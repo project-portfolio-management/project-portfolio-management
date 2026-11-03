@@ -217,6 +217,7 @@ pub fn read_csv(text: &str) -> Result<Vec<Vec<String>>, ParseError> {
     Ok(rows)
 }
 
+/// Lowercase English month abbreviations, indexed by month number minus one, for Jira's `15/Oct/26` dates.
 const MONTHS: [&str; 12] = [
     "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
 ];
@@ -287,21 +288,26 @@ pub fn jira_bucket(status: &str) -> Bucket {
     }
 }
 
+/// The export's header row, normalised for lookup.
 struct Header {
+    /// Column names, trimmed and lower-cased, in column order.
     names: Vec<String>,
 }
 
 impl Header {
+    /// Build from the header row, trimming and lower-casing every name so matching ignores case and padding.
     fn new(row: &[String]) -> Self {
         Self {
             names: row.iter().map(|h| h.trim().to_ascii_lowercase()).collect(),
         }
     }
 
+    /// Index of the first column named exactly `name`, or None when absent.
     fn first(&self, name: &str) -> Option<usize> {
         self.names.iter().position(|n| n == name)
     }
 
+    /// Every column whose name starts with `prefix`, with the remainder of the name; used for repeated columns such as Jira's several `labels`.
     fn all<'a>(&'a self, prefix: &'a str) -> impl Iterator<Item = (usize, &'a str)> + 'a {
         self.names
             .iter()
@@ -310,10 +316,12 @@ impl Header {
     }
 }
 
+/// The trimmed text in column `i` of `row`; an absent column or short row reads as an empty string.
 fn cell(row: &[String], i: Option<usize>) -> &str {
     i.and_then(|i| row.get(i)).map_or("", |s| s.trim())
 }
 
+/// Cut a field to `MAX_FIELD` characters, recording an `Unmapped` entry under `key` when anything was lost, so a cut is reported rather than silent.
 fn clip(s: &str, key: &str, unmapped: &mut Vec<Unmapped>) -> String {
     if s.chars().count() > MAX_FIELD {
         unmapped.push(Unmapped {
@@ -326,6 +334,7 @@ fn clip(s: &str, key: &str, unmapped: &mut Vec<Unmapped>) -> String {
     s.to_string()
 }
 
+/// Combine the base description with the assignee and labels into one text, because people and labels are not imported as fields. Returns None when there is nothing to say.
 fn describe(base: &str, assignee: &str, labels: &str, tracker: &str) -> Option<String> {
     let mut parts: Vec<String> = Vec::new();
     if !base.is_empty() {
@@ -360,6 +369,7 @@ pub fn parse(source: Source, text: &str) -> Result<Parsed, ParseError> {
     Ok(out)
 }
 
+/// Fail with `ParseError::MissingColumns` listing the required columns the header lacks.
 fn missing(header: &Header, need: &[&'static str]) -> Result<(), ParseError> {
     let lacking: Vec<&'static str> = need
         .iter()
@@ -373,6 +383,7 @@ fn missing(header: &Header, need: &[&'static str]) -> Result<(), ParseError> {
     }
 }
 
+/// Read a Jira CSV export into `out`. Requires `issue key` and `summary`; columns it does not map are reported as unmapped, never dropped silently.
 #[expect(clippy::too_many_lines)]
 fn jira(h: &Header, body: &[Vec<String>], out: &mut Parsed) -> Result<(), ParseError> {
     missing(h, &["issue key", "summary"])?;
@@ -511,10 +522,12 @@ fn jira(h: &Header, body: &[Vec<String>], out: &mut Parsed) -> Result<(), ParseE
     Ok(())
 }
 
+/// The normalised name of column `i`, or an empty string past the end.
 fn head_name(h: &Header, i: usize) -> String {
     h.names.get(i).cloned().unwrap_or_default()
 }
 
+/// Parse a date cell. An empty cell is None; an unparseable one is also None but is recorded as unmapped with the reason, never guessed.
 fn date_cell(raw: &str, key: &str, unmapped: &mut Vec<Unmapped>) -> Option<NaiveDate> {
     if raw.is_empty() {
         return None;
@@ -530,6 +543,7 @@ fn date_cell(raw: &str, key: &str, unmapped: &mut Vec<Unmapped>) -> Option<Naive
     d
 }
 
+/// Read an Asana CSV export into `out`. Requires `task id` and `name`; columns it does not map are reported as unmapped.
 #[expect(clippy::too_many_lines)]
 fn asana(h: &Header, body: &[Vec<String>], out: &mut Parsed) -> Result<(), ParseError> {
     missing(h, &["task id", "name"])?;

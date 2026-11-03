@@ -16,6 +16,7 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/people-impact", get(show))
 }
 
+/// Query parameters for the people-impact view.
 #[derive(Debug, Deserialize)]
 struct Query {
     /// How many months, from this one, WPM looks for over-committed pool-months in (1 to 36; WPM's default when

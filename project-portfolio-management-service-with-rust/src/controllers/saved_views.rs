@@ -20,12 +20,17 @@ use crate::saved_views as rules;
 /// `POST /api/saved-views` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SavedViewPayload {
+    /// Front-end route the view belongs to; required, capped at `MAX_ROUTE_LEN`.
     route: String,
+    /// Human-facing view name; required, capped at `MAX_NAME_LEN`.
     name: String,
+    /// Opaque filter state the front end restores; size-capped so this endpoint cannot store arbitrary documents. Defaults to null.
     #[serde(default)]
     filter: serde_json::Value,
+    /// Opaque sort state, size-capped like `filter`. Defaults to null.
     #[serde(default)]
     sort: serde_json::Value,
+    /// Visible column keys in display order; each must be non-blank and the list length is capped.
     #[serde(default)]
     columns: Vec<String>,
 }

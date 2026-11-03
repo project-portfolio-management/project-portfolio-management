@@ -38,17 +38,21 @@ const BOOKING_WINDOW_DAYS: u64 = 90;
 
 /// A measurement, or why there is none.
 struct Measure {
+    /// The measured value in the dimension's own unit (days, basis points, score or percent); None means it could not be measured, and `reason` says why.
     value: Option<i64>,
+    /// Why there is no value; set exactly when `value` is None. Absent evidence is reported, never as zero.
     reason: Option<String>,
 }
 
 impl Measure {
+    /// A successful measurement of `value`.
     const fn of(value: i64) -> Self {
         Self {
             value: Some(value),
             reason: None,
         }
     }
+    /// No measurement, with the human-readable reason it is unavailable.
     fn none(reason: &str) -> Self {
         Self {
             value: None,
@@ -70,6 +74,7 @@ async fn forecast_finish(ctx: &AppContext, plan: Uuid) -> Result<Result<NaiveDat
         .ok_or_else(|| Measure::none("no task could be scheduled, so there is no forecast finish")))
 }
 
+/// Time dimension: days the forecast finish is late against the plan's `target_date`, or no measure when there is no target or no forecast.
 async fn measure_time(ctx: &AppContext, plan: &plans::Model) -> Result<Measure> {
     let target = plan
         .to_plan()
@@ -111,6 +116,7 @@ async fn measure_schedule(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
     })
 }
 
+/// Cost dimension: overrun of the estimate at completion against the approved budget baseline total, in basis points. No measure when the estimate, baseline or a non-zero total is missing.
 async fn measure_cost(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
     let forecast = super::financials::forecast_of(ctx, plan).await?;
     let Some(eac) = forecast.estimate_at_completion_minor else {
@@ -133,6 +139,7 @@ async fn measure_cost(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
     ))
 }
 
+/// Risk dimension: the highest score among open or mitigating risks. No risks recorded is a reason, not a score of zero.
 async fn measure_risk(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
     let rows = risks::Entity::find()
         .filter(risks::Column::PlanPid.eq(plan))
@@ -323,13 +330,17 @@ async fn get_plan(
 /// `PUT /api/plans/{pid}/tolerances/{dimension}` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SetBody {
+    /// The limit for the dimension, in the dimension's unit; validated by the tolerance rules.
     limit: i64,
+    /// Percentage of the limit at which status turns amber; absent uses the default.
     #[serde(default)]
     amber_from_percent: Option<i64>,
+    /// Optional note explaining the tolerance; trimmed, and blank is stored as none.
     #[serde(default)]
     note: Option<String>,
 }
 
+/// Parse a dimension token from the URL or query, or answer 422 listing the valid dimensions.
 fn dimension_of(raw: &str) -> Result<Dimension> {
     Dimension::parse(raw).ok_or_else(|| {
         unprocessable(&format!(
@@ -440,8 +451,10 @@ async fn remove_one(
 /// `GET /api/tolerances` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct BoardQuery {
+    /// Filter to one status: green, amber, red, unknown or `not_set`; anything else is a 422.
     #[serde(default)]
     status: Option<String>,
+    /// Filter to one dimension token; an unknown one is a 422.
     #[serde(default)]
     dimension: Option<String>,
 }
@@ -580,6 +593,7 @@ async fn escalate(
 /// that is not hidden from everyone by a handling mark, and recognisable in the register and the audit log.
 pub(crate) const SYSTEM_ACTOR: &str = "system:tolerance-escalations";
 
+/// Build the synthetic admin caller the scheduled escalation task acts as, so its reads and audit entries are attributed to [`SYSTEM_ACTOR`].
 pub(crate) fn system_caller() -> MaybeAuthUser {
     MaybeAuthUser(Some(authentication_verifier::Claims {
         sub: SYSTEM_ACTOR.to_string(),

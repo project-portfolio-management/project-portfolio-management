@@ -43,6 +43,7 @@ pub(crate) fn may_manage_people(caller: &MaybeAuthUser) -> bool {
     })
 }
 
+/// Converts an allocation row to the planning engine's input: a placeholder person becomes `None` (demand without a named person), a blank role becomes `None`, and unparseable skills become empty.
 pub(crate) fn to_alloc(a: &allocations::Model) -> Alloc {
     Alloc {
         plan: a.plan_pid,
@@ -93,10 +94,13 @@ async fn scoped_allocations(
     Ok((rows, scope))
 }
 
+/// Query parameters for `GET /api/resource-plan`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PlanParams {
+    /// Window start (inclusive); `None` means today.
     #[serde(default)]
     from: Option<NaiveDate>,
+    /// Window end (inclusive); `None` means 89 days after the start.
     #[serde(default)]
     to: Option<NaiveDate>,
     /// `week` or `month` (default month).
@@ -238,10 +242,13 @@ async fn resource_plan(
     }))
 }
 
+/// Query parameters for `GET /api/resource-plan/hours`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct HoursParams {
+    /// Window start (inclusive); `None` means 27 days before the end.
     #[serde(default)]
     from: Option<NaiveDate>,
+    /// Window end (inclusive); `None` means today.
     #[serde(default)]
     to: Option<NaiveDate>,
 }
@@ -414,8 +421,10 @@ async fn hours(
     }))
 }
 
+/// `PUT /api/resource-roles` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RoleBody {
+    /// Person URN (`person:` or `worker:`) whose primary role is being set.
     person_ref: String,
     /// The primary role, or `null` to clear it.
     #[serde(default)]
@@ -518,8 +527,10 @@ async fn list_roles(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Res
     )
 }
 
+/// `POST /api/plans/{pid}/allocations/{a_pid}/resolve` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ResolveBody {
+    /// Person URN that takes over the placeholder allocation.
     person_ref: String,
     /// Resolve even though it would put the person over capacity.
     #[serde(default)]

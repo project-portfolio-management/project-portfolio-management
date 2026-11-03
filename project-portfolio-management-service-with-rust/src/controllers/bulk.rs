@@ -43,6 +43,7 @@ use crate::models::plans::Model as PlanModel;
 use crate::streaming;
 use crate::workers::bulk::{BulkWorker, BulkWorkerArgs};
 
+/// Entity name recorded on every `bulk_jobs` row; only plans are bulk-loaded today.
 const ENTITY: &str = "plans";
 /// Default import size cap: 50 MiB.
 const DEFAULT_IMPORT_MAX: usize = 50 * 1024 * 1024;
@@ -51,6 +52,7 @@ const LEASE_SECS: i64 = 600;
 /// Plans one export may carry.
 const MAX_EXPORT_ROWS: u64 = 100_000;
 
+/// Maximum accepted import body in bytes: `PROJECT_PORTFOLIO_MANAGEMENT_BULK_MAX_BYTES` when it parses, otherwise the 50 MiB default.
 fn import_max() -> usize {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_BULK_MAX_BYTES")
         .ok()
@@ -58,6 +60,7 @@ fn import_max() -> usize {
         .unwrap_or(DEFAULT_IMPORT_MAX)
 }
 
+/// How long a stored source/result artifact lives before it expires: `PROJECT_PORTFOLIO_MANAGEMENT_BULK_TTL_HOURS` (default 24), never less than one hour.
 fn ttl() -> chrono::Duration {
     let hours = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_BULK_TTL_HOURS")
         .ok()
@@ -66,6 +69,7 @@ fn ttl() -> chrono::Duration {
     chrono::Duration::hours(hours.max(1))
 }
 
+/// Whether the caller is an administrator under the plan-access rules (used to let admins see every job).
 fn is_admin(caller: &MaybeAuthUser) -> bool {
     super::plan_access::is_admin(caller.claims())
 }
@@ -83,6 +87,7 @@ fn destructive_ok(caller: &MaybeAuthUser) -> bool {
 
 // ───────────────────────────── job helpers ─────────────────────────────
 
+/// Writes `bytes` to the artifact store and records an `artifacts` row (size, SHA-256, expiry from [`ttl`], creator). The hash is what [`read_artifact`] later verifies.
 async fn store_artifact(
     ctx: &AppContext,
     kind: &str,
@@ -114,6 +119,7 @@ async fn store_artifact(
     .map_err(db_err)
 }
 
+/// Loads an artifact row and its bytes from the store, returning `NotFound` when the row, key or object is missing and an error when the stored hash no longer matches (integrity check).
 pub(crate) async fn read_artifact(
     ctx: &AppContext,
     pid: Uuid,
@@ -137,6 +143,7 @@ pub(crate) async fn read_artifact(
     Ok((row, bytes))
 }
 
+/// Fetches a job by public id; when `kind` is given and differs (import vs export) the job is reported as `NotFound` rather than leaking its existence.
 async fn find_job(ctx: &AppContext, pid: &str, kind: Option<&str>) -> Result<bulk_jobs::Model> {
     let pid = super::parse_pid(pid)?;
     let job = bulk_jobs::Entity::find()
@@ -161,6 +168,7 @@ fn visible(job: &bulk_jobs::Model, caller: &MaybeAuthUser) -> Result<()> {
     }
 }
 
+/// Builds the JSON representation of a job: status, progress, row counters and artifact references, with the artifact expiry when one is known.
 fn job_view(
     job: &bulk_jobs::Model,
     artifact_expiry: Option<chrono::DateTime<chrono::Utc>>,
@@ -202,6 +210,7 @@ fn job_view(
     })
 }
 
+/// Renders a job as an HTTP JSON response, looking up the expiry of its result (or else source) artifact for the view.
 async fn job_response(ctx: &AppContext, job: &bulk_jobs::Model) -> Result<Response> {
     let expiry = match job.result_artifact.or(job.source_artifact) {
         Some(a) => artifact_rows::Entity::find()
@@ -215,6 +224,7 @@ async fn job_response(ctx: &AppContext, job: &bulk_jobs::Model) -> Result<Respon
     format::json(job_view(job, expiry))
 }
 
+/// The `202 Accepted` response returned when a job is queued, carrying the job id and its status.
 fn accepted(job: &bulk_jobs::Model) -> Response {
     (
         StatusCode::ACCEPTED,
@@ -223,6 +233,7 @@ fn accepted(job: &bulk_jobs::Model) -> Response {
         .into_response()
 }
 
+/// Hands the job to the background [`BulkWorker`]; the worker re-reads the job by pid, so only the pid travels.
 async fn queue_job(ctx: &AppContext, job: &bulk_jobs::Model) -> Result<()> {
     BulkWorker::perform_later(ctx, BulkWorkerArgs { job_pid: job.pid })
         .await
@@ -330,6 +341,7 @@ async fn import(
     Ok(accepted(&fresh))
 }
 
+/// Inserts a new `queued` job row with all counters zero and no timing or failure data. Generic over the connection so callers may use a transaction.
 async fn new_job<C: ConnectionTrait>(
     db: &C,
     kind: &str,
@@ -377,15 +389,19 @@ async fn new_job<C: ConnectionTrait>(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ExportBody {
     #[serde(default)]
+    /// Output format, `csv` or `jsonl`; absent means the endpoint default.
     format: Option<String>,
     /// `masked` (default) or `full`.
     #[serde(default)]
     masking_profile: Option<String>,
     #[serde(default)]
+    /// Whether soft-deleted plans are included; needs the destructive right.
     include_soft_deleted: bool,
     #[serde(default)]
+    /// Optional plan kind filter.
     kind: Option<String>,
     #[serde(default)]
+    /// Optional case-insensitive name substring filter.
     name_like: Option<String>,
 }
 
@@ -604,8 +620,10 @@ async fn export_download(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct JobListParams {
     #[serde(default)]
+    /// Filter by job kind (`import` or `export`); absent means both.
     kind: Option<String>,
     #[serde(default)]
+    /// Filter by job status; absent means any status.
     status: Option<String>,
 }
 
@@ -641,6 +659,7 @@ async fn list_jobs(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ErrorsParams {
     #[serde(default)]
+    /// Error report format, `csv` or `jsonl`; absent means the default (csv).
     format: Option<String>,
 }
 
@@ -708,8 +727,10 @@ fn code_of(s: &str) -> &'static str {
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct QueueParams {
     #[serde(default)]
+    /// Filter by review-item status; absent means the default open items.
     status: Option<String>,
     #[serde(default)]
+    /// Restrict to items produced by this job; absent means all jobs.
     job: Option<Uuid>,
 }
 
@@ -733,6 +754,7 @@ async fn list_queue(
     )
 }
 
+/// Fetches a review-queue item by public id, `NotFound` when unknown.
 async fn find_item(ctx: &AppContext, pid: &str) -> Result<review_queue_items::Model> {
     let pid = super::parse_pid(pid)?;
     review_queue_items::Entity::find()
@@ -894,6 +916,7 @@ pub async fn run_job(ctx: &AppContext, job_pid: Uuid) -> Result<()> {
     Ok(())
 }
 
+/// Builds a per-row error record tied to the decoded row's number and source line, with a stable machine `code` and a human message.
 fn row_error(d: &Decoded, field: &str, code: &'static str, message: String) -> RowError {
     RowError {
         row_number: d.row_number,
@@ -904,6 +927,7 @@ fn row_error(d: &Decoded, field: &str, code: &'static str, message: String) -> R
     }
 }
 
+/// Extracts a human-readable message from an error, preferring the custom error description, then its error text.
 fn text_of(e: &Error) -> String {
     match e {
         Error::CustomError(_, d) => d
@@ -915,6 +939,7 @@ fn text_of(e: &Error) -> String {
     }
 }
 
+/// Finds the live (not soft-deleted) plan matching one import key: by pid, by an identifier scheme/value pair, or by owner organisation and code. The raw SQL binds every imported value as a parameter and orders by id so a duplicate key resolves deterministically.
 async fn find_by_key(ctx: &AppContext, key: &Key) -> Result<Option<PlanModel>> {
     use sea_orm::{DbBackend, Statement};
     let row = match key {
@@ -956,13 +981,19 @@ async fn find_by_key(ctx: &AppContext, key: &Key) -> Result<Option<PlanModel>> {
     Ok(row)
 }
 
+/// What happened to one imported row; mirrors the job counters.
 enum RowOutcome {
+    /// A new plan was created.
     Created,
+    /// An existing plan was changed.
     Updated,
+    /// The row matched a plan and carried no change.
     Unchanged,
+    /// The row was ambiguous or keyless and was held in the review queue instead of being written.
     Queued,
 }
 
+/// Validates, matches and applies one imported row through the normal create/update path, so events and audit match a single request. Returns the outcome or the row errors; a pid naming no live plan is an error, never a silent create.
 async fn process_row(
     ctx: &AppContext,
     d: &Decoded,
@@ -1074,6 +1105,7 @@ async fn process_row(
         .map_err(|e| vec![row_error(d, "", "internal", e.to_string())])
 }
 
+/// Records the terminal state of a job: status derived from the counters, progress 100, counters, omitted count, result/error artifacts and finish time.
 async fn finish(
     ctx: &AppContext,
     job: &bulk_jobs::Model,
@@ -1163,6 +1195,7 @@ async fn finish_cancelled(
     Ok(())
 }
 
+/// Worker body for an import: reads and decodes the source, enforces the row cap, processes each row while polling for cancellation, then stores the error report and finishes the job. Errors returned here fail the whole job.
 async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Result<(), String> {
     let source = job.source_artifact.ok_or("the job has no source file")?;
     let (_, bytes) = read_artifact(ctx, source).await.map_err(|e| text_of(&e))?;
@@ -1260,6 +1293,7 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
 }
 
 #[expect(clippy::too_many_lines)]
+/// Worker body for an export: loads the plans authorized when the job was requested, encodes them in the job's format and masking profile, stores the result artifact and finishes the job.
 async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Result<(), String> {
     let pids: Vec<Uuid> = job.params["pids"]
         .as_array()

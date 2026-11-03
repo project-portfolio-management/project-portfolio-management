@@ -25,6 +25,7 @@ use crate::baselines::{self, Snap};
 use crate::models::_entities::{schedule_baseline_tasks, schedule_baselines};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Per-plan cap on stored baselines, read from `PROJECT_PORTFOLIO_MANAGEMENT_MAX_SCHEDULE_BASELINES`; an unset, unparseable or non-positive value falls back to the default.
 fn max_baselines() -> i64 {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_MAX_SCHEDULE_BASELINES")
         .ok()
@@ -84,6 +85,7 @@ pub(crate) struct BaselineBody {
     reason: String,
 }
 
+/// The JSON summary of one baseline (no per-task snapshot).
 fn view(b: &schedule_baselines::Model) -> serde_json::Value {
     serde_json::json!({
         "pid": b.pid, "version": b.version, "reason": b.reason, "created_by": b.created_by,
@@ -205,6 +207,7 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
     format::json(rows.iter().map(view).collect::<Vec<_>>())
 }
 
+/// Query for `GET /api/plans/{pid}/schedule-variance`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct VarianceParams {
     /// A baseline version; defaults to the latest.

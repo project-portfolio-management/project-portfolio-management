@@ -17,6 +17,7 @@ use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, Options};
 use crate::critical_chain::{self, Outcome};
 
+/// Explanation returned with the critical chain answer: it is advice only and says how the chain and the critical path differ.
 const NOTE: &str = "This is advice; nothing has been changed. The critical chain is the longest chain through dependencies and resource links on a schedule levelled for people's time (critical tasks may move, so the finish may). A resource link means a task started when its person came free. The critical_path is the longest chain through dependencies alone, on the schedule as entered; the two are not blended. Only finish-to-start dependencies are followed as links, and milestones are not resource links. Each unfinished assigned task asks 100 percent of its assignee on each day it works.";
 
 /// The schedule as entered, the nodes with the leveling moves applied as planned starts, and the schedule

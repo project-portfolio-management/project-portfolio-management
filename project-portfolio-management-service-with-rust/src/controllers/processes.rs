@@ -28,19 +28,24 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 use crate::processes::{self as rules, Kind, Status, Step};
 
+/// True when the caller holds the `admin` access attribute; admins may act on any execution regardless of who started it.
 fn is_admin(claims: &authentication_verifier::Claims) -> bool {
     crate::auth::has_attr(claims, "access", "admin")
 }
 
 // ───────────────────────── definitions ─────────────────────────
 
+/// Request body for defining a process or adding a new version of one.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DefinitionBody {
+    /// Display name, 1 to 120 characters. Absent on an edit means keep the current name; required when creating.
     #[serde(default)]
     name: Option<String>,
+    /// Ordered steps (`approve`, `todo`, `notify`); validated by `rules::problems` before anything is stored.
     steps: Vec<Step>,
 }
 
+/// Validate a name and step list, returning a 422 that joins every problem so the client sees them all at once.
 fn check_definition(name: Option<&str>, steps: &[Step]) -> Result<()> {
     let mut problems = rules::problems(steps);
     if name.is_some_and(|n| n.trim().is_empty() || n.chars().count() > 120) {
@@ -53,6 +58,7 @@ fn check_definition(name: Option<&str>, steps: &[Step]) -> Result<()> {
     }
 }
 
+/// Load a live (not soft-deleted) process by its public id, or 404.
 async fn find_process(ctx: &AppContext, pid: &str) -> Result<processes::Model> {
     let pid = super::parse_pid(pid)?;
     processes::Entity::find()
@@ -64,6 +70,7 @@ async fn find_process(ctx: &AppContext, pid: &str) -> Result<processes::Model> {
         .ok_or(Error::NotFound)
 }
 
+/// Load the immutable step list of one process version; executions use it so edits never affect a run in flight.
 async fn version_steps<C: ConnectionTrait>(
     conn: &C,
     process: Uuid,
@@ -117,6 +124,7 @@ async fn create_process(
     process_view(&ctx, &p).await
 }
 
+/// Insert a new immutable version row for a process; the caller bumps `current_version` in the same transaction.
 async fn add_version<C: ConnectionTrait>(
     conn: &C,
     process: Uuid,
@@ -138,6 +146,7 @@ async fn add_version<C: ConnectionTrait>(
     Ok(())
 }
 
+/// Render a process with its current steps and the full version history, oldest first.
 async fn process_view(ctx: &AppContext, p: &processes::Model) -> Result<Response> {
     let versions = process_versions::Entity::find()
         .filter(process_versions::Column::ProcessPid.eq(p.pid))
@@ -257,6 +266,7 @@ async fn delete_process(
 
 // ───────────────────────── the runner ─────────────────────────
 
+/// Append one event to an execution's log. `step` is None for events about the execution as a whole; the log is append-only.
 async fn log<C: ConnectionTrait>(
     conn: &C,
     execution: Uuid,
@@ -292,6 +302,7 @@ async fn lock<C: ConnectionTrait>(conn: &C, pid: Uuid) -> Result<process_executi
         .ok_or(Error::NotFound)
 }
 
+/// Mark an execution finished: set its terminal status, stamp `finished_at` and store the optional note.
 async fn finish<C: ConnectionTrait>(
     conn: &C,
     ex: process_executions::Model,
@@ -312,12 +323,17 @@ struct Ending<'a> {
     from: usize,
     /// Whether that step is itself skipped (it never completed).
     include_from: bool,
+    /// Terminal status the execution ends in.
     status: Status,
+    /// Log event name written as the final entry.
     event: &'a str,
+    /// Subject of the person who caused the ending; None when the system did (for example a reconcile).
     actor: Option<&'a str>,
+    /// Optional free-text reason recorded in the log and on the execution.
     note: Option<&'a str>,
 }
 
+/// Finish an execution ahead of its last step, logging each skipped step so the record shows what never ran.
 async fn end_early<C: ConnectionTrait>(
     conn: &C,
     ex: process_executions::Model,
@@ -332,6 +348,7 @@ async fn end_early<C: ConnectionTrait>(
         actor,
         note,
     } = e;
+    // A step that never completed (cancel, withdrawal) is skipped too; a step that completed and was then rejected is not.
     let start = if include_from { from } else { from + 1 };
     for i in start..steps.len() {
         log(
@@ -456,9 +473,12 @@ async fn run_from<C: ConnectionTrait>(
 
 // ───────────────────────── executions ─────────────────────────
 
+/// Request body for starting an execution on a subject.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct StartBody {
+    /// Kind of the subject the process runs on, as accepted by `resolve_subject`.
     subject_kind: String,
+    /// Public id of the subject; the caller must be able to read it.
     subject_pid: String,
 }
 
@@ -526,6 +546,7 @@ async fn advance_or_fail(
     steps: &[Step],
     actor: Option<&str>,
 ) -> Result<()> {
+    // First try in one transaction so a half-started step leaves nothing behind.
     let attempt = async {
         let txn = ctx.db.begin().await.map_err(db_err)?;
         let ex = lock(&txn, ex_pid).await?;
@@ -563,6 +584,7 @@ async fn advance_or_fail(
     Ok(())
 }
 
+/// Render an execution with per-step state derived from the latest `step_*` log event for each step (no event means pending), plus the whole log.
 async fn execution_json(
     ctx: &AppContext,
     ex: &process_executions::Model,
@@ -607,6 +629,7 @@ async fn execution_json(
     }))
 }
 
+/// Load an execution by id and return its JSON view, or 404.
 async fn execution_response(ctx: &AppContext, pid: Uuid) -> Result<Response> {
     let ex = process_executions::Entity::find()
         .filter(process_executions::Column::Pid.eq(pid))
@@ -617,6 +640,7 @@ async fn execution_response(ctx: &AppContext, pid: Uuid) -> Result<Response> {
     format::json(execution_json(ctx, &ex).await?)
 }
 
+/// Load an execution by its public id from a path string, or 404.
 async fn find_execution(ctx: &AppContext, pid: &str) -> Result<process_executions::Model> {
     let pid = super::parse_pid(pid)?;
     process_executions::Entity::find()
@@ -634,6 +658,7 @@ async fn may_read(
     claims: &authentication_verifier::Claims,
     ex: &process_executions::Model,
 ) -> bool {
+    // Cheapest checks first; the subject read is last because it queries the database.
     if ex.started_by == claims.sub || is_admin(claims) {
         return true;
     }
@@ -668,16 +693,22 @@ async fn get_execution(
     format::json(execution_json(&ctx, &ex).await?)
 }
 
+/// Query parameters for listing executions.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
+    /// Only executions with this status token.
     #[serde(default)]
     status: Option<String>,
+    /// Subject kind filter; must be given together with `subject_pid`.
     #[serde(default)]
     subject_kind: Option<String>,
+    /// Subject id filter; must be given together with `subject_kind`.
     #[serde(default)]
     subject_pid: Option<String>,
+    /// Page size; capped at the shared maximum.
     #[serde(default)]
     limit: Option<u64>,
+    /// Rows to skip before the page.
     #[serde(default)]
     offset: Option<u64>,
 }
@@ -735,8 +766,10 @@ async fn list_executions(
     ))
 }
 
+/// Request body carrying an optional note for a step completion or similar action.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NoteBody {
+    /// Free-text note stored in the execution log; absent means none.
     #[serde(default)]
     note: Option<String>,
 }

@@ -14,10 +14,12 @@
 
 use serde_json::{Value, json};
 
+/// A programme's confidence value, or `not_assessed` when absent: missing evidence is stated, not treated as green.
 fn value_of(p: &Value) -> &str {
     p["confidence"]["value"].as_str().unwrap_or("not_assessed")
 }
 
+/// Every programme across all portfolio-map groups of a pack body; missing groups yield none.
 fn programmes(body: &Value) -> Vec<&Value> {
     body["portfolio_map"]["groups"]
         .as_array()

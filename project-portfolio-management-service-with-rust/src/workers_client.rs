@@ -49,16 +49,21 @@ pub const CACHE_TTL_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SKILLS_CACH
 pub const DEFAULT_CACHE_TTL_SECONDS: u64 = 300;
 
 #[derive(Clone)]
+/// One cached lookup result.
 enum CacheEntry {
+    /// The skill tags the worker service returned.
     Resolved(Vec<String>),
+    /// The reason resolution failed; cached too, so an unreachable service is not re-hit every read.
     Unresolved(String),
 }
 
+/// Process-local cache of lookups by worker pid with the time stored. Never persisted, so people and their skills stay references.
 fn cache() -> &'static Mutex<HashMap<Uuid, (CacheEntry, Instant)>> {
     static CACHE: OnceLock<Mutex<HashMap<Uuid, (CacheEntry, Instant)>>> = OnceLock::new();
     CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
+/// Cache lifetime: the seconds in the cache TTL environment variable when it parses, otherwise [`DEFAULT_CACHE_TTL_SECONDS`].
 fn cache_ttl() -> Duration {
     std::env::var(CACHE_TTL_ENV)
         .ok()
@@ -69,6 +74,7 @@ fn cache_ttl() -> Duration {
         )
 }
 
+/// Returns the cached result for a worker if present and younger than the TTL; an expired entry reads as a miss.
 fn cached(pid: Uuid) -> Option<Result<Vec<String>, String>> {
     let guard = cache()
         .lock()
@@ -83,6 +89,7 @@ fn cached(pid: Uuid) -> Option<Result<Vec<String>, String>> {
     })
 }
 
+/// Stores a lookup result (success or failure) in the cache with the current time.
 fn store(pid: Uuid, result: &Result<Vec<String>, String>) {
     let mut guard = cache()
         .lock()
@@ -109,8 +116,10 @@ fn client() -> &'static reqwest::Client {
 }
 
 #[derive(serde::Deserialize)]
+/// Wire shape of the worker service's skills answer.
 struct SkillsResponse {
     #[serde(default)]
+    /// Skill tags held by the worker; an absent field reads as an empty list.
     skills: Vec<String>,
 }
 
@@ -120,6 +129,7 @@ fn worker_pid_of(person_ref: &str) -> Option<Uuid> {
     Uuid::parse_str(person_ref.strip_prefix("worker:")?).ok()
 }
 
+/// Calls the worker service for one worker's skill tags after the outbound URL and DNS checks. Every failure is returned as a reason string, never as an empty skill list.
 async fn fetch(base_url: &str, worker_pid: Uuid) -> Result<Vec<String>, String> {
     if !crate::webhooks::target_allowed(base_url, crate::webhooks::outbound_strict()) {
         return Err(

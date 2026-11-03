@@ -24,17 +24,17 @@
 //!
 //! ## What it installs
 //!
-//! [`init`] builds one [`Resource`] (`service.name` + `service.version`,
+//! `init` builds one `Resource` (`service.name` + `service.version`,
 //! plus whatever the SDK's own detectors add) and hangs three things off it:
 //!
 //! 1. a `tracing-subscriber` **fmt layer** in the format loco's own config
-//!    asks for, filtered by loco's own [`EnvFilter`] policy (so `RUST_LOG`
+//!    asks for, filtered by loco's own `EnvFilter` policy (so `RUST_LOG`
 //!    and the `logger:` config block keep working exactly as before);
 //! 2. a [`tracing_opentelemetry`] **bridge layer** over an OTLP/gRPC
-//!    [`SdkTracerProvider`], so every `tracing` span becomes an exported
+//!    `SdkTracerProvider`, so every `tracing` span becomes an exported
 //!    `OTel` span;
-//! 3. an OTLP/gRPC [`SdkMeterProvider`] set as the global meter provider,
-//!    read periodically, feeding [`http_metrics`].
+//! 3. an OTLP/gRPC `SdkMeterProvider` set as the global meter provider,
+//!    read periodically, feeding `http_metrics`.
 //!
 //! Local logs and remote export are **both** active — not either/or.
 //!
@@ -74,7 +74,7 @@
 //! Verified against the SDK version pinned here, not assumed:
 //!
 //! - the tonic channel is built with `connect_lazy()`, so **nothing dials
-//!   the collector during boot** — [`build_span_exporter`] cannot block or
+//!   the collector during boot** — `build_span_exporter` cannot block or
 //!   fail on an unreachable endpoint;
 //! - the batch span processor and the periodic metric reader each own a
 //!   dedicated OS thread, so a stalled export never occupies a Tokio worker;
@@ -90,7 +90,7 @@
 //! person/worker/event/course/place/thing each carry **two**
 //! router-construction surfaces (a loco-native one plus a hand-rolled
 //! `create_router` used only by their own DB-gated integration tests), so
-//! [`trace_mw`] is layered on both. This crate (loco-idiomatic,
+//! `trace_mw` is layered on both. This crate (loco-idiomatic,
 //! `src/controllers/`) has exactly **one** — `App::routes` +
 //! `App::after_routes` in `src/app.rs` — confirmed by grepping `src/` and
 //! `tests/` for a second `Router::new()`/`create_router`: the one hit
@@ -136,7 +136,7 @@ pub const DEFAULT_SERVICE_NAME: &str = "project-portfolio-management-service";
 
 /// The boxed formatting layer type loco's
 /// [`init_layer`](loco_rs::logger::init_layer) returns, accepted by
-/// [`init`] so the log format a deployment configured is reused verbatim
+/// `init` so the log format a deployment configured is reused verbatim
 /// rather than re-derived here.
 pub type FmtLayer =
     Box<dyn tracing_subscriber::Layer<tracing_subscriber::Registry> + Send + Sync + 'static>;
@@ -207,7 +207,7 @@ impl TelemetryConfig {
         self.endpoint.is_some()
     }
 
-    /// The `OTel` [`Resource`] describing this process.
+    /// The `OTel` `Resource` describing this process.
     ///
     /// Deliberately minimal: `service.name` and `service.version` on top
     /// of the SDK's default detectors (which supply the `telemetry.sdk.*`
@@ -250,7 +250,7 @@ pub fn build_span_exporter(
 }
 
 /// Build the OTLP/gRPC **metric** exporter for `endpoint`. Same laziness
-/// guarantee as [`build_span_exporter`].
+/// guarantee as `build_span_exporter`.
 ///
 /// # Errors
 ///
@@ -265,9 +265,9 @@ pub fn build_metric_exporter(
         .build()
 }
 
-/// Build a batch-exporting [`SdkTracerProvider`] for `config`.
+/// Build a batch-exporting `SdkTracerProvider` for `config`.
 ///
-/// Exposed (rather than kept private to [`init`]) so a test can drive the
+/// Exposed (rather than kept private to `init`) so a test can drive the
 /// whole pipeline — bridge layer, protobuf encoding, gRPC — against an
 /// in-process collector **without** touching the global subscriber, which
 /// can only be installed once per process.
@@ -290,7 +290,7 @@ pub fn build_tracer_provider(
     ))
 }
 
-/// Build a periodically-exporting [`SdkMeterProvider`] for `config`.
+/// Build a periodically-exporting `SdkMeterProvider` for `config`.
 ///
 /// # Errors
 ///
@@ -317,7 +317,9 @@ pub fn build_meter_provider(
 /// and shuts it down from loco's `on_shutdown` hook.
 #[derive(Debug, Default)]
 pub struct Telemetry {
+    /// Trace exporter provider; None when OTLP export is not configured.
     tracer_provider: Option<SdkTracerProvider>,
+    /// Metric exporter provider; None when OTLP export is not configured.
     meter_provider: Option<SdkMeterProvider>,
 }
 
@@ -443,9 +445,11 @@ pub fn init(
 /// The HTTP server instruments, registered against the global meter
 /// provider on first use.
 struct HttpMetrics {
+    /// Inbound request duration histogram, recorded in seconds (`http.server.request.duration`).
     duration: Histogram<f64>,
 }
 
+/// Lazily register and return the process-wide HTTP instruments; the first call binds them to whichever meter provider is then global.
 fn http_metrics() -> &'static HttpMetrics {
     static METRICS: OnceLock<HttpMetrics> = OnceLock::new();
     METRICS.get_or_init(|| {
@@ -473,7 +477,7 @@ fn http_metrics() -> &'static HttpMetrics {
 /// reasoning link-graph-service applied to its own `EntityRef`-shaped
 /// paths, here for plain UUID path segments instead.
 ///
-/// Wired onto [`crate::app::App::after_routes`] — this crate's **only**
+/// Wired onto `crate::app::App::after_routes` — this crate's **only**
 /// router-construction surface (see the module docs' "What differs from
 /// the person-style ports"), unlike the person-style crates' two.
 pub async fn trace_mw(req: Request, next: Next) -> Response {

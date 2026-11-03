@@ -30,6 +30,7 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::status_evidence::{self as evidence, Claim, Counts, Source, TaskFact};
 use crate::status_updates::{self as rules, Standing};
 
+/// JSON view of one status update, with who posted it and when.
 fn update_view(u: &updates::Model) -> Value {
     json!({
         "pid": u.pid, "plan_pid": u.plan_pid, "status": u.status, "narrative": u.narrative,
@@ -113,6 +114,7 @@ async fn metrics() -> Result<Response> {
     }))
 }
 
+/// Latest status update for a plan, optionally only those created at or before a given instant (newest by id); None when there is none.
 async fn latest_before<C: ConnectionTrait>(
     db: &C,
     plan: Uuid,
@@ -128,6 +130,7 @@ async fn latest_before<C: ConnectionTrait>(
         .map_err(db_err)
 }
 
+/// Whether the plan's update cadence is being kept, from the cadence, its last update and today.
 fn standing_of(c: &cadences::Model, last: Option<&updates::Model>, today: NaiveDate) -> Standing {
     rules::standing(c.cadence_days, c.set_on, last.map(|u| u.posted_on), today)
 }
@@ -198,6 +201,7 @@ async fn put_cadence(
     format::json(cadence_view(&row, last.as_ref(), today))
 }
 
+/// JSON view of a plan's status cadence with its current standing.
 fn cadence_view(c: &cadences::Model, last: Option<&updates::Model>, today: NaiveDate) -> Value {
     json!({
         "plan_pid": c.plan_pid, "cadence_days": c.cadence_days, "set_on": c.set_on, "set_by": c.set_by,

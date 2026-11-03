@@ -9,6 +9,7 @@
 /// The decisions.
 pub const OUTCOMES: [&str; 3] = ["go", "no_go", "delay_for_safety"];
 
+/// Co-signing roles used when the deployment names none or names only invalid ones.
 fn default_roles() -> Vec<String> {
     vec![
         "accountable_professional_lead".to_string(),

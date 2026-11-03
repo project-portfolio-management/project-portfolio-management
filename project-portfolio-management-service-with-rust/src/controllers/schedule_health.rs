@@ -18,8 +18,10 @@ use crate::models::_entities::{schedule_baseline_tasks, schedule_baselines};
 use crate::schedule_health::{self as health, Input, Task};
 use crate::workflow::{Category, category_of};
 
+/// Environment variable holding optional threshold overrides for the checks; the response says whether defaults were used.
 const ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS";
 
+/// Query of `GET /api/plans/{pid}/schedule-health`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Params {
     /// The status date (default today).

@@ -1,4 +1,4 @@
-//! Per-recipient email deliveries: every email goes to one recipient at a time through the [`Sender`] in
+//! Per-recipient email deliveries: every email goes to one recipient at a time through the `Sender` in
 //! force ([`crate::email`]), and each attempt is written to `email_deliveries`.
 //!
 //! * [`deliver`] records and attempts one message to one recipient. Repeating it for the same message and
@@ -177,10 +177,13 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<usize> {
     Ok(sent)
 }
 
+/// Query of `GET /api/email-deliveries`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListQuery {
+    /// Filter by `queued`, `retry`, `sent` or `failed`; absent lists all.
     #[serde(default)]
     status: Option<String>,
+    /// Most rows returned, newest first; 1 to 500, default 100.
     #[serde(default)]
     limit: Option<u64>,
 }

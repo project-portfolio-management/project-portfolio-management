@@ -22,6 +22,7 @@ use crate::models::_entities::{risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::schedule_risk::{self as sim, Distribution, Estimate, Event, Params, RunError};
 
+/// Body of `PUT /api/plans/{pid}/tasks/{t_pid}/estimate`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct EstimateBody {
     /// Optimistic business days; `null` clears.
@@ -111,6 +112,7 @@ async fn set_estimate(
     }))
 }
 
+/// Body of `PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ImpactBody {
     /// The task it threatens; `null` clears the schedule fields.
@@ -192,10 +194,13 @@ async fn set_impact(
     format::json(serde_json::json!({ "risk_pid": row.pid, "schedule": now }))
 }
 
+/// Query for `GET /api/plans/{pid}/schedule-risk`; every field is optional and an absent one uses the simulation default.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RunParams {
+    /// Number of simulation runs; absent uses the default, and the engine enforces a maximum.
     #[serde(default)]
     iterations: Option<usize>,
+    /// Random seed; the same seed and inputs give the same answer, so results are reproducible.
     #[serde(default)]
     seed: Option<u64>,
     /// `triangular` (default) or `pert`.
@@ -206,6 +211,7 @@ pub(crate) struct RunParams {
     fallback_band_percent: Option<i64>,
 }
 
+/// Convert whole percent to basis points (percent times 100).
 fn bp(percent: i32) -> i64 {
     i64::from(percent) * 100
 }

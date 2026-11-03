@@ -39,6 +39,7 @@ fn stamp(raw: Option<&str>) -> Result<DateTime<Utc>> {
     }
 }
 
+/// Wrap PDF bytes in a download response. `nosniff` and `private, no-store` keep an intermediary or the browser from caching or reinterpreting a document that may hold access-controlled content.
 pub(super) fn respond(filename: &str, bytes: Vec<u8>) -> axum::response::Response {
     (
         [
@@ -92,6 +93,7 @@ fn flatten(v: &Value, depth: usize, skip: &[&str], out: &mut Vec<String>) {
     }
 }
 
+/// Render a JSON scalar as text; null prints as `-` so an absent value is visibly absent rather than blank.
 fn scalar(v: &Value) -> String {
     match v {
         Value::String(s) => s.clone(),
@@ -100,6 +102,7 @@ fn scalar(v: &Value) -> String {
     }
 }
 
+/// Render a nested value as inline JSON and a scalar as text, for one-line array items.
 fn compact(v: &Value) -> String {
     match v {
         Value::Object(_) | Value::Array(_) => v.to_string(),
@@ -110,10 +113,13 @@ fn compact(v: &Value) -> String {
 /// `GET /api/board/pack.pdf` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PackParams {
+    /// Window start date (`YYYY-MM-DD`); absent uses the board pack's default.
     #[serde(default)]
     from: Option<String>,
+    /// Window end date; absent uses the board pack's default.
     #[serde(default)]
     to: Option<String>,
+    /// RFC 3339 instant the pack is stamped with; absent means now.
     #[serde(default)]
     as_of: Option<String>,
 }
@@ -146,6 +152,7 @@ async fn board_pack_pdf(
 /// `GET /api/plans/{pid}/summary.pdf` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SummaryParams {
+    /// RFC 3339 instant the summary is stamped with; absent means now.
     #[serde(default)]
     as_of: Option<String>,
 }

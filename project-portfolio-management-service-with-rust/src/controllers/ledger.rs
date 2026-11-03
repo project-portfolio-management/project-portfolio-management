@@ -30,6 +30,8 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Map a database error to an HTTP error. A violation of the one-code,
+/// one-line constraint (`ccm_once`) becomes `409` with a readable message.
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();
     if t.contains("ccm_once") {
@@ -60,6 +62,8 @@ pub fn routes() -> Routes {
         .add("/ledger/reconcile", post(reconcile))
 }
 
+/// The live plans the caller may read; the trace and totals only ever count
+/// lines on these, so unreadable plans' money shows as untraced.
 async fn visible_plans(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {
     let all: Vec<Uuid> = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
@@ -75,15 +79,22 @@ async fn visible_plans(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashS
 // ---- allocations ----------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `POST /api/funding-allocations` body. Allocations are append-only.
 pub(crate) struct NewAllocation {
+    /// Public id of the funding source the money comes from.
     funding_source_pid: Uuid,
+    /// Allocated amount in minor currency units.
     amount_minor: i64,
+    /// ISO currency code; amounts in different currencies are never summed.
     currency: String,
+    /// The date the funding source made the allocation.
     allocated_on: chrono::NaiveDate,
     #[serde(default)]
+    /// Optional external reference (for example a finance document number).
     reference: Option<String>,
 }
 
+/// Render an allocation with its funding source name.
 fn view(a: &allocations::Model, source: &str) -> Value {
     json!({ "pid": a.pid, "funding_source_pid": a.funding_source_pid, "funding_source": source, "amount_minor": a.amount_minor,
         "currency": a.currency, "allocated_on": a.allocated_on, "reference": a.reference })
@@ -205,6 +216,7 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `PUT /api/plans/{pid}/budget-lines/{line}/funding-allocation` body.
 pub(crate) struct AttachBody {
     /// The allocation the line draws on; `null` detaches it.
     #[serde(default)]
@@ -389,8 +401,11 @@ async fn trace(
 // ---- cost codes -----------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `PUT /api/cost-codes` body.
 pub(crate) struct CodeBody {
+    /// The finance system's cost code; each code maps to at most one line.
     cost_code: String,
+    /// Public id of the budget line the code maps to.
     budget_line_pid: Uuid,
 }
 

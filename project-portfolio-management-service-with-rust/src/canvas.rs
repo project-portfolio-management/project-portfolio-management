@@ -3,7 +3,7 @@
 //!
 //! A **template** is nothing but an ordered list of boxes. One generic
 //! `canvases` / `canvas_items` table pair serves every type, so adding a
-//! canvas type means adding a [`Template`] here — never a migration.
+//! canvas type means adding a `Template` here — never a migration.
 //!
 //! The box sets are the conventional, widely published ones (Lean Canvas,
 //! Business Model Canvas, SWOT, empathy map, logic model). The `risk` and
@@ -33,6 +33,7 @@ pub struct Template {
     pub boxes: &'static [BoxDef],
 }
 
+/// Build a static slice of `BoxDef` from `(key, title)` pairs, for the template table below.
 macro_rules! boxes {
     ($(($k:literal, $t:literal)),+ $(,)?) => {
         &[$(BoxDef { key: $k, title: $t }),+]

@@ -6,7 +6,7 @@
 //!
 //! Schedule it daily (cron, a Kubernetes `CronJob`). It does what the "Escalate" button on a plan's tolerance page
 //! does, for every plan, as the identity `system:tolerance-escalations`. A dimension is skipped when an escalation for
-//! it is open or acknowledged, or when one was raised for it in the last [`QUIET_DAYS`] days, so a resolved one on a
+//! it is open or acknowledged, or when one was raised for it in the last `QUIET_DAYS` days, so a resolved one on a
 //! plan that stays red is not raised again at once. Plans hidden from everyone by a handling mark are not read.
 
 use loco_rs::prelude::*;

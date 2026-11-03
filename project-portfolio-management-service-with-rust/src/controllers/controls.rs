@@ -61,6 +61,8 @@ pub const KNOWN_METRICS: &[&str] = &[
 
 use super::parse_pid as find_plan_pid;
 
+/// Load one live (not soft-deleted) control by its public id; a malformed
+/// or unknown id is `404`/bad-request, never a leak of internal keys.
 async fn find_control(ctx: &AppContext, raw: &str) -> Result<controls::Model> {
     let pid = find_plan_pid(raw)?;
     controls::Entity::find()
@@ -72,6 +74,8 @@ async fn find_control(ctx: &AppContext, raw: &str) -> Result<controls::Model> {
         .ok_or(Error::NotFound)
 }
 
+/// Load one reading by public id. Readings are append-only history and
+/// have no soft-delete column, so there is no `deleted_at` filter.
 async fn find_reading(ctx: &AppContext, raw: &str) -> Result<control_readings::Model> {
     let pid = find_plan_pid(raw)?;
     control_readings::Entity::find()
@@ -82,6 +86,7 @@ async fn find_reading(ctx: &AppContext, raw: &str) -> Result<control_readings::M
         .ok_or(Error::NotFound)
 }
 
+/// Load one live (not soft-deleted) control action by public id.
 async fn find_action(ctx: &AppContext, raw: &str) -> Result<control_actions::Model> {
     let pid = find_plan_pid(raw)?;
     control_actions::Entity::find()
@@ -112,6 +117,8 @@ const fn timing_token(timing: rules::Timing) -> &'static str {
     }
 }
 
+/// Parse a wire comparator token; `None` means the token is not one of
+/// the four supported comparators and the caller must reject it.
 fn parse_comparator(raw: &str) -> Option<rules::Comparator> {
     match raw {
         "at_least" => Some(rules::Comparator::AtLeast),
@@ -122,6 +129,8 @@ fn parse_comparator(raw: &str) -> Option<rules::Comparator> {
     }
 }
 
+/// The wire token for a [`rules::Verdict`], the inverse of
+/// [`parse_verdict`].
 const fn verdict_token(verdict: rules::Verdict) -> &'static str {
     match verdict {
         rules::Verdict::Pass => "pass",
@@ -130,6 +139,8 @@ const fn verdict_token(verdict: rules::Verdict) -> &'static str {
     }
 }
 
+/// Parse a stored verdict token back into a [`rules::Verdict`]. Total by
+/// design: unknown input is `Unmeasured`, never `Pass`.
 fn parse_verdict(raw: &str) -> rules::Verdict {
     match raw {
         "pass" => rules::Verdict::Pass,
@@ -153,27 +164,49 @@ fn standard_of(row: &controls::Model) -> rules::Standard {
 /// `POST /api/plans/{pid}/controls` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ControlPayload {
+    /// Human-readable control name, trimmed on insert and capped at
+    /// `MAX_TEXT_LEN`.
     name: String,
+    /// Wire token for [`rules::Timing`]: `feedforward`, `concurrent` or
+    /// `feedback`. Decides whether a failure may block or only record.
     timing: String,
+    /// Metric the control measures; must be one of [`KNOWN_METRICS`].
     metric: String,
+    /// Target the metric is compared against, in the metric's own integer
+    /// unit (for example basis points or days).
     target_value: i64,
+    /// Wire token for the comparison: `at_least`, `at_most`, `within` or
+    /// `equals`.
     comparator: String,
     #[serde(default)]
+    /// Allowed deviation from `target_value` for `within`; absent when the
+    /// comparator needs none.
     tolerance: Option<i64>,
     #[serde(default)]
+    /// Display unit of the metric (for example `bps`, `days`); informational
+    /// only and absent when unknown.
     unit: Option<String>,
     #[serde(default)]
+    /// Currency code when the metric is monetary; absent otherwise.
     currency: Option<String>,
     #[serde(default = "default_source_kind")]
+    /// Where readings come from: `metric`, `query` or `manual`. Defaults to
+    /// `metric`.
     source_kind: String,
     #[serde(default)]
+    /// Reference to the query or external source behind `source_kind`;
+    /// absent for plain metrics and manual controls.
     source_ref: Option<String>,
     #[serde(default)]
+    /// Expected days between readings; absent means no cadence is promised.
+    /// Must be positive when present.
     cadence_days: Option<i64>,
     #[serde(default)]
+    /// Reference (not a copy) to the person accountable for the control.
     owner_ref: Option<String>,
 }
 
+/// Serde default for [`ControlPayload::source_kind`].
 fn default_source_kind() -> String {
     "metric".to_string()
 }
@@ -182,17 +215,26 @@ fn default_source_kind() -> String {
 /// `create` and `register_standard` both need, factored once so the
 /// two entry points cannot drift.
 enum RegisterError {
+    /// The timing token was not `feedforward`, `concurrent` or `feedback`.
     BadTiming,
+    /// The comparator token was not a supported one.
     BadComparator,
+    /// The source kind was not `metric`, `query` or `manual`.
     BadSourceKind,
+    /// The name exceeded `MAX_TEXT_LEN`.
     NameTooLong,
+    /// `cadence_days` was zero or negative.
     BadCadence,
+    /// The standard failed [`rules::validate`] (for example an unknown
+    /// metric); carries every problem found so the caller can fix them at once.
     NotEvaluable(Vec<rules::Invalid>),
     /// The row failed to insert — a real `500`, not a `422`: everything
     /// the caller controls already passed [`rules::validate`].
     Db(sea_orm::DbErr),
 }
 
+/// Map a [`RegisterError`] to the HTTP error: caller mistakes are `422`,
+/// a failed insert is a `500`.
 fn register_error(err: RegisterError) -> Error {
     match err {
         RegisterError::Db(e) => db_err(e),
@@ -321,6 +363,8 @@ pub(crate) struct RegisterStandardPayload {
     budget_variance_tolerance_bps: i64,
 }
 
+/// Default tolerance for the budget-variance control: 1,000 basis points
+/// (10%).
 fn default_budget_variance_tolerance_bps() -> i64 {
     1_000
 }
@@ -515,11 +559,16 @@ async fn remove(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReadingPayload {
     #[serde(default)]
+    /// Observed value in the metric's unit. Absent records an `unmeasured`
+    /// reading, which is valid and is never coerced to zero.
     value: Option<i64>,
     #[serde(default = "default_method")]
+    /// How the value was obtained (for example `manual`); defaults to
+    /// `manual`.
     method: String,
 }
 
+/// Serde default for [`ReadingPayload::method`].
 fn default_method() -> String {
     "manual".to_string()
 }
@@ -590,11 +639,16 @@ async fn list_readings(Path(pid): Path<String>, State(ctx): State<AppContext>) -
 /// `POST /api/readings/{pid}/actions` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ActionPayload {
+    /// Action kind: `correct`, `adjust`, `retrain`, `accept` or `escalate`.
     kind: String,
+    /// What was done or decided; required, non-blank and capped.
     description: String,
     #[serde(default)]
+    /// Reference to the person who owns the action.
     owner_ref: Option<String>,
     #[serde(default)]
+    /// Why the action was taken; used as the acceptance reason when `kind` is
+    /// `accept`.
     reason: Option<String>,
 }
 

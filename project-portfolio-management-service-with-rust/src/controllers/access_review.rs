@@ -19,13 +19,16 @@ use crate::auth::MaybeAuthUser;
 use crate::models::_entities::access_records;
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Query parameters for the access review.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Params {
+    /// Restrict the review to grants on one plan; absent covers every plan the caller can read.
     #[serde(default)]
     plan: Option<Uuid>,
     /// Calendar days after which a grant is flagged for review.
     #[serde(default)]
     older_than_days: Option<i64>,
+    /// Output format, `json` (default) or `csv`; anything else is a 422.
     #[serde(default)]
     format: Option<String>,
 }

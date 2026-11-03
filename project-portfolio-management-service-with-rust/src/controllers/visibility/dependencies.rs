@@ -18,10 +18,14 @@ use loco_rs::prelude::*;
 /// `sf`) and a lag in business days, **negative for a lead**.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DependencyPayload {
+    /// The plan or task that must come first.
     predecessor_pid: Uuid,
+    /// The plan or task that follows.
     successor_pid: Uuid,
+    /// Lag in business days; negative is a lead. Defaults to 0.
     #[serde(default)]
     lag_days: i32,
+    /// Relationship: `fs` (default when absent), `ss`, `ff` or `sf`.
     #[serde(default)]
     kind: Option<String>,
 }
@@ -143,10 +147,12 @@ pub(super) async fn create_dependency(
 /// all, capped 500).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DependencyParams {
+    /// Restrict to edges touching this plan or task; absent lists all, capped at 500.
     #[serde(default)]
     item: Option<Uuid>,
 }
 
+/// `GET /api/dependencies` — dependency edges. An edge with an end the caller cannot read is returned as an opaque restricted edge, and an unreadable `item` filter answers like an item with no links, so ids cannot be probed.
 #[debug_handler]
 pub(super) async fn list_dependencies(
     State(ctx): State<AppContext>,

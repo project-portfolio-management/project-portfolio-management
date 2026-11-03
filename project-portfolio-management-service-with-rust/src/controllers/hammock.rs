@@ -25,8 +25,10 @@ use crate::hammock::{self as rules, Span};
 use crate::models::_entities::{hammock_links, plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Request body for turning a task into a hammock or back.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct EnableBody {
+    /// True makes the task a hammock; false returns it to an ordinary task. Asking for the state it already has is a no-op.
     enabled: bool,
 }
 
@@ -126,8 +128,10 @@ async fn set_hammock(
     )
 }
 
+/// Request body for linking a task or hammock under a hammock.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct LinkBody {
+    /// Task or hammock of the same plan whose dates the hammock spans.
     member_pid: Uuid,
 }
 

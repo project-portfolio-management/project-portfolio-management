@@ -288,6 +288,7 @@ pub struct Ratio {
     pub absent: Option<Absent>,
 }
 
+/// Basis-point ratio num/den rounded half away from zero; a zero denominator gives no value and the given reason, never zero.
 fn ratio(num: i64, den: i64, why: Absent) -> Ratio {
     if den == 0 {
         return Ratio {

@@ -29,6 +29,7 @@ use crate::discussion as subject_rules;
 use crate::models::_entities::{artifacts as artifact_rows, attachment_texts, attachments};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Whether the caller holds the admin role; admins may act on attachments beyond their own.
 fn is_admin(caller: &MaybeAuthUser) -> bool {
     super::plan_access::is_admin(caller.claims())
 }
@@ -36,8 +37,11 @@ fn is_admin(caller: &MaybeAuthUser) -> bool {
 /// `POST /api/attachments` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct UploadParams {
+    /// Kind of record the file is attached to; must be one of the allowed subject kinds.
     subject_kind: String,
+    /// Pid of that record, as text; parsed and access-checked when the request is handled.
     subject_pid: String,
+    /// Client-supplied name; sanitised before it is stored.
     filename: String,
 }
 
@@ -188,6 +192,7 @@ async fn index_text(ctx: &AppContext, attachment_pid: Uuid, declared: &str, body
 /// `GET /api/attachments/search` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SearchParams {
+    /// Search text, 2 to 200 characters after trimming.
     q: String,
 }
 
@@ -257,7 +262,9 @@ async fn search(
 /// `GET /api/attachments` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SubjectParams {
+    /// Kind of record whose files are listed.
     subject_kind: String,
+    /// Pid of that record, as text.
     subject_pid: String,
 }
 
@@ -296,6 +303,7 @@ async fn list(
     format::json(out)
 }
 
+/// Load a live (not soft-deleted) attachment by pid, or `NotFound`. This only locates the row; callers must still authorise against its subject.
 async fn find_attachment(ctx: &AppContext, pid: &str) -> Result<attachments::Model> {
     let pid = super::parse_pid(pid)?;
     attachments::Entity::find()

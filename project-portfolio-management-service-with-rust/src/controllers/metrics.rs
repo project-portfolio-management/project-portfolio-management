@@ -3,7 +3,7 @@
 //! Exposes the process-wide registry from [`crate::metrics`] at
 //! `GET /metrics.prom` (mounted at the **root**, not under `/api`) in
 //! Prometheus text-exposition format. The route is public even under
-//! blanket JWT enforcement (see [`crate::auth::is_public_path`]) so that a
+//! blanket JWT enforcement (see `crate::auth::is_public_path`) so that a
 //! scraper can poll it without a bearer token. Configure your scraper with
 //! `metrics_path: /metrics.prom`.
 

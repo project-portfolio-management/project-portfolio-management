@@ -24,6 +24,7 @@ use crate::models::_entities::approval_requests;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 
+/// Loads an approval request by public id, `NotFound` when unknown.
 async fn find(ctx: &AppContext, pid: &str) -> Result<approval_requests::Model> {
     let pid = super::parse_pid(pid)?;
     approval_requests::Entity::find()
@@ -37,11 +38,14 @@ async fn find(ctx: &AppContext, pid: &str) -> Result<approval_requests::Model> {
 /// `POST /api/approvals` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RequestPayload {
+    /// Kind of the subject to be approved.
     subject_kind: String,
+    /// Public id of the subject, as text; checked against a live subject by the handler.
     subject_pid: String,
     /// The one person asked: a `person:` / `worker:` URN.
     approver_ref: String,
     #[serde(default)]
+    /// Optional note to the approver; absent means none.
     message: Option<String>,
 }
 
@@ -110,10 +114,13 @@ pub(crate) struct ListParams {
     #[serde(default)]
     mine: Option<String>,
     #[serde(default)]
+    /// Filter by request status; absent means all statuses.
     status: Option<String>,
     #[serde(default)]
+    /// Filter by subject kind, used together with `subject_pid`.
     subject_kind: Option<String>,
     #[serde(default)]
+    /// Filter by subject pid, used together with `subject_kind`.
     subject_pid: Option<String>,
 }
 
@@ -171,6 +178,7 @@ pub(crate) struct DecidePayload {
     /// `approved` | `rejected`.
     decision: String,
     #[serde(default)]
+    /// Optional comment recorded with the decision; absent means none.
     comment: Option<String>,
 }
 

@@ -20,6 +20,7 @@ use crate::handling_marks::scheme;
 use crate::models::_entities::plan_handling_marks as marks;
 use crate::models::audit_logs::Model as AuditModel;
 
+/// The stored handling mark row for a plan, if one was ever set; None means the plan is at the scheme's lowest level.
 async fn current(ctx: &AppContext, plan: Uuid) -> Result<Option<marks::Model>> {
     marks::Entity::find()
         .filter(marks::Column::PlanPid.eq(plan))
@@ -28,6 +29,7 @@ async fn current(ctx: &AppContext, plan: Uuid) -> Result<Option<marks::Model>> {
         .map_err(db_err)
 }
 
+/// JSON view of a plan's handling mark: the scheme levels, the stored mark (null when none) and the `effective` level the scheme resolves it to.
 fn view(plan: Uuid, stored: Option<&str>) -> serde_json::Value {
     let s = scheme();
     serde_json::json!({
@@ -52,6 +54,7 @@ async fn get_mark(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
     format::json(view(plan.pid, row.as_ref().map(|r| r.mark.as_str())))
 }
 
+/// Request body for setting a plan's handling mark.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SetBody {
     /// A code in the scheme, or `null` to reset to the lowest level.

@@ -23,12 +23,15 @@ pub(crate) struct AllocationPayload {
     /// `person_ref`, and is resolved to a named person later.
     #[serde(default)]
     placeholder: bool,
+    /// Role the booking is for; required for a placeholder, optional otherwise.
     #[serde(default)]
     role: Option<String>,
     /// Percent of the person's capacity (1–100).
     percent: i32,
+    /// First day of the booking; absent means open-ended at the start.
     #[serde(default)]
     start_date: Option<chrono::NaiveDate>,
+    /// Last day of the booking (not before `start_date`); absent means open-ended.
     #[serde(default)]
     end_date: Option<chrono::NaiveDate>,
     /// Short skill tags this allocation requires (T-28c). Only the
@@ -44,6 +47,7 @@ pub(crate) struct AllocationPayload {
     requested: bool,
 }
 
+/// `POST /api/plans/{pid}/allocations` — book a person (or a role placeholder) on a plan. A committed booking needs the plan's register guard; a proposed one does not. Audited as `allocation_added`.
 #[debug_handler]
 pub(super) async fn create_allocation(
     State(ctx): State<AppContext>,
@@ -312,12 +316,15 @@ pub(super) async fn delete_allocation(
 /// over 100 ⇒ over-allocated (PPM-8).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CapacityParams {
+    /// Window start; absent means today in the deployment's time zone.
     #[serde(default)]
     from: Option<chrono::NaiveDate>,
+    /// Window end; absent means 30 days after `from`. Not before `from`; at most ten years.
     #[serde(default)]
     to: Option<chrono::NaiveDate>,
 }
 
+/// `GET /api/capacity` — per-person capacity over the window, counting only plans the caller may see; proposed bookings are a separate series and never added to committed load.
 #[debug_handler]
 pub(super) async fn capacity(
     State(ctx): State<AppContext>,

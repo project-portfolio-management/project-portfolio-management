@@ -138,12 +138,14 @@ pub trait EventPublisher: Send + Sync {
     fn recent(&self, limit: usize) -> Vec<EventView>;
 }
 
+/// Most events the in-memory publisher retains; older ones are dropped first.
 const CAPACITY: usize = 1000;
 
 /// The in-memory ring-buffer publisher: today's behaviour, behind the
 /// [`EventPublisher`] seam. Default for tests and single-node dev.
 #[derive(Debug, Default)]
 pub struct InMemoryPublisher {
+    /// Ring buffer of retained events, oldest first, guarded by a mutex because publishing happens from many request threads.
     buffer: Mutex<VecDeque<Envelope>>,
 }
 
@@ -190,6 +192,7 @@ fn publisher() -> &'static InMemoryPublisher {
     PUB.get_or_init(InMemoryPublisher::new)
 }
 
+/// The process-wide in-memory publisher, created on first use.
 fn next_seq() -> u64 {
     use std::sync::atomic::{AtomicU64, Ordering};
     static SEQ: AtomicU64 = AtomicU64::new(1);

@@ -19,10 +19,14 @@ use loco_rs::prelude::*;
 /// `POST /api/reports` body (PPM-9).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReportPayload {
+    /// Report name; required, capped at `MAX_TEXT_LEN`.
     name: String,
+    /// Legacy collection label. Blank means all plans; otherwise it must be a plan kind and acts as a kind filter.
     collection: String,
+    /// Saved filter object; `stage`, `status` and `name_like` are honoured at run time. Defaults to null.
     #[serde(default)]
     filters: serde_json::Value,
+    /// Columns to project, in order; each must be in `REPORT_FIELDS` and at least one is required.
     fields: Vec<String>,
     /// Optional one-field grouping (T-28e); see [`GROUP_FIELDS`].
     #[serde(default)]
@@ -45,6 +49,7 @@ const REPORT_FIELDS: &[&str] = &[
 /// and `created_at` are unique-ish and would make one group per plan.
 const GROUP_FIELDS: &[&str] = &["kind", "stage", "status", "start_date", "target_date"];
 
+/// `POST /api/reports` handler. Validates every field of the definition and reports all problems in one 422, then saves it and audits `report_saved` in one transaction.
 #[debug_handler]
 pub(super) async fn create_report(
     State(ctx): State<AppContext>,
@@ -170,10 +175,12 @@ fn report_cell(model: &plans::Model, field: &str) -> String {
 /// are the family bulk machinery, roadmap).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RunParams {
+    /// Output format, `json` or `csv`; absent means json.
     #[serde(default)]
     format: Option<String>,
 }
 
+/// `GET /api/reports/{pid}/run` handler. Runs a saved report for the caller, hiding plans the caller's access scope excludes, so two callers can get different rows from the same definition.
 #[debug_handler]
 pub(super) async fn run_report(
     State(ctx): State<AppContext>,

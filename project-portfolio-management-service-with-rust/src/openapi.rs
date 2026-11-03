@@ -872,6 +872,7 @@ fn control_paths() -> Value {
     Value::Object(merged)
 }
 
+/// `OpenAPI` path items for the per-plan control register (collection and listing routes under `/api/plans/{pid}/controls`).
 fn control_register_paths() -> Value {
     let plan = json!({
         "name": "pid", "in": "path", "required": true,
@@ -913,6 +914,7 @@ fn control_register_paths() -> Value {
     })
 }
 
+/// `OpenAPI` path items for actions on a single control, under `/api/controls/{pid}`.
 fn control_action_paths() -> Value {
     let plan = json!({
         "name": "pid", "in": "path", "required": true,

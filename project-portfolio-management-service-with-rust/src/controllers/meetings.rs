@@ -133,6 +133,7 @@ async fn plan(
     format::json(json!({ "pid": row.pid, "status": row.status }))
 }
 
+/// Insert one agenda or outcome row for a meeting inside the caller's transaction. `part` is `agenda` or an outcome part; `kind` is the outcome kind (absent for agenda items); `link` optionally ties the row to another record.
 async fn insert_item(
     db: &impl ConnectionTrait,
     meeting_pid: Uuid,
@@ -156,6 +157,7 @@ async fn insert_item(
     Ok(())
 }
 
+/// Load a live meeting by pid that belongs to `plan_pid`, or `NotFound`; a meeting of another plan is indistinguishable from a missing one.
 pub(super) async fn find(ctx: &AppContext, plan_pid: Uuid, mid: &str) -> Result<meetings::Model> {
     meetings::Entity::find()
         .filter(meetings::Column::Pid.eq(super::parse_pid(mid)?))
@@ -193,12 +195,17 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
 
 /// A meeting's items: printable lines and JSON, each for the agenda and the outcomes, every link described.
 struct Items {
+    /// Printable agenda lines, in entry order.
     agenda: Vec<Line>,
+    /// Printable outcome lines, in entry order.
     outcomes: Vec<Line>,
+    /// The agenda as JSON values, in entry order.
     agenda_json: Vec<serde_json::Value>,
+    /// The outcomes as JSON values, in entry order.
     outcomes_json: Vec<serde_json::Value>,
 }
 
+/// Load a meeting's agenda and outcome rows in entry order, describing each linked record as it is now. A link whose record is gone is kept and shown as no longer there.
 async fn load_items(ctx: &AppContext, plan_pid: Uuid, meeting_pid: Uuid) -> Result<Items> {
     let rows = meeting_items::Entity::find()
         .filter(meeting_items::Column::MeetingPid.eq(meeting_pid))

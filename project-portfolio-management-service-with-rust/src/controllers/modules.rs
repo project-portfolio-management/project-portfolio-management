@@ -87,6 +87,7 @@ async fn get_modules(State(ctx): State<AppContext>, Path(pid): Path<String>) -> 
     format::json(view(plan.pid, &modules, own))
 }
 
+/// JSON view of a plan's modules: the enabled set, whether it comes from the plan itself (`own`) or the deployment default, and every available module with its enabled flag and URL segments.
 fn view(plan_pid: Uuid, modules: &BTreeSet<String>, own: bool) -> serde_json::Value {
     serde_json::json!({
         "plan_pid": plan_pid,
@@ -106,10 +107,13 @@ fn view(plan_pid: Uuid, modules: &BTreeSet<String>, own: bool) -> serde_json::Va
 /// `preset`, or `reset`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ModulesPayload {
+    /// Explicit list of module keys to enable.
     #[serde(default)]
     modules: Option<Vec<String>>,
+    /// Name of a preset set of modules to apply.
     #[serde(default)]
     preset: Option<String>,
+    /// True clears the plan's own set so it falls back to the deployment default.
     #[serde(default)]
     reset: Option<bool>,
 }

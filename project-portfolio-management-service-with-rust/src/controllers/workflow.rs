@@ -162,33 +162,49 @@ pub async fn in_force(
 /// `POST /api/workflows` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct WorkflowPayload {
+    /// Workflow name shown in configuration lists.
     name: String,
+    /// What the workflow governs: `task` or `issue`.
     applies_to: String,
+    /// Plan the workflow is scoped to; absent means it is not tied to one plan (a deployment-wide definition).
     #[serde(default)]
     plan_pid: Option<Uuid>,
+    /// Marks the deployment default, used by plans that have no workflow of their own.
     #[serde(default)]
     is_default: bool,
+    /// Declared states; every one must carry a recognized category.
     states: Vec<StatePayload>,
+    /// Allowed moves between states; empty means any move is permitted.
     #[serde(default)]
     transitions: Vec<TransitionPayload>,
 }
 
+/// One declared state of a workflow.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct StatePayload {
+    /// Stable machine key tasks store as their state.
     key: String,
+    /// Display label.
     label: String,
+    /// Meaning of the state (`todo`, `active`, `waiting` or `done`). Required and never defaulted, since boards and time analysis compute from it.
     category: String,
+    /// Maximum items allowed in the state at once; absent means unlimited.
     #[serde(default)]
     wip_limit: Option<u32>,
+    /// Marks the state new items start in.
     #[serde(default)]
     is_initial: bool,
+    /// Marks a state work does not leave (typically done).
     #[serde(default)]
     is_terminal: bool,
 }
 
+/// One allowed move between two states.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TransitionPayload {
+    /// State key the move starts from.
     from: String,
+    /// State key the move ends at.
     to: String,
     /// Roles allowed to make this move (RM-2); empty/absent means anyone.
     #[serde(default)]
@@ -425,6 +441,7 @@ async fn remove(
 /// `GET /api/plans/{pid}/workflow?applies_to=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct InForceParams {
+    /// Which workflow type to report, `task` (default) or `issue`.
     #[serde(default)]
     applies_to: Option<String>,
 }

@@ -136,7 +136,7 @@ pub mod my_work;
 pub mod notification_prefs;
 /// Structured logging + real OpenTelemetry OTLP export (repo `tasks.md`
 /// PRO-H12, slice 7 of 7 — the last). Installed via
-/// [`app::App::init_logger`]; [`observability::trace_mw`] is layered in
+/// `app::App::init_logger`; [`observability::trace_mw`] is layered in
 /// `App::after_routes`.
 pub mod observability;
 /// The OKR engine: key-result progress, objective scores, and the

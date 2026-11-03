@@ -11,7 +11,7 @@
 //!   becomes `effective`, **from today** (no back-dating, no future-dating), and in
 //!   the same step the version it replaces is `superseded` on that day, naming its
 //!   successor;
-//! * so at any date **exactly one version, or none, is in force** ([`in_force`]).
+//! * so at any date **exactly one version, or none, is in force** (`in_force`).
 
 use chrono::NaiveDate;
 use serde::Serialize;

@@ -98,6 +98,7 @@ fn goal_eq(a: &Goal, b: &Goal) -> bool {
     a.title.trim().eq_ignore_ascii_case(b.title.trim())
 }
 
+/// Union of two string lists: all of `main`, then any `extra` entries not already present (exact match).
 fn union_strings(main: &[String], extra: &[String]) -> Vec<String> {
     union_by(main, extra, |a, b| a == b)
 }

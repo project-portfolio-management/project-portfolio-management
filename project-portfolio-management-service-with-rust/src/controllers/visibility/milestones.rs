@@ -14,7 +14,9 @@ use loco_rs::prelude::*;
 /// `POST /api/plans/{pid}/milestones` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MilestonePayload {
+    /// Milestone name; required and capped at `MAX_TEXT_LEN`.
     name: String,
+    /// Due date.
     due: chrono::NaiveDate,
     /// Optional kind (`milestone` / `demo` / `release` / `checkpoint`);
     /// absent reads as `milestone`.
@@ -22,6 +24,7 @@ pub(crate) struct MilestonePayload {
     kind: Option<String>,
 }
 
+/// `POST /api/plans/{pid}/milestones`. Adds a not-yet-done milestone to a live plan after validating name and kind, and audits `milestone_added` in the same transaction.
 #[debug_handler]
 pub(super) async fn create_milestone(
     State(ctx): State<AppContext>,
@@ -88,6 +91,7 @@ pub(super) async fn list_milestones(
 /// `PUT /api/plans/{pid}/milestones/{m_pid}` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MilestoneReschedulePayload {
+    /// New due date; the `milestone_due_changed` trigger fires only when it differs from the current one.
     due: chrono::NaiveDate,
     /// Why it moved; kept in the slip history (optional, up to 500 characters).
     #[serde(default)]

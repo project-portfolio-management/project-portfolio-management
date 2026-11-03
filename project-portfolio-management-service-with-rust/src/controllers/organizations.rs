@@ -22,6 +22,7 @@ use crate::models::audit_logs::Model as AuditModel;
 /// The kinds of organization.
 pub const KINDS: [&str; 4] = ["delivery", "partner", "sponsor", "supplier"];
 
+/// Map a database error to an API error; a duplicate organization name becomes a 409 conflict.
 fn db_err(e: &sea_orm::DbErr) -> Error {
     if e.to_string().contains("org_name_once") {
         return Error::CustomError(
@@ -32,6 +33,7 @@ fn db_err(e: &sea_orm::DbErr) -> Error {
     Error::string(&e.to_string())
 }
 
+/// JSON view of an organization; the audience is `org:<pid>`, the audience key packs use.
 fn show(o: &orgs::Model) -> serde_json::Value {
     json!({ "pid": o.pid, "name": o.name, "kind": o.kind, "active": o.active, "audience": format!("org:{}", o.pid) })
 }
@@ -56,12 +58,16 @@ async fn list(State(ctx): State<AppContext>) -> Result<Response> {
     format::json(json!({ "organizations": rows.iter().map(show).collect::<Vec<_>>() }))
 }
 
+/// Request body creating an organization.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NewOrg {
+    /// Organization name, 1 to 200 characters after trimming, unique.
     name: String,
+    /// Organization kind; one of KINDS.
     kind: String,
 }
 
+/// Check name length and that the kind is in KINDS, collecting every problem into one 422.
 fn validate(name: &str, kind: &str) -> Result<()> {
     let mut problems = Vec::new();
     if !(1..=200).contains(&name.trim().chars().count()) {
@@ -109,12 +115,16 @@ async fn create(
     format::json(show(&row))
 }
 
+/// Request body changing an organization; absent fields are left as they are.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Change {
+    /// New name.
     #[serde(default)]
     name: Option<String>,
+    /// New kind; one of KINDS.
     #[serde(default)]
     kind: Option<String>,
+    /// False retires the organization, true restores it.
     #[serde(default)]
     active: Option<bool>,
 }

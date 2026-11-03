@@ -1,6 +1,6 @@
 //! Row-level integrity hashing over the `cases` table.
 //!
-//! The audit chain ([`super::audit_chain`]) proves the **trail** was not
+//! The audit chain (`super::audit_chain`) proves the **trail** was not
 //! rewritten. It says nothing about the entity rows themselves: an
 //! attacker with SQL access could edit a stored case and, as long as
 //! they wrote no audit row, the chain would still verify. That gap was

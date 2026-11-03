@@ -109,6 +109,7 @@ pub fn decide(stored: Option<&Stored>, hash: &str, now: DateTime<Utc>) -> Decisi
     }
 }
 
+/// Build a JSON error response; the in-progress conflict also carries `Retry-After: 1` so a client polls rather than hammers.
 fn refuse(status: StatusCode, code: &str, message: &str) -> Response {
     let mut r = (
         status,
@@ -122,6 +123,7 @@ fn refuse(status: StatusCode, code: &str, message: &str) -> Response {
     r
 }
 
+/// `503` for when the key store cannot be read or written. The request is not run, because running it unrecorded would break the replay guarantee.
 fn unavailable() -> Response {
     refuse(
         StatusCode::SERVICE_UNAVAILABLE,
@@ -130,10 +132,12 @@ fn unavailable() -> Response {
     )
 }
 
+/// Wrap raw SQL and its bound values as a Postgres statement.
 fn sql(text: &str, values: Vec<sea_orm::Value>) -> Statement {
     Statement::from_sql_and_values(DatabaseBackend::Postgres, text.to_string(), values)
 }
 
+/// Rebuild the first answer from a stored row (status, body, content type) and mark it `Idempotent-Replayed: true`. A corrupt status falls back to `200`.
 fn replay_response(r: &sea_orm::QueryResult) -> Response {
     let status = r
         .try_get::<i32>("", "status")
@@ -157,16 +161,22 @@ fn replay_response(r: &sea_orm::QueryResult) -> Response {
 
 /// The request as it identifies itself to the store.
 struct Ident {
+    /// The authenticated subject, or `-` when the token cannot be read; keys are scoped per caller.
     caller: String,
+    /// The client's `Idempotency-Key`, trimmed and cut to [`MAX_KEY`].
     key: String,
+    /// HTTP method (always `POST` here).
     method: String,
+    /// Request path without the query, kept for the stored row.
     path: String,
+    /// Hash of method, path, query and body, to tell a retry from a different request reusing the key.
     hash: String,
 }
 
 /// Take the key, or say what to answer instead: `Ok(())` means this request holds the key and should run.
 #[expect(clippy::result_large_err)] // the Err is the answer to send, as in the other layers
 async fn claim(db: &sea_orm::DatabaseConnection, id: &Ident) -> Result<(), Response> {
+    // Bounded retry: after a take-over or a lost insert race the insert is attempted again, but never forever.
     for _ in 0..3 {
         let inserted = db
             .execute_raw(sql(
@@ -193,6 +203,7 @@ async fn claim(db: &sea_orm::DatabaseConnection, id: &Ident) -> Result<(), Respo
             ))
             .await
             .map_err(|_| unavailable())?;
+        // A row we cannot parse is treated as absent, so the request just runs.
         let stored = row.as_ref().and_then(|r| {
             Some(Stored {
                 request_hash: r.try_get("", "request_hash").ok()?,
@@ -228,6 +239,7 @@ async fn claim(db: &sea_orm::DatabaseConnection, id: &Ident) -> Result<(), Respo
     Err(unavailable())
 }
 
+/// Delete the caller's key row so the request can be retried; `Err(())` only when the database fails.
 async fn release(db: &sea_orm::DatabaseConnection, id: &Ident) -> Result<(), ()> {
     db.execute_raw(sql(
         "DELETE FROM idempotency_keys WHERE caller = $1 AND key = $2",

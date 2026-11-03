@@ -197,6 +197,7 @@ pub enum RunError {
 pub struct Rng(u64);
 
 impl Rng {
+    /// A generator for `seed`; the seed is scrambled so nearby seeds give unrelated streams, and the state is never zero (xorshift would stick there).
     pub(crate) fn new(seed: u64) -> Self {
         // SplitMix64 finalizer; never zero.
         let mut z = seed.wrapping_add(0x9E37_79B9_7F4A_7C15);
@@ -206,6 +207,7 @@ impl Rng {
         Self(if z == 0 { 0x9E37_79B9_7F4A_7C15 } else { z })
     }
 
+    /// The next 64 bits of the xorshift64* stream; the same seed always gives the same sequence, which is what makes a simulation repeatable.
     pub(crate) fn next_u64(&mut self) -> u64 {
         self.0 ^= self.0 << 13;
         self.0 ^= self.0 >> 7;

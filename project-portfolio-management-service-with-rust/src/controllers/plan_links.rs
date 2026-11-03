@@ -33,8 +33,11 @@ async fn live(ctx: &AppContext, plan: Uuid, task: Option<Uuid>) -> Result<Vec<pl
 /// `POST /api/plans/{pid}/links` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct LinkBody {
+    /// Kind of link, validated against the allowed kinds in the plan-link rules.
     kind: String,
+    /// The linked URL; must be unique among the live links of the same plan or task, otherwise 409.
     url: String,
+    /// Human label for the link; stored trimmed.
     label: String,
     /// The work-tracking system this points into (`jira`, `trello`, `asana`, `linear`, `monday`, ...).
     #[serde(default)]
@@ -69,6 +72,7 @@ async fn add_task_link(
     add(&ctx, &caller, plan.pid, Some(task.pid), b).await
 }
 
+/// Shared create path for plan and task links. Validates the fields, caps links per plan or task, rejects a duplicate URL with 409, then inserts and audits `plan_link_added` in one transaction. `task` is None for a plan-level link.
 async fn add(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -127,8 +131,10 @@ async fn add(
 /// `GET /api/plans/{pid}/links` query: narrow to one system and/or kind.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListQuery {
+    /// Restrict to links of this system; an unknown system is a 422.
     #[serde(default)]
     system: Option<String>,
+    /// Restrict to links of this kind.
     #[serde(default)]
     kind: Option<String>,
 }
@@ -156,6 +162,7 @@ async fn list_task_links(
     filtered(&ctx, plan.pid, Some(task.pid), &q).await
 }
 
+/// Shared list path: live links of the plan (or of one task when `task` is set), optionally narrowed by system and kind.
 async fn filtered(
     ctx: &AppContext,
     plan: Uuid,
@@ -227,6 +234,7 @@ async fn remove_task_link(
     remove(&ctx, &caller, plan.pid, Some(task.pid), &lpid).await
 }
 
+/// Shared delete path: soft-deletes one live link of the plan (or task) and audits `plan_link_removed`; `NotFound` when it does not match.
 async fn remove(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

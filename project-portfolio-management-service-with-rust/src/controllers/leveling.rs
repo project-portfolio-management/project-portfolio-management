@@ -29,10 +29,12 @@ use crate::leveling::{self, Demand, Input, Params, Proposal, Resource};
 use crate::models::visibility as vis_models;
 use crate::workflow::{Category, category_of};
 
+/// A `409` with a machine-readable code, used when a proposal being applied is no longer current.
 fn conflict(code: &str, message: &str) -> Error {
     Error::CustomError(StatusCode::CONFLICT, ErrorDetail::new(code, message))
 }
 
+/// Query of `GET /api/plans/{pid}/leveling`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct LevelingParams {
     /// Let a critical task move; the finish impact is then stated.
@@ -43,6 +45,7 @@ pub(crate) struct LevelingParams {
     load_percent: Option<i32>,
 }
 
+/// Validate the per-task load, defaulting to 100; anything outside 1 to 100 is a `422`.
 fn load_percent(p: Option<i32>) -> Result<i32> {
     let v = p.unwrap_or(100);
     if (1..=100).contains(&v) {
@@ -52,9 +55,13 @@ fn load_percent(p: Option<i32>) -> Result<i32> {
     }
 }
 
+/// A computed leveling proposal together with the data needed to present or apply it.
 pub(crate) struct Computed {
+    /// The loaded schedule network (nodes, edges, calendar) the proposal was computed on.
     pub(crate) net: super::cpm::Network,
+    /// The advisory proposal: moves, effects, over-allocations and finish impact.
     pub(crate) proposal: Proposal,
+    /// Task title by task id, for display.
     pub(crate) titles: HashMap<Uuid, String>,
     /// Who does each assigned, unfinished task.
     pub(crate) people: HashMap<Uuid, String>,
@@ -62,6 +69,7 @@ pub(crate) struct Computed {
     pub(crate) estimates: HashMap<Uuid, crate::ccpm_estimates::Resolved>,
 }
 
+/// Compute a leveling proposal at the tasks' likely durations; see [`compute_with`].
 pub(crate) async fn compute(
     ctx: &AppContext,
     plan: Uuid,
@@ -242,12 +250,16 @@ async fn propose(
     format::json(shape(&c, &caller, q.allow_critical, percent))
 }
 
+/// One move of a proposal to apply.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ApplyMove {
+    /// The task to move.
     task_pid: Uuid,
+    /// The new start date; it must equal the current proposal's `to_start` for the task, else the apply is refused as stale.
     start_date: NaiveDate,
 }
 
+/// Body of `POST /api/plans/{pid}/leveling/apply`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ApplyBody {
     /// The moves to apply, as proposed.
@@ -255,8 +267,10 @@ pub(crate) struct ApplyBody {
     /// Must be `true`: applying is a decision, not a side effect of reading.
     #[serde(default)]
     confirm: bool,
+    /// Must match the setting the proposal was read with, since the apply recomputes it; absent means false.
     #[serde(default)]
     allow_critical: bool,
+    /// Must match the load the proposal was read with (1 to 100, default 100); absent means 100.
     #[serde(default)]
     load_percent: Option<i32>,
     /// Why (audited with each move).
@@ -292,6 +306,7 @@ async fn apply(
     }
     let percent = load_percent(b.load_percent)?;
     let c = compute(&ctx, plan.pid, b.allow_critical, percent).await?;
+    // The proposal is recomputed rather than trusted from the client, so a move only applies if it is still exactly what the plan would propose.
     let proposed: HashMap<Uuid, &leveling::Move> =
         c.proposal.moves.iter().map(|m| (m.pid, m)).collect();
     let mut seen = std::collections::HashSet::new();

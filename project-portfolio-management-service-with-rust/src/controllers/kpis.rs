@@ -20,6 +20,7 @@ use crate::kpi::{self, Direction, Status, Summary};
 use crate::models::_entities::{kpi_readings, kpis, objectives};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Allowed reporting cadences for a KPI; used to judge when a reading is stale.
 const CADENCES: &[&str] = &["daily", "weekly", "monthly", "quarterly"];
 
 /// Problems with the fields shared by create and update.
@@ -45,6 +46,7 @@ fn field_problems(
     out
 }
 
+/// True when a live (not soft-deleted) objective with this pid exists, so a KPI cannot point at a missing or deleted objective.
 async fn objective_exists(ctx: &AppContext, pid: Uuid) -> Result<bool> {
     Ok(objectives::Entity::find()
         .filter(objectives::Column::Pid.eq(pid))
@@ -95,6 +97,7 @@ fn view(
     )
 }
 
+/// Loads every reading for the given KPIs in entry order (by id); returns no rows for an empty list without querying.
 async fn load_readings(ctx: &AppContext, pids: &[Uuid]) -> Result<Vec<kpi_readings::Model>> {
     if pids.is_empty() {
         return Ok(Vec::new());
@@ -107,6 +110,7 @@ async fn load_readings(ctx: &AppContext, pids: &[Uuid]) -> Result<Vec<kpi_readin
         .map_err(db_err)
 }
 
+/// Loads a live KPI by pid for a caller. A KPI on a plan the caller cannot read is reported as not found, the same as a missing one.
 async fn find_kpi(ctx: &AppContext, caller: &MaybeAuthUser, raw: &str) -> Result<kpis::Model> {
     let pid = super::parse_pid(raw)?;
     let k = kpis::Entity::find()
@@ -136,18 +140,24 @@ pub(crate) struct CreateBody {
     /// The objective it supports.
     #[serde(default)]
     objective_pid: Option<Uuid>,
+    /// KPI name; required.
     name: String,
+    /// Optional longer description of what is measured.
     #[serde(default)]
     description: Option<String>,
+    /// Optional unit label (for example a percentage or a count); free text.
     #[serde(default)]
     unit: Option<String>,
     /// `higher_better` or `lower_better`.
     direction: String,
+    /// Value at which the KPI is on target; whole numbers only, in the KPI's unit.
     target_value: i64,
     /// The line beyond which it is red; on the worse side of the target.
     red_value: i64,
+    /// Reporting cadence (`daily`, `weekly`, `monthly` or `quarterly`); `None` means staleness is not judged.
     #[serde(default)]
     cadence: Option<String>,
+    /// Owner as a `person:` or `worker:` reference, never a free-text name; `None` when unowned.
     #[serde(default)]
     owner_ref: Option<String>,
 }
@@ -211,6 +221,7 @@ async fn create(
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
+/// Query parameters for `GET /api/kpis`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
     /// Only this plan's KPIs.
@@ -316,17 +327,25 @@ async fn get_one(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct UpdateBody {
+    /// New KPI name; required.
     name: String,
+    /// New description; `None` clears it.
     #[serde(default)]
     description: Option<String>,
+    /// New unit label; `None` clears it.
     #[serde(default)]
     unit: Option<String>,
+    /// New on-target value, in the KPI's unit.
     target_value: i64,
+    /// New red threshold, on the worse side of the target.
     red_value: i64,
+    /// New cadence; `None` clears it, so staleness is no longer judged.
     #[serde(default)]
     cadence: Option<String>,
+    /// New owner reference (`person:` or `worker:`); `None` clears the owner.
     #[serde(default)]
     owner_ref: Option<String>,
+    /// New supported objective; `None` detaches the KPI from any objective.
     #[serde(default)]
     objective_pid: Option<Uuid>,
 }
@@ -408,10 +427,12 @@ async fn remove(
 /// `POST /api/kpis/{pid}/readings` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReadingBody {
+    /// The measured value, a whole number in the KPI's unit.
     value: i64,
     /// The day it was observed (default today; not in the future).
     #[serde(default)]
     observed_on: Option<NaiveDate>,
+    /// Optional note about the reading, such as how it was taken.
     #[serde(default)]
     note: Option<String>,
 }

@@ -97,6 +97,7 @@ async fn ranges_on<C: sea_orm::ConnectionTrait>(db: &C, person_ref: &str) -> Res
         .collect())
 }
 
+/// The JSON shape returned for one availability range.
 fn view(r: &person_availabilities::Model) -> serde_json::Value {
     serde_json::json!({
         "pid": r.pid, "person_ref": r.person_ref, "from": r.from_date, "to": r.to_date,
@@ -110,9 +111,13 @@ pub(crate) struct Body {
     /// Whose; defaults to the caller's own.
     #[serde(default)]
     person_ref: Option<String>,
+    /// First day of the range, inclusive.
     from: NaiveDate,
+    /// Last day of the range, inclusive; must not precede `from`.
     to: NaiveDate,
+    /// Ceiling on the person's capacity in that range, 0 to 100 percent.
     max_percent: i32,
+    /// Optional free-text reason.
     #[serde(default)]
     note: Option<String>,
 }
@@ -201,6 +206,7 @@ async fn create(
     format::json(view(&row))
 }
 
+/// `GET /api/availability` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
     /// Whose ranges; defaults to the caller's own.

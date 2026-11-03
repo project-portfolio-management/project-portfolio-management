@@ -32,6 +32,7 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::schedule_risk::{self, Distribution, RunError};
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of the budget-line estimate update (low and high final cost).
 pub(crate) struct EstimateBody {
     /// Low final cost in minor units; `null` clears.
     #[serde(default)]
@@ -102,6 +103,7 @@ async fn set_line_estimate(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of the risk cost-impact update.
 pub(crate) struct CostImpactBody {
     /// The cost it adds, in minor units (positive); `null` clears both this and the currency.
     #[serde(default)]
@@ -190,10 +192,13 @@ async fn set_cost_impact(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Query parameters of the cost-risk simulation endpoints.
 pub(crate) struct RunParams {
     #[serde(default)]
+    /// Monte Carlo iterations; absent uses the engine default and a cap applies.
     iterations: Option<usize>,
     #[serde(default)]
+    /// Random seed; absent picks a default so a run can be repeated by passing the seed back.
     seed: Option<u64>,
     /// `triangular` (default) or `pert`.
     #[serde(default)]
@@ -209,12 +214,17 @@ pub(crate) struct RunParams {
     delay_cost_per_day_minor: Option<i64>,
 }
 
+/// Settings shared by every run after defaults are applied.
 struct Common {
+    /// Shape of the three-point estimate distribution.
     distribution: Distribution,
+    /// Seed that makes the run reproducible.
     seed: u64,
+    /// Fallback band in percent (0 to 100) for lines with no estimate.
     band: i64,
 }
 
+/// Applies defaults to the run parameters (distribution triangular, fallback band 20 percent) and rejects an unknown distribution or an out-of-range band.
 fn common(q: &RunParams) -> Result<Common> {
     let distribution = match q.distribution.as_deref() {
         None => Distribution::Triangular,
@@ -232,6 +242,7 @@ fn common(q: &RunParams) -> Result<Common> {
     })
 }
 
+/// Converts a stored budget line to the simulation's input line: planned amount is the most likely value, actual is spend to date, all in minor units; a missing low or high stays absent and triggers the fallback band.
 fn line_of(l: &budget_lines::Model) -> Line {
     Line {
         pid: l.pid,
@@ -290,6 +301,7 @@ fn classify_cost_events(
     (events, used, skipped, none)
 }
 
+/// The assumptions block echoed with every result (seed, iterations and cap, distribution, fallback band, independence) so the figures can be reproduced and challenged.
 fn assumptions(c: &Common, iterations: usize, max_iterations: usize) -> serde_json::Value {
     serde_json::json!({
         "seed": c.seed,
@@ -306,12 +318,14 @@ fn assumptions(c: &Common, iterations: usize, max_iterations: usize) -> serde_js
     })
 }
 
+/// Renders `(percentile, minor units)` pairs as JSON objects.
 fn pct_json(v: &[(u32, i64)]) -> Vec<serde_json::Value> {
     v.iter()
         .map(|(p, m)| serde_json::json!({ "p": p, "minor": m }))
         .collect()
 }
 
+/// Loads live budget lines, optionally restricted to the given plans.
 async fn load_lines(
     ctx: &AppContext,
     plan_pids: Option<&[Uuid]>,
@@ -326,6 +340,7 @@ async fn load_lines(
         .map_err(db_err)
 }
 
+/// Loads the live risks of the given plans in id order; an empty plan list returns nothing without querying.
 async fn load_register(ctx: &AppContext, plan_pids: &[Uuid]) -> Result<Vec<risks::Model>> {
     if plan_pids.is_empty() {
         return Ok(Vec::new());
@@ -384,6 +399,7 @@ fn shape(
         .collect()
 }
 
+/// Maps a simulation failure to a 422 with an actionable message.
 fn run_error(e: sim::RunError) -> Error {
     match e {
         sim::RunError::NoLines => unprocessable(
@@ -444,6 +460,7 @@ pub(crate) async fn p80_by_currency(
     ))
 }
 
+/// Runs the cost simulation over the budget lines and cost-risk events of the given plans and shapes the response, naming risks left out and lines that fell back to the default band.
 async fn run_cost(
     ctx: &AppContext,
     plan_pids: &[Uuid],

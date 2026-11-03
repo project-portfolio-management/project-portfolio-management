@@ -30,6 +30,7 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::onboarding::{self as rules, Kind, Seed};
 
+/// Gate for person-related onboarding data: passes only callers who may manage people, otherwise a 403 with an explanatory message.
 fn need_people(caller: &MaybeAuthUser) -> Result<()> {
     if may_manage_people(caller) {
         Ok(())
@@ -40,12 +41,14 @@ fn need_people(caller: &MaybeAuthUser) -> Result<()> {
     }
 }
 
+/// True when `r` is a well-formed `person:` or `worker:` reference (people are references, never free text).
 fn valid_person(r: &str) -> bool {
     super::governance::valid_ref(r, &["person", "worker"])
 }
 
 // ───────────────────────── templates ─────────────────────────
 
+/// Resolves the checklist for `kind`: the custom template if one is stored and parses, otherwise the built-in. The bool is true when the custom one was used.
 async fn items_for(ctx: &AppContext, kind: Kind) -> Result<(Vec<Seed>, bool)> {
     let custom = onboarding_templates::Entity::find()
         .filter(onboarding_templates::Column::Kind.eq(kind.token()))
@@ -59,6 +62,7 @@ async fn items_for(ctx: &AppContext, kind: Kind) -> Result<(Vec<Seed>, bool)> {
     })
 }
 
+/// Every checklist kind, in the order the templates endpoint lists them.
 const KINDS: [Kind; 4] = [
     Kind::PersonJoin,
     Kind::PersonLeave,
@@ -77,8 +81,10 @@ async fn list_templates(State(ctx): State<AppContext>) -> Result<Response> {
     format::json(serde_json::json!({ "templates": out }))
 }
 
+/// `PUT /api/onboarding/templates/{kind}` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TemplateBody {
+    /// Replacement checklist items, in display order.
     items: Vec<Seed>,
 }
 
@@ -156,13 +162,17 @@ async fn delete_template(
 
 // ───────────────────────── cases ─────────────────────────
 
+/// `POST /api/plans/{pid}/onboarding/cases` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CaseBody {
+    /// Checklist kind token: `person_join`, `person_leave`, `plan_intake` or `plan_closeout`.
     kind: String,
     /// The person, for a join or leave.
     #[serde(default)]
     subject_ref: Option<String>,
+    /// Date the join, leave, intake or closeout takes effect; must fall within 1970..=2100.
     effective_date: NaiveDate,
+    /// Optional case title (non-blank, at most 200 characters); `None` lets the server derive one.
     #[serde(default)]
     title: Option<String>,
 }
@@ -280,6 +290,7 @@ async fn create_case(
     case_view(&ctx, &caller, &case).await
 }
 
+/// Loads a case's checklist items in their display `position` order.
 async fn items_of(ctx: &AppContext, case: Uuid) -> Result<Vec<onboarding_items::Model>> {
     onboarding_items::Entity::find()
         .filter(onboarding_items::Column::CasePid.eq(case))
@@ -289,6 +300,7 @@ async fn items_of(ctx: &AppContext, case: Uuid) -> Result<Vec<onboarding_items::
         .map_err(db_err)
 }
 
+/// Summarizes item resolutions into done/open/overdue progress, judging lateness against the deployment's local today.
 fn progress_of(items: &[onboarding_items::Model]) -> rules::Progress {
     let today = crate::tz::deployment_today();
     let states: Vec<rules::ItemState<'_>> = items
@@ -301,6 +313,7 @@ fn progress_of(items: &[onboarding_items::Model]) -> rules::Progress {
     rules::progress(&states, today)
 }
 
+/// Renders a case with its items and progress. The subject reference is hidden (and `masked` set) unless the caller may manage people.
 async fn case_view(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -325,6 +338,7 @@ async fn case_view(
     }))
 }
 
+/// Loads a case by pid for a caller, answering not-found (never forbidden) for cases the caller must not know exist: private plans outside their scope, guests without read grant, and person cases for callers who cannot manage people.
 async fn find_case(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -353,8 +367,10 @@ async fn find_case(
     Ok(c)
 }
 
+/// Query parameters for `GET /api/plans/{pid}/onboarding/cases`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
+    /// Optional status filter (for example `open`, `completed`, `cancelled`); `None` lists all.
     #[serde(default)]
     status: Option<String>,
 }
@@ -407,16 +423,19 @@ async fn get_case(
     case_view(&ctx, &caller, &c).await
 }
 
+/// `PUT /api/onboarding/cases/{pid}/items/{item}` body; every field is optional and only those present change the item.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ItemBody {
     /// A person URN, or "" to clear.
     #[serde(default)]
     owner_ref: Option<String>,
+    /// New due date; `None` leaves it unchanged.
     #[serde(default)]
     due_date: Option<NaiveDate>,
     /// `done`, `skipped` (needs a note) or `open` (reopens).
     #[serde(default)]
     resolution: Option<String>,
+    /// Free-text note on the item; required when resolving as `skipped`.
     #[serde(default)]
     note: Option<String>,
 }
@@ -530,8 +549,10 @@ async fn complete_case(
     close(&ctx, &caller, case, "completed", None).await
 }
 
+/// `POST /api/onboarding/cases/{pid}/cancel` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CancelBody {
+    /// Why the checklist is being abandoned; stored as the closed reason.
     reason: String,
 }
 
@@ -560,6 +581,7 @@ async fn cancel_case(
     .await
 }
 
+/// Closes a case with `status` (`completed` or `cancelled`) and an optional reason, stamping the close time and auditing `onboarding_case_<status>` in the same transaction.
 async fn close(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -588,17 +610,22 @@ async fn close(
 
 // ───────────────────────── access record ─────────────────────────
 
+/// `POST /api/plans/{pid}/access-records` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct AccessBody {
+    /// Person URN whose access changed.
     person_ref: String,
     /// What access, in words ("repo write", "wiki editor").
     access: String,
     /// `granted` or `revoked`.
     action: String,
+    /// Date the change took effect; `None` lets the server default it.
     #[serde(default)]
     recorded_on: Option<NaiveDate>,
+    /// Optional free-text note.
     #[serde(default)]
     note: Option<String>,
+    /// Optional onboarding case this record belongs to.
     #[serde(default)]
     case_pid: Option<Uuid>,
 }
@@ -673,6 +700,7 @@ async fn record_access(
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
+/// Loads a plan's access records oldest first (by id), the append-only order the outstanding computation relies on.
 async fn plan_records(ctx: &AppContext, plan: Uuid) -> Result<Vec<access_records::Model>> {
     access_records::Entity::find()
         .filter(access_records::Column::PlanPid.eq(plan))
@@ -682,6 +710,7 @@ async fn plan_records(ctx: &AppContext, plan: Uuid) -> Result<Vec<access_records
         .map_err(db_err)
 }
 
+/// Reduces the access history to grants that were never revoked, as (person, access, granted-on) triples.
 fn outstanding_of(rows: &[access_records::Model]) -> Vec<(String, String, NaiveDate)> {
     let recs: Vec<rules::Record> = rows
         .iter()

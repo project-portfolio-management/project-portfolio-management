@@ -41,6 +41,7 @@ pub fn routes() -> Routes {
         .add("/director-pack-subscriptions", put(set_subscription))
 }
 
+/// JSON view of a director-pack schedule row, including its next run date and the outcome of its last run.
 fn schedule_json(s: &schedules::Model) -> serde_json::Value {
     serde_json::json!({
         "pid": s.pid, "audience": s.audience, "day_of_month": s.day_of_month,
@@ -49,9 +50,12 @@ fn schedule_json(s: &schedules::Model) -> serde_json::Value {
     })
 }
 
+/// Request body creating a monthly director-pack schedule.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NewSchedule {
+    /// Audience the drafted pack is for; must be a known audience or `org:<pid>` of an active organization.
     audience: String,
+    /// Day of the month the schedule runs on; see `first_run` for how the next date is chosen.
     day_of_month: i32,
 }
 
@@ -136,10 +140,13 @@ async fn list_schedules(State(ctx): State<AppContext>, caller: MaybeAuthUser) ->
     )
 }
 
+/// Request body changing a schedule; absent fields are left as they are.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct UpdateSchedule {
+    /// Switch the schedule on or off.
     #[serde(default)]
     enabled: Option<bool>,
+    /// Move the schedule to a different day of the month.
     #[serde(default)]
     day_of_month: Option<i32>,
 }
@@ -247,6 +254,7 @@ pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
     Ok(out)
 }
 
+/// Draft the pack for a period and audience unless one already exists (returns None then). The cut-off is the last second of the period so the draft covers it all; the origin is marked scheduled so it needs a review before issue.
 async fn draft_scheduled(ctx: &AppContext, period: &str, audience: &str) -> Result<Option<Uuid>> {
     let exists = packs::Entity::find()
         .filter(packs::Column::Period.eq(period))
@@ -339,9 +347,12 @@ async fn review(
     format::json(serde_json::json!({ "pid": row.pid, "reviewed": true }))
 }
 
+/// Request body subscribing or unsubscribing a person to an audience notice.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SubscribeBody {
+    /// Audience the subscription applies to.
     audience: String,
+    /// True to subscribe, false to unsubscribe.
     subscribed: bool,
     /// An editor may subscribe someone else (a partner reader cannot subscribe themselves).
     #[serde(default)]

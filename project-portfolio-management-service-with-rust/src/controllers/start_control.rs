@@ -38,11 +38,17 @@ pub fn routes() -> Routes {
 
 /// What the check found for a programme.
 pub(crate) struct Evaluation {
+    /// Programmes currently in active delivery, as (pid, name).
     pub in_delivery: Vec<(Uuid, String)>,
+    /// The configured limit on programmes in delivery; None means no limit applies (unset or unusable).
     pub limit: Option<usize>,
+    /// True when the limit setting was present but not a whole number from 1 to 1000, so it was ignored.
     pub limit_unusable: bool,
+    /// Reasons a start would be refused; empty means the start may go ahead.
     pub refusals: Vec<Refusal>,
+    /// The constraint pool (drum) as (pid, name), or None when no pool is identified.
     pub pool: Option<(Uuid, String)>,
+    /// This programme's demand per skill pool and month, as JSON, from firm allocations on it and the plans under it.
     pub demand: Value,
 }
 
@@ -203,6 +209,7 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
     })
 }
 
+/// Queue entries still waiting, oldest first (by id), so earlier requests are served first.
 async fn waiting<C: ConnectionTrait>(db: &C) -> Result<Vec<queue::Model>> {
     queue::Entity::find()
         .filter(queue::Column::Status.eq("waiting"))

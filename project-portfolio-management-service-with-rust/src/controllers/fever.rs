@@ -30,6 +30,7 @@ pub fn routes() -> Routes {
         .add("/buffer-fever", get(live))
 }
 
+/// Name of the one accepted buffer sizing rule: half the baselined critical duration.
 const RULE: &str = "half_of_critical_duration";
 
 /// The baselined critical work of a plan: `(baseline version, finish, critical tasks as (pid, days))`.
@@ -63,12 +64,16 @@ async fn baselined_chain(
     Ok(Some((b, chain)))
 }
 
+/// Body that sets a plan's project buffer.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct BufferBody {
+    /// Buffer length in business days, 1 to 2000. Give this or `rule`, not both.
     #[serde(default)]
     buffer_days: Option<i64>,
+    /// Sizing rule; only `half_of_critical_duration` is accepted, and it needs a schedule baseline.
     #[serde(default)]
     rule: Option<String>,
+    /// Optional free-text note about the declaration.
     #[serde(default)]
     note: Option<String>,
 }

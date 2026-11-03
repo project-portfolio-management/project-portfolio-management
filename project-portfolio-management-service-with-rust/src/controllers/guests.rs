@@ -26,6 +26,7 @@ use crate::guests::{self as rules, Attempt, Grant};
 use crate::models::_entities::guest_grants;
 use crate::models::audit_logs::Model as AuditModel;
 
+/// The caller's `role` attribute values; empty when none.
 fn roles_of(claims: &authentication_verifier::Claims) -> Vec<String> {
     claims.attrs.get("role").cloned().unwrap_or_default()
 }
@@ -75,6 +76,7 @@ pub(crate) async fn guest_covers_plan(
     rules::covers(&grants_of(db, &claims.sub).await, "plan", plan, need)
 }
 
+/// A bare `404` used for every guest refusal, so a guest cannot tell a hidden record from a missing one.
 fn not_found() -> AxumResponse {
     (
         StatusCode::NOT_FOUND,
@@ -83,6 +85,7 @@ fn not_found() -> AxumResponse {
         .into_response()
 }
 
+/// The raw (not percent-decoded) value of one query-string key, or `None`; used by the guard before any handler runs.
 fn query_param(query: Option<&str>, key: &str) -> Option<String> {
     query?
         .split('&')
@@ -175,6 +178,7 @@ pub(crate) struct GrantBody {
     guest_sub: Uuid,
     /// `read` or `comment`.
     access: String,
+    /// When the grant lapses; absent means it stays live until revoked.
     #[serde(default)]
     expires_at: Option<DateTime<Utc>>,
 }

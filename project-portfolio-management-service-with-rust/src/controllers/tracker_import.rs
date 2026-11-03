@@ -26,6 +26,7 @@ use crate::models::_entities::{plan_dependencies, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::tracker_import::{self as reader, Bucket, Item, Source};
 
+/// Query for `POST /api/plans/{pid}/import/jira` and `/import/asana`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ImportParams {
     /// `true` (default) reports without writing.
@@ -35,12 +36,16 @@ pub(crate) struct ImportParams {
 
 /// The workflow states an item's bucket maps to.
 struct States {
+    /// Workflow state for items not yet started; always present.
     initial: String,
+    /// Workflow state for items under way; absent when the workflow has none.
     active: Option<String>,
+    /// Workflow state for finished items; absent when the workflow has none.
     done: Option<String>,
 }
 
 impl States {
+    /// The state for an item bucket, falling back to the initial state when the workflow has no state of that kind.
     fn of(&self, b: Bucket) -> String {
         match b {
             Bucket::Done => self.done.clone().unwrap_or_else(|| self.initial.clone()),
@@ -50,6 +55,7 @@ impl States {
     }
 }
 
+/// The item's title cut to the maximum text length.
 fn title_of(item: &Item) -> String {
     item.title
         .chars()
@@ -63,6 +69,7 @@ fn deadline_of(item: &Item) -> Option<chrono::NaiveDate> {
         .filter(|d| crate::cpm::constraint_problems(None, None, Some(*d)).is_empty())
 }
 
+/// Shared body of both import routes: parse the export, map statuses onto the plan's workflow, and report what would be created, updated or left unmapped. Nothing is written unless `dry_run` is explicitly false; every skipped or altered value is reported in `unmapped`.
 #[expect(clippy::too_many_lines)]
 async fn run(
     ctx: AppContext,

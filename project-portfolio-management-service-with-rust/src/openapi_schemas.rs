@@ -12,58 +12,76 @@
 
 use serde_json::{Value, json};
 
+/// `OpenAPI` $ref to a named schema under components/schemas.
 fn r(name: &str) -> Value {
     json!({ "$ref": format!("#/components/schemas/{name}") })
 }
+/// Schema for a required string.
 fn s() -> Value {
     json!({ "type": "string" })
 }
+/// Schema for a string that may be null (absent evidence is null, not an empty string).
 fn s_null() -> Value {
     json!({ "type": "string", "nullable": true })
 }
+/// Schema for a required UUID string (a pid, never a numeric id).
 fn uuid() -> Value {
     json!({ "type": "string", "format": "uuid" })
 }
+/// Schema for a UUID string that may be null.
 fn uuid_null() -> Value {
     json!({ "type": "string", "format": "uuid", "nullable": true })
 }
+/// Schema for a calendar date (no time of day).
 fn date() -> Value {
     json!({ "type": "string", "format": "date" })
 }
+/// Schema for a calendar date that may be null.
 fn date_null() -> Value {
     json!({ "type": "string", "format": "date", "nullable": true })
 }
+/// Schema for a required timestamp (RFC 3339 date-time).
 fn time() -> Value {
     json!({ "type": "string", "format": "date-time" })
 }
+/// Schema for a timestamp that may be null.
 fn time_null() -> Value {
     json!({ "type": "string", "format": "date-time", "nullable": true })
 }
+/// Schema for a required 64-bit integer.
 fn int() -> Value {
     json!({ "type": "integer", "format": "int64" })
 }
+/// Schema for a 64-bit integer that may be null; null means not recorded, never zero.
 fn int_null() -> Value {
     json!({ "type": "integer", "format": "int64", "nullable": true })
 }
+/// Schema for a required double-precision number.
 fn num() -> Value {
     json!({ "type": "number", "format": "double" })
 }
+/// Schema for a required boolean.
 fn boolean() -> Value {
     json!({ "type": "boolean" })
 }
+/// Schema for a free-form JSON object whose keys are not described.
 fn any_object() -> Value {
     json!({ "type": "object", "additionalProperties": true })
 }
+/// Schema for an array whose items follow the given schema.
 fn list(item: Value) -> Value {
     json!({ "type": "array", "items": item })
 }
+/// Schema for a string restricted to the given enum values.
 fn en(values: &[&str]) -> Value {
     json!({ "type": "string", "enum": values })
 }
+/// Schema for an object with the given required property names and property schemas.
 fn obj(required: &[&str], props: Value) -> Value {
     json!({ "type": "object", "required": required, "properties": props })
 }
 
+/// Allowed confidence values, ordered from best (green) to worst (red), shared by the confidence schemas.
 const CONFIDENCE: &[&str] = &["green", "amber_green", "amber", "amber_red", "red"];
 
 /// The schemas, by name.

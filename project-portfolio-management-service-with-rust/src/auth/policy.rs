@@ -17,7 +17,7 @@ pub fn policy() -> &'static ReloadablePolicy {
 }
 
 /// Re-read the ABAC policy from the environment and swap it into the
-/// live [`policy`] holder. A malformed policy falls back to the built-in
+/// live `policy` holder. A malformed policy falls back to the built-in
 /// default, so a bad edit can never leave the service unprotected.
 pub fn reload_policy() {
     policy().store(policy_from_env());

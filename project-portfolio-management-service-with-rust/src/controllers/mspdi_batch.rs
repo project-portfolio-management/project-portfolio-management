@@ -176,6 +176,7 @@ async fn store_values(
     Ok(stored)
 }
 
+/// Name used for project `i` in reports: the caller's name for it, else the name inside the file, else `Project N` (one-based) so a nameless file is still identifiable.
 fn label_of(i: usize, p: &ProjectIn, parsed: &Parsed) -> String {
     p.name
         .as_deref()
@@ -548,6 +549,7 @@ async fn store_costs(
     Ok(json!({ "fixed_costs_in_file": parsed.fixed_costs.len(), "stored": stored }))
 }
 
+/// Create a new plan of kind project (optionally under `parent`) for a file that names no existing plan, validated and emitted like any other plan creation. Returns its id.
 async fn create_plan(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -733,6 +735,7 @@ async fn batch(
     }))
 }
 
+/// Render cross-project links that could not be resolved, each with the project, the successor task and the reason, so nothing is dropped silently.
 fn unresolved_json(items: &[rules::Unresolved]) -> Vec<Value> {
     items
         .iter()

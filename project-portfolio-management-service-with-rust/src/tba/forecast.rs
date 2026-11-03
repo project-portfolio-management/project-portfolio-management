@@ -35,6 +35,7 @@ pub const MAX_PERIODS_PER_TRIAL: usize = 520;
 struct Rng(u64);
 
 impl Rng {
+    /// Build a generator from `seed`; a zero seed is replaced by a fixed non-zero constant.
     fn new(seed: u64) -> Self {
         // A zero seed would make xorshift emit only zeroes.
         Self(if seed == 0 {
@@ -44,6 +45,7 @@ impl Rng {
         })
     }
 
+    /// Advance the xorshift64 state and return the next pseudo-random value.
     fn next(&mut self) -> u64 {
         self.0 ^= self.0 << 13;
         self.0 ^= self.0 >> 7;

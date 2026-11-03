@@ -15,6 +15,7 @@ use crate::auth::MaybeAuthUser;
 use crate::director_summary::{self as rules, ChangeLite, IssueLite};
 use crate::models::_entities::{change_requests, issues};
 
+/// Query for `GET /api/director-pack/issues-and-changes`.
 #[derive(Deserialize, schemars::JsonSchema)]
 pub(crate) struct Params {
     /// Calendar days the "in the period" counts look back; 1 to 366, default 30.
@@ -22,6 +23,7 @@ pub(crate) struct Params {
     window_days: Option<i64>,
 }
 
+/// `GET /api/director-pack/issues-and-changes`. Counts issues and change requests only over plans the caller may read; `window_days` outside 1 to 366 is refused with 422. When nothing is readable the answer says so rather than reporting zeros.
 async fn summary(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,

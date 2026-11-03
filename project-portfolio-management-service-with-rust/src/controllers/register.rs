@@ -26,10 +26,15 @@ use crate::register_completeness::{self as rules, Assessment, Facts};
 #[derive(Default)]
 #[expect(clippy::struct_excessive_bools)]
 struct Acc {
+    /// True when the programme (or a plan under it) has at least one budget line.
     any_line: bool,
+    /// True when any of those budget lines has no funding source.
     unfunded: bool,
+    /// True when at least one risk is registered under the programme.
     risk: bool,
+    /// True when a dependency touches the programme, as predecessor or successor.
     dep: bool,
+    /// True when a named partner commitment or a required partner milestone exists.
     partner: bool,
 }
 
@@ -199,6 +204,7 @@ pub(crate) async fn assess_programmes(
         .collect())
 }
 
+/// One programme's completeness as JSON: the score as a percentage (stored in basis points, so divided by 100) plus the present, applicable, missing and not-applicable fields.
 fn row(p: &plans::Model, a: &Assessment) -> Value {
     json!({
         "plan_pid": p.pid, "name": p.name, "complete": a.complete(),

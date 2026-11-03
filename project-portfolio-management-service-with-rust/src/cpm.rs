@@ -44,6 +44,7 @@ const EPOCH: NaiveDate = match NaiveDate::from_ymd_opt(1970, 1, 5) {
 pub struct WorkCalendar {
     /// Monday = index 0 … Sunday = 6.
     working: [bool; 7],
+    /// Dates that are not working days even when their weekday is; kept sorted for deterministic output.
     holidays: BTreeSet<NaiveDate>,
 }
 
@@ -108,6 +109,7 @@ impl WorkCalendar {
         )
     }
 
+    /// Number of working weekdays in a week (0 to 7); falls back to 7 only if the count cannot convert.
     fn per_week(&self) -> i64 {
         i64::try_from(self.working.iter().filter(|w| **w).count()).unwrap_or(7)
     }
@@ -371,6 +373,7 @@ pub enum CpmError {
     Cycle(Vec<Uuid>),
 }
 
+/// Topological order of node indices by Kahn's algorithm over edges whose both ends are known; edges to unknown nodes are ignored. Returns `CpmError::Cycle` naming the nodes left unordered when a cycle exists.
 fn topo(
     order: &[Uuid],
     edges: &[Edge],

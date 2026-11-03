@@ -21,7 +21,7 @@
 //! Activation: the relay only runs when the transport is `outbox`
 //! (`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox`) **and** `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY`
 //! is truthy — so it is a no-op by default, matching the family's
-//! flag-gated posture. With those on, [`spawn`] additionally selects
+//! flag-gated posture. With those on, `spawn` additionally selects
 //! `FluvioSink` over [`LoggingSink`] when
 //! `PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT` (§7) is configured — see
 //! `spawn`'s and `build_sink`'s doc comments in this file for the "no
@@ -76,7 +76,9 @@ pub trait EventSink: Send + Sync {
 /// this stays defensive for any future secondary sink that does send
 /// synchronously.
 pub struct CompositeSink {
+    /// The durable sink whose failure is returned to the caller.
     primary: Box<dyn EventSink>,
+    /// Best-effort sinks, such as webhooks; their errors never propagate.
     secondary: Vec<Box<dyn EventSink>>,
 }
 
@@ -303,7 +305,7 @@ const RECONNECT_BACKOFF_SECS: u64 = 5;
 
 /// Build the relay's sink for this run.
 ///
-/// [`FluvioSink`] when an endpoint is configured — [`spawn`] has already
+/// [`FluvioSink`] when an endpoint is configured — `spawn` has already
 /// refused to start if an endpoint was set without this feature compiled
 /// in, so reaching a `None` endpoint here always means [`LoggingSink`] is
 /// the intended sink. The initial connection is **retried indefinitely**
@@ -333,10 +335,10 @@ async fn build_sink(endpoint: Option<&str>) -> Box<dyn EventSink> {
     }
 }
 
-/// Without the `fluvio` feature, [`spawn`] has already refused to start
+/// Without the `fluvio` feature, `spawn` has already refused to start
 /// when an endpoint is configured, so the only reachable case is
 /// [`LoggingSink`]. Stays `async` (with nothing to await) so both cfg
-/// variants share one call site in [`spawn`].
+/// variants share one call site in `spawn`.
 #[cfg(not(feature = "fluvio"))]
 #[expect(clippy::unused_async)]
 async fn build_sink(_endpoint: Option<&str>) -> Box<dyn EventSink> {

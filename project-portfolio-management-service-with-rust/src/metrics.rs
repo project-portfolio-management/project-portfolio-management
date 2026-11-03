@@ -1,6 +1,6 @@
 //! Prometheus metrics for the portfolio service.
 //!
-//! This module owns a process-wide [`Registry`](prometheus::Registry)
+//! This module owns a process-wide `prometheus::Registry`
 //! populated with a fixed set of counters. Application code increments the
 //! global [`Metrics`] via [`Metrics::global`] (e.g.
 //! `Metrics::global().plan_created_total.inc()` in the `plans` controller).
@@ -123,14 +123,23 @@ pub struct Metrics {
 /// The time-based-analysis gauge handles, grouped so [`Metrics::new`]
 /// stays readable and the flow family registers in one place.
 struct FlowGauges {
+    /// `ppm_flow_efficiency`: aggregate work time over cycle time, per plan.
     efficiency: GaugeVec,
+    /// `ppm_flow_cycle_time_p85_days`: nearest-rank 85th-percentile cycle time in calendar days, per plan.
     cycle_time_p85_days: GaugeVec,
+    /// `ppm_flow_work_in_progress`: tasks started and not finished, per plan.
     work_in_progress: GaugeVec,
+    /// `ppm_flow_first_pass_yield`: share of finished tasks that never moved backwards, per plan.
     first_pass_yield: GaugeVec,
+    /// `ppm_flow_columns_over_limit`: board columns over their WIP cap, per plan.
     columns_over_limit: GaugeVec,
+    /// `ppm_flow_plans_exported`: plans exported as their own series in the last refresh.
     plans_exported: Gauge,
+    /// `ppm_flow_plans_suppressed`: plans withheld because the board was too small to aggregate without describing individuals.
     plans_suppressed: Gauge,
+    /// `ppm_flow_plans_dropped`: plans dropped in the last refresh for exceeding the series cap.
     plans_dropped: Gauge,
+    /// `ppm_flow_last_refresh_timestamp_seconds`: Unix time of the last successful refresh; alert on it going stale.
     last_refresh_timestamp_seconds: Gauge,
 }
 

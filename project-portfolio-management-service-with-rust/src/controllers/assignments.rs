@@ -25,6 +25,7 @@ pub(crate) use crate::scheduling_rules::Recomputed;
 use crate::scheduling_rules::{self as rules, Field, Rule, Triple};
 use crate::work_profile::{self as wp, Contour, Grain, Unplaced};
 
+/// Wire name of an assignment quantity, as used in error messages and responses.
 fn field_name(f: Field) -> &'static str {
     match f {
         Field::Duration => "duration_days",
@@ -33,6 +34,8 @@ fn field_name(f: Field) -> &'static str {
     }
 }
 
+/// The task's stored scheduling rule, defaulting to fixed units when the
+/// column is absent or unrecognised.
 fn rule_of(t: &tasks::Model) -> Rule {
     t.scheduling_rule
         .as_deref()
@@ -78,15 +81,20 @@ pub(crate) fn recompute_for_duration(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `PUT /api/plans/{pid}/tasks/{t_pid}/assignment` body. Give one quantity
+/// to change it, or two the first time; the rule derives the third.
 pub(crate) struct AssignmentBody {
     /// `fixed_units`, `fixed_duration` or `fixed_work`.
     #[serde(default)]
     rule: Option<String>,
     #[serde(default)]
+    /// Task duration in whole days.
     duration_days: Option<i64>,
     #[serde(default)]
+    /// Assignee allocation as a percentage of full-time.
     units_percent: Option<i64>,
     #[serde(default)]
+    /// Total effort in minutes.
     work_minutes: Option<i64>,
 }
 
@@ -280,7 +288,9 @@ async fn capacity_check(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `PUT /api/plans/{pid}/tasks/{t_pid}/contour` body.
 pub(crate) struct ContourBody {
+    /// Contour token (for example flat or custom) describing how work is spread.
     contour: String,
     /// Percentages summing to 100, for `custom`.
     #[serde(default)]
@@ -334,6 +344,8 @@ async fn set_contour(
     )
 }
 
+/// Rebuild a task's contour from its stored token and custom weights; a
+/// stored value that no longer parses falls back to flat rather than failing.
 fn contour_of(t: &tasks::Model) -> Contour {
     let custom: Option<Vec<i64>> = t
         .contour_custom
@@ -344,10 +356,15 @@ fn contour_of(t: &tasks::Model) -> Contour {
 
 /// One task's work placed on days.
 pub(crate) struct TaskWork {
+    /// Public id of the task.
     pub pid: Uuid,
+    /// Task title.
     pub title: String,
+    /// Reference to the assignee; absent when unassigned.
     pub assignee: Option<String>,
+    /// Wire token of the contour used to spread the work.
     pub contour: &'static str,
+    /// Total work in minutes; always positive for tasks listed here.
     pub work_minutes: i64,
     /// Minutes on each business day (empty when it could not be placed).
     pub per_day: Vec<(NaiveDate, i64)>,
@@ -421,10 +438,13 @@ pub(crate) fn work_of(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Query shared by the work-profile endpoints.
 pub(crate) struct ProfileParams {
     #[serde(default)]
+    /// First day of the reporting window; absent means the plan's own start.
     pub(crate) from: Option<NaiveDate>,
     #[serde(default)]
+    /// Last day of the reporting window; absent means the plan's own finish.
     pub(crate) to: Option<NaiveDate>,
     /// `day`, `week` (default) or `month`.
     #[serde(default)]
@@ -458,10 +478,14 @@ pub(crate) fn window(
     Ok((from, to, grain, periods))
 }
 
+/// Serialise buckets as JSON.
 fn buckets_json(b: &[wp::Bucket]) -> serde_json::Value {
     serde_json::json!(b)
 }
 
+/// Sum several per-resource bucket series element by element. All series
+/// must have been bucketed over the same `periods`, so index `i` is the
+/// same period in each.
 fn sum_buckets(
     parts: &[Vec<wp::Bucket>],
     periods: &[crate::portfolio_resources::Period],

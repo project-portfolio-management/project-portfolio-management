@@ -95,9 +95,11 @@ pub(crate) async fn achieved_by_tasks(
 
 /// Everything derived for a set of milestones.
 pub(crate) struct Derived {
+    /// One entry per milestone as (due date, milestone id, JSON view), sorted by due date then id.
     pub(crate) json: Vec<(NaiveDate, i64, serde_json::Value)>,
 }
 
+/// Classify each milestone (achieved, late, due soon, upcoming), forecast it from its linked tasks, and shape the JSON views. `due_soon` is a calendar-day window and `at_risk` is business days of slack; `with_history` adds the forecast history.
 #[expect(clippy::too_many_lines)] // one linear pipeline: load, classify, forecast, shape
 pub(crate) async fn derive(
     ctx: &AppContext,
@@ -316,6 +318,7 @@ pub(crate) async fn derive(
     Ok(Derived { json: out })
 }
 
+/// Query parameters for listing milestones.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
     /// Only this plan's milestones.
@@ -344,6 +347,7 @@ pub(crate) struct ListParams {
     as_of: Option<NaiveDate>,
 }
 
+/// Validate an optional day-count window (0 to 3650), applying the default when absent; 422 when out of range.
 fn window(v: Option<i64>, default: i64, name: &str) -> Result<i64> {
     let v = v.unwrap_or(default);
     if (0..=3650).contains(&v) {

@@ -58,6 +58,7 @@ pub struct OutcomeIn {
     pub link: Option<Link>,
 }
 
+/// Append a message when an agenda or outcome line is blank or longer than `MAX_TEXT` characters (counted as characters, not bytes).
 fn text_problem(what: &str, text: &str, out: &mut Vec<String>) {
     if text.trim().is_empty() || text.chars().count() > MAX_TEXT {
         out.push(format!(
@@ -66,6 +67,7 @@ fn text_problem(what: &str, text: &str, out: &mut Vec<String>) {
     }
 }
 
+/// Append a message when a line links to a record kind outside `LINK_KINDS`; no link at all is fine.
 fn link_problem(what: &str, link: Option<&Link>, out: &mut Vec<String>) {
     if let Some(l) = link
         && !LINK_KINDS.contains(&l.kind.as_str())
@@ -152,6 +154,7 @@ pub struct Printable {
     pub outcomes: Vec<Line>,
 }
 
+/// Append one numbered section of the plain-text minutes: heading, then each line with its kind tag and linked record, or `(none)` when the list is empty.
 fn items(heading: &str, lines: &[Line], out: &mut Vec<String>) {
     out.push(String::new());
     out.push(heading.to_string());

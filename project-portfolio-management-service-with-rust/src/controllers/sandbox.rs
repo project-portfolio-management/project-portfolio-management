@@ -9,7 +9,7 @@
 //! * `POST /api/plans/{pid}/sandbox/commit` applies the same edits for real, in one
 //!   transaction, one audit entry per changed item. It needs `If-Match: <plan_etag
 //!   from the preview>`; if the plan changed since, the answer is `409`, never a
-//!   merge. The leveling apply (SC-6) goes through [`commit`] too.
+//!   merge. The leveling apply (SC-6) goes through `commit` too.
 //!
 //! The permission to set a hard constraint, the masking of who does the work, and
 //! the finance gate on cost are the same as everywhere else, and a preview applies
@@ -34,6 +34,8 @@ use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::sandbox::{self, Change, Edit};
 
+/// The `409` returned when the plan changed between preview and commit;
+/// a stale preview is refused, never merged.
 fn stale() -> Error {
     Error::CustomError(
         StatusCode::CONFLICT,
@@ -46,15 +48,25 @@ fn stale() -> Error {
 
 /// What evaluating a list of edits produces.
 struct Evaluated {
+    /// The plan's network before the edits, as stored.
     before_net: Network,
+    /// Critical-path analysis of the plan before the edits.
     before: CpmResult,
+    /// A copy of the network with the edits applied; the stored plan is untouched.
     after_net: Network,
+    /// Critical-path analysis of the edited copy.
     after: CpmResult,
+    /// The per-item differences the edits produce, as reported to the caller.
     changes: Vec<Change>,
     /// Tasks whose units / work were recomputed because their duration changed (PJ-6).
     recomputed: HashMap<Uuid, super::assignments::Recomputed>,
+    /// Digest of the stored plan state; the preview's `ETag` and the commit's
+    /// `If-Match` precondition.
     plan_etag: String,
+    /// Digest of the plan state the edits would produce.
     result_etag: String,
+    /// Debug rendering of the plan and per-task calendars, used to detect a
+    /// calendar change between preview and commit.
     calendars: String,
 }
 
@@ -140,10 +152,13 @@ fn digest(rows: &[tasks::Model], edges: &[(Uuid, Uuid, String, i64)], calendars:
     sandbox::fingerprint(&parts)
 }
 
+/// A stable string form of the calendars in force, folded into the digest.
 fn calendars_of(net: &Network) -> String {
     format!("{:?}|{:?}", net.plan_cal, net.own)
 }
 
+/// Run the critical-path analysis; a dependency cycle becomes a `422`
+/// naming `what` was being analysed.
 fn analyse(net: &Network, what: &str) -> Result<CpmResult> {
     net.analyze(0).map_err(|_| {
         unprocessable(&format!(
@@ -176,6 +191,9 @@ async fn outside_pairs(ctx: &AppContext, net: &Network) -> Result<Vec<(Uuid, Uui
     Ok(all)
 }
 
+/// Check, authorise and apply `edits` to an in-memory copy of the plan and
+/// analyse both versions. Writes nothing. Hard constraints (`mso`, `mfo`)
+/// override schedule logic, so they need elevated permission.
 async fn evaluate(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -186,6 +204,7 @@ async fn evaluate(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    // Hard constraints bypass dependency logic, so gate them before any work is done.
     if sandbox::needs_hard_permission(edits) && !may_set_hard_constraint(caller) {
         return Err(forbidden(
             "a hard constraint (mso, mfo) overrides the schedule's logic and needs access=admin or scheduling=hard_constraints",
@@ -354,9 +373,13 @@ pub(crate) type AuditOverrides = HashMap<Uuid, (&'static str, serde_json::Value)
 
 /// What a commit did.
 pub(crate) struct Committed {
+    /// The changes that were applied, as previewed.
     pub changes: Vec<Change>,
+    /// How many audit entries were written (one per changed item).
     pub audit_entries: usize,
+    /// Plan finish date before the commit; absent when it could not be computed.
     pub finish_before: Option<chrono::NaiveDate>,
+    /// Plan finish date after the commit; absent when it could not be computed.
     pub finish_after: Option<chrono::NaiveDate>,
 }
 
@@ -495,7 +518,9 @@ pub(crate) async fn preview_json(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `POST /api/plans/{pid}/sandbox/preview` and `.../commit` body.
 pub(crate) struct EditsBody {
+    /// The proposed edits, applied in order to a copy of the plan.
     edits: Vec<Edit>,
     /// Why (audited with each changed item).
     #[serde(default)]

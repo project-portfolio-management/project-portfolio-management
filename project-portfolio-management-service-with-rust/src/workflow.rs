@@ -283,6 +283,7 @@ pub fn wip_limits(def: &WorkflowDef) -> std::collections::BTreeMap<String, usize
         .collect()
 }
 
+/// Build a workflow state with no work-in-progress limit.
 fn state(key: &str, label: &str, category: Category, initial: bool, terminal: bool) -> StateDef {
     StateDef {
         key: key.to_string(),

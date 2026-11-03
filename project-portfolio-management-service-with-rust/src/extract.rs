@@ -66,6 +66,7 @@ pub fn strip_xml(xml: &str) -> String {
     out.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// Decode one XML entity name (without & and ;): the five named ones or a decimal or hex character reference; anything unknown becomes empty text.
 fn decode_entity(e: &str) -> String {
     match e {
         "amp" => "&".into(),
@@ -86,6 +87,7 @@ fn decode_entity(e: &str) -> String {
     }
 }
 
+/// Pull prose out of the XML parts of a .docx, .xlsx or .pptx zip. Entry count, per-entry size, total size and text length are capped to stop zip bombs; the error is a short reason code.
 fn office_text(bytes: &[u8]) -> Result<String, &'static str> {
     let mut zip =
         zip::ZipArchive::new(std::io::Cursor::new(bytes)).map_err(|_| "unreadable_archive")?;

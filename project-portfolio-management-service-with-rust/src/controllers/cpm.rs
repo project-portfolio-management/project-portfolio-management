@@ -32,11 +32,15 @@ use crate::models::audit_logs::Model as AuditModel;
 
 /// A plan's task network, ready for [`cpm::analyze`].
 pub(crate) struct Network {
+    /// CPM nodes: the plan's own non-hammock tasks first, then any linked tasks of other plans.
     pub nodes: Vec<Node>,
+    /// Dependency edges among `nodes` (finish-to-start and the other relation kinds).
     pub edges: Vec<Edge>,
+    /// The plan's own task rows, parallel to the plan-owned prefix of `nodes`, for building the response.
     pub rows: Vec<tasks::Model>,
     /// The plan's calendar and where it came from (`plan` or `default`).
     pub plan_cal: WorkCalendar,
+    /// Where the plan calendar came from: `plan` for a configured one, `default` otherwise.
     pub cal_source: &'static str,
     /// Per-assignee calendars (the plan's intersected with theirs); a node's
     /// `own_calendar` indexes into it.
@@ -55,14 +59,18 @@ pub(crate) struct Network {
 /// A task of another plan, as the plan's network sees it.
 #[derive(Debug, Clone)]
 pub(crate) struct ExternalTask {
+    /// Title of the other plan's task.
     pub title: String,
+    /// Pid of the plan that owns the task.
     pub plan_pid: Uuid,
+    /// Display name of the owning plan (only plans the caller may read are named).
     pub plan_name: String,
 }
 
 /// A dependency whose other end the caller may not read.
 #[derive(Debug, Clone)]
 pub(crate) struct Restricted {
+    /// Pid of the dependency edge whose other end is hidden from the caller.
     pub edge_pid: Uuid,
     /// This plan's own task on the edge.
     pub task_pid: Uuid,
@@ -86,6 +94,7 @@ impl Network {
     }
 }
 
+/// Converts a task row into a CPM node: absent duration or start stay `None` (never zero), and a constraint counts only when both its kind and date are present and valid.
 fn node_of(t: &tasks::Model, own_calendar: Option<usize>) -> Node {
     Node {
         pid: t.pid,
@@ -209,6 +218,7 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
 
 /// The most plans (besides its own) and tasks a cross-plan network follows.
 const MAX_LINKED_PLANS: usize = 8;
+/// The most tasks (own and linked) a cross-plan network follows before it is flagged `truncated`.
 const MAX_LINKED_TASKS: usize = 3000;
 
 /// The plans among `pids` whose tasks the caller may see across a link: readable by
@@ -502,6 +512,7 @@ pub(crate) async fn external_dependants(
     Ok((named, live.len() - readable.len().min(live.len())))
 }
 
+/// Builds the 422 returned when the dependency graph is cyclic, naming the pids on or behind the cycle so the user can find and break it.
 fn cycle_error(on: &[Uuid]) -> Error {
     unprocessable(&format!(
         "the dependencies contain a cycle, so no schedule can be computed (on or behind it: {})",
@@ -512,6 +523,7 @@ fn cycle_error(on: &[Uuid]) -> Error {
     ))
 }
 
+/// Query parameters for `GET /api/plans/{pid}/cpm`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CpmParams {
     /// Business days of float that count as near-critical (default 5).
@@ -691,13 +703,16 @@ async fn plan_cpm(
 /// `PUT …/tasks/{pid}/schedule` body. An absent or `null` field **clears** it.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ScheduleBody {
+    /// New planned start; `None` clears it.
     #[serde(default)]
     start_date: Option<NaiveDate>,
+    /// New duration in business days; `None` clears it (unknown, not zero).
     #[serde(default)]
     duration_days: Option<i32>,
     /// `snet`, `snlt`, `fnet`, `fnlt`, `mso` or `mfo`; with `constraint_date`.
     #[serde(default)]
     constraint_kind: Option<String>,
+    /// Constraint date paired with `constraint_kind`; `None` clears the constraint.
     #[serde(default)]
     constraint_date: Option<NaiveDate>,
     /// A soft deadline: late dates only (negative float), never early dates.

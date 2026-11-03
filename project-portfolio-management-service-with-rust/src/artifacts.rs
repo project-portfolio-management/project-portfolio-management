@@ -147,6 +147,7 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
 /// The on-disk store.
 #[derive(Debug, Clone)]
 pub struct Store {
+    /// Directory under which every stored artifact lives.
     root: PathBuf,
 }
 
@@ -167,6 +168,7 @@ impl Store {
         Self::at(root)
     }
 
+    /// The file path for a key, or `None` if the key is not the `xx/yy/<id>` hex shape this store issues, so a key can never name a path outside the root.
     fn path_of(&self, key: &str) -> Option<PathBuf> {
         // A key is `ab/cd/<uuid>`: refuse anything else so a stored key can
         // never escape the root.

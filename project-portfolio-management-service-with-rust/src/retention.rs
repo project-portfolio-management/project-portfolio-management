@@ -192,6 +192,7 @@ pub struct Outcome {
     pub deleted: u64,
 }
 
+/// Wrap a database error as a framework error carrying only its message.
 fn db_err(e: &sea_orm::DbErr) -> loco_rs::Error {
     loco_rs::Error::string(&e.to_string())
 }

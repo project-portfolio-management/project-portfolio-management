@@ -12,7 +12,7 @@
 //!
 //! ## Key source
 //!
-//! The process-wide [`verifier`] is seeded once at boot ([`init`] is
+//! The process-wide `verifier` is seeded once at boot (`init` is
 //! called from `App::after_routes`, before the app serves traffic) and
 //! built from the environment:
 //!
@@ -38,7 +38,7 @@
 //! Enforcement is **on by default** ([`resolve_require_auth`]): the [`enforce`]
 //! decision — wired as an Axum middleware layer in `src/app.rs` — requires a
 //! valid bearer token on every route except the public health/ping,
-//! OpenAPI/Swagger and calendar-feed paths (see [`is_public_path`]; the
+//! OpenAPI/Swagger and calendar-feed paths (see `is_public_path`; the
 //! Prometheus endpoint needs a token like everything else). It is turned
 //! off only explicitly: `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
 //! (`0`/`false`/`no`/`off`), or `settings.require_auth: false` in the active
@@ -59,7 +59,7 @@
 //! `authentication-verifier` crate evaluates the policy over the
 //! token's `attrs` claim. The four collections (portfolios / projects /
 //! products / programs) share one guard and one [`ENTITY`] in v1. The
-//! policy is read once at first use ([`policy`], built by
+//! policy is read once at first use (`policy`, built by
 //! [`policy_from_env`]) from `PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY` (inline JSON) or
 //! `PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY_FILE` (path); unset or unparsable ⇒ the
 //! built-in default policy (`svc=true` ⇒ everything; `access=admin` ⇒

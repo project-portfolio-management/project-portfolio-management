@@ -35,8 +35,10 @@ pub fn routes() -> Routes {
         .add("/portfolio-money", get(portfolio_money))
 }
 
+/// Request body for adding a funding source.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SourceBody {
+    /// Display name of the funding source; unique names and length are checked by the handler.
     name: String,
 }
 
@@ -100,8 +102,10 @@ async fn list_sources(State(ctx): State<AppContext>) -> Result<Response> {
     }))
 }
 
+/// Request body for retiring or restoring a funding source.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ActiveBody {
+    /// False retires the source (it stops being selectable); true restores it.
     active: bool,
 }
 
@@ -134,8 +138,10 @@ async fn update_source(
     format::json(serde_json::json!({ "pid": row.pid, "name": row.name, "active": row.active }))
 }
 
+/// Request body for setting a budget line's funding source.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct LineSourceBody {
+    /// Funding source to assign; absent clears the line's source, which then reports under "no funding source".
     #[serde(default)]
     funding_source_pid: Option<Uuid>,
 }
@@ -196,11 +202,13 @@ async fn set_line_source(
     format::json(serde_json::json!({ "line": line, "funding_source_pid": b.funding_source_pid }))
 }
 
+/// Query parameters for the portfolio money view.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MoneyQuery {
     /// The year the financial year starts in, e.g. 2026 for 2026/27 (April start).
     #[serde(default)]
     fy: Option<i32>,
+    /// When true, capital and revenue classes are summed together; the default keeps them apart. Currencies are never summed.
     #[serde(default)]
     combine_classes: Option<bool>,
 }
@@ -234,6 +242,7 @@ async fn portfolio_money(
     format::json(body)
 }
 
+/// Walk up the plan parents (at most 64 steps, guarding against cycles) to the nearest ancestor that is a Program included in `include`; None when there is none.
 fn ancestors_programme(
     by_pid: &HashMap<Uuid, &plans::Model>,
     mut at: Uuid,
@@ -249,6 +258,7 @@ fn ancestors_programme(
     None
 }
 
+/// JSON for one money row: source name (with fallbacks for none or unknown), class, currency, budget, spend and variance in minor currency units.
 fn row_json(r: &Row, names: &HashMap<Uuid, String>) -> serde_json::Value {
     serde_json::json!({
         "funding_source_pid": r.source,

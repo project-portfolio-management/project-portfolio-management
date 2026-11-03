@@ -37,6 +37,7 @@ pub(crate) struct LiveParams {
     idle_ms: Option<u64>,
 }
 
+/// Convert a live event to a server-sent event carrying its id, kind and a JSON body of plan id, kind and data.
 fn sse_of(e: &live::Event) -> SseEvent {
     SseEvent::default()
         .id(e.id.to_string())

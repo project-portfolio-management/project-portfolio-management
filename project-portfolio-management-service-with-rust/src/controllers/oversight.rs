@@ -95,7 +95,9 @@ fn authorize_oversight_read(caller: &MaybeAuthUser) -> Result<()> {
 /// trailing 90 calendar days.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct WindowQuery {
+    /// Start of the window; a date (midnight UTC) or RFC 3339 instant. Absent or unparsable means 90 days before the end.
     from: Option<String>,
+    /// End of the window; a bare date means the last second of that day. Absent or unparsable means now.
     to: Option<String>,
 }
 
@@ -436,11 +438,15 @@ async fn board_trends(
 /// Query for the audit-trail explorer.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TrailQuery {
+    /// Only audit rows by this actor.
     actor: Option<String>,
+    /// Only audit rows with this action name.
     action: Option<String>,
     /// Entity pid filter.
     entity: Option<String>,
+    /// Earliest timestamp to include (date or RFC 3339).
     from: Option<String>,
+    /// Latest timestamp to include (date or RFC 3339).
     to: Option<String>,
     /// Maximum rows (default 100, cap 500), newest first.
     limit: Option<u64>,
@@ -650,7 +656,9 @@ async fn auditor_findings(
 /// Query for the evidence pack: window + format.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct EvidenceQuery {
+    /// Start of the evidence window (date or RFC 3339); absent means 90 days before the end.
     from: Option<String>,
+    /// End of the evidence window; absent means now.
     to: Option<String>,
     /// `json` (default) or `csv` (flat audit rows).
     format: Option<String>,

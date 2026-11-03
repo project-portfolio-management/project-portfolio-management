@@ -66,6 +66,7 @@ impl Split {
         self.billable + self.non_billable
     }
 
+    /// Add one entry's minutes to the billable or non-billable side.
     fn add(&mut self, e: &Entry) {
         if e.billable {
             self.billable += e.minutes;
@@ -177,6 +178,7 @@ impl GroupBy {
         }
     }
 
+    /// The grouping key for an entry under this grouping, such as person reference, plan pid, category, billable flag or `YYYY-MM` month.
     fn key(self, e: &Entry) -> String {
         match self {
             Self::Person => e.actor_ref.clone(),

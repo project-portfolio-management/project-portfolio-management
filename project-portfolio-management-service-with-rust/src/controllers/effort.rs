@@ -40,15 +40,22 @@ const DEFAULT_WINDOW_DAYS: i64 = 28;
 /// `POST /api/plans/{pid}/time-entries` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct EntryPayload {
+    /// `person:` or `worker:` URN of who spent the effort (a reference, not a name).
     actor_ref: String,
+    /// Calendar date the effort was spent on; an approved timesheet week rejects new entries.
     spent_on: chrono::NaiveDate,
+    /// Minutes spent, 1 to 1440 (one day).
     minutes: i64,
+    /// Task the effort belongs to; absent means plan-level effort not tied to a task.
     #[serde(default)]
     task_pid: Option<Uuid>,
+    /// Effort category token; unknown or absent values are normalized by the effort rules.
     #[serde(default)]
     category: Option<String>,
+    /// Whether the time is billable; defaults to false.
     #[serde(default)]
     billable: bool,
+    /// Free-text note on the entry; absent means none.
     #[serde(default)]
     note: Option<String>,
 }
@@ -127,6 +134,7 @@ async fn list_entries(Path(pid): Path<String>, State(ctx): State<AppContext>) ->
     format::json(serde_json::json!(rows))
 }
 
+/// Reduce time-entry rows to the facts the effort rules roll up (actor, minutes, category, billable).
 fn facts_of(rows: &[time_entries::Model]) -> Vec<rules::EffortFact> {
     rows.iter()
         .map(|row| rules::EffortFact {
@@ -194,9 +202,12 @@ async fn effort_rollup(
 /// `POST /api/working-time` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct WorkingTimePayload {
+    /// Scope the declaration applies to; absent is the organization-wide default read by the utilization report.
     #[serde(default)]
     scope_ref: Option<String>,
+    /// Working minutes in a day, 1 to 1440.
     minutes_per_day: i32,
+    /// Working days in a week, 1 to 7.
     working_days_per_week: i32,
 }
 
@@ -237,10 +248,15 @@ async fn set_working_time(
 /// `POST /api/non-working` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NonWorkingPayload {
+    /// `person:` reference of the person who is away.
     person_ref: String,
+    /// First day of the period (inclusive).
     starts_on: chrono::NaiveDate,
+    /// Last day of the period (inclusive); not before `starts_on`.
     ends_on: chrono::NaiveDate,
+    /// One of `leave`, `holiday`, `study_leave` or `non_project_duty`.
     kind: String,
+    /// Free-text note; absent means none.
     #[serde(default)]
     note: Option<String>,
 }
@@ -287,10 +303,13 @@ async fn create_non_working(
 /// `GET /api/capacity/utilization` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct UtilizationParams {
+    /// Grouping: `plan`, `team` or `person`; absent means `team`.
     #[serde(default)]
     by: Option<String>,
+    /// Window length in days, counted back from today; values outside 1 to 366 fall back to the 28-day default.
     #[serde(default)]
     window_days: Option<i64>,
+    /// Restrict the entries to one plan; absent includes all visible plans.
     #[serde(default)]
     plan_pid: Option<Uuid>,
 }

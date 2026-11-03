@@ -22,6 +22,7 @@ use crate::cpm::WorkCalendar;
 use crate::models::_entities::{non_working_periods, work_calendars};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Holiday dates stored on a calendar row; entries that fail to parse as YYYY-MM-DD are silently skipped.
 fn holidays_of(row: &work_calendars::Model) -> Vec<NaiveDate> {
     serde_json::from_value::<Vec<String>>(row.holidays.clone())
         .unwrap_or_default()
@@ -30,6 +31,7 @@ fn holidays_of(row: &work_calendars::Model) -> Vec<NaiveDate> {
         .collect()
 }
 
+/// Find the non-deleted calendar for a scope (such as plan or person) and subject, if any.
 async fn find<C: ConnectionTrait>(
     db: &C,
     scope: &str,
@@ -102,6 +104,7 @@ pub(crate) async fn person_calendars(
     Ok((out, conflicts))
 }
 
+/// JSON view of a calendar; with no row it shows the default seven-day week and the given note naming the default.
 fn view(row: Option<&work_calendars::Model>, default_note: &str) -> serde_json::Value {
     row.map_or_else(
         || serde_json::json!({ "source": "default", "weekdays": "1111111", "holidays": [], "note": default_note }),
@@ -112,7 +115,9 @@ fn view(row: Option<&work_calendars::Model>, default_note: &str) -> serde_json::
 /// `PUT` body for both calendars.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CalendarBody {
+    /// Seven-character working-day mask, one flag per weekday; validated by `rules::problems`.
     weekdays: String,
+    /// Non-working dates; stored sorted. Absent means none.
     #[serde(default)]
     holidays: Vec<NaiveDate>,
 }
@@ -168,6 +173,7 @@ pub(crate) async fn plan_has_calendar(ctx: &AppContext, plan_pid: Uuid) -> Resul
         .is_some())
 }
 
+/// Validate then create or update the calendar for a scope and subject inside one transaction; holidays are stored sorted as YYYY-MM-DD strings.
 async fn upsert(
     ctx: &AppContext,
     scope: &str,
@@ -241,6 +247,7 @@ async fn put_plan(
     format::json(view(Some(&row), ""))
 }
 
+/// Turn a token subject into the `person:<uuid>` calendar subject; 422 when the identity is not a person reference (people are references, never free text).
 fn person_subject(sub: &str) -> Result<String> {
     Uuid::parse_str(sub)
         .map(|u| format!("person:{u}"))

@@ -27,12 +27,17 @@ pub(crate) struct ProposalsBody {
 
 /// What the rules need to know about the meeting, read once.
 struct Facts {
+    /// The meeting row (must be held and have minutes).
     meeting: crate::models::_entities::meetings::Model,
+    /// Outcome kinds of the meeting's outcome items, in order; an outcome's index is its position here.
     kinds: Vec<String>,
+    /// Outcome numbers that already produced a task, so the same outcome is not proposed twice across requests.
     taken: Vec<usize>,
+    /// People known to the plan (task assignees and RACI holders) as references; proposed assignees must be among them.
     people: Vec<String>,
 }
 
+/// Runs a single-parameter raw SQL query (bound to `pid`) and returns its rows; used for the small lookups the proposal rules need.
 async fn column(
     db: &impl ConnectionTrait,
     sql: &str,
@@ -47,6 +52,7 @@ async fn column(
     .map_err(db_err)
 }
 
+/// Reads the meeting and the facts the proposal rules judge against. Refuses (409) unless the meeting was held and has minutes.
 async fn facts(
     db: &impl ConnectionTrait,
     ctx: &AppContext,
@@ -97,6 +103,7 @@ async fn facts(
     })
 }
 
+/// Rejects an empty proposal list or one over the per-request maximum.
 fn check_shape(items: &[ProposalIn]) -> Result<()> {
     if items.is_empty() || items.len() > rules::MAX_PROPOSALS {
         return Err(unprocessable(&format!(
@@ -107,6 +114,7 @@ fn check_shape(items: &[ProposalIn]) -> Result<()> {
     Ok(())
 }
 
+/// Judges each proposal against the meeting and the plan's people; a second proposal for an outcome already claimed in this request is dropped.
 fn verdicts(items: &[ProposalIn], f: &Facts) -> Vec<Verdict> {
     let meeting = Meeting {
         minutes: f.meeting.minutes.as_deref().unwrap_or_default(),
@@ -131,6 +139,7 @@ fn verdicts(items: &[ProposalIn], f: &Facts) -> Vec<Verdict> {
         .collect()
 }
 
+/// Renders one verdict for the response, keyed by the proposal's index in the request.
 fn shown(index: usize, v: &Verdict) -> Value {
     match v {
         Verdict::Ready(a) => json!({ "index": index, "status": "ready", "assignee": a }),

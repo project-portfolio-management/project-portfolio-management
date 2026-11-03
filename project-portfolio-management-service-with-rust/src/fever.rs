@@ -14,6 +14,7 @@
 
 use serde::Serialize;
 
+/// Tolerance for floating-point comparisons at zone boundaries.
 const EPS: f64 = 1e-9;
 
 /// A sloped line, given by its height at 0 % and at 100 % chain completed.

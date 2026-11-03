@@ -24,7 +24,7 @@
 //!
 //! `kind` is indexed (`src/search/index.rs`) so `search_page` can accept
 //! an optional exact filter — a caller narrowing a search to one kind
-//! (`?kind=project`). [`SearchEngine::candidates`] (the `check-duplicates`
+//! (`?kind=project`). `SearchEngine::candidates` (the `check-duplicates`
 //! blocking query) deliberately never applies it: the embedded matcher is
 //! kind-agnostic by design (two plans with different `kind` labels may
 //! still be the same identity), and gating duplicate detection by kind
@@ -114,7 +114,7 @@ pub fn engine() -> Option<&'static SearchEngine> {
 pub enum SearchMode {
     /// Tokenized full-text over every indexed field.
     Exact,
-    /// Typo-tolerant term matching (Levenshtein ≤ [`FUZZY_DISTANCE`]).
+    /// Typo-tolerant term matching (Levenshtein ≤ `FUZZY_DISTANCE`).
     Fuzzy,
     /// Soundex codes — names that sound alike.
     Phonetic,
@@ -146,7 +146,9 @@ pub struct SearchEngine {
 /// The writer and a count of the writes made through it, so a commit can say which writes it
 /// covers.
 struct PendingWriter {
+    /// The index writer; guarded by its owner's lock.
     writer: IndexWriter,
+    /// Running count of writes made through this writer; a write is durable once the committed count reaches its value.
     added: u64,
 }
 

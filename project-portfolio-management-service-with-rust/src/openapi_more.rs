@@ -1368,6 +1368,7 @@ fn pack_rhythm_paths() -> Value {
     })
 }
 
+/// `OpenAPI` path entries for the director pack routes (list, read, draft, issue, review).
 fn director_pack_paths() -> Value {
     json!({
         "/api/director-packs": {
@@ -1401,6 +1402,7 @@ fn director_pack_paths() -> Value {
     })
 }
 
+/// `OpenAPI` path entries for the director pack summary sections built from live registers.
 fn director_summary_paths() -> Value {
     json!({
         "/api/director-pack/issues-and-changes": {
@@ -1412,6 +1414,7 @@ fn director_summary_paths() -> Value {
     })
 }
 
+/// `OpenAPI` path entries for change requests and their decisions.
 fn change_request_paths() -> Value {
     let pid = || uuid_param("pid");
     let cr = || uuid_param("cr");

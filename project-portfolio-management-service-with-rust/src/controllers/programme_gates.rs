@@ -25,6 +25,8 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Map a database error to an HTTP error. The database enforces the status
+/// transition rules too, so a race between two decisions surfaces as `409`.
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let text = e.to_string();
     // The database enforces the transition rules too; a race lands here.
@@ -61,6 +63,7 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/programme-status", post(decide_status))
 }
 
+/// A plan's status decisions, oldest first (insertion order).
 async fn history_of(ctx: &AppContext, plan: Uuid) -> Result<Vec<decisions::Model>> {
     decisions::Entity::find()
         .filter(decisions::Column::PlanPid.eq(plan))
@@ -70,6 +73,7 @@ async fn history_of(ctx: &AppContext, plan: Uuid) -> Result<Vec<decisions::Model
         .map_err(|e| db_err(&e))
 }
 
+/// Project stored decisions down to the pure rules' input type.
 fn as_rules(h: &[decisions::Model]) -> Vec<Decision> {
     h.iter()
         .map(|d| Decision {
@@ -142,7 +146,9 @@ async fn kept(ctx: &AppContext, tree: &HashSet<Uuid>) -> Result<serde_json::Valu
 // ---- planned gate dates ----------------------------------------------------------------------
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `PUT /api/plans/{pid}/planned-gates/{gate}` body.
 pub(crate) struct PlannedBody {
+    /// The date the plan expects its review at the gate.
     planned_on: NaiveDate,
 }
 
@@ -219,15 +225,22 @@ async fn list_planned(State(ctx): State<AppContext>, Path(pid): Path<String>) ->
 // ---- programme status ------------------------------------------------------------------------
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `POST /api/plans/{pid}/programme-status` body.
 pub(crate) struct StatusBody {
+    /// Requested status token (pause, resume or stop).
     status: String,
+    /// Why the decision was made; required and at least the rules' minimum length.
     reason: String,
     #[serde(default)]
+    /// Gate review of this programme the decision follows from, if any.
     gate_review_pid: Option<Uuid>,
     #[serde(default)]
+    /// Delivery exception of this programme the decision follows from, if any.
     exception_pid: Option<Uuid>,
 }
 
+/// Render the decision history, oldest first, including who decided and
+/// the gate review or exception it cites.
 fn history_json(h: &[decisions::Model]) -> Vec<serde_json::Value> {
     h.iter()
         .map(|d| {

@@ -25,6 +25,7 @@ fn may_publish(caller: &MaybeAuthUser) -> bool {
     crate::auth::area_allows(caller, "comms", authentication_verifier::Action::Write)
 }
 
+/// The `403` returned to a caller without publish rights.
 fn forbidden() -> Error {
     Error::CustomError(
         StatusCode::FORBIDDEN,
@@ -35,6 +36,7 @@ fn forbidden() -> Error {
     )
 }
 
+/// Renders one announcement for the API, including its computed window state (scheduled, live or expired) relative to `now`.
 fn view(a: &announcements::Model, now: DateTime<Utc>) -> serde_json::Value {
     serde_json::json!({
         "pid": a.pid, "title": a.title, "body": a.body, "severity": a.severity,
@@ -44,10 +46,13 @@ fn view(a: &announcements::Model, now: DateTime<Utc>) -> serde_json::Value {
     })
 }
 
+/// Query for `GET /api/announcements`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
+    /// `all` (publishers only) also lists scheduled and expired announcements; absent lists the live feed.
     #[serde(default)]
     include: Option<String>,
+    /// Maximum announcements returned; the response reports `total` and `truncated` when more exist.
     #[serde(default)]
     limit: Option<u64>,
 }
@@ -110,22 +115,29 @@ async fn list(
     }))
 }
 
+/// Body for publishing (`POST /api/announcements`) and replacing (`PUT /api/announcements/{pid}`) an announcement.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Input {
+    /// Headline; validated and trimmed by the rules.
     title: String,
+    /// Announcement text, sent as `body` in JSON.
     #[serde(rename = "body")]
     text: String,
+    /// Severity token; defaults to `info`.
     #[serde(default = "info")]
     severity: String,
+    /// Pinned announcements sort ahead of the rest of the feed.
     #[serde(default)]
     pinned: bool,
     /// Default now.
     #[serde(default)]
     publish_at: Option<DateTime<Utc>>,
+    /// When it stops showing; absent means it never expires.
     #[serde(default)]
     expires_at: Option<DateTime<Utc>>,
 }
 
+/// Serde default for `severity`: `info`.
 fn info() -> String {
     "info".to_string()
 }
@@ -168,6 +180,7 @@ async fn create(
     format::json(view(&row, Utc::now()))
 }
 
+/// Loads a live (not retracted) announcement by public id, `404` when absent.
 async fn find(ctx: &AppContext, pid: &str) -> Result<announcements::Model> {
     let pid = super::parse_pid(pid)?;
     announcements::Entity::find()

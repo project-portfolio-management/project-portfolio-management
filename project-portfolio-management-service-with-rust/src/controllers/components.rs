@@ -17,10 +17,12 @@ use crate::components as rules;
 use crate::models::_entities::{components, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Whether a lead reference is a `worker:` or `person:` URN; people are held as references, never names.
 fn lead_ok(s: &str) -> bool {
     valid_ref(s, &["worker", "person"])
 }
 
+/// A plan's components that are not deleted, in creation order.
 async fn live_components(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<components::Model>> {
     components::Entity::find()
         .filter(components::Column::PlanPid.eq(plan_pid))
@@ -31,6 +33,7 @@ async fn live_components(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<compone
         .map_err(db_err)
 }
 
+/// One live component of the given plan by id; `404` when it is missing, deleted or belongs to another plan.
 async fn find_component(ctx: &AppContext, plan_pid: Uuid, pid: &str) -> Result<components::Model> {
     let pid = super::parse_pid(pid)?;
     components::Entity::find()
@@ -46,7 +49,9 @@ async fn find_component(ctx: &AppContext, plan_pid: Uuid, pid: &str) -> Result<c
 /// `POST/PUT` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ComponentPayload {
+    /// Component name; unique within the plan, ignoring case.
     name: String,
+    /// Reference to the lead as a `worker:` or `person:` URN; absent means no lead.
     #[serde(default)]
     lead_ref: Option<String>,
 }

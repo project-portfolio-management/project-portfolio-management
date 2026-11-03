@@ -39,6 +39,7 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
+/// The plan's configured default percent-complete method; falls back to zero/hundred when no live setting exists or the stored token is unrecognized.
 async fn default_method(ctx: &AppContext, plan: Uuid) -> Result<DefaultMethod> {
     Ok(earned_value_settings::Entity::find()
         .filter(earned_value_settings::Column::PlanPid.eq(plan))
@@ -50,6 +51,7 @@ async fn default_method(ctx: &AppContext, plan: Uuid) -> Result<DefaultMethod> {
         .unwrap_or(DefaultMethod::ZeroHundred))
 }
 
+/// Builds earned-value inputs for every live task of a plan: points, workflow-derived state (done, started, or todo), and any per-task method and manual percent (converted to basis points).
 async fn task_inputs(ctx: &AppContext, plan: Uuid) -> Result<Vec<TaskInput>> {
     let workflow = super::workflow::in_force(ctx, plan, "task").await?;
     Ok(tasks::Entity::find()
@@ -84,9 +86,13 @@ pub(crate) enum Outcome {
     NoPercent,
     /// The figures.
     Figures {
+        /// Plan-wide default percent-complete method used for tasks without their own.
         default: DefaultMethod,
+        /// Computed percent complete for the plan, including which tasks were counted or unweighted.
         pc: ev::PercentComplete,
+        /// Per-block figures as (currency, baseline version, block); currencies are never merged.
         blocks: Vec<(String, i32, ev::Block)>,
+        /// Currencies that have spend or budget lines but no phased baseline, listed so they are not silently omitted.
         unbaselined_currencies: Vec<String>,
     },
 }
@@ -106,6 +112,7 @@ pub(crate) enum AcSource {
 }
 
 impl AcSource {
+    /// Parses the `ac_source` query token (`budget_lines`, `labour` or `both`); `None` when unrecognized.
     fn parse(s: &str) -> Option<Self> {
         match s {
             "budget_lines" => Some(Self::BudgetLines),
@@ -114,6 +121,7 @@ impl AcSource {
             _ => None,
         }
     }
+    /// The token reported in responses naming which cost basis actual cost used.
     fn token(self) -> &'static str {
         match self {
             Self::BudgetLines => "budget_line_actuals",
@@ -225,6 +233,7 @@ pub(crate) async fn compute_with(
     })
 }
 
+/// Renders the percent-complete block of a response, including the weighting, the counts and which tasks were manual.
 fn pc_view(default: DefaultMethod, pc: &ev::PercentComplete) -> serde_json::Value {
     serde_json::json!({
         "percent_bp": pc.percent_bp,
@@ -455,6 +464,7 @@ async fn put_percent(
 
 // ───────────────────────── SC-5: forecasts, series, roll-up ─────────────────────────
 
+/// Reads the RAG thresholds from the environment variable, falling back to the defaults on a malformed value; the bool is true when the defaults were used.
 fn thresholds() -> (Thresholds, bool) {
     evm::parse_thresholds(
         std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EV_THRESHOLDS")
@@ -463,6 +473,7 @@ fn thresholds() -> (Thresholds, bool) {
     )
 }
 
+/// Serializes a RAG light for JSON; an unserializable value becomes null rather than an error.
 fn rag_json(r: evm::Rag) -> serde_json::Value {
     serde_json::to_value(r).unwrap_or_default()
 }
@@ -628,6 +639,7 @@ async fn snapshot(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
     )
 }
 
+/// Query parameters for `GET /api/plans/{pid}/earned-value/series`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SeriesParams {
     /// `csv` for a spreadsheet.
@@ -755,6 +767,7 @@ pub(crate) async fn subtree_ids(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid
     descendants(ctx, root).await
 }
 
+/// Walks the plan tree breadth-first below `root` (at most 10 levels and 500 plans, soft-deleted plans excluded) and returns `root` plus its descendants.
 async fn descendants(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid>> {
     let mut all = vec![root];
     let mut frontier = vec![root];

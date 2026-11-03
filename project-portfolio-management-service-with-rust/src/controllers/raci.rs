@@ -28,6 +28,7 @@ use crate::models::_entities::{raci_assignments, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::raci::{self as rules, Entry};
 
+/// Live (not soft-deleted) tasks of a plan in creation order; these are the rows of the RACI matrix.
 async fn live_tasks(ctx: &AppContext, plan: Uuid) -> Result<Vec<tasks::Model>> {
     tasks::Entity::find()
         .filter(tasks::Column::PlanPid.eq(plan))
@@ -38,6 +39,7 @@ async fn live_tasks(ctx: &AppContext, plan: Uuid) -> Result<Vec<tasks::Model>> {
         .map_err(db_err)
 }
 
+/// Live RACI assignments of a plan in creation order; one row per person and role letter on a task.
 async fn live_assignments(ctx: &AppContext, plan: Uuid) -> Result<Vec<raci_assignments::Model>> {
     raci_assignments::Entity::find()
         .filter(raci_assignments::Column::PlanPid.eq(plan))
@@ -48,6 +50,7 @@ async fn live_assignments(ctx: &AppContext, plan: Uuid) -> Result<Vec<raci_assig
         .map_err(db_err)
 }
 
+/// Query parameters for the RACI matrix.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MatrixParams {
     /// `csv` for a spreadsheet; JSON otherwise.
@@ -96,15 +99,19 @@ async fn matrix(
     }))
 }
 
+/// One person's roles on a task in a RACI row replacement.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Party {
+    /// The person as a reference (URN), never a bare name.
     person_ref: String,
     /// Letters, e.g. `"AR"` (case-insensitive).
     roles: String,
 }
 
+/// Request body that replaces a task's whole RACI row.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RowBody {
+    /// The complete new row; anything not listed is removed. An empty list clears the row.
     assignments: Vec<Party>,
 }
 

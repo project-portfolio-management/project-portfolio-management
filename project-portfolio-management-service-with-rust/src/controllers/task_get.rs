@@ -61,8 +61,10 @@ pub fn parse(raw: &str) -> std::result::Result<Vec<&'static str>, String> {
     }
 }
 
+/// Query parameters for the single-task read.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Params {
+    /// Comma-separated extras to embed (children, relations, transitions, raci, `time_entries`); an unknown name is a 422.
     #[serde(default)]
     include: Option<String>,
 }

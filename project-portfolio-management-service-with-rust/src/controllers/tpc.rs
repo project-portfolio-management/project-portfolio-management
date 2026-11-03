@@ -66,13 +66,19 @@ fn facts_of(row: &tpc_rows::Model) -> rules::TpcFacts {
 /// `currency`; ratios in basis points.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TpcPayload {
+    /// Three-letter ISO 4217 code; normalised, and refused when not recognised.
     currency: String,
+    /// Expected monetary value in minor units of `currency`; may be negative on purpose.
     expected_monetary_value: i64,
+    /// Cost estimate to complete in minor units of `currency`; must not be negative.
     cost_estimate_to_complete: i64,
+    /// DIPP in basis points; absent means it is undefined for this observation, not zero.
     #[serde(default)]
     dipp: Option<i64>,
+    /// Numerator of the DIPP progress index; absent when not measured.
     #[serde(default)]
     dipp_progress_index_numerator: Option<i64>,
+    /// Denominator of the DIPP progress index; absent when not measured.
     #[serde(default)]
     dipp_progress_index_denominator: Option<i64>,
 }
@@ -195,6 +201,7 @@ async fn report(
 /// currency is built in (spec `02-scope` §2.0).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TriageParams {
+    /// Currency to rank within; required in practice, since no currency is built in and none is converted.
     #[serde(default)]
     currency: Option<String>,
 }

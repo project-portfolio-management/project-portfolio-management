@@ -49,13 +49,19 @@ pub enum Replay {
 
 /// The hub.
 pub struct Hub {
+    /// The id counter and replay ring, behind a lock held only for short, non-blocking sections.
     inner: Mutex<Inner>,
+    /// Bounded broadcast channel to connected subscribers; one that lags is dropped and told to resync.
     tx: broadcast::Sender<Event>,
 }
 
+/// State guarded by the hub's lock.
 struct Inner {
+    /// The id the next published event will get; starts at 1, so 0 means none yet.
     next: u64,
+    /// The most recent events across all plans, oldest first, for `Last-Event-ID` replay.
     ring: VecDeque<Event>,
+    /// Most events kept in the ring (at least 1).
     cap: usize,
 }
 
@@ -76,6 +82,7 @@ impl Hub {
 
     /// Record and broadcast an event; returns its id.
     pub fn publish(&self, plan_pid: Uuid, kind: &str, data: Value) -> u64 {
+        // A poisoned lock is recovered, not propagated: a panic elsewhere must not stop live updates.
         let mut g = self
             .inner
             .lock()
@@ -137,6 +144,7 @@ impl Hub {
     }
 }
 
+/// The single hub for this process, created on first use.
 static HUB: OnceLock<Hub> = OnceLock::new();
 
 /// The process-wide hub.

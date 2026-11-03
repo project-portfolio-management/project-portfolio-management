@@ -48,12 +48,14 @@ pub struct Amount {
 }
 
 impl Amount {
+    /// Builds an amount that is present.
     fn of(minor: i64) -> Self {
         Self {
             minor: Some(minor),
             absent: None,
         }
     }
+    /// Builds an absent amount carrying the reason it is absent (never a silent zero).
     fn missing(why: Absent) -> Self {
         Self {
             minor: None,
@@ -87,6 +89,7 @@ fn round_div(n: i128, d: i128) -> i128 {
     }
 }
 
+/// Builds one EAC row from a result: a computed EAC yields derived ETC and VAC (when AC is known), while an error leaves the amount absent with its reason.
 fn eac_row(
     variant: &'static str,
     formula: &'static str,

@@ -56,6 +56,7 @@ pub fn header_value(mark: &str) -> String {
 /// An ordered scheme of marks, lowest first.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Scheme {
+    /// Mark codes, lowest first; validated to be non-empty and unique by parse.
     levels: Vec<String>,
 }
 

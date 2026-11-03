@@ -53,7 +53,9 @@ fn refuse(detail: &rules::Refusal) -> Error {
 /// `PUT /api/plans/{pid}/phase` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PhasePayload {
+    /// Target phase name. An unrecognized name is refused, never coerced.
     phase: String,
+    /// Why; required for a backward move, and recorded with the transition.
     #[serde(default)]
     reason: Option<String>,
     /// Start control (EX-8): why a refused start should go ahead anyway (10 or more characters).

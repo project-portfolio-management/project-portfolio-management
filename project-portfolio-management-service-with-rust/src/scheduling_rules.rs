@@ -143,6 +143,7 @@ pub fn is_exact(t: Triple) -> bool {
         && t.duration_days * t.units_percent * MINUTES_PER_DAY / 100 == t.work_minutes
 }
 
+/// Reject a triple whose duration (0 to 3650 business days), units (1 to 1000 percent) or work minutes fall outside the allowed ranges, returning the matching `Problem`.
 fn check(t: Triple) -> Result<(), Problem> {
     if !(0..=MAX_DAYS).contains(&t.duration_days) {
         return Err(Problem::OutOfRange(

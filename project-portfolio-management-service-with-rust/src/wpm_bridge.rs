@@ -25,7 +25,7 @@
 //! subject, else the SHA-256 of the bearer token; never the token), so that when WPM cannot be reached the
 //! capacity heatmap shows the last figure *this caller's* token fetched, with its age, or `unknown` when there is
 //! none. A refusal, and every view that does not ask WPM, reads `unknown`. The store is bounded
-//! ([`KEPT_CALLERS_MAX`] callers, [`KEPT_FIGURES_PER_CALLER_MAX`] figures each) and lost at restart.
+//! (`KEPT_CALLERS_MAX` callers, `KEPT_FIGURES_PER_CALLER_MAX` figures each) and lost at restart.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
@@ -251,19 +251,26 @@ pub fn caller_key(subject: Option<&str>, bearer: Option<&str>) -> Option<String>
 /// One caller's kept figures, each with the order it was received in, and when the caller was last seen.
 #[derive(Default)]
 struct CallerFigures {
+    /// Logical clock value of the last read or write for this caller; the smallest value marks the caller to evict first.
     seen: u64,
+    /// Kept figures keyed by (peer pool reference, month), each with the clock value when received, used to evict the oldest.
     figures: HashMap<(String, NaiveDate), (u64, Received)>,
 }
 
 /// The figures received, by caller, bounded by caller count and by figures per caller.
 struct Kept {
+    /// Maximum number of callers kept (at least 1).
     callers_max: usize,
+    /// Maximum figures kept per caller (at least 1).
     per_caller_max: usize,
+    /// Monotonic logical clock bumped on every remember and recall, so ordering does not depend on wall time.
     tick: u64,
+    /// Kept figures per caller key; figures never cross callers (see [`caller_key`]).
     by_caller: HashMap<String, CallerFigures>,
 }
 
 impl Kept {
+    /// Creates an empty store; both bounds are clamped to at least 1 so eviction always leaves room.
     fn new(callers_max: usize, per_caller_max: usize) -> Self {
         Self {
             callers_max: callers_max.max(1),
@@ -273,9 +280,11 @@ impl Kept {
         }
     }
 
+    /// Keeps a received figure for this caller, first evicting the least recently seen caller when a new caller would exceed the caller bound, and the oldest-received figure when a new key would exceed the per-caller bound.
     fn remember(&mut self, caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
         self.tick += 1;
         let tick = self.tick;
+        // Evict only when adding a brand-new caller; an existing caller never displaces another.
         if !self.by_caller.contains_key(caller)
             && self.by_caller.len() >= self.callers_max
             && let Some(stale) = self
@@ -285,6 +294,7 @@ impl Kept {
                 .map(|(k, _)| k.clone())
         {
             self.by_caller.remove(&stale);
+            // Re-inserting an existing key just overwrites it, so only a new key can trigger eviction.
         }
         let entry = self.by_caller.entry(caller.to_string()).or_default();
         entry.seen = tick;
@@ -302,6 +312,7 @@ impl Kept {
         entry.figures.insert(key, (tick, r));
     }
 
+    /// Returns this caller's last kept figure for the pool and month, if any, and marks the caller as recently seen. Another caller's figures are never returned.
     fn recall(&mut self, caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Received> {
         self.tick += 1;
         let tick = self.tick;
@@ -314,11 +325,13 @@ impl Kept {
     }
 }
 
+/// The process-wide figure store, created on first use with the module bounds.
 fn store() -> &'static Mutex<Kept> {
     static STORE: OnceLock<Mutex<Kept>> = OnceLock::new();
     STORE.get_or_init(|| Mutex::new(Kept::new(KEPT_CALLERS_MAX, KEPT_FIGURES_PER_CALLER_MAX)))
 }
 
+/// Keeps a figure in the process-wide store; a poisoned lock is recovered because the data is only a cache.
 fn remember(caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
     store()
         .lock()
@@ -326,6 +339,7 @@ fn remember(caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
         .remember(caller, peer_pool_ref, month, r);
 }
 
+/// Recalls a figure from the process-wide store for the same caller only; tolerant of a poisoned lock.
 fn recall(caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Received> {
     store()
         .lock()
@@ -335,6 +349,7 @@ fn recall(caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Receive
 
 // ---- the calls ----------------------------------------------------------------------------------------------
 
+/// Shared HTTP client for calls to the worker service: bounded by [`PEER_TIMEOUT`] and never following redirects, so a peer cannot bounce a bearer token elsewhere.
 fn client() -> &'static reqwest::Client {
     static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
     CLIENT.get_or_init(|| {
@@ -347,6 +362,7 @@ fn client() -> &'static reqwest::Client {
     })
 }
 
+/// Checks the worker service URL is an acceptable outbound target (scheme, and public address in strict mode) and that its DNS resolution passes, returning the reason when not.
 async fn allowed(base: &str) -> Result<(), String> {
     if !crate::webhooks::target_allowed(base, crate::webhooks::outbound_strict()) {
         return Err(
@@ -364,14 +380,20 @@ async fn allowed(base: &str) -> Result<(), String> {
 }
 
 #[derive(Deserialize)]
+/// Wire shape of the peer supply answer.
 struct SupplyBody {
+    /// When the peer computed the figures.
     as_of: DateTime<Utc>,
+    /// One entry per requested month.
     months: Vec<SupplyMonth>,
 }
 
 #[derive(Deserialize)]
+/// One month of the peer's supply answer.
 struct SupplyMonth {
+    /// First day of the month the figure covers.
     month: NaiveDate,
+    /// Supply in hundredths of FTE; null when the peer does not know it (never zero).
     supply_centi: Option<i64>,
 }
 
@@ -379,10 +401,13 @@ struct SupplyMonth {
 /// another caller's token fetched (WPM-D135); only a peer that could not be reached falls back to the last figure.
 #[derive(Debug, PartialEq, Eq)]
 enum Fetch {
+    /// The peer could not be reached, timed out or failed; a last kept figure for this caller may be used.
     Unreachable(String),
+    /// The peer answered a client error for this caller; no other caller's figure may stand in for it.
     Refused(String),
 }
 
+/// Asks the worker service for the supply of one peer pool over a window, under the caller's bearer token. A 4xx is `Refused`; transport errors, other statuses and unreadable bodies are `Unreachable`.
 async fn fetch_supply(
     base: &str,
     bearer: &str,
@@ -478,6 +503,7 @@ pub async fn supply_for(
     supply_at(base_url(), linked, months, read).await
 }
 
+/// Fetches supply for every linked pool concurrently using an explicit base URL (None means not configured), recalling or keeping figures per [`SupplyRead`]. Failures become a reason on the reading, never an error.
 async fn supply_at(
     base: Option<String>,
     linked: &[(Uuid, String)],
@@ -687,6 +713,7 @@ fn people_impact_readable(body: &serde_json::Value) -> bool {
         .all(|k| body[*k].is_object() && body[*k]["known"].is_boolean())
 }
 
+/// Asks the worker service for the people-impact figures with a prebuilt query string under the caller's bearer token. A 4xx is `Refused`; anything else that fails is `Unreachable`.
 async fn fetch_people_impact(
     base: &str,
     bearer: &str,
@@ -815,6 +842,7 @@ pub async fn people_impact(
     people_impact_at(base_url(), plan, target_date, months, bearer).await
 }
 
+/// Builds the people-impact view for a plan using an explicit base URL. A missing URL or missing bearer token is reported as the reason on the view rather than as an error.
 async fn people_impact_at(
     base: Option<String>,
     plan: Uuid,

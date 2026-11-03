@@ -149,8 +149,10 @@ pub fn collapse(entries: Vec<Entry>, daily_kinds: &BTreeSet<String>, zone: Tz) -
     items
 }
 
+/// Collapse a group of notifications about one subject into one list item showing the newest, with a count, every id, and unread if any member is unread. `digest` marks a grouped item.
 fn to_item(mut group: Vec<Entry>, digest: bool) -> Item {
     group.sort_by_key(|e| e.created_at);
+    // Sorted oldest first above, so the last entry is the newest, whose text represents the group.
     // `group` is never empty by construction.
     let newest = group.last().cloned().expect("non-empty group");
     Item {

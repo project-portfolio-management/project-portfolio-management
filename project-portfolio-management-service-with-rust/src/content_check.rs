@@ -33,10 +33,12 @@ const EXECUTABLE_SIGNATURES: &[(&[u8], &str)] = &[
     (b"#!", "a script"),
 ];
 
+/// True when the bytes begin with the given magic number.
 fn starts(bytes: &[u8], magic: &[u8]) -> bool {
     bytes.len() >= magic.len() && &bytes[..magic.len()] == magic
 }
 
+/// True when the needle occurs anywhere in the haystack. Callers pass non-empty needles (`windows(0)` would panic).
 fn contains(haystack: &[u8], needle: &[u8]) -> bool {
     haystack.windows(needle.len()).any(|w| w == needle)
 }

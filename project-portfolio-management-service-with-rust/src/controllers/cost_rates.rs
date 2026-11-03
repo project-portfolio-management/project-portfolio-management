@@ -55,12 +55,19 @@ fn finance_only(caller: &MaybeAuthUser) -> Result<()> {
 
 /// The rates that apply to a person, from their own table or their role's.
 struct Applicable {
+    /// Public id of the rate table the rates came from.
     table_pid: Uuid,
+    /// ISO currency code of the table; every rate in it is in this currency.
     currency: String,
+    /// Where the table was found: `person` (their own table) or `role` (the
+    /// fallback via their primary role).
     source: &'static str,
+    /// The table's rates, oldest effective date first, as the pure rules expect.
     rates: Vec<Rate>,
 }
 
+/// Load a table's rates ordered by effective date and package them with the
+/// table's id, currency and provenance (`source`).
 async fn rates_of(
     ctx: &AppContext,
     table: &cost_rate_tables::Model,
@@ -180,6 +187,8 @@ pub(crate) async fn import_rate(
     Ok(RateOutcome::Stored)
 }
 
+/// Create an empty rate table owned by one person or one role during an
+/// MSPDI batch import, auditing the creation as `via: mspdi_batch`.
 async fn create_import_table(
     ctx: &AppContext,
     actor: Option<&str>,
@@ -217,6 +226,8 @@ async fn create_import_table(
     Ok(row)
 }
 
+/// Append one rate to a table during import, in the same transaction as
+/// its audit entry. Rates are append-only, so this never edits an old row.
 async fn add_import_rate(
     ctx: &AppContext,
     actor: Option<&str>,
@@ -307,12 +318,19 @@ pub(crate) async fn import_fixed_cost(
 // ───────────────────────── rate tables and rates ─────────────────────────
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `POST /api/cost-rate-tables` body.
 pub(crate) struct TableBody {
+    /// Table name, trimmed and at most 40 characters; `standard` is the name
+    /// lookups use unless they ask for another.
     name: String,
     #[serde(default)]
+    /// Reference to the person the table prices; exactly one of `person_ref`
+    /// and `role` must be given.
     person_ref: Option<String>,
     #[serde(default)]
+    /// Role the table prices, as the fallback for people without their own table.
     role: Option<String>,
+    /// ISO currency code for every rate in the table.
     currency: String,
 }
 
@@ -390,10 +408,13 @@ async fn create_table(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `GET /api/cost-rate-tables` query: optional filters on the owner.
 pub(crate) struct ListTables {
     #[serde(default)]
+    /// Restrict to tables owned by this person.
     person_ref: Option<String>,
     #[serde(default)]
+    /// Restrict to tables owned by this role.
     role: Option<String>,
 }
 
@@ -432,7 +453,9 @@ async fn list_tables(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `POST /api/cost-rate-tables/{pid}/rates` body.
 pub(crate) struct RateBody {
+    /// First day the rate applies; it stays in force until a later rate starts.
     effective_from: NaiveDate,
     /// Minor units of the table's currency per hour.
     per_hour_minor: i64,
@@ -506,10 +529,14 @@ async fn add_rate(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `GET /api/cost-rates/lookup` query.
 pub(crate) struct LookupParams {
+    /// The person whose rate is wanted.
     person_ref: String,
+    /// The day the rate must be in force on.
     date: NaiveDate,
     #[serde(default)]
+    /// Table name to look in; defaults to `standard`.
     table: Option<String>,
 }
 
@@ -541,11 +568,16 @@ async fn lookup(
 // ───────────────────────── task costs ─────────────────────────
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `POST` body for a task's material or fixed cost.
 pub(crate) struct TaskCostBody {
     /// `material` or `fixed`.
     kind: String,
+    /// What the cost is for.
     description: String,
+    /// Amount in minor currency units (for example cents).
     amount_minor: i64,
+    /// ISO currency code of the amount; amounts in different currencies are
+    /// never summed.
     currency: String,
     /// `start`, `prorated` or `end`.
     accrual: String,
@@ -667,6 +699,8 @@ async fn delete_task_cost(
 
 // ───────────────────────── the planned cost ─────────────────────────
 
+/// Bucket per-day money into reporting periods, one JSON object per
+/// period (`minor` carries money here, reusing the minutes bucketing).
 fn money_buckets(
     per_day: &[(NaiveDate, i64)],
     periods: &[crate::portfolio_resources::Period],
@@ -681,6 +715,7 @@ fn money_buckets(
 /// Minor units by day.
 type DayMoney = BTreeMap<NaiveDate, i64>;
 
+/// Add `days` into the running per-day total, accumulating on equal dates.
 fn add_days(into: &mut BTreeMap<NaiveDate, i64>, days: &[(NaiveDate, i64)]) {
     for (d, m) in days {
         *into.entry(*d).or_default() += m;
@@ -688,8 +723,10 @@ fn add_days(into: &mut BTreeMap<NaiveDate, i64>, days: &[(NaiveDate, i64)]) {
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `GET /api/plans/{pid}/cost-plan` query.
 pub(crate) struct CostPlanParams {
     #[serde(flatten)]
+    /// Reporting window and grain, shared with the assignment profile endpoint.
     window: super::assignments::ProfileParams,
     /// The rate table to price labour with (default `standard`).
     #[serde(default)]
@@ -885,6 +922,10 @@ pub(crate) struct LabourTotals {
     pub unrated_minutes: i64,
 }
 
+/// Price every placed task's work for `net` with the `standard` tables.
+/// Unplaced work is skipped; work with no assignee or no applicable rate
+/// counts as `unrated_minutes`, never as zero cost. Rates are looked up
+/// once per person.
 pub(crate) async fn labour_totals(
     ctx: &AppContext,
     net: &super::cpm::Network,
@@ -922,8 +963,10 @@ pub(crate) async fn labour_totals(
 // ───────────────────────── labour cost actuals ─────────────────────────
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// `POST /api/plans/{pid}/labour-costs/record` query.
 pub(crate) struct RecordParams {
     #[serde(default)]
+    /// Rate table name to price with; defaults to `standard`.
     table: Option<String>,
 }
 

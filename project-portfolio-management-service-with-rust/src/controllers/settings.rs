@@ -1,7 +1,7 @@
 //! Deployment settings an administrator changes at run time. The first is the time zone that defines
 //! "today" for portfolio-wide views and defaults ([`crate::tz`], doctrine 4). It is stored in
 //! `deployment_settings`; each instance keeps it in memory and re-reads it every
-//! [`REFRESH_SECS`] seconds, so a change made on one instance reaches the others without a restart.
+//! `REFRESH_SECS` seconds, so a change made on one instance reaches the others without a restart.
 
 use axum::http::StatusCode;
 use chrono::Utc;
@@ -73,6 +73,7 @@ pub fn spawn(db: DatabaseConnection) {
     });
 }
 
+/// Render the effective zone, whether it comes from an admin setting or the default, who last changed it and when, and the current instant and "today" in that zone.
 async fn view(db: &DatabaseConnection) -> Result<Response> {
     let row = stored(db).await.map_err(db_err)?;
     let zone = tz::today_zone();
@@ -94,11 +95,14 @@ async fn get_zone(State(ctx): State<AppContext>) -> Result<Response> {
     view(&ctx.db).await
 }
 
+/// Request body for setting the zone that defines "today".
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ZoneBody {
+    /// Zone name; parsed and rejected with a 422 if unknown.
     time_zone: String,
 }
 
+/// 403 unless the caller holds the administrator attribute; the zone changes what "today" means for every user.
 fn require_admin(caller: &MaybeAuthUser) -> Result<()> {
     if super::plan_access::is_admin(caller.claims()) {
         Ok(())

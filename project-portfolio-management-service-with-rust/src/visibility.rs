@@ -268,7 +268,7 @@ pub enum SkillStatus {
     Missing,
     /// No skill set could be resolved for the assigned person (an
     /// unreachable worker record, a non-worker reference, or no
-    /// resolver configured) — never reported as [`Missing`], since
+    /// resolver configured) — never reported as `Missing`, since
     /// that would claim a fact nothing actually checked.
     Unknown,
 }

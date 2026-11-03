@@ -24,6 +24,7 @@ const EXPORT_ROWS_PER_TABLE: i64 = 1_000;
 /// The environment variable holding the secret salt for pseudonyms.
 pub const SALT_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_PSEUDONYM_SALT";
 
+/// 403 error returned when the caller lacks write access to the `subjects` area (administrators).
 fn forbidden() -> Error {
     Error::CustomError(
         StatusCode::FORBIDDEN,
@@ -31,6 +32,7 @@ fn forbidden() -> Error {
     )
 }
 
+/// Whether the caller may write in the `subjects` area, which gates every data-subject request.
 fn allowed(caller: &MaybeAuthUser) -> bool {
     crate::auth::area_allows(caller, "subjects", authentication_verifier::Action::Write)
 }
@@ -50,6 +52,7 @@ fn withheld(key: &str) -> bool {
     k.contains("hash") || k.contains("secret") || k.contains("password") || k.contains("token")
 }
 
+/// Drop credential-like and digest-like keys from an exported row (see [`withheld`]) so an export never carries secrets.
 fn clean(mut row: serde_json::Value) -> serde_json::Value {
     if let Some(map) = row.as_object_mut() {
         map.retain(|k, _| !withheld(k));
@@ -121,10 +124,13 @@ async fn export(
     }))
 }
 
+/// Plain-language statement of what a subject search and export do not cover, returned with every result so absence is not read as proof of no data.
 const NOT_COVERED: &str = "Names or e-mail addresses typed into free text (titles, comments, documents), the content of uploaded files, the snapshot JSON of audit rows, notification destinations (listed above under notification_sinks), request logs (which record the path of every call, this one included) and backups are not searched. Credential and digest fields are left out of the export.";
 
+/// Query parameters for the erasure endpoint.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ApplyParams {
+    /// `true` applies the change; absent or false only previews counts and changes nothing.
     #[serde(default)]
     apply: Option<bool>,
 }

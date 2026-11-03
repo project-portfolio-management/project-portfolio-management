@@ -3894,18 +3894,22 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body for publishing (`POST /api/announcements`) and replacing (`PUT /api/announcements/{pid}`) an announcement.",
                 "properties": {
                   "body": {
+                    "description": "Announcement text, sent as `body` in JSON.",
                     "type": "string"
                   },
                   "expires_at": {
                     "default": null,
+                    "description": "When it stops showing; absent means it never expires.",
                     "format": "date-time",
                     "nullable": true,
                     "type": "string"
                   },
                   "pinned": {
                     "default": false,
+                    "description": "Pinned announcements sort ahead of the rest of the feed.",
                     "type": "boolean"
                   },
                   "publish_at": {
@@ -3917,9 +3921,11 @@
                   },
                   "severity": {
                     "default": "info",
+                    "description": "Severity token; defaults to `info`.",
                     "type": "string"
                   },
                   "title": {
+                    "description": "Headline; validated and trimmed by the rules.",
                     "type": "string"
                   }
                 },
@@ -3997,18 +4003,22 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body for publishing (`POST /api/announcements`) and replacing (`PUT /api/announcements/{pid}`) an announcement.",
                 "properties": {
                   "body": {
+                    "description": "Announcement text, sent as `body` in JSON.",
                     "type": "string"
                   },
                   "expires_at": {
                     "default": null,
+                    "description": "When it stops showing; absent means it never expires.",
                     "format": "date-time",
                     "nullable": true,
                     "type": "string"
                   },
                   "pinned": {
                     "default": false,
+                    "description": "Pinned announcements sort ahead of the rest of the feed.",
                     "type": "boolean"
                   },
                   "publish_at": {
@@ -4020,9 +4030,11 @@
                   },
                   "severity": {
                     "default": "info",
+                    "description": "Severity token; defaults to `info`.",
                     "type": "string"
                   },
                   "title": {
+                    "description": "Headline; validated and trimmed by the rules.",
                     "type": "string"
                   }
                 },
@@ -4168,13 +4180,16 @@
                   },
                   "message": {
                     "default": null,
+                    "description": "Optional note to the approver; absent means none.",
                     "nullable": true,
                     "type": "string"
                   },
                   "subject_kind": {
+                    "description": "Kind of the subject to be approved.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Public id of the subject, as text; checked against a live subject by the handler.",
                     "type": "string"
                   }
                 },
@@ -4234,6 +4249,7 @@
                 "properties": {
                   "comment": {
                     "default": null,
+                    "description": "Optional comment recorded with the decision; absent means none.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -4923,15 +4939,18 @@
                 "description": "`POST /api/availability` body.",
                 "properties": {
                   "from": {
+                    "description": "First day of the range, inclusive.",
                     "format": "date",
                     "type": "string"
                   },
                   "max_percent": {
+                    "description": "Ceiling on the person's capacity in that range, 0 to 100 percent.",
                     "format": "int32",
                     "type": "integer"
                   },
                   "note": {
                     "default": null,
+                    "description": "Optional free-text reason.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -4942,6 +4961,7 @@
                     "type": "string"
                   },
                   "to": {
+                    "description": "Last day of the range, inclusive; must not precede `from`.",
                     "format": "date",
                     "type": "string"
                   }
@@ -5167,21 +5187,26 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/break-glass` body.",
                 "properties": {
                   "minutes": {
                     "default": null,
+                    "description": "Requested duration in minutes; absent uses the default, and the value is capped at the maximum.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "notify_ref": {
+                    "description": "Person reference told that the grant was opened, so the access is never silent.",
                     "type": "string"
                   },
                   "plan_pid": {
+                    "description": "The private plan to open.",
                     "format": "uuid",
                     "type": "string"
                   },
                   "reason": {
+                    "description": "Why access is needed; length-checked and recorded in the audit trail.",
                     "type": "string"
                   }
                 },
@@ -5410,6 +5435,7 @@
                 "properties": {
                   "description": {
                     "default": null,
+                    "description": "Optional longer description; absent means none.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -5420,9 +5446,11 @@
                     "type": "string"
                   },
                   "template": {
+                    "description": "Built-in template key; must be one of the templates in [`crate::canvas`].",
                     "type": "string"
                   },
                   "title": {
+                    "description": "Canvas title; required.",
                     "type": "string"
                   }
                 },
@@ -5527,13 +5555,16 @@
                 "description": "`POST …/items` body.",
                 "properties": {
                   "body": {
+                    "description": "Item text; validated by `rules::item_problems`.",
                     "type": "string"
                   },
                   "box": {
+                    "description": "Key of the box (a template section) the item sits in; must exist in the canvas's template.",
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Optional owner as a `worker:` / `person:` URN; absent means unowned.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -5630,21 +5661,25 @@
                 "properties": {
                   "body": {
                     "default": null,
+                    "description": "Replacement text; absent keeps it.",
                     "nullable": true,
                     "type": "string"
                   },
                   "box": {
                     "default": null,
+                    "description": "Move the item to another box of the same template; absent keeps its box.",
                     "nullable": true,
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Replacement owner URN; absent keeps it.",
                     "nullable": true,
                     "type": "string"
                   },
                   "position": {
                     "default": null,
+                    "description": "New position within the box; absent keeps it.",
                     "format": "int32",
                     "nullable": true,
                     "type": "integer"
@@ -6060,12 +6095,15 @@
                 "description": "`POST /api/comments` body.",
                 "properties": {
                   "body": {
+                    "description": "Comment text; length and emptiness are checked by the discussion rules.",
                     "type": "string"
                   },
                   "subject_kind": {
+                    "description": "Kind of subject commented on (for example a task or plan); validated by `resolve_subject`.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Public id of the subject; the caller must be able to read it.",
                     "type": "string"
                   }
                 },
@@ -6149,6 +6187,7 @@
                 "description": "`PUT /api/comments/{pid}` body.",
                 "properties": {
                   "body": {
+                    "description": "The replacement comment text; the previous body is kept in `comment_edits`.",
                     "type": "string"
                   }
                 },
@@ -6473,10 +6512,12 @@
                 "properties": {
                   "method": {
                     "default": "manual",
+                    "description": "How the value was obtained (for example `manual`); defaults to\n`manual`.",
                     "type": "string"
                   },
                   "value": {
                     "default": null,
+                    "description": "Observed value in the metric's unit. Absent records an `unmeasured`\nreading, which is valid and is never coerced to zero.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
@@ -6523,12 +6564,15 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/cost-codes` body.",
                 "properties": {
                   "budget_line_pid": {
+                    "description": "Public id of the budget line the code maps to.",
                     "format": "uuid",
                     "type": "string"
                   },
                   "cost_code": {
+                    "description": "The finance system's cost code; each code maps to at most one line.",
                     "type": "string"
                   }
                 },
@@ -6599,20 +6643,25 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/cost-rate-tables` body.",
                 "properties": {
                   "currency": {
+                    "description": "ISO currency code for every rate in the table.",
                     "type": "string"
                   },
                   "name": {
+                    "description": "Table name, trimmed and at most 40 characters; `standard` is the name\nlookups use unless they ask for another.",
                     "type": "string"
                   },
                   "person_ref": {
                     "default": null,
+                    "description": "Reference to the person the table prices; exactly one of `person_ref`\nand `role` must be given.",
                     "nullable": true,
                     "type": "string"
                   },
                   "role": {
                     "default": null,
+                    "description": "Role the table prices, as the fallback for people without their own table.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -6665,8 +6714,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/cost-rate-tables/{pid}/rates` body.",
                 "properties": {
                   "effective_from": {
+                    "description": "First day the rate applies; it stays in force until a later rate starts.",
                     "format": "date",
                     "type": "string"
                   },
@@ -6881,23 +6932,28 @@
                 "description": "`POST /api/custom-fields` body.",
                 "properties": {
                   "applies_to": {
+                    "description": "Subject type the field attaches to: `plan` or `task`.",
                     "type": "string"
                   },
                   "key": {
+                    "description": "Field key, unique among live definitions of the same `applies_to`; validated by `rules::def_problems`.",
                     "type": "string"
                   },
                   "kinds": {
                     "default": [],
+                    "description": "Plan kinds the field is limited to; empty means every kind. Only valid for plan fields.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "label": {
+                    "description": "Human-readable label shown beside the field.",
                     "type": "string"
                   },
                   "options": {
                     "default": [],
+                    "description": "Allowed choices for the list-style types; empty for the others.",
                     "items": {
                       "type": "string"
                     },
@@ -6905,9 +6961,11 @@
                   },
                   "required": {
                     "default": false,
+                    "description": "Whether a subject must have a value; an unset required field is reported, not defaulted.",
                     "type": "boolean"
                   },
                   "type": {
+                    "description": "The value type (JSON name `type`), one of the types the rules allow.",
                     "type": "string"
                   }
                 },
@@ -7078,13 +7136,16 @@
                 "description": "`PUT /api/custom-fields/values` body.",
                 "properties": {
                   "applies_to": {
+                    "description": "Subject type of the values: `plan` or `task`.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Public id of the plan or task the values belong to; resolved through the discussion resolver so the owning plan's read check applies.",
                     "type": "string"
                   },
                   "values": {
                     "additionalProperties": true,
+                    "description": "Field key to new value; a JSON `null` clears that key's stored value.",
                     "type": "object"
                   }
                 },
@@ -7170,8 +7231,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body adding a de-escalation criterion.",
                 "properties": {
                   "criterion": {
+                    "description": "Criterion text, 5 to 500 characters after trimming.",
                     "type": "string"
                   }
                 },
@@ -7216,16 +7279,20 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body recording evidence for one criterion in one finished quarter.",
                 "properties": {
                   "link": {
                     "default": null,
+                    "description": "Optional link to supporting evidence.",
                     "nullable": true,
                     "type": "string"
                   },
                   "met": {
+                    "description": "Whether the criterion was met in that quarter.",
                     "type": "boolean"
                   },
                   "note": {
+                    "description": "Required justification, at least 5 characters after trimming.",
                     "type": "string"
                   },
                   "quarter": {
@@ -7269,12 +7336,15 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body recording the sponsor-set escalation level.",
                 "properties": {
                   "level": {
+                    "description": "Escalation level label set by the sponsor, 1 to 60 characters after trimming.",
                     "type": "string"
                   },
                   "note": {
                     "default": null,
+                    "description": "Optional reason for the level.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -7380,19 +7450,23 @@
                 "properties": {
                   "kind": {
                     "default": null,
+                    "description": "Relationship: `fs` (default when absent), `ss`, `ff` or `sf`.",
                     "nullable": true,
                     "type": "string"
                   },
                   "lag_days": {
                     "default": 0,
+                    "description": "Lag in business days; negative is a lead. Defaults to 0.",
                     "format": "int32",
                     "type": "integer"
                   },
                   "predecessor_pid": {
+                    "description": "The plan or task that must come first.",
                     "format": "uuid",
                     "type": "string"
                   },
                   "successor_pid": {
+                    "description": "The plan or task that follows.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -7462,41 +7536,49 @@
                 "properties": {
                   "caused_by_deploy_pid": {
                     "default": null,
+                    "description": "Deploy event declared as the cause of this incident; only valid on incidents. Absent means causation is undeclared, never guessed.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "environment": {
                     "default": null,
+                    "description": "Target environment name; required (non-empty) for a deploy and optional otherwise.",
                     "nullable": true,
                     "type": "string"
                   },
                   "incident_pid": {
                     "default": null,
+                    "description": "Incident event this recovery resolves; required on a recovery and must name an ingested incident.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Event kind, one of `DEVOPS_EVENT_KINDS` (deploy, incident or recovery).",
                     "type": "string"
                   },
                   "occurred_at": {
                     "default": null,
+                    "description": "When the event happened (UTC); absent means now, at ingestion.",
                     "format": "date-time",
                     "nullable": true,
                     "type": "string"
                   },
                   "plan_pid": {
+                    "description": "Plan the event belongs to; must be a live plan, else 404.",
                     "format": "uuid",
                     "type": "string"
                   },
                   "reference": {
                     "default": null,
+                    "description": "Free-text external reference (build, ticket or change id); stored as given.",
                     "nullable": true,
                     "type": "string"
                   },
                   "version": {
                     "default": null,
+                    "description": "Free-text version or release label that was deployed; absent when not supplied.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -8103,24 +8185,29 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for creating a document.",
                 "properties": {
                   "body": {
                     "default": null,
+                    "description": "Text of the first draft; absent is stored as an empty draft.",
                     "nullable": true,
                     "type": "string"
                   },
                   "change_summary": {
                     "default": null,
+                    "description": "Optional note describing the version, at most 500 characters.",
                     "nullable": true,
                     "type": "string"
                   },
                   "plan_pid": {
                     "default": null,
+                    "description": "Plan the document belongs to, if any. Absent means a standalone document not tied to a plan.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Document title; validated by the documents rules and stored trimmed.",
                     "type": "string"
                   }
                 },
@@ -8236,14 +8323,17 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for editing a draft version.",
                 "properties": {
                   "body": {
                     "default": null,
+                    "description": "New text for the draft; absent leaves the existing text unchanged (or, for a new version, copies the latest text).",
                     "nullable": true,
                     "type": "string"
                   },
                   "change_summary": {
                     "default": null,
+                    "description": "New change summary; absent leaves the existing summary unchanged.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -8336,14 +8426,17 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for editing a draft version.",
                 "properties": {
                   "body": {
                     "default": null,
+                    "description": "New text for the draft; absent leaves the existing text unchanged (or, for a new version, copies the latest text).",
                     "nullable": true,
                     "type": "string"
                   },
                   "change_summary": {
                     "default": null,
+                    "description": "New change summary; absent leaves the existing summary unchanged.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -8444,12 +8537,15 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for submitting a draft for review.",
                 "properties": {
                   "approver_ref": {
+                    "description": "`person:` or `worker:` URN of the approver; never the submitter themselves.",
                     "type": "string"
                   },
                   "message": {
                     "default": null,
+                    "description": "Optional message passed to the approver with the approval request.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -8809,17 +8905,21 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/exceptions/{pid}/threshold-decision` body.",
                 "properties": {
                   "action": {
+                    "description": "One of `pause`, `reset`, `stop` or `override`. This only records a decision; nothing is paused, reset or stopped automatically.",
                     "type": "string"
                   },
                   "expiry": {
                     "default": null,
+                    "description": "Expiry date, required for an override (in the future, at most a year out) and refused for the other actions.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "reason": {
+                    "description": "Why the decision was made; required.",
                     "type": "string"
                   }
                 },
@@ -9084,24 +9184,30 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/funding-allocations` body. Allocations are append-only.",
                 "properties": {
                   "allocated_on": {
+                    "description": "The date the funding source made the allocation.",
                     "format": "date",
                     "type": "string"
                   },
                   "amount_minor": {
+                    "description": "Allocated amount in minor currency units.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "currency": {
+                    "description": "ISO currency code; amounts in different currencies are never summed.",
                     "type": "string"
                   },
                   "funding_source_pid": {
+                    "description": "Public id of the funding source the money comes from.",
                     "format": "uuid",
                     "type": "string"
                   },
                   "reference": {
                     "default": null,
+                    "description": "Optional external reference (for example a finance document number).",
                     "nullable": true,
                     "type": "string"
                   }
@@ -9605,17 +9711,20 @@
                 "properties": {
                   "pitch": {
                     "default": null,
+                    "description": "Optional longer pitch text; `None` when the author gave none.",
                     "nullable": true,
                     "type": "string"
                   },
                   "tags": {
                     "default": [],
+                    "description": "Free-form tags; empty when none were supplied.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "title": {
+                    "description": "Idea headline; required, shown in lists and copied to the proposal on conversion.",
                     "type": "string"
                   }
                 },
@@ -9664,6 +9773,7 @@
                   },
                   "sponsor_ref": {
                     "default": null,
+                    "description": "Optional sponsor reference (a `person:`, `worker:` or `organization:` URN, never a free-text name); `None` leaves the proposal without a sponsor.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -9952,9 +10062,11 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `PUT /api/key-persons`: one single-point-of-failure record.",
                 "properties": {
                   "note": {
                     "default": null,
+                    "description": "Free-text note; absent means none.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -9964,6 +10076,7 @@
                   },
                   "skill_pool_pid": {
                     "default": null,
+                    "description": "Skill pool that could cover the subject; absent means none linked.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
@@ -9978,6 +10091,7 @@
                   },
                   "successor_ref": {
                     "default": null,
+                    "description": "Person reference of the named successor; absent means no successor named, which is not the same as a successor not being ready.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -10018,11 +10132,14 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `PUT /api/key-persons/contingent`.",
                 "properties": {
                   "contingent": {
+                    "description": "True marks the person as contingent labour, false removes the mark.",
                     "type": "boolean"
                   },
                   "person_ref": {
+                    "description": "Person or worker reference to mark.",
                     "type": "string"
                   }
                 },
@@ -10130,30 +10247,36 @@
                 "properties": {
                   "due_date": {
                     "default": null,
+                    "description": "Optional due date for the key result.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Reference to the (possibly new) owner.",
                     "nullable": true,
                     "type": "string"
                   },
                   "target_value": {
+                    "description": "New target value, in the metric's unit.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "title": {
+                    "description": "New key result title.",
                     "type": "string"
                   },
                   "tolerance": {
                     "default": null,
+                    "description": "New tolerance; absent means none.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "unit": {
                     "default": null,
+                    "description": "New display unit.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -10272,6 +10395,7 @@
                 "properties": {
                   "confidence": {
                     "default": null,
+                    "description": "Self-reported confidence, recorded beside the value and never blended\ninto a score; absent means none was given.",
                     "format": "int16",
                     "maximum": 32767,
                     "minimum": -32768,
@@ -10280,10 +10404,12 @@
                   },
                   "note": {
                     "default": null,
+                    "description": "Free-text context for the reading.",
                     "nullable": true,
                     "type": "string"
                   },
                   "value": {
+                    "description": "The new measured value in the key result's unit.",
                     "format": "int64",
                     "type": "integer"
                   }
@@ -10379,11 +10505,13 @@
                 "properties": {
                   "cadence": {
                     "default": null,
+                    "description": "Reporting cadence (`daily`, `weekly`, `monthly` or `quarterly`); `None` means staleness is not judged.",
                     "nullable": true,
                     "type": "string"
                   },
                   "description": {
                     "default": null,
+                    "description": "Optional longer description of what is measured.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -10392,6 +10520,7 @@
                     "type": "string"
                   },
                   "name": {
+                    "description": "KPI name; required.",
                     "type": "string"
                   },
                   "objective_pid": {
@@ -10403,6 +10532,7 @@
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Owner as a `person:` or `worker:` reference, never a free-text name; `None` when unowned.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -10419,11 +10549,13 @@
                     "type": "integer"
                   },
                   "target_value": {
+                    "description": "Value at which the KPI is on target; whole numbers only, in the KPI's unit.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "unit": {
                     "default": null,
+                    "description": "Optional unit label (for example a percentage or a count); free text.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -10532,38 +10664,46 @@
                 "properties": {
                   "cadence": {
                     "default": null,
+                    "description": "New cadence; `None` clears it, so staleness is no longer judged.",
                     "nullable": true,
                     "type": "string"
                   },
                   "description": {
                     "default": null,
+                    "description": "New description; `None` clears it.",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "New KPI name; required.",
                     "type": "string"
                   },
                   "objective_pid": {
                     "default": null,
+                    "description": "New supported objective; `None` detaches the KPI from any objective.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "New owner reference (`person:` or `worker:`); `None` clears the owner.",
                     "nullable": true,
                     "type": "string"
                   },
                   "red_value": {
+                    "description": "New red threshold, on the worse side of the target.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "target_value": {
+                    "description": "New on-target value, in the KPI's unit.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "unit": {
                     "default": null,
+                    "description": "New unit label; `None` clears it.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -10644,6 +10784,7 @@
                 "properties": {
                   "note": {
                     "default": null,
+                    "description": "Optional note about the reading, such as how it was taken.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -10655,6 +10796,7 @@
                     "type": "string"
                   },
                   "value": {
+                    "description": "The measured value, a whole number in the KPI's unit.",
                     "format": "int64",
                     "type": "integer"
                   }
@@ -10750,6 +10892,7 @@
                 "properties": {
                   "holidays": {
                     "default": [],
+                    "description": "Non-working dates; stored sorted. Absent means none.",
                     "items": {
                       "format": "date",
                       "type": "string"
@@ -10757,6 +10900,7 @@
                     "type": "array"
                   },
                   "weekdays": {
+                    "description": "Seven-character working-day mask, one flag per weekday; validated by `rules::problems`.",
                     "type": "string"
                   }
                 },
@@ -10952,19 +11096,23 @@
                 "properties": {
                   "channel": {
                     "default": null,
+                    "description": "Channel the choice applies to; absent means the kind's default scope (all channels).",
                     "nullable": true,
                     "type": "string"
                   },
                   "digest": {
                     "default": null,
+                    "description": "Optional digest mode (for example `daily`); absent means deliver individually.",
                     "nullable": true,
                     "type": "string"
                   },
                   "enabled": {
                     "default": true,
+                    "description": "Whether this kind is delivered; defaults to true when omitted.",
                     "type": "boolean"
                   },
                   "kind": {
+                    "description": "Notification kind the choice applies to; validated by the preference rules.",
                     "type": "string"
                   }
                 },
@@ -11011,10 +11159,12 @@
                 "properties": {
                   "channel": {
                     "default": null,
+                    "description": "Channel to reset; absent resets the kind-wide choice.",
                     "nullable": true,
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Notification kind whose choice is reset.",
                     "type": "string"
                   }
                 },
@@ -11112,13 +11262,16 @@
                 "description": "`POST /api/me/notification-sinks` body.",
                 "properties": {
                   "destination": {
+                    "description": "Where to deliver; treated as a secret and only ever returned masked.",
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Sink kind (webhook, email and so on); decides the channel and how the destination is validated.",
                     "type": "string"
                   },
                   "settings": {
-                    "default": null
+                    "default": null,
+                    "description": "Optional kind-specific settings; absent is stored as an empty object."
                   }
                 },
                 "required": [
@@ -11332,14 +11485,17 @@
                 "description": "`POST /api/me/planned-slots` body.",
                 "properties": {
                   "ends_at": {
+                    "description": "End of the slot (UTC); validated by `slot_problems`.",
                     "format": "date-time",
                     "type": "string"
                   },
                   "starts_at": {
+                    "description": "Start of the slot (UTC).",
                     "format": "date-time",
                     "type": "string"
                   },
                   "task_pid": {
+                    "description": "Task the time is blocked for.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -11644,21 +11800,26 @@
                 "description": "`POST /api/non-working` body.",
                 "properties": {
                   "ends_on": {
+                    "description": "Last day of the period (inclusive); not before `starts_on`.",
                     "format": "date",
                     "type": "string"
                   },
                   "kind": {
+                    "description": "One of `leave`, `holiday`, `study_leave` or `non_project_duty`.",
                     "type": "string"
                   },
                   "note": {
                     "default": null,
+                    "description": "Free-text note; absent means none.",
                     "nullable": true,
                     "type": "string"
                   },
                   "person_ref": {
+                    "description": "`person:` reference of the person who is away.",
                     "type": "string"
                   },
                   "starts_on": {
+                    "description": "First day of the period (inclusive).",
                     "format": "date",
                     "type": "string"
                   }
@@ -11841,15 +12002,18 @@
                 "properties": {
                   "description": {
                     "default": null,
+                    "description": "Optional longer description.",
                     "nullable": true,
                     "type": "string"
                   },
                   "period": {
                     "default": null,
+                    "description": "Optional free-text period label (for example a quarter); not parsed.",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Objective title; required and length-capped.",
                     "type": "string"
                   }
                 },
@@ -11922,15 +12086,18 @@
                 "properties": {
                   "description": {
                     "default": null,
+                    "description": "New description; absent clears or leaves it unset.",
                     "nullable": true,
                     "type": "string"
                   },
                   "period": {
                     "default": null,
+                    "description": "Planning period label (for example a quarter) the objective belongs to.",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "New objective title.",
                     "type": "string"
                   }
                 },
@@ -12071,39 +12238,48 @@
                 "properties": {
                   "currency": {
                     "default": null,
+                    "description": "Currency code, required when the metric is `currency`.",
                     "nullable": true,
                     "type": "string"
                   },
                   "direction": {
+                    "description": "Wire direction of travel: `increase`, `decrease` or `maintain`.",
                     "type": "string"
                   },
                   "metric": {
+                    "description": "Wire metric kind: `number`, `percent`, `currency` or `boolean`.",
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Reference (not a copy) to the person who owns the key result.",
                     "nullable": true,
                     "type": "string"
                   },
                   "start_value": {
+                    "description": "Baseline the progress is measured from; fixed at creation and never\nupdated, because progress from a moving baseline is not progress.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "target_value": {
+                    "description": "Value that counts as done, in the metric's integer unit.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "title": {
+                    "description": "Key result title; required and capped.",
                     "type": "string"
                   },
                   "tolerance": {
                     "default": null,
+                    "description": "Band around the target; a `maintain` key result without it is\nunmeasurable rather than assumed exact.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "unit": {
                     "default": null,
+                    "description": "Display unit; informational only.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -12254,8 +12430,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/onboarding/cases/{pid}/cancel` body.",
                 "properties": {
                   "reason": {
+                    "description": "Why the checklist is being abandoned; stored as the closed reason.",
                     "type": "string"
                   }
                 },
@@ -12349,15 +12527,18 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/onboarding/cases/{pid}/items/{item}` body; every field is optional and only those present change the item.",
                 "properties": {
                   "due_date": {
                     "default": null,
+                    "description": "New due date; `None` leaves it unchanged.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "note": {
                     "default": null,
+                    "description": "Free-text note on the item; required when resolving as `skipped`.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -12460,8 +12641,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/onboarding/templates/{kind}` body.",
                 "properties": {
                   "items": {
+                    "description": "Replacement checklist items, in display order.",
                     "items": {
                       "description": "One checklist item of a template.",
                       "properties": {
@@ -12534,11 +12717,14 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body creating an organization.",
                 "properties": {
                   "kind": {
+                    "description": "Organization kind; one of KINDS.",
                     "type": "string"
                   },
                   "name": {
+                    "description": "Organization name, 1 to 200 characters after trimming, unique.",
                     "type": "string"
                   }
                 },
@@ -12587,19 +12773,23 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body changing an organization; absent fields are left as they are.",
                 "properties": {
                   "active": {
                     "default": null,
+                    "description": "False retires the organization, true restores it.",
                     "nullable": true,
                     "type": "boolean"
                   },
                   "kind": {
                     "default": null,
+                    "description": "New kind; one of KINDS.",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
                     "default": null,
+                    "description": "New name.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -13285,15 +13475,18 @@
                 "properties": {
                   "format": {
                     "default": null,
+                    "description": "Output format, `csv` or `jsonl`; absent means the endpoint default.",
                     "nullable": true,
                     "type": "string"
                   },
                   "include_soft_deleted": {
                     "default": false,
+                    "description": "Whether soft-deleted plans are included; needs the destructive right.",
                     "type": "boolean"
                   },
                   "kind": {
                     "default": null,
+                    "description": "Optional plan kind filter.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -13305,6 +13498,7 @@
                   },
                   "name_like": {
                     "default": null,
+                    "description": "Optional case-insensitive name substring filter.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -14017,12 +14211,14 @@
                 "properties": {
                   "members": {
                     "default": [],
+                    "description": "User ids allowed to see a private plan; the caller is added automatically when making it private. Normalized by the rules module.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "private": {
+                    "description": "`true` hides the plan from everyone who is not a member or an admin.",
                     "type": "boolean"
                   }
                 },
@@ -14102,6 +14298,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/plans/{pid}/access-records` body.",
                 "properties": {
                   "access": {
                     "description": "What access, in words (\"repo write\", \"wiki editor\").",
@@ -14113,20 +14310,24 @@
                   },
                   "case_pid": {
                     "default": null,
+                    "description": "Optional onboarding case this record belongs to.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "note": {
                     "default": null,
+                    "description": "Optional free-text note.",
                     "nullable": true,
                     "type": "string"
                   },
                   "person_ref": {
+                    "description": "Person URN whose access changed.",
                     "type": "string"
                   },
                   "recorded_on": {
                     "default": null,
+                    "description": "Date the change took effect; `None` lets the server default it.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
@@ -14184,17 +14385,21 @@
                 "description": "`POST /api/plans/{pid}/adoption` body.",
                 "properties": {
                   "active_users": {
+                    "description": "Users active in the window; must not be negative.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "definition": {
+                    "description": "What counted as an \"active user\", stored beside the rate so later readings stay comparable; required.",
                     "type": "string"
                   },
                   "target_users": {
+                    "description": "Intended number of users; must be positive so the adoption rate has a non-zero denominator.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "window_days": {
+                    "description": "Length of the measurement window in days; must be positive.",
                     "format": "int32",
                     "type": "integer"
                   }
@@ -14361,6 +14566,7 @@
                   },
                   "end_date": {
                     "default": null,
+                    "description": "Last day of the booking (not before `start_date`); absent means open-ended.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
@@ -14387,6 +14593,7 @@
                   },
                   "role": {
                     "default": null,
+                    "description": "Role the booking is for; required for a placeholder, optional otherwise.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -14400,6 +14607,7 @@
                   },
                   "start_date": {
                     "default": null,
+                    "description": "First day of the booking; absent means open-ended at the start.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
@@ -14533,6 +14741,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/plans/{pid}/allocations/{a_pid}/resolve` body.",
                 "properties": {
                   "confirm": {
                     "default": false,
@@ -14540,6 +14749,7 @@
                     "type": "boolean"
                   },
                   "person_ref": {
+                    "description": "Person URN that takes over the placeholder allocation.",
                     "type": "string"
                   }
                 },
@@ -14683,31 +14893,37 @@
                 "description": "`POST /api/plans/{pid}/benefits` body.",
                 "properties": {
                   "category": {
+                    "description": "Benefit category; must be one of the recognized benefit categories.",
                     "type": "string"
                   },
                   "currency": {
                     "default": null,
+                    "description": "ISO 4217 code for `target_minor`; required whenever a financial target is given.",
                     "nullable": true,
                     "type": "string"
                   },
                   "expected_on": {
                     "default": null,
+                    "description": "Date the benefit is expected to be realized; `None` when unknown.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "target_minor": {
                     "default": null,
+                    "description": "Financial target in minor units; `None` for a non-financial benefit (then `target_note` is needed).",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "target_note": {
                     "default": null,
+                    "description": "Qualitative target for non-financial benefits; `None` when only a financial target exists.",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Benefit title; required and length-capped.",
                     "type": "string"
                   }
                 },
@@ -14761,17 +14977,20 @@
                 "properties": {
                   "amount_minor": {
                     "default": null,
+                    "description": "Amount realized now, in minor units, added to the running total (overflow refused); `None` leaves the total unchanged.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "note": {
                     "default": null,
+                    "description": "Optional note replacing the stored realization note.",
                     "nullable": true,
                     "type": "string"
                   },
                   "status": {
                     "default": null,
+                    "description": "Optional new benefit status; must be a recognized status.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -15036,20 +15255,26 @@
                 "description": "`POST /api/plans/{pid}/budget-baselines` body.",
                 "properties": {
                   "currency": {
+                    "description": "Currency of every period amount in this baseline (three-letter code).",
                     "type": "string"
                   },
                   "periods": {
+                    "description": "The budget broken into periods; must be non-empty and capped in length.",
                     "items": {
+                      "description": "One planned-spend period inside a baseline.",
                       "properties": {
                         "period_end": {
+                          "description": "Last day of the period; must not precede `period_start`.",
                           "format": "date",
                           "type": "string"
                         },
                         "period_start": {
+                          "description": "First day of the period.",
                           "format": "date",
                           "type": "string"
                         },
                         "planned_minor": {
+                          "description": "Planned spend for the period in minor currency units; never negative.",
                           "format": "int64",
                           "type": "integer"
                         }
@@ -15065,6 +15290,7 @@
                   },
                   "reason": {
                     "default": null,
+                    "description": "Why the baseline is being replaced; required for every version after\nthe first.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -15138,12 +15364,15 @@
                 "description": "`POST /api/plans/{pid}/budget-lines` body.",
                 "properties": {
                   "category": {
+                    "description": "Budget category; must be one of `rules::BUDGET_CATEGORIES`.",
                     "type": "string"
                   },
                   "currency": {
+                    "description": "ISO 4217 currency code; a plan may hold lines in several currencies, totals are kept per currency.",
                     "type": "string"
                   },
                   "description": {
+                    "description": "What the line pays for; required and length-capped.",
                     "type": "string"
                   },
                   "funding_source_pid": {
@@ -15161,17 +15390,20 @@
                   },
                   "period_end": {
                     "default": null,
+                    "description": "Last day of the period; must not precede `period_start`. Absent means open-ended.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "period_start": {
                     "default": null,
+                    "description": "First day of the period the line covers; absent means open-ended.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "planned_minor": {
+                    "description": "Planned amount in minor currency units; must not be negative.",
                     "format": "int64",
                     "type": "integer"
                   }
@@ -15226,6 +15458,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of the budget-line estimate update (low and high final cost).",
                 "properties": {
                   "high_minor": {
                     "default": null,
@@ -15293,11 +15526,13 @@
                 "description": "`POST /api/plans/{pid}/budget-lines/{line_pid}/actual` —\nrecord spend against a line (accumulates; negative adjustments\nallowed; overflow refused).",
                 "properties": {
                   "amount_minor": {
+                    "description": "Spend to add, in minor currency units; negative values are adjustments. Overflow is refused.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "note": {
                     "default": null,
+                    "description": "Optional free-text note, kept only in the audit snapshot.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -15381,6 +15616,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/plans/{pid}/budget-lines/{line}/funding-allocation` body.",
                 "properties": {
                   "funding_allocation_pid": {
                     "default": null,
@@ -15607,20 +15843,25 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `POST /api/plans/{pid}/buffer-recovery-actions`.",
                 "properties": {
                   "action": {
+                    "description": "What will be done to recover the buffer, 5 to 2000 characters.",
                     "type": "string"
                   },
                   "buffer_key": {
+                    "description": "Key of the buffer in the frozen plan the action is for.",
                     "type": "string"
                   },
                   "due_date": {
                     "default": null,
+                    "description": "Optional due date; absent means none set.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "owner_ref": {
+                    "description": "Reference of the owner of the action; required, up to 200 characters.",
                     "type": "string"
                   }
                 },
@@ -15679,8 +15920,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of the close-action step.",
                 "properties": {
                   "status": {
+                    "description": "`done` or `dropped`; any other value is unprocessable.",
                     "type": "string"
                   }
                 },
@@ -15750,28 +15993,34 @@
                 "description": "`POST /api/plans/{pid}/business-case` body.",
                 "properties": {
                   "baseline_value": {
+                    "description": "Value at approval time, in the metric's unit.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "currency": {
                     "default": null,
+                    "description": "ISO 4217 code when the metric is monetary; `None` for non-monetary metrics.",
                     "nullable": true,
                     "type": "string"
                   },
                   "metric": {
+                    "description": "Name of the measure being promised; required (blank is refused).",
                     "type": "string"
                   },
                   "source": {
                     "default": null,
+                    "description": "Where the promise was made: `charter` or `gate_review`; `None` means `charter`.",
                     "nullable": true,
                     "type": "string"
                   },
                   "target_value": {
+                    "description": "Promised value, in the metric's unit.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "unit": {
                     "default": null,
+                    "description": "Optional unit label for the metric.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -15852,6 +16101,7 @@
                 "properties": {
                   "holidays": {
                     "default": [],
+                    "description": "Non-working dates; stored sorted. Absent means none.",
                     "items": {
                       "format": "date",
                       "type": "string"
@@ -15859,6 +16109,7 @@
                     "type": "array"
                   },
                   "weekdays": {
+                    "description": "Seven-character working-day mask, one flag per weekday; validated by `rules::problems`.",
                     "type": "string"
                   }
                 },
@@ -16663,10 +16914,12 @@
                 "properties": {
                   "lead_ref": {
                     "default": null,
+                    "description": "Reference to the lead as a `worker:` or `person:` URN; absent means no lead.",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Component name; unique within the plan, ignoring case.",
                     "type": "string"
                   }
                 },
@@ -16796,10 +17049,12 @@
                 "properties": {
                   "lead_ref": {
                     "default": null,
+                    "description": "Reference to the lead as a `worker:` or `person:` URN; absent means no lead.",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Component name; unique within the plan, ignoring case.",
                     "type": "string"
                   }
                 },
@@ -16955,53 +17210,65 @@
                 "properties": {
                   "cadence_days": {
                     "default": null,
+                    "description": "Expected days between readings; absent means no cadence is promised.\nMust be positive when present.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "comparator": {
+                    "description": "Wire token for the comparison: `at_least`, `at_most`, `within` or\n`equals`.",
                     "type": "string"
                   },
                   "currency": {
                     "default": null,
+                    "description": "Currency code when the metric is monetary; absent otherwise.",
                     "nullable": true,
                     "type": "string"
                   },
                   "metric": {
+                    "description": "Metric the control measures; must be one of [`KNOWN_METRICS`].",
                     "type": "string"
                   },
                   "name": {
+                    "description": "Human-readable control name, trimmed on insert and capped at\n`MAX_TEXT_LEN`.",
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Reference (not a copy) to the person accountable for the control.",
                     "nullable": true,
                     "type": "string"
                   },
                   "source_kind": {
                     "default": "metric",
+                    "description": "Where readings come from: `metric`, `query` or `manual`. Defaults to\n`metric`.",
                     "type": "string"
                   },
                   "source_ref": {
                     "default": null,
+                    "description": "Reference to the query or external source behind `source_kind`;\nabsent for plain metrics and manual controls.",
                     "nullable": true,
                     "type": "string"
                   },
                   "target_value": {
+                    "description": "Target the metric is compared against, in the metric's own integer\nunit (for example basis points or days).",
                     "format": "int64",
                     "type": "integer"
                   },
                   "timing": {
+                    "description": "Wire token for [`rules::Timing`]: `feedforward`, `concurrent` or\n`feedback`. Decides whether a failure may block or only record.",
                     "type": "string"
                   },
                   "tolerance": {
                     "default": null,
+                    "description": "Allowed deviation from `target_value` for `within`; absent when the\ncomparator needs none.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "unit": {
                     "default": null,
+                    "description": "Display unit of the metric (for example `bps`, `days`); informational\nonly and absent when unknown.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -17471,14 +17738,17 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `POST /api/plans/{pid}/cutover-decisions`.",
                 "properties": {
                   "criteria": {
+                    "description": "Stop criteria text, in order; see [`clean`] for the limits.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "title": {
+                    "description": "Name of the cutover decision.",
                     "type": "string"
                   }
                 },
@@ -17539,8 +17809,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `POST .../cosign`.",
                 "properties": {
                   "role": {
+                    "description": "Role being signed for; the caller's token must carry it in `cutover_role`.",
                     "type": "string"
                   }
                 },
@@ -17600,8 +17872,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `PUT .../criteria`: the full replacement list.",
                 "properties": {
                   "criteria": {
+                    "description": "Stop criteria text, in order; replaces the draft's list.",
                     "items": {
                       "type": "string"
                     },
@@ -17673,11 +17947,14 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `PUT .../criteria/{n}/mark`.",
                 "properties": {
                   "evidence": {
+                    "description": "The evidence supporting the mark.",
                     "type": "string"
                   },
                   "met": {
+                    "description": "Whether the criterion is met.",
                     "type": "boolean"
                   }
                 },
@@ -17738,11 +18015,14 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `POST .../decide`.",
                 "properties": {
                   "outcome": {
+                    "description": "`go`, `no_go` or a delay for safety; go needs every criterion met and every co-signature.",
                     "type": "string"
                   },
                   "reason": {
+                    "description": "Why the outcome was chosen; recorded with the decision.",
                     "type": "string"
                   }
                 },
@@ -18018,6 +18298,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body setting a programme profile.",
                 "properties": {
                   "delivery_model": {
                     "default": null,
@@ -18100,6 +18381,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `POST /api/plans/{pid}/deployment-moves`.",
                 "properties": {
                   "approver_ref": {
                     "default": null,
@@ -18108,13 +18390,16 @@
                     "type": "string"
                   },
                   "new_start": {
+                    "description": "The requested new start date for the task.",
                     "format": "date",
                     "type": "string"
                   },
                   "reason": {
+                    "description": "Why the move is wanted; at least 10 characters after trimming.",
                     "type": "string"
                   },
                   "task_pid": {
+                    "description": "The go-live task to move.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -18177,12 +18462,14 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `POST /api/plans/{pid}/deployment-moves/{mpid}/decision`.",
                 "properties": {
                   "decision": {
                     "description": "`approve` or `refuse`.",
                     "type": "string"
                   },
                   "reason": {
+                    "description": "Why the decision was made; at least 10 characters after trimming.",
                     "type": "string"
                   }
                 },
@@ -18525,11 +18812,13 @@
                 "properties": {
                   "description": {
                     "default": null,
+                    "description": "Longer explanation; absent means none was given.",
                     "nullable": true,
                     "type": "string"
                   },
                   "escalated_to": {
                     "default": null,
+                    "description": "Who it is referred to; defaults to the body named at the chosen path level.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -18542,24 +18831,29 @@
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Person or worker reference responsible for answering; absent means unassigned.",
                     "nullable": true,
                     "type": "string"
                   },
                   "reason_kind": {
                     "default": "other",
+                    "description": "Why it is being escalated (a kind from the rules module); defaults to `other`.",
                     "type": "string"
                   },
                   "respond_by": {
                     "default": null,
+                    "description": "Date by which a response is expected; absent means no deadline, so it is never overdue.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Short title of the escalation; validated by the rules module.",
                     "type": "string"
                   },
                   "tolerance_dimension": {
                     "default": null,
+                    "description": "Tolerance dimension breached, when the reason is a tolerance; absent otherwise.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -18658,6 +18952,7 @@
                 "properties": {
                   "note": {
                     "default": null,
+                    "description": "Optional free-text note recorded in the history; blank is treated as absent.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -18821,6 +19116,7 @@
                 "properties": {
                   "note": {
                     "default": null,
+                    "description": "Optional free-text note recorded in the history; blank is treated as absent.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -18986,9 +19282,11 @@
                 "description": "`POST …/resolve` body.",
                 "properties": {
                   "outcome": {
+                    "description": "Outcome, one of the rules module's accepted outcomes.",
                     "type": "string"
                   },
                   "response": {
+                    "description": "The written response to the escalation; trimmed and length-checked on use.",
                     "type": "string"
                   }
                 },
@@ -19056,6 +19354,7 @@
                 "properties": {
                   "note": {
                     "default": null,
+                    "description": "Optional free-text note recorded in the history; blank is treated as absent.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -19388,18 +19687,22 @@
                 "properties": {
                   "approver_ref": {
                     "default": null,
+                    "description": "Approver as a `worker:` / `person:` URN; absent means the decision is recorded without a named approver.",
                     "nullable": true,
                     "type": "string"
                   },
                   "conditions": {
                     "default": null,
+                    "description": "Conditions attached to the decision, if any; absent means unconditional.",
                     "nullable": true,
                     "type": "string"
                   },
                   "decision": {
+                    "description": "The gate decision token; only an approving decision advances the stage.",
                     "type": "string"
                   },
                   "gate": {
+                    "description": "Gate being decided; must be the next gate in order, checked by `rules::apply_gate_review`.",
                     "type": "string"
                   }
                 },
@@ -19839,6 +20142,7 @@
                   },
                   "expires_at": {
                     "default": null,
+                    "description": "When the grant lapses; absent means it stays live until revoked.",
                     "format": "date-time",
                     "nullable": true,
                     "type": "string"
@@ -19974,8 +20278,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for linking a task or hammock under a hammock.",
                 "properties": {
                   "member_pid": {
+                    "description": "Task or hammock of the same plan whose dates the hammock spans.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -20096,6 +20402,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for setting a plan's handling mark.",
                 "properties": {
                   "mark": {
                     "description": "A code in the scheme, or `null` to reset to the lowest level.",
@@ -20144,12 +20451,15 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for previewing or committing a handover.",
                 "properties": {
                   "from_person": {
+                    "description": "`person:` or `worker:` URN of the person handing over work.",
                     "type": "string"
                   },
                   "reason": {
                     "default": null,
+                    "description": "Optional reason recorded in the audit entry, at most 500 characters.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -20210,12 +20520,15 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for previewing or committing a handover.",
                 "properties": {
                   "from_person": {
+                    "description": "`person:` or `worker:` URN of the person handing over work.",
                     "type": "string"
                   },
                   "reason": {
                     "default": null,
+                    "description": "Optional reason recorded in the audit entry, at most 500 characters.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -20494,29 +20807,35 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for creating or replacing an issue (`POST` and `PUT`); validated by [`validate`] before any write.",
                 "properties": {
                   "description": {
                     "default": null,
+                    "description": "Optional longer text; blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
                   "due_date": {
                     "default": null,
+                    "description": "Optional date the issue should be dealt with by; absent means no due date, so it is never overdue.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "kind": {
                     "default": "concern",
+                    "description": "Issue kind; defaults to `concern` and must be a known kind.",
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Person reference of the owner; absent means unowned, and it must look like a person reference.",
                     "nullable": true,
                     "type": "string"
                   },
                   "priority": {
                     "default": null,
+                    "description": "Optional free-text priority label; blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -20529,30 +20848,36 @@
                   },
                   "resolution": {
                     "default": null,
+                    "description": "How the issue was resolved; required once the status is `closed`, blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
                   "severity": {
                     "default": "med",
+                    "description": "Severity; defaults to `med` and must be a known severity.",
                     "type": "string"
                   },
                   "source_risk_pid": {
                     "default": null,
+                    "description": "Risk this issue was raised from, when there is one; recorded as given, the risk is not changed.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "source_task_pid": {
                     "default": null,
+                    "description": "Task this issue was raised from, when there is one; recorded as given, the task is not changed.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "status": {
                     "default": "open",
+                    "description": "Lifecycle status; defaults to `open`. A closed issue must carry a resolution.",
                     "type": "string"
                   },
                   "title": {
+                    "description": "Short title; trimmed, required, length-limited by the rules module.",
                     "type": "string"
                   }
                 },
@@ -20762,29 +21087,35 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for creating or replacing an issue (`POST` and `PUT`); validated by [`validate`] before any write.",
                 "properties": {
                   "description": {
                     "default": null,
+                    "description": "Optional longer text; blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
                   "due_date": {
                     "default": null,
+                    "description": "Optional date the issue should be dealt with by; absent means no due date, so it is never overdue.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "kind": {
                     "default": "concern",
+                    "description": "Issue kind; defaults to `concern` and must be a known kind.",
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Person reference of the owner; absent means unowned, and it must look like a person reference.",
                     "nullable": true,
                     "type": "string"
                   },
                   "priority": {
                     "default": null,
+                    "description": "Optional free-text priority label; blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -20797,30 +21128,36 @@
                   },
                   "resolution": {
                     "default": null,
+                    "description": "How the issue was resolved; required once the status is `closed`, blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
                   "severity": {
                     "default": "med",
+                    "description": "Severity; defaults to `med` and must be a known severity.",
                     "type": "string"
                   },
                   "source_risk_pid": {
                     "default": null,
+                    "description": "Risk this issue was raised from, when there is one; recorded as given, the risk is not changed.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "source_task_pid": {
                     "default": null,
+                    "description": "Task this issue was raised from, when there is one; recorded as given, the task is not changed.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "status": {
                     "default": "open",
+                    "description": "Lifecycle status; defaults to `open`. A closed issue must carry a resolution.",
                     "type": "string"
                   },
                   "title": {
+                    "description": "Short title; trimmed, required, length-limited by the rules module.",
                     "type": "string"
                   }
                 },
@@ -21242,9 +21579,11 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `POST /api/plans/{pid}/leveling/apply`.",
                 "properties": {
                   "allow_critical": {
                     "default": false,
+                    "description": "Must match the setting the proposal was read with, since the apply recomputes it; absent means false.",
                     "type": "boolean"
                   },
                   "confirm": {
@@ -21254,6 +21593,7 @@
                   },
                   "load_percent": {
                     "default": null,
+                    "description": "Must match the load the proposal was read with (1 to 100, default 100); absent means 100.",
                     "format": "int32",
                     "nullable": true,
                     "type": "integer"
@@ -21261,12 +21601,15 @@
                   "moves": {
                     "description": "The moves to apply, as proposed.",
                     "items": {
+                      "description": "One move of a proposal to apply.",
                       "properties": {
                         "start_date": {
+                          "description": "The new start date; it must equal the current proposal's `to_start` for the task, else the apply is refused as stale.",
                           "format": "date",
                           "type": "string"
                         },
                         "task_pid": {
+                          "description": "The task to move.",
                           "format": "uuid",
                           "type": "string"
                         }
@@ -21445,9 +21788,11 @@
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Kind of link, validated against the allowed kinds in the plan-link rules.",
                     "type": "string"
                   },
                   "label": {
+                    "description": "Human label for the link; stored trimmed.",
                     "type": "string"
                   },
                   "system": {
@@ -21457,6 +21802,7 @@
                     "type": "string"
                   },
                   "url": {
+                    "description": "The linked URL; must be unique among the live links of the same plan or task, otherwise 409.",
                     "type": "string"
                   }
                 },
@@ -22259,6 +22605,7 @@
                 "description": "`POST /api/plans/{pid}/milestones` body.",
                 "properties": {
                   "due": {
+                    "description": "Due date.",
                     "format": "date",
                     "type": "string"
                   },
@@ -22269,6 +22616,7 @@
                     "type": "string"
                   },
                   "name": {
+                    "description": "Milestone name; required and capped at `MAX_TEXT_LEN`.",
                     "type": "string"
                   }
                 },
@@ -22321,6 +22669,7 @@
                 "description": "`PUT /api/plans/{pid}/milestones/{m_pid}` body.",
                 "properties": {
                   "due": {
+                    "description": "New due date; the `milestone_due_changed` trigger fires only when it differs from the current one.",
                     "format": "date",
                     "type": "string"
                   },
@@ -22485,8 +22834,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body replacing the organizations required to sign off a milestone.",
                 "properties": {
                   "organization_pids": {
+                    "description": "Organizations that must sign; duplicates are collapsed, at most 20, and each must exist and be active. An empty list clears the requirement.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -22547,17 +22898,20 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for signing or withdrawing a sign-off on a milestone.",
                 "properties": {
                   "action": {
                     "description": "`sign` or `withdraw`.",
                     "type": "string"
                   },
                   "organization_pid": {
+                    "description": "Organization the sign-off is made for.",
                     "format": "uuid",
                     "type": "string"
                   },
                   "reason": {
                     "default": null,
+                    "description": "Why the sign-off is withdrawn; required (5 to 500 characters) for `withdraw`, optional for `sign`.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -22710,6 +23064,7 @@
                 "properties": {
                   "modules": {
                     "default": null,
+                    "description": "Explicit list of module keys to enable.",
                     "items": {
                       "type": "string"
                     },
@@ -22718,11 +23073,13 @@
                   },
                   "preset": {
                     "default": null,
+                    "description": "Name of a preset set of modules to apply.",
                     "nullable": true,
                     "type": "string"
                   },
                   "reset": {
                     "default": null,
+                    "description": "True clears the plan's own set so it falls back to the deployment default.",
                     "nullable": true,
                     "type": "boolean"
                   }
@@ -22832,10 +23189,12 @@
                 "description": "`POST /api/plans/{pid}/objectives` body: a weighted mapping\n(upserts on the pair — re-linking updates the weight).",
                 "properties": {
                   "objective_pid": {
+                    "description": "Pid of the objective being linked.",
                     "format": "uuid",
                     "type": "string"
                   },
                   "weight": {
+                    "description": "Alignment weight, 1 to 5 inclusive; re-linking replaces the stored weight.",
                     "format": "int32",
                     "type": "integer"
                   }
@@ -22945,12 +23304,15 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/plans/{pid}/onboarding/cases` body.",
                 "properties": {
                   "effective_date": {
+                    "description": "Date the join, leave, intake or closeout takes effect; must fall within 1970..=2100.",
                     "format": "date",
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Checklist kind token: `person_join`, `person_leave`, `plan_intake` or `plan_closeout`.",
                     "type": "string"
                   },
                   "subject_ref": {
@@ -22961,6 +23323,7 @@
                   },
                   "title": {
                     "default": null,
+                    "description": "Optional case title (non-blank, at most 200 characters); `None` lets the server derive one.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -23090,10 +23453,12 @@
                 "description": "`PUT /api/plans/{pid}/phase` body.",
                 "properties": {
                   "phase": {
+                    "description": "Target phase name. An unrecognized name is refused, never coerced.",
                     "type": "string"
                   },
                   "reason": {
                     "default": null,
+                    "description": "Why; required for a backward move, and recorded with the transition.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -23524,6 +23889,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body choosing how the plan reports progress.",
                 "properties": {
                   "method": {
                     "description": "`evm` or `product`.",
@@ -23645,34 +24011,41 @@
                   },
                   "description": {
                     "default": null,
+                    "description": "Longer description of the risk; absent means none given.",
                     "nullable": true,
                     "type": "string"
                   },
                   "impact": {
+                    "description": "Impact score; exposure is `probability * impact`.",
                     "format": "int32",
                     "type": "integer"
                   },
                   "mitigation": {
                     "default": null,
+                    "description": "Planned mitigation text; absent means none recorded.",
                     "nullable": true,
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Risk owner as a `worker:` / `person:` URN; absent means unowned.",
                     "nullable": true,
                     "type": "string"
                   },
                   "probability": {
+                    "description": "Likelihood score; validated together with `impact` by `rules::risk_exposure`.",
                     "format": "int32",
                     "type": "integer"
                   },
                   "review_date": {
                     "default": null,
+                    "description": "Date by which the risk should next be reviewed; absent means no review scheduled.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Risk title; required (non-blank) and length-capped.",
                     "type": "string"
                   }
                 },
@@ -23725,6 +24098,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of the risk cost-impact update.",
                 "properties": {
                   "cost_currency": {
                     "default": null,
@@ -23797,6 +24171,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact`.",
                 "properties": {
                   "impact_days": {
                     "default": null,
@@ -23872,29 +24247,34 @@
                 "properties": {
                   "impact": {
                     "default": null,
+                    "description": "New impact score; absent keeps the stored value.",
                     "format": "int32",
                     "nullable": true,
                     "type": "integer"
                   },
                   "mitigation": {
                     "default": null,
+                    "description": "Replacement mitigation text; absent leaves it unchanged.",
                     "nullable": true,
                     "type": "string"
                   },
                   "probability": {
                     "default": null,
+                    "description": "New likelihood score; absent keeps the stored value.",
                     "format": "int32",
                     "nullable": true,
                     "type": "integer"
                   },
                   "review_date": {
                     "default": null,
+                    "description": "New review date; absent leaves it unchanged.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
                   },
                   "status": {
                     "default": null,
+                    "description": "New status; must be one of `rules::RISK_STATUSES`. Absent leaves the status unchanged.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -24007,8 +24387,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/plans/{pid}/sandbox/preview` and `.../commit` body.",
                 "properties": {
                   "edits": {
+                    "description": "The proposed edits, applied in order to a copy of the plan.",
                     "items": {
                       "description": "One edit to a plan's schedule.",
                       "oneOf": [
@@ -24229,8 +24611,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST /api/plans/{pid}/sandbox/preview` and `.../commit` body.",
                 "properties": {
                   "edits": {
+                    "description": "The proposed edits, applied in order to a copy of the plan.",
                     "items": {
                       "description": "One edit to a plan's schedule.",
                       "oneOf": [
@@ -24448,16 +24832,20 @@
                 "properties": {
                   "comment": {
                     "default": null,
+                    "description": "Optional free-text comment from the respondent.",
                     "nullable": true,
                     "type": "string"
                   },
                   "instrument": {
+                    "description": "Survey instrument, `nps` or `csat`.",
                     "type": "string"
                   },
                   "respondent_role": {
+                    "description": "Respondent role: `sponsor`, `user`, `team` or `other`.",
                     "type": "string"
                   },
                   "score": {
+                    "description": "Score from 0 to 10 inclusive.",
                     "format": "int16",
                     "maximum": 32767,
                     "minimum": -32768,
@@ -24514,10 +24902,12 @@
                 "properties": {
                   "description": {
                     "default": null,
+                    "description": "Optional description; absent means none.",
                     "nullable": true,
                     "type": "string"
                   },
                   "name": {
+                    "description": "Name for the new template.",
                     "type": "string"
                   }
                 },
@@ -25100,13 +25490,16 @@
                 "description": "`POST /api/plans/{pid}/sprints` body.",
                 "properties": {
                   "ends_on": {
+                    "description": "Last day of the sprint window; must not precede `starts_on`.",
                     "format": "date",
                     "type": "string"
                   },
                   "name": {
+                    "description": "Sprint name.",
                     "type": "string"
                   },
                   "starts_on": {
+                    "description": "First day of the sprint window (inclusive).",
                     "format": "date",
                     "type": "string"
                   }
@@ -25198,9 +25591,11 @@
                 "description": "`POST .../sprints/{s_pid}/notes` body.",
                 "properties": {
                   "body": {
+                    "description": "Text of the note.",
                     "type": "string"
                   },
                   "category": {
+                    "description": "Retrospective note category; must be one of the allowed note categories.",
                     "type": "string"
                   }
                 },
@@ -25742,6 +26137,7 @@
                 "properties": {
                   "assignee_ref": {
                     "default": null,
+                    "description": "Assignee as a person reference (worker or person URN); absent means unassigned.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -25761,6 +26157,7 @@
                   },
                   "description": {
                     "default": null,
+                    "description": "Optional free-text description.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -25800,6 +26197,7 @@
                   },
                   "sprint_pid": {
                     "default": null,
+                    "description": "Sprint of this plan the task is scheduled into; absent means none.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
@@ -25813,10 +26211,12 @@
                   },
                   "status": {
                     "default": null,
+                    "description": "Initial workflow state; must be one the plan's workflow declares. Absent means the workflow's initial state.",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Task title.",
                     "type": "string"
                   }
                 },
@@ -25918,6 +26318,7 @@
                     "type": "string"
                   },
                   "status": {
+                    "description": "Target workflow state of the move; the workflow, WIP and blocker rules decide whether it is allowed.",
                     "type": "string"
                   }
                 },
@@ -25952,6 +26353,7 @@
                 "properties": {
                   "assignee_ref": {
                     "default": null,
+                    "description": "Assignee as a person reference (worker or person URN); absent means unassigned.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -25971,6 +26373,7 @@
                   },
                   "description": {
                     "default": null,
+                    "description": "Optional free-text description.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -26010,6 +26413,7 @@
                   },
                   "sprint_pid": {
                     "default": null,
+                    "description": "Sprint of this plan the task is scheduled into; absent means none.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
@@ -26023,10 +26427,12 @@
                   },
                   "status": {
                     "default": null,
+                    "description": "Initial workflow state; must be one the plan's workflow declares. Absent means the workflow's initial state.",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Task title.",
                     "type": "string"
                   }
                 },
@@ -26063,6 +26469,7 @@
                 "properties": {
                   "assignee_ref": {
                     "default": null,
+                    "description": "Person or worker reference to assign; null or blank unassigns the task.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -26114,9 +26521,11 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/plans/{pid}/tasks/{t_pid}/assignment` body. Give one quantity\nto change it, or two the first time; the rule derives the third.",
                 "properties": {
                   "duration_days": {
                     "default": null,
+                    "description": "Task duration in whole days.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
@@ -26129,12 +26538,14 @@
                   },
                   "units_percent": {
                     "default": null,
+                    "description": "Assignee allocation as a percentage of full-time.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "work_minutes": {
                     "default": null,
+                    "description": "Total effort in minutes.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
@@ -26190,6 +26601,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body setting the two CCPM estimates for a task.",
                 "properties": {
                   "aggressive_days": {
                     "default": null,
@@ -26256,8 +26668,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/plans/{pid}/tasks/{t_pid}/contour` body.",
                 "properties": {
                   "contour": {
+                    "description": "Contour token (for example flat or custom) describing how work is spread.",
                     "type": "string"
                   },
                   "custom": {
@@ -26359,19 +26773,23 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`POST` body for a task's material or fixed cost.",
                 "properties": {
                   "accrual": {
                     "description": "`start`, `prorated` or `end`.",
                     "type": "string"
                   },
                   "amount_minor": {
+                    "description": "Amount in minor currency units (for example cents).",
                     "format": "int64",
                     "type": "integer"
                   },
                   "currency": {
+                    "description": "ISO currency code of the amount; amounts in different currencies are\nnever summed.",
                     "type": "string"
                   },
                   "description": {
+                    "description": "What the cost is for.",
                     "type": "string"
                   },
                   "kind": {
@@ -26482,6 +26900,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Body of `PUT /api/plans/{pid}/tasks/{t_pid}/estimate`.",
                 "properties": {
                   "optimistic_days": {
                     "default": null,
@@ -26548,8 +26967,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for turning a task into a hammock or back.",
                 "properties": {
                   "enabled": {
+                    "description": "True makes the task a hammock; false returns it to an ordinary task. Asking for the state it already has is a no-op.",
                     "type": "boolean"
                   }
                 },
@@ -26678,11 +27099,15 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body that replaces a task's whole RACI row.",
                 "properties": {
                   "assignments": {
+                    "description": "The complete new row; anything not listed is removed. An empty list clears the row.",
                     "items": {
+                      "description": "One person's roles on a task in a RACI row replacement.",
                       "properties": {
                         "person_ref": {
+                          "description": "The person as a reference (URN), never a bare name.",
                           "type": "string"
                         },
                         "roles": {
@@ -26790,9 +27215,11 @@
                 "description": "`POST …/relations` body.",
                 "properties": {
                   "kind": {
+                    "description": "Relation kind, validated against the allowed kinds when the request is handled.",
                     "type": "string"
                   },
                   "to_task_pid": {
+                    "description": "The task the relation points at; must be a live task.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -26941,6 +27368,7 @@
                 "properties": {
                   "constraint_date": {
                     "default": null,
+                    "description": "Constraint date paired with `constraint_kind`; `None` clears the constraint.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
@@ -26960,6 +27388,7 @@
                   },
                   "duration_days": {
                     "default": null,
+                    "description": "New duration in business days; `None` clears it (unknown, not zero).",
                     "format": "int32",
                     "nullable": true,
                     "type": "integer"
@@ -26972,6 +27401,7 @@
                   },
                   "start_date": {
                     "default": null,
+                    "description": "New planned start; `None` clears it.",
                     "format": "date",
                     "nullable": true,
                     "type": "string"
@@ -27169,9 +27599,11 @@
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Kind of link, validated against the allowed kinds in the plan-link rules.",
                     "type": "string"
                   },
                   "label": {
+                    "description": "Human label for the link; stored trimmed.",
                     "type": "string"
                   },
                   "system": {
@@ -27181,6 +27613,7 @@
                     "type": "string"
                   },
                   "url": {
+                    "description": "The linked URL; must be unique among the live links of the same plan or task, otherwise 409.",
                     "type": "string"
                   }
                 },
@@ -27433,6 +27866,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/plans/{pid}/thresholds` body; which of the other fields apply depends on `kind`.",
                 "properties": {
                   "cap_minor": {
                     "default": null,
@@ -27450,6 +27884,7 @@
                   },
                   "currency": {
                     "default": null,
+                    "description": "Currency of `cap_minor`; needed with a `p80_cap` threshold.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -27461,6 +27896,7 @@
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Threshold kind, such as `confidence_red_packs`, `forecast_past` or `p80_cap`; validated by the rules.",
                     "type": "string"
                   },
                   "remove": {
@@ -27638,32 +28074,39 @@
                 "description": "`POST /api/plans/{pid}/time-entries` body.",
                 "properties": {
                   "actor_ref": {
+                    "description": "`person:` or `worker:` URN of who spent the effort (a reference, not a name).",
                     "type": "string"
                   },
                   "billable": {
                     "default": false,
+                    "description": "Whether the time is billable; defaults to false.",
                     "type": "boolean"
                   },
                   "category": {
                     "default": null,
+                    "description": "Effort category token; unknown or absent values are normalized by the effort rules.",
                     "nullable": true,
                     "type": "string"
                   },
                   "minutes": {
+                    "description": "Minutes spent, 1 to 1440 (one day).",
                     "format": "int64",
                     "type": "integer"
                   },
                   "note": {
                     "default": null,
+                    "description": "Free-text note on the entry; absent means none.",
                     "nullable": true,
                     "type": "string"
                   },
                   "spent_on": {
+                    "description": "Calendar date the effort was spent on; an approved timesheet week rejects new entries.",
                     "format": "date",
                     "type": "string"
                   },
                   "task_pid": {
                     "default": null,
+                    "description": "Task the effort belongs to; absent means plan-level effort not tied to a task.",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
@@ -27834,16 +28277,19 @@
                 "properties": {
                   "amber_from_percent": {
                     "default": null,
+                    "description": "Percentage of the limit at which status turns amber; absent uses the default.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "limit": {
+                    "description": "The limit for the dimension, in the dimension's unit; validated by the tolerance rules.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "note": {
                     "default": null,
+                    "description": "Optional note explaining the tolerance; trimmed, and blank is stored as none.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -28006,31 +28452,37 @@
                 "description": "`POST /api/plans/{pid}/tpc` body. Money in minor units of\n`currency`; ratios in basis points.",
                 "properties": {
                   "cost_estimate_to_complete": {
+                    "description": "Cost estimate to complete in minor units of `currency`; must not be negative.",
                     "format": "int64",
                     "type": "integer"
                   },
                   "currency": {
+                    "description": "Three-letter ISO 4217 code; normalised, and refused when not recognised.",
                     "type": "string"
                   },
                   "dipp": {
                     "default": null,
+                    "description": "DIPP in basis points; absent means it is undefined for this observation, not zero.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "dipp_progress_index_denominator": {
                     "default": null,
+                    "description": "Denominator of the DIPP progress index; absent when not measured.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "dipp_progress_index_numerator": {
                     "default": null,
+                    "description": "Numerator of the DIPP progress index; absent when not measured.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "expected_monetary_value": {
+                    "description": "Expected monetary value in minor units of `currency`; may be negative on purpose.",
                     "format": "int64",
                     "type": "integer"
                   }
@@ -28138,12 +28590,14 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/plans/{pid}/triage` body.",
                 "properties": {
                   "outcome": {
                     "description": "`finish`, `fix`, `pause` or `stop`.",
                     "type": "string"
                   },
                   "reason": {
+                    "description": "Why the outcome was chosen; at least 10 characters after trimming.",
                     "type": "string"
                   }
                 },
@@ -28196,24 +28650,29 @@
                 "properties": {
                   "currency": {
                     "default": null,
+                    "description": "ISO 4217 code for a monetary value; `None` when not monetary.",
                     "nullable": true,
                     "type": "string"
                   },
                   "evidence_ref": {
                     "default": null,
+                    "description": "Optional reference to the evidence behind the value (a link or document pid).",
                     "nullable": true,
                     "type": "string"
                   },
                   "is_first_measurable": {
                     "default": false,
+                    "description": "Marks the first measurable value, which stops the Time-to-Value clock; at most one per plan.",
                     "type": "boolean"
                   },
                   "method": {
                     "default": null,
+                    "description": "How the value was measured; an unrecognized or absent method falls back to the default method token.",
                     "nullable": true,
                     "type": "string"
                   },
                   "value": {
+                    "description": "Observed value in minor units of `currency` (or the metric's own unit when not monetary).",
                     "format": "int64",
                     "type": "integer"
                   }
@@ -28527,6 +28986,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/portfolio-drum` body.",
                 "properties": {
                   "skill_pool_pid": {
                     "default": null,
@@ -28855,9 +29315,11 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body carrying an optional note for a step completion or similar action.",
                 "properties": {
                   "note": {
                     "default": null,
+                    "description": "Free-text note stored in the execution log; absent means none.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -28940,9 +29402,11 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body carrying an optional note for a step completion or similar action.",
                 "properties": {
                   "note": {
                     "default": null,
+                    "description": "Free-text note stored in the execution log; absent means none.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -29038,13 +29502,16 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for defining a process or adding a new version of one.",
                 "properties": {
                   "name": {
                     "default": null,
+                    "description": "Display name, 1 to 120 characters. Absent on an edit means keep the current name; required when creating.",
                     "nullable": true,
                     "type": "string"
                   },
                   "steps": {
+                    "description": "Ordered steps (`approve`, `todo`, `notify`); validated by `rules::problems` before anything is stored.",
                     "items": {
                       "description": "One step of a process.",
                       "properties": {
@@ -29192,13 +29659,16 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for defining a process or adding a new version of one.",
                 "properties": {
                   "name": {
                     "default": null,
+                    "description": "Display name, 1 to 120 characters. Absent on an edit means keep the current name; required when creating.",
                     "nullable": true,
                     "type": "string"
                   },
                   "steps": {
+                    "description": "Ordered steps (`approve`, `todo`, `notify`); validated by `rules::problems` before anything is stored.",
                     "items": {
                       "description": "One step of a process.",
                       "properties": {
@@ -29294,11 +29764,14 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for starting an execution on a subject.",
                 "properties": {
                   "subject_kind": {
+                    "description": "Kind of the subject the process runs on, as accepted by `resolve_subject`.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Public id of the subject; the caller must be able to read it.",
                     "type": "string"
                   }
                 },
@@ -29395,6 +29868,7 @@
                 "properties": {
                   "currency": {
                     "default": null,
+                    "description": "ISO 4217 currency code for `requested_minor`; ignored unless an amount is given.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -29409,26 +29883,31 @@
                   },
                   "requested_minor": {
                     "default": null,
+                    "description": "Requested funding in minor currency units; when present a valid `currency` must accompany it. Absent means no amount was asked for (not zero).",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "sponsor_ref": {
                     "default": null,
+                    "description": "Sponsor reference as a `person:` / `worker:` / `organization:` URN; absent means no sponsor named yet.",
                     "nullable": true,
                     "type": "string"
                   },
                   "strategic_rationale": {
                     "default": null,
+                    "description": "Why the demand matters strategically; absent means not stated.",
                     "nullable": true,
                     "type": "string"
                   },
                   "summary": {
                     "default": null,
+                    "description": "Free-text summary of the demand; absent means none was given.",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Proposal title; required (non-blank) and capped at `MAX_TEXT_LEN`.",
                     "type": "string"
                   },
                   "tradeoff": {
@@ -29517,6 +29996,7 @@
                 "properties": {
                   "currency": {
                     "default": null,
+                    "description": "ISO 4217 currency code for `requested_minor`; ignored unless an amount is given.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -29531,26 +30011,31 @@
                   },
                   "requested_minor": {
                     "default": null,
+                    "description": "Requested funding in minor currency units; when present a valid `currency` must accompany it. Absent means no amount was asked for (not zero).",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "sponsor_ref": {
                     "default": null,
+                    "description": "Sponsor reference as a `person:` / `worker:` / `organization:` URN; absent means no sponsor named yet.",
                     "nullable": true,
                     "type": "string"
                   },
                   "strategic_rationale": {
                     "default": null,
+                    "description": "Why the demand matters strategically; absent means not stated.",
                     "nullable": true,
                     "type": "string"
                   },
                   "summary": {
                     "default": null,
+                    "description": "Free-text summary of the demand; absent means none was given.",
                     "nullable": true,
                     "type": "string"
                   },
                   "title": {
+                    "description": "Proposal title; required (non-blank) and capped at `MAX_TEXT_LEN`.",
                     "type": "string"
                   },
                   "tradeoff": {
@@ -29847,6 +30332,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/proposals/{pid}/tradeoff` body.",
                 "properties": {
                   "tradeoff": {
                     "description": "What the ask displaces (10 to 2000 characters).",
@@ -29974,12 +30460,15 @@
                 "description": "`POST /api/reactions` body.",
                 "properties": {
                   "kind": {
+                    "description": "Reaction kind (emoji token); checked by `rules::reaction_problems`.",
                     "type": "string"
                   },
                   "subject_kind": {
+                    "description": "Kind of subject reacted to.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Public id of the subject reacted to.",
                     "type": "string"
                   }
                 },
@@ -30022,12 +30511,15 @@
                 "description": "`POST /api/reactions` body.",
                 "properties": {
                   "kind": {
+                    "description": "Reaction kind (emoji token); checked by `rules::reaction_problems`.",
                     "type": "string"
                   },
                   "subject_kind": {
+                    "description": "Kind of subject reacted to.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Public id of the subject reacted to.",
                     "type": "string"
                   }
                 },
@@ -30077,18 +30569,22 @@
                 "description": "`POST /api/readings/{pid}/actions` body.",
                 "properties": {
                   "description": {
+                    "description": "What was done or decided; required, non-blank and capped.",
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Action kind: `correct`, `adjust`, `retrain`, `accept` or `escalate`.",
                     "type": "string"
                   },
                   "owner_ref": {
                     "default": null,
+                    "description": "Reference to the person who owns the action.",
                     "nullable": true,
                     "type": "string"
                   },
                   "reason": {
                     "default": null,
+                    "description": "Why the action was taken; used as the acceptance reason when `kind` is\n`accept`.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -30426,16 +30922,19 @@
                 "description": "`POST /api/reports` body (PPM-9).",
                 "properties": {
                   "collection": {
+                    "description": "Legacy collection label. Blank means all plans; otherwise it must be a plan kind and acts as a kind filter.",
                     "type": "string"
                   },
                   "fields": {
+                    "description": "Columns to project, in order; each must be in `REPORT_FIELDS` and at least one is required.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "filters": {
-                    "default": null
+                    "default": null,
+                    "description": "Saved filter object; `stage`, `status` and `name_like` are honoured at run time. Defaults to null."
                   },
                   "group_by": {
                     "default": null,
@@ -30444,6 +30943,7 @@
                     "type": "string"
                   },
                   "name": {
+                    "description": "Report name; required, capped at `MAX_TEXT_LEN`.",
                     "type": "string"
                   }
                 },
@@ -30538,10 +31038,12 @@
                 "description": "`POST /api/reports/{pid}/schedule` body.",
                 "properties": {
                   "cadence": {
+                    "description": "How often the report runs; validated by the `report_schedules` rules.",
                     "type": "string"
                   },
                   "format": {
                     "default": null,
+                    "description": "Output format of the run (`json` or `csv`); absent means `csv`.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -30778,8 +31280,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "`PUT /api/resource-roles` body.",
                 "properties": {
                   "person_ref": {
+                    "description": "Person URN (`person:` or `worker:`) whose primary role is being set.",
                     "type": "string"
                   },
                   "role": {
@@ -30971,14 +31475,17 @@
                 "properties": {
                   "comment": {
                     "default": null,
+                    "description": "Optional free-text comment, length-capped.",
                     "nullable": true,
                     "type": "string"
                   },
                   "recommendation": {
+                    "description": "One of the allowed recommendation tokens.",
                     "type": "string"
                   },
                   "score": {
                     "default": null,
+                    "description": "Optional score from 0 to 100; null means the reviewer gave none, not zero.",
                     "format": "int32",
                     "nullable": true,
                     "type": "integer"
@@ -31089,22 +31596,27 @@
                 "properties": {
                   "columns": {
                     "default": [],
+                    "description": "Visible column keys in display order; each must be non-blank and the list length is capped.",
                     "items": {
                       "type": "string"
                     },
                     "type": "array"
                   },
                   "filter": {
-                    "default": null
+                    "default": null,
+                    "description": "Opaque filter state the front end restores; size-capped so this endpoint cannot store arbitrary documents. Defaults to null."
                   },
                   "name": {
+                    "description": "Human-facing view name; required, capped at `MAX_NAME_LEN`.",
                     "type": "string"
                   },
                   "route": {
+                    "description": "Front-end route the view belongs to; required, capped at `MAX_ROUTE_LEN`.",
                     "type": "string"
                   },
                   "sort": {
-                    "default": null
+                    "default": null,
+                    "description": "Opaque sort state, size-capped like `filter`. Defaults to null."
                   }
                 },
                 "required": [
@@ -31242,22 +31754,26 @@
                 "properties": {
                   "budget_cap_minor": {
                     "default": null,
+                    "description": "Optional budget ceiling in minor currency units; `None` means no cap. Requires `currency`.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "currency": {
                     "default": null,
+                    "description": "ISO 4217 code the cap is expressed in; required whenever `budget_cap_minor` is set.",
                     "nullable": true,
                     "type": "string"
                   },
                   "description": {
                     "default": null,
+                    "description": "Optional description of what the scenario explores.",
                     "nullable": true,
                     "type": "string"
                   },
                   "must_include": {
                     "default": [],
+                    "description": "Members that a generated or edited scenario must keep; informational input to feasibility checks.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -31265,10 +31781,12 @@
                     "type": "array"
                   },
                   "name": {
+                    "description": "Scenario name; required and length-capped.",
                     "type": "string"
                   },
                   "plan_pids": {
                     "default": [],
+                    "description": "Plans (existing, live, visible to the caller) included as members.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -31277,6 +31795,7 @@
                   },
                   "proposal_pids": {
                     "default": [],
+                    "description": "Proposals (existing, live, visible to the caller) included as members.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -31347,17 +31866,20 @@
                 "properties": {
                   "budget_cap_minor": {
                     "default": null,
+                    "description": "Optional budget ceiling in minor currency units; `None` means unconstrained. Requires `currency`.",
                     "format": "int64",
                     "nullable": true,
                     "type": "integer"
                   },
                   "currency": {
                     "default": null,
+                    "description": "ISO 4217 code that `budget_cap_minor` and plan costs are compared in.",
                     "nullable": true,
                     "type": "string"
                   },
                   "must_include": {
                     "default": [],
+                    "description": "Plan pids the generated scenario must contain regardless of ranking.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -31366,6 +31888,7 @@
                   },
                   "name": {
                     "default": null,
+                    "description": "Optional name for the generated scenario; `None` lets the server choose a default.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -31521,6 +32044,7 @@
                 "description": "`POST /api/scheduled-actions` body.",
                 "properties": {
                   "action_kind": {
+                    "description": "What to do at the deadline; must be one of the scheduled action kinds.",
                     "type": "string"
                   },
                   "in_days": {
@@ -31530,18 +32054,22 @@
                   },
                   "message": {
                     "default": null,
+                    "description": "Optional note carried with the action, capped at `MAX_TEXT_LEN` characters.",
                     "nullable": true,
                     "type": "string"
                   },
                   "recipient_ref": {
                     "default": null,
+                    "description": "Person, worker or organization reference to notify; required for a `notify` action.",
                     "nullable": true,
                     "type": "string"
                   },
                   "subject_kind": {
+                    "description": "Kind of the subject: an idea, proposal, plan or task.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Pid of the subject the action will act on when due.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -31637,6 +32165,7 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for creating a scorecard.",
                 "properties": {
                   "for_deescalation": {
                     "default": false,
@@ -31644,6 +32173,7 @@
                     "type": "boolean"
                   },
                   "name": {
+                    "description": "Scorecard name; must be unique.",
                     "type": "string"
                   }
                 },
@@ -31728,18 +32258,24 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body for creating KPIs from the scorecard template.",
                 "properties": {
                   "measures": {
+                    "description": "Template measures chosen, each with its own thresholds.",
                     "items": {
+                      "description": "One template measure chosen for creation, with the owner-set thresholds.",
                       "properties": {
                         "key": {
+                          "description": "Key of a measure in the built-in scorecard template.",
                           "type": "string"
                         },
                         "red_value": {
+                          "description": "Threshold at which the KPI is red; must be consistent with the measure direction.",
                           "format": "int64",
                           "type": "integer"
                         },
                         "target_value": {
+                          "description": "Target the KPI must reach to be green, in the measure unit.",
                           "format": "int64",
                           "type": "integer"
                         }
@@ -31798,8 +32334,10 @@
           "content": {
             "application/json": {
               "schema": {
+                "description": "Request body replacing the KPI membership of a scorecard (at most 60, duplicates collapsed).",
                 "properties": {
                   "kpi_pids": {
+                    "description": "Pids of the KPIs that replace the scorecard membership.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -32119,14 +32657,17 @@
                 "properties": {
                   "facilitator_ref": {
                     "default": null,
+                    "description": "Reference to the person who facilitated (a reference, not free text).",
                     "nullable": true,
                     "type": "string"
                   },
                   "kind": {
+                    "description": "Ceremony kind; one of `CEREMONY_KINDS`.",
                     "type": "string"
                   },
                   "summary": {
                     "default": null,
+                    "description": "Optional notes on what was decided.",
                     "nullable": true,
                     "type": "string"
                   }
@@ -32331,6 +32872,7 @@
                 "description": "`POST /api/tasks/bulk` body.",
                 "properties": {
                   "ids": {
+                    "description": "Tasks to edit; duplicates are removed by `dedupe_ids` and an over-long list is refused.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -32378,6 +32920,7 @@
                 "description": "`POST /api/tasks/copy` and `/move` body.",
                 "properties": {
                   "ids": {
+                    "description": "Tasks to copy or move; duplicates are removed before processing.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -32390,6 +32933,7 @@
                     "type": "boolean"
                   },
                   "to_plan_pid": {
+                    "description": "Destination plan; must be visible to the caller, otherwise the whole request is a 422.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -32429,6 +32973,7 @@
                 "description": "`POST /api/tasks/copy` and `/move` body.",
                 "properties": {
                   "ids": {
+                    "description": "Tasks to copy or move; duplicates are removed before processing.",
                     "items": {
                       "format": "uuid",
                       "type": "string"
@@ -32441,6 +32986,7 @@
                     "type": "boolean"
                   },
                   "to_plan_pid": {
+                    "description": "Destination plan; must be visible to the caller, otherwise the whole request is a 422.",
                     "format": "uuid",
                     "type": "string"
                   }
@@ -32676,6 +33222,7 @@
                 "properties": {
                   "comment": {
                     "default": null,
+                    "description": "Why, required when rejecting; optional for an approval.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -32684,9 +33231,11 @@
                     "type": "string"
                   },
                   "person": {
+                    "description": "Person URN whose week is being decided; must not be the decider.",
                     "type": "string"
                   },
                   "week": {
+                    "description": "ISO week such as `2026-W40`.",
                     "type": "string"
                   }
                 },
@@ -32736,10 +33285,12 @@
                 "properties": {
                   "person": {
                     "default": null,
+                    "description": "Optional person URN; must name the caller, since only the owner may submit.",
                     "nullable": true,
                     "type": "string"
                   },
                   "week": {
+                    "description": "ISO week such as `2026-W40`.",
                     "type": "string"
                   }
                 },
@@ -32921,9 +33472,11 @@
                 "description": "`POST /api/watchers` body.",
                 "properties": {
                   "subject_kind": {
+                    "description": "Kind of record to follow; must be one of the allowed subject kinds.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Pid of the record, as text.",
                     "type": "string"
                   }
                 },
@@ -32971,9 +33524,11 @@
                 "description": "`POST /api/watchers` body.",
                 "properties": {
                   "subject_kind": {
+                    "description": "Kind of record to follow; must be one of the allowed subject kinds.",
                     "type": "string"
                   },
                   "subject_pid": {
+                    "description": "Pid of the record, as text.",
                     "type": "string"
                   }
                 },
@@ -33453,43 +34008,55 @@
                 "description": "`POST /api/workflows` body.",
                 "properties": {
                   "applies_to": {
+                    "description": "What the workflow governs: `task` or `issue`.",
                     "type": "string"
                   },
                   "is_default": {
                     "default": false,
+                    "description": "Marks the deployment default, used by plans that have no workflow of their own.",
                     "type": "boolean"
                   },
                   "name": {
+                    "description": "Workflow name shown in configuration lists.",
                     "type": "string"
                   },
                   "plan_pid": {
                     "default": null,
+                    "description": "Plan the workflow is scoped to; absent means it is not tied to one plan (a deployment-wide definition).",
                     "format": "uuid",
                     "nullable": true,
                     "type": "string"
                   },
                   "states": {
+                    "description": "Declared states; every one must carry a recognized category.",
                     "items": {
+                      "description": "One declared state of a workflow.",
                       "properties": {
                         "category": {
+                          "description": "Meaning of the state (`todo`, `active`, `waiting` or `done`). Required and never defaulted, since boards and time analysis compute from it.",
                           "type": "string"
                         },
                         "is_initial": {
                           "default": false,
+                          "description": "Marks the state new items start in.",
                           "type": "boolean"
                         },
                         "is_terminal": {
                           "default": false,
+                          "description": "Marks a state work does not leave (typically done).",
                           "type": "boolean"
                         },
                         "key": {
+                          "description": "Stable machine key tasks store as their state.",
                           "type": "string"
                         },
                         "label": {
+                          "description": "Display label.",
                           "type": "string"
                         },
                         "wip_limit": {
                           "default": null,
+                          "description": "Maximum items allowed in the state at once; absent means unlimited.",
                           "format": "uint32",
                           "minimum": 0,
                           "nullable": true,
@@ -33506,9 +34073,12 @@
                     "type": "array"
                   },
                   "transitions": {
+                    "description": "Allowed moves between states; empty means any move is permitted.",
                     "items": {
+                      "description": "One allowed move between two states.",
                       "properties": {
                         "from": {
+                          "description": "State key the move starts from.",
                           "type": "string"
                         },
                         "roles": {
@@ -33520,6 +34090,7 @@
                           "type": "array"
                         },
                         "to": {
+                          "description": "State key the move ends at.",
                           "type": "string"
                         }
                       },
@@ -33601,15 +34172,18 @@
                 "description": "`POST /api/working-time` body.",
                 "properties": {
                   "minutes_per_day": {
+                    "description": "Working minutes in a day, 1 to 1440.",
                     "format": "int32",
                     "type": "integer"
                   },
                   "scope_ref": {
                     "default": null,
+                    "description": "Scope the declaration applies to; absent is the organization-wide default read by the utilization report.",
                     "nullable": true,
                     "type": "string"
                   },
                   "working_days_per_week": {
+                    "description": "Working days in a week, 1 to 7.",
                     "format": "int32",
                     "type": "integer"
                   }

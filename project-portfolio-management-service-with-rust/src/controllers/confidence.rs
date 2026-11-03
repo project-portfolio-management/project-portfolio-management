@@ -27,6 +27,7 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Whether the caller carries administrator access, as decided by the shared plan-access rule.
 fn is_admin(caller: &MaybeAuthUser) -> bool {
     super::plan_access::is_admin(caller.claims())
 }
@@ -48,6 +49,7 @@ fn may_assess_independently(caller: &MaybeAuthUser) -> bool {
 // DP-2: delivery confidence
 // ---------------------------------------------------------------------------------------------------
 
+/// Renders one stated assessment for the API; `assessor` is the recorded actor string, not a resolved person.
 fn assessment_json(a: &assessments::Model) -> serde_json::Value {
     serde_json::json!({
         "pid": a.pid, "plan_pid": a.plan_pid, "value": a.value, "kind": a.kind,
@@ -55,16 +57,21 @@ fn assessment_json(a: &assessments::Model) -> serde_json::Value {
     })
 }
 
+/// `PUT /api/plans/{pid}/delivery-confidence` body. The stated value is validated by `rules::assessment_problems`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct AssessBody {
+    /// Stated confidence value (for example `green`, `amber_red`, `red`); the allowed tokens live in [`crate::delivery_confidence`].
     value: String,
+    /// Either `self` or `independent`; only `independent` needs `confidence=independent` or admin access.
     kind: String,
+    /// Why the assessor holds this view; required so the value is never a bare colour.
     rationale: String,
     /// Defaults to today; not in the future.
     #[serde(default)]
     assessed_on: Option<NaiveDate>,
 }
 
+/// Renders one exception with its completeness and breach state. A closed exception is judged at its own closing time and an open one against `now`; `window` is the allowed hours to complete it.
 fn exception_json(e: &exceptions::Model, now: DateTime<Utc>, window: i64) -> serde_json::Value {
     let parts = Parts {
         cause: e.cause.as_deref(),
@@ -242,6 +249,7 @@ async fn get_confidence(
     }))
 }
 
+/// Projects a stored assessment row onto the small value the pure rules operate on.
 fn lite(a: &assessments::Model) -> Assessment {
     Assessment {
         value: a.value.clone(),
@@ -254,10 +262,13 @@ fn lite(a: &assessments::Model) -> Assessment {
 // DP-3: exceptions
 // ---------------------------------------------------------------------------------------------------
 
+/// Query for `GET /api/exceptions`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ExceptionQuery {
+    /// Optional filter, `open` or `closed`; anything else is a `422`.
     #[serde(default)]
     status: Option<String>,
+    /// Optional filter on the computed breach flag; absent returns both.
     #[serde(default)]
     breached: Option<bool>,
 }
@@ -296,6 +307,7 @@ async fn list_exceptions(
     format::json(serde_json::json!({ "exceptions": shown, "window_hours": window }))
 }
 
+/// Loads an exception by public id, returning `404` both when it does not exist and when its plan is hidden from the caller, so existence is not leaked.
 pub(crate) async fn find_exception(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -318,17 +330,22 @@ pub(crate) async fn find_exception(
     Ok(row)
 }
 
+/// `PUT /api/exceptions/{pid}` body; every field is optional and an omitted one keeps its stored value.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CompleteBody {
+    /// What caused the exception; absent keeps the stored cause.
     #[serde(default)]
     cause: Option<String>,
+    /// The decision someone must make to close the exception.
     #[serde(default)]
     decision_needed: Option<String>,
+    /// Owner as a person reference. Packs show only the role, never this reference.
     #[serde(default)]
     owner_ref: Option<String>,
     /// The owner's role, which is what a pack shows instead of the person.
     #[serde(default)]
     owner_role: Option<String>,
+    /// Date by which the decision is needed.
     #[serde(default)]
     decide_by: Option<NaiveDate>,
 }
@@ -350,6 +367,7 @@ async fn complete_exception(
             "this exception is closed",
         ));
     }
+    // Blank or whitespace-only text counts as absent, so it cannot mark a field complete.
     let clean = |s: &Option<String>| {
         s.as_ref()
             .map(|v| v.trim().to_string())
@@ -400,8 +418,10 @@ async fn complete_exception(
     format::json(exception_json(&saved, Utc::now(), rules::window_hours()))
 }
 
+/// `POST /api/exceptions/{pid}/decision` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DecisionBody {
+    /// The recorded decision text; recording it is what closes the exception.
     decision: String,
 }
 
@@ -469,8 +489,10 @@ async fn decide_exception(
 // DP-4: strategic aims and the portfolio map
 // ---------------------------------------------------------------------------------------------------
 
+/// `PUT /api/objectives/{pid}/strategic-aim` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct AimBody {
+    /// True marks the objective as a strategic aim, false unmarks it.
     strategic: bool,
 }
 
@@ -537,8 +559,10 @@ async fn mark_aim(
     format::json(serde_json::json!({ "objective_pid": objective.pid, "strategic": b.strategic }))
 }
 
+/// `PUT /api/plans/{pid}/primary-aim` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PrimaryBody {
+    /// Public id of the strategic aim that becomes the programme's one primary aim.
     objective_pid: Uuid,
 }
 
@@ -772,10 +796,12 @@ pub(crate) async fn build_map(
 /// `GET /api/portfolio-map[?period=YYYY-MM]` — the map for the programmes you can read.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MapQuery {
+    /// Optional `YYYY-MM` period; absent means the current month (UTC).
     #[serde(default)]
     period: Option<String>,
 }
 
+/// `GET /api/portfolio-map` handler: the map of programmes the caller may read, grouped under their primary strategic aim. Read-only.
 #[debug_handler]
 async fn portfolio_map(
     State(ctx): State<AppContext>,
@@ -869,6 +895,7 @@ pub(crate) async fn exceptions_section(
     }))
 }
 
+/// Returns the context's database connection; a thin accessor used by the map builder.
 fn ctx_db(ctx: &AppContext) -> &sea_orm::DatabaseConnection {
     &ctx.db
 }

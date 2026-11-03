@@ -271,6 +271,7 @@ pub struct Terms {
     pub notes: Vec<String>,
 }
 
+/// The common value when every file gives the same one; otherwise `None` and `what` is added to `conflicts`. No files means `None` with no conflict.
 fn agree<T: Clone + PartialEq>(values: &[T], what: &str, conflicts: &mut Vec<String>) -> Option<T> {
     let first = values.first()?;
     if values.iter().all(|v| v == first) {

@@ -15,8 +15,10 @@ use crate::auth::MaybeAuthUser;
 use crate::buffers;
 use crate::critical_chain::{self, Outcome};
 
+/// Explanation returned with every buffer answer: it is advice only and states how buffers are sized and which links are followed.
 const NOTE: &str = "This is advice; nothing has been changed. Tasks are scheduled at their aggressive estimates where they have one (the others keep their likely duration and are listed), levelled for people's time as for the critical chain. Each buffer is sized from the safety removed from its tasks (safe minus aggressive) by the rule printed, in business days of the plan's calendar. A feeding buffer that would push the critical chain is flagged with the days, not absorbed. Resource buffers are alerts that a person must be ready, not time. Only finish-to-start dependencies are followed as chain links.";
 
+/// Days of warning for resource buffers from `PROJECT_PORTFOLIO_MANAGEMENT_RESOURCE_BUFFER_DAYS` (0 to 30, default 2). The flag is true when the setting was present but unusable, so the default was used.
 fn resource_lead_days() -> (i64, bool) {
     match std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_RESOURCE_BUFFER_DAYS") {
         Err(_) => (2, false),

@@ -26,6 +26,7 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Map a database error to an API error; unique-constraint violations on scorecard name or the single de-escalation scorecard become 409 conflicts, anything else a generic error.
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();
     if t.contains("sc_name") {
@@ -62,14 +63,17 @@ pub fn routes() -> Routes {
         .add("/deescalation/criteria/{pid}/evidence", put(set_evidence))
 }
 
+/// True when the caller holds the admin access attribute (or auth is open).
 fn is_admin(caller: &MaybeAuthUser) -> bool {
     caller.holds_or_open(|c| crate::auth::has_attr(c, "access", "admin"))
 }
 
+/// True when the caller holds the given role attribute (or auth is open).
 fn has_role(caller: &MaybeAuthUser, role: &str) -> bool {
     caller.holds_or_open(|c| crate::auth::has_attr(c, "role", role))
 }
 
+/// Pids of non-deleted plans the caller may read; scorecards only count KPIs from these.
 async fn readable(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {
     let all: Vec<Uuid> = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
@@ -84,8 +88,10 @@ async fn readable(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uu
 
 // ---- scorecards -----------------------------------------------------------------------------
 
+/// Request body for creating a scorecard.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NewScorecard {
+    /// Scorecard name; must be unique.
     name: String,
     /// Make this the scorecard the de-escalation tracker reads.
     #[serde(default)]
@@ -135,11 +141,14 @@ async fn list(State(ctx): State<AppContext>) -> Result<Response> {
     )
 }
 
+/// Request body replacing the KPI membership of a scorecard (at most 60, duplicates collapsed).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SetKpis {
+    /// Pids of the KPIs that replace the scorecard membership.
     kpi_pids: Vec<Uuid>,
 }
 
+/// Load a scorecard by pid string; a malformed pid is rejected by `parse_pid` and an absent row is `NotFound`.
 async fn find_scorecard(ctx: &AppContext, pid: &str) -> Result<scorecards::Model> {
     let pid = super::parse_pid(pid)?;
     scorecards::Entity::find()
@@ -217,15 +226,21 @@ async fn template() -> Result<Response> {
     }))
 }
 
+/// One template measure chosen for creation, with the owner-set thresholds.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Pick {
+    /// Key of a measure in the built-in scorecard template.
     key: String,
+    /// Target the KPI must reach to be green, in the measure unit.
     target_value: i64,
+    /// Threshold at which the KPI is red; must be consistent with the measure direction.
     red_value: i64,
 }
 
+/// Request body for creating KPIs from the scorecard template.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct FromTemplate {
+    /// Template measures chosen, each with its own thresholds.
     measures: Vec<Pick>,
 }
 
@@ -356,8 +371,10 @@ async fn kpi_rows(
     Ok((rows, hidden, inputs))
 }
 
+/// Query string for the scorecard view.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Quarters {
+    /// Number of finished quarters to show; absent means 4.
     #[serde(default)]
     quarters: Option<usize>,
 }
@@ -389,9 +406,12 @@ async fn show(
 
 // ---- the tracker ----------------------------------------------------------------------------
 
+/// Request body recording the sponsor-set escalation level.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct LevelBody {
+    /// Escalation level label set by the sponsor, 1 to 60 characters after trimming.
     level: String,
+    /// Optional reason for the level.
     #[serde(default)]
     note: Option<String>,
 }
@@ -444,8 +464,10 @@ async fn set_level(
     format::json(json!({ "level": row.level, "set_on": row.set_on }))
 }
 
+/// Request body adding a de-escalation criterion.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CriterionBody {
+    /// Criterion text, 5 to 500 characters after trimming.
     criterion: String,
 }
 
@@ -482,13 +504,17 @@ async fn add_criterion(
     format::json(json!({ "pid": row.pid, "criterion": row.criterion }))
 }
 
+/// Request body recording evidence for one criterion in one finished quarter.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct EvidenceBody {
     /// `YYYY-Qn`, a finished quarter.
     quarter: String,
+    /// Whether the criterion was met in that quarter.
     met: bool,
+    /// Optional link to supporting evidence.
     #[serde(default)]
     link: Option<String>,
+    /// Required justification, at least 5 characters after trimming.
     note: String,
 }
 

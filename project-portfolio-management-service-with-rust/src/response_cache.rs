@@ -14,6 +14,7 @@ use axum::{extract::Request, extract::State, http::Method, middleware::Next, res
 use loco_rs::app::AppContext;
 use uuid::Uuid;
 
+/// Cache key of the current epoch; changing it orphans every entry written under the old one.
 const EPOCH_KEY: &str = "ppm:epoch";
 /// How long an entry lives even if nothing is written.
 pub const TTL: Duration = Duration::from_secs(30);

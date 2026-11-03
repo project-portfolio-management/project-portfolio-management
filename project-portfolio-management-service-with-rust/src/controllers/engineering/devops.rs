@@ -18,18 +18,26 @@ use crate::models::audit_logs::Model as AuditModel;
 /// `POST /api/devops/events` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DevopsEventPayload {
+    /// Plan the event belongs to; must be a live plan, else 404.
     plan_pid: Uuid,
+    /// Event kind, one of `DEVOPS_EVENT_KINDS` (deploy, incident or recovery).
     kind: String,
+    /// Target environment name; required (non-empty) for a deploy and optional otherwise.
     #[serde(default)]
     environment: Option<String>,
+    /// Free-text version or release label that was deployed; absent when not supplied.
     #[serde(default)]
     version: Option<String>,
+    /// Free-text external reference (build, ticket or change id); stored as given.
     #[serde(default)]
     reference: Option<String>,
+    /// Incident event this recovery resolves; required on a recovery and must name an ingested incident.
     #[serde(default)]
     incident_pid: Option<Uuid>,
+    /// Deploy event declared as the cause of this incident; only valid on incidents. Absent means causation is undeclared, never guessed.
     #[serde(default)]
     caused_by_deploy_pid: Option<Uuid>,
+    /// When the event happened (UTC); absent means now, at ingestion.
     #[serde(default)]
     occurred_at: Option<chrono::DateTime<chrono::Utc>>,
 }

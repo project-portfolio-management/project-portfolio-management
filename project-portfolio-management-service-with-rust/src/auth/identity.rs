@@ -13,7 +13,7 @@ use super::*;
 pub struct AuthUser(pub Claims);
 
 /// Extracting an [`AuthUser`] verifies the request's bearer token against
-/// the process-wide [`verifier`]; a missing/invalid token rejects with
+/// the process-wide `verifier`; a missing/invalid token rejects with
 /// `401` before the handler runs, so the type is the "require auth" gate.
 impl<S: Send + Sync> FromRequestParts<S> for AuthUser {
     type Rejection = (StatusCode, String);

@@ -46,12 +46,14 @@ pub struct Derived<T> {
 }
 
 impl<T> Derived<T> {
+    /// A derived value that is present.
     const fn some(v: T) -> Self {
         Self {
             value: Some(v),
             reason: None,
         }
     }
+    /// An absent derived value with the reason it is absent (never a zero).
     const fn none(reason: &'static str) -> Self {
         Self {
             value: None,

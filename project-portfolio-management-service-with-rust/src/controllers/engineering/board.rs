@@ -47,13 +47,18 @@ pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
 /// `POST /api/plans/{pid}/tasks` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TaskPayload {
+    /// Task title.
     title: String,
+    /// Optional free-text description.
     #[serde(default)]
     description: Option<String>,
+    /// Initial workflow state; must be one the plan's workflow declares. Absent means the workflow's initial state.
     #[serde(default)]
     status: Option<String>,
+    /// Assignee as a person reference (worker or person URN); absent means unassigned.
     #[serde(default)]
     assignee_ref: Option<String>,
+    /// Sprint of this plan the task is scheduled into; absent means none.
     #[serde(default)]
     sprint_pid: Option<Uuid>,
     /// Optional due **calendar date** (`YYYY-MM-DD`, no zone).
@@ -276,6 +281,7 @@ pub(super) async fn create_task(
 /// `GET /api/plans/{pid}/tasks` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TaskListParams {
+    /// Component filter: a component pid, or `unassigned` for tasks with none.
     #[serde(default)]
     component: Option<String>,
     /// Page size (at most 500). With `limit` or `offset` the answer is one page.
@@ -457,6 +463,7 @@ pub(super) fn enforce_move_roles(
 /// `PATCH /api/plans/{pid}/tasks/{t_pid}` body: the move.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MovePayload {
+    /// Target workflow state of the move; the workflow, WIP and blocker rules decide whether it is allowed.
     status: String,
     /// Why the task is blocked; only on a move into `blocked`
     /// (`crate::tba::BLOCKED_REASONS`).

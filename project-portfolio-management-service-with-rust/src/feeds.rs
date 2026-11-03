@@ -94,6 +94,7 @@ pub struct Event {
     pub span: Option<(DateTime<Utc>, DateTime<Utc>)>,
 }
 
+/// Format a date as `YYYYMMDD`, the iCalendar basic date form.
 fn ymd(d: NaiveDate) -> String {
     format!("{:04}{:02}{:02}", d.year(), d.month(), d.day())
 }

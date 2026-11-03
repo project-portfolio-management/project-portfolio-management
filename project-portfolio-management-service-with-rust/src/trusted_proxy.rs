@@ -24,11 +24,14 @@ pub fn peer_ip(extensions: &Extensions) -> Option<IpAddr> {
 /// One trusted address or CIDR range.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Cidr {
+    /// Network address, in canonical form (an IPv4-mapped IPv6 address is stored as IPv4).
     addr: IpAddr,
+    /// Number of leading bits that must match; the full address width for a single host.
     prefix: u8,
 }
 
 impl Cidr {
+    /// Parse `addr` or `addr/prefix`. A bare address means a single host. Returns a message when the address is not an IP or the prefix exceeds the address width.
     fn parse(text: &str) -> Result<Self, String> {
         let (host, prefix) = match text.split_once('/') {
             Some((host, prefix)) => (host, Some(prefix)),
@@ -52,6 +55,7 @@ impl Cidr {
         Ok(Self { addr, prefix })
     }
 
+    /// Whether `ip` falls inside this range. Addresses of different families never match.
     fn contains(&self, ip: IpAddr) -> bool {
         match (self.addr, ip.to_canonical()) {
             (IpAddr::V4(net), IpAddr::V4(ip)) => {

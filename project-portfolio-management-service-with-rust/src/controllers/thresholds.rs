@@ -41,6 +41,7 @@ pub fn routes() -> Routes {
         .add("/exceptions/{pid}/threshold-decision", post(decide))
 }
 
+/// Loads a plan and requires it to be of kind `Program`; `what` completes the `422` message ("only a plan of kind Program has ...").
 async fn programme(ctx: &AppContext, pid: &str, what: &str) -> Result<plans::Model> {
     let plan = super::governance::find_item(ctx, pid).await?;
     if plan.kind.as_deref() != Some("Program") {
@@ -53,13 +54,16 @@ async fn programme(ctx: &AppContext, pid: &str, what: &str) -> Result<plans::Mod
 
 // ---- triage ---------------------------------------------------------------------------------
 
+/// `PUT /api/plans/{pid}/triage` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TriageBody {
     /// `finish`, `fix`, `pause` or `stop`.
     outcome: String,
+    /// Why the outcome was chosen; at least 10 characters after trimming.
     reason: String,
 }
 
+/// Renders one triage row for the API.
 fn triage_view(t: &triages::Model) -> Value {
     json!({ "pid": t.pid, "triaged_on": t.triaged_on, "outcome": t.outcome, "reason": t.reason })
 }
@@ -127,8 +131,10 @@ async fn get_triage(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 
 // ---- thresholds -----------------------------------------------------------------------------
 
+/// `PUT /api/plans/{pid}/thresholds` body; which of the other fields apply depends on `kind`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ThresholdBody {
+    /// Threshold kind, such as `confidence_red_packs`, `forecast_past` or `p80_cap`; validated by the rules.
     kind: String,
     /// `confidence_red_packs`: how many issued packs in a row at red (1 to 24).
     #[serde(default)]
@@ -139,6 +145,7 @@ pub(crate) struct ThresholdBody {
     /// `p80_cap`: the cap on the P80 cost, minor units, with `currency`.
     #[serde(default)]
     cap_minor: Option<i64>,
+    /// Currency of `cap_minor`; needed with a `p80_cap` threshold.
     #[serde(default)]
     currency: Option<String>,
     /// Remove this threshold.
@@ -146,6 +153,7 @@ pub(crate) struct ThresholdBody {
     remove: bool,
 }
 
+/// Renders one threshold, showing only the parameter that kind uses (the others are null, not zero).
 fn threshold_view(t: &thresholds::Model) -> Value {
     json!({ "kind": t.kind, "count": t.count_value, "date": t.date_value, "cap_minor": t.amount_minor, "currency": t.currency })
 }
@@ -464,10 +472,14 @@ pub(crate) async fn run_sweep(ctx: &AppContext, actor: Option<&str>) -> Result<V
 
 // ---- the decision ---------------------------------------------------------------------------
 
+/// `POST /api/exceptions/{pid}/threshold-decision` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DecideBody {
+    /// One of `pause`, `reset`, `stop` or `override`. This only records a decision; nothing is paused, reset or stopped automatically.
     action: String,
+    /// Why the decision was made; required.
     reason: String,
+    /// Expiry date, required for an override (in the future, at most a year out) and refused for the other actions.
     #[serde(default)]
     expiry: Option<chrono::NaiveDate>,
 }

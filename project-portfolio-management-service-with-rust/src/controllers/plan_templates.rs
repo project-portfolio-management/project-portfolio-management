@@ -35,10 +35,15 @@ use crate::streaming;
 
 /// A plan as captured, before offsets are computed.
 struct Raw {
+    /// The plan row itself.
     row: plans::Model,
+    /// Index of the parent plan within the captured list; None for the root of the subtree.
     parent: Option<usize>,
+    /// Live tasks of this plan.
     tasks: Vec<tasks::Model>,
+    /// Live components of this plan.
     components: Vec<components::Model>,
+    /// Live milestones of this plan.
     milestones: Vec<milestones::Model>,
 }
 
@@ -218,7 +223,9 @@ pub(super) async fn capture(
 /// `POST /api/plans/{pid}/save-as-template` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SaveBody {
+    /// Name for the new template.
     name: String,
+    /// Optional description; absent means none.
     #[serde(default)]
     description: Option<String>,
 }
@@ -343,6 +350,7 @@ pub(super) fn refuse_starter(row: &plan_templates::Model) -> Result<()> {
     Ok(())
 }
 
+/// Load a template by public id: a built-in starter is served from code, any other must exist and not be soft-deleted, else 404.
 pub(super) async fn find_template(ctx: &AppContext, pid: &str) -> Result<plan_templates::Model> {
     let pid = super::parse_pid(pid)?;
     if let Some(s) = crate::starter_templates::find(pid) {
@@ -472,6 +480,7 @@ async fn from_template(
     }
 }
 
+/// Create the plan tree described by a snapshot, shifting dates by the instantiate request. Every plan created is pushed onto `created` as it goes so the caller can undo a partial build. Returns the summary JSON.
 #[expect(clippy::too_many_lines)] // one linear pipeline per plan: plan, workflow, components, tasks, milestones
 async fn build(
     ctx: &AppContext,

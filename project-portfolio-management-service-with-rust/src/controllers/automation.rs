@@ -2,7 +2,7 @@
 //!
 //! - **Automations** — rules an operator configures once (`POST
 //!   /api/automations`). When a task crosses the Kanban board (or a
-//!   review verdict lands) [`fire`] evaluates them with the pure engine
+//!   review verdict lands) `fire` evaluates them with the pure engine
 //!   in [`crate::automation`] and applies the matching actions.
 //! - **Scheduled actions** — the deadline queue. An action configured
 //!   once is held until `due_at`, then fired **exactly once** by the
@@ -61,12 +61,17 @@ pub(crate) struct AutomationPayload {
     /// Scope the rule to one plan's board; absent = every plan.
     #[serde(default)]
     plan_pid: Option<Uuid>,
+    /// Rule name; required, trimmed, capped at `MAX_TEXT_LEN` characters.
     name: String,
+    /// Event that fires the rule; validated against the known trigger kinds at write time.
     trigger_kind: String,
+    /// For a status-change trigger, the status the task leaves; absent matches any.
     #[serde(default)]
     from_status: Option<String>,
+    /// For a status-change trigger, the status the task enters; absent matches any.
     #[serde(default)]
     to_status: Option<String>,
+    /// Ordered actions, each `{"kind": ..., "value": ...}`; all are applied in array order whenever the rule matches.
     actions: Vec<serde_json::Value>,
 }
 
@@ -145,8 +150,10 @@ async fn create_automation(
 /// `GET /api/automations` filter.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct AutomationParams {
+    /// Only rules scoped to this plan; absent applies no plan filter.
     #[serde(default)]
     plan: Option<Uuid>,
+    /// Only rules with this trigger kind; absent applies no trigger filter.
     #[serde(default)]
     trigger: Option<String>,
     /// `true` ⇒ only enabled rules.
@@ -274,10 +281,13 @@ async fn delete_automation(
 /// `GET /api/automations/runs` filter.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RunParams {
+    /// Only runs of this rule (its pid).
     #[serde(default)]
     automation: Option<Uuid>,
+    /// Only runs against this subject (its pid).
     #[serde(default)]
     subject: Option<Uuid>,
+    /// Only runs with this outcome, such as `applied`, `skipped` or `failed`.
     #[serde(default)]
     outcome: Option<String>,
     /// Page size; absent ⇒ [`LIST_CAP`].
@@ -512,21 +522,25 @@ async fn act_schedule(
     }
 }
 
-/// Apply one action of a matched rule. Returns the run outcome and the
-/// detail recorded against it — one call per element of the rule's
-/// `actions` array, so a rule with several actions calls this several
-/// times, each independently logged (FR-32).
 /// The shared context every action of one matched rule's firing needs
 /// — bundled so `apply_action` takes a handful of arguments rather
 /// than one per fact about the firing.
 struct FiringContext<'a> {
+    /// The matched rule being applied.
     rule: &'a crate::models::_entities::automations::Model,
+    /// The event that matched the rule, including the plan it happened in.
     fact: &'a rules::TriggerFact,
+    /// Kind of the thing the rule acts on (for example `task`).
     subject_kind: &'a str,
+    /// Pid of the thing the rule acts on.
     subject_pid: Uuid,
+    /// Who caused the event, when known; carried into follow-up actions for the audit trail.
     actor: Option<&'a str>,
 }
 
+/// Apply one action of a matched rule and return the run outcome and its detail (`applied`, `skipped` or `failed`, with a reason on failure). Dispatches on the action kind; an unknown kind fails rather than being ignored.
+/// Called once per element of the rule's `actions` array, each independently
+/// logged (FR-32).
 async fn apply_action(
     ctx: &AppContext,
     firing: &FiringContext<'_>,
@@ -957,7 +971,7 @@ async fn apply_rule_actions(
 /// **rule firings** (a milestone matched by two rules counts as two).
 ///
 /// A due date is a **condition**, not a one-shot event, so — unlike
-/// [`fire`] — each (rule, milestone) pair is **claimed** with an
+/// `fire` — each (rule, milestone) pair is **claimed** with an
 /// `INSERT … ON CONFLICT DO NOTHING` into `automation_milestone_fires`
 /// before it is applied: only the caller whose insert actually adds a
 /// row proceeds, so two concurrent sweeps (or the ticker racing the
@@ -1060,13 +1074,18 @@ pub async fn sweep_milestone_due(ctx: &AppContext) -> Result<(usize, usize, bool
 /// `POST /api/scheduled-actions` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SchedulePayload {
+    /// Kind of the subject: an idea, proposal, plan or task.
     subject_kind: String,
+    /// Pid of the subject the action will act on when due.
     subject_pid: Uuid,
+    /// What to do at the deadline; must be one of the scheduled action kinds.
     action_kind: String,
     /// Deadline in calendar days from now (1..=[`crate::automation::MAX_SCHEDULE_DAYS`]).
     in_days: i64,
+    /// Person, worker or organization reference to notify; required for a `notify` action.
     #[serde(default)]
     recipient_ref: Option<String>,
+    /// Optional note carried with the action, capped at `MAX_TEXT_LEN` characters.
     #[serde(default)]
     message: Option<String>,
 }
@@ -1157,8 +1176,10 @@ async fn create_scheduled_action(
 /// `GET /api/scheduled-actions` filter.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ScheduledParams {
+    /// Only rows in this status (for example `pending`); absent applies no status filter.
     #[serde(default)]
     status: Option<String>,
+    /// Only rows for this subject (its pid).
     #[serde(default)]
     subject: Option<Uuid>,
     /// `true` ⇒ only rows already past their deadline.

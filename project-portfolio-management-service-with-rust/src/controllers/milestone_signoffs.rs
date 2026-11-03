@@ -113,15 +113,19 @@ pub(crate) fn assessment_json(a: &Assessment) -> Value {
     })
 }
 
+/// True when the caller holds the `access: admin` attribute (or auth is open), which lets them sign for any organization.
 fn is_admin(caller: &MaybeAuthUser) -> bool {
     caller.holds_or_open(|c| crate::auth::has_attr(c, "access", "admin"))
 }
 
+/// Request body replacing the organizations required to sign off a milestone.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Required_ {
+    /// Organizations that must sign; duplicates are collapsed, at most 20, and each must exist and be active. An empty list clears the requirement.
     organization_pids: Vec<Uuid>,
 }
 
+/// Load a milestone by pid, ensuring it belongs to the plan in the URL; otherwise `NotFound` so milestones of other plans are not revealed.
 async fn the_milestone(ctx: &AppContext, pid: &str, m_pid: &str) -> Result<milestones::Model> {
     let plan = super::governance::find_item(ctx, pid).await?;
     let m_pid = super::parse_pid(m_pid)?;
@@ -193,11 +197,14 @@ async fn set_required(
     format::json(json!({ "milestone_pid": m.pid, "organization_pids": wanted }))
 }
 
+/// Request body for signing or withdrawing a sign-off on a milestone.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Act {
+    /// Organization the sign-off is made for.
     organization_pid: Uuid,
     /// `sign` or `withdraw`.
     action: String,
+    /// Why the sign-off is withdrawn; required (5 to 500 characters) for `withdraw`, optional for `sign`.
     #[serde(default)]
     reason: Option<String>,
 }

@@ -10,6 +10,8 @@ use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
+/// SQL predicate for the allowed `audience` values: the four fixed audiences, or `org:` followed by an organization pid (a UUID).
+/// Used in the check constraint that lets an organization be the audience of a pack or commitment.
 const AUD: &str = "audience IN ('executive','board','escalation_board','partner') OR audience ~ '^org:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'";
 
 #[async_trait::async_trait]

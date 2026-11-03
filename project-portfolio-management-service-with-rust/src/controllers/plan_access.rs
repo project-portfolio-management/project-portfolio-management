@@ -11,7 +11,7 @@
 //! **Aggregates (RM-8b).** Every cross-plan view — at-a-glance, executive, board,
 //! financials, capacity, risk, compliance, engineering, scenarios, prioritization,
 //! rollups, the audit and event feeds, and the rest — loads its rows through one
-//! shared [`HiddenScope`], so a private plan contributes to **no** total, list,
+//! shared `HiddenScope`, so a private plan contributes to **no** total, list,
 //! ranking or count for someone outside it. A private-plan test compares every
 //! aggregate route before and after a private plan appears, and another enumerates
 //! the mounted routes so a new one cannot skip the decision. What stays full by
@@ -35,6 +35,7 @@ use crate::models::_entities::plan_access_settings as plan_access;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::plan_access as rules;
 
+/// The member ids stored on an access row; unreadable JSON yields no members, which hides the plan from everyone but admins rather than exposing it.
 fn members_of(row: &plan_access::Model) -> Vec<String> {
     serde_json::from_value(row.members.clone()).unwrap_or_default()
 }
@@ -258,7 +259,9 @@ pub(crate) async fn readable_plans(
 /// no total, list, ranking or count. Empty (and free) when nothing is private.
 #[derive(Debug, Default, Clone)]
 pub(crate) struct HiddenScope {
+    /// Private plans the caller is not a member of.
     plans: HashSet<Uuid>,
+    /// Tasks inside those hidden plans.
     tasks: HashSet<Uuid>,
 }
 
@@ -268,6 +271,7 @@ pub(crate) trait PlanScoped {
     fn scope_plan(&self) -> Option<Uuid>;
 }
 
+/// Implement [`PlanScoped`] for entities whose rows carry a `plan_pid`, so each is hidden with its plan.
 macro_rules! scoped_by_plan_pid {
     ($($m:ident),* $(,)?) => {$(
         impl PlanScoped for crate::models::_entities::$m::Model {
@@ -750,7 +754,9 @@ async fn get_access(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 /// `PUT /api/plans/{pid}/access` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct AccessPayload {
+    /// `true` hides the plan from everyone who is not a member or an admin.
     private: bool,
+    /// User ids allowed to see a private plan; the caller is added automatically when making it private. Normalized by the rules module.
     #[serde(default)]
     members: Vec<String>,
 }

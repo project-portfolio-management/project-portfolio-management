@@ -31,10 +31,12 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Wraps a JSON (de)serialisation failure as an internal error.
 fn json_err(e: &serde_json::Error) -> Error {
     Error::string(&e.to_string())
 }
 
+/// The plan's most recent frozen buffer plan (highest id), or None when none was frozen.
 async fn latest(ctx: &AppContext, plan: Uuid) -> Result<Option<buffer_plans::Model>> {
     buffer_plans::Entity::find()
         .filter(buffer_plans::Column::PlanPid.eq(plan))
@@ -44,6 +46,7 @@ async fn latest(ctx: &AppContext, plan: Uuid) -> Result<Option<buffer_plans::Mod
         .map_err(db_err)
 }
 
+/// Parses the frozen buffer plan's stored JSON document.
 fn parse_doc(row: &buffer_plans::Model) -> Result<Value> {
     serde_json::from_str(&row.document).map_err(|e| json_err(&e))
 }
@@ -118,6 +121,7 @@ async fn readings(ctx: &AppContext, plan: Uuid, doc: &Value) -> Result<Vec<(Read
         .collect())
 }
 
+/// JSON for one buffer reading, labelled project or feeding, with its chain and join points; when no consumption point could be computed the reason is given instead of a number.
 fn reading_json(r: &Reading, label: &Value) -> Value {
     let mut v = serde_json::to_value(r).unwrap_or_default();
     v["kind"] = json!(if r.key == "project" {
@@ -133,6 +137,7 @@ fn reading_json(r: &Reading, label: &Value) -> Value {
     v
 }
 
+/// Alerts for buffers in the red zone, as project or feeding buffer alerts with consumption percent and slip and buffer sizes in days. A reading with no point has no zone and raises no alert.
 fn alerts(rs: &[(Reading, Value)]) -> Vec<Value> {
     rs.iter()
         .filter(|(r, _)| r.zone() == Some("red"))
@@ -360,11 +365,16 @@ async fn snapshot(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `POST /api/plans/{pid}/buffer-recovery-actions`.
 pub(crate) struct ActionBody {
+    /// Key of the buffer in the frozen plan the action is for.
     buffer_key: String,
+    /// What will be done to recover the buffer, 5 to 2000 characters.
     action: String,
+    /// Reference of the owner of the action; required, up to 200 characters.
     owner_ref: String,
     #[serde(default)]
+    /// Optional due date; absent means none set.
     due_date: Option<NaiveDate>,
 }
 
@@ -428,7 +438,9 @@ async fn add_action(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of the close-action step.
 pub(crate) struct StatusBody {
+    /// `done` or `dropped`; any other value is unprocessable.
     status: String,
 }
 

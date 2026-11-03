@@ -45,6 +45,7 @@ fn error_text(e: &Error) -> String {
     }
 }
 
+/// Build the uniform bulk response: requested, ok and refused counts (which always add up) plus the per-task results.
 fn summary(results: &[ItemResult]) -> Result<Response> {
     let ok = results.iter().filter(|r| r.result == "ok").count();
     format::json(serde_json::json!({
@@ -79,6 +80,7 @@ const ALLOWED: &[&str] = &["assignee_ref", "due_date", "component_pid", "start_d
 /// `POST /api/tasks/bulk` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct EditBody {
+    /// Tasks to edit; duplicates are removed by `dedupe_ids` and an over-long list is refused.
     ids: Vec<Uuid>,
     /// Any of `assignee_ref`, `due_date`, `component_pid`, `start_date`; `null` clears.
     set: BTreeMap<String, Value>,
@@ -162,9 +164,13 @@ async fn bulk_edit(
 
 /// What one bulk edit does to each field.
 pub(super) struct Edit {
+    /// Assignee reference (a person URN); `Clear` unassigns.
     pub(super) assignee: Change<String>,
+    /// Due date; `Clear` removes it.
     pub(super) due: Change<chrono::NaiveDate>,
+    /// Component the task belongs to; `Clear` detaches it.
     pub(super) component: Change<Uuid>,
+    /// Start date; `Clear` removes it.
     pub(super) start: Change<chrono::NaiveDate>,
 }
 
@@ -256,13 +262,16 @@ pub(super) async fn edit_one(
 /// `POST /api/tasks/copy` and `/move` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TransferBody {
+    /// Tasks to copy or move; duplicates are removed before processing.
     ids: Vec<Uuid>,
+    /// Destination plan; must be visible to the caller, otherwise the whole request is a 422.
     to_plan_pid: Uuid,
     /// Copy only: keep the source's assignee (default false).
     #[serde(default)]
     keep_assignee: bool,
 }
 
+/// Check that the caller can see the destination plan and return its id; the error is deliberately vague so an unreadable plan is not confirmed to exist.
 async fn target_plan(ctx: &AppContext, caller: &MaybeAuthUser, pid: Uuid) -> Result<Uuid> {
     resolve_subject(ctx, caller, "plan", &pid.to_string())
         .await
@@ -292,6 +301,7 @@ async fn bulk_copy(
     summary(&results)
 }
 
+/// Copy one task into the target plan as a new task in the target workflow's initial state, carrying custom field values and recording a `copied_from` relation. Returns the new task id, or the refusal text for this item.
 async fn copy_one(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -403,6 +413,7 @@ async fn bulk_move(
     summary(&results)
 }
 
+/// Move one task to the target plan, refusing if it is already there or has subtasks. A status the target workflow lacks maps to its initial state and the returned note says so; None means no note.
 async fn move_one(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

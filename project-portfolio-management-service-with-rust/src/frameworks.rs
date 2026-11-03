@@ -179,36 +179,43 @@ pub struct Governance {
     pub forums: Vec<Forum>,
 }
 
+/// Serde default for a free-form kind field: the catch-all token `other`.
 fn other() -> String {
     "other".to_string()
 }
 
+/// Length in characters after trimming, so whitespace-only text counts as empty.
 fn len(s: &str) -> usize {
     s.trim().chars().count()
 }
 
+/// True when the trimmed length is between 1 and `max` characters inclusive.
 fn within(s: &str, max: usize) -> bool {
     (1..=max).contains(&len(s))
 }
 
+/// Validates an optional whole-number field (a day count or similar limit): when present it must be in `1..=max`; otherwise a problem is appended. Absent is allowed.
 fn days(out: &mut Vec<String>, field: &str, v: Option<i32>, max: i32) {
     if v.is_some_and(|d| !(1..=max).contains(&d)) {
         out.push(format!("{field} is 1 to {max}"));
     }
 }
 
+/// Appends a problem when an optional text field exceeds the shared text cap; absent text is allowed.
 fn text(out: &mut Vec<String>, field: &str, v: Option<&str>) {
     if v.is_some_and(|t| t.chars().count() > TEXT_MAX) {
         out.push(format!("{field} is longer than {TEXT_MAX} characters"));
     }
 }
 
+/// Appends a problem when a list holds more entries than the shared list cap.
 fn listed(out: &mut Vec<String>, field: &str, n: usize) {
     if n > LIST_MAX {
         out.push(format!("at most {LIST_MAX} {field}"));
     }
 }
 
+/// Collects every validation problem for a ways-of-working record so the caller can report them all at once.
 fn wow_problems(w: &WaysOfWorking) -> Vec<String> {
     let mut out = Vec::new();
     if !METHODOLOGIES.contains(&w.methodology.as_str()) {
@@ -245,6 +252,7 @@ fn wow_problems(w: &WaysOfWorking) -> Vec<String> {
     out
 }
 
+/// Collects every validation problem for a governance record (decision model, cadences, lists and text caps) so the caller can report them all at once.
 fn governance_problems(g: &Governance) -> Vec<String> {
     let mut out = Vec::new();
     if !DECISION_MODELS.contains(&g.decision_model.as_str()) {

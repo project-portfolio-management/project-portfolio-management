@@ -47,9 +47,12 @@ find_active!(find_benefit, benefits);
 /// `POST /api/ideas` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct IdeaPayload {
+    /// Idea headline; required, shown in lists and copied to the proposal on conversion.
     title: String,
+    /// Optional longer pitch text; `None` when the author gave none.
     #[serde(default)]
     pitch: Option<String>,
+    /// Free-form tags; empty when none were supplied.
     #[serde(default)]
     tags: Vec<String>,
 }
@@ -99,15 +102,18 @@ async fn create_idea(
 /// `GET /api/ideas?status=` — most-voted first (default: open).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct IdeaParams {
+    /// Status filter (`open`, `converted`, `dismissed`); `None` means `open`.
     #[serde(default)]
     status: Option<String>,
 }
 
+/// `GET /api/ideas` — list ideas of one status, most-voted first, capped at 200. Read-only and not audited.
 #[debug_handler]
 async fn list_ideas(
     State(ctx): State<AppContext>,
     Query(params): Query<IdeaParams>,
 ) -> Result<Response> {
+    // Bounded to the most-voted 200 so an unbounded table cannot produce an unbounded response.
     let status = params.status.unwrap_or_else(|| "open".to_string());
     let mut rows = ideas::Entity::find()
         .filter(ideas::Column::DeletedAt.is_null())
@@ -174,10 +180,12 @@ pub(crate) struct ConvertPayload {
     /// Optional descriptive kind label for the eventual plan. Blank means
     /// "no kind"; a non-blank value must be a recognized kind label.
     kind_target: String,
+    /// Optional sponsor reference (a `person:`, `worker:` or `organization:` URN, never a free-text name); `None` leaves the proposal without a sponsor.
     #[serde(default)]
     sponsor_ref: Option<String>,
 }
 
+/// `POST /api/ideas/{pid}/convert` — turn an open idea into a draft proposal and mark the idea `converted`, in one transaction with an `idea_converted` audit record. Rejects ideas that are not open.
 #[debug_handler]
 async fn convert_idea(
     State(ctx): State<AppContext>,
@@ -201,6 +209,7 @@ async fn convert_idea(
     if idea.status != "open" {
         return Err(unprocessable(&format!("idea is {}", idea.status)));
     }
+    // Create the proposal and flip the idea in one transaction so a half-converted idea cannot exist.
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let proposal = proposals::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -249,17 +258,24 @@ async fn convert_idea(
 /// `POST /api/scenarios` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ScenarioPayload {
+    /// Scenario name; required and length-capped.
     name: String,
+    /// Optional description of what the scenario explores.
     #[serde(default)]
     description: Option<String>,
+    /// Plans (existing, live, visible to the caller) included as members.
     #[serde(default)]
     plan_pids: Vec<Uuid>,
+    /// Proposals (existing, live, visible to the caller) included as members.
     #[serde(default)]
     proposal_pids: Vec<Uuid>,
+    /// Optional budget ceiling in minor currency units; `None` means no cap. Requires `currency`.
     #[serde(default)]
     budget_cap_minor: Option<i64>,
+    /// ISO 4217 code the cap is expressed in; required whenever `budget_cap_minor` is set.
     #[serde(default)]
     currency: Option<String>,
+    /// Members that a generated or edited scenario must keep; informational input to feasibility checks.
     #[serde(default)]
     must_include: Vec<Uuid>,
 }
@@ -402,6 +418,7 @@ async fn hidden_members(
     Ok(hidden)
 }
 
+/// Reads a list of UUIDs stored under `key` in a JSON members document; a missing key or malformed value yields an empty list rather than an error.
 fn uuids_in(v: &serde_json::Value, key: &str) -> Vec<Uuid> {
     v.get(key)
         .and_then(|x| serde_json::from_value(x.clone()).ok())
@@ -435,8 +452,11 @@ fn without(v: &serde_json::Value, hidden: &std::collections::HashSet<Uuid>) -> s
 /// evaluations of the same scenario a week apart can say why they
 /// disagree, instead of differing silently.
 pub(crate) struct EvaluationResult {
+    /// The rule-engine verdict for the scenario.
     pub evaluation: rules::Evaluation,
+    /// When the evaluation ran (UTC), so repeated evaluations can be told apart.
     pub as_of: chrono::DateTime<chrono::Utc>,
+    /// Each live row the evaluation read, with its `updated_at`, as provenance.
     pub inputs_read: Vec<rules::InputRead>,
 }
 
@@ -604,7 +624,9 @@ pub(crate) async fn evaluate(
 /// Query for `GET /api/scenarios/compare`: the two scenario pids.
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct CompareQuery {
+    /// Pid of the first scenario (the baseline side of every delta).
     a: String,
+    /// Pid of the second scenario; deltas are reported as `b - a`.
     b: String,
 }
 
@@ -802,12 +824,16 @@ async fn rollback_scenario(
 /// `POST /api/scenarios/generate` body (T-28h).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct GeneratePayload {
+    /// Optional name for the generated scenario; `None` lets the server choose a default.
     #[serde(default)]
     name: Option<String>,
+    /// Optional budget ceiling in minor currency units; `None` means unconstrained. Requires `currency`.
     #[serde(default)]
     budget_cap_minor: Option<i64>,
+    /// ISO 4217 code that `budget_cap_minor` and plan costs are compared in.
     #[serde(default)]
     currency: Option<String>,
+    /// Plan pids the generated scenario must contain regardless of ranking.
     #[serde(default)]
     must_include: Vec<Uuid>,
 }
@@ -1041,9 +1067,12 @@ async fn scenario_frontier(
 /// `POST /api/objectives` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ObjectivePayload {
+    /// Objective title; required and length-capped.
     title: String,
+    /// Optional longer description.
     #[serde(default)]
     description: Option<String>,
+    /// Optional free-text period label (for example a quarter); not parsed.
     #[serde(default)]
     period: Option<String>,
 }
@@ -1139,10 +1168,13 @@ async fn objective_alignment(
 /// (upserts on the pair — re-linking updates the weight).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct LinkPayload {
+    /// Pid of the objective being linked.
     objective_pid: Uuid,
+    /// Alignment weight, 1 to 5 inclusive; re-linking replaces the stored weight.
     weight: i32,
 }
 
+/// `POST /api/plans/{pid}/objectives` — map a plan to an objective with a weight (upsert on the pair), audited as `objective_linked` in the same transaction.
 #[debug_handler]
 async fn link_objective(
     State(ctx): State<AppContext>,
@@ -1221,14 +1253,20 @@ async fn item_objectives(
 /// `POST /api/plans/{pid}/benefits` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct BenefitPayload {
+    /// Benefit title; required and length-capped.
     title: String,
+    /// Benefit category; must be one of the recognized benefit categories.
     category: String,
+    /// ISO 4217 code for `target_minor`; required whenever a financial target is given.
     #[serde(default)]
     currency: Option<String>,
+    /// Financial target in minor units; `None` for a non-financial benefit (then `target_note` is needed).
     #[serde(default)]
     target_minor: Option<i64>,
+    /// Qualitative target for non-financial benefits; `None` when only a financial target exists.
     #[serde(default)]
     target_note: Option<String>,
+    /// Date the benefit is expected to be realized; `None` when unknown.
     #[serde(default)]
     expected_on: Option<chrono::NaiveDate>,
 }
@@ -1349,14 +1387,18 @@ async fn list_benefits(State(ctx): State<AppContext>, Path(pid): Path<String>) -
 /// the status.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RealizePayload {
+    /// Amount realized now, in minor units, added to the running total (overflow refused); `None` leaves the total unchanged.
     #[serde(default)]
     amount_minor: Option<i64>,
+    /// Optional note replacing the stored realization note.
     #[serde(default)]
     note: Option<String>,
+    /// Optional new benefit status; must be a recognized status.
     #[serde(default)]
     status: Option<String>,
 }
 
+/// `POST /api/plans/{pid}/benefits/{b_pid}/realize` — record realized value against a benefit of the plan and optionally move its status; audited as `benefit_realized`. A benefit belonging to another plan is reported as not found.
 #[debug_handler]
 async fn realize_benefit(
     State(ctx): State<AppContext>,
@@ -1372,6 +1414,7 @@ async fn realize_benefit(
             rules::BENEFIT_STATUSES
         )));
     }
+    // Look the benefit up only after the plan so the plan-ownership check below cannot leak other plans' benefits.
     let item = super::governance::find_item(&ctx, &pid).await?;
     let benefit = find_benefit(&ctx, &b_pid).await?;
     if benefit.plan_pid != item.pid {

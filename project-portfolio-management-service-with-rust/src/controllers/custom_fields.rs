@@ -24,10 +24,12 @@ use crate::custom_fields::{self as rules, Def};
 use crate::models::_entities::{custom_field_defs, custom_field_values, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Decodes a stored JSON array of strings; anything malformed reads as an empty list rather than failing the request.
 fn strings(v: &Value) -> Vec<String> {
     serde_json::from_value(v.clone()).unwrap_or_default()
 }
 
+/// Projects a stored definition onto the small [`Def`] the pure validation rules take.
 fn def_of(row: &custom_field_defs::Model) -> Def {
     Def {
         key: row.key.clone(),
@@ -36,6 +38,7 @@ fn def_of(row: &custom_field_defs::Model) -> Def {
     }
 }
 
+/// Live (not soft-deleted) definitions for a subject type, oldest first so the declaration order is stable for clients.
 async fn live_defs(ctx: &AppContext, applies_to: &str) -> Result<Vec<custom_field_defs::Model>> {
     custom_field_defs::Entity::find()
         .filter(custom_field_defs::Column::AppliesTo.eq(applies_to))
@@ -49,15 +52,22 @@ async fn live_defs(ctx: &AppContext, applies_to: &str) -> Result<Vec<custom_fiel
 /// `POST /api/custom-fields` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DefPayload {
+    /// Field key, unique among live definitions of the same `applies_to`; validated by `rules::def_problems`.
     key: String,
+    /// Human-readable label shown beside the field.
     label: String,
+    /// The value type (JSON name `type`), one of the types the rules allow.
     #[serde(rename = "type")]
     field_type: String,
+    /// Subject type the field attaches to: `plan` or `task`.
     applies_to: String,
+    /// Plan kinds the field is limited to; empty means every kind. Only valid for plan fields.
     #[serde(default)]
     kinds: Vec<String>,
+    /// Whether a subject must have a value; an unset required field is reported, not defaulted.
     #[serde(default)]
     required: bool,
+    /// Allowed choices for the list-style types; empty for the others.
     #[serde(default)]
     options: Vec<String>,
 }
@@ -145,6 +155,7 @@ pub(crate) async fn is_declared(ctx: &AppContext, applies_to: &str, key: &str) -
 /// `GET /api/custom-fields?applies_to=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListDefsParams {
+    /// Optional subject-type filter (`plan` or `task`); absent lists both.
     #[serde(default)]
     applies_to: Option<String>,
 }
@@ -295,6 +306,7 @@ pub(crate) async fn store<C: ConnectionTrait>(
     Ok(())
 }
 
+/// Rejects a subject type other than `plan` or `task` with a `422`.
 fn check_kind(applies_to: &str) -> Result<()> {
     if rules::APPLIES_TO.contains(&applies_to) {
         Ok(())
@@ -303,6 +315,7 @@ fn check_kind(applies_to: &str) -> Result<()> {
     }
 }
 
+/// The kind label of a plan, or `None` when the plan does not exist or has no kind; used to decide which kind-scoped fields apply.
 async fn plan_kind(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<String>> {
     Ok(plans::Entity::find()
         .filter(plans::Column::Pid.eq(plan_pid))
@@ -315,8 +328,11 @@ async fn plan_kind(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<String>> {
 /// `PUT /api/custom-fields/values` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ValuesPayload {
+    /// Subject type of the values: `plan` or `task`.
     applies_to: String,
+    /// Public id of the plan or task the values belong to; resolved through the discussion resolver so the owning plan's read check applies.
     subject_pid: String,
+    /// Field key to new value; a JSON `null` clears that key's stored value.
     values: BTreeMap<String, Value>,
 }
 
@@ -353,10 +369,13 @@ async fn put_values(
 /// `GET /api/custom-fields/values?applies_to=&subject_pid=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ValuesParams {
+    /// Subject type to read: `plan` or `task`.
     applies_to: String,
+    /// Public id of the plan or task whose values are read.
     subject_pid: String,
 }
 
+/// Reads the values of one subject: its stored values (withdrawn definitions included and marked) plus the required fields still unset. The subject resolver enforces the caller's read access first.
 async fn read_values(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -425,8 +444,11 @@ async fn get_values(
 /// `GET /api/custom-fields/search?applies_to=&key=&value=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SearchParams {
+    /// Subject type to search: `plan` or `task`.
     applies_to: String,
+    /// Field key to match; must be a live definition.
     key: String,
+    /// Value to compare with; for a `multi_list` field a match means the stored list contains it.
     value: String,
 }
 
@@ -459,12 +481,14 @@ async fn search(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    // The query fetched one row beyond the cap precisely so truncation can be reported.
     let truncated = rows.len() as u64 > SEARCH_CAP;
     let mut pids = Vec::new();
     for row in rows
         .iter()
         .take(usize::try_from(SEARCH_CAP).unwrap_or(usize::MAX))
     {
+        // Visibility check is per subject: a value on a plan the caller cannot read must not leak.
         if rules::matches(&d, &row.value, &p.value)
             && resolve_subject(&ctx, &caller, &p.applies_to, &row.subject_pid.to_string())
                 .await

@@ -133,6 +133,7 @@ pub fn validate(inputs: &ModelInputs) -> Result<(), Vec<String>> {
     }
 }
 
+/// Build a score component. `value` None means it could not be computed, and `explanation` says how it is derived.
 fn comp(name: &'static str, value: Option<f64>, explanation: &'static str) -> Component {
     Component {
         name,

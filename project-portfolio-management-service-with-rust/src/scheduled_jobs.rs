@@ -168,6 +168,7 @@ async fn claim(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Option<
     Ok(Some(pid))
 }
 
+/// Run one job and return a one-line outcome for the run record. Retention purge only deletes when the apply setting is on, otherwise it is a dry run; a bad retention setting fails the run rather than purging by default periods.
 async fn execute(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<String> {
     match job {
         Job::ToleranceEscalations => {

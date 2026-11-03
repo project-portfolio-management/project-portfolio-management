@@ -32,6 +32,7 @@ use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::mspdi::{self, MsConstraint};
 
+/// Query parameters for `POST /api/plans/{pid}/import/mspdi`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ImportParams {
     /// `true` (default) reports without writing.
@@ -41,37 +42,55 @@ pub(crate) struct ImportParams {
 
 /// One planned task write.
 struct Planned {
+    /// MS Project task UID, the key used to match tasks on re-import (stored as `mspdi:<uid>`).
     uid: i64,
+    /// Stable external reference (`mspdi:<uid>`) stored on the task so a re-import updates instead of duplicating.
     ext: String,
+    /// Task title, already truncated to the text cap.
     title: String,
+    /// Task description: the file's notes plus a line naming the resources assigned in the source file; `None` when neither exists.
     description: Option<String>,
+    /// Start date; `None` for summary tasks or when the schedule data was rejected (absent is not zero).
     start: Option<chrono::NaiveDate>,
+    /// Duration in working days; `None` for summary tasks or rejected data.
     duration: Option<i32>,
+    /// Optional scheduling constraint as (kind token, date); `None` when none was set or it could not be imported.
     constraint: Option<(String, chrono::NaiveDate)>,
+    /// Optional hard deadline; `None` when absent or out of range.
     deadline: Option<chrono::NaiveDate>,
+    /// UID of the enclosing summary task derived from the outline level; `None` for top-level tasks.
     parent_uid: Option<i64>,
+    /// Workflow state the task should take when newly created.
     status: StatusChoice,
 }
 
+/// Which workflow state a newly created task starts in, derived from percent complete.
 #[derive(Clone, Copy)]
 enum StatusChoice {
+    /// The workflow's initial state (0% complete, or no matching state available).
     Initial,
+    /// The workflow's first active-category state (1 to 99% complete).
     Active,
+    /// The workflow's done-category state (100% complete).
     Done,
 }
 
+/// Accumulates what the import could not map, so the response states gaps instead of silently dropping data.
 #[derive(Default)]
 struct Report {
+    /// One entry per unmapped item: `what`, optional `uid`, and the `reason`.
     unmapped: Vec<serde_json::Value>,
 }
 
 impl Report {
+    /// Records one unmapped item with its reason.
     fn note(&mut self, what: &str, uid: Option<i64>, reason: impl Into<String>) {
         self.unmapped
             .push(serde_json::json!({ "what": what, "uid": uid, "reason": reason.into() }));
     }
 }
 
+/// `POST /api/plans/{pid}/import/mspdi` — import an MS Project XML body into the plan. Dry run by default (`dry_run` absent means true); caller authorization and audit are handled in [`run`].
 #[debug_handler]
 async fn import(
     State(ctx): State<AppContext>,

@@ -51,7 +51,9 @@ pub const API_CSP: &str = "default-src 'none'; frame-ancestors 'none'";
 /// one inline bootstrap script; it may fetch only this origin's spec.
 pub const SWAGGER_CSP: &str = "default-src 'none'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; font-src 'self' https://unpkg.com data:; connect-src 'self'; frame-ancestors 'none'";
 
+/// Strict-Transport-Security value: one year, covering subdomains.
 const HSTS_VALUE: &str = "max-age=31536000; includeSubDomains";
+/// Permissions-Policy value that switches off sensor, camera, microphone, payment and USB features the service never uses.
 const PERMISSIONS_POLICY: &str = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
 
 /// When `Strict-Transport-Security` is sent.
@@ -160,6 +162,7 @@ pub async fn security_headers_mw(
 /// The CORS allow-list.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct CorsConfig {
+    /// Allowed origins, stored lower-cased and compared exactly; empty means CORS is disabled.
     origins: Vec<String>,
 }
 
@@ -218,10 +221,14 @@ impl CorsConfig {
     }
 }
 
+/// Methods advertised in preflight responses.
 const ALLOWED_METHODS: &str = "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS";
+/// Request headers a browser page may send cross-origin, including conditional-request and idempotency headers.
 const ALLOWED_HEADERS: &str = "Authorization, Content-Type, If-Match, If-None-Match, Accepts-version, Idempotency-Key, X-Request-Id";
+/// Response headers made readable to cross-origin pages, such as `ETag`, rate-limit and paging headers.
 const EXPOSED_HEADERS: &str = "ETag, Content-Disposition, Retry-After, RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset, X-Total-Count, X-Limit, X-Offset, Accepts-version";
 
+/// Append a `Vary` value rather than replacing, so existing `Vary` entries set by other layers are kept.
 fn append_vary(headers: &mut HeaderMap, value: &'static str) {
     headers.append(header::VARY, HeaderValue::from_static(value));
 }

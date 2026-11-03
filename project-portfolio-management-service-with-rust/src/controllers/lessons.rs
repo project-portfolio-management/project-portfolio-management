@@ -47,6 +47,7 @@ pub(crate) struct LessonPayload {
     link: Option<crate::meetings::Link>,
 }
 
+/// Validate a lesson payload, returning one message per problem (empty when valid). The occasion must be closure or a gate token.
 fn problems(p: &LessonPayload) -> Vec<String> {
     let mut out = Vec::new();
     if p.occasion != CLOSURE && !rules::is_token(rules::GATES, &p.occasion) {

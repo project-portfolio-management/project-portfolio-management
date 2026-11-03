@@ -62,6 +62,7 @@ pub struct View {
     pub deferred: Vec<Line>,
 }
 
+/// Whether a date falls in the period given as `YYYY-MM`.
 fn in_period(d: NaiveDate, period: &str) -> bool {
     d.format("%Y-%m").to_string() == period
 }

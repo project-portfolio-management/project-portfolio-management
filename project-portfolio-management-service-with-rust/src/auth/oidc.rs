@@ -1,6 +1,6 @@
 //! Any OIDC identity provider's access tokens (WW-1.12).
 //!
-//! The Keycloak path ([`super::keycloak_verifier`], the `keycloak` feature) accepts one product's tokens. This
+//! The Keycloak path (`super::keycloak_verifier`, the `keycloak` feature) accepts one product's tokens. This
 //! module accepts a signed JWT access token from **any** provider that publishes standard OIDC discovery
 //! (`{issuer}/.well-known/openid-configuration`) and a JSON Web Key Set: a national or sector federation, a cloud
 //! directory, a university's or a ministry's own server. Nothing in it names a product or a country. It is off until
@@ -261,13 +261,17 @@ pub fn claims_from(claims: &Value, settings: &OidcSettings) -> Result<Claims, St
 /// The cached key set and when it was last fetched.
 #[derive(Default)]
 struct KeyState {
+    /// The provider's signing keys; None until the first successful fetch.
     keys: Option<JwkSet>,
+    /// When a fetch was last attempted (success or not), used to rate-limit refetches.
     fetched: Option<Instant>,
 }
 
 /// Verifies one provider's access tokens.
 pub struct OidcVerifier {
+    /// Provider configuration: issuer, audience and claim mapping.
     settings: OidcSettings,
+    /// Cached keys behind an async mutex so concurrent requests trigger at most one fetch.
     state: Mutex<KeyState>,
     /// `None` in tests built with fixed keys: no fetch is ever made.
     http: Option<reqwest::Client>,

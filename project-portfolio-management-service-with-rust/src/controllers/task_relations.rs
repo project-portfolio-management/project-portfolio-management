@@ -22,6 +22,7 @@ use crate::models::_entities::{plans, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::task_relations as rules;
 
+/// Load a task that is not soft-deleted by pid, or `NotFound`.
 async fn live_task(ctx: &AppContext, pid: Uuid) -> Result<tasks::Model> {
     tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(pid))
@@ -32,6 +33,7 @@ async fn live_task(ctx: &AppContext, pid: Uuid) -> Result<tasks::Model> {
         .ok_or(Error::NotFound)
 }
 
+/// All live relations, optionally of one kind, in creation order.
 async fn live_relations_of(
     ctx: &AppContext,
     kind: Option<&str>,
@@ -149,6 +151,7 @@ pub(crate) async fn close_duplicates(ctx: &AppContext, primary: Uuid, actor: Opt
     }
 }
 
+/// Close one duplicate task as done in its plan's workflow, with a transition row and an audit entry in a single transaction. Does nothing when it is already done; fails if the workflow has no done state.
 async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&str>) -> Result<()> {
     let task = live_task(ctx, dup).await?;
     if task.done_at.is_some() {
@@ -202,7 +205,9 @@ async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&st
 /// `POST …/relations` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RelationPayload {
+    /// Relation kind, validated against the allowed kinds when the request is handled.
     kind: String,
+    /// The task the relation points at; must be a live task.
     to_task_pid: Uuid,
 }
 

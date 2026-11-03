@@ -16,8 +16,11 @@ use crate::models::audit_logs::Model as AuditModel;
 /// `POST /api/plans/{pid}/sprints` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SprintPayload {
+    /// Sprint name.
     name: String,
+    /// First day of the sprint window (inclusive).
     starts_on: chrono::NaiveDate,
+    /// Last day of the sprint window; must not precede `starts_on`.
     ends_on: chrono::NaiveDate,
 }
 
@@ -78,6 +81,7 @@ pub(super) async fn list_sprints(
 /// Query for the burndown: the sprint to derive over.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct BurndownQuery {
+    /// Sprint to derive the burndown for; it must belong to the plan in the URL.
     sprint: Uuid,
 }
 
@@ -225,7 +229,9 @@ pub(super) async fn find_sprint(
 /// `POST .../sprints/{s_pid}/notes` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NotePayload {
+    /// Retrospective note category; must be one of the allowed note categories.
     category: String,
+    /// Text of the note.
     body: String,
 }
 

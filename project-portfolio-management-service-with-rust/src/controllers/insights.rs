@@ -691,20 +691,23 @@ async fn technology_dependency_risk(
     conditional(&headers, &body)
 }
 
+/// Per-technology radar accumulator (rings voted, per-kind counts,
+/// capped item refs).
+struct Tech<'a> {
+    /// Ring votes cast for this technology by `tech:<name>:<ring>` tags.
+    rings: Vec<String>,
+    /// Number of plans using the technology, by collection kind.
+    per_kind: std::collections::BTreeMap<&'a str, usize>,
+    /// References to the plans using it, capped at 20.
+    items: Vec<serde_json::Value>,
+}
+
 /// `GET /api/technology/radar` — the tag-encoded technology radar.
 /// Convention (documented in the response): a plan tagged
 /// `tech:<name>` uses that technology; `tech:<name>:<ring>` also casts
 /// a ring vote (`assess` / `trial` / `adopt` / `hold`); a technology's
 /// ring is the majority vote, ties breaking toward the more cautious
 /// ring, `unclassified` with no votes.
-/// Per-technology radar accumulator (rings voted, per-kind counts,
-/// capped item refs).
-struct Tech<'a> {
-    rings: Vec<String>,
-    per_kind: std::collections::BTreeMap<&'a str, usize>,
-    items: Vec<serde_json::Value>,
-}
-
 #[debug_handler]
 async fn technology_radar(
     State(ctx): State<AppContext>,

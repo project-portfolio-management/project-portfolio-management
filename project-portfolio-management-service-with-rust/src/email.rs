@@ -48,6 +48,7 @@ pub trait Sender: Send + Sync {
 
 /// The mailer the deployment configured (loco's SMTP transport).
 pub struct SmtpSender {
+    /// The deployment's configured SMTP transport.
     mailer: loco_rs::mailer::EmailSender,
 }
 
@@ -103,7 +104,9 @@ impl Sender for NoSender {
 /// A sender for tests: it keeps what it was asked to send and can be told to fail the next attempts.
 #[derive(Default)]
 pub struct RecordingSender {
+    /// Messages accepted so far, in order.
     sent: Mutex<Vec<Message>>,
+    /// Queued errors to return from the next attempts, front first, before any message is accepted.
     failures: Mutex<VecDeque<SendError>>,
 }
 
@@ -141,6 +144,7 @@ impl Sender for RecordingSender {
     }
 }
 
+/// The process-wide sender override, empty by default; only tests set it.
 fn slot() -> &'static RwLock<Option<Arc<dyn Sender>>> {
     static SLOT: OnceLock<RwLock<Option<Arc<dyn Sender>>>> = OnceLock::new();
     SLOT.get_or_init(|| RwLock::new(None))
@@ -189,7 +193,7 @@ pub struct After {
 }
 
 /// The state after an attempt, given its result and how many attempts have now been made. A transient
-/// failure is retried after 1, 5, 25, 125 minutes (capped at six hours) until [`MAX_ATTEMPTS`]; a permanent
+/// failure is retried after 1, 5, 25, 125 minutes (capped at six hours) until `MAX_ATTEMPTS`; a permanent
 /// one, or the last, ends the delivery as failed.
 #[must_use]
 pub fn after(result: &Result<(), SendError>, attempts: i32, now: DateTime<Utc>) -> After {

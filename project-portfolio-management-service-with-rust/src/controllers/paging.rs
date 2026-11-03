@@ -21,6 +21,7 @@ use super::pagination::{MAX_LIMIT, MAX_OFFSET};
 /// The largest list body this layer will read to page (anything larger passes through).
 const MAX_BODY: usize = 32 * 1024 * 1024;
 
+/// Value of `key` in a raw query string, not percent-decoded; None when there is no query or the key is absent.
 fn query_value(query: Option<&str>, key: &str) -> Option<String> {
     query?
         .split('&')
@@ -28,6 +29,7 @@ fn query_value(query: Option<&str>, key: &str) -> Option<String> {
         .map(str::to_string)
 }
 
+/// A 400 JSON response with a machine-readable `error` code and a human `description`.
 fn bad_request(code: &str, message: &str) -> Response {
     (
         StatusCode::BAD_REQUEST,

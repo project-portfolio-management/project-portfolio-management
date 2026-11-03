@@ -22,6 +22,7 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
+/// The JSON shape for one grant, including whether it is still live (unexpired and not revoked) at `now`.
 fn view(g: &grants::Model, now: chrono::DateTime<Utc>) -> serde_json::Value {
     serde_json::json!({
         "pid": g.pid, "plan_pid": g.plan_pid, "sub": g.sub, "reason": g.reason,
@@ -31,12 +32,17 @@ fn view(g: &grants::Model, now: chrono::DateTime<Utc>) -> serde_json::Value {
     })
 }
 
+/// `POST /api/break-glass` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct OpenBody {
+    /// The private plan to open.
     plan_pid: Uuid,
+    /// Why access is needed; length-checked and recorded in the audit trail.
     reason: String,
+    /// Requested duration in minutes; absent uses the default, and the value is capped at the maximum.
     #[serde(default)]
     minutes: Option<i64>,
+    /// Person reference told that the grant was opened, so the access is never silent.
     notify_ref: String,
 }
 

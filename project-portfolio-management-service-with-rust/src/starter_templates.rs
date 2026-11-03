@@ -23,6 +23,7 @@ pub struct Starter {
     pub snapshot: Snapshot,
 }
 
+/// Build a template task from literals. `points` is the effort estimate, `due` is days after the plan start, `component` names the component it sits under, and `parent` is the key of a parent task, if any.
 fn task(
     key: usize,
     title: &str,
@@ -43,6 +44,7 @@ fn task(
     }
 }
 
+/// Build a template milestone of the given kind, due `offset_days` after the plan start.
 fn milestone(name: &str, kind: &str, offset_days: i64) -> TplMilestone {
     TplMilestone {
         name: name.to_string(),
@@ -51,6 +53,7 @@ fn milestone(name: &str, kind: &str, offset_days: i64) -> TplMilestone {
     }
 }
 
+/// Build one plan node of a template tree: kind, name, keywords, target offset in days, components, tasks and milestones. Every node is tagged `starter` and starts at offset zero.
 #[expect(clippy::too_many_arguments)] // a literal tree, written once
 fn node(
     key: usize,
@@ -80,6 +83,7 @@ fn node(
     }
 }
 
+/// Wrap nodes into a snapshot with relative dates only (`base_date` is None and `has_offsets` is true), so dates are fixed when the template is applied.
 fn snapshot(nodes: Vec<TplNode>) -> Snapshot {
     Snapshot {
         base_date: None,
@@ -88,6 +92,7 @@ fn snapshot(nodes: Vec<TplNode>) -> Snapshot {
     }
 }
 
+/// Starter: a single stage-gated project (initiation, planning, delivery, closure), targeted about 180 days out.
 fn stage_gated_project() -> Snapshot {
     let c = ["Initiation", "Planning", "Delivery", "Closure"];
     snapshot(vec![node(
@@ -157,6 +162,7 @@ fn stage_gated_project() -> Snapshot {
     )])
 }
 
+/// Starter: a programme with several workstream projects as children, each with plan, do and review components.
 fn programme_with_workstreams() -> Snapshot {
     let stream = |key, name: &str, kw: &str| {
         node(
@@ -245,6 +251,7 @@ fn programme_with_workstreams() -> Snapshot {
     ])
 }
 
+/// Starter: a process for comparing what a project promised with what happened and reporting it, targeted about 60 days out.
 fn benefits_realisation_review() -> Snapshot {
     let c = ["Baseline", "Measure", "Report"];
     snapshot(vec![node(
@@ -321,6 +328,7 @@ fn benefits_realisation_review() -> Snapshot {
     )])
 }
 
+/// Starter: a process taking a change request from intake through assessment and decision to delivery, targeted about 30 days out.
 fn change_request_process() -> Snapshot {
     let c = ["Intake", "Assessment", "Decision", "Delivery"];
     snapshot(vec![node(
@@ -397,6 +405,7 @@ fn change_request_process() -> Snapshot {
     )])
 }
 
+/// Starter: an incident response process (detect, contain, recover, review), targeted about 14 days out.
 fn incident_response() -> Snapshot {
     let c = ["Detect", "Contain", "Recover", "Review"];
     snapshot(vec![node(

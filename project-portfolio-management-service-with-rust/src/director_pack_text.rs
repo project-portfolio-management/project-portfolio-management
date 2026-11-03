@@ -7,14 +7,17 @@
 
 use serde_json::Value;
 
+/// String field `k` of a JSON object, or an empty string when it is missing or not a string.
 fn s<'a>(v: &'a Value, k: &str) -> &'a str {
     v.get(k).and_then(Value::as_str).unwrap_or("")
 }
+/// Array field `k` of a JSON object, or an empty slice when it is missing or not an array.
 fn arr<'a>(v: &'a Value, k: &str) -> &'a [Value] {
     v.get(k)
         .and_then(Value::as_array)
         .map_or(&[], Vec::as_slice)
 }
+/// Render field `k` as text for the pack: numbers, strings and booleans as written, anything absent or of another type as `-` (never zero).
 fn num(v: &Value, k: &str) -> String {
     match v.get(k) {
         Some(Value::Number(n)) => n.to_string(),
@@ -54,12 +57,14 @@ pub fn money(minor: i64, currency: &str) -> String {
     format!("{}{currency} {body}", if neg { "-" } else { "" })
 }
 
+/// Money field `k` (integer minor units) formatted in `currency`; `-` when the field is absent so a missing figure is not shown as zero.
 fn money_of(v: &Value, k: &str, currency: &str) -> String {
     v.get(k)
         .and_then(Value::as_i64)
         .map_or_else(|| "-".to_string(), |m| money(m, currency))
 }
 
+/// Full-time-equivalent field `k` to three decimal places; `-` when absent.
 fn fte(v: &Value, k: &str) -> String {
     v.get(k)
         .and_then(Value::as_f64)

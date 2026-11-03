@@ -42,6 +42,7 @@ pub(crate) fn score_by_name(model: &str, inputs: &ModelInputs) -> Option<rules::
     }
 }
 
+/// JSON view of a plan's scoring inputs. `set` is false when none were saved, in which case the inputs are all absent rather than zero.
 fn view(plan: Uuid, row: Option<&scoring_inputs::Model>) -> Value {
     let inputs = row.map(inputs_of).unwrap_or_default();
     json!({
@@ -96,6 +97,7 @@ async fn put_inputs(
     format::json(view(plan.pid, Some(&row)))
 }
 
+/// Copy every scoring input onto the row being saved and record who set them.
 fn apply(row: &mut scoring_inputs::ActiveModel, inputs: &ModelInputs, who: Option<String>) {
     row.business_value = ActiveValue::set(inputs.business_value);
     row.time_criticality = ActiveValue::set(inputs.time_criticality);

@@ -38,6 +38,7 @@ pub(crate) fn caller_power(caller: &MaybeAuthUser) -> Option<Power> {
     )
 }
 
+/// The audiences the caller belongs to: the token's `pack_audience` values plus one `org:<id>` per organization the caller is a member of. A pack is readable only when its audience is in this list (or the caller is a pack editor or issuer).
 pub(crate) fn caller_audiences(caller: &MaybeAuthUser) -> Vec<String> {
     let mut out = caller
         .claims()
@@ -276,15 +277,19 @@ async fn compute_body(
     serde_json::to_string(&body).map_err(|e| Error::string(&e.to_string()))
 }
 
+/// `POST /api/director-packs` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DraftBody {
+    /// Reporting period as `YYYY-MM`.
     period: String,
+    /// Audience the pack is addressed to (a `pack_audience` value or an `org:<id>`).
     audience: String,
     /// Defaults to now; not in the future and not more than a year old.
     #[serde(default)]
     cut_off: Option<DateTime<Utc>>,
 }
 
+/// Requires the caller to hold at least the given pack power (editor to draft, issuer to issue) and returns the actor string to record; otherwise a `403` naming the access needed.
 pub(crate) fn need(caller: &MaybeAuthUser, at_least: Power) -> Result<String> {
     match caller_power(caller) {
         Some(p) if p >= at_least => Ok(caller.actor().unwrap_or("system").to_string()),
@@ -300,6 +305,7 @@ pub(crate) fn need(caller: &MaybeAuthUser, at_least: Power) -> Result<String> {
     }
 }
 
+/// Computes the pack body as of `cut_off`, then inserts it as a `draft` and audits `event` in one transaction. The unique indexes decide a race, so a second draft or a repeated version is a `409`.
 #[expect(clippy::too_many_arguments)]
 pub(crate) async fn insert_draft(
     ctx: &AppContext,
@@ -435,6 +441,7 @@ async fn draft(
     Ok(resp)
 }
 
+/// Loads a pack by public id, `404` when absent. Audience checks are the caller's job.
 pub(crate) async fn find(ctx: &AppContext, pid: &str) -> Result<packs::Model> {
     let pid = super::parse_pid(pid)?;
     packs::Entity::find()
@@ -502,8 +509,10 @@ async fn issue(
     format::json(meta(&now))
 }
 
+/// `POST /api/director-packs/{pid}/reissue` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReissueBody {
+    /// Why the new version exists; recorded on the new draft and in the audit trail.
     change_note: String,
 }
 

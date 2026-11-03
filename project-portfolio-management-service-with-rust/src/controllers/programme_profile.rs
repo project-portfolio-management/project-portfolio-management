@@ -25,6 +25,7 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/reporting-method", put(set_method))
 }
 
+/// Request body setting a programme profile.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Body {
     /// One of the three models; `null` clears it.
@@ -35,6 +36,7 @@ pub(crate) struct Body {
     delivery_owner_organization_pid: Option<Uuid>,
 }
 
+/// Load the profile row of a plan, if one has been set.
 async fn find(ctx: &AppContext, plan: Uuid) -> Result<Option<profiles::Model>> {
     profiles::Entity::find()
         .filter(profiles::Column::PlanPid.eq(plan))
@@ -160,6 +162,7 @@ async fn show(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
     format::json(view(row.as_ref(), &names))
 }
 
+/// Request body choosing how the plan reports progress.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MethodBody {
     /// `evm` or `product`.

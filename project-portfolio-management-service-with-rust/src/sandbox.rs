@@ -162,6 +162,7 @@ pub struct TaskFields {
     pub constraint_date: Option<NaiveDate>,
 }
 
+/// The lowercase wire token for a constraint kind, as used in the sandbox response.
 const fn token(k: ConstraintKind) -> &'static str {
     match k {
         ConstraintKind::Snet => "snet",
@@ -386,6 +387,7 @@ pub fn apply(
     Ok(out)
 }
 
+/// The id of the link or task a change refers to; used to drop a link that was both added and removed in the same change set.
 fn link_pid(c: &Change) -> Uuid {
     match c {
         Change::LinkAdded { pid, .. }
@@ -420,6 +422,7 @@ pub struct Delta {
     pub after: Option<Dates>,
 }
 
+/// Copy the schedule dates and float from a CPM node result into the sandbox's `Dates` shape.
 fn dates(n: &cpm::NodeResult) -> Dates {
     Dates {
         early_start: n.early_start,

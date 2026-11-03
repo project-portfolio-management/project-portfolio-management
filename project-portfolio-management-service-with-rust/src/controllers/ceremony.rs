@@ -34,6 +34,7 @@ use crate::models::audit_logs::Model as AuditModel;
 /// The four ceremonies.
 pub const CEREMONY_KINDS: &[&str] = &["planning", "daily", "review", "retrospective"];
 
+/// Load a non-deleted sprint by pid string; `NotFound` when absent.
 async fn find_sprint(ctx: &AppContext, raw: &str) -> Result<sprints::Model> {
     let pid = super::parse_pid(raw)?;
     sprints::Entity::find()
@@ -48,9 +49,12 @@ async fn find_sprint(ctx: &AppContext, raw: &str) -> Result<sprints::Model> {
 /// `POST /api/sprints/{pid}/ceremonies` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CeremonyPayload {
+    /// Ceremony kind; one of `CEREMONY_KINDS`.
     kind: String,
+    /// Reference to the person who facilitated (a reference, not free text).
     #[serde(default)]
     facilitator_ref: Option<String>,
+    /// Optional notes on what was decided.
     #[serde(default)]
     summary: Option<String>,
 }

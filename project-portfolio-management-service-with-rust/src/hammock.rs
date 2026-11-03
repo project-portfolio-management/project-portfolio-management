@@ -5,7 +5,7 @@
 //! roll-up (which follows a task's children) in following its *links*.
 //!
 //! * A hammock may link to another hammock, so spans nest; a hammock cannot link
-//!   to itself or close a cycle of hammocks ([`would_cycle`]).
+//!   to itself or close a cycle of hammocks (`would_cycle`).
 //! * A hammock with no links is unscheduled (`no_links`); one whose linked tasks
 //!   are all unscheduled is unscheduled too (`members_unscheduled`) — never a
 //!   made-up span.
@@ -61,6 +61,7 @@ pub fn would_cycle(links: &[(Uuid, Uuid)], hammock: Uuid, member: Uuid) -> bool 
     false
 }
 
+/// Compute a hammock's span as the earliest start and latest finish of its members, recursing into member hammocks and memoising every result in `out`. `path` guards against cycles; a hammock with no links, or whose members have no dates, is recorded as unscheduled with a reason rather than given a made-up date. Returns None when unscheduled.
 fn span_of(
     h: Uuid,
     set: &HashSet<Uuid>,

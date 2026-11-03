@@ -96,10 +96,13 @@ async fn items_for(
 /// `GET /api/plans/{pid}/flow-distribution` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Params {
+    /// Look-back window in days for completed work, 1 to 3650; anything else (or absent) means 90.
     #[serde(default)]
     window_days: Option<i64>,
+    /// `true` includes the plan's descendants; absent means just this plan.
     #[serde(default)]
     rollup: Option<bool>,
+    /// Deepest level of descendants to include when rolling up; absent uses the rollup maximum.
     #[serde(default)]
     depth: Option<usize>,
 }

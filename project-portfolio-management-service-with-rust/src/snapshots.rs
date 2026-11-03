@@ -5,7 +5,7 @@
 //! is only ever what was actually captured, never re-derived.
 //!
 //! Capture runs two ways: explicitly (`POST /api/board/snapshots`) or
-//! via [`spawn`] — an optional in-process ticker gated by
+//! via `spawn` — an optional in-process ticker gated by
 //! `PROJECT_PORTFOLIO_MANAGEMENT_SNAPSHOT_HOURS` (unset/0 ⇒ off, the
 //! default; parse failure ⇒ off with a warning).
 

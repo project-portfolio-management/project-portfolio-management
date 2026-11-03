@@ -39,6 +39,7 @@ pub fn routes() -> Routes {
         .add("/portfolio-benefits", get(live))
 }
 
+/// Loads a live benefit by pid, scoped to its plan: a benefit that belongs to another plan is reported as not found.
 async fn find_benefit(ctx: &AppContext, plan: Uuid, pid: Uuid) -> Result<benefits::Model> {
     benefits::Entity::find()
         .filter(benefits::Column::Pid.eq(pid))
@@ -50,14 +51,19 @@ async fn find_benefit(ctx: &AppContext, plan: Uuid, pid: Uuid) -> Result<benefit
         .ok_or(Error::NotFound)
 }
 
+/// `PUT /api/plans/{pid}/benefits/{benefit}/classification` body; omitted fields clear the stored value.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ClassifyBody {
+    /// `one_off` or `recurring`; `None` clears it.
     #[serde(default)]
     recurrence: Option<String>,
+    /// Yearly amount in minor units of the benefit's currency; only valid for a recurring, financial benefit. `None` clears it.
     #[serde(default)]
     annualized_minor: Option<i64>,
+    /// Benefit classification token from the recognized set; `None` clears it.
     #[serde(default)]
     classification: Option<String>,
+    /// KPI that measures a non-financial benefit; must be a live KPI. `None` clears the link.
     #[serde(default)]
     kpi_pid: Option<Uuid>,
 }
@@ -223,11 +229,15 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
     Ok(refs)
 }
 
+/// `POST /api/plans/{pid}/benefits/{benefit}/validations` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ValidateBody {
+    /// Amount validated to date, in minor units of the benefit's currency; must not be negative.
     amount_minor: i64,
+    /// Optional attachment (of the benefit or its plan) that evidences the validation.
     #[serde(default)]
     evidence_attachment_pid: Option<Uuid>,
+    /// Optional free-text note; blank is stored as absent.
     #[serde(default)]
     note: Option<String>,
 }
@@ -352,6 +362,7 @@ fn programme_of(
     None
 }
 
+/// Renders one roll-up row with its figures per currency; claimed-only and no-planned-amount counts are kept explicit rather than folded into totals.
 fn row_json(r: &rules::Row) -> serde_json::Value {
     serde_json::json!({
         "currency": r.currency, "recurrence": r.recurrence, "classification": r.classification,

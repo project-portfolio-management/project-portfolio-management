@@ -33,6 +33,8 @@ use crate::validation::{MAX_ARRAY_LEN, MAX_TEXT_LEN};
 /// rollup (mirrors `controllers::tba::rollup`'s own cap).
 const MAX_PLANS_SCANNED: u64 = 1000;
 
+/// Normalise a currency code to its canonical upper-case form; `None`
+/// means it is not a recognised three-letter code.
 fn valid_currency(raw: &str) -> Option<String> {
     crate::currency::normalize(raw)
 }
@@ -40,16 +42,24 @@ fn valid_currency(raw: &str) -> Option<String> {
 /// `POST /api/plans/{pid}/budget-baselines` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct BaselinePayload {
+    /// Currency of every period amount in this baseline (three-letter code).
     currency: String,
+    /// The budget broken into periods; must be non-empty and capped in length.
     periods: Vec<PeriodPayload>,
     #[serde(default)]
+    /// Why the baseline is being replaced; required for every version after
+    /// the first.
     reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// One planned-spend period inside a baseline.
 pub(crate) struct PeriodPayload {
+    /// First day of the period.
     period_start: chrono::NaiveDate,
+    /// Last day of the period; must not precede `period_start`.
     period_end: chrono::NaiveDate,
+    /// Planned spend for the period in minor currency units; never negative.
     planned_minor: i64,
 }
 
@@ -312,8 +322,11 @@ async fn forecast(
 /// `GET /api/financials/forecast?plan=&depth=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RollupQuery {
+    /// Public id of the plan to roll up from.
     plan: String,
     #[serde(default)]
+    /// Maximum containment depth to walk; absent uses the crate-wide maximum,
+    /// and values outside `1..=MAX` are rejected.
     depth: Option<usize>,
 }
 

@@ -57,9 +57,12 @@ pub struct Placement {
     pub explanation: String,
 }
 
+/// Most candidate start offsets tried per project, to bound the search.
 const MAX_CANDIDATES: usize = 400;
+/// Furthest a project may be moved, in calendar days; beyond it the outcome is `NoSlot`.
 const MAX_DELAY_DAYS: i64 = 1_500;
 
+/// A copy of a segment moved by whole calendar days, with the same load.
 fn shift(s: &Segment, days: i64) -> Segment {
     Segment {
         start: s.start + Duration::days(days),
@@ -68,6 +71,7 @@ fn shift(s: &Segment, days: i64) -> Segment {
     }
 }
 
+/// Total milli-FTE asked on one day by all segments covering it (ends inclusive).
 fn load_at(day: NaiveDate, segs: &[Segment]) -> i64 {
     segs.iter()
         .filter(|s| s.start <= day && day <= s.end)
@@ -83,6 +87,7 @@ fn peak(segs: &[Segment]) -> i64 {
         .unwrap_or(0)
 }
 
+/// Format milli-FTE as FTE with two decimals (truncated, not rounded) for the explanation text.
 fn fte(m: i64) -> String {
     format!("{}.{:02}", m / 1000, (m.abs() % 1000) / 10)
 }

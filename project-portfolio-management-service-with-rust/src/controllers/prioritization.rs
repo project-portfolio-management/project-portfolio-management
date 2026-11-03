@@ -106,15 +106,22 @@ fn days_since(then: chrono::DateTime<chrono::FixedOffset>) -> i64 {
 /// same evidence-gathering the ranked list and single-plan score use,
 /// rather than a second, drifting copy of it.
 pub(crate) struct Estate {
+    /// Live plans the caller may see.
     pub(crate) plans: Vec<plans::Model>,
+    /// Live benefits of the visible plans; the ROI numerator.
     benefits: Vec<benefits::Model>,
+    /// Live budget lines of the visible plans; the ROI denominator.
     pub(crate) budget_lines: Vec<budget_lines::Model>,
+    /// Plan-to-objective links, filtered by the visibility fence; used for strategic alignment.
     objective_links: Vec<objective_links::Model>,
+    /// Live risks of the visible plans.
     risks: Vec<risks::Model>,
+    /// Live reviews of the visible plans.
     reviews: Vec<reviews::Model>,
 }
 
 impl Estate {
+    /// Load every table the scores need once; each is filtered by the caller's visibility fence so hidden plans never leak into a score.
     pub(crate) async fn load(
         ctx: &AppContext,
         fence: &super::plan_access::HiddenScope,

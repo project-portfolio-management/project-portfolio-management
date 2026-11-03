@@ -42,6 +42,7 @@ fn managers_only(caller: &MaybeAuthUser) -> Result<()> {
     }
 }
 
+/// JSON view of a key-person entry: subject, successor reference, readiness, linked skill pool and note.
 fn view(e: &entries::Model) -> Value {
     json!({
         "pid": e.pid, "subject_kind": e.subject_kind, "subject": e.subject,
@@ -73,18 +74,22 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `PUT /api/key-persons`: one single-point-of-failure record.
 pub(crate) struct Entry {
     /// `person` or `role`.
     subject_kind: String,
     /// A person reference (for `person`) or a role name (for `role`).
     subject: String,
     #[serde(default)]
+    /// Person reference of the named successor; absent means no successor named, which is not the same as a successor not being ready.
     successor_ref: Option<String>,
     /// `ready`, `partly` or `none`.
     readiness: String,
     #[serde(default)]
+    /// Skill pool that could cover the subject; absent means none linked.
     skill_pool_pid: Option<Uuid>,
     #[serde(default)]
+    /// Free-text note; absent means none.
     note: Option<String>,
 }
 
@@ -203,8 +208,11 @@ async fn remove(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `PUT /api/key-persons/contingent`.
 pub(crate) struct Contingent {
+    /// Person or worker reference to mark.
     person_ref: String,
+    /// True marks the person as contingent labour, false removes the mark.
     contingent: bool,
 }
 

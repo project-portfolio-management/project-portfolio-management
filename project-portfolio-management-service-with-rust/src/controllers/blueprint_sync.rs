@@ -27,19 +27,27 @@ use crate::plan_templates::{Snapshot, TplTask};
 /// Which of a plan's tasks came from which template task.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TaskLink {
+    /// Index of the template task within the template node's task list.
     key: usize,
+    /// The plan's own task created from that template task.
     task_pid: Uuid,
 }
 
 /// A link with its template and the template's tasks for this plan's node.
 struct Loaded {
+    /// The stored link between the plan and its template.
     link: plan_template_links::Model,
+    /// The template row the plan was made from.
     template: plan_templates::Model,
+    /// The template's tasks as of the last time this plan was brought up to date; diffs are taken against it.
     baseline: Vec<TplTask>,
+    /// The template's tasks now, for this plan's node.
     now: Vec<TplTask>,
+    /// Which plan task came from which template task.
     map: Vec<TaskLink>,
 }
 
+/// Load a plan's template link, the template, and the baseline, current and mapped tasks; `404` when the plan has no link, `422` when stored JSON or the plan's node in the template cannot be read.
 async fn load(ctx: &AppContext, plan_pid: Uuid) -> Result<Loaded> {
     let link = plan_template_links::Entity::find()
         .filter(plan_template_links::Column::PlanPid.eq(plan_pid))
@@ -83,6 +91,7 @@ async fn local_tasks(
     Ok(rows.into_iter().map(|t| (t.pid, t)).collect())
 }
 
+/// The plan's live task for a template task key, reduced to the fields a sync compares; `None` when the task was removed or never mapped, which marks a local removal.
 fn local_of(
     map: &[TaskLink],
     rows: &std::collections::HashMap<Uuid, tasks::Model>,
@@ -247,6 +256,7 @@ pub(crate) struct SyncBody {
     overwrite_local: Vec<String>,
 }
 
+/// The key of the workflow's initial state, or `todo` when none is flagged initial.
 fn workflow_initial(def: &crate::workflow::WorkflowDef) -> String {
     def.states
         .iter()
@@ -388,6 +398,7 @@ async fn template_sync(
     }))
 }
 
+/// The plan's live task row for a template task key, if it is still there.
 fn local_row<'a>(
     map: &[TaskLink],
     rows: &'a std::collections::HashMap<Uuid, tasks::Model>,

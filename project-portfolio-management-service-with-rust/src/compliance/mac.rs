@@ -9,7 +9,7 @@
 //!
 //! What stays here is the part that is genuinely local:
 //!
-//! - **[`Domain`]**, this service's own set of MAC purposes. It is an
+//! - **`Domain`**, this service's own set of MAC purposes. It is an
 //!   enum rather than a bare string so every call site stays
 //!   exhaustively checked by the compiler; the shared crate takes a
 //!   `&str` because the set differs per service and an enum there would

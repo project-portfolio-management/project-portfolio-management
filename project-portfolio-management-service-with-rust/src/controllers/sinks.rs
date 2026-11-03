@@ -3,7 +3,7 @@
 //! Mattermost, Discord, Telegram) or an email address. Pure rules and
 //! renderers in [`crate::sinks`].
 //!
-//! **Never in the notification's path.** [`enqueue`] only writes a delivery
+//! **Never in the notification's path.** `enqueue` only writes a delivery
 //! row; [`run_due`] (the ticker, an admin trigger, tests) sends it later with
 //! bounded retries and growing backoff, so a slow or dead destination can
 //! neither delay nor fail the notification. A failed delivery keeps its last
@@ -36,6 +36,7 @@ use crate::models::_entities::{
 use crate::notification_prefs::recipient_sub;
 use crate::sinks::{self as rules, Note};
 
+/// Whether loopback destinations are allowed, set by the presence of `PROJECT_PORTFOLIO_MANAGEMENT_SINKS_ALLOW_LOOPBACK`; meant for local testing only.
 fn allow_loopback() -> bool {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_SINKS_ALLOW_LOOPBACK").is_ok()
 }
@@ -87,7 +88,9 @@ pub(crate) async fn enqueue<C: ConnectionTrait>(db: &C, note: &notifications::Mo
     }
 }
 
+/// Result of one delivery attempt.
 enum Outcome {
+    /// Delivered.
     Sent,
     /// Try again later (carries the reason).
     Retry(String),
@@ -95,6 +98,7 @@ enum Outcome {
     Failed(String),
 }
 
+/// Delivers a note to a webhook-style sink. The destination is re-validated and, for a hostname, re-resolved at send time so a name that now points at a non-public address is refused.
 async fn send_http(sink: &notification_sinks::Model, note: &Note<'_>) -> Outcome {
     let loop_ok = allow_loopback();
     if !rules::destination_url_ok(&sink.destination, loop_ok) {
@@ -143,6 +147,7 @@ async fn send_http(sink: &notification_sinks::Model, note: &Note<'_>) -> Outcome
     }
 }
 
+/// Delivers a note by email through the shared email delivery path, mapping its result to an outcome; a sender error is retried, not failed.
 async fn send_email(
     ctx: &AppContext,
     sink: &notification_sinks::Model,
@@ -252,6 +257,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Dispatched> {
     Ok(out)
 }
 
+/// Records a delivery's new status, optionally its attempt count, last error and next attempt time, stamping the delivery time only when it is `sent`.
 async fn mark(
     ctx: &AppContext,
     d: sink_deliveries::Model,
@@ -304,12 +310,16 @@ pub fn spawn(ctx: &AppContext) {
 /// `POST /api/me/notification-sinks` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SinkBody {
+    /// Sink kind (webhook, email and so on); decides the channel and how the destination is validated.
     kind: String,
+    /// Where to deliver; treated as a secret and only ever returned masked.
     destination: String,
     #[serde(default)]
+    /// Optional kind-specific settings; absent is stored as an empty object.
     settings: Option<serde_json::Value>,
 }
 
+/// Public view of a sink: id, kind, enabled flag, channel and a masked destination.
 fn view(s: &notification_sinks::Model) -> serde_json::Value {
     serde_json::json!({
         "pid": s.pid, "kind": s.kind, "enabled": s.enabled,
@@ -319,6 +329,7 @@ fn view(s: &notification_sinks::Model) -> serde_json::Value {
     })
 }
 
+/// Turns the token subject into the user id used to key sinks; a subject that is not a UUID cannot receive person-addressed notifications and is refused.
 fn user_id(sub: &str) -> Result<String> {
     Uuid::parse_str(sub).map(|u| u.to_string()).map_err(|_| {
         unprocessable(
@@ -382,6 +393,7 @@ async fn list_sinks(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -
     format::json(rows.iter().map(view).collect::<Vec<_>>())
 }
 
+/// Loads one of the caller's own live sinks; another user's sink is `NotFound`, not forbidden, so ids do not leak.
 async fn own_sink(ctx: &AppContext, sub: &str, pid: &str) -> Result<notification_sinks::Model> {
     let pid = super::parse_pid(pid)?;
     notification_sinks::Entity::find()

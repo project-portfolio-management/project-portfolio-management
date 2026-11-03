@@ -161,15 +161,21 @@ pub struct Proposal {
     pub truncated: bool,
 }
 
+/// One day on which a person's summed demand exceeds their capacity, with the tasks that contribute.
 struct OverDay {
+    /// The over-allocated person's reference.
     person: String,
+    /// The over-allocated calendar day.
     day: NaiveDate,
+    /// Summed percent asked for that day, from active tasks plus background assignments.
     demand: i64,
+    /// Capacity in force that day, in percent.
     capacity: i32,
     /// Indices into the analysis' `nodes`.
     active: Vec<usize>,
 }
 
+/// Run CPM on the input with the given planned-start overrides applied, without near-critical analysis. Used to trial a delay before accepting it.
 fn run(input: &Input, overrides: &HashMap<Uuid, NaiveDate>) -> Result<CpmResult, CpmError> {
     let nodes: Vec<Node> = input
         .nodes
@@ -266,6 +272,7 @@ fn over_days(input: &Input, res: &CpmResult) -> Vec<OverDay> {
     out
 }
 
+/// Merge consecutive over-allocated days for the same person into runs. A run continues only while demand and capacity are unchanged and the day is the next calendar day. `reason` is set from the run's tasks when it is non-empty.
 fn runs(
     days: &[OverDay],
     res: &CpmResult,
@@ -318,6 +325,7 @@ fn runs(
     out
 }
 
+/// The tasks with negative total float, which are already late against a constraint.
 fn negative(r: &CpmResult) -> HashSet<Uuid> {
     r.nodes
         .iter()
@@ -326,6 +334,7 @@ fn negative(r: &CpmResult) -> HashSet<Uuid> {
         .collect()
 }
 
+/// The tasks flagged with a hard constraint conflict.
 fn conflicted(r: &CpmResult) -> HashSet<Uuid> {
     r.nodes
         .iter()

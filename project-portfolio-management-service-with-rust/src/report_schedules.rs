@@ -42,6 +42,7 @@ pub fn next_after(cadence: &str, anchor: NaiveDate, after: NaiveDate) -> Option<
     }
 }
 
+/// Last day of month `m` in year `y`, or None when the date is out of range. Used to clamp a schedule day to a short month.
 fn last_day(y: i32, m: u32) -> Option<u32> {
     let first_next = if m == 12 {
         NaiveDate::from_ymd_opt(y + 1, 1, 1)?

@@ -14,13 +14,13 @@ pub(super) const DEFAULT_ISSUER: &str = "authentication-service";
 #[cfg(feature = "paseto")]
 pub(super) const DEFAULT_AUDIENCE: &str = "main-x-service";
 
-/// The process-wide token verifier, seeded by [`init`] at boot (or, if
-/// [`init`] never ran — e.g. in unit tests — built lazily from the
+/// The process-wide token verifier, seeded by `init` at boot (or, if
+/// `init` never ran — e.g. in unit tests — built lazily from the
 /// environment on first use). Shared behind an `Arc` and read-only.
 #[cfg(feature = "paseto")]
 pub(super) static VERIFIER: OnceLock<ReloadableVerifier> = OnceLock::new();
 
-/// The process-wide token verifier (see [`VERIFIER`] and the module
+/// The process-wide token verifier (see `VERIFIER` and the module
 /// docs). Shared behind an `Arc` and read-only.
 #[cfg(feature = "paseto")]
 #[must_use]
@@ -28,7 +28,7 @@ pub fn verifier() -> &'static ReloadableVerifier {
     VERIFIER.get_or_init(|| ReloadableVerifier::new(build_from_env()))
 }
 
-/// Seed the process-wide [`verifier`] before the app serves traffic
+/// Seed the process-wide `verifier` before the app serves traffic
 /// (called from `App::after_routes`). When `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` is
 /// set (non-blank) the published key set is fetched over HTTP **once** —
 /// no refresh loop — and, on success, wins over the
@@ -46,7 +46,7 @@ pub async fn init() {
     super::oidc::init_oidc().await;
 }
 
-/// Seed the PASETO [`verifier`] (the `paseto` half of [`init`]).
+/// Seed the PASETO `verifier` (the `paseto` half of `init`).
 #[cfg(feature = "paseto")]
 pub(super) async fn init_paseto() {
     let built = match std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL")
@@ -122,12 +122,12 @@ pub(super) const KEY_REFRESH_DEFAULT_SECS: u64 = 3600;
 
 /// Spawn the background loop that re-fetches the published key set from
 /// `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` and swaps it into the live
-/// [`verifier`], so **a key rotation needs no restart**.
+/// `verifier`, so **a key rotation needs no restart**.
 ///
 /// A failed fetch **keeps the current key set** — a transient
 /// auth-service outage must not lock every caller out. Interval from
 /// `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_REFRESH_SECS` (default
-/// [`KEY_REFRESH_DEFAULT_SECS`]); `0` disables the loop. A no-op when
+/// `KEY_REFRESH_DEFAULT_SECS`); `0` disables the loop. A no-op when
 /// the URL is unset, since an env-supplied key set has nothing to
 /// re-fetch.
 pub fn spawn_key_refresh() {

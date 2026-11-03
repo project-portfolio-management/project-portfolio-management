@@ -28,6 +28,7 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::is_placeholder;
 
+/// The capacity buffer in calendar days between one project's last drum use and the next project's start. Reads `PROJECT_PORTFOLIO_MANAGEMENT_DRUM_BUFFER_DAYS` (0 to 90); the flag is true when the setting was present but unusable and the default of 7 was used instead, so the response can say so.
 fn buffer_days() -> (i64, bool) {
     match std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_DRUM_BUFFER_DAYS") {
         Err(_) => (7, false),
@@ -47,6 +48,7 @@ pub fn routes() -> Routes {
         .add("/portfolio-pipeline", get(pipeline))
 }
 
+/// `PUT /api/portfolio-drum` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DrumBody {
     /// The pool to name; `null` clears the naming.
@@ -97,8 +99,11 @@ async fn set_drum(
 
 /// The drum in force.
 struct Drum {
+    /// Public id of the skill pool acting as the drum.
     pool: Uuid,
+    /// Display name of that pool.
     name: String,
+    /// How it was chosen: `named` (declared by a person) or `most_overloaded` (derived from the heatmap).
     source: &'static str,
     /// Why, in words.
     why: String,
@@ -201,6 +206,7 @@ async fn resolve(
     })
 }
 
+/// Public ids of the live plans the caller may read; everything the drum and pipeline look at is restricted to this set so private plans never influence another project.
 async fn readable_set(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {
     let all: Vec<Uuid> = plans::Entity::find()
         .filter(plans::Column::DeletedAt.is_null())
@@ -213,14 +219,18 @@ async fn readable_set(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSe
     Ok(super::plan_access::readable_plans(ctx, caller, &all).await)
 }
 
+/// Query shared by the drum and pipeline reads: a month window.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Window {
+    /// First month of the window as `YYYY-MM`; absent means the current month.
     #[serde(default)]
     from: Option<String>,
+    /// Number of months, 1 to 24; absent means 6.
     #[serde(default)]
     months: Option<u32>,
 }
 
+/// Validates a [`Window`] and returns its first day and month count, with a `422` for a bad `from` or an out-of-range `months`.
 fn window(q: &Window) -> Result<(NaiveDate, u32)> {
     let months = q.months.unwrap_or(6);
     if !(1..=24).contains(&months) {

@@ -32,6 +32,7 @@ use crate::workflow::WorkflowDef;
 struct Holding {
     /// `task`, `allocation`, `raci` or `risk`.
     kind: &'static str,
+    /// Identifier of the held item (task, allocation, RACI row or risk).
     pid: Uuid,
     /// What it is, in words.
     label: String,
@@ -120,6 +121,7 @@ async fn holdings<C: ConnectionTrait>(
     Ok(out)
 }
 
+/// Fingerprint of the person, target and the exact holdings found, so a commit with `If-Match` fails when anything changed since the preview.
 fn etag(person: &str, to: Option<&str>, h: &[Holding]) -> String {
     let mut parts = vec![person.to_string(), to.unwrap_or("-").to_string()];
     parts.extend(
@@ -129,16 +131,20 @@ fn etag(person: &str, to: Option<&str>, h: &[Holding]) -> String {
     crate::sandbox::fingerprint(&parts)
 }
 
+/// Request body for previewing or committing a handover.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Body {
+    /// `person:` or `worker:` URN of the person handing over work.
     from_person: String,
     /// Who takes it; null releases the work (tasks unassigned, bookings ended).
     #[serde(default)]
     to_person: Option<String>,
+    /// Optional reason recorded in the audit entry, at most 500 characters.
     #[serde(default)]
     reason: Option<String>,
 }
 
+/// Check the caller may manage people and that the body is well formed: valid person URNs, a different recipient, and a short reason. Returns Forbidden or 422 otherwise.
 fn validate(caller: &MaybeAuthUser, b: &Body) -> Result<()> {
     if !may_manage_people(caller) {
         return Err(Error::CustomError(

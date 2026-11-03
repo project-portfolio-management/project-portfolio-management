@@ -22,7 +22,7 @@
 //! [`crate::trusted_proxy`]). A spoofed header from any other peer is
 //! ignored.
 //!
-//! Memory is bounded: when a family holds [`MAX_KEYS`] keys, idle (full)
+//! Memory is bounded: when a family holds `MAX_KEYS` keys, idle (full)
 //! buckets are dropped, and if it is still full new keys share one overflow
 //! bucket. State is per process; with several replicas each enforces its own
 //! share (a shared store is a later step, `plan.md` §47).
@@ -114,13 +114,17 @@ pub struct Verdict {
     pub retry_after_secs: u64,
 }
 
+/// One key's token bucket: the tokens it held at `last`, before any refill since.
 #[derive(Debug, Clone, Copy)]
 struct Bucket {
+    /// Tokens held at `last`; fractional because refill is continuous.
     tokens: f64,
+    /// The instant `tokens` was last written, the origin for the next refill.
     last: Instant,
 }
 
 impl Bucket {
+    /// Tokens available at `now`: stored tokens plus elapsed time times the refill rate, capped at the burst size. A clock that went backwards counts as zero elapsed time.
     fn refilled(self, limit: &Limit, now: Instant) -> f64 {
         let elapsed = now.saturating_duration_since(self.last).as_secs_f64();
         (self.tokens + elapsed * limit.per_second).min(limit.burst)
@@ -131,9 +135,11 @@ impl Bucket {
 /// time by hand.
 #[derive(Debug, Default)]
 pub struct Limiter {
+    /// Buckets by key, behind a mutex; bounded by `MAX_KEYS`.
     buckets: Mutex<HashMap<String, Bucket>>,
 }
 
+/// Round a non-negative number of seconds up to whole seconds, so a client told to wait is never told too little. Zero or negative gives 0.
 fn secs_ceil(seconds: f64) -> u64 {
     if seconds <= 0.0 {
         0
@@ -151,6 +157,7 @@ impl Limiter {
         Self::default()
     }
 
+    /// Find or create the bucket for `key`. When the map is full and the key is new, buckets that have refilled to full are dropped first; if it is still full the key is folded into a shared overflow bucket so memory stays bounded. New buckets start full.
     fn slot<'a>(
         map: &'a mut HashMap<String, Bucket>,
         key: &str,
@@ -181,6 +188,7 @@ impl Limiter {
         self.take_bounded(key, limit, now, cost, MAX_KEYS)
     }
 
+    /// `take` with an explicit key cap, so tests can exercise the overflow path with a small number. A refused request does not consume tokens, and the verdict carries the wait until `cost` tokens are available.
     fn take_bounded(
         &self,
         key: &str,
@@ -284,16 +292,25 @@ fn key_hash(text: &str) -> String {
 /// The rate limiter's settings and state.
 #[derive(Debug)]
 pub struct RateLimiter {
+    /// Master switch; when false every request passes unchecked.
     enabled: bool,
+    /// Limit applied to ordinary requests per client or token.
     general_limit: Limit,
+    /// Tighter limit for routes that do heavy work per call.
     expensive_limit: Limit,
+    /// Limit on authentication failures per client address.
     failure_limit: Limit,
+    /// Peers trusted to supply the forwarded client address.
     proxies: TrustedProxies,
+    /// Buckets for the general limit.
     general: Limiter,
+    /// Buckets for the expensive-route limit.
     expensive: Limiter,
+    /// Buckets counting authentication failures by client address.
     failures: Limiter,
 }
 
+/// Read an unsigned integer from the environment variable `name`, falling back to `default` when it is unset or not a number.
 fn env_u32(name: &str, default: u32) -> u32 {
     std::env::var(name)
         .ok()
@@ -362,6 +379,7 @@ impl RateLimiter {
     }
 }
 
+/// Add the `ratelimit-limit`, `ratelimit-remaining` and `ratelimit-reset` headers from `verdict` to `response`.
 fn set_ratelimit_headers(response: &mut Response, verdict: &Verdict) {
     let h = response.headers_mut();
     for (name, value) in [
@@ -375,6 +393,7 @@ fn set_ratelimit_headers(response: &mut Response, verdict: &Verdict) {
     }
 }
 
+/// Build the `429` JSON error response for a refused request, with `Retry-After` and the rate-limit headers from `verdict`; `what` names the limit that was hit.
 fn too_many(verdict: &Verdict, what: &str) -> Response {
     let body = serde_json::json!({
         "error": "too_many_requests",

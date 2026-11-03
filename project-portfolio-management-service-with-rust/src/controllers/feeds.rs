@@ -30,6 +30,7 @@ use crate::models::_entities::{
     feed_tokens, milestones, notifications, planned_slots, plans, sprints, tasks,
 };
 
+/// 401 returned for any bad feed token (unknown, revoked or expired) with one message, so callers cannot tell which case applied.
 fn unauthorized() -> Error {
     Error::CustomError(
         StatusCode::UNAUTHORIZED,
@@ -40,6 +41,7 @@ fn unauthorized() -> Error {
 /// `POST /api/me/feed-token?label=` query.
 #[derive(Debug, Deserialize, Default, schemars::JsonSchema)]
 pub(crate) struct IssueParams {
+    /// Optional human label stored with the token so its owner can recognise it.
     #[serde(default)]
     label: Option<String>,
 }
@@ -106,6 +108,7 @@ async fn revoke(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Re
 /// `?token=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TokenParams {
+    /// The feed token presented in the query string; only its hash is compared with the stored one.
     token: String,
 }
 
@@ -137,6 +140,7 @@ async fn owner_of(ctx: &AppContext, token: &str) -> Result<String> {
     Ok(sub)
 }
 
+/// The person and worker references a subject id can appear as in assignments; empty when the subject is not a UUID, which yields an empty feed rather than someone else's tasks.
 fn refs_of(sub: &str) -> Vec<String> {
     Uuid::parse_str(sub)
         .map(|u| vec![format!("person:{u}"), format!("worker:{u}")])

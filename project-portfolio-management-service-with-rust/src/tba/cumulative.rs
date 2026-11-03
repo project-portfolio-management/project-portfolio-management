@@ -42,7 +42,7 @@ pub struct FlowSample {
 ///
 /// A task that existed but has no transition at or before the instant
 /// is reported as `todo` — the same pessimistic treatment of unknown
-/// history that [`intervals`] applies, so a backfilled board does not
+/// history that `intervals` applies, so a backfilled board does not
 /// show items appearing from nowhere mid-chart.
 #[must_use]
 pub fn status_at(history: &TaskHistory, at_ms: i64) -> Option<&str> {

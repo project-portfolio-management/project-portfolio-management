@@ -51,12 +51,15 @@ pub(crate) fn valid_ref(value: &str, schemes: &[&str]) -> bool {
     })
 }
 
+/// Pushes a "too long" problem onto `problems` when `value` is longer than
+/// [`MAX_TEXT_LEN`] bytes; `field` names the offending input in the message.
 fn cap(problems: &mut Vec<String>, field: &str, value: &str) {
     if value.len() > MAX_TEXT_LEN {
         problems.push(format!("{field} exceeds {MAX_TEXT_LEN} characters"));
     }
 }
 
+/// Optional-text variant of [`cap`]: an absent value passes, a present one is length-checked.
 fn cap_opt(problems: &mut Vec<String>, field: &str, value: Option<&str>) {
     if let Some(v) = value {
         cap(problems, field, v);
@@ -66,18 +69,24 @@ fn cap_opt(problems: &mut Vec<String>, field: &str, value: Option<&str>) {
 /// `POST /api/proposals` body (also the draft-update shape).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ProposalPayload {
+    /// Proposal title; required (non-blank) and capped at `MAX_TEXT_LEN`.
     title: String,
+    /// Free-text summary of the demand; absent means none was given.
     #[serde(default)]
     summary: Option<String>,
     /// The collection an approved proposal becomes (`portfolios` /
     /// `projects` / `products` / `programs`).
     kind_target: String,
+    /// Sponsor reference as a `person:` / `worker:` / `organization:` URN; absent means no sponsor named yet.
     #[serde(default)]
     sponsor_ref: Option<String>,
+    /// Why the demand matters strategically; absent means not stated.
     #[serde(default)]
     strategic_rationale: Option<String>,
+    /// Requested funding in minor currency units; when present a valid `currency` must accompany it. Absent means no amount was asked for (not zero).
     #[serde(default)]
     requested_minor: Option<i64>,
+    /// ISO 4217 currency code for `requested_minor`; ignored unless an amount is given.
     #[serde(default)]
     currency: Option<String>,
     /// An external ask from the sponsor (EX-13).
@@ -88,6 +97,7 @@ pub(crate) struct ProposalPayload {
     tradeoff: Option<String>,
 }
 
+/// Collects every validation problem for a proposal body (blank title, length caps, trade-off length, kind label, sponsor URN, currency with amount) so the caller gets one `422` listing them all.
 fn validate_proposal(p: &ProposalPayload) -> Vec<String> {
     let mut problems = Vec::new();
     if p.title.trim().is_empty() {
@@ -172,10 +182,12 @@ async fn create_proposal(
 /// non-promoted, most recent first, capped 200).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
+    /// Optional status filter; absent means every proposal that has not yet been promoted.
     #[serde(default)]
     status: Option<String>,
 }
 
+/// `GET /api/proposals` handler: lists non-deleted proposals, newest first, capped at 200 rows. Read-only, so nothing is audited.
 #[debug_handler]
 async fn list_proposals(
     State(ctx): State<AppContext>,
@@ -221,6 +233,8 @@ async fn update_proposal(
             row.status
         )));
     }
+    // Edit only what the payload carries; the audit row is written in the same
+    // transaction so a failed audit rolls the edit back.
     let row_pid = row.pid;
     let mut active: proposals::ActiveModel = row.into();
     active.title = ActiveValue::set(payload.title.clone());
@@ -286,6 +300,7 @@ pub(crate) async fn asks_section(
     }))
 }
 
+/// `PUT /api/proposals/{pid}/tradeoff` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TradeoffBody {
     /// What the ask displaces (10 to 2000 characters).
@@ -368,6 +383,7 @@ async fn transition_proposal(
     Ok(row)
 }
 
+/// Generates a thin handler for a pipeline transition (submit, review, approve, reject). Each expansion delegates to `transition_proposal`, which applies the state machine and writes the audit row.
 macro_rules! pipeline_handler {
     ($fn_name:ident, $action:expr) => {
         #[debug_handler]
@@ -550,9 +566,13 @@ async fn intake_forecast(
 /// A scored duplicate-demand hit.
 #[derive(Debug, Serialize)]
 struct DemandHit {
+    /// Kind of record matched: `"plan"` or `"proposal"`.
     source: &'static str,
+    /// Public identifier (pid) of the matched record, as a string.
     pid: String,
+    /// Display name of the matched record.
     name: String,
+    /// Similarity score from the matcher; higher is closer. Advisory only: the caller decides what to do.
     score: f64,
 }
 
@@ -630,10 +650,14 @@ pub(crate) async fn find_item(ctx: &AppContext, pid: &str) -> Result<plans::Mode
 /// `POST /api/plans/{pid}/gate-reviews` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct GateReviewPayload {
+    /// Gate being decided; must be the next gate in order, checked by `rules::apply_gate_review`.
     gate: String,
+    /// The gate decision token; only an approving decision advances the stage.
     decision: String,
+    /// Conditions attached to the decision, if any; absent means unconditional.
     #[serde(default)]
     conditions: Option<String>,
+    /// Approver as a `worker:` / `person:` URN; absent means the decision is recorded without a named approver.
     #[serde(default)]
     approver_ref: Option<String>,
 }
@@ -666,6 +690,8 @@ async fn create_gate_review(
         &auth::plan_resource_attrs(item.stage.as_deref()),
     )
     .map_err(super::record_rejection)?;
+    // Pure rule: an approving decision is only valid for the next gate in order,
+    // so a stage can never skip ahead.
     let new_stage =
         rules::apply_gate_review(item.stage.as_deref(), &payload.gate, &payload.decision)
             .map_err(|e| refuse(&e))?;
@@ -734,15 +760,22 @@ async fn list_gate_reviews(
 /// `POST /api/plans/{pid}/risks` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RiskPayload {
+    /// Risk title; required (non-blank) and length-capped.
     title: String,
+    /// Longer description of the risk; absent means none given.
     #[serde(default)]
     description: Option<String>,
+    /// Likelihood score; validated together with `impact` by `rules::risk_exposure`.
     probability: i32,
+    /// Impact score; exposure is `probability * impact`.
     impact: i32,
+    /// Risk owner as a `worker:` / `person:` URN; absent means unowned.
     #[serde(default)]
     owner_ref: Option<String>,
+    /// Planned mitigation text; absent means none recorded.
     #[serde(default)]
     mitigation: Option<String>,
+    /// Date by which the risk should next be reviewed; absent means no review scheduled.
     #[serde(default)]
     review_date: Option<chrono::NaiveDate>,
     /// Optional category (`delivery` / `tech_debt` / `compliance` /
@@ -819,6 +852,7 @@ async fn create_risk(
 async fn list_risks(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
     let mut rows = gov::risks_for(&ctx.db, item.pid).await?;
+    // Highest exposure first; negated because sort_by_key is ascending.
     rows.sort_by_key(|r| -(r.probability * r.impact));
     let views: Vec<_> = rows
         .into_iter()
@@ -844,18 +878,24 @@ async fn list_risks(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 /// status / mitigation.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RiskUpdate {
+    /// New status; must be one of `rules::RISK_STATUSES`. Absent leaves the status unchanged.
     #[serde(default)]
     status: Option<String>,
+    /// New likelihood score; absent keeps the stored value.
     #[serde(default)]
     probability: Option<i32>,
+    /// New impact score; absent keeps the stored value.
     #[serde(default)]
     impact: Option<i32>,
+    /// Replacement mitigation text; absent leaves it unchanged.
     #[serde(default)]
     mitigation: Option<String>,
+    /// New review date; absent leaves it unchanged.
     #[serde(default)]
     review_date: Option<chrono::NaiveDate>,
 }
 
+/// `PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`.
 #[debug_handler]
 async fn update_risk(
     State(ctx): State<AppContext>,
@@ -944,12 +984,18 @@ async fn escalate_risk(
 /// `POST /api/plans/{pid}/budget-lines` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct BudgetPayload {
+    /// Budget category; must be one of `rules::BUDGET_CATEGORIES`.
     category: String,
+    /// What the line pays for; required and length-capped.
     description: String,
+    /// ISO 4217 currency code; a plan may hold lines in several currencies, totals are kept per currency.
     currency: String,
+    /// Planned amount in minor currency units; must not be negative.
     planned_minor: i64,
+    /// First day of the period the line covers; absent means open-ended.
     #[serde(default)]
     period_start: Option<chrono::NaiveDate>,
+    /// Last day of the period; must not precede `period_start`. Absent means open-ended.
     #[serde(default)]
     period_end: Option<chrono::NaiveDate>,
     /// Optional funding gate: the line is HELD (no actuals) until the
@@ -1078,11 +1124,14 @@ fn budget_totals(rows: &[budget_lines::Model]) -> Vec<serde_json::Value> {
 /// allowed; overflow refused).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ActualPayload {
+    /// Spend to add, in minor currency units; negative values are adjustments. Overflow is refused.
     amount_minor: i64,
+    /// Optional free-text note, kept only in the audit snapshot.
     #[serde(default)]
     note: Option<String>,
 }
 
+/// `POST /api/plans/{pid}/budget-lines/{line_pid}/actual` handler: adds spend to a line. Refused while a gated line is still held, and audited as `budget_actual_recorded` with the new running total.
 #[debug_handler]
 async fn record_actual(
     State(ctx): State<AppContext>,

@@ -7,10 +7,10 @@
 //! reference implementation in the event service, layered here in
 //! `app.rs` alongside the blanket auth guard.
 //!
-//! - Pure core: [`resolve_version`] over [`SUPPORTED_API_VERSIONS`] /
-//!   [`CURRENT_API_VERSION`] — trims, lowercases the compare, accepts a
+//! - Pure core: `resolve_version` over `SUPPORTED_API_VERSIONS` /
+//!   `CURRENT_API_VERSION` — trims, lowercases the compare, accepts a
 //!   bare major (`1`) as an alias for its current minor (`1.0`).
-//! - Edge: [`require_version_mw`] runs [`resolve_version`] on
+//! - Edge: `require_version_mw` runs `resolve_version` on
 //!   `Accepts-version` for `/api/*` requests, returns `406 Not
 //!   Acceptable` on an unsupported explicit version, and stamps the
 //!   resolved version onto the response as `Accepts-version`. It is
@@ -36,9 +36,9 @@ pub const SUPPORTED_API_VERSIONS: &[&str] = &["1.0"];
 
 /// Resolve the requested API version to a supported one.
 ///
-/// `None` (no header) ⇒ [`CURRENT_API_VERSION`]. A present value is
+/// `None` (no header) ⇒ `CURRENT_API_VERSION`. A present value is
 /// trimmed and matched case-insensitively against
-/// [`SUPPORTED_API_VERSIONS`]; a bare major (`"1"`) matches that major's
+/// `SUPPORTED_API_VERSIONS`; a bare major (`"1"`) matches that major's
 /// supported minor (`"1.0"`).
 ///
 /// # Errors

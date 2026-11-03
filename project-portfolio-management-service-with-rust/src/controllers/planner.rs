@@ -27,8 +27,11 @@ const MAX_SLOTS: u64 = 2_000;
 /// `POST /api/me/planned-slots` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SlotBody {
+    /// Task the time is blocked for.
     task_pid: Uuid,
+    /// Start of the slot (UTC).
     starts_at: DateTime<Utc>,
+    /// End of the slot (UTC); validated by `slot_problems`.
     ends_at: DateTime<Utc>,
 }
 
@@ -107,7 +110,9 @@ async fn delete_slot(
 /// `GET /api/me/plan` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PlanParams {
+    /// Local calendar day to show.
     day: NaiveDate,
+    /// IANA time-zone name the day is read in.
     tz: String,
 }
 

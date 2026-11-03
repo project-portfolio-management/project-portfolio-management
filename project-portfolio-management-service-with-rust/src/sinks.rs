@@ -265,7 +265,7 @@ pub fn render_email(note: &Note<'_>) -> (String, String) {
 }
 
 /// When to try again after `attempts` failed attempts: 1 min, 5, 25, 125 …
-/// capped at six hours. `None` once [`MAX_ATTEMPTS`] is reached.
+/// capped at six hours. `None` once `MAX_ATTEMPTS` is reached.
 #[must_use]
 pub fn next_attempt(
     now: chrono::DateTime<chrono::Utc>,

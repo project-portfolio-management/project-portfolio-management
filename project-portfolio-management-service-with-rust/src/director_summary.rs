@@ -92,7 +92,9 @@ pub struct ChangesSummary {
     pub statement: String,
 }
 
+/// Issue severities in display order, most severe first; every one is shown with a count, including zero, since a zero here is a real count of open issues.
 const SEVERITIES: [&str; 4] = ["critical", "high", "med", "low"];
+/// Change-request statuses in lifecycle order, so a summary lists every status even when none are in it.
 const CR_STATUSES: [&str; 7] = [
     "draft",
     "submitted",
@@ -103,6 +105,7 @@ const CR_STATUSES: [&str; 7] = [
     "withdrawn",
 ];
 
+/// Whether a date falls in the last `window_days` days up to and including today; future dates never count.
 fn in_window(d: NaiveDate, today: NaiveDate, window_days: i64) -> bool {
     d <= today && (today - d).num_days() < window_days
 }

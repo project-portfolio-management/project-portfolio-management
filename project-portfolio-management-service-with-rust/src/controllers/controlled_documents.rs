@@ -25,6 +25,7 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 
+/// True when the caller carries the `access: admin` attribute, which lets them act on documents they did not create.
 fn is_admin(claims: &authentication_verifier::Claims) -> bool {
     crate::auth::has_attr(claims, "access", "admin")
 }
@@ -65,6 +66,7 @@ async fn find_doc(ctx: &AppContext, caller: &MaybeAuthUser, pid: &str) -> Result
     Ok(doc)
 }
 
+/// All versions of a document, oldest first (ascending version number). Generic over the connection so it can run inside a transaction.
 async fn versions_of<C: ConnectionTrait>(conn: &C, doc: Uuid) -> Result<Vec<versions::Model>> {
     versions::Entity::find()
         .filter(versions::Column::DocumentPid.eq(doc))
@@ -74,6 +76,7 @@ async fn versions_of<C: ConnectionTrait>(conn: &C, doc: Uuid) -> Result<Vec<vers
         .map_err(db_err)
 }
 
+/// JSON shape of one version. The text is included only when `with_body` is set, so list and summary views stay small.
 fn version_view(v: &versions::Model, with_body: bool) -> serde_json::Value {
     let mut out = serde_json::json!({
         "pid": v.pid, "version": v.version, "status": v.status, "change_summary": v.change_summary,
@@ -86,6 +89,7 @@ fn version_view(v: &versions::Model, with_body: bool) -> serde_json::Value {
     out
 }
 
+/// JSON shape of a document with its version summaries (no bodies) and `in_force_today`, the version in force on the deployment's current date, or null when none is.
 async fn doc_view(ctx: &AppContext, doc: &docs::Model) -> Result<serde_json::Value> {
     let vs = versions_of(&ctx.db, doc.pid).await?;
     let spans: Vec<Span> = vs
@@ -105,17 +109,23 @@ async fn doc_view(ctx: &AppContext, doc: &docs::Model) -> Result<serde_json::Val
     }))
 }
 
+/// Request body for creating a document.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CreateBody {
+    /// Document title; validated by the documents rules and stored trimmed.
     title: String,
+    /// Plan the document belongs to, if any. Absent means a standalone document not tied to a plan.
     #[serde(default)]
     plan_pid: Option<Uuid>,
+    /// Text of the first draft; absent is stored as an empty draft.
     #[serde(default)]
     body: Option<String>,
+    /// Optional note describing the version, at most 500 characters.
     #[serde(default)]
     change_summary: Option<String>,
 }
 
+/// Insert one version row in `draft` status with no approval, effective date or supersession. `by` is the subject recorded as its creator.
 async fn insert_version<C: ConnectionTrait>(
     conn: &C,
     doc: Uuid,
@@ -280,8 +290,10 @@ async fn get_version(
     format::json(version_view(&v, true))
 }
 
+/// Query parameters for the in-force lookup.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct InForceParams {
+    /// Date to evaluate; absent means the deployment's current date.
     #[serde(default)]
     on: Option<NaiveDate>,
 }
@@ -314,14 +326,18 @@ async fn in_force(
     )
 }
 
+/// Request body for editing a draft version.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DraftBody {
+    /// New text for the draft; absent leaves the existing text unchanged (or, for a new version, copies the latest text).
     #[serde(default)]
     body: Option<String>,
+    /// New change summary; absent leaves the existing summary unchanged.
     #[serde(default)]
     change_summary: Option<String>,
 }
 
+/// Fetch one numbered version of a document, or `NotFound` when that number does not exist.
 async fn find_version(ctx: &AppContext, doc: Uuid, n: i32) -> Result<versions::Model> {
     versions_of(&ctx.db, doc)
         .await?
@@ -330,6 +346,7 @@ async fn find_version(ctx: &AppContext, doc: Uuid, n: i32) -> Result<versions::M
         .ok_or(Error::NotFound)
 }
 
+/// Allow only the person who created the document, or an admin; everyone else gets Forbidden. Used for write actions on a document.
 fn owner_only(doc: &docs::Model, claims: &authentication_verifier::Claims) -> Result<()> {
     if doc.created_by.as_deref() == Some(claims.sub.as_str()) || is_admin(claims) {
         Ok(())
@@ -442,9 +459,12 @@ async fn edit_version(
     format::json(version_view(&row, true))
 }
 
+/// Request body for submitting a draft for review.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SubmitBody {
+    /// `person:` or `worker:` URN of the approver; never the submitter themselves.
     approver_ref: String,
+    /// Optional message passed to the approver with the approval request.
     #[serde(default)]
     message: Option<String>,
 }

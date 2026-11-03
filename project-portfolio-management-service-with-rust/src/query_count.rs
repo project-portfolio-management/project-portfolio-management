@@ -5,6 +5,7 @@
 use sea_orm::DatabaseConnection;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+/// Process-wide running total of statements seen by the metric callback. Relaxed ordering is enough: it is only a counter.
 static STATEMENTS: AtomicU64 = AtomicU64::new(0);
 
 /// Count every statement run on `db` from now on.

@@ -34,6 +34,7 @@ use crate::timesheets::{self as rules, Entry, GroupBy};
 /// Rows a report or week reads at most.
 const ROW_CAP: u64 = 20_000;
 
+/// Whether the token may decide timesheets: `access=admin` or the `timesheet_approver` value of the `role` attribute.
 fn is_approver(claims: &authentication_verifier::Claims) -> bool {
     let has = |key: &str, val: &str| {
         claims
@@ -60,14 +61,17 @@ fn person_of(raw: Option<&str>, sub: &str) -> Result<String> {
     }
 }
 
+/// Whether the person reference names the caller (compared on the user id, case-insensitively).
 fn is_self(person: &str, sub: &str) -> bool {
     recipient_sub(person).is_some_and(|id| id.eq_ignore_ascii_case(sub))
 }
 
+/// Parses an ISO week string (such as `2026-W40`) to its Monday, or a `422` when it is not a valid week.
 fn week_of(raw: &str) -> Result<NaiveDate> {
     rules::week_start(raw).ok_or_else(|| unprocessable("week must be an ISO week such as 2026-W40"))
 }
 
+/// One person's non-deleted time entries for the Monday-to-Sunday week starting at `monday`, oldest first, capped at `ROW_CAP`.
 async fn week_entries(
     ctx: &AppContext,
     person: &str,
@@ -85,6 +89,7 @@ async fn week_entries(
         .map_err(db_err)
 }
 
+/// Projects a stored time entry onto the plain fact the pure grid rules aggregate. Minutes stay whole minutes and `billable` is carried through unchanged.
 fn fact(e: &time_entries::Model) -> Entry {
     Entry {
         plan_pid: e.plan_pid,
@@ -96,6 +101,7 @@ fn fact(e: &time_entries::Model) -> Entry {
     }
 }
 
+/// Finds the stored submit/approve state row for a person's week, or `None` when the week was never submitted (an open week has no row).
 async fn week_row<C: ConnectionTrait>(
     db: &C,
     person: &str,
@@ -123,8 +129,10 @@ pub(crate) async fn week_is_locked(
 /// `GET /api/timesheets` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct GridParams {
+    /// Optional person URN (`person:` or `worker:`); absent means the caller's own week.
     #[serde(default)]
     person: Option<String>,
+    /// ISO week such as `2026-W40`.
     week: String,
 }
 
@@ -171,11 +179,14 @@ async fn get_week(
 /// `POST /api/timesheets/submit` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SubmitBody {
+    /// Optional person URN; must name the caller, since only the owner may submit.
     #[serde(default)]
     person: Option<String>,
+    /// ISO week such as `2026-W40`.
     week: String,
 }
 
+/// Creates or updates the state row for a week. `submitted` stamps the submission time and clears any earlier decision; `decider` (who, optional comment) stamps a decision. Callers run it inside the transaction that also writes the audit row.
 async fn set_state<C: ConnectionTrait>(
     db: &C,
     person: &str,
@@ -184,6 +195,7 @@ async fn set_state<C: ConnectionTrait>(
     submitted: bool,
     decider: Option<(&str, Option<&str>)>,
 ) -> Result<timesheet_weeks::Model> {
+    // Upsert: a week has no row until its first submission or decision.
     let existing = week_row(db, person, monday).await?;
     let now: sea_orm::prelude::DateTimeWithTimeZone = chrono::Utc::now().into();
     match existing {
@@ -228,6 +240,7 @@ async fn submit(
     Json(b): Json<SubmitBody>,
 ) -> Result<Response> {
     let person = person_of(b.person.as_deref(), &claims.sub)?;
+    // Separation of duties: submit is owner-only here, and `decide` refuses the owner.
     if !is_self(&person, &claims.sub) {
         return Err(forbidden(
             "a week can only be submitted by the person it belongs to",
@@ -261,10 +274,13 @@ async fn submit(
 /// `POST /api/timesheets/decide` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct DecideBody {
+    /// Person URN whose week is being decided; must not be the decider.
     person: String,
+    /// ISO week such as `2026-W40`.
     week: String,
     /// `approved` | `rejected`.
     decision: String,
+    /// Why, required when rejecting; optional for an approval.
     #[serde(default)]
     comment: Option<String>,
 }
@@ -325,15 +341,21 @@ async fn decide(
 /// `GET /api/time-reports` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReportParams {
+    /// Grouping dimension: `person`, `plan`, `category`, `billable` or `month`.
     group_by: String,
+    /// Inclusive start date; absent means 90 calendar days back from the end.
     #[serde(default)]
     from: Option<NaiveDate>,
+    /// Inclusive end date; absent means today.
     #[serde(default)]
     to: Option<NaiveDate>,
+    /// Restrict the report to one plan, by public id; absent covers every readable plan.
     #[serde(default)]
     plan: Option<Uuid>,
+    /// Restrict the report to one person URN; absent covers everyone.
     #[serde(default)]
     person: Option<String>,
+    /// Output format; `csv` returns a CSV body, otherwise JSON.
     #[serde(default)]
     format: Option<String>,
 }

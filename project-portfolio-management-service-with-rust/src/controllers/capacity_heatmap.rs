@@ -26,6 +26,7 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::{self as pr, Grain, GroupBy, Person};
 
+/// Map a database error to a response: the three unique-index violations (peer link, role or skill in two pools, pool name) become `409`; anything else is an internal error carrying the text.
 fn db_err(e: &sea_orm::DbErr) -> Error {
     let t = e.to_string();
     if t.contains("skill_pools_peer_pool_ref") {
@@ -65,6 +66,7 @@ pub fn routes() -> Routes {
         .add("/capacity-heatmap", get(live))
 }
 
+/// Whether partner organization names may appear on the heatmap; off unless the deployment sets `PROJECT_PORTFOLIO_MANAGEMENT_HEATMAP_SHOW_PARTNERS` to a true-like value.
 fn show_partners() -> bool {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_HEATMAP_SHOW_PARTNERS")
         .is_ok_and(|v| matches!(v.trim(), "1" | "true" | "TRUE" | "yes"))
@@ -72,15 +74,20 @@ fn show_partners() -> bool {
 
 // ---- pools ----------------------------------------------------------------------------------
 
+/// Body of `POST /api/skill-pools`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NewPool {
+    /// Pool name, 2 to 120 characters after trimming; a duplicate name is refused with `409`.
     name: String,
+    /// Resource role names the pool groups; a role belongs to at most one pool. Empty by default.
     #[serde(default)]
     roles: Vec<String>,
+    /// Skill names the pool groups; a skill belongs to at most one pool. Empty by default.
     #[serde(default)]
     skills: Vec<String>,
 }
 
+/// Replace a pool's members with the given roles and skills inside the caller's transaction. Values are trimmed, blanks dropped and case-insensitive duplicates within a kind ignored.
 async fn set_members(
     tx: &sea_orm::DatabaseTransaction,
     pool: Uuid,
@@ -114,6 +121,7 @@ async fn set_members(
     Ok(())
 }
 
+/// Render a pool and its roles and skills (sorted, so the output is stable) as the API's JSON shape; `peer_pool_ref` is null when unlinked.
 fn pool_json(p: &pools::Model, ms: &[members::Model]) -> serde_json::Value {
     let of = |k: &str| -> Vec<&str> {
         let mut v: Vec<&str> = ms
@@ -161,12 +169,16 @@ async fn create_pool(
     format::json(pool_json(&row, &ms))
 }
 
+/// Body of `PUT /api/skill-pools/{pid}`. Every field is optional; an absent one leaves that part unchanged.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct UpdatePool {
+    /// `false` retires the pool, `true` restores it; absent leaves it as is.
     #[serde(default)]
     active: Option<bool>,
+    /// Replacement role list; absent keeps the current roles.
     #[serde(default)]
     roles: Option<Vec<String>>,
+    /// Replacement skill list; absent keeps the current skills.
     #[serde(default)]
     skills: Option<Vec<String>>,
 }
@@ -237,6 +249,7 @@ async fn list_pools(State(ctx): State<AppContext>) -> Result<Response> {
     )
 }
 
+/// Body of `PUT /api/skill-pools/{pid}/peer-link`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PeerLink {
     /// The workforce service's id for the pool that means the same skills (a lower-case hyphenated UUID);
@@ -396,25 +409,34 @@ async fn withdraw_on_unlink(
 
 // ---- commitments ----------------------------------------------------------------------------
 
+/// Body of `PUT /api/capacity-commitments`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CommitBody {
+    /// The skill pool the commitment is for; it must be active.
     pool_pid: Uuid,
+    /// The programme (a plan of kind Program) the commitment is to or from.
     plan_pid: Uuid,
+    /// Partner label; absent or blank means the organization's own. If it matches an active organization record (case-insensitive) that record is linked.
     #[serde(default)]
     organization: Option<String>,
     /// An organization record (EX-3); its name then becomes the label.
     #[serde(default)]
     organization_pid: Option<Uuid>,
+    /// Either `supply` (capacity promised) or `demand` (work owed).
     kind: String,
     /// `YYYY-MM`.
     month: String,
+    /// Committed full-time equivalents, 0 to 1000; stored in thousandths.
     committed_fte: f64,
+    /// Delivered FTE, 0 to 1000; absent means no delivery reported yet, not zero.
     #[serde(default)]
     delivered_fte: Option<f64>,
+    /// Free-text note; blank is stored as absent.
     #[serde(default)]
     note: Option<String>,
 }
 
+/// Convert FTE to thousandths, rounded; `None` for a non-finite value or one outside 0 to 1000.
 fn milli(f: f64) -> Option<i32> {
     if !f.is_finite() || !(0.0..=1000.0).contains(&f) {
         return None;
@@ -519,6 +541,7 @@ async fn set_commitment(
         .filter(commitments::Column::PlanPid.eq(plan.pid))
         .filter(commitments::Column::Kind.eq(&b.kind))
         .filter(commitments::Column::Month.eq(month));
+    // Compare labels case-insensitively so a differently cased label updates the same commitment.
     find = match &org {
         None => find.filter(commitments::Column::Organization.is_null()),
         Some(o) => find.filter(sea_orm::sea_query::Expr::cust_with_values(
@@ -655,6 +678,7 @@ async fn start_demand_send(
     )
 }
 
+/// Record the outcome of a demand figure sent (or not sent) to the workforce service in `peer_demand_sends`. One row per pool, programme and month; the upsert only replaces a row whose `version_at` is not newer, so a late outcome never overwrites a later send.
 #[expect(clippy::too_many_arguments)]
 async fn record_send(
     db: &sea_orm::DatabaseConnection,
@@ -694,6 +718,7 @@ async fn record_send(
     Ok(())
 }
 
+/// Render a commitment with FTE converted back from thousandths; `delivered_fte` is null when none was reported.
 fn commitment_json(c: &commitments::Model) -> serde_json::Value {
     serde_json::json!({
         "pid": c.pid, "pool_pid": c.pool_pid, "plan_pid": c.plan_pid, "organization": c.organization, "organization_pid": c.organization_pid,
@@ -736,6 +761,7 @@ async fn list_commitments(
             .into_iter()
             .map(|s| ((s.pool_pid, s.plan_pid, s.month), s))
             .collect();
+    // Pools linked to the workforce service, so a demand commitment shows its send state even before a send is recorded.
     let linked: HashSet<Uuid> = pools::Entity::find()
         .filter(pools::Column::PeerPoolRef.is_not_null())
         .all(&ctx.db)
@@ -764,10 +790,14 @@ async fn list_commitments(
 
 // ---- the heatmap ----------------------------------------------------------------------------
 
+/// One pool and month of the heatmap while it is being accumulated.
 #[derive(Default)]
 struct Cell {
+    /// The demand and supply figures fed to the verdict rules.
     inputs: Inputs,
+    /// Lower-cased partner names with supply in this cell, used only for a count unless names are shown.
     partners: BTreeSet<String>,
+    /// Per partner label: committed and (if any reported) delivered milli-FTE; shown only when partner names are enabled.
     by_org: BTreeMap<String, (i64, Option<i64>)>,
 }
 
@@ -805,6 +835,7 @@ pub(crate) async fn heatmap(
         .map(|r| (r.person_ref, r.role))
         .collect();
     let ranges = super::availability::all_ranges(ctx).await?;
+    // Everyone with a role or a non-proposed booking: proposed bookings are not demand and must not add people.
     let mut who: BTreeSet<&str> = role_of.keys().map(String::as_str).collect();
     who.extend(
         allocs
@@ -902,6 +933,7 @@ pub(crate) async fn heatmap(
         .map(|p| (Some(p.pid), p.name.clone()))
         .collect();
     pool_list.sort_by_key(|(_, n)| n.to_lowercase());
+    // Demand with no matching pool gets its own row so it is never silently dropped.
     if cells.keys().any(|(p, _)| p.is_none()) {
         pool_list.push((None, "no pool assigned".to_string()));
     }
@@ -968,10 +1000,13 @@ pub(crate) async fn heatmap(
     }))
 }
 
+/// Query of `GET /api/capacity-heatmap`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct HeatQuery {
+    /// First month as `YYYY-MM`; absent means the current month.
     #[serde(default)]
     from: Option<String>,
+    /// Number of months, 1 to 24; absent means 6.
     #[serde(default)]
     months: Option<u32>,
 }

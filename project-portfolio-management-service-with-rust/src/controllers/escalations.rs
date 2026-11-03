@@ -1,6 +1,6 @@
 //! Project escalations: a project referring something upward at a level of its governance escalation path. Rules
 //! in [`crate::escalations`]; the path comes from the governance framework in force for the plan
-//! ([`super::frameworks::escalation_path`]).
+//! (`super::frameworks::escalation_path`).
 //!
 //! * `POST/GET /api/plans/{pid}/escalations`: raise one, list a plan's;
 //! * `GET /api/plans/{pid}/escalations/{epid}`: one, with its history;
@@ -28,10 +28,12 @@ use crate::escalations::{self as rules, Action};
 use crate::models::_entities::{escalation_events, escalations, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// The deployment's local calendar date, used for `raised_on`, ages and overdue tests so they agree with the configured time zone.
 fn today() -> NaiveDate {
     crate::tz::deployment_today()
 }
 
+/// JSON view of one escalation, with derived `age_days` (to the resolution date, else `now`) and `overdue` (open or acknowledged and past `respond_by`).
 pub(crate) fn view(e: &escalations::Model, now: NaiveDate) -> Value {
     json!({
         "pid": e.pid, "plan_pid": e.plan_pid, "title": e.title, "description": e.description,
@@ -44,6 +46,7 @@ pub(crate) fn view(e: &escalations::Model, now: NaiveDate) -> Value {
     })
 }
 
+/// The plan's governance escalation path as `(level, body)` pairs, taken from the framework in force; empty when none defines one.
 async fn path_of(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -56,6 +59,7 @@ async fn path_of(
         .collect())
 }
 
+/// Load a live (not soft-deleted) escalation of the given plan by its pid string. A wrong plan or a deleted row is `404`, so a pid from another plan never leaks.
 async fn find_escalation(ctx: &AppContext, plan: Uuid, epid: &str) -> Result<escalations::Model> {
     let pid = super::parse_pid(epid)?;
     escalations::Entity::find()
@@ -68,6 +72,7 @@ async fn find_escalation(ctx: &AppContext, plan: Uuid, epid: &str) -> Result<esc
         .ok_or(Error::NotFound)
 }
 
+/// Append one row to the append-only `escalation_events` history. Takes any connection so the caller can write it in the same transaction as the change it records.
 async fn event<C: ConnectionTrait>(
     db: &C,
     esc: Uuid,
@@ -94,28 +99,37 @@ async fn event<C: ConnectionTrait>(
 /// `POST /api/plans/{pid}/escalations` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Input {
+    /// Short title of the escalation; validated by the rules module.
     title: String,
+    /// Longer explanation; absent means none was given.
     #[serde(default)]
     description: Option<String>,
+    /// Why it is being escalated (a kind from the rules module); defaults to `other`.
     #[serde(default = "other")]
     reason_kind: String,
+    /// Tolerance dimension breached, when the reason is a tolerance; absent otherwise.
     #[serde(default)]
     tolerance_dimension: Option<String>,
     /// The level of the escalation path; the first level of the path (else 1) when absent.
     #[serde(default)]
     level: Option<i32>,
+    /// Who it is referred to; defaults to the body named at the chosen path level.
     #[serde(default)]
     escalated_to: Option<String>,
+    /// Person or worker reference responsible for answering; absent means unassigned.
     #[serde(default)]
     owner_ref: Option<String>,
+    /// Date by which a response is expected; absent means no deadline, so it is never overdue.
     #[serde(default)]
     respond_by: Option<NaiveDate>,
 }
 
+/// Serde default for `reason_kind`.
 fn other() -> String {
     "other".to_string()
 }
 
+/// Trim an optional string and turn blank into `None`, so empty input is stored as absent rather than as an empty string.
 fn trimmed(s: Option<&String>) -> Option<String> {
     s.map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
 }
@@ -160,14 +174,21 @@ async fn tell(
 
 /// The fields of a new escalation, already validated and trimmed.
 pub(crate) struct New {
+    /// Short title, already trimmed.
     pub title: String,
+    /// Optional description, already trimmed.
     pub description: Option<String>,
+    /// Reason kind, already validated.
     pub reason_kind: String,
+    /// Tolerance dimension, when the reason is a tolerance breach.
     pub tolerance_dimension: Option<String>,
     /// The level of the escalation path; the first level (else 1) when absent.
     pub level: Option<i32>,
+    /// Body the escalation is referred to; falls back to the path level's body when absent.
     pub escalated_to: Option<String>,
+    /// Owner reference (person or worker); absent means unassigned.
     pub owner_ref: Option<String>,
+    /// Response deadline; absent means none.
     pub respond_by: Option<NaiveDate>,
 }
 
@@ -185,6 +206,7 @@ pub(crate) async fn insert(
             .unwrap_or(1)
     });
     let default_to = rules::check_level(level, &path).map_err(|m| unprocessable(&m))?;
+    // Row, first history event and audit entry commit together or not at all.
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = escalations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -221,6 +243,7 @@ pub(crate) async fn insert(
     Ok(row)
 }
 
+/// `POST /api/plans/{pid}/escalations`: raise an escalation. Validates the draft, then inserts it (audited, with its first history entry). Reaches the plan only if it is readable; the `Draft` problems come back as one `422`.
 #[debug_handler]
 async fn raise(
     State(ctx): State<AppContext>,
@@ -265,10 +288,12 @@ async fn raise(
 /// `GET /api/plans/{pid}/escalations?status=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct StatusQuery {
+    /// Status to filter by: one of the escalation statuses, or `live` for open plus acknowledged. Absent means every status.
     #[serde(default)]
     status: Option<String>,
 }
 
+/// Turn a `status` query value into the list of statuses to match; `None` means no filter and an unknown value is `422`.
 fn status_filter(raw: Option<&str>) -> Result<Option<Vec<&'static str>>> {
     Ok(match raw {
         None => None,
@@ -285,6 +310,7 @@ fn status_filter(raw: Option<&str>) -> Result<Option<Vec<&'static str>>> {
     })
 }
 
+/// `GET /api/plans/{pid}/escalations`: the plan's escalations, newest first, optionally filtered by `?status=`.
 #[debug_handler]
 async fn list_plan(
     State(ctx): State<AppContext>,
@@ -308,6 +334,7 @@ async fn list_plan(
     }))
 }
 
+/// `GET /api/plans/{pid}/escalations/{epid}`: one escalation with its full history (`events`, oldest first).
 #[debug_handler]
 async fn get_one(
     State(ctx): State<AppContext>,
@@ -332,6 +359,7 @@ async fn get_one(
 /// A note on an action.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NoteBody {
+    /// Optional free-text note recorded in the history; blank is treated as absent.
     #[serde(default)]
     note: Option<String>,
 }
@@ -339,7 +367,9 @@ pub(crate) struct NoteBody {
 /// `POST …/resolve` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ResolveBody {
+    /// Outcome, one of the rules module's accepted outcomes.
     outcome: String,
+    /// The written response to the escalation; trimmed and length-checked on use.
     response: String,
 }
 
@@ -367,6 +397,7 @@ async fn advance(
     note: Option<String>,
     change: impl FnOnce(&mut escalations::ActiveModel),
 ) -> Result<escalations::Model> {
+    // The rules module owns the state machine; an illegal move is a 409, not a silent no-op.
     let status = rules::apply(&e.status, action).map_err(|m| conflict(&m))?;
     let pid = e.pid;
     let mut a: escalations::ActiveModel = e.into();
@@ -383,6 +414,7 @@ async fn advance(
         note.clone(),
     )
     .await?;
+    // Only acknowledgement and resolution carry a payload worth keeping in the audit entry.
     let snapshot = match event_name {
         "acknowledged" => Some(json!({ "level": row.level, "note": note })),
         "resolved" => Some(json!({ "outcome": row.outcome, "response": row.response })),
@@ -422,6 +454,7 @@ fn require_right(caller: &MaybeAuthUser, area: &str, what: &str, attribute: &str
     ))
 }
 
+/// `POST …/{epid}/acknowledge`: acknowledge at the current level. Needs the acknowledgement right; audited as `escalation_acknowledged`.
 #[debug_handler]
 async fn acknowledge(
     State(ctx): State<AppContext>,
@@ -449,6 +482,7 @@ async fn acknowledge(
     .await
 }
 
+/// `POST …/{epid}/raise-level`: take the escalation up the next level of the governance path. A note of at least the minimum response length is required, because going up needs a stated reason. Audited as `escalation_level_raised`.
 #[debug_handler]
 async fn raise_level(
     State(ctx): State<AppContext>,
@@ -484,6 +518,7 @@ async fn raise_level(
     .await
 }
 
+/// `POST …/{epid}/resolve`: resolve with an outcome and response. Needs the resolution right; audited as `escalation_resolved`.
 #[debug_handler]
 async fn resolve(
     State(ctx): State<AppContext>,
@@ -558,6 +593,7 @@ fn current_acknowledgement(
     e: &escalations::Model,
     events: &[escalation_events::Model],
 ) -> Option<Value> {
+    // Taking it up a level resets it to open, so only acknowledgements after the last level change count.
     let since = events
         .iter()
         .rposition(|x| x.event == "level_raised")
@@ -587,6 +623,7 @@ fn current_resolution(
     )
 }
 
+/// The `404` answered when an escalation has no acknowledgement or resolution yet, naming which.
 fn no_such(what: &str) -> Error {
     Error::CustomError(
         StatusCode::NOT_FOUND,
@@ -688,6 +725,7 @@ async fn put_resolution(
     format::json(current_resolution(&row, &events).ok_or_else(|| no_such("resolution"))?)
 }
 
+/// `POST …/{epid}/withdraw`: the raiser withdraws it. Audited as `escalation_withdrawn`; no extra right is required beyond reaching the plan.
 #[debug_handler]
 async fn withdraw(
     State(ctx): State<AppContext>,
@@ -712,10 +750,13 @@ async fn withdraw(
 /// `GET /api/escalations?status=&plan=&overdue=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RegisterQuery {
+    /// Status filter, as for the per-plan list.
     #[serde(default)]
     status: Option<String>,
+    /// Restrict to one plan pid.
     #[serde(default)]
     plan: Option<String>,
+    /// When true, only escalations past `respond_by` that are still live.
     #[serde(default)]
     overdue: Option<bool>,
 }
@@ -742,6 +783,7 @@ async fn register(
     let mut plan_pids: Vec<Uuid> = rows.iter().map(|e| e.plan_pid).collect();
     plan_pids.sort();
     plan_pids.dedup();
+    // Rows of plans the caller cannot read are dropped before counting, so they add to no total.
     let readable = super::plan_access::readable_plans(&ctx, &caller, &plan_pids).await;
     let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
         .filter(plans::Column::Pid.is_in(plan_pids))

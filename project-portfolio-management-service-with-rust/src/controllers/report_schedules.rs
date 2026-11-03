@@ -2,7 +2,7 @@
 //! in [`crate::report_schedules`].
 //!
 //! Each due run executes the report through the **same code** as the on-demand
-//! run ([`super::visibility::execute_report`]), stores the output as an
+//! run (`super::visibility::execute_report`), stores the output as an
 //! expiring artifact (30 calendar days by default,
 //! `PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS`), and is **audited like an
 //! export — even at zero rows**. The sweep is claim-based (the next date is
@@ -29,6 +29,7 @@ use crate::models::_entities::{artifacts as artifact_rows, report_definitions, r
 use crate::models::audit_logs::Model as AuditModel;
 use crate::report_schedules as rules;
 
+/// How long a scheduled report file is kept: `PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS` days, default 30, never less than 1.
 fn ttl() -> chrono::Duration {
     let days = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS")
         .ok()
@@ -37,6 +38,7 @@ fn ttl() -> chrono::Duration {
     chrono::Duration::days(days.max(1))
 }
 
+/// JSON view of a report schedule, including the outcome of its last run.
 fn view(s: &report_schedules::Model) -> serde_json::Value {
     serde_json::json!({
         "pid": s.pid, "report_pid": s.report_pid, "cadence": s.cadence, "format": s.format,
@@ -50,7 +52,9 @@ fn view(s: &report_schedules::Model) -> serde_json::Value {
 /// `POST /api/reports/{pid}/schedule` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ScheduleBody {
+    /// How often the report runs; validated by the `report_schedules` rules.
     cadence: String,
+    /// Output format of the run (`json` or `csv`); absent means `csv`.
     #[serde(default)]
     format: Option<String>,
     /// First run date (UTC, `YYYY-MM-DD`); default today.
@@ -141,6 +145,7 @@ async fn list(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Resu
     format::json(rows.iter().map(view).collect::<Vec<_>>())
 }
 
+/// Load the caller's own non-deleted schedule; another owner's schedule is `NotFound`, indistinguishable from a missing one.
 async fn own(ctx: &AppContext, owner: &str, pid: &str) -> Result<report_schedules::Model> {
     let pid = super::parse_pid(pid)?;
     report_schedules::Entity::find()
@@ -267,6 +272,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
     Ok(out)
 }
 
+/// Run one schedule: execute its report as an anonymous reader (so private plans are excluded), store the output as an expiring artifact, and record the outcome on the schedule. Returns the error text on failure.
 async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::Result<(), String> {
     let def = report_definitions::Entity::find()
         .filter(report_definitions::Column::Pid.eq(s.report_pid))

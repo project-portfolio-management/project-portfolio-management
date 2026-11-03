@@ -40,10 +40,14 @@ pub fn routes() -> Routes {
         )
 }
 
+/// Body of `POST /api/plans/{pid}/deployment-moves`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NewMove {
+    /// The go-live task to move.
     task_pid: Uuid,
+    /// The requested new start date for the task.
     new_start: NaiveDate,
+    /// Why the move is wanted; at least 10 characters after trimming.
     reason: String,
     /// `person:<id>` or `role:<name>`; defaults to `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_APPROVER`.
     #[serde(default)]
@@ -74,6 +78,7 @@ async fn programme_of(ctx: &AppContext, plan: &plans::Model) -> Result<Option<pl
     Ok(None)
 }
 
+/// The caller's `role` attribute values from the token; empty when unauthenticated or none.
 fn roles_of(caller: &MaybeAuthUser) -> Vec<String> {
     caller
         .claims()
@@ -81,6 +86,7 @@ fn roles_of(caller: &MaybeAuthUser) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// Render a move request with its knock-on effects and cost (stored as JSON text; an unreadable value shows as null).
 fn view(m: &moves::Model) -> Value {
     json!({
         "pid": m.pid, "plan_pid": m.plan_pid, "programme_pid": m.programme_pid, "task_pid": m.task_pid,
@@ -246,10 +252,12 @@ async fn request_move(
     format::json(view(&row))
 }
 
+/// Body of `POST /api/plans/{pid}/deployment-moves/{mpid}/decision`.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Decision {
     /// `approve` or `refuse`.
     decision: String,
+    /// Why the decision was made; at least 10 characters after trimming.
     reason: String,
 }
 

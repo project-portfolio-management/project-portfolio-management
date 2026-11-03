@@ -33,15 +33,20 @@ fn addressable(sub: &str) -> Result<Uuid> {
 /// `PUT /api/me/notification-prefs` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PrefPayload {
+    /// Notification kind the choice applies to; validated by the preference rules.
     kind: String,
     #[serde(default)]
+    /// Channel the choice applies to; absent means the kind's default scope (all channels).
     channel: Option<String>,
     #[serde(default = "default_enabled")]
+    /// Whether this kind is delivered; defaults to true when omitted.
     enabled: bool,
     #[serde(default)]
+    /// Optional digest mode (for example `daily`); absent means deliver individually.
     digest: Option<String>,
 }
 
+/// Serde default for `enabled`: a preference that does not say otherwise leaves delivery on.
 const fn default_enabled() -> bool {
     true
 }
@@ -120,8 +125,10 @@ async fn list_prefs(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -
 /// `DELETE /api/me/notification-prefs?kind=&channel=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ResetParams {
+    /// Notification kind whose choice is reset.
     kind: String,
     #[serde(default)]
+    /// Channel to reset; absent resets the kind-wide choice.
     channel: Option<String>,
 }
 
@@ -153,8 +160,10 @@ async fn reset_pref(
 /// `POST /api/me/notification-prefs/reset` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ResetBody {
+    /// Notification kind whose choice is reset.
     kind: String,
     #[serde(default)]
+    /// Channel to reset; absent resets the kind-wide choice.
     channel: Option<String>,
 }
 
@@ -183,6 +192,7 @@ pub(crate) struct InboxParams {
     /// IANA zone; a daily digest groups by the caller's local day.
     tz: String,
     #[serde(default)]
+    /// When true, only unread notifications; absent means all.
     unread: Option<bool>,
 }
 

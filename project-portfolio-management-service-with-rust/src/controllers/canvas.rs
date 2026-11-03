@@ -18,6 +18,7 @@ use crate::models::_entities::{canvas_items, canvases, ideas, objectives, risks}
 use crate::models::audit_logs::Model as AuditModel;
 use crate::validation::MAX_TEXT_LEN;
 
+/// Loads a live (not soft-deleted) canvas by public id, `404` when absent or withdrawn.
 async fn find_canvas(ctx: &AppContext, pid: &str) -> Result<canvases::Model> {
     let pid = super::parse_pid(pid)?;
     canvases::Entity::find()
@@ -46,6 +47,7 @@ async fn find_item_of(
         .ok_or(Error::NotFound)
 }
 
+/// Live items of a canvas in display order (position, then insertion order as a tie-break).
 async fn live_items(ctx: &AppContext, canvas_pid: Uuid) -> Result<Vec<canvas_items::Model>> {
     canvas_items::Entity::find()
         .filter(canvas_items::Column::CanvasPid.eq(canvas_pid))
@@ -66,8 +68,11 @@ async fn list_templates() -> Result<Response> {
 /// `POST /api/canvases` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CanvasPayload {
+    /// Built-in template key; must be one of the templates in [`crate::canvas`].
     template: String,
+    /// Canvas title; required.
     title: String,
+    /// Optional longer description; absent means none.
     #[serde(default)]
     description: Option<String>,
     /// Optional plan scope; absent ⇒ a free-standing canvas.
@@ -123,8 +128,10 @@ async fn create_canvas(
 /// `GET /api/canvases?plan=&template=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
+    /// Optional plan public id filter; absent lists canvases of every scope.
     #[serde(default)]
     plan: Option<String>,
+    /// Optional template key filter.
     #[serde(default)]
     template: Option<String>,
 }
@@ -193,6 +200,7 @@ async fn delete_canvas(
     format::empty_json()
 }
 
+/// Wraps a model error as an API error; used as a `map_err` target in the promote path.
 fn db_err_model(e: ModelError) -> Error {
     Error::Model(e)
 }
@@ -200,13 +208,17 @@ fn db_err_model(e: ModelError) -> Error {
 /// `POST …/items` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ItemPayload {
+    /// Key of the box (a template section) the item sits in; must exist in the canvas's template.
     #[serde(rename = "box")]
     box_key: String,
+    /// Item text; validated by `rules::item_problems`.
     body: String,
+    /// Optional owner as a `worker:` / `person:` URN; absent means unowned.
     #[serde(default)]
     owner_ref: Option<String>,
 }
 
+/// Returns a problem message when an owner reference is present but is not a `worker:` / `person:` URN, else `None`.
 fn owner_problem(owner: Option<&str>) -> Option<String> {
     owner
         .filter(|o| !valid_ref(o, &["worker", "person"]))
@@ -234,6 +246,7 @@ async fn add_item(
             rules::MAX_ITEMS
         )));
     }
+    // Append to the end of the target box: one past the highest existing position there.
     let position = existing
         .iter()
         .filter(|i| i.box_key == payload.box_key)
@@ -266,12 +279,16 @@ async fn add_item(
 /// `PUT …/items/{item_pid}` body — every field optional.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ItemUpdate {
+    /// Move the item to another box of the same template; absent keeps its box.
     #[serde(default, rename = "box")]
     box_key: Option<String>,
+    /// Replacement text; absent keeps it.
     #[serde(default)]
     body: Option<String>,
+    /// Replacement owner URN; absent keeps it.
     #[serde(default)]
     owner_ref: Option<String>,
+    /// New position within the box; absent keeps it.
     #[serde(default)]
     position: Option<i32>,
 }

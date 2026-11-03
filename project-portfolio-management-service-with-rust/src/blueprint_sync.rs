@@ -53,6 +53,7 @@ pub fn change_id(kind: Kind, key: usize) -> String {
     format!("{k}:{key}")
 }
 
+/// Whether two tasks with the same key still agree on title, description and points; other fields do not count as a change.
 fn same_content(a: &TplTask, b: &TplTask) -> bool {
     a.title == b.title && a.description == b.description && a.points == b.points
 }

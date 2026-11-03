@@ -47,6 +47,7 @@ pub struct Draft<'a> {
     pub resolution: Option<&'a str>,
 }
 
+/// True when the value is absent or only whitespace; both count as not supplied.
 fn blank(s: Option<&str>) -> bool {
     s.is_none_or(|v| v.trim().is_empty())
 }

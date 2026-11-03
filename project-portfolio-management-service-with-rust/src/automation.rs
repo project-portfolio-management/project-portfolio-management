@@ -10,9 +10,9 @@
 //!   that column. A rule scoped to a plan never fires on another plan.
 //! - **No automation cascades.** An action that mutates a task's
 //!   status is applied **without** re-entering the engine
-//!   ([`ACTIONS_THAT_MUTATE_STATUS`]), so one operator move can never
+//!   (`ACTIONS_THAT_MUTATE_STATUS`), so one operator move can never
 //!   ripple into an unbounded chain.
-//! - **Nothing fires early.** [`is_due`] is a plain `due_at <= now`
+//! - **Nothing fires early.** `is_due` is a plain `due_at <= now`
 //!   comparison against a caller-supplied clock; the module has no
 //!   clock of its own.
 

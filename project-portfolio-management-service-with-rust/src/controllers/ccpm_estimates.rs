@@ -23,6 +23,7 @@ use crate::models::audit_logs::Model as AuditModel;
 /// Most tasks one answer lists.
 const MAX_LIMIT: u64 = 1_000;
 
+/// Request body setting the two CCPM estimates for a task.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Body {
     /// Business days at about 50 percent confidence; `null` clears.
@@ -134,6 +135,7 @@ pub(crate) async fn resolved(
         .collect())
 }
 
+/// Resolve a task's duration estimates from its recorded CCPM estimate, falling back to its optimistic/pessimistic days and its duration, under the given rule.
 fn resolve_task(t: &tasks::Model, rec: Option<&rows::Model>, rule: est::Rule) -> est::Resolved {
     est::resolve(
         t.duration_days.map(i64::from),
@@ -149,10 +151,13 @@ fn resolve_task(t: &tasks::Model, rec: Option<&rows::Model>, rule: est::Rule) ->
     )
 }
 
+/// Paging query for the estimate list.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct Page {
+    /// Page size, 1 to `MAX_LIMIT`; absent means 200.
     #[serde(default)]
     limit: Option<u64>,
+    /// Number of tasks to skip; absent means 0.
     #[serde(default)]
     offset: Option<u64>,
 }

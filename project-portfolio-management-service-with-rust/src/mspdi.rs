@@ -262,11 +262,13 @@ impl std::fmt::Display for ParseError {
     }
 }
 
+/// First direct child element with this tag name, ignoring text nodes and deeper descendants.
 fn child<'a>(n: roxmltree::Node<'a, 'a>, name: &str) -> Option<roxmltree::Node<'a, 'a>> {
     n.children()
         .find(|c| c.is_element() && c.tag_name().name() == name)
 }
 
+/// Trimmed text of a named child element; an absent or whitespace-only element is None, so empty means missing rather than an empty string.
 fn text<'a>(n: roxmltree::Node<'a, 'a>, name: &str) -> Option<&'a str> {
     child(n, name)
         .and_then(|c| c.text())
@@ -274,10 +276,12 @@ fn text<'a>(n: roxmltree::Node<'a, 'a>, name: &str) -> Option<&'a str> {
         .filter(|t| !t.is_empty())
 }
 
+/// Named child's text parsed as an integer; None when missing or not a number.
 fn int(n: roxmltree::Node<'_, '_>, name: &str) -> Option<i64> {
     text(n, name).and_then(|t| t.parse().ok())
 }
 
+/// Calendar date from a named child, reading only the leading `YYYY-MM-DD` and dropping any time and zone suffix; None when missing or malformed.
 fn date(n: roxmltree::Node<'_, '_>, name: &str) -> Option<NaiveDate> {
     text(n, name).and_then(|t| NaiveDate::parse_from_str(t.get(..10)?, "%Y-%m-%d").ok())
 }
@@ -329,6 +333,7 @@ pub fn days_of(minutes: i64, minutes_per_day: i64) -> (i64, bool) {
     (days, minutes % per != 0)
 }
 
+/// The project's own calendar as named by `CalendarUID`, falling back to the base calendar when that uid names none.
 fn calendar_of(root: roxmltree::Node<'_, '_>) -> Option<MsCalendar> {
     calendar_with(root, int(root, "CalendarUID"), true)
 }
@@ -414,6 +419,7 @@ fn per_hour_minor(rate: f64, format: Option<i64>, minutes_per_day: i64) -> Optio
     (0.0..9.0e15).contains(&minor).then_some(minor as i64)
 }
 
+/// Read each resource's name and positive rates, converting them to minor currency units per hour. A rate that cannot be converted is skipped with a note rather than guessed, and resources with uid 0 (the summary row) are ignored.
 fn resource_terms_of(root: roxmltree::Node<'_, '_>, minutes_per_day: i64) -> Vec<MsResource> {
     let Some(rs) = child(root, "Resources") else {
         return Vec::new();
@@ -455,6 +461,7 @@ fn resource_terms_of(root: roxmltree::Node<'_, '_>, minutes_per_day: i64) -> Vec
         .collect()
 }
 
+/// Inclusive list of days from `from` to `to`; empty when `to` precedes `from`, and capped at 367 days so one malformed range cannot allocate without bound.
 fn span(from: NaiveDate, to: NaiveDate) -> Vec<NaiveDate> {
     if to < from {
         return Vec::new();

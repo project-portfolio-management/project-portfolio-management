@@ -162,6 +162,7 @@ pub(super) async fn delivery_links(
 /// Query for the milestone calendar: optional kind filter.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CalendarQuery {
+    /// Milestone kind to keep; absent returns every kind.
     kind: Option<String>,
 }
 

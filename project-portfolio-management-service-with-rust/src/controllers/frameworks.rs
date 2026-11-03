@@ -36,9 +36,13 @@ use crate::models::plans::Model as PlanModel;
 
 /// A submitted record split into the common fields and the family's own.
 struct Parsed {
+    /// Record name, unique per family and owner.
     name: String,
+    /// Optional free-text description; absent when not given.
     description: Option<String>,
+    /// Public id of the owning plan; absent makes the record organisation-wide.
     plan_pid: Option<String>,
+    /// The family-specific fields, stored as one JSON object.
     body: Value,
 }
 
@@ -68,6 +72,9 @@ fn parse(family: Family, input: Value) -> Result<Parsed> {
     })
 }
 
+/// Render a record for the API: common columns, the family's own fields
+/// flattened in, the `scope` (`plan` or `organization`) and how many plans
+/// currently follow it.
 fn view(r: &frameworks::Model, plans_using: u64) -> Value {
     let mut out = Map::new();
     out.insert("pid".into(), serde_json::json!(r.pid));
@@ -92,6 +99,7 @@ fn view(r: &frameworks::Model, plans_using: u64) -> Value {
     Value::Object(out)
 }
 
+/// Count the plans currently linked to a framework record.
 async fn using(ctx: &AppContext, pid: Uuid) -> Result<u64> {
     plan_frameworks::Entity::find()
         .filter(plan_frameworks::Column::FrameworkPid.eq(pid))
@@ -168,6 +176,8 @@ async fn find_visible(
     Ok(row)
 }
 
+/// The plan's link for one family, if any. A plan has at most one link per
+/// family.
 async fn link_of<C: ConnectionTrait>(
     db: &C,
     plan: Uuid,
@@ -213,6 +223,8 @@ async fn set_link<C: ConnectionTrait>(
     Ok(())
 }
 
+/// Map an insert/update failure to `409` when it is the unique-name
+/// constraint, otherwise to the generic database error.
 fn name_taken(e: &sea_orm::DbErr, family: Family) -> Error {
     if e.to_string().contains("frameworks_name_once") {
         return conflict(&format!(
@@ -223,6 +235,10 @@ fn name_taken(e: &sea_orm::DbErr, family: Family) -> Error {
     db_err(e.clone())
 }
 
+/// `POST /api/<family>` - create a record at version 1. Organisation-wide
+/// records need `access=admin` or `framework=edit`; a plan-owned record
+/// also links its owner plan to it. Audited, and the first version is
+/// stored in the history in the same transaction.
 async fn create(
     family: Family,
     State(ctx): State<AppContext>,
@@ -271,9 +287,12 @@ async fn create(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListParams {
     #[serde(default)]
+    /// Restrict the list to records owned by this plan (a plan public id).
     plan: Option<String>,
 }
 
+/// `GET /api/<family>` - the live records the caller may see. Records
+/// owned by plans the caller cannot read are left out, not masked.
 async fn list(
     family: Family,
     State(ctx): State<AppContext>,
@@ -312,6 +331,8 @@ async fn list(
     )
 }
 
+/// `GET /api/<family>/{pid}` - one record the caller may see (`404` if it
+/// is hidden or deleted).
 async fn get_one(
     family: Family,
     State(ctx): State<AppContext>,
@@ -322,6 +343,9 @@ async fn get_one(
     format::json(view(&row, using(&ctx, row.pid).await?))
 }
 
+/// `PUT /api/<family>/{pid}` - replace a record's name, description and
+/// fields. Appends a new version; plans that pinned an earlier one keep it.
+/// Audited as `framework_updated`.
 async fn update(
     family: Family,
     State(ctx): State<AppContext>,
@@ -355,6 +379,8 @@ async fn update(
     format::json(view(&row, using(&ctx, row.pid).await?))
 }
 
+/// `DELETE /api/<family>/{pid}` (and its `POST .../delete` twin) -
+/// soft-delete a record. Refused with `409` while any plan still follows it.
 async fn remove(
     family: Family,
     State(ctx): State<AppContext>,
@@ -436,6 +462,9 @@ pub(crate) struct LinkBody {
     version: Option<i32>,
 }
 
+/// `PUT /api/plans/{pid}/<family>` - link a plan to a record (or unlink
+/// with a null `framework_pid`), pinning the requested version or the
+/// current one. The record must be readable by the caller.
 async fn link(
     family: Family,
     State(ctx): State<AppContext>,
@@ -674,6 +703,8 @@ async fn effective(
     format::json(Value::Object(out))
 }
 
+/// `GET /api/plans/{pid}/<family>` - the framework in force for the plan:
+/// its own link, else the nearest ancestor's, resolved on read.
 async fn get_effective(
     family: Family,
     State(ctx): State<AppContext>,

@@ -235,6 +235,7 @@ fn pct_value(count: i64, of: i64) -> f64 {
     v
 }
 
+/// Convert thousandths to a ratio rounded to two places (half up).
 fn ratio_value(milli: i64) -> f64 {
     // Round to two places from thousandths.
     #[expect(clippy::cast_precision_loss)]
@@ -242,6 +243,7 @@ fn ratio_value(milli: i64) -> f64 {
     v
 }
 
+/// Build an empty check: no counts, no value and no verdict yet, so an unevaluated check reads as unknown rather than passing.
 fn make(
     id: u8,
     key: &'static str,
@@ -266,6 +268,7 @@ fn make(
     }
 }
 
+/// Mark a check as not assessable with a reason: pass and value are null, never zero or true.
 fn unavailable(mut c: Check, reason: &'static str) -> Check {
     c.pass = None;
     c.value = None;
@@ -298,6 +301,7 @@ fn share(
     c
 }
 
+/// Build a percentage threshold with the given comparison operator and limit.
 fn pct_threshold(op: &'static str, limit: i64) -> Threshold {
     Threshold {
         op,

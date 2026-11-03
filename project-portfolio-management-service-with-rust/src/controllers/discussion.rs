@@ -26,6 +26,7 @@ use crate::models::capabilities as cap_models;
 
 /// What the controller needs to know about a resolved subject.
 pub(crate) struct Subject {
+    /// Internal id of the subject row (never the numeric key).
     pub(crate) pid: Uuid,
     /// The owning plan, for the record-level read check.
     pub(crate) plan_pid: Option<Uuid>,
@@ -218,8 +219,11 @@ pub(crate) async fn resolve_subject(
 /// `POST /api/comments` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CommentPayload {
+    /// Kind of subject commented on (for example a task or plan); validated by `resolve_subject`.
     subject_kind: String,
+    /// Public id of the subject; the caller must be able to read it.
     subject_pid: String,
+    /// Comment text; length and emptiness are checked by the discussion rules.
     body: String,
 }
 
@@ -309,7 +313,9 @@ async fn create_comment(
 /// Query naming a subject.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SubjectParams {
+    /// Kind of subject whose thread is requested.
     subject_kind: String,
+    /// Public id of that subject.
     subject_pid: String,
 }
 
@@ -333,6 +339,7 @@ async fn list_comments(
     format::json(rows)
 }
 
+/// Load a live (not soft-deleted) comment by public id, or 404.
 async fn find_comment(ctx: &AppContext, pid: &str) -> Result<comments::Model> {
     let pid = super::parse_pid(pid)?;
     comments::Entity::find()
@@ -356,6 +363,7 @@ fn require_author(comment: &comments::Model, caller: &MaybeAuthUser) -> Result<(
 /// `PUT /api/comments/{pid}` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct EditPayload {
+    /// The replacement comment text; the previous body is kept in `comment_edits`.
     body: String,
 }
 
@@ -459,8 +467,11 @@ fn reactor(caller: &MaybeAuthUser) -> String {
 /// `POST /api/reactions` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReactionPayload {
+    /// Kind of subject reacted to.
     subject_kind: String,
+    /// Public id of the subject reacted to.
     subject_pid: String,
+    /// Reaction kind (emoji token); checked by `rules::reaction_problems`.
     kind: String,
 }
 
@@ -510,11 +521,15 @@ async fn add_reaction(
 /// the caller's own reaction (idempotent).
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct RemoveParams {
+    /// Kind of subject the reaction is on.
     subject_kind: String,
+    /// Public id of that subject.
     subject_pid: String,
+    /// Reaction kind to remove.
     kind: String,
 }
 
+/// `DELETE /api/reactions` handler. Removes only the caller's own reaction (matched on the reactor identity); removing one that does not exist is not an error.
 #[debug_handler]
 async fn remove_reaction(
     State(ctx): State<AppContext>,

@@ -20,10 +20,12 @@ use crate::issues as rules;
 use crate::models::_entities::{issues, plans, risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
+/// Today's date in the deployment's configured time zone, so ages and due dates agree with what users see.
 fn today() -> NaiveDate {
     crate::tz::deployment_today()
 }
 
+/// JSON shape of one issue, with `age_calendar_days` and `overdue` derived from `today` rather than stored.
 fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {
     serde_json::json!({
         "pid": i.pid, "plan_pid": i.plan_pid, "title": i.title,
@@ -38,6 +40,7 @@ fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {
     })
 }
 
+/// Parses the plan pid and confirms the plan exists and is not soft-deleted; `404` otherwise.
 async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
     let pid = super::parse_pid(plan)?;
     plans::Entity::find()
@@ -50,6 +53,7 @@ async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
     Ok(pid)
 }
 
+/// Loads one live (not soft-deleted) issue of the given plan; `404` when the pid is unknown or belongs to another plan.
 async fn find(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<issues::Model> {
     let pid = super::parse_pid(pid)?;
     issues::Entity::find()
@@ -66,12 +70,16 @@ async fn find(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<issues::Model> 
 const PLAN_LIST_MAX: u64 = 5_000;
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Query filters for the plan-scoped issue list; all are optional and combine with AND.
 pub(crate) struct ListParams {
     #[serde(default)]
+    /// Only issues in this status; must be one of the rules module's statuses (`422` otherwise).
     status: Option<String>,
     #[serde(default)]
+    /// Only issues of this severity; must be one of the rules module's severities (`422` otherwise).
     severity: Option<String>,
     #[serde(default)]
+    /// Only issues whose owner reference equals this person reference exactly.
     owner: Option<String>,
     /// `true` lists only the issues that are not resolved or closed.
     #[serde(default)]
@@ -151,43 +159,59 @@ async fn get_one(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Request body for creating or replacing an issue (`POST` and `PUT`); validated by [`validate`] before any write.
 pub(crate) struct Input {
+    /// Short title; trimmed, required, length-limited by the rules module.
     title: String,
     #[serde(default)]
+    /// Optional longer text; blank is stored as absent.
     description: Option<String>,
     #[serde(default = "default_kind")]
+    /// Issue kind; defaults to `concern` and must be a known kind.
     kind: String,
     #[serde(default = "default_severity")]
+    /// Severity; defaults to `med` and must be a known severity.
     severity: String,
     #[serde(default)]
+    /// Optional free-text priority label; blank is stored as absent.
     priority: Option<String>,
     #[serde(default = "default_status")]
+    /// Lifecycle status; defaults to `open`. A closed issue must carry a resolution.
     status: String,
     #[serde(default)]
+    /// Person reference of the owner; absent means unowned, and it must look like a person reference.
     owner_ref: Option<String>,
     /// Default today.
     #[serde(default)]
     raised_on: Option<NaiveDate>,
     #[serde(default)]
+    /// Optional date the issue should be dealt with by; absent means no due date, so it is never overdue.
     due_date: Option<NaiveDate>,
     #[serde(default)]
+    /// How the issue was resolved; required once the status is `closed`, blank is stored as absent.
     resolution: Option<String>,
     #[serde(default)]
+    /// Risk this issue was raised from, when there is one; recorded as given, the risk is not changed.
     source_risk_pid: Option<Uuid>,
     #[serde(default)]
+    /// Task this issue was raised from, when there is one; recorded as given, the task is not changed.
     source_task_pid: Option<Uuid>,
 }
 
+/// Serde default for [`Input::kind`].
 fn default_kind() -> String {
     "concern".to_string()
 }
+/// Serde default for [`Input::severity`].
 fn default_severity() -> String {
     "med".to_string()
 }
+/// Serde default for [`Input::status`].
 fn default_status() -> String {
     "open".to_string()
 }
 
+/// Runs the rules module's checks on a request body and turns any problems into one `422` listing them all.
 fn validate(b: &Input, raised_on: NaiveDate) -> Result<()> {
     let problems = rules::problems(&rules::Draft {
         title: &b.title,
@@ -207,6 +231,7 @@ fn validate(b: &Input, raised_on: NaiveDate) -> Result<()> {
     }
 }
 
+/// Trims an optional string and maps blank to `None`, so empty input never becomes a stored empty value.
 fn trimmed(s: Option<&String>) -> Option<String> {
     s.map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
 }
@@ -335,21 +360,28 @@ async fn remove(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Query filters for the cross-plan register (`GET /api/issues`); all optional and combined with AND.
 pub(crate) struct RegisterParams {
     #[serde(default)]
+    /// Restrict to one plan; plans the caller cannot read stay hidden regardless.
     plan: Option<Uuid>,
     #[serde(default)]
+    /// Only issues in this status (validated against the known statuses).
     status: Option<String>,
     #[serde(default)]
+    /// Only issues of this severity (validated against the known severities).
     severity: Option<String>,
     #[serde(default)]
+    /// Only issues owned by exactly this person reference.
     owner: Option<String>,
     #[serde(default)]
+    /// `true` hides resolved and closed issues.
     open: Option<bool>,
     /// Only issues at least this many calendar days old.
     #[serde(default)]
     min_age_days: Option<i64>,
     #[serde(default)]
+    /// Rows to return; defaults to 200 and is clamped to 1 through `REGISTER_MAX`.
     limit: Option<u64>,
 }
 
@@ -459,6 +491,7 @@ async fn existing_open(
         .map_err(db_err)
 }
 
+/// The `409` returned when an open issue already exists for the same source risk or task; names the existing issue pid.
 fn already(existing: &issues::Model) -> Error {
     Error::CustomError(
         StatusCode::CONFLICT,
@@ -473,6 +506,7 @@ fn already(existing: &issues::Model) -> Error {
 }
 
 #[expect(clippy::too_many_arguments)]
+/// Inserts an `open` issue derived from a risk or task and audits `issue_raised` in the same transaction. The owner is kept only if it is a valid person reference, and the title is cut to the maximum length.
 async fn insert_from_source(
     ctx: &AppContext,
     caller: &MaybeAuthUser,

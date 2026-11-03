@@ -26,11 +26,14 @@ use crate::streaming;
 /// A goal and its position.
 #[derive(Debug, Serialize)]
 struct Indexed {
+    /// Zero-based position of the goal in the plan's goal list; goals are addressed by position.
     index: usize,
+    /// The goal itself, flattened into the same JSON object.
     #[serde(flatten)]
     goal: Goal,
 }
 
+/// Attach each goal's list position so clients can address it in later requests.
 fn indexed(goals: Vec<Goal>) -> Vec<Indexed> {
     goals
         .into_iter()
@@ -39,6 +42,7 @@ fn indexed(goals: Vec<Goal>) -> Vec<Indexed> {
         .collect()
 }
 
+/// Load a plan by public id and its parsed form, mapping a missing plan to 404.
 async fn load(
     ctx: &AppContext,
     pid: &str,
@@ -108,6 +112,7 @@ async fn save(
     with_etag(updated.to_plan().map_err(Error::Model)?.goals)
 }
 
+/// 404 for a goal position that does not exist in the plan.
 fn no_such_goal() -> Error {
     Error::CustomError(
         StatusCode::NOT_FOUND,

@@ -82,23 +82,23 @@ async fn subject_exists(ctx: &AppContext, subject_kind: &str, subject_pid: Uuid)
 /// `POST /api/reviews` body — delegate a subject to one expert.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct InvitePayload {
+    /// Kind of thing to review (one of the allowed review subject kinds).
     subject_kind: String,
+    /// Public id of the subject; it must name a live row of that kind.
     subject_pid: Uuid,
+    /// Person, worker or organization reference of the invited expert (never a raw email).
     reviewer_ref: String,
     #[serde(default)]
+    /// `internal` when absent, otherwise one of the allowed reviewer scopes.
     reviewer_scope: Option<String>,
     #[serde(default)]
+    /// Optional free-text area of expertise sought; if present it must be non-blank.
     expertise: Option<String>,
     #[serde(default)]
+    /// Optional date the verdict is due; absent means no deadline.
     due_on: Option<chrono::NaiveDate>,
 }
 
-/// `POST /api/reviews` — invite one expert to assess one subject.
-///
-/// A second live invitation for the same (subject, reviewer) is
-/// refused rather than stacked: re-delegating the same item to the same
-/// person is almost always a mistake, and the partial unique index
-/// would reject it anyway.
 /// Validate an invitation payload, reporting every problem at once.
 fn invite_problems(payload: &InvitePayload, scope: &str) -> Vec<String> {
     let mut problems = Vec::new();
@@ -130,6 +130,13 @@ fn invite_problems(payload: &InvitePayload, scope: &str) -> Vec<String> {
     problems
 }
 
+/// `POST /api/reviews` — invite one expert to assess one subject.
+///
+/// A second live invitation for the same (subject, reviewer) is
+/// refused rather than stacked: re-delegating the same item to the same
+/// person is almost always a mistake, and the partial unique index
+/// would reject it anyway. The invitation and its audit row commit
+/// together; the reviewer notification is best effort afterwards.
 #[debug_handler]
 async fn invite_review(
     State(ctx): State<AppContext>,
@@ -224,12 +231,16 @@ async fn invite_review(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReviewParams {
     #[serde(default)]
+    /// Filter by subject kind; absent means all kinds.
     subject_kind: Option<String>,
     #[serde(default)]
+    /// Filter by subject pid; absent means all subjects.
     subject_pid: Option<Uuid>,
     #[serde(default)]
+    /// Filter by reviewer reference; absent means all reviewers.
     reviewer: Option<String>,
     #[serde(default)]
+    /// Filter by review status; absent means all statuses.
     status: Option<String>,
     /// Page size; absent ⇒ [`LIST_CAP`].
     #[serde(default)]
@@ -334,9 +345,12 @@ async fn respond_review(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct VerdictPayload {
     #[serde(default)]
+    /// Optional score from 0 to 100; null means the reviewer gave none, not zero.
     score: Option<i32>,
+    /// One of the allowed recommendation tokens.
     recommendation: String,
     #[serde(default)]
+    /// Optional free-text comment, length-capped.
     comment: Option<String>,
 }
 
@@ -466,7 +480,9 @@ async fn withdraw_review(
 /// `GET /api/reviews/consensus` filter.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ConsensusParams {
+    /// Kind of the subject whose verdicts are aggregated.
     subject_kind: String,
+    /// Public id of the subject.
     subject_pid: Uuid,
 }
 
@@ -516,6 +532,7 @@ pub(crate) fn consensus_of(rows: &[reviews::Model]) -> rules::Consensus {
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct AssignPayload {
     #[serde(default)]
+    /// Person or worker reference to assign; null or blank unassigns the task.
     assignee_ref: Option<String>,
 }
 

@@ -197,6 +197,7 @@ pub struct Decoded {
     pub result: Result<(Option<String>, Plan), Vec<RowError>>,
 }
 
+/// Build a per-row import error; `row` counts decoded rows, `line` is the line in the source file.
 fn err(row: usize, line: usize, field: &str, code: &'static str, message: String) -> RowError {
     RowError {
         row_number: row,
@@ -207,6 +208,7 @@ fn err(row: usize, line: usize, field: &str, code: &'static str, message: String
     }
 }
 
+/// Turn one decoded JSON object into a plan plus its optional `pid` (blank means none). A decode failure reports only the field name and a fixed message, never the offending value.
 fn plan_of(
     mut obj: Map<String, Value>,
     row: usize,

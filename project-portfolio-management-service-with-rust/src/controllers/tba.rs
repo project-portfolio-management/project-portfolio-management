@@ -414,6 +414,7 @@ async fn aging_wip(
 /// Flow query parameters.
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
 pub(crate) struct FlowQuery {
+    /// Look-back window in days for the flow figures; between 1 and 3650, absent means the default window.
     #[serde(default)]
     window_days: Option<i64>,
 }

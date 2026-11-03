@@ -7,12 +7,12 @@
 //!
 //! This is a **best-effort notification** fan-out, not a second durable
 //! bus. The relay's primary sink ([`crate::relay::LoggingSink`] /
-//! [`crate::relay::FluvioSink`]) is the at-least-once path the family
+//! `crate::relay::FluvioSink`) is the at-least-once path the family
 //! already depends on: a send failure there leaves the outbox row
 //! unpublished so [`crate::relay::drain_once`] retries it. Webhook
 //! delivery must never gate that — an operator's slow or unreachable
 //! receiver would otherwise stall the entire outbox forever. So
-//! [`WebhookSink::send`] never returns an error: each matching target
+//! `WebhookSink::send` never returns an error: each matching target
 //! gets its own bounded retry-with-backoff on a spawned task, and a
 //! target still failing once that is exhausted is recorded in the
 //! [`crate::models::webhook_deliveries`] delivery log and moved past,
@@ -89,7 +89,7 @@
 //!
 //! Each attempt also carries `X-Mxi-Timestamp: <unix seconds>` and `X-Mxi-Signature-V2: <tag>`, the same MAC over
 //! `"<timestamp>." + <exact body bytes>`. A receiver should recompute that tag and **reject a delivery whose timestamp
-//! is more than [`REPLAY_WINDOW_SECS`] from its own clock**, so a captured request cannot be played back later. The
+//! is more than `REPLAY_WINDOW_SECS` from its own clock**, so a captured request cannot be played back later. The
 //! timestamp is taken afresh on every attempt, so a retry after backoff is not stale. `X-Mxi-Signature` (over the body
 //! alone) is still sent for one release so existing receivers keep working; new receivers should verify V2.
 //! `X-Mxi-Delivery-Id` names one delivery (all its attempts); the event id stays the same on a redelivery. An
@@ -99,7 +99,7 @@
 //! ## Format (NC-11)
 //!
 //! A target may add `"format": "cloudevents_structured"` or `"cloudevents_binary"` to receive a `CloudEvents` 1.0
-//! event instead of the bare envelope ([`render`]). The signature is unchanged: HMAC over the exact request body
+//! event instead of the bare envelope (`render`). The signature is unchanged: HMAC over the exact request body
 //! bytes, whatever the format. The default is `native`.
 //!
 //! ## Retry policy
@@ -109,8 +109,8 @@
 //! receiver or its infrastructure is presumed to be having a transient
 //! problem. A `4xx` response is **not retried**: it is the receiver
 //! rejecting this exact request, and resending it unchanged would just
-//! repeat the rejection. [`MAX_ATTEMPTS`] attempts, exponential backoff
-//! starting at [`INITIAL_BACKOFF`] and doubling.
+//! repeat the rejection. `MAX_ATTEMPTS` attempts, exponential backoff
+//! starting at `INITIAL_BACKOFF` and doubling.
 
 use std::time::Duration;
 
@@ -152,7 +152,7 @@ pub fn signing_input_v2(timestamp: i64, body: &[u8]) -> Vec<u8> {
 }
 
 /// The receiver's replay rule, stated once so it can be tested: a timestamp is acceptable when it is within
-/// [`REPLAY_WINDOW_SECS`] of `now`, in either direction (clocks differ).
+/// `REPLAY_WINDOW_SECS` of `now`, in either direction (clocks differ).
 #[must_use]
 pub fn timestamp_is_fresh(timestamp: i64, now: i64) -> bool {
     (now - timestamp).abs() <= REPLAY_WINDOW_SECS
@@ -211,7 +211,7 @@ fn ce_type(entity: &str, kind: &str) -> String {
 /// Shape `payload` (the outbox envelope) for `format`. `None` when it cannot be serialized.
 ///
 /// `CloudEvents` attributes: `specversion` `1.0`; `id` the envelope's `event_id`; `source`
-/// `urn:project-portfolio-management:<entity>`; `type` as [`ce_type`]; `subject` the record's pid; `time` only
+/// `urn:project-portfolio-management:<entity>`; `type` as `ce_type`; `subject` the record's pid; `time` only
 /// when the envelope carries `occurred_at` (it does not today, and a time is never invented); `datacontenttype`
 /// `application/json`. Pure, so it is unit-tested without a network.
 #[must_use]
@@ -398,16 +398,22 @@ pub fn should_retry_status(status: u16) -> bool {
 
 /// One delivery attempt's result, for the retry loop to act on.
 enum AttemptResult {
+    /// The receiver answered with a success status; no further attempt is made.
     Delivered,
     /// Retry-worthy failure: `status` is `None` on a pure transport
     /// error (no response received at all).
     Retryable {
+        /// The HTTP status the receiver returned (a `5xx`), or `None` when nothing came back.
         status: Option<u16>,
+        /// A short reason kept in the delivery log: `HTTP <status>`, a fixed message, or the HTTP client's own error text for a
+        /// transport failure (which can name the target).
         error: String,
     },
     /// A `4xx` — stop retrying immediately.
     Rejected {
+        /// The `4xx` status the receiver returned, or `0` when no request was made because strict outbound mode refused the target.
         status: u16,
+        /// A short reason kept in the delivery log: `HTTP <status>`, or the fixed message for a refused target.
         error: String,
     },
 }
@@ -538,7 +544,7 @@ async fn attempt_once(
 }
 
 /// Deliver one event to one target, retrying `5xx`/transport failures
-/// with exponential backoff up to [`MAX_ATTEMPTS`], and record the final
+/// with exponential backoff up to `MAX_ATTEMPTS`, and record the final
 /// outcome in the delivery log. Never panics and never propagates an
 /// error — this is the fire-and-forget body a spawned task runs.
 #[expect(clippy::too_many_arguments)] // one delivery: where, what, which event, which delivery, how often
@@ -618,7 +624,9 @@ pub(crate) async fn deliver_with_retry(
 /// [`mac::is_enabled`] first and refuses to build this sink at all in
 /// that case (see the module docs' "Signing" section).
 pub struct WebhookSink {
+    /// The configured delivery targets; each event is offered to every one whose kinds match.
     targets: Vec<WebhookTarget>,
+    /// Handle used only to write one delivery-log row per delivery, so a failed write is logged and never blocks delivery.
     db: DatabaseConnection,
 }
 

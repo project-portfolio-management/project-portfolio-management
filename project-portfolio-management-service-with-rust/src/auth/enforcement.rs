@@ -123,7 +123,7 @@ pub fn startup_verdict(
 }
 
 /// Fix the enforcement posture and apply [`startup_verdict`] (called from
-/// `App::after_routes` after [`init`] seeded the verifiers). Logs a loud
+/// `App::after_routes` after `init` seeded the verifiers). Logs a loud
 /// warning when enforcement is off.
 ///
 /// # Errors

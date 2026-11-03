@@ -26,18 +26,25 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::value as rules;
 
+/// Upper bound on rows read for a rollup query, so a runaway table cannot produce an unbounded response.
 const MAX_ROWS: u64 = 5000;
 
 /// `POST /api/plans/{pid}/business-case` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct TargetPayload {
+    /// Name of the measure being promised; required (blank is refused).
     metric: String,
+    /// Value at approval time, in the metric's unit.
     baseline_value: i64,
+    /// Promised value, in the metric's unit.
     target_value: i64,
+    /// Optional unit label for the metric.
     #[serde(default)]
     unit: Option<String>,
+    /// ISO 4217 code when the metric is monetary; `None` for non-monetary metrics.
     #[serde(default)]
     currency: Option<String>,
+    /// Where the promise was made: `charter` or `gate_review`; `None` means `charter`.
     #[serde(default)]
     source: Option<String>,
 }
@@ -96,13 +103,18 @@ async fn create_target(
 /// `POST /api/plans/{pid}/value-points` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ValuePayload {
+    /// Observed value in minor units of `currency` (or the metric's own unit when not monetary).
     value: i64,
+    /// How the value was measured; an unrecognized or absent method falls back to the default method token.
     #[serde(default)]
     method: Option<String>,
+    /// ISO 4217 code for a monetary value; `None` when not monetary.
     #[serde(default)]
     currency: Option<String>,
+    /// Marks the first measurable value, which stops the Time-to-Value clock; at most one per plan.
     #[serde(default)]
     is_first_measurable: bool,
+    /// Optional reference to the evidence behind the value (a link or document pid).
     #[serde(default)]
     evidence_ref: Option<String>,
 }
@@ -158,9 +170,13 @@ async fn create_value_point(
 /// `POST /api/plans/{pid}/adoption` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct AdoptionPayload {
+    /// Users active in the window; must not be negative.
     active_users: i64,
+    /// Intended number of users; must be positive so the adoption rate has a non-zero denominator.
     target_users: i64,
+    /// Length of the measurement window in days; must be positive.
     window_days: i32,
+    /// What counted as an "active user", stored beside the rate so later readings stay comparable; required.
     definition: String,
 }
 
@@ -214,9 +230,13 @@ async fn create_adoption(
 /// `POST /api/plans/{pid}/satisfaction` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SatisfactionPayload {
+    /// Survey instrument, `nps` or `csat`.
     instrument: String,
+    /// Score from 0 to 10 inclusive.
     score: i16,
+    /// Respondent role: `sponsor`, `user`, `team` or `other`.
     respondent_role: String,
+    /// Optional free-text comment from the respondent.
     #[serde(default)]
     comment: Option<String>,
 }

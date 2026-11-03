@@ -58,6 +58,7 @@ pub fn routes() -> Routes {
         )
 }
 
+/// Loads the plan and one of its cutover decisions by pid; a decision of another plan is `NotFound`.
 async fn load(ctx: &AppContext, pid: &str, did: &str) -> Result<(plans::Model, decisions::Model)> {
     let plan = super::governance::find_item(ctx, pid).await?;
     let did = super::parse_pid(did)?;
@@ -71,6 +72,7 @@ async fn load(ctx: &AppContext, pid: &str, did: &str) -> Result<(plans::Model, d
     Ok((plan, d))
 }
 
+/// Returns the decision's stop criteria in position order and its co-signatures.
 async fn parts(
     ctx: &AppContext,
     d: &decisions::Model,
@@ -90,6 +92,7 @@ async fn parts(
     Ok((c, s))
 }
 
+/// JSON view of a decision with its criteria and co-signatures, including which required roles have and have not signed.
 fn view(d: &decisions::Model, c: &[criteria::Model], s: &[cosigs::Model]) -> Value {
     let required = rules::required_roles();
     let signed: Vec<&str> = s.iter().map(|x| x.role.as_str()).collect();
@@ -105,6 +108,7 @@ fn view(d: &decisions::Model, c: &[criteria::Model], s: &[cosigs::Model]) -> Val
     })
 }
 
+/// Trims the criteria and requires 1 to 30 items of 5 to 500 characters each, otherwise unprocessable.
 fn clean(list: &[String]) -> Result<Vec<String>> {
     let items: Vec<String> = list.iter().map(|x| x.trim().to_string()).collect();
     if !(1..=30).contains(&items.len()) {
@@ -119,6 +123,7 @@ fn clean(list: &[String]) -> Result<Vec<String>> {
     Ok(items)
 }
 
+/// Inserts the criteria with 1-based positions in the given order. Generic over the connection so it can run inside the caller's transaction.
 async fn put_criteria<C: ConnectionTrait>(db: &C, decision: Uuid, items: &[String]) -> Result<()> {
     for (i, text) in items.iter().enumerate() {
         criteria::ActiveModel {
@@ -136,8 +141,11 @@ async fn put_criteria<C: ConnectionTrait>(db: &C, decision: Uuid, items: &[Strin
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `POST /api/plans/{pid}/cutover-decisions`.
 pub(crate) struct New {
+    /// Name of the cutover decision.
     title: String,
+    /// Stop criteria text, in order; see [`clean`] for the limits.
     criteria: Vec<String>,
 }
 
@@ -206,7 +214,9 @@ async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `PUT .../criteria`: the full replacement list.
 pub(crate) struct Criteria {
+    /// Stop criteria text, in order; replaces the draft's list.
     criteria: Vec<String>,
 }
 
@@ -246,6 +256,7 @@ async fn replace_criteria(
     format::json(view(&d, &c, &s))
 }
 
+/// Moves a decision from status `from` to `to` (publish or open), stamping today's date, and audits `action` in the same transaction. Refuses with a conflict when the decision is not in `from`.
 async fn advance(
     ctx: &AppContext,
     d: decisions::Model,
@@ -317,8 +328,11 @@ async fn open(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `PUT .../criteria/{n}/mark`.
 pub(crate) struct Mark {
+    /// Whether the criterion is met.
     met: bool,
+    /// The evidence supporting the mark.
     evidence: String,
 }
 
@@ -368,7 +382,9 @@ async fn mark(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `POST .../cosign`.
 pub(crate) struct Cosign {
+    /// Role being signed for; the caller's token must carry it in `cutover_role`.
     role: String,
 }
 
@@ -440,8 +456,11 @@ async fn cosign(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `POST .../decide`.
 pub(crate) struct Decide {
+    /// `go`, `no_go` or a delay for safety; go needs every criterion met and every co-signature.
     outcome: String,
+    /// Why the outcome was chosen; recorded with the decision.
     reason: String,
 }
 

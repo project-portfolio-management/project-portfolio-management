@@ -27,6 +27,7 @@ pub fn routes() -> Routes {
         .add("/webhook-deliveries/{id}/redeliver", post(redeliver))
 }
 
+/// Allow administrators only. Everyone else gets `NotFound` rather than Forbidden, so the endpoint's existence is not revealed.
 fn admin(caller: &MaybeAuthUser) -> Result<()> {
     if caller.holds_or_open(|c| crate::auth::has_attr(c, "access", "admin")) {
         Ok(())
@@ -38,10 +39,13 @@ fn admin(caller: &MaybeAuthUser) -> Result<()> {
 /// `GET /api/webhook-deliveries` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ListQuery {
+    /// Only deliveries for this event id.
     #[serde(default)]
     event_id: Option<Uuid>,
+    /// Only `delivered` or `failed` deliveries; anything else is a 422.
     #[serde(default)]
     status: Option<String>,
+    /// Rows to return, clamped to 1 to 500; absent means 100. Newest first.
     #[serde(default)]
     limit: Option<u64>,
 }

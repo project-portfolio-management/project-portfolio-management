@@ -2,14 +2,14 @@
 //!
 //! * A **case** is one onboarding or offboarding: a person joining or leaving a
 //!   plan, or a plan being taken in (intake) or closed out. Each kind has a
-//!   built-in checklist ([`builtin`]) that a custom template can replace.
+//!   built-in checklist (`builtin`) that a custom template can replace.
 //! * An item's due date is the case's effective date plus an offset in calendar days
-//!   (negative is before it) — [`due_date`].
+//!   (negative is before it) — `due_date`.
 //! * An item is open, `done`, or `skipped` (with a note: skipping is a decision,
 //!   not a way to lose an item). A case can complete only when none is open.
 //! * **Access** is an append-only record of grants and revocations; what is
-//!   *outstanding* is whatever was granted and not revoked since ([`outstanding`]).
-//! * A plan is **ready to close** when nothing is left open ([`closeout`]).
+//!   *outstanding* is whatever was granted and not revoked since (`outstanding`).
+//! * A plan is **ready to close** when nothing is left open (`closeout`).
 
 use std::collections::BTreeMap;
 
@@ -70,6 +70,7 @@ pub struct Seed {
     pub offset_days: i64,
 }
 
+/// Build checklist seeds from (title, offset in calendar days) pairs.
 fn seeds(items: &[(&str, i64)]) -> Vec<Seed> {
     items
         .iter()

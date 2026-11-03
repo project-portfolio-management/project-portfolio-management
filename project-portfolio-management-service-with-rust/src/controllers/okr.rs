@@ -33,6 +33,8 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::okr as rules;
 
+/// Parse a wire metric token; `None` means unsupported and is a `422` for
+/// the caller.
 fn parse_metric(raw: &str) -> Option<rules::Metric> {
     match raw {
         "number" => Some(rules::Metric::Number),
@@ -43,6 +45,8 @@ fn parse_metric(raw: &str) -> Option<rules::Metric> {
     }
 }
 
+/// Parse a wire direction token (`increase`, `decrease`, `maintain`);
+/// `None` means unsupported.
 fn parse_direction(raw: &str) -> Option<rules::Direction> {
     match raw {
         "increase" => Some(rules::Direction::Increase),
@@ -65,6 +69,7 @@ fn fact_of(row: &key_results::Model) -> Option<rules::KeyResultFact> {
     })
 }
 
+/// Load one live (not soft-deleted) objective by public id.
 async fn find_objective(ctx: &AppContext, raw: &str) -> Result<objectives::Model> {
     let pid = super::parse_pid(raw)?;
     objectives::Entity::find()
@@ -76,6 +81,7 @@ async fn find_objective(ctx: &AppContext, raw: &str) -> Result<objectives::Model
         .ok_or(Error::NotFound)
 }
 
+/// Load one live (not soft-deleted) key result by public id.
 async fn find_key_result(ctx: &AppContext, raw: &str) -> Result<key_results::Model> {
     let pid = super::parse_pid(raw)?;
     key_results::Entity::find()
@@ -100,18 +106,29 @@ async fn key_results_of(ctx: &AppContext, objective_pid: Uuid) -> Result<Vec<key
 /// `POST /api/objectives/{pid}/key-results` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct KeyResultPayload {
+    /// Key result title; required and capped.
     title: String,
+    /// Wire metric kind: `number`, `percent`, `currency` or `boolean`.
     metric: String,
+    /// Wire direction of travel: `increase`, `decrease` or `maintain`.
     direction: String,
+    /// Baseline the progress is measured from; fixed at creation and never
+    /// updated, because progress from a moving baseline is not progress.
     start_value: i64,
+    /// Value that counts as done, in the metric's integer unit.
     target_value: i64,
     #[serde(default)]
+    /// Band around the target; a `maintain` key result without it is
+    /// unmeasurable rather than assumed exact.
     tolerance: Option<i64>,
     #[serde(default)]
+    /// Display unit; informational only.
     unit: Option<String>,
     #[serde(default)]
+    /// Currency code, required when the metric is `currency`.
     currency: Option<String>,
     #[serde(default)]
+    /// Reference (not a copy) to the person who owns the key result.
     owner_ref: Option<String>,
 }
 
@@ -231,10 +248,14 @@ async fn list_key_results(
 /// `POST /api/key-results/{pid}/check-ins` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct CheckInPayload {
+    /// The new measured value in the key result's unit.
     value: i64,
     #[serde(default)]
+    /// Self-reported confidence, recorded beside the value and never blended
+    /// into a score; absent means none was given.
     confidence: Option<i16>,
     #[serde(default)]
+    /// Free-text context for the reading.
     note: Option<String>,
 }
 
@@ -479,10 +500,13 @@ async fn list_okrs(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct ObjectiveUpdate {
+    /// New objective title.
     title: String,
     #[serde(default)]
+    /// New description; absent clears or leaves it unset.
     description: Option<String>,
     #[serde(default)]
+    /// Planning period label (for example a quarter) the objective belongs to.
     period: Option<String>,
 }
 
@@ -548,15 +572,21 @@ async fn delete_objective(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct KeyResultUpdate {
+    /// New key result title.
     title: String,
+    /// New target value, in the metric's unit.
     target_value: i64,
     #[serde(default)]
+    /// New tolerance; absent means none.
     tolerance: Option<i64>,
     #[serde(default)]
+    /// New display unit.
     unit: Option<String>,
     #[serde(default)]
+    /// Reference to the (possibly new) owner.
     owner_ref: Option<String>,
     #[serde(default)]
+    /// Optional due date for the key result.
     due_date: Option<chrono::NaiveDate>,
 }
 

@@ -26,6 +26,7 @@ pub const NOT_EXPORTED: &str = "Exported from Project Portfolio Management. Not 
 status other than done (percent complete is 0 or 100), sprints, components, effort and work contours, \
 custom fields, comments, baselines, relations other than 'precedes', and elapsed-time lags (all lags are working days).";
 
+/// Map a stored constraint kind to the MSPDI constraint type; None for kinds with no counterpart.
 fn constraint_of(kind: &str) -> Option<MsConstraint> {
     Some(match kind {
         "mso" => MsConstraint::Mso,
@@ -38,6 +39,7 @@ fn constraint_of(kind: &str) -> Option<MsConstraint> {
     })
 }
 
+/// Map a stored link kind (`ss`, `ff`, `sf`) to the scheduler's kind; anything else, including `fs`, is finish-to-start.
 fn link_kind(kind: &str) -> cpm::Kind {
     match kind {
         "ss" => cpm::Kind::Ss,

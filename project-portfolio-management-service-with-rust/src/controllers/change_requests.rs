@@ -24,6 +24,7 @@ use crate::models::_entities::{change_request_risks, change_requests, issues, ri
 use crate::models::audit_logs::Model as AuditModel;
 use crate::sandbox::{self, Edit};
 
+/// The caller's actor string for audit and `requested_by`; `anonymous` when login is off.
 fn actor_of(caller: &MaybeAuthUser) -> String {
     caller
         .actor()
@@ -35,6 +36,7 @@ fn checks_apply() -> bool {
     require_auth()
 }
 
+/// Loads a live (not soft-deleted) change request by pid, scoped to its plan, so a pid from another plan is `NotFound`.
 async fn find_cr(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<change_requests::Model> {
     let pid = super::parse_pid(pid)?;
     change_requests::Entity::find()
@@ -47,6 +49,7 @@ async fn find_cr(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<change_reque
         .ok_or(Error::NotFound)
 }
 
+/// Returns the pids of the live issues and the risks linked to a change request, as `(issues, risks)`.
 async fn links_of(ctx: &AppContext, cr: Uuid) -> Result<(Vec<Uuid>, Vec<Uuid>)> {
     let issue_pids = issues::Entity::find()
         .filter(issues::Column::ChangeRequestPid.eq(cr))
@@ -68,6 +71,7 @@ async fn links_of(ctx: &AppContext, cr: Uuid) -> Result<(Vec<Uuid>, Vec<Uuid>)> 
     Ok((issue_pids, risk_pids))
 }
 
+/// JSON view of a change request: the impact block (schedule in business days, cost in minor units with its currency), decision fields, computed age in calendar days, and linked issue/risk pids when `links` is supplied (null otherwise, meaning not loaded).
 fn view(c: &change_requests::Model, links: Option<&(Vec<Uuid>, Vec<Uuid>)>) -> serde_json::Value {
     let today = crate::tz::deployment_today();
     serde_json::json!({
@@ -89,29 +93,40 @@ fn view(c: &change_requests::Model, links: Option<&(Vec<Uuid>, Vec<Uuid>)>) -> s
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `POST /api/plans/{pid}/change-requests`: a draft change request with optional impact figures.
 pub(crate) struct Input {
+    /// Short title of the change.
     title: String,
+    /// What is being changed.
     description: String,
+    /// Why the change is needed.
     reason: String,
     #[serde(default = "default_kind")]
+    /// Change kind; defaults to `other` and is checked by the domain rules.
     kind: String,
     #[serde(default)]
+    /// Estimated schedule impact in business days; null when not assessed, not zero.
     impact_schedule_days: Option<i64>,
     #[serde(default)]
+    /// Estimated cost impact in minor currency units; null when not assessed, not zero.
     impact_cost_minor: Option<i64>,
     #[serde(default)]
+    /// Currency of `impact_cost_minor`; expected whenever a cost is given.
     cost_currency: Option<String>,
     #[serde(default)]
+    /// Free-text summary of the impact.
     impact_summary: Option<String>,
     /// What-if edits (the sandbox's edit list) whose forecast is shown as the impact.
     #[serde(default)]
     edits: Option<Vec<Edit>>,
 }
 
+/// Serde default for the change kind.
 fn default_kind() -> String {
     "other".to_string()
 }
 
+/// Validates the draft against the change-request rules and reports every problem as one unprocessable response.
 fn validate(b: &Input) -> Result<()> {
     let mut problems = rules::problems(&rules::Draft {
         title: &b.title,
@@ -136,6 +151,7 @@ fn validate(b: &Input) -> Result<()> {
     }
 }
 
+/// Serialises the optional what-if edits for storage; null when none were supplied.
 fn edits_json(b: &Input) -> Option<serde_json::Value> {
     b.edits.as_ref().and_then(|e| serde_json::to_value(e).ok())
 }
@@ -250,10 +266,13 @@ async fn update(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Query parameters for listing a plan's change requests.
 pub(crate) struct ListParams {
     #[serde(default)]
+    /// Restrict to one status; absent means all.
     status: Option<String>,
     #[serde(default)]
+    /// When true, only requests still open (not decided or implemented).
     open: Option<bool>,
 }
 
@@ -349,7 +368,9 @@ async fn step(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of the submit step.
 pub(crate) struct SubmitBody {
+    /// Person reference of the approver the draft is sent to; only that person may later decide.
     approver_ref: String,
 }
 
@@ -380,6 +401,7 @@ async fn submit(
     .await
 }
 
+/// Refuses (403) unless the caller is the named approver, when identity checks apply. Administrators are deliberately not exempt: the approval belongs to the named person.
 fn must_be_approver(row: &change_requests::Model, caller: &MaybeAuthUser) -> Result<()> {
     let named = row.approver_ref.as_deref().unwrap_or_default();
     if checks_apply() && !rules::is_person(named, caller.actor()) {
@@ -407,9 +429,11 @@ async fn review(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of the decision step.
 pub(crate) struct DecisionBody {
     /// `approve` or `reject`.
     decision: String,
+    /// Why the decision was taken; recorded with the decision.
     reason: String,
 }
 
@@ -484,10 +508,13 @@ async fn withdraw(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Body of `PUT .../links`: the full replacement sets.
 pub(crate) struct LinksBody {
     #[serde(default)]
+    /// Issues the change request answers; the set replaces the current links.
     issue_pids: Vec<Uuid>,
     #[serde(default)]
+    /// Risks the change request answers; the set replaces the current links.
     risk_pids: Vec<Uuid>,
 }
 
@@ -618,6 +645,7 @@ async fn preview(
     }))
 }
 
+/// Forecasts the plan with the given what-if edits via the sandbox, as the impact shown on a change request.
 async fn sandbox_preview(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -675,10 +703,13 @@ async fn baseline(
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
+/// Query parameters for the cross-plan change-request list.
 pub(crate) struct PortfolioParams {
     #[serde(default)]
+    /// Restrict to one status; absent means all.
     status: Option<String>,
     #[serde(default)]
+    /// When true, only requests still open.
     open: Option<bool>,
 }
 

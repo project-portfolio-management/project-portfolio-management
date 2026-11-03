@@ -2288,8 +2288,10 @@ The bridges between CRM, PPM and WPM, decided 2026-10-30 (entity spec §8.5a). W
   withdrawal at zero included) and lists the recent sends. **Not built:** pools cannot be created or edited here
   (only linked); a commitment is not edited or deleted from a list (setting it again replaces it).
   **Not verified:** against a running service or WPM (the browser tests stub the service; FB-8).
-- [ ] **FB-7 (S) — Worker skills.** `workers_client` calls `GET /api/workers/{id}/skills`, which WPM does not have
-  (WPM has `/api/workers/{pid}/skills-as-of`, a different shape); the skill-gap view reports `unknown`. A mapping
+- [ ] **FB-7 (S) — Worker skills.** `workers_client` calls `GET /api/workers/{id}/skills` and expects `{"skills": ["tag", ...]}`. **Corrected 2026-11-03:**
+  WPM does have `GET /api/workers/{pid}/skills` (since 2026-10-01), but it answers a JSON array of declared-skill rows
+  (a catalogue skill reference and a proficiency 1 to 5, no tag), so PPM's parse fails and the skill-gap view reports `unknown`;
+  the earlier note that the path does not exist was wrong, and the shape is what differs. A mapping
   from WPM's catalogue skills to PPM's tags is an owners' decision, not made.
 - [ ] **FB-8 (S) — A live check.** Run PPM against a running WPM with a linked pool on both sides and a real token,
   and record what was seen. **Done in part 2026-10-30:** WPM, PPM and CRM run together on one machine with

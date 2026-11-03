@@ -12,7 +12,7 @@
 //!
 //! This calls `GET {base}/api/workers/{id}/skills`, expecting a JSON
 //! body `{"skills": ["tag", ...]}`. **The worker service carries no
-//! such endpoint today** — confirmed by reading its `Worker` and
+//! endpoint of that shape today** (see the 2026-11-03 correction below) — confirmed by reading its `Worker` and
 //! `Assessment` models directly rather than assumed: `Worker` has no
 //! skills-tag field, and its `Assessment` machinery scores psychometric
 //! scales (Watson-Glaser, SHL, …), not a short-tag vocabulary like
@@ -25,9 +25,11 @@
 //! effect of this task would be exactly the kind of unsupervised
 //! cross-crate decision the family's discipline avoids.
 //!
-//! **Read again 2026-10-30 (FB-7):** the worker service is the workforce service (WPM), and it still has no
-//! `GET /api/workers/{id}/skills`; it has `/api/workers/{pid}/skills-as-of`, catalogue skills with a proficiency,
-//! a different shape. This client is left as it is and reports `unknown`; no mapping is invented here. The
+//! **Read again 2026-10-30 (FB-7), corrected 2026-11-03:** the worker service is the workforce service (WPM). It does
+//! have `GET /api/workers/{pid}/skills` (it has had one since 2026-10-01), but it answers a JSON array of declared-skill
+//! rows (a catalogue skill reference and a proficiency 1 to 5, no tag), not `{"skills": [...]}`, so this client's parse
+//! fails and it reports `unknown`. An earlier version of this note said the path did not exist; that was wrong. This
+//! client is left as it is; no mapping from catalogue skills to tags is invented here. The
 //! capacity bridge to the same service is [`crate::wpm_bridge`].
 
 use std::collections::HashMap;

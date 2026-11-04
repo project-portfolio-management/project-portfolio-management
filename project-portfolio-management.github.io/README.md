@@ -8,8 +8,8 @@ This directory lives inside the monorepo, `project-portfolio-management/project-
 `git subtree` (the family pattern: the WPM repository's `spec/monorepo-github-pages/`). Change the site here; never
 work in the exported repository. The specification is [`../spec/github-pages-site.md`](../spec/github-pages-site.md).
 
-**Status: built, not published.** No `github-pages` remote is configured and the exported repository does not exist
-yet. The steps to publish are below.
+**Status: published** at <https://project-portfolio-management.github.io/> (first deployed 2026-11-04, GP-2). The
+exported repository's own `git subtree` history is what GitHub Pages builds; the steps are below.
 
 ## What it shows
 
@@ -56,7 +56,8 @@ if it is ever published as a project site rather than the organization site.
 
 ## Publishing
 
-The user who owns the GitHub organization does this once; nothing here has done any of it.
+Steps 1 to 3 were done once, on 2026-11-04. A new clone of the monorepo needs only step 3 (the remote lives in
+`.git/config`, not in the repository); every publish after that is step 4.
 
 1. On GitHub, create the empty public repository `project-portfolio-management/project-portfolio-management.github.io`
    (no README, licence or `.gitignore`, so the first push is not rejected).

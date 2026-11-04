@@ -99,7 +99,7 @@
 - [Tutorial: the bridge to the workforce service (WPM)](operations/wpm-bridge.md): Tutorial: link a pool to the workforce service (WPM), read supply, send demand, read people impact
 - [Operating commitments](operations/commitments.md): Operating commitments
 - [Recovery objectives](operations/recovery-objectives.md): Recovery point and recovery time objectives
-- [GitHub Pages site](project-portfolio-management.github.io/README.md): Build, test and the exact steps to publish the documentation site (not published yet)
+- [GitHub Pages site](project-portfolio-management.github.io/README.md): Build, test and the exact steps to publish the documentation site (published)
 
 ## Governance and security
 

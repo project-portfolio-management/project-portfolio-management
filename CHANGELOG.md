@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 4 November (GP-2: the documentation site is published)
+
+- The site is live at <https://project-portfolio-management.github.io/>, deployed from the new exported repository
+  `project-portfolio-management/project-portfolio-management.github.io` by `make github-pages`. Its copy of
+  `spec/index.md` had gone stale after UE-1 and was refreshed first, which also clears the `site` CI failure.
+- Not done: the axe suite ran on the local build, not against the live host; publishing is by hand, so the site can
+  lag `main`; the exported repository has no branch protection. Not fixed here: the `docs` CI job still fails because
+  `openapi_bodies.rs` is stale, which is unrelated to the site.
+
 ### 31 October (supply-chain gates matched across the family)
 
 - Every GitHub Action is pinned to a commit SHA (it was a movable tag). `scripts/check-actions-pinned.py --actions-only`

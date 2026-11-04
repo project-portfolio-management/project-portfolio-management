@@ -2331,10 +2331,14 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   four pages under a forced `dir="rtl"`; the locale switch, `lang`, the link rewriting and the phone width are
   tested. **Not built:** the site's own words are English only; no right-to-left brief exists to read; only two themes;
   the first paint uses the light fallback tokens.
-- [ ] **GP-2 (S, owner) — Publish it.** Create `project-portfolio-management/project-portfolio-management.github.io`,
-  set its Pages source to GitHub Actions, add the `github-pages` remote and run `make github-pages` (the steps are in
-  [the site's README](project-portfolio-management.github.io/README.md#publishing)). Not done: no remote, no
-  repository, nothing pushed.
+- [x] **GP-2 (S, owner) — Publish it.** **Published 2026-11-04** at <https://project-portfolio-management.github.io/>:
+  created `project-portfolio-management/project-portfolio-management.github.io` (public, issues and wiki off), set its
+  Pages source to GitHub Actions, added the `github-pages` remote and ran `make github-pages` (the steps are in
+  [the site's README](project-portfolio-management.github.io/README.md#publishing)). **Acceptance:** before the push,
+  `svelte-check` and the build were clean and all 67 Playwright tests passed; after it, all 126 prerendered pages
+  answered 200 on the live host, and seven pages in a browser under light and dark gave no console, CSP or network
+  error. **Not done:** the axe suite ran on the local build, not against the live host; `make github-pages` is by
+  hand, so the site can lag `main`; the exported repository has no branch protection to stop a direct push.
 
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 

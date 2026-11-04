@@ -71,11 +71,12 @@ repository deploys with its own `.github/workflows/deploy.yml` (GitHub Pages' ac
 Each action there is pinned to a full commit SHA with its release tag in a comment (`# v7.0.1`), as the workforce
 repository's site does, so a moved tag cannot change what runs. No Dependabot entry watches that file (the site's
 entry is npm only, and the `github-actions` entry reads the root `.github`), so the pins are moved by hand.
-The remote and the repository are created by the owner; the steps are in the site's
+Published 2026-11-04 (GP-2) at <https://project-portfolio-management.github.io/>. The exported repository exists with
+its Pages source set to GitHub Actions; the `github-pages` remote is per clone. The steps are in the site's
 [`README.md`](../project-portfolio-management.github.io/README.md#publishing).
 
 ## Not built
 
 The site's words are English only; no right-to-left brief exists to read; only the `light` and `dark` themes;
 the first paint (or a visit with JavaScript off) uses the light fallback tokens whatever the system preference;
-the site is not published.
+nothing publishes the site on a push to the monorepo (`make github-pages` is run by hand), so it can lag `main`.

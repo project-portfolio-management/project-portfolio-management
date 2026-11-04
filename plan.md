@@ -1718,3 +1718,7 @@ Not looked at: the leveling apply path and the what-if sandbox commit (it has it
 ## 83. Local-first CI/CD (2026-11-04)
 
 Research and advice are in [spec/local-ci-cd.md](spec/local-ci-cd.md); the tasks are LC-1 to LC-10 in [tasks.md](tasks.md). In one line: make the local machine the place CI runs and records its result, and make hosted runners a weekly second opinion. Order: measure; one entry point; local containers; a pre-push gate; parallel database suites; an attestation and commit status; narrow the hosted workflow; nightly jobs. Not taken: `act` as the plan, a Forgejo runner, a GitHub self-hosted runner.
+
+## 84. Learning, upskilling and economic viability (2026-11-04)
+
+[spec/learning-economics.md](spec/learning-economics.md): PPM measures ROI but has no NPV, payback or viability verdict, and sees training only as a budget line like any other. Built: the pure `viability` rule (UE-1). Proposed: a plan viability route, a `training` budget category, a portfolio view, a priced capability gap fed by the workforce planning service. No benefit recorded is `unmeasured`, never `not_viable`. Not taken: an internal rate of return, a verdict across currencies.

@@ -222,6 +222,8 @@ pub mod validation;
 pub mod value;
 /// Header-based API versioning (`Accepts-version`) for the REST surface.
 pub mod version;
+/// Net present value, payback and a viability verdict over dated cash flows.
+pub mod viability;
 /// Pure PPM visibility rules (schedule math, RAG, capacity, CSV).
 pub mod visibility;
 pub mod watermelon;

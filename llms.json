@@ -76,6 +76,11 @@
           "description": "Cycle and lead time, flow efficiency, forecasting rules"
         },
         {
+          "title": "Learning and economic viability",
+          "path": "spec/learning-economics.md",
+          "description": "Proposed (UE-1 to UE-8): net present value, payback and a viability verdict (the pure core is built), training as a budget category, a priced capability gap"
+        },
+        {
           "title": "Local-first CI/CD",
           "path": "spec/local-ci-cd.md",
           "description": "Proposed (LC-1 to LC-10): run CI locally first and record the result; the options assessed, the risks and the order"

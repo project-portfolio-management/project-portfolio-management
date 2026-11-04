@@ -2350,3 +2350,14 @@ Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is i
 - [ ] **LC-8 (M) — Nightly and weekly local jobs** by `launchd` (gitleaks over history, `cargo deny`, chaos, ZAP, the restore drill), writing a last-run page.
 - [ ] **LC-9 (M, optional) — Pilot Dagger** on the API fmt, clippy and unit stages, timed against plain cargo.
 - [ ] **LC-10 (S, optional) — A self-managed GitLab runner** on this machine for the GitLab mirror, as a second opinion. Decide after LC-1.
+
+## Learning, upskilling and economic viability (UE-n, [spec/learning-economics.md](spec/learning-economics.md)), proposed 2026-11-04
+
+- [x] **UE-1 (S) — The pure core `viability`.** *(UE-D1)* `src/viability.rs`: dated flows, NPV with the rate echoed, payback and discounted payback, the verdict (`viable`, `too_slow`, `break_even`, `not_viable`, `unmeasured`); nine unit tests (rate and rounding, linear payback, no benefit and no investment `unmeasured`, a series past 600 periods out of range, order does not matter). **Not built:** any route, table or screen.
+- [ ] **UE-2 (M) — `GET /api/plans/{pid}/viability`.** Flows from the plan's budget lines (actual where recorded, else baseline, and the answer says which) and from its value facts and projected benefits, by period; `?rate_bp=` and `?max_payback_periods=`; one currency or withheld. Derived, never stored. Routes, access table and OpenAPI updated.
+- [ ] **UE-3 (S) — A `training` budget line category** and a per-plan and portfolio figure of training investment per currency, with the share of the plan's cost.
+- [ ] **UE-4 (M) — A portfolio view of viability**: the plans by verdict, with `unmeasured` listed, not hidden; training investment beside return.
+- [ ] **UE-5 (M) — A priced capability gap.** Where WPM answers a skill gap and training hours (FB-7 mapping done), show the training time on the plan and the cost WPM offers; `unknown` where it cannot. Blocked on FB-7 and on WPM-T452.
+- [ ] **UE-6 (M) — Screens** for UE-2 to UE-4 in 11 locales, with Playwright and axe.
+- [ ] **UE-7 (S) — Document the viability definition** in 06 (the metrics table) and 09, and correct "NPV" there from promised to delivered once UE-2 lands.
+- [ ] **UE-8 (S, owner) — Confirm UE-D1 to UE-D3 and the default discount rate** (a deployment setting, echoed).

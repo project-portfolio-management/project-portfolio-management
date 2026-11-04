@@ -113,3 +113,4 @@ kept whole rather than split across them:
   routes win on crate internals (see above).
 - **Bulk import / export:** [bulk-import-export.md](bulk-import-export.md).
 - **Local-first CI/CD (proposed):** [local-ci-cd.md](local-ci-cd.md).
+- **Learning, upskilling and economic viability (proposed):** [learning-economics.md](learning-economics.md).

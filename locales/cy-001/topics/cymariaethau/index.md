@@ -1,41 +1,41 @@
 # Cymariaethau
 
-*Sut mae'n perthyn i offer eraill, i unrhyw un sy'n penderfynu a yw'n addas.*
+*Crynodeb o'r ffordd y mae'r feddalwedd yn perthyn i gynhyrchion eraill.*
 
-Mae cynhyrchion gwahanol yn datrys problemau gwahanol, felly does dim sgorio yma. Daw'r nodiadau hyn o ddarllen deunydd cyhoeddus pob prosiect. **Ni osodwyd na rhedwyd unrhyw gystadleuydd**, ac mae pob un wedi symud ymlaen ers hynny, felly gwiriwch eu dogfennau presennol.
+Mae gan y cynhyrchion isod ddibenion gwahanol ac ni chânt eu sgorio. Mae'r nodiadau hyn yn seiliedig ar ddeunydd cyhoeddus pob prosiect. **Ni osodwyd na rhedwyd unrhyw gynnyrch arall**, ac efallai fod pob un wedi newid ers hynny. Dylid gwirio dogfennau presennol y cynnyrch cyn gwneud penderfyniad.
 
 | Prosiect | Beth ydyw | Ble mae'r prosiect hwn yn wahanol |
 | --- | --- | --- |
-| [Leantime](https://github.com/leantime/leantime) | Rheoli prosiectau i bobl nad ydynt yn rheolwyr prosiect | Mae gan y prosiect hwn hefyd y set lawn o amserlennu, cost a llywodraethu sydd ei hangen ar swyddfa bortffolio |
-| [Redmine](https://www.redmine.org/) | Offeryn cyffredinol ffurfweddadwy, gyda'ch mathau, statwsau a rolau eich hun | Yma mae'r eirfa wedi'i phennu yn y cod ar y cyfan: mae meysydd personol yn bodoli, ond nid oes matrics llif gwaith fesul math |
-| Huly Platform (drwy ei fforc, Platform Collective) | Fframwaith cymwysiadau busnes ar lawer o wasanaethau | Platfform yw hwnnw; un gwasanaeth dros PostgreSQL yw hwn |
-| [ProjectLibre](https://sourceforge.net/p/projectlibre/) | Dewis bwrdd gwaith yn lle Microsoft Project, ar gyfer un rheolwr ac un prosiect | Gwasanaeth aml-ddefnyddiwr wedi'i letya yw hwn, gyda rheoli mynediad |
+| [Leantime](https://github.com/leantime/leantime) | Rheoli prosiectau i bobl nad ydynt yn rheolwyr prosiect | Mae'r prosiect hwn hefyd yn cynnwys y swyddogaethau amserlennu, cost a llywodraethu a ddefnyddir gan swyddfa bortffolio |
+| [Redmine](https://www.redmine.org/) | Offeryn cyffredinol ffurfweddadwy, gyda mathau, statwsau a rolau a ddiffinnir gan y sefydliad | Mae'r eirfa yma wedi'i phennu yn y cod ar y cyfan. Mae meysydd personol ar gael, ond nid oes matrics llif gwaith fesul math |
+| Huly Platform (drwy ei fforc, Platform Collective) | Fframwaith cymwysiadau busnes ar lawer o wasanaethau | Platfform aml-wasanaeth yw Huly. Un gwasanaeth dros PostgreSQL yw'r prosiect hwn |
+| [ProjectLibre](https://sourceforge.net/p/projectlibre/) | Dewis bwrdd gwaith yn lle Microsoft Project, ar gyfer un rheolwr ac un prosiect | Gwasanaeth aml-ddefnyddiwr wedi'i letya yw'r prosiect hwn, gyda rheoli mynediad |
 
-## Fesul cynnyrch
+## Cymariaethau cynnyrch
 
-Darllenwch dudalen ar bob un (yn Saesneg): [Trello](../../../en-001/compare/trello/index.md), [Jira](../../../en-001/compare/jira/index.md), [Asana](../../../en-001/compare/asana/index.md), [Microsoft Project](../../../en-001/compare/microsoft-project/index.md), [Planview](../../../en-001/compare/planview/index.md), [Smartsheet](../../../en-001/compare/smartsheet/index.md), [Leantime](../../../en-001/compare/leantime/index.md), [Redmine](../../../en-001/compare/redmine/index.md), [ProjectLibre](../../../en-001/compare/projectlibre/index.md).
+Tudalennau cymharu unigol (yn Saesneg): [Trello](../../../en-001/compare/trello/index.md), [Jira](../../../en-001/compare/jira/index.md), [Asana](../../../en-001/compare/asana/index.md), [Microsoft Project](../../../en-001/compare/microsoft-project/index.md), [Planview](../../../en-001/compare/planview/index.md), [Smartsheet](../../../en-001/compare/smartsheet/index.md), [Leantime](../../../en-001/compare/leantime/index.md), [Redmine](../../../en-001/compare/redmine/index.md), [ProjectLibre](../../../en-001/compare/projectlibre/index.md).
 
-## Yn gweithio ochr yn ochr â'ch offer presennol
+## Rhyngweithredu
 
 - **Jira ac Asana:** mewnforio CSV, gyda rhagolwg a rheswm wedi'i nodi am bopeth a adawyd allan.
-- **Microsoft Project:** mewnforio ac allforio XML MSPDI, sy'n cynnwys tasgau, amlinelliad, dyddiadau, hydoedd, cyfyngiadau, dibyniaethau a'r calendr. Nid yw'n cynnwys aseineion, adnoddau na llinellau sylfaen, ac mae'r ffeil yn dweud hynny.
+- **Microsoft Project:** mewnforio ac allforio XML MSPDI, sy'n cynnwys tasgau, amlinelliad, dyddiadau, hydoedd, cyfyngiadau, dibyniaethau a'r calendr. Mae aseineion, adnoddau a llinellau sylfaen wedi'u heithrio, ac mae'r ffeil yn cofnodi hyn.
 
-## Ble mae'n wahanol yn fwriadol
+## Gwahaniaethau dylunio
 
-- **Mae'n dweud pam.** "Dim rhagolwg, oherwydd…" yw ffigur coll, byth ddyfaliad a gyflwynir fel rhif.
-- **Mae canfod dyblygu yn esboniadwy,** ac mae'n gweithio ar draws pob math o gynllun.
-- **Diogel yn ddiofyn.** Mae diogelwch yn rhan o'r ystorfa, nid yn beth ychwanegol.
-- **Hydoedd plaen.** Mae pob hyd mewn dyddiau calendr neu ddyddiau busnes.
-- **Statws gonest.** Mae'r ôl-groniad yn dweud beth nad yw pob eitem yn ei wneud.
+- **Rhesymau wedi'u nodi.** Dangosir ffigur coll gyda rheswm, er enghraifft "dim rhagolwg, oherwydd…".
+- **Canfod dyblygu esboniadwy.** Mae paru'n gweithio ar draws pob math o gynllun ac yn dangos ei dystiolaeth.
+- **Diofyn diogelwch.** Mae mewngofnodi ymlaen yn ddiofyn, ac mae deunydd diogelwch wedi'i gynnwys yn yr ystorfa.
+- **Hydoedd penodol.** Nodir pob hyd mewn dyddiau calendr neu ddyddiau busnes.
+- **Cyfyngiadau wedi'u cofnodi.** Mae'r ôl-groniad yn cofnodi cyfyngiadau pob eitem.
 
-## Ble mae ar ei hôl hi
+## Cyfyngiadau hysbys
 
-- Dim ap symudol a dim rhaglen bwrdd gwaith.
+- Dim ap symudol na rhaglen bwrdd gwaith.
 - Dim cyd-olygu amser real.
-- Un cynhaliwr a chod ifanc, heb hanes hir wrth gynhyrchu a heb archwiliad trydydd parti.
-- Prawf llwyth wedi'i gyhoeddi, ond ar un peiriant, felly maint bras ydyw ac nid cynllun capasiti.
+- Un cynhaliwr, hanes cynhyrchu cyfyngedig a dim archwiliad trydydd parti.
+- Rhedodd y prawf llwyth cyhoeddedig ar un peiriant. Mae'n dangos maint bras ac nid cynllun capasiti ydyw.
 - Drafftiau yw'r cyfieithiadau, sy'n aros am adolygiad.
-- Dim sgrin eto i ddrafftio neu benderfynu ar geisiadau am newid.
-- Dim ecosystem ategion na marchnad fel sydd gan gynhyrchion aeddfed.
+- Dim sgrin i ddrafftio neu benderfynu ar geisiadau am newid.
+- Dim ecosystem ategion na marchnad.
 
-I gael adroddiad llawnach, darllenwch [y nodiadau cymharu llawn](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/COMPARISONS.md). Os dewch o hyd i gamgymeriad, agorwch fater gyda ffynhonnell.
+Mae rhagor o fanylion yn y [nodiadau cymharu](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/COMPARISONS.md). Gellir cyflwyno cywiriadau fel mater gyda ffynhonnell.

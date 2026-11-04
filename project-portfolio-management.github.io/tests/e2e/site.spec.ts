@@ -193,7 +193,7 @@ test("the search picker finds a document and a brief, by their words", async ({ 
   await page.goto("/search/?zzzz-no-such-word");
   await expect(page.getByRole("status").filter({ hasText: "No page matches" })).toBeVisible();
   await page.goto("/search/?");
-  await expect(page.getByRole("status").filter({ hasText: "Enter a word" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Enter one or more words" })).toBeVisible();
 });
 
 test("the search page's own field searches again", async ({ page }) => {
@@ -274,12 +274,12 @@ test("the keyboard reaches the last of the 57 themes, scrolled into view", async
 
 test("every locale's home page has a translated hero and names the translations", async ({ request }) => {
   const heroes: Record<string, [string, string]> = {
-    "en-001": ["Project Portfolio Management", "See everything your organization funds"],
-    "en-gb": ["Project Portfolio Management", "See everything your organisation funds"],
-    "cy-gb": ["Rheoli Portffolio Prosiectau", "Gwelwch bopeth"],
-    "cy-001": ["Rheoli Portffolio Prosiectau", "Gwelwch bopeth"],
-    "zh-cn": ["项目组合管理", "看清组织出资"],
-    "zh-001": ["项目组合管理", "看清组织出资"],
+    "en-001": ["Project Portfolio Management", "plans an organization funds"],
+    "en-gb": ["Project Portfolio Management", "plans an organisation funds"],
+    "cy-gb": ["Rheoli Portffolio Prosiectau", "Cofrestr o waith a ariennir"],
+    "cy-001": ["Rheoli Portffolio Prosiectau", "Cofrestr o waith a ariennir"],
+    "zh-cn": ["项目组合管理", "已出资工作的登记册"],
+    "zh-001": ["项目组合管理", "已出资工作的登记册"],
   };
   for (const [locale, [headline, sub]] of Object.entries(heroes)) {
     const html = await (await request.get(`/${locale}/`)).text();
@@ -411,10 +411,10 @@ test("a comparison page keeps the honest parts", async ({ page }) => {
   for (const product of COMPARE_PRODUCTS) {
     await page.goto(`/compare/${product}/`);
     const text = (await page.locator("main").innerText()).replace(/\s+/g, " ");
-    expect(text, product).toMatch(/Nobody installed or ran/);
+    expect(text, product).toMatch(/was not installed or run/);
     expect(text, product).toMatch(/not ready for unsupervised production use/);
     expect(text, product).toMatch(/not affiliated with or endorsed by/);
-    expect(text, product).toMatch(/may suit you better/);
+    expect(text, product).toMatch(/may be the better fit/);
   }
   await page.goto("/compare/trello/");
   await expect(page.locator("main")).toContainText("no Trello importer");

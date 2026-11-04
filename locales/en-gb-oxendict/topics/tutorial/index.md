@@ -1,17 +1,17 @@
 # Tutorial
 
-*Run the demonstration on your own computer and tour a whole portfolio.*
+*Steps to run the demonstration on a local computer and review a sample portfolio.*
 
-You will start a complete copy of the software, filled with a made-up organization called the Northgate Transport Authority. All the people, plans, money and dates are fictitious, so feel free to change anything.
+The demonstration is a complete copy of the software, loaded with data for a fictitious organization, the Northgate Transport Authority. All people, plans, figures and dates are fictitious, and the data can be changed freely.
 
-**Keep it on your own computer.** The demonstration trusts a published test key, so never put it on a shared network or use it with real data.
+**Security note.** The demonstration trusts a published test key. It must not be run on a shared network or used with real data.
 
-## What you need
+## Requirements
 
 - [Git](https://git-scm.com/)
 - [Podman](https://podman.io/) with Compose
 
-## Step 1: get the code
+## Step 1: download the code
 
 ```sh
 git clone https://github.com/project-portfolio-management/project-portfolio-management.git
@@ -24,43 +24,43 @@ cd project-portfolio-management
 POSTGRES_PASSWORD=demo podman compose --profile demo up -d --build --wait ui-demo
 ```
 
-This builds the software, starts the database, fills it with the fictitious portfolio and starts the interface. The first build takes a while.
+This command builds the software, starts the database, loads the fictitious portfolio and starts the interface. The first build takes longer than later ones.
 
 ## Step 3: sign in
 
 Open <http://localhost:3000/en-001/signin>, leave the address as `example@example.com` and press **Sign in to the demonstration**. No email is sent.
 
-You land on the **demonstration tour**, which lists every feature in groups, with what to look for and a link. A yellow banner on every page reminds you that the data is fictitious.
+The first page is the **demonstration tour**, which lists every feature by group, with a description and a link. A yellow banner on every page states that the data is fictitious.
 
-## Step 4: see the portfolio at a glance
+## Step 4: review the portfolio
 
-From the tour, open **Plans** to see the portfolio, its programmes and its projects, then open the **Portfolio dashboard**. Notice that any plan can contain any other.
+From the tour, open **Plans** to view the portfolio, its programmes and its projects. Then open the **Portfolio dashboard**.
 
-## Step 5: follow one project
+## Step 5: review one project
 
-Open the **North Line interlocking** project through the tour's delivery group. Look at its **Gantt** chart, then its **Critical path**, then its **Earned value**.
+Open the **North Line interlocking** project through the tour's delivery group. Review its **Gantt** chart, **Critical path** and **Earned value**.
 
-## Step 6: see your own work
+## Step 6: review personal work
 
-Open **My work** and **My kanban board**. You are signed in as Example Person, who has some open tasks. Move a card to see how it works.
+Open **My work** and **My kanban board**. The session is signed in as Example Person, who has open tasks.
 
-## Step 7: see how it speaks up
+## Step 7: review capacity, start control and reporting
 
-Open **Capacity heatmap** to see who is over-booked. Then open **Start queue**, where one programme has been refused by the work-in-progress limit and is waiting. Finish with **Director packs**, the monthly summary that is frozen once issued.
+Open **Capacity heatmap** to view over-booked resources. Open **Start queue**, where the work-in-progress limit has held back one programme. Open **Director packs**, the monthly summary that is frozen once issued.
 
-## Step 8: stop and clean up
+## Step 8: stop the demonstration
 
-This stops everything and deletes the demonstration data:
+This command stops all services and deletes the demonstration data:
 
 ```sh
 podman compose --profile demo down -v
 ```
 
-## Where to go next
+## Next steps
 
-- [Install it properly](../../../../INSTALL.md), with login and your own identity provider
-- Read the [role briefs](../../for/) for senior roles
-- Read the [full demonstration guide](../../../../operations/demo.md)
-- [See every feature](../features/index.md)
+- [Installation guide](../../../../INSTALL.md), covering login and identity providers
+- [Role briefs](../../for/) for senior roles
+- [Demonstration guide](../../../../operations/demo.md)
+- [Feature list](../features/index.md)
 
-Stuck? Please [open an issue](https://github.com/project-portfolio-management/project-portfolio-management/issues).
+Problems can be reported through the [issue tracker](https://github.com/project-portfolio-management/project-portfolio-management/issues).

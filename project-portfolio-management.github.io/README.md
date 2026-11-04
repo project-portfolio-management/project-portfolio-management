@@ -1,7 +1,7 @@
 # project-portfolio-management.github.io
 
 The Project Portfolio Management public site for GitHub Pages: a static SvelteKit build (`adapter-static`, Svelte 5
-runes, Lily's whole PickerBar) that welcomes newcomers (home, benefits, features, comparisons, a tutorial) over the
+runes, Lily's whole PickerBar) for newcomers (home, benefits, features, comparisons, a tutorial) over the
 repository's own reference documents, in English, Welsh and Mandarin.
 
 This directory lives inside the monorepo, `project-portfolio-management/project-portfolio-management`, and is

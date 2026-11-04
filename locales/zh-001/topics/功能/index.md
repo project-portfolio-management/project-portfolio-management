@@ -1,6 +1,6 @@
 # 功能
 
-*一个登记册和一个完整的项目工作区，共用同一条记录。*
+*按领域列出的功能摘要。登记册和项目工作区共用同一条记录。*
 
 ## 计划与匹配
 
@@ -48,18 +48,18 @@
 
 ## 安全与运维
 
-- 默认登录，可通过您自己的身份提供方登录，包括通过 Keycloak 使用 Microsoft Entra ID
+- 默认登录，可通过外部身份提供方登录，包括通过 Keycloak 使用 Microsoft Entra ID
 - 无法通过服务更改的审计记录
 - 速率限制和安全标头
 - 备份和恢复工具，以及经过测试的恢复演练
 
-## 尚未构建
+## 尚不可用
 
-坦诚也是一项功能。以下是部分仍然缺少的内容：
+当前版本不包括：
 
-- 没有移动应用，也没有桌面应用
-- 没有实时协同编辑
-- 变更请求在服务中可用，但还没有用于起草或裁决的界面
-- 董事报告包以数据形式提供，没有 PDF 或界面，还有若干部分有待完成
+- 移动应用或桌面应用
+- 实时协同编辑
+- 用于起草或裁决变更请求的界面（变更请求目前只能通过服务使用）
+- 董事报告包的 PDF 或界面（目前以数据形式提供），以及若干计划中的章节
 
-待办清单[说明了每一项不做什么](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/tasks.md)。
+[项目待办清单](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/tasks.md)记录了每一项的局限。

@@ -1,42 +1,42 @@
 # Rheoli Portffolio Prosiectau
 
-*Gwelwch bopeth y mae eich sefydliad yn ei ariannu, dewch o hyd i'r gwaith sy'n cael ei wneud ddwywaith, a rhedwch y cyfan mewn un lle.*
+*Cofrestr o waith a ariennir, gyda chanfod dyblygu a man gwaith rheoli prosiectau.*
 
-Cofrestr rydd, cod agored o bob cynllun y mae eich sefydliad yn ei ariannu, gyda man gwaith prosiect llawn oddi tani: tasgau, amserlenni, arian, pobl, risgiau a llywodraethu. Mae'n dweud wrthych pan fydd dau dîm wedi dechrau'r un peth, ac yn dweud pam mae'n meddwl hynny. Pan na all roi ffigur i chi, mae'n dweud beth sydd ar goll yn hytrach na dyfalu.
+Meddalwedd cod agored yw Rheoli Portffolio Prosiectau ar gyfer cofnodi'r cynlluniau y mae sefydliad yn eu hariannu a rheoli'r gwaith ynddynt. Mae'n cwmpasu tasgau, amserlenni, cost, adnoddau, risgiau a llywodraethu. Mae'n cymharu cynlluniau i nodi dyblygu posibl ac yn dangos y dystiolaeth ar gyfer pob paru. Pan na ellir cyfrifo ffigur, mae'r feddalwedd yn nodi'r rheswm.
 
-## Sut mae'n helpu
+## Prif fanteision
 
-- **Un ateb i "beth ydym ni'n ei wneud?"** Un math o gofnod yw portffolios, rhaglenni, prosiectau a chynhyrchion, a gall unrhyw gynllun eistedd y tu mewn i unrhyw un arall. Mae un rhestr i edrych arni, nid taenlen i bob adran.
-- **Llai o ddyblygu.** Mae paru esboniadwy yn dod o hyd i'r un fenter wedi'i siartio ddwywaith dan enwau gwahanol, gyda'r dystiolaeth, er mwyn i chi ei dal cyn i'r ddwy gael eu hariannu.
-- **Ffigurau y gallwch ymddiried ynddynt.** Mae rhif coll yn darllen "dim rhagolwg, oherwydd…", byth yn ddyfaliad. Mae cynllun nad oes neb wedi'i asesu yn dangos "heb ei asesu", byth yn wyrdd.
-- **Penderfyniadau y gallwch eu hamddiffyn.** Caiff pob newid ei archwilio, ac ni all y sawl a gododd gais am newid ei gymeradwyo.
-- **Diogel o'r dechrau cyntaf.** Mae mewngofnodi ymlaen yn ddiofyn, ac mae'r gwasanaeth yn gwrthod rhedeg wrth gynhyrchu hebddo.
-- **Eich un chi i'w gadw.** Dewiswch o bum trwydded cod agored, rhedwch ef ar eich gweinyddion eich hun, a dewch â'ch gwaith i mewn o Jira, Asana neu Microsoft Project.
+- **Un cofnod portffolio.** Mae portffolios, rhaglenni, prosiectau a chynhyrchion yn defnyddio un math o gofnod, a gall unrhyw gynllun gynnwys un arall. Mae adrodd yn defnyddio un rhestr ar draws pob adran.
+- **Canfod dyblygu.** Mae paru'n cymharu cynlluniau a gofnodwyd dan enwau gwahanol ac yn dangos y dystiolaeth ar gyfer pob canlyniad, er mwyn i adolygwyr weithredu cyn ariannu'r ddau.
+- **Ffigurau y gellir eu holrhain.** Dangosir ffigur coll gyda'r rheswm ei fod ar goll. Dangosir cynllun heb asesiad fel "heb ei asesu".
+- **Trywydd archwilio.** Caiff pob newid ei archwilio. Ni all y sawl sy'n codi cais am newid ei gymeradwyo.
+- **Rheoli mynediad.** Mae mewngofnodi ymlaen yn ddiofyn, ac nid yw'r gwasanaeth yn rhedeg wrth gynhyrchu gyda mewngofnodi wedi'i ddiffodd.
+- **Defnyddio a thrwyddedu.** Mae'r feddalwedd yn cael ei hunan-letya a'i chynnig dan bum trwydded cod agored. Gellir mewnforio gwaith o Jira, Asana a Microsoft Project.
 
 [Gweld yr holl fanteision](topics/manteision/index.md)
 
-## Beth sydd y tu mewn
+## Meysydd swyddogaethol
 
 - **Cynlluniau a pharu.** Cofrestr ailadroddus, canfod dyblygu esboniadwy a chyfuno.
 - **Cyflawni.** Byrddau kanban, siartiau Gantt, calendrau, cerrig milltir, llwybr critigol a chadwyn gritigol.
-- **Arian.** Cyllidebau, cyfriflyfr cyllid, gwerth a enillwyd, a risg cost ac amserlen.
-- **Pobl.** Adnoddau, cronfeydd sgiliau, map gwres capasiti a phobl allweddol.
+- **Cyllid.** Cyllidebau, cyfriflyfr cyllid, gwerth a enillwyd, a risg cost ac amserlen.
+- **Adnoddau.** Cronfeydd sgiliau, map gwres capasiti a phobl allweddol.
 - **Strategaeth.** Derbyn gwaith, syniadau, amcanion, nodau a chanlyniadau allweddol, a senarios.
 - **Llywodraethu.** Risgiau, materion, adolygiadau giât, uwchgyfeirio a phecynnau misol i gyfarwyddwyr.
 
-[Archwilio'r nodweddion](topics/nodweddion/index.md)
+[Gweld yr holl nodweddion](topics/nodweddion/index.md)
 
-## Ar gyfer pwy mae'n addas
+## Defnyddwyr bwriedig
 
-- **Swyddfeydd portffolio.** Un olwg onest ar draws llawer o raglenni.
-- **Rheolwyr prosiect a chyflawni.** Amserlennu, cost a risg mewn un lle.
-- **Aelodau tîm.** Rhestr glir o'ch gwaith eich hun.
-- **Swyddogion gweithredol a byrddau.** Mae [briffiau rôl](for/) byr ar gyfer pob rôl uwch, sy'n ymdrin â'r hyn y mae'r feddalwedd yn ei roi i chi, yr hyn nad yw'n ei roi, a'r penderfyniadau sy'n eiddo i chi.
+- **Swyddfeydd portffolio.** Adrodd ar draws rhaglenni a phrosiectau.
+- **Rheolwyr prosiect a chyflawni.** Rheoli amserlenni, cost a risg.
+- **Aelodau tîm.** Golwg bersonol ar y gwaith a neilltuwyd.
+- **Uwch arweinwyr.** Mae'r [briffiau rôl](for/) yn nodi'r hyn y mae'r feddalwedd yn ei ddarparu i bob rôl, ei chyfyngiadau, a'r penderfyniadau sydd eu hangen.
 
-## Gair gonest
+## Statws presennol
 
-Meddalwedd ifanc yw hon gydag un cynhaliwr. Nid yw wedi cael archwiliad trydydd parti ac nid oes ganddi gytundeb cymorth. Dyfarniad y prosiect ei hun yw ei bod yn **barod ar gyfer cynllun peilot rheoledig** ar ddata anghlinigol, anghyfrinachol, ac **nid yw'n barod i'w defnyddio wrth gynhyrchu heb oruchwyliaeth**. Mae'r [dudalen gymariaethau](topics/cymariaethau/index.md) yn dweud ble mae ar ei hôl hi.
+Mae'r feddalwedd ar gam cynnar. Mae ganddi un cynhaliwr, dim archwiliad trydydd parti a dim cytundeb cymorth. Asesiad y prosiect ei hun yw ei bod yn **barod ar gyfer cynllun peilot rheoledig** ar ddata anghlinigol, anghyfrinachol, ac **nid yw'n barod i'w defnyddio wrth gynhyrchu heb oruchwyliaeth**. Rhestrir y cyfyngiadau hysbys ar y [dudalen gymariaethau](topics/cymariaethau/index.md).
 
-## Rhowch gynnig arni eich hun
+## Arddangosiad
 
-Mae'r arddangosiad yn rhedeg ar eich cyfrifiadur eich hun gydag awdurdod trafnidiaeth ffug, a dim ond Git a Podman sydd eu hangen arno. [Dechrau'r tiwtorial](topics/tiwtorial/index.md).
+Mae arddangosiad lleol yn defnyddio awdurdod trafnidiaeth ffug ac mae angen Git a Podman arno. Mae'r camau yn y [tiwtorial](topics/tiwtorial/index.md).

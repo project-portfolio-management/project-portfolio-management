@@ -1,34 +1,34 @@
 # Project Portfolio Management and Microsoft Project
 
-*The scheduling standard, or a shared portfolio registry?*
+*Dedicated project scheduling compared with a shared portfolio service.*
 
-**How this page was written.** Nobody installed or ran Microsoft Project for this comparison. Its description is general, and it may be out of date, so please check Microsoft Project's own documentation. Different products solve different problems, so nothing here is scored. The facts about this project come from its own repository.
+**Basis of this comparison.** Microsoft Project was not installed or run for this comparison. The description is general and may be out of date, and Microsoft Project's current documentation should be checked before a decision is made. Products are not scored. Statements about this project are taken from its repository.
 
-## What Microsoft Project is
+## About Microsoft Project
 
-Microsoft's long-established project scheduling product, and the reference point for much of the field's vocabulary.
+Microsoft's long-established project scheduling product, whose terminology is widely used in the field.
 
-## Microsoft Project may suit you better if
+## When Microsoft Project may be the better fit
 
-- You need its depth of scheduling, and its place in the Microsoft ecosystem
-- Your partners exchange native project files with you
-- You need vendor support and a long production history
+- Advanced scheduling and integration with other Microsoft products are required
+- Partners exchange native project files
+- Vendor support and a long production history are required
 
-## This project may suit you better if
+## When this project may be the better fit
 
-- You want many people working in one shared, access-controlled service
-- You want scheduling alongside registry, matching, risk and governance
-- You want explicit calendar days or business days on every duration
-- You want open-source software you run yourself
+- Many users need to work in one shared, access-controlled service
+- Scheduling is needed alongside the registry, matching, risk and governance functions
+- Each duration needs to state calendar days or business days
+- Open-source, self-hosted software is required
 
-## Moving your work
+## Migration
 
-Import and export **MSPDI XML**, covering tasks, outline, dates, durations, constraints, dependencies and the calendar. Assignees, resources and baselines are not carried, and neither is progress beyond done or not done; the file says so. The eight Microsoft Project constraint types are supported. Plans can record a Microsoft Project id, and a shared identifier counts as a sure match, so two plans pointing at the same one are found as the same plan.
+**MSPDI XML** can be imported and exported, covering tasks, outline, dates, durations, constraints, dependencies and the calendar. Assignees, resources, baselines and progress beyond done or not done are excluded, and the file records this. The eight Microsoft Project constraint types are supported. Plans can record a Microsoft Project id. A shared identifier counts as a definite match, so two plans with the same identifier are treated as the same plan.
 
-## Before you decide
+## Project status
 
-This project is young, with one maintainer and no third-party audit. Its own verdict is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. Read [where it is behind](../../topics/comparisons/index.md#where-it-is-behind).
+This project is at an early stage, with one maintainer and no third-party audit. Its own assessment is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. See [known limitations](../../topics/comparisons/index.md#known-limitations).
 
-Spotted a mistake? Please [open an issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
+Corrections can be submitted as an [issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
 
 Microsoft Project is the name of its owner's product. This project is not affiliated with or endorsed by its owner.

@@ -1,42 +1,42 @@
 # Project Portfolio Management
 
-*See everything your organization funds, find the work being done twice, and run it all in one place.*
+*A registry of funded work, with duplicate detection and a project management workspace.*
 
-A free, open-source registry of every plan your organization funds, with a full project workspace underneath: tasks, schedules, money, people, risks and governance. It tells you when two teams have started the same thing, and it tells you why it thinks so. When it cannot give you a figure, it says what is missing rather than guess.
+Project Portfolio Management is open-source software for recording the plans an organization funds and managing the work within them. It covers tasks, schedules, cost, resources, risks and governance. It compares plans to identify possible duplicates and shows the evidence for each match. Where a figure cannot be calculated, the software states the reason.
 
-## How it helps
+## Main benefits
 
-- **One answer to "what are we doing?"** Portfolios, programs, projects and products are all one kind of record, and any plan can sit inside any other. There is one list to look at, not a spreadsheet per department.
-- **Fewer duplicates.** Explainable matching finds the same initiative chartered twice under different names, with the evidence, so you can catch it before both are funded.
-- **Figures you can trust.** A missing number reads "no forecast, because…", never a guess. A plan nobody has assessed shows "not assessed", never green.
-- **Decisions you can defend.** Every change is audited, and a change request cannot be approved by the person who raised it.
-- **Secure from the first start.** Login is on by default, and the service refuses to run in production with it off.
-- **Yours to keep.** Choose from five open-source licenses, run it on your own servers, and bring your work in from Jira, Asana or Microsoft Project.
+- **Single portfolio record.** Portfolios, programs, projects and products use one record type, and any plan can contain another. Reporting draws on one list across all departments.
+- **Duplicate detection.** Matching compares plans recorded under different names and shows the evidence for each result, so that reviewers can act before both are funded.
+- **Traceable figures.** A missing figure is shown with the reason it is missing. A plan without an assessment is shown as "not assessed".
+- **Audit trail.** Every change is audited. The person who raises a change request cannot approve it.
+- **Access control.** Login is on by default, and the service does not run in production with login turned off.
+- **Deployment and licensing.** The software is self-hosted and offered under five open-source licenses. Work can be imported from Jira, Asana and Microsoft Project.
 
-[See all the benefits](topics/benefits/index.md)
+[View all benefits](topics/benefits/index.md)
 
-## What is inside
+## Functional areas
 
-- **Plans and matching.** A recursive registry, explainable duplicate detection and merging.
+- **Plans and matching.** Recursive registry, explainable duplicate detection and merging.
 - **Delivery.** Kanban boards, Gantt charts, calendars, milestones, critical path and critical chain.
-- **Money.** Budgets, funding ledger, earned value, and cost and schedule risk.
-- **People.** Resources, skill pools, a capacity heatmap and key people.
+- **Finance.** Budgets, funding ledger, earned value, and cost and schedule risk.
+- **Resources.** Skill pools, capacity heatmap and key people.
 - **Strategy.** Work intake, ideas, objectives, goals and key results, and scenarios.
 - **Governance.** Risks, issues, gate reviews, escalation and monthly director packs.
 
-[Explore the features](topics/features/index.md)
+[View all features](topics/features/index.md)
 
-## Who it is for
+## Intended users
 
-- **Portfolio offices.** One honest view across many programs.
-- **Project and delivery managers.** Scheduling, cost and risk in one place.
-- **Team members.** A clear list of your own work.
-- **Executives and boards.** There are short [role briefs](for/) for each senior role, covering what the software gives you, what it does not, and the decisions that are yours.
+- **Portfolio offices.** Reporting across programs and projects.
+- **Project and delivery managers.** Scheduling, cost and risk management.
+- **Team members.** A personal view of assigned work.
+- **Senior leaders.** The [role briefs](for/) set out what the software provides for each role, its limits, and the decisions required.
 
-## An honest word
+## Current status
 
-This is young software with one maintainer. It has had no third-party audit and it has no support agreement. The project's own verdict is that it is **ready for a controlled pilot** on non-clinical, non-secret data, and **not ready for unsupervised production use**. The [comparisons page](topics/comparisons/index.md) says where it is behind.
+The software is at an early stage. It has one maintainer, no third-party audit and no support agreement. The project's own assessment is that it is **ready for a controlled pilot** on non-clinical, non-secret data and **not ready for unsupervised production use**. Known limitations are listed on the [comparisons page](topics/comparisons/index.md).
 
-## Try it yourself
+## Demonstration
 
-The demonstration runs on your own computer with a fictitious transport authority, and it needs nothing but Git and Podman. [Start the tutorial](topics/tutorial/index.md).
+A local demonstration uses a fictitious transport authority and requires Git and Podman. The steps are in the [tutorial](topics/tutorial/index.md).

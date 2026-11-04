@@ -1,34 +1,34 @@
 # Project Portfolio Management and Trello
 
-*Simple boards, or a whole portfolio?*
+*Board-based task tracking compared with a portfolio registry.*
 
-**How this page was written.** Nobody installed or ran Trello for this comparison. Its description is general, and it may be out of date, so please check Trello's own documentation. Different products solve different problems, so nothing here is scored. The facts about this project come from its own repository.
+**Basis of this comparison.** Trello was not installed or run for this comparison. The description is general and may be out of date, and Trello's current documentation should be checked before a decision is made. Products are not scored. Statements about this project are taken from its repository.
 
-## What Trello is
+## About Trello
 
-A hosted tool built around boards, lists and cards, known for being easy to start with.
+A hosted tool based on boards, lists and cards, generally used for simple task tracking.
 
-## Trello may suit you better if
+## When Trello may be the better fit
 
-- You want a light board for one team, with almost nothing to set up
-- You want a hosted service rather than one you run yourself
-- You mainly track cards, without schedules, budgets or governance
+- The main need is a light task board for one team, with little setup
+- A hosted service is preferred to a self-hosted one
+- Schedules, budgets and governance are not required
 
-## This project may suit you better if
+## When this project may be the better fit
 
-- You need to see every funded plan across the organization, with any plan inside any other
-- You need to find duplicate initiatives, with the evidence
-- You need critical path, cost, capacity and governance as well as a board
-- You want to run it on your own servers
+- All funded plans need to be visible across the organization, with plans nested inside each other
+- Duplicate initiatives need to be identified, with evidence
+- Critical path, cost, capacity and governance are required in addition to a board
+- Self-hosting is required
 
-## Moving your work
+## Migration
 
-There is **no Trello importer**. You can paste rows of tasks into a task board, and plans can record a Trello board id, so a plan can point back to the board it came from.
+There is **no Trello importer**. Rows of tasks can be pasted into a task board. Plans can record a Trello board id, which links a plan to its original board.
 
-## Before you decide
+## Project status
 
-This project is young, with one maintainer and no third-party audit. Its own verdict is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. Read [where it is behind](../../topics/comparisons/index.md#where-it-is-behind).
+This project is at an early stage, with one maintainer and no third-party audit. Its own assessment is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. See [known limitations](../../topics/comparisons/index.md#known-limitations).
 
-Spotted a mistake? Please [open an issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
+Corrections can be submitted as an [issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
 
 Trello is the name of its owner's product. This project is not affiliated with or endorsed by its owner.

@@ -1,6 +1,6 @@
 # Features
 
-*A registry and a full project workspace, sharing one record.*
+*Functional summary by area. The registry and the project workspace share one record.*
 
 ## Plans and matching
 
@@ -48,18 +48,18 @@
 
 ## Security and operations
 
-- Login by default, with sign-in through your own identity provider, including Microsoft Entra ID through Keycloak
+- Login by default, with sign-in through an external identity provider, including Microsoft Entra ID through Keycloak
 - An audit trail that cannot be altered through the service
 - Rate limiting and security headers
 - Backup and restore tooling, with a tested restore drill
 
-## Not built yet
+## Not yet available
 
-Honesty is a feature too. Here is some of what is still missing:
+The current version does not include:
 
-- No mobile app and no desktop application
-- No real-time co-editing
-- Change requests work in the service, but there is no screen yet for drafting or deciding one
-- Director packs are delivered as data, with no PDF or screen, and several sections are still to come
+- A mobile app or desktop application
+- Real-time co-editing
+- A screen for drafting or deciding change requests, which are available through the service only
+- A PDF or screen for director packs, which are delivered as data, and several planned pack sections
 
-The backlog [says what each item does not do](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/tasks.md).
+The [project backlog](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/tasks.md) records the limits of each item.

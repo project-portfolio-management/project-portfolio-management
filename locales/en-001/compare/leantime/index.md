@@ -1,32 +1,32 @@
 # Project Portfolio Management and Leantime
 
-*For non-project-managers, or for a portfolio office?*
+*Project management for non-specialists compared with a portfolio office tool.*
 
-**How this page was written.** Nobody installed or ran Leantime for this comparison. Its description is general, and it may be out of date, so please check Leantime's own documentation. Different products solve different problems, so nothing here is scored. The facts about this project come from its own repository.
+**Basis of this comparison.** Leantime was not installed or run for this comparison. The description is general and may be out of date, and Leantime's current documentation should be checked before a decision is made. Products are not scored. Statements about this project are taken from its repository.
 
-## What Leantime is
+## About Leantime
 
-An open-source project-management system aimed at people who are not project managers. Built with PHP and MySQL, under AGPLv3.
+An open-source project management system aimed at people who are not project managers. It uses PHP and MySQL and is licensed under AGPLv3.
 
-## Leantime may suit you better if
+## When Leantime may be the better fit
 
-- Your priority is a gentle tool for people new to project management
-- You already run PHP and MySQL
+- The priority is a simple tool for people new to project management
+- The organization already runs PHP and MySQL
 
-## This project may suit you better if
+## When this project may be the better fit
 
-- You need the full set of scheduling, cost and governance that a portfolio office needs
-- You need explainable duplicate matching across a whole portfolio
-- You want a choice of licences, including permissive ones
+- A portfolio office needs scheduling, cost and governance functions
+- Explainable duplicate matching across a portfolio is required
+- A choice of licences, including permissive licences, is required
 
-## Moving your work
+## Migration
 
-There is **no Leantime importer**. This project took ideas from Leantime, not code: the individual worker's path, plain-language labels, and one clear primary action per screen.
+There is **no Leantime importer**. This project adopted ideas from Leantime but no code: the individual worker's path, plain-language labels, and one primary action per screen.
 
-## Before you decide
+## Project status
 
-This project is young, with one maintainer and no third-party audit. Its own verdict is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. Read [where it is behind](../../topics/comparisons/index.md#where-it-is-behind).
+This project is at an early stage, with one maintainer and no third-party audit. Its own assessment is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. See [known limitations](../../topics/comparisons/index.md#known-limitations).
 
-Spotted a mistake? Please [open an issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
+Corrections can be submitted as an [issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
 
 Leantime is the name of its owner's product. This project is not affiliated with or endorsed by its owner.

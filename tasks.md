@@ -2361,6 +2361,10 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   descriptions of six of them come from general knowledge and not from `plan.md` or `COMPARISONS.md`, and none was
   checked against that product's current documentation, so the owner should read them; English only.
 
+- [x] **GP-7 (S) — Neutral wording.** **Done 2026-11-04:** the home page, topics, comparison pages and site words rewritten in a
+  neutral analyst's voice, in English, Welsh and Mandarin, with the same facts and caveats. **Not done:** the role briefs and
+  the reference documents keep their wording; the Welsh and Mandarin remain unreviewed machine drafts.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

@@ -1,34 +1,34 @@
 # Project Portfolio Management and Jira
 
-*Issue tracking for teams, or a registry of everything you fund?*
+*Team issue tracking compared with an organization-wide registry.*
 
-**How this page was written.** Nobody installed or ran Jira for this comparison. Its description is general, and it may be out of date, so please check Jira's own documentation. Different products solve different problems, so nothing here is scored. The facts about this project come from its own repository.
+**Basis of this comparison.** Jira was not installed or run for this comparison. The description is general and may be out of date, and Jira's current documentation should be checked before a decision is made. Products are not scored. Statements about this project are taken from its repository.
 
-## What Jira is
+## About Jira
 
-A widely used issue and project tracker, popular with software teams, with a large marketplace of add-ons.
+A widely used issue and project tracker, common among software teams, with a large add-on marketplace.
 
-## Jira may suit you better if
+## When Jira may be the better fit
 
-- Your teams live in issues, sprints and software delivery
-- You rely on the marketplace, or on its deep workflow configuration
-- You need a mature product with vendor support
+- Teams work mainly in issues, sprints and software delivery
+- The add-on marketplace or detailed workflow configuration is required
+- A mature product with vendor support is required
 
-## This project may suit you better if
+## When this project may be the better fit
 
-- You need one record for every portfolio, programme and project, whatever tool the work is in
-- You need to find the same initiative chartered twice
-- You want a missing figure explained, never a guess
-- You want open-source software you run yourself
+- One record is needed for every portfolio, programme and project, regardless of the tool in which the work is done
+- The same initiative may have been chartered more than once
+- Missing figures need to be reported with a reason
+- Open-source, self-hosted software is required
 
-## Moving your work
+## Migration
 
-Import a **Jira CSV export**, with a preview and a stated reason for everything left out. Plans can record a Jira project key, and a shared identifier counts as a sure match, so two plans pointing at the same one are found as the same plan.
+A **Jira CSV export** can be imported, with a preview and a stated reason for anything excluded. Plans can record a Jira project key. A shared identifier counts as a definite match, so two plans with the same identifier are treated as the same plan.
 
-## Before you decide
+## Project status
 
-This project is young, with one maintainer and no third-party audit. Its own verdict is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. Read [where it is behind](../../topics/comparisons/index.md#where-it-is-behind).
+This project is at an early stage, with one maintainer and no third-party audit. Its own assessment is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. See [known limitations](../../topics/comparisons/index.md#known-limitations).
 
-Spotted a mistake? Please [open an issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
+Corrections can be submitted as an [issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
 
 Jira is the name of its owner's product. This project is not affiliated with or endorsed by its owner.

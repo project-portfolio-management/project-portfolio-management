@@ -1,6 +1,6 @@
 # Nodweddion
 
-*Cofrestr a man gwaith prosiect llawn, yn rhannu un cofnod.*
+*Crynodeb swyddogaethol fesul maes. Mae'r gofrestr a'r man gwaith prosiect yn rhannu un cofnod.*
 
 ## Cynlluniau a pharu
 
@@ -48,18 +48,18 @@
 
 ## Diogelwch a gweithrediadau
 
-- Mewngofnodi yn ddiofyn, gyda mewngofnodi drwy eich darparwr hunaniaeth eich hun, gan gynnwys Microsoft Entra ID drwy Keycloak
+- Mewngofnodi yn ddiofyn, gyda mewngofnodi drwy ddarparwr hunaniaeth allanol, gan gynnwys Microsoft Entra ID drwy Keycloak
 - Trywydd archwilio na ellir ei newid drwy'r gwasanaeth
 - Cyfyngu cyfradd a phenawdau diogelwch
 - Offer gwneud copi wrth gefn ac adfer, gydag ymarfer adfer wedi'i brofi
 
-## Heb ei adeiladu eto
+## Ddim ar gael eto
 
-Mae gonestrwydd yn nodwedd hefyd. Dyma rywfaint o'r hyn sy'n dal ar goll:
+Nid yw'r fersiwn bresennol yn cynnwys:
 
-- Dim ap symudol a dim rhaglen bwrdd gwaith
-- Dim cyd-olygu amser real
-- Mae ceisiadau am newid yn gweithio yn y gwasanaeth, ond nid oes sgrin eto i ddrafftio neu benderfynu ar un
-- Caiff pecynnau i gyfarwyddwyr eu darparu fel data, heb PDF na sgrin, ac mae sawl adran eto i ddod
+- Ap symudol na rhaglen bwrdd gwaith
+- Cyd-olygu amser real
+- Sgrin i ddrafftio neu benderfynu ar geisiadau am newid, sydd ar gael drwy'r gwasanaeth yn unig
+- PDF na sgrin ar gyfer pecynnau i gyfarwyddwyr, a ddarperir fel data, na sawl adran a gynlluniwyd
 
-Mae'r ôl-groniad [yn dweud beth nad yw pob eitem yn ei wneud](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/tasks.md).
+Mae'r [ôl-groniad prosiect](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/tasks.md) yn cofnodi cyfyngiadau pob eitem.

@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 4 November (GP-7: neutral wording on the site)
+
+- The site's pages and words now read as a neutral analyst's summary, in English, Welsh and Mandarin. The facts and caveats
+  are unchanged. Not done: the role briefs and reference documents keep their wording; the Welsh and Mandarin remain
+  unreviewed machine drafts. The tutorial's commands have still not been run for this site.
+
 ### 4 November (GP-3 to GP-6: a welcoming site, in three languages)
 
 - The site is now for newcomers: a home page, benefits, features, comparisons and a tutorial on the seeded demonstration,

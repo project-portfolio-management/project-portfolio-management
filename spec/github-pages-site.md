@@ -23,10 +23,12 @@ repository's reference documents. It follows the family pattern written down in 
   `locales/en-001/compare/<product>/index.md`. `/docs/` (`index.md`), `README.md`, `INSTALL.md`,
   `operations/wpm-bridge.md`, `spec/index.md` and the agent skill's `SKILL.md` (front matter dropped). Every role brief
   `locales/<locale>/for/<role>/index.md` at `/<locale>/for/<role>/`, with a list per locale at `/<locale>/for/`.
+- **Voice.** The site reads as a neutral business analyst's summary: third person, declarative and specific, with no
+  rhetorical questions, slogans or promotional adjectives. Imperatives are for instructions, in the tutorial.
 - **Claims.** The site's words are held to rule 3 of `AGENTS.md`. Every claim about this project comes from its own
   documents, there are no invented users or figures, and the home page and every comparison repeat the verdict of
-  [production readiness](../governance/production-readiness.md). A comparison page says that nobody installed or ran
-  the other product, describes it in general terms only, scores nothing, says plainly when no importer exists, and
+  [production readiness](../governance/production-readiness.md). A comparison page says that the other product was not
+  installed or run, describes it in general terms only, scores nothing, says plainly when no importer exists, and
   says that the project is not affiliated with its owner. The tutorial is the seeded demonstration
   ([`operations/demo.md`](../operations/demo.md)).
 - **Sitemaps.** `/sitemap.xml` lists every page and `/<locale>/sitemap.xml` that locale's pages.

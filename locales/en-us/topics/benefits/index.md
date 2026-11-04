@@ -1,38 +1,38 @@
 # Benefits
 
-*What changes for your organization, and what stays your decision.*
+*The main benefits for an organization, by area.*
 
-## See the whole portfolio
+## Portfolio visibility
 
-Most organizations keep their portfolio in several places at once. Here, every portfolio, program, project and product is one kind of record called a **plan**. Any plan can contain any other, to any depth, so the structure can follow how you really work. A label such as "Project" describes a plan and limits nothing.
+Portfolio information is often held in several places. In this software, every portfolio, program, project and product is one record type, called a **plan**. Any plan can contain any other, to any depth, so the structure can match the organization. A label such as "Project" is descriptive and places no restriction on a plan.
 
-## Stop funding the same thing twice
+## Duplicate reduction
 
-Two departments can charter the same initiative under different names. The matcher compares what identifies a plan: its name, goals, owner, sponsor, parent, timeframe, keywords and identifiers. It works across every kind of plan, and it shows the evidence for each match, so a person can decide. When two records are the same plan, you can merge them.
+Two departments can charter the same initiative under different names. The matcher compares the attributes that identify a plan: name, goals, owner, sponsor, parent, timeframe, keywords and identifiers. It works across all plan types and shows the evidence for each match, and a person makes the decision. Two records of one plan can be merged.
 
-## Trust what you are shown
+## Reporting quality
 
-- A missing figure says why it is missing: "no forecast, because…".
-- A plan nobody has assessed shows "not assessed", never green.
-- Delivery confidence stated by people sits beside the computed status and is never blended with it.
-- Private plans stay out of every total and count, for everyone, by a rule that tests check.
-- Every duration says whether it means calendar days or business days.
+- A missing figure is shown with a reason, for example "no forecast, because…".
+- A plan without an assessment is shown as "not assessed".
+- Delivery confidence recorded by people is shown beside the calculated status, and the two are kept separate.
+- Private plans are excluded from all totals and counts for all users. Tests check this rule.
+- Each duration states whether it is in calendar days or business days.
 
-## Show how decisions were made
+## Decision records
 
-Every change is audited, and the audit trail cannot be altered through the service. A change request cannot be approved by the person who raised it. A monthly director pack is drafted once, issued by a named person, and then frozen by the database: a correction is a new version with a note.
+Every change is audited, and the audit trail cannot be altered through the service. The person who raises a change request cannot approve it. A monthly director pack is drafted once, issued by a named person and then frozen by the database. A correction is issued as a new version with a note.
 
-## Start secure
+## Security
 
-Login is on by default, and the service refuses to start in production with it off. Security headers, rate limiting, a recovery plan with stated targets and an information governance pack are part of the repository, not extras.
+Login is on by default, and the service does not start in production with login turned off. Security headers, rate limiting, a recovery plan with stated targets and an information governance pack are included in the repository.
 
-## Stay in control
+## Control and portability
 
-- **Free and open source.** Choose from MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 and GPL-3.0.
-- **Run it yourself.** One Rust service over PostgreSQL, with a SvelteKit interface.
-- **Bring your work.** Import CSV from Jira and Asana, with a preview and a stated reason for anything left out. Import and export Microsoft Project XML.
-- **Work in your language.** The interface comes in ten locales, including right-to-left Arabic. The translations are drafts awaiting review by speakers.
+- **Licensing.** The software is open source, under a choice of MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 or GPL-3.0.
+- **Hosting.** The software is self-hosted: one Rust service over PostgreSQL, with a SvelteKit interface.
+- **Data import.** CSV files from Jira and Asana can be imported, with a preview and a stated reason for anything excluded. Microsoft Project XML can be imported and exported.
+- **Languages.** The interface is available in ten locales, including right-to-left Arabic. The translations are drafts awaiting review by speakers.
 
-## Your next step
+## Related pages
 
-Read the [features](../features/index.md), see how it [compares](../comparisons/index.md), or [try the tutorial](../tutorial/index.md).
+See also [features](../features/index.md), [comparisons](../comparisons/index.md) and the [tutorial](../tutorial/index.md).

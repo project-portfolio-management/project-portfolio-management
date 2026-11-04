@@ -30,6 +30,9 @@ def balanced(s, i, open_c="(", close_c=")"):
     return -1
 
 
+# Between a type's derive and its `struct` or `enum`, attributes and doc comments may come in any order.
+
+
 def handlers(src):
     """fn name -> body type path (as written), for handlers with a Json<T> extractor."""
     out = {}
@@ -122,7 +125,7 @@ def other_type(name):
             if "controllers" in f.parts:
                 continue
             text = f.read_text()
-            for m in re.finditer(r"JsonSchema\)\]\s*(?:#\[[^\n]*\]\s*)*pub (?:struct|enum) (\w+)", text):
+            for m in re.finditer(r"JsonSchema\)\]\s*(?:(?:#\[[^\n]*\]|///[^\n]*)\s*)*pub (?:struct|enum) (\w+)", text):
                 rel = f.relative_to(root).with_suffix("")
                 parts = [p for p in rel.parts if p != "mod"]
                 _OTHER.setdefault(m.group(1), []).append("crate::" + "::".join(parts) + "::" + m.group(1))
@@ -161,7 +164,7 @@ def main():
             ty = hs[h]
             if ty in ("Value",) or ty.endswith("::Value"):
                 continue
-            if "::" not in ty and not re.search(r"JsonSchema\)\]\s*(?:#\[[^\n]*\]\s*)*(?:pub(?:\([a-z]+\))? )?(?:struct|enum) " + ty + r"\b", src):
+            if "::" not in ty and not re.search(r"JsonSchema\)\]\s*(?:(?:#\[[^\n]*\]|///[^\n]*)\s*)*(?:pub(?:\([a-z]+\))? )?(?:struct|enum) " + ty + r"\b", src):
                 # Not defined in the controller: a type the crate defines elsewhere, or another crate's (the
                 # matcher's Plan and Goal), which is documented by hand.
                 where = other_type(ty)

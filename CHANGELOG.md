@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 4 November (the request body generator, after the doc comments)
+
+- `scripts/generate-openapi-bodies.py` lost 30 request bodies once `aec010a` put a doc comment between a type's `derive` and
+  its `struct`, so regenerating would have dropped them; it now skips doc comments as it skips attributes. `openapi_bodies.rs`
+  and `openapi.json` are regenerated: 26 routes gain the descriptions written in `aec010a`, and no route or body changed. The
+  service's fmt and library tests pass, and clippy passed on the same generated bodies.
+- Not done: `lychee` is not installed here, so the `docs` job's offline link check was covered locally only by
+  `scripts/check-links.py`. The service's database tests were not run for this change.
+
 ### 4 November (GP-7: neutral wording on the site)
 
 - The site's pages and words now read as a neutral analyst's summary, in English, Welsh and Mandarin. The facts and caveats

@@ -5787,14 +5787,14 @@
     },
     "/api/capacity": {
       "get": {
-        "description": "No description has been written for this route yet.",
+        "description": "`GET /api/capacity` — per-person capacity over the window, counting only plans the caller may see; proposed bookings are a separate series and never added to committed load.",
         "parameters": [],
         "responses": {
           "200": {
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "GET /api/capacity",
+        "summary": "`GET /api/capacity` — per-person capacity over the window, counting only plans the caller may see; proposed bookings are a separate series and never added to committed load",
         "tags": [
           "visibility"
         ]
@@ -9647,7 +9647,7 @@
     },
     "/api/ideas": {
       "get": {
-        "description": "No description has been written for this route yet.",
+        "description": "`GET /api/ideas` — list ideas of one status, most-voted first, capped at 200. Read-only and not audited.",
         "parameters": [
           {
             "description": "Page size: default and ceiling 500",
@@ -9695,7 +9695,7 @@
             }
           }
         },
-        "summary": "GET /api/ideas",
+        "summary": "`GET /api/ideas` — list ideas of one status, most-voted first, capped at 200",
         "tags": [
           "strategy"
         ]
@@ -9750,7 +9750,7 @@
     },
     "/api/ideas/{pid}/convert": {
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "`POST /api/ideas/{pid}/convert` — turn an open idea into a draft proposal and mark the idea `converted`, in one transaction with an `idea_converted` audit record. Rejects ideas that are not open.",
         "parameters": [
           {
             "in": "path",
@@ -9792,7 +9792,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "POST /api/ideas/{pid}/convert",
+        "summary": "`POST /api/ideas/{pid}/convert` — turn an open idea into a draft proposal and mark the idea `converted`, in one transaction with an `idea_converted` audit record",
         "tags": [
           "strategy"
         ]
@@ -14541,7 +14541,7 @@
         ]
       },
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "`POST /api/plans/{pid}/allocations` — book a person (or a role placeholder) on a plan. A committed booking needs the plan's register guard; a proposed one does not. Audited as `allocation_added`.",
         "parameters": [
           {
             "in": "path",
@@ -14627,7 +14627,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "POST /api/plans/{pid}/allocations",
+        "summary": "`POST /api/plans/{pid}/allocations` — book a person (or a role placeholder) on a plan",
         "tags": [
           "visibility"
         ]
@@ -14950,7 +14950,7 @@
     },
     "/api/plans/{pid}/benefits/{b_pid}/realize": {
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "`POST /api/plans/{pid}/benefits/{b_pid}/realize` — record realized value against a benefit of the plan and optionally move its status; audited as `benefit_realized`. A benefit belonging to another plan is reported as not found.",
         "parameters": [
           {
             "in": "path",
@@ -15006,7 +15006,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "POST /api/plans/{pid}/benefits/{b_pid}/realize",
+        "summary": "`POST /api/plans/{pid}/benefits/{b_pid}/realize` — record realized value against a benefit of the plan and optionally move its status; audited as `benefit_realized`",
         "tags": [
           "strategy"
         ]
@@ -15500,7 +15500,7 @@
     },
     "/api/plans/{pid}/budget-lines/{line_pid}/actual": {
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "`POST /api/plans/{pid}/budget-lines/{line_pid}/actual` handler: adds spend to a line. Refused while a gated line is still held, and audited as `budget_actual_recorded` with the new running total.",
         "parameters": [
           {
             "in": "path",
@@ -15551,7 +15551,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "POST /api/plans/{pid}/budget-lines/{line_pid}/actual",
+        "summary": "`POST /api/plans/{pid}/budget-lines/{line_pid}/actual` handler: adds spend to a line",
         "tags": [
           "governance"
         ]
@@ -22587,7 +22587,7 @@
         ]
       },
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "`POST /api/plans/{pid}/milestones`. Adds a not-yet-done milestone to a live plan after validating name and kind, and audits `milestone_added` in the same transaction.",
         "parameters": [
           {
             "in": "path",
@@ -22635,7 +22635,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "POST /api/plans/{pid}/milestones",
+        "summary": "`POST /api/plans/{pid}/milestones`",
         "tags": [
           "visibility"
         ]
@@ -23171,7 +23171,7 @@
         ]
       },
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "`POST /api/plans/{pid}/objectives` — map a plan to an objective with a weight (upsert on the pair), audited as `objective_linked` in the same transaction.",
         "parameters": [
           {
             "in": "path",
@@ -23214,7 +23214,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "POST /api/plans/{pid}/objectives",
+        "summary": "`POST /api/plans/{pid}/objectives` — map a plan to an objective with a weight (upsert on the pair), audited as `objective_linked` in the same transaction",
         "tags": [
           "strategy"
         ]
@@ -24220,7 +24220,7 @@
     },
     "/api/plans/{pid}/risks/{risk_pid}": {
       "put": {
-        "description": "No description has been written for this route yet.",
+        "description": "`PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`.",
         "parameters": [
           {
             "in": "path",
@@ -24290,7 +24290,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "PUT /api/plans/{pid}/risks/{risk_pid}",
+        "summary": "`PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`",
         "tags": [
           "governance"
         ]
@@ -29804,7 +29804,7 @@
     },
     "/api/proposals": {
       "get": {
-        "description": "No description has been written for this route yet.",
+        "description": "`GET /api/proposals` handler: lists non-deleted proposals, newest first, capped at 200 rows. Read-only, so nothing is audited.",
         "parameters": [
           {
             "description": "Page size: default and ceiling 500",
@@ -29852,7 +29852,7 @@
             }
           }
         },
-        "summary": "GET /api/proposals",
+        "summary": "`GET /api/proposals` handler: lists non-deleted proposals, newest first, capped at 200 rows",
         "tags": [
           "governance"
         ]
@@ -30913,7 +30913,7 @@
         ]
       },
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "`POST /api/reports` handler. Validates every field of the definition and reports all problems in one 422, then saves it and audits `report_saved` in one transaction.",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -30963,7 +30963,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "POST /api/reports",
+        "summary": "`POST /api/reports` handler",
         "tags": [
           "visibility"
         ]
@@ -30995,7 +30995,7 @@
     },
     "/api/reports/{pid}/run": {
       "get": {
-        "description": "No description has been written for this route yet.",
+        "description": "`GET /api/reports/{pid}/run` handler. Runs a saved report for the caller, hiding plans the caller's access scope excludes, so two callers can get different rows from the same definition.",
         "parameters": [
           {
             "in": "path",
@@ -31011,7 +31011,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "GET /api/reports/{pid}/run",
+        "summary": "`GET /api/reports/{pid}/run` handler",
         "tags": [
           "visibility"
         ]

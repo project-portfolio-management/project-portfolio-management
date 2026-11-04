@@ -943,10 +943,14 @@ export interface Issue {
   plan_pid: string;
   title: string;
   description: string | null;
-  kind: "bug" | "risk" | "blocker" | "question" | "improvement" | "concern";
+  /** A key in `/api/issue-types`: built in, or the organization's own (OC-1). */
+  kind: string;
   severity: "low" | "med" | "high" | "critical";
   priority: string | null;
-  status: "open" | "in_progress" | "resolved" | "closed";
+  /** A state of the workflow in force for this issue's type. */
+  status: string;
+  /** What the status means. "Open" and "done" are read from this, never from the status's name. */
+  status_category?: IssueStatusCategory;
   owner_ref: string | null;
   raised_by: string | null;
   raised_on: string;
@@ -956,6 +960,111 @@ export interface Issue {
   /** Calendar days since raised, until resolved. */
   age_calendar_days: number;
   overdue: boolean;
+}
+
+/** What an issue status means (OC-1). */
+export type IssueStatusCategory = "todo" | "active" | "waiting" | "done";
+
+/** One status of an issue workflow. */
+export interface IssueState {
+  key: string;
+  label: string;
+  category: IssueStatusCategory;
+  is_initial: boolean;
+  is_terminal: boolean;
+}
+
+/** One allowed move. No roles means anyone. */
+export interface IssueTransition {
+  from: string;
+  to: string;
+  roles: string[];
+}
+
+/** The statuses of a type and the moves between them. No transitions means any move. */
+export interface IssueWorkflow {
+  states: IssueState[];
+  transitions: IssueTransition[];
+}
+
+/** One issue type (`/api/issue-types`). */
+export interface IssueType {
+  key: string;
+  label: string;
+  position: number;
+  retired: boolean;
+}
+
+/** `GET /api/plans/{pid}/issues/options`: what a plan's issue form offers. */
+export interface IssueOptions {
+  types: (IssueType & { workflow: IssueWorkflow })[];
+  caller_roles: string[];
+}
+
+/** One role name the organization recognizes (`/api/organization-roles`). It grants nothing. */
+export interface OrganizationRole {
+  key: string;
+  label: string;
+  description: string | null;
+  position: number;
+  retired: boolean;
+}
+
+/** `POST /api/issue-types`. */
+export interface NewIssueType {
+  key: string;
+  label: string;
+  position?: number;
+}
+
+/** `PUT /api/issue-types/{key}`. */
+export interface IssueTypeChange {
+  label: string;
+  position?: number;
+  retired?: boolean;
+}
+
+/** `POST /api/organization-roles`. */
+export interface NewOrganizationRole {
+  key: string;
+  label: string;
+  description?: string | null;
+  position?: number;
+}
+
+/** `PUT /api/organization-roles/{key}`. */
+export interface OrganizationRoleChange {
+  label: string;
+  description?: string | null;
+  position?: number;
+  retired?: boolean;
+}
+
+/** `GET /api/workflows`: one registered workflow. */
+export interface WorkflowSummary {
+  pid: string;
+  name: string;
+  applies_to: "task" | "issue";
+  issue_type: string | null;
+  plan_pid: string | null;
+  is_default: boolean;
+}
+
+/** `POST /api/workflows`, for a deployment-wide issue workflow. */
+export interface NewIssueWorkflow {
+  name: string;
+  applies_to: "issue";
+  issue_type?: string | null;
+  plan_pid?: string | null;
+  is_default: boolean;
+  states: {
+    key: string;
+    label: string;
+    category: IssueStatusCategory;
+    is_initial: boolean;
+    is_terminal: boolean;
+  }[];
+  transitions: IssueTransition[];
 }
 
 /** `GET /api/issues`. */

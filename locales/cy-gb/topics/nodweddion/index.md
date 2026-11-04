@@ -45,6 +45,7 @@
 - Adolygiadau giât, cymeradwyo cerrig milltir a phenderfyniadau newid drosodd
 - Eithriadau gyda chloc, a llwybr uwchgyfeirio
 - Pecynnau misol i gyfarwyddwyr
+- Mathau o faterion a statwsau a ddiffinnir gan y sefydliad, gyda symudiadau statws a all amrywio yn ôl math o fater a chael eu cyfyngu yn ôl rôl
 
 ## Diogelwch a gweithrediadau
 

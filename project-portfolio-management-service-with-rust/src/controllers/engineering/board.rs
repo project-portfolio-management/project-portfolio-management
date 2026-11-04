@@ -436,7 +436,7 @@ pub(super) async fn update_task(
 /// in the move path this writes **no** transition row. The caller's roles
 /// are the token's `role` attribute (a vocabulary the deployment declares, as
 /// with `view`); a caller with none holds no role.
-pub(super) fn enforce_move_roles(
+pub(crate) fn enforce_move_roles(
     workflow: &crate::workflow::WorkflowDef,
     from: &str,
     to: &str,

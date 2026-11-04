@@ -12,7 +12,7 @@ holds no token).
 > **Status: implemented (v0.2.0), verified 2026-10-30.** `pnpm run check`
 > is **0 errors / 0 warnings**, `npx vitest run` passes (`tests/unit/`), and
 > the Playwright suite (`tests/e2e/`, with axe audits) runs against a production
-> build. There are 100 page routes under `src/routes` (2026-10-30). Test counts
+> build. There are 101 page routes under `src/routes` (2026-11-04). Test counts
 > are not written here, as they go stale: test, API-route, migration and locale
 > counts are in the entity spec's
 > [§14 generated block](../spec/14-implementation-status.md) (`scripts/generate-status.sh`;

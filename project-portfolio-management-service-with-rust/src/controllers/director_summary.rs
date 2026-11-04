@@ -65,6 +65,7 @@ async fn summary(
             title: i.title.clone(),
             severity: i.severity.clone(),
             status: i.status.clone(),
+            done: crate::issues::is_done(&i.status_category),
             raised_on: i.raised_on,
             resolved_on: i.resolved_on,
             due_date: i.due_date,

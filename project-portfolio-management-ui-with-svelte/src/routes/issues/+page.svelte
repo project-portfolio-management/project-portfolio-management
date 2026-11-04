@@ -11,7 +11,8 @@
   import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
-  import { PpmClient, type IssueRegister } from "#lib/api/ppm.js";
+  import { PpmClient, type IssueRegister, type IssueType } from "#lib/api/ppm.js";
+  import { statusLabel, typeLabel } from "#lib/issue-view.js";
 
   const ppm = PpmClient.withFetch();
   let status = $state("");
@@ -32,17 +33,26 @@
   const register = $derived(loaded.data);
   const error = $derived(loaded.error);
   const refresh = () => loaded.reload();
-  onMount(refresh);
+  // The organization's type names (OC-1). Without them a built-in type is still translated and any other reads as words.
+  let types = $state<IssueType[] | null>(null);
+  onMount(() => {
+    void refresh();
+    ppm.issueTypes(true).then(
+      (found) => (types = Array.isArray(found) ? found : null),
+      () => (types = null),
+    );
+  });
 
   const SEVERITIES = ["critical", "high", "med", "low"] as const;
-  const STATUSES = ["open", "in_progress", "resolved", "closed"] as const;
+  // Each plan can have its own statuses, so the filter offers the ones in use, and the built-ins are always there.
+  const STATUSES = $derived(Object.keys(register?.summary.by_status ?? { open: 0, in_progress: 0, resolved: 0, closed: 0 }));
 
   type Issue = IssueRegister["issues"][number];
   const columns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.issues.title_col"), rowHeader: true, cell: titleCell },
-    { id: "kind", header: t("p.issues.kind_col"), format: (v) => enumLabel("issue_kind", String(v)) },
+    { id: "kind", header: t("p.issues.kind_col"), format: (v) => typeLabel(types, String(v)) },
     { id: "severity", header: t("p.issues.severity_col"), format: (v) => enumLabel("severity", String(v)) },
-    { id: "status", header: t("p.issues.status_col"), format: (v) => enumLabel("issue_status", String(v)) },
+    { id: "status", header: t("p.issues.status_col"), format: (v) => statusLabel(null, String(v)) },
     { id: "owner_ref", header: t("p.issues.owner_col"), format: (v) => (v ? String(v) : t("p.issues.no_owner")) },
     { id: "age_calendar_days", header: t("p.issues.age_col"), align: "end" },
     { id: "due_date", header: t("p.issues.due_col"), format: (v) => (v ? String(v) : t("p.issues.no_due")), cell: dueCell },
@@ -86,7 +96,7 @@
   <label>{t("p.issues.show")}
     <select bind:value={status} onchange={refresh}>
       <option value="">{t("p.issues.all_statuses")}</option>
-      {#each STATUSES as s (s)}<option value={s}>{enumLabel("issue_status", s)}</option>{/each}
+      {#each STATUSES as s (s)}<option value={s}>{statusLabel(null, s)}</option>{/each}
     </select>
   </label>
   <label>{t("p.issues.severity_filter")}

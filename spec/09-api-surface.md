@@ -334,6 +334,8 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
 **Sub-resources.** Goals: `GET`/`POST /api/plans/{pid}/goals`, `PUT`/`DELETE …/goals/{index}` (the plan's
 `goals[]`, by index). Issues: `GET`/`POST /api/plans/{pid}/issues`, `GET`/`PUT`/`DELETE …/issues/{issue_pid}`,
 `POST …/issues/from-risk/{risk_pid}` and `…/from-task/{task_pid}`, and `GET /api/issues` across plans (IR-2, IR-3).
+`GET /api/plans/{pid}/issues/options`, `/api/issue-types` and `/api/organization-roles` are the organization's issue
+vocabulary ([issue configuration](issue-configuration.md), OC-1).
 Tasks: `POST`/`GET /api/plans/{pid}/tasks`, `PUT`/`PATCH`/`DELETE …/tasks/{t_pid}`.
 
 ### 9.3 Front-end routes

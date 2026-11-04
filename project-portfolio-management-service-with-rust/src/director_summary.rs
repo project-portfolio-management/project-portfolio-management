@@ -16,8 +16,10 @@ pub struct IssueLite {
     pub title: String,
     /// `low`, `med`, `high` or `critical`.
     pub severity: String,
-    /// `open`, `in_progress`, `resolved` or `closed`.
+    /// The issue's status.
     pub status: String,
+    /// Whether that status means the issue is finished: the workflow's category, never the status's name.
+    pub done: bool,
     /// When raised.
     pub raised_on: NaiveDate,
     /// When resolved or closed.
@@ -113,8 +115,7 @@ fn in_window(d: NaiveDate, today: NaiveDate, window_days: i64) -> bool {
 /// Summarise the issues of the plans a reader can see.
 #[must_use]
 pub fn issues(rows: &[IssueLite], today: NaiveDate, window_days: i64) -> IssuesSummary {
-    let is_done = |s: &str| matches!(s, "resolved" | "closed");
-    let open: Vec<&IssueLite> = rows.iter().filter(|i| !is_done(&i.status)).collect();
+    let open: Vec<&IssueLite> = rows.iter().filter(|i| !i.done).collect();
     let mut by: std::collections::BTreeMap<String, usize> =
         SEVERITIES.iter().map(|s| ((*s).to_string(), 0)).collect();
     for i in &open {
@@ -230,6 +231,7 @@ mod tests {
             title: title.into(),
             severity: sev.into(),
             status: status.into(),
+            done: matches!(status, "resolved" | "closed"),
             raised_on: raised,
             resolved_on: None,
             due_date: None,

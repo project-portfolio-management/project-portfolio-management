@@ -7,7 +7,7 @@
 | 项目 | 它是什么 | 本项目的不同之处 |
 | --- | --- | --- |
 | [Leantime](https://github.com/leantime/leantime) | 面向非项目经理的项目管理工具 | 本项目还包括组合管理办公室使用的进度、成本和治理功能 |
-| [Redmine](https://www.redmine.org/) | 可配置的通用工具，由组织定义问题类型、状态和角色 | 这里的词汇大多固定在代码中。提供自定义字段，但没有按类型的工作流矩阵 |
+| [Redmine](https://www.redmine.org/) | 可配置的通用工具，由组织定义问题类型、状态和角色 | 问题类型、状态和工作流由组织定义。角色名称可以限制状态转换，但不授予权限，权限来自身份提供方。参见[与 Redmine 的比较](../../../en-001/compare/redmine/index.md)（英文） |
 | Huly Platform（通过其分支 Platform Collective） | 基于多个服务的业务应用框架 | Huly 是多服务平台。本项目是一个基于 PostgreSQL 的服务 |
 | [ProjectLibre](https://sourceforge.net/p/projectlibre/) | Microsoft Project 的桌面替代品，面向一位经理和一个项目 | 本项目是一项托管的多用户服务，带有访问控制 |
 

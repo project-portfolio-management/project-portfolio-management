@@ -2365,6 +2365,18 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   neutral analyst's voice, in English, Welsh and Mandarin, with the same facts and caveats. **Not done:** the role briefs and
   the reference documents keep their wording; the Welsh and Mandarin remain unreviewed machine drafts.
 
+## Issue configuration (OC-n, [spec/issue-configuration.md](spec/issue-configuration.md))
+
+- [x] **OC-1 (L) — Organization-defined issue types, statuses and roles.** **Built 2026-11-04:** `issue_types` and
+  `organization_roles` (migration `m20261104_000100_issue_configuration`), issues follow the workflow in force for their type
+  (`workflows.issue_type`), status moves can differ by type and be restricted by role, `issues.status_category` carries what a
+  status means, and `/issue-settings` manages them. **Acceptance:** `tests/issue_configuration.rs` with real tokens: only an
+  administrator changes a catalogue or an issue workflow; a role named `admin` grants nothing; a move can be refused by
+  workflow (`422`) and by role (`403`); a custom status counts by its category; a retired type stays on its issues; a withdrawn
+  workflow strands nothing; changing an issue's type cannot step round a gate; nothing configured behaves as before. **Not built:** permissions on roles, per-project role
+  membership, per-status field rules, per-plan issue types, a screen for a plan's own workflow, editing a registered workflow,
+  translated custom labels. **Open:** task workflows still need no administrator, which predates this and is the owner's decision.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

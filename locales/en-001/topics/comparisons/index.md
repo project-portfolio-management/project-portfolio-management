@@ -7,7 +7,7 @@ The products below serve different purposes and are not scored. These notes are 
 | Project | What it is | Where this project differs |
 | --- | --- | --- |
 | [Leantime](https://github.com/leantime/leantime) | Project management for people who are not project managers | This project also includes the scheduling, cost and governance functions used by a portfolio office |
-| [Redmine](https://www.redmine.org/) | A configurable general-purpose tracker, with organization-defined issue types, statuses and roles | The vocabulary here is mostly fixed in code. Custom fields are available, but there is no per-type workflow matrix |
+| [Redmine](https://www.redmine.org/) | A configurable general-purpose tracker, with organization-defined issue types, statuses and roles | Issue types, statuses and workflows are organization-defined. Role names can restrict a status move, but they grant no permissions, which come from the identity provider. See the [Redmine comparison](../../../en-001/compare/redmine/index.md) |
 | Huly Platform (through its fork, Platform Collective) | A business application framework on many services | Huly is a multi-service platform. This project is one service over PostgreSQL |
 | [ProjectLibre](https://sourceforge.net/p/projectlibre/) | A desktop alternative to Microsoft Project, for one manager and one project | This project is a hosted, multi-user service with access control |
 

@@ -13,15 +13,21 @@
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { PpmClient, type Issue, type PlanIssueList, type Risk } from "#lib/api/ppm.js";
+  import { PpmClient, type Issue, type IssueOptions, type PlanIssueList, type Risk } from "#lib/api/ppm.js";
   import {
-    ISSUE_KINDS,
     ISSUE_SEVERITIES,
-    ISSUE_STATUSES,
     emptyIssueForm,
     formFromIssue,
+    initialStatus,
     issueBody,
     issueProblem,
+    needsResolution,
+    statusChoices,
+    statusLabel,
+    typeChoices,
+    typeLabel,
+    usableOptions,
+    workflowFor,
   } from "#lib/issue-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -39,13 +45,37 @@
       risks = []; // the raise-from-risk form is then empty; the register above still works
     }
   }
+  // The organization's types and statuses (OC-1). Without them the form offers the built-ins, and the service decides.
+  let options = $state<IssueOptions | null>(null);
+  async function loadOptions() {
+    try {
+      options = usableOptions(await ppm.issueOptions(pid));
+    } catch {
+      options = null;
+    }
+  }
   onMount(() => {
     void loaded.reload();
     void loadRisks();
+    void loadOptions();
   });
 
   let form = $state(emptyIssueForm());
   let editing = $state<string | null>(null);
+  // The status the issue had when editing began, which is where a move starts from.
+  let startedAt = $state<string | null>(null);
+  const workflow = $derived(workflowFor(options, form.kind));
+  const statuses = $derived(statusChoices(workflow, startedAt, options?.caller_roles ?? []));
+  const types = $derived(typeChoices(options, form.kind));
+  const typesKnown = $derived(options?.types ?? null);
+  // The organization may have retired the default type, so the form starts on one it can actually offer.
+  $effect(() => {
+    if (!types.some((k) => k.key === form.kind)) form.kind = types[0]?.key ?? form.kind;
+  });
+  // The type decides the workflow: a status it does not offer gives way to the workflow's start.
+  $effect(() => {
+    if (!statuses.some((s) => s.key === form.status)) form.status = initialStatus(workflow);
+  });
   let riskPid = $state("");
   let notice = $state("");
   let actionError = $state<string | null>(null);
@@ -62,12 +92,14 @@
 
   function startEdit(issue: Issue) {
     editing = issue.pid;
+    startedAt = issue.status;
     form = formFromIssue(issue);
     notice = "";
     actionError = null;
   }
   function reset() {
     editing = null;
+    startedAt = null;
     form = emptyIssueForm();
   }
 
@@ -75,7 +107,7 @@
     e.preventDefault();
     actionError = null;
     notice = "";
-    const problem = issueProblem(form);
+    const problem = issueProblem(form, needsResolution(workflow, form.status));
     if (problem) {
       actionError = problemText(problem);
       return;
@@ -114,9 +146,9 @@
 
   const columns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.issues.title_col"), rowHeader: true },
-    { id: "kind", header: t("p.issues.kind_col"), format: (v) => enumLabel("issue_kind", String(v)) },
+    { id: "kind", header: t("p.issues.kind_col"), format: (v) => typeLabel(typesKnown, String(v)) },
     { id: "severity", header: t("p.issues.severity_col"), format: (v) => enumLabel("severity", String(v)) },
-    { id: "status", header: t("p.issues.status_col"), format: (v) => enumLabel("issue_status", String(v)) },
+    { id: "status", header: t("p.issues.status_col"), format: (v, r) => statusLabel(workflowFor(options, rowOf<Issue>(r).kind), String(v)) },
     { id: "owner_ref", header: t("p.issues.owner_col"), format: (v) => (v ? String(v) : t("p.issues.no_owner")) },
     { id: "age_calendar_days", header: t("p.issues.age_col"), align: "end" },
     { id: "due_date", header: t("p.issues.due_col"), format: (v) => (v ? String(v) : t("p.issues.no_due")), cell: dueCell },
@@ -169,7 +201,7 @@
     </label>
     <label>{t("p.issues.kind_col")}
       <select bind:value={form.kind}>
-        {#each ISSUE_KINDS as k (k)}<option value={k}>{enumLabel("issue_kind", k)}</option>{/each}
+        {#each types as k (k.key)}<option value={k.key}>{typeLabel(typesKnown, k.key)}</option>{/each}
       </select>
     </label>
     <label>{t("p.issues.severity_col")}
@@ -179,7 +211,7 @@
     </label>
     <label>{t("p.issues.status_col")}
       <select bind:value={form.status}>
-        {#each ISSUE_STATUSES as s (s)}<option value={s}>{enumLabel("issue_status", s)}</option>{/each}
+        {#each statuses as s (s.key)}<option value={s.key}>{statusLabel(workflow, s.key)}</option>{/each}
       </select>
     </label>
     <label>{t("p.plan_issues.f_owner")}

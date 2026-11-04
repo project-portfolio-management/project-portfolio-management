@@ -195,7 +195,7 @@ risk /plans/[pid]/leveling /plans/[pid]/links /plans/[pid]/onboarding
 risk /plans/[pid]/tasks/[tpid] /plans/[pid]/tolerances
 /plans/[pid]/ways-of-working /plans/[pid]/wbs /plans/[pid]/what-if
 /plans/[pid]/work /plans/merge /prioritization /resources /resources/rbs
-/reviews /search /start-queue /tolerances /tour
+/reviews /search /start-queue /tolerances /tour /issue-settings
 
 Roadmap (per-plan project-management sub-routes, §13/§15; not built):
 /plans/[pid]/timeline        Gantt / timeline (goal milestones + task date ranges)

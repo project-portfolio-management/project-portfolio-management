@@ -30,6 +30,7 @@ macro_rules! live {
 
 mod agile;
 mod board;
+pub(crate) use board::enforce_move_roles;
 mod devops;
 mod estate;
 pub(crate) use agile::{NotePayload, SprintPayload};

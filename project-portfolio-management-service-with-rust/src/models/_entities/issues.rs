@@ -18,13 +18,15 @@ pub struct Model {
     pub title: String,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
-    /// `bug`, `risk`, `blocker`, `question`, `improvement` or `concern`.
+    /// A key in `issue_types`.
     pub kind: String,
     /// `low`, `med`, `high` or `critical`.
     pub severity: String,
     pub priority: Option<String>,
-    /// `open`, `in_progress`, `resolved` or `closed`.
+    /// A state of the issue workflow in force when it was set.
     pub status: String,
+    /// What the status means: `todo`, `active`, `waiting` or `done`.
+    pub status_category: String,
     pub owner_ref: Option<String>,
     pub raised_by: Option<String>,
     pub raised_on: Date,

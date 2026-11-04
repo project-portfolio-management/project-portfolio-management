@@ -131,6 +131,7 @@ async fn inputs(
             plan_pid: i.plan_pid.to_string(),
             title: i.title,
             severity: i.severity,
+            done: crate::issues::is_done(&i.status_category),
             status: i.status,
             raised_on: i.raised_on,
             resolved_on: i.resolved_on,

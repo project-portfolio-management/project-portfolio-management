@@ -214,6 +214,14 @@ const MASKED_FOR_MEMBER: &[&str] = &[
 /// be added without someone deciding whether it filters private plans.
 const NOT_AGGREGATE: &[(&str, &str)] = &[
     (
+        "/api/issue-types",
+        "a deployment catalogue of issue types; it reads no plan",
+    ),
+    (
+        "/api/organization-roles",
+        "a deployment catalogue of role names; it reads no plan",
+    ),
+    (
         "/api/scenarios",
         "the scenarios themselves; each one's member list drops the plans the caller may not read, which the end of this test checks for a non-member (and a member sees them)",
     ),
@@ -305,7 +313,10 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
     ("/api/saved-views", "the caller's own views"),
     ("/api/availability", "a person's availability ranges"),
     ("/api/timesheets", "the caller's own week"),
-    ("/api/workflows", "workflow definitions"),
+    (
+        "/api/workflows",
+        "workflow definitions; a plan's own are left out for a caller who cannot read that plan",
+    ),
     (
         "/api/plan-templates",
         "templates (private plans' templates filtered at source)",

@@ -41,6 +41,7 @@ pub mod funding;
 pub mod governance;
 pub mod handling_marks;
 pub mod insights;
+pub mod issue_configuration;
 pub mod issues;
 pub mod lessons;
 pub mod metrics;

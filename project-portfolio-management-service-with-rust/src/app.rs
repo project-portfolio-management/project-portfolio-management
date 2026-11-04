@@ -229,6 +229,7 @@ impl Hooks for App {
             .add_route(controllers::report_schedules::routes())
             .add_route(controllers::announcements::routes())
             .add_route(controllers::issues::routes())
+            .add_route(controllers::issue_configuration::routes())
             .add_route(controllers::subjects::routes())
             .add_route(controllers::access_review::routes())
             .add_route(controllers::break_glass::routes())

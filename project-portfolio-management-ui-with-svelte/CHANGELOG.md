@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — organization-defined issue types, statuses and roles (OC-1, 2026-11-04)
+
+`/issue-settings` lists the issue types and role names, adds, retires and restores them, and registers and withdraws
+deployment-wide issue workflows. A plan's issue form takes its types and statuses from the service, offers only the moves this
+caller may make, and falls back to the built-ins if it cannot read them. Not done: a plan's own workflow has no screen; the
+cross-plan register shows a custom status as words from its key; the new strings are unreviewed machine drafts.
+
 ### Fixed — the Display page fits a phone again (2026-10-31)
 
 The first-day-of-week choice added for WW-1.4 widened the page past a 390-pixel screen: the section's grid column grew to the select's longest option. The column may now shrink and the select keeps within it. Found by CI's phone-width test (run 41199625155); the phone-width suite passes locally (100 tests). Not checked by eye in a right-to-left locale.

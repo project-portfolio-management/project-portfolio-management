@@ -5,19 +5,8 @@
 
 use chrono::NaiveDate;
 
-/// What sort of issue it is.
-pub const KINDS: &[&str] = &[
-    "bug",
-    "risk",
-    "blocker",
-    "question",
-    "improvement",
-    "concern",
-];
 /// How serious it is, lowest first.
 pub const SEVERITIES: &[&str] = &["low", "med", "high", "critical"];
-/// Where it is in its life.
-pub const STATUSES: &[&str] = &["open", "in_progress", "resolved", "closed"];
 
 /// Longest title, in characters.
 pub const TITLE_MAX: usize = 200;
@@ -31,12 +20,10 @@ pub struct Draft<'a> {
     pub title: &'a str,
     /// Longer description.
     pub description: Option<&'a str>,
-    /// One of [`KINDS`].
-    pub kind: &'a str,
     /// One of [`SEVERITIES`].
     pub severity: &'a str,
-    /// One of [`STATUSES`].
-    pub status: &'a str,
+    /// Whether its status needs a resolution: a terminal state of the workflow in force.
+    pub needs_resolution: bool,
     /// A `person:` or `worker:` reference.
     pub owner_ref: Option<&'a str>,
     /// When it was raised.
@@ -75,14 +62,8 @@ pub fn problems(d: &Draft<'_>) -> Vec<String> {
             out.push(format!("the {name} is longer than {TEXT_MAX} characters"));
         }
     }
-    if !KINDS.contains(&d.kind) {
-        out.push(format!("kind must be one of {KINDS:?}"));
-    }
     if !SEVERITIES.contains(&d.severity) {
         out.push(format!("severity must be one of {SEVERITIES:?}"));
-    }
-    if !STATUSES.contains(&d.status) {
-        out.push(format!("status must be one of {STATUSES:?}"));
     }
     if d.owner_ref.is_some_and(|o| !is_person_ref(o)) {
         out.push("the owner must be a person: or worker: reference".to_string());
@@ -90,7 +71,7 @@ pub fn problems(d: &Draft<'_>) -> Vec<String> {
     if d.due_date.is_some_and(|due| due < d.raised_on) {
         out.push("the due date cannot be before the day it was raised".to_string());
     }
-    if d.status == "closed" && blank(d.resolution) {
+    if d.needs_resolution && blank(d.resolution) {
         out.push("a closed issue needs a resolution".to_string());
     }
     out
@@ -98,19 +79,41 @@ pub fn problems(d: &Draft<'_>) -> Vec<String> {
 
 /// Whether the status means the issue is finished with.
 #[must_use]
-pub fn is_done(status: &str) -> bool {
-    matches!(status, "resolved" | "closed")
+pub fn is_done(status_category: &str) -> bool {
+    status_category == "done"
+}
+
+/// Whether a key can name an issue type: a lowercase letter, then up to 39 lowercase letters, digits or `_`.
+#[must_use]
+pub fn is_type_key(s: &str) -> bool {
+    is_key(s, 40, false)
+}
+
+/// Whether a key can name a role or a status: as a type's, up to 64 characters, and `-` is allowed.
+#[must_use]
+pub fn is_role_key(s: &str) -> bool {
+    is_key(s, 64, true)
+}
+
+/// A lowercase letter, then lowercase letters, digits, `_` and (if allowed) `-`, up to `max` characters.
+fn is_key(s: &str, max: usize, hyphen: bool) -> bool {
+    let mut chars = s.chars();
+    s.len() <= max
+        && chars.next().is_some_and(|c| c.is_ascii_lowercase())
+        && chars.all(|c| {
+            c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || (hyphen && c == '-')
+        })
 }
 
 /// The day an issue was resolved: kept if it already was, today if it just became
 /// resolved or closed, and none while it is open.
 #[must_use]
 pub fn resolved_on(
-    status: &str,
+    status_category: &str,
     previously: Option<NaiveDate>,
     today: NaiveDate,
 ) -> Option<NaiveDate> {
-    if is_done(status) {
+    if is_done(status_category) {
         Some(previously.unwrap_or(today))
     } else {
         None
@@ -130,8 +133,8 @@ pub fn age_calendar_days(
 
 /// Whether an open issue is past its due date.
 #[must_use]
-pub fn is_overdue(status: &str, due: Option<NaiveDate>, today: NaiveDate) -> bool {
-    !is_done(status) && due.is_some_and(|d| d < today)
+pub fn is_overdue(status_category: &str, due: Option<NaiveDate>, today: NaiveDate) -> bool {
+    !is_done(status_category) && due.is_some_and(|d| d < today)
 }
 
 /// Rank for sorting: a higher severity first.
@@ -164,9 +167,8 @@ mod tests {
         Draft {
             title: "Build server is down",
             description: None,
-            kind: "blocker",
             severity: "high",
-            status: "open",
+            needs_resolution: false,
             owner_ref: Some("person:ada"),
             raised_on: day(1),
             due_date: Some(day(5)),
@@ -182,7 +184,7 @@ mod tests {
     #[test]
     fn closing_needs_a_resolution() {
         let mut d = draft();
-        d.status = "closed";
+        d.needs_resolution = true;
         assert_eq!(problems(&d), vec!["a closed issue needs a resolution"]);
         d.resolution = Some("   ");
         assert_eq!(problems(&d).len(), 1);
@@ -193,22 +195,40 @@ mod tests {
     #[test]
     fn resolved_does_not_need_one_but_gets_a_date() {
         let mut d = draft();
-        d.status = "resolved";
+        d.needs_resolution = false;
         assert!(problems(&d).is_empty());
-        assert_eq!(resolved_on("resolved", None, day(9)), Some(day(9)));
-        assert_eq!(resolved_on("closed", Some(day(7)), day(9)), Some(day(7)));
-        assert_eq!(resolved_on("open", Some(day(7)), day(9)), None);
+        assert_eq!(resolved_on("done", None, day(9)), Some(day(9)));
+        assert_eq!(resolved_on("done", Some(day(7)), day(9)), Some(day(7)));
+        assert_eq!(resolved_on("todo", Some(day(7)), day(9)), None);
     }
 
     #[test]
     fn unknown_words_and_bad_references_are_named() {
         let mut d = draft();
-        d.kind = "typo";
         d.severity = "huge";
-        d.status = "later";
         d.owner_ref = Some("ada");
         let p = problems(&d);
-        assert_eq!(p.len(), 4, "{p:?}");
+        assert_eq!(p.len(), 2, "{p:?}");
+    }
+
+    #[test]
+    fn a_type_key_and_a_role_key_are_narrow_words() {
+        assert!(is_type_key("change_freeze"));
+        assert!(!is_type_key("Change"));
+        assert!(!is_type_key("9lives"));
+        assert!(!is_type_key("two-words"));
+        assert!(!is_type_key(&"a".repeat(41)));
+        assert!(is_role_key("change-manager"));
+        assert!(!is_role_key("admin role"));
+        assert!(!is_role_key(""));
+    }
+
+    #[test]
+    fn done_is_the_category_and_never_a_name() {
+        assert!(is_done("done"));
+        assert!(!is_done("closed"), "a status's name means nothing here");
+        assert!(!is_overdue("done", Some(day(3)), day(4)));
+        assert!(is_overdue("waiting", Some(day(3)), day(4)));
     }
 
     #[test]
@@ -227,10 +247,10 @@ mod tests {
 
     #[test]
     fn overdue_only_while_not_done() {
-        assert!(is_overdue("open", Some(day(3)), day(4)));
-        assert!(!is_overdue("open", Some(day(4)), day(4)));
-        assert!(!is_overdue("closed", Some(day(3)), day(4)));
-        assert!(!is_overdue("open", None, day(4)));
+        assert!(is_overdue("todo", Some(day(3)), day(4)));
+        assert!(!is_overdue("todo", Some(day(4)), day(4)));
+        assert!(!is_overdue("done", Some(day(3)), day(4)));
+        assert!(!is_overdue("todo", None, day(4)));
     }
 
     #[test]

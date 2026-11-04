@@ -9956,6 +9956,163 @@
         ]
       }
     },
+    "/api/issue-types": {
+      "get": {
+        "description": "`GET /api/issue-types` — the issue types, in order.",
+        "parameters": [
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/issue-types` — the issue types, in order",
+        "tags": [
+          "issue_configuration"
+        ]
+      },
+      "post": {
+        "description": "`POST /api/issue-types` — add a type (an administrator). `409` if the key is taken, retired types included.",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/issue-types` body.",
+                "properties": {
+                  "key": {
+                    "description": "Stable key, stored on issues: a lowercase letter, then lowercase letters, digits or `_`, up to 40 characters.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Name shown to people.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "default": 0,
+                    "description": "Order in lists, lowest first.",
+                    "format": "int32",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "key",
+                  "label"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/issue-types` — add a type (an administrator)",
+        "tags": [
+          "issue_configuration"
+        ]
+      }
+    },
+    "/api/issue-types/{key}": {
+      "put": {
+        "description": "`PUT /api/issue-types/{key}` — rename, reorder, retire or restore a type (an administrator).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT /api/issue-types/{key}` body. The key cannot change: issues store it.",
+                "properties": {
+                  "label": {
+                    "description": "Name shown to people.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "default": null,
+                    "description": "Order in lists, lowest first; absent keeps it.",
+                    "format": "int32",
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "retired": {
+                    "default": null,
+                    "description": "`true` retires it (it can no longer be chosen; issues that carry it keep it), `false` restores it; absent keeps it.",
+                    "nullable": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "label"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`PUT /api/issue-types/{key}` — rename, reorder, retire or restore a type (an administrator)",
+        "tags": [
+          "issue_configuration"
+        ]
+      }
+    },
     "/api/issues": {
       "get": {
         "description": "Every issue in the plans the caller can read (others are left out without a trace), most serious first, then oldest. Filters: plan, status, severity, owner, open=true (not resolved or closed), min_age_days (calendar days since raised, until resolved). summary counts everything the caller can see whatever the filters: by_severity, by_status, overdue and the oldest open issue. limit defaults to 200, at most 500; truncated says when more match.",
@@ -12693,6 +12850,175 @@
         "summary": "Replace a kind's checklist",
         "tags": [
           "onboarding"
+        ]
+      }
+    },
+    "/api/organization-roles": {
+      "get": {
+        "description": "`GET /api/organization-roles` — the role names this deployment recognizes, in order.",
+        "parameters": [
+          {
+            "description": "Page size: default and ceiling 500",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip; above 10000 is a 400",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet.",
+            "headers": {
+              "X-Limit": {
+                "description": "The page size used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Offset": {
+                "description": "The offset used",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Total-Count": {
+                "description": "How many rows there are in all",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "`GET /api/organization-roles` — the role names this deployment recognizes, in order",
+        "tags": [
+          "issue_configuration"
+        ]
+      },
+      "post": {
+        "description": "`POST /api/organization-roles` — name a role (an administrator). It grants nothing; `409` if the key is taken.",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/organization-roles` body.",
+                "properties": {
+                  "description": {
+                    "default": null,
+                    "description": "What the role is for.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "key": {
+                    "description": "The name exactly as a token's `role` attribute carries it: lowercase letters, digits, `_` or `-`, up to 64\ncharacters, starting with a letter.",
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Name shown to people.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "default": 0,
+                    "description": "Order in lists, lowest first.",
+                    "format": "int32",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "key",
+                  "label"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/organization-roles` — name a role (an administrator)",
+        "tags": [
+          "issue_configuration"
+        ]
+      }
+    },
+    "/api/organization-roles/{key}": {
+      "put": {
+        "description": "`PUT /api/organization-roles/{key}` — rename, reorder, retire or restore a role (an administrator).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT /api/organization-roles/{key}` body. The key cannot change: tokens and workflows carry it.",
+                "properties": {
+                  "description": {
+                    "default": null,
+                    "description": "What the role is for.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "label": {
+                    "description": "Name shown to people.",
+                    "type": "string"
+                  },
+                  "position": {
+                    "default": null,
+                    "description": "Order in lists, lowest first; absent keeps it.",
+                    "format": "int32",
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "retired": {
+                    "default": null,
+                    "description": "`true` retires it (no new workflow rule can name it; rules that already do keep working), `false` restores it;\nabsent keeps it.",
+                    "nullable": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "label"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`PUT /api/organization-roles/{key}` — rename, reorder, retire or restore a role (an administrator)",
+        "tags": [
+          "issue_configuration"
         ]
       }
     },
@@ -20823,8 +21149,9 @@
                     "type": "string"
                   },
                   "kind": {
-                    "default": "concern",
-                    "description": "Issue kind; defaults to `concern` and must be a known kind.",
+                    "default": null,
+                    "description": "Issue type, from `/api/issue-types` and not retired. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
+                    "nullable": true,
                     "type": "string"
                   },
                   "owner_ref": {
@@ -20848,7 +21175,7 @@
                   },
                   "resolution": {
                     "default": null,
-                    "description": "How the issue was resolved; required once the status is `closed`, blank is stored as absent.",
+                    "description": "How the issue was resolved; required in a terminal status (`closed` by default), blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -20872,8 +21199,9 @@
                     "type": "string"
                   },
                   "status": {
-                    "default": "open",
-                    "description": "Lifecycle status; defaults to `open`. A closed issue must carry a resolution.",
+                    "default": null,
+                    "description": "Status: a state of the workflow in force for this type. Absent means the workflow's initial state on a new issue,\nand no change on an existing one. A terminal state must carry a resolution.",
+                    "nullable": true,
                     "type": "string"
                   },
                   "title": {
@@ -20990,6 +21318,30 @@
         ]
       }
     },
+    "/api/plans/{pid}/issues/options": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's roles, so a form can leave out a move the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's roles, so a form can leave out a move the service would refuse",
+        "tags": [
+          "issue_configuration"
+        ]
+      }
+    },
     "/api/plans/{pid}/issues/{issue_pid}": {
       "delete": {
         "description": "Soft delete; audited.",
@@ -21103,8 +21455,9 @@
                     "type": "string"
                   },
                   "kind": {
-                    "default": "concern",
-                    "description": "Issue kind; defaults to `concern` and must be a known kind.",
+                    "default": null,
+                    "description": "Issue type, from `/api/issue-types` and not retired. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
+                    "nullable": true,
                     "type": "string"
                   },
                   "owner_ref": {
@@ -21128,7 +21481,7 @@
                   },
                   "resolution": {
                     "default": null,
-                    "description": "How the issue was resolved; required once the status is `closed`, blank is stored as absent.",
+                    "description": "How the issue was resolved; required in a terminal status (`closed` by default), blank is stored as absent.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -21152,8 +21505,9 @@
                     "type": "string"
                   },
                   "status": {
-                    "default": "open",
-                    "description": "Lifecycle status; defaults to `open`. A closed issue must carry a resolution.",
+                    "default": null,
+                    "description": "Status: a state of the workflow in force for this type. Absent means the workflow's initial state on a new issue,\nand no change on an existing one. A terminal state must carry a resolution.",
+                    "nullable": true,
                     "type": "string"
                   },
                   "title": {
@@ -34015,6 +34369,12 @@
                     "default": false,
                     "description": "Marks the deployment default, used by plans that have no workflow of their own.",
                     "type": "boolean"
+                  },
+                  "issue_type": {
+                    "default": null,
+                    "description": "For an issue workflow, the one issue type it governs (a key in `/api/issue-types`); absent governs every type\nwithout a workflow of its own. Not allowed on a task workflow.",
+                    "nullable": true,
+                    "type": "string"
                   },
                   "name": {
                     "description": "Workflow name shown in configuration lists.",

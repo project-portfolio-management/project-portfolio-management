@@ -733,6 +733,11 @@ async fn convert_to_issue(
         .chars()
         .take(crate::issues::TITLE_MAX)
         .collect();
+    let workflow = super::workflow::in_force_issue(ctx, control.plan_pid, "concern").await?;
+    let (status, category) = crate::workflow::initial_state(&workflow).map_or_else(
+        || ("open".to_string(), "todo".to_string()),
+        |s| (s.key.clone(), s.category.token().to_string()),
+    );
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let issue = crate::models::_entities::issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -745,7 +750,8 @@ async fn convert_to_issue(
         kind: ActiveValue::set("concern".to_string()),
         severity: ActiveValue::set("med".to_string()),
         priority: ActiveValue::set(None),
-        status: ActiveValue::set("open".to_string()),
+        status: ActiveValue::set(status),
+        status_category: ActiveValue::set(category),
         owner_ref: ActiveValue::set(action.owner_ref.clone()),
         raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
         raised_on: ActiveValue::set(today),

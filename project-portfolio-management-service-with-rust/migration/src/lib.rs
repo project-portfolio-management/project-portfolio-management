@@ -145,6 +145,7 @@ mod m20261025_000096_meeting_tasks;
 mod m20261025_000097_status_claims;
 mod m20261025_000098_lesson_links;
 mod m20261030_000099_peer_pool_link;
+mod m20261104_000100_issue_configuration;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -291,6 +292,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261025_000097_status_claims::Migration),
             Box::new(m20261025_000098_lesson_links::Migration),
             Box::new(m20261030_000099_peer_pool_link::Migration),
+            Box::new(m20261104_000100_issue_configuration::Migration),
             // inject-above (do not remove this comment)
         ]
     }

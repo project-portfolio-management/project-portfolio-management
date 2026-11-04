@@ -17,7 +17,7 @@ use uuid::Uuid;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::issues as rules;
-use crate::models::_entities::{issues, plans, risks, tasks};
+use crate::models::_entities::{issues, plans, risks, tasks, workflow_states, workflows};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Today's date in the deployment's configured time zone, so ages and due dates agree with what users see.
@@ -30,13 +30,14 @@ fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {
     serde_json::json!({
         "pid": i.pid, "plan_pid": i.plan_pid, "title": i.title,
         "description": i.description, "kind": i.kind, "severity": i.severity,
-        "priority": i.priority, "status": i.status, "owner_ref": i.owner_ref,
+        "priority": i.priority, "status": i.status, "status_category": i.status_category,
+        "owner_ref": i.owner_ref,
         "raised_by": i.raised_by, "raised_on": i.raised_on, "due_date": i.due_date,
         "resolution": i.resolution, "resolved_on": i.resolved_on,
         "source_risk_pid": i.source_risk_pid, "source_task_pid": i.source_task_pid,
         "change_request_pid": i.change_request_pid,
         "age_calendar_days": rules::age_calendar_days(i.raised_on, i.resolved_on, today),
-        "overdue": rules::is_overdue(&i.status, i.due_date, today),
+        "overdue": rules::is_overdue(&i.status_category, i.due_date, today),
     })
 }
 
@@ -73,7 +74,7 @@ const PLAN_LIST_MAX: u64 = 5_000;
 /// Query filters for the plan-scoped issue list; all are optional and combine with AND.
 pub(crate) struct ListParams {
     #[serde(default)]
-    /// Only issues in this status; must be one of the rules module's statuses (`422` otherwise).
+    /// Only issues in this status. A status is a state of a workflow, so any well-formed key can be asked for.
     status: Option<String>,
     #[serde(default)]
     /// Only issues of this severity; must be one of the rules module's severities (`422` otherwise).
@@ -94,14 +95,7 @@ async fn list(
     Query(q): Query<ListParams>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
-    for (name, value, allowed) in [
-        ("status", q.status.as_deref(), rules::STATUSES),
-        ("severity", q.severity.as_deref(), rules::SEVERITIES),
-    ] {
-        if value.is_some_and(|v| !allowed.contains(&v)) {
-            return Err(unprocessable(&format!("{name} must be one of {allowed:?}")));
-        }
-    }
+    check_filters(&ctx, q.status.as_deref(), q.severity.as_deref()).await?;
     let mut find = issues::Entity::find()
         .filter(issues::Column::PlanPid.eq(plan))
         .filter(issues::Column::DeletedAt.is_null());
@@ -115,7 +109,7 @@ async fn list(
         find = find.filter(issues::Column::OwnerRef.eq(o.as_str()));
     }
     if q.open == Some(true) {
-        find = find.filter(issues::Column::Status.is_in(["open", "in_progress"]));
+        find = find.filter(issues::Column::StatusCategory.ne("done"));
     }
     // At most PLAN_LIST_MAX + 1 rows are read, so one huge plan cannot make one answer unbounded.
     let mut rows = find
@@ -133,10 +127,13 @@ async fn list(
             .then(a.id.cmp(&b.id))
     });
     let now = today();
-    let open = rows.iter().filter(|i| !rules::is_done(&i.status)).count();
+    let open = rows
+        .iter()
+        .filter(|i| !rules::is_done(&i.status_category))
+        .count();
     let overdue = rows
         .iter()
-        .filter(|i| rules::is_overdue(&i.status, i.due_date, now))
+        .filter(|i| rules::is_overdue(&i.status_category, i.due_date, now))
         .count();
     format::json(serde_json::json!({
         "plan_pid": plan,
@@ -166,18 +163,20 @@ pub(crate) struct Input {
     #[serde(default)]
     /// Optional longer text; blank is stored as absent.
     description: Option<String>,
-    #[serde(default = "default_kind")]
-    /// Issue kind; defaults to `concern` and must be a known kind.
-    kind: String,
+    #[serde(default)]
+    /// Issue type, from `/api/issue-types` and not retired. Absent means `concern` on a new issue and no change on an
+    /// existing one. Changing the type of an issue under a workflow that restricts moves needs an administrator.
+    kind: Option<String>,
     #[serde(default = "default_severity")]
     /// Severity; defaults to `med` and must be a known severity.
     severity: String,
     #[serde(default)]
     /// Optional free-text priority label; blank is stored as absent.
     priority: Option<String>,
-    #[serde(default = "default_status")]
-    /// Lifecycle status; defaults to `open`. A closed issue must carry a resolution.
-    status: String,
+    #[serde(default)]
+    /// Status: a state of the workflow in force for this type. Absent means the workflow's initial state on a new issue,
+    /// and no change on an existing one. A terminal state must carry a resolution.
+    status: Option<String>,
     #[serde(default)]
     /// Person reference of the owner; absent means unowned, and it must look like a person reference.
     owner_ref: Option<String>,
@@ -188,7 +187,7 @@ pub(crate) struct Input {
     /// Optional date the issue should be dealt with by; absent means no due date, so it is never overdue.
     due_date: Option<NaiveDate>,
     #[serde(default)]
-    /// How the issue was resolved; required once the status is `closed`, blank is stored as absent.
+    /// How the issue was resolved; required in a terminal status (`closed` by default), blank is stored as absent.
     resolution: Option<String>,
     #[serde(default)]
     /// Risk this issue was raised from, when there is one; recorded as given, the risk is not changed.
@@ -198,27 +197,115 @@ pub(crate) struct Input {
     source_task_pid: Option<Uuid>,
 }
 
-/// Serde default for [`Input::kind`].
-fn default_kind() -> String {
-    "concern".to_string()
-}
 /// Serde default for [`Input::severity`].
 fn default_severity() -> String {
     "med".to_string()
 }
-/// Serde default for [`Input::status`].
-fn default_status() -> String {
-    "open".to_string()
+/// `422` for a status no issue workflow has declared, or an unknown severity. A withdrawn workflow still counts: an
+/// issue can be left in its status, and has to stay findable. So a typo is refused, not answered with an empty list.
+async fn check_filters(
+    ctx: &AppContext,
+    status: Option<&str>,
+    severity: Option<&str>,
+) -> Result<()> {
+    if let Some(status) = status {
+        let built_in = crate::workflow::built_in_issue();
+        if !built_in.states.iter().any(|s| s.key == status) {
+            let issue_workflows: Vec<Uuid> = workflows::Entity::find()
+                .filter(workflows::Column::AppliesTo.eq("issue"))
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .into_iter()
+                .map(|w| w.pid)
+                .collect();
+            let declared = workflow_states::Entity::find()
+                .filter(workflow_states::Column::StateKey.eq(status))
+                .filter(workflow_states::Column::WorkflowPid.is_in(issue_workflows))
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?;
+            if declared.is_none() {
+                return Err(unprocessable(
+                    "status is not one any issue workflow declares",
+                ));
+            }
+        }
+    }
+    if severity.is_some_and(|s| !rules::SEVERITIES.contains(&s)) {
+        return Err(unprocessable(&format!(
+            "severity must be one of {:?}",
+            rules::SEVERITIES
+        )));
+    }
+    Ok(())
+}
+
+/// Where an issue stands in its workflow, as the service stores it.
+struct Placed {
+    /// The state's key.
+    status: String,
+    /// What the state means.
+    category: String,
+    /// Whether the state is terminal, so the issue needs a resolution.
+    needs_resolution: bool,
+}
+
+/// The state with this key, as stored on an issue; `422` naming the choices if the workflow does not declare it.
+fn placed(def: &crate::workflow::WorkflowDef, key: &str) -> Result<Placed> {
+    let Some(state) = def.states.iter().find(|s| s.key == key) else {
+        let keys: Vec<&str> = def.states.iter().map(|s| s.key.as_str()).collect();
+        return Err(unprocessable(&format!("status must be one of {keys:?}")));
+    };
+    Ok(Placed {
+        status: state.key.clone(),
+        category: state.category.token().to_string(),
+        needs_resolution: state.is_terminal,
+    })
+}
+
+/// The state a new issue starts in, for the workflow in force. The built-in vocabulary is the fallback for a workflow
+/// with no initial state, which [`crate::workflow::validate`] does not let anyone register.
+fn initial(def: &crate::workflow::WorkflowDef) -> Placed {
+    crate::workflow::initial_state(def).map_or_else(
+        || Placed {
+            status: "open".to_string(),
+            category: "todo".to_string(),
+            needs_resolution: false,
+        },
+        |s| Placed {
+            status: s.key.clone(),
+            category: s.category.token().to_string(),
+            needs_resolution: s.is_terminal,
+        },
+    )
+}
+
+/// `403` unless the caller may bring an issue from a status its workflow does not declare into `to`.
+fn enforce_entry_roles(
+    def: &crate::workflow::WorkflowDef,
+    to: &str,
+    caller: &MaybeAuthUser,
+) -> Result<()> {
+    let roles = caller
+        .claims()
+        .and_then(|c| c.attrs.get("role").cloned())
+        .unwrap_or_default();
+    crate::workflow::may_enter_as(def, to, &roles).map_err(|denied| {
+        super::forbidden(&format!(
+            "entering `{to}` is restricted to the role(s): {}",
+            denied.allowed.join(", ")
+        ))
+    })
 }
 
 /// Runs the rules module's checks on a request body and turns any problems into one `422` listing them all.
-fn validate(b: &Input, raised_on: NaiveDate) -> Result<()> {
+fn validate(b: &Input, raised_on: NaiveDate, needs_resolution: bool) -> Result<()> {
     let problems = rules::problems(&rules::Draft {
         title: &b.title,
         description: b.description.as_deref(),
-        kind: &b.kind,
         severity: &b.severity,
-        status: &b.status,
+        needs_resolution,
         owner_ref: b.owner_ref.as_deref(),
         raised_on,
         due_date: b.due_date,
@@ -247,23 +334,39 @@ async fn create(
     let plan = require_plan(&ctx, &plan).await?;
     let now = today();
     let raised_on = b.raised_on.unwrap_or(now);
-    validate(&b, raised_on)?;
+    let kind = b.kind.clone().unwrap_or_else(|| "concern".to_string());
+    super::issue_configuration::require_usable_type(&ctx, &kind).await?;
+    let def = super::workflow::in_force_issue(&ctx, plan, &kind).await?;
+    let start = initial(&def);
+    let at = match &b.status {
+        None => start,
+        // Where moves are constrained, every issue starts where the workflow says, so no one raises one past a gate.
+        Some(s) if !def.transitions.is_empty() && *s != start.status => {
+            return Err(unprocessable(&format!(
+                "a new issue of this type starts in `{}`",
+                start.status
+            )));
+        }
+        Some(s) => placed(&def, s)?,
+    };
+    validate(&b, raised_on, at.needs_resolution)?;
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
         plan_pid: ActiveValue::set(plan),
         title: ActiveValue::set(b.title.trim().to_string()),
         description: ActiveValue::set(trimmed(b.description.as_ref())),
-        kind: ActiveValue::set(b.kind.clone()),
+        kind: ActiveValue::set(kind),
         severity: ActiveValue::set(b.severity.clone()),
         priority: ActiveValue::set(trimmed(b.priority.as_ref())),
-        status: ActiveValue::set(b.status.clone()),
+        status: ActiveValue::set(at.status.clone()),
+        status_category: ActiveValue::set(at.category.clone()),
         owner_ref: ActiveValue::set(trimmed(b.owner_ref.as_ref())),
         raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
         raised_on: ActiveValue::set(raised_on),
         due_date: ActiveValue::set(b.due_date),
         resolution: ActiveValue::set(trimmed(b.resolution.as_ref())),
-        resolved_on: ActiveValue::set(rules::resolved_on(&b.status, None, now)),
+        resolved_on: ActiveValue::set(rules::resolved_on(&at.category, None, now)),
         source_risk_pid: ActiveValue::set(b.source_risk_pid),
         source_task_pid: ActiveValue::set(b.source_task_pid),
         change_request_pid: ActiveValue::set(None),
@@ -289,6 +392,58 @@ async fn create(
     format::json(view(&row, now))
 }
 
+/// Whether the caller may change an issue's type. The new type must be usable, and because a type decides the workflow,
+/// a change could step round a gate in either workflow: where one restricts moves, it needs an administrator (`403`).
+async fn check_type_change(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+    from: &str,
+    to: &str,
+    def: &crate::workflow::WorkflowDef,
+) -> Result<()> {
+    super::issue_configuration::require_usable_type(ctx, to).await?;
+    let before = super::workflow::in_force_issue(ctx, plan, from).await?;
+    let gated = !before.transitions.is_empty() || !def.transitions.is_empty();
+    if gated && !super::plan_access::is_admin(caller.claims()) {
+        return Err(super::forbidden(
+            "only an administrator can change the type of an issue under a workflow that restricts moves",
+        ));
+    }
+    Ok(())
+}
+
+/// Where a save leaves an issue. Not a move keeps the meaning it was stored with, even if the workflow has changed since:
+/// it cannot lose a resolution it has, and the database requires one on `closed`. A move must be one the workflow allows
+/// (`422`) and this caller may make (`403`), and an issue from outside the workflow must still pass any gate into its target.
+fn placed_after_save(
+    def: &crate::workflow::WorkflowDef,
+    row: &issues::Model,
+    wanted: &str,
+    caller: &MaybeAuthUser,
+) -> Result<Placed> {
+    if wanted == row.status {
+        return Ok(Placed {
+            status: row.status.clone(),
+            category: row.status_category.clone(),
+            needs_resolution: row.resolution.is_some() || row.status == "closed",
+        });
+    }
+    let at = placed(def, wanted)?;
+    if !crate::workflow::may_move_issue(def, &row.status, wanted) {
+        return Err(unprocessable(&format!(
+            "the workflow in force does not permit `{}` -> `{wanted}`",
+            row.status
+        )));
+    }
+    if def.states.iter().any(|s| s.key == row.status) {
+        super::engineering::enforce_move_roles(def, &row.status, wanted, caller)?;
+    } else {
+        enforce_entry_roles(def, wanted, caller)?;
+    }
+    Ok(at)
+}
+
 /// `PUT /api/plans/{pid}/issues/{issue_pid}` — replace the fields of an issue.
 #[debug_handler]
 async fn update(
@@ -301,19 +456,27 @@ async fn update(
     let row = find(&ctx, plan, &pid).await?;
     let now = today();
     let raised_on = b.raised_on.unwrap_or(row.raised_on);
-    validate(&b, raised_on)?;
+    let kind = b.kind.clone().unwrap_or_else(|| row.kind.clone());
+    let def = super::workflow::in_force_issue(&ctx, plan, &kind).await?;
+    if kind != row.kind {
+        check_type_change(&ctx, &caller, plan, &row.kind, &kind, &def).await?;
+    }
+    let wanted = b.status.clone().unwrap_or_else(|| row.status.clone());
+    let at = placed_after_save(&def, &row, &wanted, &caller)?;
+    validate(&b, raised_on, at.needs_resolution)?;
     let was = serde_json::json!({
-        "title": row.title, "severity": row.severity, "status": row.status,
-        "owner_ref": row.owner_ref,
+        "title": row.title, "kind": row.kind, "severity": row.severity, "status": row.status,
+        "status_category": row.status_category, "owner_ref": row.owner_ref,
     });
-    let resolved_on = rules::resolved_on(&b.status, row.resolved_on, now);
+    let resolved_on = rules::resolved_on(&at.category, row.resolved_on, now);
     let mut a: issues::ActiveModel = row.into();
     a.title = ActiveValue::set(b.title.trim().to_string());
     a.description = ActiveValue::set(trimmed(b.description.as_ref()));
-    a.kind = ActiveValue::set(b.kind.clone());
+    a.kind = ActiveValue::set(kind);
     a.severity = ActiveValue::set(b.severity.clone());
     a.priority = ActiveValue::set(trimmed(b.priority.as_ref()));
-    a.status = ActiveValue::set(b.status.clone());
+    a.status = ActiveValue::set(at.status);
+    a.status_category = ActiveValue::set(at.category);
     a.owner_ref = ActiveValue::set(trimmed(b.owner_ref.as_ref()));
     a.raised_on = ActiveValue::set(raised_on);
     a.due_date = ActiveValue::set(b.due_date);
@@ -329,7 +492,8 @@ async fn update(
         "issue_changed",
         caller.actor(),
         Some(serde_json::json!({ "from": was,
-            "to": { "title": row.title, "severity": row.severity, "status": row.status,
+            "to": { "title": row.title, "kind": row.kind, "severity": row.severity,
+                    "status": row.status, "status_category": row.status_category,
                     "owner_ref": row.owner_ref } })),
     )
     .await
@@ -398,14 +562,7 @@ async fn register(
     caller: MaybeAuthUser,
     Query(q): Query<RegisterParams>,
 ) -> Result<Response> {
-    for (name, value, allowed) in [
-        ("status", q.status.as_deref(), rules::STATUSES),
-        ("severity", q.severity.as_deref(), rules::SEVERITIES),
-    ] {
-        if value.is_some_and(|v| !allowed.contains(&v)) {
-            return Err(unprocessable(&format!("{name} must be one of {allowed:?}")));
-        }
-    }
+    check_filters(&ctx, q.status.as_deref(), q.severity.as_deref()).await?;
     if q.min_age_days.is_some_and(|d| d < 0) {
         return Err(unprocessable("min_age_days cannot be negative"));
     }
@@ -430,30 +587,30 @@ async fn register(
     let now = today();
     let mut by_severity: std::collections::BTreeMap<&str, usize> =
         rules::SEVERITIES.iter().map(|s| (*s, 0)).collect();
-    let mut by_status: std::collections::BTreeMap<&str, usize> =
-        rules::STATUSES.iter().map(|s| (*s, 0)).collect();
+    // The built-in statuses always appear, so a dashboard has its columns; any other status appears once it is used.
+    let built_in = crate::workflow::built_in_issue();
+    let mut by_status: std::collections::BTreeMap<String, usize> =
+        built_in.states.iter().map(|s| (s.key.clone(), 0)).collect();
     let mut overdue = 0;
     for i in &rows {
         if let Some(c) = by_severity.get_mut(i.severity.as_str()) {
             *c += 1;
         }
-        if let Some(c) = by_status.get_mut(i.status.as_str()) {
-            *c += 1;
-        }
-        if rules::is_overdue(&i.status, i.due_date, now) {
+        *by_status.entry(i.status.clone()).or_insert(0) += 1;
+        if rules::is_overdue(&i.status_category, i.due_date, now) {
             overdue += 1;
         }
     }
     let oldest_open = rows
         .iter()
-        .filter(|i| !rules::is_done(&i.status))
+        .filter(|i| !rules::is_done(&i.status_category))
         .max_by_key(|i| rules::age_calendar_days(i.raised_on, i.resolved_on, now))
         .map(|i| view(i, now));
 
     rows.retain(|i| {
         q.status.as_ref().is_none_or(|s| &i.status == s)
             && q.severity.as_ref().is_none_or(|s| &i.severity == s)
-            && (q.open != Some(true) || !rules::is_done(&i.status))
+            && (q.open != Some(true) || !rules::is_done(&i.status_category))
             && q.min_age_days
                 .is_none_or(|d| rules::age_calendar_days(i.raised_on, i.resolved_on, now) >= d)
     });
@@ -485,7 +642,7 @@ async fn existing_open(
     issues::Entity::find()
         .filter(column.eq(source))
         .filter(issues::Column::DeletedAt.is_null())
-        .filter(issues::Column::Status.is_in(["open", "in_progress"]))
+        .filter(issues::Column::StatusCategory.ne("done"))
         .one(&ctx.db)
         .await
         .map_err(db_err)
@@ -520,6 +677,7 @@ async fn insert_from_source(
     source_task_pid: Option<Uuid>,
 ) -> Result<issues::Model> {
     let now = today();
+    let start = initial(&super::workflow::in_force_issue(ctx, plan, kind).await?);
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -529,7 +687,8 @@ async fn insert_from_source(
         kind: ActiveValue::set(kind.to_string()),
         severity: ActiveValue::set(severity.to_string()),
         priority: ActiveValue::set(None),
-        status: ActiveValue::set("open".to_string()),
+        status: ActiveValue::set(start.status),
+        status_category: ActiveValue::set(start.category),
         owner_ref: ActiveValue::set(owner_ref.filter(|o| rules::is_person_ref(o))),
         raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
         raised_on: ActiveValue::set(now),

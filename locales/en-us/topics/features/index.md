@@ -45,6 +45,7 @@
 - Gate reviews, milestone sign-off and cutover decisions
 - Exceptions with a clock, and an escalation path
 - Monthly director packs
+- Organization-defined issue types and statuses, with status moves that can differ by issue type and be restricted by role
 
 ## Security and operations
 

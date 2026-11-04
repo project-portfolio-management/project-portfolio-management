@@ -22,6 +22,8 @@ pub struct Model {
     pub name: String,
     /// `task` | `issue`.
     pub applies_to: String,
+    /// For an issue workflow, the one issue type it governs; `None` governs every type without its own.
+    pub issue_type: Option<String>,
     pub is_default: bool,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }

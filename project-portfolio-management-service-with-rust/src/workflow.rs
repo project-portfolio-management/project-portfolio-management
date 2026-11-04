@@ -141,7 +141,8 @@ pub enum Invalid {
 }
 
 /// A state key: lowercase letters, digits and underscores, 1..=32.
-fn key_ok(key: &str) -> bool {
+#[must_use]
+pub fn key_ok(key: &str) -> bool {
     !key.is_empty()
         && key.len() <= 32
         && key
@@ -214,6 +215,45 @@ pub fn may_transition(def: &WorkflowDef, from: &str, to: &str) -> bool {
         return true;
     }
     def.transitions.iter().any(|t| t.from == from && t.to == to)
+}
+
+/// Whether an issue may move from `from` to `to`. As [`may_transition`], and an issue left in a status the workflow in
+/// force does not declare (its workflow changed, or it was withdrawn) may move to any declared one: refusing would
+/// strand it, with no move that could ever be allowed.
+#[must_use]
+pub fn may_move_issue(def: &WorkflowDef, from: &str, to: &str) -> bool {
+    let declared = def.states.iter().any(|s| s.key == from);
+    may_transition(def, from, to) || (!declared && def.states.iter().any(|s| s.key == to))
+}
+
+/// Whether a caller holding `roles` may bring an issue from outside the workflow into `to`. Such an issue has no `from`
+/// for [`may_transition_as`] to match, so without this a status outside the workflow would be a way round a gate: `to`
+/// is open if nothing leads to it, or anything leading to it is open to anyone; otherwise the caller needs a role that
+/// could have moved it there.
+///
+/// # Errors
+///
+/// [`RoleDenied`] when every move into `to` is role-restricted and the caller holds none of those roles.
+pub fn may_enter_as(def: &WorkflowDef, to: &str, roles: &[String]) -> Result<(), RoleDenied> {
+    let matching: Vec<&TransitionDef> = def.transitions.iter().filter(|t| t.to == to).collect();
+    if matching.is_empty()
+        || matching.iter().any(|t| t.roles.is_empty())
+        || matching
+            .iter()
+            .any(|t| t.roles.iter().any(|r| roles.contains(r)))
+    {
+        return Ok(());
+    }
+    let mut allowed: Vec<String> = matching.iter().flat_map(|t| t.roles.clone()).collect();
+    allowed.sort();
+    allowed.dedup();
+    Err(RoleDenied { allowed })
+}
+
+/// The state new work starts in. [`validate`] guarantees one for a registered workflow.
+#[must_use]
+pub fn initial_state(def: &WorkflowDef) -> Option<&StateDef> {
+    def.states.iter().find(|s| s.is_initial)
 }
 
 /// Why a role-restricted move is refused.
@@ -375,6 +415,31 @@ mod tests {
 
     /// An unrecognized category is `None`, never a default — the
     /// regression test against a silently misclassified state.
+    #[test]
+    fn an_issue_stranded_outside_the_workflow_can_still_move_on() {
+        let mut def = built_in_issue();
+        def.transitions = vec![TransitionDef {
+            from: "open".to_string(),
+            to: "closed".to_string(),
+            roles: Vec::new(),
+        }];
+        assert!(may_move_issue(&def, "open", "closed"));
+        def.transitions[0].roles = vec!["lead".to_string()];
+        assert!(may_enter_as(&def, "closed", &[]).is_err(), "gated");
+        assert!(may_enter_as(&def, "closed", &["lead".to_string()]).is_ok());
+        assert!(
+            may_enter_as(&def, "resolved", &[]).is_ok(),
+            "nothing leads to it"
+        );
+        assert!(!may_move_issue(&def, "open", "resolved"), "constrained");
+        assert!(may_move_issue(&def, "triage", "resolved"), "not declared");
+        assert!(
+            !may_move_issue(&def, "triage", "nowhere"),
+            "target declared"
+        );
+        assert_eq!(initial_state(&def).map(|s| s.key.as_str()), Some("open"));
+    }
+
     #[test]
     fn an_unknown_category_is_refused_not_defaulted() {
         assert_eq!(Category::parse("todo"), Some(Category::Todo));

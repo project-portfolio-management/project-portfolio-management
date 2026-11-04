@@ -154,7 +154,8 @@ hang off **any** plan.
   issue raised from a risk (escalation) or from a blocked task keeps a link
   back and the source is never altered by closing the issue; every change is
   audited (FR-19). Reads obey the same attribute-based policy as tasks.
-  **Built (IR-1):** the plan-scoped CRUD at `/api/plans/{pid}/issues`
+  An issue's type, its statuses and who may move it are the organization's to define, by issue type; see
+  [issue configuration](issue-configuration.md) (OC-1). **Built (IR-1):** the plan-scoped CRUD at `/api/plans/{pid}/issues`
   (migration 50, entity, rules in `src/issues.rs`, controller, OpenAPI,
   audited, soft delete, in the `risks` module). Also built (IR-2): the
   portfolio-wide `GET /api/issues` (readable plans only; filters by plan,

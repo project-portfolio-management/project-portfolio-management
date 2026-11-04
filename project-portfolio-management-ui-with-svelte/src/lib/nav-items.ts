@@ -231,6 +231,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/issue-settings",
+      get label() {
+        return t("p.issue_settings.title");
+      },
+    },
+    {
       href: "/escalations",
       get label() {
         return t("p.escalations.escalations");

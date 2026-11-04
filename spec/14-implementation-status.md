@@ -28,13 +28,13 @@ no network, database or compilation; counts are source lines, not test runs):
 | Service version | 0.2.0 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.2 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.2.0 | `version` in the front-end `package.json` |
-| Migrations | 133 | files named `m2*.rs` in `migration/src` |
-| Mounted routes | 670 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
-| Documented API paths | 533 | path keys in the service's `openapi.json` |
-| Service tests | 1503, plus 269 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Migrations | 134 | files named `m2*.rs` in `migration/src` |
+| Mounted routes | 677 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
+| Documented API paths | 538 | path keys in the service's `openapi.json` |
+| Service tests | 1513, plus 276 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
-| Front-end unit tests (vitest) | 703 | `it(` / `test(` lines in `tests/unit` |
-| Front-end end-to-end tests (Playwright) | 307 | `test(` lines in `tests/e2e` |
+| Front-end unit tests (vitest) | 711 | `it(` / `test(` lines in `tests/unit` |
+| Front-end end-to-end tests (Playwright) | 312 | `test(` lines in `tests/e2e` |
 | Locales | 10 | entries of `LOCALES` in `src/lib/locales.ts` |
 
 **Task boxes in [`tasks.md`](../tasks.md)** (ticked / open, by prefix):
@@ -64,9 +64,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | BR | 15 | 2 |
 | FB | 6 | 2 |
 | GP | 7 | 0 |
+| OC | 1 | 0 |
 | LC | 0 | 10 |
 | UE | 1 | 7 |
-| **Total** | **211** | **29** |
+| **Total** | **212** | **29** |
 
 <!-- generated:end -->
 

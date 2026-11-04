@@ -92,6 +92,9 @@ kept whole rather than split across them:
   vocabulary; **Flow Distribution** — the mix of feature / defect /
   risk / debt work — is the new one. Committed in §1.6.
 
+- [Organization-defined issue types, statuses and roles](issue-configuration.md) — Redmine's trackers, statuses, roles and
+  workflow matrix, built on the custom workflows. A role here grants nothing (OC-1).
+
 - [GitHub Pages site](github-pages-site.md) — the public site in
   `project-portfolio-management.github.io/` (SvelteKit, Lily's PickerBar, the UI's colour tokens): home, benefits,
   features, comparisons, tutorial and reference pages, the content copy, locale and direction, the meta content

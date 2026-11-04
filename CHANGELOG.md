@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 4 November (OC-1: organization-defined issue types, statuses and roles)
+
+- An organization can define its own issue types, statuses and role-restricted moves, by issue type, as Redmine does with
+  trackers and its workflow matrix. Issues now follow the custom workflows that already existed. A role in the new catalogue
+  grants nothing; permissions still come from the token. See `spec/issue-configuration.md`. The site's comparisons say so.
+- Registering or withdrawing an issue workflow now needs an administrator. **The migration withdraws existing issue workflows**:
+  they had no effect, and anyone who could write could create one. An administrator registers the ones wanted.
+- Changing an issue's type under a workflow that restricts moves needs an administrator. An independent security review found
+  that a writer could otherwise step round a role-restricted move by changing the type and back; a test now covers it.
+- `GET /api/workflows` no longer shows a plan's workflow to someone who cannot read that plan. A `PUT` that omits an
+  issue's `kind` no longer resets it to `concern`.
+- Not done: roles carry no permissions; no per-project role membership, per-status field rules, per-plan issue types, or
+  translated custom labels. Task workflows still need no administrator, a gap that predates this. The new UI strings are
+  machine drafts in seven languages, unreviewed. The Redmine descriptions come from general knowledge, unchecked against its
+  current documentation.
+
 ### 4 November (the request body generator, after the doc comments)
 
 - `scripts/generate-openapi-bodies.py` lost 30 request bodies once `aec010a` put a doc comment between a type's `derive` and

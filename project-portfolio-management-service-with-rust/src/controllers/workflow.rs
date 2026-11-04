@@ -108,6 +108,7 @@ pub(crate) async fn register_own(
         name: name.to_string(),
         applies_to: "task".to_string(),
         plan_pid: Some(plan_pid),
+        issue_type: None,
         is_default: false,
         states: Vec::new(),
         transitions: Vec::new(),
@@ -132,6 +133,7 @@ pub async fn in_force(
     let own = workflows::Entity::find()
         .filter(workflows::Column::PlanPid.eq(plan_pid))
         .filter(workflows::Column::AppliesTo.eq(applies_to))
+        .filter(workflows::Column::IssueType.is_null())
         .filter(workflows::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
@@ -144,6 +146,7 @@ pub async fn in_force(
         .filter(workflows::Column::PlanPid.is_null())
         .filter(workflows::Column::AppliesTo.eq(applies_to))
         .filter(workflows::Column::IsDefault.eq(true))
+        .filter(workflows::Column::IssueType.is_null())
         .filter(workflows::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
@@ -159,6 +162,55 @@ pub async fn in_force(
     })
 }
 
+/// The workflow an issue of type `kind` on a plan follows (OC-1): the plan's own for that type, else the plan's own,
+/// else the deployment default for that type, else the deployment default, else the built-in vocabulary. A plan's own
+/// workflow outranks a deployment one for a type, so the nearest scope always decides.
+///
+/// # Errors
+///
+/// Propagates a database error while resolving the workflow.
+pub async fn in_force_issue(
+    ctx: &AppContext,
+    plan_pid: Uuid,
+    kind: &str,
+) -> Result<rules::WorkflowDef> {
+    let typed_for_plan = workflows::Entity::find()
+        .filter(workflows::Column::PlanPid.eq(plan_pid))
+        .filter(workflows::Column::AppliesTo.eq("issue"))
+        .filter(workflows::Column::IssueType.eq(kind))
+        .filter(workflows::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    if let Some(workflow) = typed_for_plan {
+        return definition_of(ctx, workflow.pid).await;
+    }
+    let for_plan = workflows::Entity::find()
+        .filter(workflows::Column::PlanPid.eq(plan_pid))
+        .filter(workflows::Column::AppliesTo.eq("issue"))
+        .filter(workflows::Column::IssueType.is_null())
+        .filter(workflows::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    if let Some(workflow) = for_plan {
+        return definition_of(ctx, workflow.pid).await;
+    }
+    let typed_default = workflows::Entity::find()
+        .filter(workflows::Column::PlanPid.is_null())
+        .filter(workflows::Column::AppliesTo.eq("issue"))
+        .filter(workflows::Column::IsDefault.eq(true))
+        .filter(workflows::Column::IssueType.eq(kind))
+        .filter(workflows::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    if let Some(workflow) = typed_default {
+        return definition_of(ctx, workflow.pid).await;
+    }
+    in_force(ctx, plan_pid, "issue").await
+}
+
 /// `POST /api/workflows` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct WorkflowPayload {
@@ -169,6 +221,10 @@ pub(crate) struct WorkflowPayload {
     /// Plan the workflow is scoped to; absent means it is not tied to one plan (a deployment-wide definition).
     #[serde(default)]
     plan_pid: Option<Uuid>,
+    /// For an issue workflow, the one issue type it governs (a key in `/api/issue-types`); absent governs every type
+    /// without a workflow of its own. Not allowed on a task workflow.
+    #[serde(default)]
+    issue_type: Option<String>,
     /// Marks the deployment default, used by plans that have no workflow of their own.
     #[serde(default)]
     is_default: bool,
@@ -226,6 +282,7 @@ async fn persist<C: ConnectionTrait>(
         plan_pid: ActiveValue::set(payload.plan_pid),
         name: ActiveValue::set(payload.name.trim().to_string()),
         applies_to: ActiveValue::set(payload.applies_to.clone()),
+        issue_type: ActiveValue::set(payload.issue_type.clone()),
         // A plan-scoped workflow is never the deployment default:
         // "default" means the fallback when a plan has none.
         is_default: ActiveValue::set(payload.is_default && payload.plan_pid.is_none()),
@@ -269,6 +326,97 @@ async fn persist<C: ConnectionTrait>(
     Ok(workflow)
 }
 
+/// `422` for a shape [`rules::validate`] accepts for tasks but an issue cannot take. The database requires a resolution
+/// on `closed`, so `closed` must be terminal, and an issue that starts finished, or needing a resolution nobody has
+/// written yet, could not be raised at all from a risk, a blocked task or a control action.
+fn issue_shape(def: &rules::WorkflowDef) -> Result<()> {
+    if def
+        .states
+        .iter()
+        .any(|s| s.key == "closed" && !s.is_terminal)
+    {
+        return Err(unprocessable("the status `closed` must be terminal"));
+    }
+    let bad_start = rules::initial_state(def)
+        .is_some_and(|s| s.is_terminal || s.category == rules::Category::Done);
+    if bad_start {
+        return Err(unprocessable(
+            "new issues cannot start in a finished or terminal status",
+        ));
+    }
+    Ok(())
+}
+
+/// `403` unless the caller holds the administrator attribute. Used for what governs issues: their workflows.
+fn require_issue_admin(caller: &MaybeAuthUser) -> Result<()> {
+    if super::plan_access::is_admin(caller.claims()) {
+        Ok(())
+    } else {
+        Err(super::forbidden(
+            "only an administrator can change an issue workflow",
+        ))
+    }
+}
+
+/// `409` if the scope already has its issue workflow. The database refuses it too; this says why in words.
+async fn refuse_a_second_issue_workflow(ctx: &AppContext, payload: &WorkflowPayload) -> Result<()> {
+    if payload.plan_pid.is_none() && !payload.is_default {
+        return Ok(());
+    }
+    let mut find = workflows::Entity::find()
+        .filter(workflows::Column::AppliesTo.eq("issue"))
+        .filter(workflows::Column::DeletedAt.is_null());
+    find = match payload.plan_pid {
+        Some(plan) => find.filter(workflows::Column::PlanPid.eq(plan)),
+        None => find
+            .filter(workflows::Column::PlanPid.is_null())
+            .filter(workflows::Column::IsDefault.eq(true)),
+    };
+    find = match &payload.issue_type {
+        Some(key) => find.filter(workflows::Column::IssueType.eq(key.as_str())),
+        None => find.filter(workflows::Column::IssueType.is_null()),
+    };
+    if find.one(&ctx.db).await.map_err(db_err)?.is_some() {
+        return Err(super::conflict(
+            "this scope already has an issue workflow; withdraw it first",
+        ));
+    }
+    Ok(())
+}
+
+/// What an audit row says about a workflow. One plan can hold several, and a workflow decides who may move what.
+fn audit_detail(workflow: &workflows::Model, def: &rules::WorkflowDef) -> serde_json::Value {
+    serde_json::json!({
+        "workflow_pid": workflow.pid, "name": workflow.name, "applies_to": workflow.applies_to,
+        "issue_type": workflow.issue_type, "plan_pid": workflow.plan_pid,
+        "is_default": workflow.is_default, "transitions": def.transitions,
+    })
+}
+
+/// What a workflow may govern, and whether this caller may register it.
+async fn check_scope(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    payload: &WorkflowPayload,
+) -> Result<()> {
+    if !["task", "issue"].contains(&payload.applies_to.as_str()) {
+        return Err(unprocessable("applies_to must be task or issue"));
+    }
+    // An issue workflow decides who may move an issue, so it cannot be open to anyone who can write.
+    if payload.applies_to == "issue" {
+        require_issue_admin(caller)?;
+    }
+    if payload.applies_to == "task" && payload.issue_type.is_some() {
+        return Err(unprocessable(
+            "issue_type applies to an issue workflow only",
+        ));
+    }
+    if let Some(key) = &payload.issue_type {
+        super::issue_configuration::require_usable_type(ctx, key).await?;
+    }
+    Ok(())
+}
+
 /// `POST /api/workflows` — register a workflow.
 #[debug_handler]
 async fn create(
@@ -276,9 +424,7 @@ async fn create(
     caller: MaybeAuthUser,
     Json(payload): Json<WorkflowPayload>,
 ) -> Result<Response> {
-    if !["task", "issue"].contains(&payload.applies_to.as_str()) {
-        return Err(unprocessable("applies_to must be task or issue"));
-    }
+    check_scope(&ctx, &caller, &payload).await?;
     if payload.name.trim().is_empty() || payload.name.len() > crate::validation::MAX_TEXT_LEN {
         return Err(unprocessable("name is required (and capped)"));
     }
@@ -338,6 +484,15 @@ async fn create(
             "transition roles must be non-blank names of at most 64 characters",
         ));
     }
+    if payload.applies_to == "issue" {
+        issue_shape(&def)?;
+    }
+    let named: Vec<&str> = def
+        .transitions
+        .iter()
+        .flat_map(|t| t.roles.iter().map(String::as_str))
+        .collect();
+    super::issue_configuration::require_known_roles(&ctx, &named).await?;
     if let Err(problems) = rules::validate(&def) {
         return Err(unprocessable(&format!(
             "workflow is not usable: {}",
@@ -346,6 +501,9 @@ async fn create(
     }
 
     // The workflow, its states and transitions, and the audit row are one change.
+    if payload.applies_to == "issue" {
+        refuse_a_second_issue_workflow(&ctx, &payload).await?;
+    }
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let workflow = persist(&txn, &payload, &def).await?;
 
@@ -354,7 +512,7 @@ async fn create(
         payload.plan_pid.unwrap_or(workflow.pid),
         "workflow_registered",
         caller.actor(),
-        None,
+        Some(audit_detail(&workflow, &def)),
     )
     .await
     .map_err(super::audit_failed)?;
@@ -362,14 +520,20 @@ async fn create(
     format::json(serde_json::json!({ "pid": workflow.pid.to_string() }))
 }
 
-/// `GET /api/workflows` — every registered workflow.
+/// `GET /api/workflows` — every registered workflow, leaving out those of a plan the caller cannot read: a plan's
+/// workflow names the plan and how its work is typed.
 #[debug_handler]
-async fn list(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = workflows::Entity::find()
+async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    let mut rows = workflows::Entity::find()
         .filter(workflows::Column::DeletedAt.is_null())
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let mut plan_pids: Vec<Uuid> = rows.iter().filter_map(|w| w.plan_pid).collect();
+    plan_pids.sort();
+    plan_pids.dedup();
+    let readable = super::plan_access::readable_plans(&ctx, &caller, &plan_pids).await;
+    rows.retain(|w| w.plan_pid.is_none_or(|p| readable.contains(&p)));
     format::json(serde_json::json!(rows))
 }
 
@@ -394,7 +558,11 @@ async fn remove(
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
 
-    if let Some(plan_pid) = workflow.plan_pid {
+    if workflow.applies_to == "issue" {
+        require_issue_admin(&caller)?;
+    }
+    // An issue keeps its status and category when its workflow goes, and can move on from there (`may_move_issue`).
+    if let Some(plan_pid) = workflow.plan_pid.filter(|_| workflow.applies_to == "task") {
         let def = definition_of(&ctx, workflow.pid).await?;
         let built_in = if workflow.applies_to == "issue" {
             rules::built_in_issue()
@@ -426,14 +594,21 @@ async fn remove(
         }
     }
 
+    let detail = audit_detail(&workflow, &definition_of(&ctx, workflow.pid).await?);
     let plan_pid = workflow.plan_pid.unwrap_or(workflow.pid);
     let mut active: workflows::ActiveModel = workflow.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, plan_pid, "workflow_withdrawn", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
+    AuditModel::record(
+        &txn,
+        plan_pid,
+        "workflow_withdrawn",
+        caller.actor(),
+        Some(detail),
+    )
+    .await
+    .map_err(super::audit_failed)?;
     txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
 }
@@ -473,6 +648,7 @@ async fn plan_workflow(
     let own = workflows::Entity::find()
         .filter(workflows::Column::PlanPid.eq(plan.pid))
         .filter(workflows::Column::AppliesTo.eq(applies_to.clone()))
+        .filter(workflows::Column::IssueType.is_null())
         .filter(workflows::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await

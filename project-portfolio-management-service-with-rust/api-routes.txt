@@ -159,6 +159,9 @@ POST /api/ideas/{pid}/convert
 POST /api/ideas/{pid}/dismiss
 POST /api/ideas/{pid}/vote
 POST /api/import/mspdi-batch
+GET /api/issue-types
+POST /api/issue-types
+PUT /api/issue-types/{key}
 GET /api/issues
 GET /api/key-persons
 PUT /api/key-persons
@@ -221,6 +224,9 @@ PUT /api/onboarding/cases/{pid}/items/{item}
 GET /api/onboarding/templates
 DELETE /api/onboarding/templates/{kind}
 PUT /api/onboarding/templates/{kind}
+GET /api/organization-roles
+POST /api/organization-roles
+PUT /api/organization-roles/{key}
 GET /api/organizations
 POST /api/organizations
 PUT /api/organizations/{pid}
@@ -390,6 +396,7 @@ GET /api/plans/{pid}/issues
 POST /api/plans/{pid}/issues
 POST /api/plans/{pid}/issues/from-risk/{risk_pid}
 POST /api/plans/{pid}/issues/from-task/{task_pid}
+GET /api/plans/{pid}/issues/options
 DELETE /api/plans/{pid}/issues/{issue_pid}
 GET /api/plans/{pid}/issues/{issue_pid}
 PUT /api/plans/{pid}/issues/{issue_pid}

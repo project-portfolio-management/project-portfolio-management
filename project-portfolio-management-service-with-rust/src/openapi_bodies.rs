@@ -251,6 +251,9 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/ideas/{pid}/dismiss", "strategy", "`POST /api/ideas/{pid}/dismiss`."),
     ("post", "/api/ideas/{pid}/vote", "strategy", "`POST /api/ideas/{pid}/vote` — +1."),
     ("post", "/api/import/mspdi-batch", "mspdi_batch", "`POST /api/import/mspdi-batch`: read every file first, list the resources of all of them once, then import each into its plan (existing, or created) and store the mapped custom-field values. The default is a dry run."),
+    ("get", "/api/issue-types", "issue_configuration", "`GET /api/issue-types` — the issue types, in order."),
+    ("post", "/api/issue-types", "issue_configuration", "`POST /api/issue-types` — add a type (an administrator). `409` if the key is taken, retired types included."),
+    ("put", "/api/issue-types/{key}", "issue_configuration", "`PUT /api/issue-types/{key}` — rename, reorder, retire or restore a type (an administrator)."),
     ("get", "/api/issues", "issues", "`GET /api/issues` — the register across every plan the caller can read, most serious first, then oldest. Plans the caller cannot read are left out without a trace; the summary counts what the caller can see, whatever the filters."),
     ("get", "/api/key-persons", "key_persons", "`GET /api/key-persons`"),
     ("put", "/api/key-persons", "key_persons", "`PUT /api/key-persons` — record (or update) a single point of failure."),
@@ -313,6 +316,9 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/onboarding/templates", "onboarding", "`GET /api/onboarding/templates` — the checklist for each kind (custom or built-in)."),
     ("delete", "/api/onboarding/templates/{kind}", "onboarding", "`DELETE /api/onboarding/templates/{kind}` — go back to the built-in checklist."),
     ("put", "/api/onboarding/templates/{kind}", "onboarding", "`PUT /api/onboarding/templates/{kind}` — replace a kind's checklist."),
+    ("get", "/api/organization-roles", "issue_configuration", "`GET /api/organization-roles` — the role names this deployment recognizes, in order."),
+    ("post", "/api/organization-roles", "issue_configuration", "`POST /api/organization-roles` — name a role (an administrator). It grants nothing; `409` if the key is taken."),
+    ("put", "/api/organization-roles/{key}", "issue_configuration", "`PUT /api/organization-roles/{key}` — rename, reorder, retire or restore a role (an administrator)."),
     ("get", "/api/organizations", "organizations", "`GET /api/organizations`"),
     ("post", "/api/organizations", "organizations", "`POST /api/organizations`"),
     ("put", "/api/organizations/{pid}", "organizations", "`PUT /api/organizations/{pid}` — rename, change kind, retire or restore."),
@@ -480,6 +486,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plans/{pid}/issues", "issues", "`POST /api/plans/{pid}/issues` — raise an issue."),
     ("post", "/api/plans/{pid}/issues/from-risk/{risk_pid}", "issues", "`POST /api/plans/{pid}/issues/from-risk/{risk_pid}` — raise an issue from a risk that has happened. The risk is never changed. One open issue per risk (`409`)."),
     ("post", "/api/plans/{pid}/issues/from-task/{task_pid}", "issues", "`POST /api/plans/{pid}/issues/from-task/{task_pid}` — raise a blocker issue from a blocked task (`422` if the task is not blocked). The task is never changed. One open issue per task (`409`)."),
+    ("get", "/api/plans/{pid}/issues/options", "issue_configuration", "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's roles, so a form can leave out a move the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name."),
     ("delete", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`DELETE /api/plans/{pid}/issues/{issue_pid}` — remove an issue (soft delete, audited)."),
     ("get", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`GET /api/plans/{pid}/issues/{issue_pid}` — one issue."),
     ("put", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`PUT /api/plans/{pid}/issues/{issue_pid}` — replace the fields of an issue."),
@@ -743,7 +750,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/webhook-deliveries", "webhook_deliveries", "`GET /api/webhook-deliveries[?event_id=][&status=][&limit=]` — administrators only; anyone else gets 404."),
     ("post", "/api/webhook-deliveries/{id}/redeliver", "webhook_deliveries", "`POST /api/webhook-deliveries/{id}/redeliver` — administrators only; anyone else gets 404. One attempt, to the same still-configured target, from the event the outbox still holds (`422` when either is gone). Audited first."),
     ("get", "/api/work-profile", "assignments", "`GET /api/work-profile` — every plan the caller can read, rolled up."),
-    ("get", "/api/workflows", "workflow", "`GET /api/workflows` — every registered workflow."),
+    ("get", "/api/workflows", "workflow", "`GET /api/workflows` — every registered workflow, leaving out those of a plan the caller cannot read: a plan's workflow names the plan and how its work is typed."),
     ("post", "/api/workflows", "workflow", "`POST /api/workflows` — register a workflow."),
     ("delete", "/api/workflows/{pid}", "workflow", "`DELETE /api/workflows/{pid}` — withdraw a workflow.  Refused while any live task sits in a state only this workflow declares: withdrawing it would leave that work in a state no vocabulary explains, which is exactly the uncategorized-state problem the category column exists to prevent."),
     ("post", "/api/working-time", "effort", "`POST /api/working-time` — declare the capacity basis."),
@@ -843,6 +850,8 @@ pub fn attach(paths: &mut Value) {
     body!("post", "/api/ideas", crate::controllers::strategy::IdeaPayload);
     body!("post", "/api/ideas/{pid}/convert", crate::controllers::strategy::ConvertPayload);
     body!("post", "/api/import/mspdi-batch", crate::controllers::mspdi_batch::BatchBody);
+    body!("post", "/api/issue-types", crate::controllers::issue_configuration::NewType);
+    body!("put", "/api/issue-types/{key}", crate::controllers::issue_configuration::ChangeType);
     body!("put", "/api/key-persons", crate::controllers::key_persons::Entry);
     body!("put", "/api/key-persons/contingent", crate::controllers::key_persons::Contingent);
     body!("put", "/api/key-results/{pid}", crate::controllers::okr::KeyResultUpdate);
@@ -863,6 +872,8 @@ pub fn attach(paths: &mut Value) {
     body!("post", "/api/onboarding/cases/{pid}/cancel", crate::controllers::onboarding::CancelBody);
     body!("put", "/api/onboarding/cases/{pid}/items/{item}", crate::controllers::onboarding::ItemBody);
     body!("put", "/api/onboarding/templates/{kind}", crate::controllers::onboarding::TemplateBody);
+    body!("post", "/api/organization-roles", crate::controllers::issue_configuration::NewRole);
+    body!("put", "/api/organization-roles/{key}", crate::controllers::issue_configuration::ChangeRole);
     body!("post", "/api/organizations", crate::controllers::organizations::NewOrg);
     body!("put", "/api/organizations/{pid}", crate::controllers::organizations::Change);
     body!("post", "/api/plan-templates/{pid}/revise", crate::controllers::blueprint_sync::ReviseBody);

@@ -319,6 +319,7 @@ existing table. Migrations 1-7 are dated `20220101`.
 20261024 86 deployment_settings; 87 availability_no_overlap; 88 framework_versions
 20261025 89 scoring_inputs; 90 lessons; 91 status_updates; 92 scheduled_job_runs; 93 blueprint_sync; 94 meetings; 95 idempotency_keys; 96 meeting_tasks; 97 status_claims; 98 lesson_links
 20261030 99 peer_pool_link
+20261104 100 issue_configuration
 ```
 
 From migration 49 on the index gives each migration's name, not its tables (read the file for those). Migration

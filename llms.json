@@ -76,6 +76,11 @@
           "description": "Cycle and lead time, flow efficiency, forecasting rules"
         },
         {
+          "title": "Local-first CI/CD",
+          "path": "spec/local-ci-cd.md",
+          "description": "Proposed (LC-1 to LC-10): run CI locally first and record the result; the options assessed, the risks and the order"
+        },
+        {
           "title": "Bulk import/export",
           "path": "spec/bulk-import-export.md",
           "description": "Design of asynchronous import and export jobs"

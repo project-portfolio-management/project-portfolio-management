@@ -2335,3 +2335,18 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   set its Pages source to GitHub Actions, add the `github-pages` remote and run `make github-pages` (the steps are in
   [the site's README](project-portfolio-management.github.io/README.md#publishing)). Not done: no remote, no
   repository, nothing pushed.
+
+## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
+
+Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.
+
+- [ ] **LC-1 (S) — Measure first.** Time every CI job's commands on this machine, cold and warm, against the hosted run history, with the number of runs that were down, queued or failed for reasons other than the code. The evidence for LC-D1.
+- [ ] **LC-2 (M) — One entry point.** `scripts/ci-check.sh <stage>` (the CRM pattern), one stage per current job; `ci.yml` calls it; a test fails if a workflow `run:` step is not such a call or a documented exception.
+- [ ] **LC-3 (M) — Local service containers.** Start and stop PostgreSQL 18 (and what the container smoke needs) with the pinned digests under colima or docker; `--platform linux/amd64` for the parity-sensitive stages.
+- [ ] **LC-4 (S) — A pre-push gate** (fmt, clippy, lib tests, the doc scripts), installed by a script, skippable by an explicit recorded variable.
+- [ ] **LC-5 (M) — Parallel database suites.** A throwaway database per test binary, run concurrently; compare wall time before and after.
+- [ ] **LC-6 (M) — Attestation.** `all` writes `refs/notes/ci` and posts a `local-ci` commit status to each remote that accepts one, from a clean tree only, with a status-only token. Branch protection requires it.
+- [ ] **LC-7 (S) — Narrow the hosted workflow** to `workflow_dispatch`, tags and a weekly clean room (the existing "fresh clone builds with the documented commands" job is the seed); keep `release.yml` as the manual fallback. Needs LC-2 and LC-6.
+- [ ] **LC-8 (M) — Nightly and weekly local jobs** by `launchd` (gitleaks over history, `cargo deny`, chaos, ZAP, the restore drill), writing a last-run page.
+- [ ] **LC-9 (M, optional) — Pilot Dagger** on the API fmt, clippy and unit stages, timed against plain cargo.
+- [ ] **LC-10 (S, optional) — A self-managed GitLab runner** on this machine for the GitLab mirror, as a second opinion. Decide after LC-1.

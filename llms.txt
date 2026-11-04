@@ -35,6 +35,7 @@
 - [Open questions](spec/16-open-questions.md): Unresolved decisions
 - [Change control](spec/18-change-control.md): How spec changes are made
 - [Time-based analysis](spec/time-based-analysis.md): Cycle and lead time, flow efficiency, forecasting rules
+- [Local-first CI/CD](spec/local-ci-cd.md): Proposed (LC-1 to LC-10): run CI locally first and record the result; the options assessed, the risks and the order
 - [Bulk import/export](spec/bulk-import-export.md): Design of asynchronous import and export jobs
 - [Project management standards](spec/project-management-standards/index.md): ISO 21502, PMI and IPMA mapped onto the service; which terms are one method's
 - [PRINCE2 mapping](spec/prince2/index.md): How the service maps to PRINCE2, one example method

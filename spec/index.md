@@ -112,3 +112,4 @@ kept whole rather than split across them:
   [§10](10-persistence.md); the service's own `spec/` and the mounted
   routes win on crate internals (see above).
 - **Bulk import / export:** [bulk-import-export.md](bulk-import-export.md).
+- **Local-first CI/CD (proposed):** [local-ci-cd.md](local-ci-cd.md).

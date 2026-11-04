@@ -1714,3 +1714,7 @@ meet a different shape than they were written for.
 
 Not looked at: the leveling apply path and the what-if sandbox commit (it has its own `If-Match`); allocation
 `PUT` (there is none); the UI's resource screens.
+
+## 83. Local-first CI/CD (2026-11-04)
+
+Research and advice are in [spec/local-ci-cd.md](spec/local-ci-cd.md); the tasks are LC-1 to LC-10 in [tasks.md](tasks.md). In one line: make the local machine the place CI runs and records its result, and make hosted runners a weekly second opinion. Order: measure; one entry point; local containers; a pre-push gate; parallel database suites; an attestation and commit status; narrow the hosted workflow; nightly jobs. Not taken: `act` as the plan, a Forgejo runner, a GitHub self-hosted runner.

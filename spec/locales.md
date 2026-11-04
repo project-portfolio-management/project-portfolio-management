@@ -31,6 +31,10 @@ directory or file stem that is named for a locale.
   English guides name the applicable data-protection law and treat the UK NHS DTAC as one worked
   example; the Welsh, Hindi and Chinese guides were not updated to match on 2026-10-31 and still
   name UK GDPR and the DTAC alone (a recorded gap).
+- **The site's pages are documents too (GP-4).** `locales/<code>/index.md` and
+  `locales/<code>/topics/<slug>/index.md`, for the eight English, Welsh and Mandarin locales, feed the GitHub Pages site,
+  and `locales/en-001/compare/<product>/index.md` its product comparisons. A topic's slug is per locale; its
+  `.locale-peer-id` says which pages are the same page. See [the site's spec](github-pages-site.md).
 - `tests/unit/locale-names.test.ts` fails the build if a bare two-letter locale directory or
   file appears, or if a locale directory holds a badly named entry.
 

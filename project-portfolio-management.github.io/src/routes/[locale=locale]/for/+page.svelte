@@ -1,5 +1,6 @@
 <script lang="ts">
   import { href } from "#lib/href.js";
+  import { siteTag, t } from "#lib/i18n.svelte.js";
   import { langTag } from "#lib/site.js";
   import type { PageProps } from "./$types";
 
@@ -15,14 +16,11 @@
   });
 </script>
 
-<svelte:head><title>Role briefs ({data.locale}) · Project Portfolio Management</title></svelte:head>
+<svelte:head><title>{t("briefs.title")} ({data.locale}) · {t("brand")}</title></svelte:head>
 
-<h1 lang="en" dir="ltr">Role briefs</h1>
-<p class="lede"><span lang="en" dir="ltr">Locale:</span> {endonym} (<code>{data.locale}</code>)</p>
-<p class="lede" lang="en" dir="ltr">
-  One page for each senior role: what the software is, what it gives you, what it does not, and the decisions that are
-  yours. Use the language button in the header for the same brief in another locale.
-</p>
+<h1 lang={siteTag()} dir="ltr">{t("briefs.title")}</h1>
+<p class="lede"><span lang={siteTag()} dir="ltr">{t("briefs.locale")}</span> {endonym} (<code>{data.locale}</code>)</p>
+<p class="lede" lang={siteTag()} dir="ltr">{t("briefs.lede")}</p>
 <ul class="briefs">
   {#each data.briefs as b (b.role)}
     <li>

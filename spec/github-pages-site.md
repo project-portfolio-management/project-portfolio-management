@@ -1,7 +1,8 @@
 # GitHub Pages site
 
-The public documentation site, `project-portfolio-management.github.io/` in this repository (task GP-1 in
-[`tasks.md`](../tasks.md)). It follows the family pattern written down in the workforce repository
+The public site, `project-portfolio-management.github.io/` in this repository (tasks GP-1 to GP-6 in
+[`tasks.md`](../tasks.md)): a welcoming site for newcomers (home, benefits, features, comparisons, a tutorial) over the
+repository's reference documents. It follows the family pattern written down in the workforce repository
 (`workforce-planning-management/spec/monorepo-github-pages/`): a SvelteKit and Lily Design System subproject named
 `<repo>.github.io/` inside the monorepo, exported with `git subtree` to a read-only sibling repository, published by
 `make github-pages`.
@@ -10,13 +11,25 @@ The public documentation site, `project-portfolio-management.github.io/` in this
 
 - **Static.** SvelteKit 3 with `@sveltejs/adapter-static`; every page is prerendered (`prerender = true`,
   `trailingSlash = "always"`, so `/install/` is `install/index.html`). No server, no API call, no form.
-- **Svelte 5 runes** and Lily widgets as the operator UI uses them: `ThemePicker` (themes `light` and `dark`, following
-  the system preference), `TextSizePicker` (the same seven steps and `data-text-size` rules), and `LocalePicker` on
-  the role-brief pages. No search or share picker (there is nothing to search on a static site, and the UI's share
-  targets are the UI's).
-- **Pages.** `index.md` (`/`), `README.md`, `INSTALL.md`, `operations/wpm-bridge.md`, `spec/index.md`, the agent
-  skill's `SKILL.md` (front matter dropped), and every role brief `locales/<locale>/for/<role>/index.md` at
-  `/<locale>/for/<role>/`, with a list per locale at `/<locale>/for/`.
+- **Svelte 5 runes** and Lily's whole `PickerBar` on every page: link, search, theme (all 57, following the system
+  preference until one is chosen), locale, time zone, text size and share (the UI's five destinations and copy link).
+  The time zone picker records the choice in `data-time-zone`; nothing on the site shows a time yet.
+- **Search.** `/search/` runs in the reader's browser over `/search-index.json`, prerendered from the same documents
+  (`src/lib/search.ts`): a page must hold every word, ignoring case, and title matches come first. The index is fetched
+  on the first search. Lily's search picker writes `/search/?foo%20bar`, the whole query string with no key.
+- **Pages.** `/` and `/<locale>/`: the home page, from `locales/<locale>/index.md`, whose heading, italic line and
+  first paragraph are the hero. `/<locale>/<topic>/`: benefits, features, comparisons and tutorial, from
+  `locales/<locale>/topics/<slug>/index.md`. `/compare/` and `/compare/<product>/`, from
+  `locales/en-001/compare/<product>/index.md`. `/docs/` (`index.md`), `README.md`, `INSTALL.md`,
+  `operations/wpm-bridge.md`, `spec/index.md` and the agent skill's `SKILL.md` (front matter dropped). Every role brief
+  `locales/<locale>/for/<role>/index.md` at `/<locale>/for/<role>/`, with a list per locale at `/<locale>/for/`.
+- **Claims.** The site's words are held to rule 3 of `AGENTS.md`. Every claim about this project comes from its own
+  documents, there are no invented users or figures, and the home page and every comparison repeat the verdict of
+  [production readiness](../governance/production-readiness.md). A comparison page says that nobody installed or ran
+  the other product, describes it in general terms only, scores nothing, says plainly when no importer exists, and
+  says that the project is not affiliated with its owner. The tutorial is the seeded demonstration
+  ([`operations/demo.md`](../operations/demo.md)).
+- **Sitemaps.** `/sitemap.xml` lists every page and `/<locale>/sitemap.xml` that locale's pages.
 - **Links.** A relative link to a document the site shows goes to its page (with its `#fragment`; headings get
   GitHub's anchors); a relative link to any other repository path goes to that path on GitHub (`blob`, or `tree` for a
   directory). External links are kept. The prerender fails on a link to a missing page or a missing anchor.
@@ -25,17 +38,35 @@ The public documentation site, `project-portfolio-management.github.io/` in this
 ## Content copy
 
 The exported repository has no parent directory, so the site cannot read `../README.md` when it builds. The site's
-`scripts/sync-content.mjs` copies the documents into `src/content/docs.json` (committed). `--check` fails when the copy
+`scripts/sync-content.mjs` copies the documents into `src/content/docs.json`, and each locale's topic slugs, resolved
+through `.locale-peer-id`, into `src/content/topics.json` (both committed). `--check` fails when the copy
 differs from the repository files; CI runs it, and `bin/make-github-pages` runs it before pushing. The document list
 is in that script and in `src/lib/site.ts`.
 
 ## Locale and direction
 
-`<html lang>` is the brief's locale in BCP 47 form (`en-gb-oxendict` → `en-GB-oxendict`) on a brief or a locale's
-list, and `en` elsewhere; it is written into the prerendered HTML by `hooks.server.ts` and kept in step on client-side
-navigation. The site's own words (navigation, headings, footer) are English and marked `lang="en"`. `dir` is `rtl`
-for a right-to-left language (none among the brief locales today). The locale switcher opens the same brief in the
-chosen locale. Every layout rule uses logical properties; code blocks stay left to right.
+This follows [locales for global sharing with Svelte](locales-for-global-sharing-with-svelte/index.md).
+
+`<html lang>` is the locale's BCP 47 form (`en-gb-oxendict` → `en-GB-oxendict`) on a page with a locale in its address,
+and `en` elsewhere, because those documents are in English; it is written into the prerendered HTML by
+`hooks.server.ts` and kept in step on client-side navigation. `LocalePicker` is given an unseen target, because it
+writes `lang` as it mounts. `dir` is `rtl` for a right-to-left language (none among the locales today). Every layout
+rule uses logical properties; code blocks stay left to right.
+
+The site's own words (navigation, wordmark, pickers, footer, search) are in `src/lib/messages.json`, in English, Welsh
+and Mandarin (Simplified), with their own `lang`. Their language is the address's on a page with a locale, so those
+pages are prerendered in it. Elsewhere it is the reader's choice (`localStorage` `lily-locale`), so those pages are
+prerendered in English and change as they load, and a note says the document itself is in English. There are no Hindi
+site words: a Hindi page has them in English, and Hindi has role briefs but no home page or topics.
+
+Each home page and topic has a `.locale-peer-id` that is byte-identical across locales, and a `README.md` symlink. Its
+slug is in the language and need not be ASCII (`/cy-gb/nodweddion/`, `/zh-cn/功能/`). `cy-gb` is copied to `cy-001` and
+`zh-cn` to `zh-001`; the English dialects follow the rule's spellings. The locale picker opens the same page in the
+chosen locale: a brief, a list, the home page or a topic (found by peer id). On a page with one version it stays put.
+The comparison product pages are English only.
+
+Welsh and Mandarin are machine-written until a speaker reviews them, and each page says so in its footer.
+`scripts/export-site-translation-review.py` lists them in `governance/translation-reviews/site-*.csv`.
 
 ## Colour and accessibility
 
@@ -44,7 +75,11 @@ commit `49675dc`: `--mxi-color-link` (primary mixed 70/30 with the text colour) 
 `--mxi-color-primary` (primary mixed 80/20 with the neutral) as a fill. A change to the UI's tokens is made there
 first, then copied here. Links in running text are underlined. A table or code block that scrolls sideways is
 focusable. The target is no serious or critical axe finding (WCAG 2.2 AA tags) under the light and the dark system
-preference.
+preference. The other 55 themes are offered but are not held to that: an audit of the home page on 2026-11-04 found
+contrast failures under 15 of the 57. Lily's themes give a picker button no hover change, so the layout adds one, and
+Lily's own class names (such as `.hero`, which a theme paints) are avoided. An open list that scrolls fails axe's
+`scrollable-region-focusable`, which the popup test turns off: the list takes focus itself and moves through its options
+with `aria-activedescendant`, and a test reaches the last theme by keyboard.
 
 ## Content security policy
 
@@ -56,7 +91,10 @@ scripts (`mode: "hash"`): `default-src 'self'`, `script-src 'self'` plus hashes,
 ## Tests
 
 `tests/e2e/site.spec.ts` (Playwright with `@axe-core/playwright`, against `vite preview` of the build): every page
-answers 200; axe under light and dark on every document, every locale's list and one brief per locale; no CSP report
+answers 200; axe under light and dark on every document, home page and comparison, the topics of three locales, every
+locale's list and one brief per locale; each picker (order, hover, a dropdown under its button that does not move the
+page, axe with it open); search; every word in every language; the translated hero; peer ids, `README.md` symlinks,
+the `-001` copies and the dialects; the sitemaps; the honest parts of each comparison; no CSP report
 in the console; `lang` on a brief and on a document; the locale switcher; links on and off the site; four pages under
 a forced `dir="rtl"` (brand at the inline start, no sideways scroll, axe clean in both schemes); no sideways scroll at
 390 px; no element with a `style` attribute. CI job `site` runs the content check, `svelte-check`, the build and the
@@ -77,6 +115,9 @@ its Pages source set to GitHub Actions; the `github-pages` remote is per clone. 
 
 ## Not built
 
-The site's words are English only; no right-to-left brief exists to read; only the `light` and `dark` themes;
-the first paint (or a visit with JavaScript off) uses the light fallback tokens whatever the system preference;
-nothing publishes the site on a push to the monorepo (`make github-pages` is run by hand), so it can lag `main`.
+No right-to-left locale exists to read; no Hindi site words, home page or topics; the comparison product pages are in
+English; the role briefs' slugs are English in every locale, so they fall short of the rule that a segment is in the
+language; search does not work with JavaScript off; 15 of the 57 themes fail contrast on the home page; the first paint (or
+a visit with JavaScript off) uses the light fallback tokens whatever the system preference; a page without a locale in
+its address is first painted in English for a Welsh or Mandarin reader; nothing publishes the site on a push to the
+monorepo (`make github-pages` is run by hand), so it can lag `main`.

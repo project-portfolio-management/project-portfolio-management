@@ -1,7 +1,8 @@
 # project-portfolio-management.github.io
 
-The Project Portfolio Management documentation site for GitHub Pages: a static SvelteKit build (`adapter-static`,
-Svelte 5 runes, Lily Design System widgets) of the repository's own documents.
+The Project Portfolio Management public site for GitHub Pages: a static SvelteKit build (`adapter-static`, Svelte 5
+runes, Lily's whole PickerBar) that welcomes newcomers (home, benefits, features, comparisons, a tutorial) over the
+repository's own reference documents, in English, Welsh and Mandarin.
 
 This directory lives inside the monorepo, `project-portfolio-management/project-portfolio-management`, and is
 **exported** to its own repository, `project-portfolio-management/project-portfolio-management.github.io`, with
@@ -13,21 +14,24 @@ exported repository's own `git subtree` history is what GitHub Pages builds; the
 
 ## What it shows
 
-| Route | Document |
+| Route | Source |
 | --- | --- |
-| `/` | [`index.md`](../index.md) |
-| `/readme/` | [`README.md`](../README.md) |
-| `/install/` | [`INSTALL.md`](../INSTALL.md) |
-| `/wpm-bridge/` | [`operations/wpm-bridge.md`](../operations/wpm-bridge.md) |
-| `/spec/` | [`spec/index.md`](../spec/index.md) |
-| `/skill/` | [`project-portfolio-management-skill/SKILL.md`](../project-portfolio-management-skill/SKILL.md) |
-| `/<locale>/for/` and `/<locale>/for/<role>/` | the role briefs, [`locales/<locale>/for/<role>/index.md`](../locales/) (10 locales, 11 roles) |
+| `/`, `/<locale>/` | [`locales/<locale>/index.md`](../locales/) (eight locales; `/` is `en-001`) |
+| `/<locale>/<topic>/` | `locales/<locale>/topics/<slug>/index.md`: benefits, features, comparisons, tutorial, with a slug in the language |
+| `/compare/`, `/compare/<product>/` | `locales/en-001/compare/<product>/index.md` (English) |
+| `/docs/` | [`index.md`](../index.md) |
+| `/readme/`, `/install/`, `/wpm-bridge/`, `/spec/`, `/skill/` | [`README.md`](../README.md), [`INSTALL.md`](../INSTALL.md), [`operations/wpm-bridge.md`](../operations/wpm-bridge.md), [`spec/index.md`](../spec/index.md), [`SKILL.md`](../project-portfolio-management-skill/SKILL.md) |
+| `/<locale>/for/`, `/<locale>/for/<role>/` | the role briefs, [`locales/<locale>/for/<role>/index.md`](../locales/) (10 locales, 11 roles) |
+| `/search/`, `/search-index.json` | search, in the browser |
+| `/sitemap.xml`, `/<locale>/sitemap.xml` | the sitemaps |
 
-A link between two of these documents stays on the site; a link to any other file in the repository goes to that
-file on GitHub. Raw HTML in the Markdown is shown as text. On a role brief the header's language button (Lily
-`LocalePicker`) opens the same brief in another locale, and `<html lang>` is the brief's locale. The theme follows the
-system's light or dark preference (Lily `ThemePicker`, the `light` and `dark` themes only); the colour tokens are the
-PPM UI's, with its light and dark contrast fix (commit `49675dc`). Text size uses Lily `TextSizePicker`.
+A link between two of these stays on the site; a link to any other file in the repository goes to that file on GitHub.
+Raw HTML in the Markdown is shown as text. Every claim on the site must be one the repository supports; see "Claims" in
+[the spec](../spec/github-pages-site.md).
+
+The site's own words are in `src/lib/messages.json`. After changing them, or a Welsh or Mandarin page, run
+`python3 scripts/export-site-translation-review.py` from the monorepo root. To add a page to a locale, add its `index.md`,
+a `README.md` symlink and the same `.locale-peer-id` as its peers.
 
 ## Content
 
@@ -48,7 +52,7 @@ Node 26 and pnpm.
 pnpm install
 pnpm run check                               # svelte-check
 pnpm run build                               # prerenders every page into build/
-PW_PORT=4189 CI=true pnpm exec playwright test   # every page answers; axe in light and dark; locale switch; rtl
+PW_PORT=4189 CI=true pnpm exec playwright test   # the whole suite; see spec/github-pages-site.md
 ```
 
 The monorepo's CI job `site` runs the same commands. `BASE_PATH` (empty by default) serves the site from a sub-path
@@ -86,11 +90,8 @@ Every later publish is step 4 again.
 
 ## Not done
 
-- The site's own words (navigation, headings, footer) are English only; the role briefs are in their locales.
-- No brief locale is right-to-left today. The layout uses logical properties and the tests force `dir="rtl"` on four
-  pages, but no right-to-left brief has been read by a person.
-- Only the `light` and `dark` Lily themes are offered and audited.
-- Before the theme stylesheet loads (the first paint, or with JavaScript off) the page uses the light fallbacks of the
-  tokens, whatever the system preference.
-- GitHub Pages cannot send HTTP headers, so the content security policy is a `<meta http-equiv>` tag, which cannot
-  carry `frame-ancestors`.
+See "Not built" in [the spec](../spec/github-pages-site.md). In short: Welsh and Mandarin are unreviewed machine drafts;
+the product comparisons are English only and have not been checked against each product's current documentation;
+the tutorial's commands come from `operations/demo.md` and were not run for this site; 15 of the 57 themes fail contrast
+on the home page; the role briefs keep English slugs. GitHub Pages cannot send HTTP headers, so the content security
+policy is a `<meta http-equiv>` tag, which cannot carry `frame-ancestors`.

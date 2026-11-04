@@ -1,0 +1,65 @@
+# Features
+
+*A registry and a full project workspace, sharing one record.*
+
+## Plans and matching
+
+- One recursive collection of plans, with an optional label such as Portfolio, Program or Project
+- Explainable duplicate matching across every kind of plan
+- Merging two records of one plan into a single record
+
+## Everyday work
+
+- A personal "My work" page and a personal kanban board
+- Task boards, calendars and milestones
+- Saved views, and search across the portfolio
+
+## Scheduling
+
+- Gantt charts and a work breakdown structure
+- Critical path, with the eight Microsoft Project constraint types
+- Baselines, schedule health and resource leveling
+- Critical chain, with buffers, buffer management and the drum
+
+## Money
+
+- Budget lines, costs and a funding ledger
+- Earned value
+- Cost risk, and cost and schedule risk together
+
+## People and capacity
+
+- Resources, roles, skill pools and availability
+- A capacity heatmap and capacity commitments
+- Key people
+
+## Strategy and intake
+
+- Work intake, with proposals and ideas
+- Objectives, goals and key results, and key measures
+- Scenarios for what-if planning, and a start queue that limits work in progress
+
+## Governance and escalation
+
+- Risk register and issues
+- Gate reviews, milestone sign-off and cutover decisions
+- Exceptions with a clock, and an escalation path
+- Monthly director packs
+
+## Security and operations
+
+- Login by default, with sign-in through your own identity provider, including Microsoft Entra ID through Keycloak
+- An audit trail that cannot be altered through the service
+- Rate limiting and security headers
+- Backup and restore tooling, with a tested restore drill
+
+## Not built yet
+
+Honesty is a feature too. Here is some of what is still missing:
+
+- No mobile app and no desktop application
+- No real-time co-editing
+- Change requests work in the service, but there is no screen yet for drafting or deciding one
+- Director packs are delivered as data, with no PDF or screen, and several sections are still to come
+
+The backlog [says what each item does not do](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/tasks.md).

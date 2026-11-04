@@ -288,3 +288,55 @@
 - [Chief technology officer (zh-cn)](locales/zh-cn/for/chief-technology-officer/index.md): Chief technology officer guide, locale zh-cn
 - [Governance risk compliance (zh-cn)](locales/zh-cn/for/governance-risk-compliance/index.md): Governance risk compliance guide, locale zh-cn
 - [Independent security tester (zh-cn)](locales/zh-cn/for/independent-security-tester/index.md): Independent security tester guide, locale zh-cn
+
+## Site pages by locale
+
+- [Site home page (en-001)](locales/en-001/index.md): The public site's home page in English
+- [Site topic benefits (en-001)](locales/en-001/topics/benefits/index.md): A public site page in English
+- [Site topic features (en-001)](locales/en-001/topics/features/index.md): A public site page in English
+- [Site topic comparisons (en-001)](locales/en-001/topics/comparisons/index.md): A public site page in English
+- [Site topic tutorial (en-001)](locales/en-001/topics/tutorial/index.md): A public site page in English
+- [Site home page (en-us)](locales/en-us/index.md): The public site's home page in English
+- [Site topic benefits (en-us)](locales/en-us/topics/benefits/index.md): A public site page in English
+- [Site topic features (en-us)](locales/en-us/topics/features/index.md): A public site page in English
+- [Site topic comparisons (en-us)](locales/en-us/topics/comparisons/index.md): A public site page in English
+- [Site topic tutorial (en-us)](locales/en-us/topics/tutorial/index.md): A public site page in English
+- [Site home page (en-gb)](locales/en-gb/index.md): The public site's home page in English
+- [Site topic benefits (en-gb)](locales/en-gb/topics/benefits/index.md): A public site page in English
+- [Site topic features (en-gb)](locales/en-gb/topics/features/index.md): A public site page in English
+- [Site topic comparisons (en-gb)](locales/en-gb/topics/comparisons/index.md): A public site page in English
+- [Site topic tutorial (en-gb)](locales/en-gb/topics/tutorial/index.md): A public site page in English
+- [Site home page (en-gb-oxendict)](locales/en-gb-oxendict/index.md): The public site's home page in English
+- [Site topic benefits (en-gb-oxendict)](locales/en-gb-oxendict/topics/benefits/index.md): A public site page in English
+- [Site topic features (en-gb-oxendict)](locales/en-gb-oxendict/topics/features/index.md): A public site page in English
+- [Site topic comparisons (en-gb-oxendict)](locales/en-gb-oxendict/topics/comparisons/index.md): A public site page in English
+- [Site topic tutorial (en-gb-oxendict)](locales/en-gb-oxendict/topics/tutorial/index.md): A public site page in English
+- [Site home page (cy-gb)](locales/cy-gb/index.md): The public site's home page in Welsh
+- [Site topic manteision (cy-gb)](locales/cy-gb/topics/manteision/index.md): A public site page in Welsh
+- [Site topic nodweddion (cy-gb)](locales/cy-gb/topics/nodweddion/index.md): A public site page in Welsh
+- [Site topic cymariaethau (cy-gb)](locales/cy-gb/topics/cymariaethau/index.md): A public site page in Welsh
+- [Site topic tiwtorial (cy-gb)](locales/cy-gb/topics/tiwtorial/index.md): A public site page in Welsh
+- [Site home page (cy-001)](locales/cy-001/index.md): The public site's home page in Welsh
+- [Site topic manteision (cy-001)](locales/cy-001/topics/manteision/index.md): A public site page in Welsh
+- [Site topic nodweddion (cy-001)](locales/cy-001/topics/nodweddion/index.md): A public site page in Welsh
+- [Site topic cymariaethau (cy-001)](locales/cy-001/topics/cymariaethau/index.md): A public site page in Welsh
+- [Site topic tiwtorial (cy-001)](locales/cy-001/topics/tiwtorial/index.md): A public site page in Welsh
+- [Site home page (zh-cn)](locales/zh-cn/index.md): The public site's home page in Mandarin
+- [Site topic 优势 (zh-cn)](locales/zh-cn/topics/优势/index.md): A public site page in Mandarin
+- [Site topic 功能 (zh-cn)](locales/zh-cn/topics/功能/index.md): A public site page in Mandarin
+- [Site topic 比较 (zh-cn)](locales/zh-cn/topics/比较/index.md): A public site page in Mandarin
+- [Site topic 教程 (zh-cn)](locales/zh-cn/topics/教程/index.md): A public site page in Mandarin
+- [Site home page (zh-001)](locales/zh-001/index.md): The public site's home page in Mandarin
+- [Site topic 优势 (zh-001)](locales/zh-001/topics/优势/index.md): A public site page in Mandarin
+- [Site topic 功能 (zh-001)](locales/zh-001/topics/功能/index.md): A public site page in Mandarin
+- [Site topic 比较 (zh-001)](locales/zh-001/topics/比较/index.md): A public site page in Mandarin
+- [Site topic 教程 (zh-001)](locales/zh-001/topics/教程/index.md): A public site page in Mandarin
+- [Comparison with asana](locales/en-001/compare/asana/index.md): A public site comparison, in English
+- [Comparison with jira](locales/en-001/compare/jira/index.md): A public site comparison, in English
+- [Comparison with leantime](locales/en-001/compare/leantime/index.md): A public site comparison, in English
+- [Comparison with microsoft-project](locales/en-001/compare/microsoft-project/index.md): A public site comparison, in English
+- [Comparison with planview](locales/en-001/compare/planview/index.md): A public site comparison, in English
+- [Comparison with projectlibre](locales/en-001/compare/projectlibre/index.md): A public site comparison, in English
+- [Comparison with redmine](locales/en-001/compare/redmine/index.md): A public site comparison, in English
+- [Comparison with smartsheet](locales/en-001/compare/smartsheet/index.md): A public site comparison, in English
+- [Comparison with trello](locales/en-001/compare/trello/index.md): A public site comparison, in English

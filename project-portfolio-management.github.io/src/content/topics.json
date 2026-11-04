@@ -1,0 +1,63 @@
+{
+  "locales": {
+    "cy-001": {
+      "comparisons": "cymariaethau",
+      "benefits": "manteision",
+      "features": "nodweddion",
+      "tutorial": "tiwtorial"
+    },
+    "cy-gb": {
+      "comparisons": "cymariaethau",
+      "benefits": "manteision",
+      "features": "nodweddion",
+      "tutorial": "tiwtorial"
+    },
+    "en-001": {
+      "benefits": "benefits",
+      "comparisons": "comparisons",
+      "features": "features",
+      "tutorial": "tutorial"
+    },
+    "en-gb": {
+      "benefits": "benefits",
+      "comparisons": "comparisons",
+      "features": "features",
+      "tutorial": "tutorial"
+    },
+    "en-gb-oxendict": {
+      "benefits": "benefits",
+      "comparisons": "comparisons",
+      "features": "features",
+      "tutorial": "tutorial"
+    },
+    "en-us": {
+      "benefits": "benefits",
+      "comparisons": "comparisons",
+      "features": "features",
+      "tutorial": "tutorial"
+    },
+    "zh-001": {
+      "benefits": "优势",
+      "features": "功能",
+      "tutorial": "教程",
+      "comparisons": "比较"
+    },
+    "zh-cn": {
+      "benefits": "优势",
+      "features": "功能",
+      "tutorial": "教程",
+      "comparisons": "比较"
+    }
+  },
+  "compare": [
+    "asana",
+    "jira",
+    "leantime",
+    "microsoft-project",
+    "planview",
+    "projectlibre",
+    "redmine",
+    "smartsheet",
+    "trello"
+  ]
+}

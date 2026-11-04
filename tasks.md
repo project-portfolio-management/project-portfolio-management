@@ -2340,6 +2340,27 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   error. **Not done:** the axe suite ran on the local build, not against the live host; `make github-pages` is by
   hand, so the site can lag `main`; the exported repository has no branch protection to stop a direct push.
 
+- [x] **GP-3 (M) — The whole PickerBar.** **Built 2026-11-04:** Lily `PickerBar` on every page (link, search, theme,
+  locale, time zone, text size, share), all 57 themes, and `/search/` over a prerendered index, in the browser.
+  **Acceptance:** tests for the order of the bar, each picker working, hover, a dropdown under its button that does not
+  move the page, and axe with each open; the keyboard reaches the last theme. **Not done:** nothing shows a time, so
+  the time zone choice has no effect yet; 15 of the 57 themes fail contrast on the home page (light and dark pass); search
+  needs JavaScript.
+- [x] **GP-4 (M) — English, Welsh and Mandarin, by the locales rule.** **Built 2026-11-04:** the site's words in three
+  languages, `/<locale>/` and topics for eight locales, slugs in the language, `.locale-peer-id`, `README.md` symlinks,
+  the `-001` copies, sitemaps, a translated wordmark, endonyms in the picker. **Acceptance:** tests for each of those.
+  **Not done:** every Welsh and Mandarin word is a machine draft no speaker has reviewed; no Hindi site words, home page or
+  topics; the rule's further locales are not attempted; the 110 role briefs keep English slugs; pages without a locale
+  in the address are first painted in English; the sitemap is `/<locale>/sitemap.xml`, the site's address, not the rule's
+  `/locales/<locale>/`.
+- [x] **GP-5 (M) — A welcoming site.** **Built 2026-11-04:** home page with a hero, benefits, features, comparisons and a
+  tutorial on the seeded demonstration; the reference documents moved under `/docs/`. **Not done:** the tutorial's
+  commands come from `operations/demo.md` and were **not run** for this site; no screenshots of the product.
+- [x] **GP-6 (M) — Comparison pages.** **Built 2026-11-04:** `/compare/` and nine products (Trello, Jira, Asana, Microsoft
+  Project, Planview, Smartsheet, Leantime, Redmine, ProjectLibre). **Not done:** no product was installed or run, the
+  descriptions of six of them come from general knowledge and not from `plan.md` or `COMPARISONS.md`, and none was
+  checked against that product's current documentation, so the owner should read them; English only.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

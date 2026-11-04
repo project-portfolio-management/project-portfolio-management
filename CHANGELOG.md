@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 4 November (GP-3 to GP-6: a welcoming site, in three languages)
+
+- The site is now for newcomers: a home page, benefits, features, comparisons and a tutorial on the seeded demonstration,
+  with the reference documents under `/docs/`. Every claim comes from the repository, and the home page and each
+  comparison repeat the production readiness verdict.
+- Lily's whole PickerBar on every page, all 57 themes, and search in the browser.
+- English, Welsh and Mandarin site words; home pages and topics for eight locales, with slugs in the language,
+  `.locale-peer-id` and sitemaps. `scripts/export-site-translation-review.py` lists the words for review, and CI checks it.
+- `/compare/` and nine product pages. There is no importer for Trello, Planview, Smartsheet, Leantime or Redmine, and each
+  page says so.
+- Not done: the Welsh and Mandarin are machine drafts no speaker has reviewed. The tutorial's commands were not run for
+  this site. No compared product was installed or run, and six descriptions come from general knowledge, unchecked against
+  each product's current documentation. 15 of the 57 themes fail contrast on the home page (light and dark pass). The
+  role briefs keep English slugs. Hindi has no site words, home page or topics. Nothing on the site shows a time, so the
+  time zone choice has no effect yet.
+
 ### 4 November (GP-2: the documentation site is published)
 
 - The site is live at <https://project-portfolio-management.github.io/>, deployed from the new exported repository

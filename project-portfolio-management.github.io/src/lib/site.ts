@@ -1,18 +1,22 @@
 // The site's pages and how a repository path maps to one. Safe for the browser: the document text itself is read
 // only on the server side, during prerendering (`$lib/server/content.ts`).
 
+import topics from "../content/topics.json" with { type: "json" };
+
 export const REPO_URL = "https://github.com/project-portfolio-management/project-portfolio-management";
+/** The site's address, for the sitemaps. */
+export const SITE_URL = "https://project-portfolio-management.github.io";
 
 /** A page made from one repository document. `slug` is the route under the site root ("" is the home page). */
-export type DocPage = { slug: string; path: string; nav: string };
+export type DocPage = { slug: string; path: string };
 
 export const DOC_PAGES: readonly DocPage[] = [
-  { slug: "", path: "index.md", nav: "Home" },
-  { slug: "readme", path: "README.md", nav: "README" },
-  { slug: "install", path: "INSTALL.md", nav: "Install" },
-  { slug: "wpm-bridge", path: "operations/wpm-bridge.md", nav: "WPM bridge" },
-  { slug: "spec", path: "spec/index.md", nav: "Specification" },
-  { slug: "skill", path: "project-portfolio-management-skill/SKILL.md", nav: "Agent skill" },
+  { slug: "docs", path: "index.md" },
+  { slug: "readme", path: "README.md" },
+  { slug: "install", path: "INSTALL.md" },
+  { slug: "wpm-bridge", path: "operations/wpm-bridge.md" },
+  { slug: "spec", path: "spec/index.md" },
+  { slug: "skill", path: "project-portfolio-management-skill/SKILL.md" },
 ];
 
 /** The locales that have role briefs (`locales/<locale>/for/`), in the repository's spelling. */
@@ -30,8 +34,45 @@ export const BRIEF_LOCALES = [
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
-/** The locale the navigation's "Role briefs" link opens (the one the repository's index.md links to). */
-export const DEFAULT_BRIEF_LOCALE: BriefLocale = "en-gb-oxendict";
+/** The locale of the site's canonical pages: `/` is this locale's home page. */
+export const DEFAULT_LOCALE: BriefLocale = "en-001";
+
+/** Each locale's name, in that language, in the UI's form (`spec/locales.md`). */
+export const LOCALE_LABELS: Record<BriefLocale, string> = {
+  "cy-001": "Cymraeg",
+  "cy-gb": "Cymraeg - Y Deyrnas Unedig",
+  "en-001": "English",
+  "en-gb": "English - United Kingdom",
+  "en-gb-oxendict": "English - United Kingdom (Oxford)",
+  "en-us": "English - United States",
+  "hi-001": "हिन्दी",
+  "hi-in": "हिन्दी - भारत",
+  "zh-001": "中文",
+  "zh-cn": "中文 - 中国",
+};
+
+/** The topics, by their en-001 slug. A topic's slug differs by locale: `TOPIC_SLUGS` comes from the peer ids. */
+export const TOPIC_KEYS = ["benefits", "features", "comparisons", "tutorial"] as const;
+export type TopicKey = (typeof TOPIC_KEYS)[number];
+const TOPIC_SLUGS: Record<string, Record<TopicKey, string>> = topics.locales;
+
+/** The locales with a home page and topics: English, Welsh and Mandarin. Hindi has role briefs only. */
+export const HOME_LOCALES = BRIEF_LOCALES.filter((l) => l in TOPIC_SLUGS);
+export function isHomeLocale(s: string): boolean {
+  return s in TOPIC_SLUGS;
+}
+/** The locales the "Translations" line names: one for each language, as the rule asks. */
+export const WORLD_LOCALES = HOME_LOCALES.filter((l) => l.endsWith("-001"));
+
+/** The products with a comparison page (`/compare/<product>/`, English). */
+export const COMPARE_PRODUCTS: readonly string[] = topics.compare;
+
+export function topicSlug(locale: string, key: TopicKey): string {
+  return TOPIC_SLUGS[locale]?.[key] ?? key;
+}
+export function topicKeyOf(locale: string, slug: string): TopicKey | null {
+  return TOPIC_KEYS.find((k) => TOPIC_SLUGS[locale]?.[k] === slug) ?? null;
+}
 
 /** The roles that have a brief in every locale. */
 export const ROLES = [
@@ -86,6 +127,13 @@ export function routeOfRepoPath(path: string): string | null {
     if (clean === d.path || (dir && clean === dir && /\/(index|README)\.md$/.test("/" + d.path)))
       return d.slug ? `/${d.slug}/` : "/";
   }
+  const home = /^locales\/([^/]+)(?:\/index\.md)?$/.exec(clean);
+  if (home?.[1] && isHomeLocale(home[1])) return `/${home[1]}/`;
+  // Slugs are per locale and need not be ASCII, so a slug is [^/]+, never \w+.
+  const topic = /^locales\/([^/]+)\/topics\/([^/]+)(?:\/index\.md)?$/.exec(clean);
+  if (topic?.[1] && topic[2] && topicKeyOf(topic[1], topic[2])) return `/${topic[1]}/${topic[2]}/`;
+  const product = /^locales\/en-001\/compare\/([^/]+)(?:\/index\.md)?$/.exec(clean);
+  if (product?.[1] && COMPARE_PRODUCTS.includes(product[1])) return `/compare/${product[1]}/`;
   const m = /^locales\/([^/]+)\/for(?:\/([^/]+))?(?:\/index\.md)?$/.exec(clean);
   if (m && m[1] && isBriefLocale(m[1])) {
     if (!m[2]) return `/${m[1]}/for/`;

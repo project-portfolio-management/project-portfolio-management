@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Doc from "#lib/Doc.svelte";
+  import Home from "#lib/Home.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 </script>
 
-<svelte:head><title>Project Portfolio Management</title></svelte:head>
+<svelte:head><title>{data.title}</title></svelte:head>
 
-<Doc html={data.html} path={data.path} />
+<Home home={data.home} lang="en" />

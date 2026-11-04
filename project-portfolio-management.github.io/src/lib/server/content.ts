@@ -1,7 +1,8 @@
 // Server-only (prerender time): the repository documents and their Markdown, rendered to HTML.
 import { Marked, type Tokens } from "marked";
 import docs from "../../content/docs.json" with { type: "json" };
-import { REPO_URL, routeOfRepoPath } from "#lib/site.js";
+import { BRIEF_LOCALES, DOC_PAGES, REPO_URL, SITE_URL, langTag, routeOfRepoPath } from "#lib/site.js";
+import type { SearchDoc } from "#lib/search.js";
 
 const FILES: Record<string, string> = docs.files;
 
@@ -57,8 +58,8 @@ export function rewriteHref(from: string, href: string, route: (r: string) => st
 export type Rendered = { title: string; html: string };
 
 /** Render one repository document. Raw HTML in the Markdown is shown as text, never passed through. */
-export function render(path: string, route: (r: string) => string): Rendered {
-  let text = source(path);
+export function render(path: string, route: (r: string) => string, body?: string): Rendered {
+  let text = body ?? source(path);
   // The skill's YAML front matter is metadata for agents, not page text.
   text = text.replace(/^---\n[\s\S]*?\n---\n/, "");
   const seen = new Map<string, number>();
@@ -106,4 +107,61 @@ export function briefSummary(path: string): { title: string; summary: string } {
   const title = /^# (.+)$/m.exec(text)?.[1]?.trim() ?? path;
   const summary = /^\*([^*\n].*?)\*\s*$/m.exec(text)?.[1]?.trim() ?? "";
   return { title, summary };
+}
+
+export type Home = { headline: string; subheadline: string; intro: string; html: string; path: string };
+
+/** A locale's home page: its heading, the italic line and the first paragraph make the hero, and the rest is the page. */
+export function home(locale: string, route: (r: string) => string): Home {
+  const path = `locales/${locale}/index.md`;
+  const m = /^# (.+)\n\n\*(.+)\*\n\n(.+)\n\n([\s\S]*)$/.exec(source(path));
+  if (!m) throw new Error(`${path} must open with a heading, an italic line and a paragraph`);
+  const [, headline = "", subheadline = "", intro = "", rest = ""] = m;
+  return { headline, subheadline, intro, html: render(path, route, rest).html, path };
+}
+
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"' };
+
+/** The words of rendered HTML, for the search index: this is shown as text, never as HTML. */
+export function plainText(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
+    .replace(/&(amp|lt|gt|quot);/g, (_, n: string) => ENTITIES[n] ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Every page made from a document: the documents and the role briefs (not the lists, which only link to the briefs). */
+export function searchIndex(): SearchDoc[] {
+  const documents = DOC_PAGES.map((d) => d.path);
+  const briefs = Object.keys(FILES).filter((p) => p.startsWith("locales/") && !p.endsWith("/README.md"));
+  return [...documents, ...briefs].flatMap((path) => {
+    const route = routeOfRepoPath(path);
+    if (!route) return [];
+    const { title, html } = render(path, (r) => r);
+    const locale = /^locales\/([^/]+)\//.exec(path)?.[1];
+    return [{ route, title, lang: locale ? langTag(locale) : "en", text: plainText(html) }];
+  });
+}
+
+/** Every page of the site, for the sitemaps. */
+export function allRoutes(): string[] {
+  const docs = DOC_PAGES.map((d) => `/${d.slug}/`);
+  const repo = Object.keys(FILES)
+    .map((p) => routeOfRepoPath(p))
+    .filter((r): r is string => r !== null);
+  const lists = BRIEF_LOCALES.map((l) => `/${l}/for/`);
+  return [...new Set(["/", "/compare/", "/search/", ...docs, ...repo, ...lists])].sort();
+}
+
+function escapeXml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** A sitemap of these routes. A slug may be in Welsh or Chinese, so each address is percent-encoded. */
+export function sitemap(routes: string[]): Response {
+  const urls = routes.map((r) => `  <url><loc>${escapeXml(SITE_URL + encodeURI(r))}</loc></url>`).join("\n");
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  return new Response(xml, { headers: { "content-type": "application/xml" } });
 }

@@ -92,9 +92,10 @@ kept whole rather than split across them:
   vocabulary; **Flow Distribution** — the mix of feature / defect /
   risk / debt work — is the new one. Committed in §1.6.
 
-- [GitHub Pages site](github-pages-site.md) — the static documentation site in
-  `project-portfolio-management.github.io/` (SvelteKit, Lily widgets, the UI's colour tokens): its pages, the content
-  copy, locale and direction, the meta content security policy, the tests and the `git subtree` publish (GP-1).
+- [GitHub Pages site](github-pages-site.md) — the public site in
+  `project-portfolio-management.github.io/` (SvelteKit, Lily's PickerBar, the UI's colour tokens): home, benefits,
+  features, comparisons, tutorial and reference pages, the content copy, locale and direction, the meta content
+  security policy, the tests and the `git subtree` publish (GP-1 to GP-6).
 
 - [Special files for public repos](special-files-for-public-repos/index.md) —
   the standard top-level files of a public project (README, LICENSE, CITATION,

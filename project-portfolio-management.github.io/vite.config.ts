@@ -12,7 +12,13 @@ export default defineConfig({
       preprocess: vitePreprocess(),
       adapter: adapter({ pages: "build", assets: "build", fallback: undefined, strict: true }),
       paths: { base: (process.env.BASE_PATH ?? "") as "" | `/${string}` },
-      prerender: { handleHttpError: "fail", handleMissingId: "fail" },
+      // Nothing links to the search page (only the search picker goes there), the index it fetches or the sitemaps, so
+      // a crawl of the links alone would leave them out.
+      prerender: {
+        entries: ["*", "/search/", "/search-index.json", "/sitemap.xml"],
+        handleHttpError: "fail",
+        handleMissingId: "fail",
+      },
       // GitHub Pages cannot send headers, so the policy is a <meta http-equiv> that SvelteKit writes into each
       // prerendered page with the hashes of its own inline scripts. As in the PPM UI, computed styles use
       // Svelte's `style:` directive and never a `style="…"` attribute: style-src-attr allows only the one value

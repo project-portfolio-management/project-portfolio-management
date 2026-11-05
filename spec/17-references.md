@@ -19,6 +19,11 @@ posture relative to this landscape is §8.7.
 - Date / time: ISO 8601 calendar dates for `start_date` /
   `target_date` / goal `target_date` / task `due_date`.
 
+### 17.1a Product evaluation and service management
+
+Read for [product-evaluation.md](product-evaluation.md) and [service-management.md](service-management.md) on 2026-11-05; each is linked where it is used. EU AI Act Articles 26 and 27, EU Cyber
+Resilience Act Articles 14, 24 and 71, RFC 9116, NIST AI RMF. Known by summary only: ISO/IEC 29147, 30111, 42001 and 42005, and Regulation (EU) 2026/1744.
+
 ### 17.2 Project-management tools (interop targets)
 
 The deterministic identifier schemes (§5.2, R-0) are the external ids

@@ -2466,3 +2466,46 @@ Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is i
 - [ ] **UE-6 (M) — Screens** for UE-2 to UE-4 in 11 locales, with Playwright and axe.
 - [ ] **UE-7 (S) — Document the viability definition** in 06 (the metrics table) and 09, and correct "NPV" there from promised to delivered once UE-2 lands.
 - [ ] **UE-8 (S, owner) — Confirm UE-D1 to UE-D3 and the default discount rate** (a deployment setting, echoed).
+
+## Product evaluation (PE-n, [spec/product-evaluation.md](spec/product-evaluation.md)), proposed 2026-11-05
+
+Why: the owner needs one searchable place for the products under consideration, under evaluation and in use, with custom fields, impact assessments and issue logging. AI tools are the pressing case; nothing here is specific to AI. The assessment is in [plan.md](plan.md) §85 to §87. Every decision is the owner's (PE-16). Order: §87.
+
+- [ ] **PE-1 (M) — Census: what a product plan would touch.** List every aggregate, total and pack that counts plans, and prove a `Product` plan can be left out of them by default, with a test that names each. **Can reverse PE-D1:** if this cannot be held cheaply, products get their own table.
+- [ ] **PE-2 (M) — `product_profile` and the lifecycle.** A one-to-one profile on a `Product` plan, and a stage as a workflow with categories (intake, active, in_use, held, closed). A move into `in_use` is gated, with no way round by creation, import or moving the plan, as OC-12. `rejected` and `suspended` need a reason. Off by module, and no change to any existing plan.
+- [ ] **PE-3 (S) — Vendors.** `vendor_profile` on an organization of kind `supplier`, products linked to it, and a due-diligence assessment reused across its products until it expires.
+- [ ] **PE-4 (M) — Fields for this job.** Field groups, decimal, URL and person types, required by stage, and custom fields on issues (today plan and task only), still searchable.
+- [ ] **PE-5 (L) — Evaluations.** Purpose and success criteria first; criteria sets with weights totalling 100, frozen when scoring opens; named evaluators; scores hidden until each has submitted, proved by a test; an unscored criterion stays `not scored`, with a reason; one product or a shortlist.
+- [ ] **PE-6 (M) — Comparison.** A pure rule giving a weighted result with its scored coverage, evaluators' spread, and whether the order changes when each weight moves 20 percent. Cost per currency, never converted. Side by side, with a hidden plan left out.
+- [ ] **PE-7 (S) — Trials.** Pilot group, dates, and the measured result beside each success criterion, with `not measured` where there is none.
+- [ ] **PE-8 (L) — Assessment templates.** Versioned sections and questions, with guidance, required evidence, framework references, stops and rules that derive a tier or add an approver; answers kept with their template version; a controls table that can raise risks.
+- [ ] **PE-9 (M) — Bundled templates as data.** AI impact, fundamental rights, data protection, security due diligence, accessibility and language, each with `reviewed_on`, the text it follows, and a visible unreviewed mark until a competent person reviews it. No template says compliant.
+- [ ] **PE-10 (L) — Approval routes.** Ordered steps, parallel approvers, all or any or majority, conditions on an assessment, approvers resolved from the product; a rejection returns with a reason. Open to any approvable subject. Builds on `approval_requests` and `process_executions`.
+- [ ] **PE-11 (M) — The decision and what follows.** Permitted data classes, conditions and a review date on the product; scheduled review and renewal; an out-of-cycle assessment after an agreed number of issues; a condition tied to a control with a cadence. Contract facts as descriptive fields.
+- [ ] **PE-12 (M) — AI additions.** Capability, provider, model version, deployer or provider, vendor training on data, oversight. Article 26 duties as an assessment with evidence. A model version change raises a review. ATRS record export.
+- [ ] **PE-13 (M) — Register and catalogue.** Saved views by stage and for overdue reviews and renewals; CSV import and export through the bulk path; a catalogue of approved products for any signed-in person, with what data they may take; a request form that runs the matcher and shows what was already rejected and why, to those who may see it.
+- [ ] **PE-14 (M) — The product page and reports.** One timeline of evaluations, assessments, approvals, issues and changes; a funnel, a tier by data class view, overdue reviews, seats used against licensed; a director pack section.
+- [ ] **PE-15 (L) — Screens** for each stage as it lands, in 11 locales, with Playwright and axe, and the public site's features and tutorial updated.
+- [ ] **PE-16 (S, owner) — Confirm PE-D1 to PE-D6**, and say who reviews the bundled templates.
+
+## Service management (SM-n, [spec/service-management.md](spec/service-management.md)), proposed 2026-11-05
+
+Why: what a project delivers goes on running, and its incidents, requests and security reports fall outside anything this service measures. **This is a service record, not a help desk** (SM-D1). Every decision is the owner's (SM-17). Order: [plan.md](plan.md) §87.
+
+- [ ] **SM-1 (S) — `security.txt` for this project.** `/.well-known/security.txt` on the public site with `Contact`, `Expires` under a year and `Policy`, per RFC 9116, kept in step with `SECURITY.md`, with a test that fails when `Expires` is under 60 days away. No dependency.
+- [ ] **SM-2 (M) — Times on an issue.** `reported_at`, `acknowledged_at`, `first_response_at`, `resolved_at`, `closed_at`, and for an incident `occurred_at` and `detected_at`, in UTC. A correction is audited. Existing issues are not back-filled, and reports say how many they leave out.
+- [ ] **SM-3 (M) — Incident, request, problem and security report as issue types,** with workflows as data, and an editable impact and urgency matrix giving priority, an override needing a reason.
+- [ ] **SM-4 (L) — Service levels.** Targets per type and priority, on a product or the deployment, with a work calendar; a pure clock derived from the transition log, paused in the `waiting` category with each pause recorded, restarted on reopening.
+- [ ] **SM-5 (M) — Breach and report.** Notify, escalate and fire automations before and at a breach. Met share with its count and what was left out, and paused time beside it, through `HiddenScope` across plans.
+- [ ] **SM-6 (L) — Requests and requesters.** Request forms as the catalogue; `requester_ref` with its inventory, retention and erasure; "my requests" on guest grants narrowed to the requester; comment `visibility` for internal notes, with a census of comment read paths. A threat review before it ships.
+- [ ] **SM-7 (L) — Incidents and problems.** Issue links with the OC-21 guard; a major incident as a parent with a lead and a timeline; problems and known errors; a review after an incident, written to `lessons`, so the lesson search reaches the next similar proposal; one incident not recorded twice with `devops_events`.
+- [ ] **SM-8 (L) — Restricted issues.** A flag and a named access list within a plan. **Built before any security feature.** Starts with a census of every path that reads an issue: lists, search, counts, exports, audit feed, notifications, webhooks, packs. A restricted issue leaves counts for those not on the list.
+- [ ] **SM-9 (M) — The security report.** The reporter can be withheld from those fixing it; CVSS vector, CVE, CWE, exploited or not with its source, an SSVC-style decision; disclosure state with a target date.
+- [ ] **SM-10 (M) — Notification clocks.** Named policies as data with `reviewed_on`, started from recorded awareness in calendar hours, with stages and who sent what. A duty with no stated hours shows no countdown. The service decides nothing and sends nothing to a regulator. Reads the GDPR text before shipping that policy.
+- [ ] **SM-11 (M) — Remediation targets and risk acceptance.** Targets by severity on the SM-4 engine; acceptance with a decider, evidence and an expiry, visible, off the clock, back on expiry, linked to the risk register.
+- [ ] **SM-12 (S) — Advisories.** Export as CSAF with a VEX status.
+- [ ] **SM-13 (M) — Findings summaries.** A signed webhook per product taking counts by severity and overdue counts from DefectDojo or Dependency-Track, with a link back. Stores counts, not vulnerability detail.
+- [ ] **SM-14 (M) — What leaders see.** Incidents, resolution and service levels per product and portfolio; service health beside benefits and business case; overdue critical findings; a director pack section; DORA-style metrics with real incident times.
+- [ ] **SM-15 (M) — The cost of running.** Time entries on tickets, beside the budget, and satisfaction per ticket.
+- [ ] **SM-16 (L) — Screens** for each stage as it lands, in 11 locales, with Playwright and axe.
+- [ ] **SM-17 (S, owner) — Confirm SM-D1 to SM-D6,** and take legal advice on the project's own CRA role before stating one.

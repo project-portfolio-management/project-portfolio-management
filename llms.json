@@ -81,6 +81,16 @@
           "description": "Proposed (UE-1 to UE-8): net present value, payback and a viability verdict (the pure core is built), training as a budget category, a priced capability gap"
         },
         {
+          "title": "Product evaluation",
+          "path": "spec/product-evaluation.md",
+          "description": "Proposed (PE-1 to PE-16): a register of products under consideration, evaluation and use, with weighted comparison, scored assessments and approval routes"
+        },
+        {
+          "title": "Service management",
+          "path": "spec/service-management.md",
+          "description": "Proposed (SM-1 to SM-17): a service record, not a help desk: incidents, requests, service levels and security reporting"
+        },
+        {
           "title": "Local-first CI/CD",
           "path": "spec/local-ci-cd.md",
           "description": "Proposed (LC-1 to LC-10): run CI locally first and record the result; the options assessed, the risks and the order"

@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (PE and SM: product evaluation and service management proposed)
+
+- Researched and assessed, for the owner to decide: a register and evaluation of products, and a service record of incidents, requests, service levels and security reports. Two new specs, [`spec/product-evaluation.md`](spec/product-evaluation.md) and [`spec/service-management.md`](spec/service-management.md), `plan.md` §85 to §87, and PE-1 to PE-16 and SM-1 to SM-17 in `tasks.md`. About half of the example design exists under other names, so the advice is a thin profile on the plan record and six real gaps, not new modules.
+- Not done: **nothing is built, and every decision is open.** Not verified: no comparator was run and none of their source was read; HaloITSM's own guides were read only on assets and custom fields; EUR-Lex would not load, so the Cyber Resilience Act was read on a mirror; the Digital Omnibus, the GDPR text and the ISO standards were not read; the commercial field was not scanned. The advice that a product can be a plan rests on a census not yet done (PE-1). Nothing here is legal advice.
+
 ### 5 November (GP-8: the site in Arabic and Hindi)
 
 - The public site now has a home page, the four topics and all its own words in Arabic (\`ar-001\`) and Hindi (\`hi-in\`, copied to \`hi-001\`), and the 11 role briefs in Arabic. Hindi already had its briefs. Arabic is the site's first right-to-left language: an \`ar-001\` page is right to left in its prerendered HTML, and a reader who chooses Arabic on an English document gets the site's words right to left around a left-to-right page. \`ar-001\` has no regional copy, as in the interface. Both languages are in the locale picker and the "Translations" line, and \`site-ar.csv\` and \`site-hi.csv\` list the text for a speaker.

@@ -12,6 +12,7 @@
 > production readiness, critical chain); the "Where we already match" tables are
 > as of each pass's date and are not re-verified. **2026-10-21:** §64–§70 add a
 > pass on new capabilities and code quality (`NC-`, `CQ-`); those items are open.
+> **2026-11-05:** §85–§87 add product evaluation and service management (`PE-`, `SM-`); those items are open.
 
 Research date: 2026-10-02. Subject: [leantime/leantime](https://github.com/leantime/leantime)
 (v3.10.1; PHP / MySQL; AGPLv3; ~11.7k stars).
@@ -1722,3 +1723,98 @@ Research and advice are in [spec/local-ci-cd.md](spec/local-ci-cd.md); the tasks
 ## 84. Learning, upskilling and economic viability (2026-11-04)
 
 [spec/learning-economics.md](spec/learning-economics.md): PPM measures ROI but has no NPV, payback or viability verdict, and sees training only as a budget line like any other. Built: the pure `viability` rule (UE-1). Proposed: a plan viability route, a `training` budget category, a portfolio view, a priced capability gap fed by the workforce planning service. No benefit recorded is `unmeasured`, never `not_viable`. Not taken: an internal rate of return, a verdict across currencies.
+
+# Research: product evaluation and service management (PE-n, SM-n)
+
+Research date: 2026-11-05. Prompted by the owner's HaloITSM design for a register of AI tools. The designs are in
+[spec/product-evaluation.md](spec/product-evaluation.md) and [spec/service-management.md](spec/service-management.md); the tasks are PE-1 to
+PE-16 and SM-1 to SM-17 in [tasks.md](tasks.md). Nothing is built.
+
+**Evidence base, stated plainly.** Read: GitHub signals by `gh` on the date above, READMEs and feature pages, the CRA text on a mirror, Articles 26
+and 27 of the AI Act on the Commission's service desk, and RFC 9116. **Not read:** any product running, any comparator's source code, EUR-Lex (the fetch
+returned nothing), the Digital Omnibus itself, ISO standards (summaries only), ServiceNow or Jira Service Management. HaloITSM's own guides were read only on assets and
+custom fields, so the owner's design is taken as a design, not as a verified account of Halo. The "Us" column was checked against the code.
+
+## 85. Standing
+
+**Mode: standard. Baseline: no prior scan.** Field framing:
+
+- **Detected domains:** product and vendor evaluation with AI governance; IT service management; security reporting.
+- **Adjacent, considered:** governance, risk and compliance; vulnerability management.
+- **Excluded:** help-desk channels and infrastructure discovery, because they are outside what this project aims to be (SM-D1).
+- **Benchmark assumption:** this is an open-source portfolio service adding a record of what it buys and runs, not a replacement for a service desk.
+
+**Tier: LAGGING, 17 gaps of 23 table-stakes. Coverage `███░░░░░░░` 26% (6/23 met).** Read that with care. The tier measures a field this project has not been in, and
+it counts partial as a gap: 9 of the 17 are partial, with most of the mechanism present, and 8 are missing. It is a to-do list, not a verdict on the software.
+
+| Comparator | Type | Stars | Last push | Licence | Why |
+| --- | --- | --- | --- | --- | --- |
+| [glpi-project/glpi](https://github.com/glpi-project/glpi) | canonical | 6,560 | 2026-11-05 | GPL-3.0 | Assets, incidents, problems, changes, SLAs, suppliers and contracts, plus projects |
+| [zammad/zammad](https://github.com/zammad/zammad) | popular | 6,080 | 2026-11-05 | AGPL-3.0 | The channel-led service desk: [features](https://zammad.com/en/product/features) |
+| [Combodo/iTop](https://github.com/Combodo/iTop) | canonical | 1,214 | 2026-11-05 | AGPL-3.0 | CMDB with ITIL processes as [modules](https://www.itophub.io/wiki/page?id=latest:datamodel:start) |
+| [DefectDojo/django-DefectDojo](https://github.com/DefectDojo/django-DefectDojo) | canonical | 5,191 | 2026-11-05 | BSD-3-Clause | Findings, deduplication, SLAs by severity, [risk acceptance](https://docs.defectdojo.com/help/glossary/). SLA configuration may be a paid tier |
+| [DependencyTrack/dependency-track](https://github.com/DependencyTrack/dependency-track) | canonical | 4,416 | 2026-11-05 | Apache-2.0 | Components against an SBOM |
+| [intuitem/ciso-assistant-community](https://github.com/intuitem/ciso-assistant-community) | technically advanced | 4,584 | 2026-11-05 | AGPL-3.0, with a commercial directory | 200+ frameworks with mapping, third-party risk, risk acceptance |
+| [bluewave-labs/verifywise](https://github.com/bluewave-labs/verifywise) | niche-relevant | 373 | 2026-11-05 | Source-available (VCEL 1.0), not open source | The closest match on AI: model inventory, vendors, incidents, 25 frameworks |
+| [eramba](https://www.eramba.org/learning/courses/83) | niche-relevant | not on GitHub by this name | not found | not verified | Third parties, online assessments. Which edition has what was not confirmed |
+
+Dropped on reading: osTicket (last push 2026-06-17) and Znuny as lesser versions of the above; [RT](https://github.com/bestpractical/rt), FreeScout and Frappe Helpdesk as help desks. Saturation
+was light: searches varied by capability and term of art, and the last rounds added no comparator or table-stakes capability. The commercial field was not scanned.
+
+| Capability | Us | Evidence here | Who has it | Gap? |
+| --- | --- | --- | --- | --- |
+| Product inventory with a lifecycle | Partial | `PlanKind::Product`, `phase_transitions` | VerifyWise | table-stakes |
+| Custom, searchable fields | Partial | `src/custom_fields.rs`: plan and task only | GLPI, Halo | table-stakes |
+| Vendor record | Partial | `organizations` of kind `supplier`, a name only | GLPI, CISO Assistant, VerifyWise | table-stakes |
+| Weighted comparison by criterion | Missing | `reviews` has one score; `scoring_inputs` is WSJF and RICE | ProcessUnity (commercial) | table-stakes |
+| Scored assessment templates | Missing | none | CISO Assistant, eramba | table-stakes |
+| Mapping to frameworks | Missing | `frameworks` are ways of working, not control mappings | CISO Assistant, VerifyWise | table-stakes |
+| Approval with several steps | Partial | `approval_requests` is one approver | Halo, per the owner's design | table-stakes |
+| Conditions and a review date | Partial | `gate_reviews.conditions`, `scheduled_actions` | CISO Assistant (acceptance) | table-stakes |
+| Evidence documents | Met | `controlled_documents` | CISO Assistant | |
+| Issue log per product | Met | `issues`, OC-1 to OC-6 | VerifyWise | |
+| Risk register | Met | `risks` | CISO Assistant, VerifyWise | |
+| Audit | Met | `audit_logs` | the Halo design asks for it | |
+| Incident, request and problem types | Partial | `issue_types` has the mechanism | GLPI, iTop | table-stakes |
+| Service level clocks | Missing | no times on an issue | GLPI, iTop, Zammad | table-stakes |
+| Business hours on clocks | Partial | `work_calendars`, used for scheduling | iTop | table-stakes |
+| Escalation | Met | `escalations` | Zammad, iTop | |
+| Requester's view | Missing | `guest_grants` is plan access | GLPI, Zammad | table-stakes |
+| Service catalogue or forms | Missing | none | GLPI forms, iTop | table-stakes |
+| Knowledge and known errors | Partial | `lessons`, documents | GLPI, iTop | table-stakes |
+| Change linked to issues | Met | `change_requests` | GLPI, iTop | |
+| Link to a configuration item | Partial | a Product plan and `plan_links` | GLPI, iTop | table-stakes |
+| Confidential reports | Missing | access is per plan | The norm in disclosure practice; no comparator's access model was read | table-stakes, by judgement |
+| Remediation clocks and risk acceptance | Missing | none | DefectDojo, CISO Assistant | table-stakes |
+| Inbound email | Missing | none | GLPI, Zammad | edge, by SM-D2 |
+| Satisfaction per ticket | Partial | `satisfaction_responses` per plan | Zammad | edge |
+| Duplicate check against what was rejected | **Ahead** | the matcher | none read | ours |
+| Service health beside business case and benefits | **Ahead once built** | `benefits`, `lessons` | none read | ours |
+
+## 86. Advice
+
+1. **Do both, and build neither as a module of its own.** About half of the owner's Halo design exists here under other names. The right work is a thin product profile on the plan
+   record, plus six real gaps: weighted comparison, scored assessments, approval routes, times on issues, service level clocks and restricted issues.
+2. **Evaluation first.** It is the owner's stated need, nothing like it is well served in open source, and it plays to what this project does: showing its working, not inventing figures,
+   finding duplicates. VerifyWise, the closest, is not open source.
+3. **Keep service management narrow.** Open-source service desks are good. The opening is the record that ties a live service back to its plan, business case and benefits. An organization can
+   keep GLPI or Zammad and feed this. SM-D1 is the decision that holds the scope.
+4. **Two foundations come before their features.** Times on an issue, without which there is no clock; and restricted issues, without which a security report is visible to a whole plan. The second
+   carries the same risk as the private-plan work of OC-13 to OC-25, so it starts with a census of every path that reads an issue.
+5. **Two designs here could go wrong, and the plan says how they would be caught.** A product as a plan could flood every portfolio total: PE-1 is a census that can reverse PE-D1. And an
+   assessment could read as a compliance verdict: the service records what people decided and never says a product is compliant.
+6. **Do SM-1 now.** `security.txt` is a day's work at most, needs no decision, and the project lacks it.
+
+## 87. Sequencing and open questions
+
+1. **Now:** SM-1. Owner decisions PE-16 and SM-17.
+2. **The register:** PE-1 (census, can change the design), PE-2, PE-3, PE-4, the register part of PE-13. This alone answers the owner's example for search, fields and issue logging.
+3. **Evaluation:** PE-5, PE-6, PE-7, then the decision in PE-11.
+4. **Assessment and approval:** PE-8, PE-10, PE-9, PE-12.
+5. **Service foundations:** SM-2, SM-8, SM-3.
+6. **Service levels:** SM-4, SM-5, then SM-7.
+7. **Security:** SM-9, SM-11, SM-10, SM-12, SM-13.
+8. **Reach:** the catalogue in PE-13, SM-6, PE-14, SM-14, SM-15, with screens (PE-15, SM-16) alongside each stage, not at the end.
+
+**Open questions for the owner:** whether a product that nobody funds belongs in the plan table at all (PE-D1); whether this is a service record or a help desk (SM-D1); who reviews the bundled assessment
+templates, since the owner's rule for translations should hold for legal wording too (PE-D5); and what role this project has under the CRA (SM-D5).

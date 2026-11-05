@@ -210,6 +210,8 @@ rewritten.
 
 ### Planned, not built
 
+- **Proposed 2026-11-05, not yet confirmed:** [product evaluation](product-evaluation.md) (PE-n) and [service management](service-management.md) (SM-n). Order in [`plan.md`](../plan.md) §87.
+
 The director pack (DP-1 … DP-12), the escalation-driven capabilities
 (EX-1 … EX-14) and critical chain buffers (CC-1 … CC-6), once listed here,
 are **built at the API** ([§14](14-implementation-status.md)); what they lack is

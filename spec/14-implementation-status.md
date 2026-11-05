@@ -67,7 +67,9 @@ no network, database or compilation; counts are source lines, not test runs):
 | OC | 25 | 0 |
 | LC | 0 | 10 |
 | UE | 1 | 7 |
-| **Total** | **237** | **29** |
+| PE | 0 | 16 |
+| SM | 0 | 17 |
+| **Total** | **237** | **62** |
 
 <!-- generated:end -->
 

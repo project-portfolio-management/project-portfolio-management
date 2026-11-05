@@ -11,6 +11,8 @@ Entity-level terms. Per-subproject vocabularies: service
 | **Trio** | The three subprojects: service crate, matcher crate, front-end project |
 | **Entity-level spec** | This document set — source of truth for the cross-subproject contract and the canonical §5 domain model |
 | **Crate spec** | A subproject's own `spec/` — source of truth for that subproject's internals |
+| **Product plan** | Proposed: a plan of kind `Product` with a `product_profile`, the record of a product under evaluation or in use ([product-evaluation.md](product-evaluation.md)) |
+| **Service** | Proposed: a product plan in an `in_use` stage; there is no separate service record ([service-management.md](service-management.md)) |
 | **Plan** | The canonical matchable type — the unit of work an organization funds and reports on; it may carry an optional `kind` label (Portfolio, Project, Product, Program, Practice, Process, Purpose, Pathway, or Proposal) |
 | **PlanKind** | The **optional** descriptive label on a `Plan`: `Portfolio`, `Project`, `Product`, `Program`, `Practice`, `Process`, `Purpose`, `Pathway`, `Proposal`. Used for description / display / grouping — **not** a discriminator, does **not** gate matching or fix a collection |
 | **Collection** | The single REST collection `/api/plans` and its `plans` service table; every plan lives here regardless of its `kind` label |

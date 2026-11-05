@@ -167,6 +167,11 @@ This spec owns the **cross-subproject contract**:
 All three subprojects are **implemented and green** (§14). What remains
 out of scope, tracked in §13 / §15 and the crate specs' §13:
 
+**Proposed 2026-11-05, for the owner to confirm:** a register and evaluation of the products an organization considers and uses
+([product-evaluation.md](product-evaluation.md)), and a service record of incidents, requests, service levels and security reports
+([service-management.md](service-management.md)). Neither is built. The second is not a help desk: mail and other channels, an infrastructure
+CMDB, on-call and vulnerability scanning stay out of scope.
+
 **Committed but not yet built** — in scope by §1.4–§1.6, no code yet:
 
 - **Custom workflows** (§1.4.1). Task and issue statuses are still

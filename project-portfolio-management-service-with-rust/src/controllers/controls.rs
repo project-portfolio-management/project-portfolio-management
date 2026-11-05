@@ -61,41 +61,76 @@ pub const KNOWN_METRICS: &[&str] = &[
 
 use super::parse_pid as find_plan_pid;
 
-/// Load one live (not soft-deleted) control by its public id; a malformed
-/// or unknown id is `404`/bad-request, never a leak of internal keys.
-async fn find_control(ctx: &AppContext, raw: &str) -> Result<controls::Model> {
+/// `404` unless the caller can read the plan a control belongs to. Controls, readings and actions are reached by their own
+/// pids, outside the plan guard, so every lookup here passes this, whether or not the control has been removed.
+async fn require_visible(ctx: &AppContext, caller: &MaybeAuthUser, plan: Uuid) -> Result<()> {
+    let readable = super::plan_access::readable_plans(ctx, caller, &[plan]).await;
+    if readable.contains(&plan) {
+        Ok(())
+    } else {
+        Err(Error::NotFound)
+    }
+}
+
+/// Load one live (not soft-deleted) control by its public id, if the caller can read its plan; a malformed or unknown id is
+/// `404`/bad-request, never a leak of internal keys.
+async fn find_control(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    raw: &str,
+) -> Result<controls::Model> {
     let pid = find_plan_pid(raw)?;
-    controls::Entity::find()
+    let control = controls::Entity::find()
         .filter(controls::Column::Pid.eq(pid))
         .filter(controls::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
         .map_err(db_err)?
-        .ok_or(Error::NotFound)
+        .ok_or(Error::NotFound)?;
+    require_visible(ctx, caller, control.plan_pid).await?;
+    Ok(control)
 }
 
-/// Load one reading by public id. Readings are append-only history and
-/// have no soft-delete column, so there is no `deleted_at` filter.
-async fn find_reading(ctx: &AppContext, raw: &str) -> Result<control_readings::Model> {
+/// Load one reading by public id, if the caller can read its control's plan. Readings are append-only history and have no
+/// soft-delete column, so there is no `deleted_at` filter.
+async fn find_reading(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    raw: &str,
+) -> Result<control_readings::Model> {
     let pid = find_plan_pid(raw)?;
-    control_readings::Entity::find()
+    let reading = control_readings::Entity::find()
         .filter(control_readings::Column::Pid.eq(pid))
         .one(&ctx.db)
         .await
         .map_err(db_err)?
-        .ok_or(Error::NotFound)
+        .ok_or(Error::NotFound)?;
+    let control = controls::Entity::find()
+        .filter(controls::Column::Pid.eq(reading.control_pid))
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)?;
+    require_visible(ctx, caller, control.plan_pid).await?;
+    Ok(reading)
 }
 
-/// Load one live (not soft-deleted) control action by public id.
-async fn find_action(ctx: &AppContext, raw: &str) -> Result<control_actions::Model> {
+/// Load one live (not soft-deleted) control action by public id, if the caller can read its plan.
+async fn find_action(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    raw: &str,
+) -> Result<control_actions::Model> {
     let pid = find_plan_pid(raw)?;
-    control_actions::Entity::find()
+    let action = control_actions::Entity::find()
         .filter(control_actions::Column::Pid.eq(pid))
         .filter(control_actions::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
         .map_err(db_err)?
-        .ok_or(Error::NotFound)
+        .ok_or(Error::NotFound)?;
+    find_reading(ctx, caller, &action.reading_pid.to_string()).await?;
+    Ok(action)
 }
 
 /// Parse a wire token into a [`rules::Timing`].
@@ -541,7 +576,7 @@ async fn remove(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let row = find_control(&ctx, &pid).await?;
+    let row = find_control(&ctx, &caller, &pid).await?;
     let plan_pid = row.plan_pid;
     let mut active: controls::ActiveModel = row.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
@@ -583,7 +618,7 @@ async fn add_reading(
     caller: MaybeAuthUser,
     Json(payload): Json<ReadingPayload>,
 ) -> Result<Response> {
-    let control = find_control(&ctx, &pid).await?;
+    let control = find_control(&ctx, &caller, &pid).await?;
     let (verdict, gap) = rules::compare(&standard_of(&control), payload.value);
 
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
@@ -625,8 +660,12 @@ async fn add_reading(
 
 /// `GET /api/controls/{pid}/readings` — newest first.
 #[debug_handler]
-async fn list_readings(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<Response> {
-    let control = find_control(&ctx, &pid).await?;
+async fn list_readings(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+) -> Result<Response> {
+    let control = find_control(&ctx, &caller, &pid).await?;
     let rows = control_readings::Entity::find()
         .filter(control_readings::Column::ControlPid.eq(control.pid))
         .order_by_desc(control_readings::Column::ObservedAt)
@@ -662,7 +701,7 @@ async fn add_action(
     caller: MaybeAuthUser,
     Json(payload): Json<ActionPayload>,
 ) -> Result<Response> {
-    let reading = find_reading(&ctx, &pid).await?;
+    let reading = find_reading(&ctx, &caller, &pid).await?;
     if !["correct", "adjust", "retrain", "accept", "escalate"].contains(&payload.kind.as_str()) {
         return Err(unprocessable(
             "kind must be correct, adjust, retrain, accept, or escalate",
@@ -816,7 +855,7 @@ async fn convert_action(
         Some("issue") => true,
         Some(_) => return Err(unprocessable("to must be task or issue")),
     };
-    let action = find_action(&ctx, &pid).await?;
+    let action = find_action(&ctx, &caller, &pid).await?;
     if action.converted_task_pid.is_some() || action.converted_issue_pid.is_some() {
         return Err(unprocessable("action is already converted"));
     }
@@ -837,13 +876,6 @@ async fn convert_action(
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
 
-    // The action is reached by its own pid, outside the plan guard, so the plan is checked here.
-    if super::plan_access::readable_plans(&ctx, &caller, &[control.plan_pid])
-        .await
-        .is_empty()
-    {
-        return Err(Error::NotFound);
-    }
     if to_issue {
         let standing = super::plan_roles::standing(&ctx, &caller, control.plan_pid).await?;
         super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_ADD])?;

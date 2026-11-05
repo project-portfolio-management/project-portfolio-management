@@ -2407,6 +2407,9 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 - [x] **OC-10 (S) — Task workflows need an administrator.** **Built 2026-11-05:** registering or withdrawing any workflow needs
   `access=admin`, at the owner's decision, so a task workflow's role restriction holds.
 
+- [x] **OC-11 (S) — A private plan's controls are private.** **Built 2026-11-05:** every route that reaches a control, reading or
+  action by its own pid checks the plan.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

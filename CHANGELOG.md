@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-11: a private plan's controls are private)
+
+- `/api/controls/{pid}`, `/api/controls/{pid}/readings`, `/api/readings/{pid}/actions` and `/api/actions/{pid}/convert` sit outside the
+  plan guard, and only conversion checked the plan. Someone outside a private plan who knew a pid could read its control readings, add
+  readings and actions, and remove a control. This predates OC-1. Each lookup now answers `404`, with a test on every route.
+- Not done: the same pattern was not looked for elsewhere. Other routes that reach a plan's records by their own pid may have this gap,
+  and a census of them would be worth doing. Not verified: a handling-marked plan on these routes beyond what `readable_plans` covers.
+
 ### 5 November (OC-10: task workflows need an administrator)
 
 - Registering or withdrawing a task workflow now needs an administrator, as an issue workflow does, so a role restriction on a task

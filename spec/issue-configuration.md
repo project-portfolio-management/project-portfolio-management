@@ -126,7 +126,8 @@ declares has no words, and shows as its key in plain words.
 A save is refused (`409`) if the issue's status or type changed after the save read it, so a stale save cannot undo a gated move.
 A workflow is read and written through its plan's visibility: to someone who cannot read the plan, the plan and its workflows are
 `404`, for every method and whatever else is wrong with the request. An issue's audit rows are hidden with its plan, in the recent
-feed and by pid. "One open issue per source" looks at this plan only. Linking an issue to a change request is not an edit of the
+feed and by pid. Controls, readings and actions are reached by their own pids, outside the plan guard, so each lookup checks the
+plan itself (OC-11): someone who cannot read the plan gets `404` on every such route. "One open issue per source" looks at this plan only. Linking an issue to a change request is not an edit of the
 issue, needs no permission here and is audited on the change request.
 
 ## Who can change what
@@ -172,8 +173,6 @@ shows the words the service sends with each issue, in the reader's language wher
 
 - An audit row about a role keeps the person's reference in its snapshot, which erasure does not search; see the retention schedule.
   The membership itself is deleted on erasure under the delete policy.
-- Control readings and actions are reached by their own pids, outside the plan guard. Conversion now checks the plan; reading them
-  and adding to them do not, which predates this work.
 - Only an administrator manages a plan's role members. Redmine also lets a project member with the permission do it.
 - Permissions cover issue actions only. Redmine's roles also govern queries, notes, watchers, relations and more, and can narrow
   which issues a role sees. Here, what a person sees is decided by the plan's privacy alone.

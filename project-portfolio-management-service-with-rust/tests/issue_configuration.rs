@@ -1876,3 +1876,99 @@ async fn a_task_workflow_needs_an_administrator_and_a_usable_shape() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_private_plans_controls_answer_only_to_those_who_can_read_it() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let outsider = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &admin, "Controlled").await;
+        let control: Value = request
+            .post(&format!("/api/plans/{plan}/controls"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({
+                "name": "Gate readiness", "timing": "feedforward",
+                "metric": "gate_readiness", "target_value": 10_000, "comparator": "at_least",
+            }))
+            .await
+            .json();
+        let control = control["pid"].as_str().expect("control pid").to_string();
+        let reading: Value = request
+            .post(&format!("/api/controls/{control}/readings"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "value": 600, "method": "automatic" }))
+            .await
+            .json();
+        let reading = reading["pid"].as_str().expect("reading pid").to_string();
+        let action = json!({ "kind": "correct", "description": "Fix the gate" });
+        let added: Value = request
+            .post(&format!("/api/readings/{reading}/actions"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&action)
+            .await
+            .json();
+        let added = added["pid"].as_str().expect("action pid").to_string();
+
+        // Before the plan is private, an outsider can read; afterwards every route is `404`.
+        let open = request
+            .get(&format!("/api/controls/{control}/readings"))
+            .add_header(outsider.0.clone(), outsider.1.clone())
+            .await;
+        assert_eq!(open.status_code(), 200);
+        assert_eq!(
+            put_status(
+                &request,
+                &admin,
+                &format!("/api/plans/{plan}/access"),
+                &json!({ "private": true, "members": [] }),
+            )
+            .await,
+            200
+        );
+        let reading_body = json!({ "value": 1, "method": "automatic" });
+        for answer in [
+            request
+                .get(&format!("/api/controls/{control}/readings"))
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .await,
+            request
+                .post(&format!("/api/controls/{control}/readings"))
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .json(&reading_body)
+                .await,
+            request
+                .post(&format!("/api/readings/{reading}/actions"))
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .json(&action)
+                .await,
+            request
+                .post(&format!("/api/actions/{added}/convert?to=issue"))
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .await,
+            request
+                .delete(&format!("/api/controls/{control}"))
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .await,
+        ] {
+            assert_eq!(answer.status_code(), 404, "{}", answer.text());
+        }
+
+        // Someone who can read the plan still can.
+        let member = request
+            .get(&format!("/api/controls/{control}/readings"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await;
+        assert_eq!(member.status_code(), 200);
+        let converted = request
+            .post(&format!("/api/actions/{added}/convert?to=issue"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await;
+        assert_eq!(converted.status_code(), 200, "{}", converted.text());
+    })
+    .await;
+}

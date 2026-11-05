@@ -1808,7 +1808,7 @@ was light: searches varied by capability and term of art, and the last rounds ad
 ## 87. Sequencing and open questions
 
 1. **Now:** owner decisions PE-16 and SM-17. SM-1 is done.
-2. **The register:** PE-1 (census, can change the design), PE-2, PE-3, PE-4, the register part of PE-13. This alone answers the owner's example for search, fields and issue logging.
+2. **The register:** PE-1 (done: 24 of 101 views count a bare product, 9 rightly), PE-2 (proves the hook), PE-3, PE-4, the register part of PE-13. This alone answers the owner's example for search, fields and issue logging.
 3. **Evaluation:** PE-5, PE-6, PE-7, then the decision in PE-11.
 4. **Assessment and approval:** PE-8, PE-10, PE-9, PE-12.
 5. **Service foundations:** SM-2, SM-8, SM-3.

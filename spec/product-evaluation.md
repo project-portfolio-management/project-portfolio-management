@@ -53,10 +53,26 @@ main decision (PE-D1). The reasons:
 - **The matcher works on plans,** so a request for a tool that was rejected last year is found by what it does, under a new name.
 - **The project's position is one record type.** Portfolios, programmes, projects and products already share it.
 
-The cost is the risk to weigh: **a product is not funded work.** A tool someone merely proposed would appear in every portfolio
-total, capacity view and director pack that counts plans. PE-1 therefore starts with a census of those views, and the default is
-that a product plan counts in none of them until the owner says otherwise. If the census shows that cannot be held cheaply, the
-alternative is a `products` table with a plan created only when a product enters evaluation.
+The cost is the risk to weigh: **a product is not funded work.** PE-1 measured it on 2026-11-05, by adding a `Product` plan and
+comparing 101 aggregate views before and after (`census_of_what_a_product_plan_touches` in `tests/private_aggregates.rs`):
+
+| What was added | Views that changed |
+| --- | --- |
+| A bare product plan: the record of a tool someone merely proposed | 24 |
+| A product plan with tasks, budget, staff, risks and issues on it | 58 |
+
+**Leaving a product out of everything would be wrong.** Of the 24, nine are records that should show it from the start: the audit trail,
+the evidence pack, the integrity checks, the regulator extract, the recent activity feeds and the plan list. Hiding a record from an auditor to keep a
+chart tidy is the wrong trade. The other 15 are decision views that a mere proposal should not move: at-a-glance, the board pack, executive
+health and alignment, prioritization, lifecycle, the scenario frontier, and a parent's rollups. The test names both lists, so a new view has to be sorted.
+
+**Money and work on a product are real.** Once a product has a budget line or tasks, it is spending, and a total that left that out would mislead. So the
+rule turns on the stage, not on the kind: **a product in an intake or closed stage is left out of the decision views, and one in an active, in-use or
+held stage counts like any plan.** See PE-D2.
+
+Most of the 15 go through `HiddenScope`, so the likely hook is a scope for totals that adds these products and leaves access alone. `controllers/cpm.rs`
+has no call to it, and `engineering/mod.rs` has none at its top level, so those two need looking at. The hook has not been built, because it needs the
+stage from PE-2. The alternative, should it fail, stays a `products` table with a plan created when a product enters evaluation.
 
 ### The lifecycle
 
@@ -215,11 +231,9 @@ See [`tasks.md`](../tasks.md), "Product evaluation (PE-n)".
 
 ## Decisions (proposed, the owner's)
 
-- **PE-D1. A product is a plan,** with a profile. **Confirmed by the owner 2026-11-05,** subject to the PE-1 census. First reading of that census: plans
-  are loaded directly in 101 places across 60 files, so there is no one loader to change, but `HiddenScope::of` is called in 75 places across 34 files and is what
-  the aggregates pass through. The likely hook is a separate scope for totals that also leaves out product plans, leaving access unchanged, with the
-  `tests/private_aggregates.rs` comparison run with a product plan seeded to catch what does not pass through it. That is read from the code, not yet tried.
-- **PE-D2. A product plan counts in no portfolio total** unless a person says it should.
+- **PE-D1. A product is a plan,** with a profile. **Confirmed by the owner 2026-11-05.** The PE-1 census supports it, with the hook still to be proved in PE-2.
+- **PE-D2. A product in an intake or closed stage is left out of the decision views; every other stage counts as any plan does; record-keeping views always show it.**
+  Revised after the census, which showed that "counts in no portfolio total" would hide records from auditors and real spending from totals. Recommended; open.
 - **PE-D3. Scores are hidden until every evaluator has submitted.** Recommended. It costs a little convenience.
 - **PE-D4. AI is fields and templates, not a separate module.** Recommended.
 - **PE-D5. Bundled templates ship as data,** in the licence of the repository, drafted by machine and marked unreviewed until a competent

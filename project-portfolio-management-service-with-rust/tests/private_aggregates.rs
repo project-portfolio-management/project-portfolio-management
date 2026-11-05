@@ -598,11 +598,101 @@ async fn promoted_proposal(request: &axum_test::TestServer, who: &Who, title: &s
         .map_or_else(|| promoted.to_string(), str::to_string)
 }
 
+/// Record-keeping views that are right to show a product plan from the moment it exists.
+const PRODUCT_RECORD_VIEWS: &[&str] = &[
+    "/api/auditor/evidence-pack",
+    "/api/auditor/trail",
+    "/api/compliance/audit/verify",
+    "/api/compliance/records/verify",
+    "/api/plans",
+    "/api/plans/audit/recent",
+    "/api/plans/events/recent",
+    "/api/plans?parent={hub}",
+    "/api/regulator/extract",
+];
+
+/// Decision views that a tool someone merely proposed should not move. They count it today, because no product stage
+/// exists; PE-2 empties this list for a product in an intake stage, and PE-D2 is the rule.
+const PRODUCT_DECISION_VIEWS: &[&str] = &[
+    "/api/at-a-glance",
+    "/api/board/pack",
+    "/api/controls/coverage",
+    "/api/engineering/delivery-links",
+    "/api/engineering/moscow",
+    "/api/executive/alignment",
+    "/api/executive/health",
+    "/api/financials/forecast?plan={hub}",
+    "/api/lifecycle",
+    "/api/plans/{hub}/flow-distribution?rollup=true",
+    "/api/plans/{hub}/schedule",
+    "/api/prioritization",
+    "/api/prioritization?model=rice",
+    "/api/prioritization?model=wsjf",
+    "/api/scenarios/frontier?currency=GBP&steps=4",
+];
+
+/// PE-1: the census of what a product plan touches. A bare `Product` plan, the record of a tool someone merely proposed, is
+/// added, and every aggregate that changes must be sorted into one of the two lists above (`spec/product-evaluation.md`).
+#[tokio::test]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_aggregates -- --ignored`"]
+async fn census_of_what_a_product_plan_touches() {
+    let (keys, kid) = keys_and_kid();
+    // SAFETY: the binary runs with `--test-threads=1`, and each test writes the same values.
+    unsafe {
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");
+    }
+    let bob = hdr(&kid, BOB, &["write"]);
+    let admin = hdr(&kid, ADMIN, &["admin"]);
+    request::<App, _, _>(|request, _ctx| async move {
+        let shared: Value = request
+            .post("/api/objectives")
+            .add_header(bob.0.clone(), bob.1.clone())
+            .json(&json!({ "title": "Shared objective" }))
+            .await
+            .json();
+        let shared = shared["pid"].as_str().unwrap().to_string();
+        let hub: Value = request
+            .post("/api/plans")
+            .add_header(bob.0.clone(), bob.1.clone())
+            .json(&json!({ "kind": "Portfolio", "name": "Hub" }))
+            .await
+            .json();
+        let hub = hub["pid"].as_str().unwrap().to_string();
+        let public = seed(&request, &bob, "Public", 1, &shared, &hub).await;
+        let without = capture(&request, &admin, &public.plan, &hub).await;
+        // A tool someone merely proposed: the record and nothing on it.
+        request
+            .post("/api/plans")
+            .add_header(bob.0.clone(), bob.1.clone())
+            .json(&json!({ "kind": "Product", "name": "Proposed tool", "parent_ref": hub }))
+            .await
+            .assert_status_ok();
+        let bare = capture(&request, &admin, &public.plan, &hub).await;
+        let touched: Vec<&str> = without
+            .keys()
+            .filter(|path| without[*path] != bare[*path])
+            .map(String::as_str)
+            .collect();
+        let mut expected: Vec<&str> = PRODUCT_RECORD_VIEWS
+            .iter()
+            .chain(PRODUCT_DECISION_VIEWS)
+            .copied()
+            .collect();
+        expected.sort_unstable();
+        assert_eq!(
+            touched, expected,
+            "an aggregate that counts a bare product plan must be sorted into one of the two lists"
+        );
+    })
+    .await;
+}
+
 #[tokio::test]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_aggregates -- --ignored`"]
 async fn a_private_plan_is_in_no_aggregate_for_a_non_member() {
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: the binary runs with `--test-threads=1`, and each test writes the same values.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

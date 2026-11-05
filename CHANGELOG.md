@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (PE-1: what a product plan touches)
+
+- Measured, not inferred: of 101 aggregate views, a bare `Product` plan changes 24 and one with data of every kind changes 58. Nine of the 24 are records that should show it, such as the audit trail and the regulator extract; 15 are decision views that a mere proposal should not move. `census_of_what_a_product_plan_touches` names both lists, so a new view must be sorted. This changes the advice: "counts in no portfolio total" would have hidden records from auditors and real spending from totals, so PE-D2 now turns on the stage.
+- `/api/tpc` has no entry in the 24: a bare plan has no TPC row. The census also seeds one aggregate caller, an administrator.
+- Not done: the hook is not built, because it needs the stage from PE-2, so leaving a product out of the 15 is not yet proved and PE-D1 could still be reopened. `controllers/cpm.rs` and `engineering/mod.rs` show no `HiddenScope` call and need looking at. PE-D2 as revised is the owner's to confirm. Not verified: views outside the 101, such as director pack sections; that the 58 figure holds for a product with fewer kinds of data.
+
 ### 5 November (PE and SM: four decisions recorded)
 
 - The owner confirmed that a product is a plan (PE-D1), that this is a service record and not a help desk (SM-D1), and that bundled assessment templates ship as drafts marked unreviewed (PE-D5). The project is all free open source, so no Cyber Resilience Act role is claimed for it, and legal advice comes before any commercial step (SM-D5).

@@ -837,7 +837,16 @@ async fn convert_action(
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
 
+    // The action is reached by its own pid, outside the plan guard, so the plan is checked here.
+    if super::plan_access::readable_plans(&ctx, &caller, &[control.plan_pid])
+        .await
+        .is_empty()
+    {
+        return Err(Error::NotFound);
+    }
     if to_issue {
+        let standing = super::plan_roles::standing(&ctx, &caller, control.plan_pid).await?;
+        super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_ADD])?;
         return convert_to_issue(&ctx, &caller, &action, &control).await;
     }
 

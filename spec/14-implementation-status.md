@@ -29,12 +29,12 @@ no network, database or compilation; counts are source lines, not test runs):
 | Matcher version | 0.2.2 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.2.0 | `version` in the front-end `package.json` |
 | Migrations | 138 | files named `m2*.rs` in `migration/src` |
-| Mounted routes | 683 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
+| Mounted routes | 684 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
 | Documented API paths | 541 | path keys in the service's `openapi.json` |
-| Service tests | 1533, plus 282 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1535, plus 284 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
-| Front-end unit tests (vitest) | 711 | `it(` / `test(` lines in `tests/unit` |
-| Front-end end-to-end tests (Playwright) | 312 | `test(` lines in `tests/e2e` |
+| Front-end unit tests (vitest) | 719 | `it(` / `test(` lines in `tests/unit` |
+| Front-end end-to-end tests (Playwright) | 317 | `test(` lines in `tests/e2e` |
 | Locales | 10 | entries of `LOCALES` in `src/lib/locales.ts` |
 
 **Task boxes in [`tasks.md`](../tasks.md)** (ticked / open, by prefix):
@@ -64,10 +64,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | BR | 15 | 2 |
 | FB | 6 | 2 |
 | GP | 7 | 0 |
-| OC | 6 | 0 |
+| OC | 7 | 0 |
 | LC | 0 | 10 |
 | UE | 1 | 7 |
-| **Total** | **217** | **29** |
+| **Total** | **218** | **29** |
 
 <!-- generated:end -->
 

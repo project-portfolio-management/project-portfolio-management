@@ -883,11 +883,19 @@ async fn recent_audit(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> R
 ///
 /// `400` when `pid` is not a UUID.
 #[debug_handler]
-async fn entity_audit(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<Response> {
+async fn entity_audit(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+) -> Result<Response> {
     let Ok(uuid) = uuid::Uuid::parse_str(&pid) else {
         return bad_request("invalid pid");
     };
-    let rows = AuditModel::for_entity(&ctx.db, uuid).await?;
+    // The route takes any entity's pid, and the guard only knows plans, so the rows pass the same filter as the feed.
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let rows = scope
+        .visible_audit(&ctx, AuditModel::for_entity(&ctx.db, uuid).await?)
+        .await?;
     format::json(rows)
 }
 

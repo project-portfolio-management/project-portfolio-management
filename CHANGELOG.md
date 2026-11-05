@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-9: what the independent review of OC-2 to OC-6 found)
+
+- **A private plan's issue titles, statuses and owners were readable by outsiders** in `GET /api/plans/audit/recent`, and by issue pid
+  through `GET /api/plans/{pid}/audit`, which never checked the pid was a plan. This predates OC-1. A failing test confirmed it; both
+  are closed. Anything already fetched or copied cannot be recalled.
+- `POST`, `DELETE`, `PUT` and the new `GET` on `/api/workflows` answer `404` for a plan the caller cannot read. Before this a writer
+  could confirm a hidden plan exists and install a task workflow on it.
+- Converting a control action into an issue needs `issue_add` and a plan the caller can read. A resolution counts as part of a move
+  only when the move finishes the issue. A stale save gets `409` rather than undoing a move. Removing an issue under a restricted
+  workflow needs an administrator on a plan with no members. Role memberships are deleted on erasure under the delete policy and are
+  classed `PPL`. "One open issue per source" no longer answers for another plan.
+- Not done: control readings and actions are still reached outside the plan guard, apart from conversion. An audit row about a role
+  keeps the person's reference, which erasure does not search. Two identical memberships added at once give a `500`, not a `409`. Not
+  verified: the `409` on a stale save has no race test, because the window cannot be forced through the API; the tests cover the
+  sequential paths. Other plan-owned tables were not audited for the same gap as `issues`.
+
 ### 5 November (OC-6: workflows change in place, and custom words are translated)
 
 - An administrator can change an issue workflow in place, in one audited step, rather than withdrawing and registering it.
@@ -22,14 +38,14 @@ It is pre-1.0; the first release cut from the root release workflow is
   label and translations from the service.
 - Not done: task workflows are still withdrawn and registered again; a workflow's scope cannot change; two plans wording one status
   differently share one word in the summary's counts. The interface comes with OC-7. These labels are the organization's own
-  words, so they are outside the translation reviews.
+  words, so they are outside the translation reviews. Not verified: a right-to-left label in the interface.
 
 ### 5 November (OC-5: issue types by plan)
 
 - A plan can limit itself to some of the deployment's issue types, as a Redmine project selects its trackers. A plan with no list
   offers every type, so nothing changes until an administrator chooses.
 - Not done: only an administrator chooses; the interface comes with OC-7. Issues the service raises from a risk, a blocked task or
-  a control action are not limited.
+  a control action are not limited. Not verified: a very long list of types on one plan.
 
 ### 5 November (OC-4: field rules by status)
 

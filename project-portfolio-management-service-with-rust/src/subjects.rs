@@ -178,6 +178,7 @@ pub const OWN_ROWS: &[(&str, &str)] = &[
     ("notification_prefs", "sub"),
     ("notification_sinks", "sub"),
     ("notifications", "recipient_ref"),
+    ("plan_role_members", "person_ref"),
     ("planned_slots", "sub"),
     ("reactions", "sub"),
     ("saved_views", "sub"),

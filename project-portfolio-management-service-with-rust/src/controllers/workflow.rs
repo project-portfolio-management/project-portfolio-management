@@ -438,6 +438,36 @@ async fn check_scope(
     Ok(())
 }
 
+/// `404` unless the plan is live and the caller can read it, so a hidden plan looks the same as one that does not exist.
+async fn require_readable_plan(ctx: &AppContext, caller: &MaybeAuthUser, plan: Uuid) -> Result<()> {
+    let readable = super::plan_access::readable_plans(ctx, caller, &[plan]).await;
+    if readable.contains(&plan) {
+        Ok(())
+    } else {
+        Err(Error::NotFound)
+    }
+}
+
+/// The live workflow a path names, if the caller can read its plan; `404` otherwise.
+async fn require_workflow(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    pid: &str,
+) -> Result<workflows::Model> {
+    let pid = super::parse_pid(pid)?;
+    let workflow = workflows::Entity::find()
+        .filter(workflows::Column::Pid.eq(pid))
+        .filter(workflows::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)?;
+    if let Some(plan) = workflow.plan_pid {
+        require_readable_plan(ctx, caller, plan).await?;
+    }
+    Ok(workflow)
+}
+
 /// Build and check a definition from a request, so registering and changing a workflow refuse the same things.
 async fn definition_from(
     ctx: &AppContext,
@@ -465,7 +495,14 @@ async fn definition_from(
             wip_limit: state.wip_limit,
             is_initial: state.is_initial,
             is_terminal: state.is_terminal,
-            field_rules: state.field_rules.clone(),
+            field_rules: state
+                .field_rules
+                .iter()
+                .map(|r| rules::FieldRule {
+                    roles: r.roles.iter().map(|x| x.trim().to_string()).collect(),
+                    ..r.clone()
+                })
+                .collect(),
         });
     }
 
@@ -484,10 +521,16 @@ async fn definition_from(
         .transitions
         .iter()
         .flat_map(|t| &t.roles)
+        .chain(
+            def.states
+                .iter()
+                .flat_map(|s| &s.field_rules)
+                .flat_map(|r| &r.roles),
+        )
         .any(|r| r.is_empty() || r.chars().count() > 64)
     {
         return Err(unprocessable(
-            "transition roles must be non-blank names of at most 64 characters",
+            "roles must be non-blank names of at most 64 characters",
         ));
     }
     if applies_to == "issue" {
@@ -529,20 +572,12 @@ async fn create(
     caller: MaybeAuthUser,
     Json(payload): Json<WorkflowPayload>,
 ) -> Result<Response> {
+    if let Some(plan_pid) = payload.plan_pid {
+        require_readable_plan(&ctx, &caller, plan_pid).await?;
+    }
     check_scope(&ctx, &caller, &payload).await?;
     if payload.name.trim().is_empty() || payload.name.len() > crate::validation::MAX_TEXT_LEN {
         return Err(unprocessable("name is required (and capped)"));
-    }
-    if let Some(plan_pid) = payload.plan_pid {
-        let exists = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(plan_pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        if exists.is_none() {
-            return Err(Error::NotFound);
-        }
     }
 
     let def = definition_from(
@@ -595,26 +630,13 @@ async fn change(
     caller: MaybeAuthUser,
     Json(payload): Json<ChangeWorkflow>,
 ) -> Result<Response> {
-    let workflow_pid = super::parse_pid(&pid)?;
-    let workflow = workflows::Entity::find()
-        .filter(workflows::Column::Pid.eq(workflow_pid))
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let workflow = require_workflow(&ctx, &caller, &pid).await?;
     if workflow.applies_to != "issue" {
         return Err(unprocessable(
             "only an issue workflow can be changed in place",
         ));
     }
     require_issue_admin(&caller)?;
-    if let Some(plan) = workflow.plan_pid {
-        let readable = super::plan_access::readable_plans(&ctx, &caller, &[plan]).await;
-        if !readable.contains(&plan) {
-            return Err(Error::NotFound);
-        }
-    }
     let name = payload.name.trim().to_string();
     if name.is_empty() || name.len() > crate::validation::MAX_TEXT_LEN {
         return Err(unprocessable("name is required (and capped)"));
@@ -754,6 +776,20 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
     format::json(serde_json::json!(rows))
 }
 
+/// `GET /api/workflows/{pid}` — one workflow with its states and moves, so a form can change it.
+#[debug_handler]
+async fn one(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+) -> Result<Response> {
+    let row = require_workflow(&ctx, &caller, &pid).await?;
+    let def = definition_of(&ctx, row.pid).await?;
+    let mut out = serde_json::json!(row);
+    out["workflow"] = serde_json::json!(def);
+    format::json(out)
+}
+
 /// `DELETE /api/workflows/{pid}` — withdraw a workflow.
 ///
 /// Refused while any live task sits in a state only this workflow
@@ -766,14 +802,7 @@ async fn remove(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let workflow_pid = super::parse_pid(&pid)?;
-    let workflow = workflows::Entity::find()
-        .filter(workflows::Column::Pid.eq(workflow_pid))
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let workflow = require_workflow(&ctx, &caller, &pid).await?;
 
     if workflow.applies_to == "issue" {
         require_issue_admin(&caller)?;
@@ -892,6 +921,7 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/workflows", post(create))
         .add("/workflows", get(list))
+        .add("/workflows/{pid}", get(one))
         .add("/workflows/{pid}", put(change))
         .add("/workflows/{pid}", delete(remove))
         .add("/plans/{pid}/workflow", get(plan_workflow))

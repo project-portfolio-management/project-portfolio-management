@@ -629,7 +629,7 @@ async fn plan_options(
         .collect();
     format::json(serde_json::json!({
         "types": out, "caller_roles": standing.roles,
-        "enforced": standing.enforced, "caller_permissions": allowed,
+        "enforced": standing.enforced, "caller_permissions": allowed, "caller_admin": standing.admin,
     }))
 }
 

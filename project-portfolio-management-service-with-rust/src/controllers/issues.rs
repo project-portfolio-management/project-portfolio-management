@@ -568,8 +568,11 @@ async fn update(
     let moved = wanted != row.status;
     let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
     let changed = changed_fields(&row, &b, &kind, raised_on);
-    // A resolution belongs to the move that needs it, so it is not an edit when the status changes.
-    let edited = changed.iter().any(|f| !(moved && *f == "resolution"));
+    // A resolution belongs to a move that finishes the issue, so it is not an edit there.
+    let finishes = moved
+        && (crate::workflow::is_done(&def, &wanted)
+            || def.states.iter().any(|s| s.key == wanted && s.is_terminal));
+    let edited = changed.iter().any(|f| !(finishes && *f == "resolution"));
     super::plan_roles::require(
         &standing,
         &crate::plan_roles::needed_for_save(moved, edited),
@@ -593,6 +596,7 @@ async fn update(
         "title": row.title, "kind": row.kind, "severity": row.severity, "status": row.status,
         "status_category": row.status_category, "owner_ref": row.owner_ref,
     });
+    let (issue_pid, read_status, read_kind) = (row.pid, row.status.clone(), row.kind.clone());
     let resolved_on = rules::resolved_on(&at.category, row.resolved_on, now);
     let mut a: issues::ActiveModel = row.into();
     a.title = ActiveValue::set(b.title.trim().to_string());
@@ -610,13 +614,32 @@ async fn update(
     a.source_risk_pid = ActiveValue::set(b.source_risk_pid);
     a.source_task_pid = ActiveValue::set(b.source_task_pid);
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
+    // Every check above read the issue as it was. If a move landed since, saving would undo it past its gate.
+    let saved = issues::Entity::update_many()
+        .set(a)
+        .filter(issues::Column::Pid.eq(issue_pid))
+        .filter(issues::Column::Status.eq(read_status))
+        .filter(issues::Column::Kind.eq(read_kind))
+        .exec(&txn)
+        .await
+        .map_err(db_err)?;
+    if saved.rows_affected == 0 {
+        return Err(super::conflict(
+            "this issue moved while it was being saved; reload it and try again",
+        ));
+    }
+    let row = issues::Entity::find()
+        .filter(issues::Column::Pid.eq(issue_pid))
+        .one(&txn)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)?;
     AuditModel::record(
         &txn,
         row.pid,
         "issue_changed",
         caller.actor(),
-        Some(serde_json::json!({ "from": was,
+        Some(serde_json::json!({ "plan_pid": plan, "from": was,
             "to": { "title": row.title, "kind": row.kind, "severity": row.severity,
                     "status": row.status, "status_category": row.status_category,
                     "owner_ref": row.owner_ref } })),
@@ -638,12 +661,22 @@ async fn remove(
     let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
     super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_DELETE])?;
     let row = find(&ctx, plan, &pid).await?;
+    // Removing an issue and raising another would otherwise step round its workflow's gates and field rules.
+    let def = super::workflow::in_force_issue(&ctx, plan, &row.kind).await?;
+    if !standing.enforced && !standing.admin && crate::workflow::restricts_saves(&def) {
+        return Err(super::forbidden(
+            "only an administrator can remove an issue under a workflow that restricts moves or fields",
+        ));
+    }
     let pid = row.pid;
+    let detail = serde_json::json!({
+        "plan_pid": plan, "title": row.title, "kind": row.kind, "status": row.status,
+    });
     let mut a: issues::ActiveModel = row.into();
     a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "issue_removed", caller.actor(), None)
+    AuditModel::record(&txn, pid, "issue_removed", caller.actor(), Some(detail))
         .await
         .map_err(super::audit_failed)?;
     txn.commit().await.map_err(super::db_err)?;
@@ -785,13 +818,16 @@ async fn register(
     }))
 }
 
-/// A live, unfinished issue already raised from this source, if any.
+/// A live, unfinished issue on this plan already raised from this source, if any. Only this plan's: an issue on another
+/// plan can name any pid, and answering for it would disclose that issue.
 async fn existing_open(
     ctx: &AppContext,
+    plan: Uuid,
     column: issues::Column,
     source: Uuid,
 ) -> Result<Option<issues::Model>> {
     issues::Entity::find()
+        .filter(issues::Column::PlanPid.eq(plan))
         .filter(column.eq(source))
         .filter(issues::Column::DeletedAt.is_null())
         .filter(issues::Column::StatusCategory.ne("done"))
@@ -892,7 +928,7 @@ async fn from_risk(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
-    if let Some(found) = existing_open(&ctx, issues::Column::SourceRiskPid, risk.pid).await? {
+    if let Some(found) = existing_open(&ctx, plan, issues::Column::SourceRiskPid, risk.pid).await? {
         return Err(already(&found));
     }
     let severity = rules::severity_from_exposure(risk.probability * risk.impact);
@@ -938,7 +974,7 @@ async fn from_task(
             "only a blocked task can be raised as an issue",
         ));
     }
-    if let Some(found) = existing_open(&ctx, issues::Column::SourceTaskPid, task.pid).await? {
+    if let Some(found) = existing_open(&ctx, plan, issues::Column::SourceTaskPid, task.pid).await? {
         return Err(already(&found));
     }
     let row = insert_from_source(

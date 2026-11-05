@@ -34798,6 +34798,28 @@
           "workflow"
         ]
       },
+      "get": {
+        "description": "`GET /api/workflows/{pid}` — one workflow with its states and moves, so a form can change it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/workflows/{pid}` — one workflow with its states and moves, so a form can change it",
+        "tags": [
+          "workflow"
+        ]
+      },
       "put": {
         "description": "`PUT /api/workflows/{pid}` — change an issue workflow in place (an administrator): one change, audited with what it was. An issue in a status that goes keeps it, as when a workflow is withdrawn. A task workflow is withdrawn and registered again, which keeps the check on work left in a removed state.",
         "parameters": [

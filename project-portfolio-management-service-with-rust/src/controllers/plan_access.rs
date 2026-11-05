@@ -418,6 +418,7 @@ impl HiddenScope {
         }
         owned!(
             risks,
+            issues,
             budget_lines,
             milestones,
             allocations,

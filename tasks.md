@@ -2394,6 +2394,10 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 - [x] **OC-6 (M) — Workflows change in place, and custom words are translated.** **Built 2026-11-05:** `PUT /api/workflows/{pid}`
   for issue workflows, `labels` on types, roles and states, and the words of a status on the cross-plan register.
 
+- [x] **OC-9 (M) — What the independent review of OC-2 to OC-6 found.** **Built 2026-11-05:** a private plan's issues leave the
+  audit feed and `/api/plans/{pid}/audit`; workflows are read and written through their plan's visibility; converting a control action
+  needs `issue_add`; a stale save cannot undo a move; removing a gated issue needs an administrator; erasure deletes role memberships.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

@@ -758,6 +758,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/workflows", "workflow", "`GET /api/workflows` — every registered workflow, leaving out those of a plan the caller cannot read: a plan's workflow names the plan and how its work is typed."),
     ("post", "/api/workflows", "workflow", "`POST /api/workflows` — register a workflow."),
     ("delete", "/api/workflows/{pid}", "workflow", "`DELETE /api/workflows/{pid}` — withdraw a workflow.  Refused while any live task sits in a state only this workflow declares: withdrawing it would leave that work in a state no vocabulary explains, which is exactly the uncategorized-state problem the category column exists to prevent."),
+    ("get", "/api/workflows/{pid}", "workflow", "`GET /api/workflows/{pid}` — one workflow with its states and moves, so a form can change it."),
     ("put", "/api/workflows/{pid}", "workflow", "`PUT /api/workflows/{pid}` — change an issue workflow in place (an administrator): one change, audited with what it was. An issue in a status that goes keeps it, as when a workflow is withdrawn. A task workflow is withdrawn and registered again, which keeps the check on work left in a removed state."),
     ("post", "/api/working-time", "effort", "`POST /api/working-time` — declare the capacity basis."),
     ("get", "/metrics.prom", "metrics", "Render the process-wide registry in Prometheus text-exposition format.  Responds `200` with `Content-Type: text/plain; version=0.0.4` (see [`metrics::CONTENT_TYPE`]) and the gathered metric families as the body."),

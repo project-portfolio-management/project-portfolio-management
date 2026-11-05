@@ -68,13 +68,18 @@ list is fixed; any other word is refused (`422`).
 anyone until an administrator adds the first member. From then on, each of those actions on that plan needs the permission
 (`403`), from a role that is not retired, whether held on the plan or carried by the token's `role` attribute. Reading is not
 affected. A save that moves an issue and changes nothing else needs only `issue_move`; any other save needs `issue_edit`, and a
-save that does both needs both. Removing the plan's last member ends enforcement. An issue raised by the service's own paths on a
-control action is not checked, because the person is acting on the control.
+save that does both needs both. A resolution given with a move into a finished or terminal state counts as part of the move; given
+with any other save, it is an edit. Removing the plan's last member ends enforcement. Converting a control action into an issue needs `issue_add` too, because the
+text of an action is whatever the caller typed.
 
 **The token stays the ceiling.** A write must pass the token's policy before any of this runs, so a role can only narrow what a
 caller may do. A role cannot make a read-only token write, cannot open a private plan, and cannot make anyone an administrator:
 that comes from `access=admin` alone, and a test proves that holding a role named `admin` gives nothing. A person cannot be given
 a role on a private plan until they are on its access list (`422`), because the membership would do nothing.
+
+**Removing an issue.** On an enforced plan, `issue_delete` is enough. On a plan with no members, removing an issue under a workflow
+that restricts moves or fields needs an administrator (`403`), because removing an issue and raising another would step round them.
+An audit row keeps the issue's title, type and status.
 
 **Roles open gates.** A role held on a plan counts, with the token's, for that plan's role-restricted moves, on issues and on
 tasks. It counts on that plan only. A retired role held on a plan counts for nothing. A gate satisfied by a role in the token keeps
@@ -96,7 +101,9 @@ It binds an administrator too. An issue the service raises from a risk, a blocke
 nobody has had the chance to fill anything; the next person to save it must.
 
 **Read-only** binds a save while the issue is in that state: the field cannot change, and clearing it is a change (`403`, naming
-it). It is read from the state the issue is in before the save, so a state can be locked and a move out of it is still possible.
+it). It is read from the state the issue is in before the save, so a state can be locked and a move out of it is still possible. A
+read-only rule is only as strong as the moves around it: in a workflow with no restricted moves, someone can move an issue out, edit
+it and move it back. To hold a field, also restrict the moves out of that state.
 It does not bind an administrator, who has to be able to correct a record.
 
 A field cannot be both required and read-only in one state, whoever each rule binds, because a blank one could never be saved
@@ -114,6 +121,14 @@ The cross-plan register has no workflow to hand, so the service adds the words: 
 the words for the counts; if two plans word one status differently, the first one seen speaks for both. A status no live workflow
 declares has no words, and shows as its key in plain words.
 
+## Saves and hidden plans
+
+A save is refused (`409`) if the issue's status or type changed after the save read it, so a stale save cannot undo a gated move.
+A workflow is read and written through its plan's visibility: to someone who cannot read the plan, the plan and its workflows are
+`404`, for every method and whatever else is wrong with the request. An issue's audit rows are hidden with its plan, in the recent
+feed and by pid. "One open issue per source" looks at this plan only. Linking an issue to a change request is not an edit of the
+issue, needs no permission here and is audited on the change request.
+
 ## Who can change what
 
 Anyone signed in can read the catalogues, and anyone who can see a plan can read its role members. Only an administrator
@@ -130,7 +145,8 @@ can be replaced by anyone who can write. That was already so and is left as it i
 
 `GET`, `POST /api/issue-types`; `PUT /api/issue-types/{key}`; `GET`, `POST /api/organization-roles`;
 `PUT /api/organization-roles/{key}`, whose bodies take `permissions`; `GET`, `POST /api/plans/{pid}/role-members`;
-`DELETE /api/plans/{pid}/role-members/{member_pid}`. The lists take `?include_retired=true`. `POST /api/workflows` takes `issue_type`; `PUT /api/workflows/{pid}` changes an issue workflow.
+`DELETE /api/plans/{pid}/role-members/{member_pid}`. The lists take `?include_retired=true`. `POST /api/workflows` takes `issue_type`; `GET /api/workflows/{pid}` reads one with its states and moves; `PUT /api/workflows/{pid}`
+changes an issue workflow.
 `GET`, `PUT /api/plans/{pid}/issue-types` read and set a plan's list. `GET /api/plans/{pid}/issues/options` returns each type with
 the workflow in force for it on that plan, marked `offered` if a person can choose it, retired ones marked too,
 and the caller's roles, permissions and whether the plan is enforced, so a form can leave out what the service would refuse. An issue's body takes `status` as optional: absent
@@ -144,6 +160,10 @@ read them. The service decides in every case. The cross-plan register shows the 
 
 ## Not built
 
+- An audit row about a role keeps the person's reference in its snapshot, which erasure does not search; see the retention schedule.
+  The membership itself is deleted on erasure under the delete policy.
+- Control readings and actions are reached by their own pids, outside the plan guard. Conversion now checks the plan; reading them
+  and adding to them do not, which predates this work.
 - Only an administrator manages a plan's role members. Redmine also lets a project member with the permission do it.
 - Permissions cover issue actions only. Redmine's roles also govern queries, notes, watchers, relations and more, and can narrow
   which issues a role sees. Here, what a person sees is decided by the plan's privacy alone.

@@ -1594,3 +1594,199 @@ async fn a_workflow_changes_in_place_and_its_words_reach_the_register_in_any_lan
     })
     .await;
 }
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_private_plans_issues_stay_out_of_the_audit_feed_and_workflow_writes() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let outsider = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &admin, "Audited").await;
+        assert_eq!(
+            put_status(
+                &request,
+                &admin,
+                &format!("/api/plans/{plan}/access"),
+                &json!({ "private": true, "members": [] }),
+            )
+            .await,
+            200
+        );
+        let issues = format!("/api/plans/{plan}/issues");
+        let raised: Value = request
+            .post(&issues)
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "title": "Nightingale raised" }))
+            .await
+            .json();
+        let pid = raised["pid"].as_str().expect("pid").to_string();
+        let edit = json!({ "title": "Nightingale changed" });
+        assert_eq!(
+            put_status(&request, &admin, &format!("{issues}/{pid}"), &edit).await,
+            200
+        );
+
+        // The recent feed leaves them out, and no route turns an issue's pid into its audit rows.
+        let feed = request
+            .get("/api/plans/audit/recent")
+            .add_header(outsider.0.clone(), outsider.1.clone())
+            .await
+            .text();
+        assert!(!feed.contains("Nightingale"), "{feed}");
+        let direct = request
+            .get(&format!("/api/plans/{pid}/audit"))
+            .add_header(outsider.0.clone(), outsider.1.clone())
+            .await;
+        assert!(!direct.text().contains("Nightingale"), "{}", direct.text());
+        let seen = request
+            .get("/api/plans/audit/recent")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await
+            .text();
+        assert!(seen.contains("Nightingale"), "the member still sees it");
+
+        // Removing an issue says what was removed, and stays out of the feed too.
+        let gone = request
+            .delete(&format!("{issues}/{pid}"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await;
+        assert_eq!(gone.status_code(), 200);
+        let feed = request
+            .get("/api/plans/audit/recent")
+            .add_header(outsider.0.clone(), outsider.1.clone())
+            .await
+            .text();
+        assert!(!feed.contains("issue_removed"), "{feed}");
+
+        // An outsider cannot find, or write a workflow to, a plan hidden from them.
+        let hidden_task_workflow = request
+            .post("/api/workflows")
+            .add_header(outsider.0.clone(), outsider.1.clone())
+            .json(&json!({
+                "name": "Planted", "applies_to": "task", "plan_pid": plan,
+                "states": [
+                    { "key": "a", "label": "A", "category": "todo", "is_initial": true },
+                    { "key": "b", "label": "B", "category": "done", "is_terminal": true },
+                ],
+            }))
+            .await;
+        assert_eq!(hidden_task_workflow.status_code(), 404);
+        let hers: Value = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({
+                "name": "Theirs", "applies_to": "task", "plan_pid": plan,
+                "states": [
+                    { "key": "a", "label": "A", "category": "todo", "is_initial": true },
+                    { "key": "b", "label": "B", "category": "done", "is_terminal": true },
+                ],
+            }))
+            .await
+            .json();
+        let path = format!("/api/workflows/{}", hers["pid"].as_str().expect("pid"));
+        for answer in [
+            request
+                .delete(&path)
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .await,
+            request
+                .get(&path)
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .await,
+            request
+                .put(&path)
+                .add_header(outsider.0.clone(), outsider.1.clone())
+                .json(&json!({ "name": "Mine", "states": [] }))
+                .await,
+        ] {
+            assert_eq!(answer.status_code(), 404, "{}", answer.text());
+        }
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn removing_or_a_move_only_save_gets_round_nothing() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let writer = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &admin, "Round nothing").await;
+        let issues = format!("/api/plans/{plan}/issues");
+
+        // Under a workflow that restricts moves, removing an issue needs an administrator on an unenforced plan.
+        let gated = triage_workflow("Gated", Some("bug"), Some(&plan));
+        let made = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&gated)
+            .await;
+        assert_eq!(made.status_code(), 200, "{}", made.text());
+        let raised: Value = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Gated", "kind": "bug" }))
+            .await
+            .json();
+        let path = format!("{issues}/{}", raised["pid"].as_str().expect("pid"));
+        let refused = request
+            .delete(&path)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await;
+        assert_eq!(refused.status_code(), 403);
+        let removed = request
+            .delete(&path)
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await;
+        assert_eq!(removed.status_code(), 200);
+
+        // `issue_move` carries a resolution into a finished status, and nowhere else.
+        add_role(&request, &admin, "mover", &["issue_move"]).await;
+        let raised: Value = request
+            .post(&issues)
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "title": "Moves" }))
+            .await
+            .json();
+        let path = format!("{issues}/{}", raised["pid"].as_str().expect("pid"));
+        add_member(&request, &admin, &plan, WRITER, "mover").await;
+        let aside =
+            json!({ "title": "Moves", "status": "in_progress", "resolution": "Sneaked in" });
+        assert_eq!(put_status(&request, &writer, &path, &aside).await, 403);
+        let finish = json!({ "title": "Moves", "status": "closed", "resolution": "Done" });
+        assert_eq!(put_status(&request, &writer, &path, &finish).await, 200);
+
+        // The same answer for a role that is only spaces, on a rule as on a move.
+        let mut blank = triage_workflow("Blank", Some("risk"), Some(&plan));
+        blank["states"][1]["field_rules"] =
+            json!([{ "field": "title", "rule": "read_only", "roles": [" "] }]);
+        let refused = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&blank)
+            .await;
+        assert_eq!(refused.status_code(), 422);
+
+        // A workflow can be read back whole for a form to change it.
+        let made: Value = made.json();
+        let read: Value = request
+            .get(&format!(
+                "/api/workflows/{}",
+                made["pid"].as_str().expect("pid")
+            ))
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await
+            .json();
+        assert_eq!(read["name"], "Gated");
+        assert_eq!(read["workflow"]["states"].as_array().map(Vec::len), Some(4));
+    })
+    .await;
+}

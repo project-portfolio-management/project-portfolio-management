@@ -8,7 +8,7 @@
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
   import { href } from "#lib/href.js";
-  import { choose, homeRoute, restoreChoice, shownLocale, siteTag, t, topicRoute, type MessageKey } from "#lib/i18n.svelte.js";
+  import { choose, homeRoute, restoreChoice, shownLocale, siteDir, siteTag, t, topicRoute, type MessageKey } from "#lib/i18n.svelte.js";
   import {
     BRIEF_LOCALES,
     DOC_PAGES,
@@ -155,8 +155,8 @@
   {#if isHome}<link rel="alternate" hreflang="x-default" href={href("/")} />{/if}
 </svelte:head>
 
-<a class="skip" href="#main" lang={siteTag()}>{t("skip")}</a>
-<header class="site-header" lang={siteTag()} dir={locale && isRtl(locale) ? "rtl" : "ltr"}>
+<a class="skip" href="#main" lang={siteTag()} dir={siteDir()}>{t("skip")}</a>
+<header class="site-header" lang={siteTag()} dir={siteDir()}>
   <a class="brand" href={href(homeRoute())}>{t("brand")}</a>
   <nav aria-label={t("nav.aria")}>
     <ul>
@@ -208,12 +208,12 @@
 
 <main id="main" tabindex="-1">{@render children()}</main>
 
-<footer class="site-footer" lang={siteTag()} dir="ltr">
+<footer class="site-footer" lang={siteTag()} dir={siteDir()}>
   <p>
     {t("footer.lead")} <a href={REPO_URL}>{t("footer.link")}</a>.
     {#each t("footer.tail").split(/(\{\w+\})/) as part, i (i)}
-      {#if part === "{dir}"}<code>project-portfolio-management.github.io/</code
-        >{:else if part === "{tool}"}<code>git subtree</code>{:else}{part}{/if}
+      {#if part === "{dir}"}<code dir="ltr">project-portfolio-management.github.io/</code
+        >{:else if part === "{tool}"}<code dir="ltr">git subtree</code>{:else}{part}{/if}
     {/each}
   </p>
   {#if t("footer.draft")}<p class="draft">{t("footer.draft")}</p>{/if}

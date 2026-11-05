@@ -1,21 +1,30 @@
-// The site's own words (navigation, pickers, footer, search) in English, Welsh and Mandarin (Simplified). The documents
+// The site's own words (navigation, pickers, footer, search) in English, Arabic, Hindi, Welsh and Mandarin (Simplified). The documents
 // are not translated here: the role briefs have their own files and the other documents are English.
 //
 // The language is the role brief's on a brief or a list (so those pages are prerendered in it), and otherwise the reader's
 // choice in the locale picker, which only the browser knows: those pages are prerendered in English and change as they load.
 import { page } from "$app/state";
 import messages from "./messages.json" with { type: "json" };
-import { DEFAULT_LOCALE, isBriefLocale, isHomeLocale, langTag, topicSlug, type BriefLocale, type TopicKey } from "./site.js";
+import {
+  DEFAULT_LOCALE,
+  isBriefLocale,
+  isHomeLocale,
+  isRtl,
+  langTag,
+  topicSlug,
+  type BriefLocale,
+  type TopicKey,
+} from "./site.js";
 
 export type SiteLang = keyof typeof messages;
 export type MessageKey = keyof typeof messages.en;
 
 const STORAGE_KEY = "lily-locale";
 
-/** The site's language for a locale. There are no Hindi site words yet, so a Hindi brief has them in English. */
+/** The site's language for a locale. */
 export function siteLangOf(locale: string): SiteLang {
-  const base = locale.split("-")[0];
-  return base === "cy" || base === "zh" ? base : "en";
+  const base = locale.split("-")[0] ?? "";
+  return base in messages ? (base as SiteLang) : "en";
 }
 
 /** Set only in the browser, so prerendering one page cannot leak a language into the next. */
@@ -31,7 +40,7 @@ export function shownLocale(): BriefLocale {
   return pageLocale() ?? chosen ?? DEFAULT_LOCALE;
 }
 
-/** The locale for links to the home page and the topics: Hindi has neither, so those are in English. */
+/** The locale for links to the home page and the topics: a locale with neither falls back to English. */
 function pagesLocale(): BriefLocale {
   const locale = shownLocale();
   return isHomeLocale(locale) ? locale : DEFAULT_LOCALE;
@@ -52,6 +61,11 @@ export function topicRoute(key: TopicKey): string {
 export function siteTag(): string {
   const locale = shownLocale();
   return siteLangOf(locale) === "en" ? "en" : langTag(locale);
+}
+
+/** The `dir` for the site's own words, which follow the reader's choice even on a page that is in English. */
+export function siteDir(): "ltr" | "rtl" {
+  return isRtl(shownLocale()) ? "rtl" : "ltr";
 }
 
 /** A site word in the current language; `{name}` is filled from `vars`. */

@@ -1,5 +1,11 @@
 {
   "locales": {
+    "ar-001": {
+      "tutorial": "البرنامج-التعليمي",
+      "benefits": "المزايا",
+      "comparisons": "المقارنات",
+      "features": "الميزات"
+    },
     "cy-001": {
       "comparisons": "cymariaethau",
       "benefits": "manteision",
@@ -35,6 +41,18 @@
       "comparisons": "comparisons",
       "features": "features",
       "tutorial": "tutorial"
+    },
+    "hi-001": {
+      "tutorial": "ट्यूटोरियल",
+      "comparisons": "तुलना",
+      "benefits": "लाभ",
+      "features": "सुविधाएँ"
+    },
+    "hi-in": {
+      "tutorial": "ट्यूटोरियल",
+      "comparisons": "तुलना",
+      "benefits": "लाभ",
+      "features": "सुविधाएँ"
     },
     "zh-001": {
       "benefits": "优势",

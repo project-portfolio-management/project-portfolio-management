@@ -21,7 +21,7 @@ are what the software does today and are checked by tests where a test can check
 
 Every language but English has the same statement and the same kind of record (WW-1.20): the text was written by
 Claude (the AI assistant) for WW-1.1 on 2026-10-31 (and, for the public site's Welsh and Mandarin words and pages, on
-2026-11-04: [`site-cy.csv`](translation-reviews/site-cy.csv), [`site-zh.csv`](translation-reviews/site-zh.csv)), or for Welsh earlier, and **no language has been reviewed** by a
+2026-11-04: [`site-cy.csv`](translation-reviews/site-cy.csv), [`site-zh.csv`](translation-reviews/site-zh.csv); and its Arabic and Hindi, on 2026-11-05: [`site-ar.csv`](translation-reviews/site-ar.csv), [`site-hi.csv`](translation-reviews/site-hi.csv)), or for Welsh earlier, and **no language has been reviewed** by a
 speaker or a professional translator. Welsh is not ahead of the others in any way the software checks; its record is
 older. The words inside Lily's widgets (tables, the date picker, the Gantt chart) come, for every language but English
 and Welsh, from a package's packs that are also unreviewed drafts (WW-1.17; each record says so). How a language is

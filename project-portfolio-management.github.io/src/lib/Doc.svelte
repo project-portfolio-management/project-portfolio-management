@@ -1,13 +1,13 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { siteTag, t } from "#lib/i18n.svelte.js";
+  import { siteDir, siteTag, t } from "#lib/i18n.svelte.js";
   import { REPO_URL } from "#lib/site.js";
 
   let { html, path }: { html: string; path: string } = $props();
 </script>
 
 {#if siteTag() !== "en" && !page.data.locale}
-  <p class="english-only" role="note" lang={siteTag()}>{t("doc.englishOnly")}</p>
+  <p class="english-only" role="note" lang={siteTag()} dir={siteDir()}>{t("doc.englishOnly")}</p>
 {/if}
 
 <!-- The HTML is rendered at build time from the repository's own Markdown, with raw HTML escaped
@@ -16,8 +16,8 @@
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html html}
 </article>
-<p class="source" lang={siteTag()} dir="ltr">
-  {t("doc.source")} <a href={`${REPO_URL}/blob/main/${path}`}><code>{path}</code></a>
+<p class="source" lang={siteTag()} dir={siteDir()}>
+  {t("doc.source")} <a href={`${REPO_URL}/blob/main/${path}`}><code dir="ltr">{path}</code></a>
 </p>
 
 <style>

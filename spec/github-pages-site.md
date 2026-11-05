@@ -52,22 +52,21 @@ This follows [locales for global sharing with Svelte](locales-for-global-sharing
 `<html lang>` is the locale's BCP 47 form (`en-gb-oxendict` → `en-GB-oxendict`) on a page with a locale in its address,
 and `en` elsewhere, because those documents are in English; it is written into the prerendered HTML by
 `hooks.server.ts` and kept in step on client-side navigation. `LocalePicker` is given an unseen target, because it
-writes `lang` as it mounts. `dir` is `rtl` for a right-to-left language (none among the locales today). Every layout
+writes `lang` as it mounts. `dir` is `rtl` for a right-to-left language: Arabic, on the whole page in `ar-001`, and on the site's own words wherever a reader has chosen Arabic, while an English document stays left to right. Every layout
 rule uses logical properties; code blocks stay left to right.
 
-The site's own words (navigation, wordmark, pickers, footer, search) are in `src/lib/messages.json`, in English, Welsh
-and Mandarin (Simplified), with their own `lang`. Their language is the address's on a page with a locale, so those
+The site's own words (navigation, wordmark, pickers, footer, search) are in `src/lib/messages.json`, in English, Arabic,
+Hindi, Welsh and Mandarin (Simplified), with their own `lang`. Their language is the address's on a page with a locale, so those
 pages are prerendered in it. Elsewhere it is the reader's choice (`localStorage` `lily-locale`), so those pages are
-prerendered in English and change as they load, and a note says the document itself is in English. There are no Hindi
-site words: a Hindi page has them in English, and Hindi has role briefs but no home page or topics.
+prerendered in English and change as they load, and a note says the document itself is in English.
 
 Each home page and topic has a `.locale-peer-id` that is byte-identical across locales, and a `README.md` symlink. Its
-slug is in the language and need not be ASCII (`/cy-gb/nodweddion/`, `/zh-cn/功能/`). `cy-gb` is copied to `cy-001` and
-`zh-cn` to `zh-001`; the English dialects follow the rule's spellings. The locale picker opens the same page in the
+slug is in the language and need not be ASCII (`/cy-gb/nodweddion/`, `/zh-cn/功能/`). `cy-gb` is copied to `cy-001`, `hi-in` to `hi-001`
+and `zh-cn` to `zh-001`; `ar-001` has no regional copy, as in the interface; the English dialects follow the rule's spellings. The locale picker opens the same page in the
 chosen locale: a brief, a list, the home page or a topic (found by peer id). On a page with one version it stays put.
 The comparison product pages are English only.
 
-Welsh and Mandarin are machine-written until a speaker reviews them, and each page says so in its footer.
+Arabic, Hindi, Welsh and Mandarin are machine-written until a speaker reviews them, and each page says so in its footer.
 `scripts/export-site-translation-review.py` lists them in `governance/translation-reviews/site-*.csv`.
 
 ## Colour and accessibility
@@ -117,9 +116,9 @@ its Pages source set to GitHub Actions; the `github-pages` remote is per clone. 
 
 ## Not built
 
-No right-to-left locale exists to read; no Hindi site words, home page or topics; the comparison product pages are in
+The comparison product pages are in
 English; the role briefs' slugs are English in every locale, so they fall short of the rule that a segment is in the
 language; search does not work with JavaScript off; 15 of the 57 themes fail contrast on the home page; the first paint (or
 a visit with JavaScript off) uses the light fallback tokens whatever the system preference; a page without a locale in
-its address is first painted in English for a Welsh or Mandarin reader; nothing publishes the site on a push to the
+its address is first painted in English for a reader of another language; nothing publishes the site on a push to the
 monorepo (`make github-pages` is run by hand), so it can lag `main`.

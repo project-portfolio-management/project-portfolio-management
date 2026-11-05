@@ -1,6 +1,6 @@
 <script lang="ts">
   import { href } from "#lib/href.js";
-  import { siteTag, t } from "#lib/i18n.svelte.js";
+  import { siteDir, siteTag, t } from "#lib/i18n.svelte.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -8,7 +8,7 @@
 
 <svelte:head><title>{t("compare.title")} · {t("brand")}</title></svelte:head>
 
-<div lang={siteTag()}>
+<div lang={siteTag()} dir={siteDir()}>
   <h1>{t("compare.title")}</h1>
   <p class="lede">{t("compare.lede")}</p>
 </div>

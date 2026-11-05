@@ -2,7 +2,7 @@
 
 The Project Portfolio Management public site for GitHub Pages: a static SvelteKit build (`adapter-static`, Svelte 5
 runes, Lily's whole PickerBar) for newcomers (home, benefits, features, comparisons, a tutorial) over the
-repository's own reference documents, in English, Welsh and Mandarin.
+repository's own reference documents, in English, Arabic, Hindi, Welsh and Mandarin.
 
 This directory lives inside the monorepo, `project-portfolio-management/project-portfolio-management`, and is
 **exported** to its own repository, `project-portfolio-management/project-portfolio-management.github.io`, with
@@ -16,12 +16,12 @@ exported repository's own `git subtree` history is what GitHub Pages builds; the
 
 | Route | Source |
 | --- | --- |
-| `/`, `/<locale>/` | [`locales/<locale>/index.md`](../locales/) (eight locales; `/` is `en-001`) |
+| `/`, `/<locale>/` | [`locales/<locale>/index.md`](../locales/) (eleven locales; `/` is `en-001`) |
 | `/<locale>/<topic>/` | `locales/<locale>/topics/<slug>/index.md`: benefits, features, comparisons, tutorial, with a slug in the language |
 | `/compare/`, `/compare/<product>/` | `locales/en-001/compare/<product>/index.md` (English) |
 | `/docs/` | [`index.md`](../index.md) |
 | `/readme/`, `/install/`, `/wpm-bridge/`, `/spec/`, `/skill/` | [`README.md`](../README.md), [`INSTALL.md`](../INSTALL.md), [`operations/wpm-bridge.md`](../operations/wpm-bridge.md), [`spec/index.md`](../spec/index.md), [`SKILL.md`](../project-portfolio-management-skill/SKILL.md) |
-| `/<locale>/for/`, `/<locale>/for/<role>/` | the role briefs, [`locales/<locale>/for/<role>/index.md`](../locales/) (10 locales, 11 roles) |
+| `/<locale>/for/`, `/<locale>/for/<role>/` | the role briefs, [`locales/<locale>/for/<role>/index.md`](../locales/) (11 locales, 11 roles) |
 | `/search/`, `/search-index.json` | search, in the browser |
 | `/sitemap.xml`, `/<locale>/sitemap.xml` | the sitemaps |
 
@@ -29,7 +29,7 @@ A link between two of these stays on the site; a link to any other file in the r
 Raw HTML in the Markdown is shown as text. Every claim on the site must be one the repository supports; see "Claims" in
 [the spec](../spec/github-pages-site.md).
 
-The site's own words are in `src/lib/messages.json`. After changing them, or a Welsh or Mandarin page, run
+The site's own words are in `src/lib/messages.json`. After changing them, or a translated page, run
 `python3 scripts/export-site-translation-review.py` from the monorepo root. To add a page to a locale, add its `index.md`,
 a `README.md` symlink and the same `.locale-peer-id` as its peers.
 

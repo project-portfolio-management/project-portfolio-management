@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (GP-8: the site in Arabic and Hindi)
+
+- The public site now has a home page, the four topics and all its own words in Arabic (\`ar-001\`) and Hindi (\`hi-in\`, copied to \`hi-001\`), and the 11 role briefs in Arabic. Hindi already had its briefs. Arabic is the site's first right-to-left language: an \`ar-001\` page is right to left in its prerendered HTML, and a reader who chooses Arabic on an English document gets the site's words right to left around a left-to-right page. \`ar-001\` has no regional copy, as in the interface. Both languages are in the locale picker and the "Translations" line, and \`site-ar.csv\` and \`site-hi.csv\` list the text for a speaker.
+- **Every word is a machine draft, written by Claude on 2026-11-05. No speaker has reviewed any of it,** and each page says so in its footer. The drafts were checked by script for the same headings, lists, tables, numbers and links as the English, which says nothing about their sense. New terms have no reviewed precedent, such as the Arabic for "fails closed" and the Hindi for "role briefs"; the Hindi follows the briefs where they differ from the application ("वितरण" where the interface has "डिलीवरी"). The tutorial signs in at \`/ar-001/signin\` and \`/hi-001/signin\`, not the English address, as Welsh and Mandarin do.
+- Not done: the nine comparison product pages stay in English. Arabic has no regional locale. Not verified: 200 browser tests pass, with axe on every Arabic and Hindi home page and topic, but nobody who reads either language has looked at a rendered page, so line breaks, bidirectional mixes of Latin and Arabic, and table layout in Arabic were not judged by eye.
+
 ### 5 November (CI: two new advisories accepted, not fixed)
 
 - \`cargo deny\` began failing on RUSTSEC-2026-0440 (\`astral-tokio-tar\`) and RUSTSEC-2026-0441 (\`pin-utils\`), both published after the last green run and both "unmaintained", not vulnerabilities, with no safe upgrade. The first is test-only, through \`testcontainers\`; the second comes only with the optional \`fluvio\` feature. Neither is in the default build, so they are accepted in \`deny.toml\` with that reason.

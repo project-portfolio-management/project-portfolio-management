@@ -63,11 +63,11 @@ no network, database or compilation; counts are source lines, not test runs):
 | NC | 13 | 4 |
 | BR | 15 | 2 |
 | FB | 6 | 2 |
-| GP | 7 | 0 |
+| GP | 8 | 0 |
 | OC | 25 | 0 |
 | LC | 0 | 10 |
 | UE | 1 | 7 |
-| **Total** | **236** | **29** |
+| **Total** | **237** | **29** |
 
 <!-- generated:end -->
 

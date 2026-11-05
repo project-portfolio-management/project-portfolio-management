@@ -23,10 +23,10 @@ directory or file stem that is named for a locale.
   file is named `<language>-<region>`.
 - **`/locales` holds documents, not interface strings (WW-1.19).** `locales/<code>/for/<role>/index.md`
   are the reader guides for eleven roles (chief executive, legal, security, …), in ten
-  **document locales**: `cy-001`, `cy-gb`, `en-001`, `en-gb`, `en-gb-oxendict`, `en-us`,
+  **document locales**: `ar-001`, `cy-001`, `cy-gb`, `en-001`, `en-gb`, `en-gb-oxendict`, `en-us`,
   `hi-001`, `hi-in`, `zh-001`, `zh-cn`. That set is not the interface's (§2): five are regional
   document variants (British, Oxford and US English, Welsh and Hindi with a region) the interface
-  does not have, and **`ar-001`, `de-001`, `de-de`, `es-001` and `fr-001` have no reader guides:
+  does not have, and **`de-001`, `de-de`, `es-001` and `fr-001` have no reader guides:
   a recorded gap**, to close by the same bar as the interface (a draft labelled unreviewed). The
   English guides name the applicable data-protection law and treat the UK NHS DTAC as one worked
   example; the Welsh, Hindi and Chinese guides were not updated to match on 2026-10-31 and still

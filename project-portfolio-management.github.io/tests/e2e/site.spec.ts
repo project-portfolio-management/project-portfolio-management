@@ -31,7 +31,7 @@ const briefRoutes = BRIEF_LOCALES.flatMap((l) => ROLES.map((r) => `/${l}/for/${r
 const audited = [
   ...docRoutes,
   ...homeRoutes,
-  ...topicRoutes.filter((r) => /^\/(en-001|cy-gb|zh-cn)\//.test(r)),
+  ...topicRoutes.filter((r) => /^\/(ar-001|en-001|cy-gb|hi-in|zh-cn)\//.test(r)),
   ...compareRoutes,
   ...indexRoutes,
   ...BRIEF_LOCALES.map((l, i) => `/${l}/for/${ROLES[i % ROLES.length]}/`),
@@ -106,7 +106,7 @@ async function chooseLocale(page: Page, current: string, option: RegExp) {
 
 test("every language has every word, and no translation is left empty", () => {
   const keys = Object.keys(messages.en).sort();
-  for (const lang of ["cy", "zh"] as const) {
+  for (const lang of ["ar", "cy", "hi", "zh"] as const) {
     expect(Object.keys(messages[lang]).sort(), lang).toEqual(keys);
     for (const key of keys) expect(messages[lang][key as keyof typeof messages.en], `${lang} ${key}`).not.toBe("");
     for (const key of keys)
@@ -146,10 +146,10 @@ test("a brief's page is prerendered with the site's words in its language", asyn
   expect(await words("/cy-gb/for/")).toContain("Briffiau rôl");
   expect(await words("/zh-cn/for/chief-risk-officer/")).toContain("所有角色简报");
   expect(await words("/en-gb/for/")).toContain("Role briefs");
-  // No Hindi site words exist: they are English, and marked so.
-  const hindi = await words("/hi-in/for/");
-  expect(hindi).toContain("Role briefs");
-  expect(hindi).toMatch(/<header[^>]*lang="en"/);
+  expect(await words("/hi-in/for/")).toContain("भूमिका सारांश");
+  expect(await words("/hi-in/for/")).toMatch(/<header[^>]*lang="hi-IN"/);
+  expect(await words("/ar-001/for/")).toContain("موجزات الأدوار");
+  expect(await words("/ar-001/for/")).toMatch(/<header[^>]*lang="ar-001"/);
 });
 
 test("a chosen language reaches the search page, and a word with no storage still works", async ({ page }) => {
@@ -160,7 +160,7 @@ test("a chosen language reaches the search page, and a word with no storage stil
   await expect(page.locator("main [lang]").first()).toHaveAttribute("lang", /^zh/);
 });
 
-for (const route of ["/", "/install/", "/search/", "/en-gb/for/", "/hi-in/for/chief-risk-officer/"])
+for (const route of ["/", "/install/", "/search/", "/en-gb/for/", "/en-us/for/chief-risk-officer/"])
   test(`${route} has the full picker bar, in order`, async ({ page }) => {
     await open(page, route, "light");
     const buttons = page.locator(".picker-bar").getByRole("button");
@@ -280,16 +280,21 @@ test("every locale's home page has a translated hero and names the translations"
     "cy-001": ["Rheoli Portffolio Prosiectau", "Cofrestr o waith a ariennir"],
     "zh-cn": ["项目组合管理", "已出资工作的登记册"],
     "zh-001": ["项目组合管理", "已出资工作的登记册"],
+    "ar-001": ["إدارة محافظ المشاريع", "سجل للأعمال المموَّلة"],
+    "hi-in": ["परियोजना पोर्टफ़ोलियो प्रबंधन", "निधि-प्राप्त कार्य का एक रजिस्टर"],
+    "hi-001": ["परियोजना पोर्टफ़ोलियो प्रबंधन", "निधि-प्राप्त कार्य का एक रजिस्टर"],
   };
   for (const [locale, [headline, sub]] of Object.entries(heroes)) {
     const html = await (await request.get(`/${locale}/`)).text();
     expect(html, locale).toMatch(new RegExp(`<h1[^>]*>${headline}</h1>`));
     expect(html, locale).toContain(sub);
-    for (const name of ["English", "Cymraeg", "中文"]) expect(html, locale).toContain(name);
+    for (const name of ["English", "العربية", "Cymraeg", "हिन्दी", "中文"]) expect(html, locale).toContain(name);
   }
   expect(await (await request.get("/")).text()).toContain("Translations:");
   expect(await (await request.get("/cy-gb/")).text()).toContain("Cyfieithiadau:");
   expect(await (await request.get("/zh-cn/")).text()).toContain("翻译：");
+  expect(await (await request.get("/ar-001/")).text()).toContain("الترجمات:");
+  expect(await (await request.get("/hi-in/")).text()).toContain("अनुवाद:");
 });
 
 test("the wordmark and the draft notice follow the locale", async ({ page }) => {
@@ -309,9 +314,13 @@ test("the locale picker opens the same topic under its own slug, by peer id", as
   await chooseLocale(page, "Iaith", /^中文 - /);
   await expect(page.locator("h1").first()).toHaveText("功能");
   expect(decodeURI(page.url())).toMatch(/\/zh-cn\/功能\/$/);
-  // A Hindi reader has no topics: the briefs stand in, and English site words say so.
   await chooseLocale(page, "语言", /^हिन्दी - /);
-  await expect(page).toHaveURL(/\/hi-in\/for\/$/);
+  await expect(page.locator("h1").first()).toHaveText("सुविधाएँ");
+  expect(decodeURI(page.url())).toMatch(/\/hi-in\/सुविधाएँ\/$/);
+  await chooseLocale(page, "भाषा", /^العربية$/);
+  await expect(page.locator("h1").first()).toHaveText("الميزات");
+  expect(decodeURI(page.url())).toMatch(/\/ar-001\/الميزات\/$/);
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
 });
 
 test("the locale picker on / opens that locale's home page", async ({ page }) => {
@@ -337,8 +346,8 @@ test("a home page's and a topic's source files follow the rule", () => {
   }
   for (const [key, ids] of peers) expect(ids.size, key).toBe(1);
   expect(new Set([...peers.values()].flatMap((ids) => [...ids])).size).toBe(peers.size);
-  // cy-gb is copied to cy-001 and zh-cn to zh-001.
-  for (const [from, to] of [["cy-gb", "cy-001"], ["zh-cn", "zh-001"]] as const) {
+  // cy-gb is copied to cy-001, hi-in to hi-001 and zh-cn to zh-001.
+  for (const [from, to] of [["cy-gb", "cy-001"], ["hi-in", "hi-001"], ["zh-cn", "zh-001"]] as const) {
     expect(readFileSync(`${root}/${from}/index.md`, "utf8")).toBe(readFileSync(`${root}/${to}/index.md`, "utf8"));
     for (const key of TOPIC_KEYS) {
       const path = (l: string) => `${root}/${l}/topics/${topicSlug(l, key)}/index.md`;
@@ -346,7 +355,7 @@ test("a home page's and a topic's source files follow the rule", () => {
     }
   }
   // Slugs are in the language, not merely English.
-  for (const locale of ["cy-gb", "zh-cn"])
+  for (const locale of ["ar-001", "cy-gb", "hi-in", "zh-cn"])
     for (const key of TOPIC_KEYS) expect(topicSlug(locale, key), key).not.toBe(key);
 });
 
@@ -465,6 +474,36 @@ for (const route of ["/", "/readme/", "/en-gb/for/", "/zh-cn/for/chief-executive
       expect(brand && brand.x + brand.width).toBeGreaterThan(width / 2);
       expect(await axe(page)).toEqual([]);
     });
+
+// Arabic is right to left for real, not forced: from the prerendered HTML, before any script runs.
+for (const route of ["/ar-001/", "/ar-001/المزايا/", "/ar-001/for/", "/ar-001/for/chief-risk-officer/"])
+  for (const scheme of ["light", "dark"] as const)
+    test(`${route} is right to left (${scheme})`, async ({ page, request }) => {
+      expect(await (await request.get(encodeURI(route))).text()).toMatch(/<html lang="ar-001" dir="rtl">/);
+      await open(page, encodeURI(route), scheme);
+      await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+      const brand = await page.locator(".brand").boundingBox();
+      const width = page.viewportSize()?.width ?? 0;
+      expect(brand && brand.x + brand.width).toBeGreaterThan(width / 2);
+      await expect(page.locator("footer .draft")).toContainText("مسودة آلية");
+      expect(await axe(page)).toEqual([]);
+    });
+
+test("a reader who chooses Arabic on an English document gets Arabic words, right to left, around a left-to-right page", async ({
+  page,
+}) => {
+  await open(page, "/readme/", "light");
+  await chooseLocale(page, "Language", /^العربية$/);
+  await expect(page.locator("header.site-header")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator("footer.site-footer")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator(".english-only")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  await expect(page).toHaveURL(/\/readme\/$/);
+});
 
 test("at phone width no page scrolls sideways", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

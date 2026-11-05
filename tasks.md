@@ -2365,6 +2365,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   neutral analyst's voice, in English, Welsh and Mandarin, with the same facts and caveats. **Not done:** the role briefs and
   the reference documents keep their wording; the Welsh and Mandarin remain unreviewed machine drafts.
 
+- [x] **GP-8 (M) — The site in Arabic and Hindi.** **Built 2026-11-05:** home page, topics and site words in Arabic and Hindi, role briefs in Arabic, and right-to-left pages. Machine drafts; no speaker has reviewed them.
+
 ## Issue configuration (OC-n, [spec/issue-configuration.md](spec/issue-configuration.md))
 
 - [x] **OC-1 (L) — Organization-defined issue types, statuses and roles.** **Built 2026-11-04:** `issue_types` and

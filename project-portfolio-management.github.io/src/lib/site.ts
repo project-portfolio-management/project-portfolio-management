@@ -21,6 +21,7 @@ export const DOC_PAGES: readonly DocPage[] = [
 
 /** The locales that have role briefs (`locales/<locale>/for/`), in the repository's spelling. */
 export const BRIEF_LOCALES = [
+  "ar-001",
   "cy-001",
   "cy-gb",
   "en-001",
@@ -39,6 +40,7 @@ export const DEFAULT_LOCALE: BriefLocale = "en-001";
 
 /** Each locale's name, in that language, in the UI's form (`spec/locales.md`). */
 export const LOCALE_LABELS: Record<BriefLocale, string> = {
+  "ar-001": "العربية",
   "cy-001": "Cymraeg",
   "cy-gb": "Cymraeg - Y Deyrnas Unedig",
   "en-001": "English",
@@ -56,7 +58,7 @@ export const TOPIC_KEYS = ["benefits", "features", "comparisons", "tutorial"] as
 export type TopicKey = (typeof TOPIC_KEYS)[number];
 const TOPIC_SLUGS: Record<string, Record<TopicKey, string>> = topics.locales;
 
-/** The locales with a home page and topics: English, Welsh and Mandarin. Hindi has role briefs only. */
+/** The locales with a home page and topics. Today that is every locale; the type allows one with role briefs only. */
 export const HOME_LOCALES = BRIEF_LOCALES.filter((l) => l in TOPIC_SLUGS);
 export function isHomeLocale(s: string): boolean {
   return s in TOPIC_SLUGS;
@@ -105,8 +107,7 @@ export function langTag(locale: string): string {
   return [lang, r, ...rest].join("-");
 }
 
-// Right-to-left base languages (the same list Lily's LocalePicker uses). No brief locale is right-to-left today; the
-// layout follows `dir` all the same, so a brief in Arabic or Hebrew needs no layout change.
+// Right-to-left base languages (the same list Lily's LocalePicker uses). Among the locales, only Arabic.
 const RTL = new Set(["ar", "arc", "ckb", "dv", "fa", "he", "iw", "ji", "ks", "ku", "mzn", "ps", "sd", "ug", "ur", "yi"]);
 export function isRtl(locale: string): boolean {
   return RTL.has(locale.split("-")[0] ?? "");

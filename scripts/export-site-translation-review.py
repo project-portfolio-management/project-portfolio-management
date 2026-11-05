@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write governance/translation-reviews/site-<language>.csv: the public site's words and pages in Welsh and Mandarin, for
+"""Write governance/translation-reviews/site-<language>.csv: the public site's words and pages in each translated language, for
 the speaker who reviews them (GP-4). Columns: key, english, translation, reviewed_by, reviewed_on, verdict.
 
 Reads project-portfolio-management.github.io/src/lib/messages.json, then adds one row per page: its English and
@@ -17,7 +17,7 @@ outdir = root / "governance" / "translation-reviews"
 messages = json.loads((root / "project-portfolio-management.github.io/src/lib/messages.json").read_text(encoding="utf-8"))
 FIELDS = ["key", "english", "translation", "reviewed_by", "reviewed_on", "verdict"]
 # The locale reviewed for each language: its -001 copy is byte-identical, and the site's tests check that.
-LANGUAGES = {"cy": "cy-gb", "zh": "zh-cn"}
+LANGUAGES = {"ar": "ar-001", "cy": "cy-gb", "hi": "hi-in", "zh": "zh-cn"}
 
 
 def peer(path):

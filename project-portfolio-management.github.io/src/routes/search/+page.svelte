@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { href } from "#lib/href.js";
-  import { siteTag, t } from "#lib/i18n.svelte.js";
+  import { siteDir, siteTag, t } from "#lib/i18n.svelte.js";
   import { queryOf, search, searchUrl, type SearchDoc } from "#lib/search.js";
 
   // The page is prerendered with no query: the address is read only in the browser.
@@ -44,7 +44,7 @@
 
 <svelte:head><title>{t("search.title")} · {t("brand")}</title></svelte:head>
 
-<div lang={siteTag()}>
+<div lang={siteTag()} dir={siteDir()}>
 <h1>{t("search.title")}</h1>
 <form role="search" onsubmit={submit}>
   <label for="search-field">{t("search.label")}</label>
@@ -74,7 +74,7 @@
 {#if hits.length > 0}
   <ol class="search-hits">
     {#each hits as hit (hit.route)}
-      <li lang={hit.lang}>
+      <li lang={hit.lang} dir="auto">
         <a href={href(hit.route)}>{hit.title}</a>
         <p>{hit.excerpt}</p>
       </li>

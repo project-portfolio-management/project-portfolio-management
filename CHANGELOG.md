@@ -15,6 +15,24 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-8: the Redmine comparison, checked)
+
+- The Redmine column on `/compare/redmine/` now follows Redmine's own documentation, read on 5 November, and the page links to it. The
+  table says what this project now does, and the summaries in eight languages no longer say that roles grant nothing.
+- Not done: Redmine was not installed or run. The rest of that page, and the six other commercial and open-source product pages, are
+  still general descriptions. Not verified: the wording of the changed Welsh and Chinese summaries, which are machine drafts.
+
+### 5 November (OC-7: the interface for all of it)
+
+- Administrators can now manage all of this in the interface: role permissions and translations on `/issue-settings`, and people,
+  types and workflows on the new `/plans/{pid}/issue-settings`. One editor registers and changes workflows, with field rules and
+  translated statuses. The issue form follows the caller's permissions and the status's rules, and the cross-plan list shows each
+  status's real name.
+- The issue form dropped `priority`, so any edit cleared a stored one. It now shows and sends it.
+- Not done: people are added by user id, because there is no directory to pick from. Task workflows have no editor. Not verified: a
+  real browser against a real service; the browser tests stub the service. The new strings in seven languages are machine drafts,
+  listed for review, and no speaker has read them.
+
 ### 5 November (OC-9: what the independent review of OC-2 to OC-6 found)
 
 - **A private plan's issue titles, statuses and owners were readable by outsiders** in `GET /api/plans/audit/recent`, and by issue pid

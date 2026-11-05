@@ -1,30 +1,29 @@
 <!--
   Organization-defined issue types, statuses and roles (`/issue-settings`, OC-1). Anyone signed in can read them; only an
-  administrator can change them, and the service enforces that. A role here grants nothing: what a person may do comes from
-  their sign-in. Statuses are the states of an issue workflow, registered whole and withdrawn to change. Failures say the
-  catalogue's sentence, never the service's own text.
+  administrator can change them, and the service enforces that. A role's permissions only narrow what someone's sign-in already
+  allows, on a plan that has role members. Statuses are the states of an issue workflow. Failures say the catalogue's sentence,
+  never the service's own text.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
+  import IssueWorkflows from "#lib/components/IssueWorkflows.svelte";
   import {
     PpmClient,
-    type IssueStatusCategory,
+    type IssuePermission,
     type IssueType,
     type OrganizationRole,
     type WorkflowSummary,
   } from "#lib/api/ppm.js";
   import { typeLabel } from "#lib/issue-view.js";
   import {
-    emptyWorkflowDraft,
-    workflowBody,
-    workflowProblem,
-    type WorkflowDraft,
+    ISSUE_PERMISSIONS,
+    labelsText,
+    parseLabels,
   } from "#lib/issue-settings-view.js";
 
   const ppm = PpmClient.withFetch();
-  const CATEGORIES: IssueStatusCategory[] = ["todo", "active", "waiting", "done"];
 
   let types = $state<IssueType[]>([]);
   let roles = $state<OrganizationRole[]>([]);
@@ -38,11 +37,15 @@
   let roleKey = $state("");
   let roleName = $state("");
   let roleDescription = $state("");
-  let draft = $state<WorkflowDraft>(emptyWorkflowDraft());
+  let rolePermissions = $state<IssuePermission[]>([]);
+  // What is being typed in each row, by key, until it is saved.
+  let typeWords = $state<Record<string, string>>({});
+  let roleWords = $state<Record<string, string>>({});
+  let held = $state<Record<string, IssuePermission[]>>({});
 
-  const issueWorkflows = $derived(workflows.filter((w) => w.applies_to === "issue"));
-  const usableTypes = $derived(types.filter((x) => !x.retired));
-  const stateKeys = $derived(draft.states.map((s) => s.key.trim()).filter((k) => k !== ""));
+  const issueWorkflows = $derived(
+    workflows.filter((w) => w.applies_to === "issue" && w.plan_pid === null),
+  );
 
   async function load() {
     try {
@@ -51,6 +54,9 @@
         ppm.organizationRoles(true),
         ppm.workflows(),
       ]);
+      typeWords = Object.fromEntries(types.map((x) => [x.key, labelsText(x.labels)]));
+      roleWords = Object.fromEntries(roles.map((r) => [r.key, labelsText(r.labels)]));
+      held = Object.fromEntries(roles.map((r) => [r.key, r.permissions ?? []]));
     } catch (err) {
       error = errorText(err, "p.issue_settings.could_not_load");
     }
@@ -73,6 +79,22 @@
     }
   }
 
+  function refuse(text: string) {
+    notice = "";
+    error = text;
+  }
+
+  /** What was typed as translations, or `null` after saying what is wrong. */
+  function typed(text: string | undefined) {
+    const labels = parseLabels(text ?? "");
+    if (labels === null) refuse(t("p.issue_settings.bad_translations"));
+    return labels;
+  }
+
+  function togglePermission(list: IssuePermission[], p: IssuePermission, on: boolean) {
+    return on ? [...list, p] : list.filter((x) => x !== p);
+  }
+
   function addType(e: SubmitEvent) {
     e.preventDefault();
     void act(async () => {
@@ -88,23 +110,30 @@
         key: roleKey.trim(),
         label: roleName.trim(),
         description: roleDescription.trim() || null,
+        permissions: rolePermissions,
         position: roles.length,
       });
+      rolePermissions = [];
       roleKey = "";
       roleName = "";
       roleDescription = "";
     });
   }
-  function register(e: SubmitEvent) {
-    e.preventDefault();
-    if (workflowProblem(draft)) {
-      error = t("p.issue_settings.could_not_save");
-      return;
-    }
-    void act(async () => {
-      await ppm.addIssueWorkflow(workflowBody(draft));
-      draft = emptyWorkflowDraft();
-    });
+  function saveType(x: IssueType) {
+    const labels = typed(typeWords[x.key]);
+    if (labels) void act(() => ppm.changeIssueType(x.key, { label: x.label, labels }));
+  }
+  function saveRole(r: OrganizationRole) {
+    const labels = typed(roleWords[r.key]);
+    if (labels)
+      void act(() =>
+        ppm.changeOrganizationRole(r.key, {
+          label: r.label,
+          description: r.description,
+          labels,
+          permissions: held[r.key] ?? [],
+        }),
+      );
   }
 </script>
 
@@ -125,6 +154,7 @@
         <th scope="col">{t("p.issue_settings.label")}</th>
         <th scope="col">{t("p.issue_settings.key")}</th>
         <th scope="col">{t("p.issue_settings.state")}</th>
+        <th scope="col">{t("p.issue_settings.translations")}</th>
         <th scope="col">{t("p.issue_settings.actions")}</th>
       </tr>
     </thead>
@@ -135,6 +165,23 @@
           <td><code>{x.key}</code></td>
           <td>{x.retired ? t("p.issue_settings.retired") : t("p.issue_settings.in_use")}</td>
           <td>
+            <input
+              bind:value={typeWords[x.key]}
+              maxlength="1000"
+              autocomplete="off"
+              aria-label={`${t("p.issue_settings.translations")}: ${x.label}`}
+            />
+          </td>
+          <td>
+            <button
+              class="button small"
+              type="button"
+              disabled={saving}
+              aria-label={`${t("p.issue_settings.save")}: ${x.label}`}
+              onclick={() => saveType(x)}
+            >
+              {t("p.issue_settings.save")}
+            </button>
             <button
               class="button small"
               type="button"
@@ -174,7 +221,9 @@
           <th scope="col">{t("p.issue_settings.label")}</th>
           <th scope="col">{t("p.issue_settings.key")}</th>
           <th scope="col">{t("p.issue_settings.description")}</th>
+          <th scope="col">{t("p.issue_settings.permissions")}</th>
           <th scope="col">{t("p.issue_settings.state")}</th>
+          <th scope="col">{t("p.issue_settings.translations")}</th>
           <th scope="col">{t("p.issue_settings.actions")}</th>
         </tr>
       </thead>
@@ -184,8 +233,39 @@
             <th scope="row">{r.label}</th>
             <td><code>{r.key}</code></td>
             <td>{r.description ?? ""}</td>
+            <td>
+              {#each ISSUE_PERMISSIONS as p (p)}
+                <label class="check">
+                  <input
+                    type="checkbox"
+                    checked={held[r.key]?.includes(p) ?? false}
+                    aria-label={`${t(`p.issue_settings.perm_${p}`)}: ${r.label}`}
+                    onchange={(e) =>
+                      (held[r.key] = togglePermission(held[r.key] ?? [], p, e.currentTarget.checked))}
+                  />
+                  {t(`p.issue_settings.perm_${p}`)}
+                </label>
+              {/each}
+            </td>
             <td>{r.retired ? t("p.issue_settings.retired") : t("p.issue_settings.in_use")}</td>
             <td>
+              <input
+                bind:value={roleWords[r.key]}
+                maxlength="1000"
+                autocomplete="off"
+                aria-label={`${t("p.issue_settings.translations")}: ${r.label}`}
+              />
+            </td>
+            <td>
+              <button
+                class="button small"
+                type="button"
+                disabled={saving}
+                aria-label={`${t("p.issue_settings.save")}: ${r.label}`}
+                onclick={() => saveRole(r)}
+              >
+                {t("p.issue_settings.save")}
+              </button>
               <button
                 class="button small"
                 type="button"
@@ -219,153 +299,24 @@
     <label>{t("p.issue_settings.description")}
       <input bind:value={roleDescription} maxlength="500" autocomplete="off" />
     </label>
+    <fieldset>
+      <legend>{t("p.issue_settings.permissions")}</legend>
+      {#each ISSUE_PERMISSIONS as p (p)}
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={rolePermissions.includes(p)}
+            onchange={(e) => (rolePermissions = togglePermission(rolePermissions, p, e.currentTarget.checked))}
+          />
+          {t(`p.issue_settings.perm_${p}`)}
+        </label>
+      {/each}
+    </fieldset>
     <button class="button" type="submit" disabled={saving}>{t("p.issue_settings.add_role")}</button>
   </form>
 </section>
 
-<section aria-labelledby="workflows-h">
-  <h2 id="workflows-h">{t("p.issue_settings.workflows_heading")}</h2>
-  <p class="small muted">{t("p.issue_settings.workflows_intro")}</p>
-  {#if issueWorkflows.length === 0}
-    <p>{t("p.issue_settings.none_workflows")}</p>
-  {:else}
-    <table>
-      <caption class="sr-only">{t("p.issue_settings.workflows_heading")}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{t("p.issue_settings.wf_name")}</th>
-          <th scope="col">{t("p.issue_settings.wf_type")}</th>
-          <th scope="col">{t("p.issue_settings.actions")}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each issueWorkflows as w (w.pid)}
-          <tr>
-            <th scope="row">{w.name}</th>
-            <td>
-              {w.issue_type ? typeLabel(types, w.issue_type) : t("p.issue_settings.wf_all_types")}
-              {#if w.plan_pid}({t("p.issue_settings.wf_plan")}){/if}
-            </td>
-            <td>
-              <button
-                class="button small"
-                type="button"
-                disabled={saving}
-                aria-label={`${t("p.issue_settings.withdraw")}: ${w.name}`}
-                onclick={() => act(() => ppm.withdrawWorkflow(w.pid))}
-              >
-                {t("p.issue_settings.withdraw")}
-              </button>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  {/if}
-
-  <form class="workflow-form" onsubmit={register} aria-labelledby="workflows-h">
-    <label>{t("p.issue_settings.wf_name")}
-      <input bind:value={draft.name} required maxlength="200" autocomplete="off" />
-    </label>
-    <label>{t("p.issue_settings.wf_type")}
-      <select bind:value={draft.issueType}>
-        <option value="">{t("p.issue_settings.wf_all_types")}</option>
-        {#each usableTypes as x (x.key)}<option value={x.key}>{typeLabel(types, x.key)}</option>{/each}
-      </select>
-    </label>
-
-    <fieldset>
-      <legend>{t("p.issue_settings.statuses")}</legend>
-      {#each draft.states as s, i (s.id)}
-        <div class="draft-row">
-          <label>{t("p.issue_settings.key")}
-            <input bind:value={s.key} required maxlength="32" pattern="[a-z0-9_]+" autocomplete="off" />
-          </label>
-          <label>{t("p.issue_settings.label")}
-            <input bind:value={s.label} required maxlength="100" autocomplete="off" />
-          </label>
-          <label>{t("p.issue_settings.category")}
-            <select bind:value={s.category}>
-              {#each CATEGORIES as c (c)}<option value={c}>{t(`p.issue_settings.cat_${c}`)}</option>{/each}
-            </select>
-          </label>
-          <label class="check">
-            <input type="radio" name="initial" checked={draft.initial === s.id} onchange={() => (draft.initial = s.id)} />
-            {t("p.issue_settings.initial")}
-          </label>
-          <label class="check">
-            <input type="checkbox" bind:checked={s.terminal} />
-            {t("p.issue_settings.terminal")}
-          </label>
-          {#if draft.states.length > 1}
-            <button
-              class="button small"
-              type="button"
-              aria-label={`${t("p.issue_settings.remove")}: ${s.label || i + 1}`}
-              onclick={() => (draft.states = draft.states.filter((x) => x.id !== s.id))}
-            >
-              {t("p.issue_settings.remove")}
-            </button>
-          {/if}
-        </div>
-      {/each}
-      <button
-        class="button small"
-        type="button"
-        onclick={() => {
-          draft.states.push({ id: draft.nextId, key: "", label: "", category: "active", terminal: false });
-          draft.nextId += 1;
-        }}
-      >
-        {t("p.issue_settings.add_status")}
-      </button>
-    </fieldset>
-
-    <fieldset>
-      <legend>{t("p.issue_settings.moves")}</legend>
-      <p class="small muted">{t("p.issue_settings.moves_intro")}</p>
-      {#each draft.moves as m, i (m.id)}
-        <div class="draft-row">
-          <label>{t("p.issue_settings.from")}
-            <select bind:value={m.from} required>
-              {#each stateKeys as k (k)}<option value={k}>{k}</option>{/each}
-            </select>
-          </label>
-          <label>{t("p.issue_settings.to")}
-            <select bind:value={m.to} required>
-              {#each stateKeys as k (k)}<option value={k}>{k}</option>{/each}
-            </select>
-          </label>
-          <label>{t("p.issue_settings.move_roles")}
-            <input bind:value={m.roles} maxlength="300" autocomplete="off" />
-          </label>
-          <button
-            class="button small"
-            type="button"
-            aria-label={`${t("p.issue_settings.remove")}: ${i + 1}`}
-            onclick={() => (draft.moves = draft.moves.filter((x) => x.id !== m.id))}
-          >
-            {t("p.issue_settings.remove")}
-          </button>
-        </div>
-      {/each}
-      <button
-        class="button small"
-        type="button"
-        onclick={() => {
-          draft.moves.push({ id: draft.nextId, from: stateKeys[0] ?? "", to: stateKeys[1] ?? "", roles: "" });
-          draft.nextId += 1;
-        }}
-      >
-        {t("p.issue_settings.add_move")}
-      </button>
-    </fieldset>
-
-    <div>
-      <button class="button primary" type="submit" disabled={saving}>{t("p.issue_settings.register")}</button>
-    </div>
-  </form>
-</section>
+<IssueWorkflows {types} workflows={issueWorkflows} {saving} {act} {refuse} />
 
 <style>
   section {
@@ -378,33 +329,18 @@
     gap: 0.75rem;
     margin-block: 1rem;
   }
-  .settings-form label,
-  .draft-row label {
+  .settings-form > label {
     display: grid;
     gap: 0.2rem;
   }
-  .workflow-form {
-    display: grid;
-    gap: 0.75rem;
-    max-inline-size: 56rem;
-    margin-block: 1rem;
-  }
-  .workflow-form > label {
-    display: grid;
-    gap: 0.2rem;
-    max-inline-size: 28rem;
-  }
-  .draft-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: 0.75rem;
-    margin-block-end: 0.75rem;
-  }
-  .draft-row .check {
+  .check {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    min-block-size: 2.5rem;
+  }
+  .check input {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    margin: 0;
   }
 </style>

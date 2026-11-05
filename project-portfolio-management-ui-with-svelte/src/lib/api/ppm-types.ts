@@ -951,6 +951,10 @@ export interface Issue {
   status: string;
   /** What the status means. "Open" and "done" are read from this, never from the status's name. */
   status_category?: IssueStatusCategory;
+  /** On the cross-plan register: the status's own label, when a live workflow declares it (OC-6). */
+  status_label?: string;
+  /** On the cross-plan register: that label by language code. */
+  status_labels?: Labels;
   owner_ref: string | null;
   raised_by: string | null;
   raised_on: string;
@@ -962,6 +966,9 @@ export interface Issue {
   overdue: boolean;
 }
 
+/** A label by lowercase language code (`cy`, `zh-cn`). An organization writes these itself (OC-6). */
+export type Labels = Record<string, string>;
+
 /** What an issue status means (OC-1). */
 export type IssueStatusCategory = "todo" | "active" | "waiting" | "done";
 
@@ -969,9 +976,18 @@ export type IssueStatusCategory = "todo" | "active" | "waiting" | "done";
 export interface IssueState {
   key: string;
   label: string;
+  labels?: Labels;
   category: IssueStatusCategory;
   is_initial: boolean;
   is_terminal: boolean;
+  field_rules?: FieldRule[];
+}
+
+/** A field a status makes required or read-only, for everyone or named roles (OC-4). */
+export interface FieldRule {
+  field: string;
+  rule: "required" | "read_only";
+  roles: string[];
 }
 
 /** One allowed move. No roles means anyone. */
@@ -991,20 +1007,35 @@ export interface IssueWorkflow {
 export interface IssueType {
   key: string;
   label: string;
+  labels?: Labels;
   position: number;
   retired: boolean;
+  /** On a plan's options: whether a person can choose it there (OC-5). */
+  offered?: boolean;
 }
 
 /** `GET /api/plans/{pid}/issues/options`: what a plan's issue form offers. */
 export interface IssueOptions {
   types: (IssueType & { workflow: IssueWorkflow })[];
   caller_roles: string[];
+  /** Whether the plan has role members, so issue actions need a permission (OC-3). */
+  enforced?: boolean;
+  /** What the caller may do to issues on this plan. */
+  caller_permissions?: IssuePermission[];
+  /** Whether the caller is an administrator, whom read-only fields do not bind. */
+  caller_admin?: boolean;
 }
 
-/** One role name the organization recognizes (`/api/organization-roles`). It grants nothing. */
+/** What a role can allow on a plan with role members (OC-3). */
+export type IssuePermission =
+  "issue_add" | "issue_edit" | "issue_move" | "issue_delete";
+
+/** One role the organization recognizes (`/api/organization-roles`), and what it allows. */
 export interface OrganizationRole {
   key: string;
   label: string;
+  labels?: Labels;
+  permissions?: IssuePermission[];
   description: string | null;
   position: number;
   retired: boolean;
@@ -1014,12 +1045,14 @@ export interface OrganizationRole {
 export interface NewIssueType {
   key: string;
   label: string;
+  labels?: Labels;
   position?: number;
 }
 
 /** `PUT /api/issue-types/{key}`. */
 export interface IssueTypeChange {
   label: string;
+  labels?: Labels;
   position?: number;
   retired?: boolean;
 }
@@ -1028,6 +1061,8 @@ export interface IssueTypeChange {
 export interface NewOrganizationRole {
   key: string;
   label: string;
+  labels?: Labels;
+  permissions?: IssuePermission[];
   description?: string | null;
   position?: number;
 }
@@ -1035,6 +1070,8 @@ export interface NewOrganizationRole {
 /** `PUT /api/organization-roles/{key}`. */
 export interface OrganizationRoleChange {
   label: string;
+  labels?: Labels;
+  permissions?: IssuePermission[];
   description?: string | null;
   position?: number;
   retired?: boolean;
@@ -1050,21 +1087,52 @@ export interface WorkflowSummary {
   is_default: boolean;
 }
 
-/** `POST /api/workflows`, for a deployment-wide issue workflow. */
+/** `POST /api/workflows`, for a deployment-wide or a plan's issue workflow. */
 export interface NewIssueWorkflow {
   name: string;
   applies_to: "issue";
   issue_type?: string | null;
   plan_pid?: string | null;
   is_default: boolean;
-  states: {
-    key: string;
-    label: string;
-    category: IssueStatusCategory;
-    is_initial: boolean;
-    is_terminal: boolean;
-  }[];
+  states: IssueState[];
   transitions: IssueTransition[];
+}
+
+/** `PUT /api/workflows/{pid}`: its name, states and moves. What it governs cannot change. */
+export interface IssueWorkflowChange {
+  name: string;
+  states: IssueState[];
+  transitions: IssueTransition[];
+}
+
+/** `GET /api/workflows/{pid}`: one workflow with its definition. */
+export interface WorkflowDetail extends WorkflowSummary {
+  workflow: IssueWorkflow;
+}
+
+/** `GET /api/plans/{pid}/role-members`: one person's role on a plan (OC-3). */
+export interface PlanRoleMember {
+  pid: string;
+  plan_pid: string;
+  person_ref: string;
+  role_key: string;
+  added_by: string | null;
+  added_at: string;
+}
+
+/** `GET /api/plans/{pid}/role-members`. */
+export interface PlanRoleMembers {
+  plan_pid: string;
+  enforced: boolean;
+  members: PlanRoleMember[];
+  truncated: boolean;
+}
+
+/** `GET`, `PUT /api/plans/{pid}/issue-types`: the types a plan limits itself to (OC-5). */
+export interface PlanIssueTypes {
+  plan_pid: string;
+  limited: boolean;
+  types: string[];
 }
 
 /** `GET /api/issues`. */
@@ -1077,6 +1145,8 @@ export interface IssueRegister {
     by_status: Record<string, number>;
     overdue: number;
     oldest_open: Issue | null;
+    /** The words for the statuses counted, when a live workflow declares them (OC-6). */
+    status_words?: Record<string, { label: string; labels?: Labels }>;
   };
   as_of: string;
   note: string;

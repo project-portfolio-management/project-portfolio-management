@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — roles, field rules, plan settings and translated words (OC-7, 2026-11-05)
+
+`/plans/{pid}/issue-settings` shows who holds which role, which types a plan offers, and its own workflows. `/issue-settings` sets what
+each role allows and the translations of types and roles. One editor registers and changes workflows, with field rules and translated
+statuses. The issue form follows the caller's permissions and the status's rules, and now shows and sends `priority`, which it used to
+clear on every edit. The cross-plan list shows each status's real name. Not done: people are added by user id. Not verified: against a
+real service. The new strings in seven languages are machine drafts, and no speaker has read them.
+
 ### Added — organization-defined issue types, statuses and roles (OC-1, 2026-11-04)
 
 `/issue-settings` lists the issue types and role names, adds, retires and restores them, and registers and withdraws

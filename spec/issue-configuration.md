@@ -152,11 +152,18 @@ the workflow in force for it on that plan, marked `offered` if a person can choo
 and the caller's roles, permissions and whether the plan is enforced, so a form can leave out what the service would refuse. An issue's body takes `status` as optional: absent
 means the workflow's initial state on a new issue and no change on an existing one. An issue's response adds `status_category`.
 
-## The interface
+## The interface (OC-7)
 
-`/issue-settings` lists the types and roles, adds, retires and restores them, and registers and withdraws deployment-wide issue
-workflows. A plan's issue form offers the types and statuses from the options above, and falls back to the built-ins if it cannot
-read them. The service decides in every case. The cross-plan register shows the words the service sends with each issue.
+`/issue-settings` covers the whole organization: types and roles with their translations, what each role allows, and
+deployment-wide workflows. `/plans/{pid}/issue-settings` covers one plan: who holds which role, which types it offers, and its own
+workflows. Both use one workflow editor, which registers a workflow, changes one in place, and sets each status's translations and
+field rules. Translations are typed as `cy=Risg; zh-cn=风险`. Anyone who can see these pages can read them; the service refuses a
+change from anyone but an administrator, and the page says so in the catalogue's words.
+
+A plan's issue form offers the types the plan offers, starts where the workflow says, offers only the caller's moves, leaves out what
+their roles do not allow, disables a field the status has locked for them, and names any required field left empty, in the reader's
+language. It falls back to the built-ins if it cannot read the options. The service decides in every case. The cross-plan register
+shows the words the service sends with each issue, in the reader's language where the organization has given one.
 
 ## Not built
 

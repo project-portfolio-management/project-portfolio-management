@@ -65,7 +65,7 @@ test("an administrator adds a type and a role, retires a type and registers a wo
 
   const types = page.getByRole("region", { name: "Issue types" });
   await types.getByLabel("Key").fill("incident");
-  await types.getByLabel("Name").fill("Incident");
+  await types.getByLabel("Name", { exact: true }).fill("Incident");
   await types.getByRole("button", { name: "Add type" }).click();
   await expect(
     types.getByRole("rowheader", { name: "Incident" }),
@@ -80,9 +80,9 @@ test("an administrator adds a type and a role, retires a type and registers a wo
   );
 
   const roles = page.getByRole("region", { name: "Roles" });
-  await expect(roles.getByText("grants nothing")).toBeVisible();
+  await expect(roles.getByText("can only narrow")).toBeVisible();
   await roles.getByLabel("Key").fill("change-manager");
-  await roles.getByLabel("Name").fill("Change manager");
+  await roles.getByLabel("Name", { exact: true }).fill("Change manager");
   await roles.getByRole("button", { name: "Add role" }).click();
   await expect(
     roles.getByRole("rowheader", { name: "Change manager" }),
@@ -114,10 +114,128 @@ test("an administrator adds a type and a role, retires a type and registers a wo
   expect(posted.states).toContainEqual({
     key: "with_supplier",
     label: "With supplier",
+    labels: {},
     category: "waiting",
     is_initial: false,
     is_terminal: false,
+    field_rules: [],
   });
+});
+
+test("a role's permissions and translations are saved, and a bad translation is refused here", async ({
+  page,
+}) => {
+  const sent = await stubSettings(page);
+  await page.goto("/en-001/issue-settings");
+  await settle(page);
+  const roles = page.getByRole("region", { name: "Roles" });
+  await roles.getByLabel("Key").fill("triager");
+  await roles.getByLabel("Name", { exact: true }).fill("Triager");
+  await roles
+    .getByRole("checkbox", { name: "Raise issues", exact: true })
+    .check();
+  await roles.getByRole("button", { name: "Add role" }).click();
+  await expect(roles.getByRole("rowheader", { name: "Triager" })).toBeVisible();
+  expect(
+    sent.find((s) => s.path.endsWith("/organization-roles"))?.body,
+  ).toMatchObject({
+    permissions: ["issue_add"],
+  });
+
+  await roles
+    .getByRole("checkbox", { name: "Move issues: Triager", exact: true })
+    .check();
+  await roles
+    .getByLabel(
+      "Translations (language=name, separated by semicolons): Triager",
+    )
+    .fill("cy=Brysbennydd");
+  await roles.getByRole("button", { name: "Save: Triager" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Saved." }),
+  ).toBeVisible();
+  expect(sent.at(-1)?.body).toMatchObject({
+    labels: { cy: "Brysbennydd" },
+    permissions: ["issue_add", "issue_move"],
+  });
+
+  const types = page.getByRole("region", { name: "Issue types" });
+  const count = sent.length;
+  await types
+    .getByLabel("Translations (language=name, separated by semicolons): Bug")
+    .fill("nonsense");
+  await types.getByRole("button", { name: "Save: Bug" }).click();
+  await expect(page.getByRole("alert")).toContainText("language=name");
+  expect(sent.length).toBe(count);
+});
+
+test("a workflow is changed in place, with a field rule and a translated status", async ({
+  page,
+}) => {
+  const sent = await stubSettings(page);
+  await page.route("**/api/workflows/w9", async (route) => {
+    const req = route.request();
+    if (req.method() === "GET")
+      return route.fulfill({
+        json: {
+          pid: "w9",
+          name: "Triage",
+          applies_to: "issue",
+          issue_type: null,
+          plan_pid: null,
+          is_default: true,
+          workflow,
+        },
+      });
+    sent.push({
+      method: req.method(),
+      path: "/api/workflows/w9",
+      body: req.postDataJSON(),
+    });
+    return route.fulfill({ json: { pid: "w9" } });
+  });
+  await page.route("**/api/workflows", (route) =>
+    route.request().method() === "GET"
+      ? route.fulfill({
+          json: [
+            {
+              pid: "w9",
+              name: "Triage",
+              applies_to: "issue",
+              issue_type: null,
+              plan_pid: null,
+              is_default: true,
+            },
+          ],
+        })
+      : route.fallback(),
+  );
+  await page.goto("/en-001/issue-settings");
+  await settle(page);
+  const flows = page.getByRole("region", { name: "Statuses and moves" });
+  await flows.getByRole("button", { name: "Edit: Triage" }).click();
+  await expect(flows.getByText("Changing Triage")).toBeVisible();
+  await expect(flows.getByLabel("Workflow name")).toHaveValue("Triage");
+  await expect(flows.getByLabel("Applies to")).toBeDisabled();
+  await flows
+    .getByLabel(/^Translations/)
+    .first()
+    .fill("cy=Newydd");
+  await flows.getByRole("button", { name: "Add field rule: New" }).click();
+  await flows.getByLabel(/^Field/).selectOption("due_date");
+  await flows.getByRole("button", { name: "Save workflow" }).click();
+  await expect(flows.getByText("Changing Triage")).toHaveCount(0);
+  const change = sent.find((s) => s.method === "PUT")?.body as {
+    states: Record<string, unknown>[];
+    transitions: unknown[];
+  };
+  expect(change.states[0]).toMatchObject({
+    key: "new",
+    labels: { cy: "Newydd" },
+    is_initial: true,
+    field_rules: [{ field: "due_date", rule: "required", roles: [] }],
+  });
+  expect(change.transitions).toEqual(workflow.transitions);
 });
 
 test("someone who is not an administrator is told so in the catalogue's words", async ({
@@ -128,7 +246,7 @@ test("someone who is not an administrator is told so in the catalogue's words", 
   await settle(page);
   const types = page.getByRole("region", { name: "Issue types" });
   await types.getByLabel("Key").fill("incident");
-  await types.getByLabel("Name").fill("Incident");
+  await types.getByLabel("Name", { exact: true }).fill("Incident");
   await types.getByRole("button", { name: "Add type" }).click();
   const alert = page.getByRole("alert");
   await expect(alert).toHaveText("You are not allowed to do that.");
@@ -181,7 +299,11 @@ const workflow = {
   ],
 };
 
-async function stubPlan(page: Page, callerRoles: string[]) {
+async function stubPlan(
+  page: Page,
+  callerRoles: string[],
+  standing: Record<string, unknown> = {},
+) {
   const issue = {
     pid: "i1",
     plan_pid: PID,
@@ -208,6 +330,7 @@ async function stubPlan(page: Page, callerRoles: string[]) {
       return route.fulfill({
         json: {
           caller_roles: callerRoles,
+          ...standing,
           types: [
             { key: "bug", label: "Bug", position: 0, retired: false, workflow },
             {
@@ -281,4 +404,229 @@ test("with the role, the sign-off is offered and asks for a resolution", async (
   await form.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByRole("alert")).toBeVisible();
   expect(sent).toEqual([]);
+});
+
+test("the form follows the caller's permissions and the status's field rules", async ({
+  page,
+}) => {
+  const ruled = structuredClone(workflow);
+  ruled.states[1]!.field_rules = [
+    { field: "title", rule: "read_only", roles: [] },
+    { field: "owner_ref", rule: "required", roles: [] },
+  ] as never;
+  const sent = await stubPlan(page, []);
+  await page.route(`**/api/plans/${PID}/issues/options`, (route) =>
+    route.fulfill({
+      json: {
+        caller_roles: [],
+        caller_permissions: ["issue_edit"],
+        enforced: true,
+        types: [
+          {
+            key: "incident",
+            label: "Incident",
+            position: 0,
+            retired: false,
+            offered: true,
+            workflow: ruled,
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto(`/en-001/plans/${PID}/issues`);
+  await settle(page);
+  // No `issue_add`: nothing to raise with.
+  await expect(
+    page.getByRole("heading", { name: "Raise an issue from a risk" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: /Signal failure/ }).click();
+  const form = page.locator("form.issue-form").first();
+  await expect(form.getByLabel("Title")).toBeDisabled();
+  await expect(form.getByLabel("Status")).toBeDisabled();
+  await form.getByRole("button", { name: "Save changes" }).click();
+  await expect(form.getByLabel("Owner")).toHaveAttribute("required", "");
+  expect(sent).toEqual([]);
+});
+
+test("a plan's settings name who holds what, and choose its types and workflow", async ({
+  page,
+}) => {
+  const members = [
+    {
+      pid: "m1",
+      plan_pid: PID,
+      person_ref: "3f2c6b7e-0000-4000-8000-0000000001a1",
+      role_key: "triager",
+      added_by: null,
+      added_at: "2026-11-05T00:00:00Z",
+    },
+  ];
+  const sent: { method: string; path: string; body: unknown }[] = [];
+  await stubSettings(page);
+  await page.route("**/api/organization-roles**", (route) =>
+    route.fulfill({
+      json: [
+        {
+          key: "triager",
+          label: "Triager",
+          description: null,
+          position: 0,
+          retired: false,
+        },
+        {
+          key: "closer",
+          label: "Closer",
+          description: null,
+          position: 1,
+          retired: false,
+        },
+      ],
+    }),
+  );
+  await page.route(`**/api/plans/${PID}/role-members**`, async (route) => {
+    const req = route.request();
+    if (req.method() === "GET")
+      return route.fulfill({
+        json: {
+          plan_pid: PID,
+          enforced: members.length > 0,
+          members,
+          truncated: false,
+        },
+      });
+    sent.push({
+      method: req.method(),
+      path: new URL(req.url()).pathname,
+      body: req.postDataJSON?.() ?? null,
+    });
+    if (req.method() === "DELETE") {
+      members.length = 0;
+      return route.fulfill({ json: {} });
+    }
+    return route.fulfill({ status: 201, json: {} });
+  });
+  await page.route(`**/api/plans/${PID}/issue-types`, async (route) => {
+    const req = route.request();
+    if (req.method() === "GET")
+      return route.fulfill({
+        json: { plan_pid: PID, limited: true, types: ["bug"] },
+      });
+    sent.push({
+      method: req.method(),
+      path: new URL(req.url()).pathname,
+      body: req.postDataJSON(),
+    });
+    return route.fulfill({
+      json: { plan_pid: PID, limited: true, types: ["bug"] },
+    });
+  });
+  await page.goto(`/en-001/plans/${PID}/issue-settings`);
+  await settle(page);
+  await expect(
+    page.getByText("Issue actions on this plan need a role."),
+  ).toBeVisible();
+
+  const people = page.getByRole("region", { name: "People and roles" });
+  await people
+    .getByLabel("Person's user id")
+    .fill("3f2c6b7e-0000-4000-8000-0000000001b2");
+  await people.getByLabel(/^Role/).selectOption("closer");
+  await people.getByRole("button", { name: "Add person" }).click();
+  await expect
+    .poll(() => sent.at(-1)?.body)
+    .toEqual({
+      person_ref: "3f2c6b7e-0000-4000-8000-0000000001b2",
+      role_key: "closer",
+    });
+  await people.getByRole("button", { name: /Remove: .*Triager/ }).click();
+  await expect(
+    page.getByText("Anyone who can write can act on issues here."),
+  ).toBeVisible();
+
+  const offered = page.getByRole("region", {
+    name: "Issue types on this plan",
+  });
+  await expect(offered.getByRole("checkbox", { name: "Bug" })).toBeChecked();
+  await offered.getByRole("checkbox", { name: "Risk" }).check();
+  await offered.getByRole("button", { name: "Save types" }).click();
+  await expect
+    .poll(() => sent.at(-1)?.body)
+    .toEqual({ types: ["bug", "risk"] });
+
+  const flows = page.getByRole("region", { name: "Statuses and moves" });
+  await flows.getByLabel("Workflow name").fill("This plan");
+  await flows.getByRole("button", { name: "Register workflow" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Saved." }),
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(
+    results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    ),
+  ).toEqual([]);
+});
+
+test("the register shows a status's own words, and in the reader's language", async ({
+  page,
+}) => {
+  const issue = {
+    pid: "i1",
+    plan_pid: PID,
+    title: "Waiting on the vendor",
+    description: null,
+    kind: "bug",
+    severity: "high",
+    priority: null,
+    status: "with_supplier",
+    status_category: "waiting",
+    status_label: "At the vendor",
+    status_labels: { cy: "Gyda'r gwerthwr" },
+    owner_ref: null,
+    raised_by: null,
+    raised_on: "2026-10-01",
+    due_date: null,
+    resolution: null,
+    resolved_on: null,
+    age_calendar_days: 1,
+    overdue: false,
+  };
+  await page.route("**/api/issues**", (route) =>
+    route.fulfill({
+      json: {
+        issues: [issue],
+        matching: 1,
+        truncated: false,
+        summary: {
+          by_severity: { high: 1 },
+          by_status: { open: 0, with_supplier: 1 },
+          overdue: 0,
+          oldest_open: null,
+          status_words: {
+            with_supplier: {
+              label: "At the vendor",
+              labels: { cy: "Gyda'r gwerthwr" },
+            },
+          },
+        },
+        as_of: "2026-11-05",
+        note: "",
+      },
+    }),
+  );
+  await page.route("**/api/issue-types**", (route) =>
+    route.fulfill({ json: [] }),
+  );
+  await page.goto("/en-001/issues");
+  await settle(page);
+  await expect(page.getByRole("cell", { name: "At the vendor" })).toBeVisible();
+  await page.goto("/cy-001/issues");
+  await settle(page);
+  await expect(
+    page.getByRole("cell", { name: "Gyda'r gwerthwr" }),
+  ).toBeVisible();
 });

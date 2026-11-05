@@ -2398,6 +2398,12 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   audit feed and `/api/plans/{pid}/audit`; workflows are read and written through their plan's visibility; converting a control action
   needs `issue_add`; a stale save cannot undo a move; removing a gated issue needs an administrator; erasure deletes role memberships.
 
+- [x] **OC-7 (M) — The interface for all of it.** **Built 2026-11-05:** `/plans/{pid}/issue-settings`, a shared workflow editor,
+  permissions and translations on `/issue-settings`, and an issue form that follows permissions and field rules.
+
+- [x] **OC-8 (S) — The Redmine comparison, checked.** **Built 2026-11-05:** the table on `/compare/redmine/` follows Redmine's own
+  documentation, as read on this date.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

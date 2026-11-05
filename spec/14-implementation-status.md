@@ -64,10 +64,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | BR | 15 | 2 |
 | FB | 6 | 2 |
 | GP | 7 | 0 |
-| OC | 7 | 0 |
+| OC | 9 | 0 |
 | LC | 0 | 10 |
 | UE | 1 | 7 |
-| **Total** | **218** | **29** |
+| **Total** | **220** | **29** |
 
 <!-- generated:end -->
 

@@ -10,8 +10,10 @@ import type {
   IssueState,
   IssueType,
   IssueWorkflow,
+  Labels,
 } from "./api/ppm-types.js";
 import { enumLabel } from "./enum-labels.js";
+import { i18n } from "./i18n.svelte.js";
 
 export const ISSUE_KINDS = [
   "bug",
@@ -40,6 +42,7 @@ export interface IssueForm {
   raisedOn: string;
   dueDate: string;
   resolution: string;
+  priority: string;
 }
 
 /** The first thing wrong with the form, or `null` when it can be sent. */
@@ -57,6 +60,7 @@ export function emptyIssueForm(): IssueForm {
     raisedOn: "",
     dueDate: "",
     resolution: "",
+    priority: "",
   };
 }
 
@@ -72,6 +76,7 @@ export function formFromIssue(issue: Issue): IssueForm {
     raisedOn: issue.raised_on,
     dueDate: issue.due_date ?? "",
     resolution: issue.resolution ?? "",
+    priority: issue.priority ?? "",
   };
 }
 
@@ -100,6 +105,7 @@ export function issueBody(f: IssueForm): IssueBody {
     kind: f.kind,
     severity: f.severity,
     status: f.status,
+    priority: orNull(f.priority),
     owner_ref: orNull(f.ownerRef),
     due_date: orNull(f.dueDate),
     resolution: orNull(f.resolution),
@@ -179,12 +185,31 @@ export function workflowFor(
   );
 }
 
+/**
+ * An organization's own word in `locale`: the exact language, then that language less its last part (`en-gb-oxendict`,
+ * `en-gb`, `en`), then `null`, so the caller can fall back.
+ */
+export function translated(
+  labels: Labels | null | undefined,
+  locale: string,
+): string | null {
+  let code = locale.toLowerCase();
+  while (code !== "") {
+    const found = labels?.[code];
+    if (found) return found;
+    code = code.includes("-") ? code.slice(0, code.lastIndexOf("-")) : "";
+  }
+  return null;
+}
+
 /** A type's name in the reader's language. */
 export function typeLabel(
   types: readonly IssueType[] | null | undefined,
   key: string,
 ): string {
   const found = types?.find((t) => t.key === key);
+  const own = translated(found?.labels, i18n.locale);
+  if (own) return own;
   if (!found)
     return key in SEEDED_TYPE_LABELS
       ? enumLabel("issue_kind", key)
@@ -199,19 +224,106 @@ export function statusLabel(
   workflow: IssueWorkflow | null,
   key: string,
 ): string {
-  const seeded = BUILT_IN_WORKFLOW.states.find((s) => s.key === key);
-  const found = workflow?.states.find((s) => s.key === key);
-  if (seeded && (!found || found.label === seeded.label))
-    return enumLabel("issue_status", key);
-  return found?.label ?? humanize(key);
+  return statusWords(
+    key,
+    workflow?.states.find((s) => s.key === key),
+  );
 }
 
-/** The types a person can choose: those not retired, and the one the issue already has. */
+/** A status's name from its own words, where a list has those and no workflow. */
+export function statusWords(
+  key: string,
+  words: { label: string; labels?: Labels } | null | undefined,
+): string {
+  const own = translated(words?.labels, i18n.locale);
+  if (own) return own;
+  const seeded = BUILT_IN_WORKFLOW.states.find((s) => s.key === key);
+  if (seeded && (!words || words.label === seeded.label))
+    return enumLabel("issue_status", key);
+  return words?.label ?? humanize(key);
+}
+
+/** A status on a row of the cross-plan register, which carries its own words. */
+export function issueStatusLabel(issue: Issue): string {
+  return statusWords(
+    issue.status,
+    issue.status_label === undefined
+      ? null
+      : { label: issue.status_label, labels: issue.status_labels ?? {} },
+  );
+}
+
+/** The fields `status` requires of a caller holding `roles`. */
+export function requiredFields(
+  workflow: IssueWorkflow,
+  status: string,
+  roles: readonly string[],
+): string[] {
+  return fieldsWith(workflow, status, "required", roles);
+}
+
+/** The fields `status` keeps from changing for this caller. An administrator is not bound. */
+export function readOnlyFields(
+  workflow: IssueWorkflow,
+  status: string | null,
+  roles: readonly string[],
+  admin: boolean,
+): string[] {
+  if (status === null || admin) return [];
+  return fieldsWith(workflow, status, "read_only", roles);
+}
+
+function fieldsWith(
+  workflow: IssueWorkflow,
+  status: string,
+  rule: "required" | "read_only",
+  roles: readonly string[],
+): string[] {
+  const state = workflow.states.find((s) => s.key === status);
+  return (state?.field_rules ?? [])
+    .filter(
+      (r) =>
+        r.rule === rule &&
+        (r.roles.length === 0 || r.roles.some((x) => roles.includes(x))),
+    )
+    .map((r) => r.field);
+}
+
+/** Which required fields the form leaves empty. A title and a severity always have something in them. */
+export function missingFields(
+  f: IssueForm,
+  required: readonly string[],
+): string[] {
+  const filled: Record<string, string> = {
+    description: f.description,
+    priority: f.priority,
+    owner_ref: f.ownerRef,
+    due_date: f.dueDate,
+    resolution: f.resolution,
+  };
+  return required.filter((field) => filled[field]?.trim() === "");
+}
+
+/** What this caller may do on the plan. With no options the service decides, so nothing is hidden. */
+export function allowedActions(options: IssueOptions | null): {
+  add: boolean;
+  edit: boolean;
+  move: boolean;
+} {
+  const held = options?.caller_permissions;
+  return {
+    add: held?.includes("issue_add") ?? true,
+    edit: held?.includes("issue_edit") ?? true,
+    move: held?.includes("issue_move") ?? true,
+  };
+}
+
+/** The types a person can choose: those not retired that the plan offers, and the one the issue already has. */
 export function typeChoices(
   options: IssueOptions | null,
   current: string,
 ): IssueType[] {
-  const types =
+  const types: readonly IssueType[] =
     options?.types ??
     ISSUE_KINDS.map((key, position) => ({
       key,
@@ -219,7 +331,9 @@ export function typeChoices(
       position,
       retired: false,
     }));
-  return types.filter((t) => !t.retired || t.key === current);
+  return types.filter(
+    (t) => (!t.retired && t.offered !== false) || t.key === current,
+  );
 }
 
 /** The status a new issue of this type starts in. */

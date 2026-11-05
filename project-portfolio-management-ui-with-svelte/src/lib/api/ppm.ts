@@ -103,6 +103,11 @@ import type {
   IssueTypeChange,
   NewIssueType,
   NewIssueWorkflow,
+  IssueWorkflowChange,
+  PlanIssueTypes,
+  PlanRoleMember,
+  PlanRoleMembers,
+  WorkflowDetail,
   NewOrganizationRole,
   OrganizationRole,
   OrganizationRoleChange,
@@ -649,7 +654,7 @@ export class PpmClient {
     const qs = q.toString();
     return this.http.get(`/api/issues${qs ? `?${qs}` : ""}`);
   }
-  /** What a plan's issue form offers: every type with its workflow, and the caller's roles (OC-1). */
+  /** What a plan's issue form offers: every type with its workflow, and the caller's standing (OC-1, OC-3). */
   issueOptions(pid: string): Promise<IssueOptions> {
     return this.http.get(`/api/plans/${pid}/issues/options`);
   }
@@ -667,13 +672,13 @@ export class PpmClient {
   changeIssueType(key: string, body: IssueTypeChange): Promise<IssueType> {
     return this.http.put(`/api/issue-types/${key}`, { body });
   }
-  /** The role names the organization recognizes, retired ones too if asked (OC-1). */
+  /** The roles the organization recognizes, retired ones too if asked (OC-1). */
   organizationRoles(includeRetired = false): Promise<OrganizationRole[]> {
     return this.http.get(
       `/api/organization-roles${includeRetired ? "?include_retired=true" : ""}`,
     );
   }
-  /** Name a role (an administrator). It grants nothing. */
+  /** Add a role (an administrator). */
   addOrganizationRole(body: NewOrganizationRole): Promise<OrganizationRole> {
     return this.http.post(`/api/organization-roles`, { body });
   }
@@ -691,6 +696,40 @@ export class PpmClient {
   /** Register an issue workflow (an administrator). */
   addIssueWorkflow(body: NewIssueWorkflow): Promise<{ pid: string }> {
     return this.http.post(`/api/workflows`, { body });
+  }
+  /** One workflow with its definition. */
+  workflowDetail(pid: string): Promise<WorkflowDetail> {
+    return this.http.get(`/api/workflows/${pid}`);
+  }
+  /** Change an issue workflow in place (an administrator). */
+  changeIssueWorkflow(
+    pid: string,
+    body: IssueWorkflowChange,
+  ): Promise<{ pid: string }> {
+    return this.http.put(`/api/workflows/${pid}`, { body });
+  }
+  /** Who holds which role on a plan (OC-3). */
+  planRoleMembers(pid: string): Promise<PlanRoleMembers> {
+    return this.http.get(`/api/plans/${pid}/role-members`);
+  }
+  /** Give someone a role on a plan (an administrator). The first member turns enforcement on. */
+  addPlanRoleMember(
+    pid: string,
+    body: { person_ref: string; role_key: string },
+  ): Promise<PlanRoleMember> {
+    return this.http.post(`/api/plans/${pid}/role-members`, { body });
+  }
+  /** Take a role away (an administrator). */
+  removePlanRoleMember(pid: string, member: string): Promise<void> {
+    return this.http.delete(`/api/plans/${pid}/role-members/${member}`);
+  }
+  /** The issue types a plan limits itself to (OC-5). */
+  planIssueTypes(pid: string): Promise<PlanIssueTypes> {
+    return this.http.get(`/api/plans/${pid}/issue-types`);
+  }
+  /** Choose the types a plan offers (an administrator). Empty offers every type. */
+  setPlanIssueTypes(pid: string, types: string[]): Promise<PlanIssueTypes> {
+    return this.http.put(`/api/plans/${pid}/issue-types`, { body: { types } });
   }
   /** Withdraw a workflow. An issue workflow needs an administrator. */
   withdrawWorkflow(pid: string): Promise<void> {

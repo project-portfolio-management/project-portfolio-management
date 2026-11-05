@@ -12,7 +12,7 @@
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { PpmClient, type IssueRegister, type IssueType } from "#lib/api/ppm.js";
-  import { statusLabel, typeLabel } from "#lib/issue-view.js";
+  import { issueStatusLabel, statusWords, typeLabel } from "#lib/issue-view.js";
 
   const ppm = PpmClient.withFetch();
   let status = $state("");
@@ -52,7 +52,7 @@
     { id: "title", header: t("p.issues.title_col"), rowHeader: true, cell: titleCell },
     { id: "kind", header: t("p.issues.kind_col"), format: (v) => typeLabel(types, String(v)) },
     { id: "severity", header: t("p.issues.severity_col"), format: (v) => enumLabel("severity", String(v)) },
-    { id: "status", header: t("p.issues.status_col"), format: (v) => statusLabel(null, String(v)) },
+    { id: "status", header: t("p.issues.status_col"), format: (_, r) => issueStatusLabel(rowOf<Issue>(r)) },
     { id: "owner_ref", header: t("p.issues.owner_col"), format: (v) => (v ? String(v) : t("p.issues.no_owner")) },
     { id: "age_calendar_days", header: t("p.issues.age_col"), align: "end" },
     { id: "due_date", header: t("p.issues.due_col"), format: (v) => (v ? String(v) : t("p.issues.no_due")), cell: dueCell },
@@ -96,7 +96,7 @@
   <label>{t("p.issues.show")}
     <select bind:value={status} onchange={refresh}>
       <option value="">{t("p.issues.all_statuses")}</option>
-      {#each STATUSES as s (s)}<option value={s}>{statusLabel(null, s)}</option>{/each}
+      {#each STATUSES as s (s)}<option value={s}>{statusWords(s, register?.summary.status_words?.[s])}</option>{/each}
     </select>
   </label>
   <label>{t("p.issues.severity_filter")}

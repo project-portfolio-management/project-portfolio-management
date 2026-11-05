@@ -11,6 +11,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **Role permissions, plan membership, field rules and plan types (OC-2 to OC-6, OC-9, 2026-11-05).** Migrations 101 to 104:
+  `organization_roles.permissions`, `plan_role_members`, `workflow_states.field_rules`, `plan_issue_types`, and `labels` on types,
+  roles and states. `/api/plans/{pid}/role-members`, `/api/plans/{pid}/issue-types`, `GET` and `PUT /api/workflows/{pid}`. A role can
+  only narrow what a token allows. `?status=` confirms no hidden plan's word. A private plan's issues left the audit feed and
+  `/api/plans/{pid}/audit`. `/api/workflows` answers `404` for a plan the caller cannot read. Not built: see
+  `spec/issue-configuration.md`.
 - **Organization-defined issue types, statuses and roles (OC-1, 2026-11-04).** `issue_types`, `organization_roles`,
   `issues.status_category` and `workflows.issue_type` (migration 100), `/api/issue-types`, `/api/organization-roles` and
   `GET /api/plans/{pid}/issues/options`. An issue follows the workflow in force for its type, and "open" and "overdue" read

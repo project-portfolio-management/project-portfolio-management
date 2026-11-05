@@ -7,7 +7,7 @@ Mae gan y cynhyrchion isod ddibenion gwahanol ac ni chânt eu sgorio. Mae'r nodi
 | Prosiect | Beth ydyw | Ble mae'r prosiect hwn yn wahanol |
 | --- | --- | --- |
 | [Leantime](https://github.com/leantime/leantime) | Rheoli prosiectau i bobl nad ydynt yn rheolwyr prosiect | Mae'r prosiect hwn hefyd yn cynnwys y swyddogaethau amserlennu, cost a llywodraethu a ddefnyddir gan swyddfa bortffolio |
-| [Redmine](https://www.redmine.org/) | Offeryn cyffredinol ffurfweddadwy, gyda mathau, statwsau a rolau a ddiffinnir gan y sefydliad | Mae mathau o faterion, statwsau a llifoedd gwaith yn cael eu diffinio gan y sefydliad. Gall enwau rôl gyfyngu ar symudiad statws, ond nid ydynt yn rhoi caniatâd, a ddaw gan y darparwr hunaniaeth. Gweler y [gymhariaeth â Redmine](../../../en-001/compare/redmine/index.md) (yn Saesneg) |
+| [Redmine](https://www.redmine.org/) | Offeryn cyffredinol ffurfweddadwy, gyda mathau, statwsau a rolau a ddiffinnir gan y sefydliad | Mae mathau o faterion, statwsau a llifoedd gwaith yn cael eu diffinio gan y sefydliad. Mae rolau'n cario caniatâd ar faterion, fesul cynllun, o fewn yr hyn y mae mewngofnodi rhywun yn ei ganiatáu. Gweler y [gymhariaeth â Redmine](../../../en-001/compare/redmine/index.md) (yn Saesneg) |
 | Huly Platform (drwy ei fforc, Platform Collective) | Fframwaith cymwysiadau busnes ar lawer o wasanaethau | Platfform aml-wasanaeth yw Huly. Un gwasanaeth dros PostgreSQL yw'r prosiect hwn |
 | [ProjectLibre](https://sourceforge.net/p/projectlibre/) | Dewis bwrdd gwaith yn lle Microsoft Project, ar gyfer un rheolwr ac un prosiect | Gwasanaeth aml-ddefnyddiwr wedi'i letya yw'r prosiect hwn, gyda rheoli mynediad |
 

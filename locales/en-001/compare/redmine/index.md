@@ -2,7 +2,7 @@
 
 *Two configurable issue models, and where they differ.*
 
-**Basis of this comparison.** Redmine was not installed or run for this comparison. The description is general and may be out of date, and Redmine's current documentation should be checked before a decision is made. Products are not scored. Statements about this project are taken from its repository.
+**Basis of this comparison.** The Redmine column of the table below was checked on 5 November 2026 against Redmine's own documentation: [roles and permissions](https://www.redmine.org/projects/redmine/wiki/RedmineRoles), [issue tracking setup](https://www.redmine.org/projects/redmine/wiki/RedmineIssueTrackingSetup) and [project settings](https://www.redmine.org/projects/redmine/wiki/RedmineProjectSettings). Redmine was not installed or run, and the rest of this page is a general description. Products are not scored. Statements about this project are taken from its repository.
 
 ## About Redmine
 
@@ -10,13 +10,14 @@ A long-established, configurable, open-source project tracker in which the organ
 
 ## When Redmine may be the better fit
 
-- Roles need to carry permissions inside the tool, assigned to members project by project
-- Fields need to be read-only or required by role and status
+- Roles need to govern more than issue actions, such as notes, watchers, saved queries and which issues a member can see
+- Project members, not only administrators, need to manage their own project's members and trackers
+- Groups need to hold roles, or field rules need to cover custom fields
 - A long production history and a large plugin ecosystem are required
 
 ## When this project may be the better fit
 
-- Issue types, statuses and role-restricted moves are needed alongside a portfolio registry
+- Issue types, statuses, roles and field rules are needed alongside a portfolio registry
 - Portfolio views, critical path, earned value and governance are required
 - Explainable duplicate matching is required
 
@@ -24,11 +25,13 @@ A long-established, configurable, open-source project tracker in which the organ
 
 | Concept | Redmine | This project |
 | --- | --- | --- |
-| Issue types | Trackers, defined by an administrator and enabled per project | Issue types, defined by an administrator for the whole deployment. A type is retired, never deleted |
-| Statuses | A shared list of issue statuses | The states of a workflow. Each state declares what it means (not started, active, waiting or done), and totals and overdue figures use that meaning |
-| Roles | Roles carry permissions and are given to members per project | Role names only. A name can restrict a status move, and a role listed here grants nothing: permissions come from the identity provider |
-| Workflow | Allowed status changes for each combination of role and tracker | Allowed moves for a workflow, each open to anyone or to named roles. A workflow can apply to one issue type, or to one plan through the API |
-| Field rules | Fields can be read-only or required by role and status | Not available. A terminal status requires a resolution |
+| Issue types | Trackers, defined by an administrator. Each project selects the ones it uses, and project members with the permission can make that selection | Issue types, defined by an administrator for the whole deployment. An administrator can limit a plan to some of them. A type is retired, never deleted |
+| Statuses | A shared list of statuses. More than one can be marked closed, and each can set a percent done | The states of a workflow. Each state declares what it means (not started, active, waiting or done), and totals and overdue figures use that meaning |
+| Roles | A named set of permissions across issues, notes, watchers, queries and more. A role can also narrow which issues its holder sees | A named set of four issue permissions: add, edit, move and remove. Permissions can only narrow what a person's sign-in allows, and what they can see is decided by the plan's privacy |
+| Members | A user or a group holds one or more roles on a project, and the permissions combine | A person holds one or more roles on a plan, and the permissions combine. A plan is unaffected until it has its first member. Only an administrator changes membership, and groups cannot hold a role |
+| Workflow | Allowed status changes for each combination of role and tracker | Allowed moves for a workflow, each open to anyone or to named roles. A workflow can apply to one issue type, to one plan, or to both |
+| Field rules | Per status, a field can be read-only or required, for each role and tracker. This includes custom fields | Per status, one of seven standard fields can be read-only or required, for everyone or named roles. Custom fields are not covered. An administrator is not bound by read-only |
+| Translated names | Not checked for this comparison | An organization can give each issue type, role and status a name per language |
 
 ## Migration
 

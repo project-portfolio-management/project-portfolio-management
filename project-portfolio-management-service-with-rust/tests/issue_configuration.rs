@@ -1218,3 +1218,125 @@ async fn a_role_held_on_one_plan_opens_that_plans_gates_and_no_others_and_no_pri
     })
     .await;
 }
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_status_can_require_a_field_or_lock_one_for_named_roles() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let writer = bearer(&kid, WRITER, &[("access", "write")]);
+        let guest = bearer(
+            &kid,
+            MANAGER,
+            &[("access", "write"), ("role", "contractor")],
+        );
+        let plan = new_plan(&request, &admin, "Field rules").await;
+        let issues = format!("/api/plans/{plan}/issues");
+        let mut body = triage_workflow("Rules", None, Some(&plan));
+        body["transitions"] = json!([]);
+        body["states"][0]["field_rules"] = json!([
+            { "field": "description", "rule": "required" },
+        ]);
+        body["states"][1]["field_rules"] = json!([
+            { "field": "owner_ref", "rule": "required" },
+            { "field": "due_date", "rule": "required", "roles": ["contractor"] },
+            { "field": "title", "rule": "read_only" },
+            { "field": "priority", "rule": "read_only", "roles": ["contractor"] },
+        ]);
+
+        // A field outside the list and a rule on a task workflow are refused.
+        let mut bad = body.clone();
+        bad["states"][1]["field_rules"] = json!([{ "field": "colour", "rule": "required" }]);
+        let refused = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&bad)
+            .await;
+        assert_eq!(refused.status_code(), 422, "{}", refused.text());
+        let mut task = body.clone();
+        task["applies_to"] = json!("task");
+        task["plan_pid"] = json!(new_plan(&request, &admin, "Task").await);
+        let refused = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&task)
+            .await;
+        assert_eq!(refused.status_code(), 422, "{}", refused.text());
+
+        let made = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&body)
+            .await;
+        assert_eq!(made.status_code(), 200, "{}", made.text());
+
+        // The initial state's rule binds a person raising an issue; a save names what is missing.
+        let refused = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "No description" }))
+            .await;
+        assert_eq!(refused.status_code(), 422);
+        assert!(refused.text().contains("description"), "{}", refused.text());
+        let raised: Value = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Rules", "description": "Why" }))
+            .await
+            .json();
+        let issue = format!("{issues}/{}", raised["pid"].as_str().expect("pid"));
+
+        // Entering a state needs what it requires, for whoever the rule binds.
+        let base = json!({ "title": "Rules", "description": "Why", "status": "with_supplier" });
+        assert_eq!(put_status(&request, &writer, &issue, &base).await, 422);
+        let mut owned = base.clone();
+        owned["owner_ref"] = json!("person:a");
+        assert_eq!(
+            put_status(&request, &guest, &issue, &owned).await,
+            422,
+            "a contractor must also give a due date"
+        );
+        assert_eq!(put_status(&request, &writer, &issue, &owned).await, 200);
+
+        // Read-only holds in that state: for everyone, or for the roles named. A blank is a change too.
+        let mut retitled = owned.clone();
+        retitled["title"] = json!("Changed");
+        assert_eq!(put_status(&request, &writer, &issue, &retitled).await, 403);
+        let mut prioritised = owned.clone();
+        prioritised["priority"] = json!("P1");
+        assert_eq!(
+            put_status(&request, &writer, &issue, &prioritised).await,
+            200
+        );
+        prioritised["priority"] = json!("P2");
+        prioritised["due_date"] = json!("2099-01-01");
+        assert_eq!(
+            put_status(&request, &guest, &issue, &prioritised).await,
+            403,
+            "read-only for the contractor role"
+        );
+        prioritised["priority"] = json!("P1");
+        assert_eq!(
+            put_status(&request, &guest, &issue, &prioritised).await,
+            200
+        );
+        // An administrator is not bound by read-only.
+        prioritised["title"] = json!("Changed");
+        assert_eq!(
+            put_status(&request, &admin, &issue, &prioritised).await,
+            200
+        );
+
+        // A type change cannot leave a state's rules behind.
+        prioritised["kind"] = json!("bug");
+        assert_eq!(
+            put_status(&request, &writer, &issue, &prioritised).await,
+            403
+        );
+    })
+    .await;
+}

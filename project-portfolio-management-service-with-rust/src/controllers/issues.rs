@@ -364,26 +364,63 @@ fn trimmed(s: Option<&String>) -> Option<String> {
     s.map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
 }
 
-/// Whether a save changes anything but the status. A resolution belongs to the move that needs it, so it does not count
-/// as an edit when the status changes.
-fn edits_fields(
+/// The fields a save changes, by the names field rules use. Type, dates of record and source links are listed too, so
+/// [`crate::plan_roles`] sees every edit; a rule can only name [`crate::workflow::ISSUE_FIELDS`].
+fn changed_fields(
     row: &issues::Model,
     b: &Input,
     kind: &str,
     raised_on: NaiveDate,
-    moved: bool,
-) -> bool {
-    b.title.trim() != row.title
-        || trimmed(b.description.as_ref()) != row.description
-        || kind != row.kind
-        || b.severity != row.severity
-        || trimmed(b.priority.as_ref()) != row.priority
-        || trimmed(b.owner_ref.as_ref()) != row.owner_ref
-        || raised_on != row.raised_on
-        || b.due_date != row.due_date
-        || b.source_risk_pid != row.source_risk_pid
-        || b.source_task_pid != row.source_task_pid
-        || (!moved && trimmed(b.resolution.as_ref()) != row.resolution)
+) -> Vec<&'static str> {
+    [
+        ("title", b.title.trim() != row.title),
+        (
+            "description",
+            trimmed(b.description.as_ref()) != row.description,
+        ),
+        ("kind", kind != row.kind),
+        ("severity", b.severity != row.severity),
+        ("priority", trimmed(b.priority.as_ref()) != row.priority),
+        ("owner_ref", trimmed(b.owner_ref.as_ref()) != row.owner_ref),
+        ("raised_on", raised_on != row.raised_on),
+        ("due_date", b.due_date != row.due_date),
+        ("source_risk_pid", b.source_risk_pid != row.source_risk_pid),
+        ("source_task_pid", b.source_task_pid != row.source_task_pid),
+        (
+            "resolution",
+            trimmed(b.resolution.as_ref()) != row.resolution,
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(name, changed)| changed.then_some(name))
+    .collect()
+}
+
+/// `422` naming any field `state` requires of this caller that the body leaves empty.
+fn check_required(
+    def: &crate::workflow::WorkflowDef,
+    state: &str,
+    roles: &[String],
+    b: &Input,
+) -> Result<()> {
+    let filled = |field: &str| match field {
+        "description" => trimmed(b.description.as_ref()).is_some(),
+        "priority" => trimmed(b.priority.as_ref()).is_some(),
+        "owner_ref" => trimmed(b.owner_ref.as_ref()).is_some(),
+        "due_date" => b.due_date.is_some(),
+        "resolution" => trimmed(b.resolution.as_ref()).is_some(),
+        // A title and a severity are always there.
+        _ => true,
+    };
+    let missing = crate::workflow::missing_required(def, state, roles, &filled);
+    if missing.is_empty() {
+        Ok(())
+    } else {
+        Err(unprocessable(&format!(
+            "the status `{state}` requires: {}",
+            missing.join(", ")
+        )))
+    }
 }
 
 /// `POST /api/plans/{pid}/issues` — raise an issue.
@@ -415,6 +452,7 @@ async fn create(
         Some(s) => placed(&def, s)?,
     };
     validate(&b, raised_on, at.needs_resolution)?;
+    check_required(&def, &at.status, &standing.roles, &b)?;
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -458,7 +496,7 @@ async fn create(
 }
 
 /// Whether the caller may change an issue's type. The new type must be usable, and because a type decides the workflow,
-/// a change could step round a gate in either workflow: where one restricts moves, it needs an administrator (`403`).
+/// a change could step round a gate or a field rule in either workflow: where one restricts saves, it needs an administrator (`403`).
 async fn check_type_change(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
@@ -469,10 +507,10 @@ async fn check_type_change(
 ) -> Result<()> {
     super::issue_configuration::require_usable_type(ctx, to).await?;
     let before = super::workflow::in_force_issue(ctx, plan, from).await?;
-    let gated = !before.transitions.is_empty() || !def.transitions.is_empty();
+    let gated = crate::workflow::restricts_saves(&before) || crate::workflow::restricts_saves(def);
     if gated && !super::plan_access::is_admin(caller.claims()) {
         return Err(super::forbidden(
-            "only an administrator can change the type of an issue under a workflow that restricts moves",
+            "only an administrator can change the type of an issue under a workflow that restricts moves or fields",
         ));
     }
     Ok(())
@@ -529,13 +567,28 @@ async fn update(
     let wanted = b.status.clone().unwrap_or_else(|| row.status.clone());
     let moved = wanted != row.status;
     let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
-    let edited = edits_fields(&row, &b, &kind, raised_on, moved);
+    let changed = changed_fields(&row, &b, &kind, raised_on);
+    // A resolution belongs to the move that needs it, so it is not an edit when the status changes.
+    let edited = changed.iter().any(|f| !(moved && *f == "resolution"));
     super::plan_roles::require(
         &standing,
         &crate::plan_roles::needed_for_save(moved, edited),
     )?;
     let at = placed_after_save(&def, &row, &wanted, &standing.roles)?;
+    if !standing.admin {
+        let current = super::workflow::in_force_issue(&ctx, plan, &row.kind).await?;
+        let locked =
+            crate::workflow::read_only_changes(&current, &row.status, &standing.roles, &changed);
+        if !locked.is_empty() {
+            return Err(super::forbidden(&format!(
+                "in the status `{}` these are read-only for you: {}",
+                row.status,
+                locked.join(", ")
+            )));
+        }
+    }
     validate(&b, raised_on, at.needs_resolution)?;
+    check_required(&def, &at.status, &standing.roles, &b)?;
     let was = serde_json::json!({
         "title": row.title, "kind": row.kind, "severity": row.severity, "status": row.status,
         "status_category": row.status_category, "owner_ref": row.owner_ref,

@@ -28,10 +28,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | Service version | 0.2.0 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.2 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.2.0 | `version` in the front-end `package.json` |
-| Migrations | 135 | files named `m2*.rs` in `migration/src` |
+| Migrations | 136 | files named `m2*.rs` in `migration/src` |
 | Mounted routes | 680 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
 | Documented API paths | 540 | path keys in the service's `openapi.json` |
-| Service tests | 1525, plus 279 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1530, plus 280 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 711 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 312 | `test(` lines in `tests/e2e` |
@@ -64,10 +64,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | BR | 15 | 2 |
 | FB | 6 | 2 |
 | GP | 7 | 0 |
-| OC | 3 | 0 |
+| OC | 4 | 0 |
 | LC | 0 | 10 |
 | UE | 1 | 7 |
-| **Total** | **214** | **29** |
+| **Total** | **215** | **29** |
 
 <!-- generated:end -->
 

@@ -2385,6 +2385,9 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   `plan_role_members`, `/api/plans/{pid}/role-members`, enforcement on issue writes for a plan with members, and roles held on a
   plan counting for its gates. The token stays the ceiling.
 
+- [x] **OC-4 (M) — Field rules by status.** **Built 2026-11-05:** a state of an issue workflow can make a field required or
+  read-only, for everyone or named roles (`workflow_states.field_rules`).
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

@@ -95,7 +95,43 @@ pub struct StateDef {
     pub is_initial: bool,
     /// Whether the item leaves the board here.
     pub is_terminal: bool,
+    /// What this state asks of an issue's fields. Issue workflows only.
+    #[serde(default)]
+    pub field_rules: Vec<FieldRule>,
 }
+
+/// What a state does to a field.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum FieldRuleKind {
+    /// A save that leaves the issue in this state must fill the field.
+    Required,
+    /// While the issue is in this state a save cannot change the field. An administrator still can.
+    ReadOnly,
+}
+
+/// A rule on one issue field in one state (OC-4), as Redmine's workflow field permissions.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct FieldRule {
+    /// One of [`ISSUE_FIELDS`].
+    pub field: String,
+    /// What the rule does.
+    pub rule: FieldRuleKind,
+    /// Who it binds. **Empty means everyone.**
+    #[serde(default)]
+    pub roles: Vec<String>,
+}
+
+/// The issue fields a rule can name. Status and type have their own gates.
+pub const ISSUE_FIELDS: &[&str] = &[
+    "title",
+    "description",
+    "severity",
+    "priority",
+    "owner_ref",
+    "due_date",
+    "resolution",
+];
 
 /// A permitted move.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -138,6 +174,10 @@ pub enum Invalid {
     NoDoneState,
     /// A transition names a state that was not declared.
     UnknownTransitionState(String),
+    /// A field rule names something that is not one of [`ISSUE_FIELDS`].
+    UnknownField(String),
+    /// A state makes one field both required and read-only: a blank one could never be saved.
+    ConflictingFieldRules(String),
 }
 
 /// A state key: lowercase letters, digits and underscores, 1..=32.
@@ -174,6 +214,15 @@ pub fn validate(def: &WorkflowDef) -> Result<(), Vec<Invalid>> {
         seen.push(&state.key);
         if state.label.trim().is_empty() {
             problems.push(Invalid::BadKey(state.key.clone()));
+        }
+        for rule in &state.field_rules {
+            if !ISSUE_FIELDS.contains(&rule.field.as_str()) {
+                problems.push(Invalid::UnknownField(rule.field.clone()));
+            }
+            let opposite = |other: &FieldRule| other.field == rule.field && other.rule != rule.rule;
+            if rule.rule == FieldRuleKind::Required && state.field_rules.iter().any(opposite) {
+                problems.push(Invalid::ConflictingFieldRules(rule.field.clone()));
+            }
         }
     }
 
@@ -248,6 +297,58 @@ pub fn may_enter_as(def: &WorkflowDef, to: &str, roles: &[String]) -> Result<(),
     allowed.sort();
     allowed.dedup();
     Err(RoleDenied { allowed })
+}
+
+/// Whether a rule binds a caller holding `roles`.
+fn binds(rule: &FieldRule, roles: &[String]) -> bool {
+    rule.roles.is_empty() || rule.roles.iter().any(|r| roles.contains(r))
+}
+
+/// The fields `state` requires of this caller that `filled` says are empty. A state the workflow does not declare asks
+/// for nothing.
+#[must_use]
+pub fn missing_required(
+    def: &WorkflowDef,
+    state: &str,
+    roles: &[String],
+    filled: &dyn Fn(&str) -> bool,
+) -> Vec<String> {
+    rules_of(def, state)
+        .filter(|r| r.rule == FieldRuleKind::Required && binds(r, roles) && !filled(&r.field))
+        .map(|r| r.field.clone())
+        .collect()
+}
+
+/// The fields among `changed` that `state` makes read-only for this caller.
+#[must_use]
+pub fn read_only_changes(
+    def: &WorkflowDef,
+    state: &str,
+    roles: &[String],
+    changed: &[&str],
+) -> Vec<String> {
+    rules_of(def, state)
+        .filter(|r| {
+            r.rule == FieldRuleKind::ReadOnly
+                && binds(r, roles)
+                && changed.contains(&r.field.as_str())
+        })
+        .map(|r| r.field.clone())
+        .collect()
+}
+
+/// The field rules of one state.
+fn rules_of<'a>(def: &'a WorkflowDef, state: &str) -> impl Iterator<Item = &'a FieldRule> {
+    def.states
+        .iter()
+        .filter(move |s| s.key == state)
+        .flat_map(|s| s.field_rules.iter())
+}
+
+/// Whether a workflow limits what a save can do, so that moving an issue out of it by changing its type could get round it.
+#[must_use]
+pub fn restricts_saves(def: &WorkflowDef) -> bool {
+    !def.transitions.is_empty() || def.states.iter().any(|s| !s.field_rules.is_empty())
 }
 
 /// The state new work starts in. [`validate`] guarantees one for a registered workflow.
@@ -332,6 +433,7 @@ fn state(key: &str, label: &str, category: Category, initial: bool, terminal: bo
         wip_limit: None,
         is_initial: initial,
         is_terminal: terminal,
+        field_rules: Vec::new(),
     }
 }
 
@@ -412,6 +514,75 @@ pub fn default_flow_classes(def: &WorkflowDef) -> std::collections::BTreeMap<Str
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn rule(field: &str, kind: FieldRuleKind, roles: &[&str]) -> FieldRule {
+        FieldRule {
+            field: field.to_string(),
+            rule: kind,
+            roles: roles.iter().map(ToString::to_string).collect(),
+        }
+    }
+
+    #[test]
+    fn a_required_field_binds_only_those_it_names_and_only_when_empty() {
+        let mut def = built_in_issue();
+        def.states[1].field_rules = vec![
+            rule("owner_ref", FieldRuleKind::Required, &[]),
+            rule("due_date", FieldRuleKind::Required, &["lead"]),
+        ];
+        let nothing_filled = |_: &str| false;
+        assert_eq!(
+            missing_required(&def, "in_progress", &[], &nothing_filled),
+            ["owner_ref"]
+        );
+        assert_eq!(
+            missing_required(&def, "in_progress", &["lead".to_string()], &nothing_filled),
+            ["owner_ref", "due_date"]
+        );
+        assert!(missing_required(&def, "in_progress", &[], &|_| true).is_empty());
+        assert!(missing_required(&def, "open", &[], &nothing_filled).is_empty());
+        assert!(missing_required(&def, "undeclared", &[], &nothing_filled).is_empty());
+    }
+
+    #[test]
+    fn a_read_only_field_stops_only_a_change_to_it() {
+        let mut def = built_in_issue();
+        def.states[1].field_rules = vec![rule("title", FieldRuleKind::ReadOnly, &["contractor"])];
+        let guest = ["contractor".to_string()];
+        assert_eq!(
+            read_only_changes(&def, "in_progress", &guest, &["title", "priority"]),
+            ["title"]
+        );
+        assert!(read_only_changes(&def, "in_progress", &guest, &["priority"]).is_empty());
+        assert!(read_only_changes(&def, "in_progress", &[], &["title"]).is_empty());
+        assert!(read_only_changes(&def, "open", &guest, &["title"]).is_empty());
+    }
+
+    #[test]
+    fn a_bad_field_rule_is_refused_by_name() {
+        let mut def = built_in_issue();
+        def.states[0].field_rules = vec![rule("colour", FieldRuleKind::Required, &[])];
+        assert_eq!(
+            validate(&def),
+            Err(vec![Invalid::UnknownField("colour".to_string())])
+        );
+        def.states[0].field_rules = vec![
+            rule("title", FieldRuleKind::ReadOnly, &[]),
+            rule("title", FieldRuleKind::Required, &[]),
+        ];
+        assert_eq!(
+            validate(&def),
+            Err(vec![Invalid::ConflictingFieldRules("title".to_string())])
+        );
+    }
+
+    #[test]
+    fn a_workflow_with_field_rules_restricts_saves() {
+        let mut def = built_in_issue();
+        assert!(!restricts_saves(&def));
+        def.states[0].field_rules = vec![rule("title", FieldRuleKind::ReadOnly, &[])];
+        assert!(restricts_saves(&def));
+    }
 
     /// An unrecognized category is `None`, never a default — the
     /// regression test against a silently misclassified state.

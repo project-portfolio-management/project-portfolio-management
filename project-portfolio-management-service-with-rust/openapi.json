@@ -34516,6 +34516,52 @@
                           "description": "Meaning of the state (`todo`, `active`, `waiting` or `done`). Required and never defaulted, since boards and time analysis compute from it.",
                           "type": "string"
                         },
+                        "field_rules": {
+                          "default": [],
+                          "description": "Issue workflows only: fields this state makes required or read-only, for everyone or for named roles.",
+                          "items": {
+                            "description": "A rule on one issue field in one state (OC-4), as Redmine's workflow field permissions.",
+                            "properties": {
+                              "field": {
+                                "description": "One of [`ISSUE_FIELDS`].",
+                                "type": "string"
+                              },
+                              "roles": {
+                                "default": [],
+                                "description": "Who it binds. **Empty means everyone.**",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "rule": {
+                                "description": "What the rule does.",
+                                "oneOf": [
+                                  {
+                                    "description": "A save that leaves the issue in this state must fill the field.",
+                                    "enum": [
+                                      "required"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "description": "While the issue is in this state a save cannot change the field. An administrator still can.",
+                                    "enum": [
+                                      "read_only"
+                                    ],
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "rule"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "is_initial": {
                           "default": false,
                           "description": "Marks the state new items start in.",

@@ -127,6 +127,7 @@ mod tests {
                     wip_limit: None,
                     is_initial: *initial,
                     is_terminal: false,
+                    field_rules: Vec::new(),
                 })
                 .collect(),
             transitions: vec![],

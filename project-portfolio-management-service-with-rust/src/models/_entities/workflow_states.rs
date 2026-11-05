@@ -24,6 +24,8 @@ pub struct Model {
     pub wip_limit: Option<i32>,
     pub is_initial: bool,
     pub is_terminal: bool,
+    /// What this state requires of an issue's fields (OC-4), as `crate::workflow::FieldRule`s.
+    pub field_rules: serde_json::Value,
     pub position: i32,
 }
 

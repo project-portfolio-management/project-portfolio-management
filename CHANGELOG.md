@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-4: field rules by status)
+
+- A state of an issue workflow can make a field required or read-only, for everyone or for named roles, as Redmine's workflow
+  field permissions do. Nothing changes until a workflow declares a rule.
+- Not done: rules cover seven standard fields, not custom fields; a task workflow cannot carry them; the interface comes with OC-7.
+  An issue raised by the service from a risk, a blocked task or a control action is not checked against required fields. Not
+  verified: Redmine's exact order of evaluation; here read-only is read from the state before the save.
+
 ### 5 November (OC-3: role permissions and plan role membership)
 
 - A role now carries permissions (`issue_add`, `issue_edit`, `issue_move`, `issue_delete`), and an administrator can give a person

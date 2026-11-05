@@ -55,6 +55,8 @@ async fn definition_of(ctx: &AppContext, workflow_pid: Uuid) -> Result<rules::Wo
                     wip_limit: row.wip_limit.and_then(|w| u32::try_from(w).ok()),
                     is_initial: row.is_initial,
                     is_terminal: row.is_terminal,
+                    field_rules: serde_json::from_value(row.field_rules.clone())
+                        .unwrap_or_default(),
                 })
             })
             .collect(),
@@ -253,6 +255,9 @@ pub(crate) struct StatePayload {
     /// Marks a state work does not leave (typically done).
     #[serde(default)]
     is_terminal: bool,
+    /// Issue workflows only: fields this state makes required or read-only, for everyone or for named roles.
+    #[serde(default)]
+    field_rules: Vec<rules::FieldRule>,
 }
 
 /// One allowed move between two states.
@@ -303,6 +308,7 @@ async fn persist<C: ConnectionTrait>(
             wip_limit: ActiveValue::set(state.wip_limit.and_then(|w| i32::try_from(w).ok())),
             is_initial: ActiveValue::set(state.is_initial),
             is_terminal: ActiveValue::set(state.is_terminal),
+            field_rules: ActiveValue::set(serde_json::json!(state.field_rules)),
             position: ActiveValue::set(i32::try_from(position).unwrap_or(0)),
             ..Default::default()
         }
@@ -459,6 +465,7 @@ async fn create(
             wip_limit: state.wip_limit,
             is_initial: state.is_initial,
             is_terminal: state.is_terminal,
+            field_rules: state.field_rules.clone(),
         });
     }
 
@@ -486,11 +493,19 @@ async fn create(
     }
     if payload.applies_to == "issue" {
         issue_shape(&def)?;
+    } else if def.states.iter().any(|s| !s.field_rules.is_empty()) {
+        return Err(unprocessable("field rules apply to an issue workflow only"));
     }
     let named: Vec<&str> = def
         .transitions
         .iter()
         .flat_map(|t| t.roles.iter().map(String::as_str))
+        .chain(
+            def.states
+                .iter()
+                .flat_map(|s| &s.field_rules)
+                .flat_map(|r| r.roles.iter().map(String::as_str)),
+        )
         .collect();
     super::issue_configuration::require_known_roles(&ctx, &named).await?;
     if let Err(problems) = rules::validate(&def) {

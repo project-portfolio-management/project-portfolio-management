@@ -34,7 +34,7 @@ a finished or terminal state (`422`). Where moves are constrained, a new issue m
 state, so that nobody raises an issue past a gate.
 
 **A type change cannot step round a gate.** A type decides the workflow, so changing the type of an issue needs an
-administrator (`403`) if the workflow in force for the old type or the new one restricts moves. With neither restricted there
+administrator (`403`) if the workflow in force for the old type or the new one restricts moves or fields. With neither restricted there
 is no gate to step round, and anyone who can write may change it.
 
 **A workflow can change under an issue.** The issue keeps its status and stored category, and a save that does not move it
@@ -75,6 +75,24 @@ misspelt role, which would lock everyone out of that move. Once the catalogue ha
 role outside it, or a retired one, is refused (`422`). An empty catalogue checks nothing, so a deployment that has not defined
 roles is unchanged. Workflows already registered keep working.
 
+## Field rules by status (OC-4)
+
+A state of an issue workflow can carry `field_rules`, as Redmine's workflow field permissions do. Each rule names a field
+(`title`, `description`, `severity`, `priority`, `owner_ref`, `due_date` or `resolution`), makes it `required` or `read_only`, and
+binds everyone or only the roles it lists. Roles here are the caller's roles on the plan, as for a gate.
+
+**Required** binds a save that leaves the issue in that state, by hand or by a move: the field must be filled (`422`, naming it).
+It binds an administrator too. An issue the service raises from a risk, a blocked task or a control action is not checked, because
+nobody has had the chance to fill anything; the next person to save it must.
+
+**Read-only** binds a save while the issue is in that state: the field cannot change, and clearing it is a change (`403`, naming
+it). It is read from the state the issue is in before the save, so a state can be locked and a move out of it is still possible.
+It does not bind an administrator, who has to be able to correct a record.
+
+A field cannot be both required and read-only in one state, whoever each rule binds, because a blank one could never be saved
+(`422`). Task workflows cannot carry field rules (`422`). A type change under a workflow with field rules needs an administrator,
+for the same reason as under one that restricts moves.
+
 ## Who can change what
 
 Anyone signed in can read the catalogues, and anyone who can see a plan can read its role members. Only an administrator
@@ -109,7 +127,7 @@ as words (`with_supplier` reads "With supplier").
 - Permissions cover issue actions only. Redmine's roles also govern queries, notes, watchers, relations and more, and can narrow
   which issues a role sees. Here, what a person sees is decided by the plan's privacy alone.
 - No group of people can hold a role; each person is added.
-- No per-status or per-role field rules (Redmine's read-only and required fields).
+- Field rules cover the listed fields. Redmine's also cover custom fields.
 - Issue types are deployment-wide: no per-plan choice of types.
 - A plan's own issue workflow is registered through the API only.
 - A registered workflow cannot be edited, only withdrawn and registered again.

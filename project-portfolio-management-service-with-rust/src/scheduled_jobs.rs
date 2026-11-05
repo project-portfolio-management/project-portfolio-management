@@ -199,7 +199,7 @@ async fn execute(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Strin
             ))
         }
         Job::ThresholdSweep => {
-            let v = crate::controllers::thresholds::run_sweep(ctx, Some(ACTOR)).await?;
+            let v = crate::controllers::thresholds::run_sweep(ctx, Some(ACTOR), None).await?;
             let opened = v["results"]
                 .as_array()
                 .into_iter()

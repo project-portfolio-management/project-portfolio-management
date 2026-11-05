@@ -932,3 +932,61 @@ async fn a_reference_is_no_way_into_a_private_plan() {
     })
     .await;
 }
+
+/// Security audit: three actions that span every plan answered any writer with what they found on private plans.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn a_sweep_a_writer_runs_stays_on_their_side() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = with!(request.post("/api/plans"), who.member)
+            .json(&json!({ "kind": "Program", "name": "Swept secretly" }))
+            .await
+            .json();
+        let plan = plan["pid"].as_str().expect("plan");
+        with!(
+            request.put(&format!("/api/plans/{plan}/access")),
+            who.member
+        )
+        .json(&json!({ "private": true, "members": [MEMBER] }))
+        .await
+        .assert_status_ok();
+        with!(
+            request.put(&format!("/api/plans/{plan}/thresholds")),
+            who.member
+        )
+        .json(&json!({ "kind": "forecast_past", "date": "2020-01-01" }))
+        .await
+        .assert_status_ok();
+        let swept = with!(request.post("/api/threshold-sweep"), who.outsider)
+            .json(&json!({}))
+            .await;
+        swept.assert_status_ok();
+        assert!(!swept.text().contains(plan), "{}", swept.text());
+        assert!(!swept.text().contains("Swept secretly"));
+        let member = with!(request.post("/api/threshold-sweep"), who.member)
+            .json(&json!({}))
+            .await;
+        assert!(
+            member.text().contains(plan),
+            "the member's sweep covers it: {}",
+            member.text()
+        );
+        with!(request.post("/api/status-updates/remind"), who.outsider)
+            .json(&json!({}))
+            .await
+            .assert_status_ok();
+
+        // The figures of a snapshot cover private plans, so the answer holds none.
+        let taken: Value = with!(request.post("/api/board/snapshots"), who.outsider)
+            .json(&json!({}))
+            .await
+            .json();
+        assert!(taken["id"].is_number(), "{taken}");
+        assert!(taken.get("body").is_none(), "{taken}");
+    })
+    .await;
+}

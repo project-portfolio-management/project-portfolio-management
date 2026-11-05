@@ -369,7 +369,9 @@ async fn board_investments(
 
 /// `POST /api/board/snapshots` — capture one estate snapshot now
 /// (portfolio counts, open exposure, per-currency money). The trend
-/// series only ever contains what was actually captured.
+/// series only ever contains what was actually captured. The answer says
+/// only that it was taken: the figures cover private plans, so they are
+/// read through the administrators' `GET /api/board/trends`.
 #[debug_handler]
 async fn take_snapshot(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
@@ -386,7 +388,7 @@ async fn take_snapshot(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> 
     .await
     .map_err(super::audit_failed)?;
     txn.commit().await.map_err(super::db_err)?;
-    format::json(row)
+    format::json(serde_json::json!({ "id": row.id, "taken_at": row.taken_at }))
 }
 
 /// Query for the trend series: optional result cap.

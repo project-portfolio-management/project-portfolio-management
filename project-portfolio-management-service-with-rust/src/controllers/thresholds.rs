@@ -303,19 +303,26 @@ async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
     Ok(out)
 }
 
-/// `POST /api/threshold-sweep` — open an exception for each threshold now crossed. Changes no programme.
+/// `POST /api/threshold-sweep` — open an exception for each threshold now crossed, on the plans the caller can read; the
+/// scheduled sweep covers the rest. Changes no programme.
 #[debug_handler]
 async fn sweep(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    format::json(run_sweep(&ctx, caller.actor()).await?)
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    format::json(run_sweep(&ctx, caller.actor(), Some(&scope)).await?)
 }
 
-/// The sweep itself, as `actor` (`None` for a scheduled run): what the endpoint and the scheduler both run.
+/// The sweep itself, as `actor` (`None` for a scheduled run): what the endpoint and the scheduler both run. `hidden` leaves
+/// out what a caller cannot read; the scheduler passes `None`.
 ///
 /// # Errors
 ///
 /// When a database statement fails.
 #[expect(clippy::too_many_lines)]
-pub(crate) async fn run_sweep(ctx: &AppContext, actor: Option<&str>) -> Result<Value> {
+pub(crate) async fn run_sweep(
+    ctx: &AppContext,
+    actor: Option<&str>,
+    hidden: Option<&super::plan_access::HiddenScope>,
+) -> Result<Value> {
     let today = crate::tz::deployment_today();
     let all = thresholds::Entity::find()
         .order_by_asc(thresholds::Column::Id)
@@ -338,6 +345,9 @@ pub(crate) async fn run_sweep(ctx: &AppContext, actor: Option<&str>) -> Result<V
         let Some(plan) = live_plans.get(&t.plan_pid) else {
             continue;
         };
+        if hidden.is_some_and(|scope| scope.plan(&plan.pid)) {
+            continue;
+        }
         let (crossed, detail) = match t.kind.as_str() {
             "confidence_red_packs" => {
                 let n = usize::try_from(t.count_value.unwrap_or(0)).unwrap_or(0);

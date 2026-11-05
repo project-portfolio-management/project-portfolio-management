@@ -384,13 +384,21 @@ pub struct Reminded {
     pub unaddressed: usize,
 }
 
-/// Remind, once per due date, the person who last posted (else who set the cadence) that an update is due. The
+/// Remind, once per due date, on every plan or, given `hidden`, on those the caller can read, the person who last posted (else who set the cadence) that an update is due. The
 /// reminder is claimed with a conditional update before it is sent, so two sweepers send one.
 ///
 /// # Errors
 ///
 /// When a database statement fails.
 pub async fn remind_due(ctx: &AppContext) -> Result<Reminded> {
+    remind_in_view(ctx, None).await
+}
+
+/// [`remind_due`], leaving out what `hidden` hides.
+async fn remind_in_view(
+    ctx: &AppContext,
+    hidden: Option<&super::plan_access::HiddenScope>,
+) -> Result<Reminded> {
     let today = crate::tz::deployment_today();
     let mut out = Reminded::default();
     let all = cadences::Entity::find()
@@ -407,7 +415,10 @@ pub async fn remind_due(ctx: &AppContext) -> Result<Reminded> {
         .into_iter()
         .map(|p| p.pid)
         .collect();
-    for c in all.iter().filter(|c| live.contains(&c.plan_pid)) {
+    let in_view = |c: &&cadences::Model| {
+        live.contains(&c.plan_pid) && !hidden.is_some_and(|scope| scope.plan(&c.plan_pid))
+    };
+    for c in all.iter().filter(in_view) {
         let last = latest_before(&ctx.db, c.plan_pid, None).await?;
         let s = standing_of(c, last.as_ref(), today);
         if !s.due || c.reminded_for.is_some_and(|r| r >= s.due_on) {
@@ -471,10 +482,11 @@ pub async fn remind_due(ctx: &AppContext) -> Result<Reminded> {
     Ok(out)
 }
 
-/// `POST /api/status-updates/remind`.
+/// `POST /api/status-updates/remind` — on the plans the caller can read; the scheduled run covers the rest.
 #[debug_handler]
-async fn remind(State(ctx): State<AppContext>) -> Result<Response> {
-    let r = remind_due(&ctx).await?;
+async fn remind(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let r = remind_in_view(&ctx, Some(&scope)).await?;
     format::json(json!({ "sent": r.sent, "unaddressed": r.unaddressed }))
 }
 

@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-22: a sweep a writer runs stays on their side)
+
+- `POST /api/threshold-sweep` answered any writer with every programme's pid, name and crossed thresholds, and opened exceptions on private plans. `POST /api/status-updates/remind` counted and reminded across private plans. `POST /api/board/snapshots` handed back estate totals that include private plans, the figures `GET /api/board/trends` keeps to administrators. A sweep or reminder started by hand now covers only the plans the caller can read, and the scheduled runs still cover all of them. A snapshot now answers with its `id` and `taken_at` only. Predates OC-1.
+- Not done: routes outside the plan guard are still being worked through in this series. Not verified: the reminder's filter has no test that a due reminder on a private plan is skipped, only that the route answers; the threshold sweep's filter does.
+
 ### 5 November (OC-21: a reference is no way into a private plan)
 
 - References to a record in another plan were checked for existence only. A writer on a public plan could add a `blocks` relation onto a private task, which then could not finish; a `precedes` relation probed its due date. Time entries took any `task_pid`, so minutes landed on a private task. Linking a private KPI to your own benefit put its name and latest reading on the portfolio's benefits page and in director packs. A scorecard's KPI list and a DevOps recovery's `incident_pid` told you whether a hidden pid existed. Each now gives the answer of a record that does not exist. A refused-to-finish message no longer names a blocker the caller cannot see, though it still blocks. Predates OC-1.

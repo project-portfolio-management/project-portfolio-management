@@ -2413,6 +2413,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 - [x] **OC-12 (S) — No way round a task gate.** **Built 2026-11-05:** under a workflow that restricts moves, a new or imported task
   starts in the initial state, and moving a task between plans needs an administrator.
 
+- [x] **OC-13 (S) — An inbox belongs to its owner.** **Built 2026-11-05:** `/api/notifications` and its `/read` answer only for the caller's own inbox, an administrator's token included.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

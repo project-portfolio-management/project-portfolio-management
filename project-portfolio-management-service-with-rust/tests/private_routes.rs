@@ -1,0 +1,168 @@
+//! Routes outside the plan guard, with real identities (`privacy_mw` guards only `/api/plans/{uuid}...`): whoever cannot read
+//! a private plan gets nothing from a route that reaches that plan's records by their own pid or by a field in the body, and
+//! a person's inbox belongs to that person.
+//!
+//! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
+//! `cargo test --features paseto --test private_routes -- --ignored --test-threads=1`.
+
+#![cfg(feature = "paseto")]
+
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use ed25519_dalek::SigningKey;
+use loco_rs::testing::prelude::*;
+use project_portfolio_management::app::App;
+use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
+use serde_json::{Value, json};
+use serial_test::serial;
+use sha2::{Digest, Sha256};
+
+const SEED: [u8; 32] = [83; 32];
+const ISSUER: &str = "authentication-service";
+const AUDIENCE: &str = "main-x-service";
+const MEMBER: &str = "3f2c6b7e-0000-4000-8000-0000000002a1";
+const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000002a2";
+const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000002ad";
+
+type Header = (axum::http::HeaderName, axum::http::HeaderValue);
+
+fn keys_and_kid() -> (Value, String) {
+    let public = SigningKey::from_bytes(&SEED).verifying_key().to_bytes();
+    let kid = URL_SAFE_NO_PAD.encode(Sha256::digest(public));
+    let keys = json!({
+        "keys": [{ "kty": "OKP", "crv": "Ed25519", "use": "sig",
+                   "kid": kid, "x": URL_SAFE_NO_PAD.encode(public) }]
+    });
+    (keys, kid)
+}
+
+fn bearer(kid: &str, sub: &str, attrs: &[(&str, &str)]) -> Header {
+    let iat: i64 = 1_700_000_000;
+    let attrs = attrs.iter().fold(serde_json::Map::new(), |mut m, (k, v)| {
+        m.insert((*k).to_string(), json!([*v]));
+        m
+    });
+    let payload = json!({
+        "sub": sub, "email": format!("{sub}@example.com"), "name": sub,
+        "iss": ISSUER, "aud": AUDIENCE, "exp": iat + 10_000_000_000_i64, "iat": iat,
+        "sid": "test-sid", "attrs": attrs,
+    })
+    .to_string();
+    let key = Key::<64>::from(SigningKey::from_bytes(&SEED).to_keypair_bytes());
+    let private = PasetoAsymmetricPrivateKey::<V4, Public>::from(&key);
+    let footer = format!(r#"{{"kid":"{kid}"}}"#);
+    let mut builder = Paseto::<V4, Public>::builder();
+    builder.set_payload(Payload::from(payload.as_str()));
+    builder.set_footer(Footer::from(footer.as_str()));
+    let token = builder.try_sign(&private).expect("sign");
+    (
+        axum::http::header::AUTHORIZATION,
+        format!("Bearer {token}").parse().unwrap(),
+    )
+}
+
+/// Turn on real identities. The tests run serially, so nothing races these settings.
+fn set_up(keys: &Value) {
+    // SAFETY: the tests here are `#[serial]`, and each writes the same values.
+    unsafe {
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");
+        std::env::set_var(
+            "PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY",
+            json!({ "rules": [{ "effect": "allow", "actions": ["*"],
+                                "when": { "access": ["write", "admin"] } }] })
+            .to_string(),
+        );
+    }
+}
+
+/// The three callers every test here compares.
+struct Callers {
+    member: Header,
+    outsider: Header,
+    admin: Header,
+}
+
+fn callers(kid: &str) -> Callers {
+    Callers {
+        member: bearer(kid, MEMBER, &[("access", "write")]),
+        outsider: bearer(kid, OUTSIDER, &[("access", "write")]),
+        admin: bearer(kid, ADMIN, &[("access", "admin")]),
+    }
+}
+
+macro_rules! with {
+    ($req:expr, $who:expr) => {
+        $req.add_header($who.0.clone(), $who.1.clone())
+    };
+}
+
+/// Security audit: `recipient` was a free query parameter, so anyone signed in read anyone's inbox and marked it read.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn an_inbox_belongs_to_its_owner() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = with!(request.post("/api/plans"), who.member)
+            .json(&json!({ "kind": "Project", "name": "Inbox" }))
+            .await
+            .json();
+        let plan = plan["pid"].as_str().expect("plan");
+        let task: Value = with!(
+            request.post(&format!("/api/plans/{plan}/tasks")),
+            who.member
+        )
+        .json(&json!({ "title": "Ask" }))
+        .await
+        .json();
+        let task = task["pid"].as_str().expect("task");
+        let mine = format!("person:{MEMBER}");
+        with!(
+            request.post(&format!("/api/plans/{plan}/tasks/{task}/assign")),
+            who.member
+        )
+        .json(&json!({ "assignee_ref": mine }))
+        .await
+        .assert_status_ok();
+
+        let url = format!("/api/notifications?recipient={mine}");
+        let own = with!(request.get(&url), who.member).await;
+        own.assert_status_ok();
+        let own = own.json::<Value>();
+        let note = own[0]["pid"].as_str().expect("the owner's notification");
+
+        for other in [&who.outsider, &who.admin] {
+            assert_eq!(with!(request.get(&url), other).await.status_code(), 403);
+            let read = with!(
+                request.post(&format!("/api/notifications/{note}/read")),
+                other
+            )
+            .json(&json!({}))
+            .await;
+            assert_eq!(read.status_code(), 404, "as if it did not exist");
+        }
+        let still: Value = with!(request.get(&url), who.member).await.json();
+        assert!(still[0]["read_at"].is_null(), "nobody else marked it read");
+
+        // Upper case names the same person.
+        let shouted = format!("person:{}", MEMBER.to_uppercase());
+        with!(
+            request.get(&format!("/api/notifications?recipient={shouted}")),
+            who.member
+        )
+        .await
+        .assert_status_ok();
+
+        with!(
+            request.post(&format!("/api/notifications/{note}/read")),
+            who.member
+        )
+        .json(&json!({}))
+        .await
+        .assert_status_ok();
+    })
+    .await;
+}

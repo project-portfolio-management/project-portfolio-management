@@ -350,8 +350,8 @@ and the count still **outstanding**.
 |---|---|---|
 | POST | `/api/plans/{pid}/tasks/{t_pid}/assign` | Assign / unassign (`assignee_ref: null` unassigns); notifies the assignee |
 | GET | `/api/assignees/workload` | Open work per assignee, busiest first, including the `unassigned` pile (`?plan=`) |
-| GET | `/api/notifications` | One recipient's in-app inbox (`?recipient=&unread=`) |
-| POST | `/api/notifications/{pid}/read` | Mark read (idempotent) |
+| GET | `/api/notifications` | The caller's own in-app inbox, or that of an organization they belong to (`?recipient=&unread=`); anyone else's is `403`, an administrator's token included |
+| POST | `/api/notifications/{pid}/read` | Mark one of the caller's own read (idempotent); someone else's is `404` |
 
 Notifications are **in-app only** — this service has no email or push
 transport and does not pretend to.

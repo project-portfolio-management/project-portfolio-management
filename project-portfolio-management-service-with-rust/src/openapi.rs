@@ -237,7 +237,7 @@ fn capability_paths() -> Value {
                            "422": { "description": "assignee_ref is not a person:/worker: URN" } } } },
         "/api/assignees/workload": derived("collaboration", "Open work per assignee, busiest first, including the unassigned pile (?plan=)"),
         // --- notifications ----------------------------------------------
-        "/api/notifications": get("collaboration", "One recipient's in-app inbox (?recipient=&unread=; cap 200). In-app only: this service sends no email or push"),
+        "/api/notifications": get("collaboration", "The caller's own in-app inbox (?recipient=&unread=; cap 200), or an organization's they belong to; anyone else's is 403. In-app only: this service sends no email or push"),
         "/api/notifications/{pid}/read": { "post": { "tags": ["collaboration"],
             "summary": "Mark one notification read (idempotent)",
             "responses": { "200": { "description": "The notification" } } } },

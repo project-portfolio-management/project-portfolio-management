@@ -647,7 +647,7 @@ async fn assignee_workload(
 /// `GET /api/notifications` filter.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct NotificationParams {
-    /// Whose inbox to read.
+    /// Whose inbox to read: the caller's own, or that of an organization they belong to.
     recipient: String,
     /// `true` ⇒ only unread.
     #[serde(default)]
@@ -660,24 +660,43 @@ pub(crate) struct NotificationParams {
     offset: Option<u64>,
 }
 
-/// `GET /api/notifications?recipient=&unread=&limit=&offset=` — one
-/// inbox, newest first. Paginated (agents/share/restful.md):
+/// Whether an inbox belongs to the caller: their own `person:`/`worker:` reference, or an organization they belong to.
+/// Not even an administrator reads another person's: a message can quote a plan the token's clearance does not reach, and
+/// no screen needs it. With login off there is no caller to refuse.
+fn owns_inbox(caller: &MaybeAuthUser, recipient: &str) -> bool {
+    let organizations = super::organizations::caller_organizations(caller);
+    caller.holds_or_open(|claims| {
+        crate::notification_prefs::recipient_sub(recipient)
+            .is_some_and(|id| id.eq_ignore_ascii_case(&claims.sub))
+            || recipient
+                .strip_prefix("organization:")
+                .and_then(|id| Uuid::parse_str(id).ok())
+                .is_some_and(|id| organizations.contains(&id))
+    })
+}
+
+/// `GET /api/notifications?recipient=&unread=&limit=&offset=` — the
+/// caller's own inbox, newest first. Paginated (agents/share/restful.md):
 /// `X-Total-Count`/`X-Limit`/`X-Offset` on the response.
 ///
 /// # Errors
 ///
-/// `422` when `recipient` is not a valid actor ref; `400` when `offset`
-/// exceeds [`super::pagination::MAX_OFFSET`]; a DB error when the query
-/// fails.
+/// `403` when the inbox is not the caller's; `422` when `recipient` is not
+/// a valid actor ref; `400` when `offset` exceeds
+/// [`super::pagination::MAX_OFFSET`]; a DB error when the query fails.
 #[debug_handler]
 async fn list_notifications(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<NotificationParams>,
 ) -> Result<Response> {
     if !valid_actor_ref(&params.recipient) {
         return Err(unprocessable(
             "recipient must be a person:/worker:/organization: URN",
         ));
+    }
+    if !owns_inbox(&caller, &params.recipient) {
+        return Err(super::forbidden("this inbox is not yours"));
     }
     let page = Page {
         limit: params.limit,
@@ -702,15 +721,20 @@ async fn list_notifications(
     Ok(with_page_headers(format::json(rows)?, total, limit, offset))
 }
 
-/// `POST /api/notifications/{pid}/read` — mark one notification read
-/// (idempotent: the first stamp stands).
+/// `POST /api/notifications/{pid}/read` — mark one of the caller's own
+/// notifications read (idempotent: the first stamp stands). Someone
+/// else's is `404`, the same as one that does not exist.
 #[debug_handler]
 async fn read_notification(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row =
         cap_models::find_notification(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    if !owns_inbox(&caller, &row.recipient_ref) {
+        return Err(Error::NotFound);
+    }
     if row.read_at.is_some() {
         return format::json(row);
     }

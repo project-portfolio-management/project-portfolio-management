@@ -95,7 +95,7 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | GET | `/api/reviews/consensus` | Strict-majority consensus for one subject |
 | POST | `/api/plans/{pid}/tasks/{t_pid}/assign` | Assign / unassign a task |
 | GET | `/api/assignees/workload` | Open work per assignee (incl. `unassigned`) |
-| GET | `/api/notifications` · POST `…/{pid}/read` | In-app inbox (no email / push) |
+| GET | `/api/notifications` · POST `…/{pid}/read` | The caller's own in-app inbox (no email / push); nobody reads another person's |
 | POST/GET | `/api/automations` · POST `…/{pid}/enable`·`/disable` · DELETE `…/{pid}` | Workflow-automation rules |
 | GET | `/api/automations/runs` | What fired: applied / skipped / failed |
 | POST/GET | `/api/scheduled-actions` · POST `…/sweep` · DELETE `…/{pid}` | Set-and-forget deadline queue |

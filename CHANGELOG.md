@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-13: an inbox belongs to its owner)
+
+- `GET /api/notifications` took the inbox to read from a free query parameter and `POST /api/notifications/{pid}/read` looked at nobody, so anyone signed in could read and mark any person's notifications. Each now answers only for the caller's own `person:` or `worker:` reference, or an organization they belong to; another inbox is `403` and another's notification `404`. **An administrator's token gets the same refusal:** a message can quote a plan that token's clearance does not reach, and no screen needs it. Predates OC-1.
+- Not done: the operator interface has no inbox screen, so nothing there needed changing. Routes outside the plan guard are being worked through in this series, and `tests/private_aggregates.rs` still calls some of them safe. Not verified: an `organization:` inbox has no test of its own.
+
 ### 5 November (OC-12: no way round a task gate)
 
 - A task could get past a role-restricted move three ways: created straight in a later status, imported from a file with one, or moved

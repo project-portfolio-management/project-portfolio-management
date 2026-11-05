@@ -320,7 +320,7 @@ async fn every_list_pages_the_same_way() {
             ("/api/plans/search", "q=Census".to_string()),
             ("/api/time-reports", "group_by=plan".to_string()),
             ("/api/reviews/consensus", format!("subject_kind=plan&subject_pid={plan}")),
-            ("/api/notifications", format!("recipient={person}")),
+            ("/api/notifications", "recipient=person:3f2c6b7e-0000-4000-8000-0000000000ad".to_string()),
             ("/api/timesheets", "week=2026-W41".to_string()),
             ("/api/me/inbox", "tz=UTC".to_string()),
             ("/api/me/tasks", "tz=UTC".to_string()),

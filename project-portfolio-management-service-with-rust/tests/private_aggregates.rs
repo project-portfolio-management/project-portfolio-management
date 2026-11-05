@@ -309,7 +309,10 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
     ("/api/me/calendar", "the caller's own availability"),
     ("/api/me/notification-prefs", "the caller's own preferences"),
     ("/api/me/notification-sinks", "the caller's own sinks"),
-    ("/api/notifications", "the caller's own notifications"),
+    (
+        "/api/notifications",
+        "the caller's own notifications, refused for anyone else's (tests/private_routes.rs)",
+    ),
     ("/api/saved-views", "the caller's own views"),
     ("/api/availability", "a person's availability ranges"),
     ("/api/timesheets", "the caller's own week"),
@@ -322,7 +325,10 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
         "templates (private plans' templates filtered at source)",
     ),
     ("/api/canvas-templates", "templates"),
-    ("/api/canvases", "canvases are per plan and read by plan"),
+    (
+        "/api/canvases",
+        "a hidden plan's canvases left out (tests/private_routes.rs); canvases are not an aggregate",
+    ),
     ("/api/custom-fields", "field definitions"),
     (
         "/api/custom-fields/search",

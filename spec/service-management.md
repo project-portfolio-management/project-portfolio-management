@@ -185,7 +185,7 @@ See [`tasks.md`](../tasks.md), "Service management (SM-n)".
 
 ## Decisions (proposed, the owner's)
 
-- **SM-D1. This is a service record, not a help desk.** Recommended. It is the decision that keeps the scope sane. If the answer is no, the plan is several times the size and the comparison is with GLPI and iTop on their ground.
+- **SM-D1. This is a service record, not a help desk.** **Confirmed by the owner 2026-11-05.**
 - **SM-D2. No inbound email in the core.** Recommended. An adapter or a webhook can create issues, and Zammad or GLPI can front the channels. Parsing mail is a large security surface for one maintainer.
 - **SM-D3. Tickets are issues.** Recommended.
 - **SM-D4. Restricted issues are built first,** before any security feature. Recommended, and not one to reorder: a security report in a plan-wide list is worse than none.

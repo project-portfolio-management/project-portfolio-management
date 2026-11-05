@@ -73,7 +73,7 @@ spec §16 once that crate is scaffolded.
   operator disambiguate at review time? (Lean: rely on the other
   signals + the review queue; no label-based penalty — confirm with
   real data.)
-- **OQ-10 — Is a product a plan?** A tool that nobody funds is not funded work, yet the plan record carries everything an evaluation needs, including the plan guard. (Lean: a plan, subject to the census in PE-1. PE-D1.)
-- **OQ-11 — Service record or help desk?** (Lean: a service record, fed by a service desk where there is one. SM-D1.)
-- **OQ-12 — Who reviews bundled assessment templates?** They touch legal wording, and machine-drafted wording is marked unreviewed. (PE-D5.)
+- **OQ-10 — Is a product a plan?** A tool that nobody funds is not funded work, yet the plan record carries everything an evaluation needs, including the plan guard. (**Decided 2026-11-05:** a plan, subject to the census in PE-1. PE-D1.)
+- **OQ-11 — Service record or help desk?** (**Decided 2026-11-05:** a service record, fed by a service desk where there is one. SM-D1.)
+- **OQ-12 — Who reviews bundled assessment templates?** They touch legal wording. (**Decided 2026-11-05:** they ship as drafts, marked unreviewed, as translations do. PE-D5. No reviewer is named yet.)
 - **OQ-13 — This project's role under the EU Cyber Resilience Act.** A legal question, not answered here. (SM-D5.)

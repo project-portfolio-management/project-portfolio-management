@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (PE and SM: three decisions recorded)
+
+- The owner confirmed that a product is a plan (PE-D1), that this is a service record and not a help desk (SM-D1), and that bundled assessment templates ship as drafts marked unreviewed (PE-D5).
+- Not done: the PE-1 census is at a first reading: plans are loaded in 101 places, and `HiddenScope` looks like the hook, but that has not been tried, so PE-D1 could still be reversed. PE-D2 to PE-D4, PE-D6 and SM-D2 to SM-D6 are open, including no inbound email and this project's Cyber Resilience Act role. No template reviewer is named.
+
 ### 5 November (SM-1: security.txt)
 
 - `/.well-known/security.txt` is on the public site, with the contact and policy in `SECURITY.md`, per RFC 9116. The Pages upload leaves out dotfiles by default, so the deploy now sets `include-hidden-files`, and a test checks that it does. A test fails when `Expires` is under 60 days away; it expires on 2027-10-01 and must be renewed by hand.

@@ -215,12 +215,16 @@ See [`tasks.md`](../tasks.md), "Product evaluation (PE-n)".
 
 ## Decisions (proposed, the owner's)
 
-- **PE-D1. A product is a plan,** with a profile. Recommended, subject to the PE-1 census.
+- **PE-D1. A product is a plan,** with a profile. **Confirmed by the owner 2026-11-05,** subject to the PE-1 census. First reading of that census: plans
+  are loaded directly in 101 places across 60 files, so there is no one loader to change, but `HiddenScope::of` is called in 75 places across 34 files and is what
+  the aggregates pass through. The likely hook is a separate scope for totals that also leaves out product plans, leaving access unchanged, with the
+  `tests/private_aggregates.rs` comparison run with a product plan seeded to catch what does not pass through it. That is read from the code, not yet tried.
 - **PE-D2. A product plan counts in no portfolio total** unless a person says it should.
 - **PE-D3. Scores are hidden until every evaluator has submitted.** Recommended. It costs a little convenience.
 - **PE-D4. AI is fields and templates, not a separate module.** Recommended.
 - **PE-D5. Bundled templates ship as data,** in the licence of the repository, drafted by machine and marked unreviewed until a competent
-  person reviews them, as translations are. Recommended; the alternative is shipping none.
+  person reviews them, as translations are. **Confirmed by the owner 2026-11-05.** No reviewer is named yet. A template that claims to follow a specific law
+  needs a qualified review before it says so.
 - **PE-D6. Vendors do not log in** in the first version. Recommended. A vendor questionnaire is sent and entered by staff, or uploaded.
 
 ## Not taken

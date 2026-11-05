@@ -299,13 +299,19 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
     ),
     ("/", "service banner"),
     ("/api/whoami", "the caller's own identity"),
-    ("/api/me/inbox", "the caller's own inbox"),
+    (
+        "/api/me/inbox",
+        "the caller's own inbox, without a hidden plan's notices (tests/private_routes.rs)",
+    ),
     ("/api/me/plan", "the caller's own work"),
     (
         "/api/me/tasks",
         "the caller's own tasks (hidden plans filtered at source)",
     ),
-    ("/api/me/watching", "the caller's own watches"),
+    (
+        "/api/me/watching",
+        "the caller's own watches, without a hidden plan's (tests/private_routes.rs)",
+    ),
     ("/api/me/calendar", "the caller's own availability"),
     ("/api/me/notification-prefs", "the caller's own preferences"),
     ("/api/me/notification-sinks", "the caller's own sinks"),

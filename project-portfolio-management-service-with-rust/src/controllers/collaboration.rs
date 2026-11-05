@@ -779,9 +779,11 @@ async fn list_notifications(
     };
     page.check_offset()?;
     let (limit, offset) = page.resolve(LIST_CAP);
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let mut query = notifications::Entity::find()
         .filter(notifications::Column::RecipientRef.eq(params.recipient.as_str()))
-        .filter(notifications::Column::DeletedAt.is_null());
+        .filter(notifications::Column::DeletedAt.is_null())
+        .filter(scope.notes_visible(&ctx).await?);
     if params.unread.unwrap_or(false) {
         query = query.filter(notifications::Column::ReadAt.is_null());
     }

@@ -420,6 +420,19 @@ impl HiddenScope {
         self.plans.iter().copied().collect()
     }
 
+    /// The notifications to leave out of `caller`'s own inbox: those about something in a hidden plan, whose stored words
+    /// can quote it. An invitation to review stays: being invited is what lets an expert in.
+    pub(crate) async fn notes_visible(&self, ctx: &AppContext) -> Result<sea_orm::Condition> {
+        use crate::models::_entities::notifications::Column;
+        if self.is_empty() {
+            return Ok(sea_orm::Condition::all());
+        }
+        let owned: Vec<Uuid> = self.owned_pids(ctx).await?.into_iter().collect();
+        Ok(sea_orm::Condition::any()
+            .add(Column::SubjectPid.is_not_in(owned))
+            .add(Column::Kind.eq("review_invited")))
+    }
+
     /// Whether this plan is hidden.
     pub(crate) fn plan(&self, pid: &Uuid) -> bool {
         self.plans.contains(pid)

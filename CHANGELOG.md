@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-23: what you were told goes when your access does)
+
+- Notifications store their words, some quoting a task or escalation title, and watches store a pid, so `/api/me/inbox`, `/api/notifications`, the Atom feed and `/api/me/watching` kept showing a plan after the caller lost access or the plan turned private. They now leave those out of their rows, counts and pages. The rows stay stored and come back with access. An invitation to review stays, because it is what lets an outside expert in. `GET /api/timesheets` no longer counts a hidden plan's entries in `omitted_unreadable`. Predates OC-1.
+- Not done: notifications already sent to a sink, such as email or chat, are out of reach. Routes outside the plan guard are still being worked through in this series. Not verified: a notice about a non-plan subject, such as a canvas item, is not treated as the plan's unless its pid is one `owned_pids` lists; the timesheet count has no test of its own.
+
 ### 5 November (OC-22: a sweep a writer runs stays on their side)
 
 - `POST /api/threshold-sweep` answered any writer with every programme's pid, name and crossed thresholds, and opened exceptions on private plans. `POST /api/status-updates/remind` counted and reminded across private plans. `POST /api/board/snapshots` handed back estate totals that include private plans, the figures `GET /api/board/trends` keeps to administrators. A sweep or reminder started by hand now covers only the plans the caller can read, and the scheduled runs still cover all of them. A snapshot now answers with its `id` and `taken_at` only. Predates OC-1.

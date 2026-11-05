@@ -212,9 +212,12 @@ async fn inbox(
     let zone = tz::parse_zone(&params.tz).map_err(|e| unprocessable(&e))?;
     let user = addressable(&claims.sub)?;
     let refs = vec![format!("person:{user}"), format!("worker:{user}")];
+    let caller = crate::auth::MaybeAuthUser(Some(claims.clone()));
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let mut query = notifications::Entity::find()
         .filter(notifications::Column::RecipientRef.is_in(refs))
-        .filter(notifications::Column::DeletedAt.is_null());
+        .filter(notifications::Column::DeletedAt.is_null())
+        .filter(scope.notes_visible(&ctx).await?);
     if params.unread.unwrap_or(false) {
         query = query.filter(notifications::Column::ReadAt.is_null());
     }

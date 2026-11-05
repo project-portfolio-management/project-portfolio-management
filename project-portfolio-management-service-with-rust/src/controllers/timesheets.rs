@@ -157,6 +157,10 @@ async fn get_week(
     plan_pids.sort();
     plan_pids.dedup();
     let readable = readable_plans(&ctx, &caller, &plan_pids).await;
+    // `omitted_unreadable` counts what the policy withholds, never a plan the caller may not know is there.
+    let rows = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .keep(rows);
     let facts: Vec<Entry> = rows
         .iter()
         .filter(|e| readable.contains(&e.plan_pid))

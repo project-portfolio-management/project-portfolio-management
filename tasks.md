@@ -2433,6 +2433,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-22 (S) — A sweep a writer runs stays on their side.** **Built 2026-11-05:** sweeps run by hand stay on the caller's plans, and a snapshot's answer carries no figures.
 
+- [x] **OC-23 (S) — What you were told goes when your access does.** **Built 2026-11-05:** inboxes, the Atom feed and watches leave out a plan the caller can no longer read, and timesheets stop counting it.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

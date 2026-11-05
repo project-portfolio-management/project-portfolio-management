@@ -990,3 +990,104 @@ async fn a_sweep_a_writer_runs_stays_on_their_side() {
     })
     .await;
 }
+
+/// Security audit: what someone was told about a plan stays in their inbox after they lose access to it, in the plan's own
+/// words. The reviewer's invitation stays, because it is what lets them in.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn what_you_were_told_goes_when_your_access_does() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan: Value = with!(request.post("/api/plans"), who.member)
+            .json(&json!({ "kind": "Project", "name": "Soon private" }))
+            .await
+            .json();
+        let plan = plan["pid"].as_str().expect("plan");
+        let task: Value = with!(
+            request.post(&format!("/api/plans/{plan}/tasks")),
+            who.member
+        )
+        .json(&json!({ "title": "Quoted title" }))
+        .await
+        .json();
+        let task = task["pid"].as_str().expect("task");
+        let outsider = format!("person:{OUTSIDER}");
+        with!(
+            request.post(&format!("/api/plans/{plan}/tasks/{task}/assign")),
+            who.member
+        )
+        .json(&json!({ "assignee_ref": outsider }))
+        .await
+        .assert_status_ok();
+        let watch = json!({ "subject_kind": "task", "subject_pid": task });
+        with!(request.post("/api/watchers"), who.outsider)
+            .json(&watch)
+            .await
+            .assert_status_ok();
+        let inbox = format!("/api/notifications?recipient={outsider}");
+        let feed: Value = with!(request.post("/api/me/feed-token"), who.outsider)
+            .json(&json!({}))
+            .await
+            .json();
+        let atom = feed["atom_url"].as_str().expect("feed");
+        let before = with!(request.get("/api/me/inbox?tz=UTC"), who.outsider)
+            .await
+            .text();
+        assert!(before.contains("Quoted title"), "{before}");
+        assert!(
+            with!(request.get(&inbox), who.outsider)
+                .await
+                .text()
+                .contains("Quoted title")
+        );
+        assert!(request.get(atom).await.text().contains("Quoted title"));
+        let watching: Value = with!(request.get("/api/me/watching"), who.outsider)
+            .await
+            .json();
+        assert_eq!(watching["count"], 1);
+
+        with!(
+            request.put(&format!("/api/plans/{plan}/access")),
+            who.member
+        )
+        .json(&json!({ "private": true, "members": [MEMBER] }))
+        .await
+        .assert_status_ok();
+
+        let after: Value = with!(request.get("/api/me/inbox?tz=UTC"), who.outsider)
+            .await
+            .json();
+        assert_eq!(after["unread_count"], 0, "{after}");
+        assert_eq!(after["items"], json!([]));
+        assert!(
+            !with!(request.get(&inbox), who.outsider)
+                .await
+                .text()
+                .contains("Quoted title")
+        );
+        assert!(!request.get(atom).await.text().contains("Quoted title"));
+        let watching: Value = with!(request.get("/api/me/watching"), who.outsider)
+            .await
+            .json();
+        assert_eq!(watching["count"], 0);
+
+        // An invitation to review survives, or the expert would never know.
+        with!(request.post("/api/reviews"), who.member)
+            .json(&json!({ "subject_kind": "plan", "subject_pid": plan,
+                           "reviewer_ref": outsider, "reviewer_scope": "external" }))
+            .await
+            .assert_status_ok();
+        let invited: Value = with!(request.get("/api/me/inbox?tz=UTC"), who.outsider)
+            .await
+            .json();
+        assert_eq!(
+            invited["items"].as_array().expect("items").len(),
+            1,
+            "{invited}"
+        );
+    })
+    .await;
+}

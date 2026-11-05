@@ -154,11 +154,17 @@ async fn hidden_from_owner(
     sub: &str,
     plans: &[Uuid],
 ) -> std::collections::HashSet<Uuid> {
-    let claims = serde_json::from_value(serde_json::json!({
-        "sub": sub, "email": "", "name": "", "iss": "", "aud": "", "exp": 0, "iat": 0, "sid": "", "attrs": {},
-    }))
-    .ok();
-    super::plan_access::hidden_plans(ctx, plans, &crate::auth::MaybeAuthUser(claims)).await
+    super::plan_access::hidden_plans(ctx, plans, &feed_owner(sub)).await
+}
+
+/// A feed's owner as a caller with no claims beyond their identity.
+fn feed_owner(sub: &str) -> crate::auth::MaybeAuthUser {
+    crate::auth::MaybeAuthUser(
+        serde_json::from_value(serde_json::json!({
+            "sub": sub, "email": "", "name": "", "iss": "", "aud": "", "exp": 0, "iat": 0, "sid": "", "attrs": {},
+        }))
+        .ok(),
+    )
 }
 
 /// `GET /api/feeds/calendar.ics?token=` — the owner's due tasks, plus the
@@ -318,12 +324,14 @@ async fn atom(
 ) -> Result<axum::response::Response> {
     let sub = owner_of(&ctx, &p.token).await?;
     let refs = refs_of(&sub);
+    let scope = super::plan_access::HiddenScope::of(&ctx, &feed_owner(&sub)).await?;
     let rows = if refs.is_empty() {
         Vec::new()
     } else {
         notifications::Entity::find()
             .filter(notifications::Column::RecipientRef.is_in(refs))
             .filter(notifications::Column::DeletedAt.is_null())
+            .filter(scope.notes_visible(&ctx).await?)
             .order_by_desc(notifications::Column::Id)
             .limit(100)
             .all(&ctx.db)

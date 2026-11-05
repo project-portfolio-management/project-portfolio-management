@@ -24,6 +24,7 @@ use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
+use serial_test::serial;
 use sha2::{Digest, Sha256};
 
 const SEED: [u8; 32] = [61; 32];
@@ -634,10 +635,11 @@ const PRODUCT_DECISION_VIEWS: &[&str] = &[
 /// PE-1: the census of what a product plan touches. A bare `Product` plan, the record of a tool someone merely proposed, is
 /// added, and every aggregate that changes must be sorted into one of the two lists above (`spec/product-evaluation.md`).
 #[tokio::test]
+#[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_aggregates -- --ignored`"]
 async fn census_of_what_a_product_plan_touches() {
     let (keys, kid) = keys_and_kid();
-    // SAFETY: the binary runs with `--test-threads=1`, and each test writes the same values.
+    // SAFETY: the tests here are `#[serial]`, and each writes the same values.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");
@@ -689,10 +691,11 @@ async fn census_of_what_a_product_plan_touches() {
 }
 
 #[tokio::test]
+#[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_aggregates -- --ignored`"]
 async fn a_private_plan_is_in_no_aggregate_for_a_non_member() {
     let (keys, kid) = keys_and_kid();
-    // SAFETY: the binary runs with `--test-threads=1`, and each test writes the same values.
+    // SAFETY: the tests here are `#[serial]`, and each writes the same values.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

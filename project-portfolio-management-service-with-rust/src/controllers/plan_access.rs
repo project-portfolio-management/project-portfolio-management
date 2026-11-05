@@ -409,6 +409,11 @@ impl HiddenScope {
         self.plans.is_empty()
     }
 
+    /// The hidden plans, for a list that must filter in its query so that paging stays true.
+    pub(crate) fn plan_pids(&self) -> Vec<Uuid> {
+        self.plans.iter().copied().collect()
+    }
+
     /// Whether this plan is hidden.
     pub(crate) fn plan(&self, pid: &Uuid) -> bool {
         self.plans.contains(pid)

@@ -342,7 +342,10 @@ The state machine is `invited → accepted → submitted`, with
 accepted may submit**, so an unanswered invitation never becomes
 evidence. Consensus reports a **strict** majority only (a tie or
 plurality reports none), a `mean_score` of `null` until somebody scores,
-and the count still **outstanding**.
+and the count still **outstanding**. A review of a plan, or of a proposal
+that became one, is hidden with that plan (`404`, and out of the list) from
+everyone but the invited reviewer; inviting someone to review a plan the
+caller cannot read gets the same `422` as a plan that does not exist.
 
 **Assignees + notifications:**
 

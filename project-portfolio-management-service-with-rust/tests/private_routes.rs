@@ -24,6 +24,7 @@ const AUDIENCE: &str = "main-x-service";
 const MEMBER: &str = "3f2c6b7e-0000-4000-8000-0000000002a1";
 const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000002a2";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000002ad";
+const EXPERT: &str = "3f2c6b7e-0000-4000-8000-0000000002a3";
 
 type Header = (axum::http::HeaderName, axum::http::HeaderValue);
 
@@ -364,6 +365,65 @@ async fn a_private_plans_canvas_is_private() {
             .json(&json!({ "target": "risk", "probability": 2, "impact": 2 }))
             .await
             .assert_status_ok();
+    })
+    .await;
+}
+
+/// Security audit: nothing under `/api/reviews` looked at the plan. The invited expert keeps their way in: being asked is the
+/// disclosure decision.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn a_private_plans_reviews_are_private() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    let expert = bearer(&kid, EXPERT, &[("access", "write")]);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = private_plan(&request, &who, "Reviewed").await;
+        let invite = json!({ "subject_kind": "plan", "subject_pid": plan,
+                             "reviewer_ref": format!("person:{EXPERT}"), "reviewer_scope": "external" });
+        let refused = with!(request.post("/api/reviews"), who.outsider)
+            .json(&invite)
+            .await;
+        assert_eq!(refused.status_code(), 422, "as for a plan that does not exist");
+        let review: Value = with!(request.post("/api/reviews"), who.member)
+            .json(&invite)
+            .await
+            .json();
+        let review = review["pid"].as_str().expect("review");
+
+        let listed = |v: Value| v.as_array().expect("rows").iter().any(|r| r["pid"] == review);
+        let list = format!("/api/reviews?subject_pid={plan}");
+        let page = with!(request.get("/api/reviews"), who.outsider).await;
+        assert_eq!(page.header("x-total-count"), "0", "the total does not count it");
+        assert!(!listed(page.json()));
+        assert!(!listed(with!(request.get(&list), who.outsider).await.json()));
+        assert!(listed(with!(request.get(&list), who.member).await.json()));
+        assert!(listed(with!(request.get(&list), expert).await.json()));
+
+        let consensus = format!("/api/reviews/consensus?subject_kind=plan&subject_pid={plan}");
+        assert_eq!(with!(request.get(&consensus), who.outsider).await.status_code(), 404);
+        with!(request.get(&consensus), who.member).await.assert_status_ok();
+
+        let respond = format!("/api/reviews/{review}/respond");
+        let submit = format!("/api/reviews/{review}/submit");
+        let verdict = json!({ "recommendation": "advance", "score": 80 });
+        let accept = json!({ "response": "accept" });
+        let refused = with!(request.post(&respond), who.outsider).json(&accept).await;
+        assert_eq!(refused.status_code(), 404);
+        let refused = with!(request.post(&submit), who.outsider).json(&verdict).await;
+        assert_eq!(refused.status_code(), 404);
+        assert_eq!(
+            with!(request.delete(&format!("/api/reviews/{review}")), who.outsider)
+                .await
+                .status_code(),
+            404
+        );
+
+        // The expert is not on the access list, and answers all the same.
+        with!(request.post(&respond), expert).json(&accept).await.assert_status_ok();
+        with!(request.post(&submit), expert).json(&verdict).await.assert_status_ok();
     })
     .await;
 }

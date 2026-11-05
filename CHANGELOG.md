@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-16: a private plan's reviews are private)
+
+- Nothing under `/api/reviews` looked at the plan: anyone signed in could read scores, comments and reviewers, read the consensus, invite a reviewer, and accept or submit on someone's behalf. Each now answers `404` for a plan the caller cannot read, or a proposal that became one, the list leaves them out of its rows and its total, and an invitation to such a plan gets the `422` of a plan that does not exist. The invited reviewer keeps their way in without being on the access list, because the invitation is the disclosure decision. Predates OC-1.
+- Not done: anyone who can read the plan can still accept or submit for a named reviewer. The reviews screen works that way and an outside expert may have no login, so that is left as a decision. Routes outside the plan guard are still being worked through in this series. Not verified: reviews of a promoted proposal have no test of their own.
+
 ### 5 November (OC-15: a private plan's canvas is private)
 
 - Nothing under `/api/canvases` looked at the plan: anyone signed in could read a private plan's canvases, add and edit items, and promote one, which wrote a risk into the plan. Every route now answers `404`, a body `plan_pid` included, and the list leaves those canvases out. Comments, attachments and the like on a canvas item, or on a proposal that became a plan, passed as belonging to no plan, so they had the same gap; they now follow the plan. Predates OC-1.

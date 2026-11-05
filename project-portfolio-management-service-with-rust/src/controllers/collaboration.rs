@@ -24,7 +24,7 @@
 use super::{db_err, unprocessable};
 use axum::http::HeaderMap;
 use loco_rs::prelude::*;
-use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};
+use sea_orm::{Condition, PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -77,6 +77,35 @@ async fn subject_exists(ctx: &AppContext, subject_kind: &str, subject_pid: Uuid)
         _ => false,
     };
     Ok(found)
+}
+
+/// The plan a review subject belongs to: a plan itself, or the plan a proposal became. An idea, and a proposal still in the
+/// pipeline, belong to none.
+async fn subject_plan(ctx: &AppContext, kind: &str, pid: Uuid) -> Result<Option<Uuid>> {
+    Ok(match kind {
+        "plan" => Some(pid),
+        "proposal" => proposals::Entity::find()
+            .filter(proposals::Column::Pid.eq(pid))
+            .one(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .and_then(|p| p.promoted_plan_pid),
+        _ => None,
+    })
+}
+
+/// `404` unless the caller can read this review's subject, or is the reviewer: being invited is the disclosure decision
+/// (`reviewer_scope`), so an expert who is not on a private plan's access list can still answer.
+async fn require_review_visible(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    review: &reviews::Model,
+) -> Result<()> {
+    if owns_inbox(caller, &review.reviewer_ref) {
+        return Ok(());
+    }
+    let plan = subject_plan(ctx, &review.subject_kind, review.subject_pid).await?;
+    super::plan_access::require_readable_if_any(ctx, caller, plan).await
 }
 
 /// `POST /api/reviews` body — delegate a subject to one expert.
@@ -151,7 +180,12 @@ async fn invite_review(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    if !subject_exists(&ctx, &payload.subject_kind, payload.subject_pid).await? {
+    let plan = subject_plan(&ctx, &payload.subject_kind, payload.subject_pid).await?;
+    let readable = super::plan_access::require_readable_if_any(&ctx, &caller, plan).await;
+    // The same answer for a plan that is hidden and one that does not exist.
+    if readable.is_err()
+        || !subject_exists(&ctx, &payload.subject_kind, payload.subject_pid).await?
+    {
         return Err(unprocessable(&format!(
             "no live {} with pid {}",
             payload.subject_kind, payload.subject_pid
@@ -262,6 +296,7 @@ pub(crate) struct ReviewParams {
 #[debug_handler]
 async fn list_reviews(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<ReviewParams>,
 ) -> Result<Response> {
     let page = Page {
@@ -271,6 +306,40 @@ async fn list_reviews(
     page.check_offset()?;
     let (limit, offset) = page.resolve(LIST_CAP);
     let mut query = reviews::Entity::find().filter(reviews::Column::DeletedAt.is_null());
+    let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .plan_pids();
+    if !hidden.is_empty() {
+        // In the query, not after it, so the page and its total stay true.
+        let proposals: Vec<Uuid> = proposals::Entity::find()
+            .filter(proposals::Column::PromotedPlanPid.is_in(hidden.clone()))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|p| p.pid)
+            .collect();
+        let of_hidden = Condition::any()
+            .add(
+                Condition::all()
+                    .add(reviews::Column::SubjectKind.eq("plan"))
+                    .add(reviews::Column::SubjectPid.is_in(hidden)),
+            )
+            .add(
+                Condition::all()
+                    .add(reviews::Column::SubjectKind.eq("proposal"))
+                    .add(reviews::Column::SubjectPid.is_in(proposals)),
+            );
+        let mine: Vec<String> = caller
+            .actor()
+            .map(|sub| vec![format!("person:{sub}"), format!("worker:{sub}")])
+            .unwrap_or_default();
+        query = query.filter(
+            Condition::any()
+                .add(of_hidden.not())
+                .add(reviews::Column::ReviewerRef.is_in(mine)),
+        );
+    }
     if let Some(kind) = params.subject_kind.as_deref() {
         query = query.filter(reviews::Column::SubjectKind.eq(kind));
     }
@@ -321,6 +390,7 @@ async fn respond_review(
     };
     let review =
         cap_models::find_review(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    require_review_visible(&ctx, &caller, &review).await?;
     rules::review_transition(&review.status, target).map_err(|e| unprocessable(&e))?;
     let review_pid = review.pid;
     let mut active: reviews::ActiveModel = review.into();
@@ -387,6 +457,7 @@ async fn submit_review(
     }
     let review =
         cap_models::find_review(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    require_review_visible(&ctx, &caller, &review).await?;
     rules::review_transition(&review.status, "submitted").map_err(|e| unprocessable(&e))?;
     let (review_pid, subject_kind, subject_pid, invited_by) = (
         review.pid,
@@ -463,6 +534,7 @@ async fn withdraw_review(
 ) -> Result<Response> {
     let review =
         cap_models::find_review(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    require_review_visible(&ctx, &caller, &review).await?;
     rules::review_transition(&review.status, "withdrawn").map_err(|e| unprocessable(&e))?;
     let review_pid = review.pid;
     let mut active: reviews::ActiveModel = review.into();
@@ -492,6 +564,7 @@ pub(crate) struct ConsensusParams {
 #[debug_handler]
 async fn review_consensus(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<ConsensusParams>,
 ) -> Result<Response> {
     if !rules::is_token(rules::REVIEW_SUBJECT_KINDS, &params.subject_kind) {
@@ -500,6 +573,8 @@ async fn review_consensus(
             rules::REVIEW_SUBJECT_KINDS
         )));
     }
+    let plan = subject_plan(&ctx, &params.subject_kind, params.subject_pid).await?;
+    super::plan_access::require_readable_if_any(&ctx, &caller, plan).await?;
     let rows =
         cap_models::reviews_for_subject(&ctx.db, &params.subject_kind, params.subject_pid).await?;
     format::json(consensus_of(&rows))

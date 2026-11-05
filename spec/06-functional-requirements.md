@@ -204,7 +204,9 @@ matcher payload (§5.6); every mutation audits (§6.6).
   **accepted** may submit, so an unanswered invitation never becomes
   evidence; consensus reports a **strict** majority only (a tie or a
   plurality reports none), a `null` mean until somebody scores, and the
-  count still outstanding.
+  count still outstanding. A review of a plan, or of a proposal that became
+  one, is hidden with that plan from everyone but the invited reviewer:
+  the invitation is the disclosure decision.
 - **FR-16b Assignee management.** Assign / unassign a task
   (`…/tasks/{t_pid}/assign`; `null` unassigns) and read the open
   workload per assignee, which surfaces the **unassigned** pile rather

@@ -143,7 +143,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/break-glass/{pid}/revoke", "break_glass", "`POST /api/break-glass/{pid}/revoke` — end a grant now (its holder, or an administrator)."),
     ("get", "/api/buffer-fever", "fever", "`GET /api/buffer-fever` — the programmes you can read, now."),
     ("get", "/api/canvas-templates", "canvas", "`GET /api/canvas-templates` — every built-in template and its boxes."),
-    ("get", "/api/canvases", "canvas", "`GET /api/canvases` — live canvases, optionally by plan / template."),
+    ("get", "/api/canvases", "canvas", "`GET /api/canvases` — live canvases, optionally by plan / template. A canvas on a plan the caller cannot read is left out."),
     ("post", "/api/canvases", "canvas", "`POST /api/canvases`."),
     ("delete", "/api/canvases/{pid}", "canvas", "`DELETE /api/canvases/{pid}` — soft-delete the canvas and its items."),
     ("get", "/api/canvases/{pid}", "canvas", "`GET /api/canvases/{pid}` — the canvas, its template's boxes (**all of them, empty ones at count 0**), and its items."),

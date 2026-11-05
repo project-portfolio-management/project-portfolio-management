@@ -335,6 +335,12 @@ impl PlanScoped for crate::models::_entities::controlled_documents::Model {
         self.plan_pid
     }
 }
+impl PlanScoped for crate::models::_entities::canvases::Model {
+    /// A canvas on a plan is hidden with it; a free-standing one is public.
+    fn scope_plan(&self) -> Option<Uuid> {
+        self.plan_pid
+    }
+}
 impl PlanScoped for crate::models::_entities::reviews::Model {
     /// A review of a plan is hidden with the plan.
     fn scope_plan(&self) -> Option<Uuid> {

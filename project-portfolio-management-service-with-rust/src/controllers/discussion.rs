@@ -18,8 +18,8 @@ use uuid::Uuid;
 use crate::auth::MaybeAuthUser;
 use crate::discussion as rules;
 use crate::models::_entities::{
-    budget_lines, canvas_items, comment_edits, comments, ideas, plans, proposals, reactions, risks,
-    scenarios, tasks,
+    budget_lines, canvas_items, canvases, comment_edits, comments, ideas, plans, proposals,
+    reactions, risks, scenarios, tasks,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
@@ -88,16 +88,17 @@ pub(crate) async fn resolve_subject(
             }
         }
         "proposal" => {
-            proposals::Entity::find()
+            let row = proposals::Entity::find()
                 .filter(proposals::Column::Pid.eq(pid))
                 .filter(proposals::Column::DeletedAt.is_null())
                 .one(&ctx.db)
                 .await
                 .map_err(db_err)?
                 .ok_or(Error::NotFound)?;
+            // One that became a plan is that plan's.
             Subject {
                 pid,
-                plan_pid: None,
+                plan_pid: row.promoted_plan_pid,
                 owner_ref: None,
             }
         }
@@ -123,9 +124,16 @@ pub(crate) async fn resolve_subject(
                 .await
                 .map_err(db_err)?
                 .ok_or(Error::NotFound)?;
+            // An item is its canvas's, and a canvas may be free-standing.
+            let canvas = canvases::Entity::find()
+                .filter(canvases::Column::Pid.eq(row.canvas_pid))
+                .one(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .ok_or(Error::NotFound)?;
             Subject {
                 pid,
-                plan_pid: None,
+                plan_pid: canvas.plan_pid,
                 owner_ref: row.owner_ref,
             }
         }

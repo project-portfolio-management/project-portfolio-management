@@ -260,3 +260,110 @@ async fn proposals_and_objectives_keep_a_private_plan_out() {
     })
     .await;
 }
+
+/// Security audit: nothing under `/api/canvases` looked at the plan, and an item's discussion passed as belonging to no plan.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn a_private_plans_canvas_is_private() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = private_plan(&request, &who, "Canvassed").await;
+        let body = json!({ "template": "swot", "title": "Hidden canvas", "plan_pid": plan });
+        assert_eq!(
+            with!(request.post("/api/canvases"), who.outsider)
+                .json(&body)
+                .await
+                .status_code(),
+            404,
+            "a body field is no way onto a hidden plan"
+        );
+        let canvas: Value = with!(request.post("/api/canvases"), who.member)
+            .json(&body)
+            .await
+            .json();
+        let canvas = canvas["pid"].as_str().expect("canvas");
+        let item_url = format!("/api/canvases/{canvas}/items");
+        let item_body = json!({ "box": "strengths", "body": "A hidden strength" });
+        let item: Value = with!(request.post(&item_url), who.member)
+            .json(&item_body)
+            .await
+            .json();
+        let item = item["pid"].as_str().expect("item");
+
+        let out = &who.outsider;
+        let root = format!("/api/canvases/{canvas}");
+        let one = format!("{item_url}/{item}");
+        let promote = format!("{one}/promote");
+        assert_eq!(with!(request.get(&root), out).await.status_code(), 404);
+        assert_eq!(
+            with!(request.delete(&root), who.outsider)
+                .await
+                .status_code(),
+            404
+        );
+        for (req, body) in [
+            (request.post(&item_url), item_body.clone()),
+            (request.put(&one), json!({ "body": "edited" })),
+            (
+                request.post(&promote),
+                json!({ "target": "risk", "probability": 2, "impact": 2 }),
+            ),
+        ] {
+            assert_eq!(with!(req, out).json(&body).await.status_code(), 404);
+        }
+        assert_eq!(
+            with!(request.delete(&one), who.outsider)
+                .await
+                .status_code(),
+            404
+        );
+
+        // Its discussion goes with it.
+        let comment = json!({ "subject_kind": "canvas_item", "subject_pid": item, "body": "psst" });
+        assert_eq!(
+            with!(request.post("/api/comments"), who.outsider)
+                .json(&comment)
+                .await
+                .status_code(),
+            404
+        );
+        with!(request.post("/api/comments"), who.member)
+            .json(&comment)
+            .await
+            .assert_status_ok();
+        let thread = format!("/api/comments?subject_kind=canvas_item&subject_pid={item}");
+        assert_eq!(
+            with!(request.get(&thread), who.outsider)
+                .await
+                .status_code(),
+            404
+        );
+
+        let listed = |v: Value| {
+            v.as_array()
+                .expect("rows")
+                .iter()
+                .any(|c| c["pid"] == canvas)
+        };
+        for url in [
+            "/api/canvases".to_string(),
+            format!("/api/canvases?plan={plan}"),
+        ] {
+            assert!(!listed(with!(request.get(&url), who.outsider).await.json()));
+            assert!(listed(with!(request.get(&url), who.member).await.json()));
+            assert!(listed(with!(request.get(&url), who.admin).await.json()));
+        }
+
+        // Still whole for a member.
+        let whole: Value = with!(request.get(&root), who.member).await.json();
+        assert_eq!(whole["items"][0]["body"], "A hidden strength");
+        with!(request.post(&promote), who.member)
+            .json(&json!({ "target": "risk", "probability": 2, "impact": 2 }))
+            .await
+            .assert_status_ok();
+    })
+    .await;
+}

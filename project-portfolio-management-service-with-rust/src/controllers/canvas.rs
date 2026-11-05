@@ -18,16 +18,22 @@ use crate::models::_entities::{canvas_items, canvases, ideas, objectives, risks}
 use crate::models::audit_logs::Model as AuditModel;
 use crate::validation::MAX_TEXT_LEN;
 
-/// Loads a live (not soft-deleted) canvas by public id, `404` when absent or withdrawn.
-async fn find_canvas(ctx: &AppContext, pid: &str) -> Result<canvases::Model> {
+/// Loads a live (not soft-deleted) canvas by public id, `404` when absent, withdrawn, or on a plan the caller cannot read.
+async fn find_canvas(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    pid: &str,
+) -> Result<canvases::Model> {
     let pid = super::parse_pid(pid)?;
-    canvases::Entity::find()
+    let canvas = canvases::Entity::find()
         .filter(canvases::Column::Pid.eq(pid))
         .filter(canvases::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
         .map_err(db_err)?
-        .ok_or(Error::NotFound)
+        .ok_or(Error::NotFound)?;
+    super::plan_access::require_readable_if_any(ctx, caller, canvas.plan_pid).await?;
+    Ok(canvas)
 }
 
 /// An item that belongs to `canvas` (a pid from another canvas is `404`).
@@ -105,6 +111,7 @@ async fn create_canvas(
         Some(p) => Some(find_item(&ctx, p).await?.pid),
         None => None,
     };
+    super::plan_access::require_readable_if_any(&ctx, &caller, plan_pid).await?;
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = canvases::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -136,10 +143,11 @@ pub(crate) struct ListParams {
     template: Option<String>,
 }
 
-/// `GET /api/canvases` — live canvases, optionally by plan / template.
+/// `GET /api/canvases` — live canvases, optionally by plan / template. A canvas on a plan the caller cannot read is left out.
 #[debug_handler]
 async fn list_canvases(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<ListParams>,
 ) -> Result<Response> {
     let mut query = canvases::Entity::find().filter(canvases::Column::DeletedAt.is_null());
@@ -155,14 +163,21 @@ async fn list_canvases(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let rows = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .keep(rows);
     format::json(rows)
 }
 
 /// `GET /api/canvases/{pid}` — the canvas, its template's boxes (**all of
 /// them, empty ones at count 0**), and its items.
 #[debug_handler]
-async fn get_canvas(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
-    let canvas = find_canvas(&ctx, &pid).await?;
+async fn get_canvas(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let items = live_items(&ctx, canvas.pid).await?;
     let boxes = rules::summarize(&canvas.template, items.iter().map(|i| i.box_key.as_str()));
     format::json(serde_json::json!({
@@ -179,7 +194,7 @@ async fn delete_canvas(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let canvas = find_canvas(&ctx, &pid).await?;
+    let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let canvas_pid = canvas.pid;
     let now: sea_orm::prelude::DateTimeWithTimeZone = chrono::Utc::now().into();
     let txn = ctx.db.begin().await.map_err(db_err)?;
@@ -233,7 +248,7 @@ async fn add_item(
     Path(pid): Path<String>,
     Json(payload): Json<ItemPayload>,
 ) -> Result<Response> {
-    let canvas = find_canvas(&ctx, &pid).await?;
+    let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let mut problems = rules::item_problems(&canvas.template, &payload.box_key, &payload.body);
     problems.extend(owner_problem(payload.owner_ref.as_deref()));
     if !problems.is_empty() {
@@ -301,7 +316,7 @@ async fn update_item(
     Path((pid, item_pid)): Path<(String, String)>,
     Json(payload): Json<ItemUpdate>,
 ) -> Result<Response> {
-    let canvas = find_canvas(&ctx, &pid).await?;
+    let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let item = find_item_of(&ctx, &canvas, &item_pid).await?;
     let box_key = payload
         .box_key
@@ -342,7 +357,7 @@ async fn delete_item(
     caller: MaybeAuthUser,
     Path((pid, item_pid)): Path<(String, String)>,
 ) -> Result<Response> {
-    let canvas = find_canvas(&ctx, &pid).await?;
+    let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let item = find_item_of(&ctx, &canvas, &item_pid).await?;
     let item_pid = item.pid;
     let mut active: canvas_items::ActiveModel = item.into();
@@ -381,7 +396,7 @@ async fn promote_item(
     Path((pid, item_pid)): Path<(String, String)>,
     Json(payload): Json<PromotePayload>,
 ) -> Result<Response> {
-    let canvas = find_canvas(&ctx, &pid).await?;
+    let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let item = find_item_of(&ctx, &canvas, &item_pid).await?;
     let target = PromoteTarget::parse(&payload.target)
         .ok_or_else(|| unprocessable("target must be one of: idea, risk, objective"))?;

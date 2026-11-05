@@ -2417,6 +2417,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-14 (S) — A title is no way to find a private plan.** **Built 2026-11-05:** the duplicate check, objective alignment and promoted proposals leave out a plan the caller cannot read, through the shared `require_readable` and `HiddenScope`.
 
+- [x] **OC-15 (S) — A private plan's canvas is private.** **Built 2026-11-05:** every `/api/canvases` route checks the plan, and a canvas item or promoted proposal is resolved to its plan for discussions.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

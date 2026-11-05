@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-15: a private plan's canvas is private)
+
+- Nothing under `/api/canvases` looked at the plan: anyone signed in could read a private plan's canvases, add and edit items, and promote one, which wrote a risk into the plan. Every route now answers `404`, a body `plan_pid` included, and the list leaves those canvases out. Comments, attachments and the like on a canvas item, or on a proposal that became a plan, passed as belonging to no plan, so they had the same gap; they now follow the plan. Predates OC-1.
+- Not done: routes outside the plan guard are still being worked through in this series. Not verified: reactions, watchers and attachments on a canvas item have no test of their own; they share the `resolve_subject` check that comments test.
+
 ### 5 November (OC-14: a title is no way to find a private plan)
 
 - A proposal's duplicate check named any matching plan, so a guessed title found a private one; an objective's alignment listed private plans with their weights, and `GET /api/objectives` hands out the pids; a proposal promoted into a private plan stayed readable by pid and under `?status=promoted`. Each now leaves the plan out, or answers `404` for the proposal, and alignment totals count only what the caller can read. Predates OC-1.

@@ -427,3 +427,136 @@ async fn a_private_plans_reviews_are_private() {
     })
     .await;
 }
+
+/// Security audit: a body `plan_pid` was only checked for existence, the lists and switches looked at nothing, and a rule
+/// with no plan runs on private plans its author cannot see.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn a_private_plans_automations_are_private() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = private_plan(&request, &who, "Automated").await;
+        let rule = |plan: Option<&str>| {
+            json!({ "plan_pid": plan, "name": "Rule", "trigger_kind": "task_moved",
+                    "actions": [{ "kind": "add_label", "value": { "label": "seen" } }] })
+        };
+        let refused = with!(request.post("/api/automations"), who.outsider)
+            .json(&rule(Some(&plan)))
+            .await;
+        assert_eq!(refused.status_code(), 404, "no rule on a hidden plan");
+        let everywhere = rule(None);
+        let refused = with!(request.post("/api/automations"), who.member)
+            .json(&everywhere)
+            .await;
+        assert_eq!(
+            refused.status_code(),
+            403,
+            "every plan includes private ones"
+        );
+        let wide: Value = with!(request.post("/api/automations"), who.admin)
+            .json(&everywhere)
+            .await
+            .json();
+        let wide = wide["pid"].as_str().expect("rule on every plan");
+        let own: Value = with!(request.post("/api/automations"), who.member)
+            .json(&rule(Some(&plan)))
+            .await
+            .json();
+        let own = own["pid"].as_str().expect("rule");
+
+        let listed =
+            |v: Value, pid: &str| v.as_array().expect("rows").iter().any(|r| r["pid"] == pid);
+        let seen: Value = with!(request.get("/api/automations"), who.outsider)
+            .await
+            .json();
+        assert!(!listed(seen.clone(), own));
+        assert!(
+            listed(seen, wide),
+            "a rule on every plan is no plan's secret"
+        );
+        let seen: Value = with!(request.get("/api/automations"), who.member)
+            .await
+            .json();
+        assert!(listed(seen, own));
+
+        for action in ["enable", "disable"] {
+            let url = format!("/api/automations/{own}/{action}");
+            let refused = with!(request.post(&url), who.outsider)
+                .json(&json!({}))
+                .await;
+            assert_eq!(refused.status_code(), 404);
+            let url = format!("/api/automations/{wide}/{action}");
+            let refused = with!(request.post(&url), who.member).json(&json!({})).await;
+            assert_eq!(refused.status_code(), 403);
+        }
+        assert_eq!(
+            with!(
+                request.delete(&format!("/api/automations/{own}")),
+                who.outsider
+            )
+            .await
+            .status_code(),
+            404
+        );
+
+        // Runs follow the rule, and the subject of a rule on every plan.
+        let task: Value = with!(
+            request.post(&format!("/api/plans/{plan}/tasks")),
+            who.member
+        )
+        .json(&json!({ "title": "Moved" }))
+        .await
+        .json();
+        let task = task["pid"].as_str().expect("task");
+        with!(
+            request.patch(&format!("/api/plans/{plan}/tasks/{task}")),
+            who.member
+        )
+        .json(&json!({ "status": "in_progress" }))
+        .await
+        .assert_status_ok();
+        let member: Value = with!(request.get("/api/automations/runs"), who.member)
+            .await
+            .json();
+        assert!(
+            member.as_array().is_some_and(|r| !r.is_empty()),
+            "the rules ran"
+        );
+        let seen = with!(request.get("/api/automations/runs"), who.outsider).await;
+        assert_eq!(seen.header("x-total-count"), "0");
+
+        // Scheduled actions.
+        let schedule = json!({ "subject_kind": "plan", "subject_pid": plan,
+                               "action_kind": "expire_review", "in_days": 5 });
+        let refused = with!(request.post("/api/scheduled-actions"), who.outsider)
+            .json(&schedule)
+            .await;
+        assert_eq!(refused.status_code(), 404);
+        let action: Value = with!(request.post("/api/scheduled-actions"), who.member)
+            .json(&schedule)
+            .await
+            .json();
+        let action = action["pid"].as_str().expect("action");
+        let seen: Value = with!(request.get("/api/scheduled-actions"), who.outsider)
+            .await
+            .json();
+        assert!(!listed(seen, action));
+        let seen: Value = with!(request.get("/api/scheduled-actions"), who.member)
+            .await
+            .json();
+        assert!(listed(seen, action));
+        assert_eq!(
+            with!(
+                request.delete(&format!("/api/scheduled-actions/{action}")),
+                who.outsider
+            )
+            .await
+            .status_code(),
+            404
+        );
+    })
+    .await;
+}

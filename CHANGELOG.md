@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-17: a rule on every plan needs an administrator)
+
+- A rule's `plan_pid` was checked only for existence, so anyone who could write could attach a rule to a private plan that later moved tasks and sent notices. Listing rules and their runs, and switching a rule on or off, looked at nothing, and `/api/scheduled-actions` took any subject. Each now answers `404` for a plan the caller cannot read, the lists leave those rows out, and scheduling on a subject that does not exist is `404` where it used to be accepted.
+- **This changes what writers can do:** a rule with no plan runs on every plan, private ones included, so creating, switching or deleting one now needs an administrator. Anything doing that with a writer's token gets `403`. Rules already stored stay in force, including any a writer made. The audit feed now also hides reviews and promoted proposals of a hidden plan. Predates OC-1.
+- Not done: routes outside the plan guard are still being worked through in this series. The automations screen still offers "every plan" to writers, who get the refusal. Not verified: a rule on every plan that fired on a hidden plan's review, as opposed to a task move.
+
 ### 5 November (OC-16: a private plan's reviews are private)
 
 - Nothing under `/api/reviews` looked at the plan: anyone signed in could read scores, comments and reviewers, read the consensus, invite a reviewer, and accept or submit on someone's behalf. Each now answers `404` for a plan the caller cannot read, or a proposal that became one, the list leaves them out of its rows and its total, and an invitation to such a plan gets the `422` of a plan that does not exist. The invited reviewer keeps their way in without being on the access list, because the invitation is the disclosure decision. Predates OC-1.

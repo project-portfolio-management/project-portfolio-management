@@ -486,6 +486,30 @@ impl HiddenScope {
             adoption_snapshots,
             workflows,
         );
+        // A review of a hidden plan, a proposal that became one, and any review of that proposal.
+        let promoted: Vec<Uuid> = crate::models::_entities::proposals::Entity::find()
+            .filter(
+                crate::models::_entities::proposals::Column::PromotedPlanPid.is_in(hidden.clone()),
+            )
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|p| p.pid)
+            .collect();
+        out.extend(promoted.iter().copied());
+        out.extend(
+            crate::models::_entities::reviews::Entity::find()
+                .filter(
+                    crate::models::_entities::reviews::Column::SubjectPid
+                        .is_in(hidden.iter().chain(promoted.iter()).copied()),
+                )
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .into_iter()
+                .map(|r| r.pid),
+        );
         // A KPI may belong to a plan (or to none).
         out.extend(
             crate::models::_entities::kpis::Entity::find()

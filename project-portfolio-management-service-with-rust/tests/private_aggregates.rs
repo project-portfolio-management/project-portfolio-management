@@ -338,9 +338,18 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
     ("/api/flow-classes", "vocabulary"),
     ("/api/onboarding/templates", "checklist templates"),
     ("/api/announcements", "messages to everyone"),
-    ("/api/automations", "rule definitions"),
-    ("/api/automations/runs", "runs of rules"),
-    ("/api/scheduled-actions", "scheduled actions"),
+    (
+        "/api/automations",
+        "rule definitions; a hidden plan's left out (tests/private_routes.rs)",
+    ),
+    (
+        "/api/automations/runs",
+        "runs of rules; a hidden plan's left out (tests/private_routes.rs)",
+    ),
+    (
+        "/api/scheduled-actions",
+        "scheduled actions; a hidden plan's left out (tests/private_routes.rs)",
+    ),
     ("/api/report-schedules", "schedules of saved reports"),
     ("/api/resource-roles", "role vocabulary"),
     (

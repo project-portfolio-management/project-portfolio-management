@@ -364,7 +364,7 @@ board:
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST / GET | `/api/automations` | Configure / list rules (`?plan=&trigger=&enabled=`) |
+| POST / GET | `/api/automations` | Configure / list rules (`?plan=&trigger=&enabled=`). A rule on one plan needs that plan to be readable (`404`); a rule on every plan needs an administrator (`403`), because it also runs on private plans. A hidden plan's rules, runs and scheduled actions are left out |
 | POST | `/api/automations/{pid}/enable` · `/disable` | The off switch (keeps the rule and its history) |
 | DELETE | `/api/automations/{pid}` | Soft-delete a rule |
 | GET | `/api/automations/runs` | What actually fired (`?automation=&subject=&outcome=`) |

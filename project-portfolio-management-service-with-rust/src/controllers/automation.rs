@@ -25,7 +25,7 @@
 
 use super::{db_err, unprocessable};
 use loco_rs::prelude::*;
-use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};
+use sea_orm::{Condition, PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -75,6 +75,22 @@ pub(crate) struct AutomationPayload {
     actions: Vec<serde_json::Value>,
 }
 
+/// A rule on one plan needs that plan to be readable (`404`). A rule on **every** plan needs an administrator (`403`): it
+/// also runs on private plans its author cannot see. With login off there is no caller to refuse.
+async fn require_rule_scope(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Option<Uuid>,
+) -> Result<()> {
+    match plan {
+        Some(plan) => super::plan_access::require_readable(ctx, caller, plan).await,
+        None if caller.holds_or_open(|c| super::plan_access::is_admin(Some(c))) => Ok(()),
+        None => Err(super::forbidden(
+            "only an administrator can manage a rule on every plan",
+        )),
+    }
+}
+
 /// `POST /api/automations` — configure one rule. The trigger and every
 /// declared action are validated here, at write time, so a malformed
 /// rule can never fail silently later when nobody is watching.
@@ -104,15 +120,7 @@ async fn create_automation(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    if let Some(plan_pid) = payload.plan_pid {
-        plans::Entity::find()
-            .filter(plans::Column::Pid.eq(plan_pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .ok_or(Error::NotFound)?;
-    }
+    require_rule_scope(&ctx, &caller, payload.plan_pid).await?;
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = crate::models::_entities::automations::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -179,6 +187,7 @@ pub(crate) struct AutomationParams {
 #[debug_handler]
 async fn list_automations(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<AutomationParams>,
 ) -> Result<Response> {
     use crate::models::_entities::automations;
@@ -189,6 +198,16 @@ async fn list_automations(
     page.check_offset()?;
     let (limit, offset) = page.resolve(LIST_CAP);
     let mut query = automations::Entity::find().filter(automations::Column::DeletedAt.is_null());
+    let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .plan_pids();
+    if !hidden.is_empty() {
+        query = query.filter(
+            Condition::any()
+                .add(automations::Column::PlanPid.is_null())
+                .add(automations::Column::PlanPid.is_not_in(hidden)),
+        );
+    }
     if let Some(plan) = params.plan {
         query = query.filter(automations::Column::PlanPid.eq(plan));
     }
@@ -218,6 +237,7 @@ async fn set_enabled(
 ) -> Result<Response> {
     let row =
         cap_models::find_automation(&ctx.db, crate::models::governance::parse_pid(pid)?).await?;
+    require_rule_scope(ctx, caller, row.plan_pid).await?;
     let row_pid = row.pid;
     let mut active: crate::models::_entities::automations::ActiveModel = row.into();
     active.enabled = ActiveValue::set(enabled);
@@ -265,6 +285,7 @@ async fn delete_automation(
 ) -> Result<Response> {
     let row =
         cap_models::find_automation(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    require_rule_scope(&ctx, &caller, row.plan_pid).await?;
     let row_pid = row.pid;
     let mut active: crate::models::_entities::automations::ActiveModel = row.into();
     active.enabled = ActiveValue::set(false);
@@ -276,6 +297,12 @@ async fn delete_automation(
         .map_err(super::audit_failed)?;
     txn.commit().await.map_err(super::db_err)?;
     format::empty_json()
+}
+
+/// Everything that belongs to a plan hidden from `caller`.
+async fn hidden_pids(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<Vec<Uuid>> {
+    let scope = super::plan_access::HiddenScope::of(ctx, caller).await?;
+    Ok(scope.owned_pids(ctx).await?.into_iter().collect())
 }
 
 /// `GET /api/automations/runs` filter.
@@ -310,6 +337,7 @@ pub(crate) struct RunParams {
 #[debug_handler]
 async fn list_runs(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<RunParams>,
 ) -> Result<Response> {
     use crate::models::_entities::automation_runs;
@@ -320,6 +348,13 @@ async fn list_runs(
     page.check_offset()?;
     let (limit, offset) = page.resolve(LIST_CAP);
     let mut query = automation_runs::Entity::find();
+    // A rule on every plan runs on hidden plans too, so the subject counts as well as the rule.
+    let owned = hidden_pids(&ctx, &caller).await?;
+    if !owned.is_empty() {
+        query = query
+            .filter(automation_runs::Column::AutomationPid.is_not_in(owned.clone()))
+            .filter(automation_runs::Column::SubjectPid.is_not_in(owned));
+    }
     if let Some(automation) = params.automation {
         query = query.filter(automation_runs::Column::AutomationPid.eq(automation));
     }
@@ -1139,6 +1174,14 @@ async fn create_scheduled_action(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
+    // Its subject must exist and be readable: it would otherwise act on a plan the caller cannot see.
+    super::discussion::resolve_subject(
+        &ctx,
+        &caller,
+        &payload.subject_kind,
+        &payload.subject_pid.to_string(),
+    )
+    .await?;
     let due_at = chrono::Utc::now() + chrono::Duration::days(payload.in_days);
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = cap_models::schedule(
@@ -1206,6 +1249,7 @@ pub(crate) struct ScheduledParams {
 #[debug_handler]
 async fn list_scheduled_actions(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<ScheduledParams>,
 ) -> Result<Response> {
     let page = Page {
@@ -1216,6 +1260,10 @@ async fn list_scheduled_actions(
     let (limit, offset) = page.resolve(LIST_CAP);
     let mut query =
         scheduled_actions::Entity::find().filter(scheduled_actions::Column::DeletedAt.is_null());
+    let owned = hidden_pids(&ctx, &caller).await?;
+    if !owned.is_empty() {
+        query = query.filter(scheduled_actions::Column::SubjectPid.is_not_in(owned));
+    }
     if let Some(status) = params.status.as_deref() {
         query = query.filter(scheduled_actions::Column::Status.eq(status));
     }
@@ -1250,6 +1298,9 @@ async fn cancel_scheduled_action(
     let row =
         cap_models::find_scheduled_action(&ctx.db, crate::models::governance::parse_pid(&pid)?)
             .await?;
+    if hidden_pids(&ctx, &caller).await?.contains(&row.subject_pid) {
+        return Err(Error::NotFound);
+    }
     if row.status != "pending" {
         return Err(unprocessable(&format!(
             "only a pending action can be cancelled; this one is `{}`",

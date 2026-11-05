@@ -560,3 +560,83 @@ async fn a_private_plans_automations_are_private() {
     })
     .await;
 }
+
+/// Security audit: a field of the body naming a plan was checked for existence at most, so it reached a plan the guard on
+/// `/api/plans/{pid}` would have refused.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = private_plan(&request, &who, "Fenced").await;
+        let kpi = json!({ "name": "Uptime", "unit": "percent", "direction": "higher_better",
+                          "target_value": 99, "amber_value": 95, "red_value": 90, "plan_pid": plan });
+        let framework = json!({ "name": "Scrum", "methodology": "scrum", "cadence_days": 14,
+                                "wip_limit": 5, "definition_of_done": "Done", "ceremonies": [],
+                                "plan_pid": plan });
+        let deploy = json!({ "plan_pid": plan, "kind": "deploy", "environment": "production" });
+        let child = json!({ "kind": "Project", "name": "Child", "parent_ref": plan });
+        for (url, body) in [
+            ("/api/kpis", &kpi),
+            ("/api/ways-of-working", &framework),
+            ("/api/devops/events", &deploy),
+            ("/api/plans", &child),
+        ] {
+            let refused = with!(request.post(url), who.outsider).json(body).await;
+            assert_eq!(refused.status_code(), 404, "{url}");
+        }
+        for (url, body) in [("/api/devops/events", &deploy), ("/api/plans", &child)] {
+            with!(request.post(url), who.member).json(body).await.assert_status_ok();
+        }
+
+        // A parent on an existing plan, by update.
+        let mine: Value = with!(request.post("/api/plans"), who.outsider)
+            .json(&json!({ "kind": "Project", "name": "Mine" }))
+            .await
+            .json();
+        let mine = mine["pid"].as_str().expect("plan");
+        let moved = with!(request.put(&format!("/api/plans/{mine}")), who.outsider)
+            .json(&child)
+            .await;
+        assert_eq!(moved.status_code(), 404);
+
+        // A batch import names the plan per project: refused as if it did not exist, and nothing written.
+        let xml = "<Project xmlns=\"http://schemas.microsoft.com/project\"><Name>X</Name><Tasks>\
+                   <Task><UID>1</UID><Name>Planted</Name><OutlineLevel>1</OutlineLevel></Task></Tasks></Project>";
+        let batch = |pid: &str| json!({ "projects": [{ "xml": xml, "plan_pid": pid }] });
+        let url = "/api/import/mspdi-batch?dry_run=false";
+        let hidden: Value = with!(request.post(url), who.outsider).json(&batch(&plan)).await.json();
+        let absent = uuid::Uuid::new_v4().to_string();
+        let missing: Value = with!(request.post(url), who.outsider).json(&batch(&absent)).await.json();
+        assert_eq!(hidden.to_string().replace(&plan, ""), missing.to_string().replace(&absent, ""));
+
+        // A plan import: a row keyed to a hidden plan gets the error of a pid that names nothing.
+        let row = json!({ "pid": plan, "kind": "Project", "name": "Overwritten" }).to_string();
+        let job = with!(request.post("/api/plans/import?format=jsonl&on_keyless=create"), who.outsider)
+            .content_type("text/plain")
+            .bytes(row.into_bytes().into())
+            .await;
+        let job: Value = job.json();
+        let job: Value = with!(
+            request.get(&format!("/api/plans/import/{}", job["job_id"].as_str().expect("job"))),
+            who.outsider
+        )
+        .await
+        .json();
+        assert_eq!(job["counts"]["failed"], 1, "{job}");
+
+        // Merging into or out of one.
+        let merge = json!({ "main_pid": mine, "duplicate_pid": plan });
+        let refused = with!(request.post("/api/plans/merge"), who.outsider).json(&merge).await;
+        assert_eq!(refused.status_code(), 404);
+
+        let seen: Value = with!(request.get(&format!("/api/plans/{plan}")), who.member).await.json();
+        assert_eq!(seen["name"], "Fenced", "still whole");
+        let tasks: Value = with!(request.get(&format!("/api/plans/{plan}/tasks")), who.member).await.json();
+        assert_eq!(tasks["tasks"], json!([]), "nothing planted");
+    })
+    .await;
+}

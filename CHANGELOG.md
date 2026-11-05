@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-18: a field of the body is no way into a private plan)
+
+- Five routes took a plan's pid in the body and checked at most that it existed: the batch MS Project import, KPIs, ways of working and governance frameworks, DevOps events, and a plan's `parent_ref`. Each now gives the answer the guard on `/api/plans/{pid}` would. A batch import reports a hidden plan exactly as one that does not exist, in a dry run too. `POST /api/plans/merge` and `POST /api/plans/import` were open to an administrator a handling mark should have stopped; merge now answers `404`, and an import, which runs after its request, records what was hidden from the caller and gives a row reaching such a plan the error of a pid that names nothing. The review queue no longer names a plan the reader cannot see. Predates OC-1.
+- **This changes what a service token can do:** a pipeline posting DevOps events for a private plan now needs an administrator's token or a place on the access list.
+- Not done: routes outside the plan guard are still being worked through in this series. An import keyed by identifier or owner code on a hidden plan reports the row as failed, which tells an administrator something matched. Not verified: the handling-mark case itself has no test here; these tests use a private plan and a writer, and the review queue's filter has no test.
+
 ### 5 November (OC-17: a rule on every plan needs an administrator)
 
 - A rule's `plan_pid` was checked only for existence, so anyone who could write could attach a rule to a private plan that later moved tasks and sent notices. Listing rules and their runs, and switching a rule on or off, looked at nothing, and `/api/scheduled-actions` took any subject. Each now answers `404` for a plan the caller cannot read, the lists leave those rows out, and scheduling on a subject that does not exist is `404` where it used to be accepted.

@@ -87,6 +87,26 @@ pub fn validate(wi: &Plan) -> Result<()> {
 /// descendants (i.e. the plan must not appear among the parent's
 /// ancestors). A no-op when the payload has no valid-UUID `parent_ref`.
 ///
+/// `404` if the body places a plan under one the caller cannot see. A parent that does not exist stays as it was: the
+/// reference is stored, and the guard only has to give nothing away.
+async fn require_visible_parent(ctx: &AppContext, caller: &MaybeAuthUser, wi: &Plan) -> Result<()> {
+    let parent = wi
+        .parent_ref
+        .as_deref()
+        .and_then(|s| uuid::Uuid::parse_str(s.trim()).ok());
+    let Some(parent) = parent else {
+        return Ok(());
+    };
+    if super::plan_access::hidden_plans(ctx, &[parent], caller)
+        .await
+        .contains(&parent)
+    {
+        Err(Error::NotFound)
+    } else {
+        Ok(())
+    }
+}
+
 /// `self_pid` is the plan being created/updated (`None` on create, since
 /// a fresh pid cannot yet be anyone's ancestor).
 ///
@@ -335,6 +355,7 @@ async fn create(
 ) -> Result<Response> {
     validate(&wi)?;
     check_no_cycle(&ctx, None, &wi).await?;
+    require_visible_parent(&ctx, &caller, &wi).await?;
     // Resolve the preset before writing anything, so a bad one creates no plan.
     let modules = match params.modules_preset.as_deref() {
         None => None,
@@ -500,6 +521,7 @@ async fn update(
         .await
         .map_err(super::model_not_found)?;
     check_no_cycle(&ctx, Some(model.pid), &wi).await?;
+    require_visible_parent(&ctx, &caller, &wi).await?;
     // Record-level ABAC (PPM-3): the item's phase-gate stage is a
     // `resource.stage` attribute, so "deny write past gate N unless
     // access=admin" is a policy statement. A no-op while enforcement
@@ -815,6 +837,9 @@ async fn merge(
     let duplicate = PlanModel::find_by_pid(&ctx.db, &req.duplicate_pid)
         .await
         .map_err(super::model_not_found)?;
+    // The route needs an administrator, whom a handling mark still binds.
+    super::plan_access::require_readable(&ctx, &caller, main.pid).await?;
+    super::plan_access::require_readable(&ctx, &caller, duplicate.pid).await?;
 
     let outcome = merge_plans(&main.to_plan()?, &duplicate.to_plan()?);
 

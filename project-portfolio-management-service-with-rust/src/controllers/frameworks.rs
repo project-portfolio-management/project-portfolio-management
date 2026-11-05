@@ -250,6 +250,7 @@ async fn create(
         Some(plan) => Some(find_item(&ctx, plan).await?.pid),
         None => None,
     };
+    super::plan_access::require_readable_if_any(&ctx, &caller, owner).await?;
     require_shared_right(&caller, owner)?;
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = frameworks::ActiveModel {

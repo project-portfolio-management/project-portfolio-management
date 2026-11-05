@@ -194,6 +194,7 @@ async fn create(
     }
     if let Some(plan) = b.plan_pid {
         super::governance::find_item(&ctx, &plan.to_string()).await?;
+        super::plan_access::require_readable(&ctx, &caller, plan).await?;
     }
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = kpis::ActiveModel {

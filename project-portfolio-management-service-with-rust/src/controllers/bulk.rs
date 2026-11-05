@@ -317,6 +317,10 @@ async fn import(
         caller.actor(),
     )
     .await?;
+    // The job runs after this request, with no token to ask: what was hidden from the caller travels with it.
+    let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .plan_pids();
     // The job row and the audit row of its request are one change.
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let job = new_job(
@@ -325,7 +329,7 @@ async fn import(
         format,
         key,
         caller.actor(),
-        serde_json::json!({ "on_keyless": on_keyless }),
+        serde_json::json!({ "on_keyless": on_keyless, "hidden_plans": hidden }),
         Some(source.pid),
     )
     .await?;
@@ -738,20 +742,42 @@ pub(crate) struct QueueParams {
 #[debug_handler]
 async fn list_queue(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(p): Query<QueueParams>,
 ) -> Result<Response> {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let mut q = review_queue_items::Entity::find();
     q = q.filter(review_queue_items::Column::Status.eq(p.status.as_deref().unwrap_or("pending")));
     if let Some(job) = p.job {
         q = q.filter(review_queue_items::Column::JobPid.eq(job));
     }
+    let rows = q
+        .order_by_asc(review_queue_items::Column::Id)
+        .limit(500)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
     format::json(
-        q.order_by_asc(review_queue_items::Column::Id)
-            .limit(500)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?,
+        rows.into_iter()
+            .map(|row| without_hidden(row, &scope))
+            .collect::<Vec<_>>(),
     )
+}
+
+/// A held row with the matches the reader may not see taken out: they name plans.
+fn without_hidden(
+    mut row: review_queue_items::Model,
+    scope: &super::plan_access::HiddenScope,
+) -> review_queue_items::Model {
+    if let Some(matches) = row.matches.as_array_mut() {
+        matches.retain(|m| {
+            m["pid"]
+                .as_str()
+                .and_then(|s| Uuid::parse_str(s).ok())
+                .is_none_or(|pid| !scope.plan(&pid))
+        });
+    }
+    row
 }
 
 /// Fetches a review-queue item by public id, `NotFound` when unknown.
@@ -792,7 +818,8 @@ async fn confirm_item(
     a.resolved_at = ActiveValue::set(Some(chrono::Utc::now().into()));
     a.resolution_pid = ActiveValue::set(Some(model.pid));
     let row = a.update(&ctx.db).await.map_err(db_err)?;
-    format::json(row)
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    format::json(without_hidden(row, &scope))
 }
 
 /// `POST /api/plans/review-queue/{pid}/reject` — it is a duplicate: discard
@@ -814,7 +841,9 @@ async fn reject_item(
     a.status = ActiveValue::set("rejected".to_string());
     a.resolved_by = ActiveValue::set(caller.actor().map(str::to_string));
     a.resolved_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    format::json(a.update(&ctx.db).await.map_err(db_err)?)
+    let row = a.update(&ctx.db).await.map_err(db_err)?;
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    format::json(without_hidden(row, &scope))
 }
 
 // ───────────────────────────── sweep ─────────────────────────────
@@ -993,15 +1022,54 @@ enum RowOutcome {
     Queued,
 }
 
-/// Validates, matches and applies one imported row through the normal create/update path, so events and audit match a single request. Returns the outcome or the row errors; a pid naming no live plan is an error, never a silent create.
+/// The field of a row that names no plan the job may touch: a pid that names nothing, or anything in `hidden`.
+fn unknown_field(
+    plan: &project_portfolio_management_matcher::Plan,
+    existing: Option<&PlanModel>,
+    keys: &[Key],
+    hidden: &std::collections::HashSet<Uuid>,
+) -> Option<&'static str> {
+    let parent = plan
+        .parent_ref
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s.trim()).ok());
+    if parent.is_some_and(|p| hidden.contains(&p)) {
+        return Some("parent_ref");
+    }
+    let hits_hidden = existing.is_some_and(|m| hidden.contains(&m.pid));
+    (hits_hidden || (existing.is_none() && matches!(keys.first(), Some(Key::Pid(_)))))
+        .then_some("pid")
+}
+
+/// The plans hidden from whoever asked for this import, as recorded with the job.
+fn hidden_of(job: &bulk_jobs::Model) -> std::collections::HashSet<Uuid> {
+    job.params["hidden_plans"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|v| v.as_str().and_then(|s| Uuid::parse_str(s).ok()))
+        .collect()
+}
+
+/// What one import job was asked to do, for each of its rows.
+struct ImportRun<'a> {
+    /// What a keyless row that looks like a duplicate does.
+    on_keyless: &'a str,
+    /// Who asked for the import.
+    actor: Option<&'a str>,
+    /// The job.
+    job_pid: Uuid,
+    /// The plans hidden from whoever asked.
+    hidden: std::collections::HashSet<Uuid>,
+}
+
+/// Validates, matches and applies one imported row through the normal create/update path, so events and audit match a single request. Returns the outcome or the row errors; a pid naming no live plan is an error, never a silent create. A row that reaches a plan in `hidden` gets the error of one that matched nothing.
 async fn process_row(
     ctx: &AppContext,
     d: &Decoded,
     pid: Option<&str>,
     plan: &project_portfolio_management_matcher::Plan,
-    on_keyless: &str,
-    actor: Option<&str>,
-    job_pid: Uuid,
+    run: &ImportRun<'_>,
 ) -> std::result::Result<RowOutcome, Vec<RowError>> {
     if let Err(e) = super::plans::validate(plan) {
         return Err(vec![row_error(d, "", "validation", text_of(&e))]);
@@ -1019,10 +1087,10 @@ async fn process_row(
             Err(e) => return Err(vec![row_error(d, "", "internal", text_of(&e))]),
         }
     }
-    if existing.is_none() && matches!(keys.first(), Some(Key::Pid(_))) {
+    if let Some(field) = unknown_field(plan, existing.as_ref(), &keys, &run.hidden) {
         return Err(vec![row_error(
             d,
-            "pid",
+            field,
             "unknown_pid",
             "no live plan has this pid".into(),
         )]);
@@ -1037,7 +1105,7 @@ async fn process_row(
         if let Err(e) = super::plans::check_no_cycle(ctx, Some(model.pid), plan).await {
             return Err(vec![row_error(d, "parent_ref", "cycle", text_of(&e))]);
         }
-        return streaming::update_and_emit(&ctx.db, model, plan, actor)
+        return streaming::update_and_emit(&ctx.db, model, plan, run.actor)
             .await
             .map(|_| RowOutcome::Updated)
             .map_err(|e| vec![row_error(d, "", "internal", e.to_string())]);
@@ -1046,7 +1114,7 @@ async fn process_row(
         return Err(vec![row_error(d, "parent_ref", "cycle", text_of(&e))]);
     }
     // Keyless ⇒ the normal duplicate detection decides.
-    if keys.is_empty() && on_keyless == "review" {
+    if keys.is_empty() && run.on_keyless == "review" {
         let Some(index) = crate::search::engine() else {
             return Err(vec![row_error(
                 d,
@@ -1085,7 +1153,7 @@ async fn process_row(
                 provenance: ActiveValue::set("import".to_string()),
                 candidate: ActiveValue::set(serde_json::to_value(plan).unwrap_or_default()),
                 matches: ActiveValue::set(serde_json::json!(hits)),
-                job_pid: ActiveValue::set(Some(job_pid)),
+                job_pid: ActiveValue::set(Some(run.job_pid)),
                 source_line: ActiveValue::set(i32::try_from(d.source_line).unwrap_or(i32::MAX)),
                 resolved_by: ActiveValue::set(None),
                 resolved_at: ActiveValue::set(None),
@@ -1099,7 +1167,7 @@ async fn process_row(
             return Ok(RowOutcome::Queued);
         }
     }
-    streaming::create_and_emit(&ctx.db, plan, actor)
+    streaming::create_and_emit(&ctx.db, plan, run.actor)
         .await
         .map(|_| RowOutcome::Created)
         .map_err(|e| vec![row_error(d, "", "internal", e.to_string())])
@@ -1212,7 +1280,12 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
         .as_str()
         .unwrap_or("review")
         .to_string();
-    let actor = job.requested_by.as_deref();
+    let run = ImportRun {
+        on_keyless: &on_keyless,
+        actor: job.requested_by.as_deref(),
+        job_pid: job.pid,
+        hidden: hidden_of(job),
+    };
     let mut counters = Counters::default();
     let mut errors: Vec<RowError> = Vec::new();
     let total_rows = i64::try_from(decoded.len()).unwrap_or(i64::MAX);
@@ -1227,18 +1300,16 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
                 counters.failed += 1;
                 errors.extend(errs.iter().cloned());
             }
-            Ok((pid, plan)) => {
-                match process_row(ctx, d, pid.as_deref(), plan, &on_keyless, actor, job.pid).await {
-                    Ok(RowOutcome::Created) => counters.created += 1,
-                    Ok(RowOutcome::Updated) => counters.updated += 1,
-                    Ok(RowOutcome::Unchanged) => counters.unchanged += 1,
-                    Ok(RowOutcome::Queued) => counters.queued_for_review += 1,
-                    Err(errs) => {
-                        counters.failed += 1;
-                        errors.extend(errs);
-                    }
+            Ok((pid, plan)) => match process_row(ctx, d, pid.as_deref(), plan, &run).await {
+                Ok(RowOutcome::Created) => counters.created += 1,
+                Ok(RowOutcome::Updated) => counters.updated += 1,
+                Ok(RowOutcome::Unchanged) => counters.unchanged += 1,
+                Ok(RowOutcome::Queued) => counters.queued_for_review += 1,
+                Err(errs) => {
+                    counters.failed += 1;
+                    errors.extend(errs);
                 }
-            }
+            },
         }
         // Each row is complete before the next begins, so stopping here leaves no
         // half-written row. Look at the cancel flag every few rows, and say how far we are.
@@ -1263,7 +1334,7 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
                 "import-errors.jsonl",
                 "application/x-ndjson",
                 bulk::errors_jsonl(&errors).into_bytes(),
-                actor,
+                run.actor,
             )
             .await
             .map_err(|e| text_of(&e))?
@@ -1285,7 +1356,7 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
         &ctx.db,
         job.pid,
         "bulk_import_finished",
-        actor,
+        run.actor,
         Some(serde_json::json!({ "counts": counters })),
     )
     .await;

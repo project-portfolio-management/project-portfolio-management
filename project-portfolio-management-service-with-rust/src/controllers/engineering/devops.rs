@@ -66,6 +66,7 @@ pub(super) async fn ingest_devops_event(
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?
         .ok_or(Error::NotFound)?;
+    crate::controllers::plan_access::require_readable(&ctx, &caller, item.pid).await?;
     match payload.kind.as_str() {
         "deploy" if payload.environment.as_deref().is_none_or(str::is_empty) => {
             return Err(refuse("a deploy event requires an environment"));

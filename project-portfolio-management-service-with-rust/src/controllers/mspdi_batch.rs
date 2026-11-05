@@ -636,6 +636,7 @@ async fn batch(
             let mut created = false;
             if let Some(pid) = plan_pid {
                 super::governance::find_item(&ctx, &pid.to_string()).await?;
+                super::plan_access::require_readable(&ctx, &caller, pid).await?;
             } else if !dry_run {
                 plan_pid = Some(create_plan(&ctx, &caller, label, b.parent_pid).await?);
                 created = true;

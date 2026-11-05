@@ -2423,6 +2423,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-17 (S) — A rule on every plan needs an administrator.** **Built 2026-11-05:** a rule's plan must be readable, a rule on every plan needs an administrator, and a hidden plan's rules, runs and scheduled actions stay hidden.
 
+- [x] **OC-18 (S) — A field of the body is no way into a private plan.** **Built 2026-11-05:** body fields naming a plan, plan merge, plan import and the review queue honour what the caller can read.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

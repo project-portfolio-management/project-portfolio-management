@@ -30,6 +30,8 @@ ignore = [
     "RUSTSEC-2026-0391", # zstd 0.13.3: only with `--all-features`, via the optional `fluvio` feature (fluvio 0.50.1, the latest, pins zstd 0.13); the default build has zstd 0.14.3, which is patched; added 2026-10-26
     "RUSTSEC-2026-0398", # zstd-safe 7.3.0, same path as RUSTSEC-2026-0391; added 2026-10-26
     "RUSTSEC-2026-0403", # zstd-safe 7.3.0, same path as RUSTSEC-2026-0391; added 2026-10-26
+    "RUSTSEC-2026-0440", # astral-tokio-tar (unmaintained), no safe upgrade: test-only, via testcontainers, not in a built service; added 2026-11-05
+    "RUSTSEC-2026-0441", # pin-utils (unmaintained), no safe upgrade: only with the optional `fluvio` feature, not in the default build; added 2026-11-05
 ]
 
 [licenses]

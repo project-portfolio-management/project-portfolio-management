@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (CI: two new advisories accepted, not fixed)
+
+- \`cargo deny\` began failing on RUSTSEC-2026-0440 (\`astral-tokio-tar\`) and RUSTSEC-2026-0441 (\`pin-utils\`), both published after the last green run and both "unmaintained", not vulnerabilities, with no safe upgrade. The first is test-only, through \`testcontainers\`; the second comes only with the optional \`fluvio\` feature. Neither is in the default build, so they are accepted in \`deny.toml\` with that reason.
+- Not done: neither crate is replaced; a \`testcontainers\` or \`fluvio\` release that drops them would let the entries go. Not verified: \`cargo deny\` was run by CI, not here, unless the tool is installed locally.
+
 ### 5 November (OC-25: what a review of the series found)
 
 - An independent review of OC-13 to OC-24 found more. `GET /api/tpc` named private plans and their DIPP, and the census called it filtered; it now filters, and its comparison seeds a row. The filters built on every pid of a hidden plan used one bind per pid and would have failed past Postgres's limit, taking the inbox with them; they now pass one value. Proposal edits, tradeoffs, pipeline actions, promotion and lessons now answer `404` for a proposal that became a hidden plan, as the read did. `POST /api/notifications/{pid}/read` no longer shows a note the inbox hides. Confirming a held import row checks its parent, and a held row no longer shows a hidden parent. A keyless import no longer treats a hidden plan as a duplicate, so a guessed title gets the answer of no match. A hidden canvas item's watches and notices now go with the plan.

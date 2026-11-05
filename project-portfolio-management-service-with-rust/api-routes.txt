@@ -392,6 +392,8 @@ POST /api/plans/{pid}/handover/preview
 POST /api/plans/{pid}/import/asana
 POST /api/plans/{pid}/import/jira
 POST /api/plans/{pid}/import/mspdi
+GET /api/plans/{pid}/issue-types
+PUT /api/plans/{pid}/issue-types
 GET /api/plans/{pid}/issues
 POST /api/plans/{pid}/issues
 POST /api/plans/{pid}/issues/from-risk/{risk_pid}

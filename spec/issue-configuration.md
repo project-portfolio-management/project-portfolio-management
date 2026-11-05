@@ -19,6 +19,11 @@ kinds. A type is retired, never deleted: it can no longer be chosen, and an issu
 saved. The key cannot change, because issues store it. A body that leaves the type out does not change it. The service's own paths (an issue raised from a risk, a blocked task or a
 control action) use the `risk`, `blocker` and `concern` keys even if those are retired.
 
+**Types by plan (OC-5).** A plan can limit itself to some of the types, as a Redmine project selects its trackers. An
+administrator sets the list with `PUT /api/plans/{pid}/issue-types`; an empty list offers every type. A person can only choose a
+type the plan offers (`422`). An issue that already carries a type the plan leaves out keeps it and can still be saved, and the
+service's own paths are not limited, as with a retired type. Only an administrator defines a type or changes a plan's list.
+
 **Statuses.** An issue's status is a state of the workflow in force for its type. Each state declares a category, and the
 category is stored on the issue as `status_category`, set by the service and checked by the database. "Open", "overdue", the
 register's counts and the director summaries read the category and never a status's name, so a status called `with_supplier`
@@ -110,7 +115,8 @@ can be replaced by anyone who can write. That was already so and is left as it i
 `GET`, `POST /api/issue-types`; `PUT /api/issue-types/{key}`; `GET`, `POST /api/organization-roles`;
 `PUT /api/organization-roles/{key}`, whose bodies take `permissions`; `GET`, `POST /api/plans/{pid}/role-members`;
 `DELETE /api/plans/{pid}/role-members/{member_pid}`. The lists take `?include_retired=true`. `POST /api/workflows` takes `issue_type`.
-`GET /api/plans/{pid}/issues/options` returns each type with the workflow in force for it on that plan, retired types marked,
+`GET`, `PUT /api/plans/{pid}/issue-types` read and set a plan's list. `GET /api/plans/{pid}/issues/options` returns each type with
+the workflow in force for it on that plan, marked `offered` if a person can choose it, retired ones marked too,
 and the caller's roles, permissions and whether the plan is enforced, so a form can leave out what the service would refuse. An issue's body takes `status` as optional: absent
 means the workflow's initial state on a new issue and no change on an existing one. An issue's response adds `status_category`.
 
@@ -128,7 +134,7 @@ as words (`with_supplier` reads "With supplier").
   which issues a role sees. Here, what a person sees is decided by the plan's privacy alone.
 - No group of people can hold a role; each person is added.
 - Field rules cover the listed fields. Redmine's also cover custom fields.
-- Issue types are deployment-wide: no per-plan choice of types.
+- Only an administrator chooses a plan's types. Redmine lets a project member with the permission do it. A type defines no fields of its own.
 - A plan's own issue workflow is registered through the API only.
 - A registered workflow cannot be edited, only withdrawn and registered again.
 - `severity` is not configurable.

@@ -85,6 +85,7 @@ async fn clean(ctx: &AppContext) {
         .execute_unprepared(
             "DELETE FROM workflows WHERE applies_to = 'issue';
              DELETE FROM plan_role_members;
+             DELETE FROM plan_issue_types;
              DELETE FROM organization_roles;
              DELETE FROM issues WHERE kind NOT IN
                  ('bug', 'risk', 'blocker', 'question', 'improvement', 'concern');
@@ -1337,6 +1338,109 @@ async fn a_status_can_require_a_field_or_lock_one_for_named_roles() {
             put_status(&request, &writer, &issue, &prioritised).await,
             403
         );
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_plan_can_limit_itself_to_some_issue_types() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let writer = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &admin, "Few types").await;
+        let free = new_plan(&request, &admin, "All types").await;
+        let chooser = format!("/api/plans/{plan}/issue-types");
+        let issues = format!("/api/plans/{plan}/issues");
+
+        let raised: Value = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "A question", "kind": "question" }))
+            .await
+            .json();
+        let issue = format!("{issues}/{}", raised["pid"].as_str().expect("pid"));
+
+        let choice = json!({ "types": ["concern", "bug"] });
+        assert_eq!(put_status(&request, &writer, &chooser, &choice).await, 403);
+        assert_eq!(
+            put_status(
+                &request,
+                &admin,
+                &chooser,
+                &json!({ "types": ["nonsense"] })
+            )
+            .await,
+            422
+        );
+        assert_eq!(put_status(&request, &admin, &chooser, &choice).await, 200);
+        let read: Value = request
+            .get(&chooser)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await
+            .json();
+        assert_eq!(read["types"], json!(["bug", "concern"]));
+        assert_eq!(read["limited"], true);
+
+        // Only what the plan offers can be chosen, on this plan only.
+        let refused = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Off the list", "kind": "risk" }))
+            .await;
+        assert_eq!(refused.status_code(), 422, "{}", refused.text());
+        let allowed = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "On the list", "kind": "bug" }))
+            .await;
+        assert_eq!(allowed.status_code(), 200, "{}", allowed.text());
+        let elsewhere = request
+            .post(&format!("/api/plans/{free}/issues"))
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Elsewhere", "kind": "risk" }))
+            .await;
+        assert_eq!(elsewhere.status_code(), 200);
+
+        // An issue that already carries a type left out keeps it and can be saved, but cannot be changed to another.
+        let keep = json!({ "title": "Still a question" });
+        assert_eq!(put_status(&request, &writer, &issue, &keep).await, 200);
+        let retype = json!({ "title": "Still a question", "kind": "risk" });
+        assert_eq!(put_status(&request, &writer, &issue, &retype).await, 422);
+
+        // The options mark what can be chosen, and an empty list offers everything again.
+        let options: Value = request
+            .get(&format!("{issues}/options"))
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await
+            .json();
+        let offered: Vec<&str> = options["types"]
+            .as_array()
+            .expect("types")
+            .iter()
+            .filter(|t| t["offered"] == true)
+            .filter_map(|t| t["key"].as_str())
+            .collect();
+        assert_eq!(offered, ["bug", "concern"]);
+        assert_eq!(
+            options["types"].as_array().map(Vec::len),
+            Some(6),
+            "the rest stay, so an issue can show its type's name"
+        );
+        assert_eq!(
+            put_status(&request, &admin, &chooser, &json!({ "types": [] })).await,
+            200
+        );
+        let open = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Any type", "kind": "risk" }))
+            .await;
+        assert_eq!(open.status_code(), 200);
     })
     .await;
 }

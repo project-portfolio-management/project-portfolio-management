@@ -21067,6 +21067,75 @@
         ]
       }
     },
+    "/api/plans/{pid}/issue-types": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/issue-types` — the types this plan has limited itself to. Empty means every type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/issue-types` — the types this plan has limited itself to",
+        "tags": [
+          "issue_configuration"
+        ]
+      },
+      "put": {
+        "description": "`PUT /api/plans/{pid}/issue-types` — choose the types a plan offers (an administrator). Issues that already carry a type left out keep it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT /api/plans/{pid}/issue-types` body.",
+                "properties": {
+                  "types": {
+                    "description": "The type keys this plan offers, none of them retired. Empty offers every type.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "types"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`PUT /api/plans/{pid}/issue-types` — choose the types a plan offers (an administrator)",
+        "tags": [
+          "issue_configuration"
+        ]
+      }
+    },
     "/api/plans/{pid}/issues": {
       "get": {
         "description": "Most serious first, then oldest. An issue is something that has happened (a risk is something that might). Each carries age_calendar_days (days since raised, until resolved) and overdue (open and past its due date). ?status, ?severity and ?owner filter; ?open=true lists only open and in-progress ones; an unknown status or severity is 422.",
@@ -21167,7 +21236,7 @@
                   },
                   "kind": {
                     "default": null,
-                    "description": "Issue type, from `/api/issue-types` and not retired. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
+                    "description": "Issue type, from `/api/issue-types`, not retired and offered by this plan. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -21337,7 +21406,7 @@
     },
     "/api/plans/{pid}/issues/options": {
       "get": {
-        "description": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name.",
+        "description": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Types a person cannot choose are included, marked, so an issue that carries one can still show its name.",
         "parameters": [
           {
             "in": "path",
@@ -21473,7 +21542,7 @@
                   },
                   "kind": {
                     "default": null,
-                    "description": "Issue type, from `/api/issue-types` and not retired. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
+                    "description": "Issue type, from `/api/issue-types`, not retired and offered by this plan. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
                     "nullable": true,
                     "type": "string"
                   },

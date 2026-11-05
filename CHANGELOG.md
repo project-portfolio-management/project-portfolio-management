@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-5: issue types by plan)
+
+- A plan can limit itself to some of the deployment's issue types, as a Redmine project selects its trackers. A plan with no list
+  offers every type, so nothing changes until an administrator chooses.
+- Not done: only an administrator chooses; the interface comes with OC-7. Issues the service raises from a risk, a blocked task or
+  a control action are not limited.
+
 ### 5 November (OC-4: field rules by status)
 
 - A state of an issue workflow can make a field required or read-only, for everyone or for named roles, as Redmine's workflow

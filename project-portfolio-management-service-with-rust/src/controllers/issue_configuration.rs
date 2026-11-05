@@ -19,7 +19,7 @@ use uuid::Uuid;
 use super::{conflict, db_err, forbidden, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::issues as rules;
-use crate::models::_entities::{issue_types, organization_roles, plans};
+use crate::models::_entities::{issue_types, organization_roles, plan_issue_types, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Longest label, in characters.
@@ -67,6 +67,33 @@ pub(crate) async fn require_usable_type(ctx: &AppContext, key: &str) -> Result<(
         .map_err(db_err)?;
     let keys: Vec<&str> = usable.iter().map(|t| t.key.as_str()).collect();
     Err(unprocessable(&format!("kind must be one of {keys:?}")))
+}
+
+/// The types a plan has limited itself to, in key order. Empty means every type.
+async fn chosen_types(ctx: &AppContext, plan: Uuid) -> Result<Vec<String>> {
+    Ok(plan_issue_types::Entity::find()
+        .filter(plan_issue_types::Column::PlanPid.eq(plan))
+        .order_by_asc(plan_issue_types::Column::TypeKey)
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|t| t.type_key)
+        .collect())
+}
+
+/// `422` unless a person may choose `key` for an issue on this plan: a usable type the plan has not left out. An issue
+/// that already carries a type stays valid when the plan stops offering it, as it does when the type is retired.
+pub(crate) async fn require_offered_type(ctx: &AppContext, plan: Uuid, key: &str) -> Result<()> {
+    require_usable_type(ctx, key).await?;
+    let chosen = chosen_types(ctx, plan).await?;
+    if chosen.is_empty() || chosen.iter().any(|t| t == key) {
+        Ok(())
+    } else {
+        Err(unprocessable(&format!(
+            "this plan offers only these issue types: {chosen:?}"
+        )))
+    }
 }
 
 /// `422` if the catalogue is in use and a role is not in it. An empty catalogue checks nothing, so a deployment that
@@ -447,16 +474,9 @@ async fn change_role(
     format::json(role_view(&row))
 }
 
-/// `GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for
-/// it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Retired types are included,
-/// marked, so an issue that carries one can still show its name.
-#[debug_handler]
-async fn plan_options(
-    State(ctx): State<AppContext>,
-    caller: MaybeAuthUser,
-    Path(plan): Path<String>,
-) -> Result<Response> {
-    let plan = super::parse_pid(&plan)?;
+/// The live plan a path names; `404` otherwise.
+async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
+    let plan = super::parse_pid(plan)?;
     plans::Entity::find()
         .filter(plans::Column::Pid.eq(plan))
         .filter(plans::Column::DeletedAt.is_null())
@@ -464,6 +484,87 @@ async fn plan_options(
         .await
         .map_err(db_err)?
         .ok_or(Error::NotFound)?;
+    Ok(plan)
+}
+
+/// `GET /api/plans/{pid}/issue-types` — the types this plan has limited itself to. Empty means every type.
+#[debug_handler]
+async fn plan_types(State(ctx): State<AppContext>, Path(plan): Path<String>) -> Result<Response> {
+    let plan = require_plan(&ctx, &plan).await?;
+    let types = chosen_types(&ctx, plan).await?;
+    format::json(
+        serde_json::json!({ "plan_pid": plan, "limited": !types.is_empty(), "types": types }),
+    )
+}
+
+/// `PUT /api/plans/{pid}/issue-types` body.
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct PlanTypes {
+    /// The type keys this plan offers, none of them retired. Empty offers every type.
+    types: Vec<String>,
+}
+
+/// `PUT /api/plans/{pid}/issue-types` — choose the types a plan offers (an administrator). Issues that already carry a type
+/// left out keep it.
+#[debug_handler]
+async fn set_plan_types(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(plan): Path<String>,
+    Json(b): Json<PlanTypes>,
+) -> Result<Response> {
+    let plan = require_plan(&ctx, &plan).await?;
+    require_admin(&caller)?;
+    let mut wanted = b.types;
+    wanted.sort();
+    wanted.dedup();
+    for key in &wanted {
+        require_usable_type(&ctx, key).await?;
+    }
+    let was = chosen_types(&ctx, plan).await?;
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    plan_issue_types::Entity::delete_many()
+        .filter(plan_issue_types::Column::PlanPid.eq(plan))
+        .exec(&txn)
+        .await
+        .map_err(db_err)?;
+    for key in &wanted {
+        plan_issue_types::ActiveModel {
+            pid: ActiveValue::set(Uuid::new_v4()),
+            plan_pid: ActiveValue::set(plan),
+            type_key: ActiveValue::set(key.clone()),
+            ..Default::default()
+        }
+        .insert(&txn)
+        .await
+        .map_err(db_err)?;
+    }
+    AuditModel::record(
+        &txn,
+        plan,
+        "plan_issue_types_changed",
+        caller.actor(),
+        Some(serde_json::json!({ "from": was, "to": wanted })),
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+    format::json(
+        serde_json::json!({ "plan_pid": plan, "limited": !wanted.is_empty(), "types": wanted }),
+    )
+}
+
+/// `GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for
+/// it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Types a person cannot choose
+/// are included, marked, so an issue that carries one can still show its name.
+#[debug_handler]
+async fn plan_options(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(plan): Path<String>,
+) -> Result<Response> {
+    let plan = require_plan(&ctx, &plan).await?;
+    let chosen = chosen_types(&ctx, plan).await?;
     let types = issue_types::Entity::find()
         .order_by_asc(issue_types::Column::Position)
         .order_by_asc(issue_types::Column::Key)
@@ -475,6 +576,9 @@ async fn plan_options(
         let workflow = super::workflow::in_force_issue(&ctx, plan, &t.key).await?;
         let mut item = type_view(t);
         item["workflow"] = serde_json::json!(workflow);
+        item["offered"] = serde_json::json!(
+            t.retired_at.is_none() && (chosen.is_empty() || chosen.contains(&t.key))
+        );
         out.push(item);
     }
     let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
@@ -501,4 +605,6 @@ pub fn routes() -> Routes {
         .add("/organization-roles", post(create_role))
         .add("/organization-roles/{key}", put(change_role))
         .add("/plans/{pid}/issues/options", get(plan_options))
+        .add("/plans/{pid}/issue-types", get(plan_types))
+        .add("/plans/{pid}/issue-types", put(set_plan_types))
 }

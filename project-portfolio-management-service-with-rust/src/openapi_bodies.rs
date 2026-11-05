@@ -482,11 +482,13 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plans/{pid}/import/asana", "tracker_import", "`POST /api/plans/{pid}/import/asana`."),
     ("post", "/api/plans/{pid}/import/jira", "tracker_import", "`POST /api/plans/{pid}/import/jira`."),
     ("post", "/api/plans/{pid}/import/mspdi", "mspdi_import", "`POST /api/plans/{pid}/import/mspdi` — import an MS Project XML body into the plan. Dry run by default (`dry_run` absent means true); caller authorization and audit are handled in [`run`]."),
+    ("get", "/api/plans/{pid}/issue-types", "issue_configuration", "`GET /api/plans/{pid}/issue-types` — the types this plan has limited itself to. Empty means every type."),
+    ("put", "/api/plans/{pid}/issue-types", "issue_configuration", "`PUT /api/plans/{pid}/issue-types` — choose the types a plan offers (an administrator). Issues that already carry a type left out keep it."),
     ("get", "/api/plans/{pid}/issues", "issues", "`GET /api/plans/{pid}/issues` — the plan's register, most serious and oldest first."),
     ("post", "/api/plans/{pid}/issues", "issues", "`POST /api/plans/{pid}/issues` — raise an issue."),
     ("post", "/api/plans/{pid}/issues/from-risk/{risk_pid}", "issues", "`POST /api/plans/{pid}/issues/from-risk/{risk_pid}` — raise an issue from a risk that has happened. The risk is never changed. One open issue per risk (`409`)."),
     ("post", "/api/plans/{pid}/issues/from-task/{task_pid}", "issues", "`POST /api/plans/{pid}/issues/from-task/{task_pid}` — raise a blocker issue from a blocked task (`422` if the task is not blocked). The task is never changed. One open issue per task (`409`)."),
-    ("get", "/api/plans/{pid}/issues/options", "issue_configuration", "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name."),
+    ("get", "/api/plans/{pid}/issues/options", "issue_configuration", "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Types a person cannot choose are included, marked, so an issue that carries one can still show its name."),
     ("delete", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`DELETE /api/plans/{pid}/issues/{issue_pid}` — remove an issue (soft delete, audited)."),
     ("get", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`GET /api/plans/{pid}/issues/{issue_pid}` — one issue."),
     ("put", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`PUT /api/plans/{pid}/issues/{issue_pid}` — replace the fields of an issue."),
@@ -935,6 +937,7 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/plans/{pid}/handling-mark", crate::controllers::handling_marks::SetBody);
     body!("post", "/api/plans/{pid}/handover/commit", crate::controllers::handover::Body);
     body!("post", "/api/plans/{pid}/handover/preview", crate::controllers::handover::Body);
+    body!("put", "/api/plans/{pid}/issue-types", crate::controllers::issue_configuration::PlanTypes);
     body!("post", "/api/plans/{pid}/issues", crate::controllers::issues::Input);
     body!("put", "/api/plans/{pid}/issues/{issue_pid}", crate::controllers::issues::Input);
     body!("post", "/api/plans/{pid}/lessons", crate::controllers::lessons::LessonPayload);

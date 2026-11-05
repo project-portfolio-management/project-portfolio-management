@@ -172,7 +172,7 @@ pub(crate) struct Input {
     /// Optional longer text; blank is stored as absent.
     description: Option<String>,
     #[serde(default)]
-    /// Issue type, from `/api/issue-types` and not retired. Absent means `concern` on a new issue and no change on an
+    /// Issue type, from `/api/issue-types`, not retired and offered by this plan. Absent means `concern` on a new issue and no change on an
     /// existing one. Changing the type of an issue under a workflow that restricts moves needs an administrator.
     kind: Option<String>,
     #[serde(default = "default_severity")]
@@ -437,7 +437,7 @@ async fn create(
     let now = today();
     let raised_on = b.raised_on.unwrap_or(now);
     let kind = b.kind.clone().unwrap_or_else(|| "concern".to_string());
-    super::issue_configuration::require_usable_type(&ctx, &kind).await?;
+    super::issue_configuration::require_offered_type(&ctx, plan, &kind).await?;
     let def = super::workflow::in_force_issue(&ctx, plan, &kind).await?;
     let start = initial(&def);
     let at = match &b.status {
@@ -505,7 +505,7 @@ async fn check_type_change(
     to: &str,
     def: &crate::workflow::WorkflowDef,
 ) -> Result<()> {
-    super::issue_configuration::require_usable_type(ctx, to).await?;
+    super::issue_configuration::require_offered_type(ctx, plan, to).await?;
     let before = super::workflow::in_force_issue(ctx, plan, from).await?;
     let gated = crate::workflow::restricts_saves(&before) || crate::workflow::restricts_saves(def);
     if gated && !super::plan_access::is_admin(caller.claims()) {

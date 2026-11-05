@@ -2388,6 +2388,9 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 - [x] **OC-4 (M) — Field rules by status.** **Built 2026-11-05:** a state of an issue workflow can make a field required or
   read-only, for everyone or named roles (`workflow_states.field_rules`).
 
+- [x] **OC-5 (S) — Issue types by plan.** **Built 2026-11-05:** `plan_issue_types`, `/api/plans/{pid}/issue-types`, and `offered`
+  on a plan's issue options.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

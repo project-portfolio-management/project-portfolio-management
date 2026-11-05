@@ -78,7 +78,7 @@ of the matching surface (except goal titles).
    HTML elsewhere.
 6. **No global stores** for HTTP state — construct a
    `PlanRepository` (all paths under `/api/plans`) per page/component.
-7. **No envelope.** The service is loco.rs and returns **raw JSON**;
+7. **No envelope.** The service is Axum and returns **raw JSON**;
    `src/lib/api/client.ts` is the lean wrapper (get/post/put/patch/
    delete).
 8. **Drift accepted** (repo decision 2026-06-02): own copy of API

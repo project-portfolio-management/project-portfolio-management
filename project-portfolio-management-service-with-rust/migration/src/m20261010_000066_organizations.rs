@@ -3,7 +3,7 @@
 //! the audience of a director pack (`org:<pid>`). Existing free-text partner labels become partner
 //! organizations and their commitments are linked; a record with no organization behaves as before.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

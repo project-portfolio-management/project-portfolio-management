@@ -2,7 +2,7 @@
 //! take over and how ready they are, and which people are contingent (contractors and the like), so that the
 //! contingent share of a skill pool can be counted. For resource managers only; the pack shows counts.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

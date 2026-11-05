@@ -5,7 +5,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -74,7 +74,7 @@ async fn serve_worker_404() -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // T-28c: skills_required lands on the allocation as tags only (no
 // skill data); the skill-gap view resolves live against a stubbed
 // worker service (covered/missing), reports `unknown` with a reason
@@ -191,7 +191,7 @@ async fn skill_gap_resolves_covered_missing_and_unknown() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Dependencies: self/duplicate/cycle refuse; the portfolio schedule
 // reports the violation, the critical path, and undated members.
 async fn dependencies_schedule_violations_and_critical_path() {
@@ -295,7 +295,7 @@ async fn dependencies_schedule_violations_and_critical_path() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Milestones: due-order list with overdue flags; complete clears.
 async fn milestones_flag_overdue_until_completed() {
     super::isolate_search_index();
@@ -336,7 +336,7 @@ async fn milestones_flag_overdue_until_completed() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Allocations sum per person across items; over 100% flags in the
 // capacity rollup; bad percent / URN refuse.
 async fn capacity_flags_over_allocation() {
@@ -388,7 +388,7 @@ async fn capacity_flags_over_allocation() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Saved reports run synchronously as JSON and CSV with filters and
 // field projection; unknown fields refuse at save time.
 async fn reports_filter_project_and_render_csv() {
@@ -450,7 +450,7 @@ async fn reports_filter_project_and_render_csv() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // T-28e: a grouped run counts plans per group and sums budget lines per
 // currency within each group — never across currencies; an unknown
 // `group_by` refuses at save time.
@@ -505,7 +505,7 @@ async fn grouped_report_keeps_currencies_apart() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // The dashboard: per-collection RAG + stage rollups, site tiles, and
 // the ETag conditional cycle (304 until state changes).
 async fn dashboard_rolls_up_and_is_conditional() {

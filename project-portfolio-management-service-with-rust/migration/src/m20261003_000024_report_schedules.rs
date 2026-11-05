@@ -1,6 +1,6 @@
 //! Migration: **`report_schedules`**. A saved report run on a cadence (T-28e): each due run is stored as an expiring artifact and audited like an export, even at zero rows. Dates are UTC calendar dates (a portfolio view, not a personal one).
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `report_schedules` migration (name derived from the module).

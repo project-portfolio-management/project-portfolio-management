@@ -106,8 +106,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
 - **NFR-12 — Secure by default.** Login enforcement on `/api/*` is **on**
   unless it is explicitly turned off
   (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`, or
-  `settings.require_auth: false` in a non-production loco config). The service
-  **refuses to start** when the loco environment is `production` and
+  `APP_ENV` of `development`, `test` or `container-dev`). The service
+  **refuses to start** when the environment (`APP_ENV`) is `production` and
   enforcement is off, and when enforcement is on with no token verifier and no
   key URL; turning it off logs a loud warning. Only `/_health`, `/_ping`, the
   OpenAPI documents, Swagger UI and the per-user calendar feeds are public;

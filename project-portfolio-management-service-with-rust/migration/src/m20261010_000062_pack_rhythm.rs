@@ -2,7 +2,7 @@
 //! that just ended; the portfolio office reviews the draft; a person issues it; and the audience's
 //! subscribers are told with a link. A pack drafted by the schedule records its origin and who reviewed it.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

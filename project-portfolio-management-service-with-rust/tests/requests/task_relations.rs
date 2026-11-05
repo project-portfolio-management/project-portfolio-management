@@ -4,7 +4,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -55,7 +55,7 @@ async fn mv(request: &axum_test::TestServer, p: &str, t: &str, status: &str) -> 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn relations_have_the_behaviours_redmine_proved() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

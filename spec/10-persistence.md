@@ -180,7 +180,7 @@ each import/export job (`kind`, `format`, `status`, `params`, the
 counts, `actor`, artifact URLs, and `expires_at` TTL), with
 `UNIQUE (entity, kind, idempotency_key)` so a retried submit maps to
 the same job. The `entity` discriminator is the one `plans` collection.
-Jobs run on the loco `bg_pg` worker; artifacts (uploaded source, export
+Jobs run on the axa Postgres queue; artifacts (uploaded source, export
 output, error report) live in the config-driven artifact store
 (S3-compatible in deployment, local fs in dev), referenced by
 short-lived access-controlled URLs.

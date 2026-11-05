@@ -1,6 +1,6 @@
 //! Migration: **`person_availabilities`**. A person's availability over a date range (PJ-3): the most of their time (0-100 percent) they can commit between two dates, for part-time spells, leave blocks and ramp-up. Where no range applies capacity is 100 percent, so nothing stored before this existed changes. Ranges for one person may not overlap (checked by the service).
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `person_availabilities` migration (name derived from the module).

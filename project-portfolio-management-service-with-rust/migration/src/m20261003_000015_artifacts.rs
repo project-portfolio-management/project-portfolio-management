@@ -1,6 +1,6 @@
 //! Migration: **`artifacts`**. The artifact store's index (T-8 §7, LT-5): one row per stored file. The bytes live on disk under `storage_key`; the row carries what is needed to serve and verify them — name, declared content type, size and the SHA-256 of the bytes. `expires_at` lets a sweep delete a file while the row remains as a tombstone.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `artifacts` migration (name derived from the module).

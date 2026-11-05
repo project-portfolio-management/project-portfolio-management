@@ -12,11 +12,11 @@
 //! it does not check the new person's capacity (the leveling view does that).
 
 use super::{db_err, unprocessable};
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use chrono::{NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

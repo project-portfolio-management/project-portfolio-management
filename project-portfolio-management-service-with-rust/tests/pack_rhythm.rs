@@ -9,14 +9,14 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `config/test.yaml` / `DATABASE_URL`. Run with
+//! `DATABASE_URL`. Run with
 //! `cargo test --test pack_rhythm -- --ignored`.
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::ConnectionTrait;
@@ -83,7 +83,7 @@ const PARTNER: &str = "3f2c6b7e-0000-4000-8000-0000000000d2";
 const OTHER: &str = "3f2c6b7e-0000-4000-8000-0000000000d3";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test pack_rhythm -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test pack_rhythm -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are_told() {
     let (keys, kid) = keys_and_kid();

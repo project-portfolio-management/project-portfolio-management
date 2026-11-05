@@ -1,6 +1,6 @@
 //! Migration: **`feed_tokens`**. Revocable secrets that let a calendar app or feed reader read one person's own feeds without a bearer token (LT-7 / RM-6). Only the SHA-256 of the token is stored, so a database read never yields a usable token; revoking sets `revoked_at` and takes effect on the next fetch.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `feed_tokens` migration (name derived from the module).

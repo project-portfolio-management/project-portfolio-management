@@ -9,7 +9,7 @@ use crate::models::_entities::milestones;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::visibility as vis_models;
 use crate::validation::MAX_TEXT_LEN;
-use loco_rs::prelude::*;
+use axa::prelude::*;
 
 /// `POST /api/plans/{pid}/milestones` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]

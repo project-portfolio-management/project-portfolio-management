@@ -848,7 +848,7 @@ across currencies.
   `counts` and `overdue` (a live escalation past its `respond_by`). **Tolerances (FR-53) point here:** each dimension
   reports its `open_escalations`, and a red one with none is `escalation_needed`. `POST /api/plans/{pid}/tolerances/escalate`
   raises one `tolerance` escalation at the path's first level for every such dimension (asking again raises nothing new).
-  A person asking is one way; the other is the task `cargo loco task tolerance_escalations` (schedule it daily), which
+  A person asking is one way; the other is the task `cargo run -- task tolerance_escalations` (schedule it daily), which
   does the same for every live plan as the identity `system:tolerance-escalations`, marks each description "Raised
   automatically", and skips a dimension that has a live escalation or one raised in the last 7 days, so an answered
   escalation on a plan that stays red is not raised again at once. Nothing runs the task unless the operator schedules

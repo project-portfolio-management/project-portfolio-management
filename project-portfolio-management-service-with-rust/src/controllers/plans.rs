@@ -10,9 +10,9 @@
 //! any other via `parent_ref`, `kind` is an optional descriptive label,
 //! and matching is not gated by kind.
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use project_portfolio_management_matcher::{MatchConfig, MatchingEngine, Plan, PlanKind};
 use serde::{Deserialize, Serialize};
 
@@ -599,7 +599,7 @@ async fn remove(
     if !named.is_empty() || restricted > 0 {
         return Err(Error::CustomError(
             axum::http::StatusCode::CONFLICT,
-            loco_rs::controller::ErrorDetail::new(
+            axa::error::ErrorDetail::new(
                 "conflict",
                 format!(
                     "other plans depend on this one through task links: {} plan(s) you can read{}{}; remove those links first",

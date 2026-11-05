@@ -13,9 +13,9 @@
 #![expect(clippy::many_single_char_names)]
 
 use super::conflict;
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};

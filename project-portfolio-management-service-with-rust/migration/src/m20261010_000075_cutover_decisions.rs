@@ -4,7 +4,7 @@
 //! criterion met and every co-signature; "no-go" and "delay for safety" are decisions in their own right.
 //! The database holds the freeze: criteria change only while the decision is a draft.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

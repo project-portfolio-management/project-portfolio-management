@@ -1,6 +1,6 @@
 //! Migration: **`schedule_baselines`**. A schedule baseline (SC-3): a numbered, append-only snapshot of a plan's task schedule, taken with a reason. Never updated or deleted; a re-baseline is the next version and the earlier one stays. Variance is always measured against a named version.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `schedule_baselines` migration (name derived from the module).

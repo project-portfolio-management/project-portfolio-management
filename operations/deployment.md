@@ -41,7 +41,7 @@ compiled into the binary and exits; then `api` on port 5150, healthy when
 podman compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure
 ```
 
-That profile uses `config/container-dev.yaml`, logs a loud warning at start, and
+That profile is `APP_ENV=container-dev`, logs a loud warning at start, and
 binds to `127.0.0.1`. The service refuses to run like that in `production`.
 
 ## Configuration
@@ -52,7 +52,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Purpose | Variable | Default / notes |
 |---|---|---|
 | Database | `DATABASE_URL` | required; `DB_MIN_CONNECTIONS` (2), `DB_MAX_CONNECTIONS` (20) |
-| Environment | `LOCO_ENV` | `production` in the image; `container-dev` is the insecure profile |
+| Environment | `APP_ENV` | `production` in the image; `container-dev` is the insecure profile |
 | Listen | `PORT`, `HOST` | `5150` |
 | Login | `REQUIRE_AUTH` | **on**; only `false` turns it off, and production refuses that |
 | Token keys | `PASETO_KEYS_URL`, `PASETO_KEYS`, `PASETO_KEYS_REFRESH_SECS`, `TOKEN_ISSUER`, `TOKEN_AUDIENCE` | keys are fetched at boot and refreshed; set one of URL or inline keys |

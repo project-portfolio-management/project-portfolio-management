@@ -15,8 +15,8 @@ pub(super) static REQUIRE_AUTH: OnceLock<bool> = OnceLock::new();
 /// turned it off. The environment variable
 /// `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` wins when set and non-blank
 /// (`0`/`false`/`no`/`off`, case-insensitive, is off; anything else,
-/// including a typo, is on); otherwise the `configured` value (the loco
-/// `settings.require_auth` key of the active `config/<env>.yaml`) applies;
+/// including a typo, is on); otherwise the `configured` value (`false` in the profiles of
+/// [`crate::app::opts_out_of_guards`]) applies;
 /// otherwise it is on.
 #[must_use]
 pub fn resolve_require_auth(env: Option<&str>, configured: Option<bool>) -> bool {
@@ -34,14 +34,14 @@ pub(super) fn is_falsy(value: &str) -> bool {
     )
 }
 
-/// Read `settings.require_auth` from a loco config `settings` block.
+/// Read `require_auth` from the settings the service builds for its environment.
 #[must_use]
 pub fn configured_require_auth(settings: Option<&serde_json::Value>) -> Option<bool> {
     settings?.get("require_auth")?.as_bool()
 }
 
 /// Fix the process-wide enforcement posture from the environment plus the
-/// config file's `settings.require_auth` (called once at boot, from
+/// profile's `require_auth` (called once at boot, from
 /// `App::after_routes`). First caller wins: the value is cached for the life
 /// of the process, and every later call just reports it. Returns the
 /// effective posture.
@@ -84,7 +84,7 @@ pub(super) fn verifier_configured() -> bool {
 /// The startup gate, pure. `Err(message)` means the service must refuse to
 /// start:
 ///
-/// - the loco environment is `production` and enforcement is off;
+/// - the environment is `production` and enforcement is off;
 /// - enforcement is on but no token verifier has keys, *and* no
 ///   `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` is set that the rotation
 ///   loop could still fill in (with a URL configured the service boots and
@@ -104,8 +104,8 @@ pub fn startup_verdict(
     if !require && production {
         return Err(
             "refusing to start: authentication enforcement is off in the production \
-             environment. Remove PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false (or the \
-             config's settings.require_auth: false); production never runs anonymously."
+             environment. Remove PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false; production \
+             never runs anonymously."
                 .to_string(),
         );
     }

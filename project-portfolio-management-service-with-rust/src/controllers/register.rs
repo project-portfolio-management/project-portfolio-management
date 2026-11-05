@@ -6,9 +6,9 @@
 
 use std::collections::{HashMap, HashSet};
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use serde_json::{Value, json};
 use uuid::Uuid;
 

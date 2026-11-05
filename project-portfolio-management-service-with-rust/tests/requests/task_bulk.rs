@@ -5,7 +5,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -38,7 +38,7 @@ fn counts(v: &Value) -> (i64, i64, i64) {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn bulk_edit_copy_and_move_report_every_item_and_reconcile() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

@@ -4,14 +4,14 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_template_keeps_shape_and_drops_people_identity_and_history() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

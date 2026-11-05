@@ -19,8 +19,8 @@
 //! ratio.
 
 use super::{db_err, unprocessable};
+use axa::prelude::*;
 use axum::http::HeaderMap;
-use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
@@ -84,7 +84,7 @@ async fn create_entry(
     if super::timesheets::week_is_locked(&ctx, &payload.actor_ref, payload.spent_on).await? {
         return Err(Error::CustomError(
             axum::http::StatusCode::CONFLICT,
-            loco_rs::controller::ErrorDetail::new(
+            axa::error::ErrorDetail::new(
                 "conflict",
                 "that person's week is approved and locked; it cannot take new entries",
             ),

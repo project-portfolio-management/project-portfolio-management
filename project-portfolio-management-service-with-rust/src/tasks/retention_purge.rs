@@ -1,9 +1,9 @@
 //! `retention_purge` task: remove records past their retention period (RG-4).
 //!
 //! ```text
-//! cargo loco task retention_purge                              # dry run: counts only
-//! cargo loco task retention_purge apply:true                   # delete
-//! cargo loco task retention_purge apply:true notifications_days:60
+//! cargo run -- task retention_purge                              # dry run: counts only
+//! cargo run -- task retention_purge apply:true                   # delete
+//! cargo run -- task retention_purge apply:true notifications_days:60
 //! ```
 //!
 //! Schedule it (cron, a Kubernetes `CronJob`, a systemd timer) once a day after the dry run has
@@ -11,8 +11,8 @@
 //! `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<RULE>_DAYS` (WW-1.7), which the scheduled job reads too; an argument
 //! here wins over it. See `governance/retention-schedule.md` for what is and is not covered.
 
+use axa::prelude::*;
 use chrono::Utc;
-use loco_rs::prelude::*;
 
 use crate::retention::{self, RULES};
 
@@ -21,7 +21,7 @@ pub struct RetentionPurge;
 
 #[async_trait]
 impl Task for RetentionPurge {
-    /// Task metadata for the loco CLI.
+    /// Task metadata for the command line.
     fn task(&self) -> TaskInfo {
         let names: Vec<String> = RULES.iter().map(|r| format!("{}_days", r.name)).collect();
         TaskInfo {

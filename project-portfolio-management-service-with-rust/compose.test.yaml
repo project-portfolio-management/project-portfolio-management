@@ -8,10 +8,10 @@
 #   podman compose -f compose.test.yaml down -v
 #
 # Redis (the production cache provider) is started with Postgres, on 127.0.0.1:6379 with the password `loco`
-# (override the port with TEST_REDIS_PORT). The tests keep the in-memory cache (config/test.yaml) and do not
+# (override the port with TEST_REDIS_PORT). The tests keep the in-memory cache and do not
 # need it; it is there to run the service against Redis by hand:
 #
-#   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL=redis://:loco@127.0.0.1:6379/0 LOCO_ENV=production ...
+#   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL=redis://:loco@127.0.0.1:6379/0 APP_ENV=production ...
 #
 # Redis is 8 (AGPL-3.0, RSALv2 or SSPLv1, at the user's choice; used here for development and tests only, see the
 # root LICENSE.md).
@@ -31,7 +31,7 @@ services:
     environment:
       POSTGRES_USER: loco
       POSTGRES_PASSWORD: loco
-      # Matches config/test.yaml, so a bare `cargo test -- --ignored`
+      # Matches the default test database, so a bare `cargo test -- --ignored`
       # finds its database.
       POSTGRES_DB: project_portfolio_management_test
     ports:

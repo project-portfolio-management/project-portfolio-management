@@ -3,9 +3,9 @@
 //! `deployment_settings`; each instance keeps it in memory and re-reads it every
 //! `REFRESH_SECS` seconds, so a change made on one instance reaches the others without a restart.
 
+use axa::prelude::*;
 use axum::http::StatusCode;
 use chrono::Utc;
-use loco_rs::prelude::*;
 use sea_orm::{DatabaseBackend, Statement};
 use serde::Deserialize;
 use uuid::Uuid;

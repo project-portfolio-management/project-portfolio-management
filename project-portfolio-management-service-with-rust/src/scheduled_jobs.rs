@@ -1,4 +1,4 @@
-//! The jobs the service can run for itself (NC-5), opt-in. Until now these were loco tasks for a cron or a
+//! The jobs the service can run for itself (NC-5), opt-in. Until now these were tasks for a cron or a
 //! Kubernetes `CronJob`; a deployment without either can switch them on here.
 //!
 //! * **Off by default.** `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULED_JOBS` names the jobs to run (comma-separated;
@@ -13,8 +13,8 @@
 //! * **Retention is a dry run** unless `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULED_RETENTION_APPLY` is `true`, `yes` or
 //!   `1`: nothing is deleted by switching the scheduler on.
 
+use axa::prelude::*;
 use chrono::{DateTime, Utc};
-use loco_rs::prelude::*;
 use sea_orm::{DatabaseBackend, QueryOrder, Statement};
 use serde_json::json;
 use uuid::Uuid;
@@ -189,7 +189,7 @@ async fn execute(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Strin
             });
             // WW-1.7: the deployment's periods; a bad setting fails the run rather than purge by the default.
             let overrides =
-                crate::retention::env_overrides().map_err(|m| loco_rs::Error::string(&m))?;
+                crate::retention::env_overrides().map_err(|m| axa::Error::string(&m))?;
             let out = crate::retention::run(&ctx.db, now, &overrides, apply).await?;
             let matched: u64 = out.iter().map(|o| o.matched).sum();
             let deleted: u64 = out.iter().map(|o| o.deleted).sum();

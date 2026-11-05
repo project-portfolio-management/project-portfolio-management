@@ -12,11 +12,11 @@
 |          /plans/[pid]/{timeline,burndown}                     |
 |  lib/api: client.ts → plans.ts + sub-resource repos           |
 +------------------------------+-------------------------------+
-                               | REST (raw loco JSON, no envelope)
+                               | REST (raw JSON, no envelope)
                                | PROJECT_PORTFOLIO_MANAGEMENT_API_URL (default :5150)
 +------------------------------v-------------------------------+
 |              project-portfolio-management-service-with-rust                     |
-|  loco.rs 0.16 (Axum 0.8) · port 5150                          |
+|  Axum 0.8 with axa · port 5150                               |
 |  controllers/plans.rs                                         |
 |     CRUD + /match + /check-duplicates                         |
 |                       + merge + search  (kind-agnostic)       |
@@ -63,7 +63,27 @@ relational CRUD with events + audit. The one bridge is `goals[]`
 (§5.3): goal sub-resource writes mutate `data.goals[]` so the matchable
 payload stays current.
 
-### 8.3 Service layout (loco.rs)
+### 8.3a Boot and configuration
+
+The service is ordinary [Axum](https://docs.rs/axum) with [axa](https://crates.io/crates/axa), not a framework.
+`src/bin/main.rs` calls `App::run`, and every step from there is a function call in `src/app.rs`. There are no configuration
+files. Configuration is the environment, with defaults in code, and `APP_ENV` picks the profile.
+
+| `APP_ENV` | Login and rate limits | Migrates on start | Cache | Mail |
+| --- | --- | --- | --- | --- |
+| `production` | on, and it refuses to start with them off | no | Redis, **required** | `SMTP_*`, STARTTLS |
+| `container-dev` | off unless turned on | no | memory, or Redis if named | `SMTP_*`, STARTTLS |
+| `development` | off unless turned on | yes | memory, or Redis if named | localhost:1025, no TLS |
+| `test` | off unless turned on | fresh each boot | memory | a stub |
+| any other name | **on: an unknown name fails closed** | no | memory, or Redis if named | `SMTP_*`, STARTTLS |
+
+`PORT`, `BINDING`, `HOST`, `DATABASE_URL`, `DB_MIN_CONNECTIONS`, `DB_MAX_CONNECTIONS`, `DB_CONNECT_TIMEOUT`, `DB_IDLE_TIMEOUT`,
+`BODY_LIMIT_BYTES`, `HTTP_COMPRESSION`, `WORKER_MODE`, `LOG_LEVEL`, `LOG_FORMAT` and `LOG_FILTER` are axa's. CORS and HSTS stay with
+this service's own `http_security` layer, so axa's are turned off. There is no request timeout unless `REQUEST_TIMEOUT_SECONDS` is set,
+because a timeout would cut the live event streams. A `GET` whose `ETag` matches `If-None-Match` answers `304`, whichever handler set it.
+`/_readiness` answers `503` when the database or the cache does not.
+
+### 8.3 Service layout
 
 > **Corrected 2026-08-25.** This section was headed "— planned" and drew
 > a layout that never landed: a controller per sub-resource
@@ -75,8 +95,8 @@ payload stays current.
 ```
 project-portfolio-management-service-with-rust/
 ├── src/
-│   ├── app.rs                       loco Hooks (routes, workers, boot init)
-│   ├── bin/                         loco CLI entrypoint
+│   ├── app.rs                       plain functions: routes, workers, boot
+│   ├── bin/                         command-line entrypoint
 │   ├── controllers/
 │   │   ├── plans.rs                 CRUD + match + check-duplicates + merge + search
 │   │   ├── engineering.rs           tasks, board, sprints, milestones, burndown
@@ -98,7 +118,7 @@ project-portfolio-management-service-with-rust/
 │   │                                visibility.rs · tba.rs · merge.rs · validation.rs
 │   ├── auth/ (verifier · enforcement · policy · areas · identity) streaming.rs relay.rs search/ privacy.rs compliance/
 │   ├── flow_metrics.rs scheduler.rs snapshots.rs version.rs
-│   └── workers/                     loco background jobs
+│   └── workers/                     background jobs
 ├── migration/src/                   plans, audit_logs, merge_records, event_outbox,
 │                                    governance, visibility, strategy, engineering,
 │                                    capabilities, insight_snapshots,

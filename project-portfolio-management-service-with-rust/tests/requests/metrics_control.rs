@@ -9,7 +9,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -33,7 +33,7 @@ macro_rules! create_plan {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Undeclared work is `unclassified` and counted **separately**, never
 // folded into `feature`. Absorbing it would flatter the one share a
 // reader is most likely to act on.
@@ -97,7 +97,7 @@ async fn undeclared_work_is_unclassified_not_a_feature() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // A window with nothing finished reports `null` shares, not `0%`: a
 // share of nothing is undefined, and zero would read as measured.
 async fn an_empty_mix_is_undefined_not_zero() {
@@ -123,7 +123,7 @@ async fn an_empty_mix_is_undefined_not_zero() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // DIPP = EMV / CEC, and the three refusals that keep it honest: a zero
 // cost-to-complete is `null` **with a reason** rather than infinity, a
 // negative cost estimate is refused, and a negative expected monetary
@@ -207,7 +207,7 @@ async fn dipp_computes_and_refuses_honestly() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // A plan with no observation reports `unmeasured`, never a zero — the
 // absent-evidence rule that runs through every metric here.
 async fn a_plan_with_no_tpc_observation_is_unmeasured() {
@@ -226,7 +226,7 @@ async fn a_plan_with_no_tpc_observation_is_unmeasured() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // No currency is built in (spec 02-scope 2.0, WW-1.3): the portfolio triage names the currency it ranks
 // in, or it is refused, and a plan recorded in another currency is reported, not ranked.
 async fn tpc_triage_needs_a_currency_and_has_no_default() {
@@ -266,7 +266,7 @@ async fn tpc_triage_needs_a_currency_and_has_no_default() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // The timing decides what a failing control may do, and a control
 // naming a metric the service does not produce is refused **at
 // registration** — left registered it would read `unmeasured` forever,
@@ -318,7 +318,7 @@ async fn a_control_must_be_evaluable_and_declares_its_response() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // `unmeasured` is a **third verdict**: excluded from the pass rate
 // rather than counted as either half. And a failing reading with no
 // action is reported as **unanswered** until one is recorded — "fix
@@ -395,7 +395,7 @@ async fn unmeasured_is_not_a_pass_and_a_failure_stays_unanswered() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // A control that has **never produced a reading** is the most important
 // number the register reports: it is indistinguishable from one that
 // always passes, unless somebody counts it.
@@ -427,7 +427,7 @@ async fn a_control_that_never_fired_is_reported() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Progress runs from the declared baseline to the target, a check-in
 // moves the current value, and **the baseline never moves** — progress
 // measured from a moving baseline is not progress.
@@ -488,7 +488,7 @@ async fn a_check_in_moves_the_current_value_never_the_baseline() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // An objective with no measurable key result reports `unmeasured` and is
 // **excluded** from the plan's weighted score — it must neither drag the
 // plan down nor silently lift it. And a key result with nowhere to
@@ -570,7 +570,7 @@ async fn an_unmeasured_objective_is_excluded_not_scored_zero() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // A `maintain` key result needs a band — a band is what the direction
 // means — and a currency-valued one must name its currency, because this
 // service converts between none of them.
@@ -618,7 +618,7 @@ async fn a_key_result_must_be_measurable_to_be_declared() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // T-26: a control action converts into the work store that already
 // exists (a task) rather than becoming a fifth one. The converted task
 // lands on the control's own plan, in that plan's workflow-initial
@@ -737,7 +737,7 @@ async fn converting_a_control_action_creates_a_task_on_the_plan() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // PRO-P33 (repo tasks.md): the two genuinely plan-specific numbers
 // (work_in_progress_limit, cycle_time_p85_days) have no invented
 // default and are refused when missing/non-positive, rather than
@@ -770,7 +770,7 @@ async fn register_standard_requires_the_plan_specific_numbers() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // The four controls this service can already evaluate but registers
 // for no plan automatically: gate_readiness (feedforward, fixed at
 // 100%), work_in_progress and cycle_time_p85 (concurrent, caller's own
@@ -860,7 +860,7 @@ async fn register_standard_creates_the_four_known_controls() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Calling the endpoint twice does not duplicate the controls — each
 // metric already enabled and registered is reported
 // already_registered instead.
@@ -912,7 +912,7 @@ async fn register_standard_is_idempotent_per_metric() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // A caller may override the budget-variance tolerance; the WIP and SLE
 // numbers are always the caller's own (there is no default to compare
 // against).
@@ -949,7 +949,7 @@ async fn register_standard_honours_an_explicit_variance_tolerance() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // An unknown plan is a plain 404, not a 500 or a silent empty success.
 async fn register_standard_on_an_unknown_plan_is_404() {
     request::<App, _, _>(|request, _ctx| async move {

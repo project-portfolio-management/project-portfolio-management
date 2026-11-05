@@ -9,7 +9,7 @@
 //! `PROJECT_PORTFOLIO_MANAGEMENT_SNAPSHOT_HOURS` (unset/0 ⇒ off, the
 //! default; parse failure ⇒ off with a warning).
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 use crate::insights;

@@ -1,6 +1,6 @@
 //! Migration: **`bulk_jobs`**. One bulk import or export job (T-8, spec `bulk-import-export.md` §2). `UNIQUE (entity, kind, idempotency_key)` makes a retried request return the original job. The counters always reconcile: `rows_total = created + updated + unchanged + queued_for_review + failed`. A job is never deleted; only its artifacts expire.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `bulk_jobs` migration (name derived from the module).

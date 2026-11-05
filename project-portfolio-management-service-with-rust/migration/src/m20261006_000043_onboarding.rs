@@ -1,6 +1,6 @@
 //! Migration: **onboarding and offboarding**. `onboarding_templates` are custom checklist templates (a built-in one exists for each kind); `onboarding_cases` are one onboarding or offboarding of a person on a plan, or of a plan itself; `onboarding_items` are the checklist items of a case, each with an owner, a due date and a resolution; `access_records` are an **append-only** record of access granted and revoked (this service records it; it cannot change an identity provider's accounts).
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The onboarding migration (name derived from the module).
@@ -22,7 +22,7 @@ impl MigrationTrait for Migration {
                 ("id", ColType::PkAuto),
                 ("pid", ColType::UuidUniq),
                 ("kind", ColType::String),
-                ("items", ColType::Json),
+                ("items", ColType::JsonBinary),
             ],
             &[],
         )
@@ -98,6 +98,10 @@ impl MigrationTrait for Migration {
         ] {
             db.execute_unprepared(q).await?;
         }
+        // The column has always been `json`, and a fresh database must match one that was upgraded.
+        m.get_connection()
+            .execute_unprepared("ALTER TABLE onboarding_templates ALTER COLUMN items TYPE json")
+            .await?;
         Ok(())
     }
 

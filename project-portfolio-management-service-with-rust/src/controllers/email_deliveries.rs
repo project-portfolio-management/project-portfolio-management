@@ -6,9 +6,9 @@
 //! * [`run_due`] retries what is waiting after a transient failure;
 //! * `GET /api/email-deliveries` (administrators only; anyone else gets 404) lists them, newest first.
 
+use axa::prelude::*;
 use axum::http::StatusCode;
 use chrono::Utc;
-use loco_rs::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use serde_json::json;
@@ -205,7 +205,7 @@ async fn list(
         if !["queued", "retry", "sent", "failed"].contains(&s.as_str()) {
             return Err(Error::CustomError(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                loco_rs::controller::ErrorDetail::new(
+                axa::error::ErrorDetail::new(
                     "unprocessable_entity",
                     "status must be queued, retry, sent or failed",
                 ),

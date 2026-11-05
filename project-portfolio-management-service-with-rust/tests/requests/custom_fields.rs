@@ -4,7 +4,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -29,7 +29,7 @@ async fn status_of(request: &axum_test::TestServer, body: Value) -> u16 {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn custom_fields_are_typed_scoped_required_and_searchable() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -28,7 +28,7 @@
 #
 # DEVELOPMENT OVERRIDE (UNSAFE, NEVER FOR A SHARED NETWORK): the compose
 # profile `dev-insecure` starts `api-dev-insecure` instead, with login
-# enforcement and rate limiting OFF (config/container-dev.yaml; the service
+# enforcement and rate limiting OFF (APP_ENV=container-dev; the service
 # refuses to run that way in the `production` environment), so you can poke
 # the API with curl and no token issuer:
 #
@@ -64,7 +64,7 @@
 name: project-portfolio-management
 
 x-api-environment: &api-environment
-  LOCO_ENV: production
+  APP_ENV: production
   PORT: "5150"
   DATABASE_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management
   # The cache (Redis). The password defaults to the database's so a local stack needs one secret.
@@ -123,7 +123,7 @@ services:
       REDIS_PASS: ${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}
 
   # One-shot: applies the migrations compiled into the binary, then exits.
-  # (config/production.yaml sets auto_migrate: false on purpose.)
+  # (Production never migrates on start, on purpose.)
   migrate:
     build: *api-build
     image: project-portfolio-management-service:local
@@ -189,7 +189,7 @@ services:
     image: project-portfolio-management-service:local
     environment:
       <<: *api-environment
-      LOCO_ENV: container-dev
+      APP_ENV: container-dev
       # Login is ON. The API trusts one PUBLISHED test key (its private half is in the UI's demonstration code and
       # in scripts/demo/token.mjs), so the signed-in demonstration person has a real identity: "My work", saved
       # views and the kanban board work. Safe only because the data is fictitious.
@@ -257,7 +257,7 @@ services:
     image: project-portfolio-management-service:local
     environment:
       <<: *api-environment
-      LOCO_ENV: container-dev
+      APP_ENV: container-dev
       PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false"
     ports:
       - "127.0.0.1:5150:5150"

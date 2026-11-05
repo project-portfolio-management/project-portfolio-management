@@ -1,6 +1,6 @@
 //! Migration: **the monthly director pack** (DP-1). One row per pack version. `body` is the exact text that was computed at drafting; once a pack is issued the database refuses any change to it and any deletion, so what was issued is what is read, byte for byte, forever. A correction is a new row (the next version) that points at the one it replaces.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

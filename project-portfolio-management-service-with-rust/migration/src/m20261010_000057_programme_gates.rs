@@ -6,7 +6,7 @@
 //!   names who decided it (the one exception to the append-only rule: a data-subject pseudonymisation
 //!   may blank `decided_by`).
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

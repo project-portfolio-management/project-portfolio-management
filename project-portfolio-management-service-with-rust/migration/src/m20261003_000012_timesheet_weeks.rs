@@ -1,6 +1,6 @@
 //! Migration: **`timesheet_weeks`**. The approval state of one person's week of time entries (LT-11). A row exists only once a week has been submitted; no row means the week is open. Approved weeks are locked against new entries. `week_start` is the ISO Monday, a zone-free calendar date.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `timesheet_weeks` migration (name derived from the module).

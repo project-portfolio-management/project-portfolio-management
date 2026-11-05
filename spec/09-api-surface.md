@@ -49,7 +49,7 @@ accepts a `?parent=<pid>` roll-up filter.
 | GET | `/api-docs/openapi.json` | OpenAPI 3 document | `OpenAPI` JSON |
 | GET | `/swagger-ui` | Swagger UI (CDN assets) | HTML |
 
-Plus loco's built-in `/_health` and `/_ping`.
+Plus `/_ping`, `/_health` and `/_readiness`, which also checks the cache.
 
 Every create / update / delete / merge (on a plan **and** every
 sub-resource) writes a best-effort `audit_logs` row and publishes a
@@ -64,7 +64,7 @@ extractors; `whoami` is protected; writes stamp the audit `actor` from
 the token when present. Blanket `/api/*` enforcement + paseto-keys-over-HTTP
 fetch are follow-ups (§13).
 
-Conventions: **raw loco JSON** (no `{success, data, error}` envelope).
+Conventions: **raw JSON** (no `{success, data, error}` envelope).
 `404` for unknown / soft-deleted `pid`; `422` for a validation failure
 (blank `name`, malformed `EntityRef` / `parent_ref` / containment cycle
 / deterministic identifier / relationship / `in_language` — FR-1a);

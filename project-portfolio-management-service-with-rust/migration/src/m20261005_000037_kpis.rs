@@ -1,6 +1,6 @@
 //! Migration: **`kpis`** and **`kpi_readings`**. A KPI is a standing measure (unlike a key result, it has no period and is not scored toward an objective): a name, a unit, a direction, a target and a red line. Its status is derived on read from the latest reading, never stored. Readings are appended with the date they were observed.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The KPI tables migration (name derived from the module).

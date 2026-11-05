@@ -110,6 +110,29 @@ fn set_default(headers: &mut HeaderMap, name: HeaderName, value: &'static str) {
         .or_insert_with(|| HeaderValue::from_static(value));
 }
 
+/// A `GET` or `HEAD` whose answer has the `ETag` the caller already holds gets `304` and no body, whichever handler set it.
+/// `If-None-Match` may list several, and `*` matches any.
+pub async fn not_modified_mw(req: Request, next: Next) -> Response {
+    let conditional = matches!(*req.method(), Method::GET | Method::HEAD)
+        .then(|| req.headers().get(header::IF_NONE_MATCH).cloned())
+        .flatten();
+    let response = next.run(req).await;
+    let (Some(held), Some(etag)) = (conditional, response.headers().get(header::ETAG)) else {
+        return response;
+    };
+    let current = etag.to_str().unwrap_or_default().trim_start_matches("W/");
+    let matched = held.to_str().unwrap_or_default().split(',').any(|h| {
+        let h = h.trim();
+        h == "*" || h.trim_start_matches("W/") == current
+    });
+    if !matched || !response.status().is_success() {
+        return response;
+    }
+    let mut unchanged = StatusCode::NOT_MODIFIED.into_response();
+    unchanged.headers_mut().insert(header::ETAG, etag.clone());
+    unchanged
+}
+
 /// Add the security headers to every response (see the module docs).
 pub async fn security_headers_mw(
     State(config): State<Arc<SecurityConfig>>,
@@ -133,10 +156,10 @@ pub async fn security_headers_mw(
         if swagger { SWAGGER_CSP } else { API_CSP },
     );
     set_default(headers, header::X_FRAME_OPTIONS, "DENY");
-    set_default(
-        headers,
+    // Not a default: axa has already set its own, stricter value, and a cross-origin page needs this one. No handler sets it.
+    headers.insert(
         header::REFERRER_POLICY,
-        "strict-origin-when-cross-origin",
+        HeaderValue::from_static("strict-origin-when-cross-origin"),
     );
     set_default(
         headers,
@@ -552,5 +575,36 @@ mod tests {
             .await
             .unwrap();
         assert!(!res.headers().contains_key("access-control-allow-origin"));
+    }
+
+    #[tokio::test]
+    async fn a_matching_etag_answers_304_with_no_body() {
+        use axum::http::Request as HttpRequest;
+        use tower::ServiceExt;
+        let app = axum::Router::new()
+            .route(
+                "/",
+                axum::routing::get(|| async { ([(header::ETAG, "\"a\"")], "body") }),
+            )
+            .layer(axum::middleware::from_fn(not_modified_mw));
+        let ask = |held: &'static str| {
+            let app = app.clone();
+            async move {
+                app.oneshot(
+                    HttpRequest::builder()
+                        .uri("/")
+                        .header(header::IF_NONE_MATCH, held)
+                        .body(axum::body::Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap()
+                .status()
+            }
+        };
+        assert_eq!(ask("\"a\"").await, StatusCode::NOT_MODIFIED);
+        assert_eq!(ask("W/\"b\", W/\"a\"").await, StatusCode::NOT_MODIFIED);
+        assert_eq!(ask("*").await, StatusCode::NOT_MODIFIED);
+        assert_eq!(ask("\"b\"").await, StatusCode::OK);
     }
 }

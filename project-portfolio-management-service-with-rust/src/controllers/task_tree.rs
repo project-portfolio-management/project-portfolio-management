@@ -7,9 +7,9 @@
 use super::{db_err, unprocessable};
 use std::collections::BTreeMap;
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use uuid::Uuid;
 
 use super::governance::find_item;

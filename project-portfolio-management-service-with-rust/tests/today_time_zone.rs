@@ -8,10 +8,10 @@
 
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::ConnectionTrait;
@@ -74,7 +74,7 @@ const WRITER: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test today_time_zone -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test today_time_zone -- --ignored`"]
 async fn an_administrator_sets_the_zone_that_defines_today() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.

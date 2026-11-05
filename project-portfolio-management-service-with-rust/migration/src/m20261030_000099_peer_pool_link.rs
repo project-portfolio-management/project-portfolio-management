@@ -4,7 +4,7 @@
 //! a programme's demand on a linked pool for a month (one row per pool, programme and month); it holds no token and
 //! names no person.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

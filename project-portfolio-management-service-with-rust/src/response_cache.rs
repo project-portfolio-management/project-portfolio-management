@@ -1,4 +1,4 @@
-//! Response caching on Loco's cache (Redis in production).
+//! Response caching on [`crate::cache`] (Redis in production).
 //!
 //! Correctness first: the privacy gates (`privacy_mw`, handling marks, break-glass) run in middleware
 //! **before** the handler, so a cache hit has already passed them. Entries are keyed by caller and by
@@ -10,8 +10,9 @@
 
 use std::time::Duration;
 
+use crate::cache::Cache;
+use axa::AppContext;
 use axum::{extract::Request, extract::State, http::Method, middleware::Next, response::Response};
-use loco_rs::app::AppContext;
 use uuid::Uuid;
 
 /// Cache key of the current epoch; changing it orphans every entry written under the old one.
@@ -21,12 +22,11 @@ pub const TTL: Duration = Duration::from_secs(30);
 
 /// The current epoch (created on first use).
 pub async fn epoch(ctx: &AppContext) -> String {
-    if let Ok(Some(e)) = ctx.cache.get::<String>(EPOCH_KEY).await {
+    if let Ok(Some(e)) = Cache::of(ctx).get::<String>(EPOCH_KEY).await {
         return e;
     }
     let e = Uuid::new_v4().to_string();
-    let _ = ctx
-        .cache
+    let _ = Cache::of(ctx)
         .insert_with_expiry(EPOCH_KEY, &e, Duration::from_hours(24))
         .await;
     e
@@ -34,8 +34,7 @@ pub async fn epoch(ctx: &AppContext) -> String {
 
 /// Orphan every cached entry.
 pub async fn bump(ctx: &AppContext) {
-    let _ = ctx
-        .cache
+    let _ = Cache::of(ctx)
         .insert_with_expiry(
             EPOCH_KEY,
             &Uuid::new_v4().to_string(),

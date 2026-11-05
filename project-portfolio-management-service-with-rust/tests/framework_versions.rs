@@ -9,10 +9,10 @@
 
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::ConnectionTrait;
@@ -76,7 +76,7 @@ const EDITOR: &str = "3f2c6b7e-0000-4000-8000-0000000000b2";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000bd";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test framework_versions -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test framework_versions -- --ignored`"]
 async fn an_edit_is_a_new_version_and_following_plans_keep_theirs() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.

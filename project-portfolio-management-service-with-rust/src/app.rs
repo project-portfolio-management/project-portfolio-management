@@ -1,27 +1,27 @@
-//! loco.rs application wiring: the [`App`] `Hooks` implementation that
-//! registers routes, background workers, and the truncate/seed
-//! lifecycle for `project-portfolio-management-service`.
+//! The service, top to bottom: [`App::run`] reads the command line and the environment, connects what the service
+//! needs, and starts it. Every step is an ordinary function call, so the whole path can be read here.
 
-use async_trait::async_trait;
+use axa::{
+    AppContext, Environment, Error, Result,
+    boot::{BootResult, TestApp},
+    cli::{Cli, Command, DbCommand, parse_vars},
+    config::{Config as ServiceConfig, Defaults, MB},
+    db::truncate_table,
+    queue::{Queue, QueueOptions},
+    routes::{AppRoutes, Routes},
+    server,
+    task::Tasks,
+    worker::{BackgroundWorker, WorkerMode},
+};
 use axum::{
-    Router as AxumRouter,
-    extract::Request,
+    Json, Router as AxumRouter,
+    extract::{Request, State},
+    http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Response},
+    routing::get,
 };
-use loco_rs::{
-    Result,
-    app::{AppContext, Hooks, Initializer},
-    bgworker::{BackgroundWorker, Queue},
-    boot::{BootResult, StartMode, create_app},
-    config::Config,
-    controller::AppRoutes,
-    db::truncate_table,
-    environment::Environment,
-    task::Tasks,
-};
-use project_portfolio_management_migration::Migrator;
-use std::path::Path;
+use project_portfolio_management_migration::{Migrator, MigratorTrait};
 use std::sync::OnceLock;
 
 #[expect(unused_imports)]
@@ -66,19 +66,70 @@ async fn require_auth_mw(req: Request, next: Next) -> Response {
     }
 }
 
-/// The loco.rs application hooks for `project-portfolio-management-service`.
-///
-/// Implements [`Hooks`] to register routes, background workers, and the
-/// truncate/seed lifecycle; the binary entrypoint drives it via the
-/// loco CLI.
-pub struct App;
-#[async_trait]
-impl Hooks for App {
-    fn app_name() -> &'static str {
-        env!("CARGO_CRATE_NAME")
+/// Port and database when nothing overrides them. A pool of one in development and tests, as a deadlock
+/// from holding a connection across a second query then fails at once.
+fn defaults() -> Defaults {
+    Defaults {
+        database: "project_portfolio_management",
+        port: 5150,
+        production_port: None,
+        body_limit: 2 * MB,
+        max_connections: 1,
     }
+}
 
-    fn app_version() -> String {
+/// Whether this environment was explicitly set up to run without login or rate limits: development, tests and the
+/// insecure `container-dev` profile. **Any other name gets the secure defaults,** so a misspelt environment fails closed.
+#[must_use]
+pub fn opts_out_of_guards(environment: &Environment) -> bool {
+    match environment {
+        Environment::Development | Environment::Test => true,
+        Environment::Other(name) => name == "container-dev",
+        Environment::Production => false,
+    }
+}
+
+/// The configuration, with the three things axa would do differently from this service's own middleware turned off:
+/// CORS and HSTS are `http_security`'s, and a request timeout would cut the live event streams, so it needs asking for.
+fn service_config(environment: &Environment) -> Result<ServiceConfig> {
+    let mut config = ServiceConfig::from_env(environment, &defaults())?;
+    config.http.cors_origins.clear();
+    config.http.hsts = false;
+    if std::env::var_os("REQUEST_TIMEOUT_SECONDS").is_none() {
+        config.http.timeout_seconds = 0;
+    }
+    Ok(config)
+}
+
+/// The liveness answer.
+async fn alive() -> Json<serde_json::Value> {
+    Json(serde_json::json!({ "ok": true }))
+}
+
+/// `/_readiness`: the database and the cache both answer. `503` otherwise, while `/_health` stays `200`.
+async fn readiness(State(ctx): State<AppContext>) -> Response {
+    let database = ctx
+        .db
+        .ping()
+        .await
+        .inspect_err(|error| tracing::error!(%error, "readiness_db_ping_error"))
+        .is_ok();
+    let ready = database && crate::cache::Cache::of(&ctx).is_reachable().await;
+    let status = if ready {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
+    (status, Json(serde_json::json!({ "ok": ready }))).into_response()
+}
+
+/// The service: plain functions, called in order from [`App::run`].
+pub struct App;
+
+impl App {
+    /// The version shown to operators: the crate version and the commit it was built from.
+    #[must_use]
+    pub fn app_version() -> String {
         format!(
             "{} ({})",
             env!("CARGO_PKG_VERSION"),
@@ -88,47 +139,145 @@ impl Hooks for App {
         )
     }
 
-    async fn boot(
-        mode: StartMode,
-        environment: &Environment,
-        config: Config,
-    ) -> Result<BootResult> {
-        create_app::<Self, Migrator>(mode, environment, config).await
-    }
-
-    async fn after_context(mut ctx: AppContext) -> Result<AppContext> {
+    /// Connects the database, the cache, the mailer and, where jobs are queued, the queue.
+    ///
+    /// # Errors
+    ///
+    /// When any of those cannot be set up.
+    pub async fn context(environment: Environment, config: ServiceConfig) -> Result<AppContext> {
+        let db = axa::db::connect(&config.database).await?;
+        let mut ctx = AppContext::new(environment, db, config);
         crate::query_count::install(&mut ctx.db);
+        ctx.shared_store
+            .insert(crate::cache::Cache::from_env(&ctx.environment)?);
+        ctx.shared_store
+            .insert(crate::email::Mailer::from_env(&ctx.environment)?);
+        if ctx.config.workers == WorkerMode::BackgroundQueue {
+            let mut queue =
+                Queue::connect(&ctx.config.database.uri, QueueOptions::default()).await?;
+            Self::connect_workers(&ctx, &mut queue);
+            ctx.queue_provider = Some(std::sync::Arc::new(queue));
+        }
         Ok(ctx)
     }
 
+    /// The whole router: the routes under the standard middleware, then this service's own layers.
+    ///
+    /// # Errors
+    ///
+    /// When a route table is invalid or a startup check refuses.
+    pub async fn router(ctx: &AppContext) -> Result<AxumRouter> {
+        let router = Self::routes(ctx).into_app(ctx.clone())?;
+        Self::after_routes(router, ctx).await
+    }
+
+    /// Runs one `db` subcommand.
+    async fn db(ctx: &AppContext, command: DbCommand) -> Result<()> {
+        match command {
+            DbCommand::Migrate => Migrator::up(&ctx.db, None).await?,
+            DbCommand::Down { steps } => Migrator::down(&ctx.db, Some(steps)).await?,
+            DbCommand::Reset => Migrator::fresh(&ctx.db).await?,
+            DbCommand::Status => Migrator::status(&ctx.db).await?,
+            DbCommand::Truncate => Self::truncate(ctx).await?,
+        }
+        Ok(())
+    }
+
+    /// The start of everything: one command, from the command line, against the environment's configuration.
+    ///
+    /// # Errors
+    ///
+    /// When the configuration is refused, or the command fails.
+    pub async fn run(cli: Cli) -> Result<()> {
+        let environment = cli
+            .environment
+            .as_deref()
+            .map_or_else(Environment::from_env, Environment::parse);
+        let mut config = service_config(&environment)?;
+        if let Command::Start { binding, port, .. } = &cli.command {
+            if let Some(binding) = binding {
+                config.server.binding.clone_from(binding);
+            }
+            if let Some(port) = port {
+                config.server.port = *port;
+            }
+        }
+        let ctx = Self::context(environment, config).await?;
+        if !Self::init_logger(&ctx)? {
+            axa::logger::init(env!("CARGO_CRATE_NAME"), &ctx.config.logger);
+        }
+        if ctx.config.database.auto_migrate && !matches!(cli.command, Command::Db { .. }) {
+            Migrator::up(&ctx.db, None).await?;
+        }
+        match cli.command {
+            Command::Start { worker, all, .. } => Self::start(&ctx, worker, all).await,
+            Command::Db { command } => Self::db(&ctx, command).await,
+            Command::Task { name, params } => {
+                let mut tasks = Tasks::default();
+                Self::register_tasks(&mut tasks);
+                let Some(name) = name else {
+                    for task in tasks.list() {
+                        println!("{}\t{}", task.name, task.detail);
+                    }
+                    return Ok(());
+                };
+                tasks.run(&name, &ctx, &parse_vars(&params)?).await
+            }
+        }
+    }
+
+    /// Serves, works the queue, or both, until told to stop. Plain `start` only serves.
+    async fn start(ctx: &AppContext, worker: bool, all: bool) -> Result<()> {
+        let (stop, stopped) = tokio::sync::watch::channel(false);
+        let jobs = (worker || all)
+            .then(|| ctx.queue_provider.clone())
+            .flatten()
+            .map(|queue| tokio::spawn(queue.run(stopped)));
+        let served = if worker && !all {
+            server::shutdown_signal().await;
+            Ok(())
+        } else {
+            let router = Self::router(ctx).await?;
+            server::serve(router, &ctx.config.server).await
+        };
+        let _ = stop.send(true);
+        if let Some(jobs) = jobs {
+            let _ = jobs.await;
+        }
+        Self::on_shutdown();
+        served
+    }
+
     /// Install this crate's own logging + `OpenTelemetry` stack (repo
-    /// `tasks.md` PRO-H12), returning `true` so loco does **not** also
-    /// install its own. Ported from case-service's `App::init_logger`
+    /// `tasks.md` PRO-H12), returning `true` so the plain logger is
+    /// **not** also installed. Ported from case-service's `App::init_logger`
     /// (itself care-pathway's, itself organization's, itself course's,
     /// itself person's) — the `Hooks::init_logger` seam is identical
     /// across crates' shapes despite the differing router layout (see
     /// `src/observability.rs`'s module docs and `after_routes` below for
-    /// where this crate's shape actually diverges).
+    /// where this crate's shape actually diverges). Returns `false` when
+    /// export is off, and [`App::run`] then installs the plain logger.
     ///
     /// # Errors
     ///
     /// Returns an error only if an OTLP exporter cannot be **built** (a
     /// malformed endpoint). A collector that is merely unreachable is not an
     /// error: the gRPC channel connects lazily, so boot is unaffected.
-    fn init_logger(ctx: &AppContext) -> Result<bool> {
+    pub fn init_logger(ctx: &AppContext) -> Result<bool> {
         let telemetry_config = TelemetryConfig::from_env();
         if !telemetry_config.export_enabled() {
             return Ok(false);
         }
         let logger_config = &ctx.config.logger;
         // An operator who set `RUST_LOG` or `logger.override_filter` owns
-        // the filter outright; otherwise loco's module whitelist applies,
+        // the filter outright; otherwise axa's module whitelist applies,
         // and the whitelist has no `opentelemetry*` entry — so a failing
         // export would be silent unless widened.
         let operator_supplied =
             std::env::var("RUST_LOG").is_ok() || logger_config.override_filter.is_some();
         let env_filter = observability::with_exporter_diagnostics(
-            loco_rs::logger::init_env_filter::<Self>(
+            axa::logger::init_env_filter(
+                env!("CARGO_CRATE_NAME"),
                 logger_config.override_filter.as_ref(),
                 &logger_config.level,
             ),
@@ -138,9 +287,9 @@ impl Hooks for App {
         // than quietly turning logging on for anyone who enables export.
         let fmt_layer = logger_config
             .enable
-            .then(|| loco_rs::logger::init_layer(std::io::stdout, &logger_config.format, true));
+            .then(|| axa::logger::init_layer(std::io::stdout, &logger_config.format, true));
         let telemetry = observability::init(&telemetry_config, env_filter, fmt_layer)
-            .map_err(|error| loco_rs::Error::Message(format!("OTLP init failed: {error}")))?;
+            .map_err(|error| axa::Error::Message(format!("OTLP init failed: {error}")))?;
         tracing::info!(
             service.name = %telemetry_config.service_name,
             endpoint = %telemetry_config.endpoint.as_deref().unwrap_or_default(),
@@ -152,19 +301,23 @@ impl Hooks for App {
 
     /// Flush and tear down the OTLP providers on graceful shutdown, so the
     /// last batch of spans is not lost with the process.
-    async fn on_shutdown(_ctx: &AppContext) {
+    pub fn on_shutdown() {
         if let Some(telemetry) = TELEMETRY.get() {
             telemetry.shutdown();
         }
     }
 
-    async fn initializers(_ctx: &AppContext) -> Result<Vec<Box<dyn Initializer>>> {
-        Ok(vec![])
-    }
-
+    /// Every route table of the service, and the health routes.
     #[expect(clippy::too_many_lines)]
-    fn routes(_ctx: &AppContext) -> AppRoutes {
-        AppRoutes::with_default_routes() // controller routes below
+    #[must_use]
+    pub fn routes(_ctx: &AppContext) -> AppRoutes {
+        AppRoutes::empty()
+            .add_route(
+                Routes::new()
+                    .add("/_ping", get(alive))
+                    .add("/_health", get(alive))
+                    .add("/_readiness", get(readiness)),
+            )
             .add_route(controllers::plans::routes())
             .add_route(controllers::compliance::routes())
             .add_route(controllers::governance::routes())
@@ -293,7 +446,12 @@ impl Hooks for App {
             .add_route(controllers::metrics::routes())
     }
 
-    async fn after_routes(router: AxumRouter, ctx: &AppContext) -> Result<AxumRouter> {
+    /// The guards and background loops, in order: each layer wraps the ones added before it.
+    ///
+    /// # Errors
+    ///
+    /// When [`auth::check_startup`] refuses this posture.
+    pub async fn after_routes(router: AxumRouter, ctx: &AppContext) -> Result<AxumRouter> {
         // Seed the process-wide PASETO verifier before the app serves
         // traffic: when `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` is set the published
         // key set is fetched over HTTP once at boot (fetch failure falls
@@ -301,13 +459,15 @@ impl Hooks for App {
         // always boots).
         auth::init().await;
         // Secure by default: fix the enforcement posture from the environment and the
-        // config's `settings.require_auth`, and refuse to start when it is off in
+        // profile, and refuse to start when it is off in
         // production or on with no token verifier (see `auth::check_startup`).
+        let settings = opts_out_of_guards(&ctx.environment)
+            .then(|| serde_json::json!({ "require_auth": false }));
         auth::check_startup(
             ctx.environment == Environment::Production,
-            ctx.config.settings.as_ref(),
+            settings.as_ref(),
         )
-        .map_err(loco_rs::Error::Message)?;
+        .map_err(Error::Message)?;
         // Key rotation and policy edits without a restart: both loops are
         // no-ops unless their source is configured.
         auth::spawn_key_refresh();
@@ -335,8 +495,12 @@ impl Hooks for App {
         crate::tasks::search::spawn_reindex_if_empty(ctx.db.clone());
         // Blanket JWT enforcement layer. Added unconditionally; enforcement is on
         // unless explicitly turned off (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
-        // or `settings.require_auth: false`), and the layer is a near-noop then.
+        // or a development profile), and the layer is a near-noop then.
         Ok(router
+            // Innermost, as it compares what the handler answered, before paging can take the `ETag` away.
+            .layer(axum::middleware::from_fn(
+                crate::http_security::not_modified_mw,
+            ))
             // Every list pages the same way (RM-12b): innermost of all, so what it
             // slices is exactly what the handler answered.
             .layer(axum::middleware::from_fn(controllers::paging::paging_mw))
@@ -379,11 +543,7 @@ impl Hooks for App {
             // and refused before the guard does any work (HD-5).
             .layer(axum::middleware::from_fn_with_state(
                 std::sync::Arc::new(crate::rate_limit::RateLimiter::from_env(
-                    ctx.config
-                        .settings
-                        .as_ref()
-                        .and_then(|s| s.get("rate_limit"))
-                        .and_then(serde_json::Value::as_bool),
+                    opts_out_of_guards(&ctx.environment).then_some(false),
                 )),
                 crate::rate_limit::rate_limit_mw,
             ))
@@ -404,13 +564,15 @@ impl Hooks for App {
             // module docs.
             .layer(axum::middleware::from_fn(observability::trace_mw)))
     }
-    async fn connect_workers(ctx: &AppContext, queue: &Queue) -> Result<()> {
-        queue.register(DownloadWorker::build(ctx)).await?;
-        queue.register(BulkWorker::build(ctx)).await?;
-        Ok(())
+
+    /// The kinds of job the queue runs.
+    pub fn connect_workers(ctx: &AppContext, queue: &mut Queue) {
+        queue.register(DownloadWorker::build(ctx));
+        queue.register(BulkWorker::build(ctx));
     }
 
-    fn register_tasks(tasks: &mut Tasks) {
+    /// The tasks `task <name>` can run.
+    pub fn register_tasks(tasks: &mut Tasks) {
         tasks.register(crate::tasks::search::SearchReindex);
         tasks.register(crate::tasks::retention_purge::RetentionPurge);
         tasks.register(crate::tasks::exception_breaches::ExceptionBreaches);
@@ -419,7 +581,13 @@ impl Hooks for App {
         tasks.register(crate::tasks::director_pack_schedule::DirectorPackSchedule);
         // tasks-inject (do not remove)
     }
-    async fn truncate(ctx: &AppContext) -> Result<()> {
+
+    /// Empties the tables the service owns, for `db truncate`.
+    ///
+    /// # Errors
+    ///
+    /// Propagates a database error.
+    pub async fn truncate(ctx: &AppContext) -> Result<()> {
         truncate_table(&ctx.db, notifications::Entity).await?;
         truncate_table(&ctx.db, automation_runs::Entity).await?;
         truncate_table(&ctx.db, automations::Entity).await?;
@@ -444,7 +612,19 @@ impl Hooks for App {
         truncate_table(&ctx.db, plans::Entity).await?;
         Ok(())
     }
-    async fn seed(_ctx: &AppContext, _base: &Path) -> Result<()> {
-        Ok(())
+}
+
+impl TestApp for App {
+    /// A fresh schema and the full router, as `DB reset` then `start` would give.
+    async fn boot_test() -> Result<BootResult> {
+        let environment = Environment::Test;
+        let config = service_config(&environment)?;
+        let ctx = Self::context(environment, config).await?;
+        Migrator::fresh(&ctx.db).await.map_err(Error::from)?;
+        let router = Self::router(&ctx).await?;
+        Ok(BootResult {
+            app_context: ctx,
+            router: Some(router),
+        })
     }
 }

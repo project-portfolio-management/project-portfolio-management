@@ -11,7 +11,7 @@ use crate::models::visibility as vis_models;
 use crate::validation::{MAX_ARRAY_LEN, MAX_ITEM_LEN};
 use crate::visibility as rules;
 use crate::workers_client;
-use loco_rs::prelude::*;
+use axa::prelude::*;
 
 /// `POST /api/plans/{pid}/allocations` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -217,7 +217,7 @@ pub(super) async fn commit_allocation(
     if allocation.booking == "committed" {
         return Err(Error::CustomError(
             axum::http::StatusCode::CONFLICT,
-            loco_rs::controller::ErrorDetail::new("conflict", "this booking is already committed"),
+            axa::error::ErrorDetail::new("conflict", "this booking is already committed"),
         ));
     }
     // The person's committed load with this booking made firm, over its own span.
@@ -245,7 +245,7 @@ pub(super) async fn commit_allocation(
     if over && !confirm {
         return Err(Error::CustomError(
             axum::http::StatusCode::CONFLICT,
-            loco_rs::controller::ErrorDetail::new(
+            axa::error::ErrorDetail::new(
                 "over_capacity",
                 format!(
                     "committing this would put the person over capacity on {} calendar day(s) (peak {}% against a capacity of {}%); repeat the request with ?confirm=true to commit anyway. Over: {}",

@@ -1,6 +1,6 @@
 //! Migration: **hammock activities** (PJ-7). `tasks.is_hammock` marks a task whose span is derived from the tasks it is linked to; `hammock_links` are those links (a hammock → a member task or another hammock). A hammock is not work and is not in the dependency network.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The hammock migration (name derived from the module).

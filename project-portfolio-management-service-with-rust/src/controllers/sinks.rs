@@ -21,10 +21,10 @@ use super::{db_err, unprocessable};
 use std::net::IpAddr;
 use std::time::Duration;
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
 use chrono::Utc;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;

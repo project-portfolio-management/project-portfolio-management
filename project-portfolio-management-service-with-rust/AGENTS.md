@@ -2,7 +2,7 @@
 
 Entry point for AI coding agents working in the
 `project-portfolio-management` crate (v0.2.0, edition 2024, Rust 1.99.1 with a
-minimum of 1.96, loco-rs 1.2, sea-orm 2.0, axum 0.8): a registry of **plan** records
+minimum of 1.96, axa 0.1, sea-orm 2.0, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
 label — **and** a project-management tool.
@@ -18,7 +18,7 @@ label — **and** a project-management tool.
 
 ## What this is
 
-A **loco.rs** service. The API DTO **is**
+An **Axum** service using **axa**. The API DTO **is**
 `project_portfolio_management_matcher::Plan` — stored verbatim (JSONB) and
 matched with the same type, so there is no adapter to drift. All plans
 live in **one `plans` table** (`pid`, nullable `kind`, `name`, `data`
@@ -163,7 +163,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 
 1. **Spec-first.** Behavioural change updates `spec/`; the entity spec owns
    the canonical model (§5).
-2. **Loco-idiomatic.** Controllers register in `app.rs`; tables are
+2. **Conventional.** Controllers register in `app.rs`; tables are
    `sea-orm-migration` migrations; pure rules live in `src/<area>.rs` with
    no I/O and the controller is wiring.
 3. **Reuse the matcher type**; do not fork a `Plan` DTO.
@@ -205,10 +205,10 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   edits are serialized (commit `cf55b22`).
 - **Network loaders are bounded** (cross-plan caps above); keep new
   loaders bounded the same way.
-- loco 0.16+ does not map `ModelError::EntityNotFound` to `404`; route
+- `ModelError::EntityNotFound` is not mapped to `404` for you; route
   lookups through `controllers::model_not_found`.
-- `config/production.yaml` has no JWT `auth:` block (loco's `auth` feature
-  is off; the family issues PASETO) and the Dockerfile must `COPY benches/`
+- There are no configuration files: `src/app.rs` reads the environment (`spec/08-architecture.md` §8.3a). The family
+  issues PASETO, and the Dockerfile must `COPY benches/`
   (manifest declares `[[bench]] service_bench`).
 
 ## Testing
@@ -231,7 +231,7 @@ aggregate GET needs a decision in `private_aggregates`.
 
 ```
 src/
-├── app.rs                  loco Hooks: routes, middleware stack, tickers
+├── app.rs                  routes, middleware stack, tickers, boot
 ├── controllers/            one file per area (HTTP wiring only); paging.rs, plan_access.rs (privacy_mw, HiddenScope), …
 ├── <area>.rs               pure rules beside each controller (hammock, sandbox, processes, documents, cost_rates, scheduling_rules, work_profile, onboarding, tba, tpc, …)
 ├── models/                 helpers + _entities/ (SeaORM)

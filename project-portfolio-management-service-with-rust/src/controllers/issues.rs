@@ -6,10 +6,10 @@
 //! database enforces it too). `resolved_on` is set by the service, never typed.
 
 use super::db_err;
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
 use chrono::{DateTime, NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;

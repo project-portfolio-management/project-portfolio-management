@@ -14,7 +14,7 @@
 //! (§12.4): handoff counts describe an item's journey, and there is no
 //! per-assignee cycle time by design.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 
@@ -87,7 +87,7 @@ const DEFAULT_SLE_PERCENTILE: f64 = 0.85;
 fn refuse(reason: &str) -> Error {
     Error::CustomError(
         axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-        loco_rs::controller::ErrorDetail::new("unprocessable_entity", reason),
+        axa::error::ErrorDetail::new("unprocessable_entity", reason),
     )
 }
 

@@ -13,13 +13,13 @@
 //!
 //! The decision is pure ([`decide`]) and unit-tested; the layer ([`idempotency_mw`]) is the thin edge around it.
 
+use axa::AppContext;
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::{HeaderMap, HeaderValue, Method, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use chrono::{DateTime, Duration, Utc};
-use loco_rs::app::AppContext;
 use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 
 /// The header a caller sends.

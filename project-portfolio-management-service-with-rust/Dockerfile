@@ -72,7 +72,7 @@ ARG VERSION=""
 ARG REVISION=""
 LABEL org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.title="project-portfolio-management" \
-      org.opencontainers.image.description="Project portfolio management service (loco.rs REST API, PostgreSQL)" \
+      org.opencontainers.image.description="Project portfolio management service (Axum and axa REST API, PostgreSQL)" \
       org.opencontainers.image.source="https://github.com/project-portfolio-management/project-portfolio-management" \
       org.opencontainers.image.licenses="MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only" \
       org.opencontainers.image.revision="${REVISION}"
@@ -93,9 +93,6 @@ COPY --from=builder --chown=portfolio:portfolio \
     /app/project-portfolio-management-service-with-rust/target/release/project-portfolio-management \
     /app/project-portfolio-management
 
-# loco reads config/<LOCO_ENV>.yaml at run time (it is not baked into the binary).
-COPY --chown=portfolio:portfolio project-portfolio-management-service-with-rust/config ./config
-
 # Tantivy full-text index (PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH,
 # default `data/search-index` relative to the working directory) and the
 # artifact store (PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR). Both are meant to
@@ -113,9 +110,10 @@ EXPOSE 5150
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl --silent --fail http://localhost:5150/_health || exit 1
 
-# config/production.yaml; requires DATABASE_URL. See /compose.yaml for the
+# Configuration comes from the environment; production requires DATABASE_URL and
+# PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL, and refuses to boot without them. See /compose.yaml for the
 # environment a real deployment needs (token-verifier keys, login enforcement).
-ENV LOCO_ENV=production \
+ENV APP_ENV=production \
     PORT=5150
 
 CMD ["/app/project-portfolio-management", "start"]

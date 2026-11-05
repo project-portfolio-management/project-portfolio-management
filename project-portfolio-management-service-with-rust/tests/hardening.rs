@@ -3,22 +3,22 @@
 //!
 //! The pure behaviour is pinned by the unit tests in `src/http_security.rs`
 //! and `src/rate_limit.rs`; what they cannot show is that the layers are
-//! *wired* onto the router loco builds, in the right order (so a `429` carries
+//! *wired* onto the router axa builds, in the right order (so a `429` carries
 //! the security headers, and health stays exempt). Its **own test binary**
 //! because the CORS list and the limits are read once at boot from the
 //! environment, before the first request.
 //!
 //! `#[ignore]`d — boots the app, so it needs `PostgreSQL` via
-//! `config/test.yaml` / `DATABASE_URL`. Run with
+//! `DATABASE_URL`. Run with
 //! `cargo test --test hardening -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test hardening -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test hardening -- --ignored`"]
 async fn the_real_router_carries_headers_cors_and_rate_limits() {
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT", "on");

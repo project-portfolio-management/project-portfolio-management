@@ -6,9 +6,9 @@
 //! * `GET /api/plans/{pid}/handling-mark` — a plan's mark.
 //! * `PUT /api/plans/{pid}/handling-mark` — set it, or reset it with `{ "mark": null }`.
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
 

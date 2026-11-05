@@ -21,8 +21,8 @@
 //! carries that caveat inline rather than leaving it to documentation,
 //! because a bare `verified: true` reads as more than it means.
 
+use axa::prelude::*;
 use axum::extract::Query;
-use loco_rs::prelude::*;
 use sea_orm::{EntityTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 
@@ -63,7 +63,7 @@ fn require_admin(caller: &crate::auth::MaybeAuthUser) -> Result<()> {
     }
     Err(Error::CustomError(
         axum::http::StatusCode::FORBIDDEN,
-        loco_rs::controller::ErrorDetail::new(
+        axa::error::ErrorDetail::new(
             "forbidden",
             "the integrity verifiers cover every record, private ones included: they need access=admin",
         ),

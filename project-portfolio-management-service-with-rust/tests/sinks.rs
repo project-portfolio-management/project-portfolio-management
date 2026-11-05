@@ -8,7 +8,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `config/test.yaml` / `DATABASE_URL`. Run with
+//! `DATABASE_URL`. Run with
 //! `cargo test --test sinks -- --ignored`.
 
 #![expect(
@@ -17,10 +17,10 @@
 )]
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
@@ -105,7 +105,7 @@ async fn receiver(status: Arc<AtomicU16>) -> (String, Seen) {
 
 /// LT-6 / RM-11 acceptance.
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test sinks -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test sinks -- --ignored`"]
 async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
     let (keys, kid) = keys_and_kid();
     let status = Arc::new(AtomicU16::new(200));
@@ -233,12 +233,12 @@ async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
         assert!(seen.lock().unwrap().iter().all(|(path, _, _)| path == "/hook"), "no chat message");
 
         // Email: delivered through the mailer when configured, and carries only the text.
-        let before = ctx.mailer.as_ref().expect("a stub mailer in test").deliveries().count;
+        let before = ctx.shared_store.get::<project_portfolio_management::email::Mailer>().expect("a stub mailer in test").deliveries().count;
         add(ak.clone(), av.clone(), json!({ "kind": "email", "destination": "alice@example.com" })).await.assert_status_ok();
         assign_to(ALICE).await;
         let r = ctx_run(&ctx).await;
         assert!(r.sent >= 2, "webhook + email: {r:?}");
-        let after = ctx.mailer.as_ref().unwrap().deliveries();
+        let after = ctx.shared_store.get::<project_portfolio_management::email::Mailer>().unwrap().deliveries();
         assert_eq!(after.count, before + 1);
         assert!(after.messages.last().unwrap().contains("You were assigned"));
 
@@ -257,7 +257,7 @@ async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
 }
 
 async fn ctx_run(
-    ctx: &loco_rs::app::AppContext,
+    ctx: &axa::AppContext,
 ) -> project_portfolio_management::controllers::sinks::Dispatched {
     project_portfolio_management::controllers::sinks::run_due(ctx, 100)
         .await

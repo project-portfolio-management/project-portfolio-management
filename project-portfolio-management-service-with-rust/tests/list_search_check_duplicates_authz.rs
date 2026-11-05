@@ -13,14 +13,14 @@
 //! Its **own test binary**, same reason as `tests/masking.rs`:
 //! `require_auth`/`policy`/`verifier` are process-wide `OnceLock`s.
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `config/test.yaml` / `DATABASE_URL`. Run with
+//! `DATABASE_URL`. Run with
 //! `cargo test --test list_search_check_duplicates_authz -- --ignored`.
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
@@ -101,7 +101,7 @@ fn ordinary_plan() -> Value {
 /// the endpoints.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test list_search_check_duplicates_authz -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test list_search_check_duplicates_authz -- --ignored`"]
 async fn denied_reader_never_sees_the_plan_via_list_search_or_check_duplicates() {
     let (keys, kid) = keys_and_kid();
     // `dept=outsider` may not read a plan that has passed gate 0 at all

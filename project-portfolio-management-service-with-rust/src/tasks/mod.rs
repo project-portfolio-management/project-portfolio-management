@@ -1,4 +1,4 @@
-//! CLI tasks (loco extension point).
+//! CLI tasks (extension point).
 
 /// `director_pack_schedule` — draft the monthly director packs that are due.
 pub mod director_pack_schedule;

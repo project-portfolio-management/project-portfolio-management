@@ -5,8 +5,8 @@
 
 use std::collections::HashSet;
 
+use axa::testing::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::controllers::status_updates::{pack_section, remind_due};
 use project_portfolio_management::models::_entities::{notifications, plan_status_cadences};
@@ -16,7 +16,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them_as_at_its_cut_off()
 {
     super::isolate_search_index();

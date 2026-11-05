@@ -4,7 +4,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::pdf::text_of;
 use serde_json::{Value, json};
@@ -14,7 +14,7 @@ const AS_OF: &str = "2026-10-03T12:00:00Z";
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn pdfs_render_deterministically_and_never_leak_what_the_masked_view_hides() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

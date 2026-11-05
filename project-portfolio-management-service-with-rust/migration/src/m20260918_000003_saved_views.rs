@@ -5,7 +5,7 @@
 //! `route` it was saved from — the read path never applies one
 //! route's view to another.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `saved_views` migration (name derived from the module).

@@ -15,10 +15,10 @@
 
 use std::collections::{BTreeSet, HashMap};
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use serde::Deserialize;
 use serde_json::Value;
 use uuid::Uuid;

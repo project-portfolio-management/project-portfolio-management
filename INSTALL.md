@@ -92,7 +92,7 @@ problem, use [SECURITY.md](SECURITY.md) instead.
 
 ## Redis (production cache)
 
-`config/production.yaml` uses Redis as Loco's cache. Set `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL`
+Production uses Redis as its cache. Set `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL`
 (`redis://:password@host:6379/0`, or `rediss://` for TLS); `compose.yaml` starts one and reuses the database
 password unless `PPM_REDIS_PASSWORD` is set. Without a reachable Redis the service starts but `/_readiness`
 answers 503. The cache holds nothing that cannot be rebuilt. It is used for one thing so far: the critical-path

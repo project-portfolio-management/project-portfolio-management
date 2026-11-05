@@ -19,10 +19,10 @@ use super::forbidden;
 use super::{db_err, unprocessable};
 use std::collections::{HashMap, HashSet};
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;

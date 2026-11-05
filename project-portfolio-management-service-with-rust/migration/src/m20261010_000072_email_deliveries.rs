@@ -3,7 +3,7 @@
 //! rows, so one bad address never hides a good one. The unique key (kind, subject, recipient) makes a
 //! repeated dispatch of the same message to the same person a no-op rather than a second email.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

@@ -1,6 +1,6 @@
 //! Migration: **`approval_requests`**. Ask a named person to approve something, and record their decision (PL-1). Generic over the same subject kinds as comments, plus budget lines and scenarios. A decision is final and carries a comment (required on reject).
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `approval_requests` migration (name derived from the module).

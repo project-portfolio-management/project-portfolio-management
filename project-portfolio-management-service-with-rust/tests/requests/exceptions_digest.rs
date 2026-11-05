@@ -3,7 +3,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::controllers::exceptions_digest::send_weekly;
 use project_portfolio_management::models::_entities::{
@@ -15,7 +15,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_digest_with_one_item_of_each_kind_is_built_and_sent_once_a_week() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

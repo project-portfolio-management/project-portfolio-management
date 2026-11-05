@@ -1,6 +1,6 @@
 //! Migration: **`notification_sinks`**. A person's own delivery destination for their notifications (LT-6, RM-11): a signed webhook, a chat incoming-webhook (Slack, Mattermost, Discord, Telegram) or an email address. The destination is a secret of its owner and is never returned in full by any read.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `notification_sinks` migration (name derived from the module).

@@ -16,7 +16,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -41,7 +41,7 @@ macro_rules! create_plan {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Advancement is one step at a time, and a refusal **names the phase it
 // would have skipped** — a `422` that only says "no" leaves the
 // operator guessing which step is missing.
@@ -85,7 +85,7 @@ async fn phase_advances_one_step_and_names_a_skip() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // A backward move is permitted but never **silent**: re-planning is
 // normal, an unexplained regression is not. The history then reports
 // every phase even at zero and counts the revisit separately, because
@@ -135,7 +135,7 @@ async fn a_regression_needs_a_reason_and_the_history_counts_revisits() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // The phase never gates an operational write. Refusing work on the
 // basis of a phase would teach operators to misreport it, which costs
 // more than it buys.
@@ -172,7 +172,7 @@ async fn phase_does_not_gate_operational_writes() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // With nothing configured the built-in vocabulary is in force and the
 // board is unconstrained — the backward-compatibility pin. If this
 // fails, every existing board just changed behaviour.
@@ -201,7 +201,7 @@ async fn a_plan_with_no_workflow_keeps_the_built_in_vocabulary() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // The whole point of T-15, in one test: a fully custom vocabulary takes
 // force, constrains moves, **stamps `done_at` from the state's
 // category** rather than the literal string "done", and leaves every
@@ -304,7 +304,7 @@ async fn a_custom_vocabulary_takes_force_and_stays_analysable() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // The regression pin. Deriving flow classes from workflow categories
 // nearly reclassified `in_review` from *necessary* to *value-adding*,
 // which would have raised the flow efficiency of every board that

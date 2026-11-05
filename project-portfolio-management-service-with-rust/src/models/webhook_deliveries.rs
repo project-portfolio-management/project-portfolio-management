@@ -7,7 +7,7 @@
 //! `audit_logs`' append-only posture. [`Model::recent`] is the operator
 //! read, newest first, optionally scoped to one `event_id`.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{ColumnTrait, QueryFilter, QueryOrder, QuerySelect};
 
 pub use super::_entities::webhook_deliveries::{self, ActiveModel, Entity, Model};

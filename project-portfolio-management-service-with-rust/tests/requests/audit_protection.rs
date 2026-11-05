@@ -3,7 +3,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::audit_logs::Model as AuditModel;
 use sea_orm::{ConnectionTrait, TransactionTrait};
@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn audit_rows_cannot_be_changed_or_deleted_without_the_flags() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {

@@ -16,10 +16,10 @@
 use super::db_err;
 use std::collections::{HashMap, HashSet};
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -594,7 +594,10 @@ async fn plan_cpm(
         caller.actor(),
         &format!("cpm:{pid}:{:?}:{:?}:{:?}", p.near, p.only, p.full),
     );
-    if let Ok(Some(hit)) = ctx.cache.get::<serde_json::Value>(&cache_key).await {
+    if let Ok(Some(hit)) = crate::cache::Cache::of(&ctx)
+        .get::<serde_json::Value>(&cache_key)
+        .await
+    {
         return format::json(hit);
     }
     let plan = super::governance::find_item(&ctx, &pid).await?;
@@ -692,8 +695,7 @@ async fn plan_cpm(
     });
     // Only worth storing when it is not enormous; a failure to store never fails the request.
     if net.rows.len() <= 5_000 {
-        let _ = ctx
-            .cache
+        let _ = crate::cache::Cache::of(&ctx)
             .insert_with_expiry(&cache_key, &answer, crate::response_cache::TTL)
             .await;
     }

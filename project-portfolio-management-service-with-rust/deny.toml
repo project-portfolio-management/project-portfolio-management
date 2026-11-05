@@ -6,30 +6,13 @@
 [advisories]
 version = 2
 yanked = "warn"
-# Transitive advisories carried by the shared Rust/Loco dependency tree
-# (mostly via loco-rs -> opendal / sqlx / async deps). They are not
-# fixable at the service/library level without an upstream loco-rs bump,
-# so they are accepted here WITH this note and revisited on the next
-# loco-rs upgrade. Matcher / library crates with small trees do not pull
-# these (an unused ignore is a harmless warning). Real, actionable
-# advisories NOT on this list still fail the build.
+# Transitive advisories that cannot be fixed at this level, accepted here WITH their reasons and revisited on each
+# upgrade. Removing Loco removed most of this list. Real, actionable advisories NOT on it still fail the build.
 ignore = [
-    "RUSTSEC-2024-0370", # proc-macro-error (unmaintained), transitive
     "RUSTSEC-2024-0384", # instant (unmaintained), transitive
     "RUSTSEC-2024-0436", # paste (unmaintained), transitive
-    "RUSTSEC-2024-0437", # protobuf recursion, transitive
-    "RUSTSEC-2025-0052", # transitive advisory (loco tree)
-    "RUSTSEC-2026-0173", # transitive advisory (loco tree)
-    "RUSTSEC-2026-0190", # transitive advisory (loco tree)
-    "RUSTSEC-2026-0194", # transitive advisory (loco tree)
-    "RUSTSEC-2026-0195", # quick-xml namespace-declaration DoS, transitive (opendal)
-    "RUSTSEC-2026-0204", # transitive advisory (loco tree)
-    "RUSTSEC-2025-0057", # transitive advisory (loco tree)
-    "RUSTSEC-2024-0449", # unsafe-libyaml (unmaintained), transitive: loco-rs -> loco-gen -> rrgen -> serde_yaml; added 2026-10-13
+    "RUSTSEC-2024-0449", # unsafe-libyaml (unmaintained), transitive: loco-gen -> rrgen -> serde_yaml; added 2026-10-13
     "RUSTSEC-2025-0134", # rustls-pemfile (unmaintained; a thin wrapper over rustls-pki-types), transitive (loco tree); added 2026-10-10
-    "RUSTSEC-2026-0391", # zstd 0.13.3: only with `--all-features`, via the optional `fluvio` feature (fluvio 0.50.1, the latest, pins zstd 0.13); the default build has zstd 0.14.3, which is patched; added 2026-10-26
-    "RUSTSEC-2026-0398", # zstd-safe 7.3.0, same path as RUSTSEC-2026-0391; added 2026-10-26
-    "RUSTSEC-2026-0403", # zstd-safe 7.3.0, same path as RUSTSEC-2026-0391; added 2026-10-26
     "RUSTSEC-2026-0440", # astral-tokio-tar (unmaintained), no safe upgrade: test-only, via testcontainers, not in a built service; added 2026-11-05
     "RUSTSEC-2026-0441", # pin-utils (unmaintained), no safe upgrade: only with the optional `fluvio` feature, not in the default build; added 2026-11-05
 ]

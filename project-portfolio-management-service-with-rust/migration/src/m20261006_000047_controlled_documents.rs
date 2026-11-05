@@ -1,6 +1,6 @@
 //! Migration: **controlled documents** (PL-6). A `controlled_documents` row is a document; each of its `document_versions` moves `draft → in_review → approved → effective → superseded`. The database itself enforces what the rules promise: a version that is no longer a draft cannot have its text changed or be deleted; at most one version of a document is `effective`, and at most one is in flight; a version cannot be approved, effective or superseded without the approval request that approved it; and `superseded` names its successor.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The controlled-documents migration (name derived from the module).

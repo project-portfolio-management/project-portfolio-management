@@ -1,6 +1,6 @@
 //! Migration: the **announcement feed**. An announcement is a short message to everyone, with a severity, an optional pin, and an optional window (`publish_at` to `expires_at`). Retracting one is a soft delete.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The announcements migration (name derived from the module).

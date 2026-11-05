@@ -27,7 +27,7 @@
 
 use std::time::Duration;
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::QuerySelect;
 
 use crate::metrics::Metrics;

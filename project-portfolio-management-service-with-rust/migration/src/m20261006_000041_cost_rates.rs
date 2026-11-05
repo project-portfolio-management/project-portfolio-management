@@ -1,6 +1,6 @@
 //! Migration: **cost rates** (PJ-2). `cost_rate_tables` are named rate tables (standard, overtime, …) for one person or one role, in one currency; `cost_rates` are the rates in them, each **effective from a date** and append-only. `task_costs` are material and fixed-cost expenses on a task with an accrual rule. `time_entry_costs` are the cost of a recorded time entry **as it was worked out at the time**: the rate used is stored with it, so a later rate change never rewrites an existing actual.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The cost-rates migration (name derived from the module).

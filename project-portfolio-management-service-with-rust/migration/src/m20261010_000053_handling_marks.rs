@@ -1,6 +1,6 @@
 //! Migration: **handling marks** (RG-7). A plan's mark is its own row, so a plan without a row is unmarked (the lowest level of the configured scheme) and the plan and its access settings are untouched. Which codes are valid is the deployment's scheme, not the database's; the code is only constrained in shape.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

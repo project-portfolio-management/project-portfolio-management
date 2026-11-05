@@ -1,6 +1,6 @@
 //! Migration: **`raci_assignments`**. A RACI assignment: one person's role on one task: Responsible, Accountable, Consulted or Informed. A person may hold several letters on a task (the usual A/R); a task has at most one Accountable (enforced by the service) and should have exactly one (reported when it does not). Replacing a task's row soft-deletes the old assignments, so the history is kept.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `raci_assignments` migration (name derived from the module).

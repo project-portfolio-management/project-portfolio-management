@@ -3,15 +3,15 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
+use axa::testing::prelude::*;
 use chrono::Days;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn claims_cite_checked_sources_and_the_numbers_are_counted_as_published() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -170,7 +170,7 @@ async fn claims_cite_checked_sources_and_the_numbers_are_counted_as_published() 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_plan_whose_open_tasks_have_no_dates_reports_overdue_as_unknown_not_zero() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

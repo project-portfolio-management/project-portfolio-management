@@ -1,7 +1,7 @@
 //! `sea-orm-migration` schema migrations for `project-portfolio-management-service`.
 //!
 //! The [`Migrator`] runs the ordered list below at boot (or via
-//! `cargo loco db migrate`): the `plans` table (the registry across
+//! `cargo run -- db migrate`): the `plans` table (the registry across
 //! the four collections), then the `audit_logs` and `merge_records` side
 //! tables. The audit trail these create is the who/what/when record over
 //! every change (lead / assignee / member references are personal data).
@@ -153,7 +153,7 @@ mod m20261105_000104_translated_labels;
 mod m20261105_000105_plan_template_source;
 mod m20261105_000106_issue_times;
 
-/// The crate's migrator: drives the ordered migration set for the loco
+/// The crate's migrator: drives the ordered migration set for the
 /// CLI / boot-time migration.
 pub struct Migrator;
 

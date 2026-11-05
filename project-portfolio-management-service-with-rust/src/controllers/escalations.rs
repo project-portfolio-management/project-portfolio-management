@@ -12,10 +12,10 @@
 //!
 //! The history (`escalation_events`) is append-only, enforced by a database trigger. Nothing here notifies anyone.
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use serde_json::{Value, json};

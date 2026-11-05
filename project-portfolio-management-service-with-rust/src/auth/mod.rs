@@ -41,11 +41,10 @@
 //! OpenAPI/Swagger and calendar-feed paths (see `is_public_path`; the
 //! Prometheus endpoint needs a token like everything else). It is turned
 //! off only explicitly: `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
-//! (`0`/`false`/`no`/`off`), or `settings.require_auth: false` in the active
-//! `config/<env>.yaml` (the shipped `development.yaml` and `test.yaml` do
-//! this; `production.yaml` never does). The environment variable wins over
-//! the file. [`check_startup`] logs a loud warning when it is off, and the
-//! service **refuses to start** when the loco environment is `production`
+//! (`0`/`false`/`no`/`off`), or an `APP_ENV` of `development`, `test` or
+//! `container-dev`; production and any unknown name never do. The environment
+//! variable wins over the profile. [`check_startup`] logs a loud warning when it is off, and the
+//! service **refuses to start** when the environment is `production`
 //! and it is off, or when it is on and no token verifier has keys.
 //!
 //! ## Authorization (ABAC)

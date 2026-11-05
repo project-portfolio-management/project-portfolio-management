@@ -2,7 +2,7 @@
 //! impls and finders for dependencies / milestones / allocations /
 //! report definitions.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder};
 use uuid::Uuid;
 

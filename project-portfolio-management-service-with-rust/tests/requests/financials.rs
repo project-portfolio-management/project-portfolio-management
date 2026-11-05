@@ -7,7 +7,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -36,7 +36,7 @@ async fn seed_child(request: &axum_test::TestServer, parent: &str, name: &str) -
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_plan_without_a_baseline_reports_null_with_a_reason() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -54,7 +54,7 @@ async fn a_plan_without_a_baseline_reports_null_with_a_reason() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn registering_a_baseline_unlocks_a_forecast_from_its_remaining_periods() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -95,7 +95,7 @@ async fn registering_a_baseline_unlocks_a_forecast_from_its_remaining_periods() 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_tpc_observation_takes_precedence_over_the_baseline() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -129,7 +129,7 @@ async fn a_tpc_observation_takes_precedence_over_the_baseline() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_rebaseline_needs_a_reason_and_the_predecessor_stays_reproducible() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -194,7 +194,7 @@ async fn a_rebaseline_needs_a_reason_and_the_predecessor_stays_reproducible() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn the_rollup_never_merges_two_currencies_into_one_sum() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -237,7 +237,7 @@ async fn the_rollup_never_merges_two_currencies_into_one_sum() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn performance_names_why_it_has_no_earned_value_once_a_baseline_exists() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -278,7 +278,7 @@ async fn performance_names_why_it_has_no_earned_value_once_a_baseline_exists() {
 /// come in one query, not one per baseline.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn listing_baselines_runs_the_same_number_of_queries_for_one_baseline_or_four() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

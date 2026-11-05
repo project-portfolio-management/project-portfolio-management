@@ -1,4 +1,4 @@
-//! `project-portfolio-management-service` — a loco.rs registry for **plan**
+//! `project-portfolio-management-service` — an Axum registry for **plan**
 //! records in one recursive collection, with CRUD + matching.
 //!
 //! The API DTO is `project_portfolio_management_matcher::Plan` itself: the service stores
@@ -10,11 +10,11 @@
 //!
 //! ## Modules
 //!
-//! - [`app`] — loco `Hooks` wiring (routes, workers, truncate/seed).
+//! - [`app`] — boot, routes, workers and truncate.
 //! - [`controllers`] — Axum controllers: CRUD, `match`, `check-duplicates`.
 //! - [`models`] — `SeaORM` entity + CRUD helpers over the stored payload.
-//! - [`workers`] — background workers (loco `BackgroundWorker`).
-//! - [`tasks`], [`initializers`], [`data`] — loco extension points.
+//! - [`workers`] — background workers (an axa `BackgroundWorker`).
+//! - [`tasks`], [`initializers`], [`data`] — extension points.
 //!
 //! See `spec/index.md` for the living specification.
 
@@ -40,6 +40,7 @@ pub mod break_glass;
 pub mod buffer_management;
 pub mod buffers;
 pub mod bulk;
+pub mod cache;
 pub mod calendars;
 /// Per-user saved views: route-scoped filter/sort/column presets,
 /// keyed by the token `sub` and nothing else identity-shaped (T-28l).

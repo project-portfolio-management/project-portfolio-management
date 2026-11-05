@@ -23,7 +23,7 @@ scored by the canonical project-portfolio-management-matcher) and a
 project workspace (each plan *owns* operational sub-resources — goals,
 tasks, issues — plus derived timeline / burndown views). All plans live
 in **one collection and table**; any plan may contain any other plan via
-a `parent_ref` to its parent (a recursive tree). Built on loco.rs.
+a `parent_ref` to its parent (a recursive tree). Built on Axum and axa.
 
 ## 2. Scope
 
@@ -216,8 +216,8 @@ is expressed by `parent_ref`, never by a collection boundary.
    needs no token. Exposes plan CRUD/merge counters
    (`portfolio_plan_created_total` / `_updated_total` / `_deleted_total`
    / `_merged_total`) plus `http_requests_total`.
-16. Bulk import/export (deferred, §13) — async, job-based, on the loco
-   `bg_pg` worker: the five endpoints on the plans collection (§9.8).
+16. Bulk import/export (deferred, §13) — async, job-based, on the axa
+   queue worker: the five endpoints on the plans collection (§9.8).
    The uniform family contract (execution model, JSONL/CSV/Parquet
    codecs, upsert-by-stable-key + dedupe-to-review, per-row error
    report, export masking + audit) is fixed in
@@ -226,7 +226,7 @@ is expressed by `parent_ref`, never by a collection boundary.
 
 ## 7. Non-functional requirements
 
-loco-idiomatic; Postgres persistence; deterministic + probabilistic
+conventional; Postgres persistence; deterministic + probabilistic
 matching via the embedded `project-portfolio-management-matcher` (`MatchingEngine::new(
 MatchConfig::default())` in
 [`src/controllers/plans.rs`](../src/controllers/plans.rs));
@@ -239,7 +239,7 @@ scan ranges over the plans collection's active rows with no kind gate.
 
 ## 8. Architecture
 
-loco `App` (`src/app.rs`) registers the single plan-collection controller
+`App` (`src/app.rs`) registers the single plan-collection controller
 (one shared core) and the sub-resource controllers. One `plans` table
 stores `pid` + denormalized `name` + the full `Plan` JSONB `data` + a
 **nullable** `kind` column (the optional label) + a denormalized
@@ -259,7 +259,7 @@ API URLs are version-free; a client selects the representation version
 with the `Accepts-version` request header (default `1.0`) — see
 `agents/share/api-versioning.md`.
 
-Raw loco JSON under `/api/`. All plans live at `/api/plans`. `404` for
+Raw JSON under `/api/`. All plans live at `/api/plans`. `404` for
 unknown `pid`; `422` for a validation failure (blank `name`, a malformed
 `goals` / `identifiers` / `in_language` entry, or a malformed / cyclic
 `parent_ref` — family convention, via `Error::CustomError(
@@ -446,9 +446,9 @@ assignees, and owners are user / org identities from the
 authentication-service and the index. Blanket `/api/*` enforcement is
 wired (an `after_routes` middleware calling `auth::enforce`) and **on by
 default**: only an explicit `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
-(`0`/`no`/`off`) or `settings.require_auth: false` in the loco config turns it
+(`0`/`no`/`off`) or a development profile of `APP_ENV` turns it
 off (`development.yaml` and `test.yaml` do; the environment variable wins). The
-service **refuses to start** when the loco environment is `production` and
+service **refuses to start** when the environment (`APP_ENV`) is `production` and
 enforcement is off, and when enforcement is on with no token verifier. When
 on, any `/api/*` route without a valid token is `401`; the public paths
 `/_health`, `/_ping`, `/api-docs/openapi.json`, `/swagger-ui*` and the calendar
@@ -781,7 +781,7 @@ equal-pid pin, any-two-plans merge with no kind scoping), the `escape_like`
 unit test, the `src/metrics.rs` unit tests (rendered text carries every
 plan metric name + `# HELP`/`# TYPE` preamble + content type), and the
 derived-view unit tests (timeline ordering, burndown remaining-vs-estimate
-from snapshots). Request-level tests (`tests/requests/plans.rs`, loco
+from snapshots). Request-level tests (`tests/requests/plans.rs`, axa
 testing harness) cover CRUD + match + dedupe + merge over the plans
 collection, the `tasks` sub-resource CRUD + Kanban move + the burndown
 view (`goals`/`issues` and `/timeline` remain deferred, §13),
@@ -963,7 +963,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   no `tonic` dependency of its own), and — unlike care-pathway/case —
   this crate carries no IEC 62304 SOUP register, so no
   `compliance/soup.tsv` bookkeeping was needed either: the simplest of
-  the four loco-idiomatic ports. See
+  the four ports. See
   `agents/share/rust-tracing-opentelemetry-stack.md`
   for the full rollout status. Verified: `cargo fmt --check`, `cargo
   clippy --all-targets -D warnings`, `cargo deny check`, `cargo bench
@@ -1622,7 +1622,7 @@ paseto-keys-over-HTTP fetch at boot, 2026-07-04 —
 
 - The [portfolio entity spec](../../spec/index.md) (canonical model §5);
   the [project-portfolio-management-matcher spec](../../project-portfolio-management-matcher-with-rust/spec/index.md);
-  loco.rs; cross-service linking;
+  Axum and axa; cross-service linking;
   [bulk import/export](../../spec/bulk-import-export.md);
   event bus.
 

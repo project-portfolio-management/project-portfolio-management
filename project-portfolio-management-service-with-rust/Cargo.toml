@@ -19,12 +19,8 @@ include = ["src/**/*", "README.md"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
-# `auth` is deliberately absent from this feature list. It is loco's JWT
-# support (`dep:jsonwebtoken`, and therefore `rsa` / RUSTSEC-2023-0071),
-# and this family issues PASETO v4.public rather than JWT — see
-# agents/share/jwt.md. Dropping it removes the vulnerable crate from the
-# dependency graph rather than suppressing the advisory.
-loco-rs = { version = "1.2.0", default-features = false, features = ["cli", "with-db", "cache_inmem", "cache_redis", "worker"] }
+# The plumbing every service shares. `sea-orm` is transitional, until this crate has moved to sqlx.
+axa = { version = "0.1", features = ["queue", "sea-orm"] }
 
 [dependencies]
 # Keyed integrity MACs with production-grade key handling — one audited
@@ -33,7 +29,12 @@ integrity-mac = "0.2.0"
 # Unkeyed content digests: SHA-256 (FIPS 180-4) and SHA3-256 (FIPS 202).
 sha2 = { version = "0.11" }
 sha3 = { version = "0.12" }
-loco-rs = { workspace = true  }
+axa = { workspace = true }
+# The command line.
+clap = { version = "4", features = ["derive"] }
+# Sending mail (src/email.rs) and the shared cache (src/cache.rs).
+lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-platform-verifier", "aws-lc-rs"] }
+redis = { version = "1", default-features = false, features = ["connection-manager", "tokio-comp", "tokio-rustls-comp", "tls-rustls-webpki-roots"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 # Request-body schemas for the OpenAPI document (CQ-8): derived from the handlers' own types.
@@ -114,7 +115,7 @@ reqwest = { version = "0.13", default-features = false, features = [
 
 # Any OpenID Connect provider's signed JWT access tokens (src/auth/oidc.rs, WW-1.12): JWKS keys and
 # RS/PS/ES/EdDSA verification. The same 9.x already in the tree (the verifier's Keycloak engine and the
-# dev-dependency below); it uses `ring`, not `rsa`. Follows loco-rs like the dev-dependency: do not bump alone.
+# dev-dependency below); it uses `ring`, not `rsa`. Kept at the version the service tests were written against: do not bump alone.
 jsonwebtoken = { version = "9" }
 
 [features]
@@ -150,9 +151,9 @@ required-features = []
 # token through the real guard without a Keycloak container. Tests only.
 authentication-verifier = { version = "0.9.1", default-features = false, features = ["test-idp"] }
 criterion = { version = "0.8", features = ["html_reports"] }
-loco-rs = { workspace = true, features = ["testing"] }
+axa = { workspace = true, features = ["testing"] }
 # Name the `TestServer` type in shared request-test helpers.
-axum-test = { version = "17.3.0" }
+axum-test = { version = "21" }
 # `#[tokio::test]` + a local ephemeral-port HTTP listener for the boot-time key-set fetch tests.
 # `time` also lets tests/otlp_collector's `wait_for` poll with
 # `tokio::time::sleep` instead of busy-waiting.

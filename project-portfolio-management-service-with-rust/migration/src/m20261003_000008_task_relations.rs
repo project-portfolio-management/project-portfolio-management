@@ -1,6 +1,6 @@
 //! Migration: **`task_relations`**. Typed relations between tasks (LT-10), with Redmine's concrete behaviours: `blocks` stops the blocked task closing while the blocker is open; `precedes` forbids a successor due on or before its predecessor; `duplicates` closes the duplicate when the primary closes; `related` and `copied_from` are informational. Cross-plan relations are allowed.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `task_relations` migration (name derived from the module).

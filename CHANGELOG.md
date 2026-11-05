@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (Loco replaced with axa)
+
+- The service no longer uses Loco. It is plain Axum with [axa](https://crates.io/crates/axa) 0.1, and SeaORM stays until its own change. `App::run` in `src/app.rs` is the whole boot path, written out. Configuration comes from the environment: `config/*.yaml` is gone, and `APP_ENV` replaces `LOCO_ENV` (spec §8.3a).
+- `src/cache.rs` replaces Loco's cache and `email::Mailer` uses `lettre` directly, because axa has neither. Plain `start` still only serves. Queued jobs now use `axa_queue`.
+- Things that compiled and passed and were still wrong, found by comparing with Loco's own source or by starting the binary, all fixed: `criterion_evidence` would have been created as `criterion_evidences` on a fresh database; `/_readiness` had dropped its Redis check; mail would have used implicit TLS on port 587; three handlers relied on Loco for their `304`; axa's Referrer-Policy replaced this service's; and a Redis that was down hung the boot. CORS, HSTS and the request timeout are left with this service, and a misspelt `APP_ENV` keeps login on.
+- Verified: `pg_dump --schema-only` of a fresh database is identical to one built by the Loco code, 0 differences in 5,197 lines. 295 database tests pass, the same count as CI on `main`. The binary refuses production with no database, no Redis or login off; a misspelt environment keeps login on; with Redis down `/_health` is `200` and `/_readiness` is `503`; SIGTERM exits 0.
+- Not verified: real Redis and real SMTP were not used, so Redis storage and STARTTLS are compiled, not exercised. The container image, `compose.yaml` and the chaos test were edited and not run. The restore drill was not run locally. **Nothing is pushed, so CI has not seen this.**
+- Before deploying: drain `pg_loco_queue`, because jobs in it are not moved. Replace `LOCO_ENV` with `APP_ENV`, although axa still reads the old name. A proxy that relied on `x-powered-by` loses it. The `form-examples` backends and other services are not touched.
+
 ### 5 November (SM-2: times on an issue)
 
 - An issue now carries `reported_at`, `acknowledged_at`, `resolved_at` and `closed_at`, written by the service as a pure rule from its moves, and `occurred_at` and `detected_at`, stated by a person. Stating or correcting one is an edit, and the audit entry holds the values before and after. A save that leaves them out keeps them, so a screen that does not know them cannot clear them.

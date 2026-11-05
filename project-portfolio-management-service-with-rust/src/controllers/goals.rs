@@ -11,9 +11,9 @@
 //! instead of editing the wrong goal. Without `If-Match` the write goes ahead as
 //! before.
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::{HeaderMap, StatusCode, header};
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use project_portfolio_management_matcher::Goal;
 use serde::Serialize;
 

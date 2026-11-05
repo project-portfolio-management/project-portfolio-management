@@ -46,16 +46,89 @@ pub trait Sender: Send + Sync {
     async fn send(&self, message: &Message) -> Result<(), SendError>;
 }
 
-/// The mailer the deployment configured (loco's SMTP transport).
+/// Everything a stub mailer has been asked to send.
+#[derive(Debug, Clone, Default)]
+pub struct Deliveries {
+    /// How many messages it accepted.
+    pub count: usize,
+    /// Each message, rendered as subject then text.
+    pub messages: Vec<String>,
+}
+
+/// The mailer the deployment configured.
+#[derive(Clone)]
+pub enum Mailer {
+    /// A real SMTP transport.
+    Smtp(lettre::AsyncSmtpTransport<lettre::Tokio1Executor>),
+    /// Keeps what it was given, for tests.
+    Stub(Arc<Mutex<Deliveries>>),
+}
+
+impl std::fmt::Debug for Mailer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Smtp(_) => "Mailer::Smtp",
+            Self::Stub(_) => "Mailer::Stub",
+        })
+    }
+}
+
+impl Mailer {
+    /// The mailer for this environment. Tests get a stub. Development talks to a local catcher on port 1025 in the
+    /// clear. Everything else uses `SMTP_HOST` and `SMTP_PORT` with STARTTLS, with `SMTP_USER` and `SMTP_PASSWORD` when set.
+    ///
+    /// # Errors
+    ///
+    /// When the SMTP host is not usable.
+    pub fn from_env(environment: &axa::Environment) -> axa::Result<Self> {
+        use lettre::transport::smtp::authentication::Credentials;
+        use lettre::{AsyncSmtpTransport, Tokio1Executor};
+        match environment {
+            axa::Environment::Test => Ok(Self::Stub(Arc::default())),
+            axa::Environment::Development => Ok(Self::Smtp(
+                AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous("localhost")
+                    .port(1025)
+                    .build(),
+            )),
+            _ => {
+                let host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
+                let port = std::env::var("SMTP_PORT")
+                    .ok()
+                    .and_then(|p| p.parse().ok())
+                    .unwrap_or(587);
+                let mut builder = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&host)
+                    .map_err(axa::Error::wrap)?
+                    .port(port);
+                let user = std::env::var("SMTP_USER").unwrap_or_default();
+                if !user.is_empty() {
+                    let password = std::env::var("SMTP_PASSWORD").unwrap_or_default();
+                    builder = builder.credentials(Credentials::new(user, password));
+                }
+                Ok(Self::Smtp(builder.build()))
+            }
+        }
+    }
+
+    /// What a stub mailer has been given; empty for a real one.
+    #[must_use]
+    pub fn deliveries(&self) -> Deliveries {
+        match self {
+            Self::Smtp(_) => Deliveries::default(),
+            Self::Stub(d) => d.lock().expect("lock").clone(),
+        }
+    }
+}
+
+/// Sends through the deployment's [`Mailer`].
 pub struct SmtpSender {
-    /// The deployment's configured SMTP transport.
-    mailer: loco_rs::mailer::EmailSender,
+    /// The deployment's configured mailer.
+    mailer: Mailer,
 }
 
 impl SmtpSender {
     /// Wrap the configured mailer.
     #[must_use]
-    pub fn new(mailer: loco_rs::mailer::EmailSender) -> Self {
+    pub fn new(mailer: Mailer) -> Self {
         Self { mailer }
     }
 }
@@ -67,21 +140,34 @@ impl Sender for SmtpSender {
     }
 
     async fn send(&self, m: &Message) -> Result<(), SendError> {
-        let email = loco_rs::mailer::Email {
-            from: Some(m.from.clone()),
-            to: m.to.clone(),
-            reply_to: None,
-            subject: m.subject.clone(),
-            text: m.text.clone(),
-            html: String::new(),
-            bcc: None,
-            cc: None,
-            headers: None,
-        };
-        self.mailer
-            .mail(&email)
-            .await
-            .map_err(|e| SendError::Transient(e.to_string()))
+        use lettre::AsyncTransport;
+        let refused = |e: String| SendError::Permanent(format!("not a sendable message: {e}"));
+        let email = lettre::Message::builder()
+            .from(
+                m.from
+                    .parse()
+                    .map_err(|e: lettre::address::AddressError| refused(e.to_string()))?,
+            )
+            .to(m
+                .to
+                .parse()
+                .map_err(|e: lettre::address::AddressError| refused(e.to_string()))?)
+            .subject(m.subject.clone())
+            .body(m.text.clone())
+            .map_err(|e| refused(e.to_string()))?;
+        match &self.mailer {
+            Mailer::Smtp(transport) => transport
+                .send(email)
+                .await
+                .map(|_| ())
+                .map_err(|e| SendError::Transient(e.to_string())),
+            Mailer::Stub(deliveries) => {
+                let mut d = deliveries.lock().expect("lock");
+                d.count += 1;
+                d.messages.push(format!("{}\n{}", m.subject, m.text));
+                Ok(())
+            }
+        }
     }
 }
 
@@ -157,11 +243,11 @@ pub fn override_sender(s: Option<Arc<dyn Sender>>) {
 
 /// The sender in force: the override if one is set, else the configured SMTP mailer, else [`NoSender`].
 #[must_use]
-pub fn sender_for(ctx: &loco_rs::app::AppContext) -> Arc<dyn Sender> {
+pub fn sender_for(ctx: &axa::AppContext) -> Arc<dyn Sender> {
     if let Some(s) = slot().read().expect("lock").clone() {
         return s;
     }
-    match ctx.mailer.clone() {
+    match ctx.shared_store.get::<Mailer>() {
         Some(m) => Arc::new(SmtpSender::new(m)),
         None => Arc::new(NoSender),
     }

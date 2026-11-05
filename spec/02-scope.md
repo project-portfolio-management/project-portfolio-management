@@ -81,7 +81,7 @@ This spec owns the **cross-subproject contract**:
 - **The Flow Framework metric vocabulary** (§1.6): which of the five
   metrics map onto existing time-based-analysis figures and which is
   new, so the same number is never built twice under two names.
-- The service ↔ front-end wire contract: raw loco JSON (no envelope),
+- The service ↔ front-end wire contract: raw JSON (no envelope),
   TypeScript type mirroring (§5.7).
 - Shared invariants that more than one subproject must uphold (§5.8).
 - The family integrations this entity adopts wholesale: cross-service
@@ -125,7 +125,7 @@ This spec owns the **cross-subproject contract**:
 - One `plans` table: `pid` + denormalized `name` + the full `Plan` JSONB
   `data` + a nullable denormalized `parent_pid` column; plus the
   sub-resource and family-baseline tables (§10).
-- loco.rs app structure, migrations, configuration.
+- Service structure, migrations, configuration.
 
 **project-portfolio-management-matcher-with-rust** owns:
 

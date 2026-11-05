@@ -1,6 +1,6 @@
 //! Migration: **multi-step approval processes** (PL-2). A `process` is a named, ordered list of steps (`approve`, `todo`, `notify`); each edit adds a new immutable `process_versions` row, and an `execution` is **pinned** to the version it started on. All state lives in these tables (so an execution survives a restart), and `process_execution_logs` is **append-only**: the database refuses an update or a delete of a log row. An approval request made by a process carries which execution and step it belongs to.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The processes migration (name derived from the module).
@@ -37,7 +37,7 @@ impl MigrationTrait for Migration {
                 ("pid", ColType::UuidUniq),
                 ("process_pid", ColType::Uuid),
                 ("version", ColType::Integer),
-                ("steps", ColType::Json),
+                ("steps", ColType::JsonBinary),
                 ("created_by", ColType::StringNull),
             ],
             &[],
@@ -96,6 +96,10 @@ impl MigrationTrait for Migration {
         ] {
             db.execute_unprepared(q).await?;
         }
+        // The column has always been `json`, and a fresh database must match one that was upgraded.
+        m.get_connection()
+            .execute_unprepared("ALTER TABLE process_versions ALTER COLUMN steps TYPE json")
+            .await?;
         Ok(())
     }
 

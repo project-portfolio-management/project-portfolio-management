@@ -1,21 +1,21 @@
 //! `director_pack_schedule` task: draft the monthly director packs that are due (DP-12).
 //!
 //! ```text
-//! cargo loco task director_pack_schedule
+//! cargo run -- task director_pack_schedule
 //! ```
 //!
 //! Schedule it daily (cron, a Kubernetes `CronJob`), or switch on the in-process ticker
 //! (`PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES`). It **only drafts**: a person reviews and a person
 //! issues. `POST /api/director-pack-schedules/sweep` does the same by hand.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 
 /// The `director_pack_schedule` CLI task.
 pub struct DirectorPackSchedule;
 
 #[async_trait]
 impl Task for DirectorPackSchedule {
-    /// Task metadata for the loco CLI.
+    /// Task metadata for the command line.
     fn task(&self) -> TaskInfo {
         TaskInfo {
             name: "director_pack_schedule".to_string(),

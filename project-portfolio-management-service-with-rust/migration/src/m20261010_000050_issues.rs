@@ -1,6 +1,6 @@
 //! Migration: the **issues register** (IR-1). An issue is something that has already happened and needs managing (a risk is something that might). It belongs to a plan, has a kind, a severity, a status and an optional owner, and may point back at the risk or the blocked task it came from. Closing one records a resolution. Deleting is a soft delete.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The issues migration (name derived from the module).

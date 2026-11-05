@@ -11,7 +11,7 @@
 //! assigned a thing does not subscribe them.
 
 use super::{db_err, unprocessable};
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{DatabaseConnection, PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;

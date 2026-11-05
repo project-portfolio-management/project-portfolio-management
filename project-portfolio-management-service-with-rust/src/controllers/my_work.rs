@@ -12,7 +12,7 @@
 use super::unprocessable;
 use std::collections::{BTreeMap, HashMap};
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;

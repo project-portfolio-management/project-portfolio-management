@@ -15,10 +15,10 @@
 
 use std::time::Duration;
 
+use axa::prelude::*;
 use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
-use loco_rs::prelude::*;
 use serde::Deserialize;
 use tokio::sync::broadcast::error::RecvError;
 

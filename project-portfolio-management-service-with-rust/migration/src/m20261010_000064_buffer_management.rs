@@ -3,7 +3,7 @@
 //! agreed to do about a buffer in the red. Plans and snapshots are append-only; an action may be closed once
 //! and never deleted. The one exception, for all three: a data-subject pseudonymisation may blank `owner_ref`.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

@@ -11,7 +11,7 @@
 //! is recorded on the item (`promoted_to_*`) so a promotion is
 //! idempotent-by-refusal, never silently repeated.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `canvases` migration (name derived from the module).

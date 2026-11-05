@@ -3,7 +3,7 @@
 //! a programme for a month, or work owed. Until partner organizations exist (EX-3) the organization is
 //! a free-text label; a commitment with none is the organization's own.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

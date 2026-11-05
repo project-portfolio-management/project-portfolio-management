@@ -1,6 +1,6 @@
 //! Migration: **`guest_grants`**. A scoped, time-boxed, revocable grant letting an external collaborator (a token whose role attribute includes `guest`) see — and optionally comment on — one plan (PL-7). A guest sees only what is granted and gets 404 everywhere else; never people references. `revoked_at` and `expires_at` take effect on the next request.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `guest_grants` migration (name derived from the module).

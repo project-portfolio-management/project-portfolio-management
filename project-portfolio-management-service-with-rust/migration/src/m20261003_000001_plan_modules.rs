@@ -8,7 +8,7 @@
 //! the record-integrity pre-image (`content_hash`, `content_mac`) untouched.
 //! Disabling a module hides its routes for that plan; it never deletes data.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `plan_modules` migration (name derived from the module).

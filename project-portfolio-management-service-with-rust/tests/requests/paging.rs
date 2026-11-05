@@ -1,7 +1,7 @@
 //! RM-12b: `include` on a single task read. (Paging of every list is checked, from the
 //! `OpenAPI` document, by `tests/list_paging.rs`.)
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -13,7 +13,7 @@ async fn post(request: &axum_test::TestServer, path: &str, body: Value) -> Value
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_task_can_be_read_alone_with_its_sub_resources_embedded() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

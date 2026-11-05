@@ -13,10 +13,10 @@
 )]
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use sea_orm::ConnectionTrait;
@@ -93,7 +93,7 @@ async fn sweep_call(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test organizations -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test organizations -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn organizations_are_records_and_a_partner_sees_its_own() {
     let (keys, kid) = keys_and_kid();

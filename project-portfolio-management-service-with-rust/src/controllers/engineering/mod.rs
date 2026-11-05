@@ -11,8 +11,8 @@
 //! of the matcher payload (the spec's partition rule) — nothing here
 //! feeds matching.
 
+use axa::prelude::*;
 use axum::http::HeaderMap;
-use loco_rs::prelude::*;
 use uuid::Uuid;
 
 /// Load all live rows of one entity (soft-deleted excluded).
@@ -48,7 +48,7 @@ use estate::{blocked, delivery_links, milestone_calendar, moscow};
 fn refuse(reason: &str) -> Error {
     Error::CustomError(
         axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-        loco_rs::controller::ErrorDetail::new("unprocessable_entity", reason),
+        axa::error::ErrorDetail::new("unprocessable_entity", reason),
     )
 }
 

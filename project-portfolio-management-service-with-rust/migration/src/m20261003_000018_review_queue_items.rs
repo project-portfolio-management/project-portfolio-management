@@ -1,6 +1,6 @@
 //! Migration: **`review_queue_items`**. A row held for a human decision (T-8): a keyless imported plan that the matcher scores as a probable duplicate of an existing one. Nothing is created or merged automatically (spec §5.1). `provenance` is `import` here.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `review_queue_items` migration (name derived from the module).

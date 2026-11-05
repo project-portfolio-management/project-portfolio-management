@@ -4,7 +4,7 @@
 //!
 //! The DB-free unit tests in `src/auth.rs` pin the pure `enforce` /
 //! policy-evaluation matrix. What they cannot show is that the
-//! middleware is actually *wired* onto the router loco builds, and that
+//! middleware is actually *wired* onto the router axa builds, and that
 //! a real request with (or without) a valid PASETO gets the right
 //! status. Activation is the moment this service stops being open, so it
 //! deserves a test that fails if the wiring is ever lost.
@@ -15,14 +15,14 @@
 //! it.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `config/test.yaml` / `DATABASE_URL`. Run with
+//! `DATABASE_URL`. Run with
 //! `cargo test --test enforcement -- --ignored`.
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
@@ -96,7 +96,7 @@ fn plan_body() -> Value {
 /// while requiring `access=write` to write.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test enforcement -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test enforcement -- --ignored`"]
 async fn enforcement_on_gates_the_real_router() {
     let (keys, kid) = keys_and_kid();
     // Set BEFORE the app boots — the flag, key set and policy are read

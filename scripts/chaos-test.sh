@@ -21,7 +21,7 @@ BIN="$PWD/$SVC/target/debug/project-portfolio-management"
 $RUNTIME compose -f "$SVC/compose.test.yaml" up -d --wait postgres
 trap '$RUNTIME compose -f "$SVC/compose.test.yaml" down -v >/dev/null 2>&1' EXIT
 
-( cd "$SVC" && LOCO_ENV=container-dev "$BIN" db migrate >/dev/null )
+( cd "$SVC" && APP_ENV=container-dev "$BIN" db migrate >/dev/null )
 node scripts/chaos-test.mjs --service "$BIN" --service-dir "$SVC" --database-url "$DATABASE_URL" --runtime "$RUNTIME" \
   --report "${CHAOS_REPORT:-chaos-report.json}" "$@"
 

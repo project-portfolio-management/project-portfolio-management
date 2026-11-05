@@ -473,7 +473,7 @@ choice against them.
 
 `ApiClient` (lean, raw-JSON, get/post/put/patch/delete + `ApiError`) →
 `PlanRepository` (all paths under `/api/plans`) → routes. The
-service is loco.rs and returns **raw JSON** (no envelope). Under the BFF
+service is Axum and returns **raw JSON** (no envelope). Under the BFF
 model (§6.15) the browser carries only the `__Host-mxi_session` cookie;
 `ApiClient`'s base URL is the same-origin `/api/proxy`, and the
 SvelteKit server (`src/routes/api/proxy/[...path]`) attaches the

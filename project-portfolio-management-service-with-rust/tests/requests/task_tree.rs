@@ -5,7 +5,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -31,7 +31,7 @@ async fn task(request: &axum_test::TestServer, p: &str, body: Value) -> (u16, St
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_parent_is_derived_from_its_subtasks_and_never_stored() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

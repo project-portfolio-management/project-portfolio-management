@@ -7,7 +7,7 @@
 
 use std::time::Duration;
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -48,7 +48,7 @@ fn event_id(body: &str) -> u64 {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_connected_client_sees_a_move_and_a_reconnect_is_replayed() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

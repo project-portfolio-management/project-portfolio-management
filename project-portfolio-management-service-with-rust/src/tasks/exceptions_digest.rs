@@ -1,20 +1,20 @@
 //! `exceptions_digest` task: send the weekly portfolio-exceptions digest.
 //!
 //! ```text
-//! PROJECT_PORTFOLIO_MANAGEMENT_DIGEST_RECIPIENTS=person:<user id>,person:<user id> cargo loco task exceptions_digest
+//! PROJECT_PORTFOLIO_MANAGEMENT_DIGEST_RECIPIENTS=person:<user id>,person:<user id> cargo run -- task exceptions_digest
 //! ```
 //!
 //! Schedule it weekly (cron, a Kubernetes `CronJob`); running it again in the same week sends nothing more. With no
 //! recipients configured it does nothing.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 
 /// The `exceptions_digest` CLI task.
 pub struct ExceptionsDigest;
 
 #[async_trait]
 impl Task for ExceptionsDigest {
-    /// Task metadata for the loco CLI.
+    /// Task metadata for the command line.
     fn task(&self) -> TaskInfo {
         TaskInfo {
             name: "exceptions_digest".to_string(),

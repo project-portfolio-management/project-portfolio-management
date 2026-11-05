@@ -11,8 +11,8 @@
     reason = "request-level test: long, linear, short names; recorded under CQ-14"
 )]
 
+use axa::testing::prelude::*;
 use axum::body::Bytes;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::audit_logs;
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -53,7 +53,7 @@ async fn plan_count(request: &axum_test::TestServer) -> usize {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn import_is_idempotent_reports_every_bad_row_and_reconciles() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
@@ -150,7 +150,7 @@ async fn import_is_idempotent_reports_every_bad_row_and_reconciles() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_keyless_duplicate_is_held_for_review_and_never_created_or_merged() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
@@ -224,7 +224,7 @@ async fn a_keyless_duplicate_is_held_for_review_and_never_created_or_merged() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
@@ -371,7 +371,7 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_back() {
     use project_portfolio_management::controllers::bulk::run_job;
     use project_portfolio_management::models::_entities::bulk_jobs;

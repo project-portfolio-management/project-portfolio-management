@@ -8,7 +8,7 @@
 //! row exists only where a user chose something; deleting it restores the
 //! default.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `notification_prefs` migration (name derived from the module).

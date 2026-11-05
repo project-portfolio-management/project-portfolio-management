@@ -1,7 +1,7 @@
 //! Migration: **funding sources** (DP-6). An owner-supplied reference list, and an optional funding
 //! source on each budget line. A line with none is reported as "no funding source", not hidden.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

@@ -17,7 +17,7 @@
 //! [`crate::controllers::automation::sweep_milestone_due`]), so running
 //! the ticker *and* an external cron cannot double-fire a deadline.
 
-use loco_rs::prelude::AppContext;
+use axa::prelude::AppContext;
 
 /// Smallest sweep period, in minutes. A tighter loop would poll the
 /// database far more often than deadlines actually arrive.

@@ -3,7 +3,7 @@
 //! map from the finance system's cost codes to budget lines (the register's identifier), so that a ledger
 //! export can be reconciled. Allocations are append-only.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

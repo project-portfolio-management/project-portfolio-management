@@ -1,6 +1,6 @@
 ---
 name: project-portfolio-management
-description: How an AI agent works in the Project Portfolio Management repo (Rust matcher library, Rust loco.rs API, SvelteKit UI). Use when editing code, specs, tasks.md or tests here, or when you need the run and test commands, conventions and gotchas.
+description: How an AI agent works in the Project Portfolio Management repo (Rust matcher library, Rust Axum API, SvelteKit UI). Use when editing code, specs, tasks.md or tests here, or when you need the run and test commands, conventions and gotchas.
 ---
 
 # Working in the Project Portfolio Management repo
@@ -8,7 +8,7 @@ description: How an AI agent works in the Project Portfolio Management repo (Rus
 ## Layout
 
 - `project-portfolio-management-matcher-with-rust/`: library; the `Plan` type and matching engine.
-- `project-portfolio-management-service-with-rust/`: loco.rs service under `/api/...`; the DTO is the matcher's `Plan`. The crate and binary are `project-portfolio-management`; its migration crate (`migration/`) is `project-portfolio-management-migration`.
+- `project-portfolio-management-service-with-rust/`: Axum service under `/api/...`; the DTO is the matcher's `Plan`. The crate and binary are `project-portfolio-management`; its migration crate (`migration/`) is `project-portfolio-management-migration`.
 - `project-portfolio-management-ui-with-svelte/`: SvelteKit 3 / Svelte 5 (runes) SPA with a BFF.
 - `spec/` (entity contract), `agents/` (shared guidance), `tasks.md` (backlog), `plan.md` (research history).
 - Each subproject has `AGENTS.md`, `README.md`, `index.md` and its own `spec/`. Read the subproject `AGENTS.md` before editing it.
@@ -43,7 +43,7 @@ Toolchain is pinned in `rust-toolchain.toml` (1.99.1; minimum supported 1.96); t
 - The API's OpenAPI paths are written by hand in `src/openapi.rs` and `src/openapi_more.rs`; request bodies are generated into `src/openapi_bodies.rs` by `scripts/generate-openapi-bodies.py`. Tests write `openapi.json` and `api-routes.txt` and fail when a mounted route is undocumented. See the API `AGENTS.md`.
 - The WPM bridge is off (stub mode) until `PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` is set; it forwards the caller's own token, never stores it, never fails a PPM request, and never adds WPM's supply to PPM's. Do not invent a mapping of WPM skills to PPM tags (FB-7).
 
-- `axum-test` and `jsonwebtoken` follow `loco-rs`; bump them only with it. `dtolnay/rust-toolchain` is bumped by hand with `rust-toolchain.toml`.
+- `axum-test` follows `axa`, and `jsonwebtoken` is pinned for the OIDC code; bump them with care. `dtolnay/rust-toolchain` is bumped by hand with `rust-toolchain.toml`.
 - A release is a `v*.*.*` tag equal to the service crate and UI versions; it pushes an image to GHCR (private until the owner makes it public).
 
 ## Where the backlog lives

@@ -72,7 +72,7 @@ storing the uploaded source), never after the work. A repeated
 
 ## 4. Execution
 
-Work runs in a loco `BackgroundWorker` (Postgres-backed queue, `bg_pg`),
+Work runs in an axa `BackgroundWorker` (Postgres-backed queue),
 registered in `connect_workers` beside the placeholder `DownloadWorker`.
 The worker claims a job by `UPDATE ... SET status='running' WHERE
 status='queued'` (one winner), processes rows, writes counters in

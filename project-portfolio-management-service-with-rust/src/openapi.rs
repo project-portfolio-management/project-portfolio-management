@@ -2257,7 +2257,7 @@ mod tests {
 
     /// Every route the controllers mount, as `(path, method)` pairs —
     /// the same `routes()` functions `app.rs` wires, so the list below
-    /// is kept in step with `App::routes`. (Loco's default `/_health`
+    /// is kept in step with `App::routes`. (axa's default `/_health`
     /// and `/_ping` are added by `AppRoutes`, not a controller, and are
     /// out of scope here.)
     #[expect(clippy::too_many_lines)]
@@ -2398,8 +2398,14 @@ mod tests {
                 while path.len() > 1 && path.ends_with('/') {
                     path.pop();
                 }
-                for action in &handler.actions {
-                    mounted.insert((path.clone(), action.as_str().to_lowercase()));
+                // A method router names only what it does not serve, in its debug form: `get: None`.
+                let served = format!("{:?}", handler.method);
+                for method in ["get", "post", "put", "patch", "delete"] {
+                    if served.contains(&format!("{method}: "))
+                        && !served.contains(&format!("{method}: None"))
+                    {
+                        mounted.insert((path.clone(), method.to_string()));
+                    }
                 }
             }
         }

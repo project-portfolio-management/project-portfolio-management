@@ -6,12 +6,12 @@
 
 use std::sync::{Arc, Mutex};
 
+use axa::testing::prelude::*;
 use axum::Router;
 use axum::body::Bytes;
 use axum::http::HeaderMap;
 use axum::routing::post;
 use chrono::Utc;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::compliance::mac::{self, Domain};
 use project_portfolio_management::models::_entities::{event_outbox, webhook_deliveries};
@@ -26,7 +26,7 @@ use uuid::Uuid;
 type Seen = Arc<Mutex<Vec<(HeaderMap, Vec<u8>)>>>;
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test webhook_redelivery -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test webhook_redelivery -- --ignored`"]
 #[expect(clippy::too_many_lines)] // one linear scenario: a receiver, a logged failure, then each redelivery case
 async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
     // A receiver on a loopback port, recording what it is sent.

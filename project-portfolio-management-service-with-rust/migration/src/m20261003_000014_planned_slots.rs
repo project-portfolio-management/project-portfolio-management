@@ -1,6 +1,6 @@
 //! Migration: **`planned_slots`**. A person's own time-blocking of a task (PL-4). Instants are UTC (`timestamptz`) and are rendered in the caller's zone on read. A slot never changes the task's due date, and overlapping slots are allowed — reported as clashes, not refused.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `planned_slots` migration (name derived from the module).

@@ -78,7 +78,7 @@ function startService() {
     cwd: serviceDir,
     env: {
       ...process.env,
-      LOCO_ENV: "container-dev",
+      APP_ENV: "container-dev",
       DATABASE_URL: databaseUrl,
       PORT: String(port),
       PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false",

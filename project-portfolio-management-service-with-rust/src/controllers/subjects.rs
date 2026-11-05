@@ -5,9 +5,9 @@
 //! `finance`). Every call is audited without writing the reference itself. Pseudonymising is a
 //! **preview unless `?apply=true`**, runs in one transaction and is all or nothing.
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, DatabaseBackend, Statement, TransactionTrait, Value};
 use serde::Deserialize;
 use uuid::Uuid;

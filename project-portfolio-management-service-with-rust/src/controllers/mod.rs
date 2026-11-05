@@ -83,21 +83,21 @@ pub mod workflow;
 
 /// Map a model-layer error to its HTTP shape: a missing record is
 /// `404 Not Found`; anything else stays a model error (500-class).
-/// loco 0.16 stopped mapping `ModelError::EntityNotFound` itself (its
+/// axa does not map `ModelError::EntityNotFound` itself (its
 /// `IntoResponse` catch-all turns it into a 500), so every controller
 /// lookup routes through this instead of a bare `?`.
 #[must_use]
-pub fn model_not_found(err: loco_rs::model::ModelError) -> loco_rs::Error {
+pub fn model_not_found(err: axa::model::ModelError) -> axa::Error {
     match err {
-        loco_rs::model::ModelError::EntityNotFound => loco_rs::Error::NotFound,
-        other => loco_rs::Error::Model(other),
+        axa::model::ModelError::EntityNotFound => axa::Error::NotFound,
+        other => axa::Error::Model(other),
     }
 }
 
 /// A database error as the service's error type (`500`). One definition for every controller.
 #[must_use]
-pub(crate) fn db_err(e: sea_orm::DbErr) -> loco_rs::Error {
-    loco_rs::Error::Model(loco_rs::model::ModelError::from(e))
+pub(crate) fn db_err(e: sea_orm::DbErr) -> axa::Error {
+    axa::Error::Model(axa::model::ModelError::from(e))
 }
 
 /// A write's audit row could not be written, so the write is refused (NFR-6): the audit row is written in
@@ -108,14 +108,14 @@ pub(crate) fn db_err(e: sea_orm::DbErr) -> loco_rs::Error {
     clippy::needless_pass_by_value,
     reason = "passed to `map_err`, which hands it over"
 )]
-pub(crate) fn audit_failed(e: loco_rs::model::ModelError) -> loco_rs::Error {
+pub(crate) fn audit_failed(e: axa::model::ModelError) -> axa::Error {
     crate::metrics::Metrics::global()
         .audit_write_failed_total
         .inc();
     tracing::error!(error = %e, "audit row not written; the write is refused");
-    loco_rs::Error::CustomError(
+    axa::Error::CustomError(
         axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-        loco_rs::controller::ErrorDetail::new(
+        axa::error::ErrorDetail::new(
             "audit_unavailable",
             "the change was not made because it could not be recorded; try again",
         ),
@@ -127,10 +127,10 @@ pub(crate) fn audit_failed(e: loco_rs::model::ModelError) -> loco_rs::Error {
 /// Controllers that answer with the code `unprocessable_entity` keep their own copy: the code string is part of
 /// their responses and changing it would change the API.
 #[must_use]
-pub(crate) fn unprocessable(message: &str) -> loco_rs::Error {
-    loco_rs::Error::CustomError(
+pub(crate) fn unprocessable(message: &str) -> axa::Error {
+    axa::Error::CustomError(
         axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-        loco_rs::controller::ErrorDetail::new("unprocessable", message),
+        axa::error::ErrorDetail::new("unprocessable", message),
     )
 }
 
@@ -138,10 +138,10 @@ pub(crate) fn unprocessable(message: &str) -> loco_rs::Error {
 /// controllers answer with (CQ-7). Which of the two codes survives is plan §70 question 3; until then
 /// both exist, defined once each.
 #[must_use]
-pub(crate) fn unprocessable_entity(message: &str) -> loco_rs::Error {
-    loco_rs::Error::CustomError(
+pub(crate) fn unprocessable_entity(message: &str) -> axa::Error {
+    axa::Error::CustomError(
         axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-        loco_rs::controller::ErrorDetail::new("unprocessable_entity", message),
+        axa::error::ErrorDetail::new("unprocessable_entity", message),
     )
 }
 
@@ -150,8 +150,8 @@ pub(crate) fn unprocessable_entity(message: &str) -> loco_rs::Error {
 /// # Errors
 ///
 /// `404` when `raw` is not a UUID.
-pub(crate) fn parse_pid(raw: &str) -> loco_rs::Result<uuid::Uuid> {
-    uuid::Uuid::parse_str(raw).map_err(|_| loco_rs::Error::NotFound)
+pub(crate) fn parse_pid(raw: &str) -> axa::Result<uuid::Uuid> {
+    uuid::Uuid::parse_str(raw).map_err(|_| axa::Error::NotFound)
 }
 
 /// A live (not deleted) plan by its path pid, or `404` (CQ-7: one definition for every controller).
@@ -160,9 +160,9 @@ pub(crate) fn parse_pid(raw: &str) -> loco_rs::Result<uuid::Uuid> {
 ///
 /// `404` when the pid is malformed or names no live plan; `500` on a database error.
 pub(crate) async fn find_live_plan(
-    ctx: &loco_rs::app::AppContext,
+    ctx: &axa::AppContext,
     raw: &str,
-) -> loco_rs::Result<crate::models::_entities::plans::Model> {
+) -> axa::Result<crate::models::_entities::plans::Model> {
     use crate::models::_entities::plans;
     use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
     plans::Entity::find()
@@ -171,7 +171,7 @@ pub(crate) async fn find_live_plan(
         .one(&ctx.db)
         .await
         .map_err(db_err)?
-        .ok_or(loco_rs::Error::NotFound)
+        .ok_or(axa::Error::NotFound)
 }
 
 /// A live task of `plan` by its path pid, or `404`; a task of another plan is `404` too.
@@ -180,10 +180,10 @@ pub(crate) async fn find_live_plan(
 ///
 /// `404` when the pid is malformed or names no live task of `plan`; `500` on a database error.
 pub(crate) async fn find_live_task(
-    ctx: &loco_rs::app::AppContext,
+    ctx: &axa::AppContext,
     plan: uuid::Uuid,
     raw: &str,
-) -> loco_rs::Result<crate::models::_entities::tasks::Model> {
+) -> axa::Result<crate::models::_entities::tasks::Model> {
     use crate::models::_entities::tasks;
     use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
     tasks::Entity::find()
@@ -193,7 +193,7 @@ pub(crate) async fn find_live_task(
         .one(&ctx.db)
         .await
         .map_err(db_err)?
-        .ok_or(loco_rs::Error::NotFound)
+        .ok_or(axa::Error::NotFound)
 }
 
 /// Take the transaction-scoped advisory lock for `scope` and `key` (CQ-12): the key is
@@ -208,7 +208,7 @@ pub(crate) async fn advisory_lock<C: sea_orm::ConnectionTrait>(
     txn: &C,
     scope: &'static str,
     key: impl std::fmt::Display,
-) -> loco_rs::Result<()> {
+) -> axa::Result<()> {
     txn.execute_raw(sea_orm::Statement::from_sql_and_values(
         sea_orm::DatabaseBackend::Postgres,
         "SELECT pg_advisory_xact_lock(hashtext($1))",
@@ -221,39 +221,39 @@ pub(crate) async fn advisory_lock<C: sea_orm::ConnectionTrait>(
 
 /// `409 Conflict` with the error code `conflict` and `message`.
 #[must_use]
-pub(crate) fn conflict(message: &str) -> loco_rs::Error {
-    loco_rs::Error::CustomError(
+pub(crate) fn conflict(message: &str) -> axa::Error {
+    axa::Error::CustomError(
         axum::http::StatusCode::CONFLICT,
-        loco_rs::controller::ErrorDetail::new("conflict", message),
+        axa::error::ErrorDetail::new("conflict", message),
     )
 }
 
 /// `403 Forbidden` with the error code `forbidden` and `message`.
 #[must_use]
-pub(crate) fn forbidden(message: &str) -> loco_rs::Error {
-    loco_rs::Error::CustomError(
+pub(crate) fn forbidden(message: &str) -> axa::Error {
+    axa::Error::CustomError(
         axum::http::StatusCode::FORBIDDEN,
-        loco_rs::controller::ErrorDetail::new("forbidden", message),
+        axa::error::ErrorDetail::new("forbidden", message),
     )
 }
 
 /// An error with any status and code.
 #[must_use]
-pub(crate) fn refuse(status: axum::http::StatusCode, code: &str, message: &str) -> loco_rs::Error {
-    loco_rs::Error::CustomError(status, loco_rs::controller::ErrorDetail::new(code, message))
+pub(crate) fn refuse(status: axum::http::StatusCode, code: &str, message: &str) -> axa::Error {
+    axa::Error::CustomError(status, axa::error::ErrorDetail::new(code, message))
 }
 
 /// Map a record-level authorization rejection (`(status, reason)`) to
-/// a loco error: `403` = policy denied; `401` = fail-safe when claims
+/// an axa error: `403` = policy denied; `401` = fail-safe when claims
 /// are missing behind the guard.
 #[must_use]
-pub fn record_rejection((status, reason): (axum::http::StatusCode, String)) -> loco_rs::Error {
+pub fn record_rejection((status, reason): (axum::http::StatusCode, String)) -> axa::Error {
     let code = if status == axum::http::StatusCode::FORBIDDEN {
         "forbidden"
     } else {
         "unauthorized"
     };
-    loco_rs::Error::CustomError(status, loco_rs::controller::ErrorDetail::new(code, reason))
+    axa::Error::CustomError(status, axa::error::ErrorDetail::new(code, reason))
 }
 
 /// Weak `ETag` over a serializable view (everything except `as_of`).
@@ -276,7 +276,7 @@ pub fn conditional_json<T: serde::Serialize>(
     headers: &axum::http::HeaderMap,
     etag: &str,
     body: &T,
-) -> loco_rs::Result<axum::response::Response> {
+) -> axa::Result<axum::response::Response> {
     use axum::http::{StatusCode, header};
     use axum::response::IntoResponse;
     let matched = headers
@@ -291,7 +291,7 @@ pub fn conditional_json<T: serde::Serialize>(
     Ok((
         StatusCode::OK,
         [(header::ETAG, etag_value)],
-        axum::Json(serde_json::to_value(body).map_err(|e| loco_rs::Error::Any(e.into()))?),
+        axum::Json(serde_json::to_value(body).map_err(|e| axa::Error::Any(e.into()))?),
     )
         .into_response())
 }
@@ -305,8 +305,8 @@ pub fn conditional_json<T: serde::Serialize>(
 /// runs, the deadline queue, delegations, approvals, …) shares one
 /// implementation instead of five copies drifting apart.
 pub mod pagination {
+    use axa::error::ErrorDetail;
     use axum::response::Response;
-    use loco_rs::controller::ErrorDetail;
 
     /// Largest page any collection read will serve; a bigger `limit` is
     /// clamped rather than refused.
@@ -349,9 +349,9 @@ pub mod pagination {
         /// # Errors
         ///
         /// `400` when the offset exceeds [`MAX_OFFSET`].
-        pub fn check_offset(self) -> loco_rs::Result<()> {
+        pub fn check_offset(self) -> axa::Result<()> {
             if self.offset.unwrap_or(0) > MAX_OFFSET {
-                return Err(loco_rs::Error::CustomError(
+                return Err(axa::Error::CustomError(
                     axum::http::StatusCode::BAD_REQUEST,
                     ErrorDetail::new(
                         "offset_too_large",

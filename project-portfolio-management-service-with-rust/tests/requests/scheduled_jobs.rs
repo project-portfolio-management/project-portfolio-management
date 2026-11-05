@@ -3,7 +3,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::{audit_logs, scheduled_job_runs};
 use project_portfolio_management::scheduled_jobs::{Job, Ran, run_enabled, run_job};
@@ -12,7 +12,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {

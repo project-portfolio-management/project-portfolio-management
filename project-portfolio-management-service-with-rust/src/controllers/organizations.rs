@@ -6,9 +6,9 @@
 //! the attribute is for policy to use, and the service itself uses it in two places (a partner's list of
 //! commitments, and the packs addressed to its organization).
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::StatusCode;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::json;

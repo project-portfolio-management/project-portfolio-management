@@ -7,7 +7,7 @@
   [`CHANGELOG.md`](../project-portfolio-management-service-with-rust/CHANGELOG.md).
   Deploy a **tag**, never `latest`, so a rollback is "deploy the previous tag".
 - The database schema is changed only by **migrations compiled into the binary**.
-  `config/production.yaml` sets `auto_migrate: false` on purpose: the service
+  Production does not migrate on start, on purpose: the service
   never changes the schema as a side effect of starting. You run the migration
   deliberately, as the one-shot `migrate` job in `compose.yaml`
   (`<service> db migrate`).

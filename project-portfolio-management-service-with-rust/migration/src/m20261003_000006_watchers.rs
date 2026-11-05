@@ -1,6 +1,6 @@
 //! Migration: **`watchers`**. Who follows a subject (RM-3). One row per (subject, user); unwatching deletes the row. A watcher joins the comment and status-change notification targets; it grants no access of its own.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `watchers` migration (name derived from the module).

@@ -28,7 +28,7 @@
 //! (`case/case-service-with-loco/tests/fluvio_relay.rs`, BUS-1).
 #![cfg(feature = "fluvio")]
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::event_outbox;
 use project_portfolio_management::relay::{self, FluvioSink};

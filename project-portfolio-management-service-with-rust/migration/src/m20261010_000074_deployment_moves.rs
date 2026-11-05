@@ -3,7 +3,7 @@
 //! time, decided by a named approver. Until it is approved nothing about the schedule changes. A decision
 //! needs a reason; the approver and the decider are recorded.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

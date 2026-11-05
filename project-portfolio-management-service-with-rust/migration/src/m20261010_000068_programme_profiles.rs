@@ -2,7 +2,7 @@
 //! platform with local deployment, or a local programme under central standards) and which organization
 //! owns the delivery. One row per programme; changes are audited by the service.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

@@ -14,11 +14,11 @@
 //! Only the owner can read their schedules and download the latest output.
 
 use super::{db_err, unprocessable};
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use chrono::{NaiveDate, Utc};
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect, sea_query::Expr};
 use serde::Deserialize;
 use uuid::Uuid;

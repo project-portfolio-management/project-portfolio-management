@@ -9,7 +9,7 @@
 //! *listed*, never silently missing.
 
 use super::db_err;
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 

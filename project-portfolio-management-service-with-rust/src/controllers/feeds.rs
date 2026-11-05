@@ -15,10 +15,10 @@
 //! returns is anything the token's owner is not already assigned to.
 
 use super::db_err;
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::IntoResponse;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;

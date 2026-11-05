@@ -11,12 +11,12 @@
 
 use super::forbidden;
 use super::{db_err, unprocessable};
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::body::Bytes;
 use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{ConnectionTrait, PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use uuid::Uuid;

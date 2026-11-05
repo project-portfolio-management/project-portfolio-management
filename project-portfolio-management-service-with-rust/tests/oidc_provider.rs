@@ -3,12 +3,12 @@
 //! are accepted, mapped, and refused when they should be.
 //!
 //! Its **own test binary**: the verifier is a process-wide `OnceLock` set at boot from the environment.
-//! `#[ignore]`d — boots the app, so it needs PostgreSQL via `config/test.yaml` / `DATABASE_URL`. Run with
+//! `#[ignore]`d — boots the app, so it needs PostgreSQL via `DATABASE_URL`. Run with
 //! `cargo test --test oidc_provider -- --ignored`.
 
+use axa::testing::prelude::*;
 use axum::{Json, Router, routing::get};
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 
@@ -39,7 +39,7 @@ fn auth(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue) {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test oidc_provider -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test oidc_provider -- --ignored`"]
 async fn a_token_from_a_plain_oidc_provider_is_accepted_and_mapped() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let issuer = format!("http://127.0.0.1:{}", listener.local_addr().unwrap().port());

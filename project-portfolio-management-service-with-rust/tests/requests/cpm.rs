@@ -4,7 +4,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -33,7 +33,7 @@ async fn task(
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn float_critical_chains_cycles_unscheduled_and_what_moved() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -235,7 +235,7 @@ async fn float_critical_chains_cycles_unscheduled_and_what_moved() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn calendars_constraints_deadlines_and_a_persons_absence() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -351,7 +351,7 @@ const MSPDI: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn an_ms_project_file_imports_once_idempotently_and_reports_what_it_dropped() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -531,7 +531,7 @@ async fn an_ms_project_file_imports_once_idempotently_and_reports_what_it_droppe
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn capacity_is_read_per_day_from_availability_ranges() {
     use project_portfolio_management::models::_entities::person_availabilities;
     use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -637,7 +637,7 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn proposed_bookings_never_count_until_committed() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -696,7 +696,7 @@ async fn proposed_bookings_never_count_until_committed() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn baselines_are_append_only_and_variance_separates_slip_added_and_removed() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -861,7 +861,7 @@ async fn baselines_are_append_only_and_variance_separates_slip_added_and_removed
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn the_baseline_limit_refuses_rather_than_overwrites() {
     super::isolate_search_index();
     // SAFETY: `#[serial]` — nothing else runs while this is set.
@@ -903,7 +903,7 @@ async fn the_baseline_limit_refuses_rather_than_overwrites() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn the_raci_matrix_refuses_two_accountable_and_reports_gaps() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -986,7 +986,7 @@ async fn the_raci_matrix_refuses_two_accountable_and_reports_gaps() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn earned_value_is_computed_per_currency_and_says_when_it_cannot() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -1142,7 +1142,7 @@ async fn ev_plan(
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -1240,7 +1240,7 @@ async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest(
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
     use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -1335,7 +1335,7 @@ async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -1428,7 +1428,7 @@ async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted() {
     use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -1554,7 +1554,7 @@ async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted()
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_chain_is_flagged() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -1664,7 +1664,7 @@ async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn buffer_management_reads_consumption_names_the_red_chain_and_records_recovery() {
     use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -1777,7 +1777,7 @@ async fn buffer_management_reads_consumption_names_the_red_chain_and_records_rec
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -1876,7 +1876,7 @@ async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn schedule_risk_is_seeded_honest_about_inputs_and_uses_register_events() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -2055,7 +2055,7 @@ async fn schedule_risk_is_seeded_honest_about_inputs_and_uses_register_events() 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn schedule_health_runs_fourteen_checks_and_never_passes_what_it_cannot_compute() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -2140,7 +2140,7 @@ async fn schedule_health_runs_fourteen_checks_and_never_passes_what_it_cannot_co
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn kpis_derive_status_from_readings_and_okrs_can_be_listed_edited_and_deleted() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -2267,7 +2267,7 @@ async fn kpis_derive_status_from_readings_and_okrs_can_be_listed_edited_and_dele
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn milestones_follow_their_tasks_forecast_slip_and_reopen_honestly() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -2482,7 +2482,7 @@ async fn milestones_follow_their_tasks_forecast_slip_and_reopen_honestly() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn cost_and_joint_risk_are_seeded_per_currency_and_share_one_event() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -2603,7 +2603,7 @@ async fn cost_and_joint_risk_are_seeded_per_currency_and_share_one_event() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_days() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -2933,7 +2933,7 @@ async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_d
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -3012,7 +3012,7 @@ async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn the_announcement_feed_orders_hides_scheduled_and_expired_and_retracts() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -3054,7 +3054,7 @@ async fn the_announcement_feed_orders_hides_scheduled_and_expired_and_retracts()
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn earned_value_can_take_its_actual_cost_from_recorded_labour() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -3103,7 +3103,7 @@ async fn earned_value_can_take_its_actual_cost_from_recorded_labour() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_it_showed() {
     use project_portfolio_management::models::_entities::{audit_logs, plan_dependencies};
     use sea_orm::{EntityTrait, PaginatorTrait};
@@ -3242,7 +3242,7 @@ async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_i
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn onboarding_checklists_access_closeout_and_handover_work_end_to_end() {
     use project_portfolio_management::models::_entities::audit_logs;
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -3417,7 +3417,7 @@ async fn onboarding_checklists_access_closeout_and_handover_work_end_to_end() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_hammock_follows_its_links_and_never_touches_the_network() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -3724,7 +3724,7 @@ async fn a_hammock_follows_its_links_and_never_touches_the_network() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn tasks_of_different_plans_can_depend_on_each_other_and_float_follows() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -3884,7 +3884,7 @@ async fn tasks_of_different_plans_can_depend_on_each_other_and_float_follows() {
 /// works in a plan that contains a hammock (the digest sees the same rows before and after).
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
     use sea_orm::ConnectionTrait;
     super::isolate_search_index();
@@ -3929,7 +3929,7 @@ async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
 /// T-28n: a Jira and an Asana CSV export import once, idempotently, and report what they drop.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn jira_and_asana_exports_import_idempotently_and_report_what_they_drop() {
     use project_portfolio_management::models::_entities::{plan_dependencies, tasks};
     use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};

@@ -58,7 +58,7 @@ of kind `email` use it; other callers (for example, mailing a pack's subscribers
   between releases), a message actually delivered from the service through Stalwart to a mailbox (the service has been tested against a recording sender and the test stub, not against this server), DNS (MX, SPF, DKIM, DMARC)
   and any delivery to the outside world. Public mail needs DNS records and a reputation that a container
   cannot give you.
-- **The API's mailer expects a trusted TLS certificate** (`secure: true` in `config/production.yaml`). A
+- **The API's mailer expects a trusted TLS certificate** (the mailer upgrades with STARTTLS). A
   self-signed certificate made by Stalwart will be refused; use a certificate from a CA the API container
   trusts, or send through a relay you already run.
 - The bootstrap password is `PPM_MAIL_ADMIN` or the one-time log line; once Stalwart has provisioned its

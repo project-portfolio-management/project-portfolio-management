@@ -1,7 +1,7 @@
 # Project Portfolio Management Service
 
 A registry of **plan** records — and a project-management tool —
-built on **loco.rs** and embedding the canonical
+built on **Axum and axa** and embedding the canonical
 [project-portfolio-management-matcher](../project-portfolio-management-matcher-with-rust).
 
 A *plan* is a matchable identity in one recursive collection. Its `kind`

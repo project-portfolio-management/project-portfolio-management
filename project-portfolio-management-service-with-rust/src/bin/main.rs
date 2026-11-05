@@ -1,6 +1,5 @@
-//! `project-portfolio-management-service` binary entrypoint — boots the loco.rs CLI
-//! (`project-portfolio-management-service`), wiring the `App` hooks and the database
-//! migrator. See the crate library docs for the service overview.
+//! `project-portfolio-management-service` binary entrypoint: parses the command line and runs
+//! [`App::run`]. See the crate library docs for the service overview.
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -9,11 +8,11 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use loco_rs::cli;
+use axa::cli::Cli;
+use clap::Parser;
 use project_portfolio_management::app::App;
-use project_portfolio_management_migration::Migrator;
 
 #[tokio::main]
-async fn main() -> loco_rs::Result<()> {
-    cli::main::<App, Migrator>().await
+async fn main() -> axa::Result<()> {
+    App::run(Cli::parse()).await
 }

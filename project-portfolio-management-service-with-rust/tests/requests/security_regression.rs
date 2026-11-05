@@ -8,7 +8,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -23,7 +23,7 @@ async fn made(request: &axum_test::TestServer, path: &str, body: Value) -> Strin
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_record_of_one_plan_is_not_reachable_through_another_plans_path() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

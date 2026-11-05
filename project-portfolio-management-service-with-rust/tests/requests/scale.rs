@@ -12,7 +12,7 @@ use std::future::Future;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -99,7 +99,7 @@ async fn seed_one(request: &axum_test::TestServer, name: &str, person: &str) -> 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // T-28d: query count for /capacity, /capacity/utilization, and
 // /at-a-glance is identical at a small roster and at the full 60-plan
 // / 40-person scale — proof the request-path queries are bulk reads,

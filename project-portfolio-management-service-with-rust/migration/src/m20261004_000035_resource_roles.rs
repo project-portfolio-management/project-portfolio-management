@@ -1,6 +1,6 @@
 //! Migration: **`resource_roles`**. A person's one primary role for capacity planning (SC-7): the role whose supply they count toward in the portfolio resource view. One row per person; changing it replaces the row, and the change is audited.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `resource_roles` migration (name derived from the module).

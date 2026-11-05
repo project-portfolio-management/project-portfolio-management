@@ -193,8 +193,8 @@ pub struct Outcome {
 }
 
 /// Wrap a database error as a framework error carrying only its message.
-fn db_err(e: &sea_orm::DbErr) -> loco_rs::Error {
-    loco_rs::Error::string(&e.to_string())
+fn db_err(e: &sea_orm::DbErr) -> axa::Error {
+    axa::Error::string(&e.to_string())
 }
 
 /// Run every rule. `days` overrides a rule's period by name. Without `apply`, nothing is deleted.
@@ -207,7 +207,7 @@ pub async fn run(
     now: DateTime<Utc>,
     overrides: &[(String, i64)],
     apply: bool,
-) -> loco_rs::Result<Vec<Outcome>> {
+) -> axa::Result<Vec<Outcome>> {
     let mut out = Vec::new();
     for rule in RULES {
         let days = overrides
@@ -256,7 +256,7 @@ pub async fn run(
                 })),
             )
             .await
-            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+            .map_err(|e| axa::Error::string(&e.to_string()))?;
             tx.commit().await.map_err(|e| db_err(&e))?;
         }
         out.push(Outcome {

@@ -1,4 +1,4 @@
-//! Background workers (loco `BackgroundWorker`).
+//! Background workers (an axa `BackgroundWorker`).
 
 pub mod bulk;
 pub mod downloader;

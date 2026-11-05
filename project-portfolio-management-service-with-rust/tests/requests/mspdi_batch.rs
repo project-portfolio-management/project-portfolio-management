@@ -4,7 +4,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -41,7 +41,7 @@ fn project(name: &str, resources: &[(i64, &str)], cost_centre: &str) -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn three_projects_import_in_one_job_with_their_shared_resources_listed_once() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -182,7 +182,7 @@ fn pay_project(name: &str, ana_rate: &str, bo_rate: &str, cross: Option<(&str, i
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn files_link_to_each_other_and_carry_rates_costs_and_new_fields() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

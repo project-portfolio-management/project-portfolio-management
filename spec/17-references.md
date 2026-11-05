@@ -87,4 +87,4 @@ useful when judging whether two records describe the same plan:
 - Shared docs index: `agents/share/index.md`;
   sibling entity-level spec exemplar:
   care-pathway/spec (sibling repository, not in this repository).
-- loco.rs: [loco.rs](https://loco.rs/) — the service framework.
+- axa: [crates.io/crates/axa](https://crates.io/crates/axa) — the shared service library, over [Axum](https://docs.rs/axum).

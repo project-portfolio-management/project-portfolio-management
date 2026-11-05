@@ -5,14 +5,14 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // The full funnel: capture → vote (ranked) → convert to a draft
 // proposal → the proposal promotes into the registry; dismissed and
 // converted ideas refuse further actions.
@@ -91,7 +91,7 @@ async fn idea_funnel_flows_into_the_intake_pipeline() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Scenario evaluation sums live budgets/risks per member, names cap
 // and must-include violations, and refuses committing an infeasible
 // scenario; a feasible one commits with the evaluation audited.
@@ -199,7 +199,7 @@ async fn scenarios_evaluate_and_commit_feasibly() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // T-28a: evaluate/compare carry `as_of` + the live rows they read
 // (each with its own `updated_at`); commit -> rollback -> commit is
 // idempotent (rollback only ever touches the scenario's own
@@ -350,7 +350,7 @@ async fn scenario_rollback_and_evaluation_provenance() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // T-28h: POST /scenarios/generate scores every active plan (Smart
 // Score), prices it (budget lines in the cap's currency), and
 // greedily fills the cap; a no-evidence plan is excluded `no_score`
@@ -522,7 +522,7 @@ async fn generate_scenario_scores_prices_and_never_silently_drops_must_include()
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // OKR alignment: weighted links upsert per (objective, item); the
 // objective rolls weights up per collection; the item lists its
 // mappings; weight bounds refuse.
@@ -593,7 +593,7 @@ async fn okr_alignment_rolls_up() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Benefits: declared targets, realized accumulation, and ROI in
 // basis points against the item's recorded budget actuals.
 async fn benefits_track_realization_and_roi() {
@@ -661,7 +661,7 @@ async fn benefits_track_realization_and_roi() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // NC-7: the frontier sweeps the budget cap; its value never falls as the cap rises on this
 // fixture, and each point selects exactly what a single generate at that cap selects.
 async fn the_efficient_frontier_matches_single_cap_generate_runs() {
@@ -735,7 +735,7 @@ async fn the_efficient_frontier_matches_single_cap_generate_runs() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // CQ-11: creating a scenario checks its members with one query per kind, so naming four plans takes as many
 // statements as naming one.
 async fn creating_a_scenario_runs_the_same_number_of_queries_for_one_plan_or_four() {

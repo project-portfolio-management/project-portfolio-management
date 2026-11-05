@@ -1,10 +1,10 @@
-//! The bulk-job worker (T-8): a loco `BackgroundWorker` that runs one queued
+//! The bulk-job worker (T-8): a an axa `BackgroundWorker` that runs one queued
 //! import or export job to its terminal state. The work itself lives in
 //! [`crate::controllers::bulk::run_job`] so it is the same code whether the
 //! queue runs it in the background (production) or inline (the test profile's
 //! `ForegroundBlocking`).
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

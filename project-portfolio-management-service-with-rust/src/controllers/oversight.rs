@@ -24,8 +24,8 @@
 
 use std::fmt::Write as _;
 
+use axa::prelude::*;
 use axum::http::HeaderMap;
-use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
@@ -83,10 +83,7 @@ fn authorize_oversight_read(caller: &MaybeAuthUser) -> Result<()> {
         &std::collections::BTreeMap::new(),
     )
     .map_err(|(status, reason)| {
-        Error::CustomError(
-            status,
-            loco_rs::controller::ErrorDetail::new("forbidden", reason),
-        )
+        Error::CustomError(status, axa::error::ErrorDetail::new("forbidden", reason))
     })?;
     Ok(())
 }
@@ -1084,10 +1081,7 @@ async fn regulator_extract(
     // attach the `mask` obligation (e.g. for dept=regulator tokens).
     let obligations = authorize_record(&caller, Action::Read, &std::collections::BTreeMap::new())
         .map_err(|(status, reason)| {
-        Error::CustomError(
-            status,
-            loco_rs::controller::ErrorDetail::new("forbidden", reason),
-        )
+        Error::CustomError(status, axa::error::ErrorDetail::new("forbidden", reason))
     })?;
     let masked = obligations.iter().any(|o| o == "mask");
 

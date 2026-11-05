@@ -19,7 +19,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use serde_json::{Map, Value};
@@ -121,7 +121,7 @@ fn require_shared_right(caller: &MaybeAuthUser, owner: Option<Uuid>) -> Result<(
     }
     Err(Error::CustomError(
         axum::http::StatusCode::FORBIDDEN,
-        loco_rs::controller::ErrorDetail::new(
+        axa::error::ErrorDetail::new(
             "forbidden",
             "changing an organisation-wide framework needs access=admin or framework=edit"
                 .to_string(),

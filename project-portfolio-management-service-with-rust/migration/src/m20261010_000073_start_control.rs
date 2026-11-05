@@ -2,7 +2,7 @@
 //! the overrides by which a refused start went ahead anyway. Overrides are append-only; a pseudonymisation
 //! may blank who decided.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

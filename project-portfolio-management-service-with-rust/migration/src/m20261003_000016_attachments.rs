@@ -1,6 +1,6 @@
 //! Migration: **`attachments`**. A file attached to a plan, task, risk, proposal, idea, canvas item, budget line or scenario (LT-5). The bytes are an artifact; this row is the link, so removing an attachment (soft-delete) never loses the audit trail of what was attached.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `attachments` migration (name derived from the module).

@@ -4,7 +4,7 @@
 //! append-only. A threshold exception is a delivery exception (DP-3) that also names the threshold, and its
 //! opened and worst values may be `threshold`, since it is not a confidence reading.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

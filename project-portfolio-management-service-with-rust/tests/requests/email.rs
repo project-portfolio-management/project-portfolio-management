@@ -5,7 +5,7 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`. The sender and the sender address are
 //! process-wide, so the test restores both.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::controllers::email_deliveries::{Delivered, deliver, run_due};
 use project_portfolio_management::email::{self, RecordingSender, SendError};
@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn each_recipient_has_a_delivery_row_and_a_failure_is_recorded_not_lost() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

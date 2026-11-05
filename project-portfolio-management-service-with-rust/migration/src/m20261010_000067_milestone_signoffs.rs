@@ -2,7 +2,7 @@
 //! each sign-off or withdrawal is an append-only event, so the history is kept and a withdrawal carries its
 //! reason. The one exception: a data-subject pseudonymisation may blank `signed_by`.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

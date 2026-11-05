@@ -22,13 +22,13 @@
 //! from the ring buffer (`memory`) or the outbox (`outbox`) via
 //! [`recent_events`], identically.
 //!
-//! In loco there is no per-request shared state for this, so the buffer
+//! In axa there is no per-request shared state for this, so the buffer
 //! is a `OnceLock`-initialized global.
 
 use std::collections::VecDeque;
 use std::sync::{Mutex, OnceLock};
 
-use loco_rs::prelude::ModelResult;
+use axa::prelude::ModelResult;
 use project_portfolio_management_matcher::Plan;
 use sea_orm::{ConnectionTrait, DatabaseConnection, IntoActiveModel, TransactionTrait};
 use serde::{Deserialize, Serialize};
@@ -358,7 +358,7 @@ async fn audit_best_effort(
 /// consequence — a live plan invisible to search, and so invisible to
 /// the duplicate detector that blocks on the index — is silent until
 /// someone notices a missing hit. The repair is
-/// `cargo loco task search_reindex`.
+/// `cargo run -- task search_reindex`.
 ///
 /// The index write takes the writer lock and commits (an fsync), so it runs on the blocking pool,
 /// not on an async worker (CQ-10). The request still waits for it, so a plan is searchable as soon

@@ -10,7 +10,7 @@
 //! - `reactions` are one per `(subject, sub, kind)` — the unique index
 //!   makes a repeat reaction idempotent by construction.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `comments_reactions` migration (name derived from the module).

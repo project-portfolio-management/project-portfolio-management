@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced Loco with axa 0.1: see the root `CHANGELOG.md`, 5 November (Loco replaced with axa).
+
 ### Added
 
 - **Role permissions, plan membership, field rules and plan types (OC-2 to OC-6, OC-9, 2026-11-05).** Migrations 101 to 104:

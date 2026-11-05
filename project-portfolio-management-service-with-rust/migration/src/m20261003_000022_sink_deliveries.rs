@@ -1,6 +1,6 @@
 //! Migration: **`sink_deliveries`**. One attempt-tracked delivery of one notification to one sink (LT-6). Enqueued when the notification is written and sent later, so a slow or dead destination can never delay or fail the notification itself. Bounded retries with growing backoff; the last error is kept.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `sink_deliveries` migration (name derived from the module).

@@ -6,7 +6,7 @@
 //! * `POST …/task-proposals/commit`: create them all in one transaction, or none. Send an `Idempotency-Key` (BR-1) so a
 //!   retry returns the first answer; the table also refuses a second task for the same outcome.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use serde::Deserialize;
 use serde_json::{Value, json};

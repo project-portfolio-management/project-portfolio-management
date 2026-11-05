@@ -1,7 +1,7 @@
 //! DB-gated integration tests for the durable event bus Phase-2
 //! transactional outbox (`agents/share/event-bus.md` §3, §5).
 //!
-//! These boot the real loco app against the `test` environment config, so
+//! These boot the real app against the `test` environment config, so
 //! they require a reachable PostgreSQL instance and are therefore
 //! `#[ignore]`d (run with `cargo test -- --ignored`). They exercise the
 //! exact write path the `outbox` transport takes in the CRUD handlers:
@@ -11,7 +11,7 @@
 //! The pure envelope→row mapping and the transport-string parsing are
 //! pinned DB-free in `src/models/event_outbox.rs` and `src/streaming.rs`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::{event_outbox, plans};
 use project_portfolio_management::models::event_outbox::OutboxInsert;
@@ -41,7 +41,7 @@ fn created_envelope(model: &PlanModel) -> Envelope {
 /// the `outbox`-transport CRUD handler path (`streaming::create_and_emit`).
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with: cargo test -- --ignored"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
 async fn outbox_create_writes_plan_and_one_event_atomically() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
@@ -89,7 +89,7 @@ async fn outbox_create_writes_plan_and_one_event_atomically() {
 /// its event, and no event without its committed change).
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with: cargo test -- --ignored"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
 async fn outbox_failure_rolls_back_both_writes() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {

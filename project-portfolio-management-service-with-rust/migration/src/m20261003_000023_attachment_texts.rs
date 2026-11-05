@@ -1,6 +1,6 @@
 //! Migration: **`attachment_texts`**. The text extracted from an attachment so it can be found by search (PL-8). Extraction is best-effort and never fails an upload: a file with no extractor is recorded `unindexed` with the reason, never silently skipped. The text inherits its attachment's access: a search result is shown only to someone who may read the attachment's subject.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `attachment_texts` migration (name derived from the module).

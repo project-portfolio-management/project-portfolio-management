@@ -8,7 +8,7 @@
 //! Pure rules live in [`crate::visibility`]; nothing here feeds the
 //! matcher (§8 partition rule).
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use uuid::Uuid;
 
 use crate::models::_entities::plans;

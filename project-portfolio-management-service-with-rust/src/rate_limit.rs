@@ -31,7 +31,7 @@
 //!
 //! | Variable | Default | Meaning |
 //! |---|---|---|
-//! | `PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT` | on | `off`/`false`/`0` disables (also `settings.rate_limit: false` in the loco config; the shipped development and test configs do) |
+//! | `PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT` | on | `off`/`false`/`0` disables (also off in the `development`, `test` and `container-dev` profiles) |
 //! | `…_RATE_LIMIT_GENERAL_PER_MINUTE` / `…_GENERAL_BURST` | 600 / 200 | sustained requests per minute, and the burst allowed |
 //! | `…_RATE_LIMIT_EXPENSIVE_PER_MINUTE` / `…_EXPENSIVE_BURST` | 30 / 10 | the same for expensive routes |
 //! | `…_RATE_LIMIT_FAILURES_PER_MINUTE` / `…_FAILURES_BURST` | 6 / 20 | authentication failures per client address |
@@ -320,8 +320,8 @@ fn env_u32(name: &str, default: u32) -> u32 {
 }
 
 impl RateLimiter {
-    /// Build from the environment; `configured` is the loco
-    /// `settings.rate_limit` value (the environment wins when set).
+    /// Build from the environment; `configured` is the
+    /// profile's value (the environment wins when set).
     #[must_use]
     pub fn from_env(configured: Option<bool>) -> Self {
         let env = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT").ok();

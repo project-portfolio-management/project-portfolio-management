@@ -4,7 +4,7 @@ import * as env from "$app/env/private";
 import { baseUrl, type Bridges } from "../bridge.js";
 
 /** Portfolio service base URL — the proxy forwards entity-API calls here with
- *  a server-injected PASETO. (loco dev default 5150.) */
+ *  a server-injected PASETO. (The service defaults to 5150.) */
 export const PROJECT_PORTFOLIO_MANAGEMENT_API_URL =
   env.PROJECT_PORTFOLIO_MANAGEMENT_API_URL || "http://localhost:5150";
 

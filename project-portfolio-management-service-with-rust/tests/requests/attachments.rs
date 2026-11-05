@@ -4,8 +4,8 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
+use axa::testing::prelude::*;
 use axum::body::Bytes;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::artifacts::sha256_hex;
 use serde_json::{Value, json};
@@ -31,7 +31,7 @@ fn stored_files(dir: &std::path::Path) -> usize {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn attachments_are_refused_before_storing_verified_and_served_safely() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
@@ -148,7 +148,7 @@ fn walk(dir: &std::path::Path) -> std::path::PathBuf {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn attachment_text_is_searchable_and_honest_about_what_it_cannot_read() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
@@ -265,7 +265,7 @@ async fn fake_clamd() -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn content_that_lies_is_refused_and_a_scanner_has_the_last_word() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("temp dir");

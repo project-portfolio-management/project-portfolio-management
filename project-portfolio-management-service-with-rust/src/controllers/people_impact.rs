@@ -3,7 +3,7 @@
 //! rules are in [`crate::wpm_bridge`]; this is the wiring. The private-plan guard applies as to any
 //! `/api/plans/{pid}/…` route.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use serde::Deserialize;
 
 use super::unprocessable_entity as unprocessable;

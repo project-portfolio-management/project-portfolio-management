@@ -1,6 +1,6 @@
 //! Migration: **milestones tied to the schedule** (milestone concept). A milestone may be `linked` to tasks (`milestone_tasks`): it is then achieved when they are all done, and its forecast comes from the critical-path analysis. Every reschedule is recorded (`milestone_slips`, append-only). `done_reason` records why a milestone was completed by hand while linked tasks were still open.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The milestone-links migration (name derived from the module).

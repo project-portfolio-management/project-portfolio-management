@@ -101,7 +101,7 @@ pub(crate) fn isolate_search_index() {
 /// test with no token cannot be; `tests/issue_configuration.rs` covers that route with real identities. `states` may leave
 /// out `label`, `is_initial` and `is_terminal`.
 pub async fn seed_task_workflow(
-    ctx: &loco_rs::app::AppContext,
+    ctx: &axa::AppContext,
     plan: &str,
     name: &str,
     states: serde_json::Value,

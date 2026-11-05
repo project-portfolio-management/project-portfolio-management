@@ -22,9 +22,9 @@ use super::db_err;
 use axum::http::{StatusCode, header};
 use std::fmt::Write as _;
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::response::IntoResponse;
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;

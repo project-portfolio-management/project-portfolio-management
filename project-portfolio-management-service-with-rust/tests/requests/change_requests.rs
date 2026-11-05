@@ -4,7 +4,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -13,7 +13,7 @@ const BOB: &str = "person:3f2c6b7e-0000-4000-8000-0000000000b1";
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_change_request_goes_from_draft_to_baseline_and_every_wrong_step_is_refused() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -164,7 +164,7 @@ async fn a_change_request_goes_from_draft_to_baseline_and_every_wrong_step_is_re
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn the_director_pack_summary_says_nothing_in_words_then_counts_what_is_recorded() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

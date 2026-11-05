@@ -12,7 +12,7 @@
 //! `#[ignore]`d: boots the app against Postgres. Run with
 //! `cargo test --test outbox_audit -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::{audit_logs, event_outbox, plans};
 use project_portfolio_management::streaming;
@@ -22,7 +22,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with: cargo test --test outbox_audit -- --ignored"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test --test outbox_audit -- --ignored"]
 async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
     // Select the durable transport BEFORE the app boots (the transport is
     // read once into a process-wide OnceLock). `set_var` is `unsafe` in

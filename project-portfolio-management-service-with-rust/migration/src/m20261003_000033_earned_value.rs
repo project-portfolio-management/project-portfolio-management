@@ -1,6 +1,6 @@
 //! Migration: **`earned_value_settings`**. A plan's earned-value setting (SC-4): how its tasks are counted by default (`zero_hundred`, `fifty_fifty`, or `points`, which weights by story points). A plan with no row counts `zero_hundred`. Also adds the per-task override columns: a task may be counted another way, or by a person-entered percent with a mandatory note.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `earned_value_settings` migration (name derived from the module).

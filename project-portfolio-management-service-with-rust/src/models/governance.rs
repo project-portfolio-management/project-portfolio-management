@@ -2,7 +2,7 @@
 //! impls and pid finders for the proposals / gate-reviews / risks /
 //! budget-lines sub-resources.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder};
 use uuid::Uuid;
 
@@ -14,7 +14,7 @@ impl ActiveModelBehavior for risks::ActiveModel {}
 impl ActiveModelBehavior for budget_lines::ActiveModel {}
 
 /// Parse a path `pid`, mapping failure to `404` (an unparsable pid
-/// can never name a record; loco 0.16 does not map
+/// can never name a record; axa does not map
 /// `ModelError::EntityNotFound`, so `Error::NotFound` directly).
 ///
 /// # Errors

@@ -5,7 +5,7 @@
 // `expect`: clippy only reports the glob in the library build, not in the test build.
 #![allow(clippy::wildcard_imports)]
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 
 use super::_entities::*;
 

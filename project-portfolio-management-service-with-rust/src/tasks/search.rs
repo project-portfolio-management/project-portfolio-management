@@ -8,11 +8,11 @@
 //! schema change to the indexed field set.
 //!
 //! ```text
-//! cargo loco task search_reindex            # rebuild everything
-//! cargo loco task search_reindex batch:1000 # tune the page size
+//! cargo run -- task search_reindex            # rebuild everything
+//! cargo run -- task search_reindex batch:1000 # tune the page size
 //! ```
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
 
 use crate::models::_entities::plans;
@@ -153,7 +153,7 @@ pub fn spawn_reindex_if_empty(db: DatabaseConnection) {
     }
     tokio::spawn(async move {
         if let Err(err) = reindex_if_empty(&db).await {
-            tracing::error!(error = %err, "boot reindex failed; run `cargo loco task search_reindex`");
+            tracing::error!(error = %err, "boot reindex failed; run `cargo run -- task search_reindex`");
         }
     });
 }
@@ -163,7 +163,7 @@ pub struct SearchReindex;
 
 #[async_trait]
 impl Task for SearchReindex {
-    /// Task metadata (name + one-line description) for the loco CLI.
+    /// Task metadata (name + one-line description) for the command line.
     fn task(&self) -> TaskInfo {
         TaskInfo {
             name: "search_reindex".to_string(),

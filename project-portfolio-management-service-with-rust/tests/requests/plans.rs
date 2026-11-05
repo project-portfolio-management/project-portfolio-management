@@ -1,9 +1,9 @@
 //! Request-level integration tests over the `/api/plans`
-//! endpoints (spec §6 / §9), in the loco testing style
-//! (`loco_rs::testing`, as in the authentication-service sibling).
+//! endpoints (spec §6 / §9), in the request-test style
+//! (`axa::testing`, as in the authentication-service sibling).
 //!
 //! These boot the app against the `test` environment, which needs a
-//! reachable PostgreSQL (`config/test.yaml`; override with
+//! reachable PostgreSQL (`DATABASE_URL`; override with
 //! `DATABASE_URL`). They are `#[ignore]`d so the default `cargo test`
 //! stays green on a database-less machine. Run them with:
 //!
@@ -15,7 +15,7 @@
 //! The blank-name → `422` contract is additionally pinned un-gated by the
 //! DB-free unit tests in `src/controllers/plans.rs`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -36,7 +36,7 @@ fn apollo_project() -> Value {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Pins the create happy path: `POST /api/plans` returns 200, echoes
 // the name, and mints a UUID pid; the row is then fetchable.
 async fn can_create_and_fetch_a_project() {

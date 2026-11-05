@@ -34,7 +34,7 @@
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 
-use loco_rs::Error;
+use axa::Error;
 use project_portfolio_management_matcher::{Plan, phonetic::soundex};
 use tantivy::{
     IndexWriter, TantivyDocument,
@@ -49,7 +49,7 @@ pub mod index;
 
 pub use index::{IndexStats, PlanIndex, PlanIndexSchema};
 
-/// Result alias for the search layer (loco's error type, so handlers can
+/// Result alias for the search layer (axa's error type, so handlers can
 /// propagate with `?`).
 pub type Result<T> = std::result::Result<T, Error>;
 

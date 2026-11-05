@@ -1,7 +1,7 @@
 //! Migration: **aggressive and safe estimates** per task (CC-2). One row per task; the task row itself is
 //! untouched (its duration stays the likely one). Changes are audited by the service. No person column.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

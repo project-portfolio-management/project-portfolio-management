@@ -1,6 +1,6 @@
 // Lean fetch wrapper for the Case Service.
 //
-// The service is a loco.rs app: handlers return RAW JSON (no
+// The service is an Axum app: handlers return RAW JSON (no
 // {success,data,error} envelope), so this client returns the parsed
 // body directly and throws ApiError on non-2xx.
 //
@@ -351,7 +351,7 @@ function localizeApiMessage(
 
 /**
  * Best-effort extraction of a human-readable message from a parsed error
- * body, trying the common loco.rs/JSON keys in order.
+ * body, trying the common JSON keys in order.
  * @param body Parsed response body (any shape).
  * @returns The first string found under `description`/`message`/`error`, else `undefined`.
  */

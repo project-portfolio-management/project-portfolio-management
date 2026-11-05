@@ -7,7 +7,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `config/test.yaml` / `DATABASE_URL`. Run with
+//! `DATABASE_URL`. Run with
 //! `cargo test --test watchers -- --ignored`.
 
 #![expect(
@@ -16,10 +16,10 @@
 )]
 #![cfg(feature = "paseto")]
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
@@ -78,7 +78,7 @@ const CAROL: &str = "3f2c6b7e-0000-4000-8000-00000000000c";
 /// user creates, is assigned or comments on, and `auto_watch` off stops it;
 /// a user's watch list and other watchers stay private.
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test watchers -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test watchers -- --ignored`"]
 async fn watchers_are_told_once_and_the_actor_never() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so no other test races the

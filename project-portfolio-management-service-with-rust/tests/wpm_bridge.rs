@@ -21,10 +21,10 @@
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 
+use axa::testing::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
-use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::audit_logs;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
@@ -169,7 +169,7 @@ async fn stand_in(stub: Arc<Stub>) -> String {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test wpm_bridge -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test wpm_bridge -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn the_bridge_keeps_one_owner_per_fact() {
     let (keys, kid) = keys_and_kid();

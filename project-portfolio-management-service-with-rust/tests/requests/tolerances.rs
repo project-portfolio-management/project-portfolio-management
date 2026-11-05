@@ -2,7 +2,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -18,7 +18,7 @@ fn dim<'a>(picture: &'a Value, name: &str) -> &'a Value {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_project_has_tolerances_it_sets_or_inherits_shown_as_red_amber_green() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -213,7 +213,7 @@ async fn a_project_has_tolerances_it_sets_or_inherits_shown_as_red_amber_green()
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn schedule_slip_is_held_against_the_latest_schedule_baseline() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

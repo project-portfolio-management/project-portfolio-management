@@ -1,6 +1,6 @@
 //! Migration: **change requests** (IR-4). A controlled proposal to change an approved baseline: scope, schedule, cost, quality or something else. It has a requester, one named approver who is somebody else, a decision with a stated reason, and the issues and risks it answers. The database refuses a cost without its currency, an approval without a decider and a reason, and a status it does not know. Rows are soft-deleted only.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

@@ -5,7 +5,7 @@ Entry point for AI coding agents at the repository root. Three projects live her
 
 | Project | Directory | Guide |
 | --- | --- | --- |
-| Service (loco.rs REST API, PostgreSQL) | `project-portfolio-management-service-with-rust` | [AGENTS.md](project-portfolio-management-service-with-rust/AGENTS.md) |
+| Service (Axum and axa REST API, PostgreSQL) | `project-portfolio-management-service-with-rust` | [AGENTS.md](project-portfolio-management-service-with-rust/AGENTS.md) |
 | Matcher (pure Rust library) | `project-portfolio-management-matcher-with-rust` | [AGENTS.md](project-portfolio-management-matcher-with-rust/AGENTS.md) |
 | Operator UI (SvelteKit 3, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
 
@@ -53,12 +53,12 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
   `project-portfolio-management-migration`; the directories keep their `-service-with-rust` names.
 - The UI wraps one table component (`DataTable`) and Lily widgets (`@lilydesignsystem/*`); there is no SVAR.
   Computed styles use Svelte's `style:` directive, never a `style="…"` attribute (the CSP blocks those).
-- `axum-test` and `jsonwebtoken` follow `loco-rs`; do not bump them alone. `dtolnay/rust-toolchain` is pinned by commit SHA and
+- `axum-test` follows `axa`, and `jsonwebtoken` stays at the version the Keycloak and OIDC code was written against; do not bump them alone. `dtolnay/rust-toolchain` is pinned by commit SHA and
   given an explicit `toolchain:` input; bump both by hand together with `rust-toolchain.toml` (the `fresh-clone` job checks they agree).
 - Releases: a `v*.*.*` tag must equal the service crate and UI versions; the workflow pushes an image to GHCR.
 - Use Podman (`podman compose`), not Docker, in instructions and scripts. CI still builds with Docker.
-- The service binary is started with `cargo run -- start` (and `cargo run -- task <name>`); there is no `cargo loco`
-  subcommand installed here.
+- The service binary is started with `cargo run -- start` (and `cargo run -- task <name>`); there is no
+  framework subcommand.
 - The bridge to the workforce service (WPM) is entity spec §8.5a and service spec §9.10a; it is off (stub mode)
   until `PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` is set, and every call carries the caller's own token.
   Walk-through: [`operations/wpm-bridge.md`](operations/wpm-bridge.md).

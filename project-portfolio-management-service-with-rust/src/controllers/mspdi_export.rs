@@ -9,9 +9,9 @@
 use super::db_err;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use axa::error::ErrorDetail;
+use axa::prelude::*;
 use axum::http::{StatusCode, header};
-use loco_rs::controller::ErrorDetail;
-use loco_rs::prelude::*;
 use uuid::Uuid;
 
 use super::governance::find_item;

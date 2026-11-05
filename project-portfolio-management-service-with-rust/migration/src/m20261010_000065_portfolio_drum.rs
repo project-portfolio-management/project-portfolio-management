@@ -2,7 +2,7 @@
 //! append-only, the latest row wins, and a row with no pool means the naming was cleared (the drum is then
 //! the most overloaded pool). No person is stored (the audit trail names who).
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

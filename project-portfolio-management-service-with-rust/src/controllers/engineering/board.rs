@@ -2,7 +2,7 @@
 
 use crate::auth::MaybeAuthUser;
 use crate::engineering as rules;
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
@@ -454,7 +454,7 @@ pub(crate) fn enforce_move_roles(
     crate::workflow::may_transition_as(workflow, from, to, roles).map_err(|denied| {
         Error::CustomError(
             axum::http::StatusCode::FORBIDDEN,
-            loco_rs::controller::ErrorDetail::new(
+            axa::error::ErrorDetail::new(
                 "forbidden",
                 format!(
                     "moving `{from}` -> `{to}` is restricted to the role(s): {}",

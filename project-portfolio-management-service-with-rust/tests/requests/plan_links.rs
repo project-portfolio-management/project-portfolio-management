@@ -3,14 +3,14 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use loco_rs::testing::prelude::*;
+use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_plan_links_out_safely_and_never_to_a_script_or_file() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -88,7 +88,7 @@ async fn a_plan_links_out_safely_and_never_to_a_script_or_file() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_plan_links_into_jira_trello_asana_linear_and_monday() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -153,7 +153,7 @@ async fn a_plan_links_into_jira_trello_asana_linear_and_monday() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 async fn a_task_links_to_its_issue_without_touching_the_plans_own_links() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

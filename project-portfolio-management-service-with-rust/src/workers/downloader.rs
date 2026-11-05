@@ -1,15 +1,15 @@
-//! Background worker scaffold (loco `BackgroundWorker`).
+//! Background worker scaffold (an axa `BackgroundWorker`).
 //!
-//! A placeholder async job carried over from the loco template; not yet
+//! A placeholder async job carried over from the original template; not yet
 //! wired to real work. Kept so the queue registration in
 //! [`crate::app`] has a concrete worker to register.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// Background worker that performs asynchronous download-style jobs.
 pub struct DownloadWorker {
-    /// The shared loco application context (database, queue, config).
+    /// The shared application context (database, queue, config).
     pub ctx: AppContext,
 }
 

@@ -1,6 +1,6 @@
 //! Migration: **break-glass access** (RG-10). A named, eligible person may open a private plan for a limited time by stating a reason; a second person is told at once; every use is audited. A grant makes the grantee a temporary member for *visibility* only (what they may do still depends on their attributes) and ends at `expires_at` or when it is revoked. Rows are never deleted.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

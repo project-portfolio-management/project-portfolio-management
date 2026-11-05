@@ -2,7 +2,7 @@
 //! window (DP-3).
 //!
 //! ```text
-//! cargo loco task exception_breaches
+//! cargo run -- task exception_breaches
 //! ```
 //!
 //! Schedule it every few minutes (cron, a Kubernetes `CronJob`). Each breach is notified **once**
@@ -10,8 +10,8 @@
 //! the notice goes through the ordinary notification inbox and its sinks. Breaches also show in the pack
 //! and in `GET /api/exceptions?breached=true` whether or not this task runs.
 
+use axa::prelude::*;
 use chrono::Utc;
-use loco_rs::prelude::*;
 use sea_orm::QueryOrder;
 
 use crate::delivery_confidence as rules;
@@ -75,7 +75,7 @@ pub async fn run_once(ctx: &AppContext, now: chrono::DateTime<Utc>) -> Result<us
 
 #[async_trait]
 impl Task for ExceptionBreaches {
-    /// Task metadata for the loco CLI.
+    /// Task metadata for the command line.
     fn task(&self) -> TaskInfo {
         TaskInfo {
             name: "exception_breaches".to_string(),

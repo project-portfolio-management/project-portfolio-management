@@ -9,7 +9,7 @@
 //! * `GET …/{mid}/pdf`: the meeting as a PDF, from what the JSON shows and no more;
 //! * `GET /api/plans/{pid}/references?kind=&pid=`: the meetings and lessons that point at one record of the plan (BR-4).
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{ConnectionTrait, DatabaseBackend, QueryOrder, Statement};
 use serde::Deserialize;
 use serde_json::json;

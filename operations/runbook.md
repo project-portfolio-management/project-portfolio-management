@@ -25,7 +25,7 @@ The start-up gate prints a message beginning `refusing to start:`. Do what it sa
 
 | Message | Cause | Fix |
 |---|---|---|
-| `authentication enforcement is off in the production environment` | `REQUIRE_AUTH=false` (or `settings.require_auth: false`) under `LOCO_ENV=production` | remove the opt-out; production never runs anonymously |
+| `authentication enforcement is off in the production environment` | `REQUIRE_AUTH=false` under `APP_ENV=production` | remove the opt-out; production never runs anonymously |
 | `authentication enforcement is on but no token verifier is configured` | no `PASETO_KEYS`, `PASETO_KEYS_URL` or Keycloak settings | set one (see [Deployment](deployment.md)) |
 | `PoolTimedOut` / `Conn` | the database is unreachable or the URL is wrong | check `DATABASE_URL`, the database, the network |
 | YAML or `Tera` errors naming a config file | a malformed config or a missing required variable (`DATABASE_URL`) | read the line; `doctor --config` |

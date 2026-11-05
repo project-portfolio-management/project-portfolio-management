@@ -1,6 +1,6 @@
 //! Migration: **`custom_field_values`**. The values of custom fields, one row per (subject, field key). A separate table, not the plan payload: a custom value can never reach the matcher (the matchable / operational partition holds by construction).
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `custom_field_values` migration (name derived from the module).

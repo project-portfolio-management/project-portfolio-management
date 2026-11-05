@@ -10,7 +10,7 @@ spec §16 once that crate is scaffolded.
   inverse-inconsistent relationship, and a malformed `in_language` —
   matching the family convention (person / place / care-pathway
   services resolved this to `422`). `400` stays for malformed bodies
-  (loco JSON rejection). (Lean: `422`; feeds T-3 / T-9.)
+  (JSON rejection). (Lean: `422`; feeds T-3 / T-9.)
 - **OQ-2 — Duplicate-check scale strategy.** `check-duplicates` (and
   the create-time `409`, FR-11a) will scan a capped set of stored plan
   rows in memory at first. At portfolio volumes: search-based blocking

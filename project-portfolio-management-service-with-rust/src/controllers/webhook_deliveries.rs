@@ -6,7 +6,7 @@
 //!   target, from the event the outbox still holds. The event id is the same; the delivery id is new; a new log row
 //!   records the outcome. The audit row is written **first**, so a redelivery that cannot be audited does not happen.
 
-use loco_rs::prelude::*;
+use axa::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use serde_json::json;
@@ -111,7 +111,7 @@ async fn redeliver(
     let signature = mac::tag(Domain::Webhook, &request.body).ok_or_else(|| {
         Error::CustomError(
             axum::http::StatusCode::SERVICE_UNAVAILABLE,
-            loco_rs::controller::ErrorDetail::new(
+            axa::error::ErrorDetail::new(
                 "signing_unavailable",
                 "no integrity key is active, so an unsigned delivery will not be sent",
             ),

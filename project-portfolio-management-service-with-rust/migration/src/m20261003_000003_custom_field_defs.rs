@@ -1,6 +1,6 @@
 //! Migration: **`custom_field_defs`**. Admin-declared, typed custom fields for plans and tasks (RM-1). A definition is soft-deleted, never dropped: values already stored stay readable.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The `custom_field_defs` migration (name derived from the module).

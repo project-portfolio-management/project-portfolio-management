@@ -2,7 +2,7 @@
 //! classification and an optional KPI. Validations are append-only: the one exception is blanking the
 //! validator when a data subject is pseudonymised.
 
-use loco_rs::schema::{create_table, drop_table, ColType};
+use axa::schema::{create_table, drop_table, ColType};
 use sea_orm_migration::prelude::*;
 
 /// The migration (name derived from the module).

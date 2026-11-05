@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-3: role permissions and plan role membership)
+
+- A role now carries permissions (`issue_add`, `issue_edit`, `issue_move`, `issue_delete`), and an administrator can give a person
+  one or more roles on a plan, which combine, as in Redmine. Once a plan has a member, issue actions there need the permission.
+  A plan with no members behaves as before, and no role starts with a permission, so upgrading changes nothing.
+- A role held on a plan counts for that plan's role-restricted moves, on issues and on tasks.
+- The token stays the ceiling: a role cannot lift a read-only token, open a private plan or make anyone an administrator.
+- Not done: administrators alone manage membership; permissions cover issue actions only; groups cannot hold a role; an issue raised
+  from a control action is not checked. The interface for this comes with OC-7. Not verified: a real identity provider's tokens;
+  the tests use signed test tokens.
+
 ### 5 November (OC-2: the status filter confirms no hidden word)
 
 - `?status=` no longer tells a caller whether a private plan's workflow declares a word: such a word now gets the same `422` as

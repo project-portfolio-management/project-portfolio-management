@@ -12855,7 +12855,7 @@
     },
     "/api/organization-roles": {
       "get": {
-        "description": "`GET /api/organization-roles` — the role names this deployment recognizes, in order.",
+        "description": "`GET /api/organization-roles` — the roles this deployment recognizes, with what each allows, in order.",
         "parameters": [
           {
             "description": "Page size: default and ceiling 500",
@@ -12903,13 +12903,13 @@
             }
           }
         },
-        "summary": "`GET /api/organization-roles` — the role names this deployment recognizes, in order",
+        "summary": "`GET /api/organization-roles` — the roles this deployment recognizes, with what each allows, in order",
         "tags": [
           "issue_configuration"
         ]
       },
       "post": {
-        "description": "`POST /api/organization-roles` — name a role (an administrator). It grants nothing; `409` if the key is taken.",
+        "description": "`POST /api/organization-roles` — add a role (an administrator). `409` if the key is taken.",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -12930,6 +12930,14 @@
                   "label": {
                     "description": "Name shown to people.",
                     "type": "string"
+                  },
+                  "permissions": {
+                    "default": [],
+                    "description": "What the role allows on a plan with role members: `issue_add`, `issue_edit`, `issue_move`, `issue_delete`.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   "position": {
                     "default": 0,
@@ -12953,7 +12961,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "`POST /api/organization-roles` — name a role (an administrator)",
+        "summary": "`POST /api/organization-roles` — add a role (an administrator)",
         "tags": [
           "issue_configuration"
         ]
@@ -12988,6 +12996,15 @@
                     "description": "Name shown to people.",
                     "type": "string"
                   },
+                  "permissions": {
+                    "default": null,
+                    "description": "What the role allows on a plan with role members; absent keeps it.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
                   "position": {
                     "default": null,
                     "description": "Order in lists, lowest first; absent keeps it.",
@@ -12997,7 +13014,7 @@
                   },
                   "retired": {
                     "default": null,
-                    "description": "`true` retires it (no new workflow rule can name it; rules that already do keep working), `false` restores it;\nabsent keeps it.",
+                    "description": "`true` retires it (no new workflow rule can name it, it carries no permissions, and holding it on a plan counts for\nnothing; a gate a token's role already satisfies keeps working), `false` restores it; absent keeps it.",
                     "nullable": true,
                     "type": "boolean"
                   }
@@ -21320,7 +21337,7 @@
     },
     "/api/plans/{pid}/issues/options": {
       "get": {
-        "description": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's roles, so a form can leave out a move the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name.",
+        "description": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name.",
         "parameters": [
           {
             "in": "path",
@@ -21336,7 +21353,7 @@
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's roles, so a form can leave out a move the service would refuse",
+        "summary": "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's standing on the plan, so a form can leave out what the service would refuse",
         "tags": [
           "issue_configuration"
         ]
@@ -24679,6 +24696,109 @@
         "summary": "`POST /api/plans/{pid}/risks/{risk_pid}/escalate` — a materialized risk: status → `materialized`, stamped",
         "tags": [
           "governance"
+        ]
+      }
+    },
+    "/api/plans/{pid}/role-members": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/role-members` — who holds which role here, and whether the plan is enforced.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/role-members` — who holds which role here, and whether the plan is enforced",
+        "tags": [
+          "plan_roles"
+        ]
+      },
+      "post": {
+        "description": "`POST /api/plans/{pid}/role-members` — give someone a role on this plan (an administrator). The plan's first member turns enforcement on, so everyone else who can write loses issue actions here. `409` if they already hold it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST /api/plans/{pid}/role-members` body.",
+                "properties": {
+                  "person_ref": {
+                    "description": "The person's user id, as their token's subject carries it.",
+                    "type": "string"
+                  },
+                  "role_key": {
+                    "description": "A role in `/api/organization-roles` that is not retired.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "person_ref",
+                  "role_key"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`POST /api/plans/{pid}/role-members` — give someone a role on this plan (an administrator)",
+        "tags": [
+          "plan_roles"
+        ]
+      }
+    },
+    "/api/plans/{pid}/role-members/{member_pid}": {
+      "delete": {
+        "description": "`DELETE /api/plans/{pid}/role-members/{member_pid}` — take a role away (an administrator). Removing the plan's last member turns enforcement off. The audit row keeps who held it.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "member_pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`DELETE /api/plans/{pid}/role-members/{member_pid}` — take a role away (an administrator)",
+        "tags": [
+          "plan_roles"
         ]
       }
     },

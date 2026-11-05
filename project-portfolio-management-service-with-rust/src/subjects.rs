@@ -164,6 +164,8 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("break_glass_grants", "revoked_by"),
     ("issues", "owner_ref"),
     ("issues", "raised_by"),
+    ("plan_role_members", "person_ref"),
+    ("plan_role_members", "added_by"),
     ("framework_versions", "created_by"),
 ];
 

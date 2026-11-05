@@ -1,6 +1,6 @@
 //! Organization-defined issue types, statuses and roles (OC-1), end to end with real PASETO identities. These are the
 //! properties the feature must hold: who can change the catalogues and workflows (an administrator, `403` otherwise);
-//! that a role in the catalogue **grants nothing**; that a custom status counts by its category, never its name; that a
+//! that a role **only ever narrows** what a token allows; that a custom status counts by its category, never its name; that a
 //! workflow can differ by issue type and restrict a move to a role, as Redmine's matrix does; that a retired type stays
 //! valid on the issues that carry it; and that a plan with nothing configured behaves as before.
 //!
@@ -84,6 +84,7 @@ async fn clean(ctx: &AppContext) {
     ctx.db
         .execute_unprepared(
             "DELETE FROM workflows WHERE applies_to = 'issue';
+             DELETE FROM plan_role_members;
              DELETE FROM organization_roles;
              DELETE FROM issues WHERE kind NOT IN
                  ('bug', 'risk', 'blocker', 'question', 'improvement', 'concern');
@@ -214,7 +215,7 @@ async fn only_an_administrator_changes_the_catalogues_and_issue_workflows() {
 #[tokio::test]
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (config/test.yaml)"]
-async fn a_role_in_the_catalogue_grants_nothing() {
+async fn a_role_makes_nobody_an_administrator() {
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -879,6 +880,341 @@ async fn a_status_filter_confirms_no_word_only_a_hidden_plan_uses() {
             .add_header(admin.0.clone(), admin.1.clone())
             .await;
         assert_eq!(elsewhere.status_code(), 422);
+    })
+    .await;
+}
+
+/// Sends `body` to `path` as `who`, and returns the status.
+async fn put_status(
+    request: &axum_test::TestServer,
+    who: &Header,
+    path: &str,
+    body: &Value,
+) -> u16 {
+    request
+        .put(path)
+        .add_header(who.0.clone(), who.1.clone())
+        .json(body)
+        .await
+        .status_code()
+        .as_u16()
+}
+
+async fn add_member(
+    request: &axum_test::TestServer,
+    admin: &Header,
+    plan: &str,
+    person: &str,
+    role: &str,
+) -> Value {
+    let added = request
+        .post(&format!("/api/plans/{plan}/role-members"))
+        .add_header(admin.0.clone(), admin.1.clone())
+        .json(&json!({ "person_ref": person, "role_key": role }))
+        .await;
+    assert_eq!(added.status_code(), 201, "{}", added.text());
+    added.json()
+}
+
+async fn add_role(
+    request: &axum_test::TestServer,
+    admin: &Header,
+    key: &str,
+    permissions: &[&str],
+) {
+    let added = request
+        .post("/api/organization-roles")
+        .add_header(admin.0.clone(), admin.1.clone())
+        .json(&json!({ "key": key, "label": key, "permissions": permissions }))
+        .await;
+    assert_eq!(added.status_code(), 201, "{}", added.text());
+}
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn roles_on_a_plan_decide_what_its_members_may_do_to_issues() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let member = bearer(&kid, WRITER, &[("access", "write")]);
+        let other = bearer(&kid, MANAGER, &[("access", "write")]);
+        add_role(&request, &admin, "triager", &["issue_add", "issue_edit"]).await;
+        add_role(&request, &admin, "closer", &["issue_move"]).await;
+        let plan = new_plan(&request, &admin, "Governed").await;
+        let free = new_plan(&request, &admin, "Ungoverned").await;
+        let issues = format!("/api/plans/{plan}/issues");
+
+        // A word outside the vocabulary is refused, and a role takes its permissions from the catalogue.
+        let bad = request
+            .post("/api/organization-roles")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "key": "wizard", "label": "Wizard", "permissions": ["fly"] }))
+            .await;
+        assert_eq!(bad.status_code(), 422, "{}", bad.text());
+
+        // With no members nothing is enforced, so this is everyone's plan as it always was.
+        let before: Value = request
+            .post(&issues)
+            .add_header(other.0.clone(), other.1.clone())
+            .json(&json!({ "title": "Before members" }))
+            .await
+            .json();
+        let issue = format!("{issues}/{}", before["pid"].as_str().expect("pid"));
+
+        // Only an administrator changes membership.
+        let refused = request
+            .post(&format!("/api/plans/{plan}/role-members"))
+            .add_header(member.0.clone(), member.1.clone())
+            .json(&json!({ "person_ref": WRITER, "role_key": "triager" }))
+            .await;
+        assert_eq!(refused.status_code(), 403);
+
+        // The first member turns enforcement on: the person with no role keeps reading and loses the writes.
+        let held = add_member(&request, &admin, &plan, WRITER, "triager").await;
+        let again = request
+            .post(&format!("/api/plans/{plan}/role-members"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "person_ref": WRITER, "role_key": "triager" }))
+            .await;
+        assert_eq!(again.status_code(), 409);
+        for bad in [
+            json!({ "person_ref": "not-a-uuid", "role_key": "triager" }),
+            json!({ "person_ref": MANAGER, "role_key": "nobody" }),
+        ] {
+            let refused = request
+                .post(&format!("/api/plans/{plan}/role-members"))
+                .add_header(admin.0.clone(), admin.1.clone())
+                .json(&bad)
+                .await;
+            assert_eq!(refused.status_code(), 422, "{bad}");
+        }
+        let read = request
+            .get(&issues)
+            .add_header(other.0.clone(), other.1.clone())
+            .await;
+        assert_eq!(read.status_code(), 200);
+        let refused = request
+            .post(&issues)
+            .add_header(other.0.clone(), other.1.clone())
+            .json(&json!({ "title": "No role" }))
+            .await;
+        assert_eq!(refused.status_code(), 403, "{}", refused.text());
+        assert_eq!(
+            put_status(&request, &other, &issue, &json!({ "title": "Changed" })).await,
+            403
+        );
+        let refused = request
+            .delete(&issue)
+            .add_header(other.0.clone(), other.1.clone())
+            .await;
+        assert_eq!(refused.status_code(), 403);
+        // Another plan is not affected.
+        let elsewhere = request
+            .post(&format!("/api/plans/{free}/issues"))
+            .add_header(other.0.clone(), other.1.clone())
+            .json(&json!({ "title": "Free" }))
+            .await;
+        assert_eq!(elsewhere.status_code(), 200);
+
+        // The role's permissions, and no others.
+        assert_eq!(
+            put_status(&request, &member, &issue, &json!({ "title": "Edited" })).await,
+            200
+        );
+        let body = json!({ "title": "Edited", "status": "in_progress" });
+        assert_eq!(put_status(&request, &member, &issue, &body).await, 403);
+        let refused = request
+            .delete(&issue)
+            .add_header(member.0.clone(), member.1.clone())
+            .await;
+        assert_eq!(refused.status_code(), 403);
+
+        // Several roles combine, and the options say what the form may offer.
+        add_member(&request, &admin, &plan, WRITER, "closer").await;
+        assert_eq!(put_status(&request, &member, &issue, &body).await, 200);
+        let options: Value = request
+            .get(&format!("{issues}/options"))
+            .add_header(member.0.clone(), member.1.clone())
+            .await
+            .json();
+        assert_eq!(options["enforced"], true);
+        assert_eq!(
+            options["caller_permissions"],
+            json!(["issue_add", "issue_edit", "issue_move"])
+        );
+        assert_eq!(options["caller_roles"], json!(["closer", "triager"]));
+
+        // A role carried by the token counts too, and an administrator passes without one.
+        let carried = bearer(&kid, MANAGER, &[("access", "write"), ("role", "triager")]);
+        let raised = request
+            .post(&issues)
+            .add_header(carried.0.clone(), carried.1.clone())
+            .json(&json!({ "title": "By token role" }))
+            .await;
+        assert_eq!(raised.status_code(), 200, "{}", raised.text());
+        let by_admin = request
+            .post(&issues)
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "title": "By administrator" }))
+            .await;
+        assert_eq!(by_admin.status_code(), 200);
+
+        // **The token stays the ceiling:** a member with a read-only token still cannot write.
+        let read_only = bearer(&kid, WRITER, &[("access", "read")]);
+        let refused = request
+            .post(&issues)
+            .add_header(read_only.0.clone(), read_only.1.clone())
+            .json(&json!({ "title": "Read only" }))
+            .await;
+        assert_eq!(refused.status_code(), 403, "{}", refused.text());
+
+        // A retired role carries nothing, on the plan or in a token.
+        let retired = put_status(
+            &request,
+            &admin,
+            "/api/organization-roles/triager",
+            &json!({ "label": "triager", "retired": true }),
+        )
+        .await;
+        assert_eq!(retired, 200);
+        assert_eq!(
+            put_status(
+                &request,
+                &member,
+                &issue,
+                &json!({ "title": "Too late", "status": "in_progress" })
+            )
+            .await,
+            403
+        );
+        let refused = request
+            .post(&issues)
+            .add_header(carried.0.clone(), carried.1.clone())
+            .json(&json!({ "title": "Retired" }))
+            .await;
+        assert_eq!(refused.status_code(), 403);
+        let restored = put_status(
+            &request,
+            &admin,
+            "/api/organization-roles/triager",
+            &json!({ "label": "triager", "retired": false }),
+        )
+        .await;
+        assert_eq!(restored, 200);
+
+        // Removing the last member turns enforcement off again, and both changes are in the audit trail.
+        let listed: Value = request
+            .get(&format!("/api/plans/{plan}/role-members"))
+            .add_header(other.0.clone(), other.1.clone())
+            .await
+            .json();
+        assert_eq!(listed["enforced"], true);
+        assert_eq!(listed["members"].as_array().map(Vec::len), Some(2));
+        for m in listed["members"].as_array().expect("members") {
+            let path = format!(
+                "/api/plans/{plan}/role-members/{}",
+                m["pid"].as_str().expect("pid")
+            );
+            let refused = request
+                .delete(&path)
+                .add_header(member.0.clone(), member.1.clone())
+                .await;
+            assert_eq!(refused.status_code(), 403);
+            let gone = request
+                .delete(&path)
+                .add_header(admin.0.clone(), admin.1.clone())
+                .await;
+            assert_eq!(gone.status_code(), 200);
+        }
+        let open_again = request
+            .post(&issues)
+            .add_header(other.0.clone(), other.1.clone())
+            .json(&json!({ "title": "Open again" }))
+            .await;
+        assert_eq!(open_again.status_code(), 200);
+        let audit: Value = request
+            .get(&format!("/api/plans/{plan}/audit"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await
+            .json();
+        let text = audit.to_string();
+        assert!(text.contains("plan_role_added"), "{text}");
+        assert!(text.contains("plan_role_removed"), "{text}");
+        assert!(held["added_by"] == ADMIN, "{held}");
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_role_held_on_one_plan_opens_that_plans_gates_and_no_others_and_no_private_plan() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let member = bearer(&kid, WRITER, &[("access", "write")]);
+        add_role(&request, &admin, "change-manager", &["issue_move"]).await;
+        let gated = new_plan(&request, &admin, "Gated").await;
+        let elsewhere = new_plan(&request, &admin, "Gated elsewhere").await;
+        let hidden = new_plan(&request, &admin, "Hidden").await;
+        let made = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&triage_workflow("Everywhere", None, None))
+            .await;
+        assert_eq!(made.status_code(), 200, "{}", made.text());
+
+        // Walks an issue up to the gate, as an administrator.
+        let mut paths = Vec::new();
+        for plan in [&gated, &elsewhere] {
+            let issues = format!("/api/plans/{plan}/issues");
+            let raised: Value = request
+                .post(&issues)
+                .add_header(admin.0.clone(), admin.1.clone())
+                .json(&json!({ "title": "Gate" }))
+                .await
+                .json();
+            let path = format!("{issues}/{}", raised["pid"].as_str().expect("pid"));
+            for status in ["with_supplier", "fixed"] {
+                let body = json!({ "title": "Gate", "status": status });
+                assert_eq!(put_status(&request, &admin, &path, &body).await, 200);
+            }
+            paths.push(path);
+        }
+        add_member(&request, &admin, &gated, WRITER, "change-manager").await;
+        let close = json!({ "title": "Gate", "status": "signed_off", "resolution": "Done" });
+        assert_eq!(put_status(&request, &member, &paths[0], &close).await, 200);
+        assert_eq!(
+            put_status(&request, &member, &paths[1], &close).await,
+            403,
+            "the role is held on the other plan only"
+        );
+
+        // A role does not open a private plan, so a membership there is refused rather than left to do nothing.
+        let private = put_status(
+            &request,
+            &admin,
+            &format!("/api/plans/{hidden}/access"),
+            &json!({ "private": true, "members": [] }),
+        )
+        .await;
+        assert_eq!(private, 200);
+        let refused = request
+            .post(&format!("/api/plans/{hidden}/role-members"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "person_ref": WRITER, "role_key": "change-manager" }))
+            .await;
+        assert_eq!(refused.status_code(), 422, "{}", refused.text());
+        let unseen = request
+            .get(&format!("/api/plans/{hidden}/role-members"))
+            .add_header(member.0.clone(), member.1.clone())
+            .await;
+        assert_eq!(unseen.status_code(), 404);
     })
     .await;
 }

@@ -433,20 +433,16 @@ pub(super) async fn update_task(
 }
 
 /// RM-2: a move may be restricted to named roles. Like the other refusals
-/// in the move path this writes **no** transition row. The caller's roles
-/// are the token's `role` attribute (a vocabulary the deployment declares, as
-/// with `view`); a caller with none holds no role.
+/// in the move path this writes **no** transition row. `roles` are the token's
+/// `role` attribute (a vocabulary the deployment declares, as with `view`) and
+/// any held on the plan (OC-3); a caller with none holds no role.
 pub(crate) fn enforce_move_roles(
     workflow: &crate::workflow::WorkflowDef,
     from: &str,
     to: &str,
-    caller: &MaybeAuthUser,
+    roles: &[String],
 ) -> Result<()> {
-    let roles = caller
-        .claims()
-        .and_then(|c| c.attrs.get("role").cloned())
-        .unwrap_or_default();
-    crate::workflow::may_transition_as(workflow, from, to, &roles).map_err(|denied| {
+    crate::workflow::may_transition_as(workflow, from, to, roles).map_err(|denied| {
         Error::CustomError(
             axum::http::StatusCode::FORBIDDEN,
             loco_rs::controller::ErrorDetail::new(
@@ -558,7 +554,8 @@ pub(super) async fn move_task(
             task.status, payload.status
         )));
     }
-    enforce_move_roles(&workflow, &task.status, &payload.status, &caller)?;
+    let standing = super::super::plan_roles::standing(&ctx, &caller, item.pid).await?;
+    enforce_move_roles(&workflow, &task.status, &payload.status, &standing.roles)?;
     // LT-10: a task cannot be finished while a `blocks` relation's blocker is open.
     if crate::workflow::is_done(&workflow, &payload.status) {
         super::super::task_relations::ensure_not_blocked(&ctx, task.pid).await?;

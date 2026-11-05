@@ -432,6 +432,7 @@ pub mod pdf;
 pub mod people_impact;
 pub mod plan_access;
 pub mod plan_links;
+pub mod plan_roles;
 pub mod plan_templates;
 pub mod planner;
 pub mod portfolio_resources;

@@ -316,8 +316,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/onboarding/templates", "onboarding", "`GET /api/onboarding/templates` — the checklist for each kind (custom or built-in)."),
     ("delete", "/api/onboarding/templates/{kind}", "onboarding", "`DELETE /api/onboarding/templates/{kind}` — go back to the built-in checklist."),
     ("put", "/api/onboarding/templates/{kind}", "onboarding", "`PUT /api/onboarding/templates/{kind}` — replace a kind's checklist."),
-    ("get", "/api/organization-roles", "issue_configuration", "`GET /api/organization-roles` — the role names this deployment recognizes, in order."),
-    ("post", "/api/organization-roles", "issue_configuration", "`POST /api/organization-roles` — name a role (an administrator). It grants nothing; `409` if the key is taken."),
+    ("get", "/api/organization-roles", "issue_configuration", "`GET /api/organization-roles` — the roles this deployment recognizes, with what each allows, in order."),
+    ("post", "/api/organization-roles", "issue_configuration", "`POST /api/organization-roles` — add a role (an administrator). `409` if the key is taken."),
     ("put", "/api/organization-roles/{key}", "issue_configuration", "`PUT /api/organization-roles/{key}` — rename, reorder, retire or restore a role (an administrator)."),
     ("get", "/api/organizations", "organizations", "`GET /api/organizations`"),
     ("post", "/api/organizations", "organizations", "`POST /api/organizations`"),
@@ -486,7 +486,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plans/{pid}/issues", "issues", "`POST /api/plans/{pid}/issues` — raise an issue."),
     ("post", "/api/plans/{pid}/issues/from-risk/{risk_pid}", "issues", "`POST /api/plans/{pid}/issues/from-risk/{risk_pid}` — raise an issue from a risk that has happened. The risk is never changed. One open issue per risk (`409`)."),
     ("post", "/api/plans/{pid}/issues/from-task/{task_pid}", "issues", "`POST /api/plans/{pid}/issues/from-task/{task_pid}` — raise a blocker issue from a blocked task (`422` if the task is not blocked). The task is never changed. One open issue per task (`409`)."),
-    ("get", "/api/plans/{pid}/issues/options", "issue_configuration", "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's roles, so a form can leave out a move the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name."),
+    ("get", "/api/plans/{pid}/issues/options", "issue_configuration", "`GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Retired types are included, marked, so an issue that carries one can still show its name."),
     ("delete", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`DELETE /api/plans/{pid}/issues/{issue_pid}` — remove an issue (soft delete, audited)."),
     ("get", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`GET /api/plans/{pid}/issues/{issue_pid}` — one issue."),
     ("put", "/api/plans/{pid}/issues/{issue_pid}", "issues", "`PUT /api/plans/{pid}/issues/{issue_pid}` — replace the fields of an issue."),
@@ -548,6 +548,9 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("put", "/api/plans/{pid}/risks/{r_pid}/schedule-impact", "schedule_risk", "`PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact` — make a register risk a schedule event: which task, how many business days, how likely. Any field left out stays unset, and a risk missing one is skipped (and named) by the simulation."),
     ("put", "/api/plans/{pid}/risks/{risk_pid}", "governance", "`PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`."),
     ("post", "/api/plans/{pid}/risks/{risk_pid}/escalate", "governance", "`POST /api/plans/{pid}/risks/{risk_pid}/escalate` — a materialized risk: status → `materialized`, stamped. (Conversion into a tracked issue arrives with the issues sub-resource.)"),
+    ("get", "/api/plans/{pid}/role-members", "plan_roles", "`GET /api/plans/{pid}/role-members` — who holds which role here, and whether the plan is enforced."),
+    ("post", "/api/plans/{pid}/role-members", "plan_roles", "`POST /api/plans/{pid}/role-members` — give someone a role on this plan (an administrator). The plan's first member turns enforcement on, so everyone else who can write loses issue actions here. `409` if they already hold it."),
+    ("delete", "/api/plans/{pid}/role-members/{member_pid}", "plan_roles", "`DELETE /api/plans/{pid}/role-members/{member_pid}` — take a role away (an administrator). Removing the plan's last member turns enforcement off. The audit row keeps who held it."),
     ("get", "/api/plans/{pid}/rollup", "tba", "`GET /api/plans/{pid}/rollup` — flow across a plan and everything it contains (spec §15 TBA-9; the `attrition` key is TBA-12).  **The aggregate is the union of the descendants' tasks, not the average of their ratios** — the same reasoning as §7.2: an average of ratios weights a five-task plan equally with a five-hundred-task one. The per-plan table is returned alongside, and for a portfolio it is usually the more useful half: a rollup mixes boards whose teams mean different things by `in_progress`, so *which child is different* is a firmer finding than the combined number. The response also carries an `attrition` record (TBA-12) — a named, ordered, parent-linked trail from the root plan through the walked subtree down to the finished/work-in-progress/not-started split, so the denominator behind `combined` is explained rather than left for the caller to reconstruct from `tree` by hand."),
     ("post", "/api/plans/{pid}/sandbox/commit", "sandbox", "`POST /api/plans/{pid}/sandbox/commit` — apply exactly the previewed edits."),
     ("post", "/api/plans/{pid}/sandbox/preview", "sandbox", "`POST /api/plans/{pid}/sandbox/preview` — what the edits would do. Writes nothing."),
@@ -960,6 +963,7 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/plans/{pid}/risks/{r_pid}/cost-impact", crate::controllers::cost_risk::CostImpactBody);
     body!("put", "/api/plans/{pid}/risks/{r_pid}/schedule-impact", crate::controllers::schedule_risk::ImpactBody);
     body!("put", "/api/plans/{pid}/risks/{risk_pid}", crate::controllers::governance::RiskUpdate);
+    body!("post", "/api/plans/{pid}/role-members", crate::controllers::plan_roles::NewMember);
     body!("post", "/api/plans/{pid}/sandbox/commit", crate::controllers::sandbox::EditsBody);
     body!("post", "/api/plans/{pid}/sandbox/preview", crate::controllers::sandbox::EditsBody);
     body!("post", "/api/plans/{pid}/satisfaction", crate::controllers::value::SatisfactionPayload);

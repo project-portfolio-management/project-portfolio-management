@@ -1,5 +1,5 @@
-//! `SeaORM` Entity — `organization_roles`. The role names a deployment recognizes (OC-1). **A role here grants
-//! nothing:** authority comes from the caller's token.
+//! `SeaORM` Entity — `organization_roles`. The roles a deployment recognizes (OC-1), and the issue actions each
+//! allows (OC-3). A role can only narrow what the caller's token already allows; see `crate::plan_roles`.
 
 #![expect(missing_docs)]
 
@@ -20,6 +20,8 @@ pub struct Model {
     pub key: String,
     pub label: String,
     pub description: Option<String>,
+    /// Permission names from `crate::plan_roles::PERMISSIONS`.
+    pub permissions: serde_json::Value,
     pub position: i32,
     pub retired_at: Option<DateTimeWithTimeZone>,
 }

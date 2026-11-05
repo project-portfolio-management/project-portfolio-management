@@ -330,13 +330,9 @@ fn initial(def: &crate::workflow::WorkflowDef) -> Placed {
 fn enforce_entry_roles(
     def: &crate::workflow::WorkflowDef,
     to: &str,
-    caller: &MaybeAuthUser,
+    roles: &[String],
 ) -> Result<()> {
-    let roles = caller
-        .claims()
-        .and_then(|c| c.attrs.get("role").cloned())
-        .unwrap_or_default();
-    crate::workflow::may_enter_as(def, to, &roles).map_err(|denied| {
+    crate::workflow::may_enter_as(def, to, roles).map_err(|denied| {
         super::forbidden(&format!(
             "entering `{to}` is restricted to the role(s): {}",
             denied.allowed.join(", ")
@@ -368,6 +364,28 @@ fn trimmed(s: Option<&String>) -> Option<String> {
     s.map(|v| v.trim().to_string()).filter(|v| !v.is_empty())
 }
 
+/// Whether a save changes anything but the status. A resolution belongs to the move that needs it, so it does not count
+/// as an edit when the status changes.
+fn edits_fields(
+    row: &issues::Model,
+    b: &Input,
+    kind: &str,
+    raised_on: NaiveDate,
+    moved: bool,
+) -> bool {
+    b.title.trim() != row.title
+        || trimmed(b.description.as_ref()) != row.description
+        || kind != row.kind
+        || b.severity != row.severity
+        || trimmed(b.priority.as_ref()) != row.priority
+        || trimmed(b.owner_ref.as_ref()) != row.owner_ref
+        || raised_on != row.raised_on
+        || b.due_date != row.due_date
+        || b.source_risk_pid != row.source_risk_pid
+        || b.source_task_pid != row.source_task_pid
+        || (!moved && trimmed(b.resolution.as_ref()) != row.resolution)
+}
+
 /// `POST /api/plans/{pid}/issues` — raise an issue.
 #[debug_handler]
 async fn create(
@@ -377,6 +395,8 @@ async fn create(
     Json(b): Json<Input>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
+    let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
+    super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_ADD])?;
     let now = today();
     let raised_on = b.raised_on.unwrap_or(now);
     let kind = b.kind.clone().unwrap_or_else(|| "concern".to_string());
@@ -465,7 +485,7 @@ fn placed_after_save(
     def: &crate::workflow::WorkflowDef,
     row: &issues::Model,
     wanted: &str,
-    caller: &MaybeAuthUser,
+    roles: &[String],
 ) -> Result<Placed> {
     if wanted == row.status {
         return Ok(Placed {
@@ -482,9 +502,9 @@ fn placed_after_save(
         )));
     }
     if def.states.iter().any(|s| s.key == row.status) {
-        super::engineering::enforce_move_roles(def, &row.status, wanted, caller)?;
+        super::engineering::enforce_move_roles(def, &row.status, wanted, roles)?;
     } else {
-        enforce_entry_roles(def, wanted, caller)?;
+        enforce_entry_roles(def, wanted, roles)?;
     }
     Ok(at)
 }
@@ -507,7 +527,14 @@ async fn update(
         check_type_change(&ctx, &caller, plan, &row.kind, &kind, &def).await?;
     }
     let wanted = b.status.clone().unwrap_or_else(|| row.status.clone());
-    let at = placed_after_save(&def, &row, &wanted, &caller)?;
+    let moved = wanted != row.status;
+    let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
+    let edited = edits_fields(&row, &b, &kind, raised_on, moved);
+    super::plan_roles::require(
+        &standing,
+        &crate::plan_roles::needed_for_save(moved, edited),
+    )?;
+    let at = placed_after_save(&def, &row, &wanted, &standing.roles)?;
     validate(&b, raised_on, at.needs_resolution)?;
     let was = serde_json::json!({
         "title": row.title, "kind": row.kind, "severity": row.severity, "status": row.status,
@@ -555,6 +582,8 @@ async fn remove(
     Path((plan, pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
+    let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
+    super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_DELETE])?;
     let row = find(&ctx, plan, &pid).await?;
     let pid = row.pid;
     let mut a: issues::ActiveModel = row.into();
@@ -781,6 +810,8 @@ async fn from_risk(
     Path((plan, risk_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
+    let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
+    super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_ADD])?;
     let risk_pid = super::parse_pid(&risk_pid)?;
     let risk = risks::Entity::find()
         .filter(risks::Column::Pid.eq(risk_pid))
@@ -820,6 +851,8 @@ async fn from_task(
     Path((plan, task_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
+    let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
+    super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_ADD])?;
     let task_pid = super::parse_pid(&task_pid)?;
     let task = tasks::Entity::find()
         .filter(tasks::Column::Pid.eq(task_pid))

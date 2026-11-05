@@ -2329,6 +2329,7 @@ mod tests {
             crate::controllers::announcements::routes(),
             crate::controllers::issues::routes(),
             crate::controllers::issue_configuration::routes(),
+            crate::controllers::plan_roles::routes(),
             crate::controllers::subjects::routes(),
             crate::controllers::access_review::routes(),
             crate::controllers::break_glass::routes(),

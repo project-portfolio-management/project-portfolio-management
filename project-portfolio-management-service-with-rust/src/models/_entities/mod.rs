@@ -108,6 +108,7 @@ pub mod plan_frameworks;
 pub mod plan_handling_marks;
 pub mod plan_links;
 pub mod plan_modules;
+pub mod plan_role_members;
 pub mod plan_status_cadences;
 pub mod plan_template_links;
 pub mod plan_templates;

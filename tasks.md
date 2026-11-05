@@ -2381,6 +2381,10 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   list accepts only what the caller has reason to know: built-ins, deployment-wide workflows, and statuses declared or carried on
   a plan they can read.
 
+- [x] **OC-3 (L) — Role permissions and plan role membership.** **Built 2026-11-05:** `organization_roles.permissions`,
+  `plan_role_members`, `/api/plans/{pid}/role-members`, enforcement on issue writes for a plan with members, and roles held on a
+  plan counting for its gates. The token stays the ceiling.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

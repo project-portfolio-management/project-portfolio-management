@@ -68,6 +68,7 @@ impl ActiveModelBehavior for announcements::ActiveModel {}
 impl ActiveModelBehavior for issues::ActiveModel {}
 impl ActiveModelBehavior for issue_types::ActiveModel {}
 impl ActiveModelBehavior for organization_roles::ActiveModel {}
+impl ActiveModelBehavior for plan_role_members::ActiveModel {}
 impl ActiveModelBehavior for change_requests::ActiveModel {}
 impl ActiveModelBehavior for change_request_risks::ActiveModel {}
 impl ActiveModelBehavior for plan_handling_marks::ActiveModel {}

@@ -10,7 +10,8 @@ configured, every issue behaves as it did before.
 | --- | --- | --- |
 | Tracker | Issue type | `issue_types`, `/api/issue-types` |
 | Issue status | A state of an issue workflow | `workflow_states`, `/api/workflows` |
-| Role | A role name | `organization_roles`, `/api/organization-roles` |
+| Role | A role and its permissions | `organization_roles`, `/api/organization-roles` |
+| Project member | A person's role on a plan | `plan_role_members`, `/api/plans/{pid}/role-members` |
 | Workflow matrix (role × tracker) | A workflow's transitions and their roles, with `workflows.issue_type` | `workflow_transitions`, `/api/workflows` |
 
 **Issue types.** `issues.kind` is a key in `issue_types`, enforced by a foreign key. The migration seeds the six built-in
@@ -28,7 +29,7 @@ for `closed`.
 workflow; the deployment default for the type; the deployment default; the built-in vocabulary. There is at most one in each
 scope (`409`, and unique indexes). A workflow's **allowed moves** apply as they do to tasks: none listed means any move, and
 once one is listed only listed moves are allowed (`422` otherwise). A move can be restricted to named roles (`403` otherwise),
-read from the token's `role` attribute, as for tasks (RM-2). An issue workflow must make `closed` terminal, and cannot start in
+read from the token's `role` attribute and the roles held on the plan, as for tasks (RM-2). An issue workflow must make `closed` terminal, and cannot start in
 a finished or terminal state (`422`). Where moves are constrained, a new issue must start in the initial
 state, so that nobody raises an issue past a gate.
 
@@ -43,19 +44,41 @@ issue workflow (withdrawn ones included), and any status declared or carried on 
 findable. Any other word is refused (`422`), so a typo is not answered with an empty list, and a word only a hidden plan uses
 gets the same answer as a word nobody uses (OC-2).
 
-## Roles grant nothing
+## What a role does (OC-3)
 
-This is the one rule here with a security consequence. **A role in `organization_roles` grants nothing, and the table is never
-read to decide what a caller may do.** Authority comes from the attributes in the caller's token. The catalogue names the
-roles a deployment recognizes, so that a transition cannot be restricted to a misspelt role, which would lock everyone out of
-that move. Once the catalogue has an entry, registering a workflow that names a role outside it, or a retired one, is refused
-(`422`). An empty catalogue checks nothing, so a deployment that has not defined roles is unchanged. Workflows already registered
-keep working. A test proves that holding a role named `admin` does not make someone an administrator.
+This is the part of the feature with a security consequence. Redmine's rule is the model: a role is a named set of permissions,
+each member holds one or more roles on a project, and a person's permissions are those of all their roles combined. The same
+person can hold different roles on different plans.
+
+**A role carries permissions.** `issue_add` raises an issue, by hand or from a risk or a blocked task. `issue_edit` changes its
+fields or type. `issue_move` changes its status, with the resolution that goes with that change. `issue_delete` removes it. The
+list is fixed; any other word is refused (`422`).
+
+**A plan chooses to be enforced.** A plan with no entries in `plan_role_members` behaves as it did before, so nothing changes for
+anyone until an administrator adds the first member. From then on, each of those actions on that plan needs the permission
+(`403`), from a role that is not retired, whether held on the plan or carried by the token's `role` attribute. Reading is not
+affected. A save that moves an issue and changes nothing else needs only `issue_move`; any other save needs `issue_edit`, and a
+save that does both needs both. Removing the plan's last member ends enforcement. An issue raised by the service's own paths on a
+control action is not checked, because the person is acting on the control.
+
+**The token stays the ceiling.** A write must pass the token's policy before any of this runs, so a role can only narrow what a
+caller may do. A role cannot make a read-only token write, cannot open a private plan, and cannot make anyone an administrator:
+that comes from `access=admin` alone, and a test proves that holding a role named `admin` gives nothing. A person cannot be given
+a role on a private plan until they are on its access list (`422`), because the membership would do nothing.
+
+**Roles open gates.** A role held on a plan counts, with the token's, for that plan's role-restricted moves, on issues and on
+tasks. It counts on that plan only. A retired role held on a plan counts for nothing. A gate satisfied by a role in the token keeps
+working, as it always has.
+
+**Naming a role.** The catalogue also names the roles a deployment recognizes, so that a transition cannot be restricted to a
+misspelt role, which would lock everyone out of that move. Once the catalogue has an entry, registering a workflow that names a
+role outside it, or a retired one, is refused (`422`). An empty catalogue checks nothing, so a deployment that has not defined
+roles is unchanged. Workflows already registered keep working.
 
 ## Who can change what
 
-Anyone signed in can read the catalogues. Only an administrator (`access=admin`) can change a catalogue, or register or
-withdraw an **issue** workflow, because that workflow decides who may move an issue. Every change is audited, and a workflow's
+Anyone signed in can read the catalogues, and anyone who can see a plan can read its role members. Only an administrator
+(`access=admin`) can change a catalogue or a plan's role members, or register or withdraw an **issue** workflow, because that workflow decides who may move an issue. Every change is audited, and a workflow's
 audit row carries its pid, type, plan and moves with their roles.
 
 Before this feature issue workflows did nothing, and anyone who could write could register one. **The migration withdraws
@@ -67,9 +90,10 @@ can be replaced by anyone who can write. That was already so and is left as it i
 ## The API
 
 `GET`, `POST /api/issue-types`; `PUT /api/issue-types/{key}`; `GET`, `POST /api/organization-roles`;
-`PUT /api/organization-roles/{key}`. The lists take `?include_retired=true`. `POST /api/workflows` takes `issue_type`.
+`PUT /api/organization-roles/{key}`, whose bodies take `permissions`; `GET`, `POST /api/plans/{pid}/role-members`;
+`DELETE /api/plans/{pid}/role-members/{member_pid}`. The lists take `?include_retired=true`. `POST /api/workflows` takes `issue_type`.
 `GET /api/plans/{pid}/issues/options` returns each type with the workflow in force for it on that plan, retired types marked,
-and the caller's roles, so a form can leave out a move the service would refuse. An issue's body takes `status` as optional: absent
+and the caller's roles, permissions and whether the plan is enforced, so a form can leave out what the service would refuse. An issue's body takes `status` as optional: absent
 means the workflow's initial state on a new issue and no change on an existing one. An issue's response adds `status_category`.
 
 ## The interface
@@ -81,7 +105,10 @@ as words (`with_supplier` reads "With supplier").
 
 ## Not built
 
-- Roles carry no permissions, and no per-project role membership. Redmine has both.
+- Only an administrator manages a plan's role members. Redmine also lets a project member with the permission do it.
+- Permissions cover issue actions only. Redmine's roles also govern queries, notes, watchers, relations and more, and can narrow
+  which issues a role sees. Here, what a person sees is decided by the plan's privacy alone.
+- No group of people can hold a role; each person is added.
 - No per-status or per-role field rules (Redmine's read-only and required fields).
 - Issue types are deployment-wide: no per-plan choice of types.
 - A plan's own issue workflow is registered through the API only.

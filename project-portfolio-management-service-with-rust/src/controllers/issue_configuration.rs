@@ -3,9 +3,10 @@
 //! An administrator changes the catalogues; anyone signed in can read them. Statuses are not here: an issue's statuses
 //! are the states of its workflow ([`super::workflow`]), which also says who may make each move.
 //!
-//! **A role in this catalogue grants nothing.** Authority still comes from the token's attributes, and this table is
-//! never consulted to decide what a caller may do. It only names the roles a deployment recognizes, so that a
-//! transition cannot be restricted to a misspelt one, which would lock everyone out of that move.
+//! **A role only ever narrows.** Its permissions decide what a caller may do to issues on a plan with role members, within
+//! what the token already allows (OC-3, [`crate::plan_roles`]); it never makes anyone an administrator. The catalogue also
+//! names the roles a deployment recognizes, so that a transition cannot be restricted to a misspelt one, which would lock
+//! everyone out of that move.
 //!
 //! Types and roles are retired, never deleted: an issue or a workflow that names one stays valid.
 
@@ -256,6 +257,9 @@ pub(crate) struct NewRole {
     /// What the role is for.
     #[serde(default)]
     description: Option<String>,
+    /// What the role allows on a plan with role members: `issue_add`, `issue_edit`, `issue_move`, `issue_delete`.
+    #[serde(default)]
+    permissions: Vec<String>,
     /// Order in lists, lowest first.
     #[serde(default)]
     position: i32,
@@ -269,11 +273,14 @@ pub(crate) struct ChangeRole {
     /// What the role is for.
     #[serde(default)]
     description: Option<String>,
+    /// What the role allows on a plan with role members; absent keeps it.
+    #[serde(default)]
+    permissions: Option<Vec<String>>,
     /// Order in lists, lowest first; absent keeps it.
     #[serde(default)]
     position: Option<i32>,
-    /// `true` retires it (no new workflow rule can name it; rules that already do keep working), `false` restores it;
-    /// absent keeps it.
+    /// `true` retires it (no new workflow rule can name it, it carries no permissions, and holding it on a plan counts for
+    /// nothing; a gate a token's role already satisfies keeps working), `false` restores it; absent keeps it.
     #[serde(default)]
     retired: Option<bool>,
 }
@@ -281,7 +288,7 @@ pub(crate) struct ChangeRole {
 /// JSON shape of one role.
 fn role_view(r: &organization_roles::Model) -> serde_json::Value {
     serde_json::json!({
-        "key": r.key, "label": r.label, "description": r.description,
+        "key": r.key, "label": r.label, "description": r.description, "permissions": r.permissions,
         "position": r.position, "retired": r.retired_at.is_some(),
     })
 }
@@ -300,7 +307,22 @@ fn usable_description(text: Option<&String>) -> Result<Option<String>> {
     Ok(text)
 }
 
-/// `GET /api/organization-roles` — the role names this deployment recognizes, in order.
+/// `422` unless every entry is a permission. Returns them deduplicated, in a stable order.
+fn usable_permissions(requested: &[String]) -> Result<Vec<String>> {
+    let unknown = crate::plan_roles::unknown_permissions(requested);
+    if !unknown.is_empty() {
+        return Err(unprocessable(&format!(
+            "not permissions: {unknown:?}; must be among {:?}",
+            crate::plan_roles::PERMISSIONS
+        )));
+    }
+    let mut kept = requested.to_vec();
+    kept.sort();
+    kept.dedup();
+    Ok(kept)
+}
+
+/// `GET /api/organization-roles` — the roles this deployment recognizes, with what each allows, in order.
 #[debug_handler]
 async fn list_roles(
     State(ctx): State<AppContext>,
@@ -319,7 +341,7 @@ async fn list_roles(
     format::json(rows.iter().map(role_view).collect::<Vec<_>>())
 }
 
-/// `POST /api/organization-roles` — name a role (an administrator). It grants nothing; `409` if the key is taken.
+/// `POST /api/organization-roles` — add a role (an administrator). `409` if the key is taken.
 #[debug_handler]
 async fn create_role(
     State(ctx): State<AppContext>,
@@ -335,6 +357,7 @@ async fn create_role(
     }
     let label = usable_label(&b.label)?;
     let description = usable_description(b.description.as_ref())?;
+    let permissions = usable_permissions(&b.permissions)?;
     let taken = organization_roles::Entity::find()
         .filter(organization_roles::Column::Key.eq(key))
         .one(&ctx.db)
@@ -349,6 +372,7 @@ async fn create_role(
         key: ActiveValue::set(key.to_string()),
         label: ActiveValue::set(label),
         description: ActiveValue::set(description),
+        permissions: ActiveValue::set(serde_json::json!(permissions)),
         position: ActiveValue::set(b.position),
         retired_at: ActiveValue::set(None),
         ..Default::default()
@@ -361,7 +385,9 @@ async fn create_role(
         row.pid,
         "organization_role_added",
         caller.actor(),
-        Some(serde_json::json!({ "key": row.key, "label": row.label })),
+        Some(serde_json::json!({
+            "key": row.key, "label": row.label, "permissions": row.permissions,
+        })),
     )
     .await
     .map_err(super::audit_failed)?;
@@ -380,6 +406,11 @@ async fn change_role(
     require_admin(&caller)?;
     let label = usable_label(&b.label)?;
     let description = usable_description(b.description.as_ref())?;
+    let permissions = b
+        .permissions
+        .as_deref()
+        .map(usable_permissions)
+        .transpose()?;
     let row = organization_roles::Entity::find()
         .filter(organization_roles::Column::Key.eq(key.as_str()))
         .one(&ctx.db)
@@ -396,6 +427,9 @@ async fn change_role(
     let mut a: organization_roles::ActiveModel = row.into();
     a.label = ActiveValue::set(label);
     a.description = ActiveValue::set(description);
+    if let Some(permissions) = permissions {
+        a.permissions = ActiveValue::set(serde_json::json!(permissions));
+    }
     a.position = ActiveValue::set(position);
     a.retired_at = ActiveValue::set(retired_at);
     let txn = ctx.db.begin().await.map_err(db_err)?;
@@ -414,7 +448,7 @@ async fn change_role(
 }
 
 /// `GET /api/plans/{pid}/issues/options` — what the plan's issue form offers: every type with the workflow in force for
-/// it, and the caller's roles, so a form can leave out a move the service would refuse. Retired types are included,
+/// it, and the caller's standing on the plan, so a form can leave out what the service would refuse. Retired types are included,
 /// marked, so an issue that carries one can still show its name.
 #[debug_handler]
 async fn plan_options(
@@ -443,11 +477,16 @@ async fn plan_options(
         item["workflow"] = serde_json::json!(workflow);
         out.push(item);
     }
-    let roles = caller
-        .claims()
-        .and_then(|c| c.attrs.get("role").cloned())
-        .unwrap_or_default();
-    format::json(serde_json::json!({ "types": out, "caller_roles": roles }))
+    let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
+    let allowed: Vec<&str> = crate::plan_roles::PERMISSIONS
+        .iter()
+        .copied()
+        .filter(|p| standing.may(p))
+        .collect();
+    format::json(serde_json::json!({
+        "types": out, "caller_roles": standing.roles,
+        "enforced": standing.enforced, "caller_permissions": allowed,
+    }))
 }
 
 /// The issue configuration routes.

@@ -458,6 +458,9 @@ PUT /api/plans/{pid}/risks/{r_pid}/cost-impact
 PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact
 PUT /api/plans/{pid}/risks/{risk_pid}
 POST /api/plans/{pid}/risks/{risk_pid}/escalate
+GET /api/plans/{pid}/role-members
+POST /api/plans/{pid}/role-members
+DELETE /api/plans/{pid}/role-members/{member_pid}
 GET /api/plans/{pid}/rollup
 POST /api/plans/{pid}/sandbox/commit
 POST /api/plans/{pid}/sandbox/preview

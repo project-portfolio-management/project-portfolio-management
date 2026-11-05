@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (SM-1: security.txt)
+
+- `/.well-known/security.txt` is on the public site, with the contact and policy in `SECURITY.md`, per RFC 9116. The Pages upload leaves out dotfiles by default, so the deploy now sets `include-hidden-files`, and a test checks that it does. A test fails when `Expires` is under 60 days away; it expires on 2027-10-01 and must be renewed by hand.
+- The site's copy of `spec/index.md` was stale after the proposal below, which failed CI's site job. Refreshed here.
+- Not done: the file is unsigned, which the RFC recommends and this project has no published key for. The running service serves none; a deployer sets their own contact.
+
 ### 5 November (PE and SM: product evaluation and service management proposed)
 
 - Researched and assessed, for the owner to decide: a register and evaluation of products, and a service record of incidents, requests, service levels and security reports. Two new specs, [`spec/product-evaluation.md`](spec/product-evaluation.md) and [`spec/service-management.md`](spec/service-management.md), `plan.md` §85 to §87, and PE-1 to PE-16 and SM-1 to SM-17 in `tasks.md`. About half of the example design exists under other names, so the advice is a thin profile on the plan record and six real gaps, not new modules.

@@ -2492,7 +2492,7 @@ Why: the owner needs one searchable place for the products under consideration, 
 
 Why: what a project delivers goes on running, and its incidents, requests and security reports fall outside anything this service measures. **This is a service record, not a help desk** (SM-D1). Every decision is the owner's (SM-17). Order: [plan.md](plan.md) §87.
 
-- [ ] **SM-1 (S) — `security.txt` for this project.** `/.well-known/security.txt` on the public site with `Contact`, `Expires` under a year and `Policy`, per RFC 9116, kept in step with `SECURITY.md`, with a test that fails when `Expires` is under 60 days away. No dependency.
+- [x] **SM-1 (S) — `security.txt` for this project.** **Built 2026-11-05:** `/.well-known/security.txt` on the public site with `Contact`, `Expires`, `Canonical` and `Policy`, per RFC 9116; the deploy keeps dotfiles; a test fails when `Expires` is under 60 days away. Unsigned: the project has no published key.
 - [ ] **SM-2 (M) — Times on an issue.** `reported_at`, `acknowledged_at`, `first_response_at`, `resolved_at`, `closed_at`, and for an incident `occurred_at` and `detected_at`, in UTC. A correction is audited. Existing issues are not back-filled, and reports say how many they leave out.
 - [ ] **SM-3 (M) — Incident, request, problem and security report as issue types,** with workflows as data, and an editable impact and urgency matrix giving priority, an override needing a reason.
 - [ ] **SM-4 (L) — Service levels.** Targets per type and priority, on a product or the deployment, with a work calendar; a pure clock derived from the transition log, paused in the `waiting` category with each pause recorded, restarted on reopening.

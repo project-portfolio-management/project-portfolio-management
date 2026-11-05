@@ -68,8 +68,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | LC | 0 | 10 |
 | UE | 1 | 7 |
 | PE | 0 | 16 |
-| SM | 0 | 17 |
-| **Total** | **237** | **62** |
+| SM | 1 | 16 |
+| **Total** | **238** | **61** |
 
 <!-- generated:end -->
 

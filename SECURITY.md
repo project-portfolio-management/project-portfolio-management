@@ -11,6 +11,9 @@ Please report a suspected vulnerability **privately**, not in a public issue.
 - If the report involves personal data, describe it without attaching real
   personal data.
 
+The same contact is published at
+<https://project-portfolio-management.github.io/.well-known/security.txt>.
+
 There is one maintainer (see [MAINTAINERS.md](MAINTAINERS.md)). The intent is
 to acknowledge a report within **5 business days** and to tell you what will be
 done within **15 business days**; these are targets, not guarantees. A fix is

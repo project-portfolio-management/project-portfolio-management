@@ -1,0 +1,7 @@
+# Report a suspected vulnerability privately, not in a public issue.
+# Use the subject "SECURITY: project-portfolio-management".
+Contact: mailto:joel@joelparkerhenderson.com
+Expires: 2027-10-01T00:00:00.000Z
+Canonical: https://project-portfolio-management.github.io/.well-known/security.txt
+Policy: https://github.com/project-portfolio-management/project-portfolio-management/blob/main/SECURITY.md
+Preferred-Languages: en

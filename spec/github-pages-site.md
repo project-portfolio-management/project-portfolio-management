@@ -31,6 +31,8 @@ repository's reference documents. It follows the family pattern written down in 
   installed or run, describes it in general terms only, scores nothing, says plainly when no importer exists, and
   says that the project is not affiliated with its owner. The tutorial is the seeded demonstration
   ([`operations/demo.md`](../operations/demo.md)).
+- **`/.well-known/security.txt`** (RFC 9116, SM-1), from `static/`. The deploy sets `include-hidden-files`, or the action
+  would leave it out. A test fails when `Expires` is under 60 days away.
 - **Sitemaps.** `/sitemap.xml` lists every page and `/<locale>/sitemap.xml` that locale's pages.
 - **Links.** A relative link to a document the site shows goes to its page (with its `#fragment`; headings get
   GitHub's anchors); a relative link to any other repository path goes to that path on GitHub (`blob`, or `tree` for a

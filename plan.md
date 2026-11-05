@@ -1803,11 +1803,11 @@ was light: searches varied by capability and term of art, and the last rounds ad
    carries the same risk as the private-plan work of OC-13 to OC-25, so it starts with a census of every path that reads an issue.
 5. **Two designs here could go wrong, and the plan says how they would be caught.** A product as a plan could flood every portfolio total: PE-1 is a census that can reverse PE-D1. And an
    assessment could read as a compliance verdict: the service records what people decided and never says a product is compliant.
-6. **Do SM-1 now.** `security.txt` is a day's work at most, needs no decision, and the project lacks it.
+6. **SM-1 is done (2026-11-05).** `security.txt` needed no decision.
 
 ## 87. Sequencing and open questions
 
-1. **Now:** SM-1. Owner decisions PE-16 and SM-17.
+1. **Now:** owner decisions PE-16 and SM-17. SM-1 is done.
 2. **The register:** PE-1 (census, can change the design), PE-2, PE-3, PE-4, the register part of PE-13. This alone answers the owner's example for search, fields and issue logging.
 3. **Evaluation:** PE-5, PE-6, PE-7, then the decision in PE-11.
 4. **Assessment and approval:** PE-8, PE-10, PE-9, PE-12.

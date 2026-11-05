@@ -1,6 +1,6 @@
 # Service management (proposed 2026-11-05)
 
-> **Status: proposed, and SM-1 is a small independent fix. Nothing here is built.** Tasks SM-1 to SM-17 in [`tasks.md`](../tasks.md);
+> **Status: proposed. SM-1 is built; nothing else is.** Tasks SM-1 to SM-17 in [`tasks.md`](../tasks.md);
 > decisions SM-D1 to SM-D6 are the owner's. The research is in [`plan.md`](../plan.md) §85 to §87. The sister file is
 > [product-evaluation.md](product-evaluation.md).
 
@@ -38,7 +38,7 @@ Checked against the code on 2026-11-05.
 | Knowledge | `lessons`, `controlled_documents` | Partial |
 | Confidential issues | Access is **per plan**. Everyone who can read the plan reads every issue | **Missing, and it blocks security reporting** |
 | DevOps | `devops_events`: deploys, incidents, recoveries, for DORA-style metrics | Have; a parallel notion of incident |
-| This project's own reports | `SECURITY.md`, email, with stated targets | Have; no `security.txt` |
+| This project's own reports | `SECURITY.md`, email, with stated targets, and `security.txt` | Have |
 
 Two gaps stand out, and both are small to state. **An issue has no times.** And **an issue cannot be confidential within its plan.**
 
@@ -121,9 +121,9 @@ This is the reason to have any of this here. For each product and portfolio, per
 
 ### 1. Reporting a vulnerability to this project (SM-1)
 
-`SECURITY.md` is sound, but there is no [`/.well-known/security.txt`](https://www.rfc-editor.org/rfc/rfc9116.html). RFC 9116 requires `Contact` and
-`Expires`, recommends an expiry under a year and a `Policy` link, and the file is served over HTTPS. This is small and has no dependency, so it
-comes first. A test fails when `Expires` is under 60 days away, because an expired file is worse than none.
+**Built 2026-11-05.** `SECURITY.md` is joined by `/.well-known/security.txt`, per [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116.html). A test fails when
+`Expires` is under 60 days away, because an expired file is worse than none. **The file is unsigned:** the RFC recommends a signature, and this project has no
+published key.
 
 ### 2. Reports of a vulnerability in something the organization runs (SM-8 to SM-13)
 

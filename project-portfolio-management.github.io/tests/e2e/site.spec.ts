@@ -505,6 +505,27 @@ test("a reader who chooses Arabic on an English document gets Arabic words, righ
   await expect(page).toHaveURL(/\/readme\/$/);
 });
 
+test("security.txt follows RFC 9116 and is not close to expiring", async ({ request }) => {
+  const response = await request.get("/.well-known/security.txt");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("text/plain");
+  const lines = (await response.text()).split("\n");
+  const field = (name: string) => lines.filter((l) => l.startsWith(`${name}: `)).map((l) => l.slice(name.length + 2));
+  const contact = field("Contact")[0] ?? "";
+  expect(contact).toMatch(/^mailto:/);
+  expect(readFileSync("../SECURITY.md", "utf8")).toContain(contact.replace("mailto:", ""));
+  const expires = field("Expires");
+  expect(expires.length, "exactly one Expires").toBe(1);
+  const days = (Date.parse(expires[0] ?? "") - Date.now()) / 86_400_000;
+  expect(days, "under a year away, as the RFC recommends").toBeLessThan(366);
+  expect(days, "renew it: an expired file is worse than none").toBeGreaterThan(60);
+});
+
+// upload-pages-artifact leaves out dotfiles by default: the file would pass every test here and never reach the site.
+test("the deploy keeps the .well-known directory", () => {
+  expect(readFileSync(".github/workflows/deploy.yml", "utf8")).toContain("include-hidden-files: true");
+});
+
 test("at phone width no page scrolls sideways", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [...docRoutes, "/en-gb/for/", "/hi-in/for/chief-technology-officer/", "/search/?portfolio"]) {

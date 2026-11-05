@@ -266,17 +266,60 @@ pub(crate) async fn require_readable(
     }
 }
 
-/// [`require_readable`] for a record that may belong to no plan: one that does not is not hidden by this check.
+/// [`require_readable`] for a record that may belong to no plan, or to one since deleted. The lists that show such a record
+/// ask only whether the plan is hidden, so a deleted plan must not turn a listed record into a `404`.
 pub(crate) async fn require_readable_if_any(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     plan: Option<Uuid>,
 ) -> Result<()> {
-    match plan {
-        Some(plan) => require_readable(ctx, caller, plan).await,
-        None => Ok(()),
+    use crate::models::_entities::plans;
+    let Some(plan) = plan else {
+        return Ok(());
+    };
+    if hidden_plans(ctx, &[plan], caller).await.contains(&plan) {
+        return Err(Error::NotFound);
+    }
+    let live = plans::Entity::find()
+        .filter(plans::Column::Pid.eq(plan))
+        .filter(plans::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .is_some();
+    if live {
+        require_readable(ctx, caller, plan).await
+    } else {
+        Ok(())
     }
 }
+
+/// `column` is none of `pids`, as **one** bound value. [`HiddenScope::owned_pids`] can run past the 65,535 bind parameters
+/// Postgres allows, which `is_not_in` would turn into a failed query.
+pub(crate) fn is_none_of(
+    column: &str,
+    pids: impl IntoIterator<Item = Uuid>,
+) -> sea_orm::sea_query::SimpleExpr {
+    let list = pids
+        .into_iter()
+        .map(|p| p.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+    sea_orm::sea_query::Expr::cust_with_values(
+        format!("{column} <> ALL($1::text::uuid[])"),
+        [format!("{{{list}}}")],
+    )
+}
+
+/// Notifications sent to someone by name because they must act or be told, whether or not they can read the plan: an
+/// invitation to review, a request to approve, a process step, and the notice that a plan was opened by break-glass.
+const ADDRESSED_KINDS: &[&str] = &[
+    "approval_requested",
+    "break_glass",
+    "process_notice",
+    "process_todo",
+    "review_invited",
+];
 
 /// **The one shared "what may this caller see" query** (RM-8b): the private plans
 /// hidden from them, and the tasks inside those plans. Every cross-plan aggregate
@@ -420,17 +463,27 @@ impl HiddenScope {
         self.plans.iter().copied().collect()
     }
 
-    /// The notifications to leave out of `caller`'s own inbox: those about something in a hidden plan, whose stored words
-    /// can quote it. An invitation to review stays: being invited is what lets an expert in.
+    /// The notifications `caller`'s own inbox keeps: not those about something in a hidden plan, whose stored words can quote
+    /// it, unless they were sent to the caller by name ([`ADDRESSED_KINDS`]).
     pub(crate) async fn notes_visible(&self, ctx: &AppContext) -> Result<sea_orm::Condition> {
         use crate::models::_entities::notifications::Column;
         if self.is_empty() {
             return Ok(sea_orm::Condition::all());
         }
-        let owned: Vec<Uuid> = self.owned_pids(ctx).await?.into_iter().collect();
         Ok(sea_orm::Condition::any()
-            .add(Column::SubjectPid.is_not_in(owned))
-            .add(Column::Kind.eq("review_invited")))
+            .add(is_none_of("subject_pid", self.owned_pids(ctx).await?))
+            .add(Column::Kind.is_in(ADDRESSED_KINDS.iter().copied())))
+    }
+
+    /// Whether [`Self::notes_visible`] leaves this notification out.
+    pub(crate) async fn hides_note(
+        &self,
+        ctx: &AppContext,
+        note: &crate::models::_entities::notifications::Model,
+    ) -> Result<bool> {
+        Ok(!self.is_empty()
+            && !ADDRESSED_KINDS.contains(&note.kind.as_str())
+            && self.owned_pids(ctx).await?.contains(&note.subject_pid))
     }
 
     /// Whether this plan is hidden.
@@ -504,6 +557,24 @@ impl HiddenScope {
             time_entry_costs,
             adoption_snapshots,
             workflows,
+        );
+        // The items of a hidden plan's canvases.
+        let canvases: Vec<Uuid> = crate::models::_entities::canvases::Entity::find()
+            .filter(crate::models::_entities::canvases::Column::PlanPid.is_in(hidden.clone()))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .into_iter()
+            .map(|c| c.pid)
+            .collect();
+        out.extend(
+            crate::models::_entities::canvas_items::Entity::find()
+                .filter(crate::models::_entities::canvas_items::Column::CanvasPid.is_in(canvases))
+                .all(&ctx.db)
+                .await
+                .map_err(db_err)?
+                .into_iter()
+                .map(|i| i.pid),
         );
         // A review of a hidden plan, a proposal that became one, and any review of that proposal.
         let promoted: Vec<Uuid> = crate::models::_entities::proposals::Entity::find()

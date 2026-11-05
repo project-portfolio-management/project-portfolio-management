@@ -207,20 +207,21 @@ async fn my_watching(
     State(ctx): State<AppContext>,
     AuthUser(claims): AuthUser,
 ) -> Result<Response> {
+    // A watch outlives access to the plan, and stays stored for if access comes back.
+    let sub = claims.sub.clone();
+    let caller = crate::auth::MaybeAuthUser(Some(claims));
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let owned = scope.owned_pids(&ctx).await?;
     let rows = watchers::Entity::find()
-        .filter(watchers::Column::Sub.eq(claims.sub.as_str()))
+        .filter(watchers::Column::Sub.eq(sub.as_str()))
+        .filter(super::plan_access::is_none_of("subject_pid", owned))
         .order_by_desc(watchers::Column::Id)
         .limit(500)
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    // A watch outlives access to the plan, and stays stored for if access comes back.
-    let caller = crate::auth::MaybeAuthUser(Some(claims));
-    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let owned = scope.owned_pids(&ctx).await?;
     let items: Vec<serde_json::Value> = rows
         .iter()
-        .filter(|w| !owned.contains(&w.subject_pid))
         .map(
             |w| serde_json::json!({ "subject_kind": w.subject_kind, "subject_pid": w.subject_pid }),
         )

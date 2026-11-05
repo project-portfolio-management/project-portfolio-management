@@ -82,31 +82,41 @@ pub fn validate(wi: &Plan) -> Result<()> {
     ))
 }
 
+/// `404` if the body places a plan under one that does not exist or that the caller cannot see, one answer for both. A plan
+/// already under `current` keeps it: a member of a child need not be able to read its parent to edit the child.
+pub(crate) async fn require_visible_parent(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    wi: &Plan,
+    current: Option<&str>,
+) -> Result<()> {
+    use crate::models::_entities::plans;
+    let parsed = |raw: Option<&str>| raw.and_then(|s| uuid::Uuid::parse_str(s.trim()).ok());
+    let parent = parsed(wi.parent_ref.as_deref());
+    let Some(parent) = parent.filter(|p| Some(*p) != parsed(current)) else {
+        return Ok(());
+    };
+    let exists = plans::Entity::find()
+        .filter(plans::Column::Pid.eq(parent))
+        .one(&ctx.db)
+        .await
+        .map_err(super::db_err)?
+        .is_some();
+    let hidden = super::plan_access::hidden_plans(ctx, &[parent], caller)
+        .await
+        .contains(&parent);
+    if exists && !hidden {
+        Ok(())
+    } else {
+        Err(Error::NotFound)
+    }
+}
+
 /// Reject a `parent_ref` that would create a containment cycle: the new
 /// parent must not be the plan itself, nor any of the plan's own
 /// descendants (i.e. the plan must not appear among the parent's
 /// ancestors). A no-op when the payload has no valid-UUID `parent_ref`.
 ///
-/// `404` if the body places a plan under one the caller cannot see. A parent that does not exist stays as it was: the
-/// reference is stored, and the guard only has to give nothing away.
-async fn require_visible_parent(ctx: &AppContext, caller: &MaybeAuthUser, wi: &Plan) -> Result<()> {
-    let parent = wi
-        .parent_ref
-        .as_deref()
-        .and_then(|s| uuid::Uuid::parse_str(s.trim()).ok());
-    let Some(parent) = parent else {
-        return Ok(());
-    };
-    if super::plan_access::hidden_plans(ctx, &[parent], caller)
-        .await
-        .contains(&parent)
-    {
-        Err(Error::NotFound)
-    } else {
-        Ok(())
-    }
-}
-
 /// `self_pid` is the plan being created/updated (`None` on create, since
 /// a fresh pid cannot yet be anyone's ancestor).
 ///
@@ -354,8 +364,8 @@ async fn create(
     Json(wi): Json<Plan>,
 ) -> Result<Response> {
     validate(&wi)?;
+    require_visible_parent(&ctx, &caller, &wi, None).await?;
     check_no_cycle(&ctx, None, &wi).await?;
-    require_visible_parent(&ctx, &caller, &wi).await?;
     // Resolve the preset before writing anything, so a bad one creates no plan.
     let modules = match params.modules_preset.as_deref() {
         None => None,
@@ -520,8 +530,9 @@ async fn update(
     let model = PlanModel::find_by_pid(&ctx.db, &pid)
         .await
         .map_err(super::model_not_found)?;
+    let current = model.to_plan()?.parent_ref;
+    require_visible_parent(&ctx, &caller, &wi, current.as_deref()).await?;
     check_no_cycle(&ctx, Some(model.pid), &wi).await?;
-    require_visible_parent(&ctx, &caller, &wi).await?;
     // Record-level ABAC (PPM-3): the item's phase-gate stage is a
     // `resource.stage` attribute, so "deny write past gate N unless
     // access=admin" is a policy statement. A no-op while enforcement

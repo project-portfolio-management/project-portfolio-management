@@ -96,7 +96,7 @@ GET /api/custom-fields/search	checks
 GET /api/custom-fields/values	checks
 PUT /api/custom-fields/values	checks
 DELETE /api/custom-fields/{pid}	no-plan
-GET /api/deescalation	no-plan
+GET /api/deescalation	filters
 POST /api/deescalation/criteria	no-plan
 PUT /api/deescalation/criteria/{pid}/evidence	no-plan
 PUT /api/deescalation/level	no-plan
@@ -151,7 +151,7 @@ GET /api/financials/forecast	filters
 GET /api/financials/variance	filters
 GET /api/flow-classes	no-plan
 GET /api/funding-allocations	checks
-POST /api/funding-allocations	checks
+POST /api/funding-allocations	no-plan
 GET /api/funding-allocations/{pid}/trace	checks
 GET /api/funding-sources	no-plan
 POST /api/funding-sources	no-plan
@@ -227,7 +227,7 @@ GET /api/objectives/{pid}/alignment	filters
 GET /api/objectives/{pid}/key-results	no-plan
 POST /api/objectives/{pid}/key-results	no-plan
 PUT /api/objectives/{pid}/strategic-aim	no-plan
-GET /api/okrs	filters
+GET /api/okrs	no-plan
 GET /api/onboarding/cases/{pid}	checks
 POST /api/onboarding/cases/{pid}/cancel	checks
 POST /api/onboarding/cases/{pid}/complete	checks
@@ -279,10 +279,10 @@ GET /api/portfolio-money	filters
 GET /api/portfolio-pipeline	filters
 GET /api/prioritization	filters
 GET /api/process-executions	checks
-GET /api/process-executions/{pid}	checks
-POST /api/process-executions/{pid}/cancel	checks
-POST /api/process-executions/{pid}/resume	checks
-POST /api/process-executions/{pid}/steps/{index}/complete	checks
+GET /api/process-executions/{pid}	left-open
+POST /api/process-executions/{pid}/cancel	left-open
+POST /api/process-executions/{pid}/resume	left-open
+POST /api/process-executions/{pid}/steps/{index}/complete	left-open
 GET /api/processes	no-plan
 POST /api/processes	no-plan
 DELETE /api/processes/{pid}	no-plan
@@ -290,7 +290,7 @@ GET /api/processes/{pid}	no-plan
 PUT /api/processes/{pid}	no-plan
 POST /api/processes/{pid}/start	checks
 GET /api/proposals	checks
-POST /api/proposals	checks
+POST /api/proposals	no-plan
 GET /api/proposals/forecast	checks
 GET /api/proposals/{pid}	checks
 PUT /api/proposals/{pid}	checks
@@ -351,7 +351,7 @@ GET /api/scorecard-template	no-plan
 GET /api/scorecards	filters
 POST /api/scorecards	no-plan
 GET /api/scorecards/{pid}	checks
-POST /api/scorecards/{pid}/from-template	checks
+POST /api/scorecards/{pid}/from-template	no-plan
 PUT /api/scorecards/{pid}/kpis	checks
 GET /api/security/register	filters
 DELETE /api/settings/today-time-zone	own
@@ -366,7 +366,7 @@ POST /api/sprints/{pid}/ceremonies	checks
 POST /api/sprints/{pid}/commit	checks
 GET /api/sprints/{pid}/commitment	checks
 GET /api/start-queue	filters
-GET /api/status-metrics	filters
+GET /api/status-metrics	no-plan
 GET /api/status-updates/due	filters
 POST /api/status-updates/remind	filters
 POST /api/tasks/bulk	checks
@@ -379,7 +379,7 @@ GET /api/technology/radar	filters
 POST /api/threshold-sweep	filters
 GET /api/time-reports	filters
 GET /api/timesheets	filters
-POST /api/timesheets/decide	own
+POST /api/timesheets/decide	no-plan
 POST /api/timesheets/submit	own
 GET /api/tolerances	filters
 GET /api/tpc	filters

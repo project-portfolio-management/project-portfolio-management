@@ -777,6 +777,12 @@ fn without_hidden(
                 .is_none_or(|pid| !scope.plan(&pid))
         });
     }
+    let parent = row.candidate["parent_ref"]
+        .as_str()
+        .and_then(|s| Uuid::parse_str(s.trim()).ok());
+    if parent.is_some_and(|p| scope.plan(&p)) {
+        row.candidate["parent_ref"] = serde_json::Value::Null;
+    }
     row
 }
 
@@ -811,6 +817,7 @@ async fn confirm_item(
         serde_json::from_value(item.candidate.clone())
             .map_err(|_| unprocessable("the held candidate is no longer a valid plan"))?;
     super::plans::validate(&plan)?;
+    super::plans::require_visible_parent(&ctx, &caller, &plan, None).await?;
     let model = streaming::create_and_emit(&ctx.db, &plan, caller.actor()).await?;
     let mut a: review_queue_items::ActiveModel = item.into();
     a.status = ActiveValue::set("confirmed".to_string());
@@ -1064,6 +1071,7 @@ struct ImportRun<'a> {
 }
 
 /// Validates, matches and applies one imported row through the normal create/update path, so events and audit match a single request. Returns the outcome or the row errors; a pid naming no live plan is an error, never a silent create. A row that reaches a plan in `hidden` gets the error of one that matched nothing.
+#[expect(clippy::too_many_lines)] // one linear path: match, refuse, update, hold or create
 async fn process_row(
     ctx: &AppContext,
     d: &Decoded,
@@ -1130,9 +1138,11 @@ async fn process_row(
             .iter()
             .filter_map(|s| Uuid::parse_str(s).ok())
             .collect();
-        let rows = PlanModel::find_by_pids(&ctx.db, &pids)
+        let mut rows = PlanModel::find_by_pids(&ctx.db, &pids)
             .await
             .map_err(|e| vec![row_error(d, "", "internal", e.to_string())])?;
+        // A title must not find a hidden plan here either: held or created, the answer is the one no match gives.
+        rows.retain(|r| !run.hidden.contains(&r.pid));
         let engine = MatchingEngine::new(MatchConfig::default());
         let mut hits = Vec::new();
         for r in &rows {

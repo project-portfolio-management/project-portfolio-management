@@ -255,6 +255,15 @@ async fn proposals_and_objectives_keep_a_private_plan_out() {
                 .iter()
                 .any(|r| r["pid"] == proposal)
         };
+        for tail in ["/submit", "/lessons"] {
+            let url = format!("/api/proposals/{proposal}{tail}");
+            let answer = if tail == "/submit" {
+                with!(request.post(&url), who.outsider).json(&json!({})).await
+            } else {
+                with!(request.get(&url), who.outsider).await
+            };
+            assert_eq!(answer.status_code(), 404, "{url}");
+        }
         let url = "/api/proposals?status=promoted";
         assert!(!listed(with!(request.get(url), who.outsider).await.json()));
         assert!(listed(with!(request.get(url), who.member).await.json()));
@@ -588,6 +597,11 @@ async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
             let refused = with!(request.post(url), who.outsider).json(body).await;
             assert_eq!(refused.status_code(), 404, "{url}");
         }
+        // A parent that does not exist gets the same answer, so a pid cannot be tried.
+        let refused = with!(request.post("/api/plans"), who.outsider)
+            .json(&json!({ "kind": "Project", "name": "Child", "parent_ref": uuid::Uuid::new_v4() }))
+            .await;
+        assert_eq!(refused.status_code(), 404);
         for (url, body) in [("/api/devops/events", &deploy), ("/api/plans", &child)] {
             with!(request.post(url), who.member).json(body).await.assert_status_ok();
         }
@@ -627,6 +641,8 @@ async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
         .await
         .json();
         assert_eq!(job["counts"]["failed"], 1, "{job}");
+        let errors = with!(request.get(job["errors_url"].as_str().expect("errors")), who.outsider).await;
+        assert!(errors.text().contains("unknown_pid"), "{}", errors.text());
 
         // Merging into or out of one.
         let merge = json!({ "main_pid": mine, "duplicate_pid": plan });
@@ -788,12 +804,17 @@ async fn a_template_is_hidden_with_its_plan() {
         .json(&json!({}))
         .await;
         assert_eq!(delete.status_code(), 404);
+        let own: Value = with!(request.post("/api/plans"), who.outsider)
+            .json(&json!({ "kind": "Project", "name": "Own" }))
+            .await
+            .json();
+        let own = own["pid"].as_str().expect("plan");
         for url in [format!("{one}/revise"), format!("{one}/plans")] {
             let response = if url.ends_with("plans") {
                 with!(request.get(&url), who.outsider).await
             } else {
                 with!(request.post(&url), who.outsider)
-                    .json(&json!({ "from_plan": plan }))
+                    .json(&json!({ "from_plan": own }))
                     .await
             };
             assert_eq!(response.status_code(), 404, "{url}");
@@ -859,6 +880,11 @@ async fn a_reference_is_no_way_into_a_private_plan() {
         .json(&json!({ "status": "done" }))
         .await;
         assert_eq!(stuck.status_code(), 422);
+        assert!(
+            stuck.text().contains("a task you cannot see"),
+            "{}",
+            stuck.text()
+        );
         assert!(!stuck.text().contains("Secret task"), "{}", stuck.text());
         assert!(!stuck.text().contains(&secret), "{}", stuck.text());
 
@@ -1087,6 +1113,20 @@ async fn what_you_were_told_goes_when_your_access_does() {
             invited["items"].as_array().expect("items").len(),
             1,
             "{invited}"
+        );
+
+        // So does a request to approve, which they still have to act on.
+        with!(request.post("/api/approvals"), who.member)
+            .json(&json!({ "subject_kind": "plan", "subject_pid": plan, "approver_ref": outsider }))
+            .await
+            .assert_status_ok();
+        let asked: Value = with!(request.get("/api/me/inbox?tz=UTC"), who.outsider)
+            .await
+            .json();
+        assert_eq!(
+            asked["items"].as_array().expect("items").len(),
+            2,
+            "{asked}"
         );
     })
     .await;

@@ -528,6 +528,8 @@ async fn seed(
         json!({ "gate": "g0_concept", "decision": "approved" }),
     )
     .await;
+    // So the comparison of `/api/tpc` has something to find.
+    post(format!("/api/plans/{p}/tpc"), json!({ "currency": "EUR", "expected_monetary_value": 1000 * scale, "cost_estimate_to_complete": 500 * scale })).await;
     // So the comparison of `/api/reviews` has something to find.
     post("/api/reviews".into(), json!({ "subject_kind": "plan", "subject_pid": p, "reviewer_ref": PERSON, "reviewer_scope": "internal" })).await;
     post(

@@ -330,10 +330,17 @@ async fn list_reviews(
                     .add(reviews::Column::SubjectKind.eq("proposal"))
                     .add(reviews::Column::SubjectPid.is_in(proposals)),
             );
-        let mine: Vec<String> = caller
+        // The same people `owns_inbox` lets answer.
+        let mut mine: Vec<String> = caller
             .actor()
+            .map(str::to_lowercase)
             .map(|sub| vec![format!("person:{sub}"), format!("worker:{sub}")])
             .unwrap_or_default();
+        mine.extend(
+            super::organizations::caller_organizations(&caller)
+                .iter()
+                .map(|o| format!("organization:{o}")),
+        );
         query = query.filter(
             Condition::any()
                 .add(of_hidden.not())
@@ -809,7 +816,8 @@ async fn read_notification(
 ) -> Result<Response> {
     let row =
         cap_models::find_notification(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
-    if !owns_inbox(&caller, &row.recipient_ref) {
+    let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    if !owns_inbox(&caller, &row.recipient_ref) || scope.hides_note(&ctx, &row).await? {
         return Err(Error::NotFound);
     }
     if row.read_at.is_some() {

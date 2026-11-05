@@ -30,6 +30,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::pagination::{Page, with_page_headers};
+use super::plan_access::is_none_of;
 use crate::auth::MaybeAuthUser;
 use crate::automation as rules;
 use crate::engineering::TASK_STATUSES;
@@ -83,7 +84,7 @@ async fn require_rule_scope(
     plan: Option<Uuid>,
 ) -> Result<()> {
     match plan {
-        Some(plan) => super::plan_access::require_readable(ctx, caller, plan).await,
+        Some(_) => super::plan_access::require_readable_if_any(ctx, caller, plan).await,
         None if caller.holds_or_open(|c| super::plan_access::is_admin(Some(c))) => Ok(()),
         None => Err(super::forbidden(
             "only an administrator can manage a rule on every plan",
@@ -119,6 +120,10 @@ async fn create_automation(
     }
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
+    }
+    // A new rule needs a live plan; `require_rule_scope` lets an old rule be switched off after its plan has gone.
+    if let Some(plan) = payload.plan_pid {
+        super::plan_access::require_readable(&ctx, &caller, plan).await?;
     }
     require_rule_scope(&ctx, &caller, payload.plan_pid).await?;
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
@@ -352,8 +357,8 @@ async fn list_runs(
     let owned = hidden_pids(&ctx, &caller).await?;
     if !owned.is_empty() {
         query = query
-            .filter(automation_runs::Column::AutomationPid.is_not_in(owned.clone()))
-            .filter(automation_runs::Column::SubjectPid.is_not_in(owned));
+            .filter(is_none_of("automation_pid", owned.iter().copied()))
+            .filter(is_none_of("subject_pid", owned));
     }
     if let Some(automation) = params.automation {
         query = query.filter(automation_runs::Column::AutomationPid.eq(automation));
@@ -1262,7 +1267,7 @@ async fn list_scheduled_actions(
         scheduled_actions::Entity::find().filter(scheduled_actions::Column::DeletedAt.is_null());
     let owned = hidden_pids(&ctx, &caller).await?;
     if !owned.is_empty() {
-        query = query.filter(scheduled_actions::Column::SubjectPid.is_not_in(owned));
+        query = query.filter(is_none_of("subject_pid", owned));
     }
     if let Some(status) = params.status.as_deref() {
         query = query.filter(scheduled_actions::Column::Status.eq(status));

@@ -179,7 +179,7 @@ async fn for_proposal(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let proposal = gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?;
+    let proposal = super::governance::readable_proposal(&ctx, &caller, &pid).await?;
     let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let all = lessons::Entity::find()
         .filter(lessons::Column::DeletedAt.is_null())

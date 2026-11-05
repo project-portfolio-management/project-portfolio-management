@@ -12091,7 +12091,7 @@
             }
           }
         },
-        "summary": "One recipient's in-app inbox (?recipient=&unread=; cap 200). In-app only: this service sends no email or push",
+        "summary": "The caller's own in-app inbox (?recipient=&unread=; cap 200), or an organization's they belong to; anyone else's is 403. In-app only: this service sends no email or push",
         "tags": [
           "collaboration"
         ]
@@ -12303,7 +12303,7 @@
     },
     "/api/objectives/{pid}/alignment": {
       "get": {
-        "description": "`GET /api/objectives/{pid}/alignment` — which items serve the objective, with weights and per-kind totals.",
+        "description": "`GET /api/objectives/{pid}/alignment` — which items serve the objective, with weights and per-kind totals. A plan the caller cannot read is left out of the items and of every total.",
         "parameters": [
           {
             "in": "path",
@@ -30669,7 +30669,7 @@
     },
     "/api/proposals/{pid}/duplicates": {
       "get": {
-        "description": "`GET /api/proposals/{pid}/duplicates` — duplicate-demand check (the registry heritage applied at intake): match the proposal's title against the live plans of its target collection **and** the other open proposals.",
+        "description": "`GET /api/proposals/{pid}/duplicates` — duplicate-demand check (the registry heritage applied at intake): match the proposal's title against the live plans of its target collection **and** the other open proposals. A plan the caller cannot read is not a hit: a title must not be a way of finding one.",
         "parameters": [
           {
             "in": "path",
@@ -33425,14 +33425,14 @@
     },
     "/api/status-updates/remind": {
       "post": {
-        "description": "`POST /api/status-updates/remind`.",
+        "description": "`POST /api/status-updates/remind` — on the plans the caller can read; the scheduled run covers the rest.",
         "parameters": [],
         "responses": {
           "200": {
             "description": "OK; the response shape is not documented yet."
           }
         },
-        "summary": "`POST /api/status-updates/remind`",
+        "summary": "`POST /api/status-updates/remind` — on the plans the caller can read; the scheduled run covers the rest",
         "tags": [
           "status_updates"
         ]

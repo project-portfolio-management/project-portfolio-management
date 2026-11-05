@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-25: what a review of the series found)
+
+- An independent review of OC-13 to OC-24 found more. `GET /api/tpc` named private plans and their DIPP, and the census called it filtered; it now filters, and its comparison seeds a row. The filters built on every pid of a hidden plan used one bind per pid and would have failed past Postgres's limit, taking the inbox with them; they now pass one value. Proposal edits, tradeoffs, pipeline actions, promotion and lessons now answer `404` for a proposal that became a hidden plan, as the read did. `POST /api/notifications/{pid}/read` no longer shows a note the inbox hides. Confirming a held import row checks its parent, and a held row no longer shows a hidden parent. A keyless import no longer treats a hidden plan as a duplicate, so a guessed title gets the answer of no match. A hidden canvas item's watches and notices now go with the plan.
+- OC-23 went too far and this restores it: notices sent to someone by name stay even if they cannot read the plan, because they must act or be told. That is a request to approve, a process step and the break-glass notice, as well as an invitation to review.
+- OC-15 to OC-17 went too far on deleted plans and this restores it: a canvas, proposal, review or rule on a deleted plan stays reachable, as it is listed.
+- **This changes what callers can do:** `parent_ref` naming a plan that does not exist is now `404`, as for a hidden one, where it used to be stored. A plan already under a parent keeps it, so a member of a child need not read the parent to edit the child.
+- An organization reviewer now sees their review in the list. Census corrections: process runs are `left-open`, and seven routes were misclassified.
+- Not done: an import keyed to a parent that does not exist still creates the row, so an administrator's import can tell it from a hidden one. A job queued before this runs with nothing hidden. `owned_pids` still loads every row of each hidden plan's tables per request, which costs on a large deployment; it is not a poller today. Not verified: no test covers a handling mark on these routes, a promoted-proposal review, the review queue's filters, or the keyless path, which needs the search engine. The limit of 65,535 binds was reasoned, not reproduced.
+
 ### 5 November (OC-24: every route outside the guard says how it treats a hidden plan)
 
 - `plan-guard-census.txt` lists all 396 mounted routes outside `/api/plans/{pid}`, whatever the method, with how each treats a plan the caller cannot read, and a unit test fails on one that is missing or no longer mounted. The old census covered parameterless GETs, which is how these gaps went unseen. The private-plan comparison now seeds a review, so `/api/reviews` has something to find, and the wrong reasons in that census are corrected. The review checklist says a route outside the guard must check for itself.
@@ -39,7 +48,7 @@ It is pre-1.0; the first release cut from the root release workflow is
 ### 5 November (OC-20: a template is hidden with its plan)
 
 - Saving a plan as a template copies its tasks and dates, and templates had no link back to the plan, so a template of a private plan could be read, copied into a new plan, revised or deleted by anyone. `plan_templates` now records `source_plan_pid` (migration 105), updated on revision, and a template is hidden with that plan: out of the list, `404` on every route. A template outlives a deleted plan, as it did before. Predates OC-1.
-- Not done: **templates saved before this have no source and stay visible.** The audit trail does not name the plan, so it cannot be recovered; anyone who has saved a template from a private plan should delete it and save it again. A plan's own link to its template is not re-checked for template sync. Routes outside the plan guard are still being worked through in this series. Not verified: migration 105 has run forward here, but down and rerun have not been exercised.
+- Not done: **templates saved before this have no source and stay visible.** The audit trail does not name the plan, so it cannot be recovered; anyone who has saved a template from a private plan should delete it and save it again. A plan's own link to its template is not re-checked for template sync. Routes outside the plan guard are still being worked through in this series. Migration 105 was run down, up and again on a test database.
 
 ### 5 November (OC-19: sprints and calendars keep a private plan out)
 

@@ -212,7 +212,7 @@ async fn list_proposals(
 }
 
 /// A proposal the caller may read: one that became a plan is that plan's, so it is `404` to whoever cannot read the plan.
-async fn readable_proposal(
+pub(super) async fn readable_proposal(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     pid: &str,
@@ -245,7 +245,7 @@ async fn update_proposal(
     if !problems.is_empty() {
         return Err(unprocessable(&problems));
     }
-    let row = gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?;
+    let row = readable_proposal(&ctx, &caller, &pid).await?;
     if !rules::proposal_editable(&row.status) {
         return Err(refuse(&format!(
             "a {} proposal is no longer editable",
@@ -335,7 +335,7 @@ async fn set_tradeoff(
     Path(pid): Path<String>,
     Json(b): Json<TradeoffBody>,
 ) -> Result<Response> {
-    let row = gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?;
+    let row = readable_proposal(&ctx, &caller, &pid).await?;
     if !row.external_ask {
         return Err(refuse(
             "only an external ask has a trade-off: tag the proposal as one first",
@@ -373,7 +373,7 @@ async fn transition_proposal(
     pid: &str,
     action: rules::ProposalAction,
 ) -> Result<proposals::Model> {
-    let row = gov::find_proposal(&ctx.db, gov::parse_pid(pid)?).await?;
+    let row = readable_proposal(ctx, caller, pid).await?;
     let next = rules::proposal_transition(&row.status, action).map_err(|e| refuse(&e))?;
     // A new ask from the sponsor must name what it displaces before it is approved (EX-13).
     if matches!(action, rules::ProposalAction::Approve)
@@ -430,7 +430,7 @@ async fn promote_proposal(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let row = gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?;
+    let row = readable_proposal(&ctx, &caller, &pid).await?;
     let next = rules::proposal_transition(&row.status, rules::ProposalAction::Promote)
         .map_err(|e| refuse(&e))?;
     let mut plan = Plan {

@@ -2437,6 +2437,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-24 (S) — Every route outside the guard says how it treats a hidden plan.** **Built 2026-11-05:** `plan-guard-census.txt` declares every route outside the guard, enforced by a unit test.
 
+- [x] **OC-25 (S) — What a review of the series found.** **Built 2026-11-05:** the review's findings on `/api/tpc`, bind limits, addressed notices, promoted proposals, deleted plans and the review queue are fixed, and the census corrected.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

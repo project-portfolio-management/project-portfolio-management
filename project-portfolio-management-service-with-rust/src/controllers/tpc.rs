@@ -214,6 +214,7 @@ pub(crate) struct TriageParams {
 #[debug_handler]
 async fn triage(
     State(ctx): State<AppContext>,
+    caller: crate::auth::MaybeAuthUser,
     Query(params): Query<TriageParams>,
     headers: HeaderMap,
 ) -> Result<Response> {
@@ -227,8 +228,12 @@ async fn triage(
         ));
     };
 
+    let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .plan_pids();
     let rows = tpc_rows::Entity::find()
         .filter(tpc_rows::Column::DeletedAt.is_null())
+        .filter(tpc_rows::Column::PlanPid.is_not_in(hidden))
         .order_by_desc(tpc_rows::Column::ObservedAt)
         .limit(MAX_PLANS_SCANNED)
         .all(&ctx.db)

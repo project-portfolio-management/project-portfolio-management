@@ -197,7 +197,10 @@ async fn set_kpis(
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     members::Entity::delete_many()
         .filter(members::Column::ScorecardPid.eq(sc.pid))
-        .filter(members::Column::KpiPid.is_not_in(hidden))
+        .filter(super::plan_access::is_none_of(
+            "kpi_pid",
+            hidden.iter().copied(),
+        ))
         .exec(&txn)
         .await
         .map_err(|e| db_err(&e))?;

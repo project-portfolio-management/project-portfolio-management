@@ -777,6 +777,16 @@ async fn convert_to_issue(
         || ("open".to_string(), "todo".to_string()),
         |s| (s.key.clone(), s.category.token().to_string()),
     );
+    let moment = chrono::Utc::now();
+    let times = crate::issues::times_after(
+        crate::issues::Times::default(),
+        None,
+        crate::issues::Standing {
+            category: &category,
+            terminal: false,
+        },
+        moment,
+    );
     let txn = ctx.db.begin().await.map_err(db_err)?;
     let issue = crate::models::_entities::issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -797,6 +807,8 @@ async fn convert_to_issue(
         due_date: ActiveValue::set(action.due_date),
         resolution: ActiveValue::set(None),
         resolved_on: ActiveValue::set(None),
+        reported_at: ActiveValue::set(Some(moment.into())),
+        acknowledged_at: ActiveValue::set(times.acknowledged_at.map(Into::into)),
         source_risk_pid: ActiveValue::set(None),
         source_task_pid: ActiveValue::set(None),
         change_request_pid: ActiveValue::set(None),

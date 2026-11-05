@@ -151,6 +151,7 @@ mod m20261105_000102_issue_field_rules;
 mod m20261105_000103_plan_issue_types;
 mod m20261105_000104_translated_labels;
 mod m20261105_000105_plan_template_source;
+mod m20261105_000106_issue_times;
 
 /// The crate's migrator: drives the ordered migration set for the loco
 /// CLI / boot-time migration.
@@ -303,6 +304,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261105_000103_plan_issue_types::Migration),
             Box::new(m20261105_000104_translated_labels::Migration),
             Box::new(m20261105_000105_plan_template_source::Migration),
+            Box::new(m20261105_000106_issue_times::Migration),
             // inject-above (do not remove this comment)
         ]
     }

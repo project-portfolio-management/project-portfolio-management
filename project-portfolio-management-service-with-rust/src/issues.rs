@@ -3,7 +3,7 @@
 //! kind, a severity and a status; **closing** one needs a resolution; and its
 //! age is counted in **calendar days** since it was raised.
 
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 
 /// How serious it is, lowest first.
 pub const SEVERITIES: &[&str] = &["low", "med", "high", "critical"];
@@ -32,6 +32,12 @@ pub struct Draft<'a> {
     pub due_date: Option<NaiveDate>,
     /// How it was resolved; needed to close it.
     pub resolution: Option<&'a str>,
+    /// When it really began, as it will stand after this save.
+    pub occurred_at: Option<DateTime<Utc>>,
+    /// When it was noticed, as it will stand after this save.
+    pub detected_at: Option<DateTime<Utc>>,
+    /// Now, which neither of those may be after.
+    pub now: DateTime<Utc>,
 }
 
 /// True when the value is absent or only whitespace; both count as not supplied.
@@ -73,6 +79,14 @@ pub fn problems(d: &Draft<'_>) -> Vec<String> {
     }
     if d.needs_resolution && blank(d.resolution) {
         out.push("a closed issue needs a resolution".to_string());
+    }
+    for (name, at) in [("occurred", d.occurred_at), ("detected", d.detected_at)] {
+        if at.is_some_and(|t| t > d.now) {
+            out.push(format!("the time it {name} cannot be in the future"));
+        }
+    }
+    if d.occurred_at.zip(d.detected_at).is_some_and(|(o, f)| o > f) {
+        out.push("it cannot have occurred after it was detected".to_string());
     }
     out
 }
@@ -160,6 +174,54 @@ pub fn resolved_on(
     }
 }
 
+/// Where an issue stands in its workflow, for [`times_after`].
+#[derive(Debug, Clone, Copy)]
+pub struct Standing<'a> {
+    /// `todo`, `active`, `waiting` or `done`.
+    pub category: &'a str,
+    /// Whether the state is terminal.
+    pub terminal: bool,
+}
+
+/// The times the service keeps on an issue. None of them is typed by a person.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Times {
+    /// The first move out of `todo`.
+    pub acknowledged_at: Option<DateTime<Utc>>,
+    /// The move into `done`.
+    pub resolved_at: Option<DateTime<Utc>>,
+    /// The move into a terminal state.
+    pub closed_at: Option<DateTime<Utc>>,
+}
+
+/// The times after a move, or at raising when `from` is none. A time is written by the crossing it records, so an issue
+/// already past that point from before times were kept stays without one: **nothing is guessed.** A reopening clears
+/// the resolved and closed times, and the acknowledgement stands.
+#[must_use]
+pub fn times_after(
+    before: Times,
+    from: Option<Standing<'_>>,
+    to: Standing<'_>,
+    now: DateTime<Utc>,
+) -> Times {
+    let crossed_ack = to.category != "todo" && from.is_none_or(|f| f.category == "todo");
+    let crossed_done = is_done(to.category) && !from.is_some_and(|f| is_done(f.category));
+    let crossed_terminal = to.terminal && !from.is_some_and(|f| f.terminal);
+    Times {
+        acknowledged_at: before.acknowledged_at.or(crossed_ack.then_some(now)),
+        resolved_at: if is_done(to.category) {
+            before.resolved_at.or(crossed_done.then_some(now))
+        } else {
+            None
+        },
+        closed_at: if to.terminal {
+            before.closed_at.or(crossed_terminal.then_some(now))
+        } else {
+            None
+        },
+    }
+}
+
 /// Calendar days since the issue was raised, until it was resolved (or until
 /// `today` while it is still open). Never negative.
 #[must_use]
@@ -227,7 +289,103 @@ mod tests {
             raised_on: day(1),
             due_date: Some(day(5)),
             resolution: None,
+            occurred_at: None,
+            detected_at: None,
+            now: DateTime::from_timestamp(1_800_000_000, 0).unwrap_or_default(),
         }
+    }
+
+    fn at(seconds: i64) -> DateTime<Utc> {
+        DateTime::from_timestamp(1_800_000_000 + seconds, 0).unwrap_or_default()
+    }
+
+    const TODO: Standing<'static> = Standing {
+        category: "todo",
+        terminal: false,
+    };
+    const ACTIVE: Standing<'static> = Standing {
+        category: "active",
+        terminal: false,
+    };
+    const RESOLVED: Standing<'static> = Standing {
+        category: "done",
+        terminal: false,
+    };
+    const CLOSED: Standing<'static> = Standing {
+        category: "done",
+        terminal: true,
+    };
+
+    #[test]
+    fn a_time_is_written_by_the_crossing_it_records() {
+        let raised = times_after(Times::default(), None, TODO, at(0));
+        assert_eq!(raised, Times::default());
+        let worked = times_after(raised, Some(TODO), ACTIVE, at(1));
+        assert_eq!(worked.acknowledged_at, Some(at(1)));
+        let fixed = times_after(worked, Some(ACTIVE), RESOLVED, at(2));
+        assert_eq!(fixed.acknowledged_at, Some(at(1)));
+        assert_eq!(fixed.resolved_at, Some(at(2)));
+        assert_eq!(fixed.closed_at, None);
+        let closed = times_after(fixed, Some(RESOLVED), CLOSED, at(3));
+        assert_eq!(closed.resolved_at, Some(at(2)));
+        assert_eq!(closed.closed_at, Some(at(3)));
+    }
+
+    #[test]
+    fn reopening_clears_the_end_and_keeps_the_acknowledgement() {
+        let closed = Times {
+            acknowledged_at: Some(at(1)),
+            resolved_at: Some(at(2)),
+            closed_at: Some(at(3)),
+        };
+        let again = times_after(closed, Some(CLOSED), ACTIVE, at(4));
+        assert_eq!(
+            again,
+            Times {
+                acknowledged_at: Some(at(1)),
+                resolved_at: None,
+                closed_at: None,
+            }
+        );
+    }
+
+    #[test]
+    fn an_issue_from_before_times_is_never_given_one_by_a_guess() {
+        // Resolved long ago, then closed now: the closing is real, the resolving is not known.
+        let closed = times_after(Times::default(), Some(RESOLVED), CLOSED, at(1));
+        assert_eq!(closed.closed_at, Some(at(1)));
+        assert_eq!(closed.resolved_at, None);
+        // Already being worked on: finishing it says nothing of when it was first picked up.
+        let fixed = times_after(Times::default(), Some(ACTIVE), RESOLVED, at(1));
+        assert_eq!(fixed.acknowledged_at, None);
+    }
+
+    #[test]
+    fn an_issue_raised_past_todo_is_acknowledged_when_raised() {
+        let raised = times_after(Times::default(), None, ACTIVE, at(0));
+        assert_eq!(raised.acknowledged_at, Some(at(0)));
+    }
+
+    #[test]
+    fn occurred_comes_before_detected_and_neither_is_in_the_future() {
+        let d = Draft {
+            occurred_at: Some(at(-10)),
+            detected_at: Some(at(-20)),
+            ..draft()
+        };
+        assert_eq!(problems(&d).len(), 1, "{:?}", problems(&d));
+        let d = Draft {
+            occurred_at: Some(at(1)),
+            detected_at: Some(at(2)),
+            ..draft()
+        };
+        assert_eq!(problems(&d).len(), 2, "{:?}", problems(&d));
+        let d = Draft {
+            occurred_at: Some(at(-20)),
+            detected_at: Some(at(-20)),
+            ..draft()
+        };
+        assert!(problems(&d).is_empty(), "{:?}", problems(&d));
     }
 
     #[test]

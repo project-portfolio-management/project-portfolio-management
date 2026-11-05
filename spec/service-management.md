@@ -1,6 +1,6 @@
 # Service management (proposed 2026-11-05)
 
-> **Status: proposed. SM-1 is built; nothing else is.** Tasks SM-1 to SM-17 in [`tasks.md`](../tasks.md);
+> **Status: proposed. SM-1 and SM-2 are built; nothing else is.** Tasks SM-1 to SM-17 in [`tasks.md`](../tasks.md);
 > decisions SM-D1 to SM-D6 are the owner's. The research is in [`plan.md`](../plan.md) §85 to §87. The sister file is
 > [product-evaluation.md](product-evaluation.md).
 
@@ -30,7 +30,7 @@ Checked against the code on 2026-11-05.
 | Escalation | `escalations`, with levels and `respond_by` | Have |
 | Change | `change_requests`, `issues.change_request_pid` | Have |
 | Links between issues | None: `source_risk_pid`, `source_task_pid`, `change_request_pid` only | Missing |
-| When things happened | `raised_on` and `resolved_on` are **dates**. Age is in calendar days | **Missing, and it blocks all of the rest** |
+| When things happened | `raised_on` and `resolved_on` are dates, and since SM-2 an issue also carries times | Have, from SM-2 on; older issues have none |
 | Service level clocks | None. `delivery_exceptions` and the breach tasks are about plan tolerances | Missing |
 | Business hours | `work_calendars` (weekdays and holidays), used for scheduling | Have, not yet applied here |
 | Requester | `raised_by` is a token subject; nobody outside can raise one | Missing |
@@ -58,10 +58,26 @@ of kind `incident` keep their role as a measurement feed. SM-7 links the two, so
 
 ### Times on an issue (SM-2)
 
-An issue gains `reported_at`, `acknowledged_at`, `first_response_at`, `resolved_at` and `closed_at`, and for an incident `occurred_at` and
-`detected_at`. The existing dates stay and are derived. Times are stored in UTC and shown in the reader's zone, as elsewhere. A person may
-correct `occurred_at`, with the correction audited, because the real start is often only known later. Existing issues keep their dates and
-show no time: **nothing is back-filled by guessing,** and an SLA report says how many issues it left out for that reason.
+**Built 2026-11-05.** An issue carries these times, in UTC. The existing dates stay.
+
+| Time | Written by | Rule |
+| --- | --- | --- |
+| `reported_at` | the service | When it was raised. The column default covers any other insert. |
+| `acknowledged_at` | the service | The first move out of the `todo` category. A reopening leaves it. |
+| `resolved_at` | the service | The move into `done`. A reopening clears it. |
+| `closed_at` | the service | The move into a terminal state. A reopening clears it. |
+| `occurred_at`, `detected_at` | a person | When it really began and when it was noticed, on any issue type until SM-3 adds the incident. |
+
+A time is written by the crossing it records, as a pure rule (`issues::times_after`). A person may state or correct `occurred_at` and
+`detected_at`, because the real start is often only known later. That is an edit: it needs the edit right, and the audit entry holds the
+values before and after. Left out of a save, they stay; sent as `null`, they clear. Neither may be in the future, and an issue cannot have
+occurred after it was detected, which the database also enforces.
+
+**Nothing is back-filled by guessing.** An existing issue keeps its dates and has no times. Saving it adds none, and an issue resolved before
+this change that is closed now gets `closed_at` and no `resolved_at`. An SLA report (SM-5) must say how many issues it left out for that reason.
+
+**`first_response_at` is not built.** Issues have no comments today, so nothing yet counts as a response. It belongs with SM-6, which brings
+comments on issues and the requester a response goes to. Until then SM-4 can measure time to respond only from `acknowledged_at`.
 
 ### Service levels
 

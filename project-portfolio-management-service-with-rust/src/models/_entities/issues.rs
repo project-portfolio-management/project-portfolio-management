@@ -34,6 +34,18 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub resolution: Option<String>,
     pub resolved_on: Option<Date>,
+    /// When it was reported. None on an issue from before times were kept.
+    pub reported_at: Option<DateTimeWithTimeZone>,
+    /// The first move out of the `todo` category.
+    pub acknowledged_at: Option<DateTimeWithTimeZone>,
+    /// The move into the `done` category; cleared on reopening.
+    pub resolved_at: Option<DateTimeWithTimeZone>,
+    /// The move into a terminal state; cleared on reopening.
+    pub closed_at: Option<DateTimeWithTimeZone>,
+    /// When it really began, as a person states it, often only known later.
+    pub occurred_at: Option<DateTimeWithTimeZone>,
+    /// When it was noticed, as a person states it.
+    pub detected_at: Option<DateTimeWithTimeZone>,
     pub source_risk_pid: Option<Uuid>,
     pub source_task_pid: Option<Uuid>,
     pub change_request_pid: Option<Uuid>,

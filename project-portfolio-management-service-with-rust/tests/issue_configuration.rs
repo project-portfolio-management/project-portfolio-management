@@ -2059,3 +2059,145 @@ async fn no_task_gets_past_a_gate_by_creation_or_by_changing_plan() {
     })
     .await;
 }
+
+// Times on an issue (SM-2). The service writes what a move proves; a person states when it began and when it was noticed;
+// a screen that does not know those fields cannot clear them; and an issue from before times were kept is given none by a guess.
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn an_issues_times_come_from_its_moves_and_nothing_is_guessed() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let writer = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &admin, "Times").await;
+        let issues = format!("/api/plans/{plan}/issues");
+        let raised: Value = request
+            .post(&issues)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Timed" }))
+            .await
+            .json();
+        let pid = raised["pid"].as_str().expect("pid").to_string();
+        let path = format!("{issues}/{pid}");
+        assert!(raised["reported_at"].is_string(), "{raised}");
+        assert!(raised["acknowledged_at"].is_null(), "{raised}");
+
+        let read = |body: Value| {
+            let request = &request;
+            let writer = writer.clone();
+            let path = path.clone();
+            async move {
+                let saved = request
+                    .put(&path)
+                    .add_header(writer.0, writer.1)
+                    .json(&body)
+                    .await;
+                assert_eq!(saved.status_code(), 200, "{}", saved.text());
+                saved.json::<Value>()
+            }
+        };
+
+        // A person states when it began. A later save that leaves the field out keeps it, and `null` clears it.
+        let stated = read(
+            json!({ "title": "Timed", "occurred_at": "2026-01-02T03:04:05Z",
+                                  "detected_at": "2026-01-02T04:00:00Z" }),
+        )
+        .await;
+        assert!(
+            stated["occurred_at"]
+                .as_str()
+                .is_some_and(|t| t.starts_with("2026-01-02T03:04:05")),
+            "{stated}"
+        );
+        let kept = read(json!({ "title": "Timed, renamed" })).await;
+        assert_eq!(kept["occurred_at"], stated["occurred_at"]);
+        assert_eq!(kept["detected_at"], stated["detected_at"]);
+        assert!(kept["acknowledged_at"].is_null(), "a save is not a move");
+        let audit = ctx
+            .db
+            .query_one_raw(sea_orm::Statement::from_string(
+                sea_orm::DatabaseBackend::Postgres,
+                format!(
+                    "SELECT count(*)::bigint AS n FROM audit_logs WHERE action = 'issue_changed'
+                     AND entity_pid = '{pid}'
+                     AND snapshot -> 'to' ->> 'occurred_at' IS NOT NULL
+                     AND snapshot -> 'from' ->> 'occurred_at' IS NULL"
+                ),
+            ))
+            .await
+            .expect("audit")
+            .expect("row");
+        assert_eq!(
+            audit.try_get::<i64>("", "n").expect("n"),
+            1,
+            "the correction is audited"
+        );
+
+        // A time in the future, or one that puts the end first, is refused.
+        for bad in [
+            json!({ "title": "Timed", "occurred_at": "2999-01-01T00:00:00Z", "detected_at": null }),
+            json!({ "title": "Timed", "detected_at": "2020-01-01T00:00:00Z" }),
+        ] {
+            let refused = request
+                .put(&path)
+                .add_header(writer.0.clone(), writer.1.clone())
+                .json(&bad)
+                .await;
+            assert_eq!(refused.status_code(), 422, "{}", refused.text());
+        }
+        let cleared = read(json!({ "title": "Timed", "occurred_at": null })).await;
+        assert!(cleared["occurred_at"].is_null(), "{cleared}");
+        assert_eq!(cleared["detected_at"], stated["detected_at"]);
+
+        // Each crossing is written once, and reopening takes back only the ending.
+        let worked = read(json!({ "title": "Timed", "status": "in_progress" })).await;
+        assert!(worked["acknowledged_at"].is_string(), "{worked}");
+        let fixed = read(json!({ "title": "Timed", "status": "resolved" })).await;
+        assert!(fixed["resolved_at"].is_string(), "{fixed}");
+        assert!(fixed["closed_at"].is_null(), "{fixed}");
+        assert_eq!(fixed["acknowledged_at"], worked["acknowledged_at"]);
+        let closed =
+            read(json!({ "title": "Timed", "status": "closed", "resolution": "Done" })).await;
+        assert!(closed["closed_at"].is_string(), "{closed}");
+        assert_eq!(closed["resolved_at"], fixed["resolved_at"]);
+        let again = read(json!({ "title": "Timed", "status": "in_progress" })).await;
+        assert!(again["resolved_at"].is_null(), "{again}");
+        assert!(again["closed_at"].is_null(), "{again}");
+        assert_eq!(again["acknowledged_at"], worked["acknowledged_at"]);
+
+        // An issue from before times were kept: already resolved, with no time. Saving it invents none,
+        // and closing it records the closing only.
+        ctx.db
+            .execute_unprepared(&format!(
+                "UPDATE issues SET reported_at = NULL, acknowledged_at = NULL, resolved_at = NULL,
+                     status = 'resolved', status_category = 'done', resolved_on = '2025-06-01'
+                 WHERE pid = '{pid}'"
+            ))
+            .await
+            .expect("age the issue");
+        let saved = read(json!({ "title": "Old, renamed" })).await;
+        assert!(saved["reported_at"].is_null(), "{saved}");
+        assert!(saved["resolved_at"].is_null(), "{saved}");
+        let shut = read(json!({ "title": "Old", "status": "closed", "resolution": "Done" })).await;
+        assert!(shut["closed_at"].is_string(), "{shut}");
+        assert!(shut["resolved_at"].is_null(), "{shut}");
+        assert!(shut["acknowledged_at"].is_null(), "{shut}");
+
+        // Stating a time is an edit: someone who may only move an issue may not.
+        add_role(&request, &admin, "mover", &["issue_move"]).await;
+        let other: Value = request
+            .post(&issues)
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "title": "Moves" }))
+            .await
+            .json();
+        let other = format!("{issues}/{}", other["pid"].as_str().expect("pid"));
+        add_member(&request, &admin, &plan, WRITER, "mover").await;
+        let sneaked = json!({ "title": "Moves", "occurred_at": "2026-01-02T03:04:05Z" });
+        assert_eq!(put_status(&request, &writer, &other, &sneaked).await, 403);
+    })
+    .await;
+}

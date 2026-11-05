@@ -21261,6 +21261,13 @@
                     "nullable": true,
                     "type": "string"
                   },
+                  "detected_at": {
+                    "default": null,
+                    "description": "When it was noticed, in UTC, as a person states it. Absent keeps what is there, `null` clears it. A correction is audited.",
+                    "format": "date-time",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "due_date": {
                     "default": null,
                     "description": "Optional date the issue should be dealt with by; absent means no due date, so it is never overdue.",
@@ -21271,6 +21278,13 @@
                   "kind": {
                     "default": null,
                     "description": "Issue type, from `/api/issue-types`, not retired and offered by this plan. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "occurred_at": {
+                    "default": null,
+                    "description": "When it really began, in UTC, as a person states it. Absent keeps what is there, `null` clears it. A correction is audited.",
+                    "format": "date-time",
                     "nullable": true,
                     "type": "string"
                   },
@@ -21567,6 +21581,13 @@
                     "nullable": true,
                     "type": "string"
                   },
+                  "detected_at": {
+                    "default": null,
+                    "description": "When it was noticed, in UTC, as a person states it. Absent keeps what is there, `null` clears it. A correction is audited.",
+                    "format": "date-time",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "due_date": {
                     "default": null,
                     "description": "Optional date the issue should be dealt with by; absent means no due date, so it is never overdue.",
@@ -21577,6 +21598,13 @@
                   "kind": {
                     "default": null,
                     "description": "Issue type, from `/api/issue-types`, not retired and offered by this plan. Absent means `concern` on a new issue and no change on an\nexisting one. Changing the type of an issue under a workflow that restricts moves needs an administrator.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "occurred_at": {
+                    "default": null,
+                    "description": "When it really began, in UTC, as a person states it. Absent keeps what is there, `null` clears it. A correction is audited.",
+                    "format": "date-time",
                     "nullable": true,
                     "type": "string"
                   },

@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (SM-2: times on an issue)
+
+- An issue now carries `reported_at`, `acknowledged_at`, `resolved_at` and `closed_at`, written by the service as a pure rule from its moves, and `occurred_at` and `detected_at`, stated by a person. Stating or correcting one is an edit, and the audit entry holds the values before and after. A save that leaves them out keeps them, so a screen that does not know them cannot clear them.
+- Nothing is back-filled: an existing issue has no times, saving it adds none, and closing one resolved earlier records the closing only.
+- Not done: `first_response_at` is not built, because issues have no comments and nothing yet counts as a response; it moved to SM-6. No report reads the times, so the count of issues a report leaves out moved to SM-5. No screen shows or sets them (SM-16). `occurred_at` and `detected_at` work on every issue type until SM-3 adds the incident, and a status field rule cannot yet name them.
+- Not verified: the whole database suite was not run locally, only `issue_configuration`, the issue and control tests in `mod`, and the unit tests; CI runs the rest. PE-2 still waits on the owner's answer to PE-D2.
+
 ### 5 November (PE-1: what a product plan touches)
 
 - Measured, not inferred: of 101 aggregate views, a bare `Product` plan changes 24 and one with data of every kind changes 58. Nine of the 24 are records that should show it, such as the audit trail and the regulator extract; 15 are decision views that a mere proposal should not move. `census_of_what_a_product_plan_touches` names both lists, so a new view must be sorted. This changes the advice: "counts in no portfolio total" would have hidden records from auditors and real spending from totals, so PE-D2 now turns on the stage.

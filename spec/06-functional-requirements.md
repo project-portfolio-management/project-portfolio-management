@@ -148,12 +148,14 @@ hang off **any** plan.
   Bug|Risk|Blocker|Question|Improvement|Concern, severity:
   Low|Med|High|Critical, priority?, status:
   Open|InProgress|Resolved|Closed, owner_ref? (EntityRef), raised_by,
-  raised_on, due_date?, resolution?, resolved_on?, source_risk_pid?,
-  source_task_pid?, change_request_pid? }`. Rules: a `Closed` issue records a
+  raised_on, due_date?, resolution?, resolved_on?, reported_at?,
+  acknowledged_at?, resolved_at?, closed_at?, occurred_at?, detected_at?,
+  source_risk_pid?, source_task_pid?, change_request_pid? }`. Rules: a `Closed` issue records a
   resolution; ageing is counted in **calendar days** since `raised_on`; an
   issue raised from a risk (escalation) or from a blocked task keeps a link
   back and the source is never altered by closing the issue; every change is
-  audited (FR-19). Reads obey the same attribute-based policy as tasks.
+  audited (FR-19). Reads obey the same attribute-based policy as tasks. The
+  times are specified in [service-management.md](service-management.md) (SM-2).
   An issue's type, its statuses and who may move it are the organization's to define, by issue type; see
   [issue configuration](issue-configuration.md) (OC-1). **Built (IR-1):** the plan-scoped CRUD at `/api/plans/{pid}/issues`
   (migration 50, entity, rules in `src/issues.rs`, controller, OpenAPI,

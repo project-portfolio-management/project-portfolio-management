@@ -7,7 +7,7 @@
 
 use super::db_err;
 use axum::http::StatusCode;
-use chrono::{NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use loco_rs::controller::ErrorDetail;
 use loco_rs::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
@@ -34,6 +34,9 @@ fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {
         "owner_ref": i.owner_ref,
         "raised_by": i.raised_by, "raised_on": i.raised_on, "due_date": i.due_date,
         "resolution": i.resolution, "resolved_on": i.resolved_on,
+        "reported_at": i.reported_at, "acknowledged_at": i.acknowledged_at,
+        "resolved_at": i.resolved_at, "closed_at": i.closed_at,
+        "occurred_at": i.occurred_at, "detected_at": i.detected_at,
         "source_risk_pid": i.source_risk_pid, "source_task_pid": i.source_task_pid,
         "change_request_pid": i.change_request_pid,
         "age_calendar_days": rules::age_calendar_days(i.raised_on, i.resolved_on, today),
@@ -203,6 +206,47 @@ pub(crate) struct Input {
     #[serde(default)]
     /// Task this issue was raised from, when there is one; recorded as given, the task is not changed.
     source_task_pid: Option<Uuid>,
+    #[serde(default, deserialize_with = "present")]
+    /// When it really began, in UTC, as a person states it. Absent keeps what is there, `null` clears it. A correction is audited.
+    #[expect(
+        clippy::option_option,
+        reason = "left out and `null` mean different things here"
+    )]
+    occurred_at: Option<Option<DateTime<Utc>>>,
+    #[serde(default, deserialize_with = "present")]
+    /// When it was noticed, in UTC, as a person states it. Absent keeps what is there, `null` clears it. A correction is audited.
+    #[expect(
+        clippy::option_option,
+        reason = "left out and `null` mean different things here"
+    )]
+    detected_at: Option<Option<DateTime<Utc>>>,
+}
+
+/// Tells a field sent as `null` from one left out, so a screen that does not know a field cannot clear it by saving.
+fn present<'de, T, D>(d: D) -> std::result::Result<Option<T>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: serde::Deserializer<'de>,
+{
+    T::deserialize(d).map(Some)
+}
+
+/// A stored time as the rules take it.
+fn utc(t: Option<sea_orm::prelude::DateTimeWithTimeZone>) -> Option<DateTime<Utc>> {
+    t.map(Into::into)
+}
+
+/// The times of an issue raised now in this state. `reported_at` is set beside them by the caller's insert.
+fn raised_times(at: &Placed, now: DateTime<Utc>) -> rules::Times {
+    rules::times_after(
+        rules::Times::default(),
+        None,
+        rules::Standing {
+            category: &at.category,
+            terminal: at.needs_resolution,
+        },
+        now,
+    )
 }
 
 /// Serde default for [`Input::severity`].
@@ -340,8 +384,31 @@ fn enforce_entry_roles(
     })
 }
 
+/// The times a person states, as they will stand after a save.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Stated {
+    /// When it really began.
+    occurred_at: Option<DateTime<Utc>>,
+    /// When it was noticed.
+    detected_at: Option<DateTime<Utc>>,
+}
+
+impl Stated {
+    /// What this body leaves on an issue that has these now.
+    fn after(
+        b: &Input,
+        occurred_at: Option<DateTime<Utc>>,
+        detected_at: Option<DateTime<Utc>>,
+    ) -> Self {
+        Self {
+            occurred_at: b.occurred_at.unwrap_or(occurred_at),
+            detected_at: b.detected_at.unwrap_or(detected_at),
+        }
+    }
+}
+
 /// Runs the rules module's checks on a request body and turns any problems into one `422` listing them all.
-fn validate(b: &Input, raised_on: NaiveDate, needs_resolution: bool) -> Result<()> {
+fn validate(b: &Input, raised_on: NaiveDate, needs_resolution: bool, stated: Stated) -> Result<()> {
     let problems = rules::problems(&rules::Draft {
         title: &b.title,
         description: b.description.as_deref(),
@@ -351,6 +418,9 @@ fn validate(b: &Input, raised_on: NaiveDate, needs_resolution: bool) -> Result<(
         raised_on,
         due_date: b.due_date,
         resolution: b.resolution.as_deref(),
+        occurred_at: stated.occurred_at,
+        detected_at: stated.detected_at,
+        now: Utc::now(),
     });
     if problems.is_empty() {
         Ok(())
@@ -371,6 +441,7 @@ fn changed_fields(
     b: &Input,
     kind: &str,
     raised_on: NaiveDate,
+    stated: Stated,
 ) -> Vec<&'static str> {
     [
         ("title", b.title.trim() != row.title),
@@ -386,6 +457,8 @@ fn changed_fields(
         ("due_date", b.due_date != row.due_date),
         ("source_risk_pid", b.source_risk_pid != row.source_risk_pid),
         ("source_task_pid", b.source_task_pid != row.source_task_pid),
+        ("occurred_at", stated.occurred_at != utc(row.occurred_at)),
+        ("detected_at", stated.detected_at != utc(row.detected_at)),
         (
             "resolution",
             trimmed(b.resolution.as_ref()) != row.resolution,
@@ -451,8 +524,11 @@ async fn create(
         }
         Some(s) => placed(&def, s)?,
     };
-    validate(&b, raised_on, at.needs_resolution)?;
+    let stated = Stated::after(&b, None, None);
+    validate(&b, raised_on, at.needs_resolution, stated)?;
     check_required(&def, &at.status, &standing.roles, &b)?;
+    let moment = Utc::now();
+    let times = raised_times(&at, moment);
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -470,6 +546,12 @@ async fn create(
         due_date: ActiveValue::set(b.due_date),
         resolution: ActiveValue::set(trimmed(b.resolution.as_ref())),
         resolved_on: ActiveValue::set(rules::resolved_on(&at.category, None, now)),
+        reported_at: ActiveValue::set(Some(moment.into())),
+        acknowledged_at: ActiveValue::set(times.acknowledged_at.map(Into::into)),
+        resolved_at: ActiveValue::set(times.resolved_at.map(Into::into)),
+        closed_at: ActiveValue::set(times.closed_at.map(Into::into)),
+        occurred_at: ActiveValue::set(stated.occurred_at.map(Into::into)),
+        detected_at: ActiveValue::set(stated.detected_at.map(Into::into)),
         source_risk_pid: ActiveValue::set(b.source_risk_pid),
         source_task_pid: ActiveValue::set(b.source_task_pid),
         change_request_pid: ActiveValue::set(None),
@@ -547,6 +629,49 @@ fn placed_after_save(
     Ok(at)
 }
 
+/// Writes the times onto a row about to be saved.
+fn set_times(a: &mut issues::ActiveModel, times: rules::Times, stated: Stated) {
+    a.acknowledged_at = ActiveValue::set(times.acknowledged_at.map(Into::into));
+    a.resolved_at = ActiveValue::set(times.resolved_at.map(Into::into));
+    a.closed_at = ActiveValue::set(times.closed_at.map(Into::into));
+    a.occurred_at = ActiveValue::set(stated.occurred_at.map(Into::into));
+    a.detected_at = ActiveValue::set(stated.detected_at.map(Into::into));
+}
+
+/// The times after a save. Only a move writes them, so saving an old issue that is already done gives it no invented time.
+fn times_after_save(
+    def: &crate::workflow::WorkflowDef,
+    row: &issues::Model,
+    at: &Placed,
+    moved: bool,
+) -> rules::Times {
+    let before = rules::Times {
+        acknowledged_at: utc(row.acknowledged_at),
+        resolved_at: utc(row.resolved_at),
+        closed_at: utc(row.closed_at),
+    };
+    if !moved {
+        return before;
+    }
+    let was_terminal = row.status == "closed"
+        || def
+            .states
+            .iter()
+            .any(|s| s.key == row.status && s.is_terminal);
+    rules::times_after(
+        before,
+        Some(rules::Standing {
+            category: &row.status_category,
+            terminal: was_terminal,
+        }),
+        rules::Standing {
+            category: &at.category,
+            terminal: at.needs_resolution,
+        },
+        Utc::now(),
+    )
+}
+
 /// `PUT /api/plans/{pid}/issues/{issue_pid}` — replace the fields of an issue.
 #[debug_handler]
 async fn update(
@@ -567,7 +692,8 @@ async fn update(
     let wanted = b.status.clone().unwrap_or_else(|| row.status.clone());
     let moved = wanted != row.status;
     let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
-    let changed = changed_fields(&row, &b, &kind, raised_on);
+    let stated = Stated::after(&b, utc(row.occurred_at), utc(row.detected_at));
+    let changed = changed_fields(&row, &b, &kind, raised_on, stated);
     // A resolution belongs to a move that finishes the issue, so it is not an edit there.
     let finishes = moved
         && (crate::workflow::is_done(&def, &wanted)
@@ -590,12 +716,14 @@ async fn update(
             )));
         }
     }
-    validate(&b, raised_on, at.needs_resolution)?;
+    validate(&b, raised_on, at.needs_resolution, stated)?;
     check_required(&def, &at.status, &standing.roles, &b)?;
     let was = serde_json::json!({
         "title": row.title, "kind": row.kind, "severity": row.severity, "status": row.status,
         "status_category": row.status_category, "owner_ref": row.owner_ref,
+        "occurred_at": row.occurred_at, "detected_at": row.detected_at,
     });
+    let times = times_after_save(&def, &row, &at, moved);
     let (issue_pid, read_status, read_kind) = (row.pid, row.status.clone(), row.kind.clone());
     let resolved_on = rules::resolved_on(&at.category, row.resolved_on, now);
     let mut a: issues::ActiveModel = row.into();
@@ -611,6 +739,7 @@ async fn update(
     a.due_date = ActiveValue::set(b.due_date);
     a.resolution = ActiveValue::set(trimmed(b.resolution.as_ref()));
     a.resolved_on = ActiveValue::set(resolved_on);
+    set_times(&mut a, times, stated);
     a.source_risk_pid = ActiveValue::set(b.source_risk_pid);
     a.source_task_pid = ActiveValue::set(b.source_task_pid);
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
@@ -642,7 +771,8 @@ async fn update(
         Some(serde_json::json!({ "plan_pid": plan, "from": was,
             "to": { "title": row.title, "kind": row.kind, "severity": row.severity,
                     "status": row.status, "status_category": row.status_category,
-                    "owner_ref": row.owner_ref } })),
+                    "owner_ref": row.owner_ref, "occurred_at": row.occurred_at,
+                    "detected_at": row.detected_at } })),
     )
     .await
     .map_err(super::audit_failed)?;
@@ -866,6 +996,8 @@ async fn insert_from_source(
 ) -> Result<issues::Model> {
     let now = today();
     let start = initial(&super::workflow::in_force_issue(ctx, plan, kind).await?);
+    let moment = Utc::now();
+    let times = raised_times(&start, moment);
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = issues::ActiveModel {
         pid: ActiveValue::set(Uuid::new_v4()),
@@ -883,6 +1015,8 @@ async fn insert_from_source(
         due_date: ActiveValue::set(None),
         resolution: ActiveValue::set(None),
         resolved_on: ActiveValue::set(None),
+        reported_at: ActiveValue::set(Some(moment.into())),
+        acknowledged_at: ActiveValue::set(times.acknowledged_at.map(Into::into)),
         source_risk_pid: ActiveValue::set(source_risk_pid),
         source_task_pid: ActiveValue::set(source_task_pid),
         change_request_pid: ActiveValue::set(None),

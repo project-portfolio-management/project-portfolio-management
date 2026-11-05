@@ -729,3 +729,75 @@ async fn sprints_and_calendars_keep_a_private_plan_out() {
     })
     .await;
 }
+
+/// Security audit: a snapshot of a private plan, tasks and all, was readable and copyable by everyone.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn a_template_is_hidden_with_its_plan() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = private_plan(&request, &who, "Templated").await;
+        with!(
+            request.post(&format!("/api/plans/{plan}/tasks")),
+            who.member
+        )
+        .json(&json!({ "title": "A hidden step" }))
+        .await
+        .assert_status_ok();
+        let saved: Value = with!(
+            request.post(&format!("/api/plans/{plan}/save-as-template")),
+            who.member
+        )
+        .json(&json!({ "name": "Hidden template" }))
+        .await
+        .json();
+        let template = saved["pid"].as_str().expect("template");
+
+        let listed = |v: Value| {
+            v.as_array()
+                .expect("rows")
+                .iter()
+                .any(|t| t["pid"] == template)
+        };
+        let list = "/api/plan-templates";
+        assert!(!listed(with!(request.get(list), who.outsider).await.json()));
+        assert!(listed(with!(request.get(list), who.member).await.json()));
+
+        let one = format!("/api/plan-templates/{template}");
+        assert_eq!(
+            with!(request.get(&one), who.outsider).await.status_code(),
+            404
+        );
+        with!(request.get(&one), who.member)
+            .await
+            .assert_status_ok();
+        let copy = with!(
+            request.post(&format!("/api/plans/from-template/{template}")),
+            who.outsider
+        )
+        .json(&json!({ "name": "Copy" }))
+        .await;
+        assert_eq!(copy.status_code(), 404);
+        let delete = with!(
+            request.post(&format!("/api/plan-templates/{template}/delete")),
+            who.outsider
+        )
+        .json(&json!({}))
+        .await;
+        assert_eq!(delete.status_code(), 404);
+        for url in [format!("{one}/revise"), format!("{one}/plans")] {
+            let response = if url.ends_with("plans") {
+                with!(request.get(&url), who.outsider).await
+            } else {
+                with!(request.post(&url), who.outsider)
+                    .json(&json!({ "from_plan": plan }))
+                    .await
+            };
+            assert_eq!(response.status_code(), 404, "{url}");
+        }
+    })
+    .await;
+}

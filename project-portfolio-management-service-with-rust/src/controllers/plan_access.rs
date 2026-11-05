@@ -341,6 +341,12 @@ impl PlanScoped for crate::models::_entities::canvases::Model {
         self.plan_pid
     }
 }
+impl PlanScoped for crate::models::_entities::plan_templates::Model {
+    /// A template is a snapshot of the plan it came from: hidden with it.
+    fn scope_plan(&self) -> Option<Uuid> {
+        self.source_plan_pid
+    }
+}
 impl PlanScoped for crate::models::_entities::reviews::Model {
     /// A review of a plan is hidden with the plan.
     fn scope_plan(&self) -> Option<Uuid> {

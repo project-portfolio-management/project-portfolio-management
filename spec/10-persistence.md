@@ -87,6 +87,7 @@ mutation (§10.2).
   `impact` in 0.25/0.5/1/2/3, `confidence_percent` 0 to 100, `effort` > 0), all nullable by CHECKs;
   `set_by?` (migration `m20261025_000089`). No score is stored.
 - **`plan_status_cadences`** and **`status_updates`** (built, FR-16e7) — a plan's expected update cadence (`cadence_days` 1 to 92, `set_on`, `set_by?`, `reminded_for?`) and its append-only updates (`status` on_track / at_risk / off_track by CHECK, `narrative`, `posted_on`, `posted_by?`, and from BR-2 `claims` JSONB, a list of sentences with source ids, FR-16e14, migration `m20261025_000097`); migration `m20261025_000091`.
+- **`plan_templates.source_plan_pid`** (built, OC-20) — the plan a template was saved or last revised from, with no foreign key because a template outlives its plan. A template is hidden with that plan; one saved before this column has none and stays visible.
 - **`plan_template_links`** and `plan_templates.version` (built, FR-16e9) — per plan made from a template: `plan_pid`
   (unique), `template_pid`, `node_key`, `template_version` (>= 1), `baseline` (the template's tasks for the plan when it
   was last brought up to date) and `task_map` (template task key to the plan's task); the template's `version` starts at

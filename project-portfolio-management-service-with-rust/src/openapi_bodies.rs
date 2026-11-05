@@ -322,7 +322,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/organizations", "organizations", "`GET /api/organizations`"),
     ("post", "/api/organizations", "organizations", "`POST /api/organizations`"),
     ("put", "/api/organizations/{pid}", "organizations", "`PUT /api/organizations/{pid}` — rename, change kind, retire or restore."),
-    ("get", "/api/plan-templates", "plan_templates", "`GET /api/plan-templates` — name, description and size, not the snapshot."),
+    ("get", "/api/plan-templates", "plan_templates", "`GET /api/plan-templates` — name, description and size, not the snapshot. A template of a plan the caller cannot see is left out."),
     ("delete", "/api/plan-templates/{pid}", "plan_templates", "`POST /api/plan-templates/{pid}/delete` (and `DELETE`) — soft-delete."),
     ("get", "/api/plan-templates/{pid}", "plan_templates", "`GET /api/plan-templates/{pid}` — the full snapshot."),
     ("post", "/api/plan-templates/{pid}/delete", "plan_templates", "`POST /api/plan-templates/{pid}/delete` (and `DELETE`) — soft-delete."),

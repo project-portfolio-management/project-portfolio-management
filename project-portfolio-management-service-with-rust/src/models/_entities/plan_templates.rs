@@ -21,6 +21,8 @@ pub struct Model {
     pub version: i32,
     pub created_by: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
+    /// The plan this was saved from, so it is hidden with that plan. `None` for a starter and for a template saved before OC-20.
+    pub source_plan_pid: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

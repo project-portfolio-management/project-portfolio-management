@@ -322,7 +322,7 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
     ),
     (
         "/api/plan-templates",
-        "templates (private plans' templates filtered at source)",
+        "templates; one saved from a hidden plan left out (tests/private_routes.rs)",
     ),
     ("/api/canvas-templates", "templates"),
     (

@@ -2427,6 +2427,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-19 (S) — Sprints and calendars keep a private plan out.** **Built 2026-11-05:** sprint ceremonies and commitments check the plan, and a calendar feed leaves out a plan hidden from its owner.
 
+- [x] **OC-20 (S) — A template is hidden with its plan.** **Built 2026-11-05:** `plan_templates.source_plan_pid` records the plan, and a template is hidden with it.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

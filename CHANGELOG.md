@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-20: a template is hidden with its plan)
+
+- Saving a plan as a template copies its tasks and dates, and templates had no link back to the plan, so a template of a private plan could be read, copied into a new plan, revised or deleted by anyone. `plan_templates` now records `source_plan_pid` (migration 105), updated on revision, and a template is hidden with that plan: out of the list, `404` on every route. A template outlives a deleted plan, as it did before. Predates OC-1.
+- Not done: **templates saved before this have no source and stay visible.** The audit trail does not name the plan, so it cannot be recovered; anyone who has saved a template from a private plan should delete it and save it again. A plan's own link to its template is not re-checked for template sync. Routes outside the plan guard are still being worked through in this series. Not verified: migration 105 has run forward here, but down and rerun have not been exercised.
+
 ### 5 November (OC-19: sprints and calendars keep a private plan out)
 
 - `/api/sprints/{pid}/ceremonies`, `/commitment` and `/commit` sit outside the plan guard and looked at nothing, so anyone holding a sprint pid could read retrospective notes or use up a sprint's one commitment. They now answer `404`. `/api/feeds/calendar.ics` listed the owner's tasks, and that plan's milestones and sprints, with no check, so a feed outlived its owner's access; it now leaves those plans out. Predates OC-1.

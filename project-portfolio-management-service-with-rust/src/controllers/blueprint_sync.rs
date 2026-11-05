@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 use super::discussion::resolve_subject;
 use super::plan_access::readable_plans;
-use super::plan_templates::{capture, find_template};
+use super::plan_templates::{capture, find_template, find_visible_template};
 use super::{db_err, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::blueprint_sync::{self as rules, Kind, Local};
@@ -121,7 +121,7 @@ async fn revise(
     Path(pid): Path<String>,
     Json(b): Json<ReviseBody>,
 ) -> Result<Response> {
-    let row = find_template(&ctx, &pid).await?;
+    let row = find_visible_template(&ctx, &caller, &pid).await?;
     super::plan_templates::refuse_starter(&row)?;
     let old: Snapshot = serde_json::from_value(row.snapshot.clone())
         .map_err(|e| unprocessable(&format!("the template snapshot is unreadable: {e}")))?;
@@ -139,6 +139,7 @@ async fn revise(
     let version = row.version + 1;
     let tpl_pid = row.pid;
     let mut active: plan_templates::ActiveModel = row.into();
+    active.source_plan_pid = ActiveValue::set(Some(subject.pid));
     active.snapshot = ActiveValue::set(json!(new));
     active.version = ActiveValue::set(version);
     let txn = ctx.db.begin().await.map_err(db_err)?;
@@ -168,7 +169,7 @@ async fn template_plans(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let template = find_template(&ctx, &pid).await?;
+    let template = find_visible_template(&ctx, &caller, &pid).await?;
     let snapshot: Snapshot = serde_json::from_value(template.snapshot.clone())
         .map_err(|e| unprocessable(&format!("the template snapshot is unreadable: {e}")))?;
     let links = plan_template_links::Entity::find()

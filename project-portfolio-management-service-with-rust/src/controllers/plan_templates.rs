@@ -271,6 +271,7 @@ async fn save_as_template(
         snapshot: ActiveValue::set(serde_json::json!(snapshot)),
         created_by: ActiveValue::set(caller.actor().map(str::to_string)),
         deleted_at: ActiveValue::set(None),
+        source_plan_pid: ActiveValue::set(Some(subject.pid)),
         ..Default::default()
     }
     .insert(&txn)
@@ -291,15 +292,19 @@ async fn save_as_template(
     }))
 }
 
-/// `GET /api/plan-templates` — name, description and size, not the snapshot.
+/// `GET /api/plan-templates` — name, description and size, not the snapshot. A template of a plan the caller cannot see is
+/// left out.
 #[debug_handler]
-async fn list_templates(State(ctx): State<AppContext>) -> Result<Response> {
+async fn list_templates(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let rows = plan_templates::Entity::find()
         .filter(plan_templates::Column::DeletedAt.is_null())
         .order_by_asc(plan_templates::Column::Id)
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let rows = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .keep(rows);
     let items: Vec<serde_json::Value> = rows
         .iter()
         .map(|t| {
@@ -337,6 +342,7 @@ fn starter_row(s: &crate::starter_templates::Starter) -> plan_templates::Model {
         version: 1,
         created_by: Some("system:starter".to_string()),
         deleted_at: None,
+        source_plan_pid: None,
     }
 }
 
@@ -365,10 +371,32 @@ pub(super) async fn find_template(ctx: &AppContext, pid: &str) -> Result<plan_te
         .ok_or(Error::NotFound)
 }
 
+/// [`find_template`] for a caller: `404` for a template of a plan hidden from them. Hidden, not unreadable: a template
+/// outlives a plan that is deleted, so a plan that has gone does not take its template with it.
+pub(super) async fn find_visible_template(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    pid: &str,
+) -> Result<plan_templates::Model> {
+    let row = find_template(ctx, pid).await?;
+    if let Some(source) = row.source_plan_pid
+        && super::plan_access::hidden_plans(ctx, &[source], caller)
+            .await
+            .contains(&source)
+    {
+        return Err(Error::NotFound);
+    }
+    Ok(row)
+}
+
 /// `GET /api/plan-templates/{pid}` — the full snapshot.
 #[debug_handler]
-async fn get_template(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
-    format::json(find_template(&ctx, &pid).await?)
+async fn get_template(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    format::json(find_visible_template(&ctx, &caller, &pid).await?)
 }
 
 /// `POST /api/plan-templates/{pid}/delete` (and `DELETE`) — soft-delete.
@@ -378,7 +406,7 @@ async fn delete_template(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let row = find_template(&ctx, &pid).await?;
+    let row = find_visible_template(&ctx, &caller, &pid).await?;
     refuse_starter(&row)?;
     let tpl_pid = row.pid;
     let mut active: plan_templates::ActiveModel = row.into();
@@ -414,7 +442,7 @@ async fn from_template(
     Path(tpl): Path<String>,
     Json(b): Json<InstantiateBody>,
 ) -> Result<Response> {
-    let row = find_template(&ctx, &tpl).await?;
+    let row = find_visible_template(&ctx, &caller, &tpl).await?;
     let snap: Snapshot = serde_json::from_value(row.snapshot.clone())
         .map_err(|e| unprocessable(&format!("the template snapshot is unreadable: {e}")))?;
     if snap.has_offsets && b.start_date.is_none() {

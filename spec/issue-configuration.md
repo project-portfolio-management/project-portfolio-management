@@ -130,6 +130,14 @@ feed and by pid. Controls, readings and actions are reached by their own pids, o
 plan itself (OC-11): someone who cannot read the plan gets `404` on every such route. "One open issue per source" looks at this plan only. Linking an issue to a change request is not an edit of the
 issue, needs no permission here and is audited on the change request.
 
+## No way round a gate on tasks (OC-12)
+
+A restricted move is only a restriction if nothing else reaches the same status. Where a task workflow lists its moves, a new task
+must start in the initial state (`422`), and a file import starts every task there and says so in its report, because a file is not
+an authority on a gate. Moving a task between plans changes which workflow applies, so where the workflow of either plan restricts
+moves, it needs an administrator; the bulk result refuses that task and carries on with the rest. A plan with an unrestricted
+workflow behaves as before: a task can be created in any declared status, and moved freely to another such plan.
+
 ## Who can change what
 
 Anyone signed in can read the catalogues, and anyone who can see a plan can read its role members. Only an administrator

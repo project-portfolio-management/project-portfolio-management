@@ -181,7 +181,9 @@ pub(super) async fn validate_task(
 /// `POST /api/plans/{pid}/tasks` — create a task.
 ///
 /// The default status is the workflow's **initial** state, and creating
-/// straight into a state whose category is `done` stamps `done_at`.
+/// straight into a state whose category is `done` stamps `done_at`. Where the
+/// workflow restricts moves, a new task must start in the initial state, so that
+/// nobody creates one past a gate.
 #[debug_handler]
 pub(super) async fn create_task(
     State(ctx): State<AppContext>,
@@ -196,6 +198,13 @@ pub(super) async fn create_task(
         return Err(refuse(&schedule_problems.join("; ")));
     }
     let (status, workflow) = validate_task(&ctx, item.pid, &payload).await?;
+    if !workflow.transitions.is_empty()
+        && crate::workflow::initial_state(&workflow).is_some_and(|s| s.key != status)
+    {
+        return Err(refuse(
+            "this workflow restricts moves, so a new task starts in its initial state",
+        ));
+    }
     // Required custom fields block creation; validated before any write.
     let custom = super::super::custom_fields::prepare(
         &ctx,

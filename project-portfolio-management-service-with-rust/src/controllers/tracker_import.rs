@@ -106,7 +106,23 @@ async fn run(
         active: pick(&|s| s.category == crate::workflow::Category::Active),
         done: pick(&|s| s.category == crate::workflow::Category::Done),
     };
-    if mapping.active.is_none() {
+    // A file cannot place a task past a gate, so under restricted moves everything starts at the start.
+    let restricted = !workflow.transitions.is_empty();
+    let mapping = if restricted {
+        note(
+            "status",
+            None,
+            "the plan's workflow restricts moves: every task starts in the initial state".into(),
+        );
+        States {
+            active: None,
+            done: None,
+            ..mapping
+        }
+    } else {
+        mapping
+    };
+    if mapping.active.is_none() && !restricted {
         note(
             "status",
             None,
@@ -114,7 +130,7 @@ async fn run(
                 .into(),
         );
     }
-    if mapping.done.is_none() {
+    if mapping.done.is_none() && !restricted {
         note(
             "status",
             None,

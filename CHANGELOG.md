@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-12: no way round a task gate)
+
+- A task could get past a role-restricted move three ways: created straight in a later status, imported from a file with one, or moved
+  to an unrestricted plan, finished there and moved back. Under a workflow that restricts moves, a new or imported task now starts in the
+  initial state, and moving a task between plans needs an administrator. These predate OC-1. Plans with no restricted moves are
+  unchanged.
+- Not done: tasks already past a gate stay where they are. Not verified: the two importers' new branch has no test of its own; the
+  creation and move paths do. Task-level writes other than the board move, such as a plan merge, were not traced.
+
 ### 5 November (OC-11: a private plan's controls are private)
 
 - `/api/controls/{pid}`, `/api/controls/{pid}/readings`, `/api/readings/{pid}/actions` and `/api/actions/{pid}/convert` sit outside the

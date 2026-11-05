@@ -14,7 +14,10 @@
 //!   only if asked), records a `copied_from` relation, and carries the custom
 //!   field values so a required field is never left empty;
 //! - **move** re-homes tasks, re-validating against the **target** workflow:
-//!   a status it lacks maps to its initial state **and the result says so**.
+//!   a status it lacks maps to its initial state **and the result says so**. A
+//!   move changes which workflow applies, so it could step round a gate on
+//!   either side: where the source or the target restricts moves, it needs an
+//!   administrator.
 
 use super::unprocessable;
 use std::collections::BTreeMap;
@@ -424,6 +427,17 @@ async fn move_one(
     let task = readable_task(ctx, caller, pid).await?;
     if task.plan_pid == target {
         return Err("the task is already in that plan".to_string());
+    }
+    let source = super::workflow::in_force(ctx, task.plan_pid, "task")
+        .await
+        .map_err(|e| e.to_string())?;
+    let gated =
+        crate::workflow::restricts_saves(&source) || crate::workflow::restricts_saves(workflow);
+    if gated && !super::plan_access::is_admin(caller.claims()) {
+        return Err(
+            "only an administrator can move a task between plans when either workflow restricts moves"
+                .to_string(),
+        );
     }
     let children = tasks::Entity::find()
         .filter(tasks::Column::ParentTaskPid.eq(pid))

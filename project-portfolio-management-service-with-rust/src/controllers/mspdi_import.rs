@@ -131,12 +131,22 @@ pub(super) async fn run(
             .map(|s| s.key.clone())
     };
     let initial = key_of(&|s| s.is_initial).unwrap_or_else(|| "todo".to_string());
-    let active = key_of(&|s| s.category == crate::workflow::Category::Active);
-    let done = key_of(&|s| s.category == crate::workflow::Category::Done);
-    if active.is_none() {
+    // A file cannot place a task past a gate, so under restricted moves everything starts at the start.
+    let restricted = !workflow.transitions.is_empty();
+    let active =
+        key_of(&|s| s.category == crate::workflow::Category::Active).filter(|_| !restricted);
+    let done = key_of(&|s| s.category == crate::workflow::Category::Done).filter(|_| !restricted);
+    if restricted {
+        report.note(
+            "status",
+            None,
+            "the plan's workflow restricts moves: every task starts in the initial state",
+        );
+    }
+    if active.is_none() && !restricted {
         report.note("status", None, "the plan's workflow has no active state: partly complete tasks start in the initial state");
     }
-    if done.is_none() {
+    if done.is_none() && !restricted {
         report.note(
             "status",
             None,

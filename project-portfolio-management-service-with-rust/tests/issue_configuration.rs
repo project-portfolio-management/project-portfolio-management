@@ -1972,3 +1972,90 @@ async fn a_private_plans_controls_answer_only_to_those_who_can_read_it() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn no_task_gets_past_a_gate_by_creation_or_by_changing_plan() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let writer = bearer(&kid, WRITER, &[("access", "write")]);
+        let gated = new_plan(&request, &admin, "Gated tasks").await;
+        let free = new_plan(&request, &admin, "Free tasks").await;
+        let other = new_plan(&request, &admin, "Free too").await;
+        let made = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({
+                "name": "Gated", "applies_to": "task", "plan_pid": gated,
+                "states": [
+                    { "key": "todo", "label": "To do", "category": "todo", "is_initial": true },
+                    { "key": "in_review", "label": "Review", "category": "waiting" },
+                    { "key": "done", "label": "Done", "category": "done", "is_terminal": true },
+                ],
+                "transitions": [
+                    { "from": "todo", "to": "in_review" },
+                    { "from": "in_review", "to": "done", "roles": ["lead"] },
+                ],
+            }))
+            .await;
+        assert_eq!(made.status_code(), 200, "{}", made.text());
+
+        // Nobody creates a task past the gate, and starting at the start still works.
+        let refused = request
+            .post(&format!("/api/plans/{gated}/tasks"))
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Straight to done", "status": "done" }))
+            .await;
+        assert_eq!(refused.status_code(), 422, "{}", refused.text());
+        let task: Value = request
+            .post(&format!("/api/plans/{gated}/tasks"))
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Round the gate" }))
+            .await
+            .json();
+        let task = task["pid"].as_str().expect("task pid").to_string();
+        let free_task: Value = request
+            .post(&format!("/api/plans/{free}/tasks"))
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&json!({ "title": "Finished elsewhere", "status": "done" }))
+            .await
+            .json();
+        let free_task = free_task["pid"].as_str().expect("task pid").to_string();
+
+        let shift = |who: Header, id: String, to: String| {
+            let request = &request;
+            async move {
+                let answer: Value = request
+                    .post("/api/tasks/move")
+                    .add_header(who.0, who.1)
+                    .json(&json!({ "ids": [id], "to_plan_pid": to }))
+                    .await
+                    .json();
+                answer["results"][0]["result"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_string()
+            }
+        };
+        // Out of a gated plan, and into one with a finished task: neither is a writer's to do.
+        assert_eq!(
+            shift(writer.clone(), task.clone(), free.clone()).await,
+            "refused"
+        );
+        assert_eq!(
+            shift(writer.clone(), free_task.clone(), gated.clone()).await,
+            "refused"
+        );
+        // Between plans with no restriction nothing changes, and an administrator can still move one.
+        assert_eq!(
+            shift(writer.clone(), free_task.clone(), other.clone()).await,
+            "ok"
+        );
+        assert_eq!(shift(admin.clone(), free_task, gated.clone()).await, "ok");
+    })
+    .await;
+}

@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (sqlx: first controller)
+
+- `controllers/director_summary.rs` now uses plain sqlx on the pool SeaORM already holds, so the move can land a controller at a time with the tests passing. `src/db.rs` hands out the pool. The two entities it reads derive `sqlx::FromRow`.
+- Not done: the other 127 controllers, 187 model files, 324 audit calls, and 140 migrations are still SeaORM. Column names in `query_as` are checked by tests, not by the compiler. Whole-suite database tests were not rerun for this change, only `change_requests`, `private_aggregates`, `director_packs` and the unit tests.
+
 ### 5 November (Loco replaced with axa)
 
 - The service no longer uses Loco. It is plain Axum with [axa](https://crates.io/crates/axa) 0.1, and SeaORM stays until its own change. `App::run` in `src/app.rs` is the whole boot path, written out. Configuration comes from the environment: `config/*.yaml` is gone, and `APP_ENV` replaces `LOCO_ENV` (spec §8.3a).

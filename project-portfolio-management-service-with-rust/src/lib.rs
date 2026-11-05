@@ -69,6 +69,7 @@ pub mod currency;
 pub mod custom_fields;
 pub mod cutover;
 pub mod data;
+pub mod db;
 pub mod deescalation;
 pub mod delivery_confidence;
 pub mod delivery_model;

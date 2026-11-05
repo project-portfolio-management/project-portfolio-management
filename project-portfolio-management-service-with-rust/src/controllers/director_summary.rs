@@ -6,11 +6,9 @@
 use axa::error::ErrorDetail;
 use axa::prelude::*;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::director_summary::{self as rules, ChangeLite, IssueLite};
 use crate::models::_entities::{change_requests, issues};
@@ -36,18 +34,15 @@ async fn summary(
             ErrorDetail::new("invalid", "window_days must be 1 to 366".to_string()),
         ));
     }
-    let issue_rows = issues::Entity::find()
-        .filter(issues::Column::DeletedAt.is_null())
-        .order_by_asc(issues::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let change_rows = change_requests::Entity::find()
-        .filter(change_requests::Column::DeletedAt.is_null())
-        .order_by_asc(change_requests::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let pool = crate::db::pool(&ctx);
+    let issue_rows: Vec<issues::Model> =
+        sqlx::query_as("SELECT * FROM issues WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(pool)
+            .await?;
+    let change_rows: Vec<change_requests::Model> =
+        sqlx::query_as("SELECT * FROM change_requests WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(pool)
+            .await?;
     let mut plans: Vec<Uuid> = issue_rows
         .iter()
         .map(|i| i.plan_pid)

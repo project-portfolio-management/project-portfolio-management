@@ -123,6 +123,7 @@ mod tests {
                 .map(|(k, initial)| StateDef {
                     key: (*k).to_string(),
                     label: (*k).to_string(),
+                    labels: std::collections::BTreeMap::new(),
                     category: Category::Todo,
                     wip_limit: None,
                     is_initial: *initial,

@@ -1444,3 +1444,153 @@ async fn a_plan_can_limit_itself_to_some_issue_types() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_workflow_changes_in_place_and_its_words_reach_the_register_in_any_language() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let writer = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &admin, "Editable").await;
+        let issues = format!("/api/plans/{plan}/issues");
+        let mut body = triage_workflow("Before", None, Some(&plan));
+        body["transitions"] = json!([]);
+        let made: Value = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&body)
+            .await
+            .json();
+        let workflow = format!("/api/workflows/{}", made["pid"].as_str().expect("pid"));
+
+        // Issues sit in a status that stays and one that goes.
+        let mut pids = Vec::new();
+        for (title, status) in [("Stays", "with_supplier"), ("Goes", "fixed")] {
+            let raised: Value = request
+                .post(&issues)
+                .add_header(writer.0.clone(), writer.1.clone())
+                .json(&json!({ "title": title }))
+                .await
+                .json();
+            let path = format!("{issues}/{}", raised["pid"].as_str().expect("pid"));
+            let moved = json!({ "title": title, "status": status });
+            assert_eq!(put_status(&request, &writer, &path, &moved).await, 200);
+            pids.push(path);
+        }
+
+        let change = json!({
+            "name": "After",
+            "states": [
+                { "key": "new", "label": "New", "category": "todo", "is_initial": true },
+                { "key": "with_supplier", "label": "At supplier", "category": "waiting",
+                  "labels": { "cy": "Gyda'r cyflenwr" } },
+                { "key": "signed_off", "label": "Signed off", "category": "done", "is_terminal": true },
+            ],
+        });
+        assert_eq!(put_status(&request, &writer, &workflow, &change).await, 403);
+        let mut bad = change.clone();
+        bad["states"][1]["labels"] = json!({ "Not A Code": "x" });
+        assert_eq!(put_status(&request, &admin, &workflow, &bad).await, 422);
+        let mut unfinishable = change.clone();
+        unfinishable["states"][2]["category"] = json!("active");
+        assert_eq!(put_status(&request, &admin, &workflow, &unfinishable).await, 422);
+        assert_eq!(put_status(&request, &admin, &workflow, &change).await, 200);
+
+        // Same workflow, new definition; one live row, and the change is audited with what it was.
+        let listed: Value = request
+            .get("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await
+            .json();
+        assert_eq!(listed.as_array().map(Vec::len).unwrap_or_default(), 1, "{listed}");
+        assert_eq!(listed[0]["name"], "After");
+        let audit: Value = request
+            .get(&format!("/api/plans/{plan}/audit"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await
+            .json();
+        assert!(audit.to_string().contains("workflow_changed"), "{audit}");
+
+        // A status that went stays on its issue, can be found, and can move on.
+        let register: Value = request
+            .get("/api/issues?status=fixed")
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await
+            .json();
+        assert_eq!(register["matching"], 1, "{register}");
+
+        // The register carries the status's own words, in every language it has, with no workflow to hand.
+        let register: Value = request
+            .get("/api/issues?status=with_supplier")
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await
+            .json();
+        let issue = &register["issues"][0];
+        assert_eq!(issue["status_label"], "At supplier", "{issue}");
+        assert_eq!(issue["status_labels"]["cy"], "Gyda'r cyflenwr");
+        assert_eq!(
+            register["summary"]["status_words"]["with_supplier"]["label"],
+            "At supplier"
+        );
+        let moved = json!({ "title": "Goes", "status": "signed_off", "resolution": "Done" });
+        assert_eq!(put_status(&request, &writer, &pids[1], &moved).await, 200);
+
+        // A type and a role carry their own translations, and a PUT without them keeps them.
+        let added = request
+            .post("/api/issue-types")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "key": "incident", "label": "Incident", "labels": { "cy": "Digwyddiad" } }))
+            .await;
+        assert_eq!(added.status_code(), 201, "{}", added.text());
+        let renamed = json!({ "label": "Major incident" });
+        assert_eq!(
+            put_status(&request, &admin, "/api/issue-types/incident", &renamed).await,
+            200
+        );
+        let types: Value = request
+            .get("/api/issue-types")
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await
+            .json();
+        let incident = types
+            .as_array()
+            .expect("types")
+            .iter()
+            .find(|t| t["key"] == "incident")
+            .expect("incident");
+        assert_eq!(incident["labels"]["cy"], "Digwyddiad", "{incident}");
+        add_role(&request, &admin, "lead", &[]).await;
+        let translated = json!({ "label": "Lead", "labels": { "zh-cn": "负责人" } });
+        assert_eq!(
+            put_status(&request, &admin, "/api/organization-roles/lead", &translated).await,
+            200
+        );
+        let bad = json!({ "label": "Lead", "labels": { "cy": " " } });
+        assert_eq!(
+            put_status(&request, &admin, "/api/organization-roles/lead", &bad).await,
+            422
+        );
+
+        // A task workflow is not changed in place.
+        let task = new_plan(&request, &admin, "Task workflow").await;
+        let made: Value = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({
+                "name": "Tasks", "applies_to": "task", "plan_pid": task,
+                "states": [
+                    { "key": "a", "label": "A", "category": "todo", "is_initial": true },
+                    { "key": "b", "label": "B", "category": "done", "is_terminal": true },
+                ],
+            }))
+            .await
+            .json();
+        let path = format!("/api/workflows/{}", made["pid"].as_str().expect("pid"));
+        assert_eq!(put_status(&request, &admin, &path, &change).await, 422);
+    })
+    .await;
+}

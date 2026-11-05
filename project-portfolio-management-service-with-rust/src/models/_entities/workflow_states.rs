@@ -18,6 +18,8 @@ pub struct Model {
     pub workflow_pid: Uuid,
     pub state_key: String,
     pub label: String,
+    /// The label by language code (OC-6).
+    pub labels: serde_json::Value,
     /// `todo` | `active` | `waiting` | `done`. **`NOT NULL`** — every
     /// derived view computes from this rather than from the name.
     pub category: String,

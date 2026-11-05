@@ -42,6 +42,11 @@ state, so that nobody raises an issue past a gate.
 administrator (`403`) if the workflow in force for the old type or the new one restricts moves or fields. With neither restricted there
 is no gate to step round, and anyone who can write may change it.
 
+**Changing a workflow (OC-6).** `PUT /api/workflows/{pid}` replaces an issue workflow's name, states and moves in one change, with
+the same checks as registering one. An administrator only, audited with what it was. What it governs (its plan, type and default
+flag) cannot change: withdraw it and register another. A task workflow is not changed in place (`422`), because withdrawing one
+checks for live work in a state that would go; withdraw and register it, as before.
+
 **A workflow can change under an issue.** The issue keeps its status and stored category, and a save that does not move it
 succeeds, though it cannot lose a resolution it has. It may move to any state the workflow in force declares, as long as a
 gate holds: if every move into that state is role-restricted, the caller needs one of those roles. A status filter accepts a built-in status, a state of a deployment-wide
@@ -98,6 +103,17 @@ A field cannot be both required and read-only in one state, whoever each rule bi
 (`422`). Task workflows cannot carry field rules (`422`). A type change under a workflow with field rules needs an administrator,
 for the same reason as under one that restricts moves.
 
+## Translated labels (OC-6)
+
+An issue type, a role and a status can each carry `labels`, a label per language code (`cy`, `zh-cn`, `en-gb-oxendict`), beside
+their one `label`. The interface shows the label for the reader's language, then for the language without its region, then the
+one `label`. An organization writes these itself; nothing is machine-translated, and they are not in the translation reviews.
+
+The cross-plan register has no workflow to hand, so the service adds the words: each issue carries `status_label` and
+`status_labels` when a live workflow on its plan and type declares its status, nearest scope first. `summary.status_words` gives
+the words for the counts; if two plans word one status differently, the first one seen speaks for both. A status no live workflow
+declares has no words, and shows as its key in plain words.
+
 ## Who can change what
 
 Anyone signed in can read the catalogues, and anyone who can see a plan can read its role members. Only an administrator
@@ -114,7 +130,7 @@ can be replaced by anyone who can write. That was already so and is left as it i
 
 `GET`, `POST /api/issue-types`; `PUT /api/issue-types/{key}`; `GET`, `POST /api/organization-roles`;
 `PUT /api/organization-roles/{key}`, whose bodies take `permissions`; `GET`, `POST /api/plans/{pid}/role-members`;
-`DELETE /api/plans/{pid}/role-members/{member_pid}`. The lists take `?include_retired=true`. `POST /api/workflows` takes `issue_type`.
+`DELETE /api/plans/{pid}/role-members/{member_pid}`. The lists take `?include_retired=true`. `POST /api/workflows` takes `issue_type`; `PUT /api/workflows/{pid}` changes an issue workflow.
 `GET`, `PUT /api/plans/{pid}/issue-types` read and set a plan's list. `GET /api/plans/{pid}/issues/options` returns each type with
 the workflow in force for it on that plan, marked `offered` if a person can choose it, retired ones marked too,
 and the caller's roles, permissions and whether the plan is enforced, so a form can leave out what the service would refuse. An issue's body takes `status` as optional: absent
@@ -124,8 +140,7 @@ means the workflow's initial state on a new issue and no change on an existing o
 
 `/issue-settings` lists the types and roles, adds, retires and restores them, and registers and withdraws deployment-wide issue
 workflows. A plan's issue form offers the types and statuses from the options above, and falls back to the built-ins if it cannot
-read them. The service decides in every case. The cross-plan register has no workflow to hand, so it shows a custom status's key
-as words (`with_supplier` reads "With supplier").
+read them. The service decides in every case. The cross-plan register shows the words the service sends with each issue.
 
 ## Not built
 
@@ -136,9 +151,7 @@ as words (`with_supplier` reads "With supplier").
 - Field rules cover the listed fields. Redmine's also cover custom fields.
 - Only an administrator chooses a plan's types. Redmine lets a project member with the permission do it. A type defines no fields of its own.
 - A plan's own issue workflow is registered through the API only.
-- A registered workflow cannot be edited, only withdrawn and registered again.
+- A task workflow cannot be changed in place, only withdrawn and registered again.
 - `severity` is not configurable.
-- The custom labels are one language: an organization's own type and status names are not translated.
-- A custom status has no entry in the UI's translated labels. The cross-plan register shows it as words from its key.
 - Task workflows do not require an administrator (above). That gap predates this work and needs the owner's decision.
 - Migrating down fails while an issue carries a custom type or status, by design.

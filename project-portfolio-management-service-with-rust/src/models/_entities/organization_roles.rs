@@ -19,6 +19,8 @@ pub struct Model {
     #[sea_orm(unique)]
     pub key: String,
     pub label: String,
+    /// The label by language code (OC-6).
+    pub labels: serde_json::Value,
     pub description: Option<String>,
     /// Permission names from `crate::plan_roles::PERMISSIONS`.
     pub permissions: serde_json::Value,

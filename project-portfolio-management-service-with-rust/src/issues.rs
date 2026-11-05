@@ -83,6 +83,46 @@ pub fn is_done(status_category: &str) -> bool {
     status_category == "done"
 }
 
+/// Most languages one label can be translated into.
+pub const LABELS_MAX: usize = 50;
+/// Longest label, in characters.
+pub const LABEL_MAX: usize = 100;
+
+/// A language code as the interface uses it: lowercase, such as `cy`, `zh-cn` or `en-gb-oxendict`.
+#[must_use]
+pub fn is_language_code(s: &str) -> bool {
+    let mut parts = s.split('-');
+    let first = parts.next().unwrap_or_default();
+    (2..=3).contains(&first.len())
+        && first.chars().all(|c| c.is_ascii_lowercase())
+        && s.len() <= 35
+        && parts.all(|p| {
+            (2..=8).contains(&p.len())
+                && p.chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+        })
+}
+
+/// What is wrong with a set of translated labels, in plain words; empty means it can be saved.
+#[must_use]
+pub fn label_problems(labels: &std::collections::BTreeMap<String, String>) -> Vec<String> {
+    let mut out = Vec::new();
+    if labels.len() > LABELS_MAX {
+        out.push(format!("at most {LABELS_MAX} translations of a label"));
+    }
+    for (code, text) in labels {
+        if !is_language_code(code) {
+            out.push(format!("`{code}` is not a language code"));
+        }
+        if text.trim().is_empty() || text.trim().chars().count() > LABEL_MAX {
+            out.push(format!(
+                "the `{code}` label is required, at most {LABEL_MAX} characters"
+            ));
+        }
+    }
+    out
+}
+
 /// Whether a key can name an issue type: a lowercase letter, then up to 39 lowercase letters, digits or `_`.
 #[must_use]
 pub fn is_type_key(s: &str) -> bool {
@@ -158,6 +198,20 @@ pub fn severity_from_exposure(exposure: i32) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn translated_labels_need_a_language_and_some_words() {
+        for good in ["cy", "zh-cn", "en-gb-oxendict", "en-001"] {
+            assert!(is_language_code(good), "{good}");
+        }
+        for bad in ["", "CY", "c", "toolong", "zh_cn", "en-", "en-x"] {
+            assert!(!is_language_code(bad), "{bad}");
+        }
+        let good = std::collections::BTreeMap::from([("cy".to_string(), "Risg".to_string())]);
+        assert!(label_problems(&good).is_empty());
+        let bad = std::collections::BTreeMap::from([("CY".to_string(), " ".to_string())]);
+        assert_eq!(label_problems(&bad).len(), 2);
+    }
 
     fn day(d: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(2026, 10, d).unwrap()

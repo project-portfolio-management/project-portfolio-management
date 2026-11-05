@@ -51,6 +51,7 @@ async fn definition_of(ctx: &AppContext, workflow_pid: Uuid) -> Result<rules::Wo
                 rules::Category::parse(&row.category).map(|category| rules::StateDef {
                     key: row.state_key.clone(),
                     label: row.label.clone(),
+                    labels: serde_json::from_value(row.labels.clone()).unwrap_or_default(),
                     category,
                     wip_limit: row.wip_limit.and_then(|w| u32::try_from(w).ok()),
                     is_initial: row.is_initial,
@@ -244,6 +245,9 @@ pub(crate) struct StatePayload {
     key: String,
     /// Display label.
     label: String,
+    /// Issue workflows only: the label by language code, for languages that should not fall back to `label`.
+    #[serde(default)]
+    labels: std::collections::BTreeMap<String, String>,
     /// Meaning of the state (`todo`, `active`, `waiting` or `done`). Required and never defaulted, since boards and time analysis compute from it.
     category: String,
     /// Maximum items allowed in the state at once; absent means unlimited.
@@ -298,12 +302,23 @@ async fn persist<C: ConnectionTrait>(
     .await
     .map_err(db_err)?;
 
+    persist_definition(db, workflow.pid, def).await?;
+    Ok(workflow)
+}
+
+/// Write a workflow's states and transitions.
+async fn persist_definition<C: ConnectionTrait>(
+    db: &C,
+    workflow_pid: Uuid,
+    def: &rules::WorkflowDef,
+) -> Result<()> {
     for (position, state) in def.states.iter().enumerate() {
         workflow_states::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
-            workflow_pid: ActiveValue::set(workflow.pid),
+            workflow_pid: ActiveValue::set(workflow_pid),
             state_key: ActiveValue::set(state.key.clone()),
             label: ActiveValue::set(state.label.clone()),
+            labels: ActiveValue::set(serde_json::json!(state.labels)),
             category: ActiveValue::set(state.category.token().to_string()),
             wip_limit: ActiveValue::set(state.wip_limit.and_then(|w| i32::try_from(w).ok())),
             is_initial: ActiveValue::set(state.is_initial),
@@ -319,7 +334,7 @@ async fn persist<C: ConnectionTrait>(
     for transition in &def.transitions {
         workflow_transitions::ActiveModel {
             pid: ActiveValue::set(Uuid::new_v4()),
-            workflow_pid: ActiveValue::set(workflow.pid),
+            workflow_pid: ActiveValue::set(workflow_pid),
             from_key: ActiveValue::set(transition.from.clone()),
             to_key: ActiveValue::set(transition.to.clone()),
             roles: ActiveValue::set(serde_json::json!(transition.roles)),
@@ -329,7 +344,7 @@ async fn persist<C: ConnectionTrait>(
         .await
         .map_err(db_err)?;
     }
-    Ok(workflow)
+    Ok(())
 }
 
 /// `422` for a shape [`rules::validate`] accepts for tasks but an issue cannot take. The database requires a resolution
@@ -423,6 +438,90 @@ async fn check_scope(
     Ok(())
 }
 
+/// Build and check a definition from a request, so registering and changing a workflow refuse the same things.
+async fn definition_from(
+    ctx: &AppContext,
+    applies_to: &str,
+    requested_states: &[StatePayload],
+    requested_transitions: &[TransitionPayload],
+) -> Result<rules::WorkflowDef> {
+    // An unrecognized category is refused **by name**, so an operator
+    // sees which state is wrong rather than that something is.
+    let mut states = Vec::with_capacity(requested_states.len());
+    for state in requested_states {
+        let Some(category) = rules::Category::parse(&state.category) else {
+            return Err(unprocessable(&format!(
+                "state `{}` declares category `{}`, which is not one of todo, active, \
+                 waiting, done. Every state must declare one: the board, the burndown \
+                 and every flow figure are computed from what a state means, not its name.",
+                state.key, state.category
+            )));
+        };
+        states.push(rules::StateDef {
+            key: state.key.trim().to_string(),
+            label: state.label.trim().to_string(),
+            labels: super::issue_configuration::usable_labels(&state.labels)?,
+            category,
+            wip_limit: state.wip_limit,
+            is_initial: state.is_initial,
+            is_terminal: state.is_terminal,
+            field_rules: state.field_rules.clone(),
+        });
+    }
+
+    let def = rules::WorkflowDef {
+        states,
+        transitions: requested_transitions
+            .iter()
+            .map(|t| rules::TransitionDef {
+                from: t.from.trim().to_string(),
+                to: t.to.trim().to_string(),
+                roles: t.roles.iter().map(|r| r.trim().to_string()).collect(),
+            })
+            .collect(),
+    };
+    if def
+        .transitions
+        .iter()
+        .flat_map(|t| &t.roles)
+        .any(|r| r.is_empty() || r.chars().count() > 64)
+    {
+        return Err(unprocessable(
+            "transition roles must be non-blank names of at most 64 characters",
+        ));
+    }
+    if applies_to == "issue" {
+        issue_shape(&def)?;
+    } else if def
+        .states
+        .iter()
+        .any(|s| !s.field_rules.is_empty() || !s.labels.is_empty())
+    {
+        return Err(unprocessable(
+            "field rules and translated labels apply to an issue workflow only",
+        ));
+    }
+    let named: Vec<&str> = def
+        .transitions
+        .iter()
+        .flat_map(|t| t.roles.iter().map(String::as_str))
+        .chain(
+            def.states
+                .iter()
+                .flat_map(|s| &s.field_rules)
+                .flat_map(|r| r.roles.iter().map(String::as_str)),
+        )
+        .collect();
+    super::issue_configuration::require_known_roles(ctx, &named).await?;
+    if let Err(problems) = rules::validate(&def) {
+        return Err(unprocessable(&format!(
+            "workflow is not usable: {}",
+            serde_json::to_string(&problems).unwrap_or_default()
+        )));
+    }
+    Ok(def)
+}
+
 /// `POST /api/workflows` — register a workflow.
 #[debug_handler]
 async fn create(
@@ -446,74 +545,13 @@ async fn create(
         }
     }
 
-    // An unrecognized category is refused **by name**, so an operator
-    // sees which state is wrong rather than that something is.
-    let mut states = Vec::with_capacity(payload.states.len());
-    for state in &payload.states {
-        let Some(category) = rules::Category::parse(&state.category) else {
-            return Err(unprocessable(&format!(
-                "state `{}` declares category `{}`, which is not one of todo, active, \
-                 waiting, done. Every state must declare one: the board, the burndown \
-                 and every flow figure are computed from what a state means, not its name.",
-                state.key, state.category
-            )));
-        };
-        states.push(rules::StateDef {
-            key: state.key.trim().to_string(),
-            label: state.label.trim().to_string(),
-            category,
-            wip_limit: state.wip_limit,
-            is_initial: state.is_initial,
-            is_terminal: state.is_terminal,
-            field_rules: state.field_rules.clone(),
-        });
-    }
-
-    let def = rules::WorkflowDef {
-        states,
-        transitions: payload
-            .transitions
-            .iter()
-            .map(|t| rules::TransitionDef {
-                from: t.from.trim().to_string(),
-                to: t.to.trim().to_string(),
-                roles: t.roles.iter().map(|r| r.trim().to_string()).collect(),
-            })
-            .collect(),
-    };
-    if def
-        .transitions
-        .iter()
-        .flat_map(|t| &t.roles)
-        .any(|r| r.is_empty() || r.chars().count() > 64)
-    {
-        return Err(unprocessable(
-            "transition roles must be non-blank names of at most 64 characters",
-        ));
-    }
-    if payload.applies_to == "issue" {
-        issue_shape(&def)?;
-    } else if def.states.iter().any(|s| !s.field_rules.is_empty()) {
-        return Err(unprocessable("field rules apply to an issue workflow only"));
-    }
-    let named: Vec<&str> = def
-        .transitions
-        .iter()
-        .flat_map(|t| t.roles.iter().map(String::as_str))
-        .chain(
-            def.states
-                .iter()
-                .flat_map(|s| &s.field_rules)
-                .flat_map(|r| r.roles.iter().map(String::as_str)),
-        )
-        .collect();
-    super::issue_configuration::require_known_roles(&ctx, &named).await?;
-    if let Err(problems) = rules::validate(&def) {
-        return Err(unprocessable(&format!(
-            "workflow is not usable: {}",
-            serde_json::to_string(&problems).unwrap_or_default()
-        )));
-    }
+    let def = definition_from(
+        &ctx,
+        &payload.applies_to,
+        &payload.states,
+        &payload.transitions,
+    )
+    .await?;
 
     // The workflow, its states and transitions, and the audit row are one change.
     if payload.applies_to == "issue" {
@@ -533,6 +571,170 @@ async fn create(
     .map_err(super::audit_failed)?;
     txn.commit().await.map_err(db_err)?;
     format::json(serde_json::json!({ "pid": workflow.pid.to_string() }))
+}
+
+/// `PUT /api/workflows/{pid}` body. What the workflow governs cannot change: withdraw it and register another.
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ChangeWorkflow {
+    /// Workflow name shown in configuration lists.
+    name: String,
+    /// The states it declares, replacing those it has.
+    states: Vec<StatePayload>,
+    /// Its allowed moves, replacing those it has; empty means any move is permitted.
+    #[serde(default)]
+    transitions: Vec<TransitionPayload>,
+}
+
+/// `PUT /api/workflows/{pid}` — change an issue workflow in place (an administrator): one change, audited with what it was.
+/// An issue in a status that goes keeps it, as when a workflow is withdrawn. A task workflow is withdrawn and registered
+/// again, which keeps the check on work left in a removed state.
+#[debug_handler]
+async fn change(
+    Path(pid): Path<String>,
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Json(payload): Json<ChangeWorkflow>,
+) -> Result<Response> {
+    let workflow_pid = super::parse_pid(&pid)?;
+    let workflow = workflows::Entity::find()
+        .filter(workflows::Column::Pid.eq(workflow_pid))
+        .filter(workflows::Column::DeletedAt.is_null())
+        .one(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .ok_or(Error::NotFound)?;
+    if workflow.applies_to != "issue" {
+        return Err(unprocessable(
+            "only an issue workflow can be changed in place",
+        ));
+    }
+    require_issue_admin(&caller)?;
+    if let Some(plan) = workflow.plan_pid {
+        let readable = super::plan_access::readable_plans(&ctx, &caller, &[plan]).await;
+        if !readable.contains(&plan) {
+            return Err(Error::NotFound);
+        }
+    }
+    let name = payload.name.trim().to_string();
+    if name.is_empty() || name.len() > crate::validation::MAX_TEXT_LEN {
+        return Err(unprocessable("name is required (and capped)"));
+    }
+    let def = definition_from(&ctx, "issue", &payload.states, &payload.transitions).await?;
+    let was = audit_detail(&workflow, &definition_of(&ctx, workflow.pid).await?);
+    let target = workflow.plan_pid.unwrap_or(workflow.pid);
+    let mut active: workflows::ActiveModel = workflow.into();
+    active.name = ActiveValue::set(name);
+    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let workflow = active.update(&txn).await.map_err(db_err)?;
+    workflow_states::Entity::delete_many()
+        .filter(workflow_states::Column::WorkflowPid.eq(workflow.pid))
+        .exec(&txn)
+        .await
+        .map_err(db_err)?;
+    workflow_transitions::Entity::delete_many()
+        .filter(workflow_transitions::Column::WorkflowPid.eq(workflow.pid))
+        .exec(&txn)
+        .await
+        .map_err(db_err)?;
+    persist_definition(&txn, workflow.pid, &def).await?;
+    AuditModel::record(
+        &txn,
+        target,
+        "workflow_changed",
+        caller.actor(),
+        Some(serde_json::json!({ "from": was, "to": audit_detail(&workflow, &def) })),
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    txn.commit().await.map_err(db_err)?;
+    format::json(serde_json::json!({ "pid": workflow.pid.to_string() }))
+}
+
+/// One state's words, as a list that has no workflow to hand needs them.
+#[derive(Debug, Clone)]
+pub(crate) struct StatusWords {
+    /// The label.
+    pub label: String,
+    /// The label by language code.
+    pub labels: serde_json::Value,
+}
+
+/// One live issue workflow's words for one status.
+struct BookRow {
+    /// The plan it belongs to; `None` is deployment-wide.
+    plan: Option<Uuid>,
+    /// The issue type it governs; `None` is every type without its own.
+    issue_type: Option<String>,
+    /// Whether it is a deployment default.
+    is_default: bool,
+    /// The status.
+    status: String,
+    /// What the status is called.
+    words: StatusWords,
+}
+
+/// The live issue workflows' state words, read once for a list that spans plans and types.
+pub(crate) struct StatusBook {
+    /// One row per state.
+    rows: Vec<BookRow>,
+}
+
+impl StatusBook {
+    /// Reads the live issue workflows.
+    pub(crate) async fn load(ctx: &AppContext) -> Result<Self> {
+        let live = workflows::Entity::find()
+            .filter(workflows::Column::AppliesTo.eq("issue"))
+            .filter(workflows::Column::DeletedAt.is_null())
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        let states = workflow_states::Entity::find()
+            .filter(workflow_states::Column::WorkflowPid.is_in(live.iter().map(|w| w.pid)))
+            .all(&ctx.db)
+            .await
+            .map_err(db_err)?;
+        let rows = states
+            .into_iter()
+            .filter_map(|state| {
+                let w = live.iter().find(|w| w.pid == state.workflow_pid)?;
+                Some(BookRow {
+                    plan: w.plan_pid,
+                    issue_type: w.issue_type.clone(),
+                    is_default: w.is_default,
+                    status: state.state_key,
+                    words: StatusWords {
+                        label: state.label,
+                        labels: state.labels,
+                    },
+                })
+            })
+            .collect();
+        Ok(Self { rows })
+    }
+
+    /// The words for a status on a plan and type, nearest scope first, as [`in_force_issue`] orders them. `None` for a
+    /// status no live workflow in those scopes declares.
+    pub(crate) fn words(&self, plan: Uuid, kind: &str, status: &str) -> Option<&StatusWords> {
+        let find = |wanted_plan: Option<Uuid>, typed: bool| {
+            self.rows
+                .iter()
+                .find(|row| {
+                    row.plan == wanted_plan
+                        && row.status == status
+                        && (wanted_plan.is_some() || row.is_default)
+                        && if typed {
+                            row.issue_type.as_deref() == Some(kind)
+                        } else {
+                            row.issue_type.is_none()
+                        }
+                })
+                .map(|row| &row.words)
+        };
+        find(Some(plan), true)
+            .or_else(|| find(Some(plan), false))
+            .or_else(|| find(None, true))
+            .or_else(|| find(None, false))
+    }
 }
 
 /// `GET /api/workflows` — every registered workflow, leaving out those of a plan the caller cannot read: a plan's
@@ -690,6 +892,7 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add("/workflows", post(create))
         .add("/workflows", get(list))
+        .add("/workflows/{pid}", put(change))
         .add("/workflows/{pid}", delete(remove))
         .add("/plans/{pid}/workflow", get(plan_workflow))
 }

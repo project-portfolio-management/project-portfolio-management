@@ -735,11 +735,29 @@ async fn register(
             overdue += 1;
         }
     }
+    let book = super::workflow::StatusBook::load(&ctx).await?;
+    let worded = |i: &issues::Model| {
+        let mut out = view(i, now);
+        if let Some(words) = book.words(i.plan_pid, &i.kind, &i.status) {
+            out["status_label"] = serde_json::json!(words.label);
+            out["status_labels"] = words.labels.clone();
+        }
+        out
+    };
+    // Words for the summary's counts. Two plans can word one status differently; the first seen speaks for both.
+    let mut status_words = serde_json::Map::new();
+    for i in &rows {
+        if let Some(words) = book.words(i.plan_pid, &i.kind, &i.status) {
+            status_words.entry(i.status.clone()).or_insert_with(
+                || serde_json::json!({ "label": words.label, "labels": words.labels }),
+            );
+        }
+    }
     let oldest_open = rows
         .iter()
         .filter(|i| !rules::is_done(&i.status_category))
         .max_by_key(|i| rules::age_calendar_days(i.raised_on, i.resolved_on, now))
-        .map(|i| view(i, now));
+        .map(worded);
 
     rows.retain(|i| {
         q.status.as_ref().is_none_or(|s| &i.status == s)
@@ -757,11 +775,11 @@ async fn register(
     let limit = usize::try_from(q.limit.unwrap_or(200).clamp(1, REGISTER_MAX)).unwrap_or(200);
     let matching = rows.len();
     format::json(serde_json::json!({
-        "issues": rows.iter().take(limit).map(|i| view(i, now)).collect::<Vec<_>>(),
+        "issues": rows.iter().take(limit).map(worded).collect::<Vec<_>>(),
         "matching": matching,
         "truncated": matching > limit,
         "summary": { "by_severity": by_severity, "by_status": by_status, "overdue": overdue,
-                     "oldest_open": oldest_open },
+                     "oldest_open": oldest_open, "status_words": status_words },
         "as_of": now,
         "note": "Most serious first, then oldest. Age is in calendar days since raised, until resolved. The summary counts every issue visible to the caller, whatever the filters; plans the caller cannot read are left out.",
     }))

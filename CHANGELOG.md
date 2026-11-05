@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-6: workflows change in place, and custom words are translated)
+
+- An administrator can change an issue workflow in place, in one audited step, rather than withdrawing and registering it.
+- Issue types, roles and statuses can carry a label per language. The cross-plan issue list now receives each status's real
+  label and translations from the service.
+- Not done: task workflows are still withdrawn and registered again; a workflow's scope cannot change; two plans wording one status
+  differently share one word in the summary's counts. The interface comes with OC-7. These labels are the organization's own
+  words, so they are outside the translation reviews.
+
 ### 5 November (OC-5: issue types by plan)
 
 - A plan can limit itself to some of the deployment's issue types, as a Redmine project selects its trackers. A plan with no list

@@ -22,8 +22,10 @@ use crate::issues as rules;
 use crate::models::_entities::{issue_types, organization_roles, plan_issue_types, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
-/// Longest label, in characters.
-const LABEL_MAX: usize = 100;
+use crate::issues::LABEL_MAX;
+
+/// A label per language.
+type Labels = std::collections::BTreeMap<String, String>;
 /// Longest role description, in characters.
 const DESCRIPTION_MAX: usize = 500;
 
@@ -45,6 +47,18 @@ fn usable_label(label: &str) -> Result<String> {
         )));
     }
     Ok(label.to_string())
+}
+
+/// `422` unless translated labels can be stored. Each is trimmed.
+pub(crate) fn usable_labels(labels: &Labels) -> Result<Labels> {
+    let problems = rules::label_problems(labels);
+    if !problems.is_empty() {
+        return Err(unprocessable(&problems.join("; ")));
+    }
+    Ok(labels
+        .iter()
+        .map(|(code, text)| (code.clone(), text.trim().to_string()))
+        .collect())
 }
 
 /// `422` unless `key` is a type that is not retired: what a person may choose for an issue or a workflow.
@@ -139,6 +153,9 @@ pub(crate) struct NewType {
     key: String,
     /// Name shown to people.
     label: String,
+    /// The name by language code, for languages that should not fall back to `label`.
+    #[serde(default)]
+    labels: Labels,
     /// Order in lists, lowest first.
     #[serde(default)]
     position: i32,
@@ -149,6 +166,9 @@ pub(crate) struct NewType {
 pub(crate) struct ChangeType {
     /// Name shown to people.
     label: String,
+    /// The name by language code; absent keeps them.
+    #[serde(default)]
+    labels: Option<Labels>,
     /// Order in lists, lowest first; absent keeps it.
     #[serde(default)]
     position: Option<i32>,
@@ -160,7 +180,8 @@ pub(crate) struct ChangeType {
 /// JSON shape of one type.
 fn type_view(t: &issue_types::Model) -> serde_json::Value {
     serde_json::json!({
-        "key": t.key, "label": t.label, "position": t.position, "retired": t.retired_at.is_some(),
+        "key": t.key, "label": t.label, "labels": t.labels, "position": t.position,
+        "retired": t.retired_at.is_some(),
     })
 }
 
@@ -198,6 +219,7 @@ async fn create_type(
         ));
     }
     let label = usable_label(&b.label)?;
+    let labels = usable_labels(&b.labels)?;
     let taken = issue_types::Entity::find()
         .filter(issue_types::Column::Key.eq(key))
         .one(&ctx.db)
@@ -211,6 +233,7 @@ async fn create_type(
         pid: ActiveValue::set(Uuid::new_v4()),
         key: ActiveValue::set(key.to_string()),
         label: ActiveValue::set(label),
+        labels: ActiveValue::set(serde_json::json!(labels)),
         position: ActiveValue::set(b.position),
         retired_at: ActiveValue::set(None),
         ..Default::default()
@@ -241,6 +264,7 @@ async fn change_type(
 ) -> Result<Response> {
     require_admin(&caller)?;
     let label = usable_label(&b.label)?;
+    let labels = b.labels.as_ref().map(usable_labels).transpose()?;
     let row = issue_types::Entity::find()
         .filter(issue_types::Column::Key.eq(key.as_str()))
         .one(&ctx.db)
@@ -256,6 +280,9 @@ async fn change_type(
     };
     let mut a: issue_types::ActiveModel = row.into();
     a.label = ActiveValue::set(label);
+    if let Some(labels) = labels {
+        a.labels = ActiveValue::set(serde_json::json!(labels));
+    }
     a.position = ActiveValue::set(position);
     a.retired_at = ActiveValue::set(retired_at);
     let txn = ctx.db.begin().await.map_err(db_err)?;
@@ -281,6 +308,9 @@ pub(crate) struct NewRole {
     key: String,
     /// Name shown to people.
     label: String,
+    /// The name by language code, for languages that should not fall back to `label`.
+    #[serde(default)]
+    labels: Labels,
     /// What the role is for.
     #[serde(default)]
     description: Option<String>,
@@ -297,6 +327,9 @@ pub(crate) struct NewRole {
 pub(crate) struct ChangeRole {
     /// Name shown to people.
     label: String,
+    /// The name by language code; absent keeps them.
+    #[serde(default)]
+    labels: Option<Labels>,
     /// What the role is for.
     #[serde(default)]
     description: Option<String>,
@@ -315,7 +348,8 @@ pub(crate) struct ChangeRole {
 /// JSON shape of one role.
 fn role_view(r: &organization_roles::Model) -> serde_json::Value {
     serde_json::json!({
-        "key": r.key, "label": r.label, "description": r.description, "permissions": r.permissions,
+        "key": r.key, "label": r.label, "labels": r.labels, "description": r.description,
+        "permissions": r.permissions,
         "position": r.position, "retired": r.retired_at.is_some(),
     })
 }
@@ -383,6 +417,7 @@ async fn create_role(
         ));
     }
     let label = usable_label(&b.label)?;
+    let labels = usable_labels(&b.labels)?;
     let description = usable_description(b.description.as_ref())?;
     let permissions = usable_permissions(&b.permissions)?;
     let taken = organization_roles::Entity::find()
@@ -398,6 +433,7 @@ async fn create_role(
         pid: ActiveValue::set(Uuid::new_v4()),
         key: ActiveValue::set(key.to_string()),
         label: ActiveValue::set(label),
+        labels: ActiveValue::set(serde_json::json!(labels)),
         description: ActiveValue::set(description),
         permissions: ActiveValue::set(serde_json::json!(permissions)),
         position: ActiveValue::set(b.position),
@@ -432,6 +468,7 @@ async fn change_role(
 ) -> Result<Response> {
     require_admin(&caller)?;
     let label = usable_label(&b.label)?;
+    let labels = b.labels.as_ref().map(usable_labels).transpose()?;
     let description = usable_description(b.description.as_ref())?;
     let permissions = b
         .permissions
@@ -453,6 +490,9 @@ async fn change_role(
     };
     let mut a: organization_roles::ActiveModel = row.into();
     a.label = ActiveValue::set(label);
+    if let Some(labels) = labels {
+        a.labels = ActiveValue::set(serde_json::json!(labels));
+    }
     a.description = ActiveValue::set(description);
     if let Some(permissions) = permissions {
         a.permissions = ActiveValue::set(serde_json::json!(permissions));

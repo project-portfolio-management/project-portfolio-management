@@ -677,6 +677,7 @@ GET /api/work-profile
 GET /api/workflows
 POST /api/workflows
 DELETE /api/workflows/{pid}
+PUT /api/workflows/{pid}
 POST /api/working-time
 GET /metrics.prom
 GET /swagger-ui

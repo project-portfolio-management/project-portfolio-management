@@ -87,6 +87,9 @@ pub struct StateDef {
     pub key: String,
     /// Human label.
     pub label: String,
+    /// The label by language code, where someone has given one. Issue workflows only.
+    #[serde(default)]
+    pub labels: std::collections::BTreeMap<String, String>,
     /// The structural meaning. Mandatory.
     pub category: Category,
     /// Work-in-progress cap for this column, if any.
@@ -429,6 +432,7 @@ fn state(key: &str, label: &str, category: Category, initial: bool, terminal: bo
     StateDef {
         key: key.to_string(),
         label: label.to_string(),
+        labels: std::collections::BTreeMap::new(),
         category,
         wip_limit: None,
         is_initial: initial,

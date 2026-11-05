@@ -10028,6 +10028,14 @@
                     "description": "Name shown to people.",
                     "type": "string"
                   },
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": {},
+                    "description": "The name by language code, for languages that should not fall back to `label`.",
+                    "type": "object"
+                  },
                   "position": {
                     "default": 0,
                     "description": "Order in lists, lowest first.",
@@ -10078,6 +10086,15 @@
                   "label": {
                     "description": "Name shown to people.",
                     "type": "string"
+                  },
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": null,
+                    "description": "The name by language code; absent keeps them.",
+                    "nullable": true,
+                    "type": "object"
                   },
                   "position": {
                     "default": null,
@@ -12931,6 +12948,14 @@
                     "description": "Name shown to people.",
                     "type": "string"
                   },
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": {},
+                    "description": "The name by language code, for languages that should not fall back to `label`.",
+                    "type": "object"
+                  },
                   "permissions": {
                     "default": [],
                     "description": "What the role allows on a plan with role members: `issue_add`, `issue_edit`, `issue_move`, `issue_delete`.",
@@ -12995,6 +13020,15 @@
                   "label": {
                     "description": "Name shown to people.",
                     "type": "string"
+                  },
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": null,
+                    "description": "The name by language code; absent keeps them.",
+                    "nullable": true,
+                    "type": "object"
                   },
                   "permissions": {
                     "default": null,
@@ -34649,6 +34683,14 @@
                           "description": "Display label.",
                           "type": "string"
                         },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "default": {},
+                          "description": "Issue workflows only: the label by language code, for languages that should not fall back to `label`.",
+                          "type": "object"
+                        },
                         "wip_limit": {
                           "default": null,
                           "description": "Maximum items allowed in the state at once; absent means unlimited.",
@@ -34752,6 +34794,178 @@
           }
         },
         "summary": "Withdraw a workflow",
+        "tags": [
+          "workflow"
+        ]
+      },
+      "put": {
+        "description": "`PUT /api/workflows/{pid}` — change an issue workflow in place (an administrator): one change, audited with what it was. An issue in a status that goes keeps it, as when a workflow is withdrawn. A task workflow is withdrawn and registered again, which keeps the check on work left in a removed state.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT /api/workflows/{pid}` body. What the workflow governs cannot change: withdraw it and register another.",
+                "properties": {
+                  "name": {
+                    "description": "Workflow name shown in configuration lists.",
+                    "type": "string"
+                  },
+                  "states": {
+                    "description": "The states it declares, replacing those it has.",
+                    "items": {
+                      "description": "One declared state of a workflow.",
+                      "properties": {
+                        "category": {
+                          "description": "Meaning of the state (`todo`, `active`, `waiting` or `done`). Required and never defaulted, since boards and time analysis compute from it.",
+                          "type": "string"
+                        },
+                        "field_rules": {
+                          "default": [],
+                          "description": "Issue workflows only: fields this state makes required or read-only, for everyone or for named roles.",
+                          "items": {
+                            "description": "A rule on one issue field in one state (OC-4), as Redmine's workflow field permissions.",
+                            "properties": {
+                              "field": {
+                                "description": "One of [`ISSUE_FIELDS`].",
+                                "type": "string"
+                              },
+                              "roles": {
+                                "default": [],
+                                "description": "Who it binds. **Empty means everyone.**",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "rule": {
+                                "description": "What the rule does.",
+                                "oneOf": [
+                                  {
+                                    "description": "A save that leaves the issue in this state must fill the field.",
+                                    "enum": [
+                                      "required"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "description": "While the issue is in this state a save cannot change the field. An administrator still can.",
+                                    "enum": [
+                                      "read_only"
+                                    ],
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "field",
+                              "rule"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "is_initial": {
+                          "default": false,
+                          "description": "Marks the state new items start in.",
+                          "type": "boolean"
+                        },
+                        "is_terminal": {
+                          "default": false,
+                          "description": "Marks a state work does not leave (typically done).",
+                          "type": "boolean"
+                        },
+                        "key": {
+                          "description": "Stable machine key tasks store as their state.",
+                          "type": "string"
+                        },
+                        "label": {
+                          "description": "Display label.",
+                          "type": "string"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "default": {},
+                          "description": "Issue workflows only: the label by language code, for languages that should not fall back to `label`.",
+                          "type": "object"
+                        },
+                        "wip_limit": {
+                          "default": null,
+                          "description": "Maximum items allowed in the state at once; absent means unlimited.",
+                          "format": "uint32",
+                          "minimum": 0,
+                          "nullable": true,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "label",
+                        "category"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "transitions": {
+                    "description": "Its allowed moves, replacing those it has; empty means any move is permitted.",
+                    "items": {
+                      "description": "One allowed move between two states.",
+                      "properties": {
+                        "from": {
+                          "description": "State key the move starts from.",
+                          "type": "string"
+                        },
+                        "roles": {
+                          "default": [],
+                          "description": "Roles allowed to make this move (RM-2); empty/absent means anyone.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "to": {
+                          "description": "State key the move ends at.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "name",
+                  "states"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`PUT /api/workflows/{pid}` — change an issue workflow in place (an administrator): one change, audited with what it was",
         "tags": [
           "workflow"
         ]

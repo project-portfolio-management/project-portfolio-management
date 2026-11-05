@@ -76,4 +76,4 @@ spec §16 once that crate is scaffolded.
 - **OQ-10 — Is a product a plan?** A tool that nobody funds is not funded work, yet the plan record carries everything an evaluation needs, including the plan guard. (**Decided 2026-11-05:** a plan, subject to the census in PE-1. PE-D1.)
 - **OQ-11 — Service record or help desk?** (**Decided 2026-11-05:** a service record, fed by a service desk where there is one. SM-D1.)
 - **OQ-12 — Who reviews bundled assessment templates?** They touch legal wording. (**Decided 2026-11-05:** they ship as drafts, marked unreviewed, as translations do. PE-D5. No reviewer is named yet.)
-- **OQ-13 — This project's role under the EU Cyber Resilience Act.** A legal question, not answered here. (SM-D5.)
+- **OQ-13 — This project's role under the EU Cyber Resilience Act.** A legal question, not answered here. (**Decided 2026-11-05:** no role claimed, as nothing commercial is planned; revisit with legal advice before any commercial step. SM-D5.)

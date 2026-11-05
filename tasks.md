@@ -2508,4 +2508,4 @@ Why: what a project delivers goes on running, and its incidents, requests and se
 - [ ] **SM-14 (M) — What leaders see.** Incidents, resolution and service levels per product and portfolio; service health beside benefits and business case; overdue critical findings; a director pack section; DORA-style metrics with real incident times.
 - [ ] **SM-15 (M) — The cost of running.** Time entries on tickets, beside the budget, and satisfaction per ticket.
 - [ ] **SM-16 (L) — Screens** for each stage as it lands, in 11 locales, with Playwright and axe.
-- [ ] **SM-17 (S, owner) — Confirm SM-D1 to SM-D6,** and take legal advice on the project's own CRA role before stating one.
+- [ ] **SM-17 (S, owner) — Confirm SM-D1 to SM-D6.** SM-D1 and SM-D5 are decided (no CRA role claimed; legal advice before any commercial step).

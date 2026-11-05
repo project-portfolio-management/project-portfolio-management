@@ -15,10 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
-### 5 November (PE and SM: three decisions recorded)
+### 5 November (PE and SM: four decisions recorded)
 
-- The owner confirmed that a product is a plan (PE-D1), that this is a service record and not a help desk (SM-D1), and that bundled assessment templates ship as drafts marked unreviewed (PE-D5).
-- Not done: the PE-1 census is at a first reading: plans are loaded in 101 places, and `HiddenScope` looks like the hook, but that has not been tried, so PE-D1 could still be reversed. PE-D2 to PE-D4, PE-D6 and SM-D2 to SM-D6 are open, including no inbound email and this project's Cyber Resilience Act role. No template reviewer is named.
+- The owner confirmed that a product is a plan (PE-D1), that this is a service record and not a help desk (SM-D1), and that bundled assessment templates ship as drafts marked unreviewed (PE-D5). The project is all free open source, so no Cyber Resilience Act role is claimed for it, and legal advice comes before any commercial step (SM-D5).
+- Not done: the PE-1 census is at a first reading: plans are loaded in 101 places, and `HiddenScope` looks like the hook, but that has not been tried, so PE-D1 could still be reversed. PE-D2 to PE-D4, PE-D6, SM-D2 to SM-D4 and SM-D6 are open, including no inbound email. No template reviewer is named.
 
 ### 5 November (SM-1: security.txt)
 

@@ -189,7 +189,8 @@ See [`tasks.md`](../tasks.md), "Service management (SM-n)".
 - **SM-D2. No inbound email in the core.** Recommended. An adapter or a webhook can create issues, and Zammad or GLPI can front the channels. Parsing mail is a large security surface for one maintainer.
 - **SM-D3. Tickets are issues.** Recommended.
 - **SM-D4. Restricted issues are built first,** before any security feature. Recommended, and not one to reorder: a security report in a plan-wide list is worse than none.
-- **SM-D5. Take legal advice on the project's own CRA role** before stating one anywhere. Recommended.
+- **SM-D5. No CRA role is claimed for this project.** **Decided by the owner 2026-11-05:** it is all free open source, and nothing commercial is planned. Take legal advice
+  before any commercial step, such as paid support or hosting, or a company or foundation taking the project on, and before stating a role anywhere.
 - **SM-D6. No CMDB.** Recommended. Products, dependencies and links are the floor.
 
 ## Not taken

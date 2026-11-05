@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-2: the status filter confirms no hidden word)
+
+- `?status=` no longer tells a caller whether a private plan's workflow declares a word: such a word now gets the same `422` as
+  one nobody uses. A plan's own list accepts that plan's statuses and deployment-wide ones, not another plan's.
+- Not done: nothing else about the filter changed. Not verified: the response time of a filter on a custom status with very many
+  distinct plans, which now reads the plans it names.
+
 ### 4 November (OC-1: organization-defined issue types, statuses and roles)
 
 - An organization can define its own issue types, statuses and role-restricted moves, by issue type, as Redmine does with

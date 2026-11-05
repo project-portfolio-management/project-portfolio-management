@@ -74,7 +74,7 @@ const PLAN_LIST_MAX: u64 = 5_000;
 /// Query filters for the plan-scoped issue list; all are optional and combine with AND.
 pub(crate) struct ListParams {
     #[serde(default)]
-    /// Only issues in this status. A status is a state of a workflow, so any well-formed key can be asked for.
+    /// Only issues in this status: a built-in one, one a deployment-wide or this plan's workflow declared, or one an issue here carries.
     status: Option<String>,
     #[serde(default)]
     /// Only issues of this severity; must be one of the rules module's severities (`422` otherwise).
@@ -91,11 +91,19 @@ pub(crate) struct ListParams {
 #[debug_handler]
 async fn list(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(plan): Path<String>,
     Query(q): Query<ListParams>,
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
-    check_filters(&ctx, q.status.as_deref(), q.severity.as_deref()).await?;
+    check_filters(
+        &ctx,
+        &caller,
+        Some(plan),
+        q.status.as_deref(),
+        q.severity.as_deref(),
+    )
+    .await?;
     let mut find = issues::Entity::find()
         .filter(issues::Column::PlanPid.eq(plan))
         .filter(issues::Column::DeletedAt.is_null());
@@ -201,36 +209,73 @@ pub(crate) struct Input {
 fn default_severity() -> String {
     "med".to_string()
 }
-/// `422` for a status no issue workflow has declared, or an unknown severity. A withdrawn workflow still counts: an
-/// issue can be left in its status, and has to stay findable. So a typo is refused, not answered with an empty list.
+/// Whether `status` means anything to this caller: a built-in status, a state of a deployment-wide issue workflow, or a
+/// status a plan they can read has declared or still carries. A withdrawn workflow counts, so an issue left in its status
+/// stays findable, and `plan` narrows the plans to that one. A private plan's words are never confirmed to an outsider.
+async fn status_is_known(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Option<Uuid>,
+    status: &str,
+) -> Result<bool> {
+    if crate::workflow::built_in_issue()
+        .states
+        .iter()
+        .any(|s| s.key == status)
+    {
+        return Ok(true);
+    }
+    let declaring: Vec<Uuid> = workflow_states::Entity::find()
+        .filter(workflow_states::Column::StateKey.eq(status))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?
+        .into_iter()
+        .map(|s| s.workflow_pid)
+        .collect();
+    let declared = workflows::Entity::find()
+        .filter(workflows::Column::AppliesTo.eq("issue"))
+        .filter(workflows::Column::Pid.is_in(declaring))
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    if declared.iter().any(|w| w.plan_pid.is_none()) {
+        return Ok(true);
+    }
+    let carrying: Vec<Uuid> = issues::Entity::find()
+        .select_only()
+        .column(issues::Column::PlanPid)
+        .distinct()
+        .filter(issues::Column::Status.eq(status))
+        .filter(issues::Column::DeletedAt.is_null())
+        .into_tuple()
+        .all(&ctx.db)
+        .await
+        .map_err(db_err)?;
+    let mut candidates: Vec<Uuid> = declared.iter().filter_map(|w| w.plan_pid).collect();
+    candidates.extend(carrying);
+    candidates.retain(|c| plan.is_none_or(|p| p == *c));
+    candidates.sort();
+    candidates.dedup();
+    let readable = super::plan_access::readable_plans(ctx, caller, &candidates).await;
+    Ok(!readable.is_empty())
+}
+
+/// `422` for a status the caller has no reason to know ([`status_is_known`]), or an unknown severity, so a typo is refused,
+/// not answered with an empty list. The answer is the same for a word only a hidden plan uses as for one nobody uses.
 async fn check_filters(
     ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Option<Uuid>,
     status: Option<&str>,
     severity: Option<&str>,
 ) -> Result<()> {
-    if let Some(status) = status {
-        let built_in = crate::workflow::built_in_issue();
-        if !built_in.states.iter().any(|s| s.key == status) {
-            let issue_workflows: Vec<Uuid> = workflows::Entity::find()
-                .filter(workflows::Column::AppliesTo.eq("issue"))
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .into_iter()
-                .map(|w| w.pid)
-                .collect();
-            let declared = workflow_states::Entity::find()
-                .filter(workflow_states::Column::StateKey.eq(status))
-                .filter(workflow_states::Column::WorkflowPid.is_in(issue_workflows))
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?;
-            if declared.is_none() {
-                return Err(unprocessable(
-                    "status is not one any issue workflow declares",
-                ));
-            }
-        }
+    if let Some(status) = status
+        && !status_is_known(ctx, caller, plan, status).await?
+    {
+        return Err(unprocessable(
+            "status is not one any issue workflow you can see declares",
+        ));
     }
     if severity.is_some_and(|s| !rules::SEVERITIES.contains(&s)) {
         return Err(unprocessable(&format!(
@@ -530,7 +575,7 @@ pub(crate) struct RegisterParams {
     /// Restrict to one plan; plans the caller cannot read stay hidden regardless.
     plan: Option<Uuid>,
     #[serde(default)]
-    /// Only issues in this status (validated against the known statuses).
+    /// Only issues in this status: a built-in one, or one a deployment-wide workflow or a plan the caller can read has used.
     status: Option<String>,
     #[serde(default)]
     /// Only issues of this severity (validated against the known severities).
@@ -562,7 +607,14 @@ async fn register(
     caller: MaybeAuthUser,
     Query(q): Query<RegisterParams>,
 ) -> Result<Response> {
-    check_filters(&ctx, q.status.as_deref(), q.severity.as_deref()).await?;
+    check_filters(
+        &ctx,
+        &caller,
+        q.plan,
+        q.status.as_deref(),
+        q.severity.as_deref(),
+    )
+    .await?;
     if q.min_age_days.is_some_and(|d| d < 0) {
         return Err(unprocessable("min_age_days cannot be negative"));
     }

@@ -2377,6 +2377,10 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   membership, per-status field rules, per-plan issue types, a screen for a plan's own workflow, editing a registered workflow,
   translated custom labels. **Open:** task workflows still need no administrator, which predates this and is the owner's decision.
 
+- [x] **OC-2 (S) — The status filter confirms no hidden word.** **Built 2026-11-05:** `?status=` on `/api/issues` and a plan's
+  list accepts only what the caller has reason to know: built-ins, deployment-wide workflows, and statuses declared or carried on
+  a plan they can read.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

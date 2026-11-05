@@ -38,9 +38,10 @@ is no gate to step round, and anyone who can write may change it.
 
 **A workflow can change under an issue.** The issue keeps its status and stored category, and a save that does not move it
 succeeds, though it cannot lose a resolution it has. It may move to any state the workflow in force declares, as long as a
-gate holds: if every move into that state is role-restricted, the caller needs one of those roles. A status filter accepts any status an issue workflow has ever
-declared, so such issues stay findable; a status none has declared is refused (`422`), so a typo is not answered with an empty
-list.
+gate holds: if every move into that state is role-restricted, the caller needs one of those roles. A status filter accepts a built-in status, a state of a deployment-wide
+issue workflow (withdrawn ones included), and any status declared or carried on a plan the caller can read, so such issues stay
+findable. Any other word is refused (`422`), so a typo is not answered with an empty list, and a word only a hidden plan uses
+gets the same answer as a word nobody uses (OC-2).
 
 ## Roles grant nothing
 
@@ -89,6 +90,4 @@ as words (`with_supplier` reads "With supplier").
 - The custom labels are one language: an organization's own type and status names are not translated.
 - A custom status has no entry in the UI's translated labels. The cross-plan register shows it as words from its key.
 - Task workflows do not require an administrator (above). That gap predates this work and needs the owner's decision.
-- A status filter tells a caller whether any issue workflow declares a word, including a private plan's. It shows no rows or
-  counts. Narrowing it to readable plans would hide a stranded status from a member of a plan who can read it; left as it is.
 - Migrating down fails while an issue carries a custom type or status, by design.

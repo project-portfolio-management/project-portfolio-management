@@ -818,3 +818,67 @@ async fn the_catalogues_and_workflows_keep_what_they_should() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_status_filter_confirms_no_word_only_a_hidden_plan_uses() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let outsider = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &admin, "Hidden words").await;
+        let open = new_plan(&request, &admin, "Open plan").await;
+        let mut body = triage_workflow("Hidden", None, Some(&plan));
+        body["states"][1]["key"] = json!("project_nightingale");
+        body["transitions"] = json!([]);
+        let made = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&body)
+            .await;
+        assert_eq!(made.status_code(), 200, "{}", made.text());
+        let private = request
+            .put(&format!("/api/plans/{plan}/access"))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({ "private": true, "members": [] }))
+            .await;
+        assert_eq!(private.status_code(), 200, "{}", private.text());
+
+        // To an outsider the hidden word and an unused word get the same answer, on both lists.
+        for word in ["project_nightingale", "unused_word"] {
+            for path in [
+                format!("/api/issues?status={word}"),
+                format!("/api/plans/{open}/issues?status={word}"),
+            ] {
+                let answer = request
+                    .get(&path)
+                    .add_header(outsider.0.clone(), outsider.1.clone())
+                    .await;
+                assert_eq!(answer.status_code(), 422, "{path}: {}", answer.text());
+            }
+        }
+        // Someone who can read the plan can still filter by it, across plans and on the plan.
+        for path in [
+            "/api/issues?status=project_nightingale".to_string(),
+            format!("/api/plans/{plan}/issues?status=project_nightingale"),
+        ] {
+            let answer = request
+                .get(&path)
+                .add_header(admin.0.clone(), admin.1.clone())
+                .await;
+            assert_eq!(answer.status_code(), 200, "{path}: {}", answer.text());
+        }
+        // Another plan's word is not this plan's.
+        let elsewhere = request
+            .get(&format!(
+                "/api/plans/{open}/issues?status=project_nightingale"
+            ))
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await;
+        assert_eq!(elsewhere.status_code(), 422);
+    })
+    .await;
+}

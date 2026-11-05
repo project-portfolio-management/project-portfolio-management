@@ -35,15 +35,21 @@ use crate::models::audit_logs::Model as AuditModel;
 pub const CEREMONY_KINDS: &[&str] = &["planning", "daily", "review", "retrospective"];
 
 /// Load a non-deleted sprint by pid string; `NotFound` when absent.
-async fn find_sprint(ctx: &AppContext, raw: &str) -> Result<sprints::Model> {
+async fn find_sprint(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    raw: &str,
+) -> Result<sprints::Model> {
     let pid = super::parse_pid(raw)?;
-    sprints::Entity::find()
+    let sprint = sprints::Entity::find()
         .filter(sprints::Column::Pid.eq(pid))
         .filter(sprints::Column::DeletedAt.is_null())
         .one(&ctx.db)
         .await
         .map_err(db_err)?
-        .ok_or(Error::NotFound)
+        .ok_or(Error::NotFound)?;
+    super::plan_access::require_readable(ctx, caller, sprint.plan_pid).await?;
+    Ok(sprint)
 }
 
 /// `POST /api/sprints/{pid}/ceremonies` body.
@@ -67,7 +73,7 @@ async fn create_ceremony(
     caller: MaybeAuthUser,
     Json(payload): Json<CeremonyPayload>,
 ) -> Result<Response> {
-    let sprint = find_sprint(&ctx, &pid).await?;
+    let sprint = find_sprint(&ctx, &caller, &pid).await?;
     if !CEREMONY_KINDS.contains(&payload.kind.as_str()) {
         return Err(unprocessable(&format!(
             "kind must be one of {CEREMONY_KINDS:?}"
@@ -119,8 +125,9 @@ async fn create_ceremony(
 async fn list_ceremonies(
     Path(pid): Path<String>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let sprint = find_sprint(&ctx, &pid).await?;
+    let sprint = find_sprint(&ctx, &caller, &pid).await?;
     let held = ceremonies::Entity::find()
         .filter(ceremonies::Column::SprintPid.eq(sprint.pid))
         .filter(ceremonies::Column::DeletedAt.is_null())
@@ -157,7 +164,7 @@ async fn commit_sprint(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let sprint = find_sprint(&ctx, &pid).await?;
+    let sprint = find_sprint(&ctx, &caller, &pid).await?;
     let existing = sprint_commitments::Entity::find()
         .filter(sprint_commitments::Column::SprintPid.eq(sprint.pid))
         .all(&ctx.db)
@@ -208,9 +215,10 @@ async fn commit_sprint(
 async fn commitment(
     Path(pid): Path<String>,
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     headers: HeaderMap,
 ) -> Result<Response> {
-    let sprint = find_sprint(&ctx, &pid).await?;
+    let sprint = find_sprint(&ctx, &caller, &pid).await?;
     let committed = sprint_commitments::Entity::find()
         .filter(sprint_commitments::Column::SprintPid.eq(sprint.pid))
         .all(&ctx.db)

@@ -147,6 +147,20 @@ fn refs_of(sub: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// The plans among `plans` hidden from a feed's owner. A feed URL carries no claims, so the owner is judged with none: not an
+/// administrator and cleared for no handling mark, so a marked plan stays out of a calendar that may be shared.
+async fn hidden_from_owner(
+    ctx: &AppContext,
+    sub: &str,
+    plans: &[Uuid],
+) -> std::collections::HashSet<Uuid> {
+    let claims = serde_json::from_value(serde_json::json!({
+        "sub": sub, "email": "", "name": "", "iss": "", "aud": "", "exp": 0, "iat": 0, "sid": "", "attrs": {},
+    }))
+    .ok();
+    super::plan_access::hidden_plans(ctx, plans, &crate::auth::MaybeAuthUser(claims)).await
+}
+
 /// `GET /api/feeds/calendar.ics?token=` — the owner's due tasks, plus the
 /// milestones and sprint dates of the plans those tasks sit in, as all-day
 /// events with stable UIDs.
@@ -171,12 +185,15 @@ async fn calendar(
             .await
             .map_err(db_err)?
     };
-    let plan_pids: Vec<Uuid> = {
-        let mut v: Vec<Uuid> = mine.iter().map(|t| t.plan_pid).collect();
-        v.sort();
-        v.dedup();
-        v
-    };
+    let mut plan_pids: Vec<Uuid> = mine.iter().map(|t| t.plan_pid).collect();
+    plan_pids.sort();
+    plan_pids.dedup();
+    let hidden = hidden_from_owner(&ctx, &sub, &plan_pids).await;
+    plan_pids.retain(|p| !hidden.contains(p));
+    let mine: Vec<_> = mine
+        .into_iter()
+        .filter(|t| !hidden.contains(&t.plan_pid))
+        .collect();
     let plan_names: std::collections::HashMap<Uuid, String> = if plan_pids.is_empty() {
         std::collections::HashMap::new()
     } else {

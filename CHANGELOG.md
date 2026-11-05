@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-19: sprints and calendars keep a private plan out)
+
+- `/api/sprints/{pid}/ceremonies`, `/commitment` and `/commit` sit outside the plan guard and looked at nothing, so anyone holding a sprint pid could read retrospective notes or use up a sprint's one commitment. They now answer `404`. `/api/feeds/calendar.ics` listed the owner's tasks, and that plan's milestones and sprints, with no check, so a feed outlived its owner's access; it now leaves those plans out. Predates OC-1.
+- **A calendar is narrower than the screens:** a feed URL carries no token, so its owner is judged with no clearance and no administrator's right. A plan with a handling mark stays out of the calendar even for someone cleared to see it, because a calendar URL is often shared.
+- Not done: routes outside the plan guard are still being worked through in this series. Not verified: the handling-mark case in the feed has no test of its own; the private-plan case does.
+
 ### 5 November (OC-18: a field of the body is no way into a private plan)
 
 - Five routes took a plan's pid in the body and checked at most that it existed: the batch MS Project import, KPIs, ways of working and governance frameworks, DevOps events, and a plan's `parent_ref`. Each now gives the answer the guard on `/api/plans/{pid}` would. A batch import reports a hidden plan exactly as one that does not exist, in a dry run too. `POST /api/plans/merge` and `POST /api/plans/import` were open to an administrator a handling mark should have stopped; merge now answers `404`, and an import, which runs after its request, records what was hidden from the caller and gives a row reaching such a plan the error of a pid that names nothing. The review queue no longer names a plan the reader cannot see. Predates OC-1.

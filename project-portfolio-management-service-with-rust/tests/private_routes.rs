@@ -640,3 +640,92 @@ async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
     })
     .await;
 }
+
+/// Security audit: sprint ceremonies and commitments sit outside the guard and looked at nothing, and a calendar feed kept
+/// listing a private plan after its owner lost access to it.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn sprints_and_calendars_keep_a_private_plan_out() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = private_plan(&request, &who, "Sprinted").await;
+        let sprint: Value = with!(
+            request.post(&format!("/api/plans/{plan}/sprints")),
+            who.member
+        )
+        .json(&json!({ "name": "One", "starts_on": "2026-11-02", "ends_on": "2026-11-13" }))
+        .await
+        .json();
+        let sprint = sprint["pid"].as_str().expect("sprint");
+        let ceremony = json!({ "kind": "planning" });
+        let ceremonies = format!("/api/sprints/{sprint}/ceremonies");
+        let commitment = format!("/api/sprints/{sprint}/commitment");
+        let commit = format!("/api/sprints/{sprint}/commit");
+        for url in [&ceremonies, &commitment] {
+            assert_eq!(
+                with!(request.get(url), who.outsider).await.status_code(),
+                404
+            );
+        }
+        for (url, body) in [(&ceremonies, &ceremony), (&commit, &json!({}))] {
+            let refused = with!(request.post(url), who.outsider).json(body).await;
+            assert_eq!(refused.status_code(), 404);
+        }
+        with!(request.post(&ceremonies), who.member)
+            .json(&ceremony)
+            .await
+            .assert_status_ok();
+        with!(request.post(&commit), who.member)
+            .json(&json!({}))
+            .await
+            .assert_status_ok();
+        with!(request.get(&ceremonies), who.member)
+            .await
+            .assert_status_ok();
+
+        // The outsider was assigned a task, was taken off the list, and still holds a feed URL.
+        let task = json!({ "title": "Due soon", "due_date": "2026-12-01",
+                           "assignee_ref": format!("person:{OUTSIDER}") });
+        with!(
+            request.post(&format!("/api/plans/{plan}/tasks")),
+            who.member
+        )
+        .json(&task)
+        .await
+        .assert_status_ok();
+        let feed: Value = with!(request.post("/api/me/feed-token"), who.outsider)
+            .json(&json!({}))
+            .await
+            .json();
+        let url = feed["calendar_url"].as_str().expect("feed url");
+        let text = request.get(url).await.text();
+        assert!(
+            !text.contains("Sprinted") && !text.contains("Due soon"),
+            "{text}"
+        );
+
+        // A member's own feed still has it.
+        let feed: Value = with!(request.post("/api/me/feed-token"), who.member)
+            .json(&json!({}))
+            .await
+            .json();
+        let task = json!({ "title": "Mine too", "due_date": "2026-12-02",
+                           "assignee_ref": format!("person:{MEMBER}") });
+        with!(
+            request.post(&format!("/api/plans/{plan}/tasks")),
+            who.member
+        )
+        .json(&task)
+        .await
+        .assert_status_ok();
+        let text = request
+            .get(feed["calendar_url"].as_str().expect("feed url"))
+            .await
+            .text();
+        assert!(text.contains("Mine too"), "{text}");
+    })
+    .await;
+}

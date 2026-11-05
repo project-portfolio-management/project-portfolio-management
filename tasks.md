@@ -2425,6 +2425,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-18 (S) — A field of the body is no way into a private plan.** **Built 2026-11-05:** body fields naming a plan, plan merge, plan import and the review queue honour what the caller can read.
 
+- [x] **OC-19 (S) — Sprints and calendars keep a private plan out.** **Built 2026-11-05:** sprint ceremonies and commitments check the plan, and a calendar feed leaves out a plan hidden from its owner.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

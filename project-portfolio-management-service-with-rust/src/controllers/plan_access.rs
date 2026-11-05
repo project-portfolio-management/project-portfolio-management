@@ -252,6 +252,32 @@ pub(crate) async fn readable_plans(
         .collect()
 }
 
+/// `404` unless `caller` can read `plan`, the same answer as a record that does not exist. For a route outside the plan guard
+/// (`privacy_mw` covers only `/api/plans/{uuid}...`) that reaches a plan through a record's own pid or a field of the body.
+pub(crate) async fn require_readable(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Uuid,
+) -> Result<()> {
+    if readable_plans(ctx, caller, &[plan]).await.contains(&plan) {
+        Ok(())
+    } else {
+        Err(Error::NotFound)
+    }
+}
+
+/// [`require_readable`] for a record that may belong to no plan: one that does not is not hidden by this check.
+pub(crate) async fn require_readable_if_any(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    plan: Option<Uuid>,
+) -> Result<()> {
+    match plan {
+        Some(plan) => require_readable(ctx, caller, plan).await,
+        None => Ok(()),
+    }
+}
+
 /// **The one shared "what may this caller see" query** (RM-8b): the private plans
 /// hidden from them, and the tasks inside those plans. Every cross-plan aggregate
 /// loads its rows and passes them through [`HiddenScope::keep`] (or asks

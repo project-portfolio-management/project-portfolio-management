@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-14: a title is no way to find a private plan)
+
+- A proposal's duplicate check named any matching plan, so a guessed title found a private one; an objective's alignment listed private plans with their weights, and `GET /api/objectives` hands out the pids; a proposal promoted into a private plan stayed readable by pid and under `?status=promoted`. Each now leaves the plan out, or answers `404` for the proposal, and alignment totals count only what the caller can read. Predates OC-1.
+- Not done: routes outside the plan guard are still being worked through in this series. Not verified: the handling-mark path here, beyond what the shared check covers.
+
 ### 5 November (OC-13: an inbox belongs to its owner)
 
 - `GET /api/notifications` took the inbox to read from a free query parameter and `POST /api/notifications/{pid}/read` looked at nobody, so anyone signed in could read and mark any person's notifications. Each now answers only for the caller's own `person:` or `worker:` reference, or an organization they belong to; another inbox is `403` and another's notification `404`. **An administrator's token gets the same refusal:** a message can quote a plan that token's clearance does not reach, and no screen needs it. Predates OC-1.

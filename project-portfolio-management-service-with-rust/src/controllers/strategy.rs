@@ -1119,10 +1119,12 @@ async fn list_objectives(State(ctx): State<AppContext>) -> Result<Response> {
 }
 
 /// `GET /api/objectives/{pid}/alignment` — which items serve the
-/// objective, with weights and per-kind totals.
+/// objective, with weights and per-kind totals. A plan the caller cannot
+/// read is left out of the items and of every total.
 #[debug_handler]
 async fn objective_alignment(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let objective = find_objective(&ctx, &pid).await?;
@@ -1131,6 +1133,9 @@ async fn objective_alignment(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
+    let links = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .keep(links);
     let mut items = Vec::new();
     let mut per_collection: std::collections::BTreeMap<String, i32> =
         std::collections::BTreeMap::new();

@@ -191,6 +191,7 @@ pub(crate) struct ListParams {
 #[debug_handler]
 async fn list_proposals(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Query(params): Query<ListParams>,
 ) -> Result<Response> {
     let mut query = proposals::Entity::find().filter(proposals::Column::DeletedAt.is_null());
@@ -204,13 +205,31 @@ async fn list_proposals(
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .keep(rows);
     format::json(rows.into_iter().take(200).collect::<Vec<_>>())
+}
+
+/// A proposal the caller may read: one that became a plan is that plan's, so it is `404` to whoever cannot read the plan.
+async fn readable_proposal(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    pid: &str,
+) -> Result<proposals::Model> {
+    let row = gov::find_proposal(&ctx.db, gov::parse_pid(pid)?).await?;
+    super::plan_access::require_readable_if_any(ctx, caller, row.promoted_plan_pid).await?;
+    Ok(row)
 }
 
 /// `GET /api/proposals/{pid}`.
 #[debug_handler]
-async fn get_proposal(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
-    format::json(gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?)
+async fn get_proposal(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+) -> Result<Response> {
+    format::json(readable_proposal(&ctx, &caller, &pid).await?)
 }
 
 /// `PUT /api/proposals/{pid}` — edit; drafts only (the pipeline owns
@@ -579,13 +598,15 @@ struct DemandHit {
 /// `GET /api/proposals/{pid}/duplicates` — duplicate-demand check
 /// (the registry heritage applied at intake): match the proposal's
 /// title against the live plans of its target collection **and**
-/// the other open proposals.
+/// the other open proposals. A plan the caller cannot read is not a
+/// hit: a title must not be a way of finding one.
 #[debug_handler]
 async fn proposal_duplicates(
     State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let row = gov::find_proposal(&ctx.db, gov::parse_pid(&pid)?).await?;
+    let row = readable_proposal(&ctx, &caller, &pid).await?;
     let engine = MatchingEngine::new(MatchConfig::default());
     let query = Plan {
         kind: parse_kind_label(&row.kind_target),
@@ -595,6 +616,9 @@ async fn proposal_duplicates(
     let mut hits: Vec<DemandHit> = Vec::new();
     // Live plans (one recursive collection).
     let items = PlanModel::list(&ctx.db, super::plans::CHECK_DUPLICATES_SCAN_CAP).await?;
+    let items = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .keep(items);
     for item in &items {
         let candidate = item.to_plan()?;
         let result = engine.match_plans(&query, &candidate);

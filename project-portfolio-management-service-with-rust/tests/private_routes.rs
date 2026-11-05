@@ -13,6 +13,7 @@ use ed25519_dalek::SigningKey;
 use loco_rs::testing::prelude::*;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
+use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use serial_test::serial;
 use sha2::{Digest, Sha256};
@@ -97,6 +98,23 @@ macro_rules! with {
     };
 }
 
+/// A plan of `name` that only `MEMBER` (and an administrator) can read.
+async fn private_plan(request: &axum_test::TestServer, who: &Callers, name: &str) -> String {
+    let plan: Value = with!(request.post("/api/plans"), who.member)
+        .json(&json!({ "kind": "Project", "name": name }))
+        .await
+        .json();
+    let plan = plan["pid"].as_str().expect("plan").to_string();
+    with!(
+        request.put(&format!("/api/plans/{plan}/access")),
+        who.member
+    )
+    .json(&json!({ "private": true, "members": [MEMBER] }))
+    .await
+    .assert_status_ok();
+    plan
+}
+
 /// Security audit: `recipient` was a free query parameter, so anyone signed in read anyone's inbox and marked it read.
 #[tokio::test]
 #[serial]
@@ -163,6 +181,82 @@ async fn an_inbox_belongs_to_its_owner() {
         .json(&json!({}))
         .await
         .assert_status_ok();
+    })
+    .await;
+}
+
+/// Security audit: a proposal's duplicate check named private plans, an objective's alignment listed them, and a proposal
+/// that became a private plan was readable by pid and in the promoted list.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn proposals_and_objectives_keep_a_private_plan_out() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, ctx| async move {
+        let name = "Quarterly secret replatform of the payments estate";
+        let plan = private_plan(&request, &who, name).await;
+
+        // A title is not a way of finding a plan.
+        let proposal: Value = with!(request.post("/api/proposals"), who.outsider)
+            .json(&json!({ "title": name, "summary": "Same", "kind_target": "projects", "sponsor_ref": format!("organization:{}", uuid::Uuid::new_v4()), "requested_minor": 1000, "currency": "GBP" }))
+            .await
+            .json();
+        let proposal = proposal["pid"].as_str().expect("proposal");
+        let url = format!("/api/proposals/{proposal}/duplicates");
+        let hits = |v: Value| {
+            v.as_array()
+                .expect("hits")
+                .iter()
+                .filter(|h| h["source"] == "plan")
+                .count()
+        };
+        assert_eq!(hits(with!(request.get(&url), who.outsider).await.json()), 0);
+        assert_eq!(hits(with!(request.get(&url), who.member).await.json()), 1);
+        assert_eq!(hits(with!(request.get(&url), who.admin).await.json()), 1);
+
+        // Alignment: left out of the items and of every total.
+        let objective: Value = with!(request.post("/api/objectives"), who.member)
+            .json(&json!({ "title": "Aligned", "period": "2026-H2" }))
+            .await
+            .json();
+        let objective = objective["pid"].as_str().expect("objective");
+        with!(request.post(&format!("/api/plans/{plan}/objectives")), who.member)
+            .json(&json!({ "objective_pid": objective, "weight": 3 }))
+            .await
+            .assert_status_ok();
+        let url = format!("/api/objectives/{objective}/alignment");
+        let seen: Value = with!(request.get(&url), who.outsider).await.json();
+        assert_eq!(seen["items"], json!([]));
+        assert_eq!(seen["total_weight"], 0);
+        assert_eq!(seen["weight_by_collection"], json!({}));
+        let seen: Value = with!(request.get(&url), who.member).await.json();
+        assert_eq!(seen["items"][0]["name"], name);
+        assert_eq!(seen["total_weight"], 3);
+
+        // A proposal that became the private plan is the plan's.
+        ctx.db
+            .execute_unprepared(&format!(
+                "UPDATE proposals SET status = 'promoted', promoted_plan_pid = '{plan}'
+                 WHERE pid = '{proposal}'"
+            ))
+            .await
+            .expect("promote");
+        let url = format!("/api/proposals/{proposal}");
+        assert_eq!(with!(request.get(&url), who.outsider).await.status_code(), 404);
+        with!(request.get(&url), who.member).await.assert_status_ok();
+        let url = format!("/api/proposals/{proposal}/duplicates");
+        assert_eq!(with!(request.get(&url), who.outsider).await.status_code(), 404);
+        let listed = |v: Value| {
+            v.as_array()
+                .expect("rows")
+                .iter()
+                .any(|r| r["pid"] == proposal)
+        };
+        let url = "/api/proposals?status=promoted";
+        assert!(!listed(with!(request.get(url), who.outsider).await.json()));
+        assert!(listed(with!(request.get(url), who.member).await.json()));
     })
     .await;
 }

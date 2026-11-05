@@ -306,7 +306,11 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
   the plan. Plan lists, search and duplicate checks omit private plans
   for non-members; every cross-plan aggregate loads through one shared
   `HiddenScope`, so a private plan contributes to no total, list,
-  ranking or count outside its members. Admin-only bulk reads (board
+  ranking or count outside its members. The guard covers only that
+  path, so a route that reaches a plan any other way checks for itself
+  (`plan_access::require_readable`): by a record's own pid, or by a
+  field of the body or query, the answer is the same `404`, and a list
+  leaves the plan out. Admin-only bulk reads (board
   pack, board investments and trends, auditor trail, evidence pack) are
   `403` to everyone else.
 - **Status vocabulary** used by the newer groups: `422` validation (with

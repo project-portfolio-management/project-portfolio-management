@@ -727,7 +727,9 @@ across currencies.
   duplicate checks omit it. Every cross-plan aggregate loads through
   one shared `HiddenScope`, so a hidden plan contributes to no total,
   list, ranking or count; the admin-only bulk reads stay full and
-  answer `403` to others. A failed lookup never fails open: when the
+  answer `403` to others. A route outside `/api/plans/{pid}` that
+  reaches a plan by a record's own pid, or by a field of the body or
+  query, gives the same answer as the guard. A failed lookup never fails open: when the
   guard cannot tell whether a plan is private it answers `503`
   (`unavailable`), and an aggregate hides what it could not check;
   either way the failure is logged and counted in

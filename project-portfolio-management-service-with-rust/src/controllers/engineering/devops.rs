@@ -42,6 +42,23 @@ pub(crate) struct DevopsEventPayload {
     occurred_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+/// Whether `event` is one of `kind`, on a plan the caller can read. A hidden one gets the answer of one that does not exist.
+async fn is_readable_event(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    event: Option<devops_events::Model>,
+    kind: &str,
+) -> bool {
+    match event {
+        Some(e) if e.kind == kind => {
+            crate::controllers::plan_access::require_readable(ctx, caller, e.plan_pid)
+                .await
+                .is_ok()
+        }
+        _ => false,
+    }
+}
+
 /// `POST /api/devops/events` — ingest one deploy / incident /
 /// recovery event. A `deploy` requires an `environment`; a `recovery`
 /// must reference its `incident`; an `incident` may declare the
@@ -80,7 +97,7 @@ pub(super) async fn ingest_devops_event(
                 .one(&ctx.db)
                 .await
                 .map_err(|e| Error::Model(ModelError::from(e)))?;
-            if incident.is_none_or(|e| e.kind != "incident") {
+            if !is_readable_event(&ctx, &caller, incident, "incident").await {
                 return Err(refuse("incident_pid must name an ingested incident event"));
             }
         }
@@ -95,7 +112,7 @@ pub(super) async fn ingest_devops_event(
             .one(&ctx.db)
             .await
             .map_err(|e| Error::Model(ModelError::from(e)))?;
-        if deploy.is_none_or(|e| e.kind != "deploy") {
+        if !is_readable_event(&ctx, &caller, deploy, "deploy").await {
             return Err(refuse(
                 "caused_by_deploy_pid must name an ingested deploy event",
             ));

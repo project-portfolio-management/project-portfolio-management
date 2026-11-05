@@ -2429,6 +2429,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-20 (S) — A template is hidden with its plan.** **Built 2026-11-05:** `plan_templates.source_plan_pid` records the plan, and a template is hidden with it.
 
+- [x] **OC-21 (S) — A reference is no way into a private plan.** **Built 2026-11-05:** task relations, time entries, benefit KPIs, scorecard KPIs and DevOps incident links treat a record the caller cannot read as one that does not exist.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

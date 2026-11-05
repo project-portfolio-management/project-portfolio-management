@@ -184,12 +184,20 @@ async fn set_kpis(
         .all(&ctx.db)
         .await
         .map_err(|e| db_err(&e))?;
-    if found.len() != wanted.len() {
+    // A hidden KPI gets the answer of one that does not exist, and stays on the card: the caller cannot see to remove it.
+    let hidden: Vec<Uuid> = super::plan_access::HiddenScope::of(&ctx, &caller)
+        .await?
+        .owned_pids(&ctx)
+        .await?
+        .into_iter()
+        .collect();
+    if found.len() != wanted.len() || wanted.iter().any(|k| hidden.contains(k)) {
         return Err(unprocessable("every kpi_pid must be a KPI"));
     }
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     members::Entity::delete_many()
         .filter(members::Column::ScorecardPid.eq(sc.pid))
+        .filter(members::Column::KpiPid.is_not_in(hidden))
         .exec(&txn)
         .await
         .map_err(|e| db_err(&e))?;

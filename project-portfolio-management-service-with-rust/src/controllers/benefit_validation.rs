@@ -107,14 +107,20 @@ async fn classify(
             .push("a yearly amount needs a financial benefit (one with a currency)".to_string());
     }
     if let Some(k) = b.kpi_pid {
-        let exists = kpis::Entity::find()
+        let kpi = kpis::Entity::find()
             .filter(kpis::Column::Pid.eq(k))
             .filter(kpis::Column::DeletedAt.is_null())
             .one(&ctx.db)
             .await
-            .map_err(db_err)?
-            .is_some();
-        if !exists {
+            .map_err(db_err)?;
+        // Reading a benefit shows its KPI, so a KPI of a plan the caller cannot read is no KPI to them.
+        let readable = match kpi {
+            Some(kpi) => super::plan_access::require_readable_if_any(&ctx, &caller, kpi.plan_pid)
+                .await
+                .is_ok(),
+            None => false,
+        };
+        if !readable {
             problems.push("kpi_pid is not a KPI".to_string());
         }
     }
@@ -443,7 +449,12 @@ pub(crate) async fn benefits_section(
                 validated_minor: latest.get(&b.pid).copied(),
             });
         } else {
-            let status = match b.kpi_pid.and_then(|k| kpi_rows.iter().find(|x| x.pid == k)) {
+            // A KPI of a plan outside the view counts as no KPI, or a link would carry its reading out.
+            let linked = b
+                .kpi_pid
+                .and_then(|k| kpi_rows.iter().find(|x| x.pid == k))
+                .filter(|k| k.plan_pid.is_none_or(|p| include.contains(&p)));
+            let status = match linked {
                 None => {
                     serde_json::json!({ "state": "not measured", "reason": "no KPI is linked to this benefit" })
                 }

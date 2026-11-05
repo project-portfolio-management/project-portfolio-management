@@ -28,7 +28,7 @@ use uuid::Uuid;
 use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::effort as rules;
-use crate::models::_entities::{non_working_periods, time_entries, working_time_configs};
+use crate::models::_entities::{non_working_periods, tasks, time_entries, working_time_configs};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Rows scanned per read.
@@ -89,6 +89,20 @@ async fn create_entry(
                 "that person's week is approved and locked; it cannot take new entries",
             ),
         ));
+    }
+    // Time counts on the task it names, so that task must be this plan's.
+    if let Some(task) = payload.task_pid {
+        let known = tasks::Entity::find()
+            .filter(tasks::Column::Pid.eq(task))
+            .filter(tasks::Column::PlanPid.eq(plan.pid))
+            .filter(tasks::Column::DeletedAt.is_null())
+            .one(&ctx.db)
+            .await
+            .map_err(db_err)?
+            .is_some();
+        if !known {
+            return Err(unprocessable("task_pid is not a task of this plan"));
+        }
     }
     let txn = ctx.db.begin().await.map_err(super::db_err)?;
     let row = time_entries::ActiveModel {

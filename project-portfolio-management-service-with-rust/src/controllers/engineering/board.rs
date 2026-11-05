@@ -567,7 +567,7 @@ pub(super) async fn move_task(
     enforce_move_roles(&workflow, &task.status, &payload.status, &standing.roles)?;
     // LT-10: a task cannot be finished while a `blocks` relation's blocker is open.
     if crate::workflow::is_done(&workflow, &payload.status) {
-        super::super::task_relations::ensure_not_blocked(&ctx, task.pid).await?;
+        super::super::task_relations::ensure_not_blocked(&ctx, &caller, task.pid).await?;
     }
     // WIP limits (env-configured, per plan board): refuse a move
     // into a capped column that is already full. No config ⇒ no caps.

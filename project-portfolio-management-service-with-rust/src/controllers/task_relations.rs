@@ -75,14 +75,27 @@ pub(crate) async fn open_blockers(ctx: &AppContext, task_pid: Uuid) -> Result<Ve
 }
 
 /// `blocks`: refuse finishing `task` while a blocker is open.
-pub(crate) async fn ensure_not_blocked(ctx: &AppContext, task_pid: Uuid) -> Result<()> {
+///
+/// A blocker in a plan hidden from the caller still blocks, but is not named.
+pub(crate) async fn ensure_not_blocked(
+    ctx: &AppContext,
+    caller: &MaybeAuthUser,
+    task_pid: Uuid,
+) -> Result<()> {
     let blockers = open_blockers(ctx, task_pid).await?;
     if blockers.is_empty() {
         return Ok(());
     }
+    let scope = super::plan_access::HiddenScope::of(ctx, caller).await?;
     let names: Vec<String> = blockers
         .iter()
-        .map(|(pid, title)| format!("{title} ({pid})"))
+        .map(|(pid, title)| {
+            if scope.node(pid) {
+                "a task you cannot see".to_string()
+            } else {
+                format!("{title} ({pid})")
+            }
+        })
         .collect();
     Err(unprocessable(&format!(
         "blocked by an open task via a `blocks` relation: {}",
@@ -230,6 +243,10 @@ async fn create_relation(
         return Err(unprocessable(&problems.join("; ")));
     }
     let to_task = live_task(&ctx, p.to_task_pid)
+        .await
+        .map_err(|_| unprocessable("to_task_pid names no live task"))?;
+    // A relation acts on the other task, so it must be one the caller can read: the same answer as no such task.
+    super::plan_access::require_readable(&ctx, &caller, to_task.plan_pid)
         .await
         .map_err(|_| unprocessable("to_task_pid names no live task"))?;
     let same_kind = live_relations_of(&ctx, Some(&p.kind)).await?;

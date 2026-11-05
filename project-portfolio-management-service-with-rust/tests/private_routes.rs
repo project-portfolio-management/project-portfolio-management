@@ -801,3 +801,134 @@ async fn a_template_is_hidden_with_its_plan() {
     })
     .await;
 }
+
+/// Security audit: a reference to a record in another plan was checked for existence only, so a public plan could reach into
+/// a private one: block its task, add to its effort, quote its KPI, or learn that a pid exists.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test --test private_routes -- --ignored`"]
+async fn a_reference_is_no_way_into_a_private_plan() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let hidden = private_plan(&request, &who, "Hidden").await;
+        let open: Value = with!(request.post("/api/plans"), who.outsider)
+            .json(&json!({ "kind": "Project", "name": "Open" }))
+            .await
+            .json();
+        let open = open["pid"].as_str().expect("plan");
+        let task = |plan: String, by: Header, title: &'static str| {
+            let request = &request;
+            async move {
+                let t: Value = with!(request.post(&format!("/api/plans/{plan}/tasks")), by)
+                    .json(&json!({ "title": title }))
+                    .await
+                    .json();
+                t["pid"].as_str().expect("task").to_string()
+            }
+        };
+        let secret = task(hidden.clone(), who.member.clone(), "Secret task").await;
+        let mine = task(open.to_string(), who.outsider.clone(), "My task").await;
+        let absent = uuid::Uuid::new_v4().to_string();
+
+        // A relation onto a hidden task is refused as one onto no task at all.
+        let relations = format!("/api/plans/{open}/tasks/{mine}/relations");
+        let onto = |pid: &str| json!({ "kind": "blocks", "to_task_pid": pid });
+        let refused = with!(request.post(&relations), who.outsider)
+            .json(&onto(&secret))
+            .await;
+        assert_eq!(refused.status_code(), 422);
+        let unknown = with!(request.post(&relations), who.outsider)
+            .json(&onto(&absent))
+            .await;
+        assert_eq!(refused.text(), unknown.text());
+
+        // A blocker in a plan the caller cannot see still blocks, without being named.
+        with!(
+            request.post(&format!("/api/plans/{hidden}/tasks/{secret}/relations")),
+            who.member
+        )
+        .json(&onto(&mine))
+        .await
+        .assert_status_ok();
+        let stuck = with!(
+            request.patch(&format!("/api/plans/{open}/tasks/{mine}")),
+            who.outsider
+        )
+        .json(&json!({ "status": "done" }))
+        .await;
+        assert_eq!(stuck.status_code(), 422);
+        assert!(!stuck.text().contains("Secret task"), "{}", stuck.text());
+        assert!(!stuck.text().contains(&secret), "{}", stuck.text());
+
+        // Time on a public plan cannot land on a private task.
+        let entry = with!(
+            request.post(&format!("/api/plans/{open}/time-entries")),
+            who.outsider
+        )
+        .json(
+            &json!({ "task_pid": secret, "actor_ref": format!("person:{OUTSIDER}"),
+                       "spent_on": "2026-10-06", "minutes": 60, "category": "work" }),
+        )
+        .await;
+        assert_eq!(entry.status_code(), 422);
+
+        // A KPI of a hidden plan is no KPI to a scorecard.
+        let kpi: Value = with!(request.post("/api/kpis"), who.member)
+            .json(&json!({ "name": "Hidden KPI", "direction": "higher_better",
+                           "target_value": 90, "red_value": 50, "plan_pid": hidden }))
+            .await
+            .json();
+        let kpi = kpi["pid"].as_str().expect("kpi");
+        let card: Value = with!(request.post("/api/scorecards"), who.outsider)
+            .json(&json!({ "name": "Card" }))
+            .await
+            .json();
+        let card = card["pid"].as_str().expect("scorecard");
+        let set = |pids: Vec<&str>| json!({ "kpi_pids": pids });
+        let url = format!("/api/scorecards/{card}/kpis");
+        let refused = with!(request.put(&url), who.outsider)
+            .json(&set(vec![kpi]))
+            .await;
+        let unknown = with!(request.put(&url), who.outsider)
+            .json(&set(vec![&absent]))
+            .await;
+        assert_eq!(refused.status_code(), 422);
+        assert_eq!(refused.text(), unknown.text());
+
+        // Nor to a benefit, whose reading would then show on the portfolio's page.
+        let benefit: Value = with!(
+            request.post(&format!("/api/plans/{open}/benefits")),
+            who.outsider
+        )
+        .json(&json!({ "title": "Softer", "category": "cost_saving", "target_note": "calmer" }))
+        .await
+        .json();
+        let benefit = benefit["pid"].as_str().expect("benefit");
+        let url = format!("/api/plans/{open}/benefits/{benefit}/classification");
+        let refused = with!(request.put(&url), who.outsider)
+            .json(&json!({ "kpi_pid": kpi, "classification": "societal" }))
+            .await;
+        assert_eq!(refused.status_code(), 422);
+        assert!(refused.text().contains("kpi_pid is not a KPI"));
+
+        // A recovery cannot resolve a hidden incident, or show that it exists.
+        let incident: Value = with!(request.post("/api/devops/events"), who.member)
+            .json(&json!({ "plan_pid": hidden, "kind": "incident" }))
+            .await
+            .json();
+        let incident = incident["pid"].as_str().expect("incident");
+        let recovery =
+            |pid: &str| json!({ "plan_pid": open, "kind": "recovery", "incident_pid": pid });
+        let refused = with!(request.post("/api/devops/events"), who.outsider)
+            .json(&recovery(incident))
+            .await;
+        let unknown = with!(request.post("/api/devops/events"), who.outsider)
+            .json(&recovery(&absent))
+            .await;
+        assert_eq!(refused.status_code(), unknown.status_code());
+        assert_eq!(refused.text(), unknown.text());
+    })
+    .await;
+}

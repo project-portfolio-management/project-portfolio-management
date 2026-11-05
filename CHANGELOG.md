@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-21: a reference is no way into a private plan)
+
+- References to a record in another plan were checked for existence only. A writer on a public plan could add a `blocks` relation onto a private task, which then could not finish; a `precedes` relation probed its due date. Time entries took any `task_pid`, so minutes landed on a private task. Linking a private KPI to your own benefit put its name and latest reading on the portfolio's benefits page and in director packs. A scorecard's KPI list and a DevOps recovery's `incident_pid` told you whether a hidden pid existed. Each now gives the answer of a record that does not exist. A refused-to-finish message no longer names a blocker the caller cannot see, though it still blocks. Predates OC-1.
+- A time entry's `task_pid` must now be a task of that plan, which is new: a pid from another plan, or none that exists, used to be stored and is now `422`.
+- Not done: relations and benefit links already stored stay, so an existing `blocks` onto a private task still blocks it; removing one needs the plan's member. Replacing a scorecard's KPIs keeps the hidden ones, which the caller cannot see to remove. The `precedes` refusal can still print a hidden task's pid when an existing relation is broken. Routes outside the plan guard are still being worked through in this series. Not verified: the benefit and director-pack read path after a hidden KPI link; only the refusal has a test.
+
 ### 5 November (OC-20: a template is hidden with its plan)
 
 - Saving a plan as a template copies its tasks and dates, and templates had no link back to the plan, so a template of a private plan could be read, copied into a new plan, revised or deleted by anyone. `plan_templates` now records `source_plan_pid` (migration 105), updated on revision, and a template is hidden with that plan: out of the list, `404` on every route. A template outlives a deleted plan, as it did before. Predates OC-1.

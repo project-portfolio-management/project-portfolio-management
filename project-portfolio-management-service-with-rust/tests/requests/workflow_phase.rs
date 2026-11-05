@@ -202,48 +202,6 @@ async fn a_plan_with_no_workflow_keeps_the_built_in_vocabulary() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
-// A state with no recognized category is refused **at registration**,
-// and the refusal names the offending state. Left registered, it would
-// read `unmeasured` forever — and every derived view computes from what
-// a state means, not from its name.
-async fn a_state_without_a_category_cannot_be_registered() {
-    super::isolate_search_index();
-    request::<App, _, _>(|request, _ctx| async move {
-        let plan = create_plan!(request, "Bad workflow plan");
-        let refused = request
-            .post("/api/workflows")
-            .json(&json!({
-                "name": "Bad", "applies_to": "task", "plan_pid": plan,
-                "states": [{ "key": "icebox", "label": "Icebox",
-                             "category": "nearly_done", "is_initial": true }]
-            }))
-            .await;
-        assert_eq!(refused.status_code(), 422);
-        let body: Value = refused.json();
-        let described = body["description"].as_str().unwrap_or_default();
-        assert!(
-            described.contains("icebox"),
-            "the refusal must name the offending state, got: {described}"
-        );
-
-        // A workflow that can never finish is refused too: nothing could
-        // complete and the burndown would never fall.
-        let never_finishes = request
-            .post("/api/workflows")
-            .json(&json!({
-                "name": "NoDone", "applies_to": "task", "plan_pid": plan,
-                "states": [{ "key": "icebox", "label": "Icebox",
-                             "category": "todo", "is_initial": true }]
-            }))
-            .await;
-        assert_eq!(never_finishes.status_code(), 422);
-    })
-    .await;
-}
-
-#[tokio::test]
-#[serial]
-#[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 // The whole point of T-15, in one test: a fully custom vocabulary takes
 // force, constrains moves, **stamps `done_at` from the state's
 // category** rather than the literal string "done", and leaves every
@@ -254,26 +212,25 @@ async fn a_state_without_a_category_cannot_be_registered() {
 // blind to every board that renamed its final column.
 async fn a_custom_vocabulary_takes_force_and_stays_analysable() {
     super::isolate_search_index();
-    request::<App, _, _>(|request, _ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let plan = create_plan!(request, "Custom board");
-        let registered = request
-            .post("/api/workflows")
-            .json(&json!({
-                "name": "Ship it", "applies_to": "task", "plan_pid": plan,
-                "states": [
-                    { "key": "icebox", "label": "Icebox", "category": "todo", "is_initial": true },
-                    { "key": "hacking", "label": "Hacking", "category": "active" },
-                    { "key": "awaiting_ci", "label": "Awaiting CI", "category": "waiting" },
-                    { "key": "shipped", "label": "Shipped", "category": "done", "is_terminal": true }
-                ],
-                "transitions": [
-                    { "from": "icebox", "to": "hacking" },
-                    { "from": "hacking", "to": "awaiting_ci" },
-                    { "from": "awaiting_ci", "to": "shipped" }
-                ]
-            }))
-            .await;
-        assert_eq!(registered.status_code(), 200);
+        super::seed_task_workflow(
+            &ctx,
+            &plan,
+            "Ship it",
+            json!([
+                { "key": "icebox", "label": "Icebox", "category": "todo", "is_initial": true },
+                { "key": "hacking", "label": "Hacking", "category": "active" },
+                { "key": "awaiting_ci", "label": "Awaiting CI", "category": "waiting" },
+                { "key": "shipped", "label": "Shipped", "category": "done", "is_terminal": true }
+            ]),
+            json!([
+                { "from": "icebox", "to": "hacking" },
+                { "from": "hacking", "to": "awaiting_ci" },
+                { "from": "awaiting_ci", "to": "shipped" }
+            ]),
+        )
+        .await;
 
         let view: Value = request
             .get(&format!("/api/plans/{plan}/workflow"))
@@ -303,7 +260,11 @@ async fn a_custom_vocabulary_takes_force_and_stays_analysable() {
             .patch(&format!("/api/plans/{plan}/tasks/{task}"))
             .json(&json!({ "status": "shipped" }))
             .await;
-        assert_eq!(illegal.status_code(), 422, "icebox -> shipped is not declared");
+        assert_eq!(
+            illegal.status_code(),
+            422,
+            "icebox -> shipped is not declared"
+        );
 
         // The declared path works, and completion is stamped from the
         // **category** — the defect this test exists for.

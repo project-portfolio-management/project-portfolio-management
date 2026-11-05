@@ -132,14 +132,17 @@ issue, needs no permission here and is audited on the change request.
 ## Who can change what
 
 Anyone signed in can read the catalogues, and anyone who can see a plan can read its role members. Only an administrator
-(`access=admin`) can change a catalogue or a plan's role members, or register or withdraw an **issue** workflow, because that workflow decides who may move an issue. Every change is audited, and a workflow's
+(`access=admin`) can change a catalogue or a plan's role members, or register, change or withdraw a workflow, because a workflow
+decides who may move work. Every change is audited, and a workflow's
 audit row carries its pid, type, plan and moves with their roles.
 
 Before this feature issue workflows did nothing, and anyone who could write could register one. **The migration withdraws
 them**, so that none gains authority nobody gave it. An administrator registers the ones wanted.
 
-`POST` and `DELETE /api/workflows` do not require an administrator for a **task** workflow, so a task workflow's role restriction
-can be replaced by anyone who can write. That was already so and is left as it is; see "Not built".
+**Task workflows (OC-10).** Registering or withdrawing a **task** workflow needs an administrator too. A task workflow's role
+restriction is a gate, and it did not hold while anyone who could write could replace it. Workflows already registered stay in
+force. A plan template still copies its source's workflow onto a new plan, gates included: nobody can change a workflow that way. A
+deployment running with no sign-in has no administrator, so nobody can register a workflow through the API there.
 
 ## The API
 
@@ -180,5 +183,4 @@ shows the words the service sends with each issue, in the reader's language wher
 - A plan's own issue workflow is registered through the API only.
 - A task workflow cannot be changed in place, only withdrawn and registered again.
 - `severity` is not configurable.
-- Task workflows do not require an administrator (above). That gap predates this work and needs the owner's decision.
 - Migrating down fails while an issue carries a custom type or status, by design.

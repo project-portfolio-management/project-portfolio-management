@@ -41,19 +41,21 @@ fn counts(v: &Value) -> (i64, i64, i64) {
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn bulk_edit_copy_and_move_report_every_item_and_reconcile() {
     super::isolate_search_index();
-    request::<App, _, _>(|request, _ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let a = plan(&request, "A").await;
         let b = plan(&request, "B").await;
         // B has its own workflow, which lacks `todo` and `in_review`.
         let state = |key: &str, cat: &str, initial: bool, terminal: bool| {
             json!({ "key": key, "label": key, "category": cat, "is_initial": initial, "is_terminal": terminal })
         };
-        request
-            .post("/api/workflows")
-            .json(&json!({ "name": "B board", "applies_to": "task", "plan_pid": b,
-                "states": [state("backlog", "todo", true, false), state("active", "active", false, false), state("finished", "done", false, true)] }))
-            .await
-            .assert_status_ok();
+        super::seed_task_workflow(
+            &ctx,
+            &b,
+            "B board",
+            json!([state("backlog", "todo", true, false), state("active", "active", false, false), state("finished", "done", false, true)]),
+            json!([]),
+        )
+        .await;
 
         let t1 = task(&request, &a, json!({ "title": "T1", "due_date": "2026-10-05", "assignee_ref": "person:aaaaaaaa-0000-0000-0000-000000000001" })).await;
         let t2 = task(&request, &a, json!({ "title": "T2" })).await;

@@ -96,12 +96,14 @@ pub(crate) async fn own_definition(
 }
 
 /// Register `def` as the task workflow owned by `plan_pid` (a plan template
-/// instantiation giving the new plan the vocabulary its source had).
+/// instantiation giving the new plan the vocabulary its source had). This is the
+/// service's own path: it copies a workflow onto a new plan, gates included, and
+/// nobody can change one through it, so it asks for no administrator.
 ///
 /// # Errors
 ///
 /// Propagates a database error.
-pub(crate) async fn register_own(
+pub async fn register_own(
     ctx: &AppContext,
     plan_pid: Uuid,
     name: &str,
@@ -368,13 +370,14 @@ fn issue_shape(def: &rules::WorkflowDef) -> Result<()> {
     Ok(())
 }
 
-/// `403` unless the caller holds the administrator attribute. Used for what governs issues: their workflows.
-fn require_issue_admin(caller: &MaybeAuthUser) -> Result<()> {
+/// `403` unless the caller holds the administrator attribute. A workflow decides who may move work, so changing one
+/// cannot be open to anyone who can write.
+fn require_workflow_admin(caller: &MaybeAuthUser) -> Result<()> {
     if super::plan_access::is_admin(caller.claims()) {
         Ok(())
     } else {
         Err(super::forbidden(
-            "only an administrator can change an issue workflow",
+            "only an administrator can change a workflow",
         ))
     }
 }
@@ -423,10 +426,7 @@ async fn check_scope(
     if !["task", "issue"].contains(&payload.applies_to.as_str()) {
         return Err(unprocessable("applies_to must be task or issue"));
     }
-    // An issue workflow decides who may move an issue, so it cannot be open to anyone who can write.
-    if payload.applies_to == "issue" {
-        require_issue_admin(caller)?;
-    }
+    require_workflow_admin(caller)?;
     if payload.applies_to == "task" && payload.issue_type.is_some() {
         return Err(unprocessable(
             "issue_type applies to an issue workflow only",
@@ -636,7 +636,7 @@ async fn change(
             "only an issue workflow can be changed in place",
         ));
     }
-    require_issue_admin(&caller)?;
+    require_workflow_admin(&caller)?;
     let name = payload.name.trim().to_string();
     if name.is_empty() || name.len() > crate::validation::MAX_TEXT_LEN {
         return Err(unprocessable("name is required (and capped)"));
@@ -804,9 +804,7 @@ async fn remove(
 ) -> Result<Response> {
     let workflow = require_workflow(&ctx, &caller, &pid).await?;
 
-    if workflow.applies_to == "issue" {
-        require_issue_admin(&caller)?;
-    }
+    require_workflow_admin(&caller)?;
     // An issue keeps its status and category when its workflow goes, and can move on from there (`may_move_issue`).
     if let Some(plan_pid) = workflow.plan_pid.filter(|_| workflow.applies_to == "task") {
         let def = definition_of(&ctx, workflow.pid).await?;

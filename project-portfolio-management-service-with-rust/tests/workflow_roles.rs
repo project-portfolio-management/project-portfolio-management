@@ -23,6 +23,7 @@ use sha2::{Digest, Sha256};
 const SEED: [u8; 32] = [31; 32];
 const ISSUER: &str = "authentication-service";
 const AUDIENCE: &str = "main-x-service";
+const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000002ad";
 
 /// The published Ed25519 key set plus its `kid`, derived the way the
 /// verifier derives it (SHA-256 of the public key, base64url).
@@ -44,7 +45,8 @@ fn mint(kid: &str, sub: &str, roles: &[&str]) -> String {
         "email": format!("{sub}@example.com"), "name": sub,
         "iss": ISSUER, "aud": AUDIENCE,
         "exp": iat + 10_000_000_000_i64, "iat": iat,
-        "sid": "test-sid", "attrs": { "role": roles },
+        "sid": "test-sid",
+        "attrs": { "role": roles, "access": [if sub == ADMIN { "admin" } else { "write" }] },
     })
     .to_string();
     let keypair = SigningKey::from_bytes(&SEED).to_keypair_bytes();
@@ -81,6 +83,7 @@ async fn a_role_restricted_transition_admits_only_that_role() {
     }
     let (lk, lv) = auth_header(&mint(&kid, ALICE, &["lead"]));
     let (dk, dv) = auth_header(&mint(&kid, BOB, &["dev"]));
+    let (ak, av) = auth_header(&mint(&kid, ADMIN, &[]));
 
     request::<App, _, _>(|request, _ctx| async move {
         let plan: Value = request
@@ -94,6 +97,7 @@ async fn a_role_restricted_transition_admits_only_that_role() {
         };
         request
             .post("/api/workflows")
+            .add_header(ak, av)
             .json(&json!({
                 "name": "Gated", "applies_to": "task", "plan_pid": p,
                 "states": [

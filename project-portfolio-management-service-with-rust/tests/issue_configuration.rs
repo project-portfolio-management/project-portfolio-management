@@ -1790,3 +1790,89 @@ async fn removing_or_a_move_only_save_gets_round_nothing() {
     })
     .await;
 }
+
+// Registering or withdrawing a task workflow needs an administrator (OC-10). A state with no recognized category is refused
+// **at registration**, and the refusal names the offending state. Left
+// registered, it would read `unmeasured` forever, and every derived view computes from what a state means, not its name.
+#[tokio::test]
+#[serial_test::serial]
+#[ignore = "requires PostgreSQL (config/test.yaml)"]
+async fn a_task_workflow_needs_an_administrator_and_a_usable_shape() {
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    request::<App, _, _>(|request, ctx| async move {
+        clean(&ctx).await;
+        let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
+        let writer = bearer(&kid, WRITER, &[("access", "write")]);
+        let plan = new_plan(&request, &writer, "Task rules").await;
+        let body = json!({
+            "name": "Gated", "applies_to": "task", "plan_pid": plan,
+            "states": [
+                { "key": "a", "label": "A", "category": "todo", "is_initial": true },
+                { "key": "b", "label": "B", "category": "done", "is_terminal": true },
+            ],
+            "transitions": [{ "from": "a", "to": "b", "roles": ["lead"] }],
+        });
+
+        // A writer can neither put a gate in place nor take one away.
+        let refused = request
+            .post("/api/workflows")
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&body)
+            .await;
+        assert_eq!(refused.status_code(), 403, "{}", refused.text());
+        let made: Value = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&body)
+            .await
+            .json();
+        let path = format!("/api/workflows/{}", made["pid"].as_str().expect("pid"));
+        let refused = request
+            .delete(&path)
+            .add_header(writer.0.clone(), writer.1.clone())
+            .await;
+        assert_eq!(refused.status_code(), 403);
+        let replaced = request
+            .post("/api/workflows")
+            .add_header(writer.0.clone(), writer.1.clone())
+            .json(&body)
+            .await;
+        assert_eq!(replaced.status_code(), 403);
+        let withdrawn = request
+            .delete(&path)
+            .add_header(admin.0.clone(), admin.1.clone())
+            .await;
+        assert_eq!(withdrawn.status_code(), 200, "{}", withdrawn.text());
+
+        let refused = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({
+                "name": "Bad", "applies_to": "task", "plan_pid": plan,
+                "states": [{ "key": "icebox", "label": "Icebox",
+                             "category": "nearly_done", "is_initial": true }]
+            }))
+            .await;
+        assert_eq!(refused.status_code(), 422);
+        let answer: Value = refused.json();
+        let described = answer["description"].as_str().unwrap_or_default();
+        assert!(
+            described.contains("icebox"),
+            "the refusal must name the offending state, got: {described}"
+        );
+
+        // A workflow that can never finish is refused too: nothing could complete and the burndown would never fall.
+        let never_finishes = request
+            .post("/api/workflows")
+            .add_header(admin.0.clone(), admin.1.clone())
+            .json(&json!({
+                "name": "NoDone", "applies_to": "task", "plan_pid": plan,
+                "states": [{ "key": "icebox", "label": "Icebox",
+                             "category": "todo", "is_initial": true }]
+            }))
+            .await;
+        assert_eq!(never_finishes.status_code(), 422);
+    })
+    .await;
+}

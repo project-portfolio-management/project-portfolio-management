@@ -14,7 +14,7 @@ use serial_test::serial;
 #[ignore = "requires PostgreSQL (config/test.yaml); run with `cargo test -- --ignored`"]
 async fn a_template_keeps_shape_and_drops_people_identity_and_history() {
     super::isolate_search_index();
-    request::<App, _, _>(|request, _ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         // ---- the source tree
         let root: Value = request
             .post("/api/plans")
@@ -35,12 +35,14 @@ async fn a_template_keeps_shape_and_drops_people_identity_and_history() {
         let child = child["pid"].as_str().expect("child pid").to_string();
         // A workflow of the root's own, so we can see it travels.
         let state = |k: &str, c: &str, i: bool, t: bool| json!({ "key": k, "label": k, "category": c, "is_initial": i, "is_terminal": t });
-        request
-            .post("/api/workflows")
-            .json(&json!({ "name": "Gated", "applies_to": "task", "plan_pid": root,
-                "states": [state("backlog", "todo", true, false), state("shipped", "done", false, true)] }))
-            .await
-            .assert_status_ok();
+        super::seed_task_workflow(
+            &ctx,
+            &root,
+            "Gated",
+            json!([state("backlog", "todo", true, false), state("shipped", "done", false, true)]),
+            json!([]),
+        )
+        .await;
         let comp: Value = request
             .post(&format!("/api/plans/{root}/components"))
             .json(&json!({ "name": "API" }))

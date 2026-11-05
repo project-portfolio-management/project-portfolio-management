@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-10: task workflows need an administrator)
+
+- Registering or withdrawing a task workflow now needs an administrator, as an issue workflow does, so a role restriction on a task
+  move holds. **This changes what writers can do:** anything that registers task workflows with a writer's token now gets `403`.
+  Workflows already registered stay in force. A plan template still copies its source's workflow onto a new plan.
+- Two refusal tests moved from the tokenless suite to `tests/issue_configuration.rs`, unchanged, to run as a real administrator. Tests
+  that only need a workflow to exist seed one through the path plan templates use.
+- Not done: a deployment running with no sign-in cannot register a workflow through the API at all. `task_bulk`'s move between plans maps
+  statuses with no role gate; that predates this and was not changed. Not verified: whether any deployment scripts register task
+  workflows with a writer's token.
+
 ### 5 November (OC-8: the Redmine comparison, checked)
 
 - The Redmine column on `/compare/redmine/` now follows Redmine's own documentation, read on 5 November, and the page links to it. The

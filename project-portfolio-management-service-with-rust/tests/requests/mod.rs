@@ -96,3 +96,34 @@ pub(crate) fn isolate_search_index() {
         }
     });
 }
+
+/// Gives a plan a task workflow, as a plan template does. Registering one through the API needs an administrator, which a
+/// test with no token cannot be; `tests/issue_configuration.rs` covers that route with real identities. `states` may leave
+/// out `label`, `is_initial` and `is_terminal`.
+pub async fn seed_task_workflow(
+    ctx: &loco_rs::app::AppContext,
+    plan: &str,
+    name: &str,
+    states: serde_json::Value,
+    transitions: serde_json::Value,
+) {
+    let states: Vec<serde_json::Value> = states
+        .as_array()
+        .expect("states")
+        .iter()
+        .map(|s| {
+            serde_json::json!({
+                "key": s["key"], "label": s.get("label").unwrap_or(&s["key"]), "category": s["category"],
+                "is_initial": s.get("is_initial").unwrap_or(&serde_json::json!(false)),
+                "is_terminal": s.get("is_terminal").unwrap_or(&serde_json::json!(false)),
+            })
+        })
+        .collect();
+    let def =
+        serde_json::from_value(serde_json::json!({ "states": states, "transitions": transitions }))
+            .expect("a workflow definition");
+    let plan = uuid::Uuid::parse_str(plan).expect("plan pid");
+    project_portfolio_management::controllers::workflow::register_own(ctx, plan, name, &def)
+        .await
+        .expect("seed a workflow");
+}

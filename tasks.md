@@ -2404,6 +2404,9 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 - [x] **OC-8 (S) — The Redmine comparison, checked.** **Built 2026-11-05:** the table on `/compare/redmine/` follows Redmine's own
   documentation, as read on this date.
 
+- [x] **OC-10 (S) — Task workflows need an administrator.** **Built 2026-11-05:** registering or withdrawing any workflow needs
+  `access=admin`, at the owner's decision, so a task workflow's role restriction holds.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

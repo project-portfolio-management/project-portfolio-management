@@ -310,7 +310,9 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
   path, so a route that reaches a plan any other way checks for itself
   (`plan_access::require_readable`): by a record's own pid, or by a
   field of the body or query, the answer is the same `404`, and a list
-  leaves the plan out. Admin-only bulk reads (board
+  leaves the plan out. Every such route is listed with how it does this
+  in the service's `plan-guard-census.txt`, and a test fails on one that
+  is not. Admin-only bulk reads (board
   pack, board investments and trends, auditor trail, evidence pack) are
   `403` to everyone else.
 - **Status vocabulary** used by the newer groups: `422` validation (with

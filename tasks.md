@@ -2435,6 +2435,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
 
 - [x] **OC-23 (S) — What you were told goes when your access does.** **Built 2026-11-05:** inboxes, the Atom feed and watches leave out a plan the caller can no longer read, and timesheets stop counting it.
 
+- [x] **OC-24 (S) — Every route outside the guard says how it treats a hidden plan.** **Built 2026-11-05:** `plan-guard-census.txt` declares every route outside the guard, enforced by a unit test.
+
 ## Local-first CI/CD (LC-n, [spec/local-ci-cd.md](spec/local-ci-cd.md)), proposed 2026-11-04
 
 Why: the owner finds GitHub-hosted CI unreliable and costly. The assessment is in [spec/local-ci-cd.md](spec/local-ci-cd.md); every decision is the owner's (LC-D1). Order matters: each task pays for the next.

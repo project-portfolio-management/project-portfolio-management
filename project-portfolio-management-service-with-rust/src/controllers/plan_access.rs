@@ -717,6 +717,40 @@ mod path_tests {
             assert_eq!(plan_pid_of(&path), want, "{route} is not under the guard");
         }
     }
+
+    /// A new route outside the guard has to say how it treats a plan the caller cannot read, whatever its method: the audit
+    /// behind OC-13 to OC-23 found routes that had simply never been asked, because only GETs were in a census.
+    #[test]
+    fn every_route_outside_the_guard_is_declared() {
+        const CLASSES: &[&str] = &["checks", "filters", "own", "admin", "no-plan", "left-open"];
+        let declared: std::collections::BTreeMap<&str, &str> =
+            include_str!("../../plan-guard-census.txt")
+                .lines()
+                .filter(|l| !l.starts_with('#') && !l.is_empty())
+                .map(|l| l.split_once('\t').expect("route<TAB>class"))
+                .collect();
+        for (route, class) in &declared {
+            assert!(CLASSES.contains(class), "{route}: unknown class {class}");
+        }
+        let outside: std::collections::BTreeSet<&str> = include_str!("../../api-routes.txt")
+            .lines()
+            .filter(|l| l.contains(" /"))
+            .filter(|l| {
+                !l.split_once(' ')
+                    .is_some_and(|(_, p)| p.starts_with("/api/plans/{pid}"))
+            })
+            .collect();
+        let missing: Vec<_> = outside
+            .iter()
+            .filter(|r| !declared.contains_key(*r))
+            .collect();
+        assert!(
+            missing.is_empty(),
+            "add to plan-guard-census.txt: {missing:?}"
+        );
+        let stale: Vec<_> = declared.keys().filter(|r| !outside.contains(*r)).collect();
+        assert!(stale.is_empty(), "no longer mounted: {stale:?}");
+    }
 }
 
 /// The guard layer: a request addressed to a private plan by a non-member is

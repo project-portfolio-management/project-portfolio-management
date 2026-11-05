@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 5 November (OC-24: every route outside the guard says how it treats a hidden plan)
+
+- `plan-guard-census.txt` lists all 396 mounted routes outside `/api/plans/{pid}`, whatever the method, with how each treats a plan the caller cannot read, and a unit test fails on one that is missing or no longer mounted. The old census covered parameterless GETs, which is how these gaps went unseen. The private-plan comparison now seeds a review, so `/api/reviews` has something to find, and the wrong reasons in that census are corrected. The review checklist says a route outside the guard must check for itself.
+- Not done: **the census is a declaration, not a proof.** A class is what was traced or asserted, and only what `tests/private_routes.rs` and `tests/private_aggregates.rs` exercise is tested. Two routes are marked `left-open`: a stored director pack is shown as issued even if a plan in it turned private later, and an uncleared administrator can read one too. Whether a frozen pack should disappear is left as a decision. Also left: `data_quality` in a pack counts the hidden plans; a process run's starter and named people act without a plan check; a requester or author can withdraw an approval or delete a comment after losing access. Not verified: the sections inside a director pack beyond `benefits`, `deescalation` and `key_persons` were not read, and query parameters naming a plan were not all traced.
+
 ### 5 November (OC-23: what you were told goes when your access does)
 
 - Notifications store their words, some quoting a task or escalation title, and watches store a pid, so `/api/me/inbox`, `/api/notifications`, the Atom feed and `/api/me/watching` kept showing a plan after the caller lost access or the plan turned private. They now leave those out of their rows, counts and pages. The rows stay stored and come back with access. An invitation to review stays, because it is what lets an outside expert in. `GET /api/timesheets` no longer counts a hidden plan's entries in `omitted_unreadable`. Predates OC-1.

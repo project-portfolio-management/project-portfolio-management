@@ -51,7 +51,9 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 
 | Purpose | Variable | Default / notes |
 |---|---|---|
-| Database | `DATABASE_URL` | required; `DB_MIN_CONNECTIONS` (2), `DB_MAX_CONNECTIONS` (20) |
+| Database | `DATABASE_URL` | required, with `sslmode=require`, `verify-ca` or `verify-full` unless the database is on this machine, or production refuses to start; `DB_MIN_CONNECTIONS` (2), `DB_MAX_CONNECTIONS` (20), `DB_CONNECT_TIMEOUT` (5 s), `DB_IDLE_TIMEOUT` (10 min) |
+| Stopping | `SHUTDOWN_TIMEOUT_SECONDS` | `25`; keep it under your orchestrator's own limit. Requests and jobs still running then are cut off |
+| Slow clients | `HEADER_READ_TIMEOUT_SECONDS` | `30`; a client that has not finished its headers by then is dropped |
 | Environment | `APP_ENV` | `production` in the image; `container-dev` is the insecure profile |
 | Listen | `PORT`, `HOST` | `5150` |
 | Login | `REQUIRE_AUTH` | **on**; only `false` turns it off, and production refuses that |

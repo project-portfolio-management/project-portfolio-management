@@ -84,8 +84,15 @@ because a timeout would cut the live event streams. A `GET` whose `ETag` matches
 `/_readiness` answers `503` when the database or the cache does not.
 
 `db down`, `db reset` and `db truncate` destroy data, so they refuse to run unless `APP_ENV` is `development` or `test` **and**
-`PROJECT_PORTFOLIO_MANAGEMENT_DESTROY_DATA=true` is set. No other environment can run them, whatever is set. Rollback in production
+`AXA_DESTROY_DATA=true` is set. No other environment can run them, whatever is set, and `--environment` cannot lift this: both
+the process's own `APP_ENV` and the one the command names must allow it. Rollback in production
 is a restore (`operations/upgrade-and-migration.md`).
+
+`/_readiness` is axa's. It asks the database, the queue and the cache, names what failed in a `503`, gives each check a time
+limit, and reuses one answer for 5 seconds, because the route is public. `check` reads the configuration, connects to nothing, and
+fails where a boot would for the settings it knows. Stopping is one limit for requests and jobs together:
+`SHUTDOWN_TIMEOUT_SECONDS`, 25 by default. In production, a `DATABASE_URL` that leaves this machine must set `sslmode` to `require`,
+`verify-ca` or `verify-full`, or the service refuses to start.
 
 ### 8.3b The move from SeaORM to sqlx
 

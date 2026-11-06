@@ -582,27 +582,62 @@ dependencies = [
 
 [[package]]
 name = "axa"
-version = "0.1.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18a3402379ae5f5244349d020b7e8f4a35612d59a2f47c14d4a4891fdbb6d9dc"
+checksum = "ba21d59ab7d03d8ed17898882737482fc25859de431c001c2fbb24880366c6b1"
 dependencies = [
  "async-trait",
+ "axa-environment",
+ "axa-openapi",
+ "axa-seaorm",
  "axum",
  "axum-test",
  "clap",
+ "hyper",
+ "hyper-util",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.21",
+ "tokio",
+ "tower-http 0.7.1",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "axa-environment"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aeb36293430bafb06d1e29f5e213623d127444cdd234003b413a46207c03bbd3"
+
+[[package]]
+name = "axa-openapi"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc93ebcfb0ee5fe009ae402d8880ba3cfe081950c8f6d40476e278e7983429e5"
+dependencies = [
+ "axum",
+ "serde_json",
+ "utoipa",
+]
+
+[[package]]
+name = "axa-seaorm"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "478abf3cbdf29efd6f4f390ef9059b33cf350290e4a6c8f60c608ea471c08ead"
+dependencies = [
  "cruet",
  "heck 0.5.0",
  "sea-orm",
  "sea-orm-migration",
  "serde",
  "serde_json",
- "sqlx",
  "thiserror 2.0.21",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uuid",
+ "validator",
 ]
 
 [[package]]
@@ -1430,11 +1465,10 @@ checksum = "a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6"
 
 [[package]]
 name = "cruet"
-version = "0.15.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7a9ae414b9768aada1b316493261653e41af05c9d2ccc9c504a8fc051c6a790"
+checksum = "28049cb85be0d073a0e90983c15b50d730f59292985cd17bfab0ce090f158c31"
 dependencies = [
- "once_cell",
  "regex",
 ]
 
@@ -4456,7 +4490,6 @@ dependencies = [
  "base64 0.23.1",
  "chrono",
  "chrono-tz",
- "clap",
  "criterion",
  "ed25519-dalek 3.0.0",
  "fluvio",
@@ -4931,7 +4964,7 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tower",
- "tower-http",
+ "tower-http 0.6.11",
  "tower-service",
  "url",
  "wasm-bindgen",
@@ -4969,7 +5002,7 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tower",
- "tower-http",
+ "tower-http 0.6.11",
  "tower-service",
  "url",
  "wasm-bindgen",
@@ -6754,6 +6787,24 @@ version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
 dependencies = [
+ "bitflags 2.13.2",
+ "bytes",
+ "futures-util",
+ "http",
+ "http-body",
+ "pin-project-lite",
+ "tower",
+ "tower-layer",
+ "tower-service",
+ "url",
+]
+
+[[package]]
+name = "tower-http"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08a05a66a4fdd61cbbe0a1d755ffe0ca6aba159dd4820936a0ff8a8278245b9c"
+dependencies = [
  "async-compression",
  "bitflags 2.13.2",
  "bytes",
@@ -6762,14 +6813,13 @@ dependencies = [
  "http",
  "http-body",
  "http-body-util",
+ "percent-encoding",
  "pin-project-lite",
  "tokio",
  "tokio-util",
- "tower",
  "tower-layer",
  "tower-service",
  "tracing",
- "url",
 ]
 
 [[package]]
@@ -7057,6 +7107,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a3b425286980a367278453f3b6d28cdcb134b574e5a35824a6ff5eebad50bb6"
 
 [[package]]
+name = "utoipa"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8765fe27aeff71012a3f90fa474cf1df863a7d0dd81ed25de4e63fff2544994f"
+dependencies = [
+ "indexmap 2.14.2",
+ "serde",
+ "serde_json",
+ "utoipa-gen",
+]
+
+[[package]]
+name = "utoipa-gen"
+version = "6.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d935f1c83fdf8b88f09bbe050d0cea78ea4afee6d7b0317403228c1200b2c8ab"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.9",
+]
+
+[[package]]
 name = "uuid"
 version = "1.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7066,6 +7139,20 @@ dependencies = [
  "js-sys",
  "serde_core",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "validator"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3d68c6633c483df6780cc5277a417c7c2d1bceee2649d06c8ab6b0fd2dd3c81"
+dependencies = [
+ "idna",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "url",
 ]
 
 [[package]]

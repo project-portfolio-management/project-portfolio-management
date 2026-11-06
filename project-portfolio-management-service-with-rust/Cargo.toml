@@ -4,7 +4,7 @@
 name = "project-portfolio-management"
 version = "0.2.0"
 edition = "2024"
-rust-version = "1.96"
+rust-version = "1.97"
 publish = true
 default-run = "project-portfolio-management"
 authors = ["Joel Parker Henderson <joel@joelparkerhenderson.com>"]
@@ -20,7 +20,7 @@ include = ["src/**/*", "README.md"]
 
 [workspace.dependencies]
 # The plumbing every service shares. `sea-orm` is transitional, until this crate has moved to sqlx.
-axa = { version = "0.1", features = ["queue", "sea-orm"] }
+axa = { version = "0.4", features = ["openapi", "queue", "sea-orm"] }
 
 [dependencies]
 # Keyed integrity MACs with production-grade key handling — one audited
@@ -31,7 +31,6 @@ sha2 = { version = "0.11" }
 sha3 = { version = "0.12" }
 axa = { workspace = true }
 # The command line.
-clap = { version = "4", features = ["derive"] }
 # Sending mail (src/email.rs) and the shared cache (src/cache.rs).
 lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-platform-verifier", "aws-lc-rs"] }
 redis = { version = "1", default-features = false, features = ["connection-manager", "tokio-comp", "tokio-rustls-comp", "tls-rustls-webpki-roots"] }

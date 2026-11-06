@@ -15,9 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 6 November (axa 0.4)
+
+- axa moves from 0.1 to 0.4, with `openapi` added, so the service's minimum Rust version is now 1.97. Swagger UI is one exact version with integrity hashes, where it was `@5` from unpkg. `/_readiness` is axa's: it names what failed, limits each check, and reuses an answer for 5 seconds. `server::run` puts requests and jobs under one shutdown limit, where a hung job could hold the process. The route census uses `mounted()` in place of reading a debug string. `--help` now describes this service, and `check` exists (spec §8.3a).
+- Fixed in the previous change's guard: `--environment test` changed the environment it checked, so `APP_ENV=production ... --environment test db reset` could have passed. Both must now allow it, and the variable is now `AXA_DESTROY_DATA`, the name axa uses.
+- Before deploying: in production, a `DATABASE_URL` that leaves the machine must set `sslmode`, or the service refuses to start. **`compose.yaml` runs `APP_ENV=production` against the `postgres` container with no TLS, so its production stack will not start until that is decided.** `DB_CONNECT_TIMEOUT` is now 5 s and `DB_IDLE_TIMEOUT` 10 min, up from 500 ms. A request or job still running 25 s after the stop signal is cut off. Each queued job gets one attempt unless a worker says otherwise, and `Queue::connect` alters `axa_queue`, so the role needs that permission.
+- Verified: 297 database tests and 1,241 unit tests pass; the fresh schema has 0 differences in 5,197 lines, with `cruet` now at 1; the Swagger hashes match the files on unpkg. On the binary in production: the bypass is refused, `/_readiness` is `503` naming `cache` with Redis down, `/_health` is `200`, the API and Swagger policies are this service's own, and SIGTERM exits 0.
+- Not verified: Swagger UI in a real browser; the container image, `compose.yaml` and the chaos test; real Redis or SMTP. `check` prints axa's `HTTP_CSP`, which this service does not send. A `401` from the login guard carries no `x-request-id`. **Nothing is pushed, so CI has not seen this.**
+
 ### 6 November (guards that named only `production`)
 
-- `db down`, `db reset` and `db truncate` now refuse unless `APP_ENV` is `development` or `test` and `PROJECT_PORTFOLIO_MANAGEMENT_DESTROY_DATA=true` is set. Before, `db reset` in production dropped every table, the audit log with them, and exited 0. Loco had no guard here either, so this was on `main` too.
+- `db down`, `db reset` and `db truncate` now refuse unless `APP_ENV` is `development` or `test` and `AXA_DESTROY_DATA=true` is set. Before, `db reset` in production dropped every table, the audit log with them, and exited 0. Loco had no guard here either, so this was on `main` too.
 - The service now refuses to start with login off in any environment but `development`, `test` and `container-dev`. Before, the check named only `production`, so `APP_ENV=prod-eu` with `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` served `/api/plans` to anyone. Also on `main`.
 - Redis is now required on the same terms, so an unknown name can no longer drop to a memory cache that replicas do not share (spec §8.3a, NFR-12). A deployment on a custom `APP_ENV` with no Redis will now stop booting. This is on purpose, and it should be checked before deploying.
 - Verified on the real binary: both faults were reproduced first. Then, in `production`, `prod-eu` and `container-dev`, all three commands refused even with the variable set; `test` without it refused and left the data alone; and `test` with it ran. `prod-eu` with login off or no Redis refused to boot, and `db status` still works in production. Unit tests cover each rule.

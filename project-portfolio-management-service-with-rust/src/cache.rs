@@ -139,15 +139,19 @@ impl Cache {
         }
     }
 
-    /// Whether the store answers, for `/_readiness`.
-    pub async fn is_reachable(&self) -> bool {
+    /// Asks the store whether it answers, for `/_readiness`.
+    ///
+    /// # Errors
+    ///
+    /// When Redis does not answer.
+    pub async fn ping(&self) -> Result<()> {
         match self {
-            Self::Memory(_) => true,
+            Self::Memory(_) => Ok(()),
             Self::Redis(manager) => redis::cmd("PING")
                 .query_async::<String>(&mut manager.clone())
                 .await
-                .inspect_err(|error| tracing::error!(%error, "readiness_cache_ping_error"))
-                .is_ok(),
+                .map(|_| ())
+                .map_err(Error::wrap),
         }
     }
 }
@@ -211,7 +215,7 @@ mod tests {
         )
         .unwrap();
         let cache = Cache::Redis(manager);
-        assert!(!cache.is_reachable().await);
+        assert!(cache.ping().await.is_err());
         assert!(cache.get::<String>("a").await.is_err());
     }
 }

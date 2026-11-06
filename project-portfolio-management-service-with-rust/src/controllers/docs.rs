@@ -1,6 +1,6 @@
 //! API documentation endpoints: the `OpenAPI` spec + a Swagger UI page.
 //!
-//! Swagger UI assets are loaded from a CDN (swagger-ui-dist) to keep the
+//! Swagger UI assets are loaded from a CDN (swagger-ui-dist), pinned by `axa::openapi`, to keep the
 //! crate dependency-light; the spec itself is served from this service.
 
 use axa::prelude::*;
@@ -11,28 +11,15 @@ async fn openapi_json() -> Result<Response> {
     format::json(crate::openapi::spec())
 }
 
-/// A Swagger UI page wired to `/api-docs/openapi.json`.
+/// A Swagger UI page wired to `/api-docs/openapi.json`. One exact version with integrity hashes, so the browser refuses a
+/// script that has changed. `lang="en"` is the truth, not a default (WW-1.13): Swagger UI's own labels and every description
+/// in the `OpenAPI` document are English. Translating the API reference is a stated limit (service spec).
 #[debug_handler]
 async fn swagger_ui() -> Result<Response> {
-    // `lang="en"` is the truth, not a default (WW-1.13): Swagger UI's own labels and every description in the
-    // `OpenAPI` document are English. Translating the API reference is a stated limit (service spec).
-    let html = r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Portfolio Service API</title>
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
-</head>
-<body>
-  <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js" crossorigin></script>
-  <script>
-    window.ui = SwaggerUIBundle({ url: '/api-docs/openapi.json', dom_id: '#swagger-ui' });
-  </script>
-</body>
-</html>"#;
-    format::html(html)
+    format::html(&axa::openapi::swagger_html(
+        "Portfolio Service API",
+        axa::openapi::SPEC_PATH,
+    ))
 }
 
 /// Routes for the API documentation: the raw `OpenAPI` JSON and the

@@ -2390,26 +2390,14 @@ mod tests {
             crate::controllers::earned_value::routes(),
             crate::controllers::metrics::routes(),
         ];
-        let mut mounted = std::collections::BTreeSet::new();
-        for group in &groups {
-            let prefix = group.prefix.as_deref().unwrap_or("");
-            for handler in &group.handlers {
-                let mut path = format!("{prefix}/{}", handler.uri.trim_start_matches('/'));
-                while path.len() > 1 && path.ends_with('/') {
-                    path.pop();
-                }
-                // A method router names only what it does not serve, in its debug form: `get: None`.
-                let served = format!("{:?}", handler.method);
-                for method in ["get", "post", "put", "patch", "delete"] {
-                    if served.contains(&format!("{method}: "))
-                        && !served.contains(&format!("{method}: None"))
-                    {
-                        mounted.insert((path.clone(), method.to_string()));
-                    }
-                }
-            }
-        }
-        mounted
+        groups
+            .iter()
+            .flat_map(axa::routes::Routes::mounted)
+            .map(|(method, path)| (path, method.to_lowercase()))
+            .filter(|(_, method)| {
+                ["get", "post", "put", "patch", "delete"].contains(&method.as_str())
+            })
+            .collect()
     }
 
     /// Every documented `(path, method)` pair in the spec's `paths`

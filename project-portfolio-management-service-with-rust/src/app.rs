@@ -7,19 +7,18 @@ use axa::{
     cli::{Cli, Command, DbCommand, parse_vars},
     config::{Config as ServiceConfig, Defaults, MB},
     db::truncate_table,
+    health::Checks,
     queue::{Queue, QueueOptions},
-    routes::{AppRoutes, Routes},
+    routes::AppRoutes,
     server,
     task::Tasks,
     worker::{BackgroundWorker, WorkerMode},
 };
 use axum::{
-    Json, Router as AxumRouter,
-    extract::{Request, State},
-    http::StatusCode,
+    Router as AxumRouter,
+    extract::Request,
     middleware::Next,
     response::{IntoResponse, Response},
-    routing::get,
 };
 use project_portfolio_management_migration::{Migrator, MigratorTrait};
 use std::sync::OnceLock;
@@ -66,8 +65,9 @@ async fn require_auth_mw(req: Request, next: Next) -> Response {
     }
 }
 
-/// Set to `true` to allow `db down`, `db reset` and `db truncate` where they may run at all ([`may_destroy_data`]).
-const DESTROY_DATA: &str = "PROJECT_PORTFOLIO_MANAGEMENT_DESTROY_DATA";
+/// Set to `true` to allow `db down`, `db reset` and `db truncate` where they may run at all ([`may_destroy_data`]). The
+/// name axa's own `cli::parse` will read: the published 0.4.0 does not refuse these yet, so this service does.
+const DESTROY_DATA: &str = "AXA_DESTROY_DATA";
 
 /// Port and database when nothing overrides them. A pool of one in development and tests, as a deadlock
 /// from holding a connection across a second query then fails at once.
@@ -78,6 +78,7 @@ fn defaults() -> Defaults {
         production_port: None,
         body_limit: 2 * MB,
         max_connections: 1,
+        ..Defaults::default()
     }
 }
 
@@ -92,45 +93,31 @@ pub fn opts_out_of_guards(environment: &Environment) -> bool {
     }
 }
 
-/// Whether a command that destroys data may run: only in development or tests, and only when `confirmed` is `"true"`, so
-/// it takes a choice as well as a typed command. Every other environment refuses, whatever is set.
+/// Whether a command that destroys data may run. `process` is the environment the process runs in, and `chosen` the one
+/// the command asked for: `--environment test` must not talk a production process out of this, so both must allow it.
+/// Each allows it only in development or tests, and only when `confirmed` is `"true"`.
 #[must_use]
-pub fn may_destroy_data(environment: &Environment, confirmed: Option<&str>) -> bool {
-    !environment.is_production_like() && confirmed == Some("true")
+pub fn may_destroy_data(
+    process: &Environment,
+    chosen: &Environment,
+    confirmed: Option<&str>,
+) -> bool {
+    process.may_destroy_data(confirmed) && chosen.may_destroy_data(confirmed)
 }
 
-/// The configuration, with the three things axa would do differently from this service's own middleware turned off:
-/// CORS and HSTS are `http_security`'s, and a request timeout would cut the live event streams, so it needs asking for.
+/// The configuration, with the four things axa would do differently from this service's own middleware turned off: CORS,
+/// HSTS and the content security policy are `http_security`'s, and a request timeout would cut the live event streams, so
+/// it needs asking for. axa's policy is production-only and runs first, so left on it would silently replace ours and
+/// blank `/swagger-ui`, and no test on the `test` profile would see it.
 fn service_config(environment: &Environment) -> Result<ServiceConfig> {
     let mut config = ServiceConfig::from_env(environment, &defaults())?;
     config.http.cors_origins.clear();
     config.http.hsts = false;
+    config.http.csp = None;
     if std::env::var_os("REQUEST_TIMEOUT_SECONDS").is_none() {
         config.http.timeout_seconds = 0;
     }
     Ok(config)
-}
-
-/// The liveness answer.
-async fn alive() -> Json<serde_json::Value> {
-    Json(serde_json::json!({ "ok": true }))
-}
-
-/// `/_readiness`: the database and the cache both answer. `503` otherwise, while `/_health` stays `200`.
-async fn readiness(State(ctx): State<AppContext>) -> Response {
-    let database = ctx
-        .db
-        .ping()
-        .await
-        .inspect_err(|error| tracing::error!(%error, "readiness_db_ping_error"))
-        .is_ok();
-    let ready = database && crate::cache::Cache::of(&ctx).is_reachable().await;
-    let status = if ready {
-        StatusCode::OK
-    } else {
-        StatusCode::SERVICE_UNAVAILABLE
-    };
-    (status, Json(serde_json::json!({ "ok": ready }))).into_response()
 }
 
 /// The service: plain functions, called in order from [`App::run`].
@@ -162,6 +149,11 @@ impl App {
             .insert(crate::cache::Cache::from_env(&ctx.environment)?);
         ctx.shared_store
             .insert(crate::email::Mailer::from_env(&ctx.environment)?);
+        let cache = crate::cache::Cache::of(&ctx);
+        ctx.health_checks = Checks::new().add("cache", move || {
+            let cache = cache.clone();
+            async move { cache.ping().await }
+        });
         if ctx.config.workers == WorkerMode::BackgroundQueue {
             let mut queue =
                 Queue::connect(&ctx.config.database.uri, QueueOptions::default()).await?;
@@ -187,6 +179,7 @@ impl App {
             command,
             DbCommand::Down { .. } | DbCommand::Reset | DbCommand::Truncate
         ) && !may_destroy_data(
+            &Environment::from_env(),
             &ctx.environment,
             std::env::var(DESTROY_DATA).ok().as_deref(),
         ) {
@@ -214,6 +207,13 @@ impl App {
             .environment
             .as_deref()
             .map_or_else(Environment::from_env, Environment::parse);
+        if matches!(cli.command, Command::Check) {
+            axa::cli::check(&environment, &defaults())?;
+            // axa's check knows nothing of the settings that are this service's own, and these two refuse a bad boot.
+            crate::cache::Cache::from_env(&environment)?;
+            crate::email::Mailer::from_env(&environment)?;
+            return Ok(());
+        }
         let mut config = service_config(&environment)?;
         if let Command::Start { binding, port, .. } = &cli.command {
             if let Some(binding) = binding {
@@ -231,6 +231,7 @@ impl App {
             Migrator::up(&ctx.db, None).await?;
         }
         match cli.command {
+            Command::Check => Ok(()),
             Command::Start { worker, all, .. } => Self::start(&ctx, worker, all).await,
             Command::Db { command } => Self::db(&ctx, command).await,
             Command::Task { name, params } => {
@@ -249,24 +250,17 @@ impl App {
 
     /// Serves, works the queue, or both, until told to stop. Plain `start` only serves.
     async fn start(ctx: &AppContext, worker: bool, all: bool) -> Result<()> {
-        let (stop, stopped) = tokio::sync::watch::channel(false);
-        let jobs = (worker || all)
-            .then(|| ctx.queue_provider.clone())
-            .flatten()
-            .map(|queue| tokio::spawn(queue.run(stopped)));
-        let served = if worker && !all {
-            server::shutdown_signal().await;
-            Ok(())
+        let works = worker || all;
+        axa::queue::warn_if_unserved(ctx, works);
+        let router = if worker && !all {
+            None
         } else {
-            let router = Self::router(ctx).await?;
-            server::serve(router, &ctx.config.server).await
+            Some(Self::router(ctx).await?)
         };
-        let _ = stop.send(true);
-        if let Some(jobs) = jobs {
-            let _ = jobs.await;
-        }
+        let queue = works.then(|| ctx.queue_provider.clone()).flatten();
+        let ended = server::run(router, queue, &ctx.config.server).await;
         Self::on_shutdown();
-        served
+        ended
     }
 
     /// Install this crate's own logging + `OpenTelemetry` stack (repo
@@ -332,13 +326,7 @@ impl App {
     #[expect(clippy::too_many_lines)]
     #[must_use]
     pub fn routes(_ctx: &AppContext) -> AppRoutes {
-        AppRoutes::empty()
-            .add_route(
-                Routes::new()
-                    .add("/_ping", get(alive))
-                    .add("/_health", get(alive))
-                    .add("/_readiness", get(readiness)),
-            )
+        AppRoutes::with_default_routes()
             .add_route(controllers::plans::routes())
             .add_route(controllers::compliance::routes())
             .add_route(controllers::governance::routes())
@@ -658,9 +646,9 @@ mod tests {
     #[test]
     fn data_is_destroyed_only_in_development_or_test_and_only_when_confirmed() {
         for environment in [Environment::Development, Environment::Test] {
-            assert!(may_destroy_data(&environment, Some("true")));
+            assert!(may_destroy_data(&environment, &environment, Some("true")));
             for unconfirmed in [None, Some(""), Some("1"), Some("TRUE"), Some("false")] {
-                assert!(!may_destroy_data(&environment, unconfirmed));
+                assert!(!may_destroy_data(&environment, &environment, unconfirmed));
             }
         }
         for environment in [
@@ -669,7 +657,18 @@ mod tests {
             named("container-dev"),
             named("staging"),
         ] {
-            assert!(!may_destroy_data(&environment, Some("true")));
+            assert!(!may_destroy_data(&environment, &environment, Some("true")));
+            // `--environment test` on a production process, and the other way about.
+            assert!(!may_destroy_data(
+                &environment,
+                &Environment::Test,
+                Some("true")
+            ));
+            assert!(!may_destroy_data(
+                &Environment::Test,
+                &environment,
+                Some("true")
+            ));
         }
     }
 

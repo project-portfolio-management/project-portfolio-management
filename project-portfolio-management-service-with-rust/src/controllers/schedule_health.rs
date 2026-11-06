@@ -4,12 +4,10 @@
 //!
 //! Named a *self-check* everywhere: it is not a DCMA compliance assessment.
 
-use super::db_err;
 use std::collections::HashMap;
 
 use axa::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -49,22 +47,23 @@ async fn schedule_health(
     let workflow = super::workflow::in_force(&ctx, plan.pid, "task").await?;
 
     // The latest baseline, if any: each task's baselined finish.
-    let baseline = schedule_baselines::Entity::find()
-        .filter(schedule_baselines::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(schedule_baselines::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let baseline: Option<schedule_baselines::Model> = sqlx::query_as(
+        "SELECT * FROM schedule_baselines WHERE plan_pid = $1 ORDER BY version DESC LIMIT 1",
+    )
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
     let finishes: HashMap<Uuid, NaiveDate> = match &baseline {
         None => HashMap::new(),
-        Some(b) => schedule_baseline_tasks::Entity::find()
-            .filter(schedule_baseline_tasks::Column::BaselinePid.eq(b.pid))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .filter_map(|t| t.finish_date.map(|f| (t.task_pid, f)))
-            .collect(),
+        Some(b) => sqlx::query_as::<_, schedule_baseline_tasks::Model>(
+            "SELECT * FROM schedule_baseline_tasks WHERE baseline_pid = $1",
+        )
+        .bind(b.pid)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
+        .into_iter()
+        .filter_map(|t| t.finish_date.map(|f| (t.task_pid, f)))
+        .collect(),
     };
 
     let tasks: Vec<Task> = net

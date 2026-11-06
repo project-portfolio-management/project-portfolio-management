@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 /// One persisted outbox row: a canonical envelope awaiting relay to the
 /// durable bus.
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
 #[sea_orm(table_name = "event_outbox")]
 pub struct Model {
     /// Row creation timestamp.

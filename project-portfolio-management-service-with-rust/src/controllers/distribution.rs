@@ -11,10 +11,8 @@
 //! Counted over **completed** work in the window, because a mix of
 //! what was *started* measures intent rather than delivery.
 
-use super::db_err;
 use axa::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::QuerySelect;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -28,7 +26,7 @@ const DEFAULT_WINDOW_DAYS: i64 = 90;
 
 /// Rows scanned per read, so an unbounded estate cannot become an
 /// unbounded query.
-const MAX_ROWS: u64 = 5000;
+const MAX_ROWS: i64 = 5000;
 
 /// The deployment's declared intended mix, or `None`.
 ///
@@ -55,14 +53,15 @@ async fn items_for(
     plan_pid: Uuid,
     since: chrono::DateTime<chrono::Utc>,
 ) -> Result<Vec<rules::FlowType>> {
-    let task_rows = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::DoneAt.is_not_null())
-        .limit(MAX_ROWS)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let task_rows: Vec<tasks::Model> = sqlx::query_as(
+        "SELECT * FROM tasks
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND done_at IS NOT NULL
+         LIMIT $2",
+    )
+    .bind(plan_pid)
+    .bind(MAX_ROWS)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
 
     let mut items: Vec<rules::FlowType> = task_rows
         .iter()
@@ -76,14 +75,15 @@ async fn items_for(
     // Closed risk-register rows contribute the risk and debt this
     // service already tracks, so those two types are not left empty
     // merely because nobody declared a task for them.
-    let risk_rows = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(plan_pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .filter(risks::Column::Status.eq("closed"))
-        .limit(MAX_ROWS)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let risk_rows: Vec<risks::Model> = sqlx::query_as(
+        "SELECT * FROM risks
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND status = 'closed'
+         LIMIT $2",
+    )
+    .bind(plan_pid)
+    .bind(MAX_ROWS)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     items.extend(
         risk_rows
             .iter()
@@ -132,12 +132,12 @@ async fn flow_distribution(
         // the same N+1 avoidance the TBA rollup already uses.
         // A child plan the caller may not see is not part of the subtree they roll up.
         let all = scope.keep(
-            plans::Entity::find()
-                .filter(plans::Column::DeletedAt.is_null())
-                .limit(MAX_ROWS)
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?,
+            sqlx::query_as::<_, plans::Model>(
+                "SELECT * FROM plans WHERE deleted_at IS NULL LIMIT $1",
+            )
+            .bind(MAX_ROWS)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
         );
         let mut children: std::collections::BTreeMap<Uuid, Vec<Uuid>> =
             std::collections::BTreeMap::new();

@@ -5,7 +5,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
 #[sea_orm(table_name = "task_ccpm_estimates")]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,

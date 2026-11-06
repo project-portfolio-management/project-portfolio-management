@@ -10,7 +10,7 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
 #[sea_orm(table_name = "automation_milestone_fires")]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,

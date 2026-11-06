@@ -7,12 +7,11 @@
 //!   records the outcome. The audit row is written **first**, so a redelivery that cannot be audited does not happen.
 
 use axa::prelude::*;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
-use super::{db_err, unprocessable_entity as unprocessable};
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::compliance::mac::{self, Domain};
 use crate::models::_entities::{event_outbox, webhook_deliveries as rows};
@@ -58,21 +57,22 @@ async fn list(
     Query(q): Query<ListQuery>,
 ) -> Result<Response> {
     admin(&caller)?;
-    let mut find = rows::Entity::find().order_by_desc(rows::Column::Id);
-    if let Some(e) = q.event_id {
-        find = find.filter(rows::Column::EventId.eq(e));
+    if let Some(s) = &q.status
+        && !["delivered", "failed"].contains(&s.as_str())
+    {
+        return Err(unprocessable("status must be delivered or failed"));
     }
-    if let Some(s) = &q.status {
-        if !["delivered", "failed"].contains(&s.as_str()) {
-            return Err(unprocessable("status must be delivered or failed"));
-        }
-        find = find.filter(rows::Column::Status.eq(s.as_str()));
-    }
-    let list = find
-        .limit(q.limit.unwrap_or(100).clamp(1, 500))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let list: Vec<rows::Model> = sqlx::query_as(
+        "SELECT * FROM webhook_deliveries
+         WHERE ($1::uuid IS NULL OR event_id = $1) AND ($2::text IS NULL OR status = $2)
+         ORDER BY id DESC
+         LIMIT $3",
+    )
+    .bind(q.event_id)
+    .bind(&q.status)
+    .bind(i64::try_from(q.limit.unwrap_or(100).clamp(1, 500)).unwrap_or(500))
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(json!({ "deliveries": list.iter().map(|d| json!({
         "id": d.id, "event_id": d.event_id, "entity": d.entity, "kind": d.kind, "url": d.url,
         "attempts": d.attempts, "status": d.status, "status_code": d.status_code, "error": d.error,
@@ -89,19 +89,21 @@ async fn redeliver(
     Path(id): Path<i32>,
 ) -> Result<Response> {
     admin(&caller)?;
-    let logged = rows::Entity::find_by_id(id)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let logged: rows::Model = sqlx::query_as("SELECT * FROM webhook_deliveries WHERE id = $1")
+        .bind(id)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
         .ok_or(Error::NotFound)?;
-    let event = event_outbox::Entity::find()
-        .filter(event_outbox::Column::EventId.eq(logged.event_id))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or_else(|| {
-            unprocessable("the event is no longer kept in the outbox, so it cannot be sent again")
-        })?;
+    let event: event_outbox::Model =
+        sqlx::query_as("SELECT * FROM event_outbox WHERE event_id = $1 LIMIT 1")
+            .bind(logged.event_id)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or_else(|| {
+                unprocessable(
+                    "the event is no longer kept in the outbox, so it cannot be sent again",
+                )
+            })?;
     let target = webhooks::targets()
         .into_iter()
         .find(|t| t.url == logged.url)
@@ -119,8 +121,8 @@ async fn redeliver(
     })?;
     let delivery_id = Uuid::new_v4();
     // Audit first: a redelivery that cannot be recorded does not go out.
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        crate::db::pool(&ctx),
         logged.event_id,
         "webhook_redelivered",
         caller.actor(),
@@ -140,11 +142,13 @@ async fn redeliver(
         1,
     )
     .await;
-    let after = match new_log {
-        Some(log_id) => rows::Entity::find_by_id(log_id)
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?,
+    let after: Option<rows::Model> = match new_log {
+        Some(log_id) => {
+            sqlx::query_as("SELECT * FROM webhook_deliveries WHERE id = $1")
+                .bind(log_id)
+                .fetch_optional(crate::db::pool(&ctx))
+                .await?
+        }
         None => None,
     };
     format::json(json!({

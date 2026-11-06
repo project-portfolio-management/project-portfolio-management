@@ -8,6 +8,34 @@ pub use super::_entities::audit_logs::{self, ActiveModel, Entity, Model};
 
 impl ActiveModelBehavior for super::_entities::audit_logs::ActiveModel {}
 
+/// The time and the digests of an audit row about to be written.
+///
+/// `created_at` is set here rather than left to the database's default: the timestamp is part of the MAC pre-image, so
+/// it must be known before the insert. The alternative, insert then stamp, leaves a window in which the row exists
+/// unprotected. All three digests come from one call, so none can be stamped without the others. The two unkeyed ones
+/// are written unconditionally; only the MAC depends on a configured key.
+fn stamped(
+    entity_pid: Uuid,
+    action: &str,
+    actor: Option<&str>,
+    snapshot: Option<&serde_json::Value>,
+) -> (
+    chrono::DateTime<chrono::FixedOffset>,
+    crate::compliance::audit_integrity::Digests,
+) {
+    let created_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let digests = crate::compliance::audit_integrity::digests(
+        &crate::compliance::audit_integrity::AuditInput {
+            entity_pid,
+            action,
+            actor,
+            snapshot,
+            created_at_micros: created_at.timestamp_micros(),
+        },
+    );
+    (created_at, digests)
+}
+
 impl Model {
     /// Record one audit entry. `actor` is the caller's `sub` (user `pid`)
     /// when a verified token was presented, else `None`.
@@ -29,23 +57,7 @@ impl Model {
         actor: Option<&str>,
         snapshot: Option<serde_json::Value>,
     ) -> ModelResult<Self> {
-        // Set `created_at` explicitly rather than letting the database
-        // default it: the timestamp is part of the MAC pre-image, so it
-        // must be known before the insert. The alternative — insert, then
-        // stamp — leaves a window in which the row exists unprotected.
-        let created_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
-        // All three digests from one call, so none can be stamped
-        // without the others. The two unkeyed ones are written
-        // unconditionally; only the MAC depends on a configured key.
-        let digests = crate::compliance::audit_integrity::digests(
-            &crate::compliance::audit_integrity::AuditInput {
-                entity_pid,
-                action,
-                actor,
-                snapshot: snapshot.as_ref(),
-                created_at_micros: created_at.timestamp_micros(),
-            },
-        );
+        let (created_at, digests) = stamped(entity_pid, action, actor, snapshot.as_ref());
         let entry = audit_logs::ActiveModel {
             entity_pid: ActiveValue::set(entity_pid),
             action: ActiveValue::set(action.to_string()),
@@ -60,6 +72,39 @@ impl Model {
         .insert(db)
         .await?;
         Ok(entry)
+    }
+
+    /// [`Self::record`] on sqlx: the pool ([`crate::db::pool`]) or a transaction ([`crate::db::Tx::conn`]), so the audit
+    /// row can share the change's transaction here too.
+    ///
+    /// # Errors
+    ///
+    /// When the insert fails.
+    pub async fn record_on<'e, E: sqlx::Executor<'e, Database = sqlx::Postgres>>(
+        db: E,
+        entity_pid: Uuid,
+        action: &str,
+        actor: Option<&str>,
+        snapshot: Option<serde_json::Value>,
+    ) -> ModelResult<Self> {
+        let (created_at, digests) = stamped(entity_pid, action, actor, snapshot.as_ref());
+        sqlx::query_as(
+            "INSERT INTO audit_logs
+                 (entity_pid, action, actor, snapshot, created_at, hash, hash_sha3, mac)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING *",
+        )
+        .bind(entity_pid)
+        .bind(action)
+        .bind(actor)
+        .bind(snapshot)
+        .bind(created_at)
+        .bind(digests.sha256)
+        .bind(digests.sha3)
+        .bind(digests.mac)
+        .fetch_one(db)
+        .await
+        .map_err(ModelError::wrap)
     }
 
     /// [`Self::record`] for a write that is kept even when its audit row cannot be written (CQ-3).

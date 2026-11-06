@@ -14,7 +14,6 @@ use super::db_err;
 use axa::error::ErrorDetail;
 use axa::prelude::*;
 use axum::http::StatusCode;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 
 use super::portfolio_resources::may_manage_people;
@@ -24,7 +23,19 @@ use crate::models::_entities::{
 };
 
 /// Rows embedded per sub-resource.
-const CAP: u64 = 200;
+const CAP: i64 = 200;
+
+/// One task's rows of one kind. `sql` takes the task as `$1` and the cap as `$2`.
+async fn of_task<T>(ctx: &AppContext, sql: &'static str, task_pid: uuid::Uuid) -> Result<Vec<T>>
+where
+    T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> + Send + Unpin,
+{
+    Ok(sqlx::query_as(sql)
+        .bind(task_pid)
+        .bind(CAP)
+        .fetch_all(crate::db::pool(ctx))
+        .await?)
+}
 
 /// Includable names, the module each belongs to, and whether it names people.
 pub const INCLUDABLE: &[(&str, &str, bool)] = &[
@@ -112,31 +123,26 @@ async fn get_task(
         }
         let rows: serde_json::Value = match name {
             "children" => serde_json::to_value(
-                tasks::Entity::find()
-                    .filter(tasks::Column::ParentTaskPid.eq(task.pid))
-                    .filter(tasks::Column::DeletedAt.is_null())
-                    .order_by_asc(tasks::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-                    .iter()
-                    .map(super::engineering::task_view)
-                    .collect::<Vec<_>>(),
+                of_task::<tasks::Model>(
+                    &ctx,
+                    "SELECT * FROM tasks WHERE parent_task_pid = $1 AND deleted_at IS NULL
+                     ORDER BY id LIMIT $2",
+                    task.pid,
+                )
+                .await?
+                .iter()
+                .map(super::engineering::task_view)
+                .collect::<Vec<_>>(),
             ),
             "relations" => {
-                let found = task_relations::Entity::find()
-                    .filter(task_relations::Column::DeletedAt.is_null())
-                    .filter(
-                        sea_orm::Condition::any()
-                            .add(task_relations::Column::FromTaskPid.eq(task.pid))
-                            .add(task_relations::Column::ToTaskPid.eq(task.pid)),
-                    )
-                    .order_by_asc(task_relations::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?;
+                let found = of_task::<task_relations::Model>(
+                    &ctx,
+                    "SELECT * FROM task_relations
+                     WHERE deleted_at IS NULL AND (from_task_pid = $1 OR to_task_pid = $1)
+                     ORDER BY id LIMIT $2",
+                    task.pid,
+                )
+                .await?;
                 // A relation to a task in a plan the caller cannot read is not shown, not even as a pid.
                 let ends: Vec<Uuid> = found.iter().flat_map(|r| [r.from_task_pid, r.to_task_pid]).collect();
                 let ok = super::cpm::readable_endpoints(&ctx, &caller, &ends).await?;
@@ -149,39 +155,36 @@ async fn get_task(
                 )
             }
             "transitions" => serde_json::to_value(
-                task_transitions::Entity::find()
-                    .filter(task_transitions::Column::TaskPid.eq(task.pid))
-                    .order_by_asc(task_transitions::Column::At)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-                    .iter()
-                    .map(|t| serde_json::json!({ "from": t.from_status, "to": t.to_status, "at": t.at, "actor_ref": t.actor_ref }))
-                    .collect::<Vec<_>>(),
+                of_task::<task_transitions::Model>(
+                    &ctx,
+                    r#"SELECT * FROM task_transitions WHERE task_pid = $1 ORDER BY "at" LIMIT $2"#,
+                    task.pid,
+                )
+                .await?
+                .iter()
+                .map(|t| serde_json::json!({ "from": t.from_status, "to": t.to_status, "at": t.at, "actor_ref": t.actor_ref }))
+                .collect::<Vec<_>>(),
             ),
             "raci" => serde_json::to_value(
-                raci_assignments::Entity::find()
-                    .filter(raci_assignments::Column::TaskPid.eq(task.pid))
-                    .filter(raci_assignments::Column::DeletedAt.is_null())
-                    .order_by_asc(raci_assignments::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-                    .iter()
-                    .map(|r| serde_json::json!({ "person_ref": r.person_ref, "role": r.role }))
-                    .collect::<Vec<_>>(),
+                of_task::<raci_assignments::Model>(
+                    &ctx,
+                    "SELECT * FROM raci_assignments WHERE task_pid = $1 AND deleted_at IS NULL
+                     ORDER BY id LIMIT $2",
+                    task.pid,
+                )
+                .await?
+                .iter()
+                .map(|r| serde_json::json!({ "person_ref": r.person_ref, "role": r.role }))
+                .collect::<Vec<_>>(),
             ),
             _ => serde_json::to_value(
-                time_entries::Entity::find()
-                    .filter(time_entries::Column::TaskPid.eq(task.pid))
-                    .filter(time_entries::Column::DeletedAt.is_null())
-                    .order_by_asc(time_entries::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?,
+                of_task::<time_entries::Model>(
+                    &ctx,
+                    "SELECT * FROM time_entries WHERE task_pid = $1 AND deleted_at IS NULL
+                     ORDER BY id LIMIT $2",
+                    task.pid,
+                )
+                .await?,
             ),
         }
         .unwrap_or_default();

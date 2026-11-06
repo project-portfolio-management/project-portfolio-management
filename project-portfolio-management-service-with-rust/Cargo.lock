@@ -4460,6 +4460,7 @@ dependencies = [
  "criterion",
  "ed25519-dalek 3.0.0",
  "fluvio",
+ "futures-core",
  "insta",
  "integrity-mac",
  "jsonwebtoken",

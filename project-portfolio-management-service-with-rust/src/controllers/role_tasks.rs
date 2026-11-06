@@ -7,22 +7,20 @@
 //! `omitted_unreadable`, never shown masked. The `unclassified` row has no list of people and is refused.
 //! Skills have no people at all, so there is no skill drill-down.
 
-use super::db_err;
 use super::refuse;
 use std::collections::{BTreeMap, HashMap};
 
 use axa::prelude::*;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::portfolio_resources::may_manage_people;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plans, resource_roles, tasks};
+use crate::models::_entities::{plans, tasks};
 
 /// Open tasks read per request; a role with more is told so.
-const ROW_CAP: u64 = 500;
+const ROW_CAP: usize = 500;
 
 /// The plans of `rows` the caller can read, with their names: not hidden (private) and readable at the
 /// plan's stage.
@@ -37,12 +35,12 @@ async fn readable_plans(
     let plan_rows = if plan_pids.is_empty() {
         Vec::new()
     } else {
-        plans::Entity::find()
-            .filter(plans::Column::Pid.is_in(plan_pids))
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        sqlx::query_as::<_, plans::Model>(
+            "SELECT * FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(&plan_pids)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
     };
     let hidden = super::plan_access::hidden_plans(
         ctx,
@@ -93,30 +91,28 @@ async fn role_tasks(
             "the unclassified row has no list of people; give a person a role first (PUT /api/resource-roles)",
         ));
     }
-    let people: Vec<String> = resource_roles::Entity::find()
-        .filter(resource_roles::Column::Role.eq(q.role.as_str()))
-        .order_by_asc(resource_roles::Column::PersonRef)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| r.person_ref)
-        .collect();
-    let mut rows = if people.is_empty() {
+    let people: Vec<String> = sqlx::query_scalar(
+        "SELECT person_ref FROM resource_roles WHERE role = $1 ORDER BY person_ref",
+    )
+    .bind(&q.role)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let mut rows: Vec<tasks::Model> = if people.is_empty() {
         Vec::new()
     } else {
-        tasks::Entity::find()
-            .filter(tasks::Column::AssigneeRef.is_in(people.clone()))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::DoneAt.is_null())
-            .order_by_asc(tasks::Column::Id)
-            .limit(ROW_CAP + 1)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        sqlx::query_as(
+            "SELECT * FROM tasks
+             WHERE assignee_ref = ANY($1) AND deleted_at IS NULL AND done_at IS NULL
+             ORDER BY id
+             LIMIT $2",
+        )
+        .bind(&people)
+        .bind(i64::try_from(ROW_CAP + 1).unwrap_or(i64::MAX))
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
     };
-    let truncated = rows.len() as u64 > ROW_CAP;
-    rows.truncate(usize::try_from(ROW_CAP).unwrap_or(usize::MAX));
+    let truncated = rows.len() > ROW_CAP;
+    rows.truncate(ROW_CAP);
 
     let readable = readable_plans(&ctx, &caller, &rows).await?;
 

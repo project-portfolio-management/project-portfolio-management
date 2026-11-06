@@ -15,10 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 6 November (sqlx: the shared layer and nine controllers)
+
+- `src/db.rs` is now the only way to sqlx (spec §8.3b). It counts every statement in `query_count`, because that count saw SeaORM only, and the guards in `financials` and `strategy` would have passed with nothing to see once their routes moved. A census test refuses the raw pool anywhere else. `AuditModel::record_on` writes the audit row on sqlx, on the pool or in a transaction. Every entity derives `sqlx::FromRow`. `controllers/director_summary.rs` moved to `db::pool`.
+- Moved to sqlx: `saved_views`, `schedule_health`, `access_review`, `role_tasks`, `webhook_deliveries`, `includes`, `distribution`, `my_work` and `task_get`. `includes` and `task_get` still ask SeaORM for a plan's modules, and `schedule_health` still loads its network through SeaORM helpers.
+- Tested: `tests/sqlx_layer.rs` shows the count sees the pool and a transaction, an audit row written on sqlx passes `verify`, and it leaves with a dropped transaction. `tests/requests/includes.rs` now covers every name with a row in it. It did not before, and a wrong column only fails when a row comes back.
+- Verified, before those last include assertions: 297 database tests pass (295 plus the 2 new), `cargo test --lib` passes (1,239), and the fresh schema has 0 differences from the Loco-built one. After them, only the `includes` test and the gates were rerun.
+- Not done: 118 controllers, the models, about 320 audit calls and 140 migrations are still SeaORM, and no write here shares a sqlx transaction with its audit row yet, so `record_on` in a transaction is tested but not used by a route. Column names in `query_as` are still checked by tests, not the compiler. Statements in the SeaORM helpers are counted, but this adds no count guard for the moved routes. **Nothing is pushed, so CI has not seen this.**
+
 ### 5 November (sqlx: first controller)
 
 - `controllers/director_summary.rs` now uses plain sqlx on the pool SeaORM already holds, so the move can land a controller at a time with the tests passing. `src/db.rs` hands out the pool. The two entities it reads derive `sqlx::FromRow`.
-- Not done: the other 127 controllers, 187 model files, 324 audit calls, and 140 migrations are still SeaORM. Column names in `query_as` are checked by tests, not by the compiler. Whole-suite database tests were not rerun for this change, only `change_requests`, `private_aggregates`, `director_packs` and the unit tests.
+- Not done, at the time: the other 127 controllers, 187 model files, 324 audit calls, and 140 migrations were still SeaORM. Column names in `query_as` are checked by tests, not by the compiler. Whole-suite database tests were not rerun for this change, only `change_requests`, `private_aggregates`, `director_packs` and the unit tests.
 
 ### 5 November (Loco replaced with axa)
 

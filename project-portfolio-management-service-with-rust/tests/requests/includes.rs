@@ -27,14 +27,29 @@ async fn include_embeds_named_sub_resources_and_lists_what_it_omits() {
             .json(&json!({ "title": "Supplier failure", "probability": 3, "impact": 4 }))
             .await
             .assert_status_ok();
-        request
+        let shipped: Value = request
             .post(&format!("/api/plans/{p}/tasks"))
             .json(&json!({ "title": "Ship" }))
             .await
-            .assert_status_ok();
+            .json();
         request
             .post(&format!("/api/plans/{p}/milestones"))
             .json(&json!({ "name": "Beta", "due": "2026-10-20" }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&format!("/api/plans/{p}/components"))
+            .json(&json!({ "name": "API" }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&format!("/api/plans/{p}/budget-lines"))
+            .json(&json!({ "category": "capex", "description": "spend", "currency": "GBP", "planned_minor": 100_000 }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&format!("/api/plans/{p}/time-entries"))
+            .json(&json!({ "task_pid": shipped["pid"], "actor_ref": "person:a", "spent_on": "2026-10-06", "minutes": 120, "category": "work" }))
             .await
             .assert_status_ok();
 
@@ -55,6 +70,15 @@ async fn include_embeds_named_sub_resources_and_lists_what_it_omits() {
         assert!(inc["omitted"].as_array().unwrap().is_empty());
         // Only what was asked for.
         assert!(inc["included"].get("time_entries").is_none());
+
+        // Every other name, with a row in it: a query's columns are only checked when a row comes back.
+        let rest: Value = request
+            .get(&format!("/api/plans/{p}?include=components,budget_lines,time_entries"))
+            .await
+            .json();
+        assert_eq!(rest["included"]["components"][0]["name"], "API");
+        assert_eq!(rest["included"]["budget_lines"][0]["currency"], "GBP");
+        assert_eq!(rest["included"]["time_entries"][0]["minutes"], 120);
 
         // An unknown name is refused, listing the allowed ones.
         let bad = request

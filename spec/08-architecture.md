@@ -83,6 +83,16 @@ this service's own `http_security` layer, so axa's are turned off. There is no r
 because a timeout would cut the live event streams. A `GET` whose `ETag` matches `If-None-Match` answers `304`, whichever handler set it.
 `/_readiness` answers `503` when the database or the cache does not.
 
+### 8.3b The move from SeaORM to sqlx
+
+The service is moving from SeaORM to plain [sqlx](https://docs.rs/sqlx), one controller at a time. The two share one connection
+pool, so both work side by side. A transaction is not shared, so all of one handler's writes stay on one side, including the audit
+row: `AuditModel::record` is for SeaORM and `AuditModel::record_on` for sqlx.
+
+`src/db.rs` is the only way to sqlx: `db::pool` and `db::begin`. Both count each statement in `query_count`, where SeaORM's
+statements are counted too, so a guard on how many statements a route runs covers both sides. A census test refuses the raw pool
+anywhere else. An update names only the columns it changes, as SeaORM's did, and no row hook exists to carry across.
+
 ### 8.3 Service layout
 
 > **Corrected 2026-08-25.** This section was headed "— planned" and drew

@@ -10,13 +10,12 @@
 
 use super::db_err;
 use axa::prelude::*;
-use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 
 use crate::models::_entities::{budget_lines, components, milestones, risks, tasks, time_entries};
 
 /// Rows embedded per sub-resource.
-const CAP: u64 = 200;
+const CAP: i64 = 200;
 
 /// Includable names, and the module each belongs to.
 pub const INCLUDABLE: &[(&str, &str)] = &[
@@ -54,6 +53,19 @@ pub fn parse(raw: &str) -> std::result::Result<Vec<&'static str>, String> {
     Ok(out)
 }
 
+/// A plan's live rows of one kind, as JSON. `sql` takes the plan as `$1` and the cap as `$2`.
+async fn live<T>(ctx: &AppContext, sql: &'static str, plan_pid: Uuid) -> Result<serde_json::Value>
+where
+    T: for<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> + serde::Serialize + Send + Unpin,
+{
+    let rows: Vec<T> = sqlx::query_as(sql)
+        .bind(plan_pid)
+        .bind(CAP)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+    Ok(serde_json::json!(rows))
+}
+
 /// Build the `included` map and the `omitted` list for `names`.
 ///
 /// # Errors
@@ -87,66 +99,60 @@ pub async fn build(
             continue;
         }
         let value = match *name {
-            "milestones" => serde_json::json!(
-                milestones::Entity::find()
-                    .filter(milestones::Column::PlanPid.eq(plan_pid))
-                    .filter(milestones::Column::DeletedAt.is_null())
-                    .order_by_asc(milestones::Column::Due)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-            ),
-            "risks" => serde_json::json!(
-                risks::Entity::find()
-                    .filter(risks::Column::PlanPid.eq(plan_pid))
-                    .filter(risks::Column::DeletedAt.is_null())
-                    .order_by_asc(risks::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-            ),
-            "tasks" => serde_json::json!(
-                tasks::Entity::find()
-                    .filter(tasks::Column::PlanPid.eq(plan_pid))
-                    .filter(tasks::Column::DeletedAt.is_null())
-                    .order_by_asc(tasks::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-            ),
-            "components" => serde_json::json!(
-                components::Entity::find()
-                    .filter(components::Column::PlanPid.eq(plan_pid))
-                    .filter(components::Column::DeletedAt.is_null())
-                    .order_by_asc(components::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-            ),
-            "time_entries" => serde_json::json!(
-                time_entries::Entity::find()
-                    .filter(time_entries::Column::PlanPid.eq(plan_pid))
-                    .filter(time_entries::Column::DeletedAt.is_null())
-                    .order_by_desc(time_entries::Column::SpentOn)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-            ),
-            "budget_lines" => serde_json::json!(
-                budget_lines::Entity::find()
-                    .filter(budget_lines::Column::PlanPid.eq(plan_pid))
-                    .filter(budget_lines::Column::DeletedAt.is_null())
-                    .order_by_asc(budget_lines::Column::Id)
-                    .limit(CAP)
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-            ),
+            "milestones" => {
+                live::<milestones::Model>(
+                    ctx,
+                    "SELECT * FROM milestones WHERE plan_pid = $1 AND deleted_at IS NULL
+                     ORDER BY due LIMIT $2",
+                    plan_pid,
+                )
+                .await?
+            }
+            "risks" => {
+                live::<risks::Model>(
+                    ctx,
+                    "SELECT * FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL
+                     ORDER BY id LIMIT $2",
+                    plan_pid,
+                )
+                .await?
+            }
+            "tasks" => {
+                live::<tasks::Model>(
+                    ctx,
+                    "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL
+                     ORDER BY id LIMIT $2",
+                    plan_pid,
+                )
+                .await?
+            }
+            "components" => {
+                live::<components::Model>(
+                    ctx,
+                    "SELECT * FROM components WHERE plan_pid = $1 AND deleted_at IS NULL
+                     ORDER BY id LIMIT $2",
+                    plan_pid,
+                )
+                .await?
+            }
+            "time_entries" => {
+                live::<time_entries::Model>(
+                    ctx,
+                    "SELECT * FROM time_entries WHERE plan_pid = $1 AND deleted_at IS NULL
+                     ORDER BY spent_on DESC LIMIT $2",
+                    plan_pid,
+                )
+                .await?
+            }
+            "budget_lines" => {
+                live::<budget_lines::Model>(
+                    ctx,
+                    "SELECT * FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL
+                     ORDER BY id LIMIT $2",
+                    plan_pid,
+                )
+                .await?
+            }
             _ => continue,
         };
         included.insert((*name).to_string(), value);

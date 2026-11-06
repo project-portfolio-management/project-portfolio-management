@@ -9,11 +9,9 @@ use super::refuse;
 use axa::prelude::*;
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use crate::access_review::{self as rules, DEFAULT_STALE_DAYS, Entry};
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::access_records;
@@ -70,15 +68,12 @@ async fn review(
             ));
         }
     };
-    let mut find = access_records::Entity::find();
-    if let Some(p) = q.plan {
-        find = find.filter(access_records::Column::PlanPid.eq(p));
-    }
-    let rows = find
-        .order_by_asc(access_records::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<access_records::Model> = sqlx::query_as(
+        "SELECT * FROM access_records WHERE $1::uuid IS NULL OR plan_pid = $1 ORDER BY id",
+    )
+    .bind(q.plan)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut plans: Vec<Uuid> = rows.iter().map(|r| r.plan_pid).collect();
     plans.sort();
     plans.dedup();
@@ -99,8 +94,8 @@ async fn review(
         .collect();
     let today = crate::tz::deployment_today();
     let standing = rules::standing(&entries, today, stale);
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        crate::db::pool(&ctx),
         Uuid::nil(),
         "access_review_read",
         caller.actor(),

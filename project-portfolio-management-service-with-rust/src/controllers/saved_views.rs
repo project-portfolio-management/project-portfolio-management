@@ -7,9 +7,8 @@
 //! always scoped to the `route` it was saved from and to the caller
 //! who saved it — never another user's, never another route's.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use axa::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -55,20 +54,20 @@ async fn create_saved_view(
         return Err(unprocessable(&problems.join("; ")));
     }
 
-    let row = saved_views::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        sub: ActiveValue::set(claims.sub.clone()),
-        route: ActiveValue::set(payload.route.clone()),
-        name: ActiveValue::set(payload.name.clone()),
-        filter: ActiveValue::set(payload.filter.clone()),
-        sort: ActiveValue::set(payload.sort.clone()),
-        columns: ActiveValue::set(serde_json::json!(payload.columns)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)?;
+    let row: saved_views::Model = sqlx::query_as(
+        "INSERT INTO saved_views (pid, sub, route, name, filter, sort, columns)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&claims.sub)
+    .bind(&payload.route)
+    .bind(&payload.name)
+    .bind(&payload.filter)
+    .bind(&payload.sort)
+    .bind(serde_json::json!(payload.columns))
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     format::json(row)
 }
 
@@ -89,17 +88,15 @@ async fn list_saved_views(
     AuthUser(claims): AuthUser,
     Query(params): Query<ListParams>,
 ) -> Result<Response> {
-    let mut query = saved_views::Entity::find()
-        .filter(saved_views::Column::Sub.eq(claims.sub.clone()))
-        .filter(saved_views::Column::DeletedAt.is_null());
-    if let Some(route) = &params.route {
-        query = query.filter(saved_views::Column::Route.eq(route.clone()));
-    }
-    let rows = query
-        .order_by_asc(saved_views::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<saved_views::Model> = sqlx::query_as(
+        "SELECT * FROM saved_views
+         WHERE sub = $1 AND deleted_at IS NULL AND ($2::text IS NULL OR route = $2)
+         ORDER BY id",
+    )
+    .bind(&claims.sub)
+    .bind(&params.route)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(rows)
 }
 
@@ -108,13 +105,11 @@ async fn list_saved_views(
 /// view's existence is not disclosed across users.
 async fn find_own(ctx: &AppContext, sub: &str, pid: &str) -> Result<saved_views::Model> {
     let pid = super::parse_pid(pid)?;
-    saved_views::Entity::find()
-        .filter(saved_views::Column::Pid.eq(pid))
-        .filter(saved_views::Column::Sub.eq(sub))
-        .filter(saved_views::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM saved_views WHERE pid = $1 AND sub = $2 AND deleted_at IS NULL")
+        .bind(pid)
+        .bind(sub)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -127,9 +122,10 @@ async fn delete_saved_view(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row = find_own(&ctx, &claims.sub, &pid).await?;
-    let mut active: saved_views::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.map_err(db_err)?;
+    sqlx::query("UPDATE saved_views SET deleted_at = now() WHERE id = $1")
+        .bind(row.id)
+        .execute(crate::db::pool(&ctx))
+        .await?;
     format::empty_json()
 }
 

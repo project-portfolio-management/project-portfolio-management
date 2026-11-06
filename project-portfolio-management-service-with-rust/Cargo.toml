@@ -70,6 +70,7 @@ sea-orm = { version = "2.0", features = [
   "macros",
 ] }
 # Plain SQL, replacing SeaORM one controller at a time on the same pool.
+futures-core = "0.3"
 sqlx = { version = "0.9", default-features = false, features = ["chrono", "derive", "json", "postgres", "runtime-tokio", "rust_decimal", "uuid"] }
 chrono = { version = "0.4" }
 # IANA zones for per-request "today" (LT-3 / LT-9). Never read from the process.

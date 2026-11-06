@@ -13,7 +13,6 @@ use super::unprocessable;
 use std::collections::{BTreeMap, HashMap};
 
 use axa::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -23,7 +22,7 @@ use crate::my_work::{self as rules, Bucket};
 use crate::tz;
 
 /// Rows read per request; a person with more open tasks is told so.
-const ROW_CAP: u64 = 500;
+const ROW_CAP: usize = 500;
 
 /// `GET /api/me/tasks?tz=&as_of=` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -60,17 +59,18 @@ async fn my_tasks(
     let (rows, truncated) = if refs.is_empty() {
         (Vec::new(), false)
     } else {
-        let mut rows = tasks::Entity::find()
-            .filter(tasks::Column::AssigneeRef.is_in(refs.clone()))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::DoneAt.is_null())
-            .order_by_asc(tasks::Column::Id)
-            .limit(ROW_CAP + 1)
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?;
-        let truncated = rows.len() as u64 > ROW_CAP;
-        rows.truncate(usize::try_from(ROW_CAP).unwrap_or(usize::MAX));
+        let mut rows: Vec<tasks::Model> = sqlx::query_as(
+            "SELECT * FROM tasks
+             WHERE assignee_ref = ANY($1) AND deleted_at IS NULL AND done_at IS NULL
+             ORDER BY id
+             LIMIT $2",
+        )
+        .bind(&refs)
+        .bind(i64::try_from(ROW_CAP + 1).unwrap_or(i64::MAX))
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
+        let truncated = rows.len() > ROW_CAP;
+        rows.truncate(ROW_CAP);
         (rows, truncated)
     };
 
@@ -85,12 +85,12 @@ async fn my_tasks(
     let plan_rows = if plan_pids.is_empty() {
         Vec::new()
     } else {
-        plans::Entity::find()
-            .filter(plans::Column::Pid.is_in(plan_pids))
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?
+        sqlx::query_as::<_, plans::Model>(
+            "SELECT * FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(&plan_pids)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
     };
     let caller = crate::auth::MaybeAuthUser(Some(claims.clone()));
     // RM-8: tasks in a private plan the caller is not a member of are omitted.

@@ -66,6 +66,9 @@ async fn require_auth_mw(req: Request, next: Next) -> Response {
     }
 }
 
+/// Set to `true` to allow `db down`, `db reset` and `db truncate` where they may run at all ([`may_destroy_data`]).
+const DESTROY_DATA: &str = "PROJECT_PORTFOLIO_MANAGEMENT_DESTROY_DATA";
+
 /// Port and database when nothing overrides them. A pool of one in development and tests, as a deadlock
 /// from holding a connection across a second query then fails at once.
 fn defaults() -> Defaults {
@@ -87,6 +90,13 @@ pub fn opts_out_of_guards(environment: &Environment) -> bool {
         Environment::Other(name) => name == "container-dev",
         Environment::Production => false,
     }
+}
+
+/// Whether a command that destroys data may run: only in development or tests, and only when `confirmed` is `"true"`, so
+/// it takes a choice as well as a typed command. Every other environment refuses, whatever is set.
+#[must_use]
+pub fn may_destroy_data(environment: &Environment, confirmed: Option<&str>) -> bool {
+    !environment.is_production_like() && confirmed == Some("true")
 }
 
 /// The configuration, with the three things axa would do differently from this service's own middleware turned off:
@@ -173,6 +183,17 @@ impl App {
 
     /// Runs one `db` subcommand.
     async fn db(ctx: &AppContext, command: DbCommand) -> Result<()> {
+        if matches!(
+            command,
+            DbCommand::Down { .. } | DbCommand::Reset | DbCommand::Truncate
+        ) && !may_destroy_data(
+            &ctx.environment,
+            std::env::var(DESTROY_DATA).ok().as_deref(),
+        ) {
+            return Err(Error::Message(format!(
+                "refusing to destroy data: this command runs only in development or test, with {DESTROY_DATA}=true"
+            )));
+        }
         match command {
             DbCommand::Migrate => Migrator::up(&ctx.db, None).await?,
             DbCommand::Down { steps } => Migrator::down(&ctx.db, Some(steps)).await?,
@@ -463,11 +484,8 @@ impl App {
         // production or on with no token verifier (see `auth::check_startup`).
         let settings = opts_out_of_guards(&ctx.environment)
             .then(|| serde_json::json!({ "require_auth": false }));
-        auth::check_startup(
-            ctx.environment == Environment::Production,
-            settings.as_ref(),
-        )
-        .map_err(Error::Message)?;
+        auth::check_startup(!opts_out_of_guards(&ctx.environment), settings.as_ref())
+            .map_err(Error::Message)?;
         // Key rotation and policy edits without a restart: both loops are
         // no-ops unless their source is configured.
         auth::spawn_key_refresh();
@@ -626,5 +644,54 @@ impl TestApp for App {
             app_context: ctx,
             router: Some(router),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn named(name: &str) -> Environment {
+        Environment::Other(name.to_string())
+    }
+
+    #[test]
+    fn data_is_destroyed_only_in_development_or_test_and_only_when_confirmed() {
+        for environment in [Environment::Development, Environment::Test] {
+            assert!(may_destroy_data(&environment, Some("true")));
+            for unconfirmed in [None, Some(""), Some("1"), Some("TRUE"), Some("false")] {
+                assert!(!may_destroy_data(&environment, unconfirmed));
+            }
+        }
+        for environment in [
+            Environment::Production,
+            named("prod-eu"),
+            named("container-dev"),
+            named("staging"),
+        ] {
+            assert!(!may_destroy_data(&environment, Some("true")));
+        }
+    }
+
+    #[test]
+    fn only_the_named_profiles_may_run_without_login() {
+        for environment in [Environment::Production, named("prod-eu"), named("staging")] {
+            assert!(!opts_out_of_guards(&environment), "{environment}");
+            assert!(
+                auth::startup_verdict(!opts_out_of_guards(&environment), false, true, false)
+                    .is_err()
+            );
+        }
+        for environment in [
+            Environment::Development,
+            Environment::Test,
+            named("container-dev"),
+        ] {
+            assert!(opts_out_of_guards(&environment), "{environment}");
+            assert!(
+                auth::startup_verdict(!opts_out_of_guards(&environment), false, true, false)
+                    .is_ok()
+            );
+        }
     }
 }

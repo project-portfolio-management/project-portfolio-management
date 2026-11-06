@@ -12,8 +12,9 @@
   deliberately, as the one-shot `migrate` job in `compose.yaml`
   (`<service> db migrate`).
 - Migrations are **forward-only in practice**. `db down` exists, but it removes
-  structure (and the data in it) and is not a rollback plan. Rollback is a
-  restore (below).
+  structure (and the data in it) and is not a rollback plan, so it refuses to run
+  outside `development` and `test`, as `db reset` and `db truncate` do. Rollback is
+  a restore (below).
 - Most migrations only add. The few that rewrite existing rows say so in the
   changelog (for example `m20261009_000049_oxford_spelling` renames the stored
   risk status `materialised` to `materialized`).

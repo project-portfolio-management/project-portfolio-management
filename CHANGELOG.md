@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 6 November (guards that named only `production`)
+
+- `db down`, `db reset` and `db truncate` now refuse unless `APP_ENV` is `development` or `test` and `PROJECT_PORTFOLIO_MANAGEMENT_DESTROY_DATA=true` is set. Before, `db reset` in production dropped every table, the audit log with them, and exited 0. Loco had no guard here either, so this was on `main` too.
+- The service now refuses to start with login off in any environment but `development`, `test` and `container-dev`. Before, the check named only `production`, so `APP_ENV=prod-eu` with `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false` served `/api/plans` to anyone. Also on `main`.
+- Redis is now required on the same terms, so an unknown name can no longer drop to a memory cache that replicas do not share (spec §8.3a, NFR-12). A deployment on a custom `APP_ENV` with no Redis will now stop booting. This is on purpose, and it should be checked before deploying.
+- Verified on the real binary: both faults were reproduced first. Then, in `production`, `prod-eu` and `container-dev`, all three commands refused even with the variable set; `test` without it refused and left the data alone; and `test` with it ran. `prod-eu` with login off or no Redis refused to boot, and `db status` still works in production. Unit tests cover each rule.
+- Not verified: the whole database suite was not rerun for this change, only `cargo test --lib`, `hardening` and `enforcement`. **Nothing is pushed, so CI has not seen this.** Not done: the rest of the axa 0.4 upgrade list.
+
 ### 6 November (sqlx: the shared layer and nine controllers)
 
 - `src/db.rs` is now the only way to sqlx (spec §8.3b). It counts every statement in `query_count`, because that count saw SeaORM only, and the guards in `financials` and `strategy` would have passed with nothing to see once their routes moved. A census test refuses the raw pool anywhere else. `AuditModel::record_on` writes the audit row on sqlx, on the pool or in a transaction. Every entity derives `sqlx::FromRow`. `controllers/director_summary.rs` moved to `db::pool`.

@@ -107,8 +107,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   unless it is explicitly turned off
   (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`, or
   `APP_ENV` of `development`, `test` or `container-dev`). The service
-  **refuses to start** when the environment (`APP_ENV`) is `production` and
-  enforcement is off, and when enforcement is on with no token verifier and no
+  **refuses to start** when enforcement is off and `APP_ENV` is anything but
+  `development`, `test` or `container-dev`, so a misspelt or new name fails closed, and when enforcement is on with no token verifier and no
   key URL; turning it off logs a loud warning. Only `/_health`, `/_ping`, the
   OpenAPI documents, Swagger UI and the per-user calendar feeds are public;
   `/metrics.prom` needs a token.

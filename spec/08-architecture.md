@@ -75,13 +75,17 @@ files. Configuration is the environment, with defaults in code, and `APP_ENV` pi
 | `container-dev` | off unless turned on | no | memory, or Redis if named | `SMTP_*`, STARTTLS |
 | `development` | off unless turned on | yes | memory, or Redis if named | localhost:1025, no TLS |
 | `test` | off unless turned on | fresh each boot | memory | a stub |
-| any other name | **on: an unknown name fails closed** | no | memory, or Redis if named | `SMTP_*`, STARTTLS |
+| any other name | **on, and it refuses to start with them off: an unknown name fails closed** | no | Redis, **required** | `SMTP_*`, STARTTLS |
 
 `PORT`, `BINDING`, `HOST`, `DATABASE_URL`, `DB_MIN_CONNECTIONS`, `DB_MAX_CONNECTIONS`, `DB_CONNECT_TIMEOUT`, `DB_IDLE_TIMEOUT`,
 `BODY_LIMIT_BYTES`, `HTTP_COMPRESSION`, `WORKER_MODE`, `LOG_LEVEL`, `LOG_FORMAT` and `LOG_FILTER` are axa's. CORS and HSTS stay with
 this service's own `http_security` layer, so axa's are turned off. There is no request timeout unless `REQUEST_TIMEOUT_SECONDS` is set,
 because a timeout would cut the live event streams. A `GET` whose `ETag` matches `If-None-Match` answers `304`, whichever handler set it.
 `/_readiness` answers `503` when the database or the cache does not.
+
+`db down`, `db reset` and `db truncate` destroy data, so they refuse to run unless `APP_ENV` is `development` or `test` **and**
+`PROJECT_PORTFOLIO_MANAGEMENT_DESTROY_DATA=true` is set. No other environment can run them, whatever is set. Rollback in production
+is a restore (`operations/upgrade-and-migration.md`).
 
 ### 8.3b The move from SeaORM to sqlx
 

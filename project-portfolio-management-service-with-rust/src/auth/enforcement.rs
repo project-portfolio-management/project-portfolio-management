@@ -103,8 +103,8 @@ pub fn startup_verdict(
 ) -> Result<(), String> {
     if !require && production {
         return Err(
-            "refusing to start: authentication enforcement is off in the production \
-             environment. Remove PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false; production \
+            "refusing to start: authentication enforcement is off, and this is not a \
+             development environment. Remove PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false; production \
              never runs anonymously."
                 .to_string(),
         );

@@ -39,12 +39,13 @@ impl Cache {
         Self::Memory(Mutex::new(HashMap::new()))
     }
 
-    /// The cache for this environment. Production needs `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL`, and refuses to boot
-    /// without it, so replicas cannot silently stop sharing. Anywhere else it is optional.
+    /// The cache for this environment. Production, and any name not set up for development, needs
+    /// `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL` and refuses to boot without it, so replicas cannot silently stop sharing.
+    /// In development, tests and `container-dev` it is optional.
     ///
     /// # Errors
     ///
-    /// When production has no URL, or the URL is malformed. An unreachable Redis is not an error here:
+    /// When such an environment has no URL, or the URL is malformed. An unreachable Redis is not an error here:
     /// the connection is retried, and `/_readiness` reports it.
     pub fn from_env(environment: &Environment) -> Result<Self> {
         let url = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL")
@@ -65,10 +66,10 @@ impl Cache {
                 .map_err(Error::wrap)?;
                 Ok(Self::Redis(manager))
             }
-            None if *environment == Environment::Production => Err(Error::string(
-                "PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL is required in production",
+            None if crate::app::opts_out_of_guards(environment) => Ok(Self::memory()),
+            None => Err(Error::string(
+                "PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL is required in this environment",
             )),
-            None => Ok(Self::memory()),
         }
     }
 
@@ -193,7 +194,9 @@ mod tests {
     async fn production_refuses_to_boot_with_no_redis() {
         if std::env::var_os("PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL").is_none() {
             assert!(Cache::from_env(&Environment::Production).is_err());
+            assert!(Cache::from_env(&Environment::Other("prod-eu".to_string())).is_err());
             assert!(Cache::from_env(&Environment::Test).is_ok());
+            assert!(Cache::from_env(&Environment::Other("container-dev".to_string())).is_ok());
         }
     }
 

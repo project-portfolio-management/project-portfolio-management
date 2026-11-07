@@ -246,11 +246,9 @@ pub(crate) struct ListParams {
 
 // ─── Pagination (agents/share/restful.md) ───────────────────────────────
 //
-// The `Page` / `with_page_headers` mechanics live in
+// The paging mechanics (`resolve`, then axa's `Page::respond`) live in
 // [`super::pagination`], shared with every other collection-read
 // controller (automation, collaboration, …).
-
-use super::pagination::{Page, with_page_headers};
 
 /// Default page size for `GET /api/plans` — the cap this endpoint
 /// applied before pagination.
@@ -643,12 +641,8 @@ async fn list(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let page = Page {
-        limit: params.limit,
-        offset: params.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(LIST_DEFAULT_LIMIT);
+    let page = super::pagination::resolve(params.limit, params.offset, LIST_DEFAULT_LIMIT)?;
+    let (limit, offset) = (page.limit, page.offset);
     // The parent scope is applied to the page and the count alike, so the
     // total always describes the rows actually being paged over.
     let parent = params
@@ -665,7 +659,7 @@ async fn list(
     )
     .await;
     let refs = readable_refs(&rows, &caller, &hidden);
-    Ok(with_page_headers(format::json(refs)?, total, limit, offset))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), refs))
 }
 
 /// Full-text plan search: `GET /api/plans/search?q=`.
@@ -689,12 +683,8 @@ async fn search(
     if q.trim().is_empty() {
         return bad_request("query parameter `q` is required");
     }
-    let page = Page {
-        limit: params.limit,
-        offset: params.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(SEARCH_DEFAULT_LIMIT);
+    let page = super::pagination::resolve(params.limit, params.offset, SEARCH_DEFAULT_LIMIT)?;
+    let (limit, offset) = (page.limit, page.offset);
     // An unavailable index is reported, never disguised as "no matches":
     // an operator must be able to tell a broken index from an empty one.
     let Some(engine) = crate::search::engine() else {
@@ -726,7 +716,7 @@ async fn search(
     )
     .await;
     let refs = readable_refs(&rows, &caller, &hidden);
-    Ok(with_page_headers(format::json(refs)?, total, limit, offset))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), refs))
 }
 
 /// Score a query against an explicit candidate list (no persistence).

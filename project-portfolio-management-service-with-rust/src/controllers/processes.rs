@@ -168,12 +168,8 @@ async fn list_processes(
     AuthUser(_): AuthUser,
     Query(q): Query<super::paging::PageQuery>,
 ) -> Result<Response> {
-    let page = super::pagination::Page {
-        limit: q.limit,
-        offset: q.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(super::pagination::MAX_LIMIT);
+    let page = super::pagination::resolve(q.limit, q.offset, super::pagination::MAX_LIMIT)?;
+    let (limit, offset) = (page.limit, page.offset);
     let query = processes::Entity::find()
         .filter(processes::Column::DeletedAt.is_null())
         .order_by_asc(processes::Column::Id);
@@ -184,10 +180,8 @@ async fn list_processes(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    let body = format::json(rows.iter().map(|p| serde_json::json!({ "pid": p.pid, "name": p.name, "current_version": p.current_version })).collect::<Vec<_>>())?;
-    Ok(super::pagination::with_page_headers(
-        body, total, limit, offset,
-    ))
+    let body = rows.iter().map(|p| serde_json::json!({ "pid": p.pid, "name": p.name, "current_version": p.current_version })).collect::<Vec<_>>();
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), body))
 }
 
 /// `GET /api/processes/{pid}` — a definition with every version.
@@ -741,12 +735,8 @@ async fn list_executions(
         _ => return Err(unprocessable("give subject_kind and subject_pid together")),
     }
     // Paged in the database: the page is all that is read.
-    let page = super::pagination::Page {
-        limit: q.limit,
-        offset: q.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(super::pagination::MAX_LIMIT);
+    let page = super::pagination::resolve(q.limit, q.offset, super::pagination::MAX_LIMIT)?;
+    let (limit, offset) = (page.limit, page.offset);
     let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
     let rows = query
         .limit(limit)
@@ -754,16 +744,12 @@ async fn list_executions(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    let body = format::json(
-        rows.iter()
+    let body = rows.iter()
             .map(|e| serde_json::json!({ "pid": e.pid, "process_pid": e.process_pid, "version": e.version,
                 "subject_kind": e.subject_kind, "subject_pid": e.subject_pid, "status": e.status,
                 "current_step": e.current_step, "started_by": e.started_by, "finished_at": e.finished_at }))
-            .collect::<Vec<_>>(),
-    )?;
-    Ok(super::pagination::with_page_headers(
-        body, total, limit, offset,
-    ))
+            .collect::<Vec<_>>();
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), body))
 }
 
 /// Request body carrying an optional note for a step completion or similar action.

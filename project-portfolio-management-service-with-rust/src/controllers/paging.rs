@@ -12,7 +12,7 @@
 
 use axum::body::Body;
 use axum::extract::Request;
-use axum::http::{HeaderValue, Method, StatusCode, header};
+use axum::http::{Method, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 
@@ -121,14 +121,8 @@ pub async fn paging_mw(req: Request, next: Next) -> Response {
     if !whole {
         parts.headers.remove(header::ETAG);
     }
-    for (name, value) in [
-        ("x-total-count", total),
-        ("x-limit", limit),
-        ("x-offset", offset),
-    ] {
-        if let Ok(v) = HeaderValue::from_str(&value.to_string()) {
-            parts.headers.insert(name, v);
-        }
-    }
+    parts
+        .headers
+        .extend(axa::pagination::Page { limit, offset }.headers(total));
     Response::from_parts(parts, Body::from(body))
 }

@@ -240,12 +240,8 @@ async fn list(
         .filter(|d| !guest || d.plan_pid.is_some())
         .collect();
     // Only the requested page is turned into views (each view reads its versions).
-    let page = super::pagination::Page {
-        limit: q.limit,
-        offset: q.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(super::pagination::MAX_LIMIT);
+    let page = super::pagination::resolve(q.limit, q.offset, super::pagination::MAX_LIMIT)?;
+    let (limit, offset) = (page.limit, page.offset);
     let total = rows.len() as u64;
     let mut out = Vec::new();
     for d in rows
@@ -255,12 +251,7 @@ async fn list(
     {
         out.push(doc_view(&ctx, d).await?);
     }
-    Ok(super::pagination::with_page_headers(
-        format::json(out)?,
-        total,
-        limit,
-        offset,
-    ))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), out))
 }
 
 /// `GET /api/documents/{pid}` — a document and its versions (without their text).

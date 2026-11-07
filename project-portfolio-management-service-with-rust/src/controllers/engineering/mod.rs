@@ -102,7 +102,12 @@ pub fn routes() -> Routes {
 
 #[cfg(test)]
 mod task_window_tests {
-    use super::{UNPAGED_TASK_CAP, task_window};
+    use super::{UNPAGED_TASK_CAP, task_window as page};
+
+    fn task_window(limit: Option<u64>, offset: Option<u64>) -> (u64, u64) {
+        let page = page(limit, offset).expect("within the offset ceiling");
+        (page.limit, page.offset)
+    }
 
     #[test]
     fn no_paging_parameters_means_the_first_capped_slice() {
@@ -127,5 +132,11 @@ mod task_window_tests {
             (100, 0),
             "zero falls back to the default"
         );
+    }
+
+    #[test]
+    fn an_offset_past_the_ceiling_is_refused() {
+        assert!(page(None, Some(10_001)).is_err());
+        assert!(page(None, Some(10_000)).is_ok());
     }
 }

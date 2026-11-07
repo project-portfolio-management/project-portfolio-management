@@ -318,8 +318,7 @@ pub fn conditional_json<T: serde::Serialize>(
 /// runs, the deadline queue, delegations, approvals, …) shares one
 /// implementation instead of five copies drifting apart.
 pub mod pagination {
-    use axa::error::ErrorDetail;
-    use axum::response::Response;
+    use axa::pagination::{Limits, Page, PageParams};
 
     /// Largest page any collection read will serve; a bigger `limit` is
     /// clamped rather than refused.
@@ -330,71 +329,36 @@ pub mod pagination {
     /// arbitrarily many rows just to discard them.
     pub const MAX_OFFSET: u64 = 10_000;
 
-    /// `?limit=` / `?offset=` on a collection read.
+    /// The page a collection read serves: `limit` (`None` or zero is `default_limit`) clamped to [`MAX_LIMIT`], and
+    /// `offset` (`None` is 0). Read `?limit=` and `?offset=` as `u64` fields on the handler's own query struct (not a
+    /// `#[serde(flatten)]`, which parses through strings), so a non-number is already refused.
     ///
-    /// Declare the two fields directly on each query-parameter struct
-    /// (as here) rather than `#[serde(flatten)]`-ing this type in:
-    /// flattening deserializes via a string-keyed map, so `limit=2`
-    /// arrives as the string `"2"` and fails to parse as a `u64` — a
-    /// `400` on an otherwise-valid request.
-    #[derive(Debug, Default, Clone, Copy)]
-    pub struct Page {
-        /// Page size; `None`/zero ⇒ the endpoint default.
-        pub limit: Option<u64>,
-        /// Rows to skip; `None` ⇒ 0.
-        pub offset: Option<u64>,
-    }
-
-    impl Page {
-        /// The clamped `(limit, offset)` this request will use.
-        #[must_use]
-        pub fn resolve(self, default_limit: u64) -> (u64, u64) {
-            let limit = self
-                .limit
-                .filter(|l| *l > 0)
-                .unwrap_or(default_limit)
-                .min(MAX_LIMIT);
-            (limit, self.offset.unwrap_or(0))
+    /// # Errors
+    ///
+    /// `400` `offset_too_large` when the offset exceeds [`MAX_OFFSET`], before it reaches the database.
+    pub fn resolve(
+        limit: Option<u64>,
+        offset: Option<u64>,
+        default_limit: u64,
+    ) -> axa::Result<Page> {
+        PageParams {
+            limit: limit.map(|n| n.to_string()),
+            offset: offset.map(|n| n.to_string()),
         }
-
-        /// Reject an out-of-bound offset before it reaches the database.
-        ///
-        /// # Errors
-        ///
-        /// `400` when the offset exceeds [`MAX_OFFSET`].
-        pub fn check_offset(self) -> axa::Result<()> {
-            if self.offset.unwrap_or(0) > MAX_OFFSET {
-                return Err(axa::Error::CustomError(
-                    axum::http::StatusCode::BAD_REQUEST,
-                    ErrorDetail::new(
-                        "offset_too_large",
-                        format!("offset must not exceed {MAX_OFFSET}; narrow the query instead"),
-                    ),
-                ));
-            }
-            Ok(())
-        }
-    }
-
-    /// Stamp `X-Total-Count` / `X-Limit` / `X-Offset` onto a response.
-    #[must_use]
-    pub fn with_page_headers(
-        mut response: Response,
-        total: u64,
-        limit: u64,
-        offset: u64,
-    ) -> Response {
-        let headers = response.headers_mut();
-        for (name, value) in [
-            ("x-total-count", total),
-            ("x-limit", limit),
-            ("x-offset", offset),
-        ] {
-            if let Ok(value) = axum::http::HeaderValue::from_str(&value.to_string()) {
-                headers.insert(name, value);
-            }
-        }
-        response
+        .resolve(Limits {
+            default_limit,
+            max_limit: MAX_LIMIT,
+            max_offset: MAX_OFFSET,
+        })
+        .map_err(|_| {
+            axa::Error::CustomError(
+                axum::http::StatusCode::BAD_REQUEST,
+                axa::error::ErrorDetail::new(
+                    "offset_too_large",
+                    format!("offset must not exceed {MAX_OFFSET}; narrow the query instead"),
+                ),
+            )
+        })
     }
 }
 pub mod approvals;

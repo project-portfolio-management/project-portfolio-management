@@ -29,7 +29,6 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::governance::valid_ref;
-use super::pagination::{Page, with_page_headers};
 use crate::auth::MaybeAuthUser;
 use crate::collaboration as rules;
 use crate::models::_entities::{ideas, notifications, plans, proposals, reviews, tasks};
@@ -299,12 +298,8 @@ async fn list_reviews(
     caller: MaybeAuthUser,
     Query(params): Query<ReviewParams>,
 ) -> Result<Response> {
-    let page = Page {
-        limit: params.limit,
-        offset: params.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(LIST_CAP);
+    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
+    let (limit, offset) = (page.limit, page.offset);
     let mut query = reviews::Entity::find().filter(reviews::Column::DeletedAt.is_null());
     let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
@@ -367,7 +362,7 @@ async fn list_reviews(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(with_page_headers(format::json(rows)?, total, limit, offset))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
 }
 
 /// `POST /api/reviews/{pid}/respond` body.
@@ -780,12 +775,8 @@ async fn list_notifications(
     if !owns_inbox(&caller, &params.recipient) {
         return Err(super::forbidden("this inbox is not yours"));
     }
-    let page = Page {
-        limit: params.limit,
-        offset: params.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(LIST_CAP);
+    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
+    let (limit, offset) = (page.limit, page.offset);
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let mut query = notifications::Entity::find()
         .filter(notifications::Column::RecipientRef.eq(params.recipient.as_str()))
@@ -802,7 +793,7 @@ async fn list_notifications(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(with_page_headers(format::json(rows)?, total, limit, offset))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
 }
 
 /// `POST /api/notifications/{pid}/read` — mark one of the caller's own

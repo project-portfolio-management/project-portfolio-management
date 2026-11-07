@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (paging through axa-pagination)
+
+- `controllers::pagination` now resolves every page with `axa-pagination`: `resolve(limit, offset, default)` returns axa's `Page`, and handlers answer with `Page::respond` (a bare array plus `X-Total-Count`, `X-Limit` and `X-Offset`) or stamp `Page::headers`. The service's own `Page`, `check_offset` and `with_page_headers` are gone, across 7 controllers and the paging layer. The board's task list is an object, not an array, and stamps the headers itself. `task_window` now returns a `Result`, because it checks the offset itself.
+- Unchanged on purpose: a limit is still clamped to 500 and an offset past 10 000 is still `400 offset_too_large`. A non-number is still `400`, from the handler's `u64` fields and the paging layer's `invalid_paging` (spec §9). axa's `PageParams` would instead fall back to the default on a non-number, so it is fed only already-parsed numbers.
+- Verified: a new unit test refuses an offset past the ceiling, `list_paging` and 24 paging-related request tests pass, and so do 1,241 unit tests and all 298 database tests. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (axa::extract)
 
 - Handlers now take `axa::extract`'s `Json`, `Path` and `Query` in place of Axum's, through a new `crate::prelude`: `axa::prelude` with those three replaced. 161 files switch from `axa::prelude::*` to it. A bad body, path or query value now answers a problem whose `detail` says which part was wrong (`The request body is not valid JSON`, `A value in the URL is not valid`, `A query parameter is not valid`) and quotes nothing the caller sent. Before, since axa 0.6, these were problems with no `detail` at all. Before 0.6 they were Axum's plain text, which could quote the value (spec §8.3a).

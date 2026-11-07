@@ -29,7 +29,6 @@ use sea_orm::{Condition, PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::pagination::{Page, with_page_headers};
 use super::plan_access::is_none_of;
 use crate::auth::MaybeAuthUser;
 use crate::automation as rules;
@@ -196,12 +195,8 @@ async fn list_automations(
     Query(params): Query<AutomationParams>,
 ) -> Result<Response> {
     use crate::models::_entities::automations;
-    let page = Page {
-        limit: params.limit,
-        offset: params.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(LIST_CAP);
+    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
+    let (limit, offset) = (page.limit, page.offset);
     let mut query = automations::Entity::find().filter(automations::Column::DeletedAt.is_null());
     let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
@@ -230,7 +225,7 @@ async fn list_automations(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(with_page_headers(format::json(rows)?, total, limit, offset))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
 }
 
 /// Flip one rule's `enabled` flag.
@@ -346,12 +341,8 @@ async fn list_runs(
     Query(params): Query<RunParams>,
 ) -> Result<Response> {
     use crate::models::_entities::automation_runs;
-    let page = Page {
-        limit: params.limit,
-        offset: params.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(LIST_CAP);
+    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
+    let (limit, offset) = (page.limit, page.offset);
     let mut query = automation_runs::Entity::find();
     // A rule on every plan runs on hidden plans too, so the subject counts as well as the rule.
     let owned = hidden_pids(&ctx, &caller).await?;
@@ -377,7 +368,7 @@ async fn list_runs(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(with_page_headers(format::json(rows)?, total, limit, offset))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
 }
 
 /// Read a non-blank string field from an action's stored value.
@@ -1257,12 +1248,8 @@ async fn list_scheduled_actions(
     caller: MaybeAuthUser,
     Query(params): Query<ScheduledParams>,
 ) -> Result<Response> {
-    let page = Page {
-        limit: params.limit,
-        offset: params.offset,
-    };
-    page.check_offset()?;
-    let (limit, offset) = page.resolve(LIST_CAP);
+    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
+    let (limit, offset) = (page.limit, page.offset);
     let mut query =
         scheduled_actions::Entity::find().filter(scheduled_actions::Column::DeletedAt.is_null());
     let owned = hidden_pids(&ctx, &caller).await?;
@@ -1289,7 +1276,7 @@ async fn list_scheduled_actions(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(with_page_headers(format::json(rows)?, total, limit, offset))
+    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
 }
 
 /// `DELETE /api/scheduled-actions/{pid}` — cancel a pending deadline.

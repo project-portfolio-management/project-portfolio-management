@@ -306,14 +306,20 @@ pub(crate) struct TaskListParams {
 /// the caller pages with `limit` and `offset`.
 pub const UNPAGED_TASK_CAP: u64 = 2_000;
 
-/// The `(limit, offset)` for a task list: the standard page when the caller asked for one, else the
-/// first [`UNPAGED_TASK_CAP`] tasks. Pure, so it is unit-tested.
-#[must_use]
-pub fn task_window(limit: Option<u64>, offset: Option<u64>) -> (u64, u64) {
+/// The page for a task list: the standard page when the caller asked for one, else the first
+/// [`UNPAGED_TASK_CAP`] tasks. Pure, so it is unit-tested.
+///
+/// # Errors
+///
+/// `400` when the offset exceeds [`super::super::pagination::MAX_OFFSET`].
+pub fn task_window(limit: Option<u64>, offset: Option<u64>) -> Result<axa::pagination::Page> {
     if limit.is_some() || offset.is_some() {
-        super::super::pagination::Page { limit, offset }.resolve(100)
+        super::super::pagination::resolve(limit, offset, 100)
     } else {
-        (UNPAGED_TASK_CAP, 0)
+        Ok(axa::pagination::Page {
+            limit: UNPAGED_TASK_CAP,
+            offset: 0,
+        })
     }
 }
 
@@ -340,12 +346,8 @@ pub(super) async fn list_tasks(
             query = query.filter(tasks::Column::ComponentPid.eq(component));
         }
     }
-    super::super::pagination::Page {
-        limit: params.limit,
-        offset: params.offset,
-    }
-    .check_offset()?;
-    let (limit, offset) = task_window(params.limit, params.offset);
+    let page = task_window(params.limit, params.offset)?;
+    let (limit, offset) = (page.limit, page.offset);
     // The per-status counts cover every task that matches, not just this page (board columns).
     let by_status: Vec<(String, i64)> = query
         .clone()
@@ -379,19 +381,17 @@ pub(super) async fn list_tasks(
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
     let truncated = offset + (rows.len() as u64) < total;
-    Ok(super::super::pagination::with_page_headers(
-        format::json(serde_json::json!({
-            "tasks": rows.iter().map(task_view).collect::<Vec<_>>(),
-            "counts": counts,
-            "total": total,
-            "truncated": truncated,
-            "limit": limit,
-            "offset": offset,
-        }))?,
-        total,
-        limit,
-        offset,
-    ))
+    // An object, not a bare array, with the count headers all the same.
+    let mut response = format::json(serde_json::json!({
+        "tasks": rows.iter().map(task_view).collect::<Vec<_>>(),
+        "counts": counts,
+        "total": total,
+        "truncated": truncated,
+        "limit": limit,
+        "offset": offset,
+    }))?;
+    response.headers_mut().extend(page.headers(total));
+    Ok(response)
 }
 
 /// `PUT /api/plans/{pid}/tasks/{t_pid}` — update fields

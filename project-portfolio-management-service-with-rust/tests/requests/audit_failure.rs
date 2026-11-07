@@ -75,7 +75,7 @@ async fn a_write_whose_audit_row_cannot_be_written_is_refused() {
             .unwrap();
 
         assert_eq!(refused.status_code(), 500, "{}", refused.text());
-        assert_eq!(refused.json::<Value>()["error"], "audit_unavailable");
+        assert_eq!(refused.json::<Value>()["code"], "audit_unavailable");
         let kept = feed["announcements"].as_array().unwrap().iter().any(|a| a["title"] == title.as_str());
         assert!(!kept, "the write was rolled back with its audit row");
         assert!((counted - 1.0).abs() < f64::EPSILON, "the refusal is counted once, got {counted}");

@@ -963,13 +963,13 @@ fn row_error(d: &Decoded, field: &str, code: &'static str, message: String) -> R
     }
 }
 
-/// Extracts a human-readable message from an error, preferring the custom error description, then its error text.
+/// Extracts a human-readable message from an error, preferring the custom error detail, then its code.
 fn text_of(e: &Error) -> String {
     match e {
         Error::CustomError(_, d) => d
-            .description
+            .detail
             .clone()
-            .or_else(|| d.error.clone())
+            .or_else(|| d.code.clone())
             .unwrap_or_default(),
         other => other.to_string(),
     }

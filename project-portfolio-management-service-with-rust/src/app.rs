@@ -61,7 +61,8 @@ async fn require_auth_mw(req: Request, next: Next) -> Response {
     .await;
     match decision {
         Ok(()) => next.run(req).await,
-        Err((status, msg)) => (status, msg).into_response(),
+        // As a problem with the reason in `detail`: axa would send the plain text as a problem without it.
+        Err(refusal) => crate::controllers::record_rejection(refusal).into_response(),
     }
 }
 
@@ -615,12 +616,12 @@ mod tests {
         Environment::Other(name.to_string())
     }
 
-    /// `Cli::parse()` would compile just as well, and refuses nothing: `db reset` would then run in production.
+    /// axa's parser is what refuses `db reset` in production, as this service no longer does: a parser of its own,
+    /// written with clap, would compile just as well and refuse nothing.
     #[test]
     fn the_binary_reads_its_arguments_through_the_parser_that_refuses_data_loss() {
         let main = include_str!("bin/main.rs");
         assert!(main.contains("axa::cli::parse("));
-        assert!(!main.contains("Cli::parse"));
     }
 
     #[test]

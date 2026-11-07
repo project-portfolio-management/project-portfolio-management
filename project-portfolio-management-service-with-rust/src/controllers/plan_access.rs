@@ -71,14 +71,12 @@ pub async fn lookup_fault_mw(req: Request, next: Next) -> AxumResponse {
             let response = next.run(req).await;
             let failed = LOOKUP_FAILED.with(|f| f.load(std::sync::atomic::Ordering::Relaxed));
             if is_read && failed && response.status().is_success() {
-                return (
+                return super::problem(
                     StatusCode::SERVICE_UNAVAILABLE,
-                    axum::Json(serde_json::json!({
-                        "error": "unavailable",
-                        "description": "could not check who may see this; try again",
-                    })),
+                    "unavailable",
+                    "could not check who may see this; try again",
                 )
-                    .into_response();
+                .into_response();
             }
             response
         })
@@ -847,11 +845,7 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
                 }
             };
             if stored.is_err() || !scheme.can_see(mark.as_deref(), clearance.as_deref()) {
-                return (
-                    StatusCode::NOT_FOUND,
-                    axum::Json(serde_json::json!({ "error": "not_found" })),
-                )
-                    .into_response();
+                return axa::Error::NotFound.into_response();
             }
             label = scheme.effective(mark.as_deref()).map(str::to_string);
         }
@@ -864,14 +858,12 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
         // used to fall through to the handler, which a non-member must not reach.
         if let Err(error) = &private {
             fail_closed("plan_access_settings", error);
-            return (
+            return super::problem(
                 StatusCode::SERVICE_UNAVAILABLE,
-                axum::Json(serde_json::json!({
-                    "error": "unavailable",
-                    "description": "could not check who may see this plan; try again",
-                })),
+                "unavailable",
+                "could not check who may see this plan; try again",
             )
-                .into_response();
+            .into_response();
         }
         if let Ok(Some(row)) = private {
             let claims = crate::auth::request_claims(req.headers()).await.ok();
@@ -888,11 +880,7 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
                         .is_some_and(|v| v.iter().any(|g| g == s))
                 });
                 if !via_grant {
-                    return (
-                        StatusCode::NOT_FOUND,
-                        axum::Json(serde_json::json!({ "error": "not_found" })),
-                    )
-                        .into_response();
+                    return axa::Error::NotFound.into_response();
                 }
                 // Fail closed: a break-glass request that cannot be audited is not served, so the use
                 // of the grant is never invisible.

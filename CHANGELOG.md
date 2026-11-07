@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (axa 0.6)
+
+- axa moves from 0.5 to 0.6.1. **Every error body changes:** it is an RFC 9457 problem, `application/problem+json`, with `type`, `title`, `status`, `detail` where there is more to say, and `code`. `{error, description}` is gone: `error` is now `code` and `description` is `detail`. Successes are unchanged. An API client that reads `error` or `description`, or checks for `application/json` on an error, must change (spec §8.3a).
+- The service's own refusals now match. Before, these were plain text, which axa 0.6 would have sent with the reason dropped, or hand-written `{error, description}`: the login guard and `AuthUser` (`401`/`403`), idempotency, paging, rate limiting (`429`), API version (`406`, keeping `requested` and `supported`), module off (`404`, keeping `module`), privacy lookup failure (`503`), and the two missing-`If-Match` `428`s. A guest's `404` is now axa's `not_found`. Before, its body differed from the one a missing record answers, which would have told a guest that a hidden record exists. `tests/guests.rs` now checks the two match byte for byte.
+- The UI reads `detail` first, then `message` (SvelteKit's own), then `code` and `title`. Before, it read `description` first.
+- Also from axa 0.6: an unmatched path's `404` and a wrong method's `405` are problems. An unmapped unique or foreign key violation answers `409`, not `500`. `KEEP_ALIVE_TIMEOUT_SECONDS` (75 s) sets how long an idle connection is kept, and a load balancer that keeps them longer needs a higher value. `Cli::parse` now refuses data loss as `cli::parse` does.
+- Verified: `cargo fmt`, `clippy -D warnings` and 1,241 unit tests; all 297 database tests (214 in `mod` plus every real-token binary); UI lint, check and 1,007 unit tests; Playwright 908 passed, plus 1 axe colour-contrast failure on the automations page that passed 7/7 on a rerun. On the production binary: `401`s are problems naming the reason, `405` is a problem, `406` keeps its members, and SIGTERM exits 0.
+- Flaky, not caused by this change: `requests::scale::capacity_views_do_not_fan_out_with_scale` failed once in a full run and passed alone and in a second full run.
+- Not done: the restore drill. Not taken up from 0.6: `axa::extract` (Axum's rejections remain problems with no `detail`), `axa-ratelimit` (the service keeps its own `rate_limit`), `Task::development_only` (no task here loads fixtures), and `Page::bounds`. The Playwright stubs still send the old `{error}` bodies. They pass because the UI shows text by status, but they no longer look like the service. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (axa 0.5)
 
 - axa moves from 0.4 to 0.5, which refuses `db down`, `db reset` and `db truncate` itself in `cli::parse`, on the same rule: both the process's `APP_ENV` and `--environment` must be `development` or `test`, with `AXA_DESTROY_DATA=true`. The service's own copy of that guard and its unit test are gone; a test now fails if `bin/main.rs` stops reading its arguments through `axa::cli::parse`, since `Cli::parse()` compiles and refuses nothing (spec §8.3a).

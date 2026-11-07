@@ -57,7 +57,7 @@ async fn phase_advances_one_step_and_names_a_skip() {
             .await;
         assert_eq!(skip.status_code(), 422);
         let body: Value = skip.json();
-        let described = body["description"].as_str().unwrap_or_default();
+        let described = body["detail"].as_str().unwrap_or_default();
         assert!(
             described.contains("initiating"),
             "a skip must name the phase skipped, got: {described}"

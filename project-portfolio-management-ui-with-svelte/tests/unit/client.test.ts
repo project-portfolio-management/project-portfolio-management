@@ -92,15 +92,35 @@ describe("ApiClient", () => {
     expect(headers.authorization).toBeUndefined();
   });
 
-  // Pins: a non-2xx JSON body maps to ApiError carrying status + message.
+  // Pins: a non-2xx problem body maps to ApiError carrying status + its `detail`, ahead of its `code`.
   it("throws ApiError with the server message on non-2xx", async () => {
-    const f = fakeFetch(422, { error: "title is required" });
+    const f = fakeFetch(422, {
+      type: "about:blank",
+      title: "Unprocessable Entity",
+      status: 422,
+      detail: "title is required",
+      code: "unprocessable_entity",
+    });
     await expect(
       client(f).post("/api/cases", { body: {} }),
     ).rejects.toMatchObject({
       name: "ApiError",
       status: 422,
       message: "title is required",
+    });
+  });
+
+  // Pins: a problem with no `detail` (a 500 has none) falls back to its `code`.
+  it("uses the problem's code when it has no detail", async () => {
+    const f = fakeFetch(404, {
+      type: "about:blank",
+      title: "Not Found",
+      status: 404,
+      code: "x_y",
+    });
+    await expect(client(f).get("/x")).rejects.toMatchObject({
+      status: 404,
+      message: "x_y",
     });
   });
 

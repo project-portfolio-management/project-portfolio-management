@@ -225,14 +225,12 @@ async fn commit(
         .and_then(|v| v.to_str().ok())
         .map(str::trim)
     else {
-        return Ok((
+        return Ok(super::problem(
             StatusCode::PRECONDITION_REQUIRED,
-            axum::Json(serde_json::json!({
-                "error": "precondition_required",
-                "description": "send If-Match with the handover_etag of the preview you are committing",
-            })),
+            "precondition_required",
+            "send If-Match with the handover_etag of the preview you are committing",
         )
-            .into_response());
+        .into_response());
     };
     let stale = || {
         Error::CustomError(

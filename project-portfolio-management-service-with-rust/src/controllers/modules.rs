@@ -61,15 +61,13 @@ pub async fn modules_mw(State(ctx): State<AppContext>, req: Request, next: Next)
     if let Some((plan_pid, segment, module)) = gated {
         match modules_in_force(&ctx.db, plan_pid).await {
             Ok((modules, _)) if !rules::segment_enabled(&modules, &segment) => {
-                return (
+                return super::problem(
                     StatusCode::NOT_FOUND,
-                    axum::Json(serde_json::json!({
-                        "error": "module_disabled",
-                        "module": module,
-                        "message": format!("the {module} module is off for this plan"),
-                    })),
+                    "module_disabled",
+                    format!("the {module} module is off for this plan"),
                 )
-                    .into_response();
+                .with_extension("module", serde_json::json!(module))
+                .into_response();
             }
             // Enabled — or the lookup failed: fail open. Hiding a feature
             // because of a transient error would be worse than showing it.

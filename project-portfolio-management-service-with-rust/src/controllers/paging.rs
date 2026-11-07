@@ -29,13 +29,13 @@ fn query_value(query: Option<&str>, key: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-/// A 400 JSON response with a machine-readable `error` code and a human `description`.
+/// A 400 problem with a machine-readable `code` and a human `detail`.
 fn bad_request(code: &str, message: &str) -> Response {
-    (
+    axa::Error::CustomError(
         StatusCode::BAD_REQUEST,
-        axum::Json(serde_json::json!({ "error": code, "description": message })),
+        axa::error::ErrorDetail::new(code, message),
     )
-        .into_response()
+    .into_response()
 }
 
 /// `?limit=` / `?offset=` for a handler that pages in the database.

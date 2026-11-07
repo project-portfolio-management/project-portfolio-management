@@ -81,12 +81,19 @@ files. Configuration is the environment, with defaults in code, and `APP_ENV` pi
 `BODY_LIMIT_BYTES`, `HTTP_COMPRESSION`, `WORKER_MODE`, `LOG_LEVEL`, `LOG_FORMAT` and `LOG_FILTER` are axa's. CORS and HSTS stay with
 this service's own `http_security` layer, so axa's are turned off. There is no request timeout unless `REQUEST_TIMEOUT_SECONDS` is set,
 because a timeout would cut the live event streams. A `GET` whose `ETag` matches `If-None-Match` answers `304`, whichever handler set it.
-`/_readiness` answers `503` when the database or the cache does not.
+`/_readiness` answers `503` when the database or the cache does not. An idle connection is kept for `KEEP_ALIVE_TIMEOUT_SECONDS`, 75
+by default, so a load balancer that keeps idle connections longer needs a higher value.
+
+Every error is an RFC 9457 problem, `application/problem+json`: `type`, `title` and `status`, `detail` where there is more to say,
+and the machine-readable `code` (such as `not_found`, `forbidden` or `idempotency_key_reused`), with `errors` for a validation
+failure. A `500` carries no `detail`. Successes stay bare JSON. The service's own refusals (login, policy, idempotency, paging)
+are problems too, and a guest's `404` is byte for byte the one a missing record answers. A violated unique or foreign key that
+no handler maps answers `409`.
 
 `db down`, `db reset` and `db truncate` destroy data, so they refuse to run unless `APP_ENV` is `development` or `test` **and**
 `AXA_DESTROY_DATA=true` is set. No other environment can run them, whatever is set, and `--environment` cannot lift this: both
-the process's own `APP_ENV` and the one the command names must allow it. axa's `cli::parse` refuses them, exiting `1` before
-the service connects to anything, so `bin/main.rs` must read its arguments through it. Rollback in production
+the process's own `APP_ENV` and the one the command names must allow it. axa's parser (`cli::parse`, and `Cli::parse` since 0.6) refuses
+them, exiting `1` before the service connects to anything, so `bin/main.rs` must read its arguments through axa. Rollback in production
 is a restore (`operations/upgrade-and-migration.md`).
 
 `/_readiness` is axa's. It asks the database, the queue and the cache, names what failed in a `503`, gives each check a time

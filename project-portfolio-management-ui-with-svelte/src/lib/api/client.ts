@@ -358,8 +358,9 @@ function localizeApiMessage(
 function extractMessage(body: unknown): string | undefined {
   if (body && typeof body === "object") {
     const record = body as Record<string, unknown>;
-    // The service sends {error: <code>, description: <the reason>}: the reason is what a person needs.
-    for (const key of ["description", "message", "error"]) {
+    // The service sends an RFC 9457 problem, {type, title, status, detail?, code}: the reason (`detail`) is what a
+    // person needs, then the code; `title` is all a 500 carries. `message` is SvelteKit's own error body.
+    for (const key of ["detail", "message", "code", "title"]) {
       const value = record[key];
       if (typeof value === "string") return value;
     }

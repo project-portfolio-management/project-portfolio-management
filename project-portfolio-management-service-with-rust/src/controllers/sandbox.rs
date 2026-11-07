@@ -559,14 +559,12 @@ async fn commit_handler(
         return Err(unprocessable("reason is at most 500 characters"));
     }
     let Some(expected) = headers.get(header::IF_MATCH).and_then(|v| v.to_str().ok()) else {
-        return Ok((
+        return Ok(super::problem(
             StatusCode::PRECONDITION_REQUIRED,
-            axum::Json(serde_json::json!({
-                "error": "precondition_required",
-                "description": "send If-Match with the plan_etag of the preview you are committing",
-            })),
+            "precondition_required",
+            "send If-Match with the plan_etag of the preview you are committing",
         )
-            .into_response());
+        .into_response());
     };
     let done = commit(
         &ctx,

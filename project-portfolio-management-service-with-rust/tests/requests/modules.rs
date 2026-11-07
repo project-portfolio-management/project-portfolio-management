@@ -60,7 +60,7 @@ async fn a_disabled_module_hides_its_routes_but_never_its_data() {
             };
             assert_eq!(r.status_code(), 404, "{method} {path}");
             let body: Value = r.json();
-            assert_eq!(body["error"], "module_disabled");
+            assert_eq!(body["code"], "module_disabled");
         }
         // Everything else is untouched.
         request

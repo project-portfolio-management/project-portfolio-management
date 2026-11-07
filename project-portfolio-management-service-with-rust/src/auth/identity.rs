@@ -16,10 +16,14 @@ pub struct AuthUser(pub Claims);
 /// the process-wide `verifier`; a missing/invalid token rejects with
 /// `401` before the handler runs, so the type is the "require auth" gate.
 impl<S: Send + Sync> FromRequestParts<S> for AuthUser {
-    type Rejection = (StatusCode, String);
+    /// A problem with the reason as its `detail`: axa 0.6 sends a plain-text refusal as a problem with the text dropped.
+    type Rejection = axa::Error;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        request_claims(&parts.headers).await.map(AuthUser)
+        request_claims(&parts.headers)
+            .await
+            .map(AuthUser)
+            .map_err(crate::controllers::record_rejection)
     }
 }
 

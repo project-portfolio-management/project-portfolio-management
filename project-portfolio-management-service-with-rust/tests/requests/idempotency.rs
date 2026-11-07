@@ -73,7 +73,7 @@ async fn a_retried_post_returns_the_first_answer_and_writes_once() {
             .json(&json!({ "kind": "Project", "name": "A different plan" }))
             .await;
         assert_eq!(other.status_code(), 409);
-        assert_eq!(other.json::<Value>()["error"], "idempotency_key_reused");
+        assert_eq!(other.json::<Value>()["code"], "idempotency_key_reused");
         assert_eq!(count_named(&request, "A different plan").await, 0);
 
         // ---- the same key on another path is a different request too
@@ -132,7 +132,7 @@ async fn a_retried_post_returns_the_first_answer_and_writes_once() {
             .await;
         assert_eq!(refused.status_code(), 422);
         assert_eq!(
-            refused.json::<Value>()["error"],
+            refused.json::<Value>()["code"],
             "idempotency_body_too_large"
         );
 

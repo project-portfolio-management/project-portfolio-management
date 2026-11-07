@@ -131,6 +131,17 @@ async fn a_guest_sees_only_what_is_granted_masked_and_nothing_else() {
                      "/api/reports".to_string(), "/api/at-a-glance".to_string()] {
             assert_eq!(status(path.clone(), gk.clone(), gv.clone()).await, 404, "{path}");
         }
+        // The refusal reads exactly as a plan that does not exist, body and media type alike.
+        let hidden = get(format!("/api/plans/{p}"), gk.clone(), gv.clone()).await;
+        let missing = get(
+            "/api/plans/3f2c6b7e-0000-4000-8000-00000000dead".to_string(),
+            ak.clone(),
+            av.clone(),
+        )
+        .await;
+        assert_eq!(missing.status_code(), 404);
+        assert_eq!(hidden.text(), missing.text());
+        assert_eq!(hidden.header("content-type"), missing.header("content-type"));
         // A non-guest is untouched by the guard.
         assert_eq!(status("/api/plans".to_string(), ak.clone(), av.clone()).await, 200);
 

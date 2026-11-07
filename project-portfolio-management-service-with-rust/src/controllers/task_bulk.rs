@@ -40,9 +40,9 @@ use crate::task_bulk::{self as rules, Change, ItemResult};
 fn error_text(e: &Error) -> String {
     match e {
         Error::CustomError(_, detail) => detail
-            .description
+            .detail
             .clone()
-            .or_else(|| detail.error.clone())
+            .or_else(|| detail.code.clone())
             .unwrap_or_else(|| "refused".to_string()),
         other => other.to_string(),
     }

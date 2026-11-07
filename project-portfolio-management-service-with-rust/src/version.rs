@@ -97,15 +97,14 @@ pub async fn require_version_mw(req: Request, next: Next) -> Response {
             );
             response
         }
-        Err(bad) => (
+        Err(bad) => crate::controllers::problem(
             StatusCode::NOT_ACCEPTABLE,
-            axum::Json(serde_json::json!({
-                "error": "unsupported_api_version",
-                "requested": bad,
-                "supported": SUPPORTED_API_VERSIONS,
-            })),
+            "unsupported_api_version",
+            "this API version is not served",
         )
-            .into_response(),
+        .with_extension("requested", serde_json::json!(bad))
+        .with_extension("supported", serde_json::json!(SUPPORTED_API_VERSIONS))
+        .into_response(),
     }
 }
 

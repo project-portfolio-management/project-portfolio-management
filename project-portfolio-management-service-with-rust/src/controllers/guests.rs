@@ -12,7 +12,6 @@
 use super::{db_err, unprocessable};
 use axa::prelude::*;
 use axum::extract::{Request, State};
-use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response as AxumResponse};
 use chrono::{DateTime, Utc};
@@ -76,13 +75,10 @@ pub(crate) async fn guest_covers_plan(
     rules::covers(&grants_of(db, &claims.sub).await, "plan", plan, need)
 }
 
-/// A bare `404` used for every guest refusal, so a guest cannot tell a hidden record from a missing one.
+/// The `404` a missing record answers, used for every guest refusal, so a guest cannot tell a hidden record from a
+/// missing one.
 fn not_found() -> AxumResponse {
-    (
-        StatusCode::NOT_FOUND,
-        axum::Json(serde_json::json!({ "error": "not_found" })),
-    )
-        .into_response()
+    axa::Error::NotFound.into_response()
 }
 
 /// The raw (not percent-decoded) value of one query-string key, or `None`; used by the guard before any handler runs.

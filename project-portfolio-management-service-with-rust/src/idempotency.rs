@@ -109,12 +109,10 @@ pub fn decide(stored: Option<&Stored>, hash: &str, now: DateTime<Utc>) -> Decisi
     }
 }
 
-/// Build a JSON error response; the in-progress conflict also carries `Retry-After: 1` so a client polls rather than hammers.
+/// Build a problem response (`code` and `detail`, as every other error); the in-progress conflict also carries
+/// `Retry-After: 1` so a client polls rather than hammers.
 fn refuse(status: StatusCode, code: &str, message: &str) -> Response {
-    let mut r = (
-        status,
-        axum::Json(serde_json::json!({ "error": code, "description": message })),
-    )
+    let mut r = axa::Error::CustomError(status, axa::error::ErrorDetail::new(code, message))
         .into_response();
     if code == "idempotency_in_progress" {
         r.headers_mut()

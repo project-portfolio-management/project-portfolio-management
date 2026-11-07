@@ -243,6 +243,19 @@ pub(crate) fn refuse(status: axum::http::StatusCode, code: &str, message: &str) 
     axa::Error::CustomError(status, axa::error::ErrorDetail::new(code, message))
 }
 
+/// An RFC 9457 problem with this service's machine-readable `code`, as every error the service answers is (spec §8.3a).
+/// For a refusal that needs a header or an extension member of its own; anything else returns an `axa::Error`.
+#[must_use]
+pub fn problem(
+    status: axum::http::StatusCode,
+    code: &str,
+    detail: impl Into<String>,
+) -> axa::problem::Problem {
+    axa::problem::Problem::new(status)
+        .with_detail(detail)
+        .with_extension("code", serde_json::Value::from(code))
+}
+
 /// Map a record-level authorization rejection (`(status, reason)`) to
 /// an axa error: `403` = policy denied; `401` = fail-safe when claims
 /// are missing behind the guard.

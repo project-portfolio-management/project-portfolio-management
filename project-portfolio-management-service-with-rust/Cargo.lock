@@ -582,13 +582,14 @@ dependencies = [
 
 [[package]]
 name = "axa"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "701b64579d3cfa2affd9e2a6d45bacf8d66d8cb2f32dc30b682604cadb7f9d15"
+checksum = "39530ce057e79a039c11ee1da47eafbcb1a3e97f7fbc36b714584c8eee4ab41d"
 dependencies = [
  "async-trait",
  "axa-environment",
  "axa-openapi",
+ "axa-problem",
  "axa-seaorm",
  "axum",
  "axum-test",
@@ -622,6 +623,17 @@ dependencies = [
  "axum",
  "serde_json",
  "utoipa",
+]
+
+[[package]]
+name = "axa-problem"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb39b7bacf93de6ee4fc19e1816be36cb9b43db4cb75d9f9cb85560130c01025"
+dependencies = [
+ "axum",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

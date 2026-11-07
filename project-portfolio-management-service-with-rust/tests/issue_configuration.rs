@@ -1856,7 +1856,7 @@ async fn a_task_workflow_needs_an_administrator_and_a_usable_shape() {
             .await;
         assert_eq!(refused.status_code(), 422);
         let answer: Value = refused.json();
-        let described = answer["description"].as_str().unwrap_or_default();
+        let described = answer["detail"].as_str().unwrap_or_default();
         assert!(
             described.contains("icebox"),
             "the refusal must name the offending state, got: {described}"

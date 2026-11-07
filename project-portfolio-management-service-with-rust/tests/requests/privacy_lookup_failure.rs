@@ -45,7 +45,7 @@ async fn a_failed_privacy_lookup_refuses_and_is_counted() {
             .expect("rename back");
 
         assert_eq!(res.status_code(), 503, "{}", res.text());
-        assert_eq!(res.json::<Value>()["error"], "unavailable");
+        assert_eq!(res.json::<Value>()["code"], "unavailable");
         assert!(failed() - before >= 1.0, "the failure is counted");
         request
             .get(&format!("/api/plans/{pid}"))
@@ -86,7 +86,7 @@ async fn a_failed_lookup_under_a_list_answers_503() {
             .expect("rename back");
 
         assert_eq!(res.status_code(), 503, "{}", res.text());
-        assert_eq!(res.json::<Value>()["error"], "unavailable");
+        assert_eq!(res.json::<Value>()["code"], "unavailable");
         assert!(Metrics::global().visibility_lookup_failed_total.get() - before >= 1.0);
         request.get("/api/plans").await.assert_status_ok();
     })

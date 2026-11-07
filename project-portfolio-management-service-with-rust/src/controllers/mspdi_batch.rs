@@ -82,13 +82,13 @@ pub(crate) struct ResourceIdentity {
     role: Option<String>,
 }
 
-/// What a refusal says: a custom error's description, else the error's own text (a custom error prints as nothing).
+/// What a refusal says: a custom error's detail, else the error's own text (a custom error prints as nothing).
 fn message_of(e: &Error) -> String {
     match e {
         Error::CustomError(_, d) => d
-            .description
+            .detail
             .clone()
-            .or_else(|| d.error.clone())
+            .or_else(|| d.code.clone())
             .unwrap_or_default(),
         other => other.to_string(),
     }

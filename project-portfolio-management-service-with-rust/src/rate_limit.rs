@@ -43,11 +43,10 @@ use std::{
 };
 
 use axum::{
-    body::Body,
     extract::{Request, State},
     http::{HeaderName, HeaderValue, StatusCode, header},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
 };
 
 use crate::trusted_proxy::{TrustedProxies, peer_ip};
@@ -393,19 +392,14 @@ fn set_ratelimit_headers(response: &mut Response, verdict: &Verdict) {
     }
 }
 
-/// Build the `429` JSON error response for a refused request, with `Retry-After` and the rate-limit headers from `verdict`; `what` names the limit that was hit.
+/// Build the `429` problem for a refused request, with `Retry-After` and the rate-limit headers from `verdict`; `what` names the limit that was hit.
 fn too_many(verdict: &Verdict, what: &str) -> Response {
-    let body = serde_json::json!({
-        "error": "too_many_requests",
-        "description": format!("{what}; retry after {} seconds", verdict.retry_after_secs),
-    })
-    .to_string();
-    let mut response = Response::new(Body::from(body));
-    *response.status_mut() = StatusCode::TOO_MANY_REQUESTS;
-    response.headers_mut().insert(
-        header::CONTENT_TYPE,
-        HeaderValue::from_static("application/json"),
-    );
+    let mut response = crate::controllers::problem(
+        StatusCode::TOO_MANY_REQUESTS,
+        "too_many_requests",
+        format!("{what}; retry after {} seconds", verdict.retry_after_secs),
+    )
+    .into_response();
     if let Ok(v) = HeaderValue::from_str(&verdict.retry_after_secs.to_string()) {
         response.headers_mut().insert(header::RETRY_AFTER, v);
     }
@@ -482,7 +476,9 @@ pub async fn rate_limit_mw(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{Router, extract::ConnectInfo, http::Request as HttpRequest, routing::get};
+    use axum::{
+        Router, body::Body, extract::ConnectInfo, http::Request as HttpRequest, routing::get,
+    };
     use std::{net::SocketAddr, time::Duration};
     use tower::ServiceExt;
 

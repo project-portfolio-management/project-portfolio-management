@@ -582,9 +582,9 @@ dependencies = [
 
 [[package]]
 name = "axa"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba21d59ab7d03d8ed17898882737482fc25859de431c001c2fbb24880366c6b1"
+checksum = "701b64579d3cfa2affd9e2a6d45bacf8d66d8cb2f32dc30b682604cadb7f9d15"
 dependencies = [
  "async-trait",
  "axa-environment",
@@ -626,9 +626,9 @@ dependencies = [
 
 [[package]]
 name = "axa-seaorm"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "478abf3cbdf29efd6f4f390ef9059b33cf350290e4a6c8f60c608ea471c08ead"
+checksum = "c76135da6ce92267ca75dd3fb77e95435c470b919ffd21853326bc051e30dd6c"
 dependencies = [
  "cruet",
  "heck 0.5.0",

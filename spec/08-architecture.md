@@ -85,7 +85,8 @@ because a timeout would cut the live event streams. A `GET` whose `ETag` matches
 
 `db down`, `db reset` and `db truncate` destroy data, so they refuse to run unless `APP_ENV` is `development` or `test` **and**
 `AXA_DESTROY_DATA=true` is set. No other environment can run them, whatever is set, and `--environment` cannot lift this: both
-the process's own `APP_ENV` and the one the command names must allow it. Rollback in production
+the process's own `APP_ENV` and the one the command names must allow it. axa's `cli::parse` refuses them, exiting `1` before
+the service connects to anything, so `bin/main.rs` must read its arguments through it. Rollback in production
 is a restore (`operations/upgrade-and-migration.md`).
 
 `/_readiness` is axa's. It asks the database, the queue and the cache, names what failed in a `503`, gives each check a time

@@ -65,10 +65,6 @@ async fn require_auth_mw(req: Request, next: Next) -> Response {
     }
 }
 
-/// Set to `true` to allow `db down`, `db reset` and `db truncate` where they may run at all ([`may_destroy_data`]). The
-/// name axa's own `cli::parse` will read: the published 0.4.0 does not refuse these yet, so this service does.
-const DESTROY_DATA: &str = "AXA_DESTROY_DATA";
-
 /// Port and database when nothing overrides them. A pool of one in development and tests, as a deadlock
 /// from holding a connection across a second query then fails at once.
 fn defaults() -> Defaults {
@@ -91,18 +87,6 @@ pub fn opts_out_of_guards(environment: &Environment) -> bool {
         Environment::Other(name) => name == "container-dev",
         Environment::Production => false,
     }
-}
-
-/// Whether a command that destroys data may run. `process` is the environment the process runs in, and `chosen` the one
-/// the command asked for: `--environment test` must not talk a production process out of this, so both must allow it.
-/// Each allows it only in development or tests, and only when `confirmed` is `"true"`.
-#[must_use]
-pub fn may_destroy_data(
-    process: &Environment,
-    chosen: &Environment,
-    confirmed: Option<&str>,
-) -> bool {
-    process.may_destroy_data(confirmed) && chosen.may_destroy_data(confirmed)
 }
 
 /// The configuration, with the four things axa would do differently from this service's own middleware turned off: CORS,
@@ -173,20 +157,8 @@ impl App {
         Self::after_routes(router, ctx).await
     }
 
-    /// Runs one `db` subcommand.
+    /// Runs one `db` subcommand. `axa::cli::parse` has already refused one that destroys data where it may not run.
     async fn db(ctx: &AppContext, command: DbCommand) -> Result<()> {
-        if matches!(
-            command,
-            DbCommand::Down { .. } | DbCommand::Reset | DbCommand::Truncate
-        ) && !may_destroy_data(
-            &Environment::from_env(),
-            &ctx.environment,
-            std::env::var(DESTROY_DATA).ok().as_deref(),
-        ) {
-            return Err(Error::Message(format!(
-                "refusing to destroy data: this command runs only in development or test, with {DESTROY_DATA}=true"
-            )));
-        }
         match command {
             DbCommand::Migrate => Migrator::up(&ctx.db, None).await?,
             DbCommand::Down { steps } => Migrator::down(&ctx.db, Some(steps)).await?,
@@ -643,33 +615,12 @@ mod tests {
         Environment::Other(name.to_string())
     }
 
+    /// `Cli::parse()` would compile just as well, and refuses nothing: `db reset` would then run in production.
     #[test]
-    fn data_is_destroyed_only_in_development_or_test_and_only_when_confirmed() {
-        for environment in [Environment::Development, Environment::Test] {
-            assert!(may_destroy_data(&environment, &environment, Some("true")));
-            for unconfirmed in [None, Some(""), Some("1"), Some("TRUE"), Some("false")] {
-                assert!(!may_destroy_data(&environment, &environment, unconfirmed));
-            }
-        }
-        for environment in [
-            Environment::Production,
-            named("prod-eu"),
-            named("container-dev"),
-            named("staging"),
-        ] {
-            assert!(!may_destroy_data(&environment, &environment, Some("true")));
-            // `--environment test` on a production process, and the other way about.
-            assert!(!may_destroy_data(
-                &environment,
-                &Environment::Test,
-                Some("true")
-            ));
-            assert!(!may_destroy_data(
-                &Environment::Test,
-                &environment,
-                Some("true")
-            ));
-        }
+    fn the_binary_reads_its_arguments_through_the_parser_that_refuses_data_loss() {
+        let main = include_str!("bin/main.rs");
+        assert!(main.contains("axa::cli::parse("));
+        assert!(!main.contains("Cli::parse"));
     }
 
     #[test]

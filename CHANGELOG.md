@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (axa 0.5)
+
+- axa moves from 0.4 to 0.5, which refuses `db down`, `db reset` and `db truncate` itself in `cli::parse`, on the same rule: both the process's `APP_ENV` and `--environment` must be `development` or `test`, with `AXA_DESTROY_DATA=true`. The service's own copy of that guard and its unit test are gone; a test now fails if `bin/main.rs` stops reading its arguments through `axa::cli::parse`, since `Cli::parse()` compiles and refuses nothing (spec §8.3a).
+- Verified on the binary: `production` and `prod-eu` with the variable set, `test` without it, and `--environment` either way round all refuse, exit 1 and connect to nothing; `test` with it gets past the guard. `cargo fmt`, `clippy -D warnings` and 1,241 unit tests pass.
+- Not verified: the database suite was not rerun. Not taken up from axa 0.5: `TRUSTED_PROXIES` and `ClientAddr` (the service keeps its own `trusted_proxy`), `MAX_CONNECTIONS`, the `auth_refused` audit line and the obligation check in `axa-keycloak` and `axa-paseto`, which this service does not use. axa 0.6 is out and not looked at. **Nothing is pushed, so CI has not seen this.**
+
 ### 6 November (axa 0.4)
 
 - axa moves from 0.1 to 0.4, with `openapi` added, so the service's minimum Rust version is now 1.97. Swagger UI is one exact version with integrity hashes, where it was `@5` from unpkg. `/_readiness` is axa's: it names what failed, limits each check, and reuses an answer for 5 seconds. `server::run` puts requests and jobs under one shutdown limit, where a hung job could hold the process. The route census uses `mounted()` in place of reading a debug string. `--help` now describes this service, and `check` exists (spec §8.3a).

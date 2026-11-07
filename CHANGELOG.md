@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (one trusted-proxy list, read by axa)
+
+- **One setting:** `TRUSTED_PROXIES`, read by axa. It decides whose `X-Forwarded-For` gives the client address, for axa and for the rate limiter, and whose `X-Forwarded-Proto` is believed for HSTS. `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES` still works when it is the only one set, with a deprecation warning. **If both are set to different lists, the service refuses to start** and says which to keep. The same entries in another order or spacing count as one list. A bad entry still trusts no proxy, as before.
+- The service's own CIDR parser and `X-Forwarded-For` walk are gone: entries parse as axa's `ProxyNet`, and the address is axa's `client::resolve`, reduced to `/64` by `axa-ratelimit`'s `client_key`. The limiter's middleware sits outside axa's stack, which records the address only further in. So it resolves the address itself, with the same function and the list axa read (`ctx.config.http.trusted_proxies`).
+- Caught on the way: the first version read only the address axa records. On the real binary every client then shared one limit, whatever the setting, because the limiter runs first. The unit tests had placed the limiter inside axa's stack, so they missed it. They now layer it as production does, and putting the broken lookup back fails 3 of them.
+- Verified: on the binary with a limit of 2, the new name and the old name each give a second forwarded client its own limit, and with no list the header is ignored. Different lists refuse to start, the same list reordered starts, and `check` prints the merged list. Also 1,241 unit tests (the setting merge, and resolution matching axa's) and all 298 database tests pass. Not verified: that the deprecation warning reaches the log, as the `test` profile logged nothing here, and real proxies such as nginx or a cloud load balancer. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (paging through axa-pagination)
 
 - `controllers::pagination` now resolves every page with `axa-pagination`: `resolve(limit, offset, default)` returns axa's `Page`, and handlers answer with `Page::respond` (a bare array plus `X-Total-Count`, `X-Limit` and `X-Offset`) or stamp `Page::headers`. The service's own `Page`, `check_offset` and `with_page_headers` are gone, across 7 controllers and the paging layer. The board's task list is an object, not an array, and stamps the headers itself. `task_window` now returns a `Result`, because it checks the offset itself.

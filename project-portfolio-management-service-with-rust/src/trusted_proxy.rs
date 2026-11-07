@@ -1,16 +1,22 @@
-//! Who is the client, and did it arrive over TLS? Both questions are
-//! answered from the **socket peer**, and only a peer listed in
-//! `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES` (comma-separated IPs or
-//! CIDR ranges, e.g. `10.0.0.0/8,::1`) is allowed to say otherwise through
-//! `X-Forwarded-For` / `X-Forwarded-Proto`. An unset list trusts nobody, so a
+//! Which proxies are trusted to speak for the client. One list, `TRUSTED_PROXIES` (comma-separated IPs or CIDR ranges,
+//! e.g. `10.0.0.0/8,::1`), which axa reads at boot: axa resolves the client address from `X-Forwarded-For` with it, and
+//! this service believes `X-Forwarded-Proto` (for HSTS) only from the same peers. An unset list trusts nobody, so a
 //! spoofed forwarding header from a direct client is ignored.
 //!
-//! Shared by the rate limiter (`crate::rate_limit`) and the HSTS decision in
-//! `crate::http_security`.
+//! `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`, the name this service read before axa did, still works alone, with
+//! a warning. Set to a different list from `TRUSTED_PROXIES`, the service refuses to start, as there would be no
+//! saying which was meant.
 
+use axa::client::ProxyNet;
 use axum::extract::ConnectInfo;
 use axum::http::{Extensions, HeaderMap};
 use std::net::{IpAddr, SocketAddr};
+
+/// The one setting axa and this service read.
+pub const TRUSTED_PROXIES: &str = "TRUSTED_PROXIES";
+
+/// The name this service read before axa read the list too.
+pub const OLD_TRUSTED_PROXIES: &str = "PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES";
 
 /// The socket peer of a request, when the server recorded one (the real
 /// server does; an in-process test transport may not).
@@ -21,69 +27,41 @@ pub fn peer_ip(extensions: &Extensions) -> Option<IpAddr> {
         .map(|ConnectInfo(addr)| addr.ip())
 }
 
-/// One trusted address or CIDR range.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Cidr {
-    /// Network address, in canonical form (an IPv4-mapped IPv6 address is stored as IPv4).
-    addr: IpAddr,
-    /// Number of leading bits that must match; the full address width for a single host.
-    prefix: u8,
+/// The entries of a list, trimmed, with empty ones dropped.
+fn entries(list: &str) -> impl Iterator<Item = &str> {
+    list.split(',').map(str::trim).filter(|e| !e.is_empty())
 }
 
-impl Cidr {
-    /// Parse `addr` or `addr/prefix`. A bare address means a single host. Returns a message when the address is not an IP or the prefix exceeds the address width.
-    fn parse(text: &str) -> Result<Self, String> {
-        let (host, prefix) = match text.split_once('/') {
-            Some((host, prefix)) => (host, Some(prefix)),
-            None => (text, None),
-        };
-        let addr: IpAddr = host
-            .trim()
-            .parse()
-            .map_err(|_| format!("not an IP address: {text:?}"))?;
-        let addr = addr.to_canonical();
-        let max = if addr.is_ipv4() { 32 } else { 128 };
-        let prefix = match prefix {
-            None => max,
-            Some(p) => p
-                .trim()
-                .parse::<u8>()
-                .ok()
-                .filter(|p| *p <= max)
-                .ok_or_else(|| format!("bad prefix length in {text:?}"))?,
-        };
-        Ok(Self { addr, prefix })
-    }
-
-    /// Whether `ip` falls inside this range. Addresses of different families never match.
-    fn contains(&self, ip: IpAddr) -> bool {
-        match (self.addr, ip.to_canonical()) {
-            (IpAddr::V4(net), IpAddr::V4(ip)) => {
-                masked(u128::from(u32::from(net)), self.prefix, 32)
-                    == masked(u128::from(u32::from(ip)), self.prefix, 32)
+/// What the old name says, when `TRUSTED_PROXIES` is unset and so must take it on. `lookup` reads one variable.
+///
+/// # Errors
+///
+/// Both names set, to lists with different entries.
+pub fn old_setting(lookup: impl Fn(&str) -> Option<String>) -> Result<Option<String>, String> {
+    let read = |name: &str| lookup(name).filter(|v| entries(v).next().is_some());
+    let set = |list: &str| {
+        entries(list)
+            .map(str::to_string)
+            .collect::<std::collections::BTreeSet<_>>()
+    };
+    match (read(TRUSTED_PROXIES), read(OLD_TRUSTED_PROXIES)) {
+        (Some(new), Some(old)) => {
+            if set(&new) == set(&old) {
+                Ok(None)
+            } else {
+                Err(format!(
+                    "refusing to start: {TRUSTED_PROXIES} and {OLD_TRUSTED_PROXIES} name different proxies; set {TRUSTED_PROXIES} alone"
+                ))
             }
-            (IpAddr::V6(net), IpAddr::V6(ip)) => {
-                masked(u128::from(net), self.prefix, 128)
-                    == masked(u128::from(ip), self.prefix, 128)
-            }
-            _ => false,
         }
+        (None, old) => Ok(old),
+        (Some(_), None) => Ok(None),
     }
 }
 
-/// The top `prefix` bits of a `width`-bit address, others zeroed.
-fn masked(value: u128, prefix: u8, width: u8) -> u128 {
-    if prefix == 0 {
-        0
-    } else {
-        let host_bits = u32::from(width - prefix);
-        (value >> host_bits) << host_bits
-    }
-}
-
-/// The set of peers allowed to assert a client address / scheme.
+/// The set of peers allowed to assert the scheme.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct TrustedProxies(Vec<Cidr>);
+pub struct TrustedProxies(Vec<ProxyNet>);
 
 impl TrustedProxies {
     /// Trust nobody (the default).
@@ -92,66 +70,38 @@ impl TrustedProxies {
         Self::default()
     }
 
-    /// Parse a comma-separated list of IPs / CIDR ranges.
+    /// The list axa resolved at boot (`ctx.config.http.trusted_proxies`), so both trust the same peers.
+    #[must_use]
+    pub fn from_nets(nets: Vec<ProxyNet>) -> Self {
+        Self(nets)
+    }
+
+    /// Parse a comma-separated list of IPs / CIDR ranges, as axa's [`ProxyNet`] reads each.
     ///
     /// # Errors
     ///
     /// The first entry that is not a valid address or range.
     pub fn parse(list: &str) -> Result<Self, String> {
-        list.split(',')
-            .map(str::trim)
-            .filter(|e| !e.is_empty())
-            .map(Cidr::parse)
+        entries(list)
+            .map(|entry| {
+                entry
+                    .parse::<ProxyNet>()
+                    .map_err(|error| format!("{entry}: {error}"))
+            })
             .collect::<Result<Vec<_>, _>>()
             .map(Self)
     }
 
-    /// Read `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`. A bad entry
-    /// aborts the parse, logs a warning and trusts nobody: failing toward
-    /// *less* trust is the safe direction.
+    /// The parsed entries, for axa's configuration.
     #[must_use]
-    pub fn from_env() -> Self {
-        let raw = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES").unwrap_or_default();
-        Self::parse(&raw).unwrap_or_else(|error| {
-            tracing::warn!(%error, "PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES ignored; trusting no proxy");
-            Self::none()
-        })
+    pub fn into_nets(self) -> Vec<ProxyNet> {
+        self.0
     }
 
     /// Whether `ip` is a trusted proxy.
     #[must_use]
     pub fn contains(&self, ip: IpAddr) -> bool {
-        self.0.iter().any(|c| c.contains(ip))
-    }
-
-    /// The client address: the socket `peer`, unless the peer is a trusted
-    /// proxy, in which case the right-most `X-Forwarded-For` hop that is not
-    /// itself a trusted proxy (the right end is the part our own
-    /// infrastructure appended; the left end is client-controlled). An
-    /// unparsable hop stops the walk at the proxy. `None` only when there is
-    /// no peer (an in-process test transport).
-    #[must_use]
-    pub fn client_ip(&self, peer: Option<IpAddr>, headers: &HeaderMap) -> Option<IpAddr> {
-        let peer = peer?.to_canonical();
-        if !self.contains(peer) {
-            return Some(peer);
-        }
-        let hops: Vec<&str> = headers
-            .get_all("x-forwarded-for")
-            .iter()
-            .filter_map(|v| v.to_str().ok())
-            .flat_map(|v| v.split(','))
-            .map(str::trim)
-            .filter(|h| !h.is_empty())
-            .collect();
-        for hop in hops.iter().rev() {
-            match hop.parse::<IpAddr>() {
-                Ok(ip) if self.contains(ip) => {}
-                Ok(ip) => return Some(ip.to_canonical()),
-                Err(_) => return Some(peer),
-            }
-        }
-        Some(peer)
+        self.0.iter().any(|net| net.contains(ip))
     }
 
     /// Whether the request reached the edge over TLS: the peer is a trusted
@@ -172,12 +122,6 @@ mod tests {
 
     fn ip(s: &str) -> IpAddr {
         s.parse().unwrap()
-    }
-
-    fn xff(value: &str) -> HeaderMap {
-        let mut h = HeaderMap::new();
-        h.insert("x-forwarded-for", value.parse().unwrap());
-        h
     }
 
     #[test]
@@ -203,34 +147,70 @@ mod tests {
         );
     }
 
+    fn env<'a>(vars: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<String> + 'a {
+        move |name| {
+            vars.iter()
+                .find(|(n, _)| *n == name)
+                .map(|(_, v)| (*v).to_string())
+        }
+    }
+
     #[test]
-    fn untrusted_peer_cannot_spoof_the_client_address() {
-        let t = TrustedProxies::parse("10.0.0.1").unwrap();
-        let got = t.client_ip(Some(ip("203.0.113.9")), &xff("1.2.3.4"));
-        assert_eq!(got, Some(ip("203.0.113.9")));
-        let nobody = TrustedProxies::none();
+    fn the_old_name_is_used_only_when_the_new_one_is_unset() {
+        assert_eq!(old_setting(env(&[])), Ok(None));
+        assert_eq!(old_setting(env(&[(TRUSTED_PROXIES, "10.0.0.1")])), Ok(None));
         assert_eq!(
-            nobody.client_ip(Some(ip("10.0.0.1")), &xff("1.2.3.4")),
-            Some(ip("10.0.0.1"))
+            old_setting(env(&[(OLD_TRUSTED_PROXIES, "10.0.0.1")])),
+            Ok(Some("10.0.0.1".to_string()))
+        );
+        // A blank new name is unset.
+        assert_eq!(
+            old_setting(env(&[
+                (TRUSTED_PROXIES, " , "),
+                (OLD_TRUSTED_PROXIES, "10.0.0.1")
+            ])),
+            Ok(Some("10.0.0.1".to_string()))
+        );
+        // The same entries, in any order or spacing, agree.
+        assert_eq!(
+            old_setting(env(&[
+                (TRUSTED_PROXIES, "10.0.0.1,10.0.0.0/8"),
+                (OLD_TRUSTED_PROXIES, " 10.0.0.0/8 , 10.0.0.1 ")
+            ])),
+            Ok(None)
         );
     }
 
     #[test]
-    fn trusted_peer_forwards_the_rightmost_untrusted_hop() {
-        let t = TrustedProxies::parse("10.0.0.0/8").unwrap();
-        let peer = Some(ip("10.0.0.1"));
-        assert_eq!(
-            t.client_ip(peer, &xff("198.51.100.7")),
-            Some(ip("198.51.100.7"))
+    fn two_different_lists_refuse_to_start() {
+        let refused = old_setting(env(&[
+            (TRUSTED_PROXIES, "10.0.0.1"),
+            (OLD_TRUSTED_PROXIES, "10.0.0.2"),
+        ]))
+        .unwrap_err();
+        assert!(
+            refused.contains(TRUSTED_PROXIES) && refused.contains(OLD_TRUSTED_PROXIES),
+            "{refused}"
         );
-        // A client-supplied left hop is ignored: the right-most untrusted wins.
-        assert_eq!(
-            t.client_ip(peer, &xff("6.6.6.6, 198.51.100.7, 10.0.0.2")),
-            Some(ip("198.51.100.7"))
+    }
+
+    #[test]
+    fn the_list_resolves_clients_as_axa_does() {
+        let nets = TrustedProxies::parse("10.0.0.0/8").unwrap().into_nets();
+        let mut h = HeaderMap::new();
+        h.insert(
+            "x-forwarded-for",
+            "6.6.6.6, 198.51.100.7, 10.0.0.2".parse().unwrap(),
         );
-        assert_eq!(t.client_ip(peer, &HeaderMap::new()), peer);
-        assert_eq!(t.client_ip(peer, &xff("garbage")), peer);
-        assert_eq!(t.client_ip(None, &xff("1.2.3.4")), None);
+        // A trusted peer speaks for the right-most untrusted hop; an untrusted one only for itself.
+        assert_eq!(
+            axa::client::resolve(ip("10.0.0.1"), &h, &nets),
+            ip("198.51.100.7")
+        );
+        assert_eq!(
+            axa::client::resolve(ip("203.0.113.9"), &h, &nets),
+            ip("203.0.113.9")
+        );
     }
 
     #[test]

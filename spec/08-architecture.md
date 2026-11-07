@@ -81,7 +81,10 @@ files. Configuration is the environment, with defaults in code, and `APP_ENV` pi
 `BODY_LIMIT_BYTES`, `HTTP_COMPRESSION`, `WORKER_MODE`, `LOG_LEVEL`, `LOG_FORMAT` and `LOG_FILTER` are axa's. CORS and HSTS stay with
 this service's own `http_security` layer, so axa's are turned off. There is no request timeout unless `REQUEST_TIMEOUT_SECONDS` is set,
 because a timeout would cut the live event streams. A `GET` whose `ETag` matches `If-None-Match` answers `304`, whichever handler set it.
-`/_readiness` answers `503` when the database or the cache does not. An idle connection is kept for `KEEP_ALIVE_TIMEOUT_SECONDS`, 75
+`/_readiness` answers `503` when the database or the cache does not. One list of trusted proxies, `TRUSTED_PROXIES`, which axa
+reads, decides both whose `X-Forwarded-For` gives the client address and whose `X-Forwarded-Proto` is believed for HSTS.
+`PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`, the old name, still works alone with a warning; set to a different list, the
+service refuses to start. An idle connection is kept for `KEEP_ALIVE_TIMEOUT_SECONDS`, 75
 by default, so a load balancer that keeps idle connections longer needs a higher value.
 
 Every error is an RFC 9457 problem, `application/problem+json`: `type`, `title` and `status`, `detail` where there is more to say,

@@ -62,7 +62,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Keycloak tokens | `KEYCLOAK_URL`, `…_REALM`, `…_AUDIENCES`, `…_ROLE_MAP` | needs a build with the `keycloak` feature; see the Entra guide |
 | Access policy | `ABAC_POLICY` or `ABAC_POLICY_FILE` | built-in default (read for any signed-in caller, `access=write` to write); a file is re-read without a restart |
 | Browser access | `CORS_ORIGINS` | none (same-origin only); exact origins, comma-separated, no wildcard |
-| Behind a proxy | `TRUSTED_PROXIES`, `HSTS` | list your proxy's address(es) so client addresses and HTTPS are believed; `HSTS=proxy` (default) |
+| Behind a proxy | `TRUSTED_PROXIES` (no prefix), `HSTS` | list your proxy's address(es) so client addresses and HTTPS are believed; one list, read by axa, for both. `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES` still works alone, with a warning, and set to a different list the service refuses to start. `HSTS=proxy` (default) |
 | Rate limits | `RATE_LIMIT` (on), `RATE_LIMIT_GENERAL_PER_MINUTE` (600) / `_BURST` (200), `RATE_LIMIT_EXPENSIVE_PER_MINUTE` (30) / `_BURST` (10), `RATE_LIMIT_FAILURES_PER_MINUTE` (6) / `_BURST` (20) | per process; each allows its burst per window of 60 × burst ÷ per-minute seconds (general 200 per 20 s, expensive 10 per 20 s, failures 20 per 200 s) |
 | Files | `ARTIFACT_DIR` | `/app/data/artifacts` (a volume in Compose); `ATTACHMENT_MAX_BYTES` (10 MiB); `BULK_MAX_BYTES`; `BULK_TTL_HOURS`; `REPORT_TTL_DAYS` (calendar days) |
 | Search | `SEARCH_INDEX_PATH` | `/app/data/search-index`; `SEARCH_BOOT_REINDEX` |

@@ -20,11 +20,11 @@
 //! burst: 10 at 30 a minute is 10 per 20 seconds. As with any fixed window, a client can send up to twice the burst
 //! across the end of one.
 //!
-//! The client address is the socket peer unless that peer is listed in
-//! `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`, in which case the
-//! rightmost untrusted `X-Forwarded-For` hop is used (see
-//! [`crate::trusted_proxy`]). A spoofed header from any other peer is
-//! ignored. An IPv6 address counts by its `/64`, which is what one subscriber is usually given.
+//! The client address is axa's: [`axa::client::resolve`] with the `TRUSTED_PROXIES` list axa read, so the socket peer
+//! unless that peer is a trusted proxy, in which case the rightmost untrusted `X-Forwarded-For` hop (see
+//! [`crate::trusted_proxy`]). A spoofed header from any other peer is ignored. An IPv6 address counts by its `/64`
+//! ([`axa::ratelimit::client_key`]), which is what one subscriber is usually given. This layer sits outside axa's
+//! stack, which has not yet recorded the address when it runs, so it resolves the address itself the same way.
 //!
 //! Memory is bounded by `axa-ratelimit`: a key is dropped two windows after its last request, and past
 //! [`axa::ratelimit::MAX_KEYS`] new keys share one count. State is per process; with several replicas each enforces
@@ -39,21 +39,18 @@
 //! | `…_RATE_LIMIT_EXPENSIVE_PER_MINUTE` / `…_EXPENSIVE_BURST` | 30 / 10 | the same for expensive routes |
 //! | `…_RATE_LIMIT_FAILURES_PER_MINUTE` / `…_FAILURES_BURST` | 6 / 20 | authentication failures per client address |
 
-use std::{
-    net::{IpAddr, Ipv6Addr},
-    num::NonZeroU32,
-    sync::Arc,
-};
+use std::{net::IpAddr, num::NonZeroU32, sync::Arc};
 
-use axa::ratelimit::{Limiter, Verdict};
+use axa::{
+    client::ProxyNet,
+    ratelimit::{Limiter, Verdict},
+};
 use axum::{
     extract::{Request, State},
-    http::{HeaderValue, StatusCode, header},
+    http::{Extensions, HeaderValue, StatusCode, header},
     middleware::Next,
     response::{IntoResponse, Response},
 };
-
-use crate::trusted_proxy::{TrustedProxies, peer_ip};
 
 /// Path segments that mark a route as expensive.
 const EXPENSIVE_SEGMENTS: &[&str] = &[
@@ -113,17 +110,6 @@ enum Key<'a> {
     Client(Option<IpAddr>),
 }
 
-/// The client address a request is counted against, with an IPv6 address reduced to its `/64`.
-fn client(proxies: &TrustedProxies, req: &Request) -> Option<IpAddr> {
-    let address = proxies
-        .client_ip(peer_ip(req.extensions()), req.headers())?
-        .to_canonical();
-    Some(match address {
-        IpAddr::V4(_) => address,
-        IpAddr::V6(v6) => IpAddr::V6(Ipv6Addr::from_bits(v6.to_bits() & (!0u128 << 64))),
-    })
-}
-
 /// Whether `path` is one of the routes that does real work per call.
 #[must_use]
 pub fn is_expensive(path: &str) -> bool {
@@ -146,8 +132,8 @@ pub fn is_exempt(path: &str) -> bool {
 pub struct RateLimiter {
     /// Master switch; when false every request passes unchecked.
     enabled: bool,
-    /// Peers trusted to supply the forwarded client address.
-    proxies: TrustedProxies,
+    /// The proxies axa trusts, from its configuration.
+    proxies: Vec<ProxyNet>,
     /// Counts for the general limit, per credential or client.
     general: Limiter,
     /// Counts for the expensive-route limit, per credential or client.
@@ -169,7 +155,7 @@ impl RateLimiter {
     /// Build from the environment; `configured` is the
     /// profile's value (the environment wins when set).
     #[must_use]
-    pub fn from_env(configured: Option<bool>) -> Self {
+    pub fn from_env(configured: Option<bool>, proxies: Vec<ProxyNet>) -> Self {
         let env = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT").ok();
         let enabled = match env.as_deref().map(str::trim).filter(|v| !v.is_empty()) {
             Some(v) => !matches!(
@@ -193,7 +179,7 @@ impl RateLimiter {
                 env_u32(&format!("{pm}_FAILURES_PER_MINUTE"), 6),
                 env_u32(&format!("{pm}_FAILURES_BURST"), 20),
             ),
-            TrustedProxies::from_env(),
+            proxies,
         )
     }
 
@@ -204,7 +190,7 @@ impl RateLimiter {
         general: Limit,
         expensive: Limit,
         failures: Limit,
-        proxies: TrustedProxies,
+        proxies: Vec<ProxyNet>,
     ) -> Self {
         Self {
             enabled,
@@ -213,6 +199,17 @@ impl RateLimiter {
             expensive: expensive.limiter(),
             failures: failures.limiter(),
         }
+    }
+
+    /// The client a request is counted against: the address axa recorded if it has, else axa's resolution of the
+    /// socket peer and `X-Forwarded-For`, reduced as axa reduces it. `None` with no peer (an in-process transport).
+    fn client(&self, req: &Request) -> Option<IpAddr> {
+        axa::ratelimit::client_key(req.extensions()).or_else(|| {
+            let peer = crate::trusted_proxy::peer_ip(req.extensions())?;
+            let mut resolved = Extensions::new();
+            resolved.insert(axa::client::resolve(peer, req.headers(), &self.proxies));
+            axa::ratelimit::client_key(&resolved)
+        })
     }
 
     /// Whether limiting is on.
@@ -249,7 +246,7 @@ pub async fn rate_limit_mw(
     if !limiter.enabled || is_exempt(req.uri().path()) {
         return next.run(req).await;
     }
-    let client = client(&limiter.proxies, &req);
+    let client = limiter.client(&req);
 
     // Peek, so a client under the failure limit is not charged for asking.
     let failures = limiter.failures.peek(client);
@@ -361,33 +358,42 @@ mod tests {
         assert!(!is_exempt("/api/plans"));
     }
 
-    #[test]
-    fn an_ipv6_client_counts_by_its_slash_64() {
-        let at = |peer: &str| {
-            let mut req = Request::new(Body::empty());
-            let addr: SocketAddr = format!("[{peer}]:4000").parse().unwrap();
-            req.extensions_mut().insert(ConnectInfo(addr));
-            client(&TrustedProxies::none(), &req)
+    /// The limiter as production layers it: outside axa's stack, with the proxy list axa was given.
+    fn app(limiter: RateLimiter, proxies: &str) -> Router {
+        let nets = crate::trusted_proxy::TrustedProxies::parse(proxies)
+            .unwrap()
+            .into_nets();
+        let limiter = RateLimiter {
+            proxies: nets.clone(),
+            ..limiter
         };
-        assert_eq!(at("2001:db8:1:2::1"), at("2001:db8:1:2:ffff::9"));
-        assert_ne!(at("2001:db8:1:2::1"), at("2001:db8:1:3::1"));
-        // An IPv4 address seen over IPv6 is the IPv4 address.
-        assert_eq!(at("::ffff:10.0.0.1"), Some("10.0.0.1".parse().unwrap()));
-    }
-
-    fn app(limiter: RateLimiter) -> Router {
-        Router::new()
+        let routes = Router::new()
             .route("/api/x", get(|| async { "ok" }))
             .route("/api/plans/p/cpm", get(|| async { "ok" }))
             .route("/_health", get(|| async { "ok" }))
             .route(
                 "/api/private",
                 get(|| async { (StatusCode::UNAUTHORIZED, "no") }),
-            )
-            .layer(axum::middleware::from_fn_with_state(
-                Arc::new(limiter),
-                rate_limit_mw,
-            ))
+            );
+        let app = axa::middleware::apply(
+            routes,
+            &axa::config::Http {
+                body_limit: 1 << 20,
+                compression: false,
+                timeout_seconds: 0,
+                timeout_overrides: Vec::new(),
+                cors_origins: Vec::new(),
+                hsts: false,
+                hsts_max_age: 0,
+                csp: None,
+                trusted_proxies: nets,
+            },
+        )
+        .unwrap();
+        app.layer(axum::middleware::from_fn_with_state(
+            Arc::new(limiter),
+            rate_limit_mw,
+        ))
     }
 
     fn request(
@@ -404,19 +410,16 @@ mod tests {
             builder = builder.header("x-forwarded-for", value);
         }
         let mut req = builder.body(Body::empty()).unwrap();
-        let addr: SocketAddr = format!("{peer}:4000").parse().unwrap();
+        let addr: SocketAddr = match peer.parse::<std::net::IpAddr>().unwrap() {
+            std::net::IpAddr::V4(v4) => SocketAddr::from((v4, 4000)),
+            std::net::IpAddr::V6(v6) => SocketAddr::from((v6, 4000)),
+        };
         req.extensions_mut().insert(ConnectInfo(addr));
         req
     }
 
-    fn tight(general: Limit, expensive: Limit, failures: Limit, proxies: &str) -> RateLimiter {
-        RateLimiter::new(
-            true,
-            general,
-            expensive,
-            failures,
-            TrustedProxies::parse(proxies).unwrap(),
-        )
+    fn tight(general: Limit, expensive: Limit, failures: Limit) -> RateLimiter {
+        RateLimiter::new(true, general, expensive, failures, Vec::new())
     }
 
     async fn status(app: &Router, req: HttpRequest<Body>) -> (StatusCode, axum::http::HeaderMap) {
@@ -426,7 +429,7 @@ mod tests {
 
     #[tokio::test]
     async fn one_subject_is_limited_while_another_is_not() {
-        let app = app(tight(limit(2, 60), limit(5, 60), limit(5, 60), ""));
+        let app = app(tight(limit(2, 60), limit(5, 60), limit(5, 60)), "");
         for _ in 0..2 {
             let (s, h) = status(&app, request("/api/x", "10.0.0.1", Some("alice"), None)).await;
             assert_eq!(s, StatusCode::OK);
@@ -447,7 +450,7 @@ mod tests {
 
     #[tokio::test]
     async fn the_allowed_response_reports_what_is_left() {
-        let app = app(tight(limit(5, 60), limit(5, 60), limit(5, 60), ""));
+        let app = app(tight(limit(5, 60), limit(5, 60), limit(5, 60)), "");
         let (_, h) = status(&app, request("/api/x", "10.0.0.1", None, None)).await;
         assert_eq!(h["ratelimit-limit"], "5");
         assert_eq!(h["ratelimit-remaining"], "4");
@@ -455,7 +458,7 @@ mod tests {
 
     #[tokio::test]
     async fn the_expensive_bucket_trips_before_the_general_one() {
-        let app = app(tight(limit(50, 600), limit(2, 60), limit(50, 600), ""));
+        let app = app(tight(limit(50, 600), limit(2, 60), limit(50, 600)), "");
         for _ in 0..2 {
             let (s, _) = status(
                 &app,
@@ -477,7 +480,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_spoofed_forwarded_for_from_an_untrusted_peer_is_ignored() {
-        let app = app(tight(limit(1, 60), limit(5, 60), limit(5, 60), "192.0.2.1"));
+        let app = app(tight(limit(1, 60), limit(5, 60), limit(5, 60)), "192.0.2.1");
         let (s, _) = status(
             &app,
             request("/api/x", "10.0.0.9", None, Some("203.0.113.1")),
@@ -495,7 +498,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_trusted_proxy_lets_clients_be_told_apart() {
-        let app = app(tight(limit(1, 60), limit(5, 60), limit(5, 60), "192.0.2.1"));
+        let app = app(tight(limit(1, 60), limit(5, 60), limit(5, 60)), "192.0.2.1");
         let (s, _) = status(
             &app,
             request("/api/x", "192.0.2.1", None, Some("203.0.113.1")),
@@ -518,7 +521,7 @@ mod tests {
 
     #[tokio::test]
     async fn repeated_authentication_failures_are_cut_off_for_that_client() {
-        let app = app(tight(limit(50, 600), limit(5, 60), limit(2, 60), ""));
+        let app = app(tight(limit(50, 600), limit(5, 60), limit(2, 60)), "");
         for _ in 0..2 {
             let (s, _) = status(&app, request("/api/private", "10.0.0.1", Some("bad"), None)).await;
             assert_eq!(s, StatusCode::UNAUTHORIZED);
@@ -532,8 +535,20 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn an_ipv6_client_counts_by_its_slash_64() {
+        let app = app(tight(limit(1, 60), limit(5, 60), limit(5, 60)), "");
+        let (s, _) = status(&app, request("/api/x", "2001:db8:1:2::1", None, None)).await;
+        assert_eq!(s, StatusCode::OK);
+        // Another address in the same /64 is the same subscriber.
+        let (s, _) = status(&app, request("/api/x", "2001:db8:1:2:ffff::9", None, None)).await;
+        assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        let (s, _) = status(&app, request("/api/x", "2001:db8:1:3::1", None, None)).await;
+        assert_eq!(s, StatusCode::OK);
+    }
+
+    #[tokio::test]
     async fn health_is_never_limited() {
-        let app = app(tight(limit(1, 60), limit(1, 60), limit(1, 60), ""));
+        let app = app(tight(limit(1, 60), limit(1, 60), limit(1, 60)), "");
         for _ in 0..5 {
             let (s, _) = status(&app, request("/_health", "10.0.0.1", None, None)).await;
             assert_eq!(s, StatusCode::OK);
@@ -542,14 +557,8 @@ mod tests {
 
     #[tokio::test]
     async fn a_disabled_limiter_passes_everything() {
-        let off = RateLimiter::new(
-            false,
-            limit(1, 60),
-            limit(1, 60),
-            limit(1, 60),
-            TrustedProxies::none(),
-        );
-        let app = app(off);
+        let off = RateLimiter::new(false, limit(1, 60), limit(1, 60), limit(1, 60), Vec::new());
+        let app = app(off, "");
         for _ in 0..5 {
             let (s, h) = status(&app, request("/api/x", "10.0.0.1", None, None)).await;
             assert_eq!(s, StatusCode::OK);
@@ -560,9 +569,9 @@ mod tests {
     #[test]
     fn the_setting_resolves_from_config_and_environment() {
         // No environment variable is set by the test suite for this name.
-        let on = RateLimiter::from_env(None);
+        let on = RateLimiter::from_env(None, Vec::new());
         assert!(on.enabled());
-        assert!(RateLimiter::from_env(Some(true)).enabled());
-        assert!(!RateLimiter::from_env(Some(false)).enabled());
+        assert!(RateLimiter::from_env(Some(true), Vec::new()).enabled());
+        assert!(!RateLimiter::from_env(Some(false), Vec::new()).enabled());
     }
 }

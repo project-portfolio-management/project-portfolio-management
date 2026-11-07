@@ -19,7 +19,7 @@
 //! `Strict-Transport-Security` is sent **only** when the request arrived over
 //! TLS: `PROJECT_PORTFOLIO_MANAGEMENT_HSTS=proxy` (the default) believes
 //! `X-Forwarded-Proto: https` from a peer in
-//! `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES` only; `always` is the switch
+//! `TRUSTED_PROXIES` only (the list axa resolves client addresses with); `always` is the switch
 //! for a deployment that terminates TLS in front of every request; `off`
 //! never sends it. Plain HTTP never gets it.
 //!
@@ -90,15 +90,14 @@ pub struct SecurityConfig {
 }
 
 impl SecurityConfig {
-    /// From `PROJECT_PORTFOLIO_MANAGEMENT_HSTS` and
-    /// `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`.
+    /// From `PROJECT_PORTFOLIO_MANAGEMENT_HSTS`, and the proxies axa trusts (`TRUSTED_PROXIES`).
     #[must_use]
-    pub fn from_env() -> Self {
+    pub fn from_env(proxies: TrustedProxies) -> Self {
         Self {
             hsts: HstsMode::parse(
                 &std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_HSTS").unwrap_or_default(),
             ),
-            proxies: TrustedProxies::from_env(),
+            proxies,
         }
     }
 }

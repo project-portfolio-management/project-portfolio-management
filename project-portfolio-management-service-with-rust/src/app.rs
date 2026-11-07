@@ -102,6 +102,25 @@ fn service_config(environment: &Environment) -> Result<ServiceConfig> {
     if std::env::var_os("REQUEST_TIMEOUT_SECONDS").is_none() {
         config.http.timeout_seconds = 0;
     }
+    // One list of trusted proxies, which axa has read as `TRUSTED_PROXIES`. The old name still works alone, and two
+    // different lists refuse to start.
+    if let Some(old) = crate::trusted_proxy::old_setting(|name| std::env::var(name).ok())
+        .map_err(Error::Message)?
+    {
+        tracing::warn!(
+            "{} is deprecated: set {} instead",
+            crate::trusted_proxy::OLD_TRUSTED_PROXIES,
+            crate::trusted_proxy::TRUSTED_PROXIES
+        );
+        config.http.trusted_proxies = crate::trusted_proxy::TrustedProxies::parse(&old)
+            .map_or_else(
+                |error| {
+                    tracing::warn!(%error, "trusted proxy list ignored; trusting no proxy");
+                    Vec::new()
+                },
+                crate::trusted_proxy::TrustedProxies::into_nets,
+            );
+    }
     Ok(config)
 }
 
@@ -523,6 +542,7 @@ impl App {
             .layer(axum::middleware::from_fn_with_state(
                 std::sync::Arc::new(crate::rate_limit::RateLimiter::from_env(
                     opts_out_of_guards(&ctx.environment).then_some(false),
+                    ctx.config.http.trusted_proxies.clone(),
                 )),
                 crate::rate_limit::rate_limit_mw,
             ))
@@ -533,7 +553,11 @@ impl App {
                 crate::http_security::cors_mw,
             ))
             .layer(axum::middleware::from_fn_with_state(
-                std::sync::Arc::new(crate::http_security::SecurityConfig::from_env()),
+                std::sync::Arc::new(crate::http_security::SecurityConfig::from_env(
+                    crate::trusted_proxy::TrustedProxies::from_nets(
+                        ctx.config.http.trusted_proxies.clone(),
+                    ),
+                )),
                 crate::http_security::security_headers_mw,
             ))
             // Outermost layer runs first, so the request span wraps

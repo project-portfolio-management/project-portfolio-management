@@ -1,39 +1,41 @@
-//! Durable event bus **Phase 3** — the outbox relay + retention.
+//! Durable event bus **Phase 3** — the outbox relay, on `axa-outbox`.
 //!
-//! Phase 2 ([`crate::streaming`]) durably enqueues each event into the
-//! `event_outbox` table inside the entity mutation's transaction. Phase 3
-//! is the **relay**: a background loop that drains unpublished outbox rows
-//! to an [`EventSink`], stamps `published_at`, and periodically purges old
-//! published rows. Delivery is **at-least-once** (a crash between the sink
-//! send and the `published_at` stamp re-sends), so sinks/consumers dedupe
-//! on the envelope `event_id` (see `agents/share/event-bus.md` §6).
+//! Phase 2 ([`crate::streaming`]) writes each event to `axa_outbox` inside
+//! the entity mutation's transaction. Phase 3 is the **relay**:
+//! [`axa::outbox::Outbox::run`] claims rows oldest first, hands each to an
+//! [`EventSink`], and marks it sent only once the sink answers `Ok`. The crate
+//! keeps one record's events in order (by topic and key, the record pid), takes
+//! back the claims of a relay that died, retries a row with a doubling wait,
+//! and deletes sent rows after [`retention_days`]. Delivery is
+//! **at-least-once**, so sinks and consumers dedupe on the envelope `event_id`
+//! (see `agents/share/event-bus.md` §6).
+//!
+//! Every sink error counts as the broker being unavailable: no row is charged
+//! an attempt, the relay waits longer each time, and the row it was trying
+//! waits before the next try, so one bad record holds back its own key and no
+//! other. A sink that panics has rejected that row, which after ten attempts is
+//! left `failed` for an operator (`SELECT … FROM axa_outbox WHERE status = 'failed'`).
 //!
 //! The default [`LoggingSink`] ships every event to the tracing log: it is
-//! the **no-broker** dev/CI sink and a useful observability aid — the drain
-//! plus retention machinery runs and is fully exercised without Fluvio.
-//! `FluvioSink` (BUS-3, following BUS-1's case-service reference; only
-//! compiled under this crate's `fluvio` cargo feature, off by default, so
-//! a default build's dependency tree and behaviour are unchanged) is the
-//! real-broker `impl EventSink`; the [`EventSink`] trait is the seam, so
-//! the drain loop and retention never change between the two
-//! (`agents/share/event-bus.md` §5).
+//! the **no-broker** dev/CI sink, and it marks every row sent that it logs.
+//! `FluvioSink` (BUS-3, only compiled under this crate's `fluvio` cargo
+//! feature, off by default) is the real-broker `impl EventSink`, and answers
+//! `Ok` once the broker has acknowledged the record.
 //!
 //! Activation: the relay only runs when the transport is `outbox`
 //! (`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox`) **and** `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY`
-//! is truthy — so it is a no-op by default, matching the family's
-//! flag-gated posture. With those on, `spawn` additionally selects
-//! `FluvioSink` over [`LoggingSink`] when
+//! is truthy — so it is a no-op by default. With those on, `spawn`
+//! additionally selects `FluvioSink` over [`LoggingSink`] when
 //! `PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT` (§7) is configured — see
 //! `spawn`'s and `build_sink`'s doc comments in this file for the "no
 //! silent fallback" rule that governs an endpoint configured without the
 //! `fluvio` feature.
 
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use crate::prelude::*;
-
-use crate::models::_entities::event_outbox::Column as OutboxColumn;
-use crate::models::event_outbox::{self, Model as OutboxRow};
+use axa::outbox::{Failure, Outbox, OutboxOptions};
+use tokio::sync::watch;
 
 /// A boxed, thread-safe error from a sink send (a bus/broker failure).
 pub type SinkError = Box<dyn std::error::Error + Send + Sync>;
@@ -65,7 +67,7 @@ pub trait EventSink: Send + Sync {
 /// [`crate::webhooks::WebhookSink`] as a secondary (`agents/share/event-bus.md`
 /// §12, repo `tasks.md` EV-3).
 ///
-/// The **primary**'s result governs [`drain_once`]'s at-least-once
+/// The **primary**'s result governs the relay's at-least-once
 /// retry, exactly as a single sink would: its failure leaves the row
 /// unpublished. Every **secondary** sink is delivered to only after the
 /// primary succeeds, and its own failure is **swallowed** (logged, never
@@ -176,66 +178,14 @@ impl EventSink for FluvioSink {
         // connected to (one FluvioSink per topic, per `spawn` below); the
         // partition key is the record `pid`, per §7.
         let bytes = serde_json::to_vec(payload)?;
-        self.producer.send(key.to_string(), bytes).await?;
+        // Wait for the broker's acknowledgement: only then is the row sent.
+        self.producer
+            .send(key.to_string(), bytes)
+            .await?
+            .wait()
+            .await?;
         Ok(())
     }
-}
-
-/// Drain up to `batch` unpublished outbox rows to `sink`, stamping
-/// `published_at` on each successful send. Stops at the first send failure
-/// (the row stays unpublished and is retried next tick, preserving per-pid
-/// order). Returns the number of rows published this pass.
-///
-/// # Errors
-///
-/// When the outbox poll or the `mark_published` ack query fails.
-pub async fn drain_once<S: EventSink + ?Sized>(
-    db: &DatabaseConnection,
-    sink: &S,
-    batch: u64,
-) -> ModelResult<usize> {
-    // SEC-B6: claim rows under a transaction with FOR UPDATE SKIP LOCKED
-    // (in `unpublished`) so parallel relay instances can't double-ship.
-    let txn = sea_orm::TransactionTrait::begin(db).await?;
-    let rows = OutboxRow::unpublished(&txn, batch).await?;
-    let mut published: Vec<i32> = Vec::with_capacity(rows.len());
-    for row in &rows {
-        match sink
-            .send(&row.entity, &row.entity_pid.to_string(), &row.payload)
-            .await
-        {
-            Ok(()) => published.push(row.id),
-            Err(err) => {
-                // Leave this row (and everything after it, to keep per-pid
-                // order) unpublished; retry on the next tick.
-                tracing::warn!(id = row.id, error = %err, "relay send failed; will retry");
-                break;
-            }
-        }
-    }
-    if !published.is_empty() {
-        OutboxRow::mark_published(&txn, &published).await?;
-    }
-    txn.commit().await?;
-    Ok(published.len())
-}
-
-/// Delete published rows older than `retention_days` (the outbox is a
-/// short-lived hand-off buffer; durable history is the bus's job — see
-/// `agents/share/event-bus.md` §3). Returns the number of rows purged.
-///
-/// # Errors
-///
-/// When the delete query fails.
-pub async fn purge_published(db: &DatabaseConnection, retention_days: i64) -> ModelResult<u64> {
-    let cutoff =
-        chrono::Utc::now() - chrono::Duration::try_days(retention_days.max(0)).unwrap_or_default();
-    let res = event_outbox::Entity::delete_many()
-        .filter(OutboxColumn::PublishedAt.is_not_null())
-        .filter(OutboxColumn::PublishedAt.lt(cutoff.fixed_offset()))
-        .exec(db)
-        .await?;
-    Ok(res.rows_affected)
 }
 
 /// Whether the relay background loop should run: `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY`
@@ -295,10 +245,6 @@ pub fn event_topic() -> String {
         .unwrap_or_else(|| "mxi.plan.events".to_string())
 }
 
-/// How many drain ticks between retention purges (purge is cheaper and
-/// less urgent than draining).
-const PURGE_EVERY_TICKS: u64 = 60;
-
 /// Seconds between retries while the initial Fluvio connection is down.
 #[cfg(feature = "fluvio")]
 const RECONNECT_BACKOFF_SECS: u64 = 5;
@@ -345,29 +291,51 @@ async fn build_sink(_endpoint: Option<&str>) -> Box<dyn EventSink> {
     Box::new(LoggingSink)
 }
 
-/// The drain + retention loop, generic over the already-connected sink.
-async fn run_drain_loop(
-    db: DatabaseConnection,
-    sink: Box<dyn EventSink>,
-    interval: u64,
-    retention: i64,
-) {
-    let mut ticks: u64 = 0;
+/// The relay's settings: poll every [`interval_secs`], keep sent rows [`retention_days`], and the crate's defaults
+/// for the rest (100 rows a claim, ten attempts, a 30-second publish limit, a claim lost after five minutes).
+#[must_use]
+pub fn options() -> OutboxOptions {
+    OutboxOptions {
+        poll_interval: Duration::from_secs(interval_secs()),
+        retention_days: i32::try_from(retention_days().max(0)).unwrap_or(i32::MAX),
+        ..OutboxOptions::default()
+    }
+}
+
+/// Publish one claimed row through `sink`. Every sink error is an outage (see the module docs).
+async fn publish(sink: Arc<dyn EventSink>, event: axa::outbox::Claimed) -> Result<(), Failure> {
+    sink.send(&event.topic, &event.key, &event.payload)
+        .await
+        .map_err(Failure::unavailable)
+}
+
+/// Tells a running relay to stop: it finishes the publish in hand and puts the rest of its batch back.
+static STOP: OnceLock<watch::Sender<bool>> = OnceLock::new();
+
+/// Stop the relay, if one was started. Called on shutdown.
+pub fn stop() {
+    if let Some(stop) = STOP.get() {
+        let _ = stop.send(true);
+    }
+}
+
+/// Relay `outbox` through `sink` until `stopped` turns `true`.
+pub async fn run(outbox: Outbox, sink: Arc<dyn EventSink>, stopped: watch::Receiver<bool>) {
+    outbox
+        .run(move |event| publish(sink.clone(), event), stopped)
+        .await;
+}
+
+/// Connect to `axa_outbox`, which the migrations made, retrying while the database is down.
+async fn connect(uri: &str) -> Outbox {
     loop {
-        if let Err(err) = drain_once(&db, sink.as_ref(), 100).await {
-            tracing::warn!(error = %err, "relay drain pass failed");
-        }
-        ticks = ticks.wrapping_add(1);
-        if ticks.is_multiple_of(PURGE_EVERY_TICKS) {
-            match purge_published(&db, retention).await {
-                Ok(n) if n > 0 => {
-                    tracing::info!(purged = n, "relay purged old published outbox rows");
-                }
-                Ok(_) => {}
-                Err(err) => tracing::warn!(error = %err, "relay retention purge failed"),
+        match Outbox::connect_existing(uri, options()).await {
+            Ok(outbox) => return outbox,
+            Err(err) => {
+                tracing::warn!(error = %err, "relay: cannot reach axa_outbox; retrying");
+                tokio::time::sleep(Duration::from_secs(5)).await;
             }
         }
-        tokio::time::sleep(Duration::from_secs(interval)).await;
     }
 }
 
@@ -389,7 +357,7 @@ async fn run_drain_loop(
 /// key is configured, in which case webhook delivery refuses to start
 /// (logged `error`) rather than send unsigned deliveries; the primary
 /// relay still starts either way.
-pub fn spawn(db: DatabaseConnection) {
+pub fn spawn(db: sea_orm::DatabaseConnection, uri: String) {
     if !crate::streaming::transport().is_outbox() || !relay_enabled() {
         return;
     }
@@ -411,9 +379,15 @@ pub fn spawn(db: DatabaseConnection) {
         retention_days = retention,
         fluvio_endpoint = endpoint.as_deref().unwrap_or("(none — LoggingSink)"),
         webhook_targets = webhook_targets.len(),
-        "starting event-outbox relay"
+        "starting the axa_outbox relay"
     );
+    let (stop, stopped) = watch::channel(false);
+    if STOP.set(stop).is_err() {
+        tracing::error!("the event-outbox relay was already started; not starting a second");
+        return;
+    }
     tokio::spawn(async move {
+        let outbox = connect(&uri).await;
         let primary = build_sink(endpoint.as_deref()).await;
         let sink: Box<dyn EventSink> = if webhook_targets.is_empty() {
             primary
@@ -438,7 +412,7 @@ pub fn spawn(db: DatabaseConnection) {
             );
             primary
         };
-        run_drain_loop(db, sink, interval, retention).await;
+        run(outbox, Arc::from(sink), stopped).await;
     });
 }
 

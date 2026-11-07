@@ -8,14 +8,14 @@
 //! - **`memory`** (Phase 1, default) — a process-wide ring buffer via the
 //!   [`EventPublisher`] seam / [`InMemoryPublisher`]. Behaviour is
 //!   identical to the original free-function ring buffer; no DB, no tx.
-//! - **`outbox`** (Phase 2) — the [`OutboxPublisher`] inserts one
-//!   `event_outbox` row **on the handler's transaction**, so the entity
+//! - **`outbox`** (Phase 2) — the [`OutboxPublisher`] writes one
+//!   `axa_outbox` row (`axa-outbox`) **on the handler's transaction**, so the entity
 //!   write and its event commit or roll back together (no committed
 //!   change without its event, and vice versa). The transaction-aware
 //!   write+emit path is exposed as [`create_and_emit`] /
 //!   [`update_and_emit`] / [`delete_and_emit`] / [`merge_and_emit`], which
 //!   the plan controller calls so it never has to know the transport.
-//!   Phase 3 (the Fluvio relay worker) is roadmap.
+//!   Phase 3, the relay, is [`crate::relay`].
 //!
 //! The operator endpoint `GET /api/{collection}/events/recent` returns the
 //! frozen flat [`EventView`] projection (`{kind, pid, name, seq}`) — served
@@ -30,12 +30,11 @@ use std::sync::{Mutex, OnceLock};
 
 use axa::prelude::ModelResult;
 use project_portfolio_management_matcher::Plan;
-use sea_orm::{ConnectionTrait, DatabaseConnection, IntoActiveModel, TransactionTrait};
+use sea_orm::{DatabaseConnection, DatabaseTransaction, IntoActiveModel, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::audit_logs::Model as AuditModel;
-use crate::models::event_outbox::{Model as OutboxRow, OutboxInsert};
 use crate::models::plans::Model as PlanModel;
 
 /// Envelope schema version (§4). Bumped only on a breaking change to the
@@ -243,7 +242,7 @@ pub fn recent(limit: usize) -> Vec<EventView> {
 pub enum EventTransport {
     /// Process-wide ring buffer; no DB, no transaction (default).
     Memory,
-    /// Transactional outbox: an `event_outbox` row per event, written on
+    /// Transactional outbox: an `axa_outbox` row per event, written on
     /// the handler's transaction (Phase 2).
     Outbox,
 }
@@ -288,18 +287,15 @@ pub fn transport() -> EventTransport {
 pub struct OutboxPublisher;
 
 impl OutboxPublisher {
-    /// Insert one `event_outbox` row for `env` **on `conn`**. Pass a
-    /// `&DatabaseTransaction` to share the entity mutation's commit
-    /// boundary. `occurred_at` is stamped now (the Phase-1 envelope has no
-    /// wall-clock time).
+    /// Write one `axa_outbox` row for `env` **on `txn`**, the entity
+    /// mutation's own transaction, so the two share one commit. The row's
+    /// `created_at` is when it was written (the envelope has no wall-clock time).
     ///
     /// # Errors
     ///
     /// When the envelope pid is not a UUID, or the insert fails.
-    pub async fn publish<C: ConnectionTrait>(self, conn: &C, env: &Envelope) -> ModelResult<()> {
-        let insert = OutboxInsert::from_envelope(env, chrono::Utc::now().into())?;
-        insert.insert_on(conn).await?;
-        Ok(())
+    pub async fn publish(self, txn: &DatabaseTransaction, env: &Envelope) -> ModelResult<()> {
+        crate::models::event_outbox::write(txn, env).await
     }
 
     /// The most recent outbox rows, newest first, projected to
@@ -314,7 +310,7 @@ impl OutboxPublisher {
         db: &DatabaseConnection,
         limit: usize,
     ) -> ModelResult<Vec<EventView>> {
-        OutboxRow::recent(db, u64::try_from(limit).unwrap_or(u64::MAX)).await
+        crate::models::event_outbox::recent(db, u64::try_from(limit).unwrap_or(u64::MAX)).await
     }
 }
 
@@ -396,7 +392,7 @@ async fn deindex_best_effort(pid: Uuid) {
 /// Create a plan and emit its `Created` event, atomically under the
 /// active transport. `memory`: insert on `db`, then push to the ring
 /// buffer (today's behaviour). `outbox`: open one transaction, insert the
-/// row, the `event_outbox` row, **and** the audit row on it, then commit
+/// row, the `axa_outbox` row, **and** the audit row on it, then commit
 /// — so a crash can never persist one without the others.
 ///
 /// # Errors

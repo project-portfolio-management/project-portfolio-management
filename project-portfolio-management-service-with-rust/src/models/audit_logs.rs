@@ -44,7 +44,7 @@ impl Model {
     /// `&DatabaseConnection` (the best-effort side-channel path, `memory`
     /// transport) **or** on a `&DatabaseTransaction` — under the `outbox`
     /// transport the audit row is written in the *same* transaction as the
-    /// entity mutation and its `event_outbox` row, so the three can never
+    /// entity mutation and its `axa_outbox` row, so the three can never
     /// disagree (`agents/share/event-bus.md` §3).
     ///
     /// # Errors

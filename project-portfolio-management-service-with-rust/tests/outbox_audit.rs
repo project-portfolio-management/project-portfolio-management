@@ -1,5 +1,5 @@
 //! DB-gated proof that under the `outbox` transport, `create_and_emit`
-//! writes the entity, its `event_outbox` row, **and** its `audit_logs`
+//! writes the entity, its `axa_outbox` row, **and** its `audit_logs`
 //! row in **one transaction** (`agents/share/event-bus.md` §3: audit and
 //! outbox share the handler transaction, so they can never disagree).
 //!
@@ -14,7 +14,7 @@
 
 use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::{audit_logs, event_outbox, plans};
+use project_portfolio_management::models::_entities::{audit_logs, plans};
 use project_portfolio_management::streaming;
 use project_portfolio_management_matcher::Plan;
 use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
@@ -52,14 +52,17 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
         );
 
         // Exactly one outbox row, unpublished, for this record.
-        let events = event_outbox::Entity::find()
-            .filter(event_outbox::Column::EntityPid.eq(model.pid))
-            .all(&ctx.db)
-            .await
-            .expect("load outbox rows");
-        assert_eq!(events.len(), 1, "one event_outbox row");
-        assert_eq!(events[0].kind, "created");
-        assert!(events[0].published_at.is_none());
+        let events: Vec<(String, String)> =
+            sqlx::query_as("SELECT kind, status FROM axa_outbox WHERE key = $1")
+                .bind(model.pid.to_string())
+                .fetch_all(ctx.db.get_postgres_connection_pool())
+                .await
+                .expect("load outbox rows");
+        assert_eq!(
+            events,
+            vec![("created".to_string(), "pending".to_string())],
+            "one pending axa_outbox row"
+        );
 
         // ...and the audit row rode the SAME transaction (§3) — not a
         // best-effort after-commit side channel.

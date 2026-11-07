@@ -153,6 +153,7 @@ mod m20261105_000104_translated_labels;
 mod m20261105_000105_plan_template_source;
 mod m20261105_000106_issue_times;
 mod m20261107_000107_axa_idempotency;
+mod m20261107_000108_axa_outbox;
 
 /// The crate's migrator: drives the ordered migration set for the
 /// CLI / boot-time migration.
@@ -307,6 +308,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261105_000105_plan_template_source::Migration),
             Box::new(m20261105_000106_issue_times::Migration),
             Box::new(m20261107_000107_axa_idempotency::Migration),
+            Box::new(m20261107_000108_axa_outbox::Migration),
             // inject-above (do not remove this comment)
         ]
     }

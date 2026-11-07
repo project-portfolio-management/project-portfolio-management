@@ -18,7 +18,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     /// The envelope's dedup id, so this row is traceable to its
-    /// `event_outbox` row.
+    /// `axa_outbox` row.
     pub event_id: Uuid,
     /// The entity name (e.g. `plan`).
     pub entity: String,

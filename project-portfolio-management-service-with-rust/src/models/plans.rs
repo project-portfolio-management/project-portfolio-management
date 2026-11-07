@@ -50,7 +50,7 @@ impl Model {
     /// Generic over [`ConnectionTrait`] so the caller can pass either the
     /// pooled `&DatabaseConnection` (memory transport) or its own
     /// `&DatabaseTransaction` (outbox transport — so the row and its
-    /// `event_outbox` row share one commit boundary).
+    /// `axa_outbox` row share one commit boundary).
     ///
     /// # Errors
     ///

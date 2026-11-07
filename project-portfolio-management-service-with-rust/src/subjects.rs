@@ -13,7 +13,8 @@
 //! data-protection officer, and this code takes no position on it.
 //!
 //! **What this does not find:** a name or an e-mail address typed into free text (a title, a comment,
-//! a document), the content of uploaded files, the `snapshot` JSON of an audit row, and backups.
+//! a document), the content of uploaded files, the `snapshot` JSON of an audit row, the `actor` inside an
+//! outbox event's `payload` (`axa_outbox`, swept seven days after it is sent), and backups.
 //! Those need a human search and the retention schedule.
 
 use sha2::{Digest, Sha256};
@@ -58,7 +59,6 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("cost_rate_tables", "person_ref"),
     ("cost_rates", "created_by"),
     ("document_versions", "created_by"),
-    ("event_outbox", "actor"),
     ("feed_tokens", "sub"),
     ("gate_reviews", "approver_ref"),
     ("guest_grants", "granted_by"),

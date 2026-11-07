@@ -1214,6 +1214,18 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `LoggingSink`/capturing-sink send + config defaults; the drain/ack
   seams (`unpublished`/`mark_published`) are DB-gated via the outbox
   suite.
+- [x] **Durable event bus on `axa-outbox` (2026-11-07).** The outbox
+  is `axa_outbox`, written with `axa::outbox::write_seaorm` on the
+  handler's transaction (`models::event_outbox::write`), and the relay is
+  `axa::outbox::Outbox::run` with the `EventSink` as its publisher, so the
+  claim (`FOR UPDATE SKIP LOCKED`), per-record order, recovery of a dead
+  relay's claims, retry with a doubling wait, `failed` after ten attempts
+  and the sweep of sent rows are the crate's. `drain_once`,
+  `purge_published` and the `event_outbox` entity are gone. Every sink
+  error counts as an outage; `FluvioSink` now waits for the broker's
+  acknowledgement. Tests: `requests::event_outbox` (atomic write,
+  rollback, and the relay holding rows while the sink is down, then
+  sending each once, in order), `outbox_audit`, `webhook_redelivery`.
 - [x] **Durable event bus — Phase 3, `FluvioSink` (BUS-3, following
   BUS-1's case-service reference).** *(done 2026-08-03)* The real-broker
   `impl EventSink`, behind this crate's own `fluvio` Cargo feature (off

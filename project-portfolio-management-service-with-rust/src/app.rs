@@ -28,9 +28,9 @@ use crate::{
     auth, controllers,
     models::_entities::{
         allocations, audit_logs, automation_runs, automations, benefits, budget_lines,
-        event_outbox, gate_reviews, ideas, merge_records, milestones, notifications,
-        objective_links, objectives, plan_dependencies, plans, proposals, report_definitions,
-        reviews, risks, scenarios, scheduled_actions,
+        gate_reviews, ideas, merge_records, milestones, notifications, objective_links, objectives,
+        plan_dependencies, plans, proposals, report_definitions, reviews, risks, scenarios,
+        scheduled_actions,
     },
     observability::{self, Telemetry, TelemetryConfig},
     tasks,
@@ -253,6 +253,7 @@ impl App {
         };
         let queue = works.then(|| ctx.queue_provider.clone()).flatten();
         let ended = server::run(router, queue, &ctx.config.server).await;
+        crate::relay::stop();
         Self::on_shutdown();
         ended
     }
@@ -480,7 +481,7 @@ impl App {
         // Durable event bus Phase 3: start the outbox relay loop. A no-op
         // unless `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox` AND `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY`
         // are set, so the default `memory` transport never spawns it.
-        crate::relay::spawn(ctx.db.clone());
+        crate::relay::spawn(ctx.db.clone(), ctx.config.database.uri.clone());
         // Optional estate-snapshot ticker (env-gated, default off).
         crate::snapshots::spawn(ctx.db.clone());
         // Set-and-forget: the optional scheduled-action sweep ticker
@@ -620,7 +621,7 @@ impl App {
         truncate_table(&ctx.db, risks::Entity).await?;
         truncate_table(&ctx.db, gate_reviews::Entity).await?;
         truncate_table(&ctx.db, proposals::Entity).await?;
-        truncate_table(&ctx.db, event_outbox::Entity).await?;
+        sea_orm::ConnectionTrait::execute_unprepared(&ctx.db, "DELETE FROM axa_outbox").await?;
         truncate_table(&ctx.db, merge_records::Entity).await?;
         truncate_table(&ctx.db, audit_logs::Entity).await?;
         truncate_table(&ctx.db, plans::Entity).await?;

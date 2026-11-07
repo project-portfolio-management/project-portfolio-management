@@ -14,7 +14,7 @@ use uuid::Uuid;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::compliance::mac::{self, Domain};
-use crate::models::_entities::{event_outbox, webhook_deliveries as rows};
+use crate::models::_entities::webhook_deliveries as rows;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::webhooks;
 
@@ -94,8 +94,8 @@ async fn redeliver(
         .fetch_optional(crate::db::pool(&ctx))
         .await?
         .ok_or(Error::NotFound)?;
-    let event: event_outbox::Model =
-        sqlx::query_as("SELECT * FROM event_outbox WHERE event_id = $1 LIMIT 1")
+    let (topic, kind, payload): (String, String, serde_json::Value) =
+        sqlx::query_as("SELECT topic, kind, payload FROM axa_outbox WHERE event_id = $1")
             .bind(logged.event_id)
             .fetch_optional(crate::db::pool(&ctx))
             .await?
@@ -108,7 +108,7 @@ async fn redeliver(
         .into_iter()
         .find(|t| t.url == logged.url)
         .ok_or_else(|| unprocessable("that target is no longer configured"))?;
-    let request = webhooks::render(target.format, &event.entity, &event.payload)
+    let request = webhooks::render(target.format, &topic, &payload)
         .ok_or_else(|| unprocessable("the event could not be rendered"))?;
     let signature = mac::tag(Domain::Webhook, &request.body).ok_or_else(|| {
         Error::CustomError(
@@ -133,8 +133,8 @@ async fn redeliver(
     let new_log = webhooks::deliver_with_retry(
         &ctx.db,
         &target,
-        &event.entity,
-        &event.kind,
+        &topic,
+        &kind,
         logged.event_id,
         delivery_id,
         &signature,

@@ -6,20 +6,23 @@
 //! `#[ignore]`d (run with `cargo test -- --ignored`). They exercise the
 //! exact write path the `outbox` transport takes in the CRUD handlers:
 //! one transaction spanning the `plans` insert **and** the
-//! `event_outbox` insert, so the two commit or roll back together.
+//! `axa_outbox` insert, so the two commit or roll back together, and the
+//! relay that sends what was written.
 //!
-//! The pure envelope→row mapping and the transport-string parsing are
+//! The pure envelope→event mapping and the transport-string parsing are
 //! pinned DB-free in `src/models/event_outbox.rs` and `src/streaming.rs`.
 
 use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::{event_outbox, plans};
-use project_portfolio_management::models::event_outbox::OutboxInsert;
+use project_portfolio_management::models::_entities::plans;
+use project_portfolio_management::models::event_outbox;
 use project_portfolio_management::models::plans::Model as PlanModel;
+use project_portfolio_management::relay::{self, EventSink, SinkError};
 use project_portfolio_management::streaming::{ENTITY, Envelope, EventKind, SCHEMA_VERSION};
 use project_portfolio_management_matcher::Plan;
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, TransactionTrait};
+use sea_orm::{EntityTrait, PaginatorTrait, TransactionTrait};
 use serial_test::serial;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 /// Build a `Created` envelope for a freshly-created plan row.
@@ -34,6 +37,20 @@ fn created_envelope(model: &PlanModel) -> Envelope {
         actor: None,
         name: model.name.clone(),
     }
+}
+
+/// The outbox rows for a record, oldest first: `(event_id, topic, kind, status)`.
+pub(crate) async fn outbox_rows(
+    db: &sea_orm::DatabaseConnection,
+    pid: Uuid,
+) -> Vec<(Uuid, String, String, String)> {
+    sqlx::query_as(
+        "SELECT event_id, topic, kind, status FROM axa_outbox WHERE key = $1 ORDER BY id",
+    )
+    .bind(pid.to_string())
+    .fetch_all(db.get_postgres_connection_pool())
+    .await
+    .expect("load outbox rows")
 }
 
 /// Outbox happy path: creating a plan writes BOTH the plan row
@@ -51,9 +68,7 @@ async fn outbox_create_writes_plan_and_one_event_atomically() {
         let txn = ctx.db.begin().await.expect("begin tx");
         let model = PlanModel::create(&txn, &wi).await.expect("create plan");
         let env = created_envelope(&model);
-        OutboxInsert::from_envelope(&env, chrono::Utc::now().into())
-            .expect("map envelope")
-            .insert_on(&txn)
+        event_outbox::write(&txn, &env)
             .await
             .expect("enqueue outbox row");
         txn.commit().await.expect("commit tx");
@@ -66,18 +81,16 @@ async fn outbox_create_writes_plan_and_one_event_atomically() {
         assert_eq!(wi_count, 1, "the plans row committed");
 
         // ...and exactly one outbox row for it, unpublished, correctly mapped.
-        let rows = event_outbox::Entity::find()
-            .filter(event_outbox::Column::EntityPid.eq(model.pid))
-            .all(&ctx.db)
-            .await
-            .expect("load outbox rows");
-        assert_eq!(rows.len(), 1, "exactly one event_outbox row for the plan");
-        assert_eq!(rows[0].kind, "created");
-        assert_eq!(rows[0].entity, "plan");
-        assert_eq!(rows[0].event_id, env.event_id);
-        assert!(
-            rows[0].published_at.is_none(),
-            "the row starts unpublished (the relay stamps it)"
+        let rows = outbox_rows(&ctx.db, model.pid).await;
+        assert_eq!(
+            rows,
+            vec![(
+                env.event_id,
+                "plan".to_string(),
+                "created".to_string(),
+                "pending".to_string()
+            )],
+            "exactly one pending axa_outbox row for the plan, keyed by its pid"
         );
     })
     .await;
@@ -98,9 +111,7 @@ async fn outbox_failure_rolls_back_both_writes() {
         let txn = ctx.db.begin().await.expect("begin tx");
         let model = PlanModel::create(&txn, &wi).await.expect("create plan");
         let env = created_envelope(&model);
-        OutboxInsert::from_envelope(&env, chrono::Utc::now().into())
-            .expect("map envelope")
-            .insert_on(&txn)
+        event_outbox::write(&txn, &env)
             .await
             .expect("enqueue outbox row");
         // Simulate a handler error after both writes but before commit:
@@ -113,11 +124,112 @@ async fn outbox_failure_rolls_back_both_writes() {
             .await
             .expect("count plans");
         assert_eq!(wi_count, 0, "the plans insert rolled back");
-        let event_count = event_outbox::Entity::find()
-            .count(&ctx.db)
+        assert!(
+            outbox_rows(&ctx.db, model.pid).await.is_empty(),
+            "the event insert rolled back with it"
+        );
+    })
+    .await;
+}
+
+/// A sink that records what it is sent, or fails while `down` is set.
+struct Recording {
+    sent: Mutex<Vec<(String, String, String)>>,
+    down: std::sync::atomic::AtomicBool,
+}
+
+#[async_trait::async_trait]
+impl EventSink for Recording {
+    async fn send(
+        &self,
+        entity: &str,
+        key: &str,
+        payload: &serde_json::Value,
+    ) -> Result<(), SinkError> {
+        if self.down.load(std::sync::atomic::Ordering::SeqCst) {
+            return Err("the broker is down".into());
+        }
+        self.sent.lock().unwrap().push((
+            entity.to_string(),
+            key.to_string(),
+            payload["kind"].as_str().unwrap_or_default().to_string(),
+        ));
+        Ok(())
+    }
+}
+
+/// The relay sends each row through the sink, in the order they were written, and marks it sent; while the sink is
+/// down nothing is marked sent, and nothing is lost.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
+    super::isolate_search_index();
+    request::<App, _, _>(|_request, ctx| async move {
+        let txn = ctx.db.begin().await.expect("begin tx");
+        let model = PlanModel::create(&txn, &Plan::new("Relayed plan"))
             .await
-            .expect("count outbox rows");
-        assert_eq!(event_count, 0, "the event insert rolled back with it");
+            .expect("create plan");
+        for kind in [EventKind::Created, EventKind::Updated, EventKind::Deleted] {
+            let env = Envelope {
+                kind,
+                ..created_envelope(&model)
+            };
+            event_outbox::write(&txn, &env).await.expect("write");
+        }
+        txn.commit().await.expect("commit");
+
+        let sink = Arc::new(Recording {
+            sent: Mutex::new(Vec::new()),
+            down: std::sync::atomic::AtomicBool::new(true),
+        });
+        let outbox = axa::outbox::Outbox::connect_existing(
+            &ctx.config.database.uri,
+            axa::outbox::OutboxOptions {
+                poll_interval: std::time::Duration::from_millis(50),
+                retry_backoff: std::time::Duration::from_millis(50),
+                ..relay::options()
+            },
+        )
+        .await
+        .expect("connect to axa_outbox");
+        let (stop, stopped) = tokio::sync::watch::channel(false);
+        let running = tokio::spawn(relay::run(outbox, sink.clone(), stopped));
+
+        // Down: rows stay owed.
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+        let statuses = |rows: Vec<(Uuid, String, String, String)>| {
+            rows.into_iter().map(|r| r.3).collect::<Vec<_>>()
+        };
+        assert!(
+            statuses(outbox_rows(&ctx.db, model.pid).await)
+                .iter()
+                .all(|s| s != "sent"),
+            "nothing is marked sent while the sink is down"
+        );
+
+        // Up: each goes out once, in order, and is marked sent.
+        sink.down.store(false, std::sync::atomic::Ordering::SeqCst);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+        while statuses(outbox_rows(&ctx.db, model.pid).await)
+            .iter()
+            .any(|s| s != "sent")
+        {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "the relay sent every row"
+            );
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+        let _ = stop.send(true);
+        running.await.expect("the relay stops when told");
+        let pid = model.pid.to_string();
+        assert_eq!(
+            *sink.sent.lock().unwrap(),
+            ["created", "updated", "deleted"]
+                .map(|kind| ("plan".to_string(), pid.clone(), kind.to_string()))
+                .to_vec(),
+        );
     })
     .await;
 }

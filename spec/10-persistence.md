@@ -98,6 +98,13 @@ mutation (§10.2).
   `link_pid` together); migration `m20261025_000094`.
 - **`meeting_tasks`** (built, FR-16e13) — which task came from which outcome (`meeting_pid`, `outcome_no`, `task_pid`);
   `UNIQUE (meeting_pid, outcome_no)` so an outcome has at most one task; no personal data; migration `m20261025_000096`.
+- **`axa_outbox`** (built, event bus) — made by `axa-outbox`'s own setup statements (migration `m20261107_000108`,
+  which moves every `event_outbox` row across, an unpublished one as `pending` and a published one as `sent`, and
+  leaves `event_outbox` empty, to be dropped in a later release): `id` (identity, the relay's order), `event_id`
+  (unique, the envelope's, which a consumer dedupes on), `topic` (the entity), `kind`, `key` (the record pid, which
+  keeps one record's events in order), `payload` (the whole envelope, with its `actor`), `status` (`pending`,
+  `claimed`, `sent`, `failed`), `attempts`, `error`, `run_at`, `sent_at`, `created_at`, `updated_at`. Sent rows are
+  deleted after `EVENT_RETENTION_DAYS` (class `EVT`); a `failed` row is kept.
 - **`axa_idempotency`** (built, NFR-7) — made by `axa-idempotency`'s own setup statements (migration
   `m20261107_000107`, which also drops the earlier `idempotency_keys` of `m20261025_000095`): `caller`, `key` (the
   primary key together), `fingerprint` (a hash of the request), `claim`, `state` (`running`, `done`, `not_kept` by

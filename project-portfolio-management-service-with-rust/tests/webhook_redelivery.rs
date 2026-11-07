@@ -14,7 +14,7 @@ use axum::routing::post;
 use chrono::Utc;
 use project_portfolio_management::app::App;
 use project_portfolio_management::compliance::mac::{self, Domain};
-use project_portfolio_management::models::_entities::{event_outbox, webhook_deliveries};
+use project_portfolio_management::models::_entities::webhook_deliveries;
 use project_portfolio_management::webhooks::{
     DELIVERY_ID_HEADER, EVENT_ID_HEADER, SIGNATURE_V2_HEADER, TIMESTAMP_HEADER, signing_input_v2,
     timestamp_is_fresh,
@@ -61,21 +61,15 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
     request::<App, _, _>(|request, ctx| async move {
         // An event the outbox still holds, and the log row of a delivery that failed.
         let event_id = Uuid::new_v4();
-        event_outbox::ActiveModel {
-            event_id: ActiveValue::set(event_id),
-            entity: ActiveValue::set("plan".to_string()),
-            entity_pid: ActiveValue::set(Uuid::new_v4()),
-            kind: ActiveValue::set("created".to_string()),
-            occurred_at: ActiveValue::set(Utc::now().into()),
-            actor: ActiveValue::set(None),
-            schema_version: ActiveValue::set(1),
-            payload: ActiveValue::set(
-                json!({ "event_id": event_id, "kind": "created", "name": "Redelivered" }),
-            ),
-            published_at: ActiveValue::set(Some(Utc::now().into())),
-            ..Default::default()
-        }
-        .insert(&ctx.db)
+        // As the relay leaves a row it has sent.
+        sqlx::query(
+            "INSERT INTO axa_outbox (event_id, topic, kind, key, payload, status, sent_at) \
+             VALUES ($1, 'plan', 'created', $2, $3, 'sent', now())",
+        )
+        .bind(event_id)
+        .bind(Uuid::new_v4().to_string())
+        .bind(json!({ "event_id": event_id, "kind": "created", "name": "Redelivered" }))
+        .execute(ctx.db.get_postgres_connection_pool())
         .await
         .unwrap();
         let log = |event: Uuid, target: &str| webhook_deliveries::ActiveModel {

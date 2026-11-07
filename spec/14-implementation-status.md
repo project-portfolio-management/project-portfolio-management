@@ -28,10 +28,10 @@ no network, database or compilation; counts are source lines, not test runs):
 | Service version | 0.2.0 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.2 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.2.0 | `version` in the front-end `package.json` |
-| Migrations | 141 | files named `m2*.rs` in `migration/src` |
+| Migrations | 142 | files named `m2*.rs` in `migration/src` |
 | Mounted routes | 684 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
 | Documented API paths | 541 | path keys in the service's `openapi.json` |
-| Service tests | 1573, plus 302 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1573, plus 303 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 721 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 317 | `test(` lines in `tests/e2e` |
@@ -112,7 +112,7 @@ migrations (`m20260825_000001` … `m20260826_000003`) and a matcher
 | service | Operational sub-resources | Goals / objectives, tasks (Kanban board with WIP-limit caps), sprints + notes, milestones, risks, budget lines, benefits, ideas, proposals, scenarios, gate reviews, allocations, dependencies, automations, notifications, report definitions |
 | service | Derived views | Burndown (honest — real `done_at` stamps only, no ideal line), velocity, standup digest, executive health / decisions / benefits / alignment, financial variance + exposure, technology radar / debt / flow, board pack, auditor trail + findings + evidence pack, compliance register, risk heatmap, regulator extract |
 | service | **Time-based analysis** | `task_transitions` (append-only, written in-transaction by the existing task create/move calls, with a labelled backfill); the pure `src/tba.rs`; `GET /api/plans/{pid}/{time-analysis,constraints,aging-wip,flow}`, `GET /api/plans/{pid}/tasks/{t_pid}/{transitions,time-analysis}`, `GET /api/flow-classes`. See [`time-based-analysis.md`](time-based-analysis.md) §16 |
-| service | Audit log + durable outbox events | `audit_logs`; `event_outbox` with `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT` (default `memory`); `src/relay.rs` relay + `FluvioSink` behind the off-by-default `fluvio` feature |
+| service | Audit log + durable outbox events | `audit_logs`; `axa_outbox` (`axa-outbox`) with `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT` (default `memory`); `src/relay.rs` relays through `axa::outbox::Outbox::run`, with `FluvioSink` behind the off-by-default `fluvio` feature |
 | service | Auth + ABAC | Offline PASETO v4.public verification via `authentication-verifier`; the blanket `/api/*` guard behind `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` (**on by default** since HD-3); record-level `authorize_record` + `mask` obligations; proved end-to-end by `tests/enforcement.rs` |
 | service | Privacy masking | `src/privacy.rs` + `tests/masking.rs` |
 | service | Integrity | `src/compliance/` — record content hashing, audit integrity, keyed HMAC MACs via the shared `integrity-mac` crate |

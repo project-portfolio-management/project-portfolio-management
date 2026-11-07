@@ -912,7 +912,7 @@ async fn entity_audit(
 }
 
 /// Recent events (cap 100), from whichever transport is active — the
-/// in-memory ring buffer (`memory`) or the `event_outbox` table
+/// in-memory ring buffer (`memory`) or the `axa_outbox` table
 /// (`outbox`); the wire shape is identical. `GET /api/plans/events/recent`.
 ///
 /// # Errors

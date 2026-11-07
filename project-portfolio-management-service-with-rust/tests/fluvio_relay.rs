@@ -30,12 +30,11 @@
 
 use axa::testing::prelude::*;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::event_outbox;
 use project_portfolio_management::relay::{self, FluvioSink};
 use project_portfolio_management::streaming;
 use project_portfolio_management_matcher::Plan;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serial_test::serial;
+use std::sync::Arc;
 
 #[tokio::test]
 #[serial]
@@ -60,21 +59,30 @@ async fn fluvio_relay_publishes_an_outbox_row_to_a_real_topic() {
             .await
             .expect("connect FluvioSink to the live broker");
 
-        let published = relay::drain_once(&ctx.db, &sink, 10)
-            .await
-            .expect("drain_once against the real sink");
-        assert!(published >= 1, "at least this row's send should succeed");
-
-        let row = event_outbox::Entity::find()
-            .filter(event_outbox::Column::EntityPid.eq(model.pid))
-            .one(&ctx.db)
-            .await
-            .expect("load the outbox row")
-            .expect("the row exists");
-        assert!(
-            row.published_at.is_some(),
-            "a successful send to the real broker must stamp published_at"
-        );
+        let outbox =
+            axa::outbox::Outbox::connect_existing(&ctx.config.database.uri, relay::options())
+                .await
+                .expect("connect to axa_outbox");
+        let (stop, stopped) = tokio::sync::watch::channel(false);
+        let running = tokio::spawn(relay::run(outbox, Arc::new(sink), stopped));
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        loop {
+            let status: String = sqlx::query_scalar("SELECT status FROM axa_outbox WHERE key = $1")
+                .bind(model.pid.to_string())
+                .fetch_one(ctx.db.get_postgres_connection_pool())
+                .await
+                .expect("the row exists");
+            if status == "sent" {
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "a send the real broker acknowledged must mark the row sent"
+            );
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+        let _ = stop.send(true);
+        running.await.expect("the relay stops when told");
     })
     .await;
 }

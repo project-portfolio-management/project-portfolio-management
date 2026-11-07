@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (tasks decided on for production)
+
+- axa 0.6's `Task::development_only` makes `task <name>` refuse a fixture-loading task outside development and test, as `db reset` is refused. None of the six tasks here loads fixtures: `director_pack_schedule`, `exception_breaches`, `exceptions_digest`, `retention_purge`, `search_reindex` and `tolerance_escalations` all run against real data on a schedule. So none is marked, and a new test lists each one as decided for production. A task added or removed fails it until someone decides whether it is development-only.
+- Not changed: the demonstration data comes from `scripts/seed-demo.mjs`, which fills a running API over HTTP. It is not an axa task, so the marker cannot guard it. `operations/demo.md` already says never to run it against real data.
+- Verified: the test passes, and 1,241 unit tests pass. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (one trusted-proxy list, read by axa)
 
 - **One setting:** `TRUSTED_PROXIES`, read by axa. It decides whose `X-Forwarded-For` gives the client address, for axa and for the rate limiter, and whose `X-Forwarded-Proto` is believed for HSTS. `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES` still works when it is the only one set, with a deprecation warning. **If both are set to different lists, the service refuses to start** and says which to keep. The same entries in another order or spacing count as one list. A bad entry still trusts no proxy, as before.

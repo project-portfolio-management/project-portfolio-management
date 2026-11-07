@@ -642,6 +642,50 @@ mod tests {
 
     /// axa's parser is what refuses `db reset` in production, as this service no longer does: a parser of its own,
     /// written with clap, would compile just as well and refuse nothing.
+    /// Each task has been asked whether it may run in production, and these all may: none loads fixtures, and each is
+    /// meant to run on a schedule against real data. A new task fails this until someone decides, and one that loads
+    /// fixtures says `development_only`, which `task` then refuses in production as `db reset` is refused.
+    #[test]
+    fn every_task_has_been_decided_on_for_production() {
+        use axa::task::Task;
+        let decided: [(&str, &dyn Task); 6] = [
+            (
+                "director_pack_schedule",
+                &crate::tasks::director_pack_schedule::DirectorPackSchedule,
+            ),
+            (
+                "exception_breaches",
+                &crate::tasks::exception_breaches::ExceptionBreaches,
+            ),
+            (
+                "exceptions_digest",
+                &crate::tasks::exceptions_digest::ExceptionsDigest,
+            ),
+            (
+                "retention_purge",
+                &crate::tasks::retention_purge::RetentionPurge,
+            ),
+            ("search_reindex", &crate::tasks::search::SearchReindex),
+            (
+                "tolerance_escalations",
+                &crate::tasks::tolerance_escalations::ToleranceEscalations,
+            ),
+        ];
+        let mut tasks = Tasks::default();
+        App::register_tasks(&mut tasks);
+        let mut registered: Vec<String> = tasks.list().into_iter().map(|t| t.name).collect();
+        registered.sort();
+        assert_eq!(
+            registered,
+            decided.map(|(name, _)| name.to_string()),
+            "a task was added or removed: decide whether it is development_only, and list it here"
+        );
+        for (name, task) in decided {
+            assert_eq!(task.task().name, name);
+            assert!(!task.development_only(), "{name} is meant for production");
+        }
+    }
+
     #[test]
     fn the_binary_reads_its_arguments_through_the_parser_that_refuses_data_loss() {
         let main = include_str!("bin/main.rs");

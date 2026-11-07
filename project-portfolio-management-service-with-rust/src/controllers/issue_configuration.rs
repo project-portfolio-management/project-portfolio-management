@@ -10,7 +10,7 @@
 //!
 //! Types and roles are retired, never deleted: an issue or a workflow that names one stays valid.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::StatusCode;
 use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;

@@ -3,7 +3,7 @@
 //! `kind` column is an optional descriptive label, and `parent_pid` is
 //! the containment link (any plan may contain any other).
 
-use axa::prelude::*;
+use crate::prelude::*;
 use project_portfolio_management_matcher::Plan as MatchPlan;
 use sea_orm::sea_query::Expr;
 use sea_orm::sea_query::extension::postgres::PgExpr;

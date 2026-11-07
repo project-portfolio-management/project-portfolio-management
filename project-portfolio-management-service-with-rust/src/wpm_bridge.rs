@@ -1064,7 +1064,7 @@ mod tests {
         let app = axum::Router::new().route(
             "/api/capacity/peer-demand",
             axum::routing::post(
-                move |h: axum::http::HeaderMap, axum::Json(b): axum::Json<serde_json::Value>| {
+                move |h: axum::http::HeaderMap, axa::extract::Json(b): axa::extract::Json<serde_json::Value>| {
                     let kept = kept.clone();
                     async move {
                         let auth = h

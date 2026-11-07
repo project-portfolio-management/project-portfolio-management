@@ -3,7 +3,7 @@
 //! Swagger UI assets are loaded from a CDN (swagger-ui-dist), pinned by `axa::openapi`, to keep the
 //! crate dependency-light; the spec itself is served from this service.
 
-use axa::prelude::*;
+use crate::prelude::*;
 
 /// The `OpenAPI` 3 document.
 #[debug_handler]

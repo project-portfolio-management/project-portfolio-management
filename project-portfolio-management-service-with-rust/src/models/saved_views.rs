@@ -2,7 +2,7 @@
 //! No custom finders needed — the controller queries directly, scoped
 //! to the caller's own `sub`.
 
-use axa::prelude::*;
+use crate::prelude::*;
 
 use super::_entities::saved_views;
 

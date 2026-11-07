@@ -2,7 +2,7 @@
 //! impls and pid finders for the proposals / gate-reviews / risks /
 //! budget-lines sub-resources.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use sea_orm::{ConnectionTrait, QueryOrder};
 use uuid::Uuid;
 

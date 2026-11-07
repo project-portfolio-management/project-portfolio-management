@@ -2,7 +2,7 @@
 
 use crate::auth::MaybeAuthUser;
 use crate::engineering as rules;
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::HeaderMap;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -91,7 +91,7 @@ pub(crate) struct BurndownQuery {
 /// the client's to draw and label.
 #[debug_handler]
 pub(super) async fn burndown(
-    axum::extract::Query(query): axum::extract::Query<BurndownQuery>,
+    axa::extract::Query(query): axa::extract::Query<BurndownQuery>,
     State(ctx): State<AppContext>,
     Path(pid): Path<String>,
     headers: HeaderMap,

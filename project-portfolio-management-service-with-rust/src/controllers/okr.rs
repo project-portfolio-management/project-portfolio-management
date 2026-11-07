@@ -20,7 +20,7 @@
 //! - Confidence is recorded and **never** blended into a score.
 
 use super::{db_err, unprocessable};
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::HeaderMap;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
@@ -428,7 +428,7 @@ pub(crate) struct OkrParams {
 #[debug_handler]
 async fn list_okrs(
     State(ctx): State<AppContext>,
-    axum::extract::Query(q): axum::extract::Query<OkrParams>,
+    axa::extract::Query(q): axa::extract::Query<OkrParams>,
 ) -> Result<Response> {
     let mut query = objectives::Entity::find().filter(objectives::Column::DeletedAt.is_null());
     if let Some(period) = &q.period {

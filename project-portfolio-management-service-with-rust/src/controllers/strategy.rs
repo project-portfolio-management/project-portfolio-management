@@ -6,7 +6,7 @@
 
 use super::conflict;
 use super::{db_err, unprocessable};
-use axa::prelude::*;
+use crate::prelude::*;
 use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -637,7 +637,7 @@ pub(crate) struct CompareQuery {
 /// and alignment deltas, and both feasibility verdicts.
 #[debug_handler]
 async fn compare_scenarios(
-    axum::extract::Query(query): axum::extract::Query<CompareQuery>,
+    axa::extract::Query(query): axa::extract::Query<CompareQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {

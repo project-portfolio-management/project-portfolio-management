@@ -2,7 +2,7 @@
 
 use crate::auth::MaybeAuthUser;
 use crate::engineering as rules;
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::HeaderMap;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -164,7 +164,7 @@ pub(crate) struct DevopsMetricsQuery {
 /// (undeclared causation is not guessed).
 #[debug_handler]
 pub(super) async fn devops_metrics(
-    axum::extract::Query(query): axum::extract::Query<DevopsMetricsQuery>,
+    axa::extract::Query(query): axa::extract::Query<DevopsMetricsQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,

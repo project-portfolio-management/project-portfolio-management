@@ -4,7 +4,7 @@
 //! wired to real work. Kept so the queue registration in
 //! [`crate::app`] has a concrete worker to register.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// Background worker that performs asynchronous download-style jobs.

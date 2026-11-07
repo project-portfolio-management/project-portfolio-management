@@ -24,7 +24,7 @@
 
 use std::fmt::Write as _;
 
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::HeaderMap;
 use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
@@ -147,7 +147,7 @@ fn money_lines(rows: &[&budget_lines::Model]) -> Vec<insights::MoneyLine> {
 /// summary (as-of-now; trends come from the stored snapshots).
 #[debug_handler]
 async fn board_pack(
-    axum::extract::Query(query): axum::extract::Query<WindowQuery>,
+    axa::extract::Query(query): axa::extract::Query<WindowQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,
@@ -399,7 +399,7 @@ pub(crate) struct TrendsQuery {
 /// first. No interpolation, no re-derived history.
 #[debug_handler]
 async fn board_trends(
-    axum::extract::Query(query): axum::extract::Query<TrendsQuery>,
+    axa::extract::Query(query): axa::extract::Query<TrendsQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,
@@ -463,7 +463,7 @@ pub(crate) struct TrailQuery {
 /// find out the disclosure went unrecorded).
 #[debug_handler]
 async fn auditor_trail(
-    axum::extract::Query(query): axum::extract::Query<TrailQuery>,
+    axa::extract::Query(query): axa::extract::Query<TrailQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,
@@ -673,7 +673,7 @@ pub(crate) struct EvidenceQuery {
 /// delivery is gated on that write succeeding.
 #[debug_handler]
 async fn evidence_pack(
-    axum::extract::Query(query): axum::extract::Query<EvidenceQuery>,
+    axa::extract::Query(query): axa::extract::Query<EvidenceQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
@@ -760,7 +760,7 @@ pub(crate) struct ConformanceQuery {
 /// invented compliance score.
 #[debug_handler]
 async fn compliance_findings(
-    axum::extract::Query(query): axum::extract::Query<ConformanceQuery>,
+    axa::extract::Query(query): axa::extract::Query<ConformanceQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,

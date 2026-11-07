@@ -7,7 +7,7 @@
 //! Schedule it weekly (cron, a Kubernetes `CronJob`); running it again in the same week sends nothing more. With no
 //! recipients configured it does nothing.
 
-use axa::prelude::*;
+use crate::prelude::*;
 
 /// The `exceptions_digest` CLI task.
 pub struct ExceptionsDigest;

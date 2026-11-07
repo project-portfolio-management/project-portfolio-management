@@ -3,7 +3,7 @@
 //! rules are in [`crate::wpm_bridge`]; this is the wiring. The private-plan guard applies as to any
 //! `/api/plans/{pid}/…` route.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use serde::Deserialize;
 
 use super::unprocessable_entity as unprocessable;
@@ -30,7 +30,7 @@ async fn show(
     State(ctx): State<AppContext>,
     Path(pid): Path<String>,
     headers: axum::http::HeaderMap,
-    axum::extract::Query(q): axum::extract::Query<Query>,
+    axa::extract::Query(q): axa::extract::Query<Query>,
 ) -> Result<Response> {
     if q.months
         .is_some_and(|m| m == 0 || m > bridge::PEOPLE_IMPACT_MAX_MONTHS)

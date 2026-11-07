@@ -22,6 +22,7 @@ mod email;
 mod escalations;
 mod event_outbox;
 mod exceptions_digest;
+mod extractors;
 mod financials;
 mod frameworks;
 mod goals;

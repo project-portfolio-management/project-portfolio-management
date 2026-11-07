@@ -9,7 +9,7 @@
 //! it is open or acknowledged, or when one was raised for it in the last `QUIET_DAYS` days, so a resolved one on a
 //! plan that stays red is not raised again at once. Plans hidden from everyone by a handling mark are not read.
 
-use axa::prelude::*;
+use crate::prelude::*;
 
 /// Days after raising during which the same plan and dimension is not escalated again.
 pub const QUIET_DAYS: i64 = 7;

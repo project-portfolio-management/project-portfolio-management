@@ -6,7 +6,7 @@
 //!   target, from the event the outbox still holds. The event id is the same; the delivery id is new; a new log row
 //!   records the outcome. The audit row is written **first**, so a redelivery that cannot be audited does not happen.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;

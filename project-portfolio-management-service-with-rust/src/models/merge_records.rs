@@ -1,6 +1,6 @@
 //! `merge_records` model — record and query the record-merge history.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 

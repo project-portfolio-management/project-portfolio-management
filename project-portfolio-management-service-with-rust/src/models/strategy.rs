@@ -3,7 +3,7 @@
 //! benefits entities (finders live in the controller — these tables
 //! have no cross-cutting query helpers yet).
 
-use axa::prelude::*;
+use crate::prelude::*;
 
 use super::_entities::{benefits, ideas, objective_links, objectives, scenarios};
 

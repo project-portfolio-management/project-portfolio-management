@@ -11,7 +11,7 @@
 //! `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<RULE>_DAYS` (WW-1.7), which the scheduled job reads too; an argument
 //! here wins over it. See `governance/retention-schedule.md` for what is and is not covered.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use chrono::Utc;
 
 use crate::retention::{self, RULES};

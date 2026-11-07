@@ -4,7 +4,7 @@
 //! queue runs it in the background (production) or inline (the test profile's
 //! `ForegroundBlocking`).
 
-use axa::prelude::*;
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

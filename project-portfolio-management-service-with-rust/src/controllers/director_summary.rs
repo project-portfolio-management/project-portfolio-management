@@ -3,8 +3,8 @@
 //! `readable_plans`, the same filter every other cross-plan summary uses. When the caller can read no plan
 //! the answer says `available: false` with the reason rather than a page of zeros.
 
+use crate::prelude::*;
 use axa::error::ErrorDetail;
-use axa::prelude::*;
 use axum::http::StatusCode;
 use serde::Deserialize;
 use uuid::Uuid;

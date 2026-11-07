@@ -12,7 +12,7 @@
 //! cargo run -- task search_reindex batch:1000 # tune the page size
 //! ```
 
-use axa::prelude::*;
+use crate::prelude::*;
 use sea_orm::{DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
 
 use crate::models::_entities::plans;

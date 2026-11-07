@@ -26,6 +26,54 @@
 pub mod access_review;
 pub mod announcements;
 pub mod app;
+/// `axa::prelude`, with `axa::extract`'s `Json`, `Path` and `Query` in place of Axum's, so a bad body, path or query
+/// answers a problem that says which and quotes nothing the caller sent (spec §8.3a). Handlers import this, not
+/// `axa::prelude`.
+pub mod prelude {
+    pub use axa::prelude::*;
+    // Named, so they shadow the prelude's own `Json`, `Path` and `Query`, which are Axum's.
+    pub use axa::extract::{Json, Path, Query};
+
+    #[cfg(test)]
+    mod tests {
+        /// Axum's extractors reject with text that can quote what the caller sent, and axa then sends that as a
+        /// problem with no `detail`. This keeps them, and the prelude that exports them, out of `src`.
+        #[test]
+        fn handlers_take_axas_extractors_not_axums() {
+            let forbidden = [
+                "axa::prelude::*",
+                "axum::extract::Path",
+                "axum::extract::Query",
+                "axum::extract::Json",
+                ": axum::Json<",
+            ];
+            let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+            let mut stack = vec![root];
+            let mut offenders = Vec::new();
+            while let Some(dir) = stack.pop() {
+                for entry in std::fs::read_dir(&dir).expect("read src") {
+                    let path = entry.expect("entry").path();
+                    if path.is_dir() {
+                        stack.push(path);
+                    } else if path.extension().is_some_and(|e| e == "rs")
+                        && !path.ends_with("src/lib.rs")
+                    {
+                        let text = std::fs::read_to_string(&path).expect("read file");
+                        for pattern in &forbidden {
+                            if text.contains(pattern) {
+                                offenders.push(format!("{}: {pattern}", path.display()));
+                            }
+                        }
+                    }
+                }
+            }
+            assert!(
+                offenders.is_empty(),
+                "use crate::prelude or axa::extract: {offenders:?}"
+            );
+        }
+    }
+}
 pub mod approvals;
 pub mod artifacts;
 pub mod asyncapi;

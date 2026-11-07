@@ -30,7 +30,7 @@
 
 use std::time::Duration;
 
-use axa::prelude::*;
+use crate::prelude::*;
 
 use crate::models::_entities::event_outbox::Column as OutboxColumn;
 use crate::models::event_outbox::{self, Model as OutboxRow};

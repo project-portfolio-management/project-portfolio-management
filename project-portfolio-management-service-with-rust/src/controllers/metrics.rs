@@ -7,7 +7,7 @@
 //! scraper can poll it without a bearer token. Configure your scraper with
 //! `metrics_path: /metrics.prom`.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::{HeaderValue, StatusCode, header::CONTENT_TYPE};
 use axum::response::{IntoResponse, Response};
 

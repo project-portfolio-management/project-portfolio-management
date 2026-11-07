@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (axa::extract)
+
+- Handlers now take `axa::extract`'s `Json`, `Path` and `Query` in place of Axum's, through a new `crate::prelude`: `axa::prelude` with those three replaced. 161 files switch from `axa::prelude::*` to it. A bad body, path or query value now answers a problem whose `detail` says which part was wrong (`The request body is not valid JSON`, `A value in the URL is not valid`, `A query parameter is not valid`) and quotes nothing the caller sent. Before, since axa 0.6, these were problems with no `detail` at all. Before 0.6 they were Axum's plain text, which could quote the value (spec §8.3a).
+- A census test in `src/lib.rs` refuses `axa::prelude::*` and Axum's extractors anywhere in `src`. Deliberately adding an offending file made it fail.
+- Verified: `tests/requests/extractors.rs` (new) sends a broken body, a path and a query carrying a marker string, and checks the status, media type and `detail` of each and that the marker never comes back. `cargo fmt`, `clippy -D warnings`, 1,237 unit tests, and all 298 database tests (215 in `mod` plus every real-token binary) pass.
+- Not covered: a body's `415` and `422` answers are axa's and are not tested here. `Form` and `Multipart` are still Axum's, since `axa::extract` has none. The UI needed no change, because it shows text by status. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (rate limits counted by axa-ratelimit)
 
 - `src/rate_limit.rs` now counts with `axa-ratelimit`'s `Limiter` in place of its own token buckets, 240 lines fewer. The three limits, the settings and their defaults are unchanged. So are the credential-else-address key, the service's own `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES` and the `429` that names which limit tripped (NFR-14).

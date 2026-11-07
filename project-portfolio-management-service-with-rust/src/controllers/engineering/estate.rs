@@ -2,7 +2,7 @@
 
 use crate::auth::MaybeAuthUser;
 use crate::engineering as rules;
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -171,7 +171,7 @@ pub(crate) struct CalendarQuery {
 /// the demo / release calendar.
 #[debug_handler]
 pub(super) async fn milestone_calendar(
-    axum::extract::Query(query): axum::extract::Query<CalendarQuery>,
+    axa::extract::Query(query): axa::extract::Query<CalendarQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,

@@ -6,7 +6,7 @@
 //! * [`run_due`] retries what is waiting after a transient failure;
 //! * `GET /api/email-deliveries` (administrators only; anyone else gets 404) lists them, newest first.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::Utc;
 use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};

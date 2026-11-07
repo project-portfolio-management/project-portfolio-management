@@ -10,8 +10,8 @@
 //! any other via `parent_ref`, `kind` is an optional descriptive label,
 //! and matching is not gated by kind.
 
+use crate::prelude::*;
 use axa::error::ErrorDetail;
-use axa::prelude::*;
 use axum::http::StatusCode;
 use project_portfolio_management_matcher::{MatchConfig, MatchingEngine, Plan, PlanKind};
 use serde::{Deserialize, Serialize};
@@ -639,7 +639,7 @@ async fn remove(
 /// A DB error when the query fails.
 #[debug_handler]
 async fn list(
-    axum::extract::Query(params): axum::extract::Query<ListParams>,
+    axa::extract::Query(params): axa::extract::Query<ListParams>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
@@ -681,7 +681,7 @@ async fn list(
 /// unavailable.
 #[debug_handler]
 async fn search(
-    axum::extract::Query(params): axum::extract::Query<SearchParams>,
+    axa::extract::Query(params): axa::extract::Query<SearchParams>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {

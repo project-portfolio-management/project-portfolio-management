@@ -1,6 +1,6 @@
 //! Canvas (LT-1) and comment/reaction (LT-4) model helpers: the `ActiveModelBehavior` impls.
 
-use axa::prelude::*;
+use crate::prelude::*;
 
 use super::_entities::{
     canvas_items, canvases, comment_edits, comments, notification_prefs, plan_modules, reactions,

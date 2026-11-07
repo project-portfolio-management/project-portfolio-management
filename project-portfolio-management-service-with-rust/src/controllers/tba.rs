@@ -14,7 +14,7 @@
 //! (§12.4): handoff counts describe an item's journey, and there is no
 //! per-assignee cycle time by design.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 

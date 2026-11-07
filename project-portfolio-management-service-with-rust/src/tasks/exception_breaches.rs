@@ -10,7 +10,7 @@
 //! the notice goes through the ordinary notification inbox and its sinks. Breaches also show in the pack
 //! and in `GET /api/exceptions?breached=true` whether or not this task runs.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use chrono::Utc;
 use sea_orm::QueryOrder;
 

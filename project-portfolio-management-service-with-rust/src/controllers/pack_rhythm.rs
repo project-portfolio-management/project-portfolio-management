@@ -10,7 +10,7 @@
 //! * A notice carries the period, the audience, the version and a link. It never carries the body.
 
 use super::refuse;
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
 use sea_orm::{QueryOrder, sea_query::Expr};

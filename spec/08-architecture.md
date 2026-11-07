@@ -86,7 +86,9 @@ by default, so a load balancer that keeps idle connections longer needs a higher
 
 Every error is an RFC 9457 problem, `application/problem+json`: `type`, `title` and `status`, `detail` where there is more to say,
 and the machine-readable `code` (such as `not_found`, `forbidden` or `idempotency_key_reused`), with `errors` for a validation
-failure. A `500` carries no `detail`. Successes stay bare JSON. The service's own refusals (login, policy, idempotency, paging)
+failure. A `500` carries no `detail`. Successes stay bare JSON. A body, path or query value the handler cannot read is a `400`
+(a body's media type `415`, its shape `422`) whose `detail` says which part was wrong and quotes nothing the caller sent: handlers
+take `axa::extract`'s `Json`, `Path` and `Query` through `crate::prelude`, and a census test keeps Axum's out. The service's own refusals (login, policy, idempotency, paging)
 are problems too, and a guest's `404` is byte for byte the one a missing record answers. A violated unique or foreign key that
 no handler maps answers `409`.
 

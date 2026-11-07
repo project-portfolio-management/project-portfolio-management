@@ -16,7 +16,7 @@
 //! excludes `as_of`), mirroring `/api/at-a-glance`. All endpoints are
 //! GETs, so under the blanket ABAC guard they derive as `read`.
 
-use axa::prelude::*;
+use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -360,7 +360,7 @@ pub(crate) struct DecisionsQuery {
 /// projection, not a new record type.
 #[debug_handler]
 async fn executive_decisions(
-    axum::extract::Query(query): axum::extract::Query<DecisionsQuery>,
+    axa::extract::Query(query): axa::extract::Query<DecisionsQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,
@@ -940,7 +940,7 @@ pub(crate) struct FlowQuery {
 /// an honest gap, not a guess.
 #[debug_handler]
 async fn technology_flow(
-    axum::extract::Query(query): axum::extract::Query<FlowQuery>,
+    axa::extract::Query(query): axa::extract::Query<FlowQuery>,
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
     headers: HeaderMap,

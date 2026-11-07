@@ -103,7 +103,7 @@ async fn keys_are_per_caller_and_a_replay_never_skips_the_guards() {
         let b2 = post(&bo, "Bo's plan").await;
         assert_eq!(b2.json::<Value>()["pid"], b["pid"]);
         // Ana's key is not Bo's: Bo cannot replay Ana's answer by sending her request under it.
-        assert_eq!(post(&bo, "Ana's plan").await.status_code(), 409);
+        assert_eq!(post(&bo, "Ana's plan").await.status_code(), 422);
 
         // An exact replay by a caller the guards refuse is refused, not answered from the store.
         assert_eq!(post(&ana_read_only, "Ana's plan").await.status_code(), 403);

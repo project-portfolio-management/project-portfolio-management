@@ -72,7 +72,7 @@ async fn a_retried_post_returns_the_first_answer_and_writes_once() {
             .add_header("Idempotency-Key", "key-1")
             .json(&json!({ "kind": "Project", "name": "A different plan" }))
             .await;
-        assert_eq!(other.status_code(), 409);
+        assert_eq!(other.status_code(), 422);
         assert_eq!(other.json::<Value>()["code"], "idempotency_key_reused");
         assert_eq!(count_named(&request, "A different plan").await, 0);
 
@@ -85,7 +85,19 @@ async fn a_retried_post_returns_the_first_answer_and_writes_once() {
             .add_header("Idempotency-Key", "key-1")
             .json(&json!({ "title": "t" }))
             .await;
-        assert_eq!(elsewhere.status_code(), 409);
+        assert_eq!(elsewhere.status_code(), 422);
+
+        // ---- a key is one value of 1 to 255 visible ASCII characters, never trimmed or cut
+        for bad_key in ["has space", &"k".repeat(256)] {
+            let r = request
+                .post("/api/plans")
+                .add_header("Idempotency-Key", bad_key)
+                .json(&json!({ "kind": "Project", "name": "Badly keyed plan" }))
+                .await;
+            assert_eq!(r.status_code(), 400, "{bad_key}");
+            assert_eq!(r.json::<Value>()["code"], "idempotency_key_invalid");
+        }
+        assert_eq!(count_named(&request, "Badly keyed plan").await, 0);
 
         // ---- a refused request releases its key, so the corrected request runs
         let bad = request
@@ -130,7 +142,7 @@ async fn a_retried_post_returns_the_first_answer_and_writes_once() {
             .add_header("Idempotency-Key", "key-3")
             .json(&huge)
             .await;
-        assert_eq!(refused.status_code(), 422);
+        assert_eq!(refused.status_code(), 413);
         assert_eq!(
             refused.json::<Value>()["code"],
             "idempotency_body_too_large"

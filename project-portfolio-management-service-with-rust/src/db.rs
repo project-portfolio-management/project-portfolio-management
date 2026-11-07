@@ -57,6 +57,14 @@ pub fn pool(ctx: &AppContext) -> Counted<&PgPool> {
     Counted(ctx.db.get_postgres_connection_pool())
 }
 
+/// The shared pool, **uncounted**, for an `axa` crate that runs statements of its own and takes a [`PgPool`]
+/// (`axa-idempotency`). Those statements are not seen by the query-count guards; nothing in this crate may use
+/// this to run its own.
+#[must_use]
+pub fn for_axa_crate(db: &sea_orm::DatabaseConnection) -> PgPool {
+    db.get_postgres_connection_pool().clone()
+}
+
 /// An open transaction. Dropped without [`Tx::commit`], it rolls back.
 #[derive(Debug)]
 pub struct Tx(sqlx::Transaction<'static, Postgres>);

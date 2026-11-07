@@ -256,18 +256,25 @@ schedulers* (`pack_rhythm::run_due`), which run with no caller at all. The only 
 `GET /api/me/tasks` and the notification digest, which already take the caller's zone (`?tz=`).
 No default was moved. A report that wants a person's own day passes `from`/`to` explicitly.
 
-- **NFR-7 — Retry-safe writes (BR-1).** A `POST` may carry `Idempotency-Key: <opaque, up to 200 characters>`. The
-  same key with the same request (method, path, query, body) returns the **first answer** again (its status and body;
-  header `Idempotent-Replayed: true`) and writes nothing a second time. The same key with a different request is
-  `409` `idempotency_key_reused`; the same key while the first request is still running is `409`
-  `idempotency_in_progress` with `Retry-After: 1`. Keys are **per caller** (the token's subject; callers with no token
-  share one namespace, which only matters when enforcement is off). The layer sits inside the authentication,
-  guest and privacy guards, so a replay is decided only for a caller those guards let through. Only a `2xx` answer is
-  kept; a refusal or failure releases the key so the corrected request can run. A key is kept one day (retention rule
-  `idempotency_keys`, class `GEN`) and a run that died holding it is taken over after five minutes. Request and answer
-  bodies up to 1 MiB are supported: a larger request with a key is `422` `idempotency_body_too_large`, a larger answer
-  is returned and not kept. `POST /api/plans/import` keeps its own key semantics (it returns the original job). If the
-  store cannot be reached the request is **not run** (`503` `idempotency_unavailable`), never run unprotected.
-  Not built: a required key (it is optional everywhere); keys on `PUT`, `PATCH` and `DELETE` (already safe to repeat);
-  a per-key lock held across the whole run (the claim is a row, so it survives a restart but not a deadline).
+- **NFR-7 — Retry-safe writes (BR-1).** A `POST` may carry `Idempotency-Key: <1 to 255 visible ASCII characters>`,
+  kept by `axa-idempotency` in the table `axa_idempotency`. The same key with the same request (method, path, query,
+  body) returns the **first answer** again (its status, body and the headers `Content-Type`, `Location`, `ETag`,
+  `Link`, `Cache-Control`, `Content-Disposition`, `Content-Language` and `Last-Modified`; header
+  `Idempotent-Replayed: true`) and writes nothing a second time. A key that is blank, has a space or another invisible
+  character, is over 255 bytes or is sent twice is `400` `idempotency_key_invalid`: a key is never trimmed or cut, as
+  two keys cut to one would share an answer. The same key with a different request is `422` `idempotency_key_reused`;
+  the same key while the first request is still running is `409` `idempotency_in_progress` with `Retry-After: 1`.
+  Keys are **per caller** (the token's subject; with enforcement off, requests with no token are `anonymous` and share
+  one namespace; with it on, a request with a key and no caller is `401` `idempotency_no_caller` and is not run). The
+  layer sits inside the authentication, guest and privacy guards, so a replay is decided only for a caller those
+  guards let through. A `2xx` or `3xx` answer is kept; a `4xx` or `5xx` releases the key so the corrected request can
+  run. An answer that ran and could not be kept (over 1 MiB, or a stream) reaches its caller, and a retry under its key
+  is `409` `idempotency_answer_not_kept` rather than a second run. A key is kept one day (retention rule
+  `idempotency_keys`, class `GEN`). A running request renews its claim every 20 seconds; one not renewed for a minute
+  (a crash) may be taken over by the same request. A request body over 1 MiB with a key is `413`
+  `idempotency_body_too_large`. `POST /api/plans/import` keeps its own key semantics (it returns the original job). If
+  the store cannot be reached the request is **not run** (`503` `idempotency_unavailable`), never run unprotected.
+  The answer is stored after the handler commits, in a separate transaction, so a crash between the two runs the
+  request again on the retry. Not built: a required key (it is optional everywhere); keys on `PUT`, `PATCH` and
+  `DELETE` (already safe to repeat).
 

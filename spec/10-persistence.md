@@ -98,10 +98,11 @@ mutation (§10.2).
   `link_pid` together); migration `m20261025_000094`.
 - **`meeting_tasks`** (built, FR-16e13) — which task came from which outcome (`meeting_pid`, `outcome_no`, `task_pid`);
   `UNIQUE (meeting_pid, outcome_no)` so an outcome has at most one task; no personal data; migration `m20261025_000096`.
-- **`idempotency_keys`** (built, NFR-7) — `caller`, `key` (unique together), `method`, `path`, `request_hash`,
-  `state` (`in_progress`, `done` by CHECK), and for a kept answer `status`, `content_type`, `body`; purged after one day
-  (class `GEN`); migration `m20261025_000095`. The stored body is the answer as sent, so it may hold personal data
-  for as long as the key lives.
+- **`axa_idempotency`** (built, NFR-7) — made by `axa-idempotency`'s own setup statements (migration
+  `m20261107_000107`, which also drops the earlier `idempotency_keys` of `m20261025_000095`): `caller`, `key` (the
+  primary key together), `fingerprint` (a hash of the request), `claim`, `state` (`running`, `done`, `not_kept` by
+  CHECK), `lease_until`, `expires_at`, and for a kept answer `status`, `headers`, `body`; purged after one day (class
+  `GEN`). The stored body is the answer as sent, so it may hold personal data for as long as the key lives.
 - **`scheduled_job_runs`** (built, FR-16e8) — `pid`, `job`, `started_at`, `finished_at?`, `outcome` (`running`, `ok`, `failed` by CHECK), `detail?`; one row per run of a job the service schedules for itself; migration `m20261025_000092`.
 - **`lessons`** (built, FR-16e4) — `pid`, `plan_pid`, `occasion` (a gate or `closure`), `category` (`went_well`,
   `went_badly`, `recommendation`, by CHECK), `summary`, `detail?`, `recorded_by?`, `deleted_at?` (a withdrawal);

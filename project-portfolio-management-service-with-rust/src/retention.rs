@@ -71,9 +71,9 @@ pub const RULES: &[Rule] = &[
     Rule {
         name: "idempotency_keys",
         class: "GEN",
-        table: "idempotency_keys",
+        table: "axa_idempotency",
         age_column: "created_at",
-        also: "",
+        also: "lease_until <= now()",
         default_days: 1,
         basis: "a retry with the same key comes within minutes; one day is ample (NFR on idempotency)",
     },

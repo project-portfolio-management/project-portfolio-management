@@ -589,6 +589,7 @@ dependencies = [
  "async-trait",
  "axa-cursor-pagination",
  "axa-environment",
+ "axa-idempotency",
  "axa-openapi",
  "axa-outbox",
  "axa-problem",
@@ -630,6 +631,22 @@ name = "axa-environment"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aeb36293430bafb06d1e29f5e213623d127444cdd234003b413a46207c03bbd3"
+
+[[package]]
+name = "axa-idempotency"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be22a42e059963b0d513a968a0ffeef5dd9cd17a7b34026c69ebef9601a46cbf"
+dependencies = [
+ "axa-problem",
+ "axum",
+ "serde_json",
+ "sha2 0.11.1",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "axa-openapi"

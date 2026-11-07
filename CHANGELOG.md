@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (idempotency keys by axa-idempotency)
+
+- **`Idempotency-Key` is now kept by `axa-idempotency`** in its table `axa_idempotency`, in place of the service's own layer and `idempotency_keys` (NFR-7). Migration `m20261107_000107` makes the table with the crate's own setup statements and drops the old one; a key taken in the day before the deploy is forgotten, so a retry across it runs as a first request. The service still says what is covered (a `POST`, not the bulk import, which keeps its own key) and whose key it is (the token's subject, or `anonymous` with enforcement off), and the layer stays inside the auth, guest and privacy guards.
+- **Breaking for API clients:** a key reused on a different request is `422`, not `409`. A key with a space or other invisible character, over 255 bytes, or sent twice is `400` `idempotency_key_invalid`; before, it was trimmed and cut to 200 characters, so two keys could become one. A body over 1 MiB with a key is `413`, not `422`. An answer that ran and could not be kept (over 1 MiB, or a stream) now holds its key, and a retry is `409` `idempotency_answer_not_kept` rather than running a second time. A `3xx` is kept as well as a `2xx`, with `Location`, `ETag`, `Link` and five other headers; before, only the status, body and content type.
+- A running request now renews a one-minute claim, so a crashed run is taken over after a minute, not five, and a slow one is never taken over while it runs.
+- The crate's statements run on the shared pool through `db::for_axa_crate`, and are **not seen by the query-count guards**; the guard test still refuses raw pool access anywhere else. The retention rule `idempotency_keys` now purges `axa_idempotency` (and never a running claim); the subject-access and erasure lookup and the personal-data inventory name the new table.
+- Not done: `PUT`, `PATCH` and `DELETE` stay uncovered, as before, though the crate would cover them; nothing calls the crate's `sweep`, `forget` or `forget_caller` (retention and the erasure lookup do their work); no test makes an answer that cannot be kept, or a claim that lapses. The migration's `down` was not run.
+- Verified: fmt, clippy, 1,247 unit tests; in `mod`, the idempotency, meeting actions, bulk, retention and subjects tests; `idempotency_callers` and `personal_data_inventory`. Not rerun: the other 213 tests in `mod`, the other real-token binaries and the restore drill. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (lists page by signed cursor)
 
 - **Every list now pages by cursor, with `axa-cursor-pagination`, in place of offsets.** A list takes `?limit=` and an opaque `?cursor=`, and answers a bare JSON array with `Link: <…>; rel="next"` while more rows follow; the last page has none (FR-46, API surface §9). A cursor is signed over its position, path and filters with a new setting, `PROJECT_PORTFOLIO_MANAGEMENT_CURSOR_KEY`, so a made-up, edited or moved one is `422`.

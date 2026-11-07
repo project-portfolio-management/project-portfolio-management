@@ -496,6 +496,11 @@ impl App {
         // Blanket JWT enforcement layer. Added unconditionally; enforcement is on
         // unless explicitly turned off (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
         // or a development profile), and the layer is a near-noop then.
+        // The key store's table is the migrations'; a missing one stops the boot, not the first write.
+        let keys = crate::idempotency::keys(&ctx.db);
+        keys.check()
+            .await
+            .map_err(|error| Error::Message(format!("axa_idempotency: {error}")))?;
         Ok(router
             // Innermost, as it compares what the handler answered, before paging can take the `ETag` away.
             .layer(axum::middleware::from_fn(
@@ -510,9 +515,10 @@ impl App {
             // A retried write returns the first answer (BR-1). Inside the guards below, so a replay never
             // answers a caller they would refuse.
             .layer(axum::middleware::from_fn_with_state(
-                ctx.clone(),
-                crate::idempotency::idempotency_mw,
+                keys,
+                axa::idempotency::idempotent,
             ))
+            .layer(axum::middleware::from_fn(crate::idempotency::caller_mw))
             // A read whose visibility lookup failed answers 503, not a short 200 (CQ-6).
             .layer(axum::middleware::from_fn(
                 controllers::plan_access::lookup_fault_mw,

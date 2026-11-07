@@ -146,7 +146,7 @@ fn schema() -> BTreeMap<String, Vec<String>> {
         out.insert(name, columns);
     }
     // Tables made by a raw-SQL migration have no entity file; the columns the inventory names are listed here.
-    out.entry("idempotency_keys".to_string())
+    out.entry("axa_idempotency".to_string())
         .or_insert_with(|| vec!["caller".to_string(), "body".to_string()]);
     out
 }

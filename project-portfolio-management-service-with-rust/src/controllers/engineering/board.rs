@@ -312,11 +312,14 @@ pub const UNPAGED_TASK_CAP: u64 = 2_000;
 /// # Errors
 ///
 /// `400` when the offset exceeds [`super::super::pagination::MAX_OFFSET`].
-pub fn task_window(limit: Option<u64>, offset: Option<u64>) -> Result<axa::pagination::Page> {
+pub fn task_window(
+    limit: Option<u64>,
+    offset: Option<u64>,
+) -> Result<axa::offset_pagination::Page> {
     if limit.is_some() || offset.is_some() {
         super::super::pagination::resolve(limit, offset, 100)
     } else {
-        Ok(axa::pagination::Page {
+        Ok(axa::offset_pagination::Page {
             limit: UNPAGED_TASK_CAP,
             offset: 0,
         })

@@ -85,7 +85,8 @@ because a timeout would cut the live event streams. A `GET` whose `ETag` matches
 reads, decides both whose `X-Forwarded-For` gives the client address and whose `X-Forwarded-Proto` is believed for HSTS.
 `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`, the old name, still works alone with a warning; set to a different list, the
 service refuses to start. An idle connection is kept for `KEEP_ALIVE_TIMEOUT_SECONDS`, 75
-by default, so a load balancer that keeps idle connections longer needs a higher value.
+by default, so a load balancer that keeps idle connections longer needs a higher value. A client that stops reading a
+response is dropped after `SEND_STALL_TIMEOUT_SECONDS`, 60 by default; any write that goes through restarts it.
 
 Every error is an RFC 9457 problem, `application/problem+json`: `type`, `title` and `status`, `detail` where there is more to say,
 and the machine-readable `code` (such as `not_found`, `forbidden` or `idempotency_key_reused`), with `errors` for a validation
@@ -93,7 +94,7 @@ failure. A `500` carries no `detail`. Successes stay bare JSON. A body, path or 
 (a body's media type `415`, its shape `422`) whose `detail` says which part was wrong and quotes nothing the caller sent: handlers
 take `axa::extract`'s `Json`, `Path` and `Query` through `crate::prelude`, and a census test keeps Axum's out. The service's own refusals (login, policy, idempotency, paging)
 are problems too, and a guest's `404` is byte for byte the one a missing record answers. A violated unique or foreign key that
-no handler maps answers `409`.
+no handler maps answers `409`, and a violated check or not-null constraint `422` (`unprocessable_entity`), naming no column or value.
 
 `db down`, `db reset` and `db truncate` destroy data, so they refuse to run unless `APP_ENV` is `development` or `test` **and**
 `AXA_DESTROY_DATA=true` is set. No other environment can run them, whatever is set, and `--environment` cannot lift this: both

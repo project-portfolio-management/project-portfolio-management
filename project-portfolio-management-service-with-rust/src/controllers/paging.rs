@@ -123,6 +123,6 @@ pub async fn paging_mw(req: Request, next: Next) -> Response {
     }
     parts
         .headers
-        .extend(axa::pagination::Page { limit, offset }.headers(total));
+        .extend(axa::offset_pagination::Page { limit, offset }.headers(total));
     Response::from_parts(parts, Body::from(body))
 }

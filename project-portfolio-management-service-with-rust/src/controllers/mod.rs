@@ -318,7 +318,7 @@ pub fn conditional_json<T: serde::Serialize>(
 /// runs, the deadline queue, delegations, approvals, …) shares one
 /// implementation instead of five copies drifting apart.
 pub mod pagination {
-    use axa::pagination::{Limits, Page, PageParams};
+    use axa::offset_pagination::{Limits, Page, PageParams};
 
     /// Largest page any collection read will serve; a bigger `limit` is
     /// clamped rather than refused.

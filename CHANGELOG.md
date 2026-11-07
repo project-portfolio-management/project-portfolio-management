@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (axa 0.7)
+
+- axa 0.7.0 and `axa-ratelimit` 0.2.0. Paging now uses the `offset-pagination` feature and `axa::offset_pagination`, the new names for `axa-pagination`, which is superseded. The old names still worked but will go.
+- New from axa, with no code here: a client that stops reading a response is dropped after `SEND_STALL_TIMEOUT_SECONDS` (60 s). Since 0.6.2, a violated check or not-null constraint answers `422` `unprocessable_entity`, not `500`, naming no column or value. axa's stack now also answers `304` to a matching `If-None-Match`, which the service's own `conditional_json` already did, so the service's comparison is now redundant but kept. CORS would expose `etag`, but CORS here is `http_security`'s, which already does. The queue's new columns and `axa_schedule` table are made by `Queue::connect`, which this service uses, so no migration is needed.
+- Not taken up: `axa-ratelimit` 0.2's `by_key`, `WhenFull`, `first_refusal` and per-key overrides; `axa-worker`'s schedules (the six tasks keep their own timers); `axa-idempotency` and `axa-outbox` (the service keeps its own); `conditional::etag`. Not tested here: the stall timeout and the `422` for a check constraint, which are axa's and have no test in this repository.
+- Verified: fmt, clippy, 1,240 unit tests and the 215 database tests in `mod` pass. Not rerun: the 57 other real-token test binaries. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (tasks decided on for production)
 
 - axa 0.6's `Task::development_only` makes `task <name>` refuse a fixture-loading task outside development and test, as `db reset` is refused. None of the six tasks here loads fixtures: `director_pack_schedule`, `exception_breaches`, `exceptions_digest`, `retention_purge`, `search_reindex` and `tolerance_escalations` all run against real data on a schedule. So none is marked, and a new test lists each one as decided for production. A task added or removed fails it until someone decides whether it is development-only.

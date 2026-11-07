@@ -18,17 +18,16 @@
   let items = $state<PlanRef[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
-  // Rows matching overall, from `X-Total-Count` — not `items.length`,
-  // which is only this page. Shown so an operator can tell a short list
-  // from a first page of a long one (agents/share/restful.md), matching
-  // the organization front-end's `/organizations` list convention.
-  let total = $state(0);
+  // Whether more plans follow this page (the service's `Link: rel="next"`).
+  // Shown so an operator can tell a short list from a first page of a long
+  // one (agents/restful.md).
+  let more = $state(false);
 
   onMount(async () => {
     try {
       const page = await repo.listPage();
       items = page.items;
-      total = page.total;
+      more = page.more;
     } catch (err) {
       error = errorText(err, "list.loadFailed");
     } finally {
@@ -59,15 +58,15 @@
   <p class="surface">{t("list.empty")} <a href={localeHref("/plans/new")}>{t("list.createOne")}</a>.</p>
 {:else}
   <p class="count">
-    {items.length === total ? `${total}` : `${items.length} / ${total}`}
+    {`${items.length}${more ? "+" : ""}`}
   </p>
   <DataTable label={t("list.title")} {columns} rows={items} rowId={(r) => String(r.pid)} searchable pageSize={100} />
 {/if}
 
 <style>
-  /* The row count: just the total when the page holds everything, and "shown / total" when it does not, so a
-     first page of a long list cannot be mistaken for a short list (same convention as the organization
-     service's front-end /organizations list route). */
+  /* The row count: the rows shown, with a "+" when more follow, so a first page of a long list cannot be
+     mistaken for a short list. There is no total: the service sends none, as it would count rows the caller may
+     not see. */
   .count {
     margin: 0 0 0.5rem;
     opacity: 0.75;

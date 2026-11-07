@@ -14,7 +14,7 @@ const PLANS = [
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/proxy/api/plans*", (r) =>
-    r.fulfill({ json: PLANS, headers: { "x-total-count": "2" } }),
+    r.fulfill({ json: PLANS }),
   );
 });
 
@@ -172,7 +172,6 @@ test.describe("the tour", () => {
     await page.route("**/api/proxy/api/plans*", (r) =>
       r.fulfill({
         json: [{ pid: "p2", name: "Signalling Renewal" }],
-        headers: { "x-total-count": "1" },
       }),
     );
     await page.goto("/en-001/demo", { waitUntil: "networkidle" });

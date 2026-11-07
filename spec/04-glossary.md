@@ -52,7 +52,7 @@ Entity-level terms. Per-subproject vocabularies: service
 | **Cross-plan task link** | A dependency between tasks of two plans (`plan_dependencies`); float is computed across it, and a plan the caller cannot read appears only as a restricted edge (FR-44) |
 | **Private plan** | A plan visible only to named members; `404` to everyone else, and excluded from every aggregate through `HiddenScope` (FR-45) |
 | **HiddenScope** | The one shared query of the private plans (and their tasks) a caller may not see, applied to every cross-plan aggregate (FR-45) |
-| **Paging headers** | `X-Total-Count`, `X-Limit`, `X-Offset` on every bare-array list; `limit` default and ceiling 500, `offset` ceiling 10 000 (FR-46) |
+| **Paging** | Every bare-array list takes `?limit=` (1 to 500, 500 when absent) and a signed `?cursor=`, and answers `Link: <…>; rel="next"` while more rows follow; no total, no offset (FR-46) |
 | **`include`** | Query parameter on `GET …/tasks/{t_pid}` embedding sub-resources (`children`, `relations`, `transitions`, `raci`, `time_entries`) (FR-46) |
 | **Cooperative cancel** | A bulk job asked to stop ends `cancelled` after the row it is on, keeping rows already processed (FR-47) |
 | **Process** | A versioned, ordered list of up to 20 steps (`approve`, `todo`, `notify`); each edit is a new immutable version (FR-48) |

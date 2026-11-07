@@ -111,10 +111,10 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   `observability::trace_mw` (outermost; its span wraps auth failures and
   `429`s). See spec NFR-12 to NFR-14.
 - **Paging** (`controllers/paging.rs`): any `GET` answering `200` with a
-  bare JSON array is a list: `?limit=` (default and ceiling 500),
-  `?offset=` (> 10 000 is `400`), headers `X-Total-Count`/`X-Limit`/
-  `X-Offset`; body stays the bare array. Handlers that page in the
-  database and set `X-Total-Count` themselves are left alone; the rest are
+  bare JSON array is a list: `?limit=` (1 to 500, else `422`) and a signed
+  `?cursor=`, with `Link: rel="next"` while more follow and no total;
+  `?offset=` is `400`; body stays the bare array. Handlers that page in the
+  database (`pagination::Cursor`, `Page::respond`) are left alone; the rest are
   sliced by the layer. `openapi::PAGED_LISTS` is the census of such lists;
   `tests/list_paging.rs` walks every documented `GET` and fails if a list is
   not in the census (or an unreachable `GET` is not named in `UNREACHED`

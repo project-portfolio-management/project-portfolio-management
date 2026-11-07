@@ -25,7 +25,7 @@
 
 use super::{db_err, unprocessable};
 use crate::prelude::*;
-use sea_orm::{Condition, PaginatorTrait, QueryOrder, QuerySelect};
+use sea_orm::{Condition, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -39,9 +39,8 @@ use crate::models::capabilities as cap_models;
 use crate::validation::MAX_TEXT_LEN;
 
 /// Default page size for every list endpoint here — the cap each one
-/// applied before `?limit=`/`?offset=` pagination (agents/share/restful.md)
-/// landed; a bigger `limit` clamps rather than errors
-/// ([`super::pagination::MAX_LIMIT`]).
+/// applied before paging (agents/restful.md) landed; a `limit` above
+/// [`super::pagination::MAX_LIMIT`] is a `422`.
 pub const LIST_CAP: u64 = 200;
 
 /// Highest number of due actions one sweep will fire. A bounded sweep
@@ -171,32 +170,26 @@ pub(crate) struct AutomationParams {
     /// `true` ⇒ only enabled rules.
     #[serde(default)]
     enabled: Option<bool>,
-    /// Page size; absent ⇒ [`LIST_CAP`]. Declared inline rather than
-    /// `#[serde(flatten)]`-ing [`Page`] in — see that type's docs.
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip; absent ⇒ 0.
-    #[serde(default)]
-    offset: Option<u64>,
 }
 
-/// `GET /api/automations?plan=&trigger=&enabled=&limit=&offset=` — the
-/// configured rules, oldest first. Paginated (agents/share/restful.md):
-/// `X-Total-Count`/`X-Limit`/`X-Offset` on the response.
+/// `GET /api/automations?plan=&trigger=&enabled=&limit=&cursor=` — the
+/// configured rules, oldest first. Paged by cursor (agents/restful.md):
+/// `Link: rel="next"` while more rows follow, and no total.
 ///
 /// # Errors
 ///
-/// `400` when `offset` exceeds [`super::pagination::MAX_OFFSET`]; a DB
+/// `422` for a bad `limit` or `cursor`, and `400` for a cursor past [`super::pagination::MAX_OFFSET`]; a DB
 /// error when the query fails.
 #[debug_handler]
 async fn list_automations(
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
     Query(params): Query<AutomationParams>,
 ) -> Result<Response> {
     use crate::models::_entities::automations;
-    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
-    let (limit, offset) = (page.limit, page.offset);
+    let page = cursor.page(LIST_CAP)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     let mut query = automations::Entity::find().filter(automations::Column::DeletedAt.is_null());
     let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
@@ -217,7 +210,6 @@ async fn list_automations(
     if let Some(enabled) = params.enabled {
         query = query.filter(automations::Column::Enabled.eq(enabled));
     }
-    let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
     let rows = query
         .order_by_asc(automations::Column::Id)
         .offset(offset)
@@ -225,7 +217,7 @@ async fn list_automations(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
+    Ok(page.respond(rows))
 }
 
 /// Flip one rule's `enabled` flag.
@@ -317,32 +309,26 @@ pub(crate) struct RunParams {
     /// Only runs with this outcome, such as `applied`, `skipped` or `failed`.
     #[serde(default)]
     outcome: Option<String>,
-    /// Page size; absent ⇒ [`LIST_CAP`].
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip; absent ⇒ 0.
-    #[serde(default)]
-    offset: Option<u64>,
 }
 
-/// `GET /api/automations/runs?automation=&subject=&outcome=&limit=&offset=`
-/// — what the automations actually did, newest first. Paginated
-/// (agents/share/restful.md): `X-Total-Count`/`X-Limit`/`X-Offset` on
-/// the response.
+/// `GET /api/automations/runs?automation=&subject=&outcome=&limit=&cursor=`
+/// — what the automations actually did, newest first. Paged by cursor (agents/restful.md):
+/// `Link: rel="next"` while more rows follow, and no total.
 ///
 /// # Errors
 ///
-/// `400` when `offset` exceeds [`super::pagination::MAX_OFFSET`]; a DB
+/// `422` for a bad `limit` or `cursor`, and `400` for a cursor past [`super::pagination::MAX_OFFSET`]; a DB
 /// error when the query fails.
 #[debug_handler]
 async fn list_runs(
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
     Query(params): Query<RunParams>,
 ) -> Result<Response> {
     use crate::models::_entities::automation_runs;
-    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
-    let (limit, offset) = (page.limit, page.offset);
+    let page = cursor.page(LIST_CAP)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     let mut query = automation_runs::Entity::find();
     // A rule on every plan runs on hidden plans too, so the subject counts as well as the rule.
     let owned = hidden_pids(&ctx, &caller).await?;
@@ -360,7 +346,6 @@ async fn list_runs(
     if let Some(outcome) = params.outcome.as_deref() {
         query = query.filter(automation_runs::Column::Outcome.eq(outcome));
     }
-    let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
     let rows = query
         .order_by_desc(automation_runs::Column::Id)
         .offset(offset)
@@ -368,7 +353,7 @@ async fn list_runs(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
+    Ok(page.respond(rows))
 }
 
 /// Read a non-blank string field from an action's stored value.
@@ -1224,32 +1209,26 @@ pub(crate) struct ScheduledParams {
     /// `true` ⇒ only rows already past their deadline.
     #[serde(default)]
     overdue: Option<bool>,
-    /// Page size; absent ⇒ [`LIST_CAP`].
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip; absent ⇒ 0.
-    #[serde(default)]
-    offset: Option<u64>,
 }
 
-/// `GET /api/scheduled-actions?status=&subject=&overdue=&limit=&offset=`
-/// — the deadline queue, soonest first. Paginated
-/// (agents/share/restful.md): `X-Total-Count`/`X-Limit`/`X-Offset` on
-/// the response; the soonest-first order holds across pages, so page 2
+/// `GET /api/scheduled-actions?status=&subject=&overdue=&limit=&cursor=`
+/// — the deadline queue, soonest first. Paged by cursor (agents/restful.md):
+/// `Link: rel="next"` while more rows follow, and no total; the soonest-first order holds across pages, so page 2
 /// picks up exactly where page 1 left off.
 ///
 /// # Errors
 ///
-/// `400` when `offset` exceeds [`super::pagination::MAX_OFFSET`]; a DB
+/// `422` for a bad `limit` or `cursor`, and `400` for a cursor past [`super::pagination::MAX_OFFSET`]; a DB
 /// error when the query fails.
 #[debug_handler]
 async fn list_scheduled_actions(
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
     Query(params): Query<ScheduledParams>,
 ) -> Result<Response> {
-    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
-    let (limit, offset) = (page.limit, page.offset);
+    let page = cursor.page(LIST_CAP)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     let mut query =
         scheduled_actions::Entity::find().filter(scheduled_actions::Column::DeletedAt.is_null());
     let owned = hidden_pids(&ctx, &caller).await?;
@@ -1268,15 +1247,16 @@ async fn list_scheduled_actions(
             .filter(scheduled_actions::Column::Status.eq("pending"))
             .filter(scheduled_actions::Column::DueAt.lte(now));
     }
-    let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
     let rows = query
         .order_by_asc(scheduled_actions::Column::DueAt)
+        // A unique last key, so two actions due at the same instant keep their order between pages.
+        .order_by_asc(scheduled_actions::Column::Id)
         .offset(offset)
         .limit(limit)
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
+    Ok(page.respond(rows))
 }
 
 /// `DELETE /api/scheduled-actions/{pid}` — cancel a pending deadline.

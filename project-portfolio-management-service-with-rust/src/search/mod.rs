@@ -386,9 +386,9 @@ impl SearchEngine {
     /// One page of hits **plus the true total**: `(pids, total)`.
     ///
     /// The total comes from Tantivy's `Count` collector rather than the
-    /// page length, because a page can never tell a caller how much
-    /// there is — which is the whole point of `X-Total-Count`
-    /// (`agents/share/restful.md`). `mode` picks the same three
+    /// page length. No endpoint reports it any more: lists page by cursor
+    /// with no total, which would count plans the caller may not see
+    /// (`agents/restful.md`). `mode` picks the same three
     /// retrieval routes the un-paged methods expose; `kind_filter`, when
     /// set, additionally requires the exact (lowercased) `kind` label —
     /// an opt-in narrowing the caller requests, not a gate the service
@@ -871,8 +871,7 @@ mod tests {
         assert_eq!(hits, vec![pid.to_string()]);
     }
 
-    /// A page reports the **whole** match count, not the page length —
-    /// the number `X-Total-Count` carries.
+    /// A page reports the **whole** match count, not the page length.
     #[test]
     fn search_page_reports_the_total_not_the_page() {
         let (engine, _dir) = engine_in_temp();

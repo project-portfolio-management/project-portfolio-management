@@ -187,11 +187,9 @@ async fn whoami_requires_a_token() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL"]
-// Pins pagination on the plan collection reads: `limit`/`offset` window
-// the rows, `X-Total-Count` reports the whole match set, the limit
-// clamps, and an out-of-bound offset is a 400. The parent scope applies
-// to the count as well as the page, so a child listing's total describes
-// the children rather than every plan.
+// Pins paging on the plan collection reads: signed next links walk every
+// plan once, there is no total, a bad limit, cursor or offset is refused,
+// and a cursor cannot be carried from the list to a search.
 async fn list_and_search_are_paginated() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -201,39 +199,23 @@ async fn list_and_search_are_paginated() {
                 .json(&json!({"name": format!("Paging Plan {i}")}))
                 .await;
         }
-        macro_rules! header {
-            ($r:expr, $name:expr) => {
-                $r.headers()
-                    .get($name)
-                    .and_then(|v| v.to_str().ok())
-                    .unwrap_or_default()
-                    .to_string()
-            };
-        }
-
-        let page = request.get("/api/plans?limit=2&offset=1").await;
-        assert_eq!(page.status_code(), 200);
-        assert_eq!(page.json::<Value>().as_array().expect("array").len(), 2);
-        assert_eq!(header!(page, "x-total-count"), "5");
-        assert_eq!(header!(page, "x-limit"), "2");
-        assert_eq!(header!(page, "x-offset"), "1");
-
-        let all = request.get("/api/plans").await;
-        assert_eq!(all.json::<Value>().as_array().expect("array").len(), 5);
-        assert_eq!(header!(all, "x-limit"), "100", "the default is the old cap");
-
-        let clamped = request.get("/api/plans?limit=100000").await;
-        assert_eq!(header!(clamped, "x-limit"), "500");
-
+        super::assert_pages(&request, "/api/plans", 5).await;
+        // Search pages the same way.
+        let (hits, pages) = super::walk(&request, "/api/plans/search?q=Paging&limit=2").await;
+        assert_eq!((hits.len(), pages), (5, 3));
+        // A cursor from the plan list does not read a search.
+        let first = request.get("/api/plans?limit=2").await;
+        let next = super::next_page(&first).expect("a next page");
+        let cursor = next.split_once("cursor=").expect("cursor").1;
         assert_eq!(
-            request.get("/api/plans?offset=10001").await.status_code(),
-            400
+            request
+                .get(&format!(
+                    "/api/plans/search?q=Paging&limit=2&cursor={cursor}"
+                ))
+                .await
+                .status_code(),
+            422
         );
-
-        let hits = request.get("/api/plans/search?q=Paging&limit=2").await;
-        assert_eq!(hits.status_code(), 200, "search page: {}", hits.text());
-        assert_eq!(hits.json::<Value>().as_array().expect("array").len(), 2);
-        assert_eq!(header!(hits, "x-total-count"), "5");
     })
     .await;
 }

@@ -1,6 +1,6 @@
 // The response headers the BFF proxy passes back to the browser (CQ-4).
 //
-// The proxy used to copy only `content-type`, so paging totals, entity tags,
+// The proxy used to copy only `content-type`, so the next-page link, entity tags,
 // retry hints, download names and the handling mark never reached the page.
 // This is an allow-list: hop-by-hop headers, `set-cookie` (the service never
 // sets the browser's cookies) and anything else unnamed stay behind, and the
@@ -16,9 +16,6 @@ export const RELAYED_RESPONSE_HEADERS = [
   "location",
   "retry-after",
   "link",
-  "x-total-count",
-  "x-limit",
-  "x-offset",
   "x-handling-mark",
   "ratelimit-limit",
   "ratelimit-remaining",

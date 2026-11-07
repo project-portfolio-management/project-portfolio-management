@@ -221,8 +221,8 @@ async fn create(
 #[debug_handler]
 async fn list(
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
-    Query(q): Query<super::paging::PageQuery>,
 ) -> Result<Response> {
     require_signed_in(&caller)?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
@@ -240,9 +240,8 @@ async fn list(
         .filter(|d| !guest || d.plan_pid.is_some())
         .collect();
     // Only the requested page is turned into views (each view reads its versions).
-    let page = super::pagination::resolve(q.limit, q.offset, super::pagination::MAX_LIMIT)?;
-    let (limit, offset) = (page.limit, page.offset);
-    let total = rows.len() as u64;
+    let page = cursor.page(super::pagination::MAX_LIMIT)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     let mut out = Vec::new();
     for d in rows
         .iter()
@@ -251,7 +250,7 @@ async fn list(
     {
         out.push(doc_view(&ctx, d).await?);
     }
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), out))
+    Ok(page.respond(out))
 }
 
 /// `GET /api/documents/{pid}` — a document and its versions (without their text).

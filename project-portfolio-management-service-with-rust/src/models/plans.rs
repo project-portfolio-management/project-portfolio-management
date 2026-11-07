@@ -155,11 +155,6 @@ impl Model {
     /// One page of active plans (most-recent first), optionally scoped to
     /// a parent's direct children.
     ///
-    /// The parent filter and the page window live in one query so that
-    /// [`count_for`](Self::count_for) can mirror it exactly: a total that
-    /// counted a different predicate from the page would be worse than no
-    /// total at all.
-    ///
     /// # Errors
     ///
     /// When `parent` is not a UUID, or the query fails.
@@ -181,22 +176,6 @@ impl Model {
             .all(db)
             .await?;
         Ok(rows)
-    }
-
-    /// How many active plans match the same scope
-    /// [`list_paged`](Self::list_paged) would page over, ignoring the
-    /// window — the `X-Total-Count` a paged response reports.
-    ///
-    /// # Errors
-    ///
-    /// When `parent` is not a UUID, or the query fails.
-    pub async fn count_for(db: &DatabaseConnection, parent: Option<&str>) -> ModelResult<u64> {
-        let mut query = plans::Entity::find().filter(plans::Column::DeletedAt.is_null());
-        if let Some(parent) = parent {
-            let parent_uuid = Uuid::parse_str(parent).map_err(|e| ModelError::Any(e.into()))?;
-            query = query.filter(plans::Column::ParentPid.eq(parent_uuid));
-        }
-        Ok(query.count(db).await?)
     }
 
     /// List active child plans whose denormalized `parent_pid` equals

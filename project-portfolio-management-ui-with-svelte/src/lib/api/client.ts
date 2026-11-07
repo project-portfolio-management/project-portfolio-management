@@ -82,24 +82,33 @@ export class ApiError extends Error {
   }
 }
 
-/** A `limit` / `offset` window to request. */
+/** The page size to ask for. The rest of a list is read by following {@link Page.next}. */
 export interface PageRequest {
-  /** Page size; omitted ⇒ the service default. */
+  /** Page size; omitted ⇒ the service default. Above the service's ceiling is a `422`, not clamped. */
   limit?: number;
-  /** Rows to skip; omitted ⇒ 0. */
-  offset?: number;
 }
 
-/** One page of a collection plus the window the service applied. */
+/**
+ * One page of a collection. There is no total: the service sends none, because it would count rows the caller may
+ * not see (FR-46). `more` says whether rows follow, and `next` is the path of the next page, with its signed cursor.
+ */
 export interface Page<T> {
   /** The rows in this page. */
   items: T[];
-  /** Rows matching the query overall, ignoring the window. */
-  total: number;
-  /** The page size the service applied (it may have clamped yours). */
-  limit: number;
-  /** The offset the service applied. */
-  offset: number;
+  /** Whether more rows follow this page. */
+  more: boolean;
+  /** The next page's path, from `Link: <…>; rel="next"`, to pass back to {@link ApiClient.getPage}; null on the last. */
+  next: string | null;
+}
+
+/** The URL in a `Link: <url>; rel="next"` header, or null. */
+export function nextLink(link: string | null): string | null {
+  if (link === null) return null;
+  for (const part of link.split(",")) {
+    const match = /^\s*<([^>]*)>\s*;\s*rel="?next"?\s*$/.exec(part);
+    if (match) return match[1] ?? null;
+  }
+  return null;
 }
 
 /**
@@ -184,13 +193,11 @@ export class ApiClient {
    * @throws {ApiError} on any non-2xx response.
    */
   /**
-   * `GET` one page of a collection, returning the body **and** the
-   * pagination headers the service sends (`agents/share/restful.md`).
+   * `GET` one page of a collection, returning the body **and** whether more follow (`agents/restful.md`).
    *
-   * The plain {@link get} discards response headers, which is fine for a
-   * single record and useless for a collection: the total lives in
-   * `X-Total-Count`, deliberately, so that adding it did not change the
-   * array body every existing caller already parses.
+   * The plain {@link get} discards response headers, which is fine for a single record and useless for a
+   * collection: the next page lives in the `Link` header, so that the body stays the array every existing caller
+   * already parses. Pass a page's {@link Page.next} back as `path` to read the next one.
    */
   async getPage<T>(
     path: string,
@@ -199,28 +206,14 @@ export class ApiClient {
   ): Promise<Page<T>> {
     const query = new URLSearchParams();
     if (page.limit !== undefined) query.set("limit", String(page.limit));
-    if (page.offset !== undefined) query.set("offset", String(page.offset));
     const suffix = query.toString();
     const { data, response } = await this.requestWithResponse<T[]>(
       "GET",
       suffix ? `${path}${path.includes("?") ? "&" : "?"}${suffix}` : path,
       opts,
     );
-    const header = (name: string): number | undefined => {
-      const raw = response.headers.get(name);
-      if (raw === null) return undefined;
-      const value = Number(raw);
-      return Number.isFinite(value) ? value : undefined;
-    };
-    const items = data ?? [];
-    return {
-      items,
-      // A service that predates the headers still works: the page length
-      // is the honest fallback.
-      total: header("x-total-count") ?? items.length,
-      limit: header("x-limit") ?? page.limit ?? items.length,
-      offset: header("x-offset") ?? page.offset ?? 0,
-    };
+    const next = nextLink(response.headers.get("link"));
+    return { items: data ?? [], more: next !== null, next };
   }
 
   private async request<T>(

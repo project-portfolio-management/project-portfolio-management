@@ -481,8 +481,8 @@ short-lived PASETO server-side when forwarding to the service — no token
 is read or attached in browser JS. On the way back it relays the status, the
 body and an allow-list of response headers (`src/lib/server/proxy-headers.ts`,
 CQ-4): `content-type`, `content-disposition`, `cache-control`, `etag`,
-`last-modified`, `location`, `retry-after`, `link`, the paging headers
-`x-total-count` / `x-limit` / `x-offset`, `x-handling-mark` and the
+`last-modified`, `location`, `retry-after`, `link` (which carries a list's
+next page), `x-handling-mark` and the
 `ratelimit-*` trio; never `set-cookie` or a hop-by-hop header. Before
 forwarding it refuses (403) a state-changing request whose `Origin` is not the
 app's, or whose `Sec-Fetch-Site` names another site, drops a browser-supplied

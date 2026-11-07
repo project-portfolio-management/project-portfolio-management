@@ -29,12 +29,12 @@
   let automations = $state<Automation[]>([]);
   let runs = $state<AutomationRun[]>([]);
   let scheduled = $state<ScheduledAction[]>([]);
-  // Rows matching overall, from `X-Total-Count` — not `<list>.length`,
-  // which is only this page. Shown so an operator can tell a short list
-  // from a first page of a long one (agents/share/restful.md).
-  let automationsTotal = $state(0);
-  let runsTotal = $state(0);
-  let scheduledTotal = $state(0);
+  // Whether more rows follow each first page (the service's `Link:
+  // rel="next"`). Shown so an operator can tell a short list from a first
+  // page of a long one (agents/restful.md).
+  let automationsMore = $state(false);
+  let runsMore = $state(false);
+  let scheduledMore = $state(false);
   let error = $state<string | null>(null);
   let notice = $state<string | null>(null);
 
@@ -86,11 +86,11 @@
         api.listScheduledPage({ status: "pending" }),
       ]);
       automations = automationsPage.items;
-      automationsTotal = automationsPage.total;
+      automationsMore = automationsPage.more;
       runs = runsPage.items;
-      runsTotal = runsPage.total;
+      runsMore = runsPage.more;
       scheduled = scheduledPage.items;
-      scheduledTotal = scheduledPage.total;
+      scheduledMore = scheduledPage.more;
       error = null;
     } catch (err) {
       error = errorText(err, "p.automations.could_not_load_automations");
@@ -269,9 +269,7 @@
 <h2>{t("p.automations.rules")}</h2>
 {#if automations.length > 0}
   <p class="count">
-    {automations.length === automationsTotal
-      ? `${automationsTotal}`
-      : `${automations.length} / ${automationsTotal}`}
+    {`${automations.length}${automationsMore ? "+" : ""}`}
   </p>
 {/if}
 <DataTable label={t("p.automations.name_2")} columns={ruleColumns} rows={automations} rowId={(r) => String(r.pid)} />
@@ -286,9 +284,7 @@
 </div>
 {#if scheduled.length > 0}
   <p class="count">
-    {scheduled.length === scheduledTotal
-      ? `${scheduledTotal}`
-      : `${scheduled.length} / ${scheduledTotal}`}
+    {`${scheduled.length}${scheduledMore ? "+" : ""}`}
   </p>
 {/if}
 <DataTable label={t("p.automations.subject")} columns={scheduledColumns} rows={scheduled} rowId={(r) => String(r.pid)} />
@@ -297,7 +293,7 @@
 <h2>{t("p.automations.runs")}</h2>
 {#if runs.length > 0}
   <p class="count">
-    {runs.length === runsTotal ? `${runsTotal}` : `${runs.length} / ${runsTotal}`}
+    {`${runs.length}${runsMore ? "+" : ""}`}
   </p>
 {/if}
 <DataTable label={t("p.automations.when")} columns={runColumns} rows={runs} rowId={(r) => String(r.pid)} pageSize={50} searchable />
@@ -313,10 +309,9 @@
   }
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.8rem 0; }
 
-  /* The row count: just the total when the page holds everything, and
-     "shown / total" when it does not, so a first page of a long list
-     cannot be mistaken for a short list (same convention as the
-     organization service's front-end /organizations list route). */
+  /* The row count: the rows shown, with a "+" when more follow, so a first page of a long list cannot be
+     mistaken for a short list. There is no total: the service sends none, as it would count rows the caller may
+     not see. */
   .count {
     margin: 0 0 0.3rem;
     opacity: 0.75;

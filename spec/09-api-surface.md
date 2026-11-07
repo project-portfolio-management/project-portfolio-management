@@ -283,15 +283,24 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
   `GET` is open to anyone signed in and answers `time_zone`, `source` (`default` or `admin`),
   `updated_by`, `updated_at`, `now_utc` and the `today` it gives. `PUT { time_zone }` and `DELETE`
   are `access=admin` only (`403`); a name that is not an IANA zone is `422`; both are audited.
-- **Paging** (`controllers::paging::paging_mw`). Every `GET` that
-  answers `200` with a **bare JSON array** pages the same way:
-  `?limit=` (default and ceiling **500**; a larger value is clamped),
-  `?offset=` (above **10 000** is `400`), a non-numeric value is `400`
-  (`invalid_paging`), and the response carries `X-Total-Count`,
-  `X-Limit`, `X-Offset` with the body still a bare array. Handlers that
-  page in the database (processes, executions, documents) set
-  `X-Total-Count` themselves and are left alone. Objects, streams and
-  files pass through untouched.
+- **Paging** (`controllers::paging::paging_mw`, `controllers::pagination`).
+  Every `GET` that answers `200` with a **bare JSON array** pages the same
+  way (FR-46): `?limit=` (1 to **500**, and 500 when absent; zero, a
+  non-number or more is `422`, never clamped) and an opaque, signed
+  `?cursor=`. While more rows follow the response carries
+  `Link: <…>; rel="next"`, which names the next page with its cursor; the
+  last page carries none. There is no total. A cursor that this service
+  did not sign for this path and these filters is `422`, one past
+  **10 000** rows is `400` (`offset_too_large`), and any `GET` with
+  `?offset=` is `400` (`offset_not_supported`), so a client written for
+  offsets fails instead of reading page one for ever. Handlers that page
+  in the database (plans, search, reviews, the inbox, automations, runs,
+  the deadline queue, processes, executions, documents) mark their
+  response and are left alone. Two objects page their task arrays the same
+  way and keep their whole-plan counts: the board (`limit` 1 to 2 000,
+  2 000 when absent, `truncated` when more follow) and the CCPM estimates
+  (1 to 1 000, 200). Objects, streams and files otherwise pass through
+  untouched.
 - **`GET /api/plans/{pid}/tasks/{t_pid}?include=`** (`task_get.rs`).
   Without `include` the answer is the bare task; with it, `{task,
   included, omitted}`. Allowed names: `children`, `relations`,

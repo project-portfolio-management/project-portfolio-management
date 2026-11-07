@@ -248,7 +248,7 @@ const ALLOWED_METHODS: &str = "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS";
 /// Request headers a browser page may send cross-origin, including conditional-request and idempotency headers.
 const ALLOWED_HEADERS: &str = "Authorization, Content-Type, If-Match, If-None-Match, Accepts-version, Idempotency-Key, X-Request-Id";
 /// Response headers made readable to cross-origin pages, such as `ETag`, rate-limit and paging headers.
-const EXPOSED_HEADERS: &str = "ETag, Content-Disposition, Retry-After, RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset, X-Total-Count, X-Limit, X-Offset, Accepts-version";
+const EXPOSED_HEADERS: &str = "ETag, Content-Disposition, Retry-After, RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset, Link, Accepts-version";
 
 /// Append a `Vary` value rather than replacing, so existing `Vary` entries set by other layers are kept.
 fn append_vary(headers: &mut HeaderMap, value: &'static str) {

@@ -24,7 +24,7 @@
 use super::{db_err, unprocessable};
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{Condition, PaginatorTrait, QueryOrder, QuerySelect};
+use sea_orm::{Condition, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -37,9 +37,8 @@ use crate::models::capabilities as cap_models;
 use crate::validation::MAX_TEXT_LEN;
 
 /// Default page size for every list endpoint here — the cap each one
-/// applied before `?limit=`/`?offset=` pagination (agents/share/restful.md)
-/// landed; a bigger `limit` clamps rather than errors
-/// ([`super::pagination::MAX_LIMIT`]).
+/// applied before paging (agents/restful.md) landed; a `limit` above
+/// [`super::pagination::MAX_LIMIT`] is a `422`.
 pub const LIST_CAP: u64 = 200;
 
 /// A reviewer / recipient reference: an `EntityRef` over the family's
@@ -275,31 +274,25 @@ pub(crate) struct ReviewParams {
     #[serde(default)]
     /// Filter by review status; absent means all statuses.
     status: Option<String>,
-    /// Page size; absent ⇒ [`LIST_CAP`].
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip; absent ⇒ 0.
-    #[serde(default)]
-    offset: Option<u64>,
 }
 
-/// `GET /api/reviews?subject_kind=&subject_pid=&reviewer=&status=&limit=&offset=`
-/// — the delegation list, newest first. Paginated
-/// (agents/share/restful.md): `X-Total-Count`/`X-Limit`/`X-Offset` on
-/// the response.
+/// `GET /api/reviews?subject_kind=&subject_pid=&reviewer=&status=&limit=&cursor=`
+/// — the delegation list, newest first. Paged by cursor (agents/restful.md):
+/// `Link: rel="next"` while more rows follow, and no total.
 ///
 /// # Errors
 ///
-/// `400` when `offset` exceeds [`super::pagination::MAX_OFFSET`]; a DB
+/// `422` for a bad `limit` or `cursor`, and `400` for a cursor past [`super::pagination::MAX_OFFSET`]; a DB
 /// error when the query fails.
 #[debug_handler]
 async fn list_reviews(
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
     Query(params): Query<ReviewParams>,
 ) -> Result<Response> {
-    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
-    let (limit, offset) = (page.limit, page.offset);
+    let page = cursor.page(LIST_CAP)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     let mut query = reviews::Entity::find().filter(reviews::Column::DeletedAt.is_null());
     let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
@@ -354,7 +347,6 @@ async fn list_reviews(
     if let Some(status) = params.status.as_deref() {
         query = query.filter(reviews::Column::Status.eq(status));
     }
-    let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
     let rows = query
         .order_by_desc(reviews::Column::Id)
         .offset(offset)
@@ -362,7 +354,7 @@ async fn list_reviews(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
+    Ok(page.respond(rows))
 }
 
 /// `POST /api/reviews/{pid}/respond` body.
@@ -729,12 +721,6 @@ pub(crate) struct NotificationParams {
     /// `true` ⇒ only unread.
     #[serde(default)]
     unread: Option<bool>,
-    /// Page size; absent ⇒ [`LIST_CAP`].
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip; absent ⇒ 0.
-    #[serde(default)]
-    offset: Option<u64>,
 }
 
 /// Whether an inbox belongs to the caller: their own `person:`/`worker:` reference, or an organization they belong to.
@@ -752,18 +738,19 @@ fn owns_inbox(caller: &MaybeAuthUser, recipient: &str) -> bool {
     })
 }
 
-/// `GET /api/notifications?recipient=&unread=&limit=&offset=` — the
-/// caller's own inbox, newest first. Paginated (agents/share/restful.md):
-/// `X-Total-Count`/`X-Limit`/`X-Offset` on the response.
+/// `GET /api/notifications?recipient=&unread=&limit=&cursor=` — the
+/// caller's own inbox, newest first. Paged by cursor (agents/restful.md):
+/// `Link: rel="next"` while more rows follow, and no total.
 ///
 /// # Errors
 ///
 /// `403` when the inbox is not the caller's; `422` when `recipient` is not
-/// a valid actor ref; `400` when `offset` exceeds
-/// [`super::pagination::MAX_OFFSET`]; a DB error when the query fails.
+/// a valid actor ref; `422` for a bad `limit` or `cursor`, and `400` for a cursor past
+///[`super::pagination::MAX_OFFSET`]; a DB error when the query fails.
 #[debug_handler]
 async fn list_notifications(
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
     Query(params): Query<NotificationParams>,
 ) -> Result<Response> {
@@ -775,8 +762,8 @@ async fn list_notifications(
     if !owns_inbox(&caller, &params.recipient) {
         return Err(super::forbidden("this inbox is not yours"));
     }
-    let page = super::pagination::resolve(params.limit, params.offset, LIST_CAP)?;
-    let (limit, offset) = (page.limit, page.offset);
+    let page = cursor.page(LIST_CAP)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let mut query = notifications::Entity::find()
         .filter(notifications::Column::RecipientRef.eq(params.recipient.as_str()))
@@ -785,7 +772,6 @@ async fn list_notifications(
     if params.unread.unwrap_or(false) {
         query = query.filter(notifications::Column::ReadAt.is_null());
     }
-    let total = query.clone().count(&ctx.db).await.map_err(db_err)?;
     let rows = query
         .order_by_desc(notifications::Column::Id)
         .offset(offset)
@@ -793,7 +779,7 @@ async fn list_notifications(
         .all(&ctx.db)
         .await
         .map_err(db_err)?;
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), rows))
+    Ok(page.respond(rows))
 }
 
 /// `POST /api/notifications/{pid}/read` — mark one of the caller's own

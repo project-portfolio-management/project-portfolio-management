@@ -51,10 +51,10 @@ Matching is kind-agnostic. `POST /api/plans/deduplicate` (batch scan) is
 
 ### Paging (every list)
 
-A `GET` that answers `200` with a bare JSON array pages the same way:
-`?limit=` (default and ceiling 500), `?offset=` (above 10 000 is `400`),
-and headers `X-Total-Count` / `X-Limit` / `X-Offset`; the body stays the
-bare array. The service's `openapi::PAGED_LISTS` census is checked by
+A `GET` that answers `200` with a bare JSON array pages the same way, by
+signed cursor: `?limit=` (1 to 500, 500 when absent, else `422`) and an
+opaque `?cursor=`, with `Link: <…>; rel="next"` while more rows follow; the
+body stays the bare array. There is no total and no `?offset=` (`400`). The service's `openapi::PAGED_LISTS` census is checked by
 `tests/list_paging.rs`.
 
 ### Areas beyond the registry

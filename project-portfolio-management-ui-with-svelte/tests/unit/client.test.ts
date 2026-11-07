@@ -4,7 +4,7 @@
 // normally handled by the BFF proxy, which injects the bearer server-side;
 // the client attaches one only when explicitly passed.
 import { describe, it, expect, vi } from "vitest";
-import { ApiClient, ApiError } from "$lib/api/client";
+import { ApiClient, ApiError, nextLink } from "$lib/api/client";
 
 /** A fake `fetch` that records the last call and returns a canned response. */
 function fakeFetch(
@@ -164,33 +164,49 @@ describe("getPage", () => {
       })) as unknown as typeof fetch;
   }
 
-  it("reads the pagination headers the service sends", async () => {
+  it("reads the next page from the Link header", async () => {
+    const seen: string[] = [];
     const client = new ApiClient({
       baseUrl: "http://x",
-      fetch: stub([{ pid: "a" }], {
-        "x-total-count": "431",
-        "x-limit": "25",
-        "x-offset": "50",
-      }),
+      fetch: (async (url: string) => {
+        seen.push(String(url));
+        return new Response(JSON.stringify([{ pid: "a" }]), {
+          status: 200,
+          headers: { link: '</api/things?limit=25&cursor=AbC_9>; rel="next"' },
+        });
+      }) as unknown as typeof fetch,
     });
     const page = await client.getPage<{ pid: string }>("/api/things", {
       limit: 25,
-      offset: 50,
     });
+    expect(seen[0]).toBe("http://x/api/things?limit=25");
     expect(page.items).toHaveLength(1);
-    expect(page.total).toBe(431);
-    expect(page.limit).toBe(25);
-    expect(page.offset).toBe(50);
+    expect(page.more).toBe(true);
+    expect(page.next).toBe("/api/things?limit=25&cursor=AbC_9");
+    await client.getPage(page.next!);
+    expect(seen[1]).toBe("http://x/api/things?limit=25&cursor=AbC_9");
   });
 
-  it("falls back to the page length when a service sends no headers", async () => {
+  it("is the last page when there is no Link, whatever else is sent", async () => {
     const client = new ApiClient({
       baseUrl: "http://x",
-      fetch: stub([{ pid: "a" }, { pid: "b" }], {}),
+      fetch: stub([{ pid: "a" }, { pid: "b" }], { "x-total-count": "431" }),
     });
     const page = await client.getPage("/api/things");
-    expect(page.total).toBe(2);
-    expect(page.offset).toBe(0);
+    expect(page).toEqual({
+      items: [{ pid: "a" }, { pid: "b" }],
+      more: false,
+      next: null,
+    });
+  });
+});
+
+describe("nextLink", () => {
+  it("finds rel=next among other links and ignores the rest", () => {
+    expect(nextLink('</a?cursor=1>; rel="next"')).toBe("/a?cursor=1");
+    expect(nextLink('</p>; rel="prev", </n>; rel="next"')).toBe("/n");
+    expect(nextLink('</p>; rel="prev"')).toBeNull();
+    expect(nextLink(null)).toBeNull();
   });
 });
 

@@ -8,9 +8,7 @@ describe("relayResponseHeaders (CQ-4)", () => {
   it("passes the paging, caching, download and marking headers through", () => {
     const upstream = new Headers({
       "Content-Type": "application/json",
-      "X-Total-Count": "1234",
-      "X-Limit": "100",
-      "X-Offset": "200",
+      Link: '</api/plans?cursor=c1>; rel="next"',
       ETag: '"abc"',
       "Retry-After": "30",
       Location: "/api/plans/1",
@@ -18,9 +16,7 @@ describe("relayResponseHeaders (CQ-4)", () => {
       "X-Handling-Mark": "OFFICIAL-SENSITIVE",
     });
     const out = relayResponseHeaders(upstream);
-    expect(out.get("x-total-count")).toBe("1234");
-    expect(out.get("x-limit")).toBe("100");
-    expect(out.get("x-offset")).toBe("200");
+    expect(out.get("link")).toBe('</api/plans?cursor=c1>; rel="next"');
     expect(out.get("etag")).toBe('"abc"');
     expect(out.get("retry-after")).toBe("30");
     expect(out.get("location")).toBe("/api/plans/1");

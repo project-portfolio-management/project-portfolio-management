@@ -309,56 +309,275 @@ pub fn conditional_json<T: serde::Serialize>(
         .into_response())
 }
 
-/// Family-wide `?limit=`/`?offset=` collection-read pagination
-/// (`agents/share/restful.md`): headers, not an envelope, so the body
-/// stays the bare array every caller already parses.
+/// Family-wide collection-read paging (FR-46, `agents/restful.md`): `?limit=` and an opaque, signed `?cursor=` from
+/// `axa-cursor-pagination`, a bare JSON array, and `Link: <…>; rel="next"` while more rows follow. There is no total,
+/// because a total would count rows the caller's record policy hides, and no `?offset=`, because the position is the
+/// service's to give, not the caller's.
 ///
-/// Introduced alongside `GET /api/plans`' pagination (2026-08-01) and
-/// promoted here so every other collection-read controller (automation
-/// runs, the deadline queue, delegations, approvals, …) shares one
-/// implementation instead of five copies drifting apart.
+/// Every collection-read controller and the paging layer share this one implementation.
 pub mod pagination {
-    use axa::offset_pagination::{Limits, Page, PageParams};
+    use std::sync::Arc;
 
-    /// Largest page any collection read will serve; a bigger `limit` is
-    /// clamped rather than refused.
+    use axa::cursor_pagination::{CursorKey, CursorLimits, CursorPage};
+    use axum::extract::{FromRequestParts, OriginalUri};
+    use axum::http::{HeaderValue, Uri, header::LINK, request::Parts};
+    use axum::response::Response;
+
+    use crate::cursor::Cursors;
+    use crate::prelude::*;
+
+    /// Largest page any collection read serves, and the page when none is asked for; a bigger `limit` is a `422`.
     pub const MAX_LIMIT: u64 = 500;
 
-    /// Largest accepted `offset`; past this a request is a `400` (SEC-G7)
-    /// rather than a query that makes the database materialize
-    /// arbitrarily many rows just to discard them.
+    /// Furthest position a cursor may reach; past it a request is a `400` (SEC-G7) rather than a query that makes the
+    /// database materialize arbitrarily many rows just to discard them. A list that long needs a narrower query.
     pub const MAX_OFFSET: u64 = 10_000;
 
-    /// The page a collection read serves: `limit` (`None` or zero is `default_limit`) clamped to [`MAX_LIMIT`], and
-    /// `offset` (`None` is 0). Read `?limit=` and `?offset=` as `u64` fields on the handler's own query struct (not a
-    /// `#[serde(flatten)]`, which parses through strings), so a non-number is already refused.
+    /// On a response its handler paged, so the paging layer leaves it alone.
+    #[derive(Debug, Clone, Copy)]
+    pub struct Paged;
+
+    /// What a handler needs to page: the key cursors are signed with, and the request's whole URI.
+    #[derive(Debug, Clone)]
+    pub struct Cursor {
+        key: Arc<Cursors>,
+        uri: Uri,
+    }
+
+    impl FromRequestParts<AppContext> for Cursor {
+        type Rejection = std::convert::Infallible;
+
+        fn from_request_parts(
+            parts: &mut Parts,
+            ctx: &AppContext,
+        ) -> impl Future<Output = std::result::Result<Self, Self::Rejection>> + Send {
+            // The original URI, with the `/api` prefix, which is the one the `Link` must name.
+            let uri = parts
+                .extensions
+                .get::<OriginalUri>()
+                .map_or_else(|| parts.uri.clone(), |original| original.0.clone());
+            std::future::ready(Ok(Self {
+                key: Cursors::of(ctx),
+                uri,
+            }))
+        }
+    }
+
+    impl Cursor {
+        /// A cursor reader for `uri`, signed with `key`.
+        #[must_use]
+        pub const fn new(key: Arc<Cursors>, uri: Uri) -> Self {
+            Self { key, uri }
+        }
+
+        /// The page asked for: `default_limit` rows when no `limit` is given, at most [`MAX_LIMIT`].
+        ///
+        /// # Errors
+        ///
+        /// As [`page_with`].
+        pub fn page(&self, default_limit: u64) -> axa::Result<Page> {
+            page_with(&self.key.0, &self.uri, default_limit, MAX_LIMIT)
+        }
+
+        /// As [`Cursor::page`], with a ceiling of the endpoint's own.
+        ///
+        /// # Errors
+        ///
+        /// As [`page_with`].
+        pub fn page_up_to(&self, default_limit: u64, max_limit: u64) -> axa::Result<Page> {
+            page_with(&self.key.0, &self.uri, default_limit, max_limit)
+        }
+    }
+
+    /// The page `uri` asks for.
     ///
     /// # Errors
     ///
-    /// `400` `offset_too_large` when the offset exceeds [`MAX_OFFSET`], before it reaches the database.
-    pub fn resolve(
-        limit: Option<u64>,
-        offset: Option<u64>,
+    /// `422` when the limit is zero, not a number, given twice or above `max_limit`, or the cursor was not signed with
+    /// `key` for this path and these filters; `400` `offset_too_large` when the cursor is past [`MAX_OFFSET`].
+    pub fn page_with(
+        key: &CursorKey,
+        uri: &Uri,
         default_limit: u64,
+        max_limit: u64,
     ) -> axa::Result<Page> {
-        PageParams {
-            limit: limit.map(|n| n.to_string()),
-            offset: offset.map(|n| n.to_string()),
-        }
-        .resolve(Limits {
-            default_limit,
-            max_limit: MAX_LIMIT,
-            max_offset: MAX_OFFSET,
-        })
-        .map_err(|_| {
-            axa::Error::CustomError(
+        let page = CursorPage::new(
+            key,
+            CursorLimits {
+                default_limit,
+                max_limit,
+            },
+            uri,
+        )?;
+        if page.offset() > MAX_OFFSET {
+            return Err(axa::Error::CustomError(
                 axum::http::StatusCode::BAD_REQUEST,
                 axa::error::ErrorDetail::new(
                     "offset_too_large",
-                    format!("offset must not exceed {MAX_OFFSET}; narrow the query instead"),
+                    format!(
+                        "a list is read at most {MAX_OFFSET} rows deep; narrow the query instead"
+                    ),
                 ),
-            )
-        })
+            ));
+        }
+        Ok(Page(page))
+    }
+
+    /// One checked page of a list.
+    #[derive(Debug, Clone)]
+    pub struct Page(CursorPage);
+
+    impl Page {
+        /// Rows in the page.
+        #[must_use]
+        pub const fn limit(&self) -> u64 {
+            self.0.limit()
+        }
+
+        /// Rows before the page.
+        #[must_use]
+        pub const fn offset(&self) -> u64 {
+            self.0.offset()
+        }
+
+        /// The `LIMIT` to fetch: one more row than the page, so [`Page::respond`] can tell whether more follow.
+        #[must_use]
+        pub const fn fetch(&self) -> u64 {
+            self.0.limit().saturating_add(1)
+        }
+
+        /// The page out of rows already in memory: [`Page::fetch`] of them, from [`Page::offset`].
+        #[must_use]
+        pub fn slice<T>(&self, rows: impl IntoIterator<Item = T>) -> Vec<T> {
+            rows.into_iter()
+                .skip(usize::try_from(self.offset()).unwrap_or(usize::MAX))
+                .take(usize::try_from(self.fetch()).unwrap_or(usize::MAX))
+                .collect()
+        }
+
+        /// Drop the extra row [`Page::fetch`] asked for; the flag says whether more rows follow.
+        #[must_use]
+        pub fn split<T>(&self, rows: Vec<T>) -> (Vec<T>, bool) {
+            self.0.split(rows)
+        }
+
+        /// `rows`, fetched with [`Page::fetch`], as a bare JSON array, with `Link: rel="next"` while more follow.
+        #[must_use]
+        pub fn respond<T: serde::Serialize>(&self, rows: Vec<T>) -> Response {
+            let mut response = self.0.respond(rows);
+            response.extensions_mut().insert(Paged);
+            response
+        }
+
+        /// Mark a response this page's handler built itself: `Link: rel="next"` when `more`.
+        pub fn stamp(&self, response: &mut Response, more: bool) {
+            if more && let Some(link) = self.next_link() {
+                response.headers_mut().insert(LINK, link);
+            }
+            response.extensions_mut().insert(Paged);
+        }
+
+        /// The `Link` header for the next page.
+        #[must_use]
+        pub fn next_link(&self) -> Option<HeaderValue> {
+            self.0.next_link()
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        fn key() -> CursorKey {
+            CursorKey::new(&[9; 32]).unwrap()
+        }
+
+        fn page(uri: &str) -> axa::Result<Page> {
+            page_with(&key(), &uri.parse().unwrap(), 100, MAX_LIMIT)
+        }
+
+        fn next(page: &Page) -> String {
+            let link = page.next_link().unwrap();
+            let link = link.to_str().unwrap();
+            link.trim_start_matches('<')
+                .split_once('>')
+                .unwrap()
+                .0
+                .to_string()
+        }
+
+        #[test]
+        fn the_first_page_is_the_default_limit_from_the_start() {
+            let p = page("/api/plans").unwrap();
+            assert_eq!((p.limit(), p.offset(), p.fetch()), (100, 0, 101));
+        }
+
+        #[test]
+        fn a_cursor_carries_on_where_the_last_page_stopped() {
+            let first = page("/api/plans?parent=x&limit=10").unwrap();
+            let second = page(&next(&first)).unwrap();
+            assert_eq!((second.limit(), second.offset()), (10, 10));
+            assert!(next(&second).starts_with("/api/plans?parent=x&limit=10&cursor="));
+        }
+
+        #[test]
+        fn a_cursor_moved_to_another_filter_or_list_is_refused() {
+            let first = page("/api/plans?parent=x&limit=10").unwrap();
+            let link = next(&first);
+            let cursor = link.split_once("cursor=").unwrap().1;
+            for uri in [
+                format!("/api/plans?parent=y&cursor={cursor}"),
+                format!("/api/reviews?parent=x&cursor={cursor}"),
+                "/api/plans?parent=x&cursor=made-up".to_string(),
+            ] {
+                let error = page(&uri).unwrap_err();
+                assert_eq!(
+                    axum::response::IntoResponse::into_response(error).status(),
+                    422,
+                    "{uri}"
+                );
+            }
+        }
+
+        #[test]
+        fn a_limit_out_of_range_is_refused_not_clamped() {
+            for uri in [
+                "/api/plans?limit=0",
+                "/api/plans?limit=501",
+                "/api/plans?limit=ten",
+            ] {
+                assert!(page(uri).is_err(), "{uri}");
+            }
+            assert_eq!(page("/api/plans?limit=500").unwrap().limit(), 500);
+        }
+
+        #[test]
+        fn a_cursor_past_the_ceiling_is_refused() {
+            let mut p = page("/api/plans?limit=500").unwrap();
+            while p.offset() < MAX_OFFSET {
+                p = page(&next(&p)).unwrap();
+            }
+            assert_eq!(p.offset(), MAX_OFFSET);
+            let error = page(&next(&p)).unwrap_err();
+            assert_eq!(
+                axum::response::IntoResponse::into_response(error).status(),
+                400
+            );
+        }
+
+        #[test]
+        fn a_slice_takes_one_more_row_and_respond_drops_it_with_a_link() {
+            let p = page("/api/plans?limit=2").unwrap();
+            assert_eq!(p.slice(0..10), vec![0, 1, 2]);
+            let response = p.respond(p.slice(0..10));
+            assert!(response.headers().contains_key(LINK));
+            assert!(response.extensions().get::<Paged>().is_some());
+            let last = p.respond(p.slice(0..2));
+            assert!(
+                !last.headers().contains_key(LINK),
+                "the last page has no next"
+            );
+        }
     }
 }
 pub mod approvals;

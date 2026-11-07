@@ -69,6 +69,9 @@ x-api-environment: &api-environment
   DATABASE_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management
   # The cache (Redis). The password defaults to the database's so a local stack needs one secret.
   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL: redis://:${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}@redis:6379/0
+  # Signs list cursors (FR-46): 32 bytes or more, the same on every replica. The default is built from the
+  # database password so a local stack needs one secret; set PPM_CURSOR_KEY to random text of your own anywhere else.
+  PROJECT_PORTFOLIO_MANAGEMENT_CURSOR_KEY: ${PPM_CURSOR_KEY:-local-stack-cursor-key-${POSTGRES_PASSWORD}}
   PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL: ${PPM_PASETO_KEYS_URL:-}
   PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS: ${PPM_PASETO_KEYS:-}
   PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER: ${PPM_TOKEN_ISSUER:-authentication-service}

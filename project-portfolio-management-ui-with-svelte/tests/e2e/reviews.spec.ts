@@ -47,7 +47,6 @@ async function stub(page: Page, rows: Record<string, unknown>[]) {
     if (req.method() === "GET")
       return r.fulfill({
         json: rows,
-        headers: { "x-total-count": String(rows.length) },
       });
     if (req.method() === "DELETE") return r.fulfill({ status: 204, body: "" });
     return r.fulfill({ status: 201, json: rows[0] ?? review({}) });

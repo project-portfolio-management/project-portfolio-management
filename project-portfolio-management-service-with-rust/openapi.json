@@ -4109,23 +4109,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -4133,22 +4131,10 @@
           "200": {
             "description": "Requests",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -4384,23 +4370,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -4408,22 +4392,10 @@
           "200": {
             "description": "Attachments",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -4676,23 +4648,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -4700,22 +4670,10 @@
           "200": {
             "description": "Rules",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -4769,23 +4727,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -4793,22 +4749,10 @@
           "200": {
             "description": "OK",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -4873,23 +4817,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -4897,22 +4839,10 @@
           "200": {
             "description": "Ranges, earliest first",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -5302,23 +5232,21 @@
         "description": "Lean, Business Model, SWOT, empathy map, logic model, risk and goal. A template is only a list of boxes, so a new canvas type is a code change to that list, never a migration. The risk and goal box sets are this service's own design.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -5326,22 +5254,10 @@
           "200": {
             "description": "Templates",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -5372,23 +5288,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -5396,22 +5310,10 @@
           "200": {
             "description": "Canvases",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -6030,23 +5932,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -6054,22 +5954,10 @@
           "200": {
             "description": "Comments",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -6264,23 +6152,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -6288,22 +6174,10 @@
           "200": {
             "description": "Edit history",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -6438,23 +6312,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -6462,22 +6334,10 @@
           "200": {
             "description": "Readings",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -6872,23 +6732,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -6896,22 +6754,10 @@
           "200": {
             "description": "Definitions",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -7030,23 +6876,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -7054,22 +6898,10 @@
           "200": {
             "description": "count, pids, truncated",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -7389,23 +7221,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -7413,22 +7243,10 @@
           "200": {
             "description": "dependencies, restricted ones opaque",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -8128,23 +7946,21 @@
         "description": "A document that belongs to a private plan the caller is outside is not listed (and is 404 on its own routes). Paged like every list.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -8152,22 +7968,10 @@
           "200": {
             "description": "documents",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -9383,23 +9187,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -9407,22 +9209,10 @@
           "200": {
             "description": "Records",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -9650,23 +9440,21 @@
         "description": "`GET /api/ideas` — list ideas of one status, most-voted first, capped at 200. Read-only and not audited.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -9674,22 +9462,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -9961,23 +9737,21 @@
         "description": "`GET /api/issue-types` — the issue types, in order.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -9985,22 +9759,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -10495,23 +10257,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -10519,22 +10279,10 @@
           "200": {
             "description": "Check-ins",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -11373,23 +11121,21 @@
         "description": "Each sink with its kind, channel, enabled flag and a masked destination (scheme and host plus the last four characters, or the email domain). Never another person's, and never a full secret.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -11397,22 +11143,10 @@
           "200": {
             "description": "Sinks",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -11551,23 +11285,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -11575,22 +11307,10 @@
           "200": {
             "description": "Deliveries",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -12046,23 +11766,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -12070,22 +11788,10 @@
           "200": {
             "description": "OK",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -12115,23 +11821,21 @@
         "description": "`GET /api/objectives`.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -12139,22 +11843,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -12338,23 +12030,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -12362,22 +12052,10 @@
           "200": {
             "description": "Key results",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -12875,23 +12553,21 @@
         "description": "`GET /api/organization-roles` — the roles this deployment recognizes, with what each allows, in order.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -12899,22 +12575,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -13202,23 +12866,21 @@
         "description": "Plain list of stored templates without their snapshots.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13226,22 +12888,10 @@
           "200": {
             "description": "Templates",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -13348,23 +12998,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13372,22 +13020,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -13448,23 +13084,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13482,22 +13116,10 @@
             },
             "description": "List of references",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -13544,23 +13166,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13568,22 +13188,10 @@
           "200": {
             "description": "Audit entries",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -13618,23 +13226,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13642,22 +13248,10 @@
           "200": {
             "description": "Jobs",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -13789,23 +13383,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13813,22 +13405,10 @@
           "200": {
             "description": "Events",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -14159,23 +13739,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14183,22 +13761,10 @@
           "200": {
             "description": "Merge records",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -14233,23 +13799,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14257,22 +13821,10 @@
           "200": {
             "description": "Items",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -14361,23 +13913,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14395,22 +13945,10 @@
             },
             "description": "Matches",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -14867,23 +14405,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14891,22 +14427,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -15166,23 +14690,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15190,22 +14712,10 @@
           "200": {
             "description": "Audit entries",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -15559,23 +15069,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15583,22 +15091,10 @@
           "200": {
             "description": "Baseline versions",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -16518,7 +16014,7 @@
     },
     "/api/plans/{pid}/ccpm-estimates": {
       "get": {
-        "description": "Inputs: each task's duration (the likely one), the aggressive and safe figures recorded for it, its optimistic and pessimistic estimate from the schedule-risk inputs, and the rule in force (PROJECT_PORTFOLIO_MANAGEMENT_CCPM_ESTIMATE_RULE: explicit_only by default, or half_of_safe; echoed as rule, with rule_setting_unusable when a value was set but not understood). Each figure is the one recorded, else the risk range, else (only under the rule) a derivation, and carries its source (recorded, risk_range, rule). A task with a figure missing is state missing and listed under needing_attention, never given a figure silently; aggressive above safe is inconsistent; a milestone and a task with no duration are not estimated. counts cover every task; limit (1 to 1000, default 200) and offset page the tasks list.",
+        "description": "Inputs: each task's duration (the likely one), the aggressive and safe figures recorded for it, its optimistic and pessimistic estimate from the schedule-risk inputs, and the rule in force (PROJECT_PORTFOLIO_MANAGEMENT_CCPM_ESTIMATE_RULE: explicit_only by default, or half_of_safe; echoed as rule, with rule_setting_unusable when a value was set but not understood). Each figure is the one recorded, else the risk range, else (only under the rule) a derivation, and carries its source (recorded, risk_range, rule). A task with a figure missing is state missing and listed under needing_attention, never given a figure silently; aggressive above safe is inconsistent; a milestone and a task with no duration are not estimated. counts cover every task; limit (1 to 1000, default 200) pages the tasks list, and while more follow, Link: rel=\"next\" names the next page with its signed cursor.",
         "parameters": [
           {
             "in": "path",
@@ -16539,9 +16035,9 @@
             }
           },
           {
-            "description": "default 0",
+            "description": "opaque, from the previous page's Link header",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
               "type": "string"
@@ -17217,23 +16713,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -17241,22 +16735,10 @@
           "200": {
             "description": "Components",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -17513,23 +16995,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -17537,22 +17017,10 @@
           "200": {
             "description": "Controls",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -20118,23 +19586,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -20142,22 +19608,10 @@
           "200": {
             "description": "Goals",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -20441,23 +19895,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -20465,22 +19917,10 @@
           "200": {
             "description": "Grants",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -21852,23 +21292,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -21876,22 +21314,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -22208,23 +21634,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -22232,22 +21656,10 @@
           "200": {
             "description": "Links",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -22496,23 +21908,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -22520,22 +21930,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -23038,23 +22436,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -23062,22 +22458,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -23622,23 +23006,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -23646,22 +23028,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -24437,23 +23807,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -24461,22 +23829,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -25583,23 +24939,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25607,22 +24961,10 @@
           "200": {
             "description": "Baselines",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -26026,23 +25368,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -26050,22 +25390,10 @@
           "200": {
             "description": "Sprints",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -26138,23 +25466,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -26162,22 +25488,10 @@
           "200": {
             "description": "Notes",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -26420,23 +25734,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -26444,22 +25756,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -26679,7 +25979,7 @@
     },
     "/api/plans/{pid}/tasks": {
       "get": {
-        "description": "Returns {tasks, counts, total, truncated, limit, offset}. counts and total cover every task that matches (?component narrows), not just the page. With ?limit and/or ?offset the answer is one page (default 100, at most 500; an offset over 10,000 is 400) with X-Total-Count, X-Limit and X-Offset headers. With no paging parameter the first 2,000 tasks are returned and truncated says whether more exist: a plan of 12,667 tasks otherwise made one ~400 KB response that took seconds. Page with offset to read the rest.",
+        "description": "Returns {tasks, counts, total, truncated, limit}. counts and total cover every task that matches (?component narrows), not just the page. A page is 2,000 tasks unless ?limit asks for fewer (at most 2,000; outside that a 422): a plan of 12,667 tasks otherwise made one ~400 KB response that took seconds. truncated says whether more follow, and then Link: rel=\"next\" names the next page, whose signed cursor reads the rest.",
         "parameters": [
           {
             "description": "a component pid, or unassigned",
@@ -26691,7 +25991,7 @@
             }
           },
           {
-            "description": "page size, at most 500",
+            "description": "page size, 1 to 2,000",
             "in": "query",
             "name": "limit",
             "required": false,
@@ -26700,12 +26000,12 @@
             }
           },
           {
-            "description": "rows to skip, at most 10,000",
+            "description": "opaque, from the previous page's Link header",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -26714,7 +26014,10 @@
             "description": "Tasks, counts, total, truncated"
           },
           "400": {
-            "description": "A bad limit or an offset over the maximum"
+            "description": "A cursor past 10,000 tasks"
+          },
+          "422": {
+            "description": "A bad limit or cursor"
           }
         },
         "summary": "The item's live tasks + per-status board counts",
@@ -28606,23 +27909,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -28630,22 +27931,10 @@
           "200": {
             "description": "Entries",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -28984,23 +28273,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -29008,22 +28295,10 @@
           "200": {
             "description": "Observations",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -29820,23 +29095,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -29844,22 +29117,10 @@
           "200": {
             "description": "executions",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -30050,23 +29311,21 @@
         "description": "Paged like every list.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -30074,22 +29333,10 @@
           "200": {
             "description": "name, current_version",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -30412,23 +29659,21 @@
         "description": "`GET /api/proposals` handler: lists non-deleted proposals, newest first, capped at 200 rows. Read-only, so nothing is audited.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -30436,22 +29681,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -30708,23 +29941,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -30732,22 +29963,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -30772,23 +29991,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -30796,22 +30013,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -31257,23 +30462,21 @@
         "description": "Each with its next run date, last status, last row count (0 is a real zero) and whether an output exists. Only your own.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -31281,22 +30484,10 @@
           "200": {
             "description": "Schedules",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -31405,23 +30596,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -31429,22 +30618,10 @@
           "200": {
             "description": "The report file",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -31467,23 +30644,21 @@
         "description": "`GET /api/reports` — saved definitions.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -31491,22 +30666,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -31828,23 +30991,21 @@
         "description": "A manager (access=admin or role=resource_manager) sees everyone's; anyone else sees only their own.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -31852,22 +31013,10 @@
           "200": {
             "description": "person_ref and role",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -31928,23 +31077,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -31952,22 +31099,10 @@
           "200": {
             "description": "Invitations, newest first",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -32140,23 +31275,21 @@
         "description": "`GET /api/saved-views?route=` — the caller's own views, optionally narrowed to one route. Never returns another `sub`'s rows.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -32164,22 +31297,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -32298,23 +31419,21 @@
         "description": "`GET /api/scenarios`.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -32322,22 +31441,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -32591,23 +31698,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -32615,22 +31720,10 @@
           "200": {
             "description": "Scheduled actions",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -33400,23 +32493,21 @@
         "description": "`GET /api/status-updates/due` — the plans the caller can read whose next update is due, most overdue first.",
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -33424,22 +32515,10 @@
           "200": {
             "description": "OK; the response shape is not documented yet.",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -34175,23 +33254,21 @@
             }
           },
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -34199,22 +33276,10 @@
           "200": {
             "description": "Records",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }
@@ -34554,23 +33619,21 @@
       "get": {
         "parameters": [
           {
-            "description": "Page size: default and ceiling 500",
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
-              "minimum": 0,
               "type": "integer"
             }
           },
           {
-            "description": "Rows to skip; above 10000 is a 400",
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
             "in": "query",
-            "name": "offset",
+            "name": "cursor",
             "required": false,
             "schema": {
-              "minimum": 0,
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -34578,22 +33641,10 @@
           "200": {
             "description": "Workflows",
             "headers": {
-              "X-Limit": {
-                "description": "The page size used",
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
                 "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Offset": {
-                "description": "The offset used",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Total-Count": {
-                "description": "How many rows there are in all",
-                "schema": {
-                  "type": "integer"
+                  "type": "string"
                 }
               }
             }

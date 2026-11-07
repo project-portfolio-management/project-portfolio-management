@@ -85,9 +85,8 @@ in [spec §9](./spec/index.md):
 - Access: **private plans** are `404` to non-members and appear in no
   aggregate; guests are confined to their grants; per-plan modules can be
   switched off.
-- Every list pages the same way: `?limit=` (default and max 500),
-  `?offset=` (max 10 000), headers `X-Total-Count` / `X-Limit` /
-  `X-Offset`. `GET /api/plans/{pid}/tasks/{t_pid}?include=` returns a task
+- Every list pages the same way: `?limit=` (default and max 500) and a
+  signed `?cursor=`, following `Link: rel="next"`; there is no total. `GET /api/plans/{pid}/tasks/{t_pid}?include=` returns a task
   with its sub-resources in one response.
 
 See [AGENTS.md](./AGENTS.md) and [spec §9](./spec/index.md) for the full

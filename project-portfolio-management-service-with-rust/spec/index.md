@@ -326,7 +326,7 @@ right internal or external expert:
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST / GET | `/api/reviews` | Invite an expert; list invitations (`?subject_kind=&subject_pid=&reviewer=&status=&limit=&offset=`, paginated — §9.1's `X-Total-Count`/`X-Limit`/`X-Offset` contract) |
+| POST / GET | `/api/reviews` | Invite an expert; list invitations (`?subject_kind=&subject_pid=&reviewer=&status=&limit=&cursor=`, paged by signed cursor — root spec FR-46: `Link: rel="next"`, no total) |
 | GET | `/api/reviews/consensus` | Aggregate verdict for one subject (`?subject_kind=&subject_pid=`) |
 | POST | `/api/reviews/{pid}/respond` | Accept / decline |
 | POST | `/api/reviews/{pid}/submit` | Verdict: `score` 0–100 (optional), `recommendation` advance/hold/reject, `comment` |

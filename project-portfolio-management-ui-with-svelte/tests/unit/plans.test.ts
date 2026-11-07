@@ -128,11 +128,9 @@ describe("PlanRepository", () => {
   });
 });
 
-// Pins the pagination contract (agents/share/restful.md) the `/plans`
-// list route relies on: `listPage()` sends `limit`/`offset` and reads
-// `X-Total-Count`/`X-Limit`/`X-Offset` off the response, falling back to
-// the page length when a header is absent (a service that predates the
-// headers still works).
+// Pins the paging contract (agents/restful.md) the `/plans` list route
+// relies on: `listPage()` sends `limit` and reads the next page from
+// `Link: rel="next"`; no link means the last page.
 describe("PlanRepository.listPage", () => {
   /** A PlanRepository whose fetch answers with `body` and `headers`. */
   function pagedRepo(body: unknown, headers: Record<string, string>) {
@@ -147,43 +145,33 @@ describe("PlanRepository.listPage", () => {
     return { repo, calls };
   }
 
-  it("GETs the collection and reads the pagination headers", async () => {
+  it("GETs the collection and reads the next page link", async () => {
     const { repo, calls } = pagedRepo([{ pid: "p1", name: "Apollo" }], {
-      "x-total-count": "12",
-      "x-limit": "1",
-      "x-offset": "0",
+      link: '</api/plans?cursor=c1>; rel="next"',
     });
 
     const page = await repo.listPage();
 
     expect(calls).toEqual(["http://svc.test/api/plans"]);
     expect(page.items).toEqual([{ pid: "p1", name: "Apollo" }]);
-    expect(page.total).toBe(12);
-    expect(page.limit).toBe(1);
-    expect(page.offset).toBe(0);
+    expect(page.more).toBe(true);
+    expect(page.next).toBe("/api/plans?cursor=c1");
   });
 
-  it("sends limit/offset and carries the parent roll-up query through", async () => {
-    const { repo, calls } = pagedRepo([], {
-      "x-total-count": "0",
-      "x-limit": "5",
-      "x-offset": "10",
-    });
+  it("sends limit and carries the parent roll-up query through", async () => {
+    const { repo, calls } = pagedRepo([], {});
 
-    await repo.listPage({ limit: 5, offset: 10 }, "port-1");
+    await repo.listPage({ limit: 5 }, "port-1");
 
-    expect(calls).toEqual([
-      "http://svc.test/api/plans?parent=port-1&limit=5&offset=10",
-    ]);
+    expect(calls).toEqual(["http://svc.test/api/plans?parent=port-1&limit=5"]);
   });
 
-  it("falls back to the page length when headers are absent", async () => {
+  it("is the last page when there is no link", async () => {
     const { repo } = pagedRepo([{ pid: "p1", name: "Apollo" }], {});
 
     const page = await repo.listPage();
 
-    expect(page.total).toBe(1);
-    expect(page.limit).toBe(1);
-    expect(page.offset).toBe(0);
+    expect(page.more).toBe(false);
+    expect(page.next).toBeNull();
   });
 });

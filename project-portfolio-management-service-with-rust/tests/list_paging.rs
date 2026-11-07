@@ -1,8 +1,9 @@
 //! RM-12b: every list pages the same way, **driven by the `OpenAPI` document**. The test
 //! signs in as an admin, seeds one of each kind of record, then calls every documented
 //! `GET` it can reach. Every one that answers `200` with a bare JSON array is a list and
-//! must carry `X-Total-Count` / `X-Limit` / `X-Offset`, honour `limit` and `offset`,
-//! refuse an absurd offset, and document `limit` and `offset` itself. A documented `GET`
+//! must send no total, honour `limit`, give a `Link: rel="next"` that reads the next
+//! row, refuse a made-up cursor, a bad limit and an offset, and document `limit` and
+//! `cursor` itself. A documented `GET`
 //! it cannot reach must be named, with a reason, in `UNREACHED`, so a new list cannot
 //! slip past by needing a parameter nobody supplied.
 //!
@@ -370,28 +371,42 @@ async fn every_list_pages_the_same_way() {
             let Some(rows) = body.as_array() else { continue };
             lists.push(path.clone());
             let sep = if url.contains('?') { '&' } else { '?' };
-            let total = r.maybe_header("x-total-count").and_then(|v| v.to_str().ok().and_then(|s| s.parse::<usize>().ok()));
-            if total.is_none() || r.maybe_header("x-limit").is_none() || r.maybe_header("x-offset").is_none() {
-                broken.push(format!("{path}: no X-Total-Count/X-Limit/X-Offset"));
-                continue;
+            let header = |r: &axum_test::TestResponse, name: &str| r.maybe_header(name).and_then(|v| v.to_str().ok().map(str::to_string));
+            let rows_of = |r: &axum_test::TestResponse| serde_json::from_str::<Value>(&r.text()).ok().and_then(|v| v.as_array().cloned());
+            // The next page's URL from `Link: <url>; rel="next"`.
+            let next = |r: &axum_test::TestResponse| header(r, "link").and_then(|l| l.strip_prefix('<').and_then(|l| l.split_once(">; rel=\"next\"")).map(|(u, _)| u.to_string()));
+            if header(&r, "x-total-count").is_some() || header(&r, "x-offset").is_some() {
+                broken.push(format!("{path}: still sends a total or an offset"));
             }
-            if total.is_none_or(|t| t < rows.len()) { broken.push(format!("{path}: X-Total-Count {total:?} but {} rows", rows.len())); }
             let one = request.get(&format!("{url}{sep}limit=1")).add_header(who.0.clone(), who.1.clone()).await;
-            let one_rows = serde_json::from_str::<Value>(&one.text()).ok().and_then(|v| v.as_array().map(Vec::len));
-            if one_rows.is_none_or(|n| n > 1) || one.maybe_header("x-limit").and_then(|v| v.to_str().ok().map(str::to_string)).as_deref() != Some("1") {
-                broken.push(format!("{path}: limit=1 not honoured ({one_rows:?})"));
+            let first = rows_of(&one);
+            if first.as_ref().is_none_or(|p| p.len() > 1) {
+                broken.push(format!("{path}: limit=1 not honoured ({:?})", first.as_ref().map(Vec::len)));
             }
-            let past = request.get(&format!("{url}{sep}offset=9000")).add_header(who.0.clone(), who.1.clone()).await;
-            let past_rows = serde_json::from_str::<Value>(&past.text()).ok().and_then(|v| v.as_array().map(Vec::len));
-            if past_rows != Some(0) || past.maybe_header("x-total-count").is_none() {
-                broken.push(format!("{path}: an offset past the end is not an empty page that still says the total ({past_rows:?})"));
+            match (rows.len() > 1, next(&one)) {
+                (true, None) => broken.push(format!("{path}: {} rows but limit=1 gives no next link", rows.len())),
+                (false, Some(_)) => broken.push(format!("{path}: one page only, yet a next link")),
+                (true, Some(link)) => {
+                    let second = request.get(&link).add_header(who.0.clone(), who.1.clone()).await;
+                    let page = rows_of(&second);
+                    if second.status_code() != 200 || page.as_ref().is_none_or(|p| p.len() != 1 || first.as_deref() == Some(p.as_slice())) {
+                        broken.push(format!("{path}: the next link did not give the next row ({} {link})", second.status_code()));
+                    }
+                }
+                (false, None) => {}
             }
-            let absurd = request.get(&format!("{url}{sep}offset=999999999")).add_header(who.0.clone(), who.1.clone()).await;
-            if absurd.status_code() != 400 { broken.push(format!("{path}: an absurd offset is {}, not 400", absurd.status_code())); }
-            let bad = request.get(&format!("{url}{sep}limit=abc")).add_header(who.0.clone(), who.1.clone()).await;
-            if bad.status_code() != 400 { broken.push(format!("{path}: limit=abc is {}, not 400", bad.status_code())); }
+            for (query, status, why) in [
+                ("cursor=made-up", 422, "a made-up cursor"),
+                ("limit=abc", 422, "limit=abc"),
+                ("limit=0", 422, "limit=0"),
+                ("limit=501", 422, "a limit over 500"),
+                ("offset=5", 400, "an offset"),
+            ] {
+                let refused = request.get(&format!("{url}{sep}{query}")).add_header(who.0.clone(), who.1.clone()).await;
+                if refused.status_code() != status { broken.push(format!("{path}: {why} is {}, not {status}", refused.status_code())); }
+            }
             let params: Vec<&str> = get["parameters"].as_array().map(|a| a.iter().filter_map(|p| p["name"].as_str()).collect()).unwrap_or_default();
-            if !(params.contains(&"limit") && params.contains(&"offset")) { undocumented.push(path.clone()); }
+            if !(params.contains(&"limit") && params.contains(&"cursor")) { undocumented.push(path.clone()); }
             let _ = get;
         }
         // The registry the spec uses is exactly what the census finds (plus the lists it cannot reach).
@@ -407,7 +422,7 @@ async fn every_list_pages_the_same_way() {
         eprintln!("BROKEN ({}):\n{}", broken.len(), broken.join("\n"));
         assert!(unreached.is_empty(), "documented GETs the census could not call and nobody explained: {unreached:#?}");
         assert!(broken.is_empty(), "lists that do not page the standard way: {broken:#?}");
-        assert!(undocumented.is_empty(), "lists whose OpenAPI entry does not document limit and offset: {undocumented:#?}");
+        assert!(undocumented.is_empty(), "lists whose OpenAPI entry does not document limit and cursor: {undocumented:#?}");
     })
     .await;
 }

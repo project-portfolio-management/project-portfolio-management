@@ -128,3 +128,64 @@ pub async fn seed_task_workflow(
         .await
         .expect("seed a workflow");
 }
+
+/// The next page's URL, from `Link: <url>; rel="next"`; `None` on the last page.
+pub(crate) fn next_page(r: &axum_test::TestResponse) -> Option<String> {
+    let link = r.maybe_header("link")?;
+    let link = link.to_str().ok()?;
+    link.strip_prefix('<')?
+        .split_once(">; rel=\"next\"")
+        .map(|(url, _)| url.to_string())
+}
+
+/// Every row of a list from `url` on, following its next links, and how many pages that took. Each page must be `200`.
+pub(crate) async fn walk(
+    request: &axum_test::TestServer,
+    url: &str,
+) -> (Vec<serde_json::Value>, usize) {
+    let (mut rows, mut pages, mut at) = (Vec::new(), 0, Some(url.to_string()));
+    while let Some(url) = at {
+        let r = request.get(&url).await;
+        assert_eq!(r.status_code(), 200, "{url}: {}", r.text());
+        assert!(
+            r.maybe_header("x-total-count").is_none(),
+            "{url}: a list sends no total"
+        );
+        rows.extend(
+            r.json::<serde_json::Value>()
+                .as_array()
+                .expect("array")
+                .clone(),
+        );
+        pages += 1;
+        at = next_page(&r);
+        assert!(pages <= 100, "{url}: more than 100 pages");
+    }
+    (rows, pages)
+}
+
+/// A list at `url` pages by cursor (FR-46): two at a time it walks the same `expected` rows, in the same order, as one
+/// default page, with no total; a limit over the ceiling, a made-up cursor and an offset are refused.
+pub(crate) async fn assert_pages(request: &axum_test::TestServer, url: &str, expected: usize) {
+    let sep = if url.contains('?') { '&' } else { '?' };
+    let (whole, one) = walk(request, url).await;
+    assert_eq!((whole.len(), one), (expected, 1), "{url}: one default page");
+    let (in_twos, page_count) = walk(request, &format!("{url}{sep}limit=2")).await;
+    assert_eq!(
+        in_twos, whole,
+        "{url}: the pages are the list, once each, in order"
+    );
+    assert_eq!(
+        page_count,
+        expected.div_ceil(2).max(1),
+        "{url}: pages of two"
+    );
+    for (query, status) in [
+        ("limit=100000", 422),
+        ("cursor=made-up", 422),
+        ("offset=1", 400),
+    ] {
+        let r = request.get(&format!("{url}{sep}{query}")).await;
+        assert_eq!(r.status_code(), status, "{url} {query}: {}", r.text());
+    }
+}

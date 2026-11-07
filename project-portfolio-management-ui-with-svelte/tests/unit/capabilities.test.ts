@@ -154,53 +154,43 @@ describe("CapabilityClient pagination (agents/share/restful.md)", () => {
       calls.push(String(input));
       return new Response(JSON.stringify([{ pid: "r1" }]), {
         status: 200,
-        headers: { "x-total-count": "9", "x-limit": "2", "x-offset": "1" },
+        headers: {
+          link: '</api/reviews?status=invited&limit=2&cursor=c2>; rel="next"',
+        },
       });
     }) as unknown as typeof fetch;
     const api = new CapabilityClient(
       new ApiClient({ baseUrl: "http://svc", fetch: fetchFn }),
     );
 
-    const page = await api.listReviewsPage(
-      { status: "invited" },
-      { limit: 2, offset: 1 },
-    );
+    const page = await api.listReviewsPage({ status: "invited" }, { limit: 2 });
 
-    expect(calls).toEqual([
-      "http://svc/api/reviews?status=invited&limit=2&offset=1",
-    ]);
+    expect(calls).toEqual(["http://svc/api/reviews?status=invited&limit=2"]);
     expect(page.items).toHaveLength(1);
-    expect(page.total).toBe(9);
-    expect(page.limit).toBe(2);
-    expect(page.offset).toBe(1);
+    expect(page.more).toBe(true);
+    expect(page.next).toBe("/api/reviews?status=invited&limit=2&cursor=c2");
   });
 
   it("paginates the automation rules, run log, and deadline queue", async () => {
     const api = pagedClient([{ pid: "a1" }, { pid: "a2" }], {
-      "x-total-count": "5",
-      "x-limit": "2",
-      "x-offset": "0",
+      link: '</api/automations?cursor=c>; rel="next"',
     });
 
     const rules = await api.listAutomationsPage();
     expect(rules.items).toHaveLength(2);
-    expect(rules.total).toBe(5);
+    expect(rules.more).toBe(true);
 
     const runs = await api.runsPage();
-    expect(runs.total).toBe(5);
+    expect(runs.more).toBe(true);
 
     const queue = await api.listScheduledPage({ status: "pending" });
-    expect(queue.total).toBe(5);
+    expect(queue.more).toBe(true);
   });
 
   it("paginates one recipient's notification inbox", async () => {
-    const api = pagedClient([{ pid: "n1" }], {
-      "x-total-count": "3",
-      "x-limit": "1",
-      "x-offset": "0",
-    });
+    const api = pagedClient([{ pid: "n1" }], {});
     const page = await api.inboxPage("person:u1", true, { limit: 1 });
     expect(page.items).toHaveLength(1);
-    expect(page.total).toBe(3);
+    expect(page.more).toBe(false);
   });
 });

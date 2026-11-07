@@ -151,29 +151,15 @@ fn resolve_task(t: &tasks::Model, rec: Option<&rows::Model>, rule: est::Rule) ->
     )
 }
 
-/// Paging query for the estimate list.
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub(crate) struct Page {
-    /// Page size, 1 to `MAX_LIMIT`; absent means 200.
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Number of tasks to skip; absent means 0.
-    #[serde(default)]
-    offset: Option<u64>,
-}
-
 /// `GET /api/plans/{pid}/ccpm-estimates`
 #[debug_handler]
 async fn list(
     State(ctx): State<AppContext>,
     Path(pid): Path<String>,
-    Query(q): Query<Page>,
+    cursor: super::pagination::Cursor,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let limit = q.limit.unwrap_or(200);
-    if !(1..=MAX_LIMIT).contains(&limit) {
-        return Err(unprocessable(&format!("limit must be 1 to {MAX_LIMIT}")));
-    }
+    let page = cursor.page_up_to(200, MAX_LIMIT)?;
     let (rule, unusable) = est::configured_rule();
     let all = tasks::Entity::find()
         .filter(tasks::Column::PlanPid.eq(plan.pid))
@@ -220,21 +206,18 @@ async fn list(
         }));
     }
     let total = items.len();
-    let offset = usize::try_from(q.offset.unwrap_or(0)).unwrap_or(usize::MAX);
-    let page: Vec<_> = items
-        .into_iter()
-        .skip(offset)
-        .take(usize::try_from(limit).unwrap_or(0))
-        .collect();
-    format::json(json!({
+    let (tasks, more) = page.split(page.slice(items));
+    let mut response = format::json(json!({
         "rule": rule.name(),
         "rule_setting_unusable": unusable,
-        "total": total, "limit": limit, "offset": offset,
+        "total": total, "limit": page.limit(),
         "counts": counts,
         "needing_attention": missing,
-        "tasks": page,
+        "tasks": tasks,
         "note": "The likely duration is the task's duration. An aggressive estimate is about 50 percent confidence and a safe one about 90 percent. Each figure is the one recorded for it, else the optimistic or pessimistic estimate of the schedule-risk inputs, else (only under the rule in force) a derivation, and says which. A task with a figure missing is listed under needing_attention, never given one silently.",
-    }))
+    }))?;
+    page.stamp(&mut response, more);
+    Ok(response)
 }
 
 /// The routes.

@@ -52,7 +52,6 @@ async function stub(
       const rows = path === "/api/automations/runs" ? data.runs : data.rules;
       return r.fulfill({
         json: rows,
-        headers: { "x-total-count": String(rows.length) },
       });
     }
     if (req.method() === "DELETE") return r.fulfill({ status: 204, body: "" });
@@ -69,7 +68,6 @@ async function stub(
     if (req.method() === "GET")
       return r.fulfill({
         json: data.scheduled,
-        headers: { "x-total-count": String(data.scheduled.length) },
       });
     return r.fulfill({ status: 204, body: "" });
   });

@@ -1,75 +1,57 @@
-//! One paging rule for every list (RM-12b).
+//! One paging rule for every list (RM-12b, FR-46).
 //!
 //! A `GET` that answers `200` with a **bare JSON array** is a list, and every list
-//! pages the same way (`agents/share/restful.md`): `?limit=` (default and ceiling
-//! [`MAX_LIMIT`]), `?offset=` (a request past [`MAX_OFFSET`] is `400`), and
-//! `X-Total-Count` / `X-Limit` / `X-Offset` headers; the body stays the bare array.
+//! pages the same way (`agents/restful.md`): `?limit=` (1 to [`MAX_LIMIT`], which is
+//! also the page when none is asked for), an opaque signed `?cursor=`, and
+//! `Link: <…>; rel="next"` while more rows follow. There is no total, and no `?offset=`:
+//! a `GET` that sends one is refused, so a client written for offsets cannot loop on
+//! the first page for ever.
 //!
-//! Handlers that page in the database (and so already set `X-Total-Count`) are
-//! left alone. For all the others this layer slices the array they returned, so a
-//! list added tomorrow pages today without anyone remembering to. Streams, files
-//! and objects (reports, aggregates) are not arrays and pass through untouched.
+//! Handlers that page in the database (and so mark their response
+//! [`super::pagination::Paged`]) are left alone. For all the others this layer slices
+//! the array they returned, so a list added tomorrow pages today without anyone
+//! remembering to. Streams, files and objects (reports, aggregates) are not arrays and
+//! pass through untouched.
 
 use axum::body::Body;
-use axum::extract::Request;
+use axum::extract::{Request, State};
 use axum::http::{Method, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 
-use super::pagination::{MAX_LIMIT, MAX_OFFSET};
+use super::pagination::{MAX_LIMIT, Paged, page_with};
+use crate::cursor::Cursors;
+use crate::prelude::*;
 
 /// The largest list body this layer will read to page (anything larger passes through).
 const MAX_BODY: usize = 32 * 1024 * 1024;
 
-/// Value of `key` in a raw query string, not percent-decoded; None when there is no query or the key is absent.
-fn query_value(query: Option<&str>, key: &str) -> Option<String> {
-    query?
-        .split('&')
-        .find_map(|kv| kv.strip_prefix(&format!("{key}=")))
-        .map(str::to_string)
-}
-
-/// A 400 problem with a machine-readable `code` and a human `detail`.
-fn bad_request(code: &str, message: &str) -> Response {
-    axa::Error::CustomError(
-        StatusCode::BAD_REQUEST,
-        axa::error::ErrorDetail::new(code, message),
-    )
-    .into_response()
-}
-
-/// `?limit=` / `?offset=` for a handler that pages in the database.
-#[derive(Debug, Default, serde::Deserialize, schemars::JsonSchema)]
-pub struct PageQuery {
-    /// Page size.
-    #[serde(default)]
-    pub limit: Option<u64>,
-    /// Rows to skip.
-    #[serde(default)]
-    pub offset: Option<u64>,
+/// Whether a raw query string names `key`.
+fn names(query: Option<&str>, key: &str) -> bool {
+    query.is_some_and(|q| {
+        q.split('&')
+            .any(|part| part.split_once('=').map_or(part, |(name, _)| name) == key)
+    })
 }
 
 /// The paging layer. See the module docs.
-#[expect(clippy::result_large_err)]
-pub async fn paging_mw(req: Request, next: Next) -> Response {
+pub async fn paging_mw(State(ctx): State<AppContext>, req: Request, next: Next) -> Response {
     if req.method() != Method::GET {
         return next.run(req).await;
     }
-    let query = req.uri().query().map(str::to_string);
-    let parse = |key: &str| -> Result<Option<u64>, Response> {
-        match query_value(query.as_deref(), key) {
-            None => Ok(None),
-            Some(v) => v.parse::<u64>().map(Some).map_err(|_| {
-                bad_request("invalid_paging", &format!("{key} must be a whole number"))
-            }),
-        }
-    };
-    let (limit, offset) = match (parse("limit"), parse("offset")) {
-        (Ok(l), Ok(o)) => (l, o),
-        (Err(r), _) | (_, Err(r)) => return r,
-    };
+    if names(req.uri().query(), "offset") {
+        return axa::Error::CustomError(
+            StatusCode::BAD_REQUEST,
+            axa::error::ErrorDetail::new(
+                "offset_not_supported",
+                "lists page by cursor: follow the Link header's next page instead of sending offset",
+            ),
+        )
+        .into_response();
+    }
+    let uri = req.uri().clone();
     let response = next.run(req).await;
-    if response.status() != StatusCode::OK || response.headers().contains_key("x-total-count") {
+    if response.status() != StatusCode::OK || response.extensions().get::<Paged>().is_some() {
         return response;
     }
     let is_json = response
@@ -99,30 +81,33 @@ pub async fn paging_mw(req: Request, next: Next) -> Response {
     else {
         return rebuilt(parts, bytes);
     };
-    if offset.unwrap_or(0) > MAX_OFFSET {
-        return bad_request(
-            "offset_too_large",
-            &format!("offset must not exceed {MAX_OFFSET}; narrow the query instead"),
-        );
-    }
-    let total = rows.len() as u64;
-    let limit = limit.filter(|l| *l > 0).unwrap_or(MAX_LIMIT).min(MAX_LIMIT);
-    let offset = offset.unwrap_or(0);
-    let page: Vec<serde_json::Value> = rows
-        .into_iter()
-        .skip(usize::try_from(offset).unwrap_or(usize::MAX))
-        .take(usize::try_from(limit).unwrap_or(usize::MAX))
-        .collect();
-    let whole = offset == 0 && total <= limit;
-    let body = serde_json::to_vec(&page).unwrap_or_default();
+    let page = match page_with(&Cursors::of(&ctx).0, &uri, MAX_LIMIT, MAX_LIMIT) {
+        Ok(page) => page,
+        Err(error) => return error.into_response(),
+    };
+    let (rows, more) = page.split(page.slice(rows));
+    let whole = page.offset() == 0 && !more;
+    let body = serde_json::to_vec(&rows).unwrap_or_default();
     parts.headers.remove(header::CONTENT_LENGTH);
     // A tag describes the whole list; a page that leaves rows out is not it. A page
     // that is the whole list keeps it, so `If-Match` works on a list (CF-2).
     if !whole {
         parts.headers.remove(header::ETAG);
     }
-    parts
-        .headers
-        .extend(axa::offset_pagination::Page { limit, offset }.headers(total));
-    Response::from_parts(parts, Body::from(body))
+    let mut response = Response::from_parts(parts, Body::from(body));
+    page.stamp(&mut response, more);
+    response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::names;
+
+    #[test]
+    fn offset_is_found_by_name_only() {
+        assert!(names(Some("a=1&offset=20"), "offset"));
+        assert!(names(Some("offset"), "offset"));
+        assert!(!names(Some("tz_offset=2&q=offset"), "offset"));
+        assert!(!names(None, "offset"));
+    }
 }

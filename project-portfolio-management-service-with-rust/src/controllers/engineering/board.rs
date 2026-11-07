@@ -293,37 +293,21 @@ pub(crate) struct TaskListParams {
     /// Component filter: a component pid, or `unassigned` for tasks with none.
     #[serde(default)]
     component: Option<String>,
-    /// Page size (at most 500). With `limit` or `offset` the answer is one page.
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip.
-    #[serde(default)]
-    offset: Option<u64>,
 }
 
-/// Tasks returned when a caller sends no paging parameters (the old behaviour, now with a ceiling so
-/// one huge plan cannot make one response unbounded). Past it the answer says `truncated: true` and
-/// the caller pages with `limit` and `offset`.
+/// The largest page of tasks, and the page when no `limit` is asked for, so one huge plan cannot make one response
+/// unbounded. Past it the answer says `truncated: true`, and `Link: rel="next"` names the next page.
 pub const UNPAGED_TASK_CAP: u64 = 2_000;
 
-/// The page for a task list: the standard page when the caller asked for one, else the first
-/// [`UNPAGED_TASK_CAP`] tasks. Pure, so it is unit-tested.
+/// The page for a task list: [`UNPAGED_TASK_CAP`] tasks unless `limit` asks for fewer, from the signed cursor.
 ///
 /// # Errors
 ///
-/// `400` when the offset exceeds [`super::super::pagination::MAX_OFFSET`].
+/// `422` for a bad limit or cursor; `400` for a cursor past [`super::super::pagination::MAX_OFFSET`].
 pub fn task_window(
-    limit: Option<u64>,
-    offset: Option<u64>,
-) -> Result<axa::offset_pagination::Page> {
-    if limit.is_some() || offset.is_some() {
-        super::super::pagination::resolve(limit, offset, 100)
-    } else {
-        Ok(axa::offset_pagination::Page {
-            limit: UNPAGED_TASK_CAP,
-            offset: 0,
-        })
-    }
+    cursor: &super::super::pagination::Cursor,
+) -> Result<super::super::pagination::Page> {
+    cursor.page_up_to(UNPAGED_TASK_CAP, UNPAGED_TASK_CAP)
 }
 
 /// `GET /api/plans/{pid}/tasks` — the item's live tasks plus
@@ -333,6 +317,7 @@ pub(super) async fn list_tasks(
     State(ctx): State<AppContext>,
     Path(pid): Path<String>,
     Query(params): Query<TaskListParams>,
+    cursor: super::super::pagination::Cursor,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let mut query = tasks::Entity::find()
@@ -349,8 +334,7 @@ pub(super) async fn list_tasks(
             query = query.filter(tasks::Column::ComponentPid.eq(component));
         }
     }
-    let page = task_window(params.limit, params.offset)?;
-    let (limit, offset) = (page.limit, page.offset);
+    let page = task_window(&cursor)?;
     // The per-status counts cover every task that matches, not just this page (board columns).
     let by_status: Vec<(String, i64)> = query
         .clone()
@@ -378,22 +362,22 @@ pub(super) async fn list_tasks(
     let rows = query
         .order_by_asc(tasks::Column::SiblingPosition)
         .order_by_asc(tasks::Column::Id)
-        .offset(offset)
-        .limit(limit)
+        .offset(page.offset())
+        .limit(page.fetch())
         .all(&ctx.db)
         .await
         .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let truncated = offset + (rows.len() as u64) < total;
-    // An object, not a bare array, with the count headers all the same.
+    let (rows, truncated) = page.split(rows);
+    // An object, not a bare array, with the next page in `Link` all the same. The counts and total are of one plan
+    // the caller can already read, so they count nothing hidden from them.
     let mut response = format::json(serde_json::json!({
         "tasks": rows.iter().map(task_view).collect::<Vec<_>>(),
         "counts": counts,
         "total": total,
         "truncated": truncated,
-        "limit": limit,
-        "offset": offset,
+        "limit": page.limit(),
     }))?;
-    response.headers_mut().extend(page.headers(total));
+    page.stamp(&mut response, truncated);
     Ok(response)
 }
 

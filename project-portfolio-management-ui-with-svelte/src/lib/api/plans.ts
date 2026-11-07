@@ -54,12 +54,11 @@ export class PlanRepository {
   }
 
   /**
-   * `GET /api/plans?limit=&offset=[&parent=]` — one page, with the total.
+   * `GET /api/plans?limit=[&parent=]` — one page, and whether more follow.
    *
-   * The parent scope reaches the service's count as well as its page, so
-   * a child listing's total describes the children rather than every
-   * plan.
-   * @param page The window; omitted values leave the service's defaults.
+   * There is no total: it would count plans the caller may not see. Pass
+   * the page's `next` to {@link ApiClient.getPage} for the rest.
+   * @param page The page size; omitted leaves the service's default.
    */
   listPage(page: PageRequest = {}, parentRef?: string): Promise<Page<PlanRef>> {
     const suffix = parentRef ? `?parent=${encodeURIComponent(parentRef)}` : "";

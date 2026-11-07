@@ -102,41 +102,40 @@ pub fn routes() -> Routes {
 
 #[cfg(test)]
 mod task_window_tests {
-    use super::{UNPAGED_TASK_CAP, task_window as page};
+    use super::{UNPAGED_TASK_CAP, task_window};
+    use crate::controllers::pagination::Cursor;
+    use crate::cursor::Cursors;
 
-    fn task_window(limit: Option<u64>, offset: Option<u64>) -> (u64, u64) {
-        let page = page(limit, offset).expect("within the offset ceiling");
-        (page.limit, page.offset)
+    fn window(uri: &str) -> Result<(u64, u64), u16> {
+        let cursor = Cursor::new(std::sync::Arc::new(Cursors::random()), uri.parse().unwrap());
+        task_window(&cursor)
+            .map(|page| (page.limit(), page.offset()))
+            .map_err(|e| {
+                axum::response::IntoResponse::into_response(e)
+                    .status()
+                    .as_u16()
+            })
     }
 
     #[test]
     fn no_paging_parameters_means_the_first_capped_slice() {
-        assert_eq!(task_window(None, None), (UNPAGED_TASK_CAP, 0));
+        assert_eq!(window("/api/plans/p/tasks"), Ok((UNPAGED_TASK_CAP, 0)));
     }
 
     #[test]
-    fn a_limit_or_an_offset_means_a_standard_page() {
-        assert_eq!(task_window(Some(10), None), (10, 0));
+    fn a_limit_asks_for_fewer_and_never_more() {
+        assert_eq!(window("/api/plans/p/tasks?limit=10"), Ok((10, 0)));
+        assert_eq!(window("/api/plans/p/tasks?limit=2000"), Ok((2000, 0)));
         assert_eq!(
-            task_window(None, Some(40)),
-            (100, 40),
-            "the default page is 100"
+            window("/api/plans/p/tasks?limit=2001"),
+            Err(422),
+            "refused, not clamped"
         );
-        assert_eq!(
-            task_window(Some(10_000), Some(5)),
-            (500, 5),
-            "a big limit is clamped to 500"
-        );
-        assert_eq!(
-            task_window(Some(0), None),
-            (100, 0),
-            "zero falls back to the default"
-        );
+        assert_eq!(window("/api/plans/p/tasks?limit=0"), Err(422));
     }
 
     #[test]
-    fn an_offset_past_the_ceiling_is_refused() {
-        assert!(page(None, Some(10_001)).is_err());
-        assert!(page(None, Some(10_000)).is_ok());
+    fn an_offset_is_not_a_cursor() {
+        assert_eq!(window("/api/plans/p/tasks?cursor=40"), Err(422));
     }
 }

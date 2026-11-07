@@ -28,9 +28,9 @@
 
   const api = CapabilityClient.withFetch();
   let reviews = $state<Review[]>([]);
-  // Rows matching overall, from `X-Total-Count` — not `reviews.length`,
-  // which is only this page (agents/share/restful.md).
-  let reviewsTotal = $state(0);
+  // Whether more reviews follow this page (the service's `Link:
+  // rel="next"`, agents/restful.md).
+  let reviewsMore = $state(false);
   let error = $state<string | null>(null);
   let notice = $state<string | null>(null);
   let statusFilter = $state<ReviewStatus | "">("");
@@ -53,7 +53,7 @@
         status: statusFilter || undefined,
       });
       reviews = page.items;
-      reviewsTotal = page.total;
+      reviewsMore = page.more;
       error = null;
     } catch (err) {
       error = errorText(err, "p.reviews.could_not_load_reviews");
@@ -226,9 +226,7 @@
 
 {#if reviews.length > 0}
   <p class="count">
-    {reviews.length === reviewsTotal
-      ? `${reviewsTotal}`
-      : `${reviews.length} / ${reviewsTotal}`}
+    {`${reviews.length}${reviewsMore ? "+" : ""}`}
   </p>
 {/if}
 <DataTable label={t("p.reviews.subject_2")} columns={columns} rows={reviews} rowId={(r) => String(r.pid)} searchable />
@@ -254,10 +252,9 @@
   }
   .chip.external { color: #8a6d1d; font-weight: 700; }
 
-  /* The row count: just the total when the page holds everything, and
-     "shown / total" when it does not, so a first page of a long list
-     cannot be mistaken for a short list (same convention as the
-     organization service's front-end /organizations list route). */
+  /* The row count: the rows shown, with a "+" when more follow, so a first page of a long list cannot be
+     mistaken for a short list. There is no total: the service sends none, as it would count rows the caller may
+     not see. */
   .count {
     margin: 0 0 0.3rem;
     opacity: 0.75;

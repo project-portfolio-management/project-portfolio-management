@@ -236,12 +236,6 @@ pub(crate) struct ListParams {
     /// When set, list only the direct children of this parent plan.
     #[serde(default)]
     parent: Option<String>,
-    /// Page size; absent ⇒ [`LIST_DEFAULT_LIMIT`].
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip; absent ⇒ 0.
-    #[serde(default)]
-    offset: Option<u64>,
 }
 
 // ─── Pagination (agents/share/restful.md) ───────────────────────────────
@@ -277,12 +271,6 @@ fn parse_pids(hits: &[String]) -> Vec<uuid::Uuid> {
 /// Query string for `GET /plans/search`: the `q` name term.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct SearchParams {
-    /// Page size; absent ⇒ [`SEARCH_DEFAULT_LIMIT`].
-    #[serde(default)]
-    limit: Option<u64>,
-    /// Rows to skip; absent ⇒ 0.
-    #[serde(default)]
-    offset: Option<u64>,
     /// The full-text query.
     q: Option<String>,
     /// Typo-tolerant retrieval (Levenshtein ≤ 2) instead of exact terms.
@@ -639,19 +627,17 @@ async fn remove(
 async fn list(
     axa::extract::Query(params): axa::extract::Query<ListParams>,
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let page = super::pagination::resolve(params.limit, params.offset, LIST_DEFAULT_LIMIT)?;
-    let (limit, offset) = (page.limit, page.offset);
-    // The parent scope is applied to the page and the count alike, so the
-    // total always describes the rows actually being paged over.
+    let page = cursor.page(LIST_DEFAULT_LIMIT)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     let parent = params
         .parent
         .as_deref()
         .map(str::trim)
         .filter(|p| !p.is_empty());
     let rows = PlanModel::list_paged(&ctx.db, parent, limit, offset).await?;
-    let total = PlanModel::count_for(&ctx.db, parent).await?;
     let hidden = super::plan_access::hidden_plans(
         &ctx,
         &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
@@ -659,7 +645,7 @@ async fn list(
     )
     .await;
     let refs = readable_refs(&rows, &caller, &hidden);
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), refs))
+    Ok(page.respond(refs))
 }
 
 /// Full-text plan search: `GET /api/plans/search?q=`.
@@ -677,14 +663,15 @@ async fn list(
 async fn search(
     axa::extract::Query(params): axa::extract::Query<SearchParams>,
     State(ctx): State<AppContext>,
+    cursor: super::pagination::Cursor,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
     let q = params.q.unwrap_or_default();
     if q.trim().is_empty() {
         return bad_request("query parameter `q` is required");
     }
-    let page = super::pagination::resolve(params.limit, params.offset, SEARCH_DEFAULT_LIMIT)?;
-    let (limit, offset) = (page.limit, page.offset);
+    let page = cursor.page(SEARCH_DEFAULT_LIMIT)?;
+    let (limit, offset) = (page.fetch(), page.offset());
     // An unavailable index is reported, never disguised as "no matches":
     // an operator must be able to tell a broken index from an empty one.
     let Some(engine) = crate::search::engine() else {
@@ -700,7 +687,7 @@ async fn search(
     } else {
         crate::search::SearchMode::Exact
     };
-    let (pids, index_total) = engine.search_page(
+    let (pids, _index_total) = engine.search_page(
         q.trim(),
         mode,
         params.kind.as_deref(),
@@ -708,7 +695,6 @@ async fn search(
         usize::try_from(offset).unwrap_or(usize::MAX),
     )?;
     let rows = PlanModel::find_by_pids(&ctx.db, &parse_pids(&pids)).await?;
-    let total = index_total as u64;
     let hidden = super::plan_access::hidden_plans(
         &ctx,
         &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
@@ -716,7 +702,7 @@ async fn search(
     )
     .await;
     let refs = readable_refs(&rows, &caller, &hidden);
-    Ok(page.respond(i64::try_from(total).unwrap_or(i64::MAX), refs))
+    Ok(page.respond(refs))
 }
 
 /// Score a query against an explicit candidate list (no persistence).

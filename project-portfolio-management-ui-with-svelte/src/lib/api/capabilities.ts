@@ -264,9 +264,8 @@ export class CapabilityClient {
     return this.http.get(`/api/reviews${query(params)}`);
   }
   /**
-   * As {@link listReviews}, but paginated (`?limit=&offset=`) and
-   * returning the service's `X-Total-Count`/`X-Limit`/`X-Offset`
-   * alongside the page — see {@link ApiClient.getPage}.
+   * As {@link listReviews}, but one page (`?limit=`), saying whether more
+   * follow and where — see {@link ApiClient.getPage}.
    */
   listReviewsPage(
     params: {
@@ -335,7 +334,7 @@ export class CapabilityClient {
     );
   }
   /**
-   * As {@link inbox}, but paginated (`?limit=&offset=`) — see
+   * As {@link inbox}, but one page (`?limit=`) — see
    * {@link ApiClient.getPage}. No route calls this yet (nor {@link inbox}
    * itself — the notifications inbox has no consuming UI; see
    * `spec/index.md` §13), but the API-client layer carries the same
@@ -367,7 +366,7 @@ export class CapabilityClient {
     return this.http.get(`/api/automations${query(params)}`);
   }
   /**
-   * As {@link listAutomations}, but paginated (`?limit=&offset=`) — see
+   * As {@link listAutomations}, but one page (`?limit=`) — see
    * {@link ApiClient.getPage}.
    */
   listAutomationsPage(
@@ -406,7 +405,7 @@ export class CapabilityClient {
     return this.http.get(`/api/automations/runs${query(params)}`);
   }
   /**
-   * As {@link runs}, but paginated (`?limit=&offset=`) — see
+   * As {@link runs}, but one page (`?limit=`) — see
    * {@link ApiClient.getPage}.
    */
   runsPage(
@@ -427,7 +426,7 @@ export class CapabilityClient {
     return this.http.get(`/api/scheduled-actions${query(params)}`);
   }
   /**
-   * As {@link listScheduled}, but paginated (`?limit=&offset=`) — see
+   * As {@link listScheduled}, but one page (`?limit=`) — see
    * {@link ApiClient.getPage}. The deadline queue stays soonest-first
    * (`due_at` ascending) under paging: a page is a contiguous slice of
    * that order, never a reshuffled one.

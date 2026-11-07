@@ -153,6 +153,8 @@ impl App {
             .insert(crate::cache::Cache::from_env(&ctx.environment)?);
         ctx.shared_store
             .insert(crate::email::Mailer::from_env(&ctx.environment)?);
+        ctx.shared_store
+            .insert(crate::cursor::Cursors::from_env(&ctx.environment)?);
         let cache = crate::cache::Cache::of(&ctx);
         ctx.health_checks = Checks::new().add("cache", move || {
             let cache = cache.clone();
@@ -501,7 +503,10 @@ impl App {
             ))
             // Every list pages the same way (RM-12b): innermost of all, so what it
             // slices is exactly what the handler answered.
-            .layer(axum::middleware::from_fn(controllers::paging::paging_mw))
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.clone(),
+                controllers::paging::paging_mw,
+            ))
             // A retried write returns the first answer (BR-1). Inside the guards below, so a replay never
             // answers a caller they would refuse.
             .layer(axum::middleware::from_fn_with_state(

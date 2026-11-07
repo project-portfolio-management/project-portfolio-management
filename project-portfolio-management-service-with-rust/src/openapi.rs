@@ -69,8 +69,8 @@ fn paths() -> Value {
 }
 
 /// Every `GET` that answers with a bare JSON array — a list. Each pages the same way
-/// (RM-12b, [`crate::controllers::paging`]): `limit`, `offset`, and the
-/// `X-Total-Count` / `X-Limit` / `X-Offset` headers. A test calls every documented
+/// (RM-12b, [`crate::controllers::paging`]): `limit`, a signed `cursor`, and
+/// `Link: rel="next"` while more rows follow, with no total. A test calls every documented
 /// `GET` it can reach and checks that the lists it finds are exactly these
 /// (and that the ones it cannot reach are named, with a reason), so a new list
 /// cannot go undocumented.
@@ -145,7 +145,7 @@ pub const PAGED_LISTS: &[&str] = &[
     "/api/status-updates/due",
 ];
 
-/// Add `limit`, `offset` and the count headers to every list in [`PAGED_LISTS`].
+/// Add `limit`, `cursor` and the `Link` header to every list in [`PAGED_LISTS`].
 fn document_paging(paths: &mut Value) {
     let Some(map) = paths.as_object_mut() else {
         return;
@@ -160,14 +160,22 @@ fn document_paging(paths: &mut Value) {
         };
         let params = get.entry("parameters").or_insert_with(|| json!([]));
         if let Some(list) = params.as_array_mut() {
-            for (name, text) in [
-                ("limit", "Page size: default and ceiling 500"),
-                ("offset", "Rows to skip; above 10000 is a 400"),
+            for (name, text, kind) in [
+                (
+                    "limit",
+                    "Page size, 1 to 500 (500 when absent); outside that a 422",
+                    "integer",
+                ),
+                (
+                    "cursor",
+                    "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
+                    "string",
+                ),
             ] {
                 if !list.iter().any(|p| p["name"] == name) {
                     list.push(
                         json!({ "name": name, "in": "query", "required": false, "description": text,
-                        "schema": { "type": "integer", "minimum": 0 } }),
+                        "schema": { "type": kind } }),
                     );
                 }
             }
@@ -178,9 +186,7 @@ fn document_paging(paths: &mut Value) {
             .and_then(Value::as_object_mut)
         {
             ok.insert("headers".to_string(), json!({
-                "X-Total-Count": { "description": "How many rows there are in all", "schema": { "type": "integer" } },
-                "X-Limit": { "description": "The page size used", "schema": { "type": "integer" } },
-                "X-Offset": { "description": "The offset used", "schema": { "type": "integer" } },
+                "Link": { "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see", "schema": { "type": "string" } },
             }));
         }
     }
@@ -319,12 +325,12 @@ fn insight_paths() -> Value {
         "/api/plans/{pid}/tasks": {
             "parameters": [{ "name": "pid", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
             "get": { "tags": ["engineering"], "summary": "The item's live tasks + per-status board counts",
-                "description": "Returns {tasks, counts, total, truncated, limit, offset}. counts and total cover every task that matches (?component narrows), not just the page. With ?limit and/or ?offset the answer is one page (default 100, at most 500; an offset over 10,000 is 400) with X-Total-Count, X-Limit and X-Offset headers. With no paging parameter the first 2,000 tasks are returned and truncated says whether more exist: a plan of 12,667 tasks otherwise made one ~400 KB response that took seconds. Page with offset to read the rest.",
+                "description": "Returns {tasks, counts, total, truncated, limit}. counts and total cover every task that matches (?component narrows), not just the page. A page is 2,000 tasks unless ?limit asks for fewer (at most 2,000; outside that a 422): a plan of 12,667 tasks otherwise made one ~400 KB response that took seconds. truncated says whether more follow, and then Link: rel=\"next\" names the next page, whose signed cursor reads the rest.",
                 "parameters": [
                     { "name": "component", "in": "query", "required": false, "description": "a component pid, or unassigned", "schema": { "type": "string" } },
-                    { "name": "limit", "in": "query", "required": false, "description": "page size, at most 500", "schema": { "type": "integer" } },
-                    { "name": "offset", "in": "query", "required": false, "description": "rows to skip, at most 10,000", "schema": { "type": "integer" } }],
-                "responses": { "200": { "description": "Tasks, counts, total, truncated" }, "400": { "description": "A bad limit or an offset over the maximum" } } },
+                    { "name": "limit", "in": "query", "required": false, "description": "page size, 1 to 2,000", "schema": { "type": "integer" } },
+                    { "name": "cursor", "in": "query", "required": false, "description": "opaque, from the previous page's Link header", "schema": { "type": "string" } }],
+                "responses": { "200": { "description": "Tasks, counts, total, truncated" }, "400": { "description": "A cursor past 10,000 tasks" }, "422": { "description": "A bad limit or cursor" } } },
             "post": { "tags": ["engineering"], "summary": "Create a task (default status todo; done on create stamps done_at)",
                 "responses": { "200": { "description": "The task" }, "422": { "description": "Validation failure" } } }
         },

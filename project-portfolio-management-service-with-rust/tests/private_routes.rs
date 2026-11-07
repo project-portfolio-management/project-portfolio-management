@@ -405,7 +405,10 @@ async fn a_private_plans_reviews_are_private() {
         let listed = |v: Value| v.as_array().expect("rows").iter().any(|r| r["pid"] == review);
         let list = format!("/api/reviews?subject_pid={plan}");
         let page = with!(request.get("/api/reviews"), who.outsider).await;
-        assert_eq!(page.header("x-total-count"), "0", "the total does not count it");
+        assert!(
+            page.maybe_header("x-total-count").is_none() && page.maybe_header("link").is_none(),
+            "no total or next page counts it"
+        );
         assert!(!listed(page.json()));
         assert!(!listed(with!(request.get(&list), who.outsider).await.json()));
         assert!(listed(with!(request.get(&list), who.member).await.json()));
@@ -535,7 +538,10 @@ async fn a_private_plans_automations_are_private() {
             "the rules ran"
         );
         let seen = with!(request.get("/api/automations/runs"), who.outsider).await;
-        assert_eq!(seen.header("x-total-count"), "0");
+        assert!(
+            seen.maybe_header("x-total-count").is_none() && seen.maybe_header("link").is_none()
+        );
+        assert_eq!(seen.json::<Value>().as_array().map(Vec::len), Some(0));
 
         // Scheduled actions.
         let schedule = json!({ "subject_kind": "plan", "subject_pid": plan,

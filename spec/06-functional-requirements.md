@@ -739,9 +739,16 @@ across currencies.
   either way the failure is logged and counted in
   `visibility_lookup_failed_total` (CQ-6).
 - **FR-46 Uniform paging and task `include` (RM-12b).** Every `GET`
-  answering `200` with a bare JSON array pages: `?limit=` (default and
-  ceiling 500), `?offset=` (above 10 000 is `400`), headers
-  `X-Total-Count` / `X-Limit` / `X-Offset`, body still the bare array.
+  answering `200` with a bare JSON array pages by signed cursor
+  (`axa-cursor-pagination`): `?limit=` (1 to 500, and 500 when absent;
+  outside that `422`, never clamped) and an opaque `?cursor=`, with
+  `Link: <…>; rel="next"` while more rows follow and none on the last
+  page; body still the bare array. There is **no total**, because it would
+  count rows the caller's record policy hides. A cursor is signed with
+  `PROJECT_PORTFOLIO_MANAGEMENT_CURSOR_KEY` over its position, path and
+  filters, so a made-up, edited or moved one is `422`; one past 10 000 rows
+  is `400` `offset_too_large`, and `?offset=` is `400`
+  `offset_not_supported`.
   `GET /api/plans/{pid}/tasks/{t_pid}?include=` embeds sub-resources
   (`children`, `relations`, `transitions`, `raci`, `time_entries`); a name whose module is off is
   omitted with reason `module_disabled`, one naming people with reason

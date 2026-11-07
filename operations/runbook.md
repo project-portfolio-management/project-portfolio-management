@@ -54,7 +54,7 @@ single integration or office is hitting it:
 1. Is the real client address visible? Behind a proxy, set `TRUSTED_PROXIES`;
    otherwise every user shares the proxy's address.
 2. Raise the matching limit (`RATE_LIMIT_GENERAL_*`, `RATE_LIMIT_EXPENSIVE_*`).
-3. Many `401`s from one address fill the failures bucket: find what is sending
+3. Many `401`s from one address use up the failures limit: find what is sending
    bad tokens (an expired token in a script).
 
 ### `500` on data routes while `/_health` is `200`

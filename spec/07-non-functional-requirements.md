@@ -121,10 +121,12 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   for scripts or style elements). CORS is an **explicit allow-list** of exact
   origins; with none configured, only same-origin callers are served.
 - **NFR-14 — Rate limiting.** Requests are rate limited per caller (credential,
-  else client address): a general bucket, a tighter one for expensive routes,
-  and one for failed authentication. A refusal is `429` with `Retry-After` and
-  `RateLimit-*` headers. Health and ping are exempt. The client address honours
-  `X-Forwarded-For` only from configured trusted proxies. State is per process.
+  else client address): a general limit, a tighter one for expensive routes,
+  and one for failed authentication. Each allows its burst in a fixed window as long as its per-minute rate takes to
+  earn that burst, counted by `axa-ratelimit`, so a client can send up to twice the burst across the end of a window.
+  A refusal is `429` with `Retry-After` and `RateLimit-*` headers. Health, ping and readiness are exempt. The client
+  address honours `X-Forwarded-For` only from configured trusted proxies, and an IPv6 address counts by its `/64`.
+  State is per process.
 - **NFR-15 — Licence.** The repository is offered under any one of MIT,
   Apache-2.0, BSD-3-Clause, GPL-2.0-only or GPL-3.0-only, or custom terms by
   arrangement; every manifest declares the one SPDX expression

@@ -1,11 +1,11 @@
-//! In-process request rate limiting (HD-5): token buckets, no external store.
+//! In-process request rate limiting (HD-5), counted by `axa-ratelimit`: fixed windows, no external store.
 //!
-//! Three independent bucket families, each keyed separately:
+//! Three independent limits, each keyed separately:
 //!
-//! - **general** — every request, keyed by the caller's credential (a hash of
-//!   the bearer token, so no extra verification) else the client address;
+//! - **general** — every request, keyed by the caller's credential (the bearer token, held only as `axa-ratelimit`'s
+//!   keyed hash, so no extra verification) else the client address;
 //! - **expensive** — the routes that do real work per call (simulations, CPM,
-//!   levelling, forecasts, imports, exports, bulk jobs, PDF), a tighter bucket
+//!   levelling, forecasts, imports, exports, bulk jobs, PDF), a tighter limit
 //!   charged on top of the general one;
 //! - **failures** — authentication failures (`401`) per client address, so a
 //!   password-guessing or token-guessing client is slowed before the auth
@@ -14,18 +14,21 @@
 //! `/_health`, `/_ping` and `/_readiness` are exempt. A refused request is `429` with
 //! `Retry-After` and the `RateLimit-Limit` / `RateLimit-Remaining` /
 //! `RateLimit-Reset` headers (whole seconds); an allowed one carries the
-//! `RateLimit-*` headers of the tightest bucket it was charged to.
+//! `RateLimit-*` headers of the tightest limit it was charged to.
+//!
+//! Each limit allows its *burst* in one window, and the window is as long as the sustained rate takes to earn that
+//! burst: 10 at 30 a minute is 10 per 20 seconds. As with any fixed window, a client can send up to twice the burst
+//! across the end of one.
 //!
 //! The client address is the socket peer unless that peer is listed in
 //! `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`, in which case the
 //! rightmost untrusted `X-Forwarded-For` hop is used (see
 //! [`crate::trusted_proxy`]). A spoofed header from any other peer is
-//! ignored.
+//! ignored. An IPv6 address counts by its `/64`, which is what one subscriber is usually given.
 //!
-//! Memory is bounded: when a family holds `MAX_KEYS` keys, idle (full)
-//! buckets are dropped, and if it is still full new keys share one overflow
-//! bucket. State is per process; with several replicas each enforces its own
-//! share (a shared store is a later step, `plan.md` §47).
+//! Memory is bounded by `axa-ratelimit`: a key is dropped two windows after its last request, and past
+//! [`axa::ratelimit::MAX_KEYS`] new keys share one count. State is per process; with several replicas each enforces
+//! its own share (a shared store is a later step, `plan.md` §47).
 //!
 //! ## Configuration
 //!
@@ -37,28 +40,20 @@
 //! | `…_RATE_LIMIT_FAILURES_PER_MINUTE` / `…_FAILURES_BURST` | 6 / 20 | authentication failures per client address |
 
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-    time::Instant,
+    net::{IpAddr, Ipv6Addr},
+    num::NonZeroU32,
+    sync::Arc,
 };
 
+use axa::ratelimit::{Limiter, Verdict};
 use axum::{
     extract::{Request, State},
-    http::{HeaderName, HeaderValue, StatusCode, header},
+    http::{HeaderValue, StatusCode, header},
     middleware::Next,
     response::{IntoResponse, Response},
 };
 
 use crate::trusted_proxy::{TrustedProxies, peer_ip};
-
-/// Keys one bucket family may hold before it sheds idle ones.
-pub const MAX_KEYS: usize = 100_000;
-
-/// The shared key for callers that arrive once the family is full.
-const OVERFLOW_KEY: &str = "overflow";
-
-/// Paths that are never limited.
-const EXEMPT: &[&str] = &["/_health", "/_ping", "/_readiness"];
 
 /// Path segments that mark a route as expensive.
 const EXPENSIVE_SEGMENTS: &[&str] = &[
@@ -78,185 +73,55 @@ const EXPENSIVE_SEGMENTS: &[&str] = &[
     "dependency-risk",
 ];
 
-/// One bucket's shape: how many requests it holds, and how fast it refills.
-#[derive(Debug, Clone, Copy, PartialEq)]
+/// One limit's shape: the burst allowed in a window, and the sustained rate that sets the window's length.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Limit {
-    /// Burst size: the most requests available at once.
-    pub burst: f64,
-    /// Refill rate in requests per second.
-    pub per_second: f64,
+    /// The most requests in one window.
+    pub burst: NonZeroU32,
+    /// The window, in whole seconds: as long as `per_minute` takes to earn `burst`, rounded up.
+    pub window_seconds: NonZeroU32,
 }
 
 impl Limit {
-    /// A limit of `per_minute` sustained requests with a `burst` allowance.
+    /// A limit of `per_minute` sustained requests with a `burst` allowance. A `0` counts as `1`.
     #[must_use]
     pub fn per_minute(per_minute: u32, burst: u32) -> Self {
+        let burst = NonZeroU32::new(burst).unwrap_or(NonZeroU32::MIN);
+        let per_minute = per_minute.max(1);
+        let seconds = (u64::from(burst.get()) * 60).div_ceil(u64::from(per_minute));
         Self {
-            burst: f64::from(burst.max(1)),
-            per_second: f64::from(per_minute.max(1)) / 60.0,
-        }
-    }
-}
-
-/// The outcome of charging a bucket.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Verdict {
-    /// Whether the request may proceed.
-    pub allowed: bool,
-    /// The bucket's burst size.
-    pub limit: u32,
-    /// Whole requests left after this one.
-    pub remaining: u32,
-    /// Seconds until the bucket is full again.
-    pub reset_secs: u64,
-    /// Seconds to wait before retrying (0 when allowed).
-    pub retry_after_secs: u64,
-}
-
-/// One key's token bucket: the tokens it held at `last`, before any refill since.
-#[derive(Debug, Clone, Copy)]
-struct Bucket {
-    /// Tokens held at `last`; fractional because refill is continuous.
-    tokens: f64,
-    /// The instant `tokens` was last written, the origin for the next refill.
-    last: Instant,
-}
-
-impl Bucket {
-    /// Tokens available at `now`: stored tokens plus elapsed time times the refill rate, capped at the burst size. A clock that went backwards counts as zero elapsed time.
-    fn refilled(self, limit: &Limit, now: Instant) -> f64 {
-        let elapsed = now.saturating_duration_since(self.last).as_secs_f64();
-        (self.tokens + elapsed * limit.per_second).min(limit.burst)
-    }
-}
-
-/// A keyed family of token buckets. The clock is passed in, so tests drive
-/// time by hand.
-#[derive(Debug, Default)]
-pub struct Limiter {
-    /// Buckets by key, behind a mutex; bounded by `MAX_KEYS`.
-    buckets: Mutex<HashMap<String, Bucket>>,
-}
-
-/// Round a non-negative number of seconds up to whole seconds, so a client told to wait is never told too little. Zero or negative gives 0.
-fn secs_ceil(seconds: f64) -> u64 {
-    if seconds <= 0.0 {
-        0
-    } else {
-        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let whole = seconds.ceil() as u64;
-        whole
-    }
-}
-
-impl Limiter {
-    /// A new, empty family.
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Find or create the bucket for `key`. When the map is full and the key is new, buckets that have refilled to full are dropped first; if it is still full the key is folded into a shared overflow bucket so memory stays bounded. New buckets start full.
-    fn slot<'a>(
-        map: &'a mut HashMap<String, Bucket>,
-        key: &str,
-        limit: &Limit,
-        now: Instant,
-        max_keys: usize,
-    ) -> (&'a mut Bucket, String) {
-        let mut key = key.to_string();
-        if !map.contains_key(&key) && map.len() >= max_keys {
-            map.retain(|_, b| b.refilled(limit, now) < limit.burst);
-            if map.len() >= max_keys {
-                key = OVERFLOW_KEY.to_string();
-            }
-        }
-        let bucket = map.entry(key.clone()).or_insert(Bucket {
-            tokens: limit.burst,
-            last: now,
-        });
-        (bucket, key)
-    }
-
-    /// Charge `cost` requests to `key`'s bucket.
-    ///
-    /// # Panics
-    ///
-    /// Only if another thread panicked while holding the lock.
-    pub fn take(&self, key: &str, limit: &Limit, now: Instant, cost: f64) -> Verdict {
-        self.take_bounded(key, limit, now, cost, MAX_KEYS)
-    }
-
-    /// `take` with an explicit key cap, so tests can exercise the overflow path with a small number. A refused request does not consume tokens, and the verdict carries the wait until `cost` tokens are available.
-    fn take_bounded(
-        &self,
-        key: &str,
-        limit: &Limit,
-        now: Instant,
-        cost: f64,
-        max_keys: usize,
-    ) -> Verdict {
-        let mut map = self.buckets.lock().expect("the limiter lock");
-        let (bucket, _) = Self::slot(&mut map, key, limit, now, max_keys);
-        let have = bucket.refilled(limit, now);
-        let allowed = have >= cost;
-        let left = if allowed { have - cost } else { have };
-        bucket.tokens = left;
-        bucket.last = now;
-        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let remaining = left.floor().max(0.0) as u32;
-        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let burst = limit.burst as u32;
-        Verdict {
-            allowed,
-            limit: burst,
-            remaining,
-            reset_secs: secs_ceil((limit.burst - left) / limit.per_second),
-            retry_after_secs: if allowed {
-                0
-            } else {
-                secs_ceil((cost - left) / limit.per_second).max(1)
-            },
+            burst,
+            window_seconds: u32::try_from(seconds)
+                .ok()
+                .and_then(NonZeroU32::new)
+                .unwrap_or(NonZeroU32::MAX),
         }
     }
 
-    /// Whether `key` has at least one request available, without charging it.
-    ///
-    /// # Panics
-    ///
-    /// Only if another thread panicked while holding the lock.
-    pub fn has_capacity(&self, key: &str, limit: &Limit, now: Instant) -> Option<Verdict> {
-        let map = self.buckets.lock().expect("the limiter lock");
-        let have = map.get(key).map_or(limit.burst, |b| b.refilled(limit, now));
-        if have >= 1.0 {
-            return None;
-        }
-        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let burst = limit.burst as u32;
-        Some(Verdict {
-            allowed: false,
-            limit: burst,
-            remaining: 0,
-            reset_secs: secs_ceil((limit.burst - have) / limit.per_second),
-            retry_after_secs: secs_ceil((1.0 - have) / limit.per_second).max(1),
-        })
+    /// A fresh limiter of this shape.
+    fn limiter(self) -> Limiter {
+        Limiter::new(self.burst, self.window_seconds)
     }
+}
 
-    /// Keys currently held.
-    ///
-    /// # Panics
-    ///
-    /// Only if another thread panicked while holding the lock.
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.buckets.lock().expect("the limiter lock").len()
-    }
+/// What a request is counted against for the general and expensive limits.
+#[derive(Hash)]
+enum Key<'a> {
+    /// The bearer token. `axa-ratelimit` keeps only a keyed hash of it.
+    Credential(&'a str),
+    /// The client address, or `None` when there is none.
+    Client(Option<IpAddr>),
+}
 
-    /// Whether no key is held.
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
+/// The client address a request is counted against, with an IPv6 address reduced to its `/64`.
+fn client(proxies: &TrustedProxies, req: &Request) -> Option<IpAddr> {
+    let address = proxies
+        .client_ip(peer_ip(req.extensions()), req.headers())?
+        .to_canonical();
+    Some(match address {
+        IpAddr::V4(_) => address,
+        IpAddr::V6(v6) => IpAddr::V6(Ipv6Addr::from_bits(v6.to_bits() & (!0u128 << 64))),
+    })
 }
 
 /// Whether `path` is one of the routes that does real work per call.
@@ -273,19 +138,7 @@ pub fn is_expensive(path: &str) -> bool {
 /// Whether `path` is never limited.
 #[must_use]
 pub fn is_exempt(path: &str) -> bool {
-    EXEMPT.contains(&path)
-}
-
-/// A 64-bit FNV-1a hash of `text`, hex-encoded. Not a security boundary: it
-/// only turns a bearer token into a bucket key so the token itself is never
-/// held in memory longer than the request.
-fn key_hash(text: &str) -> String {
-    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
-    for byte in text.bytes() {
-        hash ^= u64::from(byte);
-        hash = hash.wrapping_mul(0x0100_0000_01b3);
-    }
-    format!("{hash:016x}")
+    axa::ratelimit::EXEMPT.contains(&path)
 }
 
 /// The rate limiter's settings and state.
@@ -293,19 +146,13 @@ fn key_hash(text: &str) -> String {
 pub struct RateLimiter {
     /// Master switch; when false every request passes unchecked.
     enabled: bool,
-    /// Limit applied to ordinary requests per client or token.
-    general_limit: Limit,
-    /// Tighter limit for routes that do heavy work per call.
-    expensive_limit: Limit,
-    /// Limit on authentication failures per client address.
-    failure_limit: Limit,
     /// Peers trusted to supply the forwarded client address.
     proxies: TrustedProxies,
-    /// Buckets for the general limit.
+    /// Counts for the general limit, per credential or client.
     general: Limiter,
-    /// Buckets for the expensive-route limit.
+    /// Counts for the expensive-route limit, per credential or client.
     expensive: Limiter,
-    /// Buckets counting authentication failures by client address.
+    /// Counts of authentication failures, per client address.
     failures: Limiter,
 }
 
@@ -361,13 +208,10 @@ impl RateLimiter {
     ) -> Self {
         Self {
             enabled,
-            general_limit: general,
-            expensive_limit: expensive,
-            failure_limit: failures,
             proxies,
-            general: Limiter::new(),
-            expensive: Limiter::new(),
-            failures: Limiter::new(),
+            general: general.limiter(),
+            expensive: expensive.limiter(),
+            failures: failures.limiter(),
         }
     }
 
@@ -378,32 +222,19 @@ impl RateLimiter {
     }
 }
 
-/// Add the `ratelimit-limit`, `ratelimit-remaining` and `ratelimit-reset` headers from `verdict` to `response`.
-fn set_ratelimit_headers(response: &mut Response, verdict: &Verdict) {
-    let h = response.headers_mut();
-    for (name, value) in [
-        ("ratelimit-limit", verdict.limit.to_string()),
-        ("ratelimit-remaining", verdict.remaining.to_string()),
-        ("ratelimit-reset", verdict.reset_secs.to_string()),
-    ] {
-        if let Ok(v) = HeaderValue::from_str(&value) {
-            h.insert(HeaderName::from_static(name), v);
-        }
-    }
-}
-
-/// Build the `429` problem for a refused request, with `Retry-After` and the rate-limit headers from `verdict`; `what` names the limit that was hit.
+/// The `429` problem for a refused request: `axa-ratelimit`'s headers, with `detail` naming the limit that was hit.
 fn too_many(verdict: &Verdict, what: &str) -> Response {
     let mut response = crate::controllers::problem(
         StatusCode::TOO_MANY_REQUESTS,
         "too_many_requests",
-        format!("{what}; retry after {} seconds", verdict.retry_after_secs),
+        format!("{what}; retry after {} seconds", verdict.reset_seconds),
     )
     .into_response();
-    if let Ok(v) = HeaderValue::from_str(&verdict.retry_after_secs.to_string()) {
-        response.headers_mut().insert(header::RETRY_AFTER, v);
-    }
-    set_ratelimit_headers(&mut response, verdict);
+    verdict.stamp(&mut response);
+    response.headers_mut().insert(
+        header::RETRY_AFTER,
+        HeaderValue::from(verdict.reset_seconds),
+    );
     response
 }
 
@@ -415,21 +246,15 @@ pub async fn rate_limit_mw(
     req: Request,
     next: Next,
 ) -> Response {
-    let path = req.uri().path().to_string();
-    if !limiter.enabled || is_exempt(&path) {
+    if !limiter.enabled || is_exempt(req.uri().path()) {
         return next.run(req).await;
     }
-    let now = Instant::now();
-    let client = limiter
-        .proxies
-        .client_ip(peer_ip(req.extensions()), req.headers())
-        .map_or_else(|| "unknown".to_string(), |ip| ip.to_string());
+    let client = client(&limiter.proxies, &req);
 
-    if let Some(verdict) = limiter
-        .failures
-        .has_capacity(&client, &limiter.failure_limit, now)
-    {
-        return too_many(&verdict, "too many failed authentication attempts");
+    // Peek, so a client under the failure limit is not charged for asking.
+    let failures = limiter.failures.peek(client);
+    if !failures.allowed {
+        return too_many(&failures, "too many failed authentication attempts");
     }
 
     let credential = req
@@ -442,19 +267,17 @@ pub async fn rate_limit_mw(
         })
         .map(str::trim)
         .filter(|t| !t.is_empty());
-    let key = credential.map_or_else(
-        || format!("ip:{client}"),
-        |t| format!("tok:{}", key_hash(t)),
-    );
-
-    let mut tightest = limiter.general.take(&key, &limiter.general_limit, now, 1.0);
+    let (mut tightest, expensive) = {
+        let key = credential.map_or(Key::Client(client), Key::Credential);
+        let general = limiter.general.check(&key);
+        let expensive = (general.allowed && is_expensive(req.uri().path()))
+            .then(|| limiter.expensive.check(&key));
+        (general, expensive)
+    };
     if !tightest.allowed {
         return too_many(&tightest, "rate limit exceeded");
     }
-    if is_expensive(&path) {
-        let verdict = limiter
-            .expensive
-            .take(&key, &limiter.expensive_limit, now, 1.0);
+    if let Some(verdict) = expensive {
         if !verdict.allowed {
             return too_many(&verdict, "rate limit exceeded for this kind of request");
         }
@@ -465,11 +288,9 @@ pub async fn rate_limit_mw(
 
     let mut response = next.run(req).await;
     if response.status() == StatusCode::UNAUTHORIZED {
-        limiter
-            .failures
-            .take(&client, &limiter.failure_limit, Instant::now(), 1.0);
+        limiter.failures.check(client);
     }
-    set_ratelimit_headers(&mut response, &tightest);
+    tightest.stamp(&mut response);
     response
 }
 
@@ -479,7 +300,7 @@ mod tests {
     use axum::{
         Router, body::Body, extract::ConnectInfo, http::Request as HttpRequest, routing::get,
     };
-    use std::{net::SocketAddr, time::Duration};
+    use std::net::SocketAddr;
     use tower::ServiceExt;
 
     fn limit(burst: u32, per_minute: u32) -> Limit {
@@ -487,88 +308,17 @@ mod tests {
     }
 
     #[test]
-    fn a_bucket_allows_its_burst_then_refuses_then_refills() {
-        let l = Limiter::new();
-        let lim = limit(3, 60); // one per second
-        let t0 = Instant::now();
-        for left in [2, 1, 0] {
-            let v = l.take("k", &lim, t0, 1.0);
-            assert!(v.allowed);
-            assert_eq!(v.remaining, left);
-        }
-        let refused = l.take("k", &lim, t0, 1.0);
-        assert!(!refused.allowed);
-        assert_eq!(refused.retry_after_secs, 1);
-        assert_eq!(refused.limit, 3);
-        // Half a second later there is still not a whole request.
-        assert!(
-            !l.take("k", &lim, t0 + Duration::from_millis(500), 1.0)
-                .allowed
-        );
-        // A second after the start one has refilled.
-        assert!(l.take("k", &lim, t0 + Duration::from_secs(1), 1.0).allowed);
-    }
-
-    #[test]
-    fn the_bucket_never_holds_more_than_its_burst() {
-        let l = Limiter::new();
-        let lim = limit(2, 60);
-        let t0 = Instant::now();
-        assert!(l.take("k", &lim, t0, 1.0).allowed);
-        let later = l.take("k", &lim, t0 + Duration::from_hours(1), 1.0);
-        assert!(later.allowed);
-        assert_eq!(later.remaining, 1);
-    }
-
-    #[test]
-    fn keys_are_independent() {
-        let l = Limiter::new();
-        let lim = limit(1, 1);
-        let t0 = Instant::now();
-        assert!(l.take("a", &lim, t0, 1.0).allowed);
-        assert!(!l.take("a", &lim, t0, 1.0).allowed);
-        assert!(l.take("b", &lim, t0, 1.0).allowed);
-    }
-
-    #[test]
-    fn memory_is_bounded_by_an_overflow_bucket() {
-        let l = Limiter::new();
-        let lim = limit(1, 1);
-        let t0 = Instant::now();
-        for i in 0..4 {
-            l.take_bounded(&format!("k{i}"), &lim, t0, 1.0, 3);
-        }
-        // Three real keys, the fourth caller landed in the shared overflow key.
-        assert_eq!(l.len(), 4);
-        for i in 4..40 {
-            l.take_bounded(&format!("k{i}"), &lim, t0, 1.0, 3);
-        }
-        assert_eq!(l.len(), 4, "new callers share the overflow bucket");
-    }
-
-    #[test]
-    fn idle_buckets_are_shed_before_overflow() {
-        let l = Limiter::new();
-        let lim = limit(2, 120);
-        let t0 = Instant::now();
-        l.take_bounded("a", &lim, t0, 1.0, 1);
-        // Long idle: "a" is full again, so "b" displaces it instead of overflowing.
-        l.take_bounded("b", &lim, t0 + Duration::from_mins(10), 1.0, 1);
-        assert_eq!(l.len(), 1);
-        assert!(l.buckets.lock().unwrap().contains_key("b"));
-    }
-
-    #[test]
-    fn has_capacity_does_not_charge() {
-        let l = Limiter::new();
-        let lim = limit(1, 60);
-        let t0 = Instant::now();
-        assert!(l.has_capacity("k", &lim, t0).is_none());
-        assert!(l.has_capacity("k", &lim, t0).is_none());
-        l.take("k", &lim, t0, 1.0);
-        let refused = l.has_capacity("k", &lim, t0).expect("empty bucket");
-        assert!(!refused.allowed);
-        assert_eq!(refused.retry_after_secs, 1);
+    fn a_window_is_as_long_as_the_rate_takes_to_earn_the_burst() {
+        let window = |per_minute, burst| Limit::per_minute(per_minute, burst).window_seconds.get();
+        // The defaults: general 200 per 20 s, expensive 10 per 20 s, failures 20 per 200 s.
+        assert_eq!(window(600, 200), 20);
+        assert_eq!(window(30, 10), 20);
+        assert_eq!(window(6, 20), 200);
+        // Rounded up, never to zero, and a zero setting counts as one.
+        assert_eq!(window(7, 1), 9);
+        assert_eq!(window(6000, 1), 1);
+        assert_eq!(Limit::per_minute(0, 0), Limit::per_minute(1, 1));
+        assert_eq!(window(1, 1), 60);
     }
 
     #[test]
@@ -612,10 +362,17 @@ mod tests {
     }
 
     #[test]
-    fn the_credential_key_is_stable_and_not_the_token() {
-        assert_eq!(key_hash("abc"), key_hash("abc"));
-        assert_ne!(key_hash("abc"), key_hash("abd"));
-        assert!(!key_hash("secret-token").contains("secret"));
+    fn an_ipv6_client_counts_by_its_slash_64() {
+        let at = |peer: &str| {
+            let mut req = Request::new(Body::empty());
+            let addr: SocketAddr = format!("[{peer}]:4000").parse().unwrap();
+            req.extensions_mut().insert(ConnectInfo(addr));
+            client(&TrustedProxies::none(), &req)
+        };
+        assert_eq!(at("2001:db8:1:2::1"), at("2001:db8:1:2:ffff::9"));
+        assert_ne!(at("2001:db8:1:2::1"), at("2001:db8:1:3::1"));
+        // An IPv4 address seen over IPv6 is the IPv4 address.
+        assert_eq!(at("::ffff:10.0.0.1"), Some("10.0.0.1".parse().unwrap()));
     }
 
     fn app(limiter: RateLimiter) -> Router {
@@ -677,7 +434,10 @@ mod tests {
         }
         let (s, h) = status(&app, request("/api/x", "10.0.0.1", Some("alice"), None)).await;
         assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
-        assert_eq!(h["retry-after"], "1");
+        assert_eq!(
+            h["retry-after"], "2",
+            "2 per minute with a burst of 2 is 2 per 2 s"
+        );
         assert_eq!(h["ratelimit-remaining"], "0");
         assert_eq!(h["ratelimit-limit"], "2");
         // Same address, different credential: unaffected.

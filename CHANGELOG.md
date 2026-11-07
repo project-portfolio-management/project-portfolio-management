@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 7 November (rate limits counted by axa-ratelimit)
+
+- `src/rate_limit.rs` now counts with `axa-ratelimit`'s `Limiter` in place of its own token buckets, 240 lines fewer. The three limits, the settings and their defaults are unchanged. So are the credential-else-address key, the service's own `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES` and the `429` that names which limit tripped (NFR-14).
+- **Behaviour changes.** A limit now allows its burst once per fixed window of 60 × burst ÷ per-minute seconds: general 200 per 20 s, expensive 10 per 20 s, failures 20 per 200 s. Where a token bucket refilled steadily, a client can now send up to twice the burst across the end of a window, and `Retry-After` is the rest of the window, not one request's refill. An IPv6 client now counts by its `/64`, so one subscriber cannot rotate addresses for a fresh limit. A token is held as `axa-ratelimit`'s keyed hash, not an FNV hash.
+- Not taken: `axa-ratelimit`'s `by_client` and `lock_out_failures` layers, and its `client_key`. These read the address axa resolves from its own `TRUSTED_PROXIES`, and a deployment that sets only this service's variable would then put every client behind its proxy on one limit. Reconciling the two lists is a separate change.
+- Verified: 13 rate-limit unit tests (2 new: the window arithmetic, and IPv6 `/64`), 1,236 unit tests in all, `hardening` and `break_glass`. On the production binary with a burst of 3 at 6 a minute: three `401`s, then a `429` with `retry-after: 30`, the `RateLimit-*` headers and a problem body. `/_health` still `200`, and SIGTERM exits 0. Not verified: the rest of the database suite was not rerun, and nothing was measured under load. **Nothing is pushed, so CI has not seen this.**
+
 ### 7 November (axa 0.6)
 
 - axa moves from 0.5 to 0.6.1. **Every error body changes:** it is an RFC 9457 problem, `application/problem+json`, with `type`, `title`, `status`, `detail` where there is more to say, and `code`. `{error, description}` is gone: `error` is now `code` and `description` is `detail`. Successes are unchanged. An API client that reads `error` or `description`, or checks for `application/json` on an error, must change (spec §8.3a).

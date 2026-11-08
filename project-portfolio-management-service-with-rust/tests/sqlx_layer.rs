@@ -17,6 +17,9 @@ use uuid::Uuid;
 #[serial]
 async fn the_count_sees_a_statement_on_the_pool_and_in_a_transaction() {
     request::<App, _, _>(|_request, ctx| async move {
+        // The boot's background tasks run statements of their own just after start, and the count is process-wide:
+        // let them settle before either count.
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         let before = query_count::total();
         sqlx::query("SELECT 1")
             .execute(db::pool(&ctx))
@@ -24,8 +27,6 @@ async fn the_count_sees_a_statement_on_the_pool_and_in_a_transaction() {
             .unwrap();
         assert_eq!(query_count::total() - before, 1, "on the pool");
 
-        // The boot's background tasks run a statement of their own just after start, and the count is process-wide.
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         let before = query_count::total();
         let mut tx = db::begin(&ctx).await.unwrap();
         sqlx::query("SELECT 1").execute(tx.conn()).await.unwrap();

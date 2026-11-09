@@ -31,6 +31,16 @@
 //! | `ppm_flow_plans_suppressed` | gauge | — |
 //! | `ppm_flow_plans_dropped` | gauge | — |
 //! | `ppm_flow_last_refresh_timestamp_seconds` | gauge | — |
+//! | `ppm_event_outbox_rows` | gauge vec | `status` (`pending`, `claimed`, `failed`) |
+//! | `ppm_event_outbox_oldest_owed_seconds` | gauge | — |
+//! | `ppm_event_outbox_last_refresh_timestamp_seconds` | gauge | — |
+//!
+//! # The outbox gauges are absent without a relay
+//!
+//! The `ppm_event_outbox_*` family is set by the relay ([`crate::relay`]) from `axa-outbox`'s own counts, every
+//! [`crate::relay::STATS_EVERY`]. Each is a vector, label-less where it has no label, so that with no relay running
+//! nothing is exported: a `failed 0` from a service that never looked would read as all clear. A `failed` above zero
+//! is a row no relay will send until an operator retries it (`operations/deployment.md`).
 //!
 //! # The flow gauges are default-off, bounded, and suppressed
 //!
@@ -118,6 +128,26 @@ pub struct Metrics {
     /// this going stale — the only way to tell a healthy zero from a
     /// refresh loop that died.
     pub flow_last_refresh_timestamp_seconds: Gauge,
+
+    /// Outbox rows by `status`, from the relay's last read of `axa_outbox`.
+    pub event_outbox_rows: GaugeVec,
+    /// How long the oldest pending or claimed row has waited, in seconds (`0` with none owed). No labels.
+    pub event_outbox_oldest_owed_seconds: GaugeVec,
+    /// Unix time of the relay's last read. No labels. Alert on it going stale.
+    pub event_outbox_last_refresh_timestamp_seconds: GaugeVec,
+}
+
+/// One read of the outbox, as the relay publishes it.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OutboxCounts {
+    /// Rows waiting for a relay.
+    pub pending: i64,
+    /// Rows a relay is working on.
+    pub claimed: i64,
+    /// Rows out of attempts, which no relay sends until they are retried.
+    pub failed: i64,
+    /// How long the oldest owed row has waited, in seconds; `None` with none owed.
+    pub oldest_owed_seconds: Option<f64>,
 }
 
 /// The time-based-analysis gauge handles, grouped so [`Metrics::new`]
@@ -216,6 +246,47 @@ impl FlowGauges {
     }
 }
 
+/// The outbox gauge handles, made and registered together (see the module docs).
+struct OutboxGauges {
+    rows: GaugeVec,
+    oldest_owed_seconds: GaugeVec,
+    last_refresh_timestamp_seconds: GaugeVec,
+}
+
+impl OutboxGauges {
+    /// Construct the outbox gauges and register them into `registry`.
+    fn new(registry: &Registry) -> Self {
+        let outbox_vec = |name: &str, help: &str, labels: &[&str]| {
+            let vec = GaugeVec::new(Opts::new(name, help), labels)
+                .expect("static opts and label names cannot fail");
+            registry
+                .register(Box::new(vec.clone()))
+                .expect("registering a freshly-constructed collector cannot fail");
+            vec
+        };
+        let event_outbox_rows = outbox_vec(
+            "ppm_event_outbox_rows",
+            "Event outbox rows by status, from the relay's last read; failed rows wait for an operator.",
+            &["status"],
+        );
+        let event_outbox_oldest_owed_seconds = outbox_vec(
+            "ppm_event_outbox_oldest_owed_seconds",
+            "How long the oldest pending or claimed event outbox row has waited, in seconds.",
+            &[],
+        );
+        let event_outbox_last_refresh_timestamp_seconds = outbox_vec(
+            "ppm_event_outbox_last_refresh_timestamp_seconds",
+            "Unix time of the relay's last read of the event outbox; alert on it going stale.",
+            &[],
+        );
+        Self {
+            rows: event_outbox_rows,
+            oldest_owed_seconds: event_outbox_oldest_owed_seconds,
+            last_refresh_timestamp_seconds: event_outbox_last_refresh_timestamp_seconds,
+        }
+    }
+}
+
 impl Metrics {
     /// Construct the full metric set and register every collector into a
     /// fresh [`Registry`].
@@ -225,6 +296,8 @@ impl Metrics {
     /// freshly-constructed collector into an empty registry cannot collide.
     fn new() -> Self {
         let registry = Registry::new();
+
+        let outbox = OutboxGauges::new(&registry);
 
         let plan_created_total = Counter::with_opts(Opts::new(
             "plan_created_total",
@@ -313,7 +386,30 @@ impl Metrics {
             flow_plans_suppressed: flow.plans_suppressed,
             flow_plans_dropped: flow.plans_dropped,
             flow_last_refresh_timestamp_seconds: flow.last_refresh_timestamp_seconds,
+            event_outbox_rows: outbox.rows,
+            event_outbox_oldest_owed_seconds: outbox.oldest_owed_seconds,
+            event_outbox_last_refresh_timestamp_seconds: outbox.last_refresh_timestamp_seconds,
         }
+    }
+
+    /// Publish one read of the outbox.
+    #[expect(clippy::cast_precision_loss)] // row counts, far below 2^52
+    pub fn publish_outbox(&self, counts: OutboxCounts, now_unix: f64) {
+        for (status, rows) in [
+            ("pending", counts.pending),
+            ("claimed", counts.claimed),
+            ("failed", counts.failed),
+        ] {
+            self.event_outbox_rows
+                .with_label_values(&[status])
+                .set(rows as f64);
+        }
+        self.event_outbox_oldest_owed_seconds
+            .with_label_values(&[] as &[&str])
+            .set(counts.oldest_owed_seconds.unwrap_or(0.0));
+        self.event_outbox_last_refresh_timestamp_seconds
+            .with_label_values(&[] as &[&str])
+            .set(now_unix);
     }
 
     /// The process-wide project-portfolio-management-service metrics, initialized on first access.
@@ -409,6 +505,50 @@ impl Metrics {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_outbox_family_is_absent_until_a_relay_publishes_it() {
+        let metrics = Metrics::isolated();
+        assert!(
+            !metrics.render().contains("ppm_event_outbox"),
+            "no relay, no figures"
+        );
+        metrics.publish_outbox(
+            OutboxCounts {
+                pending: 4,
+                claimed: 1,
+                failed: 2,
+                oldest_owed_seconds: Some(12.5),
+            },
+            1_700_000_000.0,
+        );
+        let text = metrics.render();
+        for line in [
+            "ppm_event_outbox_rows{status=\"pending\"} 4",
+            "ppm_event_outbox_rows{status=\"claimed\"} 1",
+            "ppm_event_outbox_rows{status=\"failed\"} 2",
+            "ppm_event_outbox_oldest_owed_seconds 12.5",
+            "ppm_event_outbox_last_refresh_timestamp_seconds 1700000000",
+        ] {
+            assert!(text.lines().any(|l| l == line), "{line} in:\n{text}");
+        }
+        metrics.publish_outbox(
+            OutboxCounts {
+                pending: 0,
+                claimed: 0,
+                failed: 0,
+                oldest_owed_seconds: None,
+            },
+            1_700_000_030.0,
+        );
+        assert!(
+            metrics
+                .render()
+                .lines()
+                .any(|l| l == "ppm_event_outbox_oldest_owed_seconds 0"),
+            "none owed is a wait of nothing"
+        );
+    }
 
     /// A published pass renders labelled series, and the two bound
     /// counters travel with them so the gauges cannot be mistaken for

@@ -1226,6 +1226,16 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   acknowledgement. Tests: `requests::event_outbox` (atomic write,
   rollback, and the relay holding rows while the sink is down, then
   sending each once, in order), `outbox_audit`, `webhook_redelivery`.
+- [x] **The outbox in `/metrics.prom` (2026-11-09).** While the relay
+  runs it reads `axa::outbox::Outbox::stats` every 30 seconds and sets
+  `ppm_event_outbox_rows{status}` (`pending`, `claimed`, `failed`),
+  `ppm_event_outbox_oldest_owed_seconds` and
+  `ppm_event_outbox_last_refresh_timestamp_seconds`. With no relay the
+  family is absent, never a `0` nobody measured. Alert on `failed` above
+  zero, on the oldest owed row growing, and on the refresh going stale.
+  Counts only, as the route is public. Tests: `metrics` (absent until
+  published, then the three series) and `requests::event_outbox` (a
+  running relay publishes a `failed` row's count).
 - [x] **Durable event bus — Phase 3, `FluvioSink` (BUS-3, following
   BUS-1's case-service reference).** *(done 2026-08-03)* The real-broker
   `impl EventSink`, behind this crate's own `fluvio` Cargo feature (off

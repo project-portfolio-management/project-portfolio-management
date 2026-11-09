@@ -302,6 +302,7 @@ async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
             .expect("connect to axa_outbox");
         let (stop, stopped) = tokio::sync::watch::channel(false);
         let running = tokio::spawn(relay::run(outbox, sink.clone(), stopped));
+        let (stop_counting, stopped_too) = tokio::sync::watch::channel(false);
 
         let status = |pid| {
             let db = ctx.db.clone();
@@ -326,6 +327,30 @@ async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
 
         wait_for(stuck.pid, "failed").await;
         wait_for(fine.pid, "sent").await;
+
+        // The relay's counts reach `/metrics.prom`, so an operator can be told of the failed row.
+        let counting = tokio::spawn(relay::count(
+            operator.clone(),
+            stopped_too.clone(),
+            std::time::Duration::from_millis(50),
+        ));
+        let failed_rows = || {
+            project_portfolio_management::metrics::Metrics::global()
+                .render()
+                .lines()
+                .find_map(|l| l.strip_prefix("ppm_event_outbox_rows{status=\"failed\"} "))
+                .and_then(|v| v.parse::<f64>().ok())
+        };
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while failed_rows().is_none_or(|n| n < 1.0) {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "the failed row is counted"
+            );
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+        let _ = stop_counting.send(true);
+        counting.await.expect("the count stops when told");
 
         sink.stuck.store(false, std::sync::atomic::Ordering::SeqCst);
         assert_eq!(operator.retry_failed().await.expect("retry_failed"), 1);

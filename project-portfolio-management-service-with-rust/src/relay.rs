@@ -321,9 +321,39 @@ pub fn stop() {
 
 /// Relay `outbox` through `sink` until `stopped` turns `true`.
 pub async fn run(outbox: Outbox, sink: Arc<dyn EventSink>, stopped: watch::Receiver<bool>) {
+    let counting = tokio::spawn(count(outbox.clone(), stopped.clone(), STATS_EVERY));
     outbox
         .run(move |event| publish(sink.clone(), event), stopped)
         .await;
+    let _ = counting.await;
+}
+
+/// How often a running relay reads the outbox's counts into `/metrics.prom`.
+pub const STATS_EVERY: Duration = Duration::from_secs(30);
+
+/// Read the outbox's counts every `every` and publish them ([`crate::metrics::Metrics::publish_outbox`]), until
+/// stopped. A failed read is logged and skipped, so the last refresh goes stale and says so.
+pub async fn count(outbox: Outbox, mut stopped: watch::Receiver<bool>, every: Duration) {
+    loop {
+        match outbox.stats().await {
+            Ok(stats) => crate::metrics::Metrics::global().publish_outbox(
+                crate::metrics::OutboxCounts {
+                    pending: stats.pending,
+                    claimed: stats.claimed,
+                    failed: stats.failed,
+                    oldest_owed_seconds: stats.oldest.map(|d| d.as_secs_f64()),
+                },
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map_or(0.0, |d| d.as_secs_f64()),
+            ),
+            Err(err) => tracing::warn!(error = %err, "relay: cannot read axa_outbox's counts"),
+        }
+        tokio::select! {
+            () = tokio::time::sleep(every) => {}
+            _ = stopped.wait_for(|stop| *stop) => return,
+        }
+    }
 }
 
 /// Connect to `axa_outbox`, which the migrations made, retrying while the database is down.

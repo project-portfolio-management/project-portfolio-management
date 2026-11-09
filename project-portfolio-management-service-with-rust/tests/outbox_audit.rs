@@ -52,16 +52,18 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
         );
 
         // Exactly one outbox row, unpublished, for this record.
-        let events: Vec<(String, String)> =
-            sqlx::query_as("SELECT kind, status FROM axa_outbox WHERE key = $1")
-                .bind(model.pid.to_string())
-                .fetch_all(ctx.db.get_postgres_connection_pool())
-                .await
-                .expect("load outbox rows");
+        let events: Vec<(String, String)> = sqlx::query_as(
+            "SELECT e.kind, o.state FROM axa_outbox_events e \
+                 JOIN axa_outbox_owed o ON o.event_id = e.event_id WHERE e.key = $1",
+        )
+        .bind(model.pid.to_string())
+        .fetch_all(ctx.db.get_postgres_connection_pool())
+        .await
+        .expect("load outbox rows");
         assert_eq!(
             events,
             vec![("created".to_string(), "pending".to_string())],
-            "one pending axa_outbox row"
+            "one pending outbox event"
         );
 
         // ...and the audit row rode the SAME transaction (§3) — not a

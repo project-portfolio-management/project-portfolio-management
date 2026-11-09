@@ -636,6 +636,16 @@ impl App {
         truncate_table(&ctx.db, gate_reviews::Entity).await?;
         truncate_table(&ctx.db, proposals::Entity).await?;
         sea_orm::ConnectionTrait::execute_unprepared(&ctx.db, "DELETE FROM axa_outbox").await?;
+        // The outbox's record refuses DELETE and TRUNCATE by design, so emptying it means making it again.
+        sea_orm::ConnectionTrait::execute_unprepared(
+            &ctx.db,
+            "DROP TABLE IF EXISTS axa_outbox_attempts, axa_outbox_owed, axa_outbox_leases, \
+             axa_outbox_payloads, axa_outbox_events CASCADE",
+        )
+        .await?;
+        for statement in axa::outbox::SETUP_STATEMENTS {
+            sea_orm::ConnectionTrait::execute_unprepared(&ctx.db, statement).await?;
+        }
         truncate_table(&ctx.db, merge_records::Entity).await?;
         truncate_table(&ctx.db, audit_logs::Entity).await?;
         truncate_table(&ctx.db, plans::Entity).await?;

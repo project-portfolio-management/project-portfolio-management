@@ -30,7 +30,12 @@
      from another origin);
    - rate limits apply (raise them for a heavy integration, or put it behind a
      trusted proxy so clients are told apart);
-   - the route `/api/prioritisation` is now `/api/prioritization`.
+   - the route `/api/prioritisation` is now `/api/prioritization`;
+   - migration `m20261109_000109` (axa 0.9) makes the outbox a record that keeps
+     every event and refuses changes: **stop every relay** (`EVENT_RELAY`) before it
+     runs, and unset `EVENT_RETENTION_DAYS`. It **cannot be rolled back** with
+     `db down`; to go back, restore the backup. Clients that retry a write under the
+     same `Idempotency-Key` after a crash now get `409` for a day, not a minute.
 2. **Take a backup and check it restores** ([Backup and restore](backup-and-restore.md)):
    `scripts/backup.sh`, then `scripts/restore-test.sh`. Do not upgrade without a
    backup you have seen restore.

@@ -68,7 +68,7 @@ groups:
           severity: warning
         annotations:
           summary: Events the broker refused are held as failed
-          description: "{{ $value }} outbox rows are failed. Fix the cause, then `project-portfolio-management task outbox_retry_failed` lists them and, with apply:true, owes them again."
+          description: "{{ $value }} outbox rows are failed. Fix the cause, then `project-portfolio-management task outbox_retry_failed` lists them and, with apply:true by:<who> reason:<code>, releases them."
 
       - alert: PpmEventOutboxBacklog
         expr: max(ppm_event_outbox_oldest_owed_seconds) > 300

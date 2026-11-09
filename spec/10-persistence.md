@@ -98,13 +98,22 @@ mutation (§10.2).
   `link_pid` together); migration `m20261025_000094`.
 - **`meeting_tasks`** (built, FR-16e13) — which task came from which outcome (`meeting_pid`, `outcome_no`, `task_pid`);
   `UNIQUE (meeting_pid, outcome_no)` so an outcome has at most one task; no personal data; migration `m20261025_000096`.
-- **`axa_outbox`** (built, event bus) — made by `axa-outbox`'s own setup statements (migration `m20261107_000108`,
-  which moves every `event_outbox` row across, an unpublished one as `pending` and a published one as `sent`, and
-  leaves `event_outbox` empty, to be dropped in a later release): `id` (identity, the relay's order), `event_id`
-  (unique, the envelope's, which a consumer dedupes on), `topic` (the entity), `kind`, `key` (the record pid, which
-  keeps one record's events in order), `payload` (the whole envelope, with its `actor`), `status` (`pending`,
-  `claimed`, `sent`, `failed`), `attempts`, `error`, `run_at`, `sent_at`, `created_at`, `updated_at`. Sent rows are
-  deleted after `EVENT_RETENTION_DAYS` (class `EVT`); a `failed` row is kept.
+- **The outbox's record** (built, event bus; `axa-outbox` 0.2, migration `m20261109_000109`) — made by
+  `axa-outbox`'s own setup statements, and only ever added to: triggers refuse `UPDATE`, `DELETE` and `TRUNCATE` on
+  `axa_outbox_events` (`id`, the relay's order; `event_id`, unique, the envelope's, which a consumer dedupes on;
+  `topic`, the entity; `kind`; `key`, the record pid, which keeps one record's events in order; `fingerprint`;
+  `created_at`), `axa_outbox_payloads` (`event_id`, `payload`: the whole envelope, with its `actor`; `sealed`, unused)
+  and `axa_outbox_attempts` (one row for each thing that happened to an event: `outcome` of `claimed`, `delivered`,
+  `rejected`, `failed`, `lost`, `abandoned`, `released`, `imported` and others, with `relay`, `claim`, a `reason`
+  code, `by` for a person's act, and `at`). An event's state is its latest attempt. `axa_outbox_owed` and
+  `axa_outbox_leases` are working state the database keeps in step. Nothing is swept: every event is kept with no end
+  date, as a record of what the service disclosed (owner decision, 9 November 2026, class `EVT`).
+  `axa::outbox::erase` can blank one payload, recording who and why; nothing calls it yet.
+- **`axa_outbox`** (superseded) — `axa-outbox` 0.1's table, made by migration `m20261107_000108` (which moved
+  every `event_outbox` row across and left `event_outbox` empty). Migration `m20261109_000109` copied every row into
+  the record (a `sent` row as `delivered`, a `failed` one as `failed`, a `pending` or `claimed` one as `imported`,
+  which the relay then sends) and renamed 0.1's index `axa_outbox_owed`, whose name the record's table takes, to
+  `axa_outbox_v01_owed`. Nothing writes or sweeps it now; it and `event_outbox` are dropped in a later release.
 - **`axa_idempotency`** (built, NFR-7) — made by `axa-idempotency`'s own setup statements (migration
   `m20261107_000107`, which also drops the earlier `idempotency_keys` of `m20261025_000095`): `caller`, `key` (the
   primary key together), `fingerprint` (a hash of the request), `claim`, `state` (`running`, `done`, `not_kept` by

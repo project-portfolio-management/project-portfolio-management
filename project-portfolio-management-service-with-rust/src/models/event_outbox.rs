@@ -1,4 +1,5 @@
-//! The durable event bus's outbox rows, kept in `axa_outbox` by `axa-outbox` (`agents/share/event-bus.md` §3, §5).
+//! The durable event bus's outbox events, kept in `axa-outbox`'s record (`axa_outbox_events`, `axa_outbox_payloads`,
+//! `axa_outbox_attempts`; `agents/share/event-bus.md` §3, §5). Every event is kept: the record refuses changes.
 //!
 //! [`event`] is the **pure** envelope-to-event mapping, unit-tested with no database. [`write`] puts the event on
 //! the handler's transaction, so the change and its event commit or roll back together; it takes a transaction and
@@ -64,7 +65,8 @@ pub async fn recent<C: ConnectionTrait>(db: &C, limit: u64) -> ModelResult<Vec<E
     let rows = db
         .query_all_raw(Statement::from_sql_and_values(
             DatabaseBackend::Postgres,
-            "SELECT payload FROM axa_outbox ORDER BY id DESC LIMIT $1",
+            "SELECT p.payload FROM axa_outbox_events e JOIN axa_outbox_payloads p ON p.event_id = e.event_id \
+             WHERE p.payload IS NOT NULL ORDER BY e.id DESC LIMIT $1",
             [i64::try_from(limit).unwrap_or(i64::MAX).into()],
         ))
         .await?;

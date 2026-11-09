@@ -1,110 +1,140 @@
-//! `outbox_retry_failed` task: owe the event outbox's `failed` rows again (`axa::outbox::Outbox::retry_failed`).
+//! `outbox_retry_failed` task: put the event outbox's `failed` events back to be sent (`axa::outbox::release`).
 //!
 //! ```text
-//! cargo run -- task outbox_retry_failed              # dry run: lists the failed rows, changes nothing
-//! cargo run -- task outbox_retry_failed apply:true   # every failed row back to pending, with its attempts reset
+//! cargo run -- task outbox_retry_failed                                       # dry run: lists them, changes nothing
+//! cargo run -- task outbox_retry_failed apply:true by:<who> reason:<code>     # every failed event back, recorded
 //! ```
 //!
-//! A row is `failed` when its sends ran out of attempts (`ppm_event_outbox_rows{status="failed"}` in
-//! `/metrics.prom`). No relay touches it again until this runs, so fix the cause first (the broker, a sink that
-//! hangs), read the dry run, then apply. A retried row goes out in its record's order, and a consumer dedupes on its
-//! `event_id`, so a row the broker had in fact taken is harmless to send again.
+//! An event is `failed` when its sends ran out of attempts (`ppm_event_outbox_rows{status="failed"}` in
+//! `/metrics.prom`). No relay touches it again until a person releases it, so fix the cause first (the broker, a sink
+//! that hangs), read the dry run, then apply. Each release is kept in the outbox's record as a `released` attempt
+//! naming `by` and `reason`: an id for the person and a short code (1 to 200 characters, no line breaks), such as
+//! `by:ops-jane reason:broker_restored`. All are released in one transaction, so either every one goes back or none
+//! does. A released event can arrive after later events for its key, and a consumer dedupes on its `event_id`, so one
+//! the broker had in fact taken is harmless to send again.
 
 use crate::prelude::*;
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 
-/// The most failed rows the dry run lists; the count covers them all.
+/// The most failed events the dry run lists; the count covers them all.
 pub const LISTED: i64 = 50;
 
-/// One failed row, as the dry run lists it.
+/// One failed event, as the dry run lists it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FailedRow {
-    /// The row's id in `axa_outbox`.
+    /// The event's row id in the record.
     pub id: i64,
     /// Its topic (the entity).
     pub topic: String,
     /// Its change kind.
     pub kind: String,
-    /// Sends tried.
+    /// Attempts it was charged.
     pub attempts: i32,
-    /// The last send's error, as the crate kept it.
+    /// The code the last failed attempt kept.
     pub error: Option<String>,
 }
 
 /// What one run found and did.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Report {
-    /// Failed rows found.
+    /// Failed events found.
     pub failed: i64,
     /// The first [`LISTED`] of them, oldest first.
     pub listed: Vec<FailedRow>,
-    /// Rows put back to pending; `0` on a dry run.
+    /// Events released; `0` on a dry run.
     pub retried: u64,
 }
 
-/// Whether the arguments ask to apply: `apply:true` (or `yes`, `1`); anything else is a dry run.
-///
-/// # Errors
-///
-/// An argument other than `apply`.
-pub fn applies<'a>(args: impl IntoIterator<Item = (&'a String, &'a String)>) -> Result<bool> {
-    let mut apply = false;
-    for (key, value) in args {
-        if key == "apply" {
-            apply = matches!(
-                value.trim().to_ascii_lowercase().as_str(),
-                "true" | "yes" | "1"
-            );
-        } else {
-            return Err(Error::string(&format!("unknown argument {key:?}")));
-        }
-    }
-    Ok(apply)
+/// Who released the events and why, as the record keeps them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Release {
+    /// An id for the person.
+    pub by: String,
+    /// A short code for why.
+    pub reason: String,
 }
 
-/// List the failed rows and, when `apply`, owe them all again on a connection of the crate's own to `uri`.
+/// What the arguments ask for: `None` for a dry run, or who releases and why for `apply:true` (or `yes`, `1`).
 ///
 /// # Errors
 ///
-/// When a statement fails, or the outbox cannot be reached.
-pub async fn run(db: &DatabaseConnection, uri: &str, apply: bool) -> Result<Report> {
-    let failed: i64 = db
-        .query_one_raw(Statement::from_string(
-            DatabaseBackend::Postgres,
-            "SELECT count(*) AS failed FROM axa_outbox WHERE status = 'failed'",
-        ))
-        .await?
-        .map(|row| row.try_get("", "failed"))
-        .transpose()?
-        .unwrap_or(0);
-    let listed = db
-        .query_all_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "SELECT id, topic, kind, attempts, error FROM axa_outbox WHERE status = 'failed' ORDER BY id LIMIT $1",
-            [LISTED.into()],
-        ))
-        .await?
-        .iter()
-        .map(|row| {
-            Ok(FailedRow {
+/// An unknown argument, or `apply:true` without both `by` and `reason`.
+pub fn applies<'a>(
+    args: impl IntoIterator<Item = (&'a String, &'a String)>,
+) -> Result<Option<Release>> {
+    let (mut apply, mut by, mut reason) = (false, None, None);
+    for (key, value) in args {
+        match key.as_str() {
+            "apply" => {
+                apply = matches!(
+                    value.trim().to_ascii_lowercase().as_str(),
+                    "true" | "yes" | "1"
+                );
+            }
+            "by" => by = Some(value.trim().to_string()),
+            "reason" => reason = Some(value.trim().to_string()),
+            _ => return Err(Error::string(&format!("unknown argument {key:?}"))),
+        }
+    }
+    if !apply {
+        return Ok(None);
+    }
+    match (by, reason) {
+        (Some(by), Some(reason)) if !by.is_empty() && !reason.is_empty() => {
+            Ok(Some(Release { by, reason }))
+        }
+        _ => Err(Error::string(
+            "apply:true needs by:<who> and reason:<code>, which the outbox's record keeps on each release",
+        )),
+    }
+}
+
+/// The failed events, oldest first.
+const FAILED: &str = "SELECT owed.id, owed.event_id, e.topic, e.kind, owed.charges, owed.reason
+    FROM axa_outbox_owed owed JOIN axa_outbox_events e ON e.event_id = owed.event_id
+    WHERE owed.state = 'failed' ORDER BY owed.id";
+
+/// List the failed events and, given a [`Release`], put them all back in one transaction.
+///
+/// # Errors
+///
+/// When a statement fails, or the record refuses `by` or `reason` (empty, over 200 characters, or with a line break).
+pub async fn run(db: &DatabaseConnection, release: Option<&Release>) -> Result<Report> {
+    let rows = db
+        .query_all_raw(Statement::from_string(DatabaseBackend::Postgres, FAILED))
+        .await?;
+    let failed = i64::try_from(rows.len()).unwrap_or(i64::MAX);
+    let mut listed = Vec::new();
+    let mut events = Vec::with_capacity(rows.len());
+    for row in &rows {
+        events.push(row.try_get::<uuid::Uuid>("", "event_id")?);
+        if i64::try_from(listed.len()).unwrap_or(i64::MAX) < LISTED {
+            listed.push(FailedRow {
                 id: row.try_get("", "id")?,
                 topic: row.try_get("", "topic")?,
                 kind: row.try_get("", "kind")?,
-                attempts: row.try_get("", "attempts")?,
-                error: row.try_get("", "error")?,
-            })
-        })
-        .collect::<std::result::Result<Vec<_>, sea_orm::DbErr>>()?;
-    let retried = if apply && failed > 0 {
-        axa::outbox::Outbox::connect_existing(uri, crate::relay::options())
+                attempts: row.try_get("", "charges")?,
+                error: row.try_get("", "reason")?,
+            });
+        }
+    }
+    let mut retried = 0;
+    if let Some(release) = release {
+        let outbox_err = |e: sqlx::Error| Error::string(&format!("outbox: {e}"));
+        let mut tx = crate::db::for_axa_crate(db)
+            .begin()
             .await
-            .map_err(|e| Error::string(&format!("axa_outbox: {e}")))?
-            .retry_failed()
-            .await
-            .map_err(|e| Error::string(&format!("axa_outbox: {e}")))?
-    } else {
-        0
-    };
+            .map_err(outbox_err)?;
+        for event in events {
+            if axa::outbox::release(&mut tx, event, &release.by, &release.reason)
+                .await
+                .map_err(outbox_err)?
+            {
+                retried += 1;
+            }
+        }
+        tx.commit().await.map_err(outbox_err)?;
+    }
     Ok(Report {
         failed,
         listed,
@@ -121,7 +151,7 @@ impl Task for OutboxRetryFailed {
     fn task(&self) -> TaskInfo {
         TaskInfo {
             name: "outbox_retry_failed".to_string(),
-            detail: "Send the event outbox's failed rows again. Dry run unless apply:true. Args: [apply:true]."
+            detail: "Send the event outbox's failed events again. Dry run unless apply:true. Args: [apply:true by:<who> reason:<code>]."
                 .to_string(),
         }
     }
@@ -132,8 +162,9 @@ impl Task for OutboxRetryFailed {
     ///
     /// An unknown argument, a failed statement, or an outbox that cannot be reached.
     async fn run(&self, ctx: &AppContext, vars: &task::Vars) -> Result<()> {
-        let apply = applies(&vars.cli)?;
-        let report = run(&ctx.db, &ctx.config.database.uri, apply).await?;
+        let release = applies(&vars.cli)?;
+        let apply = release.is_some();
+        let report = run(&ctx.db, release.as_ref()).await?;
         println!(
             "{}: {} failed",
             if apply {
@@ -157,7 +188,7 @@ impl Task for OutboxRetryFailed {
             println!("  ... and {} more", report.failed - LISTED);
         }
         if apply {
-            println!("{} back to pending", report.retried);
+            println!("{} released", report.retried);
         }
         Ok(())
     }
@@ -177,12 +208,42 @@ mod tests {
 
     #[test]
     fn it_is_a_dry_run_unless_asked_to_apply() {
-        assert!(!applies(&args(&[])).unwrap());
-        assert!(!applies(&args(&[("apply", "false")])).unwrap());
-        assert!(!applies(&args(&[("apply", "maybe")])).unwrap());
+        assert_eq!(applies(&args(&[])).unwrap(), None);
+        assert_eq!(applies(&args(&[("apply", "false")])).unwrap(), None);
+        assert_eq!(
+            applies(&args(&[("apply", "maybe"), ("by", "ops")])).unwrap(),
+            None
+        );
         for yes in ["true", "TRUE", "yes", "1"] {
-            assert!(applies(&args(&[("apply", yes)])).unwrap(), "{yes}");
+            assert_eq!(
+                applies(&args(&[
+                    ("apply", yes),
+                    ("by", "ops-jane"),
+                    ("reason", "broker_restored")
+                ]))
+                .unwrap(),
+                Some(Release {
+                    by: "ops-jane".into(),
+                    reason: "broker_restored".into()
+                }),
+                "{yes}"
+            );
         }
+    }
+
+    #[test]
+    fn applying_names_who_and_why() {
+        assert!(applies(&args(&[("apply", "true")])).is_err());
+        assert!(applies(&args(&[("apply", "true"), ("by", "ops")])).is_err());
+        assert!(applies(&args(&[("apply", "true"), ("reason", "fixed")])).is_err());
+        assert!(
+            applies(&args(&[
+                ("apply", "true"),
+                ("by", " "),
+                ("reason", "fixed")
+            ]))
+            .is_err()
+        );
     }
 
     #[test]

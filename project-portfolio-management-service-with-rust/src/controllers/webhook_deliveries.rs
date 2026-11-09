@@ -94,16 +94,17 @@ async fn redeliver(
         .fetch_optional(crate::db::pool(&ctx))
         .await?
         .ok_or(Error::NotFound)?;
-    let (topic, kind, payload): (String, String, serde_json::Value) =
-        sqlx::query_as("SELECT topic, kind, payload FROM axa_outbox WHERE event_id = $1")
-            .bind(logged.event_id)
-            .fetch_optional(crate::db::pool(&ctx))
-            .await?
-            .ok_or_else(|| {
-                unprocessable(
-                    "the event is no longer kept in the outbox, so it cannot be sent again",
-                )
-            })?;
+    let (topic, kind, payload): (String, String, Option<serde_json::Value>) = sqlx::query_as(
+        "SELECT e.topic, e.kind, p.payload FROM axa_outbox_events e \
+         LEFT JOIN axa_outbox_payloads p ON p.event_id = e.event_id WHERE e.event_id = $1",
+    )
+    .bind(logged.event_id)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or_else(|| unprocessable("the event is not in the outbox, so it cannot be sent again"))?;
+    let payload = payload.ok_or_else(|| {
+        unprocessable("the event's payload was erased, so it cannot be sent again")
+    })?;
     let target = webhooks::targets()
         .into_iter()
         .find(|t| t.url == logged.url)

@@ -1,20 +1,28 @@
 //! Durable event bus **Phase 3** — the outbox relay, on `axa-outbox`.
 //!
-//! Phase 2 ([`crate::streaming`]) writes each event to `axa_outbox` inside
-//! the entity mutation's transaction. Phase 3 is the **relay**:
-//! [`axa::outbox::Outbox::run`] claims rows oldest first, hands each to an
-//! [`EventSink`], and marks it sent only once the sink answers `Ok`. The crate
-//! keeps one record's events in order (by topic and key, the record pid), takes
-//! back the claims of a relay that died, retries a row with a doubling wait,
-//! and deletes sent rows after [`retention_days`]. Delivery is
-//! **at-least-once**, so sinks and consumers dedupe on the envelope `event_id`
-//! (see `agents/share/event-bus.md` §6).
+//! Phase 2 ([`crate::streaming`]) writes each event into `axa-outbox`'s record
+//! (`axa_outbox_events` and `axa_outbox_payloads`) inside the entity mutation's
+//! transaction. Phase 3 is the **relay**: [`axa::outbox::Outbox::run`] claims
+//! events oldest first, hands each to an [`EventSink`], and records it
+//! `delivered` only once the sink answers `Ok`. The crate keeps one record's
+//! events in order (by topic and key, the record pid), takes back the claims of
+//! a relay that died, and retries an event with a doubling wait. Every event and
+//! every attempt is kept: the record's tables refuse `UPDATE`, `DELETE` and
+//! `TRUNCATE`, and nothing is swept (owner decision, 9 November 2026). Delivery
+//! is **at-least-once**, so sinks and consumers dedupe on the envelope
+//! `event_id` (see `agents/share/event-bus.md` §6).
 //!
-//! Every sink error counts as the broker being unavailable: no row is charged
-//! an attempt, the relay waits longer each time, and the row it was trying
+//! The relay applies no policy before an event goes ([`decide::deliver_all`])
+//! and writes no audit row of its own for an outcome ([`record::nothing`]): the
+//! attempts table is the record of what went out and when.
+//!
+//! Every sink error counts as the broker being unavailable: no event is charged
+//! an attempt, the relay waits longer each time, and the event it was trying
 //! waits before the next try, so one bad record holds back its own key and no
-//! other. A sink that panics has rejected that row, which after ten attempts is
-//! left `failed` for an operator (`SELECT … FROM axa_outbox WHERE status = 'failed'`).
+//! other. The error's text goes to the log, and the attempt keeps only the code
+//! `sink_unavailable`, as a broker's error can quote what it was sent. A sink
+//! that panics has rejected that event, which after ten attempts is left
+//! `failed` for an operator (`task outbox_retry_failed`).
 //!
 //! The default [`LoggingSink`] ships every event to the tracing log: it is
 //! the **no-broker** dev/CI sink, and it marks every row sent that it logs.
@@ -34,7 +42,7 @@
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use axa::outbox::{Failure, Outbox, OutboxOptions};
+use axa::outbox::{Failure, Outbox, OutboxOptions, decide, record};
 use tokio::sync::watch;
 
 /// A boxed, thread-safe error from a sink send (a bus/broker failure).
@@ -213,14 +221,14 @@ pub fn interval_secs() -> u64 {
         .max(1)
 }
 
-/// Outbox retention in calendar days
-/// (`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RETENTION_DAYS`, default 7).
+/// The setting that used to delete sent events after a number of calendar days. Events are now kept as a record, so
+/// it does nothing; [`spawn`] warns when it is set, so that a deployment relying on it hears so.
+pub const RETIRED_RETENTION_SETTING: &str = "PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RETENTION_DAYS";
+
+/// Whether the retired retention setting is set, to anything.
 #[must_use]
-pub fn retention_days() -> i64 {
-    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RETENTION_DAYS")
-        .ok()
-        .and_then(|v| v.trim().parse::<i64>().ok())
-        .unwrap_or(7)
+pub fn retired_retention_is_set() -> bool {
+    std::env::var_os(RETIRED_RETENTION_SETTING).is_some()
 }
 
 /// Fluvio broker endpoint (`PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT`,
@@ -291,22 +299,27 @@ async fn build_sink(_endpoint: Option<&str>) -> Box<dyn EventSink> {
     Box::new(LoggingSink)
 }
 
-/// The relay's settings: poll every [`interval_secs`], keep sent rows [`retention_days`], and the crate's defaults
-/// for the rest (100 rows a claim, ten attempts, a 30-second publish limit, a claim lost after five minutes).
+/// The relay's settings: poll every [`interval_secs`], and the crate's defaults for the rest (100 events a claim, ten
+/// attempts, a 30-second publish limit, a claim lost after five minutes, every topic in order per key).
 #[must_use]
 pub fn options() -> OutboxOptions {
     OutboxOptions {
         poll_interval: Duration::from_secs(interval_secs()),
-        retention_days: i32::try_from(retention_days().max(0)).unwrap_or(i32::MAX),
         ..OutboxOptions::default()
     }
 }
 
-/// Publish one claimed row through `sink`. Every sink error is an outage (see the module docs).
+/// The code an attempt keeps when a sink fails. The sink's own text goes to the log only.
+pub const SINK_UNAVAILABLE: &str = "sink_unavailable";
+
+/// Publish one claimed event through `sink`. Every sink error is an outage (see the module docs).
 async fn publish(sink: Arc<dyn EventSink>, event: axa::outbox::Claimed) -> Result<(), Failure> {
     sink.send(&event.topic, &event.key, &event.payload)
         .await
-        .map_err(Failure::unavailable)
+        .map_err(|err| {
+            tracing::warn!(error = %err, event_id = %event.event_id, topic = %event.topic, "relay: the sink failed");
+            Failure::unavailable(SINK_UNAVAILABLE)
+        })
 }
 
 /// Tells a running relay to stop: it finishes the publish in hand and puts the rest of its batch back.
@@ -323,7 +336,12 @@ pub fn stop() {
 pub async fn run(outbox: Outbox, sink: Arc<dyn EventSink>, stopped: watch::Receiver<bool>) {
     let counting = tokio::spawn(count(outbox.clone(), stopped.clone(), STATS_EVERY));
     outbox
-        .run(move |event| publish(sink.clone(), event), stopped)
+        .run(
+            decide::deliver_all,
+            move |event| publish(sink.clone(), event),
+            record::nothing,
+            stopped,
+        )
         .await;
     let _ = counting.await;
 }
@@ -340,14 +358,16 @@ pub async fn count(outbox: Outbox, mut stopped: watch::Receiver<bool>, every: Du
                 crate::metrics::OutboxCounts {
                     pending: stats.pending,
                     claimed: stats.claimed,
+                    held: stats.held,
                     failed: stats.failed,
+                    tampered: stats.tampered,
                     oldest_owed_seconds: stats.oldest.map(|d| d.as_secs_f64()),
                 },
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .map_or(0.0, |d| d.as_secs_f64()),
             ),
-            Err(err) => tracing::warn!(error = %err, "relay: cannot read axa_outbox's counts"),
+            Err(err) => tracing::warn!(error = %err, "relay: cannot read the outbox's counts"),
         }
         tokio::select! {
             () = tokio::time::sleep(every) => {}
@@ -356,13 +376,13 @@ pub async fn count(outbox: Outbox, mut stopped: watch::Receiver<bool>, every: Du
     }
 }
 
-/// Connect to `axa_outbox`, which the migrations made, retrying while the database is down.
+/// Connect to the outbox's record, which the migrations made, retrying while the database is down.
 async fn connect(uri: &str) -> Outbox {
     loop {
         match Outbox::connect_existing(uri, options()).await {
             Ok(outbox) => return outbox,
             Err(err) => {
-                tracing::warn!(error = %err, "relay: cannot reach axa_outbox; retrying");
+                tracing::warn!(error = %err, "relay: cannot reach the outbox; retrying");
                 tokio::time::sleep(Duration::from_secs(5)).await;
             }
         }
@@ -402,14 +422,18 @@ pub fn spawn(db: sea_orm::DatabaseConnection, uri: String) {
         return;
     }
     let interval = interval_secs();
-    let retention = retention_days();
+    if retired_retention_is_set() {
+        tracing::warn!(
+            setting = RETIRED_RETENTION_SETTING,
+            "this setting no longer deletes anything: every event is kept as a record (axa-outbox 0.2); unset it"
+        );
+    }
     let webhook_targets = crate::webhooks::targets();
     tracing::info!(
         interval_secs = interval,
-        retention_days = retention,
         fluvio_endpoint = endpoint.as_deref().unwrap_or("(none — LoggingSink)"),
         webhook_targets = webhook_targets.len(),
-        "starting the axa_outbox relay"
+        "starting the outbox relay"
     );
     let (stop, stopped) = watch::channel(false);
     if STOP.set(stop).is_err() {
@@ -503,8 +527,7 @@ mod tests {
         );
     }
 
-    /// Config parsers: relay off by default; interval floors at 1; retention
-    /// defaults to 7 (env-independent defaults, since env may be unset).
+    /// Config parsers: relay off by default; interval floors at 1 (env-independent defaults, since env may be unset).
     #[test]
     fn config_defaults_are_safe() {
         // These read process env; with the vars unset (the CI default) the
@@ -515,8 +538,8 @@ mod tests {
         if std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY_INTERVAL_SECS").is_err() {
             assert_eq!(interval_secs(), 5);
         }
-        if std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RETENTION_DAYS").is_err() {
-            assert_eq!(retention_days(), 7);
+        if std::env::var_os(RETIRED_RETENTION_SETTING).is_none() {
+            assert!(!retired_retention_is_set());
         }
     }
 }

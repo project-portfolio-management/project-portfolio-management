@@ -61,17 +61,23 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
     request::<App, _, _>(|request, ctx| async move {
         // An event the outbox still holds, and the log row of a delivery that failed.
         let event_id = Uuid::new_v4();
-        // As the relay leaves a row it has sent.
-        sqlx::query(
-            "INSERT INTO axa_outbox (event_id, topic, kind, key, payload, status, sent_at) \
-             VALUES ($1, 'plan', 'created', $2, $3, 'sent', now())",
+        // As a handler writes it; the record keeps it whatever the relay has done since.
+        let mut tx = ctx.db.get_postgres_connection_pool().begin().await.unwrap();
+        axa::outbox::write(
+            &mut tx,
+            &axa::outbox::Event {
+                event_id,
+                ..axa::outbox::Event::new(
+                    "plan",
+                    "created",
+                    Uuid::new_v4().to_string(),
+                    json!({ "event_id": event_id, "kind": "created", "name": "Redelivered" }),
+                )
+            },
         )
-        .bind(event_id)
-        .bind(Uuid::new_v4().to_string())
-        .bind(json!({ "event_id": event_id, "kind": "created", "name": "Redelivered" }))
-        .execute(ctx.db.get_postgres_connection_pool())
         .await
         .unwrap();
+        tx.commit().await.unwrap();
         let log = |event: Uuid, target: &str| webhook_deliveries::ActiveModel {
             event_id: ActiveValue::set(event),
             entity: ActiveValue::set("plan".to_string()),

@@ -14,7 +14,8 @@
 //!
 //! **What this does not find:** a name or an e-mail address typed into free text (a title, a comment,
 //! a document), the content of uploaded files, the `snapshot` JSON of an audit row, the `actor` inside an
-//! outbox event's `payload` (`axa_outbox`, swept seven days after it is sent), and backups.
+//! outbox event's `payload` (`axa_outbox_payloads`, kept with no end date as the record of what was disclosed; owner
+//! decision, 9 November 2026), the operator in an outbox attempt's `by`, and backups.
 //! Those need a human search and the retention schedule.
 
 use sha2::{Digest, Sha256};
@@ -246,6 +247,11 @@ pub fn erasure_marker() -> Uuid {
 
 /// Identifier columns in the inventory that are **not** person references, with the reason.
 pub const EXCLUDED: &[(&str, &str, &str)] = &[
+    (
+        "axa_outbox_attempts",
+        "by",
+        "the operator who released or erased an outgoing event, kept in a record whose tables refuse every change, so it can be neither pseudonymized nor erased; not searched either (a known gap)",
+    ),
     (
         "email_deliveries",
         "subject_ref",

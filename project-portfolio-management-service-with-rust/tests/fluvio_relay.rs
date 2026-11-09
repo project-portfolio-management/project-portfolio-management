@@ -62,17 +62,20 @@ async fn fluvio_relay_publishes_an_outbox_row_to_a_real_topic() {
         let outbox =
             axa::outbox::Outbox::connect_existing(&ctx.config.database.uri, relay::options())
                 .await
-                .expect("connect to axa_outbox");
+                .expect("connect to the outbox");
         let (stop, stopped) = tokio::sync::watch::channel(false);
         let running = tokio::spawn(relay::run(outbox, Arc::new(sink), stopped));
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         loop {
-            let status: String = sqlx::query_scalar("SELECT status FROM axa_outbox WHERE key = $1")
-                .bind(model.pid.to_string())
-                .fetch_one(ctx.db.get_postgres_connection_pool())
-                .await
-                .expect("the row exists");
-            if status == "sent" {
+            let status: String = sqlx::query_scalar(
+                "SELECT a.outcome FROM axa_outbox_attempts a JOIN axa_outbox_events e \
+                 ON e.event_id = a.event_id WHERE e.key = $1 ORDER BY a.id DESC LIMIT 1",
+            )
+            .bind(model.pid.to_string())
+            .fetch_one(ctx.db.get_postgres_connection_pool())
+            .await
+            .expect("the row exists");
+            if status == "delivered" {
                 break;
             }
             assert!(

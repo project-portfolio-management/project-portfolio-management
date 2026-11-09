@@ -34,7 +34,7 @@
 //! | `ppm_flow_plans_suppressed` | gauge | — |
 //! | `ppm_flow_plans_dropped` | gauge | — |
 //! | `ppm_flow_last_refresh_timestamp_seconds` | gauge | — |
-//! | `ppm_event_outbox_rows` | gauge vec | `status` (`pending`, `claimed`, `failed`) |
+//! | `ppm_event_outbox_rows` | gauge vec | `status` (`pending`, `claimed`, `held`, `failed`, `tampered`) |
 //! | `ppm_event_outbox_oldest_owed_seconds` | gauge | — |
 //! | `ppm_event_outbox_last_refresh_timestamp_seconds` | gauge | — |
 //!
@@ -135,7 +135,7 @@ pub struct Metrics {
     /// refresh loop that died.
     pub flow_last_refresh_timestamp_seconds: Gauge,
 
-    /// Outbox rows by `status`, from the relay's last read of `axa_outbox`.
+    /// Outbox events by `status` (`pending`, `claimed`, `held`, `failed`, `tampered`), from the relay's last read.
     pub event_outbox_rows: GaugeVec,
     /// How long the oldest pending or claimed row has waited, in seconds (`0` with none owed). No labels.
     pub event_outbox_oldest_owed_seconds: GaugeVec,
@@ -150,8 +150,12 @@ pub struct OutboxCounts {
     pub pending: i64,
     /// Rows a relay is working on.
     pub claimed: i64,
-    /// Rows out of attempts, which no relay sends until they are retried.
+    /// Events the service's decision is holding (none while the relay delivers all).
+    pub held: i64,
+    /// Events out of attempts, which no relay sends until a person releases them; `tampered` ones included.
     pub failed: i64,
+    /// Failed events whose fingerprint no longer matched what was written.
+    pub tampered: i64,
     /// How long the oldest owed row has waited, in seconds; `None` with none owed.
     pub oldest_owed_seconds: Option<f64>,
 }
@@ -411,7 +415,9 @@ impl Metrics {
         for (status, rows) in [
             ("pending", counts.pending),
             ("claimed", counts.claimed),
+            ("held", counts.held),
             ("failed", counts.failed),
+            ("tampered", counts.tampered),
         ] {
             self.event_outbox_rows
                 .with_label_values(&[status])
@@ -530,7 +536,9 @@ mod tests {
             OutboxCounts {
                 pending: 4,
                 claimed: 1,
+                held: 0,
                 failed: 2,
+                tampered: 0,
                 oldest_owed_seconds: Some(12.5),
             },
             1_700_000_000.0,
@@ -549,7 +557,9 @@ mod tests {
             OutboxCounts {
                 pending: 0,
                 claimed: 0,
+                held: 0,
                 failed: 0,
+                tampered: 0,
                 oldest_owed_seconds: None,
             },
             1_700_000_030.0,
@@ -743,7 +753,9 @@ mod tests {
             OutboxCounts {
                 pending: 0,
                 claimed: 0,
+                held: 0,
                 failed: 0,
+                tampered: 0,
                 oldest_owed_seconds: None,
             },
             0.0,

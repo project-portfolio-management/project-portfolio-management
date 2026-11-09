@@ -1231,7 +1231,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `webhook_redelivery`.
 - [x] **The outbox in `/metrics.prom` (2026-11-09).** While the relay
   runs it reads `axa::outbox::Outbox::stats` every 30 seconds and sets
-  `ppm_event_outbox_rows{status}` (`pending`, `claimed`, `failed`),
+  `ppm_event_outbox_rows{status}` (`pending`, `claimed`, `held`, `failed`, `tampered`),
   `ppm_event_outbox_oldest_owed_seconds` and
   `ppm_event_outbox_last_refresh_timestamp_seconds`. With no relay the
   family is absent, never a `0` nobody measured. Alert on `failed` above
@@ -1240,13 +1240,34 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   published, then the three series) and `requests::event_outbox` (a
   running relay publishes a `failed` row's count).
 - [x] **`task outbox_retry_failed` (2026-11-09).** Lists the outbox's
-  `failed` rows (count, and the first 50 with topic, kind, attempts and
-  last error) and changes nothing, unless `apply:true`, which calls
-  `axa::outbox::Outbox::retry_failed`: every failed row back to
-  `pending`, attempts reset. Any other argument is refused. Decided for
-  production in the task census. Tests: `tasks::outbox_retry_failed`
-  (the arguments) and `requests::event_outbox` (a dry run lists a seeded
-  row and leaves it; applied, it is pending with no attempts).
+  `failed` events (count, and the first 50 with topic, kind, attempts and
+  the last attempt's code) and changes nothing, unless `apply:true` with
+  `by:<who>` and `reason:<code>`, which releases every one
+  (`axa::outbox::release`) in one transaction, each kept in the record as
+  a `released` attempt naming who and why. `apply:true` without both is
+  refused, as is any other argument. Decided for production in the task
+  census. Tests: `tasks::outbox_retry_failed` (the arguments) and
+  `requests::event_outbox` (a dry run lists a failed event and leaves it;
+  applied, it is released on record and sent once).
+- [x] **The outbox is a record: `axa` 0.9 (2026-11-09).** `axa-outbox`
+  0.2 keeps every event, its payload and every attempt, only ever inserted
+  (`axa_outbox_events`, `axa_outbox_payloads`, `axa_outbox_attempts`);
+  the sweep of sent rows is gone, and `EVENT_RETENTION_DAYS` does nothing
+  (the relay warns when it is set). Owner decision: keep every event,
+  payloads included, with no end date. Migration 109 makes the tables and
+  imports `axa_outbox`; it cannot be rolled back. The relay passes
+  `decide::deliver_all` and `record::nothing`, so it applies no policy and
+  writes no audit row of its own; a sink error is kept on the attempt only
+  as the code `sink_unavailable`, its text logged. `/events/recent` and
+  webhook redelivery read the record; a redelivery of an erased payload is
+  `422`. `/metrics.prom` adds `held` and `tampered` to
+  `ppm_event_outbox_rows`. `db truncate` drops and remakes the record, as it
+  refuses `DELETE`. `axa-idempotency` 0.2 holds a lost run's key for its
+  whole day (NFR-7); `axa-worker` 0.2 makes `axa_job_acts` when the queue
+  connects. Tests: `requests::event_outbox` (each state reached as a relay
+  reaches it: delivered, failed by a hung publish, released with who and
+  why, a dead relay's claim lost and resent or abandoned),
+  `outbox_audit`, `webhook_redelivery`, `personal_data_inventory`.
 - [x] **Durable event bus — Phase 3, `FluvioSink` (BUS-3, following
   BUS-1's case-service reference).** *(done 2026-08-03)* The real-broker
   `impl EventSink`, behind this crate's own `fluvio` Cargo feature (off

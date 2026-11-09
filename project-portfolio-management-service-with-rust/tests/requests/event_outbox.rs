@@ -5,9 +5,11 @@
 //! they require a reachable PostgreSQL instance and are therefore
 //! `#[ignore]`d (run with `cargo test -- --ignored`). They exercise the
 //! exact write path the `outbox` transport takes in the CRUD handlers:
-//! one transaction spanning the `plans` insert **and** the
-//! `axa_outbox` insert, so the two commit or roll back together, and the
-//! relay that sends what was written.
+//! one transaction spanning the `plans` insert **and** the outbox's
+//! insert, so the two commit or roll back together, and the relay that
+//! sends what was written. The outbox is a record (`axa-outbox` 0.2) that
+//! refuses `UPDATE` and `DELETE`, so these tests bring an event to each
+//! state the way a relay does, never by editing it.
 //!
 //! The pure envelope→event mapping and the transport-string parsing are
 //! pinned DB-free in `src/models/event_outbox.rs` and `src/streaming.rs`.
@@ -39,13 +41,16 @@ fn created_envelope(model: &PlanModel) -> Envelope {
     }
 }
 
-/// The outbox rows for a record, oldest first: `(event_id, topic, kind, status)`.
+/// The outbox events for a record, oldest first: `(event_id, topic, kind, state)`.
 pub(crate) async fn outbox_rows(
     db: &sea_orm::DatabaseConnection,
     pid: Uuid,
 ) -> Vec<(Uuid, String, String, String)> {
+    // While owed, an event's state is `pending`, `claimed` or `failed`; after, its latest attempt (`delivered`).
     sqlx::query_as(
-        "SELECT event_id, topic, kind, status FROM axa_outbox WHERE key = $1 ORDER BY id",
+        "SELECT e.event_id, e.topic, e.kind, COALESCE(o.state, (SELECT a.outcome FROM axa_outbox_attempts a \
+         WHERE a.event_id = e.event_id ORDER BY a.id DESC LIMIT 1)) FROM axa_outbox_events e \
+         LEFT JOIN axa_outbox_owed o ON o.event_id = e.event_id WHERE e.key = $1 ORDER BY e.id",
     )
     .bind(pid.to_string())
     .fetch_all(db.get_postgres_connection_pool())
@@ -90,7 +95,7 @@ async fn outbox_create_writes_plan_and_one_event_atomically() {
                 "created".to_string(),
                 "pending".to_string()
             )],
-            "exactly one pending axa_outbox row for the plan, keyed by its pid"
+            "exactly one pending outbox event for the plan, keyed by its pid"
         );
     })
     .await;
@@ -158,8 +163,8 @@ impl EventSink for Recording {
     }
 }
 
-/// The relay sends each row through the sink, in the order they were written, and marks it sent; while the sink is
-/// down nothing is marked sent, and nothing is lost.
+/// The relay sends each event through the sink, in the order they were written, and records it delivered; while the
+/// sink is down nothing is delivered, and nothing is lost.
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
@@ -192,7 +197,7 @@ async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
             },
         )
         .await
-        .expect("connect to axa_outbox");
+        .expect("connect to the outbox");
         let (stop, stopped) = tokio::sync::watch::channel(false);
         let running = tokio::spawn(relay::run(outbox, sink.clone(), stopped));
 
@@ -204,8 +209,8 @@ async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
         assert!(
             statuses(outbox_rows(&ctx.db, model.pid).await)
                 .iter()
-                .all(|s| s != "sent"),
-            "nothing is marked sent while the sink is down"
+                .all(|s| s != "delivered"),
+            "nothing is delivered while the sink is down"
         );
 
         // Up: each goes out once, in order, and is marked sent.
@@ -213,7 +218,7 @@ async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
         while statuses(outbox_rows(&ctx.db, model.pid).await)
             .iter()
-            .any(|s| s != "sent")
+            .any(|s| s != "delivered")
         {
             assert!(
                 std::time::Instant::now() < deadline,
@@ -257,13 +262,14 @@ impl EventSink for HangsOn {
     }
 }
 
-/// A send that hangs past the publish limit uses an attempt; out of attempts, the row is left `failed` and kept, and
-/// another record's event still goes out. `retry_failed` (the operator's fix in `operations/deployment.md`) owes it
-/// again, and it is sent once the sink recovers.
+/// A send that hangs past the publish limit uses an attempt; out of attempts, the event is left `failed` and kept, and
+/// another record's event still goes out. `task outbox_retry_failed` lists it and changes nothing on a dry run; applied,
+/// it releases it as an act of a named person, kept in the record, and it is sent once the sink recovers.
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
-async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
+async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
+    use project_portfolio_management::tasks::outbox_retry_failed::{self, Release};
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
         let txn = ctx.db.begin().await.expect("begin tx");
@@ -296,10 +302,10 @@ async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
         let outbox =
             axa::outbox::Outbox::connect_existing(&ctx.config.database.uri, options.clone())
                 .await
-                .expect("connect to axa_outbox");
+                .expect("connect to the outbox");
         let operator = axa::outbox::Outbox::connect_existing(&ctx.config.database.uri, options)
             .await
-            .expect("connect to axa_outbox");
+            .expect("connect to the outbox");
         let (stop, stopped) = tokio::sync::watch::channel(false);
         let running = tokio::spawn(relay::run(outbox, sink.clone(), stopped));
         let (stop_counting, stopped_too) = tokio::sync::watch::channel(false);
@@ -326,7 +332,7 @@ async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
         };
 
         wait_for(stuck.pid, "failed").await;
-        wait_for(fine.pid, "sent").await;
+        wait_for(fine.pid, "delivered").await;
 
         // The relay's counts reach `/metrics.prom`, so an operator can be told of the failed row.
         let counting = tokio::spawn(relay::count(
@@ -352,9 +358,44 @@ async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
         let _ = stop_counting.send(true);
         counting.await.expect("the count stops when told");
 
+        // The dry run lists it, with the code its last attempt kept, and changes nothing.
+        let dry = outbox_retry_failed::run(&ctx.db, None)
+            .await
+            .expect("dry run");
+        assert_eq!((dry.failed, dry.retried), (1, 0));
+        assert_eq!(
+            (
+                dry.listed[0].topic.as_str(),
+                dry.listed[0].kind.as_str(),
+                dry.listed[0].attempts,
+                dry.listed[0].error.as_deref()
+            ),
+            ("plan", "created", 1, Some("timed_out"))
+        );
+        assert_eq!(status(stuck.pid).await, ["failed"], "a dry run changes nothing");
+
         sink.stuck.store(false, std::sync::atomic::Ordering::SeqCst);
-        assert_eq!(operator.retry_failed().await.expect("retry_failed"), 1);
-        wait_for(stuck.pid, "sent").await;
+        let release = Release {
+            by: "ops-test".into(),
+            reason: "sink_restored".into(),
+        };
+        let applied = outbox_retry_failed::run(&ctx.db, Some(&release))
+            .await
+            .expect("apply");
+        assert_eq!(applied.retried, 1);
+        wait_for(stuck.pid, "delivered").await;
+        let (by, reason): (Option<String>, Option<String>) = sqlx::query_as(
+            "SELECT a.by, a.reason FROM axa_outbox_attempts a JOIN axa_outbox_events e ON e.event_id = a.event_id \
+             WHERE e.key = $1 AND a.outcome = 'released'",
+        )
+        .bind(stuck.pid.to_string())
+        .fetch_one(ctx.db.get_postgres_connection_pool())
+        .await
+        .expect("the release is on record");
+        assert_eq!(
+            (by.as_deref(), reason.as_deref()),
+            (Some("ops-test"), Some("sink_restored"))
+        );
 
         let _ = stop.send(true);
         running.await.expect("the relay stops when told");
@@ -362,161 +403,134 @@ async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
         assert_eq!(
             sent.iter().filter(|k| **k == stuck.pid.to_string()).count(),
             1,
-            "the stuck row is sent once, after the retry: {sent:?}"
+            "the stuck event is sent once, after the release: {sent:?}"
         );
     })
     .await;
 }
 
-/// `task outbox_retry_failed`: a dry run lists a failed row and changes nothing; `apply:true` puts it back to
-/// pending with its attempts reset.
-#[tokio::test]
-#[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
-async fn the_retry_task_lists_failed_rows_and_owes_them_again_only_when_applied() {
-    use project_portfolio_management::tasks::outbox_retry_failed;
-    super::isolate_search_index();
-    request::<App, _, _>(|_request, ctx| async move {
-        let key = Uuid::new_v4();
-        let id: i64 = sqlx::query_scalar(
-            "INSERT INTO axa_outbox (event_id, topic, kind, key, payload, status, attempts, error) \
-             VALUES ($1, 'plan', 'created', $2, '{}'::jsonb, 'failed', 10, 'publish timed out') RETURNING id",
-        )
-        .bind(Uuid::new_v4())
-        .bind(key.to_string())
-        .fetch_one(ctx.db.get_postgres_connection_pool())
-        .await
-        .expect("seed a failed row");
-        let row = |db: sea_orm::DatabaseConnection| async move {
-            sqlx::query_as::<_, (String, i32)>("SELECT status, attempts FROM axa_outbox WHERE id = $1")
-                .bind(id)
-                .fetch_one(db.get_postgres_connection_pool())
-                .await
-                .expect("the row")
-        };
-
-        let dry = outbox_retry_failed::run(&ctx.db, &ctx.config.database.uri, false)
-            .await
-            .expect("dry run");
-        assert!(dry.failed >= 1);
-        assert_eq!(dry.retried, 0);
-        let listed = dry.listed.iter().find(|r| r.id == id).expect("the row is listed");
-        assert_eq!(
-            (listed.topic.as_str(), listed.kind.as_str(), listed.attempts, listed.error.as_deref()),
-            ("plan", "created", 10, Some("publish timed out"))
-        );
-        assert_eq!(row(ctx.db.clone()).await, ("failed".to_string(), 10), "a dry run changes nothing");
-
-        let applied = outbox_retry_failed::run(&ctx.db, &ctx.config.database.uri, true)
-            .await
-            .expect("apply");
-        assert!(applied.retried >= 1);
-        assert_eq!(row(ctx.db.clone()).await, ("pending".to_string(), 0), "owed again, attempts reset");
-        sqlx::query("DELETE FROM axa_outbox WHERE id = $1")
-            .bind(id)
-            .execute(ctx.db.get_postgres_connection_pool())
-            .await
-            .expect("tidy up");
-    })
-    .await;
-}
-
-/// A relay that died holding a claim: once the claim has not been heard from for `stale_minutes`, a live relay takes
-/// it back and sends the row; a claimed row already out of attempts is left `failed`, marked as abandoned.
+/// A relay that dies mid-send leaves its events claimed. Once its lease has not been heard from for `stale_minutes`,
+/// a live relay takes the claim back: an event with attempts left is `lost`, goes back, and is sent once; one with none
+/// left is `abandoned`, and kept as `failed`.
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
 async fn a_dead_relays_claim_is_taken_back_and_sent() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
-        let txn = ctx.db.begin().await.expect("begin tx");
-        let orphaned = PlanModel::create(&txn, &Plan::new("Orphaned plan"))
-            .await
-            .expect("create plan");
-        let spent = PlanModel::create(&txn, &Plan::new("Spent plan"))
-            .await
-            .expect("create plan");
-        event_outbox::write(&txn, &created_envelope(&orphaned))
-            .await
-            .expect("write");
-        event_outbox::write(&txn, &created_envelope(&spent))
-            .await
-            .expect("write");
-        txn.commit().await.expect("commit");
-
-        // As a relay leaves them when it dies mid-send: claimed, attempts charged, unheard from for ten minutes.
-        let pool = ctx.db.get_postgres_connection_pool();
-        for (pid, attempts) in [(orphaned.pid, 1), (spent.pid, 10)] {
-            sqlx::query(
-                "UPDATE axa_outbox SET status = 'claimed', attempts = $2, \
-                 updated_at = now() - interval '10 minutes' WHERE key = $1",
-            )
-            .bind(pid.to_string())
-            .bind(attempts)
-            .execute(pool)
-            .await
-            .expect("leave a dead relay's claim");
-        }
-
-        let sink = Arc::new(Recording {
-            sent: Mutex::new(Vec::new()),
-            down: std::sync::atomic::AtomicBool::new(false),
-        });
-        let outbox = axa::outbox::Outbox::connect_existing(
-            &ctx.config.database.uri,
-            axa::outbox::OutboxOptions {
-                poll_interval: std::time::Duration::from_millis(50),
-                maintenance_interval: std::time::Duration::from_millis(50),
-                ..relay::options()
-            },
-        )
-        .await
-        .expect("connect to axa_outbox");
-        let (stop, stopped) = tokio::sync::watch::channel(false);
-        let running = tokio::spawn(relay::run(outbox, sink.clone(), stopped));
-
-        let status = |pid: Uuid| {
+        let uri = ctx.config.database.uri.clone();
+        let fast = |max_attempts| axa::outbox::OutboxOptions {
+            poll_interval: std::time::Duration::from_millis(50),
+            max_attempts,
+            ..relay::options()
+        };
+        let state = |pid: Uuid| {
             let db = ctx.db.clone();
             async move {
-                sqlx::query_as::<_, (String, Option<String>)>(
-                    "SELECT status, error FROM axa_outbox WHERE key = $1",
-                )
-                .bind(pid.to_string())
-                .fetch_one(db.get_postgres_connection_pool())
-                .await
-                .expect("the row")
+                outbox_rows(&db, pid)
+                    .await
+                    .into_iter()
+                    .map(|r| r.3)
+                    .collect::<Vec<_>>()
             }
         };
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
-        while status(orphaned.pid).await.0 != "sent" || status(spent.pid).await.0 != "failed" {
-            assert!(
-                std::time::Instant::now() < deadline,
-                "the claims were taken back: {:?} {:?}",
-                status(orphaned.pid).await,
-                status(spent.pid).await
-            );
-            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-        }
+        let wait_for = |pid: Uuid, want: &'static str| {
+            let state = &state;
+            async move {
+                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+                while state(pid).await != [want] {
+                    assert!(std::time::Instant::now() < deadline, "{pid} reached {want}: {:?}", state(pid).await);
+                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                }
+            }
+        };
+        // A relay whose publish hangs, killed while it holds the claim; then its lease is let go stale.
+        let die_holding = |pid: Uuid| {
+            let uri = uri.clone();
+            let wait_for = &wait_for;
+            let db = ctx.db.clone();
+            async move {
+                let sink = Arc::new(HangsOn {
+                    pid: pid.to_string(),
+                    stuck: std::sync::atomic::AtomicBool::new(true),
+                    sent: Mutex::new(Vec::new()),
+                });
+                let outbox = axa::outbox::Outbox::connect_existing(&uri, fast(10))
+                    .await
+                    .expect("connect to the outbox");
+                let (_stop, stopped) = tokio::sync::watch::channel(false);
+                let dying = tokio::spawn(relay::run(outbox, sink, stopped));
+                wait_for(pid, "claimed").await;
+                dying.abort();
+                let _ = dying.await;
+                sqlx::query(
+                    "UPDATE axa_outbox_leases SET heard_at = now() - interval '10 minutes' \
+                     WHERE claim IN (SELECT claim FROM axa_outbox_owed WHERE state = 'claimed')",
+                )
+                .execute(db.get_postgres_connection_pool())
+                .await
+                .expect("let the dead relay's lease go stale");
+            }
+        };
+        let recover_with = |max_attempts| {
+            let uri = uri.clone();
+            async move {
+                let sink = Arc::new(Recording {
+                    sent: Mutex::new(Vec::new()),
+                    down: std::sync::atomic::AtomicBool::new(false),
+                });
+                let outbox = axa::outbox::Outbox::connect_existing(&uri, fast(max_attempts))
+                    .await
+                    .expect("connect to the outbox");
+                let (stop, stopped) = tokio::sync::watch::channel(false);
+                (sink.clone(), stop, tokio::spawn(relay::run(outbox, sink, stopped)))
+            }
+        };
+        let write = |name: &'static str| {
+            let db = ctx.db.clone();
+            async move {
+                let txn = db.begin().await.expect("begin tx");
+                let model = PlanModel::create(&txn, &Plan::new(name)).await.expect("create plan");
+                event_outbox::write(&txn, &created_envelope(&model)).await.expect("write");
+                txn.commit().await.expect("commit");
+                model
+            }
+        };
+
+        // No attempts left for it under a relay allowing one: abandoned, kept as failed, never sent.
+        let spent = write("Spent plan").await;
+        die_holding(spent.pid).await;
+        let (sink, stop, running) = recover_with(1).await;
+        wait_for(spent.pid, "failed").await;
         let _ = stop.send(true);
         running.await.expect("the relay stops when told");
+        let outcomes: Vec<String> = sqlx::query_scalar(
+            "SELECT a.outcome FROM axa_outbox_attempts a JOIN axa_outbox_events e ON e.event_id = a.event_id \
+             WHERE e.key = $1 ORDER BY a.id",
+        )
+        .bind(spent.pid.to_string())
+        .fetch_all(ctx.db.get_postgres_connection_pool())
+        .await
+        .expect("the record");
+        assert_eq!(outcomes, ["claimed", "abandoned"], "an operator can tell why it failed");
+        assert!(sink.sent.lock().unwrap().is_empty(), "the spent event is not sent");
 
-        assert_eq!(
-            status(spent.pid).await.1.as_deref(),
-            Some("abandoned by its relay"),
-            "an operator can tell why it failed"
-        );
+        // Attempts left: lost, taken back, and sent once.
+        let orphaned = write("Orphaned plan").await;
+        die_holding(orphaned.pid).await;
+        let (sink, stop, running) = recover_with(10).await;
+        wait_for(orphaned.pid, "delivered").await;
+        let _ = stop.send(true);
+        running.await.expect("the relay stops when told");
         let sent = sink.sent.lock().unwrap().clone();
         assert_eq!(
             sent.iter()
                 .filter(|(_, key, _)| *key == orphaned.pid.to_string())
                 .count(),
             1,
-            "the orphaned row is sent once: {sent:?}"
+            "the orphaned event is sent once: {sent:?}"
         );
-        assert!(
-            !sent.iter().any(|(_, key, _)| *key == spent.pid.to_string()),
-            "the spent row is not sent"
-        );
+        assert_eq!(state(spent.pid).await, ["failed"], "a failed event stays failed");
     })
     .await;
 }

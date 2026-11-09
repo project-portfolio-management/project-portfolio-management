@@ -117,7 +117,7 @@ Delivered 2026-07-22 (§6.4a; service spec §9.4a). Derived views carry
 | POST / GET | `/api/plans/{pid}/meetings/{mid}/held` · `…/cancel` · GET `…/pdf` | Record the minutes and outcomes once; cancel; print as a deterministic PDF |
 | POST | `/api/plans/{pid}/meetings/{mid}/task-proposals/preview` · `…/commit` | Judge proposed tasks against the minutes (nothing written); create them once, linked to their outcomes |
 | POST | `/api/import/mspdi-batch` | Up to ten MSPDI files in one job: plans created or reused, the resource pool listed once, custom fields mapped; dry run by default |
-| any `POST` | header `Idempotency-Key` | A retried write returns the first answer (`Idempotent-Replayed: true`); a different request under the key is `422`, a malformed key `400` (NFR-7) |
+| any `POST` | header `Idempotency-Key` | A retried write returns the first answer (`Idempotent-Replayed: true`); a different request under the key is `422`, a malformed key `400`; a retry of a run still going, or lost to a crash, is `409` until the key expires a day later, so send a new key once you have checked the write did not happen (NFR-7) |
 | GET / POST | `/api/webhook-deliveries` · `/api/webhook-deliveries/{id}/redeliver` | The outbound webhook delivery log; send one logged delivery again (administrators only) (BR-5) |
 | GET | `/api/lifecycle` · `/api/plans/{pid}/lifecycle` | Funnel + next-phase readiness checklist |
 

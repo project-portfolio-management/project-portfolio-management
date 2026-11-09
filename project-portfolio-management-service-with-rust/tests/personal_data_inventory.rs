@@ -150,6 +150,10 @@ fn schema() -> BTreeMap<String, Vec<String>> {
         .or_insert_with(|| vec!["caller".to_string(), "body".to_string()]);
     out.entry("axa_outbox".to_string())
         .or_insert_with(|| vec!["payload".to_string()]);
+    out.entry("axa_outbox_payloads".to_string())
+        .or_insert_with(|| vec!["payload".to_string()]);
+    out.entry("axa_outbox_attempts".to_string())
+        .or_insert_with(|| vec!["by".to_string()]);
     out
 }
 

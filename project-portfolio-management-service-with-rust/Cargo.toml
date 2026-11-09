@@ -20,7 +20,7 @@ include = ["src/**/*", "README.md"]
 
 [workspace.dependencies]
 # The plumbing every service shares. `sea-orm` is transitional, until this crate has moved to sqlx.
-axa = { version = "0.7", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "sea-orm"] }
+axa = { version = "0.9", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "sea-orm"] }
 
 [dependencies]
 # Keyed integrity MACs with production-grade key handling — one audited

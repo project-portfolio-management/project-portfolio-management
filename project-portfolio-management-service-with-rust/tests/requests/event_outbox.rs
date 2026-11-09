@@ -233,3 +233,112 @@ async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
     })
     .await;
 }
+
+/// A sink that hangs on one record's events while `stuck` is set, and sends everything else.
+struct HangsOn {
+    pid: String,
+    stuck: std::sync::atomic::AtomicBool,
+    sent: Mutex<Vec<String>>,
+}
+
+#[async_trait::async_trait]
+impl EventSink for HangsOn {
+    async fn send(
+        &self,
+        _entity: &str,
+        key: &str,
+        _payload: &serde_json::Value,
+    ) -> Result<(), SinkError> {
+        if key == self.pid && self.stuck.load(std::sync::atomic::Ordering::SeqCst) {
+            std::future::pending::<()>().await;
+        }
+        self.sent.lock().unwrap().push(key.to_string());
+        Ok(())
+    }
+}
+
+/// A send that hangs past the publish limit uses an attempt; out of attempts, the row is left `failed` and kept, and
+/// another record's event still goes out. `retry_failed` (the operator's fix in `operations/deployment.md`) owes it
+/// again, and it is sent once the sink recovers.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
+    super::isolate_search_index();
+    request::<App, _, _>(|_request, ctx| async move {
+        let txn = ctx.db.begin().await.expect("begin tx");
+        let stuck = PlanModel::create(&txn, &Plan::new("Stuck plan"))
+            .await
+            .expect("create plan");
+        let fine = PlanModel::create(&txn, &Plan::new("Fine plan"))
+            .await
+            .expect("create plan");
+        event_outbox::write(&txn, &created_envelope(&stuck))
+            .await
+            .expect("write");
+        event_outbox::write(&txn, &created_envelope(&fine))
+            .await
+            .expect("write");
+        txn.commit().await.expect("commit");
+
+        let sink = Arc::new(HangsOn {
+            pid: stuck.pid.to_string(),
+            stuck: std::sync::atomic::AtomicBool::new(true),
+            sent: Mutex::new(Vec::new()),
+        });
+        let options = axa::outbox::OutboxOptions {
+            poll_interval: std::time::Duration::from_millis(50),
+            retry_backoff: std::time::Duration::from_millis(50),
+            publish_timeout: std::time::Duration::from_millis(200),
+            max_attempts: 1,
+            ..relay::options()
+        };
+        let outbox =
+            axa::outbox::Outbox::connect_existing(&ctx.config.database.uri, options.clone())
+                .await
+                .expect("connect to axa_outbox");
+        let operator = axa::outbox::Outbox::connect_existing(&ctx.config.database.uri, options)
+            .await
+            .expect("connect to axa_outbox");
+        let (stop, stopped) = tokio::sync::watch::channel(false);
+        let running = tokio::spawn(relay::run(outbox, sink.clone(), stopped));
+
+        let status = |pid| {
+            let db = ctx.db.clone();
+            async move {
+                outbox_rows(&db, pid)
+                    .await
+                    .into_iter()
+                    .map(|r| r.3)
+                    .collect::<Vec<_>>()
+            }
+        };
+        let wait_for = |pid, want: &'static str| {
+            let status = &status;
+            async move {
+                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+                while status(pid).await != [want] {
+                    assert!(std::time::Instant::now() < deadline, "{pid} reached {want}");
+                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                }
+            }
+        };
+
+        wait_for(stuck.pid, "failed").await;
+        wait_for(fine.pid, "sent").await;
+
+        sink.stuck.store(false, std::sync::atomic::Ordering::SeqCst);
+        assert_eq!(operator.retry_failed().await.expect("retry_failed"), 1);
+        wait_for(stuck.pid, "sent").await;
+
+        let _ = stop.send(true);
+        running.await.expect("the relay stops when told");
+        let sent = sink.sent.lock().unwrap().clone();
+        assert_eq!(
+            sent.iter().filter(|k| **k == stuck.pid.to_string()).count(),
+            1,
+            "the stuck row is sent once, after the retry: {sent:?}"
+        );
+    })
+    .await;
+}

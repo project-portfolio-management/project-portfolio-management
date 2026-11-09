@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (Rust lockfiles refreshed)
+
+- **`cargo update` in the service and the matcher**: every dependency moved to its newest compatible release, among them `authentication-verifier` 0.9.2, `axa-cursor-pagination` 0.1.1, `axum-keycloak-auth` 0.8.4, `uuid` 1.29.2 and `zip` 9.5.0; `defmt` and `atomic-time` dropped out of the tree. No `Cargo.toml` requirement changed.
+- Not done: the incompatible releases are left: `axa` 0.9 (we are on 0.7) is its own change, and `jsonwebtoken` 11 stays out, as AGENTS.md pins it. The matcher's fuzz lockfile is not tracked and was not committed.
+- Verified: clippy (all features), 1,255 service and 65 matcher unit tests, `cargo deny check` in both. The database suite was not rerun for this.
+
 ### 9 November (alert rules)
 
 - **Prometheus alert rules ship in `operations/prometheus/alerts.yml`** (NFR-7): audit rows not written (critical), visibility lookups failing closed, five or more lockouts in 15 minutes, more than 5% `5xx` for 10 minutes, a failed scheduled job (per job), and, while a relay runs, failed outbox rows, an event owed over 5 minutes and outbox counts stale for 2 minutes. The outbox rules take `max()`, as every relay replica reports the same database-wide counts. `alerts.test.yml` holds promtool unit tests for each rule; CI's docs job runs `promtool check rules` and `promtool test rules` (Prometheus 3.7.3, pinned by digest). A unit test in `src/metrics.rs` fails if a rule names a metric the registry does not render. The metric inventory in `src/metrics.rs` now lists `audit_write_failed_total` and `visibility_lookup_failed_total`, which it had left out.

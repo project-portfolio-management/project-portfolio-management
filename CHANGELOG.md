@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (npm packages and an action refreshed)
+
+- **The UI and the site take their packages' newest releases**: the Lily widgets and themes (patch releases: `svelte-calendar` 0.7.2, `svelte-data-grid` 0.11.2, `svelte-gantt-chart` 0.8.2, `svelte-kanban-board` 0.8.3, `svelte-picker-bar` 0.5.3, `svelte-share-picker` 0.3.2, `themes` 0.6.2), `vite` 8.3.6, `vitest` 5.1.0, `@playwright/test` 1.65.0, `svelte-check` 4.7.8, `eslint-plugin-svelte` 3.24.1, `globals` 17.14.0, `marked` 18.1.3 and `jsdom` 31 (a major release, used only by the unit tests). CI's `taiki-e/install-action` goes to 2.89.1, pinned by its commit. This covers Dependabot's open pull requests 28, 29 and 30, which are closed in favour of it.
+- Not done: `@lilydesignsystem/svelte-headless` stays at 0.6.1 (0.8.0 is out, and pre-1.0 minor releases may break) and TypeScript stays at 6 (7 is out); each is its own change.
+- Verified: UI lint, `svelte-check` (0 errors, 0 warnings), 1,008 unit tests and 1,011 Playwright tests; the site's content check, `svelte-check`, build and 202 Playwright tests. The action's new commit was checked against its `v2.89.1` tag; CI has not run it yet.
+
 ### 9 November (Rust lockfiles refreshed)
 
 - **`cargo update` in the service and the matcher**: every dependency moved to its newest compatible release, among them `authentication-verifier` 0.9.2, `axa-cursor-pagination` 0.1.1, `axum-keycloak-auth` 0.8.4, `uuid` 1.29.2 and `zip` 9.5.0; `defmt` and `atomic-time` dropped out of the tree. No `Cargo.toml` requirement changed.

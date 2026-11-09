@@ -367,3 +367,56 @@ async fn a_row_out_of_attempts_is_kept_as_failed_and_can_be_owed_again() {
     })
     .await;
 }
+
+/// `task outbox_retry_failed`: a dry run lists a failed row and changes nothing; `apply:true` puts it back to
+/// pending with its attempts reset.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+async fn the_retry_task_lists_failed_rows_and_owes_them_again_only_when_applied() {
+    use project_portfolio_management::tasks::outbox_retry_failed;
+    super::isolate_search_index();
+    request::<App, _, _>(|_request, ctx| async move {
+        let key = Uuid::new_v4();
+        let id: i64 = sqlx::query_scalar(
+            "INSERT INTO axa_outbox (event_id, topic, kind, key, payload, status, attempts, error) \
+             VALUES ($1, 'plan', 'created', $2, '{}'::jsonb, 'failed', 10, 'publish timed out') RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(key.to_string())
+        .fetch_one(ctx.db.get_postgres_connection_pool())
+        .await
+        .expect("seed a failed row");
+        let row = |db: sea_orm::DatabaseConnection| async move {
+            sqlx::query_as::<_, (String, i32)>("SELECT status, attempts FROM axa_outbox WHERE id = $1")
+                .bind(id)
+                .fetch_one(db.get_postgres_connection_pool())
+                .await
+                .expect("the row")
+        };
+
+        let dry = outbox_retry_failed::run(&ctx.db, &ctx.config.database.uri, false)
+            .await
+            .expect("dry run");
+        assert!(dry.failed >= 1);
+        assert_eq!(dry.retried, 0);
+        let listed = dry.listed.iter().find(|r| r.id == id).expect("the row is listed");
+        assert_eq!(
+            (listed.topic.as_str(), listed.kind.as_str(), listed.attempts, listed.error.as_deref()),
+            ("plan", "created", 10, Some("publish timed out"))
+        );
+        assert_eq!(row(ctx.db.clone()).await, ("failed".to_string(), 10), "a dry run changes nothing");
+
+        let applied = outbox_retry_failed::run(&ctx.db, &ctx.config.database.uri, true)
+            .await
+            .expect("apply");
+        assert!(applied.retried >= 1);
+        assert_eq!(row(ctx.db.clone()).await, ("pending".to_string(), 0), "owed again, attempts reset");
+        sqlx::query("DELETE FROM axa_outbox WHERE id = $1")
+            .bind(id)
+            .execute(ctx.db.get_postgres_connection_pool())
+            .await
+            .expect("tidy up");
+    })
+    .await;
+}

@@ -607,6 +607,7 @@ impl App {
         tasks.register(crate::tasks::tolerance_escalations::ToleranceEscalations);
         tasks.register(crate::tasks::exceptions_digest::ExceptionsDigest);
         tasks.register(crate::tasks::director_pack_schedule::DirectorPackSchedule);
+        tasks.register(crate::tasks::outbox_retry_failed::OutboxRetryFailed);
         // tasks-inject (do not remove)
     }
 
@@ -673,7 +674,7 @@ mod tests {
     #[test]
     fn every_task_has_been_decided_on_for_production() {
         use axa::task::Task;
-        let decided: [(&str, &dyn Task); 6] = [
+        let decided: [(&str, &dyn Task); 7] = [
             (
                 "director_pack_schedule",
                 &crate::tasks::director_pack_schedule::DirectorPackSchedule,
@@ -685,6 +686,10 @@ mod tests {
             (
                 "exceptions_digest",
                 &crate::tasks::exceptions_digest::ExceptionsDigest,
+            ),
+            (
+                "outbox_retry_failed",
+                &crate::tasks::outbox_retry_failed::OutboxRetryFailed,
             ),
             (
                 "retention_purge",

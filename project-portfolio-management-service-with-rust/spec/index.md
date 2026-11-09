@@ -1236,6 +1236,14 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   Counts only, as the route is public. Tests: `metrics` (absent until
   published, then the three series) and `requests::event_outbox` (a
   running relay publishes a `failed` row's count).
+- [x] **`task outbox_retry_failed` (2026-11-09).** Lists the outbox's
+  `failed` rows (count, and the first 50 with topic, kind, attempts and
+  last error) and changes nothing, unless `apply:true`, which calls
+  `axa::outbox::Outbox::retry_failed`: every failed row back to
+  `pending`, attempts reset. Any other argument is refused. Decided for
+  production in the task census. Tests: `tasks::outbox_retry_failed`
+  (the arguments) and `requests::event_outbox` (a dry run lists a seeded
+  row and leaves it; applied, it is pending with no attempts).
 - [x] **Durable event bus — Phase 3, `FluvioSink` (BUS-3, following
   BUS-1's case-service reference).** *(done 2026-08-03)* The real-broker
   `impl EventSink`, behind this crate's own `fluvio` Cargo feature (off

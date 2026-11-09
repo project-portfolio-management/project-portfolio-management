@@ -9,6 +9,9 @@ pub mod exceptions_digest;
 /// `exception_breaches` — notify breached delivery exceptions.
 pub mod exception_breaches;
 
+/// `outbox_retry_failed` — send the event outbox's failed rows again.
+pub mod outbox_retry_failed;
+
 /// `retention_purge` — delete records past their retention period.
 pub mod retention_purge;
 

@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (`task outbox_retry_failed`)
+
+- **`project-portfolio-management task outbox_retry_failed`** lists the event outbox's `failed` rows (their count, and the first 50 with topic, kind, attempts and last error) and changes nothing; `apply:true` puts every one back to pending with its attempts reset (`axa::outbox::Outbox::retry_failed`), so the relay sends it again in its record's order. It replaces the raw `UPDATE` that `operations/deployment.md` gave. An argument other than `apply` is refused; as with `retention_purge`, an `apply:` value other than `true`, `yes` or `1` is a dry run. It is in the task census, decided for production.
+- Not done: it retries all failed rows or none, not one topic or row; it is not a route, so retrying needs a shell on a machine that reaches the database; nothing audits who ran it.
+- Verified: fmt, clippy (all features), 1,253 unit tests (three new) and the census; `requests::event_outbox`, where a dry run lists a seeded failed row and leaves it, and applied it is `pending` with no attempts; the binary, dry (`1 failed`, the row and its error), applied (`1 back to pending`), and refusing `bogus:1`.
+
 ### 9 November (the outbox in `/metrics.prom`)
 
 - **A running relay now puts `axa-outbox`'s own counts in `/metrics.prom`** every 30 seconds: `ppm_event_outbox_rows{status}` (`pending`, `claimed`, `failed`), `ppm_event_outbox_oldest_owed_seconds` (`0` with none owed) and `ppm_event_outbox_last_refresh_timestamp_seconds`. A `failed` row is one no relay will send until an operator retries it, so `failed` above zero is the alert the outbox commit said was missing; `operations/deployment.md` says what to alert on.

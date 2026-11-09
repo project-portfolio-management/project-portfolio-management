@@ -420,3 +420,103 @@ async fn the_retry_task_lists_failed_rows_and_owes_them_again_only_when_applied(
     })
     .await;
 }
+
+/// A relay that died holding a claim: once the claim has not been heard from for `stale_minutes`, a live relay takes
+/// it back and sends the row; a claimed row already out of attempts is left `failed`, marked as abandoned.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+async fn a_dead_relays_claim_is_taken_back_and_sent() {
+    super::isolate_search_index();
+    request::<App, _, _>(|_request, ctx| async move {
+        let txn = ctx.db.begin().await.expect("begin tx");
+        let orphaned = PlanModel::create(&txn, &Plan::new("Orphaned plan"))
+            .await
+            .expect("create plan");
+        let spent = PlanModel::create(&txn, &Plan::new("Spent plan"))
+            .await
+            .expect("create plan");
+        event_outbox::write(&txn, &created_envelope(&orphaned))
+            .await
+            .expect("write");
+        event_outbox::write(&txn, &created_envelope(&spent))
+            .await
+            .expect("write");
+        txn.commit().await.expect("commit");
+
+        // As a relay leaves them when it dies mid-send: claimed, attempts charged, unheard from for ten minutes.
+        let pool = ctx.db.get_postgres_connection_pool();
+        for (pid, attempts) in [(orphaned.pid, 1), (spent.pid, 10)] {
+            sqlx::query(
+                "UPDATE axa_outbox SET status = 'claimed', attempts = $2, \
+                 updated_at = now() - interval '10 minutes' WHERE key = $1",
+            )
+            .bind(pid.to_string())
+            .bind(attempts)
+            .execute(pool)
+            .await
+            .expect("leave a dead relay's claim");
+        }
+
+        let sink = Arc::new(Recording {
+            sent: Mutex::new(Vec::new()),
+            down: std::sync::atomic::AtomicBool::new(false),
+        });
+        let outbox = axa::outbox::Outbox::connect_existing(
+            &ctx.config.database.uri,
+            axa::outbox::OutboxOptions {
+                poll_interval: std::time::Duration::from_millis(50),
+                maintenance_interval: std::time::Duration::from_millis(50),
+                ..relay::options()
+            },
+        )
+        .await
+        .expect("connect to axa_outbox");
+        let (stop, stopped) = tokio::sync::watch::channel(false);
+        let running = tokio::spawn(relay::run(outbox, sink.clone(), stopped));
+
+        let status = |pid: Uuid| {
+            let db = ctx.db.clone();
+            async move {
+                sqlx::query_as::<_, (String, Option<String>)>(
+                    "SELECT status, error FROM axa_outbox WHERE key = $1",
+                )
+                .bind(pid.to_string())
+                .fetch_one(db.get_postgres_connection_pool())
+                .await
+                .expect("the row")
+            }
+        };
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+        while status(orphaned.pid).await.0 != "sent" || status(spent.pid).await.0 != "failed" {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "the claims were taken back: {:?} {:?}",
+                status(orphaned.pid).await,
+                status(spent.pid).await
+            );
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+        let _ = stop.send(true);
+        running.await.expect("the relay stops when told");
+
+        assert_eq!(
+            status(spent.pid).await.1.as_deref(),
+            Some("abandoned by its relay"),
+            "an operator can tell why it failed"
+        );
+        let sent = sink.sent.lock().unwrap().clone();
+        assert_eq!(
+            sent.iter()
+                .filter(|(_, key, _)| *key == orphaned.pid.to_string())
+                .count(),
+            1,
+            "the orphaned row is sent once: {sent:?}"
+        );
+        assert!(
+            !sent.iter().any(|(_, key, _)| *key == spent.pid.to_string()),
+            "the spent row is not sent"
+        );
+    })
+    .await;
+}

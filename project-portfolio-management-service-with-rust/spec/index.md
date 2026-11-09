@@ -1224,8 +1224,11 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `purge_published` and the `event_outbox` entity are gone. Every sink
   error counts as an outage; `FluvioSink` now waits for the broker's
   acknowledgement. Tests: `requests::event_outbox` (atomic write,
-  rollback, and the relay holding rows while the sink is down, then
-  sending each once, in order), `outbox_audit`, `webhook_redelivery`.
+  rollback, the relay holding rows while the sink is down, then
+  sending each once, in order, a row out of attempts kept as `failed`,
+  and a dead relay's claim taken back and sent, or left `failed` as
+  abandoned when it had no attempts left), `outbox_audit`,
+  `webhook_redelivery`.
 - [x] **The outbox in `/metrics.prom` (2026-11-09).** While the relay
   runs it reads `axa::outbox::Outbox::stats` every 30 seconds and sets
   `ppm_event_outbox_rows{status}` (`pending`, `claimed`, `failed`),

@@ -14,7 +14,9 @@ is what the root [`compose.yaml`](../compose.yaml) runs. Read
   authentication service, any OpenID Connect provider through `OIDC_ISSUER`, or a Keycloak realm; see
   [sign in with Microsoft Entra ID](sign-in-with-entra.md)). Without a key set
   the service **refuses to start**.
-- PostgreSQL 18 (the Compose file uses `postgres:18-alpine`).
+- PostgreSQL 18 (the Compose file builds `postgres:18-alpine` with TLS, `ci/postgres-tls`: a self-signed
+  certificate made on first start, which the API uses with `sslmode=require`, so the link is encrypted but the
+  certificate is not checked. For a database outside the stack, use `sslmode=verify-full`).
 
 ## First start
 

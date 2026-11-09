@@ -85,6 +85,13 @@ updates:
       default-days: 7
     schedule:
       interval: weekly
+  - package-ecosystem: docker
+    directory: /ci/postgres-tls
+    # A release is trusted after it has been out a week, not on the day it is published.
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
   # Compose files hold digest-pinned images too (the demo, the Fluvio stack, the test stack).
   - package-ecosystem: docker-compose
     directory: /

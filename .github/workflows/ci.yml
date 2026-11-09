@@ -376,9 +376,18 @@ jobs:
           cache-to: type=gha,mode=max,scope=ui
       - name: Public-only test key set (so the secure stack can boot)
         run: echo "PPM_PASETO_KEYS=$(scripts/smoke-keys.sh)" >> "$GITHUB_ENV"
+      - name: Build the database image (PostgreSQL with TLS)
+        run: docker compose build postgres
       - name: Start the stack
         # The images are already built and tagged; do not rebuild. The `ui` profile adds the UI server.
         run: docker compose --profile ui up -d --no-build --wait --wait-timeout 180
+      - name: The API reaches its database over TLS
+        run: |
+          used="$(docker compose exec -T postgres psql -U ppm -d project_portfolio_management -Atc \
+            "SELECT count(*) FILTER (WHERE ssl), count(*) FILTER (WHERE NOT ssl) FROM pg_stat_ssl JOIN pg_stat_activity USING (pid) WHERE client_addr IS NOT NULL")"
+          echo "network connections with TLS|without: $used"
+          test "${used%%|*}" -gt 0
+          test "${used##*|}" = 0
       - name: The UI serves its sign-in page, with its security headers, and its proxy refuses an anonymous call
         run: |
           curl --fail --silent --show-error --location --retry 5 --retry-delay 2 -o /dev/null http://localhost:3000/

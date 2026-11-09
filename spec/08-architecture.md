@@ -106,7 +106,9 @@ is a restore (`operations/upgrade-and-migration.md`).
 limit, and reuses one answer for 5 seconds, because the route is public. `check` reads the configuration, connects to nothing, and
 fails where a boot would for the settings it knows. Stopping is one limit for requests and jobs together:
 `SHUTDOWN_TIMEOUT_SECONDS`, 25 by default. In production, a `DATABASE_URL` that leaves this machine must set `sslmode` to `require`,
-`verify-ca` or `verify-full`, or the service refuses to start.
+`verify-ca` or `verify-full`, or the service refuses to start. `compose.yaml` runs in production, so its PostgreSQL
+offers TLS (`ci/postgres-tls`: a self-signed certificate made on first start, TLS 1.3 only) and the API connects with
+`sslmode=require`, encrypted but with the certificate unchecked. A database outside the stack should use `verify-full`.
 
 ### 8.3b The move from SeaORM to sqlx
 

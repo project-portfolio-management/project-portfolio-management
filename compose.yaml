@@ -66,7 +66,7 @@ name: project-portfolio-management
 x-api-environment: &api-environment
   APP_ENV: production
   PORT: "5150"
-  DATABASE_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management
+  DATABASE_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management?sslmode=require
   # The cache (Redis). The password defaults to the database's so a local stack needs one secret.
   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL: redis://:${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}@redis:6379/0
   # Signs list cursors (FR-46): 32 bytes or more, the same on every replica. The default is built from the
@@ -96,8 +96,12 @@ x-api-build: &api-build
   dockerfile: project-portfolio-management-service-with-rust/Dockerfile
 
 services:
+  # PostgreSQL 18 with TLS (ci/postgres-tls/Dockerfile): production refuses a DATABASE_URL without sslmode, so the
+  # API connects with sslmode=require to a self-signed certificate made on first start.
   postgres:
-    image: docker.io/library/postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+    build:
+      context: ci/postgres-tls
+    image: project-portfolio-management-postgres:local
     environment:
       POSTGRES_USER: ppm
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}

@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (the Compose database offers TLS)
+
+- **`compose.yaml`'s PostgreSQL now offers TLS, and the API connects with `sslmode=require`.** Since axa 0.7, production refuses a `DATABASE_URL` that leaves the machine without `sslmode`, and the Compose stack runs in production, so `migrate` stopped at boot: the container smoke and ZAP jobs both failed on it, the first time CI ran this branch. `ci/postgres-tls/Dockerfile` is the same pinned `postgres:18-alpine` plus `openssl`; its entrypoint makes a self-signed certificate (P-256, ten years) on first start, beside the data on the existing `postgres-data` volume, and Postgres runs with `ssl=on` and TLS 1.3 at least.
+- `sslmode=require` encrypts the link but does not check the certificate. That is enough on the stack's own network and no more: a database outside it should use `verify-full` (spec §8.3a, `operations/deployment.md`).
+- CI's container job builds the database image before it starts the stack (`--no-build`), and a new step fails unless the API's database connections all use TLS. Dependabot watches the new Dockerfile.
+- Upgrading a stack already running: rebuild (`podman compose up -d --build`); the old data volume is kept and gets a certificate on the next start. A `psql` through `podman compose exec postgres` uses the local socket and is unchanged.
+- Not done: the certificate never rotates, and nothing reads its expiry; the GHCR image and release workflow are unchanged, as they hold the API only; the new CI step has not yet run on GitHub.
+- Verified: the stack built and started with Podman: `migrate` applied every migration in production, `/_readiness` `200`, an anonymous `GET /api/plans` `401`; `pg_stat_ssl` showed 3 API connections on TLS 1.3 and none without; after `restart postgres` the certificate's hash was the same, the key `600` and owned by `postgres`, and the API was ready again.
+
 ### 9 November (failed-login lockout by axa-ratelimit)
 
 - **A client address that earns `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT` failed authentications (`401`, 20 by default) is now locked out by `axa-ratelimit`'s `lock_out_failures`**, in place of the service's own failures bucket in `rate_limit_mw` (NFR-14). Only a `401` counts, a locked-out client is refused before the auth guard and before it is charged to the general limit, and the lockout lasts until its window ends: as long as `…_RATE_LIMIT_FAILURES_PER_MINUTE` (6) takes to earn the count, 200 s by default, so the defaults behave as before.

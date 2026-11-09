@@ -50,10 +50,10 @@
 //! is set (see [`crate::flow_metrics`]). Unset, the gauges are never
 //! written and the family does not appear in the exposition at all.
 //!
-//! Three properties are deliberate, because `/metrics.prom` is on the
-//! **public allow-list** — it stays scrapeable with
-//! `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` on, so anything here is
-//! readable by whoever can reach the port.
+//! Three properties are deliberate. `/metrics.prom` needs a bearer token
+//! (it is not on `crate::auth`'s public list), but every scraper and every
+//! dashboard its figures reach can read them, so nothing here may describe
+//! one person or one private plan more than its row in the API would.
 //!
 //! - **Per-plan series are capped** (default 50).
 //! - **Small boards are suppressed.** A flow efficiency over two tasks

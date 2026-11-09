@@ -30,7 +30,7 @@ It is pre-1.0; the first release cut from the root release workflow is
 ### 9 November (the outbox in `/metrics.prom`)
 
 - **A running relay now puts `axa-outbox`'s own counts in `/metrics.prom`** every 30 seconds: `ppm_event_outbox_rows{status}` (`pending`, `claimed`, `failed`), `ppm_event_outbox_oldest_owed_seconds` (`0` with none owed) and `ppm_event_outbox_last_refresh_timestamp_seconds`. A `failed` row is one no relay will send until an operator retries it, so `failed` above zero is the alert the outbox commit said was missing; `operations/deployment.md` says what to alert on.
-- With no relay running the family is absent, never a `0` nobody measured: each gauge is a vector, label-less where it has no label. Counts only, as `/metrics.prom` is public. A failed read is logged and skipped, so the refresh time goes stale and says so. The counts share the relay's own two connections.
+- With no relay running the family is absent, never a `0` nobody measured: each gauge is a vector, label-less where it has no label. Counts only, as every scraper can read them. A failed read is logged and skipped, so the refresh time goes stale and says so. The counts share the relay's own two connections.
 - Not done: no alert rule ships (the service has none); with several relays each publishes the same table-wide counts from its own process; `retry_failed` still has no route or task; a relay dying mid-claim is still untested.
 - Verified: fmt, clippy (all features), the unit tests (one new: the family is absent until published, then the three series, and none owed is `0`), and `requests::event_outbox`, where a running count publishes the failed row's count and stops when told.
 

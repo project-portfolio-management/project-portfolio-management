@@ -1236,7 +1236,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `ppm_event_outbox_last_refresh_timestamp_seconds`. With no relay the
   family is absent, never a `0` nobody measured. Alert on `failed` above
   zero, on the oldest owed row growing, and on the refresh going stale.
-  Counts only, as the route is public. Tests: `metrics` (absent until
+  Counts only, as every scraper can read them. Tests: `metrics` (absent until
   published, then the three series) and `requests::event_outbox` (a
   running relay publishes a `failed` row's count).
 - [x] **`task outbox_retry_failed` (2026-11-09).** Lists the outbox's

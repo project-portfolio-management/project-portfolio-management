@@ -57,6 +57,7 @@ single integration or office is hitting it:
 3. Many `401`s from one address lock it out (`LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT`,
    20 by default) until its window ends: find what is sending bad tokens (an
    expired token in a script). A restart clears every lockout, as counts are per process.
+   `client_address_lockouts_total` in `/metrics.prom` rises once per lockout.
 
 ### `500` on data routes while `/_health` is `200`
 

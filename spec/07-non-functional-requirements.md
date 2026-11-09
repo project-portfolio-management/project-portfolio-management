@@ -127,7 +127,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   authentications (`401`, 20 by default) is **locked out**, refused before the auth guard runs, until its window ends
   (as long as `…_RATE_LIMIT_FAILURES_PER_MINUTE`, 6 by default, takes to earn the count: 200 s). Only a `401` counts.
   The lockout is `axa-ratelimit`'s; the old name for the count, `…_RATE_LIMIT_FAILURES_BURST`, is still read alone,
-  with a warning, and the service refuses to start if the two names give different counts.
+  with a warning, and the service refuses to start if the two names give different counts. Each lockout is counted
+  once, on its first refusal, in `client_address_lockouts_total`, and logged without the address.
   A refusal is `429` with `Retry-After` and `RateLimit-*` headers. Health, ping and readiness are exempt. The client
   address honours `X-Forwarded-For` only from configured trusted proxies, and an IPv6 address counts by its `/64`.
   State is per process.

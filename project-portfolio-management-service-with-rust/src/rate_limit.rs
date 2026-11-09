@@ -311,7 +311,8 @@ pub async fn client_address_mw(
 }
 
 /// `axa-ratelimit`'s failed-login lockout ([`axa::ratelimit::lock_out_failures`]), per client address, when limiting
-/// is on. A locked-out client is refused before it is charged to the general limit.
+/// is on. A locked-out client is refused before it is charged to the general limit. Each lockout is counted once, on
+/// its first refusal, in `client_address_lockouts_total`, and logged without the address (which is personal data).
 pub async fn lockout_mw(
     State(limiter): State<Arc<RateLimiter>>,
     req: Request,
@@ -320,7 +321,24 @@ pub async fn lockout_mw(
     if !limiter.enabled {
         return next.run(req).await;
     }
-    axa::ratelimit::lock_out_failures(State(limiter.lockout.clone()), req, next).await
+    let response =
+        axa::ratelimit::lock_out_failures(State(limiter.lockout.clone()), req, next).await;
+    if is_new_lockout(&response) {
+        crate::metrics::Metrics::global()
+            .client_address_lockouts_total
+            .inc();
+        tracing::warn!("a client address was locked out for failed authentications");
+    }
+    response
+}
+
+/// Whether `response` is the first refusal of a lockout: a `429` whose [`Verdict`] says it is the first this window.
+fn is_new_lockout(response: &Response) -> bool {
+    response.status() == StatusCode::TOO_MANY_REQUESTS
+        && response
+            .extensions()
+            .get::<Verdict>()
+            .is_some_and(|verdict| verdict.first_refusal)
 }
 
 /// The general and expensive limits (see the module docs). Layer the three limit layers outside the auth guard and
@@ -619,6 +637,30 @@ mod tests {
         // Another client is unaffected.
         let (s, _) = status(&app, request("/api/x", "10.0.0.2", Some("good"), None)).await;
         assert_eq!(s, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn a_lockout_is_counted_once_not_per_refused_request() {
+        let app = app(tight(limit(50, 600), limit(5, 60), limit(1, 60)), "");
+        let (s, _) = status(&app, request("/api/private", "10.0.0.7", Some("bad"), None)).await;
+        assert_eq!(s, StatusCode::UNAUTHORIZED);
+        let mut firsts = Vec::new();
+        for _ in 0..3 {
+            let response = app
+                .clone()
+                .oneshot(request("/api/x", "10.0.0.7", None, None))
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+            firsts.push(is_new_lockout(&response));
+        }
+        assert_eq!(firsts, [true, false, false]);
+        let ok = app
+            .clone()
+            .oneshot(request("/api/x", "10.0.0.8", None, None))
+            .await
+            .unwrap();
+        assert!(!is_new_lockout(&ok), "an allowed response is no lockout");
     }
 
     #[tokio::test]

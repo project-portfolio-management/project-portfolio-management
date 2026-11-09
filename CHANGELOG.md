@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (lockouts counted)
+
+- **Each failed-login lockout is now counted once in `client_address_lockouts_total`** (`/metrics.prom`) and logged at `warn`, on axa's first refusal for that address in its window, not on every refused request after it. The log line leaves the address out, as it is personal data. This closes the lockout entry's "nothing counts a lockout".
+- Not done: no audit row is written for a lockout; the counter has no label, so it cannot say which route the guessing was on; nothing alerts on it.
+- Verified: fmt, clippy (all features), 1,254 unit tests (one new: three refused requests in a row are one lockout, and an allowed response is none). On the binary in production a lockout logged the warning once; the counter itself was not read there, as `/metrics.prom` needs a token the test key set cannot sign.
+
 ### 9 November (`task outbox_retry_failed`)
 
 - **`project-portfolio-management task outbox_retry_failed`** lists the event outbox's `failed` rows (their count, and the first 50 with topic, kind, attempts and last error) and changes nothing; `apply:true` puts every one back to pending with its attempts reset (`axa::outbox::Outbox::retry_failed`), so the relay sends it again in its record's order. It replaces the raw `UPDATE` that `operations/deployment.md` gave. An argument other than `apply` is refused; as with `retention_purge`, an `apply:` value other than `true`, `yes` or `1` is a dry run. It is in the task census, decided for production.

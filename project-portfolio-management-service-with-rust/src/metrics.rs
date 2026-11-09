@@ -21,6 +21,7 @@
 //! | `plan_deleted_total` | counter | — |
 //! | `plan_merged_total` | counter | — |
 //! | `http_requests_total` | counter vec | `method`, `path`, `status` |
+//! | `client_address_lockouts_total` | counter | — |
 //! | `scheduled_job_runs_total` | counter vec | `job`, `outcome` |
 //! | `ppm_flow_efficiency` | gauge vec | `plan` |
 //! | `ppm_flow_cycle_time_p85_days` | gauge vec | `plan` |
@@ -101,6 +102,9 @@ pub struct Metrics {
     /// answered by hiding what could not be checked (CQ-6). Any rise means people are seeing less
     /// than they should, and why is in the error log.
     pub visibility_lookup_failed_total: Counter,
+    /// Client addresses locked out for failed authentications, once per lockout and not per refused request
+    /// (NFR-14). A rise is someone guessing, or a script with a bad token.
+    pub client_address_lockouts_total: Counter,
 
     /// HTTP requests handled, labeled by `method`, `path`, and `status`.
     pub http_requests_total: IntCounterVec,
@@ -323,6 +327,11 @@ impl Metrics {
         ))
         .expect("static counter opts are always valid");
 
+        let client_address_lockouts_total = Counter::with_opts(Opts::new(
+            "client_address_lockouts_total",
+            "Client addresses locked out for failed authentications, once per lockout.",
+        ))
+        .expect("static counter opts are always valid");
         let visibility_lookup_failed_total = Counter::with_opts(Opts::new(
             "visibility_lookup_failed_total",
             "Visibility lookups that failed and were answered by hiding (fail closed).",
@@ -354,6 +363,7 @@ impl Metrics {
             Box::new(plan_merged_total.clone()),
             Box::new(audit_write_failed_total.clone()),
             Box::new(visibility_lookup_failed_total.clone()),
+            Box::new(client_address_lockouts_total.clone()),
         ] {
             registry
                 .register(collector)
@@ -375,6 +385,7 @@ impl Metrics {
             plan_merged_total,
             audit_write_failed_total,
             visibility_lookup_failed_total,
+            client_address_lockouts_total,
             http_requests_total,
             scheduled_job_runs_total,
             flow_efficiency: flow.efficiency,

@@ -22,6 +22,8 @@
 //! | `plan_merged_total` | counter | — |
 //! | `http_requests_total` | counter vec | `method`, `path`, `status` |
 //! | `client_address_lockouts_total` | counter | — |
+//! | `audit_write_failed_total` | counter | — |
+//! | `visibility_lookup_failed_total` | counter | — |
 //! | `scheduled_job_runs_total` | counter vec | `job`, `outcome` |
 //! | `ppm_flow_efficiency` | gauge vec | `plan` |
 //! | `ppm_flow_cycle_time_p85_days` | gauge vec | `plan` |
@@ -722,6 +724,49 @@ mod tests {
 
     /// The exposed content type matches the Prometheus text format version
     /// the handler advertises.
+    /// The shipped alert rules (`operations/prometheus/alerts.yml`) name only metrics this registry
+    /// renders, so renaming one here cannot leave an alert silently watching nothing.
+    #[test]
+    fn every_metric_an_alert_rule_names_is_registered() {
+        const RULES: &str = include_str!("../../operations/prometheus/alerts.yml");
+        let metrics = Metrics::isolated();
+        // The vecs render nothing until a label is used; give each one series.
+        metrics
+            .http_requests_total
+            .with_label_values(&["GET", "/x", "503"])
+            .inc();
+        metrics
+            .scheduled_job_runs_total
+            .with_label_values(&["retention_purge", "failed"])
+            .inc();
+        metrics.publish_outbox(
+            OutboxCounts {
+                pending: 0,
+                claimed: 0,
+                failed: 0,
+                oldest_owed_seconds: None,
+            },
+            0.0,
+        );
+        let text = metrics.render();
+        let mut named = Vec::new();
+        for line in RULES.lines().filter(|l| !l.trim_start().starts_with('#')) {
+            for word in line.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')) {
+                if (word.starts_with("ppm_") || word.ends_with("_total")) && !named.contains(&word)
+                {
+                    named.push(word);
+                }
+            }
+        }
+        assert!(named.len() >= 8, "the rules name the metrics: {named:?}");
+        for name in named {
+            assert!(
+                text.contains(&format!("# TYPE {name} ")),
+                "alerts.yml names {name}, which the service does not register"
+            );
+        }
+    }
+
     #[test]
     fn content_type_is_prometheus_text() {
         assert_eq!(CONTENT_TYPE, "text/plain; version=0.0.4");

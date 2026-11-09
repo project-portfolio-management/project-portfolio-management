@@ -303,6 +303,14 @@ jobs:
         run: python3 scripts/export-translation-review.py --check
       - name: The site's translation review files are current
         run: python3 scripts/export-site-translation-review.py --check
+      - name: The alert rules load and their unit tests pass
+        run: |
+          docker run --rm -v "$PWD/operations/prometheus:/r:ro" -w /r --entrypoint promtool \
+            prom/prometheus:v3.7.3@sha256:49214755b6153f90a597adcbff0252cc61069f8ab69ce8411285cd4a560e8038 \
+            check rules alerts.yml
+          docker run --rm -v "$PWD/operations/prometheus:/r:ro" -w /r --entrypoint promtool \
+            prom/prometheus:v3.7.3@sha256:49214755b6153f90a597adcbff0252cc61069f8ab69ce8411285cd4a560e8038 \
+            test rules alerts.test.yml
       - name: Link check (offline)
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:

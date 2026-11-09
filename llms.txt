@@ -95,6 +95,7 @@
 - [Backup and restore](operations/backup-and-restore.md): Database and artifact backup, verified restore, RPO and RTO
 - [Upgrade and migration](operations/upgrade-and-migration.md): Upgrading, migrations and rollback
 - [Runbook](operations/runbook.md): Logs, health, common faults
+- [Alert rules](operations/prometheus/alerts.yml): Prometheus alert rules for the service, with promtool unit tests beside them
 - [Demo](operations/demo.md): A seeded demonstration stack
 - [Sign in with Entra](operations/sign-in-with-entra.md): Single sign-on through Keycloak and Microsoft Entra
 - [Email with Stalwart](operations/email-with-stalwart.md): Outgoing mail with a local Stalwart server

@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (alert rules)
+
+- **Prometheus alert rules ship in `operations/prometheus/alerts.yml`** (NFR-7): audit rows not written (critical), visibility lookups failing closed, five or more lockouts in 15 minutes, more than 5% `5xx` for 10 minutes, a failed scheduled job (per job), and, while a relay runs, failed outbox rows, an event owed over 5 minutes and outbox counts stale for 2 minutes. The outbox rules take `max()`, as every relay replica reports the same database-wide counts. `alerts.test.yml` holds promtool unit tests for each rule; CI's docs job runs `promtool check rules` and `promtool test rules` (Prometheus 3.7.3, pinned by digest). A unit test in `src/metrics.rs` fails if a rule names a metric the registry does not render. The metric inventory in `src/metrics.rs` now lists `audit_write_failed_total` and `visibility_lookup_failed_total`, which it had left out.
+- Not done: the thresholds are guesses, not measured on real traffic; no rule for the scrape itself (`up`), the database, the broker or the flow gauges; no Alertmanager routing; the rules have not been loaded into a running Prometheus.
+- Verified: promtool 3.7.3 `check rules` (8 rules) and `test rules` (6 groups) under Podman; the new unit test and the metrics tests.
+
 ### 9 November (lockouts counted)
 
 - **Each failed-login lockout is now counted once in `client_address_lockouts_total`** (`/metrics.prom`) and logged at `warn`, on axa's first refusal for that address in its window, not on every refused request after it. The log line leaves the address out, as it is personal data. This closes the lockout entry's "nothing counts a lockout".

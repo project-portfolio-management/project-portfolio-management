@@ -80,6 +80,12 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   `tracing-subscriber`, JSON logs in production); OTLP traces /
   metrics / logs *(roadmap)* per
   `agents/share/observability.md` (shared family guidance, not in this repository).
+  **Alert rules ship with the service:** `operations/prometheus/alerts.yml` alerts on audit rows not written,
+  visibility lookups failing closed, five or more lockouts in 15 minutes, more than 5% of requests answering `5xx`
+  for 10 minutes, a failed scheduled job, and, while a relay runs, failed outbox rows, an event owed for over
+  5 minutes and outbox counts not refreshed for 2 minutes. A unit test fails if a rule names a metric the service
+  does not register, and CI runs `promtool check rules` and the rules' own unit tests. Thresholds are starting
+  points, not measured. The scrape itself (`up`), the database and the broker are not covered.
 - **NFR-8 — Determinism and explainability.** Matching is a pure,
   total, deterministic function — no clocks, RNGs, IO, or panics in
   the matcher library; every score carries a breakdown an auditor can

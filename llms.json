@@ -356,6 +356,11 @@
           "description": "Logs, health, common faults"
         },
         {
+          "title": "Alert rules",
+          "path": "operations/prometheus/alerts.yml",
+          "description": "Prometheus alert rules for the service, with promtool unit tests beside them"
+        },
+        {
           "title": "Demo",
           "path": "operations/demo.md",
           "description": "A seeded demonstration stack"

@@ -9,6 +9,7 @@ For the person on call. Start with the quick reference, then find the symptom.
 | Liveness | `GET /_health` and `GET /_ping` (stay `200` with the database down) |
 | Readiness | `GET /_readiness` (`200` `{"ok":true}`; `503` when the database, queue or cache fails) |
 | Metrics | `GET /metrics.prom` (needs a bearer token); flow gauges are `ppm_flow_*` |
+| Alert rules | [`operations/prometheus/alerts.yml`](prometheus/alerts.yml), for Prometheus `rule_files:`; each alert names its next step |
 | Logs | standard output, JSON in production (`podman compose logs api`) |
 | Traces and metrics export | OTLP to `OTLP_ENDPOINT` |
 | Version | `<service> version`; the image tag |

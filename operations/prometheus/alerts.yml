@@ -1,0 +1,89 @@
+# Prometheus alert rules for the project-portfolio-management service.
+#
+# Load this file from your Prometheus `rule_files:`. Every metric named here is one the service
+# registers (a unit test in `src/metrics.rs` checks that), and CI runs `promtool check rules` and the
+# unit tests in `alerts.test.yml` against it.
+#
+# Not covered here: the scrape itself (`up == 0`), because the job name is yours; the database,
+# the broker and the identity provider, which have exporters of their own. Thresholds are starting
+# points, not measured ones: tune them to your traffic.
+groups:
+  - name: project-portfolio-management
+    rules:
+      # NFR-6: an audited read was answered without its audit row. Writes are refused instead, so
+      # this counts only what was served unrecorded.
+      - alert: PpmAuditWriteFailed
+        expr: sum(increase(audit_write_failed_total[10m])) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: Audit rows could not be written
+          description: "{{ $value | humanize }} audit rows failed in the last 10 minutes; the audit trail has gaps. See operations/runbook.md."
+
+      # FR (CQ-6): a visibility lookup failed and the record was hidden (fail closed). Callers see
+      # less than they should until the cause is fixed.
+      - alert: PpmVisibilityLookupFailed
+        expr: sum(increase(visibility_lookup_failed_total[10m])) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Visibility lookups are failing closed
+          description: "{{ $value | humanize }} visibility lookups failed in the last 10 minutes; records were hidden from callers who may see them."
+
+      # NFR-14: client addresses locked out for failed authentications. One lockout is a mistyped
+      # password; several in a quarter of an hour is guessing.
+      - alert: PpmClientAddressLockouts
+        expr: sum(increase(client_address_lockouts_total[15m])) >= 5
+        labels:
+          severity: warning
+        annotations:
+          summary: Many client addresses locked out
+          description: "{{ $value | humanize }} lockouts in the last 15 minutes. The log line \"client address locked out\" has the time of each."
+
+      - alert: PpmServerErrors
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+            / sum(rate(http_requests_total[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: More than 5% of requests fail with a server error
+          description: "{{ $value | humanizePercentage }} of requests answered 5xx over the last 5 minutes."
+
+      - alert: PpmScheduledJobFailed
+        expr: sum by (job) (increase(scheduled_job_runs_total{outcome="failed"}[1h])) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Scheduled job {{ $labels.job }} failed"
+          description: "The scheduled_job_runs table has the error of each failed run."
+
+      # The outbox figures exist only while a relay runs. Every replica reports the same
+      # database-wide counts, so max() is the figure, not a sum.
+      - alert: PpmEventOutboxFailed
+        expr: max(ppm_event_outbox_rows{status="failed"}) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Events the broker refused are held as failed
+          description: "{{ $value }} outbox rows are failed. Fix the cause, then `project-portfolio-management task outbox_retry_failed` lists them and, with apply:true, owes them again."
+
+      - alert: PpmEventOutboxBacklog
+        expr: max(ppm_event_outbox_oldest_owed_seconds) > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Events are waiting more than 5 minutes to be sent
+          description: "The oldest owed event has waited {{ $value | humanizeDuration }}."
+
+      - alert: PpmEventOutboxStatsStale
+        expr: time() - max(ppm_event_outbox_last_refresh_timestamp_seconds) > 120
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: No relay has read the outbox for over 2 minutes
+          description: "The relay reads every 30 s; the last read was {{ $value | humanizeDuration }} ago. A relay may be stuck."

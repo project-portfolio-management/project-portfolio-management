@@ -104,7 +104,7 @@ USER portfolio
 
 EXPOSE 5150
 
-# Loco's built-in /_health. Podman's default OCI image format drops
+# axa's built-in /_health. Podman's default OCI image format drops
 # HEALTHCHECK (build with `--format docker` to keep it); compose.yaml
 # repeats an equivalent healthcheck so either format works.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \

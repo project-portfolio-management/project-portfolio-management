@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (minimum Rust 1.97 everywhere; docs say axa, not loco)
+
+- **The matcher's `rust-version` is now 1.97, as the service's already was**: N-2 of the pinned 1.99.1, and what the root `AGENTS.md` already stated. The service's `AGENTS.md`, `llms.json`, `llms.txt` and the skill said 1.96; they now say 1.97.
+- **Documents that described the service as loco.rs now say axa**: `llms.json` (summary and stack, which also named loco.rs 1.2), `agents/restful.md` (health routes, JSON rejections), `agents/subprojects.md`, `agents/review-checklist.md`, the service's `index.md`, the Dockerfile's healthcheck comment, and the CTO page in all 11 locales, where only the name changed. The service's `AGENTS.md` said axa 0.1; it is 0.7. Dated history (`tasks.md`, the task log in `spec/13-tasks.md`, past entries in the service spec) is left as written, and the database user and password `loco` are unchanged.
+- Not done: no newer Rust syntax was adopted; nothing in clippy or the code pointed at a 1.97 feature to use. No MSRV check runs in CI.
+- Verified: `cargo +1.97 check --all-targets` for the matcher and the service; `generate-llms.py --check`, the translation review checks and the site's content sync.
+
 ### 9 November (npm packages and an action refreshed)
 
 - **The UI and the site take their packages' newest releases**: the Lily widgets and themes (patch releases: `svelte-calendar` 0.7.2, `svelte-data-grid` 0.11.2, `svelte-gantt-chart` 0.8.2, `svelte-kanban-board` 0.8.3, `svelte-picker-bar` 0.5.3, `svelte-share-picker` 0.3.2, `themes` 0.6.2), `vite` 8.3.6, `vitest` 5.1.0, `@playwright/test` 1.65.0, `svelte-check` 4.7.8, `eslint-plugin-svelte` 3.24.1, `globals` 17.14.0, `marked` 18.1.3 and `jsdom` 31 (a major release, used only by the unit tests). CI's `taiki-e/install-action` goes to 2.89.1, pinned by its commit. This covers Dependabot's open pull requests 28, 29 and 30, which are closed in favour of it.

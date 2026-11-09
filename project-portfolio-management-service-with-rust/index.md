@@ -1,6 +1,6 @@
 # Portfolio Service — documentation index
 
-A loco.rs registry of plan records — and a full project-management
+An axa registry of plan records — and a full project-management
 tool: CRUD + matching (embedding the canonical
 project-portfolio-management-matcher) over one recursive `plans`
 collection with an **optional** Portfolio / Project / Product / Program

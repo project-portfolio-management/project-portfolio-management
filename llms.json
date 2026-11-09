@@ -1,6 +1,6 @@
 {
   "name": "Project Portfolio Management",
-  "summary": "A plan registry and project-management tool: one recursive plan collection with an optional kind label, a Rust matcher library for explainable duplicate detection, a loco.rs REST service (governance, scheduling, cost, approvals, controlled documents), and a SvelteKit UI.",
+  "summary": "A plan registry and project-management tool: one recursive plan collection with an optional kind label, a Rust matcher library for explainable duplicate detection, an axa REST service (governance, scheduling, cost, approvals, controlled documents), and a SvelteKit UI.",
   "sections": [
     {
       "title": "Specification",
@@ -1526,7 +1526,7 @@
       "ui": "project-portfolio-management-ui-with-svelte"
     },
     "stack": [
-      "Rust 1.99.1 (minimum 1.96), loco.rs 1.2, sea-orm 2.0, axum 0.8, PostgreSQL 18",
+      "Rust 1.99.1 (minimum 1.97), axa 0.7, sea-orm 2.0, axum 0.8, PostgreSQL 18",
       "SvelteKit 3, Svelte 5 (runes), Node 26, pnpm",
       "Lily Design System widgets (@lilydesignsystem/*)",
       "Podman with Compose to run it"

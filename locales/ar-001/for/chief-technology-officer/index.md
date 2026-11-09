@@ -9,7 +9,7 @@
 | الجزء | التقنية |
 |---|---|
 | مكتبة المطابقة | Rust؛ مطابقة زوجية حتمية واحتمالية وقابلة للتفسير؛ مدمجة في الخدمة |
-| الخدمة | Rust، وLoco.rs فوق axum، وSeaORM، وPostgreSQL 18؛ REST تحت `/api`، وOpenAPI مشتق من المسارات |
+| الخدمة | Rust، وaxa فوق axum، وSeaORM، وPostgreSQL 18؛ REST تحت `/api`، وOpenAPI مشتق من المسارات |
 | الواجهة | SvelteKit 3، وSvelte 5 SPA مع backend-for-frontend؛ وفهارس i18n |
 
 سلسلة الأدوات مثبَّتة في [`rust-toolchain.toml`](../../../../rust-toolchain.toml). والحفظ موضح في [المواصفة 10](../../../../spec/10-persistence.md)؛ وAPI في [المواصفة 09](../../../../spec/09-api-surface.md).

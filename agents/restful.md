@@ -1,7 +1,7 @@
 # RESTful API Reference — Portfolio Entity
 
-The service is loco.rs and returns **raw JSON** — no
-`{success, data, error}` envelope (unlike the pre-loco person service).
+The service is built on axa (over Axum) and returns **raw JSON** — no
+`{success, data, error}` envelope.
 Source:
 [`src/controllers/`](../project-portfolio-management-service-with-rust/src/controllers/).
 Base URL in development: `http://localhost:5150`.
@@ -13,7 +13,7 @@ per-kind collection and no `{collection}` path segment. Matching is
 
 ## Endpoints
 
-### Health (loco built-ins)
+### Health (axa built-ins)
 
 | Method | Path | Description |
 |---|---|---|
@@ -122,7 +122,7 @@ webhooks).
 | Code | Meaning |
 |---|---|
 | 200 | Success |
-| 400 | Malformed body (loco JSON rejection); blank `q` on search; `offset` above 10 000 |
+| 400 | Malformed body (the JSON extractor's rejection); blank `q` on search; `offset` above 10 000 |
 | 409 | Duplicate on create; stale `If-Match` on a commit |
 | 404 | Unknown or soft-deleted `pid`; a private plan to a non-member |
 | 422 | Validation failure: blank `name` on create/update; containment cycle on `parent_ref`; blank sub-resource title (family convention) |

@@ -20,7 +20,7 @@ look at.
 
 ## Database
 
-1. A new table is named in the plural in the migration, in the entity's `table_name` and in raw SQL (`create_table` pluralises). (memory: loco create_table pluralises)
+1. A new table is named in the plural in the migration, in the entity's `table_name` and in raw SQL (`create_table` pluralises). (`axa::schema::create_table` pluralises)
 2. Each migration file is registered in `migration/src/lib.rs`, in both the `mod` list and the `migrations()` list, and can run twice (`IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION` for triggers). (service `AGENTS.md`)
 3. Append-only and immutability rules are database triggers, not only code. (service `AGENTS.md`)
 4. A list is bounded (a cap or `limit`/`offset`), and a list route is in `PAGED_LISTS` or, if the census cannot call it, in `UNREACHED` with a reason in `tests/list_paging.rs`. (`tests/list_paging.rs`)

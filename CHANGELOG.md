@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 9 November (failed-login lockout by axa-ratelimit)
+
+- **A client address that earns `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT` failed authentications (`401`, 20 by default) is now locked out by `axa-ratelimit`'s `lock_out_failures`**, in place of the service's own failures bucket in `rate_limit_mw` (NFR-14). Only a `401` counts, a locked-out client is refused before the auth guard and before it is charged to the general limit, and the lockout lasts until its window ends: as long as `…_RATE_LIMIT_FAILURES_PER_MINUTE` (6) takes to earn the count, 200 s by default, so the defaults behave as before.
+- The new name has no prefix, as `TRUSTED_PROXIES` has none. `PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT_FAILURES_BURST`, the old name for the count, still works alone with a warning; set to a different count, the service refuses to start, and a value that is not a whole number above zero is refused under either name (before, it fell back to the default).
+- axa's lockout reads the client address axa records, which the service's layers run before. A new outermost layer, `client_address_mw`, records the address axa would, so each client behind a trusted proxy is locked out on its own and not the proxy for all of them.
+- A refusal is axa's `429` problem (`code: too_many_requests`, `Retry-After`, `RateLimit-*`): it no longer carries the `detail` "too many failed authentication attempts".
+- Not done: no request test produces a `401` through the real router (the `hardening` binary runs with login enforcement off), so the order of the three layers in `app.rs` is shown by the unit tests, which build them the same way on axa's stack, and by one run of the binary; lockouts are still per process, so each replica counts its own, and a restart clears them; no lockout is audited or counted in a metric.
+- Verified: fmt, clippy (all features), 1,249 unit tests (three new: only failures count, a lockout behind a trusted proxy is per client, the two names), `hardening` on the real router; the binary in production with `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT=3` answered `401` three times, then `429` with `Retry-After: 30` and the security headers; with the two names at 3 and 7 it refused to start, naming both. All 217 database tests in `mod` pass.
+
 ### 7 November (event outbox by axa-outbox)
 
 - **The durable event bus's outbox is now `axa_outbox`, kept and relayed by `axa-outbox`**, in place of the service's own `event_outbox` table and drain loop. An event is still written on the handler's own transaction (`axa::outbox::write_seaorm`), and its payload is still the whole envelope, so a consumer sees the same message, with the same `event_id` to dedupe on. The relay is `Outbox::run`, with the `EventSink` (logging, Fluvio, and the webhook fan-out behind it) as its publisher, and it stops on shutdown after the server.

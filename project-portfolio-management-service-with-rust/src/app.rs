@@ -502,6 +502,13 @@ impl App {
         keys.check()
             .await
             .map_err(|error| Error::Message(format!("axa_idempotency: {error}")))?;
+        let limits = std::sync::Arc::new(
+            crate::rate_limit::RateLimiter::from_env(
+                opts_out_of_guards(&ctx.environment).then_some(false),
+                ctx.config.http.trusted_proxies.clone(),
+            )
+            .map_err(Error::Message)?,
+        );
         Ok(router
             // Innermost, as it compares what the handler answered, before paging can take the `ETag` away.
             .layer(axum::middleware::from_fn(
@@ -550,13 +557,19 @@ impl App {
                 crate::version::require_version_mw,
             ))
             // Rate limiting sits outside the auth guard so failed logins are counted
-            // and refused before the guard does any work (HD-5).
+            // and refused before the guard does any work (HD-5). From the outside in: the
+            // client address is recorded, a locked-out address is refused, then the limits.
             .layer(axum::middleware::from_fn_with_state(
-                std::sync::Arc::new(crate::rate_limit::RateLimiter::from_env(
-                    opts_out_of_guards(&ctx.environment).then_some(false),
-                    ctx.config.http.trusted_proxies.clone(),
-                )),
+                limits.clone(),
                 crate::rate_limit::rate_limit_mw,
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                limits.clone(),
+                crate::rate_limit::lockout_mw,
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                limits,
+                crate::rate_limit::client_address_mw,
             ))
             // CORS is an explicit allow-list (none by default) and the security headers
             // go on every response including the 401/403/429 above (HD-4).

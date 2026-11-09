@@ -121,9 +121,13 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   for scripts or style elements). CORS is an **explicit allow-list** of exact
   origins; with none configured, only same-origin callers are served.
 - **NFR-14 — Rate limiting.** Requests are rate limited per caller (credential,
-  else client address): a general limit, a tighter one for expensive routes,
-  and one for failed authentication. Each allows its burst in a fixed window as long as its per-minute rate takes to
-  earn that burst, counted by `axa-ratelimit`, so a client can send up to twice the burst across the end of a window.
+  else client address): a general limit and a tighter one for expensive routes. Each allows its burst in a fixed window
+  as long as its per-minute rate takes to earn that burst, counted by `axa-ratelimit`, so a client can send up to twice
+  the burst across the end of a window. A client address that earns `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT` failed
+  authentications (`401`, 20 by default) is **locked out**, refused before the auth guard runs, until its window ends
+  (as long as `…_RATE_LIMIT_FAILURES_PER_MINUTE`, 6 by default, takes to earn the count: 200 s). Only a `401` counts.
+  The lockout is `axa-ratelimit`'s; the old name for the count, `…_RATE_LIMIT_FAILURES_BURST`, is still read alone,
+  with a warning, and the service refuses to start if the two names give different counts.
   A refusal is `429` with `Retry-After` and `RateLimit-*` headers. Health, ping and readiness are exempt. The client
   address honours `X-Forwarded-For` only from configured trusted proxies, and an IPv6 address counts by its `/64`.
   State is per process.

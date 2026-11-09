@@ -7,9 +7,10 @@
 //! - **expensive** — the routes that do real work per call (simulations, CPM,
 //!   levelling, forecasts, imports, exports, bulk jobs, PDF), a tighter limit
 //!   charged on top of the general one;
-//! - **failures** — authentication failures (`401`) per client address, so a
-//!   password-guessing or token-guessing client is slowed before the auth
-//!   guard does any work.
+//! - **lockout** — a client address that has earned `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT` authentication failures
+//!   (`401`) is refused until its window ends, so a password-guessing or token-guessing client is stopped before the
+//!   auth guard does any work. Only a `401` counts, so a client that signs in correctly is never slowed. It is
+//!   `axa-ratelimit`'s [`axa::ratelimit::lock_out_failures`], which reads the address [`client_address_mw`] records.
 //!
 //! `/_health`, `/_ping` and `/_readiness` are exempt. A refused request is `429` with
 //! `Retry-After` and the `RateLimit-Limit` / `RateLimit-Remaining` /
@@ -37,7 +38,12 @@
 //! | `PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT` | on | `off`/`false`/`0` disables (also off in the `development`, `test` and `container-dev` profiles) |
 //! | `…_RATE_LIMIT_GENERAL_PER_MINUTE` / `…_GENERAL_BURST` | 600 / 200 | sustained requests per minute, and the burst allowed |
 //! | `…_RATE_LIMIT_EXPENSIVE_PER_MINUTE` / `…_EXPENSIVE_BURST` | 30 / 10 | the same for expensive routes |
-//! | `…_RATE_LIMIT_FAILURES_PER_MINUTE` / `…_FAILURES_BURST` | 6 / 20 | authentication failures per client address |
+//! | `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT` | 20 | authentication failures one client address may earn before it is locked out |
+//! | `…_RATE_LIMIT_FAILURES_PER_MINUTE` | 6 | sets how long a lockout lasts: as long as this rate takes to earn the count (200 s by default) |
+//!
+//! `…_RATE_LIMIT_FAILURES_BURST`, the name this service read for the count before, still works alone, with a warning.
+//! Set to a different count from `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT`, the service refuses to start, as there would
+//! be no telling which was meant.
 
 use std::{net::IpAddr, num::NonZeroU32, sync::Arc};
 
@@ -127,6 +133,54 @@ pub fn is_exempt(path: &str) -> bool {
     axa::ratelimit::EXEMPT.contains(&path)
 }
 
+/// The number of authentication failures one client address may earn before it is locked out.
+pub const LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT: &str = "LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT";
+
+/// The name this service read for that count before.
+pub const OLD_LOCKOUT_COUNT: &str = "PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT_FAILURES_BURST";
+
+/// The lockout count to use, from the two names, as `lookup` reads them: the new name, else the old one with a
+/// warning, else `None` for the default. A number that is not a positive whole number, under either, is refused; so
+/// are two different counts.
+///
+/// # Errors
+///
+/// A message naming the variable that cannot be used.
+pub fn lockout_count(
+    lookup: impl Fn(&str) -> Option<String>,
+) -> Result<Option<NonZeroU32>, String> {
+    let read = |name: &str| -> Result<Option<NonZeroU32>, String> {
+        match lookup(name)
+            .as_deref()
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+        {
+            None => Ok(None),
+            Some(value) => value
+                .parse::<NonZeroU32>()
+                .map(Some)
+                .map_err(|_| format!("{name} must be a whole number above zero, not {value:?}")),
+        }
+    };
+    match (
+        read(LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT)?,
+        read(OLD_LOCKOUT_COUNT)?,
+    ) {
+        (Some(new), Some(old)) if new != old => Err(format!(
+            "{LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT} is {new} and {OLD_LOCKOUT_COUNT} is {old}; set only \
+             {LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT}"
+        )),
+        (Some(new), _) => Ok(Some(new)),
+        (None, Some(old)) => {
+            tracing::warn!(
+                "{OLD_LOCKOUT_COUNT} is read for now; rename it to {LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT}"
+            );
+            Ok(Some(old))
+        }
+        (None, None) => Ok(None),
+    }
+}
+
 /// The rate limiter's settings and state.
 #[derive(Debug)]
 pub struct RateLimiter {
@@ -138,8 +192,8 @@ pub struct RateLimiter {
     general: Limiter,
     /// Counts for the expensive-route limit, per credential or client.
     expensive: Limiter,
-    /// Counts of authentication failures, per client address.
-    failures: Limiter,
+    /// Counts of authentication failures, per client address, for `axa-ratelimit`'s lockout.
+    lockout: Limiter,
 }
 
 /// Read an unsigned integer from the environment variable `name`, falling back to `default` when it is unset or not a number.
@@ -154,8 +208,11 @@ fn env_u32(name: &str, default: u32) -> u32 {
 impl RateLimiter {
     /// Build from the environment; `configured` is the
     /// profile's value (the environment wins when set).
-    #[must_use]
-    pub fn from_env(configured: Option<bool>, proxies: Vec<ProxyNet>) -> Self {
+    ///
+    /// # Errors
+    ///
+    /// When the lockout count cannot be used ([`lockout_count`]).
+    pub fn from_env(configured: Option<bool>, proxies: Vec<ProxyNet>) -> Result<Self, String> {
         let env = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT").ok();
         let enabled = match env.as_deref().map(str::trim).filter(|v| !v.is_empty()) {
             Some(v) => !matches!(
@@ -165,7 +222,8 @@ impl RateLimiter {
             None => configured.unwrap_or(true),
         };
         let pm = "PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT";
-        Self::new(
+        let after = lockout_count(|name| std::env::var(name).ok())?.map_or(20, NonZeroU32::get);
+        Ok(Self::new(
             enabled,
             Limit::per_minute(
                 env_u32(&format!("{pm}_GENERAL_PER_MINUTE"), 600),
@@ -175,12 +233,9 @@ impl RateLimiter {
                 env_u32(&format!("{pm}_EXPENSIVE_PER_MINUTE"), 30),
                 env_u32(&format!("{pm}_EXPENSIVE_BURST"), 10),
             ),
-            Limit::per_minute(
-                env_u32(&format!("{pm}_FAILURES_PER_MINUTE"), 6),
-                env_u32(&format!("{pm}_FAILURES_BURST"), 20),
-            ),
+            Limit::per_minute(env_u32(&format!("{pm}_FAILURES_PER_MINUTE"), 6), after),
             proxies,
-        )
+        ))
     }
 
     /// Build with explicit settings (tests, and [`Self::from_env`]).
@@ -189,7 +244,7 @@ impl RateLimiter {
         enabled: bool,
         general: Limit,
         expensive: Limit,
-        failures: Limit,
+        lockout: Limit,
         proxies: Vec<ProxyNet>,
     ) -> Self {
         Self {
@@ -197,19 +252,24 @@ impl RateLimiter {
             proxies,
             general: general.limiter(),
             expensive: expensive.limiter(),
-            failures: failures.limiter(),
+            lockout: lockout.limiter(),
         }
     }
 
-    /// The client a request is counted against: the address axa recorded if it has, else axa's resolution of the
-    /// socket peer and `X-Forwarded-For`, reduced as axa reduces it. `None` with no peer (an in-process transport).
-    fn client(&self, req: &Request) -> Option<IpAddr> {
-        axa::ratelimit::client_key(req.extensions()).or_else(|| {
+    /// The client address: the one axa recorded if it has, else axa's resolution of the socket peer and
+    /// `X-Forwarded-For`. `None` with no peer (an in-process transport).
+    fn address(&self, req: &Request) -> Option<IpAddr> {
+        req.extensions().get::<IpAddr>().copied().or_else(|| {
             let peer = crate::trusted_proxy::peer_ip(req.extensions())?;
-            let mut resolved = Extensions::new();
-            resolved.insert(axa::client::resolve(peer, req.headers(), &self.proxies));
-            axa::ratelimit::client_key(&resolved)
+            Some(axa::client::resolve(peer, req.headers(), &self.proxies))
         })
+    }
+
+    /// The client a request is counted against: its address, reduced as axa reduces it.
+    fn client(&self, req: &Request) -> Option<IpAddr> {
+        let mut resolved = Extensions::new();
+        resolved.insert(self.address(req)?);
+        axa::ratelimit::client_key(&resolved)
     }
 
     /// Whether limiting is on.
@@ -235,9 +295,36 @@ fn too_many(verdict: &Verdict, what: &str) -> Response {
     response
 }
 
-/// The rate-limiting middleware (see the module docs). Layer it outside the
-/// auth guard and inside the security-headers layer, so a `429` carries the
-/// security headers.
+/// Record the client address on the request, as axa would, for the lockout inside. Outermost of the three limit
+/// layers: `client_address_mw`, then [`lockout_mw`], then [`rate_limit_mw`].
+pub async fn client_address_mw(
+    State(limiter): State<Arc<RateLimiter>>,
+    mut req: Request,
+    next: Next,
+) -> Response {
+    if req.extensions().get::<IpAddr>().is_none()
+        && let Some(address) = limiter.address(&req)
+    {
+        req.extensions_mut().insert(address);
+    }
+    next.run(req).await
+}
+
+/// `axa-ratelimit`'s failed-login lockout ([`axa::ratelimit::lock_out_failures`]), per client address, when limiting
+/// is on. A locked-out client is refused before it is charged to the general limit.
+pub async fn lockout_mw(
+    State(limiter): State<Arc<RateLimiter>>,
+    req: Request,
+    next: Next,
+) -> Response {
+    if !limiter.enabled {
+        return next.run(req).await;
+    }
+    axa::ratelimit::lock_out_failures(State(limiter.lockout.clone()), req, next).await
+}
+
+/// The general and expensive limits (see the module docs). Layer the three limit layers outside the auth guard and
+/// inside the security-headers layer, so a `429` carries the security headers.
 pub async fn rate_limit_mw(
     State(limiter): State<Arc<RateLimiter>>,
     req: Request,
@@ -247,12 +334,6 @@ pub async fn rate_limit_mw(
         return next.run(req).await;
     }
     let client = limiter.client(&req);
-
-    // Peek, so a client under the failure limit is not charged for asking.
-    let failures = limiter.failures.peek(client);
-    if !failures.allowed {
-        return too_many(&failures, "too many failed authentication attempts");
-    }
 
     let credential = req
         .headers()
@@ -284,9 +365,6 @@ pub async fn rate_limit_mw(
     }
 
     let mut response = next.run(req).await;
-    if response.status() == StatusCode::UNAUTHORIZED {
-        limiter.failures.check(client);
-    }
     tightest.stamp(&mut response);
     response
 }
@@ -363,10 +441,10 @@ mod tests {
         let nets = crate::trusted_proxy::TrustedProxies::parse(proxies)
             .unwrap()
             .into_nets();
-        let limiter = RateLimiter {
+        let limiter = Arc::new(RateLimiter {
             proxies: nets.clone(),
             ..limiter
-        };
+        });
         let routes = Router::new()
             .route("/api/x", get(|| async { "ok" }))
             .route("/api/plans/p/cpm", get(|| async { "ok" }))
@@ -391,8 +469,16 @@ mod tests {
         )
         .unwrap();
         app.layer(axum::middleware::from_fn_with_state(
-            Arc::new(limiter),
+            limiter.clone(),
             rate_limit_mw,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            limiter.clone(),
+            lockout_mw,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            limiter,
+            client_address_mw,
         ))
     }
 
@@ -418,8 +504,8 @@ mod tests {
         req
     }
 
-    fn tight(general: Limit, expensive: Limit, failures: Limit) -> RateLimiter {
-        RateLimiter::new(true, general, expensive, failures, Vec::new())
+    fn tight(general: Limit, expensive: Limit, lockout: Limit) -> RateLimiter {
+        RateLimiter::new(true, general, expensive, lockout, Vec::new())
     }
 
     async fn status(app: &Router, req: HttpRequest<Body>) -> (StatusCode, axum::http::HeaderMap) {
@@ -526,12 +612,112 @@ mod tests {
             let (s, _) = status(&app, request("/api/private", "10.0.0.1", Some("bad"), None)).await;
             assert_eq!(s, StatusCode::UNAUTHORIZED);
         }
-        // The failure bucket is empty: even a valid-looking request is refused.
-        let (s, _) = status(&app, request("/api/x", "10.0.0.1", Some("good"), None)).await;
+        // Locked out: even a valid-looking request is refused, with when to come back.
+        let (s, h) = status(&app, request("/api/x", "10.0.0.1", Some("good"), None)).await;
         assert_eq!(s, StatusCode::TOO_MANY_REQUESTS);
+        assert!(h.contains_key("retry-after"));
         // Another client is unaffected.
         let (s, _) = status(&app, request("/api/x", "10.0.0.2", Some("good"), None)).await;
         assert_eq!(s, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn only_failures_count_towards_a_lockout() {
+        let app = app(tight(limit(50, 600), limit(5, 60), limit(2, 60)), "");
+        for _ in 0..5 {
+            let (s, _) = status(&app, request("/api/x", "10.0.0.1", Some("good"), None)).await;
+            assert_eq!(s, StatusCode::OK);
+        }
+        let (s, _) = status(&app, request("/api/private", "10.0.0.1", Some("bad"), None)).await;
+        assert_eq!(
+            s,
+            StatusCode::UNAUTHORIZED,
+            "one failure is under the count"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_lockout_behind_a_trusted_proxy_is_per_client_not_per_proxy() {
+        let app = app(
+            tight(limit(50, 600), limit(5, 60), limit(1, 60)),
+            "192.0.2.1",
+        );
+        let (s, _) = status(
+            &app,
+            request(
+                "/api/private",
+                "192.0.2.1",
+                Some("bad"),
+                Some("203.0.113.1"),
+            ),
+        )
+        .await;
+        assert_eq!(s, StatusCode::UNAUTHORIZED);
+        let (s, _) = status(
+            &app,
+            request("/api/x", "192.0.2.1", None, Some("203.0.113.1")),
+        )
+        .await;
+        assert_eq!(
+            s,
+            StatusCode::TOO_MANY_REQUESTS,
+            "the guessing client is locked out"
+        );
+        let (s, _) = status(
+            &app,
+            request("/api/x", "192.0.2.1", None, Some("203.0.113.2")),
+        )
+        .await;
+        assert_eq!(
+            s,
+            StatusCode::OK,
+            "another client through the same proxy is not"
+        );
+    }
+
+    #[test]
+    fn the_lockout_count_is_read_from_the_new_name_and_the_old_one() {
+        let env = |pairs: &'static [(&'static str, &'static str)]| {
+            move |name: &str| {
+                pairs
+                    .iter()
+                    .find(|(n, _)| *n == name)
+                    .map(|(_, v)| (*v).to_string())
+            }
+        };
+        let n = |v: u32| Ok(NonZeroU32::new(v));
+        assert_eq!(lockout_count(env(&[])), Ok(None));
+        assert_eq!(
+            lockout_count(env(&[(LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT, "5")])),
+            n(5)
+        );
+        assert_eq!(lockout_count(env(&[(OLD_LOCKOUT_COUNT, "7")])), n(7));
+        assert_eq!(
+            lockout_count(env(&[
+                (LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT, "5"),
+                (OLD_LOCKOUT_COUNT, "5")
+            ])),
+            n(5)
+        );
+        let two = lockout_count(env(&[
+            (LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT, "5"),
+            (OLD_LOCKOUT_COUNT, "7"),
+        ]))
+        .unwrap_err();
+        assert!(
+            two.contains(LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT) && two.contains(OLD_LOCKOUT_COUNT),
+            "{two}"
+        );
+        for bad in ["0", "-1", "many"] {
+            let refused = lockout_count(move |name: &str| {
+                (name == LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT).then(|| bad.to_string())
+            })
+            .unwrap_err();
+            assert!(
+                refused.contains(LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT),
+                "{refused}"
+            );
+        }
     }
 
     #[tokio::test]
@@ -569,9 +755,17 @@ mod tests {
     #[test]
     fn the_setting_resolves_from_config_and_environment() {
         // No environment variable is set by the test suite for this name.
-        let on = RateLimiter::from_env(None, Vec::new());
+        let on = RateLimiter::from_env(None, Vec::new()).unwrap();
         assert!(on.enabled());
-        assert!(RateLimiter::from_env(Some(true), Vec::new()).enabled());
-        assert!(!RateLimiter::from_env(Some(false), Vec::new()).enabled());
+        assert!(
+            RateLimiter::from_env(Some(true), Vec::new())
+                .unwrap()
+                .enabled()
+        );
+        assert!(
+            !RateLimiter::from_env(Some(false), Vec::new())
+                .unwrap()
+                .enabled()
+        );
     }
 }

@@ -135,6 +135,14 @@ import type {
   MilestoneView,
   MoscowView,
   MyWork,
+  MyInbox,
+  NotificationPrefBody,
+  NotificationPrefResetBody,
+  NotificationPrefs,
+  NotificationPref,
+  NotificationSink,
+  NotificationSinkBody,
+  SinkDelivery,
   Objective,
   OkrList,
   OnboardingCase,
@@ -1833,6 +1841,44 @@ export class PpmClient {
     const q = new URLSearchParams({ tz });
     if (asOf) q.set("as_of", asOf);
     return this.http.get(`/api/me/tasks?${q.toString()}`);
+  }
+  /**
+   * The caller's own inbox (PL-5, NC-1 slice 4), with their daily digests applied in `tz` (an IANA zone name).
+   * `unread` keeps only lines with something unread. A 422 is a zone the service refused, or a sign-in identity
+   * that cannot receive person-addressed notifications.
+   */
+  myInbox(tz: string, unread = false): Promise<MyInbox> {
+    const q = new URLSearchParams({ tz });
+    if (unread) q.set("unread", "true");
+    return this.http.get(`/api/me/inbox?${q.toString()}`);
+  }
+  /** The caller's notification choices, the kinds, channels and digests there are, and the default (PL-5). */
+  myNotificationPrefs(): Promise<NotificationPrefs> {
+    return this.http.get(`/api/me/notification-prefs`);
+  }
+  /** Set one notification choice (PL-5); the service keeps one row per kind and channel. */
+  setNotificationPref(body: NotificationPrefBody): Promise<NotificationPref> {
+    return this.http.put(`/api/me/notification-prefs`, { body });
+  }
+  /** Back to the default for one kind and channel (PL-5). The POST twin: the default policy keeps DELETE for admins. */
+  resetNotificationPref(body: NotificationPrefResetBody): Promise<void> {
+    return this.http.post(`/api/me/notification-prefs/reset`, { body });
+  }
+  /** The caller's own notification destinations (LT-6), each destination masked. */
+  myNotificationSinks(): Promise<NotificationSink[]> {
+    return this.http.get(`/api/me/notification-sinks`);
+  }
+  /** Register a destination (LT-6, RM-11); 422 for one the service will not send to, or past ten. */
+  addNotificationSink(body: NotificationSinkBody): Promise<NotificationSink> {
+    return this.http.post(`/api/me/notification-sinks`, { body });
+  }
+  /** Remove one of the caller's destinations (LT-6); the POST twin of DELETE. Another person's is a 404. */
+  removeNotificationSink(sinkPid: string): Promise<void> {
+    return this.http.post(`/api/me/notification-sinks/${sinkPid}/delete`);
+  }
+  /** The recent deliveries to one of the caller's destinations (LT-6), newest first, at most 50. */
+  sinkDeliveries(sinkPid: string): Promise<SinkDelivery[]> {
+    return this.http.get(`/api/me/notification-sinks/${sinkPid}/deliveries`);
   }
   /** A plan's handling mark (RG-7). `scheme` is empty when the deployment has none. */
   planHandlingMark(pid: string): Promise<{

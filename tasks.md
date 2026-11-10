@@ -102,7 +102,7 @@ audited; people stay references.
   *Blocked on:* T-8 step 1–2 (artifact store). Gate-review and risk evidence
   are the first consumers.
 
-- [x] **LT-6 (M) — Per-user webhooks and chat sinks.** **Landed 2026-10-03.** Service: `notification_sinks` + `sink_deliveries` (migrations `…_000021`, `…_000022`), `POST/GET /api/me/notification-sinks`, remove (DELETE + POST twin), `…/{pid}/deliveries`, admin `POST /api/notification-sinks/dispatch`; a ticker (`PROJECT_PORTFOLIO_MANAGEMENT_SINKS_TICK_SECS`, 0 = off); `src/sinks.rs` (8 unit tests) + `tests/sinks.rs` end to end with a **real local HTTP receiver**. A person registers destinations for **their own** notifications: signed `webhook` (the family envelope + `X-Mxi-Event-Id` / `X-Mxi-Signature`), and chat formats `slack`, `mattermost`, `discord`, `telegram` (golden-pinned bodies carrying **only the notification's own text**). **Never in the notification's path:** `notify()` only *enqueues* (asserted: nothing is sent until dispatch); failures retry at 1/5/25/125 min then give up, keeping the last error, so a dead destination cannot delay or fail a notification. Per-channel preferences (`webhook`/`chat`/`email`) are honoured per kind; one person's notifications never reach another's sink. **Safe by construction (SSRF):** https to a **public** host only — loopback, private, link-local/metadata (169.254.169.254), CGNAT, unique-local, `.internal`/`.local` names and URLs with credentials are refused, the name is **re-resolved at send time** and refused if any answer is private, redirects are not followed; the destination is a **secret returned only masked**. **Residual risk, stated:** DNS rebinding between the check and the connection is not closed (the client resolves again). **Not built:** a front-end; a per-sink test-send button. Extend T-28m
+- [x] **LT-6 (M) — Per-user webhooks and chat sinks.** **Landed 2026-10-03.** Service: `notification_sinks` + `sink_deliveries` (migrations `…_000021`, `…_000022`), `POST/GET /api/me/notification-sinks`, remove (DELETE + POST twin), `…/{pid}/deliveries`, admin `POST /api/notification-sinks/dispatch`; a ticker (`PROJECT_PORTFOLIO_MANAGEMENT_SINKS_TICK_SECS`, 0 = off); `src/sinks.rs` (8 unit tests) + `tests/sinks.rs` end to end with a **real local HTTP receiver**. A person registers destinations for **their own** notifications: signed `webhook` (the family envelope + `X-Mxi-Event-Id` / `X-Mxi-Signature`), and chat formats `slack`, `mattermost`, `discord`, `telegram` (golden-pinned bodies carrying **only the notification's own text**). **Never in the notification's path:** `notify()` only *enqueues* (asserted: nothing is sent until dispatch); failures retry at 1/5/25/125 min then give up, keeping the last error, so a dead destination cannot delay or fail a notification. Per-channel preferences (`webhook`/`chat`/`email`) are honoured per kind; one person's notifications never reach another's sink. **Safe by construction (SSRF):** https to a **public** host only — loopback, private, link-local/metadata (169.254.169.254), CGNAT, unique-local, `.internal`/`.local` names and URLs with credentials are refused, the name is **re-resolved at send time** and refused if any answer is private, redirects are not followed; the destination is a **secret returned only masked**. **Residual risk, stated:** DNS rebinding between the check and the connection is not closed (the client resolves again). **Not built:** a front-end; a per-sink test-send button. **Screen 2026-11-10 (NC-1 slice 4):** `/me/notifications` lists, adds and removes the caller's destinations (masked as the service returns them) and shows their recent deliveries without `last_error`; there is still no test send and no way to pause one. Extend T-28m
   (`src/webhooks.rs`): a user registers their own destination for **their**
   notifications; and a `format` option renders the payload for Slack,
   Mattermost, Discord or Telegram instead of the family envelope.
@@ -376,7 +376,9 @@ Nothing here is started. **Ideas only — no code from the EPL-2.0 project.**
   as `skipped` (`recipient_opted_out`), not `failed`. Digest is applied **at
   read** (`GET /api/me/inbox?tz=`), grouping per (kind, subject, local day) and
   listing every member — nothing is delayed or dropped. **OpenAPI documented 2026-10-02.** **Not built:**
-  front-end settings page; channels beyond `in_app` (LT-6 / RM-11 add them). A new `notify(...)` kind must be
+  front-end settings page (**screen 2026-11-10, NC-1 slice 4:** `/me/notifications` shows the inbox with digests,
+  marks a line read, and switches each kind on or off per channel, sets the daily digest and goes back to the
+  default); channels beyond `in_app` (LT-6 / RM-11 add them). A new `notify(...)` kind must be
   added to `notification_prefs::KINDS` or it cannot be switched off. `notification_prefs` keyed
   `(sub, kind, channel)` with `enabled` and an optional `digest` (`instant |
   daily`); an in-app inbox that groups by subject. Defaults preserve today's
@@ -2025,6 +2027,23 @@ only as search snippets.
   assignee picker; every later slice in the order above.
   **Not verified:** the stubbed service only (no run against a real service); CI; the Welsh and the six other
   languages are machine-written and unreviewed.
+  **Slice 4 built 2026-11-10 (notification sinks and preferences, LT-6, PL-5, RM-11, and `/api/me/inbox`; NC-1 stays
+  open).** New route `/me/notifications`, linked from `/me`: the caller's inbox (digests applied in the browser's time
+  zone, unread only, a line marked read, which stamps every notification it stands for), their choices (each kind on
+  or off per channel, a daily digest for the inbox, back to the default through the `POST …/reset` twin), and their
+  destinations (list, masked as the service returns them; add one, checked on the page against the service's rules,
+  the box cleared once saved; remove one through the `POST …/delete` twin; the recent deliveries, never with the
+  service's `last_error`, which can quote the destination's URL). Typed bodies and eight `PpmClient` methods (the
+  read stamp reuses `CapabilityClient.markRead`, which existed); `src/lib/notifications-view.ts` with unit tests;
+  `tests/e2e/me-notifications.spec.ts` (the `/me` link, inbox, mark read, unread only, choices, back to the default,
+  three refusals on the page, add, deliveries, remove, 404, 422, 403, an identity the service cannot address, Welsh,
+  axe). 105 new catalogue keys in all eight page catalogues. These routes answer no 409.
+  **Not done:** pausing a destination (no service route); a test send; marking everything read at once; paging the
+  inbox past 500 rows; a link from a line about a task or a review; a confirmation before removing a destination; the
+  admin dispatch; the reason a delivery failed; every later slice in the order above.
+  **Not verified:** the stubbed service only (no run against a real service, so the default policy's answer to a
+  write-level user on these routes is not seen here); CI; the Welsh and the six other languages are machine-written
+  and unreviewed.
 - [ ] **NC-2 (M) — Read-only MCP adapter.** It exposes registry, task, RAID,
   schedule and pack reads as MCP tools that call the existing API with the
   caller's token, so ABAC, privacy and handling marks apply unchanged. It runs

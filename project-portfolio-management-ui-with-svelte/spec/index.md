@@ -138,6 +138,8 @@ match breakdown).
                              that answers with what moved (SC-1/SC-2)
 /plans/[pid]/calendar        the plan's working weekdays and holidays
 /me/calendar                 my working weekdays and days off
+/me/notifications            my inbox, what I am told about, and where
+                             copies go (NC-1 slice 4); linked from /me
 /gantt                       schedule Gantt (Lily GanttChart: a bar is a
                              run of named cells; dependencies as text,
                              critical path in colour and words, zoom,
@@ -185,7 +187,7 @@ match breakdown).
                              each board card's title links here
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 103):
+every page; `find src/routes -name +page.svelte` gives all 104):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -1643,4 +1645,53 @@ links back to the board and to the work breakdown.
 - **Tests:** `tests/unit/task-edit-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
   `tests/e2e/plan-task-edit.spec.ts` (the board's link, the edit's body, refusals on the page, a 422 and a 403 on
   the edit, the links read both ways, add and remove, refusals on the page, a 409, a 422 and a 404 on the links,
+  Welsh, axe). The Welsh and the other six languages are machine-written and unreviewed.
+
+## My notifications: inbox, choices and destinations (NC-1 slice 4, PL-5, LT-6, RM-11)
+
+`/me/notifications`, linked from `/me`, is the signed-in person's own notification settings. Everything on it is the
+caller's alone: the service keys it by the token, and nobody (not an administrator) reads another person's.
+`src/lib/notifications-view.ts` holds the rules; the page only renders.
+
+- **Inbox.** `GET /api/me/inbox?tz=` with the browser's IANA zone, so a daily digest groups by the person's own day;
+  "Show only unread" adds `unread=true`. Each line says read or unread in words and a shape (never colour alone), the
+  kind in words, the message the service wrote, its time, and for a digest how many notifications it stands for.
+  A line about a plan links to it; a line about anything else (a task, a review) has no link, as the line carries no
+  plan to build one from. "Mark read" stamps every notification the line stands for
+  (`POST /api/notifications/{pid}/read`, idempotent, through `CapabilityClient.markRead`, which existed), then reads
+  the inbox again. The count above is the service's `unread_count`, which counts notifications, not lines.
+- **What you are told about.** `GET /api/me/notification-prefs`: one group per kind the service lists
+  (`known_kinds`), a box per channel it lists (in the inbox, by signed webhook, in chat, by email) and "Daily digest
+  in the inbox". No stored row means the default (on, instant), as the service says in `default`. A box saves at
+  once (`PUT /api/me/notification-prefs` with the kind, channel, on or off, and the digest kept; the channel is
+  always sent, as the service reads a missing one as `in_app`); a digest is only sent as `daily` on the inbox
+  channel, where the service reads it. "Back to the default" shows only for a kind with a stored choice and resets
+  each stored channel through the `POST …/reset` twin (the default policy keeps `DELETE` for administrators).
+  A refused change reads the choices again and redraws the boxes from them.
+- **Where copies go.** `GET /api/me/notification-sinks`: each destination's kind ("Slack chat", "Signed webhook",
+  "Email"), its address as the service masks it (scheme and host and the last four characters, or `***@domain`; the
+  page never has more), and whether it is sending or paused. Add one (`POST`): a kind, the address and, for
+  Telegram, the chat. The page checks the service's rules before sending: an email address shaped as `email_shaped`
+  wants, otherwise an `https` address with no user name or password whose host is not `localhost`, a `.local`,
+  `.internal` or `.localhost` name, or a loopback, private, link-local (the metadata address), carrier-grade NAT,
+  documentation, multicast or unique-local literal; at most 2048 characters; at most ten destinations. A name that
+  resolves inside the network is the service's to refuse when it sends. Once saved, the box is cleared, so the
+  secret does not stay on the page. Remove one through the `POST …/{pid}/delete` twin. "Recent deliveries" lists the
+  last 50 (`GET …/{pid}/deliveries`): the outcome in words, attempts, when sent or the next try. The delivery's
+  `last_error` is **not shown**: it is the service's text, and a transport error can quote the destination's URL.
+- **Refusals.** A 403 says the caller may not change these settings; a 404 on a read stamp says the notification has
+  gone or is not theirs (the service answers both alike) and reads the inbox again; a 404 on a destination says it
+  had already been removed and reads the list again; a 422 on a choice or a destination says what was not accepted;
+  a 422 on reading any section says the sign-in identity is not one notifications can be addressed to (a token
+  `sub` that is not a UUID). These routes answer no 409 and take no `If-Match`. Each is a catalogue sentence; the
+  service's own text is never shown.
+- **Not built in this slice:** pausing a destination (the service has no route to change `enabled`); a test send;
+  marking every line read at once; paging the inbox past the service's 500 rows; a link from a line about a task or
+  a review; a confirmation before removing a destination; the admin dispatch (`POST /api/notification-sinks/dispatch`);
+  showing why a delivery failed; the other kinds' wording beyond the 17 the service sends today (a new kind shows
+  its code).
+- **Tests:** `tests/unit/notifications-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/me-notifications.spec.ts` (the link from `/me`, the inbox and a mark read, unread only, a choice off, a
+  daily digest, back to the default, a destination refused on the page three ways, added, its deliveries read
+  without the service's error text, and removed, a 404, 422, 403 and 404, an identity the service cannot address,
   Welsh, axe). The Welsh and the other six languages are machine-written and unreviewed.

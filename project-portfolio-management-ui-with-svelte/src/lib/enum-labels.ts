@@ -26,7 +26,11 @@ export type EnumGroup =
   | "pk_class"
   | "pk_recur"
   | "pk_cls"
-  | "pk_gate";
+  | "pk_gate"
+  | "notify_kind"
+  | "notify_channel"
+  | "sink_kind"
+  | "delivery_status";
 
 /** The label for `value` in `group`, in the current language. */
 export function enumLabel(group: EnumGroup, value: unknown): string {

@@ -2078,6 +2078,142 @@ export const PAGES_ES: Record<PageKey, string> = {
     "El servicio no aceptó el cambio: revise los campos. Una nueva fecha de vencimiento también debe mantener en orden cada vínculo «Va antes de».",
   "p.task.refused_link_invalid":
     "El servicio no aceptó el vínculo: puede que la otra tarea ya no exista, un vínculo «Bloquea» o «Va antes de» no puede formar un círculo, y «Va antes de» exige que la otra tarea venza después de esta.",
+  "p.me.notifications_link": "Mis notificaciones",
+  "p.me.notifications_note":
+    "— su bandeja de entrada, de qué se le avisa y adónde van las copias.",
+  "p.notifications.title_ppm": "Mis notificaciones — PPM",
+  "p.notifications.heading": "Mis notificaciones",
+  "p.notifications.back": "← Mi trabajo",
+  "p.notifications.intro":
+    "Todo lo que hay aquí es solo suyo: nadie más puede leer su bandeja de entrada, sus preferencias ni sus destinos.",
+  "p.notifications.loading": "Cargando…",
+  "p.notifications.inbox_heading": "Bandeja de entrada",
+  "p.notifications.unread_only": "Mostrar solo las no leídas",
+  "p.notifications.unread_count_one": "{n} notificación sin leer.",
+  "p.notifications.unread_count_other": "{n} notificaciones sin leer.",
+  "p.notifications.inbox_tz": "Los días se cuentan en su zona horaria, {tz}.",
+  "p.notifications.inbox_empty": "No hay nada en su bandeja de entrada.",
+  "p.notifications.inbox_unread_empty": "No hay nada sin leer.",
+  "p.notifications.status_unread": "Sin leer",
+  "p.notifications.status_read": "Leída",
+  "p.notifications.digest_count_one": "resumen diario de {n} notificación",
+  "p.notifications.digest_count_other": "resumen diario de {n} notificaciones",
+  "p.notifications.open_subject": "Abrir el plan",
+  "p.notifications.mark_read": "Marcar como leída",
+  "p.notifications.mark_read_named": "Marcar como leída: {message}",
+  "p.notifications.marked_read": "Marcada como leída.",
+  "p.notifications.could_not_load_inbox":
+    "No se pudo cargar su bandeja de entrada.",
+  "p.notifications.could_not_mark":
+    "No se pudo marcar la notificación como leída.",
+  "p.notifications.prefs_heading": "De qué se le avisa",
+  "p.notifications.prefs_intro":
+    "Active o desactive cada tipo de notificación para la bandeja de entrada y para cada tipo de destino. Una copia va a un webhook, un chat o un correo electrónico solo cuando ha añadido abajo un destino de ese tipo. Un resumen diario reúne las notificaciones de un día sobre una misma cosa en una sola línea de la bandeja; nada se retiene ni se descarta.",
+  "p.notifications.pref_daily": "Resumen diario en la bandeja de entrada",
+  "p.notifications.pref_saved": "Se guardó su preferencia.",
+  "p.notifications.pref_reset_done":
+    "De vuelta al valor predeterminado: activadas, según llegan.",
+  "p.notifications.reset": "Volver al valor predeterminado",
+  "p.notifications.reset_named": "Volver al valor predeterminado: {kind}",
+  "p.notifications.could_not_load_prefs":
+    "No se pudieron cargar sus preferencias.",
+  "p.notifications.could_not_save_pref": "No se pudo guardar la preferencia.",
+  "p.notifications.sinks_heading": "Adónde van las copias",
+  "p.notifications.sinks_intro":
+    "Un destino recibe una copia de cada una de sus notificaciones, que lleva solo el texto de la propia notificación. La dirección es secreta: una vez guardada, solo se muestra acortada. Un destino lento o averiado nunca retrasa la bandeja de entrada; un envío fallido se reintenta cuatro veces más durante unas dos horas y media y después se abandona.",
+  "p.notifications.no_sinks":
+    "No tiene destinos; sus notificaciones van solo a la bandeja de entrada.",
+  "p.notifications.chat_named": "Chat de {name}",
+  "p.notifications.sink_sending": "Enviando",
+  "p.notifications.sink_paused": "En pausa",
+  "p.notifications.show_deliveries": "Entregas recientes",
+  "p.notifications.deliveries_named": "Entregas recientes: {destination}",
+  "p.notifications.remove_sink": "Quitar",
+  "p.notifications.remove_sink_named": "Quitar: {destination}",
+  "p.notifications.sink_removed": "Se quitó el destino.",
+  "p.notifications.deliveries_heading": "Entregas recientes a {destination}",
+  "p.notifications.deliveries_note":
+    "Aquí no se muestra por qué falló un envío, ya que el motivo puede citar la dirección secreta.",
+  "p.notifications.no_deliveries": "Aún no se ha enviado nada a este destino.",
+  "p.notifications.attempts_one": "{n} intento",
+  "p.notifications.attempts_other": "{n} intentos",
+  "p.notifications.delivered_at": "enviado {date}",
+  "p.notifications.next_attempt": "próximo intento {date}",
+  "p.notifications.close_deliveries": "Cerrar las entregas",
+  "p.notifications.add_heading": "Añadir un destino",
+  "p.notifications.f_kind": "Tipo",
+  "p.notifications.f_destination_email": "Dirección de correo electrónico",
+  "p.notifications.f_destination_url":
+    "Dirección web (https, a un servidor público)",
+  "p.notifications.f_chat_id": "Chat de Telegram (su número, o @ y su nombre)",
+  "p.notifications.add_sink": "Añadir el destino",
+  "p.notifications.sink_added": "Se añadió el destino: {destination}.",
+  "p.notifications.could_not_load_sinks": "No se pudieron cargar sus destinos.",
+  "p.notifications.could_not_load_deliveries":
+    "No se pudieron cargar las entregas.",
+  "p.notifications.could_not_save_sink": "No se pudo añadir el destino.",
+  "p.notifications.could_not_remove_sink": "No se pudo quitar el destino.",
+  "p.notifications.problem_too_many":
+    "Ya tiene diez destinos, el máximo permitido: quite uno primero.",
+  "p.notifications.problem_destination_required":
+    "Indique la dirección a la que enviar.",
+  "p.notifications.problem_email_invalid":
+    "Eso no es una dirección de correo electrónico.",
+  "p.notifications.problem_url_invalid": "Eso no es una dirección web.",
+  "p.notifications.problem_url_not_https":
+    "La dirección web debe empezar por https://.",
+  "p.notifications.problem_url_credentials":
+    "La dirección web no debe llevar nombre de usuario ni contraseña.",
+  "p.notifications.problem_url_private":
+    "La dirección web debe ser un servidor público, no uno local, privado o interno.",
+  "p.notifications.problem_url_too_long":
+    "La dirección web es demasiado larga.",
+  "p.notifications.problem_chat_id_required":
+    "Un destino de Telegram necesita el chat en el que publica.",
+  "p.notifications.refused_forbidden":
+    "No puede cambiar estas preferencias de notificación.",
+  "p.notifications.refused_note_gone":
+    "Esa notificación ya no existe o no es suya; se ha vuelto a leer la bandeja de entrada.",
+  "p.notifications.refused_sink_gone":
+    "Ese destino ya se había quitado; se han vuelto a leer sus destinos.",
+  "p.notifications.refused_not_addressable":
+    "Su identidad de inicio de sesión no es una a la que se puedan dirigir notificaciones, así que aquí no hay nada que mostrar.",
+  "p.notifications.refused_pref_invalid":
+    "El servicio no aceptó esa preferencia; se han vuelto a leer sus preferencias.",
+  "p.notifications.refused_sink_invalid":
+    "El servicio no aceptó el destino: debe ser una dirección de correo electrónico o una dirección web https a un servidor público; uno de Telegram necesita su chat; y puede haber diez como máximo.",
+  "l.enum.notify_kind.approval_decided":
+    "Se decidió una aprobación que usted pidió",
+  "l.enum.notify_kind.approval_requested": "Se le pide que apruebe algo",
+  "l.enum.notify_kind.auto_watch":
+    "Seguir automáticamente aquello en lo que trabaja",
+  "l.enum.notify_kind.automation": "Una regla le avisa",
+  "l.enum.notify_kind.comment": "Comentarios",
+  "l.enum.notify_kind.escalation": "Escalados",
+  "l.enum.notify_kind.exceptions_digest": "El resumen semanal de excepciones",
+  "l.enum.notify_kind.reschedule_proposed": "Se propone una nueva fecha",
+  "l.enum.notify_kind.review_invited": "Se le invita a revisar",
+  "l.enum.notify_kind.review_submitted": "Se presentó una revisión",
+  "l.enum.notify_kind.scheduled": "Un recordatorio programado",
+  "l.enum.notify_kind.status_update_due": "Toca un informe de estado",
+  "l.enum.notify_kind.task_assigned": "Se le asignó una tarea",
+  "l.enum.notify_kind.watch_update": "Algo que sigue ha cambiado",
+  "l.enum.notify_kind.process_todo": "Le toca hacer un paso de un proceso",
+  "l.enum.notify_kind.process_notice":
+    "Un paso de un proceso del que se le avisa",
+  "l.enum.notify_kind.break_glass":
+    "Se abrió un plan privado en una emergencia",
+  "l.enum.notify_channel.in_app": "En la bandeja de entrada",
+  "l.enum.notify_channel.webhook": "Por webhook firmado",
+  "l.enum.notify_channel.chat": "En un chat",
+  "l.enum.notify_channel.email": "Por correo electrónico",
+  "l.enum.sink_kind.email": "Correo electrónico",
+  "l.enum.sink_kind.webhook": "Webhook firmado",
+  "l.enum.delivery_status.pending": "Esperando el envío",
+  "l.enum.delivery_status.sent": "Enviado",
+  "l.enum.delivery_status.failed": "Abandonado",
+  "l.enum.delivery_status.skipped":
+    "No enviado: el destino o la notificación ya no existe",
   "l.link.kind_docs": "Documentos",
   "l.link.kind_repo": "Repositorio de código",
   "l.link.kind_ticket": "Ticket",

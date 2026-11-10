@@ -44,6 +44,7 @@
 
 <h1>{t("p.me.my_work")}</h1>
 <p class="small"><a href={localeHref("/me/calendar")}>{t("p.me.my_calendar")}</a> {t("p.me.the_days_you_work_so")}</p>
+<p class="small"><a href={localeHref("/me/notifications")}>{t("p.me.notifications_link")}</a> {t("p.me.notifications_note")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if work}

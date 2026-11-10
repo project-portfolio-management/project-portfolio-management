@@ -9,6 +9,27 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — my notifications: inbox, choices and destinations (NC-1 slice 4, PL-5, LT-6, RM-11, 2026-11-10)
+
+`/me/notifications`, linked from `/me`, has three sections. The inbox (`GET /api/me/inbox?tz=` in the browser's
+zone, `unread=true` for unread only) lists each line with read or unread in words and a shape, the kind in words, the
+message, its time and, for a digest, how many notifications it stands for; a line about a plan links to it; "Mark
+read" stamps every pid of the line with the existing `CapabilityClient.markRead`. "What you are told about" has one
+group per kind the service lists, a box per channel and "Daily digest in the inbox"; a box saves at once (`PUT`, the
+channel always sent, the digest kept, and only `daily` on the inbox channel), and "Back to the default" resets each
+stored channel of a kind through `POST …/reset`; a refused change redraws the boxes from what the service holds.
+"Where copies go" lists the destinations masked as the service returns them, adds one (kind, address, a chat for
+Telegram; the form is `novalidate`, so the page's own sentences speak, and the box is cleared once saved), removes one
+(`POST …/delete`) and shows its recent deliveries without `last_error`. `src/lib/notifications-view.ts` holds the
+default choice, the bodies, the destination checks (mirroring `sinks::problems` and `destination_url_ok`) and the
+refusal sentence for a 403, 404 or 422; there is no 409 on these routes. Enum-label groups `notify_kind` (the 17
+kinds the service sends today), `notify_channel`, `sink_kind` and `delivery_status`. Tests: unit tests of the view
+module and the client paths, and `tests/e2e/me-notifications.spec.ts` (eight tests: the `/me` link, the inbox, the
+choices, a destination refused, added, read and removed, refusals, an identity the service cannot address, Welsh,
+axe). Not done: pausing a destination, a test send, mark all read, paging past 500, links for task or review lines,
+a confirmation before removing. Not verified: against a real service. The 105 new strings in seven languages are
+machine drafts, and no speaker has read them.
+
 ### Added — edit a task and link it to other tasks (NC-1 slice 3, LT-10, 2026-11-10)
 
 `/plans/[pid]/tasks/[tpid]` gains an edit form (title, description, assignee, points, due date) over the `PUT`, which

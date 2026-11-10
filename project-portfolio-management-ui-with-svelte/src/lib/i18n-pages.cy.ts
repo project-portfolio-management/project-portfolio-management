@@ -2073,6 +2073,137 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Ni dderbyniodd y gwasanaeth y newid: gwiriwch y meysydd. Rhaid i ddyddiad dyledus newydd hefyd gadw pob cysylltiad ‘Yn dod cyn’ mewn trefn.",
   "p.task.refused_link_invalid":
     "Ni dderbyniodd y gwasanaeth y cysylltiad: efallai fod y dasg arall wedi mynd, ni chaiff cysylltiad ‘Yn rhwystro’ neu ‘Yn dod cyn’ fynd mewn cylch, ac mae ‘Yn dod cyn’ yn golygu bod rhaid i'r dasg arall fod yn ddyledus ar ôl hon.",
+  "p.me.notifications_link": "Fy hysbysiadau",
+  "p.me.notifications_note":
+    "— eich mewnflwch, yr hyn y cewch wybod amdano, a ble mae copïau'n mynd.",
+  "p.notifications.title_ppm": "Fy hysbysiadau — PPM",
+  "p.notifications.heading": "Fy hysbysiadau",
+  "p.notifications.back": "← Fy ngwaith",
+  "p.notifications.intro":
+    "Chi yn unig biau popeth yma: ni all neb arall ddarllen eich mewnflwch, eich dewisiadau na'ch cyrchfannau.",
+  "p.notifications.loading": "Yn llwytho…",
+  "p.notifications.inbox_heading": "Mewnflwch",
+  "p.notifications.unread_only": "Dangos y rhai heb eu darllen yn unig",
+  "p.notifications.unread_count_one": "{n} hysbysiad heb ei ddarllen.",
+  "p.notifications.unread_count_other": "{n} o hysbysiadau heb eu darllen.",
+  "p.notifications.inbox_tz":
+    "Cyfrifir y dyddiau yn eich cylchfa amser chi, {tz}.",
+  "p.notifications.inbox_empty": "Does dim byd yn eich mewnflwch.",
+  "p.notifications.inbox_unread_empty": "Does dim byd heb ei ddarllen.",
+  "p.notifications.status_unread": "Heb ei ddarllen",
+  "p.notifications.status_read": "Wedi'i ddarllen",
+  "p.notifications.digest_count_one": "crynodeb dyddiol o {n} hysbysiad",
+  "p.notifications.digest_count_other": "crynodeb dyddiol o {n} o hysbysiadau",
+  "p.notifications.open_subject": "Agor y cynllun",
+  "p.notifications.mark_read": "Nodi wedi'i ddarllen",
+  "p.notifications.mark_read_named": "Nodi wedi'i ddarllen: {message}",
+  "p.notifications.marked_read": "Wedi'i nodi wedi'i ddarllen.",
+  "p.notifications.could_not_load_inbox": "Methu llwytho eich mewnflwch.",
+  "p.notifications.could_not_mark":
+    "Methu nodi bod yr hysbysiad wedi'i ddarllen.",
+  "p.notifications.prefs_heading": "Yr hyn y cewch wybod amdano",
+  "p.notifications.prefs_intro":
+    "Trowch bob math o hysbysiad ymlaen neu i ffwrdd ar gyfer y mewnflwch ac ar gyfer pob math o gyrchfan. Mae copi'n mynd i fachyn gwe, sgwrs neu e-bost dim ond pan fyddwch wedi ychwanegu cyrchfan o'r math hwnnw isod. Mae crynodeb dyddiol yn casglu hysbysiadau diwrnod am un peth yn un llinell yn y mewnflwch; does dim yn cael ei ddal yn ôl na'i ollwng.",
+  "p.notifications.pref_daily": "Crynodeb dyddiol yn y mewnflwch",
+  "p.notifications.pref_saved": "Cadwyd eich dewis.",
+  "p.notifications.pref_reset_done":
+    "Yn ôl i'r rhagosodiad: ymlaen, fel y dônt.",
+  "p.notifications.reset": "Yn ôl i'r rhagosodiad",
+  "p.notifications.reset_named": "Yn ôl i'r rhagosodiad: {kind}",
+  "p.notifications.could_not_load_prefs": "Methu llwytho eich dewisiadau.",
+  "p.notifications.could_not_save_pref": "Methu cadw'r dewis.",
+  "p.notifications.sinks_heading": "Ble mae copïau'n mynd",
+  "p.notifications.sinks_intro":
+    "Mae cyrchfan yn cael copi o bob un o'ch hysbysiadau, sy'n cario testun yr hysbysiad ei hun yn unig. Mae'r cyfeiriad yn gyfrinach: ar ôl ei gadw, dim ond ar ffurf fyrrach y caiff ei ddangos. Nid yw cyrchfan araf neu doredig byth yn dal y mewnflwch yn ôl; rhoddir cynnig arall ar anfoniad a fethodd bedair gwaith eto dros tua dwy awr a hanner, ac yna rhoddir y gorau iddi.",
+  "p.notifications.no_sinks":
+    "Does gennych chi ddim cyrchfannau; mae eich hysbysiadau'n mynd i'r mewnflwch yn unig.",
+  "p.notifications.chat_named": "Sgwrs {name}",
+  "p.notifications.sink_sending": "Yn anfon",
+  "p.notifications.sink_paused": "Wedi oedi",
+  "p.notifications.show_deliveries": "Anfoniadau diweddar",
+  "p.notifications.deliveries_named": "Anfoniadau diweddar: {destination}",
+  "p.notifications.remove_sink": "Tynnu",
+  "p.notifications.remove_sink_named": "Tynnu: {destination}",
+  "p.notifications.sink_removed": "Tynnwyd y gyrchfan.",
+  "p.notifications.deliveries_heading": "Anfoniadau diweddar i {destination}",
+  "p.notifications.deliveries_note":
+    "Ni ddangosir yma pam y methodd anfoniad, gan y gall y rheswm ddyfynnu'r cyfeiriad cyfrinachol.",
+  "p.notifications.no_deliveries":
+    "Does dim wedi'i anfon i'r gyrchfan hon eto.",
+  "p.notifications.attempts_one": "{n} ymgais",
+  "p.notifications.attempts_other": "{n} o ymgeisiau",
+  "p.notifications.delivered_at": "anfonwyd {date}",
+  "p.notifications.next_attempt": "cynnig nesaf {date}",
+  "p.notifications.close_deliveries": "Cau'r anfoniadau",
+  "p.notifications.add_heading": "Ychwanegu cyrchfan",
+  "p.notifications.f_kind": "Math",
+  "p.notifications.f_destination_email": "Cyfeiriad e-bost",
+  "p.notifications.f_destination_url":
+    "Cyfeiriad gwe (https, i westeiwr cyhoeddus)",
+  "p.notifications.f_chat_id": "Sgwrs Telegram (ei rhif, neu @ a'i henw)",
+  "p.notifications.add_sink": "Ychwanegu'r gyrchfan",
+  "p.notifications.sink_added": "Ychwanegwyd y gyrchfan: {destination}.",
+  "p.notifications.could_not_load_sinks": "Methu llwytho eich cyrchfannau.",
+  "p.notifications.could_not_load_deliveries": "Methu llwytho'r anfoniadau.",
+  "p.notifications.could_not_save_sink": "Methu ychwanegu'r gyrchfan.",
+  "p.notifications.could_not_remove_sink": "Methu tynnu'r gyrchfan.",
+  "p.notifications.problem_too_many":
+    "Mae gennych chi ddeg cyrchfan yn barod, sef yr uchafswm: tynnwch un yn gyntaf.",
+  "p.notifications.problem_destination_required":
+    "Rhowch y cyfeiriad i anfon ato.",
+  "p.notifications.problem_email_invalid": "Nid cyfeiriad e-bost yw hwnnw.",
+  "p.notifications.problem_url_invalid": "Nid cyfeiriad gwe yw hwnnw.",
+  "p.notifications.problem_url_not_https":
+    "Rhaid i'r cyfeiriad gwe ddechrau gyda https://.",
+  "p.notifications.problem_url_credentials":
+    "Ni chaiff y cyfeiriad gwe gario enw defnyddiwr na chyfrinair.",
+  "p.notifications.problem_url_private":
+    "Rhaid i'r cyfeiriad gwe fod yn westeiwr cyhoeddus, nid un lleol, preifat neu fewnol.",
+  "p.notifications.problem_url_too_long": "Mae'r cyfeiriad gwe yn rhy hir.",
+  "p.notifications.problem_chat_id_required":
+    "Mae ar gyrchfan Telegram angen y sgwrs y mae'n postio iddi.",
+  "p.notifications.refused_forbidden":
+    "Ni chewch newid y gosodiadau hysbysu hyn.",
+  "p.notifications.refused_note_gone":
+    "Mae'r hysbysiad hwnnw wedi mynd, neu nid chi biau ef; mae'r mewnflwch wedi'i ddarllen eto.",
+  "p.notifications.refused_sink_gone":
+    "Roedd y gyrchfan honno wedi'i thynnu'n barod; mae eich cyrchfannau wedi'u darllen eto.",
+  "p.notifications.refused_not_addressable":
+    "Nid yw eich hunaniaeth fewngofnodi yn un y gellir cyfeirio hysbysiadau ati, felly does dim i'w ddangos yma.",
+  "p.notifications.refused_pref_invalid":
+    "Ni dderbyniodd y gwasanaeth y dewis hwnnw; mae eich dewisiadau wedi'u darllen eto.",
+  "p.notifications.refused_sink_invalid":
+    "Ni dderbyniodd y gwasanaeth y gyrchfan: rhaid iddi fod yn gyfeiriad e-bost, neu'n gyfeiriad gwe https i westeiwr cyhoeddus; mae ar un Telegram angen ei sgwrs; a chewch ddeg ar y mwyaf.",
+  "l.enum.notify_kind.approval_decided":
+    "Penderfynwyd ar gymeradwyaeth y gofynnoch amdani",
+  "l.enum.notify_kind.approval_requested": "Gofynnir i chi gymeradwyo rhywbeth",
+  "l.enum.notify_kind.auto_watch":
+    "Dilyn yr hyn rydych yn gweithio arno, yn awtomatig",
+  "l.enum.notify_kind.automation": "Mae rheol yn dweud wrthych",
+  "l.enum.notify_kind.comment": "Sylwadau",
+  "l.enum.notify_kind.escalation": "Uwchgyfeiriadau",
+  "l.enum.notify_kind.exceptions_digest": "Y crynodeb wythnosol o eithriadau",
+  "l.enum.notify_kind.reschedule_proposed": "Cynigir dyddiad newydd",
+  "l.enum.notify_kind.review_invited": "Fe'ch gwahoddir i adolygu",
+  "l.enum.notify_kind.review_submitted": "Cyflwynwyd adolygiad",
+  "l.enum.notify_kind.scheduled": "Nodyn atgoffa wedi'i drefnu",
+  "l.enum.notify_kind.status_update_due": "Mae diweddariad statws yn ddyledus",
+  "l.enum.notify_kind.task_assigned": "Rhoddwyd tasg i chi",
+  "l.enum.notify_kind.watch_update": "Newidiodd rhywbeth rydych yn ei ddilyn",
+  "l.enum.notify_kind.process_todo": "Mae cam proses i chi ei wneud",
+  "l.enum.notify_kind.process_notice": "Cam proses y cewch wybod amdano",
+  "l.enum.notify_kind.break_glass": "Agorwyd cynllun preifat mewn argyfwng",
+  "l.enum.notify_channel.in_app": "Yn y mewnflwch",
+  "l.enum.notify_channel.webhook": "Drwy fachyn gwe wedi'i lofnodi",
+  "l.enum.notify_channel.chat": "Mewn sgwrs",
+  "l.enum.notify_channel.email": "Drwy e-bost",
+  "l.enum.sink_kind.email": "E-bost",
+  "l.enum.sink_kind.webhook": "Bachyn gwe wedi'i lofnodi",
+  "l.enum.delivery_status.pending": "Yn aros i anfon",
+  "l.enum.delivery_status.sent": "Anfonwyd",
+  "l.enum.delivery_status.failed": "Rhoddwyd y gorau iddi",
+  "l.enum.delivery_status.skipped":
+    "Heb ei anfon: mae'r gyrchfan neu'r hysbysiad wedi mynd",
   "l.link.kind_docs": "Dogfennau",
   "l.link.kind_repo": "Storfa cod",
   "l.link.kind_ticket": "Tocyn",

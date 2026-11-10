@@ -2070,6 +2070,149 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Der Dienst hat die Änderung nicht angenommen: Prüfen Sie die Felder. Ein neues Fälligkeitsdatum muss außerdem jede „Kommt vor“-Verknüpfung in der richtigen Reihenfolge halten.",
   "p.task.refused_link_invalid":
     "Der Dienst hat die Verknüpfung nicht angenommen: Die andere Aufgabe ist vielleicht entfernt, eine „Blockiert“- oder „Kommt vor“-Verknüpfung darf keinen Kreis bilden, und „Kommt vor“ verlangt, dass die andere Aufgabe nach dieser fällig ist.",
+  "p.me.notifications_link": "Meine Benachrichtigungen",
+  "p.me.notifications_note":
+    "— Ihr Posteingang, worüber Sie informiert werden und wohin Kopien gehen.",
+  "p.notifications.title_ppm": "Meine Benachrichtigungen — PPM",
+  "p.notifications.heading": "Meine Benachrichtigungen",
+  "p.notifications.back": "← Meine Arbeit",
+  "p.notifications.intro":
+    "Alles hier gehört nur Ihnen: Niemand sonst kann Ihren Posteingang, Ihre Einstellungen oder Ihre Ziele lesen.",
+  "p.notifications.loading": "Wird geladen…",
+  "p.notifications.inbox_heading": "Posteingang",
+  "p.notifications.unread_only": "Nur ungelesene zeigen",
+  "p.notifications.unread_count_one": "{n} ungelesene Benachrichtigung.",
+  "p.notifications.unread_count_other": "{n} ungelesene Benachrichtigungen.",
+  "p.notifications.inbox_tz": "Tage werden in Ihrer Zeitzone gezählt, {tz}.",
+  "p.notifications.inbox_empty": "Ihr Posteingang ist leer.",
+  "p.notifications.inbox_unread_empty": "Nichts Ungelesenes.",
+  "p.notifications.status_unread": "Ungelesen",
+  "p.notifications.status_read": "Gelesen",
+  "p.notifications.digest_count_one":
+    "Tageszusammenfassung von {n} Benachrichtigung",
+  "p.notifications.digest_count_other":
+    "Tageszusammenfassung von {n} Benachrichtigungen",
+  "p.notifications.open_subject": "Den Plan öffnen",
+  "p.notifications.mark_read": "Als gelesen markieren",
+  "p.notifications.mark_read_named": "Als gelesen markieren: {message}",
+  "p.notifications.marked_read": "Als gelesen markiert.",
+  "p.notifications.could_not_load_inbox":
+    "Ihr Posteingang konnte nicht geladen werden.",
+  "p.notifications.could_not_mark":
+    "Die Benachrichtigung konnte nicht als gelesen markiert werden.",
+  "p.notifications.prefs_heading": "Worüber Sie informiert werden",
+  "p.notifications.prefs_intro":
+    "Schalten Sie jede Art von Benachrichtigung für den Posteingang und für jede Art von Ziel ein oder aus. Eine Kopie geht nur dann an einen Webhook, einen Chat oder eine E-Mail, wenn Sie unten ein Ziel dieser Art hinzugefügt haben. Eine Tageszusammenfassung fasst die Benachrichtigungen eines Tages zu einer Sache in einer Zeile des Posteingangs zusammen; nichts wird zurückgehalten oder verworfen.",
+  "p.notifications.pref_daily": "Tageszusammenfassung im Posteingang",
+  "p.notifications.pref_saved": "Ihre Einstellung wurde gespeichert.",
+  "p.notifications.pref_reset_done":
+    "Zurück zur Voreinstellung: an, sobald sie eintreffen.",
+  "p.notifications.reset": "Zurück zur Voreinstellung",
+  "p.notifications.reset_named": "Zurück zur Voreinstellung: {kind}",
+  "p.notifications.could_not_load_prefs":
+    "Ihre Einstellungen konnten nicht geladen werden.",
+  "p.notifications.could_not_save_pref":
+    "Die Einstellung konnte nicht gespeichert werden.",
+  "p.notifications.sinks_heading": "Wohin Kopien gehen",
+  "p.notifications.sinks_intro":
+    "Ein Ziel erhält eine Kopie jeder Ihrer Benachrichtigungen, nur mit dem Text der Benachrichtigung selbst. Die Adresse ist geheim: Einmal gespeichert, wird sie nur noch gekürzt angezeigt. Ein langsames oder defektes Ziel hält den Posteingang nie auf; ein fehlgeschlagener Versand wird noch viermal über etwa zweieinhalb Stunden wiederholt und dann aufgegeben.",
+  "p.notifications.no_sinks":
+    "Sie haben keine Ziele; Ihre Benachrichtigungen gehen nur in den Posteingang.",
+  "p.notifications.chat_named": "{name}-Chat",
+  "p.notifications.sink_sending": "Sendet",
+  "p.notifications.sink_paused": "Pausiert",
+  "p.notifications.show_deliveries": "Letzte Zustellungen",
+  "p.notifications.deliveries_named": "Letzte Zustellungen: {destination}",
+  "p.notifications.remove_sink": "Entfernen",
+  "p.notifications.remove_sink_named": "Entfernen: {destination}",
+  "p.notifications.sink_removed": "Das Ziel wurde entfernt.",
+  "p.notifications.deliveries_heading": "Letzte Zustellungen an {destination}",
+  "p.notifications.deliveries_note":
+    "Warum ein Versand fehlschlug, wird hier nicht gezeigt, da der Grund die geheime Adresse enthalten kann.",
+  "p.notifications.no_deliveries": "An dieses Ziel wurde noch nichts gesendet.",
+  "p.notifications.attempts_one": "{n} Versuch",
+  "p.notifications.attempts_other": "{n} Versuche",
+  "p.notifications.delivered_at": "gesendet {date}",
+  "p.notifications.next_attempt": "nächster Versuch {date}",
+  "p.notifications.close_deliveries": "Zustellungen schließen",
+  "p.notifications.add_heading": "Ein Ziel hinzufügen",
+  "p.notifications.f_kind": "Art",
+  "p.notifications.f_destination_email": "E-Mail-Adresse",
+  "p.notifications.f_destination_url":
+    "Webadresse (https, zu einem öffentlichen Host)",
+  "p.notifications.f_chat_id":
+    "Telegram-Chat (seine Nummer oder @ und sein Name)",
+  "p.notifications.add_sink": "Das Ziel hinzufügen",
+  "p.notifications.sink_added": "Das Ziel wurde hinzugefügt: {destination}.",
+  "p.notifications.could_not_load_sinks":
+    "Ihre Ziele konnten nicht geladen werden.",
+  "p.notifications.could_not_load_deliveries":
+    "Die Zustellungen konnten nicht geladen werden.",
+  "p.notifications.could_not_save_sink":
+    "Das Ziel konnte nicht hinzugefügt werden.",
+  "p.notifications.could_not_remove_sink":
+    "Das Ziel konnte nicht entfernt werden.",
+  "p.notifications.problem_too_many":
+    "Sie haben bereits zehn Ziele, das Höchste, was möglich ist: Entfernen Sie zuerst eines.",
+  "p.notifications.problem_destination_required":
+    "Geben Sie die Adresse an, an die gesendet werden soll.",
+  "p.notifications.problem_email_invalid": "Das ist keine E-Mail-Adresse.",
+  "p.notifications.problem_url_invalid": "Das ist keine Webadresse.",
+  "p.notifications.problem_url_not_https":
+    "Die Webadresse muss mit https:// beginnen.",
+  "p.notifications.problem_url_credentials":
+    "Die Webadresse darf keinen Benutzernamen und kein Passwort enthalten.",
+  "p.notifications.problem_url_private":
+    "Die Webadresse muss ein öffentlicher Host sein, kein lokaler, privater oder interner.",
+  "p.notifications.problem_url_too_long": "Die Webadresse ist zu lang.",
+  "p.notifications.problem_chat_id_required":
+    "Ein Telegram-Ziel braucht den Chat, in den es schreibt.",
+  "p.notifications.refused_forbidden":
+    "Sie dürfen diese Benachrichtigungseinstellungen nicht ändern.",
+  "p.notifications.refused_note_gone":
+    "Diese Benachrichtigung gibt es nicht mehr, oder sie gehört nicht Ihnen; der Posteingang wurde neu gelesen.",
+  "p.notifications.refused_sink_gone":
+    "Dieses Ziel war bereits entfernt; Ihre Ziele wurden neu gelesen.",
+  "p.notifications.refused_not_addressable":
+    "Ihre Anmeldeidentität kann keine persönlich adressierten Benachrichtigungen empfangen, daher gibt es hier nichts zu zeigen.",
+  "p.notifications.refused_pref_invalid":
+    "Der Dienst hat diese Einstellung nicht angenommen; Ihre Einstellungen wurden neu gelesen.",
+  "p.notifications.refused_sink_invalid":
+    "Der Dienst hat das Ziel nicht angenommen: Es muss eine E-Mail-Adresse oder eine https-Webadresse zu einem öffentlichen Host sein; ein Telegram-Ziel braucht seinen Chat; und es dürfen höchstens zehn sein.",
+  "l.enum.notify_kind.approval_decided":
+    "Über eine von Ihnen erbetene Genehmigung wurde entschieden",
+  "l.enum.notify_kind.approval_requested":
+    "Sie werden um eine Genehmigung gebeten",
+  "l.enum.notify_kind.auto_watch": "Automatisch verfolgen, woran Sie arbeiten",
+  "l.enum.notify_kind.automation": "Eine Regel informiert Sie",
+  "l.enum.notify_kind.comment": "Kommentare",
+  "l.enum.notify_kind.escalation": "Eskalationen",
+  "l.enum.notify_kind.exceptions_digest": "Die wöchentliche Ausnahmenübersicht",
+  "l.enum.notify_kind.reschedule_proposed":
+    "Ein neuer Termin wird vorgeschlagen",
+  "l.enum.notify_kind.review_invited": "Sie werden zu einer Prüfung eingeladen",
+  "l.enum.notify_kind.review_submitted": "Eine Prüfung wurde eingereicht",
+  "l.enum.notify_kind.scheduled": "Eine geplante Erinnerung",
+  "l.enum.notify_kind.status_update_due": "Ein Statusbericht ist fällig",
+  "l.enum.notify_kind.task_assigned": "Ihnen wurde eine Aufgabe zugewiesen",
+  "l.enum.notify_kind.watch_update": "Etwas, dem Sie folgen, hat sich geändert",
+  "l.enum.notify_kind.process_todo":
+    "Ein Prozessschritt ist von Ihnen zu erledigen",
+  "l.enum.notify_kind.process_notice":
+    "Ein Prozessschritt, über den Sie informiert werden",
+  "l.enum.notify_kind.break_glass":
+    "Ein privater Plan wurde im Notfall geöffnet",
+  "l.enum.notify_channel.in_app": "Im Posteingang",
+  "l.enum.notify_channel.webhook": "Per signiertem Webhook",
+  "l.enum.notify_channel.chat": "Im Chat",
+  "l.enum.notify_channel.email": "Per E-Mail",
+  "l.enum.sink_kind.email": "E-Mail",
+  "l.enum.sink_kind.webhook": "Signierter Webhook",
+  "l.enum.delivery_status.pending": "Wartet auf Versand",
+  "l.enum.delivery_status.sent": "Gesendet",
+  "l.enum.delivery_status.failed": "Aufgegeben",
+  "l.enum.delivery_status.skipped":
+    "Nicht gesendet: Das Ziel oder die Benachrichtigung gibt es nicht mehr",
   "l.link.kind_docs": "Dokumente",
   "l.link.kind_repo": "Code-Repository",
   "l.link.kind_ticket": "Ticket",

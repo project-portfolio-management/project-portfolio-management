@@ -319,6 +319,42 @@ describe("PpmClient task edit and link paths (NC-1 slice 3, LT-10)", () => {
   });
 });
 
+describe("PpmClient notification paths (NC-1 slice 4, PL-5, LT-6)", () => {
+  it("reads the inbox in a zone, and reads, sets and resets choices and destinations", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.myInbox("Europe/London");
+    await ppm.myInbox("Europe/London", true);
+    await ppm.myNotificationPrefs();
+    await ppm.setNotificationPref({
+      kind: "task_assigned",
+      channel: "in_app",
+      enabled: false,
+      digest: "instant",
+    });
+    await ppm.resetNotificationPref({ kind: "task_assigned", channel: "chat" });
+    await ppm.myNotificationSinks();
+    await ppm.addNotificationSink({
+      kind: "email",
+      destination: "me@example.com",
+    });
+    await ppm.removeNotificationSink("s1");
+    await ppm.sinkDeliveries("s1");
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/me/inbox?tz=Europe%2FLondon",
+      "GET /api/me/inbox?tz=Europe%2FLondon&unread=true",
+      "GET /api/me/notification-prefs",
+      "PUT /api/me/notification-prefs",
+      "POST /api/me/notification-prefs/reset",
+      "GET /api/me/notification-sinks",
+      "POST /api/me/notification-sinks",
+      "POST /api/me/notification-sinks/s1/delete",
+      "GET /api/me/notification-sinks/s1/deliveries",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

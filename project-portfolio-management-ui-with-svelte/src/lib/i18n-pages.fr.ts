@@ -2078,6 +2078,146 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Le service n'a pas accepté la modification : vérifiez les champs. Une nouvelle date d'échéance doit aussi garder chaque lien « Précède » dans l'ordre.",
   "p.task.refused_link_invalid":
     "Le service n'a pas accepté le lien : l'autre tâche a peut-être disparu, un lien « Bloque » ou « Précède » ne peut pas former de boucle, et « Précède » exige que l'autre tâche soit due après celle-ci.",
+  "p.me.notifications_link": "Mes notifications",
+  "p.me.notifications_note":
+    "— votre boîte de réception, ce dont vous êtes averti et où vont les copies.",
+  "p.notifications.title_ppm": "Mes notifications — PPM",
+  "p.notifications.heading": "Mes notifications",
+  "p.notifications.back": "← Mon travail",
+  "p.notifications.intro":
+    "Tout ce qui est ici n'appartient qu'à vous : personne d'autre ne peut lire votre boîte de réception, vos choix ni vos destinations.",
+  "p.notifications.loading": "Chargement…",
+  "p.notifications.inbox_heading": "Boîte de réception",
+  "p.notifications.unread_only": "N'afficher que les non lues",
+  "p.notifications.unread_count_one": "{n} notification non lue.",
+  "p.notifications.unread_count_other": "{n} notifications non lues.",
+  "p.notifications.inbox_tz":
+    "Les jours sont comptés dans votre fuseau horaire, {tz}.",
+  "p.notifications.inbox_empty": "Votre boîte de réception est vide.",
+  "p.notifications.inbox_unread_empty": "Rien de non lu.",
+  "p.notifications.status_unread": "Non lue",
+  "p.notifications.status_read": "Lue",
+  "p.notifications.digest_count_one": "résumé quotidien de {n} notification",
+  "p.notifications.digest_count_other": "résumé quotidien de {n} notifications",
+  "p.notifications.open_subject": "Ouvrir le plan",
+  "p.notifications.mark_read": "Marquer comme lue",
+  "p.notifications.mark_read_named": "Marquer comme lue : {message}",
+  "p.notifications.marked_read": "Marquée comme lue.",
+  "p.notifications.could_not_load_inbox":
+    "Impossible de charger votre boîte de réception.",
+  "p.notifications.could_not_mark":
+    "Impossible de marquer la notification comme lue.",
+  "p.notifications.prefs_heading": "Ce dont vous êtes averti",
+  "p.notifications.prefs_intro":
+    "Activez ou désactivez chaque type de notification pour la boîte de réception et pour chaque type de destination. Une copie part vers un webhook, une messagerie instantanée ou un courriel seulement si vous avez ajouté ci-dessous une destination de ce type. Un résumé quotidien regroupe les notifications d'une journée sur un même sujet en une seule ligne de la boîte ; rien n'est retenu ni supprimé.",
+  "p.notifications.pref_daily": "Résumé quotidien dans la boîte de réception",
+  "p.notifications.pref_saved": "Votre choix a été enregistré.",
+  "p.notifications.pref_reset_done":
+    "Retour à la valeur par défaut : activées, au fil de l'eau.",
+  "p.notifications.reset": "Revenir à la valeur par défaut",
+  "p.notifications.reset_named": "Revenir à la valeur par défaut : {kind}",
+  "p.notifications.could_not_load_prefs": "Impossible de charger vos choix.",
+  "p.notifications.could_not_save_pref": "Impossible d'enregistrer le choix.",
+  "p.notifications.sinks_heading": "Où vont les copies",
+  "p.notifications.sinks_intro":
+    "Une destination reçoit une copie de chacune de vos notifications, avec seulement le texte de la notification elle-même. L'adresse est secrète : une fois enregistrée, elle n'est plus affichée qu'en abrégé. Une destination lente ou en panne ne retarde jamais la boîte de réception ; un envoi qui a échoué est retenté encore quatre fois sur environ deux heures et demie, puis abandonné.",
+  "p.notifications.no_sinks":
+    "Vous n'avez aucune destination ; vos notifications vont seulement dans la boîte de réception.",
+  "p.notifications.chat_named": "Messagerie {name}",
+  "p.notifications.sink_sending": "Envoi actif",
+  "p.notifications.sink_paused": "En pause",
+  "p.notifications.show_deliveries": "Envois récents",
+  "p.notifications.deliveries_named": "Envois récents : {destination}",
+  "p.notifications.remove_sink": "Retirer",
+  "p.notifications.remove_sink_named": "Retirer : {destination}",
+  "p.notifications.sink_removed": "La destination a été retirée.",
+  "p.notifications.deliveries_heading": "Envois récents vers {destination}",
+  "p.notifications.deliveries_note":
+    "La raison d'un envoi échoué n'est pas affichée ici, car elle peut citer l'adresse secrète.",
+  "p.notifications.no_deliveries":
+    "Rien n'a encore été envoyé à cette destination.",
+  "p.notifications.attempts_one": "{n} tentative",
+  "p.notifications.attempts_other": "{n} tentatives",
+  "p.notifications.delivered_at": "envoyé le {date}",
+  "p.notifications.next_attempt": "prochain essai le {date}",
+  "p.notifications.close_deliveries": "Fermer les envois",
+  "p.notifications.add_heading": "Ajouter une destination",
+  "p.notifications.f_kind": "Type",
+  "p.notifications.f_destination_email": "Adresse électronique",
+  "p.notifications.f_destination_url":
+    "Adresse web (https, vers un hôte public)",
+  "p.notifications.f_chat_id":
+    "Discussion Telegram (son numéro, ou @ et son nom)",
+  "p.notifications.add_sink": "Ajouter la destination",
+  "p.notifications.sink_added": "La destination a été ajoutée : {destination}.",
+  "p.notifications.could_not_load_sinks":
+    "Impossible de charger vos destinations.",
+  "p.notifications.could_not_load_deliveries":
+    "Impossible de charger les envois.",
+  "p.notifications.could_not_save_sink": "Impossible d'ajouter la destination.",
+  "p.notifications.could_not_remove_sink":
+    "Impossible de retirer la destination.",
+  "p.notifications.problem_too_many":
+    "Vous avez déjà dix destinations, le maximum possible : retirez-en une d'abord.",
+  "p.notifications.problem_destination_required":
+    "Indiquez l'adresse à laquelle envoyer.",
+  "p.notifications.problem_email_invalid":
+    "Ce n'est pas une adresse électronique.",
+  "p.notifications.problem_url_invalid": "Ce n'est pas une adresse web.",
+  "p.notifications.problem_url_not_https":
+    "L'adresse web doit commencer par https://.",
+  "p.notifications.problem_url_credentials":
+    "L'adresse web ne doit contenir ni nom d'utilisateur ni mot de passe.",
+  "p.notifications.problem_url_private":
+    "L'adresse web doit désigner un hôte public, pas un hôte local, privé ou interne.",
+  "p.notifications.problem_url_too_long": "L'adresse web est trop longue.",
+  "p.notifications.problem_chat_id_required":
+    "Une destination Telegram a besoin de la discussion où elle publie.",
+  "p.notifications.refused_forbidden":
+    "Vous ne pouvez pas modifier ces réglages de notification.",
+  "p.notifications.refused_note_gone":
+    "Cette notification n'existe plus ou n'est pas la vôtre ; la boîte de réception a été relue.",
+  "p.notifications.refused_sink_gone":
+    "Cette destination avait déjà été retirée ; vos destinations ont été relues.",
+  "p.notifications.refused_not_addressable":
+    "Votre identité de connexion ne peut pas recevoir de notifications adressées à une personne ; il n'y a donc rien à afficher ici.",
+  "p.notifications.refused_pref_invalid":
+    "Le service n'a pas accepté ce choix ; vos choix ont été relus.",
+  "p.notifications.refused_sink_invalid":
+    "Le service n'a pas accepté la destination : ce doit être une adresse électronique ou une adresse web https vers un hôte public ; une destination Telegram a besoin de sa discussion ; et il peut y en avoir dix au plus.",
+  "l.enum.notify_kind.approval_decided":
+    "Une approbation que vous avez demandée a été tranchée",
+  "l.enum.notify_kind.approval_requested":
+    "On vous demande d'approuver quelque chose",
+  "l.enum.notify_kind.auto_watch":
+    "Suivre automatiquement ce sur quoi vous travaillez",
+  "l.enum.notify_kind.automation": "Une règle vous avertit",
+  "l.enum.notify_kind.comment": "Commentaires",
+  "l.enum.notify_kind.escalation": "Remontées",
+  "l.enum.notify_kind.exceptions_digest":
+    "Le résumé hebdomadaire des exceptions",
+  "l.enum.notify_kind.reschedule_proposed": "Une nouvelle date est proposée",
+  "l.enum.notify_kind.review_invited": "Vous êtes invité à relire",
+  "l.enum.notify_kind.review_submitted": "Une relecture a été remise",
+  "l.enum.notify_kind.scheduled": "Un rappel programmé",
+  "l.enum.notify_kind.status_update_due": "Un point d'avancement est attendu",
+  "l.enum.notify_kind.task_assigned": "Une tâche vous a été confiée",
+  "l.enum.notify_kind.watch_update": "Quelque chose que vous suivez a changé",
+  "l.enum.notify_kind.process_todo": "Une étape de processus vous revient",
+  "l.enum.notify_kind.process_notice":
+    "Une étape de processus dont vous êtes averti",
+  "l.enum.notify_kind.break_glass": "Un plan privé a été ouvert en urgence",
+  "l.enum.notify_channel.in_app": "Dans la boîte de réception",
+  "l.enum.notify_channel.webhook": "Par webhook signé",
+  "l.enum.notify_channel.chat": "Par messagerie instantanée",
+  "l.enum.notify_channel.email": "Par courriel",
+  "l.enum.sink_kind.email": "Courriel",
+  "l.enum.sink_kind.webhook": "Webhook signé",
+  "l.enum.delivery_status.pending": "En attente d'envoi",
+  "l.enum.delivery_status.sent": "Envoyé",
+  "l.enum.delivery_status.failed": "Abandonné",
+  "l.enum.delivery_status.skipped":
+    "Non envoyé : la destination ou la notification n'existe plus",
   "l.link.kind_docs": "Documents",
   "l.link.kind_repo": "Dépôt de code",
   "l.link.kind_ticket": "Ticket",

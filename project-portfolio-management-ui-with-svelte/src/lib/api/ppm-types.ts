@@ -3057,6 +3057,108 @@ export interface MyWork {
   reason: string | null;
 }
 
+/**
+ * One line of `GET /api/me/inbox` (PL-5, NC-1 slice 4): a single notification, or a daily digest of several about
+ * one subject on one local day. Nothing is dropped: `pids` names every notification the line stands for.
+ */
+export interface InboxItem {
+  kind: string;
+  subject_kind: string;
+  subject_pid: string;
+  /** The newest message in the group, as the service wrote it. */
+  message: string;
+  count: number;
+  pids: string[];
+  /** Whether any of them is unread. */
+  unread: boolean;
+  latest_at: string;
+  /** Whether the line is a digest the person chose (`daily`). */
+  digest: boolean;
+}
+
+/** `GET /api/me/inbox?tz=&unread=`: `unread_count` counts notifications, not lines. */
+export interface MyInbox {
+  tz: string;
+  items: InboxItem[];
+  unread_count: number;
+}
+
+/** A delivery channel a preference applies to (PL-5, LT-6, RM-11). */
+export type NotificationChannel = "in_app" | "webhook" | "chat" | "email";
+
+/** When an in-app notification of a kind arrives. */
+export type NotificationDigest = "instant" | "daily";
+
+/** One stored choice (`GET`/`PUT /api/me/notification-prefs`); no row for a kind and channel means the default. */
+export interface NotificationPref {
+  pid: string;
+  kind: string;
+  channel: string;
+  enabled: boolean;
+  digest: string;
+}
+
+/** `GET /api/me/notification-prefs`: the caller's own choices, what can be chosen and the default. */
+export interface NotificationPrefs {
+  prefs: NotificationPref[];
+  known_kinds: string[];
+  channels: string[];
+  digests: string[];
+  default: { enabled: boolean; digest: string };
+}
+
+/**
+ * `PUT /api/me/notification-prefs`: set one choice. The channel is always sent (the service reads a missing one as
+ * `in_app`). Checked against the service's schema by `client-bodies.test.ts` (CQ-9).
+ */
+export interface NotificationPrefBody {
+  kind: string;
+  channel: NotificationChannel;
+  enabled: boolean;
+  digest: NotificationDigest;
+}
+
+/** `POST /api/me/notification-prefs/reset`: back to the default for one kind and channel. */
+export interface NotificationPrefResetBody {
+  kind: string;
+  channel: NotificationChannel;
+}
+
+/** The kinds of destination a person may register (LT-6, RM-11). */
+export type SinkKind =
+  "webhook" | "slack" | "mattermost" | "discord" | "telegram" | "email";
+
+/** `POST /api/me/notification-sinks`: the destination is a secret, never shown back in full. */
+export interface NotificationSinkBody {
+  kind: SinkKind;
+  destination: string;
+  /** Only Telegram needs one: `{ chat_id }`. */
+  settings?: { chat_id: string };
+}
+
+/** One of the caller's destinations, as the service shows it: the destination is masked. */
+export interface NotificationSink {
+  pid: string;
+  kind: string;
+  enabled: boolean;
+  channel: string;
+  /** Scheme and host and the last four characters, or `***@domain`; never the whole secret. */
+  destination: string;
+}
+
+/**
+ * One recent delivery to a sink (`GET …/notification-sinks/{pid}/deliveries`). `last_error` is the service's own
+ * text, and a transport error can quote the destination, so no page shows it.
+ */
+export interface SinkDelivery {
+  notification_pid: string;
+  status: string;
+  attempts: number;
+  last_error: string | null;
+  next_attempt_at: string | null;
+  delivered_at: string | null;
+}
+
 /** A time-boxed sprint. */
 export interface Sprint {
   pid: string;

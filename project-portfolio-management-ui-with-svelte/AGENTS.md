@@ -184,11 +184,13 @@ the Status note above).
 | Scheduled actions (`/automations`) | `POST / GET /api/scheduled-actions` · `POST /api/scheduled-actions/sweep` |
 | Smart Score (`/prioritization`) | `GET /api/plans/{pid}/smart-score` · `GET /api/prioritization` |
 | Lifecycle (`/lifecycle`) | `GET /api/lifecycle` · `GET /api/plans/{pid}/lifecycle` |
+| My notifications (`/me/notifications`) | `GET /api/me/inbox?tz=` · `POST /api/notifications/{pid}/read` · `GET / PUT /api/me/notification-prefs` · `POST …/reset` · `GET / POST /api/me/notification-sinks` · `POST …/{pid}/delete` · `GET …/{pid}/deliveries` |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign
 endpoint, an assignee-workload query, and a notifications inbox
-(`GET /api/notifications`); none is called by a route yet — the CHANGELOG's
-2026-07-22 entry already flags the notifications gap specifically. There
+(`GET /api/notifications`); none is called by a route yet. The caller's own
+inbox is read through `GET /api/me/inbox` on `/me/notifications` instead, which
+marks a line read with `CapabilityClient.markRead`. There
 is no `/plans/[pid]/{issues,timeline,goals}` route or endpoint at all
 (service spec §9.4 sub-resources not yet built on either side).
 

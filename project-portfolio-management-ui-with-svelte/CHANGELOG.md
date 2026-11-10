@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — Lily headless 0.8; the command palette keeps its keys (BR-14, 2026-11-10)
+
+`@lilydesignsystem/svelte-headless` 0.6.1 to 0.8.0. From 0.7 Lily's `Combobox` handles its own keys on the input, and
+the palette's handler (delegated, so it ran after) found its query replaced by the row's text: Enter chose nothing and
+the page stayed put. The palette now takes the arrow keys, Enter, Escape, Home and End in the capture phase, puts the active row
+back after each keystroke, closes on one Escape after typing (the `Combobox` would close only its list), and keeps its
+rows shown when focus comes back to the input. Two new Playwright tests; the second fails without the fix. The rename
+of `tag-input` to `tag-input-div` (0.7) touches nothing here. Not done: the lockfile still holds three `svelte-headless`
+versions (0.2.0 and 0.4.0 through the pickers and the date-time picker), so CQ-16 stays open. Home and End are kept from the
+`Combobox` too, so they still move the caret in the text, as before; no test presses them.
+
 ### Added — roles, field rules, plan settings and translated words (OC-7, 2026-11-05)
 
 `/plans/{pid}/issue-settings` shows who holds which role, which types a plan offers, and its own workflows. `/issue-settings` sets what

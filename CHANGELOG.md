@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 10 November (Lily headless 0.8)
+
+- **`@lilydesignsystem/svelte-headless` 0.6.1 → 0.8.0** in the UI. Lily's `Combobox` now keys its own list, which broke the command palette's Enter (it went nowhere) and needed two presses of Escape after typing. The palette takes those keys first, in the capture phase, and keeps its rows shown when focus returns to the input (BR-14, UI spec). See the UI `CHANGELOG.md`.
+- Not done: three `svelte-headless` versions are still in the lockfile (CQ-16), and TypeScript stays at 6.
+
 ### 10 November (axa 0.10)
 
 - **axa 0.9.1 → 0.10.0.** The test helpers left axa's `testing` feature for their own crate: the dev-dependency is now `axa-test` 0.1, and the 121 test files import `axa_test::prelude::*` instead of `axa::testing::prelude::*`. axa's parts were renamed (`axa-outbox` is now `axa-transactional-outbox`, `axa-idempotency` is `axa-idempotency-key`, and so on); the `axa::` paths, features and table names are the same, so there is no migration and no change in behaviour. `axum-test` stays at 21, which `axa-test` uses.

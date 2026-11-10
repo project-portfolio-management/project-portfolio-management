@@ -103,6 +103,31 @@ test.describe("command palette (BR-14)", () => {
     await expect(trigger).toBeFocused();
   });
 
+  test("one Escape closes it after typing, with rows showing", async ({
+    page,
+  }) => {
+    await page.keyboard.press("Control+k");
+    await input(page).pressSequentially("my wo");
+    await expect(palette(page).getByRole("option")).toHaveCount(1);
+    await page.keyboard.press("Escape");
+    await expect(palette(page)).toBeHidden();
+  });
+
+  test("the rows stay shown when focus leaves the input and comes back", async ({
+    page,
+  }) => {
+    await page.keyboard.press("Control+k");
+    await input(page).pressSequentially("my wo");
+    const row = palette(page).getByRole("option");
+    await expect(row).toHaveCount(1);
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    await expect(input(page)).toBeFocused();
+    await expect(row).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/en-001\/me$/);
+  });
+
   test("when plan search fails the commands still work and the failure is said in words", async ({
     page,
   }) => {

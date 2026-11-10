@@ -1,8 +1,10 @@
 <!--
   CommandPalette (BR-14) — Ctrl or Cmd with K opens a modal palette: type a plan name or a command, move with the
   arrow keys, Enter goes there, Escape closes. Lily's Dialog is the modal (focus trap, Escape, focus returned to the
-  opener) and Lily's Combobox is the input and listbox (roles and labels); the arrow keys and the active row are
-  done here because the primitives are headless. The ranking is in `#lib/palette-view.ts`.
+  opener) and Lily's Combobox is the input and listbox (roles and labels). The arrow keys, Enter and the active row
+  are done here, as the first match is active as soon as there is a query (Lily's Combobox, from headless 0.7, keys its
+  own list with no row active until an arrow key): the keys are taken in the capture phase, before the Combobox's own
+  listener on the input, and the highlight is put back after each keystroke, which the Combobox clears. The ranking is in `#lib/palette-view.ts`.
   Mounted once in the root layout; the button that opens it is `PaletteTrigger`, an entry in the menu.
 -->
 <script lang="ts">
@@ -96,10 +98,17 @@
   });
 
 
-  // The input is inside Lily's Combobox, so the active row is announced by setting aria-activedescendant on it.
+  // The input is inside Lily's Combobox, so the active row is announced by setting aria-activedescendant on it. The
+  // Combobox clears that and every row's aria-selected when a key is typed, so this runs again on every query, not only
+  // when the active row moves, and sets the rows' aria-selected itself.
   $effect(() => {
+    void query;
+    void shown;
     const input = root?.querySelector<HTMLInputElement>('input[role="combobox"]');
-    if (!input) return;
+    if (!input || !root) return;
+    root.querySelectorAll('[role="option"]').forEach((row, i) => {
+      row.setAttribute("aria-selected", String(i === active));
+    });
     const id = active >= 0 ? `palette-row-${active}` : null;
     if (id) input.setAttribute("aria-activedescendant", id);
     else input.removeAttribute("aria-activedescendant");
@@ -118,16 +127,29 @@
     void goto(localeHref(item.href));
   }
 
-  function onkeydown(e: KeyboardEvent) {
+  // In the capture phase, so the Combobox's own listener never sees these keys: it would choose its own row, or none.
+  function onkeydowncapture(e: KeyboardEvent) {
+    if (e.isComposing) return;
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
+      e.stopPropagation();
       active = move(active, e.key, shown.length);
     } else if (e.key === "Enter") {
       const item = shown[active];
       if (item) {
         e.preventDefault();
+        e.stopPropagation();
         choose(item);
       }
+    } else if (e.key === "Home" || e.key === "End") {
+      // Left to the text field (the caret moves), not to the Combobox, which would move its own highlight off ours.
+      e.stopPropagation();
+    } else if (e.key === "Escape") {
+      // The Combobox would close only its list and mark the key handled, so the Dialog would ignore it: one Escape
+      // must close the palette.
+      e.preventDefault();
+      e.stopPropagation();
+      open = false;
     }
   }
 
@@ -153,14 +175,13 @@
 <svelte:window onkeydown={onwindowkeydown} />
 
 <Dialog class="palette-dialog" bind:open label={t("c.CommandPalette.title")}>
-  <div bind:this={root} class="palette">
+  <div bind:this={root} class="palette" {onkeydowncapture}>
     <Combobox
       class="palette-combobox"
       label={t("c.CommandPalette.label")}
       bind:value={query}
-      open={true}
+      bind:open={() => true, () => {}}
       placeholder={t("c.CommandPalette.placeholder")}
-      {onkeydown}
     >
       {#each shown as item, i (item.id)}
         <div

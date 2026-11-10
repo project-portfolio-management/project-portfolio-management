@@ -1401,7 +1401,10 @@ Ctrl or Cmd with K, or the "Search and commands" entry in the navigation menu (i
 Typing two or more letters searches plans by name through `GET /api/plans/search?q=` after a 200 ms pause, and only
 the latest answer is shown; commands are matched at once. Rows are ranked by the whole label, a prefix, a word start,
 a match inside, then letters in order (`src/lib/palette-view.ts`, pure and unit-tested); with nothing typed the recent
-items come first. The first match is active, the arrow keys move (wrapping), Enter goes there, Escape closes. The
+items come first. The first match is active, the arrow keys move (wrapping), Enter goes there, one Escape closes the palette (typed text
+or not), and the rows stay shown when focus leaves the input and comes back. Lily's `Combobox` (from headless 0.7)
+keys its own list, with no row active until an arrow key and Escape closing only the list; the palette takes the arrow
+keys, Enter, Escape, Home and End (which still move the caret) in the capture phase before it, and puts the active row back after each keystroke. The
 active row is marked by a bar and bold text as well as colour, and every row says what it is (Command, Plan, Recent).
 Ctrl or Cmd with K is taken over everywhere in the app, text fields included, so the browser's own shortcut for it does not run. The last five items chosen are kept in this browser (`mxi.palette.recent`), never sent anywhere; a stored item with a
 path that does not start with a single `/` is dropped. A failed search says so in words and the commands still work.

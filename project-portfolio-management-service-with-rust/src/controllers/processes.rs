@@ -10,11 +10,11 @@
 //! * A step starts only after the one before it completes. A rejected approval ends
 //!   the execution `rejected` and **skips, and logs, every step after it**.
 
+use super::unprocessable;
 use super::{conflict, forbidden};
-use super::{db_err, unprocessable};
+use crate::db::Tx;
 use crate::prelude::*;
 use chrono::Utc;
-use sea_orm::{ConnectionTrait, QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -61,28 +61,23 @@ fn check_definition(name: Option<&str>, steps: &[Step]) -> Result<()> {
 /// Load a live (not soft-deleted) process by its public id, or 404.
 async fn find_process(ctx: &AppContext, pid: &str) -> Result<processes::Model> {
     let pid = super::parse_pid(pid)?;
-    processes::Entity::find()
-        .filter(processes::Column::Pid.eq(pid))
-        .filter(processes::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM processes WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
 /// Load the immutable step list of one process version; executions use it so edits never affect a run in flight.
-async fn version_steps<C: ConnectionTrait>(
-    conn: &C,
-    process: Uuid,
-    version: i32,
-) -> Result<Vec<Step>> {
-    let row = process_versions::Entity::find()
-        .filter(process_versions::Column::ProcessPid.eq(process))
-        .filter(process_versions::Column::Version.eq(version))
-        .one(conn)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+async fn version_steps(ctx: &AppContext, process: Uuid, version: i32) -> Result<Vec<Step>> {
+    let row: process_versions::Model = sqlx::query_as(
+        "SELECT * FROM process_versions WHERE process_pid = $1 AND version = $2 LIMIT 1",
+    )
+    .bind(process)
+    .bind(version)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     serde_json::from_value(row.steps).map_err(|e| Error::Any(e.into()))
 }
 
@@ -98,21 +93,20 @@ async fn create_process(
         return Err(unprocessable("name is required"));
     }
     check_definition(Some(&name), &b.steps)?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let p = processes::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(name.trim().to_string()),
-        current_version: ActiveValue::set(1),
-        created_by: ActiveValue::set(Some(claims.sub.clone())),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    add_version(&txn, p.pid, 1, &b.steps, &claims.sub).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let p: processes::Model = sqlx::query_as(
+        "INSERT INTO processes (pid, name, current_version, created_by, deleted_at)
+         VALUES ($1, $2, 1, $3, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(name.trim())
+    .bind(&claims.sub)
+    .fetch_one(tx.conn())
+    .await?;
+    add_version(&mut tx, p.pid, 1, &b.steps, &claims.sub).await?;
+    AuditModel::record_on(
+        tx.conn(),
         p.pid,
         "process_defined",
         Some(&claims.sub),
@@ -120,40 +114,39 @@ async fn create_process(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     process_view(&ctx, &p).await
 }
 
 /// Insert a new immutable version row for a process; the caller bumps `current_version` in the same transaction.
-async fn add_version<C: ConnectionTrait>(
-    conn: &C,
+async fn add_version(
+    tx: &mut Tx,
     process: Uuid,
     version: i32,
     steps: &[Step],
     by: &str,
 ) -> Result<()> {
-    process_versions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        process_pid: ActiveValue::set(process),
-        version: ActiveValue::set(version),
-        steps: ActiveValue::set(serde_json::to_value(steps).unwrap_or_default()),
-        created_by: ActiveValue::set(Some(by.to_string())),
-        ..Default::default()
-    }
-    .insert(conn)
-    .await
-    .map_err(db_err)?;
+    sqlx::query(
+        "INSERT INTO process_versions (pid, process_pid, version, steps, created_by)
+         VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(process)
+    .bind(version)
+    .bind(serde_json::to_value(steps).unwrap_or_default())
+    .bind(by)
+    .execute(tx.conn())
+    .await?;
     Ok(())
 }
 
 /// Render a process with its current steps and the full version history, oldest first.
 async fn process_view(ctx: &AppContext, p: &processes::Model) -> Result<Response> {
-    let versions = process_versions::Entity::find()
-        .filter(process_versions::Column::ProcessPid.eq(p.pid))
-        .order_by_asc(process_versions::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let versions: Vec<process_versions::Model> =
+        sqlx::query_as("SELECT * FROM process_versions WHERE process_pid = $1 ORDER BY version")
+            .bind(p.pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     format::json(serde_json::json!({
         "pid": p.pid, "name": p.name, "current_version": p.current_version, "created_by": p.created_by,
         "steps": versions.iter().find(|v| v.version == p.current_version).map(|v| v.steps.clone()),
@@ -170,15 +163,13 @@ async fn list_processes(
 ) -> Result<Response> {
     let page = cursor.page(super::pagination::MAX_LIMIT)?;
     let (limit, offset) = (page.fetch(), page.offset());
-    let query = processes::Entity::find()
-        .filter(processes::Column::DeletedAt.is_null())
-        .order_by_asc(processes::Column::Id);
-    let rows = query
-        .limit(limit)
-        .offset(offset)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<processes::Model> = sqlx::query_as(
+        "SELECT * FROM processes WHERE deleted_at IS NULL ORDER BY id LIMIT $1 OFFSET $2",
+    )
+    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+    .bind(i64::try_from(offset).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let body = rows.iter().map(|p| serde_json::json!({ "pid": p.pid, "name": p.name, "current_version": p.current_version })).collect::<Vec<_>>();
     Ok(page.respond(body))
 }
@@ -211,16 +202,25 @@ async fn update_process(
     }
     check_definition(b.name.as_deref(), &b.steps)?;
     let next = p.current_version + 1;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    add_version(&txn, p.pid, next, &b.steps, &claims.sub).await?;
-    let mut a: processes::ActiveModel = p.into();
-    a.current_version = ActiveValue::set(next);
-    if let Some(n) = &b.name {
-        a.name = ActiveValue::set(n.trim().to_string());
+    let mut tx = crate::db::begin(&ctx).await?;
+    add_version(&mut tx, p.pid, next, &b.steps, &claims.sub).await?;
+    let row: processes::Model = match &b.name {
+        Some(n) => sqlx::query_as(
+            "UPDATE processes SET current_version = $1, name = $2 WHERE id = $3 RETURNING *",
+        )
+        .bind(next)
+        .bind(n.trim())
+        .bind(p.id),
+        None => {
+            sqlx::query_as("UPDATE processes SET current_version = $1 WHERE id = $2 RETURNING *")
+                .bind(next)
+                .bind(p.id)
+        }
     }
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "process_versioned",
         Some(&claims.sub),
@@ -228,7 +228,7 @@ async fn update_process(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     process_view(&ctx, &row).await
 }
 
@@ -246,67 +246,71 @@ async fn delete_process(
         ));
     }
     let pid = p.pid;
-    let mut a: processes::ActiveModel = p.into();
-    a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "process_retired", Some(&claims.sub), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE processes SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(Utc::now().fixed_offset())
+        .bind(p.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), pid, "process_retired", Some(&claims.sub), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
 // ───────────────────────── the runner ─────────────────────────
 
 /// Append one event to an execution's log. `step` is None for events about the execution as a whole; the log is append-only.
-async fn log<C: ConnectionTrait>(
-    conn: &C,
+async fn log(
+    tx: &mut Tx,
     execution: Uuid,
     step: Option<usize>,
     event: &str,
     actor: Option<&str>,
     note: Option<&str>,
 ) -> Result<()> {
-    process_execution_logs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        execution_pid: ActiveValue::set(execution),
-        step_index: ActiveValue::set(step.and_then(|s| i32::try_from(s).ok())),
-        event: ActiveValue::set(event.to_string()),
-        actor: ActiveValue::set(actor.map(str::to_string)),
-        note: ActiveValue::set(note.map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(conn)
-    .await
-    .map_err(db_err)?;
+    sqlx::query(
+        "INSERT INTO process_execution_logs (pid, execution_pid, step_index, event, actor, note)
+         VALUES ($1, $2, $3, $4, $5, $6)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(execution)
+    .bind(step.and_then(|s| i32::try_from(s).ok()))
+    .bind(event)
+    .bind(actor)
+    .bind(note)
+    .execute(tx.conn())
+    .await?;
     Ok(())
 }
 
 /// Lock an execution row for the rest of the transaction (so two completions cannot race).
-async fn lock<C: ConnectionTrait>(conn: &C, pid: Uuid) -> Result<process_executions::Model> {
-    use sea_orm::QuerySelect;
-    process_executions::Entity::find()
-        .filter(process_executions::Column::Pid.eq(pid))
-        .lock_exclusive()
-        .one(conn)
-        .await
-        .map_err(db_err)?
+async fn lock(tx: &mut Tx, pid: Uuid) -> Result<process_executions::Model> {
+    sqlx::query_as("SELECT * FROM process_executions WHERE pid = $1 LIMIT 1 FOR UPDATE")
+        .bind(pid)
+        .fetch_optional(tx.conn())
+        .await?
         .ok_or(Error::NotFound)
 }
 
 /// Mark an execution finished: set its terminal status, stamp `finished_at` and store the optional note.
-async fn finish<C: ConnectionTrait>(
-    conn: &C,
+async fn finish(
+    tx: &mut Tx,
     ex: process_executions::Model,
     status: Status,
     note: Option<&str>,
 ) -> Result<process_executions::Model> {
-    let mut a: process_executions::ActiveModel = ex.into();
-    a.status = ActiveValue::set(status.token().to_string());
-    a.finished_at = ActiveValue::set(Some(Utc::now().into()));
-    a.note = ActiveValue::set(note.map(str::to_string));
-    a.update(conn).await.map_err(db_err)
+    Ok(sqlx::query_as(
+        "UPDATE process_executions SET status = $1, finished_at = $2, note = $3
+         WHERE id = $4 RETURNING *",
+    )
+    .bind(status.token())
+    .bind(Utc::now().fixed_offset())
+    .bind(note)
+    .bind(ex.id)
+    .fetch_one(tx.conn())
+    .await?)
 }
 
 /// End an execution early: every step after `from` (and `from` itself when
@@ -327,8 +331,8 @@ struct Ending<'a> {
 }
 
 /// Finish an execution ahead of its last step, logging each skipped step so the record shows what never ran.
-async fn end_early<C: ConnectionTrait>(
-    conn: &C,
+async fn end_early(
+    tx: &mut Tx,
     ex: process_executions::Model,
     steps: &[Step],
     e: Ending<'_>,
@@ -345,7 +349,7 @@ async fn end_early<C: ConnectionTrait>(
     let start = if include_from { from } else { from + 1 };
     for i in start..steps.len() {
         log(
-            conn,
+            tx,
             ex.pid,
             Some(i),
             "step_skipped",
@@ -354,9 +358,9 @@ async fn end_early<C: ConnectionTrait>(
         )
         .await?;
     }
-    log(conn, ex.pid, Some(from), event, actor, note).await?;
-    AuditModel::record(
-        conn,
+    log(tx, ex.pid, Some(from), event, actor, note).await?;
+    AuditModel::record_on(
+        tx.conn(),
         ex.pid,
         &format!("process_{}", status.token()),
         actor,
@@ -364,13 +368,13 @@ async fn end_early<C: ConnectionTrait>(
     )
     .await
     .map_err(Error::Model)?;
-    finish(conn, ex, status, note).await
+    finish(tx, ex, status, note).await
 }
 
 /// Run from step `from`: notices go out at once, the first step that needs a person
 /// starts and the execution waits on it, and with none left it completes.
-async fn run_from<C: ConnectionTrait>(
-    conn: &C,
+async fn run_from(
+    tx: &mut Tx,
     ex: process_executions::Model,
     steps: &[Step],
     from: usize,
@@ -379,7 +383,7 @@ async fn run_from<C: ConnectionTrait>(
     let adv = rules::advance(steps, from);
     for &i in &adv.completed {
         log(
-            conn,
+            tx,
             ex.pid,
             Some(i),
             "step_started",
@@ -387,8 +391,8 @@ async fn run_from<C: ConnectionTrait>(
             Some(&steps[i].title),
         )
         .await?;
-        cap_models::notify(
-            conn,
+        cap_models::notify_on(
+            tx,
             &steps[i].person_ref,
             &ex.subject_kind,
             ex.subject_pid,
@@ -396,11 +400,11 @@ async fn run_from<C: ConnectionTrait>(
             &steps[i].title,
         )
         .await?;
-        log(conn, ex.pid, Some(i), "step_completed", actor, None).await?;
+        log(tx, ex.pid, Some(i), "step_completed", actor, None).await?;
     }
     if let Some((i, kind)) = adv.waiting {
         log(
-            conn,
+            tx,
             ex.pid,
             Some(i),
             "step_started",
@@ -410,26 +414,24 @@ async fn run_from<C: ConnectionTrait>(
         .await?;
         match kind {
             Kind::Approve => {
-                approval_requests::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    subject_kind: ActiveValue::set(ex.subject_kind.clone()),
-                    subject_pid: ActiveValue::set(ex.subject_pid),
-                    requested_by: ActiveValue::set(ex.started_by.clone()),
-                    approver_ref: ActiveValue::set(steps[i].person_ref.clone()),
-                    message: ActiveValue::set(Some(steps[i].title.clone())),
-                    status: ActiveValue::set("pending".to_string()),
-                    decision_comment: ActiveValue::set(None),
-                    decided_by: ActiveValue::set(None),
-                    decided_at: ActiveValue::set(None),
-                    process_execution_pid: ActiveValue::set(Some(ex.pid)),
-                    process_step: ActiveValue::set(i32::try_from(i).ok()),
-                    ..Default::default()
-                }
-                .insert(conn)
-                .await
-                .map_err(db_err)?;
-                cap_models::notify(
-                    conn,
+                sqlx::query(
+                    "INSERT INTO approval_requests
+                         (pid, subject_kind, subject_pid, requested_by, approver_ref, message, status,
+                          decision_comment, decided_by, decided_at, process_execution_pid, process_step)
+                     VALUES ($1, $2, $3, $4, $5, $6, 'pending', NULL, NULL, NULL, $7, $8)",
+                )
+                .bind(Uuid::new_v4())
+                .bind(&ex.subject_kind)
+                .bind(ex.subject_pid)
+                .bind(&ex.started_by)
+                .bind(&steps[i].person_ref)
+                .bind(&steps[i].title)
+                .bind(ex.pid)
+                .bind(i32::try_from(i).ok())
+                .execute(tx.conn())
+                .await?;
+                cap_models::notify_on(
+                    tx,
                     &steps[i].person_ref,
                     &ex.subject_kind,
                     ex.subject_pid,
@@ -439,8 +441,8 @@ async fn run_from<C: ConnectionTrait>(
                 .await?;
             }
             _ => {
-                cap_models::notify(
-                    conn,
+                cap_models::notify_on(
+                    tx,
                     &steps[i].person_ref,
                     &ex.subject_kind,
                     ex.subject_pid,
@@ -450,18 +452,27 @@ async fn run_from<C: ConnectionTrait>(
                 .await?;
             }
         }
-        let mut a: process_executions::ActiveModel = ex.into();
-        a.current_step = ActiveValue::set(i32::try_from(i).unwrap_or(i32::MAX));
-        return a.update(conn).await.map_err(db_err);
+        return Ok(set_step(tx, ex.id, i32::try_from(i).unwrap_or(i32::MAX)).await?);
     }
-    log(conn, ex.pid, None, "execution_completed", actor, None).await?;
-    AuditModel::record(conn, ex.pid, "process_completed", actor, None)
+    log(tx, ex.pid, None, "execution_completed", actor, None).await?;
+    AuditModel::record_on(tx.conn(), ex.pid, "process_completed", actor, None)
         .await
         .map_err(Error::Model)?;
-    let mut a: process_executions::ActiveModel = ex.into();
-    a.current_step = ActiveValue::set(i32::try_from(steps.len()).unwrap_or(i32::MAX));
-    let ex = a.update(conn).await.map_err(db_err)?;
-    finish(conn, ex, Status::Completed, None).await
+    let ex = set_step(tx, ex.id, i32::try_from(steps.len()).unwrap_or(i32::MAX)).await?;
+    finish(tx, ex, Status::Completed, None).await
+}
+
+/// Move an execution to step `step`, naming only that column.
+async fn set_step(
+    tx: &mut Tx,
+    id: i64,
+    step: i32,
+) -> std::result::Result<process_executions::Model, sqlx::Error> {
+    sqlx::query_as("UPDATE process_executions SET current_step = $1 WHERE id = $2 RETURNING *")
+        .bind(step)
+        .bind(id)
+        .fetch_one(tx.conn())
+        .await
 }
 
 // ───────────────────────── executions ─────────────────────────
@@ -493,26 +504,25 @@ async fn start(
         )));
     }
     let subject = resolve_subject(&ctx, &caller, &b.subject_kind, &b.subject_pid).await?;
-    let steps = version_steps(&ctx.db, process.pid, process.current_version).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let ex = process_executions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        process_pid: ActiveValue::set(process.pid),
-        version: ActiveValue::set(process.current_version),
-        subject_kind: ActiveValue::set(b.subject_kind.clone()),
-        subject_pid: ActiveValue::set(subject.pid),
-        status: ActiveValue::set("running".to_string()),
-        current_step: ActiveValue::set(0),
-        started_by: ActiveValue::set(claims.sub.clone()),
-        finished_at: ActiveValue::set(None),
-        note: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let steps = version_steps(&ctx, process.pid, process.current_version).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let ex: process_executions::Model = sqlx::query_as(
+        "INSERT INTO process_executions
+             (pid, process_pid, version, subject_kind, subject_pid, status, current_step, started_by,
+              finished_at, note)
+         VALUES ($1, $2, $3, $4, $5, 'running', 0, $6, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(process.pid)
+    .bind(process.current_version)
+    .bind(&b.subject_kind)
+    .bind(subject.pid)
+    .bind(&claims.sub)
+    .fetch_one(tx.conn())
+    .await?;
     log(
-        &txn,
+        &mut tx,
         ex.pid,
         None,
         "execution_started",
@@ -520,10 +530,10 @@ async fn start(
         Some(&format!("{} v{}", process.name, process.current_version)),
     )
     .await?;
-    AuditModel::record(&txn, ex.pid, "process_started", Some(&claims.sub), Some(serde_json::json!({ "process_pid": process.pid, "version": process.current_version, "subject_kind": b.subject_kind, "subject_pid": subject.pid })))
+    AuditModel::record_on(tx.conn(), ex.pid, "process_started", Some(&claims.sub), Some(serde_json::json!({ "process_pid": process.pid, "version": process.current_version, "subject_kind": b.subject_kind, "subject_pid": subject.pid })))
         .await
         .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     // The steps run in a second transaction: if one cannot start, the execution exists
     // and says it failed, rather than vanishing.
     let ex_pid = ex.pid;
@@ -541,24 +551,24 @@ async fn advance_or_fail(
 ) -> Result<()> {
     // First try in one transaction so a half-started step leaves nothing behind.
     let attempt = async {
-        let txn = ctx.db.begin().await.map_err(db_err)?;
-        let ex = lock(&txn, ex_pid).await?;
+        let mut tx = crate::db::begin(ctx).await?;
+        let ex = lock(&mut tx, ex_pid).await?;
         if Status::is_final(&ex.status) {
             return Ok(());
         }
-        run_from(&txn, ex, steps, from, actor).await?;
-        txn.commit().await.map_err(db_err)?;
+        run_from(&mut tx, ex, steps, from, actor).await?;
+        tx.commit().await?;
         Ok::<(), Error>(())
     };
     if let Err(e) = attempt.await {
-        let txn = ctx.db.begin().await.map_err(db_err)?;
-        let ex = lock(&txn, ex_pid).await?;
+        let mut tx = crate::db::begin(ctx).await?;
+        let ex = lock(&mut tx, ex_pid).await?;
         if !Status::is_final(&ex.status) {
             let at = usize::try_from(ex.current_step).unwrap_or(0).max(from);
             let why = format!("{e}");
-            log(&txn, ex.pid, Some(at), "step_failed", actor, Some(&why)).await?;
+            log(&mut tx, ex.pid, Some(at), "step_failed", actor, Some(&why)).await?;
             end_early(
-                &txn,
+                &mut tx,
                 ex,
                 steps,
                 Ending {
@@ -572,7 +582,7 @@ async fn advance_or_fail(
             )
             .await?;
         }
-        txn.commit().await.map_err(db_err)?;
+        tx.commit().await?;
     }
     Ok(())
 }
@@ -582,13 +592,12 @@ async fn execution_json(
     ctx: &AppContext,
     ex: &process_executions::Model,
 ) -> Result<serde_json::Value> {
-    let steps = version_steps(&ctx.db, ex.process_pid, ex.version).await?;
-    let logs = process_execution_logs::Entity::find()
-        .filter(process_execution_logs::Column::ExecutionPid.eq(ex.pid))
-        .order_by_asc(process_execution_logs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let steps = version_steps(ctx, ex.process_pid, ex.version).await?;
+    let logs: Vec<process_execution_logs::Model> =
+        sqlx::query_as("SELECT * FROM process_execution_logs WHERE execution_pid = $1 ORDER BY id")
+            .bind(ex.pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let state_of = |i: usize| -> &'static str {
         let latest = logs
             .iter()
@@ -604,12 +613,11 @@ async fn execution_json(
             _ => "pending",
         }
     };
-    let name = processes::Entity::find()
-        .filter(processes::Column::Pid.eq(ex.process_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .map(|p| p.name);
+    let name: Option<String> =
+        sqlx::query_scalar("SELECT name FROM processes WHERE pid = $1 LIMIT 1")
+            .bind(ex.process_pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?;
     Ok(serde_json::json!({
         "pid": ex.pid, "process_pid": ex.process_pid, "process_name": name, "version": ex.version,
         "subject_kind": ex.subject_kind, "subject_pid": ex.subject_pid,
@@ -624,24 +632,27 @@ async fn execution_json(
 
 /// Load an execution by id and return its JSON view, or 404.
 async fn execution_response(ctx: &AppContext, pid: Uuid) -> Result<Response> {
-    let ex = process_executions::Entity::find()
-        .filter(process_executions::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let ex = execution_by_pid(ctx, pid).await?.ok_or(Error::NotFound)?;
     format::json(execution_json(ctx, &ex).await?)
 }
 
 /// Load an execution by its public id from a path string, or 404.
 async fn find_execution(ctx: &AppContext, pid: &str) -> Result<process_executions::Model> {
     let pid = super::parse_pid(pid)?;
-    process_executions::Entity::find()
-        .filter(process_executions::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    execution_by_pid(ctx, pid).await?.ok_or(Error::NotFound)
+}
+
+/// An execution by its public id, if there is one.
+async fn execution_by_pid(
+    ctx: &AppContext,
+    pid: Uuid,
+) -> Result<Option<process_executions::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM process_executions WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Whether the caller may read an execution: who started it, an admin, anyone named in
@@ -655,7 +666,7 @@ async fn may_read(
     if ex.started_by == claims.sub || is_admin(claims) {
         return true;
     }
-    if let Ok(steps) = version_steps(&ctx.db, ex.process_pid, ex.version).await
+    if let Ok(steps) = version_steps(ctx, ex.process_pid, ex.version).await
         && steps
             .iter()
             .any(|s| is_approver(&s.person_ref, Some(&claims.sub)))
@@ -710,20 +721,24 @@ async fn list_executions(
     Query(q): Query<ListParams>,
 ) -> Result<Response> {
     let mut query =
-        process_executions::Entity::find().order_by_desc(process_executions::Column::Id);
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM process_executions WHERE TRUE");
     if let Some(s) = &q.status {
-        query = query.filter(process_executions::Column::Status.eq(s.as_str()));
+        query.push(" AND status = ").push_bind(s.clone());
     }
     match (&q.subject_kind, &q.subject_pid) {
         (Some(k), Some(p)) => {
             let subject = resolve_subject(&ctx, &MaybeAuthUser(Some(claims.clone())), k, p).await?;
-            query = query
-                .filter(process_executions::Column::SubjectKind.eq(k.as_str()))
-                .filter(process_executions::Column::SubjectPid.eq(subject.pid));
+            query
+                .push(" AND subject_kind = ")
+                .push_bind(k.clone())
+                .push(" AND subject_pid = ")
+                .push_bind(subject.pid);
         }
         (None, None) => {
             if !is_admin(&claims) {
-                query = query.filter(process_executions::Column::StartedBy.eq(claims.sub.as_str()));
+                query
+                    .push(" AND started_by = ")
+                    .push_bind(claims.sub.clone());
             }
         }
         _ => return Err(unprocessable("give subject_kind and subject_pid together")),
@@ -731,12 +746,15 @@ async fn list_executions(
     // Paged in the database: the page is all that is read.
     let page = cursor.page(super::pagination::MAX_LIMIT)?;
     let (limit, offset) = (page.fetch(), page.offset());
-    let rows = query
-        .limit(limit)
-        .offset(offset)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    query
+        .push(" ORDER BY id DESC LIMIT ")
+        .push_bind(i64::try_from(limit).unwrap_or(i64::MAX))
+        .push(" OFFSET ")
+        .push_bind(i64::try_from(offset).unwrap_or(i64::MAX));
+    let rows: Vec<process_executions::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let body = rows.iter()
             .map(|e| serde_json::json!({ "pid": e.pid, "process_pid": e.process_pid, "version": e.version,
                 "subject_kind": e.subject_kind, "subject_pid": e.subject_pid, "status": e.status,
@@ -763,7 +781,7 @@ async fn complete_step(
     Json(b): Json<NoteBody>,
 ) -> Result<Response> {
     let ex0 = find_execution(&ctx, &pid).await?;
-    let steps = version_steps(&ctx.db, ex0.process_pid, ex0.version).await?;
+    let steps = version_steps(&ctx, ex0.process_pid, ex0.version).await?;
     let step = steps.get(index).ok_or(Error::NotFound)?;
     if !is_approver(&step.person_ref, Some(&claims.sub)) {
         return Err(forbidden(
@@ -773,8 +791,8 @@ async fn complete_step(
     if b.note.as_deref().is_some_and(|n| n.chars().count() > 500) {
         return Err(unprocessable("note is at most 500 characters"));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let ex = lock(&txn, ex0.pid).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let ex = lock(&mut tx, ex0.pid).await?;
     if Status::is_final(&ex.status) {
         return Err(conflict("this execution is over"));
     }
@@ -789,7 +807,7 @@ async fn complete_step(
         ));
     }
     log(
-        &txn,
+        &mut tx,
         ex.pid,
         Some(index),
         "step_completed",
@@ -798,15 +816,15 @@ async fn complete_step(
     )
     .await?;
     let ex_pid = ex.pid;
-    let result = run_from(&txn, ex, &steps, index + 1, Some(&claims.sub)).await;
+    let result = run_from(&mut tx, ex, &steps, index + 1, Some(&claims.sub)).await;
     if result.is_ok() {
-        txn.commit().await.map_err(db_err)?;
+        tx.commit().await?;
     } else {
         {
-            drop(txn);
+            drop(tx);
             // The completion is real even if the next step could not start: record it, then fail.
-            let t2 = ctx.db.begin().await.map_err(db_err)?;
-            let ex = lock(&t2, ex_pid).await?;
+            let mut t2 = crate::db::begin(&ctx).await?;
+            let ex = lock(&mut t2, ex_pid).await?;
             // Between the rollback and this lock the execution may have been cancelled or
             // finished: then the completion is not recorded a second time.
             if Status::is_final(&ex.status) || usize::try_from(ex.current_step).ok() != Some(index)
@@ -816,7 +834,7 @@ async fn complete_step(
                 return execution_response(&ctx, ex_pid).await;
             }
             log(
-                &t2,
+                &mut t2,
                 ex.pid,
                 Some(index),
                 "step_completed",
@@ -824,7 +842,7 @@ async fn complete_step(
                 b.note.as_deref(),
             )
             .await?;
-            t2.commit().await.map_err(db_err)?;
+            t2.commit().await?;
             advance_or_fail(&ctx, ex_pid, index + 1, &steps, Some(&claims.sub)).await?;
         }
     }
@@ -847,27 +865,24 @@ async fn cancel(
             "only the person who started this execution, or an admin, may cancel it",
         ));
     }
-    let steps = version_steps(&ctx.db, ex0.process_pid, ex0.version).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let ex = lock(&txn, ex0.pid).await?;
+    let steps = version_steps(&ctx, ex0.process_pid, ex0.version).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let ex = lock(&mut tx, ex0.pid).await?;
     if Status::is_final(&ex.status) {
         return Err(conflict("this execution is already over"));
     }
     let at = usize::try_from(ex.current_step).unwrap_or(0);
     // The step it is waiting on is skipped too (it did not complete), and its approval withdrawn.
-    approval_requests::Entity::update_many()
-        .col_expr(
-            approval_requests::Column::Status,
-            sea_orm::sea_query::Expr::value("withdrawn"),
-        )
-        .filter(approval_requests::Column::ProcessExecutionPid.eq(ex.pid))
-        .filter(approval_requests::Column::Status.eq("pending"))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
+    sqlx::query(
+        "UPDATE approval_requests SET status = 'withdrawn'
+         WHERE process_execution_pid = $1 AND status = 'pending'",
+    )
+    .bind(ex.pid)
+    .execute(tx.conn())
+    .await?;
     let ex_pid = ex.pid;
     end_early(
-        &txn,
+        &mut tx,
         ex,
         &steps,
         Ending {
@@ -880,7 +895,7 @@ async fn cancel(
         },
     )
     .await?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     execution_response(&ctx, ex_pid).await
 }
 
@@ -901,23 +916,19 @@ pub(crate) async fn on_approval(
     let Ok(index) = usize::try_from(step) else {
         return Ok(());
     };
-    let ex0 = process_executions::Entity::find()
-        .filter(process_executions::Column::Pid.eq(ex_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let ex0 = execution_by_pid(ctx, ex_pid).await?;
     let Some(ex0) = ex0 else { return Ok(()) };
-    let steps = version_steps(&ctx.db, ex0.process_pid, ex0.version).await?;
+    let steps = version_steps(ctx, ex0.process_pid, ex0.version).await?;
     let actor = approval.decided_by.clone();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let ex = lock(&txn, ex_pid).await?;
+    let mut tx = crate::db::begin(ctx).await?;
+    let ex = lock(&mut tx, ex_pid).await?;
     if Status::is_final(&ex.status) || usize::try_from(ex.current_step).ok() != Some(index) {
         return Ok(()); // already applied, or not the step it is waiting on
     }
     match approval.status.as_str() {
         "approved" => {
             log(
-                &txn,
+                &mut tx,
                 ex.pid,
                 Some(index),
                 "step_completed",
@@ -925,12 +936,12 @@ pub(crate) async fn on_approval(
                 approval.decision_comment.as_deref(),
             )
             .await?;
-            run_from(&txn, ex, &steps, index + 1, actor.as_deref()).await?;
-            txn.commit().await.map_err(db_err)?;
+            run_from(&mut tx, ex, &steps, index + 1, actor.as_deref()).await?;
+            tx.commit().await?;
         }
         "rejected" => {
             log(
-                &txn,
+                &mut tx,
                 ex.pid,
                 Some(index),
                 "step_rejected",
@@ -939,7 +950,7 @@ pub(crate) async fn on_approval(
             )
             .await?;
             end_early(
-                &txn,
+                &mut tx,
                 ex,
                 &steps,
                 Ending {
@@ -952,11 +963,11 @@ pub(crate) async fn on_approval(
                 },
             )
             .await?;
-            txn.commit().await.map_err(db_err)?;
+            tx.commit().await?;
         }
         "withdrawn" => {
             end_early(
-                &txn,
+                &mut tx,
                 ex,
                 &steps,
                 Ending {
@@ -969,7 +980,7 @@ pub(crate) async fn on_approval(
                 },
             )
             .await?;
-            txn.commit().await.map_err(db_err)?;
+            tx.commit().await?;
         }
         _ => {}
     }
@@ -992,27 +1003,31 @@ async fn resume(
         ));
     }
     if !Status::is_final(&ex.status) {
-        let waiting = approval_requests::Entity::find()
-            .filter(approval_requests::Column::ProcessExecutionPid.eq(ex.pid))
-            .filter(approval_requests::Column::ProcessStep.eq(ex.current_step))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let waiting: Option<approval_requests::Model> = sqlx::query_as(
+            "SELECT * FROM approval_requests
+             WHERE process_execution_pid = $1 AND process_step = $2 LIMIT 1",
+        )
+        .bind(ex.pid)
+        .bind(ex.current_step)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?;
         if let Some(a) = waiting {
             on_approval(&ctx, &a).await?;
         } else {
             // Nothing is waiting and the current step has no log at all: the process stopped
             // between creating the execution and starting its first step (or the next one).
             // Run it now; a step that began is left alone.
-            let begun = process_execution_logs::Entity::find()
-                .filter(process_execution_logs::Column::ExecutionPid.eq(ex.pid))
-                .filter(process_execution_logs::Column::StepIndex.eq(ex.current_step))
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .is_some();
+            let begun = sqlx::query(
+                "SELECT 1 FROM process_execution_logs
+                 WHERE execution_pid = $1 AND step_index = $2 LIMIT 1",
+            )
+            .bind(ex.pid)
+            .bind(ex.current_step)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .is_some();
             if !begun {
-                let steps = version_steps(&ctx.db, ex.process_pid, ex.version).await?;
+                let steps = version_steps(&ctx, ex.process_pid, ex.version).await?;
                 let from = usize::try_from(ex.current_step).unwrap_or(0);
                 advance_or_fail(&ctx, ex.pid, from, &steps, Some(&claims.sub)).await?;
             }

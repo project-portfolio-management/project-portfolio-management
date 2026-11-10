@@ -7,15 +7,13 @@
 //!   retry returns the first answer; the table also refuses a second task for the same outcome.
 
 use crate::prelude::*;
-use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::{conflict, db_err, unprocessable};
+use super::{conflict, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::meeting_actions::{self as rules, Meeting, ProposalIn, Verdict};
-use crate::models::_entities::tasks;
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Both routes take this body.
@@ -37,63 +35,55 @@ struct Facts {
     people: Vec<String>,
 }
 
-/// Runs a single-parameter raw SQL query (bound to `pid`) and returns its rows; used for the small lookups the proposal rules need.
-async fn column(
-    db: &impl ConnectionTrait,
-    sql: &str,
-    pid: Uuid,
-) -> Result<Vec<sea_orm::QueryResult>> {
-    db.query_all_raw(Statement::from_sql_and_values(
-        DatabaseBackend::Postgres,
-        sql,
-        [pid.into()],
-    ))
-    .await
-    .map_err(db_err)
+/// Runs a single-parameter SQL query (bound to `pid`) and returns its one column, `None` where it is null; used for the
+/// small lookups the proposal rules need.
+async fn column<T>(ctx: &AppContext, sql: &'static str, pid: Uuid) -> Result<Vec<Option<T>>>
+where
+    T: Send + Unpin + for<'r> sqlx::Decode<'r, sqlx::Postgres> + sqlx::Type<sqlx::Postgres>,
+{
+    Ok(sqlx::query_scalar(sql)
+        .bind(pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await?)
 }
 
 /// Reads the meeting and the facts the proposal rules judge against. Refuses (409) unless the meeting was held and has minutes.
-async fn facts(
-    db: &impl ConnectionTrait,
-    ctx: &AppContext,
-    plan_pid: Uuid,
-    mid: &str,
-) -> Result<Facts> {
+async fn facts(ctx: &AppContext, plan_pid: Uuid, mid: &str) -> Result<Facts> {
     let meeting = super::meetings::find(ctx, plan_pid, mid).await?;
     if meeting.status != "held" || meeting.minutes.as_deref().is_none_or(str::is_empty) {
         return Err(conflict(
             "only a held meeting with minutes has outcomes to propose tasks for",
         ));
     }
-    let kinds = column(
-        db,
+    let kinds = column::<String>(
+        ctx,
         "SELECT outcome_kind AS v FROM meeting_items WHERE meeting_pid = $1 AND part = 'outcome' ORDER BY id",
         meeting.pid,
     )
     .await?
-    .iter()
-    .map(|r| r.try_get::<String>("", "v").unwrap_or_default())
+    .into_iter()
+    .map(Option::unwrap_or_default)
     .collect();
-    let taken = column(
-        db,
+    let taken = column::<i32>(
+        ctx,
         "SELECT outcome_no AS v FROM meeting_tasks WHERE meeting_pid = $1",
         meeting.pid,
     )
     .await?
-    .iter()
-    .filter_map(|r| r.try_get::<i32>("", "v").ok())
+    .into_iter()
+    .flatten()
     .filter_map(|n| usize::try_from(n).ok())
     .collect();
     // The plan's people: whoever is assigned a live task of the plan or holds a RACI letter on it.
-    let people = column(
-        db,
+    let people = column::<String>(
+        ctx,
         "SELECT assignee_ref AS v FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL AND assignee_ref IS NOT NULL \
          UNION SELECT person_ref FROM raci_assignments WHERE plan_pid = $1 AND deleted_at IS NULL",
         plan_pid,
     )
     .await?
-    .iter()
-    .filter_map(|r| r.try_get::<String>("", "v").ok())
+    .into_iter()
+    .flatten()
     .collect();
     Ok(Facts {
         meeting,
@@ -156,7 +146,7 @@ async fn preview(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     check_shape(&b.items)?;
-    let f = facts(&ctx.db, &ctx, plan.pid, &mid).await?;
+    let f = facts(&ctx, plan.pid, &mid).await?;
     let v = verdicts(&b.items, &f);
     let count = |pred: fn(&Verdict) -> bool| v.iter().filter(|x| pred(x)).count();
     format::json(json!({
@@ -180,7 +170,7 @@ async fn commit(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     check_shape(&b.items)?;
-    let f = facts(&ctx.db, &ctx, plan.pid, &mid).await?;
+    let f = facts(&ctx, plan.pid, &mid).await?;
     let v = verdicts(&b.items, &f);
     let refused: Vec<String> = v
         .iter()
@@ -201,64 +191,69 @@ async fn commit(
         .map_or("todo", |s| s.key.as_str())
         .to_string();
     let now = chrono::Utc::now();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let now: chrono::DateTime<chrono::FixedOffset> = now.into();
+    let mut tx = crate::db::begin(&ctx).await?;
     let mut created = vec![];
     for (p, verdict) in b.items.iter().zip(&v) {
         let Verdict::Ready(assignee) = verdict else {
             continue;
         };
-        let task = tasks::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            sprint_pid: ActiveValue::set(None),
-            title: ActiveValue::set(p.title.trim().to_string()),
-            description: ActiveValue::set(Some(format!(
-                "Created from the minutes of the meeting \"{}\".",
-                f.meeting.title
-            ))),
-            status: ActiveValue::set(initial.clone()),
-            assignee_ref: ActiveValue::set(assignee.clone()),
-            points: ActiveValue::set(p.points),
-            due_date: ActiveValue::set(p.due_on),
-            status_changed_at: ActiveValue::set(now.into()),
-            flow_type: ActiveValue::set(None),
-            done_at: ActiveValue::set(None),
-            deleted_at: ActiveValue::set(None),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
-        crate::tba::transition_row(
-            task.pid,
-            plan.pid,
-            None,
-            initial.clone(),
-            now,
-            caller.actor().map(ToString::to_string),
-            assignee.clone(),
+        let task_pid: Uuid = sqlx::query_scalar(
+            "INSERT INTO tasks
+                 (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points, due_date,
+                  status_changed_at, flow_type, done_at, deleted_at)
+             VALUES ($1, $2, NULL, $3, $4, $5, $6, $7, $8, $9, NULL, NULL, NULL)
+             RETURNING pid",
         )
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
-        let outcome_no = i32::try_from(p.outcome).unwrap_or(i32::MAX);
-        txn.execute_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "INSERT INTO meeting_tasks (meeting_pid, outcome_no, task_pid) VALUES ($1, $2, $3)",
-            [f.meeting.pid.into(), outcome_no.into(), task.pid.into()],
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind(p.title.trim())
+        .bind(format!(
+            "Created from the minutes of the meeting \"{}\".",
+            f.meeting.title
         ))
+        .bind(&initial)
+        .bind(assignee)
+        .bind(p.points)
+        .bind(p.due_on)
+        .bind(now)
+        .fetch_one(tx.conn())
+        .await?;
+        // The task's creation in the transition log, as `crate::tba::transition_row` writes it.
+        sqlx::query(
+            "INSERT INTO task_transitions
+                 (pid, task_pid, plan_pid, from_status, to_status, at, actor_ref, assignee_ref, backfilled)
+             VALUES ($1, $2, $3, NULL, $4, $5, $6, $7, false)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(task_pid)
+        .bind(plan.pid)
+        .bind(&initial)
+        .bind(now)
+        .bind(caller.actor())
+        .bind(assignee)
+        .execute(tx.conn())
+        .await?;
+        let outcome_no = i32::try_from(p.outcome).unwrap_or(i32::MAX);
+        sqlx::query(
+            "INSERT INTO meeting_tasks (meeting_pid, outcome_no, task_pid) VALUES ($1, $2, $3)",
+        )
+        .bind(f.meeting.pid)
+        .bind(outcome_no)
+        .bind(task_pid)
+        .execute(tx.conn())
         .await
         .map_err(|e| {
             if e.to_string().contains("meeting_tasks_outcome_once") {
                 conflict("an outcome of this meeting already has a task")
             } else {
-                db_err(e)
+                Error::from(e)
             }
         })?;
-        created.push(json!({ "index": created.len(), "outcome": p.outcome, "task_pid": task.pid }));
+        created.push(json!({ "index": created.len(), "outcome": p.outcome, "task_pid": task_pid }));
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "meeting_tasks_created",
         caller.actor(),
@@ -266,7 +261,7 @@ async fn commit(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({ "meeting": f.meeting.pid, "created": created }))
 }
 

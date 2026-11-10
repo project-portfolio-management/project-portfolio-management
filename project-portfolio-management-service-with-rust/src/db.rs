@@ -85,6 +85,26 @@ impl Tx {
     }
 }
 
+/// Somewhere several statements can run in turn: a transaction ([`Tx`]), or the pool ([`pool`]), where each statement
+/// commits on its own. A helper that runs more than one statement takes `&mut impl Session`, so it serves both and
+/// never decides for its caller whether the writes share a transaction.
+pub trait Session: Send {
+    /// The executor for the next statement, counted.
+    fn ex(&mut self) -> impl Executor<'_, Database = Postgres>;
+}
+
+impl Session for Tx {
+    fn ex(&mut self) -> impl Executor<'_, Database = Postgres> {
+        self.conn()
+    }
+}
+
+impl Session for Counted<&PgPool> {
+    fn ex(&mut self) -> impl Executor<'_, Database = Postgres> {
+        *self
+    }
+}
+
 /// Starts a transaction.
 ///
 /// # Errors

@@ -74,7 +74,7 @@ async fn view_with_evidence(
             sources.push(match evidence::parse(s) {
                 Ok(Source::Record { kind, pid }) => {
                     let link = Link { kind: kind.clone(), pid };
-                    match super::meetings::describe(&ctx.db, u.plan_pid, &link).await? {
+                    match super::meetings::describe(ctx, u.plan_pid, &link).await? {
                         Some(title) => json!({ "source": s, "state": "ok", "kind": kind, "pid": pid, "title": title }),
                         None => json!({ "source": s, "state": "unavailable" }),
                     }
@@ -257,7 +257,7 @@ async fn post_update(
     for (i, c) in body.claims.iter().enumerate() {
         for s in &c.sources {
             if let Ok(Source::Record { kind, pid }) = evidence::parse(s)
-                && super::meetings::describe(&ctx.db, plan.pid, &Link { kind, pid })
+                && super::meetings::describe(&ctx, plan.pid, &Link { kind, pid })
                     .await?
                     .is_none()
             {

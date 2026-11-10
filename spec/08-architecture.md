@@ -131,7 +131,14 @@ row: `AuditModel::record` is for SeaORM and `AuditModel::record_on` for sqlx.
 
 `src/db.rs` is the only way to sqlx: `db::pool` and `db::begin`. Both count each statement in `query_count`, where SeaORM's
 statements are counted too, so a guard on how many statements a route runs covers both sides. A census test refuses the raw pool
-anywhere else. An update names only the columns it changes, as SeaORM's did, and no row hook exists to carry across.
+anywhere else. An update names only the columns it changes, as SeaORM's did, and no row hook exists to carry across. A helper that
+runs several statements takes `&mut impl db::Session`, which is a transaction or the pool, so the caller decides whether they share
+one.
+
+How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
+API on 10 November, 8 have moved (`approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`, `meetings`,
+`meeting_actions`, `lessons`) and 139 are left. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
+connection.
 
 ### 8.3 Service layout
 

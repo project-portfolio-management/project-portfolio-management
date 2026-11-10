@@ -11,13 +11,13 @@
 //! About people, so it needs the permission to manage people. It moves ownership;
 //! it does not check the new person's capacity (the leveling view does that).
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
+use crate::db::Session;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use chrono::{NaiveDate, Utc};
-use sea_orm::{ConnectionTrait, QueryOrder, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -39,22 +39,23 @@ struct Holding {
 }
 
 /// What a person holds on a plan, ordered by kind then pid (so it is repeatable).
-async fn holdings<C: ConnectionTrait>(
-    conn: &C,
+async fn holdings(
+    db: &mut impl Session,
     plan: Uuid,
     person: &str,
     def: &WorkflowDef,
     today: NaiveDate,
 ) -> Result<Vec<Holding>> {
     let mut out = Vec::new();
-    for t in tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::AssigneeRef.eq(person))
-        .order_by_asc(tasks::Column::Pid)
-        .all(conn)
-        .await
-        .map_err(db_err)?
+    for t in sqlx::query_as::<_, tasks::Model>(
+        "SELECT * FROM tasks
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND assignee_ref = $2
+         ORDER BY pid",
+    )
+    .bind(plan)
+    .bind(person)
+    .fetch_all(db.ex())
+    .await?
     {
         if !crate::workflow::is_done(def, &t.status) {
             out.push(Holding {
@@ -64,14 +65,15 @@ async fn holdings<C: ConnectionTrait>(
             });
         }
     }
-    for a in allocations::Entity::find()
-        .filter(allocations::Column::PlanPid.eq(plan))
-        .filter(allocations::Column::DeletedAt.is_null())
-        .filter(allocations::Column::PersonRef.eq(person))
-        .order_by_asc(allocations::Column::Pid)
-        .all(conn)
-        .await
-        .map_err(db_err)?
+    for a in sqlx::query_as::<_, allocations::Model>(
+        "SELECT * FROM allocations
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND person_ref = $2
+         ORDER BY pid",
+    )
+    .bind(plan)
+    .bind(person)
+    .fetch_all(db.ex())
+    .await?
     {
         if a.end_date.is_none_or(|e| e >= today) {
             out.push(Holding {
@@ -87,14 +89,15 @@ async fn holdings<C: ConnectionTrait>(
             });
         }
     }
-    for r in raci_assignments::Entity::find()
-        .filter(raci_assignments::Column::PlanPid.eq(plan))
-        .filter(raci_assignments::Column::DeletedAt.is_null())
-        .filter(raci_assignments::Column::PersonRef.eq(person))
-        .order_by_asc(raci_assignments::Column::Pid)
-        .all(conn)
-        .await
-        .map_err(db_err)?
+    for r in sqlx::query_as::<_, raci_assignments::Model>(
+        "SELECT * FROM raci_assignments
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND person_ref = $2
+         ORDER BY pid",
+    )
+    .bind(plan)
+    .bind(person)
+    .fetch_all(db.ex())
+    .await?
     {
         out.push(Holding {
             kind: "raci",
@@ -102,15 +105,16 @@ async fn holdings<C: ConnectionTrait>(
             label: format!("RACI role {}", r.role),
         });
     }
-    for r in risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(plan))
-        .filter(risks::Column::DeletedAt.is_null())
-        .filter(risks::Column::OwnerRef.eq(person))
-        .filter(risks::Column::Status.is_in(["open", "mitigating"]))
-        .order_by_asc(risks::Column::Pid)
-        .all(conn)
-        .await
-        .map_err(db_err)?
+    for r in sqlx::query_as::<_, risks::Model>(
+        "SELECT * FROM risks
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND owner_ref = $2
+           AND status IN ('open', 'mitigating')
+         ORDER BY pid",
+    )
+    .bind(plan)
+    .bind(person)
+    .fetch_all(db.ex())
+    .await?
     {
         out.push(Holding {
             kind: "risk",
@@ -119,6 +123,15 @@ async fn holdings<C: ConnectionTrait>(
         });
     }
     Ok(out)
+}
+
+/// What a handed-over row's moved column becomes.
+#[derive(Debug, Clone, Copy)]
+enum Moved<'a> {
+    /// The new holder (or nobody, for a released task or risk).
+    Person(Option<&'a str>),
+    /// Released: the row is soft-deleted at this moment.
+    Deleted(chrono::DateTime<chrono::FixedOffset>),
 }
 
 /// Fingerprint of the person, target and the exact holdings found, so a commit with `If-Match` fails when anything changed since the preview.
@@ -182,7 +195,7 @@ async fn preview(
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let def = super::workflow::in_force(&ctx, plan.pid, "task").await?;
     let h = holdings(
-        &ctx.db,
+        &mut crate::db::pool(&ctx),
         plan.pid,
         &b.from_person,
         &def,
@@ -246,91 +259,67 @@ async fn commit(
     let to = b.to_person.as_deref();
     // The freshness check is made through the transaction that writes, behind a lock
     // on the plan, so a second commit waits and then sees the first one's changes.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    super::advisory_lock(&txn, "handover", plan.pid).await?;
-    let h = holdings(&txn, plan.pid, &b.from_person, &def, today).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    super::advisory_lock_on(&mut tx, "handover", plan.pid).await?;
+    let h = holdings(&mut tx, plan.pid, &b.from_person, &def, today).await?;
     if etag(&b.from_person, to, &h) != expected {
         return Err(stale());
     }
     let now: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
     let mut entries = 0;
     for x in &h {
-        let action = match (x.kind, to) {
-            ("task", _) => {
-                let row = tasks::Entity::find()
-                    .filter(tasks::Column::Pid.eq(x.pid))
-                    .one(&txn)
-                    .await
-                    .map_err(db_err)?
-                    .ok_or(Error::NotFound)?;
-                let mut a: tasks::ActiveModel = row.into();
-                a.assignee_ref = ActiveValue::set(to.map(str::to_string));
-                a.update(&txn).await.map_err(db_err)?;
-                "task_handed_over"
-            }
-            ("risk", _) => {
-                let row = risks::Entity::find()
-                    .filter(risks::Column::Pid.eq(x.pid))
-                    .one(&txn)
-                    .await
-                    .map_err(db_err)?
-                    .ok_or(Error::NotFound)?;
-                let mut a: risks::ActiveModel = row.into();
-                a.owner_ref = ActiveValue::set(to.map(str::to_string));
-                a.update(&txn).await.map_err(db_err)?;
-                "risk_handed_over"
-            }
-            ("allocation", Some(t)) => {
-                let row = allocations::Entity::find()
-                    .filter(allocations::Column::Pid.eq(x.pid))
-                    .one(&txn)
-                    .await
-                    .map_err(db_err)?
-                    .ok_or(Error::NotFound)?;
-                let mut a: allocations::ActiveModel = row.into();
-                a.person_ref = ActiveValue::set(t.to_string());
-                a.update(&txn).await.map_err(db_err)?;
-                "allocation_handed_over"
-            }
-            ("allocation", None) => {
-                let row = allocations::Entity::find()
-                    .filter(allocations::Column::Pid.eq(x.pid))
-                    .one(&txn)
-                    .await
-                    .map_err(db_err)?
-                    .ok_or(Error::NotFound)?;
-                let mut a: allocations::ActiveModel = row.into();
-                a.deleted_at = ActiveValue::set(Some(now));
-                a.update(&txn).await.map_err(db_err)?;
-                "allocation_released"
-            }
-            ("raci", Some(t)) => {
-                let row = raci_assignments::Entity::find()
-                    .filter(raci_assignments::Column::Pid.eq(x.pid))
-                    .one(&txn)
-                    .await
-                    .map_err(db_err)?
-                    .ok_or(Error::NotFound)?;
-                let mut a: raci_assignments::ActiveModel = row.into();
-                a.person_ref = ActiveValue::set(t.to_string());
-                a.update(&txn).await.map_err(db_err)?;
-                "raci_handed_over"
-            }
-            _ => {
-                let row = raci_assignments::Entity::find()
-                    .filter(raci_assignments::Column::Pid.eq(x.pid))
-                    .one(&txn)
-                    .await
-                    .map_err(db_err)?
-                    .ok_or(Error::NotFound)?;
-                let mut a: raci_assignments::ActiveModel = row.into();
-                a.deleted_at = ActiveValue::set(Some(now));
-                a.update(&txn).await.map_err(db_err)?;
-                "raci_released"
-            }
+        // Each row is read by its pid, then written by its id naming only the column that moves.
+        let (table, set, value, action) = match (x.kind, to) {
+            ("task", _) => (
+                "tasks",
+                "assignee_ref",
+                Moved::Person(to),
+                "task_handed_over",
+            ),
+            ("risk", _) => ("risks", "owner_ref", Moved::Person(to), "risk_handed_over"),
+            ("allocation", Some(t)) => (
+                "allocations",
+                "person_ref",
+                Moved::Person(Some(t)),
+                "allocation_handed_over",
+            ),
+            ("allocation", None) => (
+                "allocations",
+                "deleted_at",
+                Moved::Deleted(now),
+                "allocation_released",
+            ),
+            ("raci", Some(t)) => (
+                "raci_assignments",
+                "person_ref",
+                Moved::Person(Some(t)),
+                "raci_handed_over",
+            ),
+            _ => (
+                "raci_assignments",
+                "deleted_at",
+                Moved::Deleted(now),
+                "raci_released",
+            ),
         };
-        AuditModel::record(
-            &txn,
+        // The table and column come from the match above, never from the request.
+        let id: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+            "SELECT id::int8 FROM {table} WHERE pid = $1 LIMIT 1"
+        )))
+        .bind(x.pid)
+        .fetch_optional(tx.conn())
+        .await?
+        .ok_or(Error::NotFound)?;
+        let update = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "UPDATE {table} SET {set} = $1 WHERE id = $2 RETURNING id"
+        )));
+        let update = match value {
+            Moved::Person(p) => update.bind(p.map(str::to_string)),
+            Moved::Deleted(at) => update.bind(Some(at)),
+        };
+        update.bind(id).fetch_one(tx.conn()).await?;
+        AuditModel::record_on(
+            tx.conn(),
             x.pid,
             action,
             caller.actor(),
@@ -343,7 +332,7 @@ async fn commit(
         .map_err(Error::Model)?;
         entries += 1;
     }
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "committed": true, "audit_entries": entries, "holdings": h,
         "from_person": b.from_person, "to_person": b.to_person,

@@ -8,10 +8,9 @@
 //! told (`approval_requested`) and the requester is told of the outcome
 //! (`approval_decided`), both honouring notification preferences.
 
+use super::unprocessable;
 use super::{conflict, forbidden};
-use super::{db_err, unprocessable};
 use crate::prelude::*;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -27,11 +26,10 @@ use crate::models::capabilities as cap_models;
 /// Loads an approval request by public id, `NotFound` when unknown.
 async fn find(ctx: &AppContext, pid: &str) -> Result<approval_requests::Model> {
     let pid = super::parse_pid(pid)?;
-    approval_requests::Entity::find()
-        .filter(approval_requests::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM approval_requests WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -73,29 +71,34 @@ async fn request_approval(
     }
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = approval_requests::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set(p.subject_kind.clone()),
-        subject_pid: ActiveValue::set(subject.pid),
-        requested_by: ActiveValue::set(claims.sub.clone()),
-        approver_ref: ActiveValue::set(p.approver_ref.clone()),
-        message: ActiveValue::set(p.message.clone()),
-        status: ActiveValue::set("pending".to_string()),
-        decision_comment: ActiveValue::set(None),
-        decided_by: ActiveValue::set(None),
-        decided_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: approval_requests::Model = sqlx::query_as(
+        "INSERT INTO approval_requests
+             (pid, subject_kind, subject_pid, requested_by, approver_ref, message, status,
+              decision_comment, decided_by, decided_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', NULL, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&p.subject_kind)
+    .bind(subject.pid)
+    .bind(&claims.sub)
+    .bind(&p.approver_ref)
+    .bind(&p.message)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "approval_requested",
+        Some(&claims.sub),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "approval_requested", Some(&claims.sub), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    cap_models::notify(
-        &ctx.db,
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
+    cap_models::notify_on(
+        &mut crate::db::pool(&ctx),
         &p.approver_ref,
         &p.subject_kind,
         subject.pid,
@@ -133,26 +136,35 @@ async fn list(
     AuthUser(claims): AuthUser,
     Query(p): Query<ListParams>,
 ) -> Result<Response> {
-    let mut q = approval_requests::Entity::find();
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM approval_requests WHERE ");
     if let (Some(kind), Some(pid)) = (p.subject_kind.as_deref(), p.subject_pid.as_deref()) {
         let caller = MaybeAuthUser(Some(claims.clone()));
         let subject = resolve_subject(&ctx, &caller, kind, pid).await?;
-        q = q
-            .filter(approval_requests::Column::SubjectKind.eq(kind))
-            .filter(approval_requests::Column::SubjectPid.eq(subject.pid));
+        q.push("subject_kind = ")
+            .push_bind(kind.to_string())
+            .push(" AND subject_pid = ")
+            .push_bind(subject.pid);
     } else {
         let me = Uuid::parse_str(&claims.sub).ok();
         let refs: Vec<String> = me
             .map(|u| vec![format!("person:{u}"), format!("worker:{u}")])
             .unwrap_or_default();
-        let as_approver = approval_requests::Column::ApproverRef.is_in(refs);
-        let as_requester = approval_requests::Column::RequestedBy.eq(claims.sub.as_str());
-        q = match p.mine.as_deref() {
-            Some("approver") => q.filter(as_approver),
-            Some("requester") => q.filter(as_requester),
-            None => q.filter(sea_orm::Condition::any().add(as_approver).add(as_requester)),
+        match p.mine.as_deref() {
+            Some("approver") => {
+                q.push("approver_ref = ANY(").push_bind(refs).push(")");
+            }
+            Some("requester") => {
+                q.push("requested_by = ").push_bind(claims.sub.clone());
+            }
+            None => {
+                q.push("(approver_ref = ANY(")
+                    .push_bind(refs)
+                    .push(") OR requested_by = ")
+                    .push_bind(claims.sub.clone())
+                    .push(")");
+            }
             Some(_) => return Err(unprocessable("mine must be approver or requester")),
-        };
+        }
     }
     if let Some(status) = p.status {
         if !rules::STATUSES.contains(&status.as_str()) {
@@ -161,15 +173,12 @@ async fn list(
                 rules::STATUSES
             )));
         }
-        q = q.filter(approval_requests::Column::Status.eq(status));
+        q.push(" AND status = ").push_bind(status);
     }
-    format::json(
-        q.order_by_desc(approval_requests::Column::Id)
-            .limit(500)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?,
-    )
+    q.push(" ORDER BY id DESC LIMIT 500");
+    let rows: Vec<approval_requests::Model> =
+        q.build_query_as().fetch_all(crate::db::pool(&ctx)).await?;
+    format::json(rows)
 }
 
 /// `POST /api/approvals/{pid}/decide` body.
@@ -216,17 +225,17 @@ async fn decide(
         row.subject_kind.clone(),
         row.subject_pid,
     );
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     let updated = settle(
-        &txn,
+        &mut tx,
         request_pid,
         status,
         p.comment.as_ref().map(|c| c.trim().to_string()),
         Some(claims.sub.clone()),
     )
     .await?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         request_pid,
         &format!("approval_{status}"),
         Some(&claims.sub),
@@ -238,13 +247,13 @@ async fn decide(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     // An approval that belongs to a process moves that process on (or ends it).
     super::processes::on_approval(&ctx, &updated).await?;
     super::controlled_documents::on_approval(&ctx, &updated).await?;
     if let Some(target) = discussion_rules::sub_as_recipient(&requester) {
-        cap_models::notify(
-            &ctx.db,
+        cap_models::notify_on(
+            &mut crate::db::pool(&ctx),
             &target,
             &subject_kind,
             subject_pid,
@@ -271,10 +280,10 @@ async fn withdraw(
     }
     let status = rules::withdraw(&row.status).map_err(|r| conflict(&r.message()))?;
     let request_pid = row.pid;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let updated = settle(&txn, request_pid, status, None, None).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let updated = settle(&mut tx, request_pid, status, None, None).await?;
+    AuditModel::record_on(
+        tx.conn(),
         request_pid,
         "approval_withdrawn",
         Some(&claims.sub),
@@ -282,7 +291,7 @@ async fn withdraw(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     super::processes::on_approval(&ctx, &updated).await?;
     super::controlled_documents::on_approval(&ctx, &updated).await?;
     format::json(updated)
@@ -292,45 +301,42 @@ async fn withdraw(
 /// the condition, so of two racing decisions (or a decision and a withdrawal) exactly one
 /// lands and the other is a 409 — never a last-write-wins that leaves what hangs off the
 /// request (a process step, a document version) disagreeing with it.
-async fn settle<C: ConnectionTrait>(
-    db: &C,
+async fn settle(
+    tx: &mut crate::db::Tx,
     pid: Uuid,
     status: &str,
     comment: Option<String>,
     decided_by: Option<String>,
 ) -> Result<approval_requests::Model> {
-    let decided = decided_by.is_some();
-    let mut q = approval_requests::Entity::update_many()
-        .col_expr(
-            approval_requests::Column::Status,
-            sea_orm::sea_query::Expr::value(status.to_string()),
+    let done = if decided_by.is_some() {
+        sqlx::query(
+            "UPDATE approval_requests
+             SET status = $1, decision_comment = $2, decided_by = $3, decided_at = $4
+             WHERE pid = $5 AND status = 'pending'",
         )
-        .filter(approval_requests::Column::Pid.eq(pid))
-        .filter(approval_requests::Column::Status.eq("pending"));
-    if decided {
-        q = q
-            .col_expr(
-                approval_requests::Column::DecisionComment,
-                sea_orm::sea_query::Expr::value(comment),
-            )
-            .col_expr(
-                approval_requests::Column::DecidedBy,
-                sea_orm::sea_query::Expr::value(decided_by),
-            )
-            .col_expr(
-                approval_requests::Column::DecidedAt,
-                sea_orm::sea_query::Expr::value(chrono::Utc::now().fixed_offset()),
-            );
-    }
-    let done = q.exec(db).await.map_err(db_err)?;
-    if done.rows_affected != 1 {
+        .bind(status)
+        .bind(comment)
+        .bind(decided_by)
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(pid)
+        .execute(tx.conn())
+        .await?
+    } else {
+        sqlx::query(
+            "UPDATE approval_requests SET status = $1 WHERE pid = $2 AND status = 'pending'",
+        )
+        .bind(status)
+        .bind(pid)
+        .execute(tx.conn())
+        .await?
+    };
+    if done.rows_affected() != 1 {
         return Err(conflict("this request was already decided or withdrawn"));
     }
-    approval_requests::Entity::find()
-        .filter(approval_requests::Column::Pid.eq(pid))
-        .one(db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM approval_requests WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(tx.conn())
+        .await?
         .ok_or(Error::NotFound)
 }
 

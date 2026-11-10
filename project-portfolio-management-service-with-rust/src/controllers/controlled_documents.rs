@@ -8,11 +8,11 @@
 //! edit is the next draft) — in the database itself as well as here. Every transition
 //! is audited.
 
+use super::unprocessable;
 use super::{conflict, forbidden};
-use super::{db_err, unprocessable};
+use crate::db::Tx;
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -43,13 +43,13 @@ fn require_signed_in(caller: &MaybeAuthUser) -> Result<()> {
 async fn find_doc(ctx: &AppContext, caller: &MaybeAuthUser, pid: &str) -> Result<docs::Model> {
     require_signed_in(caller)?;
     let pid = super::parse_pid(pid)?;
-    let doc = docs::Entity::find()
-        .filter(docs::Column::Pid.eq(pid))
-        .filter(docs::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let doc: docs::Model = sqlx::query_as(
+        "SELECT * FROM controlled_documents WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if let Some(plan) = doc.plan_pid {
         if super::guests::caller_is_guest(caller)
             && !super::guests::guest_covers_plan(&ctx.db, caller, plan, "read").await
@@ -66,14 +66,24 @@ async fn find_doc(ctx: &AppContext, caller: &MaybeAuthUser, pid: &str) -> Result
     Ok(doc)
 }
 
-/// All versions of a document, oldest first (ascending version number). Generic over the connection so it can run inside a transaction.
-async fn versions_of<C: ConnectionTrait>(conn: &C, doc: Uuid) -> Result<Vec<versions::Model>> {
-    versions::Entity::find()
-        .filter(versions::Column::DocumentPid.eq(doc))
-        .order_by_asc(versions::Column::Version)
-        .all(conn)
-        .await
-        .map_err(db_err)
+/// The statement for all versions of a document, oldest first (ascending version number).
+const VERSIONS_OF: &str =
+    "SELECT * FROM document_versions WHERE document_pid = $1 ORDER BY version";
+
+/// All versions of a document, oldest first (ascending version number).
+async fn versions_of(ctx: &AppContext, doc: Uuid) -> Result<Vec<versions::Model>> {
+    Ok(sqlx::query_as(VERSIONS_OF)
+        .bind(doc)
+        .fetch_all(crate::db::pool(ctx))
+        .await?)
+}
+
+/// [`versions_of`] inside a transaction.
+async fn versions_in(tx: &mut Tx, doc: Uuid) -> Result<Vec<versions::Model>> {
+    Ok(sqlx::query_as(VERSIONS_OF)
+        .bind(doc)
+        .fetch_all(tx.conn())
+        .await?)
 }
 
 /// JSON shape of one version. The text is included only when `with_body` is set, so list and summary views stay small.
@@ -91,7 +101,7 @@ fn version_view(v: &versions::Model, with_body: bool) -> serde_json::Value {
 
 /// JSON shape of a document with its version summaries (no bodies) and `in_force_today`, the version in force on the deployment's current date, or null when none is.
 async fn doc_view(ctx: &AppContext, doc: &docs::Model) -> Result<serde_json::Value> {
-    let vs = versions_of(&ctx.db, doc.pid).await?;
+    let vs = versions_of(ctx, doc.pid).await?;
     let spans: Vec<Span> = vs
         .iter()
         .filter_map(|v| {
@@ -126,31 +136,30 @@ pub(crate) struct CreateBody {
 }
 
 /// Insert one version row in `draft` status with no approval, effective date or supersession. `by` is the subject recorded as its creator.
-async fn insert_version<C: ConnectionTrait>(
-    conn: &C,
+async fn insert_version(
+    tx: &mut Tx,
     doc: Uuid,
     version: i32,
     body: &str,
     summary: Option<&str>,
     by: &str,
 ) -> Result<versions::Model> {
-    versions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        document_pid: ActiveValue::set(doc),
-        version: ActiveValue::set(version),
-        body: ActiveValue::set(body.to_string()),
-        change_summary: ActiveValue::set(summary.map(str::to_string)),
-        status: ActiveValue::set(Status::Draft.token().to_string()),
-        approval_pid: ActiveValue::set(None),
-        effective_from: ActiveValue::set(None),
-        superseded_on: ActiveValue::set(None),
-        superseded_by: ActiveValue::set(None),
-        created_by: ActiveValue::set(Some(by.to_string())),
-        ..Default::default()
-    }
-    .insert(conn)
-    .await
-    .map_err(db_err)
+    Ok(sqlx::query_as(
+        "INSERT INTO document_versions
+             (pid, document_pid, version, body, change_summary, status, approval_pid, effective_from,
+              superseded_on, superseded_by, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, NULL, NULL, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(doc)
+    .bind(version)
+    .bind(body)
+    .bind(summary)
+    .bind(Status::Draft.token())
+    .bind(by)
+    .fetch_one(tx.conn())
+    .await?)
 }
 
 /// `POST /api/documents` — create a document and its first draft.
@@ -174,20 +183,20 @@ async fn create(
     if let Some(plan) = b.plan_pid {
         resolve_subject(&ctx, &caller, "plan", &plan.to_string()).await?;
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let doc = docs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        title: ActiveValue::set(b.title.trim().to_string()),
-        plan_pid: ActiveValue::set(b.plan_pid),
-        created_by: ActiveValue::set(Some(claims.sub.clone())),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let doc: docs::Model = sqlx::query_as(
+        "INSERT INTO controlled_documents (pid, title, plan_pid, created_by, deleted_at)
+         VALUES ($1, $2, $3, $4, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.title.trim())
+    .bind(b.plan_pid)
+    .bind(&claims.sub)
+    .fetch_one(tx.conn())
+    .await?;
     let v = insert_version(
-        &txn,
+        &mut tx,
         doc.pid,
         1,
         b.body.as_deref().unwrap_or(""),
@@ -195,8 +204,8 @@ async fn create(
         &claims.sub,
     )
     .await?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         doc.pid,
         "document_created",
         Some(&claims.sub),
@@ -204,8 +213,8 @@ async fn create(
     )
     .await
     .map_err(Error::Model)?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         v.pid,
         "document_version_created",
         Some(&claims.sub),
@@ -213,7 +222,7 @@ async fn create(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(doc_view(&ctx, &doc).await?)
 }
 
@@ -227,12 +236,11 @@ async fn list(
     require_signed_in(&caller)?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let rows = scope.keep(
-        docs::Entity::find()
-            .filter(docs::Column::DeletedAt.is_null())
-            .order_by_asc(docs::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?,
+        sqlx::query_as::<_, docs::Model>(
+            "SELECT * FROM controlled_documents WHERE deleted_at IS NULL ORDER BY id",
+        )
+        .fetch_all(crate::db::pool(&ctx))
+        .await?,
     );
     let guest = super::guests::caller_is_guest(&caller);
     let rows: Vec<_> = rows
@@ -272,7 +280,7 @@ async fn get_version(
     Path((pid, version)): Path<(String, i32)>,
 ) -> Result<Response> {
     let doc = find_doc(&ctx, &caller, &pid).await?;
-    let v = versions_of(&ctx.db, doc.pid)
+    let v = versions_of(&ctx, doc.pid)
         .await?
         .into_iter()
         .find(|v| v.version == version)
@@ -299,7 +307,7 @@ async fn in_force(
 ) -> Result<Response> {
     let doc = find_doc(&ctx, &caller, &pid).await?;
     let date = q.on.unwrap_or_else(crate::tz::deployment_today);
-    let vs = versions_of(&ctx.db, doc.pid).await?;
+    let vs = versions_of(&ctx, doc.pid).await?;
     let spans: Vec<Span> = vs
         .iter()
         .filter_map(|v| {
@@ -329,7 +337,7 @@ pub(crate) struct DraftBody {
 
 /// Fetch one numbered version of a document, or `NotFound` when that number does not exist.
 async fn find_version(ctx: &AppContext, doc: Uuid, n: i32) -> Result<versions::Model> {
-    versions_of(&ctx.db, doc)
+    versions_of(ctx, doc)
         .await?
         .into_iter()
         .find(|v| v.version == n)
@@ -363,10 +371,10 @@ async fn new_version(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     // Serialize per document so two people cannot both open "the next draft".
-    super::advisory_lock(&txn, "document", doc.pid).await?;
-    let vs = versions_of(&txn, doc.pid).await?;
+    super::advisory_lock_on(&mut tx, "document", doc.pid).await?;
+    let vs = versions_in(&mut tx, doc.pid).await?;
     if vs.iter().any(|v| {
         matches!(
             Status::parse(&v.status),
@@ -381,7 +389,7 @@ async fn new_version(
     let next = latest.version + 1;
     let body = b.body.unwrap_or_else(|| latest.body.clone());
     let v = insert_version(
-        &txn,
+        &mut tx,
         doc.pid,
         next,
         &body,
@@ -389,8 +397,8 @@ async fn new_version(
         &claims.sub,
     )
     .await?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         v.pid,
         "document_version_created",
         Some(&claims.sub),
@@ -398,7 +406,7 @@ async fn new_version(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(version_view(&v, true))
 }
 
@@ -433,19 +441,30 @@ async fn edit_version(
         )));
     }
     let was = v.body.chars().count();
-    let mut a: versions::ActiveModel = v.into();
-    if let Some(body) = &b.body {
-        a.body = ActiveValue::set(body.clone());
-    }
-    if b.change_summary.is_some() {
-        a.change_summary = ActiveValue::set(b.change_summary.clone());
-    }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "document_version_edited", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "chars_before": was, "chars_after": row.body.chars().count() })))
+    let mut tx = crate::db::begin(&ctx).await?;
+    // Only the columns given are named; with none, the row is read back unchanged.
+    let row: versions::Model = if b.body.is_none() && b.change_summary.is_none() {
+        sqlx::query_as("SELECT * FROM document_versions WHERE id = $1 LIMIT 1")
+            .bind(v.id)
+            .fetch_one(tx.conn())
+            .await?
+    } else {
+        let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE document_versions SET ");
+        let mut set = q.separated(", ");
+        if let Some(body) = &b.body {
+            set.push("body = ").push_bind_unseparated(body.clone());
+        }
+        if b.change_summary.is_some() {
+            set.push("change_summary = ")
+                .push_bind_unseparated(b.change_summary.clone());
+        }
+        q.push(" WHERE id = ").push_bind(v.id).push(" RETURNING *");
+        q.build_query_as().fetch_one(tx.conn()).await?
+    };
+    AuditModel::record_on(tx.conn(), row.pid, "document_version_edited", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "chars_before": was, "chars_after": row.body.chars().count() })))
         .await
         .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(version_view(&row, true))
 }
 
@@ -479,10 +498,10 @@ async fn submit(
             "you cannot approve your own document: name someone else",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     // Serialize per document, then re-read: two submits cannot both pass the draft check.
-    super::advisory_lock(&txn, "document", doc.pid).await?;
-    let v = versions_of(&txn, doc.pid)
+    super::advisory_lock_on(&mut tx, "document", doc.pid).await?;
+    let v = versions_in(&mut tx, doc.pid)
         .await?
         .into_iter()
         .find(|v| v.version == n)
@@ -495,35 +514,37 @@ async fn submit(
     if v.body.trim().is_empty() {
         return Err(unprocessable("a version with no text cannot be reviewed"));
     }
-    let approval = approval_requests::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set("document_version".to_string()),
-        subject_pid: ActiveValue::set(v.pid),
-        requested_by: ActiveValue::set(claims.sub.clone()),
-        approver_ref: ActiveValue::set(b.approver_ref.clone()),
-        message: ActiveValue::set(Some(
-            b.message
-                .clone()
-                .unwrap_or_else(|| format!("Approve {} version {n}", doc.title)),
-        )),
-        status: ActiveValue::set("pending".to_string()),
-        decision_comment: ActiveValue::set(None),
-        decided_by: ActiveValue::set(None),
-        decided_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    let mut a: versions::ActiveModel = v.into();
-    a.status = ActiveValue::set(Status::InReview.token().to_string());
-    a.approval_pid = ActiveValue::set(Some(approval.pid));
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "document_version_submitted", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "approval_pid": approval.pid })))
+    let approval: approval_requests::Model = sqlx::query_as(
+        "INSERT INTO approval_requests
+             (pid, subject_kind, subject_pid, requested_by, approver_ref, message, status,
+              decision_comment, decided_by, decided_at)
+         VALUES ($1, 'document_version', $2, $3, $4, $5, 'pending', NULL, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(v.pid)
+    .bind(&claims.sub)
+    .bind(&b.approver_ref)
+    .bind(
+        b.message
+            .clone()
+            .unwrap_or_else(|| format!("Approve {} version {n}", doc.title)),
+    )
+    .fetch_one(tx.conn())
+    .await?;
+    let row: versions::Model = sqlx::query_as(
+        "UPDATE document_versions SET status = $1, approval_pid = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(Status::InReview.token())
+    .bind(approval.pid)
+    .bind(v.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "document_version_submitted", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "approval_pid": approval.pid })))
         .await
         .map_err(Error::Model)?;
-    cap_models::notify(
-        &txn,
+    cap_models::notify_on(
+        &mut tx,
         &b.approver_ref,
         "document_version",
         row.pid,
@@ -531,7 +552,7 @@ async fn submit(
         "Your approval has been requested",
     )
     .await?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(version_view(&row, false))
 }
 
@@ -548,13 +569,13 @@ pub(crate) async fn on_approval(
     if approval.subject_kind != "document_version" {
         return Ok(());
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let Some(v) = versions::Entity::find()
-        .filter(versions::Column::Pid.eq(approval.subject_pid))
-        .lock_exclusive()
-        .one(&txn)
-        .await
-        .map_err(db_err)?
+    let mut tx = crate::db::begin(ctx).await?;
+    let Some(v) = sqlx::query_as::<_, versions::Model>(
+        "SELECT * FROM document_versions WHERE pid = $1 LIMIT 1 FOR UPDATE",
+    )
+    .bind(approval.subject_pid)
+    .fetch_optional(tx.conn())
+    .await?
     else {
         return Ok(());
     };
@@ -569,16 +590,21 @@ pub(crate) async fn on_approval(
     };
     rules::check_move(Status::InReview, to).map_err(|m| conflict(&m))?;
     let (doc, n) = (v.document_pid, v.version);
-    let mut a: versions::ActiveModel = v.into();
-    a.status = ActiveValue::set(to.token().to_string());
-    if to == Status::Draft {
-        a.approval_pid = ActiveValue::set(None);
+    let row: versions::Model = if to == Status::Draft {
+        sqlx::query_as(
+            "UPDATE document_versions SET status = $1, approval_pid = NULL WHERE id = $2 RETURNING *",
+        )
+    } else {
+        sqlx::query_as("UPDATE document_versions SET status = $1 WHERE id = $2 RETURNING *")
     }
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, event, approval.decided_by.as_deref().or(Some(&approval.requested_by)), Some(serde_json::json!({ "document_pid": doc, "version": n, "approval_pid": approval.pid, "comment": approval.decision_comment })))
+    .bind(to.token())
+    .bind(v.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, event, approval.decided_by.as_deref().or(Some(&approval.requested_by)), Some(serde_json::json!({ "document_pid": doc, "version": n, "approval_pid": approval.pid, "comment": approval.decision_comment })))
         .await
         .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Ok(())
 }
 
@@ -594,9 +620,9 @@ async fn make_effective(
     let caller = MaybeAuthUser(Some(claims.clone()));
     let doc = find_doc(&ctx, &caller, &pid).await?;
     owner_only(&doc, &claims)?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    super::advisory_lock(&txn, "document", doc.pid).await?;
-    let vs = versions_of(&txn, doc.pid).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    super::advisory_lock_on(&mut tx, "document", doc.pid).await?;
+    let vs = versions_in(&mut tx, doc.pid).await?;
     let v = vs
         .iter()
         .find(|v| v.version == n)
@@ -614,11 +640,11 @@ async fn make_effective(
             "a document with no approval cannot become effective",
         ));
     };
-    let approval = approval_requests::Entity::find()
-        .filter(approval_requests::Column::Pid.eq(approval_pid))
-        .one(&txn)
-        .await
-        .map_err(db_err)?;
+    let approval: Option<approval_requests::Model> =
+        sqlx::query_as("SELECT * FROM approval_requests WHERE pid = $1 LIMIT 1")
+            .bind(approval_pid)
+            .fetch_optional(tx.conn())
+            .await?;
     let approved = approval.as_ref().is_some_and(|a| {
         a.status == "approved" && a.subject_kind == "document_version" && a.subject_pid == v.pid
     });
@@ -635,21 +661,30 @@ async fn make_effective(
     if let Some(old) = current {
         rules::check_move(Status::Effective, Status::Superseded).map_err(|m| conflict(&m))?;
         let (old_pid, old_n) = (old.pid, old.version);
-        let mut a: versions::ActiveModel = old.clone().into();
-        a.status = ActiveValue::set(Status::Superseded.token().to_string());
-        a.superseded_on = ActiveValue::set(Some(from));
-        a.superseded_by = ActiveValue::set(Some(v.pid));
-        a.update(&txn).await.map_err(db_err)?;
-        AuditModel::record(&txn, old_pid, "document_version_superseded", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": old_n, "superseded_by": v.pid, "on": from })))
+        sqlx::query(
+            "UPDATE document_versions SET status = $1, superseded_on = $2, superseded_by = $3
+             WHERE id = $4 RETURNING id",
+        )
+        .bind(Status::Superseded.token())
+        .bind(from)
+        .bind(v.pid)
+        .bind(old.id)
+        .fetch_one(tx.conn())
+        .await?;
+        AuditModel::record_on(tx.conn(), old_pid, "document_version_superseded", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": old_n, "superseded_by": v.pid, "on": from })))
             .await
             .map_err(Error::Model)?;
     }
-    let mut a: versions::ActiveModel = v.clone().into();
-    a.status = ActiveValue::set(Status::Effective.token().to_string());
-    a.effective_from = ActiveValue::set(Some(from));
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let row: versions::Model = sqlx::query_as(
+        "UPDATE document_versions SET status = $1, effective_from = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(Status::Effective.token())
+    .bind(from)
+    .bind(v.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "document_version_made_effective",
         Some(&claims.sub),
@@ -657,7 +692,7 @@ async fn make_effective(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(version_view(&row, false))
 }
 

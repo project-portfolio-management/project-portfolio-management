@@ -219,6 +219,23 @@ pub(crate) async fn advisory_lock<C: sea_orm::ConnectionTrait>(
     Ok(())
 }
 
+/// [`advisory_lock`] on a `sqlx` transaction ([`crate::db::begin`]): the same key, so the two sides exclude each other.
+///
+/// # Errors
+///
+/// `500` when the lock statement fails.
+pub(crate) async fn advisory_lock_on(
+    tx: &mut crate::db::Tx,
+    scope: &'static str,
+    key: impl std::fmt::Display,
+) -> axa::Result<()> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtext($1))")
+        .bind(format!("{scope}:{key}"))
+        .execute(tx.conn())
+        .await?;
+    Ok(())
+}
+
 /// `409 Conflict` with the error code `conflict` and `message`.
 #[must_use]
 pub(crate) fn conflict(message: &str) -> axa::Error {

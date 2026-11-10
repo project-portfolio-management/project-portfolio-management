@@ -1881,6 +1881,36 @@ came from grep.
   **Acceptance:** each statement matches the code; the link checker passes.
   **Built 2026-10-21.** The link-route privacy notes in the root and service CHANGELOGs are struck through with a correction, and `plan_access::path_tests::every_link_route_is_behind_the_privacy_guard` reads `plan_links.rs`'s route table and checks each route is under the guard (`privacy_mw` wraps the whole router, `app.rs`). COMPARISONS.md: change requests built, load test published. `spec/15`: "Planned, not built" and HD-6/HD-7 corrected. `ppm.ts` header and the UI package description fixed. `operations/deployment.md` lists the three newer cargo tasks and which one the in-process ticker also runs. **No change needed:** the CSP note — the UI CHANGELOG entry that set `style-src-attr 'unsafe-inline'` is history, and the root CHANGELOG already records its removal (2026-10-18). **Found while doing it:** `src/scheduler.rs` already runs four kinds of job, so NC-5 is narrower than first written (amended).
 
+## SeaORM removal (SQ-n)
+
+- [ ] **SQ-1 (L) — Remove SeaORM: finish the move to sqlx ([spec §8.3b](spec/08-architecture.md)).** The owner asked
+  to remove all SeaORM. The plan, each step its own commit:
+  (a) the controllers and models, in batches of about ten files, to plain sqlx through `src/db.rs` (`db::pool`,
+  `db::begin`), each handler's audit row written by `AuditModel::record_on` in the same transaction as its writes;
+  (b) the migration crate from `sea-orm-migration` to sqlx migrations with a history bridge (**decided, owner,
+  2026-11-10**): each existing migration's SQL is frozen as a sqlx migration file; on first boot a one-time step copies
+  every migration already recorded in `seaql_migrations` into sqlx's own table, so nothing runs twice; rolling back
+  stays refused where it is refused today; existing databases upgrade in place;
+  (c) delete `src/models/_entities`, turn axa's `sea-orm` feature off and its `sqlx` feature on (so `ctx.db` is the
+  `PgPool`), drop the sea-orm dependencies, and update §8.3b and the docs.
+  **Acceptance:** `grep -r sea_orm` finds nothing in the service and migration crates; the whole database suite and
+  every database test binary pass.
+  **Measure 2026-11-10 (before batch 1).** 147 files under `src/` (not `src/models/_entities`) name the SeaORM API
+  (`sea_orm::`, `ActiveModel`, `ActiveValue`, `Entity::find`, `EntityTrait`, `ColumnTrait`, `QueryFilter`,
+  `ConnectionTrait`, `TransactionTrait`, `DatabaseConnection`, `DatabaseTransaction`, `ModelTrait`, `IntoActiveModel`,
+  `PaginatorTrait`, `QueryOrder`, `QuerySelect`, `Set(`, `::Column::`, `::Entity`, `DbErr`, …), on 5,774 lines.
+  **Progress 2026-11-10, batch 1 (not ticked).** The governed-records controllers moved: `approvals`, `processes`,
+  `controlled_documents` (they share `approval_requests`), `onboarding`, `handover` (they share the people
+  holdings), `meetings`, `meeting_actions` and `lessons` (they share the meeting links): 447 lines naming SeaORM, now
+  none; 139 files and 5,327 lines left. New shared pieces: `db::Session` (a helper that runs several statements serves
+  a transaction or the pool), `controllers::advisory_lock_on`, `capabilities::notify_on` and `sinks::enqueue_on`
+  (sqlx twins of the SeaORM helpers, which stay for the controllers not yet moved). `meetings::describe` now takes the
+  context, so `status_updates` changed at its two calls. **Still on SeaORM through other modules**, always on the pool
+  and never inside one of these handlers' transactions: `governance::find_item`, `workflow::in_force`,
+  `discussion::resolve_subject`, `plan_access::hidden_plans` and `HiddenScope`, `guests::guest_covers_plan` and
+  `plans::Model::find_by_pid`. **Next batch, suggested:** `okr`, `kpis`, `controls`, `value`, `benefit_validation`
+  and `frameworks` (strategy measures; none is called into except `value` by `earned_value`).
+
 ## Correctness carried forward (CF-n)
 
 Gaps that earlier entries record only as "Not done", lifted here because each

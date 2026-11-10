@@ -139,6 +139,54 @@ pub async fn notify<C: ConnectionTrait>(
     Ok(Some(row))
 }
 
+/// [`notify`] on `sqlx`: in a transaction ([`crate::db::Tx`]) or on the pool ([`crate::db::pool`]), so a handler
+/// moved to `sqlx` writes its notification beside its other writes. The same statements, in the same order.
+///
+/// # Errors
+///
+/// Propagates database errors.
+pub async fn notify_on(
+    db: &mut impl crate::db::Session,
+    recipient_ref: &str,
+    subject_kind: &str,
+    subject_pid: Uuid,
+    kind: &str,
+    message: &str,
+) -> Result<Option<notifications::Model>> {
+    if let Some(sub) = crate::notification_prefs::recipient_sub(recipient_ref) {
+        let opted_out = sqlx::query(
+            "SELECT 1 FROM notification_prefs
+             WHERE sub = $1 AND kind = $2 AND channel = $3 AND enabled = false
+             LIMIT 1",
+        )
+        .bind(sub)
+        .bind(kind)
+        .bind(crate::notification_prefs::DEFAULT_CHANNEL)
+        .fetch_optional(db.ex())
+        .await?
+        .is_some();
+        if opted_out {
+            return Ok(None);
+        }
+    }
+    let row: notifications::Model = sqlx::query_as(
+        "INSERT INTO notifications
+             (pid, recipient_ref, subject_kind, subject_pid, kind, message, read_at, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(recipient_ref)
+    .bind(subject_kind)
+    .bind(subject_pid)
+    .bind(kind)
+    .bind(message)
+    .fetch_one(db.ex())
+    .await?;
+    crate::controllers::sinks::enqueue_on(db, &row).await;
+    Ok(Some(row))
+}
+
 /// Record what one **action** of one automation firing did.
 /// `action_index` (0-based) names which element of the rule's `actions`
 /// array this row reports on (FR-32: "each action's outcome logged

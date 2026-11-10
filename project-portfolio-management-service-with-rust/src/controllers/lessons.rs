@@ -8,13 +8,12 @@
 
 use crate::prelude::*;
 use project_portfolio_management_matcher::{MatchConfig, MatchingEngine, Plan};
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
 use super::plans::parse_kind_label;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::governance as rules;
 use crate::models::_entities::lessons;
@@ -82,7 +81,7 @@ async fn record(
         return Err(unprocessable(&found.join("; ")));
     }
     if let Some(l) = &body.link
-        && super::meetings::describe(&ctx.db, plan.pid, l)
+        && super::meetings::describe(&ctx, plan.pid, l)
             .await?
             .is_none()
     {
@@ -91,25 +90,27 @@ async fn record(
             l.kind, l.pid
         )));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = lessons::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        occasion: ActiveValue::set(body.occasion.clone()),
-        category: ActiveValue::set(body.category.clone()),
-        summary: ActiveValue::set(body.summary.trim().to_string()),
-        detail: ActiveValue::set(body.detail.clone()),
-        recorded_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        link_kind: ActiveValue::set(body.link.as_ref().map(|l| l.kind.clone())),
-        link_pid: ActiveValue::set(body.link.as_ref().map(|l| l.pid)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: lessons::Model = sqlx::query_as(
+        "INSERT INTO lessons
+             (pid, plan_pid, occasion, category, summary, detail, recorded_by, link_kind, link_pid,
+              deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(&body.occasion)
+    .bind(&body.category)
+    .bind(body.summary.trim())
+    .bind(&body.detail)
+    .bind(caller.actor())
+    .bind(body.link.as_ref().map(|l| l.kind.clone()))
+    .bind(body.link.as_ref().map(|l| l.pid))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "lesson_recorded",
         caller.actor(),
@@ -117,7 +118,7 @@ async fn record(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -125,13 +126,12 @@ async fn record(
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = lessons::Entity::find()
-        .filter(lessons::Column::PlanPid.eq(plan.pid))
-        .filter(lessons::Column::DeletedAt.is_null())
-        .order_by_asc(lessons::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<lessons::Model> = sqlx::query_as(
+        "SELECT * FROM lessons WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(rows)
 }
 
@@ -144,20 +144,22 @@ async fn withdraw(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let lesson_pid = gov::parse_pid(&lpid)?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = lessons::Entity::find()
-        .filter(lessons::Column::Pid.eq(lesson_pid))
-        .filter(lessons::Column::PlanPid.eq(plan.pid))
-        .filter(lessons::Column::DeletedAt.is_null())
-        .one(&txn)
-        .await
-        .map_err(db_err)?
-        .ok_or_else(|| Error::NotFound)?;
-    let mut active: lessons::ActiveModel = row.clone().into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: lessons::Model = sqlx::query_as(
+        "SELECT * FROM lessons WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(lesson_pid)
+    .bind(plan.pid)
+    .fetch_optional(tx.conn())
+    .await?
+    .ok_or_else(|| Error::NotFound)?;
+    sqlx::query("UPDATE lessons SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "lesson_withdrawn",
         caller.actor(),
@@ -165,7 +167,7 @@ async fn withdraw(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({ "withdrawn": row.pid }))
 }
 
@@ -181,12 +183,10 @@ async fn for_proposal(
 ) -> Result<Response> {
     let proposal = super::governance::readable_proposal(&ctx, &caller, &pid).await?;
     let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let all = lessons::Entity::find()
-        .filter(lessons::Column::DeletedAt.is_null())
-        .order_by_desc(lessons::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all: Vec<lessons::Model> =
+        sqlx::query_as("SELECT * FROM lessons WHERE deleted_at IS NULL ORDER BY id DESC")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut by_plan: Vec<(Uuid, Vec<lessons::Model>)> = Vec::new();
     for l in all {
         if fence.plan(&l.plan_pid) {

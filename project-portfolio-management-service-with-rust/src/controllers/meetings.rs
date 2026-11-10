@@ -10,15 +10,15 @@
 //! * `GET /api/plans/{pid}/references?kind=&pid=`: the meetings and lessons that point at one record of the plan (BR-4).
 
 use crate::prelude::*;
-use sea_orm::{ConnectionTrait, DatabaseBackend, QueryOrder, Statement};
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::auth::MaybeAuthUser;
+use crate::db::Tx;
 use crate::meetings::{self as rules, AgendaIn, Line, Link, OutcomeIn, Printable};
-use crate::models::_entities::{meeting_items, meetings};
+use crate::models::_entities::{lessons, meeting_items, meetings};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Where each kind of link lives: kind, table, the column that names the record, and the condition for "still there".
@@ -38,7 +38,7 @@ const LINK_TABLES: &[(&str, &str, &str, &str)] = &[
 
 /// The name of the record a link points at, when it belongs to `plan_pid` and is still there.
 pub(super) async fn describe(
-    db: &impl ConnectionTrait,
+    ctx: &AppContext,
     plan_pid: Uuid,
     link: &Link,
 ) -> Result<Option<String>> {
@@ -47,23 +47,20 @@ pub(super) async fn describe(
     };
     // The table, column and condition come from the constant above, never from the request.
     let sql = format!(
-        "SELECT {label}::text AS label FROM {table} WHERE pid = $1 AND plan_pid = $2 AND {live}"
+        "SELECT {label}::text AS label FROM {table} WHERE pid = $1 AND plan_pid = $2 AND {live} LIMIT 1"
     );
-    let row = db
-        .query_one_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            sql,
-            [link.pid.into(), plan_pid.into()],
-        ))
-        .await
-        .map_err(db_err)?;
-    Ok(row.and_then(|r| r.try_get::<String>("", "label").ok()))
+    let label: Option<Option<String>> = sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+        .bind(link.pid)
+        .bind(plan_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
+    Ok(label.flatten())
 }
 
 /// Check every link belongs to the plan; the message names the first that does not.
-async fn check_links(db: &impl ConnectionTrait, plan_pid: Uuid, links: &[&Link]) -> Result<()> {
+async fn check_links(ctx: &AppContext, plan_pid: Uuid, links: &[&Link]) -> Result<()> {
     for link in links {
-        if describe(db, plan_pid, link).await?.is_none() {
+        if describe(ctx, plan_pid, link).await?.is_none() {
             return Err(unprocessable(&format!(
                 "{} {} is not a record of this plan",
                 link.kind, link.pid
@@ -99,29 +96,27 @@ async fn plan(
         return Err(unprocessable(&found.join("; ")));
     }
     let links: Vec<&Link> = b.agenda.iter().filter_map(|a| a.link.as_ref()).collect();
-    check_links(&ctx.db, plan.pid, &links).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = meetings::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        title: ActiveValue::set(b.title.trim().to_string()),
-        scheduled_on: ActiveValue::set(b.scheduled_on),
-        status: ActiveValue::set("planned".to_string()),
-        minutes: ActiveValue::set(None),
-        held_on: ActiveValue::set(None),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        held_by: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    check_links(&ctx, plan.pid, &links).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: meetings::Model = sqlx::query_as(
+        "INSERT INTO meetings
+             (pid, plan_pid, title, scheduled_on, status, minutes, held_on, created_by, held_by,
+              deleted_at)
+         VALUES ($1, $2, $3, $4, 'planned', NULL, NULL, $5, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(b.title.trim())
+    .bind(b.scheduled_on)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
     for a in &b.agenda {
-        insert_item(&txn, row.pid, "agenda", None, &a.text, a.link.as_ref()).await?;
+        insert_item(&mut tx, row.pid, "agenda", None, &a.text, a.link.as_ref()).await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "meeting_planned",
         caller.actor(),
@@ -129,58 +124,57 @@ async fn plan(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": row.pid, "status": row.status }))
 }
 
 /// Insert one agenda or outcome row for a meeting inside the caller's transaction. `part` is `agenda` or an outcome part; `kind` is the outcome kind (absent for agenda items); `link` optionally ties the row to another record.
 async fn insert_item(
-    db: &impl ConnectionTrait,
+    tx: &mut Tx,
     meeting_pid: Uuid,
     part: &str,
     kind: Option<&str>,
     text: &str,
     link: Option<&Link>,
 ) -> Result<()> {
-    meeting_items::ActiveModel {
-        meeting_pid: ActiveValue::set(meeting_pid),
-        part: ActiveValue::set(part.to_string()),
-        outcome_kind: ActiveValue::set(kind.map(str::to_string)),
-        text: ActiveValue::set(text.trim().to_string()),
-        link_kind: ActiveValue::set(link.map(|l| l.kind.clone())),
-        link_pid: ActiveValue::set(link.map(|l| l.pid)),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(db_err)?;
+    sqlx::query(
+        "INSERT INTO meeting_items (meeting_pid, part, outcome_kind, text, link_kind, link_pid)
+         VALUES ($1, $2, $3, $4, $5, $6)",
+    )
+    .bind(meeting_pid)
+    .bind(part)
+    .bind(kind)
+    .bind(text.trim())
+    .bind(link.map(|l| l.kind.clone()))
+    .bind(link.map(|l| l.pid))
+    .execute(tx.conn())
+    .await?;
     Ok(())
 }
 
 /// Load a live meeting by pid that belongs to `plan_pid`, or `NotFound`; a meeting of another plan is indistinguishable from a missing one.
 pub(super) async fn find(ctx: &AppContext, plan_pid: Uuid, mid: &str) -> Result<meetings::Model> {
-    meetings::Entity::find()
-        .filter(meetings::Column::Pid.eq(super::parse_pid(mid)?))
-        .filter(meetings::Column::PlanPid.eq(plan_pid))
-        .filter(meetings::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM meetings WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(super::parse_pid(mid)?)
+    .bind(plan_pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
 /// `GET /api/plans/{pid}/meetings`: the plan's meetings, newest first, without their items.
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = meetings::Entity::find()
-        .filter(meetings::Column::PlanPid.eq(plan.pid))
-        .filter(meetings::Column::DeletedAt.is_null())
-        .order_by_desc(meetings::Column::ScheduledOn)
-        .order_by_desc(meetings::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<meetings::Model> = sqlx::query_as(
+        "SELECT * FROM meetings WHERE plan_pid = $1 AND deleted_at IS NULL
+         ORDER BY scheduled_on DESC, id DESC",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let items: Vec<serde_json::Value> = rows
         .iter()
         .map(|m| {
@@ -207,12 +201,11 @@ struct Items {
 
 /// Load a meeting's agenda and outcome rows in entry order, describing each linked record as it is now. A link whose record is gone is kept and shown as no longer there.
 async fn load_items(ctx: &AppContext, plan_pid: Uuid, meeting_pid: Uuid) -> Result<Items> {
-    let rows = meeting_items::Entity::find()
-        .filter(meeting_items::Column::MeetingPid.eq(meeting_pid))
-        .order_by_asc(meeting_items::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<meeting_items::Model> =
+        sqlx::query_as("SELECT * FROM meeting_items WHERE meeting_pid = $1 ORDER BY id")
+            .bind(meeting_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut items = Items {
         agenda: vec![],
         outcomes: vec![],
@@ -223,7 +216,7 @@ async fn load_items(ctx: &AppContext, plan_pid: Uuid, meeting_pid: Uuid) -> Resu
         let link = match (&r.link_kind, r.link_pid) {
             (Some(kind), Some(pid)) => {
                 let name = describe(
-                    &ctx.db,
+                    ctx,
                     plan_pid,
                     &Link {
                         kind: kind.clone(),
@@ -268,20 +261,16 @@ async fn get_one(
     let m = find(&ctx, plan.pid, &mid).await?;
     let items = load_items(&ctx, plan.pid, m.pid).await?;
     // Each outcome says which task was created from it (BR-3), by its position among the outcomes.
-    let made = ctx
-        .db
-        .query_all_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "SELECT outcome_no, task_pid FROM meeting_tasks WHERE meeting_pid = $1",
-            [m.pid.into()],
-        ))
-        .await
-        .map_err(db_err)?;
+    let made: Vec<(Option<i32>, Option<Uuid>)> =
+        sqlx::query_as("SELECT outcome_no, task_pid FROM meeting_tasks WHERE meeting_pid = $1")
+            .bind(m.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut outcomes = items.outcomes_json;
     for (i, o) in outcomes.iter_mut().enumerate() {
-        let task = made.iter().find_map(|r| {
-            (r.try_get::<i32>("", "outcome_no").ok()? == i32::try_from(i).ok()?)
-                .then(|| r.try_get::<Uuid>("", "task_pid").ok())
+        let task = made.iter().find_map(|(no, task)| {
+            ((*no)? == i32::try_from(i).ok()?)
+                .then_some(*task)
                 .flatten()
         });
         o["index"] = json!(i);
@@ -323,37 +312,25 @@ async fn held(
         return Err(unprocessable(&found.join("; ")));
     }
     let links: Vec<&Link> = b.outcomes.iter().filter_map(|o| o.link.as_ref()).collect();
-    check_links(&ctx.db, plan.pid, &links).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    check_links(&ctx, plan.pid, &links).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
     // Claimed by a conditional update, so two callers cannot both record the same meeting.
-    let claimed = meetings::Entity::update_many()
-        .col_expr(
-            meetings::Column::Status,
-            sea_orm::sea_query::Expr::value("held"),
-        )
-        .col_expr(
-            meetings::Column::Minutes,
-            sea_orm::sea_query::Expr::value(b.minutes.trim().to_string()),
-        )
-        .col_expr(
-            meetings::Column::HeldOn,
-            sea_orm::sea_query::Expr::value(b.held_on.unwrap_or(m.scheduled_on)),
-        )
-        .col_expr(
-            meetings::Column::HeldBy,
-            sea_orm::sea_query::Expr::value(caller.actor().map(str::to_string)),
-        )
-        .filter(meetings::Column::Pid.eq(m.pid))
-        .filter(meetings::Column::Status.eq("planned"))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    if claimed.rows_affected == 0 {
+    let claimed = sqlx::query(
+        "UPDATE meetings SET status = 'held', minutes = $1, held_on = $2, held_by = $3
+         WHERE pid = $4 AND status = 'planned'",
+    )
+    .bind(b.minutes.trim())
+    .bind(b.held_on.unwrap_or(m.scheduled_on))
+    .bind(caller.actor())
+    .bind(m.pid)
+    .execute(tx.conn())
+    .await?;
+    if claimed.rows_affected() == 0 {
         return Err(super::conflict("this meeting is already held or cancelled"));
     }
     for o in &b.outcomes {
         insert_item(
-            &txn,
+            &mut tx,
             m.pid,
             "outcome",
             Some(&o.kind),
@@ -362,8 +339,8 @@ async fn held(
         )
         .await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "meeting_held",
         caller.actor(),
@@ -371,7 +348,7 @@ async fn held(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": m.pid, "status": "held" }))
 }
 
@@ -384,22 +361,18 @@ async fn cancel(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let m = find(&ctx, plan.pid, &mid).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let claimed = meetings::Entity::update_many()
-        .col_expr(
-            meetings::Column::Status,
-            sea_orm::sea_query::Expr::value("cancelled"),
-        )
-        .filter(meetings::Column::Pid.eq(m.pid))
-        .filter(meetings::Column::Status.eq("planned"))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    if claimed.rows_affected == 0 {
+    let mut tx = crate::db::begin(&ctx).await?;
+    let claimed = sqlx::query(
+        "UPDATE meetings SET status = 'cancelled' WHERE pid = $1 AND status = 'planned'",
+    )
+    .bind(m.pid)
+    .execute(tx.conn())
+    .await?;
+    if claimed.rows_affected() == 0 {
         return Err(super::conflict("this meeting is already held or cancelled"));
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "meeting_cancelled",
         caller.actor(),
@@ -407,7 +380,7 @@ async fn cancel(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": m.pid, "status": "cancelled" }))
 }
 
@@ -438,6 +411,25 @@ async fn pdf(
     ))
 }
 
+/// One meeting item that points at the record, with its meeting.
+#[derive(Debug, sqlx::FromRow)]
+struct Reference {
+    /// The meeting's pid.
+    meeting_pid: Option<Uuid>,
+    /// The meeting's title.
+    meeting_title: Option<String>,
+    /// The meeting's status.
+    meeting_status: Option<String>,
+    /// The date the meeting is scheduled for.
+    scheduled_on: Option<chrono::NaiveDate>,
+    /// `agenda` or `outcome`.
+    part: Option<String>,
+    /// The outcome's kind; none on an agenda item.
+    outcome_kind: Option<String>,
+    /// The item's text.
+    text: Option<String>,
+}
+
 /// `GET /api/plans/{pid}/references` query.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct ReferencesQuery {
@@ -462,48 +454,46 @@ async fn references(
         kind: q.kind.clone(),
         pid: q.pid,
     };
-    let Some(title) = describe(&ctx.db, plan.pid, &link).await? else {
+    let Some(title) = describe(&ctx, plan.pid, &link).await? else {
         return Err(Error::NotFound);
     };
-    let rows = ctx
-        .db
-        .query_all_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "SELECT m.pid AS meeting_pid, m.title AS meeting_title, m.status AS meeting_status, \
-                    m.scheduled_on AS scheduled_on, i.part AS part, i.outcome_kind AS outcome_kind, i.text AS text \
-             FROM meeting_items i JOIN meetings m ON m.pid = i.meeting_pid \
-             WHERE m.plan_pid = $1 AND m.deleted_at IS NULL AND i.link_kind = $2 AND i.link_pid = $3 \
-             ORDER BY m.scheduled_on DESC, i.id LIMIT 100"
-                .to_string(),
-            [plan.pid.into(), q.kind.clone().into(), q.pid.into()],
-        ))
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<Reference> = sqlx::query_as(
+        "SELECT m.pid AS meeting_pid, m.title AS meeting_title, m.status AS meeting_status, \
+                m.scheduled_on AS scheduled_on, i.part AS part, i.outcome_kind AS outcome_kind, i.text AS text \
+         FROM meeting_items i JOIN meetings m ON m.pid = i.meeting_pid \
+         WHERE m.plan_pid = $1 AND m.deleted_at IS NULL AND i.link_kind = $2 AND i.link_pid = $3 \
+         ORDER BY m.scheduled_on DESC, i.id LIMIT 100",
+    )
+    .bind(plan.pid)
+    .bind(&q.kind)
+    .bind(q.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let meetings: Vec<serde_json::Value> = rows
         .iter()
         .map(|r| {
             json!({
-                "meeting_pid": r.try_get::<Uuid>("", "meeting_pid").ok(),
-                "meeting_title": r.try_get::<String>("", "meeting_title").ok(),
-                "meeting_status": r.try_get::<String>("", "meeting_status").ok(),
-                "scheduled_on": r.try_get::<chrono::NaiveDate>("", "scheduled_on").ok(),
-                "part": r.try_get::<String>("", "part").ok(),
-                "outcome_kind": r.try_get::<Option<String>>("", "outcome_kind").ok().flatten(),
-                "text": r.try_get::<String>("", "text").ok(),
+                "meeting_pid": r.meeting_pid,
+                "meeting_title": r.meeting_title,
+                "meeting_status": r.meeting_status,
+                "scheduled_on": r.scheduled_on,
+                "part": r.part,
+                "outcome_kind": r.outcome_kind,
+                "text": r.text,
             })
         })
         .collect();
-    let lessons: Vec<serde_json::Value> = crate::models::_entities::lessons::Entity::find()
-        .filter(crate::models::_entities::lessons::Column::PlanPid.eq(plan.pid))
-        .filter(crate::models::_entities::lessons::Column::DeletedAt.is_null())
-        .filter(crate::models::_entities::lessons::Column::LinkKind.eq(q.kind.clone()))
-        .filter(crate::models::_entities::lessons::Column::LinkPid.eq(q.pid))
-        .order_by_asc(crate::models::_entities::lessons::Column::Id)
-        .limit(100)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
+    let lessons: Vec<serde_json::Value> = sqlx::query_as::<_, lessons::Model>(
+        "SELECT * FROM lessons
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND link_kind = $2 AND link_pid = $3
+         ORDER BY id LIMIT 100",
+    )
+    .bind(plan.pid)
+    .bind(&q.kind)
+    .bind(q.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
         .map(|l| json!({ "lesson_pid": l.pid, "occasion": l.occasion, "category": l.category, "summary": l.summary }))
         .collect();
     format::json(json!({

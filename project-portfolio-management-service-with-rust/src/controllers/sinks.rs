@@ -88,6 +88,52 @@ pub(crate) async fn enqueue<C: ConnectionTrait>(db: &C, note: &notifications::Mo
     }
 }
 
+/// [`enqueue`] on `sqlx` ([`crate::db::Session`]): the same statements, in the same order, and never an error.
+pub(crate) async fn enqueue_on(db: &mut impl crate::db::Session, note: &notifications::Model) {
+    let Some(sub) = recipient_sub(&note.recipient_ref) else {
+        return;
+    };
+    let Ok(sinks) = sqlx::query_as::<_, notification_sinks::Model>(
+        "SELECT * FROM notification_sinks WHERE sub = $1 AND enabled = true AND deleted_at IS NULL",
+    )
+    .bind(sub.as_str())
+    .fetch_all(db.ex())
+    .await
+    else {
+        return;
+    };
+    for sink in sinks {
+        let channel = rules::channel_of(&sink.kind);
+        let opted_out = sqlx::query(
+            "SELECT 1 FROM notification_prefs
+             WHERE sub = $1 AND kind = $2 AND channel = $3 AND enabled = false
+             LIMIT 1",
+        )
+        .bind(sub.as_str())
+        .bind(note.kind.as_str())
+        .bind(channel)
+        .fetch_optional(db.ex())
+        .await
+        .ok()
+        .flatten()
+        .is_some();
+        if opted_out {
+            continue;
+        }
+        let _ = sqlx::query(
+            "INSERT INTO sink_deliveries
+                 (pid, sink_pid, notification_pid, status, attempts, next_attempt_at, last_error, delivered_at)
+             VALUES ($1, $2, $3, 'pending', 0, $4, NULL, NULL)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(sink.pid)
+        .bind(note.pid)
+        .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()))
+        .execute(db.ex())
+        .await;
+    }
+}
+
 /// Result of one delivery attempt.
 enum Outcome {
     /// Delivered.

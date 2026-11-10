@@ -22,17 +22,16 @@
 //!   rather than counted as either half. An all-unmeasured control
 //!   reports `null`, never `0%`.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::controls as rules;
-use crate::models::_entities::{control_actions, control_readings, controls, plans, tasks};
+use crate::models::_entities::{control_actions, control_readings, controls, plans};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::validation::MAX_TEXT_LEN;
 
@@ -80,13 +79,12 @@ async fn find_control(
     raw: &str,
 ) -> Result<controls::Model> {
     let pid = find_plan_pid(raw)?;
-    let control = controls::Entity::find()
-        .filter(controls::Column::Pid.eq(pid))
-        .filter(controls::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let control: controls::Model =
+        sqlx::query_as("SELECT * FROM controls WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     require_visible(ctx, caller, control.plan_pid).await?;
     Ok(control)
 }
@@ -99,17 +97,16 @@ async fn find_reading(
     raw: &str,
 ) -> Result<control_readings::Model> {
     let pid = find_plan_pid(raw)?;
-    let reading = control_readings::Entity::find()
-        .filter(control_readings::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let control = controls::Entity::find()
-        .filter(controls::Column::Pid.eq(reading.control_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let reading: control_readings::Model =
+        sqlx::query_as("SELECT * FROM control_readings WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
+    let control: controls::Model = sqlx::query_as("SELECT * FROM controls WHERE pid = $1 LIMIT 1")
+        .bind(reading.control_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)?;
     require_visible(ctx, caller, control.plan_pid).await?;
     Ok(reading)
@@ -122,13 +119,13 @@ async fn find_action(
     raw: &str,
 ) -> Result<control_actions::Model> {
     let pid = find_plan_pid(raw)?;
-    let action = control_actions::Entity::find()
-        .filter(control_actions::Column::Pid.eq(pid))
-        .filter(control_actions::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let action: control_actions::Model = sqlx::query_as(
+        "SELECT * FROM control_actions WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     find_reading(ctx, caller, &action.reading_pid.to_string()).await?;
     Ok(action)
 }
@@ -265,14 +262,14 @@ enum RegisterError {
     NotEvaluable(Vec<rules::Invalid>),
     /// The row failed to insert — a real `500`, not a `422`: everything
     /// the caller controls already passed [`rules::validate`].
-    Db(sea_orm::DbErr),
+    Db(sqlx::Error),
 }
 
 /// Map a [`RegisterError`] to the HTTP error: caller mistakes are `422`,
 /// a failed insert is a `500`.
 fn register_error(err: RegisterError) -> Error {
     match err {
-        RegisterError::Db(e) => db_err(e),
+        RegisterError::Db(e) => Error::from(e),
         RegisterError::BadTiming => {
             unprocessable("timing must be feedforward, concurrent, or feedback")
         }
@@ -295,8 +292,8 @@ fn register_error(err: RegisterError) -> Error {
 /// callers record different audit event names). Returns the inserted
 /// row plus the parsed [`rules::Timing`] (needed for
 /// `permitted_response`, and cheaper than re-parsing the stored token).
-async fn register_control<C: ConnectionTrait>(
-    db: &C,
+async fn register_control(
+    tx: &mut crate::db::Tx,
     plan_pid: Uuid,
     payload: &ControlPayload,
 ) -> std::result::Result<(controls::Model, rules::Timing), RegisterError> {
@@ -324,26 +321,28 @@ async fn register_control<C: ConnectionTrait>(
     rules::validate(&payload.name, &standard, KNOWN_METRICS)
         .map_err(RegisterError::NotEvaluable)?;
 
-    let row = controls::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan_pid),
-        name: ActiveValue::set(payload.name.trim().to_string()),
-        timing: ActiveValue::set(timing_token(timing).to_string()),
-        metric: ActiveValue::set(payload.metric.clone()),
-        target_value: ActiveValue::set(payload.target_value),
-        comparator: ActiveValue::set(payload.comparator.clone()),
-        tolerance: ActiveValue::set(payload.tolerance),
-        unit: ActiveValue::set(payload.unit.clone()),
-        currency: ActiveValue::set(payload.currency.clone()),
-        source_kind: ActiveValue::set(payload.source_kind.clone()),
-        source_ref: ActiveValue::set(payload.source_ref.clone()),
-        cadence_days: ActiveValue::set(payload.cadence_days),
-        owner_ref: ActiveValue::set(payload.owner_ref.clone()),
-        enabled: ActiveValue::set(true),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(db)
+    let row: controls::Model = sqlx::query_as(
+        "INSERT INTO controls
+             (pid, plan_pid, name, timing, metric, target_value, comparator, tolerance, unit, currency,
+              source_kind, source_ref, cadence_days, owner_ref, enabled, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, true, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan_pid)
+    .bind(payload.name.trim())
+    .bind(timing_token(timing))
+    .bind(&payload.metric)
+    .bind(payload.target_value)
+    .bind(&payload.comparator)
+    .bind(payload.tolerance)
+    .bind(&payload.unit)
+    .bind(&payload.currency)
+    .bind(&payload.source_kind)
+    .bind(&payload.source_ref)
+    .bind(payload.cadence_days)
+    .bind(&payload.owner_ref)
+    .fetch_one(tx.conn())
     .await
     .map_err(RegisterError::Db)?;
 
@@ -359,15 +358,21 @@ async fn create(
     Json(payload): Json<ControlPayload>,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let (row, timing) = register_control(&txn, plan.pid, &payload)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let (row, timing) = register_control(&mut tx, plan.pid, &payload)
         .await
         .map_err(register_error)?;
 
-    AuditModel::record(&txn, plan.pid, "control_registered", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    AuditModel::record_on(
+        tx.conn(),
+        plan.pid,
+        "control_registered",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "pid": row.pid.to_string(),
         "permitted_response": rules::permitted_response(timing),
@@ -512,16 +517,16 @@ async fn register_standard(
         ));
     }
 
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     let mut outcomes = Vec::with_capacity(4);
     for candidate in &standard_control_payloads(&payload) {
-        let existing = controls::Entity::find()
-            .filter(controls::Column::PlanPid.eq(plan.pid))
-            .filter(controls::Column::Metric.eq(candidate.metric.as_str()))
-            .filter(controls::Column::DeletedAt.is_null())
-            .one(&txn)
-            .await
-            .map_err(db_err)?;
+        let existing = sqlx::query(
+            "SELECT 1 FROM controls WHERE plan_pid = $1 AND metric = $2 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(plan.pid)
+        .bind(candidate.metric.as_str())
+        .fetch_optional(tx.conn())
+        .await?;
         if existing.is_some() {
             outcomes.push(serde_json::json!({
                 "metric": candidate.metric,
@@ -529,7 +534,7 @@ async fn register_standard(
             }));
             continue;
         }
-        let (row, _timing) = register_control(&txn, plan.pid, candidate)
+        let (row, _timing) = register_control(&mut tx, plan.pid, candidate)
             .await
             .map_err(register_error)?;
         outcomes.push(serde_json::json!({
@@ -539,8 +544,8 @@ async fn register_standard(
         }));
     }
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "standard_controls_registered",
         caller.actor(),
@@ -548,7 +553,7 @@ async fn register_standard(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
 
     format::json(serde_json::json!({ "controls": outcomes }))
 }
@@ -557,13 +562,12 @@ async fn register_standard(
 #[debug_handler]
 async fn list(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let rows = controls::Entity::find()
-        .filter(controls::Column::PlanPid.eq(plan.pid))
-        .filter(controls::Column::DeletedAt.is_null())
-        .order_by_asc(controls::Column::Name)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<controls::Model> = sqlx::query_as(
+        "SELECT * FROM controls WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY name",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(serde_json::json!(rows))
 }
 
@@ -578,14 +582,22 @@ async fn remove(
 ) -> Result<Response> {
     let row = find_control(&ctx, &caller, &pid).await?;
     let plan_pid = row.plan_pid;
-    let mut active: controls::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, plan_pid, "control_withdrawn", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE controls SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        plan_pid,
+        "control_withdrawn",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -621,24 +633,24 @@ async fn add_reading(
     let control = find_control(&ctx, &caller, &pid).await?;
     let (verdict, gap) = rules::compare(&standard_of(&control), payload.value);
 
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = control_readings::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        control_pid: ActiveValue::set(control.pid),
-        value: ActiveValue::set(payload.value),
-        verdict: ActiveValue::set(verdict_token(verdict).to_string()),
-        gap: ActiveValue::set(gap),
-        method: ActiveValue::set(payload.method.clone()),
-        accepted_at: ActiveValue::set(None),
-        accepted_reason: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO control_readings
+             (pid, control_pid, value, verdict, gap, method, accepted_at, accepted_reason)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(control.pid)
+    .bind(payload.value)
+    .bind(verdict_token(verdict))
+    .bind(gap)
+    .bind(&payload.method)
+    .fetch_one(tx.conn())
+    .await?;
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         control.plan_pid,
         "control_reading_recorded",
         caller.actor(),
@@ -646,10 +658,10 @@ async fn add_reading(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
 
     format::json(serde_json::json!({
-        "pid": row.pid.to_string(),
+        "pid": row_pid.to_string(),
         "verdict": verdict_token(verdict),
         "gap": gap,
         "permitted_response": rules::permitted_response(
@@ -666,12 +678,12 @@ async fn list_readings(
     caller: MaybeAuthUser,
 ) -> Result<Response> {
     let control = find_control(&ctx, &caller, &pid).await?;
-    let rows = control_readings::Entity::find()
-        .filter(control_readings::Column::ControlPid.eq(control.pid))
-        .order_by_desc(control_readings::Column::ObservedAt)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<control_readings::Model> = sqlx::query_as(
+        "SELECT * FROM control_readings WHERE control_pid = $1 ORDER BY observed_at DESC",
+    )
+    .bind(control.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(serde_json::json!(rows))
 }
 
@@ -711,34 +723,35 @@ async fn add_action(
         return Err(unprocessable("description is required (and capped)"));
     }
 
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = control_actions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        reading_pid: ActiveValue::set(reading.pid),
-        kind: ActiveValue::set(payload.kind.clone()),
-        description: ActiveValue::set(payload.description.trim().to_string()),
-        owner_ref: ActiveValue::set(payload.owner_ref.clone()),
-        due_date: ActiveValue::set(None),
-        converted_task_pid: ActiveValue::set(None),
-        converted_issue_pid: ActiveValue::set(None),
-        closed_at: ActiveValue::set(None),
-        outcome: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO control_actions
+             (pid, reading_pid, kind, description, owner_ref, due_date, converted_task_pid,
+              converted_issue_pid, closed_at, outcome, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL, NULL, NULL, NULL, NULL, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(reading.pid)
+    .bind(&payload.kind)
+    .bind(payload.description.trim())
+    .bind(&payload.owner_ref)
+    .fetch_one(tx.conn())
+    .await?;
 
     if payload.kind == "accept" {
-        let mut active: control_readings::ActiveModel = reading.clone().into();
-        active.accepted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-        active.accepted_reason = ActiveValue::set(payload.reason.clone());
-        active.update(&txn).await.map_err(db_err)?;
+        sqlx::query(
+            "UPDATE control_readings SET accepted_at = $1, accepted_reason = $2 WHERE id = $3 RETURNING id",
+        )
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(&payload.reason)
+        .bind(reading.id)
+        .fetch_one(tx.conn())
+        .await?;
     }
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         reading.control_pid,
         "control_action_recorded",
         caller.actor(),
@@ -746,8 +759,8 @@ async fn add_action(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `POST /api/actions/{pid}/convert` query.
@@ -787,57 +800,55 @@ async fn convert_to_issue(
         },
         moment,
     );
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let issue = crate::models::_entities::issues::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(control.plan_pid),
-        title: ActiveValue::set(title),
-        description: ActiveValue::set(Some(format!(
-            "Converted from a {} action on control \"{}\".\n\n{}",
-            action.kind, control.name, action.description
-        ))),
-        kind: ActiveValue::set("concern".to_string()),
-        severity: ActiveValue::set("med".to_string()),
-        priority: ActiveValue::set(None),
-        status: ActiveValue::set(status),
-        status_category: ActiveValue::set(category),
-        owner_ref: ActiveValue::set(action.owner_ref.clone()),
-        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        raised_on: ActiveValue::set(today),
-        due_date: ActiveValue::set(action.due_date),
-        resolution: ActiveValue::set(None),
-        resolved_on: ActiveValue::set(None),
-        reported_at: ActiveValue::set(Some(moment.into())),
-        acknowledged_at: ActiveValue::set(times.acknowledged_at.map(Into::into)),
-        source_risk_pid: ActiveValue::set(None),
-        source_task_pid: ActiveValue::set(None),
-        change_request_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    let mut active: control_actions::ActiveModel = action.clone().into();
-    active.converted_issue_pid = ActiveValue::set(Some(issue.pid));
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(ctx).await?;
+    let issue_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO issues
+             (pid, plan_pid, title, description, kind, severity, priority, status, status_category,
+              owner_ref, raised_by, raised_on, due_date, resolution, resolved_on, reported_at,
+              acknowledged_at, source_risk_pid, source_task_pid, change_request_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, 'concern', 'med', NULL, $5, $6, $7, $8, $9, $10, NULL, NULL, $11, $12,
+                 NULL, NULL, NULL, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(control.plan_pid)
+    .bind(title)
+    .bind(format!(
+        "Converted from a {} action on control \"{}\".\n\n{}",
+        action.kind, control.name, action.description
+    ))
+    .bind(status)
+    .bind(category)
+    .bind(&action.owner_ref)
+    .bind(caller.actor())
+    .bind(today)
+    .bind(action.due_date)
+    .bind(moment.fixed_offset())
+    .bind(times.acknowledged_at.map(|t| t.fixed_offset()))
+    .fetch_one(tx.conn())
+    .await?;
+    sqlx::query("UPDATE control_actions SET converted_issue_pid = $1 WHERE id = $2 RETURNING id")
+        .bind(issue_pid)
+        .bind(action.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         control.pid,
         "control_action_converted",
         caller.actor(),
         Some(serde_json::json!({
             "action_pid": action.pid.to_string(),
-            "issue_pid": issue.pid.to_string(),
+            "issue_pid": issue_pid.to_string(),
         })),
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
 
     format::json(serde_json::json!({
         "pid": action.pid.to_string(),
-        "issue_pid": issue.pid.to_string(),
+        "issue_pid": issue_pid.to_string(),
         "plan_pid": control.plan_pid.to_string(),
     }))
 }
@@ -874,19 +885,18 @@ async fn convert_action(
     if action.closed_at.is_some() {
         return Err(unprocessable("action is already closed"));
     }
-    let reading = control_readings::Entity::find()
-        .filter(control_readings::Column::Pid.eq(action.reading_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let control = controls::Entity::find()
-        .filter(controls::Column::Pid.eq(reading.control_pid))
-        .filter(controls::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let reading: control_readings::Model =
+        sqlx::query_as("SELECT * FROM control_readings WHERE pid = $1 LIMIT 1")
+            .bind(action.reading_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
+    let control: controls::Model =
+        sqlx::query_as("SELECT * FROM controls WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(reading.control_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
 
     if to_issue {
         let standing = super::plan_roles::standing(&ctx, &caller, control.plan_pid).await?;
@@ -905,67 +915,70 @@ async fn convert_action(
         .find(|state| state.is_initial)
         .map_or("todo", |state| state.key.as_str());
 
-    let now = chrono::Utc::now();
+    let now = chrono::Utc::now().fixed_offset();
     // The task and its opening transition commit together with the
     // action's own update, same reasoning as task creation (spec
     // `time-based-analysis.md` §5.1 invariant 3): a converted task
     // without a transition would silently begin its life at its first
     // later move, and an action left unmarked could be converted twice.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let task = tasks::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(control.plan_pid),
-        sprint_pid: ActiveValue::set(None),
-        title: ActiveValue::set(action.description.clone()),
-        description: ActiveValue::set(Some(format!(
-            "Converted from a {} action on control \"{}\".",
-            action.kind, control.name
-        ))),
-        status: ActiveValue::set(initial.to_string()),
-        assignee_ref: ActiveValue::set(action.owner_ref.clone()),
-        points: ActiveValue::set(None),
-        status_changed_at: ActiveValue::set(now.into()),
-        flow_type: ActiveValue::set(None),
-        done_at: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    crate::tba::transition_row(
-        task.pid,
-        control.plan_pid,
-        None,
-        initial.to_string(),
-        now,
-        caller.actor().map(ToString::to_string),
-        action.owner_ref.clone(),
+    let mut tx = crate::db::begin(&ctx).await?;
+    let task_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO tasks
+             (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points,
+              status_changed_at, flow_type, done_at, deleted_at)
+         VALUES ($1, $2, NULL, $3, $4, $5, $6, NULL, $7, NULL, NULL, NULL)
+         RETURNING pid",
     )
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    let mut active: control_actions::ActiveModel = action.clone().into();
-    active.converted_task_pid = ActiveValue::set(Some(task.pid));
-    active.update(&txn).await.map_err(db_err)?;
+    .bind(Uuid::new_v4())
+    .bind(control.plan_pid)
+    .bind(&action.description)
+    .bind(format!(
+        "Converted from a {} action on control \"{}\".",
+        action.kind, control.name
+    ))
+    .bind(initial)
+    .bind(&action.owner_ref)
+    .bind(now)
+    .fetch_one(tx.conn())
+    .await?;
+    // The task's creation in the transition log, as `crate::tba::transition_row` writes it.
+    sqlx::query(
+        "INSERT INTO task_transitions
+             (pid, task_pid, plan_pid, from_status, to_status, at, actor_ref, assignee_ref, backfilled)
+         VALUES ($1, $2, $3, NULL, $4, $5, $6, $7, false)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(task_pid)
+    .bind(control.plan_pid)
+    .bind(initial)
+    .bind(now)
+    .bind(caller.actor())
+    .bind(&action.owner_ref)
+    .execute(tx.conn())
+    .await?;
+    sqlx::query("UPDATE control_actions SET converted_task_pid = $1 WHERE id = $2 RETURNING id")
+        .bind(task_pid)
+        .bind(action.id)
+        .fetch_one(tx.conn())
+        .await?;
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         control.pid,
         "control_action_converted",
         caller.actor(),
         Some(serde_json::json!({
             "action_pid": action.pid.to_string(),
-            "task_pid": task.pid.to_string(),
+            "task_pid": task_pid.to_string(),
         })),
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
 
     format::json(serde_json::json!({
         "pid": action.pid.to_string(),
-        "task_pid": task.pid.to_string(),
+        "task_pid": task_pid.to_string(),
     }))
 }
 
@@ -978,23 +991,23 @@ async fn coverage_of(
     let mut facts = Vec::with_capacity(control_rows.len());
 
     for control in control_rows {
-        let readings = control_readings::Entity::find()
-            .filter(control_readings::Column::ControlPid.eq(control.pid))
-            .order_by_desc(control_readings::Column::ObservedAt)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let readings: Vec<control_readings::Model> = sqlx::query_as(
+            "SELECT * FROM control_readings WHERE control_pid = $1 ORDER BY observed_at DESC",
+        )
+        .bind(control.pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
 
         let mut reading_facts = Vec::with_capacity(readings.len());
         for reading in readings {
             let answered = reading.accepted_at.is_some()
-                || control_actions::Entity::find()
-                    .filter(control_actions::Column::ReadingPid.eq(reading.pid))
-                    .filter(control_actions::Column::DeletedAt.is_null())
-                    .one(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-                    .is_some();
+                || sqlx::query(
+                    "SELECT 1 FROM control_actions WHERE reading_pid = $1 AND deleted_at IS NULL LIMIT 1",
+                )
+                .bind(reading.pid)
+                .fetch_optional(crate::db::pool(ctx))
+                .await?
+                .is_some();
             reading_facts.push(rules::ReadingFact {
                 age_days: (now - reading.observed_at.with_timezone(&chrono::Utc))
                     .num_days()
@@ -1024,12 +1037,11 @@ async fn plan_coverage(
     headers: HeaderMap,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let rows = controls::Entity::find()
-        .filter(controls::Column::PlanPid.eq(plan.pid))
-        .filter(controls::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<controls::Model> =
+        sqlx::query_as("SELECT * FROM controls WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let body = serde_json::json!({
         "plan_pid": plan.pid.to_string(),
         "coverage": coverage_of(&ctx, rows).await?,
@@ -1050,22 +1062,18 @@ async fn portfolio_coverage(
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let rows = scope.keep(
-        controls::Entity::find()
-            .filter(controls::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?,
+        sqlx::query_as::<_, controls::Model>("SELECT * FROM controls WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
 
     let controlled: std::collections::HashSet<Uuid> =
         rows.iter().map(|control| control.plan_pid).collect();
     let uncontrolled: Vec<String> = scope
         .keep(
-            plans::Entity::find()
-                .filter(plans::Column::DeletedAt.is_null())
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?,
+            sqlx::query_as::<_, plans::Model>("SELECT * FROM plans WHERE deleted_at IS NULL")
+                .fetch_all(crate::db::pool(&ctx))
+                .await?,
         )
         .into_iter()
         .filter(|plan| !controlled.contains(&plan.pid))

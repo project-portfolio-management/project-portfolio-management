@@ -10,11 +10,9 @@
 //! value points has not failed to deliver — it has not been measured,
 //! and those are different findings.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::QueryOrder;
-use sea_orm::QuerySelect;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -27,7 +25,7 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::value as rules;
 
 /// Upper bound on rows read for a rollup query, so a runaway table cannot produce an unbounded response.
-const MAX_ROWS: u64 = 5000;
+const MAX_ROWS: i64 = 5000;
 
 /// `POST /api/plans/{pid}/business-case` body.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -69,26 +67,27 @@ async fn create_target(
     if payload.metric.trim().is_empty() {
         return Err(unprocessable("metric is required"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = business_case_targets::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        metric: ActiveValue::set(payload.metric.trim().to_string()),
-        baseline_value: ActiveValue::set(payload.baseline_value),
-        target_value: ActiveValue::set(payload.target_value),
-        unit: ActiveValue::set(payload.unit.clone()),
-        currency: ActiveValue::set(payload.currency.clone()),
-        promised_by: ActiveValue::set(None),
-        source: ActiveValue::set(source),
-        approved_by_ref: ActiveValue::set(caller.actor().map(ToString::to_string)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO business_case_targets
+             (pid, plan_pid, metric, baseline_value, target_value, unit, currency, promised_by, source,
+              approved_by_ref, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(payload.metric.trim())
+    .bind(payload.baseline_value)
+    .bind(payload.target_value)
+    .bind(&payload.unit)
+    .bind(&payload.currency)
+    .bind(&source)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "business_case_target_set",
         caller.actor(),
@@ -96,8 +95,8 @@ async fn create_target(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `POST /api/plans/{pid}/value-points` body.
@@ -128,25 +127,23 @@ async fn create_value_point(
     Json(payload): Json<ValuePayload>,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = value_points::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        benefit_pid: ActiveValue::set(None),
-        value: ActiveValue::set(payload.value),
-        currency: ActiveValue::set(payload.currency.clone()),
-        is_first_measurable: ActiveValue::set(payload.is_first_measurable),
-        method: ActiveValue::set(
-            rules::Method::parse(payload.method.as_deref())
-                .token()
-                .to_string(),
-        ),
-        evidence_ref: ActiveValue::set(payload.evidence_ref.clone()),
-        actor: ActiveValue::set(caller.actor().map(ToString::to_string)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO value_points
+             (pid, plan_pid, benefit_pid, value, currency, is_first_measurable, method, evidence_ref, actor,
+              deleted_at)
+         VALUES ($1, $2, NULL, $3, $4, $5, $6, $7, $8, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(payload.value)
+    .bind(&payload.currency)
+    .bind(payload.is_first_measurable)
+    .bind(rules::Method::parse(payload.method.as_deref()).token())
+    .bind(&payload.evidence_ref)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| {
         // The partial unique index refuses a second first-measurable
@@ -157,14 +154,14 @@ async fn create_value_point(
                  Time-to-Value clock stops once",
             )
         } else {
-            db_err(e)
+            Error::from(e)
         }
     })?;
-    AuditModel::record(&txn, plan.pid, "value_observed", caller.actor(), None)
+    AuditModel::record_on(tx.conn(), plan.pid, "value_observed", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `POST /api/plans/{pid}/adoption` body.
@@ -206,25 +203,32 @@ async fn create_adoption(
              redefined between two readings, so it is stored beside the rate",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = adoption_snapshots::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        active_users: ActiveValue::set(payload.active_users),
-        target_users: ActiveValue::set(payload.target_users),
-        window_days: ActiveValue::set(payload.window_days),
-        definition: ActiveValue::set(payload.definition.trim().to_string()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO adoption_snapshots
+             (pid, plan_pid, active_users, target_users, window_days, definition, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(payload.active_users)
+    .bind(payload.target_users)
+    .bind(payload.window_days)
+    .bind(payload.definition.trim())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        plan.pid,
+        "adoption_recorded",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, plan.pid, "adoption_recorded", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `POST /api/plans/{pid}/satisfaction` body.
@@ -261,22 +265,23 @@ async fn create_satisfaction(
             "respondent_role must be sponsor, user, team or other",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = satisfaction_responses::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        instrument: ActiveValue::set(payload.instrument.clone()),
-        score: ActiveValue::set(payload.score),
-        respondent_role: ActiveValue::set(payload.respondent_role.clone()),
-        comment: ActiveValue::set(payload.comment.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO satisfaction_responses
+             (pid, plan_pid, instrument, score, respondent_role, comment, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(&payload.instrument)
+    .bind(payload.score)
+    .bind(&payload.respondent_role)
+    .bind(&payload.comment)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "satisfaction_recorded",
         caller.actor(),
@@ -284,8 +289,8 @@ async fn create_satisfaction(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/plans/{pid}/value-realization` — the realized-gains view.
@@ -297,32 +302,31 @@ async fn value_realization(
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
 
-    let points = value_points::Entity::find()
-        .filter(value_points::Column::PlanPid.eq(plan.pid))
-        .filter(value_points::Column::DeletedAt.is_null())
-        .limit(MAX_ROWS)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let targets = business_case_targets::Entity::find()
-        .filter(business_case_targets::Column::PlanPid.eq(plan.pid))
-        .filter(business_case_targets::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let budgets = budget_lines::Entity::find()
-        .filter(budget_lines::Column::PlanPid.eq(plan.pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let adoption = adoption_snapshots::Entity::find()
-        .filter(adoption_snapshots::Column::PlanPid.eq(plan.pid))
-        .filter(adoption_snapshots::Column::DeletedAt.is_null())
-        .order_by_desc(adoption_snapshots::Column::ObservedAt)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let points: Vec<value_points::Model> = sqlx::query_as(
+        "SELECT * FROM value_points WHERE plan_pid = $1 AND deleted_at IS NULL LIMIT $2",
+    )
+    .bind(plan.pid)
+    .bind(MAX_ROWS)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let targets: Vec<business_case_targets::Model> = sqlx::query_as(
+        "SELECT * FROM business_case_targets WHERE plan_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let budgets: Vec<budget_lines::Model> =
+        sqlx::query_as("SELECT * FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
+    let adoption: Option<adoption_snapshots::Model> = sqlx::query_as(
+        "SELECT * FROM adoption_snapshots WHERE plan_pid = $1 AND deleted_at IS NULL
+         ORDER BY observed_at DESC LIMIT 1",
+    )
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
 
     let approved_at = targets.iter().map(|t| t.approved_at).min();
     let facts: Vec<rules::ValueFact> = points
@@ -410,14 +414,15 @@ async fn performance(
     headers: HeaderMap,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let responses = satisfaction_responses::Entity::find()
-        .filter(satisfaction_responses::Column::PlanPid.eq(plan.pid))
-        .filter(satisfaction_responses::Column::DeletedAt.is_null())
-        .filter(satisfaction_responses::Column::Instrument.eq("nps"))
-        .limit(MAX_ROWS)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let responses: Vec<satisfaction_responses::Model> = sqlx::query_as(
+        "SELECT * FROM satisfaction_responses
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND instrument = 'nps'
+         LIMIT $2",
+    )
+    .bind(plan.pid)
+    .bind(MAX_ROWS)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let scores: Vec<u8> = responses
         .iter()
         .filter_map(|r| u8::try_from(r.score).ok())

@@ -19,10 +19,9 @@
 //!   is not progress.
 //! - Confidence is recorded and **never** blended into a score.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -72,35 +71,31 @@ fn fact_of(row: &key_results::Model) -> Option<rules::KeyResultFact> {
 /// Load one live (not soft-deleted) objective by public id.
 async fn find_objective(ctx: &AppContext, raw: &str) -> Result<objectives::Model> {
     let pid = super::parse_pid(raw)?;
-    objectives::Entity::find()
-        .filter(objectives::Column::Pid.eq(pid))
-        .filter(objectives::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM objectives WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
 /// Load one live (not soft-deleted) key result by public id.
 async fn find_key_result(ctx: &AppContext, raw: &str) -> Result<key_results::Model> {
     let pid = super::parse_pid(raw)?;
-    key_results::Entity::find()
-        .filter(key_results::Column::Pid.eq(pid))
-        .filter(key_results::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM key_results WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
 /// Live key results for one objective.
 async fn key_results_of(ctx: &AppContext, objective_pid: Uuid) -> Result<Vec<key_results::Model>> {
-    key_results::Entity::find()
-        .filter(key_results::Column::ObjectivePid.eq(objective_pid))
-        .filter(key_results::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM key_results WHERE objective_pid = $1 AND deleted_at IS NULL")
+            .bind(objective_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// `POST /api/objectives/{pid}/key-results` body.
@@ -183,30 +178,31 @@ async fn create_key_result(
         ));
     }
 
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = key_results::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        objective_pid: ActiveValue::set(objective.pid),
-        title: ActiveValue::set(payload.title.trim().to_string()),
-        metric: ActiveValue::set(payload.metric.clone()),
-        direction: ActiveValue::set(payload.direction.clone()),
-        start_value: ActiveValue::set(payload.start_value),
-        target_value: ActiveValue::set(payload.target_value),
-        current_value: ActiveValue::set(payload.start_value),
-        tolerance: ActiveValue::set(payload.tolerance),
-        unit: ActiveValue::set(payload.unit.clone()),
-        currency: ActiveValue::set(payload.currency.clone()),
-        owner_ref: ActiveValue::set(payload.owner_ref.clone()),
-        due_date: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO key_results
+             (pid, objective_pid, title, metric, direction, start_value, target_value, current_value,
+              tolerance, unit, currency, owner_ref, due_date, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NULL, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(objective.pid)
+    .bind(payload.title.trim())
+    .bind(&payload.metric)
+    .bind(&payload.direction)
+    .bind(payload.start_value)
+    .bind(payload.target_value)
+    .bind(payload.start_value)
+    .bind(payload.tolerance)
+    .bind(&payload.unit)
+    .bind(&payload.currency)
+    .bind(&payload.owner_ref)
+    .fetch_one(tx.conn())
+    .await?;
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         objective.pid,
         "key_result_declared",
         caller.actor(),
@@ -214,8 +210,8 @@ async fn create_key_result(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/objectives/{pid}/key-results` — with each one's derived
@@ -275,29 +271,33 @@ async fn create_check_in(
         return Err(unprocessable("confidence must be between 0 and 100"));
     }
 
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = key_result_check_ins::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        key_result_pid: ActiveValue::set(key_result.pid),
-        value: ActiveValue::set(payload.value),
-        confidence: ActiveValue::set(payload.confidence),
-        note: ActiveValue::set(payload.note.clone()),
-        actor: ActiveValue::set(caller.actor().map(ToString::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO key_result_check_ins (pid, key_result_pid, value, confidence, note, actor)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(key_result.pid)
+    .bind(payload.value)
+    .bind(payload.confidence)
+    .bind(&payload.note)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
 
     // The observation moves the current value. The baseline is left
     // alone — deliberately, and there is no path here that touches it.
     let objective_pid = key_result.objective_pid;
-    let mut active: key_results::ActiveModel = key_result.into();
-    active.current_value = ActiveValue::set(payload.value);
-    let updated = active.update(&txn).await.map_err(db_err)?;
+    let updated: key_results::Model =
+        sqlx::query_as("UPDATE key_results SET current_value = $1 WHERE id = $2 RETURNING *")
+            .bind(payload.value)
+            .bind(key_result.id)
+            .fetch_one(tx.conn())
+            .await?;
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         objective_pid,
         "key_result_checked_in",
         caller.actor(),
@@ -305,11 +305,11 @@ async fn create_check_in(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
 
     let progress = fact_of(&updated).and_then(|fact| rules::progress(&fact).ok());
     format::json(serde_json::json!({
-        "pid": row.pid.to_string(),
+        "pid": row_pid.to_string(),
         "current_value": updated.current_value,
         "progress_basis_points": progress,
         // Echoed so a reader can see it was recorded, and see that it
@@ -325,12 +325,12 @@ async fn list_check_ins(
     State(ctx): State<AppContext>,
 ) -> Result<Response> {
     let key_result = find_key_result(&ctx, &pid).await?;
-    let rows = key_result_check_ins::Entity::find()
-        .filter(key_result_check_ins::Column::KeyResultPid.eq(key_result.pid))
-        .order_by_desc(key_result_check_ins::Column::ObservedAt)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<key_result_check_ins::Model> = sqlx::query_as(
+        "SELECT * FROM key_result_check_ins WHERE key_result_pid = $1 ORDER BY observed_at DESC",
+    )
+    .bind(key_result.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(serde_json::json!(rows))
 }
 
@@ -347,29 +347,27 @@ async fn plan_okr(
     headers: HeaderMap,
 ) -> Result<Response> {
     let plan_pid = super::parse_pid(&pid)?;
-    let plan = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(plan_pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let plan: plans::Model =
+        sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(plan_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
 
-    let links = objective_links::Entity::find()
-        .filter(objective_links::Column::PlanPid.eq(plan.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let links: Vec<objective_links::Model> =
+        sqlx::query_as("SELECT * FROM objective_links WHERE plan_pid = $1")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
 
     // A deleted objective no longer counts toward the plan.
-    let live: std::collections::HashSet<Uuid> = objectives::Entity::find()
-        .filter(objectives::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|o| o.pid)
-        .collect();
+    let live: std::collections::HashSet<Uuid> =
+        sqlx::query_as::<_, objectives::Model>("SELECT * FROM objectives WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .map(|o| o.pid)
+            .collect();
     let links: Vec<_> = links
         .into_iter()
         .filter(|l| live.contains(&l.objective_pid))
@@ -430,15 +428,13 @@ async fn list_okrs(
     State(ctx): State<AppContext>,
     axa::extract::Query(q): axa::extract::Query<OkrParams>,
 ) -> Result<Response> {
-    let mut query = objectives::Entity::find().filter(objectives::Column::DeletedAt.is_null());
-    if let Some(period) = &q.period {
-        query = query.filter(objectives::Column::Period.eq(period.as_str()));
-    }
-    let objs = query
-        .order_by_asc(objectives::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let objs: Vec<objectives::Model> = sqlx::query_as(
+        "SELECT * FROM objectives WHERE deleted_at IS NULL AND ($1::text IS NULL OR period = $1)
+         ORDER BY id",
+    )
+    .bind(q.period.as_deref())
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut rows: Vec<(Option<i64>, serde_json::Value)> = Vec::with_capacity(objs.len());
     for o in &objs {
         let krs = key_results_of(&ctx, o.pid).await?;
@@ -446,13 +442,13 @@ async fn list_okrs(
         let check_ins = if pids.is_empty() {
             Vec::new()
         } else {
-            key_result_check_ins::Entity::find()
-                .filter(key_result_check_ins::Column::KeyResultPid.is_in(pids))
-                .order_by_desc(key_result_check_ins::Column::ObservedAt)
-                .order_by_desc(key_result_check_ins::Column::Id)
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?
+            sqlx::query_as::<_, key_result_check_ins::Model>(
+                "SELECT * FROM key_result_check_ins WHERE key_result_pid = ANY($1)
+                 ORDER BY observed_at DESC, id DESC",
+            )
+            .bind(pids)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
         };
         let facts: Vec<rules::KeyResultFact> = krs.iter().filter_map(fact_of).collect();
         let score = rules::objective_score(&facts);
@@ -524,14 +520,18 @@ async fn update_objective(
     }
     let was = serde_json::json!({ "title": objective.title, "description": objective.description,
                                    "period": objective.period });
-    let mut a: objectives::ActiveModel = objective.into();
-    a.title = ActiveValue::set(b.title.trim().to_string());
-    a.description = ActiveValue::set(b.description.clone());
-    a.period = ActiveValue::set(b.period.clone());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: objectives::Model = sqlx::query_as(
+        "UPDATE objectives SET title = $1, description = $2, period = $3 WHERE id = $4 RETURNING *",
+    )
+    .bind(b.title.trim())
+    .bind(&b.description)
+    .bind(&b.period)
+    .bind(objective.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "objective_updated",
         caller.actor(),
@@ -540,7 +540,7 @@ async fn update_objective(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -554,14 +554,22 @@ async fn delete_objective(
 ) -> Result<Response> {
     let objective = find_objective(&ctx, &pid).await?;
     let row_pid = objective.pid;
-    let mut a: objectives::ActiveModel = objective.into();
-    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row_pid, "objective_deleted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE objectives SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(objective.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "objective_deleted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -617,17 +625,24 @@ async fn update_key_result(
     }
     let was = serde_json::json!({ "title": kr.title, "target_value": kr.target_value,
         "tolerance": kr.tolerance, "unit": kr.unit, "owner_ref": kr.owner_ref, "due_date": kr.due_date });
-    let mut a: key_results::ActiveModel = kr.into();
-    a.title = ActiveValue::set(b.title.trim().to_string());
-    a.target_value = ActiveValue::set(b.target_value);
-    a.tolerance = ActiveValue::set(b.tolerance);
-    a.unit = ActiveValue::set(b.unit.clone());
-    a.owner_ref = ActiveValue::set(b.owner_ref.clone());
-    a.due_date = ActiveValue::set(b.due_date);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: key_results::Model = sqlx::query_as(
+        "UPDATE key_results
+         SET title = $1, target_value = $2, tolerance = $3, unit = $4, owner_ref = $5, due_date = $6
+         WHERE id = $7
+         RETURNING *",
+    )
+    .bind(b.title.trim())
+    .bind(b.target_value)
+    .bind(b.tolerance)
+    .bind(&b.unit)
+    .bind(&b.owner_ref)
+    .bind(b.due_date)
+    .bind(kr.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "key_result_updated",
         caller.actor(),
@@ -637,7 +652,7 @@ async fn update_key_result(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -651,14 +666,22 @@ async fn delete_key_result(
 ) -> Result<Response> {
     let kr = find_key_result(&ctx, &pid).await?;
     let row_pid = kr.pid;
-    let mut a: key_results::ActiveModel = kr.into();
-    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row_pid, "key_result_deleted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE key_results SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(kr.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "key_result_deleted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

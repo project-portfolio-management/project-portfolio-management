@@ -20,13 +20,12 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
-use sea_orm::{PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;
 
 use super::governance::find_item;
-use super::{conflict, db_err, unprocessable};
+use super::{conflict, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::frameworks::Family;
 use crate::inherit::{Source, resolve};
@@ -101,11 +100,12 @@ fn view(r: &frameworks::Model, plans_using: u64) -> Value {
 
 /// Count the plans currently linked to a framework record.
 async fn using(ctx: &AppContext, pid: Uuid) -> Result<u64> {
-    plan_frameworks::Entity::find()
-        .filter(plan_frameworks::Column::FrameworkPid.eq(pid))
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)
+    let n: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM plan_frameworks WHERE framework_pid = $1")
+            .bind(pid)
+            .fetch_one(crate::db::pool(ctx))
+            .await?;
+    Ok(u64::try_from(n).unwrap_or(0))
 }
 
 /// `403` when `owner` is none (an organisation-wide record) and the caller does not hold the right to change one.
@@ -130,23 +130,23 @@ fn require_shared_right(caller: &MaybeAuthUser, owner: Option<Uuid>) -> Result<(
 }
 
 /// Append `version` of `row` to the history.
-async fn record_version<C: ConnectionTrait>(
-    db: &C,
+async fn record_version(
+    tx: &mut crate::db::Tx,
     row: &frameworks::Model,
     by: Option<&str>,
 ) -> Result<()> {
-    framework_versions::ActiveModel {
-        framework_pid: ActiveValue::set(row.pid),
-        version: ActiveValue::set(row.version),
-        name: ActiveValue::set(row.name.clone()),
-        description: ActiveValue::set(row.description.clone()),
-        body: ActiveValue::set(row.body.clone()),
-        created_by: ActiveValue::set(by.map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(db_err)?;
+    sqlx::query(
+        "INSERT INTO framework_versions (framework_pid, version, name, description, body, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6)",
+    )
+    .bind(row.pid)
+    .bind(row.version)
+    .bind(&row.name)
+    .bind(&row.description)
+    .bind(&row.body)
+    .bind(by)
+    .execute(tx.conn())
+    .await?;
     Ok(())
 }
 
@@ -158,14 +158,14 @@ async fn find_visible(
     pid: &str,
 ) -> Result<frameworks::Model> {
     let pid = super::parse_pid(pid)?;
-    let row = frameworks::Entity::find()
-        .filter(frameworks::Column::Pid.eq(pid))
-        .filter(frameworks::Column::Family.eq(family.token()))
-        .filter(frameworks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: frameworks::Model = sqlx::query_as(
+        "SELECT * FROM frameworks WHERE pid = $1 AND family = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(family.token())
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if let Some(owner) = row.owner_plan_pid
         && !super::plan_access::readable_plans(ctx, caller, &[owner])
             .await
@@ -178,61 +178,67 @@ async fn find_visible(
 
 /// The plan's link for one family, if any. A plan has at most one link per
 /// family.
-async fn link_of<C: ConnectionTrait>(
-    db: &C,
+async fn link_of(
+    db: &mut impl crate::db::Session,
     plan: Uuid,
     family: Family,
 ) -> Result<Option<plan_frameworks::Model>> {
-    plan_frameworks::Entity::find()
-        .filter(plan_frameworks::Column::PlanPid.eq(plan))
-        .filter(plan_frameworks::Column::Family.eq(family.token()))
-        .one(db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM plan_frameworks WHERE plan_pid = $1 AND family = $2 LIMIT 1")
+            .bind(plan)
+            .bind(family.token())
+            .fetch_optional(db.ex())
+            .await?,
+    )
 }
 
 /// Point `plan` at `target` for `family`, replacing any earlier link.
-async fn set_link<C: ConnectionTrait>(
-    db: &C,
+async fn set_link(
+    tx: &mut crate::db::Tx,
     plan: Uuid,
     family: Family,
     target: Uuid,
     version: i32,
     by: Option<&str>,
 ) -> Result<()> {
-    if let Some(existing) = link_of(db, plan, family).await? {
-        let mut a: plan_frameworks::ActiveModel = existing.into();
-        a.framework_pid = ActiveValue::set(target);
-        a.version = ActiveValue::set(version);
-        a.set_by = ActiveValue::set(by.map(str::to_string));
-        a.update(db).await.map_err(db_err)?;
+    if let Some(existing) = link_of(tx, plan, family).await? {
+        sqlx::query(
+            "UPDATE plan_frameworks SET framework_pid = $1, version = $2, set_by = $3 WHERE id = $4
+             RETURNING id",
+        )
+        .bind(target)
+        .bind(version)
+        .bind(by)
+        .bind(existing.id)
+        .fetch_one(tx.conn())
+        .await?;
     } else {
-        plan_frameworks::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan),
-            family: ActiveValue::set(family.token().to_string()),
-            framework_pid: ActiveValue::set(target),
-            version: ActiveValue::set(version),
-            set_by: ActiveValue::set(by.map(str::to_string)),
-            ..Default::default()
-        }
-        .insert(db)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO plan_frameworks (pid, plan_pid, family, framework_pid, version, set_by)
+             VALUES ($1, $2, $3, $4, $5, $6)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan)
+        .bind(family.token())
+        .bind(target)
+        .bind(version)
+        .bind(by)
+        .execute(tx.conn())
+        .await?;
     }
     Ok(())
 }
 
 /// Map an insert/update failure to `409` when it is the unique-name
 /// constraint, otherwise to the generic database error.
-fn name_taken(e: &sea_orm::DbErr, family: Family) -> Error {
+fn name_taken(e: sqlx::Error, family: Family) -> Error {
     if e.to_string().contains("frameworks_name_once") {
         return conflict(&format!(
             "a {} with that name already exists for this owner",
             family.noun()
         ));
     }
-    db_err(e.clone())
+    Error::from(e)
 }
 
 /// `POST /api/<family>` - create a record at version 1. Organisation-wide
@@ -252,35 +258,36 @@ async fn create(
     };
     super::plan_access::require_readable_if_any(&ctx, &caller, owner).await?;
     require_shared_right(&caller, owner)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = frameworks::ActiveModel {
-        version: ActiveValue::set(1),
-        pid: ActiveValue::set(Uuid::new_v4()),
-        family: ActiveValue::set(family.token().to_string()),
-        name: ActiveValue::set(p.name),
-        description: ActiveValue::set(p.description),
-        body: ActiveValue::set(p.body),
-        owner_plan_pid: ActiveValue::set(owner),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: frameworks::Model = sqlx::query_as(
+        "INSERT INTO frameworks
+             (version, pid, family, name, description, body, owner_plan_pid, created_by, deleted_at)
+         VALUES (1, $1, $2, $3, $4, $5, $6, $7, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(family.token())
+    .bind(p.name)
+    .bind(p.description)
+    .bind(p.body)
+    .bind(owner)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
     .await
-    .map_err(|e| name_taken(&e, family))?;
-    record_version(&txn, &row, caller.actor()).await?;
+    .map_err(|e| name_taken(e, family))?;
+    record_version(&mut tx, &row, caller.actor()).await?;
     if let Some(plan) = owner {
-        set_link(&txn, plan, family, row.pid, row.version, caller.actor()).await?;
+        set_link(&mut tx, plan, family, row.pid, row.version, caller.actor()).await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "framework_created",
         caller.actor(),
         Some(serde_json::json!({ "family": family.token(), "name": row.name, "owner_plan_pid": owner })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, u64::from(owner.is_some())))
 }
 
@@ -300,15 +307,19 @@ async fn list(
     caller: MaybeAuthUser,
     Query(q): Query<ListParams>,
 ) -> Result<Response> {
-    let mut query = frameworks::Entity::find()
-        .filter(frameworks::Column::Family.eq(family.token()))
-        .filter(frameworks::Column::DeletedAt.is_null())
-        .order_by_asc(frameworks::Column::Id);
-    if let Some(p) = q.plan.as_deref() {
-        let plan = Uuid::parse_str(p).map_err(|_| unprocessable("plan must be a plan pid"))?;
-        query = query.filter(frameworks::Column::OwnerPlanPid.eq(plan));
-    }
-    let rows = query.all(&ctx.db).await.map_err(db_err)?;
+    let plan = match q.plan.as_deref() {
+        Some(p) => Some(Uuid::parse_str(p).map_err(|_| unprocessable("plan must be a plan pid"))?),
+        None => None,
+    };
+    let rows: Vec<frameworks::Model> = sqlx::query_as(
+        "SELECT * FROM frameworks
+         WHERE family = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR owner_plan_pid = $2)
+         ORDER BY id",
+    )
+    .bind(family.token())
+    .bind(plan)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let owners: Vec<Uuid> = rows.iter().filter_map(|r| r.owner_plan_pid).collect();
     let readable: HashSet<Uuid> = if owners.is_empty() {
         HashSet::new()
@@ -316,13 +327,13 @@ async fn list(
         super::plan_access::readable_plans(&ctx, &caller, &owners).await
     };
     let mut counts: HashMap<Uuid, u64> = HashMap::new();
-    for l in plan_frameworks::Entity::find()
-        .filter(plan_frameworks::Column::Family.eq(family.token()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    for framework_pid in
+        sqlx::query_scalar::<_, Uuid>("SELECT framework_pid FROM plan_frameworks WHERE family = $1")
+            .bind(family.token())
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
     {
-        *counts.entry(l.framework_pid).or_insert(0) += 1;
+        *counts.entry(framework_pid).or_insert(0) += 1;
     }
     format::json(
         rows.iter()
@@ -359,16 +370,22 @@ async fn update(
     require_shared_right(&caller, row.owner_plan_pid)?;
     // An edit is a new version: the plans that follow this one keep the version they pinned until they move.
     let previous = row.version;
-    let mut a: frameworks::ActiveModel = row.into();
-    a.name = ActiveValue::set(p.name);
-    a.description = ActiveValue::set(p.description);
-    a.body = ActiveValue::set(p.body);
-    a.version = ActiveValue::set(previous + 1);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = a.update(&txn).await.map_err(|e| name_taken(&e, family))?;
-    record_version(&txn, &row, caller.actor()).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: frameworks::Model = sqlx::query_as(
+        "UPDATE frameworks SET name = $1, description = $2, body = $3, version = $4 WHERE id = $5
+         RETURNING *",
+    )
+    .bind(p.name)
+    .bind(p.description)
+    .bind(p.body)
+    .bind(previous + 1)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await
+    .map_err(|e| name_taken(e, family))?;
+    record_version(&mut tx, &row, caller.actor()).await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "framework_updated",
         caller.actor(),
@@ -376,7 +393,7 @@ async fn update(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(view(&row, using(&ctx, row.pid).await?))
 }
 
@@ -397,14 +414,16 @@ async fn remove(
         )));
     }
     let pid = row.pid;
-    let mut a: frameworks::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "framework_deleted", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE frameworks SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), pid, "framework_deleted", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -417,20 +436,20 @@ async fn list_versions(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row = find_visible(&ctx, &caller, family, &pid).await?;
-    let versions = framework_versions::Entity::find()
-        .filter(framework_versions::Column::FrameworkPid.eq(row.pid))
-        .order_by_desc(framework_versions::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let versions: Vec<framework_versions::Model> = sqlx::query_as(
+        "SELECT * FROM framework_versions WHERE framework_pid = $1 ORDER BY version DESC",
+    )
+    .bind(row.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut following: HashMap<i32, u64> = HashMap::new();
-    for l in plan_frameworks::Entity::find()
-        .filter(plan_frameworks::Column::FrameworkPid.eq(row.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    for version in
+        sqlx::query_scalar::<_, i32>("SELECT version FROM plan_frameworks WHERE framework_pid = $1")
+            .bind(row.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
     {
-        *following.entry(l.version).or_insert(0) += 1;
+        *following.entry(version).or_insert(0) += 1;
     }
     format::json(serde_json::json!({
         "framework_pid": row.pid,
@@ -488,26 +507,35 @@ async fn link(
                     })?;
             let version = b.version.unwrap_or(record.version);
             if version != record.version
-                && framework_versions::Entity::find()
-                    .filter(framework_versions::Column::FrameworkPid.eq(record.pid))
-                    .filter(framework_versions::Column::Version.eq(version))
-                    .one(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-                    .is_none()
+                && sqlx::query(
+                    "SELECT 1 FROM framework_versions WHERE framework_pid = $1 AND version = $2 LIMIT 1",
+                )
+                .bind(record.pid)
+                .bind(version)
+                .fetch_optional(crate::db::pool(&ctx))
+                .await?
+                .is_none()
             {
                 return Err(unprocessable(&format!(
                     "version {version} does not exist (the current version is {})",
                     record.version
                 )));
             }
-            let before = link_of(&ctx.db, plan.pid, family)
+            let before = link_of(&mut crate::db::pool(&ctx), plan.pid, family)
                 .await?
                 .map(|l| (l.framework_pid, l.version));
-            let txn = ctx.db.begin().await.map_err(db_err)?;
-            set_link(&txn, plan.pid, family, record.pid, version, caller.actor()).await?;
-            AuditModel::record(
-                &txn,
+            let mut tx = crate::db::begin(&ctx).await?;
+            set_link(
+                &mut tx,
+                plan.pid,
+                family,
+                record.pid,
+                version,
+                caller.actor(),
+            )
+            .await?;
+            AuditModel::record_on(
+                tx.conn(),
                 plan.pid,
                 "framework_linked",
                 caller.actor(),
@@ -516,14 +544,17 @@ async fn link(
             )
             .await
             .map_err(super::audit_failed)?;
-            txn.commit().await.map_err(db_err)?;
+            tx.commit().await?;
         }
         None => {
-            if let Some(existing) = link_of(&ctx.db, plan.pid, family).await? {
-                let txn = ctx.db.begin().await.map_err(db_err)?;
-                existing.delete(&txn).await.map_err(db_err)?;
-                AuditModel::record(
-                    &txn,
+            if let Some(existing) = link_of(&mut crate::db::pool(&ctx), plan.pid, family).await? {
+                let mut tx = crate::db::begin(&ctx).await?;
+                sqlx::query("DELETE FROM plan_frameworks WHERE id = $1")
+                    .bind(existing.id)
+                    .execute(tx.conn())
+                    .await?;
+                AuditModel::record_on(
+                    tx.conn(),
                     plan.pid,
                     "framework_unlinked",
                     caller.actor(),
@@ -531,7 +562,7 @@ async fn link(
                 )
                 .await
                 .map_err(super::audit_failed)?;
-                txn.commit().await.map_err(db_err)?;
+                tx.commit().await?;
             }
         }
     }
@@ -567,15 +598,16 @@ pub(crate) async fn in_force(
         .map_err(Error::Model)?;
     let mut chain = vec![plan];
     chain.extend(&ancestors);
-    let links: HashMap<Uuid, (Uuid, i32)> = plan_frameworks::Entity::find()
-        .filter(plan_frameworks::Column::Family.eq(family.token()))
-        .filter(plan_frameworks::Column::PlanPid.is_in(chain))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|l| (l.plan_pid, (l.framework_pid, l.version)))
-        .collect();
+    let links: HashMap<Uuid, (Uuid, i32)> = sqlx::query_as::<_, plan_frameworks::Model>(
+        "SELECT * FROM plan_frameworks WHERE family = $1 AND plan_pid = ANY($2)",
+    )
+    .bind(family.token())
+    .bind(chain)
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .map(|l| (l.plan_pid, (l.framework_pid, l.version)))
+    .collect();
     let ancestor_links: Vec<(Uuid, Option<Uuid>)> = ancestors
         .iter()
         .map(|p| (*p, links.get(p).map(|l| l.0)))
@@ -586,26 +618,27 @@ pub(crate) async fn in_force(
         Source::Own => links.get(&plan).map(|l| l.1),
         _ => r.from_plan.and_then(|p| links.get(&p)).map(|l| l.1),
     };
-    let mut record = match r.value {
+    let mut record: Option<frameworks::Model> = match r.value {
         None => None,
-        Some(w) => frameworks::Entity::find()
-            .filter(frameworks::Column::Pid.eq(w))
-            .filter(frameworks::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?,
+        Some(w) => {
+            sqlx::query_as("SELECT * FROM frameworks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+                .bind(w)
+                .fetch_optional(crate::db::pool(ctx))
+                .await?
+        }
     };
     // Show the version the plan follows, not the record's current one.
     let mut latest_version = None;
     if let (Some(rec), Some(want)) = (record.as_mut(), pinned)
         && want != rec.version
     {
-        let old = framework_versions::Entity::find()
-            .filter(framework_versions::Column::FrameworkPid.eq(rec.pid))
-            .filter(framework_versions::Column::Version.eq(want))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let old: Option<framework_versions::Model> = sqlx::query_as(
+            "SELECT * FROM framework_versions WHERE framework_pid = $1 AND version = $2 LIMIT 1",
+        )
+        .bind(rec.pid)
+        .bind(want)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
         if let Some(old) = old {
             latest_version = Some(rec.version);
             rec.name = old.name;

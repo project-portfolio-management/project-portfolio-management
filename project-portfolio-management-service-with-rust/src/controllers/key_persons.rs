@@ -9,17 +9,14 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
-    contingent_workers, key_person_entries as entries, resource_roles, skill_pool_members,
-    skill_pools,
+    key_person_entries as entries, resource_roles, skill_pool_members, skill_pools,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -55,19 +52,13 @@ fn view(e: &entries::Model) -> Value {
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     managers_only(&caller)?;
-    let rows = entries::Entity::find()
-        .order_by_asc(entries::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let contingent: Vec<String> = contingent_workers::Entity::find()
-        .order_by_asc(contingent_workers::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|c| c.person_ref)
-        .collect();
+    let rows: Vec<entries::Model> = sqlx::query_as("SELECT * FROM key_person_entries ORDER BY id")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
+    let contingent: Vec<String> =
+        sqlx::query_scalar("SELECT person_ref FROM contingent_workers ORDER BY id")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(
         json!({ "entries": rows.iter().map(view).collect::<Vec<_>>(), "contingent": contingent }),
     )
@@ -125,53 +116,61 @@ async fn upsert(
         return Err(unprocessable(&problems.join("; ")));
     }
     if let Some(p) = b.skill_pool_pid
-        && skill_pools::Entity::find()
-            .filter(skill_pools::Column::Pid.eq(p))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+        && sqlx::query("SELECT 1 FROM skill_pools WHERE pid = $1 LIMIT 1")
+            .bind(p)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
             .is_none()
     {
         return Err(unprocessable("skill_pool_pid is not a skill pool"));
     }
-    let existing = entries::Entity::find()
-        .filter(entries::Column::SubjectKind.eq(&b.subject_kind))
-        .filter(sea_orm::sea_query::Expr::cust_with_values(
-            "lower(btrim(subject)) = lower($1)",
-            [subject.clone()],
-        ))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing: Option<entries::Model> = sqlx::query_as(
+        "SELECT * FROM key_person_entries
+         WHERE subject_kind = $1 AND lower(btrim(subject)) = lower($2)
+         LIMIT 1",
+    )
+    .bind(&b.subject_kind)
+    .bind(&subject)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
     let note = b
         .note
         .map(|n| n.trim().to_string())
         .filter(|n| !n.is_empty());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = if let Some(e) = existing {
-        let mut a: entries::ActiveModel = e.into();
-        a.successor_ref = ActiveValue::set(b.successor_ref.clone());
-        a.readiness = ActiveValue::set(b.readiness.clone());
-        a.skill_pool_pid = ActiveValue::set(b.skill_pool_pid);
-        a.note = ActiveValue::set(note);
-        a.update(&txn).await.map_err(db_err)?
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: entries::Model = if let Some(e) = existing {
+        sqlx::query_as(
+            "UPDATE key_person_entries
+             SET successor_ref = $1, readiness = $2, skill_pool_pid = $3, note = $4
+             WHERE id = $5
+             RETURNING *",
+        )
+        .bind(&b.successor_ref)
+        .bind(&b.readiness)
+        .bind(b.skill_pool_pid)
+        .bind(note)
+        .bind(e.id)
+        .fetch_one(tx.conn())
+        .await?
     } else {
-        entries::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            subject_kind: ActiveValue::set(b.subject_kind.clone()),
-            subject: ActiveValue::set(subject),
-            successor_ref: ActiveValue::set(b.successor_ref.clone()),
-            readiness: ActiveValue::set(b.readiness.clone()),
-            skill_pool_pid: ActiveValue::set(b.skill_pool_pid),
-            note: ActiveValue::set(note),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?
+        sqlx::query_as(
+            "INSERT INTO key_person_entries
+                 (pid, subject_kind, subject, successor_ref, readiness, skill_pool_pid, note)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(&b.subject_kind)
+        .bind(subject)
+        .bind(&b.successor_ref)
+        .bind(&b.readiness)
+        .bind(b.skill_pool_pid)
+        .bind(note)
+        .fetch_one(tx.conn())
+        .await?
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "key_person_recorded",
         caller.actor(),
@@ -179,7 +178,7 @@ async fn upsert(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row))
 }
 
@@ -192,18 +191,21 @@ async fn remove(
 ) -> Result<Response> {
     managers_only(&caller)?;
     let pid = super::parse_pid(&pid)?;
-    let row = entries::Entity::find()
-        .filter(entries::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    row.delete(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "key_person_removed", caller.actor(), None)
+    let row_id: i64 =
+        sqlx::query_scalar("SELECT id FROM key_person_entries WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM key_person_entries WHERE id = $1")
+        .bind(row_id)
+        .execute(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), pid, "key_person_removed", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "removed": pid }))
 }
 
@@ -227,30 +229,30 @@ async fn set_contingent(
     if !super::governance::valid_ref(&b.person_ref, &["person", "worker"]) {
         return Err(unprocessable("person_ref must be a person:/worker: URN"));
     }
-    let existing = contingent_workers::Entity::find()
-        .filter(contingent_workers::Column::PersonRef.eq(&b.person_ref))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let existing: Option<i64> =
+        sqlx::query_scalar("SELECT id FROM contingent_workers WHERE person_ref = $1 LIMIT 1")
+            .bind(&b.person_ref)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?;
+    let mut tx = crate::db::begin(&ctx).await?;
     match (existing, b.contingent) {
         (None, true) => {
-            contingent_workers::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                person_ref: ActiveValue::set(b.person_ref.clone()),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query("INSERT INTO contingent_workers (pid, person_ref) VALUES ($1, $2)")
+                .bind(Uuid::new_v4())
+                .bind(&b.person_ref)
+                .execute(tx.conn())
+                .await?;
         }
-        (Some(e), false) => {
-            e.delete(&txn).await.map_err(db_err)?;
+        (Some(id), false) => {
+            sqlx::query("DELETE FROM contingent_workers WHERE id = $1")
+                .bind(id)
+                .execute(tx.conn())
+                .await?;
         }
         _ => {}
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         Uuid::new_v4(),
         "contingent_worker_set",
         caller.actor(),
@@ -258,7 +260,7 @@ async fn set_contingent(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "person_ref": b.person_ref, "contingent": b.contingent }))
 }
 
@@ -269,30 +271,27 @@ async fn set_contingent(
 ///
 /// When a database read fails.
 pub(crate) async fn pack_section(ctx: &AppContext) -> Result<Value> {
-    let rows = entries::Entity::find().all(&ctx.db).await.map_err(db_err)?;
+    let rows: Vec<entries::Model> = sqlx::query_as("SELECT * FROM key_person_entries")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     let count = |f: &dyn Fn(&entries::Model) -> bool| rows.iter().filter(|r| f(r)).count();
-    let pools = skill_pools::Entity::find()
-        .filter(skill_pools::Column::Active.eq(true))
-        .order_by_asc(skill_pools::Column::Name)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let members = skill_pool_members::Entity::find()
-        .filter(skill_pool_members::Column::Kind.eq("role"))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let roles: Vec<resource_roles::Model> = resource_roles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let contingent: HashSet<String> = contingent_workers::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|c| c.person_ref)
-        .collect();
+    let pools: Vec<skill_pools::Model> =
+        sqlx::query_as("SELECT * FROM skill_pools WHERE active = true ORDER BY name")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let members: Vec<skill_pool_members::Model> =
+        sqlx::query_as("SELECT * FROM skill_pool_members WHERE kind = 'role'")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let roles: Vec<resource_roles::Model> = sqlx::query_as("SELECT * FROM resource_roles")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+    let contingent: HashSet<String> =
+        sqlx::query_scalar::<_, String>("SELECT person_ref FROM contingent_workers")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
     let pool_roles: HashMap<Uuid, HashSet<String>> =
         members.iter().fold(HashMap::new(), |mut m, r| {
             m.entry(r.pool_pid)

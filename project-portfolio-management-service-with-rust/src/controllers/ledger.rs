@@ -16,7 +16,6 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -26,13 +25,13 @@ use crate::auth::MaybeAuthUser;
 use crate::ledger::{self as rules, Line};
 use crate::models::_entities::{
     benefit_validations, benefits, budget_lines, cost_code_maps as codes,
-    funding_allocations as allocations, funding_sources, milestones, plans,
+    funding_allocations as allocations, funding_sources, milestones,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Map a database error to an HTTP error. A violation of the one-code,
 /// one-line constraint (`ccm_once`) becomes `409` with a readable message.
-fn db_err(e: &sea_orm::DbErr) -> Error {
+fn db_err(e: &sqlx::Error) -> Error {
     let t = e.to_string();
     if t.contains("ccm_once") {
         return Error::CustomError(
@@ -65,14 +64,10 @@ pub fn routes() -> Routes {
 /// The live plans the caller may read; the trace and totals only ever count
 /// lines on these, so unreadable plans' money shows as untraced.
 async fn visible_plans(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
         .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+        .map_err(|e| db_err(&e))?;
     Ok(super::plan_access::readable_plans(ctx, caller, &all).await)
 }
 
@@ -107,12 +102,13 @@ async fn create(
     caller: MaybeAuthUser,
     Json(b): Json<NewAllocation>,
 ) -> Result<Response> {
-    let src = funding_sources::Entity::find()
-        .filter(funding_sources::Column::Pid.eq(b.funding_source_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .ok_or_else(|| unprocessable("funding_source_pid is not a funding source"))?;
+    let src: funding_sources::Model =
+        sqlx::query_as("SELECT * FROM funding_sources WHERE pid = $1 LIMIT 1")
+            .bind(b.funding_source_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .ok_or_else(|| unprocessable("funding_source_pid is not a funding source"))?;
     let mut problems = Vec::new();
     if b.amount_minor <= 0 {
         problems.push("amount_minor must be above 0");
@@ -132,26 +128,29 @@ async fn create(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = allocations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        funding_source_pid: ActiveValue::set(src.pid),
-        amount_minor: ActiveValue::set(b.amount_minor),
-        currency: ActiveValue::set(b.currency.clone()),
-        allocated_on: ActiveValue::set(b.allocated_on),
-        reference: ActiveValue::set(
-            b.reference
-                .map(|r| r.trim().to_string())
-                .filter(|r| !r.is_empty()),
-        ),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: allocations::Model = sqlx::query_as(
+        "INSERT INTO funding_allocations
+             (pid, funding_source_pid, amount_minor, currency, allocated_on, reference, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(src.pid)
+    .bind(b.amount_minor)
+    .bind(&b.currency)
+    .bind(b.allocated_on)
+    .bind(
+        b.reference
+            .map(|r| r.trim().to_string())
+            .filter(|r| !r.is_empty()),
+    )
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "funding_allocation_recorded",
         caller.actor(),
@@ -159,7 +158,7 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, &src.name))
 }
 
@@ -169,13 +168,14 @@ async fn lines_by_allocation(
     visible: &HashSet<Uuid>,
 ) -> Result<HashMap<Uuid, Vec<budget_lines::Model>>> {
     let mut out: HashMap<Uuid, Vec<budget_lines::Model>> = HashMap::new();
-    for l in budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .filter(budget_lines::Column::FundingAllocationPid.is_not_null())
-        .order_by_asc(budget_lines::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
+    for l in sqlx::query_as::<_, budget_lines::Model>(
+        "SELECT * FROM budget_lines
+         WHERE deleted_at IS NULL AND funding_allocation_pid IS NOT NULL
+         ORDER BY id",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await
+    .map_err(|e| db_err(&e))?
     {
         if visible.contains(&l.plan_pid)
             && let Some(a) = l.funding_allocation_pid
@@ -192,19 +192,18 @@ async fn lines_by_allocation(
 async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let visible = visible_plans(&ctx, &caller).await?;
     let by = lines_by_allocation(&ctx, &visible).await?;
-    let names: HashMap<Uuid, String> = funding_sources::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|s| (s.pid, s.name))
-        .collect();
-    let rows = allocations::Entity::find()
-        .order_by_desc(allocations::Column::AllocatedOn)
-        .order_by_desc(allocations::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM funding_sources")
+            .fetch_all(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .into_iter()
+            .collect();
+    let rows: Vec<allocations::Model> =
+        sqlx::query_as("SELECT * FROM funding_allocations ORDER BY allocated_on DESC, id DESC")
+            .fetch_all(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
     format::json(json!({ "allocations": rows.iter().map(|a| {
         let planned: i64 = by.get(&a.pid).map_or(0, |ls| ls.iter().map(|l| l.planned_minor).sum());
         let mut v = view(a, names.get(&a.funding_source_pid).map_or("", String::as_str));
@@ -232,21 +231,23 @@ async fn attach(
     Json(b): Json<AttachBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let row = budget_lines::Entity::find()
-        .filter(budget_lines::Column::Pid.eq(line))
-        .filter(budget_lines::Column::PlanPid.eq(plan.pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .ok_or(Error::NotFound)?;
+    let row: budget_lines::Model = sqlx::query_as(
+        "SELECT * FROM budget_lines WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(line)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await
+    .map_err(|e| db_err(&e))?
+    .ok_or(Error::NotFound)?;
     if let Some(a) = b.funding_allocation_pid {
-        let alloc = allocations::Entity::find()
-            .filter(allocations::Column::Pid.eq(a))
-            .one(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?
-            .ok_or_else(|| unprocessable("funding_allocation_pid is not an allocation"))?;
+        let alloc: allocations::Model =
+            sqlx::query_as("SELECT * FROM funding_allocations WHERE pid = $1 LIMIT 1")
+                .bind(a)
+                .fetch_optional(crate::db::pool(&ctx))
+                .await
+                .map_err(|e| db_err(&e))?
+                .ok_or_else(|| unprocessable("funding_allocation_pid is not an allocation"))?;
         if row.funding_source_pid != Some(alloc.funding_source_pid) {
             return Err(unprocessable(
                 "the line's funding source must be the allocation's source: set the line's funding source first",
@@ -258,12 +259,15 @@ async fn attach(
             ));
         }
     }
-    let mut a: budget_lines::ActiveModel = row.into();
-    a.funding_allocation_pid = ActiveValue::set(b.funding_allocation_pid);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE budget_lines SET funding_allocation_pid = $1 WHERE id = $2 RETURNING id")
+        .bind(b.funding_allocation_pid)
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await
+        .map_err(|e| db_err(&e))?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "budget_line_allocation_set",
         caller.actor(),
@@ -271,7 +275,7 @@ async fn attach(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "line": line, "funding_allocation_pid": b.funding_allocation_pid }))
 }
 
@@ -284,19 +288,20 @@ async fn trace(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let a = allocations::Entity::find()
-        .filter(allocations::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .ok_or(Error::NotFound)?;
-    let source = funding_sources::Entity::find()
-        .filter(funding_sources::Column::Pid.eq(a.funding_source_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .map(|s| s.name)
-        .unwrap_or_default();
+    let a: allocations::Model =
+        sqlx::query_as("SELECT * FROM funding_allocations WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .ok_or(Error::NotFound)?;
+    let source: String =
+        sqlx::query_scalar("SELECT name FROM funding_sources WHERE pid = $1 LIMIT 1")
+            .bind(a.funding_source_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .unwrap_or_default();
     let visible = visible_plans(&ctx, &caller).await?;
     let lines = lines_by_allocation(&ctx, &visible)
         .await?
@@ -308,22 +313,21 @@ async fn trace(
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
-    let names: HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(plan_ids.clone()))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(&plan_ids)
+            .fetch_all(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .into_iter()
+            .collect();
     // Milestones met on those plans.
     let ms: Vec<milestones::Model> = if plan_ids.is_empty() {
         Vec::new()
     } else {
-        milestones::Entity::find()
-            .filter(milestones::Column::PlanPid.is_in(plan_ids.clone()))
-            .filter(milestones::Column::DeletedAt.is_null())
-            .all(&ctx.db)
+        sqlx::query_as("SELECT * FROM milestones WHERE plan_pid = ANY($1) AND deleted_at IS NULL")
+            .bind(&plan_ids)
+            .fetch_all(crate::db::pool(&ctx))
             .await
             .map_err(|e| db_err(&e))?
     };
@@ -338,10 +342,9 @@ async fn trace(
     let bens: Vec<benefits::Model> = if plan_ids.is_empty() {
         Vec::new()
     } else {
-        benefits::Entity::find()
-            .filter(benefits::Column::PlanPid.is_in(plan_ids.clone()))
-            .filter(benefits::Column::DeletedAt.is_null())
-            .all(&ctx.db)
+        sqlx::query_as("SELECT * FROM benefits WHERE plan_pid = ANY($1) AND deleted_at IS NULL")
+            .bind(&plan_ids)
+            .fetch_all(crate::db::pool(&ctx))
             .await
             .map_err(|e| db_err(&e))?
     };
@@ -349,11 +352,13 @@ async fn trace(
     let vals = if bids.is_empty() {
         Vec::new()
     } else {
-        benefit_validations::Entity::find()
-            .filter(benefit_validations::Column::BenefitPid.is_in(bids))
-            .all(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?
+        sqlx::query_as::<_, benefit_validations::Model>(
+            "SELECT * FROM benefit_validations WHERE benefit_pid = ANY($1)",
+        )
+        .bind(bids)
+        .fetch_all(crate::db::pool(&ctx))
+        .await
+        .map_err(|e| db_err(&e))?
     };
     let mut validated: BTreeMap<String, i64> = BTreeMap::new();
     let mut planned_b: BTreeMap<String, i64> = BTreeMap::new();
@@ -420,44 +425,48 @@ async fn map_code(
     if !(1..=60).contains(&code.chars().count()) {
         return Err(unprocessable("cost_code is 1 to 60 characters"));
     }
-    let line = budget_lines::Entity::find()
-        .filter(budget_lines::Column::Pid.eq(b.budget_line_pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .ok_or_else(|| unprocessable("budget_line_pid is not a budget line"))?;
+    let line: budget_lines::Model =
+        sqlx::query_as("SELECT * FROM budget_lines WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(b.budget_line_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .ok_or_else(|| unprocessable("budget_line_pid is not a budget line"))?;
     // The line sits on a plan: the caller must be able to read it, or the answer is the same as for no line.
     if !visible_plans(&ctx, &caller).await?.contains(&line.plan_pid) {
         return Err(unprocessable("budget_line_pid is not a budget line"));
     }
-    let existing = codes::Entity::find()
-        .filter(sea_orm::sea_query::Expr::cust_with_values(
-            "lower(btrim(cost_code)) = lower($1)",
-            [code.clone()],
-        ))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = if let Some(e) = existing {
-        let mut a: codes::ActiveModel = e.into();
-        a.budget_line_pid = ActiveValue::set(line.pid);
-        a.update(&txn).await.map_err(|e| db_err(&e))?
+    let existing: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM cost_code_maps WHERE lower(btrim(cost_code)) = lower($1) LIMIT 1",
+    )
+    .bind(&code)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await
+    .map_err(|e| db_err(&e))?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: codes::Model = if let Some(id) = existing {
+        sqlx::query_as("UPDATE cost_code_maps SET budget_line_pid = $1 WHERE id = $2 RETURNING *")
+            .bind(line.pid)
+            .bind(id)
+            .fetch_one(tx.conn())
+            .await
+            .map_err(|e| db_err(&e))?
     } else {
-        codes::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            cost_code: ActiveValue::set(code),
-            budget_line_pid: ActiveValue::set(line.pid),
-            created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-            ..Default::default()
-        }
-        .insert(&txn)
+        sqlx::query_as(
+            "INSERT INTO cost_code_maps (pid, cost_code, budget_line_pid, created_by)
+             VALUES ($1, $2, $3, $4)
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(code)
+        .bind(line.pid)
+        .bind(caller.actor())
+        .fetch_one(tx.conn())
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "cost_code_mapped",
         caller.actor(),
@@ -465,7 +474,7 @@ async fn map_code(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "cost_code": row.cost_code, "budget_line_pid": row.budget_line_pid }))
 }
 
@@ -473,17 +482,17 @@ async fn map_code(
 #[debug_handler]
 async fn list_codes(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let visible = visible_plans(&ctx, &caller).await?;
-    let lines: HashMap<Uuid, budget_lines::Model> = budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|l| (l.pid, l))
-        .collect();
-    let rows = codes::Entity::find()
-        .order_by_asc(codes::Column::CostCode)
-        .all(&ctx.db)
+    let lines: HashMap<Uuid, budget_lines::Model> = sqlx::query_as::<_, budget_lines::Model>(
+        "SELECT * FROM budget_lines WHERE deleted_at IS NULL",
+    )
+    .fetch_all(crate::db::pool(&ctx))
+    .await
+    .map_err(|e| db_err(&e))?
+    .into_iter()
+    .map(|l| (l.pid, l))
+    .collect();
+    let rows: Vec<codes::Model> = sqlx::query_as("SELECT * FROM cost_code_maps ORDER BY cost_code")
+        .fetch_all(crate::db::pool(&ctx))
         .await
         .map_err(|e| db_err(&e))?;
     format::json(
@@ -504,33 +513,35 @@ async fn reconcile(
     }
     let rows = rules::parse(&body).map_err(|p| unprocessable(&p.join("; ")))?;
     let visible = visible_plans(&ctx, &caller).await?;
-    let lines: HashMap<Uuid, budget_lines::Model> = budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|l| (l.pid, l))
-        .collect();
-    let map: HashMap<String, Line> = codes::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .filter_map(|c| {
-            let l = lines.get(&c.budget_line_pid)?;
-            visible.contains(&l.plan_pid).then(|| {
-                (
-                    c.cost_code.trim().to_lowercase(),
-                    Line {
-                        line_pid: l.pid,
-                        currency: l.currency.clone(),
-                        actual_minor: l.actual_minor,
-                    },
-                )
+    let lines: HashMap<Uuid, budget_lines::Model> = sqlx::query_as::<_, budget_lines::Model>(
+        "SELECT * FROM budget_lines WHERE deleted_at IS NULL",
+    )
+    .fetch_all(crate::db::pool(&ctx))
+    .await
+    .map_err(|e| db_err(&e))?
+    .into_iter()
+    .map(|l| (l.pid, l))
+    .collect();
+    let map: HashMap<String, Line> =
+        sqlx::query_as::<_, codes::Model>("SELECT * FROM cost_code_maps")
+            .fetch_all(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .into_iter()
+            .filter_map(|c| {
+                let l = lines.get(&c.budget_line_pid)?;
+                visible.contains(&l.plan_pid).then(|| {
+                    (
+                        c.cost_code.trim().to_lowercase(),
+                        Line {
+                            line_pid: l.pid,
+                            currency: l.currency.clone(),
+                            actual_minor: l.actual_minor,
+                        },
+                    )
+                })
             })
-        })
-        .collect();
+            .collect();
     let report = rules::reconcile(&rows, &map);
     format::json(json!({
         "rows": rows.len(), "report": report,

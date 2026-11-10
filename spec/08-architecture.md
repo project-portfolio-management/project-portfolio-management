@@ -136,8 +136,9 @@ runs several statements takes `&mut impl db::Session`, which is a transaction or
 one.
 
 How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 8 have moved (`approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`, `meetings`,
-`meeting_actions`, `lessons`) and 139 are left. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
+API on 10 November, 16 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
+`meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
+`key_persons`, `ledger`) and 131 are left. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
 connection.
 
 ### 8.3 Service layout

@@ -1910,6 +1910,21 @@ came from grep.
   `discussion::resolve_subject`, `plan_access::hidden_plans` and `HiddenScope`, `guests::guest_covers_plan` and
   `plans::Model::find_by_pid`. **Next batch, suggested:** `okr`, `kpis`, `controls`, `value`, `benefit_validation`
   and `frameworks` (strategy measures; none is called into except `value` by `earned_value`).
+  **Progress 2026-11-10, batch 2 (not ticked).** The strategy and money controllers moved: `okr` (66 lines naming
+  SeaORM), `kpis` (45), `controls` (124), `value` (58), `benefit_validation` (56), `frameworks` (73), `key_persons`
+  (38) and `ledger` (63): 523 lines, now none; 131 files and 4,804 lines left (same measure as batch 1; the
+  `count.sh` pattern, which also counts `_entities` imports, still finds one import line in each of the 16 moved
+  files). Batch 1's note had the call backwards: `value` calls `earned_value::compute`, nothing calls `value`.
+  The three functions other modules call (`benefit_validation::benefits_section` and `key_persons::pack_section`
+  from `director_packs`, `frameworks::escalation_path` from `escalations`) already took the context, so no caller
+  changed. `benefit_validation`'s two writes (classification, validation) and their audit rows now share one
+  transaction; before, each was its own statement on the pool, so a failed audit row left the write in place.
+  **Still on SeaORM through other modules**, on the pool and outside these handlers' transactions:
+  `find_live_plan`, `governance::find_item`, `plan_access` (`readable_plans`, `require_readable`, `HiddenScope`),
+  `plans::Model::ancestor_pids`, `workflow::in_force` and `in_force_issue`, `plan_roles::standing`,
+  `milestones::derive` and `earned_value::compute`. **Next batch, suggested:** `financials`, `funding`,
+  `tolerances`, `thresholds`, `effort`, `timesheets`, `milestones`, `milestone_signoffs`, `announcements` and
+  `components` (money, time and milestones; about 410 lines).
 
 ## Correctness carried forward (CF-n)
 

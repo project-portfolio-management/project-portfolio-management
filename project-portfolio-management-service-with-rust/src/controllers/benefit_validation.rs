@@ -9,17 +9,15 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::prelude::*;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::benefit_validation::{self as rules, Financial};
 use crate::models::_entities::{
-    allocations, attachments, benefit_validations as validations, benefits, kpi_readings, kpis,
-    plan_access_settings, plans, raci_assignments, tasks,
+    attachments, benefit_validations as validations, benefits, kpi_readings, kpis,
+    plan_access_settings, plans,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -41,14 +39,14 @@ pub fn routes() -> Routes {
 
 /// Loads a live benefit by pid, scoped to its plan: a benefit that belongs to another plan is reported as not found.
 async fn find_benefit(ctx: &AppContext, plan: Uuid, pid: Uuid) -> Result<benefits::Model> {
-    benefits::Entity::find()
-        .filter(benefits::Column::Pid.eq(pid))
-        .filter(benefits::Column::PlanPid.eq(plan))
-        .filter(benefits::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM benefits WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
 /// `PUT /api/plans/{pid}/benefits/{benefit}/classification` body; omitted fields clear the stored value.
@@ -107,12 +105,11 @@ async fn classify(
             .push("a yearly amount needs a financial benefit (one with a currency)".to_string());
     }
     if let Some(k) = b.kpi_pid {
-        let kpi = kpis::Entity::find()
-            .filter(kpis::Column::Pid.eq(k))
-            .filter(kpis::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let kpi: Option<kpis::Model> =
+            sqlx::query_as("SELECT * FROM kpis WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+                .bind(k)
+                .fetch_optional(crate::db::pool(&ctx))
+                .await?;
         // Reading a benefit shows its KPI, so a KPI of a plan the caller cannot read is no KPI to them.
         let readable = match kpi {
             Some(kpi) => super::plan_access::require_readable_if_any(&ctx, &caller, kpi.plan_pid)
@@ -127,14 +124,21 @@ async fn classify(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let mut a: benefits::ActiveModel = row.into();
-    a.recurrence = ActiveValue::set(b.recurrence.clone());
-    a.annualized_minor = ActiveValue::set(b.annualized_minor);
-    a.classification = ActiveValue::set(b.classification.clone());
-    a.kpi_pid = ActiveValue::set(b.kpi_pid);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
-        &ctx.db,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: benefits::Model = sqlx::query_as(
+        "UPDATE benefits SET recurrence = $1, annualized_minor = $2, classification = $3, kpi_pid = $4
+         WHERE id = $5
+         RETURNING *",
+    )
+    .bind(&b.recurrence)
+    .bind(b.annualized_minor)
+    .bind(&b.classification)
+    .bind(b.kpi_pid)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "benefit_classified",
         caller.actor(),
@@ -142,6 +146,7 @@ async fn classify(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "benefit": row.pid, "recurrence": row.recurrence, "annualized_minor": row.annualized_minor,
         "classification": row.classification, "kpi_pid": row.kpi_pid,
@@ -150,11 +155,9 @@ async fn classify(
 
 /// Every person reference on the programme (or the plan, if it is under none) and everything beneath it.
 async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<String>> {
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all: Vec<plans::Model> = sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     let by_pid: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
     // The nearest programme above the plan, else the plan itself.
     let mut root = plan.pid;
@@ -192,41 +195,38 @@ async fn members_of_scope(ctx: &AppContext, plan: &plans::Model) -> Result<Vec<S
         }
     }
     refs.extend(
-        allocations::Entity::find()
-            .filter(allocations::Column::DeletedAt.is_null())
-            .filter(allocations::Column::PlanPid.is_in(ids.clone()))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|a| a.person_ref),
+        sqlx::query_scalar::<_, String>(
+            "SELECT person_ref FROM allocations WHERE deleted_at IS NULL AND plan_pid = ANY($1)",
+        )
+        .bind(&ids)
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
     );
     refs.extend(
-        raci_assignments::Entity::find()
-            .filter(raci_assignments::Column::DeletedAt.is_null())
-            .filter(raci_assignments::Column::PlanPid.is_in(ids.clone()))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|a| a.person_ref),
+        sqlx::query_scalar::<_, String>(
+            "SELECT person_ref FROM raci_assignments WHERE deleted_at IS NULL AND plan_pid = ANY($1)",
+        )
+        .bind(&ids)
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
     );
     refs.extend(
-        tasks::Entity::find()
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::PlanPid.is_in(ids.clone()))
-            .filter(tasks::Column::AssigneeRef.is_not_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .filter_map(|t| t.assignee_ref),
+        sqlx::query_scalar::<_, Option<String>>(
+            "SELECT assignee_ref FROM tasks
+             WHERE deleted_at IS NULL AND plan_pid = ANY($1) AND assignee_ref IS NOT NULL",
+        )
+        .bind(&ids)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
+        .into_iter()
+        .flatten(),
     );
-    for s in plan_access_settings::Entity::find()
-        .filter(plan_access_settings::Column::PlanPid.is_in(ids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    for s in sqlx::query_as::<_, plan_access_settings::Model>(
+        "SELECT * FROM plan_access_settings WHERE plan_pid = ANY($1)",
+    )
+    .bind(&ids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?
     {
         if let Some(m) = s.members.as_array() {
             refs.extend(m.iter().filter_map(|v| v.as_str().map(str::to_string)));
@@ -268,13 +268,13 @@ async fn validate(
         return Err(unprocessable("amount_minor must not be negative"));
     }
     if let Some(e) = b.evidence_attachment_pid {
-        let ok = attachments::Entity::find()
-            .filter(attachments::Column::Pid.eq(e))
-            .filter(attachments::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some_and(|a| a.subject_pid == row.pid || a.subject_pid == plan.pid);
+        let ok = sqlx::query_as::<_, attachments::Model>(
+            "SELECT * FROM attachments WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(e)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
+        .is_some_and(|a| a.subject_pid == row.pid || a.subject_pid == plan.pid);
         if !ok {
             return Err(unprocessable(
                 "evidence_attachment_pid is not an attachment of this benefit or its plan",
@@ -292,27 +292,31 @@ async fn validate(
             ));
         }
     }
-    let v = validations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        benefit_pid: ActiveValue::set(row.pid),
-        plan_pid: ActiveValue::set(plan.pid),
-        amount_minor: ActiveValue::set(b.amount_minor),
-        currency: ActiveValue::set(currency),
-        validator: ActiveValue::set(Some(actor)),
-        evidence_attachment_pid: ActiveValue::set(b.evidence_attachment_pid),
-        validated_on: ActiveValue::set(crate::tz::deployment_today()),
-        note: ActiveValue::set(
-            b.note
-                .map(|n| n.trim().to_string())
-                .filter(|n| !n.is_empty()),
-        ),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &ctx.db,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let v: validations::Model = sqlx::query_as(
+        "INSERT INTO benefit_validations
+             (pid, benefit_pid, plan_pid, amount_minor, currency, validator, evidence_attachment_pid,
+              validated_on, note)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(row.pid)
+    .bind(plan.pid)
+    .bind(b.amount_minor)
+    .bind(currency)
+    .bind(actor)
+    .bind(b.evidence_attachment_pid)
+    .bind(crate::tz::deployment_today())
+    .bind(
+        b.note
+            .map(|n| n.trim().to_string())
+            .filter(|n| !n.is_empty()),
+    )
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "benefit_validated",
         caller.actor(),
@@ -320,6 +324,7 @@ async fn validate(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "validation": v.pid, "benefit": row.pid, "amount_minor": v.amount_minor, "currency": v.currency,
         "validated_on": v.validated_on,
@@ -334,12 +339,11 @@ async fn history(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let row = find_benefit(&ctx, plan.pid, benefit).await?;
-    let rows = validations::Entity::find()
-        .filter(validations::Column::BenefitPid.eq(row.pid))
-        .order_by_asc(validations::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<validations::Model> =
+        sqlx::query_as("SELECT * FROM benefit_validations WHERE benefit_pid = $1 ORDER BY id")
+            .bind(row.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let latest = rows.last().map(|v| v.amount_minor);
     format::json(serde_json::json!({
         "benefit": row.pid, "claimed_minor": row.realized_minor, "validated_minor": latest,
@@ -390,40 +394,32 @@ pub(crate) async fn benefits_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
 ) -> Result<serde_json::Value> {
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all: Vec<plans::Model> = sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     let by_pid: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
-    let rows = benefits::Entity::find()
-        .filter(benefits::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<benefits::Model> =
+        sqlx::query_as("SELECT * FROM benefits WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let latest: HashMap<Uuid, i64> = {
         let mut m = HashMap::new();
-        for v in validations::Entity::find()
-            .order_by_asc(validations::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        for v in
+            sqlx::query_as::<_, validations::Model>("SELECT * FROM benefit_validations ORDER BY id")
+                .fetch_all(crate::db::pool(ctx))
+                .await?
         {
             m.insert(v.benefit_pid, v.amount_minor);
         }
         m
     };
-    let kpi_rows = kpis::Entity::find()
-        .filter(kpis::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let readings = kpi_readings::Entity::find()
-        .order_by_asc(kpi_readings::Column::ObservedOn)
-        .order_by_asc(kpi_readings::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let kpi_rows: Vec<kpis::Model> = sqlx::query_as("SELECT * FROM kpis WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+    let readings: Vec<kpi_readings::Model> =
+        sqlx::query_as("SELECT * FROM kpi_readings ORDER BY observed_on, id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut last_reading: HashMap<Uuid, i64> = HashMap::new();
     for r in &readings {
         last_reading.insert(r.kpi_pid, r.value);
@@ -524,14 +520,9 @@ pub(crate) async fn benefits_section(
 /// `GET /api/portfolio-benefits` — validated benefits for the programmes you can read.
 #[debug_handler]
 async fn live(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     format::json(benefits_section(&ctx, &readable).await?)
 }

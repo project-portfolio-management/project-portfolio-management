@@ -6,18 +6,17 @@
 //! reading is `no_data`, not red and not green. Readings are append-only: a
 //! correction is a newer reading for the same day.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::HashMap;
 
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::kpi::{self, Direction, Status, Summary};
-use crate::models::_entities::{kpi_readings, kpis, objectives};
+use crate::models::_entities::{kpi_readings, kpis};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Allowed reporting cadences for a KPI; used to judge when a reading is stale.
@@ -48,13 +47,13 @@ fn field_problems(
 
 /// True when a live (not soft-deleted) objective with this pid exists, so a KPI cannot point at a missing or deleted objective.
 async fn objective_exists(ctx: &AppContext, pid: Uuid) -> Result<bool> {
-    Ok(objectives::Entity::find()
-        .filter(objectives::Column::Pid.eq(pid))
-        .filter(objectives::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some())
+    Ok(
+        sqlx::query("SELECT 1 FROM objectives WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .is_some(),
+    )
 }
 
 /// The two latest readings of a KPI, newest first.
@@ -102,24 +101,23 @@ async fn load_readings(ctx: &AppContext, pids: &[Uuid]) -> Result<Vec<kpi_readin
     if pids.is_empty() {
         return Ok(Vec::new());
     }
-    kpi_readings::Entity::find()
-        .filter(kpi_readings::Column::KpiPid.is_in(pids.to_vec()))
-        .order_by_asc(kpi_readings::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM kpi_readings WHERE kpi_pid = ANY($1) ORDER BY id")
+            .bind(pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Loads a live KPI by pid for a caller. A KPI on a plan the caller cannot read is reported as not found, the same as a missing one.
 async fn find_kpi(ctx: &AppContext, caller: &MaybeAuthUser, raw: &str) -> Result<kpis::Model> {
     let pid = super::parse_pid(raw)?;
-    let k = kpis::Entity::find()
-        .filter(kpis::Column::Pid.eq(pid))
-        .filter(kpis::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let k: kpis::Model =
+        sqlx::query_as("SELECT * FROM kpis WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     // A KPI on a plan the caller cannot read is not there for them.
     if let Some(plan) = k.plan_pid
         && !super::plan_access::readable_plans(ctx, caller, &[plan])
@@ -196,30 +194,32 @@ async fn create(
         super::governance::find_item(&ctx, &plan.to_string()).await?;
         super::plan_access::require_readable(&ctx, &caller, plan).await?;
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = kpis::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(b.plan_pid),
-        objective_pid: ActiveValue::set(b.objective_pid),
-        name: ActiveValue::set(b.name.trim().to_string()),
-        description: ActiveValue::set(b.description.clone()),
-        unit: ActiveValue::set(b.unit.clone()),
-        direction: ActiveValue::set(b.direction.clone()),
-        target_value: ActiveValue::set(b.target_value),
-        red_value: ActiveValue::set(b.red_value),
-        cadence: ActiveValue::set(b.cadence.clone()),
-        owner_ref: ActiveValue::set(b.owner_ref.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "kpi_defined", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO kpis
+             (pid, plan_pid, objective_pid, name, description, unit, direction, target_value, red_value,
+              cadence, owner_ref, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.plan_pid)
+    .bind(b.objective_pid)
+    .bind(b.name.trim())
+    .bind(&b.description)
+    .bind(&b.unit)
+    .bind(&b.direction)
+    .bind(b.target_value)
+    .bind(b.red_value)
+    .bind(&b.cadence)
+    .bind(&b.owner_ref)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "kpi_defined", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid }))
 }
 
 /// Query parameters for `GET /api/kpis`.
@@ -256,18 +256,17 @@ async fn list(
         Some(_) => return Err(unprocessable("status must be green, amber, red or no_data")),
     };
     let as_of = q.as_of.unwrap_or_else(crate::tz::deployment_today);
-    let mut query = kpis::Entity::find().filter(kpis::Column::DeletedAt.is_null());
-    if let Some(p) = q.plan {
-        query = query.filter(kpis::Column::PlanPid.eq(p));
-    }
-    if let Some(o) = q.objective {
-        query = query.filter(kpis::Column::ObjectivePid.eq(o));
-    }
-    let mut rows = query
-        .order_by_asc(kpis::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let mut rows: Vec<kpis::Model> = sqlx::query_as(
+        "SELECT * FROM kpis
+         WHERE deleted_at IS NULL
+           AND ($1::uuid IS NULL OR plan_pid = $1)
+           AND ($2::uuid IS NULL OR objective_pid = $2)
+         ORDER BY id",
+    )
+    .bind(q.plan)
+    .bind(q.objective)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     // Plan KPIs on plans the caller cannot read are left out.
     let mut plans: Vec<Uuid> = rows.iter().filter_map(|k| k.plan_pid).collect();
     plans.sort();
@@ -381,19 +380,27 @@ async fn update(
     }
     let was = serde_json::json!({ "name": k.name, "target_value": k.target_value,
         "red_value": k.red_value, "cadence": k.cadence, "owner_ref": k.owner_ref });
-    let mut a: kpis::ActiveModel = k.into();
-    a.name = ActiveValue::set(b.name.trim().to_string());
-    a.description = ActiveValue::set(b.description.clone());
-    a.unit = ActiveValue::set(b.unit.clone());
-    a.target_value = ActiveValue::set(b.target_value);
-    a.red_value = ActiveValue::set(b.red_value);
-    a.cadence = ActiveValue::set(b.cadence.clone());
-    a.owner_ref = ActiveValue::set(b.owner_ref.clone());
-    a.objective_pid = ActiveValue::set(b.objective_pid);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: kpis::Model = sqlx::query_as(
+        "UPDATE kpis
+         SET name = $1, description = $2, unit = $3, target_value = $4, red_value = $5, cadence = $6,
+             owner_ref = $7, objective_pid = $8
+         WHERE id = $9
+         RETURNING *",
+    )
+    .bind(b.name.trim())
+    .bind(&b.description)
+    .bind(&b.unit)
+    .bind(b.target_value)
+    .bind(b.red_value)
+    .bind(&b.cadence)
+    .bind(&b.owner_ref)
+    .bind(b.objective_pid)
+    .bind(k.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "kpi_updated",
         caller.actor(),
@@ -401,7 +408,7 @@ async fn update(
             "red_value": row.red_value, "cadence": row.cadence, "owner_ref": row.owner_ref } })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -414,14 +421,16 @@ async fn remove(
 ) -> Result<Response> {
     let k = find_kpi(&ctx, &caller, &pid).await?;
     let row_pid = k.pid;
-    let mut a: kpis::ActiveModel = k.into();
-    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row_pid, "kpi_deleted", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE kpis SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(k.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "kpi_deleted", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -463,21 +472,22 @@ async fn add_reading(
     {
         return Err(unprocessable("note is too long"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = kpi_readings::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        kpi_pid: ActiveValue::set(k.pid),
-        observed_on: ActiveValue::set(on),
-        value: ActiveValue::set(b.value),
-        note: ActiveValue::set(b.note.clone()),
-        actor: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO kpi_readings (pid, kpi_pid, observed_on, value, note, actor)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(k.pid)
+    .bind(on)
+    .bind(b.value)
+    .bind(&b.note)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         k.pid,
         "kpi_reading_added",
         caller.actor(),
@@ -485,10 +495,10 @@ async fn add_reading(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let readings = load_readings(&ctx, &[k.pid]).await?;
     let (_, v) = view(&k, &readings, today);
-    format::json(serde_json::json!({ "reading_pid": row.pid, "kpi": v }))
+    format::json(serde_json::json!({ "reading_pid": row_pid, "kpi": v }))
 }
 
 /// `GET /api/kpis/{pid}/readings` — every reading, newest first.

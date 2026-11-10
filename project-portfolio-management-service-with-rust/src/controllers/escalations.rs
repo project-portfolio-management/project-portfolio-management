@@ -16,16 +16,15 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
 use super::governance::find_item;
-use super::{conflict, db_err, unprocessable};
+use super::{conflict, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::escalations::{self as rules, Action};
-use crate::models::_entities::{escalation_events, escalations, plans};
+use crate::models::_entities::{escalation_events, escalations};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The deployment's local calendar date, used for `raised_on`, ages and overdue tests so they agree with the configured time zone.
@@ -62,37 +61,39 @@ async fn path_of(
 /// Load a live (not soft-deleted) escalation of the given plan by its pid string. A wrong plan or a deleted row is `404`, so a pid from another plan never leaks.
 async fn find_escalation(ctx: &AppContext, plan: Uuid, epid: &str) -> Result<escalations::Model> {
     let pid = super::parse_pid(epid)?;
-    escalations::Entity::find()
-        .filter(escalations::Column::Pid.eq(pid))
-        .filter(escalations::Column::PlanPid.eq(plan))
-        .filter(escalations::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM escalations WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
-/// Append one row to the append-only `escalation_events` history. Takes any connection so the caller can write it in the same transaction as the change it records.
-async fn event<C: ConnectionTrait>(
-    db: &C,
+/// Append one row to the append-only `escalation_events` history, in the caller's transaction so it is written with
+/// the change it records.
+async fn event(
+    tx: &mut crate::db::Tx,
     esc: Uuid,
     event: &str,
     level: i32,
     actor: Option<&str>,
     note: Option<String>,
 ) -> Result<()> {
-    escalation_events::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        escalation_pid: ActiveValue::set(esc),
-        event: ActiveValue::set(event.to_string()),
-        level: ActiveValue::set(level),
-        actor: ActiveValue::set(actor.map(str::to_string)),
-        note: ActiveValue::set(note),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(db_err)?;
+    sqlx::query(
+        "INSERT INTO escalation_events (pid, escalation_pid, event, level, actor, note)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id",
+    )
+    .bind(Uuid::new_v4())
+    .bind(esc)
+    .bind(event)
+    .bind(level)
+    .bind(actor)
+    .bind(note)
+    .fetch_one(tx.conn())
+    .await?;
     Ok(())
 }
 
@@ -159,8 +160,8 @@ async fn tell(
         if is_actor {
             continue;
         }
-        crate::models::capabilities::notify(
-            &ctx.db,
+        crate::models::capabilities::notify_on(
+            &mut crate::db::pool(ctx),
             &who,
             "plan",
             e.plan_pid,
@@ -207,30 +208,31 @@ pub(crate) async fn insert(
     });
     let default_to = rules::check_level(level, &path).map_err(|m| unprocessable(&m))?;
     // Row, first history event and audit entry commit together or not at all.
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = escalations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan),
-        title: ActiveValue::set(n.title),
-        description: ActiveValue::set(n.description),
-        reason_kind: ActiveValue::set(n.reason_kind),
-        tolerance_dimension: ActiveValue::set(n.tolerance_dimension),
-        level: ActiveValue::set(level),
-        escalated_to: ActiveValue::set(n.escalated_to.or(default_to)),
-        owner_ref: ActiveValue::set(n.owner_ref),
-        status: ActiveValue::set("open".to_string()),
-        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        raised_on: ActiveValue::set(today()),
-        respond_by: ActiveValue::set(n.respond_by),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    event(&txn, row.pid, "raised", level, caller.actor(), None).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: escalations::Model = sqlx::query_as(
+        "INSERT INTO escalations
+             (pid, plan_pid, title, description, reason_kind, tolerance_dimension, level, escalated_to,
+              owner_ref, status, raised_by, raised_on, respond_by, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'open', $10, $11, $12, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan)
+    .bind(n.title)
+    .bind(n.description)
+    .bind(n.reason_kind)
+    .bind(n.tolerance_dimension)
+    .bind(level)
+    .bind(n.escalated_to.or(default_to))
+    .bind(n.owner_ref)
+    .bind(caller.actor())
+    .bind(today())
+    .bind(n.respond_by)
+    .fetch_one(tx.conn())
+    .await?;
+    event(&mut tx, row.pid, "raised", level, caller.actor(), None).await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "escalation_raised",
         caller.actor(),
@@ -238,7 +240,7 @@ pub(crate) async fn insert(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     tell(ctx, &row, caller.actor(), false, "has been raised with you").await;
     Ok(row)
 }
@@ -319,15 +321,19 @@ async fn list_plan(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     let wanted = status_filter(q.status.as_deref())?;
-    let mut query = escalations::Entity::find()
-        .filter(escalations::Column::PlanPid.eq(plan.pid))
-        .filter(escalations::Column::DeletedAt.is_null())
-        .order_by_desc(escalations::Column::Id);
+    let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM escalations WHERE deleted_at IS NULL AND plan_pid = ",
+    );
+    query.push_bind(plan.pid);
     if let Some(w) = wanted {
-        query = query.filter(escalations::Column::Status.is_in(w));
+        query.push(" AND status = ANY(").push_bind(w).push(")");
     }
+    query.push(" ORDER BY id DESC");
     let now = today();
-    let rows = query.all(&ctx.db).await.map_err(db_err)?;
+    let rows: Vec<escalations::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     format::json(json!({
         "plan_pid": plan.pid,
         "escalations": rows.iter().map(|e| view(e, now)).collect::<Vec<_>>(),
@@ -342,12 +348,7 @@ async fn get_one(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     let e = find_escalation(&ctx, plan.pid, &epid).await?;
-    let events = escalation_events::Entity::find()
-        .filter(escalation_events::Column::EscalationPid.eq(e.pid))
-        .order_by_asc(escalation_events::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let events = events_of(&ctx, e.pid).await?;
     let mut out = view(&e, today());
     out["events"] = json!(events
         .iter()
@@ -381,10 +382,20 @@ async fn step(
     action: Action,
     event_name: &str,
     note: Option<String>,
-    change: impl FnOnce(&mut escalations::ActiveModel),
+    change: Change,
 ) -> Result<Response> {
     let row = advance(ctx, caller, e, action, event_name, note, change).await?;
     format::json(view(&row, today()))
+}
+
+/// What a step changes besides the status.
+enum Change {
+    /// Nothing else.
+    Nothing,
+    /// Up a level; the body there, when the path names one.
+    Level(i32, Option<String>),
+    /// Resolved: the outcome, the response and the day.
+    Resolution(String, String, NaiveDate),
 }
 
 /// [`step`], answering the changed row.
@@ -395,18 +406,36 @@ async fn advance(
     action: Action,
     event_name: &str,
     note: Option<String>,
-    change: impl FnOnce(&mut escalations::ActiveModel),
+    change: Change,
 ) -> Result<escalations::Model> {
     // The rules module owns the state machine; an illegal move is a 409, not a silent no-op.
     let status = rules::apply(&e.status, action).map_err(|m| conflict(&m))?;
     let pid = e.pid;
-    let mut a: escalations::ActiveModel = e.into();
-    a.status = ActiveValue::set(status.to_string());
-    change(&mut a);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
+    // Only the status and the columns this step changes are written.
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE escalations SET status = ");
+    q.push_bind(status.to_string());
+    match change {
+        Change::Nothing => {}
+        Change::Level(level, body) => {
+            q.push(", level = ").push_bind(level);
+            if let Some(body) = body {
+                q.push(", escalated_to = ").push_bind(body);
+            }
+        }
+        Change::Resolution(outcome, response, on) => {
+            q.push(", outcome = ")
+                .push_bind(outcome)
+                .push(", response = ")
+                .push_bind(response)
+                .push(", resolved_on = ")
+                .push_bind(on);
+        }
+    }
+    q.push(" WHERE id = ").push_bind(e.id).push(" RETURNING *");
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: escalations::Model = q.build_query_as().fetch_one(tx.conn()).await?;
     event(
-        &txn,
+        &mut tx,
         pid,
         event_name,
         row.level,
@@ -420,8 +449,8 @@ async fn advance(
         "resolved" => Some(json!({ "outcome": row.outcome, "response": row.response })),
         _ => None,
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         pid,
         &format!("escalation_{event_name}"),
         caller.actor(),
@@ -429,7 +458,7 @@ async fn advance(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     let what = match event_name {
         "acknowledged" => "has been acknowledged",
         "level_raised" => "has been taken up a level",
@@ -477,7 +506,7 @@ async fn acknowledge(
         Action::Acknowledge,
         "acknowledged",
         trimmed(b.note.as_ref()),
-        |_| {},
+        Change::Nothing,
     )
     .await
 }
@@ -508,12 +537,7 @@ async fn raise_level(
         Action::RaiseLevel,
         "level_raised",
         Some(note),
-        move |a| {
-            a.level = ActiveValue::set(level);
-            if let Some(body) = body {
-                a.escalated_to = ActiveValue::set(Some(body));
-            }
-        },
+        Change::Level(level, body),
     )
     .await
 }
@@ -568,23 +592,19 @@ async fn resolve_row(
         Action::Resolve,
         "resolved",
         Some(response.clone()),
-        move |a| {
-            a.outcome = ActiveValue::set(Some(outcome));
-            a.response = ActiveValue::set(Some(response));
-            a.resolved_on = ActiveValue::set(Some(on));
-        },
+        Change::Resolution(outcome, response, on),
     )
     .await
 }
 
 /// The history of one escalation, oldest first.
 async fn events_of(ctx: &AppContext, esc: Uuid) -> Result<Vec<escalation_events::Model>> {
-    escalation_events::Entity::find()
-        .filter(escalation_events::Column::EscalationPid.eq(esc))
-        .order_by_asc(escalation_events::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM escalation_events WHERE escalation_pid = $1 ORDER BY id")
+            .bind(esc)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// The acknowledgement the escalation has now: the last `acknowledged` event after the last
@@ -672,7 +692,7 @@ async fn put_acknowledgement(
         Action::Acknowledge,
         "acknowledged",
         trimmed(b.note.as_ref()),
-        |_| {},
+        Change::Nothing,
     )
     .await?;
     let events = events_of(&ctx, row.pid).await?;
@@ -742,7 +762,7 @@ async fn withdraw(
         Action::Withdraw,
         "withdrawn",
         trimmed(b.note.as_ref()),
-        |_| {},
+        Change::Nothing,
     )
     .await
 }
@@ -769,30 +789,34 @@ async fn register(
     Query(q): Query<RegisterQuery>,
 ) -> Result<Response> {
     let wanted = status_filter(q.status.as_deref())?;
-    let mut query = escalations::Entity::find()
-        .filter(escalations::Column::DeletedAt.is_null())
-        .order_by_desc(escalations::Column::Id);
+    let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM escalations WHERE deleted_at IS NULL",
+    );
     if let Some(w) = wanted {
-        query = query.filter(escalations::Column::Status.is_in(w));
+        query.push(" AND status = ANY(").push_bind(w).push(")");
     }
     if let Some(p) = q.plan.as_deref() {
         let plan = Uuid::parse_str(p).map_err(|_| unprocessable("plan must be a plan pid"))?;
-        query = query.filter(escalations::Column::PlanPid.eq(plan));
+        query.push(" AND plan_pid = ").push_bind(plan);
     }
-    let rows = query.all(&ctx.db).await.map_err(db_err)?;
+    query.push(" ORDER BY id DESC");
+    let rows: Vec<escalations::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let mut plan_pids: Vec<Uuid> = rows.iter().map(|e| e.plan_pid).collect();
     plan_pids.sort();
     plan_pids.dedup();
     // Rows of plans the caller cannot read are dropped before counting, so they add to no total.
     let readable = super::plan_access::readable_plans(&ctx, &caller, &plan_pids).await;
-    let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(plan_pids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: std::collections::HashMap<Uuid, String> =
+        sqlx::query_as::<_, PlanName>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(plan_pids)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .map(|p| (p.pid, p.name))
+            .collect();
     let now = today();
     let mut counts = std::collections::BTreeMap::new();
     let mut overdue = 0_u64;
@@ -809,6 +833,15 @@ async fn register(
         out.push(v);
     }
     format::json(json!({ "escalations": out, "counts": counts, "overdue": overdue }))
+}
+
+/// A plan's pid and name.
+#[derive(sqlx::FromRow)]
+struct PlanName {
+    /// The plan's pid.
+    pid: Uuid,
+    /// The plan's name.
+    name: String,
 }
 
 /// The escalation routes.

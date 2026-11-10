@@ -11,7 +11,6 @@ use std::collections::{HashMap, HashSet};
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -22,12 +21,12 @@ use crate::deescalation::{self as rules, Input, Quarter, QuarterState};
 use crate::kpi::{self, Direction, Status};
 use crate::models::_entities::{
     criterion_evidence as evidence, deescalation_criteria as crits, escalation_levels as levels,
-    kpi_readings, kpis, plans, scorecard_kpis as members, scorecards,
+    kpi_readings, kpis, scorecards,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Map a database error to an API error; unique-constraint violations on scorecard name or the single de-escalation scorecard become 409 conflicts, anything else a generic error.
-fn db_err(e: &sea_orm::DbErr) -> Error {
+fn db_err(e: &sqlx::Error) -> Error {
     let t = e.to_string();
     if t.contains("sc_name") {
         return Error::CustomError(
@@ -75,14 +74,10 @@ fn has_role(caller: &MaybeAuthUser, role: &str) -> bool {
 
 /// Pids of non-deleted plans the caller may read; scorecards only count KPIs from these.
 async fn readable(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
         .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+        .map_err(|e| db_err(&e))?;
     Ok(super::plan_access::readable_plans(ctx, caller, &all).await)
 }
 
@@ -108,21 +103,28 @@ async fn create(
     if !(3..=120).contains(&b.name.trim().chars().count()) {
         return Err(unprocessable("name is 3 to 120 characters"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = scorecards::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(b.name.trim().to_string()),
-        for_deescalation: ActiveValue::set(b.for_deescalation),
-        active: ActiveValue::set(true),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: scorecards::Model = sqlx::query_as(
+        "INSERT INTO scorecards (pid, name, for_deescalation, active)
+         VALUES ($1, $2, $3, TRUE)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.name.trim())
+    .bind(b.for_deescalation)
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(&txn, row.pid, "scorecard_created", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "scorecard_created",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(
         json!({ "pid": row.pid, "name": row.name, "for_deescalation": row.for_deescalation }),
     )
@@ -131,9 +133,8 @@ async fn create(
 /// `GET /api/scorecards`
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = scorecards::Entity::find()
-        .order_by_asc(scorecards::Column::Name)
-        .all(&ctx.db)
+    let rows: Vec<scorecards::Model> = sqlx::query_as("SELECT * FROM scorecards ORDER BY name")
+        .fetch_all(crate::db::pool(&ctx))
         .await
         .map_err(|e| db_err(&e))?;
     format::json(
@@ -151,9 +152,9 @@ pub(crate) struct SetKpis {
 /// Load a scorecard by pid string; a malformed pid is rejected by `parse_pid` and an absent row is `NotFound`.
 async fn find_scorecard(ctx: &AppContext, pid: &str) -> Result<scorecards::Model> {
     let pid = super::parse_pid(pid)?;
-    scorecards::Entity::find()
-        .filter(scorecards::Column::Pid.eq(pid))
-        .one(&ctx.db)
+    sqlx::query_as("SELECT * FROM scorecards WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
         .await
         .map_err(|e| db_err(&e))?
         .ok_or(Error::NotFound)
@@ -178,12 +179,12 @@ async fn set_kpis(
     if wanted.len() > 60 {
         return Err(unprocessable("a scorecard holds at most 60 KPIs"));
     }
-    let found = kpis::Entity::find()
-        .filter(kpis::Column::Pid.is_in(wanted.clone()))
-        .filter(kpis::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let found: Vec<Uuid> =
+        sqlx::query_scalar("SELECT pid FROM kpis WHERE pid = ANY($1) AND deleted_at IS NULL")
+            .bind(&wanted)
+            .fetch_all(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
     // A hidden KPI gets the answer of one that does not exist, and stays on the card: the caller cannot see to remove it.
     let hidden: Vec<Uuid> = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
@@ -194,29 +195,19 @@ async fn set_kpis(
     if found.len() != wanted.len() || wanted.iter().any(|k| hidden.contains(k)) {
         return Err(unprocessable("every kpi_pid must be a KPI"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    members::Entity::delete_many()
-        .filter(members::Column::ScorecardPid.eq(sc.pid))
-        .filter(super::plan_access::is_none_of(
-            "kpi_pid",
-            hidden.iter().copied(),
-        ))
-        .exec(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The hidden KPIs as one bound array, which no number of them can take past the bind-parameter limit.
+    sqlx::query("DELETE FROM scorecard_kpis WHERE scorecard_pid = $1 AND kpi_pid <> ALL($2)")
+        .bind(sc.pid)
+        .bind(&hidden)
+        .execute(tx.conn())
         .await
         .map_err(|e| db_err(&e))?;
     for k in &wanted {
-        members::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            scorecard_pid: ActiveValue::set(sc.pid),
-            kpi_pid: ActiveValue::set(*k),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(|e| db_err(&e))?;
+        insert_member(&mut tx, sc.pid, *k).await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         sc.pid,
         "scorecard_kpis_set",
         caller.actor(),
@@ -224,8 +215,22 @@ async fn set_kpis(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": wanted }))
+}
+
+/// Put one KPI on a scorecard, in the caller's transaction.
+async fn insert_member(tx: &mut crate::db::Tx, scorecard: Uuid, kpi: Uuid) -> Result<()> {
+    sqlx::query(
+        "INSERT INTO scorecard_kpis (pid, scorecard_pid, kpi_pid) VALUES ($1, $2, $3) RETURNING id",
+    )
+    .bind(Uuid::new_v4())
+    .bind(scorecard)
+    .bind(kpi)
+    .fetch_one(tx.conn())
+    .await
+    .map_err(|e| db_err(&e))?;
+    Ok(())
 }
 
 /// `GET /api/scorecard-template` — a starter set of measures with no targets; nothing is applied.
@@ -284,34 +289,27 @@ async fn from_template(
         return Err(unprocessable(&problems.join("; ")));
     }
     let mut made = Vec::new();
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     for (name, dir, unit, p) in chosen {
-        let k = kpis::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            name: ActiveValue::set(name.to_string()),
-            unit: ActiveValue::set(Some(unit.to_string())),
-            direction: ActiveValue::set(dir.to_string()),
-            target_value: ActiveValue::set(p.target_value),
-            red_value: ActiveValue::set(p.red_value),
-            cadence: ActiveValue::set(Some("quarterly".to_string())),
-            ..Default::default()
-        }
-        .insert(&txn)
+        let k: Uuid = sqlx::query_scalar(
+            "INSERT INTO kpis (pid, name, unit, direction, target_value, red_value, cadence)
+             VALUES ($1, $2, $3, $4, $5, $6, 'quarterly')
+             RETURNING pid",
+        )
+        .bind(Uuid::new_v4())
+        .bind(name)
+        .bind(unit)
+        .bind(dir)
+        .bind(p.target_value)
+        .bind(p.red_value)
+        .fetch_one(tx.conn())
         .await
         .map_err(|e| db_err(&e))?;
-        members::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            scorecard_pid: ActiveValue::set(sc.pid),
-            kpi_pid: ActiveValue::set(k.pid),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(|e| db_err(&e))?;
-        made.push(k.pid);
+        insert_member(&mut tx, sc.pid, k).await?;
+        made.push(k);
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         sc.pid,
         "scorecard_from_template",
         caller.actor(),
@@ -319,7 +317,7 @@ async fn from_template(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "scorecard_pid": sc.pid, "kpi_pids": made }))
 }
 
@@ -331,21 +329,19 @@ async fn kpi_rows(
     quarters: &[Quarter],
     visible: &HashSet<Uuid>,
 ) -> Result<(Vec<Value>, usize, Vec<Vec<Input>>)> {
-    let ids: Vec<Uuid> = members::Entity::find()
-        .filter(members::Column::ScorecardPid.eq(sc.pid))
-        .order_by_asc(members::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|m| m.kpi_pid)
-        .collect();
-    let all = kpis::Entity::find()
-        .filter(kpis::Column::Pid.is_in(ids.clone()))
-        .filter(kpis::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let ids: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT kpi_pid FROM scorecard_kpis WHERE scorecard_pid = $1 ORDER BY id",
+    )
+    .bind(sc.pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await
+    .map_err(|e| db_err(&e))?;
+    let all: Vec<kpis::Model> =
+        sqlx::query_as("SELECT * FROM kpis WHERE pid = ANY($1) AND deleted_at IS NULL")
+            .bind(&ids)
+            .fetch_all(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
     let by: HashMap<Uuid, kpis::Model> = all.into_iter().map(|k| (k.pid, k)).collect();
     let mut hidden = 0;
     let mut rows = Vec::new();
@@ -357,13 +353,13 @@ async fn kpi_rows(
             continue;
         }
         let dir = Direction::parse(&k.direction).unwrap_or(Direction::HigherBetter);
-        let readings = kpi_readings::Entity::find()
-            .filter(kpi_readings::Column::KpiPid.eq(k.pid))
-            .order_by_asc(kpi_readings::Column::ObservedOn)
-            .order_by_asc(kpi_readings::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?;
+        let readings: Vec<kpi_readings::Model> = sqlx::query_as(
+            "SELECT * FROM kpi_readings WHERE kpi_pid = $1 ORDER BY observed_on, id",
+        )
+        .bind(k.pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await
+        .map_err(|e| db_err(&e))?;
         let mut per = Vec::new();
         for (i, q) in quarters.iter().enumerate() {
             let latest = readings
@@ -446,24 +442,26 @@ async fn set_level(
     if !(1..=60).contains(&b.level.trim().chars().count()) {
         return Err(unprocessable("level is 1 to 60 characters"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = levels::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        level: ActiveValue::set(b.level.trim().to_string()),
-        note: ActiveValue::set(
-            b.note
-                .map(|n| n.trim().to_string())
-                .filter(|n| !n.is_empty()),
-        ),
-        set_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        set_on: ActiveValue::set(crate::tz::deployment_today()),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: levels::Model = sqlx::query_as(
+        "INSERT INTO escalation_levels (pid, level, note, set_by, set_on)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.level.trim())
+    .bind(
+        b.note
+            .map(|n| n.trim().to_string())
+            .filter(|n| !n.is_empty()),
+    )
+    .bind(caller.actor())
+    .bind(crate::tz::deployment_today())
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "escalation_level_set",
         caller.actor(),
@@ -471,7 +469,7 @@ async fn set_level(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "level": row.level, "set_on": row.set_on }))
 }
 
@@ -492,18 +490,19 @@ async fn add_criterion(
     if !(5..=500).contains(&b.criterion.trim().chars().count()) {
         return Err(unprocessable("a criterion is 5 to 500 characters"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = crits::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        criterion: ActiveValue::set(b.criterion.trim().to_string()),
-        active: ActiveValue::set(true),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: crits::Model = sqlx::query_as(
+        "INSERT INTO deescalation_criteria (pid, criterion, active)
+         VALUES ($1, $2, TRUE)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.criterion.trim())
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "deescalation_criterion_added",
         caller.actor(),
@@ -511,7 +510,7 @@ async fn add_criterion(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": row.pid, "criterion": row.criterion }))
 }
 
@@ -538,12 +537,13 @@ async fn set_evidence(
     Json(b): Json<EvidenceBody>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let c = crits::Entity::find()
-        .filter(crits::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .ok_or(Error::NotFound)?;
+    let c: crits::Model =
+        sqlx::query_as("SELECT * FROM deescalation_criteria WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .ok_or(Error::NotFound)?;
     let Some(q) = Quarter::parse(&b.quarter) else {
         return Err(unprocessable("quarter must be YYYY-Qn"));
     };
@@ -564,23 +564,26 @@ async fn set_evidence(
             "link must be an http or https address with no spaces, up to 500 characters",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    evidence::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        criterion_pid: ActiveValue::set(c.pid),
-        quarter: ActiveValue::set(q.label()),
-        met: ActiveValue::set(b.met),
-        link: ActiveValue::set(b.link.clone()),
-        note: ActiveValue::set(b.note.trim().to_string()),
-        recorded_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        recorded_on: ActiveValue::set(crate::tz::deployment_today()),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "INSERT INTO criterion_evidence
+             (pid, criterion_pid, quarter, met, link, note, recorded_by, recorded_on)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING id",
+    )
+    .bind(Uuid::new_v4())
+    .bind(c.pid)
+    .bind(q.label())
+    .bind(b.met)
+    .bind(b.link.as_deref())
+    .bind(b.note.trim())
+    .bind(caller.actor())
+    .bind(crate::tz::deployment_today())
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         c.pid,
         "deescalation_evidence_recorded",
         caller.actor(),
@@ -588,7 +591,7 @@ async fn set_evidence(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "criterion_pid": c.pid, "quarter": q.label(), "met": b.met }))
 }
 
@@ -605,36 +608,34 @@ pub(crate) async fn tracker_view(
 ) -> Result<Value> {
     let (need, unusable) = rules::required_quarters();
     let qs = rules::window(today, need.max(4));
-    let level = levels::Entity::find()
-        .order_by_desc(levels::Column::Id)
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
-    let history = levels::Entity::find()
-        .order_by_desc(levels::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
-    let criteria = crits::Entity::find()
-        .filter(crits::Column::Active.eq(true))
-        .order_by_asc(crits::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
-    let evid = evidence::Entity::find()
-        .order_by_asc(evidence::Column::Id)
-        .all(&ctx.db)
+    let level: Option<levels::Model> =
+        sqlx::query_as("SELECT * FROM escalation_levels ORDER BY id DESC LIMIT 1")
+            .fetch_optional(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
+    let history: Vec<levels::Model> =
+        sqlx::query_as("SELECT * FROM escalation_levels ORDER BY id DESC")
+            .fetch_all(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
+    let criteria: Vec<crits::Model> =
+        sqlx::query_as("SELECT * FROM deescalation_criteria WHERE active = TRUE ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
+    let evid: Vec<evidence::Model> = sqlx::query_as("SELECT * FROM criterion_evidence ORDER BY id")
+        .fetch_all(crate::db::pool(ctx))
         .await
         .map_err(|e| db_err(&e))?;
     let mut latest: HashMap<(Uuid, String), &evidence::Model> = HashMap::new();
     for e in &evid {
         latest.insert((e.criterion_pid, e.quarter.clone()), e);
     }
-    let sc = scorecards::Entity::find()
-        .filter(scorecards::Column::ForDeescalation.eq(true))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let sc: Option<scorecards::Model> =
+        sqlx::query_as("SELECT * FROM scorecards WHERE for_deescalation = TRUE LIMIT 1")
+            .fetch_optional(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
     let (kpi_rows_v, hidden, mut inputs) = match &sc {
         Some(s) => kpi_rows(ctx, s, &qs, visible).await?,
         None => (Vec::new(), 0, vec![Vec::new(); qs.len()]),

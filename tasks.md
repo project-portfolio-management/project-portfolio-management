@@ -1948,6 +1948,24 @@ came from grep.
   `deescalation`, `confidence`, `exceptions_digest`, `schedule_baselines`, `cost_risk`, `schedule_risk`, `tpc`,
   `director_packs` and `pack_rhythm` (exceptions, escalations and the director pack; batch 3's files call four of
   them; about 446 lines).
+  **Progress 2026-11-10, batch 4 (not ticked).** The exception, escalation and director-pack controllers moved:
+  `escalations` (55 lines naming SeaORM), `deescalation` (76), `confidence` (96), `exceptions_digest` (16),
+  `schedule_baselines` (31), `cost_risk` (25), `schedule_risk` (24), `tpc` (20), `director_packs` (51) and
+  `pack_rhythm` (52): 446 lines, now none; 111 files and 3,958 lines left (batch 3's measure). The four functions
+  batch 3's files call (`escalations::insert`, still in its own transaction; `confidence::find_exception`;
+  `schedule_baselines::current`; `cost_risk::p80_by_currency`) kept their signatures, because no caller holds a sqlx
+  transaction to join, so no caller changed. `pack_rhythm`'s four writes (create a schedule, change one, review a
+  draft, set a subscription) and their audit rows now share one transaction; before, each was its own statement on
+  the pool, so a failed audit row left the write in place. Two updates that may set no column (`PUT
+  /api/exceptions/{pid}` and `PUT /api/director-pack-schedules/{pid}` with nothing to change) read the row back
+  instead, as SeaORM's empty update did. **Still on SeaORM through other modules**, on the pool and outside these
+  handlers' transactions: `governance::find_item` and `asks_section`, `find_live_plan`, `plan_access`
+  (`readable_plans`, `HiddenScope`), `cpm::load_network`, `models::visibility::all_dependencies`
+  (`confidence::build_map` still hands it `&ctx.db`), `programme_gates` (`status_map`, `gates_section`),
+  `programme_profile::all`, `organizations` (`audience_valid`, `caller_organizations`) and the director-pack sections
+  not yet moved (`fever`, `earned_value`, `capacity_heatmap`, `register`, `cutover`, `status_updates`). **Next batch, suggested:** the director pack's remaining section builders
+  `fever`, `programme_gates`, `programme_profile`, `capacity_heatmap`, `cutover`, `status_updates`, `register`,
+  `earned_value` and `insights` (about 411 lines).
 
 ## Correctness carried forward (CF-n)
 

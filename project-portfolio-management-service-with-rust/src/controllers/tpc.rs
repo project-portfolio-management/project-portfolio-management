@@ -16,10 +16,9 @@
 //!   a plan whose DIPP cannot be computed is set aside from the triage
 //!   ranking rather than sorted last as though measured and bad.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -37,7 +36,7 @@ const MAX_PLANS_SCANNED: u64 = 1000;
 /// Out-of-range reads as absent rather than saturating: a silently
 /// clamped money figure is worse than a missing one, because it still
 /// looks like an answer.
-fn to_i64(value: Option<sea_orm::prelude::Decimal>) -> Option<i64> {
+fn to_i64(value: Option<sqlx::types::Decimal>) -> Option<i64> {
     use std::str::FromStr;
     value.and_then(|d| i64::from_str(&d.trunc().to_string()).ok())
 }
@@ -110,50 +109,58 @@ async fn record(
         ));
     }
 
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = tpc_rows::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        currency: ActiveValue::set(currency),
-        total_project_control_dipp: ActiveValue::set(payload.dipp.map(Into::into)),
-        total_project_control_dipp_progress_index_numerator: ActiveValue::set(
-            payload.dipp_progress_index_numerator.map(Into::into),
-        ),
-        total_project_control_dipp_progress_index_denominator: ActiveValue::set(
-            payload.dipp_progress_index_denominator.map(Into::into),
-        ),
-        total_project_control_expected_monetary_value: ActiveValue::set(
-            payload.expected_monetary_value.into(),
-        ),
-        total_project_control_cost_estimate_to_complete: ActiveValue::set(
-            payload.cost_estimate_to_complete.into(),
-        ),
-        deleted_at: ActiveValue::set(None),
-        // `..._ratio` is GENERATED ALWAYS in Postgres and is never
-        // written here — that is what stops it disagreeing with the two
-        // numbers beside it.
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `..._ratio` is GENERATED ALWAYS in Postgres and is never written
+    // here — that is what stops it disagreeing with the two numbers
+    // beside it.
+    let row: Uuid = sqlx::query_scalar(
+        "INSERT INTO total_project_control
+             (pid, plan_pid, currency, total_project_control_dipp,
+              total_project_control_dipp_progress_index_numerator,
+              total_project_control_dipp_progress_index_denominator,
+              total_project_control_expected_monetary_value,
+              total_project_control_cost_estimate_to_complete, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(currency)
+    .bind(payload.dipp.map(sqlx::types::Decimal::from))
+    .bind(
+        payload
+            .dipp_progress_index_numerator
+            .map(sqlx::types::Decimal::from),
+    )
+    .bind(
+        payload
+            .dipp_progress_index_denominator
+            .map(sqlx::types::Decimal::from),
+    )
+    .bind(sqlx::types::Decimal::from(payload.expected_monetary_value))
+    .bind(sqlx::types::Decimal::from(
+        payload.cost_estimate_to_complete,
+    ))
+    .fetch_one(tx.conn())
+    .await?;
 
-    AuditModel::record(&txn, plan.pid, "tpc_recorded", caller.actor(), None)
+    AuditModel::record_on(tx.conn(), plan.pid, "tpc_recorded", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row.to_string() }))
 }
 
 /// Newest-first observations for one plan.
 async fn observations(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<tpc_rows::Model>> {
-    tpc_rows::Entity::find()
-        .filter(tpc_rows::Column::PlanPid.eq(plan_pid))
-        .filter(tpc_rows::Column::DeletedAt.is_null())
-        .order_by_desc(tpc_rows::Column::ObservedAt)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM total_project_control
+         WHERE plan_pid = $1 AND deleted_at IS NULL
+         ORDER BY observed_at DESC",
+    )
+    .bind(plan_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// `GET /api/plans/{pid}/tpc` — the observation history, newest first.
@@ -231,14 +238,17 @@ async fn triage(
     let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .plan_pids();
-    let rows = tpc_rows::Entity::find()
-        .filter(tpc_rows::Column::DeletedAt.is_null())
-        .filter(tpc_rows::Column::PlanPid.is_not_in(hidden))
-        .order_by_desc(tpc_rows::Column::ObservedAt)
-        .limit(MAX_PLANS_SCANNED)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // The hidden plans as one bound array, so no number of them can pass the bind-parameter limit.
+    let rows: Vec<tpc_rows::Model> = sqlx::query_as(
+        "SELECT * FROM total_project_control
+         WHERE deleted_at IS NULL AND plan_pid <> ALL($1)
+         ORDER BY observed_at DESC
+         LIMIT $2",
+    )
+    .bind(hidden)
+    .bind(i64::try_from(MAX_PLANS_SCANNED).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
 
     // Newest observation per plan wins; the query is already newest
     // first, so the first sighting of a plan is the one to keep.

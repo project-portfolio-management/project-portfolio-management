@@ -8,11 +8,9 @@
 //! * `GET …/schedule-risk` — the seeded simulation. Every assumption is echoed
 //!   in the response, including that inputs are treated as independent.
 
-use super::db_err;
 use std::collections::HashMap;
 
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -45,13 +43,8 @@ async fn set_estimate(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let t_pid = super::parse_pid(&t_pid)?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let task = live_task(&ctx, plan.pid, t_pid)
+        .await?
         .ok_or(Error::NotFound)?;
     let mut problems = Vec::new();
     for (name, v) in [
@@ -88,13 +81,19 @@ async fn set_estimate(
         task.duration_optimistic_days,
         task.duration_pessimistic_days,
     );
-    let mut a: tasks::ActiveModel = task.into();
-    a.duration_optimistic_days = ActiveValue::set(b.optimistic_days);
-    a.duration_pessimistic_days = ActiveValue::set(b.pessimistic_days);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: tasks::Model = sqlx::query_as(
+        "UPDATE tasks SET duration_optimistic_days = $1, duration_pessimistic_days = $2
+         WHERE id = $3
+         RETURNING *",
+    )
+    .bind(b.optimistic_days)
+    .bind(b.pessimistic_days)
+    .bind(task.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "task_estimate_set",
         caller.actor(),
@@ -105,11 +104,22 @@ async fn set_estimate(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "task_pid": row.pid, "optimistic_days": row.duration_optimistic_days,
         "likely_days": row.duration_days, "pessimistic_days": row.duration_pessimistic_days,
     }))
+}
+
+/// A live (not deleted) task of the plan, if there is one.
+async fn live_task(ctx: &AppContext, plan: Uuid, task: Uuid) -> Result<Option<tasks::Model>> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(task)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Body of `PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact`.
@@ -138,14 +148,14 @@ async fn set_impact(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let r_pid = super::parse_pid(&r_pid)?;
-    let risk = risks::Entity::find()
-        .filter(risks::Column::Pid.eq(r_pid))
-        .filter(risks::Column::PlanPid.eq(plan.pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let risk: risks::Model = sqlx::query_as(
+        "SELECT * FROM risks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(r_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     let mut problems = Vec::new();
     if b.impact_days.is_some_and(|d| !(1..=365).contains(&d)) {
         problems.push("impact_days must be 1 to 365".to_string());
@@ -156,14 +166,7 @@ async fn set_impact(
         problems.push("probability_percent must be 0 to 100".to_string());
     }
     if let Some(t) = b.task_pid {
-        let known = tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(t))
-            .filter(tasks::Column::PlanPid.eq(plan.pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some();
+        let known = live_task(&ctx, plan.pid, t).await?.is_some();
         if !known {
             problems.push("task_pid is not a task of this plan".to_string());
         }
@@ -173,16 +176,22 @@ async fn set_impact(
     }
     let was = serde_json::json!({ "task_pid": risk.task_pid, "impact_days": risk.schedule_impact_days,
         "probability_percent": risk.schedule_probability_percent });
-    let mut a: risks::ActiveModel = risk.into();
-    a.task_pid = ActiveValue::set(b.task_pid);
-    a.schedule_impact_days = ActiveValue::set(b.impact_days);
-    a.schedule_probability_percent = ActiveValue::set(b.probability_percent);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: risks::Model = sqlx::query_as(
+        "UPDATE risks SET task_pid = $1, schedule_impact_days = $2, schedule_probability_percent = $3
+         WHERE id = $4
+         RETURNING *",
+    )
+    .bind(b.task_pid)
+    .bind(b.impact_days)
+    .bind(b.probability_percent)
+    .bind(risk.id)
+    .fetch_one(tx.conn())
+    .await?;
     let now = serde_json::json!({ "task_pid": row.task_pid, "impact_days": row.schedule_impact_days,
         "probability_percent": row.schedule_probability_percent });
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "risk_schedule_impact_set",
         caller.actor(),
@@ -190,7 +199,7 @@ async fn set_impact(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "risk_pid": row.pid, "schedule": now }))
 }
 
@@ -328,13 +337,12 @@ async fn schedule_risk(
 
     // The register's schedule events: used, skipped (named), or not schedule
     // risks at all (counted).
-    let register = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(plan.pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .order_by_asc(risks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let register: Vec<risks::Model> = sqlx::query_as(
+        "SELECT * FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let in_network: std::collections::HashSet<Uuid> = net.nodes.iter().map(|n| n.pid).collect();
     let (events, used, skipped, not_schedule) = classify_events(&register, &in_network);
 

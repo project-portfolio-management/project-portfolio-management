@@ -15,11 +15,9 @@
 //! a cost impact is a single event: in the joint run it strikes once and drives
 //! both.
 
-use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -27,7 +25,7 @@ use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cost_risk::{self as sim, CostEvent, Line};
 use crate::joint_risk::{self as joint, JointError};
-use crate::models::_entities::{budget_lines, plans, risks};
+use crate::models::_entities::{budget_lines, risks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::schedule_risk::{self, Distribution, RunError};
 
@@ -53,14 +51,14 @@ async fn set_line_estimate(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let l_pid = super::parse_pid(&l_pid)?;
-    let line = budget_lines::Entity::find()
-        .filter(budget_lines::Column::Pid.eq(l_pid))
-        .filter(budget_lines::Column::PlanPid.eq(plan.pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let line: budget_lines::Model = sqlx::query_as(
+        "SELECT * FROM budget_lines WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(l_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     let mut problems = Vec::new();
     if let Some(lo) = b.low_minor {
         if lo < 0 {
@@ -82,20 +80,24 @@ async fn set_line_estimate(
         return Err(unprocessable(&problems.join("; ")));
     }
     let was = serde_json::json!({ "low_minor": line.low_minor, "high_minor": line.high_minor });
-    let mut a: budget_lines::ActiveModel = line.into();
-    a.low_minor = ActiveValue::set(b.low_minor);
-    a.high_minor = ActiveValue::set(b.high_minor);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: budget_lines::Model = sqlx::query_as(
+        "UPDATE budget_lines SET low_minor = $1, high_minor = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(b.low_minor)
+    .bind(b.high_minor)
+    .bind(line.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "budget_line_estimate_set",
         caller.actor(),
         Some(serde_json::json!({ "from": was, "to": { "low_minor": row.low_minor, "high_minor": row.high_minor } })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "line_pid": row.pid, "low_minor": row.low_minor,
         "planned_minor": row.planned_minor, "high_minor": row.high_minor }),
@@ -129,14 +131,14 @@ async fn set_cost_impact(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let r_pid = super::parse_pid(&r_pid)?;
-    let risk = risks::Entity::find()
-        .filter(risks::Column::Pid.eq(r_pid))
-        .filter(risks::Column::PlanPid.eq(plan.pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let risk: risks::Model = sqlx::query_as(
+        "SELECT * FROM risks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(r_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     let currency = b
         .cost_currency
         .as_deref()
@@ -168,18 +170,23 @@ async fn set_cost_impact(
     }
     let was = serde_json::json!({ "cost_impact_minor": risk.cost_impact_minor,
         "cost_currency": risk.cost_currency, "probability_percent": risk.schedule_probability_percent });
-    let mut a: risks::ActiveModel = risk.into();
-    a.cost_impact_minor = ActiveValue::set(b.cost_impact_minor);
-    a.cost_currency = ActiveValue::set(currency);
+    // The probability is written only when it is given.
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE risks SET cost_impact_minor = ");
+    q.push_bind(b.cost_impact_minor)
+        .push(", cost_currency = ")
+        .push_bind(currency);
     if let Some(p) = b.probability_percent {
-        a.schedule_probability_percent = ActiveValue::set(Some(p));
+        q.push(", schedule_probability_percent = ").push_bind(p);
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
+    q.push(" WHERE id = ")
+        .push_bind(risk.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: risks::Model = q.build_query_as().fetch_one(tx.conn()).await?;
     let now = serde_json::json!({ "cost_impact_minor": row.cost_impact_minor,
         "cost_currency": row.cost_currency, "probability_percent": row.schedule_probability_percent });
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "risk_cost_impact_set",
         caller.actor(),
@@ -187,7 +194,7 @@ async fn set_cost_impact(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "risk_pid": row.pid, "cost": now }))
 }
 
@@ -330,14 +337,16 @@ async fn load_lines(
     ctx: &AppContext,
     plan_pids: Option<&[Uuid]>,
 ) -> Result<Vec<budget_lines::Model>> {
-    let mut q = budget_lines::Entity::find().filter(budget_lines::Column::DeletedAt.is_null());
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM budget_lines WHERE deleted_at IS NULL",
+    );
     if let Some(p) = plan_pids {
-        q = q.filter(budget_lines::Column::PlanPid.is_in(p.to_vec()));
+        q.push(" AND plan_pid = ANY(")
+            .push_bind(p.to_vec())
+            .push(")");
     }
-    q.order_by_asc(budget_lines::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    q.push(" ORDER BY id");
+    Ok(q.build_query_as().fetch_all(crate::db::pool(ctx)).await?)
 }
 
 /// Loads the live risks of the given plans in id order; an empty plan list returns nothing without querying.
@@ -345,13 +354,12 @@ async fn load_register(ctx: &AppContext, plan_pids: &[Uuid]) -> Result<Vec<risks
     if plan_pids.is_empty() {
         return Ok(Vec::new());
     }
-    risks::Entity::find()
-        .filter(risks::Column::PlanPid.is_in(plan_pids.to_vec()))
-        .filter(risks::Column::DeletedAt.is_null())
-        .order_by_asc(risks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM risks WHERE plan_pid = ANY($1) AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan_pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Shape the engine's outcome with the lines' and risks' own words.
@@ -480,14 +488,13 @@ async fn run_cost(
     let currencies: HashSet<String> = lines.iter().map(|l| l.currency.clone()).collect();
     let (events, used, skipped, not_cost) = classify_cost_events(&register, &currencies);
     let outcome = sim::simulate(&lines, &events, params).map_err(run_error)?;
-    let plan_names: HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(plan_pids.to_vec()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let plan_names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(plan_pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
     let by_pid: HashMap<Uuid, &budget_lines::Model> = rows.iter().map(|r| (r.pid, r)).collect();
     let fallback: Vec<Uuid> = outcome
         .currencies

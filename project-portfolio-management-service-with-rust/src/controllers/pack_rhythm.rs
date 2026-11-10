@@ -13,12 +13,12 @@ use super::refuse;
 use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::{NaiveDate, Utc};
-use sea_orm::{QueryOrder, sea_query::Expr};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
-use super::director_packs::{caller_audiences, caller_power, find, insert_draft, need};
+use super::director_packs::{
+    any_of_period, caller_audiences, caller_power, find, insert_draft, need,
+};
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::director_pack::{self as rules, Power};
@@ -26,6 +26,16 @@ use crate::models::_entities::{
     director_pack_schedules as schedules, director_pack_subscriptions as subs,
     director_packs as packs,
 };
+
+/// One schedule by pid, if there is one.
+async fn find_schedule(ctx: &AppContext, pid: Uuid) -> Result<Option<schedules::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM director_pack_schedules WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
+}
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The routes.
@@ -92,16 +102,19 @@ async fn create_schedule(
     }
     let today = crate::tz::deployment_today();
     let next = first_run(b.day_of_month, today).ok_or_else(|| unprocessable("no such day"))?;
-    let row = schedules::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        audience: ActiveValue::set(b.audience.clone()),
-        day_of_month: ActiveValue::set(b.day_of_month),
-        next_run_date: ActiveValue::set(next),
-        enabled: ActiveValue::set(true),
-        created_by: ActiveValue::set(Some(actor.clone())),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
+    // The row and its audit row in one transaction (before SQ-1 batch 4 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: schedules::Model = sqlx::query_as(
+        "INSERT INTO director_pack_schedules (pid, audience, day_of_month, next_run_date, enabled, created_by)
+         VALUES ($1, $2, $3, $4, TRUE, $5)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&b.audience)
+    .bind(b.day_of_month)
+    .bind(next)
+    .bind(&actor)
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| {
         if e.to_string().contains("dps_one_per_audience") {
@@ -111,11 +124,11 @@ async fn create_schedule(
                 "that audience already has a schedule; change it instead",
             )
         } else {
-            db_err(e)
+            e.into()
         }
     })?;
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "director_pack_schedule_created",
         Some(&actor),
@@ -123,6 +136,7 @@ async fn create_schedule(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(schedule_json(&row))
 }
 
@@ -130,11 +144,10 @@ async fn create_schedule(
 #[debug_handler]
 async fn list_schedules(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     need(&caller, Power::Editor)?;
-    let rows = schedules::Entity::find()
-        .order_by_asc(schedules::Column::Audience)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<schedules::Model> =
+        sqlx::query_as("SELECT * FROM director_pack_schedules ORDER BY audience")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(
         serde_json::json!({ "schedules": rows.iter().map(schedule_json).collect::<Vec<_>>() }),
     )
@@ -160,15 +173,14 @@ async fn update_schedule(
     Json(b): Json<UpdateSchedule>,
 ) -> Result<Response> {
     let actor = need(&caller, Power::Editor)?;
-    let row = schedules::Entity::find()
-        .filter(schedules::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let mut a: schedules::ActiveModel = row.into();
+    let row = find_schedule(&ctx, pid).await?.ok_or(Error::NotFound)?;
+    // Only the fields given are written; with none, the row is read back unchanged (as `SeaORM`'s empty update did).
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE director_pack_schedules SET ");
+    let mut set = q.separated(", ");
+    let mut any = false;
     if let Some(e) = b.enabled {
-        a.enabled = ActiveValue::set(e);
+        set.push("enabled = ").push_bind_unseparated(e);
+        any = true;
     }
     if let Some(d) = b.day_of_month {
         if !(1..=28).contains(&d) {
@@ -176,15 +188,27 @@ async fn update_schedule(
                 "day_of_month must be 1 to 28, so that every month has it",
             ));
         }
-        a.day_of_month = ActiveValue::set(d);
-        a.next_run_date = ActiveValue::set(
-            first_run(d, crate::tz::deployment_today())
-                .ok_or_else(|| unprocessable("no such day"))?,
-        );
+        let next = first_run(d, crate::tz::deployment_today())
+            .ok_or_else(|| unprocessable("no such day"))?;
+        set.push("day_of_month = ").push_bind_unseparated(d);
+        set.push("next_run_date = ").push_bind_unseparated(next);
+        any = true;
     }
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
-        &ctx.db,
+    q.push(" WHERE id = ")
+        .push_bind(row.id)
+        .push(" RETURNING *");
+    // The change and its audit row in one transaction (before SQ-1 batch 4 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: schedules::Model = if any {
+        q.build_query_as().fetch_one(tx.conn()).await?
+    } else {
+        sqlx::query_as("SELECT * FROM director_pack_schedules WHERE id = $1 LIMIT 1")
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?
+    };
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "director_pack_schedule_updated",
         Some(&actor),
@@ -192,6 +216,7 @@ async fn update_schedule(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(schedule_json(&row))
 }
 
@@ -210,26 +235,27 @@ pub struct Swept {
 ///
 /// When a database statement fails.
 pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
-    let due = schedules::Entity::find()
-        .filter(schedules::Column::Enabled.eq(true))
-        .filter(schedules::Column::NextRunDate.lte(today))
-        .order_by_asc(schedules::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let due: Vec<schedules::Model> = sqlx::query_as(
+        "SELECT * FROM director_pack_schedules WHERE enabled = TRUE AND next_run_date <= $1 ORDER BY id",
+    )
+    .bind(today)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut out = Swept::default();
     for s in due {
         // Claim first: only the sweep that moves the date does the work.
         let next = first_run(s.day_of_month, today).unwrap_or(today + chrono::Duration::days(28));
-        let claimed = schedules::Entity::update_many()
-            .col_expr(schedules::Column::NextRunDate, Expr::value(next))
-            .col_expr(schedules::Column::LastRunOn, Expr::value(today))
-            .filter(schedules::Column::Pid.eq(s.pid))
-            .filter(schedules::Column::NextRunDate.eq(s.next_run_date))
-            .exec(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        if claimed.rows_affected == 0 {
+        let claimed = sqlx::query(
+            "UPDATE director_pack_schedules SET next_run_date = $1, last_run_on = $2
+             WHERE pid = $3 AND next_run_date = $4",
+        )
+        .bind(next)
+        .bind(today)
+        .bind(s.pid)
+        .bind(s.next_run_date)
+        .execute(crate::db::pool(ctx))
+        .await?;
+        if claimed.rows_affected() == 0 {
             continue;
         }
         let period = rules::previous_period(today);
@@ -244,25 +270,18 @@ pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
             }
             Err(e) => format!("failed {period}: {e}"),
         };
-        schedules::Entity::update_many()
-            .col_expr(schedules::Column::LastResult, Expr::value(result))
-            .filter(schedules::Column::Pid.eq(s.pid))
-            .exec(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        sqlx::query("UPDATE director_pack_schedules SET last_result = $1 WHERE pid = $2")
+            .bind(result)
+            .bind(s.pid)
+            .execute(crate::db::pool(ctx))
+            .await?;
     }
     Ok(out)
 }
 
 /// Draft the pack for a period and audience unless one already exists (returns None then). The cut-off is the last second of the period so the draft covers it all; the origin is marked scheduled so it needs a review before issue.
 async fn draft_scheduled(ctx: &AppContext, period: &str, audience: &str) -> Result<Option<Uuid>> {
-    let exists = packs::Entity::find()
-        .filter(packs::Column::Period.eq(period))
-        .filter(packs::Column::Audience.eq(audience))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some();
+    let exists = any_of_period(ctx, period, audience).await?.is_some();
     if exists {
         return Ok(None);
     }
@@ -283,13 +302,12 @@ async fn draft_scheduled(ctx: &AppContext, period: &str, audience: &str) -> Resu
         "director_pack_drafted_by_schedule",
     )
     .await?;
-    packs::Entity::update_many()
-        .col_expr(packs::Column::Origin, Expr::value("scheduled"))
-        .filter(packs::Column::Pid.eq(row.pid))
-        .filter(packs::Column::Status.eq("draft"))
-        .exec(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    sqlx::query(
+        "UPDATE director_packs SET origin = 'scheduled' WHERE pid = $1 AND status = 'draft'",
+    )
+    .bind(row.pid)
+    .execute(crate::db::pool(ctx))
+    .await?;
     Ok(Some(row.pid))
 }
 
@@ -319,24 +337,26 @@ async fn review(
             "only a draft is reviewed; an issued pack is frozen",
         ));
     }
-    let done = packs::Entity::update_many()
-        .col_expr(packs::Column::ReviewedBy, Expr::value(actor.clone()))
-        .col_expr(packs::Column::ReviewedAt, Expr::value(Utc::now()))
-        .filter(packs::Column::Pid.eq(row.pid))
-        .filter(packs::Column::Status.eq("draft"))
-        .filter(packs::Column::ReviewedAt.is_null())
-        .exec(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if done.rows_affected == 0 {
+    // The review and its audit row in one transaction (before SQ-1 batch 4 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let done = sqlx::query(
+        "UPDATE director_packs SET reviewed_by = $1, reviewed_at = $2
+         WHERE pid = $3 AND status = 'draft' AND reviewed_at IS NULL",
+    )
+    .bind(&actor)
+    .bind(Utc::now())
+    .bind(row.pid)
+    .execute(tx.conn())
+    .await?;
+    if done.rows_affected() == 0 {
         return Err(refuse(
             StatusCode::CONFLICT,
             "conflict",
             "this draft has already been reviewed",
         ));
     }
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "director_pack_reviewed",
         Some(&actor),
@@ -344,6 +364,7 @@ async fn review(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid, "reviewed": true }))
 }
 
@@ -407,37 +428,40 @@ async fn set_subscription(
             format!("person:{me}")
         }
     };
-    let existing = subs::Entity::find()
-        .filter(subs::Column::Audience.eq(b.audience.as_str()))
-        .filter(Expr::cust_with_values(
-            "lower(person_ref) = lower($1)",
-            [who.clone()],
-        ))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM director_pack_subscriptions
+         WHERE audience = $1 AND lower(person_ref) = lower($2)
+         LIMIT 1",
+    )
+    .bind(&b.audience)
+    .bind(&who)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
+    // The change and its audit row in one transaction (before SQ-1 batch 4 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
     match (existing, b.subscribed) {
         (None, true) => {
-            subs::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                audience: ActiveValue::set(b.audience.clone()),
-                person_ref: ActiveValue::set(who.clone()),
-                ..Default::default()
-            }
-            .insert(&ctx.db)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO director_pack_subscriptions (pid, audience, person_ref)
+                 VALUES ($1, $2, $3)
+                 RETURNING id",
+            )
+            .bind(Uuid::new_v4())
+            .bind(&b.audience)
+            .bind(&who)
+            .fetch_one(tx.conn())
+            .await?;
         }
-        (Some(e), false) => {
-            subs::Entity::delete_by_id(e.id)
-                .exec(&ctx.db)
-                .await
-                .map_err(db_err)?;
+        (Some(id), false) => {
+            sqlx::query("DELETE FROM director_pack_subscriptions WHERE id = $1")
+                .bind(id)
+                .execute(tx.conn())
+                .await?;
         }
         _ => {}
     }
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        tx.conn(),
         Uuid::nil(),
         "director_pack_subscription_set",
         caller.actor(),
@@ -445,6 +469,7 @@ async fn set_subscription(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "audience": b.audience, "subscribed": b.subscribed }))
 }
 
@@ -455,11 +480,10 @@ async fn list_subscriptions(
     caller: MaybeAuthUser,
 ) -> Result<Response> {
     let me = caller.actor().map(|a| format!("person:{a}"));
-    let rows = subs::Entity::find()
-        .order_by_asc(subs::Column::Audience)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<subs::Model> =
+        sqlx::query_as("SELECT * FROM director_pack_subscriptions ORDER BY audience")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mine: Vec<&str> = rows
         .iter()
         .filter(|r| {
@@ -478,19 +502,19 @@ async fn list_subscriptions(
 ///
 /// When a database read fails; a notice that cannot be made for one person is skipped.
 pub(crate) async fn notify_issued(ctx: &AppContext, pack: &packs::Model) -> Result<usize> {
-    let rows = subs::Entity::find()
-        .filter(subs::Column::Audience.eq(pack.audience.as_str()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<subs::Model> =
+        sqlx::query_as("SELECT * FROM director_pack_subscriptions WHERE audience = $1")
+            .bind(&pack.audience)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let message = format!(
         "The {} director pack for {} (version {}) has been issued. Open it: /director-packs/{}",
         pack.period, pack.audience, pack.version, pack.pid
     );
     let mut told = 0;
     for r in rows {
-        if crate::models::capabilities::notify(
-            &ctx.db,
+        if crate::models::capabilities::notify_on(
+            &mut crate::db::pool(ctx),
             &r.person_ref,
             "director_pack",
             pack.pid,

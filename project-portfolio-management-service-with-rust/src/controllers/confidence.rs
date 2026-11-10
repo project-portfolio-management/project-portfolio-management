@@ -8,23 +8,20 @@
 //! the director pack (for plans that are neither private nor marked).
 
 use super::refuse;
-use sea_orm::sea_query::Expr;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::{DateTime, NaiveDate, Utc};
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::delivery_confidence::{self as rules, Assessment, Parts};
 use crate::models::_entities::{
     budget_lines, delivery_confidence_assessments as assessments,
-    delivery_exceptions as exceptions, objective_links, objectives, plans, risks, strategic_aims,
+    delivery_exceptions as exceptions, objective_links, objectives, plans, risks,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
@@ -124,28 +121,30 @@ async fn set_confidence(
         ));
     }
     let actor = caller.actor().unwrap_or("system").to_string();
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    let previous = assessments::Entity::find()
-        .filter(assessments::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(assessments::Column::Id)
-        .one(&tx)
-        .await
-        .map_err(db_err)?;
-    let row = assessments::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        value: ActiveValue::set(b.value.clone()),
-        kind: ActiveValue::set(b.kind.clone()),
-        rationale: ActiveValue::set(b.rationale.trim().to_string()),
-        assessor: ActiveValue::set(Some(actor.clone())),
-        assessed_on: ActiveValue::set(on),
-        ..Default::default()
-    }
-    .insert(&tx)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &tx,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let previous: Option<assessments::Model> = sqlx::query_as(
+        "SELECT * FROM delivery_confidence_assessments WHERE plan_pid = $1 ORDER BY id DESC LIMIT 1",
+    )
+    .bind(plan.pid)
+    .fetch_optional(tx.conn())
+    .await?;
+    let row: assessments::Model = sqlx::query_as(
+        "INSERT INTO delivery_confidence_assessments
+             (pid, plan_pid, value, kind, rationale, assessor, assessed_on)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(&b.value)
+    .bind(&b.kind)
+    .bind(b.rationale.trim())
+    .bind(&actor)
+    .bind(on)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "delivery_confidence_set",
         Some(&actor),
@@ -160,21 +159,27 @@ async fn set_confidence(
     // does not restart its clock; improving never closes it (only a decision does).
     let mut exception = None;
     if rules::opens_exception(&b.value) {
-        let open = exceptions::Entity::find()
-            .filter(exceptions::Column::PlanPid.eq(plan.pid))
-            .filter(exceptions::Column::Status.eq("open"))
-            .one(&tx)
-            .await
-            .map_err(db_err)?;
+        let open: Option<exceptions::Model> = sqlx::query_as(
+            "SELECT * FROM delivery_exceptions WHERE plan_pid = $1 AND status = 'open' LIMIT 1",
+        )
+        .bind(plan.pid)
+        .fetch_optional(tx.conn())
+        .await?;
         let now = Utc::now();
         exception = Some(if let Some(open) = open {
             if rules::worsens(&open.worst_value, &b.value) {
-                let mut a: exceptions::ActiveModel = open.clone().into();
-                a.worst_value = ActiveValue::set(b.value.clone());
-                a.worsened_count = ActiveValue::set(open.worsened_count + 1);
-                let updated = a.update(&tx).await.map_err(db_err)?;
-                AuditModel::record(
-                    &tx,
+                let updated: exceptions::Model = sqlx::query_as(
+                    "UPDATE delivery_exceptions SET worst_value = $1, worsened_count = $2
+                     WHERE id = $3
+                     RETURNING *",
+                )
+                .bind(&b.value)
+                .bind(open.worsened_count + 1)
+                .bind(open.id)
+                .fetch_one(tx.conn())
+                .await?;
+                AuditModel::record_on(
+                    tx.conn(),
                     updated.pid,
                     "delivery_exception_worsened",
                     Some(&actor),
@@ -187,22 +192,21 @@ async fn set_confidence(
                 open
             }
         } else {
-            let opened = exceptions::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan.pid),
-                status: ActiveValue::set("open".to_string()),
-                opened_at: ActiveValue::set(now.into()),
-                opened_by: ActiveValue::set(Some(actor.clone())),
-                opened_value: ActiveValue::set(b.value.clone()),
-                worst_value: ActiveValue::set(b.value.clone()),
-                worsened_count: ActiveValue::set(0),
-                ..Default::default()
-            }
-            .insert(&tx)
-            .await
-            .map_err(db_err)?;
-            AuditModel::record(
-                &tx,
+            let opened: exceptions::Model = sqlx::query_as(
+                "INSERT INTO delivery_exceptions
+                     (pid, plan_pid, status, opened_at, opened_by, opened_value, worst_value, worsened_count)
+                 VALUES ($1, $2, 'open', $3, $4, $5, $5, 0)
+                 RETURNING *",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan.pid)
+            .bind(now)
+            .bind(&actor)
+            .bind(&b.value)
+            .fetch_one(tx.conn())
+            .await?;
+            AuditModel::record_on(
+                tx.conn(),
                 opened.pid,
                 "delivery_exception_opened",
                 Some(&actor),
@@ -213,7 +217,7 @@ async fn set_confidence(
             opened
         });
     }
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "assessment": assessment_json(&row),
         "exception": exception.map(|e| exception_json(&e, Utc::now(), rules::window_hours())),
@@ -227,12 +231,12 @@ async fn get_confidence(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = assessments::Entity::find()
-        .filter(assessments::Column::PlanPid.eq(plan.pid))
-        .order_by_asc(assessments::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<assessments::Model> = sqlx::query_as(
+        "SELECT * FROM delivery_confidence_assessments WHERE plan_pid = $1 ORDER BY id",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let history: Vec<Assessment> = rows.iter().map(lite).collect();
     let period = Utc::now().format("%Y-%m").to_string();
     let shown = rules::shown(&history).map(|s| {
@@ -287,12 +291,10 @@ async fn list_exceptions(
     {
         return Err(unprocessable("status must be open or closed"));
     }
-    let rows = exceptions::Entity::find()
-        .order_by_desc(exceptions::Column::OpenedAt)
-        .limit(1000)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<exceptions::Model> =
+        sqlx::query_as("SELECT * FROM delivery_exceptions ORDER BY opened_at DESC LIMIT 1000")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut plans: Vec<Uuid> = rows.iter().map(|r| r.plan_pid).collect();
     plans.sort();
     plans.dedup();
@@ -315,12 +317,7 @@ pub(crate) async fn find_exception(
     pid: &str,
 ) -> Result<exceptions::Model> {
     let pid = super::parse_pid(pid)?;
-    let row = exceptions::Entity::find()
-        .filter(exceptions::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row = exception_by_pid(ctx, pid).await?.ok_or(Error::NotFound)?;
     // The same answer as an exception that does not exist when its plan is hidden from the caller.
     if !super::plan_access::readable_plans(ctx, caller, &[row.plan_pid])
         .await
@@ -329,6 +326,16 @@ pub(crate) async fn find_exception(
         return Err(Error::NotFound);
     }
     Ok(row)
+}
+
+/// One exception by pid, if there is one.
+async fn exception_by_pid(ctx: &AppContext, pid: Uuid) -> Result<Option<exceptions::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM delivery_exceptions WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// `PUT /api/exceptions/{pid}` body; every field is optional and an omitted one keeps its stored value.
@@ -374,24 +381,38 @@ async fn complete_exception(
             .map(|v| v.trim().to_string())
             .filter(|v| !v.is_empty())
     };
-    let mut a: exceptions::ActiveModel = row.clone().into();
-    if let Some(v) = clean(&b.cause) {
-        a.cause = ActiveValue::set(Some(v));
-    }
-    if let Some(v) = clean(&b.decision_needed) {
-        a.decision_needed = ActiveValue::set(Some(v));
-    }
-    if let Some(v) = clean(&b.owner_ref) {
-        a.owner_ref = ActiveValue::set(Some(v));
-    }
-    if let Some(v) = clean(&b.owner_role) {
-        a.owner_role = ActiveValue::set(Some(v));
+    // Only the fields given are written; with none given the row is read back unchanged, as `SeaORM`'s empty
+    // update did.
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE delivery_exceptions SET ");
+    let mut set = q.separated(", ");
+    let mut any = false;
+    for (column, value) in [
+        ("cause = ", clean(&b.cause)),
+        ("decision_needed = ", clean(&b.decision_needed)),
+        ("owner_ref = ", clean(&b.owner_ref)),
+        ("owner_role = ", clean(&b.owner_role)),
+    ] {
+        if let Some(v) = value {
+            set.push(column).push_bind_unseparated(v);
+            any = true;
+        }
     }
     if let Some(d) = b.decide_by {
-        a.decide_by = ActiveValue::set(Some(d));
+        set.push("decide_by = ").push_bind_unseparated(d);
+        any = true;
     }
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    let merged = a.update(&tx).await.map_err(db_err)?;
+    q.push(" WHERE id = ")
+        .push_bind(row.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    let merged: exceptions::Model = if any {
+        q.build_query_as().fetch_one(tx.conn()).await?
+    } else {
+        sqlx::query_as("SELECT * FROM delivery_exceptions WHERE id = $1 LIMIT 1")
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?
+    };
     let parts = Parts {
         cause: merged.cause.as_deref(),
         decision_needed: merged.decision_needed.as_deref(),
@@ -400,14 +421,16 @@ async fn complete_exception(
     };
     let done = rules::missing(&parts).is_empty();
     let saved = if done && merged.completed_at.is_none() {
-        let mut a: exceptions::ActiveModel = merged.into();
-        a.completed_at = ActiveValue::set(Some(Utc::now().into()));
-        a.update(&tx).await.map_err(db_err)?
+        sqlx::query_as("UPDATE delivery_exceptions SET completed_at = $1 WHERE id = $2 RETURNING *")
+            .bind(Utc::now())
+            .bind(merged.id)
+            .fetch_one(tx.conn())
+            .await?
     } else {
         merged
     };
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         saved.pid,
         "delivery_exception_updated",
         caller.actor(),
@@ -415,7 +438,7 @@ async fn complete_exception(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(exception_json(&saved, Utc::now(), rules::window_hours()))
 }
 
@@ -446,29 +469,26 @@ async fn decide_exception(
         ));
     }
     let actor = caller.actor().unwrap_or("system").to_string();
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    let done = exceptions::Entity::update_many()
-        .col_expr(exceptions::Column::Status, Expr::value("closed"))
-        .col_expr(exceptions::Column::ClosedAt, Expr::value(Utc::now()))
-        .col_expr(
-            exceptions::Column::Decision,
-            Expr::value(b.decision.trim().to_string()),
-        )
-        .col_expr(exceptions::Column::DecidedBy, Expr::value(actor.clone()))
-        .filter(exceptions::Column::Pid.eq(row.pid))
-        .filter(exceptions::Column::Status.eq("open"))
-        .exec(&tx)
-        .await
-        .map_err(db_err)?;
-    if done.rows_affected == 0 {
+    let mut tx = crate::db::begin(&ctx).await?;
+    let done = sqlx::query(
+        "UPDATE delivery_exceptions SET status = 'closed', closed_at = $1, decision = $2, decided_by = $3
+         WHERE pid = $4 AND status = 'open'",
+    )
+    .bind(Utc::now())
+    .bind(b.decision.trim())
+    .bind(&actor)
+    .bind(row.pid)
+    .execute(tx.conn())
+    .await?;
+    if done.rows_affected() == 0 {
         return Err(refuse(
             StatusCode::CONFLICT,
             "conflict",
             "this exception is already closed",
         ));
     }
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "delivery_exception_closed",
         Some(&actor),
@@ -476,12 +496,9 @@ async fn decide_exception(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
-    let now = exceptions::Entity::find()
-        .filter(exceptions::Column::Pid.eq(row.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    tx.commit().await?;
+    let now = exception_by_pid(&ctx, row.pid)
+        .await?
         .ok_or(Error::NotFound)?;
     format::json(exception_json(&now, Utc::now(), rules::window_hours()))
 }
@@ -506,45 +523,44 @@ async fn mark_aim(
     Json(b): Json<AimBody>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let objective = objectives::Entity::find()
-        .filter(objectives::Column::Pid.eq(pid))
-        .filter(objectives::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    let existing = strategic_aims::Entity::find()
-        .filter(strategic_aims::Column::ObjectivePid.eq(objective.pid))
-        .one(&tx)
-        .await
-        .map_err(db_err)?;
+    let objective: objectives::Model =
+        sqlx::query_as("SELECT * FROM objectives WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let existing: Option<i64> =
+        sqlx::query_scalar("SELECT id FROM strategic_aims WHERE objective_pid = $1 LIMIT 1")
+            .bind(objective.pid)
+            .fetch_optional(tx.conn())
+            .await?;
     match (b.strategic, existing) {
         (true, None) => {
-            strategic_aims::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                objective_pid: ActiveValue::set(objective.pid),
-                marked_by: ActiveValue::set(caller.actor().map(str::to_string)),
-                ..Default::default()
-            }
-            .insert(&tx)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO strategic_aims (pid, objective_pid, marked_by) VALUES ($1, $2, $3) RETURNING id",
+            )
+            .bind(Uuid::new_v4())
+            .bind(objective.pid)
+            .bind(caller.actor())
+            .fetch_one(tx.conn())
+            .await?;
         }
-        (false, Some(row)) => {
+        (false, Some(id)) => {
             // Unmarking also clears the primary flag of every programme that pointed at it.
-            objective_links::Entity::update_many()
-                .col_expr(objective_links::Column::IsPrimary, Expr::value(false))
-                .filter(objective_links::Column::ObjectivePid.eq(objective.pid))
-                .exec(&tx)
-                .await
-                .map_err(db_err)?;
-            row.delete(&tx).await.map_err(db_err)?;
+            sqlx::query("UPDATE objective_links SET is_primary = FALSE WHERE objective_pid = $1")
+                .bind(objective.pid)
+                .execute(tx.conn())
+                .await?;
+            sqlx::query("DELETE FROM strategic_aims WHERE id = $1")
+                .bind(id)
+                .execute(tx.conn())
+                .await?;
         }
         _ => {}
     }
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         objective.pid,
         if b.strategic {
             "strategic_aim_marked"
@@ -556,7 +572,7 @@ async fn mark_aim(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "objective_pid": objective.pid, "strategic": b.strategic }))
 }
 
@@ -577,49 +593,47 @@ async fn set_primary(
     Json(b): Json<PrimaryBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let is_aim = strategic_aims::Entity::find()
-        .filter(strategic_aims::Column::ObjectivePid.eq(b.objective_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let is_aim = sqlx::query("SELECT 1 FROM strategic_aims WHERE objective_pid = $1 LIMIT 1")
+        .bind(b.objective_pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
         .is_some();
     if !is_aim {
         return Err(unprocessable(
             "that objective is not marked as a strategic aim",
         ));
     }
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    objective_links::Entity::update_many()
-        .col_expr(objective_links::Column::IsPrimary, Expr::value(false))
-        .filter(objective_links::Column::PlanPid.eq(plan.pid))
-        .exec(&tx)
-        .await
-        .map_err(db_err)?;
-    let existing = objective_links::Entity::find()
-        .filter(objective_links::Column::PlanPid.eq(plan.pid))
-        .filter(objective_links::Column::ObjectivePid.eq(b.objective_pid))
-        .one(&tx)
-        .await
-        .map_err(db_err)?;
-    if let Some(link) = existing {
-        let mut a: objective_links::ActiveModel = link.into();
-        a.is_primary = ActiveValue::set(true);
-        a.update(&tx).await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE objective_links SET is_primary = FALSE WHERE plan_pid = $1")
+        .bind(plan.pid)
+        .execute(tx.conn())
+        .await?;
+    let existing: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM objective_links WHERE plan_pid = $1 AND objective_pid = $2 LIMIT 1",
+    )
+    .bind(plan.pid)
+    .bind(b.objective_pid)
+    .fetch_optional(tx.conn())
+    .await?;
+    if let Some(id) = existing {
+        sqlx::query("UPDATE objective_links SET is_primary = TRUE WHERE id = $1 RETURNING id")
+            .bind(id)
+            .fetch_one(tx.conn())
+            .await?;
     } else {
-        objective_links::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            objective_pid: ActiveValue::set(b.objective_pid),
-            plan_pid: ActiveValue::set(plan.pid),
-            weight: ActiveValue::set(3),
-            is_primary: ActiveValue::set(true),
-            ..Default::default()
-        }
-        .insert(&tx)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO objective_links (pid, objective_pid, plan_pid, weight, is_primary)
+             VALUES ($1, $2, $3, 3, TRUE)
+             RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(b.objective_pid)
+        .bind(plan.pid)
+        .fetch_one(tx.conn())
+        .await?;
     }
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "primary_aim_set",
         caller.actor(),
@@ -627,7 +641,7 @@ async fn set_primary(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "plan_pid": plan.pid, "primary_aim": b.objective_pid }))
 }
 
@@ -663,20 +677,20 @@ pub(crate) async fn build_map(
     previous_body: Option<&str>,
 ) -> Result<serde_json::Value> {
     let today = crate::tz::deployment_today();
-    let all_plans = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all_plans: Vec<plans::Model> =
+        sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let programmes: Vec<&plans::Model> = all_plans
         .iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
         .collect();
-    let risk_rows = risks::Entity::find().all(&ctx.db).await.map_err(db_err)?;
-    let budget_rows = budget_lines::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let risk_rows: Vec<risks::Model> = sqlx::query_as("SELECT * FROM risks")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+    let budget_rows: Vec<budget_lines::Model> = sqlx::query_as("SELECT * FROM budget_lines")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     let deps = crate::models::visibility::all_dependencies(&ctx.db).await?;
     let scoped: Vec<plans::Model> = all_plans
         .iter()
@@ -685,34 +699,29 @@ pub(crate) async fn build_map(
         .collect();
     let rag = super::insights::rag_by_pid(&scoped, &risk_rows, &budget_rows, &deps, today);
     let aims: HashMap<Uuid, String> = {
-        let marked: HashSet<Uuid> = strategic_aims::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|a| a.objective_pid)
-            .collect();
-        objectives::Entity::find()
-            .filter(objectives::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        let marked: HashSet<Uuid> =
+            sqlx::query_scalar::<_, Uuid>("SELECT objective_pid FROM strategic_aims")
+                .fetch_all(crate::db::pool(ctx))
+                .await?
+                .into_iter()
+                .collect();
+        sqlx::query_as::<_, objectives::Model>("SELECT * FROM objectives WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
             .into_iter()
             .filter(|o| marked.contains(&o.pid))
             .map(|o| (o.pid, o.title))
             .collect()
     };
-    let links = objective_links::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let links: Vec<objective_links::Model> = sqlx::query_as("SELECT * FROM objective_links")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     let statuses = super::programme_gates::status_map(ctx, today).await?;
     let (profiles, org_names) = super::programme_profile::all(ctx, include).await?;
-    let history = assessments::Entity::find()
-        .order_by_asc(assessments::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let history: Vec<assessments::Model> =
+        sqlx::query_as("SELECT * FROM delivery_confidence_assessments ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut by_plan: HashMap<Uuid, Vec<Assessment>> = HashMap::new();
     for h in &history {
         by_plan.entry(h.plan_pid).or_default().push(lite(h));
@@ -815,14 +824,9 @@ async fn portfolio_map(
     if !crate::director_pack::valid_period(&period) {
         return Err(unprocessable("period must be YYYY-MM"));
     }
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     let map = build_map(&ctx, &readable, &period, None).await?;
     format::json(map)
@@ -839,21 +843,20 @@ pub(crate) async fn exceptions_section(
     period: &str,
     now: DateTime<Utc>,
 ) -> Result<serde_json::Value> {
-    let names: HashMap<Uuid, String> = plans::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
-    let rows: Vec<exceptions::Model> = exceptions::Entity::find()
-        .order_by_asc(exceptions::Column::OpenedAt)
-        .all(ctx_db(ctx))
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|r| include.contains(&r.plan_pid))
-        .collect();
+    let names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
+    let rows: Vec<exceptions::Model> = sqlx::query_as::<_, exceptions::Model>(
+        "SELECT * FROM delivery_exceptions ORDER BY opened_at",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .filter(|r| include.contains(&r.plan_pid))
+    .collect();
     let window = rules::window_hours();
     let start = rules::period_start(period);
     let item = |r: &exceptions::Model| {
@@ -894,11 +897,6 @@ pub(crate) async fn exceptions_section(
         "open": open, "breached": breached, "closed_in_period": closed,
         "note": "An exception opens when delivery confidence reaches amber-red or red. It is complete with a cause, the decision needed, a named owner and a decide-by date, and closes only when a decision is recorded. Breached means it was not complete within the window counted from when it opened. Owners are shown by role, never by person.",
     }))
-}
-
-/// Returns the context's database connection; a thin accessor used by the map builder.
-fn ctx_db(ctx: &AppContext) -> &sea_orm::DatabaseConnection {
-    &ctx.db
 }
 
 /// The routes.

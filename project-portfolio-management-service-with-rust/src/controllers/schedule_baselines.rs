@@ -12,10 +12,8 @@
 //! footing, in business days of the plan's calendar.
 
 use super::conflict;
-use super::db_err;
 use crate::prelude::*;
 use chrono::Utc;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -107,12 +105,7 @@ pub(crate) async fn take(
             "nothing is scheduled yet, so there is nothing to baseline: give tasks a duration and a start date",
         ));
     }
-    let existing = schedule_baselines::Entity::find()
-        .filter(schedule_baselines::Column::PlanPid.eq(plan_pid))
-        .order_by_desc(schedule_baselines::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing = baselines_of(ctx, plan_pid).await?;
     if i64::try_from(existing.len()).unwrap_or(i64::MAX) >= max_baselines() {
         return Err(conflict(&format!(
             "this plan already holds {} baselines, the most it keeps; baselines are append-only and are never overwritten",
@@ -120,46 +113,51 @@ pub(crate) async fn take(
         )));
     }
     let version = existing.first().map_or(1, |l| l.version + 1);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = schedule_baselines::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan_pid),
-        version: ActiveValue::set(version),
-        reason: ActiveValue::set(reason.clone()),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        task_count: ActiveValue::set(i32::try_from(snaps.len()).unwrap_or(i32::MAX)),
-        project_finish: ActiveValue::set(finish),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: schedule_baselines::Model = sqlx::query_as(
+        "INSERT INTO schedule_baselines (pid, plan_pid, version, reason, created_by, task_count, project_finish)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan_pid)
+    .bind(version)
+    .bind(&reason)
+    .bind(caller.actor())
+    .bind(i32::try_from(snaps.len()).unwrap_or(i32::MAX))
+    .bind(finish)
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| {
         // A concurrent baseline took the same version: the unique index says so.
         if e.to_string().contains("schedule_baselines_version") {
             conflict("another baseline was taken at the same moment; try again")
         } else {
-            db_err(e)
+            e.into()
         }
     })?;
     for (s, total_float, why) in &snaps {
-        schedule_baseline_tasks::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            baseline_pid: ActiveValue::set(row.pid),
-            task_pid: ActiveValue::set(s.task_pid),
-            title: ActiveValue::set(s.title.clone()),
-            start_date: ActiveValue::set(s.start),
-            finish_date: ActiveValue::set(s.finish),
-            duration_days: ActiveValue::set(s.duration.and_then(|d| i32::try_from(d).ok())),
-            total_float: ActiveValue::set(*total_float),
-            unscheduled_reason: ActiveValue::set(why.map(str::to_string)),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO schedule_baseline_tasks
+                 (pid, baseline_pid, task_pid, title, start_date, finish_date, duration_days, total_float,
+                  unscheduled_reason)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(row.pid)
+        .bind(s.task_pid)
+        .bind(&s.title)
+        .bind(s.start)
+        .bind(s.finish)
+        .bind(s.duration.and_then(|d| i32::try_from(d).ok()))
+        .bind(*total_float)
+        .bind(*why)
+        .fetch_one(tx.conn())
+        .await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "schedule_baselined",
         caller.actor(),
@@ -170,7 +168,7 @@ pub(crate) async fn take(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
 
     Ok(row)
 }
@@ -198,13 +196,20 @@ async fn create(
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = schedule_baselines::Entity::find()
-        .filter(schedule_baselines::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(schedule_baselines::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows = baselines_of(&ctx, plan.pid).await?;
     format::json(rows.iter().map(view).collect::<Vec<_>>())
+}
+
+/// A plan's baselines, newest first.
+async fn baselines_of(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<schedule_baselines::Model>> {
+    Ok(
+        sqlx::query_as(
+            "SELECT * FROM schedule_baselines WHERE plan_pid = $1 ORDER BY version DESC",
+        )
+        .bind(plan_pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
+    )
 }
 
 /// Query for `GET /api/plans/{pid}/schedule-variance`.
@@ -224,13 +229,24 @@ async fn variance(
     Query(p): Query<VarianceParams>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let mut q =
-        schedule_baselines::Entity::find().filter(schedule_baselines::Column::PlanPid.eq(plan.pid));
-    q = match p.baseline {
-        Some(v) => q.filter(schedule_baselines::Column::Version.eq(v)),
-        None => q.order_by_desc(schedule_baselines::Column::Version),
+    let base: Option<schedule_baselines::Model> = match p.baseline {
+        Some(v) => {
+            sqlx::query_as(
+                "SELECT * FROM schedule_baselines WHERE plan_pid = $1 AND version = $2 LIMIT 1",
+            )
+            .bind(plan.pid)
+            .bind(v)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+        }
+        None => sqlx::query_as(
+            "SELECT * FROM schedule_baselines WHERE plan_pid = $1 ORDER BY version DESC LIMIT 1",
+        )
+        .bind(plan.pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?,
     };
-    let Some(base) = q.one(&ctx.db).await.map_err(db_err)? else {
+    let Some(base) = base else {
         if p.baseline.is_some() {
             return Err(Error::NotFound);
         }
@@ -240,12 +256,11 @@ async fn variance(
             "note": "no baseline has been taken for this plan, so nothing can be said about slip",
         }));
     };
-    let then_rows = schedule_baseline_tasks::Entity::find()
-        .filter(schedule_baseline_tasks::Column::BaselinePid.eq(base.pid))
-        .order_by_asc(schedule_baseline_tasks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let then_rows: Vec<schedule_baseline_tasks::Model> =
+        sqlx::query_as("SELECT * FROM schedule_baseline_tasks WHERE baseline_pid = $1 ORDER BY id")
+            .bind(base.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let then: Vec<Snap> = then_rows
         .iter()
         .map(|t| Snap {

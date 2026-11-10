@@ -11,19 +11,13 @@ use super::refuse;
 use crate::prelude::*;
 use axum::http::{StatusCode, header};
 use chrono::{DateTime, Utc};
-use sea_orm::sea_query::Expr;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::director_pack::{self as rules, Power};
 use crate::director_summary::{self as summary, ChangeLite, IssueLite};
-use crate::models::_entities::{
-    change_requests, director_packs as packs, issues, plan_access_settings, plan_handling_marks,
-    plans,
-};
+use crate::models::_entities::{change_requests, director_packs as packs, issues};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// What the caller may do. With login off everyone is trusted, as for every other write.
@@ -90,29 +84,20 @@ async fn inputs(
     usize,
 )> {
     let day = cut_off.date_naive();
-    let all_plans: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
-    let mut left_out: std::collections::HashSet<Uuid> = plan_access_settings::Entity::find()
-        .filter(plan_access_settings::Column::Private.eq(true))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| r.plan_pid)
-        .collect();
+    let all_plans: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+    let mut left_out: std::collections::HashSet<Uuid> = sqlx::query_scalar::<_, Uuid>(
+        "SELECT plan_pid FROM plan_access_settings WHERE private = TRUE",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .collect();
     left_out.extend(
-        plan_handling_marks::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|r| r.plan_pid),
+        sqlx::query_scalar::<_, Uuid>("SELECT plan_pid FROM plan_handling_marks")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
     );
     let included: std::collections::HashSet<Uuid> = all_plans
         .iter()
@@ -120,41 +105,39 @@ async fn inputs(
         .filter(|p| !left_out.contains(p))
         .collect();
     let excluded = all_plans.len() - included.len();
-    let issue_rows: Vec<IssueLite> = issues::Entity::find()
-        .filter(issues::Column::DeletedAt.is_null())
-        .order_by_asc(issues::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|i| included.contains(&i.plan_pid) && i.raised_on <= day)
-        .map(|i| IssueLite {
-            plan_pid: i.plan_pid.to_string(),
-            title: i.title,
-            severity: i.severity,
-            done: crate::issues::is_done(&i.status_category),
-            status: i.status,
-            raised_on: i.raised_on,
-            resolved_on: i.resolved_on,
-            due_date: i.due_date,
-        })
-        .collect();
-    let change_rows: Vec<ChangeLite> = change_requests::Entity::find()
-        .filter(change_requests::Column::DeletedAt.is_null())
-        .order_by_asc(change_requests::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|c| included.contains(&c.plan_pid) && c.requested_on <= day)
-        .map(|c| ChangeLite {
-            plan_pid: c.plan_pid.to_string(),
-            title: c.title,
-            status: c.status,
-            requested_on: c.requested_on,
-            decided_on: c.decided_on,
-        })
-        .collect();
+    let issue_rows: Vec<IssueLite> = sqlx::query_as::<_, issues::Model>(
+        "SELECT * FROM issues WHERE deleted_at IS NULL ORDER BY id",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .filter(|i| included.contains(&i.plan_pid) && i.raised_on <= day)
+    .map(|i| IssueLite {
+        plan_pid: i.plan_pid.to_string(),
+        title: i.title,
+        severity: i.severity,
+        done: crate::issues::is_done(&i.status_category),
+        status: i.status,
+        raised_on: i.raised_on,
+        resolved_on: i.resolved_on,
+        due_date: i.due_date,
+    })
+    .collect();
+    let change_rows: Vec<ChangeLite> = sqlx::query_as::<_, change_requests::Model>(
+        "SELECT * FROM change_requests WHERE deleted_at IS NULL ORDER BY id",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .filter(|c| included.contains(&c.plan_pid) && c.requested_on <= day)
+    .map(|c| ChangeLite {
+        plan_pid: c.plan_pid.to_string(),
+        title: c.title,
+        status: c.status,
+        requested_on: c.requested_on,
+        decided_on: c.decided_on,
+    })
+    .collect();
     Ok((issue_rows, change_rows, included, excluded))
 }
 
@@ -185,15 +168,16 @@ async fn compute_body(
     let i = summary::issues(&issue_rows, today, 31);
     let c = summary::changes(&change_rows, today, 31);
     // The previous issued pack for this audience: the latest of an earlier period.
-    let previous = packs::Entity::find()
-        .filter(packs::Column::Audience.eq(audience))
-        .filter(packs::Column::Status.eq("issued"))
-        .filter(packs::Column::Period.lt(period))
-        .order_by_desc(packs::Column::Period)
-        .order_by_desc(packs::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let previous: Option<packs::Model> = sqlx::query_as(
+        "SELECT * FROM director_packs
+         WHERE audience = $1 AND status = 'issued' AND period < $2
+         ORDER BY period DESC, version DESC
+         LIMIT 1",
+    )
+    .bind(audience)
+    .bind(period)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     let prev_body = previous.as_ref().map(|p| p.body.as_str());
     let before = |path: &[&str]| prev_body.and_then(|b| count_in(b, path));
     let what_changed = vec![
@@ -325,23 +309,24 @@ pub(crate) async fn insert_draft(
         ctx, pid, period, audience, version, supersedes, cut_off, note,
     )
     .await?;
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    let row = packs::ActiveModel {
-        pid: ActiveValue::set(pid),
-        period: ActiveValue::set(period.to_string()),
-        audience: ActiveValue::set(audience.to_string()),
-        version: ActiveValue::set(version),
-        status: ActiveValue::set("draft".to_string()),
-        cut_off: ActiveValue::set(cut_off.into()),
-        body: ActiveValue::set(body),
-        change_note: ActiveValue::set(note.map(str::to_string)),
-        supersedes_pid: ActiveValue::set(supersedes),
-        drafted_by: ActiveValue::set(Some(actor.to_string())),
-        issued_by: ActiveValue::set(None),
-        issued_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&tx)
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: packs::Model = sqlx::query_as(
+        "INSERT INTO director_packs
+             (pid, period, audience, version, status, cut_off, body, change_note, supersedes_pid, drafted_by,
+              issued_by, issued_at)
+         VALUES ($1, $2, $3, $4, 'draft', $5, $6, $7, $8, $9, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(pid)
+    .bind(period)
+    .bind(audience)
+    .bind(version)
+    .bind(cut_off)
+    .bind(body)
+    .bind(note)
+    .bind(supersedes)
+    .bind(actor)
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| {
         // The unique indexes are the arbiters of a race: one draft, one version.
@@ -352,11 +337,11 @@ pub(crate) async fn insert_draft(
                 "a draft or that version of this pack already exists",
             )
         } else {
-            db_err(e)
+            e.into()
         }
     })?;
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         event,
         Some(actor),
@@ -366,7 +351,7 @@ pub(crate) async fn insert_draft(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Ok(row)
 }
 
@@ -404,12 +389,7 @@ async fn draft(
             "cut_off must not be in the future or more than 400 days old",
         ));
     }
-    let existing = packs::Entity::find()
-        .filter(packs::Column::Period.eq(b.period.as_str()))
-        .filter(packs::Column::Audience.eq(b.audience.as_str()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing = any_of_period(&ctx, &b.period, &b.audience).await?;
     if let Some(e) = existing {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -446,12 +426,26 @@ async fn draft(
 /// Loads a pack by public id, `404` when absent. Audience checks are the caller's job.
 pub(crate) async fn find(ctx: &AppContext, pid: &str) -> Result<packs::Model> {
     let pid = super::parse_pid(pid)?;
-    packs::Entity::find()
-        .filter(packs::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM director_packs WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
+}
+
+/// A pack of the period for the audience (any version, in no particular order), if there is one.
+pub(crate) async fn any_of_period(
+    ctx: &AppContext,
+    period: &str,
+    audience: &str,
+) -> Result<Option<packs::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM director_packs WHERE period = $1 AND audience = $2 LIMIT 1")
+            .bind(period)
+            .bind(audience)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// `POST /api/director-packs/{pid}/issue` — freeze a draft. Only a person with the right can; a second
@@ -472,25 +466,25 @@ async fn issue(
             "this draft was made by the monthly schedule; the portfolio office must review it before it is issued",
         ));
     }
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    let done = packs::Entity::update_many()
-        .col_expr(packs::Column::Status, Expr::value("issued"))
-        .col_expr(packs::Column::IssuedBy, Expr::value(actor.clone()))
-        .col_expr(packs::Column::IssuedAt, Expr::value(Utc::now()))
-        .filter(packs::Column::Pid.eq(row.pid))
-        .filter(packs::Column::Status.eq("draft"))
-        .exec(&tx)
-        .await
-        .map_err(db_err)?;
-    if done.rows_affected == 0 {
+    let mut tx = crate::db::begin(&ctx).await?;
+    let done = sqlx::query(
+        "UPDATE director_packs SET status = 'issued', issued_by = $1, issued_at = $2
+         WHERE pid = $3 AND status = 'draft'",
+    )
+    .bind(&actor)
+    .bind(Utc::now())
+    .bind(row.pid)
+    .execute(tx.conn())
+    .await?;
+    if done.rows_affected() == 0 {
         return Err(refuse(
             StatusCode::CONFLICT,
             "conflict",
             "this pack is already issued",
         ));
     }
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "director_pack_issued",
         Some(&actor),
@@ -498,7 +492,7 @@ async fn issue(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     let now = find(&ctx, &pid).await?;
     // Tell the audience's subscribers, with a link and never the body. A notice that cannot be made does
     // not undo the issue: the pack is issued either way.
@@ -543,14 +537,14 @@ async fn reissue(
             &problem,
         ));
     }
-    let latest = packs::Entity::find()
-        .filter(packs::Column::Period.eq(row.period.as_str()))
-        .filter(packs::Column::Audience.eq(row.audience.as_str()))
-        .order_by_desc(packs::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let latest: packs::Model = sqlx::query_as(
+        "SELECT * FROM director_packs WHERE period = $1 AND audience = $2 ORDER BY version DESC LIMIT 1",
+    )
+    .bind(&row.period)
+    .bind(&row.audience)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if latest.pid != row.pid {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -581,13 +575,11 @@ async fn reissue(
 /// `GET /api/director-packs` — the packs you may read, without bodies; drafts only for those who draft.
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let rows = packs::Entity::find()
-        .order_by_desc(packs::Column::Period)
-        .order_by_asc(packs::Column::Audience)
-        .order_by_desc(packs::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<packs::Model> = sqlx::query_as(
+        "SELECT * FROM director_packs ORDER BY period DESC, audience ASC, version DESC",
+    )
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let shown: Vec<serde_json::Value> = rows
         .iter()
         .filter(|p| may_read(&caller, p))

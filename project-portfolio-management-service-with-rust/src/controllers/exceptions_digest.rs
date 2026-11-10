@@ -11,14 +11,12 @@ use std::collections::HashMap;
 
 use crate::prelude::*;
 use chrono::{Datelike, NaiveDate};
-use sea_orm::QueryOrder;
 use serde_json::json;
 use uuid::Uuid;
 
-use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::exceptions_digest::{self as rules, Digest, Item, Kind};
-use crate::models::_entities::{delivery_exceptions, escalations, notifications, plans};
+use crate::models::_entities::{delivery_exceptions, escalations};
 
 /// The environment variable naming who receives the weekly digest.
 pub const RECIPIENTS_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_DIGEST_RECIPIENTS";
@@ -73,20 +71,18 @@ pub(crate) async fn gather(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<D
     let (mut items, mut names) = tolerance_items(&pictures);
 
     // Threshold exceptions and escalations: only on plans the caller can read.
-    let thresholds = delivery_exceptions::Entity::find()
-        .filter(delivery_exceptions::Column::Status.eq("open"))
-        .filter(delivery_exceptions::Column::ThresholdKind.is_not_null())
-        .order_by_asc(delivery_exceptions::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let live = escalations::Entity::find()
-        .filter(escalations::Column::DeletedAt.is_null())
-        .filter(escalations::Column::Status.is_in(["open", "acknowledged"]))
-        .order_by_asc(escalations::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let thresholds: Vec<delivery_exceptions::Model> = sqlx::query_as(
+        "SELECT * FROM delivery_exceptions WHERE status = 'open' AND threshold_kind IS NOT NULL ORDER BY id",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let live: Vec<escalations::Model> = sqlx::query_as(
+        "SELECT * FROM escalations
+         WHERE deleted_at IS NULL AND status IN ('open', 'acknowledged')
+         ORDER BY id",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut wanted: Vec<Uuid> = thresholds.iter().map(|t| t.plan_pid).collect();
     wanted.extend(live.iter().map(|e| e.plan_pid));
     wanted.sort();
@@ -98,14 +94,14 @@ pub(crate) async fn gather(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<D
         .filter(|p| readable.contains(p) && !names.contains_key(p))
         .collect();
     if !missing.is_empty() {
-        for plan in plans::Entity::find()
-            .filter(plans::Column::Pid.is_in(missing))
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        for (pid, name) in sqlx::query_as::<_, (Uuid, String)>(
+            "SELECT pid, name FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(missing)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
         {
-            names.insert(plan.pid, plan.name);
+            names.insert(pid, name);
         }
     }
     for t in thresholds {
@@ -187,18 +183,26 @@ pub async fn send_weekly(ctx: &AppContext, recipients: &[String]) -> Result<Sent
             out.unaddressable += 1;
             continue;
         }
-        let mut q = notifications::Entity::find()
-            .filter(notifications::Column::RecipientRef.eq(who.as_str()))
-            .filter(notifications::Column::Kind.eq(KIND));
+        let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+            "SELECT 1 FROM notifications WHERE recipient_ref = ",
+        );
+        q.push_bind(who.as_str())
+            .push(" AND kind = ")
+            .push_bind(KIND);
         if let Some(since) = since {
-            q = q.filter(notifications::Column::CreatedAt.gte(since));
+            q.push(" AND created_at >= ").push_bind(since);
         }
-        if q.one(&ctx.db).await.map_err(db_err)?.is_some() {
+        q.push(" LIMIT 1");
+        if q.build()
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .is_some()
+        {
             out.already += 1;
             continue;
         }
-        if crate::models::capabilities::notify(
-            &ctx.db,
+        if crate::models::capabilities::notify_on(
+            &mut crate::db::pool(ctx),
             who,
             "portfolio",
             Uuid::nil(),

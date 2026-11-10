@@ -36,7 +36,8 @@ pub(crate) struct PrefPayload {
     /// Notification kind the choice applies to; validated by the preference rules.
     kind: String,
     #[serde(default)]
-    /// Channel the choice applies to; absent means the kind's default scope (all channels).
+    /// Channel the choice applies to (`in_app`, `webhook`, `chat` or `email`); absent means `in_app`, not every
+    /// channel.
     channel: Option<String>,
     #[serde(default = "default_enabled")]
     /// Whether this kind is delivered; defaults to true when omitted.
@@ -128,7 +129,7 @@ pub(crate) struct ResetParams {
     /// Notification kind whose choice is reset.
     kind: String,
     #[serde(default)]
-    /// Channel to reset; absent resets the kind-wide choice.
+    /// Channel to reset; absent means `in_app`, not every channel.
     channel: Option<String>,
 }
 
@@ -163,7 +164,7 @@ pub(crate) struct ResetBody {
     /// Notification kind whose choice is reset.
     kind: String,
     #[serde(default)]
-    /// Channel to reset; absent resets the kind-wide choice.
+    /// Channel to reset; absent means `in_app`, not every channel.
     channel: Option<String>,
 }
 

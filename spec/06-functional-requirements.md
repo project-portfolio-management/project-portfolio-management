@@ -225,7 +225,9 @@ matcher payload (§5.6); every mutation audits (§6.6).
   (`/api/scheduled-actions`) is held until due and fired **exactly
   once**: the sweep claims each row with a conditional update, so the
   optional in-process ticker and a manual sweep cannot double-fire.
-  Notifications are **in-app only** — no email, no push.
+  Its notification goes to the in-app inbox and, by each person's own
+  choices, to their webhook, chat or email destinations (LT-6, RM-11);
+  there is no push.
 - **FR-16e Smart Score (data-driven prioritization).** A derived,
   renormalized weighted average over ROI, strategic alignment, expert
   review, risk (inverted), demand, MoSCoW priority, and momentum, with a

@@ -11018,7 +11018,7 @@
                 "properties": {
                   "channel": {
                     "default": null,
-                    "description": "Channel the choice applies to; absent means the kind's default scope (all channels).",
+                    "description": "Channel the choice applies to (`in_app`, `webhook`, `chat` or `email`); absent means `in_app`, not every\nchannel.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -11081,7 +11081,7 @@
                 "properties": {
                   "channel": {
                     "default": null,
-                    "description": "Channel to reset; absent resets the kind-wide choice.",
+                    "description": "Channel to reset; absent means `in_app`, not every channel.",
                     "nullable": true,
                     "type": "string"
                   },

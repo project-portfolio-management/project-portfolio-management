@@ -3,8 +3,9 @@
   description, assignee, points and due date; the service replaces every field, so the sprint, component and parent go
   back as they are, and a status change stays the board's move); its links to other tasks of the plan (LT-10:
   blocks, comes before, related, duplicate, copied from), added and removed here; and its links to outside systems,
-  such as the Jira or Linear issue it is tracked as (the service stores a link's address and never fetches it). Each
-  card on the board links here. Refusals say the catalogue's sentence, never the service's own text.
+  such as the Jira or Linear issue it is tracked as (the service stores a link's address and never fetches it); and
+  (NC-1 slice 5) following it, reactions, comments and attached files, in `Discussion.svelte`. Each card on the board
+  links here. Refusals say the catalogue's sentence, never the service's own text.
 -->
 <script lang="ts">
   import { resource } from "#lib/resource.svelte.js";
@@ -16,6 +17,7 @@
   import { ApiError } from "#lib/api/client.js";
   import { PpmClient, type Task, type TaskRelationKind, type TaskRelationList } from "#lib/api/ppm.js";
   import LinksPanel from "#lib/components/LinksPanel.svelte";
+  import Discussion from "#lib/components/Discussion.svelte";
   import {
     RELATION_KINDS,
     formFromTask,
@@ -260,6 +262,8 @@
 
   <p class="small muted">{t("p.task.links_intro")}</p>
   <LinksPanel {pid} taskPid={tpid} />
+
+  <Discussion subjectKind="task" subjectPid={task.pid} />
 {:else if !loadError}
   <p class="muted">{t("p.task.loading")}</p>
 {/if}

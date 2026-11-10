@@ -184,7 +184,9 @@ match breakdown).
                              (NC-1 slice 2)
 /plans/[pid]/tasks/[tpid]    one task: edit its fields, add and remove
                              its links to other tasks (NC-1 slice 3);
-                             each board card's title links here
+                             follow it, react, comment, attach files
+                             (NC-1 slice 5); each board card's title
+                             links here
 
 Also built, described in the sections below (the list above is not
 every page; `find src/routes -name +page.svelte` gives all 104):
@@ -1695,3 +1697,64 @@ caller's alone: the service keys it by the token, and nobody (not an administrat
   daily digest, back to the default, a destination refused on the page three ways, added, its deliveries read
   without the service's error text, and removed, a 404, 422, 403 and 404, an identity the service cannot address,
   Welsh, axe). The Welsh and the other six languages are machine-written and unreviewed.
+
+## A task's discussion and files: following, reactions, comments, attachments (NC-1 slice 5, LT-4, LT-5, RM-3)
+
+The task page `/plans/[pid]/tasks/[tpid]` ends with two sections drawn by `src/lib/components/Discussion.svelte`,
+which takes a subject kind and pid (the service's generic `subject_kind` / `subject_pid`), so the same component can
+later serve a plan, a risk or a proposal; this slice mounts it on the task page only. `src/lib/discussion-view.ts`
+holds the rules; the component only renders. None of these routes takes an `If-Match`; none answers a 409.
+
+- **Following (RM-3).** `GET /api/watchers` says how many follow the task and whether the caller does; nobody is
+  named. "Follow" is `POST /api/watchers`, "Stop following" the `POST /api/watchers/unwatch` twin (the default policy
+  keeps `DELETE` for administrators). These routes need a sign-in: a 401 on the status is shown as a sentence ("Sign
+  in to follow this…") with no button and no alert. Commenting follows the thread unless the person switched
+  `auto_watch` off on `/me/notifications`, so the status is read again after a comment.
+- **Reactions (LT-4).** The service's closed set of five (thumbs up, heart, celebrate, looking at it, question), each
+  a toggle button with `aria-pressed` for the caller's own, its count, and an accessible name in words ("Heart: 2
+  people"); the symbol is drawn `aria-hidden`. Adding is `POST /api/reactions` (a repeat writes nothing), taking back
+  the `POST /api/reactions/remove` twin.
+- **Comments (LT-4).** `GET /api/comments`, oldest first; every page is read by following the `Link` header
+  (`ApiClient.followPages`, at most 20 pages of 500). Each shows the writer (their token `sub`, as the service holds
+  it; there is no name lookup), when, and "edited" with when; the text keeps its line breaks and is plain text (never
+  HTML). "Earlier versions" (only on an edited comment) reads `GET /api/comments/{pid}/history`. Edit is
+  `PUT /api/comments/{pid}`; Delete asks first (`askConfirm`) and is the `POST /api/comments/{pid}/delete` twin (a soft
+  delete; earlier versions are kept). The page does not know who the caller is, so Edit and Delete show on every
+  comment and the service's 403 says "Only the person who wrote a comment may change or delete it." Before sending,
+  the page refuses a blank comment and one over 4000 characters, counted by code point as the service counts, and
+  shows how many characters are left.
+- **Files (LT-5).** `GET /api/attachments` (every page read): each file is a link to the service's own
+  `GET /api/attachments/{pid}/download` through the proxy, which relays the service's `Content-Disposition:
+  attachment`, `Content-Type` and `Cache-Control: private, no-store`, with the UI's own `nosniff`; so the browser saves
+  the file. **Nothing uploaded is ever drawn in the page:** no preview, no `<img>`, no frame, no `target`. Beside the
+  link: the type in words ("PDF document"), the size (bytes, KB or MB, 1024-based), who added it and when. Attaching
+  sends the chosen file itself as the request body (`POST /api/attachments?subject_kind=&subject_pid=&filename=`,
+  the file's type as `Content-Type`; not multipart, which the service does not take). The page refuses before sending:
+  no file, an empty file, one over 10 MiB (the service's default cap; a deployment may set another, which the page
+  cannot read, and the service decides), and a type outside the service's twelve (PDF, PNG, JPEG, GIF, WebP, plain
+  text, CSV, Markdown, JSON, Word, Excel, PowerPoint; never HTML, SVG, archives or programs). When the browser gives no
+  type for a `.md`, `.csv`, `.json` or `.txt` file, the type is taken from its name; a type the browser did name is
+  never replaced. The file box's `accept` lists the twelve. Remove asks first and is the
+  `POST /api/attachments/{pid}/delete` twin (the uploader or an administrator). The service also checks that the
+  content is what the type says and may run a malware scan; its 422 and 503 are sentences.
+- **Body size at the proxy.** adapter-node refuses a request body over 512 KiB unless `BODY_SIZE_LIMIT` is set, which
+  would stop most files at the proxy. The container image sets `BODY_SIZE_LIMIT=10304K` (the service's own transport
+  ceiling for the upload route: 10 MiB plus 64 KiB). It is one limit for the whole server, not only this route. A 413
+  is shown as "The file is too large to send."
+- **Refusals.** 401: sign in first; 403: the author rule (edit, delete), the uploader rule (remove a file), or "You may
+  not read or change this"; 404: the comment or file has gone (the list is read again), or the subject is not found;
+  413: too large to send; 422: what was not accepted, for a comment or a file; 503 on an upload: the malware scanner
+  did not answer. Each is a catalogue sentence; the service's own text is never shown.
+- **Not built in this slice:** the section on any page other than a task (plan, risk, proposal, idea, canvas item,
+  budget line, scenario, document version); `GET /api/me/watching` (a list of what the caller follows); attachment
+  search (`GET /api/attachments/search`, PL-8); people's names for a `sub`; mentions, threads or replies (the service
+  has none); hiding Edit and Delete on other people's comments; live updates (the plan's `comment_added` event, PL-3);
+  reading the deployment's attachment cap; drag and drop, several files at once, or upload progress; a preview of any
+  file.
+- **Tests:** `tests/unit/discussion-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/task-discussion.spec.ts` (thread, post, follow after commenting; blank and over-long refused on the page;
+  edit, earlier versions, delete after asking; a 403 and a 404; a reaction added and taken back; follow and stop, and
+  signed out; files as download links never drawn in the page, a Markdown file sent as itself with its type; a web
+  page, an empty file and one over 10 MiB refused on the page; a 422, a 403 and a 503; remove after asking; Welsh;
+  axe). `tests/e2e/plan-task-edit.spec.ts` now also answers these routes, empty. The Welsh and the other six languages
+  are machine-written and unreviewed.

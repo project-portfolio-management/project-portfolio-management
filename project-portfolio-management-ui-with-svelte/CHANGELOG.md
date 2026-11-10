@@ -9,6 +9,29 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a task's discussion and files: following, reactions, comments, attachments (NC-1 slice 5, LT-4, LT-5, RM-3, 2026-11-10)
+
+`/plans/[pid]/tasks/[tpid]` ends with "Discussion" and "Files", drawn by `src/lib/components/Discussion.svelte`
+(subject kind and pid as props; mounted on the task only). Following: `GET /api/watchers` (a count, nobody named),
+`POST /api/watchers`, `POST /api/watchers/unwatch`; a 401 shows "Sign in to follow this…" and no button. Reactions:
+five toggle buttons with `aria-pressed`, a count and a name in words, the symbol `aria-hidden`; `POST /api/reactions`
+and `POST /api/reactions/remove`. Comments: every page of `GET /api/comments` (`ApiClient.followPages`, at most 20
+pages), writer, time and "edited"; post, edit (`PUT`), "Earlier versions" (`GET …/history`), delete after `askConfirm`
+(`POST …/delete`); a blank comment or one over 4000 characters (code points, as the service counts) is refused on the
+page, with characters left shown. Files: each a plain link to `GET /api/attachments/{pid}/download` through the
+proxy (the service's `Content-Disposition: attachment` and type relayed, `nosniff` from the UI), never an image,
+frame or preview; type in words, size, who and when; attach sends the `File` as the raw body with its type
+(`ApiClient` `rawBody` now takes a `Blob`), taking the type from the name only for a `.md`, `.csv`, `.json` or `.txt`
+the browser gave none; refused on the page when none is chosen, empty, over 10 MiB or off the twelve types; remove
+after `askConfirm` (`POST …/delete`). Refusals: 401, 403 (author rule, uploader rule, or not allowed), 404 (gone; the
+list is read again), 413, 422 (comment or file), 503 (malware scanner did not answer). The container sets
+`BODY_SIZE_LIMIT=10304K`. Tests: `tests/unit/discussion-view.test.ts`, client paths in `tests/unit/ppm.test.ts`, and
+`tests/e2e/task-discussion.spec.ts` (twelve tests, with Welsh and axe); `tests/e2e/plan-task-edit.spec.ts` now
+answers these routes with empty lists. Not done: other subject kinds, `GET /api/me/watching`, attachment search, names
+for a `sub`, hiding Edit and Delete on other people's comments, live updates, the deployment's own cap, several files
+or progress. Not verified: against a real service or through a built container. The 90 new strings in seven
+languages are machine drafts, and no speaker has read them.
+
 ### Added — my notifications: inbox, choices and destinations (NC-1 slice 4, PL-5, LT-6, RM-11, 2026-11-10)
 
 `/me/notifications`, linked from `/me`, has three sections. The inbox (`GET /api/me/inbox?tz=` in the browser's

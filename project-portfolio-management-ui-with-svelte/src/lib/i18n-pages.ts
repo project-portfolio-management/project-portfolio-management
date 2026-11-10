@@ -5202,6 +5202,115 @@ export const PAGES_EN = {
   "p.commitments.out_old_zero":
     "Not sent: a zero recorded before zeros were sent, so the workforce service kept its last figure. Save again to withdraw it.",
   "p.commitments.out_other": "The service recorded: {outcome}.",
+  "p.discussion.heading": "Discussion",
+  "p.discussion.loading": "Loading…",
+  "p.discussion.could_not_load_comments": "The comments could not be loaded.",
+  "p.discussion.could_not_load_reactions": "The reactions could not be loaded.",
+  "p.discussion.could_not_load_files": "The files could not be loaded.",
+  "p.discussion.could_not_load_watch":
+    "Whether you follow this could not be read.",
+  "p.discussion.sign_in_to_follow":
+    "Sign in to follow this and be told of new comments and changes.",
+  "p.discussion.you_follow":
+    "You follow this: you are told of new comments and changes.",
+  "p.discussion.you_do_not_follow": "You do not follow this.",
+  "p.discussion.followers_one": "{n} person follows it.",
+  "p.discussion.followers_other": "{n} people follow it.",
+  "p.discussion.follow": "Follow",
+  "p.discussion.unfollow": "Stop following",
+  "p.discussion.followed": "You now follow this.",
+  "p.discussion.unfollowed": "You no longer follow this.",
+  "p.discussion.reactions_label": "Reactions",
+  "p.discussion.reaction_named_one": "{reaction}: {n} person",
+  "p.discussion.reaction_named_other": "{reaction}: {n} people",
+  "p.discussion.r_thumbs_up": "Thumbs up",
+  "p.discussion.r_heart": "Heart",
+  "p.discussion.r_celebrate": "Celebrate",
+  "p.discussion.r_eyes": "Looking at it",
+  "p.discussion.r_question": "Question",
+  "p.discussion.comments_heading": "Comments",
+  "p.discussion.no_comments": "No comments yet.",
+  "p.discussion.no_author": "someone not signed in",
+  "p.discussion.by_at": "By {who}, {when}",
+  "p.discussion.edited_at": "edited {when}",
+  "p.discussion.edit": "Edit",
+  "p.discussion.edit_named": "Edit the comment by {who}, {when}",
+  "p.discussion.delete": "Delete",
+  "p.discussion.delete_named": "Delete the comment by {who}, {when}",
+  "p.discussion.confirm_delete_comment":
+    "Delete this comment? Its earlier versions are kept, but nobody sees it on the page again.",
+  "p.discussion.earlier": "Earlier versions",
+  "p.discussion.no_earlier": "No earlier version is kept.",
+  "p.discussion.replaced_at": "Replaced {when}",
+  "p.discussion.f_edit": "Change the comment",
+  "p.discussion.save_edit": "Save the comment",
+  "p.discussion.cancel": "Cancel",
+  "p.discussion.f_comment": "Your comment",
+  "p.discussion.chars_left": "{n} of {max} characters left.",
+  "p.discussion.chars_over": "{n} characters over the limit of {max}.",
+  "p.discussion.post": "Post the comment",
+  "p.discussion.posted": "The comment was posted.",
+  "p.discussion.edited":
+    "The comment was changed; its earlier version is kept.",
+  "p.discussion.deleted": "The comment was deleted.",
+  "p.discussion.problem_blank": "Write the comment first.",
+  "p.discussion.problem_too_long": "A comment can be at most 4000 characters.",
+  "p.discussion.files_heading": "Files",
+  "p.discussion.files_intro":
+    "Files attached here are saved to your computer when you open them; they are never shown inside this page.",
+  "p.discussion.no_files": "No files attached.",
+  "p.discussion.file_facts": "{type}, {size}, added by {who}, {when}",
+  "p.discussion.remove_file": "Remove",
+  "p.discussion.remove_file_named": "Remove the file {name}",
+  "p.discussion.confirm_remove_file":
+    "Remove the file {name}? Nobody can download it from here again.",
+  "p.discussion.removed_file": "The file {name} was removed.",
+  "p.discussion.f_file": "File to attach",
+  "p.discussion.files_rules":
+    "A PDF, an image (PNG, JPEG, GIF or WebP), plain text, CSV, Markdown, JSON, or a Word, Excel or PowerPoint file, of at most 10 MB. Web pages, SVG drawings, archives and programs are refused.",
+  "p.discussion.attach": "Attach the file",
+  "p.discussion.attached": "The file {name} was attached.",
+  "p.discussion.problem_choose_file": "Choose a file first.",
+  "p.discussion.problem_empty": "That file is empty.",
+  "p.discussion.problem_too_large":
+    "That file is over 10 MB, the limit for one file.",
+  "p.discussion.problem_type":
+    "That kind of file cannot be attached. The list below says which kinds can.",
+  "p.discussion.type_pdf": "PDF document",
+  "p.discussion.type_png": "PNG image",
+  "p.discussion.type_jpeg": "JPEG image",
+  "p.discussion.type_gif": "GIF image",
+  "p.discussion.type_webp": "WebP image",
+  "p.discussion.type_text": "plain text",
+  "p.discussion.type_csv": "CSV table",
+  "p.discussion.type_markdown": "Markdown text",
+  "p.discussion.type_json": "JSON data",
+  "p.discussion.type_word": "Word document",
+  "p.discussion.type_excel": "Excel workbook",
+  "p.discussion.type_powerpoint": "PowerPoint slides",
+  "p.discussion.size_b": "{n} bytes",
+  "p.discussion.size_kb": "{n} KB",
+  "p.discussion.size_mb": "{n} MB",
+  "p.discussion.refused_sign_in":
+    "Sign in first: the service does not know who you are.",
+  "p.discussion.refused_not_author":
+    "Only the person who wrote a comment may change or delete it.",
+  "p.discussion.refused_not_uploader":
+    "Only the person who attached a file, or an administrator, may remove it.",
+  "p.discussion.refused_forbidden": "You may not read or change this.",
+  "p.discussion.refused_comment_gone":
+    "That comment has gone; the comments have been read again.",
+  "p.discussion.refused_file_gone":
+    "That file had already been removed; the files have been read again.",
+  "p.discussion.refused_gone":
+    "This could not be found: it may have been removed, or you may not see it.",
+  "p.discussion.refused_comment_invalid":
+    "The service did not accept the comment: it must not be blank, and can be at most 4000 characters.",
+  "p.discussion.refused_file_invalid":
+    "The service did not accept the file: its kind, its size, or what it holds did not pass the checks (a file must be what its kind says, and no program is taken).",
+  "p.discussion.refused_too_large": "The file is too large to send.",
+  "p.discussion.refused_scan_unavailable":
+    "The file was not attached: the malware scanner did not answer. Try again later.",
 } as const;
 
 /** A key in the page and component catalogue. */

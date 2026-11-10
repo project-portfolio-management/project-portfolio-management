@@ -5387,4 +5387,116 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.commitments.out_old_zero":
     "No enviado: un cero registrado antes de que se enviaran los ceros, así que el servicio de personal conservó su última cifra. Guarde de nuevo para retirarla.",
   "p.commitments.out_other": "El servicio registró: {outcome}.",
+  "p.discussion.heading": "Conversación",
+  "p.discussion.loading": "Cargando…",
+  "p.discussion.could_not_load_comments":
+    "No se pudieron cargar los comentarios.",
+  "p.discussion.could_not_load_reactions":
+    "No se pudieron cargar las reacciones.",
+  "p.discussion.could_not_load_files": "No se pudieron cargar los archivos.",
+  "p.discussion.could_not_load_watch": "No se pudo leer si sigue esto.",
+  "p.discussion.sign_in_to_follow":
+    "Inicie sesión para seguir esto y recibir avisos de comentarios y cambios nuevos.",
+  "p.discussion.you_follow":
+    "Sigue esto: recibe avisos de comentarios y cambios nuevos.",
+  "p.discussion.you_do_not_follow": "No sigue esto.",
+  "p.discussion.followers_one": "{n} persona lo sigue.",
+  "p.discussion.followers_other": "{n} personas lo siguen.",
+  "p.discussion.follow": "Seguir",
+  "p.discussion.unfollow": "Dejar de seguir",
+  "p.discussion.followed": "Ahora sigue esto.",
+  "p.discussion.unfollowed": "Ya no sigue esto.",
+  "p.discussion.reactions_label": "Reacciones",
+  "p.discussion.reaction_named_one": "{reaction}: {n} persona",
+  "p.discussion.reaction_named_other": "{reaction}: {n} personas",
+  "p.discussion.r_thumbs_up": "Pulgar arriba",
+  "p.discussion.r_heart": "Corazón",
+  "p.discussion.r_celebrate": "Celebrar",
+  "p.discussion.r_eyes": "Lo estoy mirando",
+  "p.discussion.r_question": "Pregunta",
+  "p.discussion.comments_heading": "Comentarios",
+  "p.discussion.no_comments": "Todavía no hay comentarios.",
+  "p.discussion.no_author": "alguien sin sesión iniciada",
+  "p.discussion.by_at": "De {who}, {when}",
+  "p.discussion.edited_at": "editado {when}",
+  "p.discussion.edit": "Editar",
+  "p.discussion.edit_named": "Editar el comentario de {who}, {when}",
+  "p.discussion.delete": "Eliminar",
+  "p.discussion.delete_named": "Eliminar el comentario de {who}, {when}",
+  "p.discussion.confirm_delete_comment":
+    "¿Eliminar este comentario? Se conservan sus versiones anteriores, pero nadie volverá a verlo en la página.",
+  "p.discussion.earlier": "Versiones anteriores",
+  "p.discussion.no_earlier": "No se conserva ninguna versión anterior.",
+  "p.discussion.replaced_at": "Sustituido {when}",
+  "p.discussion.f_edit": "Cambiar el comentario",
+  "p.discussion.save_edit": "Guardar el comentario",
+  "p.discussion.cancel": "Cancelar",
+  "p.discussion.f_comment": "Su comentario",
+  "p.discussion.chars_left": "Quedan {n} de {max} caracteres.",
+  "p.discussion.chars_over": "{n} caracteres por encima del límite de {max}.",
+  "p.discussion.post": "Publicar el comentario",
+  "p.discussion.posted": "Se publicó el comentario.",
+  "p.discussion.edited":
+    "Se cambió el comentario; se conserva su versión anterior.",
+  "p.discussion.deleted": "Se eliminó el comentario.",
+  "p.discussion.problem_blank": "Escriba primero el comentario.",
+  "p.discussion.problem_too_long":
+    "Un comentario puede tener como máximo 4000 caracteres.",
+  "p.discussion.files_heading": "Archivos",
+  "p.discussion.files_intro":
+    "Los archivos adjuntos aquí se guardan en su equipo al abrirlos; nunca se muestran dentro de esta página.",
+  "p.discussion.no_files": "No hay archivos adjuntos.",
+  "p.discussion.file_facts": "{type}, {size}, añadido por {who}, {when}",
+  "p.discussion.remove_file": "Quitar",
+  "p.discussion.remove_file_named": "Quitar el archivo {name}",
+  "p.discussion.confirm_remove_file":
+    "¿Quitar el archivo {name}? Nadie podrá volver a descargarlo desde aquí.",
+  "p.discussion.removed_file": "Se quitó el archivo {name}.",
+  "p.discussion.f_file": "Archivo que adjuntar",
+  "p.discussion.files_rules":
+    "Un PDF, una imagen (PNG, JPEG, GIF o WebP), texto sin formato, CSV, Markdown, JSON o un archivo de Word, Excel o PowerPoint, de 10 MB como máximo. Se rechazan páginas web, dibujos SVG, archivos comprimidos y programas.",
+  "p.discussion.attach": "Adjuntar el archivo",
+  "p.discussion.attached": "Se adjuntó el archivo {name}.",
+  "p.discussion.problem_choose_file": "Elija primero un archivo.",
+  "p.discussion.problem_empty": "Ese archivo está vacío.",
+  "p.discussion.problem_too_large":
+    "Ese archivo supera los 10 MB, el límite para un archivo.",
+  "p.discussion.problem_type":
+    "No se puede adjuntar ese tipo de archivo. La lista de abajo indica qué tipos se admiten.",
+  "p.discussion.type_pdf": "Documento PDF",
+  "p.discussion.type_png": "Imagen PNG",
+  "p.discussion.type_jpeg": "Imagen JPEG",
+  "p.discussion.type_gif": "Imagen GIF",
+  "p.discussion.type_webp": "Imagen WebP",
+  "p.discussion.type_text": "texto sin formato",
+  "p.discussion.type_csv": "tabla CSV",
+  "p.discussion.type_markdown": "texto Markdown",
+  "p.discussion.type_json": "datos JSON",
+  "p.discussion.type_word": "documento de Word",
+  "p.discussion.type_excel": "libro de Excel",
+  "p.discussion.type_powerpoint": "diapositivas de PowerPoint",
+  "p.discussion.size_b": "{n} B",
+  "p.discussion.size_kb": "{n} KB",
+  "p.discussion.size_mb": "{n} MB",
+  "p.discussion.refused_sign_in":
+    "Inicie sesión primero: el servicio no sabe quién es usted.",
+  "p.discussion.refused_not_author":
+    "Solo quien escribió un comentario puede cambiarlo o eliminarlo.",
+  "p.discussion.refused_not_uploader":
+    "Solo quien adjuntó un archivo, o un administrador, puede quitarlo.",
+  "p.discussion.refused_forbidden": "No puede leer ni cambiar esto.",
+  "p.discussion.refused_comment_gone":
+    "Ese comentario ya no existe; se han vuelto a leer los comentarios.",
+  "p.discussion.refused_file_gone":
+    "Ese archivo ya se había quitado; se han vuelto a leer los archivos.",
+  "p.discussion.refused_gone":
+    "No se encontró: puede que se haya quitado o que usted no pueda verlo.",
+  "p.discussion.refused_comment_invalid":
+    "El servicio no aceptó el comentario: no puede estar vacío y puede tener como máximo 4000 caracteres.",
+  "p.discussion.refused_file_invalid":
+    "El servicio no aceptó el archivo: su tipo, su tamaño o su contenido no superaron las comprobaciones (un archivo debe ser lo que dice su tipo, y no se admiten programas).",
+  "p.discussion.refused_too_large":
+    "El archivo es demasiado grande para enviarlo.",
+  "p.discussion.refused_scan_unavailable":
+    "No se adjuntó el archivo: el analizador de malware no respondió. Inténtelo más tarde.",
 };

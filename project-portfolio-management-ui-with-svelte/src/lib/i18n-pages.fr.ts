@@ -5401,4 +5401,118 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.commitments.out_old_zero":
     "Non envoyé : un zéro enregistré avant que les zéros ne soient envoyés ; le service des effectifs a donc conservé son dernier chiffre. Enregistrez de nouveau pour le retirer.",
   "p.commitments.out_other": "Le service a enregistré : {outcome}.",
+  "p.discussion.heading": "Échanges",
+  "p.discussion.loading": "Chargement…",
+  "p.discussion.could_not_load_comments":
+    "Les commentaires n'ont pas pu être chargés.",
+  "p.discussion.could_not_load_reactions":
+    "Les réactions n'ont pas pu être chargées.",
+  "p.discussion.could_not_load_files":
+    "Les fichiers n'ont pas pu être chargés.",
+  "p.discussion.could_not_load_watch":
+    "Impossible de savoir si vous suivez ceci.",
+  "p.discussion.sign_in_to_follow":
+    "Connectez-vous pour suivre ceci et être averti des nouveaux commentaires et changements.",
+  "p.discussion.you_follow":
+    "Vous suivez ceci : vous êtes averti des nouveaux commentaires et changements.",
+  "p.discussion.you_do_not_follow": "Vous ne suivez pas ceci.",
+  "p.discussion.followers_one": "{n} personne le suit.",
+  "p.discussion.followers_other": "{n} personnes le suivent.",
+  "p.discussion.follow": "Suivre",
+  "p.discussion.unfollow": "Ne plus suivre",
+  "p.discussion.followed": "Vous suivez désormais ceci.",
+  "p.discussion.unfollowed": "Vous ne suivez plus ceci.",
+  "p.discussion.reactions_label": "Réactions",
+  "p.discussion.reaction_named_one": "{reaction} : {n} personne",
+  "p.discussion.reaction_named_other": "{reaction} : {n} personnes",
+  "p.discussion.r_thumbs_up": "Pouce levé",
+  "p.discussion.r_heart": "Cœur",
+  "p.discussion.r_celebrate": "Fête",
+  "p.discussion.r_eyes": "Je regarde",
+  "p.discussion.r_question": "Une question",
+  "p.discussion.comments_heading": "Commentaires",
+  "p.discussion.no_comments": "Aucun commentaire pour l'instant.",
+  "p.discussion.no_author": "quelqu'un de non connecté",
+  "p.discussion.by_at": "Par {who}, {when}",
+  "p.discussion.edited_at": "modifié {when}",
+  "p.discussion.edit": "Modifier",
+  "p.discussion.edit_named": "Modifier le commentaire de {who}, {when}",
+  "p.discussion.delete": "Supprimer",
+  "p.discussion.delete_named": "Supprimer le commentaire de {who}, {when}",
+  "p.discussion.confirm_delete_comment":
+    "Supprimer ce commentaire ? Ses versions antérieures sont conservées, mais personne ne le verra plus sur la page.",
+  "p.discussion.earlier": "Versions antérieures",
+  "p.discussion.no_earlier": "Aucune version antérieure n'est conservée.",
+  "p.discussion.replaced_at": "Remplacé {when}",
+  "p.discussion.f_edit": "Modifier le texte du commentaire",
+  "p.discussion.save_edit": "Enregistrer le commentaire",
+  "p.discussion.cancel": "Annuler",
+  "p.discussion.f_comment": "Votre commentaire",
+  "p.discussion.chars_left": "Il reste {n} caractères sur {max}.",
+  "p.discussion.chars_over": "{n} caractères au-delà de la limite de {max}.",
+  "p.discussion.post": "Publier le commentaire",
+  "p.discussion.posted": "Le commentaire a été publié.",
+  "p.discussion.edited":
+    "Le commentaire a été modifié ; sa version antérieure est conservée.",
+  "p.discussion.deleted": "Le commentaire a été supprimé.",
+  "p.discussion.problem_blank": "Écrivez d'abord le commentaire.",
+  "p.discussion.problem_too_long":
+    "Un commentaire peut compter au plus 4000 caractères.",
+  "p.discussion.files_heading": "Fichiers",
+  "p.discussion.files_intro":
+    "Les fichiers joints ici sont enregistrés sur votre ordinateur quand vous les ouvrez ; ils ne sont jamais affichés dans cette page.",
+  "p.discussion.no_files": "Aucun fichier joint.",
+  "p.discussion.file_facts": "{type}, {size}, ajouté par {who}, {when}",
+  "p.discussion.remove_file": "Retirer",
+  "p.discussion.remove_file_named": "Retirer le fichier {name}",
+  "p.discussion.confirm_remove_file":
+    "Retirer le fichier {name} ? Personne ne pourra plus le télécharger d'ici.",
+  "p.discussion.removed_file": "Le fichier {name} a été retiré.",
+  "p.discussion.f_file": "Fichier à joindre",
+  "p.discussion.files_rules":
+    "Un PDF, une image (PNG, JPEG, GIF ou WebP), du texte brut, CSV, Markdown, JSON ou un fichier Word, Excel ou PowerPoint, de 10 Mo au plus. Les pages web, dessins SVG, archives et programmes sont refusés.",
+  "p.discussion.attach": "Joindre le fichier",
+  "p.discussion.attached": "Le fichier {name} a été joint.",
+  "p.discussion.problem_choose_file": "Choisissez d'abord un fichier.",
+  "p.discussion.problem_empty": "Ce fichier est vide.",
+  "p.discussion.problem_too_large":
+    "Ce fichier dépasse 10 Mo, la limite pour un fichier.",
+  "p.discussion.problem_type":
+    "Ce type de fichier ne peut pas être joint. La liste ci-dessous indique les types acceptés.",
+  "p.discussion.type_pdf": "Document PDF",
+  "p.discussion.type_png": "Image PNG",
+  "p.discussion.type_jpeg": "Image JPEG",
+  "p.discussion.type_gif": "Image GIF",
+  "p.discussion.type_webp": "Image WebP",
+  "p.discussion.type_text": "texte brut",
+  "p.discussion.type_csv": "tableau CSV",
+  "p.discussion.type_markdown": "texte Markdown",
+  "p.discussion.type_json": "données JSON",
+  "p.discussion.type_word": "document Word",
+  "p.discussion.type_excel": "classeur Excel",
+  "p.discussion.type_powerpoint": "diapositives PowerPoint",
+  "p.discussion.size_b": "{n} octets",
+  "p.discussion.size_kb": "{n} Ko",
+  "p.discussion.size_mb": "{n} Mo",
+  "p.discussion.refused_sign_in":
+    "Connectez-vous d'abord : le service ne sait pas qui vous êtes.",
+  "p.discussion.refused_not_author":
+    "Seule la personne qui a écrit un commentaire peut le modifier ou le supprimer.",
+  "p.discussion.refused_not_uploader":
+    "Seule la personne qui a joint un fichier, ou un administrateur, peut le retirer.",
+  "p.discussion.refused_forbidden": "Vous ne pouvez ni lire ni modifier ceci.",
+  "p.discussion.refused_comment_gone":
+    "Ce commentaire n'existe plus ; les commentaires ont été relus.",
+  "p.discussion.refused_file_gone":
+    "Ce fichier avait déjà été retiré ; les fichiers ont été relus.",
+  "p.discussion.refused_gone":
+    "Introuvable : cela a peut-être été retiré, ou vous ne pouvez pas le voir.",
+  "p.discussion.refused_comment_invalid":
+    "Le service n'a pas accepté le commentaire : il ne doit pas être vide et peut compter au plus 4000 caractères.",
+  "p.discussion.refused_file_invalid":
+    "Le service n'a pas accepté le fichier : son type, sa taille ou son contenu n'ont pas passé les contrôles (un fichier doit être ce que dit son type, et aucun programme n'est accepté).",
+  "p.discussion.refused_too_large":
+    "Le fichier est trop volumineux pour être envoyé.",
+  "p.discussion.refused_scan_unavailable":
+    "Le fichier n'a pas été joint : l'analyseur de logiciels malveillants n'a pas répondu. Réessayez plus tard.",
 };

@@ -89,6 +89,8 @@ audited; people stay references.
   row); a comment on a plan the caller cannot read is 403/404 like the plan
   itself; edit and delete are the author's, delete is a soft delete, and the
   edit history is kept; a notification fires once per recipient.
+  **Screen 2026-11-10 (NC-1 slice 5):** the task page `/plans/[pid]/tasks/[tpid]` lists, posts, edits (with earlier
+  versions) and deletes a task's comments and toggles its reactions; no other subject kind has a screen yet.
   *Reconcile with* the deferred `posts / comments` item in the API spec §9.
 
 - [x] **LT-5 (M) — File attachments.** **Landed 2026-10-03.** Service: the **artifact store** (`src/artifacts.rs`, 5 unit tests; local directory `PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR`, sharded random keys, a key can never escape the root) with its `artifacts` index (SHA-256, size, declared type, optional `expires_at`) and `attachments` (migrations `…_000015_artifacts`, `…_000016_attachments`); `POST /api/attachments` (the **raw body** + `Content-Type`, `?subject_kind=&subject_pid=&filename=`), list, **download**, remove (DELETE + POST twin). **Refused before anything is stored:** a type outside the allow-list (pdf, png, jpeg, gif, webp, txt, csv, markdown, json, docx, xlsx, pptx — never html, svg, archives, executables), an empty file, a file over the cap (10 MiB default) — the test asserts **zero bytes on disk** after each refusal. The stored SHA-256 equals the bytes' hash and is **re-checked on every download** (a tampered file is 500, never served). A download is **re-authorized on the subject** (ABAC + private plan), served `nosniff`, `private, no-store`, `attachment`, with an ASCII fallback **and** the RFC 5987 UTF-8 name — a non-Latin filename survives and is never doubled. Subjects: plan, task, risk, proposal, idea, canvas item, budget line, scenario. 1 DB-gated test. **Not built:** an expiry sweep (this is T-8's); front-end; multipart upload; the gate-review subject kind. `attachments` table
@@ -101,6 +103,10 @@ audited; people stay references.
   UTF-8 filenames survive upload and download (Leantime shipped a bug here).
   *Blocked on:* T-8 step 1–2 (artifact store). Gate-review and risk evidence
   are the first consumers.
+  **Screen 2026-11-10 (NC-1 slice 5):** the task page lists a task's files as links to the service's download (never
+  drawn in the page), attaches one (the raw body with its type; empty, over 10 MiB or a type off the list refused on
+  the page) and removes one; no other subject kind has a screen, and the UI container's `BODY_SIZE_LIMIT` is set to
+  the service's transport ceiling.
 
 - [x] **LT-6 (M) — Per-user webhooks and chat sinks.** **Landed 2026-10-03.** Service: `notification_sinks` + `sink_deliveries` (migrations `…_000021`, `…_000022`), `POST/GET /api/me/notification-sinks`, remove (DELETE + POST twin), `…/{pid}/deliveries`, admin `POST /api/notification-sinks/dispatch`; a ticker (`PROJECT_PORTFOLIO_MANAGEMENT_SINKS_TICK_SECS`, 0 = off); `src/sinks.rs` (8 unit tests) + `tests/sinks.rs` end to end with a **real local HTTP receiver**. A person registers destinations for **their own** notifications: signed `webhook` (the family envelope + `X-Mxi-Event-Id` / `X-Mxi-Signature`), and chat formats `slack`, `mattermost`, `discord`, `telegram` (golden-pinned bodies carrying **only the notification's own text**). **Never in the notification's path:** `notify()` only *enqueues* (asserted: nothing is sent until dispatch); failures retry at 1/5/25/125 min then give up, keeping the last error, so a dead destination cannot delay or fail a notification. Per-channel preferences (`webhook`/`chat`/`email`) are honoured per kind; one person's notifications never reach another's sink. **Safe by construction (SSRF):** https to a **public** host only — loopback, private, link-local/metadata (169.254.169.254), CGNAT, unique-local, `.internal`/`.local` names and URLs with credentials are refused, the name is **re-resolved at send time** and refused if any answer is private, redirects are not followed; the destination is a **secret returned only masked**. **Residual risk, stated:** DNS rebinding between the check and the connection is not closed (the client resolves again). **Not built:** a front-end; a per-sink test-send button. **Screen 2026-11-10 (NC-1 slice 4):** `/me/notifications` lists, adds and removes the caller's destinations (masked as the service returns them) and shows their recent deliveries without `last_error`; there is still no test send and no way to pause one. Extend T-28m
   (`src/webhooks.rs`): a user registers their own destination for **their**
@@ -226,6 +232,8 @@ started.
   notified of their own change; a watcher of a plan the caller can no longer
   read stops receiving notifications and sees nothing (record-level read check
   re-applied at delivery).
+  **Screen 2026-11-10 (NC-1 slice 5):** the task page follows and stops following a task and shows how many follow
+  it (nobody named); `GET /api/me/watching` and the other subject kinds have no screen yet.
 
 - [x] **RM-5 (M) — Subtask roll-up audit and fill.** **Landed 2026-10-02.** **Audit finding:** before this, tasks had **no parent concept** (carried: none of start, due, % done, estimate, spent, priority rolled up). Added `tasks.parent_task_pid` (migration `m20261003_000009_task_parent`; same plan, no cycle, at most ten deep) and `GET /api/plans/{pid}/tasks/{t}/rollup`, **derived on read, never stored**: due = latest descendant due, estimate = summed points, progress = estimate-weighted basis points over the estimated descendants only, spent minutes across the family; no-children / no-estimates / no-dated-children are `null` with a reason, and unestimated children are **named** in `excluded_unestimated`, never counted as zero. `src/task_rollup.rs` (5 unit tests) + 1 DB-gated test. **Not built:** priority roll-up (tasks carry no priority), a start date (tasks have none), front-end. Verify what a parent
   derives from its children today (start, due, % done, estimate, spent time,
@@ -2044,6 +2052,28 @@ only as search snippets.
   **Not verified:** the stubbed service only (no run against a real service, so the default policy's answer to a
   write-level user on these routes is not seen here); CI; the Welsh and the six other languages are machine-written
   and unreviewed.
+  **Slice 5 built 2026-11-10 (comments, attachments and watchers, LT-4, LT-5, RM-3; NC-1 stays open).** The task
+  page `/plans/[pid]/tasks/[tpid]` gains a discussion and a files section (`src/lib/components/Discussion.svelte`,
+  written for any subject kind, mounted on the task only): follow and stop following (the `POST …/unwatch` twin; a
+  401 says to sign in), the five reactions as toggles with counts in words (the `POST …/remove` twin), the comments
+  oldest first with every page read (post, edit by the author, earlier versions, delete after asking through the
+  `POST …/delete` twin; blank and over 4000 characters refused on the page), and the files (each a link to the
+  service's own download, which says `attachment` and `nosniff`; nothing uploaded is drawn in the page; attach sends
+  the file itself with its type, refused on the page when empty, over 10 MiB or outside the service's twelve types;
+  remove after asking, the `POST …/delete` twin). Typed bodies and fifteen `PpmClient` methods, `ApiClient.followPages`
+  and a `Blob` raw body; `src/lib/discussion-view.ts` with unit tests; `tests/e2e/task-discussion.spec.ts` (twelve
+  tests: thread and post, refusals on the page, edit, history, delete, 403 and 404, reactions, follow and signed out,
+  files and an upload, three refusals on the page, 422, 403 and 503, remove, Welsh, axe). 90 new catalogue keys in all
+  eight page catalogues. The UI container sets `BODY_SIZE_LIMIT=10304K`, as adapter-node's 512 KiB default would
+  have refused most files at the proxy. These routes answer no 409 and take no `If-Match`.
+  **Not done:** the section on a plan, risk, proposal or any other subject; `GET /api/me/watching`; attachment search
+  (PL-8); people's names for a `sub`; hiding Edit and Delete on other people's comments (the page does not know the
+  caller; the service's 403 is shown in words); live updates from `comment_added`; reading the deployment's own
+  attachment cap (the page checks the 10 MiB default); several files at once, drag and drop, upload progress; every
+  later slice in the order above.
+  **Not verified:** the stubbed service only (no run against a real service, so neither the default policy's answer
+  to a write-level user on these routes nor a real upload through the proxy and the raised body limit is seen here;
+  the container image was not built); CI; the Welsh and the six other languages are machine-written and unreviewed.
 - [ ] **NC-2 (M) — Read-only MCP adapter.** It exposes registry, task, RAID,
   schedule and pack reads as MCP tools that call the existing API with the
   caller's token, so ABAC, privacy and handling marks apply unchanged. It runs

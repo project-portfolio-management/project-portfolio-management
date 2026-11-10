@@ -5398,4 +5398,117 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.commitments.out_old_zero":
     "Nicht gesendet: eine Null, die erfasst wurde, bevor Nullwerte gesendet wurden, daher hat der Personaldienst seinen letzten Wert behalten. Speichern Sie erneut, um ihn zurückzuziehen.",
   "p.commitments.out_other": "Der Dienst hat erfasst: {outcome}.",
+  "p.discussion.heading": "Diskussion",
+  "p.discussion.loading": "Wird geladen…",
+  "p.discussion.could_not_load_comments":
+    "Die Kommentare konnten nicht geladen werden.",
+  "p.discussion.could_not_load_reactions":
+    "Die Reaktionen konnten nicht geladen werden.",
+  "p.discussion.could_not_load_files":
+    "Die Dateien konnten nicht geladen werden.",
+  "p.discussion.could_not_load_watch":
+    "Ob Sie dem folgen, konnte nicht gelesen werden.",
+  "p.discussion.sign_in_to_follow":
+    "Melden Sie sich an, um dem zu folgen und über neue Kommentare und Änderungen informiert zu werden.",
+  "p.discussion.you_follow":
+    "Sie folgen dem: Sie werden über neue Kommentare und Änderungen informiert.",
+  "p.discussion.you_do_not_follow": "Sie folgen dem nicht.",
+  "p.discussion.followers_one": "{n} Person folgt dem.",
+  "p.discussion.followers_other": "{n} Personen folgen dem.",
+  "p.discussion.follow": "Folgen",
+  "p.discussion.unfollow": "Nicht mehr folgen",
+  "p.discussion.followed": "Sie folgen dem jetzt.",
+  "p.discussion.unfollowed": "Sie folgen dem nicht mehr.",
+  "p.discussion.reactions_label": "Reaktionen",
+  "p.discussion.reaction_named_one": "{reaction}: {n} Person",
+  "p.discussion.reaction_named_other": "{reaction}: {n} Personen",
+  "p.discussion.r_thumbs_up": "Daumen hoch",
+  "p.discussion.r_heart": "Herz",
+  "p.discussion.r_celebrate": "Feiern",
+  "p.discussion.r_eyes": "Schaue es mir an",
+  "p.discussion.r_question": "Frage",
+  "p.discussion.comments_heading": "Kommentare",
+  "p.discussion.no_comments": "Noch keine Kommentare.",
+  "p.discussion.no_author": "jemand ohne Anmeldung",
+  "p.discussion.by_at": "Von {who}, {when}",
+  "p.discussion.edited_at": "bearbeitet {when}",
+  "p.discussion.edit": "Bearbeiten",
+  "p.discussion.edit_named": "Kommentar von {who}, {when} bearbeiten",
+  "p.discussion.delete": "Löschen",
+  "p.discussion.delete_named": "Kommentar von {who}, {when} löschen",
+  "p.discussion.confirm_delete_comment":
+    "Diesen Kommentar löschen? Frühere Fassungen bleiben erhalten, aber niemand sieht ihn mehr auf der Seite.",
+  "p.discussion.earlier": "Frühere Fassungen",
+  "p.discussion.no_earlier": "Es ist keine frühere Fassung gespeichert.",
+  "p.discussion.replaced_at": "Ersetzt {when}",
+  "p.discussion.f_edit": "Kommentar ändern",
+  "p.discussion.save_edit": "Kommentar speichern",
+  "p.discussion.cancel": "Abbrechen",
+  "p.discussion.f_comment": "Ihr Kommentar",
+  "p.discussion.chars_left": "Noch {n} von {max} Zeichen.",
+  "p.discussion.chars_over": "{n} Zeichen über der Grenze von {max}.",
+  "p.discussion.post": "Kommentar veröffentlichen",
+  "p.discussion.posted": "Der Kommentar wurde veröffentlicht.",
+  "p.discussion.edited":
+    "Der Kommentar wurde geändert; die frühere Fassung bleibt erhalten.",
+  "p.discussion.deleted": "Der Kommentar wurde gelöscht.",
+  "p.discussion.problem_blank": "Schreiben Sie zuerst den Kommentar.",
+  "p.discussion.problem_too_long":
+    "Ein Kommentar darf höchstens 4000 Zeichen lang sein.",
+  "p.discussion.files_heading": "Dateien",
+  "p.discussion.files_intro":
+    "Hier angehängte Dateien werden beim Öffnen auf Ihrem Computer gespeichert; sie werden nie innerhalb dieser Seite angezeigt.",
+  "p.discussion.no_files": "Keine Dateien angehängt.",
+  "p.discussion.file_facts": "{type}, {size}, hinzugefügt von {who}, {when}",
+  "p.discussion.remove_file": "Entfernen",
+  "p.discussion.remove_file_named": "Datei {name} entfernen",
+  "p.discussion.confirm_remove_file":
+    "Die Datei {name} entfernen? Niemand kann sie danach hier herunterladen.",
+  "p.discussion.removed_file": "Die Datei {name} wurde entfernt.",
+  "p.discussion.f_file": "Anzuhängende Datei",
+  "p.discussion.files_rules":
+    "Ein PDF, ein Bild (PNG, JPEG, GIF oder WebP), reiner Text, CSV, Markdown, JSON oder eine Word-, Excel- oder PowerPoint-Datei, höchstens 10 MB. Webseiten, SVG-Zeichnungen, Archive und Programme werden abgelehnt.",
+  "p.discussion.attach": "Datei anhängen",
+  "p.discussion.attached": "Die Datei {name} wurde angehängt.",
+  "p.discussion.problem_choose_file": "Wählen Sie zuerst eine Datei.",
+  "p.discussion.problem_empty": "Diese Datei ist leer.",
+  "p.discussion.problem_too_large":
+    "Diese Datei ist größer als 10 MB, die Grenze für eine Datei.",
+  "p.discussion.problem_type":
+    "Diese Art von Datei kann nicht angehängt werden. Die Liste unten nennt die erlaubten Arten.",
+  "p.discussion.type_pdf": "PDF-Dokument",
+  "p.discussion.type_png": "PNG-Bild",
+  "p.discussion.type_jpeg": "JPEG-Bild",
+  "p.discussion.type_gif": "GIF-Bild",
+  "p.discussion.type_webp": "WebP-Bild",
+  "p.discussion.type_text": "reiner Text",
+  "p.discussion.type_csv": "CSV-Tabelle",
+  "p.discussion.type_markdown": "Markdown-Text",
+  "p.discussion.type_json": "JSON-Daten",
+  "p.discussion.type_word": "Word-Dokument",
+  "p.discussion.type_excel": "Excel-Arbeitsmappe",
+  "p.discussion.type_powerpoint": "PowerPoint-Folien",
+  "p.discussion.size_b": "{n} Byte",
+  "p.discussion.size_kb": "{n} KB",
+  "p.discussion.size_mb": "{n} MB",
+  "p.discussion.refused_sign_in":
+    "Melden Sie sich zuerst an: Der Dienst weiß nicht, wer Sie sind.",
+  "p.discussion.refused_not_author":
+    "Nur wer einen Kommentar geschrieben hat, darf ihn ändern oder löschen.",
+  "p.discussion.refused_not_uploader":
+    "Nur wer eine Datei angehängt hat, oder ein Administrator, darf sie entfernen.",
+  "p.discussion.refused_forbidden": "Sie dürfen dies weder lesen noch ändern.",
+  "p.discussion.refused_comment_gone":
+    "Dieser Kommentar ist nicht mehr da; die Kommentare wurden neu gelesen.",
+  "p.discussion.refused_file_gone":
+    "Diese Datei war bereits entfernt; die Dateien wurden neu gelesen.",
+  "p.discussion.refused_gone":
+    "Dies wurde nicht gefunden: Es wurde vielleicht entfernt, oder Sie dürfen es nicht sehen.",
+  "p.discussion.refused_comment_invalid":
+    "Der Dienst hat den Kommentar nicht angenommen: Er darf nicht leer sein und höchstens 4000 Zeichen haben.",
+  "p.discussion.refused_file_invalid":
+    "Der Dienst hat die Datei nicht angenommen: Art, Größe oder Inhalt haben die Prüfung nicht bestanden (eine Datei muss sein, was ihre Art angibt, und Programme werden nicht angenommen).",
+  "p.discussion.refused_too_large": "Die Datei ist zu groß zum Senden.",
+  "p.discussion.refused_scan_unavailable":
+    "Die Datei wurde nicht angehängt: Der Schadsoftware-Scanner hat nicht geantwortet. Versuchen Sie es später erneut.",
 };

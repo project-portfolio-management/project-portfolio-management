@@ -20,7 +20,11 @@ RUN pnpm run build \
  && pnpm install --frozen-lockfile --prod
 
 FROM docker.io/library/node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39
-ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0 PROTOCOL_HEADER=x-forwarded-proto
+# BODY_SIZE_LIMIT: adapter-node refuses a request body over 512 KiB by default, which would stop an attachment (LT-5,
+# NC-1 slice 5) long before the service's 10 MiB limit. 10304K is the service's own transport ceiling for the upload
+# route (the limit plus 64 KiB). It applies to every route of this server; raise both together if
+# PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_MAX_BYTES is raised.
+ENV NODE_ENV=production PORT=3000 HOST=0.0.0.0 PROTOCOL_HEADER=x-forwarded-proto BODY_SIZE_LIMIT=10304K
 WORKDIR /app
 COPY --from=builder /ui/build ./build
 COPY --from=builder /ui/node_modules ./node_modules

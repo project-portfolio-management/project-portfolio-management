@@ -2632,6 +2632,102 @@ export interface TaskRelationList {
   hidden: number;
 }
 
+/**
+ * What a comment, a reaction, a watch or an attachment is on (LT-4, LT-5, RM-3), as the service names it
+ * (`discussion::SUBJECT_KINDS`). NC-1 slice 5 shows them on a task only.
+ */
+export type DiscussionSubjectKind =
+  | "plan"
+  | "task"
+  | "risk"
+  | "proposal"
+  | "idea"
+  | "canvas_item"
+  | "budget_line"
+  | "scenario"
+  | "document_version";
+
+/** One live comment, as `GET /api/comments` lists it (oldest first). `author_sub` is the writer's token `sub`. */
+export interface Comment {
+  pid: string;
+  subject_kind: DiscussionSubjectKind;
+  subject_pid: string;
+  author_sub: string | null;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  /** When the author last changed it; null when never edited. */
+  edited_at: string | null;
+}
+
+/** `POST /api/comments` (LT-4): at most 4000 characters, not blank. */
+export interface CommentBody {
+  subject_kind: DiscussionSubjectKind;
+  subject_pid: string;
+  body: string;
+}
+
+/** `PUT /api/comments/{pid}`: the author's new text; the previous one is kept. */
+export interface CommentEditBody {
+  body: string;
+}
+
+/** One earlier version of a comment, from `GET /api/comments/{pid}/history` (oldest first). */
+export interface CommentEdit {
+  previous_body: string;
+  edited_by: string | null;
+  created_at: string;
+}
+
+/** The closed set of reactions (`discussion::REACTION_KINDS`). */
+export type ReactionKind =
+  "thumbs_up" | "heart" | "celebrate" | "eyes" | "question";
+
+/** `POST /api/reactions` and its `POST /api/reactions/remove` twin. */
+export interface ReactionBody {
+  subject_kind: DiscussionSubjectKind;
+  subject_pid: string;
+  kind: ReactionKind;
+}
+
+/** `GET /api/reactions`: a count for every kind (zero included) and the caller's own. */
+export interface ReactionSummary {
+  counts: Partial<Record<ReactionKind, number>>;
+  mine: ReactionKind[];
+}
+
+/** `POST /api/watchers` and its `POST /api/watchers/unwatch` twin (RM-3). */
+export interface WatchBody {
+  subject_kind: DiscussionSubjectKind;
+  subject_pid: string;
+}
+
+/** `GET /api/watchers`: how many follow the subject and whether the caller does; nobody is named. */
+export interface WatchStatus {
+  count: number;
+  mine: boolean;
+}
+
+/** One live attachment, as `GET /api/attachments` lists it (LT-5). */
+export interface Attachment {
+  pid: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  sha256: string;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+/** What `POST /api/attachments` answers: the stored name (cleaned by the service), type, size and hash. */
+export interface AttachmentUploaded {
+  pid: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  sha256: string;
+}
+
 /** One task in `GET /api/plans/{pid}/cpm` (SC-1, SC-2). Dates are `YYYY-MM-DD`. */
 export interface CpmNode {
   pid: string;

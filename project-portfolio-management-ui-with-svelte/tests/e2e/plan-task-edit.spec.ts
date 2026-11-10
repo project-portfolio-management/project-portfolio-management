@@ -77,6 +77,18 @@ async function stub(page: Page, refuse: Partial<Record<string, number>> = {}) {
     delete refuse[method];
     return status;
   };
+  // The task's discussion (NC-1 slice 5) has its own spec, task-discussion.spec.ts; here it is empty.
+  await page.route(
+    /\/api\/(comments|reactions|attachments|watchers)(\?.*)?$/,
+    (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.endsWith("/reactions"))
+        return route.fulfill({ json: { counts: {}, mine: [] } });
+      if (path.endsWith("/watchers"))
+        return route.fulfill({ json: { count: 0, mine: false } });
+      return route.fulfill({ json: [] });
+    },
+  );
   await page.route(`**/api/plans/${PID}/**`, async (route) => {
     const req = route.request();
     const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");

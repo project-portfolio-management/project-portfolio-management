@@ -355,6 +355,118 @@ describe("PpmClient notification paths (NC-1 slice 4, PL-5, LT-6)", () => {
   });
 });
 
+describe("PpmClient discussion paths (NC-1 slice 5, LT-4, LT-5, RM-3)", () => {
+  /** A client whose lists answer in two pages, the first naming the second in its Link header. */
+  function pagedClient() {
+    const calls: { url: string; method: string; init?: RequestInit }[] = [];
+    const fetchFn = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        const method = init?.method ?? "GET";
+        calls.push({ url, method, init });
+        if (method === "GET" && /\/api\/(comments|attachments)\?/.test(url)) {
+          const second = url.includes("cursor=");
+          return new Response(JSON.stringify([{ pid: second ? "b" : "a" }]), {
+            status: 200,
+            headers: second
+              ? { "content-type": "application/json" }
+              : {
+                  "content-type": "application/json",
+                  link: `<${new URL(url).pathname}${new URL(url).search}&cursor=c2>; rel="next"`,
+                },
+          });
+        }
+        return new Response("{}", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    ) as unknown as typeof fetch;
+    return {
+      ppm: new PpmClient(
+        new ApiClient({ baseUrl: "http://svc", fetch: fetchFn }),
+      ),
+      calls,
+    };
+  }
+
+  it("reads every page of comments and files, following the Link header", async () => {
+    const { ppm, calls } = pagedClient();
+    expect((await ppm.comments("task", "t1")).map((c) => c.pid)).toEqual([
+      "a",
+      "b",
+    ]);
+    expect((await ppm.attachments("task", "t1")).map((a) => a.pid)).toEqual([
+      "a",
+      "b",
+    ]);
+    expect(calls.map((c) => c.url.replace("http://svc", ""))).toEqual([
+      "/api/comments?subject_kind=task&subject_pid=t1",
+      "/api/comments?subject_kind=task&subject_pid=t1&cursor=c2",
+      "/api/attachments?subject_kind=task&subject_pid=t1",
+      "/api/attachments?subject_kind=task&subject_pid=t1&cursor=c2",
+    ]);
+  });
+
+  it("uses the POST twins for every removal, as the default policy keeps DELETE for admins", async () => {
+    const { ppm, calls } = pagedClient();
+    const subject = { subject_kind: "task" as const, subject_pid: "t1" };
+    await ppm.addComment({ ...subject, body: "Hello" });
+    await ppm.editComment("c1", { body: "Hello again" });
+    await ppm.deleteComment("c1");
+    await ppm.commentHistory("c1");
+    await ppm.reactions("task", "t1");
+    await ppm.addReaction({ ...subject, kind: "heart" });
+    await ppm.removeReaction({ ...subject, kind: "heart" });
+    await ppm.watchStatus("task", "t1");
+    await ppm.watch(subject);
+    await ppm.unwatch(subject);
+    await ppm.removeAttachment("a1");
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "POST /api/comments",
+      "PUT /api/comments/c1",
+      "POST /api/comments/c1/delete",
+      "GET /api/comments/c1/history",
+      "GET /api/reactions?subject_kind=task&subject_pid=t1",
+      "POST /api/reactions",
+      "POST /api/reactions/remove",
+      "GET /api/watchers?subject_kind=task&subject_pid=t1",
+      "POST /api/watchers",
+      "POST /api/watchers/unwatch",
+      "POST /api/attachments/a1/delete",
+    ]);
+  });
+
+  it("uploads the file itself as the body, with its type, and the name in the query", async () => {
+    const { ppm, calls } = pagedClient();
+    const file = new Blob(["a,b\n1,2\n"], { type: "text/csv" });
+    await ppm.uploadAttachment(
+      "task",
+      "t1",
+      file,
+      "Résumé 2026.csv",
+      "text/csv",
+    );
+    const call = calls[0]!;
+    expect(call.method).toBe("POST");
+    expect(call.url).toBe(
+      "http://svc/api/attachments?subject_kind=task&subject_pid=t1&filename=R%C3%A9sum%C3%A9+2026.csv",
+    );
+    expect(call.init?.body).toBe(file);
+    expect((call.init?.headers as Record<string, string>)["content-type"]).toBe(
+      "text/csv",
+    );
+  });
+
+  it("downloads through the proxy, from the service's own download route", () => {
+    expect(PpmClient.withFetch().attachmentDownloadUrl("a1")).toMatch(
+      /\/api\/proxy\/api\/attachments\/a1\/download$/,
+    );
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

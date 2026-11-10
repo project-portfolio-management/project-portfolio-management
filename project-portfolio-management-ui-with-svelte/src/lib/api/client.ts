@@ -27,8 +27,8 @@ export interface ClientOptions {
 export interface RequestOptions {
   /** JSON request body; serialized with `JSON.stringify`. Omit for bodyless requests (GET/DELETE). */
   body?: unknown;
-  /** A body sent as is (a CSV file, say); wins over `body`. Set the `content-type` header with it. */
-  rawBody?: string;
+  /** A body sent as is (a CSV file, or a file the person chose); wins over `body`. Set the `content-type` header with it. */
+  rawBody?: string | Blob;
   /** Override the bearer for this request: a string sets the header, `null`/`""` suppresses it. Omit to send no bearer (the BFF injects one). */
   token?: string | null;
   /** Extra request headers, merged over (and able to override) the JSON defaults. */
@@ -216,6 +216,21 @@ export class ApiClient {
     return { items: data ?? [], more: next !== null, next };
   }
 
+  /**
+   * Every row of a list, from a first page already read: its `next` links (the service's own, signed) are followed
+   * until the last page, or until `maxPages` pages in all, so a service that always says "more" cannot hold a page.
+   */
+  async followPages<T>(first: Page<T>, maxPages = 20): Promise<T[]> {
+    const out = [...first.items];
+    let next = first.next;
+    for (let n = 1; next !== null && n < maxPages; n++) {
+      const page = await this.getPage<T>(next);
+      out.push(...page.items);
+      next = page.next;
+    }
+    return out;
+  }
+
   private async request<T>(
     method: string,
     path: string,
@@ -250,7 +265,12 @@ export class ApiClient {
       if (opts.idempotencyKey) {
         headers["idempotency-key"] = opts.idempotencyKey;
       } else {
-        const sig = `${path}\n${opts.rawBody ?? JSON.stringify(opts.body ?? null)}`;
+        // A file is named by its size and type: its bytes are not read here just to make a key.
+        const raw =
+          typeof opts.rawBody === "string" || opts.rawBody === undefined
+            ? opts.rawBody
+            : `blob:${opts.rawBody.size}:${opts.rawBody.type}`;
+        const sig = `${path}\n${raw ?? JSON.stringify(opts.body ?? null)}`;
         const held = this.inflight.get(sig);
         if (held) held.count += 1;
         else this.inflight.set(sig, { key: newIdempotencyKey(), count: 1 });

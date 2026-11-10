@@ -185,6 +185,7 @@ the Status note above).
 | Smart Score (`/prioritization`) | `GET /api/plans/{pid}/smart-score` · `GET /api/prioritization` |
 | Lifecycle (`/lifecycle`) | `GET /api/lifecycle` · `GET /api/plans/{pid}/lifecycle` |
 | My notifications (`/me/notifications`) | `GET /api/me/inbox?tz=` · `POST /api/notifications/{pid}/read` · `GET / PUT /api/me/notification-prefs` · `POST …/reset` · `GET / POST /api/me/notification-sinks` · `POST …/{pid}/delete` · `GET …/{pid}/deliveries` |
+| Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign
 endpoint, an assignee-workload query, and a notifications inbox

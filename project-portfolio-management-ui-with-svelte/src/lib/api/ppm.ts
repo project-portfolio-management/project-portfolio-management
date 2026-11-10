@@ -185,6 +185,17 @@ import type {
   Standup,
   Task,
   TaskRelationBody,
+  Attachment,
+  AttachmentUploaded,
+  Comment,
+  CommentBody,
+  CommentEdit,
+  CommentEditBody,
+  DiscussionSubjectKind,
+  ReactionBody,
+  ReactionSummary,
+  WatchBody,
+  WatchStatus,
   TaskRelationList,
   TaskRelationRow,
   UpdateTaskBody,
@@ -1948,6 +1959,123 @@ export class PpmClient {
     return this.http.delete(
       `/api/plans/${pid}/tasks/${taskPid}/relations/${relationPid}`,
     );
+  }
+
+  // ---- comments, reactions, watchers and attachments (LT-4, RM-3, LT-5; NC-1 slice 5) ----
+  /** A subject's live comments, oldest first (LT-4). Every page is read, following the `Link` header. */
+  async comments(
+    kind: DiscussionSubjectKind,
+    subjectPid: string,
+  ): Promise<Comment[]> {
+    const q = new URLSearchParams({
+      subject_kind: kind,
+      subject_pid: subjectPid,
+    });
+    const first = await this.http.getPage<Comment>(
+      `/api/comments?${q.toString()}`,
+    );
+    return this.http.followPages(first);
+  }
+  /** Comment on a subject (LT-4); 422 for a blank one or one over 4000 characters. */
+  addComment(body: CommentBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/comments`, { body });
+  }
+  /** The author changes their comment (LT-4); the previous text is kept. Anyone else is 403. */
+  editComment(commentPid: string, body: CommentEditBody): Promise<Comment> {
+    return this.http.put(`/api/comments/${commentPid}`, { body });
+  }
+  /** The author removes their comment (a soft delete); the `POST …/delete` twin, as the default policy keeps DELETE for admins. */
+  deleteComment(commentPid: string): Promise<void> {
+    return this.http.post(`/api/comments/${commentPid}/delete`);
+  }
+  /** A comment's earlier versions, oldest first (LT-4). */
+  commentHistory(commentPid: string): Promise<CommentEdit[]> {
+    return this.http.get(`/api/comments/${commentPid}/history`);
+  }
+  /** Reaction counts on a subject and the caller's own (LT-4). */
+  reactions(
+    kind: DiscussionSubjectKind,
+    subjectPid: string,
+  ): Promise<ReactionSummary> {
+    const q = new URLSearchParams({
+      subject_kind: kind,
+      subject_pid: subjectPid,
+    });
+    return this.http.get(`/api/reactions?${q.toString()}`);
+  }
+  /** React (LT-4); a repeat is not an error and writes nothing. */
+  addReaction(body: ReactionBody): Promise<{ created: boolean }> {
+    return this.http.post(`/api/reactions`, { body });
+  }
+  /** Take back the caller's own reaction (LT-4); the `POST …/remove` twin of DELETE. */
+  removeReaction(body: ReactionBody): Promise<void> {
+    return this.http.post(`/api/reactions/remove`, { body });
+  }
+  /** How many follow a subject and whether the caller does (RM-3); 401 without a sign-in. */
+  watchStatus(
+    kind: DiscussionSubjectKind,
+    subjectPid: string,
+  ): Promise<WatchStatus> {
+    const q = new URLSearchParams({
+      subject_kind: kind,
+      subject_pid: subjectPid,
+    });
+    return this.http.get(`/api/watchers?${q.toString()}`);
+  }
+  /** Follow a subject (RM-3); idempotent. */
+  watch(body: WatchBody): Promise<{ watching: boolean; created: boolean }> {
+    return this.http.post(`/api/watchers`, { body });
+  }
+  /** Stop following (RM-3); the `POST …/unwatch` twin of DELETE. */
+  unwatch(body: WatchBody): Promise<void> {
+    return this.http.post(`/api/watchers/unwatch`, { body });
+  }
+  /** A subject's live attachments, oldest first (LT-5). Every page is read. */
+  async attachments(
+    kind: DiscussionSubjectKind,
+    subjectPid: string,
+  ): Promise<Attachment[]> {
+    const q = new URLSearchParams({
+      subject_kind: kind,
+      subject_pid: subjectPid,
+    });
+    const first = await this.http.getPage<Attachment>(
+      `/api/attachments?${q.toString()}`,
+    );
+    return this.http.followPages(first);
+  }
+  /**
+   * Attach a file (LT-5): the bytes as the raw body with `contentType`, the name in the query. The service refuses
+   * (422) a type outside its list, an empty file, one over its limit, content that is not what the type says, or one
+   * its malware scan refuses; 503 when a configured scanner does not answer.
+   */
+  uploadAttachment(
+    kind: DiscussionSubjectKind,
+    subjectPid: string,
+    file: Blob,
+    filename: string,
+    contentType: string,
+  ): Promise<AttachmentUploaded> {
+    const q = new URLSearchParams({
+      subject_kind: kind,
+      subject_pid: subjectPid,
+      filename,
+    });
+    return this.http.post(`/api/attachments?${q.toString()}`, {
+      rawBody: file,
+      headers: { "content-type": contentType },
+    });
+  }
+  /** Remove an attachment (a soft delete; the uploader or an admin); the `POST …/delete` twin of DELETE. */
+  removeAttachment(attachmentPid: string): Promise<void> {
+    return this.http.post(`/api/attachments/${attachmentPid}/delete`);
+  }
+  /**
+   * Where the browser downloads an attachment: the service's own response, through the proxy, with its
+   * `Content-Disposition: attachment`, type and `nosniff`, so a file is saved and never shown as a page.
+   */
+  attachmentDownloadUrl(attachmentPid: string): string {
+    return `${API_BASE_URL}/api/attachments/${attachmentPid}/download`;
   }
   listSprints(pid: string): Promise<Sprint[]> {
     return this.http.get(`/api/plans/${pid}/sprints`);

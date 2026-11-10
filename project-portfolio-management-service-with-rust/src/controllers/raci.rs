@@ -12,13 +12,11 @@
 //! task (RM-3), unless they have switched `auto_watch` off. Removing them from the
 //! row does **not** unsubscribe them (they may be watching for other reasons).
 
-use super::db_err;
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
 use axum::http::header;
 use axum::response::IntoResponse;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -30,24 +28,24 @@ use crate::raci::{self as rules, Entry};
 
 /// Live (not soft-deleted) tasks of a plan in creation order; these are the rows of the RACI matrix.
 async fn live_tasks(ctx: &AppContext, plan: Uuid) -> Result<Vec<tasks::Model>> {
-    tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .order_by_asc(tasks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as(
+            "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+        )
+        .bind(plan)
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
+    )
 }
 
 /// Live RACI assignments of a plan in creation order; one row per person and role letter on a task.
 async fn live_assignments(ctx: &AppContext, plan: Uuid) -> Result<Vec<raci_assignments::Model>> {
-    raci_assignments::Entity::find()
-        .filter(raci_assignments::Column::PlanPid.eq(plan))
-        .filter(raci_assignments::Column::DeletedAt.is_null())
-        .order_by_asc(raci_assignments::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM raci_assignments WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Query parameters for the RACI matrix.
@@ -126,14 +124,14 @@ async fn set_row(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let t_pid = super::parse_pid(&t_pid)?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task: tasks::Model = sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(t_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     let mut problems = Vec::new();
     let mut entries = Vec::new();
     for party in &b.assignments {
@@ -162,47 +160,45 @@ async fn set_row(
     }
     let before: BTreeMap<String, String> = {
         let mut m: BTreeMap<String, String> = BTreeMap::new();
-        for a in raci_assignments::Entity::find()
-            .filter(raci_assignments::Column::TaskPid.eq(task.pid))
-            .filter(raci_assignments::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-        {
+        let rows: Vec<raci_assignments::Model> = sqlx::query_as(
+            "SELECT * FROM raci_assignments WHERE task_pid = $1 AND deleted_at IS NULL",
+        )
+        .bind(task.pid)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
+        for a in rows {
             m.entry(a.person_ref).or_default().push_str(&a.role);
         }
         m
     };
     let now = chrono::Utc::now();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    raci_assignments::Entity::update_many()
-        .col_expr(
-            raci_assignments::Column::DeletedAt,
-            sea_orm::sea_query::Expr::value(now),
-        )
-        .filter(raci_assignments::Column::TaskPid.eq(task.pid))
-        .filter(raci_assignments::Column::DeletedAt.is_null())
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "UPDATE raci_assignments SET deleted_at = $1 WHERE task_pid = $2 AND deleted_at IS NULL",
+    )
+    .bind(now)
+    .bind(task.pid)
+    .execute(tx.conn())
+    .await?;
     for e in &entries {
         for r in &e.roles {
-            raci_assignments::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan.pid),
-                task_pid: ActiveValue::set(task.pid),
-                person_ref: ActiveValue::set(e.person_ref.clone()),
-                role: ActiveValue::set(r.to_string()),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&txn)
+            sqlx::query(
+                "INSERT INTO raci_assignments (pid, plan_pid, task_pid, person_ref, role, deleted_at)
+                 VALUES ($1, $2, $3, $4, $5, $6)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan.pid)
+            .bind(task.pid)
+            .bind(&e.person_ref)
+            .bind(r.to_string())
+            .bind(None::<chrono::DateTime<chrono::Utc>>)
+            .execute(tx.conn())
             .await
             .map_err(|err| {
                 if err.to_string().contains("raci_assignments_one_accountable") {
                     unprocessable("a task has one Accountable person; another request set one at the same moment")
                 } else {
-                    db_err(err)
+                    Error::from(err)
                 }
             })?;
         }
@@ -211,8 +207,8 @@ async fn set_row(
         .iter()
         .map(|e| (e.person_ref.clone(), e.roles.iter().collect()))
         .collect();
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         task.pid,
         "raci_set",
         caller.actor(),
@@ -220,7 +216,7 @@ async fn set_row(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     // Responsible, Accountable and Informed people want to hear about the task.
     for e in &entries {
         if e.roles.iter().any(|r| matches!(r, 'R' | 'A' | 'I'))

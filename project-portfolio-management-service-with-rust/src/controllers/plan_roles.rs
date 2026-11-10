@@ -5,20 +5,19 @@
 
 use crate::prelude::*;
 use axum::http::StatusCode;
-use sea_orm::{QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::{conflict, db_err, forbidden, unprocessable};
+use super::{conflict, forbidden, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
-    organization_roles, plan_access_settings, plan_role_members as members, plans,
+    organization_roles, plan_access_settings, plan_role_members as members,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::plan_roles as rules;
 
 /// The most memberships one plan's list returns; `truncated` says when there were more.
-const MEMBER_LIST_MAX: u64 = 1_000;
+const MEMBER_LIST_MAX: i64 = 1_000;
 
 /// The roles a token carries.
 #[must_use]
@@ -44,22 +43,18 @@ pub(crate) async fn standing(
     caller: &MaybeAuthUser,
     plan: Uuid,
 ) -> Result<rules::Standing> {
-    let rows = members::Entity::find()
-        .filter(members::Column::PlanPid.eq(plan))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let held: Vec<rules::Member> = rows
-        .into_iter()
-        .map(|m| (m.person_ref, m.role_key))
-        .collect();
-    let catalogue: Vec<rules::Role> = organization_roles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .iter()
-        .map(role_of)
-        .collect();
+    let held: Vec<rules::Member> =
+        sqlx::query_as("SELECT person_ref, role_key FROM plan_role_members WHERE plan_pid = $1")
+            .bind(plan)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let catalogue: Vec<rules::Role> =
+        sqlx::query_as::<_, organization_roles::Model>("SELECT * FROM organization_roles")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .iter()
+            .map(role_of)
+            .collect();
     Ok(rules::standing(
         super::plan_access::is_admin(caller.claims()),
         &token_roles(caller),
@@ -82,13 +77,13 @@ pub(crate) fn require(standing: &rules::Standing, needed: &[&str]) -> Result<()>
 /// The live plan a path names; `404` otherwise.
 async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
     let pid = super::parse_pid(plan)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    sqlx::query_scalar::<_, i64>(
+        "SELECT id FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     Ok(pid)
 }
 
@@ -104,14 +99,13 @@ fn view(m: &members::Model) -> serde_json::Value {
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, Path(plan): Path<String>) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
-    let mut rows = members::Entity::find()
-        .filter(members::Column::PlanPid.eq(plan))
-        .order_by_asc(members::Column::Id)
-        .limit(MEMBER_LIST_MAX + 1)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let truncated = rows.len() as u64 > MEMBER_LIST_MAX;
+    let mut rows: Vec<members::Model> =
+        sqlx::query_as("SELECT * FROM plan_role_members WHERE plan_pid = $1 ORDER BY id LIMIT $2")
+            .bind(plan)
+            .bind(MEMBER_LIST_MAX + 1)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
+    let truncated = i64::try_from(rows.len()).unwrap_or(i64::MAX) > MEMBER_LIST_MAX;
     rows.truncate(usize::try_from(MEMBER_LIST_MAX).unwrap_or(1000));
     format::json(serde_json::json!({
         "plan_pid": plan, "enforced": !rows.is_empty(),
@@ -131,12 +125,13 @@ pub(crate) struct NewMember {
 
 /// `422` if `person` could not see this plan. A role does not open a private plan, so the membership would do nothing.
 async fn require_can_see(ctx: &AppContext, plan: Uuid, person: &str) -> Result<()> {
-    let private = plan_access_settings::Entity::find()
-        .filter(plan_access_settings::Column::PlanPid.eq(plan))
-        .filter(plan_access_settings::Column::Private.eq(true))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let private: Option<plan_access_settings::Model> = sqlx::query_as(
+        "SELECT * FROM plan_access_settings WHERE plan_pid = $1 AND private = $2 LIMIT 1",
+    )
+    .bind(plan)
+    .bind(true)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     let Some(row) = private else {
         return Ok(());
     };
@@ -168,38 +163,42 @@ async fn add(
     let person = Uuid::parse_str(b.person_ref.trim())
         .map_err(|_| unprocessable("person_ref must be a user id (a UUID)"))?
         .to_string();
-    let role = organization_roles::Entity::find()
-        .filter(organization_roles::Column::Key.eq(b.role_key.as_str()))
-        .filter(organization_roles::Column::RetiredAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or_else(|| unprocessable("role_key must be a role that is not retired"))?;
+    let role: organization_roles::Model = sqlx::query_as(
+        "SELECT * FROM organization_roles WHERE key = $1 AND retired_at IS NULL LIMIT 1",
+    )
+    .bind(b.role_key.as_str())
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or_else(|| unprocessable("role_key must be a role that is not retired"))?;
     require_can_see(&ctx, plan, &person).await?;
-    let held = members::Entity::find()
-        .filter(members::Column::PlanPid.eq(plan))
-        .filter(members::Column::PersonRef.eq(person.as_str()))
-        .filter(members::Column::RoleKey.eq(role.key.as_str()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let held: Option<i32> = sqlx::query_scalar(
+        "SELECT id FROM plan_role_members
+         WHERE plan_pid = $1 AND person_ref = $2 AND role_key = $3
+         LIMIT 1",
+    )
+    .bind(plan)
+    .bind(person.as_str())
+    .bind(role.key.as_str())
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
     if held.is_some() {
         return Err(conflict("this person already holds this role here"));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = members::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan),
-        person_ref: ActiveValue::set(person),
-        role_key: ActiveValue::set(role.key),
-        added_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: members::Model = sqlx::query_as(
+        "INSERT INTO plan_role_members (pid, plan_pid, person_ref, role_key, added_by)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan)
+    .bind(person)
+    .bind(role.key)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan,
         "plan_role_added",
         caller.actor(),
@@ -207,7 +206,7 @@ async fn add(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Ok((StatusCode::CREATED, format::json(view(&row))?).into_response())
 }
 
@@ -226,21 +225,21 @@ async fn remove(
         ));
     }
     let pid = super::parse_pid(&pid)?;
-    let row = members::Entity::find()
-        .filter(members::Column::Pid.eq(pid))
-        .filter(members::Column::PlanPid.eq(plan))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: members::Model =
+        sqlx::query_as("SELECT * FROM plan_role_members WHERE pid = $1 AND plan_pid = $2 LIMIT 1")
+            .bind(pid)
+            .bind(plan)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     let detail = serde_json::json!({ "person_ref": row.person_ref, "role_key": row.role_key });
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    members::Entity::delete_by_id(row.id)
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM plan_role_members WHERE id = $1")
+        .bind(row.id)
+        .execute(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan,
         "plan_role_removed",
         caller.actor(),
@@ -248,7 +247,7 @@ async fn remove(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

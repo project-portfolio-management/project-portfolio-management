@@ -7,7 +7,6 @@
 //! — the same line as availability) sees **roles and totals only**: no person
 //! refs anywhere, and unplanned time is shown per plan, not per person.
 
-use super::db_err;
 use super::forbidden;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
@@ -15,13 +14,14 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{allocations, resource_roles, scenarios, time_entries};
+use crate::models::_entities::{
+    allocations, resource_roles, scenarios, time_entries, working_time_configs,
+};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::visibility as vis_models;
 use crate::portfolio_resources::{
@@ -29,7 +29,7 @@ use crate::portfolio_resources::{
 };
 
 /// Time entries read per call.
-const ROW_CAP: u64 = 20_000;
+const ROW_CAP: i64 = 20_000;
 
 /// Whether the caller may see and manage people's resource detail.
 pub(crate) fn may_manage_people(caller: &MaybeAuthUser) -> bool {
@@ -68,13 +68,12 @@ async fn scoped_allocations(
     let mut scope = serde_json::json!({ "kind": "portfolio" });
     if let Some(raw) = scenario {
         let pid = super::parse_pid(raw)?;
-        let s = scenarios::Entity::find()
-            .filter(scenarios::Column::Pid.eq(pid))
-            .filter(scenarios::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .ok_or(Error::NotFound)?;
+        let s: scenarios::Model =
+            sqlx::query_as("SELECT * FROM scenarios WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+                .bind(pid)
+                .fetch_optional(crate::db::pool(ctx))
+                .await?
+                .ok_or(Error::NotFound)?;
         let members: HashSet<Uuid> = s
             .members
             .get("plan_pids")
@@ -141,13 +140,12 @@ async fn resource_plan(
 
     // Supply: everyone with a primary role, plus named people with demand in
     // scope and no role (the unclassified row).
-    let roles: HashMap<String, String> = resource_roles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| (r.person_ref, r.role))
-        .collect();
+    let roles: HashMap<String, String> =
+        sqlx::query_as::<_, (String, String)>("SELECT person_ref, role FROM resource_roles")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .collect();
     let all_ranges = super::availability::all_ranges(&ctx).await?;
     let mut who: BTreeSet<&str> = roles.keys().map(String::as_str).collect();
     who.extend(
@@ -282,16 +280,18 @@ async fn hours(
         .map(|a| (a.plan_pid, a.person_ref.clone()))
         .collect();
 
-    let entries = time_entries::Entity::find()
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .filter(time_entries::Column::SpentOn.gte(from))
-        .filter(time_entries::Column::SpentOn.lte(to))
-        .order_by_asc(time_entries::Column::Id)
-        .limit(ROW_CAP + 1)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let truncated = entries.len() as u64 > ROW_CAP;
+    let entries: Vec<time_entries::Model> = sqlx::query_as(
+        "SELECT * FROM time_entries
+         WHERE deleted_at IS NULL AND spent_on >= $1 AND spent_on <= $2
+         ORDER BY id
+         LIMIT $3",
+    )
+    .bind(from)
+    .bind(to)
+    .bind(ROW_CAP + 1)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let truncated = i64::try_from(entries.len()).unwrap_or(i64::MAX) > ROW_CAP;
     let mut plan_pids: Vec<Uuid> = entries.iter().map(|e| e.plan_pid).collect();
     plan_pids.sort();
     plan_pids.dedup();
@@ -322,15 +322,14 @@ async fn hours(
     }
     // The organization's working-time setting (`POST /api/working-time`) gives the day's length; without one, the
     // deployment's (`PROJECT_PORTFOLIO_MANAGEMENT_MINUTES_PER_DAY`, default 480).
-    let minutes_per_day = crate::models::_entities::working_time_configs::Entity::find()
-        .filter(crate::models::_entities::working_time_configs::Column::ScopeRef.is_null())
-        .filter(crate::models::_entities::working_time_configs::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .map_or_else(crate::working_time::minutes_per_day, |c| {
-            i64::from(c.minutes_per_day)
-        });
+    let minutes_per_day = sqlx::query_as::<_, working_time_configs::Model>(
+        "SELECT * FROM working_time_configs WHERE scope_ref IS NULL AND deleted_at IS NULL LIMIT 1",
+    )
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .map_or_else(crate::working_time::minutes_per_day, |c| {
+        i64::from(c.minutes_per_day)
+    });
     let table = rules::hours(
         from,
         to,
@@ -452,47 +451,46 @@ async fn set_role(
     {
         return Err(unprocessable("role is at most 60 characters"));
     }
-    let existing = resource_roles::Entity::find()
-        .filter(resource_roles::Column::PersonRef.eq(&b.person_ref))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing: Option<resource_roles::Model> =
+        sqlx::query_as("SELECT * FROM resource_roles WHERE person_ref = $1 LIMIT 1")
+            .bind(&b.person_ref)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?;
     let was = existing.as_ref().map(|e| e.role.clone());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     let pid = match (existing, role) {
         (Some(e), Some(r)) => {
-            let pid = e.pid;
-            let mut a: resource_roles::ActiveModel = e.into();
-            a.role = ActiveValue::set(r.to_string());
-            a.update(&txn).await.map_err(db_err)?;
-            pid
+            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            sqlx::query_scalar::<_, i64>(
+                "UPDATE resource_roles SET role = $1 WHERE id = $2 RETURNING id",
+            )
+            .bind(r)
+            .bind(e.id)
+            .fetch_one(tx.conn())
+            .await?;
+            e.pid
         }
         (Some(e), None) => {
-            let pid = e.pid;
-            resource_roles::Entity::delete_by_id(e.id)
-                .exec(&txn)
-                .await
-                .map_err(db_err)?;
-            pid
+            sqlx::query("DELETE FROM resource_roles WHERE id = $1")
+                .bind(e.id)
+                .execute(tx.conn())
+                .await?;
+            e.pid
         }
-        (None, Some(r)) => {
-            resource_roles::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                person_ref: ActiveValue::set(b.person_ref.clone()),
-                role: ActiveValue::set(r.to_string()),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?
-            .pid
-        }
+        (None, Some(r)) => sqlx::query_scalar(
+            "INSERT INTO resource_roles (pid, person_ref, role) VALUES ($1, $2, $3) RETURNING pid",
+        )
+        .bind(Uuid::new_v4())
+        .bind(&b.person_ref)
+        .bind(r)
+        .fetch_one(tx.conn())
+        .await?,
         (None, None) => {
             return format::json(serde_json::json!({ "person_ref": b.person_ref, "role": null }));
         }
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         pid,
         "resource_role_set",
         caller.actor(),
@@ -500,7 +498,7 @@ async fn set_role(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "person_ref": b.person_ref, "role": role }))
 }
 
@@ -508,11 +506,10 @@ async fn set_role(
 /// the caller's own.
 #[debug_handler]
 async fn list_roles(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let mut rows = resource_roles::Entity::find()
-        .order_by_asc(resource_roles::Column::PersonRef)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let mut rows: Vec<resource_roles::Model> =
+        sqlx::query_as("SELECT * FROM resource_roles ORDER BY person_ref")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     if !may_manage_people(&caller) {
         let me = caller
             .claims()
@@ -606,28 +603,25 @@ async fn resolve_placeholder(
     }
     let was = allocation.person_ref.clone();
     let row_pid = allocation.pid;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     // Compare and set (CF-6): the write names the placeholder it saw, so a second resolver that read the same row
     // changes nothing and is told so, rather than replacing the first person.
-    let changed = allocations::Entity::update_many()
-        .col_expr(
-            allocations::Column::PersonRef,
-            sea_orm::sea_query::Expr::value(b.person_ref.clone()),
-        )
-        .filter(allocations::Column::Pid.eq(row_pid))
-        .filter(allocations::Column::PersonRef.eq(was.clone()))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?
-        .rows_affected;
+    let changed =
+        sqlx::query("UPDATE allocations SET person_ref = $1 WHERE pid = $2 AND person_ref = $3")
+            .bind(&b.person_ref)
+            .bind(row_pid)
+            .bind(&was)
+            .execute(tx.conn())
+            .await?
+            .rows_affected();
     if changed == 0 {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
             ErrorDetail::new("conflict", "this allocation already names a person"),
         ));
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "allocation_resolved",
         caller.actor(),
@@ -635,7 +629,7 @@ async fn resolve_placeholder(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "pid": row_pid, "person_ref": b.person_ref, "over_capacity": over }),
     )

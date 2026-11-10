@@ -10,19 +10,18 @@
 //! task's float. The span is derived on read from the same analysis the critical
 //! path uses.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::HashMap;
 
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::find_live_task as find_task;
 use crate::auth::MaybeAuthUser;
 use crate::hammock::{self as rules, Span};
-use crate::models::_entities::{hammock_links, plan_dependencies, task_relations, tasks};
+use crate::models::_entities::{hammock_links, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Request body for turning a task into a hammock or back.
@@ -61,28 +60,23 @@ async fn set_hammock(
         if task.constraint_kind.is_some() {
             blockers.push("constraint");
         }
-        let has_dep = plan_dependencies::Entity::find()
-            .filter(
-                sea_orm::Condition::any()
-                    .add(plan_dependencies::Column::PredecessorPid.eq(task.pid))
-                    .add(plan_dependencies::Column::SuccessorPid.eq(task.pid)),
+        let has_dep = sqlx::query_scalar::<_, i64>(
+            "SELECT id FROM plan_dependencies WHERE predecessor_pid = $1 OR successor_pid = $1 LIMIT 1",
+        )
+        .bind(task.pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
+        .is_some()
+            || sqlx::query_scalar::<_, i64>(
+                "SELECT id FROM task_relations
+                 WHERE deleted_at IS NULL AND kind = $1 AND (from_task_pid = $2 OR to_task_pid = $2)
+                 LIMIT 1",
             )
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some()
-            || task_relations::Entity::find()
-                .filter(task_relations::Column::DeletedAt.is_null())
-                .filter(task_relations::Column::Kind.eq("precedes"))
-                .filter(
-                    sea_orm::Condition::any()
-                        .add(task_relations::Column::FromTaskPid.eq(task.pid))
-                        .add(task_relations::Column::ToTaskPid.eq(task.pid)),
-                )
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .is_some();
+            .bind("precedes")
+            .bind(task.pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .is_some();
         if has_dep {
             blockers.push("dependencies");
         }
@@ -94,23 +88,32 @@ async fn set_hammock(
         }
     }
     // Links, flag and audit row change together or not at all.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     if !b.enabled {
-        hammock_links::Entity::delete_many()
-            .filter(hammock_links::Column::HammockPid.eq(task.pid))
-            .exec(&txn)
-            .await
-            .map_err(db_err)?;
+        sqlx::query("DELETE FROM hammock_links WHERE hammock_pid = $1")
+            .bind(task.pid)
+            .execute(tx.conn())
+            .await?;
     }
-    let mut a: tasks::ActiveModel = task.clone().into();
-    a.is_hammock = ActiveValue::set(b.enabled);
     // A hammock's start is derived, so a stored planned start must not linger.
-    if b.enabled {
-        a.start_date = ActiveValue::set(None);
-    }
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let row: tasks::Model = if b.enabled {
+        sqlx::query_as(
+            "UPDATE tasks SET is_hammock = $1, start_date = $2 WHERE id = $3 RETURNING *",
+        )
+        .bind(b.enabled)
+        .bind(None::<chrono::NaiveDate>)
+        .bind(task.id)
+        .fetch_one(tx.conn())
+        .await?
+    } else {
+        sqlx::query_as("UPDATE tasks SET is_hammock = $1 WHERE id = $2 RETURNING *")
+            .bind(b.enabled)
+            .bind(task.id)
+            .fetch_one(tx.conn())
+            .await?
+    };
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         if b.enabled {
             "hammock_enabled"
@@ -122,7 +125,7 @@ async fn set_hammock(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "pid": row.pid, "is_hammock": row.is_hammock, "changed": true }),
     )
@@ -155,15 +158,12 @@ async fn add_link(
         .await
         .map_err(|_| unprocessable("a hammock links to a task of the same plan"))?;
     // One link at a time per plan: two simultaneous A→B and B→A cannot both pass the cycle check.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    super::advisory_lock(&txn, "hammock", plan.pid).await?;
-    let all: Vec<(Uuid, Uuid)> = hammock_links::Entity::find()
-        .all(&txn)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|l| (l.hammock_pid, l.member_pid))
-        .collect();
+    let mut tx = crate::db::begin(&ctx).await?;
+    super::advisory_lock_on(&mut tx, "hammock", plan.pid).await?;
+    let all: Vec<(Uuid, Uuid)> =
+        sqlx::query_as("SELECT hammock_pid, member_pid FROM hammock_links")
+            .fetch_all(tx.conn())
+            .await?;
     if all.contains(&(hammock.pid, member.pid)) {
         return Err(unprocessable("this link already exists"));
     }
@@ -172,17 +172,16 @@ async fn add_link(
             "a hammock cannot link to itself or create a cycle of hammocks",
         ));
     }
-    let row = hammock_links::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        hammock_pid: ActiveValue::set(hammock.pid),
-        member_pid: ActiveValue::set(member.pid),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let row: hammock_links::Model = sqlx::query_as(
+        "INSERT INTO hammock_links (pid, hammock_pid, member_pid) VALUES ($1, $2, $3) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(hammock.pid)
+    .bind(member.pid)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "hammock_link_added",
         caller.actor(),
@@ -190,7 +189,7 @@ async fn add_link(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -205,20 +204,21 @@ async fn remove_link(
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let hammock = find_task(&ctx, plan.pid, &h_pid).await?;
     let member = super::parse_pid(&member)?;
-    let link = hammock_links::Entity::find()
-        .filter(hammock_links::Column::HammockPid.eq(hammock.pid))
-        .filter(hammock_links::Column::MemberPid.eq(member))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    hammock_links::Entity::delete_by_id(link.id)
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let link: hammock_links::Model = sqlx::query_as(
+        "SELECT * FROM hammock_links WHERE hammock_pid = $1 AND member_pid = $2 LIMIT 1",
+    )
+    .bind(hammock.pid)
+    .bind(member)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM hammock_links WHERE id = $1")
+        .bind(link.id)
+        .execute(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         link.pid,
         "hammock_link_removed",
         caller.actor(),
@@ -226,7 +226,7 @@ async fn remove_link(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -236,27 +236,23 @@ pub(crate) async fn spans_for(
     plan: Uuid,
     analysis: Option<&crate::cpm::CpmResult>,
 ) -> Result<Vec<serde_json::Value>> {
-    let rows: Vec<tasks::Model> = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .order_by_asc(tasks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<tasks::Model> = sqlx::query_as(
+        "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let hammocks: Vec<&tasks::Model> = rows.iter().filter(|t| t.is_hammock).collect();
     if hammocks.is_empty() {
         return Ok(Vec::new());
     }
     let pids: Vec<Uuid> = hammocks.iter().map(|h| h.pid).collect();
-    let links: Vec<(Uuid, Uuid)> = hammock_links::Entity::find()
-        .filter(hammock_links::Column::HammockPid.is_in(pids.clone()))
-        .order_by_asc(hammock_links::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|l| (l.hammock_pid, l.member_pid))
-        .collect();
+    let links: Vec<(Uuid, Uuid)> = sqlx::query_as(
+        "SELECT hammock_pid, member_pid FROM hammock_links WHERE hammock_pid = ANY($1) ORDER BY id",
+    )
+    .bind(pids.clone())
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let spans: HashMap<Uuid, (NaiveDate, NaiveDate)> = analysis
         .map(|a| {
             a.nodes

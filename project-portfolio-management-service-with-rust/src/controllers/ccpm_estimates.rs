@@ -5,11 +5,9 @@
 //! * `GET /api/plans/{pid}/ccpm-estimates` — every task's figures with where each came from, the rule in
 //!   force, and the tasks that are missing one.
 
-use super::db_err;
 use std::collections::HashMap;
 
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -44,14 +42,14 @@ async fn set(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let t_pid = super::parse_pid(&t_pid)?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task: tasks::Model = sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(t_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     let problems = est::problems(
         task.duration_days.map(i64::from),
         b.aggressive_days.map(i64::from),
@@ -60,43 +58,51 @@ async fn set(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let existing = rows::Entity::find()
-        .filter(rows::Column::TaskPid.eq(t_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing: Option<rows::Model> =
+        sqlx::query_as("SELECT * FROM task_ccpm_estimates WHERE task_pid = $1 LIMIT 1")
+            .bind(t_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?;
     let was = existing.as_ref().map(|r| (r.aggressive_days, r.safe_days));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     match (
         existing,
         b.aggressive_days.is_none() && b.safe_days.is_none(),
     ) {
         (Some(r), true) => {
-            r.delete(&txn).await.map_err(db_err)?;
+            sqlx::query("DELETE FROM task_ccpm_estimates WHERE id = $1")
+                .bind(r.id)
+                .execute(tx.conn())
+                .await?;
         }
         (None, true) => {}
         (Some(r), false) => {
-            let mut a: rows::ActiveModel = r.into();
-            a.aggressive_days = ActiveValue::set(b.aggressive_days);
-            a.safe_days = ActiveValue::set(b.safe_days);
-            a.update(&txn).await.map_err(db_err)?;
+            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            sqlx::query_scalar::<_, i64>(
+                "UPDATE task_ccpm_estimates SET aggressive_days = $1, safe_days = $2 WHERE id = $3 RETURNING id",
+            )
+            .bind(b.aggressive_days)
+            .bind(b.safe_days)
+            .bind(r.id)
+            .fetch_one(tx.conn())
+            .await?;
         }
         (None, false) => {
-            rows::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan.pid),
-                task_pid: ActiveValue::set(t_pid),
-                aggressive_days: ActiveValue::set(b.aggressive_days),
-                safe_days: ActiveValue::set(b.safe_days),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO task_ccpm_estimates (pid, plan_pid, task_pid, aggressive_days, safe_days)
+                 VALUES ($1, $2, $3, $4, $5)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan.pid)
+            .bind(t_pid)
+            .bind(b.aggressive_days)
+            .bind(b.safe_days)
+            .execute(tx.conn())
+            .await?;
         }
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         t_pid,
         "task_ccpm_estimate_set",
         caller.actor(),
@@ -107,11 +113,21 @@ async fn set(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({
         "task_pid": t_pid, "aggressive_days": b.aggressive_days, "safe_days": b.safe_days,
         "likely_days": task.duration_days,
     }))
+}
+
+/// Every estimate recorded on a plan's tasks (unordered, as before).
+async fn recorded_of(ctx: &AppContext, plan: Uuid) -> Result<Vec<rows::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM task_ccpm_estimates WHERE plan_pid = $1")
+            .bind(plan)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Every task's resolved figures, under the rule in force.
@@ -121,11 +137,8 @@ pub(crate) async fn resolved(
     rows_of_plan: &[tasks::Model],
 ) -> Result<HashMap<Uuid, est::Resolved>> {
     let (rule, _) = est::configured_rule();
-    let recorded: HashMap<Uuid, rows::Model> = rows::Entity::find()
-        .filter(rows::Column::PlanPid.eq(plan))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let recorded: HashMap<Uuid, rows::Model> = recorded_of(ctx, plan)
+        .await?
         .into_iter()
         .map(|r| (r.task_pid, r))
         .collect();
@@ -161,19 +174,17 @@ async fn list(
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let page = cursor.page_up_to(200, MAX_LIMIT)?;
     let (rule, unusable) = est::configured_rule();
-    let all = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::IsHammock.eq(false))
-        .order_by_asc(tasks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let recorded: HashMap<Uuid, rows::Model> = rows::Entity::find()
-        .filter(rows::Column::PlanPid.eq(plan.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let all: Vec<tasks::Model> = sqlx::query_as(
+        "SELECT * FROM tasks
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND is_hammock = $2
+         ORDER BY id",
+    )
+    .bind(plan.pid)
+    .bind(false)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let recorded: HashMap<Uuid, rows::Model> = recorded_of(&ctx, plan.pid)
+        .await?
         .into_iter()
         .map(|r| (r.task_pid, r))
         .collect();

@@ -8,12 +8,10 @@
 //! Only plans the caller may read are looked at, so a private plan's drum use is nowhere (it neither
 //! appears nor holds up another project), as in the capacity heatmap.
 
-use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
 use chrono::{Datelike, NaiveDate};
-use sea_orm::{PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -21,10 +19,7 @@ use uuid::Uuid;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::drum::{self as rules, Project, Segment};
-use crate::models::_entities::{
-    allocations, plans, portfolio_drum as drums, resource_roles, skill_pool_members as members,
-    skill_pools as pools,
-};
+use crate::models::_entities::{allocations, portfolio_drum as drums, skill_pools as pools};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::is_placeholder;
 
@@ -64,28 +59,24 @@ async fn set_drum(
     Json(b): Json<DrumBody>,
 ) -> Result<Response> {
     if let Some(p) = b.skill_pool_pid {
-        let pool = pools::Entity::find()
-            .filter(pools::Column::Pid.eq(p))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+        let pool = find_pool(&ctx, p)
+            .await?
             .ok_or_else(|| unprocessable("there is no such skill pool"))?;
         if !pool.active {
             return Err(unprocessable("that skill pool is retired"));
         }
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = drums::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        skill_pool_pid: ActiveValue::set(b.skill_pool_pid),
-        declared_on: ActiveValue::set(crate::tz::deployment_today()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: drums::Model = sqlx::query_as(
+        "INSERT INTO portfolio_drums (pid, skill_pool_pid, declared_on) VALUES ($1, $2, $3) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.skill_pool_pid)
+    .bind(crate::tz::deployment_today())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "portfolio_drum_set",
         caller.actor(),
@@ -93,8 +84,18 @@ async fn set_drum(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "skill_pool_pid": row.skill_pool_pid, "declared_on": row.declared_on }))
+}
+
+/// A skill pool by its pid, retired or not.
+async fn find_pool(ctx: &AppContext, pid: Uuid) -> Result<Option<pools::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM skill_pools WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// The drum in force.
@@ -126,18 +127,13 @@ async fn resolve(
     ctx: &AppContext,
     heat: &Value,
 ) -> Result<std::result::Result<Drum, (&'static str, String)>> {
-    let named = drums::Entity::find()
-        .order_by_desc(drums::Column::Id)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .and_then(|d| d.skill_pool_pid);
+    let named =
+        sqlx::query_as::<_, drums::Model>("SELECT * FROM portfolio_drums ORDER BY id DESC LIMIT 1")
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .and_then(|d| d.skill_pool_pid);
     if let Some(p) = named {
-        let pool = pools::Entity::find()
-            .filter(pools::Column::Pid.eq(p))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let pool = find_pool(ctx, p).await?;
         return Ok(match pool {
             Some(pool) if pool.active => Ok(Drum {
                 pool: pool.pid,
@@ -152,11 +148,10 @@ async fn resolve(
             )),
         });
     }
-    let all = pools::Entity::find()
-        .filter(pools::Column::Active.eq(true))
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM skill_pools WHERE active = $1")
+        .bind(true)
+        .fetch_one(crate::db::pool(ctx))
+        .await?;
     if all == 0 {
         return Ok(Err((
             "no_skill_pools",
@@ -208,14 +203,9 @@ async fn resolve(
 
 /// Public ids of the live plans the caller may read; everything the drum and pipeline look at is restricted to this set so private plans never influence another project.
 async fn readable_set(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<HashSet<Uuid>> {
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     Ok(super::plan_access::readable_plans(ctx, caller, &all).await)
 }
 
@@ -263,11 +253,10 @@ async fn show_drum(
         &crate::wpm_bridge::SupplyRead::Kept,
     )
     .await?;
-    let history = drums::Entity::find()
-        .order_by_desc(drums::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let history: Vec<drums::Model> =
+        sqlx::query_as("SELECT * FROM portfolio_drums ORDER BY id DESC")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let now = match resolve(&ctx, &heat).await? {
         Ok(d) => {
             json!({ "state": "drum", "skill_pool_pid": d.pool, "name": d.name, "source": d.source, "why": d.why })
@@ -335,32 +324,32 @@ async fn pipeline(
     let capacity = (low * 1000.0).round() as i64;
     out["capacity_fte"] = json!(low);
 
-    let roles: HashSet<String> = members::Entity::find()
-        .filter(members::Column::PoolPid.eq(drum.pool))
-        .filter(members::Column::Kind.eq("role"))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|m| m.value.to_lowercase())
-        .collect();
-    let role_of: HashMap<String, String> = resource_roles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| (r.person_ref, r.role.to_lowercase()))
-        .collect();
+    let roles: HashSet<String> = sqlx::query_scalar::<_, String>(
+        "SELECT value FROM skill_pool_members WHERE pool_pid = $1 AND kind = $2",
+    )
+    .bind(drum.pool)
+    .bind("role")
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
+    .map(|v| v.to_lowercase())
+    .collect();
+    let role_of: HashMap<String, String> =
+        sqlx::query_as::<_, (String, String)>("SELECT person_ref, role FROM resource_roles")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .map(|(p, r)| (p, r.to_lowercase()))
+            .collect();
     let last = crate::capacity_heatmap::add_months(from, months)
         .pred_opt()
         .unwrap_or(from);
     let mut by_plan: HashMap<Uuid, Vec<Segment>> = HashMap::new();
-    for a in allocations::Entity::find()
-        .filter(allocations::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    let rows: Vec<allocations::Model> =
+        sqlx::query_as("SELECT * FROM allocations WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
+    for a in rows {
         if !readable.contains(&a.plan_pid) || a.booking == "proposed" {
             continue;
         }
@@ -390,14 +379,12 @@ async fn pipeline(
             milli_fte: i64::from(a.percent) * 10,
         });
     }
-    let names: HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .collect();
     let projects: Vec<Project> = by_plan
         .into_iter()
         .map(|(plan, segments)| Project {

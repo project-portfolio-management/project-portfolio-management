@@ -14,16 +14,11 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::Datelike;
-use sea_orm::QueryOrder;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::db_err;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{
-    allocations, plans, resource_roles, skill_pool_members as members, skill_pools,
-    start_overrides as overrides, start_queue_entries as queue,
-};
+use crate::models::_entities::{allocations, plans, start_queue_entries as queue};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::start_control::{self as rules, Refusal};
 
@@ -56,11 +51,9 @@ pub(crate) struct Evaluation {
 #[expect(clippy::too_many_lines)]
 pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Evaluation> {
     let today = crate::tz::deployment_today();
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all: Vec<plans::Model> = sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     let statuses = super::programme_gates::status_map(ctx, today).await?;
     let in_delivery: Vec<(Uuid, String)> = all
         .iter()
@@ -122,35 +115,34 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
         tree.extend(kids.iter().copied());
         frontier = kids;
     }
-    let pool_names: HashMap<Uuid, String> = skill_pools::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
-    let pool_of_role: HashMap<String, Uuid> = members::Entity::find()
-        .filter(members::Column::Kind.eq("role"))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|m| (m.value.to_lowercase(), m.pool_pid))
-        .collect();
-    let role_of: HashMap<String, String> = resource_roles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| (r.person_ref, r.role.to_lowercase()))
-        .collect();
+    let pool_names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM skill_pools")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
+    let pool_of_role: HashMap<String, Uuid> = sqlx::query_as::<_, (String, Uuid)>(
+        "SELECT value, pool_pid FROM skill_pool_members WHERE kind = $1",
+    )
+    .bind("role")
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .map(|(v, pool)| (v.to_lowercase(), pool))
+    .collect();
+    let role_of: HashMap<String, String> =
+        sqlx::query_as::<_, (String, String)>("SELECT person_ref, role FROM resource_roles")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .map(|(p, r)| (p, r.to_lowercase()))
+            .collect();
     let mut milli: BTreeMap<(String, String), i64> = BTreeMap::new();
-    for a in allocations::Entity::find()
-        .filter(allocations::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    let rows: Vec<allocations::Model> =
+        sqlx::query_as("SELECT * FROM allocations WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    for a in rows {
         if !tree.contains(&a.plan_pid) || a.booking == "proposed" {
             continue;
         }
@@ -210,28 +202,44 @@ pub(crate) async fn evaluate(ctx: &AppContext, plan: &plans::Model) -> Result<Ev
 }
 
 /// Queue entries still waiting, oldest first (by id), so earlier requests are served first.
-async fn waiting<C: ConnectionTrait>(db: &C) -> Result<Vec<queue::Model>> {
-    queue::Entity::find()
-        .filter(queue::Column::Status.eq("waiting"))
-        .order_by_asc(queue::Column::Id)
-        .all(db)
-        .await
-        .map_err(db_err)
+async fn waiting(db: &mut impl crate::db::Session) -> Result<Vec<queue::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM start_queue_entries WHERE status = $1 ORDER BY id")
+            .bind("waiting")
+            .fetch_all(db.ex())
+            .await?,
+    )
 }
 
 /// Mark a waiting programme as started.
-async fn mark_started<C: ConnectionTrait>(
-    db: &C,
+async fn mark_started(
+    db: &mut impl crate::db::Session,
     entry: Option<queue::Model>,
     today: chrono::NaiveDate,
 ) -> Result<()> {
     if let Some(q) = entry {
-        let mut a: queue::ActiveModel = q.into();
-        a.status = ActiveValue::set("started".to_string());
-        a.resolved_on = ActiveValue::set(Some(today));
-        a.update(db).await.map_err(db_err)?;
+        // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE start_queue_entries SET status = $1, resolved_on = $2 WHERE id = $3 RETURNING id",
+        )
+        .bind("started")
+        .bind(Some(today))
+        .bind(q.id)
+        .fetch_one(db.ex())
+        .await?;
     }
     Ok(())
+}
+
+/// The waiting entry of a programme, if it is in the queue.
+async fn waiting_entry(ctx: &AppContext, plan: Uuid) -> Result<Option<queue::Model>> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM start_queue_entries WHERE plan_pid = $1 AND status = $2 LIMIT 1",
+    )
+    .bind(plan)
+    .bind("waiting")
+    .fetch_optional(crate::db::pool(ctx))
+    .await?)
 }
 
 /// `GET /api/plans/{pid}/start-check` — what a start would meet now. Changes nothing.
@@ -243,7 +251,7 @@ async fn start_check(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let e = evaluate(&ctx, &plan).await?;
-    let q = waiting(&ctx.db).await?;
+    let q = waiting(&mut crate::db::pool(&ctx)).await?;
     let pids: Vec<Uuid> = q.iter().map(|x| x.plan_pid).collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &pids).await;
     format::json(json!({
@@ -283,14 +291,9 @@ pub(crate) async fn gate(
         return Ok(());
     }
     let e = evaluate(ctx, plan).await?;
-    let entry = queue::Entity::find()
-        .filter(queue::Column::PlanPid.eq(plan.pid))
-        .filter(queue::Column::Status.eq("waiting"))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let entry = waiting_entry(ctx, plan.pid).await?;
     if e.refusals.is_empty() {
-        return mark_started(&ctx.db, entry, today).await;
+        return mark_started(&mut crate::db::pool(ctx), entry, today).await;
     }
     let text = serde_json::to_string(&e.refusals).unwrap_or_default();
     if let Some(r) = override_reason
@@ -298,21 +301,21 @@ pub(crate) async fn gate(
         .filter(|r| r.chars().count() >= 10)
     {
         // The override, the audit row and the start are one change.
-        let txn = ctx.db.begin().await.map_err(db_err)?;
-        overrides::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            reason: ActiveValue::set(r.to_string()),
-            refusals: ActiveValue::set(text),
-            decided_by: ActiveValue::set(caller.actor().map(str::to_string)),
-            decided_on: ActiveValue::set(today),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
-        AuditModel::record(
-            &txn,
+        let mut tx = crate::db::begin(ctx).await?;
+        sqlx::query(
+            "INSERT INTO start_overrides (pid, plan_pid, reason, refusals, decided_by, decided_on)
+             VALUES ($1, $2, $3, $4, $5, $6)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind(r)
+        .bind(text)
+        .bind(caller.actor())
+        .bind(today)
+        .execute(tx.conn())
+        .await?;
+        AuditModel::record_on(
+            tx.conn(),
             plan.pid,
             "start_override",
             caller.actor(),
@@ -320,38 +323,47 @@ pub(crate) async fn gate(
         )
         .await
         .map_err(super::audit_failed)?;
-        mark_started(&txn, entry, today).await?;
-        txn.commit().await.map_err(db_err)?;
+        mark_started(&mut tx, entry, today).await?;
+        tx.commit().await?;
         return Ok(());
     }
     // Who may be counted in the queue, worked out before the transaction opens: the pool may hold a single
     // connection, and nothing may ask for a second while one is held.
-    let mut pids: Vec<Uuid> = waiting(&ctx.db).await?.iter().map(|x| x.plan_pid).collect();
+    let mut pids: Vec<Uuid> = waiting(&mut crate::db::pool(ctx))
+        .await?
+        .iter()
+        .map(|x| x.plan_pid)
+        .collect();
     pids.push(plan.pid);
     let readable = super::plan_access::readable_plans(ctx, caller, &pids).await;
     // The queue entry and the audit row of the refusal are one change.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(ctx).await?;
     let position = if let Some(q) = entry {
-        let mut a: queue::ActiveModel = q.clone().into();
-        a.refusals = ActiveValue::set(text);
-        a.update(&txn).await.map_err(db_err)?;
+        // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE start_queue_entries SET refusals = $1 WHERE id = $2 RETURNING id",
+        )
+        .bind(text)
+        .bind(q.id)
+        .fetch_one(tx.conn())
+        .await?;
         q.id
     } else {
-        queue::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            status: ActiveValue::set("waiting".to_string()),
-            refusals: ActiveValue::set(text),
-            queued_on: ActiveValue::set(today),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?
-        .id
+        sqlx::query_scalar::<_, i64>(
+            "INSERT INTO start_queue_entries (pid, plan_pid, status, refusals, queued_on)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind("waiting")
+        .bind(text)
+        .bind(today)
+        .fetch_one(tx.conn())
+        .await?
     };
     // The place among the programmes the caller may read: a private plan is not counted for anyone else.
-    let waiting_now = waiting(&txn).await?;
+    let waiting_now = waiting(&mut tx).await?;
     let place = waiting_now
         .iter()
         .filter(|x| readable.contains(&x.plan_pid))
@@ -371,8 +383,8 @@ pub(crate) async fn gate(
         })
         .collect::<Vec<_>>()
         .join("; ");
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "start_refused",
         caller.actor(),
@@ -380,7 +392,7 @@ pub(crate) async fn gate(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Err(Error::CustomError(
         StatusCode::UNPROCESSABLE_ENTITY,
         ErrorDetail::new(
@@ -400,20 +412,21 @@ async fn withdraw(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let q = queue::Entity::find()
-        .filter(queue::Column::PlanPid.eq(plan.pid))
-        .filter(queue::Column::Status.eq("waiting"))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let q = waiting_entry(&ctx, plan.pid)
+        .await?
         .ok_or(Error::NotFound)?;
-    let mut a: queue::ActiveModel = q.into();
-    a.status = ActiveValue::set("withdrawn".to_string());
-    a.resolved_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE start_queue_entries SET status = $1, resolved_on = $2 WHERE id = $3 RETURNING id",
+    )
+    .bind("withdrawn")
+    .bind(Some(crate::tz::deployment_today()))
+    .bind(q.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "start_queue_withdrawn",
         caller.actor(),
@@ -421,24 +434,22 @@ async fn withdraw(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "withdrawn": plan.pid }))
 }
 
 /// `GET /api/start-queue` — programmes waiting to start that you can read, in the order they asked.
 #[debug_handler]
 async fn list_queue(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let q = waiting(&ctx.db).await?;
+    let q = waiting(&mut crate::db::pool(&ctx)).await?;
     let pids: Vec<Uuid> = q.iter().map(|x| x.plan_pid).collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &pids).await;
-    let names: HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .collect();
     // A private plan is nowhere: the places count only the programmes you may read.
     let list: Vec<Value> = q
         .iter()

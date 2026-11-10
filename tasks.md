@@ -1989,6 +1989,29 @@ came from grep.
   capacity and critical-chain controllers `start_control`, `drum`, `buffer_management`, `availability`,
   `portfolio_resources`, `ccpm_estimates`, `hammock`, `cpm`, `plan_roles` and `raci` (about 360 lines; this batch's
   files call four of them).
+  **Progress 2026-11-10, batch 6 (not ticked).** The capacity and critical-chain controllers moved: `start_control`
+  (43 lines naming SeaORM), `drum` (25), `buffer_management` (41), `availability` (27), `portfolio_resources` (29),
+  `ccpm_estimates` (25), `hammock` (32), `cpm` (56), `plan_roles` (30) and `raci` (28): 336 lines, now none; 91 files
+  and 3,193 lines left (batch 5's measure). The functions other modules call (`cpm::load_network`,
+  `load_network_cross`, `deps_touching`, `readable_endpoints` and `external_dependants`;
+  `buffer_management::project_reading`; `availability::all_ranges` and `ranges_for`; `ccpm_estimates::resolved`;
+  `hammock::spans_for`; `plan_roles::standing`; `drum::constraint_pool`; `start_control::gate`) kept their
+  signatures, because no caller holds a sqlx transaction to join, so no caller changed. Inside `availability` and
+  `start_control` the helpers that run in a handler's transaction (`ranges_on`, `waiting`, `mark_started`) now take
+  `&mut impl db::Session`. Every handler here already wrote its rows and audit row in one transaction, so no write
+  changed transaction. An update by id that finds no row is still an error (`fetch_one`), as SeaORM's was.
+  `cpm::load_network` reads the same rows in the same order (tasks by id with hammocks and soft-deleted tasks left
+  out, dependencies by id, `precedes` relations by id, a dependency winning over a relation on the same pair): a
+  throwaway check that dumped every answer of these routes and every row they write (audit rows included) for one
+  network, before and after, found them the same, apart from two lists already ordered by random plan pid.
+  **Still on SeaORM through other modules**, on the pool and outside these handlers' transactions:
+  `governance::find_item`, `find_live_task`, `plan_access::readable_plans`, `calendars` (`plan_calendar`,
+  `person_calendars`, `plan_calendar_spec`; so `cpm::load_network` still reads calendars through SeaORM),
+  `guests::guest_covers_plan`, `models::visibility` (`all_allocations_with_placeholders`, `find_allocation`,
+  `all_allocations`) and `watchers::ensure_watching`. **Next batch, suggested:** the network's neighbours
+  `calendars`, `task_relations`, `assignments`, `sandbox`, `deployment_moves`, `phase`, `guests`, `watchers`,
+  `visibility/dependencies` and `visibility/allocations` (about 294 lines; this batch's files call four of them:
+  `calendars`, `assignments`, `guests` and `watchers`).
 
 ## Correctness carried forward (CF-n)
 

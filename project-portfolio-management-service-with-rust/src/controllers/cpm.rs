@@ -13,21 +13,19 @@
 //! answers with **what moved** across the whole network (PJ-8), not just the
 //! task that was edited.
 
-use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, Edge, Kind, Node, Options, WorkCalendar};
-use crate::models::_entities::{plan_dependencies, plans, task_relations, tasks};
+use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// A plan's task network, ready for [`cpm::analyze`].
@@ -120,29 +118,28 @@ pub(crate) async fn deps_touching(
     if ids.is_empty() {
         return Ok(Vec::new());
     }
-    plan_dependencies::Entity::find()
-        .filter(
-            sea_orm::Condition::any()
-                .add(plan_dependencies::Column::PredecessorPid.is_in(ids.clone()))
-                .add(plan_dependencies::Column::SuccessorPid.is_in(ids)),
-        )
-        .order_by_asc(plan_dependencies::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM plan_dependencies
+         WHERE predecessor_pid = ANY($1) OR successor_pid = ANY($1)
+         ORDER BY id",
+    )
+    .bind(ids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Load a plan's tasks and the edges among them.
 pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Network> {
-    let rows = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        // A hammock is a derived span, not work: it is not in the network.
-        .filter(tasks::Column::IsHammock.eq(false))
-        .order_by_asc(tasks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // A hammock is a derived span, not work: it is not in the network.
+    let rows: Vec<tasks::Model> = sqlx::query_as(
+        "SELECT * FROM tasks
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND is_hammock = $2
+         ORDER BY id",
+    )
+    .bind(plan_pid)
+    .bind(false)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let pids: std::collections::HashSet<Uuid> = rows.iter().map(|t| t.pid).collect();
     let (plan_cal, cal_source) = super::calendars::plan_calendar(ctx, plan_pid).await?;
     let mut refs: Vec<String> = rows.iter().filter_map(|t| t.assignee_ref.clone()).collect();
@@ -180,15 +177,16 @@ pub(crate) async fn load_network(ctx: &AppContext, plan_pid: Uuid) -> Result<Net
             });
         }
     }
-    for r in task_relations::Entity::find()
-        .filter(task_relations::Column::DeletedAt.is_null())
-        .filter(task_relations::Column::Kind.eq("precedes"))
-        .filter(task_relations::Column::FromTaskPid.is_in(pids.iter().copied().collect::<Vec<_>>()))
-        .order_by_asc(task_relations::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    let relations: Vec<task_relations::Model> = sqlx::query_as(
+        "SELECT * FROM task_relations
+         WHERE deleted_at IS NULL AND kind = $1 AND from_task_pid = ANY($2)
+         ORDER BY id",
+    )
+    .bind("precedes")
+    .bind(pids.iter().copied().collect::<Vec<_>>())
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    for r in relations {
         if pids.contains(&r.from_task_pid)
             && pids.contains(&r.to_task_pid)
             && seen.insert((r.from_task_pid, r.to_task_pid))
@@ -277,13 +275,13 @@ pub(crate) async fn load_network_cross(
         if others.is_empty() {
             break;
         }
-        let found: Vec<tasks::Model> = tasks::Entity::find()
-            .filter(tasks::Column::Pid.is_in(others))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::IsHammock.eq(false))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let found: Vec<tasks::Model> = sqlx::query_as(
+            "SELECT * FROM tasks WHERE pid = ANY($1) AND deleted_at IS NULL AND is_hammock = $2",
+        )
+        .bind(others)
+        .bind(false)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
         let fresh: Vec<Uuid> = found
             .iter()
             .map(|t| t.plan_pid)
@@ -304,13 +302,13 @@ pub(crate) async fn load_network_cross(
             }
             plans_seen.push(p);
         }
-        let all: Vec<tasks::Model> = tasks::Entity::find()
-            .filter(tasks::Column::PlanPid.is_in(plans_seen.clone()))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::IsHammock.eq(false))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let all: Vec<tasks::Model> = sqlx::query_as(
+            "SELECT * FROM tasks WHERE plan_pid = ANY($1) AND deleted_at IS NULL AND is_hammock = $2",
+        )
+        .bind(plans_seen.clone())
+        .bind(false)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
         for t in &all {
             known_tasks.insert(t.pid, t.plan_pid);
         }
@@ -356,14 +354,13 @@ pub(crate) async fn load_network_cross(
         net.truncated = truncated;
         return Ok(net);
     }
-    let names: HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(ext_plans.clone()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(ext_plans.clone())
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
     for p in &ext_plans {
         let (plan_cal, _) = super::calendars::plan_calendar(ctx, *p).await?;
         let shared = net.plan_cal.intersect(&plan_cal);
@@ -374,14 +371,15 @@ pub(crate) async fn load_network_cross(
             net.conflicts.push(format!("plan:{p}"));
             None
         };
-        let rows = tasks::Entity::find()
-            .filter(tasks::Column::PlanPid.eq(*p))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::IsHammock.eq(false))
-            .order_by_asc(tasks::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let rows: Vec<tasks::Model> = sqlx::query_as(
+            "SELECT * FROM tasks
+             WHERE plan_pid = $1 AND deleted_at IS NULL AND is_hammock = $2
+             ORDER BY id",
+        )
+        .bind(*p)
+        .bind(false)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
         for t in rows {
             net.nodes.push(node_of(&t, idx));
             net.external.insert(
@@ -429,15 +427,14 @@ pub(crate) async fn readable_endpoints(
     if pids.is_empty() {
         return Ok(HashSet::new());
     }
-    let task_plan: HashMap<Uuid, Uuid> = tasks::Entity::find()
-        .filter(tasks::Column::Pid.is_in(pids.to_vec()))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|t| (t.pid, t.plan_pid))
-        .collect();
+    let task_plan: HashMap<Uuid, Uuid> = sqlx::query_as::<_, (Uuid, Uuid)>(
+        "SELECT pid, plan_pid FROM tasks WHERE pid = ANY($1) AND deleted_at IS NULL",
+    )
+    .bind(pids.to_vec())
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .collect();
     let mut plan_ids: Vec<Uuid> = pids.to_vec();
     plan_ids.extend(task_plan.values().copied());
     plan_ids.sort();
@@ -460,15 +457,13 @@ pub(crate) async fn external_dependants(
     plan_pid: Uuid,
     caller: &MaybeAuthUser,
 ) -> Result<(Vec<(Uuid, String)>, usize)> {
-    let own: HashSet<Uuid> = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|t| t.pid)
-        .collect();
+    let own: HashSet<Uuid> =
+        sqlx::query_scalar("SELECT pid FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
     if own.is_empty() {
         return Ok((Vec::new(), 0));
     }
@@ -486,28 +481,26 @@ pub(crate) async fn external_dependants(
             }
         })
         .collect();
-    let other_plans: HashSet<Uuid> = tasks::Entity::find()
-        .filter(tasks::Column::Pid.is_in(others))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::PlanPid.ne(plan_pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|t| t.plan_pid)
-        .collect();
-    let live: Vec<plans::Model> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(other_plans.into_iter().collect::<Vec<_>>()))
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let pids: Vec<Uuid> = live.iter().map(|p| p.pid).collect();
+    let other_plans: HashSet<Uuid> = sqlx::query_scalar(
+        "SELECT plan_pid FROM tasks WHERE pid = ANY($1) AND deleted_at IS NULL AND plan_pid <> $2",
+    )
+    .bind(others)
+    .bind(plan_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .collect();
+    let live: Vec<(Uuid, String)> =
+        sqlx::query_as("SELECT pid, name FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL")
+            .bind(other_plans.into_iter().collect::<Vec<_>>())
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let pids: Vec<Uuid> = live.iter().map(|(p, _)| *p).collect();
     let readable = linkable_plans(ctx, caller, &pids).await;
     let named: Vec<(Uuid, String)> = live
         .iter()
-        .filter(|p| readable.contains(&p.pid))
-        .map(|p| (p.pid, p.name.clone()))
+        .filter(|(p, _)| readable.contains(p))
+        .cloned()
         .collect();
     Ok((named, live.len() - readable.len().min(live.len())))
 }
@@ -780,14 +773,14 @@ async fn set_schedule(
             return Err(unprocessable("a hard constraint needs a reason"));
         }
     }
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task: tasks::Model = sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(t_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if task.is_hammock {
         return Err(unprocessable(
             "a hammock's span is derived from the tasks it links to: it has no schedule of its own to set",
@@ -806,23 +799,47 @@ async fn set_schedule(
         task.constraint_date,
         task.deadline,
     );
-    let mut a: tasks::ActiveModel = task.into();
-    a.start_date = ActiveValue::set(b.start_date);
-    a.duration_days = ActiveValue::set(b.duration_days);
-    a.constraint_kind = ActiveValue::set(kind.clone());
-    a.constraint_date = ActiveValue::set(b.constraint_date);
-    a.deadline = ActiveValue::set(b.deadline);
-    if let Some(r) = &assignment {
-        a.units_percent = ActiveValue::set(i32::try_from(r.triple.units_percent).ok());
-        a.work_minutes = ActiveValue::set(Some(r.triple.work_minutes));
-    }
     // The change and its audit row (with the reason) land together or not at all.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     // The same lock a what-if commit holds: a plain edit cannot slip in between its freshness check and its writes.
-    super::advisory_lock(&txn, "sandbox", plan.pid).await?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    super::advisory_lock_on(&mut tx, "sandbox", plan.pid).await?;
+    // The columns the schedule sets, and the assignment's two when the rule recomputed them.
+    let row: tasks::Model = if let Some(r) = &assignment {
+        sqlx::query_as(
+            "UPDATE tasks
+             SET start_date = $1, duration_days = $2, constraint_kind = $3, constraint_date = $4, deadline = $5,
+                 units_percent = $6, work_minutes = $7
+             WHERE id = $8
+             RETURNING *",
+        )
+        .bind(b.start_date)
+        .bind(b.duration_days)
+        .bind(kind.clone())
+        .bind(b.constraint_date)
+        .bind(b.deadline)
+        .bind(i32::try_from(r.triple.units_percent).ok())
+        .bind(Some(r.triple.work_minutes))
+        .bind(task.id)
+        .fetch_one(tx.conn())
+        .await?
+    } else {
+        sqlx::query_as(
+            "UPDATE tasks
+             SET start_date = $1, duration_days = $2, constraint_kind = $3, constraint_date = $4, deadline = $5
+             WHERE id = $6
+             RETURNING *",
+        )
+        .bind(b.start_date)
+        .bind(b.duration_days)
+        .bind(kind.clone())
+        .bind(b.constraint_date)
+        .bind(b.deadline)
+        .bind(task.id)
+        .fetch_one(tx.conn())
+        .await?
+    };
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "task_schedule_updated",
         caller.actor(),
@@ -837,7 +854,7 @@ async fn set_schedule(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     let after = analyse(&load_network(&ctx, plan.pid).await?);
     let (moved, note) = match (&before, &after) {
         (Ok(b), Ok(a)) => (Some(cpm::diff(b, a)), None),

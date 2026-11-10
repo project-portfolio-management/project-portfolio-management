@@ -13,12 +13,10 @@
 //! first's range and is refused. (A database exclusion constraint would need the
 //! `btree_gist` extension, which not every deployment may install.)
 
-use super::db_err;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -50,13 +48,12 @@ pub(crate) async fn all_ranges(
     ctx: &AppContext,
 ) -> Result<std::collections::HashMap<String, Vec<Range>>> {
     let mut out: std::collections::HashMap<String, Vec<Range>> = std::collections::HashMap::new();
-    for r in person_availabilities::Entity::find()
-        .filter(person_availabilities::Column::DeletedAt.is_null())
-        .order_by_asc(person_availabilities::Column::FromDate)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    let rows: Vec<person_availabilities::Model> = sqlx::query_as(
+        "SELECT * FROM person_availabilities WHERE deleted_at IS NULL ORDER BY from_date",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    for r in rows {
         out.entry(r.person_ref).or_default().push(Range {
             from: r.from_date,
             to: r.to_date,
@@ -76,18 +73,28 @@ pub(crate) fn own_ref(caller: &MaybeAuthUser) -> Option<String> {
 
 /// A person's ranges, as pure [`Range`]s.
 pub(crate) async fn ranges_for(ctx: &AppContext, person_ref: &str) -> Result<Vec<Range>> {
-    ranges_on(&ctx.db, person_ref).await
+    ranges_on(&mut crate::db::pool(ctx), person_ref).await
 }
 
-/// [`ranges_for`] on a given connection or transaction.
-async fn ranges_on<C: sea_orm::ConnectionTrait>(db: &C, person_ref: &str) -> Result<Vec<Range>> {
-    Ok(person_availabilities::Entity::find()
-        .filter(person_availabilities::Column::PersonRef.eq(person_ref))
-        .filter(person_availabilities::Column::DeletedAt.is_null())
-        .order_by_asc(person_availabilities::Column::FromDate)
-        .all(db)
-        .await
-        .map_err(db_err)?
+/// A person's live ranges, earliest first.
+async fn rows_on(
+    db: &mut impl crate::db::Session,
+    person_ref: &str,
+) -> Result<Vec<person_availabilities::Model>> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM person_availabilities
+         WHERE person_ref = $1 AND deleted_at IS NULL
+         ORDER BY from_date",
+    )
+    .bind(person_ref)
+    .fetch_all(db.ex())
+    .await?)
+}
+
+/// [`ranges_for`] on the pool or a transaction.
+async fn ranges_on(db: &mut impl crate::db::Session, person_ref: &str) -> Result<Vec<Range>> {
+    Ok(rows_on(db, person_ref)
+        .await?
         .into_iter()
         .map(|r| Range {
             from: r.from_date,
@@ -124,7 +131,7 @@ pub(crate) struct Body {
 
 /// The database refused an overlapping range (the exclusion constraint, CF-3): the same answer the
 /// service's own check gives. Anything else is an ordinary database error.
-fn overlap_or_db_err(e: sea_orm::DbErr) -> Error {
+fn overlap_or_db_err(e: sqlx::Error) -> Error {
     if e.to_string().contains("person_availabilities_no_overlap") {
         return Error::CustomError(
             StatusCode::CONFLICT,
@@ -134,7 +141,7 @@ fn overlap_or_db_err(e: sea_orm::DbErr) -> Error {
             ),
         );
     }
-    db_err(e)
+    Error::from(e)
 }
 
 /// `POST /api/availability` — set a person's capacity for a date range.
@@ -165,9 +172,9 @@ async fn create(
         return Err(Error::NotFound);
     }
     // Check and insert under one lock per person, so two requests cannot both pass the check.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    super::advisory_lock(&txn, "availability", &person_ref).await?;
-    if rules::overlaps(&ranges_on(&txn, &person_ref).await?, b.from, b.to) {
+    let mut tx = crate::db::begin(&ctx).await?;
+    super::advisory_lock_on(&mut tx, "availability", &person_ref).await?;
+    if rules::overlaps(&ranges_on(&mut tx, &person_ref).await?, b.from, b.to) {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
             ErrorDetail::new(
@@ -176,21 +183,23 @@ async fn create(
             ),
         ));
     }
-    let row = person_availabilities::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        person_ref: ActiveValue::set(person_ref.clone()),
-        from_date: ActiveValue::set(b.from),
-        to_date: ActiveValue::set(b.to),
-        max_percent: ActiveValue::set(b.max_percent),
-        note: ActiveValue::set(b.note.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let row: person_availabilities::Model = sqlx::query_as(
+        "INSERT INTO person_availabilities (pid, person_ref, from_date, to_date, max_percent, note, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&person_ref)
+    .bind(b.from)
+    .bind(b.to)
+    .bind(b.max_percent)
+    .bind(b.note.clone())
+    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .fetch_one(tx.conn())
     .await
     .map_err(overlap_or_db_err)?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "availability_set",
         caller.actor(),
@@ -201,7 +210,7 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(overlap_or_db_err)?;
+    tx.commit().await.map_err(overlap_or_db_err)?;
 
     format::json(view(&row))
 }
@@ -228,13 +237,7 @@ async fn list(
     if !may_manage_person(&caller, &person) {
         return Err(Error::NotFound);
     }
-    let rows = person_availabilities::Entity::find()
-        .filter(person_availabilities::Column::PersonRef.eq(person.as_str()))
-        .filter(person_availabilities::Column::DeletedAt.is_null())
-        .order_by_asc(person_availabilities::Column::FromDate)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows = rows_on(&mut crate::db::pool(&ctx), &person).await?;
     format::json(rows.iter().map(view).collect::<Vec<_>>())
 }
 
@@ -246,21 +249,28 @@ async fn remove(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let row = person_availabilities::Entity::find()
-        .filter(person_availabilities::Column::Pid.eq(pid))
-        .filter(person_availabilities::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .filter(|r| may_manage_person(&caller, &r.person_ref))
-        .ok_or(Error::NotFound)?;
+    let row: person_availabilities::Model = sqlx::query_as(
+        "SELECT * FROM person_availabilities WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .filter(|r: &person_availabilities::Model| may_manage_person(&caller, &r.person_ref))
+    .ok_or(Error::NotFound)?;
     let (row_pid, person) = (row.pid, row.person_ref.clone());
-    let mut a: person_availabilities::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE person_availabilities SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+        chrono::Utc::now(),
+    ))
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "availability_removed",
         caller.actor(),
@@ -268,7 +278,7 @@ async fn remove(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

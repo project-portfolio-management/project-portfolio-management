@@ -10,14 +10,12 @@
 //!
 //! Report, a person decides: nothing is re-planned and no action is invented.
 
-use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -38,12 +36,12 @@ fn json_err(e: &serde_json::Error) -> Error {
 
 /// The plan's most recent frozen buffer plan (highest id), or None when none was frozen.
 async fn latest(ctx: &AppContext, plan: Uuid) -> Result<Option<buffer_plans::Model>> {
-    buffer_plans::Entity::find()
-        .filter(buffer_plans::Column::PlanPid.eq(plan))
-        .order_by_desc(buffer_plans::Column::Id)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM buffer_plans WHERE plan_pid = $1 ORDER BY id DESC LIMIT 1")
+            .bind(plan)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Parses the frozen buffer plan's stored JSON document.
@@ -184,19 +182,18 @@ async fn freeze(
             answer["reason"].as_str().unwrap_or("no critical chain")
         )));
     };
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = buffer_plans::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        taken_on: ActiveValue::set(crate::tz::deployment_today()),
-        document: ActiveValue::set(doc.to_string()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: buffer_plans::Model = sqlx::query_as(
+        "INSERT INTO buffer_plans (pid, plan_pid, taken_on, document) VALUES ($1, $2, $3, $4) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(crate::tz::deployment_today())
+    .bind(doc.to_string())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "buffer_plan_frozen",
         caller.actor(),
@@ -204,7 +201,7 @@ async fn freeze(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": row.pid, "taken_on": row.taken_on, "document": doc }))
 }
 
@@ -212,12 +209,11 @@ async fn freeze(
 #[debug_handler]
 async fn show_plan(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let all = buffer_plans::Entity::find()
-        .filter(buffer_plans::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(buffer_plans::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all: Vec<buffer_plans::Model> =
+        sqlx::query_as("SELECT * FROM buffer_plans WHERE plan_pid = $1 ORDER BY id DESC")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let Some(first) = all.first() else {
         return format::json(
             json!({ "state": "no_buffer_plan", "reason": "no buffer plan has been frozen for this plan" }),
@@ -245,13 +241,13 @@ async fn manage(
     let doc = parse_doc(&row)?;
     let rs = readings(&ctx, plan.pid, &doc).await?;
     let (lines, unusable) = fever::configured_lines();
-    let acts = actions::Entity::find()
-        .filter(actions::Column::PlanPid.eq(plan.pid))
-        .filter(actions::Column::BufferPlanPid.eq(row.pid))
-        .order_by_asc(actions::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let acts: Vec<actions::Model> = sqlx::query_as(
+        "SELECT * FROM buffer_recovery_actions WHERE plan_pid = $1 AND buffer_plan_pid = $2 ORDER BY id",
+    )
+    .bind(plan.pid)
+    .bind(row.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let open: HashSet<&str> = acts
         .iter()
         .filter(|a| a.status == "open")
@@ -262,13 +258,13 @@ async fn manage(
         .filter(|(r, _)| r.zone() == Some("red"))
         .map(|(r, _)| r.key.as_str())
         .collect();
-    let snaps = buffer_snapshots::Entity::find()
-        .filter(buffer_snapshots::Column::PlanPid.eq(plan.pid))
-        .filter(buffer_snapshots::Column::BufferPlanPid.eq(row.pid))
-        .order_by_desc(buffer_snapshots::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let snaps: Vec<buffer_snapshots::Model> = sqlx::query_as(
+        "SELECT * FROM buffer_snapshots WHERE plan_pid = $1 AND buffer_plan_pid = $2 ORDER BY id DESC",
+    )
+    .bind(plan.pid)
+    .bind(row.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let history: Vec<Value> = snaps
         .iter()
         .take(50)
@@ -334,20 +330,21 @@ async fn snapshot(
         "alerts": alerts(&rs),
     });
     // The snapshot and the audit rows (one per red buffer too) are one change.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let snap = buffer_snapshots::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        buffer_plan_pid: ActiveValue::set(row.pid),
-        taken_on: ActiveValue::set(crate::tz::deployment_today()),
-        document: ActiveValue::set(document.to_string()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let snap: buffer_snapshots::Model = sqlx::query_as(
+        "INSERT INTO buffer_snapshots (pid, plan_pid, buffer_plan_pid, taken_on, document)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(row.pid)
+    .bind(crate::tz::deployment_today())
+    .bind(document.to_string())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "buffer_snapshot_taken",
         caller.actor(),
@@ -356,11 +353,11 @@ async fn snapshot(
     .await
     .map_err(super::audit_failed)?;
     for a in alerts(&rs) {
-        AuditModel::record(&txn, plan.pid, "buffer_red", caller.actor(), Some(a))
+        AuditModel::record_on(tx.conn(), plan.pid, "buffer_red", caller.actor(), Some(a))
             .await
             .map_err(super::audit_failed)?;
     }
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": snap.pid, "taken_on": snap.taken_on, "document": document }))
 }
 
@@ -409,23 +406,25 @@ async fn add_action(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let a = actions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        buffer_plan_pid: ActiveValue::set(row.pid),
-        buffer_key: ActiveValue::set(b.buffer_key.clone()),
-        action: ActiveValue::set(text.to_string()),
-        owner_ref: ActiveValue::set(Some(owner.to_string())),
-        due_date: ActiveValue::set(b.due_date),
-        status: ActiveValue::set("open".to_string()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let a: actions::Model = sqlx::query_as(
+        "INSERT INTO buffer_recovery_actions
+             (pid, plan_pid, buffer_plan_pid, buffer_key, action, owner_ref, due_date, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(row.pid)
+    .bind(&b.buffer_key)
+    .bind(text)
+    .bind(Some(owner))
+    .bind(b.due_date)
+    .bind("open")
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "buffer_recovery_action_recorded",
         caller.actor(),
@@ -433,7 +432,7 @@ async fn add_action(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": a.pid, "buffer_key": a.buffer_key, "status": a.status }))
 }
 
@@ -457,13 +456,14 @@ async fn close_action(
     if !["done", "dropped"].contains(&b.status.as_str()) {
         return Err(unprocessable("status must be done or dropped"));
     }
-    let a = actions::Entity::find()
-        .filter(actions::Column::Pid.eq(aid))
-        .filter(actions::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let a: actions::Model = sqlx::query_as(
+        "SELECT * FROM buffer_recovery_actions WHERE pid = $1 AND plan_pid = $2 LIMIT 1",
+    )
+    .bind(aid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if a.status != "open" {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
@@ -473,13 +473,17 @@ async fn close_action(
             ),
         ));
     }
-    let mut m: actions::ActiveModel = a.into();
-    m.status = ActiveValue::set(b.status.clone());
-    m.closed_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = m.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: actions::Model = sqlx::query_as(
+        "UPDATE buffer_recovery_actions SET status = $1, closed_on = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(&b.status)
+    .bind(Some(crate::tz::deployment_today()))
+    .bind(a.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "buffer_recovery_action_closed",
         caller.actor(),
@@ -487,7 +491,7 @@ async fn close_action(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": row.pid, "status": row.status, "closed_on": row.closed_on }))
 }
 

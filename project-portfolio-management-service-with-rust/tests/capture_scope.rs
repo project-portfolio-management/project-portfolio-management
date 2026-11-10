@@ -62,7 +62,7 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 const SUB: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test capture_scope -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test capture_scope -- --ignored`"]
 async fn a_capture_token_posts_three_things_and_is_refused_the_rest() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

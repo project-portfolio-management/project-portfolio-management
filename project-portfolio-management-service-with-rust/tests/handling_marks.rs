@@ -8,7 +8,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test handling_marks -- --ignored`.
 #![cfg(feature = "paseto")]
 
@@ -75,7 +75,7 @@ fn bearer(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test handling_marks -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test handling_marks -- --ignored`"]
 async fn a_plan_marked_above_your_clearance_does_not_exist_for_you() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier and the scheme.

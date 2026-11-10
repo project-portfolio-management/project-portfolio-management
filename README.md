@@ -9,7 +9,7 @@ resources, governance).
 | Subproject | What it is | Run | Test |
 |---|---|---|---|
 | [`project-portfolio-management-matcher-with-rust`](project-portfolio-management-matcher-with-rust) | Rust library: the `Plan` type and the matching engine, embedded by the API | `cargo run` (demo) | `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo fmt --check` |
-| [`project-portfolio-management-service-with-rust`](project-portfolio-management-service-with-rust) | Axum and axa REST service; the API DTO is the matcher's `Plan` | `cargo run -- start` (needs Postgres) | `cargo test` (database-free); `DATABASE_URL=… cargo test --test mod -- --ignored --test-threads=1` and the other database binaries (need Postgres; see [AGENTS.md](AGENTS.md)) |
+| [`project-portfolio-management-service-with-rust`](project-portfolio-management-service-with-rust) | Axum and axa REST service; the API DTO is the matcher's `Plan` | `cargo run -- start` (needs Postgres) | `cargo test` (database-free); `DB_URL=… cargo test --test mod -- --ignored --test-threads=1` and the other database binaries (need Postgres; see [AGENTS.md](AGENTS.md)) |
 | [`project-portfolio-management-ui-with-svelte`](project-portfolio-management-ui-with-svelte) | SvelteKit 3 / Svelte 5 SPA with a BFF; calls the API | `pnpm install && pnpm dev` (http://localhost:5173) | `pnpm run check`, `npx vitest run`, `npx playwright test` |
 
 The Rust toolchain is pinned in [`rust-toolchain.toml`](rust-toolchain.toml)
@@ -28,7 +28,7 @@ repository root as the build context.
 # of whatever issues your tokens (see the header of compose.yaml).
 POSTGRES_PASSWORD=change-me PPM_PASETO_KEYS_URL=https://auth.example.com/.well-known/paseto-keys \
   podman compose up -d --build --wait
-curl -fsS http://localhost:5150/_health
+curl -fsS http://localhost:5150/_health/ready
 
 # Throwaway, UNSAFE (login off), for poking with curl on your own machine:
 POSTGRES_PASSWORD=x podman compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure

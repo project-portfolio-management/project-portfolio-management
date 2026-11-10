@@ -18,7 +18,7 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   are computed within p99 ≤ 200 ms over a single plan's
   sub-resources.
 - **NFR-3 — Availability.** Stateless app tier, horizontal scaling,
-  PostgreSQL replication, health checks (`/_health`, `/_ping`),
+  PostgreSQL replication, health checks (`/_health/live`, `/_health/ready`, `/_health/startup`),
   graceful shutdown, non-root containers. See
   `agents/share/availability.md` (shared family guidance, not in this repository).
 - **NFR-4 — i18n / locales.** Plan names, goal titles, keywords,
@@ -115,8 +115,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   `APP_ENV` of `development`, `test` or `container-dev`). The service
   **refuses to start** when enforcement is off and `APP_ENV` is anything but
   `development`, `test` or `container-dev`, so a misspelt or new name fails closed, and when enforcement is on with no token verifier and no
-  key URL; turning it off logs a loud warning. Only `/_health`, `/_ping`, the
-  OpenAPI documents, Swagger UI and the per-user calendar feeds are public;
+  key URL; turning it off logs a loud warning. Only the three health probes (`/_health/live`, `/_health/ready`,
+  `/_health/startup`), the OpenAPI documents, Swagger UI and the per-user calendar feeds are public;
   `/metrics.prom` needs a token.
 - **NFR-13 — Security headers and CORS.** Every API response carries
   `X-Content-Type-Options: nosniff`, a restrictive `Content-Security-Policy`

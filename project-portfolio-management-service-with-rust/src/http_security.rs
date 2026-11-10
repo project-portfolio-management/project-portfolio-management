@@ -53,8 +53,9 @@ pub const SWAGGER_CSP: &str = "default-src 'none'; script-src 'self' 'unsafe-inl
 
 /// Strict-Transport-Security value: one year, covering subdomains.
 const HSTS_VALUE: &str = "max-age=31536000; includeSubDomains";
-/// Permissions-Policy value that switches off sensor, camera, microphone, payment and USB features the service never uses.
-const PERMISSIONS_POLICY: &str = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
+/// Permissions-Policy value that switches off sensor, camera, microphone, payment, USB and ad-topic features the service
+/// never uses. It is axa 0.11's default list, which `app::service_config` turns off so that this one is the only one.
+pub const PERMISSIONS_POLICY: &str = "accelerometer=(), browsing-topics=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
 
 /// When `Strict-Transport-Security` is sent.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -396,6 +397,13 @@ mod tests {
         assert_eq!(dl.headers()["cache-control"], "private, max-age=60");
         assert_eq!(dl.headers()["content-security-policy"], "sandbox");
         assert_eq!(dl.headers()["x-content-type-options"], "nosniff");
+    }
+
+    /// `app::service_config` turns axa's permissions policy off, so this one is sent instead: it must deny everything
+    /// axa's default denies, and is the same list.
+    #[test]
+    fn the_permissions_policy_is_no_weaker_than_axas_default() {
+        assert_eq!(PERMISSIONS_POLICY, axa::config::DEFAULT_PERMISSIONS_POLICY);
     }
 
     #[tokio::test]

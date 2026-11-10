@@ -10,7 +10,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test fever -- --ignored`.
 #![cfg(feature = "paseto")]
 
@@ -81,7 +81,7 @@ const ISSUER_SUB: &str = "3f2c6b7e-0000-4000-8000-0000000000e2";
 const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000000a9";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test fever -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test fever -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn the_fever_chart_keeps_its_promises() {
     let (keys, kid) = keys_and_kid();

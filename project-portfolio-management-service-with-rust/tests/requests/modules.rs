@@ -23,7 +23,7 @@ async fn plan(request: &axum_test::TestServer, name: &str) -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // A plan nobody configured exposes everything; switching `risks` off
 // hides its routes (all methods) with 404 module_disabled but leaves every
 // other route, the plan record and the stored risk alone; re-enabling
@@ -106,7 +106,7 @@ async fn a_disabled_module_hides_its_routes_but_never_its_data() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // The personal preset at creation exposes only tasks and time; bad input
 // is refused; an unknown plan is 404.
 async fn the_personal_preset_exposes_only_tasks_and_time() {
@@ -179,7 +179,7 @@ async fn the_personal_preset_exposes_only_tasks_and_time() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // A deployment default narrows every unconfigured plan, and a plan's own
 // choice overrides it.
 async fn the_deployment_default_applies_until_a_plan_chooses() {

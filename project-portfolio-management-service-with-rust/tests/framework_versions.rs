@@ -76,7 +76,7 @@ const EDITOR: &str = "3f2c6b7e-0000-4000-8000-0000000000b2";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000bd";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test framework_versions -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test framework_versions -- --ignored`"]
 async fn an_edit_is_a_new_version_and_following_plans_keep_theirs() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.

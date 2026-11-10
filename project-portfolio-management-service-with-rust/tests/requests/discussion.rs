@@ -25,7 +25,7 @@ async fn plan(request: &axum_test::TestServer) -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // A comment on a task notifies the assignee once; the thread is ordered;
 // an edit keeps the previous body; a delete hides the comment.
 async fn comments_thread_notify_edit_and_delete() {
@@ -101,7 +101,7 @@ async fn comments_thread_notify_edit_and_delete() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Invalid input is refused; an unknown subject is 404; every subject
 // kind we can create here accepts a comment.
 async fn comment_validation_and_subject_resolution() {
@@ -160,7 +160,7 @@ async fn comment_validation_and_subject_resolution() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // A repeat reaction is idempotent; every kind is counted (zero included);
 // removing is idempotent; an unknown kind is refused.
 async fn reactions_are_idempotent_and_every_kind_is_counted() {

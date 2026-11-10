@@ -18,7 +18,7 @@ description: How an AI agent works in the Project Portfolio Management repo (Rus
 | Where | Command |
 |---|---|
 | matcher | `cargo test`; `cargo clippy --all-targets --all-features -- -D warnings`; `cargo fmt --check` |
-| service | `cargo fmt --check`; `cargo clippy --all-targets --all-features -- -D warnings`; `cargo test --lib` (database-free); with Postgres 18 (`podman compose -f compose.test.yaml up -d --wait`): `DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1`, then each other `tests/*.rs` with `-- --ignored`; run the app with `podman compose up -d --build --wait`, or from source `cargo run -- start` (there is no `cargo loco`) |
+| service | `cargo fmt --check`; `cargo clippy --all-targets --all-features -- -D warnings`; `cargo test --lib` (database-free); with Postgres 18 (`podman compose -f compose.test.yaml up -d --wait`): `DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1`, then each other `tests/*.rs` with `-- --ignored`; run the app with `podman compose up -d --build --wait`, or from source `cargo run -- start` (there is no `cargo loco`) |
 | ui | `pnpm run lint`; `pnpm run check` (0 errors, 0 warnings expected); `npx vitest run`; `PW_PORT=4183 CI=true pnpm exec playwright test` (other projects on a shared machine may hold 4173) |
 
 Toolchain is pinned in `rust-toolchain.toml` (1.99.1; minimum supported 1.97); the UI pins Node 26. Use Podman (`podman compose`), not Docker, in instructions.

@@ -16,7 +16,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them_as_at_its_cut_off()
 {
     super::isolate_search_index();

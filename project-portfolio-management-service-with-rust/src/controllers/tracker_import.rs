@@ -14,8 +14,8 @@ use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
+use axa::middleware::body_limit;
 use axum::body::Bytes;
-use axum::extract::DefaultBodyLimit;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -348,10 +348,10 @@ pub fn routes() -> Routes {
         .prefix("/api")
         .add(
             "/plans/{pid}/import/jira",
-            post(import_jira).layer(DefaultBodyLimit::max(ceiling)),
+            body_limit(post(import_jira), ceiling),
         )
         .add(
             "/plans/{pid}/import/asana",
-            post(import_asana).layer(DefaultBodyLimit::max(ceiling)),
+            body_limit(post(import_asana), ceiling),
         )
 }

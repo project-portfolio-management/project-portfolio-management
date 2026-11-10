@@ -7,7 +7,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test my_work -- --ignored`.
 
 #![expect(
@@ -80,7 +80,7 @@ const AS_OF: &str = "2026-10-02T23:30:00Z";
 /// open tasks; every bucket is present; bad zones are refused; a `sub`
 /// that is not a UUID gets empty buckets with a stated reason.
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test my_work -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test my_work -- --ignored`"]
 async fn my_work_buckets_by_due_date_in_the_callers_zone() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so no other test races the

@@ -46,7 +46,7 @@ impl Cache {
     /// # Errors
     ///
     /// When such an environment has no URL, or the URL is malformed. An unreachable Redis is not an error here:
-    /// the connection is retried, and `/_readiness` reports it.
+    /// the connection is retried, and `/_health/ready` reports it.
     pub fn from_env(environment: &Environment) -> Result<Self> {
         let url = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL")
             .ok()
@@ -54,7 +54,7 @@ impl Cache {
         match url {
             Some(url) => {
                 let client = redis::Client::open(url).map_err(Error::wrap)?;
-                // Lazy, so a Redis that is down costs cached answers and a `503` on `/_readiness`, never a service
+                // Lazy, so a Redis that is down costs cached answers and a `503` on `/_health/ready`, never a service
                 // that hangs at boot.
                 let manager = redis::aio::ConnectionManager::new_lazy_with_config(
                     client,
@@ -139,7 +139,7 @@ impl Cache {
         }
     }
 
-    /// Asks the store whether it answers, for `/_readiness`.
+    /// Asks the store whether it answers, for `/_health/ready`.
     ///
     /// # Errors
     ///

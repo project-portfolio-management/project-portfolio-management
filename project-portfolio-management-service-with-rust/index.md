@@ -95,7 +95,7 @@ verified claims (`401` without one), while every other handler stamps the
 token `sub` as the audit `actor`. Leads, assignees, and owners are user /
 org identities. That token is required on
 every `/api/*` route by default (`/api-docs/openapi.json`, `/swagger-ui`,
-`/_health`, `/_ping` and the calendar feeds stay public; `/metrics.prom` needs
+the three health probes (`/_health/live`, `/_health/ready`, `/_health/startup`) and the calendar feeds stay public; `/metrics.prom` needs
 a token); only an explicit `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
 turns enforcement off, and never in production. Source of truth:
 `agents/share/authentication-sessions.md` (shared family guidance, not in this repository)

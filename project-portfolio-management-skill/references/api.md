@@ -20,7 +20,7 @@ by a unit test), and `openapi.json` beside it documents every route except `GET 
 - **The caller**: `/api/me/…` (my work, my calendar, notification preferences, watching).
 - **Governance**: `/api/approvals`, `/api/processes`, `/api/documents`, `/api/governance-frameworks`,
   `/api/ways-of-working`, `/api/escalations`, `/api/change-requests`, `/api/issues`.
-- **Outside `/api`**: `/_health`, `/_readiness`, `/metrics.prom` (needs a token), `/api-docs/openapi.json`,
+- **Outside `/api`**: `/_health/live`, `/_health/ready`, `/_health/startup`, `/metrics.prom` (needs a token), `/api-docs/openapi.json`,
   `/swagger-ui`.
 
 ## The bridge to the workforce service (FB-1 to FB-6)

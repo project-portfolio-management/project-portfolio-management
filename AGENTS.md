@@ -36,12 +36,12 @@ agents read it: `security-reviewer`, `database-reviewer`, `rust-reviewer` and `u
 # service and matcher
 cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
 # database tests need Postgres 18 (the file also starts a Redis 8 on 127.0.0.1:6379, password `loco`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
-#   then DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1
+#   then DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1
 #   (or a throwaway database on a local Postgres: createdb -U postgres -O "$USER" <name>, and drop it after)
 #   and every real-token binary, as CI's `db` job loops over tests/*.rs: cargo test --test <name> -- --ignored --test-threads=1
 #   (all but mod, matching, otlp_export, otlp_middleware, licence_files, keycloak_container, fluvio_relay)
 # restore drill, as CI runs it (the whole suite on a restored copy; run it alone, two at once collide):
-#   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DATABASE_URL="$RESTORED_DATABASE_URL" cargo test --test mod -- --ignored --test-threads=1'
+#   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test mod -- --ignored --test-threads=1'
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60
 # UI (other projects on this machine may hold port 4173: use PW_PORT)
 cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run check && npx vitest run && PW_PORT=4183 CI=true pnpm exec playwright test

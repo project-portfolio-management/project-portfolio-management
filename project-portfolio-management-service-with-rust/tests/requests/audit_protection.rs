@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn audit_rows_cannot_be_changed_or_deleted_without_the_flags() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {

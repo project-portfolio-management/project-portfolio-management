@@ -3,7 +3,7 @@
 # From this crate's directory:
 #
 #   podman compose -f compose.test.yaml up -d --wait
-#   DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
+#   DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
 #     cargo test --test mod -- --ignored --test-threads=1
 #   podman compose -f compose.test.yaml down -v
 #

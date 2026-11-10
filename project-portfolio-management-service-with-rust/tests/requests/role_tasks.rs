@@ -9,7 +9,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_role_lists_what_its_people_are_working_on() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

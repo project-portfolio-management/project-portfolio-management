@@ -13,7 +13,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn executive_financial_and_technology_views() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -210,7 +210,7 @@ async fn executive_financial_and_technology_views() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn moderate_fits_tranches_debt_flow_alignment_compare() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -398,7 +398,7 @@ async fn moderate_fits_tranches_debt_flow_alignment_compare() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn oversight_areas_round_trip() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -616,7 +616,7 @@ async fn oversight_areas_round_trip() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn engineering_tasks_sprints_and_views() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -799,7 +799,7 @@ async fn engineering_tasks_sprints_and_views() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn engineering_moderate_points_notes_wip_devops() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -966,7 +966,7 @@ async fn engineering_moderate_points_notes_wip_devops() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn wip_limits_refuse_overfull_columns() {
     // SAFETY: single-threaded within this #[serial] test.
     unsafe {

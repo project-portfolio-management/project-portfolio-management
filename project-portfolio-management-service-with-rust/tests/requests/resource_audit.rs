@@ -11,7 +11,7 @@ use serial_test::serial;
 /// exactly one wins, the others are told it already names a person, and the person stored is the winner's.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn racing_resolvers_of_one_placeholder_leave_exactly_one_person() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

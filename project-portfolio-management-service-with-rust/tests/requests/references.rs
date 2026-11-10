@@ -9,7 +9,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_meeting_and_a_lesson_appear_under_the_task_they_point_at_and_the_count_is_the_list() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

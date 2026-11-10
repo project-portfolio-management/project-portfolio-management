@@ -20,7 +20,7 @@
 //! both).
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test masking -- --ignored`.
 #![cfg(feature = "paseto")]
 
@@ -103,7 +103,7 @@ fn apollo_plan() -> Value {
 /// through to the GDPR export — which declares itself partial.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test masking -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test masking -- --ignored`"]
 async fn mask_obligation_redacts_reads_and_exports() {
     let (keys, kid) = keys_and_kid();
     // `dept=partner` may read, but only masked. Everyone else reads in

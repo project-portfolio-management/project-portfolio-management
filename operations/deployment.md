@@ -30,12 +30,12 @@ PPM_PASETO_KEYS_URL=https://auth.example.com/.well-known/paseto-keys
 ENV
 
 podman compose up -d --build --wait
-curl -fsS http://localhost:5150/_readiness      # {"ok":true}
+curl -fsS http://localhost:5150/_health/ready   # {"ok":true}
 ```
 
 What starts: `postgres`; a one-shot `migrate` job that applies the migrations
 compiled into the binary and exits; then `api` on port 5150, healthy when
-`/_readiness` answers (it pings the database, the queue and the cache).
+`/_health/ready` answers (it pings the database, the queue and the cache).
 
 **To try it without an identity provider** (your own machine only; login is OFF):
 
@@ -53,10 +53,12 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 
 | Purpose | Variable | Default / notes |
 |---|---|---|
-| Database | `DATABASE_URL` | required, with `sslmode=require`, `verify-ca` or `verify-full` unless the database is on this machine, or production refuses to start; `DB_MIN_CONNECTIONS` (2), `DB_MAX_CONNECTIONS` (20), `DB_CONNECT_TIMEOUT` (5 s), `DB_IDLE_TIMEOUT` (10 min) |
-| Stopping | `SHUTDOWN_TIMEOUT_SECONDS` | `25`; keep it under your orchestrator's own limit. Requests and jobs still running then are cut off |
-| Slow clients | `HEADER_READ_TIMEOUT_SECONDS` | `30`; a client that has not finished its headers by then is dropped |
-| Environment | `APP_ENV` | `production` in the image; `container-dev` is the insecure profile |
+| Database | `DB_URL` | `DATABASE_URL` until axa 0.11, which no longer reads it: the service refuses to start while `DATABASE_URL` is set without `DB_URL`. Required, with `sslmode=require`, `verify-ca` or `verify-full` unless the database is on this machine, or production refuses to start; `DB_MIN_CONNECTIONS` (2), `DB_MAX_CONNECTIONS` (20), `DB_CONNECT_TIMEOUT` (5 s), `DB_IDLE_TIMEOUT` (10 min) |
+| Stopping | `SHUTDOWN_TIMEOUT_SECONDS`, `SHUTDOWN_DRAIN_SECONDS` | `25` and `0`. Told to stop, the service keeps accepting for `SHUTDOWN_DRAIN_SECONDS` while `/_health/ready` answers `503` `shutting_down`, so a load balancer or Kubernetes takes it out first; then requests and jobs get `SHUTDOWN_TIMEOUT_SECONDS`, and those still running are cut off. On Kubernetes set the drain a little above the time the cluster takes to remove a pod, and keep `terminationGracePeriodSeconds` above drain plus timeout |
+| Slow clients | `HTTP_REQUEST_HEADER_READ_TIMEOUT_SECONDS` | `30`; a client that has not finished its headers by then is dropped. Was `HEADER_READ_TIMEOUT_SECONDS` until axa 0.11; the old name set alone refuses the start |
+| Request size | `HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT` | `2097152` (2 MiB) for every route but the uploads and imports, which raise it to their own caps (`ATTACHMENT_MAX_BYTES` and the import limits). Was `BODY_LIMIT_BYTES` until axa 0.11; the old name set alone refuses the start |
+| Environment | `APP_ENV` | `production` in the image; `container-dev` is the insecure profile. Loco's `LOCO_ENV` is not read since axa 0.11; set alone, it refuses the start |
+| Response headers | none | the content security policy and permissions policy are this service's own (`http_security`); axa's `HTTP_CONTENT_SECURITY_POLICY` (was `HTTP_CSP`) and `HTTP_PERMISSIONS_POLICY` change nothing here. Every response is `cross-origin-opener-policy` and `cross-origin-resource-policy` `same-origin` |
 | Listen | `PORT`, `HOST` | `5150` |
 | Login | `REQUIRE_AUTH` | **on**; only `false` turns it off, and production refuses that |
 | Token keys | `PASETO_KEYS_URL`, `PASETO_KEYS`, `PASETO_KEYS_REFRESH_SECS`, `TOKEN_ISSUER`, `TOKEN_AUDIENCE` | keys are fetched at boot and refreshed; set one of URL or inline keys |
@@ -106,8 +108,8 @@ nginx, Caddy, or your platform's ingress). Then:
 3. Publish only the proxy's port; do not expose 5150 and the database port to
    the internet. In Compose, remove the `ports:` entry for `postgres` (it has
    none by default) and bind the API to the proxy's network.
-4. Probe `/_readiness` from the load balancer. `/_health` and `/_ping` are
-   liveness only (they stay `200` with the database down).
+4. Probe `/_health/ready` from the load balancer. `/_health/live` is liveness only (it stays `200` with the database
+   down). `/_ping`, `/_health` and `/_readiness`, axa 0.10's routes, are gone: a check still on one fails.
 
 ## Persistence
 
@@ -129,7 +131,8 @@ The service is designed for a single node today. Before running replicas:
 ## Kubernetes and Helm
 
 No Helm chart is provided. The image runs under any OCI orchestrator: map
-`/_health` to the liveness probe and `/_readiness` to the readiness probe, the
+`/_health/live` to the liveness probe, `/_health/ready` to the readiness probe and `/_health/startup` to the startup probe
+(it answers `503` `not_started` until the database has answered once), set `SHUTDOWN_DRAIN_SECONDS` as above, the
 environment table above to a `ConfigMap` and `Secret`, `/app/data/artifacts`
 to a `PersistentVolumeClaim`, and run the migration as a `Job` (or init
 container) before rolling the Deployment. Write the chart when a cluster target
@@ -138,6 +141,6 @@ and its conventions are named.
 ## Verified
 
 The image builds from a clean checkout, the secure stack starts and answers
-`/_readiness`, anonymous API calls and `/metrics.prom` are `401`, and the
+`/_health/ready`, anonymous API calls and `/metrics.prom` are `401`, and the
 security headers are present; production refuses to start with login off or with
 no key set. See [Backup and restore](backup-and-restore.md) for the disaster exercise.

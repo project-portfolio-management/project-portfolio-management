@@ -188,17 +188,17 @@ pub fn parse_bool(value: &str) -> bool {
     )
 }
 
-/// Paths that stay public even when enforcement is on: health/ping, the
+/// Paths that stay public even when enforcement is on: the three health probes, the
 /// `OpenAPI` doc + Swagger UI, and the calendar feeds (which carry their own
 /// token). The Prometheus endpoint is deliberately **not** here: it exposes
 /// route and traffic shape, so a scraper presents a bearer token like any
 /// other client. Everything else requires a valid bearer token.
 pub(super) fn is_public_path(path: &str) -> bool {
-    path == "/_health"
-        || path == "/_ping"
-        // Readiness pings the database, the queue and the cache and answers only
-        // ok / not ok (200 / 503): what a load balancer or orchestrator needs.
-        || path == "/_readiness"
+    // Liveness asks nothing; readiness pings the database, the queue and the cache, and startup the database; each
+    // answers only ok / not ok (200 / 503): what a load balancer or orchestrator needs.
+    path == "/_health/live"
+        || path == "/_health/ready"
+        || path == "/_health/startup"
         || path == "/api-docs/openapi.json"
         || path.starts_with("/swagger-ui")
         // Feeds authenticate themselves with a per-user revocable token in the

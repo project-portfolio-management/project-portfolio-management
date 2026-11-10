@@ -12,9 +12,8 @@
 //!   auth guard does any work. Only a `401` counts, so a client that signs in correctly is never slowed. It is
 //!   `axa-ratelimit`'s [`axa::ratelimit::lock_out_failures`], which reads the address [`client_address_mw`] records.
 //!
-//! `/_health`, `/_ping` and `/_readiness` are exempt. A refused request is `429` with
-//! `Retry-After` and the `RateLimit-Limit` / `RateLimit-Remaining` /
-//! `RateLimit-Reset` headers (whole seconds); an allowed one carries the
+//! The three health probes, `/_health/live`, `/_health/ready` and `/_health/startup`, are exempt. A refused request is
+//! `429` with `Retry-After` and the `RateLimit-Limit` / `RateLimit-Remaining` / `RateLimit-Reset` headers (whole seconds); an allowed one carries the
 //! `RateLimit-*` headers of the tightest limit it was charged to.
 //!
 //! Each limit allows its *burst* in one window, and the window is as long as the sustained rate takes to earn that
@@ -447,11 +446,15 @@ mod tests {
     }
 
     #[test]
-    fn health_and_ping_are_exempt() {
-        assert!(is_exempt("/_health"));
-        assert!(is_exempt("/_ping"));
-        assert!(is_exempt("/_readiness"));
+    fn the_health_probes_are_exempt() {
+        assert!(is_exempt("/_health/live"));
+        assert!(is_exempt("/_health/ready"));
+        assert!(is_exempt("/_health/startup"));
         assert!(!is_exempt("/api/plans"));
+        // The routes axa 0.10 served are gone, so are their exemptions.
+        for old in ["/_health", "/_ping", "/_readiness"] {
+            assert!(!is_exempt(old), "{old}");
+        }
     }
 
     /// The limiter as production layers it: outside axa's stack, with the proxy list axa was given.
@@ -466,7 +469,7 @@ mod tests {
         let routes = Router::new()
             .route("/api/x", get(|| async { "ok" }))
             .route("/api/plans/p/cpm", get(|| async { "ok" }))
-            .route("/_health", get(|| async { "ok" }))
+            .route("/_health/live", get(|| async { "ok" }))
             .route(
                 "/api/private",
                 get(|| async { (StatusCode::UNAUTHORIZED, "no") }),
@@ -482,6 +485,7 @@ mod tests {
                 hsts: false,
                 hsts_max_age: 0,
                 csp: None,
+                permissions_policy: None,
                 trusted_proxies: nets,
             },
         )
@@ -778,7 +782,7 @@ mod tests {
     async fn health_is_never_limited() {
         let app = app(tight(limit(1, 60), limit(1, 60), limit(1, 60)), "");
         for _ in 0..5 {
-            let (s, _) = status(&app, request("/_health", "10.0.0.1", None, None)).await;
+            let (s, _) = status(&app, request("/_health/live", "10.0.0.1", None, None)).await;
             assert_eq!(s, StatusCode::OK);
         }
     }

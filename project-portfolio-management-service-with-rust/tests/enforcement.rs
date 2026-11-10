@@ -15,7 +15,7 @@
 //! it.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test enforcement -- --ignored`.
 #![cfg(feature = "paseto")]
 
@@ -96,7 +96,7 @@ fn plan_body() -> Value {
 /// while requiring `access=write` to write.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test enforcement -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test enforcement -- --ignored`"]
 async fn enforcement_on_gates_the_real_router() {
     let (keys, kid) = keys_and_kid();
     // Set BEFORE the app boots — the flag, key set and policy are read
@@ -110,15 +110,27 @@ async fn enforcement_on_gates_the_real_router() {
 
     request::<App, _, _>(|request, _ctx| async move {
         assert_eq!(
-            request.get("/_health").await.status_code(),
+            request.get("/_health/live").await.status_code(),
             200,
             "a public path stays open with enforcement on"
         );
         assert_eq!(
-            request.get("/_readiness").await.status_code(),
+            request.get("/_health/ready").await.status_code(),
             200,
             "readiness (database, queue, cache ping) is public for load balancers"
         );
+        assert_eq!(
+            request.get("/_health/startup").await.status_code(),
+            200,
+            "startup (database ping) is public for the orchestrator"
+        );
+        for old in ["/_ping", "/_health", "/_readiness"] {
+            assert_eq!(
+                request.get(old).await.status_code(),
+                401,
+                "{old}: axa 0.10's health route is gone, and no longer public"
+            );
+        }
         assert_eq!(
             request.get("/metrics.prom").await.status_code(),
             401,

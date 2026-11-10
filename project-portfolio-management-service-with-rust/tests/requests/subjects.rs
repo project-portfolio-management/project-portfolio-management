@@ -27,7 +27,7 @@ async fn count(db: &sea_orm::DatabaseConnection, sql: &str) -> i64 {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_person_is_exported_and_pseudonymised_everywhere_and_nobody_else_is_touched() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -142,7 +142,7 @@ async fn a_person_is_exported_and_pseudonymised_everywhere_and_nobody_else_is_to
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_blocked_change_rolls_back_everything_and_says_so() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -227,7 +227,7 @@ impl Drop for PolicyGuard {
 /// refuses the erasure; unset, `/erase` pseudonymises.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_deployment_can_choose_to_delete_instead_of_pseudonymise() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

@@ -8,7 +8,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test break_glass -- --ignored`.
 #![cfg(feature = "paseto")]
 
@@ -82,7 +82,7 @@ const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 const REASON: &str = "Incident 4412: the plan owner is unreachable and the release is blocked";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test break_glass -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test break_glass -- --ignored`"]
 async fn a_private_plan_opens_only_for_the_eligible_for_a_while_and_with_a_witness() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

@@ -63,7 +63,7 @@ pub(crate) async fn outbox_rows(
 /// the `outbox`-transport CRUD handler path (`streaming::create_and_emit`).
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test -- --ignored"]
 async fn outbox_create_writes_plan_and_one_event_atomically() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
@@ -107,7 +107,7 @@ async fn outbox_create_writes_plan_and_one_event_atomically() {
 /// its event, and no event without its committed change).
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test -- --ignored"]
 async fn outbox_failure_rolls_back_both_writes() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
@@ -167,7 +167,7 @@ impl EventSink for Recording {
 /// sink is down nothing is delivered, and nothing is lost.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test -- --ignored"]
 async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
@@ -267,7 +267,7 @@ impl EventSink for HangsOn {
 /// it releases it as an act of a named person, kept in the record, and it is sent once the sink recovers.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test -- --ignored"]
 async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
     use project_portfolio_management::tasks::outbox_retry_failed::{self, Release};
     super::isolate_search_index();
@@ -414,7 +414,7 @@ async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
 /// left is `abandoned`, and kept as `failed`.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test -- --ignored"]
+#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test -- --ignored"]
 async fn a_dead_relays_claim_is_taken_back_and_sent() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {

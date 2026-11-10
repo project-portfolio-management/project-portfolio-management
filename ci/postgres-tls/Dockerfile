@@ -1,5 +1,5 @@
 # The Compose stack's PostgreSQL, with TLS (spec §8.3a). The stack runs APP_ENV=production, where the service refuses
-# a DATABASE_URL without sslmode=require or stronger, so its database must offer TLS. This is the upstream image plus
+# a DB_URL without sslmode=require or stronger, so its database must offer TLS. This is the upstream image plus
 # `openssl`, and an entrypoint that makes a self-signed certificate on first start. The service uses sslmode=require:
 # the connection is encrypted, but the certificate is not checked, which is enough on the stack's own network and no
 # more. A database elsewhere should have a certificate the service can verify (sslmode=verify-full).

@@ -11,7 +11,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn claims_cite_checked_sources_and_the_numbers_are_counted_as_published() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -170,7 +170,7 @@ async fn claims_cite_checked_sources_and_the_numbers_are_counted_as_published() 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_plan_whose_open_tasks_have_no_dates_reports_overdue_as_unknown_not_zero() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -8,7 +8,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test sinks -- --ignored`.
 
 #![expect(
@@ -105,7 +105,7 @@ async fn receiver(status: Arc<AtomicU16>) -> (String, Seen) {
 
 /// LT-6 / RM-11 acceptance.
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test sinks -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test sinks -- --ignored`"]
 async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
     let (keys, kid) = keys_and_kid();
     let status = Arc::new(AtomicU16::new(200));

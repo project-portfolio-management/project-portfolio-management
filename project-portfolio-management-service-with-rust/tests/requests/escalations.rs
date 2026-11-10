@@ -10,7 +10,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_project_escalates_along_its_governance_path_and_the_history_is_kept() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -117,7 +117,7 @@ async fn a_project_escalates_along_its_governance_path_and_the_history_is_kept()
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_red_tolerance_with_no_escalation_is_flagged_until_someone_escalates_it() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -154,7 +154,7 @@ async fn a_red_tolerance_with_no_escalation_is_flagged_until_someone_escalates_i
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn escalating_the_red_tolerances_raises_one_each_and_only_once() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -211,7 +211,7 @@ async fn escalating_the_red_tolerances_raises_one_each_and_only_once() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_scheduled_task_escalates_a_red_tolerance_once_and_waits_after_it_is_answered() {
     use project_portfolio_management::controllers::tolerances::raise_all_needed;
     use sea_orm::ConnectionTrait;
@@ -276,7 +276,7 @@ async fn the_scheduled_task_escalates_a_red_tolerance_once_and_waits_after_it_is
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_person_an_escalation_names_is_told_in_their_inbox() {
     use project_portfolio_management::models::_entities::notifications;
     use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};

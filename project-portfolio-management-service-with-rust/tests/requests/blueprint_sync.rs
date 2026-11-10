@@ -41,7 +41,7 @@ fn ids(diff: &Value) -> Vec<String> {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_template_change_is_applied_to_one_plan_and_refused_for_another_that_edited_the_task() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

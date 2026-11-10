@@ -22,7 +22,7 @@ fn proposal(title: &str) -> Value {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_similar_proposal_is_shown_the_lessons_of_a_past_plan_with_the_match_evidence() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

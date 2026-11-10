@@ -55,7 +55,7 @@ async fn mv(request: &axum_test::TestServer, p: &str, t: &str, status: &str) -> 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn relations_have_the_behaviours_redmine_proved() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

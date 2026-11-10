@@ -12,7 +12,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn plans_are_ranked_by_wsjf_and_rice_from_their_estimated_inputs() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

@@ -14,7 +14,7 @@ const AS_OF: &str = "2026-10-03T12:00:00Z";
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn pdfs_render_deterministically_and_never_leak_what_the_masked_view_hides() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

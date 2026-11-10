@@ -19,7 +19,7 @@ async fn count_named(request: &axum_test::TestServer, name: &str) -> usize {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_retried_post_returns_the_first_answer_and_writes_once() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

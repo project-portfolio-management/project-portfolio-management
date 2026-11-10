@@ -1,7 +1,7 @@
 #!/bin/sh
 # Restore a backup made by scripts/backup.sh into a database (and artifact directory).
 #
-#   scripts/restore.sh BACKUP_DIR TARGET_DATABASE_URL [-a ARTIFACT_DIR] [-f]
+#   scripts/restore.sh BACKUP_DIR TARGET_DB_URL [-a ARTIFACT_DIR] [-f]
 #
 # Verifies SHA256SUMS first and refuses to continue on any mismatch. Refuses to
 # restore into a database that already has tables unless -f is given (-f drops
@@ -20,7 +20,7 @@
 # Stop the service before restoring over a live database.
 set -eu
 
-[ $# -ge 2 ] || { echo "usage: $0 BACKUP_DIR TARGET_DATABASE_URL [-a ARTIFACT_DIR] [-f]" >&2; exit 2; }
+[ $# -ge 2 ] || { echo "usage: $0 BACKUP_DIR TARGET_DB_URL [-a ARTIFACT_DIR] [-f]" >&2; exit 2; }
 DIR="$1"; TARGET="$2"; shift 2
 ARTIFACTS_OUT=""; FORCE=0
 while getopts "a:f" opt; do

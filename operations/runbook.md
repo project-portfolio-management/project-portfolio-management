@@ -6,8 +6,10 @@ For the person on call. Start with the quick reference, then find the symptom.
 
 | Thing | Where |
 |---|---|
-| Liveness | `GET /_health` and `GET /_ping` (stay `200` with the database down) |
-| Readiness | `GET /_readiness` (`200` `{"ok":true}`; `503` when the database, queue or cache fails) |
+| Liveness | `GET /_health/live` (asks nothing; stays `200` with the database down) |
+| Readiness | `GET /_health/ready` (`200` `{"ok":true}`; `503` when the database, queue or cache fails, and `503` `shutting_down` while the service stops) |
+| Startup | `GET /_health/startup` (`503` `not_started` until the database has answered once, then `200` for good) |
+| Old routes | `/_ping`, `/_health`, `/_readiness` are gone since axa 0.11 (`404`, or `401` with login on): a probe still on one fails |
 | Metrics | `GET /metrics.prom` (needs a bearer token); flow gauges are `ppm_flow_*` |
 | Alert rules | [`operations/prometheus/alerts.yml`](prometheus/alerts.yml), for Prometheus `rule_files:`; each alert names its next step |
 | Logs | standard output, JSON in production (`podman compose logs api`) |
@@ -28,8 +30,10 @@ The start-up gate prints a message beginning `refusing to start:`. Do what it sa
 |---|---|---|
 | `authentication enforcement is off in the production environment` | `REQUIRE_AUTH=false` under `APP_ENV=production` | remove the opt-out; production never runs anonymously |
 | `authentication enforcement is on but no token verifier is configured` | no `PASETO_KEYS`, `PASETO_KEYS_URL` or Keycloak settings | set one (see [Deployment](deployment.md)) |
-| `PoolTimedOut` / `Conn` | the database is unreachable or the URL is wrong | check `DATABASE_URL`, the database, the network |
-| YAML or `Tera` errors naming a config file | a malformed config or a missing required variable (`DATABASE_URL`) | read the line; `doctor --config` |
+| `axa 0.11 no longer reads DATABASE_URL (set DB_URL instead)` (or `LOCO_ENV`, `BODY_LIMIT_BYTES`, `HEADER_READ_TIMEOUT_SECONDS`) | a setting under its axa 0.10 name | rename it as the message says ([Upgrade](upgrade-and-migration.md#upgrading-to-axa-011)) |
+| `DB_URL is required in production` | no database URL | set `DB_URL` |
+| `PoolTimedOut` / `Conn` | the database is unreachable or the URL is wrong | check `DB_URL`, the database, the network |
+| YAML or `Tera` errors naming a config file | a malformed config or a missing required variable (`DB_URL`) | read the line; `doctor --config` |
 
 ### Everyone gets `401`
 
@@ -60,10 +64,12 @@ single integration or office is hitting it:
    expired token in a script). A restart clears every lockout, as counts are per process.
    `client_address_lockouts_total` in `/metrics.prom` rises once per lockout.
 
-### `500` on data routes while `/_health` is `200`
+### `503` (or `500`) on data routes while `/_health/live` is `200`
 
-The database is unavailable or erroring; `/_health` is liveness only. Check
-`/_readiness` (`503`), the database, connections (`DB_MAX_CONNECTIONS` vs the
+The database is unavailable or erroring; `/_health/live` is liveness only. Since axa 0.11 a database that cannot serve for now
+(no free connection, a lost connection, a read-only, shutting-down or full server) answers `503` `unavailable` with
+`Retry-After: 5`, not `500`, so an alert that counts only `500` misses it: count `5xx`. Check
+`/_health/ready` (`503`), the database, connections (`DB_MAX_CONNECTIONS` vs the
 server limit), and disk. The service recovers by itself when the database
 returns (verified: after a database restart the next request succeeded).
 

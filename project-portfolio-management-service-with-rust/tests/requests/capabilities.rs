@@ -34,7 +34,7 @@ fn person(uuid: &str) -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Collaborative review end-to-end: delegate to two experts (one
 // external), one declines, one accepts and submits — and the consensus
 // reports the outstanding invitation rather than declaring agreement.
@@ -141,7 +141,7 @@ async fn collaborative_review_delegates_and_aggregates_honestly() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Pins pagination (agents/share/restful.md) on the two collaboration
 // list endpoints — the delegation list (`GET /api/reviews`) and one
 // inbox (`GET /api/notifications`): signed next links walk every row
@@ -182,7 +182,7 @@ async fn collaboration_lists_are_paginated() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // A rule configured once fires when the task crosses the board, logs
 // what it did, and a rule scoped to another plan stays out of it.
 async fn workflow_automation_fires_on_a_board_move_and_logs_the_run() {
@@ -336,7 +336,7 @@ async fn workflow_automation_fires_on_a_board_move_and_logs_the_run() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // FR-32: a rule with more than one action applies every one of them, in
 // the array's declared order, and logs each action's own outcome
 // separately — one action skipping (the plan already carries the
@@ -413,7 +413,7 @@ async fn a_multi_action_rule_applies_every_action_in_order_and_logs_each_outcome
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // FR-32: "a date arriving" — a `milestone_due` rule fires once a
 // milestone's due date has passed, and the sweep is exactly-once: a
 // second sweep over the same still-overdue milestone does not refire
@@ -504,7 +504,7 @@ async fn a_milestone_due_rule_fires_once_the_date_arrives_and_never_again() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // T-28g: shifting a plan's end proposes the same delta on a direct
 // finish-start successor, via a notification that moves nothing.
 async fn plan_timeframe_changed_proposes_a_shift_via_notification() {
@@ -573,7 +573,7 @@ async fn plan_timeframe_changed_proposes_a_shift_via_notification() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // T-28g: shift_dependents actually applies the proposed shift, and
 // does not cascade — the successor's own move never re-fires a rule
 // watching plan_timeframe_changed.
@@ -685,7 +685,7 @@ async fn shift_dependents_applies_the_shift_without_cascading() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // T-28g: rescheduling a milestone's due date fires
 // milestone_due_changed — the write path that did not exist before
 // this task.
@@ -760,7 +760,7 @@ async fn rescheduling_a_milestone_fires_milestone_due_changed() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Set and forget: a deadline in the future is not fired by a sweep, and
 // a cancelled one never fires at all.
 async fn scheduled_actions_only_fire_when_due_and_only_once() {
@@ -843,7 +843,7 @@ async fn scheduled_actions_only_fire_when_due_and_only_once() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Pins pagination (agents/share/restful.md) on the three automation
 // list endpoints — configured rules, their run log, and the deadline
 // queue: signed next links walk every row once, there is no total, and
@@ -927,7 +927,7 @@ async fn automation_lists_are_paginated() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Assignee management: assign, see the workload (including unassigned),
 // then unassign.
 async fn assignee_workload_shows_the_open_pile_including_unassigned() {
@@ -979,7 +979,7 @@ async fn assignee_workload_shows_the_open_pile_including_unassigned() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // The Smart Score explains itself: a plan with no evidence scores null
 // (not zero), and evidence moves the score and shrinks `missing`.
 async fn smart_score_explains_itself_and_never_fakes_evidence() {
@@ -1059,7 +1059,7 @@ async fn smart_score_explains_itself_and_never_fakes_evidence() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Bird's-eye visibility: every phase is reported, and a plan's
 // readiness names each blocker instead of just saying "not ready".
 async fn lifecycle_reports_every_phase_and_names_each_blocker() {

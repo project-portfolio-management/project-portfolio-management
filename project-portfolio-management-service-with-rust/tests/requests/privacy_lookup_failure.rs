@@ -13,7 +13,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_failed_privacy_lookup_refuses_and_is_counted() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -59,7 +59,7 @@ async fn a_failed_privacy_lookup_refuses_and_is_counted() {
 /// lookup failed. It now answers `503`; a write is not turned into one.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_failed_lookup_under_a_list_answers_503() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

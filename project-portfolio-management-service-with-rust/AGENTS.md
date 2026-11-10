@@ -2,7 +2,7 @@
 
 Entry point for AI coding agents working in the
 `project-portfolio-management` crate (v0.2.0, edition 2024, Rust 1.99.1 with a
-minimum of 1.97, axa 0.10, sea-orm 2.0, axum 0.8): a registry of **plan** records
+minimum of 1.97, axa 0.11, sea-orm 2.0, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
 label — **and** a project-management tool.
@@ -35,7 +35,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 | Run | `cargo run -- start` (needs Postgres; port 5150; migrations auto-run in development) |
 | Lint (must be clean) | `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` |
 | DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
-| DB tests | `#[ignore]`d; need `DATABASE_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
+| DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
 | Migrations | `migration/src/` (crate `project-portfolio-management-migration`) — files `m2026…`; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
 
@@ -78,7 +78,7 @@ full contract; this is the map. One module per area in
 | Announcements | `GET`/`POST /announcements`, `PUT`/`DELETE /announcements/{pid}` — publish/edit/retract need the `comms` area (`access=admin` or `comms=publish`) else `403`; `?include=all` for publishers |
 | Access / privacy | `GET`/`PUT /plans/{pid}/access` (private plan + members) · `/plans/{pid}/guests` (+ `revoke`) · `/plans/{pid}/modules` · `/plans/{pid}/links` (typed links) |
 | Collaboration / automation | `/reviews` · `/assignees/workload` · `/notifications` · `/automations` · `/scheduled-actions` (+ `sweep`) · `/automations/milestones/sweep` (a rule/milestone pair fires once, ever) · saved views, canvases, comments, attachments, custom fields, components, templates, timesheets, `/my-work`, report schedules, notification sinks |
-| Audit / auth / docs | `/plans/audit/recent` · `/plans/{pid}/audit` · `/plans/events/recent` · `GET /plans/whoami` · `/api-docs/openapi.json` · `/swagger-ui` · `/metrics.prom` · loco `/_health`, `/_ping` |
+| Audit / auth / docs | `/plans/audit/recent` · `/plans/{pid}/audit` · `/plans/events/recent` · `GET /plans/whoami` · `/api-docs/openapi.json` · `/swagger-ui` · `/metrics.prom` · axa `/_health/live`, `/_health/ready`, `/_health/startup` |
 
 Every plan/record write writes an `audit_logs` row (or, if that insert fails, logs it and counts it in
 `audit_write_failed_total` via `AuditModel::record_or_log`; never `record(..).await.ok()`, CQ-3) and publishes a
@@ -254,5 +254,5 @@ config/                     development / production / test yaml
 matcher, `authentication-verifier` and `integrity-mac` all come from crates.io, and the `migration/` crate is a path
 dependency inside this directory):
 `podman build -f project-portfolio-management-service-with-rust/Dockerfile -t project-portfolio-management-service .`
-Exclude every `target/` via `.containerignore`. `GET /_health` returns
-`200` once Postgres is reachable.
+Exclude every `target/` via `.containerignore`. `GET /_health/live` returns
+`200` once the service listens; `/_health/ready` and `/_health/startup` once Postgres is reachable.

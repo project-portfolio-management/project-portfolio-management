@@ -7,7 +7,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test workflow_roles -- --ignored`.
 #![cfg(feature = "paseto")]
 
@@ -73,7 +73,7 @@ const BOB: &str = "3f2c6b7e-0000-4000-8000-00000000000b";
 /// role and writes no transition row; the same move by a `lead` succeeds; an
 /// unrestricted move is open to anyone; the refusal names the allowed roles.
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test workflow_roles -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test workflow_roles -- --ignored`"]
 async fn a_role_restricted_transition_admits_only_that_role() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so no other test races the

@@ -16,7 +16,7 @@ The search index is not backed up; it is rebuilt (`task search_reindex`).
 ## Take a backup
 
 ```sh
-DATABASE_URL=postgres://user:pass@db-host:5432/project_portfolio_management \
+DB_URL=postgres://user:pass@db-host:5432/project_portfolio_management \
 ARTIFACT_DIR=/var/lib/ppm/artifacts \
   scripts/backup.sh -o /backups
 # -> /backups/ppm-backup-20261010T020000Z/{db.dump,artifacts.tar.gz,MANIFEST,SHA256SUMS}
@@ -46,7 +46,7 @@ contains personal data (see the [retention schedule](../governance/retention-sch
 The database and the artifact volume live in containers, so run the tools there:
 
 ```sh
-export DATABASE_URL=postgresql://ppm:$POSTGRES_PASSWORD@localhost:5432/project_portfolio_management
+export DB_URL=postgresql://ppm:$POSTGRES_PASSWORD@localhost:5432/project_portfolio_management
 export PG_DUMP="podman compose exec -T postgres pg_dump"
 export PSQL="podman compose exec -T postgres psql"
 export ARTIFACT_TAR_CMD="podman compose exec -T api tar -C /app/data/artifacts -cz ."
@@ -90,10 +90,10 @@ With Compose (this exact sequence was exercised after deleting every volume):
 
 ```sh
 podman compose up -d --wait postgres                       # an empty database
-export DATABASE_URL=postgresql://ppm:$POSTGRES_PASSWORD@localhost:5432/project_portfolio_management
+export DB_URL=postgresql://ppm:$POSTGRES_PASSWORD@localhost:5432/project_portfolio_management
 export PSQL="podman compose exec -T postgres psql"
 export PG_RESTORE="podman compose exec -T postgres pg_restore" RESTORE_FROM_STDIN=1
-scripts/restore.sh /backups/ppm-backup-20261010T020000Z "$DATABASE_URL"   # the database
+scripts/restore.sh /backups/ppm-backup-20261010T020000Z "$DB_URL"   # the database
 podman compose up -d --wait migrate api                    # start the service (migrate is a no-op)
 podman compose exec -T api tar -C /app/data/artifacts -xz \
     < /backups/ppm-backup-20261010T020000Z/artifacts.tar.gz               # the artifact store
@@ -110,7 +110,7 @@ A backup that has never been restored is a hope. `scripts/restore-test.sh`
 proves it:
 
 ```sh
-DATABASE_URL=postgres://user:pass@db-host:5432/project_portfolio_management \
+DB_URL=postgres://user:pass@db-host:5432/project_portfolio_management \
   scripts/restore-test.sh
 ```
 
@@ -118,7 +118,7 @@ It takes a backup of the source, restores it into a scratch database, and fails
 unless **the migration history is identical**, **every table has the same rows
 and the same content digest**, and the **restored artifact file count matches**.
 `-t COMMAND` runs a command against the restored database before it is dropped
-(`RESTORED_DATABASE_URL` is exported); CI uses it to run the whole request test
+(`RESTORED_DB_URL` is exported); CI uses it to run the whole request test
 suite against the restored copy. `-k` keeps the scratch database so you can
 inspect it and time the restore.
 

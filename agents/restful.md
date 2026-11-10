@@ -17,8 +17,11 @@ per-kind collection and no `{collection}` path segment. Matching is
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/_health` | Health check |
-| GET | `/_ping` | Liveness ping |
+| GET | `/_health/live` | Liveness: asks nothing |
+| GET | `/_health/ready` | Readiness: the database, the queue and the cache; `503` `shutting_down` from the moment shutdown begins |
+| GET | `/_health/startup` | Startup: the database, and passes for good once it has |
+
+`/_ping`, `/_health` and `/_readiness` (axa 0.10) are gone and answer `404`.
 
 ### Plan CRUD
 
@@ -127,6 +130,7 @@ webhooks).
 | 404 | Unknown or soft-deleted `pid`; a private plan to a non-member |
 | 422 | Validation failure: blank `name` on create/update; containment cycle on `parent_ref`; blank sub-resource title (family convention) |
 | 500 | Internal error |
+| 503 | `unavailable`, with `Retry-After: 5`: the database cannot serve for now (no free connection, a lost connection, a read-only, shutting-down or full server; axa 0.11); also an index or privacy lookup that is down |
 
 ## Example
 

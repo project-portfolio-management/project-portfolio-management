@@ -42,7 +42,7 @@ async fn item(request: &axum_test::TestServer, canvas: &str, key: &str, body: &s
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Each built-in template accepts an item in every one of its boxes and
 // reports every box, with the right counts.
 async fn every_template_round_trips_with_all_boxes_reported() {
@@ -75,7 +75,7 @@ async fn every_template_round_trips_with_all_boxes_reported() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // An unknown template, an unknown box, a blank body and a foreign
 // owner scheme are all refused 422; another canvas's item is a 404.
 async fn invalid_canvases_and_items_are_refused() {
@@ -121,7 +121,7 @@ async fn invalid_canvases_and_items_are_refused() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Promotion creates the target and an audit row naming the source item,
 // links the item back, and is refused (409) the second time.
 async fn promotion_writes_the_target_audits_the_source_and_is_not_repeatable() {
@@ -227,7 +227,7 @@ async fn promotion_writes_the_target_audits_the_source_and_is_not_repeatable() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Deleting a canvas hides it and its items; the list no longer shows it.
 async fn deleting_a_canvas_soft_deletes_its_items() {
     super::isolate_search_index();

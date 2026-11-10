@@ -9,7 +9,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_project_follows_its_own_ways_of_working_or_inherits_its_programmes() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -123,7 +123,7 @@ async fn a_project_follows_its_own_ways_of_working_or_inherits_its_programmes() 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn governance_is_followed_separately_from_ways_of_working() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

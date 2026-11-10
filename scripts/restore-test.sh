@@ -2,10 +2,10 @@
 # Prove that a backup restores: back up SOURCE, restore it into a fresh scratch
 # database, and compare the two. Exits non-zero on the first difference.
 #
-#   DATABASE_URL=postgres://user:pass@host:5432/ppm scripts/restore-test.sh [-k] [-t "COMMAND"]
+#   DB_URL=postgres://user:pass@host:5432/ppm scripts/restore-test.sh [-k] [-t "COMMAND"]
 #
 #   -k            keep the scratch database (its URL is printed) instead of dropping it
-#   -t "COMMAND"  run COMMAND with RESTORED_DATABASE_URL (and RESTORED_ARTIFACT_DIR)
+#   -t "COMMAND"  run COMMAND with RESTORED_DB_URL (and RESTORED_ARTIFACT_DIR)
 #                 exported, before the scratch database is dropped. CI uses it to
 #                 run the test suite against the restored database.
 #
@@ -13,7 +13,7 @@
 # the same row count; every table has the same content digest (md5 over its rows
 # as text, ordered); the restored artifact files match the archive's manifest.
 #
-# DATABASE_URL must be a plain postgres://user:pass@host:port/dbname URL with no
+# DB_URL must be a plain postgres://user:pass@host:port/dbname URL with no
 # query string, and its role must be able to CREATE DATABASE.
 set -eu
 
@@ -25,11 +25,12 @@ while getopts "kt:" opt; do
     *) echo "usage: $0 [-k] [-t COMMAND]" >&2; exit 2 ;;
   esac
 done
-: "${DATABASE_URL:?set DATABASE_URL to the source database}"
+[ -z "${DATABASE_URL:-}" ] || [ -n "${DB_URL:-}" ] || { echo "DATABASE_URL is no longer read (axa 0.11): set DB_URL" >&2; exit 2; }
+: "${DB_URL:?set DB_URL to the source database}"
 PSQL="${PSQL:-psql}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
-base="${DATABASE_URL%/*}"
+base="${DB_URL%/*}"
 scratch="ppm_restore_test_$(date -u +%Y%m%d%H%M%S)_$$"
 SCRATCH_URL="$base/$scratch"
 WORK="$(mktemp -d)"
@@ -53,17 +54,17 @@ $PSQL "$base/postgres" -qc "create database \"$scratch\"" || fail "cannot create
 
 echo "3/5 comparing migration history ..."
 mig() { $PSQL "$1" -Atc "select coalesce(string_agg(version, ',' order by version), '') from seaql_migrations"; }
-[ "$(mig "$DATABASE_URL")" = "$(mig "$SCRATCH_URL")" ] || fail "migration history differs"
+[ "$(mig "$DB_URL")" = "$(mig "$SCRATCH_URL")" ] || fail "migration history differs"
 
 echo "4/5 comparing every table (rows and content digest) ..."
-tables="$($PSQL "$DATABASE_URL" -Atc "select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' order by 1")"
+tables="$($PSQL "$DB_URL" -Atc "select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' order by 1")"
 [ -n "$tables" ] || fail "the source has no tables"
 digest() {
   $PSQL "$1" -Atc "select count(*) || ':' || coalesce(md5(string_agg(x::text, E'\\n' order by x::text)), '') from \"$2\" x"
 }
 n=0
 for t in $tables; do
-  a="$(digest "$DATABASE_URL" "$t")"; b="$(digest "$SCRATCH_URL" "$t")"
+  a="$(digest "$DB_URL" "$t")"; b="$(digest "$SCRATCH_URL" "$t")"
   [ "$a" = "$b" ] || fail "table $t differs (source $a, restored $b)"
   n=$((n+1))
 done
@@ -83,6 +84,6 @@ fi
 
 if [ -n "$AFTER" ]; then
   echo "running: $AFTER"
-  RESTORED_DATABASE_URL="$SCRATCH_URL" RESTORED_ARTIFACT_DIR="$WORK/artifacts" sh -c "$AFTER" || fail "the command run against the restored database failed"
+  RESTORED_DB_URL="$SCRATCH_URL" RESTORED_ARTIFACT_DIR="$WORK/artifacts" sh -c "$AFTER" || fail "the command run against the restored database failed"
 fi
 echo "RESTORE TEST PASSED"

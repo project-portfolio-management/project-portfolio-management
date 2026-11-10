@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn each_recipient_has_a_delivery_row_and_a_failure_is_recorded_not_lost() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_failed_audit_write_is_counted_not_dropped() {
     request::<App, _, _>(|_request, ctx| async move {
         let failed = || Metrics::global().audit_write_failed_total.get();
@@ -45,7 +45,7 @@ async fn a_failed_audit_write_is_counted_not_dropped() {
 /// its audit row is not. Announcements stand for the writes whose audit moved into their transaction.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_write_whose_audit_row_cannot_be_written_is_refused() {
     use serde_json::{Value, json};
     request::<App, _, _>(|request, ctx| async move {

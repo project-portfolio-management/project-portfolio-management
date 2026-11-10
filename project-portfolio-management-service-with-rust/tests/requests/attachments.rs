@@ -31,7 +31,7 @@ fn stored_files(dir: &std::path::Path) -> usize {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn attachments_are_refused_before_storing_verified_and_served_safely() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
@@ -148,7 +148,7 @@ fn walk(dir: &std::path::Path) -> std::path::PathBuf {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn attachment_text_is_searchable_and_honest_about_what_it_cannot_read() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
@@ -265,7 +265,7 @@ async fn fake_clamd() -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn content_that_lies_is_refused_and_a_scanner_has_the_last_word() {
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("temp dir");
@@ -338,4 +338,75 @@ async fn content_that_lies_is_refused_and_a_scanner_has_the_last_word() {
         unsafe { std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_SCAN_ADDR") };
     })
     .await;
+}
+
+/// The upload route raises the service-wide 2 MiB body limit to the attachment cap. Since axa 0.11 the stack binds every
+/// body, not only the extractors, so a route that raised only Axum's `DefaultBodyLimit` would refuse a 3 MiB file with
+/// `413` while the cap allowed it; the route says `axa::middleware::body_limit` instead.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn an_upload_larger_than_the_service_wide_body_limit_is_accepted_up_to_the_cap() {
+    super::isolate_search_index();
+    let dir = tempfile::tempdir().expect("tempdir");
+    // SAFETY: `#[serial]` — nothing else runs while these are set.
+    unsafe {
+        std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR", dir.path());
+        std::env::set_var(
+            "PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_MAX_BYTES",
+            (4 << 20).to_string(),
+        );
+    }
+    request::<App, _, _>(move |request, _ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Project", "name": "Large files" }))
+            .await
+            .json();
+        let p = plan["pid"].as_str().expect("pid").to_string();
+        let pdf = |size: usize| {
+            let mut body = b"%PDF-1.7 ".to_vec();
+            body.resize(size, b'a');
+            Bytes::from(body)
+        };
+        let url = format!("/api/attachments?subject_kind=plan&subject_pid={p}&filename=large.pdf");
+        let three = request
+            .post(&url)
+            .content_type("application/pdf")
+            .bytes(pdf(3 << 20))
+            .await;
+        assert_eq!(
+            three.status_code(),
+            200,
+            "3 MiB is over the service-wide limit and under the cap"
+        );
+        assert_eq!(
+            three.json::<Value>()["sha256"],
+            sha256_hex(&pdf(3 << 20)),
+            "every byte arrived"
+        );
+        let over = request
+            .post(&url)
+            .content_type("application/pdf")
+            .bytes(pdf((4 << 20) + 1))
+            .await;
+        assert_eq!(
+            over.status_code(),
+            422,
+            "over the cap, the handler refuses it: {}",
+            over.text()
+        );
+        // Elsewhere the service-wide limit still holds.
+        let big_json = request
+            .post("/api/plans")
+            .content_type("application/json")
+            .bytes(pdf(3 << 20))
+            .await;
+        assert_eq!(big_json.status_code(), 413);
+    })
+    .await;
+    unsafe {
+        std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR");
+        std::env::remove_var("PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_MAX_BYTES");
+    }
 }

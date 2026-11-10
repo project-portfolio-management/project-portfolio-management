@@ -9,7 +9,7 @@
 //! environment, before the first request.
 //!
 //! `#[ignore]`d — boots the app, so it needs `PostgreSQL` via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test hardening -- --ignored`.
 
 use axa_test::prelude::*;
@@ -18,7 +18,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test hardening -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test hardening -- --ignored`"]
 async fn the_real_router_carries_headers_cors_and_rate_limits() {
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT", "on");
@@ -76,7 +76,7 @@ async fn the_real_router_carries_headers_cors_and_rate_limits() {
 
         // Health is exempt from limiting however often it is called.
         for _ in 0..10 {
-            assert_eq!(request.get("/_health").await.status_code(), 200);
+            assert_eq!(request.get("/_health/live").await.status_code(), 200);
         }
 
         // Spend the rest of the burst (3 requests so far), then get refused

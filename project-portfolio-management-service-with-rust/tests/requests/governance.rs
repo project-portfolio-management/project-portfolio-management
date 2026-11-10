@@ -3,8 +3,8 @@
 //! item), duplicate-demand detection, the strictly-ordered gate
 //! journey, risks, and budget arithmetic — over the live routes.
 //!
-//! `#[ignore]`d: needs PostgreSQL (`DATABASE_URL` /
-//! `DATABASE_URL`); run with `cargo test -- --ignored`.
+//! `#[ignore]`d: needs PostgreSQL (`DB_URL` /
+//! `DB_URL`); run with `cargo test -- --ignored`.
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
@@ -25,7 +25,7 @@ fn a_proposal(title: &str) -> Value {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // T-28i: below the minimum periods of history, the forecast is
 // null + a reason and never a confident-looking number; with enough
 // periods and real approvals, it returns a real forecast, names the
@@ -98,7 +98,7 @@ async fn intake_forecast_refuses_thin_history_and_is_deterministic() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // The full intake pipeline: draft → submitted → in_review → approved →
 // promoted, which mints a real plan in the target collection;
 // out-of-order actions and post-submission edits are refused.
@@ -174,7 +174,7 @@ async fn intake_pipeline_promotes_into_the_registry() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Duplicate-demand detection at intake: a proposal whose title matches
 // a live plan (and a sibling proposal) is flagged before funding.
 async fn duplicate_demand_is_flagged_at_intake() {
@@ -218,7 +218,7 @@ async fn duplicate_demand_is_flagged_at_intake() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // The gate journey is strictly ordered: approvals advance the stage,
 // hold does not, skipping refuses naming the expected gate, and the
 // summary + review list expose stage / next_gate.
@@ -270,7 +270,7 @@ async fn gate_journey_advances_stage_in_order() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Risks: scoring bounds enforce 1–5, the list derives exposure
 // (highest first), and escalation materializes an open risk.
 async fn risks_score_and_escalate() {
@@ -329,7 +329,7 @@ async fn risks_score_and_escalate() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Budgets: minor-unit arithmetic, per-currency variance, currency
 // shape validation, and the governance summary tying it together.
 async fn budgets_track_variance_and_the_summary_aggregates() {

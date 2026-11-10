@@ -13,7 +13,7 @@ const BOB: &str = "person:3f2c6b7e-0000-4000-8000-00000000000b";
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_review_lists_only_standing_grants_oldest_first() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

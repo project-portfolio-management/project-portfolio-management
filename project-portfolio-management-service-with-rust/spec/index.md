@@ -454,8 +454,8 @@ off (`development.yaml` and `test.yaml` do; the environment variable wins). The
 service **refuses to start** when the environment (`APP_ENV`) is `production` and
 enforcement is off, and when enforcement is on with no token verifier. When
 on, any `/api/*` route without a valid token is `401`; the public paths
-`/_health`, `/_ping`, `/api-docs/openapi.json`, `/swagger-ui*` and the calendar
-feeds stay open (via `src/auth.rs::is_public_path`); `/metrics.prom` needs a
+`/_health/live`, `/_health/ready`, `/_health/startup`, `/api-docs/openapi.json`, `/swagger-ui*` and the calendar
+feeds stay open (via `src/auth/enforcement.rs::is_public_path`); `/metrics.prom` needs a
 token. **A handler never reads missing claims as a pass while enforcement is
 on** (CQ-2): a route that lets anyone act with login off asks
 `MaybeAuthUser::holds_or_open`, which passes no claims only when enforcement is
@@ -797,7 +797,7 @@ trail, `whoami` (no token → `401`), blanket enforcement (with
 in-test: un-authed `GET /api/plans` → `401`, public
 `GET /api-docs/openapi.json` → `200`; `#[serial]`), and OpenAPI/Swagger —
 these need Postgres, so they are `#[ignore]`-gated; run with
-`cargo test -- --ignored` and a `DATABASE_URL`.
+`cargo test -- --ignored` and a `DB_URL`.
 
 ## 12. Compliance
 
@@ -902,6 +902,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   single entity (see e.g. care-pathway's/case's `disclosure::
   record_access` calls for a FHIR search). The write is awaited and
   its error propagated via `?` — a real DB error surfaces as `500`
+  (`503` `unavailable` with `Retry-After: 5` when the database cannot serve for now, since axa 0.11)
   before either endpoint constructs a body, so a failed audit write
   never ships alongside a delivered response. `auditor_trail`'s query
   struct carries no `format` (the endpoint always returns JSON), so

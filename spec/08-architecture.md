@@ -77,11 +77,19 @@ files. Configuration is the environment, with defaults in code, and `APP_ENV` pi
 | `test` | off unless turned on | fresh each boot | memory | a stub |
 | any other name | **on, and it refuses to start with them off: an unknown name fails closed** | no | Redis, **required** | `SMTP_*`, STARTTLS |
 
-`PORT`, `BINDING`, `HOST`, `DATABASE_URL`, `DB_MIN_CONNECTIONS`, `DB_MAX_CONNECTIONS`, `DB_CONNECT_TIMEOUT`, `DB_IDLE_TIMEOUT`,
-`BODY_LIMIT_BYTES`, `HTTP_COMPRESSION`, `WORKER_MODE`, `LOG_LEVEL`, `LOG_FORMAT` and `LOG_FILTER` are axa's. CORS and HSTS stay with
-this service's own `http_security` layer, so axa's are turned off. There is no request timeout unless `REQUEST_TIMEOUT_SECONDS` is set,
-because a timeout would cut the live event streams. A `GET` whose `ETag` matches `If-None-Match` answers `304`, whichever handler set it.
-`/_readiness` answers `503` when the database or the cache does not. One list of trusted proxies, `TRUSTED_PROXIES`, which axa
+`PORT`, `BINDING`, `HOST`, `DB_URL`, `DB_MIN_CONNECTIONS`, `DB_MAX_CONNECTIONS`, `DB_CONNECT_TIMEOUT`, `DB_IDLE_TIMEOUT`,
+`HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT`, `HTTP_REQUEST_HEADER_READ_TIMEOUT_SECONDS`, `HTTP_COMPRESSION`, `WORKER_MODE`,
+`SHUTDOWN_TIMEOUT_SECONDS`, `SHUTDOWN_DRAIN_SECONDS`, `LOG_LEVEL`, `LOG_FORMAT` and `LOG_FILTER` are axa's (since axa 0.11). CORS,
+HSTS, the content security policy and the permissions policy stay with this service's own `http_security` layer, so axa's are turned
+off, and neither `HTTP_CONTENT_SECURITY_POLICY` nor `HTTP_PERMISSIONS_POLICY` changes what is sent. axa 0.10 read four of these under
+other names, which axa 0.11 ignores: `DATABASE_URL` (now `DB_URL`), `LOCO_ENV` (now `APP_ENV`), `BODY_LIMIT_BYTES` and
+`HEADER_READ_TIMEOUT_SECONDS`. **The service refuses to start, in every environment, when an old name is set and its new name is
+not**, naming both, rather than silently falling back to a default database, environment or limit. The body limit
+(2 MiB unless set) binds every request body, read by an extractor or not; the attachment upload and the plan, MS Project
+and tracker imports raise it to their own caps with axa's `middleware::body_limit`, and a census test keeps Axum's
+`DefaultBodyLimit`, which since axa 0.11 raises only the extractors' limit, out of the controllers. There is no request timeout
+unless `REQUEST_TIMEOUT_SECONDS` is set, because a timeout would cut the live event streams. A `GET` whose `ETag` matches
+`If-None-Match` answers `304`, whichever handler set it. `/_health/ready` answers `503` when the database or the cache does not. One list of trusted proxies, `TRUSTED_PROXIES`, which axa
 reads, decides both whose `X-Forwarded-For` gives the client address and whose `X-Forwarded-Proto` is believed for HSTS.
 `PROJECT_PORTFOLIO_MANAGEMENT_TRUSTED_PROXIES`, the old name, still works alone with a warning; set to a different list, the
 service refuses to start. An idle connection is kept for `KEEP_ALIVE_TIMEOUT_SECONDS`, 75
@@ -102,10 +110,15 @@ the process's own `APP_ENV` and the one the command names must allow it. axa's p
 them, exiting `1` before the service connects to anything, so `bin/main.rs` must read its arguments through axa. Rollback in production
 is a restore (`operations/upgrade-and-migration.md`).
 
-`/_readiness` is axa's. It asks the database, the queue and the cache, names what failed in a `503`, gives each check a time
-limit, and reuses one answer for 5 seconds, because the route is public. `check` reads the configuration, connects to nothing, and
+The three health routes are axa's and follow Kubernetes' probes. `/_health/live` asks nothing. `/_health/ready` asks the database,
+the queue and the cache, names what failed in a `503`, gives each check a time limit, reuses one answer for 5 seconds, because the
+route is public, and answers `503` `shutting_down` from the moment shutdown begins. `/_health/startup` asks only the database and,
+once it has passed, passes for good. The routes axa 0.10 served, `/_ping`, `/_health` and `/_readiness`, answer `404` (or `401`
+with login on, as they are no longer public). A database that cannot serve for now (no free connection, a lost connection, or a
+read-only, shutting-down or full server) answers `503` `unavailable` with `Retry-After: 5`, not `500`. `check` reads the configuration, connects to nothing, and
 fails where a boot would for the settings it knows. Stopping is one limit for requests and jobs together:
-`SHUTDOWN_TIMEOUT_SECONDS`, 25 by default. In production, a `DATABASE_URL` that leaves this machine must set `sslmode` to `require`,
+`SHUTDOWN_TIMEOUT_SECONDS`, 25 by default, counted from the end of `SHUTDOWN_DRAIN_SECONDS` (0 by default), for which the service
+still accepts requests while readiness refuses. In production, a `DB_URL` that leaves this machine must set `sslmode` to `require`,
 `verify-ca` or `verify-full`, or the service refuses to start. `compose.yaml` runs in production, so its PostgreSQL
 offers TLS (`ci/postgres-tls`: a self-signed certificate made on first start, TLS 1.3 only) and the API connects with
 `sslmode=require`, encrypted but with the certificate unchecked. A database outside the stack should use `verify-full`.

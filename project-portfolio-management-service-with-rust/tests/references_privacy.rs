@@ -60,7 +60,7 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test references_privacy -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test references_privacy -- --ignored`"]
 async fn a_private_plans_references_are_not_found_for_a_non_member() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

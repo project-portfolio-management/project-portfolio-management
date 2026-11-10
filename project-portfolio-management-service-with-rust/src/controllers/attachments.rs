@@ -13,8 +13,8 @@ use super::forbidden;
 use super::{db_err, unprocessable};
 use crate::prelude::*;
 use axa::error::ErrorDetail;
+use axa::middleware::body_limit;
 use axum::body::Bytes;
-use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use sea_orm::{ConnectionTrait, PaginatorTrait, QueryOrder};
@@ -401,16 +401,15 @@ async fn delete_one(
 
 /// The attachment routes.
 pub fn routes() -> Routes {
-    // Axum's default body limit is 2 MiB; raise it to the configured cap (plus
-    // a little) for the upload route only. The handler still refuses anything
+    // The service-wide body limit is 2 MiB; raise it to the configured cap (plus
+    // a little) for the upload route only, with axa's `body_limit`, which binds the
+    // body itself (Axum's `DefaultBodyLimit` raises only the extractors' limit, and
+    // axa 0.11's stack would still refuse at 2 MiB). The handler still refuses anything
     // over the cap, so this layer is a transport ceiling, not the rule.
     let ceiling = artifacts::max_bytes().saturating_add(64 * 1024);
     Routes::new()
         .prefix("/api")
-        .add(
-            "/attachments",
-            post(upload).layer(DefaultBodyLimit::max(ceiling)),
-        )
+        .add("/attachments", body_limit(post(upload), ceiling))
         .add("/attachments", get(list))
         .add("/attachments/search", get(search))
         .add("/attachments/{pid}/download", get(download))

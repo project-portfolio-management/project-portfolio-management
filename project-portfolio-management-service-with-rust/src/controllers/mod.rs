@@ -703,4 +703,51 @@ mod helper_census {
         offenders.sort();
         assert!(offenders.is_empty(), "copied helpers: {offenders:?}");
     }
+
+    /// Since axa 0.11 the stack binds every request body to the service-wide limit, so a route raised only with
+    /// Axum's `DefaultBodyLimit` still refuses a body over 2 MiB with `413` (a 3 MiB attachment did, in
+    /// `requests::attachments`). A route that takes a larger body says `axa::middleware::body_limit`, which raises both.
+    #[test]
+    fn a_larger_body_is_allowed_with_axas_body_limit_not_axums() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
+        let mut offenders = Vec::new();
+        for entry in std::fs::read_dir(dir).expect("read controllers") {
+            let path = entry.expect("entry").path();
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if name == "mod.rs" || path.extension().is_none_or(|e| e != "rs") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).expect("read file");
+            if text.contains("DefaultBodyLimit::") {
+                offenders.push(name.to_string());
+            }
+        }
+        offenders.sort();
+        assert!(
+            offenders.is_empty(),
+            "use axa::middleware::body_limit(route, bytes): {offenders:?}"
+        );
+    }
+}
+
+#[cfg(test)]
+mod database_unavailable {
+    use axum::{http::StatusCode, response::IntoResponse};
+
+    /// Since axa 0.11 a database that cannot serve for now is `503` `unavailable` with `Retry-After: 5`, not `500`:
+    /// through [`super::db_err`] (`SeaORM`) and through `?` on a plain `sqlx` error alike.
+    #[test]
+    fn a_database_that_cannot_serve_answers_503_with_retry_after() {
+        let seaorm = super::db_err(sea_orm::DbErr::ConnectionAcquire(
+            sea_orm::error::ConnAcquireErr::Timeout,
+        ));
+        let sqlx: axa::Error = sqlx::Error::PoolTimedOut.into();
+        for response in [seaorm.into_response(), sqlx.into_response()] {
+            assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+            assert_eq!(response.headers()["retry-after"], "5");
+        }
+        // A database that refused this request is still the service's own `500`.
+        let refused = super::db_err(sea_orm::DbErr::Custom("boom".into())).into_response();
+        assert_eq!(refused.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
 }

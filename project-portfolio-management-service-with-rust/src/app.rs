@@ -90,15 +90,16 @@ pub fn opts_out_of_guards(environment: &Environment) -> bool {
     }
 }
 
-/// The configuration, with the four things axa would do differently from this service's own middleware turned off: CORS,
-/// HSTS and the content security policy are `http_security`'s, and a request timeout would cut the live event streams, so
-/// it needs asking for. axa's policy is production-only and runs first, so left on it would silently replace ours and
-/// blank `/swagger-ui`, and no test on the `test` profile would see it.
+/// The configuration, with the five things axa would do differently from this service's own middleware turned off: CORS,
+/// HSTS, the content security policy and the permissions policy are `http_security`'s, and a request timeout would cut
+/// the live event streams, so it needs asking for. axa's content security policy is production-only and runs first, so
+/// left on it would silently replace ours and blank `/swagger-ui`, and no test on the `test` profile would see it. Its
+/// permissions policy (new in axa 0.11, set by `HTTP_PERMISSIONS_POLICY`) would likewise replace ours, so one list, ours,
+/// is the policy whatever the environment says.
 fn service_config(environment: &Environment) -> Result<ServiceConfig> {
+    renamed_settings(|name| std::env::var(name).ok()).map_err(Error::Message)?;
     let mut config = ServiceConfig::from_env(environment, &defaults())?;
-    config.http.cors_origins.clear();
-    config.http.hsts = false;
-    config.http.csp = None;
+    leave_headers_to_http_security(&mut config);
     if std::env::var_os("REQUEST_TIMEOUT_SECONDS").is_none() {
         config.http.timeout_seconds = 0;
     }
@@ -122,6 +123,52 @@ fn service_config(environment: &Environment) -> Result<ServiceConfig> {
             );
     }
     Ok(config)
+}
+
+/// Turns off what axa would send that `http_security` sends itself (see [`service_config`]).
+fn leave_headers_to_http_security(config: &mut ServiceConfig) {
+    config.http.cors_origins.clear();
+    config.http.hsts = false;
+    config.http.csp = None;
+    config.http.permissions_policy = None;
+}
+
+/// Settings axa 0.10 read under a name axa 0.11 ignores, each with the name that replaced it. Left alone, each falls back
+/// without a word: to a default database in development, to the build's environment, to the default body limit or
+/// header timeout. `HTTP_CSP` is not here, as this service never used axa's policy under either name.
+pub const RENAMED_SETTINGS: [(&str, &str); 4] = [
+    ("DATABASE_URL", "DB_URL"),
+    ("LOCO_ENV", "APP_ENV"),
+    ("BODY_LIMIT_BYTES", "HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT"),
+    (
+        "HEADER_READ_TIMEOUT_SECONDS",
+        "HTTP_REQUEST_HEADER_READ_TIMEOUT_SECONDS",
+    ),
+];
+
+/// Refuses a boot, in every environment, where an old name in [`RENAMED_SETTINGS`] is set and its new name is not, so
+/// that a deployment not yet renamed stops and says why rather than running on defaults.
+///
+/// # Errors
+///
+/// Naming each old setting that is set alone, with its new name.
+pub fn renamed_settings(
+    lookup: impl Fn(&str) -> Option<String>,
+) -> std::result::Result<(), String> {
+    let set = |name: &str| lookup(name).is_some_and(|value| !value.trim().is_empty());
+    let stale: Vec<String> = RENAMED_SETTINGS
+        .iter()
+        .filter(|(old, new)| set(old) && !set(new))
+        .map(|(old, new)| format!("{old} (set {new} instead)"))
+        .collect();
+    if stale.is_empty() {
+        Ok(())
+    } else {
+        Err(format!(
+            "refusing to start: axa 0.11 no longer reads {}",
+            stale.join(", ")
+        ))
+    }
 }
 
 /// The service: plain functions, called in order from [`App::run`].
@@ -202,6 +249,7 @@ impl App {
             .as_deref()
             .map_or_else(Environment::from_env, Environment::parse);
         if matches!(cli.command, Command::Check) {
+            renamed_settings(|name| std::env::var(name).ok()).map_err(Error::Message)?;
             axa::cli::check(&environment, &defaults())?;
             // axa's check knows nothing of the settings that are this service's own, and these two refuse a bad boot.
             crate::cache::Cache::from_env(&environment)?;
@@ -724,6 +772,59 @@ mod tests {
             assert_eq!(task.task().name, name);
             assert!(!task.development_only(), "{name} is meant for production");
         }
+    }
+
+    /// `http_security` owns CORS, HSTS, the content security policy and the permissions policy, so axa's are off, and
+    /// axa 0.11's new permissions policy cannot replace this service's own list from `HTTP_PERMISSIONS_POLICY`.
+    #[test]
+    fn axa_sends_none_of_the_headers_this_service_sets_itself() {
+        let mut config = ServiceConfig::from_env(&Environment::Test, &defaults()).unwrap();
+        assert!(
+            config.http.permissions_policy.is_some(),
+            "axa 0.11 sends one unless told not to"
+        );
+        leave_headers_to_http_security(&mut config);
+        assert!(config.http.cors_origins.is_empty());
+        assert!(!config.http.hsts);
+        assert_eq!(config.http.csp, None);
+        assert_eq!(config.http.permissions_policy, None);
+    }
+
+    /// An old name set alone refuses the boot, naming the new one; the new name, or both, boot; a blank old name is unset.
+    #[test]
+    fn a_setting_axa_no_longer_reads_refuses_the_boot() {
+        let env = |pairs: &'static [(&'static str, &'static str)]| {
+            move |name: &str| {
+                pairs
+                    .iter()
+                    .find(|(n, _)| *n == name)
+                    .map(|(_, v)| (*v).to_string())
+            }
+        };
+        assert_eq!(renamed_settings(env(&[])), Ok(()));
+        assert_eq!(renamed_settings(env(&[("DB_URL", "postgres://x")])), Ok(()));
+        assert_eq!(
+            renamed_settings(env(&[
+                ("DATABASE_URL", "postgres://x"),
+                ("DB_URL", "postgres://x")
+            ])),
+            Ok(())
+        );
+        assert_eq!(renamed_settings(env(&[("DATABASE_URL", " ")])), Ok(()));
+        for (old, new) in RENAMED_SETTINGS {
+            let lookup = move |name: &str| (name == old).then(|| "1".to_string());
+            let refusal = renamed_settings(lookup).unwrap_err();
+            assert!(refusal.contains(old) && refusal.contains(new), "{refusal}");
+        }
+        let refusal = renamed_settings(env(&[
+            ("DATABASE_URL", "postgres://x"),
+            ("LOCO_ENV", "production"),
+        ]))
+        .unwrap_err();
+        assert!(
+            refusal.contains("DB_URL") && refusal.contains("APP_ENV"),
+            "{refusal}"
+        );
     }
 
     #[test]

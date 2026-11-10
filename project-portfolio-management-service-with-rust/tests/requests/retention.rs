@@ -24,7 +24,7 @@ async fn count(db: &sea_orm::DatabaseConnection, sql: &str) -> i64 {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_purge_removes_only_what_is_past_its_period() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {

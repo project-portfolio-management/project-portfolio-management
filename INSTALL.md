@@ -25,7 +25,7 @@ cd project-portfolio-management
 POSTGRES_PASSWORD='<a long random password>' \
 PPM_PASETO_KEYS_URL='https://auth.example.com/.well-known/paseto-keys' \
   podman compose up -d --build --wait
-curl -fsS http://localhost:5150/_readiness
+curl -fsS http://localhost:5150/_health/ready
 ```
 
 To look around on your own machine **with login off** (never expose this):
@@ -69,7 +69,7 @@ cargo test
 (cd project-portfolio-management-matcher-with-rust && cargo test)
 (cd project-portfolio-management-service-with-rust && cargo test)               # database-free
 # needs PostgreSQL; one binary at a time, serially (AGENTS.md lists the rest)
-(cd project-portfolio-management-service-with-rust && DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1)
+(cd project-portfolio-management-service-with-rust && DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1)
 
 # Front end
 cd project-portfolio-management-ui-with-svelte
@@ -94,7 +94,7 @@ problem, use [SECURITY.md](SECURITY.md) instead.
 
 Production uses Redis as its cache. Set `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL`
 (`redis://:password@host:6379/0`, or `rediss://` for TLS); `compose.yaml` starts one and reuses the database
-password unless `PPM_REDIS_PASSWORD` is set. Without a reachable Redis the service starts but `/_readiness`
+password unless `PPM_REDIS_PASSWORD` is set. Without a reachable Redis the service starts but `/_health/ready`
 answers 503. The cache holds nothing that cannot be rebuilt. It is used for one thing so far: the critical-path
 answer (`GET /api/plans/{pid}/cpm`, plans up to 5,000 tasks), kept 30 seconds, per caller, and orphaned by
 any successful write. A change made outside the API (a database edit, a retention purge) can show for up to 30 seconds.

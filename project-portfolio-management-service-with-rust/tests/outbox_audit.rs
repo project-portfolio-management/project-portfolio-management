@@ -22,7 +22,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with: cargo test --test outbox_audit -- --ignored"]
+#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test --test outbox_audit -- --ignored"]
 async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
     // Select the durable transport BEFORE the app boots (the transport is
     // read once into a process-wide OnceLock). `set_var` is `unsafe` in

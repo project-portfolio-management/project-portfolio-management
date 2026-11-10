@@ -32,7 +32,7 @@ macro_rules! create_plan {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Effort rolls up per plan, task and assignee, and every roll-up is
 // labelled **asserted** — it is typed by a person, unlike a transition
 // timestamp. Uncategorized effort stays visible rather than being
@@ -90,7 +90,7 @@ async fn effort_rolls_up_and_is_labelled_asserted() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // A day cannot hold more than 1440 minutes, and an actor must be a real
 // EntityRef. Both are refused at write rather than producing a roll-up
 // nobody can reconcile.
@@ -120,7 +120,7 @@ async fn an_impossible_entry_is_refused() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // **The obligation-2 test.** Somebody on leave for the whole window
 // reports `null` with a reason, **never 0%** — leave is absence of
 // capacity, not failure to use it. And the figure always ships its own
@@ -201,7 +201,7 @@ async fn someone_on_leave_reports_null_not_zero_percent() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // With no declared capacity at all the denominator is **unknown**, which
 // is a different answer from zero and from being on leave — so it has
 // its own reason.
@@ -226,7 +226,7 @@ async fn no_declared_capacity_is_not_zero_utilization() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // **Small-cell suppression.** A team figure over fewer than five people is
 // withheld whole (no figure, and no numerator or denominator to make one
 // from); the fifth person makes it reportable. The per-person view is the

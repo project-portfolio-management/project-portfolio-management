@@ -20,7 +20,7 @@ async fn plan(request: &axum_test::TestServer, name: &str) -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn issues_are_raised_ranked_closed_and_kept_in_their_plan() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -215,7 +215,7 @@ async fn issues_are_raised_ranked_closed_and_kept_in_their_plan() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn an_issue_can_be_raised_from_a_risk_or_a_blocked_task_once() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -38,7 +38,7 @@ fn counts(v: &Value) -> (i64, i64, i64) {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn bulk_edit_copy_and_move_report_every_item_and_reconcile() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {

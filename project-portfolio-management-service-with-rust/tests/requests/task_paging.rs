@@ -11,7 +11,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_task_list_pages_and_keeps_counts_over_everything() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

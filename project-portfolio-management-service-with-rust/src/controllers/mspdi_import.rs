@@ -19,8 +19,8 @@ use super::db_err;
 use std::collections::HashMap;
 
 use crate::prelude::*;
+use axa::middleware::body_limit;
 use axum::body::Bytes;
-use axum::extract::DefaultBodyLimit;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -505,6 +505,6 @@ pub fn routes() -> Routes {
     let ceiling = mspdi::MAX_BYTES + 64 * 1024;
     Routes::new().prefix("/api").add(
         "/plans/{pid}/import/mspdi",
-        post(import).layer(DefaultBodyLimit::max(ceiling)),
+        body_limit(post(import), ceiling),
     )
 }

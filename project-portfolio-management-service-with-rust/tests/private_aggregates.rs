@@ -636,7 +636,7 @@ const PRODUCT_DECISION_VIEWS: &[&str] = &[
 /// added, and every aggregate that changes must be sorted into one of the two lists above (`spec/product-evaluation.md`).
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test private_aggregates -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_aggregates -- --ignored`"]
 async fn census_of_what_a_product_plan_touches() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: the tests here are `#[serial]`, and each writes the same values.
@@ -692,7 +692,7 @@ async fn census_of_what_a_product_plan_touches() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test private_aggregates -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_aggregates -- --ignored`"]
 async fn a_private_plan_is_in_no_aggregate_for_a_non_member() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: the tests here are `#[serial]`, and each writes the same values.

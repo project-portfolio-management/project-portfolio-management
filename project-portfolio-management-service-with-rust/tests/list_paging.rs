@@ -229,7 +229,7 @@ const UNREACHED: &[(&str, &str)] = &[
 ];
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test list_paging -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test list_paging -- --ignored`"]
 async fn every_list_pages_the_same_way() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

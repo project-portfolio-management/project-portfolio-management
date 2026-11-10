@@ -17,7 +17,7 @@ import { seedChain } from "./demo/chain.mjs";
 log(`Seeding the demonstration portfolio into ${API}`);
 for (let i = 0; ; i++) {
   try {
-    await get("/_health");
+    await get("/_health/ready");
     break;
   } catch (e) {
     if (i >= 60) throw new Error(`the API at ${API} did not answer: ${e.message}`);

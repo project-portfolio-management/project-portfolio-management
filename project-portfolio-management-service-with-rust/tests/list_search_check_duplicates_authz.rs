@@ -13,7 +13,7 @@
 //! Its **own test binary**, same reason as `tests/masking.rs`:
 //! `require_auth`/`policy`/`verifier` are process-wide `OnceLock`s.
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test list_search_check_duplicates_authz -- --ignored`.
 #![cfg(feature = "paseto")]
 
@@ -101,7 +101,7 @@ fn ordinary_plan() -> Value {
 /// the endpoints.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test list_search_check_duplicates_authz -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test list_search_check_duplicates_authz -- --ignored`"]
 async fn denied_reader_never_sees_the_plan_via_list_search_or_check_duplicates() {
     let (keys, kid) = keys_and_kid();
     // `dept=outsider` may not read a plan that has passed gate 0 at all

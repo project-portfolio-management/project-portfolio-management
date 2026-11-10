@@ -8,7 +8,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test finance_gate -- --ignored`.
 
 #![expect(
@@ -80,7 +80,7 @@ fn bearer(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test finance_gate -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test finance_gate -- --ignored`"]
 async fn rates_labour_cost_and_publishing_follow_the_policy() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

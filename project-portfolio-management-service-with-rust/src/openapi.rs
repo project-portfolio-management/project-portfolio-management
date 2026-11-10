@@ -2263,9 +2263,9 @@ mod tests {
 
     /// Every route the controllers mount, as `(path, method)` pairs —
     /// the same `routes()` functions `app.rs` wires, so the list below
-    /// is kept in step with `App::routes`. (axa's default `/_health`
-    /// and `/_ping` are added by `AppRoutes`, not a controller, and are
-    /// out of scope here.)
+    /// is kept in step with `App::routes`. (axa's `/_health/live`,
+    /// `/_health/ready` and `/_health/startup` are added by `AppRoutes`, not a
+    /// controller, and are out of scope here.)
     #[expect(clippy::too_many_lines)]
     fn mounted_routes() -> std::collections::BTreeSet<(String, String)> {
         let groups = [

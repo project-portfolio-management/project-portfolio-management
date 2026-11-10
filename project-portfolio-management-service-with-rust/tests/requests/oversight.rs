@@ -22,7 +22,7 @@ fn recorded_actions(rows: &Value) -> Vec<&str> {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn evidence_pack_export_is_audited() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -52,7 +52,7 @@ async fn evidence_pack_export_is_audited() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn auditor_trail_read_is_audited() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

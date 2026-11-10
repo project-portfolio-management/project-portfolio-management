@@ -26,7 +26,7 @@ macro_rules! create_plan {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // The commitment snapshot is written once and **names** what changed
 // afterwards. Without it, scope added mid-sprint is indistinguishable
 // from scope committed at the outset — the sprint simply looks like it
@@ -89,7 +89,7 @@ async fn a_commitment_is_written_once_and_names_later_scope_change() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // All four ceremonies are reportable, every kind appears even at zero,
 // and a second planning or review is refused — that is a re-plan, which
 // is a new sprint.
@@ -144,7 +144,7 @@ async fn ceremonies_report_every_kind_and_refuse_a_second_planning() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // **A plan with no value points is `unrealized`, never a total loss.**
 // It has not failed to deliver; it has not been measured, and those are
 // different findings.
@@ -167,7 +167,7 @@ async fn a_plan_with_no_value_is_unrealized_not_a_loss() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // An adoption rate needs a denominator and its own definition — "active
 // user" is the term most easily redefined between two readings, so it is
 // refused at write rather than divided at read.
@@ -219,7 +219,7 @@ async fn adoption_needs_a_denominator_and_a_definition() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // The Time-to-Value clock stops **once**: a second first-measurable
 // value point is refused, because a clock that can restart is not a
 // measurement.
@@ -268,7 +268,7 @@ async fn the_time_to_value_clock_stops_once() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // NPS always carries its response count — 100 from two respondents is
 // not a finding — and SPI/CPI without a baseline report `null` **with a
 // reason**, never 1.0, which would say "exactly on plan".

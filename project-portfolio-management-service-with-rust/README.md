@@ -109,7 +109,7 @@ matcher (goal **titles** bridge in via `data.goals[]`).
 Requires PostgreSQL.
 
 ```bash
-export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
+export DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
 cargo run -- start      # migrations auto-run in development
 
 # Create a plan labelled as a portfolio (the umbrella kind)
@@ -153,7 +153,7 @@ cargo test --test matching             # DB-free: matcher embedding + JSON round
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
-# Need Postgres (DATABASE_URL; compose.test.yaml provides one on 5432):
+# Need Postgres (DB_URL; compose.test.yaml provides one on 5432):
 cargo test --test mod -- --ignored --test-threads=1      # request suites
 cargo test --test private_aggregates -- --ignored        # real-token binaries,
 cargo test --test list_paging -- --ignored               #   one per binary

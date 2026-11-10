@@ -194,7 +194,7 @@ fn enforce_off_allows_without_token() {
     }
 }
 
-/// Enforcement on ⇒ the public paths (health/ping, `OpenAPI`,
+/// Enforcement on ⇒ the public paths (the health probes, `OpenAPI`,
 /// Swagger UI, calendar feeds) still pass without a token.
 #[test]
 fn enforce_on_allows_public_paths() {
@@ -202,9 +202,9 @@ fn enforce_on_allows_public_paths() {
     let verifier = Verifier::from_paseto_keys_value(&keys, ISSUER, AUDIENCE).unwrap();
     let policy = policy();
     for path in [
-        "/_health",
-        "/_ping",
-        "/_readiness",
+        "/_health/live",
+        "/_health/ready",
+        "/_health/startup",
         "/api-docs/openapi.json",
         "/swagger-ui",
         "/swagger-ui/index.html",
@@ -223,6 +223,26 @@ fn enforce_on_allows_public_paths() {
             .is_ok(),
             "{path} should be public"
         );
+    }
+}
+
+/// The health routes axa 0.10 served (`/_ping`, `/_health`, `/_readiness`) are gone, and so is their exemption: with
+/// enforcement on and no token they are `401` like any other path, so nothing can hide behind an old public name.
+#[test]
+fn the_old_health_paths_are_not_public() {
+    let (keys, _) = test_keys_and_kid();
+    let verifier = Verifier::from_paseto_keys_value(&keys, ISSUER, AUDIENCE).unwrap();
+    for path in ["/_ping", "/_health", "/_readiness", "/_health/other"] {
+        let err = enforce(
+            true,
+            &Method::GET,
+            path,
+            &HeaderMap::new(),
+            &verifier,
+            &policy(),
+        )
+        .unwrap_err();
+        assert_eq!(err.0, StatusCode::UNAUTHORIZED, "{path}");
     }
 }
 

@@ -99,7 +99,7 @@ async fn seed_one(request: &axum_test::TestServer, name: &str, person: &str) -> 
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // T-28d: query count for /capacity, /capacity/utilization, and
 // /at-a-glance is identical at a small roster and at the full 60-plan
 // / 40-person scale — proof the request-path queries are bulk reads,

@@ -9,7 +9,7 @@ operational sub-resources and derived views.
 | Subproject | Kind | Responsibility |
 |---|---|---|
 | [project-portfolio-management-matcher-with-rust](../project-portfolio-management-matcher-with-rust/) | Rust library (edition 2024, dependency-light) | Pairwise `Plan` comparison: kind-agnostic deterministic short-circuits + weighted probabilistic scoring with per-component breakdown. Owns the canonical `Plan` domain type. |
-| [project-portfolio-management-service-with-rust](../project-portfolio-management-service-with-rust/) | axa 0.10 service (Axum 0.8, SeaORM 2.0, PostgreSQL) | Registry + PM tool over **one** recursive `plans` collection: CRUD with soft delete + `/match` + `/check-duplicates` + `/merge`; the project-management areas (tasks and sprints, governance, scheduling and critical path, cost, onboarding, approval processes, controlled documents, announcements, …); typed plan links; bulk import/export. `/deduplicate`, goals/issues and `/timeline` are not wired. Stores the matcher type verbatim as JSONB. |
+| [project-portfolio-management-service-with-rust](../project-portfolio-management-service-with-rust/) | axa 0.11 service (Axum 0.8, SeaORM 2.0, PostgreSQL) | Registry + PM tool over **one** recursive `plans` collection: CRUD with soft delete + `/match` + `/check-duplicates` + `/merge`; the project-management areas (tasks and sprints, governance, scheduling and critical path, cost, onboarding, approval processes, controlled documents, announcements, …); typed plan links; bulk import/export. `/deduplicate`, goals/issues and `/timeline` are not wired. Stores the matcher type verbatim as JSONB. |
 | [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte/) | SvelteKit 3 SPA (Svelte 5 runes, TS strict) | Operator UI: plan list / create / detail / edit / delete / check-duplicates + sub-resource management + timeline / burndown views over the service REST API; a plan detail rolls up its child plans. |
 
 ## Dependency direction
@@ -59,7 +59,7 @@ cargo run                    # demo binary (not SemVer surface)
 
 # Service — needs PostgreSQL; port 5150
 cd project-portfolio-management-service-with-rust
-export DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
+export DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
 cargo run -- start           # migrations auto-run in development
 cargo test --lib             # DB-free unit tests
 cargo test --test matching   # DB-free embedding tests

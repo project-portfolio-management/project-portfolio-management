@@ -12,7 +12,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {

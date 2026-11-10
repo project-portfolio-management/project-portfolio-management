@@ -3,12 +3,11 @@
 //! (`axa-test`, as in the authentication-service sibling).
 //!
 //! These boot the app against the `test` environment, which needs a
-//! reachable PostgreSQL (`DATABASE_URL`; override with
-//! `DATABASE_URL`). They are `#[ignore]`d so the default `cargo test`
+//! reachable PostgreSQL (`DB_URL`). They are `#[ignore]`d so the default `cargo test`
 //! stays green on a database-less machine. Run them with:
 //!
 //! ```sh
-//! DATABASE_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
+//! DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
 //!   cargo test -- --ignored
 //! ```
 //!
@@ -36,7 +35,7 @@ fn apollo_project() -> Value {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Pins the create happy path: `POST /api/plans` returns 200, echoes
 // the name, and mints a UUID pid; the row is then fetchable.
 async fn can_create_and_fetch_a_project() {

@@ -93,7 +93,7 @@ async fn sweep_call(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test organizations -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test organizations -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn organizations_are_records_and_a_partner_sees_its_own() {
     let (keys, kid) = keys_and_kid();

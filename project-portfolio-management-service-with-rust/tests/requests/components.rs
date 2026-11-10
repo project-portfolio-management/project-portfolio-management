@@ -21,7 +21,7 @@ async fn plan(request: &axum_test::TestServer, name: &str) -> String {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn components_group_tasks_and_never_orphan_them() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -81,7 +81,7 @@ fn hdr(kid: &str, sub: &str, access: &[&str]) -> Who {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test controlled_documents -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test controlled_documents -- --ignored`"]
 async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_approval() {
     use project_portfolio_management::models::_entities::audit_logs;
     let (keys, kid) = keys_and_kid();

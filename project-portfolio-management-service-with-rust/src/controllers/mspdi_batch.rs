@@ -14,7 +14,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::prelude::*;
-use axum::extract::DefaultBodyLimit;
+use axa::middleware::body_limit;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -758,8 +758,7 @@ async fn mspdi_import_run(
 /// The batch import route (body limit raised to ten files).
 pub fn routes() -> Routes {
     let ceiling = mspdi::MAX_BYTES * rules::MAX_PROJECTS + 1024 * 1024;
-    Routes::new().prefix("/api").add(
-        "/import/mspdi-batch",
-        post(batch).layer(DefaultBodyLimit::max(ceiling)),
-    )
+    Routes::new()
+        .prefix("/api")
+        .add("/import/mspdi-batch", body_limit(post(batch), ceiling))
 }

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Back up the database and the artifact store into one verified directory.
 #
-#   DATABASE_URL=postgres://user:pass@host/db scripts/backup.sh [-o BACKUP_ROOT]
+#   DB_URL=postgres://user:pass@host/db scripts/backup.sh [-o BACKUP_ROOT]
 #
 # Writes BACKUP_ROOT/ppm-backup-<UTC timestamp>/ containing
 #   db.dump             pg_dump custom format (restore with scripts/restore.sh)
@@ -10,14 +10,14 @@
 #   SHA256SUMS          checksums of every file above (verified on restore)
 #
 # Environment:
-#   DATABASE_URL        required. The database to dump.
+#   DB_URL        required. The database to dump.
 #   ARTIFACT_DIR        the artifact store (default: $PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR;
 #                       if neither is set the artifact step is skipped and the MANIFEST says so)
 #   PG_DUMP, PSQL       commands to run (default pg_dump / psql). Override to run inside
 #                       the database container of a compose deployment:
 #                         PG_DUMP="podman compose exec -T postgres pg_dump"
 #                         PSQL="podman compose exec -T postgres psql"
-#                       (DATABASE_URL is then resolved inside that container).
+#                       (DB_URL is then resolved inside that container).
 #   ARTIFACT_TAR_CMD    a command that writes the artifact store as a gzip tar to stdout, for
 #                       a store that is not a host directory (compose: a named volume):
 #                         ARTIFACT_TAR_CMD="podman compose exec -T api tar -C /app/data/artifacts -cz ."
@@ -43,7 +43,8 @@ while getopts "o:" opt; do
   esac
 done
 
-: "${DATABASE_URL:?set DATABASE_URL to the database to back up}"
+[ -z "${DATABASE_URL:-}" ] || [ -n "${DB_URL:-}" ] || { echo "DATABASE_URL is no longer read (axa 0.11): set DB_URL" >&2; exit 2; }
+: "${DB_URL:?set DB_URL to the database to back up}"
 PG_DUMP="${PG_DUMP:-pg_dump}"
 PSQL="${PSQL:-psql}"
 ARTIFACT_DIR="${ARTIFACT_DIR:-${PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR:-}}"
@@ -84,7 +85,7 @@ trap 'echo "backup FAILED; removing partial $OUT" >&2; rm -rf "$OUT"' EXIT
 
 echo "dumping the database ..."
 # --no-owner/--no-privileges: restore works under a different role. -Fc: compressed, selective.
-$PG_DUMP --format=custom --no-owner --no-privileges --dbname="$DATABASE_URL" > "$OUT/db.dump"
+$PG_DUMP --format=custom --no-owner --no-privileges --dbname="$DB_URL" > "$OUT/db.dump"
 
 ARTIFACT_TAR_CMD="${ARTIFACT_TAR_CMD:-}"
 ARTIFACT_NOTE="skipped (no ARTIFACT_DIR or ARTIFACT_TAR_CMD set)"
@@ -107,15 +108,15 @@ encrypt "$OUT/db.dump"
   echo "encryption=$ENCRYPTION"
   echo "created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "created_epoch=$(date -u +%s)"
-  echo "server_version=$($PSQL "$DATABASE_URL" -Atc 'show server_version' 2>/dev/null || echo unknown)"
-  echo "migrations=$($PSQL "$DATABASE_URL" -Atc 'select count(*) from seaql_migrations' 2>/dev/null || echo unknown)"
-  echo "latest_migration=$($PSQL "$DATABASE_URL" -Atc 'select version from seaql_migrations order by version desc limit 1' 2>/dev/null || echo unknown)"
+  echo "server_version=$($PSQL "$DB_URL" -Atc 'show server_version' 2>/dev/null || echo unknown)"
+  echo "migrations=$($PSQL "$DB_URL" -Atc 'select count(*) from seaql_migrations' 2>/dev/null || echo unknown)"
+  echo "latest_migration=$($PSQL "$DB_URL" -Atc 'select version from seaql_migrations order by version desc limit 1' 2>/dev/null || echo unknown)"
   echo "artifacts=$ARTIFACT_NOTE"
   echo "search_index=not backed up (rebuild with: <service> task search_reindex)"
   echo "--- rows per table"
-  $PSQL "$DATABASE_URL" -Atc "select format('%I', relname) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' order by 1" 2>/dev/null \
+  $PSQL "$DB_URL" -Atc "select format('%I', relname) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' order by 1" 2>/dev/null \
     | while read -r t; do
-        printf '%s=%s\n' "$t" "$($PSQL "$DATABASE_URL" -Atc "select count(*) from \"$t\"")"
+        printf '%s=%s\n' "$t" "$($PSQL "$DB_URL" -Atc "select count(*) from \"$t\"")"
       done
 } > "$OUT/MANIFEST"
 

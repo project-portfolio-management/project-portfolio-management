@@ -105,7 +105,7 @@ fn states(ex: &Value) -> Vec<String> {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test processes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test processes -- --ignored`"]
 async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

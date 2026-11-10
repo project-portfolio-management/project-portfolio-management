@@ -10,7 +10,7 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn siblings_are_reordered_per_parent_and_the_body_must_be_exact() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

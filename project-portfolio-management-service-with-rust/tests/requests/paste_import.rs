@@ -15,7 +15,7 @@ paste-4e5f6a7b,Book room,2026-10-06,\n";
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn pasted_rows_import_once_and_a_second_paste_updates_instead_of_duplicating() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

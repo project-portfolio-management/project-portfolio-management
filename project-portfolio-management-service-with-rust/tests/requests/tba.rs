@@ -43,7 +43,7 @@ async fn move_task(request: &axum_test::TestServer, plan: &str, task: &str, stat
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn time_based_analysis_round_trip() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -304,7 +304,7 @@ async fn time_based_analysis_round_trip() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn cycle_time_and_lead_time_are_reported_separately() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -341,7 +341,7 @@ async fn cycle_time_and_lead_time_are_reported_separately() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_flow_gauges_publish_only_what_may_be_published() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
@@ -400,7 +400,7 @@ async fn the_flow_gauges_publish_only_what_may_be_published() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_forecast_samples_throughput_and_refuses_a_thin_history() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -520,7 +520,7 @@ async fn seed_child(request: &axum_test::TestServer, parent: &str, name: &str) -
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_rollup_unions_the_tree_and_keeps_the_children_comparable() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
@@ -625,7 +625,7 @@ async fn the_rollup_unions_the_tree_and_keeps_the_children_comparable() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_blocked_reason_is_recorded_on_the_move_and_checked() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -49,7 +49,7 @@ accepts a `?parent=<pid>` roll-up filter.
 | GET | `/api-docs/openapi.json` | OpenAPI 3 document | `OpenAPI` JSON |
 | GET | `/swagger-ui` | Swagger UI (CDN assets) | HTML |
 
-Plus `/_ping`, `/_health` and `/_readiness`, which also checks the cache.
+Plus axa's three health probes: `/_health/live`, `/_health/ready` (which also checks the cache) and `/_health/startup`.
 
 Every create / update / delete / merge (on a plan **and** every
 sub-resource) writes a best-effort `audit_logs` row and publishes a

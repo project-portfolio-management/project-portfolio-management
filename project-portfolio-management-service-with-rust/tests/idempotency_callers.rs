@@ -61,7 +61,7 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test idempotency_callers -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test idempotency_callers -- --ignored`"]
 async fn keys_are_per_caller_and_a_replay_never_skips_the_guards() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.

@@ -73,7 +73,7 @@ jobs:
           --health-cmd "pg_isready -U loco -d project_portfolio_management_test"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      DATABASE_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_test
+      DB_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_test
       # The test pool has ONE connection and a 500 ms wait for it. On a busy
       # runner a request that queues behind another fails with PoolTimedOut (seen twice, in
       # two different tests, 2026-10-18). Wait up to 10 s; a real deadlock still fails.
@@ -125,7 +125,7 @@ jobs:
           --health-cmd "pg_isready -U loco -d ppm_source"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      DATABASE_URL: postgres://loco:loco@localhost:5432/ppm_source
+      DB_URL: postgres://loco:loco@localhost:5432/ppm_source
       ARTIFACT_DIR: ${{ github.workspace }}/restore-artifacts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -164,7 +164,7 @@ jobs:
         working-directory: .
         run: >-
           scripts/restore-test.sh
-          -t 'cd project-portfolio-management-service-with-rust && DATABASE_URL="$RESTORED_DATABASE_URL" cargo test --test mod -- --ignored --test-threads=1'
+          -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test mod -- --ignored --test-threads=1'
       - name: The same drill with an encrypted backup (passphrase)
         working-directory: .
         run: |
@@ -403,8 +403,14 @@ jobs:
           code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/proxy/api/plans)"
           echo "anonymous GET via the UI proxy -> $code"
           test "$code" = 401
-      - name: /_health answers
-        run: curl --fail --silent --show-error --retry 5 --retry-delay 2 http://localhost:5150/_health
+      - name: The health probes answer, and axa 0.10's old route does not
+        run: |
+          for probe in live ready startup; do
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 "http://localhost:5150/_health/$probe"
+          done
+          code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5150/_readiness)"
+          echo "GET /_readiness -> $code"
+          test "$code" != 200
       - name: Login enforcement is on (anonymous API call is refused)
         run: |
           code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5150/api/plans)"

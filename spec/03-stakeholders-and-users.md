@@ -12,7 +12,7 @@ governmental system. Stakeholders span the trio:
 | Sponsoring organizations | Their plans registered once, linked to the owning org (`owner_org_id` → organization entity (sibling repository, not in this repository)) | Service create + identifiers + cross-service links |
 | Integrators (Jira / Asana / MS Project / Linear / GitHub Projects) | Register / sync a project via its external id; stable REST surface; deterministic-id linkage | Service `/api/*` + bulk import/export |
 | Auditors / information-governance officers | Who changed what, when; explainable match decisions; who was on which plan | Audit endpoints + event stream + soft-delete timestamps |
-| Operations / DBA / SRE | Schema + migration discipline, backups, health checks, scaling | Service deployment artefacts, `/_health` |
+| Operations / DBA / SRE | Schema + migration discipline, backups, health checks, scaling | Service deployment artefacts, `/_health/live`, `/_health/ready`, `/_health/startup` |
 | Developers / AI agents | Clear SDD contracts; which spec governs what; the optional-`kind` label model + the matchable/operational partition | This spec + the three crate specs |
 | Other Main X Index entities | Cross-references via `EntityRef` (lead, assignees, members → person / worker / authentication; sponsor → organization); cross-service links to any entity | Service REST API + the link aggregator |
 

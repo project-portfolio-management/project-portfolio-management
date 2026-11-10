@@ -12,7 +12,7 @@ const STRANGER: &str = "person:99999999-9999-9999-9999-999999999999";
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn proposed_tasks_are_verified_against_the_minutes_and_created_once() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

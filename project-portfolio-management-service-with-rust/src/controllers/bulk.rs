@@ -22,9 +22,9 @@ use super::forbidden;
 use super::{db_err, unprocessable};
 use crate::prelude::*;
 use axa::error::ErrorDetail;
+use axa::middleware::body_limit;
 use axa::worker::BackgroundWorker;
 use axum::body::Bytes;
-use axum::extract::DefaultBodyLimit;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use project_portfolio_management_matcher::{MatchConfig, MatchingEngine};
@@ -1486,10 +1486,7 @@ pub fn routes() -> Routes {
     let ceiling = import_max().saturating_add(64 * 1024);
     Routes::new()
         .prefix("/api")
-        .add(
-            "/plans/import",
-            post(import).layer(DefaultBodyLimit::max(ceiling)),
-        )
+        .add("/plans/import", body_limit(post(import), ceiling))
         .add("/plans/import/{id}", get(import_status))
         .add("/plans/export", post(export))
         .add("/plans/export/{id}", get(export_status))

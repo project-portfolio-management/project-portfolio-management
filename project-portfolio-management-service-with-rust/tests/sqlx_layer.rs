@@ -1,7 +1,7 @@
 //! The `sqlx` layer in `src/db.rs`: statements are counted, a transaction is one, and an audit row written on `sqlx` verifies
 //! like one written on `SeaORM`.
 //!
-//! `#[ignore]`d: boots the app, so it needs PostgreSQL via `DATABASE_URL`. Run with
+//! `#[ignore]`d: boots the app, so it needs PostgreSQL via `DB_URL`. Run with
 //! `cargo test --test sqlx_layer -- --ignored --test-threads=1`.
 
 use axa_test::prelude::*;
@@ -13,7 +13,7 @@ use serial_test::serial;
 use uuid::Uuid;
 
 #[tokio::test]
-#[ignore = "needs PostgreSQL via DATABASE_URL"]
+#[ignore = "needs PostgreSQL via DB_URL"]
 #[serial]
 async fn the_count_sees_a_statement_on_the_pool_and_in_a_transaction() {
     request::<App, _, _>(|_request, ctx| async move {
@@ -38,7 +38,7 @@ async fn the_count_sees_a_statement_on_the_pool_and_in_a_transaction() {
 }
 
 #[tokio::test]
-#[ignore = "needs PostgreSQL via DATABASE_URL"]
+#[ignore = "needs PostgreSQL via DB_URL"]
 #[serial]
 async fn an_audit_row_on_sqlx_verifies_and_leaves_with_its_transaction() {
     request::<App, _, _>(|_request, ctx| async move {

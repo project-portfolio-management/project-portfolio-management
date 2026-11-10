@@ -7,7 +7,7 @@
 //! test happens to touch an authenticated route first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
-//! `DATABASE_URL`. Run with
+//! `DB_URL`. Run with
 //! `cargo test --test saved_views -- --ignored`.
 
 #![expect(
@@ -75,7 +75,7 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 /// one user cannot read or delete another's view (`404`, not `403` —
 /// existence is not disclosed across users).
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test saved_views -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test saved_views -- --ignored`"]
 async fn saved_views_are_scoped_to_their_owner_and_their_route() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so no other test races the

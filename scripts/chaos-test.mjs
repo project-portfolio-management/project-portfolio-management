@@ -18,7 +18,7 @@
 // and anything on a multi-replica deployment.
 //
 // What is checked:
-//   1. The service answers `/_health` again within 30 s of every fault, and exits only when this script kills it.
+//   1. The service answers `/_health/live` again within 30 s of every fault, and exits only when this script kills it.
 //   2. Every response is either a success, a client error that the request deserves, or a clean 5xx
 //      (500, 502, 503, 504) with a JSON or empty body. Anything else is a violation.
 //   3. Every write that was acknowledged (2xx) is still there once the faults stop: acknowledged plans can be
@@ -79,7 +79,7 @@ function startService() {
     env: {
       ...process.env,
       APP_ENV: "container-dev",
-      DATABASE_URL: databaseUrl,
+      DB_URL: databaseUrl,
       PORT: String(port),
       PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false",
     },
@@ -96,7 +96,7 @@ async function healthy(timeoutMs) {
   const end = Date.now() + timeoutMs;
   while (Date.now() < end) {
     try {
-      const r = await fetch(`${base}/_health`, { signal: AbortSignal.timeout(2000) });
+      const r = await fetch(`${base}/_health/live`, { signal: AbortSignal.timeout(2000) });
       if (r.ok) return true;
     } catch {
       /* not yet */

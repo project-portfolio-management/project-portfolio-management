@@ -13,7 +13,7 @@ async fn post(request: &axum_test::TestServer, path: &str, body: Value) -> Value
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_task_can_be_read_alone_with_its_sub_resources_embedded() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -169,7 +169,7 @@ async fn stand_in(stub: Arc<Stub>) -> String {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test --test wpm_bridge -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test wpm_bridge -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn the_bridge_keeps_one_owner_per_fact() {
     let (keys, kid) = keys_and_kid();

@@ -24,7 +24,7 @@ const MSPDI: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_plan_exports_as_an_ms_project_file_that_reads_back() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {

@@ -31,7 +31,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | Migrations | 143 | files named `m2*.rs` in `migration/src` |
 | Mounted routes | 684 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
 | Documented API paths | 541 | path keys in the service's `openapi.json` |
-| Service tests | 1587, plus 306 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1588, plus 306 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 763 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 342 | `test(` lines in `tests/e2e` |

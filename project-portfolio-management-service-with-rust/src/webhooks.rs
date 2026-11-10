@@ -538,9 +538,16 @@ async fn attempt_once(
         }
         Err(err) => AttemptResult::Retryable {
             status: None,
-            error: err.to_string(),
+            error: transport_error(err),
         },
     }
+}
+
+/// A transport failure as it is stored and shown: reqwest's text **without the request URL**. A destination URL can
+/// carry its secret (a chat webhook's token is in its path), and the stored error is read back by the delivery logs,
+/// which would otherwise undo the destination's masking.
+pub(crate) fn transport_error(err: reqwest::Error) -> String {
+    err.without_url().to_string()
 }
 
 /// Deliver one event to one target, retrying `5xx`/transport failures
@@ -697,6 +704,24 @@ impl EventSink for WebhookSink {
 
 #[cfg(test)]
 mod tests {
+    /// A failed send's stored error never carries the destination URL, whose path can hold the secret.
+    #[tokio::test]
+    async fn a_transport_error_is_stored_without_the_url() {
+        // Port 1 on loopback refuses the connection, so the send fails in transport, as a dead receiver would.
+        let err = reqwest::Client::new()
+            .post("http://127.0.0.1:1/hooks/s3cret-token")
+            .send()
+            .await
+            .expect_err("nothing listens on port 1");
+        assert!(
+            err.to_string().contains("s3cret-token"),
+            "reqwest's own text names the URL"
+        );
+        let stored = super::transport_error(err);
+        assert!(!stored.contains("s3cret-token"), "{stored}");
+        assert!(!stored.contains("127.0.0.1:1"), "{stored}");
+    }
+
     #[test]
     fn the_v2_signature_covers_the_timestamp_and_the_exact_body() {
         let keys = integrity_mac::KeySet::load_with_domains(

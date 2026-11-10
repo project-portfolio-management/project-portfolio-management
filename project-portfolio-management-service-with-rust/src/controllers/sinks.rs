@@ -143,7 +143,7 @@ async fn send_http(sink: &notification_sinks::Model, note: &Note<'_>) -> Outcome
             Outcome::Retry(format!("HTTP {}", r.status()))
         }
         Ok(r) => Outcome::Failed(format!("HTTP {}", r.status())),
-        Err(e) => Outcome::Retry(e.to_string()),
+        Err(e) => Outcome::Retry(crate::webhooks::transport_error(e)),
     }
 }
 

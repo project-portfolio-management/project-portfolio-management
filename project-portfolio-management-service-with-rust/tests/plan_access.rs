@@ -228,6 +228,58 @@ async fn a_private_plan_is_404_to_non_members_and_visible_to_members_and_admins(
             .json();
         assert_eq!(mine["total"], 1);
 
+        // A member's comment is theirs only while they can read the plan: removed, they can neither edit nor delete
+        // it (the plan is hidden from them, so 404), and Alice still sees it.
+        let said: Value = request
+            .post("/api/comments")
+            .add_header(bk.clone(), bv.clone())
+            .json(&json!({ "subject_kind": "task", "subject_pid": t, "body": "while a member" }))
+            .await
+            .json();
+        let c = said["pid"].as_str().expect("comment pid").to_string();
+        request
+            .put(&format!("/api/plans/{p}/access"))
+            .add_header(ak.clone(), av.clone())
+            .json(&json!({ "private": true, "members": [] }))
+            .await
+            .assert_status_ok();
+        assert_eq!(
+            request
+                .put(&format!("/api/comments/{c}"))
+                .add_header(bk.clone(), bv.clone())
+                .json(&json!({ "body": "after" }))
+                .await
+                .status_code(),
+            404
+        );
+        for deleting in [
+            request.delete(&format!("/api/comments/{c}")),
+            request.post(&format!("/api/comments/{c}/delete")),
+        ] {
+            assert_eq!(
+                deleting
+                    .add_header(bk.clone(), bv.clone())
+                    .await
+                    .status_code(),
+                404
+            );
+        }
+        let thread: Value = request
+            .get(&format!("/api/comments?subject_kind=task&subject_pid={t}"))
+            .add_header(ak.clone(), av.clone())
+            .await
+            .json();
+        assert!(
+            thread.to_string().contains("while a member"),
+            "the comment is still there: {thread}"
+        );
+        request
+            .put(&format!("/api/plans/{p}/access"))
+            .add_header(ak.clone(), av.clone())
+            .json(&json!({ "private": true, "members": [BOB] }))
+            .await
+            .assert_status_ok();
+
         // Bad members are refused; public again opens it to all.
         assert_eq!(
             request

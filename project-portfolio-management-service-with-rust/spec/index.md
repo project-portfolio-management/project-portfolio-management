@@ -310,7 +310,10 @@ Kanban-move `PATCH` and WIP limits) support `POST` (create), `GET`
 (list), `PUT /{sub_pid}` (update), `PATCH /{sub_pid}` (move) and
 `DELETE /{sub_pid}` (soft-delete). Comments are the top-level
 `/api/comments` collection; `posts` and `members` sub-resources are
-not built.
+not built. A comment's author edits or deletes it only while they can
+still read its subject: both steps resolve the subject again, so an
+author removed from a private plan gets `404` for their own comment, as
+for anything else in it (2026-11-10; edit already did, delete did not).
 
 ### 9.4 Derived read views
 

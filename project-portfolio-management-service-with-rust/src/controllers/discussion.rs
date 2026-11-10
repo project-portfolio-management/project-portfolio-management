@@ -445,7 +445,7 @@ async fn comment_history(
     format::json(rows)
 }
 
-/// `DELETE /api/comments/{pid}` — the author soft-deletes.
+/// `DELETE /api/comments/{pid}` — the author soft-deletes, while they can still read the subject.
 #[debug_handler]
 async fn delete_comment(
     State(ctx): State<AppContext>,
@@ -454,6 +454,14 @@ async fn delete_comment(
 ) -> Result<Response> {
     let comment = find_comment(&ctx, &pid).await?;
     require_author(&comment, &caller)?;
+    // As for an edit: an author who can no longer read the subject's plan cannot touch the comment either.
+    resolve_subject(
+        &ctx,
+        &caller,
+        &comment.subject_kind,
+        &comment.subject_pid.to_string(),
+    )
+    .await?;
     let comment_pid = comment.pid;
     let mut active: comments::ActiveModel = comment.into();
     active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));

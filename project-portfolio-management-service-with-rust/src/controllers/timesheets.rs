@@ -13,26 +13,26 @@
 //! An approver is a caller holding `access=admin` or the `timesheet_approver`
 //! role (the token's `role` attribute — a vocabulary the deployment declares).
 
+use super::unprocessable;
 use super::{conflict, forbidden};
-use super::{db_err, unprocessable};
 use std::fmt::Write as _;
 
 use crate::prelude::*;
 use axum::http::{StatusCode, header};
 use chrono::NaiveDate;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::plan_access::readable_plans;
 use crate::auth::{AuthUser, MaybeAuthUser};
+use crate::db::Session;
 use crate::models::_entities::{time_entries, timesheet_weeks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::notification_prefs::recipient_sub;
 use crate::timesheets::{self as rules, Entry, GroupBy};
 
 /// Rows a report or week reads at most.
-const ROW_CAP: u64 = 20_000;
+const ROW_CAP: i64 = 20_000;
 
 /// Whether the token may decide timesheets: `access=admin` or the `timesheet_approver` value of the `role` attribute.
 fn is_approver(claims: &authentication_verifier::Claims) -> bool {
@@ -77,16 +77,18 @@ async fn week_entries(
     person: &str,
     monday: NaiveDate,
 ) -> Result<Vec<time_entries::Model>> {
-    time_entries::Entity::find()
-        .filter(time_entries::Column::ActorRef.eq(person))
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .filter(time_entries::Column::SpentOn.gte(monday))
-        .filter(time_entries::Column::SpentOn.lte(monday + chrono::Duration::days(6)))
-        .order_by_asc(time_entries::Column::SpentOn)
-        .limit(ROW_CAP)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM time_entries
+         WHERE actor_ref = $1 AND deleted_at IS NULL AND spent_on >= $2 AND spent_on <= $3
+         ORDER BY spent_on
+         LIMIT $4",
+    )
+    .bind(person)
+    .bind(monday)
+    .bind(monday + chrono::Duration::days(6))
+    .bind(ROW_CAP)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Projects a stored time entry onto the plain fact the pure grid rules aggregate. Minutes stay whole minutes and `billable` is carried through unchanged.
@@ -102,17 +104,18 @@ fn fact(e: &time_entries::Model) -> Entry {
 }
 
 /// Finds the stored submit/approve state row for a person's week, or `None` when the week was never submitted (an open week has no row).
-async fn week_row<C: ConnectionTrait>(
-    db: &C,
+async fn week_row(
+    db: &mut impl Session,
     person: &str,
     monday: NaiveDate,
 ) -> Result<Option<timesheet_weeks::Model>> {
-    timesheet_weeks::Entity::find()
-        .filter(timesheet_weeks::Column::PersonRef.eq(person))
-        .filter(timesheet_weeks::Column::WeekStart.eq(monday))
-        .one(db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM timesheet_weeks WHERE person_ref = $1 AND week_start = $2 LIMIT 1",
+    )
+    .bind(person)
+    .bind(monday)
+    .fetch_optional(db.ex())
+    .await?)
 }
 
 /// Whether `person`'s week containing `date` is approved (and so locked).
@@ -121,9 +124,11 @@ pub(crate) async fn week_is_locked(
     person: &str,
     date: NaiveDate,
 ) -> Result<bool> {
-    Ok(week_row(&ctx.db, person, rules::monday_of(date))
-        .await?
-        .is_some_and(|r| r.status == "approved"))
+    Ok(
+        week_row(&mut crate::db::pool(ctx), person, rules::monday_of(date))
+            .await?
+            .is_some_and(|r| r.status == "approved"),
+    )
 }
 
 /// `GET /api/timesheets` query.
@@ -167,7 +172,7 @@ async fn get_week(
         .map(fact)
         .collect();
     let omitted = rows.len() - facts.len();
-    let state = week_row(&ctx.db, &person, monday).await?;
+    let state = week_row(&mut crate::db::pool(&ctx), &person, monday).await?;
     format::json(serde_json::json!({
         "person": person,
         "week": p.week,
@@ -191,8 +196,8 @@ pub(crate) struct SubmitBody {
 }
 
 /// Creates or updates the state row for a week. `submitted` stamps the submission time and clears any earlier decision; `decider` (who, optional comment) stamps a decision. Callers run it inside the transaction that also writes the audit row.
-async fn set_state<C: ConnectionTrait>(
-    db: &C,
+async fn set_state(
+    db: &mut impl Session,
     person: &str,
     monday: NaiveDate,
     status: &str,
@@ -201,38 +206,61 @@ async fn set_state<C: ConnectionTrait>(
 ) -> Result<timesheet_weeks::Model> {
     // Upsert: a week has no row until its first submission or decision.
     let existing = week_row(db, person, monday).await?;
-    let now: sea_orm::prelude::DateTimeWithTimeZone = chrono::Utc::now().into();
+    let now = chrono::Utc::now().fixed_offset();
     match existing {
         Some(row) => {
-            let mut a: timesheet_weeks::ActiveModel = row.into();
-            a.status = ActiveValue::set(status.to_string());
-            if submitted {
-                a.submitted_at = ActiveValue::set(Some(now));
-                a.decided_by = ActiveValue::set(None);
-                a.decided_at = ActiveValue::set(None);
-                a.decision_comment = ActiveValue::set(None);
-            }
-            if let Some((by, comment)) = decider {
-                a.decided_by = ActiveValue::set(Some(by.to_string()));
-                a.decided_at = ActiveValue::set(Some(now));
-                a.decision_comment = ActiveValue::set(comment.map(|c| c.trim().to_string()));
-            }
-            a.update(db).await.map_err(db_err)
+            // An update names only the columns it changes, as SeaORM's did: the status; the submission stamp
+            // and a cleared decision when `submitted`; the decision when `decider` (it wins over the clearing).
+            let all = "UPDATE timesheet_weeks
+                 SET status = $1, submitted_at = $2, decided_by = $3, decided_at = $4, decision_comment = $5
+                 WHERE id = $6
+                 RETURNING *";
+            let query = match (submitted, decider) {
+                (true, Some((by, comment))) => sqlx::query_as(all)
+                    .bind(status)
+                    .bind(now)
+                    .bind(by)
+                    .bind(now)
+                    .bind(comment.map(|c| c.trim().to_string())),
+                (false, Some((by, comment))) => sqlx::query_as(
+                    "UPDATE timesheet_weeks
+                     SET status = $1, decided_by = $2, decided_at = $3, decision_comment = $4
+                     WHERE id = $5
+                     RETURNING *",
+                )
+                .bind(status)
+                .bind(by)
+                .bind(now)
+                .bind(comment.map(|c| c.trim().to_string())),
+                (true, None) => sqlx::query_as(all)
+                    .bind(status)
+                    .bind(now)
+                    .bind(None::<String>)
+                    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+                    .bind(None::<String>),
+                (false, None) => {
+                    sqlx::query_as("UPDATE timesheet_weeks SET status = $1 WHERE id = $2 RETURNING *")
+                        .bind(status)
+                }
+            };
+            Ok(query.bind(row.id).fetch_one(db.ex()).await?)
         }
-        None => timesheet_weeks::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            person_ref: ActiveValue::set(person.to_string()),
-            week_start: ActiveValue::set(monday),
-            status: ActiveValue::set(status.to_string()),
-            submitted_at: ActiveValue::set(submitted.then_some(now)),
-            decided_by: ActiveValue::set(decider.map(|(b, _)| b.to_string())),
-            decided_at: ActiveValue::set(decider.map(|_| now)),
-            decision_comment: ActiveValue::set(decider.and_then(|(_, c)| c.map(str::to_string))),
-            ..Default::default()
-        }
-        .insert(db)
-        .await
-        .map_err(db_err),
+        None => Ok(sqlx::query_as(
+            "INSERT INTO timesheet_weeks
+                 (pid, person_ref, week_start, status, submitted_at, decided_by, decided_at, decision_comment)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(person)
+        .bind(monday)
+        .bind(status)
+        .bind(submitted.then_some(now))
+        .bind(decider.map(|(b, _)| b.to_string()))
+        .bind(decider.map(|_| now))
+        .bind(decider.and_then(|(_, c)| c.map(str::to_string)))
+        .fetch_one(db.ex())
+        .await?),
     }
 }
 
@@ -252,7 +280,7 @@ async fn submit(
     }
     let monday = week_of(&b.week)?;
     let entries = week_entries(&ctx, &person, monday).await?;
-    let current = week_row(&ctx.db, &person, monday).await?;
+    let current = week_row(&mut crate::db::pool(&ctx), &person, monday).await?;
     let next =
         rules::submit(current.as_ref().map(|r| r.status.as_str()), entries.len()).map_err(|r| {
             match r {
@@ -260,10 +288,10 @@ async fn submit(
                 _ => conflict(&r.message()),
             }
         })?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = set_state(&txn, &person, monday, next, true, None).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row = set_state(&mut tx, &person, monday, next, true, None).await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "timesheet_submitted",
         Some(&claims.sub),
@@ -271,7 +299,7 @@ async fn submit(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -309,7 +337,7 @@ async fn decide(
         _ => return Err(unprocessable("decision must be approved or rejected")),
     };
     let monday = week_of(&b.week)?;
-    let current = week_row(&ctx.db, &person, monday).await?;
+    let current = week_row(&mut crate::db::pool(&ctx), &person, monday).await?;
     let next = rules::decide(
         current.as_ref().map(|r| r.status.as_str()),
         approve,
@@ -319,9 +347,9 @@ async fn decide(
         rules::Refusal::CommentRequired => unprocessable(&r.message()),
         _ => conflict(&r.message()),
     })?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     let row = set_state(
-        &txn,
+        &mut tx,
         &person,
         monday,
         next,
@@ -329,8 +357,8 @@ async fn decide(
         Some((&claims.sub, b.comment.as_deref())),
     )
     .await?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         &format!("timesheet_{next}"),
         Some(&claims.sub),
@@ -338,7 +366,7 @@ async fn decide(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -382,26 +410,25 @@ async fn time_report(
     if from > to {
         return Err(unprocessable("from must not be after to"));
     }
-    let mut q = time_entries::Entity::find()
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .filter(time_entries::Column::SpentOn.gte(from))
-        .filter(time_entries::Column::SpentOn.lte(to));
-    if let Some(plan) = p.plan {
-        q = q.filter(time_entries::Column::PlanPid.eq(plan));
-    }
-    if let Some(person) = p.person.as_deref() {
-        q = q.filter(time_entries::Column::ActorRef.eq(person));
-    }
-    let rows = q
-        .order_by_asc(time_entries::Column::Id)
-        .limit(ROW_CAP + 1)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<time_entries::Model> = sqlx::query_as(
+        "SELECT * FROM time_entries
+         WHERE deleted_at IS NULL AND spent_on >= $1 AND spent_on <= $2
+           AND ($3::uuid IS NULL OR plan_pid = $3)
+           AND ($4::text IS NULL OR actor_ref = $4)
+         ORDER BY id
+         LIMIT $5",
+    )
+    .bind(from)
+    .bind(to)
+    .bind(p.plan)
+    .bind(p.person.as_deref())
+    .bind(ROW_CAP + 1)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     // Entries of a private plan the caller is not in do not exist for them: not shown, not counted.
     let rows = scope.keep(rows);
-    let truncated = rows.len() as u64 > ROW_CAP;
+    let truncated = i64::try_from(rows.len()).unwrap_or(i64::MAX) > ROW_CAP;
     let mut plan_pids: Vec<Uuid> = rows.iter().map(|e| e.plan_pid).collect();
     plan_pids.sort();
     plan_pids.dedup();

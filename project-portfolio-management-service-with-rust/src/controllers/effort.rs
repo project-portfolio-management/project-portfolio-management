@@ -18,21 +18,20 @@
 //! denominator — so a reader has to look at the working, not just the
 //! ratio.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::effort as rules;
-use crate::models::_entities::{non_working_periods, tasks, time_entries, working_time_configs};
+use crate::models::_entities::{non_working_periods, time_entries, working_time_configs};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Rows scanned per read.
-const MAX_ROWS: u64 = 5000;
+const MAX_ROWS: i64 = 5000;
 
 /// Default window for a utilization read.
 const DEFAULT_WINDOW_DAYS: i64 = 28;
@@ -92,59 +91,55 @@ async fn create_entry(
     }
     // Time counts on the task it names, so that task must be this plan's.
     if let Some(task) = payload.task_pid {
-        let known = tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(task))
-            .filter(tasks::Column::PlanPid.eq(plan.pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some();
+        let known = sqlx::query(
+            "SELECT 1 FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(task)
+        .bind(plan.pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
+        .is_some();
         if !known {
             return Err(unprocessable("task_pid is not a task of this plan"));
         }
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = time_entries::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        task_pid: ActiveValue::set(payload.task_pid),
-        actor_ref: ActiveValue::set(payload.actor_ref.clone()),
-        spent_on: ActiveValue::set(payload.spent_on),
-        minutes: ActiveValue::set(payload.minutes),
-        category: ActiveValue::set(
-            rules::EffortCategory::parse(payload.category.as_deref())
-                .token()
-                .to_string(),
-        ),
-        billable: ActiveValue::set(payload.billable),
-        note: ActiveValue::set(payload.note.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO time_entries
+             (pid, plan_pid, task_pid, actor_ref, spent_on, minutes, category, billable, note, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(payload.task_pid)
+    .bind(&payload.actor_ref)
+    .bind(payload.spent_on)
+    .bind(payload.minutes)
+    .bind(rules::EffortCategory::parse(payload.category.as_deref()).token())
+    .bind(payload.billable)
+    .bind(&payload.note)
+    .fetch_one(tx.conn())
+    .await?;
 
-    AuditModel::record(&txn, plan.pid, "effort_recorded", caller.actor(), None)
+    AuditModel::record_on(tx.conn(), plan.pid, "effort_recorded", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/plans/{pid}/time-entries` — newest first.
 #[debug_handler]
 async fn list_entries(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let rows = time_entries::Entity::find()
-        .filter(time_entries::Column::PlanPid.eq(plan.pid))
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .order_by_desc(time_entries::Column::SpentOn)
-        .limit(MAX_ROWS)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<time_entries::Model> = sqlx::query_as(
+        "SELECT * FROM time_entries WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY spent_on DESC LIMIT $2",
+    )
+    .bind(plan.pid)
+    .bind(MAX_ROWS)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(serde_json::json!(rows))
 }
 
@@ -169,13 +164,13 @@ async fn effort_rollup(
     headers: HeaderMap,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let rows = time_entries::Entity::find()
-        .filter(time_entries::Column::PlanPid.eq(plan.pid))
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .limit(MAX_ROWS)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<time_entries::Model> = sqlx::query_as(
+        "SELECT * FROM time_entries WHERE plan_pid = $1 AND deleted_at IS NULL LIMIT $2",
+    )
+    .bind(plan.pid)
+    .bind(MAX_ROWS)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
 
     let mut by_actor: std::collections::BTreeMap<String, Vec<time_entries::Model>> =
         std::collections::BTreeMap::new();
@@ -240,23 +235,29 @@ async fn set_working_time(
             "working_days_per_week must be between 1 and 7",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = working_time_configs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        scope_ref: ActiveValue::set(payload.scope_ref.clone()),
-        minutes_per_day: ActiveValue::set(payload.minutes_per_day),
-        working_days_per_week: ActiveValue::set(payload.working_days_per_week),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO working_time_configs (pid, scope_ref, minutes_per_day, working_days_per_week, deleted_at)
+         VALUES ($1, $2, $3, $4, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&payload.scope_ref)
+    .bind(payload.minutes_per_day)
+    .bind(payload.working_days_per_week)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "working_time_declared",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "working_time_declared", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `POST /api/non-working` body.
@@ -293,25 +294,31 @@ async fn create_non_working(
     if payload.ends_on < payload.starts_on {
         return Err(unprocessable("ends_on must not precede starts_on"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = non_working_periods::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        person_ref: ActiveValue::set(payload.person_ref.clone()),
-        starts_on: ActiveValue::set(payload.starts_on),
-        ends_on: ActiveValue::set(payload.ends_on),
-        kind: ActiveValue::set(payload.kind.clone()),
-        note: ActiveValue::set(payload.note.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO non_working_periods (pid, person_ref, starts_on, ends_on, kind, note, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&payload.person_ref)
+    .bind(payload.starts_on)
+    .bind(payload.ends_on)
+    .bind(&payload.kind)
+    .bind(&payload.note)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "non_working_recorded",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "non_working_recorded", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/capacity/utilization` query.
@@ -367,29 +374,33 @@ async fn utilization(
         .unwrap_or(DEFAULT_WINDOW_DAYS);
     let since = crate::tz::deployment_today() - chrono::Duration::days(window_days);
 
-    let mut query = time_entries::Entity::find()
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .filter(time_entries::Column::SpentOn.gte(since));
-    if let Some(plan_pid) = params.plan_pid {
-        query = query.filter(time_entries::Column::PlanPid.eq(plan_pid));
-    }
-    let entries = scope.keep(query.limit(MAX_ROWS).all(&ctx.db).await.map_err(db_err)?);
+    let entries = scope.keep(
+        sqlx::query_as::<_, time_entries::Model>(
+            "SELECT * FROM time_entries
+             WHERE deleted_at IS NULL AND spent_on >= $1 AND ($2::uuid IS NULL OR plan_pid = $2)
+             LIMIT $3",
+        )
+        .bind(since)
+        .bind(params.plan_pid)
+        .bind(MAX_ROWS)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?,
+    );
 
-    let config = working_time_configs::Entity::find()
-        .filter(working_time_configs::Column::ScopeRef.is_null())
-        .filter(working_time_configs::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let config: Option<working_time_configs::Model> = sqlx::query_as(
+        "SELECT * FROM working_time_configs WHERE scope_ref IS NULL AND deleted_at IS NULL LIMIT 1",
+    )
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
     let declared = declared_minutes(config.as_ref(), window_days);
 
-    let absences = non_working_periods::Entity::find()
-        .filter(non_working_periods::Column::DeletedAt.is_null())
-        .filter(non_working_periods::Column::EndsOn.gte(since))
-        .limit(MAX_ROWS)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let absences: Vec<non_working_periods::Model> = sqlx::query_as(
+        "SELECT * FROM non_working_periods WHERE deleted_at IS NULL AND ends_on >= $1 LIMIT $2",
+    )
+    .bind(since)
+    .bind(MAX_ROWS)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
 
     let mut per_person: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
     for entry in &entries {

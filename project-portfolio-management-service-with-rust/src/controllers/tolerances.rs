@@ -15,18 +15,15 @@ use std::collections::HashMap;
 
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
 use super::governance::find_item;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::inherit::{Source, resolve};
-use crate::models::_entities::{
-    allocations, escalations, plan_tolerances, plans, risks, schedule_baselines,
-};
+use crate::models::_entities::{allocations, plan_tolerances, plans, risks, schedule_baselines};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
 use crate::tolerances::{self as rules, Dimension, Status};
@@ -94,12 +91,12 @@ async fn measure_time(ctx: &AppContext, plan: &plans::Model) -> Result<Measure> 
 
 /// Slip against the finish the plan's latest schedule baseline recorded.
 async fn measure_schedule(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
-    let latest = schedule_baselines::Entity::find()
-        .filter(schedule_baselines::Column::PlanPid.eq(plan))
-        .order_by_desc(schedule_baselines::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let latest: Option<schedule_baselines::Model> = sqlx::query_as(
+        "SELECT * FROM schedule_baselines WHERE plan_pid = $1 ORDER BY version DESC LIMIT 1",
+    )
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     let Some(baseline) = latest else {
         return Ok(Measure::none(
             "the plan has no schedule baseline to hold the forecast against",
@@ -141,12 +138,11 @@ async fn measure_cost(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
 
 /// Risk dimension: the highest score among open or mitigating risks. No risks recorded is a reason, not a score of zero.
 async fn measure_risk(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
-    let rows = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(plan))
-        .filter(risks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<risks::Model> =
+        sqlx::query_as("SELECT * FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     if rows.is_empty() {
         return Ok(Measure::none(
             "no risks are recorded for the plan, which is not the same as no risk",
@@ -213,11 +209,12 @@ async fn rows_for(
     ctx: &AppContext,
     plan_pids: Vec<Uuid>,
 ) -> Result<HashMap<(Uuid, String), plan_tolerances::Model>> {
-    Ok(plan_tolerances::Entity::find()
-        .filter(plan_tolerances::Column::PlanPid.is_in(plan_pids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let rows: Vec<plan_tolerances::Model> =
+        sqlx::query_as("SELECT * FROM plan_tolerances WHERE plan_pid = ANY($1)")
+            .bind(plan_pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    Ok(rows
         .into_iter()
         .map(|r| ((r.plan_pid, r.dimension.clone()), r))
         .collect())
@@ -239,18 +236,16 @@ async fn picture(
     let today = crate::tz::deployment_today();
     // Live escalations that cite a tolerance dimension, so a red one nobody has escalated is visible.
     let mut escalated: HashMap<String, usize> = HashMap::new();
-    for e in escalations::Entity::find()
-        .filter(escalations::Column::PlanPid.eq(plan.pid))
-        .filter(escalations::Column::DeletedAt.is_null())
-        .filter(escalations::Column::ReasonKind.eq("tolerance"))
-        .filter(escalations::Column::Status.is_in(["open", "acknowledged"]))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
-        if let Some(d) = e.tolerance_dimension {
-            *escalated.entry(d).or_insert(0) += 1;
-        }
+    let cited: Vec<Option<String>> = sqlx::query_scalar(
+        "SELECT tolerance_dimension FROM escalations
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND reason_kind = 'tolerance'
+           AND status IN ('open', 'acknowledged')",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    for d in cited.into_iter().flatten() {
+        *escalated.entry(d).or_insert(0) += 1;
     }
     let mut needs_escalation = false;
     let mut dimensions = Vec::new();
@@ -349,6 +344,30 @@ fn dimension_of(raw: &str) -> Result<Dimension> {
     })
 }
 
+/// The plan's own tolerance row for one dimension, if it has one.
+async fn find_tolerance(
+    ctx: &AppContext,
+    plan: Uuid,
+    dim: Dimension,
+) -> Result<Option<plan_tolerances::Model>> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM plan_tolerances WHERE plan_pid = $1 AND dimension = $2 LIMIT 1",
+    )
+    .bind(plan)
+    .bind(dim.token())
+    .fetch_optional(crate::db::pool(ctx))
+    .await?)
+}
+
+/// Every live (not deleted) plan, oldest first.
+async fn live_plans(ctx: &AppContext) -> Result<Vec<plans::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
 /// `PUT /api/plans/{pid}/tolerances/{dimension}`.
 #[debug_handler]
 async fn set_one(
@@ -372,38 +391,40 @@ async fn set_one(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let existing = plan_tolerances::Entity::find()
-        .filter(plan_tolerances::Column::PlanPid.eq(plan.pid))
-        .filter(plan_tolerances::Column::Dimension.eq(dim.token()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing = find_tolerance(&ctx, plan.pid, dim).await?;
     let amber = i32::try_from(amber).unwrap_or(75);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     if let Some(row) = existing {
-        let mut a: plan_tolerances::ActiveModel = row.into();
-        a.limit_value = ActiveValue::set(b.limit);
-        a.amber_from_percent = ActiveValue::set(amber);
-        a.note = ActiveValue::set(note);
-        a.set_by = ActiveValue::set(caller.actor().map(str::to_string));
-        a.update(&txn).await.map_err(db_err)?;
+        sqlx::query(
+            "UPDATE plan_tolerances SET limit_value = $1, amber_from_percent = $2, note = $3, set_by = $4
+             WHERE id = $5
+             RETURNING id",
+        )
+        .bind(b.limit)
+        .bind(amber)
+        .bind(&note)
+        .bind(caller.actor())
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
     } else {
-        plan_tolerances::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            dimension: ActiveValue::set(dim.token().to_string()),
-            limit_value: ActiveValue::set(b.limit),
-            amber_from_percent: ActiveValue::set(amber),
-            note: ActiveValue::set(note),
-            set_by: ActiveValue::set(caller.actor().map(str::to_string)),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO plan_tolerances (pid, plan_pid, dimension, limit_value, amber_from_percent, note, set_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind(dim.token())
+        .bind(b.limit)
+        .bind(amber)
+        .bind(&note)
+        .bind(caller.actor())
+        .fetch_one(tx.conn())
+        .await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "tolerance_set",
         caller.actor(),
@@ -411,7 +432,7 @@ async fn set_one(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let allocs = readable_allocations(&ctx, &caller).await?;
     format::json(picture(&ctx, &caller, &plan, &allocs).await?)
 }
@@ -425,17 +446,16 @@ async fn remove_one(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     let dim = dimension_of(&dimension)?;
-    let row = plan_tolerances::Entity::find()
-        .filter(plan_tolerances::Column::PlanPid.eq(plan.pid))
-        .filter(plan_tolerances::Column::Dimension.eq(dim.token()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let row = find_tolerance(&ctx, plan.pid, dim)
+        .await?
         .ok_or(Error::NotFound)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    row.delete(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM plan_tolerances WHERE id = $1")
+        .bind(row.id)
+        .execute(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "tolerance_removed",
         caller.actor(),
@@ -443,7 +463,7 @@ async fn remove_one(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let allocs = readable_allocations(&ctx, &caller).await?;
     format::json(picture(&ctx, &caller, &plan, &allocs).await?)
 }
@@ -464,12 +484,7 @@ pub(crate) async fn pictures(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
 ) -> Result<(Vec<Value>, bool)> {
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .order_by_asc(plans::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all = live_plans(ctx).await?;
     let pids: Vec<Uuid> = all.iter().map(|p| p.pid).collect();
     let readable = super::plan_access::readable_plans(ctx, caller, &pids).await;
     let visible: Vec<&plans::Model> = all.iter().filter(|p| readable.contains(&p.pid)).collect();
@@ -624,12 +639,7 @@ pub async fn raise_all_needed(ctx: &AppContext, quiet_days: i64) -> Result<usize
     let caller = system_caller();
     let today = crate::tz::deployment_today();
     let since = today - chrono::Duration::days(quiet_days);
-    let plans = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .order_by_asc(plans::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let plans = live_plans(ctx).await?;
     let allocs = readable_allocations(ctx, &caller).await?;
     let mut raised = 0;
     for plan in &plans {
@@ -639,14 +649,16 @@ pub async fn raise_all_needed(ctx: &AppContext, quiet_days: i64) -> Result<usize
                 continue;
             }
             let token = d["dimension"].as_str().unwrap_or_default();
-            let recent = escalations::Entity::find()
-                .filter(escalations::Column::PlanPid.eq(plan.pid))
-                .filter(escalations::Column::ReasonKind.eq("tolerance"))
-                .filter(escalations::Column::ToleranceDimension.eq(token))
-                .filter(escalations::Column::RaisedOn.gte(since))
-                .count(&ctx.db)
-                .await
-                .map_err(db_err)?;
+            let recent: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM escalations
+                 WHERE plan_pid = $1 AND reason_kind = 'tolerance' AND tolerance_dimension = $2
+                   AND raised_on >= $3",
+            )
+            .bind(plan.pid)
+            .bind(token)
+            .bind(since)
+            .fetch_one(crate::db::pool(ctx))
+            .await?;
             if recent > 0 {
                 continue;
             }

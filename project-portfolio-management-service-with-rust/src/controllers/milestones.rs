@@ -15,19 +15,17 @@
 //! manual completion and the append-only reschedule history.
 
 use super::conflict;
-use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::milestones::{self as rules, Achieved, Mode, ScheduleState, Slip};
-use crate::models::_entities::{milestone_slips, milestone_tasks, milestones, tasks};
+use crate::models::_entities::{milestone_slips, milestones, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::visibility as vis_models;
 use crate::workflow::{Category, category_of};
@@ -45,14 +43,14 @@ async fn links_of(ctx: &AppContext, milestone_pids: &[Uuid]) -> Result<HashMap<U
     if milestone_pids.is_empty() {
         return Ok(out);
     }
-    for l in milestone_tasks::Entity::find()
-        .filter(milestone_tasks::Column::MilestonePid.is_in(milestone_pids.to_vec()))
-        .order_by_asc(milestone_tasks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
-        out.entry(l.milestone_pid).or_default().push(l.task_pid);
+    let rows: Vec<(Uuid, Uuid)> = sqlx::query_as(
+        "SELECT milestone_pid, task_pid FROM milestone_tasks WHERE milestone_pid = ANY($1) ORDER BY id",
+    )
+    .bind(milestone_pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    for (milestone_pid, task_pid) in rows {
+        out.entry(milestone_pid).or_default().push(task_pid);
     }
     Ok(out)
 }
@@ -66,14 +64,14 @@ pub(crate) async fn linked_progress(ctx: &AppContext, m: &milestones::Model) -> 
         return Ok(Vec::new());
     }
     let workflow = super::workflow::in_force(ctx, m.plan_pid, "task").await?;
-    Ok(tasks::Entity::find()
-        .filter(tasks::Column::Pid.is_in(pids))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let statuses: Vec<String> =
+        sqlx::query_scalar("SELECT status FROM tasks WHERE pid = ANY($1) AND deleted_at IS NULL")
+            .bind(pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    Ok(statuses
         .iter()
-        .map(|t| matches!(category_of(&workflow, &t.status), Some(Category::Done)))
+        .map(|s| matches!(category_of(&workflow, s), Some(Category::Done)))
         .collect())
 }
 
@@ -117,25 +115,23 @@ pub(crate) async fn derive(
     let task_rows: HashMap<Uuid, tasks::Model> = if all_tasks.is_empty() {
         HashMap::new()
     } else {
-        tasks::Entity::find()
-            .filter(tasks::Column::Pid.is_in(all_tasks))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|t| (t.pid, t))
-            .collect()
+        sqlx::query_as::<_, tasks::Model>(
+            "SELECT * FROM tasks WHERE pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(all_tasks)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
+        .into_iter()
+        .map(|t| (t.pid, t))
+        .collect()
     };
     let slips: Vec<milestone_slips::Model> = if pids.is_empty() {
         Vec::new()
     } else {
-        milestone_slips::Entity::find()
-            .filter(milestone_slips::Column::MilestonePid.is_in(pids.clone()))
-            .order_by_asc(milestone_slips::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        sqlx::query_as("SELECT * FROM milestone_slips WHERE milestone_pid = ANY($1) ORDER BY id")
+            .bind(&pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?
     };
 
     // One workflow and one critical-path analysis per plan that needs them.
@@ -381,24 +377,21 @@ async fn list(
         return Err(unprocessable("to is before from"));
     }
     let today = q.as_of.unwrap_or_else(crate::tz::deployment_today);
-    let mut query = milestones::Entity::find().filter(milestones::Column::DeletedAt.is_null());
-    if let Some(p) = q.plan {
-        query = query.filter(milestones::Column::PlanPid.eq(p));
-    }
-    if let Some(k) = &q.kind {
-        query = query.filter(milestones::Column::Kind.eq(k.as_str()));
-    }
-    if let Some(f) = q.from {
-        query = query.filter(milestones::Column::Due.gte(f));
-    }
-    if let Some(t) = q.to {
-        query = query.filter(milestones::Column::Due.lte(t));
-    }
-    let mut rows = query
-        .order_by_asc(milestones::Column::Due)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let mut rows: Vec<milestones::Model> = sqlx::query_as(
+        "SELECT * FROM milestones
+         WHERE deleted_at IS NULL
+           AND ($1::uuid IS NULL OR plan_pid = $1)
+           AND ($2::text IS NULL OR kind = $2)
+           AND ($3::date IS NULL OR due >= $3)
+           AND ($4::date IS NULL OR due <= $4)
+         ORDER BY due",
+    )
+    .bind(q.plan)
+    .bind(q.kind.as_deref())
+    .bind(q.from)
+    .bind(q.to)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     // Plans the caller cannot read are left out without a trace.
     let mut plans: Vec<Uuid> = rows.iter().map(|m| m.plan_pid).collect();
     plans.sort();
@@ -502,14 +495,14 @@ async fn set_links(
         ));
     }
     if !b.task_pids.is_empty() {
-        let found = tasks::Entity::find()
-            .filter(tasks::Column::Pid.is_in(b.task_pids.clone()))
-            .filter(tasks::Column::PlanPid.eq(plan.pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .len();
+        let found = sqlx::query_scalar::<_, Uuid>(
+            "SELECT pid FROM tasks WHERE pid = ANY($1) AND plan_pid = $2 AND deleted_at IS NULL",
+        )
+        .bind(&b.task_pids)
+        .bind(plan.pid)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
+        .len();
         if found != b.task_pids.len() {
             return Err(unprocessable(
                 "every task must be a live task of this milestone's plan",
@@ -521,31 +514,31 @@ async fn set_links(
         .remove(&m.pid)
         .unwrap_or_default();
     let was_mode = m.completion_mode.clone();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    milestone_tasks::Entity::delete_many()
-        .filter(milestone_tasks::Column::MilestonePid.eq(m.pid))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM milestone_tasks WHERE milestone_pid = $1")
+        .bind(m.pid)
+        .execute(tx.conn())
+        .await?;
     for t in &b.task_pids {
-        milestone_tasks::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            milestone_pid: ActiveValue::set(m.pid),
-            task_pid: ActiveValue::set(*t),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO milestone_tasks (pid, milestone_pid, task_pid) VALUES ($1, $2, $3) RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(m.pid)
+        .bind(t)
+        .fetch_one(tx.conn())
+        .await?;
     }
-    let mut a: milestones::ActiveModel = m.clone().into();
-    a.completion_mode = ActiveValue::set(match mode {
-        Mode::Manual => "manual".to_string(),
-        Mode::Linked => "linked".to_string(),
-    });
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    sqlx::query("UPDATE milestones SET completion_mode = $1 WHERE id = $2 RETURNING id")
+        .bind(match mode {
+            Mode::Manual => "manual",
+            Mode::Linked => "linked",
+        })
+        .bind(m.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         m.pid,
         "milestone_links_set",
         caller.actor(),
@@ -556,7 +549,7 @@ async fn set_links(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
 
     format::json(
         serde_json::json!({ "pid": m.pid, "completion_mode": mode, "task_pids": b.task_pids }),
@@ -603,14 +596,15 @@ async fn reopen(
     }
     let was = (m.done_at, m.done_reason.clone());
     let row_pid = m.pid;
-    let mut a: milestones::ActiveModel = m.into();
-    a.done = ActiveValue::set(false);
-    a.done_at = ActiveValue::set(None);
-    a.done_reason = ActiveValue::set(None);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: milestones::Model = sqlx::query_as(
+        "UPDATE milestones SET done = FALSE, done_at = NULL, done_reason = NULL WHERE id = $1 RETURNING *",
+    )
+    .bind(m.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "milestone_reopened",
         caller.actor(),
@@ -618,7 +612,7 @@ async fn reopen(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let still = rules::achieved(mode, false, &progress) == Achieved::Tasks;
     format::json(serde_json::json!({ "pid": row.pid, "done": row.done, "achieved": still }))
 }

@@ -14,7 +14,6 @@ use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::financial_year::{self as rules, Line, Row};
@@ -53,10 +52,8 @@ async fn create_source(
     if name.chars().count() < 2 || name.chars().count() > 120 {
         return Err(unprocessable("name must be 2 to 120 characters"));
     }
-    let dup = funding_sources::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let dup = all_sources(&ctx)
+        .await?
         .into_iter()
         .any(|s| s.name.to_lowercase() == name.to_lowercase());
     if dup {
@@ -66,18 +63,20 @@ async fn create_source(
             "a funding source with that name exists",
         ));
     }
-    let row = funding_sources::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(name),
-        active: ActiveValue::set(true),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &ctx.db,
+    // The row and its audit row in one transaction (before SQ-1 batch 3 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: funding_sources::Model = sqlx::query_as(
+        "INSERT INTO funding_sources (pid, name, active, created_by)
+         VALUES ($1, $2, TRUE, $3)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&name)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "funding_source_created",
         caller.actor(),
@@ -85,16 +84,14 @@ async fn create_source(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid, "name": row.name, "active": row.active }))
 }
 
 /// `GET /api/funding-sources`.
 #[debug_handler]
 async fn list_sources(State(ctx): State<AppContext>) -> Result<Response> {
-    let mut rows = funding_sources::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let mut rows = all_sources(&ctx).await?;
     rows.sort_by_key(|r| r.name.to_lowercase());
     format::json(serde_json::json!({
         "funding_sources": rows.iter().map(|r| serde_json::json!({
@@ -117,17 +114,17 @@ async fn update_source(
     Path(pid): Path<Uuid>,
     Json(b): Json<ActiveBody>,
 ) -> Result<Response> {
-    let row = funding_sources::Entity::find()
-        .filter(funding_sources::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let mut a: funding_sources::ActiveModel = row.into();
-    a.active = ActiveValue::set(b.active);
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
-        &ctx.db,
+    let row = find_source(&ctx, pid).await?.ok_or(Error::NotFound)?;
+    // The update and its audit row in one transaction (before SQ-1 batch 3 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: funding_sources::Model =
+        sqlx::query_as("UPDATE funding_sources SET active = $1 WHERE id = $2 RETURNING *")
+            .bind(b.active)
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "funding_source_updated",
         caller.actor(),
@@ -135,6 +132,7 @@ async fn update_source(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid, "name": row.name, "active": row.active }))
 }
 
@@ -146,18 +144,30 @@ pub(crate) struct LineSourceBody {
     funding_source_pid: Option<Uuid>,
 }
 
+/// Every funding source, in no particular order.
+async fn all_sources(ctx: &AppContext) -> Result<Vec<funding_sources::Model>> {
+    Ok(sqlx::query_as("SELECT * FROM funding_sources")
+        .fetch_all(crate::db::pool(ctx))
+        .await?)
+}
+
+/// One funding source by pid, if there is one.
+async fn find_source(ctx: &AppContext, pid: Uuid) -> Result<Option<funding_sources::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM funding_sources WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
 /// Whether a funding source exists and is active.
 ///
 /// # Errors
 ///
 /// A 422 when it does not.
 pub(crate) async fn check_source(ctx: &AppContext, pid: Uuid) -> Result<()> {
-    let ok = funding_sources::Entity::find()
-        .filter(funding_sources::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some_and(|s| s.active);
+    let ok = find_source(ctx, pid).await?.is_some_and(|s| s.active);
     if ok {
         Ok(())
     } else {
@@ -176,22 +186,26 @@ async fn set_line_source(
     Json(b): Json<LineSourceBody>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let row = budget_lines::Entity::find()
-        .filter(budget_lines::Column::Pid.eq(line))
-        .filter(budget_lines::Column::PlanPid.eq(plan.pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: budget_lines::Model = sqlx::query_as(
+        "SELECT * FROM budget_lines WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(line)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if let Some(s) = b.funding_source_pid {
         check_source(&ctx, s).await?;
     }
-    let mut a: budget_lines::ActiveModel = row.into();
-    a.funding_source_pid = ActiveValue::set(b.funding_source_pid);
-    a.update(&ctx.db).await.map_err(db_err)?;
-    AuditModel::record(
-        &ctx.db,
+    // The update and its audit row in one transaction (before SQ-1 batch 3 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE budget_lines SET funding_source_pid = $1 WHERE id = $2 RETURNING id")
+        .bind(b.funding_source_pid)
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "budget_line_funding_source_set",
         caller.actor(),
@@ -199,6 +213,7 @@ async fn set_line_source(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "line": line, "funding_source_pid": b.funding_source_pid }))
 }
 
@@ -221,14 +236,7 @@ async fn portfolio_money(
     caller: MaybeAuthUser,
     Query(q): Query<MoneyQuery>,
 ) -> Result<Response> {
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all: Vec<Uuid> = live_plans(&ctx).await?.into_iter().map(|p| p.pid).collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     let sm = rules::start_month();
     let day = match q.fy {
@@ -240,6 +248,15 @@ async fn portfolio_money(
     };
     let body = money_section(&ctx, &readable, day, q.combine_classes.unwrap_or(false)).await?;
     format::json(body)
+}
+
+/// Every live (not deleted) plan, in no particular order.
+async fn live_plans(ctx: &AppContext) -> Result<Vec<plans::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Walk up the plan parents (at most 64 steps, guarding against cycles) to the nearest ancestor that is a Program included in `include`; None when there is none.
@@ -276,7 +293,6 @@ fn row_json(r: &Row, names: &HashMap<Uuid, String>) -> serde_json::Value {
 /// # Errors
 ///
 /// When a database read fails.
-#[expect(clippy::too_many_lines)]
 pub(crate) async fn money_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
@@ -285,24 +301,17 @@ pub(crate) async fn money_section(
 ) -> Result<serde_json::Value> {
     let sm = rules::start_month();
     let year = rules::year_of(day, sm);
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all = live_plans(ctx).await?;
     let by_pid: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
-    let names: HashMap<Uuid, String> = funding_sources::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let names: HashMap<Uuid, String> = all_sources(ctx)
+        .await?
         .into_iter()
         .map(|s| (s.pid, s.name))
         .collect();
-    let rows = budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<budget_lines::Model> =
+        sqlx::query_as("SELECT * FROM budget_lines WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut lines: Vec<Line> = Vec::new();
     let mut unsourced: Vec<serde_json::Value> = Vec::new();
     for b in rows.iter().filter(|b| include.contains(&b.plan_pid)) {

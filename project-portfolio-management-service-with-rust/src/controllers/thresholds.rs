@@ -14,12 +14,10 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::Utc;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::{
@@ -88,21 +86,22 @@ async fn set_triage(
             "a reason of at least 10 characters is required",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = triages::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        triaged_on: ActiveValue::set(crate::tz::deployment_today()),
-        outcome: ActiveValue::set(b.outcome.clone()),
-        reason: ActiveValue::set(b.reason.trim().to_string()),
-        decided_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: triages::Model = sqlx::query_as(
+        "INSERT INTO programme_triages (pid, plan_pid, triaged_on, outcome, reason, decided_by)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(crate::tz::deployment_today())
+    .bind(&b.outcome)
+    .bind(b.reason.trim())
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "programme_triaged",
         caller.actor(),
@@ -110,7 +109,7 @@ async fn set_triage(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(triage_view(&row))
 }
 
@@ -118,12 +117,11 @@ async fn set_triage(
 #[debug_handler]
 async fn get_triage(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = programme(&ctx, &pid, "a triage").await?;
-    let rows = triages::Entity::find()
-        .filter(triages::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(triages::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<triages::Model> =
+        sqlx::query_as("SELECT * FROM programme_triages WHERE plan_pid = $1 ORDER BY id DESC")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(
         json!({ "triage": rows.first().map(triage_view), "history": rows.iter().map(triage_view).collect::<Vec<_>>() }),
     )
@@ -173,19 +171,23 @@ async fn set_threshold(
             rules::KINDS
         )));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let existing = thresholds::Entity::find()
-        .filter(thresholds::Column::PlanPid.eq(plan.pid))
-        .filter(thresholds::Column::Kind.eq(&b.kind))
-        .one(&txn)
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let existing: Option<thresholds::Model> = sqlx::query_as(
+        "SELECT * FROM programme_thresholds WHERE plan_pid = $1 AND kind = $2 LIMIT 1",
+    )
+    .bind(plan.pid)
+    .bind(&b.kind)
+    .fetch_optional(tx.conn())
+    .await?;
     if b.remove {
         if let Some(e) = existing {
-            e.delete(&txn).await.map_err(db_err)?;
+            sqlx::query("DELETE FROM programme_thresholds WHERE id = $1")
+                .bind(e.id)
+                .execute(tx.conn())
+                .await?;
         }
-        AuditModel::record(
-            &txn,
+        AuditModel::record_on(
+            tx.conn(),
             plan.pid,
             "threshold_removed",
             caller.actor(),
@@ -193,7 +195,7 @@ async fn set_threshold(
         )
         .await
         .map_err(super::audit_failed)?;
-        txn.commit().await.map_err(db_err)?;
+        tx.commit().await?;
         return format::json(json!({ "removed": b.kind }));
     }
     let (count, date, amount, currency) = match b.kind.as_str() {
@@ -214,30 +216,37 @@ async fn set_threshold(
             }
         },
     };
-    let row = if let Some(e) = existing {
-        let mut a: thresholds::ActiveModel = e.into();
-        a.count_value = ActiveValue::set(count);
-        a.date_value = ActiveValue::set(date);
-        a.amount_minor = ActiveValue::set(amount);
-        a.currency = ActiveValue::set(currency);
-        a.update(&txn).await.map_err(db_err)?
+    let row: thresholds::Model = if let Some(e) = existing {
+        sqlx::query_as(
+            "UPDATE programme_thresholds SET count_value = $1, date_value = $2, amount_minor = $3, currency = $4
+             WHERE id = $5
+             RETURNING *",
+        )
+        .bind(count)
+        .bind(date)
+        .bind(amount)
+        .bind(&currency)
+        .bind(e.id)
+        .fetch_one(tx.conn())
+        .await?
     } else {
-        thresholds::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            kind: ActiveValue::set(b.kind.clone()),
-            count_value: ActiveValue::set(count),
-            date_value: ActiveValue::set(date),
-            amount_minor: ActiveValue::set(amount),
-            currency: ActiveValue::set(currency),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?
+        sqlx::query_as(
+            "INSERT INTO programme_thresholds (pid, plan_pid, kind, count_value, date_value, amount_minor, currency)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind(&b.kind)
+        .bind(count)
+        .bind(date)
+        .bind(amount)
+        .bind(&currency)
+        .fetch_one(tx.conn())
+        .await?
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "threshold_set",
         caller.actor(),
@@ -245,7 +254,7 @@ async fn set_threshold(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(threshold_view(&row))
 }
 
@@ -256,12 +265,11 @@ async fn get_thresholds(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let plan = programme(&ctx, &pid, "thresholds").await?;
-    let rows = thresholds::Entity::find()
-        .filter(thresholds::Column::PlanPid.eq(plan.pid))
-        .order_by_asc(thresholds::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<thresholds::Model> =
+        sqlx::query_as("SELECT * FROM programme_thresholds WHERE plan_pid = $1 ORDER BY id")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(json!({ "thresholds": rows.iter().map(threshold_view).collect::<Vec<_>>() }))
 }
 
@@ -270,13 +278,11 @@ async fn get_thresholds(
 /// For each programme, whether it was red in each issued period, newest first (the latest issued pack of a
 /// period that names the programme speaks for the period).
 async fn red_history(ctx: &AppContext) -> Result<HashMap<String, Vec<bool>>> {
-    let packs = director_packs::Entity::find()
-        .filter(director_packs::Column::Status.eq("issued"))
-        .order_by_desc(director_packs::Column::Period)
-        .order_by_desc(director_packs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let packs: Vec<director_packs::Model> = sqlx::query_as(
+        "SELECT * FROM director_packs WHERE status = 'issued' ORDER BY period DESC, id DESC",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut seen: HashSet<(String, String)> = HashSet::new();
     let mut out: HashMap<String, Vec<bool>> = HashMap::new();
     for p in packs {
@@ -324,19 +330,19 @@ pub(crate) async fn run_sweep(
     hidden: Option<&super::plan_access::HiddenScope>,
 ) -> Result<Value> {
     let today = crate::tz::deployment_today();
-    let all = thresholds::Entity::find()
-        .order_by_asc(thresholds::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all: Vec<thresholds::Model> =
+        sqlx::query_as("SELECT * FROM programme_thresholds ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let reds = red_history(ctx).await?;
     // One query for every threshold's plan, not one per threshold (CQ-11).
-    let live_plans: std::collections::HashMap<Uuid, plans::Model> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(all.iter().map(|t| t.plan_pid).collect::<Vec<_>>()))
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let live_plans: std::collections::HashMap<Uuid, plans::Model> =
+        sqlx::query_as::<_, plans::Model>(
+            "SELECT * FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(all.iter().map(|t| t.plan_pid).collect::<Vec<_>>())
+        .fetch_all(crate::db::pool(ctx))
+        .await?
         .into_iter()
         .map(|p| (p.pid, p))
         .collect();
@@ -388,25 +394,27 @@ pub(crate) async fn run_sweep(
             results.push(row);
             continue;
         }
-        let active_override = decisions::Entity::find()
-            .filter(decisions::Column::PlanPid.eq(plan.pid))
-            .filter(decisions::Column::ThresholdKind.eq(&t.kind))
-            .filter(decisions::Column::Action.eq("override"))
-            .filter(decisions::Column::Expiry.gt(today))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let active_override: Option<i64> = sqlx::query_scalar(
+            "SELECT id FROM threshold_decisions
+             WHERE plan_pid = $1 AND threshold_kind = $2 AND action = 'override' AND expiry > $3
+             LIMIT 1",
+        )
+        .bind(plan.pid)
+        .bind(&t.kind)
+        .bind(today)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
         if active_override.is_some() {
             row["outcome"] = json!("suppressed_by_override");
             results.push(row);
             continue;
         }
-        let open = exceptions::Entity::find()
-            .filter(exceptions::Column::PlanPid.eq(plan.pid))
-            .filter(exceptions::Column::Status.eq("open"))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let open: Option<exceptions::Model> = sqlx::query_as(
+            "SELECT * FROM delivery_exceptions WHERE plan_pid = $1 AND status = 'open' LIMIT 1",
+        )
+        .bind(plan.pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
         let cause = format!("Threshold crossed: {detail}.");
         let actor = actor.map(str::to_string);
         match open {
@@ -415,16 +423,21 @@ pub(crate) async fn run_sweep(
                 row["exception_pid"] = json!(o.pid);
             }
             Some(o) => {
-                let mut a: exceptions::ActiveModel = o.clone().into();
-                a.threshold_kind = ActiveValue::set(Some(t.kind.clone()));
-                a.cause = ActiveValue::set(Some(match &o.cause {
+                let joined = match &o.cause {
                     Some(c) if !c.trim().is_empty() => format!("{c} {cause}"),
                     _ => cause.clone(),
-                }));
-                let txn = ctx.db.begin().await.map_err(db_err)?;
-                a.update(&txn).await.map_err(db_err)?;
-                AuditModel::record(
-                    &txn,
+                };
+                let mut tx = crate::db::begin(ctx).await?;
+                sqlx::query(
+                    "UPDATE delivery_exceptions SET threshold_kind = $1, cause = $2 WHERE id = $3 RETURNING id",
+                )
+                .bind(&t.kind)
+                .bind(joined)
+                .bind(o.id)
+                .fetch_one(tx.conn())
+                .await?;
+                AuditModel::record_on(
+                    tx.conn(),
                     o.pid,
                     "threshold_attached_to_exception",
                     actor.as_deref(),
@@ -432,44 +445,41 @@ pub(crate) async fn run_sweep(
                 )
                 .await
                 .map_err(super::audit_failed)?;
-                txn.commit().await.map_err(db_err)?;
+                tx.commit().await?;
                 row["outcome"] = json!("attached_to_open_exception");
                 row["exception_pid"] = json!(o.pid);
             }
             None => {
                 let now = Utc::now();
-                let txn = ctx.db.begin().await.map_err(db_err)?;
-                let e = exceptions::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    plan_pid: ActiveValue::set(plan.pid),
-                    status: ActiveValue::set("open".to_string()),
-                    opened_at: ActiveValue::set(now.into()),
-                    opened_by: ActiveValue::set(actor.clone()),
-                    opened_value: ActiveValue::set("threshold".to_string()),
-                    worst_value: ActiveValue::set("threshold".to_string()),
-                    worsened_count: ActiveValue::set(0),
-                    cause: ActiveValue::set(Some(cause)),
-                    decision_needed: ActiveValue::set(Some(
-                        "Pause, reset, stop, or record an override with an expiry".to_string(),
-                    )),
-                    threshold_kind: ActiveValue::set(Some(t.kind.clone())),
-                    ..Default::default()
-                }
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
-                AuditModel::record(
-                    &txn,
-                    e.pid,
+                let mut tx = crate::db::begin(ctx).await?;
+                let e_pid: Uuid = sqlx::query_scalar(
+                    "INSERT INTO delivery_exceptions
+                         (pid, plan_pid, status, opened_at, opened_by, opened_value, worst_value, worsened_count,
+                          cause, decision_needed, threshold_kind)
+                     VALUES ($1, $2, 'open', $3, $4, 'threshold', 'threshold', 0, $5, $6, $7)
+                     RETURNING pid",
+                )
+                .bind(Uuid::new_v4())
+                .bind(plan.pid)
+                .bind(now.fixed_offset())
+                .bind(&actor)
+                .bind(cause)
+                .bind("Pause, reset, stop, or record an override with an expiry")
+                .bind(&t.kind)
+                .fetch_one(tx.conn())
+                .await?;
+                AuditModel::record_on(
+                    tx.conn(),
+                    e_pid,
                     "threshold_exception_opened",
                     actor.as_deref(),
                     Some(json!({ "kind": t.kind })),
                 )
                 .await
                 .map_err(super::audit_failed)?;
-                txn.commit().await.map_err(db_err)?;
+                tx.commit().await?;
                 row["outcome"] = json!("opened");
-                row["exception_pid"] = json!(e.pid);
+                row["exception_pid"] = json!(e_pid);
             }
         }
         results.push(row);
@@ -514,37 +524,44 @@ async fn decide(
         return Err(unprocessable(&problems.join("; ")));
     }
     let actor = caller.actor().unwrap_or("system").to_string();
-    let tx = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     let text = format!("{}: {}", b.action, b.reason.trim());
-    let mut a: exceptions::ActiveModel = row.clone().into();
     if row.status != "open" {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
             ErrorDetail::new("conflict", "this exception is already closed"),
         ));
     }
-    a.status = ActiveValue::set("closed".to_string());
-    a.closed_at = ActiveValue::set(Some(Utc::now().into()));
-    a.decision = ActiveValue::set(Some(text));
-    a.decided_by = ActiveValue::set(Some(actor.clone()));
-    a.update(&tx).await.map_err(db_err)?;
-    let d = decisions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        exception_pid: ActiveValue::set(row.pid),
-        plan_pid: ActiveValue::set(row.plan_pid),
-        threshold_kind: ActiveValue::set(kind.clone()),
-        action: ActiveValue::set(b.action.clone()),
-        expiry: ActiveValue::set(b.expiry),
-        reason: ActiveValue::set(b.reason.trim().to_string()),
-        decided_by: ActiveValue::set(Some(actor.clone())),
-        decided_on: ActiveValue::set(today),
-        ..Default::default()
-    }
-    .insert(&tx)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &tx,
+    sqlx::query(
+        "UPDATE delivery_exceptions SET status = 'closed', closed_at = $1, decision = $2, decided_by = $3
+         WHERE id = $4
+         RETURNING id",
+    )
+    .bind(Utc::now().fixed_offset())
+    .bind(text)
+    .bind(&actor)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    let d: decisions::Model = sqlx::query_as(
+        "INSERT INTO threshold_decisions
+             (pid, exception_pid, plan_pid, threshold_kind, action, expiry, reason, decided_by, decided_on)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(row.pid)
+    .bind(row.plan_pid)
+    .bind(&kind)
+    .bind(&b.action)
+    .bind(b.expiry)
+    .bind(b.reason.trim())
+    .bind(&actor)
+    .bind(today)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "threshold_decision",
         Some(&actor),
@@ -552,7 +569,7 @@ async fn decide(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(
         json!({ "pid": d.pid, "exception_pid": row.pid, "action": d.action, "expiry": d.expiry, "decided_on": d.decided_on }),
     )
@@ -571,22 +588,20 @@ pub(crate) async fn pack_section(
     include: &HashSet<Uuid>,
     period: &str,
 ) -> Result<Value> {
-    let names: HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|p| include.contains(&p.pid) && p.kind.as_deref() == Some("Program"))
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: HashMap<Uuid, String> =
+        sqlx::query_as::<_, plans::Model>("SELECT * FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .filter(|p| include.contains(&p.pid) && p.kind.as_deref() == Some("Program"))
+            .map(|p| (p.pid, p.name))
+            .collect();
     let mut latest: HashMap<Uuid, triages::Model> = HashMap::new();
-    for t in triages::Entity::find()
-        .order_by_asc(triages::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    let all_triages: Vec<triages::Model> =
+        sqlx::query_as("SELECT * FROM programme_triages ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    for t in all_triages {
         if names.contains_key(&t.plan_pid) {
             latest.insert(t.plan_pid, t);
         }
@@ -598,14 +613,13 @@ pub(crate) async fn pack_section(
     triage.sort_by_key(|v| v["programme"].as_str().unwrap_or("").to_string());
     let count_of = |o: &str| latest.values().filter(|t| t.outcome == o).count();
     let today = crate::tz::deployment_today();
-    let decided: Vec<decisions::Model> = decisions::Entity::find()
-        .order_by_asc(decisions::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|d| names.contains_key(&d.plan_pid))
-        .collect();
+    let decided: Vec<decisions::Model> =
+        sqlx::query_as::<_, decisions::Model>("SELECT * FROM threshold_decisions ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .filter(|d| names.contains_key(&d.plan_pid))
+            .collect();
     let in_period = |a: &str| {
         decided
             .iter()
@@ -617,15 +631,14 @@ pub(crate) async fn pack_section(
         .filter(|d| d.action == "override" && d.expiry.is_some_and(|e| e > today))
         .map(|d| json!({ "programme": names[&d.plan_pid], "threshold": d.threshold_kind, "expiry": d.expiry }))
         .collect();
-    let open = exceptions::Entity::find()
-        .filter(exceptions::Column::Status.eq("open"))
-        .filter(exceptions::Column::ThresholdKind.is_not_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|e| names.contains_key(&e.plan_pid))
-        .count();
+    let open = sqlx::query_scalar::<_, Uuid>(
+        "SELECT plan_pid FROM delivery_exceptions WHERE status = 'open' AND threshold_kind IS NOT NULL",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .filter(|p| names.contains_key(p))
+    .count();
     Ok(json!({
         "triage": triage,
         "triage_counts": { "finish": count_of("finish"), "fix": count_of("fix"), "pause": count_of("pause"), "stop": count_of("stop") },

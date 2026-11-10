@@ -6,12 +6,11 @@
 //! otherwise `403`. Audited. `?include=all` (publishers only) also lists the
 //! scheduled and expired ones, which is how a publisher manages the feed.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -69,12 +68,10 @@ async fn list(
         return Err(forbidden());
     }
     let now = Utc::now();
-    let rows = announcements::Entity::find()
-        .filter(announcements::Column::DeletedAt.is_null())
-        .order_by_desc(announcements::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<announcements::Model> =
+        sqlx::query_as("SELECT * FROM announcements WHERE deleted_at IS NULL ORDER BY id DESC")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut keep: Vec<&announcements::Model> = rows
         .iter()
         .filter(|a| {
@@ -157,38 +154,37 @@ async fn create(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = announcements::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        title: ActiveValue::set(b.title.trim().to_string()),
-        body: ActiveValue::set(b.text.trim().to_string()),
-        severity: ActiveValue::set(b.severity.clone()),
-        pinned: ActiveValue::set(b.pinned),
-        publish_at: ActiveValue::set(publish_at.into()),
-        expires_at: ActiveValue::set(b.expires_at.map(Into::into)),
-        author_ref: ActiveValue::set(caller.actor().map(str::to_string)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "announcement_published", caller.actor(),
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: announcements::Model = sqlx::query_as(
+        "INSERT INTO announcements
+             (pid, title, body, severity, pinned, publish_at, expires_at, author_ref, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.title.trim())
+    .bind(b.text.trim())
+    .bind(&b.severity)
+    .bind(b.pinned)
+    .bind(publish_at.fixed_offset())
+    .bind(b.expires_at.map(|e| e.fixed_offset()))
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "announcement_published", caller.actor(),
         Some(serde_json::json!({ "title": row.title, "severity": row.severity, "pinned": row.pinned }))).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, Utc::now()))
 }
 
 /// Loads a live (not retracted) announcement by public id, `404` when absent.
 async fn find(ctx: &AppContext, pid: &str) -> Result<announcements::Model> {
     let pid = super::parse_pid(pid)?;
-    announcements::Entity::find()
-        .filter(announcements::Column::Pid.eq(pid))
-        .filter(announcements::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM announcements WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -211,17 +207,24 @@ async fn update(
     }
     let was =
         serde_json::json!({ "title": row.title, "severity": row.severity, "pinned": row.pinned });
-    let mut a: announcements::ActiveModel = row.into();
-    a.title = ActiveValue::set(b.title.trim().to_string());
-    a.body = ActiveValue::set(b.text.trim().to_string());
-    a.severity = ActiveValue::set(b.severity.clone());
-    a.pinned = ActiveValue::set(b.pinned);
-    a.publish_at = ActiveValue::set(publish_at.into());
-    a.expires_at = ActiveValue::set(b.expires_at.map(Into::into));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: announcements::Model = sqlx::query_as(
+        "UPDATE announcements
+         SET title = $1, body = $2, severity = $3, pinned = $4, publish_at = $5, expires_at = $6
+         WHERE id = $7
+         RETURNING *",
+    )
+    .bind(b.title.trim())
+    .bind(b.text.trim())
+    .bind(&b.severity)
+    .bind(b.pinned)
+    .bind(publish_at.fixed_offset())
+    .bind(b.expires_at.map(|e| e.fixed_offset()))
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "announcement_edited",
         caller.actor(),
@@ -230,7 +233,7 @@ async fn update(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, Utc::now()))
 }
 
@@ -246,14 +249,22 @@ async fn retract(
     }
     let row = find(&ctx, &pid).await?;
     let pid = row.pid;
-    let mut a: announcements::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "announcement_retracted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE announcements SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(Utc::now().fixed_offset())
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        pid,
+        "announcement_retracted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

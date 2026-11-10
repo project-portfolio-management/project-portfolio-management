@@ -5,16 +5,15 @@
 //! orphaning them.
 
 use super::conflict;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
-use sea_orm::{PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::governance::{find_item, valid_ref};
 use crate::auth::MaybeAuthUser;
 use crate::components as rules;
-use crate::models::_entities::{components, tasks};
+use crate::models::_entities::components;
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Whether a lead reference is a `worker:` or `person:` URN; people are held as references, never names.
@@ -24,26 +23,25 @@ fn lead_ok(s: &str) -> bool {
 
 /// A plan's components that are not deleted, in creation order.
 async fn live_components(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<components::Model>> {
-    components::Entity::find()
-        .filter(components::Column::PlanPid.eq(plan_pid))
-        .filter(components::Column::DeletedAt.is_null())
-        .order_by_asc(components::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM components WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// One live component of the given plan by id; `404` when it is missing, deleted or belongs to another plan.
 async fn find_component(ctx: &AppContext, plan_pid: Uuid, pid: &str) -> Result<components::Model> {
     let pid = super::parse_pid(pid)?;
-    components::Entity::find()
-        .filter(components::Column::Pid.eq(pid))
-        .filter(components::Column::PlanPid.eq(plan_pid))
-        .filter(components::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM components WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(plan_pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
 /// `POST/PUT` body.
@@ -84,22 +82,28 @@ async fn create_component(
             "a component with this name already exists in the plan",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = components::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        name: ActiveValue::set(payload.name.trim().to_string()),
-        lead_ref: ActiveValue::set(payload.lead_ref.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: components::Model = sqlx::query_as(
+        "INSERT INTO components (pid, plan_pid, name, lead_ref, deleted_at)
+         VALUES ($1, $2, $3, $4, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(payload.name.trim())
+    .bind(&payload.lead_ref)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "component_created",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "component_created", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -137,15 +141,24 @@ async fn update_component(
         ));
     }
     let comp_pid = row.pid;
-    let mut active: components::ActiveModel = row.into();
-    active.name = ActiveValue::set(payload.name.trim().to_string());
-    active.lead_ref = ActiveValue::set(payload.lead_ref.clone());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, comp_pid, "component_updated", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: components::Model =
+        sqlx::query_as("UPDATE components SET name = $1, lead_ref = $2 WHERE id = $3 RETURNING *")
+            .bind(payload.name.trim())
+            .bind(&payload.lead_ref)
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        comp_pid,
+        "component_updated",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -159,26 +172,34 @@ async fn delete_component(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     let row = find_component(&ctx, plan.pid, &c_pid).await?;
-    let in_use = tasks::Entity::find()
-        .filter(tasks::Column::ComponentPid.eq(row.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let in_use: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM tasks WHERE component_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(row.pid)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     if in_use > 0 {
         return Err(conflict(&format!(
             "{in_use} live task(s) still belong to this component; move them first"
         )));
     }
     let comp_pid = row.pid;
-    let mut active: components::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, comp_pid, "component_deleted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("UPDATE components SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::Utc::now().fixed_offset())
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        comp_pid,
+        "component_deleted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -193,16 +214,12 @@ async fn summary(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Resu
         .into_iter()
         .map(|c| (c.pid, c.name))
         .collect();
-    let rows = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let facts: Vec<(Option<Uuid>, bool)> = rows
-        .iter()
-        .map(|t| (t.component_pid, t.done_at.is_some()))
-        .collect();
+    let facts: Vec<(Option<Uuid>, bool)> = sqlx::query_as(
+        "SELECT component_pid, done_at IS NOT NULL FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let buckets = rules::summarize(&comps, &facts);
     format::json(serde_json::json!({
         "buckets": buckets,

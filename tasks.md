@@ -1925,6 +1925,29 @@ came from grep.
   `milestones::derive` and `earned_value::compute`. **Next batch, suggested:** `financials`, `funding`,
   `tolerances`, `thresholds`, `effort`, `timesheets`, `milestones`, `milestone_signoffs`, `announcements` and
   `components` (money, time and milestones; about 410 lines).
+  **Progress 2026-11-10, batch 3 (not ticked).** The money, time and milestone controllers moved: `financials` (38
+  lines naming SeaORM), `funding` (26), `tolerances` (44), `thresholds` (86), `effort` (47), `timesheets` (38),
+  `milestones` (35), `milestone_signoffs` (34), `announcements` (26) and `components` (26): 400 lines, now none; 121
+  files and 4,404 lines left (batch 2's measure, the `count.sh` pattern without `_entities`; batch 2's "about 410"
+  counted the import lines too). `funding`'s three writes (create a source, retire or restore one, set a line's
+  source) and their audit rows now share one transaction; before, each was its own statement on the pool, so a
+  failed audit row left the write in place. `timesheets::set_state` takes `&mut impl db::Session` and its update
+  names only the columns the old one set; the timesheet behaviour the owner has still to decide (the approved-week
+  lock compares `person_ref` as exact text; plan write lets anyone record time for another person; a submitted
+  week is not locked) is unchanged. No caller changed: every function other modules call (`financials::forecast_of`
+  and `latest_baseline`, `funding::check_source` and `pack_section`, `milestones::derive`, `linked_progress` and
+  `achieved_by_tasks`, `milestone_signoffs::pack_section`, `thresholds::run_sweep` and `pack_section`,
+  `tolerances::pictures` and `raise_all_needed`, `timesheets::week_is_locked`) already took the context.
+  **Found, not changed:** `funding`'s three audit failures and `thresholds::decide`'s map to a plain 500
+  (`Error::string`) rather than `audit_failed`, so `audit_write_failed_total` does not count them.
+  **Still on SeaORM through other modules**, on the pool and outside these handlers' transactions: `find_live_plan`,
+  `governance::find_item`, `plan_access`, `plans::Model::ancestor_pids`, `models::visibility`
+  (`find_milestone`, `all_allocations_with_placeholders`), `workflow::in_force`, `cpm::load_network`,
+  `escalations::insert` (its own transaction), `confidence::find_exception`, `schedule_baselines::current`,
+  `earned_value::subtree_ids` and `cost_risk::p80_by_currency`. **Next batch, suggested:** `escalations`,
+  `deescalation`, `confidence`, `exceptions_digest`, `schedule_baselines`, `cost_risk`, `schedule_risk`, `tpc`,
+  `director_packs` and `pack_rhythm` (exceptions, escalations and the director pack; batch 3's files call four of
+  them; about 446 lines).
 
 ## Correctness carried forward (CF-n)
 

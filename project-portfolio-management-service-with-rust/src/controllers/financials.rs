@@ -13,10 +13,9 @@
 //! future bulk import (T-8); this module only reads what is already
 //! there.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -24,14 +23,14 @@ use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
 use crate::financials as rules;
 use crate::models::_entities::{
-    budget_baseline_periods, budget_baselines, budget_lines, plans, total_project_control,
+    budget_baseline_periods, budget_baselines, plans, total_project_control,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::validation::{MAX_ARRAY_LEN, MAX_TEXT_LEN};
 
 /// Plans scanned to build the containment map for the portfolio-wide
 /// rollup (mirrors `controllers::tba::rollup`'s own cap).
-const MAX_PLANS_SCANNED: u64 = 1000;
+const MAX_PLANS_SCANNED: i64 = 1000;
 
 /// Normalise a currency code to its canonical upper-case form; `None`
 /// means it is not a recognised three-letter code.
@@ -66,12 +65,12 @@ pub(crate) struct PeriodPayload {
 /// The next version number for a plan's baseline sequence: `1` for the
 /// first, else one past the highest existing version.
 async fn next_version(ctx: &AppContext, plan_pid: Uuid) -> Result<i32> {
-    let newest = budget_baselines::Entity::find()
-        .filter(budget_baselines::Column::PlanPid.eq(plan_pid))
-        .order_by_desc(budget_baselines::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let newest: Option<budget_baselines::Model> = sqlx::query_as(
+        "SELECT * FROM budget_baselines WHERE plan_pid = $1 ORDER BY version DESC LIMIT 1",
+    )
+    .bind(plan_pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     Ok(newest.map_or(1, |row| row.version.saturating_add(1)))
 }
 
@@ -125,35 +124,37 @@ async fn create(
         return Err(unprocessable("reason is too long"));
     }
 
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = budget_baselines::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        version: ActiveValue::set(version),
-        currency: ActiveValue::set(currency),
-        approved_at: ActiveValue::set(chrono::Utc::now().into()),
-        reason: ActiveValue::set(reason.map(ToString::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO budget_baselines (pid, plan_pid, version, currency, approved_at, reason)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(version)
+    .bind(&currency)
+    .bind(chrono::Utc::now().fixed_offset())
+    .bind(reason)
+    .fetch_one(tx.conn())
+    .await?;
     for period in &payload.periods {
-        budget_baseline_periods::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            baseline_pid: ActiveValue::set(row.pid),
-            period_start: ActiveValue::set(period.period_start),
-            period_end: ActiveValue::set(period.period_end),
-            planned_minor: ActiveValue::set(period.planned_minor),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO budget_baseline_periods (pid, baseline_pid, period_start, period_end, planned_minor)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(row_pid)
+        .bind(period.period_start)
+        .bind(period.period_end)
+        .bind(period.planned_minor)
+        .fetch_one(tx.conn())
+        .await?;
     }
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "budget_baseline_approved",
         caller.actor(),
@@ -161,9 +162,9 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
 
-    format::json(serde_json::json!({ "pid": row.pid.to_string(), "version": version }))
+    format::json(serde_json::json!({ "pid": row_pid.to_string(), "version": version }))
 }
 
 /// `GET /api/plans/{pid}/budget-baselines` — every version, newest
@@ -172,26 +173,22 @@ async fn create(
 #[debug_handler]
 async fn list(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let baselines = budget_baselines::Entity::find()
-        .filter(budget_baselines::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(budget_baselines::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let baselines: Vec<budget_baselines::Model> =
+        sqlx::query_as("SELECT * FROM budget_baselines WHERE plan_pid = $1 ORDER BY version DESC")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
 
     // Every baseline's periods in one query, grouped here, not one query per baseline (CQ-11).
     let mut periods_of: std::collections::HashMap<Uuid, Vec<budget_baseline_periods::Model>> =
         std::collections::HashMap::new();
-    for p in budget_baseline_periods::Entity::find()
-        .filter(
-            budget_baseline_periods::Column::BaselinePid
-                .is_in(baselines.iter().map(|b| b.pid).collect::<Vec<_>>()),
-        )
-        .order_by_asc(budget_baseline_periods::Column::PeriodStart)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    let periods: Vec<budget_baseline_periods::Model> = sqlx::query_as(
+        "SELECT * FROM budget_baseline_periods WHERE baseline_pid = ANY($1) ORDER BY period_start",
+    )
+    .bind(baselines.iter().map(|b| b.pid).collect::<Vec<_>>())
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    for p in periods {
         periods_of.entry(p.baseline_pid).or_default().push(p);
     }
     let mut out = Vec::with_capacity(baselines.len());
@@ -218,20 +215,21 @@ pub(crate) async fn latest_baseline(
     ctx: &AppContext,
     plan_pid: Uuid,
 ) -> Result<Option<rules::Baseline>> {
-    let Some(row) = budget_baselines::Entity::find()
-        .filter(budget_baselines::Column::PlanPid.eq(plan_pid))
-        .order_by_desc(budget_baselines::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let Some(row): Option<budget_baselines::Model> = sqlx::query_as(
+        "SELECT * FROM budget_baselines WHERE plan_pid = $1 ORDER BY version DESC LIMIT 1",
+    )
+    .bind(plan_pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
     else {
         return Ok(None);
     };
-    let periods = budget_baseline_periods::Entity::find()
-        .filter(budget_baseline_periods::Column::BaselinePid.eq(row.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let rows: Vec<budget_baseline_periods::Model> =
+        sqlx::query_as("SELECT * FROM budget_baseline_periods WHERE baseline_pid = $1")
+            .bind(row.pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let periods = rows
         .into_iter()
         .map(|p| rules::BaselinePeriod {
             period_start: p.period_start,
@@ -247,7 +245,7 @@ pub(crate) async fn latest_baseline(
 }
 
 /// A stored `NUMERIC` as `i64` minor units, matching `controllers::tpc`.
-fn to_i64(value: Option<sea_orm::prelude::Decimal>) -> Option<i64> {
+fn to_i64(value: Option<sqlx::types::Decimal>) -> Option<i64> {
     use std::str::FromStr;
     value.and_then(|d| i64::from_str(&d.trunc().to_string()).ok())
 }
@@ -255,13 +253,15 @@ fn to_i64(value: Option<sea_orm::prelude::Decimal>) -> Option<i64> {
 /// The plan's latest TPC observation's own `(currency,
 /// cost_estimate_to_complete)`, if any.
 async fn latest_tpc_cec(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<(String, i64)>> {
-    let row = total_project_control::Entity::find()
-        .filter(total_project_control::Column::PlanPid.eq(plan_pid))
-        .filter(total_project_control::Column::DeletedAt.is_null())
-        .order_by_desc(total_project_control::Column::ObservedAt)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let row: Option<total_project_control::Model> = sqlx::query_as(
+        "SELECT * FROM total_project_control
+         WHERE plan_pid = $1 AND deleted_at IS NULL
+         ORDER BY observed_at DESC
+         LIMIT 1",
+    )
+    .bind(plan_pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     Ok(row.and_then(|row| {
         to_i64(Some(row.total_project_control_cost_estimate_to_complete))
             .map(|cec| (row.currency, cec))
@@ -270,16 +270,12 @@ async fn latest_tpc_cec(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<(Stri
 
 /// Every `(currency, actual_minor)` line recorded against the plan.
 async fn actual_lines(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<(String, i64)>> {
-    let rows = budget_lines::Entity::find()
-        .filter(budget_lines::Column::PlanPid.eq(plan_pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    Ok(rows
-        .into_iter()
-        .map(|r| (r.currency, r.actual_minor))
-        .collect())
+    Ok(sqlx::query_as(
+        "SELECT currency, actual_minor FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(plan_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Build one plan's forecast from its live inputs.
@@ -359,12 +355,10 @@ async fn rollup(
     }
 
     let all = scope.keep(
-        plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .limit(MAX_PLANS_SCANNED)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?,
+        sqlx::query_as::<_, plans::Model>("SELECT * FROM plans WHERE deleted_at IS NULL LIMIT $1")
+            .bind(MAX_PLANS_SCANNED)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
     let mut children: std::collections::BTreeMap<Uuid, Vec<Uuid>> =
         std::collections::BTreeMap::new();

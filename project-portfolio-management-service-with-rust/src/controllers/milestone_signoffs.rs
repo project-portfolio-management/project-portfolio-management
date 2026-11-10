@@ -9,14 +9,12 @@
 //!
 //! Delivered keeps its meaning and its date; met is separate. Both are derived on read.
 
-use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -55,31 +53,31 @@ pub(crate) async fn assessments(
     if pids.is_empty() {
         return Ok(HashMap::new());
     }
-    let required = reqs::Entity::find()
-        .filter(reqs::Column::MilestonePid.is_in(pids.clone()))
-        .order_by_asc(reqs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let required: Vec<reqs::Model> = sqlx::query_as(
+        "SELECT * FROM milestone_signoff_requirements WHERE milestone_pid = ANY($1) ORDER BY id",
+    )
+    .bind(&pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     if required.is_empty() {
         return Ok(HashMap::new());
     }
-    let orgs: HashMap<Uuid, String> = organizations::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|o| (o.pid, o.name))
-        .collect();
+    let orgs: HashMap<Uuid, String> =
+        sqlx::query_as::<_, organizations::Model>("SELECT * FROM organizations")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .map(|o| (o.pid, o.name))
+            .collect();
     // The sign-off now in force per milestone and organization: the latest event, if it is a sign.
     let mut in_force: HashMap<(Uuid, Uuid), Option<NaiveDate>> = HashMap::new();
-    for e in events::Entity::find()
-        .filter(events::Column::MilestonePid.is_in(pids))
-        .order_by_asc(events::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
+    let signed: Vec<events::Model> = sqlx::query_as(
+        "SELECT * FROM milestone_signoffs WHERE milestone_pid = ANY($1) ORDER BY id",
+    )
+    .bind(&pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    for e in signed {
         in_force.insert(
             (e.milestone_pid, e.organization_pid),
             (e.action == "sign").then_some(e.acted_on),
@@ -158,34 +156,33 @@ async fn set_required(
             "a milestone may require at most 20 organizations",
         ));
     }
-    let found = organizations::Entity::find()
-        .filter(organizations::Column::Pid.is_in(wanted.clone()))
-        .filter(organizations::Column::Active.eq(true))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let found: Vec<organizations::Model> =
+        sqlx::query_as("SELECT * FROM organizations WHERE pid = ANY($1) AND active = TRUE")
+            .bind(&wanted)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     if found.len() != wanted.len() {
         return Err(unprocessable("every organization must exist and be active"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    reqs::Entity::delete_many()
-        .filter(reqs::Column::MilestonePid.eq(m.pid))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM milestone_signoff_requirements WHERE milestone_pid = $1")
+        .bind(m.pid)
+        .execute(tx.conn())
+        .await?;
     for o in &wanted {
-        reqs::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            milestone_pid: ActiveValue::set(m.pid),
-            organization_pid: ActiveValue::set(*o),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO milestone_signoff_requirements (pid, milestone_pid, organization_pid)
+             VALUES ($1, $2, $3)
+             RETURNING id",
+        )
+        .bind(Uuid::new_v4())
+        .bind(m.pid)
+        .bind(o)
+        .fetch_one(tx.conn())
+        .await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         m.pid,
         "milestone_signoff_required_set",
         caller.actor(),
@@ -193,7 +190,7 @@ async fn set_required(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "milestone_pid": m.pid, "organization_pids": wanted }))
 }
 
@@ -221,12 +218,13 @@ async fn act(
     if !["sign", "withdraw"].contains(&b.action.as_str()) {
         return Err(unprocessable("action must be sign or withdraw"));
     }
-    let required = reqs::Entity::find()
-        .filter(reqs::Column::MilestonePid.eq(m.pid))
-        .filter(reqs::Column::OrganizationPid.eq(b.organization_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let required = sqlx::query(
+        "SELECT 1 FROM milestone_signoff_requirements WHERE milestone_pid = $1 AND organization_pid = $2 LIMIT 1",
+    )
+    .bind(m.pid)
+    .bind(b.organization_pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
     if required.is_none() {
         return Err(unprocessable(
             "that organization is not required to sign this milestone",
@@ -258,22 +256,23 @@ async fn act(
             "a withdrawal needs a reason of 5 to 500 characters",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = events::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        milestone_pid: ActiveValue::set(m.pid),
-        organization_pid: ActiveValue::set(b.organization_pid),
-        action: ActiveValue::set(b.action.clone()),
-        reason: ActiveValue::set(reason.clone()),
-        acted_on: ActiveValue::set(crate::tz::deployment_today()),
-        signed_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: events::Model = sqlx::query_as(
+        "INSERT INTO milestone_signoffs (pid, milestone_pid, organization_pid, action, reason, acted_on, signed_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(m.pid)
+    .bind(b.organization_pid)
+    .bind(&b.action)
+    .bind(&reason)
+    .bind(crate::tz::deployment_today())
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         m.pid,
         if b.action == "sign" {
             "milestone_signed_off"
@@ -285,7 +284,7 @@ async fn act(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(json!({ "pid": row.pid, "action": row.action, "acted_on": row.acted_on }))
 }
 
@@ -295,27 +294,26 @@ async fn act(
 ///
 /// When a database read fails.
 pub(crate) async fn summary(ctx: &AppContext, include: &HashSet<Uuid>) -> Result<Value> {
-    let pids: Vec<Uuid> = reqs::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| r.milestone_pid)
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .collect();
+    let pids: Vec<Uuid> =
+        sqlx::query_scalar::<_, Uuid>("SELECT milestone_pid FROM milestone_signoff_requirements")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
     let rows: Vec<milestones::Model> = if pids.is_empty() {
         Vec::new()
     } else {
-        milestones::Entity::find()
-            .filter(milestones::Column::Pid.is_in(pids))
-            .filter(milestones::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .filter(|m| include.contains(&m.plan_pid))
-            .collect()
+        sqlx::query_as::<_, milestones::Model>(
+            "SELECT * FROM milestones WHERE pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(pids)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
+        .into_iter()
+        .filter(|m| include.contains(&m.plan_pid))
+        .collect()
     };
     let today = crate::tz::deployment_today();
     let derived = super::milestones::derive(ctx, &rows, today, 14, 5, false).await?;
@@ -352,14 +350,10 @@ pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>) -> R
 /// `GET /api/milestone-signoffs` — for the plans you can read.
 #[debug_handler]
 async fn portfolio(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let all: Vec<Uuid> = milestones::Entity::find()
-        .filter(milestones::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|m| m.plan_pid)
-        .collect();
+    let all: Vec<Uuid> =
+        sqlx::query_scalar("SELECT plan_pid FROM milestones WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     format::json(summary(&ctx, &readable).await?)
 }

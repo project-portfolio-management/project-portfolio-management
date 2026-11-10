@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 10 November (one svelte-headless: CQ-16 done)
+
+- **The UI lockfile now resolves one `@lilydesignsystem/svelte-headless` (0.8.0), not three.** The pickers under `svelte-picker-bar` and `svelte-date-time-picker` (under the calendar and the Gantt chart) were locked at older releases that carried their own copies; their current patch releases take it as a peer, and an in-range `pnpm update` of the Lily packages picked them up. Only `pnpm-lock.yaml` changed. This meets CQ-16's last acceptance point, so it is ticked in `tasks.md`.
+- Not done: no picker's look or behaviour was checked by hand; the Playwright suite (which opens every picker at desktop and phone width) is the check.
+
 ### 10 November (Lily headless 0.8)
 
 - **`@lilydesignsystem/svelte-headless` 0.6.1 → 0.8.0** in the UI. Lily's `Combobox` now keys its own list, which broke the command palette's Enter (it went nowhere) and needed two presses of Escape after typing. The palette takes those keys first, in the capture phase, and keeps its rows shown when focus returns to the input (BR-14, UI spec). See the UI `CHANGELOG.md`.

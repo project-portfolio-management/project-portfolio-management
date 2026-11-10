@@ -222,7 +222,7 @@ async fn set_row(
         if e.roles.iter().any(|r| matches!(r, 'R' | 'A' | 'I'))
             && let Some(sub) = e.person_ref.split_once(':').map(|(_, id)| id)
         {
-            super::watchers::ensure_watching(&ctx.db, "task", task.pid, sub).await;
+            super::watchers::ensure_watching(&ctx, "task", task.pid, sub).await;
         }
     }
     crate::live::publish(

@@ -352,7 +352,7 @@ async fn find_case(
             .ok_or(Error::NotFound)?;
     // A case of a private plan the caller is outside (or a guest not granted) does not exist for them.
     if (super::guests::caller_is_guest(caller)
-        && !super::guests::guest_covers_plan(&ctx.db, caller, c.plan_pid, "read").await)
+        && !super::guests::guest_covers_plan(ctx, caller, c.plan_pid, "read").await)
         || super::plan_access::hidden_plans(ctx, &[c.plan_pid], caller)
             .await
             .contains(&c.plan_pid)

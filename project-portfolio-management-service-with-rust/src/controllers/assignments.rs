@@ -9,7 +9,6 @@
 //!
 //! An assignment needs an assignee: units are a share of *their* day.
 
-use super::db_err;
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
@@ -19,11 +18,23 @@ use uuid::Uuid;
 
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plans, tasks};
+use crate::models::_entities::tasks;
 use crate::models::audit_logs::Model as AuditModel;
 pub(crate) use crate::scheduling_rules::Recomputed;
 use crate::scheduling_rules::{self as rules, Field, Rule, Triple};
 use crate::work_profile::{self as wp, Contour, Grain, Unplaced};
+
+/// A live task of `plan` by pid, or `404`.
+async fn live_task_of(ctx: &AppContext, plan: Uuid, t_pid: Uuid) -> Result<tasks::Model> {
+    sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(t_pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
+}
 
 /// Wire name of an assignment quantity, as used in error messages and responses.
 fn field_name(f: Field) -> &'static str {
@@ -115,14 +126,7 @@ async fn set_assignment(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let t_pid = super::parse_pid(&t_pid)?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task = live_task_of(&ctx, plan.pid, t_pid).await?;
     if task.is_hammock {
         return Err(unprocessable(
             "a hammock is a derived span, not work: it takes no assignment",
@@ -204,23 +208,44 @@ async fn set_assignment(
         Some(r.map_err(|p| unprocessable(p.message()))?)
     };
 
-    let mut a: tasks::ActiveModel = task.clone().into();
-    a.scheduling_rule = ActiveValue::set(Some(rule.token().to_string()));
-    if let Some(r) = &outcome {
-        a.duration_days = ActiveValue::set(Some(
+    let rule_token = Some(rule.token().to_string());
+    let triple = match &outcome {
+        Some(r) => Some((
             i32::try_from(r.triple.duration_days)
                 .map_err(|_| unprocessable("duration out of range"))?,
-        ));
-        a.units_percent = ActiveValue::set(Some(
             i32::try_from(r.triple.units_percent)
                 .map_err(|_| unprocessable("units out of range"))?,
-        ));
-        a.work_minutes = ActiveValue::set(Some(r.triple.work_minutes));
-    }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+            r.triple.work_minutes,
+        )),
+        None => None,
+    };
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: tasks::Model = match triple {
+        Some((duration, units, work)) => {
+            sqlx::query_as(
+                "UPDATE tasks
+                 SET scheduling_rule = $1, duration_days = $2, units_percent = $3, work_minutes = $4
+                 WHERE id = $5
+                 RETURNING *",
+            )
+            .bind(&rule_token)
+            .bind(Some(duration))
+            .bind(Some(units))
+            .bind(Some(work))
+            .bind(task.id)
+            .fetch_one(tx.conn())
+            .await?
+        }
+        None => {
+            sqlx::query_as("UPDATE tasks SET scheduling_rule = $1 WHERE id = $2 RETURNING *")
+                .bind(&rule_token)
+                .bind(task.id)
+                .fetch_one(tx.conn())
+                .await?
+        }
+    };
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "task_assignment_set",
         caller.actor(),
@@ -230,7 +255,7 @@ async fn set_assignment(
             "derived": outcome.map(|r| field_name(r.derived)), "exact": outcome.map(|r| r.exact) })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
 
     // Does the result ask more of the assignee than they can give, on any day?
     let capacity = capacity_check(&ctx, plan.pid, &row, &person).await?;
@@ -309,26 +334,24 @@ async fn set_contour(
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let t_pid = super::parse_pid(&t_pid)?;
     let contour = wp::parse(&b.contour, b.custom.as_deref()).map_err(|m| unprocessable(&m))?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task = live_task_of(&ctx, plan.pid, t_pid).await?;
     let was = serde_json::json!({ "contour": task.contour, "custom": task.contour_custom });
     let work = task.work_minutes;
-    let mut a: tasks::ActiveModel = task.into();
-    a.contour = ActiveValue::set(contour.token().to_string());
-    a.contour_custom = ActiveValue::set(match &contour {
+    let custom = match &contour {
         Contour::Custom(w) => Some(serde_json::json!(w)),
         _ => None,
-    });
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    };
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: tasks::Model = sqlx::query_as(
+        "UPDATE tasks SET contour = $1, contour_custom = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(contour.token())
+    .bind(&custom)
+    .bind(task.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "task_contour_set",
         caller.actor(),
@@ -336,7 +359,7 @@ async fn set_contour(
             "to": { "contour": row.contour, "custom": row.contour_custom }, "work_minutes": work })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "task_pid": row.pid, "contour": row.contour,
         "custom": row.contour_custom, "work_minutes": row.work_minutes,
@@ -580,15 +603,12 @@ async fn portfolio_profile(
     Query(q): Query<ProfileParams>,
 ) -> Result<Response> {
     let with_work: Vec<Uuid> = {
-        let mut v: Vec<Uuid> = tasks::Entity::find()
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::WorkMinutes.gt(0))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|t| t.plan_pid)
-            .collect();
+        let mut v: Vec<Uuid> = sqlx::query_scalar(
+            "SELECT plan_pid FROM tasks WHERE deleted_at IS NULL AND work_minutes > $1",
+        )
+        .bind(0_i64)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
         v.sort();
         v.dedup();
         v
@@ -614,14 +634,13 @@ async fn portfolio_profile(
         .flat_map(|(_, w)| w.iter().flat_map(|t| t.per_day.iter()))
         .collect();
     let (from, to, grain, periods) = window(&q, &placed)?;
-    let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(plan_pids.clone()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: std::collections::HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(plan_pids.clone())
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .collect();
     let mut plans_json = Vec::new();
     let mut plan_buckets: Vec<Vec<wp::Bucket>> = Vec::new();
     let mut unplaced_work = 0_i64;

@@ -196,30 +196,11 @@ pub(crate) async fn find_live_task(
         .ok_or(axa::Error::NotFound)
 }
 
-/// Take the transaction-scoped advisory lock for `scope` and `key` (CQ-12): the key is
-/// `hashtext('<scope>:<key>')`, bound as a parameter rather than formatted into the SQL. Two
-/// places that must exclude each other (a what-if commit and a plain schedule edit share
-/// `sandbox`) use the same scope. `key` is usually a pid; availability locks on a person ref.
-///
-/// # Errors
-///
-/// `500` when the lock statement fails.
-pub(crate) async fn advisory_lock<C: sea_orm::ConnectionTrait>(
-    txn: &C,
-    scope: &'static str,
-    key: impl std::fmt::Display,
-) -> axa::Result<()> {
-    txn.execute_raw(sea_orm::Statement::from_sql_and_values(
-        sea_orm::DatabaseBackend::Postgres,
-        "SELECT pg_advisory_xact_lock(hashtext($1))",
-        [sea_orm::Value::from(format!("{scope}:{key}"))],
-    ))
-    .await
-    .map_err(db_err)?;
-    Ok(())
-}
-
-/// [`advisory_lock`] on a `sqlx` transaction ([`crate::db::begin`]): the same key, so the two sides exclude each other.
+/// Take the transaction-scoped advisory lock for `scope` and `key` (CQ-12) on a `sqlx` transaction
+/// ([`crate::db::begin`]): the key is `hashtext('<scope>:<key>')`, bound as a parameter rather than formatted into
+/// the SQL. Two places that must exclude each other (a what-if commit and a plain schedule edit share `sandbox`) use
+/// the same scope. `key` is usually a pid; availability locks on a person ref. (The `SeaORM` twin went when its last
+/// caller moved, SQ-1 batch 7; the key is unchanged.)
 ///
 /// # Errors
 ///

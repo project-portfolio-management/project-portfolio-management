@@ -136,14 +136,16 @@ runs several statements takes `&mut impl db::Session`, which is a transaction or
 one.
 
 How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 56 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
+API on 10 November, 66 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
 `meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
 `key_persons`, `ledger`; batch 3: `financials`, `funding`, `tolerances`, `thresholds`, `effort`, `timesheets`,
 `milestones`, `milestone_signoffs`, `announcements`, `components`; batch 4: `escalations`, `deescalation`, `confidence`,
 `exceptions_digest`, `schedule_baselines`, `cost_risk`, `schedule_risk`, `tpc`, `director_packs`, `pack_rhythm`; batch 5:
 `fever`, `programme_gates`, `programme_profile`, `capacity_heatmap`, `cutover`, `status_updates`, `register`,
 `earned_value`, `insights`, `organizations`; batch 6: `start_control`, `drum`, `buffer_management`, `availability`,
-`portfolio_resources`, `ccpm_estimates`, `hammock`, `cpm`, `plan_roles`, `raci`) and 91 are left. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
+`portfolio_resources`, `ccpm_estimates`, `hammock`, `cpm`, `plan_roles`, `raci`; batch 7: `calendars`, `task_relations`,
+`assignments`, `sandbox`, `deployment_moves`, `phase`, `guests`, `watchers`, `visibility/dependencies`,
+`visibility/allocations`) and 81 are left. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
 connection.
 
 ### 8.3 Service layout

@@ -15,18 +15,16 @@
 //!   deliberate — refusing writes on the basis of a phase teaches
 //!   operators to misreport it.
 
-use super::db_err;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::{HeaderMap, StatusCode};
 use project_portfolio_management_matcher::PlanPhase;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::find_live_plan as find_plan;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{phase_transitions, plans};
+use crate::models::_entities::phase_transitions;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::phase as rules;
 
@@ -98,19 +96,19 @@ async fn set_phase(
         .await?;
     }
 
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    phase_transitions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        from_phase: ActiveValue::set(from.map(|p| p.token().to_string())),
-        to_phase: ActiveValue::set(to.token().to_string()),
-        actor: ActiveValue::set(caller.actor().map(ToString::to_string)),
-        reason: ActiveValue::set(payload.reason.clone()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "INSERT INTO phase_transitions (pid, plan_pid, from_phase, to_phase, actor, reason)
+         VALUES ($1, $2, $3, $4, $5, $6)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(from.map(PlanPhase::token))
+    .bind(to.token())
+    .bind(caller.actor())
+    .bind(payload.reason.as_deref())
+    .execute(tx.conn())
+    .await?;
 
     // Payload and column together, so the two cannot drift.
     let mut data = plan.data.clone();
@@ -121,15 +119,20 @@ async fn set_phase(
         );
     }
     let plan_pid = plan.pid;
-    let mut active: plans::ActiveModel = plan.into();
-    active.phase = ActiveValue::set(Some(to.token().to_string()));
-    active.data = ActiveValue::set(data);
-    active.update(&txn).await.map_err(db_err)?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE plans SET phase = $1, data = $2 WHERE id = $3 RETURNING id",
+    )
+    .bind(Some(to.token()))
+    .bind(&data)
+    .bind(plan.id)
+    .fetch_one(tx.conn())
+    .await?;
 
-    AuditModel::record(&txn, plan_pid, "phase_changed", caller.actor(), None)
+    AuditModel::record_on(tx.conn(), plan_pid, "phase_changed", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
 
     // Workflow automation (FR-32). The phase change is already
     // committed, so a rule that fails is logged as a failed run and
@@ -169,12 +172,11 @@ async fn history(
     headers: HeaderMap,
 ) -> Result<Response> {
     let plan = find_plan(&ctx, &pid).await?;
-    let rows = phase_transitions::Entity::find()
-        .filter(phase_transitions::Column::PlanPid.eq(plan.pid))
-        .order_by_asc(phase_transitions::Column::OccurredAt)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<phase_transitions::Model> =
+        sqlx::query_as("SELECT * FROM phase_transitions WHERE plan_pid = $1 ORDER BY occurred_at")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
 
     let facts: Vec<rules::TransitionFact> = rows
         .iter()

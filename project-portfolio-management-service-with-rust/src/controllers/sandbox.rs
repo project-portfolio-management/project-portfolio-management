@@ -16,14 +16,13 @@
 //! them, so a preview never shows more than a commit would allow.
 
 use super::forbidden;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -74,18 +73,17 @@ struct Evaluated {
 /// the order the network is built (stored dependencies, then `precedes` relations
 /// not already covered). Read through any connection, so a transaction can re-read
 /// exactly what the preview read.
-async fn read_edges<C: sea_orm::ConnectionTrait>(
-    conn: &C,
+async fn read_edges(
+    conn: &mut impl crate::db::Session,
     pids: &HashSet<Uuid>,
 ) -> Result<Vec<(Uuid, Uuid, String, i64)>> {
     let mut seen: HashSet<(Uuid, Uuid)> = HashSet::new();
     let mut out = Vec::new();
-    for d in plan_dependencies::Entity::find()
-        .order_by_asc(plan_dependencies::Column::Id)
-        .all(conn)
-        .await
-        .map_err(db_err)?
-    {
+    let dependencies: Vec<plan_dependencies::Model> =
+        sqlx::query_as("SELECT * FROM plan_dependencies ORDER BY id")
+            .fetch_all(conn.ex())
+            .await?;
+    for d in dependencies {
         if pids.contains(&d.predecessor_pid) && pids.contains(&d.successor_pid) {
             seen.insert((d.predecessor_pid, d.successor_pid));
             out.push((
@@ -96,14 +94,13 @@ async fn read_edges<C: sea_orm::ConnectionTrait>(
             ));
         }
     }
-    for r in task_relations::Entity::find()
-        .filter(task_relations::Column::DeletedAt.is_null())
-        .filter(task_relations::Column::Kind.eq("precedes"))
-        .order_by_asc(task_relations::Column::Id)
-        .all(conn)
-        .await
-        .map_err(db_err)?
-    {
+    let relations: Vec<task_relations::Model> = sqlx::query_as(
+        "SELECT * FROM task_relations WHERE deleted_at IS NULL AND kind = $1 ORDER BY id",
+    )
+    .bind("precedes")
+    .fetch_all(conn.ex())
+    .await?;
+    for r in relations {
         if pids.contains(&r.from_task_pid)
             && pids.contains(&r.to_task_pid)
             && seen.insert((r.from_task_pid, r.to_task_pid))
@@ -115,16 +112,17 @@ async fn read_edges<C: sea_orm::ConnectionTrait>(
 }
 
 /// The plan's task rows, as the network is built from them.
-async fn read_rows<C: sea_orm::ConnectionTrait>(conn: &C, plan: Uuid) -> Result<Vec<tasks::Model>> {
-    tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        // Hammocks are not in the network the preview digests, so the recheck must not see them either.
-        .filter(tasks::Column::IsHammock.eq(false))
-        .order_by_asc(tasks::Column::Id)
-        .all(conn)
-        .await
-        .map_err(db_err)
+async fn read_rows(conn: &mut impl crate::db::Session, plan: Uuid) -> Result<Vec<tasks::Model>> {
+    // Hammocks are not in the network the preview digests, so the recheck must not see them either.
+    Ok(sqlx::query_as(
+        "SELECT * FROM tasks
+         WHERE plan_pid = $1 AND deleted_at IS NULL AND is_hammock = $2
+         ORDER BY id",
+    )
+    .bind(plan)
+    .bind(false)
+    .fetch_all(conn.ex())
+    .await?)
 }
 
 /// A digest of a plan's state: every field an edit can change or depend on, the
@@ -170,22 +168,18 @@ fn analyse(net: &Network, what: &str) -> Result<CpmResult> {
 /// Dependency pairs from outside this network, for the cycle check.
 async fn outside_pairs(ctx: &AppContext, net: &Network) -> Result<Vec<(Uuid, Uuid)>> {
     let here: HashSet<(Uuid, Uuid)> = net.edges.iter().map(|e| (e.pred, e.succ)).collect();
-    let mut all: Vec<(Uuid, Uuid)> = plan_dependencies::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|d| (d.predecessor_pid, d.successor_pid))
-        .collect();
+    let mut all: Vec<(Uuid, Uuid)> =
+        sqlx::query_as("SELECT predecessor_pid, successor_pid FROM plan_dependencies")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     all.extend(
-        task_relations::Entity::find()
-            .filter(task_relations::Column::DeletedAt.is_null())
-            .filter(task_relations::Column::Kind.eq("precedes"))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|r| (r.from_task_pid, r.to_task_pid)),
+        sqlx::query_as::<_, (Uuid, Uuid)>(
+            "SELECT from_task_pid, to_task_pid FROM task_relations
+             WHERE deleted_at IS NULL AND kind = $1",
+        )
+        .bind("precedes")
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
     );
     all.retain(|p| !here.contains(p));
     Ok(all)
@@ -214,14 +208,13 @@ async fn evaluate(
     let before = analyse(&before_net, "the plan")?;
     let outside = outside_pairs(ctx, &before_net).await?;
     let edge_pids: Vec<Uuid> = before_net.edges.iter().map(|e| e.pid).collect();
-    let removable: HashSet<Uuid> = plan_dependencies::Entity::find()
-        .filter(plan_dependencies::Column::Pid.is_in(edge_pids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|d| d.pid)
-        .collect();
+    let removable: HashSet<Uuid> =
+        sqlx::query_scalar::<_, Uuid>("SELECT pid FROM plan_dependencies WHERE pid = ANY($1)")
+            .bind(edge_pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
     let mut nodes = before_net.nodes.clone();
     let mut edges = before_net.edges.clone();
     let changes = sandbox::apply(&mut nodes, &mut edges, &outside, &removable, edits)
@@ -264,7 +257,7 @@ async fn evaluate(
     let after = analyse(&after_net, "the plan with these edits")?;
     let cal = calendars_of(&before_net);
     let pids: HashSet<Uuid> = before_net.rows.iter().map(|r| r.pid).collect();
-    let stored = read_edges(&ctx.db, &pids).await?;
+    let stored = read_edges(&mut crate::db::pool(ctx), &pids).await?;
     let after_edges: Vec<(Uuid, Uuid, String, i64)> = after_net
         .edges
         .iter()
@@ -404,13 +397,13 @@ pub(crate) async fn commit(
     if expected.is_some_and(|x| x != e.plan_etag) {
         return Err(stale());
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(ctx).await?;
     // One commit at a time per plan: a second waits here, then re-reads the plan
     // through this transaction and is refused as stale if the first changed it.
-    super::advisory_lock(&txn, "sandbox", plan).await?;
-    let rows = read_rows(&txn, plan).await?;
+    super::advisory_lock_on(&mut tx, "sandbox", plan).await?;
+    let rows = read_rows(&mut tx, plan).await?;
     let pids: HashSet<Uuid> = rows.iter().map(|r| r.pid).collect();
-    let edges = read_edges(&txn, &pids).await?;
+    let edges = read_edges(&mut tx, &pids).await?;
     if digest(&rows, &edges, &e.calendars) != e.plan_etag {
         return Err(stale());
     }
@@ -418,23 +411,46 @@ pub(crate) async fn commit(
     for c in &e.changes {
         match c {
             Change::Task { pid, from, to } => {
-                let row = tasks::Entity::find()
-                    .filter(tasks::Column::Pid.eq(*pid))
-                    .one(&txn)
-                    .await
-                    .map_err(db_err)?
+                let id: i32 = sqlx::query_scalar("SELECT id FROM tasks WHERE pid = $1 LIMIT 1")
+                    .bind(*pid)
+                    .fetch_optional(tx.conn())
+                    .await?
                     .ok_or(Error::NotFound)?;
-                let mut a: tasks::ActiveModel = row.into();
-                a.start_date = ActiveValue::set(to.start_date);
-                a.duration_days =
-                    ActiveValue::set(to.duration_days.and_then(|d| i32::try_from(d).ok()));
-                a.constraint_kind = ActiveValue::set(to.constraint_kind.map(str::to_string));
-                a.constraint_date = ActiveValue::set(to.constraint_date);
+                let duration = to.duration_days.and_then(|d| i32::try_from(d).ok());
+                let constraint_kind = to.constraint_kind.map(str::to_string);
+                // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
                 if let Some(r) = e.recomputed.get(pid) {
-                    a.units_percent = ActiveValue::set(i32::try_from(r.triple.units_percent).ok());
-                    a.work_minutes = ActiveValue::set(Some(r.triple.work_minutes));
+                    sqlx::query_scalar::<_, i32>(
+                        "UPDATE tasks
+                         SET start_date = $1, duration_days = $2, constraint_kind = $3, constraint_date = $4,
+                             units_percent = $5, work_minutes = $6
+                         WHERE id = $7
+                         RETURNING id",
+                    )
+                    .bind(to.start_date)
+                    .bind(duration)
+                    .bind(&constraint_kind)
+                    .bind(to.constraint_date)
+                    .bind(i32::try_from(r.triple.units_percent).ok())
+                    .bind(Some(r.triple.work_minutes))
+                    .bind(id)
+                    .fetch_one(tx.conn())
+                    .await?;
+                } else {
+                    sqlx::query_scalar::<_, i32>(
+                        "UPDATE tasks
+                         SET start_date = $1, duration_days = $2, constraint_kind = $3, constraint_date = $4
+                         WHERE id = $5
+                         RETURNING id",
+                    )
+                    .bind(to.start_date)
+                    .bind(duration)
+                    .bind(&constraint_kind)
+                    .bind(to.constraint_date)
+                    .bind(id)
+                    .fetch_one(tx.conn())
+                    .await?;
                 }
-                a.update(&txn).await.map_err(db_err)?;
                 let (action, detail) = overrides.get(pid).cloned().unwrap_or_else(|| {
                     (
                         "task_schedule_updated",
@@ -445,7 +461,7 @@ pub(crate) async fn commit(
                                 "work_minutes": r.triple.work_minutes })) }),
                     )
                 });
-                AuditModel::record(&txn, *pid, action, caller.actor(), Some(detail))
+                AuditModel::record_on(tx.conn(), *pid, action, caller.actor(), Some(detail))
                     .await
                     .map_err(Error::Model)?;
                 audit_entries += 1;
@@ -457,18 +473,19 @@ pub(crate) async fn commit(
                 lag_days,
                 ..
             } => {
-                let row = plan_dependencies::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    predecessor_pid: ActiveValue::set(*predecessor_pid),
-                    successor_pid: ActiveValue::set(*successor_pid),
-                    lag_days: ActiveValue::set(i32::try_from(*lag_days).unwrap_or(0)),
-                    kind: ActiveValue::set((*kind).to_string()),
-                    ..Default::default()
-                }
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
-                AuditModel::record(&txn, row.pid, "dependency_added", caller.actor(),
+                let row_pid: Uuid = sqlx::query_scalar(
+                    "INSERT INTO plan_dependencies (pid, predecessor_pid, successor_pid, lag_days, kind)
+                     VALUES ($1, $2, $3, $4, $5)
+                     RETURNING pid",
+                )
+                .bind(Uuid::new_v4())
+                .bind(*predecessor_pid)
+                .bind(*successor_pid)
+                .bind(i32::try_from(*lag_days).unwrap_or(0))
+                .bind((*kind).to_string())
+                .fetch_one(tx.conn())
+                .await?;
+                AuditModel::record_on(tx.conn(), row_pid, "dependency_added", caller.actor(),
                     Some(serde_json::json!({ "via": "sandbox", "reason": reason, "predecessor_pid": predecessor_pid,
                         "successor_pid": successor_pid, "kind": kind, "lag_days": lag_days })))
                     .await
@@ -482,12 +499,11 @@ pub(crate) async fn commit(
                 kind,
                 lag_days,
             } => {
-                plan_dependencies::Entity::delete_many()
-                    .filter(plan_dependencies::Column::Pid.eq(*pid))
-                    .exec(&txn)
-                    .await
-                    .map_err(db_err)?;
-                AuditModel::record(&txn, *pid, "dependency_removed", caller.actor(),
+                sqlx::query("DELETE FROM plan_dependencies WHERE pid = $1")
+                    .bind(*pid)
+                    .execute(tx.conn())
+                    .await?;
+                AuditModel::record_on(tx.conn(), *pid, "dependency_removed", caller.actor(),
                     Some(serde_json::json!({ "via": "sandbox", "reason": reason, "predecessor_pid": predecessor_pid,
                         "successor_pid": successor_pid, "kind": kind, "lag_days": lag_days })))
                     .await
@@ -496,7 +512,7 @@ pub(crate) async fn commit(
             }
         }
     }
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Ok(Committed {
         changes: e.changes,
         audit_entries,

@@ -10,74 +10,76 @@
 //! **auto-watch** (the `auto_watch` preference) so creating or being
 //! assigned a thing does not subscribe them.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
-use sea_orm::{DatabaseConnection, PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::discussion::resolve_subject;
 use crate::auth::{AuthUser, MaybeAuthUser};
 use crate::discussion as rules;
-use crate::models::_entities::{notification_prefs, watchers};
+use crate::models::_entities::watchers;
 use crate::models::capabilities as cap_models;
 
 /// The `sub`s watching a subject.
-pub(crate) async fn watcher_subs(db: &DatabaseConnection, kind: &str, pid: Uuid) -> Vec<String> {
-    watchers::Entity::find()
-        .filter(watchers::Column::SubjectKind.eq(kind))
-        .filter(watchers::Column::SubjectPid.eq(pid))
-        .all(db)
+pub(crate) async fn watcher_subs(ctx: &AppContext, kind: &str, pid: Uuid) -> Vec<String> {
+    sqlx::query_scalar("SELECT sub FROM watchers WHERE subject_kind = $1 AND subject_pid = $2")
+        .bind(kind)
+        .bind(pid)
+        .fetch_all(crate::db::pool(ctx))
         .await
-        .map(|rows| rows.into_iter().map(|w| w.sub).collect())
         .unwrap_or_default()
 }
 
 /// Subscribe `sub` unless they switched `auto_watch` off. Best-effort and
 /// idempotent: a failure here must never fail the action that triggered it.
-pub(crate) async fn ensure_watching(db: &DatabaseConnection, kind: &str, pid: Uuid, sub: &str) {
-    let opted_out = notification_prefs::Entity::find()
-        .filter(notification_prefs::Column::Sub.eq(sub))
-        .filter(notification_prefs::Column::Kind.eq("auto_watch"))
-        .filter(notification_prefs::Column::Enabled.eq(false))
-        .one(db)
-        .await
-        .ok()
-        .flatten()
-        .is_some();
+pub(crate) async fn ensure_watching(ctx: &AppContext, kind: &str, pid: Uuid, sub: &str) {
+    let opted_out = sqlx::query(
+        "SELECT 1 FROM notification_prefs WHERE sub = $1 AND kind = $2 AND enabled = false LIMIT 1",
+    )
+    .bind(sub)
+    .bind("auto_watch")
+    .fetch_optional(crate::db::pool(ctx))
+    .await
+    .ok()
+    .flatten()
+    .is_some();
     if opted_out {
         return;
     }
-    insert_if_absent(db, kind, pid, sub).await.ok();
+    insert_if_absent(ctx, kind, pid, sub).await.ok();
 }
 
 /// Insert a watch row unless one exists. `true` when a row was added.
 async fn insert_if_absent(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     kind: &str,
     pid: Uuid,
     sub: &str,
-) -> std::result::Result<bool, sea_orm::DbErr> {
-    let exists = watchers::Entity::find()
-        .filter(watchers::Column::SubjectKind.eq(kind))
-        .filter(watchers::Column::SubjectPid.eq(pid))
-        .filter(watchers::Column::Sub.eq(sub))
-        .one(db)
-        .await?
-        .is_some();
+) -> std::result::Result<bool, sqlx::Error> {
+    let exists = sqlx::query(
+        "SELECT 1 FROM watchers WHERE subject_kind = $1 AND subject_pid = $2 AND sub = $3 LIMIT 1",
+    )
+    .bind(kind)
+    .bind(pid)
+    .bind(sub)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .is_some();
     if exists {
         return Ok(false);
     }
     // A concurrent identical insert loses to the unique index: the same
-    // idempotent outcome, not an error.
-    Ok(watchers::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set(kind.to_string()),
-        subject_pid: ActiveValue::set(pid),
-        sub: ActiveValue::set(sub.to_string()),
-        ..Default::default()
-    }
-    .insert(db)
+    // idempotent outcome, not an error. On the pool, so the failed insert
+    // aborts no one's transaction.
+    Ok(sqlx::query(
+        "INSERT INTO watchers (pid, subject_kind, subject_pid, sub) VALUES ($1, $2, $3, $4) RETURNING id",
+    )
+    .bind(Uuid::new_v4())
+    .bind(kind)
+    .bind(pid)
+    .bind(sub)
+    .fetch_one(crate::db::pool(ctx))
     .await
     .is_ok())
 }
@@ -92,11 +94,18 @@ pub(crate) async fn notify_watchers(
     actor: Option<&str>,
     message: &str,
 ) {
-    let subs = watcher_subs(&ctx.db, kind, pid).await;
+    let subs = watcher_subs(ctx, kind, pid).await;
     for target in rules::notify_targets(actor, None, &[], &subs) {
-        cap_models::notify(&ctx.db, &target, kind, pid, "watch_update", message)
-            .await
-            .ok();
+        cap_models::notify_on(
+            &mut crate::db::pool(ctx),
+            &target,
+            kind,
+            pid,
+            "watch_update",
+            message,
+        )
+        .await
+        .ok();
     }
 }
 
@@ -134,9 +143,7 @@ async fn watch(
     // Following requires being able to read the subject at all.
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
-    let created = insert_if_absent(&ctx.db, &p.subject_kind, subject.pid, &claims.sub)
-        .await
-        .map_err(db_err)?;
+    let created = insert_if_absent(&ctx, &p.subject_kind, subject.pid, &claims.sub).await?;
     format::json(serde_json::json!({ "watching": true, "created": created }))
 }
 
@@ -149,13 +156,12 @@ async fn unwatch(
     Query(p): Query<SubjectParams>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&p.subject_pid)?;
-    watchers::Entity::delete_many()
-        .filter(watchers::Column::SubjectKind.eq(p.subject_kind.as_str()))
-        .filter(watchers::Column::SubjectPid.eq(pid))
-        .filter(watchers::Column::Sub.eq(claims.sub.as_str()))
-        .exec(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    sqlx::query("DELETE FROM watchers WHERE subject_kind = $1 AND subject_pid = $2 AND sub = $3")
+        .bind(p.subject_kind.as_str())
+        .bind(pid)
+        .bind(claims.sub.as_str())
+        .execute(crate::db::pool(&ctx))
+        .await?;
     format::empty_json()
 }
 
@@ -188,15 +194,21 @@ async fn status(
 ) -> Result<Response> {
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
-    let all = watchers::Entity::find()
-        .filter(watchers::Column::SubjectKind.eq(p.subject_kind.as_str()))
-        .filter(watchers::Column::SubjectPid.eq(subject.pid));
-    let count = all.clone().count(&ctx.db).await.map_err(db_err)?;
-    let mine = all
-        .filter(watchers::Column::Sub.eq(claims.sub.as_str()))
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM watchers WHERE subject_kind = $1 AND subject_pid = $2",
+    )
+    .bind(p.subject_kind.as_str())
+    .bind(subject.pid)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
+    let mine = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM watchers WHERE subject_kind = $1 AND subject_pid = $2 AND sub = $3",
+    )
+    .bind(p.subject_kind.as_str())
+    .bind(subject.pid)
+    .bind(claims.sub.as_str())
+    .fetch_one(crate::db::pool(&ctx))
+    .await?
         > 0;
     format::json(serde_json::json!({ "count": count, "mine": mine }))
 }
@@ -212,14 +224,19 @@ async fn my_watching(
     let caller = crate::auth::MaybeAuthUser(Some(claims));
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let owned = scope.owned_pids(&ctx).await?;
-    let rows = watchers::Entity::find()
-        .filter(watchers::Column::Sub.eq(sub.as_str()))
-        .filter(super::plan_access::is_none_of("subject_pid", owned))
-        .order_by_desc(watchers::Column::Id)
-        .limit(500)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // The hidden pids as one bound array, which no number of them can take past the bind-parameter limit.
+    let owned: Vec<Uuid> = owned.into_iter().collect();
+    let rows: Vec<watchers::Model> = sqlx::query_as(
+        "SELECT * FROM watchers
+         WHERE sub = $1 AND subject_pid <> ALL($2)
+         ORDER BY id DESC
+         LIMIT $3",
+    )
+    .bind(sub.as_str())
+    .bind(&owned)
+    .bind(500_i64)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let items: Vec<serde_json::Value> = rows
         .iter()
         .map(

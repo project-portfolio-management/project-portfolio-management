@@ -664,7 +664,7 @@ async fn assign_task(
         .ok();
         // Being assigned follows the task (unless the assignee opted out).
         if let Some(sub) = crate::notification_prefs::recipient_sub(assignee) {
-            super::watchers::ensure_watching(&ctx.db, "task", task_pid, &sub).await;
+            super::watchers::ensure_watching(&ctx, "task", task_pid, &sub).await;
         }
     }
     format::json(row)

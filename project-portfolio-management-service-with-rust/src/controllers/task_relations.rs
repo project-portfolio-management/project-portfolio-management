@@ -9,28 +9,31 @@
 //! shown), and deleting nothing here ever removes a task.
 
 use super::conflict;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::{ActiveModelTrait, QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::governance::find_item;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plans, task_relations, tasks};
+use crate::models::_entities::{task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::task_relations as rules;
 
 /// Load a task that is not soft-deleted by pid, or `NotFound`.
 async fn live_task(ctx: &AppContext, pid: Uuid) -> Result<tasks::Model> {
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    live_task_or_none(ctx, pid).await?.ok_or(Error::NotFound)
+}
+
+/// A task that is not soft-deleted, by pid.
+async fn live_task_or_none(ctx: &AppContext, pid: Uuid) -> Result<Option<tasks::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM tasks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// All live relations, optionally of one kind, in creation order.
@@ -38,37 +41,54 @@ async fn live_relations_of(
     ctx: &AppContext,
     kind: Option<&str>,
 ) -> Result<Vec<task_relations::Model>> {
-    let mut q = task_relations::Entity::find().filter(task_relations::Column::DeletedAt.is_null());
-    if let Some(k) = kind {
-        q = q.filter(task_relations::Column::Kind.eq(k));
-    }
-    q.order_by_asc(task_relations::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(match kind {
+        Some(k) => {
+            sqlx::query_as(
+                "SELECT * FROM task_relations WHERE deleted_at IS NULL AND kind = $1 ORDER BY id",
+            )
+            .bind(k)
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+        }
+        None => {
+            sqlx::query_as("SELECT * FROM task_relations WHERE deleted_at IS NULL ORDER BY id")
+                .fetch_all(crate::db::pool(ctx))
+                .await?
+        }
+    })
+}
+
+/// Live relations of `kind` pointing at `to`, unordered (as the `SeaORM` read was).
+async fn live_relations_to(
+    ctx: &AppContext,
+    to: Uuid,
+    kind: &str,
+) -> std::result::Result<Vec<task_relations::Model>, sqlx::Error> {
+    sqlx::query_as(
+        "SELECT * FROM task_relations WHERE to_task_pid = $1 AND kind = $2 AND deleted_at IS NULL",
+    )
+    .bind(to)
+    .bind(kind)
+    .fetch_all(crate::db::pool(ctx))
+    .await
 }
 
 /// Open tasks that block `task_pid` (a live `blocks` relation pointing at it
 /// from a task that is not finished): `(blocker pid, title)`.
 pub(crate) async fn open_blockers(ctx: &AppContext, task_pid: Uuid) -> Result<Vec<(Uuid, String)>> {
-    let rels = task_relations::Entity::find()
-        .filter(task_relations::Column::ToTaskPid.eq(task_pid))
-        .filter(task_relations::Column::Kind.eq("blocks"))
-        .filter(task_relations::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rels = live_relations_to(ctx, task_pid, "blocks").await?;
     let mut out = Vec::new();
     for r in rels {
-        let blocker = tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(r.from_task_pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::DoneAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let blocker: Option<(Uuid, String)> = sqlx::query_as(
+            "SELECT pid, title FROM tasks
+             WHERE pid = $1 AND deleted_at IS NULL AND done_at IS NULL
+             LIMIT 1",
+        )
+        .bind(r.from_task_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
         if let Some(b) = blocker {
-            out.push((b.pid, b.title));
+            out.push(b);
         }
     }
     Ok(out)
@@ -122,13 +142,7 @@ pub(crate) async fn check_due_change(
         } else {
             r.from_task_pid
         };
-        let Some(other) = tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(other_pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-        else {
+        let Some(other) = live_task_or_none(ctx, other_pid).await? else {
             continue;
         };
         let (pred_due, succ_due) = match (pred, succ) {
@@ -150,13 +164,7 @@ pub(crate) async fn check_due_change(
 /// duplicate of it, writing a transition row for each. Best-effort per
 /// duplicate: one failure never undoes the primary's move.
 pub(crate) async fn close_duplicates(ctx: &AppContext, primary: Uuid, actor: Option<&str>) {
-    let Ok(rels) = task_relations::Entity::find()
-        .filter(task_relations::Column::ToTaskPid.eq(primary))
-        .filter(task_relations::Column::Kind.eq("duplicates"))
-        .filter(task_relations::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-    else {
+    let Ok(rels) = live_relations_to(ctx, primary, "duplicates").await else {
         return;
     };
     for r in rels {
@@ -184,26 +192,36 @@ async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&st
         task.assignee_ref.clone(),
         task.plan_pid,
     );
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let mut active: tasks::ActiveModel = task.into();
-    active.status = ActiveValue::set(done.key.clone());
-    active.status_changed_at = ActiveValue::set(now.into());
-    active.done_at = ActiveValue::set(Some(now.into()));
-    active.update(&txn).await.map_err(db_err)?;
-    crate::tba::transition_row(
-        dup,
-        plan_pid,
-        Some(from),
-        done.key.clone(),
-        now,
-        actor.map(ToString::to_string),
-        assignee,
+    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let mut tx = crate::db::begin(ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i32>(
+        "UPDATE tasks SET status = $1, status_changed_at = $2, done_at = $3 WHERE id = $4 RETURNING id",
     )
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    .bind(&done.key)
+    .bind(at)
+    .bind(Some(at))
+    .bind(task.id)
+    .fetch_one(tx.conn())
+    .await?;
+    // The move in the transition log, as `crate::tba::transition_row` writes it.
+    sqlx::query(
+        "INSERT INTO task_transitions
+             (pid, task_pid, plan_pid, from_status, to_status, at, actor_ref, assignee_ref, backfilled)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(dup)
+    .bind(plan_pid)
+    .bind(Some(from))
+    .bind(&done.key)
+    .bind(at)
+    .bind(actor)
+    .bind(assignee)
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         dup,
         "task_closed_as_duplicate",
         actor,
@@ -211,7 +229,7 @@ async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&st
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Ok(())
 }
 
@@ -276,22 +294,29 @@ async fn create_relation(
             "`precedes` requires the successor to be due after the predecessor",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = task_relations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        from_task_pid: ActiveValue::set(from),
-        to_task_pid: ActiveValue::set(p.to_task_pid),
-        kind: ActiveValue::set(p.kind.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: task_relations::Model = sqlx::query_as(
+        "INSERT INTO task_relations (pid, from_task_pid, to_task_pid, kind, deleted_at)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(from)
+    .bind(p.to_task_pid)
+    .bind(&p.kind)
+    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "task_relation_added",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "task_relation_added", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -309,17 +334,14 @@ async fn list_relations(
     if task.plan_pid != plan.pid {
         return Err(Error::NotFound);
     }
-    let rels = task_relations::Entity::find()
-        .filter(task_relations::Column::DeletedAt.is_null())
-        .filter(
-            sea_orm::Condition::any()
-                .add(task_relations::Column::FromTaskPid.eq(task.pid))
-                .add(task_relations::Column::ToTaskPid.eq(task.pid)),
-        )
-        .order_by_asc(task_relations::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rels: Vec<task_relations::Model> = sqlx::query_as(
+        "SELECT * FROM task_relations
+         WHERE deleted_at IS NULL AND (from_task_pid = $1 OR to_task_pid = $1)
+         ORDER BY id",
+    )
+    .bind(task.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut shown = Vec::new();
     let mut hidden = 0usize;
     for r in rels {
@@ -328,21 +350,16 @@ async fn list_relations(
         } else {
             r.from_task_pid
         };
-        let Some(other) = tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(other_pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-        else {
+        let Some(other) = live_task_or_none(&ctx, other_pid).await? else {
             continue; // the other task is gone: so is the relation's meaning
         };
-        let stage = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(other.plan_pid))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .and_then(|p| p.stage);
+        let stage: Option<String> = sqlx::query_scalar::<_, Option<String>>(
+            "SELECT stage FROM plans WHERE pid = $1 LIMIT 1",
+        )
+        .bind(other.plan_pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
+        .flatten();
         let private_hidden = super::plan_access::hidden_plans(&ctx, &[other.plan_pid], &caller)
             .await
             .contains(&other.plan_pid);
@@ -381,26 +398,36 @@ async fn delete_relation(
         return Err(Error::NotFound);
     }
     let r_pid = super::parse_pid(&r_pid)?;
-    let row = task_relations::Entity::find()
-        .filter(task_relations::Column::Pid.eq(r_pid))
-        .filter(task_relations::Column::DeletedAt.is_null())
-        .filter(
-            sea_orm::Condition::any()
-                .add(task_relations::Column::FromTaskPid.eq(task.pid))
-                .add(task_relations::Column::ToTaskPid.eq(task.pid)),
-        )
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let mut active: task_relations::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, r_pid, "task_relation_removed", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let row: task_relations::Model = sqlx::query_as(
+        "SELECT * FROM task_relations
+         WHERE pid = $1 AND deleted_at IS NULL AND (from_task_pid = $2 OR to_task_pid = $2)
+         LIMIT 1",
+    )
+    .bind(r_pid)
+    .bind(task.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
+    let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE task_relations SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(Some(deleted_at))
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        r_pid,
+        "task_relation_removed",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

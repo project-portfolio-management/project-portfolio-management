@@ -226,7 +226,7 @@ async fn linkable_plans(ctx: &AppContext, caller: &MaybeAuthUser, pids: &[Uuid])
     if super::guests::caller_is_guest(caller) {
         let mut covered = HashSet::new();
         for p in &ok {
-            if super::guests::guest_covers_plan(&ctx.db, caller, *p, "read").await {
+            if super::guests::guest_covers_plan(ctx, caller, *p, "read").await {
                 covered.insert(*p);
             }
         }

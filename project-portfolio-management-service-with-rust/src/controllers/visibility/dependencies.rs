@@ -1,13 +1,12 @@
 //! Cross-item dependencies and the portfolio schedule view.
 
 use super::super::unprocessable;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::{find_any_item, schedule_item};
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plan_dependencies, plans};
+use crate::models::_entities::plans;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::visibility as vis_models;
 use crate::prelude::*;
@@ -32,23 +31,21 @@ pub(crate) struct DependencyPayload {
 
 /// Whether `pid` is a live plan or a live task (a dependency endpoint).
 async fn node_exists(ctx: &AppContext, pid: Uuid) -> Result<bool> {
-    if plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    if sqlx::query("SELECT 1 FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .is_some()
     {
         return Ok(true);
     }
-    Ok(crate::models::_entities::tasks::Entity::find()
-        .filter(crate::models::_entities::tasks::Column::Pid.eq(pid))
-        .filter(crate::models::_entities::tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
-        .is_some())
+    Ok(
+        sqlx::query("SELECT 1 FROM tasks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .is_some(),
+    )
 }
 
 /// `POST /api/dependencies` — add an edge (both items must exist,
@@ -84,15 +81,11 @@ pub(super) async fn create_dependency(
         return Err(Error::NotFound);
     }
     // A hammock is a derived span, not work: it is linked through hammock links, never dependencies.
-    if crate::models::_entities::tasks::Entity::find()
-        .filter(crate::models::_entities::tasks::Column::IsHammock.eq(true))
-        .filter(
-            crate::models::_entities::tasks::Column::Pid
-                .is_in([payload.predecessor_pid, payload.successor_pid]),
-        )
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    if sqlx::query("SELECT 1 FROM tasks WHERE is_hammock = $1 AND pid = ANY($2) LIMIT 1")
+        .bind(true)
+        .bind(vec![payload.predecessor_pid, payload.successor_pid])
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
         .is_some()
     {
         return Err(unprocessable(
@@ -112,35 +105,35 @@ pub(super) async fn create_dependency(
     // Task `precedes` relations are schedule edges too: a cycle through them
     // is a cycle.
     edges.extend(
-        crate::models::_entities::task_relations::Entity::find()
-            .filter(crate::models::_entities::task_relations::Column::DeletedAt.is_null())
-            .filter(crate::models::_entities::task_relations::Column::Kind.eq("precedes"))
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?
-            .into_iter()
-            .map(|r| (r.from_task_pid, r.to_task_pid)),
+        sqlx::query_as::<_, (Uuid, Uuid)>(
+            "SELECT from_task_pid, to_task_pid FROM task_relations
+             WHERE deleted_at IS NULL AND kind = $1",
+        )
+        .bind("precedes")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?,
     );
     if rules::would_create_cycle(&edges, payload.predecessor_pid, payload.successor_pid) {
         return Err(unprocessable("this dependency would create a cycle"));
     }
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = plan_dependencies::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        predecessor_pid: ActiveValue::set(payload.predecessor_pid),
-        successor_pid: ActiveValue::set(payload.successor_pid),
-        lag_days: ActiveValue::set(payload.lag_days),
-        kind: ActiveValue::set(kind),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "dependency_added", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO plan_dependencies (pid, predecessor_pid, successor_pid, lag_days, kind)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(payload.predecessor_pid)
+    .bind(payload.successor_pid)
+    .bind(payload.lag_days)
+    .bind(kind)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "dependency_added", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/dependencies?item={pid}` — edges touching one item (or
@@ -219,15 +212,21 @@ pub(super) async fn delete_dependency(
         return Err(Error::NotFound);
     }
     let row_pid = row.pid;
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    plan_dependencies::Entity::delete_by_id(row.id)
-        .exec(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row_pid, "dependency_removed", caller.actor(), None)
-        .await
-        .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM plan_dependencies WHERE id = $1")
+        .bind(row.id)
+        .execute(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "dependency_removed",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -244,13 +243,12 @@ pub(super) async fn portfolio_schedule(
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let parent_pid = super::super::parse_pid(&pid)?;
     let portfolio = find_any_item(&ctx, parent_pid).await?;
-    let members = plans::Entity::find()
-        .filter(plans::Column::ParentPid.eq(parent_pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .order_by_asc(plans::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let members: Vec<plans::Model> = sqlx::query_as(
+        "SELECT * FROM plans WHERE parent_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(parent_pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     // A child plan the caller may not see is not on their roadmap.
     let mut members = scope.keep(members);
     members.insert(0, portfolio);

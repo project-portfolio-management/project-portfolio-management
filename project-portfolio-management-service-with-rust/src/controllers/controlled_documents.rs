@@ -52,7 +52,7 @@ async fn find_doc(ctx: &AppContext, caller: &MaybeAuthUser, pid: &str) -> Result
     .ok_or(Error::NotFound)?;
     if let Some(plan) = doc.plan_pid {
         if super::guests::caller_is_guest(caller)
-            && !super::guests::guest_covers_plan(&ctx.db, caller, plan, "read").await
+            && !super::guests::guest_covers_plan(ctx, caller, plan, "read").await
         {
             return Err(Error::NotFound);
         }

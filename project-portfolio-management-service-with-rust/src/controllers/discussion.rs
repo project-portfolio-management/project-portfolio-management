@@ -194,7 +194,7 @@ pub(crate) async fn resolve_subject(
     if let Some(plan_pid) = subject.plan_pid {
         // PL-7: a guest sees a subject only through a live grant on its plan.
         if super::guests::caller_is_guest(caller)
-            && !super::guests::guest_covers_plan(&ctx.db, caller, plan_pid, "read").await
+            && !super::guests::guest_covers_plan(ctx, caller, plan_pid, "read").await
         {
             return Err(Error::NotFound);
         }
@@ -253,7 +253,7 @@ async fn create_comment(
         let Some(plan) = subject.plan_pid else {
             return Err(Error::NotFound);
         };
-        if !super::guests::guest_covers_plan(&ctx.db, &caller, plan, "comment").await {
+        if !super::guests::guest_covers_plan(&ctx, &caller, plan, "comment").await {
             return Err(forbidden("this guest grant does not allow commenting"));
         }
     }
@@ -294,9 +294,9 @@ async fn create_comment(
     }
     // Commenting follows the thread (unless the user opted out of auto-watch).
     if let Some(sub) = caller.actor() {
-        super::watchers::ensure_watching(&ctx.db, &payload.subject_kind, subject.pid, sub).await;
+        super::watchers::ensure_watching(&ctx, &payload.subject_kind, subject.pid, sub).await;
     }
-    let watching = super::watchers::watcher_subs(&ctx.db, &payload.subject_kind, subject.pid).await;
+    let watching = super::watchers::watcher_subs(&ctx, &payload.subject_kind, subject.pid).await;
     for target in rules::notify_targets(
         caller.actor(),
         subject.owner_ref.as_deref(),

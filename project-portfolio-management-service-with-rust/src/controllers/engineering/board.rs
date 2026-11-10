@@ -310,7 +310,7 @@ pub(super) async fn create_task(
         .map_err(|e| Error::Model(ModelError::from(e)))?;
 
     if let Some(sub) = caller.actor() {
-        super::super::watchers::ensure_watching(&ctx.db, "task", row.pid, sub).await;
+        super::super::watchers::ensure_watching(&ctx, "task", row.pid, sub).await;
     }
     crate::live::publish(
         item.pid,

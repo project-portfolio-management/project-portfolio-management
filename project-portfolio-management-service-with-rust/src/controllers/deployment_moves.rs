@@ -15,17 +15,15 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, Options};
 use crate::deployment_moves as rules;
-use crate::models::_entities::{deployment_moves as moves, plans, programme_profiles, tasks};
+use crate::models::_entities::{deployment_moves as moves, plans, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The routes.
@@ -64,12 +62,12 @@ async fn programme_of(ctx: &AppContext, plan: &plans::Model) -> Result<Option<pl
         let Some(parent) = cur.parent_pid else {
             return Ok(None);
         };
-        let Some(p) = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(parent))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+        let Some(p) = sqlx::query_as::<_, plans::Model>(
+            "SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(parent)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         else {
             return Ok(None);
         };
@@ -112,12 +110,13 @@ async fn request_move(
     let Some(programme) = programme_of(&ctx, &plan).await? else {
         return Err(unprocessable("this plan is not part of a programme"));
     };
-    let model = programme_profiles::Entity::find()
-        .filter(programme_profiles::Column::PlanPid.eq(programme.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .and_then(|p| p.delivery_model);
+    let model: Option<String> = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT delivery_model FROM programme_profiles WHERE plan_pid = $1 LIMIT 1",
+    )
+    .bind(programme.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .flatten();
     if model.as_deref() != Some(rules::CONTROLLED_MODEL) {
         return Err(unprocessable(
             "a deployment date is under change control only in a programme delivered as a central platform with local deployment (set it with PUT /api/plans/{pid}/delivery-model)",
@@ -128,14 +127,14 @@ async fn request_move(
             "a reason of at least 10 characters is required",
         ));
     }
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(b.task_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or_else(|| unprocessable("task_pid is not a task of this deployment"))?;
+    let task: tasks::Model = sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(b.task_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or_else(|| unprocessable("task_pid is not a task of this deployment"))?;
     let Some(from) = task.start_date else {
         return Err(unprocessable("the go-live task has no start date to move"));
     };
@@ -150,13 +149,14 @@ async fn request_move(
     if let Some(why) = rules::approver_problem(&approver, caller.actor()) {
         return Err(unprocessable(&why));
     }
-    if moves::Entity::find()
-        .filter(moves::Column::TaskPid.eq(task.pid))
-        .filter(moves::Column::Status.eq("requested"))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some()
+    if sqlx::query_scalar::<_, i64>(
+        "SELECT id FROM deployment_moves WHERE task_pid = $1 AND status = $2 LIMIT 1",
+    )
+    .bind(task.pid)
+    .bind("requested")
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .is_some()
     {
         return Err(Error::CustomError(
             StatusCode::CONFLICT,
@@ -226,29 +226,32 @@ async fn request_move(
             json!({ "currency": c, "delta_minor": y - x })
         })
         .collect();
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = moves::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        programme_pid: ActiveValue::set(programme.pid),
-        task_pid: ActiveValue::set(task.pid),
-        from_start: ActiveValue::set(from),
-        to_start: ActiveValue::set(b.new_start),
-        reason: ActiveValue::set(b.reason.trim().to_string()),
-        requested_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        organization_pid: ActiveValue::set(super::organizations::caller_organizations(&caller).first().copied()),
-        approver_ref: ActiveValue::set(approver),
-        status: ActiveValue::set("requested".to_string()),
-        knock_on: ActiveValue::set(json!(knock_on).to_string()),
-        knock_on_cost: ActiveValue::set(json!({ "labour": cost, "unrated_minutes_before": b_cost.unrated_minutes, "unrated_minutes_after": a_cost.unrated_minutes }).to_string()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "deployment_move_requested", caller.actor(), Some(json!({ "task": task.pid, "from": from, "to": b.new_start, "knock_on": knock_on.len() }))).await
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: moves::Model = sqlx::query_as(
+        "INSERT INTO deployment_moves
+             (pid, plan_pid, programme_pid, task_pid, from_start, to_start, reason, requested_by,
+              organization_pid, approver_ref, status, knock_on, knock_on_cost)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(programme.pid)
+    .bind(task.pid)
+    .bind(from)
+    .bind(b.new_start)
+    .bind(b.reason.trim())
+    .bind(caller.actor())
+    .bind(super::organizations::caller_organizations(&caller).first().copied())
+    .bind(approver)
+    .bind("requested")
+    .bind(json!(knock_on).to_string())
+    .bind(json!({ "labour": cost, "unrated_minutes_before": b_cost.unrated_minutes, "unrated_minutes_after": a_cost.unrated_minutes }).to_string())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "deployment_move_requested", caller.actor(), Some(json!({ "task": task.pid, "from": from, "to": b.new_start, "knock_on": knock_on.len() }))).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row))
 }
 
@@ -271,13 +274,13 @@ async fn decide(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let mpid = super::parse_pid(&mpid)?;
-    let m = moves::Entity::find()
-        .filter(moves::Column::Pid.eq(mpid))
-        .filter(moves::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let m: moves::Model =
+        sqlx::query_as("SELECT * FROM deployment_moves WHERE pid = $1 AND plan_pid = $2 LIMIT 1")
+            .bind(mpid)
+            .bind(plan.pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     if !["approve", "refuse"].contains(&b.decision.as_str()) {
         return Err(unprocessable("decision must be approve or refuse"));
     }
@@ -308,15 +311,14 @@ async fn decide(
     }
     let approve = b.decision == "approve";
     // The go-live date, the move and both audit rows are one change.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     if approve {
-        let task = tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(m.task_pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .one(&txn)
-            .await
-            .map_err(db_err)?
-            .ok_or(Error::NotFound)?;
+        let task: tasks::Model =
+            sqlx::query_as("SELECT * FROM tasks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+                .bind(m.task_pid)
+                .fetch_optional(tx.conn())
+                .await?
+                .ok_or(Error::NotFound)?;
         if task.start_date != Some(m.from_start) {
             return Err(Error::CustomError(
                 StatusCode::CONFLICT,
@@ -326,11 +328,14 @@ async fn decide(
                 ),
             ));
         }
-        let mut a: tasks::ActiveModel = task.into();
-        a.start_date = ActiveValue::set(Some(m.to_start));
-        a.update(&txn).await.map_err(db_err)?;
-        AuditModel::record(
-            &txn,
+        // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+        sqlx::query_scalar::<_, i32>("UPDATE tasks SET start_date = $1 WHERE id = $2 RETURNING id")
+            .bind(Some(m.to_start))
+            .bind(task.id)
+            .fetch_one(tx.conn())
+            .await?;
+        AuditModel::record_on(
+            tx.conn(),
             m.task_pid,
             "deployment_go_live_moved",
             caller.actor(),
@@ -339,14 +344,21 @@ async fn decide(
         .await
         .map_err(super::audit_failed)?;
     }
-    let mut a: moves::ActiveModel = m.into();
-    a.status = ActiveValue::set(if approve { "approved" } else { "refused" }.to_string());
-    a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
-    a.decided_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let row: moves::Model = sqlx::query_as(
+        "UPDATE deployment_moves
+         SET status = $1, decided_by = $2, decided_on = $3, decision_reason = $4
+         WHERE id = $5
+         RETURNING *",
+    )
+    .bind(if approve { "approved" } else { "refused" })
+    .bind(caller.actor())
+    .bind(Some(crate::tz::deployment_today()))
+    .bind(Some(b.reason.trim()))
+    .bind(m.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         if approve {
             "deployment_move_approved"
@@ -358,7 +370,7 @@ async fn decide(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(view(&row))
 }
 
@@ -366,12 +378,11 @@ async fn decide(
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = moves::Entity::find()
-        .filter(moves::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(moves::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<moves::Model> =
+        sqlx::query_as("SELECT * FROM deployment_moves WHERE plan_pid = $1 ORDER BY id DESC")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     // The knock-on cost recorded against each requester (all requests, whatever their outcome).
     let mut by: BTreeMap<String, (usize, BTreeMap<String, i64>)> = BTreeMap::new();
     for r in &rows {

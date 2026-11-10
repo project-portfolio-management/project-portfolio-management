@@ -100,42 +100,48 @@ pub(super) async fn create_allocation(
     if payload.booking.as_deref() != Some("proposed") {
         super::super::register::guard(&ctx, &caller, item.pid, "booking a firm allocation").await?;
     }
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = allocations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(item.pid),
-        person_ref: ActiveValue::set(if payload.placeholder {
-            format!(
-                "{}{}",
-                crate::portfolio_resources::PLACEHOLDER_PREFIX,
-                Uuid::new_v4()
-            )
-        } else {
-            payload.person_ref.clone()
-        }),
-        role: ActiveValue::set(payload.role.clone()),
-        percent: ActiveValue::set(payload.percent),
-        booking: ActiveValue::set(
-            payload
-                .booking
-                .clone()
-                .unwrap_or_else(|| "committed".to_string()),
-        ),
-        requested: ActiveValue::set(payload.requested),
-        start_date: ActiveValue::set(payload.start_date),
-        end_date: ActiveValue::set(payload.end_date),
-        deleted_at: ActiveValue::set(None),
-        skills_required: ActiveValue::set(serde_json::json!(payload.skills_required)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "allocation_added", caller.actor(), None)
+    // The pid first and then the placeholder's, as the `SeaORM` insert drew them.
+    let row_pid = Uuid::new_v4();
+    let person_ref = if payload.placeholder {
+        format!(
+            "{}{}",
+            crate::portfolio_resources::PLACEHOLDER_PREFIX,
+            Uuid::new_v4()
+        )
+    } else {
+        payload.person_ref.clone()
+    };
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO allocations
+             (pid, plan_pid, person_ref, role, percent, booking, requested, start_date, end_date,
+              deleted_at, skills_required)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         RETURNING pid",
+    )
+    .bind(row_pid)
+    .bind(item.pid)
+    .bind(person_ref)
+    .bind(payload.role.clone())
+    .bind(payload.percent)
+    .bind(
+        payload
+            .booking
+            .clone()
+            .unwrap_or_else(|| "committed".to_string()),
+    )
+    .bind(payload.requested)
+    .bind(payload.start_date)
+    .bind(payload.end_date)
+    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .bind(serde_json::json!(payload.skills_required))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "allocation_added", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/plans/{pid}/skill-gap` — for every allocation on this
@@ -258,15 +264,15 @@ pub(super) async fn commit_allocation(
         ));
     }
     let row_pid = allocation.pid;
-    let mut active: allocations::ActiveModel = allocation.into();
-    active.booking = ActiveValue::set("committed".to_string());
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>("UPDATE allocations SET booking = $1 WHERE id = $2 RETURNING id")
+        .bind("committed")
+        .bind(allocation.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "allocation_committed",
         caller.actor(),
@@ -277,7 +283,7 @@ pub(super) async fn commit_allocation(
     )
     .await
     .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "pid": row_pid, "booking": "committed", "over_capacity": over }),
     )
@@ -297,17 +303,26 @@ pub(super) async fn delete_allocation(
         return Err(Error::NotFound);
     }
     let row_pid = allocation.pid;
-    let mut active: allocations::ActiveModel = allocation.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row_pid, "allocation_removed", caller.actor(), None)
-        .await
-        .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE allocations SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(Some(deleted_at))
+    .bind(allocation.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "allocation_removed",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

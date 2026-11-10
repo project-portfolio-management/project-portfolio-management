@@ -2012,6 +2012,36 @@ came from grep.
   `calendars`, `task_relations`, `assignments`, `sandbox`, `deployment_moves`, `phase`, `guests`, `watchers`,
   `visibility/dependencies` and `visibility/allocations` (about 294 lines; this batch's files call four of them:
   `calendars`, `assignments`, `guests` and `watchers`).
+  **Progress 2026-11-10, batch 7 (not ticked).** The scheduling network's neighbours moved: `calendars` (18 lines
+  naming SeaORM), `task_relations` (51), `assignments` (21), `sandbox` (37), `deployment_moves` (43), `phase` (14),
+  `guests` (27), `watchers` (32), `visibility/dependencies` (24) and `visibility/allocations` (16): 283 lines, now
+  none; with `controllers::advisory_lock` (the SeaORM lock helper, whose last callers moved; 4 lines of `mod.rs`)
+  gone too, 81 files and 2,906 lines are left (batch 6's measure). So `cpm::load_network` now reads calendars through
+  sqlx. Callers changed minimally: `guests::guest_covers_plan` takes the context instead of SeaORM's connection
+  (`onboarding`, `cpm`, `controlled_documents`, `discussion` ×2), as do `watchers::ensure_watching` and
+  `watcher_subs` (`raci`, `discussion` ×2, `collaboration`, `task_bulk`, `engineering/board`); none of these callers
+  holds a sqlx transaction, so no helper takes `&mut impl db::Session` for them. Inside the files, the helpers that
+  run in a handler's transaction (`calendars::find`, `sandbox::read_rows` and `read_edges`) take `&mut impl
+  db::Session`. Every handler here already wrote its rows and audit row in one transaction, so no write changed
+  transaction. `guest_covers_plan` reads the same rows (every grant of the guest's `sub`, any order; a lookup failure
+  is no grant) and `plan_of` the same (a task or risk by pid, deleted or not; a failure is no plan). The
+  `task_relations` owner decision (a link into a plan the caller can only read) is unchanged. A throwaway check
+  (not committed) dumped every answer of these routes, guest reads and comments on granted, ungranted and revoked
+  plans, and every row they write (audit, transitions, notifications included), before and after: the same.
+  **Found, not changed:** the sandbox preview's `plan_etag` folds in the per-person calendars in the order of a
+  `HashMap` (`calendars::person_calendars`, then `cpm::load_network`), so when two or more assignees have their own
+  calendar or absences the preview and the commit can digest them in different orders and the commit answers a
+  spurious `409 stale_preview` (seen in a throwaway run on the code before the move; the move does not touch that order); `sandbox::commit`'s and
+  `task_relations::close_one`'s audit failures map to a plain model error rather than `audit_failed`.
+  **Still on SeaORM through other modules**, on the pool and outside these handlers' transactions:
+  `governance::find_item`, `find_live_plan`, `discussion::resolve_subject`, `plan_access` (`HiddenScope`,
+  `hidden_plans`, `require_readable`, `readable_plans`), `workflow::in_force`, `models::visibility`
+  (`all_dependencies`, `find_dependency`, `allocations_for`, `all_allocations`, `all_allocations_with_proposed`,
+  `find_allocation`), `visibility::find_any_item`, `cost_rates::labour_totals` and `automation::fire`.
+  **Next batch, suggested:** the task board and workflow: `workflow`, `engineering/board`, `engineering/agile`,
+  `engineering/devops`, `engineering/estate`, `engineering/mod`, `task_bulk` (controller and `src/task_bulk.rs`),
+  `task_tree`, `controllers/tba` and `tba/persistence` (about 350 lines; `task_relations` and `watchers` are called
+  from here).
 
 ## Correctness carried forward (CF-n)
 

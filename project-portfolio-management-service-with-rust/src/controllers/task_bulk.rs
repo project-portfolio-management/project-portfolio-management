@@ -256,7 +256,7 @@ pub(super) async fn edit_one(
         .await
         .ok();
         if let Some(sub) = crate::notification_prefs::recipient_sub(who) {
-            super::watchers::ensure_watching(&ctx.db, "task", pid, &sub).await;
+            super::watchers::ensure_watching(ctx, "task", pid, &sub).await;
         }
     }
     ItemResult::ok(pid, None)

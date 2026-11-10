@@ -9,13 +9,12 @@
 //! to them at all. Grants are time-boxed, revocable, audited and listed per
 //! plan.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::extract::{Request, State};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response as AxumResponse};
 use chrono::{DateTime, Utc};
-use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -39,11 +38,11 @@ pub fn caller_is_guest(caller: &MaybeAuthUser) -> bool {
 }
 
 /// A guest's live grants (empty on a lookup failure: fail closed).
-pub(crate) async fn grants_of(db: &DatabaseConnection, sub: &str) -> Vec<Grant> {
+pub(crate) async fn grants_of(ctx: &AppContext, sub: &str) -> Vec<Grant> {
     let now = Utc::now();
-    guest_grants::Entity::find()
-        .filter(guest_grants::Column::GuestSub.eq(sub))
-        .all(db)
+    sqlx::query_as::<_, guest_grants::Model>("SELECT * FROM guest_grants WHERE guest_sub = $1")
+        .bind(sub)
+        .fetch_all(crate::db::pool(ctx))
         .await
         .map(|rows| {
             rows.into_iter()
@@ -64,7 +63,7 @@ pub(crate) async fn grants_of(db: &DatabaseConnection, sub: &str) -> Vec<Grant> 
 
 /// Whether a guest holds a live grant covering `plan` for `need`.
 pub(crate) async fn guest_covers_plan(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     caller: &MaybeAuthUser,
     plan: Uuid,
     need: &str,
@@ -72,7 +71,7 @@ pub(crate) async fn guest_covers_plan(
     let Some(claims) = caller.claims() else {
         return false;
     };
-    rules::covers(&grants_of(db, &claims.sub).await, "plan", plan, need)
+    rules::covers(&grants_of(ctx, &claims.sub).await, "plan", plan, need)
 }
 
 /// The `404` a missing record answers, used for every guest refusal, so a guest cannot tell a hidden record from a
@@ -107,7 +106,7 @@ pub async fn guest_mw(State(ctx): State<AppContext>, req: Request, next: Next) -
     let attempt = rules::classify(req.method().as_str(), req.uri().path());
     let allowed = match attempt {
         Attempt::ReadPlan(pid) => {
-            rules::covers(&grants_of(&ctx.db, &claims.sub).await, "plan", pid, "read")
+            rules::covers(&grants_of(&ctx, &claims.sub).await, "plan", pid, "read")
         }
         // Comments and attachments name their subject in the query (or, for a
         // POST, the body); the handler re-checks it against the grants via
@@ -127,9 +126,9 @@ pub async fn guest_mw(State(ctx): State<AppContext>, req: Request, next: Next) -
                 query_param(q, "subject_pid"),
             );
             let granted = match (kind, pid.and_then(|p| Uuid::parse_str(&p).ok())) {
-                (Some(k), Some(p)) => match plan_of(&ctx.db, &k, p).await {
+                (Some(k), Some(p)) => match plan_of(&ctx, &k, p).await {
                     Some(plan) => {
-                        rules::covers(&grants_of(&ctx.db, &claims.sub).await, "plan", plan, "read")
+                        rules::covers(&grants_of(&ctx, &claims.sub).await, "plan", plan, "read")
                     }
                     None => false,
                 },
@@ -145,26 +144,20 @@ pub async fn guest_mw(State(ctx): State<AppContext>, req: Request, next: Next) -
 }
 
 /// The plan a subject belongs to (a plan is its own).
-pub(crate) async fn plan_of(db: &DatabaseConnection, kind: &str, pid: Uuid) -> Option<Uuid> {
-    use crate::models::_entities::{risks, tasks};
-    match kind {
-        "plan" => Some(pid),
-        "task" => tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(pid))
-            .one(db)
-            .await
-            .ok()
-            .flatten()
-            .map(|t| t.plan_pid),
-        "risk" => risks::Entity::find()
-            .filter(risks::Column::Pid.eq(pid))
-            .one(db)
-            .await
-            .ok()
-            .flatten()
-            .map(|r| r.plan_pid),
-        _ => None,
-    }
+pub(crate) async fn plan_of(ctx: &AppContext, kind: &str, pid: Uuid) -> Option<Uuid> {
+    // Any row, deleted or not, as before; a lookup failure is `None` (fail closed).
+    let sql = match kind {
+        "plan" => return Some(pid),
+        "task" => "SELECT plan_pid FROM tasks WHERE pid = $1 LIMIT 1",
+        "risk" => "SELECT plan_pid FROM risks WHERE pid = $1 LIMIT 1",
+        _ => return None,
+    };
+    sqlx::query_scalar::<_, Uuid>(sql)
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await
+        .ok()
+        .flatten()
 }
 
 /// `POST /api/plans/{pid}/guests` body.
@@ -198,30 +191,35 @@ async fn grant(
     }
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, "plan", &pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = guest_grants::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        guest_sub: ActiveValue::set(b.guest_sub.to_string()),
-        subject_kind: ActiveValue::set("plan".to_string()),
-        subject_pid: ActiveValue::set(subject.pid),
-        access: ActiveValue::set(b.access.clone()),
-        expires_at: ActiveValue::set(b.expires_at.map(Into::into)),
-        granted_by: ActiveValue::set(Some(claims.sub.clone())),
-        revoked_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: guest_grants::Model = sqlx::query_as(
+        "INSERT INTO guest_grants
+             (pid, guest_sub, subject_kind, subject_pid, access, expires_at, granted_by, revoked_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.guest_sub.to_string())
+    .bind("plan")
+    .bind(subject.pid)
+    .bind(&b.access)
+    .bind(
+        b.expires_at
+            .map(chrono::DateTime::<chrono::FixedOffset>::from),
+    )
+    .bind(Some(claims.sub.as_str()))
+    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         subject.pid,
         "guest_granted",
         Some(&claims.sub),
         Some(serde_json::json!({ "guest": b.guest_sub, "access": b.access, "expires_at": b.expires_at })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -233,12 +231,12 @@ async fn list(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let subject = resolve_subject(&ctx, &caller, "plan", &pid).await?;
-    let rows = guest_grants::Entity::find()
-        .filter(guest_grants::Column::SubjectKind.eq("plan"))
-        .filter(guest_grants::Column::SubjectPid.eq(subject.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<guest_grants::Model> =
+        sqlx::query_as("SELECT * FROM guest_grants WHERE subject_kind = $1 AND subject_pid = $2")
+            .bind("plan")
+            .bind(subject.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let now = Utc::now();
     format::json(
         rows.iter()
@@ -264,22 +262,34 @@ async fn revoke(
     let caller = MaybeAuthUser(Some(claims.clone()));
     let subject = resolve_subject(&ctx, &caller, "plan", &pid).await?;
     let grant = super::parse_pid(&grant)?;
-    let row = guest_grants::Entity::find()
-        .filter(guest_grants::Column::Pid.eq(grant))
-        .filter(guest_grants::Column::SubjectPid.eq(subject.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: guest_grants::Model =
+        sqlx::query_as("SELECT * FROM guest_grants WHERE pid = $1 AND subject_pid = $2 LIMIT 1")
+            .bind(grant)
+            .bind(subject.pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     if row.revoked_at.is_none() {
-        let mut a: guest_grants::ActiveModel = row.into();
-        a.revoked_at = ActiveValue::set(Some(Utc::now().into()));
-        let txn = ctx.db.begin().await.map_err(super::db_err)?;
-        a.update(&txn).await.map_err(db_err)?;
-        AuditModel::record(&txn, subject.pid, "guest_revoked", Some(&claims.sub), None)
-            .await
-            .map_err(super::audit_failed)?;
-        txn.commit().await.map_err(super::db_err)?;
+        let revoked_at = chrono::DateTime::<chrono::FixedOffset>::from(Utc::now());
+        let mut tx = crate::db::begin(&ctx).await?;
+        // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE guest_grants SET revoked_at = $1 WHERE id = $2 RETURNING id",
+        )
+        .bind(Some(revoked_at))
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+        AuditModel::record_on(
+            tx.conn(),
+            subject.pid,
+            "guest_revoked",
+            Some(&claims.sub),
+            None,
+        )
+        .await
+        .map_err(super::audit_failed)?;
+        tx.commit().await?;
     }
     format::empty_json()
 }

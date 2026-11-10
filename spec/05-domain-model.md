@@ -463,6 +463,13 @@ of the Flow Framework's four types.
 classifies *work items* by type rather than reconstructing type from
 structure.
 
+The declaration is set on create and changed on `PUT
+/api/plans/{pid}/tasks/{t_pid}`: a type replaces it and `null` withdraws
+it (the task is `unclassified` again). **A `PUT` that leaves `flow_type`
+out keeps it**, unlike the task's other fields, which the `PUT` replaces:
+a client that never showed the field must not erase a declaration it did
+not know about. The task view returns `flow_type`.
+
 | Flow type | Source |
 |---|---|
 | `feature` | A task declared `feature` — work that adds value a customer asked for |

@@ -37,6 +37,7 @@ pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
         "parent_task_pid": task.parent_task_pid,
         "sibling_position": task.sibling_position,
         "sprint_pid": task.sprint_pid,
+        "flow_type": task.flow_type,
         "created_at": task.created_at.to_utc(),
         "status_changed_at": task.status_changed_at.to_utc(),
         "done_at": task.done_at.map(|at| at.to_utc()),
@@ -90,9 +91,41 @@ pub(crate) struct TaskPayload {
     /// `defect`, `risk` or `debt` (FR-31). Absent means **nobody
     /// declared one**, which Flow Distribution reports as
     /// `unclassified` and counts separately; it is deliberately not
-    /// defaulted to `feature`.
-    #[serde(default)]
-    flow_type: Option<String>,
+    /// defaulted to `feature`. On **update**, absent keeps the declared
+    /// type, `null` withdraws it (the task is unclassified again), and a
+    /// value replaces it: unlike the other fields, leaving it out of a
+    /// `PUT` does not clear it, as a client that never showed it would
+    /// otherwise erase a declaration it did not know about.
+    #[serde(default, deserialize_with = "FlowTypeField::present")]
+    #[schemars(with = "Option<String>")]
+    flow_type: FlowTypeField,
+}
+
+/// What a task body says about `flow_type`: nothing (the field is absent), withdraw it (`null`), or this type.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+enum FlowTypeField {
+    /// Absent: on update the declared type is kept; on create there is none.
+    #[default]
+    Keep,
+    /// `null`: no type (on update, the declaration is withdrawn).
+    Clear,
+    /// A type, checked by [`validate_task`].
+    Set(String),
+}
+
+impl FlowTypeField {
+    /// Read a present field: `null` is [`Self::Clear`]. An absent field never reaches this; it is the default.
+    fn present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        Ok(Option::<String>::deserialize(d)?.map_or(Self::Clear, Self::Set))
+    }
+
+    /// The type this field declares, if any.
+    fn declared(&self) -> Option<&str> {
+        match self {
+            Self::Set(flow_type) => Some(flow_type),
+            Self::Keep | Self::Clear => None,
+        }
+    }
 }
 
 /// Validate the shared task fields; returns the resolved status.
@@ -144,7 +177,7 @@ pub(super) async fn validate_task(
     // `unclassified` is deliberately not accepted: it is the *absence*
     // of a declaration, and letting a caller spell it would allow a row
     // to claim it had been classified as unclassified.
-    if let Some(flow_type) = payload.flow_type.as_deref()
+    if let Some(flow_type) = payload.flow_type.declared()
         && !["feature", "defect", "risk", "debt"].contains(&flow_type)
     {
         return Err(refuse(
@@ -240,7 +273,7 @@ pub(super) async fn create_task(
         component_pid: sea_orm::ActiveValue::set(payload.component_pid),
         parent_task_pid: sea_orm::ActiveValue::set(payload.parent_task_pid),
         status_changed_at: sea_orm::ActiveValue::set(now.into()),
-        flow_type: sea_orm::ActiveValue::set(payload.flow_type.clone()),
+        flow_type: sea_orm::ActiveValue::set(payload.flow_type.declared().map(str::to_string)),
         // Stamped from the state's **category**, not from the literal
         // string "done". A custom vocabulary finishes in whatever it
         // calls finished (`shipped`, `closed`, …), and matching on the
@@ -411,6 +444,10 @@ pub(super) async fn update_task(
     active.component_pid = sea_orm::ActiveValue::set(payload.component_pid);
     active.parent_task_pid = sea_orm::ActiveValue::set(payload.parent_task_pid);
     active.sprint_pid = sea_orm::ActiveValue::set(payload.sprint_pid);
+    if payload.flow_type != FlowTypeField::Keep {
+        active.flow_type =
+            sea_orm::ActiveValue::set(payload.flow_type.declared().map(str::to_string));
+    }
     let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
     let row = active
         .update(&txn)
@@ -668,4 +705,34 @@ pub(super) async fn delete_task(
         .map_err(super::super::audit_failed)?;
     txn.commit().await.map_err(super::super::db_err)?;
     format::empty_json()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{FlowTypeField, TaskPayload};
+
+    fn flow_type(body: serde_json::Value) -> FlowTypeField {
+        serde_json::from_value::<TaskPayload>(body)
+            .expect("a task body")
+            .flow_type
+    }
+
+    #[test]
+    fn an_absent_flow_type_is_keep_null_is_clear_and_a_value_is_set() {
+        assert_eq!(
+            flow_type(serde_json::json!({ "title": "t" })),
+            FlowTypeField::Keep
+        );
+        assert_eq!(
+            flow_type(serde_json::json!({ "title": "t", "flow_type": null })),
+            FlowTypeField::Clear
+        );
+        assert_eq!(
+            flow_type(serde_json::json!({ "title": "t", "flow_type": "debt" })),
+            FlowTypeField::Set("debt".into())
+        );
+        assert_eq!(FlowTypeField::Set("debt".into()).declared(), Some("debt"));
+        assert_eq!(FlowTypeField::Clear.declared(), None);
+        assert_eq!(FlowTypeField::Keep.declared(), None);
+    }
 }

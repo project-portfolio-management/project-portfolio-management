@@ -26084,8 +26084,7 @@
                     "type": "integer"
                   },
                   "flow_type": {
-                    "default": null,
-                    "description": "The declared Flow Framework work-item type — `feature`,\n`defect`, `risk` or `debt` (FR-31). Absent means **nobody\ndeclared one**, which Flow Distribution reports as\n`unclassified` and counts separately; it is deliberately not\ndefaulted to `feature`.",
+                    "description": "The declared Flow Framework work-item type — `feature`,\n`defect`, `risk` or `debt` (FR-31). Absent means **nobody\ndeclared one**, which Flow Distribution reports as\n`unclassified` and counts separately; it is deliberately not\ndefaulted to `feature`. On **update**, absent keeps the declared\ntype, `null` withdraws it (the task is unclassified again), and a\nvalue replaces it: unlike the other fields, leaving it out of a\n`PUT` does not clear it, as a client that never showed it would\notherwise erase a declaration it did not know about.",
                     "nullable": true,
                     "type": "string"
                   },
@@ -26300,8 +26299,7 @@
                     "type": "integer"
                   },
                   "flow_type": {
-                    "default": null,
-                    "description": "The declared Flow Framework work-item type — `feature`,\n`defect`, `risk` or `debt` (FR-31). Absent means **nobody\ndeclared one**, which Flow Distribution reports as\n`unclassified` and counts separately; it is deliberately not\ndefaulted to `feature`.",
+                    "description": "The declared Flow Framework work-item type — `feature`,\n`defect`, `risk` or `debt` (FR-31). Absent means **nobody\ndeclared one**, which Flow Distribution reports as\n`unclassified` and counts separately; it is deliberately not\ndefaulted to `feature`. On **update**, absent keeps the declared\ntype, `null` withdraws it (the task is unclassified again), and a\nvalue replaces it: unlike the other fields, leaving it out of a\n`PUT` does not clear it, as a client that never showed it would\notherwise erase a declaration it did not know about.",
                     "nullable": true,
                     "type": "string"
                   },

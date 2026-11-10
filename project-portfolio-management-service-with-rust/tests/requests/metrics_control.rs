@@ -34,6 +34,55 @@ macro_rules! create_plan {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
+// A task's declared flow type can be changed and withdrawn by `PUT`, and a `PUT` that leaves it out keeps it:
+// a client that never showed the field must not erase a declaration it did not know about.
+async fn a_task_edit_keeps_changes_or_withdraws_its_flow_type() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let plan = create_plan!(request, "Flow type edits");
+        let created: Value = request
+            .post(&format!("/api/plans/{plan}/tasks"))
+            .json(&json!({ "title": "a bug", "flow_type": "defect" }))
+            .await
+            .json();
+        assert_eq!(
+            created["flow_type"], "defect",
+            "the view shows the declared type"
+        );
+        let task = created["pid"].as_str().expect("task pid").to_string();
+        let put = |body: Value| {
+            let url = format!("/api/plans/{plan}/tasks/{task}");
+            let request = &request;
+            async move {
+                let response = request.put(&url).json(&body).await;
+                response.assert_status_ok();
+                response.json::<Value>()
+            }
+        };
+
+        let kept = put(json!({ "title": "a bug, renamed" })).await;
+        assert_eq!(kept["flow_type"], "defect", "leaving it out keeps it");
+        let changed = put(json!({ "title": "a bug, renamed", "flow_type": "debt" })).await;
+        assert_eq!(changed["flow_type"], "debt", "a value replaces it");
+        let withdrawn = put(json!({ "title": "a bug, renamed", "flow_type": null })).await;
+        assert_eq!(withdrawn["flow_type"], Value::Null, "null withdraws it");
+
+        let refused = request
+            .put(&format!("/api/plans/{plan}/tasks/{task}"))
+            .json(&json!({ "title": "a bug, renamed", "flow_type": "unclassified" }))
+            .await;
+        assert_eq!(
+            refused.status_code(),
+            422,
+            "unclassified is not a type a caller can declare"
+        );
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DATABASE_URL); run with `cargo test -- --ignored`"]
 // Undeclared work is `unclassified` and counted **separately**, never
 // folded into `feature`. Absorbing it would flatter the one share a
 // reader is most likely to act on.

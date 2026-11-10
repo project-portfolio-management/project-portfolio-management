@@ -177,6 +177,9 @@ match breakdown).
 /compliance                  compliance register + conformance findings
 /risk                        CRO heatmap + posture + appetite
 /security                    CISO register + late-stage heuristic
+/security/access             the access review and emergency (break-glass)
+                             access to a private plan (NC-1 slice 7);
+                             linked from /security
 /regulator                   coarse regulator extract (mask-aware)
 /signin · /verify            BFF magic-link sign-in / verification
 
@@ -192,7 +195,7 @@ match breakdown).
                              links here
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 105):
+every page; `find src/routes -name +page.svelte` gives all 106):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -1816,3 +1819,61 @@ holds the rules and `src/lib/components/TimesheetGrid.svelte` draws a week; the 
   caller's own sent-back week; a refused person, the caller's own week by another prefix, and an approval; a 403
   and 409 on decide and a 403 on reading; an identity with no person reference; Welsh; axe). The Welsh and the other
   six languages are machine-written and unreviewed.
+
+## Access review and emergency access (NC-1 slice 7, RG-9, RG-10)
+
+`/security/access`, linked from `/security`, has two sections: the access review for recertification, and emergency
+("break-glass") access to a private plan. `src/lib/access-view.ts` holds the checks, bodies, states and refusal
+sentences; the page only wires them.
+
+- **The access review (RG-9).** Filters: a plan id (blank covers every plan the reader can read) and the review age in
+  calendar days (365 when blank, a whole number, 0 or more; the page refuses anything else as the service would).
+  `GET /api/access-review?plan=&older_than_days=` is read **only when the person asks** ("Show the review"), never on
+  opening the page, because the service audits every read. The page says it is for administrators only, that each
+  reading is recorded in the audit trail, and that it lists what people recorded in the access ledger, not what the
+  sign-in service enforces. It shows the date (the deployment's today), how many grants stand and how many are due,
+  then a table oldest first (person, access, plan named by `GET /api/plans/{pid}` or the start of its id, granted on,
+  granted by, age in calendar days, due for review in words and a shape ⚑, note). The table offers no export of its
+  own: the recertification artefact is the service's spreadsheet (`?format=csv`, a link through the proxy, formulas
+  defused, with an empty keep or revoke decision column), whose read is audited like the page's. The service's
+  English `note` is not shown; the page says the same in the catalogue's words.
+- **Emergency access (RG-10).** Before the form, a bordered note (`role="note"`) says that every use is recorded and
+  audited (opening, with who, the plan, the reason, the length and the person named; and every request the access
+  alone lets through), that the person named is told at once and that the plan is not opened if they cannot be, that
+  it grants seeing only (what one may change still follows one's own rights), and that it ends by itself, at most five
+  a day and one at a time per plan. The form asks for the private plan's id, the reason (at least 20 characters once
+  trimmed and at most 1000, counted as the service counts them, with a live count), the length in whole minutes (1 to
+  240, 60 filled in, always sent), the person to tell, and a tick that the person understands it is recorded and
+  audited and that the person named is told. Every problem is listed at once and nothing is sent until there are none.
+  The page is **never looser than the service**: the person to tell must be `person:` or `worker:` with a UUID (the
+  service takes any text after the prefix, but can deliver the notice and read the person's choices only for a UUID),
+  and the acknowledgement is the page's own extra step. The button is not the page's primary action (the page has
+  none), so the control is never the easiest thing on the screen. After `POST /api/break-glass` the page says the plan
+  is open until the expiry **in the browser's time zone, which it names**, that the person has been told, and links to
+  the plan; the reason and the tick are cleared, so a second use asks again.
+- **Grants.** `GET /api/break-glass` (read on opening; it is not audited): the caller's own, or everyone's for an
+  administrator, newest first, in the service's order (not sortable). State in words and a shape from the service's
+  `live` (in force ●, ended early ■, ran out ○), plan (a link while in force), holder, opened, ends or ended (with who
+  ended it), the reason and the person told; times in the browser's zone, named above the table. "End now" (`POST
+  /api/break-glass/{pid}/revoke`) on a grant in force, with no confirmation, as ending early only takes access away;
+  the list is read again after.
+- **Refusals.** A 401 says to sign in; on the review a 403 says administrators only and a 400 or 422 that the plan or
+  days were not accepted; on opening a 403 names the eligibility needed, 404 that no plan has that id, 409 that the
+  caller already holds access to it (the list is read again), 422 the three service checks the page cannot make (the
+  plan is not private, the person to tell is the caller, or that person cannot be told) and that no access was given,
+  and 429 the daily limit; on ending a 404 that the grant is not found or not the caller's. Each is a catalogue
+  sentence; the service's own text is never shown. These routes take no `If-Match`.
+- **Not built in this slice:** recording a reviewer's keep or revoke decision back to the service (it has no route;
+  the spreadsheet is the artefact); a link from the access review to the access ledger's own page or to revoking an
+  access entry; a plan picker for a private plan (the person must know its id, as they cannot list it); a person
+  picker or people's names for a reference; hiding either section from people without the right (the page does not
+  know the caller's attributes; the 403 is shown in words); checking on the page that the person to tell is not the
+  caller (the page does not know the caller's subject); a countdown or a live refresh as a grant runs out (the state
+  is as the service said when the list was read); paging past the service's 500 newest grants; offering emergency
+  access from a plan page that answered 404.
+- **Tests:** `tests/unit/access-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/security-access.spec.ts` (the link from `/security`; the review read only when asked, two refused
+  filters, the totals, the due shape and the spreadsheet link; a 403 on the review; the audited note before the form,
+  not primary, every problem at once and nothing sent; opening with the body sent and the expiry in Auckland's time,
+  the grant in force, and ending it early; a 403, 404, 409, 422 and 429 on opening, a 404 on ending and a 401 on the
+  list; Welsh; axe). The Welsh and the other six languages are machine-written and unreviewed.

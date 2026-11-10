@@ -5313,4 +5313,117 @@ export const PAGES_AR: Record<PageKey, string> = {
     "لم يُرسل الأسبوع: لا يوجد فيه وقت مسجّل.",
   "p.timesheet.refused_decide_invalid":
     "لم تقبل الخدمة القرار: إعادة الأسبوع تحتاج إلى سبب.",
+  "p.security.access_link": "مراجعة الوصول والوصول الطارئ",
+  "p.security.access_note":
+    "— من يملك أي وصول، لإعادة الاعتماد، والوصول الطارئ المحدود بوقت إلى خطة خاصة، وهو مسجَّل ومدقَّق.",
+  "p.access.title_ppm": "مراجعة الوصول والوصول الطارئ — PPM",
+  "p.access.back": "← الأمن",
+  "p.access.heading": "مراجعة الوصول والوصول الطارئ",
+  "p.access.intro":
+    "تسرد مراجعة الوصول الوصول الذي سجّله الأشخاص على أنه ممنوح، لإعادة الاعتماد. يفتح الوصول الطارئ لك خطة خاصة لوقت محدود عندما لا توجد طريقة أخرى؛ ويُسجَّل كل استخدام ويُدقَّق.",
+  "p.access.review_heading": "مراجعة الوصول",
+  "p.access.review_intro":
+    "الوصول المسجَّل على أنه ممنوح في سجل الوصول ولم يُسحب منذ ذلك الحين، الأقدم أولًا، مع من منحه ومتى. تُظهر ما سجّله الأشخاص، لا ما تفرضه خدمة تسجيل الدخول: قارن بينهما. للمسؤولين فقط؛ تُسجَّل كل قراءة في سجل التدقيق، لذا لا تُقرأ المراجعة إلا عندما تطلبها.",
+  "p.access.f_review_plan": "معرّف الخطة (اتركه فارغًا لكل خطة يمكنك قراءتها)",
+  "p.access.f_review_days": "مستحق للمراجعة بعد هذا العدد من الأيام التقويمية",
+  "p.access.show_review": "اعرض المراجعة",
+  "p.access.problem_review_plan":
+    "هذا ليس معرّف خطة: الصق معرّف الخطة، أو اترك المربع فارغًا لكل الخطط.",
+  "p.access.problem_review_days":
+    "اكتب عدد الأيام التقويمية عددًا صحيحًا، 0 أو أكثر.",
+  "p.access.could_not_load_review": "تعذّر تحميل مراجعة الوصول.",
+  "p.access.review_totals":
+    "حتى {as_of}. الوصول القائم: {standing}. المستحق للمراجعة، بعمر {days} يومًا تقويميًا أو أكثر: {due}.",
+  "p.access.review_note":
+    "يُحسب العمر بالأيام التقويمية من يوم تسجيل الوصول حتى يوم النشر الحالي.",
+  "p.access.download_review":
+    "نزّل المراجعة جدولَ بيانات، مع عمود لقراراتك بالإبقاء أو السحب",
+  "p.access.review_caption": "الوصول القائم اليوم، الأقدم أولًا",
+  "p.access.review_empty":
+    "لا يوجد وصول مسجَّل على أنه ممنوح قائم في الخطط التي يمكنك قراءتها.",
+  "p.access.col_person": "الشخص",
+  "p.access.col_access": "الوصول",
+  "p.access.col_plan": "اسم الخطة",
+  "p.access.col_granted_on": "مُنح في",
+  "p.access.col_granted_by": "منحه",
+  "p.access.col_age": "العمر بالأيام التقويمية",
+  "p.access.col_review": "المراجعة",
+  "p.access.col_note": "ملاحظة",
+  "p.access.due": "مستحق للمراجعة",
+  "p.access.not_due": "غير مستحق بعد",
+  "p.access.plan_unnamed": "الخطة {id}… (الاسم غير معروض)",
+  "p.access.bg_heading": "الوصول الطارئ إلى خطة خاصة (كسر الزجاج)",
+  "p.access.bg_audited_heading": "يُسجَّل كل استخدام للوصول الطارئ ويُدقَّق.",
+  "p.access.bg_audited_open":
+    "يسجّل فتح خطة في سجل التدقيق هويتك والخطة وسببك والمدة والشخص الذي تسمّيه.",
+  "p.access.bg_audited_told":
+    "يُبلَّغ الشخص الذي تسمّيه فورًا. وإذا تعذّر إبلاغه، فلن تُفتح الخطة.",
+  "p.access.bg_audited_each":
+    "يُسجَّل في سجل التدقيق كل طلب لا يمرّ إلا بفضل هذا الوصول، على أنه وصول طارئ.",
+  "p.access.bg_audited_visibility":
+    "يتيح لك رؤية الخطة. أما ما يمكنك تغييره فتقرّره صلاحياتك أنت.",
+  "p.access.bg_audited_ends":
+    "ينتهي من تلقاء نفسه في الوقت المعروض، أو قبل ذلك إن أنهيته. خمسة على الأكثر في اليوم، وواحد في كل مرة لكل خطة.",
+  "p.access.bg_intro":
+    "استخدمه فقط عندما يتعذّر الوصول إلى أعضاء الخطة ولا يحتمل العمل الانتظار. يتطلب أهلية كسر الزجاج أو وصول المسؤول؛ والخدمة هي التي تقرّر.",
+  "p.access.problems_heading": "لم تُفتح الخطة:",
+  "p.access.problem_plan": "أدخل معرّف الخطة الخاصة.",
+  "p.access.problem_reason_short":
+    "اذكر سبب حاجتك إلى الوصول، في {reason_min} حرفًا على الأقل.",
+  "p.access.problem_reason_long": "السبب أطول من {reason_max} حرف.",
+  "p.access.problem_minutes":
+    "أدخل المدة بالدقائق الكاملة، من {minutes_min} إلى {minutes_max}.",
+  "p.access.problem_notify":
+    "سمِّ الشخص المراد إبلاغه بصيغة ‘person:’ أو ‘worker:’ متبوعة بمعرّفه، دون أي شيء آخر.",
+  "p.access.problem_acknowledged":
+    "حدّد المربع لتقول إنك تفهم أن هذا مسجَّل ومدقَّق وأن الشخص سيُبلَّغ.",
+  "p.access.could_not_open": "تعذّر فتح الخطة.",
+  "p.access.opened_notice":
+    "الخطة مفتوحة لك حتى {until} (منطقتك الزمنية، {tz}). أُبلغ {person}.",
+  "p.access.go_to_plan": "انتقل إلى الخطة",
+  "p.access.f_plan": "معرّف الخطة الخاصة",
+  "p.access.f_reason": "لماذا تحتاج إلى الوصول (مطلوب، {min} حرفًا على الأقل)",
+  "p.access.reason_count": "{n} حرف؛ {min} على الأقل و{max} على الأكثر.",
+  "p.access.f_minutes": "لكم من الوقت، بالدقائق ({min} إلى {max})",
+  "p.access.f_notify":
+    "الشخص المراد إبلاغه: ‘person:’ أو ‘worker:’ ومعرّفه (ليس أنت)",
+  "p.access.f_acknowledge":
+    "أفهم أن هذا مسجَّل ومدقَّق، وأن الشخص الذي أسمّيه سيُبلَّغ.",
+  "p.access.open": "افتح الخطة للوصول الطارئ",
+  "p.access.grants_heading": "منح الوصول الطارئ",
+  "p.access.grants_intro":
+    "منحك أنت، الأحدث أولًا؛ ويرى المسؤول منح الجميع. لا يُحذف المنح أبدًا. الأوقات بمنطقتك الزمنية، {tz}.",
+  "p.access.grants_caption": "منح الوصول الطارئ، الأحدث أولًا",
+  "p.access.grants_empty": "لم يُفتح أي وصول طارئ.",
+  "p.access.loading": "جارٍ التحميل…",
+  "p.access.could_not_load_grants": "تعذّر تحميل منح الوصول الطارئ.",
+  "p.access.could_not_revoke": "تعذّر إنهاء الوصول الطارئ.",
+  "p.access.revoked_notice": "انتهى الوصول الطارئ إلى {plan}.",
+  "p.access.revoke": "أنهِ الآن",
+  "p.access.revoke_for": "أنهِ الآن: الوصول الطارئ إلى {plan}",
+  "p.access.state_live": "سارٍ",
+  "p.access.state_revoked": "انتهى مبكرًا",
+  "p.access.state_expired": "انقضى",
+  "p.access.ended_by": "{when}، أنهاه {who}",
+  "p.access.col_state": "الحالة",
+  "p.access.col_holder": "صاحبه",
+  "p.access.col_opened": "فُتح",
+  "p.access.col_ends": "ينتهي أو انتهى",
+  "p.access.col_reason": "السبب المقدَّم",
+  "p.access.col_told": "الشخص المُبلَّغ",
+  "p.access.col_act": "الإجراء",
+  "p.access.refused_sign_in": "سجّل الدخول أولًا.",
+  "p.access.refused_review_forbidden": "مراجعة الوصول للمسؤولين فقط.",
+  "p.access.refused_review_invalid": "لم تقبل الخدمة الخطة أو عدد الأيام.",
+  "p.access.refused_open_forbidden":
+    "لا يحق لك استخدام الوصول الطارئ: فهو يتطلب أهلية كسر الزجاج أو وصول المسؤول.",
+  "p.access.refused_open_not_found": "لا توجد خطة بهذا المعرّف.",
+  "p.access.refused_open_conflict":
+    "لديك بالفعل وصول طارئ إلى هذه الخطة؛ وأُعيدت قراءة القائمة أدناه.",
+  "p.access.refused_open_invalid":
+    "لم تُفتح الخطة. فإما أنها ليست خاصة، فلا شيء لفتحه، أو أن الشخص المراد إبلاغه هو أنت، أو أنه يتعذّر إبلاغ ذلك الشخص. لم يُمنح أي وصول.",
+  "p.access.refused_open_limit":
+    "لقد فتحت أقصى عدد مسموح به من الوصول الطارئ في يوم واحد (خمسة، محسوبة على آخر 24 ساعة).",
+  "p.access.refused_revoke_not_found":
+    "لم يُعثر على هذا المنح، أو ليس لك أن تنهيه.",
 };

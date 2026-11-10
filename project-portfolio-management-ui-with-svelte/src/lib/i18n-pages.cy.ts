@@ -5542,4 +5542,124 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Ni anfonwyd yr wythnos: does dim amser wedi'i gofnodi ynddi.",
   "p.timesheet.refused_decide_invalid":
     "Ni dderbyniodd y gwasanaeth y penderfyniad: mae angen rheswm i anfon wythnos yn ôl.",
+  "p.security.access_link": "Adolygiad mynediad a mynediad brys",
+  "p.security.access_note":
+    "— pwy sydd â pha fynediad, i'w ailardystio, a mynediad brys am gyfnod cyfyngedig at gynllun preifat, sy'n cael ei gofnodi a'i archwilio.",
+  "p.access.title_ppm": "Adolygiad mynediad a mynediad brys — PPM",
+  "p.access.back": "← Diogelwch",
+  "p.access.heading": "Adolygiad mynediad a mynediad brys",
+  "p.access.intro":
+    "Mae'r adolygiad mynediad yn rhestru'r mynediad a gofnododd pobl fel un a roddwyd, i'w ailardystio. Mae mynediad brys yn agor cynllun preifat i chi am gyfnod cyfyngedig pan nad oes ffordd arall; caiff pob defnydd ei gofnodi a'i archwilio.",
+  "p.access.review_heading": "Adolygiad mynediad",
+  "p.access.review_intro":
+    "Y mynediad a gofnodwyd fel un a roddwyd yn y cofrestr mynediad ac nas tynnwyd yn ôl ers hynny, yr hynaf yn gyntaf, gyda phwy a'i rhoddodd a phryd. Mae'n dangos beth a gofnododd pobl, nid yr hyn y mae'r gwasanaeth mewngofnodi yn ei orfodi: cymharwch y ddau. I weinyddwyr yn unig; caiff pob darlleniad ei gofnodi yn y trywydd archwilio, felly dim ond pan fyddwch yn gofyn y caiff yr adolygiad ei ddarllen.",
+  "p.access.f_review_plan":
+    "Dynodydd y cynllun (gadewch yn wag ar gyfer pob cynllun y gallwch ei ddarllen)",
+  "p.access.f_review_days":
+    "Angen ei adolygu ar ôl y nifer hwn o ddyddiau calendr",
+  "p.access.show_review": "Dangos yr adolygiad",
+  "p.access.problem_review_plan":
+    "Nid dynodydd cynllun yw hwnnw: gludwch ddynodydd y cynllun, neu gadewch y blwch yn wag ar gyfer pob cynllun.",
+  "p.access.problem_review_days":
+    "Ysgrifennwch nifer y dyddiau calendr fel rhif cyfan, 0 neu fwy.",
+  "p.access.could_not_load_review": "Methu llwytho'r adolygiad mynediad.",
+  "p.access.review_totals":
+    "Ar {as_of}. Mynediad sy'n sefyll: {standing}. Angen eu hadolygu, yn {days} diwrnod calendr oed neu fwy: {due}.",
+  "p.access.review_note":
+    "Caiff oed ei gyfrif mewn dyddiau calendr o'r diwrnod y cofnodwyd y mynediad hyd at heddiw'r gosodiad.",
+  "p.access.download_review":
+    "Lawrlwytho'r adolygiad fel taenlen, gyda cholofn ar gyfer eich penderfyniadau cadw neu dynnu'n ôl",
+  "p.access.review_caption": "Mynediad sy'n sefyll heddiw, yr hynaf yn gyntaf",
+  "p.access.review_empty":
+    "Nid oes mynediad a gofnodwyd fel un a roddwyd yn sefyll yn y cynlluniau y gallwch eu darllen.",
+  "p.access.col_person": "Person",
+  "p.access.col_access": "Mynediad",
+  "p.access.col_plan": "Enw'r cynllun",
+  "p.access.col_granted_on": "Rhoddwyd ar",
+  "p.access.col_granted_by": "Rhoddwyd gan",
+  "p.access.col_age": "Oed mewn dyddiau calendr",
+  "p.access.col_review": "Adolygiad",
+  "p.access.col_note": "Nodyn",
+  "p.access.due": "Angen ei adolygu",
+  "p.access.not_due": "Ddim yn ddyledus eto",
+  "p.access.plan_unnamed": "Cynllun {id}… (enw heb ei ddangos)",
+  "p.access.bg_heading": "Mynediad brys at gynllun preifat (torri'r gwydr)",
+  "p.access.bg_audited_heading":
+    "Caiff pob defnydd o fynediad brys ei gofnodi a'i archwilio.",
+  "p.access.bg_audited_open":
+    "Mae agor cynllun yn cofnodi pwy ydych chi, y cynllun, eich rheswm, am ba hyd, a'r person a enwir gennych, yn y trywydd archwilio.",
+  "p.access.bg_audited_told":
+    "Dywedir wrth y person a enwir gennych ar unwaith. Os na ellir dweud wrthynt, nid yw'r cynllun yn cael ei agor.",
+  "p.access.bg_audited_each":
+    "Caiff pob cais na fyddai'n cael ei ganiatáu heblaw am y mynediad hwn ei gofnodi yn y trywydd archwilio fel mynediad brys.",
+  "p.access.bg_audited_visibility":
+    "Mae'n gadael i chi weld y cynllun. Eich hawliau eich hun sy'n dal i benderfynu beth y gallwch ei newid.",
+  "p.access.bg_audited_ends":
+    "Mae'n dod i ben ohono'i hun ar yr amser a ddangosir, neu'n gynt os byddwch yn ei ddiweddu. Pump y dydd ar y mwyaf, ac un ar y tro ar bob cynllun.",
+  "p.access.bg_intro":
+    "Defnyddiwch ef dim ond pan na ellir cysylltu ag aelodau'r cynllun ac na all y gwaith aros. Mae angen cymhwysedd torri'r gwydr neu fynediad gweinyddwr; y gwasanaeth sy'n penderfynu.",
+  "p.access.problems_heading": "Ni agorwyd y cynllun:",
+  "p.access.problem_plan": "Rhowch ddynodydd y cynllun preifat.",
+  "p.access.problem_reason_short":
+    "Dywedwch pam mae angen mynediad arnoch, mewn o leiaf {reason_min} nod.",
+  "p.access.problem_reason_long": "Mae'r rheswm yn hirach na {reason_max} nod.",
+  "p.access.problem_minutes":
+    "Rhowch am ba hyd mewn munudau cyfan, o {minutes_min} i {minutes_max}.",
+  "p.access.problem_notify":
+    "Enwch y person i ddweud wrtho fel ‘person:’ neu ‘worker:’ ac yna ei ddynodydd, heb ddim arall.",
+  "p.access.problem_acknowledged":
+    "Ticiwch y blwch i ddweud eich bod yn deall bod hyn yn cael ei gofnodi a'i archwilio a bod y person yn cael gwybod.",
+  "p.access.could_not_open": "Methu agor y cynllun.",
+  "p.access.opened_notice":
+    "Mae'r cynllun ar agor i chi tan {until} (eich cylchfa amser, {tz}). Mae {person} wedi cael gwybod.",
+  "p.access.go_to_plan": "Mynd i'r cynllun",
+  "p.access.f_plan": "Dynodydd y cynllun preifat",
+  "p.access.f_reason":
+    "Pam mae angen mynediad arnoch (angenrheidiol, o leiaf {min} nod)",
+  "p.access.reason_count": "{n} nod; o leiaf {min} ac ar y mwyaf {max}.",
+  "p.access.f_minutes": "Am ba hyd, mewn munudau ({min} i {max})",
+  "p.access.f_notify":
+    "Person i ddweud wrtho: ‘person:’ neu ‘worker:’ a'i ddynodydd (nid chi)",
+  "p.access.f_acknowledge":
+    "Rwy'n deall bod hyn yn cael ei gofnodi a'i archwilio, ac y bydd y person a enwir gennyf yn cael gwybod.",
+  "p.access.open": "Agor y cynllun ar gyfer mynediad brys",
+  "p.access.grants_heading": "Caniatadau mynediad brys",
+  "p.access.grants_intro":
+    "Eich rhai chi, y mwyaf diweddar yn gyntaf; mae gweinyddwr yn gweld rhai pawb. Nid yw caniatâd byth yn cael ei ddileu. Mae'r amseroedd yn eich cylchfa amser, {tz}.",
+  "p.access.grants_caption":
+    "Caniatadau mynediad brys, y mwyaf diweddar yn gyntaf",
+  "p.access.grants_empty": "Nid oes mynediad brys wedi'i agor.",
+  "p.access.loading": "Yn llwytho…",
+  "p.access.could_not_load_grants": "Methu llwytho'r caniatadau mynediad brys.",
+  "p.access.could_not_revoke": "Methu dod â'r mynediad brys i ben.",
+  "p.access.revoked_notice": "Mae mynediad brys at {plan} wedi dod i ben.",
+  "p.access.revoke": "Dod i ben nawr",
+  "p.access.revoke_for": "Dod i ben nawr: mynediad brys at {plan}",
+  "p.access.state_live": "Mewn grym",
+  "p.access.state_revoked": "Daeth i ben yn gynnar",
+  "p.access.state_expired": "Daeth yr amser i ben",
+  "p.access.ended_by": "{when}, daeth i ben gan {who}",
+  "p.access.col_state": "Cyflwr",
+  "p.access.col_holder": "Gan",
+  "p.access.col_opened": "Agorwyd",
+  "p.access.col_ends": "Yn dod i ben neu daeth i ben",
+  "p.access.col_reason": "Y rheswm a roddwyd",
+  "p.access.col_told": "Person a gafodd wybod",
+  "p.access.col_act": "Gweithred",
+  "p.access.refused_sign_in": "Mewngofnodwch yn gyntaf.",
+  "p.access.refused_review_forbidden":
+    "Mae'r adolygiad mynediad i weinyddwyr yn unig.",
+  "p.access.refused_review_invalid":
+    "Ni dderbyniodd y gwasanaeth y cynllun na nifer y dyddiau.",
+  "p.access.refused_open_forbidden":
+    "Ni chewch ddefnyddio mynediad brys: mae angen cymhwysedd torri'r gwydr neu fynediad gweinyddwr.",
+  "p.access.refused_open_not_found": "Nid oes cynllun gyda'r dynodydd hwnnw.",
+  "p.access.refused_open_conflict":
+    "Mae gennych fynediad brys at y cynllun hwn eisoes; mae'r rhestr isod wedi'i darllen eto.",
+  "p.access.refused_open_invalid":
+    "Ni agorwyd y cynllun. Naill ai nid yw'n breifat, felly nid oes dim i'w agor, neu chi yw'r person i ddweud wrtho, neu ni ellir dweud wrth y person hwnnw. Ni roddwyd mynediad.",
+  "p.access.refused_open_limit":
+    "Rydych wedi agor y mwyaf o fynediad brys a ganiateir mewn diwrnod (pump, wedi'u cyfrif dros y 24 awr ddiwethaf).",
+  "p.access.refused_revoke_not_found":
+    "Ni chafwyd hyd i'r caniatâd hwnnw, neu nid chi sydd i'w ddiweddu.",
 };

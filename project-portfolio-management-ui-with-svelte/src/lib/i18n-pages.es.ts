@@ -5605,4 +5605,129 @@ export const PAGES_ES: Record<PageKey, string> = {
     "La semana no se envió: no tiene tiempo registrado.",
   "p.timesheet.refused_decide_invalid":
     "El servicio no aceptó la decisión: devolver una semana exige un motivo.",
+  "p.security.access_link": "Revisión de accesos y acceso de emergencia",
+  "p.security.access_note":
+    "— quién tiene qué acceso, para la recertificación, y acceso de emergencia por tiempo limitado a un plan privado, que se registra y audita.",
+  "p.access.title_ppm": "Revisión de accesos y acceso de emergencia — PPM",
+  "p.access.back": "← Seguridad",
+  "p.access.heading": "Revisión de accesos y acceso de emergencia",
+  "p.access.intro":
+    "La revisión de accesos enumera los accesos que se registraron como concedidos, para la recertificación. El acceso de emergencia le abre un plan privado durante un tiempo limitado cuando no hay otra forma; cada uso se registra y se audita.",
+  "p.access.review_heading": "Revisión de accesos",
+  "p.access.review_intro":
+    "Los accesos registrados como concedidos en el registro de accesos y no revocados desde entonces, los más antiguos primero, con quién los concedió y cuándo. Muestra lo que se registró, no lo que aplica el servicio de inicio de sesión: compare ambos. Solo para administradores; cada lectura se registra en el registro de auditoría, por eso la revisión solo se lee cuando usted lo pide.",
+  "p.access.f_review_plan":
+    "Identificador del plan (déjelo en blanco para todos los planes que puede leer)",
+  "p.access.f_review_days":
+    "Pendiente de revisión tras este número de días naturales",
+  "p.access.show_review": "Mostrar la revisión",
+  "p.access.problem_review_plan":
+    "Eso no es un identificador de plan: pegue el identificador del plan o deje la casilla en blanco para todos los planes.",
+  "p.access.problem_review_days":
+    "Escriba el número de días naturales como un número entero, 0 o más.",
+  "p.access.could_not_load_review": "No se pudo cargar la revisión de accesos.",
+  "p.access.review_totals":
+    "A fecha de {as_of}. Accesos vigentes: {standing}. Pendientes de revisión, con {days} días naturales o más: {due}.",
+  "p.access.review_note":
+    "La antigüedad se cuenta en días naturales desde el día en que se registró el acceso hasta el día de hoy de la instalación.",
+  "p.access.download_review":
+    "Descargar la revisión como hoja de cálculo, con una columna para sus decisiones de mantener o revocar",
+  "p.access.review_caption": "Accesos vigentes hoy, los más antiguos primero",
+  "p.access.review_empty":
+    "No hay accesos registrados como concedidos vigentes en los planes que puede leer.",
+  "p.access.col_person": "Persona",
+  "p.access.col_access": "Acceso",
+  "p.access.col_plan": "Nombre del plan",
+  "p.access.col_granted_on": "Concedido el",
+  "p.access.col_granted_by": "Concedido por",
+  "p.access.col_age": "Antigüedad en días naturales",
+  "p.access.col_review": "Revisión",
+  "p.access.col_note": "Nota",
+  "p.access.due": "Pendiente de revisión",
+  "p.access.not_due": "Aún no pendiente",
+  "p.access.plan_unnamed": "Plan {id}… (nombre no mostrado)",
+  "p.access.bg_heading":
+    "Acceso de emergencia a un plan privado (romper el cristal)",
+  "p.access.bg_audited_heading":
+    "Cada uso del acceso de emergencia se registra y se audita.",
+  "p.access.bg_audited_open":
+    "Abrir un plan registra en el registro de auditoría quién es usted, el plan, su motivo, cuánto tiempo y la persona que nombra.",
+  "p.access.bg_audited_told":
+    "La persona que nombra recibe un aviso de inmediato. Si no se le puede avisar, el plan no se abre.",
+  "p.access.bg_audited_each":
+    "Cada solicitud que solo este acceso deja pasar se registra en el registro de auditoría como acceso de emergencia.",
+  "p.access.bg_audited_visibility":
+    "Le permite ver el plan. Lo que puede cambiar lo siguen decidiendo sus propios derechos.",
+  "p.access.bg_audited_ends":
+    "Termina por sí solo a la hora indicada, o antes si usted lo termina. Como máximo cinco al día, y uno a la vez en cada plan.",
+  "p.access.bg_intro":
+    "Úselo solo cuando no se pueda contactar con los miembros del plan y el trabajo no pueda esperar. Requiere la habilitación para romper el cristal o acceso de administrador; decide el servicio.",
+  "p.access.problems_heading": "El plan no se abrió:",
+  "p.access.problem_plan": "Indique el identificador del plan privado.",
+  "p.access.problem_reason_short":
+    "Diga por qué necesita acceso, en al menos {reason_min} caracteres.",
+  "p.access.problem_reason_long":
+    "El motivo tiene más de {reason_max} caracteres.",
+  "p.access.problem_minutes":
+    "Indique la duración en minutos enteros, de {minutes_min} a {minutes_max}.",
+  "p.access.problem_notify":
+    "Indique la persona a quien avisar como ‘person:’ o ‘worker:’ seguido de su identificador, sin nada más.",
+  "p.access.problem_acknowledged":
+    "Marque la casilla para indicar que entiende que esto se registra y audita y que se avisa a la persona.",
+  "p.access.could_not_open": "No se pudo abrir el plan.",
+  "p.access.opened_notice":
+    "El plan está abierto para usted hasta {until} (su zona horaria, {tz}). Se ha avisado a {person}.",
+  "p.access.go_to_plan": "Ir al plan",
+  "p.access.f_plan": "Identificador del plan privado",
+  "p.access.f_reason":
+    "Por qué necesita acceso (obligatorio, al menos {min} caracteres)",
+  "p.access.reason_count":
+    "{n} caracteres; al menos {min} y como máximo {max}.",
+  "p.access.f_minutes": "Durante cuánto tiempo, en minutos ({min} a {max})",
+  "p.access.f_notify":
+    "Persona a quien avisar: ‘person:’ o ‘worker:’ y su identificador (no usted)",
+  "p.access.f_acknowledge":
+    "Entiendo que esto se registra y audita, y que se avisará a la persona que nombro.",
+  "p.access.open": "Abrir el plan con acceso de emergencia",
+  "p.access.grants_heading": "Accesos de emergencia concedidos",
+  "p.access.grants_intro":
+    "Los suyos, los más recientes primero; un administrador ve los de todos. Un acceso nunca se borra. Las horas están en su zona horaria, {tz}.",
+  "p.access.grants_caption":
+    "Accesos de emergencia concedidos, los más recientes primero",
+  "p.access.grants_empty": "No se ha abierto ningún acceso de emergencia.",
+  "p.access.loading": "Cargando…",
+  "p.access.could_not_load_grants":
+    "No se pudieron cargar los accesos de emergencia.",
+  "p.access.could_not_revoke": "No se pudo terminar el acceso de emergencia.",
+  "p.access.revoked_notice": "El acceso de emergencia a {plan} ha terminado.",
+  "p.access.revoke": "Terminar ahora",
+  "p.access.revoke_for": "Terminar ahora: acceso de emergencia a {plan}",
+  "p.access.state_live": "Vigente",
+  "p.access.state_revoked": "Terminado antes de tiempo",
+  "p.access.state_expired": "Caducado",
+  "p.access.ended_by": "{when}, terminado por {who}",
+  "p.access.col_state": "Estado",
+  "p.access.col_holder": "Titular",
+  "p.access.col_opened": "Abierto",
+  "p.access.col_ends": "Termina o terminó",
+  "p.access.col_reason": "Motivo indicado",
+  "p.access.col_told": "Persona avisada",
+  "p.access.col_act": "Acción",
+  "p.access.refused_sign_in": "Inicie sesión primero.",
+  "p.access.refused_review_forbidden":
+    "La revisión de accesos es solo para administradores.",
+  "p.access.refused_review_invalid":
+    "El servicio no aceptó el plan o el número de días.",
+  "p.access.refused_open_forbidden":
+    "No puede usar el acceso de emergencia: requiere la habilitación para romper el cristal o acceso de administrador.",
+  "p.access.refused_open_not_found":
+    "No hay ningún plan con ese identificador.",
+  "p.access.refused_open_conflict":
+    "Ya tiene acceso de emergencia a este plan; la lista de abajo se ha vuelto a leer.",
+  "p.access.refused_open_invalid":
+    "El plan no se abrió. O no es privado, así que no hay nada que abrir, o la persona a quien avisar es usted, o no se puede avisar a esa persona. No se concedió acceso.",
+  "p.access.refused_open_limit":
+    "Ha abierto el máximo de accesos de emergencia permitidos en un día (cinco, contados en las últimas 24 horas).",
+  "p.access.refused_revoke_not_found":
+    "No se encontró ese acceso, o no le corresponde terminarlo.",
 };

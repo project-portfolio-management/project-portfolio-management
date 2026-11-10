@@ -5412,6 +5412,125 @@ export const PAGES_EN = {
     "The week was not sent: it has no time recorded in it.",
   "p.timesheet.refused_decide_invalid":
     "The service did not accept the decision: sending a week back needs a reason.",
+  "p.security.access_link": "Access review and emergency access",
+  "p.security.access_note":
+    "— who holds what access, for recertification, and time-limited emergency access to a private plan, which is recorded and audited.",
+  "p.access.title_ppm": "Access review and emergency access — PPM",
+  "p.access.back": "← Security",
+  "p.access.heading": "Access review and emergency access",
+  "p.access.intro":
+    "The access review lists the access people recorded as granted, for recertification. Emergency access opens a private plan to you for a limited time when there is no other way; every use is recorded and audited.",
+  "p.access.review_heading": "Access review",
+  "p.access.review_intro":
+    "The access recorded as granted in the access ledger and not since revoked, oldest first, with who granted it and when. It shows what people recorded, not what the sign-in service enforces: compare the two. For administrators only; each reading is recorded in the audit trail, so the review is read only when you ask.",
+  "p.access.f_review_plan": "Plan id (leave blank for every plan you can read)",
+  "p.access.f_review_days": "Due for review after this many calendar days",
+  "p.access.show_review": "Show the review",
+  "p.access.problem_review_plan":
+    "That is not a plan id: paste the plan's id, or leave the box blank for every plan.",
+  "p.access.problem_review_days":
+    "Write the number of calendar days as a whole number, 0 or more.",
+  "p.access.could_not_load_review": "Could not load the access review.",
+  "p.access.review_totals":
+    "As of {as_of}. Grants that stand: {standing}. Due for review, at {days} calendar days old or more: {due}.",
+  "p.access.review_note":
+    "Age is counted in calendar days from the day the grant was recorded to the deployment's today.",
+  "p.access.download_review":
+    "Download the review as a spreadsheet, with a column for your keep or revoke decisions",
+  "p.access.review_caption": "Access that stands today, oldest first",
+  "p.access.review_empty":
+    "No access recorded as granted stands in the plans you can read.",
+  "p.access.col_person": "Person",
+  "p.access.col_access": "Access",
+  "p.access.col_plan": "Plan name",
+  "p.access.col_granted_on": "Granted on",
+  "p.access.col_granted_by": "Granted by",
+  "p.access.col_age": "Age in calendar days",
+  "p.access.col_review": "Review",
+  "p.access.col_note": "Note",
+  "p.access.due": "Due for review",
+  "p.access.not_due": "Not yet due",
+  "p.access.plan_unnamed": "Plan {id}… (name not shown)",
+  "p.access.bg_heading": "Emergency access to a private plan (break-glass)",
+  "p.access.bg_audited_heading":
+    "Every use of emergency access is recorded and audited.",
+  "p.access.bg_audited_open":
+    "Opening a plan records who you are, the plan, your reason, how long, and the person you name, in the audit trail.",
+  "p.access.bg_audited_told":
+    "The person you name is told at once. If they cannot be told, the plan is not opened.",
+  "p.access.bg_audited_each":
+    "Every request that only this access lets through is recorded in the audit trail as emergency access.",
+  "p.access.bg_audited_visibility":
+    "It lets you see the plan. What you may change is still decided by your own rights.",
+  "p.access.bg_audited_ends":
+    "It ends by itself at the time shown, or sooner if you end it. At most five a day, and one at a time on each plan.",
+  "p.access.bg_intro":
+    "Use it only when the plan's members cannot be reached and the work cannot wait. It needs the break-glass eligibility or administrator access; the service decides.",
+  "p.access.problems_heading": "The plan was not opened:",
+  "p.access.problem_plan": "Give the private plan's id.",
+  "p.access.problem_reason_short":
+    "Say why you need access, in at least {reason_min} characters.",
+  "p.access.problem_reason_long":
+    "The reason is longer than {reason_max} characters.",
+  "p.access.problem_minutes":
+    "Give how long in whole minutes, from {minutes_min} to {minutes_max}.",
+  "p.access.problem_notify":
+    "Name the person to tell as ‘person:’ or ‘worker:’ followed by their id, with nothing else.",
+  "p.access.problem_acknowledged":
+    "Tick the box to say you understand that this is recorded and audited and that the person is told.",
+  "p.access.could_not_open": "Could not open the plan.",
+  "p.access.opened_notice":
+    "The plan is open to you until {until} (your time zone, {tz}). {person} has been told.",
+  "p.access.go_to_plan": "Go to the plan",
+  "p.access.f_plan": "Private plan's id",
+  "p.access.f_reason":
+    "Why you need access (needed, at least {min} characters)",
+  "p.access.reason_count": "{n} characters; at least {min} and at most {max}.",
+  "p.access.f_minutes": "For how long, in minutes ({min} to {max})",
+  "p.access.f_notify":
+    "Person to tell: ‘person:’ or ‘worker:’ and their id (not you)",
+  "p.access.f_acknowledge":
+    "I understand that this is recorded and audited, and that the person I name will be told.",
+  "p.access.open": "Open the plan for emergency access",
+  "p.access.grants_heading": "Emergency access grants",
+  "p.access.grants_intro":
+    "Yours, newest first; an administrator sees everyone's. A grant is never deleted. Times are in your time zone, {tz}.",
+  "p.access.grants_caption": "Emergency access grants, newest first",
+  "p.access.grants_empty": "No emergency access has been opened.",
+  "p.access.loading": "Loading…",
+  "p.access.could_not_load_grants":
+    "Could not load the emergency access grants.",
+  "p.access.could_not_revoke": "Could not end the emergency access.",
+  "p.access.revoked_notice": "Emergency access to {plan} has ended.",
+  "p.access.revoke": "End now",
+  "p.access.revoke_for": "End now: emergency access to {plan}",
+  "p.access.state_live": "In force",
+  "p.access.state_revoked": "Ended early",
+  "p.access.state_expired": "Ran out",
+  "p.access.ended_by": "{when}, ended by {who}",
+  "p.access.col_state": "State",
+  "p.access.col_holder": "Held by",
+  "p.access.col_opened": "Opened",
+  "p.access.col_ends": "Ends or ended",
+  "p.access.col_reason": "Reason given",
+  "p.access.col_told": "Person told",
+  "p.access.col_act": "Action",
+  "p.access.refused_sign_in": "Sign in first.",
+  "p.access.refused_review_forbidden":
+    "The access review is for administrators only.",
+  "p.access.refused_review_invalid":
+    "The service did not accept the plan or the number of days.",
+  "p.access.refused_open_forbidden":
+    "You may not use emergency access: it needs the break-glass eligibility or administrator access.",
+  "p.access.refused_open_not_found": "There is no plan with that id.",
+  "p.access.refused_open_conflict":
+    "You already hold emergency access to this plan; the list below has been read again.",
+  "p.access.refused_open_invalid":
+    "The plan was not opened. Either it is not private, so there is nothing to open, or the person to tell is you, or that person cannot be told. No access was given.",
+  "p.access.refused_open_limit":
+    "You have opened the most emergency access allowed in a day (five, counted over the last 24 hours).",
+  "p.access.refused_revoke_not_found":
+    "That grant was not found, or it is not yours to end.",
 } as const;
 
 /** A key in the page and component catalogue. */

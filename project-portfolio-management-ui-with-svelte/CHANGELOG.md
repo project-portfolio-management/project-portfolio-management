@@ -9,6 +9,25 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the access review and emergency (break-glass) access (NC-1 slice 7, RG-9, RG-10, 2026-11-10)
+
+`/security/access`, linked from `/security`. The access review is `GET /api/access-review?plan=&older_than_days=`,
+read only on "Show the review" (each read is audited by the service), with `reviewProblem` refusing a plan that is not
+an id and an age that is not a whole number of days; the counts are a sentence, the grants a `DataTable` (no export of
+its own, `exportable={false}`) with "due for review" as ⚑ and words, and `accessReviewCsvUrl` links to the service's
+spreadsheet through the proxy. Emergency access opens with a bordered `role="note"` saying what is recorded and
+audited, then a form checked by `openProblems` (plan id; reason 20 to 1000 characters counted as Unicode scalar values,
+the minimum once trimmed; 1 to 240 whole minutes, 60 filled in and always sent; a `person:` or `worker:` reference with
+a UUID, stricter than the service; an acknowledgement tick), every problem listed at once. The button is a plain
+`button`, not `primary`. `POST /api/break-glass` answers with the expiry, shown by `formatDateTime` in the browser's
+zone, which the page names. `GET /api/break-glass` lists the grants in the service's order with `grantState` (in force
+●, ended early ■, ran out ○), and "End now" (`aria-label` starting with the visible words, for WCAG 2.5.3) posts
+`…/{pid}/revoke`. Refusals by step (`accessRefusalKey`). Tests: `tests/unit/access-view.test.ts`, client paths in
+`tests/unit/ppm.test.ts`, and `tests/e2e/security-access.spec.ts` (eight tests, in an Auckland zone, Welsh and axe).
+Not done: recording a reviewer's decision, pickers for a private plan or a person, hiding sections by right, a
+countdown, paging past 500 grants. Not verified: against a real service. The 85 new strings in seven languages are
+machine drafts, and no speaker has read them.
+
 ### Added — my timesheet: a week by day and plan, submitting it, and an approver's decision (NC-1 slice 6, LT-11, 2026-11-10)
 
 `/me/timesheet`, linked from `/me`. The week is the service's ISO week (`2026-W46`, Monday to Sunday) whatever the

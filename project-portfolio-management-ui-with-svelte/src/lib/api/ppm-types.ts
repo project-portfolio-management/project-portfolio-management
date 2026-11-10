@@ -3476,3 +3476,79 @@ export interface TimesheetWeekState {
   decided_at: string | null;
   decision_comment: string | null;
 }
+
+// ---- access review and break-glass access (RG-9, RG-10; NC-1 slice 7) ----
+
+/** One grant that stands today in the access ledger (`GET /api/access-review`). */
+export interface AccessReviewGrant {
+  plan_pid: string;
+  person_ref: string;
+  /** What access, in the words it was recorded with. */
+  access: string;
+  /** The civil date the grant was recorded. */
+  granted_on: string;
+  granted_by: string | null;
+  note: string | null;
+  /** Calendar days since it was granted. */
+  age_calendar_days: number;
+  /** Whether it is at or over the review age. */
+  review_due: boolean;
+}
+
+/** `GET /api/access-review`: administrators only; oldest first; the caller's readable plans only; audited. */
+export interface AccessReview {
+  /** The deployment's today, a civil date. */
+  as_of: string;
+  older_than_days: number;
+  standing: number;
+  review_due: number;
+  grants: AccessReviewGrant[];
+  note: string;
+}
+
+/** The access review's query: one plan or every readable one, and the review age in calendar days. */
+export interface AccessReviewQuery {
+  plan?: string;
+  older_than_days?: number;
+}
+
+/** `POST /api/break-glass`: open a private plan for a limited time, telling a second person. */
+export interface BreakGlassOpenBody {
+  plan_pid: string;
+  /** Why, at least 20 characters once trimmed, at most 1000. */
+  reason: string;
+  /** 1 to 240; the service's default is 60 when left out. */
+  minutes?: number | null;
+  /** A `person:` or `worker:` reference, not the caller. */
+  notify_ref: string;
+}
+
+/** What `POST /api/break-glass` answers. */
+export interface BreakGlassOpened {
+  pid: string;
+  plan_pid: string;
+  expires_at: string;
+  notified: boolean;
+}
+
+/** One break-glass grant (`GET /api/break-glass`, and the revoke's answer). A grant is never deleted. */
+export interface BreakGlassGrant {
+  pid: string;
+  plan_pid: string;
+  /** Who holds it (the token subject). */
+  sub: string;
+  reason: string;
+  notify_ref: string;
+  opened_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+  revoked_by: string | null;
+  /** In force now: not revoked and not expired, as the service read it. */
+  live: boolean;
+}
+
+/** `GET /api/break-glass`: the caller's grants (every grant for an administrator), newest first, at most 500. */
+export interface BreakGlassList {
+  grants: BreakGlassGrant[];
+  live: number;
+}

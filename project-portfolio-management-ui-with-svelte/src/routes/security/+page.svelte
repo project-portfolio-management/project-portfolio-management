@@ -8,7 +8,7 @@
   import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, type RiskRegister } from "#lib/api/ppm.js";
@@ -33,6 +33,7 @@
 <svelte:head><title>{t("p.security.ppm", { t: t("ppm.nav.security") })}</title></svelte:head>
 
 <h1>{t("ppm.nav.security")}</h1>
+<p class="small"><a href={localeHref("/security/access")}>{t("p.security.access_link")}</a> {t("p.security.access_note")}</p>
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 
 {#if register}

@@ -5623,4 +5623,126 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Die Woche wurde nicht gesendet: Es ist keine Zeit darin erfasst.",
   "p.timesheet.refused_decide_invalid":
     "Der Dienst hat die Entscheidung nicht angenommen: Das Zurückschicken einer Woche braucht einen Grund.",
+  "p.security.access_link": "Zugriffsprüfung und Notfallzugriff",
+  "p.security.access_note":
+    "— wer welchen Zugriff hat, zur Rezertifizierung, und zeitlich begrenzter Notfallzugriff auf einen privaten Plan, der aufgezeichnet und geprüft wird.",
+  "p.access.title_ppm": "Zugriffsprüfung und Notfallzugriff — PPM",
+  "p.access.back": "← Sicherheit",
+  "p.access.heading": "Zugriffsprüfung und Notfallzugriff",
+  "p.access.intro":
+    "Die Zugriffsprüfung listet die Zugriffe auf, die als gewährt erfasst wurden, zur Rezertifizierung. Der Notfallzugriff öffnet Ihnen einen privaten Plan für begrenzte Zeit, wenn es keinen anderen Weg gibt; jede Nutzung wird aufgezeichnet und geprüft.",
+  "p.access.review_heading": "Zugriffsprüfung",
+  "p.access.review_intro":
+    "Die im Zugriffsbuch als gewährt erfassten und seitdem nicht widerrufenen Zugriffe, die ältesten zuerst, mit wer sie wann gewährt hat. Sie zeigt, was erfasst wurde, nicht was der Anmeldedienst durchsetzt: Vergleichen Sie beides. Nur für Administratoren; jedes Lesen wird im Prüfprotokoll aufgezeichnet, daher wird die Prüfung nur gelesen, wenn Sie es verlangen.",
+  "p.access.f_review_plan":
+    "Plan-Kennung (leer lassen für jeden Plan, den Sie lesen können)",
+  "p.access.f_review_days": "Zur Prüfung fällig nach so vielen Kalendertagen",
+  "p.access.show_review": "Prüfung anzeigen",
+  "p.access.problem_review_plan":
+    "Das ist keine Plan-Kennung: Fügen Sie die Kennung des Plans ein oder lassen Sie das Feld für alle Pläne leer.",
+  "p.access.problem_review_days":
+    "Geben Sie die Zahl der Kalendertage als ganze Zahl ab 0 an.",
+  "p.access.could_not_load_review":
+    "Die Zugriffsprüfung konnte nicht geladen werden.",
+  "p.access.review_totals":
+    "Stand {as_of}. Bestehende Zugriffe: {standing}. Zur Prüfung fällig, ab {days} Kalendertagen alt: {due}.",
+  "p.access.review_note":
+    "Das Alter wird in Kalendertagen vom Tag der Erfassung bis zum heutigen Tag der Installation gezählt.",
+  "p.access.download_review":
+    "Prüfung als Tabelle herunterladen, mit einer Spalte für Ihre Entscheidungen „behalten“ oder „widerrufen“",
+  "p.access.review_caption": "Heute bestehende Zugriffe, die ältesten zuerst",
+  "p.access.review_empty":
+    "In den Plänen, die Sie lesen können, besteht kein als gewährt erfasster Zugriff.",
+  "p.access.col_person": "Person",
+  "p.access.col_access": "Zugriff",
+  "p.access.col_plan": "Planname",
+  "p.access.col_granted_on": "Gewährt am",
+  "p.access.col_granted_by": "Gewährt von",
+  "p.access.col_age": "Alter in Kalendertagen",
+  "p.access.col_review": "Prüfung",
+  "p.access.col_note": "Notiz",
+  "p.access.due": "Zur Prüfung fällig",
+  "p.access.not_due": "Noch nicht fällig",
+  "p.access.plan_unnamed": "Plan {id}… (Name nicht angezeigt)",
+  "p.access.bg_heading": "Notfallzugriff auf einen privaten Plan (Break-Glass)",
+  "p.access.bg_audited_heading":
+    "Jede Nutzung des Notfallzugriffs wird aufgezeichnet und geprüft.",
+  "p.access.bg_audited_open":
+    "Das Öffnen eines Plans zeichnet im Prüfprotokoll auf, wer Sie sind, den Plan, Ihren Grund, wie lange und die von Ihnen genannte Person.",
+  "p.access.bg_audited_told":
+    "Die von Ihnen genannte Person wird sofort benachrichtigt. Kann sie nicht benachrichtigt werden, wird der Plan nicht geöffnet.",
+  "p.access.bg_audited_each":
+    "Jede Anfrage, die nur dieser Zugriff durchlässt, wird im Prüfprotokoll als Notfallzugriff aufgezeichnet.",
+  "p.access.bg_audited_visibility":
+    "Sie können den Plan damit sehen. Was Sie ändern dürfen, bestimmen weiterhin Ihre eigenen Rechte.",
+  "p.access.bg_audited_ends":
+    "Er endet von selbst zur angezeigten Zeit oder früher, wenn Sie ihn beenden. Höchstens fünf am Tag und jeweils einer pro Plan.",
+  "p.access.bg_intro":
+    "Nutzen Sie ihn nur, wenn die Mitglieder des Plans nicht erreichbar sind und die Arbeit nicht warten kann. Er erfordert die Break-Glass-Berechtigung oder Administratorzugriff; der Dienst entscheidet.",
+  "p.access.problems_heading": "Der Plan wurde nicht geöffnet:",
+  "p.access.problem_plan": "Geben Sie die Kennung des privaten Plans an.",
+  "p.access.problem_reason_short":
+    "Sagen Sie in mindestens {reason_min} Zeichen, warum Sie Zugriff brauchen.",
+  "p.access.problem_reason_long":
+    "Der Grund ist länger als {reason_max} Zeichen.",
+  "p.access.problem_minutes":
+    "Geben Sie die Dauer in ganzen Minuten an, von {minutes_min} bis {minutes_max}.",
+  "p.access.problem_notify":
+    "Nennen Sie die zu benachrichtigende Person als ‘person:’ oder ‘worker:’ gefolgt von ihrer Kennung, ohne weiteren Text.",
+  "p.access.problem_acknowledged":
+    "Kreuzen Sie das Feld an, um zu bestätigen, dass Sie verstehen, dass dies aufgezeichnet und geprüft wird und die Person benachrichtigt wird.",
+  "p.access.could_not_open": "Der Plan konnte nicht geöffnet werden.",
+  "p.access.opened_notice":
+    "Der Plan ist für Sie bis {until} geöffnet (Ihre Zeitzone, {tz}). {person} wurde benachrichtigt.",
+  "p.access.go_to_plan": "Zum Plan",
+  "p.access.f_plan": "Kennung des privaten Plans",
+  "p.access.f_reason":
+    "Warum Sie Zugriff brauchen (erforderlich, mindestens {min} Zeichen)",
+  "p.access.reason_count": "{n} Zeichen; mindestens {min} und höchstens {max}.",
+  "p.access.f_minutes": "Wie lange, in Minuten ({min} bis {max})",
+  "p.access.f_notify":
+    "Zu benachrichtigende Person: ‘person:’ oder ‘worker:’ und ihre Kennung (nicht Sie)",
+  "p.access.f_acknowledge":
+    "Ich verstehe, dass dies aufgezeichnet und geprüft wird und dass die von mir genannte Person benachrichtigt wird.",
+  "p.access.open": "Plan für Notfallzugriff öffnen",
+  "p.access.grants_heading": "Notfallzugriffe",
+  "p.access.grants_intro":
+    "Ihre, die neuesten zuerst; ein Administrator sieht die aller Personen. Ein Zugriff wird nie gelöscht. Zeiten sind in Ihrer Zeitzone, {tz}.",
+  "p.access.grants_caption": "Notfallzugriffe, die neuesten zuerst",
+  "p.access.grants_empty": "Es wurde kein Notfallzugriff geöffnet.",
+  "p.access.loading": "Wird geladen…",
+  "p.access.could_not_load_grants":
+    "Die Notfallzugriffe konnten nicht geladen werden.",
+  "p.access.could_not_revoke":
+    "Der Notfallzugriff konnte nicht beendet werden.",
+  "p.access.revoked_notice": "Der Notfallzugriff auf {plan} ist beendet.",
+  "p.access.revoke": "Jetzt beenden",
+  "p.access.revoke_for": "Jetzt beenden: Notfallzugriff auf {plan}",
+  "p.access.state_live": "In Kraft",
+  "p.access.state_revoked": "Vorzeitig beendet",
+  "p.access.state_expired": "Abgelaufen",
+  "p.access.ended_by": "{when}, beendet von {who}",
+  "p.access.col_state": "Zustand",
+  "p.access.col_holder": "Inhaber",
+  "p.access.col_opened": "Geöffnet",
+  "p.access.col_ends": "Endet oder endete",
+  "p.access.col_reason": "Angegebener Grund",
+  "p.access.col_told": "Benachrichtigte Person",
+  "p.access.col_act": "Aktion",
+  "p.access.refused_sign_in": "Melden Sie sich zuerst an.",
+  "p.access.refused_review_forbidden":
+    "Die Zugriffsprüfung ist nur für Administratoren.",
+  "p.access.refused_review_invalid":
+    "Der Dienst hat den Plan oder die Zahl der Tage nicht angenommen.",
+  "p.access.refused_open_forbidden":
+    "Sie dürfen den Notfallzugriff nicht nutzen: Er erfordert die Break-Glass-Berechtigung oder Administratorzugriff.",
+  "p.access.refused_open_not_found": "Es gibt keinen Plan mit dieser Kennung.",
+  "p.access.refused_open_conflict":
+    "Sie haben bereits Notfallzugriff auf diesen Plan; die Liste unten wurde neu gelesen.",
+  "p.access.refused_open_invalid":
+    "Der Plan wurde nicht geöffnet. Entweder ist er nicht privat, es gibt also nichts zu öffnen, oder die zu benachrichtigende Person sind Sie, oder diese Person kann nicht benachrichtigt werden. Es wurde kein Zugriff gewährt.",
+  "p.access.refused_open_limit":
+    "Sie haben die an einem Tag erlaubte Höchstzahl an Notfallzugriffen geöffnet (fünf, gezählt über die letzten 24 Stunden).",
+  "p.access.refused_revoke_not_found":
+    "Dieser Zugriff wurde nicht gefunden, oder Sie dürfen ihn nicht beenden.",
 };

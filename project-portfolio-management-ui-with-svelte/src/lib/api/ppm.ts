@@ -144,6 +144,12 @@ import type {
   NotificationSinkBody,
   SinkDelivery,
   TimesheetDecideBody,
+  AccessReview,
+  AccessReviewQuery,
+  BreakGlassGrant,
+  BreakGlassList,
+  BreakGlassOpenBody,
+  BreakGlassOpened,
   TimesheetSubmitBody,
   TimesheetWeek,
   TimesheetWeekState,
@@ -1914,6 +1920,38 @@ export class PpmClient {
   decideTimesheet(body: TimesheetDecideBody): Promise<TimesheetWeekState> {
     return this.http.post(`/api/timesheets/decide`, { body });
   }
+  /**
+   * The access grants that stand today, oldest first (RG-9, NC-1 slice 7): administrators only (403 otherwise), plans
+   * the caller cannot read left out, and every read audited. A 422 is a negative age or a format the service does not
+   * write.
+   */
+  accessReview(q: AccessReviewQuery = {}): Promise<AccessReview> {
+    return this.http.get(`/api/access-review${accessReviewQuery(q, false)}`);
+  }
+  /**
+   * Where the browser downloads the access review as a spreadsheet: the service's own CSV, through the proxy, with an
+   * empty decision column for the reviewer, formulas defused and `Content-Disposition: attachment`. Audited like the
+   * page's own read.
+   */
+  accessReviewCsvUrl(q: AccessReviewQuery = {}): string {
+    return `${API_BASE_URL}/api/access-review${accessReviewQuery(q, true)}`;
+  }
+  /** The caller's break-glass grants, every grant for an administrator, newest first (RG-10, NC-1 slice 7). */
+  breakGlassGrants(): Promise<BreakGlassList> {
+    return this.http.get(`/api/break-glass`);
+  }
+  /**
+   * Open a private plan for a limited time (RG-10): `breakglass=eligible` or an administrator (403), a reason and a
+   * second person who is told in the same step (422 when they cannot be, or when the plan is not private), one live
+   * grant per plan and person (409), five a day (429). Recorded and audited.
+   */
+  openBreakGlass(body: BreakGlassOpenBody): Promise<BreakGlassOpened> {
+    return this.http.post(`/api/break-glass`, { body });
+  }
+  /** End a grant now (RG-10): its holder or an administrator; anyone else gets 404. Audited. */
+  revokeBreakGlass(grantPid: string): Promise<BreakGlassGrant> {
+    return this.http.post(`/api/break-glass/${grantPid}/revoke`);
+  }
   /** A plan's handling mark (RG-7). `scheme` is empty when the deployment has none. */
   planHandlingMark(pid: string): Promise<{
     plan_pid: string;
@@ -2357,4 +2395,15 @@ export interface CutoverDecision {
     missing: string[];
   };
   go_would_be_refused_because: string[];
+}
+
+/** The access review's query string, with `format=csv` for the spreadsheet; empty values are left out. */
+function accessReviewQuery(q: AccessReviewQuery, csv: boolean): string {
+  const params = new URLSearchParams();
+  if (q.plan) params.set("plan", q.plan);
+  if (q.older_than_days !== undefined)
+    params.set("older_than_days", String(q.older_than_days));
+  if (csv) params.set("format", "csv");
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
 }

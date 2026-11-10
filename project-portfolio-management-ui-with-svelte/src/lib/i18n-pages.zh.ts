@@ -5094,4 +5094,114 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.timesheet.refused_submit_invalid": "该周未提交：其中没有记录时间。",
   "p.timesheet.refused_decide_invalid":
     "服务未接受该决定：退回一周需要说明理由。",
+  "p.security.access_link": "访问权限审查与紧急访问",
+  "p.security.access_note":
+    "——谁拥有何种访问权限（用于重新认证），以及对私有计划的限时紧急访问（会被记录和审计）。",
+  "p.access.title_ppm": "访问权限审查与紧急访问 — PPM",
+  "p.access.back": "← 安全",
+  "p.access.heading": "访问权限审查与紧急访问",
+  "p.access.intro":
+    "访问权限审查列出被记录为已授予的访问权限，用于重新认证。紧急访问在别无他法时，限时向您开放一个私有计划；每次使用都会被记录和审计。",
+  "p.access.review_heading": "访问权限审查",
+  "p.access.review_intro":
+    "访问台账中记录为已授予且此后未被撤销的访问权限，最早的在前，并注明由谁、何时授予。它显示的是人们记录的内容，而非登录服务实际执行的内容：请对比两者。仅限管理员；每次读取都会记入审计日志，因此只在您要求时才读取审查。",
+  "p.access.f_review_plan": "计划标识（留空则包括您能读取的所有计划）",
+  "p.access.f_review_days": "超过此日历天数即需审查",
+  "p.access.show_review": "显示审查",
+  "p.access.problem_review_plan":
+    "这不是计划标识：请粘贴计划的标识，或留空以包括所有计划。",
+  "p.access.problem_review_days": "请以整数填写日历天数，0 或以上。",
+  "p.access.could_not_load_review": "无法加载访问权限审查。",
+  "p.access.review_totals":
+    "截至 {as_of}。现存授权：{standing}。需审查（已满 {days} 个日历日）：{due}。",
+  "p.access.review_note":
+    "时长按日历日计算，从授权被记录之日起到本部署的今天为止。",
+  "p.access.download_review":
+    "将审查下载为电子表格，其中有一列供您填写保留或撤销的决定",
+  "p.access.review_caption": "当前现存的访问权限，最早的在前",
+  "p.access.review_empty": "在您能读取的计划中，没有现存的已记录授权。",
+  "p.access.col_person": "人员",
+  "p.access.col_access": "访问权限",
+  "p.access.col_plan": "计划名称",
+  "p.access.col_granted_on": "授予日期",
+  "p.access.col_granted_by": "授予人",
+  "p.access.col_age": "时长（日历日）",
+  "p.access.col_review": "审查",
+  "p.access.col_note": "备注",
+  "p.access.due": "需审查",
+  "p.access.not_due": "尚未到期",
+  "p.access.plan_unnamed": "计划 {id}…（名称未显示）",
+  "p.access.bg_heading": "对私有计划的紧急访问（破窗）",
+  "p.access.bg_audited_heading": "每次使用紧急访问都会被记录和审计。",
+  "p.access.bg_audited_open":
+    "打开计划时，审计日志会记录您是谁、哪个计划、您的理由、时长以及您指定的人员。",
+  "p.access.bg_audited_told":
+    "您指定的人员会立即收到通知。如果无法通知此人，计划将不会被打开。",
+  "p.access.bg_audited_each":
+    "仅因此访问而被放行的每个请求，都会作为紧急访问记入审计日志。",
+  "p.access.bg_audited_visibility":
+    "它让您能看到该计划。您可以更改什么，仍由您自己的权限决定。",
+  "p.access.bg_audited_ends":
+    "它会在显示的时间自动结束，若您提前结束则更早。每天最多五次，每个计划同时只能有一个。",
+  "p.access.bg_intro":
+    "仅在无法联系计划成员且工作无法等待时使用。需要破窗资格或管理员权限；由服务决定。",
+  "p.access.problems_heading": "计划未被打开：",
+  "p.access.problem_plan": "请填写私有计划的标识。",
+  "p.access.problem_reason_short":
+    "请说明您为何需要访问，至少 {reason_min} 个字符。",
+  "p.access.problem_reason_long": "理由超过 {reason_max} 个字符。",
+  "p.access.problem_minutes":
+    "请以整数分钟填写时长，从 {minutes_min} 到 {minutes_max}。",
+  "p.access.problem_notify":
+    "请以 ‘person:’ 或 ‘worker:’ 加其标识的形式填写要通知的人员，不要包含其他内容。",
+  "p.access.problem_acknowledged":
+    "请勾选此框，表示您理解此操作会被记录和审计，且该人员会收到通知。",
+  "p.access.could_not_open": "无法打开计划。",
+  "p.access.opened_notice":
+    "该计划向您开放至 {until}（您的时区：{tz}）。已通知 {person}。",
+  "p.access.go_to_plan": "前往计划",
+  "p.access.f_plan": "私有计划的标识",
+  "p.access.f_reason": "您为何需要访问（必填，至少 {min} 个字符）",
+  "p.access.reason_count": "{n} 个字符；至少 {min} 个，至多 {max} 个。",
+  "p.access.f_minutes": "时长，以分钟计（{min} 至 {max}）",
+  "p.access.f_notify":
+    "要通知的人员：‘person:’ 或 ‘worker:’ 加其标识（不能是您自己）",
+  "p.access.f_acknowledge":
+    "我理解此操作会被记录和审计，且我指定的人员会收到通知。",
+  "p.access.open": "以紧急访问打开计划",
+  "p.access.grants_heading": "紧急访问授权",
+  "p.access.grants_intro":
+    "您自己的，最新的在前；管理员可看到所有人的。授权永不删除。时间以您的时区 {tz} 显示。",
+  "p.access.grants_caption": "紧急访问授权，最新的在前",
+  "p.access.grants_empty": "尚未开启任何紧急访问。",
+  "p.access.loading": "正在加载…",
+  "p.access.could_not_load_grants": "无法加载紧急访问授权。",
+  "p.access.could_not_revoke": "无法结束紧急访问。",
+  "p.access.revoked_notice": "对 {plan} 的紧急访问已结束。",
+  "p.access.revoke": "立即结束",
+  "p.access.revoke_for": "立即结束：对 {plan} 的紧急访问",
+  "p.access.state_live": "生效中",
+  "p.access.state_revoked": "已提前结束",
+  "p.access.state_expired": "已到期",
+  "p.access.ended_by": "{when}，由 {who} 结束",
+  "p.access.col_state": "状态",
+  "p.access.col_holder": "持有人",
+  "p.access.col_opened": "开启时间",
+  "p.access.col_ends": "结束时间",
+  "p.access.col_reason": "所给理由",
+  "p.access.col_told": "已通知人员",
+  "p.access.col_act": "操作",
+  "p.access.refused_sign_in": "请先登录。",
+  "p.access.refused_review_forbidden": "访问权限审查仅限管理员。",
+  "p.access.refused_review_invalid": "服务未接受该计划或天数。",
+  "p.access.refused_open_forbidden":
+    "您不能使用紧急访问：需要破窗资格或管理员权限。",
+  "p.access.refused_open_not_found": "没有该标识的计划。",
+  "p.access.refused_open_conflict":
+    "您已拥有对该计划的紧急访问；下方列表已重新读取。",
+  "p.access.refused_open_invalid":
+    "计划未被打开。可能是它并非私有（无需打开），或要通知的人员是您自己，或无法通知该人员。未授予任何访问。",
+  "p.access.refused_open_limit":
+    "您已达到一天内允许开启的紧急访问上限（五次，按过去 24 小时计算）。",
+  "p.access.refused_revoke_not_found": "未找到该授权，或您无权结束它。",
 };

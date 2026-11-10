@@ -492,6 +492,40 @@ describe("PpmClient timesheet paths (NC-1 slice 6, LT-11)", () => {
   });
 });
 
+describe("PpmClient access review and break-glass paths (NC-1 slice 7, RG-9, RG-10)", () => {
+  it("reads the review and its spreadsheet, lists, opens and ends a grant", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.accessReview();
+    await ppm.accessReview({
+      plan: "11111111-1111-4111-8111-111111111111",
+      older_than_days: 0,
+    });
+    await ppm.breakGlassGrants();
+    await ppm.openBreakGlass({
+      plan_pid: "11111111-1111-4111-8111-111111111111",
+      reason: "Incident 4412: the plan owner is unreachable",
+      minutes: 30,
+      notify_ref: "person:6f1c2a3b-0000-4000-8000-00000000000e",
+    });
+    await ppm.revokeBreakGlass("g1");
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/access-review",
+      "GET /api/access-review?plan=11111111-1111-4111-8111-111111111111&older_than_days=0",
+      "GET /api/break-glass",
+      "POST /api/break-glass",
+      "POST /api/break-glass/g1/revoke",
+    ]);
+    expect(ppm.accessReviewCsvUrl({ older_than_days: 90 })).toMatch(
+      /\/api\/access-review\?older_than_days=90&format=csv$/,
+    );
+    expect(ppm.accessReviewCsvUrl()).toMatch(
+      /\/api\/access-review\?format=csv$/,
+    );
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

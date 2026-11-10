@@ -5627,4 +5627,125 @@ export const PAGES_FR: Record<PageKey, string> = {
     "La semaine n'a pas été envoyée : aucun temps n'y est saisi.",
   "p.timesheet.refused_decide_invalid":
     "Le service n'a pas accepté la décision : renvoyer une semaine exige une raison.",
+  "p.security.access_link": "Revue des accès et accès d'urgence",
+  "p.security.access_note":
+    "— qui détient quel accès, pour la recertification, et l'accès d'urgence limité dans le temps à un plan privé, qui est enregistré et audité.",
+  "p.access.title_ppm": "Revue des accès et accès d'urgence — PPM",
+  "p.access.back": "← Sécurité",
+  "p.access.heading": "Revue des accès et accès d'urgence",
+  "p.access.intro":
+    "La revue des accès liste les accès enregistrés comme accordés, pour la recertification. L'accès d'urgence vous ouvre un plan privé pour une durée limitée quand il n'y a pas d'autre moyen ; chaque utilisation est enregistrée et auditée.",
+  "p.access.review_heading": "Revue des accès",
+  "p.access.review_intro":
+    "Les accès enregistrés comme accordés dans le registre des accès et non révoqués depuis, les plus anciens d'abord, avec qui les a accordés et quand. Elle montre ce qui a été enregistré, pas ce que le service de connexion applique : comparez les deux. Réservé aux administrateurs ; chaque lecture est enregistrée dans la piste d'audit, la revue n'est donc lue que lorsque vous la demandez.",
+  "p.access.f_review_plan":
+    "Identifiant du plan (laissez vide pour tous les plans que vous pouvez lire)",
+  "p.access.f_review_days": "À revoir après ce nombre de jours calendaires",
+  "p.access.show_review": "Afficher la revue",
+  "p.access.problem_review_plan":
+    "Ce n'est pas un identifiant de plan : collez l'identifiant du plan, ou laissez la case vide pour tous les plans.",
+  "p.access.problem_review_days":
+    "Indiquez le nombre de jours calendaires par un nombre entier, 0 ou plus.",
+  "p.access.could_not_load_review": "Impossible de charger la revue des accès.",
+  "p.access.review_totals":
+    "Au {as_of}. Accès en vigueur : {standing}. À revoir, âgés de {days} jours calendaires ou plus : {due}.",
+  "p.access.review_note":
+    "L'ancienneté est comptée en jours calendaires du jour où l'accès a été enregistré jusqu'à aujourd'hui pour le déploiement.",
+  "p.access.download_review":
+    "Télécharger la revue sous forme de tableur, avec une colonne pour vos décisions de conserver ou révoquer",
+  "p.access.review_caption":
+    "Accès en vigueur aujourd'hui, les plus anciens d'abord",
+  "p.access.review_empty":
+    "Aucun accès enregistré comme accordé n'est en vigueur dans les plans que vous pouvez lire.",
+  "p.access.col_person": "Personne",
+  "p.access.col_access": "Accès",
+  "p.access.col_plan": "Nom du plan",
+  "p.access.col_granted_on": "Accordé le",
+  "p.access.col_granted_by": "Accordé par",
+  "p.access.col_age": "Ancienneté en jours calendaires",
+  "p.access.col_review": "Revue",
+  "p.access.col_note": "Remarque",
+  "p.access.due": "À revoir",
+  "p.access.not_due": "Pas encore à revoir",
+  "p.access.plan_unnamed": "Plan {id}… (nom non affiché)",
+  "p.access.bg_heading": "Accès d'urgence à un plan privé (bris de glace)",
+  "p.access.bg_audited_heading":
+    "Chaque utilisation de l'accès d'urgence est enregistrée et auditée.",
+  "p.access.bg_audited_open":
+    "Ouvrir un plan enregistre dans la piste d'audit qui vous êtes, le plan, votre raison, la durée et la personne que vous nommez.",
+  "p.access.bg_audited_told":
+    "La personne que vous nommez est prévenue immédiatement. Si elle ne peut pas l'être, le plan n'est pas ouvert.",
+  "p.access.bg_audited_each":
+    "Chaque requête que seul cet accès laisse passer est enregistrée dans la piste d'audit comme accès d'urgence.",
+  "p.access.bg_audited_visibility":
+    "Il vous permet de voir le plan. Ce que vous pouvez modifier reste décidé par vos propres droits.",
+  "p.access.bg_audited_ends":
+    "Il prend fin de lui-même à l'heure indiquée, ou plus tôt si vous y mettez fin. Cinq au plus par jour, et un à la fois par plan.",
+  "p.access.bg_intro":
+    "Ne l'utilisez que lorsque les membres du plan sont injoignables et que le travail ne peut pas attendre. Il faut l'habilitation bris de glace ou un accès administrateur ; le service décide.",
+  "p.access.problems_heading": "Le plan n'a pas été ouvert :",
+  "p.access.problem_plan": "Indiquez l'identifiant du plan privé.",
+  "p.access.problem_reason_short":
+    "Dites pourquoi vous avez besoin d'accès, en au moins {reason_min} caractères.",
+  "p.access.problem_reason_long": "La raison dépasse {reason_max} caractères.",
+  "p.access.problem_minutes":
+    "Indiquez la durée en minutes entières, de {minutes_min} à {minutes_max}.",
+  "p.access.problem_notify":
+    "Nommez la personne à prévenir sous la forme ‘person:’ ou ‘worker:’ suivi de son identifiant, sans rien d'autre.",
+  "p.access.problem_acknowledged":
+    "Cochez la case pour indiquer que vous comprenez que ceci est enregistré et audité et que la personne est prévenue.",
+  "p.access.could_not_open": "Impossible d'ouvrir le plan.",
+  "p.access.opened_notice":
+    "Le plan vous est ouvert jusqu'au {until} (votre fuseau horaire, {tz}). {person} a été prévenu.",
+  "p.access.go_to_plan": "Aller au plan",
+  "p.access.f_plan": "Identifiant du plan privé",
+  "p.access.f_reason":
+    "Pourquoi vous avez besoin d'accès (obligatoire, au moins {min} caractères)",
+  "p.access.reason_count": "{n} caractères ; au moins {min} et au plus {max}.",
+  "p.access.f_minutes": "Pour combien de temps, en minutes ({min} à {max})",
+  "p.access.f_notify":
+    "Personne à prévenir : ‘person:’ ou ‘worker:’ et son identifiant (pas vous)",
+  "p.access.f_acknowledge":
+    "Je comprends que ceci est enregistré et audité, et que la personne que je nomme sera prévenue.",
+  "p.access.open": "Ouvrir le plan en accès d'urgence",
+  "p.access.grants_heading": "Accès d'urgence accordés",
+  "p.access.grants_intro":
+    "Les vôtres, les plus récents d'abord ; un administrateur voit ceux de tout le monde. Un accès n'est jamais supprimé. Les heures sont dans votre fuseau horaire, {tz}.",
+  "p.access.grants_caption":
+    "Accès d'urgence accordés, les plus récents d'abord",
+  "p.access.grants_empty": "Aucun accès d'urgence n'a été ouvert.",
+  "p.access.loading": "Chargement…",
+  "p.access.could_not_load_grants":
+    "Impossible de charger les accès d'urgence.",
+  "p.access.could_not_revoke": "Impossible de mettre fin à l'accès d'urgence.",
+  "p.access.revoked_notice": "L'accès d'urgence à {plan} a pris fin.",
+  "p.access.revoke": "Terminer maintenant",
+  "p.access.revoke_for": "Terminer maintenant : accès d'urgence à {plan}",
+  "p.access.state_live": "En vigueur",
+  "p.access.state_revoked": "Terminé plus tôt",
+  "p.access.state_expired": "Expiré",
+  "p.access.ended_by": "{when}, terminé par {who}",
+  "p.access.col_state": "État",
+  "p.access.col_holder": "Détenu par",
+  "p.access.col_opened": "Ouvert",
+  "p.access.col_ends": "Se termine ou s'est terminé",
+  "p.access.col_reason": "Raison donnée",
+  "p.access.col_told": "Personne prévenue",
+  "p.access.col_act": "Agir",
+  "p.access.refused_sign_in": "Connectez-vous d'abord.",
+  "p.access.refused_review_forbidden":
+    "La revue des accès est réservée aux administrateurs.",
+  "p.access.refused_review_invalid":
+    "Le service n'a pas accepté le plan ou le nombre de jours.",
+  "p.access.refused_open_forbidden":
+    "Vous ne pouvez pas utiliser l'accès d'urgence : il faut l'habilitation bris de glace ou un accès administrateur.",
+  "p.access.refused_open_not_found": "Aucun plan ne porte cet identifiant.",
+  "p.access.refused_open_conflict":
+    "Vous avez déjà un accès d'urgence à ce plan ; la liste ci-dessous a été relue.",
+  "p.access.refused_open_invalid":
+    "Le plan n'a pas été ouvert. Soit il n'est pas privé, il n'y a donc rien à ouvrir, soit la personne à prévenir est vous, soit cette personne ne peut pas être prévenue. Aucun accès n'a été accordé.",
+  "p.access.refused_open_limit":
+    "Vous avez ouvert le maximum d'accès d'urgence autorisé en une journée (cinq, comptés sur les dernières 24 heures).",
+  "p.access.refused_revoke_not_found":
+    "Cet accès est introuvable, ou il ne vous revient pas d'y mettre fin.",
 };

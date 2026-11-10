@@ -1966,6 +1966,29 @@ came from grep.
   not yet moved (`fever`, `earned_value`, `capacity_heatmap`, `register`, `cutover`, `status_updates`). **Next batch, suggested:** the director pack's remaining section builders
   `fever`, `programme_gates`, `programme_profile`, `capacity_heatmap`, `cutover`, `status_updates`, `register`,
   `earned_value` and `insights` (about 411 lines).
+  **Progress 2026-11-10, batch 5 (not ticked).** The director pack's remaining section builders and organizations
+  moved: `fever` (26 lines naming SeaORM), `programme_gates` (51), `programme_profile` (22), `capacity_heatmap` (91),
+  `cutover` (69), `status_updates` (55), `register` (17), `earned_value` (73), `insights` (7) and `organizations` (18):
+  429 lines, now none; 101 files and 3,529 lines left (batch 4's measure). No caller changed: every function other
+  modules call (`programme_gates::status_map` and `gates_section`, `programme_profile::all`,
+  `organizations::audience_valid`, `earned_value::compute` and `subtree_ids`, `capacity_heatmap::heatmap`,
+  `register::guard`, `status_updates::remind_due` and `pack_section`, `insights::decision_entries`) already took the
+  context and none of their callers holds a sqlx transaction to join. Four writes and their audit rows now share one
+  transaction; before, each was its own statement on the pool, so a failed audit row left the write in place:
+  `PUT /api/plans/{pid}/project-buffer` (`fever`), `PUT /api/plans/{pid}/planned-gates/{gate}` and
+  `POST /api/plans/{pid}/programme-status` (`programme_gates`), and `PUT /api/capacity-commitments`
+  (`capacity_heatmap`). New shared piece: `AuditModel::record_or_log_on`, the sqlx twin of `record_or_log`
+  (`register::guard`'s warning); the census of `record_or_log` callers now counts both names, so a call moved to the
+  twin is still held to the list. **Found, not changed:** those four audit failures and the skill-pool writes' map to
+  a plain 500 (`Error::string`) rather than `audit_failed`; `PUT /api/plans/{pid}/reporting-method` with the method
+  it already has drops its transaction uncommitted, so it writes nothing (and on a programme with no profile row
+  creates none), as before. **Still on SeaORM through other modules**, on the pool and outside these handlers'
+  transactions: `governance::find_item`, `plan_access` (`readable_plans`, `HiddenScope`), `workflow::in_force`,
+  `cpm::load_network`, `buffer_management::project_reading`, `availability::all_ranges` and
+  `models::visibility::all_dependencies` (`insights` still hands it `&ctx.db`). **Next batch, suggested:** the
+  capacity and critical-chain controllers `start_control`, `drum`, `buffer_management`, `availability`,
+  `portfolio_resources`, `ccpm_estimates`, `hammock`, `cpm`, `plan_roles` and `raci` (about 360 lines; this batch's
+  files call four of them).
 
 ## Correctness carried forward (CF-n)
 

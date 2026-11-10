@@ -12,13 +12,8 @@ use axum::http::StatusCode;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::db_err;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{
-    budget_lines, capacity_commitments, delivery_confidence_assessments as assessments,
-    milestone_signoff_requirements, milestones, plan_dependencies, plans, programme_profiles,
-    risks, schedule_baselines,
-};
+use crate::models::_entities::plans;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::register_completeness::{self as rules, Assessment, Facts};
 
@@ -55,11 +50,7 @@ pub(crate) async fn assess_programmes(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
 ) -> Result<Vec<(plans::Model, Assessment)>> {
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all = live_plans(ctx).await?;
     let mut programmes: Vec<&plans::Model> = all
         .iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
@@ -83,60 +74,56 @@ pub(crate) async fn assess_programmes(
         None
     };
 
-    let lines = budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let risk_rows = risks::Entity::find().all(&ctx.db).await.map_err(db_err)?;
-    let assessed: HashSet<Uuid> = assessments::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|a| a.plan_pid)
-        .collect();
-    let baselined: HashSet<Uuid> = schedule_baselines::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|b| b.plan_pid)
-        .collect();
-    let deps = plan_dependencies::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let commitments: Vec<(Uuid, bool)> = capacity_commitments::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|c| (c.plan_pid, c.organization_pid.is_some()))
-        .collect();
-    let required_ms: HashSet<Uuid> = milestone_signoff_requirements::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| r.milestone_pid)
-        .collect();
-    let ms_plan: Vec<Uuid> = milestones::Entity::find()
-        .filter(milestones::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|m| required_ms.contains(&m.pid))
-        .map(|m| m.plan_pid)
-        .collect();
-    let models: HashMap<Uuid, Option<String>> = programme_profiles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.plan_pid, p.delivery_model))
-        .collect();
+    let db = crate::db::pool(ctx);
+    let lines: Vec<Line> = sqlx::query_as(
+        "SELECT plan_pid, funding_source_pid FROM budget_lines WHERE deleted_at IS NULL",
+    )
+    .fetch_all(db)
+    .await?;
+    let risk_rows: Vec<Uuid> = sqlx::query_scalar("SELECT plan_pid FROM risks")
+        .fetch_all(db)
+        .await?;
+    let assessed: HashSet<Uuid> =
+        sqlx::query_scalar::<_, Uuid>("SELECT plan_pid FROM delivery_confidence_assessments")
+            .fetch_all(db)
+            .await?
+            .into_iter()
+            .collect();
+    let baselined: HashSet<Uuid> =
+        sqlx::query_scalar::<_, Uuid>("SELECT plan_pid FROM schedule_baselines")
+            .fetch_all(db)
+            .await?
+            .into_iter()
+            .collect();
+    let deps: Vec<(Uuid, Uuid)> =
+        sqlx::query_as("SELECT predecessor_pid, successor_pid FROM plan_dependencies")
+            .fetch_all(db)
+            .await?;
+    let commitments: Vec<(Uuid, bool)> =
+        sqlx::query_as("SELECT plan_pid, organization_pid IS NOT NULL FROM capacity_commitments")
+            .fetch_all(db)
+            .await?;
+    let required_ms: HashSet<Uuid> =
+        sqlx::query_scalar::<_, Uuid>("SELECT milestone_pid FROM milestone_signoff_requirements")
+            .fetch_all(db)
+            .await?
+            .into_iter()
+            .collect();
+    let ms_plan: Vec<Uuid> = sqlx::query_as::<_, (Uuid, Uuid)>(
+        "SELECT pid, plan_pid FROM milestones WHERE deleted_at IS NULL",
+    )
+    .fetch_all(db)
+    .await?
+    .into_iter()
+    .filter(|(pid, _)| required_ms.contains(pid))
+    .map(|(_, plan)| plan)
+    .collect();
+    let models: HashMap<Uuid, Option<String>> =
+        sqlx::query_as("SELECT plan_pid, delivery_model FROM programme_profiles")
+            .fetch_all(db)
+            .await?
+            .into_iter()
+            .collect();
 
     let mut acc: HashMap<Uuid, Acc> = HashMap::new();
     let mut tally = |plan: Uuid, f: &mut dyn FnMut(&mut Acc)| {
@@ -151,11 +138,11 @@ pub(crate) async fn assess_programmes(
         });
     }
     for r in &risk_rows {
-        tally(r.plan_pid, &mut |a| a.risk = true);
+        tally(*r, &mut |a| a.risk = true);
     }
-    for d in &deps {
-        tally(d.predecessor_pid, &mut |a| a.dep = true);
-        tally(d.successor_pid, &mut |a| a.dep = true);
+    for (predecessor, successor) in &deps {
+        tally(*predecessor, &mut |a| a.dep = true);
+        tally(*successor, &mut |a| a.dep = true);
     }
     for (plan, named) in &commitments {
         if *named {
@@ -204,6 +191,24 @@ pub(crate) async fn assess_programmes(
         .collect())
 }
 
+/// A live budget line: its plan and its funding source, if any.
+#[derive(sqlx::FromRow)]
+struct Line {
+    /// The plan the line is on.
+    plan_pid: Uuid,
+    /// Its funding source; none is unfunded.
+    funding_source_pid: Option<Uuid>,
+}
+
+/// Every plan that is not deleted, in no particular order.
+async fn live_plans(ctx: &AppContext) -> Result<Vec<plans::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
 /// One programme's completeness as JSON: the score as a percentage (stored in basis points, so divided by 100) plus the present, applicable, missing and not-applicable fields.
 fn row(p: &plans::Model, a: &Assessment) -> Value {
     json!({
@@ -235,14 +240,9 @@ pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>) -> R
 /// `GET /api/register-completeness` — every programme you can read, with what is missing.
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     let rows = assess_programmes(&ctx, &readable).await?;
     format::json(json!({
@@ -266,11 +266,7 @@ pub(crate) async fn guard(
     plan: Uuid,
     action: &str,
 ) -> Result<()> {
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all = live_plans(ctx).await?;
     let by: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
     let mut cur = Some(plan);
     let mut prog = None;
@@ -304,8 +300,8 @@ pub(crate) async fn guard(
             ),
         ));
     }
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record_or_log_on(
+        crate::db::pool(ctx),
         p.pid,
         "register_incomplete_warning",
         caller.actor(),

@@ -126,6 +126,22 @@ impl Model {
         }
     }
 
+    /// [`Self::record_or_log`] on sqlx: the pool ([`crate::db::pool`]) or a transaction ([`crate::db::Tx::conn`]).
+    pub async fn record_or_log_on<'e, E: sqlx::Executor<'e, Database = sqlx::Postgres>>(
+        db: E,
+        entity_pid: Uuid,
+        action: &str,
+        actor: Option<&str>,
+        snapshot: Option<serde_json::Value>,
+    ) {
+        if let Err(error) = Self::record_on(db, entity_pid, action, actor, snapshot).await {
+            crate::metrics::Metrics::global()
+                .audit_write_failed_total
+                .inc();
+            tracing::error!(%entity_pid, action, %error, "audit row not written");
+        }
+    }
+
     /// Most-recent audit entries, capped at `limit`.
     ///
     /// # Errors
@@ -216,7 +232,9 @@ mod tests {
                 .to_string_lossy()
                 .to_string();
             let text = std::fs::read_to_string(&path).expect("read file");
-            let found = text.matches("record_or_log(").count();
+            // The sqlx twin counts too, so moving a call to it cannot slip past this list.
+            let found =
+                text.matches("record_or_log(").count() + text.matches("record_or_log_on(").count();
             let allowed = KNOWN
                 .iter()
                 .find(|(f, _)| *f == name)

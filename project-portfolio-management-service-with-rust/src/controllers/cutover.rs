@@ -16,12 +16,10 @@ use super::conflict;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cutover as rules;
@@ -62,13 +60,13 @@ pub fn routes() -> Routes {
 async fn load(ctx: &AppContext, pid: &str, did: &str) -> Result<(plans::Model, decisions::Model)> {
     let plan = super::governance::find_item(ctx, pid).await?;
     let did = super::parse_pid(did)?;
-    let d = decisions::Entity::find()
-        .filter(decisions::Column::Pid.eq(did))
-        .filter(decisions::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let d: decisions::Model =
+        sqlx::query_as("SELECT * FROM cutover_decisions WHERE pid = $1 AND plan_pid = $2 LIMIT 1")
+            .bind(did)
+            .bind(plan.pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     Ok((plan, d))
 }
 
@@ -77,18 +75,16 @@ async fn parts(
     ctx: &AppContext,
     d: &decisions::Model,
 ) -> Result<(Vec<criteria::Model>, Vec<cosigs::Model>)> {
-    let c = criteria::Entity::find()
-        .filter(criteria::Column::DecisionPid.eq(d.pid))
-        .order_by_asc(criteria::Column::Position)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let s = cosigs::Entity::find()
-        .filter(cosigs::Column::DecisionPid.eq(d.pid))
-        .order_by_asc(cosigs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let c: Vec<criteria::Model> =
+        sqlx::query_as("SELECT * FROM cutover_criteria WHERE decision_pid = $1 ORDER BY position")
+            .bind(d.pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let s: Vec<cosigs::Model> =
+        sqlx::query_as("SELECT * FROM cutover_cosignatures WHERE decision_pid = $1 ORDER BY id")
+            .bind(d.pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     Ok((c, s))
 }
 
@@ -123,19 +119,22 @@ fn clean(list: &[String]) -> Result<Vec<String>> {
     Ok(items)
 }
 
-/// Inserts the criteria with 1-based positions in the given order. Generic over the connection so it can run inside the caller's transaction.
-async fn put_criteria<C: ConnectionTrait>(db: &C, decision: Uuid, items: &[String]) -> Result<()> {
+/// Inserts the criteria with 1-based positions in the given order, in the caller's transaction (or on the pool).
+async fn put_criteria(
+    db: &mut impl crate::db::Session,
+    decision: Uuid,
+    items: &[String],
+) -> Result<()> {
     for (i, text) in items.iter().enumerate() {
-        criteria::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            decision_pid: ActiveValue::set(decision),
-            position: ActiveValue::set(i32::try_from(i + 1).unwrap_or(i32::MAX)),
-            criterion: ActiveValue::set(text.clone()),
-            ..Default::default()
-        }
-        .insert(db)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO cutover_criteria (pid, decision_pid, position, criterion) VALUES ($1, $2, $3, $4)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(decision)
+        .bind(i32::try_from(i + 1).unwrap_or(i32::MAX))
+        .bind(text)
+        .execute(db.ex())
+        .await?;
     }
     Ok(())
 }
@@ -162,27 +161,29 @@ async fn create(
         return Err(unprocessable("title is 3 to 200 characters"));
     }
     let items = clean(&b.criteria)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let d = decisions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        title: ActiveValue::set(b.title.trim().to_string()),
-        version: ActiveValue::set(1),
-        status: ActiveValue::set("draft".to_string()),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let d: decisions::Model = sqlx::query_as(
+        "INSERT INTO cutover_decisions (pid, plan_pid, title, version, status)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(b.title.trim())
+    .bind(1_i32)
+    .bind("draft")
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| {
         if e.to_string().contains("cd_version") {
             conflict("a decision with that title exists for this plan: make a new version of it")
         } else {
-            db_err(e)
+            e.into()
         }
     })?;
-    put_criteria(&txn, d.pid, &items).await?;
-    AuditModel::record(
-        &txn,
+    put_criteria(&mut tx, d.pid, &items).await?;
+    AuditModel::record_on(
+        tx.conn(),
         d.pid,
         "cutover_decision_drafted",
         caller.actor(),
@@ -190,7 +191,7 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -199,12 +200,11 @@ async fn create(
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = decisions::Entity::find()
-        .filter(decisions::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(decisions::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<decisions::Model> =
+        sqlx::query_as("SELECT * FROM cutover_decisions WHERE plan_pid = $1 ORDER BY id DESC")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut out = Vec::new();
     for d in &rows {
         let (c, s) = parts(&ctx, d).await?;
@@ -235,15 +235,14 @@ async fn replace_criteria(
         ));
     }
     let items = clean(&b.criteria)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    criteria::Entity::delete_many()
-        .filter(criteria::Column::DecisionPid.eq(d.pid))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    put_criteria(&txn, d.pid, &items).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM cutover_criteria WHERE decision_pid = $1")
+        .bind(d.pid)
+        .execute(tx.conn())
+        .await?;
+    put_criteria(&mut tx, d.pid, &items).await?;
+    AuditModel::record_on(
+        tx.conn(),
         d.pid,
         "cutover_criteria_edited",
         caller.actor(),
@@ -251,7 +250,7 @@ async fn replace_criteria(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -272,19 +271,23 @@ async fn advance(
         )));
     }
     let today = crate::tz::deployment_today();
-    let mut a: decisions::ActiveModel = d.into();
-    a.status = ActiveValue::set(to.to_string());
-    if to == "published" {
-        a.published_on = ActiveValue::set(Some(today));
+    // The date column is one of two literals, chosen by `to`.
+    let sql = if to == "published" {
+        "UPDATE cutover_decisions SET status = $1, published_on = $2 WHERE id = $3 RETURNING *"
     } else {
-        a.opened_on = ActiveValue::set(Some(today));
-    }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, action, caller.actor(), None)
+        "UPDATE cutover_decisions SET status = $1, opened_on = $2 WHERE id = $3 RETURNING *"
+    };
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: decisions::Model = sqlx::query_as(sql)
+        .bind(to)
+        .bind(Some(today))
+        .bind(d.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), row.pid, action, caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let (c, s) = parts(ctx, &row).await?;
     format::json(view(&row, &c, &s))
 }
@@ -353,22 +356,29 @@ async fn mark(
             "evidence of at least 5 characters is required",
         ));
     }
-    let c = criteria::Entity::find()
-        .filter(criteria::Column::DecisionPid.eq(d.pid))
-        .filter(criteria::Column::Position.eq(n))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let mut a: criteria::ActiveModel = c.into();
-    a.met = ActiveValue::set(Some(b.met));
-    a.evidence = ActiveValue::set(Some(b.evidence.trim().to_string()));
-    a.marked_by = ActiveValue::set(caller.actor().map(str::to_string));
-    a.marked_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let c: criteria::Model = sqlx::query_as(
+        "SELECT * FROM cutover_criteria WHERE decision_pid = $1 AND position = $2 LIMIT 1",
+    )
+    .bind(d.pid)
+    .bind(n)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "UPDATE cutover_criteria SET met = $1, evidence = $2, marked_by = $3, marked_on = $4
+         WHERE id = $5
+         RETURNING id",
+    )
+    .bind(Some(b.met))
+    .bind(Some(b.evidence.trim()))
+    .bind(caller.actor())
+    .bind(Some(crate::tz::deployment_today()))
+    .bind(c.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         d.pid,
         "cutover_criterion_marked",
         caller.actor(),
@@ -376,7 +386,7 @@ async fn mark(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -423,26 +433,27 @@ async fn cosign(
             ),
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    cosigs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        decision_pid: ActiveValue::set(d.pid),
-        role: ActiveValue::set(role.clone()),
-        signed_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        signed_on: ActiveValue::set(crate::tz::deployment_today()),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "INSERT INTO cutover_cosignatures (pid, decision_pid, role, signed_by, signed_on)
+         VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(d.pid)
+    .bind(&role)
+    .bind(caller.actor())
+    .bind(crate::tz::deployment_today())
+    .execute(tx.conn())
     .await
     .map_err(|e| {
         if e.to_string().contains("ccs_once") {
             conflict("that role has already co-signed")
         } else {
-            db_err(e)
+            e.into()
         }
     })?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         d.pid,
         "cutover_cosigned",
         caller.actor(),
@@ -450,7 +461,7 @@ async fn cosign(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let (c, s) = parts(&ctx, &d).await?;
     format::json(view(&d, &c, &s))
 }
@@ -502,16 +513,23 @@ async fn decide(
             )));
         }
     }
-    let mut a: decisions::ActiveModel = d.into();
-    a.status = ActiveValue::set("decided".to_string());
-    a.outcome = ActiveValue::set(Some(b.outcome.clone()));
-    a.decided_on = ActiveValue::set(Some(crate::tz::deployment_today()));
-    a.decided_by = ActiveValue::set(caller.actor().map(str::to_string));
-    a.decision_reason = ActiveValue::set(Some(b.reason.trim().to_string()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: decisions::Model = sqlx::query_as(
+        "UPDATE cutover_decisions
+         SET status = $1, outcome = $2, decided_on = $3, decided_by = $4, decision_reason = $5
+         WHERE id = $6
+         RETURNING *",
+    )
+    .bind("decided")
+    .bind(Some(&b.outcome))
+    .bind(Some(crate::tz::deployment_today()))
+    .bind(caller.actor())
+    .bind(Some(b.reason.trim()))
+    .bind(d.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "cutover_decided",
         caller.actor(),
@@ -519,7 +537,7 @@ async fn decide(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, &c, &s))
 }
 
@@ -540,41 +558,43 @@ async fn new_version(
     if d.outcome.as_deref() == Some("go") {
         return Err(conflict("a decision that went ahead is final"));
     }
-    let latest = decisions::Entity::find()
-        .filter(decisions::Column::PlanPid.eq(plan.pid))
-        .filter(sea_orm::sea_query::Expr::cust_with_values(
-            "lower(title) = lower($1)",
-            [d.title.clone()],
-        ))
-        .order_by_desc(decisions::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let latest: decisions::Model = sqlx::query_as(
+        "SELECT * FROM cutover_decisions WHERE plan_pid = $1 AND lower(title) = lower($2)
+         ORDER BY version DESC
+         LIMIT 1",
+    )
+    .bind(plan.pid)
+    .bind(&d.title)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if latest.pid != d.pid {
         return Err(conflict("there is already a newer version"));
     }
     let (old_c, _) = parts(&ctx, &d).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     if d.status != "decided" {
-        let mut a: decisions::ActiveModel = d.clone().into();
-        a.status = ActiveValue::set("superseded".to_string());
-        a.update(&txn).await.map_err(db_err)?;
+        sqlx::query("UPDATE cutover_decisions SET status = $1 WHERE id = $2 RETURNING id")
+            .bind("superseded")
+            .bind(d.id)
+            .fetch_one(tx.conn())
+            .await?;
     }
-    let nd = decisions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        title: ActiveValue::set(d.title.clone()),
-        version: ActiveValue::set(d.version + 1),
-        supersedes_pid: ActiveValue::set(Some(d.pid)),
-        status: ActiveValue::set("draft".to_string()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let nd: decisions::Model = sqlx::query_as(
+        "INSERT INTO cutover_decisions (pid, plan_pid, title, version, supersedes_pid, status)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(&d.title)
+    .bind(d.version + 1)
+    .bind(Some(d.pid))
+    .bind("draft")
+    .fetch_one(tx.conn())
+    .await?;
     put_criteria(
-        &txn,
+        &mut tx,
         nd.pid,
         &old_c
             .iter()
@@ -582,8 +602,8 @@ async fn new_version(
             .collect::<Vec<_>>(),
     )
     .await?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         nd.pid,
         "cutover_decision_new_version",
         caller.actor(),
@@ -591,7 +611,7 @@ async fn new_version(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let (c, s) = parts(&ctx, &nd).await?;
     format::json(view(&nd, &c, &s))
 }
@@ -607,28 +627,26 @@ pub(crate) async fn pack_section(
     include: &std::collections::HashSet<Uuid>,
     period: &str,
 ) -> Result<Value> {
-    let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|p| include.contains(&p.pid))
-        .map(|p| (p.pid, p.name))
-        .collect();
-    let rows: Vec<decisions::Model> = decisions::Entity::find()
-        .filter(decisions::Column::Status.eq("decided"))
-        .order_by_asc(decisions::Column::DecidedOn)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|d| {
-            names.contains_key(&d.plan_pid)
-                && d.decided_on
-                    .is_some_and(|x| x.format("%Y-%m").to_string() == period)
-        })
-        .collect();
+    let names: std::collections::HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .filter(|(pid, _)| include.contains(pid))
+            .collect();
+    let rows: Vec<decisions::Model> = sqlx::query_as::<_, decisions::Model>(
+        "SELECT * FROM cutover_decisions WHERE status = $1 ORDER BY decided_on",
+    )
+    .bind("decided")
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .filter(|d| {
+        names.contains_key(&d.plan_pid)
+            && d.decided_on
+                .is_some_and(|x| x.format("%Y-%m").to_string() == period)
+    })
+    .collect();
     let count = |o: &str| {
         rows.iter()
             .filter(|d| d.outcome.as_deref() == Some(o))

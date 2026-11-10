@@ -18,14 +18,12 @@
 //! **Currencies never merge.** One block per baseline currency; budget lines in a
 //! currency with no baseline are listed, not added in.
 
-use super::db_err;
 use axum::http::{StatusCode, header};
 use std::fmt::Write as _;
 
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::response::IntoResponse;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -33,49 +31,103 @@ use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::earned_value::{self as ev, DefaultMethod, Method, Period, TaskInput, TaskState};
 use crate::evm::{self, Thresholds};
-use crate::models::_entities::{
-    budget_baseline_periods, budget_baselines, budget_lines, earned_value_settings,
-    earned_value_snapshots, plans, tasks, time_entry_costs,
-};
+use crate::models::_entities::{budget_baselines, earned_value_snapshots, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The plan's configured default percent-complete method; falls back to zero/hundred when no live setting exists or the stored token is unrecognized.
 async fn default_method(ctx: &AppContext, plan: Uuid) -> Result<DefaultMethod> {
-    Ok(earned_value_settings::Entity::find()
-        .filter(earned_value_settings::Column::PlanPid.eq(plan))
-        .filter(earned_value_settings::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .and_then(|s| DefaultMethod::parse(&s.default_method))
+    Ok(setting_of(ctx, plan)
+        .await?
+        .and_then(|(_, m)| DefaultMethod::parse(&m))
         .unwrap_or(DefaultMethod::ZeroHundred))
+}
+
+/// The plan's live earned-value setting, as `(id, default method)`, if one exists.
+async fn setting_of(ctx: &AppContext, plan: Uuid) -> Result<Option<(i64, String)>> {
+    Ok(sqlx::query_as(
+        "SELECT id, default_method FROM earned_value_settings
+         WHERE plan_pid = $1 AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?)
+}
+
+/// What earned value reads of a task.
+#[derive(sqlx::FromRow)]
+struct TaskRow {
+    /// The task.
+    pid: Uuid,
+    /// Its story points.
+    points: Option<i32>,
+    /// Its workflow state.
+    status: String,
+    /// Its own percent-complete method, if any.
+    percent_method: Option<String>,
+    /// Its person-entered percent, if any.
+    percent_manual: Option<i32>,
+}
+
+/// A baseline's periods, in order (at most 5,000).
+async fn periods_of(ctx: &AppContext, baseline: Uuid) -> Result<Vec<Period>> {
+    Ok(
+        sqlx::query_as::<_, (chrono::NaiveDate, chrono::NaiveDate, i64)>(
+            "SELECT period_start, period_end, planned_minor FROM budget_baseline_periods
+         WHERE baseline_pid = $1
+         ORDER BY period_start
+         LIMIT $2",
+        )
+        .bind(baseline)
+        .bind(5_000_i64)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
+        .into_iter()
+        .map(|(start, end, planned_minor)| Period {
+            start,
+            end,
+            planned_minor,
+        })
+        .collect(),
+    )
+}
+
+/// A plan's budget baselines, newest version first.
+async fn baselines_of(ctx: &AppContext, plan: Uuid) -> Result<Vec<budget_baselines::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM budget_baselines WHERE plan_pid = $1 ORDER BY version DESC")
+            .bind(plan)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Builds earned-value inputs for every live task of a plan: points, workflow-derived state (done, started, or todo), and any per-task method and manual percent (converted to basis points).
 async fn task_inputs(ctx: &AppContext, plan: Uuid) -> Result<Vec<TaskInput>> {
     let workflow = super::workflow::in_force(ctx, plan, "task").await?;
-    Ok(tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .order_by_asc(tasks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|t| TaskInput {
-            pid: t.pid,
-            points: t.points,
-            state: match crate::workflow::category_of(&workflow, &t.status) {
-                Some(crate::workflow::Category::Done) => TaskState::Done,
-                Some(crate::workflow::Category::Active | crate::workflow::Category::Waiting) => {
-                    TaskState::Started
-                }
-                Some(crate::workflow::Category::Todo) | None => TaskState::Todo,
-            },
-            method: t.percent_method.as_deref().and_then(Method::parse),
-            manual_bp: t.percent_manual.map(|p| i64::from(p) * 100),
-        })
-        .collect())
+    Ok(sqlx::query_as::<_, TaskRow>(
+        "SELECT pid, points, status, percent_method, percent_manual FROM tasks
+         WHERE plan_pid = $1 AND deleted_at IS NULL
+         ORDER BY id",
+    )
+    .bind(plan)
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .map(|t| TaskInput {
+        pid: t.pid,
+        points: t.points,
+        state: match crate::workflow::category_of(&workflow, &t.status) {
+            Some(crate::workflow::Category::Done) => TaskState::Done,
+            Some(crate::workflow::Category::Active | crate::workflow::Category::Waiting) => {
+                TaskState::Started
+            }
+            Some(crate::workflow::Category::Todo) | None => TaskState::Todo,
+        },
+        method: t.percent_method.as_deref().and_then(Method::parse),
+        manual_bp: t.percent_manual.map(|p| i64::from(p) * 100),
+    })
+    .collect())
 }
 
 /// What the figures came to.
@@ -147,12 +199,7 @@ pub(crate) async fn compute_with(
     as_of: chrono::NaiveDate,
     source: AcSource,
 ) -> Result<Outcome> {
-    let baselines = budget_baselines::Entity::find()
-        .filter(budget_baselines::Column::PlanPid.eq(plan))
-        .order_by_desc(budget_baselines::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let baselines = baselines_of(ctx, plan).await?;
     if baselines.is_empty() {
         return Ok(Outcome::NoBaseline);
     }
@@ -167,45 +214,32 @@ pub(crate) async fn compute_with(
             seen.push(b);
         }
     }
-    let lines = budget_lines::Entity::find()
-        .filter(budget_lines::Column::PlanPid.eq(plan))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let labour_rows = if source == AcSource::BudgetLines {
+    // (currency, actual) of each live budget line, and (currency, cost) of each labour cost.
+    let lines: Vec<(String, i64)> = sqlx::query_as(
+        "SELECT currency, actual_minor FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(plan)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let labour_rows: Vec<(String, i64)> = if source == AcSource::BudgetLines {
         Vec::new()
     } else {
-        time_entry_costs::Entity::find()
-            .filter(time_entry_costs::Column::PlanPid.eq(plan))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        sqlx::query_as("SELECT currency, cost_minor FROM time_entry_costs WHERE plan_pid = $1")
+            .bind(plan)
+            .fetch_all(crate::db::pool(ctx))
+            .await?
     };
     let mut blocks = Vec::new();
     for b in seen {
-        let periods: Vec<Period> = budget_baseline_periods::Entity::find()
-            .filter(budget_baseline_periods::Column::BaselinePid.eq(b.pid))
-            .order_by_asc(budget_baseline_periods::Column::PeriodStart)
-            .limit(5_000)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|p| Period {
-                start: p.period_start,
-                end: p.period_end,
-                planned_minor: p.planned_minor,
-            })
-            .collect();
+        let periods = periods_of(ctx, b.pid).await?;
         let budget_ac = lines
             .iter()
-            .filter(|l| l.currency == b.currency)
-            .fold(0_i64, |a, l| a.saturating_add(l.actual_minor));
+            .filter(|(currency, _)| *currency == b.currency)
+            .fold(0_i64, |a, (_, actual)| a.saturating_add(*actual));
         let labour: Vec<i64> = labour_rows
             .iter()
-            .filter(|c| c.currency == b.currency)
-            .map(|c| c.cost_minor)
+            .filter(|(currency, _)| *currency == b.currency)
+            .map(|(_, cost)| *cost)
             .collect();
         let labour_ac = labour.iter().fold(0_i64, |a, c| a.saturating_add(*c));
         // No labour recorded in this currency is "no actuals" (null), never a zero.
@@ -220,7 +254,7 @@ pub(crate) async fn compute_with(
     }
     let mut unbaselined: Vec<String> = lines
         .iter()
-        .map(|l| l.currency.clone())
+        .map(|(currency, _)| currency.clone())
         .filter(|c| !blocks.iter().any(|(bc, _, _)| bc == c))
         .collect();
     unbaselined.sort();
@@ -334,35 +368,34 @@ async fn put_settings(
             "default_method must be zero_hundred, fifty_fifty or points",
         ));
     }
-    let existing = earned_value_settings::Entity::find()
-        .filter(earned_value_settings::Column::PlanPid.eq(plan.pid))
-        .filter(earned_value_settings::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let was = existing.as_ref().map(|e| e.default_method.clone());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let existing = setting_of(&ctx, plan.pid).await?;
+    let was = existing.as_ref().map(|(_, m)| m.clone());
+    let mut tx = crate::db::begin(&ctx).await?;
     match existing {
-        Some(row) => {
-            let mut a: earned_value_settings::ActiveModel = row.into();
-            a.default_method = ActiveValue::set(b.default_method.clone());
-            a.update(&txn).await.map_err(db_err)?;
+        Some((id, _)) => {
+            sqlx::query(
+                "UPDATE earned_value_settings SET default_method = $1 WHERE id = $2 RETURNING id",
+            )
+            .bind(&b.default_method)
+            .bind(id)
+            .fetch_one(tx.conn())
+            .await?;
         }
         None => {
-            earned_value_settings::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan.pid),
-                default_method: ActiveValue::set(b.default_method.clone()),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO earned_value_settings (pid, plan_pid, default_method, deleted_at)
+                 VALUES ($1, $2, $3, $4)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan.pid)
+            .bind(&b.default_method)
+            .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+            .execute(tx.conn())
+            .await?;
         }
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "earned_value_method_set",
         caller.actor(),
@@ -370,7 +403,7 @@ async fn put_settings(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "plan_pid": plan.pid, "default_method": b.default_method }))
 }
 
@@ -388,6 +421,21 @@ pub(crate) struct PercentBody {
     note: Option<String>,
 }
 
+/// A task's percent-complete override, as `put_percent` reads and writes it.
+#[derive(sqlx::FromRow)]
+struct Override {
+    /// The task's row id.
+    id: i32,
+    /// The task.
+    pid: Uuid,
+    /// Its own method, if any.
+    percent_method: Option<String>,
+    /// Its person-entered percent, if any.
+    percent_manual: Option<i32>,
+    /// Why, with a manual percent.
+    percent_note: Option<String>,
+}
+
 /// `PUT /api/plans/{pid}/tasks/{t_pid}/percent-complete` — count this task another way.
 #[debug_handler]
 async fn put_percent(
@@ -398,14 +446,16 @@ async fn put_percent(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let t_pid = super::parse_pid(&t_pid)?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(t_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task: Override = sqlx::query_as(
+        "SELECT id, pid, percent_method, percent_manual, percent_note FROM tasks
+         WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(t_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     let method =
         match b.method.as_deref() {
             None => None,
@@ -437,14 +487,20 @@ async fn put_percent(
         (None, None)
     };
     let was = (task.percent_method.clone(), task.percent_manual);
-    let mut a: tasks::ActiveModel = task.into();
-    a.percent_method = ActiveValue::set(b.method.clone());
-    a.percent_manual = ActiveValue::set(manual);
-    a.percent_note = ActiveValue::set(note.clone());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: Override = sqlx::query_as(
+        "UPDATE tasks SET percent_method = $1, percent_manual = $2, percent_note = $3
+         WHERE id = $4
+         RETURNING id, pid, percent_method, percent_manual, percent_note",
+    )
+    .bind(&b.method)
+    .bind(manual)
+    .bind(&note)
+    .bind(task.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "percent_complete_method_set",
         caller.actor(),
@@ -455,7 +511,7 @@ async fn put_percent(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "task_pid": row.pid, "method": row.percent_method,
         "percent": row.percent_manual, "note": row.percent_note }),
@@ -566,35 +622,28 @@ pub(crate) async fn snapshot_plan(ctx: &AppContext, plan: Uuid) -> Result<usize>
     // unique-index error: the second replaces the first (CQ-11).
     let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
     for (currency, version, b) in &blocks {
-        use earned_value_snapshots::Column as C;
-        earned_value_snapshots::Entity::insert(earned_value_snapshots::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan),
-            currency: ActiveValue::set(currency.clone()),
-            as_of: ActiveValue::set(today),
-            baseline_version: ActiveValue::set(*version),
-            bac_minor: ActiveValue::set(b.bac_minor),
-            pv_minor: ActiveValue::set(b.pv_minor),
-            ev_minor: ActiveValue::set(b.ev_minor),
-            ac_minor: ActiveValue::set(b.ac_minor),
-            updated_at: ActiveValue::set(now),
-            ..Default::default()
-        })
-        .on_conflict(
-            sea_orm::sea_query::OnConflict::columns([C::PlanPid, C::Currency, C::AsOf])
-                .update_columns([
-                    C::BaselineVersion,
-                    C::BacMinor,
-                    C::PvMinor,
-                    C::EvMinor,
-                    C::AcMinor,
-                    C::UpdatedAt,
-                ])
-                .to_owned(),
+        sqlx::query(
+            "INSERT INTO earned_value_snapshots
+                 (pid, plan_pid, currency, as_of, baseline_version, bac_minor, pv_minor, ev_minor, ac_minor,
+                  updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             ON CONFLICT (plan_pid, currency, as_of) DO UPDATE SET
+                 baseline_version = EXCLUDED.baseline_version, bac_minor = EXCLUDED.bac_minor,
+                 pv_minor = EXCLUDED.pv_minor, ev_minor = EXCLUDED.ev_minor, ac_minor = EXCLUDED.ac_minor,
+                 updated_at = EXCLUDED.updated_at",
         )
-        .exec(&ctx.db)
-        .await
-        .map_err(db_err)?;
+        .bind(Uuid::new_v4())
+        .bind(plan)
+        .bind(currency)
+        .bind(today)
+        .bind(*version)
+        .bind(b.bac_minor)
+        .bind(b.pv_minor)
+        .bind(b.ev_minor)
+        .bind(b.ac_minor)
+        .bind(now)
+        .execute(crate::db::pool(ctx))
+        .await?;
     }
     Ok(blocks.len())
 }
@@ -607,21 +656,20 @@ pub(crate) async fn snapshot_plan(ctx: &AppContext, plan: Uuid) -> Result<usize>
 /// Propagates database errors from finding the plans.
 pub async fn snapshot_all(ctx: &AppContext) -> Result<usize> {
     let today = crate::tz::deployment_today();
-    let with_baseline: std::collections::BTreeSet<Uuid> = budget_baselines::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|b| b.plan_pid)
-        .collect();
-    let done: std::collections::BTreeSet<Uuid> = earned_value_snapshots::Entity::find()
-        .filter(earned_value_snapshots::Column::AsOf.eq(today))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|s| s.plan_pid)
-        .collect();
+    let with_baseline: std::collections::BTreeSet<Uuid> =
+        sqlx::query_scalar::<_, Uuid>("SELECT plan_pid FROM budget_baselines")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
+    let done: std::collections::BTreeSet<Uuid> = sqlx::query_scalar::<_, Uuid>(
+        "SELECT plan_pid FROM earned_value_snapshots WHERE as_of = $1",
+    )
+    .bind(today)
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .collect();
     let mut n = 0;
     for plan in with_baseline.difference(&done) {
         n += snapshot_plan(ctx, *plan).await.unwrap_or(0);
@@ -647,7 +695,6 @@ pub(crate) struct SeriesParams {
     format: Option<String>,
 }
 
-#[expect(clippy::too_many_lines)]
 /// `GET /api/plans/{pid}/earned-value/series[?format=csv]` — the S-curve data: the
 /// planned-value curve from the baseline (complete), and earned value and actual
 /// cost on the days they were **recorded** (never filled in between).
@@ -658,18 +705,12 @@ async fn series(
     Query(p): Query<SeriesParams>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let baselines = budget_baselines::Entity::find()
-        .filter(budget_baselines::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(budget_baselines::Column::Version)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let snaps = earned_value_snapshots::Entity::find()
-        .filter(earned_value_snapshots::Column::PlanPid.eq(plan.pid))
-        .order_by_asc(earned_value_snapshots::Column::AsOf)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let baselines = baselines_of(&ctx, plan.pid).await?;
+    let snaps: Vec<earned_value_snapshots::Model> =
+        sqlx::query_as("SELECT * FROM earned_value_snapshots WHERE plan_pid = $1 ORDER BY as_of")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut seen: Vec<&budget_baselines::Model> = Vec::new();
     for b in &baselines {
         if !seen.iter().any(|s| s.currency == b.currency) {
@@ -678,20 +719,7 @@ async fn series(
     }
     let mut curves = Vec::new();
     for b in seen {
-        let periods: Vec<Period> = budget_baseline_periods::Entity::find()
-            .filter(budget_baseline_periods::Column::BaselinePid.eq(b.pid))
-            .order_by_asc(budget_baseline_periods::Column::PeriodStart)
-            .limit(5_000)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|r| Period {
-                start: r.period_start,
-                end: r.period_end,
-                planned_minor: r.planned_minor,
-            })
-            .collect();
+        let periods = periods_of(&ctx, b.pid).await?;
         let Some(start) = ev::baseline_start(&periods) else {
             continue;
         };
@@ -775,16 +803,15 @@ async fn descendants(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid>> {
         if frontier.is_empty() || all.len() >= 500 {
             break;
         }
-        let kids: Vec<Uuid> = plans::Entity::find()
-            .filter(plans::Column::ParentPid.is_in(frontier.clone()))
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|p| p.pid)
-            .filter(|p| !all.contains(p))
-            .collect();
+        let kids: Vec<Uuid> = sqlx::query_scalar::<_, Uuid>(
+            "SELECT pid FROM plans WHERE parent_pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(&frontier)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
+        .into_iter()
+        .filter(|p| !all.contains(p))
+        .collect();
         all.extend(kids.iter().copied());
         frontier = kids;
     }
@@ -952,23 +979,19 @@ pub(crate) async fn portfolio_section(
             .ok()
             .as_deref(),
     );
-    let mut progs: Vec<crate::models::_entities::plans::Model> =
-        crate::models::_entities::plans::Entity::find()
-            .filter(crate::models::_entities::plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+    let mut progs: Vec<plans::Model> =
+        sqlx::query_as::<_, plans::Model>("SELECT * FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
             .into_iter()
             .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
             .collect();
     progs.sort_by(|a, b| a.name.cmp(&b.name).then(a.pid.cmp(&b.pid)));
     let methods: std::collections::HashMap<Uuid, String> =
-        crate::models::_entities::programme_profiles::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        sqlx::query_as::<_, (Uuid, String)>("SELECT plan_pid, method FROM programme_profiles")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
             .into_iter()
-            .map(|r| (r.plan_pid, r.method))
             .collect();
     let mut out = Vec::new();
     for p in &progs {
@@ -1019,19 +1042,20 @@ async fn product_flow(
     plans: &[Uuid],
     as_of: chrono::NaiveDate,
 ) -> Result<Option<crate::product_flow::Flow>> {
-    use crate::models::_entities::tasks;
-    let rows = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.is_in(plans.to_vec()))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::IsHammock.eq(false))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    type At = chrono::DateTime<chrono::FixedOffset>;
+    let rows: Vec<(At, Option<At>)> = sqlx::query_as(
+        "SELECT created_at, done_at FROM tasks
+         WHERE plan_pid = ANY($1) AND deleted_at IS NULL AND is_hammock = $2",
+    )
+    .bind(plans)
+    .bind(false)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let items: Vec<crate::product_flow::Item> = rows
         .iter()
-        .map(|t| crate::product_flow::Item {
-            created: t.created_at.date_naive(),
-            done: t.done_at.map(|d| d.date_naive()),
+        .map(|(created, done)| crate::product_flow::Item {
+            created: created.date_naive(),
+            done: done.map(|d| d.date_naive()),
         })
         .collect();
     Ok(crate::product_flow::flow(&items, as_of, 8))
@@ -1049,14 +1073,9 @@ async fn portfolio(
         Some(a) => AcSource::parse(a)
             .ok_or_else(|| unprocessable("ac must be budget_lines, labour or both"))?,
     };
-    let all: Vec<Uuid> = crate::models::_entities::plans::Entity::find()
-        .filter(crate::models::_entities::plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     format::json(portfolio_section(&ctx, &readable, crate::tz::deployment_today(), source).await?)
 }

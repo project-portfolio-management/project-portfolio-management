@@ -11,7 +11,6 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::{DateTime, NaiveDate, Utc};
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -20,14 +19,13 @@ use crate::auth::{MaybeAuthUser, require_auth};
 use crate::gate_decisions::{self as rules, Decision, Planned, Review};
 use crate::governance as gov_rules;
 use crate::models::_entities::{
-    allocations, benefits, budget_lines, delivery_exceptions, gate_reviews, planned_gates, plans,
-    programme_status_decisions as decisions,
+    gate_reviews, planned_gates, plans, programme_status_decisions as decisions,
 };
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Map a database error to an HTTP error. The database enforces the status
 /// transition rules too, so a race between two decisions surfaces as `409`.
-fn db_err(e: &sea_orm::DbErr) -> Error {
+fn db_err(e: &sqlx::Error) -> Error {
     let text = e.to_string();
     // The database enforces the transition rules too; a race lands here.
     if text.contains("already has that status") || text.contains("stays stopped") {
@@ -65,12 +63,32 @@ pub fn routes() -> Routes {
 
 /// A plan's status decisions, oldest first (insertion order).
 async fn history_of(ctx: &AppContext, plan: Uuid) -> Result<Vec<decisions::Model>> {
-    decisions::Entity::find()
-        .filter(decisions::Column::PlanPid.eq(plan))
-        .order_by_asc(decisions::Column::Id)
-        .all(&ctx.db)
+    sqlx::query_as("SELECT * FROM programme_status_decisions WHERE plan_pid = $1 ORDER BY id")
+        .bind(plan)
+        .fetch_all(crate::db::pool(ctx))
         .await
         .map_err(|e| db_err(&e))
+}
+
+/// Every plan that is not deleted, in no particular order.
+async fn live_plans(ctx: &AppContext) -> Result<Vec<plans::Model>> {
+    sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(ctx))
+        .await
+        .map_err(|e| db_err(&e))
+}
+
+/// A live budget line's money, for [`kept`].
+#[derive(sqlx::FromRow)]
+struct Money {
+    /// The plan the line is on.
+    plan_pid: Uuid,
+    /// Its currency.
+    currency: String,
+    /// Planned, in minor units.
+    planned_minor: i64,
+    /// Actual, in minor units.
+    actual_minor: i64,
 }
 
 /// Project stored decisions down to the pure rules' input type.
@@ -106,35 +124,37 @@ fn subtree(all: &[plans::Model], root: Uuid) -> HashSet<Uuid> {
 /// What a paused or stopped programme still has: allocations flagged (counted, never deleted), money per
 /// currency and benefits, all reportable.
 async fn kept(ctx: &AppContext, tree: &HashSet<Uuid>) -> Result<serde_json::Value> {
-    let allocs = allocations::Entity::find()
-        .filter(allocations::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .filter(|a| tree.contains(&a.plan_pid))
-        .count();
+    let db = crate::db::pool(ctx);
+    let allocs =
+        sqlx::query_scalar::<_, Uuid>("SELECT plan_pid FROM allocations WHERE deleted_at IS NULL")
+            .fetch_all(db)
+            .await
+            .map_err(|e| db_err(&e))?
+            .into_iter()
+            .filter(|p| tree.contains(p))
+            .count();
     let mut money: BTreeMap<String, (i64, i64)> = BTreeMap::new();
-    for b in budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .filter(|b| tree.contains(&b.plan_pid))
+    for b in sqlx::query_as::<_, Money>(
+        "SELECT plan_pid, currency, planned_minor, actual_minor FROM budget_lines WHERE deleted_at IS NULL",
+    )
+    .fetch_all(db)
+    .await
+    .map_err(|e| db_err(&e))?
+    .into_iter()
+    .filter(|b| tree.contains(&b.plan_pid))
     {
         let e = money.entry(b.currency).or_default();
         e.0 += b.planned_minor;
         e.1 += b.actual_minor;
     }
-    let benefit_rows: Vec<benefits::Model> = benefits::Entity::find()
-        .filter(benefits::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .filter(|b| tree.contains(&b.plan_pid))
-        .collect();
+    let benefit_rows: Vec<Uuid> =
+        sqlx::query_scalar::<_, Uuid>("SELECT plan_pid FROM benefits WHERE deleted_at IS NULL")
+            .fetch_all(db)
+            .await
+            .map_err(|e| db_err(&e))?
+            .into_iter()
+            .filter(|p| tree.contains(p))
+            .collect();
     Ok(serde_json::json!({
         "allocations_flagged": allocs,
         "money_by_currency": money.iter().map(|(c, (p, a))| serde_json::json!({
@@ -167,32 +187,42 @@ async fn set_planned(
             gov_rules::GATES
         )));
     }
-    let existing = planned_gates::Entity::find()
-        .filter(planned_gates::Column::PlanPid.eq(plan.pid))
-        .filter(planned_gates::Column::Gate.eq(&gate))
-        .one(&ctx.db)
+    let existing: Option<planned_gates::Model> =
+        sqlx::query_as("SELECT * FROM planned_gates WHERE plan_pid = $1 AND gate = $2 LIMIT 1")
+            .bind(plan.pid)
+            .bind(&gate)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
+    // The date and its audit row in one transaction (before SQ-1 batch 5 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: planned_gates::Model = if let Some(e) = existing {
+        sqlx::query_as(
+            "UPDATE planned_gates SET planned_on = $1, set_by = $2 WHERE id = $3 RETURNING *",
+        )
+        .bind(b.planned_on)
+        .bind(caller.actor())
+        .bind(e.id)
+        .fetch_one(tx.conn())
         .await
-        .map_err(|e| db_err(&e))?;
-    let row = if let Some(e) = existing {
-        let mut a: planned_gates::ActiveModel = e.into();
-        a.planned_on = ActiveValue::set(b.planned_on);
-        a.set_by = ActiveValue::set(caller.actor().map(str::to_string));
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+        .map_err(|e| db_err(&e))?
     } else {
-        planned_gates::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            gate: ActiveValue::set(gate.clone()),
-            planned_on: ActiveValue::set(b.planned_on),
-            set_by: ActiveValue::set(caller.actor().map(str::to_string)),
-            ..Default::default()
-        }
-        .insert(&ctx.db)
+        sqlx::query_as(
+            "INSERT INTO planned_gates (pid, plan_pid, gate, planned_on, set_by)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind(&gate)
+        .bind(b.planned_on)
+        .bind(caller.actor())
+        .fetch_one(tx.conn())
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "gate_planned",
         caller.actor(),
@@ -200,6 +230,7 @@ async fn set_planned(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "plan_pid": plan.pid, "gate": row.gate, "planned_on": row.planned_on }),
     )
@@ -209,11 +240,12 @@ async fn set_planned(
 #[debug_handler]
 async fn list_planned(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = planned_gates::Entity::find()
-        .filter(planned_gates::Column::PlanPid.eq(plan.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let rows: Vec<planned_gates::Model> =
+        sqlx::query_as("SELECT * FROM planned_gates WHERE plan_pid = $1")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
     let mut out: Vec<serde_json::Value> = rows
         .iter()
         .map(|r| serde_json::json!({ "gate": r.gate, "planned_on": r.planned_on }))
@@ -290,10 +322,10 @@ async fn decide_status(
         return Err(refuse(StatusCode::CONFLICT, "conflict", why));
     }
     if let Some(g) = b.gate_review_pid {
-        let ok = gate_reviews::Entity::find()
-            .filter(gate_reviews::Column::Pid.eq(g))
-            .filter(gate_reviews::Column::PlanPid.eq(plan.pid))
-            .one(&ctx.db)
+        let ok = sqlx::query("SELECT 1 FROM gate_reviews WHERE pid = $1 AND plan_pid = $2 LIMIT 1")
+            .bind(g)
+            .bind(plan.pid)
+            .fetch_optional(crate::db::pool(&ctx))
             .await
             .map_err(|e| db_err(&e))?
             .is_some();
@@ -304,13 +336,15 @@ async fn decide_status(
         }
     }
     if let Some(x) = b.exception_pid {
-        let ok = delivery_exceptions::Entity::find()
-            .filter(delivery_exceptions::Column::Pid.eq(x))
-            .filter(delivery_exceptions::Column::PlanPid.eq(plan.pid))
-            .one(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?
-            .is_some();
+        let ok = sqlx::query(
+            "SELECT 1 FROM delivery_exceptions WHERE pid = $1 AND plan_pid = $2 LIMIT 1",
+        )
+        .bind(x)
+        .bind(plan.pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await
+        .map_err(|e| db_err(&e))?
+        .is_some();
         if !ok {
             return Err(unprocessable(
                 "exception_pid is not an exception of this programme",
@@ -318,18 +352,23 @@ async fn decide_status(
         }
     }
     let actor = caller.actor().unwrap_or("system").to_string();
-    let row = decisions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        status: ActiveValue::set(b.status.clone()),
-        reason: ActiveValue::set(b.reason.trim().to_string()),
-        decided_by: ActiveValue::set(Some(actor)),
-        decided_on: ActiveValue::set(today),
-        gate_review_pid: ActiveValue::set(b.gate_review_pid),
-        exception_pid: ActiveValue::set(b.exception_pid),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
+    // The decision and its audit row in one transaction (before SQ-1 batch 5 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: decisions::Model = sqlx::query_as(
+        "INSERT INTO programme_status_decisions
+             (pid, plan_pid, status, reason, decided_by, decided_on, gate_review_pid, exception_pid)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(&b.status)
+    .bind(b.reason.trim())
+    .bind(actor)
+    .bind(today)
+    .bind(b.gate_review_pid)
+    .bind(b.exception_pid)
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
     let action = match (current, b.status.as_str()) {
@@ -337,8 +376,8 @@ async fn decide_status(
         (_, "paused") => "programme_paused",
         _ => "programme_resumed",
     };
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         action,
         caller.actor(),
@@ -346,6 +385,7 @@ async fn decide_status(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "plan_pid": plan.pid, "status": row.status, "decision": row.pid }),
     )
@@ -361,11 +401,7 @@ async fn get_status(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
     let kept_now = if status == "active" {
         serde_json::Value::Null
     } else {
-        let all = plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?;
+        let all = live_plans(&ctx).await?;
         kept(&ctx, &subtree(&all, plan.pid)).await?
     };
     format::json(serde_json::json!({
@@ -377,16 +413,20 @@ async fn get_status(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 
 // ---- the same, for the pack and the map ------------------------------------------------------
 
+/// Every status decision, oldest first (insertion order).
+async fn all_decisions(ctx: &AppContext) -> Result<Vec<decisions::Model>> {
+    sqlx::query_as("SELECT * FROM programme_status_decisions ORDER BY id")
+        .fetch_all(crate::db::pool(ctx))
+        .await
+        .map_err(|e| db_err(&e))
+}
+
 /// Each programme's status at `at`, for the programmes with any decision.
 pub(crate) async fn status_map(
     ctx: &AppContext,
     at: NaiveDate,
 ) -> Result<HashMap<Uuid, &'static str>> {
-    let rows = decisions::Entity::find()
-        .order_by_asc(decisions::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let rows = all_decisions(ctx).await?;
     let mut by: HashMap<Uuid, Vec<decisions::Model>> = HashMap::new();
     for r in rows {
         by.entry(r.plan_pid).or_default().push(r);
@@ -398,7 +438,7 @@ pub(crate) async fn status_map(
 }
 
 /// The pack's gate view: gates passed, failed and deferred, and the programmes paused and stopped.
-#[expect(clippy::too_many_lines, clippy::similar_names)]
+#[expect(clippy::similar_names)]
 pub(crate) async fn gates_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
@@ -406,29 +446,21 @@ pub(crate) async fn gates_section(
     cut_off: DateTime<Utc>,
 ) -> Result<serde_json::Value> {
     let at = cut_off.date_naive();
-    let all = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let all = live_plans(ctx).await?;
     let programmes: Vec<&plans::Model> = all
         .iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
         .collect();
-    let reviews = gate_reviews::Entity::find()
-        .order_by_asc(gate_reviews::Column::Id)
-        .all(&ctx.db)
+    let reviews: Vec<gate_reviews::Model> =
+        sqlx::query_as("SELECT * FROM gate_reviews ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
+    let plans_planned: Vec<planned_gates::Model> = sqlx::query_as("SELECT * FROM planned_gates")
+        .fetch_all(crate::db::pool(ctx))
         .await
         .map_err(|e| db_err(&e))?;
-    let plans_planned = planned_gates::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
-    let history = decisions::Entity::find()
-        .order_by_asc(decisions::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let history = all_decisions(ctx).await?;
     let start = crate::delivery_confidence::period_start(period);
     let (mut passed, mut failed, mut deferred) = (Vec::new(), Vec::new(), Vec::new());
     let (mut paused, mut stopped, mut changes) = (Vec::new(), Vec::new(), Vec::new());

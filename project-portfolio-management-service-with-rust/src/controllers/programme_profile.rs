@@ -9,11 +9,10 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::delivery_model as rules;
-use crate::models::_entities::{organizations, programme_profiles as profiles};
+use crate::models::_entities::programme_profiles as profiles;
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The routes.
@@ -38,11 +37,12 @@ pub(crate) struct Body {
 
 /// Load the profile row of a plan, if one has been set.
 async fn find(ctx: &AppContext, plan: Uuid) -> Result<Option<profiles::Model>> {
-    profiles::Entity::find()
-        .filter(profiles::Column::PlanPid.eq(plan))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM programme_profiles WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// A profile as JSON, with the owner's name.
@@ -65,20 +65,18 @@ pub(crate) async fn all(
     ctx: &AppContext,
     plans: &HashSet<Uuid>,
 ) -> Result<(HashMap<Uuid, profiles::Model>, HashMap<Uuid, String>)> {
-    let rows: HashMap<Uuid, profiles::Model> = profiles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let rows: HashMap<Uuid, profiles::Model> =
+        sqlx::query_as::<_, profiles::Model>("SELECT * FROM programme_profiles")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .filter(|p| plans.contains(&p.plan_pid))
+            .map(|p| (p.plan_pid, p))
+            .collect();
+    let names = sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM organizations")
+        .fetch_all(crate::db::pool(ctx))
+        .await?
         .into_iter()
-        .filter(|p| plans.contains(&p.plan_pid))
-        .map(|p| (p.plan_pid, p))
-        .collect();
-    let names = organizations::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|o| (o.pid, o.name))
         .collect();
     Ok((rows, names))
 }
@@ -106,12 +104,11 @@ async fn set(
         )));
     }
     if let Some(o) = b.delivery_owner_organization_pid {
-        let ok = organizations::Entity::find()
-            .filter(organizations::Column::Pid.eq(o))
-            .filter(organizations::Column::Active.eq(true))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+        let ok = sqlx::query("SELECT 1 FROM organizations WHERE pid = $1 AND active = $2 LIMIT 1")
+            .bind(o)
+            .bind(true)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
             .is_some();
         if !ok {
             return Err(unprocessable(
@@ -121,34 +118,41 @@ async fn set(
     }
     let existing = find(&ctx, plan.pid).await?;
     let was = view(existing.as_ref(), &HashMap::new());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = if let Some(e) = existing {
-        let mut a: profiles::ActiveModel = e.into();
-        a.delivery_model = ActiveValue::set(b.delivery_model.clone());
-        a.delivery_organization_pid = ActiveValue::set(b.delivery_owner_organization_pid);
-        a.update(&txn).await.map_err(db_err)?
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: profiles::Model = if let Some(e) = existing {
+        sqlx::query_as(
+            "UPDATE programme_profiles SET delivery_model = $1, delivery_organization_pid = $2
+             WHERE id = $3
+             RETURNING *",
+        )
+        .bind(&b.delivery_model)
+        .bind(b.delivery_owner_organization_pid)
+        .bind(e.id)
+        .fetch_one(tx.conn())
+        .await?
     } else {
-        profiles::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            delivery_model: ActiveValue::set(b.delivery_model.clone()),
-            delivery_organization_pid: ActiveValue::set(b.delivery_owner_organization_pid),
-            method: ActiveValue::set("evm".to_string()),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?
+        sqlx::query_as(
+            "INSERT INTO programme_profiles (pid, plan_pid, delivery_model, delivery_organization_pid, method)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind(&b.delivery_model)
+        .bind(b.delivery_owner_organization_pid)
+        .bind("evm")
+        .fetch_one(tx.conn())
+        .await?
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "delivery_model_set",
         caller.actor(),
         Some(json!({ "from": was["delivery_model"], "to": b.delivery_model, "owner": b.delivery_owner_organization_pid })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let (_, names) = all(&ctx, &HashSet::from([plan.pid])).await?;
     format::json(view(Some(&row), &names))
 }
@@ -191,25 +195,27 @@ async fn set_method(
     let was = existing
         .as_ref()
         .map_or("evm".to_string(), |e| e.method.clone());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = if let Some(e) = existing {
-        let mut a: profiles::ActiveModel = e.into();
-        a.method = ActiveValue::set(b.method.clone());
-        a.update(&txn).await.map_err(db_err)?
+    // As before SQ-1: with no change of method the transaction is dropped uncommitted, so nothing is written.
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: profiles::Model = if let Some(e) = existing {
+        sqlx::query_as("UPDATE programme_profiles SET method = $1 WHERE id = $2 RETURNING *")
+            .bind(&b.method)
+            .bind(e.id)
+            .fetch_one(tx.conn())
+            .await?
     } else {
-        profiles::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan.pid),
-            method: ActiveValue::set(b.method.clone()),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?
+        sqlx::query_as(
+            "INSERT INTO programme_profiles (pid, plan_pid, method) VALUES ($1, $2, $3) RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(plan.pid)
+        .bind(&b.method)
+        .fetch_one(tx.conn())
+        .await?
     };
     if was != b.method {
-        AuditModel::record(
-            &txn,
+        AuditModel::record_on(
+            tx.conn(),
             plan.pid,
             "reporting_method_changed",
             caller.actor(),
@@ -217,7 +223,7 @@ async fn set_method(
         )
         .await
         .map_err(super::audit_failed)?;
-        txn.commit().await.map_err(super::db_err)?;
+        tx.commit().await?;
     }
     format::json(json!({ "plan_pid": plan.pid, "reporting_method": row.method }))
 }

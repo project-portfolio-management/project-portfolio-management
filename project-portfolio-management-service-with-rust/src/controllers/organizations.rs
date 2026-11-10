@@ -9,7 +9,6 @@
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -23,7 +22,7 @@ use crate::models::audit_logs::Model as AuditModel;
 pub const KINDS: [&str; 4] = ["delivery", "partner", "sponsor", "supplier"];
 
 /// Map a database error to an API error; a duplicate organization name becomes a 409 conflict.
-fn db_err(e: &sea_orm::DbErr) -> Error {
+fn db_err(e: &sqlx::Error) -> Error {
     if e.to_string().contains("org_name_once") {
         return Error::CustomError(
             StatusCode::CONFLICT,
@@ -50,9 +49,8 @@ pub fn routes() -> Routes {
 /// `GET /api/organizations`
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = orgs::Entity::find()
-        .order_by_asc(orgs::Column::Name)
-        .all(&ctx.db)
+    let rows: Vec<orgs::Model> = sqlx::query_as("SELECT * FROM organizations ORDER BY name")
+        .fetch_all(crate::db::pool(&ctx))
         .await
         .map_err(|e| db_err(&e))?;
     format::json(json!({ "organizations": rows.iter().map(show).collect::<Vec<_>>() }))
@@ -91,19 +89,19 @@ async fn create(
     Json(b): Json<NewOrg>,
 ) -> Result<Response> {
     validate(&b.name, &b.kind)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = orgs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(b.name.trim().to_string()),
-        kind: ActiveValue::set(b.kind),
-        active: ActiveValue::set(true),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: orgs::Model = sqlx::query_as(
+        "INSERT INTO organizations (pid, name, kind, active) VALUES ($1, $2, $3, $4) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(b.name.trim())
+    .bind(&b.kind)
+    .bind(true)
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "organization_created",
         caller.actor(),
@@ -111,7 +109,7 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(show(&row))
 }
 
@@ -138,9 +136,9 @@ async fn update(
     Json(b): Json<Change>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let row = orgs::Entity::find()
-        .filter(orgs::Column::Pid.eq(pid))
-        .one(&ctx.db)
+    let row: orgs::Model = sqlx::query_as("SELECT * FROM organizations WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(&ctx))
         .await
         .map_err(|e| db_err(&e))?
         .ok_or(Error::NotFound)?;
@@ -148,20 +146,41 @@ async fn update(
         b.name.as_deref().unwrap_or(&row.name),
         b.kind.as_deref().unwrap_or(&row.kind),
     )?;
-    let mut a: orgs::ActiveModel = row.into();
+    // Only the fields given are written; with none, the row is read back unchanged (as `SeaORM`'s empty update did).
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE organizations SET ");
+    let mut set = q.separated(", ");
+    let mut any = false;
     if let Some(n) = b.name {
-        a.name = ActiveValue::set(n.trim().to_string());
+        set.push("name = ")
+            .push_bind_unseparated(n.trim().to_string());
+        any = true;
     }
     if let Some(k) = b.kind {
-        a.kind = ActiveValue::set(k);
+        set.push("kind = ").push_bind_unseparated(k);
+        any = true;
     }
     if let Some(v) = b.active {
-        a.active = ActiveValue::set(v);
+        set.push("active = ").push_bind_unseparated(v);
+        any = true;
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(
-        &txn,
+    q.push(" WHERE id = ")
+        .push_bind(row.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: orgs::Model = if any {
+        q.build_query_as()
+            .fetch_one(tx.conn())
+            .await
+            .map_err(|e| db_err(&e))?
+    } else {
+        sqlx::query_as("SELECT * FROM organizations WHERE id = $1 LIMIT 1")
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await
+            .map_err(|e| db_err(&e))?
+    };
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "organization_changed",
         caller.actor(),
@@ -169,7 +188,7 @@ async fn update(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(show(&row))
 }
 
@@ -189,13 +208,14 @@ pub(crate) async fn audience_valid(ctx: &AppContext, audience: &str) -> Result<b
     else {
         return Ok(false);
     };
-    Ok(orgs::Entity::find()
-        .filter(orgs::Column::Pid.eq(pid))
-        .filter(orgs::Column::Active.eq(true))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .is_some())
+    Ok(
+        sqlx::query("SELECT 1 FROM organizations WHERE pid = $1 AND active = true LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .is_some(),
+    )
 }
 
 /// The organizations a caller belongs to: the values of their `organization` attribute.

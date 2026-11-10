@@ -31,15 +31,17 @@ use crate::models::_entities::{
 use crate::models::visibility as vis_models;
 use crate::visibility as rules;
 
-/// Load all live rows of one entity (soft-deleted excluded).
+/// Load all live rows of one table (soft-deleted excluded), in no particular order. The table is a literal.
 macro_rules! live {
-    ($module:ident, $db:expr, $scope:expr) => {
+    ($module:ident, $table:literal, $ctx:expr, $scope:expr) => {
         $scope.keep(
-            $module::Entity::find()
-                .filter($module::Column::DeletedAt.is_null())
-                .all($db)
-                .await
-                .map_err(|e| Error::Model(ModelError::from(e)))?,
+            sqlx::query_as::<_, $module::Model>(concat!(
+                "SELECT * FROM ",
+                $table,
+                " WHERE deleted_at IS NULL"
+            ))
+            .fetch_all(crate::db::pool($ctx))
+            .await?,
         )
     };
 }
@@ -146,10 +148,10 @@ async fn executive_health(
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = crate::tz::deployment_today();
-    let items = live!(plans, &ctx.db, &scope);
-    let risk_rows = live!(risks, &ctx.db, &scope);
-    let budget_rows = live!(budget_lines, &ctx.db, &scope);
-    let milestone_rows = live!(milestones, &ctx.db, &scope);
+    let items = live!(plans, "plans", &ctx, &scope);
+    let risk_rows = live!(risks, "risks", &ctx, &scope);
+    let budget_rows = live!(budget_lines, "budget_lines", &ctx, &scope);
+    let milestone_rows = live!(milestones, "milestones", &ctx, &scope);
     let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
@@ -259,16 +261,15 @@ pub(crate) async fn decision_entries(
     ctx: &AppContext,
     scope: &super::plan_access::HiddenScope,
 ) -> Result<Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)>> {
-    let items = live!(plans, &ctx.db, scope);
+    let items = live!(plans, "plans", ctx, scope);
     let names: std::collections::BTreeMap<Uuid, &str> =
         items.iter().map(|i| (i.pid, i.name.as_str())).collect();
     let mut entries: Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)> = Vec::new();
 
     for review in scope.keep(
-        gate_reviews::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, gate_reviews::Model>("SELECT * FROM gate_reviews")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
     ) {
         let at = review.decided_at.to_utc();
         entries.push((
@@ -285,11 +286,10 @@ pub(crate) async fn decision_entries(
             }),
         ));
     }
-    for scenario in scenarios::Entity::find()
-        .filter(scenarios::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    for scenario in
+        sqlx::query_as::<_, scenarios::Model>("SELECT * FROM scenarios WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
     {
         if let Some(committed_at) = scenario.committed_at {
             let at = committed_at.to_utc();
@@ -304,7 +304,7 @@ pub(crate) async fn decision_entries(
             ));
         }
     }
-    for proposal in live!(proposals, &ctx.db, scope) {
+    for proposal in live!(proposals, "proposals", ctx, scope) {
         if matches!(
             proposal.status.as_str(),
             "approved" | "rejected" | "promoted"
@@ -322,10 +322,9 @@ pub(crate) async fn decision_entries(
             ));
         }
     }
-    for merge in merge_records::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    for merge in sqlx::query_as::<_, merge_records::Model>("SELECT * FROM merge_records")
+        .fetch_all(crate::db::pool(ctx))
+        .await?
         .into_iter()
         .filter(|m| !scope.plan(&m.main_pid) && !scope.plan(&m.duplicate_pid))
     {
@@ -392,8 +391,8 @@ async fn executive_benefits(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
-    let benefit_rows = live!(benefits, &ctx.db, &scope);
+    let items = live!(plans, "plans", &ctx, &scope);
+    let benefit_rows = live!(benefits, "benefits", &ctx, &scope);
     let portfolio_of: std::collections::BTreeMap<Uuid, Option<Uuid>> = items
         .iter()
         .map(|i| {
@@ -475,8 +474,8 @@ async fn financial_variance(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
-    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let items = live!(plans, "plans", &ctx, &scope);
+    let budget_rows = live!(budget_lines, "budget_lines", &ctx, &scope);
     let kind_of: std::collections::BTreeMap<Uuid, &str> = items
         .iter()
         .map(|i| (i.pid, i.kind.as_deref().unwrap_or("unspecified")))
@@ -555,7 +554,7 @@ async fn financial_exposure(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let budget_rows = live!(budget_lines, "budget_lines", &ctx, &scope);
     let lines: Vec<insights::MoneyLine> = budget_rows
         .iter()
         .map(|b| insights::MoneyLine {
@@ -616,9 +615,9 @@ async fn technology_dependency_risk(
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = crate::tz::deployment_today();
-    let items = live!(plans, &ctx.db, &scope);
-    let risk_rows = live!(risks, &ctx.db, &scope);
-    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let items = live!(plans, "plans", &ctx, &scope);
+    let risk_rows = live!(risks, "risks", &ctx, &scope);
+    let budget_rows = live!(budget_lines, "budget_lines", &ctx, &scope);
     let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
@@ -715,7 +714,7 @@ async fn technology_radar(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, "plans", &ctx, &scope);
     let mut techs: std::collections::BTreeMap<String, Tech<'_>> = std::collections::BTreeMap::new();
     for item in &items {
         let tags = item
@@ -784,13 +783,12 @@ async fn executive_alignment(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
-    let budget_rows = live!(budget_lines, &ctx.db, &scope);
+    let items = live!(plans, "plans", &ctx, &scope);
+    let budget_rows = live!(budget_lines, "budget_lines", &ctx, &scope);
     let link_rows = scope.keep(
-        objective_links::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, objective_links::Model>("SELECT * FROM objective_links")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
     let aligned: std::collections::HashSet<Uuid> = link_rows.iter().map(|l| l.plan_pid).collect();
 
@@ -887,8 +885,8 @@ async fn technology_debt(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
-    let risk_rows = live!(risks, &ctx.db, &scope);
+    let items = live!(plans, "plans", &ctx, &scope);
+    let risk_rows = live!(risks, "risks", &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut debt: Vec<&risks::Model> = category_risks(&risk_rows, "tech_debt");
@@ -949,7 +947,7 @@ async fn technology_flow(
     let months = i64::from(query.months.unwrap_or(6).clamp(1, 24));
     let now = chrono::Utc::now();
     let window_start = now - chrono::Days::new(u64::try_from(months * 31).unwrap_or(186));
-    let milestone_rows = live!(milestones, &ctx.db, &scope);
+    let milestone_rows = live!(milestones, "milestones", &ctx, &scope);
 
     let mut per_month: std::collections::BTreeMap<String, usize> =
         std::collections::BTreeMap::new();

@@ -15,17 +15,14 @@ use std::collections::HashSet;
 
 use crate::prelude::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use sea_orm::{QueryOrder, sea_query::Expr};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::meetings::Link;
-use crate::models::_entities::{
-    plan_status_cadences as cadences, plans, status_updates as updates,
-};
+use crate::models::_entities::{plan_status_cadences as cadences, status_updates as updates};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::status_evidence::{self as evidence, Claim, Counts, Source, TaskFact};
 use crate::status_updates::{self as rules, Standing};
@@ -41,18 +38,18 @@ fn update_view(u: &updates::Model) -> Value {
 /// The plan's open-task numbers as of today (BR-2): "open" is a workflow state that is not done.
 async fn counts_of(ctx: &AppContext, plan: Uuid) -> Result<Counts> {
     let workflow = super::workflow::in_force(ctx, plan, "task").await?;
-    let rows = crate::models::_entities::tasks::Entity::find()
-        .filter(crate::models::_entities::tasks::Column::PlanPid.eq(plan))
-        .filter(crate::models::_entities::tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<(Option<NaiveDate>, String)> = sqlx::query_as(
+        "SELECT due_date, status FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(plan)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let facts: Vec<TaskFact> = rows
         .iter()
-        .map(|t| TaskFact {
-            due: t.due_date,
-            open: !crate::workflow::is_done(&workflow, &t.status),
-            blocked: t.status == "blocked",
+        .map(|(due, status)| TaskFact {
+            due: *due,
+            open: !crate::workflow::is_done(&workflow, status),
+            blocked: status == "blocked",
         })
         .collect();
     Ok(evidence::counts(&facts, crate::tz::deployment_today()))
@@ -115,19 +112,51 @@ async fn metrics() -> Result<Response> {
 }
 
 /// Latest status update for a plan, optionally only those created at or before a given instant (newest by id); None when there is none.
-async fn latest_before<C: ConnectionTrait>(
-    db: &C,
+async fn latest_before(
+    ctx: &AppContext,
     plan: Uuid,
     at_or_before: Option<DateTime<Utc>>,
 ) -> Result<Option<updates::Model>> {
-    let mut q = updates::Entity::find().filter(updates::Column::PlanPid.eq(plan));
-    if let Some(t) = at_or_before {
-        q = q.filter(updates::Column::CreatedAt.lte(t));
-    }
-    q.order_by_desc(updates::Column::Id)
-        .one(db)
-        .await
-        .map_err(db_err)
+    Ok(match at_or_before {
+        None => {
+            sqlx::query_as(
+                "SELECT * FROM status_updates WHERE plan_pid = $1 ORDER BY id DESC LIMIT 1",
+            )
+            .bind(plan)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+        }
+        Some(t) => {
+            sqlx::query_as(
+                "SELECT * FROM status_updates WHERE plan_pid = $1 AND created_at <= $2
+                 ORDER BY id DESC
+                 LIMIT 1",
+            )
+            .bind(plan)
+            .bind(t)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+        }
+    })
+}
+
+/// A plan's cadence, if one is set.
+async fn cadence_of(ctx: &AppContext, plan: Uuid) -> Result<Option<cadences::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plan_status_cadences WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
+/// Every cadence, in the order they were set.
+async fn all_cadences(ctx: &AppContext) -> Result<Vec<cadences::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plan_status_cadences ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Whether the plan's update cadence is being kept, from the cadence, its last update and today.
@@ -159,36 +188,43 @@ async fn put_cadence(
         )));
     }
     let today = crate::tz::deployment_today();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let existing = cadences::Entity::find()
-        .filter(cadences::Column::PlanPid.eq(plan.pid))
-        .one(&txn)
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let existing: Option<cadences::Model> =
+        sqlx::query_as("SELECT * FROM plan_status_cadences WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan.pid)
+            .fetch_optional(tx.conn())
+            .await?;
     let before = existing.as_ref().map(|e| e.cadence_days);
-    let who = caller.actor().map(str::to_string);
-    let row = if let Some(e) = existing {
-        let mut a: cadences::ActiveModel = e.into();
-        a.cadence_days = ActiveValue::set(body.cadence_days);
-        a.set_on = ActiveValue::set(today);
-        a.set_by = ActiveValue::set(who);
-        a.reminded_for = ActiveValue::set(None);
-        a.update(&txn).await.map_err(db_err)?
+    let who = caller.actor();
+    let row: cadences::Model = if let Some(e) = existing {
+        sqlx::query_as(
+            "UPDATE plan_status_cadences SET cadence_days = $1, set_on = $2, set_by = $3, reminded_for = $4
+             WHERE id = $5
+             RETURNING *",
+        )
+        .bind(body.cadence_days)
+        .bind(today)
+        .bind(who)
+        .bind(None::<NaiveDate>)
+        .bind(e.id)
+        .fetch_one(tx.conn())
+        .await?
     } else {
-        cadences::ActiveModel {
-            plan_pid: ActiveValue::set(plan.pid),
-            cadence_days: ActiveValue::set(body.cadence_days),
-            set_on: ActiveValue::set(today),
-            set_by: ActiveValue::set(who),
-            reminded_for: ActiveValue::set(None),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?
+        sqlx::query_as(
+            "INSERT INTO plan_status_cadences (plan_pid, cadence_days, set_on, set_by, reminded_for)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *",
+        )
+        .bind(plan.pid)
+        .bind(body.cadence_days)
+        .bind(today)
+        .bind(who)
+        .bind(None::<NaiveDate>)
+        .fetch_one(tx.conn())
+        .await?
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "status_cadence_set",
         caller.actor(),
@@ -196,8 +232,8 @@ async fn put_cadence(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
-    let last = latest_before(&ctx.db, plan.pid, None).await?;
+    tx.commit().await?;
+    let last = latest_before(&ctx, plan.pid, None).await?;
     format::json(cadence_view(&row, last.as_ref(), today))
 }
 
@@ -213,13 +249,8 @@ fn cadence_view(c: &cadences::Model, last: Option<&updates::Model>, today: Naive
 #[debug_handler]
 async fn get_cadence(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let row = cadences::Entity::find()
-        .filter(cadences::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let last = latest_before(&ctx.db, plan.pid, None).await?;
+    let row = cadence_of(&ctx, plan.pid).await?.ok_or(Error::NotFound)?;
+    let last = latest_before(&ctx, plan.pid, None).await?;
     format::json(cadence_view(
         &row,
         last.as_ref(),
@@ -267,22 +298,23 @@ async fn post_update(
             }
         }
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = updates::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        status: ActiveValue::set(body.status.clone()),
-        narrative: ActiveValue::set(body.narrative.trim().to_string()),
-        posted_on: ActiveValue::set(crate::tz::deployment_today()),
-        posted_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        claims: ActiveValue::set(json!(body.claims)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: updates::Model = sqlx::query_as(
+        "INSERT INTO status_updates (pid, plan_pid, status, narrative, posted_on, posted_by, claims)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(&body.status)
+    .bind(body.narrative.trim())
+    .bind(crate::tz::deployment_today())
+    .bind(caller.actor())
+    .bind(json!(body.claims))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "status_update_posted",
         caller.actor(),
@@ -290,7 +322,7 @@ async fn post_update(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(view_with_evidence(&ctx, &row, &mut None).await?)
 }
 
@@ -298,12 +330,11 @@ async fn post_update(
 #[debug_handler]
 async fn list_updates(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let rows = updates::Entity::find()
-        .filter(updates::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(updates::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<updates::Model> =
+        sqlx::query_as("SELECT * FROM status_updates WHERE plan_pid = $1 ORDER BY id DESC")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut counts = None;
     let mut out = Vec::with_capacity(rows.len());
     for r in &rows {
@@ -318,12 +349,8 @@ async fn list_updates(State(ctx): State<AppContext>, Path(pid): Path<String>) ->
 async fn get_status(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let today = crate::tz::deployment_today();
-    let last = latest_before(&ctx.db, plan.pid, None).await?;
-    let cadence = cadences::Entity::find()
-        .filter(cadences::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let last = latest_before(&ctx, plan.pid, None).await?;
+    let cadence = cadence_of(&ctx, plan.pid).await?;
     format::json(json!({
         "plan_pid": plan.pid,
         "as_of": today,
@@ -340,24 +367,19 @@ async fn get_status(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
 #[debug_handler]
 async fn due(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let today = crate::tz::deployment_today();
-    let all = cadences::Entity::find()
-        .order_by_asc(cadences::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all = all_cadences(&ctx).await?;
     let pids: Vec<Uuid> = all.iter().map(|c| c.plan_pid).collect();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &pids).await;
-    let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(pids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: std::collections::HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(&pids)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .collect();
     let mut out = Vec::new();
     for c in all.iter().filter(|c| readable.contains(&c.plan_pid)) {
-        let last = latest_before(&ctx.db, c.plan_pid, None).await?;
+        let last = latest_before(&ctx, c.plan_pid, None).await?;
         let s = standing_of(c, last.as_ref(), today);
         if s.due {
             out.push((
@@ -401,25 +423,20 @@ async fn remind_in_view(
 ) -> Result<Reminded> {
     let today = crate::tz::deployment_today();
     let mut out = Reminded::default();
-    let all = cadences::Entity::find()
-        .order_by_asc(cadences::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let live: HashSet<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .filter(plans::Column::Pid.is_in(all.iter().map(|c| c.plan_pid).collect::<Vec<_>>()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all = all_cadences(ctx).await?;
+    let live: HashSet<Uuid> = sqlx::query_scalar::<_, Uuid>(
+        "SELECT pid FROM plans WHERE deleted_at IS NULL AND pid = ANY($1)",
+    )
+    .bind(all.iter().map(|c| c.plan_pid).collect::<Vec<_>>())
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
+    .collect();
     let in_view = |c: &&cadences::Model| {
         live.contains(&c.plan_pid) && !hidden.is_some_and(|scope| scope.plan(&c.plan_pid))
     };
     for c in all.iter().filter(in_view) {
-        let last = latest_before(&ctx.db, c.plan_pid, None).await?;
+        let last = latest_before(ctx, c.plan_pid, None).await?;
         let s = standing_of(c, last.as_ref(), today);
         if !s.due || c.reminded_for.is_some_and(|r| r >= s.due_on) {
             continue;
@@ -430,23 +447,21 @@ async fn remind_in_view(
             .or_else(|| c.set_by.clone())
             .map(|sub| format!("person:{sub}"))
             .filter(|r| crate::notification_prefs::recipient_sub(r).is_some());
-        let txn = ctx.db.begin().await.map_err(db_err)?;
-        let claimed = cadences::Entity::update_many()
-            .col_expr(cadences::Column::RemindedFor, Expr::value(s.due_on))
-            .filter(cadences::Column::Id.eq(c.id))
-            .filter(
-                sea_orm::Condition::any()
-                    .add(cadences::Column::RemindedFor.is_null())
-                    .add(cadences::Column::RemindedFor.lt(s.due_on)),
-            )
-            .exec(&txn)
-            .await
-            .map_err(db_err)?;
-        if claimed.rows_affected != 1 {
+        let mut tx = crate::db::begin(ctx).await?;
+        let claimed = sqlx::query(
+            "UPDATE plan_status_cadences SET reminded_for = $1
+             WHERE id = $2 AND (reminded_for IS NULL OR reminded_for < $3)",
+        )
+        .bind(s.due_on)
+        .bind(c.id)
+        .bind(s.due_on)
+        .execute(tx.conn())
+        .await?;
+        if claimed.rows_affected() != 1 {
             continue;
         }
-        AuditModel::record(
-            &txn,
+        AuditModel::record_on(
+            tx.conn(),
             c.plan_pid,
             "status_update_reminded",
             None,
@@ -454,7 +469,7 @@ async fn remind_in_view(
         )
         .await
         .map_err(super::audit_failed)?;
-        txn.commit().await.map_err(db_err)?;
+        tx.commit().await?;
         let Some(who) = who else {
             out.unaddressed += 1;
             continue;
@@ -468,8 +483,8 @@ async fn remind_in_view(
             },
             c.cadence_days
         );
-        crate::models::capabilities::notify(
-            &ctx.db,
+        crate::models::capabilities::notify_on(
+            &mut crate::db::pool(ctx),
             &who,
             "plan",
             c.plan_pid,
@@ -507,26 +522,21 @@ pub async fn pack_section(
     cut_off: DateTime<Utc>,
 ) -> Result<Value> {
     let day = cut_off.date_naive();
-    let all = cadences::Entity::find()
-        .order_by_asc(cadences::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let all = all_cadences(ctx).await?;
     let with: Vec<&cadences::Model> = all
         .iter()
         .filter(|c| include.contains(&c.plan_pid) && c.set_on <= day)
         .collect();
-    let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(with.iter().map(|c| c.plan_pid).collect::<Vec<_>>()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    let names: std::collections::HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(with.iter().map(|c| c.plan_pid).collect::<Vec<_>>())
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .collect();
     let mut rows = Vec::new();
     for c in &with {
-        let last = latest_before(&ctx.db, c.plan_pid, Some(cut_off)).await?;
+        let last = latest_before(ctx, c.plan_pid, Some(cut_off)).await?;
         rows.push(json!({
             "plan_pid": c.plan_pid, "plan_name": names.get(&c.plan_pid),
             "cadence_days": c.cadence_days,

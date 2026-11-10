@@ -8,11 +8,9 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::fever::{self as rules, Absent, Lines};
@@ -38,20 +36,20 @@ async fn baselined_chain(
     ctx: &AppContext,
     plan: Uuid,
 ) -> Result<Option<(schedule_baselines::Model, Vec<(Uuid, i64)>)>> {
-    let Some(b) = schedule_baselines::Entity::find()
-        .filter(schedule_baselines::Column::PlanPid.eq(plan))
-        .order_by_desc(schedule_baselines::Column::Version)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let Some(b): Option<schedule_baselines::Model> = sqlx::query_as(
+        "SELECT * FROM schedule_baselines WHERE plan_pid = $1 ORDER BY version DESC LIMIT 1",
+    )
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
     else {
         return Ok(None);
     };
-    let tasks = schedule_baseline_tasks::Entity::find()
-        .filter(schedule_baseline_tasks::Column::BaselinePid.eq(b.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let tasks: Vec<schedule_baseline_tasks::Model> =
+        sqlx::query_as("SELECT * FROM schedule_baseline_tasks WHERE baseline_pid = $1")
+            .bind(b.pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let chain = tasks
         .into_iter()
         .filter(|t| t.total_float == Some(0))
@@ -125,27 +123,31 @@ async fn set_buffer(
             ));
         }
     };
-    let row = buffers::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        buffer_days: ActiveValue::set(i32::try_from(days).unwrap_or(i32::MAX)),
-        source: ActiveValue::set(source.to_string()),
-        rule: ActiveValue::set(rule),
-        note: ActiveValue::set(
-            b.note
-                .map(|n| n.trim().to_string())
-                .filter(|n| !n.is_empty()),
-        ),
-        declared_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        declared_on: ActiveValue::set(crate::tz::deployment_today()),
-        baseline_version: ActiveValue::set(chain.as_ref().map(|(b, _)| b.version)),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &ctx.db,
+    // The declaration and its audit row in one transaction (before SQ-1 batch 5 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: buffers::Model = sqlx::query_as(
+        "INSERT INTO programme_buffers
+             (pid, plan_pid, buffer_days, source, rule, note, declared_by, declared_on, baseline_version)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(i32::try_from(days).unwrap_or(i32::MAX))
+    .bind(source)
+    .bind(rule)
+    .bind(
+        b.note
+            .map(|n| n.trim().to_string())
+            .filter(|n| !n.is_empty()),
+    )
+    .bind(caller.actor())
+    .bind(crate::tz::deployment_today())
+    .bind(chain.as_ref().map(|(b, _)| b.version))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "project_buffer_set",
         caller.actor(),
@@ -153,6 +155,7 @@ async fn set_buffer(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "plan_pid": plan.pid, "buffer_days": row.buffer_days, "source": row.source }),
     )
@@ -162,12 +165,11 @@ async fn set_buffer(
 #[debug_handler]
 async fn get_buffer(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let history = buffers::Entity::find()
-        .filter(buffers::Column::PlanPid.eq(plan.pid))
-        .order_by_asc(buffers::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let history: Vec<buffers::Model> =
+        sqlx::query_as("SELECT * FROM programme_buffers WHERE plan_pid = $1 ORDER BY id")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let (lines, bad) = rules::configured_lines();
     let now = one(&ctx, &plan, &lines, None).await?;
     format::json(serde_json::json!({
@@ -207,12 +209,12 @@ async fn one(
         }
         return Ok(entry);
     }
-    let buffer = buffers::Entity::find()
-        .filter(buffers::Column::PlanPid.eq(plan.pid))
-        .order_by_desc(buffers::Column::Id)
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let buffer: Option<buffers::Model> = sqlx::query_as(
+        "SELECT * FROM programme_buffers WHERE plan_pid = $1 ORDER BY id DESC LIMIT 1",
+    )
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     let chain = baselined_chain(ctx, plan.pid).await?;
     let mut entry = serde_json::json!({ "plan_pid": plan.pid, "plan": plan.name });
     let absent = |why: Absent| serde_json::json!({ "code": why, "reason": why.reason() });
@@ -311,14 +313,13 @@ pub(crate) async fn fever_section(
 ) -> Result<serde_json::Value> {
     let (lines, bad) = rules::configured_lines();
     let prev = previous_points(previous_body);
-    let mut progs: Vec<plans::Model> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
-        .collect();
+    let mut progs: Vec<plans::Model> =
+        sqlx::query_as::<_, plans::Model>("SELECT * FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+            .into_iter()
+            .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
+            .collect();
     progs.sort_by(|a, b| a.name.cmp(&b.name).then(a.pid.cmp(&b.pid)));
     let mut entries = Vec::new();
     let mut table = Vec::new();
@@ -348,14 +349,9 @@ pub(crate) async fn fever_section(
 /// `GET /api/buffer-fever` — the programmes you can read, now.
 #[debug_handler]
 async fn live(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     format::json(fever_section(&ctx, &readable, None).await?)
 }

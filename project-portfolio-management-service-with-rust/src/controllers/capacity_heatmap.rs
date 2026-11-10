@@ -12,7 +12,6 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::{Datelike, NaiveDate};
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -20,14 +19,14 @@ use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::capacity_heatmap::{self as rules, Inputs};
 use crate::models::_entities::{
-    allocations, capacity_commitments as commitments, organizations, peer_demand_sends, plans,
-    resource_roles, skill_pool_members as members, skill_pools as pools,
+    allocations, capacity_commitments as commitments, organizations, peer_demand_sends,
+    skill_pool_members as members, skill_pools as pools,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::portfolio_resources::{self as pr, Grain, GroupBy, Person};
 
 /// Map a database error to a response: the three unique-index violations (peer link, role or skill in two pools, pool name) become `409`; anything else is an internal error carrying the text.
-fn db_err(e: &sea_orm::DbErr) -> Error {
+fn db_err(e: &sqlx::Error) -> Error {
     let t = e.to_string();
     if t.contains("skill_pools_peer_pool_ref") {
         return refuse(
@@ -89,14 +88,14 @@ pub(crate) struct NewPool {
 
 /// Replace a pool's members with the given roles and skills inside the caller's transaction. Values are trimmed, blanks dropped and case-insensitive duplicates within a kind ignored.
 async fn set_members(
-    tx: &sea_orm::DatabaseTransaction,
+    tx: &mut impl crate::db::Session,
     pool: Uuid,
     roles: &[String],
     skills: &[String],
 ) -> Result<()> {
-    members::Entity::delete_many()
-        .filter(members::Column::PoolPid.eq(pool))
-        .exec(tx)
+    sqlx::query("DELETE FROM skill_pool_members WHERE pool_pid = $1")
+        .bind(pool)
+        .execute(tx.ex())
         .await
         .map_err(|e| db_err(&e))?;
     for (kind, values) in [("role", roles), ("skill", skills)] {
@@ -106,19 +105,37 @@ async fn set_members(
             if v.is_empty() || !seen.insert(v.to_lowercase()) {
                 continue;
             }
-            members::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                pool_pid: ActiveValue::set(pool),
-                kind: ActiveValue::set(kind.to_string()),
-                value: ActiveValue::set(v.to_string()),
-                ..Default::default()
-            }
-            .insert(tx)
+            sqlx::query(
+                "INSERT INTO skill_pool_members (pid, pool_pid, kind, value) VALUES ($1, $2, $3, $4)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(pool)
+            .bind(kind)
+            .bind(v)
+            .execute(tx.ex())
             .await
             .map_err(|e| db_err(&e))?;
         }
     }
     Ok(())
+}
+
+/// A pool's members.
+async fn members_of(ctx: &AppContext, pool: Uuid) -> Result<Vec<members::Model>> {
+    sqlx::query_as("SELECT * FROM skill_pool_members WHERE pool_pid = $1")
+        .bind(pool)
+        .fetch_all(crate::db::pool(ctx))
+        .await
+        .map_err(|e| db_err(&e))
+}
+
+/// A pool by pid.
+async fn find_pool(ctx: &AppContext, pid: Uuid) -> Result<Option<pools::Model>> {
+    sqlx::query_as("SELECT * FROM skill_pools WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await
+        .map_err(|e| db_err(&e))
 }
 
 /// Render a pool and its roles and skills (sorted, so the output is stable) as the API's JSON shape; `peer_pool_ref` is null when unlinked.
@@ -146,26 +163,28 @@ async fn create_pool(
     if name.chars().count() < 2 || name.chars().count() > 120 {
         return Err(unprocessable("name must be 2 to 120 characters"));
     }
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
-    let row = pools::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(name),
-        active: ActiveValue::set(true),
-        ..Default::default()
-    }
-    .insert(&tx)
+    let mut tx = crate::db::begin(&ctx).await.map_err(|e| db_err(&e))?;
+    let row: pools::Model = sqlx::query_as(
+        "INSERT INTO skill_pools (pid, name, active) VALUES ($1, $2, $3) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(name)
+    .bind(true)
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| db_err(&e))?;
-    set_members(&tx, row.pid, &b.roles, &b.skills).await?;
-    AuditModel::record(&tx, row.pid, "skill_pool_created", caller.actor(), None)
-        .await
-        .map_err(|e| Error::string(&e.to_string()))?;
+    set_members(&mut tx, row.pid, &b.roles, &b.skills).await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "skill_pool_created",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(|e| Error::string(&e.to_string()))?;
     tx.commit().await.map_err(|e| db_err(&e))?;
-    let ms = members::Entity::find()
-        .filter(members::Column::PoolPid.eq(row.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let ms = members_of(&ctx, row.pid).await?;
     format::json(pool_json(&row, &ms))
 }
 
@@ -191,24 +210,30 @@ async fn update_pool(
     Path(pid): Path<Uuid>,
     Json(b): Json<UpdatePool>,
 ) -> Result<Response> {
-    let row = pools::Entity::find()
-        .filter(pools::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .ok_or(Error::NotFound)?;
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
-    let mut a: pools::ActiveModel = row.into();
-    if let Some(active) = b.active {
-        a.active = ActiveValue::set(active);
-    }
-    let row = a.update(&tx).await.map_err(|e| db_err(&e))?;
-    if b.roles.is_some() || b.skills.is_some() {
-        let current = members::Entity::find()
-            .filter(members::Column::PoolPid.eq(pid))
-            .all(&tx)
+    let row = find_pool(&ctx, pid).await?.ok_or(Error::NotFound)?;
+    let mut tx = crate::db::begin(&ctx).await.map_err(|e| db_err(&e))?;
+    // With no `active` given, the row is read back unchanged (as `SeaORM`'s empty update did).
+    let row: pools::Model = if let Some(active) = b.active {
+        sqlx::query_as("UPDATE skill_pools SET active = $1 WHERE id = $2 RETURNING *")
+            .bind(active)
+            .bind(row.id)
+            .fetch_one(tx.conn())
             .await
-            .map_err(|e| db_err(&e))?;
+            .map_err(|e| db_err(&e))?
+    } else {
+        sqlx::query_as("SELECT * FROM skill_pools WHERE id = $1 LIMIT 1")
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await
+            .map_err(|e| db_err(&e))?
+    };
+    if b.roles.is_some() || b.skills.is_some() {
+        let current: Vec<members::Model> =
+            sqlx::query_as("SELECT * FROM skill_pool_members WHERE pool_pid = $1")
+                .bind(pid)
+                .fetch_all(tx.conn())
+                .await
+                .map_err(|e| db_err(&e))?;
         let keep = |k: &str| -> Vec<String> {
             current
                 .iter()
@@ -218,30 +243,26 @@ async fn update_pool(
         };
         let roles = b.roles.clone().unwrap_or_else(|| keep("role"));
         let skills = b.skills.clone().unwrap_or_else(|| keep("skill"));
-        set_members(&tx, pid, &roles, &skills).await?;
+        set_members(&mut tx, pid, &roles, &skills).await?;
     }
-    AuditModel::record(&tx, pid, "skill_pool_updated", caller.actor(), None)
+    AuditModel::record_on(tx.conn(), pid, "skill_pool_updated", caller.actor(), None)
         .await
         .map_err(|e| Error::string(&e.to_string()))?;
     tx.commit().await.map_err(|e| db_err(&e))?;
-    let ms = members::Entity::find()
-        .filter(members::Column::PoolPid.eq(pid))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let ms = members_of(&ctx, pid).await?;
     format::json(pool_json(&row, &ms))
 }
 
 /// `GET /api/skill-pools`.
 #[debug_handler]
 async fn list_pools(State(ctx): State<AppContext>) -> Result<Response> {
-    let mut ps = pools::Entity::find()
-        .all(&ctx.db)
+    let mut ps: Vec<pools::Model> = sqlx::query_as("SELECT * FROM skill_pools")
+        .fetch_all(crate::db::pool(&ctx))
         .await
         .map_err(|e| db_err(&e))?;
     ps.sort_by_key(|p| p.name.to_lowercase());
-    let ms = members::Entity::find()
-        .all(&ctx.db)
+    let ms: Vec<members::Model> = sqlx::query_as("SELECT * FROM skill_pool_members")
+        .fetch_all(crate::db::pool(&ctx))
         .await
         .map_err(|e| db_err(&e))?;
     format::json(
@@ -278,12 +299,7 @@ async fn set_peer_link(
             "peer_pool_ref must be the workforce service's pool id: a lower-case hyphenated UUID, or null",
         ));
     }
-    let row = pools::Entity::find()
-        .filter(pools::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .ok_or(Error::NotFound)?;
+    let row = find_pool(&ctx, pid).await?.ok_or(Error::NotFound)?;
     let action = if peer.is_some() {
         "skill_pool_peer_linked"
     } else {
@@ -293,19 +309,19 @@ async fn set_peer_link(
         .peer_pool_ref
         .clone()
         .filter(|o| Some(o) != peer.as_ref());
-    let tx = ctx.db.begin().await.map_err(|e| db_err(&e))?;
-    let mut a: pools::ActiveModel = row.into();
-    a.peer_pool_ref = ActiveValue::set(peer);
-    let row = a.update(&tx).await.map_err(|e| db_err(&e))?;
-    AuditModel::record(&tx, pid, action, caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await.map_err(|e| db_err(&e))?;
+    let row: pools::Model =
+        sqlx::query_as("UPDATE skill_pools SET peer_pool_ref = $1 WHERE id = $2 RETURNING *")
+            .bind(peer)
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await
+            .map_err(|e| db_err(&e))?;
+    AuditModel::record_on(tx.conn(), pid, action, caller.actor(), None)
         .await
         .map_err(|e| Error::string(&e.to_string()))?;
     tx.commit().await.map_err(|e| db_err(&e))?;
-    let ms = members::Entity::find()
-        .filter(members::Column::PoolPid.eq(pid))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let ms = members_of(&ctx, pid).await?;
     let mut out = pool_json(&row, &ms);
     if let Some(old) = before {
         out["peer_demand_withdrawals"] = withdraw_on_unlink(&ctx, &headers, pid, old).await?;
@@ -328,16 +344,19 @@ async fn withdraw_on_unlink(
     old: String,
 ) -> Result<serde_json::Value> {
     use crate::wpm_bridge::{self as bridge, DemandPlan};
-    let rows = peer_demand_sends::Entity::find()
-        .filter(peer_demand_sends::Column::PoolPid.eq(pool))
-        .filter(peer_demand_sends::Column::PeerPoolRef.eq(&old))
-        .filter(peer_demand_sends::Column::FteCenti.gt(0))
-        .order_by_asc(peer_demand_sends::Column::Month)
-        .order_by_asc(peer_demand_sends::Column::PlanPid)
-        .limit(WITHDRAWALS_MAX)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let rows: Vec<peer_demand_sends::Model> = sqlx::query_as(
+        "SELECT * FROM peer_demand_sends
+         WHERE pool_pid = $1 AND peer_pool_ref = $2 AND fte_centi > $3
+         ORDER BY month, plan_pid
+         LIMIT $4",
+    )
+    .bind(pool)
+    .bind(&old)
+    .bind(0_i64)
+    .bind(i64::try_from(WITHDRAWALS_MAX).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await
+    .map_err(|e| db_err(&e))?;
     let unlinked_at = chrono::Utc::now();
     let base = bridge::base_url();
     let bearer = bridge::bearer_of(headers);
@@ -351,7 +370,7 @@ async fn withdraw_on_unlink(
             DemandPlan::Skip(o, d) => (*o, *d, None),
         };
         record_send(
-            &ctx.db,
+            ctx,
             pool,
             r.plan_pid,
             r.month,
@@ -381,12 +400,12 @@ async fn withdraw_on_unlink(
         }
     }
     if !sends.is_empty() {
-        let db = ctx.db.clone();
+        let ctx = ctx.clone();
         tokio::spawn(async move {
             for send in sends {
                 let (outcome, detail) = bridge::send_demand(&send).await;
                 if let Err(e) = record_send(
-                    &db,
+                    &ctx,
                     pool,
                     send.plan_pid,
                     send.month,
@@ -495,11 +514,7 @@ async fn set_commitment(
             "a commitment is to a programme (a plan of kind Program)",
         ));
     }
-    let pool = pools::Entity::find()
-        .filter(pools::Column::Pid.eq(b.pool_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let pool = find_pool(&ctx, b.pool_pid).await?;
     let Some(pool) = pool.filter(|p| p.active) else {
         return Err(unprocessable("pool_pid is not an active skill pool"));
     };
@@ -512,78 +527,108 @@ async fn set_commitment(
         .filter(|o| !o.is_empty())
         .map(str::to_string);
     if let Some(op) = b.organization_pid {
-        let o = organizations::Entity::find()
-            .filter(organizations::Column::Pid.eq(op))
-            .one(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?
-            .filter(|o| o.active)
-            .ok_or_else(|| unprocessable("organization_pid is not an active organization"))?;
+        let o = sqlx::query_as::<_, organizations::Model>(
+            "SELECT * FROM organizations WHERE pid = $1 LIMIT 1",
+        )
+        .bind(op)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await
+        .map_err(|e| db_err(&e))?
+        .filter(|o| o.active)
+        .ok_or_else(|| unprocessable("organization_pid is not an active organization"))?;
         org_pid = Some(o.pid);
         label = Some(o.name);
     } else if let Some(l) = &label
-        && let Some(o) = organizations::Entity::find()
-            .filter(sea_orm::sea_query::Expr::cust_with_values(
-                "lower(name) = lower($1)",
-                [l.clone()],
-            ))
-            .filter(organizations::Column::Active.eq(true))
-            .one(&ctx.db)
-            .await
-            .map_err(|e| db_err(&e))?
+        && let Some(o) = sqlx::query_as::<_, organizations::Model>(
+            "SELECT * FROM organizations WHERE lower(name) = lower($1) AND active = $2 LIMIT 1",
+        )
+        .bind(l)
+        .bind(true)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await
+        .map_err(|e| db_err(&e))?
     {
         org_pid = Some(o.pid);
         label = Some(o.name);
     }
     let org = label;
-    let mut find = commitments::Entity::find()
-        .filter(commitments::Column::PoolPid.eq(b.pool_pid))
-        .filter(commitments::Column::PlanPid.eq(plan.pid))
-        .filter(commitments::Column::Kind.eq(&b.kind))
-        .filter(commitments::Column::Month.eq(month));
     // Compare labels case-insensitively so a differently cased label updates the same commitment.
-    find = match &org {
-        None => find.filter(commitments::Column::Organization.is_null()),
-        Some(o) => find.filter(sea_orm::sea_query::Expr::cust_with_values(
-            "lower(organization) = lower($1)",
-            [o.clone()],
-        )),
-    };
-    let existing = find.one(&ctx.db).await.map_err(|e| db_err(&e))?;
+    let existing: Option<commitments::Model> = match &org {
+        None => sqlx::query_as(
+            "SELECT * FROM capacity_commitments
+             WHERE pool_pid = $1 AND plan_pid = $2 AND kind = $3 AND month = $4 AND organization IS NULL
+             LIMIT 1",
+        )
+        .bind(b.pool_pid)
+        .bind(plan.pid)
+        .bind(&b.kind)
+        .bind(month)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await,
+        Some(o) => sqlx::query_as(
+            "SELECT * FROM capacity_commitments
+             WHERE pool_pid = $1 AND plan_pid = $2 AND kind = $3 AND month = $4
+               AND lower(organization) = lower($5)
+             LIMIT 1",
+        )
+        .bind(b.pool_pid)
+        .bind(plan.pid)
+        .bind(&b.kind)
+        .bind(month)
+        .bind(o)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await,
+    }
+    .map_err(|e| db_err(&e))?;
     let note = b
         .note
         .map(|n| n.trim().to_string())
         .filter(|n| !n.is_empty());
     let actor = caller.actor().map(str::to_string);
-    let row = if let Some(e) = existing {
-        let mut a: commitments::ActiveModel = e.into();
-        a.organization_pid = ActiveValue::set(org_pid);
-        a.committed_milli_fte = ActiveValue::set(committed);
-        a.delivered_milli_fte = ActiveValue::set(delivered);
-        a.note = ActiveValue::set(note);
-        a.updated_by = ActiveValue::set(actor);
-        a.update(&ctx.db).await.map_err(|e| db_err(&e))?
+    // The commitment and its audit row in one transaction (before SQ-1 batch 5 they were two statements on the pool).
+    let mut tx = crate::db::begin(&ctx).await.map_err(|e| db_err(&e))?;
+    let row: commitments::Model = if let Some(e) = existing {
+        sqlx::query_as(
+            "UPDATE capacity_commitments
+             SET organization_pid = $1, committed_milli_fte = $2, delivered_milli_fte = $3, note = $4,
+                 updated_by = $5
+             WHERE id = $6
+             RETURNING *",
+        )
+        .bind(org_pid)
+        .bind(committed)
+        .bind(delivered)
+        .bind(note)
+        .bind(actor)
+        .bind(e.id)
+        .fetch_one(tx.conn())
+        .await
+        .map_err(|e| db_err(&e))?
     } else {
-        commitments::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            pool_pid: ActiveValue::set(b.pool_pid),
-            plan_pid: ActiveValue::set(plan.pid),
-            organization: ActiveValue::set(org),
-            organization_pid: ActiveValue::set(org_pid),
-            kind: ActiveValue::set(b.kind.clone()),
-            month: ActiveValue::set(month),
-            committed_milli_fte: ActiveValue::set(committed),
-            delivered_milli_fte: ActiveValue::set(delivered),
-            note: ActiveValue::set(note),
-            updated_by: ActiveValue::set(actor),
-            ..Default::default()
-        }
-        .insert(&ctx.db)
+        sqlx::query_as(
+            "INSERT INTO capacity_commitments
+                 (pid, pool_pid, plan_pid, organization, organization_pid, kind, month, committed_milli_fte,
+                  delivered_milli_fte, note, updated_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(b.pool_pid)
+        .bind(plan.pid)
+        .bind(org)
+        .bind(org_pid)
+        .bind(&b.kind)
+        .bind(month)
+        .bind(committed)
+        .bind(delivered)
+        .bind(note)
+        .bind(actor)
+        .fetch_one(tx.conn())
         .await
         .map_err(|e| db_err(&e))?
     };
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "capacity_commitment_set",
         caller.actor(),
@@ -591,6 +636,7 @@ async fn set_commitment(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
+    tx.commit().await.map_err(|e| db_err(&e))?;
     let mut out = commitment_json(&row);
     if b.kind == "demand"
         && let Some(peer) = pool.peer_pool_ref.clone()
@@ -617,17 +663,20 @@ async fn start_demand_send(
     month: NaiveDate,
 ) -> Result<serde_json::Value> {
     use crate::wpm_bridge::{self as bridge, DemandPlan};
-    let total: i64 = commitments::Entity::find()
-        .filter(commitments::Column::PoolPid.eq(pool))
-        .filter(commitments::Column::PlanPid.eq(plan))
-        .filter(commitments::Column::Kind.eq("demand"))
-        .filter(commitments::Column::Month.eq(month))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .iter()
-        .map(|c| i64::from(c.committed_milli_fte))
-        .sum();
+    let total: i64 = sqlx::query_scalar::<_, i32>(
+        "SELECT committed_milli_fte FROM capacity_commitments
+         WHERE pool_pid = $1 AND plan_pid = $2 AND kind = $3 AND month = $4",
+    )
+    .bind(pool)
+    .bind(plan)
+    .bind("demand")
+    .bind(month)
+    .fetch_all(crate::db::pool(ctx))
+    .await
+    .map_err(|e| db_err(&e))?
+    .into_iter()
+    .map(i64::from)
+    .sum();
     let written_at = chrono::Utc::now();
     let event = bridge::peer_event_id(pool, plan, month, written_at);
     let base = bridge::base_url();
@@ -638,7 +687,7 @@ async fn start_demand_send(
         DemandPlan::Skip(o, d) => (*o, *d, None),
     };
     record_send(
-        &ctx.db, pool, plan, month, &peer, centi, &event, written_at, outcome, detail,
+        ctx, pool, plan, month, &peer, centi, &event, written_at, outcome, detail,
     )
     .await?;
     if let (DemandPlan::Send(c), Some(base), Some(bearer)) = (decided, base, bearer) {
@@ -652,11 +701,11 @@ async fn start_demand_send(
             peer_event_id: event.clone(),
             sent_at: written_at,
         };
-        let db = ctx.db.clone();
+        let ctx = ctx.clone();
         tokio::spawn(async move {
             let (outcome, detail) = bridge::send_demand(&send).await;
             if let Err(e) = record_send(
-                &db,
+                &ctx,
                 pool,
                 plan,
                 month,
@@ -681,7 +730,7 @@ async fn start_demand_send(
 /// Record the outcome of a demand figure sent (or not sent) to the workforce service in `peer_demand_sends`. One row per pool, programme and month; the upsert only replaces a row whose `version_at` is not newer, so a late outcome never overwrites a later send.
 #[expect(clippy::too_many_arguments)]
 async fn record_send(
-    db: &sea_orm::DatabaseConnection,
+    ctx: &AppContext,
     pool: Uuid,
     plan: Uuid,
     month: NaiveDate,
@@ -692,27 +741,24 @@ async fn record_send(
     outcome: &str,
     detail: &str,
 ) -> Result<()> {
-    use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
-    db.execute_raw(Statement::from_sql_and_values(
-        DatabaseBackend::Postgres,
+    sqlx::query(
         "INSERT INTO peer_demand_sends (pid, pool_pid, plan_pid, month, peer_pool_ref, fte_centi, peer_event_id, version_at, outcome, detail, created_at, updated_at) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) \
          ON CONFLICT (pool_pid, plan_pid, month) DO UPDATE SET peer_pool_ref = EXCLUDED.peer_pool_ref, fte_centi = EXCLUDED.fte_centi, \
          peer_event_id = EXCLUDED.peer_event_id, version_at = EXCLUDED.version_at, outcome = EXCLUDED.outcome, detail = EXCLUDED.detail, updated_at = now() \
          WHERE peer_demand_sends.version_at <= EXCLUDED.version_at",
-        [
-            Uuid::new_v4().into(),
-            pool.into(),
-            plan.into(),
-            month.into(),
-            peer.to_string().into(),
-            centi.into(),
-            event.to_string().into(),
-            version_at.into(),
-            outcome.to_string().into(),
-            detail.to_string().into(),
-        ],
-    ))
+    )
+    .bind(Uuid::new_v4())
+    .bind(pool)
+    .bind(plan)
+    .bind(month)
+    .bind(peer)
+    .bind(centi)
+    .bind(event)
+    .bind(version_at)
+    .bind(outcome)
+    .bind(detail)
+    .execute(crate::db::pool(ctx))
     .await
     .map_err(|e| db_err(&e))?;
     Ok(())
@@ -734,12 +780,12 @@ async fn list_commitments(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let rows = commitments::Entity::find()
-        .order_by_asc(commitments::Column::Month)
-        .limit(1000)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
+    let rows: Vec<commitments::Model> =
+        sqlx::query_as("SELECT * FROM capacity_commitments ORDER BY month LIMIT $1")
+            .bind(1000_i64)
+            .fetch_all(crate::db::pool(&ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
     let plans_of: Vec<Uuid> = rows
         .iter()
         .map(|r| r.plan_pid)
@@ -754,22 +800,22 @@ async fn list_commitments(
         .claims()
         .is_some_and(|c| c.attrs.contains_key("organization"));
     let sends: HashMap<(Uuid, Uuid, NaiveDate), peer_demand_sends::Model> =
-        peer_demand_sends::Entity::find()
-            .all(&ctx.db)
+        sqlx::query_as::<_, peer_demand_sends::Model>("SELECT * FROM peer_demand_sends")
+            .fetch_all(crate::db::pool(&ctx))
             .await
             .map_err(|e| db_err(&e))?
             .into_iter()
             .map(|s| ((s.pool_pid, s.plan_pid, s.month), s))
             .collect();
     // Pools linked to the workforce service, so a demand commitment shows its send state even before a send is recorded.
-    let linked: HashSet<Uuid> = pools::Entity::find()
-        .filter(pools::Column::PeerPoolRef.is_not_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    let linked: HashSet<Uuid> = sqlx::query_scalar::<_, Uuid>(
+        "SELECT pid FROM skill_pools WHERE peer_pool_ref IS NOT NULL",
+    )
+    .fetch_all(crate::db::pool(&ctx))
+    .await
+    .map_err(|e| db_err(&e))?
+    .into_iter()
+    .collect();
     format::json(serde_json::json!({
         "commitments": rows.iter()
             .filter(|r| readable.contains(&r.plan_pid))
@@ -818,22 +864,23 @@ pub(crate) async fn heatmap(
 ) -> Result<serde_json::Value> {
     let last = rules::add_months(from, months).pred_opt().unwrap_or(from);
     let periods = pr::periods(from, last, Grain::Month).map_err(|m| unprocessable(&m))?;
-    let allocs: Vec<pr::Alloc> = allocations::Entity::find()
-        .filter(allocations::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .iter()
-        .filter(|a| include.contains(&a.plan_pid))
-        .map(super::portfolio_resources::to_alloc)
-        .collect();
-    let role_of: HashMap<String, String> = resource_roles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|r| (r.person_ref, r.role))
-        .collect();
+    let allocs: Vec<pr::Alloc> = sqlx::query_as::<_, allocations::Model>(
+        "SELECT * FROM allocations WHERE deleted_at IS NULL",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await
+    .map_err(|e| db_err(&e))?
+    .iter()
+    .filter(|a| include.contains(&a.plan_pid))
+    .map(super::portfolio_resources::to_alloc)
+    .collect();
+    let role_of: HashMap<String, String> =
+        sqlx::query_as::<_, (String, String)>("SELECT person_ref, role FROM resource_roles")
+            .fetch_all(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?
+            .into_iter()
+            .collect();
     let ranges = super::availability::all_ranges(ctx).await?;
     // Everyone with a role or a non-proposed booking: proposed bookings are not demand and must not add people.
     let mut who: BTreeSet<&str> = role_of.keys().map(String::as_str).collect();
@@ -853,13 +900,14 @@ pub(crate) async fn heatmap(
         .collect();
     let plan = pr::plan(&periods, &allocs, &people, GroupBy::Role);
 
-    let all_pools = pools::Entity::find()
-        .filter(pools::Column::Active.eq(true))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| db_err(&e))?;
-    let pool_members = members::Entity::find()
-        .all(&ctx.db)
+    let all_pools: Vec<pools::Model> =
+        sqlx::query_as("SELECT * FROM skill_pools WHERE active = $1")
+            .bind(true)
+            .fetch_all(crate::db::pool(ctx))
+            .await
+            .map_err(|e| db_err(&e))?;
+    let pool_members: Vec<members::Model> = sqlx::query_as("SELECT * FROM skill_pool_members")
+        .fetch_all(crate::db::pool(ctx))
         .await
         .map_err(|e| db_err(&e))?;
     // Linked pools take their supply from the workforce service (FB-2): asked now or as last received.
@@ -896,8 +944,8 @@ pub(crate) async fn heatmap(
         .enumerate()
         .map(|(i, p)| (p.from, i))
         .collect();
-    let rows = commitments::Entity::find()
-        .all(&ctx.db)
+    let rows: Vec<commitments::Model> = sqlx::query_as("SELECT * FROM capacity_commitments")
+        .fetch_all(crate::db::pool(ctx))
         .await
         .map_err(|e| db_err(&e))?;
     for r in rows.iter().filter(|r| include.contains(&r.plan_pid)) {
@@ -1030,14 +1078,10 @@ async fn live(
             .unwrap_or_default(),
         Some(f) => rules::parse_month(f).ok_or_else(|| unprocessable("from must be YYYY-MM"))?,
     };
-    let all: Vec<Uuid> = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
+    let all: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(crate::db::pool(&ctx))
         .await
-        .map_err(|e| db_err(&e))?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+        .map_err(|e| db_err(&e))?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &all).await;
     let read =
         crate::wpm_bridge::SupplyRead::live(caller.actor(), crate::wpm_bridge::bearer_of(&headers));

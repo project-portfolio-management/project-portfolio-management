@@ -143,6 +143,10 @@ import type {
   NotificationSink,
   NotificationSinkBody,
   SinkDelivery,
+  TimesheetDecideBody,
+  TimesheetSubmitBody,
+  TimesheetWeek,
+  TimesheetWeekState,
   Objective,
   OkrList,
   OnboardingCase,
@@ -1890,6 +1894,25 @@ export class PpmClient {
   /** The recent deliveries to one of the caller's destinations (LT-6), newest first, at most 50. */
   sinkDeliveries(sinkPid: string): Promise<SinkDelivery[]> {
     return this.http.get(`/api/me/notification-sinks/${sinkPid}/deliveries`);
+  }
+  /**
+   * One person's week by day and plan, and its approval state (LT-11, NC-1 slice 6). `week` is an ISO week such as
+   * `2026-W46`; `person` (a `person:` or `worker:` reference) defaults to the caller, and reading someone else's
+   * needs the approver right (403 otherwise). A 422 is a week or person the service does not read, or a sign-in
+   * identity with no person reference.
+   */
+  timesheetWeek(week: string, person?: string): Promise<TimesheetWeek> {
+    const q = new URLSearchParams({ week });
+    if (person) q.set("person", person);
+    return this.http.get(`/api/timesheets?${q.toString()}`);
+  }
+  /** Submit the caller's own week (LT-11): 422 when it has no entries, 409 when it is already submitted or approved. */
+  submitTimesheet(body: TimesheetSubmitBody): Promise<TimesheetWeekState> {
+    return this.http.post(`/api/timesheets/submit`, { body });
+  }
+  /** An approver approves or rejects someone else's submitted week (LT-11); approved is final. */
+  decideTimesheet(body: TimesheetDecideBody): Promise<TimesheetWeekState> {
+    return this.http.post(`/api/timesheets/decide`, { body });
   }
   /** A plan's handling mark (RG-7). `scheme` is empty when the deployment has none. */
   planHandlingMark(pid: string): Promise<{

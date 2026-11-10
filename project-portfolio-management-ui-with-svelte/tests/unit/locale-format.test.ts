@@ -22,6 +22,7 @@ import {
   formatPercentValue,
   formatSigned,
   formatTime,
+  formatWeekdayDate,
   numberToInput,
   parseNumber,
   parseScaled,
@@ -275,5 +276,14 @@ describe("catalogue strings with a percent sign after a placeholder", () => {
     const cy = readFileSync(join(here, "src/lib/i18n-pages.cy.ts"), "utf8");
     expect(glued(en)).toBeLessThanOrEqual(30);
     expect(glued(cy)).toBeLessThanOrEqual(30);
+  });
+});
+
+describe("a day of the week with its date (NC-1 slice 6)", () => {
+  it("names the weekday of a civil date the same day everywhere, in the page's locale", () => {
+    expect(formatWeekdayDate("2026-11-09", "en-001")).toBe("Mon, 9 Nov");
+    expect(formatWeekdayDate("2026-11-15", "de-001")).toContain("So");
+    expect(formatWeekdayDate(null)).toBe(DASH);
+    expect(formatWeekdayDate("not a date")).toBe("not a date");
   });
 });

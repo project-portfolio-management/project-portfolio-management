@@ -5214,4 +5214,103 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.discussion.refused_too_large": "الملف أكبر من أن يُرسل.",
   "p.discussion.refused_scan_unavailable":
     "لم يُرفق الملف: لم يستجب فاحص البرمجيات الخبيثة. حاول مرة أخرى لاحقًا.",
+  "p.me.timesheet_link": "سجل ساعاتي",
+  "p.me.timesheet_note":
+    "— وقتك حسب اليوم والخطة، أسبوعًا بأسبوع، وإرسال أسبوع للاعتماد.",
+  "p.timesheet.title_ppm": "سجل ساعاتي — PPM",
+  "p.timesheet.heading": "سجل ساعاتي",
+  "p.timesheet.back": "← عملي",
+  "p.timesheet.intro":
+    "الوقت الذي سجّلته في أسبوع واحد، حسب اليوم والخطة، بالساعات والدقائق، مع عرض الوقت القابل للفوترة وغير القابل للفوترة منفصلين دائمًا. أرسل أسبوعًا مكتملًا للاعتماد؛ وبعد اعتماده يصبح نهائيًا ولا يمكن تسجيل مزيد من الوقت فيه.",
+  "p.timesheet.loading": "جارٍ التحميل…",
+  "p.timesheet.week_nav": "اختيار الأسبوع",
+  "p.timesheet.previous_week": "الأسبوع السابق",
+  "p.timesheet.this_week": "هذا الأسبوع",
+  "p.timesheet.next_week": "الأسبوع التالي",
+  "p.timesheet.f_week": "الأسبوع، مثل 2026-W46",
+  "p.timesheet.show_week": "عرض الأسبوع",
+  "p.timesheet.week_hint":
+    "تمتد الأسابيع من الاثنين إلى الأحد وتُرقَّم وفق المعيار الدولي، أيًّا كان أول يوم في أسبوعك. اليوم هو {today} في منطقتك الزمنية، {tz}.",
+  "p.timesheet.problem_week":
+    "هذا ليس أسبوعًا: اكتب السنة و‘-W’ ورقم الأسبوع، مثل 2026-W46.",
+  "p.timesheet.mine_heading": "أسبوعك {week}",
+  "p.timesheet.mine_caption": "وقتك في الأسبوع {week}، حسب الخطة واليوم",
+  "p.timesheet.status_open": "مفتوح: لم يُرسل للاعتماد بعد",
+  "p.timesheet.status_submitted": "أُرسل للاعتماد: بانتظار قرار",
+  "p.timesheet.status_approved": "معتمد: نهائي ومقفل أمام أي وقت جديد",
+  "p.timesheet.status_rejected": "أُعيد: عدّله وأرسله مرة أخرى",
+  "p.timesheet.rejected_because": "كتب المعتمِد: {comment}",
+  "p.timesheet.decision_comment": "مع الملاحظة: {comment}",
+  "p.timesheet.no_entries":
+    "لا يوجد وقت مسجّل في هذا الأسبوع، لذلك لا يوجد مجموع.",
+  "p.timesheet.col_plan": "اسم الخطة",
+  "p.timesheet.col_total": "المجموع",
+  "p.timesheet.col_billable": "قابل للفوترة",
+  "p.timesheet.col_non_billable": "غير قابل للفوترة",
+  "p.timesheet.row_day_totals": "كل يوم",
+  "p.timesheet.plan_unnamed": "الخطة {id}… (الاسم غير معروض)",
+  "p.timesheet.split_line":
+    "قابل للفوترة {billable}، غير قابل للفوترة {non_billable}: {total} في المجموع.",
+  "p.timesheet.omitted": "إدخالات مستبعدة لأنها في خطط لا يمكنك قراءتها: {n}.",
+  "p.timesheet.hours_one": "{n} ساعة",
+  "p.timesheet.hours_other": "{n} ساعات",
+  "p.timesheet.minutes_one": "{n} دقيقة",
+  "p.timesheet.minutes_other": "{n} دقائق",
+  "p.timesheet.duration_hm": "{h} {m}",
+  "p.timesheet.submit": "إرسال هذا الأسبوع للاعتماد",
+  "p.timesheet.submit_again": "إرسال هذا الأسبوع للاعتماد مرة أخرى",
+  "p.timesheet.submitted_notice": "أُرسل الأسبوع {week} للاعتماد.",
+  "p.timesheet.nothing_to_submit":
+    "لا يمكن إرسال أسبوع بلا وقت مسجّل للاعتماد.",
+  "p.timesheet.waiting": "هذا الأسبوع بانتظار قرار المعتمِد.",
+  "p.timesheet.locked":
+    "الأسبوع المعتمد نهائي: لا يمكن تسجيل مزيد من الوقت فيه.",
+  "p.timesheet.could_not_load": "تعذّر تحميل أسبوعك.",
+  "p.timesheet.could_not_submit": "تعذّر إرسال الأسبوع للاعتماد.",
+  "p.timesheet.other_heading": "أسبوع شخص آخر، للمعتمِدين",
+  "p.timesheet.other_intro":
+    "إن كان يحق لك اعتماد سجلات الساعات، فأدخل مرجع الشخص لقراءة أسبوعه للأسبوع المختار أعلاه، ثم اعتمده أو أعده. لا أحد يقرر في أسبوعه هو، والإعادة تحتاج إلى سبب، والاعتماد نهائي.",
+  "p.timesheet.f_person": "الشخص: ‘person:’ أو ‘worker:’ ومعرّفه",
+  "p.timesheet.show_person": "عرض أسبوعه",
+  "p.timesheet.problem_person":
+    "أدخل الشخص بصيغة ‘person:’ أو ‘worker:’ متبوعة بمعرّفه، دون أي شيء آخر.",
+  "p.timesheet.other_week_heading": "الأسبوع {week} لـ {person}",
+  "p.timesheet.other_caption":
+    "وقت {person} في الأسبوع {week}، حسب الخطة واليوم",
+  "p.timesheet.decision_legend": "قرارك",
+  "p.timesheet.approve": "اعتماد",
+  "p.timesheet.reject": "إعادة",
+  "p.timesheet.f_comment": "ملاحظة، إن أردت",
+  "p.timesheet.f_comment_required": "سبب الإعادة (مطلوب)",
+  "p.timesheet.approve_final":
+    "الاعتماد نهائي: يُقفل الأسبوع بعده، ولا يمكن لأحد إعادته.",
+  "p.timesheet.record_decision": "تسجيل القرار",
+  "p.timesheet.approved_notice": "اعتُمد الأسبوع {week} لـ {person}.",
+  "p.timesheet.rejected_notice": "أُعيد الأسبوع {week} لـ {person}.",
+  "p.timesheet.other_not_submitted":
+    "لم يُرسل هذا الأسبوع للاعتماد، لذلك لا يوجد ما يُقرَّر بعد.",
+  "p.timesheet.other_rejected":
+    "أُعيد هذا الأسبوع؛ ويمكن القرار فيه مجددًا عندما يرسله الشخص مرة أخرى.",
+  "p.timesheet.problem_own_week":
+    "هذا أسبوعك أنت: لا أحد يقرر في سجل ساعاته هو.",
+  "p.timesheet.problem_comment": "اذكر سبب إعادة الأسبوع.",
+  "p.timesheet.could_not_load_other": "تعذّر تحميل أسبوع ذلك الشخص.",
+  "p.timesheet.could_not_decide": "تعذّر تسجيل القرار.",
+  "p.timesheet.refused_read_forbidden":
+    "لا يقرأ ذلك الأسبوع إلا الشخص نفسه أو معتمِد سجلات الساعات.",
+  "p.timesheet.refused_submit_forbidden":
+    "لا يرسل الأسبوع للاعتماد إلا الشخص الذي يخصه.",
+  "p.timesheet.refused_decide_forbidden":
+    "لا يمكنك القرار في هذا الأسبوع: يلزم حق اعتماد سجلات الساعات، ولا أحد يقرر في أسبوعه هو.",
+  "p.timesheet.refused_submit_conflict":
+    "أُرسل هذا الأسبوع للاعتماد أو اعتُمد بالفعل؛ وقد قُرئ مجددًا.",
+  "p.timesheet.refused_decide_conflict":
+    "لم يعد هذا الأسبوع بانتظار قرار؛ وقد قُرئ مجددًا.",
+  "p.timesheet.refused_not_addressable":
+    "ليس لهوية تسجيل دخولك مرجع شخص، لذلك لا يوجد سجل ساعات لعرضه.",
+  "p.timesheet.refused_read_invalid": "لم تقبل الخدمة ذلك الأسبوع أو الشخص.",
+  "p.timesheet.refused_submit_invalid":
+    "لم يُرسل الأسبوع: لا يوجد فيه وقت مسجّل.",
+  "p.timesheet.refused_decide_invalid":
+    "لم تقبل الخدمة القرار: إعادة الأسبوع تحتاج إلى سبب.",
 };

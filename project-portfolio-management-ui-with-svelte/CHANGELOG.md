@@ -9,6 +9,29 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — my timesheet: a week by day and plan, submitting it, and an approver's decision (NC-1 slice 6, LT-11, 2026-11-10)
+
+`/me/timesheet`, linked from `/me`. The week is the service's ISO week (`2026-W46`, Monday to Sunday) whatever the
+Display page's first day of the week; "this week" is computed from today in the browser's IANA zone
+(`thisWeek(tz)`), and "Previous week", "Next week" and a typed week (`parseWeek`, which refuses week 0 and a 53rd
+week in a 52-week year, as the service's `week_start` does) move it. `GET /api/timesheets?week=` is drawn by
+`TimesheetGrid.svelte`, a native table with a caption: a row per plan (named by `GET /api/plans/{pid}`, or the start
+of the id when it cannot be read), a column per day headed by `formatWeekdayDate` (new in `locale-format.ts`), the
+row's total and its billable and not billable halves, the day totals in the foot, and a sentence with both halves and
+the total. Times are `durationText`: whole minutes as catalogue plurals for hours and minutes, since Chromium's
+locale data has no Welsh units for `Intl.NumberFormat`. An empty week (`total: null`, `no_entries`) is a sentence;
+`omitted_unreadable` is counted. Status in words and a shape; "Send this week for approval" (`POST …/submit` with
+`{ week }`) on an open or sent-back week with time in it. The approver section takes a `person:` or `worker:`
+reference with a UUID, reads `GET /api/timesheets?week=&person=`, and on a submitted week records "Approve" or "Send
+back" with a note (`POST …/decide`); a rejection with no reason and the caller's own week (compared on the id with
+the `person` of their own week) are refused on the page. The decide button is a plain button, as the screen has one
+primary action. Refusals: 403, 409 (the week is read again) and 422, by step (`timesheetRefusalKey`). Tests:
+`tests/unit/timesheet-view.test.ts`, client paths in `tests/unit/ppm.test.ts`, the weekday heads in
+`tests/unit/locale-format.test.ts`, and `tests/e2e/me-timesheet.spec.ts` (twelve tests, with a fixed clock, a London
+and an Auckland zone, Welsh and axe). Not done: recording or changing time entries, a queue of weeks to decide, a
+person picker, time reports, a week in the address, hiding the approver section by right. Not verified: against a
+real service. The 76 new strings in seven languages are machine drafts, and no speaker has read them.
+
 ### Added — a task's discussion and files: following, reactions, comments, attachments (NC-1 slice 5, LT-4, LT-5, RM-3, 2026-11-10)
 
 `/plans/[pid]/tasks/[tpid]` ends with "Discussion" and "Files", drawn by `src/lib/components/Discussion.svelte`

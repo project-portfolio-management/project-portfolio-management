@@ -140,6 +140,9 @@ match breakdown).
 /me/calendar                 my working weekdays and days off
 /me/notifications            my inbox, what I am told about, and where
                              copies go (NC-1 slice 4); linked from /me
+/me/timesheet                my week by day and plan, sent for approval,
+                             and an approver's decision on someone
+                             else's week (NC-1 slice 6); linked from /me
 /gantt                       schedule Gantt (Lily GanttChart: a bar is a
                              run of named cells; dependencies as text,
                              critical path in colour and words, zoom,
@@ -189,7 +192,7 @@ match breakdown).
                              links here
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 104):
+every page; `find src/routes -name +page.svelte` gives all 105):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -1758,3 +1761,58 @@ holds the rules; the component only renders. None of these routes takes an `If-M
   page, an empty file and one over 10 MiB refused on the page; a 422, a 403 and a 503; remove after asking; Welsh;
   axe). `tests/e2e/plan-task-edit.spec.ts` now also answers these routes, empty. The Welsh and the other six languages
   are machine-written and unreviewed.
+
+## My timesheet: a week by day and plan, submitting it, and an approver's decision (NC-1 slice 6, LT-11)
+
+`/me/timesheet`, linked from `/me`, shows the signed-in person's recorded time for one week and lets them send it for
+approval; below, a person with the approver right reads someone else's week and decides it. `src/lib/timesheet-view.ts`
+holds the rules and `src/lib/components/TimesheetGrid.svelte` draws a week; the page only wires them.
+
+- **Which week.** A week is the service's ISO 8601 week (`2026-W46`, Monday to Sunday), whatever the person's first
+  day of the week on the Display page (WW-1.4): the week the service approves and locks is that set of days, so the
+  grid does not reorder them. "This week" is the week of today in the browser's IANA time zone (computed with
+  `Intl.DateTimeFormat`, so a person in Auckland on Monday morning sees the new week while London still has Sunday);
+  the page says the date and the zone. "Previous week", "Next week" and a typed week (`2026-W46`, a lower-case `w` and
+  spaces accepted) move it; a typed week the service would refuse (week 0, a 53rd week in a 52-week year, anything
+  else) is refused on the page. Time entries carry a calendar date, not a time, so no other zone applies.
+- **The grid.** `GET /api/timesheets?week=` (the caller's own; the service takes the person from the token). A row
+  per plan, named by `GET /api/plans/{pid}` (a plan the page cannot read is shown as the start of its id, "name not
+  shown"), linking to the plan; a column per day headed by weekday and date in the page's locale; then the row's
+  total and its billable and not billable halves. The foot row is each day's total, the week's total and its halves,
+  and a sentence below repeats the week's billable, not billable and total, so the two are never merged into one
+  number without both being shown. Times are the service's whole minutes written as hours and minutes ("2 hrs 15
+  mins"; the units are catalogue plurals, as some browsers have no Welsh units in `Intl`); a day with nothing on a
+  plan's row is blank. An empty week (`total: null`, `reason: "no_entries"`) is a sentence, never a row of zeros. The
+  entries left out because they are in plans the reader cannot see are counted (`omitted_unreadable`).
+- **Status and submitting.** The status in words and a shape (open ○, sent for approval ◔, approved ✓, sent back ✗;
+  never colour alone). "Send this week for approval" (`POST /api/timesheets/submit` with `{ week }`) shows on an open
+  or sent-back week with time in it ("…again" after a rejection, with the approver's reason shown); a week with no
+  time says it cannot be sent; a submitted week says it is waiting; an approved week says it is final and that no
+  more time can be recorded in it (the service refuses a new entry against it with 409).
+- **Someone else's week (approvers).** A `person:` or `worker:` reference with a UUID, checked on the page as the
+  service reads it, then `GET /api/timesheets?week=&person=` for the week chosen above. A submitted week offers
+  "Approve" or "Send back" and a note (`POST /api/timesheets/decide` with `person`, `week`, `decision` and, when not
+  blank, `comment`); sending back with no reason is refused on the page, and so is deciding one's own week (the
+  page compares the id with the `person` the service returned for the caller's own week, ignoring the prefix and
+  case, as the service does). The approval is said to be final before it is sent. The decide button is not the
+  page's primary action (one primary per screen: submitting one's own week).
+- **Refusals.** A 403 on reading someone else's week says only the person or a timesheet approver may read it; on
+  submit, that only the owner may send it; on decide, that it needs the approver right and nobody decides their own
+  week. A 409 on submit says it was already sent or approved, and on decide that it no longer waits for a decision;
+  both read the week again. A 422 on reading one's own week says the sign-in identity has no person reference (a
+  token `sub` that is not a UUID); on someone else's, that the week or person was not accepted; on submit, that the
+  week has no time in it; on decide, that sending back needs a reason. Each is a catalogue sentence; the service's own
+  text is never shown. These routes take no `If-Match`.
+- **Not built in this slice:** recording, editing or deleting time entries (`POST /api/plans/{pid}/time-entries` has
+  no screen, and the service has no edit or delete route); a list of the weeks waiting for a decision (the service
+  has no such query, so an approver must know the person); a person picker or people's names for a reference; time
+  reports (`GET /api/time-reports`, RM-10); a link to a week from `?week=` in the address; hiding the approver section
+  from people without the right (the page does not know the caller's rights; the service's 403 is shown in words);
+  categories and notes of the entries behind a cell.
+- **Tests:** `tests/unit/timesheet-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, the weekday heads in
+  `tests/unit/locale-format.test.ts`, and `tests/e2e/me-timesheet.spec.ts` (the link from `/me`; the grid with plan
+  names, an unnamed plan, the day totals and both halves, and a submit; weeks moved and typed, a refused typed week
+  and an empty week; this week in Auckland; a 409, 422 and 403 on submit; a sent-back week and the reason; the
+  caller's own sent-back week; a refused person, the caller's own week by another prefix, and an approval; a 403
+  and 409 on decide and a 403 on reading; an identity with no person reference; Welsh; axe). The Welsh and the other
+  six languages are machine-written and unreviewed.

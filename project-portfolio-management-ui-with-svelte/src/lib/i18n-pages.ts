@@ -5311,6 +5311,107 @@ export const PAGES_EN = {
   "p.discussion.refused_too_large": "The file is too large to send.",
   "p.discussion.refused_scan_unavailable":
     "The file was not attached: the malware scanner did not answer. Try again later.",
+  "p.me.timesheet_link": "My timesheet",
+  "p.me.timesheet_note":
+    "— your time by day and plan, week by week, and sending a week for approval.",
+  "p.timesheet.title_ppm": "My timesheet — PPM",
+  "p.timesheet.heading": "My timesheet",
+  "p.timesheet.back": "← My work",
+  "p.timesheet.intro":
+    "Your recorded time for one week, by day and plan, in hours and minutes, with billable and non-billable time always shown apart. Send a finished week for approval; once it is approved it is final, and no more time can be recorded in it.",
+  "p.timesheet.loading": "Loading…",
+  "p.timesheet.week_nav": "Choose the week",
+  "p.timesheet.previous_week": "Previous week",
+  "p.timesheet.this_week": "This week",
+  "p.timesheet.next_week": "Next week",
+  "p.timesheet.f_week": "Week, such as 2026-W46",
+  "p.timesheet.show_week": "Show the week",
+  "p.timesheet.week_hint":
+    "Weeks run from Monday to Sunday and are numbered by the international standard, whatever your first day of the week. Today is {today} in your time zone, {tz}.",
+  "p.timesheet.problem_week":
+    "That is not a week: write the year, ‘-W’ and the week's number, such as 2026-W46.",
+  "p.timesheet.mine_heading": "Your week {week}",
+  "p.timesheet.mine_caption": "Your time in week {week}, by plan and day",
+  "p.timesheet.status_open": "Open: not sent for approval yet",
+  "p.timesheet.status_submitted": "Sent for approval: waiting for a decision",
+  "p.timesheet.status_approved": "Approved: final, and locked against new time",
+  "p.timesheet.status_rejected": "Sent back: change it and send it again",
+  "p.timesheet.rejected_because": "the approver said: {comment}",
+  "p.timesheet.decision_comment": "with the note: {comment}",
+  "p.timesheet.no_entries":
+    "No time is recorded in this week, so there is no total.",
+  "p.timesheet.col_plan": "Plan name",
+  "p.timesheet.col_total": "Total",
+  "p.timesheet.col_billable": "Billable",
+  "p.timesheet.col_non_billable": "Not billable",
+  "p.timesheet.row_day_totals": "Each day",
+  "p.timesheet.plan_unnamed": "Plan {id}… (name not shown)",
+  "p.timesheet.split_line":
+    "Billable {billable}, not billable {non_billable}: {total} in all.",
+  "p.timesheet.omitted":
+    "Entries left out because they are in plans you cannot read: {n}.",
+  "p.timesheet.hours_one": "{n} hr",
+  "p.timesheet.hours_other": "{n} hrs",
+  "p.timesheet.minutes_one": "{n} min",
+  "p.timesheet.minutes_other": "{n} mins",
+  "p.timesheet.duration_hm": "{h} {m}",
+  "p.timesheet.submit": "Send this week for approval",
+  "p.timesheet.submit_again": "Send this week for approval again",
+  "p.timesheet.submitted_notice": "Week {week} was sent for approval.",
+  "p.timesheet.nothing_to_submit":
+    "A week with no time recorded cannot be sent for approval.",
+  "p.timesheet.waiting": "This week is waiting for an approver's decision.",
+  "p.timesheet.locked":
+    "An approved week is final: no more time can be recorded in it.",
+  "p.timesheet.could_not_load": "Could not load your week.",
+  "p.timesheet.could_not_submit": "Could not send the week for approval.",
+  "p.timesheet.other_heading": "Someone else's week, for approvers",
+  "p.timesheet.other_intro":
+    "If you may approve timesheets, give the person's reference to read their week for the week chosen above, then approve it or send it back. Nobody decides their own week, sending one back needs a reason, and an approval is final.",
+  "p.timesheet.f_person": "Person: ‘person:’ or ‘worker:’ and their id",
+  "p.timesheet.show_person": "Show their week",
+  "p.timesheet.problem_person":
+    "Give the person as ‘person:’ or ‘worker:’ followed by their id, with nothing else.",
+  "p.timesheet.other_week_heading": "Week {week} of {person}",
+  "p.timesheet.other_caption":
+    "Time of {person} in week {week}, by plan and day",
+  "p.timesheet.decision_legend": "Your decision",
+  "p.timesheet.approve": "Approve",
+  "p.timesheet.reject": "Send back",
+  "p.timesheet.f_comment": "Note, if you want one",
+  "p.timesheet.f_comment_required": "Why it is sent back (needed)",
+  "p.timesheet.approve_final":
+    "An approval is final: the week is then locked, and nobody can send it back.",
+  "p.timesheet.record_decision": "Record the decision",
+  "p.timesheet.approved_notice": "Week {week} of {person} is approved.",
+  "p.timesheet.rejected_notice": "Week {week} of {person} was sent back.",
+  "p.timesheet.other_not_submitted":
+    "This week has not been sent for approval, so there is nothing to decide yet.",
+  "p.timesheet.other_rejected":
+    "This week was sent back; it can be decided again once the person sends it again.",
+  "p.timesheet.problem_own_week":
+    "That is your own week: nobody decides their own timesheet.",
+  "p.timesheet.problem_comment": "Say why the week is sent back.",
+  "p.timesheet.could_not_load_other": "Could not load that person's week.",
+  "p.timesheet.could_not_decide": "Could not record the decision.",
+  "p.timesheet.refused_read_forbidden":
+    "Only the person themselves or a timesheet approver may read that week.",
+  "p.timesheet.refused_submit_forbidden":
+    "Only the person a week belongs to may send it for approval.",
+  "p.timesheet.refused_decide_forbidden":
+    "You may not decide this week: it needs the timesheet approver right, and nobody decides their own week.",
+  "p.timesheet.refused_submit_conflict":
+    "This week has already been sent for approval or approved; it has been read again.",
+  "p.timesheet.refused_decide_conflict":
+    "This week is not waiting for a decision any more; it has been read again.",
+  "p.timesheet.refused_not_addressable":
+    "Your sign-in identity has no person reference, so there is no timesheet to show for it.",
+  "p.timesheet.refused_read_invalid":
+    "The service did not accept that week or person.",
+  "p.timesheet.refused_submit_invalid":
+    "The week was not sent: it has no time recorded in it.",
+  "p.timesheet.refused_decide_invalid":
+    "The service did not accept the decision: sending a week back needs a reason.",
 } as const;
 
 /** A key in the page and component catalogue. */

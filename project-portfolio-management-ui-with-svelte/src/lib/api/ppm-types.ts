@@ -3406,3 +3406,73 @@ export function simQuery(o: SimOptions): string {
   const qs = q.toString();
   return qs ? `?${qs}` : "";
 }
+
+// ---- timesheets (LT-11; NC-1 slice 6) ----
+
+/** Where a person's week stands: `open` until it is submitted; `approved` is final and locks the week. */
+export type TimesheetStatus = "open" | "submitted" | "approved" | "rejected";
+
+/** Whole minutes, billable and non-billable always apart. */
+export interface TimesheetSplit {
+  billable: number;
+  non_billable: number;
+}
+
+/** One plan's line of the week: minutes on each of the seven days, Monday first. */
+export interface TimesheetRow {
+  plan_pid: string;
+  by_day: number[];
+  split: TimesheetSplit;
+  total: number;
+}
+
+/** The week grid (`timesheets::grid`). An empty week has `total: null` and `reason: "no_entries"`, never zero. */
+export interface TimesheetGrid {
+  /** The seven civil dates, Monday to Sunday. */
+  days: string[];
+  rows: TimesheetRow[];
+  day_totals: number[];
+  split: TimesheetSplit;
+  total: number | null;
+  reason: "no_entries" | null;
+}
+
+/** `GET /api/timesheets?person=&week=`: one person's week and its approval state. */
+export interface TimesheetWeek {
+  person: string;
+  week: string;
+  week_start: string;
+  status: string;
+  decided_by: string | null;
+  decision_comment: string | null;
+  grid: TimesheetGrid;
+  /** Entries in plans the reader may not see, left out of the grid. */
+  omitted_unreadable: number;
+}
+
+/** `POST /api/timesheets/submit`: the caller's own week (the person is taken from the token when left out). */
+export interface TimesheetSubmitBody {
+  person?: string | null;
+  week: string;
+}
+
+/** `POST /api/timesheets/decide`: an approver's decision on someone else's submitted week. */
+export interface TimesheetDecideBody {
+  person: string;
+  week: string;
+  decision: "approved" | "rejected";
+  /** Required, and not blank, when rejecting. */
+  comment?: string | null;
+}
+
+/** The stored state row `submit` and `decide` answer with. */
+export interface TimesheetWeekState {
+  pid: string;
+  person_ref: string;
+  week_start: string;
+  status: string;
+  submitted_at: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  decision_comment: string | null;
+}

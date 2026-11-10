@@ -5432,4 +5432,114 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.discussion.refused_too_large": "Mae'r ffeil yn rhy fawr i'w hanfon.",
   "p.discussion.refused_scan_unavailable":
     "Ni atodwyd y ffeil: ni atebodd y sganiwr maleiswedd. Rhowch gynnig arall arni yn nes ymlaen.",
+  "p.me.timesheet_link": "Fy nhaflen amser",
+  "p.me.timesheet_note":
+    "— eich amser fesul diwrnod a chynllun, wythnos wrth wythnos, ac anfon wythnos i'w chymeradwyo.",
+  "p.timesheet.title_ppm": "Fy nhaflen amser — PPM",
+  "p.timesheet.heading": "Fy nhaflen amser",
+  "p.timesheet.back": "← Fy ngwaith",
+  "p.timesheet.intro":
+    "Yr amser a gofnodwyd gennych am un wythnos, fesul diwrnod a chynllun, mewn oriau a munudau, gydag amser y gellir ei filio ac amser na ellir ei filio bob amser ar wahân. Anfonwch wythnos orffenedig i'w chymeradwyo; unwaith y caiff ei chymeradwyo mae'n derfynol, ac ni ellir cofnodi rhagor o amser ynddi.",
+  "p.timesheet.loading": "Yn llwytho…",
+  "p.timesheet.week_nav": "Dewis yr wythnos",
+  "p.timesheet.previous_week": "Yr wythnos flaenorol",
+  "p.timesheet.this_week": "Yr wythnos hon",
+  "p.timesheet.next_week": "Yr wythnos nesaf",
+  "p.timesheet.f_week": "Wythnos, fel 2026-W46",
+  "p.timesheet.show_week": "Dangos yr wythnos",
+  "p.timesheet.week_hint":
+    "Mae wythnosau'n rhedeg o ddydd Llun i ddydd Sul ac wedi'u rhifo yn ôl y safon ryngwladol, beth bynnag yw diwrnod cyntaf eich wythnos. Heddiw yw {today} yn eich cylchfa amser chi, {tz}.",
+  "p.timesheet.problem_week":
+    "Nid wythnos yw honno: ysgrifennwch y flwyddyn, ‘-W’ a rhif yr wythnos, fel 2026-W46.",
+  "p.timesheet.mine_heading": "Eich wythnos {week}",
+  "p.timesheet.mine_caption":
+    "Eich amser yn wythnos {week}, fesul cynllun a diwrnod",
+  "p.timesheet.status_open": "Ar agor: heb ei hanfon i'w chymeradwyo eto",
+  "p.timesheet.status_submitted":
+    "Wedi'i hanfon i'w chymeradwyo: yn aros am benderfyniad",
+  "p.timesheet.status_approved":
+    "Wedi'i chymeradwyo: terfynol, ac wedi'i chloi rhag amser newydd",
+  "p.timesheet.status_rejected":
+    "Wedi'i hanfon yn ôl: newidiwch hi a'i hanfon eto",
+  "p.timesheet.rejected_because": "meddai'r cymeradwywr: {comment}",
+  "p.timesheet.decision_comment": "gyda'r nodyn: {comment}",
+  "p.timesheet.no_entries":
+    "Does dim amser wedi'i gofnodi yn yr wythnos hon, felly does dim cyfanswm.",
+  "p.timesheet.col_plan": "Enw'r cynllun",
+  "p.timesheet.col_total": "Cyfanswm",
+  "p.timesheet.col_billable": "Gellir ei filio",
+  "p.timesheet.col_non_billable": "Ni ellir ei filio",
+  "p.timesheet.row_day_totals": "Pob diwrnod",
+  "p.timesheet.plan_unnamed": "Cynllun {id}… (enw heb ei ddangos)",
+  "p.timesheet.split_line":
+    "Gellir ei filio {billable}, ni ellir ei filio {non_billable}: {total} i gyd.",
+  "p.timesheet.omitted":
+    "Cofnodion a adawyd allan am eu bod mewn cynlluniau na allwch eu darllen: {n}.",
+  "p.timesheet.hours_one": "{n} awr",
+  "p.timesheet.hours_other": "{n} awr",
+  "p.timesheet.minutes_one": "{n} munud",
+  "p.timesheet.minutes_other": "{n} munud",
+  "p.timesheet.duration_hm": "{h} {m}",
+  "p.timesheet.submit": "Anfon yr wythnos hon i'w chymeradwyo",
+  "p.timesheet.submit_again": "Anfon yr wythnos hon i'w chymeradwyo eto",
+  "p.timesheet.submitted_notice": "Anfonwyd wythnos {week} i'w chymeradwyo.",
+  "p.timesheet.nothing_to_submit":
+    "Ni ellir anfon wythnos heb amser wedi'i gofnodi i'w chymeradwyo.",
+  "p.timesheet.waiting":
+    "Mae'r wythnos hon yn aros am benderfyniad cymeradwywr.",
+  "p.timesheet.locked":
+    "Mae wythnos wedi'i chymeradwyo'n derfynol: ni ellir cofnodi rhagor o amser ynddi.",
+  "p.timesheet.could_not_load": "Methu llwytho eich wythnos.",
+  "p.timesheet.could_not_submit": "Methu anfon yr wythnos i'w chymeradwyo.",
+  "p.timesheet.other_heading": "Wythnos rhywun arall, i gymeradwywyr",
+  "p.timesheet.other_intro":
+    "Os cewch chi gymeradwyo taflenni amser, rhowch gyfeirnod yr unigolyn i ddarllen ei wythnos ar gyfer yr wythnos a ddewiswyd uchod, yna ei chymeradwyo neu ei hanfon yn ôl. Does neb yn penderfynu ar ei wythnos ei hun, mae angen rheswm i anfon un yn ôl, ac mae cymeradwyaeth yn derfynol.",
+  "p.timesheet.f_person": "Unigolyn: ‘person:’ neu ‘worker:’ a'i ddynodydd",
+  "p.timesheet.show_person": "Dangos ei wythnos",
+  "p.timesheet.problem_person":
+    "Rhowch yr unigolyn fel ‘person:’ neu ‘worker:’ ac yna ei ddynodydd, heb ddim byd arall.",
+  "p.timesheet.other_week_heading": "Wythnos {week} {person}",
+  "p.timesheet.other_caption":
+    "Amser {person} yn wythnos {week}, fesul cynllun a diwrnod",
+  "p.timesheet.decision_legend": "Eich penderfyniad",
+  "p.timesheet.approve": "Cymeradwyo",
+  "p.timesheet.reject": "Anfon yn ôl",
+  "p.timesheet.f_comment": "Nodyn, os ydych am un",
+  "p.timesheet.f_comment_required":
+    "Pam y caiff ei hanfon yn ôl (angenrheidiol)",
+  "p.timesheet.approve_final":
+    "Mae cymeradwyaeth yn derfynol: caiff yr wythnos ei chloi wedyn, ac ni all neb ei hanfon yn ôl.",
+  "p.timesheet.record_decision": "Cofnodi'r penderfyniad",
+  "p.timesheet.approved_notice":
+    "Mae wythnos {week} {person} wedi'i chymeradwyo.",
+  "p.timesheet.rejected_notice": "Anfonwyd wythnos {week} {person} yn ôl.",
+  "p.timesheet.other_not_submitted":
+    "Nid yw'r wythnos hon wedi'i hanfon i'w chymeradwyo, felly does dim i'w benderfynu eto.",
+  "p.timesheet.other_rejected":
+    "Anfonwyd yr wythnos hon yn ôl; gellir penderfynu arni eto unwaith y bydd yr unigolyn yn ei hanfon eto.",
+  "p.timesheet.problem_own_week":
+    "Eich wythnos chi yw honno: does neb yn penderfynu ar ei daflen amser ei hun.",
+  "p.timesheet.problem_comment":
+    "Dywedwch pam y caiff yr wythnos ei hanfon yn ôl.",
+  "p.timesheet.could_not_load_other":
+    "Methu llwytho wythnos yr unigolyn hwnnw.",
+  "p.timesheet.could_not_decide": "Methu cofnodi'r penderfyniad.",
+  "p.timesheet.refused_read_forbidden":
+    "Dim ond yr unigolyn ei hun neu gymeradwywr taflenni amser gaiff ddarllen yr wythnos honno.",
+  "p.timesheet.refused_submit_forbidden":
+    "Dim ond yr unigolyn y mae'r wythnos yn perthyn iddo gaiff ei hanfon i'w chymeradwyo.",
+  "p.timesheet.refused_decide_forbidden":
+    "Ni chewch benderfynu ar yr wythnos hon: mae angen hawl cymeradwywr taflenni amser, a does neb yn penderfynu ar ei wythnos ei hun.",
+  "p.timesheet.refused_submit_conflict":
+    "Mae'r wythnos hon eisoes wedi'i hanfon i'w chymeradwyo neu wedi'i chymeradwyo; fe'i darllenwyd eto.",
+  "p.timesheet.refused_decide_conflict":
+    "Nid yw'r wythnos hon yn aros am benderfyniad mwyach; fe'i darllenwyd eto.",
+  "p.timesheet.refused_not_addressable":
+    "Nid oes cyfeirnod unigolyn gan eich hunaniaeth fewngofnodi, felly does dim taflen amser i'w dangos ar ei chyfer.",
+  "p.timesheet.refused_read_invalid":
+    "Ni dderbyniodd y gwasanaeth yr wythnos neu'r unigolyn hwnnw.",
+  "p.timesheet.refused_submit_invalid":
+    "Ni anfonwyd yr wythnos: does dim amser wedi'i gofnodi ynddi.",
+  "p.timesheet.refused_decide_invalid":
+    "Ni dderbyniodd y gwasanaeth y penderfyniad: mae angen rheswm i anfon wythnos yn ôl.",
 };

@@ -215,6 +215,25 @@ export function formatDayMonth(
   }).format(at.date);
 }
 
+/**
+ * A day of the week with its day and month ("Mon 9 Nov", "Mo., 9. Nov.", "11月9日周一"), for the heads of a week's
+ * columns (the timesheet, NC-1 slice 6). A civil date is read in UTC, so it is the same day everywhere.
+ */
+export function formatWeekdayDate(
+  iso: string | null | undefined,
+  loc?: string,
+): string {
+  if (iso === null || iso === undefined || iso === "") return DASH;
+  const at = instant(iso);
+  if (!at) return iso;
+  return dtf(locale(loc), {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    ...(at.civil ? { timeZone: "UTC" } : {}),
+  }).format(at.date);
+}
+
 // Ranges and arrows (as WPM-T377). A literal "→" between two dates points the wrong way on a right-to-left page, so a
 // range of dates is `Intl.DateTimeFormat#formatRange` in the page's locale ("1–30 Sept 2026", "1 Sept – 30 Oct 2026"),
 // whose separator is the locale's own and has no direction; an end that is not known is "…". An arrow that means

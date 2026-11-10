@@ -467,6 +467,31 @@ describe("PpmClient discussion paths (NC-1 slice 5, LT-4, LT-5, RM-3)", () => {
   });
 });
 
+describe("PpmClient timesheet paths (NC-1 slice 6, LT-11)", () => {
+  it("reads a week, mine or someone else's, and submits and decides", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.timesheetWeek("2026-W46");
+    await ppm.timesheetWeek(
+      "2026-W46",
+      "person:6f1c2a3b-0000-4000-8000-000000000001",
+    );
+    await ppm.submitTimesheet({ week: "2026-W46" });
+    await ppm.decideTimesheet({
+      person: "person:6f1c2a3b-0000-4000-8000-000000000001",
+      week: "2026-W46",
+      decision: "approved",
+    });
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/timesheets?week=2026-W46",
+      "GET /api/timesheets?week=2026-W46&person=person%3A6f1c2a3b-0000-4000-8000-000000000001",
+      "POST /api/timesheets/submit",
+      "POST /api/timesheets/decide",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

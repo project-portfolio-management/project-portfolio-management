@@ -5511,4 +5511,116 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.discussion.refused_too_large": "Die Datei ist zu groß zum Senden.",
   "p.discussion.refused_scan_unavailable":
     "Die Datei wurde nicht angehängt: Der Schadsoftware-Scanner hat nicht geantwortet. Versuchen Sie es später erneut.",
+  "p.me.timesheet_link": "Mein Stundenzettel",
+  "p.me.timesheet_note":
+    "— Ihre Zeit nach Tag und Plan, Woche für Woche, und eine Woche zur Genehmigung senden.",
+  "p.timesheet.title_ppm": "Mein Stundenzettel — PPM",
+  "p.timesheet.heading": "Mein Stundenzettel",
+  "p.timesheet.back": "← Meine Arbeit",
+  "p.timesheet.intro":
+    "Ihre erfasste Zeit für eine Woche, nach Tag und Plan, in Stunden und Minuten, abrechenbare und nicht abrechenbare Zeit immer getrennt. Senden Sie eine fertige Woche zur Genehmigung; sobald sie genehmigt ist, ist sie endgültig, und es kann keine weitere Zeit darin erfasst werden.",
+  "p.timesheet.loading": "Wird geladen…",
+  "p.timesheet.week_nav": "Woche wählen",
+  "p.timesheet.previous_week": "Vorige Woche",
+  "p.timesheet.this_week": "Diese Woche",
+  "p.timesheet.next_week": "Nächste Woche",
+  "p.timesheet.f_week": "Woche, etwa 2026-W46",
+  "p.timesheet.show_week": "Woche anzeigen",
+  "p.timesheet.week_hint":
+    "Wochen laufen von Montag bis Sonntag und sind nach der internationalen Norm nummeriert, gleich welcher Tag Ihr erster Wochentag ist. Heute ist der {today} in Ihrer Zeitzone, {tz}.",
+  "p.timesheet.problem_week":
+    "Das ist keine Woche: Schreiben Sie das Jahr, ‘-W’ und die Nummer der Woche, etwa 2026-W46.",
+  "p.timesheet.mine_heading": "Ihre Woche {week}",
+  "p.timesheet.mine_caption": "Ihre Zeit in Woche {week}, nach Plan und Tag",
+  "p.timesheet.status_open": "Offen: noch nicht zur Genehmigung gesendet",
+  "p.timesheet.status_submitted":
+    "Zur Genehmigung gesendet: wartet auf eine Entscheidung",
+  "p.timesheet.status_approved":
+    "Genehmigt: endgültig und für neue Zeit gesperrt",
+  "p.timesheet.status_rejected": "Zurückgeschickt: ändern und erneut senden",
+  "p.timesheet.rejected_because": "die genehmigende Person schrieb: {comment}",
+  "p.timesheet.decision_comment": "mit dem Vermerk: {comment}",
+  "p.timesheet.no_entries":
+    "In dieser Woche ist keine Zeit erfasst, daher gibt es keine Summe.",
+  "p.timesheet.col_plan": "Name des Plans",
+  "p.timesheet.col_total": "Summe",
+  "p.timesheet.col_billable": "Abrechenbar",
+  "p.timesheet.col_non_billable": "Nicht abrechenbar",
+  "p.timesheet.row_day_totals": "Je Tag",
+  "p.timesheet.plan_unnamed": "Plan {id}… (Name nicht angezeigt)",
+  "p.timesheet.split_line":
+    "Abrechenbar {billable}, nicht abrechenbar {non_billable}: insgesamt {total}.",
+  "p.timesheet.omitted":
+    "Ausgelassene Einträge, weil sie in Plänen stehen, die Sie nicht lesen dürfen: {n}.",
+  "p.timesheet.hours_one": "{n} Std.",
+  "p.timesheet.hours_other": "{n} Std.",
+  "p.timesheet.minutes_one": "{n} Min.",
+  "p.timesheet.minutes_other": "{n} Min.",
+  "p.timesheet.duration_hm": "{h} {m}",
+  "p.timesheet.submit": "Diese Woche zur Genehmigung senden",
+  "p.timesheet.submit_again": "Diese Woche erneut zur Genehmigung senden",
+  "p.timesheet.submitted_notice":
+    "Woche {week} wurde zur Genehmigung gesendet.",
+  "p.timesheet.nothing_to_submit":
+    "Eine Woche ohne erfasste Zeit kann nicht zur Genehmigung gesendet werden.",
+  "p.timesheet.waiting":
+    "Diese Woche wartet auf die Entscheidung einer genehmigenden Person.",
+  "p.timesheet.locked":
+    "Eine genehmigte Woche ist endgültig: Es kann keine weitere Zeit darin erfasst werden.",
+  "p.timesheet.could_not_load": "Ihre Woche konnte nicht geladen werden.",
+  "p.timesheet.could_not_submit":
+    "Die Woche konnte nicht zur Genehmigung gesendet werden.",
+  "p.timesheet.other_heading":
+    "Die Woche einer anderen Person, für Genehmigende",
+  "p.timesheet.other_intro":
+    "Wenn Sie Stundenzettel genehmigen dürfen, geben Sie die Referenz der Person an, um ihre Woche für die oben gewählte Woche zu lesen, und genehmigen Sie sie oder schicken Sie sie zurück. Niemand entscheidet über die eigene Woche, das Zurückschicken braucht einen Grund, und eine Genehmigung ist endgültig.",
+  "p.timesheet.f_person": "Person: ‘person:’ oder ‘worker:’ und ihre Kennung",
+  "p.timesheet.show_person": "Ihre Woche anzeigen",
+  "p.timesheet.problem_person":
+    "Geben Sie die Person als ‘person:’ oder ‘worker:’ gefolgt von ihrer Kennung an, ohne weiteren Text.",
+  "p.timesheet.other_week_heading": "Woche {week} von {person}",
+  "p.timesheet.other_caption":
+    "Zeit von {person} in Woche {week}, nach Plan und Tag",
+  "p.timesheet.decision_legend": "Ihre Entscheidung",
+  "p.timesheet.approve": "Genehmigen",
+  "p.timesheet.reject": "Zurückschicken",
+  "p.timesheet.f_comment": "Vermerk, falls gewünscht",
+  "p.timesheet.f_comment_required":
+    "Warum sie zurückgeschickt wird (erforderlich)",
+  "p.timesheet.approve_final":
+    "Eine Genehmigung ist endgültig: Die Woche wird dann gesperrt, und niemand kann sie zurückschicken.",
+  "p.timesheet.record_decision": "Entscheidung festhalten",
+  "p.timesheet.approved_notice": "Woche {week} von {person} ist genehmigt.",
+  "p.timesheet.rejected_notice":
+    "Woche {week} von {person} wurde zurückgeschickt.",
+  "p.timesheet.other_not_submitted":
+    "Diese Woche wurde nicht zur Genehmigung gesendet, daher gibt es noch nichts zu entscheiden.",
+  "p.timesheet.other_rejected":
+    "Diese Woche wurde zurückgeschickt; sie kann erneut entschieden werden, sobald die Person sie wieder sendet.",
+  "p.timesheet.problem_own_week":
+    "Das ist Ihre eigene Woche: Niemand entscheidet über den eigenen Stundenzettel.",
+  "p.timesheet.problem_comment":
+    "Sagen Sie, warum die Woche zurückgeschickt wird.",
+  "p.timesheet.could_not_load_other":
+    "Die Woche dieser Person konnte nicht geladen werden.",
+  "p.timesheet.could_not_decide":
+    "Die Entscheidung konnte nicht festgehalten werden.",
+  "p.timesheet.refused_read_forbidden":
+    "Nur die Person selbst oder eine Person mit dem Recht, Stundenzettel zu genehmigen, darf diese Woche lesen.",
+  "p.timesheet.refused_submit_forbidden":
+    "Nur die Person, der eine Woche gehört, darf sie zur Genehmigung senden.",
+  "p.timesheet.refused_decide_forbidden":
+    "Sie dürfen über diese Woche nicht entscheiden: Dafür braucht es das Recht, Stundenzettel zu genehmigen, und niemand entscheidet über die eigene Woche.",
+  "p.timesheet.refused_submit_conflict":
+    "Diese Woche wurde bereits zur Genehmigung gesendet oder genehmigt; sie wurde neu gelesen.",
+  "p.timesheet.refused_decide_conflict":
+    "Diese Woche wartet nicht mehr auf eine Entscheidung; sie wurde neu gelesen.",
+  "p.timesheet.refused_not_addressable":
+    "Ihre Anmeldeidentität hat keine Personenreferenz, daher gibt es dafür keinen Stundenzettel.",
+  "p.timesheet.refused_read_invalid":
+    "Der Dienst hat diese Woche oder Person nicht angenommen.",
+  "p.timesheet.refused_submit_invalid":
+    "Die Woche wurde nicht gesendet: Es ist keine Zeit darin erfasst.",
+  "p.timesheet.refused_decide_invalid":
+    "Der Dienst hat die Entscheidung nicht angenommen: Das Zurückschicken einer Woche braucht einen Grund.",
 };

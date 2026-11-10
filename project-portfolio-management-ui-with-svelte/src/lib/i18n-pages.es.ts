@@ -5499,4 +5499,110 @@ export const PAGES_ES: Record<PageKey, string> = {
     "El archivo es demasiado grande para enviarlo.",
   "p.discussion.refused_scan_unavailable":
     "No se adjuntó el archivo: el analizador de malware no respondió. Inténtelo más tarde.",
+  "p.me.timesheet_link": "Mi hoja de horas",
+  "p.me.timesheet_note":
+    "— su tiempo por día y por plan, semana a semana, y el envío de una semana para su aprobación.",
+  "p.timesheet.title_ppm": "Mi hoja de horas — PPM",
+  "p.timesheet.heading": "Mi hoja de horas",
+  "p.timesheet.back": "← Mi trabajo",
+  "p.timesheet.intro":
+    "El tiempo que registró en una semana, por día y por plan, en horas y minutos, con el tiempo facturable y el no facturable siempre por separado. Envíe una semana terminada para su aprobación; una vez aprobada es definitiva y ya no se puede registrar más tiempo en ella.",
+  "p.timesheet.loading": "Cargando…",
+  "p.timesheet.week_nav": "Elegir la semana",
+  "p.timesheet.previous_week": "Semana anterior",
+  "p.timesheet.this_week": "Esta semana",
+  "p.timesheet.next_week": "Semana siguiente",
+  "p.timesheet.f_week": "Semana, por ejemplo 2026-W46",
+  "p.timesheet.show_week": "Mostrar la semana",
+  "p.timesheet.week_hint":
+    "Las semanas van de lunes a domingo y se numeran según la norma internacional, sea cual sea su primer día de la semana. Hoy es {today} en su zona horaria, {tz}.",
+  "p.timesheet.problem_week":
+    "Eso no es una semana: escriba el año, ‘-W’ y el número de la semana, por ejemplo 2026-W46.",
+  "p.timesheet.mine_heading": "Su semana {week}",
+  "p.timesheet.mine_caption": "Su tiempo en la semana {week}, por plan y día",
+  "p.timesheet.status_open": "Abierta: aún no enviada para aprobación",
+  "p.timesheet.status_submitted":
+    "Enviada para aprobación: a la espera de una decisión",
+  "p.timesheet.status_approved":
+    "Aprobada: definitiva y bloqueada contra tiempo nuevo",
+  "p.timesheet.status_rejected": "Devuelta: modifíquela y vuelva a enviarla",
+  "p.timesheet.rejected_because": "quien aprueba escribió: {comment}",
+  "p.timesheet.decision_comment": "con la nota: {comment}",
+  "p.timesheet.no_entries":
+    "No hay tiempo registrado en esta semana, así que no hay total.",
+  "p.timesheet.col_plan": "Nombre del plan",
+  "p.timesheet.col_total": "Suma",
+  "p.timesheet.col_billable": "Facturable",
+  "p.timesheet.col_non_billable": "No facturable",
+  "p.timesheet.row_day_totals": "Cada día",
+  "p.timesheet.plan_unnamed": "Plan {id}… (nombre no mostrado)",
+  "p.timesheet.split_line":
+    "Facturable {billable}, no facturable {non_billable}: {total} en total.",
+  "p.timesheet.omitted":
+    "Registros omitidos porque están en planes que usted no puede leer: {n}.",
+  "p.timesheet.hours_one": "{n} h",
+  "p.timesheet.hours_other": "{n} h",
+  "p.timesheet.minutes_one": "{n} minuto",
+  "p.timesheet.minutes_other": "{n} minutos",
+  "p.timesheet.duration_hm": "{h} {m}",
+  "p.timesheet.submit": "Enviar esta semana para aprobación",
+  "p.timesheet.submit_again": "Volver a enviar esta semana para aprobación",
+  "p.timesheet.submitted_notice": "La semana {week} se envió para aprobación.",
+  "p.timesheet.nothing_to_submit":
+    "Una semana sin tiempo registrado no se puede enviar para aprobación.",
+  "p.timesheet.waiting": "Esta semana espera la decisión de quien aprueba.",
+  "p.timesheet.locked":
+    "Una semana aprobada es definitiva: ya no se puede registrar más tiempo en ella.",
+  "p.timesheet.could_not_load": "No se pudo cargar su semana.",
+  "p.timesheet.could_not_submit":
+    "No se pudo enviar la semana para aprobación.",
+  "p.timesheet.other_heading":
+    "La semana de otra persona, para quienes aprueban",
+  "p.timesheet.other_intro":
+    "Si puede aprobar hojas de horas, indique la referencia de la persona para leer su semana, la elegida arriba, y apruébela o devuélvala. Nadie decide sobre su propia semana, devolver una exige un motivo y una aprobación es definitiva.",
+  "p.timesheet.f_person": "Persona: ‘person:’ o ‘worker:’ y su identificador",
+  "p.timesheet.show_person": "Mostrar su semana",
+  "p.timesheet.problem_person":
+    "Indique la persona como ‘person:’ o ‘worker:’ seguido de su identificador, sin nada más.",
+  "p.timesheet.other_week_heading": "Semana {week} de {person}",
+  "p.timesheet.other_caption":
+    "Tiempo de {person} en la semana {week}, por plan y día",
+  "p.timesheet.decision_legend": "Su decisión",
+  "p.timesheet.approve": "Aprobar",
+  "p.timesheet.reject": "Devolver",
+  "p.timesheet.f_comment": "Nota, si quiere añadir una",
+  "p.timesheet.f_comment_required": "Por qué se devuelve (obligatorio)",
+  "p.timesheet.approve_final":
+    "Una aprobación es definitiva: la semana queda bloqueada y nadie puede devolverla.",
+  "p.timesheet.record_decision": "Registrar la decisión",
+  "p.timesheet.approved_notice": "La semana {week} de {person} está aprobada.",
+  "p.timesheet.rejected_notice": "La semana {week} de {person} se devolvió.",
+  "p.timesheet.other_not_submitted":
+    "Esta semana no se ha enviado para aprobación, así que aún no hay nada que decidir.",
+  "p.timesheet.other_rejected":
+    "Esta semana se devolvió; podrá decidirse de nuevo cuando la persona vuelva a enviarla.",
+  "p.timesheet.problem_own_week":
+    "Es su propia semana: nadie decide sobre su propia hoja de horas.",
+  "p.timesheet.problem_comment": "Diga por qué se devuelve la semana.",
+  "p.timesheet.could_not_load_other":
+    "No se pudo cargar la semana de esa persona.",
+  "p.timesheet.could_not_decide": "No se pudo registrar la decisión.",
+  "p.timesheet.refused_read_forbidden":
+    "Solo la propia persona o quien aprueba hojas de horas puede leer esa semana.",
+  "p.timesheet.refused_submit_forbidden":
+    "Solo la persona a quien pertenece una semana puede enviarla para aprobación.",
+  "p.timesheet.refused_decide_forbidden":
+    "No puede decidir sobre esta semana: hace falta el derecho de aprobar hojas de horas, y nadie decide sobre su propia semana.",
+  "p.timesheet.refused_submit_conflict":
+    "Esta semana ya se envió para aprobación o ya está aprobada; se ha vuelto a leer.",
+  "p.timesheet.refused_decide_conflict":
+    "Esta semana ya no espera una decisión; se ha vuelto a leer.",
+  "p.timesheet.refused_not_addressable":
+    "Su identidad de inicio de sesión no tiene referencia de persona, así que no hay hoja de horas que mostrar.",
+  "p.timesheet.refused_read_invalid":
+    "El servicio no aceptó esa semana o esa persona.",
+  "p.timesheet.refused_submit_invalid":
+    "La semana no se envió: no tiene tiempo registrado.",
+  "p.timesheet.refused_decide_invalid":
+    "El servicio no aceptó la decisión: devolver una semana exige un motivo.",
 };

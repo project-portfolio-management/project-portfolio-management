@@ -5332,4 +5332,108 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.discussion.refused_too_large": "फ़ाइल भेजने के लिए बहुत बड़ी है।",
   "p.discussion.refused_scan_unavailable":
     "फ़ाइल नहीं जोड़ी गई: मैलवेयर स्कैनर ने उत्तर नहीं दिया। बाद में फिर प्रयास करें।",
+  "p.me.timesheet_link": "मेरी टाइमशीट",
+  "p.me.timesheet_note":
+    "— दिन और योजना के अनुसार आपका समय, सप्ताह दर सप्ताह, और किसी सप्ताह को स्वीकृति के लिए भेजना।",
+  "p.timesheet.title_ppm": "मेरी टाइमशीट — PPM",
+  "p.timesheet.heading": "मेरी टाइमशीट",
+  "p.timesheet.back": "← मेरा काम",
+  "p.timesheet.intro":
+    "एक सप्ताह में आपका दर्ज किया गया समय, दिन और योजना के अनुसार, घंटों और मिनटों में, बिल योग्य और गैर-बिल योग्य समय हमेशा अलग-अलग दिखाया जाता है। पूरा सप्ताह स्वीकृति के लिए भेजें; स्वीकृत होने के बाद वह अंतिम होता है और उसमें और समय दर्ज नहीं किया जा सकता।",
+  "p.timesheet.loading": "लोड हो रहा है…",
+  "p.timesheet.week_nav": "सप्ताह चुनें",
+  "p.timesheet.previous_week": "पिछला सप्ताह",
+  "p.timesheet.this_week": "यह सप्ताह",
+  "p.timesheet.next_week": "अगला सप्ताह",
+  "p.timesheet.f_week": "सप्ताह, जैसे 2026-W46",
+  "p.timesheet.show_week": "सप्ताह दिखाएँ",
+  "p.timesheet.week_hint":
+    "सप्ताह सोमवार से रविवार तक चलते हैं और अंतरराष्ट्रीय मानक के अनुसार क्रमांकित होते हैं, चाहे आपके सप्ताह का पहला दिन कोई भी हो। आपके समय क्षेत्र, {tz}, में आज {today} है।",
+  "p.timesheet.problem_week":
+    "यह सप्ताह नहीं है: वर्ष, ‘-W’ और सप्ताह की संख्या लिखें, जैसे 2026-W46।",
+  "p.timesheet.mine_heading": "आपका सप्ताह {week}",
+  "p.timesheet.mine_caption":
+    "सप्ताह {week} में आपका समय, योजना और दिन के अनुसार",
+  "p.timesheet.status_open": "खुला: अभी स्वीकृति के लिए नहीं भेजा गया",
+  "p.timesheet.status_submitted":
+    "स्वीकृति के लिए भेजा गया: निर्णय की प्रतीक्षा में",
+  "p.timesheet.status_approved": "स्वीकृत: अंतिम, और नए समय के लिए बंद",
+  "p.timesheet.status_rejected": "वापस भेजा गया: इसे बदलें और फिर से भेजें",
+  "p.timesheet.rejected_because": "स्वीकृतकर्ता ने लिखा: {comment}",
+  "p.timesheet.decision_comment": "इस टिप्पणी के साथ: {comment}",
+  "p.timesheet.no_entries":
+    "इस सप्ताह कोई समय दर्ज नहीं है, इसलिए कोई कुल नहीं है।",
+  "p.timesheet.col_plan": "योजना का नाम",
+  "p.timesheet.col_total": "कुल",
+  "p.timesheet.col_billable": "बिल योग्य",
+  "p.timesheet.col_non_billable": "बिल योग्य नहीं",
+  "p.timesheet.row_day_totals": "हर दिन",
+  "p.timesheet.plan_unnamed": "योजना {id}… (नाम नहीं दिखाया गया)",
+  "p.timesheet.split_line":
+    "बिल योग्य {billable}, बिल योग्य नहीं {non_billable}: कुल {total}।",
+  "p.timesheet.omitted":
+    "छोड़ी गई प्रविष्टियाँ, क्योंकि वे उन योजनाओं में हैं जिन्हें आप नहीं पढ़ सकते: {n}।",
+  "p.timesheet.hours_one": "{n} घंटा",
+  "p.timesheet.hours_other": "{n} घंटे",
+  "p.timesheet.minutes_one": "{n} मिनट",
+  "p.timesheet.minutes_other": "{n} मिनट",
+  "p.timesheet.duration_hm": "{h} {m}",
+  "p.timesheet.submit": "यह सप्ताह स्वीकृति के लिए भेजें",
+  "p.timesheet.submit_again": "यह सप्ताह फिर से स्वीकृति के लिए भेजें",
+  "p.timesheet.submitted_notice": "सप्ताह {week} स्वीकृति के लिए भेजा गया।",
+  "p.timesheet.nothing_to_submit":
+    "जिस सप्ताह में कोई समय दर्ज नहीं है उसे स्वीकृति के लिए नहीं भेजा जा सकता।",
+  "p.timesheet.waiting":
+    "यह सप्ताह स्वीकृतकर्ता के निर्णय की प्रतीक्षा में है।",
+  "p.timesheet.locked":
+    "स्वीकृत सप्ताह अंतिम होता है: उसमें और समय दर्ज नहीं किया जा सकता।",
+  "p.timesheet.could_not_load": "आपका सप्ताह लोड नहीं हो सका।",
+  "p.timesheet.could_not_submit": "सप्ताह स्वीकृति के लिए नहीं भेजा जा सका।",
+  "p.timesheet.other_heading": "किसी और का सप्ताह, स्वीकृतकर्ताओं के लिए",
+  "p.timesheet.other_intro":
+    "यदि आप टाइमशीट स्वीकृत कर सकते हैं, तो ऊपर चुने गए सप्ताह के लिए उस व्यक्ति का सप्ताह पढ़ने हेतु उनका संदर्भ दें, फिर उसे स्वीकृत करें या वापस भेजें। कोई भी अपने सप्ताह का निर्णय नहीं करता, वापस भेजने के लिए कारण चाहिए, और स्वीकृति अंतिम होती है।",
+  "p.timesheet.f_person": "व्यक्ति: ‘person:’ या ‘worker:’ और उनकी आईडी",
+  "p.timesheet.show_person": "उनका सप्ताह दिखाएँ",
+  "p.timesheet.problem_person":
+    "व्यक्ति को ‘person:’ या ‘worker:’ के बाद उनकी आईडी के रूप में दें, और कुछ नहीं।",
+  "p.timesheet.other_week_heading": "{person} का सप्ताह {week}",
+  "p.timesheet.other_caption":
+    "सप्ताह {week} में {person} का समय, योजना और दिन के अनुसार",
+  "p.timesheet.decision_legend": "आपका निर्णय",
+  "p.timesheet.approve": "स्वीकृत करें",
+  "p.timesheet.reject": "वापस भेजें",
+  "p.timesheet.f_comment": "टिप्पणी, यदि चाहें",
+  "p.timesheet.f_comment_required": "इसे वापस क्यों भेजा जा रहा है (आवश्यक)",
+  "p.timesheet.approve_final":
+    "स्वीकृति अंतिम होती है: तब सप्ताह बंद हो जाता है, और कोई उसे वापस नहीं भेज सकता।",
+  "p.timesheet.record_decision": "निर्णय दर्ज करें",
+  "p.timesheet.approved_notice": "{person} का सप्ताह {week} स्वीकृत है।",
+  "p.timesheet.rejected_notice": "{person} का सप्ताह {week} वापस भेजा गया।",
+  "p.timesheet.other_not_submitted":
+    "यह सप्ताह स्वीकृति के लिए नहीं भेजा गया है, इसलिए अभी निर्णय के लिए कुछ नहीं है।",
+  "p.timesheet.other_rejected":
+    "यह सप्ताह वापस भेजा गया था; व्यक्ति के फिर से भेजने पर इसका फिर से निर्णय किया जा सकता है।",
+  "p.timesheet.problem_own_week":
+    "यह आपका अपना सप्ताह है: कोई भी अपनी टाइमशीट का निर्णय नहीं करता।",
+  "p.timesheet.problem_comment": "बताएँ कि सप्ताह वापस क्यों भेजा जा रहा है।",
+  "p.timesheet.could_not_load_other": "उस व्यक्ति का सप्ताह लोड नहीं हो सका।",
+  "p.timesheet.could_not_decide": "निर्णय दर्ज नहीं हो सका।",
+  "p.timesheet.refused_read_forbidden":
+    "केवल वह व्यक्ति स्वयं या टाइमशीट स्वीकृतकर्ता वह सप्ताह पढ़ सकता है।",
+  "p.timesheet.refused_submit_forbidden":
+    "केवल वही व्यक्ति, जिसका सप्ताह है, उसे स्वीकृति के लिए भेज सकता है।",
+  "p.timesheet.refused_decide_forbidden":
+    "आप इस सप्ताह का निर्णय नहीं कर सकते: इसके लिए टाइमशीट स्वीकृत करने का अधिकार चाहिए, और कोई भी अपने सप्ताह का निर्णय नहीं करता।",
+  "p.timesheet.refused_submit_conflict":
+    "यह सप्ताह पहले ही स्वीकृति के लिए भेजा जा चुका है या स्वीकृत है; इसे फिर से पढ़ा गया है।",
+  "p.timesheet.refused_decide_conflict":
+    "यह सप्ताह अब निर्णय की प्रतीक्षा में नहीं है; इसे फिर से पढ़ा गया है।",
+  "p.timesheet.refused_not_addressable":
+    "आपकी साइन-इन पहचान के पास कोई व्यक्ति संदर्भ नहीं है, इसलिए दिखाने के लिए कोई टाइमशीट नहीं है।",
+  "p.timesheet.refused_read_invalid":
+    "सेवा ने वह सप्ताह या व्यक्ति स्वीकार नहीं किया।",
+  "p.timesheet.refused_submit_invalid":
+    "सप्ताह नहीं भेजा गया: उसमें कोई समय दर्ज नहीं है।",
+  "p.timesheet.refused_decide_invalid":
+    "सेवा ने निर्णय स्वीकार नहीं किया: सप्ताह वापस भेजने के लिए कारण चाहिए।",
 };

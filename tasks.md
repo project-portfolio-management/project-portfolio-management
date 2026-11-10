@@ -164,7 +164,7 @@ audited; people stay references.
   cycle is refused; deleting a task soft-deletes its relations; a relation to
   a task in an unreadable plan is hidden from the reader.
 
-- [x] **LT-11 (M) — Timesheet views and approval.** **Landed 2026-10-02.** Service: `timesheet_weeks` (migration `m20261003_000012_timesheet_weeks`), `GET /api/timesheets?person=&week=` (week grid by day and plan), `POST /api/timesheets/submit` (your own week only; an empty week is 422; once), `POST /api/timesheets/decide` (approver only — `access=admin` or the `timesheet_approver` role — never on their own week; a rejection needs a comment; **approved is final**); `src/timesheets.rs` (5 unit tests) + `tests/timesheets.rs` end to end with an owner, an approver and a bystander. **Integer minutes; billable and non-billable are always carried apart**; an empty week is `null` + `no_entries`, never zero. An **approved week is locked**: a new time entry against it is 409 (the lock is in the time-entry create path). **Deviation:** there is no edit/delete route for time entries, so the lock covers *creation*; if edit/delete is added it must call `timesheets::week_is_locked`. **Not built:** front-end. On the existing
+- [x] **LT-11 (M) — Timesheet views and approval.** **Landed 2026-10-02.** Service: `timesheet_weeks` (migration `m20261003_000012_timesheet_weeks`), `GET /api/timesheets?person=&week=` (week grid by day and plan), `POST /api/timesheets/submit` (your own week only; an empty week is 422; once), `POST /api/timesheets/decide` (approver only — `access=admin` or the `timesheet_approver` role — never on their own week; a rejection needs a comment; **approved is final**); `src/timesheets.rs` (5 unit tests) + `tests/timesheets.rs` end to end with an owner, an approver and a bystander. **Integer minutes; billable and non-billable are always carried apart**; an empty week is `null` + `no_entries`, never zero. An **approved week is locked**: a new time entry against it is 409 (the lock is in the time-entry create path). **Deviation:** there is no edit/delete route for time entries, so the lock covers *creation*; if edit/delete is added it must call `timesheets::week_is_locked`. **Not built:** front-end. **Screen 2026-11-10 (NC-1 slice 6):** `/me/timesheet` shows the caller's week by day and plan with billable and non-billable apart, sends it for approval, and lets an approver read someone else's week and approve it or send it back; recording time entries and a queue of weeks waiting for a decision still have no screen. On the existing
   `time_entries`: `GET /api/timesheets?person=&week=` (a week grid by day and
   plan), `POST …/submit` and `…/approve|reject` per person-week, billable
   roll-up per plan. Approved weeks are locked against edit.
@@ -2076,6 +2076,30 @@ only as search snippets.
   **Not verified:** the stubbed service only (no run against a real service, so neither the default policy's answer
   to a write-level user on these routes nor a real upload through the proxy and the raised body limit is seen here;
   the container image was not built); CI; the Welsh and the six other languages are machine-written and unreviewed.
+  **Slice 6 built 2026-11-10 (timesheets and approval, LT-11; NC-1 stays open).** New route `/me/timesheet`, linked
+  from `/me`: the caller's own week (`GET /api/timesheets?week=`) as a row per plan and a column per day, Monday to
+  Sunday (the service's ISO week, whatever the person's first day of the week), each row's total with its billable
+  and not billable halves, the day totals and a sentence with both halves and the total; whole minutes written as
+  hours and minutes; an empty week a sentence, never zeros; entries in unreadable plans counted. "This week" is the
+  week of today in the browser's time zone; weeks move back and forward or are typed, and a week the service would
+  refuse is refused on the page. Send for approval (`POST …/submit`) on an open or sent-back week with time in it;
+  the status in words and a shape; a sent-back week shows the reason; an approved week says it is final and locked.
+  An approver section reads someone else's week by a `person:` or `worker:` reference and approves it or sends it
+  back (`POST …/decide`); a rejection with no reason and the caller's own week are refused on the page. Typed bodies
+  and three `PpmClient` methods; `src/lib/timesheet-view.ts` and `src/lib/components/TimesheetGrid.svelte` with
+  unit tests; `tests/e2e/me-timesheet.spec.ts` (twelve tests: the `/me` link, the grid and a submit, weeks moved and
+  typed, an empty week, this week in Auckland, three refusals on submit, a rejection needing a reason, the caller's
+  own sent-back week, their own week refused and an approval, three refusals on deciding and reading, an identity
+  with no person reference, Welsh, axe). 76 new catalogue keys in all eight page catalogues. These routes take no
+  `If-Match`.
+  **Not done:** recording, editing or deleting time entries (`POST /api/plans/{pid}/time-entries` has no screen, and
+  the service has no edit or delete route); a list of weeks waiting for a decision (no service query); a person
+  picker or people's names for a reference; the time reports (RM-10); a week in the address; hiding the approver
+  section from people without the right (the page does not know the caller's rights; the 403 is shown in words);
+  every later slice in the order above.
+  **Not verified:** the stubbed service only (no run against a real service, so neither the default policy's answer
+  to a write-level user on these routes nor a real approver token is seen here); CI; the Welsh and the six other
+  languages are machine-written and unreviewed.
 - [ ] **NC-2 (M) — Read-only MCP adapter.** It exposes registry, task, RAID,
   schedule and pack reads as MCP tools that call the existing API with the
   caller's token, so ABAC, privacy and handling marks apply unchanged. It runs

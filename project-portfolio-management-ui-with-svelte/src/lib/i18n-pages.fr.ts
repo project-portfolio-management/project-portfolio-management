@@ -5515,4 +5515,116 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Le fichier est trop volumineux pour être envoyé.",
   "p.discussion.refused_scan_unavailable":
     "Le fichier n'a pas été joint : l'analyseur de logiciels malveillants n'a pas répondu. Réessayez plus tard.",
+  "p.me.timesheet_link": "Ma feuille de temps",
+  "p.me.timesheet_note":
+    "— votre temps par jour et par plan, semaine après semaine, et l'envoi d'une semaine pour approbation.",
+  "p.timesheet.title_ppm": "Ma feuille de temps — PPM",
+  "p.timesheet.heading": "Ma feuille de temps",
+  "p.timesheet.back": "← Mon travail",
+  "p.timesheet.intro":
+    "Le temps que vous avez saisi pour une semaine, par jour et par plan, en heures et minutes, le temps facturable et non facturable toujours séparés. Envoyez une semaine terminée pour approbation ; une fois approuvée, elle est définitive et plus aucun temps ne peut y être saisi.",
+  "p.timesheet.loading": "Chargement…",
+  "p.timesheet.week_nav": "Choisir la semaine",
+  "p.timesheet.previous_week": "Semaine précédente",
+  "p.timesheet.this_week": "Cette semaine",
+  "p.timesheet.next_week": "Semaine suivante",
+  "p.timesheet.f_week": "Semaine, par exemple 2026-W46",
+  "p.timesheet.show_week": "Afficher la semaine",
+  "p.timesheet.week_hint":
+    "Les semaines vont du lundi au dimanche et sont numérotées selon la norme internationale, quel que soit votre premier jour de la semaine. Nous sommes le {today} dans votre fuseau horaire, {tz}.",
+  "p.timesheet.problem_week":
+    "Ce n'est pas une semaine : écrivez l'année, ‘-W’ et le numéro de la semaine, par exemple 2026-W46.",
+  "p.timesheet.mine_heading": "Votre semaine {week}",
+  "p.timesheet.mine_caption":
+    "Votre temps de la semaine {week}, par plan et par jour",
+  "p.timesheet.status_open": "Ouverte : pas encore envoyée pour approbation",
+  "p.timesheet.status_submitted":
+    "Envoyée pour approbation : en attente d'une décision",
+  "p.timesheet.status_approved":
+    "Approuvée : définitive et verrouillée contre tout nouveau temps",
+  "p.timesheet.status_rejected":
+    "Renvoyée : modifiez-la et envoyez-la de nouveau",
+  "p.timesheet.rejected_because": "l'approbateur a écrit : {comment}",
+  "p.timesheet.decision_comment": "avec la note : {comment}",
+  "p.timesheet.no_entries":
+    "Aucun temps n'est saisi cette semaine, il n'y a donc pas de total.",
+  "p.timesheet.col_plan": "Nom du plan",
+  "p.timesheet.col_total": "Somme",
+  "p.timesheet.col_billable": "Facturable",
+  "p.timesheet.col_non_billable": "Non facturable",
+  "p.timesheet.row_day_totals": "Chaque jour",
+  "p.timesheet.plan_unnamed": "Plan {id}… (nom non affiché)",
+  "p.timesheet.split_line":
+    "Facturable {billable}, non facturable {non_billable} : {total} au total.",
+  "p.timesheet.omitted":
+    "Saisies omises parce qu'elles sont dans des plans que vous ne pouvez pas lire : {n}.",
+  "p.timesheet.hours_one": "{n} h",
+  "p.timesheet.hours_other": "{n} h",
+  "p.timesheet.minutes_one": "{n} minute",
+  "p.timesheet.minutes_other": "{n} minutes",
+  "p.timesheet.duration_hm": "{h} {m}",
+  "p.timesheet.submit": "Envoyer cette semaine pour approbation",
+  "p.timesheet.submit_again":
+    "Envoyer de nouveau cette semaine pour approbation",
+  "p.timesheet.submitted_notice":
+    "La semaine {week} a été envoyée pour approbation.",
+  "p.timesheet.nothing_to_submit":
+    "Une semaine sans temps saisi ne peut pas être envoyée pour approbation.",
+  "p.timesheet.waiting": "Cette semaine attend la décision d'un approbateur.",
+  "p.timesheet.locked":
+    "Une semaine approuvée est définitive : plus aucun temps ne peut y être saisi.",
+  "p.timesheet.could_not_load": "Impossible de charger votre semaine.",
+  "p.timesheet.could_not_submit":
+    "Impossible d'envoyer la semaine pour approbation.",
+  "p.timesheet.other_heading":
+    "La semaine d'une autre personne, pour les approbateurs",
+  "p.timesheet.other_intro":
+    "Si vous pouvez approuver les feuilles de temps, indiquez la référence de la personne pour lire sa semaine, celle choisie ci-dessus, puis approuvez-la ou renvoyez-la. Personne ne décide de sa propre semaine, renvoyer une semaine exige une raison, et une approbation est définitive.",
+  "p.timesheet.f_person":
+    "Personne : ‘person:’ ou ‘worker:’ et son identifiant",
+  "p.timesheet.show_person": "Afficher sa semaine",
+  "p.timesheet.problem_person":
+    "Indiquez la personne sous la forme ‘person:’ ou ‘worker:’ suivi de son identifiant, sans rien d'autre.",
+  "p.timesheet.other_week_heading": "Semaine {week} de {person}",
+  "p.timesheet.other_caption":
+    "Temps de {person} la semaine {week}, par plan et par jour",
+  "p.timesheet.decision_legend": "Votre décision",
+  "p.timesheet.approve": "Approuver",
+  "p.timesheet.reject": "Renvoyer",
+  "p.timesheet.f_comment": "Note, si vous le souhaitez",
+  "p.timesheet.f_comment_required": "Pourquoi elle est renvoyée (obligatoire)",
+  "p.timesheet.approve_final":
+    "Une approbation est définitive : la semaine est alors verrouillée et personne ne peut la renvoyer.",
+  "p.timesheet.record_decision": "Enregistrer la décision",
+  "p.timesheet.approved_notice": "La semaine {week} de {person} est approuvée.",
+  "p.timesheet.rejected_notice":
+    "La semaine {week} de {person} a été renvoyée.",
+  "p.timesheet.other_not_submitted":
+    "Cette semaine n'a pas été envoyée pour approbation, il n'y a donc encore rien à décider.",
+  "p.timesheet.other_rejected":
+    "Cette semaine a été renvoyée ; elle pourra être décidée de nouveau quand la personne l'enverra de nouveau.",
+  "p.timesheet.problem_own_week":
+    "C'est votre propre semaine : personne ne décide de sa propre feuille de temps.",
+  "p.timesheet.problem_comment": "Dites pourquoi la semaine est renvoyée.",
+  "p.timesheet.could_not_load_other":
+    "Impossible de charger la semaine de cette personne.",
+  "p.timesheet.could_not_decide": "Impossible d'enregistrer la décision.",
+  "p.timesheet.refused_read_forbidden":
+    "Seule la personne elle-même ou un approbateur des feuilles de temps peut lire cette semaine.",
+  "p.timesheet.refused_submit_forbidden":
+    "Seule la personne à qui appartient une semaine peut l'envoyer pour approbation.",
+  "p.timesheet.refused_decide_forbidden":
+    "Vous ne pouvez pas décider de cette semaine : il faut le droit d'approuver les feuilles de temps, et personne ne décide de sa propre semaine.",
+  "p.timesheet.refused_submit_conflict":
+    "Cette semaine a déjà été envoyée pour approbation ou approuvée ; elle a été relue.",
+  "p.timesheet.refused_decide_conflict":
+    "Cette semaine n'attend plus de décision ; elle a été relue.",
+  "p.timesheet.refused_not_addressable":
+    "Votre identité de connexion n'a pas de référence de personne, il n'y a donc pas de feuille de temps à afficher.",
+  "p.timesheet.refused_read_invalid":
+    "Le service n'a pas accepté cette semaine ou cette personne.",
+  "p.timesheet.refused_submit_invalid":
+    "La semaine n'a pas été envoyée : aucun temps n'y est saisi.",
+  "p.timesheet.refused_decide_invalid":
+    "Le service n'a pas accepté la décision : renvoyer une semaine exige une raison.",
 };

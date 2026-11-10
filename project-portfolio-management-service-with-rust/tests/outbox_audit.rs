@@ -12,7 +12,7 @@
 //! `#[ignore]`d: boots the app against Postgres. Run with
 //! `cargo test --test outbox_audit -- --ignored`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::{audit_logs, plans};
 use project_portfolio_management::streaming;

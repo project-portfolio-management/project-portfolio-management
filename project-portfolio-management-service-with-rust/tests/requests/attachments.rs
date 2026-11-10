@@ -4,7 +4,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use axum::body::Bytes;
 use project_portfolio_management::app::App;
 use project_portfolio_management::artifacts::sha256_hex;

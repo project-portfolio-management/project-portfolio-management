@@ -6,7 +6,7 @@
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via `DATABASE_URL`. Run with
 //! `cargo test --test oidc_provider -- --ignored`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use axum::{Json, Router, routing::get};
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use project_portfolio_management::app::App;

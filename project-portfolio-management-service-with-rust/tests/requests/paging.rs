@@ -1,7 +1,7 @@
 //! RM-12b: `include` on a single task read. (Paging of every list is checked, from the
 //! `OpenAPI` document, by `tests/list_paging.rs`.)
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;

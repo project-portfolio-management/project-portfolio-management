@@ -20,7 +20,7 @@ include = ["src/**/*", "README.md"]
 
 [workspace.dependencies]
 # The plumbing every service shares. `sea-orm` is transitional, until this crate has moved to sqlx.
-axa = { version = "0.9", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "sea-orm"] }
+axa = { version = "0.10", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "sea-orm"] }
 
 [dependencies]
 # Keyed integrity MACs with production-grade key handling — one audited
@@ -153,7 +153,8 @@ required-features = []
 # token through the real guard without a Keycloak container. Tests only.
 authentication-verifier = { version = "0.9.1", default-features = false, features = ["test-idp"] }
 criterion = { version = "0.8", features = ["html_reports"] }
-axa = { workspace = true, features = ["testing"] }
+axa = { workspace = true }
+axa-test = { version = "0.1" }
 # Name the `TestServer` type in shared request-test helpers.
 axum-test = { version = "21" }
 # `#[tokio::test]` + a local ephemeral-port HTTP listener for the boot-time key-set fetch tests.

@@ -9,7 +9,7 @@
 //! `#[ignore]`d — needs PostgreSQL. `cargo test --test cross_plan -- --ignored`.
 #![cfg(feature = "paseto")]
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;

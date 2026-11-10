@@ -7,7 +7,7 @@
 //! unit test `discussion::tests::only_the_author_may_change_a_comment`.
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;

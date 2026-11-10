@@ -12,7 +12,7 @@
 //! `DATABASE_URL`. Run with
 //! `cargo test --test hardening -- --ignored`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use serial_test::serial;
 

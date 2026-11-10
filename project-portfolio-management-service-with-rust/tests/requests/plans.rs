@@ -1,6 +1,6 @@
 //! Request-level integration tests over the `/api/plans`
 //! endpoints (spec §6 / §9), in the request-test style
-//! (`axa::testing`, as in the authentication-service sibling).
+//! (`axa-test`, as in the authentication-service sibling).
 //!
 //! These boot the app against the `test` environment, which needs a
 //! reachable PostgreSQL (`DATABASE_URL`; override with
@@ -15,7 +15,7 @@
 //! The blank-name → `422` contract is additionally pinned un-gated by the
 //! DB-free unit tests in `src/controllers/plans.rs`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;

@@ -4,7 +4,7 @@
 //! `#[ignore]`d: boots the app, so it needs PostgreSQL via `DATABASE_URL`. Run with
 //! `cargo test --test sqlx_layer -- --ignored --test-threads=1`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::compliance::audit_integrity::verify;
 use project_portfolio_management::models::audit_logs::Model as AuditModel;

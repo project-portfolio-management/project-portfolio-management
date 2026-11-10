@@ -11,7 +11,7 @@
     reason = "request-level test: long, linear, short names; recorded under CQ-14"
 )]
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use axum::body::Bytes;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::audit_logs;

@@ -3,7 +3,7 @@
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::starter_templates::starters;
 use serde_json::{Value, json};

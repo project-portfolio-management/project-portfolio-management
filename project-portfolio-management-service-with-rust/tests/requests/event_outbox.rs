@@ -14,7 +14,7 @@
 //! The pure envelope→event mapping and the transport-string parsing are
 //! pinned DB-free in `src/models/event_outbox.rs` and `src/streaming.rs`.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::plans;
 use project_portfolio_management::models::event_outbox;

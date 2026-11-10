@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 10 November (axa 0.10)
+
+- **axa 0.9.1 → 0.10.0.** The test helpers left axa's `testing` feature for their own crate: the dev-dependency is now `axa-test` 0.1, and the 121 test files import `axa_test::prelude::*` instead of `axa::testing::prelude::*`. axa's parts were renamed (`axa-outbox` is now `axa-transactional-outbox`, `axa-idempotency` is `axa-idempotency-key`, and so on); the `axa::` paths, features and table names are the same, so there is no migration and no change in behaviour. `axum-test` stays at 21, which `axa-test` uses.
+- Not done: the 0.1 → 0.2 outbox index-name clash that migration 109 works round is not fixed upstream in 0.10, and is not yet reported upstream.
+- Verified: fmt, clippy (all features), 1,256 unit tests, `cargo deny`, the whole database suite (`mod`) and the other database test binaries. Not tested: the Fluvio relay (needs a broker).
+
 ### 9 November (axa 0.9: the outbox keeps a record)
 
 - **axa 0.7 → 0.9.1**, with `axa-outbox` 0.2, `axa-idempotency` 0.2.1 and `axa-worker` 0.2. `axum-test` stays at 21, which axa 0.9 still uses.

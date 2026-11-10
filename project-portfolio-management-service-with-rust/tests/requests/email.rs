@@ -5,7 +5,7 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`. The sender and the sender address are
 //! process-wide, so the test restores both.
 
-use axa::testing::prelude::*;
+use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::controllers::email_deliveries::{Delivered, deliver, run_due};
 use project_portfolio_management::email::{self, RecordingSender, SendError};

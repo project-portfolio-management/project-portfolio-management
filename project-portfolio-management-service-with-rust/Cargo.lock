@@ -581,22 +581,21 @@ dependencies = [
 
 [[package]]
 name = "axa"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cb4433db343fa45b24c649074a6b98c84e7944cbc58d318cc99c22aff45c694"
+checksum = "749003a8ad036a3290cfa8ba199784bb6cc3cb981dbafaa40aced8cefeb0d48f"
 dependencies = [
  "async-trait",
  "axa-cursor-pagination",
  "axa-environment",
- "axa-idempotency",
- "axa-openapi",
- "axa-outbox",
- "axa-problem",
- "axa-ratelimit",
+ "axa-idempotency-key",
+ "axa-openapi-docs",
+ "axa-postgres-job-queue",
+ "axa-problem-details-for-http-apis",
+ "axa-request-rate-limit",
  "axa-seaorm",
- "axa-worker",
+ "axa-transactional-outbox",
  "axum",
- "axum-test",
  "clap",
  "hyper",
  "hyper-util",
@@ -632,12 +631,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aeb36293430bafb06d1e29f5e213623d127444cdd234003b413a46207c03bbd3"
 
 [[package]]
-name = "axa-idempotency"
+name = "axa-idempotency-key"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1f992078a727402ad9cb7b21591766ec31bc3610a0217a1a5a5f79abbaeda80"
+checksum = "f6b16134fa6e2994dd5166fec367dd30b103f04d78a3fc40f5267befa3c4cad3"
 dependencies = [
- "axa-problem",
+ "axa-problem-details-for-http-apis",
  "axum",
  "serde_json",
  "sha2 0.11.1",
@@ -648,10 +647,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "axa-openapi"
+name = "axa-openapi-docs"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc93ebcfb0ee5fe009ae402d8880ba3cfe081950c8f6d40476e278e7983429e5"
+checksum = "02a59c83674ffe57cae04ad1f3a1d6caa3c57a760f55633940348e54a81376ff"
 dependencies = [
  "axum",
  "serde_json",
@@ -659,12 +658,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "axa-outbox"
+name = "axa-postgres-job-queue"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebe7457515444e509c0a1df79f5c6a79c28c54cd794adc8ed3eda8a2af3422cf"
+checksum = "0c39e78f9f48c36920f0d2c139797b21fc477b72519e0f0b6d0b03f809ed739f"
 dependencies = [
- "sea-orm",
  "serde_json",
  "sqlx",
  "tokio",
@@ -673,10 +671,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "axa-problem"
+name = "axa-problem-details-for-http-apis"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb39b7bacf93de6ee4fc19e1816be36cb9b43db4cb75d9f9cb85560130c01025"
+checksum = "5f38120df3cab7c23d904781dab36f2b11b6167b260eaf9b89284539e32f759f"
 dependencies = [
  "axum",
  "serde",
@@ -684,12 +682,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "axa-ratelimit"
+name = "axa-request-rate-limit"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "491a6eb3b9e613d12da6df0eea115ded93cdddf42f16157e272663a75bfbfab6"
+checksum = "b21a6d7122840293b59a2eabd62e92865a6945e4dfa8101996deb41d203ab04c"
 dependencies = [
- "axa-problem",
+ "axa-problem-details-for-http-apis",
  "axum",
  "serde_json",
  "tracing",
@@ -712,11 +710,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "axa-worker"
+name = "axa-test"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4d675f10aa4fdfa3ae28b903c5eb0173026afbc247992b348dc9ec539981000"
+dependencies = [
+ "axa",
+ "axum-test",
+]
+
+[[package]]
+name = "axa-transactional-outbox"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cc0632f7f7ef8158fc817aef410be52936e63097f737585485aaa06c606646f"
+checksum = "4fa6844d712f88b7884a3b9809203167e66c67448daea1d719bcccca61d92dc3"
 dependencies = [
+ "sea-orm",
  "serde_json",
  "sqlx",
  "tokio",
@@ -4552,6 +4561,7 @@ dependencies = [
  "async-trait",
  "authentication-verifier",
  "axa",
+ "axa-test",
  "axum",
  "axum-test",
  "base64 0.23.1",

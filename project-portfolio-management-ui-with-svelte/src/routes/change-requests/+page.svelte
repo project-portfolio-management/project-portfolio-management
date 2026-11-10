@@ -1,7 +1,7 @@
 <!--
   Change requests (`/change-requests`, IR-4): every change request across the plans you can read, newest
-  first, with the count by status and how many await a decision. Read-only here: drafting, submitting and
-  deciding are done through the API.
+  first, with the count by status and how many await a decision. Read-only here: each title opens its plan's
+  change requests (`/plans/[pid]/change-requests`, NC-1 slice 2), where they are drafted, submitted and decided.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -45,7 +45,7 @@
 </script>
 
 {#snippet crTitle({ row, formatted }: DataGridCellContext)}
-  <a href={localeHref(`/plans/${row.plan_pid}/governance`)} aria-label={`${formatted}: ${t("p.change_requests.plan_link")}`}>{formatted}</a>
+  <a href={localeHref(`/plans/${row.plan_pid}/change-requests`)} aria-label={`${formatted}: ${t("p.change_requests.plan_link")}`}>{formatted}</a>
 {/snippet}
 
 

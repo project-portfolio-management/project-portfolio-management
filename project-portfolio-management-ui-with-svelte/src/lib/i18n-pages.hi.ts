@@ -3651,6 +3651,87 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.enum.cr_kind.cost": "लागत",
   "l.enum.cr_kind.quality": "गुणवत्ता",
   "l.enum.cr_kind.other": "अन्य",
+  "p.plan_change_requests.title_ppm": "योजना के परिवर्तन अनुरोध — PPM",
+  "p.plan_change_requests.title": "योजना के परिवर्तन अनुरोध",
+  "p.plan_change_requests.intro":
+    "इस योजना के परिवर्तन अनुरोध, सबसे नए पहले। एक अनुरोध का मसौदा बनाएँ और मसौदा रहते हुए उसे संपादित करें; उसे किसी नामित अनुमोदक को भेजें, जो आप नहीं हैं; अनुमोदक उसकी समीक्षा करता है और कारण सहित निर्णय दर्ज करता है। खुला अनुरोध वापस लिया जा सकता है।",
+  "p.plan_change_requests.register_link": "सभी योजनाओं के परिवर्तन अनुरोध",
+  "p.plan_change_requests.could_not_load":
+    "योजना के परिवर्तन अनुरोध लोड नहीं हो सके",
+  "p.plan_change_requests.could_not_save": "परिवर्तन अनुरोध सहेजा नहीं जा सका",
+  "p.plan_change_requests.steps": "चरण",
+  "p.plan_change_requests.draft_heading": "परिवर्तन अनुरोध का मसौदा बनाएँ",
+  "p.plan_change_requests.edit_heading": "मसौदा संपादित करें",
+  "p.plan_change_requests.f_description": "विवरण (क्या बदलना है)",
+  "p.plan_change_requests.f_reason": "कारण (परिवर्तन क्यों आवश्यक है)",
+  "p.plan_change_requests.f_days":
+    "अनुसूची पर प्रभाव, कार्य दिवसों में (ऋणात्मक मान समाप्ति को पहले लाता है; आकलन न हुआ हो तो खाली छोड़ें)",
+  "p.plan_change_requests.f_cost":
+    "लागत पर प्रभाव (आकलन न हुआ हो तो खाली छोड़ें)",
+  "p.plan_change_requests.f_currency": "लागत की मुद्रा (तीन अक्षर, जैसे EUR)",
+  "p.plan_change_requests.f_summary": "प्रभाव का सारांश",
+  "p.plan_change_requests.save_draft": "मसौदा सहेजें",
+  "p.plan_change_requests.drafted": "परिवर्तन अनुरोध का मसौदा बन गया।",
+  "p.plan_change_requests.saved": "मसौदा सहेजा गया।",
+  "p.plan_change_requests.problem_title_required":
+    "परिवर्तन अनुरोध को एक शीर्षक दें।",
+  "p.plan_change_requests.problem_description_required":
+    "बताएँ कि क्या बदलना है।",
+  "p.plan_change_requests.problem_reason_required":
+    "बताएँ कि परिवर्तन क्यों आवश्यक है।",
+  "p.plan_change_requests.problem_days_not_whole":
+    "अनुसूची पर प्रभाव कार्य दिवसों की पूर्ण संख्या होनी चाहिए।",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "अनुसूची पर प्रभाव -3650 से 3650 कार्य दिवसों के बीच होना चाहिए।",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "लागत पर प्रभाव कोई राशि नहीं है।",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "लागत पर प्रभाव के साथ उसकी मुद्रा चाहिए।",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "मुद्रा के साथ लागत पर प्रभाव चाहिए।",
+  "p.plan_change_requests.problem_currency_invalid":
+    "मुद्रा तीन अक्षरों का कोड है, जैसे EUR, JPY या GBP।",
+  "p.plan_change_requests.steps_heading": "{title} के चरण",
+  "p.plan_change_requests.status_now": "अभी इसकी स्थिति: {status}।",
+  "p.plan_change_requests.decided": "{who} द्वारा {on} को निर्णय: {reason}",
+  "p.plan_change_requests.no_steps":
+    "इस परिवर्तन अनुरोध पर कोई और चरण नहीं उठाया जा सकता।",
+  "p.plan_change_requests.who_note":
+    "कौन-सा चरण कौन उठा सकता है, यह सेवा तय करती है: केवल मसौदा बनाने वाला व्यक्ति उसे संपादित करता है, भेजता है या वापस लेता है (प्रशासक भी उसे वापस ले सकता है), और केवल नामित अनुमोदक समीक्षा या निर्णय करता है।",
+  "p.plan_change_requests.submit_heading": "निर्णय के लिए भेजें",
+  "p.plan_change_requests.f_approver":
+    "अनुमोदक (person: या worker: संदर्भ, मसौदा बनाने वाला व्यक्ति नहीं)",
+  "p.plan_change_requests.submit": "भेजें",
+  "p.plan_change_requests.submitted": "परिवर्तन अनुरोध भेज दिया गया।",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "अनुमोदक को person: या worker: संदर्भ के रूप में बताएँ।",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "अनुमोदक वह व्यक्ति नहीं हो सकता जिसने परिवर्तन माँगा।",
+  "p.plan_change_requests.review": "समीक्षा शुरू करें",
+  "p.plan_change_requests.review_started": "समीक्षा शुरू हो गई है।",
+  "p.plan_change_requests.decide_heading": "निर्णय दर्ज करें",
+  "p.plan_change_requests.f_decision": "निर्णय",
+  "p.plan_change_requests.approve": "अनुमोदित करें",
+  "p.plan_change_requests.reject": "अस्वीकार करें",
+  "p.plan_change_requests.f_decision_reason":
+    "निर्णय का कारण (कम से कम 10 अक्षर)",
+  "p.plan_change_requests.decide": "निर्णय सहेजें",
+  "p.plan_change_requests.decision_recorded": "निर्णय दर्ज हो गया।",
+  "p.plan_change_requests.problem_decision_reason":
+    "निर्णय के लिए कम से कम 10 अक्षरों का कारण चाहिए।",
+  "p.plan_change_requests.withdraw": "परिवर्तन अनुरोध वापस लें",
+  "p.plan_change_requests.withdrawn": "परिवर्तन अनुरोध वापस ले लिया गया।",
+  "p.plan_change_requests.close_steps": "चरण बंद करें",
+  "p.plan_change_requests.refused_requester":
+    "यह केवल वही व्यक्ति कर सकता है जिसने इस परिवर्तन अनुरोध का मसौदा बनाया।",
+  "p.plan_change_requests.refused_withdraw":
+    "इसे केवल वही व्यक्ति जिसने इस परिवर्तन अनुरोध का मसौदा बनाया, या कोई प्रशासक, वापस ले सकता है।",
+  "p.plan_change_requests.refused_approver":
+    "केवल नामित अनुमोदक ही इस परिवर्तन अनुरोध की समीक्षा या निर्णय कर सकता है।",
+  "p.plan_change_requests.refused_state":
+    "यह परिवर्तन अनुरोध आगे बढ़ चुका है और वह चरण अब उपलब्ध नहीं है; सूची फिर से पढ़ी गई है।",
+  "p.plan_change_requests.refused_invalid":
+    "सेवा ने दर्ज जानकारी स्वीकार नहीं की: फ़ील्ड जाँचें और फिर से प्रयास करें।",
   "p.change_requests.change_requests_ppm": "परिवर्तन अनुरोध — PPM",
   "p.change_requests.change_requests": "परिवर्तन अनुरोध",
   "p.change_requests.intro":
@@ -3677,7 +3758,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.change_requests.no_approver": "अभी नामित नहीं",
   "p.change_requests.no_impact": "कोई प्रभाव नहीं बताया गया",
   "p.change_requests.impact_days": "{days} कार्य-दिवस",
-  "p.change_requests.plan_link": "योजना का शासन पृष्ठ खोलें",
+  "p.change_requests.plan_link": "योजना के परिवर्तन अनुरोध खोलें",
   "p.director_pack.director_packs_ppm": "निदेशक पैक — PPM",
   "p.director_pack.director_packs": "निदेशक पैक",
   "p.director_pack.intro":

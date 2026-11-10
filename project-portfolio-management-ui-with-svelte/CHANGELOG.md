@@ -9,6 +9,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a plan's change requests: draft, submit, decide, withdraw (NC-1 slice 2, IR-4, 2026-11-10)
+
+`/plans/[pid]/change-requests` lists the plan's change requests and has one form to draft one or edit a draft (the PUT
+replaces every field, so all are sent, and the request's `edits` are sent back so an edit does not clear them). "Steps"
+on a row opens what its status allows: submit (naming the approver), start the review, record the decision (approve
+or reject, a reason of at least 10 characters), withdraw. `src/lib/change-request-view.ts` holds the checks, the body
+(an empty impact is null, a cost goes through `toMinor` in its own currency), the steps per status and the refusal
+sentence for a 403, 409 or 422. Linked from the plan page (module `governance`) and from the titles in the
+`/change-requests` register, whose header comment now says where drafting and deciding happen. Tests: unit tests of
+the view module and the client paths, and `tests/e2e/plan-change-requests.spec.ts` (five tests: the whole flow with
+three refusals made on the page, withdraw and a 409, the register's link, Welsh, axe with the steps open). The Welsh
+specs allow "cost", the same word in Welsh (the kind select shows it). Not done:
+implement, links, preview and baseline; a confirmation before withdrawing; an approver picker; steps are offered by
+status, not by who the caller is. Not verified: against a real service. The 56 new strings in seven languages are
+machine drafts, and no speaker has read them.
+
 ### Changed — Lily headless 0.8; the command palette keeps its keys (BR-14, 2026-11-10)
 
 `@lilydesignsystem/svelte-headless` 0.6.1 to 0.8.0. From 0.7 Lily's `Combobox` handles its own keys on the input, and

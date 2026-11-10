@@ -67,7 +67,7 @@ const GERMAN = [
  * draft; a reviewer may change them (governance/translation-reviews/).
  */
 const SAME: Partial<Record<string, ReadonlySet<string>>> = {
-  "cy-001": new Set(["Project", "Active", "band", "capex", "opex"]),
+  "cy-001": new Set(["Project", "Active", "band", "cost", "capex", "opex"]),
   "de-001": new Set(GERMAN),
   "de-de": new Set(GERMAN),
   "es-001": new Set([

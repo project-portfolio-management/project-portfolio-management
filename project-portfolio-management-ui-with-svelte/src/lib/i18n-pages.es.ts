@@ -3757,6 +3757,90 @@ export const PAGES_ES: Record<PageKey, string> = {
   "l.enum.cr_kind.cost": "coste",
   "l.enum.cr_kind.quality": "calidad",
   "l.enum.cr_kind.other": "otro",
+  "p.plan_change_requests.title_ppm": "Solicitudes de cambio del plan — PPM",
+  "p.plan_change_requests.title": "Solicitudes de cambio del plan",
+  "p.plan_change_requests.intro":
+    "Las solicitudes de cambio de este plan, las más recientes primero. Redacte una y edítela mientras sea un borrador; envíela a una persona aprobadora designada, que no sea usted; esa persona la revisa y registra la decisión con un motivo. Una solicitud abierta se puede retirar.",
+  "p.plan_change_requests.register_link":
+    "Solicitudes de cambio de todos los planes",
+  "p.plan_change_requests.could_not_load":
+    "No se pudieron cargar las solicitudes de cambio del plan",
+  "p.plan_change_requests.could_not_save":
+    "No se pudo guardar la solicitud de cambio",
+  "p.plan_change_requests.steps": "Pasos",
+  "p.plan_change_requests.draft_heading": "Redactar una solicitud de cambio",
+  "p.plan_change_requests.edit_heading": "Editar el borrador",
+  "p.plan_change_requests.f_description": "Descripción (qué ha de cambiar)",
+  "p.plan_change_requests.f_reason": "Motivo (por qué se necesita el cambio)",
+  "p.plan_change_requests.f_days":
+    "Impacto en el calendario en días hábiles (negativo adelanta el final; déjelo vacío si no se ha evaluado)",
+  "p.plan_change_requests.f_cost":
+    "Impacto en el coste (déjelo vacío si no se ha evaluado)",
+  "p.plan_change_requests.f_currency":
+    "Moneda del coste (tres letras, por ejemplo EUR)",
+  "p.plan_change_requests.f_summary": "Resumen del impacto",
+  "p.plan_change_requests.save_draft": "Guardar el borrador",
+  "p.plan_change_requests.drafted": "Se redactó la solicitud de cambio.",
+  "p.plan_change_requests.saved": "Se guardó el borrador.",
+  "p.plan_change_requests.problem_title_required":
+    "Dé un título a la solicitud de cambio.",
+  "p.plan_change_requests.problem_description_required":
+    "Indique qué ha de cambiar.",
+  "p.plan_change_requests.problem_reason_required":
+    "Indique por qué se necesita el cambio.",
+  "p.plan_change_requests.problem_days_not_whole":
+    "El impacto en el calendario es un número entero de días hábiles.",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "El impacto en el calendario debe estar entre -3650 y 3650 días hábiles.",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "El impacto en el coste no es un importe.",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "Un impacto en el coste necesita su moneda.",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "Una moneda necesita un impacto en el coste.",
+  "p.plan_change_requests.problem_currency_invalid":
+    "La moneda es un código de tres letras, por ejemplo EUR, JPY o GBP.",
+  "p.plan_change_requests.steps_heading": "Pasos para {title}",
+  "p.plan_change_requests.status_now": "Ahora está en estado {status}.",
+  "p.plan_change_requests.decided": "Decidido por {who} el {on}: {reason}",
+  "p.plan_change_requests.no_steps":
+    "No se puede dar ningún paso más con esta solicitud de cambio.",
+  "p.plan_change_requests.who_note":
+    "El servicio decide quién puede dar cada paso: solo quien la redactó la edita, la envía o la retira (una persona administradora también puede retirarla), y solo la persona aprobadora designada la revisa o decide.",
+  "p.plan_change_requests.submit_heading": "Enviar para decisión",
+  "p.plan_change_requests.f_approver":
+    "Persona aprobadora (una referencia person: o worker:, no quien la redactó)",
+  "p.plan_change_requests.submit": "Enviar",
+  "p.plan_change_requests.submitted": "Se envió la solicitud de cambio.",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "Indique la persona aprobadora como referencia person: o worker:.",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "La persona aprobadora no puede ser quien pidió el cambio.",
+  "p.plan_change_requests.review": "Empezar la revisión",
+  "p.plan_change_requests.review_started": "La revisión ha empezado.",
+  "p.plan_change_requests.decide_heading": "Registrar la decisión",
+  "p.plan_change_requests.f_decision": "Decisión",
+  "p.plan_change_requests.approve": "Aprobar",
+  "p.plan_change_requests.reject": "Rechazar",
+  "p.plan_change_requests.f_decision_reason":
+    "Motivo de la decisión (al menos 10 caracteres)",
+  "p.plan_change_requests.decide": "Guardar la decisión",
+  "p.plan_change_requests.decision_recorded": "Se registró la decisión.",
+  "p.plan_change_requests.problem_decision_reason":
+    "Una decisión necesita un motivo de al menos 10 caracteres.",
+  "p.plan_change_requests.withdraw": "Retirar la solicitud de cambio",
+  "p.plan_change_requests.withdrawn": "Se retiró la solicitud de cambio.",
+  "p.plan_change_requests.close_steps": "Cerrar los pasos",
+  "p.plan_change_requests.refused_requester":
+    "Solo quien redactó esta solicitud de cambio puede hacerlo.",
+  "p.plan_change_requests.refused_withdraw":
+    "Solo quien redactó esta solicitud de cambio, o una persona administradora, puede retirarla.",
+  "p.plan_change_requests.refused_approver":
+    "Solo la persona aprobadora designada puede revisar o decidir esta solicitud de cambio.",
+  "p.plan_change_requests.refused_state":
+    "Esta solicitud de cambio ha avanzado y ese paso ya no está disponible; se ha vuelto a leer la lista.",
+  "p.plan_change_requests.refused_invalid":
+    "El servicio no aceptó lo introducido: revise los campos e inténtelo de nuevo.",
   "p.change_requests.change_requests_ppm": "Solicitudes de cambio — PPM",
   "p.change_requests.change_requests": "Solicitudes de cambio",
   "p.change_requests.intro":
@@ -3786,7 +3870,7 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.change_requests.no_approver": "Aún sin designar",
   "p.change_requests.no_impact": "Sin impacto declarado",
   "p.change_requests.impact_days": "{days} días hábiles",
-  "p.change_requests.plan_link": "Abrir la página de gobernanza del plan",
+  "p.change_requests.plan_link": "Abrir las solicitudes de cambio del plan",
   "p.director_pack.director_packs_ppm": "Dosieres para la dirección — PPM",
   "p.director_pack.director_packs": "Dosieres para la dirección",
   "p.director_pack.intro":

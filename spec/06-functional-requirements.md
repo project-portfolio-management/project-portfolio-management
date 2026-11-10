@@ -181,7 +181,7 @@ hang off **any** plan.
   take a new **baseline** (never replacing one) only when a person chooses to;
   the decision log keeps who decided, when and why; impacts are stated, not
   guessed (the schedule impact may be shown as a *what-if* preview from the
-  existing scheduler and is labelled a forecast). **Built (IR-4, IR-5):** `/api/plans/{pid}/change-requests` with the actions `submit`, `review`, `decision`, `implement`, `withdraw`, `links`, `preview` and `baseline`, and `GET /api/change-requests` across plans; the named approver is the only person who reviews or decides, and not even an administrator decides for them. **Not built:** screens to draft, submit and decide; an approval chain of more than one approver; a notification to the approver.
+  existing scheduler and is labelled a forecast). **Built (IR-4, IR-5):** `/api/plans/{pid}/change-requests` with the actions `submit`, `review`, `decision`, `implement`, `withdraw`, `links`, `preview` and `baseline`, and `GET /api/change-requests` across plans; the named approver is the only person who reviews or decides, and not even an administrator decides for them. **Screen (NC-1 slice 2):** `/plans/{pid}/change-requests` drafts, edits a draft, submits, reviews, decides and withdraws (UI spec); implement, links, preview and baseline have no screen yet. **Not built:** an approval chain of more than one approver; a notification to the approver.
 - **FR-15 Timeline (derived).** `GET /api/plans/{pid}/timeline`
   returns a Gantt-style projection: goals with a `target_date` as
   milestones + tasks with `due_date` / date ranges as bars. Read-only;

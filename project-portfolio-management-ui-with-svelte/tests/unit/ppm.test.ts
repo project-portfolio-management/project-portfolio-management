@@ -261,6 +261,34 @@ describe("PpmClient issue paths (NC-1, IR-2, IR-3)", () => {
   });
 });
 
+describe("PpmClient change-request paths (NC-1 slice 2, IR-4)", () => {
+  it("lists, drafts, replaces a draft, submits, reviews, decides and withdraws", async () => {
+    const { ppm, calls } = recordingClient();
+    const body = { title: "T", description: "D", reason: "R" };
+    await ppm.planChangeRequests("p1");
+    await ppm.draftChangeRequest("p1", body);
+    await ppm.updateChangeRequest("p1", "c1", body);
+    await ppm.submitChangeRequest("p1", "c1", { approver_ref: "person:bob" });
+    await ppm.reviewChangeRequest("p1", "c1");
+    await ppm.decideChangeRequest("p1", "c1", {
+      decision: "approve",
+      reason: "Within tolerance",
+    });
+    await ppm.withdrawChangeRequest("p1", "c1");
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/change-requests",
+      "POST /api/plans/p1/change-requests",
+      "PUT /api/plans/p1/change-requests/c1",
+      "POST /api/plans/p1/change-requests/c1/submit",
+      "POST /api/plans/p1/change-requests/c1/review",
+      "POST /api/plans/p1/change-requests/c1/decision",
+      "POST /api/plans/p1/change-requests/c1/withdraw",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

@@ -3756,6 +3756,92 @@ export const PAGES_DE: Record<PageKey, string> = {
   "l.enum.cr_kind.cost": "Kosten",
   "l.enum.cr_kind.quality": "Qualität",
   "l.enum.cr_kind.other": "Sonstiges",
+  "p.plan_change_requests.title_ppm": "Änderungsanträge des Plans — PPM",
+  "p.plan_change_requests.title": "Änderungsanträge des Plans",
+  "p.plan_change_requests.intro":
+    "Die Änderungsanträge dieses Plans, die neuesten zuerst. Entwerfen Sie einen und bearbeiten Sie ihn, solange er ein Entwurf ist; reichen Sie ihn bei einer benannten genehmigenden Person ein, die nicht Sie sind; diese prüft ihn und hält die Entscheidung mit einer Begründung fest. Ein offener Antrag kann zurückgezogen werden.",
+  "p.plan_change_requests.register_link": "Änderungsanträge aller Pläne",
+  "p.plan_change_requests.could_not_load":
+    "Die Änderungsanträge des Plans konnten nicht geladen werden",
+  "p.plan_change_requests.could_not_save":
+    "Der Änderungsantrag konnte nicht gespeichert werden",
+  "p.plan_change_requests.steps": "Schritte",
+  "p.plan_change_requests.draft_heading": "Änderungsantrag entwerfen",
+  "p.plan_change_requests.edit_heading": "Entwurf bearbeiten",
+  "p.plan_change_requests.f_description": "Beschreibung (was sich ändern soll)",
+  "p.plan_change_requests.f_reason":
+    "Begründung (warum die Änderung nötig ist)",
+  "p.plan_change_requests.f_days":
+    "Auswirkung auf den Zeitplan in Arbeitstagen (negativ zieht das Ende vor; leer lassen, wenn nicht bewertet)",
+  "p.plan_change_requests.f_cost":
+    "Auswirkung auf die Kosten (leer lassen, wenn nicht bewertet)",
+  "p.plan_change_requests.f_currency":
+    "Währung der Kosten (drei Buchstaben, zum Beispiel EUR)",
+  "p.plan_change_requests.f_summary": "Zusammenfassung der Auswirkung",
+  "p.plan_change_requests.save_draft": "Entwurf speichern",
+  "p.plan_change_requests.drafted": "Der Änderungsantrag wurde entworfen.",
+  "p.plan_change_requests.saved": "Der Entwurf wurde gespeichert.",
+  "p.plan_change_requests.problem_title_required":
+    "Geben Sie dem Änderungsantrag einen Titel.",
+  "p.plan_change_requests.problem_description_required":
+    "Geben Sie an, was sich ändern soll.",
+  "p.plan_change_requests.problem_reason_required":
+    "Geben Sie an, warum die Änderung nötig ist.",
+  "p.plan_change_requests.problem_days_not_whole":
+    "Die Auswirkung auf den Zeitplan ist eine ganze Zahl von Arbeitstagen.",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "Die Auswirkung auf den Zeitplan muss zwischen -3650 und 3650 Arbeitstagen liegen.",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "Die Auswirkung auf die Kosten ist kein Betrag.",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "Eine Auswirkung auf die Kosten braucht ihre Währung.",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "Eine Währung braucht eine Auswirkung auf die Kosten.",
+  "p.plan_change_requests.problem_currency_invalid":
+    "Die Währung ist ein Code aus drei Buchstaben, zum Beispiel EUR, JPY oder GBP.",
+  "p.plan_change_requests.steps_heading": "Schritte für {title}",
+  "p.plan_change_requests.status_now": "Aktueller Stand: {status}.",
+  "p.plan_change_requests.decided": "Entschieden von {who} am {on}: {reason}",
+  "p.plan_change_requests.no_steps":
+    "Für diesen Änderungsantrag ist kein weiterer Schritt möglich.",
+  "p.plan_change_requests.who_note":
+    "Der Dienst entscheidet, wer welchen Schritt gehen darf: Nur die Person, die ihn entworfen hat, bearbeitet, reicht ein oder zieht zurück (eine Administratorin oder ein Administrator darf ihn ebenfalls zurückziehen), und nur die benannte genehmigende Person prüft oder entscheidet.",
+  "p.plan_change_requests.submit_heading": "Zur Entscheidung einreichen",
+  "p.plan_change_requests.f_approver":
+    "Genehmigende Person (eine person:- oder worker:-Referenz, nicht die Person, die ihn entworfen hat)",
+  "p.plan_change_requests.submit": "Einreichen",
+  "p.plan_change_requests.submitted": "Der Änderungsantrag wurde eingereicht.",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "Nennen Sie die genehmigende Person als person:- oder worker:-Referenz.",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "Die genehmigende Person kann nicht die Person sein, die die Änderung beantragt hat.",
+  "p.plan_change_requests.review": "Prüfung beginnen",
+  "p.plan_change_requests.review_started": "Die Prüfung hat begonnen.",
+  "p.plan_change_requests.decide_heading": "Entscheidung festhalten",
+  "p.plan_change_requests.f_decision": "Entscheidung",
+  "p.plan_change_requests.approve": "Genehmigen",
+  "p.plan_change_requests.reject": "Ablehnen",
+  "p.plan_change_requests.f_decision_reason":
+    "Begründung der Entscheidung (mindestens 10 Zeichen)",
+  "p.plan_change_requests.decide": "Entscheidung speichern",
+  "p.plan_change_requests.decision_recorded":
+    "Die Entscheidung wurde festgehalten.",
+  "p.plan_change_requests.problem_decision_reason":
+    "Eine Entscheidung braucht eine Begründung von mindestens 10 Zeichen.",
+  "p.plan_change_requests.withdraw": "Änderungsantrag zurückziehen",
+  "p.plan_change_requests.withdrawn":
+    "Der Änderungsantrag wurde zurückgezogen.",
+  "p.plan_change_requests.close_steps": "Schritte schließen",
+  "p.plan_change_requests.refused_requester":
+    "Nur die Person, die diesen Änderungsantrag entworfen hat, kann das tun.",
+  "p.plan_change_requests.refused_withdraw":
+    "Nur die Person, die diesen Änderungsantrag entworfen hat, oder eine Administratorin bzw. ein Administrator kann ihn zurückziehen.",
+  "p.plan_change_requests.refused_approver":
+    "Nur die benannte genehmigende Person kann diesen Änderungsantrag prüfen oder entscheiden.",
+  "p.plan_change_requests.refused_state":
+    "Dieser Änderungsantrag ist weitergegangen, und dieser Schritt ist für ihn nicht mehr möglich; die Liste wurde neu gelesen.",
+  "p.plan_change_requests.refused_invalid":
+    "Der Dienst hat die Eingabe nicht angenommen: Prüfen Sie die Felder und versuchen Sie es erneut.",
   "p.change_requests.change_requests_ppm": "Änderungsanträge — PPM",
   "p.change_requests.change_requests": "Änderungsanträge",
   "p.change_requests.intro":
@@ -3783,7 +3869,7 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.change_requests.no_approver": "Noch nicht benannt",
   "p.change_requests.no_impact": "Keine Auswirkung angegeben",
   "p.change_requests.impact_days": "{days} Arbeitstage",
-  "p.change_requests.plan_link": "Governance-Seite des Plans öffnen",
+  "p.change_requests.plan_link": "Änderungsanträge des Plans öffnen",
   "p.director_pack.director_packs_ppm": "Vorstandsberichte — PPM",
   "p.director_pack.director_packs": "Vorstandsberichte",
   "p.director_pack.intro":

@@ -13,6 +13,7 @@ export const PLAN_LINKS = [
   { key: "tolerances", module: "governance" },
   { key: "escalations", module: "governance" },
   { key: "issues", module: "governance" },
+  { key: "change-requests", module: "governance" },
   { key: "ways-of-working", module: "governance" },
   { key: "governance-framework", module: "governance" },
   { key: "links", module: "governance" },

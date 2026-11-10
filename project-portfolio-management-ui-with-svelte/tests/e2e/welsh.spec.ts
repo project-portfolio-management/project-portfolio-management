@@ -33,6 +33,8 @@ const SAME = new Set([
   "English",
   // Catalogue words that are the same in Welsh, and the stub API's own error text (test data):
   "band",
+  // "cost" is the Welsh word too (the change-request kind; already on the unit catalogue allow-list).
+  "cost",
   "capex",
   "opex",
   "unhandled in stub",

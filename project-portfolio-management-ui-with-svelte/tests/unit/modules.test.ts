@@ -32,6 +32,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "tolerances",
       "escalations",
       "issues",
+      "change-requests",
       "ways-of-working",
       "governance-framework",
       "links",

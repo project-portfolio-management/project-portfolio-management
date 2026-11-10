@@ -1998,6 +1998,19 @@ only as search snippets.
   page; raise from a task (`source_task_pid`); `priority`; an owner picker; every later slice in the order above.
   **Not verified:** the stubbed service only (no run against a real service); CI; the Welsh is machine-written and
   unreviewed.
+  **Slice 2 built 2026-11-10 (change-request drafting and deciding, IR-4; NC-1 stays open).** New route
+  `/plans/[pid]/change-requests` (list, one draft/edit form, and a request's steps by status: submit naming the
+  approver, start the review, record the decision, withdraw), linked from the plan page and from the
+  `/change-requests` register rows, which stays read-only; typed `ChangeRequestBody`, submit and decision bodies and
+  seven client methods; `src/lib/change-request-view.ts` with unit tests; `tests/e2e/plan-change-requests.spec.ts`
+  (draft, refused draft, edit keeping what-if edits, refused and accepted submit, review, refused and accepted
+  decision, withdraw, 409, register link, Welsh, axe). 56 new catalogue keys in all eight page catalogues.
+  **Not done:** marking an approved change implemented; links to issues and risks; the what-if preview and attaching
+  edits; a baseline for an approved change; a confirmation before withdrawing; an approver picker (a typed `person:`
+  or `worker:` reference); hiding steps the caller may not take (the page does not know the caller; the service
+  refuses with 403, shown in words); every later slice in the order above.
+  **Not verified:** the stubbed service only (no run against a real service); CI; the Welsh and the six other
+  languages are machine-written and unreviewed.
 - [ ] **NC-2 (M) — Read-only MCP adapter.** It exposes registry, task, RAID,
   schedule and pack reads as MCP tools that call the existing API with the
   caller's token, so ABAC, privacy and handling marks apply unchanged. It runs

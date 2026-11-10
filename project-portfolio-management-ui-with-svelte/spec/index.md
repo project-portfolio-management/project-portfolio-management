@@ -177,9 +177,12 @@ match breakdown).
 
 /plans/[pid]/issues          the plan's issues register: raise, edit,
                              raise from a risk (NC-1 slice 1)
+/plans/[pid]/change-requests the plan's change requests: draft, edit a
+                             draft, submit, review, decide, withdraw
+                             (NC-1 slice 2)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 100):
+every page; `find src/routes -name +page.svelte` gives all 103):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -1564,3 +1567,38 @@ plan page (module `governance`) and from the title of each row in the all-plans 
 - **Tests:** `tests/unit/issue-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
   `tests/e2e/plan-issues.spec.ts` (raise, edit, the refused close, raise from a risk, the 409, Welsh, axe).
   The Welsh is machine-written and listed in `governance/welsh-translation-review.csv`.
+
+## Plan change requests: draft, submit, decide, withdraw (NC-1 slice 2, IR-4)
+
+`/plans/[pid]/change-requests` is the screen for the change-request routes (IR-4) that existed only at the API.
+It is linked from the plan page (module `governance`) and from the title of each row in the all-plans register at
+`/change-requests`, which stays read-only.
+
+- **List.** `GET /api/plans/{pid}/change-requests`: the plan's change requests, newest first, in a `DataTable`
+  with the kind and status as words, the stated impact (business days, and money in its own currency's minor
+  unit), the named approver and the age in calendar days.
+- **Draft and edit.** One form (`POST /api/plans/{pid}/change-requests`; `PUT …/{cr}` for an edit). Only a draft
+  can be edited, so the edit button is on draft rows only. Title, description and reason are required; the
+  schedule impact is a whole number of business days from -3650 to 3650 (negative pulls the finish in); a cost
+  needs a currency and a currency needs a cost; an empty impact is sent as null (not assessed), never zero. The
+  page checks these before sending (`src/lib/change-request-view.ts`); the service remains the authority. The
+  edit replaces every field, so what-if edits already attached to the request (`edits`) are sent back unchanged
+  rather than cleared. The body type `ChangeRequestBody` is checked against `openapi.json` by
+  `client-bodies.test.ts`.
+- **Steps.** Choosing "Steps" on a row opens that request's steps, offered by its status as the service's state
+  machine allows: a draft can be submitted (naming the approver as a `person:` or `worker:` reference, not the
+  requester) or withdrawn; a submitted one can be put under review, decided or withdrawn; one under review can
+  be decided or withdrawn; an approved one can be withdrawn. A decision is approve or reject with a reason of at
+  least 10 characters. A rejected, implemented or withdrawn request has no steps; its decision, if any, is shown.
+  The page does not know who the caller is, so it offers the steps by status only: the service refuses a step
+  the caller may not take (only the requester edits, submits or withdraws, besides an administrator for
+  withdraw; only the named approver reviews or decides).
+- **Refusals.** A 403 says who may take that step, a 409 says the request is no longer in a state that allows it
+  (and the list is read again), a 422 says what was not accepted, each in a catalogue sentence; the service's
+  own text is never shown.
+- **Not built in this slice:** marking an approved change implemented (`…/implement`); linking issues and risks
+  (`…/links`); the what-if forecast (`…/preview`) and attaching what-if edits; taking a baseline for an approved
+  change (`…/baseline`); a confirmation before withdrawing; picking the approver from a list of people.
+- **Tests:** `tests/unit/change-request-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/plan-change-requests.spec.ts` (draft, refused draft, edit, submit, review, decide, withdraw, the
+  409, Welsh, axe). The Welsh and the other six languages are machine-written and unreviewed.

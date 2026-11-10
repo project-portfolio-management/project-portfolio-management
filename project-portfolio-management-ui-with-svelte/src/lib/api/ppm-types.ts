@@ -1212,6 +1212,44 @@ export interface ChangeRequest {
   decided_by: string | null;
   decided_on: string | null;
   decision_reason: string | null;
+  /** The what-if edits attached, sent back unchanged on an edit so they are not cleared. */
+  edits?: unknown[] | null;
+  implemented_on?: string | null;
+  baseline_pid?: string | null;
+}
+
+/**
+ * `POST /api/plans/{pid}/change-requests` and `PUT …/change-requests/{cr}` (same fields; the PUT replaces them all);
+ * checked against the service's schema by `client-bodies.test.ts` (CQ-9). A null impact is "not assessed", not zero.
+ */
+export interface ChangeRequestBody {
+  title: string;
+  description: string;
+  reason: string;
+  kind?: ChangeRequest["kind"];
+  impact_schedule_days?: number | null;
+  impact_cost_minor?: number | null;
+  cost_currency?: string | null;
+  impact_summary?: string | null;
+  edits?: unknown[] | null;
+}
+
+/** `POST …/change-requests/{cr}/submit`: the one person who will decide. */
+export interface ChangeRequestSubmitBody {
+  approver_ref: string;
+}
+
+/** `POST …/change-requests/{cr}/decision`: a reason of at least 10 characters. */
+export interface ChangeRequestDecisionBody {
+  decision: "approve" | "reject";
+  reason: string;
+}
+
+/** `GET /api/plans/{pid}/change-requests`. */
+export interface PlanChangeRequestList {
+  plan_pid: string;
+  change_requests: ChangeRequest[];
+  total: number;
 }
 
 /** A director pack's row (DP-1). */

@@ -3625,6 +3625,87 @@ export const PAGES_EN = {
   "l.enum.cr_kind.cost": "cost",
   "l.enum.cr_kind.quality": "quality",
   "l.enum.cr_kind.other": "other",
+  "p.plan_change_requests.title_ppm": "Plan change requests — PPM",
+  "p.plan_change_requests.title": "Plan change requests",
+  "p.plan_change_requests.intro":
+    "The change requests on this plan, newest first. Draft one and edit it while it is a draft; submit it to a named approver, who is not you; the approver reviews it and records the decision with a reason. An open request can be withdrawn.",
+  "p.plan_change_requests.register_link": "Change requests across all plans",
+  "p.plan_change_requests.could_not_load":
+    "Could not load the plan's change requests",
+  "p.plan_change_requests.could_not_save": "Could not save the change request",
+  "p.plan_change_requests.steps": "Steps",
+  "p.plan_change_requests.draft_heading": "Draft a change request",
+  "p.plan_change_requests.edit_heading": "Edit the draft",
+  "p.plan_change_requests.f_description": "Description (what is to change)",
+  "p.plan_change_requests.f_reason": "Reason (why the change is needed)",
+  "p.plan_change_requests.f_days":
+    "Schedule impact in business days (negative brings the finish forward; leave empty if not assessed)",
+  "p.plan_change_requests.f_cost": "Cost impact (leave empty if not assessed)",
+  "p.plan_change_requests.f_currency":
+    "Currency of the cost (three letters, for example EUR)",
+  "p.plan_change_requests.f_summary": "Summary of the impact",
+  "p.plan_change_requests.save_draft": "Save the draft",
+  "p.plan_change_requests.drafted": "The change request was drafted.",
+  "p.plan_change_requests.saved": "The draft was saved.",
+  "p.plan_change_requests.problem_title_required":
+    "Give the change request a title.",
+  "p.plan_change_requests.problem_description_required":
+    "Say what is to change.",
+  "p.plan_change_requests.problem_reason_required":
+    "Say why the change is needed.",
+  "p.plan_change_requests.problem_days_not_whole":
+    "The schedule impact is a whole number of business days.",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "The schedule impact must be from -3650 to 3650 business days.",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "The cost impact is not an amount.",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "A cost impact needs its currency.",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "A currency needs a cost impact.",
+  "p.plan_change_requests.problem_currency_invalid":
+    "The currency is a three-letter code, for example EUR, JPY or GBP.",
+  "p.plan_change_requests.steps_heading": "Steps for {title}",
+  "p.plan_change_requests.status_now": "It is now {status}.",
+  "p.plan_change_requests.decided": "Decided by {who} on {on}: {reason}",
+  "p.plan_change_requests.no_steps":
+    "No further step can be taken on this change request.",
+  "p.plan_change_requests.who_note":
+    "The service decides who may take each step: only the person who drafted it edits, submits or withdraws it (an administrator may also withdraw it), and only the named approver reviews or decides.",
+  "p.plan_change_requests.submit_heading": "Submit for a decision",
+  "p.plan_change_requests.f_approver":
+    "Approver (a person: or worker: reference, not the person who drafted it)",
+  "p.plan_change_requests.submit": "Submit",
+  "p.plan_change_requests.submitted": "The change request was submitted.",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "Name the approver as a person: or worker: reference.",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "The approver cannot be the person who asked for the change.",
+  "p.plan_change_requests.review": "Start the review",
+  "p.plan_change_requests.review_started": "The review has started.",
+  "p.plan_change_requests.decide_heading": "Record the decision",
+  "p.plan_change_requests.f_decision": "Decision",
+  "p.plan_change_requests.approve": "Approve",
+  "p.plan_change_requests.reject": "Reject",
+  "p.plan_change_requests.f_decision_reason":
+    "Reason for the decision (at least 10 characters)",
+  "p.plan_change_requests.decide": "Record decision",
+  "p.plan_change_requests.decision_recorded": "The decision was recorded.",
+  "p.plan_change_requests.problem_decision_reason":
+    "A decision needs a reason of at least 10 characters.",
+  "p.plan_change_requests.withdraw": "Withdraw the change request",
+  "p.plan_change_requests.withdrawn": "The change request was withdrawn.",
+  "p.plan_change_requests.close_steps": "Close the steps",
+  "p.plan_change_requests.refused_requester":
+    "Only the person who drafted this change request can do that.",
+  "p.plan_change_requests.refused_withdraw":
+    "Only the person who drafted this change request, or an administrator, can withdraw it.",
+  "p.plan_change_requests.refused_approver":
+    "Only the named approver can review or decide this change request.",
+  "p.plan_change_requests.refused_state":
+    "This change request has moved on and that step is no longer open to it; the list has been read again.",
+  "p.plan_change_requests.refused_invalid":
+    "The service did not accept what was entered: check the fields and try again.",
   "p.change_requests.change_requests_ppm": "Change requests — PPM",
   "p.change_requests.change_requests": "Change requests",
   "p.change_requests.intro":
@@ -3651,7 +3732,7 @@ export const PAGES_EN = {
   "p.change_requests.no_approver": "Not yet named",
   "p.change_requests.no_impact": "No impact stated",
   "p.change_requests.impact_days": "{days} business days",
-  "p.change_requests.plan_link": "Open the plan's governance page",
+  "p.change_requests.plan_link": "Open the plan's change requests",
   "p.director_pack.director_packs_ppm": "Director packs — PPM",
   "p.director_pack.director_packs": "Director packs",
   "p.director_pack.intro":

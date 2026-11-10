@@ -3571,6 +3571,83 @@ export const PAGES_AR: Record<PageKey, string> = {
   "l.enum.cr_kind.cost": "التكلفة",
   "l.enum.cr_kind.quality": "الجودة",
   "l.enum.cr_kind.other": "أخرى",
+  "p.plan_change_requests.title_ppm": "طلبات التغيير في الخطة — PPM",
+  "p.plan_change_requests.title": "طلبات التغيير في الخطة",
+  "p.plan_change_requests.intro":
+    "طلبات التغيير في هذه الخطة، الأحدث أولاً. اكتب مسودة طلب وعدّلها ما دامت مسودة؛ قدّمها إلى معتمِد مسمّى غيرك؛ يراجعها المعتمِد ويسجّل القرار مع سببه. يمكن سحب الطلب المفتوح.",
+  "p.plan_change_requests.register_link": "طلبات التغيير في جميع الخطط",
+  "p.plan_change_requests.could_not_load": "تعذّر تحميل طلبات التغيير في الخطة",
+  "p.plan_change_requests.could_not_save": "تعذّر حفظ طلب التغيير",
+  "p.plan_change_requests.steps": "الخطوات",
+  "p.plan_change_requests.draft_heading": "صياغة طلب تغيير",
+  "p.plan_change_requests.edit_heading": "تعديل المسودة",
+  "p.plan_change_requests.f_description": "الوصف (ما الذي سيتغيّر)",
+  "p.plan_change_requests.f_reason": "السبب (لماذا يلزم التغيير)",
+  "p.plan_change_requests.f_days":
+    "الأثر على الجدول بأيام العمل (السالب يقدّم موعد الانتهاء؛ اتركه فارغاً إن لم يُقيَّم)",
+  "p.plan_change_requests.f_cost":
+    "الأثر على التكلفة (اتركه فارغاً إن لم يُقيَّم)",
+  "p.plan_change_requests.f_currency": "عملة التكلفة (ثلاثة أحرف، مثل EUR)",
+  "p.plan_change_requests.f_summary": "ملخّص الأثر",
+  "p.plan_change_requests.save_draft": "حفظ المسودة",
+  "p.plan_change_requests.drafted": "تمت صياغة طلب التغيير.",
+  "p.plan_change_requests.saved": "تم حفظ المسودة.",
+  "p.plan_change_requests.problem_title_required": "أعطِ طلب التغيير عنواناً.",
+  "p.plan_change_requests.problem_description_required":
+    "اذكر ما الذي سيتغيّر.",
+  "p.plan_change_requests.problem_reason_required": "اذكر لماذا يلزم التغيير.",
+  "p.plan_change_requests.problem_days_not_whole":
+    "الأثر على الجدول عدد صحيح من أيام العمل.",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "يجب أن يكون الأثر على الجدول بين -3650 و3650 يوم عمل.",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "الأثر على التكلفة ليس مبلغاً.",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "يحتاج الأثر على التكلفة إلى عملته.",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "تحتاج العملة إلى أثر على التكلفة.",
+  "p.plan_change_requests.problem_currency_invalid":
+    "العملة رمز من ثلاثة أحرف، مثل EUR أو JPY أو GBP.",
+  "p.plan_change_requests.steps_heading": "خطوات {title}",
+  "p.plan_change_requests.status_now": "حالته الآن: {status}.",
+  "p.plan_change_requests.decided": "قرّره {who} في {on}: {reason}",
+  "p.plan_change_requests.no_steps":
+    "لا يمكن اتخاذ أي خطوة أخرى في طلب التغيير هذا.",
+  "p.plan_change_requests.who_note":
+    "تحدّد الخدمة من يحق له اتخاذ كل خطوة: وحده من صاغ الطلب يعدّله أو يقدّمه أو يسحبه (ويجوز للمسؤول سحبه أيضاً)، ووحده المعتمِد المسمّى يراجعه أو يقرّر فيه.",
+  "p.plan_change_requests.submit_heading": "تقديم الطلب للقرار",
+  "p.plan_change_requests.f_approver":
+    "المعتمِد (مرجع person: أو worker:، وليس من صاغ الطلب)",
+  "p.plan_change_requests.submit": "تقديم",
+  "p.plan_change_requests.submitted": "تم تقديم طلب التغيير.",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "اذكر المعتمِد بمرجع person: أو worker:.",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "لا يمكن أن يكون المعتمِد هو من طلب التغيير.",
+  "p.plan_change_requests.review": "بدء المراجعة",
+  "p.plan_change_requests.review_started": "بدأت المراجعة.",
+  "p.plan_change_requests.decide_heading": "تسجيل القرار",
+  "p.plan_change_requests.f_decision": "القرار",
+  "p.plan_change_requests.approve": "اعتماد",
+  "p.plan_change_requests.reject": "رفض",
+  "p.plan_change_requests.f_decision_reason": "سبب القرار (10 أحرف على الأقل)",
+  "p.plan_change_requests.decide": "حفظ القرار",
+  "p.plan_change_requests.decision_recorded": "تم تسجيل القرار.",
+  "p.plan_change_requests.problem_decision_reason":
+    "يحتاج القرار إلى سبب من 10 أحرف على الأقل.",
+  "p.plan_change_requests.withdraw": "سحب طلب التغيير",
+  "p.plan_change_requests.withdrawn": "تم سحب طلب التغيير.",
+  "p.plan_change_requests.close_steps": "إغلاق الخطوات",
+  "p.plan_change_requests.refused_requester":
+    "وحده من صاغ طلب التغيير هذا يمكنه فعل ذلك.",
+  "p.plan_change_requests.refused_withdraw":
+    "وحده من صاغ طلب التغيير هذا، أو المسؤول، يمكنه سحبه.",
+  "p.plan_change_requests.refused_approver":
+    "وحده المعتمِد المسمّى يمكنه مراجعة طلب التغيير هذا أو القرار فيه.",
+  "p.plan_change_requests.refused_state":
+    "تقدّم طلب التغيير هذا ولم تعد تلك الخطوة متاحة له؛ أُعيدت قراءة القائمة.",
+  "p.plan_change_requests.refused_invalid":
+    "لم تقبل الخدمة ما أُدخل: تحقّق من الحقول وحاول مرة أخرى.",
   "p.change_requests.change_requests_ppm": "طلبات التغيير — PPM",
   "p.change_requests.change_requests": "طلبات التغيير",
   "p.change_requests.intro":
@@ -3597,7 +3674,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.change_requests.no_approver": "لم يُسمَّ بعد",
   "p.change_requests.no_impact": "لم يُذكر أثر",
   "p.change_requests.impact_days": "{days} أيام عمل",
-  "p.change_requests.plan_link": "افتح صفحة حوكمة الخطة",
+  "p.change_requests.plan_link": "افتح طلبات التغيير في الخطة",
   "p.director_pack.director_packs_ppm": "حزم المديرين — PPM",
   "p.director_pack.director_packs": "حزم المديرين",
   "p.director_pack.intro":

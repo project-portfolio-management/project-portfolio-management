@@ -37,7 +37,12 @@ import type {
   Burndown,
   CapacityView,
   ChainBuffers,
+  ChangeRequest,
+  ChangeRequestBody,
+  ChangeRequestDecisionBody,
   ChangeRequestList,
+  ChangeRequestSubmitBody,
+  PlanChangeRequestList,
   Closeout,
   ConformanceFindings,
   Contour,
@@ -358,6 +363,61 @@ export class PpmClient {
     if (params.open) q.set("open", "true");
     const qs = q.toString();
     return this.http.get(`/api/change-requests${qs ? `?${qs}` : ""}`);
+  }
+  /** One plan's change requests (IR-4), newest first. */
+  planChangeRequests(pid: string): Promise<PlanChangeRequestList> {
+    return this.http.get(`/api/plans/${pid}/change-requests`);
+  }
+  /** Draft a change request on a plan (IR-4). */
+  draftChangeRequest(
+    pid: string,
+    body: ChangeRequestBody,
+  ): Promise<ChangeRequest> {
+    return this.http.post(`/api/plans/${pid}/change-requests`, { body });
+  }
+  /** Replace a draft's fields (IR-4); 409 once it is no longer a draft, 403 for anyone but its requester. */
+  updateChangeRequest(
+    pid: string,
+    crPid: string,
+    body: ChangeRequestBody,
+  ): Promise<ChangeRequest> {
+    return this.http.put(`/api/plans/${pid}/change-requests/${crPid}`, {
+      body,
+    });
+  }
+  /** Send a draft for decision, naming the approver (IR-4). */
+  submitChangeRequest(
+    pid: string,
+    crPid: string,
+    body: ChangeRequestSubmitBody,
+  ): Promise<ChangeRequest> {
+    return this.http.post(`/api/plans/${pid}/change-requests/${crPid}/submit`, {
+      body,
+    });
+  }
+  /** The named approver starts reviewing a submitted request (IR-4). */
+  reviewChangeRequest(pid: string, crPid: string): Promise<ChangeRequest> {
+    return this.http.post(`/api/plans/${pid}/change-requests/${crPid}/review`, {
+      body: {},
+    });
+  }
+  /** The named approver approves or rejects, with a reason (IR-4). */
+  decideChangeRequest(
+    pid: string,
+    crPid: string,
+    body: ChangeRequestDecisionBody,
+  ): Promise<ChangeRequest> {
+    return this.http.post(
+      `/api/plans/${pid}/change-requests/${crPid}/decision`,
+      { body },
+    );
+  }
+  /** The requester (or an administrator) withdraws an open request (IR-4). */
+  withdrawChangeRequest(pid: string, crPid: string): Promise<ChangeRequest> {
+    return this.http.post(
+      `/api/plans/${pid}/change-requests/${crPid}/withdraw`,
+      { body: {} },
+    );
   }
   /** The critical chain beside the critical path (advice only). */
   criticalChain(pid: string): Promise<CriticalChain> {

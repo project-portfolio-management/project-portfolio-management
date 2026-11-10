@@ -3718,6 +3718,89 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.enum.cr_kind.cost": "cost",
   "l.enum.cr_kind.quality": "ansawdd",
   "l.enum.cr_kind.other": "arall",
+  "p.plan_change_requests.title_ppm": "Ceisiadau newid y cynllun — PPM",
+  "p.plan_change_requests.title": "Ceisiadau newid y cynllun",
+  "p.plan_change_requests.intro":
+    "Y ceisiadau newid ar y cynllun hwn, y mwyaf newydd yn gyntaf. Drafftiwch un a'i olygu tra ei fod yn ddrafft; cyflwynwch ef i gymeradwywr a enwir, nad yw'n chi; mae'r cymeradwywr yn ei adolygu ac yn cofnodi'r penderfyniad gyda rheswm. Gellir tynnu cais agored yn ôl.",
+  "p.plan_change_requests.register_link":
+    "Ceisiadau newid ar draws pob cynllun",
+  "p.plan_change_requests.could_not_load":
+    "Methu llwytho ceisiadau newid y cynllun",
+  "p.plan_change_requests.could_not_save": "Methu cadw'r cais newid",
+  "p.plan_change_requests.steps": "Camau",
+  "p.plan_change_requests.draft_heading": "Drafftio cais newid",
+  "p.plan_change_requests.edit_heading": "Golygu'r drafft",
+  "p.plan_change_requests.f_description": "Disgrifiad (beth sydd i newid)",
+  "p.plan_change_requests.f_reason": "Rheswm (pam mae angen y newid)",
+  "p.plan_change_requests.f_days":
+    "Effaith ar yr amserlen mewn diwrnodau gwaith (mae negatif yn dod â'r diwedd ymlaen; gadewch yn wag os nad yw wedi'i asesu)",
+  "p.plan_change_requests.f_cost":
+    "Effaith ar y gost (gadewch yn wag os nad yw wedi'i asesu)",
+  "p.plan_change_requests.f_currency":
+    "Arian cyfred y gost (tair llythyren, er enghraifft EUR)",
+  "p.plan_change_requests.f_summary": "Crynodeb o'r effaith",
+  "p.plan_change_requests.save_draft": "Cadw'r drafft",
+  "p.plan_change_requests.drafted": "Drafftiwyd y cais newid.",
+  "p.plan_change_requests.saved": "Cadwyd y drafft.",
+  "p.plan_change_requests.problem_title_required":
+    "Rhowch deitl i'r cais newid.",
+  "p.plan_change_requests.problem_description_required":
+    "Dywedwch beth sydd i newid.",
+  "p.plan_change_requests.problem_reason_required":
+    "Dywedwch pam mae angen y newid.",
+  "p.plan_change_requests.problem_days_not_whole":
+    "Mae'r effaith ar yr amserlen yn nifer cyfan o ddiwrnodau gwaith.",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "Rhaid i'r effaith ar yr amserlen fod rhwng -3650 a 3650 diwrnod gwaith.",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "Nid yw'r effaith ar y gost yn swm.",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "Mae angen arian cyfred ar effaith ar y gost.",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "Mae angen effaith ar y gost gydag arian cyfred.",
+  "p.plan_change_requests.problem_currency_invalid":
+    "Cod tair llythyren yw'r arian cyfred, er enghraifft EUR, JPY neu GBP.",
+  "p.plan_change_requests.steps_heading": "Camau ar gyfer {title}",
+  "p.plan_change_requests.status_now": "Mae bellach yn {status}.",
+  "p.plan_change_requests.decided": "Penderfynwyd gan {who} ar {on}: {reason}",
+  "p.plan_change_requests.no_steps":
+    "Ni ellir cymryd cam arall ar y cais newid hwn.",
+  "p.plan_change_requests.who_note":
+    "Y gwasanaeth sy'n penderfynu pwy all gymryd pob cam: dim ond y sawl a'i drafftiodd sy'n ei olygu, ei gyflwyno neu ei dynnu'n ôl (gall gweinyddwr hefyd ei dynnu'n ôl), a dim ond y cymeradwywr a enwir sy'n adolygu neu'n penderfynu.",
+  "p.plan_change_requests.submit_heading": "Cyflwyno am benderfyniad",
+  "p.plan_change_requests.f_approver":
+    "Cymeradwywr (cyfeirnod person: neu worker:, nid y sawl a'i drafftiodd)",
+  "p.plan_change_requests.submit": "Cyflwyno",
+  "p.plan_change_requests.submitted": "Cyflwynwyd y cais newid.",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "Enwch y cymeradwywr fel cyfeirnod person: neu worker:.",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "Ni all y cymeradwywr fod y sawl a ofynnodd am y newid.",
+  "p.plan_change_requests.review": "Dechrau'r adolygiad",
+  "p.plan_change_requests.review_started": "Mae'r adolygiad wedi dechrau.",
+  "p.plan_change_requests.decide_heading": "Cofnodi'r penderfyniad",
+  "p.plan_change_requests.f_decision": "Penderfyniad",
+  "p.plan_change_requests.approve": "Cymeradwyo",
+  "p.plan_change_requests.reject": "Gwrthod",
+  "p.plan_change_requests.f_decision_reason":
+    "Rheswm dros y penderfyniad (o leiaf 10 nod)",
+  "p.plan_change_requests.decide": "Cofnodi penderfyniad",
+  "p.plan_change_requests.decision_recorded": "Cofnodwyd y penderfyniad.",
+  "p.plan_change_requests.problem_decision_reason":
+    "Mae angen rheswm o leiaf 10 nod ar benderfyniad.",
+  "p.plan_change_requests.withdraw": "Tynnu'r cais newid yn ôl",
+  "p.plan_change_requests.withdrawn": "Tynnwyd y cais newid yn ôl.",
+  "p.plan_change_requests.close_steps": "Cau'r camau",
+  "p.plan_change_requests.refused_requester":
+    "Dim ond y sawl a ddrafftiodd y cais newid hwn all wneud hynny.",
+  "p.plan_change_requests.refused_withdraw":
+    "Dim ond y sawl a ddrafftiodd y cais newid hwn, neu weinyddwr, all ei dynnu'n ôl.",
+  "p.plan_change_requests.refused_approver":
+    "Dim ond y cymeradwywr a enwir all adolygu neu benderfynu ar y cais newid hwn.",
+  "p.plan_change_requests.refused_state":
+    "Mae'r cais newid hwn wedi symud ymlaen ac nid yw'r cam hwnnw ar gael iddo mwyach; darllenwyd y rhestr eto.",
+  "p.plan_change_requests.refused_invalid":
+    "Ni dderbyniodd y gwasanaeth yr hyn a roddwyd: gwiriwch y meysydd a rhowch gynnig arall arni.",
   "p.change_requests.change_requests_ppm": "Ceisiadau newid — PPM",
   "p.change_requests.change_requests": "Ceisiadau newid",
   "p.change_requests.intro":
@@ -3744,7 +3827,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.change_requests.no_approver": "Heb ei enwi eto",
   "p.change_requests.no_impact": "Dim effaith wedi'i nodi",
   "p.change_requests.impact_days": "{days} diwrnod gwaith",
-  "p.change_requests.plan_link": "Agor tudalen llywodraethu'r cynllun",
+  "p.change_requests.plan_link": "Agor ceisiadau newid y cynllun",
   "p.director_pack.director_packs_ppm": "Pecynnau cyfarwyddwyr — PPM",
   "p.director_pack.director_packs": "Pecynnau cyfarwyddwyr",
   "p.director_pack.intro":

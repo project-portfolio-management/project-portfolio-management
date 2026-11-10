@@ -3758,6 +3758,93 @@ export const PAGES_FR: Record<PageKey, string> = {
   "l.enum.cr_kind.cost": "coût",
   "l.enum.cr_kind.quality": "qualité",
   "l.enum.cr_kind.other": "autre",
+  "p.plan_change_requests.title_ppm": "Demandes de modification du plan — PPM",
+  "p.plan_change_requests.title": "Demandes de modification du plan",
+  "p.plan_change_requests.intro":
+    "Les demandes de modification de ce plan, les plus récentes d'abord. Rédigez-en une et modifiez-la tant qu'elle est un brouillon ; soumettez-la à une personne approbatrice désignée, qui n'est pas vous ; cette personne l'examine et consigne la décision avec un motif. Une demande ouverte peut être retirée.",
+  "p.plan_change_requests.register_link":
+    "Demandes de modification de tous les plans",
+  "p.plan_change_requests.could_not_load":
+    "Impossible de charger les demandes de modification du plan",
+  "p.plan_change_requests.could_not_save":
+    "Impossible d'enregistrer la demande de modification",
+  "p.plan_change_requests.steps": "Étapes",
+  "p.plan_change_requests.draft_heading": "Rédiger une demande de modification",
+  "p.plan_change_requests.edit_heading": "Modifier le brouillon",
+  "p.plan_change_requests.f_description": "Description (ce qui doit changer)",
+  "p.plan_change_requests.f_reason":
+    "Motif (pourquoi la modification est nécessaire)",
+  "p.plan_change_requests.f_days":
+    "Impact sur le calendrier en jours ouvrés (négatif avance la fin ; laissez vide si non évalué)",
+  "p.plan_change_requests.f_cost":
+    "Impact sur le coût (laissez vide si non évalué)",
+  "p.plan_change_requests.f_currency":
+    "Devise du coût (trois lettres, par exemple EUR)",
+  "p.plan_change_requests.f_summary": "Résumé de l'impact",
+  "p.plan_change_requests.save_draft": "Enregistrer le brouillon",
+  "p.plan_change_requests.drafted": "La demande de modification a été rédigée.",
+  "p.plan_change_requests.saved": "Le brouillon a été enregistré.",
+  "p.plan_change_requests.problem_title_required":
+    "Donnez un titre à la demande de modification.",
+  "p.plan_change_requests.problem_description_required":
+    "Indiquez ce qui doit changer.",
+  "p.plan_change_requests.problem_reason_required":
+    "Indiquez pourquoi la modification est nécessaire.",
+  "p.plan_change_requests.problem_days_not_whole":
+    "L'impact sur le calendrier est un nombre entier de jours ouvrés.",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "L'impact sur le calendrier doit être compris entre -3650 et 3650 jours ouvrés.",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "L'impact sur le coût n'est pas un montant.",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "Un impact sur le coût doit avoir sa devise.",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "Une devise doit accompagner un impact sur le coût.",
+  "p.plan_change_requests.problem_currency_invalid":
+    "La devise est un code de trois lettres, par exemple EUR, JPY ou GBP.",
+  "p.plan_change_requests.steps_heading": "Étapes pour {title}",
+  "p.plan_change_requests.status_now": "État actuel : {status}.",
+  "p.plan_change_requests.decided": "Décidé par {who} le {on} : {reason}",
+  "p.plan_change_requests.no_steps":
+    "Aucune autre étape n'est possible pour cette demande de modification.",
+  "p.plan_change_requests.who_note":
+    "Le service décide qui peut franchir chaque étape : seule la personne qui l'a rédigée la modifie, la soumet ou la retire (un administrateur peut aussi la retirer), et seule la personne approbatrice désignée l'examine ou décide.",
+  "p.plan_change_requests.submit_heading": "Soumettre pour décision",
+  "p.plan_change_requests.f_approver":
+    "Personne approbatrice (une référence person: ou worker:, pas la personne qui l'a rédigée)",
+  "p.plan_change_requests.submit": "Soumettre",
+  "p.plan_change_requests.submitted":
+    "La demande de modification a été soumise.",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "Indiquez la personne approbatrice sous forme de référence person: ou worker:.",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "La personne approbatrice ne peut pas être celle qui a demandé la modification.",
+  "p.plan_change_requests.review": "Commencer l'examen",
+  "p.plan_change_requests.review_started": "L'examen a commencé.",
+  "p.plan_change_requests.decide_heading": "Consigner la décision",
+  "p.plan_change_requests.f_decision": "Décision",
+  "p.plan_change_requests.approve": "Approuver",
+  "p.plan_change_requests.reject": "Rejeter",
+  "p.plan_change_requests.f_decision_reason":
+    "Motif de la décision (au moins 10 caractères)",
+  "p.plan_change_requests.decide": "Enregistrer la décision",
+  "p.plan_change_requests.decision_recorded": "La décision a été consignée.",
+  "p.plan_change_requests.problem_decision_reason":
+    "Une décision doit avoir un motif d'au moins 10 caractères.",
+  "p.plan_change_requests.withdraw": "Retirer la demande de modification",
+  "p.plan_change_requests.withdrawn":
+    "La demande de modification a été retirée.",
+  "p.plan_change_requests.close_steps": "Fermer les étapes",
+  "p.plan_change_requests.refused_requester":
+    "Seule la personne qui a rédigé cette demande de modification peut le faire.",
+  "p.plan_change_requests.refused_withdraw":
+    "Seule la personne qui a rédigé cette demande de modification, ou un administrateur, peut la retirer.",
+  "p.plan_change_requests.refused_approver":
+    "Seule la personne approbatrice désignée peut examiner cette demande de modification ou en décider.",
+  "p.plan_change_requests.refused_state":
+    "Cette demande de modification a évolué et cette étape ne lui est plus ouverte ; la liste a été relue.",
+  "p.plan_change_requests.refused_invalid":
+    "Le service n'a pas accepté la saisie : vérifiez les champs et réessayez.",
   "p.change_requests.change_requests_ppm": "Demandes de modification — PPM",
   "p.change_requests.change_requests": "Demandes de modification",
   "p.change_requests.intro":
@@ -3788,7 +3875,7 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.change_requests.no_approver": "Pas encore désigné",
   "p.change_requests.no_impact": "Aucun impact déclaré",
   "p.change_requests.impact_days": "{days} jours ouvrés",
-  "p.change_requests.plan_link": "Ouvrir la page de gouvernance du plan",
+  "p.change_requests.plan_link": "Ouvrir les demandes de modification du plan",
   "p.director_pack.director_packs_ppm": "Dossiers de direction — PPM",
   "p.director_pack.director_packs": "Dossiers de direction",
   "p.director_pack.intro":

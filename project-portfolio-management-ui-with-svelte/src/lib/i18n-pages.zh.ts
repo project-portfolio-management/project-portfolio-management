@@ -3443,6 +3443,80 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "l.enum.cr_kind.cost": "成本",
   "l.enum.cr_kind.quality": "质量",
   "l.enum.cr_kind.other": "其他",
+  "p.plan_change_requests.title_ppm": "计划的变更请求 — PPM",
+  "p.plan_change_requests.title": "计划的变更请求",
+  "p.plan_change_requests.intro":
+    "此计划的变更请求，最新的在前。起草一份请求，并在其仍为草稿时编辑；将其提交给一位指定的审批人（不能是您本人）；审批人审查后记录决定及理由。未结的请求可以撤回。",
+  "p.plan_change_requests.register_link": "所有计划的变更请求",
+  "p.plan_change_requests.could_not_load": "无法加载计划的变更请求",
+  "p.plan_change_requests.could_not_save": "无法保存变更请求",
+  "p.plan_change_requests.steps": "步骤",
+  "p.plan_change_requests.draft_heading": "起草变更请求",
+  "p.plan_change_requests.edit_heading": "编辑草稿",
+  "p.plan_change_requests.f_description": "描述（要变更的内容）",
+  "p.plan_change_requests.f_reason": "理由（为何需要此变更）",
+  "p.plan_change_requests.f_days":
+    "对进度的影响（工作日；负数表示提前完成；未评估则留空）",
+  "p.plan_change_requests.f_cost": "对成本的影响（未评估则留空）",
+  "p.plan_change_requests.f_currency": "成本的币种（三个字母，例如 EUR）",
+  "p.plan_change_requests.f_summary": "影响摘要",
+  "p.plan_change_requests.save_draft": "保存草稿",
+  "p.plan_change_requests.drafted": "已起草变更请求。",
+  "p.plan_change_requests.saved": "草稿已保存。",
+  "p.plan_change_requests.problem_title_required": "请为变更请求填写标题。",
+  "p.plan_change_requests.problem_description_required": "请说明要变更的内容。",
+  "p.plan_change_requests.problem_reason_required": "请说明为何需要此变更。",
+  "p.plan_change_requests.problem_days_not_whole":
+    "对进度的影响须为整数个工作日。",
+  "p.plan_change_requests.problem_days_out_of_range":
+    "对进度的影响须在 -3650 到 3650 个工作日之间。",
+  "p.plan_change_requests.problem_cost_not_amount":
+    "对成本的影响不是有效金额。",
+  "p.plan_change_requests.problem_cost_needs_currency":
+    "成本影响需要注明币种。",
+  "p.plan_change_requests.problem_currency_needs_cost":
+    "填写币种时需要填写成本影响。",
+  "p.plan_change_requests.problem_currency_invalid":
+    "币种为三个字母的代码，例如 EUR、JPY 或 GBP。",
+  "p.plan_change_requests.steps_heading": "{title} 的步骤",
+  "p.plan_change_requests.status_now": "当前状态：{status}。",
+  "p.plan_change_requests.decided": "由 {who} 于 {on} 决定：{reason}",
+  "p.plan_change_requests.no_steps": "此变更请求不能再进行任何步骤。",
+  "p.plan_change_requests.who_note":
+    "由服务决定谁可以执行每个步骤：只有起草人可以编辑、提交或撤回（管理员也可以撤回），只有指定的审批人可以审查或作出决定。",
+  "p.plan_change_requests.submit_heading": "提交以作决定",
+  "p.plan_change_requests.f_approver":
+    "审批人（person: 或 worker: 引用，不能是起草人）",
+  "p.plan_change_requests.submit": "提交",
+  "p.plan_change_requests.submitted": "已提交变更请求。",
+  "p.plan_change_requests.problem_approver_not_reference":
+    "请以 person: 或 worker: 引用指定审批人。",
+  "p.plan_change_requests.problem_approver_is_requester":
+    "审批人不能是提出变更的人。",
+  "p.plan_change_requests.review": "开始审查",
+  "p.plan_change_requests.review_started": "审查已开始。",
+  "p.plan_change_requests.decide_heading": "记录决定",
+  "p.plan_change_requests.f_decision": "决定",
+  "p.plan_change_requests.approve": "批准",
+  "p.plan_change_requests.reject": "拒绝",
+  "p.plan_change_requests.f_decision_reason": "决定理由（至少 10 个字符）",
+  "p.plan_change_requests.decide": "保存决定",
+  "p.plan_change_requests.decision_recorded": "已记录决定。",
+  "p.plan_change_requests.problem_decision_reason":
+    "决定需要至少 10 个字符的理由。",
+  "p.plan_change_requests.withdraw": "撤回变更请求",
+  "p.plan_change_requests.withdrawn": "已撤回变更请求。",
+  "p.plan_change_requests.close_steps": "关闭步骤",
+  "p.plan_change_requests.refused_requester":
+    "只有起草此变更请求的人才能执行此操作。",
+  "p.plan_change_requests.refused_withdraw":
+    "只有起草此变更请求的人或管理员才能撤回。",
+  "p.plan_change_requests.refused_approver":
+    "只有指定的审批人才能审查或决定此变更请求。",
+  "p.plan_change_requests.refused_state":
+    "此变更请求的状态已改变，无法再执行该步骤；已重新读取列表。",
+  "p.plan_change_requests.refused_invalid":
+    "服务未接受所输入的内容：请检查字段后重试。",
   "p.change_requests.change_requests_ppm": "变更请求 — PPM",
   "p.change_requests.change_requests": "变更请求",
   "p.change_requests.intro":
@@ -3468,7 +3542,7 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.change_requests.no_approver": "尚未指定",
   "p.change_requests.no_impact": "未陈述影响",
   "p.change_requests.impact_days": "{days} 个工作日",
-  "p.change_requests.plan_link": "打开计划的治理页面",
+  "p.change_requests.plan_link": "打开计划的变更请求",
   "p.director_pack.director_packs_ppm": "董事资料包 — PPM",
   "p.director_pack.director_packs": "董事资料包",
   "p.director_pack.intro":

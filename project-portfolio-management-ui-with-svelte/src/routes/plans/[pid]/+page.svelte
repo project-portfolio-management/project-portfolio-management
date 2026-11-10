@@ -63,6 +63,7 @@
     get tolerances() { return t("p.tolerances.plan_link"); },
     get escalations() { return t("p.escalations.plan_link"); },
     get issues() { return t("p.issues.plan_issues_link"); },
+    get "change-requests"() { return t("p.change_requests.change_requests"); },
     get "ways-of-working"() { return t("p.frameworks.wow"); },
     get "governance-framework"() { return t("p.frameworks.gov"); },
     get links() { return t("p.links.links"); },

@@ -2007,6 +2007,77 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.task.s_blocked": "Bloquée",
   "p.task.links_intro":
     "Où cette tâche figure dans d'autres outils, comme le ticket Jira ou Linear qui la suit. L'adresse est enregistrée et affichée ; elle n'est jamais consultée et rien n'est synchronisé.",
+  "p.task.back_board": "Retour au tableau",
+  "p.task.could_not_load_links":
+    "Impossible de charger les liens de la tâche vers d'autres tâches.",
+  "p.task.could_not_load_tasks":
+    "Impossible de charger les tâches du plan à lier.",
+  "p.task.edit_heading": "Modifier la tâche",
+  "p.task.edit_note":
+    "Le statut change sur le tableau. Le sprint, le composant et la tâche parente restent tels quels.",
+  "p.task.f_title": "Intitulé",
+  "p.task.f_assignee":
+    "Attribuée à (une référence person: ou worker: ; laisser vide pour personne)",
+  "p.task.f_points":
+    "Points d'effort (un nombre entier de 0 à 100 ; laisser vide pour aucun)",
+  "p.task.f_due": "Date d'échéance (laisser vide pour aucune)",
+  "p.task.save": "Enregistrer la tâche",
+  "p.task.saved": "La tâche a été enregistrée.",
+  "p.task.problem_title_required": "Donnez un intitulé à la tâche.",
+  "p.task.problem_title_too_long": "L'intitulé est trop long.",
+  "p.task.problem_assignee":
+    "Indiquez la personne attribuée par une référence person: ou worker:, ou laissez vide.",
+  "p.task.problem_points_whole": "Les points d'effort sont un nombre entier.",
+  "p.task.problem_points_range":
+    "Les points d'effort doivent être compris entre 0 et 100.",
+  "p.task.problem_due": "La date d'échéance n'est pas une date.",
+  "p.task.relations_heading": "Liens vers d'autres tâches",
+  "p.task.relations_intro":
+    "« Bloque » empêche de terminer l'autre tâche tant que celle-ci est ouverte. « Précède » exige que l'autre tâche soit due après celle-ci. Quand une tâche est terminée, toute tâche qui en est un doublon l'est aussi. « Liée à » et « Copiée de » sont purement informatifs.",
+  "p.task.no_relations": "Cette tâche n'a aucun lien vers d'autres tâches.",
+  "p.task.rel_related": "Liée à",
+  "p.task.rel_blocks": "Bloque",
+  "p.task.rel_blocked_by": "Bloquée par",
+  "p.task.rel_precedes": "Précède",
+  "p.task.rel_follows": "Suit",
+  "p.task.rel_duplicates": "Doublon de",
+  "p.task.rel_duplicated_by": "Dupliquée par",
+  "p.task.rel_copied_from": "Copiée de",
+  "p.task.rel_copied_to": "Copiée vers",
+  "p.task.other_state": "(maintenant {status})",
+  "p.task.other_state_due": "(maintenant {status}, échéance {date})",
+  "p.task.remove_link": "Retirer",
+  "p.task.remove_link_named": "Retirer le lien : {link} {title}",
+  "p.task.hidden_links_one":
+    "{n} autre lien mène à une tâche d'un plan que vous ne pouvez pas voir.",
+  "p.task.hidden_links_other":
+    "{n} autres liens mènent à des tâches de plans que vous ne pouvez pas voir.",
+  "p.task.add_link_heading": "Lier à une autre tâche",
+  "p.task.f_kind": "Cette tâche",
+  "p.task.f_other": "Autre tâche",
+  "p.task.choose_task": "Choisissez une tâche",
+  "p.task.add_link": "Lier les tâches",
+  "p.task.link_added": "Le lien a été ajouté.",
+  "p.task.link_removed": "Le lien a été retiré.",
+  "p.task.problem_choose_task": "Choisissez l'autre tâche.",
+  "p.task.problem_self": "Une tâche ne peut pas être liée à elle-même.",
+  "p.task.problem_exists": "Cette tâche a déjà ce lien.",
+  "p.task.problem_cycle":
+    "L'autre tâche a déjà ce lien vers celle-ci ; les deux s'attendraient l'une l'autre.",
+  "p.task.problem_precedes_dates":
+    "« Précède » exige que l'autre tâche soit due après celle-ci : modifiez d'abord une date d'échéance.",
+  "p.task.refused_forbidden":
+    "Vous ne pouvez pas modifier les tâches de ce plan.",
+  "p.task.refused_gone":
+    "Cette tâche n'existe plus, ou vous ne pouvez pas la voir ; elle a été relue.",
+  "p.task.refused_link_gone":
+    "Ce lien avait déjà été retiré ; les liens ont été relus.",
+  "p.task.refused_link_exists":
+    "Ce lien existe déjà ; les liens ont été relus.",
+  "p.task.refused_edit_invalid":
+    "Le service n'a pas accepté la modification : vérifiez les champs. Une nouvelle date d'échéance doit aussi garder chaque lien « Précède » dans l'ordre.",
+  "p.task.refused_link_invalid":
+    "Le service n'a pas accepté le lien : l'autre tâche a peut-être disparu, un lien « Bloque » ou « Précède » ne peut pas former de boucle, et « Précède » exige que l'autre tâche soit due après celle-ci.",
   "l.link.kind_docs": "Documents",
   "l.link.kind_repo": "Dépôt de code",
   "l.link.kind_ticket": "Ticket",

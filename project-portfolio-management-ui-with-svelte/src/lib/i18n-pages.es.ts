@@ -2008,6 +2008,76 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.task.s_blocked": "Bloqueada",
   "p.task.links_intro":
     "Dónde está esta tarea en otras herramientas, como la incidencia de Jira o Linear con la que se sigue. La dirección se guarda y se muestra; nunca se consulta y no se sincroniza nada.",
+  "p.task.back_board": "Volver al tablero",
+  "p.task.could_not_load_links":
+    "No se pudieron cargar los vínculos de la tarea con otras tareas.",
+  "p.task.could_not_load_tasks":
+    "No se pudieron cargar las tareas del plan para vincularlas.",
+  "p.task.edit_heading": "Editar la tarea",
+  "p.task.edit_note":
+    "El estado cambia en el tablero. El sprint, el componente y la tarea principal se mantienen como están.",
+  "p.task.f_title": "Título",
+  "p.task.f_assignee":
+    "Asignada a (una referencia person: o worker:; déjelo vacío para nadie)",
+  "p.task.f_points":
+    "Puntos de historia (un número entero de 0 a 100; déjelo vacío para ninguno)",
+  "p.task.f_due": "Fecha de vencimiento (déjela vacía para ninguna)",
+  "p.task.save": "Guardar la tarea",
+  "p.task.saved": "Se guardó la tarea.",
+  "p.task.problem_title_required": "Dé un título a la tarea.",
+  "p.task.problem_title_too_long": "El título es demasiado largo.",
+  "p.task.problem_assignee":
+    "Indique la persona asignada como referencia person: o worker:, o déjelo vacío.",
+  "p.task.problem_points_whole": "Los puntos de historia son un número entero.",
+  "p.task.problem_points_range":
+    "Los puntos de historia deben estar entre 0 y 100.",
+  "p.task.problem_due": "La fecha de vencimiento no es una fecha.",
+  "p.task.relations_heading": "Vínculos con otras tareas",
+  "p.task.relations_intro":
+    "«Bloquea» impide terminar la otra tarea mientras esta siga abierta. «Va antes de» exige que la otra tarea venza después de esta. Cuando se termina una tarea, también se termina toda tarea que sea un duplicado de ella. «Relacionada con» y «Copiada de» son solo informativos.",
+  "p.task.no_relations": "Esta tarea no tiene vínculos con otras tareas.",
+  "p.task.rel_related": "Relacionada con",
+  "p.task.rel_blocks": "Bloquea",
+  "p.task.rel_blocked_by": "Bloqueada por",
+  "p.task.rel_precedes": "Va antes de",
+  "p.task.rel_follows": "Va después de",
+  "p.task.rel_duplicates": "Duplicado de",
+  "p.task.rel_duplicated_by": "Duplicada por",
+  "p.task.rel_copied_from": "Copiada de",
+  "p.task.rel_copied_to": "Copiada a",
+  "p.task.other_state": "(ahora {status})",
+  "p.task.other_state_due": "(ahora {status}, vence {date})",
+  "p.task.remove_link": "Quitar",
+  "p.task.remove_link_named": "Quitar el vínculo: {link} {title}",
+  "p.task.hidden_links_one":
+    "{n} vínculo más lleva a una tarea de un plan que usted no puede ver.",
+  "p.task.hidden_links_other":
+    "{n} vínculos más llevan a tareas de planes que usted no puede ver.",
+  "p.task.add_link_heading": "Vincular con otra tarea",
+  "p.task.f_kind": "Esta tarea",
+  "p.task.f_other": "Otra tarea",
+  "p.task.choose_task": "Elija una tarea",
+  "p.task.add_link": "Vincular las tareas",
+  "p.task.link_added": "Se añadió el vínculo.",
+  "p.task.link_removed": "Se quitó el vínculo.",
+  "p.task.problem_choose_task": "Elija la otra tarea.",
+  "p.task.problem_self": "Una tarea no puede vincularse consigo misma.",
+  "p.task.problem_exists": "Esta tarea ya tiene ese vínculo.",
+  "p.task.problem_cycle":
+    "La otra tarea ya tiene ese vínculo con esta; las dos se esperarían mutuamente.",
+  "p.task.problem_precedes_dates":
+    "«Va antes de» exige que la otra tarea venza después de esta: cambie antes una fecha de vencimiento.",
+  "p.task.refused_forbidden": "No puede cambiar las tareas de este plan.",
+  "p.task.refused_gone":
+    "Esta tarea ya no existe o no puede verla; se ha vuelto a leer.",
+  "p.task.refused_link_gone":
+    "Ese vínculo ya se había quitado; se han vuelto a leer los vínculos.",
+  "p.task.refused_link_exists":
+    "Ese vínculo ya existe; se han vuelto a leer los vínculos.",
+  "p.task.refused_edit_invalid":
+    "El servicio no aceptó el cambio: revise los campos. Una nueva fecha de vencimiento también debe mantener en orden cada vínculo «Va antes de».",
+  "p.task.refused_link_invalid":
+    "El servicio no aceptó el vínculo: puede que la otra tarea ya no exista, un vínculo «Bloquea» o «Va antes de» no puede formar un círculo, y «Va antes de» exige que la otra tarea venza después de esta.",
   "l.link.kind_docs": "Documentos",
   "l.link.kind_repo": "Repositorio de código",
   "l.link.kind_ticket": "Ticket",

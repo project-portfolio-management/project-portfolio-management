@@ -6,7 +6,8 @@
   card shows its assignee and points as typed fields and a blocked task says
   so in words, plus sprint create/select with the honest burndown
   (real completions only — the server's derivation note is shown) and
-  the last-24h standup digest. English-first, like the other PPM views.
+  the last-24h standup digest. A card's title links to the task's page, where it is edited and linked to other
+  tasks (NC-1 slice 3).
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -26,7 +27,7 @@
     type Task,
     type Velocity,
   } from "#lib/api/ppm.js";
-  import { t, tn } from "#lib/i18n.svelte.js";
+  import { t, tn, localeHref } from "#lib/i18n.svelte.js";
   import PasteTasks from "#lib/components/PasteTasks.svelte";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   // Reactive, so the page follows the URL to another plan (CQ-18); the load effect reads it.
@@ -120,6 +121,8 @@
       id: task.pid,
       columnId: STATUSES.some((c) => c.id === task.status) ? task.status : "todo",
       title: task.title,
+      // The title opens the task's page, where it is edited and linked to other tasks (NC-1 slice 3).
+      href: localeHref(`/plans/${pid}/tasks/${task.pid}`),
       // A non-colour status: said in words, and announced with the card.
       flag:
         task.blocked_days !== null

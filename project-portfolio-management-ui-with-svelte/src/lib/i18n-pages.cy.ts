@@ -2003,6 +2003,76 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.task.s_blocked": "Wedi'i rwystro",
   "p.task.links_intro":
     "Lle mae'r dasg hon mewn offer eraill, megis y mater Jira neu Linear y caiff ei holrhain fel. Caiff y cyfeiriad ei storio a'i ddangos; ni chaiff byth ei nôl ac ni chaiff dim ei gydamseru.",
+  "p.task.back_board": "Yn ôl i'r bwrdd",
+  "p.task.could_not_load_links":
+    "Methu llwytho cysylltiadau'r dasg â thasgau eraill.",
+  "p.task.could_not_load_tasks":
+    "Methu llwytho tasgau'r cynllun i gysylltu â nhw.",
+  "p.task.edit_heading": "Golygu'r dasg",
+  "p.task.edit_note":
+    "Mae'r statws yn newid ar y bwrdd. Mae'r sbrint, y gydran a'r rhiant-dasg yn aros fel y maent.",
+  "p.task.f_title": "Teitl",
+  "p.task.f_assignee":
+    "Wedi'i neilltuo i (cyfeirnod person: neu worker:; gadewch yn wag ar gyfer neb)",
+  "p.task.f_points":
+    "Pwyntiau stori (rhif cyfan o 0 i 100; gadewch yn wag ar gyfer dim)",
+  "p.task.f_due": "Dyddiad dyledus (gadewch yn wag ar gyfer dim)",
+  "p.task.save": "Cadw'r dasg",
+  "p.task.saved": "Cadwyd y dasg.",
+  "p.task.problem_title_required": "Rhowch deitl i'r dasg.",
+  "p.task.problem_title_too_long": "Mae'r teitl yn rhy hir.",
+  "p.task.problem_assignee":
+    "Enwch y sawl a neilltuwyd fel cyfeirnod person: neu worker:, neu gadewch yn wag.",
+  "p.task.problem_points_whole": "Mae pwyntiau stori yn rhif cyfan.",
+  "p.task.problem_points_range": "Rhaid i bwyntiau stori fod rhwng 0 a 100.",
+  "p.task.problem_due": "Nid yw'r dyddiad dyledus yn ddyddiad.",
+  "p.task.relations_heading": "Cysylltiadau â thasgau eraill",
+  "p.task.relations_intro":
+    "Mae ‘Yn rhwystro’ yn atal y dasg arall rhag cael ei gorffen tra bo hon ar agor. Mae ‘Yn dod cyn’ yn golygu bod rhaid i'r dasg arall fod yn ddyledus ar ôl hon. Pan fydd tasg wedi'i gorffen, mae tasg sy'n ddyblygiad ohoni yn cael ei gorffen hefyd. Er gwybodaeth yn unig y mae ‘Yn gysylltiedig â’ a ‘Wedi'i chopïo o’.",
+  "p.task.no_relations":
+    "Nid oes gan y dasg hon gysylltiadau â thasgau eraill.",
+  "p.task.rel_related": "Yn gysylltiedig â",
+  "p.task.rel_blocks": "Yn rhwystro",
+  "p.task.rel_blocked_by": "Wedi'i rhwystro gan",
+  "p.task.rel_precedes": "Yn dod cyn",
+  "p.task.rel_follows": "Yn dod ar ôl",
+  "p.task.rel_duplicates": "Dyblygiad o",
+  "p.task.rel_duplicated_by": "Wedi'i dyblygu gan",
+  "p.task.rel_copied_from": "Wedi'i chopïo o",
+  "p.task.rel_copied_to": "Wedi'i chopïo i",
+  "p.task.other_state": "(nawr {status})",
+  "p.task.other_state_due": "(nawr {status}, dyledus {date})",
+  "p.task.remove_link": "Tynnu",
+  "p.task.remove_link_named": "Tynnu'r cysylltiad: {link} {title}",
+  "p.task.hidden_links_one":
+    "Mae {n} cysylltiad arall yn mynd i dasg mewn cynllun na allwch ei weld.",
+  "p.task.hidden_links_other":
+    "Mae {n} cysylltiad arall yn mynd i dasgau mewn cynlluniau na allwch eu gweld.",
+  "p.task.add_link_heading": "Cysylltu â thasg arall",
+  "p.task.f_kind": "Y dasg hon",
+  "p.task.f_other": "Tasg arall",
+  "p.task.choose_task": "Dewiswch dasg",
+  "p.task.add_link": "Cysylltu'r tasgau",
+  "p.task.link_added": "Ychwanegwyd y cysylltiad.",
+  "p.task.link_removed": "Tynnwyd y cysylltiad.",
+  "p.task.problem_choose_task": "Dewiswch y dasg arall.",
+  "p.task.problem_self": "Ni ellir cysylltu tasg â hi ei hun.",
+  "p.task.problem_exists": "Mae gan y dasg hon y cysylltiad hwnnw eisoes.",
+  "p.task.problem_cycle":
+    "Mae gan y dasg arall y cysylltiad hwnnw â hon eisoes; byddai'r ddwy'n aros am ei gilydd.",
+  "p.task.problem_precedes_dates":
+    "Mae ‘Yn dod cyn’ yn golygu bod rhaid i'r dasg arall fod yn ddyledus ar ôl hon: newidiwch ddyddiad dyledus yn gyntaf.",
+  "p.task.refused_forbidden": "Ni chewch newid tasgau'r cynllun hwn.",
+  "p.task.refused_gone":
+    "Nid yw'r dasg hon yn bodoli mwyach, neu ni allwch ei gweld; mae wedi'i darllen eto.",
+  "p.task.refused_link_gone":
+    "Roedd y cysylltiad hwnnw wedi'i dynnu eisoes; mae'r cysylltiadau wedi'u darllen eto.",
+  "p.task.refused_link_exists":
+    "Mae'r cysylltiad hwnnw'n bodoli eisoes; mae'r cysylltiadau wedi'u darllen eto.",
+  "p.task.refused_edit_invalid":
+    "Ni dderbyniodd y gwasanaeth y newid: gwiriwch y meysydd. Rhaid i ddyddiad dyledus newydd hefyd gadw pob cysylltiad ‘Yn dod cyn’ mewn trefn.",
+  "p.task.refused_link_invalid":
+    "Ni dderbyniodd y gwasanaeth y cysylltiad: efallai fod y dasg arall wedi mynd, ni chaiff cysylltiad ‘Yn rhwystro’ neu ‘Yn dod cyn’ fynd mewn cylch, ac mae ‘Yn dod cyn’ yn golygu bod rhaid i'r dasg arall fod yn ddyledus ar ôl hon.",
   "l.link.kind_docs": "Dogfennau",
   "l.link.kind_repo": "Storfa cod",
   "l.link.kind_ticket": "Tocyn",

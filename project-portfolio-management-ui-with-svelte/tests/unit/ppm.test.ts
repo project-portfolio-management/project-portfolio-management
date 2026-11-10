@@ -289,6 +289,36 @@ describe("PpmClient change-request paths (NC-1 slice 2, IR-4)", () => {
   });
 });
 
+describe("PpmClient task edit and link paths (NC-1 slice 3, LT-10)", () => {
+  it("replaces a task's fields, and lists, adds and removes its links", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.updateTask("p1", "t1", {
+      title: "T",
+      description: null,
+      assignee_ref: null,
+      points: null,
+      due_date: null,
+      component_pid: null,
+      parent_task_pid: null,
+      sprint_pid: null,
+    });
+    await ppm.taskRelations("p1", "t1");
+    await ppm.addTaskRelation("p1", "t1", {
+      kind: "blocks",
+      to_task_pid: "t2",
+    });
+    await ppm.removeTaskRelation("p1", "t1", "r1");
+    expect(
+      calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "PUT /api/plans/p1/tasks/t1",
+      "GET /api/plans/p1/tasks/t1/relations",
+      "POST /api/plans/p1/tasks/t1/relations",
+      "DELETE /api/plans/p1/tasks/t1/relations/r1",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

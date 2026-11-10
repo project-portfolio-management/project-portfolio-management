@@ -2573,7 +2573,63 @@ export interface Task {
   parent_task_pid?: string | null;
   /** Position among the siblings; null until a reorder sets it. */
   sibling_position?: number | null;
+  /** The component (grouping) of the plan the task is in, or null; sent back unchanged on an edit. */
+  component_pid?: string | null;
   is_hammock?: boolean;
+}
+
+/**
+ * `PUT /api/plans/{pid}/tasks/{t_pid}` (NC-1 slice 3): the edit replaces every field here, so a field left out is
+ * cleared. Status is not sent (a status change is the board move, PATCH). Checked against the service's schema by
+ * `client-bodies.test.ts` (CQ-9).
+ */
+export interface UpdateTaskBody {
+  title: string;
+  description: string | null;
+  assignee_ref: string | null;
+  points: number | null;
+  due_date: string | null;
+  component_pid: string | null;
+  parent_task_pid: string | null;
+  sprint_pid: string | null;
+}
+
+/** The kinds of link between two tasks (LT-10), as the service names them. */
+export type TaskRelationKind =
+  "related" | "blocks" | "precedes" | "duplicates" | "copied_from";
+
+/** `POST /api/plans/{pid}/tasks/{t_pid}/relations`: a link from this task to another. */
+export interface TaskRelationBody {
+  kind: TaskRelationKind;
+  to_task_pid: string;
+}
+
+/** The stored link, as `POST …/relations` answers. */
+export interface TaskRelationRow {
+  pid: string;
+  from_task_pid: string;
+  to_task_pid: string;
+  kind: TaskRelationKind;
+}
+
+/** One link of a task, from its own side: `outgoing` when this task is the link's `from`. */
+export interface TaskRelation {
+  pid: string;
+  kind: TaskRelationKind;
+  direction: "outgoing" | "incoming";
+  other_task: {
+    pid: string;
+    title: string;
+    plan_pid: string;
+    status: string;
+    due_date: string | null;
+  };
+}
+
+/** `GET /api/plans/{pid}/tasks/{t_pid}/relations`: links to tasks in plans the caller cannot read are only counted. */
+export interface TaskRelationList {
+  relations: TaskRelation[];
+  hidden: number;
 }
 
 /** One task in `GET /api/plans/{pid}/cpm` (SC-1, SC-2). Dates are `YYYY-MM-DD`. */

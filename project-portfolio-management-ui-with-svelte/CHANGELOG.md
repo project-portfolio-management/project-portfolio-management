@@ -9,6 +9,23 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — edit a task and link it to other tasks (NC-1 slice 3, LT-10, 2026-11-10)
+
+`/plans/[pid]/tasks/[tpid]` gains an edit form (title, description, assignee, points, due date) over the `PUT`, which
+replaces every field: the body carries the sprint, component and parent task as loaded and never a status. A second
+section lists the task's links to other tasks from its own side, in words, with the other task's status and due date,
+counts the hidden ones, adds a link to another task of the plan (kind and task) and removes one. Each board card's
+title now links to this page (`href` on Lily's `KanbanCard`), and the page links back to the board.
+`src/lib/task-edit-view.ts` holds the checks, the body, the words for each kind and direction, the checks before
+adding a link and the refusal sentence for a 403, 404, 409 or 422. There is no `If-Match` on the task routes, so no
+412. Tests: unit tests of the view module and the client paths, and `tests/e2e/plan-task-edit.spec.ts` (ten tests:
+the board's link, the edit's body, refusals on the page, a 422 and a 403 on the edit, the links both ways with add
+and remove, refusals on the page, a 409, a 422 and a 404 on the links, Welsh, axe). The page's link button is "Link
+the tasks", not "Add the link", which the outside-links panel below it already says. Not done: editing the sprint,
+component or parent; cross-plan links and incoming links made from this side; a confirmation before removing; links
+on the board's cards; custom fields; an assignee picker. Not verified: against a real service. The 53 new strings in
+seven languages are machine drafts, and no speaker has read them.
+
 ### Added — a plan's change requests: draft, submit, decide, withdraw (NC-1 slice 2, IR-4, 2026-11-10)
 
 `/plans/[pid]/change-requests` lists the plan's change requests and has one form to draft one or edit a draft (the PUT

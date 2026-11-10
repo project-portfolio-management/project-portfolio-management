@@ -176,6 +176,10 @@ import type {
   SprintNote,
   Standup,
   Task,
+  TaskRelationBody,
+  TaskRelationList,
+  TaskRelationRow,
+  UpdateTaskBody,
   TaskCost,
   TaskScheduleBody,
   TechDebtRegister,
@@ -1866,6 +1870,38 @@ export class PpmClient {
     return this.http.patch(`/api/plans/${pid}/tasks/${taskPid}`, {
       body: { status },
     });
+  }
+  /** Replace a task's fields (NC-1 slice 3); every field is sent, as the service clears one left out. */
+  updateTask(
+    pid: string,
+    taskPid: string,
+    body: UpdateTaskBody,
+  ): Promise<Task> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}`, { body });
+  }
+  /** A task's links to other tasks, both ways (LT-10). */
+  taskRelations(pid: string, taskPid: string): Promise<TaskRelationList> {
+    return this.http.get(`/api/plans/${pid}/tasks/${taskPid}/relations`);
+  }
+  /** Link this task to another (LT-10); 409 when the link exists, 422 for a cycle or a date it would break. */
+  addTaskRelation(
+    pid: string,
+    taskPid: string,
+    body: TaskRelationBody,
+  ): Promise<TaskRelationRow> {
+    return this.http.post(`/api/plans/${pid}/tasks/${taskPid}/relations`, {
+      body,
+    });
+  }
+  /** Remove one of a task's links (LT-10); neither task is removed. */
+  removeTaskRelation(
+    pid: string,
+    taskPid: string,
+    relationPid: string,
+  ): Promise<void> {
+    return this.http.delete(
+      `/api/plans/${pid}/tasks/${taskPid}/relations/${relationPid}`,
+    );
   }
   listSprints(pid: string): Promise<Sprint[]> {
     return this.http.get(`/api/plans/${pid}/sprints`);

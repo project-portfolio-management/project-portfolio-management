@@ -1997,6 +1997,79 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.task.s_blocked": "Blockiert",
   "p.task.links_intro":
     "Wo diese Aufgabe in anderen Werkzeugen geführt wird, etwa als Jira- oder Linear-Issue. Die Adresse wird gespeichert und angezeigt; sie wird nie abgerufen und nichts wird synchronisiert.",
+  "p.task.back_board": "Zurück zum Board",
+  "p.task.could_not_load_links":
+    "Die Verknüpfungen der Aufgabe mit anderen Aufgaben konnten nicht geladen werden.",
+  "p.task.could_not_load_tasks":
+    "Die Aufgaben des Plans zum Verknüpfen konnten nicht geladen werden.",
+  "p.task.edit_heading": "Aufgabe bearbeiten",
+  "p.task.edit_note":
+    "Der Status ändert sich auf dem Board. Sprint, Komponente und übergeordnete Aufgabe bleiben, wie sie sind.",
+  "p.task.f_title": "Titel",
+  "p.task.f_assignee":
+    "Zugewiesen an (eine person:- oder worker:-Referenz; leer lassen für niemanden)",
+  "p.task.f_points":
+    "Story Points (eine ganze Zahl von 0 bis 100; leer lassen für keine)",
+  "p.task.f_due": "Fälligkeitsdatum (leer lassen für keines)",
+  "p.task.save": "Aufgabe speichern",
+  "p.task.saved": "Die Aufgabe wurde gespeichert.",
+  "p.task.problem_title_required": "Geben Sie der Aufgabe einen Titel.",
+  "p.task.problem_title_too_long": "Der Titel ist zu lang.",
+  "p.task.problem_assignee":
+    "Geben Sie die zugewiesene Person als person:- oder worker:-Referenz an oder lassen Sie das Feld leer.",
+  "p.task.problem_points_whole": "Story Points sind eine ganze Zahl.",
+  "p.task.problem_points_range":
+    "Story Points müssen zwischen 0 und 100 liegen.",
+  "p.task.problem_due": "Das Fälligkeitsdatum ist kein Datum.",
+  "p.task.relations_heading": "Verknüpfungen mit anderen Aufgaben",
+  "p.task.relations_intro":
+    "„Blockiert“ verhindert, dass die andere Aufgabe abgeschlossen wird, solange diese offen ist. „Kommt vor“ verlangt, dass die andere Aufgabe nach dieser fällig ist. Wird eine Aufgabe abgeschlossen, wird auch jede Aufgabe abgeschlossen, die ein Duplikat davon ist. „Verwandt mit“ und „Kopiert von“ dienen nur der Information.",
+  "p.task.no_relations":
+    "Diese Aufgabe hat keine Verknüpfungen mit anderen Aufgaben.",
+  "p.task.rel_related": "Verwandt mit",
+  "p.task.rel_blocks": "Blockiert",
+  "p.task.rel_blocked_by": "Blockiert durch",
+  "p.task.rel_precedes": "Kommt vor",
+  "p.task.rel_follows": "Kommt nach",
+  "p.task.rel_duplicates": "Duplikat von",
+  "p.task.rel_duplicated_by": "Dupliziert durch",
+  "p.task.rel_copied_from": "Kopiert von",
+  "p.task.rel_copied_to": "Kopiert nach",
+  "p.task.other_state": "(jetzt {status})",
+  "p.task.other_state_due": "(jetzt {status}, fällig {date})",
+  "p.task.remove_link": "Entfernen",
+  "p.task.remove_link_named": "Verknüpfung entfernen: {link} {title}",
+  "p.task.hidden_links_one":
+    "{n} weitere Verknüpfung führt zu einer Aufgabe in einem Plan, den Sie nicht sehen können.",
+  "p.task.hidden_links_other":
+    "{n} weitere Verknüpfungen führen zu Aufgaben in Plänen, die Sie nicht sehen können.",
+  "p.task.add_link_heading": "Mit einer anderen Aufgabe verknüpfen",
+  "p.task.f_kind": "Diese Aufgabe",
+  "p.task.f_other": "Andere Aufgabe",
+  "p.task.choose_task": "Aufgabe wählen",
+  "p.task.add_link": "Aufgaben verknüpfen",
+  "p.task.link_added": "Die Verknüpfung wurde hinzugefügt.",
+  "p.task.link_removed": "Die Verknüpfung wurde entfernt.",
+  "p.task.problem_choose_task": "Wählen Sie die andere Aufgabe.",
+  "p.task.problem_self":
+    "Eine Aufgabe kann nicht mit sich selbst verknüpft werden.",
+  "p.task.problem_exists": "Diese Aufgabe hat diese Verknüpfung bereits.",
+  "p.task.problem_cycle":
+    "Die andere Aufgabe hat diese Verknüpfung zu dieser bereits; die beiden würden aufeinander warten.",
+  "p.task.problem_precedes_dates":
+    "„Kommt vor“ verlangt, dass die andere Aufgabe nach dieser fällig ist: Ändern Sie zuerst ein Fälligkeitsdatum.",
+  "p.task.refused_forbidden":
+    "Sie dürfen die Aufgaben dieses Plans nicht ändern.",
+  "p.task.refused_gone":
+    "Diese Aufgabe existiert nicht mehr, oder Sie können sie nicht sehen; sie wurde neu gelesen.",
+  "p.task.refused_link_gone":
+    "Diese Verknüpfung war bereits entfernt; die Verknüpfungen wurden neu gelesen.",
+  "p.task.refused_link_exists":
+    "Diese Verknüpfung besteht bereits; die Verknüpfungen wurden neu gelesen.",
+  "p.task.refused_edit_invalid":
+    "Der Dienst hat die Änderung nicht angenommen: Prüfen Sie die Felder. Ein neues Fälligkeitsdatum muss außerdem jede „Kommt vor“-Verknüpfung in der richtigen Reihenfolge halten.",
+  "p.task.refused_link_invalid":
+    "Der Dienst hat die Verknüpfung nicht angenommen: Die andere Aufgabe ist vielleicht entfernt, eine „Blockiert“- oder „Kommt vor“-Verknüpfung darf keinen Kreis bilden, und „Kommt vor“ verlangt, dass die andere Aufgabe nach dieser fällig ist.",
   "l.link.kind_docs": "Dokumente",
   "l.link.kind_repo": "Code-Repository",
   "l.link.kind_ticket": "Ticket",

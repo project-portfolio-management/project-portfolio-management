@@ -180,6 +180,9 @@ match breakdown).
 /plans/[pid]/change-requests the plan's change requests: draft, edit a
                              draft, submit, review, decide, withdraw
                              (NC-1 slice 2)
+/plans/[pid]/tasks/[tpid]    one task: edit its fields, add and remove
+                             its links to other tasks (NC-1 slice 3);
+                             each board card's title links here
 
 Also built, described in the sections below (the list above is not
 every page; `find src/routes -name +page.svelte` gives all 103):
@@ -412,8 +415,9 @@ choice against them.
 10. **Kanban task board** (`/plans/[pid]/board`): columns **Todo /
     InProgress / InReview / Done / Blocked**; cards show task title,
     assignee, estimate, due date. **Drag a card to a column = status
-    change** (`PATCH /api/plans/{pid}/tasks/{tid}`). Create / edit task
-    inline.
+    change** (`PATCH /api/plans/{pid}/tasks/{tid}`). Create a task
+    inline; a card's title links to the task's page, where it is edited
+    and linked to other tasks (NC-1 slice 3, section below).
 11. **Issues list** (`/plans/[pid]/issues`): table of issues with
     kind (Bug / Risk / Blocker / Question / Improvement), severity
     (Low / Med / High / Critical), status (Open / InProgress / Resolved /
@@ -1602,3 +1606,41 @@ It is linked from the plan page (module `governance`) and from the title of each
 - **Tests:** `tests/unit/change-request-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
   `tests/e2e/plan-change-requests.spec.ts` (draft, refused draft, edit, submit, review, decide, withdraw, the
   409, Welsh, axe). The Welsh and the other six languages are machine-written and unreviewed.
+
+## Task editing and links between tasks (NC-1 slice 3, LT-10)
+
+`/plans/[pid]/tasks/[tpid]` (which already showed a task and its links to outside systems) is now where a task is
+edited and linked to other tasks. Each card on the board (`/plans/[pid]/board`) links to it from its title; the page
+links back to the board and to the work breakdown.
+
+- **Edit.** One form over `PUT /api/plans/{pid}/tasks/{t_pid}`: title, description, assignee, story points and due
+  date. The service replaces every field the body names and clears one left out, so the body always carries the
+  task's sprint, component and parent task as they were loaded; it never carries a status (a status change is the
+  board's move, `PATCH`, which keeps the flow stamps true). The page checks the service's rules before sending
+  (`src/lib/task-edit-view.ts`): a title (at most 1024 bytes), an assignee that is a `person:` or `worker:`
+  reference to a UUID or nobody, whole story points from 0 to 100 or none, a due date or none. The service remains
+  the authority: a new due date that breaks a `precedes` link is its 422. The body type `UpdateTaskBody` is checked
+  against `openapi.json` by `client-bodies.test.ts`. The task routes take no `If-Match` and answer no `ETag`, so the
+  edit is last-writer-wins and there is no 412 to handle.
+- **Links to other tasks.** `GET …/tasks/{t_pid}/relations` lists them from this task's side, in words: "Blocks" /
+  "Blocked by", "Comes before" / "Comes after" (`precedes`), "Related to", "Duplicate of" / "Duplicated by",
+  "Copied from" / "Copied to". Each names the other task (a link to its page), its status and due date, and has a
+  Remove button (`DELETE …/relations/{r_pid}`; neither task is removed). Links to tasks in plans the caller cannot
+  read are counted, never shown, as the service answers. A short note says what each kind does (`blocks` stops the
+  other task finishing; `precedes` needs the other task due after; closing a task closes its duplicates).
+- **Add a link.** `POST …/relations` with a kind and one of this plan's other tasks. The page refuses before asking:
+  no task chosen; the same link again (`related` either way is the same link); a two-task loop of `blocks` or
+  `precedes`; `precedes` when both tasks are dated and the other is not due strictly after this one. A longer loop,
+  or a task that has gone, is the service's 422.
+- **Refusals.** A 403 says the caller may not change this plan's tasks; a 404 says the task (or the link) has gone
+  and reads it again; a 409 says the link exists and reads the links again; a 422 says what was not accepted, for
+  an edit or a link. Each is a catalogue sentence; the service's own text is never shown.
+- **Not built in this slice:** editing the sprint, component or parent task here (they are kept); a status change
+  here (the board does it); a link to a task in another plan, or an incoming link made from this side (the add
+  form links this task to another of the same plan); a confirmation before removing a link; showing links on the
+  board's cards; editing the start date or duration (the schedule editor on `/plans/[pid]/critical-path` does);
+  custom fields (`PUT /api/custom-fields/values`); a person picker for the assignee.
+- **Tests:** `tests/unit/task-edit-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/plan-task-edit.spec.ts` (the board's link, the edit's body, refusals on the page, a 422 and a 403 on
+  the edit, the links read both ways, add and remove, refusals on the page, a 409, a 422 and a 404 on the links,
+  Welsh, axe). The Welsh and the other six languages are machine-written and unreviewed.

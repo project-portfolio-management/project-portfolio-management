@@ -149,7 +149,7 @@ audited; people stay references.
   *Why:* Leantime's 3.10.1 fixed timestamps stored in viewer-local time,
   midnight due-date buckets and "Invalid DateTime" in the calendar.
 
-- [x] **LT-10 (S) — Task relations.** **Landed 2026-10-02.** Service: `task_relations` (migration `m20261003_000008_task_relations`), three routes under `/api/plans/{pid}/tasks/{t}/relations`; `src/task_relations.rs` (4 unit tests). Redmine's behaviours as the acceptance set, every refusal naming the relation: **`blocks`** stops the blocked task finishing while the blocker is open; **`precedes`** needs the successor due strictly after (checked at create **and** when either due date is edited); **`duplicates`** closes the duplicate (with a transition row and audit) when the primary finishes; `related` (symmetric) and `copied_from` are informational. `blocks`/`precedes` must stay acyclic; self and exact-duplicate relations refused; cross-plan allowed; a relation to a task in an unreadable plan is hidden and counted. 1 DB-gated test. **Deviation:** tasks have a due date, not a start date, so `precedes` is on due dates. **Not built:** front-end. `task_relations` (`from`, `kind` ∈
+- [x] **LT-10 (S) — Task relations.** **Landed 2026-10-02.** Service: `task_relations` (migration `m20261003_000008_task_relations`), three routes under `/api/plans/{pid}/tasks/{t}/relations`; `src/task_relations.rs` (4 unit tests). Redmine's behaviours as the acceptance set, every refusal naming the relation: **`blocks`** stops the blocked task finishing while the blocker is open; **`precedes`** needs the successor due strictly after (checked at create **and** when either due date is edited); **`duplicates`** closes the duplicate (with a transition row and audit) when the primary finishes; `related` (symmetric) and `copied_from` are informational. `blocks`/`precedes` must stay acyclic; self and exact-duplicate relations refused; cross-plan allowed; a relation to a task in an unreadable plan is hidden and counted. 1 DB-gated test. **Deviation:** tasks have a due date, not a start date, so `precedes` is on due dates. **Not built:** front-end. **Screen 2026-11-10 (NC-1 slice 3):** `/plans/[pid]/tasks/[tpid]` lists, adds and removes a task's links to other tasks of its plan; a link to a task in another plan has no screen yet. `task_relations` (`from`, `kind` ∈
   `related | duplicates | blocks`, `to`); `blocks` reuses dependency cycle
   refusal. Shown on the task detail.
   **Acceptance:** self-relations and exact duplicates are refused; a `blocks`
@@ -2009,6 +2009,20 @@ only as search snippets.
   edits; a baseline for an approved change; a confirmation before withdrawing; an approver picker (a typed `person:`
   or `worker:` reference); hiding steps the caller may not take (the page does not know the caller; the service
   refuses with 403, shown in words); every later slice in the order above.
+  **Not verified:** the stubbed service only (no run against a real service); CI; the Welsh and the six other
+  languages are machine-written and unreviewed.
+  **Slice 3 built 2026-11-10 (task editing and links between tasks, LT-10; NC-1 stays open).** The existing task page
+  `/plans/[pid]/tasks/[tpid]` gains an edit form (title, description, assignee, points, due date over the `PUT`,
+  which replaces every field, so the sprint, component and parent go back as loaded and no status is sent) and a
+  section for the task's links to other tasks (listed both ways in words, hidden ones counted; add one to another
+  task of the plan; remove one). Each board card's title now links to that page. Typed `UpdateTaskBody` and
+  `TaskRelationBody` and four client methods; `src/lib/task-edit-view.ts` with unit tests;
+  `tests/e2e/plan-task-edit.spec.ts` (board link, edit body, refusals on the page, 422 and 403 on the edit, links
+  both ways, add, remove, refusals on the page, 409, 422 and 404 on the links, Welsh, axe). 53 new catalogue keys in
+  all eight page catalogues. The task routes take no `If-Match`, so there is no 412 to show.
+  **Not done:** editing the sprint, component or parent; a link to a task in another plan, or an incoming link made
+  from this side; a confirmation before removing a link; links shown on the board's cards; custom fields; an
+  assignee picker; every later slice in the order above.
   **Not verified:** the stubbed service only (no run against a real service); CI; the Welsh and the six other
   languages are machine-written and unreviewed.
 - [ ] **NC-2 (M) — Read-only MCP adapter.** It exposes registry, task, RAID,

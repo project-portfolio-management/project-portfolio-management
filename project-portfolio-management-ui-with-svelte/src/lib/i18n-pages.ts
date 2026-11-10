@@ -1961,6 +1961,74 @@ export const PAGES_EN = {
   "p.task.s_blocked": "Blocked",
   "p.task.links_intro":
     "Where this task lives in other tools, such as the Jira or Linear issue it is tracked as. The address is stored and shown; it is never fetched and nothing is synchronised.",
+  "p.task.back_board": "Back to the board",
+  "p.task.could_not_load_links":
+    "Could not load the task's links to other tasks.",
+  "p.task.could_not_load_tasks": "Could not load the plan's tasks to link to.",
+  "p.task.edit_heading": "Edit the task",
+  "p.task.edit_note":
+    "The status changes on the board. The sprint, the component and the parent task are kept as they are.",
+  "p.task.f_title": "Title",
+  "p.task.f_assignee":
+    "Assigned to (a person: or worker: reference; leave empty for nobody)",
+  "p.task.f_points":
+    "Story points (a whole number from 0 to 100; leave empty for none)",
+  "p.task.f_due": "Due date (leave empty for none)",
+  "p.task.save": "Save the task",
+  "p.task.saved": "The task was saved.",
+  "p.task.problem_title_required": "Give the task a title.",
+  "p.task.problem_title_too_long": "The title is too long.",
+  "p.task.problem_assignee":
+    "Name the assignee as a person: or worker: reference, or leave it empty.",
+  "p.task.problem_points_whole": "Story points are a whole number.",
+  "p.task.problem_points_range": "Story points must be from 0 to 100.",
+  "p.task.problem_due": "The due date is not a date.",
+  "p.task.relations_heading": "Links to other tasks",
+  "p.task.relations_intro":
+    "‘Blocks’ stops the other task being finished while this one is open. ‘Comes before’ needs the other task to be due after this one. When a task is finished, a task that is a duplicate of it is finished too. ‘Related to’ and ‘Copied from’ are for information only.",
+  "p.task.no_relations": "This task has no links to other tasks.",
+  "p.task.rel_related": "Related to",
+  "p.task.rel_blocks": "Blocks",
+  "p.task.rel_blocked_by": "Blocked by",
+  "p.task.rel_precedes": "Comes before",
+  "p.task.rel_follows": "Comes after",
+  "p.task.rel_duplicates": "Duplicate of",
+  "p.task.rel_duplicated_by": "Duplicated by",
+  "p.task.rel_copied_from": "Copied from",
+  "p.task.rel_copied_to": "Copied to",
+  "p.task.other_state": "(now {status})",
+  "p.task.other_state_due": "(now {status}, due {date})",
+  "p.task.remove_link": "Remove",
+  "p.task.remove_link_named": "Remove the link: {link} {title}",
+  "p.task.hidden_links_one":
+    "{n} more link goes to a task in a plan you cannot see.",
+  "p.task.hidden_links_other":
+    "{n} more links go to tasks in plans you cannot see.",
+  "p.task.add_link_heading": "Link to another task",
+  "p.task.f_kind": "This task",
+  "p.task.f_other": "Other task",
+  "p.task.choose_task": "Choose a task",
+  "p.task.add_link": "Link the tasks",
+  "p.task.link_added": "The link was added.",
+  "p.task.link_removed": "The link was removed.",
+  "p.task.problem_choose_task": "Choose the other task.",
+  "p.task.problem_self": "A task cannot be linked to itself.",
+  "p.task.problem_exists": "This task already has that link.",
+  "p.task.problem_cycle":
+    "The other task already has that link to this one; the two would wait on each other.",
+  "p.task.problem_precedes_dates":
+    "‘Comes before’ needs the other task to be due after this one: change a due date first.",
+  "p.task.refused_forbidden": "You may not change the tasks of this plan.",
+  "p.task.refused_gone":
+    "This task no longer exists, or you cannot see it; it has been read again.",
+  "p.task.refused_link_gone":
+    "That link had already been removed; the links have been read again.",
+  "p.task.refused_link_exists":
+    "That link already exists; the links have been read again.",
+  "p.task.refused_edit_invalid":
+    "The service did not accept the change: check the fields. A new due date must also keep every ‘Comes before’ link in order.",
+  "p.task.refused_link_invalid":
+    "The service did not accept the link: the other task may be gone, a ‘Blocks’ or ‘Comes before’ link may not go round in a circle, and ‘Comes before’ needs the other task due after this one.",
   "l.link.kind_docs": "Documents",
   "l.link.kind_repo": "Code repository",
   "l.link.kind_ticket": "Ticket",

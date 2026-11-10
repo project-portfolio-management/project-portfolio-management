@@ -1938,6 +1938,73 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.task.s_blocked": "معطّلة",
   "p.task.links_intro":
     "مكان هذه المهمة في أدوات أخرى، مثل مسألة Jira أو Linear التي تُتتبَّع بها. يُخزَّن العنوان ويُعرض؛ ولا يُجلب أبدًا ولا تجري أي مزامنة.",
+  "p.task.back_board": "العودة إلى اللوحة",
+  "p.task.could_not_load_links": "تعذّر تحميل روابط المهمة بالمهام الأخرى.",
+  "p.task.could_not_load_tasks": "تعذّر تحميل مهام الخطة لربطها.",
+  "p.task.edit_heading": "تعديل المهمة",
+  "p.task.edit_note":
+    "تتغيّر الحالة على اللوحة. يبقى السباق والمكوّن والمهمة الأم كما هي.",
+  "p.task.f_title": "العنوان",
+  "p.task.f_assignee":
+    "مُسندة إلى (مرجع person: أو worker:؛ اتركه فارغًا لعدم الإسناد)",
+  "p.task.f_points":
+    "نقاط القصة (عدد صحيح من 0 إلى 100؛ اتركه فارغًا لعدم التحديد)",
+  "p.task.f_due": "تاريخ الاستحقاق (اتركه فارغًا لعدم التحديد)",
+  "p.task.save": "حفظ المهمة",
+  "p.task.saved": "حُفظت المهمة.",
+  "p.task.problem_title_required": "أعطِ المهمة عنوانًا.",
+  "p.task.problem_title_too_long": "العنوان طويل جدًا.",
+  "p.task.problem_assignee":
+    "اذكر الشخص المُسندة إليه بمرجع person: أو worker:، أو اتركه فارغًا.",
+  "p.task.problem_points_whole": "نقاط القصة عدد صحيح.",
+  "p.task.problem_points_range": "يجب أن تكون نقاط القصة من 0 إلى 100.",
+  "p.task.problem_due": "تاريخ الاستحقاق ليس تاريخًا.",
+  "p.task.relations_heading": "الروابط بمهام أخرى",
+  "p.task.relations_intro":
+    "«تحجب» تمنع إنهاء المهمة الأخرى ما دامت هذه مفتوحة. «تسبق» تتطلب أن يكون استحقاق المهمة الأخرى بعد هذه. عند إنهاء مهمة تُنهى أيضًا كل مهمة مكرّرة منها. «مرتبطة بـ» و«منسوخة من» للعلم فقط.",
+  "p.task.no_relations": "ليس لهذه المهمة روابط بمهام أخرى.",
+  "p.task.rel_related": "مرتبطة بـ",
+  "p.task.rel_blocks": "تحجب",
+  "p.task.rel_blocked_by": "محجوبة بواسطة",
+  "p.task.rel_precedes": "تسبق",
+  "p.task.rel_follows": "تلي",
+  "p.task.rel_duplicates": "مكرّرة من",
+  "p.task.rel_duplicated_by": "كُرّرت في",
+  "p.task.rel_copied_from": "منسوخة من",
+  "p.task.rel_copied_to": "نُسخت إلى",
+  "p.task.other_state": "(الآن {status})",
+  "p.task.other_state_due": "(الآن {status}، تستحق {date})",
+  "p.task.remove_link": "إزالة",
+  "p.task.remove_link_named": "إزالة الرابط: {link} {title}",
+  "p.task.hidden_links_one":
+    "رابط آخر ({n}) يؤدي إلى مهمة في خطة لا يمكنك رؤيتها.",
+  "p.task.hidden_links_other":
+    "{n} روابط أخرى تؤدي إلى مهام في خطط لا يمكنك رؤيتها.",
+  "p.task.add_link_heading": "الربط بمهمة أخرى",
+  "p.task.f_kind": "هذه المهمة",
+  "p.task.f_other": "المهمة الأخرى",
+  "p.task.choose_task": "اختر مهمة",
+  "p.task.add_link": "ربط المهمتين",
+  "p.task.link_added": "أُضيف الرابط.",
+  "p.task.link_removed": "أُزيل الرابط.",
+  "p.task.problem_choose_task": "اختر المهمة الأخرى.",
+  "p.task.problem_self": "لا يمكن ربط مهمة بنفسها.",
+  "p.task.problem_exists": "لهذه المهمة هذا الرابط بالفعل.",
+  "p.task.problem_cycle":
+    "للمهمة الأخرى هذا الرابط بهذه بالفعل؛ وستنتظر كل منهما الأخرى.",
+  "p.task.problem_precedes_dates":
+    "«تسبق» تتطلب أن يكون استحقاق المهمة الأخرى بعد هذه: غيّر تاريخ استحقاق أولًا.",
+  "p.task.refused_forbidden": "لا يحق لك تغيير مهام هذه الخطة.",
+  "p.task.refused_gone":
+    "لم تعد هذه المهمة موجودة، أو لا يمكنك رؤيتها؛ وقد أُعيدت قراءتها.",
+  "p.task.refused_link_gone":
+    "كان هذا الرابط قد أُزيل من قبل؛ وأُعيدت قراءة الروابط.",
+  "p.task.refused_link_exists":
+    "هذا الرابط موجود بالفعل؛ وأُعيدت قراءة الروابط.",
+  "p.task.refused_edit_invalid":
+    "لم تقبل الخدمة التغيير: راجع الحقول. ويجب أن يحافظ تاريخ الاستحقاق الجديد أيضًا على ترتيب كل رابط «تسبق».",
+  "p.task.refused_link_invalid":
+    "لم تقبل الخدمة الرابط: ربما لم تعد المهمة الأخرى موجودة، ولا يجوز أن يشكّل رابط «تحجب» أو «تسبق» دائرة، و«تسبق» تتطلب أن يكون استحقاق المهمة الأخرى بعد هذه.",
   "l.link.kind_docs": "المستندات",
   "l.link.kind_repo": "مستودع الشيفرة",
   "l.link.kind_ticket": "تذكرة",

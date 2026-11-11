@@ -1,6 +1,6 @@
 //! `SeaORM` Entity — `budget_baselines`. The **append-only**, versioned
 //! phased budget baseline (T-28b). See
-//! `migration/src/m20260918_000001_budget_baselines.rs` for the schema
+//! `migration/migrations/20260918000001_budget_baselines.up.sql` for the schema
 //! rationale.
 
 // SeaORM-generated entity shape: documented by the migration.

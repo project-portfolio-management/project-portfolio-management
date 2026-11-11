@@ -38,7 +38,7 @@ task_count() { # <prefix> <x| >
 cargo_version() { sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$1" | sed -n 1p; }
 
 generate() {
-  migrations=$(find "$API/migration/src" -name 'm2*.rs' | wc -l | tr -d ' ')
+  migrations=$(find "$API/migration/migrations" -name '*.sql' ! -name '*.down.sql' | wc -l | tr -d ' ')
   # api-routes.txt is written from the router by a unit test (src/openapi.rs), one `METHOD /path` per line.
   mounted=$(grep -cE '^[A-Z]+ /' "$API/api-routes.txt" || true)
   # openapi.json is written by a test with sorted keys and two-space indent: a path key sits four spaces in.
@@ -63,7 +63,7 @@ generate() {
   echo "| Service version | $(cargo_version "$API/Cargo.toml") | \`version\` in the service \`Cargo.toml\` |"
   echo "| Matcher version | $(cargo_version "$MATCHER/Cargo.toml") | \`version\` in the matcher \`Cargo.toml\` |"
   echo "| Front-end version | $ui_version | \`version\` in the front-end \`package.json\` |"
-  echo "| Migrations | $migrations | files named \`m2*.rs\` in \`migration/src\` |"
+  echo "| Migrations | $migrations | files in \`migration/migrations\` (a \`.sql\` or \`.up.sql\` each) |"
   echo "| Mounted routes | $mounted | \`METHOD /path\` lines in the service's \`api-routes.txt\` (one per method, so this exceeds the path count) |"
   echo "| Documented API paths | $documented | path keys in the service's \`openapi.json\` |"
   echo "| Service tests | $svc_tests, plus $svc_ignored \`#[ignore]\`d (database or container gated) | \`#[test]\` and \`#[tokio::test]\` lines; \`#[ignore]\` lines, in \`src\`, \`tests\`, \`migration/src\` |"

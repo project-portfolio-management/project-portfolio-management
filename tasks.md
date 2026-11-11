@@ -2709,6 +2709,30 @@ came from grep.
   **Verified:** fmt, clippy (all targets, all features), 1,265 unit tests, the whole database suite (`mod`, 220 tests, one run: 219 passed and `requests::attachments::an_upload_larger_than_the_service_wide_body_limit_is_accepted_up_to_the_cap` failed once with `Connection reset by peer` on `127.0.0.1:8001` at its `POST /api/plans`, the known intermittent; nothing listened on port 8001 before the run; run alone five times after, it passed five times; `requests::event_outbox` (the relay tests and the outbox release among them), `requests::idempotency`, `requests::retention`, `requests::scheduled_jobs`, `requests::audit_protection`, `requests::tba` (the flow gauges) and `requests::scale` passed) and the 57 other database test binaries (85 tests, `outbox_audit`, `sqlx_layer` and `webhook_redelivery` among them; `keycloak_entra_broker` and `keycloak_guard` with the `keycloak` feature), on a throwaway database; the status, OpenAPI-bodies and llms checks.
   **Still on SeaORM through other modules**, for these files: none.
   **Next, suggested:** step (b), the migration crate to sqlx migrations with the history bridge.
+  **Step (b) done 2026-11-11 (SQ-1 not ticked: step (c) is left).** The migration crate runs on sqlx: the 143
+  migrations are SQL files in `migration/migrations/` (`<SeaORM digits>_<name>.up.sql` and `.down.sql` for the 142
+  that roll back; a plain `.sql` for `m20261109_000109_axa_outbox_record`, which `db down` refuses with its old
+  reason), frozen from the statements each migration ran on PostgreSQL 18: a throwaway program (not committed) drove
+  the old `Migrator` on a scratch server with `log_statement = 'all'` and a JSON log, every `up` in one run and every
+  `down` one at a time (rebuilding below the refusal), and each transaction's statements, named by its
+  `seaql_migrations` row, became one file. Two captures of every `up` were the same. No migration branched in Rust,
+  so the data migrations keep their logic as the SQL they ran (`automation_multi_action`, 049, 066, 088, 100, 107,
+  108, 109, and the `IF NOT EXISTS` ones). `db migrate`, `db down`, `db reset` and `db status` keep their meaning
+  (spec §8.3b says how); the bridge copies `seaql_migrations` into `_sqlx_migrations` once, in one transaction,
+  refuses an unknown SeaORM name on every run and leaves `seaql_migrations` alone. The brief expected about 19
+  refusing rollbacks; every `down` run on the old migrator found one.
+  **Verified:** `pg_dump --schema-only --no-owner` of a database the old migrator built and one the new runner built
+  are identical but for the two history tables, and so is the data (only `issue_types` has rows; equal once random
+  pids and `now()` are normalised); the same with rows seeded before each data migration, and with the old migrator
+  stopped at 141 and the new binary finishing; an old-built database booted and `db migrate`d by the new binary
+  dumps the same, `seaql_migrations` included, apart from `_sqlx_migrations`, and a second run changes nothing; the
+  whole database suite (`mod`, 220 passed) and the 58 other database test binaries (90 tests, with the new
+  `migrations`, 7; the two `keycloak` ones with the feature) on a database the new runner built; the restore drill (`scripts/restore-test.sh -t` with the whole suite on the restored copy, alone: passed, `mod` 220 passed on it; and once more on an old-built database bridged by the new binary, which keeps both histories: passed);
+  fmt, clippy, 1,265 unit tests and the migration crate's 7, `cargo deny check`, `cargo machete`; the status,
+  OpenAPI-bodies and llms checks. **Not verified:** CI; a bridge on a long-lived database; two processes migrating at
+  once; the image build; the chaos test. **Not done:** `start` without auto-migrate reads no history, so a database
+  newer than the binary is refused by the `migrate` job, not at `start`.
+  **Next, suggested:** step (c).
 
 ## Correctness carried forward (CF-n)
 

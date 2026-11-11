@@ -57,6 +57,10 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
   given an explicit `toolchain:` input; bump both by hand together with `rust-toolchain.toml` (the `fresh-clone` job checks they agree).
 - Releases: a `v*.*.*` tag must equal the service crate and UI versions; the workflow pushes an image to GHCR.
 - Use Podman (`podman compose`), not Docker, in instructions and scripts. CI still builds with Docker.
+- Migrations are frozen SQL files in `project-portfolio-management-service-with-rust/migration/migrations/`, run by
+  sqlx (`_sqlx_migrations`); never edit a released one (its checksum is checked), add a new file. A database the old
+  `sea-orm-migration` runner built is bridged once from `seaql_migrations`, which stays
+  ([`operations/upgrade-and-migration.md`](operations/upgrade-and-migration.md)).
 - The service binary is started with `cargo run -- start` (and `cargo run -- task <name>`); there is no
   framework subcommand.
 - The bridge to the workforce service (WPM) is entity spec §8.5a and service spec §9.10a; it is off (stub mode)

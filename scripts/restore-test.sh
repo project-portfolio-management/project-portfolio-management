@@ -53,7 +53,16 @@ $PSQL "$base/postgres" -qc "create database \"$scratch\"" || fail "cannot create
 "$HERE/restore.sh" "$out" "$SCRATCH_URL" -a "$WORK/artifacts" >/dev/null || fail "restore failed"
 
 echo "3/5 comparing migration history ..."
-mig() { $PSQL "$1" -Atc "select coalesce(string_agg(version, ',' order by version), '') from seaql_migrations"; }
+# Both histories: sqlx's, and SeaORM's, which a database migrated before the move to sqlx keeps.
+hist() {
+  if [ "$($PSQL "$1" -Atc "select to_regclass('$2') is not null")" = t ]; then
+    $PSQL "$1" -Atc "select coalesce(string_agg(version::text, ',' order by version), '') from $2"
+  else
+    echo "(no $2)"
+  fi
+}
+mig() { echo "sqlx: $(hist "$1" _sqlx_migrations); seaorm: $(hist "$1" seaql_migrations)"; }
+[ "$(mig "$DB_URL")" != "sqlx: (no _sqlx_migrations); seaorm: (no seaql_migrations)" ] || fail "the source has no migration history"
 [ "$(mig "$DB_URL")" = "$(mig "$SCRATCH_URL")" ] || fail "migration history differs"
 
 echo "4/5 comparing every table (rows and content digest) ..."

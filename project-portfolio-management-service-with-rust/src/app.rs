@@ -19,7 +19,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use project_portfolio_management_migration::{Migrator, MigratorTrait};
+use project_portfolio_management_migration as migrations;
 use std::sync::OnceLock;
 
 #[expect(unused_imports)]
@@ -56,6 +56,15 @@ async fn require_auth_mw(req: Request, next: Next) -> Response {
         Ok(()) => next.run(req).await,
         // As a problem with the reason in `detail`: axa would send the plain text as a problem without it.
         Err(refusal) => crate::controllers::record_rejection(refusal).into_response(),
+    }
+}
+
+/// A migration runner's failure as the service's: a statement's own error stays sqlx's, so a database that cannot
+/// serve reads as one; the rest (a refused rollback, a database newer than this binary) keep their message.
+fn migration_error(error: migrations::Error) -> Error {
+    match error {
+        migrations::Error::Sqlx(error) => Error::Sqlx(error),
+        other => Error::Any(Box::new(other)),
     }
 }
 
@@ -222,10 +231,29 @@ impl App {
     /// Runs one `db` subcommand. `axa::cli::parse` has already refused one that destroys data where it may not run.
     async fn db(ctx: &AppContext, command: DbCommand) -> Result<()> {
         match command {
-            DbCommand::Migrate => Migrator::up(&ctx.db, None).await?,
-            DbCommand::Down { steps } => Migrator::down(&ctx.db, Some(steps)).await?,
-            DbCommand::Reset => Migrator::fresh(&ctx.db).await?,
-            DbCommand::Status => Migrator::status(&ctx.db).await?,
+            DbCommand::Migrate => migrations::up(crate::db::for_migrations(ctx))
+                .await
+                .map_err(migration_error)?,
+            DbCommand::Down { steps } => migrations::down(crate::db::for_migrations(ctx), steps)
+                .await
+                .map_err(migration_error)?,
+            DbCommand::Reset => migrations::fresh(crate::db::for_migrations(ctx))
+                .await
+                .map_err(migration_error)?,
+            DbCommand::Status => {
+                tracing::info!("Checking migration status");
+                for migration in migrations::status(crate::db::for_migrations(ctx))
+                    .await
+                    .map_err(migration_error)?
+                {
+                    let status = if migration.applied {
+                        "Applied"
+                    } else {
+                        "Pending"
+                    };
+                    tracing::info!("Migration '{}'... {status}", migration.name);
+                }
+            }
             DbCommand::Truncate => Self::truncate(ctx).await?,
         }
         Ok(())
@@ -263,7 +291,9 @@ impl App {
             axa::logger::init(env!("CARGO_CRATE_NAME"), &ctx.config.logger);
         }
         if ctx.config.database.auto_migrate && !matches!(cli.command, Command::Db { .. }) {
-            Migrator::up(&ctx.db, None).await?;
+            migrations::up(crate::db::for_migrations(&ctx))
+                .await
+                .map_err(migration_error)?;
         }
         match cli.command {
             Command::Check => Ok(()),
@@ -718,7 +748,9 @@ impl TestApp for App {
         let environment = Environment::Test;
         let config = service_config(&environment)?;
         let ctx = Self::context(environment, config).await?;
-        Migrator::fresh(&ctx.db).await.map_err(Error::from)?;
+        migrations::fresh(crate::db::for_migrations(&ctx))
+            .await
+            .map_err(migration_error)?;
         let router = Self::router(&ctx).await?;
         Ok(BootResult {
             app_context: ctx,

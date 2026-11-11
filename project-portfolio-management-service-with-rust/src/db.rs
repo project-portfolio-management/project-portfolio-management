@@ -65,6 +65,14 @@ pub fn for_axa_crate(ctx: &AppContext) -> PgPool {
     ctx.db.get_postgres_connection_pool().clone()
 }
 
+/// The shared pool, **uncounted**, for the migration runner (`project_portfolio_management_migration`): sqlx's
+/// migrator takes a [`PgPool`] and holds its lock on one connection. Its statements are the schema's, not a route's,
+/// so no query-count guard is meant to see them; nothing else may use this.
+#[must_use]
+pub fn for_migrations(ctx: &AppContext) -> &PgPool {
+    ctx.db.get_postgres_connection_pool()
+}
+
 /// An open transaction. Dropped without [`Tx::commit`], it rolls back.
 #[derive(Debug)]
 pub struct Tx(sqlx::Transaction<'static, Postgres>);

@@ -20,8 +20,8 @@ look at.
 
 ## Database
 
-1. A new table is named in the plural in the migration, in the entity's `table_name` and in raw SQL (`create_table` pluralises). (`axa::schema::create_table` pluralises)
-2. Each migration file is registered in `migration/src/lib.rs`, in both the `mod` list and the `migrations()` list, and can run twice (`IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION` for triggers). (service `AGENTS.md`)
+1. A new table is named in the plural in the migration, in the entity's `table_name` and in raw SQL, as every table so far is. (service `AGENTS.md`)
+2. A migration is a new file in `migration/migrations/`, versioned after the last (`<YYYYMMDD><NNNNNN>_<name>`): an `.up.sql` and a `.down.sql`, or a plain `.sql` with a reason in `REFUSED` (`migration/src/lib.rs`) when it cannot be rolled back. No released file is edited (the runner refuses a changed checksum). It can run twice (`IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION` for triggers). (service `AGENTS.md`)
 3. Append-only and immutability rules are database triggers, not only code. (service `AGENTS.md`)
 4. A list is bounded (a cap or `limit`/`offset`), and a list route is in `PAGED_LISTS` or, if the census cannot call it, in `UNREACHED` with a reason in `tests/list_paging.rs`. (`tests/list_paging.rs`)
 5. A multi-row change is one transaction with its audit row; a change made in several steps says what happens when a step fails. (`controllers/plan_templates.rs`)

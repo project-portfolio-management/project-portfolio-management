@@ -3,7 +3,7 @@ name = "project-portfolio-management-migration"
 version = "0.2.0"
 edition = "2021"
 rust-version = "1.97"
-description = "Database migrations for the project portfolio management service (sea-orm-migration on axa)"
+description = "Database migrations for the project portfolio management service (frozen SQL, run by sqlx)"
 license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only"
 repository = "https://github.com/project-portfolio-management/project-portfolio-management"
 keywords = ["portfolio", "project", "migration", "database"]
@@ -14,14 +14,6 @@ name = "project_portfolio_management_migration"
 path = "src/lib.rs"
 
 [dependencies]
-axa = { workspace = true }
-
-
-[dependencies.sea-orm-migration]
-version = "2.0"
-features = [
-  # Enable at least one `ASYNC_RUNTIME` and `DATABASE_DRIVER` feature if you want to run migration via CLI.
-  # View the list of supported features at https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime.
-  # e.g.
-  "runtime-tokio-rustls", # `ASYNC_RUNTIME` feature
-]
+# `migrate` for the runner and its history table (`build.rs` embeds `migrations/`).
+sqlx = { version = "0.9", default-features = false, features = ["migrate", "postgres", "runtime-tokio"] }
+tracing = { version = "0.1" }

@@ -37,7 +37,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 | DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
 | DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
-| Migrations | `migration/src/` (crate `project-portfolio-management-migration`) — files `m2026…`; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
+| Migrations | `migration/migrations/` (crate `project-portfolio-management-migration`, run by sqlx) — one frozen SQL file per migration, `<version>_<name>.up.sql` with its `.down.sql`, or a plain `.sql` that refuses to roll back; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
 
 ## API surface
 
@@ -164,7 +164,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 1. **Spec-first.** Behavioural change updates `spec/`; the entity spec owns
    the canonical model (§5).
 2. **Conventional.** Controllers register in `app.rs`; tables are
-   `sea-orm-migration` migrations; pure rules live in `src/<area>.rs` with
+   SQL migrations in `migration/migrations/`; pure rules live in `src/<area>.rs` with
    no I/O and the controller is wiring.
 3. **Reuse the matcher type**; do not fork a `Plan` DTO.
 4. **One recursive collection**; no per-kind collections.
@@ -194,12 +194,20 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   segments; `plan_pid_of` decodes first because `%7B<uuid>%7D` (braced
   UUID) bypassed a guard that parsed raw text. Any new path-parsing
   middleware must do the same (and fail closed).
-- **Migrations**: use `CREATE OR REPLACE FUNCTION` for trigger functions
-  (re-runnable; see migrations 45–47); `create_table` pluralizes names, so
-  reference the plural table name in later migrations and entities;
-  register each file in `migration/src/lib.rs`. Append-only and immutability
-  rules (processes, document versions) are database triggers, not just
-  handler checks.
+- **Migrations** are SQL files in `migration/migrations/`, embedded by
+  `migration/build.rs` and run by sqlx (history in `_sqlx_migrations`). A new
+  one is `<YYYYMMDD><NNNNNN>_<name>.up.sql` plus `.down.sql`, numbered after
+  the last; one that cannot be rolled back is a plain `.sql` with its reason
+  in `REFUSED` (`migration/src/lib.rs`), and a unit test keeps the two in step.
+  **Never edit a released file**: its checksum is recorded, and `db migrate`
+  refuses a changed one; a change is a new migration. The 143 files up to
+  `20261109000109` are the statements the old `sea-orm-migration` migrations
+  ran, frozen; a database that migrator built is bridged once from
+  `seaql_migrations` (kept), so nothing runs twice. Use `CREATE OR REPLACE
+  FUNCTION` for trigger functions (re-runnable; see migrations 45–47); name
+  tables in the plural, as every table so far is. Append-only and
+  immutability rules (processes, document versions) are database triggers,
+  not just handler checks.
 - **Optimistic commits**: sandbox and handover commits require `If-Match`
   with the preview's etag; stale is `409`. Hammock links and schedule
   edits are serialized (commit `cf55b22`).
@@ -242,7 +250,8 @@ src/
 ├── openapi.rs · openapi_more.rs     hand-written OpenAPI + PAGED_LISTS
 ├── compliance/             keyed integrity (mac, record_integrity, audit_integrity)
 └── tasks/search.rs         search_reindex CLI task
-migration/src/              ordered m2026… migrations (lib.rs registers them)
+migration/migrations/       frozen SQL migrations, oldest first (sqlx)
+migration/src/lib.rs        the runner: up, down, fresh, status, and the seaql_migrations bridge
 tests/                      mod.rs + requests/ (shared DB), one binary per real-token suite, otlp_*
 config/                     development / production / test yaml
 ```

@@ -6,7 +6,10 @@
   with that tag in the registry; the release notes come from
   [`CHANGELOG.md`](../project-portfolio-management-service-with-rust/CHANGELOG.md).
   Deploy a **tag**, never `latest`, so a rollback is "deploy the previous tag".
-- The database schema is changed only by **migrations compiled into the binary**.
+- The database schema is changed only by **migrations compiled into the binary**: SQL files, run by sqlx, which
+  records each one in `_sqlx_migrations` with a checksum of its file (before the release that moved to sqlx,
+  `sea-orm-migration` recorded them in `seaql_migrations`; see
+  [Upgrading to sqlx migrations](#upgrading-to-sqlx-migrations)).
   Production does not migrate on start, on purpose: the service
   never changes the schema as a side effect of starting. You run the migration
   deliberately, as the one-shot `migrate` job in `compose.yaml`
@@ -37,7 +40,10 @@
      `db down`; to go back, restore the backup. Clients that retry a write under the
      same `Idempotency-Key` after a crash now get `409` for a day, not a minute;
    - axa 0.11 renames settings and health routes: follow
-     [Upgrading to axa 0.11](#upgrading-to-axa-011) **before** the new image goes out.
+     [Upgrading to axa 0.11](#upgrading-to-axa-011) **before** the new image goes out;
+   - migrations move from `sea-orm-migration` to sqlx: the first `db migrate` copies the history, and from then
+     on an older image must not run against the database: read
+     [Upgrading to sqlx migrations](#upgrading-to-sqlx-migrations).
 2. **Take a backup and check it restores** ([Backup and restore](backup-and-restore.md)):
    `scripts/backup.sh`, then `scripts/restore-test.sh`. Do not upgrade without a
    backup you have seen restore.
@@ -108,6 +114,50 @@ routes. Do these first, in every environment, then deploy. Each item names the o
 No migration comes with the axa 0.11 change, so going back is redeploying the previous tag, with the old names and
 probes restored.
 
+## Upgrading to sqlx migrations
+
+The release that moves migrations from `sea-orm-migration` to sqlx changes no table, column, index, trigger or
+row. Each old migration is now a SQL file holding exactly the statements it ran, frozen; what changes is where the
+history is kept.
+
+**Take a backup first, and check it restores** (`scripts/backup.sh`, then `scripts/restore-test.sh`). Then run the
+`migrate` job as for any upgrade.
+
+**What happens on the first `db migrate`** (or the first boot, in an environment that migrates at boot, which
+production does not):
+
+1. In one transaction, every migration recorded in `seaql_migrations` is copied into a new table,
+   `_sqlx_migrations`, marked applied, with the checksum of its frozen file and the time SeaORM recorded. Nothing
+   is run again. `seaql_migrations` is left as it is, and is never written again.
+2. If `seaql_migrations` names a migration this binary does not know (the database was migrated by a newer
+   version), the step **refuses** and changes nothing: the error names the migrations. Run the newer version, or
+   restore the backup taken before it.
+3. Then sqlx applies whatever is still pending, each migration in its own transaction, as before.
+
+The copy happens once: when `_sqlx_migrations` already exists it is the history, and a second run changes nothing.
+`db status` reads `seaql_migrations` on a database not yet copied, so it shows the same list before and after.
+
+Check the result:
+
+```sh
+podman compose run --rm api /app/project-portfolio-management db status       # every migration Applied
+psql "$DB_URL" -Atc "select count(*), count(*) filter (where execution_time = 0) from _sqlx_migrations"
+```
+
+The second count is the migrations copied from `seaql_migrations` (they record no run time); any others were run
+by sqlx.
+
+**This is one-way.** An image from before this release reads only `seaql_migrations`. Once this release has
+applied a new migration, or rolled one back with `db down` (in development or test), `seaql_migrations` no longer
+says what the schema is, and an older image would run migrations against a schema that already has them, or skip
+ones it lacks. **Going back to an older image needs the backup** taken before the upgrade (below). Until a new
+migration has been released and applied, the schema is the same either way, but restore anyway rather than rely
+on it.
+
+`db down` refuses the same migrations as before (today only `m20261109_000109_axa_outbox_record`, with the same
+reason), and rolls back the others with their frozen down files; it still runs only in development and test.
+`db reset` drops both history tables with everything else and builds the schema with sqlx.
+
 ## Roll back
 
 Go back to the previous **image tag** and, if the new version applied
@@ -122,7 +172,9 @@ podman compose up -d --wait api
 ```
 
 If the upgrade applied **no** migration (the changelog says so, and
-`db status` showed nothing new), you can redeploy the previous tag without a restore.
+`db status` showed nothing new), you can redeploy the previous tag without a restore. The release that moved to
+sqlx migrations is the exception: going back across it needs the restore (see
+[Upgrading to sqlx migrations](#upgrading-to-sqlx-migrations)).
 
 Anything written after the backup is lost on a restore; export it first if it matters.
 
@@ -133,8 +185,8 @@ podman compose run --rm api /app/project-portfolio-management db status    # wha
 podman compose run --rm migrate                                                    # apply all pending
 ```
 
-If a migration fails it runs in a transaction where PostgreSQL allows, so the
-database is left at the last good version; read the error, fix the cause (for
+If a migration fails, its transaction rolls back, so the
+database is left at the last good version (each migration is its own transaction); read the error, fix the cause (for
 example a duplicate that a new unique index rejects), and run it again. A
 failure that leaves the schema half-changed is the case for a restore.
 

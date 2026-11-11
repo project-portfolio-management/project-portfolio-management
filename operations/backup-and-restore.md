@@ -8,8 +8,8 @@ version 18 tools), or you run them inside the database container (below).
 
 - the **database**, as a `pg_dump` custom-format file (`db.dump`);
 - the **artifact store** (uploaded attachments, export files) as `artifacts.tar.gz`;
-- a `MANIFEST` (when, server version, migration count and latest migration, row
-  count per table) and `SHA256SUMS` over all of it.
+- a `MANIFEST` (when, server version, migration count and latest migration, read from `_sqlx_migrations`, or
+  from `seaql_migrations` on a database not yet migrated by sqlx; row count per table) and `SHA256SUMS` over all of it.
 
 The search index is not backed up; it is rebuilt (`task search_reindex`).
 
@@ -73,7 +73,11 @@ verified one).
 1. **Stop the service** that writes to the target database.
 2. Create an empty database (`createdb`), or use `-f` to replace what is there.
 3. Restore, then start the service; migrations are already applied (they are in
-   the dump), and the one-shot `migrate` job is a no-op.
+   the dump), and the one-shot `migrate` job is a no-op. Restore a backup taken
+   before the move to sqlx migrations only to run the version it came from: the
+   newer binary would bridge it again on its first `db migrate`
+   ([Upgrade and migration](upgrade-and-migration.md#upgrading-to-sqlx-migrations)), which is safe but
+   is an upgrade, not a restore.
 
 ```sh
 scripts/restore.sh /backups/ppm-backup-20261010T020000Z \
@@ -115,7 +119,8 @@ DB_URL=postgres://user:pass@db-host:5432/project_portfolio_management \
 ```
 
 It takes a backup of the source, restores it into a scratch database, and fails
-unless **the migration history is identical**, **every table has the same rows
+unless **the migration history is identical** (`_sqlx_migrations`, and `seaql_migrations` where a database
+migrated before the move to sqlx keeps it), **every table has the same rows
 and the same content digest**, and the **restored artifact file count matches**.
 `-t COMMAND` runs a command against the restored database before it is dropped
 (`RESTORED_DB_URL` is exported); CI uses it to run the whole request test

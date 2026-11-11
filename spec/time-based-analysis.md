@@ -906,7 +906,7 @@ TBA-1 … TBA-8 are **implemented**. In
 
 | Piece | Location |
 |---|---|
-| Migration | `migration/src/m20260823_000001_time_based_analysis.rs` |
+| Migration | `migration/migrations/20260823000001_time_based_analysis.up.sql` (was `migration/src/m20260823_000001_time_based_analysis.rs`) |
 | Entity | `src/models/_entities/task_transitions.rs` |
 | Pure analysis + classification + tests | `src/tba.rs` |
 | Transition writes | `src/controllers/engineering.rs` (`create_task`, `move_task`) |

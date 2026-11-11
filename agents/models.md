@@ -111,15 +111,15 @@ cost plan, time-based flow metrics, Smart Score, lifecycle.
 
 **Files:**
 [`src/models/`](../project-portfolio-management-service-with-rust/src/models/),
-[`migration/src/`](../project-portfolio-management-service-with-rust/migration/src/)
+[`migration/migrations/`](../project-portfolio-management-service-with-rust/migration/migrations/)
 
 One core table `plans` — `{id` (PK)`, pid` (public UUID)`, name`
 (denormalized from `data.name`)`, kind` (nullable)`, parent_pid`
 (nullable, the recursive containment link)`, data` (JSONB `Plan`)`,
 active, deleted_at` (soft delete)`, phase}`. Model helpers: `create`,
 `find_by_pid`, `list_paged`, `to_plan()`, `update_data`, `soft_delete`.
-Migrations live in `migration/src/` (latest `…_000048_onboarding_one_open`);
-`create_table` pluralizes names, and trigger functions use
+Migrations are frozen SQL files in `migration/migrations/`, run by sqlx (latest
+`20261109000109_axa_outbox_record`); tables are named in the plural, and trigger functions use
 `CREATE OR REPLACE FUNCTION`.
 
 ## Wire DTOs (service controller)

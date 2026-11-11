@@ -109,8 +109,14 @@ encrypt "$OUT/db.dump"
   echo "created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "created_epoch=$(date -u +%s)"
   echo "server_version=$($PSQL "$DB_URL" -Atc 'show server_version' 2>/dev/null || echo unknown)"
-  echo "migrations=$($PSQL "$DB_URL" -Atc 'select count(*) from seaql_migrations' 2>/dev/null || echo unknown)"
-  echo "latest_migration=$($PSQL "$DB_URL" -Atc 'select version from seaql_migrations order by version desc limit 1' 2>/dev/null || echo unknown)"
+  # sqlx's history once the service has migrated with it; SeaORM's on a database it has not reached yet.
+  if [ "$($PSQL "$DB_URL" -Atc "select to_regclass('_sqlx_migrations') is not null" 2>/dev/null)" = t ]; then
+    echo "migrations=$($PSQL "$DB_URL" -Atc 'select count(*) from _sqlx_migrations where success' 2>/dev/null || echo unknown)"
+    echo "latest_migration=$($PSQL "$DB_URL" -Atc "select version || '_' || replace(description, ' ', '_') from _sqlx_migrations where success order by version desc limit 1" 2>/dev/null || echo unknown)"
+  else
+    echo "migrations=$($PSQL "$DB_URL" -Atc 'select count(*) from seaql_migrations' 2>/dev/null || echo unknown)"
+    echo "latest_migration=$($PSQL "$DB_URL" -Atc 'select version from seaql_migrations order by version desc limit 1' 2>/dev/null || echo unknown)"
+  fi
   echo "artifacts=$ARTIFACT_NOTE"
   echo "search_index=not backed up (rebuild with: <service> task search_reindex)"
   echo "--- rows per table"

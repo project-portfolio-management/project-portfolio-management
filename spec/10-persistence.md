@@ -1,7 +1,7 @@
 ## 10. Persistence
 
-PostgreSQL via SeaORM 1.1 + `sea-orm-migration`, owned entirely by the
-service crate. Family conventions:
+PostgreSQL via SeaORM 2.0 and sqlx, owned entirely by the service crate. The schema is made by frozen SQL
+migrations in `migration/migrations/`, run by sqlx (until 11 November 2026, by `sea-orm-migration`; §8.3b). Family conventions:
 `agents/share/postgresql.md` (shared family guidance, not in this repository).
 
 > **Corrected 2026-08-25.** This paragraph read *"All tables below are
@@ -291,7 +291,8 @@ applies to Smart Score.
 
 ### 10.7 Migrations 40-48 (2026-10-06)
 
-Migration files are `migration/src/m20261006_0000NN_*.rs`. Tables carry
+Migration files were `migration/src/m20261006_0000NN_*.rs`; they are now frozen as
+`migration/migrations/202610060000NN_*.up.sql`. Tables carry
 `id`, `pid` (unique uuid) and, where noted, `deleted_at`, as elsewhere.
 
 | # | Migration | Adds |

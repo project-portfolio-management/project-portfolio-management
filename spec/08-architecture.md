@@ -161,10 +161,11 @@ API on 10 November, 134 have moved (batch 1: `approvals`, `processes`, `controll
 `idempotency`, `flow_metrics`, `tasks/search`, `tasks/outbox_retry_failed`, `controllers/mod.rs`, `db.rs`) and 13 are
 left (the grep that measures it counts 15, because `engineering/board` and `task_bulk` name enum variants `Set` of their
 own; so does `src/task_bulk.rs`, so 12 name the API). Those 12 are step (c)'s: `query_count`'s metric callback, which
-counts what still runs through `ctx.db` as a SeaORM connection (the migrator's statements), and the
+counts what still runs through `ctx.db` as a SeaORM connection (the tests' own statements; the migrator's moved to
+sqlx in step (b)), and the
 `ActiveModelBehavior` impls and entity re-exports of `models/behaviors`, `canvases`, `strategy`, `capabilities`,
 `visibility`, `governance`, `plans`, `merge_records`, `webhook_deliveries`, `saved_views` and `audit_logs`. Beyond the
-grep, `app.rs` still runs the SeaORM migrator (step (b)), and `db::pool`, `db::begin` and `db::for_axa_crate` reach the
+grep, `db::pool`, `db::begin` and `db::for_axa_crate` reach the
 pool through SeaORM's connection until `ctx.db` is the `PgPool` (step (c)). No statement of the service's own runs
 through SeaORM after batch 18. Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
 `find_live_task`) and `models/governance`; `models/governance` keeps its `ActiveModelBehavior` impls. Batch 11 gave `plan_access::is_none_of` a sqlx form,
@@ -197,8 +198,30 @@ writes its tasks and links in one transaction and its audit row after it, on the
 the request (NFR-6): it is not one transaction, and a re-import converges. A scheduled report run writes its artifact row, the schedule's outcome
 and its audit row in one transaction (batch 14). `custom_fields::store`, the SeaORM writer of custom values, is gone: `custom_fields::store_on` serves
 the board, the bulk routes, `PUT /api/custom-fields/values` (each in its transaction) and the MSPDI batch import (on the
-pool). The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
-connection.
+pool). `ctx.db` is still SeaORM's connection (step (c)).
+
+**Migrations (step (b), 11 November 2026).** The migration crate runs on sqlx, not `sea-orm-migration`. Each of the
+143 migrations is a SQL file in `migration/migrations/`, frozen from the statements its Rust migration ran on
+PostgreSQL 18, in order (captured from the server's statement log, one migration per transaction), so the data
+migrations keep their logic as SQL (`INSERT … SELECT`, `UPDATE … FROM`, `DO` blocks, `IF NOT EXISTS`) rather than
+one run's effect. A migration is versioned by its SeaORM name (`m20261109_000109_axa_outbox_record` is
+`20261109000109`, so the order is the same). One that rolls back has an `.up.sql` and a `.down.sql` (142); one that
+refused to roll back is a plain `.sql`, refused by `db down` with its old reason (`REFUSED`, one:
+`m20261109_000109_axa_outbox_record`). sqlx's migrator applies them, each in its own transaction, under its
+advisory lock, and refuses a history naming a version it does not have or a file whose checksum changed. Its own
+`undo` would skip a migration with no down file and go on to the older ones, so `db down` is the crate's: newest
+first, each with sqlx's `revert`, stopping with the refusal at a migration that has none, as SeaORM's did.
+`db reset` drops what SeaORM's `fresh` dropped (the base tables, then the non-array types of no extension, in
+`current_schema()`) and migrates. `db status` reads and never writes.
+On a database the SeaORM migrator built, `db migrate` (and the boot, where it migrates) first copies, in one
+transaction, every migration recorded in `seaql_migrations` into `_sqlx_migrations`, marked applied with its frozen
+file's checksum and SeaORM's time, and only when `_sqlx_migrations` does not exist yet, so a later `db down` is not
+undone by a second copy. It refuses, changing nothing, when `seaql_migrations` names a migration the binary does
+not know, and checks that on every run. `seaql_migrations` is left in place. The runner takes the pool through
+`db::for_migrations`, uncounted by `query_count`. The move is one-way for an operator: an older image reads only
+`seaql_migrations` (`operations/upgrade-and-migration.md`). Step (b) is done: a database the old migrator built and one the new runner
+built give the same `pg_dump` schema and data but for the history tables, and an old-built database bridged in place
+is unchanged but for `_sqlx_migrations` (task SQ-1; `tests/migrations.rs` holds the bridge and rollback cases).
 
 ### 8.3 Service layout
 
@@ -236,10 +259,10 @@ project-portfolio-management-service-with-rust/
 │   ├── auth/ (verifier · enforcement · policy · areas · identity) streaming.rs relay.rs search/ privacy.rs compliance/
 │   ├── flow_metrics.rs scheduler.rs snapshots.rs version.rs
 │   └── workers/                     background jobs
-├── migration/src/                   plans, audit_logs, merge_records, event_outbox,
-│                                    governance, visibility, strategy, engineering,
-│                                    capabilities, insight_snapshots,
-│                                    integrity_digests, time_based_analysis
+├── migration/migrations/            the frozen SQL migrations, run by sqlx: plans,
+│                                    audit_logs, merge_records, event_outbox, governance,
+│                                    visibility, strategy, engineering, capabilities, …
+├── migration/src/lib.rs             the runner and the bridge from seaql_migrations
 ├── config/{development,production,test}.yaml
 └── tests/                           matcher-embedding + request-level + enforcement + masking
 ```

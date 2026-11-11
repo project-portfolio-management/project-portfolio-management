@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Fill a running API with the FICTITIOUS Northgate demonstration portfolio (see operations/demo.md).
 //
-//   PPM_API_URL=http://127.0.0.1:5150 node scripts/seed-demo.mjs
+//   PPM_API_URL=http://127.0.0.1:1241 node scripts/seed-demo.mjs
 //
 // Safe to run twice: each group looks for what is already there. NEVER run it against a deployment that
 // holds real data. The script signs in with the published demonstration key (scripts/demo/token.mjs), which is

@@ -7,8 +7,16 @@ minimum of 1.97, axa 0.11, sqlx 0.9, axum 0.8): a registry of **plan** records
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
 label — **and** a project-management tool.
 
-> Read [`spec/index.md`](./spec/index.md) first — the living spec for this
-> crate. The entity-wide contract and canonical `Plan` model live in the
+## Specification Driven Development
+
+**The `spec/` directory is the source of truth.** 
+- Before doing anything read all files inside the `spec/` directory using your file-reading tools.
+- Treat all files inside `spec/` as strict requirements. Where any file disagrees with the spec, the spec wins: fix the file, or change the spec on purpose and bring the other files into line in the same commit. 
+- Do not improvise structure, style, or citation practice.
+
+## More
+
+> The entity-wide contract and canonical `Plan` model live in the
 > [portfolio entity spec](../spec/index.md). Work queues: the numbered
 > build-out is [`spec/index.md`](./spec/index.md) §13; root
 > [`../tasks.md`](../tasks.md) (`LT-n`, derived from
@@ -32,7 +40,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 
 | Question | Answer |
 |---|---|
-| Run | `cargo run -- start` (needs Postgres; port 5150; migrations auto-run in development) |
+| Run | `cargo run -- start` (needs Postgres; port 1241; migrations auto-run in development) |
 | Lint (must be clean) | `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` |
 | DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
 | DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |

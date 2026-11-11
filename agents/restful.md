@@ -4,7 +4,7 @@ The service is built on axa (over Axum) and returns **raw JSON** — no
 `{success, data, error}` envelope.
 Source:
 [`src/controllers/`](../project-portfolio-management-service-with-rust/src/controllers/).
-Base URL in development: `http://localhost:5150`.
+Base URL in development: `http://localhost:1241`.
 
 The service exposes **one matchable collection** — `/api/plans`. Every
 record is a `Plan` with an optional descriptive `kind` label; there is no
@@ -135,7 +135,7 @@ webhooks).
 ## Example
 
 ```bash
-curl -s localhost:5150/api/plans \
+curl -s localhost:1241/api/plans \
   -H 'content-type: application/json' \
   -d '{"kind":"Project",
        "name":"Q3 Platform Migration",
@@ -154,7 +154,7 @@ curl -s localhost:5150/api/plans \
 The UI project owns its route list; see its [AGENTS.md](../project-portfolio-management-ui-with-svelte/AGENTS.md) and spec.
 
 A plan detail also rolls up its child plans (recursive containment). The UI's
-server side reaches the service at `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` (default `http://localhost:5150`,
+server side reaches the service at `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` (default `http://localhost:1241`,
 `src/lib/server/config.ts`); the browser only calls the UI's own `/api/proxy/…`.
 
 ## Matcher library API

@@ -28,7 +28,7 @@ repository root as the build context.
 # of whatever issues your tokens (see the header of compose.yaml).
 POSTGRES_PASSWORD=change-me PPM_PASETO_KEYS_URL=https://auth.example.com/.well-known/paseto-keys \
   podman compose up -d --build --wait
-curl -fsS http://localhost:5150/_health/ready
+curl -fsS http://localhost:1241/_health/ready
 
 # Throwaway, UNSAFE (login off), for poking with curl on your own machine:
 POSTGRES_PASSWORD=x podman compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure

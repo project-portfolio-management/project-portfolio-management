@@ -15,7 +15,7 @@ import { tDynamic } from "../i18n.svelte.js";
  * Construction-time configuration for {@link ApiClient}.
  */
 export interface ClientOptions {
-  /** Absolute origin (and optional prefix) of the Case Service, e.g. `http://localhost:5150`. Trailing slashes are trimmed. */
+  /** Absolute origin (and optional prefix) of the Case Service, e.g. `http://localhost:1241`. Trailing slashes are trimmed. */
   baseUrl: string;
   /** Override the `fetch` implementation (SSR, tests, instrumentation). Defaults to the global `fetch`. */
   fetch?: typeof fetch;

@@ -30,11 +30,11 @@ PPM_PASETO_KEYS_URL=https://auth.example.com/.well-known/paseto-keys
 ENV
 
 podman compose up -d --build --wait
-curl -fsS http://localhost:5150/_health/ready   # {"ok":true}
+curl -fsS http://localhost:1241/_health/ready   # {"ok":true}
 ```
 
 What starts: `postgres`; a one-shot `migrate` job that applies the migrations
-compiled into the binary and exits; then `api` on port 5150, healthy when
+compiled into the binary and exits; then `api` on port 1241, healthy when
 `/_health/ready` answers (it pings the database, the queue and the cache).
 
 **To try it without an identity provider** (your own machine only; login is OFF):
@@ -59,7 +59,7 @@ unless shown). `compose.yaml` sets the essentials; the rest have defaults.
 | Request size | `HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT` | `2097152` (2 MiB) for every route but the uploads and imports, which raise it to their own caps (`ATTACHMENT_MAX_BYTES` and the import limits). Was `BODY_LIMIT_BYTES` until axa 0.11; the old name set alone refuses the start |
 | Environment | `APP_ENV` | `production` in the image; `container-dev` is the insecure profile. Loco's `LOCO_ENV` is not read since axa 0.11; set alone, it refuses the start |
 | Response headers | none | the content security policy and permissions policy are this service's own (`http_security`); axa's `HTTP_CONTENT_SECURITY_POLICY` (was `HTTP_CSP`) and `HTTP_PERMISSIONS_POLICY` change nothing here. Every response is `cross-origin-opener-policy` and `cross-origin-resource-policy` `same-origin` |
-| Listen | `PORT`, `HOST` | `5150` |
+| Listen | `PORT`, `HOST` | `1241` |
 | Login | `REQUIRE_AUTH` | **on**; only `false` turns it off, and production refuses that |
 | Token keys | `PASETO_KEYS_URL`, `PASETO_KEYS`, `PASETO_KEYS_REFRESH_SECS`, `TOKEN_ISSUER`, `TOKEN_AUDIENCE` | keys are fetched at boot and refreshed; set one of URL or inline keys |
 | OpenID Connect tokens | `OIDC_ISSUER`, `OIDC_AUDIENCES`, `OIDC_ROLES_CLAIM` (`roles`; a dotted path such as `realm_access.roles` allowed), `OIDC_ROLE_MAP`, `OIDC_REQUIRE_VERIFIED_EMAIL` (`true`) | any provider with standard discovery (`{issuer}/.well-known/openid-configuration`) and a JWKS, no build feature (WW-1.12). Unset: off. HTTPS only (loopback excepted); the discovery `issuer` and each token's `iss` must equal `OIDC_ISSUER` exactly; one of `OIDC_AUDIENCES` (required) must be in `aud`; RS, PS, ES or EdDSA signatures only; keys refetched when a token names an unknown key id, at most once a minute. A role reaches ABAC only through the map. One issuer per deployment |
@@ -105,7 +105,7 @@ nginx, Caddy, or your platform's ingress). Then:
    address (for rate limiting) and the `https` scheme (for HSTS) are believed.
    A header from any other peer is ignored.
 2. Have the proxy send `X-Forwarded-For` and `X-Forwarded-Proto`.
-3. Publish only the proxy's port; do not expose 5150 and the database port to
+3. Publish only the proxy's port; do not expose 1241 and the database port to
    the internet. In Compose, remove the `ports:` entry for `postgres` (it has
    none by default) and bind the API to the proxy's network.
 4. Probe `/_health/ready` from the load balancer. `/_health/live` is liveness only (it stays `200` with the database

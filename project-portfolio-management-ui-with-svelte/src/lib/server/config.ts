@@ -4,13 +4,13 @@ import * as env from "$app/env/private";
 import { baseUrl, type Bridges } from "../bridge.js";
 
 /** Portfolio service base URL — the proxy forwards entity-API calls here with
- *  a server-injected PASETO. (The service defaults to 5150.) */
+ *  a server-injected PASETO. (The service defaults to 1241.) */
 export const PROJECT_PORTFOLIO_MANAGEMENT_API_URL =
-  env.PROJECT_PORTFOLIO_MANAGEMENT_API_URL || "http://localhost:5150";
+  env.PROJECT_PORTFOLIO_MANAGEMENT_API_URL || "http://localhost:1241";
 
 /** Authentication service base URL — for the session→PASETO exchange and
  *  the magic-link login flow. */
-export const AUTH_API_URL = env.AUTH_API_URL || "http://localhost:5150";
+export const AUTH_API_URL = env.AUTH_API_URL || "http://localhost:1241";
 
 import type { OidcConfig } from "./oidc";
 

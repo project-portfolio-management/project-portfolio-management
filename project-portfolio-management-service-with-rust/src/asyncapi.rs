@@ -71,7 +71,7 @@ pub fn spec() -> Value {
         "defaultContentType": "application/json",
         "servers": {
             "service": {
-                "host": "localhost:5150",
+                "host": "localhost:1241",
                 "protocol": "http",
                 "description": "The service itself; the stream is `GET /api/plans/{pid}/live`."
             }

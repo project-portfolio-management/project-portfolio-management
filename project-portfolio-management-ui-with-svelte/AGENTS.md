@@ -6,9 +6,15 @@ collection**, plus the project-management workspace (Kanban board,
 governance, schedule) and cookie-session / SSO auth (BFF; the browser
 holds no token).
 
-> Read [`spec/index.md`](./spec/index.md) first — the living spec
-> (§1–§18). Entity umbrella: [`../spec/index.md`](../spec/index.md).
->
+## Specification Driven Development
+
+**The `spec/` directory is the source of truth.** 
+- Before doing anything read all files inside the `spec/` directory using your file-reading tools.
+- Treat all files inside `spec/` as strict requirements. Where any file disagrees with the spec, the spec wins: fix the file, or change the spec on purpose and bring the other files into line in the same commit. 
+- Do not improvise structure, style, or citation practice.
+
+## More
+
 > **Status: implemented (v0.2.0), verified 2026-10-30.** `pnpm run check`
 > is **0 errors / 0 warnings**, `npx vitest run` passes (`tests/unit/`), and
 > the Playwright suite (`tests/e2e/`, with axe audits) runs against a production
@@ -325,7 +331,7 @@ are decommissioned).
 Configure the BFF's upstream URLs with the server-side env vars
 `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` (portfolio service) and
 `AUTH_API_URL` (authentication service) — see `src/lib/server/config.ts`;
-both default to `http://localhost:5150` (see `.env.example`).
+both default to `http://localhost:1241` (see `.env.example`).
 
 ## What does NOT live here
 

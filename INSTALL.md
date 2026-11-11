@@ -25,7 +25,7 @@ cd project-portfolio-management
 POSTGRES_PASSWORD='<a long random password>' \
 PPM_PASETO_KEYS_URL='https://auth.example.com/.well-known/paseto-keys' \
   podman compose up -d --build --wait
-curl -fsS http://localhost:5150/_health/ready
+curl -fsS http://localhost:1241/_health/ready
 ```
 
 To look around on your own machine **with login off** (never expose this):
@@ -33,7 +33,7 @@ To look around on your own machine **with login off** (never expose this):
 ```sh
 POSTGRES_PASSWORD=x podman compose --profile dev-insecure up -d --build --wait \
   postgres migrate api-dev-insecure
-curl -s http://localhost:5150/api/plans
+curl -s http://localhost:1241/api/plans
 ```
 
 The deployment guide covers configuration, volumes, backups and upgrades:
@@ -45,7 +45,7 @@ The deployment guide covers configuration, volumes, backups and upgrades:
 
 ```sh
 cd project-portfolio-management-ui-with-svelte
-cp .env.example .env     # PROJECT_PORTFOLIO_MANAGEMENT_API_URL and AUTH_API_URL, default http://localhost:5150
+cp .env.example .env     # PROJECT_PORTFOLIO_MANAGEMENT_API_URL and AUTH_API_URL, default http://localhost:1241
 pnpm install
 pnpm dev                 # http://localhost:5173
 ```

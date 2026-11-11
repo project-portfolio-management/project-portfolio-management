@@ -73,7 +73,7 @@ fn migration_error(error: migrations::Error) -> Error {
 fn defaults() -> Defaults {
     Defaults {
         database: "project_portfolio_management",
-        port: 5150,
+        port: 1241,
         production_port: None,
         body_limit: 2 * MB,
         max_connections: 1,

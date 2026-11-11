@@ -377,7 +377,7 @@
   "servers": {
     "service": {
       "description": "The service itself; the stream is `GET /api/plans/{pid}/live`.",
-      "host": "localhost:5150",
+      "host": "localhost:1241",
       "protocol": "http"
     }
   }

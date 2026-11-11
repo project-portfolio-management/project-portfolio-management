@@ -24,7 +24,7 @@ recorded session.
   PPM's default policy.
 - A skill pool on each side that means the same skills, and a PPM plan of kind `Program` for the demand.
 
-Both services listen on port 5150 by default. On one machine, start WPM on another port, for example:
+Both services listen on port 1241 by default. On one machine, start WPM on another port, for example:
 
 ```bash
 # in WPM's service directory
@@ -46,13 +46,13 @@ export PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL=http://127.0.0.1:5151
 cargo run -- start
 ```
 
-`compose.yaml` does not pass this variable to the API container. Between containers `http://wpm:5150` would be
+`compose.yaml` does not pass this variable to the API container. Between containers `http://wpm:1241` would be
 refused (plain `http` to a host that is not loopback), so in containers WPM needs an `https://` address.
 
 Every call to WPM has a 2-second timeout and follows no redirects. A WPM that is down, slow or refusing never fails
 a PPM request; the answer says what happened instead.
 
-In the examples, `PPM=http://localhost:5150`, `WPM=http://127.0.0.1:5151` and `TOKEN` is the shared bearer token.
+In the examples, `PPM=http://localhost:1241`, `WPM=http://127.0.0.1:5151` and `TOKEN` is the shared bearer token.
 
 ## 3. Link a pool on both sides
 

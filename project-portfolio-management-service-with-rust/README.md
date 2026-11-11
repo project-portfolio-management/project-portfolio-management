@@ -113,30 +113,30 @@ export DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_d
 cargo run -- start      # migrations auto-run in development
 
 # Create a plan labelled as a portfolio (the umbrella kind)
-curl -s localhost:5150/api/plans -H 'content-type: application/json' \
+curl -s localhost:1241/api/plans -H 'content-type: application/json' \
   -d '{"name":"Digital Transformation Portfolio","kind":"portfolio",
        "goals":[{"title":"Modernize core systems","target_date":"2026-12-01"}]}'
 
 # Create a plan under that one (carries parent_ref; kind label optional)
-curl -s localhost:5150/api/plans -H 'content-type: application/json' \
+curl -s localhost:1241/api/plans -H 'content-type: application/json' \
   -d '{"name":"EHR Migration","kind":"project","parent_ref":"<parent-pid>",
        "code":"EHR-2026"}'
 
 # Name search across all plans
-curl -s 'localhost:5150/api/plans/search?q=migration'
+curl -s 'localhost:1241/api/plans/search?q=migration'
 
 # Match an explicit query against candidates (no persistence; kind-agnostic)
-curl -s localhost:5150/api/plans/match -H 'content-type: application/json' \
+curl -s localhost:1241/api/plans/match -H 'content-type: application/json' \
   -d '{"query":{"name":"EHR Migration"},"candidates":[{"name":"EHR Migration Project"}]}'
 
 # Merge a duplicate into any survivor plan (the survivor is `main_pid`)
-curl -s localhost:5150/api/plans/merge -H 'content-type: application/json' \
+curl -s localhost:1241/api/plans/merge -H 'content-type: application/json' \
   -d '{"main_pid":"<survivor-uuid>","duplicate_pid":"<duplicate-uuid>"}'
 
 # Authenticated request: present a short-lived PASETO v4.public token
 # minted by the auth-service (front-ends use a BFF + cookie session; the
 # BFF holds the session and supplies this bearer server-side).
-curl -s localhost:5150/api/plans/whoami \
+curl -s localhost:1241/api/plans/whoami \
   -H 'authorization: Bearer <paseto-v4.public-from-authentication-service>'
 ```
 

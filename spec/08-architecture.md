@@ -13,10 +13,10 @@
 |  lib/api: client.ts → plans.ts + sub-resource repos           |
 +------------------------------+-------------------------------+
                                | REST (raw JSON, no envelope)
-                               | PROJECT_PORTFOLIO_MANAGEMENT_API_URL (default :5150)
+                               | PROJECT_PORTFOLIO_MANAGEMENT_API_URL (default :1241)
 +------------------------------v-------------------------------+
 |              project-portfolio-management-service-with-rust                     |
-|  Axum 0.8 with axa · port 5150                               |
+|  Axum 0.8 with axa · port 1241                               |
 |  controllers/plans.rs                                         |
 |     CRUD + /match + /check-duplicates                         |
 |                       + merge + search  (kind-agnostic)       |

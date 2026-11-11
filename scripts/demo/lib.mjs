@@ -6,7 +6,7 @@
 
 import { mintDemoToken } from "./token.mjs";
 
-export const API = (process.env.PPM_API_URL ?? "http://127.0.0.1:5150").replace(/\/+$/, "");
+export const API = (process.env.PPM_API_URL ?? "http://127.0.0.1:1241").replace(/\/+$/, "");
 
 export class ApiFailure extends Error {
   constructor(method, path, status, body) {

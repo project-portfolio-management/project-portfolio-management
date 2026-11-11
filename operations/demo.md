@@ -67,7 +67,7 @@ so it works against the demonstration API (use `PPM_API_TOKEN` to give it anothe
 - **Critical chain:** aggressive and safe estimates, a frozen buffer plan with a snapshot and a recovery action, the
   drum, a schedule baseline, an earned-value snapshot, a scenario.
 
-To seed another API that trusts the demonstration key: `PPM_API_URL=http://127.0.0.1:5150 node scripts/seed-demo.mjs`.
+To seed another API that trusts the demonstration key: `PPM_API_URL=http://127.0.0.1:1241 node scripts/seed-demo.mjs`.
 
 ## What is and is not covered
 

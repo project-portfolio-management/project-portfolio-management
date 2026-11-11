@@ -102,18 +102,18 @@ RUN mkdir -p /app/data/search-index /app/data/artifacts && chown -R portfolio:po
 
 USER portfolio
 
-EXPOSE 5150
+EXPOSE 1241
 
 # axa's liveness probe, /_health/live (axa 0.11; /_health is gone). Podman's default OCI image format drops
 # HEALTHCHECK (build with `--format docker` to keep it); compose.yaml has its own healthcheck, on readiness
 # (/_health/ready), so either format works.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl --silent --fail http://localhost:5150/_health/live || exit 1
+    CMD curl --silent --fail http://localhost:1241/_health/live || exit 1
 
 # Configuration comes from the environment; production requires DB_URL and
 # PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL, and refuses to boot without them. See /compose.yaml for the
 # environment a real deployment needs (token-verifier keys, login enforcement).
 ENV APP_ENV=production \
-    PORT=5150
+    PORT=1241
 
 CMD ["/app/project-portfolio-management", "start"]

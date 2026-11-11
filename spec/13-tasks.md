@@ -1230,7 +1230,7 @@ described manual check confirms it. Split tasks too big for one PR
 - [ ] **T-3 — Service crate: chassis + thin-record CRUD + matching.**
   - [ ] loco 0.16 / Axum 0.8 / SeaORM 1.1 chassis; the `plans`
     migration (nullable `kind`, `parent_pid`); `cargo loco start`;
-    config yamls; port 5150.
+    config yamls; port 1241.
   - [ ] The controller over the one plans collection: CRUD over the
     thin `Plan` (JSONB `data`), name search (`ILIKE`), `/match`,
     `/check-duplicates` (all kind-agnostic), validation (§FR-1a incl.

@@ -1,7 +1,7 @@
 # Run the Project Portfolio Management API with its database.
 #
 #   podman compose up -d --build --wait
-#   curl -fsS http://localhost:5150/_health/ready
+#   curl -fsS http://localhost:1241/_health/ready
 #   podman compose down -v                     # stop and delete the database volume
 #
 # Build context is this directory (the repository root); the image is built
@@ -34,7 +34,7 @@
 #
 #   podman compose --profile dev-insecure up -d --build --wait postgres migrate api-dev-insecure
 #
-# Do not run both `api` and `api-dev-insecure` at once (they share host port 5150).
+# Do not run both `api` and `api-dev-insecure` at once (they share host port 1241).
 #
 # THE DEMONSTRATION (profile `demo`, fictitious data, sign in as example@example.com): operations/demo.md.
 #
@@ -65,7 +65,7 @@ name: project-portfolio-management
 
 x-api-environment: &api-environment
   APP_ENV: production
-  PORT: "5150"
+  PORT: "1241"
   DB_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management?sslmode=require
   # The cache (Redis). The password defaults to the database's so a local stack needs one secret.
   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL: redis://:${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}@redis:6379/0
@@ -150,7 +150,7 @@ services:
       <<: *api-environment
       PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "true"
     ports:
-      - "5150:5150"
+      - "1241:1241"
     volumes:
       - ppm-artifacts:/app/data/artifacts
       - ppm-search:/app/data/search-index
@@ -158,7 +158,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_health/ready"]
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:1241/_health/ready"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -172,8 +172,8 @@ services:
       dockerfile: project-portfolio-management-ui-with-svelte/Dockerfile
     image: project-portfolio-management-ui:local
     environment:
-      PROJECT_PORTFOLIO_MANAGEMENT_API_URL: http://api:5150
-      AUTH_API_URL: ${AUTH_API_URL:-http://api:5150}
+      PROJECT_PORTFOLIO_MANAGEMENT_API_URL: http://api:1241
+      AUTH_API_URL: ${AUTH_API_URL:-http://api:1241}
     ports:
       - "3000:3000"
     healthcheck:
@@ -213,7 +213,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_health/ready"]
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:1241/_health/ready"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -227,8 +227,8 @@ services:
     image: project-portfolio-management-ui:local
     environment:
       PPM_DEMO_MODE: "true"
-      PROJECT_PORTFOLIO_MANAGEMENT_API_URL: http://api-demo:5150
-      AUTH_API_URL: http://api-demo:5150
+      PROJECT_PORTFOLIO_MANAGEMENT_API_URL: http://api-demo:1241
+      AUTH_API_URL: http://api-demo:1241
     ports:
       - "3000:3000"
     healthcheck:
@@ -249,7 +249,7 @@ services:
     working_dir: /repo
     command: ["node", "scripts/seed-demo.mjs"]
     environment:
-      PPM_API_URL: http://api-demo:5150
+      PPM_API_URL: http://api-demo:1241
     volumes:
       - ./scripts:/repo/scripts:ro,z
     depends_on:
@@ -267,7 +267,7 @@ services:
       APP_ENV: container-dev
       PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH: "false"
     ports:
-      - "127.0.0.1:5150:5150"
+      - "127.0.0.1:1241:1241"
     volumes:
       - ppm-artifacts:/app/data/artifacts
       - ppm-search:/app/data/search-index
@@ -275,7 +275,7 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:5150/_health/ready"]
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:1241/_health/ready"]
       interval: 5s
       timeout: 3s
       retries: 20

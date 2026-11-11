@@ -1,0 +1,178 @@
+{
+  "date": "2026-11-05",
+  "domains": [
+    "product-evaluation-and-service-management"
+  ],
+  "rubric_version": 1,
+  "field": [
+    {
+      "repo": "glpi-project/glpi",
+      "stars": 6560,
+      "pushed": "2026-11-05"
+    },
+    {
+      "repo": "zammad/zammad",
+      "stars": 6080,
+      "pushed": "2026-11-05"
+    },
+    {
+      "repo": "DefectDojo/django-DefectDojo",
+      "stars": 5191,
+      "pushed": "2026-11-05"
+    },
+    {
+      "repo": "intuitem/ciso-assistant-community",
+      "stars": 4584,
+      "pushed": "2026-11-05"
+    },
+    {
+      "repo": "DependencyTrack/dependency-track",
+      "stars": 4416,
+      "pushed": "2026-11-05"
+    },
+    {
+      "repo": "Combodo/iTop",
+      "stars": 1214,
+      "pushed": "2026-11-05"
+    },
+    {
+      "repo": "bluewave-labs/verifywise",
+      "stars": 373,
+      "pushed": "2026-11-05"
+    }
+  ],
+  "matrix": [
+    {
+      "id": "product-inventory-lifecycle",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "custom-searchable-fields",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "vendor-record",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "weighted-criteria-comparison",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "scored-assessment-templates",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "framework-mapping",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "multi-step-approval",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "conditions-and-review-date",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "evidence-documents",
+      "us": "met",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "issue-log-per-product",
+      "us": "met",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "risk-register",
+      "us": "met",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "audit-trail",
+      "us": "met",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "incident-request-problem-types",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "service-level-clocks",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "business-hours-on-clocks",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "escalation",
+      "us": "met",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "requester-view",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "service-catalogue-forms",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "knowledge-known-errors",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "change-linked-to-issues",
+      "us": "met",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "configuration-item-link",
+      "us": "partial",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "confidential-reports",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "remediation-clocks-risk-acceptance",
+      "us": "missing",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "inbound-email",
+      "us": "missing",
+      "tier": "edge"
+    },
+    {
+      "id": "satisfaction-per-ticket",
+      "us": "partial",
+      "tier": "edge"
+    }
+  ],
+  "coverage": {
+    "met": 6,
+    "total": 23,
+    "pct": 26
+  },
+  "tier": "LAGGING",
+  "gaps_total": 17
+}

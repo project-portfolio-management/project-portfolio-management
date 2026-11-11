@@ -995,5 +995,5 @@ left open on 2026-08-01. This wires the two consuming routes to it.
 
 ### Configuration
 
-- `PUBLIC_API_BASE_URL` (default `http://localhost:5150`).
+- `PUBLIC_API_BASE_URL` (default `http://localhost:1241`).
 - `VITE_AUTH_FRONTEND_URL` (default `http://localhost:5173`).

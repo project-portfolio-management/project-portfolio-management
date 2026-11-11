@@ -57,7 +57,7 @@ git fetch --tags && git checkout v0.4.0          # or pull the image tag you dep
 podman compose pull                              # or: podman compose build
 podman compose run --rm migrate                  # apply the new migrations, then it exits
 podman compose up -d --wait api                  # start the new version
-curl -fsS http://localhost:5150/_health/ready
+curl -fsS http://localhost:1241/_health/ready
 ```
 
 There is a short outage while the old container stops and the new one starts; a

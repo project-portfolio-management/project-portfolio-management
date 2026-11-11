@@ -409,14 +409,14 @@ jobs:
       - name: The health probes answer, and axa 0.10's old route does not
         run: |
           for probe in live ready startup; do
-            curl --fail --silent --show-error --retry 5 --retry-delay 2 "http://localhost:5150/_health/$probe"
+            curl --fail --silent --show-error --retry 5 --retry-delay 2 "http://localhost:1241/_health/$probe"
           done
-          code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5150/_readiness)"
+          code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:1241/_readiness)"
           echo "GET /_readiness -> $code"
           test "$code" != 200
       - name: Login enforcement is on (anonymous API call is refused)
         run: |
-          code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5150/api/plans)"
+          code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:1241/api/plans)"
           echo "anonymous GET /api/plans -> $code"
           test "$code" = 401
       - name: Logs on failure
@@ -443,7 +443,7 @@ jobs:
       - name: ZAP baseline (passive) scan
         uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
         with:
-          target: http://localhost:5150
+          target: http://localhost:1241
           rules_file_name: .zap/rules.tsv
           fail_action: true
           # Needs `issues: write`, which this workflow does not grant.

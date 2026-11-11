@@ -57,7 +57,7 @@ cd project-portfolio-management-matcher-with-rust
 cargo test
 cargo run                    # demo binary (not SemVer surface)
 
-# Service — needs PostgreSQL; port 5150
+# Service — needs PostgreSQL; port 1241
 cd project-portfolio-management-service-with-rust
 export DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
 cargo run -- start           # migrations auto-run in development
@@ -66,7 +66,7 @@ cargo test --test matching   # DB-free embedding tests
 
 # Front-end — needs the service running
 cd project-portfolio-management-ui-with-svelte
-cp .env.example .env         # PROJECT_PORTFOLIO_MANAGEMENT_API_URL=http://localhost:5150
+cp .env.example .env         # PROJECT_PORTFOLIO_MANAGEMENT_API_URL=http://localhost:1241
 pnpm install
 pnpm dev                     # http://localhost:5173
 pnpm run check               # svelte-check strict (0/0 expected)

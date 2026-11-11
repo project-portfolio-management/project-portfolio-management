@@ -1,7 +1,3 @@
-# Repository tasks. Each target delegates to a script in bin/.
-
-.PHONY: github-pages
-
-# Publish project-portfolio-management.github.io/ to the github-pages remote (git subtree push).
-github-pages:
-	bin/make-github-pages
+demo:
+	cd project-portfolio-management-service-with-rust && make demo
+	cd project-portfolio-management-ui-with-svelte && make demo

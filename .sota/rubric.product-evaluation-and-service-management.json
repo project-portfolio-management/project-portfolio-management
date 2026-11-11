@@ -1,0 +1,106 @@
+{
+  "domain": "product-evaluation-and-service-management",
+  "version": 1,
+  "capabilities": [
+    {
+      "id": "product-inventory-lifecycle",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "custom-searchable-fields",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "vendor-record",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "weighted-criteria-comparison",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "scored-assessment-templates",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "framework-mapping",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "multi-step-approval",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "conditions-and-review-date",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "evidence-documents",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "issue-log-per-product",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "risk-register",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "audit-trail",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "incident-request-problem-types",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "service-level-clocks",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "business-hours-on-clocks",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "escalation",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "requester-view",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "service-catalogue-forms",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "knowledge-known-errors",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "change-linked-to-issues",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "configuration-item-link",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "confidential-reports",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "remediation-clocks-risk-acceptance",
+      "tier": "table-stakes"
+    },
+    {
+      "id": "inbound-email",
+      "tier": "edge"
+    },
+    {
+      "id": "satisfaction-per-ticket",
+      "tier": "edge"
+    }
+  ]
+}

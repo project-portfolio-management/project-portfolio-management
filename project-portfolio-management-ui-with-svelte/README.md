@@ -117,7 +117,7 @@ switcher). The chrome area carries:
 ## Quick start
 
 ```bash
-cp .env.example .env     # PROJECT_PORTFOLIO_MANAGEMENT_API_URL=http://localhost:5150
+cp .env.example .env     # PROJECT_PORTFOLIO_MANAGEMENT_API_URL=http://localhost:1241
 pnpm install
 pnpm dev                 # http://localhost:5173
 ```
@@ -129,8 +129,8 @@ the BFF proxy and the auth exchange — the browser never sees them.
 
 | Var | Default | Purpose |
 |---|---|---|
-| `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` | `http://localhost:5150` | Portfolio service REST base URL, forwarded to by `src/routes/api/proxy/[...path]`. |
-| `AUTH_API_URL` | `http://localhost:5150` | Authentication service base URL (BFF-side magic-link + session→PASETO exchange, `src/lib/server/auth.ts`). |
+| `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` | `http://localhost:1241` | Portfolio service REST base URL, forwarded to by `src/routes/api/proxy/[...path]`. |
+| `AUTH_API_URL` | `http://localhost:1241` | Authentication service base URL (BFF-side magic-link + session→PASETO exchange, `src/lib/server/auth.ts`). |
 | `PUBLIC_OIDC_SIGNIN_ENABLED` | unset | Set to `true` to show the opt-in "Sign in with SSO" link on `/signin` (OIDC via the auth service; `/signin/sso` is a 404 otherwise). |
 
 ## How it works

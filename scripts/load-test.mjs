@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Repeatable load and soak test for the service (RG-11).
 //
-//   node scripts/load-test.mjs seed  --base http://127.0.0.1:5150 --plans 200 --tasks 50 [--large 10000]
-//   node scripts/load-test.mjs run   --base http://127.0.0.1:5150 --seconds 20 --concurrency 32 [--pid SERVICE_PID]
+//   node scripts/load-test.mjs seed  --base http://127.0.0.1:1241 --plans 200 --tasks 50 [--large 10000]
+//   node scripts/load-test.mjs run   --base http://127.0.0.1:1241 --seconds 20 --concurrency 32 [--pid SERVICE_PID]
 //   node scripts/load-test.mjs soak  --base ... --minutes 10 --concurrency 16 [--pid SERVICE_PID]
 //
 // Needs Node 22+ and `oha` (cargo install oha). Run the service WITHOUT login and rate limiting
@@ -26,7 +26,7 @@ const args = Object.fromEntries(
   }, []),
 );
 const command = process.argv[2];
-const base = (args.base ?? "http://127.0.0.1:5150").replace(/\/$/, "");
+const base = (args.base ?? "http://127.0.0.1:1241").replace(/\/$/, "");
 const stateFile = args.state ?? "load-test-state.json";
 
 async function api(method, path, body) {

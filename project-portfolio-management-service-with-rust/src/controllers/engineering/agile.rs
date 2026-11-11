@@ -4,7 +4,6 @@ use crate::auth::MaybeAuthUser;
 use crate::engineering as rules;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -40,23 +39,23 @@ pub(super) async fn create_sprint(
         return Err(refuse("ends_on is before starts_on"));
     }
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = sprints::ActiveModel {
-        pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
-        plan_pid: sea_orm::ActiveValue::set(item.pid),
-        name: sea_orm::ActiveValue::set(payload.name.clone()),
-        starts_on: sea_orm::ActiveValue::set(payload.starts_on),
-        ends_on: sea_orm::ActiveValue::set(payload.ends_on),
-        deleted_at: sea_orm::ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "sprint_created", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: sprints::Model = sqlx::query_as(
+        "INSERT INTO sprints (pid, plan_pid, name, starts_on, ends_on, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(item.pid)
+    .bind(&payload.name)
+    .bind(payload.starts_on)
+    .bind(payload.ends_on)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "sprint_created", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -68,13 +67,12 @@ pub(super) async fn list_sprints(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let rows = sprints::Entity::find()
-        .filter(sprints::Column::PlanPid.eq(item.pid))
-        .filter(sprints::Column::DeletedAt.is_null())
-        .order_by_desc(sprints::Column::StartsOn)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows: Vec<sprints::Model> = sqlx::query_as(
+        "SELECT * FROM sprints WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY starts_on DESC",
+    )
+    .bind(item.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(rows)
 }
 
@@ -97,20 +95,15 @@ pub(super) async fn burndown(
     headers: HeaderMap,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let sprint = sprints::Entity::find()
-        .filter(sprints::Column::Pid.eq(query.sprint))
-        .filter(sprints::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    let sprint = live_sprint(&ctx, query.sprint)
+        .await?
         .filter(|s| s.plan_pid == item.pid)
         .ok_or(Error::NotFound)?;
-    let sprint_tasks = tasks::Entity::find()
-        .filter(tasks::Column::SprintPid.eq(sprint.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let sprint_tasks: Vec<tasks::Model> =
+        sqlx::query_as("SELECT * FROM tasks WHERE sprint_pid = $1 AND deleted_at IS NULL")
+            .bind(sprint.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let done_dates: Vec<chrono::NaiveDate> = sprint_tasks
         .iter()
         .filter_map(|task| task.done_at.map(|at| at.to_utc().date_naive()))
@@ -144,12 +137,7 @@ pub(super) async fn standup(
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let since = chrono::Utc::now() - chrono::Days::new(1);
-    let item_tasks = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(item.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let item_tasks = plan_tasks(&ctx, item.pid).await?;
     let task_pids: std::collections::HashSet<Uuid> =
         item_tasks.iter().map(|task| task.pid).collect();
     let titles: std::collections::BTreeMap<Uuid, &str> = item_tasks
@@ -157,13 +145,12 @@ pub(super) async fn standup(
         .map(|task| (task.pid, task.title.as_str()))
         .collect();
 
-    let recent = audit_logs::Entity::find()
-        .filter(audit_logs::Column::CreatedAt.gte(since))
-        .order_by_desc(audit_logs::Column::CreatedAt)
-        .limit(500)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let recent: Vec<audit_logs::Model> = sqlx::query_as(
+        "SELECT * FROM audit_logs WHERE created_at >= $1 ORDER BY created_at DESC LIMIT 500",
+    )
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(since))
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut moves = Vec::new();
     let mut created = Vec::new();
     let mut risks_raised = 0usize;
@@ -209,6 +196,26 @@ pub(super) async fn standup(
     conditional(&headers, &body)
 }
 
+/// A plan's live tasks, unordered.
+async fn plan_tasks(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<tasks::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
+/// The live sprint with this pid, of any plan.
+async fn live_sprint(ctx: &AppContext, s_pid: Uuid) -> Result<Option<sprints::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM sprints WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(s_pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
 /// Find one live sprint of one plan, or 404.
 pub(super) async fn find_sprint(
     ctx: &AppContext,
@@ -216,12 +223,8 @@ pub(super) async fn find_sprint(
     s_pid: &str,
 ) -> Result<sprints::Model> {
     let s_pid = super::super::parse_pid(s_pid)?;
-    sprints::Entity::find()
-        .filter(sprints::Column::Pid.eq(s_pid))
-        .filter(sprints::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    live_sprint(ctx, s_pid)
+        .await?
         .filter(|sprint| sprint.plan_pid == plan_pid)
         .ok_or(Error::NotFound)
 }
@@ -255,23 +258,28 @@ pub(super) async fn create_note(
     }
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let sprint = find_sprint(&ctx, item.pid, &s_pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = sprint_notes::ActiveModel {
-        pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
-        sprint_pid: sea_orm::ActiveValue::set(sprint.pid),
-        category: sea_orm::ActiveValue::set(payload.category.clone()),
-        body: sea_orm::ActiveValue::set(payload.body.clone()),
-        task_pid: sea_orm::ActiveValue::set(None),
-        deleted_at: sea_orm::ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: sprint_notes::Model = sqlx::query_as(
+        "INSERT INTO sprint_notes (pid, sprint_pid, category, body, task_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(sprint.pid)
+    .bind(&payload.category)
+    .bind(&payload.body)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "sprint_note_added",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "sprint_note_added", caller.actor(), None)
-        .await
-        .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    .map_err(super::super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -284,13 +292,12 @@ pub(super) async fn list_notes(
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let sprint = find_sprint(&ctx, item.pid, &s_pid).await?;
-    let rows = sprint_notes::Entity::find()
-        .filter(sprint_notes::Column::SprintPid.eq(sprint.pid))
-        .filter(sprint_notes::Column::DeletedAt.is_null())
-        .order_by_asc(sprint_notes::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows: Vec<sprint_notes::Model> = sqlx::query_as(
+        "SELECT * FROM sprint_notes WHERE sprint_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(sprint.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(rows)
 }
 
@@ -307,14 +314,13 @@ pub(super) async fn convert_note(
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let sprint = find_sprint(&ctx, item.pid, &s_pid).await?;
     let n_pid = super::super::parse_pid(&n_pid)?;
-    let note = sprint_notes::Entity::find()
-        .filter(sprint_notes::Column::Pid.eq(n_pid))
-        .filter(sprint_notes::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
-        .filter(|note| note.sprint_pid == sprint.pid)
-        .ok_or(Error::NotFound)?;
+    let note: sprint_notes::Model =
+        sqlx::query_as("SELECT * FROM sprint_notes WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(n_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .filter(|note: &sprint_notes::Model| note.sprint_pid == sprint.pid)
+            .ok_or(Error::NotFound)?;
     if !rules::CONVERTIBLE_NOTE_CATEGORIES.contains(&note.category.as_str()) {
         return Err(refuse(&format!(
             "only {:?} notes convert to tasks",
@@ -325,36 +331,34 @@ pub(super) async fn convert_note(
         return Err(refuse("note is already converted"));
     }
     let now = chrono::Utc::now();
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let task = tasks::ActiveModel {
-        pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
-        plan_pid: sea_orm::ActiveValue::set(item.pid),
-        sprint_pid: sea_orm::ActiveValue::set(None),
-        title: sea_orm::ActiveValue::set(note.body.clone()),
-        description: sea_orm::ActiveValue::set(Some(format!(
-            "from {} note in sprint `{}`",
-            note.category, sprint.name
-        ))),
-        status: sea_orm::ActiveValue::set("todo".to_string()),
-        assignee_ref: sea_orm::ActiveValue::set(None),
-        points: sea_orm::ActiveValue::set(None),
-        status_changed_at: sea_orm::ActiveValue::set(now.into()),
-        done_at: sea_orm::ActiveValue::set(None),
-        deleted_at: sea_orm::ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let task: tasks::Model = sqlx::query_as(
+        "INSERT INTO tasks
+             (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points,
+              status_changed_at, done_at, deleted_at)
+         VALUES ($1, $2, NULL, $3, $4, 'todo', NULL, NULL, $5, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(item.pid)
+    .bind(&note.body)
+    .bind(format!(
+        "from {} note in sprint `{}`",
+        note.category, sprint.name
+    ))
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+    .fetch_one(tx.conn())
+    .await?;
     let note_pid = note.pid;
-    let mut active: sprint_notes::ActiveModel = note.into();
-    active.task_pid = sea_orm::ActiveValue::set(Some(task.pid));
-    let updated = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
-        &txn,
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let updated: sprint_notes::Model =
+        sqlx::query_as("UPDATE sprint_notes SET task_pid = $1 WHERE id = $2 RETURNING *")
+            .bind(task.pid)
+            .bind(note.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(
+        tx.conn(),
         note_pid,
         "sprint_note_converted",
         caller.actor(),
@@ -362,7 +366,7 @@ pub(super) async fn convert_note(
     )
     .await
     .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "note": updated, "task": task_view(&task) }))
 }
 
@@ -377,19 +381,13 @@ pub(super) async fn velocity(
     headers: HeaderMap,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let sprint_rows = sprints::Entity::find()
-        .filter(sprints::Column::PlanPid.eq(item.pid))
-        .filter(sprints::Column::DeletedAt.is_null())
-        .order_by_asc(sprints::Column::StartsOn)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let task_rows = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(item.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let sprint_rows: Vec<sprints::Model> = sqlx::query_as(
+        "SELECT * FROM sprints WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY starts_on",
+    )
+    .bind(item.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let task_rows = plan_tasks(&ctx, item.pid).await?;
     let sprints_view: Vec<serde_json::Value> = sprint_rows
         .iter()
         .map(|sprint| {

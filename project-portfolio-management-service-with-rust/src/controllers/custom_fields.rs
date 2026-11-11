@@ -306,6 +306,62 @@ pub(crate) async fn store<C: ConnectionTrait>(
     Ok(())
 }
 
+/// [`store`] on `sqlx`, for a handler that holds a [`crate::db::Tx`] (task create and copy write the values in the
+/// task's own transaction). The same statements in the same order: per value, find the stored one, then update,
+/// delete or insert it.
+pub(crate) async fn store_on(
+    db: &mut impl crate::db::Session,
+    subject_kind: &str,
+    subject_pid: Uuid,
+    prepared: &[(String, Option<Value>)],
+) -> Result<()> {
+    for (key, value) in prepared {
+        let existing: Option<i64> = sqlx::query_scalar(
+            "SELECT id FROM custom_field_values
+             WHERE subject_kind = $1 AND subject_pid = $2 AND field_key = $3
+             LIMIT 1",
+        )
+        .bind(subject_kind)
+        .bind(subject_pid)
+        .bind(key.as_str())
+        .fetch_optional(db.ex())
+        .await?;
+        match (existing, value) {
+            (Some(id), Some(v)) => {
+                // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+                sqlx::query_scalar::<_, i64>(
+                    "UPDATE custom_field_values SET value = $1 WHERE id = $2 RETURNING id",
+                )
+                .bind(v)
+                .bind(id)
+                .fetch_one(db.ex())
+                .await?;
+            }
+            (Some(id), None) => {
+                sqlx::query("DELETE FROM custom_field_values WHERE id = $1")
+                    .bind(id)
+                    .execute(db.ex())
+                    .await?;
+            }
+            (None, Some(v)) => {
+                sqlx::query(
+                    "INSERT INTO custom_field_values (pid, subject_kind, subject_pid, field_key, value)
+                     VALUES ($1, $2, $3, $4, $5)",
+                )
+                .bind(Uuid::new_v4())
+                .bind(subject_kind)
+                .bind(subject_pid)
+                .bind(key.as_str())
+                .bind(v)
+                .execute(db.ex())
+                .await?;
+            }
+            (None, None) => {}
+        }
+    }
+    Ok(())
+}
+
 /// Rejects a subject type other than `plan` or `task` with a `422`.
 fn check_kind(applies_to: &str) -> Result<()> {
     if rules::APPLIES_TO.contains(&applies_to) {

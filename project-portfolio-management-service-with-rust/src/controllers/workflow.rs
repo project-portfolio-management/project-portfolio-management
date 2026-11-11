@@ -13,31 +13,29 @@
 //! vocabulary. A plan with nothing configured therefore behaves exactly
 //! as it did before this feature existed.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plans, tasks, workflow_states, workflow_transitions, workflows};
+use crate::models::_entities::{workflow_states, workflow_transitions, workflows};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::workflow as rules;
 
 /// Rebuild the pure definition from stored rows.
 async fn definition_of(ctx: &AppContext, workflow_pid: Uuid) -> Result<rules::WorkflowDef> {
-    let states = workflow_states::Entity::find()
-        .filter(workflow_states::Column::WorkflowPid.eq(workflow_pid))
-        .order_by_asc(workflow_states::Column::Position)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let transitions = workflow_transitions::Entity::find()
-        .filter(workflow_transitions::Column::WorkflowPid.eq(workflow_pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let states: Vec<workflow_states::Model> =
+        sqlx::query_as("SELECT * FROM workflow_states WHERE workflow_pid = $1 ORDER BY position")
+            .bind(workflow_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let transitions: Vec<workflow_transitions::Model> =
+        sqlx::query_as("SELECT * FROM workflow_transitions WHERE workflow_pid = $1")
+            .bind(workflow_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
 
     Ok(rules::WorkflowDef {
         states: states
@@ -82,15 +80,16 @@ pub(crate) async fn own_definition(
     ctx: &AppContext,
     plan_pid: Uuid,
 ) -> Result<Option<rules::WorkflowDef>> {
-    let own = workflows::Entity::find()
-        .filter(workflows::Column::PlanPid.eq(plan_pid))
-        .filter(workflows::Column::AppliesTo.eq("task"))
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let own: Option<Uuid> = sqlx::query_scalar(
+        "SELECT pid FROM workflows
+         WHERE plan_pid = $1 AND applies_to = 'task' AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(plan_pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     match own {
-        Some(w) => Ok(Some(definition_of(ctx, w.pid).await?)),
+        Some(w) => Ok(Some(definition_of(ctx, w).await?)),
         None => Ok(None),
     }
 }
@@ -118,7 +117,9 @@ pub async fn register_own(
         states: Vec::new(),
         transitions: Vec::new(),
     };
-    persist(&ctx.db, &payload, def).await.map(|_| ())
+    persist(&mut crate::db::pool(ctx), &payload, def)
+        .await
+        .map(|_| ())
 }
 
 /// The workflow in force for a plan and resource kind.
@@ -135,29 +136,21 @@ pub async fn in_force(
     plan_pid: Uuid,
     applies_to: &str,
 ) -> Result<rules::WorkflowDef> {
-    let own = workflows::Entity::find()
-        .filter(workflows::Column::PlanPid.eq(plan_pid))
-        .filter(workflows::Column::AppliesTo.eq(applies_to))
-        .filter(workflows::Column::IssueType.is_null())
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if let Some(workflow) = own {
-        return definition_of(ctx, workflow.pid).await;
+    if let Some(workflow) = plan_own(ctx, plan_pid, applies_to).await? {
+        return definition_of(ctx, workflow).await;
     }
 
-    let fallback = workflows::Entity::find()
-        .filter(workflows::Column::PlanPid.is_null())
-        .filter(workflows::Column::AppliesTo.eq(applies_to))
-        .filter(workflows::Column::IsDefault.eq(true))
-        .filter(workflows::Column::IssueType.is_null())
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let fallback: Option<Uuid> = sqlx::query_scalar(
+        "SELECT pid FROM workflows
+         WHERE plan_pid IS NULL AND applies_to = $1 AND is_default = true
+           AND issue_type IS NULL AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(applies_to)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     if let Some(workflow) = fallback {
-        return definition_of(ctx, workflow.pid).await;
+        return definition_of(ctx, workflow).await;
     }
 
     Ok(if applies_to == "issue" {
@@ -165,6 +158,19 @@ pub async fn in_force(
     } else {
         rules::built_in_task()
     })
+}
+
+/// The live workflow a plan owns for `applies_to` that names no issue type, if any.
+async fn plan_own(ctx: &AppContext, plan_pid: Uuid, applies_to: &str) -> Result<Option<Uuid>> {
+    Ok(sqlx::query_scalar(
+        "SELECT pid FROM workflows
+         WHERE plan_pid = $1 AND applies_to = $2 AND issue_type IS NULL AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(plan_pid)
+    .bind(applies_to)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?)
 }
 
 /// The workflow an issue of type `kind` on a plan follows (OC-1): the plan's own for that type, else the plan's own,
@@ -179,39 +185,32 @@ pub async fn in_force_issue(
     plan_pid: Uuid,
     kind: &str,
 ) -> Result<rules::WorkflowDef> {
-    let typed_for_plan = workflows::Entity::find()
-        .filter(workflows::Column::PlanPid.eq(plan_pid))
-        .filter(workflows::Column::AppliesTo.eq("issue"))
-        .filter(workflows::Column::IssueType.eq(kind))
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let typed_for_plan: Option<Uuid> = sqlx::query_scalar(
+        "SELECT pid FROM workflows
+         WHERE plan_pid = $1 AND applies_to = 'issue' AND issue_type = $2 AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(plan_pid)
+    .bind(kind)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     if let Some(workflow) = typed_for_plan {
-        return definition_of(ctx, workflow.pid).await;
+        return definition_of(ctx, workflow).await;
     }
-    let for_plan = workflows::Entity::find()
-        .filter(workflows::Column::PlanPid.eq(plan_pid))
-        .filter(workflows::Column::AppliesTo.eq("issue"))
-        .filter(workflows::Column::IssueType.is_null())
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if let Some(workflow) = for_plan {
-        return definition_of(ctx, workflow.pid).await;
+    if let Some(workflow) = plan_own(ctx, plan_pid, "issue").await? {
+        return definition_of(ctx, workflow).await;
     }
-    let typed_default = workflows::Entity::find()
-        .filter(workflows::Column::PlanPid.is_null())
-        .filter(workflows::Column::AppliesTo.eq("issue"))
-        .filter(workflows::Column::IsDefault.eq(true))
-        .filter(workflows::Column::IssueType.eq(kind))
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let typed_default: Option<Uuid> = sqlx::query_scalar(
+        "SELECT pid FROM workflows
+         WHERE plan_pid IS NULL AND applies_to = 'issue' AND is_default = true
+           AND issue_type = $1 AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(kind)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     if let Some(workflow) = typed_default {
-        return definition_of(ctx, workflow.pid).await;
+        return definition_of(ctx, workflow).await;
     }
     in_force(ctx, plan_pid, "issue").await
 }
@@ -283,68 +282,70 @@ pub(crate) struct TransitionPayload {
 /// Split from the handler so the validation half stays readable; the
 /// ordering matters — the parent row first, so a state can never
 /// reference a workflow that does not exist.
-async fn persist<C: ConnectionTrait>(
-    db: &C,
+async fn persist(
+    db: &mut impl crate::db::Session,
     payload: &WorkflowPayload,
     def: &rules::WorkflowDef,
 ) -> Result<workflows::Model> {
-    let workflow = workflows::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(payload.plan_pid),
-        name: ActiveValue::set(payload.name.trim().to_string()),
-        applies_to: ActiveValue::set(payload.applies_to.clone()),
-        issue_type: ActiveValue::set(payload.issue_type.clone()),
-        // A plan-scoped workflow is never the deployment default:
-        // "default" means the fallback when a plan has none.
-        is_default: ActiveValue::set(payload.is_default && payload.plan_pid.is_none()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(db_err)?;
+    let workflow: workflows::Model = sqlx::query_as(
+        "INSERT INTO workflows (pid, plan_pid, name, applies_to, issue_type, is_default, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(payload.plan_pid)
+    .bind(payload.name.trim())
+    .bind(&payload.applies_to)
+    .bind(payload.issue_type.as_deref())
+    // A plan-scoped workflow is never the deployment default:
+    // "default" means the fallback when a plan has none.
+    .bind(payload.is_default && payload.plan_pid.is_none())
+    .fetch_one(db.ex())
+    .await?;
 
     persist_definition(db, workflow.pid, def).await?;
     Ok(workflow)
 }
 
 /// Write a workflow's states and transitions.
-async fn persist_definition<C: ConnectionTrait>(
-    db: &C,
+async fn persist_definition(
+    db: &mut impl crate::db::Session,
     workflow_pid: Uuid,
     def: &rules::WorkflowDef,
 ) -> Result<()> {
     for (position, state) in def.states.iter().enumerate() {
-        workflow_states::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            workflow_pid: ActiveValue::set(workflow_pid),
-            state_key: ActiveValue::set(state.key.clone()),
-            label: ActiveValue::set(state.label.clone()),
-            labels: ActiveValue::set(serde_json::json!(state.labels)),
-            category: ActiveValue::set(state.category.token().to_string()),
-            wip_limit: ActiveValue::set(state.wip_limit.and_then(|w| i32::try_from(w).ok())),
-            is_initial: ActiveValue::set(state.is_initial),
-            is_terminal: ActiveValue::set(state.is_terminal),
-            field_rules: ActiveValue::set(serde_json::json!(state.field_rules)),
-            position: ActiveValue::set(i32::try_from(position).unwrap_or(0)),
-            ..Default::default()
-        }
-        .insert(db)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO workflow_states
+                 (pid, workflow_pid, state_key, label, labels, category, wip_limit, is_initial,
+                  is_terminal, field_rules, position)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(workflow_pid)
+        .bind(&state.key)
+        .bind(&state.label)
+        .bind(serde_json::json!(state.labels))
+        .bind(state.category.token())
+        .bind(state.wip_limit.and_then(|w| i32::try_from(w).ok()))
+        .bind(state.is_initial)
+        .bind(state.is_terminal)
+        .bind(serde_json::json!(state.field_rules))
+        .bind(i32::try_from(position).unwrap_or(0))
+        .execute(db.ex())
+        .await?;
     }
     for transition in &def.transitions {
-        workflow_transitions::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            workflow_pid: ActiveValue::set(workflow_pid),
-            from_key: ActiveValue::set(transition.from.clone()),
-            to_key: ActiveValue::set(transition.to.clone()),
-            roles: ActiveValue::set(serde_json::json!(transition.roles)),
-            ..Default::default()
-        }
-        .insert(db)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO workflow_transitions (pid, workflow_pid, from_key, to_key, roles)
+             VALUES ($1, $2, $3, $4, $5)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(workflow_pid)
+        .bind(&transition.from)
+        .bind(&transition.to)
+        .bind(serde_json::json!(transition.roles))
+        .execute(db.ex())
+        .await?;
     }
     Ok(())
 }
@@ -387,20 +388,32 @@ async fn refuse_a_second_issue_workflow(ctx: &AppContext, payload: &WorkflowPayl
     if payload.plan_pid.is_none() && !payload.is_default {
         return Ok(());
     }
-    let mut find = workflows::Entity::find()
-        .filter(workflows::Column::AppliesTo.eq("issue"))
-        .filter(workflows::Column::DeletedAt.is_null());
-    find = match payload.plan_pid {
-        Some(plan) => find.filter(workflows::Column::PlanPid.eq(plan)),
-        None => find
-            .filter(workflows::Column::PlanPid.is_null())
-            .filter(workflows::Column::IsDefault.eq(true)),
-    };
-    find = match &payload.issue_type {
-        Some(key) => find.filter(workflows::Column::IssueType.eq(key.as_str())),
-        None => find.filter(workflows::Column::IssueType.is_null()),
-    };
-    if find.one(&ctx.db).await.map_err(db_err)?.is_some() {
+    let mut find = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT 1 FROM workflows WHERE applies_to = 'issue' AND deleted_at IS NULL",
+    );
+    match payload.plan_pid {
+        Some(plan) => {
+            find.push(" AND plan_pid = ").push_bind(plan);
+        }
+        None => {
+            find.push(" AND plan_pid IS NULL AND is_default = true");
+        }
+    }
+    match &payload.issue_type {
+        Some(key) => {
+            find.push(" AND issue_type = ").push_bind(key.as_str());
+        }
+        None => {
+            find.push(" AND issue_type IS NULL");
+        }
+    }
+    find.push(" LIMIT 1");
+    if find
+        .build()
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .is_some()
+    {
         return Err(super::conflict(
             "this scope already has an issue workflow; withdraw it first",
         ));
@@ -455,13 +468,12 @@ async fn require_workflow(
     pid: &str,
 ) -> Result<workflows::Model> {
     let pid = super::parse_pid(pid)?;
-    let workflow = workflows::Entity::find()
-        .filter(workflows::Column::Pid.eq(pid))
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let workflow: workflows::Model =
+        sqlx::query_as("SELECT * FROM workflows WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     if let Some(plan) = workflow.plan_pid {
         require_readable_plan(ctx, caller, plan).await?;
     }
@@ -592,11 +604,11 @@ async fn create(
     if payload.applies_to == "issue" {
         refuse_a_second_issue_workflow(&ctx, &payload).await?;
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let workflow = persist(&txn, &payload, &def).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let workflow = persist(&mut tx, &payload, &def).await?;
 
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         payload.plan_pid.unwrap_or(workflow.pid),
         "workflow_registered",
         caller.actor(),
@@ -604,7 +616,7 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": workflow.pid.to_string() }))
 }
 
@@ -644,23 +656,25 @@ async fn change(
     let def = definition_from(&ctx, "issue", &payload.states, &payload.transitions).await?;
     let was = audit_detail(&workflow, &definition_of(&ctx, workflow.pid).await?);
     let target = workflow.plan_pid.unwrap_or(workflow.pid);
-    let mut active: workflows::ActiveModel = workflow.into();
-    active.name = ActiveValue::set(name);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let workflow = active.update(&txn).await.map_err(db_err)?;
-    workflow_states::Entity::delete_many()
-        .filter(workflow_states::Column::WorkflowPid.eq(workflow.pid))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    workflow_transitions::Entity::delete_many()
-        .filter(workflow_transitions::Column::WorkflowPid.eq(workflow.pid))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    persist_definition(&txn, workflow.pid, &def).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let workflow: workflows::Model =
+        sqlx::query_as("UPDATE workflows SET name = $1 WHERE id = $2 RETURNING *")
+            .bind(&name)
+            .bind(workflow.id)
+            .fetch_one(tx.conn())
+            .await?;
+    sqlx::query("DELETE FROM workflow_states WHERE workflow_pid = $1")
+        .bind(workflow.pid)
+        .execute(tx.conn())
+        .await?;
+    sqlx::query("DELETE FROM workflow_transitions WHERE workflow_pid = $1")
+        .bind(workflow.pid)
+        .execute(tx.conn())
+        .await?;
+    persist_definition(&mut tx, workflow.pid, &def).await?;
+    AuditModel::record_on(
+        tx.conn(),
         target,
         "workflow_changed",
         caller.actor(),
@@ -668,7 +682,7 @@ async fn change(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": workflow.pid.to_string() }))
 }
 
@@ -704,17 +718,17 @@ pub(crate) struct StatusBook {
 impl StatusBook {
     /// Reads the live issue workflows.
     pub(crate) async fn load(ctx: &AppContext) -> Result<Self> {
-        let live = workflows::Entity::find()
-            .filter(workflows::Column::AppliesTo.eq("issue"))
-            .filter(workflows::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        let states = workflow_states::Entity::find()
-            .filter(workflow_states::Column::WorkflowPid.is_in(live.iter().map(|w| w.pid)))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let live: Vec<workflows::Model> = sqlx::query_as(
+            "SELECT * FROM workflows WHERE applies_to = 'issue' AND deleted_at IS NULL",
+        )
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+        let live_pids: Vec<Uuid> = live.iter().map(|w| w.pid).collect();
+        let states: Vec<workflow_states::Model> =
+            sqlx::query_as("SELECT * FROM workflow_states WHERE workflow_pid = ANY($1)")
+                .bind(&live_pids)
+                .fetch_all(crate::db::pool(ctx))
+                .await?;
         let rows = states
             .into_iter()
             .filter_map(|state| {
@@ -763,11 +777,10 @@ impl StatusBook {
 /// workflow names the plan and how its work is typed.
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let mut rows = workflows::Entity::find()
-        .filter(workflows::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let mut rows: Vec<workflows::Model> =
+        sqlx::query_as("SELECT * FROM workflows WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut plan_pids: Vec<Uuid> = rows.iter().filter_map(|w| w.plan_pid).collect();
     plan_pids.sort();
     plan_pids.dedup();
@@ -813,15 +826,15 @@ async fn remove(
         } else {
             rules::built_in_task()
         };
-        let live = tasks::Entity::find()
-            .filter(tasks::Column::PlanPid.eq(plan_pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let live: Vec<String> = sqlx::query_scalar(
+            "SELECT status FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL",
+        )
+        .bind(plan_pid)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
         let stranded: Vec<&str> = live
             .iter()
-            .map(|task| task.status.as_str())
+            .map(String::as_str)
             .filter(|status| {
                 rules::category_of(&def, status).is_some()
                     && rules::category_of(&built_in, status).is_none()
@@ -840,12 +853,17 @@ async fn remove(
 
     let detail = audit_detail(&workflow, &definition_of(&ctx, workflow.pid).await?);
     let plan_pid = workflow.plan_pid.unwrap_or(workflow.pid);
-    let mut active: workflows::ActiveModel = workflow.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i32>("UPDATE workflows SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+            chrono::Utc::now(),
+        ))
+        .bind(workflow.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan_pid,
         "workflow_withdrawn",
         caller.actor(),
@@ -853,7 +871,7 @@ async fn remove(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -875,31 +893,23 @@ async fn plan_workflow(
     headers: HeaderMap,
 ) -> Result<Response> {
     let plan_pid = super::parse_pid(&pid)?;
-    let plan = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(plan_pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let plan: Uuid =
+        sqlx::query_scalar("SELECT pid FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(plan_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
 
     let applies_to = params.applies_to.unwrap_or_else(|| "task".to_string());
     if !["task", "issue"].contains(&applies_to.as_str()) {
         return Err(unprocessable("applies_to must be task or issue"));
     }
-    let def = in_force(&ctx, plan.pid, &applies_to).await?;
+    let def = in_force(&ctx, plan, &applies_to).await?;
 
-    let own = workflows::Entity::find()
-        .filter(workflows::Column::PlanPid.eq(plan.pid))
-        .filter(workflows::Column::AppliesTo.eq(applies_to.clone()))
-        .filter(workflows::Column::IssueType.is_null())
-        .filter(workflows::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let own = plan_own(&ctx, plan, &applies_to).await?;
 
     let body = serde_json::json!({
-        "plan_pid": plan.pid.to_string(),
+        "plan_pid": plan.to_string(),
         "applies_to": applies_to,
         // Naming the source matters: "why can I not move this card"
         // is answered by which vocabulary is in force, not by the

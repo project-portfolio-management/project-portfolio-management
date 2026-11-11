@@ -136,7 +136,7 @@ runs several statements takes `&mut impl db::Session`, which is a transaction or
 one.
 
 How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 66 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
+API on 10 November, 75 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
 `meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
 `key_persons`, `ledger`; batch 3: `financials`, `funding`, `tolerances`, `thresholds`, `effort`, `timesheets`,
 `milestones`, `milestone_signoffs`, `announcements`, `components`; batch 4: `escalations`, `deescalation`, `confidence`,
@@ -145,7 +145,11 @@ API on 10 November, 66 have moved (batch 1: `approvals`, `processes`, `controlle
 `earned_value`, `insights`, `organizations`; batch 6: `start_control`, `drum`, `buffer_management`, `availability`,
 `portfolio_resources`, `ccpm_estimates`, `hammock`, `cpm`, `plan_roles`, `raci`; batch 7: `calendars`, `task_relations`,
 `assignments`, `sandbox`, `deployment_moves`, `phase`, `guests`, `watchers`, `visibility/dependencies`,
-`visibility/allocations`) and 81 are left. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
+`visibility/allocations`; batch 8: `workflow`, `engineering/board`, `engineering/agile`, `engineering/devops`,
+`engineering/estate`, `engineering/mod`, `task_bulk`, `task_tree`, `tba`) and 72 are left (the grep that measures it
+still counts 74, because `engineering/board` and `task_bulk` name enum variants `Set` of their own).
+`tba::transition_row`, the SeaORM transition row, stays for the callers not yet moved; `tba::insert_transition_on` is
+its sqlx twin. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
 connection.
 
 ### 8.3 Service layout

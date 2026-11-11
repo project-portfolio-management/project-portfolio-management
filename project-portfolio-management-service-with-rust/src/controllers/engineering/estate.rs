@@ -22,17 +22,16 @@ pub(super) async fn blocked(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut rows: Vec<&tasks::Model> = Vec::new();
     let all_tasks = scope.keep(
-        tasks::Entity::find()
-            .filter(tasks::Column::Status.eq("blocked"))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, tasks::Model>(
+            "SELECT * FROM tasks WHERE status = 'blocked' AND deleted_at IS NULL",
+        )
+        .fetch_all(crate::db::pool(&ctx))
+        .await?,
     );
     for task in &all_tasks {
         rows.push(task);
@@ -71,7 +70,7 @@ pub(super) async fn moscow(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
     let mut bands: std::collections::BTreeMap<&str, Vec<serde_json::Value>> = rules::MOSCOW_BANDS
         .iter()
         .map(|band| (*band, Vec::new()))
@@ -123,7 +122,7 @@ pub(super) async fn delivery_links(
         "LinearId",
     ];
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
     let mut tracked = Vec::new();
     let mut untracked = Vec::new();
     for item in &items {
@@ -185,10 +184,10 @@ pub(super) async fn milestone_calendar(
             rules::MILESTONE_KINDS
         )));
     }
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
-    let mut rows = live!(milestones, &ctx.db, &scope);
+    let mut rows = live!(milestones, &ctx, &scope);
     rows.sort_by_key(|m| m.due);
     let entries: Vec<serde_json::Value> = rows
         .iter()

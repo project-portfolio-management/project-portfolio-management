@@ -4,7 +4,6 @@ use crate::auth::MaybeAuthUser;
 use crate::engineering as rules;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -42,6 +41,16 @@ pub(crate) struct DevopsEventPayload {
     occurred_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+/// The devops event with this pid, if any.
+async fn find_event(ctx: &AppContext, pid: Uuid) -> Result<Option<devops_events::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM devops_events WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
 /// Whether `event` is one of `kind`, on a plan the caller can read. A hidden one gets the answer of one that does not exist.
 async fn is_readable_event(
     ctx: &AppContext,
@@ -76,14 +85,13 @@ pub(super) async fn ingest_devops_event(
             rules::DEVOPS_EVENT_KINDS
         )));
     }
-    let item = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(payload.plan_pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
-        .ok_or(Error::NotFound)?;
-    crate::controllers::plan_access::require_readable(&ctx, &caller, item.pid).await?;
+    let item: Uuid =
+        sqlx::query_scalar("SELECT pid FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(payload.plan_pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
+    crate::controllers::plan_access::require_readable(&ctx, &caller, item).await?;
     match payload.kind.as_str() {
         "deploy" if payload.environment.as_deref().is_none_or(str::is_empty) => {
             return Err(refuse("a deploy event requires an environment"));
@@ -92,11 +100,7 @@ pub(super) async fn ingest_devops_event(
             let Some(incident_pid) = payload.incident_pid else {
                 return Err(refuse("a recovery event must reference its incident_pid"));
             };
-            let incident = devops_events::Entity::find()
-                .filter(devops_events::Column::Pid.eq(incident_pid))
-                .one(&ctx.db)
-                .await
-                .map_err(|e| Error::Model(ModelError::from(e)))?;
+            let incident = find_event(&ctx, incident_pid).await?;
             if !is_readable_event(&ctx, &caller, incident, "incident").await {
                 return Err(refuse("incident_pid must name an ingested incident event"));
             }
@@ -107,37 +111,36 @@ pub(super) async fn ingest_devops_event(
         return Err(refuse("caused_by_deploy_pid belongs on incident events"));
     }
     if let Some(deploy_pid) = payload.caused_by_deploy_pid {
-        let deploy = devops_events::Entity::find()
-            .filter(devops_events::Column::Pid.eq(deploy_pid))
-            .one(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?;
+        let deploy = find_event(&ctx, deploy_pid).await?;
         if !is_readable_event(&ctx, &caller, deploy, "deploy").await {
             return Err(refuse(
                 "caused_by_deploy_pid must name an ingested deploy event",
             ));
         }
     }
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = devops_events::ActiveModel {
-        pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
-        plan_pid: sea_orm::ActiveValue::set(item.pid),
-        kind: sea_orm::ActiveValue::set(payload.kind.clone()),
-        environment: sea_orm::ActiveValue::set(payload.environment.clone()),
-        version: sea_orm::ActiveValue::set(payload.version.clone()),
-        reference: sea_orm::ActiveValue::set(payload.reference.clone()),
-        incident_pid: sea_orm::ActiveValue::set(payload.incident_pid),
-        caused_by_deploy_pid: sea_orm::ActiveValue::set(payload.caused_by_deploy_pid),
-        occurred_at: sea_orm::ActiveValue::set(
-            payload.occurred_at.unwrap_or_else(chrono::Utc::now).into(),
-        ),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: devops_events::Model = sqlx::query_as(
+        "INSERT INTO devops_events
+             (pid, plan_pid, kind, environment, version, reference, incident_pid, caused_by_deploy_pid,
+              occurred_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(item)
+    .bind(&payload.kind)
+    .bind(payload.environment.as_deref())
+    .bind(payload.version.as_deref())
+    .bind(payload.reference.as_deref())
+    .bind(payload.incident_pid)
+    .bind(payload.caused_by_deploy_pid)
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+        payload.occurred_at.unwrap_or_else(chrono::Utc::now),
+    ))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "devops_event_ingested",
         caller.actor(),
@@ -145,7 +148,7 @@ pub(super) async fn ingest_devops_event(
     )
     .await
     .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -174,10 +177,9 @@ pub(super) async fn devops_metrics(
     let now = chrono::Utc::now();
     let window_start = now - chrono::Days::new(u64::try_from(months * 31).unwrap_or(93));
     let rows = scope.keep(
-        devops_events::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, devops_events::Model>("SELECT * FROM devops_events")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
     let in_window = |at: chrono::DateTime<chrono::Utc>| at >= window_start && at <= now;
 
@@ -278,16 +280,14 @@ pub(super) async fn devops_releases(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
-    let rows = devops_events::Entity::find()
-        .filter(devops_events::Column::Kind.eq("deploy"))
-        .order_by_desc(devops_events::Column::OccurredAt)
-        .limit(200)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows: Vec<devops_events::Model> = sqlx::query_as(
+        "SELECT * FROM devops_events WHERE kind = 'deploy' ORDER BY occurred_at DESC LIMIT 200",
+    )
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let rows = scope.keep(rows);
     let releases: Vec<serde_json::Value> = rows
         .iter()

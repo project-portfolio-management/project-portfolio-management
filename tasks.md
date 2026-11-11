@@ -2042,6 +2042,45 @@ came from grep.
   `engineering/devops`, `engineering/estate`, `engineering/mod`, `task_bulk` (controller and `src/task_bulk.rs`),
   `task_tree`, `controllers/tba` and `tba/persistence` (about 350 lines; `task_relations` and `watchers` are called
   from here).
+  **Progress 2026-11-11, batch 8 (not ticked).** The task board and workflow moved: `workflow` (102 lines naming
+  SeaORM, now none), `engineering/agile` (62, none), `engineering/board` (61, now 4), `task_bulk` (56, now 7),
+  `engineering/devops` (22, none), `tba` (17, none), `task_tree` (8, none), `engineering/estate` (3, none) and
+  `engineering/mod` (2, none): 322 lines gone, leaving 74 files and 2,584 lines by batch 6's measure. The 4 left in
+  `engineering/board` and 7 in `task_bulk`, and the 4 in `src/task_bulk.rs`, are that grep's `Set(` matching their own
+  `FlowTypeField::Set` and `Change::Set`: none names SeaORM, so by name 72 files are left. `tba/persistence` keeps
+  its 12: `transition_row` (the SeaORM `ActiveModel`) still serves `plan_templates`, `mspdi_import`,
+  `tracker_import` and `blueprint_sync`, and gains a sqlx twin, `insert_transition_on(&mut impl db::Session,
+  NewTransition)`, which the board's create and move and the bulk copy and move now use inside their own
+  transactions. `custom_fields` gains `store_on`, the sqlx twin of `store`, for the same two writers (task create and
+  copy); `store` stays for `custom_fields` itself and `mspdi_batch`. `workflow::in_force`, `in_force_issue`,
+  `own_definition`, `register_own` and `StatusBook::load` keep their signatures (they take the context and use the
+  pool), so their 20-odd callers did not change; they read the same rows in the same order (the plan's own, then the
+  deployment default, then the built-in; an issue type's own before the untyped). `engineering`'s `live!` macro now
+  reads the table its entity module names. Every handler here already wrote its rows and audit row in one transaction,
+  so no write changed transaction; the board's flow stamps (`status_changed_at` on every move, `done_at` on the first
+  finish only, from the state's category), WIP limits (the workflow's caps before the environment's), the PATCH
+  move's refusals (none writes a transition), the task PUT's `flow_type` rule (absent keeps, `null` clears, a value
+  sets: the update names `flow_type` only when the body does), the `Link` paging, ETags and the live events after
+  commit are as before. A throwaway check (not committed) dumped every answer of these routes and every row they
+  write (audit, tasks, transitions with `blocked_reason`, workflows and their states and moves, sprints, notes,
+  devops events, custom field values, `copied_from` relations, watchers, notifications, issues, outbox) for a plan
+  with a gated, role-restricted, WIP-capped workflow, a plan and a typed default issue workflow changed and
+  withdrawn, a template capturing and re-registering a workflow, tasks created, listed by component and by page,
+  updated, moved, blocked, ordered, rolled up, copied, moved between plans and deleted, sprints with burndown,
+  velocity, standup and a converted note, devops events and metrics, and every estate and time-analysis view, before
+  and after: the same once pids and times were normalised (the time analyses' millisecond figures, and whether a
+  zero-length `todo` stay is listed, vary from run to run either way).
+  **Changed, deliberately:** a bulk item refused by a database failure now carries sqlx's error text in its note
+  rather than SeaORM's wrapping of it (only on a failure; no test reaches it). A task's opening transition row (task
+  create, bulk copy) and a bulk move's row now name `blocked_reason` as `NULL`, as the board move's always did; the
+  column has no default, so the row is the same.
+  **Still on SeaORM through other modules**, on the pool and outside these handlers' transactions:
+  `governance::find_item`, `find_live_task`, `discussion::resolve_subject`, `plan_access` (`HiddenScope`,
+  `readable_plans`, `require_readable`), `custom_fields::prepare`, `issue_configuration` (`require_usable_type`,
+  `require_known_roles`) and `automation::fire`.
+  **Next batch, suggested:** the shared lookups every moved file still reaches SeaORM through: `governance` (99),
+  `plan_access` (78), `discussion` (86) and `controllers/mod.rs` (`find_live_task`, `find_live_plan`, 13), about 276
+  lines; or the issue tracker, `issues`, `issue_configuration` and `custom_fields` (about 242).
 
 ## Correctness carried forward (CF-n)
 

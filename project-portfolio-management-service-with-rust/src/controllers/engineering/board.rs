@@ -3,12 +3,11 @@
 use crate::auth::MaybeAuthUser;
 use crate::engineering as rules;
 use crate::prelude::*;
-use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::{find_task, refuse, valid_person_ref};
-use crate::models::_entities::{sprints, tasks};
+use crate::models::_entities::tasks;
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The task wire view (adds blocked-age calendar days to the stored row).
@@ -186,25 +185,27 @@ pub(super) async fn validate_task(
         ));
     }
     if let Some(component_pid) = payload.component_pid {
-        let found = crate::models::_entities::components::Entity::find()
-            .filter(crate::models::_entities::components::Column::Pid.eq(component_pid))
-            .filter(crate::models::_entities::components::Column::PlanPid.eq(plan_pid))
-            .filter(crate::models::_entities::components::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?;
+        let found = sqlx::query(
+            "SELECT 1 FROM components
+             WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL
+             LIMIT 1",
+        )
+        .bind(component_pid)
+        .bind(plan_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
         if found.is_none() {
             return Err(refuse("component_pid must name a component of this plan"));
         }
     }
     if let Some(sprint_pid) = payload.sprint_pid {
-        let sprint = sprints::Entity::find()
-            .filter(sprints::Column::Pid.eq(sprint_pid))
-            .filter(sprints::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?;
-        if sprint.is_none_or(|s| s.plan_pid != plan_pid) {
+        let sprint_plan: Option<Uuid> = sqlx::query_scalar(
+            "SELECT plan_pid FROM sprints WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(sprint_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
+        if sprint_plan.is_none_or(|p| p != plan_pid) {
             return Err(refuse("sprint_pid must name a sprint of this plan"));
         }
     }
@@ -253,61 +254,59 @@ pub(super) async fn create_task(
     // without one would have no measurable start, and the time-based
     // analysis would silently begin its life at the first later move
     // (spec `time-based-analysis.md` §5.1 invariant 3).
-    let txn = ctx
-        .db
-        .begin()
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let row = tasks::ActiveModel {
-        pid: sea_orm::ActiveValue::set(Uuid::new_v4()),
-        plan_pid: sea_orm::ActiveValue::set(item.pid),
-        sprint_pid: sea_orm::ActiveValue::set(payload.sprint_pid),
-        title: sea_orm::ActiveValue::set(payload.title.clone()),
-        description: sea_orm::ActiveValue::set(payload.description.clone()),
-        status: sea_orm::ActiveValue::set(status.clone()),
-        assignee_ref: sea_orm::ActiveValue::set(payload.assignee_ref.clone()),
-        points: sea_orm::ActiveValue::set(payload.points),
-        due_date: sea_orm::ActiveValue::set(payload.due_date),
-        start_date: sea_orm::ActiveValue::set(payload.start_date),
-        duration_days: sea_orm::ActiveValue::set(payload.duration_days),
-        component_pid: sea_orm::ActiveValue::set(payload.component_pid),
-        parent_task_pid: sea_orm::ActiveValue::set(payload.parent_task_pid),
-        status_changed_at: sea_orm::ActiveValue::set(now.into()),
-        flow_type: sea_orm::ActiveValue::set(payload.flow_type.declared().map(str::to_string)),
-        // Stamped from the state's **category**, not from the literal
-        // string "done". A custom vocabulary finishes in whatever it
-        // calls finished (`shipped`, `closed`, …), and matching on the
-        // name would leave the burndown blind to every board that
-        // renamed its final column — the exact failure the mandatory
-        // category exists to prevent.
-        done_at: sea_orm::ActiveValue::set(
-            crate::workflow::is_done(&workflow, &status).then(|| now.into()),
-        ),
-        deleted_at: sea_orm::ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    super::super::custom_fields::store(&txn, "task", row.pid, &custom).await?;
-    crate::tba::transition_row(
-        row.pid,
-        item.pid,
-        None,
-        status.clone(),
-        now,
-        caller.actor().map(ToString::to_string),
-        payload.assignee_ref.clone(),
+    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: tasks::Model = sqlx::query_as(
+        "INSERT INTO tasks
+             (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points, due_date,
+              start_date, duration_days, component_pid, parent_task_pid, status_changed_at, flow_type,
+              done_at, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NULL)
+         RETURNING *",
     )
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "task_created", caller.actor(), None)
+    .bind(Uuid::new_v4())
+    .bind(item.pid)
+    .bind(payload.sprint_pid)
+    .bind(&payload.title)
+    .bind(payload.description.as_deref())
+    .bind(&status)
+    .bind(payload.assignee_ref.as_deref())
+    .bind(payload.points)
+    .bind(payload.due_date)
+    .bind(payload.start_date)
+    .bind(payload.duration_days)
+    .bind(payload.component_pid)
+    .bind(payload.parent_task_pid)
+    .bind(at)
+    .bind(payload.flow_type.declared())
+    // Stamped from the state's **category**, not from the literal
+    // string "done". A custom vocabulary finishes in whatever it
+    // calls finished (`shipped`, `closed`, …), and matching on the
+    // name would leave the burndown blind to every board that
+    // renamed its final column — the exact failure the mandatory
+    // category exists to prevent.
+    .bind(crate::workflow::is_done(&workflow, &status).then_some(at))
+    .fetch_one(tx.conn())
+    .await?;
+    super::super::custom_fields::store_on(&mut tx, "task", row.pid, &custom).await?;
+    crate::tba::insert_transition_on(
+        &mut tx,
+        crate::tba::NewTransition {
+            task_pid: row.pid,
+            plan_pid: item.pid,
+            from_status: None,
+            to_status: &status,
+            at: now,
+            actor_ref: caller.actor(),
+            assignee_ref: payload.assignee_ref.as_deref(),
+            blocked_reason: None,
+        },
+    )
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "task_created", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit()
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    tx.commit().await?;
 
     if let Some(sub) = caller.actor() {
         super::super::watchers::ensure_watching(&ctx, "task", row.pid, sub).await;
@@ -353,32 +352,41 @@ pub(super) async fn list_tasks(
     cursor: super::super::pagination::Cursor,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let mut query = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(item.pid))
-        .filter(tasks::Column::DeletedAt.is_null());
     // `?component=<pid>` narrows to one component; `?component=unassigned`
     // to the tasks with none (never silently dropped from a grouping).
-    match params.component.as_deref() {
-        None => {}
-        Some("unassigned") => query = query.filter(tasks::Column::ComponentPid.is_null()),
-        Some(raw) => {
-            let component = Uuid::parse_str(raw)
-                .map_err(|_| refuse("component must be a component pid or \"unassigned\""))?;
-            query = query.filter(tasks::Column::ComponentPid.eq(component));
+    let component = match params.component.as_deref() {
+        None => ComponentFilter::Any,
+        Some("unassigned") => ComponentFilter::Unassigned,
+        Some(raw) => ComponentFilter::One(
+            Uuid::parse_str(raw)
+                .map_err(|_| refuse("component must be a component pid or \"unassigned\""))?,
+        ),
+    };
+    let filtered = |select: &str| {
+        let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(select);
+        query
+            .push(" FROM tasks WHERE plan_pid = ")
+            .push_bind(item.pid)
+            .push(" AND deleted_at IS NULL");
+        match component {
+            ComponentFilter::Any => {}
+            ComponentFilter::Unassigned => {
+                query.push(" AND component_pid IS NULL");
+            }
+            ComponentFilter::One(c) => {
+                query.push(" AND component_pid = ").push_bind(c);
+            }
         }
-    }
+        query
+    };
     let page = task_window(&cursor)?;
     // The per-status counts cover every task that matches, not just this page (board columns).
-    let by_status: Vec<(String, i64)> = query
-        .clone()
-        .select_only()
-        .column(tasks::Column::Status)
-        .column_as(tasks::Column::Id.count(), "n")
-        .group_by(tasks::Column::Status)
-        .into_tuple()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut counted = filtered("SELECT status, COUNT(id) AS n");
+    counted.push(" GROUP BY status");
+    let by_status: Vec<(String, i64)> = counted
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let mut counts: std::collections::BTreeMap<&str, usize> = rules::TASK_STATUSES
         .iter()
         .map(|status| (*status, 0))
@@ -392,14 +400,16 @@ pub(super) async fn list_tasks(
         }
     }
     // Positioned siblings first (Postgres sorts NULL last), then by age.
-    let rows = query
-        .order_by_asc(tasks::Column::SiblingPosition)
-        .order_by_asc(tasks::Column::Id)
-        .offset(page.offset())
-        .limit(page.fetch())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut listed = filtered("SELECT *");
+    listed
+        .push(" ORDER BY sibling_position, id LIMIT ")
+        .push_bind(i64::try_from(page.fetch()).unwrap_or(i64::MAX))
+        .push(" OFFSET ")
+        .push_bind(i64::try_from(page.offset()).unwrap_or(i64::MAX));
+    let rows: Vec<tasks::Model> = listed
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let (rows, truncated) = page.split(rows);
     // An object, not a bare array, with the next page in `Link` all the same. The counts and total are of one plan
     // the caller can already read, so they count nothing hidden from them.
@@ -412,6 +422,17 @@ pub(super) async fn list_tasks(
     }))?;
     page.stamp(&mut response, truncated);
     Ok(response)
+}
+
+/// What `?component=` asks a task list for.
+#[derive(Clone, Copy)]
+enum ComponentFilter {
+    /// Every task.
+    Any,
+    /// The tasks with no component.
+    Unassigned,
+    /// The tasks of one component.
+    One(Uuid),
 }
 
 /// `PUT /api/plans/{pid}/tasks/{t_pid}` — update fields
@@ -435,28 +456,40 @@ pub(super) async fn update_task(
         super::super::task_relations::check_due_change(&ctx, task.pid, payload.due_date).await?;
     }
     let task_pid = task.pid;
-    let mut active: tasks::ActiveModel = task.into();
-    active.title = sea_orm::ActiveValue::set(payload.title.clone());
-    active.description = sea_orm::ActiveValue::set(payload.description.clone());
-    active.assignee_ref = sea_orm::ActiveValue::set(payload.assignee_ref.clone());
-    active.points = sea_orm::ActiveValue::set(payload.points);
-    active.due_date = sea_orm::ActiveValue::set(payload.due_date);
-    active.component_pid = sea_orm::ActiveValue::set(payload.component_pid);
-    active.parent_task_pid = sea_orm::ActiveValue::set(payload.parent_task_pid);
-    active.sprint_pid = sea_orm::ActiveValue::set(payload.sprint_pid);
+    // `flow_type` is written only when the body names it (absent keeps it; `null` clears it; a value sets it).
+    let sql = if payload.flow_type == FlowTypeField::Keep {
+        "UPDATE tasks
+         SET title = $1, description = $2, assignee_ref = $3, points = $4, due_date = $5,
+             component_pid = $6, parent_task_pid = $7, sprint_pid = $8
+         WHERE id = $9
+         RETURNING *"
+    } else {
+        "UPDATE tasks
+         SET title = $1, description = $2, assignee_ref = $3, points = $4, due_date = $5,
+             component_pid = $6, parent_task_pid = $7, sprint_pid = $8, flow_type = $10
+         WHERE id = $9
+         RETURNING *"
+    };
+    let mut tx = crate::db::begin(&ctx).await?;
+    let mut update = sqlx::query_as(sql)
+        .bind(&payload.title)
+        .bind(payload.description.as_deref())
+        .bind(payload.assignee_ref.as_deref())
+        .bind(payload.points)
+        .bind(payload.due_date)
+        .bind(payload.component_pid)
+        .bind(payload.parent_task_pid)
+        .bind(payload.sprint_pid)
+        .bind(task.id);
     if payload.flow_type != FlowTypeField::Keep {
-        active.flow_type =
-            sea_orm::ActiveValue::set(payload.flow_type.declared().map(str::to_string));
+        update = update.bind(payload.flow_type.declared());
     }
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, task_pid, "task_updated", caller.actor(), None)
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let row: tasks::Model = update.fetch_one(tx.conn()).await?;
+    AuditModel::record_on(tx.conn(), task_pid, "task_updated", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     crate::live::publish(
         item.pid,
         "task_updated",
@@ -527,13 +560,13 @@ pub(super) async fn check_wip(
     else {
         return Ok(());
     };
-    let occupancy = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::Status.eq(status))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .count(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let occupancy: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM tasks WHERE plan_pid = $1 AND status = $2 AND deleted_at IS NULL",
+    )
+    .bind(plan_pid)
+    .bind(status)
+    .fetch_one(crate::db::pool(ctx))
+    .await?;
     if usize::try_from(occupancy).unwrap_or(usize::MAX) >= *cap {
         return Err(refuse(&format!(
             "WIP limit reached: `{status}` is capped at {cap} for this item"
@@ -605,37 +638,37 @@ pub(super) async fn move_task(
     // The move and its transition commit together. A refused move (an
     // unknown status, a full WIP column) has already returned above, so
     // the log never records a move that did not happen.
-    let txn = ctx
-        .db
-        .begin()
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let mut active: tasks::ActiveModel = task.into();
-    active.status = sea_orm::ActiveValue::set(payload.status.clone());
-    active.status_changed_at = sea_orm::ActiveValue::set(now.into());
-    if first_done {
-        active.done_at = sea_orm::ActiveValue::set(Some(now.into()));
-    }
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    let mut transition = crate::tba::transition_row(
-        task_pid,
-        item.pid,
-        Some(from.clone()),
-        payload.status.clone(),
-        now,
-        caller.actor().map(ToString::to_string),
-        assignee,
-    );
-    transition.blocked_reason = sea_orm::ActiveValue::set(payload.blocked_reason.clone());
-    transition
-        .insert(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
-        &txn,
+    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `done_at` is written only on the first finish (kept thereafter).
+    let sql = if first_done {
+        "UPDATE tasks SET status = $1, status_changed_at = $2, done_at = $2 WHERE id = $3 RETURNING *"
+    } else {
+        "UPDATE tasks SET status = $1, status_changed_at = $2 WHERE id = $3 RETURNING *"
+    };
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let row: tasks::Model = sqlx::query_as(sql)
+        .bind(&payload.status)
+        .bind(at)
+        .bind(task.id)
+        .fetch_one(tx.conn())
+        .await?;
+    crate::tba::insert_transition_on(
+        &mut tx,
+        crate::tba::NewTransition {
+            task_pid,
+            plan_pid: item.pid,
+            from_status: Some(&from),
+            to_status: &payload.status,
+            at: now,
+            actor_ref: caller.actor(),
+            assignee_ref: assignee.as_deref(),
+            blocked_reason: payload.blocked_reason.as_deref(),
+        },
+    )
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         task_pid,
         "task_moved",
         caller.actor(),
@@ -643,9 +676,7 @@ pub(super) async fn move_task(
     )
     .await
     .map_err(super::super::audit_failed)?;
-    txn.commit()
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    tx.commit().await?;
 
     crate::live::publish(
         item.pid,
@@ -693,17 +724,19 @@ pub(super) async fn delete_task(
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let task = find_task(&ctx, item.pid, &t_pid).await?;
     let task_pid = task.pid;
-    let mut active: tasks::ActiveModel = task.into();
-    active.deleted_at = sea_orm::ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, task_pid, "task_deleted", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i32>("UPDATE tasks SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+            chrono::Utc::now(),
+        ))
+        .bind(task.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), task_pid, "task_deleted", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

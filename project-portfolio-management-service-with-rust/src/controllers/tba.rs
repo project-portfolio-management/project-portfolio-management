@@ -15,7 +15,6 @@
 //! per-assignee cycle time by design.
 
 use crate::prelude::*;
-use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 
 use super::find_live_task as find_task;
@@ -116,28 +115,36 @@ pub(crate) async fn load_board(
     plan_pid: Uuid,
     sprint: Option<Uuid>,
 ) -> Result<(Vec<tasks::Model>, Vec<task_transitions::Model>)> {
-    let mut query = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::DeletedAt.is_null());
-    if let Some(sprint) = sprint {
-        query = query.filter(tasks::Column::SprintPid.eq(sprint));
-    }
-    let tasks_rows = query
-        .order_by_asc(tasks::Column::Id)
-        .limit(MAX_TASKS)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let cap = i64::try_from(MAX_TASKS).unwrap_or(i64::MAX);
+    let tasks_rows: Vec<tasks::Model> = match sprint {
+        Some(sprint) => {
+            sqlx::query_as(
+                "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL AND sprint_pid = $2
+                 ORDER BY id LIMIT $3",
+            )
+            .bind(plan_pid)
+            .bind(sprint)
+            .bind(cap)
+            .fetch_all(crate::db::pool(ctx))
+            .await?
+        }
+        None => sqlx::query_as(
+            "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id LIMIT $2",
+        )
+        .bind(plan_pid)
+        .bind(cap)
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
+    };
     if tasks_rows.is_empty() {
         return Ok((tasks_rows, Vec::new()));
     }
     let pids: Vec<Uuid> = tasks_rows.iter().map(|t| t.pid).collect();
-    let transitions = task_transitions::Entity::find()
-        .filter(task_transitions::Column::TaskPid.is_in(pids))
-        .order_by_asc(task_transitions::Column::At)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let transitions: Vec<task_transitions::Model> =
+        sqlx::query_as(r#"SELECT * FROM task_transitions WHERE task_pid = ANY($1) ORDER BY "at""#)
+            .bind(&pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     Ok((tasks_rows, transitions))
 }
 
@@ -167,6 +174,20 @@ pub(crate) fn analyze_board(
         .collect()
 }
 
+/// One task's transitions, oldest first, capped at [`MAX_TRANSITIONS`].
+async fn task_transitions_of(
+    ctx: &AppContext,
+    task_pid: Uuid,
+) -> Result<Vec<task_transitions::Model>> {
+    Ok(sqlx::query_as(
+        r#"SELECT * FROM task_transitions WHERE task_pid = $1 ORDER BY "at" LIMIT $2"#,
+    )
+    .bind(task_pid)
+    .bind(i64::try_from(MAX_TRANSITIONS).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
+}
+
 /// The classification map, echoed on every response so a figure can
 /// never be compared across two deployments without the difference
 /// being visible (spec §5.3).
@@ -192,13 +213,7 @@ async fn list_transitions(
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
     let task = find_task(&ctx, item.pid, &t_pid).await?;
-    let rows = task_transitions::Entity::find()
-        .filter(task_transitions::Column::TaskPid.eq(task.pid))
-        .order_by_asc(task_transitions::Column::At)
-        .limit(MAX_TRANSITIONS)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows = task_transitions_of(&ctx, task.pid).await?;
     format::json(serde_json::json!({
         "task": task_ref(&task),
         "note": "append-only; there is no edit or delete. `backfilled` marks a \
@@ -217,13 +232,7 @@ async fn task_time_analysis(
     let now = chrono::Utc::now();
     let item = super::governance::find_item(&ctx, &pid).await?;
     let task = find_task(&ctx, item.pid, &t_pid).await?;
-    let rows = task_transitions::Entity::find()
-        .filter(task_transitions::Column::TaskPid.eq(task.pid))
-        .order_by_asc(task_transitions::Column::At)
-        .limit(MAX_TRANSITIONS)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows = task_transitions_of(&ctx, task.pid).await?;
     let transitions: Vec<tba::Transition> = rows.iter().map(tba::to_transition).collect();
     let classes = classes_for(&ctx, item.pid).await;
     let analysis = tba::analyze(
@@ -631,12 +640,10 @@ async fn rollup(
     // queries at all — a query per level is the N+1 this avoids.
     // Child plans the caller may not see are not part of the rollup they are given.
     let all = scope.keep(
-        plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .limit(MAX_PLANS_SCANNED)
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, plans::Model>("SELECT * FROM plans WHERE deleted_at IS NULL LIMIT $1")
+            .bind(i64::try_from(MAX_PLANS_SCANNED).unwrap_or(i64::MAX))
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
     let mut children: std::collections::BTreeMap<Uuid, Vec<Uuid>> =
         std::collections::BTreeMap::new();

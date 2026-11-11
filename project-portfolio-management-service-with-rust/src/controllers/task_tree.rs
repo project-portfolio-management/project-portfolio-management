@@ -4,7 +4,7 @@
 //! stored. Parent links are validated here (same plan, no cycle, bounded
 //! depth) and on the task create/update path.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
@@ -13,17 +13,17 @@ use axum::http::StatusCode;
 use uuid::Uuid;
 
 use super::governance::find_item;
-use crate::models::_entities::{tasks, time_entries};
+use crate::models::_entities::tasks;
 use crate::task_rollup::{self as rules, Fact};
 
 /// The plan's live tasks.
 async fn plan_tasks(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<tasks::Model>> {
-    tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Validate a requested parent for a task: it must be a live task of the
@@ -85,15 +85,12 @@ async fn rollup(
     let kids = descendants(&all, t_pid);
     let mut pids: Vec<Uuid> = kids.iter().map(|t| t.pid).collect();
     pids.push(t_pid);
-    let spent: Vec<(Option<Uuid>, i64)> = time_entries::Entity::find()
-        .filter(time_entries::Column::TaskPid.is_in(pids))
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|e| (e.task_pid, e.minutes))
-        .collect();
+    let spent: Vec<(Option<Uuid>, i64)> = sqlx::query_as(
+        "SELECT task_pid, minutes FROM time_entries WHERE task_pid = ANY($1) AND deleted_at IS NULL",
+    )
+    .bind(&pids)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let minutes_of = |p: Uuid| -> i64 {
         spent
             .iter()
@@ -167,7 +164,7 @@ async fn set_order(
             ),
         ));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     for (index, task_pid) in body.order.iter().enumerate() {
         let position = i32::try_from(index).map_err(|_| unprocessable("too many tasks"))?;
         let row = all
@@ -175,13 +172,18 @@ async fn set_order(
             .find(|t| t.pid == *task_pid)
             .ok_or(Error::NotFound)?;
         if row.sibling_position != Some(position) {
-            let mut active: tasks::ActiveModel = row.clone().into();
-            active.sibling_position = ActiveValue::set(Some(position));
-            active.update(&txn).await.map_err(db_err)?;
+            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            sqlx::query_scalar::<_, i32>(
+                "UPDATE tasks SET sibling_position = $1 WHERE id = $2 RETURNING id",
+            )
+            .bind(position)
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
         }
     }
-    crate::models::audit_logs::Model::record(
-        &txn,
+    crate::models::audit_logs::Model::record_on(
+        tx.conn(),
         plan.pid,
         "task_order_set",
         caller.actor(),
@@ -189,7 +191,7 @@ async fn set_order(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "parent_task_pid": body.parent_task_pid,
         "order": body.order,

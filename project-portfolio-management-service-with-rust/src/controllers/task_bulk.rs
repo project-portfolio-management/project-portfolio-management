@@ -23,7 +23,6 @@ use super::unprocessable;
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
-use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use serde_json::Value;
 use uuid::Uuid;
@@ -31,7 +30,7 @@ use uuid::Uuid;
 use super::discussion::resolve_subject;
 use super::governance::valid_ref;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{components, custom_field_values, task_relations, tasks};
+use crate::models::_entities::tasks;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 use crate::task_bulk::{self as rules, Change, ItemResult};
@@ -68,10 +67,9 @@ async fn readable_task(
     resolve_subject(ctx, caller, "task", &pid.to_string())
         .await
         .map_err(|_| "unknown task, or not readable by this caller".to_string())?;
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
+    sqlx::query_as("SELECT * FROM tasks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
         .await
         .map_err(|e| e.to_string())?
         .ok_or_else(|| "unknown task".to_string())
@@ -193,15 +191,19 @@ pub(super) async fn edit_one(
         Err(why) => return ItemResult::refused(pid, why),
     };
     if let Change::Set(c) = component {
-        let ok = components::Entity::find()
-            .filter(components::Column::Pid.eq(*c))
-            .filter(components::Column::PlanPid.eq(task.plan_pid))
-            .filter(components::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .ok()
-            .flatten()
-            .is_some();
+        // A lookup that fails counts as no such component, as before.
+        let ok = sqlx::query(
+            "SELECT 1 FROM components
+             WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL
+             LIMIT 1",
+        )
+        .bind(*c)
+        .bind(task.plan_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await
+        .ok()
+        .flatten()
+        .is_some();
         if !ok {
             return ItemResult::refused(
                 pid,
@@ -221,32 +223,42 @@ pub(super) async fn edit_one(
         component.apply(task.component_pid),
     );
     let new_start = edit.start.apply(task.start_date);
-    let mut active: tasks::ActiveModel = task.into();
-    active.assignee_ref = ActiveValue::set(new_assignee);
-    active.due_date = ActiveValue::set(new_due);
-    active.start_date = ActiveValue::set(new_start);
-    active.component_pid = ActiveValue::set(new_component);
     // The change and its audit row are one change: an item whose audit row cannot be written is refused.
-    let txn = match ctx.db.begin().await {
+    let mut tx = match crate::db::begin(ctx).await {
         Ok(t) => t,
         Err(e) => return ItemResult::refused(pid, e.to_string()),
     };
-    if let Err(e) = active.update(&txn).await {
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    if let Err(e) = sqlx::query_scalar::<_, i32>(
+        "UPDATE tasks SET assignee_ref = $1, due_date = $2, start_date = $3, component_pid = $4
+         WHERE id = $5
+         RETURNING id",
+    )
+    .bind(new_assignee)
+    .bind(new_due)
+    .bind(new_start)
+    .bind(new_component)
+    .bind(task.id)
+    .fetch_one(tx.conn())
+    .await
+    {
         return ItemResult::refused(pid, e.to_string());
     }
-    if let Err(e) = AuditModel::record(&txn, pid, audit_kind, caller.actor(), audit_detail).await {
+    if let Err(e) =
+        AuditModel::record_on(tx.conn(), pid, audit_kind, caller.actor(), audit_detail).await
+    {
         let _ = super::audit_failed(e);
         return ItemResult::refused(
             pid,
             "the change was not made because it could not be recorded",
         );
     }
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = tx.commit().await {
         return ItemResult::refused(pid, e.to_string());
     }
     if let Change::Set(who) = assignee {
-        cap_models::notify(
-            &ctx.db,
+        cap_models::notify_on(
+            &mut crate::db::pool(ctx),
             who,
             "task",
             pid,
@@ -323,66 +335,69 @@ async fn copy_one(
     let now = chrono::Utc::now();
     let new_pid = Uuid::new_v4();
     let assignee = keep_assignee.then(|| src.assignee_ref.clone()).flatten();
-    let values = custom_field_values::Entity::find()
-        .filter(custom_field_values::Column::SubjectKind.eq("task"))
-        .filter(custom_field_values::Column::SubjectPid.eq(pid))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| e.to_string())?;
-    let prepared: Vec<(String, Option<Value>)> = values
-        .into_iter()
-        .map(|v| (v.field_key, Some(v.value)))
-        .collect();
-    let txn = ctx.db.begin().await.map_err(|e| e.to_string())?;
-    let row = tasks::ActiveModel {
-        pid: ActiveValue::set(new_pid),
-        plan_pid: ActiveValue::set(target),
-        sprint_pid: ActiveValue::set(None),
-        title: ActiveValue::set(src.title.clone()),
-        description: ActiveValue::set(src.description.clone()),
-        status: ActiveValue::set(initial.clone()),
-        assignee_ref: ActiveValue::set(assignee.clone()),
-        points: ActiveValue::set(src.points),
-        due_date: ActiveValue::set(src.due_date),
-        component_pid: ActiveValue::set(None),
-        parent_task_pid: ActiveValue::set(None),
-        status_changed_at: ActiveValue::set(now.into()),
-        flow_type: ActiveValue::set(src.flow_type.clone()),
-        done_at: ActiveValue::set(crate::workflow::is_done(workflow, &initial).then(|| now.into())),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| e.to_string())?;
-    super::custom_fields::store(&txn, "task", new_pid, &prepared)
-        .await
-        .map_err(|e| e.to_string())?;
-    crate::tba::transition_row(
-        new_pid,
-        target,
-        None,
-        initial,
-        now,
-        caller.actor().map(ToString::to_string),
-        assignee,
+    let prepared: Vec<(String, Option<Value>)> = sqlx::query_as::<_, (String, Value)>(
+        "SELECT field_key, value FROM custom_field_values WHERE subject_kind = 'task' AND subject_pid = $1",
     )
-    .insert(&txn)
+    .bind(pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await
+    .map_err(|e| e.to_string())?
+    .into_iter()
+    .map(|(key, value)| (key, Some(value)))
+    .collect();
+    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let mut tx = crate::db::begin(ctx).await.map_err(|e| e.to_string())?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO tasks
+             (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points, due_date,
+              component_pid, parent_task_pid, status_changed_at, flow_type, done_at, deleted_at)
+         VALUES ($1, $2, NULL, $3, $4, $5, $6, $7, $8, NULL, NULL, $9, $10, $11, NULL)
+         RETURNING pid",
+    )
+    .bind(new_pid)
+    .bind(target)
+    .bind(&src.title)
+    .bind(src.description.as_deref())
+    .bind(&initial)
+    .bind(assignee.as_deref())
+    .bind(src.points)
+    .bind(src.due_date)
+    .bind(at)
+    .bind(src.flow_type.as_deref())
+    .bind(crate::workflow::is_done(workflow, &initial).then_some(at))
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| e.to_string())?;
-    task_relations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        from_task_pid: ActiveValue::set(row.pid),
-        to_task_pid: ActiveValue::set(pid),
-        kind: ActiveValue::set("copied_from".to_string()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    super::custom_fields::store_on(&mut tx, "task", new_pid, &prepared)
+        .await
+        .map_err(|e| e.to_string())?;
+    crate::tba::insert_transition_on(
+        &mut tx,
+        crate::tba::NewTransition {
+            task_pid: new_pid,
+            plan_pid: target,
+            from_status: None,
+            to_status: &initial,
+            at: now,
+            actor_ref: caller.actor(),
+            assignee_ref: assignee.as_deref(),
+            blocked_reason: None,
+        },
+    )
     .await
     .map_err(|e| e.to_string())?;
-    AuditModel::record(
-        &txn,
+    sqlx::query(
+        "INSERT INTO task_relations (pid, from_task_pid, to_task_pid, kind, deleted_at)
+         VALUES ($1, $2, $3, 'copied_from', NULL)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(row_pid)
+    .bind(pid)
+    .execute(tx.conn())
+    .await
+    .map_err(|e| e.to_string())?;
+    AuditModel::record_on(
+        tx.conn(),
         new_pid,
         "task_copied",
         caller.actor(),
@@ -390,7 +405,7 @@ async fn copy_one(
     )
     .await
     .map_err(|e| e.to_string())?;
-    txn.commit().await.map_err(|e| e.to_string())?;
+    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(new_pid)
 }
 
@@ -439,12 +454,13 @@ async fn move_one(
                 .to_string(),
         );
     }
-    let children = tasks::Entity::find()
-        .filter(tasks::Column::ParentTaskPid.eq(pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .count(&ctx.db)
-        .await
-        .map_err(|e| e.to_string())?;
+    let children: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM tasks WHERE parent_task_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(pid)
+    .fetch_one(crate::db::pool(ctx))
+    .await
+    .map_err(|e| e.to_string())?;
     if children > 0 {
         return Err(format!(
             "it has {children} subtask(s); move or detach them first"
@@ -457,36 +473,56 @@ async fn move_one(
         task.plan_pid,
     );
     let now = chrono::Utc::now();
-    let txn = ctx.db.begin().await.map_err(|e| e.to_string())?;
-    let mut active: tasks::ActiveModel = task.into();
-    active.plan_pid = ActiveValue::set(target);
-    // Plan-specific links do not survive the move.
-    active.component_pid = ActiveValue::set(None);
-    active.sprint_pid = ActiveValue::set(None);
-    active.parent_task_pid = ActiveValue::set(None);
-    if mapped {
-        active.status = ActiveValue::set(status.clone());
-        active.status_changed_at = ActiveValue::set(now.into());
-        active.done_at =
-            ActiveValue::set(crate::workflow::is_done(workflow, &status).then(|| now.into()));
-    }
-    active.update(&txn).await.map_err(|e| e.to_string())?;
-    if mapped {
-        crate::tba::transition_row(
-            pid,
-            target,
-            Some(from_status.clone()),
-            status.clone(),
-            now,
-            caller.actor().map(ToString::to_string),
-            assignee,
+    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let mut tx = crate::db::begin(ctx).await.map_err(|e| e.to_string())?;
+    // Plan-specific links do not survive the move; a status the target lacks is mapped and stamped.
+    let moved = if mapped {
+        sqlx::query_scalar::<_, i32>(
+            "UPDATE tasks
+             SET plan_pid = $1, component_pid = NULL, sprint_pid = NULL, parent_task_pid = NULL,
+                 status = $2, status_changed_at = $3, done_at = $4
+             WHERE id = $5
+             RETURNING id",
         )
-        .insert(&txn)
+        .bind(target)
+        .bind(&status)
+        .bind(at)
+        .bind(crate::workflow::is_done(workflow, &status).then_some(at))
+        .bind(task.id)
+    } else {
+        sqlx::query_scalar::<_, i32>(
+            "UPDATE tasks
+             SET plan_pid = $1, component_pid = NULL, sprint_pid = NULL, parent_task_pid = NULL
+             WHERE id = $2
+             RETURNING id",
+        )
+        .bind(target)
+        .bind(task.id)
+    };
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    moved
+        .fetch_one(tx.conn())
+        .await
+        .map_err(|e| e.to_string())?;
+    if mapped {
+        crate::tba::insert_transition_on(
+            &mut tx,
+            crate::tba::NewTransition {
+                task_pid: pid,
+                plan_pid: target,
+                from_status: Some(&from_status),
+                to_status: &status,
+                at: now,
+                actor_ref: caller.actor(),
+                assignee_ref: assignee.as_deref(),
+                blocked_reason: None,
+            },
+        )
         .await
         .map_err(|e| e.to_string())?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         pid,
         "task_moved_plan",
         caller.actor(),
@@ -494,7 +530,7 @@ async fn move_one(
     )
     .await
     .map_err(|e| e.to_string())?;
-    txn.commit().await.map_err(|e| e.to_string())?;
+    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(mapped.then(|| {
         format!("status `{from_status}` is not in the target workflow; mapped to `{status}`")
     }))

@@ -15,15 +15,18 @@ use crate::prelude::*;
 use axum::http::HeaderMap;
 use uuid::Uuid;
 
-/// Load all live rows of one entity (soft-deleted excluded).
+/// Load all live rows of one table (soft-deleted excluded), unordered, that the scope lets the caller see. The table
+/// is the entity module's name, a literal in the code.
 macro_rules! live {
-    ($module:ident, $db:expr, $scope:expr) => {
+    ($module:ident, $ctx:expr, $scope:expr) => {
         $scope.keep(
-            $module::Entity::find()
-                .filter($module::Column::DeletedAt.is_null())
-                .all($db)
-                .await
-                .map_err(|e| Error::Model(ModelError::from(e)))?,
+            sqlx::query_as::<_, $module::Model>(concat!(
+                "SELECT * FROM ",
+                stringify!($module),
+                " WHERE deleted_at IS NULL"
+            ))
+            .fetch_all(crate::db::pool($ctx))
+            .await?,
         )
     };
 }

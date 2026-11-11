@@ -14,12 +14,10 @@
 //! cannot be evaluated for it, and widening it would leak. Nothing a feed
 //! returns is anything the token's owner is not already assigned to.
 
-use super::db_err;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::IntoResponse;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -27,7 +25,7 @@ use crate::auth::AuthUser;
 use crate::feeds::{self as rules, Entry, Event};
 use crate::link_token;
 use crate::models::_entities::{
-    feed_tokens, milestones, notifications, planned_slots, plans, sprints, tasks,
+    feed_tokens, milestones, notifications, planned_slots, sprints, tasks,
 };
 
 /// 401 returned for any bad feed token (unknown, revoked or expired) with one message, so callers cannot tell which case applied.
@@ -60,21 +58,19 @@ async fn issue(
     let token = rules::new_token();
     // One live token per person: issuing a new one revokes the earlier ones, so a leaked old URL
     // stops working on rotation.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    revoke_live(&txn, &claims.sub).await?;
-    feed_tokens::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        sub: ActiveValue::set(claims.sub.clone()),
-        token_hash: ActiveValue::set(rules::hash_token(&token)),
-        label: ActiveValue::set(label),
-        revoked_at: ActiveValue::set(None),
-        last_used_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    txn.commit().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    revoke_live(&mut tx, &claims.sub).await?;
+    sqlx::query(
+        "INSERT INTO feed_tokens (pid, sub, token_hash, label, revoked_at, last_used_at)
+         VALUES ($1, $2, $3, $4, NULL, NULL)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&claims.sub)
+    .bind(rules::hash_token(&token))
+    .bind(label)
+    .execute(tx.conn())
+    .await?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "token": token,
         "calendar_url": format!("/api/feeds/calendar.ics?token={token}"),
@@ -84,24 +80,19 @@ async fn issue(
 }
 
 /// Revoke every live token of `sub`.
-async fn revoke_live(db: &impl ConnectionTrait, sub: &str) -> Result<()> {
-    feed_tokens::Entity::update_many()
-        .col_expr(
-            feed_tokens::Column::RevokedAt,
-            sea_orm::sea_query::Expr::value(chrono::Utc::now()),
-        )
-        .filter(feed_tokens::Column::Sub.eq(sub))
-        .filter(feed_tokens::Column::RevokedAt.is_null())
-        .exec(db)
-        .await
-        .map_err(db_err)?;
+async fn revoke_live(db: &mut impl crate::db::Session, sub: &str) -> Result<()> {
+    sqlx::query("UPDATE feed_tokens SET revoked_at = $1 WHERE sub = $2 AND revoked_at IS NULL")
+        .bind(chrono::Utc::now())
+        .bind(sub)
+        .execute(db.ex())
+        .await?;
     Ok(())
 }
 
 /// `DELETE /api/me/feed-token` — revoke **all** of the caller's tokens.
 #[debug_handler]
 async fn revoke(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Result<Response> {
-    revoke_live(&ctx.db, &claims.sub).await?;
+    revoke_live(&mut crate::db::pool(&ctx), &claims.sub).await?;
     format::empty_json()
 }
 
@@ -117,13 +108,13 @@ async fn owner_of(ctx: &AppContext, token: &str) -> Result<String> {
     if !rules::token_shaped(token) {
         return Err(unauthorized());
     }
-    let row = feed_tokens::Entity::find()
-        .filter(feed_tokens::Column::TokenHash.eq(rules::hash_token(token)))
-        .filter(feed_tokens::Column::RevokedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or_else(unauthorized)?;
+    let row: feed_tokens::Model = sqlx::query_as(
+        "SELECT * FROM feed_tokens WHERE token_hash = $1 AND revoked_at IS NULL LIMIT 1",
+    )
+    .bind(rules::hash_token(token))
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or_else(unauthorized)?;
     let link = link_token::Link {
         issued_at: row.created_at.with_timezone(&chrono::Utc),
         lifetime_days: link_token::FEED_TOKEN_LIFETIME_DAYS,
@@ -133,11 +124,13 @@ async fn owner_of(ctx: &AppContext, token: &str) -> Result<String> {
     };
     link_token::check(&link, chrono::Utc::now()).map_err(|_| unauthorized())?;
     // Best-effort bookkeeping; never fails the fetch.
-    let sub = row.sub.clone();
-    let mut active: feed_tokens::ActiveModel = row.into();
-    active.last_used_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    active.update(&ctx.db).await.ok();
-    Ok(sub)
+    sqlx::query("UPDATE feed_tokens SET last_used_at = $1 WHERE id = $2")
+        .bind(chrono::Utc::now())
+        .bind(row.id)
+        .execute(crate::db::pool(ctx))
+        .await
+        .ok();
+    Ok(row.sub)
 }
 
 /// The person and worker references a subject id can appear as in assignments; empty when the subject is not a UUID, which yields an empty feed rather than someone else's tasks.
@@ -181,15 +174,15 @@ async fn calendar(
     let mine = if refs.is_empty() {
         Vec::new()
     } else {
-        tasks::Entity::find()
-            .filter(tasks::Column::AssigneeRef.is_in(refs))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::DoneAt.is_null())
-            .order_by_asc(tasks::Column::Id)
-            .limit(2_000)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        sqlx::query_as::<_, tasks::Model>(
+            "SELECT * FROM tasks
+             WHERE assignee_ref = ANY($1) AND deleted_at IS NULL AND done_at IS NULL
+             ORDER BY id
+             LIMIT 2000",
+        )
+        .bind(refs)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
     };
     let mut plan_pids: Vec<Uuid> = mine.iter().map(|t| t.plan_pid).collect();
     plan_pids.sort();
@@ -203,15 +196,14 @@ async fn calendar(
     let plan_names: std::collections::HashMap<Uuid, String> = if plan_pids.is_empty() {
         std::collections::HashMap::new()
     } else {
-        plans::Entity::find()
-            .filter(plans::Column::Pid.is_in(plan_pids.clone()))
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|p| (p.pid, p.name))
-            .collect()
+        sqlx::query_as::<_, (Uuid, String)>(
+            "SELECT pid, name FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL",
+        )
+        .bind(&plan_pids)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
+        .into_iter()
+        .collect()
     };
     let live: Vec<Uuid> = plan_names.keys().copied().collect();
     let mut events: Vec<Event> = Vec::new();
@@ -228,15 +220,15 @@ async fn calendar(
         });
     }
     if !live.is_empty() {
-        for m in milestones::Entity::find()
-            .filter(milestones::Column::PlanPid.is_in(live.clone()))
-            .filter(milestones::Column::DeletedAt.is_null())
-            .filter(milestones::Column::Done.eq(false))
-            .order_by_asc(milestones::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-        {
+        let found: Vec<milestones::Model> = sqlx::query_as(
+            "SELECT * FROM milestones
+             WHERE plan_pid = ANY($1) AND deleted_at IS NULL AND done = false
+             ORDER BY id",
+        )
+        .bind(&live)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
+        for m in found {
             events.push(Event {
                 uid: format!("milestone-{}@ppm", m.pid),
                 date: m.due,
@@ -247,14 +239,13 @@ async fn calendar(
                 span: None,
             });
         }
-        for s in sprints::Entity::find()
-            .filter(sprints::Column::PlanPid.is_in(live))
-            .filter(sprints::Column::DeletedAt.is_null())
-            .order_by_asc(sprints::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-        {
+        let found: Vec<sprints::Model> = sqlx::query_as(
+            "SELECT * FROM sprints WHERE plan_pid = ANY($1) AND deleted_at IS NULL ORDER BY id",
+        )
+        .bind(&live)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
+        for s in found {
             events.push(Event {
                 uid: format!("sprint-start-{}@ppm", s.pid),
                 date: s.starts_on,
@@ -274,22 +265,23 @@ async fn calendar(
     // PL-4: the owner's own planned slots, as timed events (UTC). Slots on a
     // task that is gone are skipped; recent and future ones only.
     let cutoff = chrono::Utc::now() - chrono::Duration::days(7);
-    for s in planned_slots::Entity::find()
-        .filter(planned_slots::Column::Sub.eq(sub.as_str()))
-        .filter(planned_slots::Column::DeletedAt.is_null())
-        .filter(planned_slots::Column::EndsAt.gt(cutoff))
-        .order_by_asc(planned_slots::Column::StartsAt)
-        .limit(500)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
-        let Some(t) = tasks::Entity::find()
-            .filter(tasks::Column::Pid.eq(s.task_pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+    let slots: Vec<planned_slots::Model> = sqlx::query_as(
+        "SELECT * FROM planned_slots
+         WHERE sub = $1 AND deleted_at IS NULL AND ends_at > $2
+         ORDER BY starts_at
+         LIMIT 500",
+    )
+    .bind(sub.as_str())
+    .bind(cutoff)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    for s in slots {
+        let Some(title) = sqlx::query_scalar::<_, String>(
+            "SELECT title FROM tasks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(s.task_pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
         else {
             continue;
         };
@@ -297,7 +289,7 @@ async fn calendar(
         events.push(Event {
             uid: format!("slot-{}@ppm", s.pid),
             date: a.date_naive(),
-            summary: format!("Focus: {}", t.title),
+            summary: format!("Focus: {title}"),
             description: None,
             span: Some((a, b)),
         });
@@ -328,15 +320,16 @@ async fn atom(
     let rows = if refs.is_empty() {
         Vec::new()
     } else {
-        notifications::Entity::find()
-            .filter(notifications::Column::RecipientRef.is_in(refs))
-            .filter(notifications::Column::DeletedAt.is_null())
-            .filter(scope.notes_visible(&ctx).await?)
-            .order_by_desc(notifications::Column::Id)
-            .limit(100)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+            "SELECT * FROM notifications WHERE recipient_ref = ANY(",
+        );
+        query.push_bind(refs).push(") AND deleted_at IS NULL");
+        scope.notes_visible(&ctx, &mut query).await?;
+        query.push(" ORDER BY id DESC LIMIT 100");
+        query
+            .build_query_as::<notifications::Model>()
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
     };
     let entries: Vec<Entry> = rows
         .iter()

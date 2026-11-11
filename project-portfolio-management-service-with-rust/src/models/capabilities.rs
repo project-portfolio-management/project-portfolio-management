@@ -38,29 +38,54 @@ macro_rules! find_active {
     };
 }
 
-find_active!(find_review, reviews);
 find_active!(find_automation, automations);
 find_active!(find_scheduled_action, scheduled_actions);
-find_active!(find_notification, notifications);
 
-/// Every live review invitation on one subject, oldest first.
+/// Find the live review by public id, on the pool.
+///
+/// # Errors
+///
+/// [`Error::NotFound`] when absent or soft-deleted.
+pub async fn find_review(ctx: &AppContext, pid: Uuid) -> Result<reviews::Model> {
+    sqlx::query_as("SELECT * FROM reviews WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .ok_or(Error::NotFound)
+}
+
+/// Find the live notification by public id, on the pool.
+///
+/// # Errors
+///
+/// [`Error::NotFound`] when absent or soft-deleted.
+pub async fn find_notification(ctx: &AppContext, pid: Uuid) -> Result<notifications::Model> {
+    sqlx::query_as("SELECT * FROM notifications WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .ok_or(Error::NotFound)
+}
+
+/// Every live review invitation on one subject, oldest first, on the pool.
 ///
 /// # Errors
 ///
 /// Propagates database errors.
-pub async fn reviews_for_subject<C: ConnectionTrait>(
-    db: &C,
+pub async fn reviews_for_subject(
+    ctx: &AppContext,
     subject_kind: &str,
     subject_pid: Uuid,
 ) -> Result<Vec<reviews::Model>> {
-    reviews::Entity::find()
-        .filter(reviews::Column::SubjectKind.eq(subject_kind))
-        .filter(reviews::Column::SubjectPid.eq(subject_pid))
-        .filter(reviews::Column::DeletedAt.is_null())
-        .order_by_asc(reviews::Column::Id)
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+    Ok(sqlx::query_as(
+        "SELECT * FROM reviews
+         WHERE subject_kind = $1 AND subject_pid = $2 AND deleted_at IS NULL
+         ORDER BY id",
+    )
+    .bind(subject_kind)
+    .bind(subject_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Every enabled automation whose trigger kind matches, cheapest-first
@@ -83,6 +108,9 @@ pub async fn enabled_automations<C: ConnectionTrait>(
         .map_err(|e| Error::Model(ModelError::from(e)))
 }
 
+/// The `SeaORM` form of [`notify_on`], for the callers not yet on `sqlx`: `break_glass` (inside its own `SeaORM`
+/// transaction, so the grant and its notice stand or fall together), `automation` and the exception-breach task.
+///
 /// Write one in-app notification, unless the recipient has switched that
 /// kind off (PL-5). In-app only — this service has no email or push
 /// transport, and does not pretend to.

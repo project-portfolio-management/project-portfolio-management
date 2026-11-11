@@ -1,6 +1,6 @@
 //! Notification preferences and the caller's inbox (PL-5). Pure rules in
 //! [`crate::notification_prefs`]; the suppression itself happens where a
-//! notification is written ([`crate::models::capabilities::notify`]), so
+//! notification is written ([`crate::models::capabilities::notify_on`]), so
 //! **no** call site can forget to honour it.
 //!
 //! Everything here is the caller's own: identity is the token `sub`, and
@@ -9,11 +9,10 @@
 //! preferences could never take effect — that is refused up front rather
 //! than silently stored.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::BTreeSet;
 
 use crate::prelude::*;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -72,33 +71,41 @@ async fn put_pref(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let existing = notification_prefs::Entity::find()
-        .filter(notification_prefs::Column::Sub.eq(sub.as_str()))
-        .filter(notification_prefs::Column::Kind.eq(payload.kind.as_str()))
-        .filter(notification_prefs::Column::Channel.eq(channel.as_str()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let row = match existing {
-        Some(row) => {
-            let mut active: notification_prefs::ActiveModel = row.into();
-            active.enabled = ActiveValue::set(payload.enabled);
-            active.digest = ActiveValue::set(digest);
-            active.update(&ctx.db).await.map_err(db_err)?
-        }
-        None => notification_prefs::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            sub: ActiveValue::set(sub),
-            kind: ActiveValue::set(payload.kind.clone()),
-            channel: ActiveValue::set(channel),
-            enabled: ActiveValue::set(payload.enabled),
-            digest: ActiveValue::set(digest),
-            ..Default::default()
-        }
-        .insert(&ctx.db)
-        .await
-        .map_err(db_err)?,
-    };
+    let existing: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM notification_prefs WHERE sub = $1 AND kind = $2 AND channel = $3 LIMIT 1",
+    )
+    .bind(sub.as_str())
+    .bind(payload.kind.as_str())
+    .bind(channel.as_str())
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
+    let row: notification_prefs::Model =
+        match existing {
+            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            Some(id) => sqlx::query_as(
+                "UPDATE notification_prefs SET enabled = $1, digest = $2 WHERE id = $3 RETURNING *",
+            )
+            .bind(payload.enabled)
+            .bind(digest)
+            .bind(id)
+            .fetch_one(crate::db::pool(&ctx))
+            .await?,
+            None => {
+                sqlx::query_as(
+                    "INSERT INTO notification_prefs (pid, sub, kind, channel, enabled, digest)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 RETURNING *",
+                )
+                .bind(Uuid::new_v4())
+                .bind(sub)
+                .bind(&payload.kind)
+                .bind(channel)
+                .bind(payload.enabled)
+                .bind(digest)
+                .fetch_one(crate::db::pool(&ctx))
+                .await?
+            }
+        };
     format::json(row)
 }
 
@@ -107,13 +114,11 @@ async fn put_pref(
 #[debug_handler]
 async fn list_prefs(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Result<Response> {
     let sub = addressable(&claims.sub)?.to_string();
-    let rows = notification_prefs::Entity::find()
-        .filter(notification_prefs::Column::Sub.eq(sub))
-        .order_by_asc(notification_prefs::Column::Kind)
-        .order_by_asc(notification_prefs::Column::Channel)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<notification_prefs::Model> =
+        sqlx::query_as("SELECT * FROM notification_prefs WHERE sub = $1 ORDER BY kind, channel")
+            .bind(sub)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(serde_json::json!({
         "prefs": rows,
         "known_kinds": rules::KINDS,
@@ -148,13 +153,12 @@ async fn reset_pref(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    notification_prefs::Entity::delete_many()
-        .filter(notification_prefs::Column::Sub.eq(sub))
-        .filter(notification_prefs::Column::Kind.eq(params.kind))
-        .filter(notification_prefs::Column::Channel.eq(channel))
-        .exec(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    sqlx::query("DELETE FROM notification_prefs WHERE sub = $1 AND kind = $2 AND channel = $3")
+        .bind(sub)
+        .bind(params.kind)
+        .bind(channel)
+        .execute(crate::db::pool(&ctx))
+        .await?;
     format::empty_json()
 }
 
@@ -198,7 +202,7 @@ pub(crate) struct InboxParams {
 }
 
 /// Rows read per request.
-const INBOX_CAP: u64 = 500;
+const INBOX_CAP: i64 = 500;
 
 /// `GET /api/me/inbox` — the caller's notifications with their digest
 /// choices applied. A kind set to `daily` collapses into one line per
@@ -215,29 +219,28 @@ async fn inbox(
     let refs = vec![format!("person:{user}"), format!("worker:{user}")];
     let caller = crate::auth::MaybeAuthUser(Some(claims.clone()));
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let mut query = notifications::Entity::find()
-        .filter(notifications::Column::RecipientRef.is_in(refs))
-        .filter(notifications::Column::DeletedAt.is_null())
-        .filter(scope.notes_visible(&ctx).await?);
+    let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM notifications WHERE recipient_ref = ANY(",
+    );
+    query.push_bind(refs).push(") AND deleted_at IS NULL");
+    scope.notes_visible(&ctx, &mut query).await?;
     if params.unread.unwrap_or(false) {
-        query = query.filter(notifications::Column::ReadAt.is_null());
+        query.push(" AND read_at IS NULL");
     }
-    let rows = query
-        .order_by_desc(notifications::Column::Id)
-        .limit(INBOX_CAP)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let daily: BTreeSet<String> = notification_prefs::Entity::find()
-        .filter(notification_prefs::Column::Sub.eq(user.to_string()))
-        .filter(notification_prefs::Column::Channel.eq(rules::DEFAULT_CHANNEL))
-        .filter(notification_prefs::Column::Digest.eq("daily"))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.kind)
-        .collect();
+    query.push(" ORDER BY id DESC LIMIT ").push_bind(INBOX_CAP);
+    let rows: Vec<notifications::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
+    let daily: BTreeSet<String> = sqlx::query_scalar::<_, String>(
+        "SELECT kind FROM notification_prefs WHERE sub = $1 AND channel = $2 AND digest = 'daily'",
+    )
+    .bind(user.to_string())
+    .bind(rules::DEFAULT_CHANNEL)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
+    .collect();
     let unread_count = rows.iter().filter(|n| n.read_at.is_none()).count();
     let entries = rows
         .into_iter()

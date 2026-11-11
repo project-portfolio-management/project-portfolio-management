@@ -2181,6 +2181,60 @@ came from grep.
   **Next batch, suggested:** the inbox, `collaboration` (68), `feeds` (48), `notification_prefs` (32) and
   `models/capabilities` (67), about 215 lines, after which `plan_access::is_none_of` and `HiddenScope::notes_visible`
   can become sqlx.
+  **Progress 2026-11-11, batch 11 (not ticked).** The inbox moved: `collaboration` (68 lines naming SeaORM, now none),
+  `feeds` (48, none) and `notification_prefs` (32, none), with what they reach SeaORM through: `models/capabilities` (67,
+  now 61) and `plan_access` (5, now 2). 157 lines gone, leaving 66 files and 1,921 lines by batch 6's measure (64 by
+  name). `HiddenScope::notes_visible`, whose only callers were these three files, is now sqlx: it pushes `AND
+  (subject_pid <> ALL(…) OR kind = ANY(…))` onto a `QueryBuilder` over `notifications` (nothing when nothing is
+  hidden), the owned pids still bound as one array. `plan_access::is_none_of` keeps its SeaORM form for `automation`,
+  its last caller, and gains a sqlx form, `push_none_of`. `models/capabilities` moved `find_review`,
+  `find_notification` and `reviews_for_subject`, which now take the context and use the pool, so `prioritization`
+  changed at its one call (`&ctx.db` to `&ctx`). The SeaORM `notify` and `sinks::enqueue` stay: `break_glass` calls
+  `notify` inside its own SeaORM transaction (the grant and its notice stand or fall together, so it cannot move to the
+  pool without moving `break_glass`), and `automation` (four calls) and the exception-breach task call it on the pool;
+  so do the finders and writers only `automation` uses (`find_automation`, `find_scheduled_action`,
+  `enabled_automations`, `record_run`, `schedule`, `due_actions`) and the five `ActiveModelBehavior` impls. The moved
+  files' notifications go through `notify_on` on the pool, after commit and best effort, where `notify` ran before.
+  Every handler here already wrote its rows and audit row in one transaction (a review's invitation, response, verdict
+  and withdrawal; a task's assignment), as did the feed token's revoke-then-insert, so no write changed transaction;
+  marking a notification read, a preference's upsert and reset, a feed token's revocation and its `last_used_at` stay
+  single statements on the pool with no audit row, as before. Inserts list the columns SeaORM set and updates name the
+  columns SeaORM's did (an update by id that finds no row is still an error). The notification kinds that cannot be
+  switched off (`process_todo`, `process_notice`, `break_glass`, not in `notification_prefs::KINDS`; an open owner
+  decision) are unchanged. A throwaway check (not committed) dumped 609 answers and every row written (audit, reviews,
+  notifications, preferences, feed tokens, sink deliveries, tasks, watchers, outbox) for an administrator, a plan's
+  owner, a member of a private plan and of a private plan promoted from a proposal, a writer who is a member of
+  nothing, and no token: preferences set, updated, refused and reset (both routes); reviews invited (person, worker,
+  organization; internal and external; duplicate; on public, private, promoted, proposal, idea, missing and wrong-kind
+  subjects), answered, refused, submitted, withdrawn, listed under every filter and page, and their consensus; tasks
+  assigned, unassigned and refused; 288 notifications of nine kinds (the addressed ones among them) on visible and
+  hidden subjects, read, unread and deleted, through the inbox (both time zones), the notification list (paged, every
+  recipient), the Atom feed (with and without a matching `If-None-Match`) and the calendar feed (tasks, milestones,
+  sprints and planned slots); notifications marked read; feed tokens issued, rotated, revoked and refused. Then the
+  member lost both private plans (OC-23) and every read and write ran again: the inbox, the list, the Atom feed and
+  the watches leave the plan out the same way. Then `plan_access_settings`, `tasks`, `notification_prefs`,
+  `notifications` and `feed_tokens` were each made unreadable in turn. Before and after: the same, once pids, times,
+  tokens and paging cursors were normalised and the calendar's events (ordered by date, then by a uid made of a random
+  pid) were compared sorted.
+  **Changed, deliberately:** a database failure carries sqlx's error rather than SeaORM's (only on a failure; same
+  status). The subject checks (`subject_exists`, `subject_plan`), the calendar's plan names and slot tasks, the
+  preference upsert's lookup and the inbox's daily kinds read only the columns they use; the lists that SeaORM bound one
+  parameter per value (`IN (…)`: the hidden plans and their proposals, the reviewer's own references, the calendar's
+  and inbox's recipient references and plan pids, the addressed kinds) are bound as one array (`= ANY($1)`); the
+  owned pids of `notes_visible` are bound as a `uuid[]` rather than as a text literal cast to one.
+  **Found, not changed:** two `PUT /api/me/notification-prefs` for the same choice at once can both find no row and
+  both insert, and the second fails the unique index (`notification_prefs_one_per_choice`) with a `500`; the review
+  routes and the task assignment read the row on the pool before their transaction, so a racing change between the
+  read and the update is overwritten (the transition check and the audit's `from` use the stale row); minting and
+  revoking a feed token write no audit row; the review list lets a reviewer see their own invitation on a hidden plan by
+  comparing `reviewer_ref` exactly with a lower-cased `person:`/`worker:` reference and lower-case organization ids,
+  while `owns_inbox` (who may answer) ignores case and `valid_ref` accepts an upper-case UUID, so an invitation stored
+  with one is answerable by its reviewer but missing from their list.
+  **Still on SeaORM through other modules**, on the pool and outside these handlers' transactions:
+  `automation::fire` (a submitted review of a plan fires `review_submitted` rules).
+  **Next batch, suggested:** `automation` (98), after which `is_none_of`, the SeaORM `notify` (but for `break_glass`)
+  and `capabilities`' remaining finders can go; or `break_glass` with `sinks` (62), after which `notify` and
+  `enqueue` can go once `automation` and the exception-breach task call `notify_on`.
 
 ## Correctness carried forward (CF-n)
 

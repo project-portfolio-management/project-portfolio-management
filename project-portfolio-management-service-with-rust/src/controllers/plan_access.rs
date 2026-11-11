@@ -298,7 +298,8 @@ pub(crate) async fn require_readable_if_any(
 }
 
 /// `column` is none of `pids`, as **one** bound value. [`HiddenScope::owned_pids`] can run past the 65,535 bind parameters
-/// Postgres allows, which `is_not_in` would turn into a failed query.
+/// Postgres allows, which `is_not_in` would turn into a failed query. The `SeaORM` form, for `automation`, the last caller
+/// not yet on `sqlx`; [`push_none_of`] is the same condition on a `sqlx` query.
 pub(crate) fn is_none_of(
     column: &str,
     pids: impl IntoIterator<Item = Uuid>,
@@ -312,6 +313,19 @@ pub(crate) fn is_none_of(
         format!("{column} <> ALL($1::text::uuid[])"),
         [format!("{{{list}}}")],
     )
+}
+
+/// [`is_none_of`] on a `sqlx` query: pushes `{column} <> ALL($n::uuid[])` with the pids bound as one array. `column` is a
+/// literal at every call, never input.
+pub(crate) fn push_none_of(
+    q: &mut sqlx::QueryBuilder<sqlx::Postgres>,
+    column: &'static str,
+    pids: impl IntoIterator<Item = Uuid>,
+) {
+    q.push(column)
+        .push(" <> ALL(")
+        .push_bind(pids.into_iter().collect::<Vec<Uuid>>())
+        .push("::uuid[])");
 }
 
 /// Notifications sent to someone by name because they must act or be told, whether or not they can read the plan: an
@@ -453,15 +467,27 @@ impl HiddenScope {
     }
 
     /// The notifications `caller`'s own inbox keeps: not those about something in a hidden plan, whose stored words can quote
-    /// it, unless they were sent to the caller by name ([`ADDRESSED_KINDS`]).
-    pub(crate) async fn notes_visible(&self, ctx: &AppContext) -> Result<sea_orm::Condition> {
-        use crate::models::_entities::notifications::Column;
+    /// it, unless they were sent to the caller by name ([`ADDRESSED_KINDS`]). Pushes `AND (subject_pid <> ALL(…) OR kind =
+    /// ANY(…))` onto a query over `notifications` that already has a `WHERE`, or nothing when nothing is hidden.
+    ///
+    /// # Errors
+    ///
+    /// When the owned pids cannot be read ([`Self::owned_pids`]).
+    pub(crate) async fn notes_visible(
+        &self,
+        ctx: &AppContext,
+        q: &mut sqlx::QueryBuilder<sqlx::Postgres>,
+    ) -> Result<()> {
         if self.is_empty() {
-            return Ok(sea_orm::Condition::all());
+            return Ok(());
         }
-        Ok(sea_orm::Condition::any()
-            .add(is_none_of("subject_pid", self.owned_pids(ctx).await?))
-            .add(Column::Kind.is_in(ADDRESSED_KINDS.iter().copied())))
+        let owned = self.owned_pids(ctx).await?;
+        q.push(" AND (");
+        push_none_of(q, "subject_pid", owned);
+        q.push(" OR kind = ANY(")
+            .push_bind(ADDRESSED_KINDS.to_vec())
+            .push("))");
+        Ok(())
     }
 
     /// Whether [`Self::notes_visible`] leaves this notification out.

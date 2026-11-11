@@ -482,7 +482,7 @@ async fn plan_lifecycle(
         .await
         .map_err(db_err)?;
     let plan_reviews =
-        crate::models::capabilities::reviews_for_subject(&ctx.db, "plan", plan.pid).await?;
+        crate::models::capabilities::reviews_for_subject(&ctx, "plan", plan.pid).await?;
     let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
     let overdue = scheduled_actions::Entity::find()
         .filter(scheduled_actions::Column::SubjectPid.eq(plan.pid))

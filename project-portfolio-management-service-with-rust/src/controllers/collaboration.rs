@@ -21,17 +21,16 @@
 //!
 //! Every mutation writes an `audit_logs` row.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{Condition, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::governance::valid_ref;
 use crate::auth::MaybeAuthUser;
 use crate::collaboration as rules;
-use crate::models::_entities::{ideas, notifications, plans, proposals, reviews, tasks};
+use crate::models::_entities::{notifications, reviews, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 use crate::validation::MAX_TEXT_LEN;
@@ -50,31 +49,17 @@ fn valid_actor_ref(value: &str) -> bool {
 /// Confirm the review subject actually exists and is live, so an
 /// invitation can never point at nothing.
 async fn subject_exists(ctx: &AppContext, subject_kind: &str, subject_pid: Uuid) -> Result<bool> {
-    let found = match subject_kind {
-        "idea" => ideas::Entity::find()
-            .filter(ideas::Column::Pid.eq(subject_pid))
-            .filter(ideas::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some(),
-        "proposal" => proposals::Entity::find()
-            .filter(proposals::Column::Pid.eq(subject_pid))
-            .filter(proposals::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some(),
-        "plan" => plans::Entity::find()
-            .filter(plans::Column::Pid.eq(subject_pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .is_some(),
-        _ => false,
+    let sql = match subject_kind {
+        "idea" => "SELECT 1 FROM ideas WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        "proposal" => "SELECT 1 FROM proposals WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        "plan" => "SELECT 1 FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        _ => return Ok(false),
     };
-    Ok(found)
+    Ok(sqlx::query_scalar::<_, i32>(sql)
+        .bind(subject_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .is_some())
 }
 
 /// The plan a review subject belongs to: a plan itself, or the plan a proposal became. An idea, and a proposal still in the
@@ -82,12 +67,13 @@ async fn subject_exists(ctx: &AppContext, subject_kind: &str, subject_pid: Uuid)
 async fn subject_plan(ctx: &AppContext, kind: &str, pid: Uuid) -> Result<Option<Uuid>> {
     Ok(match kind {
         "plan" => Some(pid),
-        "proposal" => proposals::Entity::find()
-            .filter(proposals::Column::Pid.eq(pid))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .and_then(|p| p.promoted_plan_pid),
+        "proposal" => sqlx::query_scalar::<_, Option<Uuid>>(
+            "SELECT promoted_plan_pid FROM proposals WHERE pid = $1 LIMIT 1",
+        )
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .flatten(),
         _ => None,
     })
 }
@@ -189,7 +175,7 @@ async fn invite_review(
             payload.subject_kind, payload.subject_pid
         )));
     }
-    let live = cap_models::reviews_for_subject(&ctx.db, &payload.subject_kind, payload.subject_pid)
+    let live = cap_models::reviews_for_subject(&ctx, &payload.subject_kind, payload.subject_pid)
         .await?
         .into_iter()
         .any(|r| {
@@ -201,30 +187,26 @@ async fn invite_review(
             "this reviewer already has a live invitation for this subject",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = reviews::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set(payload.subject_kind.clone()),
-        subject_pid: ActiveValue::set(payload.subject_pid),
-        reviewer_ref: ActiveValue::set(payload.reviewer_ref.clone()),
-        reviewer_scope: ActiveValue::set(scope.clone()),
-        expertise: ActiveValue::set(payload.expertise.clone()),
-        status: ActiveValue::set("invited".to_string()),
-        due_on: ActiveValue::set(payload.due_on),
-        score: ActiveValue::set(None),
-        recommendation: ActiveValue::set(None),
-        comment: ActiveValue::set(None),
-        invited_by: ActiveValue::set(caller.actor().map(std::string::ToString::to_string)),
-        responded_at: ActiveValue::set(None),
-        submitted_at: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: reviews::Model = sqlx::query_as(
+        "INSERT INTO reviews
+             (pid, subject_kind, subject_pid, reviewer_ref, reviewer_scope, expertise, status, due_on, score,
+              recommendation, comment, invited_by, responded_at, submitted_at, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'invited', $7, NULL, NULL, NULL, $8, NULL, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&payload.subject_kind)
+    .bind(payload.subject_pid)
+    .bind(&payload.reviewer_ref)
+    .bind(&scope)
+    .bind(payload.expertise.as_deref())
+    .bind(payload.due_on)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "review_invited",
         caller.actor(),
@@ -237,10 +219,10 @@ async fn invite_review(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     // The reviewer learns they have been asked.
-    cap_models::notify(
-        &ctx.db,
+    cap_models::notify_on(
+        &mut crate::db::pool(&ctx),
         &payload.reviewer_ref,
         &payload.subject_kind,
         payload.subject_pid,
@@ -293,31 +275,18 @@ async fn list_reviews(
 ) -> Result<Response> {
     let page = cursor.page(LIST_CAP)?;
     let (limit, offset) = (page.fetch(), page.offset());
-    let mut query = reviews::Entity::find().filter(reviews::Column::DeletedAt.is_null());
+    let mut query =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM reviews WHERE deleted_at IS NULL");
     let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .plan_pids();
     if !hidden.is_empty() {
         // In the query, not after it, so the page and its total stay true.
-        let proposals: Vec<Uuid> = proposals::Entity::find()
-            .filter(proposals::Column::PromotedPlanPid.is_in(hidden.clone()))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|p| p.pid)
-            .collect();
-        let of_hidden = Condition::any()
-            .add(
-                Condition::all()
-                    .add(reviews::Column::SubjectKind.eq("plan"))
-                    .add(reviews::Column::SubjectPid.is_in(hidden)),
-            )
-            .add(
-                Condition::all()
-                    .add(reviews::Column::SubjectKind.eq("proposal"))
-                    .add(reviews::Column::SubjectPid.is_in(proposals)),
-            );
+        let proposals: Vec<Uuid> =
+            sqlx::query_scalar("SELECT pid FROM proposals WHERE promoted_plan_pid = ANY($1)")
+                .bind(&hidden)
+                .fetch_all(crate::db::pool(&ctx))
+                .await?;
         // The same people `owns_inbox` lets answer.
         let mut mine: Vec<String> = caller
             .actor()
@@ -329,31 +298,37 @@ async fn list_reviews(
                 .iter()
                 .map(|o| format!("organization:{o}")),
         );
-        query = query.filter(
-            Condition::any()
-                .add(of_hidden.not())
-                .add(reviews::Column::ReviewerRef.is_in(mine)),
-        );
+        // Not a review of a hidden plan or of a proposal that became one, unless it is the caller's to answer.
+        query
+            .push(" AND (NOT ((subject_kind = 'plan' AND subject_pid = ANY(")
+            .push_bind(hidden)
+            .push(")) OR (subject_kind = 'proposal' AND subject_pid = ANY(")
+            .push_bind(proposals)
+            .push("))) OR reviewer_ref = ANY(")
+            .push_bind(mine)
+            .push("))");
     }
-    if let Some(kind) = params.subject_kind.as_deref() {
-        query = query.filter(reviews::Column::SubjectKind.eq(kind));
+    if let Some(kind) = params.subject_kind {
+        query.push(" AND subject_kind = ").push_bind(kind);
     }
     if let Some(pid) = params.subject_pid {
-        query = query.filter(reviews::Column::SubjectPid.eq(pid));
+        query.push(" AND subject_pid = ").push_bind(pid);
     }
-    if let Some(reviewer) = params.reviewer.as_deref() {
-        query = query.filter(reviews::Column::ReviewerRef.eq(reviewer));
+    if let Some(reviewer) = params.reviewer {
+        query.push(" AND reviewer_ref = ").push_bind(reviewer);
     }
-    if let Some(status) = params.status.as_deref() {
-        query = query.filter(reviews::Column::Status.eq(status));
+    if let Some(status) = params.status {
+        query.push(" AND status = ").push_bind(status);
     }
-    let rows = query
-        .order_by_desc(reviews::Column::Id)
-        .offset(offset)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    query
+        .push(" ORDER BY id DESC LIMIT ")
+        .push_bind(i64::try_from(limit).unwrap_or(i64::MAX))
+        .push(" OFFSET ")
+        .push_bind(i64::try_from(offset).unwrap_or(i64::MAX));
+    let rows: Vec<reviews::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     Ok(page.respond(rows))
 }
 
@@ -382,18 +357,22 @@ async fn respond_review(
             )));
         }
     };
-    let review =
-        cap_models::find_review(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    let review = cap_models::find_review(&ctx, crate::models::governance::parse_pid(&pid)?).await?;
     require_review_visible(&ctx, &caller, &review).await?;
     rules::review_transition(&review.status, target).map_err(|e| unprocessable(&e))?;
     let review_pid = review.pid;
-    let mut active: reviews::ActiveModel = review.into();
-    active.status = ActiveValue::set(target.to_string());
-    active.responded_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let row: reviews::Model = sqlx::query_as(
+        "UPDATE reviews SET status = $1, responded_at = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(target)
+    .bind(chrono::Utc::now())
+    .bind(review.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         review_pid,
         &format!("review_{target}"),
         caller.actor(),
@@ -401,7 +380,7 @@ async fn respond_review(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -449,8 +428,7 @@ async fn submit_review(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let review =
-        cap_models::find_review(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    let review = cap_models::find_review(&ctx, crate::models::governance::parse_pid(&pid)?).await?;
     require_review_visible(&ctx, &caller, &review).await?;
     rules::review_transition(&review.status, "submitted").map_err(|e| unprocessable(&e))?;
     let (review_pid, subject_kind, subject_pid, invited_by) = (
@@ -459,16 +437,21 @@ async fn submit_review(
         review.subject_pid,
         review.invited_by.clone(),
     );
-    let mut active: reviews::ActiveModel = review.into();
-    active.status = ActiveValue::set("submitted".to_string());
-    active.score = ActiveValue::set(payload.score);
-    active.recommendation = ActiveValue::set(Some(payload.recommendation.trim().to_string()));
-    active.comment = ActiveValue::set(payload.comment.clone());
-    active.submitted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: reviews::Model = sqlx::query_as(
+        "UPDATE reviews SET status = 'submitted', score = $1, recommendation = $2, comment = $3, submitted_at = $4
+         WHERE id = $5
+         RETURNING *",
+    )
+    .bind(payload.score)
+    .bind(payload.recommendation.trim())
+    .bind(payload.comment.as_deref())
+    .bind(chrono::Utc::now())
+    .bind(review.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         review_pid,
         "review_submitted",
         caller.actor(),
@@ -479,13 +462,13 @@ async fn submit_review(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     // Tell whoever delegated it that the verdict has landed.
     if let Some(invited_by) = invited_by.as_deref()
         && valid_actor_ref(invited_by)
     {
-        cap_models::notify(
-            &ctx.db,
+        cap_models::notify_on(
+            &mut crate::db::pool(&ctx),
             invited_by,
             &subject_kind,
             subject_pid,
@@ -526,20 +509,28 @@ async fn withdraw_review(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let review =
-        cap_models::find_review(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+    let review = cap_models::find_review(&ctx, crate::models::governance::parse_pid(&pid)?).await?;
     require_review_visible(&ctx, &caller, &review).await?;
     rules::review_transition(&review.status, "withdrawn").map_err(|e| unprocessable(&e))?;
     let review_pid = review.pid;
-    let mut active: reviews::ActiveModel = review.into();
-    active.status = ActiveValue::set("withdrawn".to_string());
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, review_pid, "review_withdrawn", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query_scalar::<_, i32>(
+        "UPDATE reviews SET status = 'withdrawn', deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(chrono::Utc::now())
+    .bind(review.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        review_pid,
+        "review_withdrawn",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -570,7 +561,7 @@ async fn review_consensus(
     let plan = subject_plan(&ctx, &params.subject_kind, params.subject_pid).await?;
     super::plan_access::require_readable_if_any(&ctx, &caller, plan).await?;
     let rows =
-        cap_models::reviews_for_subject(&ctx.db, &params.subject_kind, params.subject_pid).await?;
+        cap_models::reviews_for_subject(&ctx, &params.subject_kind, params.subject_pid).await?;
     format::json(consensus_of(&rows))
 }
 
@@ -628,21 +619,24 @@ async fn assign_task(
     }
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let task_pid = crate::models::governance::parse_pid(&t_pid)?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(task_pid))
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task: tasks::Model = sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(task_pid)
+    .bind(plan.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     let previous = task.assignee_ref.clone();
-    let mut active: tasks::ActiveModel = task.into();
-    active.assignee_ref = ActiveValue::set(assignee.map(std::string::ToString::to_string));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: tasks::Model =
+        sqlx::query_as("UPDATE tasks SET assignee_ref = $1 WHERE id = $2 RETURNING *")
+            .bind(assignee)
+            .bind(task.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(
+        tx.conn(),
         task_pid,
         "task_assigned",
         caller.actor(),
@@ -650,10 +644,10 @@ async fn assign_task(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     if let Some(assignee) = row.assignee_ref.as_deref() {
-        cap_models::notify(
-            &ctx.db,
+        cap_models::notify_on(
+            &mut crate::db::pool(&ctx),
             assignee,
             "task",
             task_pid,
@@ -688,11 +682,16 @@ async fn assignee_workload(
     Query(params): Query<WorkloadParams>,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let mut query = tasks::Entity::find().filter(tasks::Column::DeletedAt.is_null());
+    let mut query =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM tasks WHERE deleted_at IS NULL");
     if let Some(plan) = params.plan {
-        query = query.filter(tasks::Column::PlanPid.eq(plan));
+        query.push(" AND plan_pid = ").push_bind(plan);
     }
-    let rows = scope.keep(query.all(&ctx.db).await.map_err(db_err)?);
+    let rows: Vec<tasks::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
+    let rows = scope.keep(rows);
     let facts: Vec<rules::TaskLoadFact> = rows
         .iter()
         .map(|t| rules::TaskLoadFact {
@@ -765,20 +764,24 @@ async fn list_notifications(
     let page = cursor.page(LIST_CAP)?;
     let (limit, offset) = (page.fetch(), page.offset());
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let mut query = notifications::Entity::find()
-        .filter(notifications::Column::RecipientRef.eq(params.recipient.as_str()))
-        .filter(notifications::Column::DeletedAt.is_null())
-        .filter(scope.notes_visible(&ctx).await?);
+    let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM notifications WHERE recipient_ref = ",
+    );
+    query.push_bind(params.recipient.as_str());
+    query.push(" AND deleted_at IS NULL");
+    scope.notes_visible(&ctx, &mut query).await?;
     if params.unread.unwrap_or(false) {
-        query = query.filter(notifications::Column::ReadAt.is_null());
+        query.push(" AND read_at IS NULL");
     }
-    let rows = query
-        .order_by_desc(notifications::Column::Id)
-        .offset(offset)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    query
+        .push(" ORDER BY id DESC LIMIT ")
+        .push_bind(i64::try_from(limit).unwrap_or(i64::MAX))
+        .push(" OFFSET ")
+        .push_bind(i64::try_from(offset).unwrap_or(i64::MAX));
+    let rows: Vec<notifications::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     Ok(page.respond(rows))
 }
 
@@ -792,7 +795,7 @@ async fn read_notification(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row =
-        cap_models::find_notification(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+        cap_models::find_notification(&ctx, crate::models::governance::parse_pid(&pid)?).await?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     if !owns_inbox(&caller, &row.recipient_ref) || scope.hides_note(&ctx, &row).await? {
         return Err(Error::NotFound);
@@ -800,9 +803,12 @@ async fn read_notification(
     if row.read_at.is_some() {
         return format::json(row);
     }
-    let mut active: notifications::ActiveModel = row.into();
-    active.read_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let row = active.update(&ctx.db).await.map_err(db_err)?;
+    let row: notifications::Model =
+        sqlx::query_as("UPDATE notifications SET read_at = $1 WHERE id = $2 RETURNING *")
+            .bind(chrono::Utc::now())
+            .bind(row.id)
+            .fetch_one(crate::db::pool(&ctx))
+            .await?;
     format::json(row)
 }
 

@@ -378,8 +378,7 @@ async fn put_values(
         caller.actor(),
         Some(serde_json::json!({ "keys": prepared.iter().map(|(k, _)| k).collect::<Vec<_>>() })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     read_values(&ctx, &caller, &p.applies_to, &p.subject_pid).await
 }

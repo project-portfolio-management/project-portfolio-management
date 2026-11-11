@@ -123,8 +123,7 @@ async fn set_hammock(
         caller.actor(),
         Some(serde_json::json!({ "plan_pid": plan.pid })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     format::json(
         serde_json::json!({ "pid": row.pid, "is_hammock": row.is_hammock, "changed": true }),
@@ -187,8 +186,7 @@ async fn add_link(
         caller.actor(),
         Some(serde_json::json!({ "hammock_pid": hammock.pid, "member_pid": member.pid })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }

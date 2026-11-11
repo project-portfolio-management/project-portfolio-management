@@ -2350,6 +2350,27 @@ came from grep.
   **Still on SeaORM through other modules**, for these files: none.
   **Next batch, suggested:** `report_schedules` (65), `email_deliveries` (34) and `attachments` (42), about 140 lines;
   or `plan_templates` (82), the last big caller of the plan core.
+  **Fix 2026-11-11, after batch 13 (not ticked).** `AuditModel::record_on` wrapped sqlx's error as a plain model error
+  (`ModelError::Any`), so where a caller passed it on with `?` or `.map_err(Error::Model)` a database outage answered
+  `500` where `record`'s SeaORM error had answered `503` `unavailable` with `Retry-After: 5` (spec §8.3a, NFR-7), and a
+  broken constraint `500` where it had answered `409`/`422`. Batch 13's note named the outbox transport and the plan
+  export; the same loss had stood since batch 1 at the 22 calls that moved with `.map_err(Error::Model)`:
+  `controlled_documents` (8), `processes` (5), `sandbox` (3), `hammock` (2), `cpm`, `custom_fields`, `discussion`,
+  `handover`, `onboarding` and `task_relations` (1 each). `record_on` now returns the service's `Result` with sqlx's
+  error inside (`Error::Sqlx`), those 22 calls pass it on with `?`, and the six in `streaming` and `plans` (export) are
+  unchanged at the call. `audit_failed` takes anything that displays, so the 188 sqlx calls and the SeaORM calls that refuse with it
+  answer `500` `audit_unavailable`, as before SQ-1; the 27 calls that map the error to `Error::string` and `task_bulk`'s
+  two that keep its text answer `500` as before SQ-1. A unit test (`models::audit_logs`) sends an insert to a pool on a
+  port nothing listens on and checks the `503` and `Retry-After: 5`; it fails on the old wrapping.
+  Checked for the same loss in the other moved helpers: none. Every other sqlx helper (`notify_on`, `record_run_on`,
+  `schedule_on`, `update_data_on`, `soft_delete_on`, `advisory_lock_on`, `store_on`, the plan finders,
+  `merge_records`, `streaming`) returns the service's `Result` through `?`, and `insert_transition_on`, `watchers`'
+  lookup and `processes::set_step` return sqlx's error, which their callers pass on with `?` (`task_bulk` keeps its
+  text, as its SeaORM form did). Compared with the code before batch 1, the only other error wrappers that grew are
+  serde and UUID errors in `models/plans` (not the database). **Found, not changed:** the five local `db_err`s that
+  map a named constraint (`organizations`, `capacity_heatmap`, `deescalation`, `ledger`, `programme_gates`) fall back to
+  `Error::string`, a `500` for an outage too; they did the same with SeaORM's error before SQ-1, so the status is
+  unchanged, and a `503` there is a change for its own commit.
 
 ## Correctness carried forward (CF-n)
 

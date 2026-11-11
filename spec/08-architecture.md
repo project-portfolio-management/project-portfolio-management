@@ -127,7 +127,10 @@ offers TLS (`ci/postgres-tls`: a self-signed certificate made on first start, TL
 
 The service is moving from SeaORM to plain [sqlx](https://docs.rs/sqlx), one controller at a time. The two share one connection
 pool, so both work side by side. A transaction is not shared, so all of one handler's writes stay on one side, including the audit
-row: `AuditModel::record` is for SeaORM and `AuditModel::record_on` for sqlx.
+row: `AuditModel::record` is for SeaORM and `AuditModel::record_on` for sqlx. `record_on` fails with sqlx's own error
+(`axa::Error::Sqlx`), never wrapped, so where a caller passes it on (`?`) a database that cannot serve still answers `503`
+`unavailable` with `Retry-After: 5` (§8.3a) and a broken constraint its `409` or `422`, as `record`'s SeaORM error did; a
+caller that refuses the write with `audit_failed` answers `500` `audit_unavailable` on either side.
 
 `src/db.rs` is the only way to sqlx: `db::pool` and `db::begin`. Both count each statement in `query_count`, where SeaORM's
 statements are counted too, so a guard on how many statements a route runs covers both sides. A census test refuses the raw pool

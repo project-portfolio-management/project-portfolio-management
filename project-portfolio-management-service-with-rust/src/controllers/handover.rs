@@ -328,8 +328,7 @@ async fn commit(
                 "to_person": b.to_person, "what": x.label, "reason": b.reason }),
             ),
         )
-        .await
-        .map_err(Error::Model)?;
+        .await?;
         entries += 1;
     }
     tx.commit().await?;

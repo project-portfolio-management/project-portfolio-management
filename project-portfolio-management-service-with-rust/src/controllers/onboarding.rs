@@ -283,8 +283,7 @@ async fn create_case(
             "subject_ref": case.subject_ref, "effective_date": case.effective_date }),
         ),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     case_view(&ctx, &caller, &case).await
 }

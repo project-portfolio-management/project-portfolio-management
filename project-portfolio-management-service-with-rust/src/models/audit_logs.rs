@@ -79,14 +79,16 @@ impl Model {
     ///
     /// # Errors
     ///
-    /// When the insert fails.
+    /// When the insert fails: the `sqlx` error itself (`Error::Sqlx`), so a database that cannot serve still answers
+    /// `503` `unavailable` with `Retry-After` and a broken constraint its `409` or `422`, as [`Self::record`]'s
+    /// `SeaORM` error did, where the caller passes it on (`?`). Wrapped as a plain model error it would be a `500`.
     pub async fn record_on<'e, E: sqlx::Executor<'e, Database = sqlx::Postgres>>(
         db: E,
         entity_pid: Uuid,
         action: &str,
         actor: Option<&str>,
         snapshot: Option<serde_json::Value>,
-    ) -> ModelResult<Self> {
+    ) -> Result<Self> {
         let (created_at, digests) = stamped(entity_pid, action, actor, snapshot.as_ref());
         sqlx::query_as(
             "INSERT INTO audit_logs
@@ -104,7 +106,7 @@ impl Model {
         .bind(digests.mac)
         .fetch_one(db)
         .await
-        .map_err(ModelError::wrap)
+        .map_err(Error::from)
     }
 
     /// [`Self::record`] for a write that is kept even when its audit row cannot be written (CQ-3).
@@ -173,6 +175,36 @@ impl Model {
 
 #[cfg(test)]
 mod tests {
+    /// A database that cannot serve answers `503` `unavailable` with `Retry-After: 5` (spec §8.3a, NFR-7) through
+    /// `record_on`'s error too, as it did through `record`'s `SeaORM` error: a caller that passes it on with `?` (the
+    /// outbox transport's audit row, the plan export's) must not turn an outage into a `500`. The pool here points at a
+    /// port nothing listens on, so the insert fails the way an unreachable database does. A database that refused the
+    /// statement is still the service's own `500`.
+    #[tokio::test]
+    async fn an_unavailable_database_through_record_on_answers_503_with_retry_after() {
+        use axum::{http::StatusCode, response::IntoResponse};
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(500))
+            .connect_lazy("postgres://nobody:nothing@127.0.0.1:1/none")
+            .expect("a lazy pool");
+        let error = super::Model::record_on(&pool, uuid::Uuid::nil(), "created", None, None)
+            .await
+            .expect_err("nothing answers on port 1");
+        assert!(
+            matches!(error, axa::Error::Sqlx(_)),
+            "the sqlx error itself, not wrapped: {error:?}"
+        );
+        let response = error.into_response();
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(response.headers()["retry-after"], "5");
+        // The same error type, from a statement the database refused, is not an outage.
+        let refused: axa::Error = sqlx::Error::RowNotFound.into();
+        assert_eq!(
+            refused.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+
     /// CQ-3: no audit write throws its error away. A call either passes the error on (`?`,
     /// `map_err`) or goes through `record_or_log`, which logs it and counts it.
     #[test]

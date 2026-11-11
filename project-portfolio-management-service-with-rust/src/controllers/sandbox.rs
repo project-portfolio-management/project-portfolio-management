@@ -462,8 +462,7 @@ pub(crate) async fn commit(
                     )
                 });
                 AuditModel::record_on(tx.conn(), *pid, action, caller.actor(), Some(detail))
-                    .await
-                    .map_err(Error::Model)?;
+                    .await?;
                 audit_entries += 1;
             }
             Change::LinkAdded {
@@ -488,8 +487,7 @@ pub(crate) async fn commit(
                 AuditModel::record_on(tx.conn(), row_pid, "dependency_added", caller.actor(),
                     Some(serde_json::json!({ "via": "sandbox", "reason": reason, "predecessor_pid": predecessor_pid,
                         "successor_pid": successor_pid, "kind": kind, "lag_days": lag_days })))
-                    .await
-                    .map_err(Error::Model)?;
+                    .await?;
                 audit_entries += 1;
             }
             Change::LinkRemoved {
@@ -506,8 +504,7 @@ pub(crate) async fn commit(
                 AuditModel::record_on(tx.conn(), *pid, "dependency_removed", caller.actor(),
                     Some(serde_json::json!({ "via": "sandbox", "reason": reason, "predecessor_pid": predecessor_pid,
                         "successor_pid": successor_pid, "kind": kind, "lag_days": lag_days })))
-                    .await
-                    .map_err(Error::Model)?;
+                    .await?;
                 audit_entries += 1;
             }
         }

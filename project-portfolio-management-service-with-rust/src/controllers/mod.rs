@@ -103,12 +103,9 @@ pub(crate) fn db_err(e: sea_orm::DbErr) -> axa::Error {
 /// A write's audit row could not be written, so the write is refused (NFR-6): the audit row is written in
 /// the same transaction as the change, and the transaction is rolled back when this is returned. Logged at
 /// error level and counted in `audit_write_failed_total`, which an operator should alert on.
+/// Takes any error that displays: `AuditModel::record`'s `SeaORM` model error and `record_on`'s service error alike.
 #[must_use]
-#[expect(
-    clippy::needless_pass_by_value,
-    reason = "passed to `map_err`, which hands it over"
-)]
-pub(crate) fn audit_failed(e: axa::model::ModelError) -> axa::Error {
+pub(crate) fn audit_failed(e: impl std::fmt::Display) -> axa::Error {
     crate::metrics::Metrics::global()
         .audit_write_failed_total
         .inc();

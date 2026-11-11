@@ -211,8 +211,7 @@ async fn create(
         Some(&claims.sub),
         Some(serde_json::json!({ "title": doc.title, "plan_pid": doc.plan_pid })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     AuditModel::record_on(
         tx.conn(),
         v.pid,
@@ -220,8 +219,7 @@ async fn create(
         Some(&claims.sub),
         Some(serde_json::json!({ "document_pid": doc.pid, "version": 1 })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     format::json(doc_view(&ctx, &doc).await?)
 }
@@ -404,8 +402,7 @@ async fn new_version(
         Some(&claims.sub),
         Some(serde_json::json!({ "document_pid": doc.pid, "version": next })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     format::json(version_view(&v, true))
 }
@@ -462,8 +459,7 @@ async fn edit_version(
         q.build_query_as().fetch_one(tx.conn()).await?
     };
     AuditModel::record_on(tx.conn(), row.pid, "document_version_edited", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "chars_before": was, "chars_after": row.body.chars().count() })))
-        .await
-        .map_err(Error::Model)?;
+        .await?;
     tx.commit().await?;
     format::json(version_view(&row, true))
 }
@@ -541,8 +537,7 @@ async fn submit(
     .fetch_one(tx.conn())
     .await?;
     AuditModel::record_on(tx.conn(), row.pid, "document_version_submitted", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "approval_pid": approval.pid })))
-        .await
-        .map_err(Error::Model)?;
+        .await?;
     cap_models::notify_on(
         &mut tx,
         &b.approver_ref,
@@ -602,8 +597,7 @@ pub(crate) async fn on_approval(
     .fetch_one(tx.conn())
     .await?;
     AuditModel::record_on(tx.conn(), row.pid, event, approval.decided_by.as_deref().or(Some(&approval.requested_by)), Some(serde_json::json!({ "document_pid": doc, "version": n, "approval_pid": approval.pid, "comment": approval.decision_comment })))
-        .await
-        .map_err(Error::Model)?;
+        .await?;
     tx.commit().await?;
     Ok(())
 }
@@ -672,8 +666,7 @@ async fn make_effective(
         .fetch_one(tx.conn())
         .await?;
         AuditModel::record_on(tx.conn(), old_pid, "document_version_superseded", Some(&claims.sub), Some(serde_json::json!({ "document_pid": doc.pid, "version": old_n, "superseded_by": v.pid, "on": from })))
-            .await
-            .map_err(Error::Model)?;
+            .await?;
     }
     let row: versions::Model = sqlx::query_as(
         "UPDATE document_versions SET status = $1, effective_from = $2 WHERE id = $3 RETURNING *",
@@ -690,8 +683,7 @@ async fn make_effective(
         Some(&claims.sub),
         Some(serde_json::json!({ "document_pid": doc.pid, "version": n, "effective_from": from })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     format::json(version_view(&row, false))
 }

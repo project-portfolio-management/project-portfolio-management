@@ -387,8 +387,7 @@ async fn edit_comment(
         caller.actor(),
         None,
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     format::json(row)
 }

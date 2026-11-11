@@ -112,8 +112,7 @@ async fn create_process(
         Some(&claims.sub),
         Some(serde_json::json!({ "name": p.name, "steps": b.steps.len() })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     process_view(&ctx, &p).await
 }
@@ -226,8 +225,7 @@ async fn update_process(
         Some(&claims.sub),
         Some(serde_json::json!({ "version": next, "steps": b.steps.len() })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     process_view(&ctx, &row).await
 }
@@ -366,8 +364,7 @@ async fn end_early(
         actor,
         note.map(|n| serde_json::json!({ "note": n })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     finish(tx, ex, status, note).await
 }
 
@@ -455,9 +452,7 @@ async fn run_from(
         return Ok(set_step(tx, ex.id, i32::try_from(i).unwrap_or(i32::MAX)).await?);
     }
     log(tx, ex.pid, None, "execution_completed", actor, None).await?;
-    AuditModel::record_on(tx.conn(), ex.pid, "process_completed", actor, None)
-        .await
-        .map_err(Error::Model)?;
+    AuditModel::record_on(tx.conn(), ex.pid, "process_completed", actor, None).await?;
     let ex = set_step(tx, ex.id, i32::try_from(steps.len()).unwrap_or(i32::MAX)).await?;
     finish(tx, ex, Status::Completed, None).await
 }
@@ -531,8 +526,7 @@ async fn start(
     )
     .await?;
     AuditModel::record_on(tx.conn(), ex.pid, "process_started", Some(&claims.sub), Some(serde_json::json!({ "process_pid": process.pid, "version": process.current_version, "subject_kind": b.subject_kind, "subject_pid": subject.pid })))
-        .await
-        .map_err(Error::Model)?;
+        .await?;
     tx.commit().await?;
     // The steps run in a second transaction: if one cannot start, the execution exists
     // and says it failed, rather than vanishing.

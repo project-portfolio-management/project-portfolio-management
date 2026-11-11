@@ -227,8 +227,7 @@ async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&st
         actor,
         Some(serde_json::json!({ "primary": primary })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     Ok(())
 }

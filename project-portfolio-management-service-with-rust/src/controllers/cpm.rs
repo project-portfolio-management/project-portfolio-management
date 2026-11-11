@@ -852,8 +852,7 @@ async fn set_schedule(
             "reason": b.reason, "hard": hard,
         })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     tx.commit().await?;
     let after = analyse(&load_network(&ctx, plan.pid).await?);
     let (moved, note) = match (&before, &after) {

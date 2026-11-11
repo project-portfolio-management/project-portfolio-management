@@ -9,12 +9,10 @@
 use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::Utc;
-use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
-use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::email::{self, Message, SendError};
 use crate::models::_entities::email_deliveries as rows;
@@ -61,16 +59,16 @@ pub async fn deliver(
     text: &str,
 ) -> Result<Delivered> {
     let recipient = recipient.trim();
-    let existing = rows::Entity::find()
-        .filter(rows::Column::Kind.eq(kind))
-        .filter(rows::Column::SubjectRef.eq(subject_ref))
-        .filter(sea_orm::sea_query::Expr::cust_with_values(
-            "lower(recipient) = lower($1)",
-            [recipient.to_string()],
-        ))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing: Option<rows::Model> = sqlx::query_as(
+        "SELECT * FROM email_deliveries
+         WHERE kind = $1 AND subject_ref = $2 AND lower(recipient) = lower($3)
+         LIMIT 1",
+    )
+    .bind(kind)
+    .bind(subject_ref)
+    .bind(recipient)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     if existing.as_ref().is_some_and(|e| e.status == "sent") {
         return Ok(Delivered::Sent);
     }
@@ -103,36 +101,51 @@ pub async fn deliver(
     let error = result.as_ref().err().map(|e| match e {
         SendError::Transient(m) | SendError::Permanent(m) => m.clone(),
     });
+    let next_attempt_at = after
+        .next
+        .map(chrono::DateTime::<chrono::FixedOffset>::from);
+    let sent_at =
+        (after.status == "sent").then(|| chrono::DateTime::<chrono::FixedOffset>::from(now));
     match existing {
         Some(e) => {
-            let mut a: rows::ActiveModel = e.into();
-            a.status = ActiveValue::set(after.status.to_string());
-            a.attempts = ActiveValue::set(attempts);
-            a.last_error = ActiveValue::set(error.clone());
-            a.sender = ActiveValue::set(Some(sender.name().to_string()));
-            a.next_attempt_at = ActiveValue::set(after.next.map(Into::into));
-            a.sent_at = ActiveValue::set((after.status == "sent").then(|| now.into()));
-            a.update(&ctx.db).await.map_err(db_err)?;
+            // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+            sqlx::query_scalar::<_, i64>(
+                "UPDATE email_deliveries
+                 SET status = $1, attempts = $2, last_error = $3, sender = $4, next_attempt_at = $5, sent_at = $6
+                 WHERE id = $7
+                 RETURNING id",
+            )
+            .bind(after.status)
+            .bind(attempts)
+            .bind(&error)
+            .bind(sender.name())
+            .bind(next_attempt_at)
+            .bind(sent_at)
+            .bind(e.id)
+            .fetch_one(crate::db::pool(ctx))
+            .await?;
         }
         None => {
-            rows::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                kind: ActiveValue::set(kind.to_string()),
-                subject_ref: ActiveValue::set(subject_ref),
-                recipient: ActiveValue::set(recipient.to_string()),
-                subject: ActiveValue::set(subject.replace(['\r', '\n'], " ")),
-                body_text: ActiveValue::set(text.to_string()),
-                status: ActiveValue::set(after.status.to_string()),
-                attempts: ActiveValue::set(attempts),
-                last_error: ActiveValue::set(error.clone()),
-                sender: ActiveValue::set(Some(sender.name().to_string())),
-                next_attempt_at: ActiveValue::set(after.next.map(Into::into)),
-                sent_at: ActiveValue::set((after.status == "sent").then(|| now.into())),
-                ..Default::default()
-            }
-            .insert(&ctx.db)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO email_deliveries
+                     (pid, kind, subject_ref, recipient, subject, body_text, status, attempts, last_error, sender,
+                      next_attempt_at, sent_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(kind)
+            .bind(subject_ref)
+            .bind(recipient)
+            .bind(subject.replace(['\r', '\n'], " "))
+            .bind(text)
+            .bind(after.status)
+            .bind(attempts)
+            .bind(&error)
+            .bind(sender.name())
+            .bind(next_attempt_at)
+            .bind(sent_at)
+            .execute(crate::db::pool(ctx))
+            .await?;
         }
     }
     Ok(match (after.status, error) {
@@ -149,15 +162,16 @@ pub async fn deliver(
 ///
 /// When a database read fails.
 pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<usize> {
-    let due = rows::Entity::find()
-        .filter(rows::Column::Status.eq("retry"))
-        .filter(rows::Column::Kind.ne("sink"))
-        .filter(rows::Column::NextAttemptAt.lte(Utc::now()))
-        .order_by_asc(rows::Column::Id)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let due: Vec<rows::Model> = sqlx::query_as(
+        "SELECT * FROM email_deliveries
+         WHERE status = 'retry' AND kind <> 'sink' AND next_attempt_at <= $1
+         ORDER BY id
+         LIMIT $2",
+    )
+    .bind(Utc::now())
+    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut sent = 0;
     for d in due {
         if deliver(
@@ -200,7 +214,7 @@ async fn list(
         return Err(Error::NotFound);
     }
     let limit = q.limit.unwrap_or(100).clamp(1, 500);
-    let mut find = rows::Entity::find().order_by_desc(rows::Column::Id);
+    let mut find = sqlx::QueryBuilder::new("SELECT * FROM email_deliveries");
     if let Some(s) = &q.status {
         if !["queued", "retry", "sent", "failed"].contains(&s.as_str()) {
             return Err(Error::CustomError(
@@ -211,16 +225,21 @@ async fn list(
                 ),
             ));
         }
-        find = find.filter(rows::Column::Status.eq(s.as_str()));
+        find.push(" WHERE status = ").push_bind(s.as_str());
     }
-    let list = find.limit(limit).all(&ctx.db).await.map_err(db_err)?;
+    find.push(" ORDER BY id DESC LIMIT ")
+        .push_bind(i64::try_from(limit).unwrap_or(i64::MAX));
+    let list: Vec<rows::Model> = find
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let count = |s: &str| {
         let ctx = ctx.clone();
         let s = s.to_string();
         async move {
-            rows::Entity::find()
-                .filter(rows::Column::Status.eq(s))
-                .count(&ctx.db)
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM email_deliveries WHERE status = $1")
+                .bind(s)
+                .fetch_one(crate::db::pool(&ctx))
                 .await
                 .unwrap_or(0)
         }

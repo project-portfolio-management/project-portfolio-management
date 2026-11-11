@@ -13,19 +13,18 @@
 //!
 //! Only the owner can read their schedules and download the latest output.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use chrono::{NaiveDate, Utc};
-use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect, sea_query::Expr};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::artifacts::{self, Store};
 use crate::auth::AuthUser;
-use crate::models::_entities::{artifacts as artifact_rows, report_definitions, report_schedules};
+use crate::models::_entities::{report_definitions, report_schedules};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::report_schedules as rules;
 
@@ -71,13 +70,7 @@ async fn create(
     Json(b): Json<ScheduleBody>,
 ) -> Result<Response> {
     let report = super::parse_pid(&pid)?;
-    report_definitions::Entity::find()
-        .filter(report_definitions::Column::Pid.eq(report))
-        .filter(report_definitions::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    find_report(&ctx, report).await?.ok_or(Error::NotFound)?;
     let format = b.format.as_deref().unwrap_or("csv");
     if !rules::CADENCES.contains(&b.cadence.as_str()) {
         return Err(unprocessable(&format!(
@@ -97,65 +90,70 @@ async fn create(
         Some(s) => NaiveDate::parse_from_str(s, "%Y-%m-%d")
             .map_err(|_| unprocessable("start must be a date, YYYY-MM-DD"))?,
     };
-    let held = report_schedules::Entity::find()
-        .filter(report_schedules::Column::Owner.eq(claims.sub.as_str()))
-        .filter(report_schedules::Column::DeletedAt.is_null())
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if held >= rules::MAX_PER_PERSON {
+    let held: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM report_schedules WHERE owner = $1 AND deleted_at IS NULL",
+    )
+    .bind(claims.sub.as_str())
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
+    if u64::try_from(held).unwrap_or(0) >= rules::MAX_PER_PERSON {
         return Err(unprocessable(&format!(
             "at most {} schedules per person",
             rules::MAX_PER_PERSON
         )));
     }
-    let row = report_schedules::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        report_pid: ActiveValue::set(report),
-        owner: ActiveValue::set(claims.sub.clone()),
-        cadence: ActiveValue::set(b.cadence),
-        format: ActiveValue::set(format.to_string()),
-        anchor_date: ActiveValue::set(start),
-        next_run_date: ActiveValue::set(start),
-        enabled: ActiveValue::set(true),
-        last_run_at: ActiveValue::set(None),
-        last_status: ActiveValue::set(None),
-        last_rows: ActiveValue::set(None),
-        last_artifact_pid: ActiveValue::set(None),
-        last_error: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)?;
+    let row: report_schedules::Model = sqlx::query_as(
+        "INSERT INTO report_schedules
+             (pid, report_pid, owner, cadence, format, anchor_date, next_run_date, enabled, last_run_at, last_status,
+              last_rows, last_artifact_pid, last_error, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $6, true, NULL, NULL, NULL, NULL, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(report)
+    .bind(&claims.sub)
+    .bind(&b.cadence)
+    .bind(format)
+    .bind(start)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     format::json(view(&row))
 }
 
 /// `GET /api/report-schedules` — the caller's own schedules.
 #[debug_handler]
 async fn list(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Result<Response> {
-    let rows = report_schedules::Entity::find()
-        .filter(report_schedules::Column::Owner.eq(claims.sub.as_str()))
-        .filter(report_schedules::Column::DeletedAt.is_null())
-        .order_by_asc(report_schedules::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<report_schedules::Model> = sqlx::query_as(
+        "SELECT * FROM report_schedules WHERE owner = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(claims.sub.as_str())
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(rows.iter().map(view).collect::<Vec<_>>())
 }
 
 /// Load the caller's own non-deleted schedule; another owner's schedule is `NotFound`, indistinguishable from a missing one.
 async fn own(ctx: &AppContext, owner: &str, pid: &str) -> Result<report_schedules::Model> {
     let pid = super::parse_pid(pid)?;
-    report_schedules::Entity::find()
-        .filter(report_schedules::Column::Pid.eq(pid))
-        .filter(report_schedules::Column::Owner.eq(owner))
-        .filter(report_schedules::Column::DeletedAt.is_null())
-        .one(&ctx.db)
+    sqlx::query_as(
+        "SELECT * FROM report_schedules WHERE pid = $1 AND owner = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(owner)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
+}
+
+/// A live (not soft-deleted) saved report.
+async fn find_report(
+    ctx: &AppContext,
+    pid: Uuid,
+) -> std::result::Result<Option<report_definitions::Model>, sqlx::Error> {
+    sqlx::query_as("SELECT * FROM report_definitions WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
         .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
 }
 
 /// `POST /api/report-schedules/{pid}/delete` (and `DELETE`) — stop a schedule.
@@ -167,10 +165,14 @@ async fn remove(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row = own(&ctx, &claims.sub, &pid).await?;
-    let mut a: report_schedules::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    a.enabled = ActiveValue::set(false);
-    a.update(&ctx.db).await.map_err(db_err)?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE report_schedules SET deleted_at = $1, enabled = false WHERE id = $2 RETURNING id",
+    )
+    .bind(now())
+    .bind(row.id)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     format::empty_json()
 }
 
@@ -224,28 +226,30 @@ pub struct Swept {
 /// Propagates database errors from finding the due schedules.
 pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
     let today = crate::tz::deployment_today();
-    let due = report_schedules::Entity::find()
-        .filter(report_schedules::Column::Enabled.eq(true))
-        .filter(report_schedules::Column::DeletedAt.is_null())
-        .filter(report_schedules::Column::NextRunDate.lte(today))
-        .order_by_asc(report_schedules::Column::Id)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let due: Vec<report_schedules::Model> = sqlx::query_as(
+        "SELECT * FROM report_schedules
+         WHERE enabled = true AND deleted_at IS NULL AND next_run_date <= $1
+         ORDER BY id
+         LIMIT $2",
+    )
+    .bind(today)
+    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut out = Swept::default();
     for s in due {
         let next = rules::after_run(&s.cadence, s.anchor_date, today)
             .unwrap_or(today + chrono::Duration::days(1));
         // The claim: only one sweeper moves the date off the value it read.
-        let claimed = report_schedules::Entity::update_many()
-            .col_expr(report_schedules::Column::NextRunDate, Expr::value(next))
-            .filter(report_schedules::Column::Pid.eq(s.pid))
-            .filter(report_schedules::Column::NextRunDate.eq(s.next_run_date))
-            .exec(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        if claimed.rows_affected != 1 {
+        let claimed = sqlx::query(
+            "UPDATE report_schedules SET next_run_date = $1 WHERE pid = $2 AND next_run_date = $3",
+        )
+        .bind(next)
+        .bind(s.pid)
+        .bind(s.next_run_date)
+        .execute(crate::db::pool(ctx))
+        .await?;
+        if claimed.rows_affected() != 1 {
             out.already_claimed += 1;
             continue;
         }
@@ -253,13 +257,19 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
             Ok(()) => out.ran += 1,
             Err(why) => {
                 out.failed += 1;
-                let mut a: report_schedules::ActiveModel = s.clone().into();
-                a.last_run_at = ActiveValue::set(Some(Utc::now().into()));
-                a.last_status = ActiveValue::set(Some("failed".to_string()));
-                a.last_error = ActiveValue::set(Some(why.clone()));
-                let _ = a.update(&ctx.db).await;
-                AuditModel::record_or_log(
-                    &ctx.db,
+                let _ = sqlx::query_scalar::<_, i64>(
+                    "UPDATE report_schedules
+                     SET last_run_at = $1, last_status = 'failed', last_error = $2
+                     WHERE id = $3
+                     RETURNING id",
+                )
+                .bind(now())
+                .bind(&why)
+                .bind(s.id)
+                .fetch_one(crate::db::pool(ctx))
+                .await;
+                AuditModel::record_or_log_on(
+                    crate::db::pool(ctx),
                     s.pid,
                     "report_run_failed",
                     Some(&s.owner),
@@ -274,10 +284,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
 
 /// Run one schedule: execute its report as an anonymous reader (so private plans are excluded), store the output as an expiring artifact, and record the outcome on the schedule. Returns the error text on failure.
 async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::Result<(), String> {
-    let def = report_definitions::Entity::find()
-        .filter(report_definitions::Column::Pid.eq(s.report_pid))
-        .filter(report_definitions::Column::DeletedAt.is_null())
-        .one(&ctx.db)
+    let def = find_report(ctx, s.report_pid)
         .await
         .map_err(|e| e.to_string())?
         .ok_or_else(|| "the report no longer exists".to_string())?;
@@ -311,42 +318,59 @@ async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::
         .await
         .map_err(|e| e.to_string())?
         .map_err(|e| format!("could not store the file: {e}"))?;
-    let artifact = artifact_rows::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        kind: ActiveValue::set("report_run".to_string()),
-        filename: ActiveValue::set(filename),
-        content_type: ActiveValue::set(ctype.to_string()),
-        size_bytes: ActiveValue::set(size),
-        sha256: ActiveValue::set(sha),
-        storage_key: ActiveValue::set(Some(key)),
-        created_by: ActiveValue::set(Some(s.owner.clone())),
-        expires_at: ActiveValue::set(Some((Utc::now() + ttl()).into())),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
+    // The artifact row, the schedule's outcome and the audit row are one change (the stored bytes are not: a refused
+    // change leaves an unreferenced blob, which nothing reads).
+    let mut tx = crate::db::begin(ctx).await.map_err(|e| e.to_string())?;
+    let artifact_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO artifacts
+             (pid, kind, filename, content_type, size_bytes, sha256, storage_key, created_by, expires_at)
+         VALUES ($1, 'report_run', $2, $3, $4, $5, $6, $7, $8)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(filename)
+    .bind(ctype)
+    .bind(size)
+    .bind(sha)
+    .bind(key)
+    .bind(&s.owner)
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now() + ttl()))
+    .fetch_one(tx.conn())
     .await
     .map_err(|e| e.to_string())?;
-    let mut a: report_schedules::ActiveModel = s.clone().into();
-    a.last_run_at = ActiveValue::set(Some(Utc::now().into()));
-    a.last_status = ActiveValue::set(Some("ok".to_string()));
-    a.last_rows = ActiveValue::set(Some(rows));
-    a.last_artifact_pid = ActiveValue::set(Some(artifact.pid));
-    a.last_error = ActiveValue::set(None);
-    a.update(&ctx.db).await.map_err(|e| e.to_string())?;
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE report_schedules
+         SET last_run_at = $1, last_status = 'ok', last_rows = $2, last_artifact_pid = $3, last_error = NULL
+         WHERE id = $4
+         RETURNING id",
+    )
+    .bind(now())
+    .bind(rows)
+    .bind(artifact_pid)
+    .bind(s.id)
+    .fetch_one(tx.conn())
+    .await
+    .map_err(|e| e.to_string())?;
     // Audited like an export: every run, even a zero-row one.
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        tx.conn(),
         s.pid,
         "report_run_scheduled",
         Some(&s.owner),
         Some(
             serde_json::json!({ "report_pid": s.report_pid, "format": s.format, "rows": rows,
-                                  "artifact_pid": artifact.pid }),
+                                  "artifact_pid": artifact_pid }),
         ),
     )
     .await
     .map_err(|e| e.to_string())?;
+    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(())
+}
+
+/// Now, as the `timestamptz` the schedule's columns hold.
+fn now() -> chrono::DateTime<chrono::FixedOffset> {
+    Utc::now().into()
 }
 
 /// `POST /api/report-schedules/sweep` — run what is due now. Admin only (the

@@ -139,7 +139,7 @@ runs several statements takes `&mut impl db::Session`, which is a transaction or
 one.
 
 How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 93 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
+API on 10 November, 97 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
 `meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
 `key_persons`, `ledger`; batch 3: `financials`, `funding`, `tolerances`, `thresholds`, `effort`, `timesheets`,
 `milestones`, `milestone_signoffs`, `announcements`, `components`; batch 4: `escalations`, `deescalation`, `confidence`,
@@ -152,8 +152,8 @@ API on 10 November, 93 have moved (batch 1: `approvals`, `processes`, `controlle
 `engineering/estate`, `engineering/mod`, `task_bulk`, `task_tree`, `tba`; batch 9: `governance`, `discussion`; batch 10:
 `issues`, `issue_configuration`, `custom_fields`; batch 11: `collaboration`, `feeds`, `notification_prefs`; batch 12:
 `automation`, `break_glass`, `sinks`, `tasks/exception_breaches`, `plan_access`; batch 13: `streaming`,
-`controllers/plans`, `plan_links`, `planner`, `models/event_outbox`) and 54 are left (the grep that measures it still
-counts 56, because
+`controllers/plans`, `plan_links`, `planner`, `models/event_outbox`; batch 14: `attachments`, `email_deliveries`,
+`report_schedules`, `plan_templates`) and 50 are left (the grep that measures it still counts 52, because
 `engineering/board` and `task_bulk` name enum variants `Set` of their own). Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
 `find_live_task`) and `models/governance`; `controllers::db_err` still maps SeaORM's error for unmoved callers, and
 `models/governance` keeps its `ActiveModelBehavior` impls. Batch 11 gave `plan_access::is_none_of` a sqlx form,
@@ -169,8 +169,10 @@ sqlx form of `write_seaorm`, and counts the statement); the SeaORM `update_data`
 (`update_data_on`, `soft_delete_on` and `create` take a `db::Session`), and the plan finders, `merge_records` and
 `AuditModel::recent` and `for_entity` take the context. `models/plans` and `models/merge_records` keep only their
 `ActiveModelBehavior` impls, for step (c).
-`tba::transition_row`, the SeaORM transition row, stays for the callers not yet moved; `tba::insert_transition_on` is
-its sqlx twin. `custom_fields::store`, the SeaORM writer of custom values, is gone: `custom_fields::store_on` serves
+`tba::transition_row`, the SeaORM transition row, stays for the callers not yet moved (`mspdi_import`,
+`tracker_import`, `blueprint_sync`); `tba::insert_transition_on` is its sqlx twin, and since batch 14 writes the
+transition of every task a template instantiates. A scheduled report run writes its artifact row, the schedule's outcome
+and its audit row in one transaction (batch 14). `custom_fields::store`, the SeaORM writer of custom values, is gone: `custom_fields::store_on` serves
 the board, the bulk routes, `PUT /api/custom-fields/values` (each in its transaction) and the MSPDI batch import (on the
 pool). The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
 connection.

@@ -2371,6 +2371,68 @@ came from grep.
   map a named constraint (`organizations`, `capacity_heatmap`, `deescalation`, `ledger`, `programme_gates`) fall back to
   `Error::string`, a `500` for an outage too; they did the same with SeaORM's error before SQ-1, so the status is
   unchanged, and a `503` there is a change for its own commit.
+  **Progress 2026-11-11, batch 14 (not ticked).** Attachments, email deliveries, scheduled reports and plan templates
+  moved: `attachments` (42 lines naming SeaORM, now none), `email_deliveries` (34, none), `report_schedules` (65,
+  none) and `plan_templates` (82, none). 223 lines gone, leaving 52 files and 1,277 lines by batch 6's measure (50 by
+  name). `plan_templates`, the last big caller of the SeaORM `tba::transition_row`, now writes each instantiated
+  task's transition with `tba::insert_transition_on` (on the pool, as before); `transition_row` stays, because
+  `mspdi_import`, `tracker_import` and `blueprint_sync` still call it. `audit_logs` keeps 17: `record` and
+  `record_or_log` (now called only by `bulk`) have callers left. Attachments: the allow-list, the cap (the route's
+  `axa::middleware::body_limit` ceiling is unchanged), the content checks and the malware scan all run before a byte is
+  stored, as before; a scan that finds something is still `record_or_log_on` (the census still allows `attachments.rs`
+  one) and a scanner that does not answer still `503` `scan_unavailable`; the artifact row, the attachment row and the
+  audit row are still one transaction, and the soft delete and its audit row too (uploader or administrator only);
+  downloads still re-authorize on the subject, re-check the SHA-256 and send `content-disposition: attachment`,
+  `nosniff` and `private, no-store`. Email deliveries: one row per message and recipient (the recipient trimmed and
+  matched case-insensitively), the sender in force named on the row, a sent delivery never sent again, the retry pass
+  leaving `sink` deliveries to the sinks; the same columns are stored and nothing new is logged. Report schedules: the
+  claim is still a conditional update of `next_run_date` (one sweeper wins), a failed run still records `failed` on the
+  schedule (its update's error still dropped) and `record_or_log_on`'s `report_run_failed` (the census still allows
+  `report_schedules.rs` one). Plan templates: capture, visibility (`readable_plans`, `HiddenScope::keep`,
+  `hidden_plans`), the case-insensitive name check, starters, instantiation plan by plan through
+  `streaming::create_and_emit` and the undo of a failed build are unchanged. Inserts list the columns SeaORM set;
+  updates by id name the columns SeaORM's did and still fail when no row comes back.
+  **Changed, deliberately:** a scheduled report run's artifact row, the schedule's `ok` outcome and its
+  `report_run_scheduled` audit row are now one transaction (they were three statements on the pool), so a run whose
+  audit row cannot be written leaves no artifact row and keeps the schedule's previous `last_rows` and
+  `last_artifact_pid` (before, the new run's stayed beside the `failed` status); the stored file is still written
+  before, so such a run leaves an unreferenced blob, as a refused upload does. A database failure carries sqlx's error
+  text rather than SeaORM's, in a response and in what is stored for a failed report run (`report_schedules.last_error`
+  and the `report_run_failed` audit snapshot; only on a failure; same status). The parent lookup of a template capture
+  binds the parents as one array (`= ANY($1)`) where SeaORM bound one parameter each; counts are a plain `COUNT(*)`;
+  the duplicate-name check reads only the names; inserts and updates whose row is not used return only its id or pid.
+  A throwaway check (not committed) dumped 729 answers, 85 function results and 16 tables (audit, artifacts,
+  attachments and their texts, email deliveries, schedules, templates, template links, tasks, transitions, components,
+  milestones, plans, workflows and their states) for an administrator, a plan's owner, a member of a private plan, a
+  writer who is a member of nothing, an identity with no user id, and no token: uploads accepted (a 3 MiB one over the
+  service-wide limit among them) and refused every way (type, empty, a program, binary text, over the cap, unknown kind
+  or subject, a private plan, infected, scanner down), listed, searched, downloaded (tampered, keyless, missing
+  artifact) and deleted by each caller; deliveries sent, retried, refused, repeated in another case, swept with and
+  without a limit, with a bad, blank and no sender address and the default sender, and listed by every filter; schedules
+  created, refused (bad cadence, format, date, report, the 20 cap), swept by each caller, swept twice at once (none ran
+  twice), failed, listed, downloaded (expired too) and removed; templates saved (duplicate, starter and bad names, a
+  hidden subtree omitted, a private plan), listed, read, instantiated (with and without a start date, under a private,
+  missing and hidden parent, a starter, a build that fails part-way and is undone), hidden with their source plan and
+  deleted; then thirteen tables made unreadable in turn under every route. Before and after: the same, once pids and
+  times were normalised, but for the error text of a failed report run and, with `audit_logs` unreadable, the one run
+  above that now leaves no artifact row.
+  **Found, not changed:** the search's `unindexed_attachments` counts every unindexed attachment text, of hidden and
+  deleted attachments too, so it is not filtered by the subject check that filters the hits; the search reads 200
+  matches before the access check, so a caller with many hidden matches can see fewer than 50 hits; an attachment's
+  list and download ignore the artifact's own `deleted_at`, and the list reads each artifact in turn; an attachment
+  and a report schedule are read before the transaction that deletes them; two `deliver` calls for one message and
+  recipient at once can both send and both insert (no claim, no unique index), and a permanently `failed` delivery is
+  attempted again when `deliver` is called again; the delivery list's counts read `0` when their query fails;
+  creating a report schedule counts and then inserts, so two at once can pass `MAX_PER_PERSON`; creating and removing
+  a schedule write no audit row; saving a template reads every live template's name and then inserts, so two at once
+  can save the same name; a template's milestones are captured in `due` order with no tie-break; instantiation is not
+  one transaction (as its documentation says) and its undo ignores its own errors.
+  **Verified:** fmt, clippy, 1,265 unit tests, `mod` (220 tests, one run, no failure; the 3 MiB upload test passed and
+  nothing listened on port 8001 before the run) and the 57 other database binaries (85 tests), on a throwaway database.
+  **Still on SeaORM through other modules**, for these files: none.
+  **Next batch, suggested:** the three remaining callers of `transition_row`, `blueprint_sync` (45), `mspdi_import`
+  (39) and `tracker_import` (34), about 120 lines, after which `transition_row` can go; or `bulk` (165), the last
+  caller of `record_or_log`.
 
 ## Correctness carried forward (CF-n)
 

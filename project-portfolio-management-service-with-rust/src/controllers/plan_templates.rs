@@ -15,19 +15,16 @@
 //! the failure is reported, so a half-built tree is never left behind.
 
 use super::conflict;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::discussion::resolve_subject;
 use super::plan_access::readable_plans;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{
-    components, milestones, plan_template_links, plan_templates, plans, tasks,
-};
+use crate::models::_entities::{components, milestones, plan_templates, plans, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::plans::Model as PlanModel;
 use crate::plan_templates::{self as rules, Snapshot, TplMilestone, TplNode, TplTask};
@@ -69,13 +66,12 @@ pub(super) async fn capture(
             break;
         }
         let parents: Vec<Uuid> = frontier.iter().map(|i| raws[*i].row.pid).collect();
-        let children = plans::Entity::find()
-            .filter(plans::Column::ParentPid.is_in(parents))
-            .filter(plans::Column::DeletedAt.is_null())
-            .order_by_asc(plans::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let children: Vec<plans::Model> = sqlx::query_as(
+            "SELECT * FROM plans WHERE parent_pid = ANY($1) AND deleted_at IS NULL ORDER BY id",
+        )
+        .bind(parents)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
         let pids: Vec<Uuid> = children.iter().map(|c| c.pid).collect();
         let readable = readable_plans(ctx, caller, &pids).await;
         let mut next = Vec::new();
@@ -107,28 +103,25 @@ pub(super) async fn capture(
     let mut total_tasks = 0usize;
     for r in &mut raws {
         let pid = r.row.pid;
-        r.tasks = tasks::Entity::find()
-            .filter(tasks::Column::PlanPid.eq(pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .order_by_asc(tasks::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        r.tasks = sqlx::query_as(
+            "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+        )
+        .bind(pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
         total_tasks += r.tasks.len();
-        r.components = components::Entity::find()
-            .filter(components::Column::PlanPid.eq(pid))
-            .filter(components::Column::DeletedAt.is_null())
-            .order_by_asc(components::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        r.milestones = milestones::Entity::find()
-            .filter(milestones::Column::PlanPid.eq(pid))
-            .filter(milestones::Column::DeletedAt.is_null())
-            .order_by_asc(milestones::Column::Due)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        r.components = sqlx::query_as(
+            "SELECT * FROM components WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+        )
+        .bind(pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+        r.milestones = sqlx::query_as(
+            "SELECT * FROM milestones WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY due",
+        )
+        .bind(pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
     }
     if total_tasks > rules::MAX_TASKS {
         return Err(unprocessable(&format!(
@@ -243,47 +236,47 @@ async fn save_as_template(
         return Err(unprocessable("name is required (at most 120 characters)"));
     }
     let subject = resolve_subject(&ctx, &caller, "plan", &pid).await?;
-    let root = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(subject.pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let existing = plan_templates::Entity::find()
-        .filter(plan_templates::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let root = PlanModel::find_by_pid(&ctx, &subject.pid.to_string()).await?;
+    // Only the names are compared (in Rust, as before, so "the same name" is Rust's `to_lowercase`, not the database's).
+    let existing: Vec<String> =
+        sqlx::query_scalar("SELECT name FROM plan_templates WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     if crate::starter_templates::is_starter_name(&name)
         || existing
             .iter()
-            .any(|t| t.name.to_lowercase() == name.to_lowercase())
+            .any(|t| t.to_lowercase() == name.to_lowercase())
     {
         return Err(conflict("a template with this name already exists"));
     }
     let (snapshot, omitted) = capture(&ctx, &caller, root).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = plan_templates::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(name),
-        description: ActiveValue::set(b.description.clone()),
-        snapshot: ActiveValue::set(serde_json::json!(snapshot)),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        deleted_at: ActiveValue::set(None),
-        source_plan_pid: ActiveValue::set(Some(subject.pid)),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let (row_pid, row_name): (Uuid, String) = sqlx::query_as(
+        "INSERT INTO plan_templates (pid, name, description, snapshot, created_by, deleted_at, source_plan_pid)
+         VALUES ($1, $2, $3, $4, $5, NULL, $6)
+         RETURNING pid, name",
+    )
+    .bind(Uuid::new_v4())
+    .bind(name)
+    .bind(&b.description)
+    .bind(serde_json::json!(snapshot))
+    .bind(caller.actor())
+    .bind(subject.pid)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "plan_template_saved",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "plan_template_saved", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
-        "pid": row.pid,
-        "name": row.name,
+        "pid": row_pid,
+        "name": row_name,
         "plans": snapshot.nodes.len(),
         "tasks": snapshot.nodes.iter().map(|n| n.tasks.len()).sum::<usize>(),
         "milestones": snapshot.nodes.iter().map(|n| n.milestones.len()).sum::<usize>(),
@@ -296,12 +289,10 @@ async fn save_as_template(
 /// left out.
 #[debug_handler]
 async fn list_templates(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let rows = plan_templates::Entity::find()
-        .filter(plan_templates::Column::DeletedAt.is_null())
-        .order_by_asc(plan_templates::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<plan_templates::Model> =
+        sqlx::query_as("SELECT * FROM plan_templates WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let rows = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .keep(rows);
@@ -362,12 +353,10 @@ pub(super) async fn find_template(ctx: &AppContext, pid: &str) -> Result<plan_te
     if let Some(s) = crate::starter_templates::find(pid) {
         return Ok(starter_row(&s));
     }
-    plan_templates::Entity::find()
-        .filter(plan_templates::Column::Pid.eq(pid))
-        .filter(plan_templates::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM plan_templates WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -408,15 +397,27 @@ async fn delete_template(
 ) -> Result<Response> {
     let row = find_visible_template(&ctx, &caller, &pid).await?;
     refuse_starter(&row)?;
-    let tpl_pid = row.pid;
-    let mut active: plan_templates::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, tpl_pid, "plan_template_deleted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE plan_templates SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+        chrono::Utc::now(),
+    ))
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "plan_template_deleted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -475,8 +476,8 @@ async fn from_template(
     // The plans are built one at a time, so they cannot share a transaction with the audit row; if the audit
     // row cannot be written the whole instantiation is undone the same way a failed build is.
     let result = match result {
-        Ok(summary) => AuditModel::record(
-            &ctx.db,
+        Ok(summary) => AuditModel::record_on(
+            crate::db::pool(&ctx),
             row.pid,
             "plan_template_instantiated",
             caller.actor(),
@@ -491,9 +492,9 @@ async fn from_template(
         Ok(summary) => format::json(summary),
         Err(e) => {
             // Roll back: soft-delete what was created, then report the failure.
-            plan_template_links::Entity::delete_many()
-                .filter(plan_template_links::Column::PlanPid.is_in(created.clone()))
-                .exec(&ctx.db)
+            sqlx::query("DELETE FROM plan_template_links WHERE plan_pid = ANY($1)")
+                .bind(&created)
+                .execute(crate::db::pool(&ctx))
                 .await
                 .ok();
             for pid in created.iter().rev() {
@@ -553,63 +554,61 @@ async fn build(
 
         let mut comp_pids: Vec<(String, Uuid)> = Vec::new();
         for name in &node.components {
-            let c = components::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan_pid),
-                name: ActiveValue::set(name.clone()),
-                lead_ref: ActiveValue::set(None),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&ctx.db)
-            .await
-            .map_err(db_err)?;
-            comp_pids.push((name.clone(), c.pid));
+            let c: Uuid = sqlx::query_scalar(
+                "INSERT INTO components (pid, plan_pid, name, lead_ref, deleted_at)
+                 VALUES ($1, $2, $3, NULL, NULL)
+                 RETURNING pid",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan_pid)
+            .bind(name)
+            .fetch_one(crate::db::pool(ctx))
+            .await?;
+            comp_pids.push((name.clone(), c));
         }
         let now = chrono::Utc::now();
         let mut task_pids: Vec<Uuid> = Vec::new();
         for t in &node.tasks {
             let tp = Uuid::new_v4();
-            tasks::ActiveModel {
-                pid: ActiveValue::set(tp),
-                plan_pid: ActiveValue::set(plan_pid),
-                sprint_pid: ActiveValue::set(None),
-                title: ActiveValue::set(t.title.clone()),
-                description: ActiveValue::set(t.description.clone()),
-                status: ActiveValue::set(initial.clone()),
-                assignee_ref: ActiveValue::set(None),
-                points: ActiveValue::set(t.points),
-                due_date: ActiveValue::set(date_of(t.due_offset_days)),
-                component_pid: ActiveValue::set(
-                    t.component
-                        .as_ref()
-                        .and_then(|n| comp_pids.iter().find(|(x, _)| x == n))
-                        .map(|(_, p)| *p),
-                ),
-                parent_task_pid: ActiveValue::set(None),
-                status_changed_at: ActiveValue::set(now.into()),
-                flow_type: ActiveValue::set(t.flow_type.clone()),
-                done_at: ActiveValue::set(
-                    crate::workflow::is_done(&workflow, &initial).then(|| now.into()),
-                ),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&ctx.db)
-            .await
-            .map_err(db_err)?;
-            crate::tba::transition_row(
-                tp,
-                plan_pid,
-                None,
-                initial.clone(),
-                now,
-                caller.actor().map(ToString::to_string),
-                None,
+            let at: chrono::DateTime<chrono::FixedOffset> = now.into();
+            sqlx::query(
+                "INSERT INTO tasks
+                     (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points, due_date,
+                      component_pid, parent_task_pid, status_changed_at, flow_type, done_at, deleted_at)
+                 VALUES ($1, $2, NULL, $3, $4, $5, NULL, $6, $7, $8, NULL, $9, $10, $11, NULL)",
             )
-            .insert(&ctx.db)
-            .await
-            .map_err(db_err)?;
+            .bind(tp)
+            .bind(plan_pid)
+            .bind(&t.title)
+            .bind(&t.description)
+            .bind(&initial)
+            .bind(t.points)
+            .bind(date_of(t.due_offset_days))
+            .bind(
+                t.component
+                    .as_ref()
+                    .and_then(|n| comp_pids.iter().find(|(x, _)| x == n))
+                    .map(|(_, p)| *p),
+            )
+            .bind(at)
+            .bind(&t.flow_type)
+            .bind(crate::workflow::is_done(&workflow, &initial).then_some(at))
+            .execute(crate::db::pool(ctx))
+            .await?;
+            crate::tba::insert_transition_on(
+                &mut crate::db::pool(ctx),
+                crate::tba::NewTransition {
+                    task_pid: tp,
+                    plan_pid,
+                    from_status: None,
+                    to_status: &initial,
+                    at: now,
+                    actor_ref: caller.actor(),
+                    assignee_ref: None,
+                    blocked_reason: None,
+                },
+            )
+            .await?;
             task_pids.push(tp);
             n_tasks += 1;
         }
@@ -619,15 +618,11 @@ async fn build(
                 && let (Some(child), Some(parent)) =
                     (task_pids.get(t.key), task_pids.get(parent_key))
             {
-                tasks::Entity::update_many()
-                    .col_expr(
-                        tasks::Column::ParentTaskPid,
-                        sea_orm::sea_query::Expr::value(*parent),
-                    )
-                    .filter(tasks::Column::Pid.eq(*child))
-                    .exec(&ctx.db)
-                    .await
-                    .map_err(db_err)?;
+                sqlx::query("UPDATE tasks SET parent_task_pid = $1 WHERE pid = $2")
+                    .bind(*parent)
+                    .bind(*child)
+                    .execute(crate::db::pool(ctx))
+                    .await?;
             }
         }
         // Remember where the plan came from, for blueprint sync (NC-12).
@@ -640,36 +635,33 @@ async fn build(
                     .map(|p| serde_json::json!({ "key": t.key, "task_pid": p }))
             })
             .collect();
-        plan_template_links::ActiveModel {
-            plan_pid: ActiveValue::set(plan_pid),
-            template_pid: ActiveValue::set(template.0),
-            node_key: ActiveValue::set(i32::try_from(node.key).unwrap_or(0)),
-            template_version: ActiveValue::set(template.1),
-            baseline: ActiveValue::set(serde_json::json!(node.tasks)),
-            task_map: ActiveValue::set(serde_json::json!(task_map)),
-            ..Default::default()
-        }
-        .insert(&ctx.db)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO plan_template_links (plan_pid, template_pid, node_key, template_version, baseline, task_map)
+             VALUES ($1, $2, $3, $4, $5, $6)",
+        )
+        .bind(plan_pid)
+        .bind(template.0)
+        .bind(i32::try_from(node.key).unwrap_or(0))
+        .bind(template.1)
+        .bind(serde_json::json!(node.tasks))
+        .bind(serde_json::json!(task_map))
+        .execute(crate::db::pool(ctx))
+        .await?;
         for m in &node.milestones {
             let Some(due) = date_of(Some(m.offset_days)) else {
                 continue;
             };
-            milestones::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan_pid),
-                name: ActiveValue::set(m.name.clone()),
-                due: ActiveValue::set(due),
-                done: ActiveValue::set(false),
-                done_at: ActiveValue::set(None),
-                kind: ActiveValue::set(m.kind.clone()),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&ctx.db)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO milestones (pid, plan_pid, name, due, done, done_at, kind, deleted_at)
+                 VALUES ($1, $2, $3, $4, false, NULL, $5, NULL)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan_pid)
+            .bind(&m.name)
+            .bind(due)
+            .bind(&m.kind)
+            .execute(crate::db::pool(ctx))
+            .await?;
             n_milestones += 1;
         }
     }

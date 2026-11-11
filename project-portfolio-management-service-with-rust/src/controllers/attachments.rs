@@ -10,14 +10,13 @@
 //! file can never be rendered as a page.
 
 use super::forbidden;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axa::middleware::body_limit;
 use axum::body::Bytes;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
-use sea_orm::{ConnectionTrait, PaginatorTrait, QueryOrder};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -26,7 +25,7 @@ use crate::artifacts::{self, Store};
 use crate::auth::MaybeAuthUser;
 use crate::content_check;
 use crate::discussion as subject_rules;
-use crate::models::_entities::{artifacts as artifact_rows, attachment_texts, attachments};
+use crate::models::_entities::{artifacts as artifact_rows, attachments};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Whether the caller holds the admin role; admins may act on attachments beyond their own.
@@ -80,8 +79,8 @@ async fn upload(
     match content_check::scan(&body).await {
         content_check::Verdict::NotConfigured | content_check::Verdict::Clean => {}
         content_check::Verdict::Infected(name) => {
-            AuditModel::record_or_log(
-                &ctx.db,
+            AuditModel::record_or_log_on(
+                crate::db::pool(&ctx),
                 subject.pid,
                 "attachment_refused_by_scan",
                 caller.actor(),
@@ -111,37 +110,37 @@ async fn upload(
         .map_err(|e| Error::string(&format!("could not store the file: {e}")))?;
     // The artifact, the attachment and the audit row are one change (the stored bytes are not: a refused
     // change leaves an unreferenced blob, which nothing reads).
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let artifact = artifact_rows::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        kind: ActiveValue::set("attachment".to_string()),
-        filename: ActiveValue::set(filename.clone()),
-        content_type: ActiveValue::set(artifacts::media_type(declared)),
-        size_bytes: ActiveValue::set(size),
-        sha256: ActiveValue::set(sha.clone()),
-        storage_key: ActiveValue::set(Some(key)),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        expires_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    let row = attachments::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set(p.subject_kind.clone()),
-        subject_pid: ActiveValue::set(subject.pid),
-        artifact_pid: ActiveValue::set(artifact.pid),
-        uploaded_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
-        row.pid,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let (artifact_pid, content_type): (Uuid, String) = sqlx::query_as(
+        "INSERT INTO artifacts
+             (pid, kind, filename, content_type, size_bytes, sha256, storage_key, created_by, expires_at)
+         VALUES ($1, 'attachment', $2, $3, $4, $5, $6, $7, NULL)
+         RETURNING pid, content_type",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&filename)
+    .bind(artifacts::media_type(declared))
+    .bind(size)
+    .bind(&sha)
+    .bind(key)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO attachments (pid, subject_kind, subject_pid, artifact_pid, uploaded_by, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&p.subject_kind)
+    .bind(subject.pid)
+    .bind(artifact_pid)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
         "attachment_added",
         caller.actor(),
         Some(
@@ -151,10 +150,10 @@ async fn upload(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
-    index_text(&ctx, row.pid, declared, &body).await;
+    tx.commit().await?;
+    index_text(&ctx, row_pid, declared, &body).await;
     format::json(serde_json::json!({
-        "pid": row.pid, "filename": filename, "content_type": artifact.content_type,
+        "pid": row_pid, "filename": filename, "content_type": content_type,
         "size_bytes": size, "sha256": sha,
     }))
 }
@@ -177,15 +176,15 @@ async fn index_text(ctx: &AppContext, attachment_pid: Uuid, declared: &str, body
     };
     // Postgres text cannot hold NUL.
     let text = text.replace('\0', "");
-    let _ = attachment_texts::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        attachment_pid: ActiveValue::set(attachment_pid),
-        status: ActiveValue::set(status.to_string()),
-        reason: ActiveValue::set(reason),
-        body: ActiveValue::set(text),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
+    let _ = sqlx::query(
+        "INSERT INTO attachment_texts (pid, attachment_pid, status, reason, body) VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(attachment_pid)
+    .bind(status)
+    .bind(reason)
+    .bind(text)
+    .execute(crate::db::pool(ctx))
     .await;
 }
 
@@ -194,6 +193,21 @@ async fn index_text(ctx: &AppContext, attachment_pid: Uuid, declared: &str, body
 pub(crate) struct SearchParams {
     /// Search text, 2 to 200 characters after trimming.
     q: String,
+}
+
+/// One search hit, before the subject's access check.
+#[derive(sqlx::FromRow)]
+struct Hit {
+    /// The attachment.
+    attachment_pid: Uuid,
+    /// Its subject's kind.
+    subject_kind: String,
+    /// Its subject.
+    subject_pid: Uuid,
+    /// The file's name.
+    filename: String,
+    /// The matching words in context.
+    snippet: String,
 }
 
 /// `GET /api/attachments/search?q=` — find attachments by their text (PL-8).
@@ -213,11 +227,8 @@ async fn search(
     if q.chars().count() < 2 || q.chars().count() > 200 {
         return Err(unprocessable("q must be 2 to 200 characters"));
     }
-    let rows = ctx
-        .db
-        .query_all_raw(sea_orm::Statement::from_sql_and_values(
-            sea_orm::DatabaseBackend::Postgres,
-            "SELECT a.pid AS attachment_pid, a.subject_kind, a.subject_pid, f.filename, \
+    let rows: Vec<Hit> = sqlx::query_as(
+        "SELECT a.pid AS attachment_pid, a.subject_kind, a.subject_pid, f.filename, \
                     ts_headline('simple', t.body, plainto_tsquery('simple', $1), \
                                 'MaxFragments=1,MaxWords=18,MinWords=5') AS snippet \
              FROM attachment_texts t \
@@ -227,35 +238,32 @@ async fn search(
                AND to_tsvector('simple', t.body) @@ plainto_tsquery('simple', $1) \
              ORDER BY ts_rank(to_tsvector('simple', t.body), plainto_tsquery('simple', $1)) DESC, a.id \
              LIMIT 200",
-            [q.into()],
-        ))
-        .await
-        .map_err(db_err)?;
+    )
+    .bind(q)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut out = Vec::new();
     for r in rows {
-        let kind: String = r.try_get("", "subject_kind").map_err(db_err)?;
-        let subject: Uuid = r.try_get("", "subject_pid").map_err(db_err)?;
-        if resolve_subject(&ctx, &caller, &kind, &subject.to_string())
+        if resolve_subject(&ctx, &caller, &r.subject_kind, &r.subject_pid.to_string())
             .await
             .is_err()
         {
             continue;
         }
         out.push(serde_json::json!({
-            "attachment_pid": r.try_get::<Uuid>("", "attachment_pid").map_err(db_err)?,
-            "subject_kind": kind, "subject_pid": subject,
-            "filename": r.try_get::<String>("", "filename").map_err(db_err)?,
-            "snippet": r.try_get::<String>("", "snippet").map_err(db_err)?,
+            "attachment_pid": r.attachment_pid,
+            "subject_kind": r.subject_kind, "subject_pid": r.subject_pid,
+            "filename": r.filename,
+            "snippet": r.snippet,
         }));
         if out.len() >= 50 {
             break;
         }
     }
-    let unindexed = attachment_texts::Entity::find()
-        .filter(attachment_texts::Column::Status.eq("unindexed"))
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let unindexed: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM attachment_texts WHERE status = 'unindexed'")
+            .fetch_one(crate::db::pool(&ctx))
+            .await?;
     format::json(serde_json::json!({ "results": out, "unindexed_attachments": unindexed }))
 }
 
@@ -276,22 +284,18 @@ async fn list(
     Query(p): Query<SubjectParams>,
 ) -> Result<Response> {
     let subject = resolve_subject(&ctx, &caller, &p.subject_kind, &p.subject_pid).await?;
-    let rows = attachments::Entity::find()
-        .filter(attachments::Column::SubjectKind.eq(p.subject_kind.as_str()))
-        .filter(attachments::Column::SubjectPid.eq(subject.pid))
-        .filter(attachments::Column::DeletedAt.is_null())
-        .order_by_asc(attachments::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<attachments::Model> = sqlx::query_as(
+        "SELECT * FROM attachments
+         WHERE subject_kind = $1 AND subject_pid = $2 AND deleted_at IS NULL
+         ORDER BY id",
+    )
+    .bind(&p.subject_kind)
+    .bind(subject.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut out = Vec::new();
     for r in rows {
-        let Some(a) = artifact_rows::Entity::find()
-            .filter(artifact_rows::Column::Pid.eq(r.artifact_pid))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-        else {
+        let Some(a) = find_artifact(&ctx, r.artifact_pid).await? else {
             continue;
         };
         out.push(serde_json::json!({
@@ -303,15 +307,24 @@ async fn list(
     format::json(out)
 }
 
+/// The artifact row behind an attachment, deleted or not (as before: an attachment's file is not hidden by its
+/// artifact's `deleted_at`).
+async fn find_artifact(ctx: &AppContext, pid: Uuid) -> Result<Option<artifact_rows::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM artifacts WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
 /// Load a live (not soft-deleted) attachment by pid, or `NotFound`. This only locates the row; callers must still authorise against its subject.
 async fn find_attachment(ctx: &AppContext, pid: &str) -> Result<attachments::Model> {
     let pid = super::parse_pid(pid)?;
-    attachments::Entity::find()
-        .filter(attachments::Column::Pid.eq(pid))
-        .filter(attachments::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM attachments WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -332,11 +345,8 @@ async fn download(
         &att.subject_pid.to_string(),
     )
     .await?;
-    let artifact = artifact_rows::Entity::find()
-        .filter(artifact_rows::Column::Pid.eq(att.artifact_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let artifact = find_artifact(&ctx, att.artifact_pid)
+        .await?
         .ok_or(Error::NotFound)?;
     let key = artifact.storage_key.clone().ok_or(Error::NotFound)?;
     let bytes = tokio::task::spawn_blocking(move || Store::from_env().get(&key))
@@ -387,15 +397,27 @@ async fn delete_one(
             "only the uploader or an admin may remove an attachment",
         ));
     }
-    let att_pid = att.pid;
-    let mut active: attachments::ActiveModel = att.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, att_pid, "attachment_removed", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error (`500`), as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE attachments SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+        chrono::Utc::now(),
+    ))
+    .bind(att.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        att.pid,
+        "attachment_removed",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

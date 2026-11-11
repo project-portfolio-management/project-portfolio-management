@@ -64,7 +64,7 @@ async fn scoped_allocations(
     caller: &MaybeAuthUser,
     scenario: Option<&str>,
 ) -> Result<(Vec<allocations::Model>, serde_json::Value)> {
-    let mut rows = vis_models::all_allocations_with_placeholders(&ctx.db).await?;
+    let mut rows = vis_models::all_allocations_with_placeholders(ctx).await?;
     let mut scope = serde_json::json!({ "kind": "portfolio" });
     if let Some(raw) = scenario {
         let pid = super::parse_pid(raw)?;
@@ -555,7 +555,7 @@ async fn resolve_placeholder(
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
     let a_pid = super::parse_pid(&a_pid)?;
-    let allocation = vis_models::find_allocation(&ctx.db, a_pid).await?;
+    let allocation = vis_models::find_allocation(&ctx, a_pid).await?;
     if allocation.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -570,7 +570,7 @@ async fn resolve_placeholder(
         let today = crate::tz::deployment_today();
         let from = allocation.start_date.unwrap_or(today);
         let to = allocation.end_date.unwrap_or(from + chrono::Days::new(365));
-        let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx.db)
+        let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx)
             .await?
             .iter()
             .filter(|a| a.person_ref == b.person_ref)

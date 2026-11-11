@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use super::{is_finished, schedule_item};
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{budget_lines, plans, risks};
+use crate::models::_entities::{budget_lines, plans, proposals, risks};
 use crate::models::visibility as vis_models;
 use crate::prelude::*;
 use crate::visibility as rules;
@@ -23,38 +23,31 @@ pub(super) async fn at_a_glance(
 ) -> Result<Response> {
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = crate::tz::deployment_today();
-    let items = scope.keep(
-        plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    // Each table whole and in the database's order, as before (no `ORDER BY`).
+    let items: Vec<plans::Model> = scope.keep(
+        sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
-    let risk_rows = scope.keep(
-        risks::Entity::find()
-            .filter(risks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    let risk_rows: Vec<risks::Model> = scope.keep(
+        sqlx::query_as("SELECT * FROM risks WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
-    let budget_rows = scope.keep(
-        budget_lines::Entity::find()
-            .filter(budget_lines::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    let budget_rows: Vec<budget_lines::Model> = scope.keep(
+        sqlx::query_as("SELECT * FROM budget_lines WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
-    let proposal_rows = scope.keep(
-        crate::models::_entities::proposals::Entity::find()
-            .filter(crate::models::_entities::proposals::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+    let proposal_rows: Vec<proposals::Model> = scope.keep(
+        sqlx::query_as("SELECT * FROM proposals WHERE deleted_at IS NULL")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
-    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
-    let allocation_rows = scope.keep(vis_models::all_allocations(&ctx.db).await?);
+    let allocation_rows = scope.keep(vis_models::all_allocations(&ctx).await?);
 
     // Global schedule violations (per successor item).
     let facts: Vec<rules::ScheduleItem> = items.iter().map(schedule_item).collect();

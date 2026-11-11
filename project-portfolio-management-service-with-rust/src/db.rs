@@ -94,6 +94,16 @@ impl Tx {
     pub async fn commit(self) -> Result<(), Error> {
         self.0.commit().await
     }
+
+    /// Rolls back now. Dropping the transaction rolls it back too, but without saying whether that worked; a
+    /// caller that answered an error when `SeaORM`'s rollback failed uses this to keep doing so.
+    ///
+    /// # Errors
+    ///
+    /// When the rollback fails.
+    pub async fn rollback(self) -> Result<(), Error> {
+        self.0.rollback().await
+    }
 }
 
 /// Somewhere several statements can run in turn: a transaction ([`Tx`]), or the pool ([`pool`]), where each statement

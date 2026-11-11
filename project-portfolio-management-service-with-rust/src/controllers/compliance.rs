@@ -23,7 +23,6 @@
 
 use crate::prelude::*;
 use axa::extract::Query;
-use sea_orm::{EntityTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 
 use crate::compliance::{audit_integrity, record_integrity};
@@ -55,6 +54,11 @@ impl VerifyParams {
     }
 }
 
+/// A clamped limit as the `bigint` a `LIMIT` binds (it is at most [`VERIFY_MAX_LIMIT`], so it always fits).
+fn limit_param(limit: u64) -> i64 {
+    i64::try_from(limit).unwrap_or(i64::MAX)
+}
+
 /// The verifiers read every plan and every audit row, private ones included, and report counts and the rows that
 /// differ, so they are for administrators (and, with enforcement off, for anyone, as for every write).
 fn require_admin(caller: &crate::auth::MaybeAuthUser) -> Result<()> {
@@ -84,11 +88,12 @@ async fn verify_records(
     Query(params): Query<VerifyParams>,
 ) -> Result<Response> {
     require_admin(&caller)?;
-    let rows = plans::Entity::find()
-        .order_by_desc(plans::Column::UpdatedAt)
-        .limit(params.limit())
-        .all(&ctx.db)
-        .await?;
+    // Every plan, deleted ones included, newest change first, as before.
+    let rows: Vec<plans::Model> =
+        sqlx::query_as("SELECT * FROM plans ORDER BY updated_at DESC LIMIT $1")
+            .bind(limit_param(params.limit()))
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(record_integrity::verify(&rows))
 }
 
@@ -106,11 +111,11 @@ async fn verify_audit(
     Query(params): Query<VerifyParams>,
 ) -> Result<Response> {
     require_admin(&caller)?;
-    let rows = audit_logs::Entity::find()
-        .order_by_desc(audit_logs::Column::Id)
-        .limit(params.limit())
-        .all(&ctx.db)
-        .await?;
+    let rows: Vec<audit_logs::Model> =
+        sqlx::query_as("SELECT * FROM audit_logs ORDER BY id DESC LIMIT $1")
+            .bind(limit_param(params.limit()))
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(audit_integrity::verify(&rows))
 }
 

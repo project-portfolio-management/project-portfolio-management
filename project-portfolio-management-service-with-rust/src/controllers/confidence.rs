@@ -691,7 +691,7 @@ pub(crate) async fn build_map(
     let budget_rows: Vec<budget_lines::Model> = sqlx::query_as("SELECT * FROM budget_lines")
         .fetch_all(crate::db::pool(ctx))
         .await?;
-    let deps = crate::models::visibility::all_dependencies(&ctx.db).await?;
+    let deps = crate::models::visibility::all_dependencies(ctx).await?;
     let scoped: Vec<plans::Model> = all_plans
         .iter()
         .filter(|p| include.contains(&p.pid))

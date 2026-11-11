@@ -126,7 +126,7 @@ pub(crate) async fn compute_with(
     }
     // Other plans' committed bookings are fixed load; this plan's own are the
     // same work its tasks describe, so they are not counted twice.
-    for a in vis_models::all_allocations(&ctx.db).await? {
+    for a in vis_models::all_allocations(ctx).await? {
         if a.plan_pid != plan && people.contains(a.person_ref.as_str()) {
             resources
                 .entry(a.person_ref.clone())

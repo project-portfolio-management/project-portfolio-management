@@ -154,7 +154,7 @@ pub(super) async fn skill_gap(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let rows = vis_models::allocations_for(&ctx.db, item.pid).await?;
+    let rows = vis_models::allocations_for(&ctx, item.pid).await?;
     let base_url = std::env::var(workers_client::BASE_URL_ENV).ok();
     let mut findings = Vec::new();
     for row in &rows {
@@ -187,7 +187,7 @@ pub(super) async fn list_allocations(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    format::json(vis_models::allocations_for(&ctx.db, item.pid).await?)
+    format::json(vis_models::allocations_for(&ctx, item.pid).await?)
 }
 
 /// `POST …/allocations/{a_pid}/commit` query.
@@ -214,7 +214,7 @@ pub(super) async fn commit_allocation(
     let confirm = body.confirm;
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let a_pid = super::super::parse_pid(&a_pid)?;
-    let allocation = vis_models::find_allocation(&ctx.db, a_pid).await?;
+    let allocation = vis_models::find_allocation(&ctx, a_pid).await?;
     if allocation.plan_pid != item.pid
         || !super::super::availability::may_manage_person(&caller, &allocation.person_ref)
     {
@@ -230,7 +230,7 @@ pub(super) async fn commit_allocation(
     let today = crate::tz::deployment_today();
     let from = allocation.start_date.unwrap_or(today);
     let to = allocation.end_date.unwrap_or(from + chrono::Days::new(365));
-    let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx.db)
+    let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx)
         .await?
         .iter()
         .filter(|a| a.person_ref == allocation.person_ref)
@@ -298,7 +298,7 @@ pub(super) async fn delete_allocation(
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let a_pid = super::super::parse_pid(&a_pid)?;
-    let allocation = vis_models::find_allocation(&ctx.db, a_pid).await?;
+    let allocation = vis_models::find_allocation(&ctx, a_pid).await?;
     if allocation.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -356,10 +356,10 @@ pub(super) async fn capacity(
     if (to - from).num_days() > crate::availability::MAX_WINDOW_DAYS {
         return Err(unprocessable("the window may span at most ten years"));
     }
-    let rows = scope.keep(vis_models::all_allocations(&ctx.db).await?);
+    let rows = scope.keep(vis_models::all_allocations(&ctx).await?);
     // PJ-4: proposed bookings are reported as their own series, never merged in.
     let proposed_rows: Vec<_> = scope
-        .keep(vis_models::all_allocations_with_proposed(&ctx.db).await?)
+        .keep(vis_models::all_allocations_with_proposed(&ctx).await?)
         .into_iter()
         .filter(|a| a.booking == "proposed")
         .collect();

@@ -2,7 +2,6 @@
 
 use super::super::unprocessable;
 use axum::http::{StatusCode, header};
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use std::fmt::Write as _;
 use uuid::Uuid;
@@ -92,36 +91,35 @@ pub(super) async fn create_report(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = report_definitions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(payload.name.clone()),
-        collection: ActiveValue::set(payload.collection.clone()),
-        filters: ActiveValue::set(payload.filters.clone()),
-        fields: ActiveValue::set(serde_json::json!(payload.fields)),
-        group_by: ActiveValue::set(payload.group_by.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "report_saved", caller.actor(), None)
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more.
+    sqlx::query(
+        "INSERT INTO report_definitions (pid, name, collection, filters, fields, group_by, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL)",
+    )
+    .bind(row_pid)
+    .bind(&payload.name)
+    .bind(&payload.collection)
+    .bind(&payload.filters)
+    .bind(serde_json::json!(payload.fields))
+    .bind(&payload.group_by)
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "report_saved", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/reports` — saved definitions.
 #[debug_handler]
 pub(super) async fn list_reports(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = report_definitions::Entity::find()
-        .filter(report_definitions::Column::DeletedAt.is_null())
-        .order_by_asc(report_definitions::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows: Vec<report_definitions::Model> =
+        sqlx::query_as("SELECT * FROM report_definitions WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(rows)
 }
 
@@ -133,19 +131,22 @@ pub(super) async fn delete_report(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let pid = super::super::parse_pid(&pid)?;
-    let row = vis_models::find_report(&ctx.db, pid).await?;
+    let row = vis_models::find_report(&ctx, pid).await?;
     let row_pid = row.pid;
-    let mut active: report_definitions::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row_pid, "report_deleted", caller.actor(), None)
+    let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+    let _: i64 = sqlx::query_scalar(
+        "UPDATE report_definitions SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(deleted_at)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "report_deleted", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -189,7 +190,7 @@ pub(super) async fn run_report(
     Query(params): Query<RunParams>,
 ) -> Result<Response> {
     let pid = super::super::parse_pid(&pid)?;
-    let def = vis_models::find_report(&ctx.db, pid).await?;
+    let def = vis_models::find_report(&ctx, pid).await?;
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     execute_report(&ctx, &def, params.format.as_deref(), &scope).await
 }
@@ -299,12 +300,13 @@ async fn run_grouped(
     format: Option<&str>,
 ) -> Result<Response> {
     let pids: Vec<Uuid> = selected.iter().map(|m| m.pid).collect();
-    let lines = budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .filter(budget_lines::Column::PlanPid.is_in(pids))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // In the database's order, as before (no `ORDER BY`); the pids bound as one array.
+    let lines: Vec<budget_lines::Model> = sqlx::query_as(
+        "SELECT * FROM budget_lines WHERE deleted_at IS NULL AND plan_pid = ANY($1)",
+    )
+    .bind(pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let entries = selected
         .iter()
         .map(|m| {

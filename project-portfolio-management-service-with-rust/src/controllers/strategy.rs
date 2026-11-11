@@ -5,9 +5,8 @@
 //! feeds the matcher (§8 partition rule).
 
 use super::conflict;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -28,13 +27,15 @@ macro_rules! find_active {
     ($fn_name:ident, $module:ident) => {
         async fn $fn_name(ctx: &AppContext, pid: &str) -> Result<$module::Model> {
             let pid = super::parse_pid(pid)?;
-            $module::Entity::find()
-                .filter($module::Column::Pid.eq(pid))
-                .filter($module::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)
+            sqlx::query_as(concat!(
+                "SELECT * FROM ",
+                stringify!($module),
+                " WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+            ))
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)
         }
     };
 }
@@ -77,26 +78,24 @@ async fn create_idea(
             "tags: at most 32, non-blank, each ≤ 64 chars",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = ideas::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        title: ActiveValue::set(payload.title.clone()),
-        pitch: ActiveValue::set(payload.pitch.clone()),
-        tags: ActiveValue::set(serde_json::json!(payload.tags)),
-        votes: ActiveValue::set(0),
-        status: ActiveValue::set("open".to_string()),
-        converted_proposal_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "idea_captured", caller.actor(), None)
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more.
+    sqlx::query(
+        "INSERT INTO ideas (pid, title, pitch, tags, votes, status, converted_proposal_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, 0, 'open', NULL, NULL)",
+    )
+    .bind(row_pid)
+    .bind(&payload.title)
+    .bind(&payload.pitch)
+    .bind(serde_json::json!(payload.tags))
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "idea_captured", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/ideas?status=` — most-voted first (default: open).
@@ -115,12 +114,12 @@ async fn list_ideas(
 ) -> Result<Response> {
     // Bounded to the most-voted 200 so an unbounded table cannot produce an unbounded response.
     let status = params.status.unwrap_or_else(|| "open".to_string());
-    let mut rows = ideas::Entity::find()
-        .filter(ideas::Column::DeletedAt.is_null())
-        .filter(ideas::Column::Status.eq(status))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // In the database's order before the stable sort, as before (no `ORDER BY`).
+    let mut rows: Vec<ideas::Model> =
+        sqlx::query_as("SELECT * FROM ideas WHERE deleted_at IS NULL AND status = $1")
+            .bind(status)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     rows.sort_by_key(|i| -i.votes);
     format::json(rows.into_iter().take(200).collect::<Vec<_>>())
 }
@@ -138,14 +137,17 @@ async fn vote_idea(
     }
     let row_pid = idea.pid;
     let next = idea.votes.saturating_add(1);
-    let mut active: ideas::ActiveModel = idea.into();
-    active.votes = ActiveValue::set(next);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row_pid, "idea_voted", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+    let row: ideas::Model = sqlx::query_as("UPDATE ideas SET votes = $1 WHERE id = $2 RETURNING *")
+        .bind(next)
+        .bind(idea.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "idea_voted", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -161,14 +163,16 @@ async fn dismiss_idea(
         return Err(unprocessable(&format!("idea is {}", idea.status)));
     }
     let row_pid = idea.pid;
-    let mut active: ideas::ActiveModel = idea.into();
-    active.status = ActiveValue::set("dismissed".to_string());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row_pid, "idea_dismissed", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: ideas::Model =
+        sqlx::query_as("UPDATE ideas SET status = 'dismissed' WHERE id = $1 RETURNING *")
+            .bind(idea.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "idea_dismissed", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -210,36 +214,37 @@ async fn convert_idea(
         return Err(unprocessable(&format!("idea is {}", idea.status)));
     }
     // Create the proposal and flip the idea in one transaction so a half-converted idea cannot exist.
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let proposal = proposals::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        title: ActiveValue::set(idea.title.clone()),
-        summary: ActiveValue::set(idea.pitch.clone()),
-        kind_target: ActiveValue::set(payload.kind_target.clone()),
-        sponsor_ref: ActiveValue::set(payload.sponsor_ref.clone()),
-        strategic_rationale: ActiveValue::set(None),
-        requested_minor: ActiveValue::set(None),
-        currency: ActiveValue::set(None),
-        status: ActiveValue::set("draft".to_string()),
-        promoted_plan_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
+    let proposal_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more (`external_ask` and `tradeoff` are the table's defaults).
+    sqlx::query(
+        "INSERT INTO proposals (pid, title, summary, kind_target, sponsor_ref, strategic_rationale, requested_minor,
+             currency, status, promoted_plan_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL, NULL, NULL, 'draft', NULL, NULL)",
+    )
+    .bind(proposal_pid)
+    .bind(&idea.title)
+    .bind(&idea.pitch)
+    .bind(&payload.kind_target)
+    .bind(&payload.sponsor_ref)
+    .execute(tx.conn())
+    .await?;
     let idea_pid = idea.pid;
-    let mut active: ideas::ActiveModel = idea.into();
-    active.status = ActiveValue::set("converted".to_string());
-    active.converted_proposal_pid = ActiveValue::set(Some(proposal.pid));
-    let row = active.update(&txn).await.map_err(db_err)?;
+    // The two columns `SeaORM`'s update set, by id; no row back is an error, as before.
+    let (row_pid, row_status): (Uuid, String) = sqlx::query_as(
+        "UPDATE ideas SET status = 'converted', converted_proposal_pid = $1 WHERE id = $2 RETURNING pid, status",
+    )
+    .bind(proposal_pid)
+    .bind(idea.id)
+    .fetch_one(tx.conn())
+    .await?;
     let snapshot = serde_json::json!({
-        "proposal_pid": proposal.pid.to_string(),
+        "proposal_pid": proposal_pid.to_string(),
         "kind_target": payload.kind_target,
         "provenance": "idea",
     });
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         idea_pid,
         "idea_converted",
         caller.actor(),
@@ -247,11 +252,11 @@ async fn convert_idea(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
-        "pid": row.pid.to_string(),
-        "status": row.status,
-        "proposal_pid": proposal.pid.to_string(),
+        "pid": row_pid.to_string(),
+        "status": row_status,
+        "proposal_pid": proposal_pid.to_string(),
     }))
 }
 
@@ -304,30 +309,34 @@ async fn create_scenario(
     // Every named member must exist (unknown pids listed at once). One the caller may
     // not see is unknown to them too.
     // One query per kind, not one per named member (CQ-11).
-    let live_plans: std::collections::HashSet<Uuid> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(payload.plan_pids.clone()))
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| p.pid)
-        .collect();
+    // Only the pids are read; the named pids bound as one array.
+    let live_plans: std::collections::HashSet<Uuid> = sqlx::query_scalar::<_, Uuid>(
+        "SELECT pid FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL",
+    )
+    .bind(&payload.plan_pids)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
+    .collect();
     for pid in &payload.plan_pids {
         if fence.plan(pid) || !live_plans.contains(pid) {
             problems.push(format!("unknown plan {pid}"));
         }
     }
-    let visible_proposals: std::collections::HashSet<Uuid> = proposals::Entity::find()
-        .filter(proposals::Column::Pid.is_in(payload.proposal_pids.clone()))
-        .filter(proposals::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter(|p| !p.promoted_plan_pid.is_some_and(|plan| fence.plan(&plan)))
-        .map(|p| p.pid)
-        .collect();
+    // Only the pid and the plan it was promoted to are read.
+    let visible_proposals: std::collections::HashSet<Uuid> = sqlx::query_as::<
+        _,
+        (Uuid, Option<Uuid>),
+    >(
+        "SELECT pid, promoted_plan_pid FROM proposals WHERE pid = ANY($1) AND deleted_at IS NULL",
+    )
+    .bind(&payload.proposal_pids)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
+    .filter(|(_, promoted)| !promoted.is_some_and(|plan| fence.plan(&plan)))
+    .map(|(pid, _)| pid)
+    .collect();
     for pid in &payload.proposal_pids {
         if !visible_proposals.contains(pid) {
             problems.push(format!("unknown proposal {pid}"));
@@ -336,43 +345,66 @@ async fn create_scenario(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = scenarios::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(payload.name.clone()),
-        description: ActiveValue::set(payload.description.clone()),
-        members: ActiveValue::set(serde_json::json!({
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    insert_scenario(
+        &mut tx,
+        row_pid,
+        &payload.name,
+        payload.description.as_deref(),
+        &serde_json::json!({
             "plan_pids": payload.plan_pids,
             "proposal_pids": payload.proposal_pids,
-        })),
-        budget_cap_minor: ActiveValue::set(payload.budget_cap_minor),
-        currency: ActiveValue::set(payload.currency.clone()),
-        must_include: ActiveValue::set(serde_json::json!(payload.must_include)),
-        status: ActiveValue::set("draft".to_string()),
-        committed_at: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "scenario_created", caller.actor(), None)
+        }),
+        payload.budget_cap_minor,
+        payload.currency.as_deref(),
+        &serde_json::json!(payload.must_include),
+    )
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "scenario_created", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
+}
+
+/// Insert a `draft` scenario: the columns `SeaORM`'s insert set, no more.
+#[expect(clippy::too_many_arguments)] // one per column written
+async fn insert_scenario(
+    tx: &mut crate::db::Tx,
+    pid: Uuid,
+    name: &str,
+    description: Option<&str>,
+    members: &serde_json::Value,
+    budget_cap_minor: Option<i64>,
+    currency: Option<&str>,
+    must_include: &serde_json::Value,
+) -> std::result::Result<(), sqlx::Error> {
+    sqlx::query(
+        "INSERT INTO scenarios (pid, name, description, members, budget_cap_minor, currency, must_include, status,
+             committed_at, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', NULL, NULL)",
+    )
+    .bind(pid)
+    .bind(name)
+    .bind(description)
+    .bind(members)
+    .bind(budget_cap_minor)
+    .bind(currency)
+    .bind(must_include)
+    .execute(tx.conn())
+    .await?;
+    Ok(())
 }
 
 /// `GET /api/scenarios`.
 #[debug_handler]
 async fn list_scenarios(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let fence = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let rows = scenarios::Entity::find()
-        .filter(scenarios::Column::DeletedAt.is_null())
-        .order_by_asc(scenarios::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<scenarios::Model> =
+        sqlx::query_as("SELECT * FROM scenarios WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     // A scenario's member list names plans: the ones the caller may not see are not in it.
     let hidden = hidden_members(&ctx, &fence, &rows).await?;
     let out: Vec<scenarios::Model> = rows
@@ -405,14 +437,16 @@ async fn hidden_members(
         }
         proposals_named.extend(uuids_in(&s.members, "proposal_pids"));
     }
-    for p in proposals::Entity::find()
-        .filter(proposals::Column::Pid.is_in(proposals_named))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
+    // Deleted ones included, as before; only the pid and the plan it was promoted to are read.
+    for (pid, promoted) in sqlx::query_as::<_, (Uuid, Option<Uuid>)>(
+        "SELECT pid, promoted_plan_pid FROM proposals WHERE pid = ANY($1)",
+    )
+    .bind(proposals_named)
+    .fetch_all(crate::db::pool(ctx))
+    .await?
     {
-        if p.promoted_plan_pid.is_some_and(|plan| fence.plan(&plan)) {
-            hidden.insert(p.pid);
+        if promoted.is_some_and(|plan| fence.plan(&plan)) {
+            hidden.insert(pid);
         }
     }
     Ok(hidden)
@@ -466,12 +500,12 @@ async fn plan_member_fact(
     pid: Uuid,
 ) -> Result<(rules::MemberFact, Vec<rules::InputRead>)> {
     let mut inputs_read = Vec::new();
-    let budgets = budget_lines::Entity::find()
-        .filter(budget_lines::Column::PlanPid.eq(pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Each in the database's order, as before (no `ORDER BY`): `inputs_read` lists the rows as they come.
+    let budgets: Vec<budget_lines::Model> =
+        sqlx::query_as("SELECT * FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut planned: Vec<(String, i64)> = Vec::new();
     for line in &budgets {
         match planned.iter_mut().find(|(c, _)| *c == line.currency) {
@@ -484,12 +518,11 @@ async fn plan_member_fact(
             updated_at: line.updated_at.to_utc(),
         });
     }
-    let risk_rows = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let risk_rows: Vec<risks::Model> =
+        sqlx::query_as("SELECT * FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let open_exposure: i32 = risk_rows
         .iter()
         .filter(|r| matches!(r.status.as_str(), "open" | "mitigating"))
@@ -502,11 +535,11 @@ async fn plan_member_fact(
             updated_at: risk.updated_at.to_utc(),
         });
     }
-    let link_rows = objective_links::Entity::find()
-        .filter(objective_links::Column::PlanPid.eq(pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let link_rows: Vec<objective_links::Model> =
+        sqlx::query_as("SELECT * FROM objective_links WHERE plan_pid = $1")
+            .bind(pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let alignment_weight: i32 = link_rows.iter().map(|l| l.weight).sum();
     for link in &link_rows {
         inputs_read.push(rules::InputRead {
@@ -531,12 +564,11 @@ async fn proposal_member_fact(
     ctx: &AppContext,
     pid: Uuid,
 ) -> Result<(rules::MemberFact, Vec<rules::InputRead>)> {
-    let proposal = proposals::Entity::find()
-        .filter(proposals::Column::Pid.eq(pid))
-        .filter(proposals::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let proposal: Option<proposals::Model> =
+        sqlx::query_as("SELECT * FROM proposals WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?;
     let mut inputs_read = Vec::new();
     if let Some(proposal) = &proposal {
         inputs_read.push(rules::InputRead {
@@ -646,13 +678,12 @@ async fn compare_scenarios(
     let (a_pid, b_pid) = (load(&query.a)?, load(&query.b)?);
     let mut pair = Vec::new();
     for pid in [a_pid, b_pid] {
-        let scenario = scenarios::Entity::find()
-            .filter(scenarios::Column::Pid.eq(pid))
-            .filter(scenarios::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .ok_or(Error::NotFound)?;
+        let scenario: scenarios::Model =
+            sqlx::query_as("SELECT * FROM scenarios WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+                .bind(pid)
+                .fetch_optional(crate::db::pool(&ctx))
+                .await?
+                .ok_or(Error::NotFound)?;
         let result = evaluate(&ctx, &scenario, &fence).await?;
         pair.push((scenario, result));
     }
@@ -751,14 +782,19 @@ async fn commit_scenario(
         )));
     }
     let row_pid = scenario.pid;
-    let mut active: scenarios::ActiveModel = scenario.into();
-    active.status = ActiveValue::set("committed".to_string());
-    active.committed_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
+    let committed_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The two columns `SeaORM`'s update set, by id; no row back is an error, as before.
+    let row: scenarios::Model = sqlx::query_as(
+        "UPDATE scenarios SET status = 'committed', committed_at = $1 WHERE id = $2 RETURNING *",
+    )
+    .bind(committed_at)
+    .bind(scenario.id)
+    .fetch_one(tx.conn())
+    .await?;
     let snapshot = serde_json::to_value(&result.evaluation).unwrap_or_default();
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "scenario_committed",
         caller.actor(),
@@ -766,7 +802,7 @@ async fn commit_scenario(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -803,13 +839,15 @@ async fn rollback_scenario(
     }
     let row_pid = scenario.pid;
     let former_committed_at = scenario.committed_at;
-    let mut active: scenarios::ActiveModel = scenario.into();
-    active.status = ActiveValue::set("draft".to_string());
-    active.committed_at = ActiveValue::set(None);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: scenarios::Model = sqlx::query_as(
+        "UPDATE scenarios SET status = 'draft', committed_at = NULL WHERE id = $1 RETURNING *",
+    )
+    .bind(scenario.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "scenario_rolled_back",
         caller.actor(),
@@ -817,7 +855,7 @@ async fn rollback_scenario(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -925,42 +963,36 @@ async fn generate_scenario(
             chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
         )
     });
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = scenarios::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(name.clone()),
-        description: ActiveValue::set(Some(
-            "Deterministically generated by Smart Score per unit cost (T-28h)".to_string(),
-        )),
-        members: ActiveValue::set(serde_json::json!({
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    insert_scenario(
+        &mut tx,
+        row_pid,
+        &name,
+        Some("Deterministically generated by Smart Score per unit cost (T-28h)"),
+        &serde_json::json!({
             "plan_pids": member_pids,
             "proposal_pids": Vec::<Uuid>::new(),
-        })),
-        budget_cap_minor: ActiveValue::set(payload.budget_cap_minor),
-        currency: ActiveValue::set(payload.currency.clone()),
-        must_include: ActiveValue::set(serde_json::json!(payload.must_include)),
-        status: ActiveValue::set("draft".to_string()),
-        committed_at: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
-        row.pid,
+        }),
+        payload.budget_cap_minor,
+        payload.currency.as_deref(),
+        &serde_json::json!(payload.must_include),
+    )
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
         "scenario_generated",
         caller.actor(),
         Some(serde_json::json!({ "rationale": rationale })),
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
-        "pid": row.pid.to_string(),
-        "name": row.name,
-        "status": row.status,
+        "pid": row_pid.to_string(),
+        "name": name,
+        "status": "draft",
         "rationale": rationale,
     }))
 }
@@ -1087,34 +1119,38 @@ async fn create_objective(
     if payload.title.trim().is_empty() || payload.title.len() > MAX_TEXT_LEN {
         return Err(unprocessable("title is required (and capped)"));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = objectives::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        title: ActiveValue::set(payload.title.clone()),
-        description: ActiveValue::set(payload.description.clone()),
-        period: ActiveValue::set(payload.period.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more.
+    sqlx::query(
+        "INSERT INTO objectives (pid, title, description, period, deleted_at) VALUES ($1, $2, $3, $4, NULL)",
+    )
+    .bind(row_pid)
+    .bind(&payload.title)
+    .bind(&payload.description)
+    .bind(&payload.period)
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "objective_created",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "objective_created", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/objectives`.
 #[debug_handler]
 async fn list_objectives(State(ctx): State<AppContext>) -> Result<Response> {
-    let rows = objectives::Entity::find()
-        .filter(objectives::Column::DeletedAt.is_null())
-        .order_by_asc(objectives::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<objectives::Model> =
+        sqlx::query_as("SELECT * FROM objectives WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(rows)
 }
 
@@ -1128,11 +1164,12 @@ async fn objective_alignment(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let objective = find_objective(&ctx, &pid).await?;
-    let links = objective_links::Entity::find()
-        .filter(objective_links::Column::ObjectivePid.eq(objective.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // In the database's order, as before (no `ORDER BY`).
+    let links: Vec<objective_links::Model> =
+        sqlx::query_as("SELECT * FROM objective_links WHERE objective_pid = $1")
+            .bind(objective.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let links = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .keep(links);
@@ -1140,12 +1177,11 @@ async fn objective_alignment(
     let mut per_collection: std::collections::BTreeMap<String, i32> =
         std::collections::BTreeMap::new();
     for link in &links {
-        let Some(item) = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(link.plan_pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+        let Some(item): Option<plans::Model> =
+            sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+                .bind(link.plan_pid)
+                .fetch_optional(crate::db::pool(&ctx))
+                .await?
         else {
             continue;
         };
@@ -1192,34 +1228,40 @@ async fn link_objective(
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
     let objective = find_objective(&ctx, &payload.objective_pid.to_string()).await?;
-    let existing = objective_links::Entity::find()
-        .filter(objective_links::Column::ObjectivePid.eq(objective.pid))
-        .filter(objective_links::Column::PlanPid.eq(item.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = if let Some(existing) = existing {
-        let mut active: objective_links::ActiveModel = existing.into();
-        active.weight = ActiveValue::set(payload.weight);
-        active.update(&txn).await.map_err(db_err)?
+    // Only the id is read.
+    let existing: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM objective_links WHERE objective_pid = $1 AND plan_pid = $2 LIMIT 1",
+    )
+    .bind(objective.pid)
+    .bind(item.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The update names the one column `SeaORM`'s did, by id (no row back is an error, as before); the insert the
+    // columns its insert set (`is_primary` is the table's default).
+    let (row_pid, row_weight): (Uuid, i32) = if let Some(id) = existing {
+        sqlx::query_as("UPDATE objective_links SET weight = $1 WHERE id = $2 RETURNING pid, weight")
+            .bind(payload.weight)
+            .bind(id)
+            .fetch_one(tx.conn())
+            .await?
     } else {
-        objective_links::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            objective_pid: ActiveValue::set(objective.pid),
-            plan_pid: ActiveValue::set(item.pid),
-            weight: ActiveValue::set(payload.weight),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?
+        sqlx::query_as(
+            "INSERT INTO objective_links (pid, objective_pid, plan_pid, weight) VALUES ($1, $2, $3, $4)
+             RETURNING pid, weight",
+        )
+        .bind(Uuid::new_v4())
+        .bind(objective.pid)
+        .bind(item.pid)
+        .bind(payload.weight)
+        .fetch_one(tx.conn())
+        .await?
     };
-    AuditModel::record(&txn, row.pid, "objective_linked", caller.actor(), None)
+    AuditModel::record_on(tx.conn(), row_pid, "objective_linked", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string(), "weight": row.weight }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string(), "weight": row_weight }))
 }
 
 /// `GET /api/plans/{pid}/objectives` — the item's mappings.
@@ -1229,19 +1271,20 @@ async fn item_objectives(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let links = objective_links::Entity::find()
-        .filter(objective_links::Column::PlanPid.eq(item.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // In the database's order, as before (no `ORDER BY`).
+    let links: Vec<objective_links::Model> =
+        sqlx::query_as("SELECT * FROM objective_links WHERE plan_pid = $1")
+            .bind(item.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut out = Vec::new();
     for link in &links {
-        let Some(objective) = objectives::Entity::find()
-            .filter(objectives::Column::Pid.eq(link.objective_pid))
-            .filter(objectives::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+        let Some(objective): Option<objectives::Model> = sqlx::query_as(
+            "SELECT * FROM objectives WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(link.objective_pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
         else {
             continue;
         };
@@ -1308,30 +1351,30 @@ async fn create_benefit(
         return Err(unprocessable(&problems.join("; ")));
     }
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = benefits::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(item.pid),
-        title: ActiveValue::set(payload.title.clone()),
-        category: ActiveValue::set(payload.category.clone()),
-        currency: ActiveValue::set(payload.currency.clone()),
-        target_minor: ActiveValue::set(payload.target_minor),
-        realized_minor: ActiveValue::set(0),
-        target_note: ActiveValue::set(payload.target_note.clone()),
-        realized_note: ActiveValue::set(None),
-        expected_on: ActiveValue::set(payload.expected_on),
-        status: ActiveValue::set("planned".to_string()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "benefit_declared", caller.actor(), None)
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more (`recurrence`, `annualized_minor`, `classification` and `kpi_pid`
+    // are the table's defaults).
+    sqlx::query(
+        "INSERT INTO benefits (pid, plan_pid, title, category, currency, target_minor, realized_minor, target_note,
+             realized_note, expected_on, status, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 0, $7, NULL, $8, 'planned', NULL)",
+    )
+    .bind(row_pid)
+    .bind(item.pid)
+    .bind(&payload.title)
+    .bind(&payload.category)
+    .bind(&payload.currency)
+    .bind(payload.target_minor)
+    .bind(&payload.target_note)
+    .bind(payload.expected_on)
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "benefit_declared", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/plans/{pid}/benefits` — the benefits plus
@@ -1341,19 +1384,17 @@ async fn create_benefit(
 #[debug_handler]
 async fn list_benefits(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let item = super::governance::find_item(&ctx, &pid).await?;
-    let rows = benefits::Entity::find()
-        .filter(benefits::Column::PlanPid.eq(item.pid))
-        .filter(benefits::Column::DeletedAt.is_null())
-        .order_by_asc(benefits::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let budget_rows = budget_lines::Entity::find()
-        .filter(budget_lines::Column::PlanPid.eq(item.pid))
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<benefits::Model> = sqlx::query_as(
+        "SELECT * FROM benefits WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(item.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let budget_rows: Vec<budget_lines::Model> =
+        sqlx::query_as("SELECT * FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(item.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut currencies: Vec<&str> = rows.iter().filter_map(|b| b.currency.as_deref()).collect();
     currencies.sort_unstable();
     currencies.dedup();
@@ -1431,24 +1472,31 @@ async fn realize_benefit(
         None => benefit.realized_minor,
     };
     let row_pid = benefit.pid;
-    let mut active: benefits::ActiveModel = benefit.into();
-    active.realized_minor = ActiveValue::set(next);
+    // The columns `SeaORM`'s update set: the total always, the note and the status only when sent; by id, and no
+    // row back is an error, as before.
+    let mut update =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE benefits SET realized_minor = ");
+    update.push_bind(next);
     if let Some(note) = payload.note.clone() {
-        active.realized_note = ActiveValue::set(Some(note));
+        update.push(", realized_note = ").push_bind(note);
     }
     if let Some(status) = payload.status.clone() {
-        active.status = ActiveValue::set(status);
+        update.push(", status = ").push_bind(status);
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
+    update
+        .push(" WHERE id = ")
+        .push_bind(benefit.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: benefits::Model = update.build_query_as().fetch_one(tx.conn()).await?;
     let snapshot = serde_json::json!({
         "amount_minor": payload.amount_minor,
         "realized_minor": next,
         "note": payload.note,
         "status": payload.status,
     });
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "benefit_realized",
         caller.actor(),
@@ -1456,7 +1504,7 @@ async fn realize_benefit(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 

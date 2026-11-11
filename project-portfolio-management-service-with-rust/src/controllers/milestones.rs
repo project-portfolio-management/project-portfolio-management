@@ -440,7 +440,7 @@ async fn get_one(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let m = vis_models::find_milestone(&ctx.db, pid).await?;
+    let m = vis_models::find_milestone(&ctx, pid).await?;
     let readable = super::plan_access::readable_plans(&ctx, &caller, &[m.plan_pid]).await;
     if !readable.contains(&m.plan_pid) {
         return Err(Error::NotFound);
@@ -472,7 +472,7 @@ async fn set_links(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let m_pid = super::parse_pid(&m_pid)?;
-    let m = vis_models::find_milestone(&ctx.db, m_pid).await?;
+    let m = vis_models::find_milestone(&ctx, m_pid).await?;
     if m.plan_pid != plan.pid {
         return Err(Error::NotFound);
     }
@@ -575,7 +575,7 @@ async fn reopen(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let m_pid = super::parse_pid(&m_pid)?;
-    let m = vis_models::find_milestone(&ctx.db, m_pid).await?;
+    let m = vis_models::find_milestone(&ctx, m_pid).await?;
     if m.plan_pid != plan.pid {
         return Err(Error::NotFound);
     }

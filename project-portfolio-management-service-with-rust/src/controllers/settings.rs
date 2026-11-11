@@ -6,11 +6,10 @@
 use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::Utc;
-use sea_orm::{DatabaseBackend, Statement};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::{db_err, refuse, unprocessable};
+use super::{refuse, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::tz;
@@ -23,23 +22,14 @@ const REFRESH_SECS: u64 = 60;
 
 /// The stored zone, who set it and when, or `None` if no administrator has set one.
 async fn stored(
-    db: &DatabaseConnection,
-) -> std::result::Result<Option<(String, Option<String>, String)>, sea_orm::DbErr> {
-    let row = db
-        .query_one_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "SELECT value, updated_by, updated_at::text AS updated_at FROM deployment_settings WHERE key = $1",
-            [KEY.into()],
-        ))
-        .await?;
-    row.map(|r| {
-        Ok((
-            r.try_get::<String>("", "value")?,
-            r.try_get::<Option<String>>("", "updated_by")?,
-            r.try_get::<String>("", "updated_at")?,
-        ))
-    })
-    .transpose()
+    ctx: &AppContext,
+) -> std::result::Result<Option<(String, Option<String>, String)>, sqlx::Error> {
+    sqlx::query_as(
+        "SELECT value, updated_by, updated_at::text AS updated_at FROM deployment_settings WHERE key = $1",
+    )
+    .bind(KEY)
+    .fetch_optional(crate::db::pool(ctx))
+    .await
 }
 
 /// Load the stored zone into memory: the stored one, or UTC when none is set. A stored value that
@@ -48,8 +38,8 @@ async fn stored(
 /// # Errors
 ///
 /// When the database cannot be read.
-pub async fn refresh(db: &DatabaseConnection) -> std::result::Result<(), sea_orm::DbErr> {
-    match stored(db).await? {
+pub async fn refresh(ctx: &AppContext) -> std::result::Result<(), sqlx::Error> {
+    match stored(ctx).await? {
         None => tz::set_today_zone(tz::Tz::UTC),
         Some((name, _, _)) => match tz::parse_zone(&name) {
             Ok(zone) => tz::set_today_zone(zone),
@@ -62,10 +52,10 @@ pub async fn refresh(db: &DatabaseConnection) -> std::result::Result<(), sea_orm
 }
 
 /// Load the zone now and keep it fresh. Called once at boot.
-pub fn spawn(db: DatabaseConnection) {
+pub fn spawn(ctx: AppContext) {
     tokio::spawn(async move {
         loop {
-            if let Err(error) = refresh(&db).await {
+            if let Err(error) = refresh(&ctx).await {
                 tracing::warn!(%error, "could not read the today time zone; keeping the current zone");
             }
             tokio::time::sleep(std::time::Duration::from_secs(REFRESH_SECS)).await;
@@ -74,8 +64,8 @@ pub fn spawn(db: DatabaseConnection) {
 }
 
 /// Render the effective zone, whether it comes from an admin setting or the default, who last changed it and when, and the current instant and "today" in that zone.
-async fn view(db: &DatabaseConnection) -> Result<Response> {
-    let row = stored(db).await.map_err(db_err)?;
+async fn view(ctx: &AppContext) -> Result<Response> {
+    let row = stored(ctx).await?;
     let zone = tz::today_zone();
     let now = Utc::now();
     format::json(serde_json::json!({
@@ -92,7 +82,7 @@ async fn view(db: &DatabaseConnection) -> Result<Response> {
 /// date it gives right now.
 #[debug_handler]
 async fn get_zone(State(ctx): State<AppContext>) -> Result<Response> {
-    view(&ctx.db).await
+    view(&ctx).await
 }
 
 /// Request body for setting the zone that defines "today".
@@ -127,17 +117,18 @@ async fn put_zone(
     let zone = tz::parse_zone(&body.time_zone).map_err(|m| unprocessable(&m))?;
     let before = tz::today_zone();
     let actor = caller.actor().map(str::to_string);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    txn.execute_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "INSERT INTO deployment_settings (key, value, updated_by, updated_at) VALUES ($1, $2, $3, now())
-             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()",
-            [KEY.into(), zone.name().into(), actor.clone().into()],
-        ))
-        .await
-        .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "INSERT INTO deployment_settings (key, value, updated_by, updated_at) VALUES ($1, $2, $3, now())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()",
+    )
+    .bind(KEY)
+    .bind(zone.name())
+    .bind(actor.as_deref())
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         Uuid::nil(),
         "today_time_zone_changed",
         actor.as_deref(),
@@ -145,10 +136,10 @@ async fn put_zone(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     // Only once it is stored and audited does this instance use it.
     tz::set_today_zone(zone);
-    view(&ctx.db).await
+    view(&ctx).await
 }
 
 /// `DELETE /api/settings/today-time-zone` — go back to the default (UTC). An administrator; audited.
@@ -156,16 +147,13 @@ async fn put_zone(
 async fn delete_zone(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     require_admin(&caller)?;
     let before = tz::today_zone();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    txn.execute_raw(Statement::from_sql_and_values(
-        DatabaseBackend::Postgres,
-        "DELETE FROM deployment_settings WHERE key = $1",
-        [KEY.into()],
-    ))
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM deployment_settings WHERE key = $1")
+        .bind(KEY)
+        .execute(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
         Uuid::nil(),
         "today_time_zone_changed",
         caller.actor(),
@@ -173,9 +161,9 @@ async fn delete_zone(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Re
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     tz::set_today_zone(tz::Tz::UTC);
-    view(&ctx.db).await
+    view(&ctx).await
 }
 
 /// The settings routes.

@@ -10,7 +10,6 @@
 //! (reason `masked`). An omitted name is *listed*, never silently missing; an unknown
 //! name is a `422` that lists the allowed ones.
 
-use super::db_err;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
@@ -102,9 +101,7 @@ async fn get_task(
         )
     })?;
     let people = may_manage_people(&caller);
-    let (modules, _) = super::modules::modules_in_force(&ctx.db, plan.pid)
-        .await
-        .map_err(db_err)?;
+    let (modules, _) = super::modules::modules_in_force(&ctx, plan.pid).await?;
     let mut included = serde_json::Map::new();
     let mut omitted = Vec::new();
     for name in names {

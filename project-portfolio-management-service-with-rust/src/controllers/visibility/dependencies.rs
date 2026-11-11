@@ -92,7 +92,7 @@ pub(super) async fn create_dependency(
             "a hammock is a derived span, not work: link it with hammock links, not a dependency",
         ));
     }
-    let existing = vis_models::all_dependencies(&ctx.db).await?;
+    let existing = vis_models::all_dependencies(&ctx).await?;
     if existing.iter().any(|e| {
         e.predecessor_pid == payload.predecessor_pid && e.successor_pid == payload.successor_pid
     }) {
@@ -161,7 +161,7 @@ pub(super) async fn list_dependencies(
     {
         return format::json(Vec::<serde_json::Value>::new());
     }
-    let rows = vis_models::all_dependencies(&ctx.db).await?;
+    let rows = vis_models::all_dependencies(&ctx).await?;
     let rows: Vec<_> = rows
         .into_iter()
         .filter(|e| {
@@ -200,7 +200,7 @@ pub(super) async fn delete_dependency(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let pid = super::super::parse_pid(&pid)?;
-    let row = vis_models::find_dependency(&ctx.db, pid).await?;
+    let row = vis_models::find_dependency(&ctx, pid).await?;
     // Removing a link needs to be able to read both ends; otherwise it is as if it were not there.
     let readable = super::super::cpm::readable_endpoints(
         &ctx,
@@ -254,7 +254,7 @@ pub(super) async fn portfolio_schedule(
     members.insert(0, portfolio);
     let facts: Vec<rules::ScheduleItem> = members.iter().map(schedule_item).collect();
     let member_pids: std::collections::HashSet<Uuid> = facts.iter().map(|f| f.pid).collect();
-    let edges: Vec<rules::ScheduleEdge> = vis_models::all_dependencies(&ctx.db)
+    let edges: Vec<rules::ScheduleEdge> = vis_models::all_dependencies(&ctx)
         .await?
         .into_iter()
         .filter(|e| {

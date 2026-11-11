@@ -192,7 +192,7 @@ async fn board_pack_body(
     let budget_rows = live!(budget_lines, ctx, scope);
     let milestone_rows = live!(milestones, ctx, scope);
     let benefit_rows = live!(benefits, ctx, &scope);
-    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(ctx).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
     let today = crate::tz::deployment_today();

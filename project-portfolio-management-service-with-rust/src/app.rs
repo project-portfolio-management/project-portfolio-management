@@ -522,7 +522,7 @@ impl App {
         auth::spawn_key_refresh();
         auth::spawn_policy_watcher();
         // The zone that defines "today": load it now, re-read it every minute (settings.rs).
-        controllers::settings::spawn(ctx.db.clone());
+        controllers::settings::spawn(ctx.clone());
         // Time-based-analysis gauges: a no-op unless
         // `PROJECT_PORTFOLIO_MANAGEMENT_FLOW_METRICS_SECS` is set.
         crate::flow_metrics::spawn(ctx);

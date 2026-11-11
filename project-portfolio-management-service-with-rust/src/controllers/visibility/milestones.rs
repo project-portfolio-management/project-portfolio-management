@@ -44,25 +44,25 @@ pub(super) async fn create_milestone(
         )));
     }
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = milestones::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(item.pid),
-        name: ActiveValue::set(payload.name.clone()),
-        due: ActiveValue::set(payload.due),
-        kind: ActiveValue::set(payload.kind.clone()),
-        done: ActiveValue::set(false),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "milestone_added", caller.actor(), None)
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more (`completion_mode`, `done_at` and `done_reason` are the table's defaults).
+    sqlx::query(
+        "INSERT INTO milestones (pid, plan_pid, name, due, kind, done, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, FALSE, NULL)",
+    )
+    .bind(row_pid)
+    .bind(item.pid)
+    .bind(&payload.name)
+    .bind(payload.due)
+    .bind(&payload.kind)
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "milestone_added", caller.actor(), None)
         .await
         .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/plans/{pid}/milestones` — due-date order, with
@@ -74,7 +74,7 @@ pub(super) async fn list_milestones(
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let today = crate::tz::deployment_today();
-    let rows = vis_models::milestones_for(&ctx.db, item.pid).await?;
+    let rows = vis_models::milestones_for(&ctx, item.pid).await?;
     let views: Vec<_> = rows
         .into_iter()
         .map(|m| {
@@ -115,7 +115,7 @@ pub(super) async fn reschedule_milestone(
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let m_pid = super::super::parse_pid(&m_pid)?;
-    let milestone = vis_models::find_milestone(&ctx.db, m_pid).await?;
+    let milestone = vis_models::find_milestone(&ctx, m_pid).await?;
     if milestone.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -128,39 +128,45 @@ pub(super) async fn reschedule_milestone(
     }
     let old_due = milestone.due;
     let row_pid = milestone.pid;
-    let mut active: milestones::ActiveModel = milestone.into();
-    active.due = ActiveValue::set(payload.due);
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+    let row: milestones::Model =
+        sqlx::query_as("UPDATE milestones SET due = $1 WHERE id = $2 RETURNING *")
+            .bind(payload.due)
+            .bind(milestone.id)
+            .fetch_one(tx.conn())
+            .await?;
     // The slip history: one append-only row per actual move.
     if old_due != payload.due {
-        crate::models::_entities::milestone_slips::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            milestone_pid: ActiveValue::set(row_pid),
-            from_due: ActiveValue::set(old_due),
-            to_due: ActiveValue::set(payload.due),
-            reason: ActiveValue::set(
-                payload
-                    .reason
-                    .as_deref()
-                    .map(str::trim)
-                    .filter(|r| !r.is_empty())
-                    .map(str::to_string),
-            ),
-            actor: ActiveValue::set(caller.actor().map(str::to_string)),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+        sqlx::query(
+            "INSERT INTO milestone_slips (pid, milestone_pid, from_due, to_due, reason, actor)
+             VALUES ($1, $2, $3, $4, $5, $6)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(row_pid)
+        .bind(old_due)
+        .bind(payload.due)
+        .bind(
+            payload
+                .reason
+                .as_deref()
+                .map(str::trim)
+                .filter(|r| !r.is_empty()),
+        )
+        .bind(caller.actor())
+        .execute(tx.conn())
+        .await?;
     }
-    AuditModel::record(&txn, row_pid, "milestone_rescheduled", caller.actor(), None)
-        .await
-        .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "milestone_rescheduled",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::super::audit_failed)?;
+    tx.commit().await?;
 
     if old_due != payload.due {
         super::super::automation::fire(
@@ -209,7 +215,7 @@ pub(super) async fn complete_milestone(
     };
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let m_pid = super::super::parse_pid(&m_pid)?;
-    let milestone = vis_models::find_milestone(&ctx.db, m_pid).await?;
+    let milestone = vis_models::find_milestone(&ctx, m_pid).await?;
     if milestone.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -233,24 +239,31 @@ pub(super) async fn complete_milestone(
         )));
     }
     let row_pid = milestone.pid;
-    let first_stamp = milestone.done_at;
-    let mut active: milestones::ActiveModel = milestone.into();
-    active.done = ActiveValue::set(true);
     // Stamp the completion instant for the delivery-flow metrics
     // (idempotent completes keep the first stamp).
-    active.done_at = ActiveValue::set(Some(
-        first_stamp.unwrap_or_else(|| chrono::Utc::now().into()),
-    ));
-    if reason.is_some() {
-        active.done_reason = ActiveValue::set(reason.clone());
-    }
-    let txn = ctx.db.begin().await.map_err(super::super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
-        &txn,
+    let done_at: chrono::DateTime<chrono::FixedOffset> = milestone
+        .done_at
+        .unwrap_or_else(|| chrono::Utc::now().into());
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s update set (`done_reason` only when a reason is given), by id; no row back is an error.
+    let row: milestones::Model = if let Some(reason) = reason.as_deref() {
+        sqlx::query_as(
+            "UPDATE milestones SET done = TRUE, done_at = $1, done_reason = $2 WHERE id = $3 RETURNING *",
+        )
+        .bind(done_at)
+        .bind(reason)
+        .bind(milestone.id)
+        .fetch_one(tx.conn())
+        .await?
+    } else {
+        sqlx::query_as("UPDATE milestones SET done = TRUE, done_at = $1 WHERE id = $2 RETURNING *")
+            .bind(done_at)
+            .bind(milestone.id)
+            .fetch_one(tx.conn())
+            .await?
+    };
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "milestone_completed",
         caller.actor(),
@@ -260,6 +273,6 @@ pub(super) async fn complete_milestone(
     )
     .await
     .map_err(super::super::audit_failed)?;
-    txn.commit().await.map_err(super::super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }

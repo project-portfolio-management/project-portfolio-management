@@ -34,12 +34,10 @@ use reports::{create_report, delete_report, list_reports, run_report};
 /// Find an active plan by pid across **any** collection (edges
 /// may span kinds).
 async fn find_any_item(ctx: &AppContext, pid: Uuid) -> Result<plans::Model> {
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 

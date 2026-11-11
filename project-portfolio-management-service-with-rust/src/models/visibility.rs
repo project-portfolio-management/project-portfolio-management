@@ -1,9 +1,9 @@
 //! Visibility model helpers (PPM Phase B): `ActiveModelBehavior`
 //! impls and finders for dependencies / milestones / allocations /
-//! report definitions.
+//! report definitions. The finders take the context and read the pool
+//! ([`crate::db::pool`]).
 
 use crate::prelude::*;
-use sea_orm::{ConnectionTrait, QueryOrder};
 use uuid::Uuid;
 
 use super::_entities::{allocations, milestones, plan_dependencies, report_definitions};
@@ -19,12 +19,12 @@ impl ActiveModelBehavior for report_definitions::ActiveModel {}
 /// # Errors
 ///
 /// When the query fails.
-pub async fn all_dependencies<C: ConnectionTrait>(db: &C) -> Result<Vec<plan_dependencies::Model>> {
-    plan_dependencies::Entity::find()
-        .order_by_asc(plan_dependencies::Column::Id)
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+pub async fn all_dependencies(ctx: &AppContext) -> Result<Vec<plan_dependencies::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plan_dependencies ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// One dependency by pid.
@@ -32,15 +32,11 @@ pub async fn all_dependencies<C: ConnectionTrait>(db: &C) -> Result<Vec<plan_dep
 /// # Errors
 ///
 /// [`Error::NotFound`] when absent.
-pub async fn find_dependency<C: ConnectionTrait>(
-    db: &C,
-    pid: Uuid,
-) -> Result<plan_dependencies::Model> {
-    plan_dependencies::Entity::find()
-        .filter(plan_dependencies::Column::Pid.eq(pid))
-        .one(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+pub async fn find_dependency(ctx: &AppContext, pid: Uuid) -> Result<plan_dependencies::Model> {
+    sqlx::query_as("SELECT * FROM plan_dependencies WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -52,14 +48,16 @@ macro_rules! find_active {
         /// # Errors
         ///
         /// [`Error::NotFound`] when absent or soft-deleted.
-        pub async fn $fn_name<C: ConnectionTrait>(db: &C, pid: Uuid) -> Result<$module::Model> {
-            let row = $module::Entity::find()
-                .filter($module::Column::Pid.eq(pid))
-                .filter($module::Column::DeletedAt.is_null())
-                .one(db)
-                .await
-                .map_err(|e| Error::Model(ModelError::from(e)))?;
-            row.ok_or(Error::NotFound)
+        pub async fn $fn_name(ctx: &AppContext, pid: Uuid) -> Result<$module::Model> {
+            sqlx::query_as(concat!(
+                "SELECT * FROM ",
+                stringify!($module),
+                " WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+            ))
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)
         }
     };
 }
@@ -73,17 +71,13 @@ find_active!(find_report, report_definitions);
 /// # Errors
 ///
 /// When the query fails.
-pub async fn milestones_for(
-    db: &DatabaseConnection,
-    plan_pid: Uuid,
-) -> Result<Vec<milestones::Model>> {
-    milestones::Entity::find()
-        .filter(milestones::Column::PlanPid.eq(plan_pid))
-        .filter(milestones::Column::DeletedAt.is_null())
-        .order_by_asc(milestones::Column::Due)
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+pub async fn milestones_for(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<milestones::Model>> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM milestones WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY due",
+    )
+    .bind(plan_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// A plan's active allocations, oldest first.
@@ -91,17 +85,13 @@ pub async fn milestones_for(
 /// # Errors
 ///
 /// When the query fails.
-pub async fn allocations_for(
-    db: &DatabaseConnection,
-    plan_pid: Uuid,
-) -> Result<Vec<allocations::Model>> {
-    allocations::Entity::find()
-        .filter(allocations::Column::PlanPid.eq(plan_pid))
-        .filter(allocations::Column::DeletedAt.is_null())
-        .order_by_asc(allocations::Column::Id)
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+pub async fn allocations_for(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<allocations::Model>> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM allocations WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Every active allocation (the capacity rollup input).
@@ -109,16 +99,16 @@ pub async fn allocations_for(
 /// # Errors
 ///
 /// When the query fails.
-pub async fn all_allocations(db: &DatabaseConnection) -> Result<Vec<allocations::Model>> {
-    allocations::Entity::find()
-        .filter(allocations::Column::DeletedAt.is_null())
-        .filter(allocations::Column::Booking.eq("committed"))
-        // A placeholder (SC-7) is role demand with no person yet: it is not a
-        // person's load, so it never enters per-person capacity.
-        .filter(allocations::Column::PersonRef.not_like("placeholder:%"))
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+pub async fn all_allocations(ctx: &AppContext) -> Result<Vec<allocations::Model>> {
+    // A placeholder (SC-7) is role demand with no person yet: it is not a
+    // person's load, so it never enters per-person capacity. In the database's
+    // order, as before (no `ORDER BY`).
+    Ok(sqlx::query_as(
+        "SELECT * FROM allocations WHERE deleted_at IS NULL AND booking = 'committed' \
+         AND person_ref NOT LIKE 'placeholder:%'",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Every live allocation, **proposed ones included** (PJ-4). The committed view
@@ -127,15 +117,13 @@ pub async fn all_allocations(db: &DatabaseConnection) -> Result<Vec<allocations:
 /// # Errors
 ///
 /// When the query fails.
-pub async fn all_allocations_with_proposed(
-    db: &DatabaseConnection,
-) -> Result<Vec<allocations::Model>> {
-    allocations::Entity::find()
-        .filter(allocations::Column::DeletedAt.is_null())
-        .filter(allocations::Column::PersonRef.not_like("placeholder:%"))
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+pub async fn all_allocations_with_proposed(ctx: &AppContext) -> Result<Vec<allocations::Model>> {
+    // In the database's order, as before (no `ORDER BY`).
+    Ok(sqlx::query_as(
+        "SELECT * FROM allocations WHERE deleted_at IS NULL AND person_ref NOT LIKE 'placeholder:%'",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Every live allocation, proposed and **placeholders** included (SC-7): the
@@ -145,12 +133,11 @@ pub async fn all_allocations_with_proposed(
 ///
 /// When the query fails.
 pub async fn all_allocations_with_placeholders(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
 ) -> Result<Vec<allocations::Model>> {
-    allocations::Entity::find()
-        .filter(allocations::Column::DeletedAt.is_null())
-        .order_by_asc(allocations::Column::Id)
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+    Ok(
+        sqlx::query_as("SELECT * FROM allocations WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
 }

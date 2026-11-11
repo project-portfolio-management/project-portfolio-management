@@ -23,7 +23,6 @@
 //! Every response carries `as_of` and is ETag-conditional, mirroring
 //! `/api/at-a-glance`.
 
-use super::db_err;
 use std::collections::BTreeSet;
 
 use crate::prelude::*;
@@ -34,8 +33,7 @@ use crate::auth::MaybeAuthUser;
 use crate::engineering::parse_moscow_tag;
 use crate::lifecycle as life_rules;
 use crate::models::_entities::{
-    benefits, budget_lines, ideas, objective_links, plans, proposals, reviews, risks,
-    scheduled_actions, tasks,
+    benefits, budget_lines, ideas, objective_links, plans, proposals, reviews, risks, tasks,
 };
 use crate::prioritization as rules;
 use crate::strategy::roi_basis_points;
@@ -51,15 +49,18 @@ pub const DEFAULT_STALL_DAYS: i64 = 30;
 /// blocks phase readiness.
 pub const SEVERE_RISK_EXPOSURE: i32 = 15;
 
-/// Load all live rows of one entity.
+/// Load all live rows of one entity (the table its entity module names), in the database's order, as before (no
+/// `ORDER BY`).
 macro_rules! live {
-    ($module:ident, $db:expr, $fence:expr) => {
+    ($module:ident, $ctx:expr, $fence:expr) => {
         $fence.keep(
-            $module::Entity::find()
-                .filter($module::Column::DeletedAt.is_null())
-                .all($db)
-                .await
-                .map_err(db_err)?,
+            sqlx::query_as::<_, $module::Model>(concat!(
+                "SELECT * FROM ",
+                stringify!($module),
+                " WHERE deleted_at IS NULL"
+            ))
+            .fetch_all(crate::db::pool($ctx))
+            .await?,
         )
     };
 }
@@ -127,17 +128,16 @@ impl Estate {
         fence: &super::plan_access::HiddenScope,
     ) -> Result<Self> {
         Ok(Self {
-            plans: live!(plans, &ctx.db, fence),
-            benefits: live!(benefits, &ctx.db, fence),
-            budget_lines: live!(budget_lines, &ctx.db, fence),
+            plans: live!(plans, ctx, fence),
+            benefits: live!(benefits, ctx, fence),
+            budget_lines: live!(budget_lines, ctx, fence),
             objective_links: fence.keep(
-                objective_links::Entity::find()
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?,
+                sqlx::query_as::<_, objective_links::Model>("SELECT * FROM objective_links")
+                    .fetch_all(crate::db::pool(ctx))
+                    .await?,
             ),
-            risks: live!(risks, &ctx.db, fence),
-            reviews: live!(reviews, &ctx.db, fence),
+            risks: live!(risks, ctx, fence),
+            reviews: live!(reviews, ctx, fence),
         })
     }
 
@@ -353,15 +353,17 @@ async fn rank_by_inputs(
     limit: usize,
 ) -> Result<Response> {
     let pids: Vec<Uuid> = estate.plans.iter().take(RANK_CAP).map(|p| p.pid).collect();
+    // The pids bound as one array.
     let by_plan: std::collections::HashMap<Uuid, crate::models::_entities::scoring_inputs::Model> =
-        crate::models::_entities::scoring_inputs::Entity::find()
-            .filter(crate::models::_entities::scoring_inputs::Column::PlanPid.is_in(pids))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|r| (r.plan_pid, r))
-            .collect();
+        sqlx::query_as::<_, crate::models::_entities::scoring_inputs::Model>(
+            "SELECT * FROM scoring_inputs WHERE plan_pid = ANY($1)",
+        )
+        .bind(pids)
+        .fetch_all(crate::db::pool(ctx))
+        .await?
+        .into_iter()
+        .map(|r| (r.plan_pid, r))
+        .collect();
     let mut scored: Vec<(Option<f64>, serde_json::Value)> = estate
         .plans
         .iter()
@@ -416,7 +418,7 @@ async fn lifecycle(
     let stall = stall_days();
     let mut items: Vec<life_rules::PhaseItem> = Vec::new();
 
-    for idea in live!(ideas, &ctx.db, fence) {
+    for idea in live!(ideas, &ctx, fence) {
         if idea.status == "open" {
             items.push(life_rules::PhaseItem {
                 phase: "idea".to_string(),
@@ -424,7 +426,7 @@ async fn lifecycle(
             });
         }
     }
-    for proposal in live!(proposals, &ctx.db, fence) {
+    for proposal in live!(proposals, &ctx, fence) {
         if matches!(
             proposal.status.as_str(),
             "draft" | "submitted" | "in_review"
@@ -435,13 +437,7 @@ async fn lifecycle(
             });
         }
     }
-    let plan_rows = fence.keep(
-        plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?,
-    );
+    let plan_rows = live!(plans, &ctx, fence);
     for plan in &plan_rows {
         items.push(life_rules::PhaseItem {
             phase: life_rules::phase_of_plan(plan.stage.as_deref(), plan.active).to_string(),
@@ -469,29 +465,28 @@ async fn plan_lifecycle(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let plan_risks = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(plan.pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let plan_tasks = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let plan_risks: Vec<risks::Model> =
+        sqlx::query_as("SELECT * FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
+    let plan_tasks: Vec<tasks::Model> =
+        sqlx::query_as("SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let plan_reviews =
         crate::models::capabilities::reviews_for_subject(&ctx, "plan", plan.pid).await?;
     let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
-    let overdue = scheduled_actions::Entity::find()
-        .filter(scheduled_actions::Column::SubjectPid.eq(plan.pid))
-        .filter(scheduled_actions::Column::Status.eq("pending"))
-        .filter(scheduled_actions::Column::DueAt.lte(now))
-        .filter(scheduled_actions::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Only how many are overdue is read.
+    let overdue: Vec<i32> = sqlx::query_scalar(
+        "SELECT id FROM scheduled_actions WHERE subject_pid = $1 AND status = 'pending' AND due_at <= $2 \
+         AND deleted_at IS NULL",
+    )
+    .bind(plan.pid)
+    .bind(now)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let facts = life_rules::ReadinessFacts {
         stage: plan.stage.clone(),
         severe_open_risks: plan_risks

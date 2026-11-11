@@ -14,19 +14,18 @@
 //! **Not signed.** Signing needs a named signer (a person or a service key) and
 //! a key policy; that decision is open (see the repo `plan.md`).
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axum::http::header;
 use axum::response::IntoResponse;
 use chrono::{DateTime, Utc};
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use serde_json::Value;
 
 use super::discussion::resolve_subject;
 use crate::artifacts::content_disposition;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{milestones, plans, risks, tasks};
+use crate::models::_entities::{milestones, plans};
 use crate::pdf;
 
 /// `?as_of=` — the stamp the document carries.
@@ -168,38 +167,35 @@ async fn plan_summary_pdf(
 ) -> Result<axum::response::Response> {
     let as_of = stamp(p.as_of.as_deref())?;
     let subject = resolve_subject(&ctx, &caller, "plan", &pid).await?;
-    let row = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(subject.pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: plans::Model =
+        sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(subject.pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     let masked = crate::privacy::mask_plan(&row.to_plan()?);
-    let task_rows = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(row.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Only the statuses are read (counted per status; the order does not matter).
+    let task_statuses: Vec<String> =
+        sqlx::query_scalar("SELECT status FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(row.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut by_status: std::collections::BTreeMap<String, usize> =
         std::collections::BTreeMap::new();
-    for t in &task_rows {
-        *by_status.entry(t.status.clone()).or_default() += 1;
+    for status in &task_statuses {
+        *by_status.entry(status.clone()).or_default() += 1;
     }
-    let ms = milestones::Entity::find()
-        .filter(milestones::Column::PlanPid.eq(row.pid))
-        .filter(milestones::Column::DeletedAt.is_null())
-        .order_by_asc(milestones::Column::Due)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let open_risks = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(row.pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let ms: Vec<milestones::Model> = sqlx::query_as(
+        "SELECT * FROM milestones WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY due",
+    )
+    .bind(row.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let open_risks: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(row.pid)
+            .fetch_one(crate::db::pool(&ctx))
+            .await?;
     let plan_json = serde_json::to_value(&masked).unwrap_or_default();
     let field = |k: &str| scalar(&plan_json[k]);
     let mut lines = vec![
@@ -227,7 +223,7 @@ async fn plan_summary_pdf(
         lines.extend(masked.goals.iter().map(|g| format!("- {}", g.title)));
     }
     lines.push(String::new());
-    lines.push(format!("Tasks: {} total", task_rows.len()));
+    lines.push(format!("Tasks: {} total", task_statuses.len()));
     lines.extend(by_status.iter().map(|(s, n)| format!("  {s}: {n}")));
     lines.push(format!("Risks recorded: {open_risks}"));
     if !ms.is_empty() {

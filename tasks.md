@@ -2566,6 +2566,83 @@ came from grep.
   **Next batch, suggested:** `strategy` (141), the largest caller of `AuditModel::record` left (12 calls); or
   `visibility/milestones` (21), `scoring` (19), `prioritization` (18), `modules` (18) and `visibility/reports` (18), about
   95 lines.
+  **Progress 2026-11-11, batch 17 (not ticked).** The last controllers moved: `strategy` (141 lines naming SeaORM, now
+  none), `visibility/milestones` (21, none), `scoring` (19, none), `prioritization` (18, none), `modules` (17, none),
+  `visibility/reports` (17, none), `pdf` (14, none), `handling_marks` (11, none), `visibility/dashboard` (8, none),
+  `settings` (6, none), `compliance` (5, none), `subjects` (3, none) and `visibility/mod` (`find_any_item`, 3, none);
+  `models/visibility` (39) keeps 5, its `ActiveModelBehavior` impls, and `models/strategy` (6) is only those impls, both
+  for step (c). 317 lines gone, leaving 26 files and 272 lines by batch 6's measure: 24 by the count spec §8.3b keeps
+  (it leaves out `engineering/board` and `task_bulk`), and 23 that name the API, as the 4 in `src/task_bulk.rs` are its
+  own `Change::Set` too (they always were; it was counted among the 147). No file under
+  `src/controllers/` names the SeaORM API now but `controllers/mod.rs` (`db_err` and its test, which
+  `scheduled_jobs` still calls); the rest of what the grep finds there is `_entities` row types and `task_bulk`'s and
+  `engineering/board`'s own `Set`. `AuditModel::record` has 3 SeaORM calls left (`retention` 1, `scheduled_jobs` 2),
+  27 in 10 files before. `models::visibility`'s finders (`all_dependencies`, `find_dependency`, `find_milestone`,
+  `find_allocation`, `find_report`, `milestones_for`, `allocations_for`, `all_allocations`,
+  `all_allocations_with_proposed`, `all_allocations_with_placeholders`) take the context and read the pool, so their 22
+  callers (the board pack, insights, confidence, dependencies, allocations, leveling, portfolio resources, tolerances,
+  milestones and sign-offs among them) pass `&ctx` or `ctx` for `&ctx.db` and change nowhere else; they read the same
+  rows in the same order (an `ORDER BY` where there was one, none where there was none). `modules_in_force` takes the
+  context and returns sqlx's error, so `includes` and `task_get` pass it on with `?` (the same status); the module guard
+  still fails open. `settings::refresh` and `settings::spawn` take the context (`app.rs` and
+  `tests/today_time_zone.rs` changed at the call only). `db::Tx` gains `rollback`, so the subjects preview, which rolls
+  back its counts, still answers an error when the rollback fails, as `SeaORM`'s explicit rollback did. Every handler
+  here already wrote its rows and audit row in one transaction, so no write changed transaction; the subjects export
+  still writes its audit row on the pool after reading, and the erasure still sets `ppm.audit_pseudonymise` for its own
+  transaction only. Inserts list the columns SeaORM set (an idea, scenario, objective, objective link, benefit,
+  proposal from an idea, milestone, slip, report, scoring inputs, plan modules, handling mark); updates name the
+  columns SeaORM's did, by id, and still fail when no row comes back (a vote, a dismissal, a conversion, a scenario's
+  commit and rollback, a link's weight, a benefit's realisation with the note and status only when sent, a
+  milestone's move and completion with `done_reason` only when a reason is given and the first `done_at` kept, a
+  report's soft delete, every scoring input and who set them, a plan's module set, a handling mark and who set it).
+  The handling-mark answers and the hiding they drive are unchanged and still fail closed; the subjects SQL still names
+  only the fixed tables and columns of `subjects::COLUMNS`, binds every form, counts and changes the same columns and
+  deletes the same `OWN_ROWS`; the verifiers read the same rows (`ORDER BY updated_at DESC` and `ORDER BY id DESC`,
+  clamped `LIMIT`) and give the same counts; the Smart Score, WSJF and RICE, the generator and frontier, the scenario
+  evaluation, comparison and `inputs_read`, alignment and the benefit totals give the same numbers; the PDFs are the
+  same bytes for the same data and `as_of`. A throwaway check (not committed) dumped 1,713 answers and 17 tables (audit,
+  ideas, scenarios, objectives, objective links, benefits, proposals, milestones, slips, reports with their `filters`
+  type, scoring inputs, plan modules, handling marks, deployment settings, tasks, risks, allocations) plus every one of
+  the 132 personal-data columns of `subjects::COLUMNS`, for an administrator with `SECRET` clearance, an owner with
+  `OFFICIAL-SENSITIVE`, a member of a private plan, a writer who is a member of nothing and no token, under a
+  three-level marking scheme: marks set, raised, refused for clearance and for an unknown code, lowered, cleared and
+  read on public, private and marked plans; module sets chosen, changed, refused every way, preset and reset, the guard
+  on gated routes and `?include=` on a plan and a task; scoring inputs set, updated, refused and read, every model's
+  score, the Smart Score and lifecycle per plan and the ranked list by every model, limit and band; ideas captured,
+  refused, voted, dismissed and converted; objectives, links and relinks, alignment and item views; benefits declared,
+  refused, realised (overflow, other plan) and totalled; scenarios created (hidden and missing members), listed,
+  evaluated, compared, committed, refused, rolled back and committed again, generated and swept in two currencies;
+  milestones created, moved (with and without a reason), refused and completed twice; reports saved, run as JSON and CSV
+  grouped and not, and deleted; the dashboard (with its `304`), dependencies, capacity, board pack, executive and
+  financial views, flow, the portfolio map, schedules and confidence; both PDFs for every caller; the time zone set,
+  refused and reset; both verifiers at every limit; a person exported, pseudonymised (preview, applied, again),
+  misconfigured, and erased under `delete`; then 22 tables made unreadable in turn under 54 routes. Before and after:
+  the same, once pids, times and hashes were normalised and the generator's tied candidates (listed in pid order)
+  sorted; two runs before were the same.
+  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's in the log (the answers
+  were the same in the check above). Lists SeaORM bound one parameter each are bound as one array (`= ANY($1)`: a
+  scenario's named plans and proposals, the proposals behind a scenario's members, the ranked list's scoring inputs, a
+  grouped report's budget lines; empty is false, as SeaORM's empty `IN` was). Reads whose rows were used for a few
+  columns read only those (a scenario's plan and proposal checks and hidden members, a plan's module set, whether a
+  module set or objective link exists, a plan summary's task statuses, a plan's overdue actions); inserts whose row is
+  not used return nothing, and the updates of a conversion, a link, a mark, a report's delete and a module set return
+  only what is used.
+  **Found, not changed:** a vote and a benefit's realisation compute the new total from the row read before the
+  update (`votes = next`, `realized_minor = next`), so two at once lose one; an idea's conversion, a scenario's commit
+  and rollback and a milestone's completion check the status read before the update, so two at once can both pass (two
+  conversions make two proposals, the idea keeping the second); a handling mark's first set and an objective's first
+  link read before their transaction, so a second at once meets the unique index (`409`); `hidden_members` reads
+  deleted proposals too (as before; a deleted proposal promoted to a hidden plan stays hidden). `webhook_deliveries`
+  still passes `ctx.db` to `webhooks::deliver_with_retry`, which is the infrastructure batch's.
+  **Verified:** fmt, clippy (all targets, all features), 1,265 unit tests, the whole database suite (`mod`, 220 tests, one run, no failure; nothing listened on port 8001 before the run, and the 3 MiB upload test passed) and the 57 other database test binaries (85 tests, `keycloak_entra_broker` and `keycloak_guard` with the `keycloak` feature), on a throwaway database; the status, OpenAPI-bodies and llms checks.
+  **Still on SeaORM through other modules**, for these files: none.
+  **Next batch, suggested:** the infrastructure, the 23 files that still name the API: `models/behaviors` (116, `ActiveModelBehavior`
+  impls), `app.rs` (24), `models/webhook_deliveries` (17), `scheduled_jobs` (16, with the last `AuditModel::record`
+  calls but one and `controllers::db_err`'s only caller), `models/audit_logs` (16, `record` and its test), `tasks/search`
+  (9), `models/canvases` (8), `models/strategy` and `models/capabilities` (6 each), `retention` (5), `models/visibility`
+  and `models/governance` (5 each), `webhooks` (4), `controllers/mod.rs` (4), `flow_metrics` (3), and 2 or 1 in
+  `tasks/outbox_retry_failed`, `query_count`, `models/saved_views`, `models/plans`, `models/merge_records`, `relay`,
+  `idempotency` and `db.rs` (`src/task_bulk.rs` needs nothing).
 
 ## Correctness carried forward (CF-n)
 

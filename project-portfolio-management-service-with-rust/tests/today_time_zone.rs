@@ -95,7 +95,7 @@ async fn an_administrator_sets_the_zone_that_defines_today() {
             .execute_unprepared("DELETE FROM deployment_settings WHERE key = 'today_time_zone'")
             .await
             .unwrap();
-        project_portfolio_management::controllers::settings::refresh(&ctx.db).await.unwrap();
+        project_portfolio_management::controllers::settings::refresh(&ctx).await.unwrap();
 
         // Default: UTC, and it says so.
         let got = request.get(url).add_header(writer.0.clone(), writer.1.clone()).await;
@@ -135,7 +135,7 @@ async fn an_administrator_sets_the_zone_that_defines_today() {
 
         // Another instance that missed the change picks it up from the table on its next refresh.
         project_portfolio_management::tz::set_today_zone(chrono_tz::UTC);
-        project_portfolio_management::controllers::settings::refresh(&ctx.db).await.unwrap();
+        project_portfolio_management::controllers::settings::refresh(&ctx).await.unwrap();
         assert_eq!(project_portfolio_management::tz::today_zone(), honolulu);
 
         // Back to the default.
@@ -143,7 +143,7 @@ async fn an_administrator_sets_the_zone_that_defines_today() {
         r.assert_status_ok();
         let v: Value = r.json();
         assert_eq!((v["time_zone"].as_str(), v["source"].as_str()), (Some("UTC"), Some("default")));
-        project_portfolio_management::controllers::settings::refresh(&ctx.db).await.unwrap();
+        project_portfolio_management::controllers::settings::refresh(&ctx).await.unwrap();
         assert_eq!(project_portfolio_management::tz::today_zone(), chrono_tz::UTC);
     })
     .await;

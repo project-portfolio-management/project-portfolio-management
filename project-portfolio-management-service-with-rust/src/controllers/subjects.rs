@@ -8,11 +8,9 @@
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use sea_orm::{ConnectionTrait, DatabaseBackend, Statement, TransactionTrait, Value};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::audit_logs::Model as AuditModel;
@@ -37,13 +35,15 @@ fn allowed(caller: &MaybeAuthUser) -> bool {
     crate::auth::area_allows(caller, "subjects", authentication_verifier::Action::Write)
 }
 
-/// `$1, $2, …` placeholders and the matching values for the forms of a subject.
-fn in_list(forms: &[String]) -> (String, Vec<Value>) {
-    let marks: Vec<String> = (1..=forms.len()).map(|i| format!("${i}")).collect();
-    (
-        marks.join(", "),
-        forms.iter().map(|f| Value::from(f.clone())).collect(),
-    )
+/// Push `"<column>" IN ($n, $n+1, …)` onto `q`, one bound parameter per form of the subject. `column` is one of the
+/// fixed names in `subjects::COLUMNS`, checked by the caller.
+fn push_in_list(q: &mut sqlx::QueryBuilder<sqlx::Postgres>, column: &str, forms: &[String]) {
+    q.push(format!("\"{column}\" IN ("));
+    let mut list = q.separated(", ");
+    for form in forms {
+        list.push_bind(form.clone());
+    }
+    list.push_unseparated(")");
 }
 
 /// Whether a JSON key looks like a credential or a digest, which an export leaves out.
@@ -74,31 +74,27 @@ async fn export(
     if forms.is_empty() {
         return Err(unprocessable("the subject reference is empty"));
     }
-    let (marks, values) = in_list(&forms);
     let mut tables = Vec::new();
     let mut total: i64 = 0;
     for (table, column) in COLUMNS {
-        let sql = format!(
-            "SELECT row_to_json(t)::text AS j FROM \"{table}\" t WHERE \"{column}\" IN ({marks}) LIMIT {}",
-            EXPORT_ROWS_PER_TABLE + 1
-        );
-        let found = ctx
-            .db
-            .query_all_raw(Statement::from_sql_and_values(
-                DatabaseBackend::Postgres,
-                sql,
-                values.clone(),
-            ))
-            .await
-            .map_err(db_err)?;
+        // Only the fixed names in `subjects::COLUMNS` reach the SQL (CQ-12); every form is a bound parameter.
+        let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new(format!(
+            "SELECT row_to_json(t)::text AS j FROM \"{table}\" t WHERE "
+        ));
+        push_in_list(&mut q, column, &forms);
+        q.push(format!(" LIMIT {}", EXPORT_ROWS_PER_TABLE + 1));
+        let found: Vec<Option<String>> = q
+            .build_query_scalar()
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
         if found.is_empty() {
             continue;
         }
         let truncated = i64::try_from(found.len()).unwrap_or(0) > EXPORT_ROWS_PER_TABLE;
         let rows: Vec<serde_json::Value> = found
-            .iter()
+            .into_iter()
             .take(usize::try_from(EXPORT_ROWS_PER_TABLE).unwrap_or(1000))
-            .filter_map(|r| r.try_get::<String>("", "j").ok())
+            .flatten()
             .filter_map(|j| serde_json::from_str(&j).ok())
             .map(clean)
             .collect();
@@ -107,8 +103,8 @@ async fn export(
             "table": table, "column": column, "rows": rows, "truncated": truncated,
         }));
     }
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        crate::db::pool(&ctx),
         Uuid::nil(),
         "subject_exported",
         caller.actor(),
@@ -148,7 +144,7 @@ fn replacement_for(form: &str, pseudo: Uuid) -> String {
 
 /// Count (preview) or change (apply) the rows of one column that hold any form of the subject.
 async fn touch(
-    tx: &sea_orm::DatabaseTransaction,
+    tx: &mut crate::db::Tx,
     table: &str,
     column: &str,
     forms: &[String],
@@ -162,17 +158,15 @@ async fn touch(
     let mut n: u64 = 0;
     for form in forms {
         if apply {
-            let update =
-                format!("UPDATE \"{table}\" SET \"{column}\" = $2 WHERE \"{column}\" = $1");
-            n += tx
-                .execute_raw(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    update,
-                    vec![
-                        Value::from(form.clone()),
-                        Value::from(replacement_for(form, pseudo)),
-                    ],
-                ))
+            let mut update = sqlx::QueryBuilder::<sqlx::Postgres>::new(format!(
+                "UPDATE \"{table}\" SET \"{column}\" = "
+            ));
+            update.push_bind(replacement_for(form, pseudo));
+            update.push(format!(" WHERE \"{column}\" = "));
+            update.push_bind(form.clone());
+            n += update
+                .build()
+                .execute(tx.conn())
                 .await
                 .map_err(|error| {
                     // The database's own text stays in the log: it can name constraints and
@@ -188,20 +182,12 @@ async fn touch(
                 })?
                 .rows_affected();
         } else {
-            let count = format!("SELECT COUNT(*) AS n FROM \"{table}\" WHERE \"{column}\" = $1");
-            let row = tx
-                .query_one_raw(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    count,
-                    vec![Value::from(form.clone())],
-                ))
-                .await
-                .map_err(db_err)?;
-            n += u64::try_from(
-                row.and_then(|r| r.try_get::<i64>("", "n").ok())
-                    .unwrap_or(0),
-            )
-            .unwrap_or(0);
+            let mut count = sqlx::QueryBuilder::<sqlx::Postgres>::new(format!(
+                "SELECT COUNT(*) AS n FROM \"{table}\" WHERE \"{column}\" = "
+            ));
+            count.push_bind(form.clone());
+            let found: i64 = count.build_query_scalar().fetch_one(tx.conn()).await?;
+            n += u64::try_from(found).unwrap_or(0);
         }
     }
     Ok(n)
@@ -210,7 +196,7 @@ async fn touch(
 /// Count (preview) or delete (apply) the rows of one person-only column ([`rules::OWN_ROWS`]) that hold
 /// any form of the subject.
 async fn remove(
-    tx: &sea_orm::DatabaseTransaction,
+    tx: &mut crate::db::Tx,
     table: &str,
     column: &str,
     forms: &[String],
@@ -219,15 +205,13 @@ async fn remove(
     if !rules::is_plain_identifier(table) || !rules::is_plain_identifier(column) {
         return Err(Error::string("not a known table or column"));
     }
-    let (marks, values) = in_list(forms);
     if apply {
-        let sql = format!("DELETE FROM \"{table}\" WHERE \"{column}\" IN ({marks})");
-        return Ok(tx
-            .execute_raw(Statement::from_sql_and_values(
-                DatabaseBackend::Postgres,
-                sql,
-                values,
-            ))
+        let mut delete =
+            sqlx::QueryBuilder::<sqlx::Postgres>::new(format!("DELETE FROM \"{table}\" WHERE "));
+        push_in_list(&mut delete, column, forms);
+        return Ok(delete
+            .build()
+            .execute(tx.conn())
             .await
             .map_err(|error| {
                 tracing::error!(table, column, %error, "erasure delete refused");
@@ -241,20 +225,12 @@ async fn remove(
             })?
             .rows_affected());
     }
-    let sql = format!("SELECT COUNT(*) AS n FROM \"{table}\" WHERE \"{column}\" IN ({marks})");
-    let row = tx
-        .query_one_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            sql,
-            values,
-        ))
-        .await
-        .map_err(db_err)?;
-    Ok(u64::try_from(
-        row.and_then(|r| r.try_get::<i64>("", "n").ok())
-            .unwrap_or(0),
-    )
-    .unwrap_or(0))
+    let mut count = sqlx::QueryBuilder::<sqlx::Postgres>::new(format!(
+        "SELECT COUNT(*) AS n FROM \"{table}\" WHERE "
+    ));
+    push_in_list(&mut count, column, forms);
+    let found: i64 = count.build_query_scalar().fetch_one(tx.conn()).await?;
+    Ok(u64::try_from(found).unwrap_or(0))
 }
 
 /// Erase one subject under `policy`: a preview (counts only, rolled back) unless `apply`.
@@ -282,23 +258,23 @@ async fn erase_under(
         let salt = std::env::var(SALT_ENV).unwrap_or_default();
         rules::pseudonym(subject, &salt)
     };
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    tx.execute_unprepared("SELECT set_config('ppm.audit_pseudonymise', 'on', true)")
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(ctx).await?;
+    sqlx::query("SELECT set_config('ppm.audit_pseudonymise', 'on', true)")
+        .execute(tx.conn())
+        .await?;
     let mut changed = Vec::new();
     let mut deleted = Vec::new();
     let mut total: u64 = 0;
     for (table, column) in COLUMNS {
         if deleting && rules::OWN_ROWS.contains(&(*table, *column)) {
-            let n = remove(&tx, table, column, &forms, apply).await?;
+            let n = remove(&mut tx, table, column, &forms, apply).await?;
             if n > 0 {
                 total += n;
                 deleted.push(serde_json::json!({ "table": table, "column": column, "rows": n }));
             }
             continue;
         }
-        let n = touch(&tx, table, column, &forms, replacement, apply).await?;
+        let n = touch(&mut tx, table, column, &forms, replacement, apply).await?;
         if n > 0 {
             total += n;
             changed.push(serde_json::json!({ "table": table, "column": column, "rows": n }));
@@ -311,8 +287,8 @@ async fn erase_under(
         } else {
             serde_json::json!({ "pseudonym": replacement, "tables": changed.len(), "rows": total })
         };
-        AuditModel::record(
-            &tx,
+        AuditModel::record_on(
+            tx.conn(),
             Uuid::nil(),
             if deleting {
                 "subject_erased"
@@ -324,9 +300,9 @@ async fn erase_under(
         )
         .await
         .map_err(|e| Error::string(&e.to_string()))?;
-        tx.commit().await.map_err(db_err)?;
+        tx.commit().await?;
     } else {
-        tx.rollback().await.map_err(db_err)?;
+        tx.rollback().await?;
     }
     let mut out = serde_json::json!({
         "applied": apply,

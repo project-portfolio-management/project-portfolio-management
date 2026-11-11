@@ -12,7 +12,6 @@ use axum::http::StatusCode;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use super::governance::find_item;
 use super::plan_access::clearance_of;
 use crate::auth::MaybeAuthUser;
@@ -22,11 +21,12 @@ use crate::models::audit_logs::Model as AuditModel;
 
 /// The stored handling mark row for a plan, if one was ever set; None means the plan is at the scheme's lowest level.
 async fn current(ctx: &AppContext, plan: Uuid) -> Result<Option<marks::Model>> {
-    marks::Entity::find()
-        .filter(marks::Column::PlanPid.eq(plan))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(
+        sqlx::query_as("SELECT * FROM plan_handling_marks WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// JSON view of a plan's handling mark: the scheme levels, the stored mark (null when none) and the `effective` level the scheme resolves it to.
@@ -88,36 +88,41 @@ async fn put_mark(
             Error::CustomError(status, ErrorDetail::new("handling_mark", m))
         })?;
     let was = existing.as_ref().map(|r| r.mark.clone());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     match (existing, b.mark.as_deref()) {
         (Some(row), Some(new)) => {
-            let mut a: marks::ActiveModel = row.into();
-            a.mark = ActiveValue::set(new.to_string());
-            a.set_by = ActiveValue::set(caller.actor().map(str::to_string));
-            a.update(&txn).await.map_err(db_err)?;
+            // The two columns `SeaORM`'s update set, by id; no row back is an error, as before.
+            let _: i64 = sqlx::query_scalar(
+                "UPDATE plan_handling_marks SET mark = $1, set_by = $2 WHERE id = $3 RETURNING id",
+            )
+            .bind(new)
+            .bind(caller.actor())
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
         }
         (Some(row), None) => {
-            marks::Entity::delete_by_id(row.id)
-                .exec(&txn)
-                .await
-                .map_err(db_err)?;
+            // As `SeaORM`'s `delete_by_id`: no row deleted is not an error.
+            sqlx::query("DELETE FROM plan_handling_marks WHERE id = $1")
+                .bind(row.id)
+                .execute(tx.conn())
+                .await?;
         }
         (None, Some(new)) => {
-            marks::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan.pid),
-                mark: ActiveValue::set(new.to_string()),
-                set_by: ActiveValue::set(caller.actor().map(str::to_string)),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO plan_handling_marks (pid, plan_pid, mark, set_by) VALUES ($1, $2, $3, $4)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan.pid)
+            .bind(new)
+            .bind(caller.actor())
+            .execute(tx.conn())
+            .await?;
         }
         (None, None) => {}
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "handling_mark_set",
         caller.actor(),
@@ -125,7 +130,7 @@ async fn put_mark(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(plan.pid, b.mark.as_deref()))
 }
 

@@ -193,7 +193,7 @@ async fn readable_allocations(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
 ) -> Result<Vec<allocations::Model>> {
-    let rows = crate::models::visibility::all_allocations_with_placeholders(&ctx.db).await?;
+    let rows = crate::models::visibility::all_allocations_with_placeholders(ctx).await?;
     let mut pids: Vec<Uuid> = rows.iter().map(|a| a.plan_pid).collect();
     pids.sort();
     pids.dedup();

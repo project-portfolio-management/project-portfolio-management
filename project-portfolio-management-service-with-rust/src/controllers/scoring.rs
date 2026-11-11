@@ -13,7 +13,7 @@ use axum::http::HeaderMap;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::models::_entities::scoring_inputs;
 use crate::models::audit_logs::Model as AuditModel;
@@ -64,28 +64,55 @@ async fn put_inputs(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     rules::validate(&body).map_err(|p| unprocessable(&p.join("; ")))?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let existing = scoring_inputs::Entity::find()
-        .filter(scoring_inputs::Column::PlanPid.eq(plan.pid))
-        .one(&txn)
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let existing: Option<scoring_inputs::Model> =
+        sqlx::query_as("SELECT * FROM scoring_inputs WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan.pid)
+            .fetch_optional(tx.conn())
+            .await?;
     let before = existing.as_ref().map(inputs_of);
-    let who = caller.actor().map(str::to_string);
-    let row = if let Some(e) = existing {
-        let mut active: scoring_inputs::ActiveModel = e.into();
-        apply(&mut active, &body, who);
-        active.update(&txn).await.map_err(db_err)?
+    let who = caller.actor();
+    // Every input and who set them, as `SeaORM`'s update and insert did; the update by id, where no row back is
+    // an error, as before.
+    let row: scoring_inputs::Model = if let Some(e) = existing {
+        sqlx::query_as(
+            "UPDATE scoring_inputs SET business_value = $1, time_criticality = $2, risk_reduction = $3,
+                 job_size = $4, reach = $5, impact = $6, confidence_percent = $7, effort = $8, set_by = $9
+             WHERE id = $10 RETURNING *",
+        )
+        .bind(body.business_value)
+        .bind(body.time_criticality)
+        .bind(body.risk_reduction)
+        .bind(body.job_size)
+        .bind(body.reach)
+        .bind(body.impact)
+        .bind(body.confidence_percent)
+        .bind(body.effort)
+        .bind(who)
+        .bind(e.id)
+        .fetch_one(tx.conn())
+        .await?
     } else {
-        let mut active = scoring_inputs::ActiveModel {
-            plan_pid: ActiveValue::set(plan.pid),
-            ..Default::default()
-        };
-        apply(&mut active, &body, who);
-        active.insert(&txn).await.map_err(db_err)?
+        sqlx::query_as(
+            "INSERT INTO scoring_inputs (plan_pid, business_value, time_criticality, risk_reduction, job_size,
+                 reach, impact, confidence_percent, effort, set_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+        )
+        .bind(plan.pid)
+        .bind(body.business_value)
+        .bind(body.time_criticality)
+        .bind(body.risk_reduction)
+        .bind(body.job_size)
+        .bind(body.reach)
+        .bind(body.impact)
+        .bind(body.confidence_percent)
+        .bind(body.effort)
+        .bind(who)
+        .fetch_one(tx.conn())
+        .await?
     };
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "scoring_inputs_set",
         caller.actor(),
@@ -93,32 +120,19 @@ async fn put_inputs(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(view(plan.pid, Some(&row)))
-}
-
-/// Copy every scoring input onto the row being saved and record who set them.
-fn apply(row: &mut scoring_inputs::ActiveModel, inputs: &ModelInputs, who: Option<String>) {
-    row.business_value = ActiveValue::set(inputs.business_value);
-    row.time_criticality = ActiveValue::set(inputs.time_criticality);
-    row.risk_reduction = ActiveValue::set(inputs.risk_reduction);
-    row.job_size = ActiveValue::set(inputs.job_size);
-    row.reach = ActiveValue::set(inputs.reach);
-    row.impact = ActiveValue::set(inputs.impact);
-    row.confidence_percent = ActiveValue::set(inputs.confidence_percent);
-    row.effort = ActiveValue::set(inputs.effort);
-    row.set_by = ActiveValue::set(who);
 }
 
 /// `GET /api/plans/{pid}/scoring-inputs`.
 #[debug_handler]
 async fn get_inputs(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let row = scoring_inputs::Entity::find()
-        .filter(scoring_inputs::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let row: Option<scoring_inputs::Model> =
+        sqlx::query_as("SELECT * FROM scoring_inputs WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan.pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?;
     format::json(view(plan.pid, row.as_ref()))
 }
 
@@ -138,11 +152,11 @@ async fn plan_score(
     Query(q): Query<ScoreParams>,
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let row = scoring_inputs::Entity::find()
-        .filter(scoring_inputs::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let row: Option<scoring_inputs::Model> =
+        sqlx::query_as("SELECT * FROM scoring_inputs WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan.pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?;
     let inputs = row.as_ref().map(inputs_of).unwrap_or_default();
     let Some(score) = score_by_name(&q.model, &inputs) else {
         return Err(unprocessable(

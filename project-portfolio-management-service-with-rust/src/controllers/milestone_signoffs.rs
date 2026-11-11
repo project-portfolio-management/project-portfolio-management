@@ -127,7 +127,7 @@ pub(crate) struct Required_ {
 async fn the_milestone(ctx: &AppContext, pid: &str, m_pid: &str) -> Result<milestones::Model> {
     let plan = super::governance::find_item(ctx, pid).await?;
     let m_pid = super::parse_pid(m_pid)?;
-    let m = vis_models::find_milestone(&ctx.db, m_pid).await?;
+    let m = vis_models::find_milestone(ctx, m_pid).await?;
     if m.plan_pid == plan.pid {
         Ok(m)
     } else {

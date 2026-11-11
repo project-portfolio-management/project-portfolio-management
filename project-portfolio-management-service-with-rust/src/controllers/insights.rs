@@ -152,7 +152,7 @@ async fn executive_health(
     let risk_rows = live!(risks, "risks", &ctx, &scope);
     let budget_rows = live!(budget_lines, "budget_lines", &ctx, &scope);
     let milestone_rows = live!(milestones, "milestones", &ctx, &scope);
-    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
     let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
@@ -618,7 +618,7 @@ async fn technology_dependency_risk(
     let items = live!(plans, "plans", &ctx, &scope);
     let risk_rows = live!(risks, "risks", &ctx, &scope);
     let budget_rows = live!(budget_lines, "budget_lines", &ctx, &scope);
-    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
+    let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
     let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);

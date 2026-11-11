@@ -8,7 +8,6 @@
 //! pulls nothing operational at all (reason `masked`). An omitted name is
 //! *listed*, never silently missing.
 
-use super::db_err;
 use crate::prelude::*;
 use uuid::Uuid;
 
@@ -82,9 +81,7 @@ pub async fn build(
 )> {
     let mut included = serde_json::Map::new();
     let mut omitted = Vec::new();
-    let (modules, _) = super::modules::modules_in_force(&ctx.db, plan_pid)
-        .await
-        .map_err(db_err)?;
+    let (modules, _) = super::modules::modules_in_force(ctx, plan_pid).await?;
     for name in names {
         if masked {
             omitted.push(serde_json::json!({ "name": name, "reason": "masked" }));

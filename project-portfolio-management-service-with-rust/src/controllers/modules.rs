@@ -6,7 +6,7 @@
 //! gated route can forget it** — and it runs only for paths that belong to
 //! a module, so every other request pays nothing.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::BTreeSet;
 
 use crate::prelude::*;
@@ -14,26 +14,26 @@ use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response as AxumResponse};
-use sea_orm::DatabaseConnection;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::plan_modules;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::modules as rules;
 
 /// The plan's explicit module set, if it has chosen one.
 async fn explicit_modules(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     plan_pid: Uuid,
-) -> std::result::Result<Option<BTreeSet<String>>, sea_orm::DbErr> {
-    let row = plan_modules::Entity::find()
-        .filter(plan_modules::Column::PlanPid.eq(plan_pid))
-        .one(db)
-        .await?;
-    Ok(row.map(|r| {
-        serde_json::from_value::<Vec<String>>(r.modules)
+) -> std::result::Result<Option<BTreeSet<String>>, sqlx::Error> {
+    // Only the set is read.
+    let row: Option<serde_json::Value> =
+        sqlx::query_scalar("SELECT modules FROM plan_modules WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan_pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?;
+    Ok(row.map(|modules| {
+        serde_json::from_value::<Vec<String>>(modules)
             .unwrap_or_default()
             .into_iter()
             .collect()
@@ -42,10 +42,10 @@ async fn explicit_modules(
 
 /// The modules in force for a plan, and whether they are its own choice.
 pub(crate) async fn modules_in_force(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     plan_pid: Uuid,
-) -> std::result::Result<(BTreeSet<String>, bool), sea_orm::DbErr> {
-    let explicit = explicit_modules(db, plan_pid).await?;
+) -> std::result::Result<(BTreeSet<String>, bool), sqlx::Error> {
+    let explicit = explicit_modules(ctx, plan_pid).await?;
     let own = explicit.is_some();
     Ok((
         rules::effective(explicit.as_ref(), &rules::deployment_default()),
@@ -59,7 +59,7 @@ pub async fn modules_mw(State(ctx): State<AppContext>, req: Request, next: Next)
     let gated = rules::parse_plan_path(req.uri().path())
         .and_then(|(pid, seg)| rules::module_for_segment(seg).map(|m| (pid, seg.to_string(), m)));
     if let Some((plan_pid, segment, module)) = gated {
-        match modules_in_force(&ctx.db, plan_pid).await {
+        match modules_in_force(&ctx, plan_pid).await {
             Ok((modules, _)) if !rules::segment_enabled(&modules, &segment) => {
                 return super::problem(
                     StatusCode::NOT_FOUND,
@@ -81,7 +81,7 @@ pub async fn modules_mw(State(ctx): State<AppContext>, req: Request, next: Next)
 #[debug_handler]
 async fn get_modules(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let (modules, own) = modules_in_force(&ctx.db, plan.pid).await.map_err(db_err)?;
+    let (modules, own) = modules_in_force(&ctx, plan.pid).await?;
     format::json(view(plan.pid, &modules, own))
 }
 
@@ -123,42 +123,46 @@ pub(crate) async fn set_modules(
     new: Option<BTreeSet<String>>,
     actor: Option<&str>,
 ) -> Result<()> {
-    let before = explicit_modules(&ctx.db, plan_pid).await.map_err(db_err)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let before = explicit_modules(ctx, plan_pid).await?;
+    let mut tx = crate::db::begin(ctx).await?;
     match &new {
         Some(set) => {
             let value = serde_json::json!(set);
-            let existing = plan_modules::Entity::find()
-                .filter(plan_modules::Column::PlanPid.eq(plan_pid))
-                .one(&txn)
-                .await
-                .map_err(db_err)?;
-            if let Some(row) = existing {
-                let mut active: plan_modules::ActiveModel = row.into();
-                active.modules = ActiveValue::set(value);
-                active.update(&txn).await.map_err(db_err)?;
+            // Only the id is read.
+            let existing: Option<i64> =
+                sqlx::query_scalar("SELECT id FROM plan_modules WHERE plan_pid = $1 LIMIT 1")
+                    .bind(plan_pid)
+                    .fetch_optional(tx.conn())
+                    .await?;
+            if let Some(id) = existing {
+                // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+                let _: i64 = sqlx::query_scalar(
+                    "UPDATE plan_modules SET modules = $1 WHERE id = $2 RETURNING id",
+                )
+                .bind(&value)
+                .bind(id)
+                .fetch_one(tx.conn())
+                .await?;
             } else {
-                plan_modules::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    plan_pid: ActiveValue::set(plan_pid),
-                    modules: ActiveValue::set(value),
-                    ..Default::default()
-                }
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
+                sqlx::query(
+                    "INSERT INTO plan_modules (pid, plan_pid, modules) VALUES ($1, $2, $3)",
+                )
+                .bind(Uuid::new_v4())
+                .bind(plan_pid)
+                .bind(&value)
+                .execute(tx.conn())
+                .await?;
             }
         }
         None => {
-            plan_modules::Entity::delete_many()
-                .filter(plan_modules::Column::PlanPid.eq(plan_pid))
-                .exec(&txn)
-                .await
-                .map_err(db_err)?;
+            sqlx::query("DELETE FROM plan_modules WHERE plan_pid = $1")
+                .bind(plan_pid)
+                .execute(tx.conn())
+                .await?;
         }
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan_pid,
         "plan_modules_changed",
         actor,
@@ -166,7 +170,7 @@ pub(crate) async fn set_modules(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     Ok(())
 }
 
@@ -203,7 +207,7 @@ async fn put_modules(
         None
     };
     set_modules(&ctx, plan.pid, new, caller.actor()).await?;
-    let (modules, own) = modules_in_force(&ctx.db, plan.pid).await.map_err(db_err)?;
+    let (modules, own) = modules_in_force(&ctx, plan.pid).await?;
     format::json(view(plan.pid, &modules, own))
 }
 

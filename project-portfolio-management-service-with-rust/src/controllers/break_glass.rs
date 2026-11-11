@@ -10,16 +10,12 @@ use super::refuse;
 use crate::prelude::*;
 use axum::http::StatusCode;
 use chrono::Utc;
-use sea_orm::{PaginatorTrait, QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use crate::auth::MaybeAuthUser;
 use crate::break_glass as rules;
-use crate::models::_entities::{
-    break_glass_grants as grants, plan_access_settings as plan_access, plans,
-};
+use crate::models::_entities::{break_glass_grants as grants, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The JSON shape for one grant, including whether it is still live (unexpired and not revoked) at `now`.
@@ -56,19 +52,18 @@ async fn preconditions(
 ) -> Result<plans::Model> {
     // The same answer for "no such plan" and "a plan you could not otherwise name" is not needed here:
     // an eligible person is told whether the plan exists, but only that, never what is in it.
-    let plan = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(plan_pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let private = plan_access::Entity::find()
-        .filter(plan_access::Column::PlanPid.eq(plan.pid))
-        .filter(plan_access::Column::Private.eq(true))
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let plan: plans::Model =
+        sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(plan_pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
+    let private = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plan_access_settings WHERE plan_pid = $1 AND private = true",
+    )
+    .bind(plan.pid)
+    .fetch_one(crate::db::pool(ctx))
+    .await?
         > 0;
     if !private {
         return Err(refuse(
@@ -77,27 +72,30 @@ async fn preconditions(
             "that plan is not private: there is nothing to open",
         ));
     }
-    let recent = grants::Entity::find()
-        .filter(grants::Column::Sub.eq(sub))
-        .filter(grants::Column::CreatedAt.gt(now - chrono::Duration::days(1)))
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if recent >= rules::MAX_PER_DAY {
+    let recent: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM break_glass_grants WHERE sub = $1 AND created_at > $2",
+    )
+    .bind(sub)
+    .bind(now - chrono::Duration::days(1))
+    .fetch_one(crate::db::pool(ctx))
+    .await?;
+    if u64::try_from(recent).unwrap_or(0) >= rules::MAX_PER_DAY {
         return Err(refuse(
             StatusCode::TOO_MANY_REQUESTS,
             "too_many_requests",
             "you have opened the most break-glass grants allowed in a day",
         ));
     }
-    let live = grants::Entity::find()
-        .filter(grants::Column::PlanPid.eq(plan.pid))
-        .filter(grants::Column::Sub.eq(sub))
-        .filter(grants::Column::RevokedAt.is_null())
-        .filter(grants::Column::ExpiresAt.gt(now))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let live: Option<grants::Model> = sqlx::query_as(
+        "SELECT * FROM break_glass_grants
+         WHERE plan_pid = $1 AND sub = $2 AND revoked_at IS NULL AND expires_at > $3
+         LIMIT 1",
+    )
+    .bind(plan.pid)
+    .bind(sub)
+    .bind(now)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     if let Some(g) = live {
         return Err(refuse(
             StatusCode::CONFLICT,
@@ -149,23 +147,23 @@ async fn open(
     let expires = rules::expires_at(now, b.minutes);
     let minutes = b.minutes.unwrap_or(rules::DEFAULT_MINUTES);
     // The grant and the notice stand or fall together.
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    let row = grants::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        sub: ActiveValue::set(sub.clone()),
-        reason: ActiveValue::set(b.reason.trim().to_string()),
-        notify_ref: ActiveValue::set(b.notify_ref.trim().to_string()),
-        expires_at: ActiveValue::set(expires.into()),
-        revoked_at: ActiveValue::set(None),
-        revoked_by: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&tx)
-    .await
-    .map_err(db_err)?;
-    let told = crate::models::capabilities::notify(
-        &tx,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: grants::Model = sqlx::query_as(
+        "INSERT INTO break_glass_grants
+             (pid, plan_pid, sub, reason, notify_ref, expires_at, revoked_at, revoked_by)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(&sub)
+    .bind(b.reason.trim())
+    .bind(b.notify_ref.trim())
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(expires))
+    .fetch_one(tx.conn())
+    .await?;
+    let told = crate::models::capabilities::notify_on(
+        &mut tx,
         &row.notify_ref,
         "plan",
         plan.pid,
@@ -174,15 +172,16 @@ async fn open(
     )
     .await?;
     if told.is_none() {
-        tx.rollback().await.map_err(db_err)?;
+        // Dropped without a commit, the transaction rolls back: no grant, no notice.
+        drop(tx);
         return Err(refuse(
             StatusCode::UNPROCESSABLE_ENTITY,
             "unprocessable_entity",
             "the person to notify has switched this notice off; choose someone who can be told",
         ));
     }
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "break_glass_opened",
         Some(&sub),
@@ -193,7 +192,7 @@ async fn open(
     )
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "pid": row.pid, "plan_pid": plan.pid, "expires_at": expires, "notified": true,
     }))
@@ -209,16 +208,15 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
             "sign in first",
         ));
     };
-    let mut find = grants::Entity::find();
+    let mut find = sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM break_glass_grants");
     if !super::plan_access::is_admin(caller.claims()) {
-        find = find.filter(grants::Column::Sub.eq(sub));
+        find.push(" WHERE sub = ").push_bind(sub);
     }
-    let rows = find
-        .order_by_desc(grants::Column::Id)
-        .limit(500)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    find.push(" ORDER BY id DESC LIMIT 500");
+    let rows: Vec<grants::Model> = find
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let now = Utc::now();
     format::json(serde_json::json!({
         "grants": rows.iter().map(|g| view(g, now)).collect::<Vec<_>>(),
@@ -241,12 +239,12 @@ async fn revoke(
         ));
     };
     let pid = super::parse_pid(&pid)?;
-    let row = grants::Entity::find()
-        .filter(grants::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: grants::Model =
+        sqlx::query_as("SELECT * FROM break_glass_grants WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     // Someone else's grant does not exist for you (unless you administer).
     if row.sub != sub && !super::plan_access::is_admin(caller.claims()) {
         return Err(Error::NotFound);
@@ -254,15 +252,20 @@ async fn revoke(
     if row.revoked_at.is_some() {
         return format::json(view(&row, Utc::now()));
     }
-    let mut a: grants::ActiveModel = row.into();
-    a.revoked_at = ActiveValue::set(Some(Utc::now().into()));
-    a.revoked_by = ActiveValue::set(Some(sub.clone()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "break_glass_revoked", Some(&sub), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    let row: grants::Model = sqlx::query_as(
+        "UPDATE break_glass_grants SET revoked_at = $1, revoked_by = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()))
+    .bind(&sub)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "break_glass_revoked", Some(&sub), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, Utc::now()))
 }
 

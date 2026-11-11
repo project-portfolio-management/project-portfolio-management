@@ -45,6 +45,55 @@ impl Model {
         serde_json::from_value(self.data.clone()).map_err(|e| ModelError::Any(e.into()))
     }
 
+    /// The `SeaORM` `update_data` on `sqlx`, for a caller that holds the plan row: in a transaction or on the
+    /// pool ([`crate::db::Session`]). The same columns, re-digested the same way; an update that finds no row is an
+    /// error, as `SeaORM`'s was.
+    ///
+    /// # Errors
+    ///
+    /// When serialization or the update fails.
+    pub async fn update_data_on(
+        &self,
+        db: &mut impl crate::db::Session,
+        pl: &MatchPlan,
+    ) -> Result<Model> {
+        let data = serde_json::to_value(pl).map_err(|e| Error::Model(ModelError::Any(e.into())))?;
+        let kind = kind_of(pl);
+        let parent_pid = parent_pid_of(pl);
+        let d = crate::compliance::record_integrity::digests(
+            &crate::compliance::record_integrity::RecordInput {
+                pid: self.pid,
+                name: &pl.name,
+                kind: kind.as_deref(),
+                parent_pid,
+                stage: self.stage.as_deref(),
+                data: &data,
+                active: self.active,
+                deleted_at_micros: self
+                    .deleted_at
+                    .as_ref()
+                    .map(chrono::DateTime::timestamp_micros),
+            },
+        );
+        Ok(sqlx::query_as(
+            "UPDATE plans
+             SET name = $1, kind = $2, data = $3, parent_pid = $4,
+                 content_hash = $5, content_hash_sha3 = $6, content_mac = $7
+             WHERE id = $8
+             RETURNING *",
+        )
+        .bind(&pl.name)
+        .bind(kind)
+        .bind(data)
+        .bind(parent_pid)
+        .bind(Some(d.sha256))
+        .bind(Some(d.sha3))
+        .bind(d.mac)
+        .bind(self.id)
+        .fetch_one(db.ex())
+        .await?)
+    }
+
     /// Insert a new plan, returning the created row.
     ///
     /// Generic over [`ConnectionTrait`] so the caller can pass either the

@@ -5,12 +5,9 @@
 //! sweep, so it lives here rather than being duplicated).
 
 use crate::prelude::*;
-use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect};
 use uuid::Uuid;
 
-use super::_entities::{
-    automation_runs, automations, notification_prefs, notifications, reviews, scheduled_actions,
-};
+use super::_entities::{automation_runs, automations, notifications, reviews, scheduled_actions};
 
 impl ActiveModelBehavior for reviews::ActiveModel {}
 impl ActiveModelBehavior for automations::ActiveModel {}
@@ -18,28 +15,34 @@ impl ActiveModelBehavior for automation_runs::ActiveModel {}
 impl ActiveModelBehavior for scheduled_actions::ActiveModel {}
 impl ActiveModelBehavior for notifications::ActiveModel {}
 
-/// Generate a `find_<x>` finder over an active (not soft-deleted) row.
-macro_rules! find_active {
-    ($fn_name:ident, $module:ident) => {
-        /// Find the active row by public id.
-        ///
-        /// # Errors
-        ///
-        /// [`Error::NotFound`] when absent or soft-deleted.
-        pub async fn $fn_name<C: ConnectionTrait>(db: &C, pid: Uuid) -> Result<$module::Model> {
-            $module::Entity::find()
-                .filter($module::Column::Pid.eq(pid))
-                .filter($module::Column::DeletedAt.is_null())
-                .one(db)
-                .await
-                .map_err(|e| Error::Model(ModelError::from(e)))?
-                .ok_or(Error::NotFound)
-        }
-    };
+/// Find the live automation by public id, on the pool.
+///
+/// # Errors
+///
+/// [`Error::NotFound`] when absent or soft-deleted.
+pub async fn find_automation(ctx: &AppContext, pid: Uuid) -> Result<automations::Model> {
+    sqlx::query_as("SELECT * FROM automations WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .ok_or(Error::NotFound)
 }
 
-find_active!(find_automation, automations);
-find_active!(find_scheduled_action, scheduled_actions);
+/// Find the live scheduled action by public id, on the pool.
+///
+/// # Errors
+///
+/// [`Error::NotFound`] when absent or soft-deleted.
+pub async fn find_scheduled_action(
+    ctx: &AppContext,
+    pid: Uuid,
+) -> Result<scheduled_actions::Model> {
+    sqlx::query_as("SELECT * FROM scheduled_actions WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .ok_or(Error::NotFound)
+}
 
 /// Find the live review by public id, on the pool.
 ///
@@ -94,81 +97,29 @@ pub async fn reviews_for_subject(
 /// # Errors
 ///
 /// Propagates database errors.
-pub async fn enabled_automations<C: ConnectionTrait>(
-    db: &C,
+pub async fn enabled_automations(
+    ctx: &AppContext,
     trigger_kind: &str,
 ) -> Result<Vec<automations::Model>> {
-    automations::Entity::find()
-        .filter(automations::Column::TriggerKind.eq(trigger_kind))
-        .filter(automations::Column::Enabled.eq(true))
-        .filter(automations::Column::DeletedAt.is_null())
-        .order_by_asc(automations::Column::Id)
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+    Ok(sqlx::query_as(
+        "SELECT * FROM automations
+         WHERE trigger_kind = $1 AND enabled = true AND deleted_at IS NULL
+         ORDER BY id",
+    )
+    .bind(trigger_kind)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
-/// The `SeaORM` form of [`notify_on`], for the callers not yet on `sqlx`: `break_glass` (inside its own `SeaORM`
-/// transaction, so the grant and its notice stand or fall together), `automation` and the exception-breach task.
-///
 /// Write one in-app notification, unless the recipient has switched that
 /// kind off (PL-5). In-app only — this service has no email or push
-/// transport, and does not pretend to.
+/// transport, and does not pretend to. On `sqlx`: in a transaction ([`crate::db::Tx`]) or on the pool
+/// ([`crate::db::pool`]), so a handler writes its notification beside its other writes.
 ///
 /// Returns `Ok(None)` when the recipient opted out: **suppression is a
 /// result, not an error**, so a caller can report it ("skipped") rather
 /// than log a failure. A recipient with no preference row — including every
 /// `organization:` reference — gets today's behaviour.
-///
-/// # Errors
-///
-/// Propagates database errors.
-pub async fn notify<C: ConnectionTrait>(
-    db: &C,
-    recipient_ref: &str,
-    subject_kind: &str,
-    subject_pid: Uuid,
-    kind: &str,
-    message: &str,
-) -> Result<Option<notifications::Model>> {
-    if let Some(sub) = crate::notification_prefs::recipient_sub(recipient_ref) {
-        let opted_out = notification_prefs::Entity::find()
-            .filter(notification_prefs::Column::Sub.eq(sub))
-            .filter(notification_prefs::Column::Kind.eq(kind))
-            .filter(
-                notification_prefs::Column::Channel.eq(crate::notification_prefs::DEFAULT_CHANNEL),
-            )
-            .filter(notification_prefs::Column::Enabled.eq(false))
-            .one(db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?
-            .is_some();
-        if opted_out {
-            return Ok(None);
-        }
-    }
-    let row = notifications::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        recipient_ref: ActiveValue::set(recipient_ref.to_string()),
-        subject_kind: ActiveValue::set(subject_kind.to_string()),
-        subject_pid: ActiveValue::set(subject_pid),
-        kind: ActiveValue::set(kind.to_string()),
-        message: ActiveValue::set(message.to_string()),
-        read_at: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    // LT-6 / RM-11: enqueue this person's sink deliveries. Best-effort and
-    // outside the notification's own success: it never fails the write.
-    crate::controllers::sinks::enqueue(db, &row).await;
-    Ok(Some(row))
-}
-
-/// [`notify`] on `sqlx`: in a transaction ([`crate::db::Tx`]) or on the pool ([`crate::db::pool`]), so a handler
-/// moved to `sqlx` writes its notification beside its other writes. The same statements, in the same order.
 ///
 /// # Errors
 ///
@@ -225,8 +176,8 @@ pub async fn notify_on(
 /// # Errors
 ///
 /// Propagates database errors.
-pub async fn record_run<C: ConnectionTrait>(
-    db: &C,
+pub async fn record_run_on(
+    db: &mut impl crate::db::Session,
     automation_pid: Uuid,
     subject_kind: &str,
     subject_pid: Uuid,
@@ -234,19 +185,21 @@ pub async fn record_run<C: ConnectionTrait>(
     outcome: &str,
     detail: serde_json::Value,
 ) -> Result<automation_runs::Model> {
-    automation_runs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        automation_pid: ActiveValue::set(automation_pid),
-        subject_kind: ActiveValue::set(subject_kind.to_string()),
-        subject_pid: ActiveValue::set(subject_pid),
-        action_index: ActiveValue::set(action_index),
-        outcome: ActiveValue::set(outcome.to_string()),
-        detail: ActiveValue::set(detail),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))
+    Ok(sqlx::query_as(
+        "INSERT INTO automation_runs
+             (pid, automation_pid, subject_kind, subject_pid, action_index, outcome, detail)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(automation_pid)
+    .bind(subject_kind)
+    .bind(subject_pid)
+    .bind(action_index)
+    .bind(outcome)
+    .bind(detail)
+    .fetch_one(db.ex())
+    .await?)
 }
 
 /// One deadline to hold until it comes due.
@@ -274,8 +227,8 @@ pub struct NewScheduledAction {
 /// # Errors
 ///
 /// Propagates database errors.
-pub async fn schedule<C: ConnectionTrait>(
-    db: &C,
+pub async fn schedule_on(
+    db: &mut impl crate::db::Session,
     new: NewScheduledAction,
 ) -> Result<scheduled_actions::Model> {
     let NewScheduledAction {
@@ -287,24 +240,23 @@ pub async fn schedule<C: ConnectionTrait>(
         source_automation_pid,
         created_by,
     } = new;
-    scheduled_actions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set(subject_kind),
-        subject_pid: ActiveValue::set(subject_pid),
-        action_kind: ActiveValue::set(action_kind),
-        payload: ActiveValue::set(payload),
-        due_at: ActiveValue::set(due_at),
-        status: ActiveValue::set("pending".to_string()),
-        source_automation_pid: ActiveValue::set(source_automation_pid),
-        created_by: ActiveValue::set(created_by),
-        fired_at: ActiveValue::set(None),
-        outcome: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))
+    Ok(sqlx::query_as(
+        "INSERT INTO scheduled_actions
+             (pid, subject_kind, subject_pid, action_kind, payload, due_at, status,
+              source_automation_pid, created_by, fired_at, outcome, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, NULL, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(subject_kind)
+    .bind(subject_pid)
+    .bind(action_kind)
+    .bind(payload)
+    .bind(due_at)
+    .bind(source_automation_pid)
+    .bind(created_by)
+    .fetch_one(db.ex())
+    .await?)
 }
 
 /// The pending scheduled actions due at or before `now`, oldest
@@ -313,18 +265,19 @@ pub async fn schedule<C: ConnectionTrait>(
 /// # Errors
 ///
 /// Propagates database errors.
-pub async fn due_actions<C: ConnectionTrait>(
-    db: &C,
+pub async fn due_actions(
+    ctx: &AppContext,
     now: chrono::DateTime<chrono::FixedOffset>,
     cap: u64,
 ) -> Result<Vec<scheduled_actions::Model>> {
-    scheduled_actions::Entity::find()
-        .filter(scheduled_actions::Column::Status.eq("pending"))
-        .filter(scheduled_actions::Column::DueAt.lte(now))
-        .filter(scheduled_actions::Column::DeletedAt.is_null())
-        .order_by_asc(scheduled_actions::Column::DueAt)
-        .limit(cap)
-        .all(db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))
+    Ok(sqlx::query_as(
+        "SELECT * FROM scheduled_actions
+         WHERE status = 'pending' AND due_at <= $1 AND deleted_at IS NULL
+         ORDER BY due_at
+         LIMIT $2",
+    )
+    .bind(now)
+    .bind(i64::try_from(cap).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }

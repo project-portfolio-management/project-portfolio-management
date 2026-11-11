@@ -12,7 +12,6 @@
 
 use crate::prelude::*;
 use chrono::Utc;
-use sea_orm::QueryOrder;
 
 use crate::delivery_confidence as rules;
 use crate::models::_entities::delivery_exceptions as exceptions;
@@ -27,13 +26,14 @@ pub struct ExceptionBreaches;
 /// When a database statement fails.
 pub async fn run_once(ctx: &AppContext, now: chrono::DateTime<Utc>) -> Result<usize> {
     let window = rules::window_hours();
-    let open = exceptions::Entity::find()
-        .filter(exceptions::Column::Status.eq("open"))
-        .filter(exceptions::Column::BreachNotifiedAt.is_null())
-        .order_by_asc(exceptions::Column::OpenedAt)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::string(&e.to_string()))?;
+    let open: Vec<exceptions::Model> = sqlx::query_as(
+        "SELECT * FROM delivery_exceptions
+         WHERE status = 'open' AND breach_notified_at IS NULL
+         ORDER BY opened_at",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await
+    .map_err(|e| Error::string(&e.to_string()))?;
     let mut told = 0;
     for e in open {
         if !rules::breached(
@@ -51,8 +51,8 @@ pub async fn run_once(ctx: &AppContext, now: chrono::DateTime<Utc>) -> Result<us
         if let Some(r) = recipient {
             // A person who switched the notice off, or a reference that is not a person, is simply not
             // told; the breach still stands and still shows.
-            let _ = crate::models::capabilities::notify(
-                &ctx.db,
+            let _ = crate::models::capabilities::notify_on(
+                &mut crate::db::pool(ctx),
                 &r,
                 "plan",
                 e.plan_pid,
@@ -63,11 +63,15 @@ pub async fn run_once(ctx: &AppContext, now: chrono::DateTime<Utc>) -> Result<us
             )
             .await?;
         }
-        let mut a: exceptions::ActiveModel = e.into();
-        a.breach_notified_at = ActiveValue::set(Some(now.into()));
-        a.update(&ctx.db)
-            .await
-            .map_err(|e| Error::string(&e.to_string()))?;
+        // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE delivery_exceptions SET breach_notified_at = $1 WHERE id = $2 RETURNING id",
+        )
+        .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+        .bind(e.id)
+        .fetch_one(crate::db::pool(ctx))
+        .await
+        .map_err(|e| Error::string(&e.to_string()))?;
         told += 1;
     }
     Ok(told)

@@ -23,17 +23,18 @@
 //!   update and only acts when it won the claim, so two concurrent
 //!   sweeps cannot double-fire a deadline.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
-use sea_orm::{Condition, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::plan_access::is_none_of;
+use super::plan_access::push_none_of;
 use crate::auth::MaybeAuthUser;
 use crate::automation as rules;
 use crate::engineering::TASK_STATUSES;
-use crate::models::_entities::{plan_dependencies, plans, reviews, scheduled_actions, tasks};
+use crate::models::_entities::{
+    automation_runs, automations, milestones, plan_dependencies, plans, scheduled_actions, tasks,
+};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 use crate::validation::MAX_TEXT_LEN;
@@ -124,24 +125,24 @@ async fn create_automation(
         super::plan_access::require_readable(&ctx, &caller, plan).await?;
     }
     require_rule_scope(&ctx, &caller, payload.plan_pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = crate::models::_entities::automations::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(payload.plan_pid),
-        name: ActiveValue::set(payload.name.trim().to_string()),
-        trigger_kind: ActiveValue::set(payload.trigger_kind.clone()),
-        from_status: ActiveValue::set(payload.from_status.clone()),
-        to_status: ActiveValue::set(payload.to_status.clone()),
-        actions: ActiveValue::set(serde_json::Value::Array(payload.actions.clone())),
-        enabled: ActiveValue::set(true),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: automations::Model = sqlx::query_as(
+        "INSERT INTO automations
+             (pid, plan_pid, name, trigger_kind, from_status, to_status, actions, enabled, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, true, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(payload.plan_pid)
+    .bind(payload.name.trim())
+    .bind(payload.trigger_kind.as_str())
+    .bind(payload.from_status.as_deref())
+    .bind(payload.to_status.as_deref())
+    .bind(serde_json::Value::Array(payload.actions.clone()))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "automation_created",
         caller.actor(),
@@ -154,7 +155,7 @@ async fn create_automation(
         })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -187,36 +188,34 @@ async fn list_automations(
     caller: MaybeAuthUser,
     Query(params): Query<AutomationParams>,
 ) -> Result<Response> {
-    use crate::models::_entities::automations;
     let page = cursor.page(LIST_CAP)?;
     let (limit, offset) = (page.fetch(), page.offset());
-    let mut query = automations::Entity::find().filter(automations::Column::DeletedAt.is_null());
+    let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM automations WHERE deleted_at IS NULL",
+    );
     let hidden = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .plan_pids();
     if !hidden.is_empty() {
-        query = query.filter(
-            Condition::any()
-                .add(automations::Column::PlanPid.is_null())
-                .add(automations::Column::PlanPid.is_not_in(hidden)),
-        );
+        query
+            .push(" AND (plan_pid IS NULL OR plan_pid <> ALL(")
+            .push_bind(hidden)
+            .push("))");
     }
     if let Some(plan) = params.plan {
-        query = query.filter(automations::Column::PlanPid.eq(plan));
+        query.push(" AND plan_pid = ").push_bind(plan);
     }
-    if let Some(trigger) = params.trigger.as_deref() {
-        query = query.filter(automations::Column::TriggerKind.eq(trigger));
+    if let Some(trigger) = params.trigger {
+        query.push(" AND trigger_kind = ").push_bind(trigger);
     }
     if let Some(enabled) = params.enabled {
-        query = query.filter(automations::Column::Enabled.eq(enabled));
+        query.push(" AND enabled = ").push_bind(enabled);
     }
-    let rows = query
-        .order_by_asc(automations::Column::Id)
-        .offset(offset)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    push_page(&mut query, "id", limit, offset);
+    let rows: Vec<automations::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     Ok(page.respond(rows))
 }
 
@@ -227,23 +226,26 @@ async fn set_enabled(
     pid: &str,
     enabled: bool,
 ) -> Result<Response> {
-    let row =
-        cap_models::find_automation(&ctx.db, crate::models::governance::parse_pid(pid)?).await?;
+    let row = cap_models::find_automation(ctx, crate::models::governance::parse_pid(pid)?).await?;
     require_rule_scope(ctx, caller, row.plan_pid).await?;
     let row_pid = row.pid;
-    let mut active: crate::models::_entities::automations::ActiveModel = row.into();
-    active.enabled = ActiveValue::set(enabled);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
+    let mut tx = crate::db::begin(ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    let row: automations::Model =
+        sqlx::query_as("UPDATE automations SET enabled = $1 WHERE id = $2 RETURNING *")
+            .bind(enabled)
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
     let action = if enabled {
         "automation_enabled"
     } else {
         "automation_disabled"
     };
-    AuditModel::record(&txn, row_pid, action, caller.actor(), None)
+    AuditModel::record_on(tx.conn(), row_pid, action, caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -276,19 +278,46 @@ async fn delete_automation(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row =
-        cap_models::find_automation(&ctx.db, crate::models::governance::parse_pid(&pid)?).await?;
+        cap_models::find_automation(&ctx, crate::models::governance::parse_pid(&pid)?).await?;
     require_rule_scope(&ctx, &caller, row.plan_pid).await?;
     let row_pid = row.pid;
-    let mut active: crate::models::_entities::automations::ActiveModel = row.into();
-    active.enabled = ActiveValue::set(false);
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row_pid, "automation_deleted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    sqlx::query_scalar::<_, i32>(
+        "UPDATE automations SET enabled = false, deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(deleted_at)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "automation_deleted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
+}
+
+/// Order a list by `order` (a literal at every call, never input) and take one page of it.
+fn push_page(
+    query: &mut sqlx::QueryBuilder<sqlx::Postgres>,
+    order: &'static str,
+    limit: u64,
+    offset: u64,
+) {
+    query
+        .push(" ORDER BY ")
+        .push(order)
+        .push(" LIMIT ")
+        .push_bind(i64::try_from(limit).unwrap_or(i64::MAX))
+        .push(" OFFSET ")
+        .push_bind(i64::try_from(offset).unwrap_or(i64::MAX));
 }
 
 /// Everything that belongs to a plan hidden from `caller`.
@@ -326,33 +355,32 @@ async fn list_runs(
     caller: MaybeAuthUser,
     Query(params): Query<RunParams>,
 ) -> Result<Response> {
-    use crate::models::_entities::automation_runs;
     let page = cursor.page(LIST_CAP)?;
     let (limit, offset) = (page.fetch(), page.offset());
-    let mut query = automation_runs::Entity::find();
+    let mut query =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM automation_runs WHERE true");
     // A rule on every plan runs on hidden plans too, so the subject counts as well as the rule.
     let owned = hidden_pids(&ctx, &caller).await?;
     if !owned.is_empty() {
-        query = query
-            .filter(is_none_of("automation_pid", owned.iter().copied()))
-            .filter(is_none_of("subject_pid", owned));
+        query.push(" AND ");
+        push_none_of(&mut query, "automation_pid", owned.iter().copied());
+        query.push(" AND ");
+        push_none_of(&mut query, "subject_pid", owned);
     }
     if let Some(automation) = params.automation {
-        query = query.filter(automation_runs::Column::AutomationPid.eq(automation));
+        query.push(" AND automation_pid = ").push_bind(automation);
     }
     if let Some(subject) = params.subject {
-        query = query.filter(automation_runs::Column::SubjectPid.eq(subject));
+        query.push(" AND subject_pid = ").push_bind(subject);
     }
-    if let Some(outcome) = params.outcome.as_deref() {
-        query = query.filter(automation_runs::Column::Outcome.eq(outcome));
+    if let Some(outcome) = params.outcome {
+        query.push(" AND outcome = ").push_bind(outcome);
     }
-    let rows = query
-        .order_by_desc(automation_runs::Column::Id)
-        .offset(offset)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    push_page(&mut query, "id DESC", limit, offset);
+    let rows: Vec<automation_runs::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     Ok(page.respond(rows))
 }
 
@@ -390,12 +418,18 @@ async fn act_assign(
         );
     };
     let previous = task.assignee_ref.clone();
-    let mut active: tasks::ActiveModel = task.into();
-    active.assignee_ref = ActiveValue::set(Some(assignee.clone()));
-    match active.update(&ctx.db).await {
+    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    let updated = sqlx::query_scalar::<_, i32>(
+        "UPDATE tasks SET assignee_ref = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(&assignee)
+    .bind(task.id)
+    .fetch_one(crate::db::pool(ctx))
+    .await;
+    match updated {
         Ok(_) => {
-            cap_models::notify(
-                &ctx.db,
+            cap_models::notify_on(
+                &mut crate::db::pool(ctx),
                 &assignee,
                 "task",
                 subject_pid,
@@ -446,13 +480,20 @@ async fn act_set_task_status(
     }
     let from = task.status.clone();
     let first_done = task.done_at.is_none() && status == "done";
-    let mut active: tasks::ActiveModel = task.into();
-    active.status = ActiveValue::set(status.clone());
-    active.status_changed_at = ActiveValue::set(chrono::Utc::now().into());
-    if first_done {
-        active.done_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    }
-    match active.update(&ctx.db).await {
+    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    // `done_at` only on the first move to done, as before; `fetch_one`: an update that finds no row is an error.
+    let sql = if first_done {
+        "UPDATE tasks SET status = $1, status_changed_at = $2, done_at = $2 WHERE id = $3 RETURNING id"
+    } else {
+        "UPDATE tasks SET status = $1, status_changed_at = $2 WHERE id = $3 RETURNING id"
+    };
+    let updated = sqlx::query_scalar::<_, i32>(sql)
+        .bind(&status)
+        .bind(now)
+        .bind(task.id)
+        .fetch_one(crate::db::pool(ctx))
+        .await;
+    match updated {
         Ok(_) => ("applied", serde_json::json!({ "from": from, "to": status })),
         Err(e) => ("failed", serde_json::json!({ "reason": e.to_string() })),
     }
@@ -474,8 +515,8 @@ async fn act_notify(
     };
     let message = action_str(action_value, "message")
         .unwrap_or_else(|| format!("Automation `{rule_name}` fired"));
-    match cap_models::notify(
-        &ctx.db,
+    match cap_models::notify_on(
+        &mut crate::db::pool(ctx),
         &recipient,
         subject_kind,
         subject_pid,
@@ -513,8 +554,8 @@ async fn act_schedule(
         return ("failed", serde_json::json!({ "reason": "no in_days" }));
     };
     let due_at = chrono::Utc::now() + chrono::Duration::days(days);
-    match cap_models::schedule(
-        &ctx.db,
+    match cap_models::schedule_on(
+        &mut crate::db::pool(ctx),
         cap_models::NewScheduledAction {
             subject_kind: subject_kind.to_string(),
             subject_pid,
@@ -543,7 +584,7 @@ async fn act_schedule(
 /// than one per fact about the firing.
 struct FiringContext<'a> {
     /// The matched rule being applied.
-    rule: &'a crate::models::_entities::automations::Model,
+    rule: &'a automations::Model,
     /// The event that matched the rule, including the plan it happened in.
     fact: &'a rules::TriggerFact,
     /// Kind of the thing the rule acts on (for example `task`).
@@ -611,12 +652,10 @@ async fn apply_action(
 
 /// One live task by pid.
 async fn find_live_task(ctx: &AppContext, pid: Uuid) -> Result<tasks::Model> {
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM tasks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -624,12 +663,8 @@ async fn find_live_task(ctx: &AppContext, pid: Uuid) -> Result<tasks::Model> {
 /// de-duplicated (the tag convention in the entity spec §5.4).
 /// `Ok(false)` when the plan already carries it.
 async fn add_plan_label(ctx: &AppContext, plan_pid: Uuid, label: &str) -> Result<bool> {
-    let model = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(plan_pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let model = find_live_plan(ctx, plan_pid)
+        .await?
         .ok_or(Error::NotFound)?;
     let mut plan = model.to_plan().map_err(Error::Model)?;
     if plan
@@ -640,12 +675,20 @@ async fn add_plan_label(ctx: &AppContext, plan_pid: Uuid, label: &str) -> Result
         return Ok(false);
     }
     plan.tags.push(label.to_string());
-    let active: plans::ActiveModel = model.into();
-    active
-        .update_data(&ctx.db, &plan)
-        .await
-        .map_err(Error::Model)?;
+    model
+        .update_data_on(&mut crate::db::pool(ctx), &plan)
+        .await?;
     Ok(true)
+}
+
+/// One live plan by pid, `None` when there is none.
+async fn find_live_plan(ctx: &AppContext, pid: Uuid) -> Result<Option<plans::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
 }
 
 /// Every direct finish-start successor of `plan_pid`, with its own
@@ -654,20 +697,14 @@ async fn add_plan_label(ctx: &AppContext, plan_pid: Uuid, label: &str) -> Result
 /// declares; no pagination cap exists on `plan_dependencies` writes
 /// today, so this is not yet N+1-hardened the way `tba::load_board` is).
 async fn load_successors(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<rules::SuccessorFact>> {
-    let edges = plan_dependencies::Entity::find()
-        .filter(plan_dependencies::Column::PredecessorPid.eq(plan_pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let edges: Vec<plan_dependencies::Model> =
+        sqlx::query_as("SELECT * FROM plan_dependencies WHERE predecessor_pid = $1")
+            .bind(plan_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut out = Vec::with_capacity(edges.len());
     for edge in edges {
-        let Some(successor) = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(edge.successor_pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-        else {
+        let Some(successor) = find_live_plan(ctx, edge.successor_pid).await? else {
             // The successor was deleted since the edge was recorded;
             // skip it rather than propose a shift for a plan that no
             // longer exists.
@@ -735,8 +772,8 @@ async fn act_propose_reschedule(
         shifts.len(),
         (new_end - old_end).num_days(),
     );
-    match cap_models::notify(
-        &ctx.db,
+    match cap_models::notify_on(
+        &mut crate::db::pool(ctx),
         &recipient,
         "plan",
         fact.plan_pid,
@@ -796,12 +833,7 @@ async fn act_shift_dependents(
     let shifts = rules::propose_shifts(old_end, new_end, &successors);
     let mut moved = Vec::with_capacity(shifts.len());
     for shift in &shifts {
-        let Ok(Some(model)) = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(shift.successor_pid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(&ctx.db)
-            .await
-        else {
+        let Ok(Some(model)) = find_live_plan(ctx, shift.successor_pid).await else {
             continue;
         };
         let Ok(mut plan) = model.to_plan() else {
@@ -809,17 +841,16 @@ async fn act_shift_dependents(
         };
         plan.start_date = shift.proposed_start.map(|d| d.to_string());
         plan.target_date = shift.proposed_end.map(|d| d.to_string());
-        let active: plans::ActiveModel = model.into();
         // The shift, its run record and its audit row are one change: a shift that cannot be audited is not
         // made (the rule never blocks the action that triggered it, so it is skipped, and logged).
-        let Ok(txn) = ctx.db.begin().await else {
+        let Ok(mut tx) = crate::db::begin(ctx).await else {
             continue;
         };
-        if active.update_data(&txn, &plan).await.is_err() {
+        if model.update_data_on(&mut tx, &plan).await.is_err() {
             continue;
         }
-        cap_models::record_run(
-            &txn,
+        cap_models::record_run_on(
+            &mut tx,
             rule_pid,
             "plan",
             shift.successor_pid,
@@ -835,8 +866,8 @@ async fn act_shift_dependents(
         )
         .await
         .ok();
-        if let Err(error) = AuditModel::record(
-            &txn,
+        if let Err(error) = AuditModel::record_on(
+            tx.conn(),
             shift.successor_pid,
             "automation_shifted_dependent",
             actor,
@@ -847,7 +878,7 @@ async fn act_shift_dependents(
             let _ = super::audit_failed(error);
             continue;
         }
-        if txn.commit().await.is_err() {
+        if tx.commit().await.is_err() {
             continue;
         }
         moved.push(shift.successor_pid.to_string());
@@ -872,7 +903,7 @@ pub(crate) async fn fire(
     subject_pid: Uuid,
     actor: Option<&str>,
 ) {
-    let candidates = match cap_models::enabled_automations(&ctx.db, &fact.kind).await {
+    let candidates = match cap_models::enabled_automations(ctx, &fact.kind).await {
         Ok(rows) => rows,
         Err(err) => {
             tracing::warn!("automation lookup failed: {err}");
@@ -901,7 +932,7 @@ pub(crate) async fn fire(
 /// sweep row), not in what firing does once found.
 async fn apply_rule_actions(
     ctx: &AppContext,
-    rule: &crate::models::_entities::automations::Model,
+    rule: &automations::Model,
     fact: &rules::TriggerFact,
     subject_kind: &str,
     subject_pid: Uuid,
@@ -949,8 +980,8 @@ async fn apply_rule_actions(
     for (action_index, action) in actions.iter().enumerate() {
         let action_index = i32::try_from(action_index).unwrap_or(i32::MAX);
         let (outcome, detail) = apply_action(ctx, &firing, action, action_index).await;
-        if let Err(err) = cap_models::record_run(
-            &ctx.db,
+        if let Err(err) = cap_models::record_run_on(
+            &mut crate::db::pool(ctx),
             rule.pid,
             subject_kind,
             subject_pid,
@@ -962,8 +993,8 @@ async fn apply_rule_actions(
         {
             tracing::warn!("automation run log failed: {err}");
         }
-        AuditModel::record_or_log(
-            &ctx.db,
+        AuditModel::record_or_log_on(
+            crate::db::pool(ctx),
             subject_pid,
             "automation_fired",
             actor,
@@ -999,17 +1030,17 @@ async fn apply_rule_actions(
 ///
 /// Propagates a database error from the due-milestone query.
 pub async fn sweep_milestone_due(ctx: &AppContext) -> Result<(usize, usize, bool)> {
-    use crate::models::_entities::{automation_milestone_fires, milestones};
     let today = crate::tz::deployment_today();
-    let due = milestones::Entity::find()
-        .filter(milestones::Column::Due.lte(today))
-        .filter(milestones::Column::Done.eq(false))
-        .filter(milestones::Column::DeletedAt.is_null())
-        .order_by_asc(milestones::Column::Due)
-        .limit(SWEEP_CAP)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let due: Vec<milestones::Model> = sqlx::query_as(
+        "SELECT * FROM milestones
+         WHERE due <= $1 AND done = false AND deleted_at IS NULL
+         ORDER BY due
+         LIMIT $2",
+    )
+    .bind(today)
+    .bind(i64::try_from(SWEEP_CAP).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let capped = due.len() as u64 >= SWEEP_CAP;
     // A linked milestone whose tasks are all done is achieved, not overdue.
     let achieved = super::milestones::achieved_by_tasks(ctx, &due).await?;
@@ -1017,7 +1048,7 @@ pub async fn sweep_milestone_due(ctx: &AppContext) -> Result<(usize, usize, bool
         .into_iter()
         .filter(|m| !achieved.contains(&m.pid))
         .collect();
-    let candidates = cap_models::enabled_automations(&ctx.db, "milestone_due").await?;
+    let candidates = cap_models::enabled_automations(ctx, "milestone_due").await?;
     let (mut fired, mut already_claimed) = (0, 0);
     for milestone in &due {
         let fact = rules::TriggerFact {
@@ -1037,41 +1068,21 @@ pub async fn sweep_milestone_due(ctx: &AppContext) -> Result<(usize, usize, bool
             if !rules::rule_matches(&rule_fact, &fact) {
                 continue;
             }
-            // The claim: Postgres's `RETURNING` comes back with zero
-            // rows when `DO NOTHING` suppresses the insert, which
-            // `sea-orm`'s `exec_with_returning` surfaces as
-            // `Err(DbErr::RecordNotFound)` rather than an empty `Ok` —
-            // verified live against a real Postgres, not assumed (see
-            // the match arm below).
-            let claim = automation_milestone_fires::Entity::insert(
-                automation_milestone_fires::ActiveModel {
-                    automation_pid: ActiveValue::set(rule.pid),
-                    milestone_pid: ActiveValue::set(milestone.pid),
-                    ..Default::default()
-                },
+            // The claim: `DO NOTHING` suppresses the insert of a pair already claimed, and `RETURNING` then comes back
+            // with no row, which is exactly "already claimed", not a failure.
+            let claim = sqlx::query_scalar::<_, i32>(
+                "INSERT INTO automation_milestone_fires (automation_pid, milestone_pid)
+                 VALUES ($1, $2)
+                 ON CONFLICT (automation_pid, milestone_pid) DO NOTHING
+                 RETURNING id",
             )
-            .on_conflict(
-                sea_orm::sea_query::OnConflict::columns([
-                    automation_milestone_fires::Column::AutomationPid,
-                    automation_milestone_fires::Column::MilestonePid,
-                ])
-                .do_nothing()
-                .to_owned(),
-            )
-            .exec_with_returning(&ctx.db)
+            .bind(rule.pid)
+            .bind(milestone.pid)
+            .fetch_optional(crate::db::pool(ctx))
             .await;
             match claim {
-                Ok(_) => {}
-                // `Insert::exec_with_returning` on a single `ActiveModel`
-                // reports a `DO NOTHING`-suppressed conflict as
-                // `RecordNotFound` (verified live against Postgres, not
-                // assumed — `RecordNotInserted` is a *different* code
-                // path's error, `TryInsertResult::Conflicted`'s, which
-                // this call never goes through): `RETURNING` came back
-                // with zero rows because the conflicting row already
-                // existed, which is exactly "already claimed", not a
-                // failure.
-                Err(sea_orm::DbErr::RecordNotFound(_)) => {
+                Ok(Some(_)) => {}
+                Ok(None) => {
                     already_claimed += 1;
                     continue;
                 }
@@ -1164,9 +1175,9 @@ async fn create_scheduled_action(
     )
     .await?;
     let due_at = chrono::Utc::now() + chrono::Duration::days(payload.in_days);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = cap_models::schedule(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row = cap_models::schedule_on(
+        &mut tx,
         cap_models::NewScheduledAction {
             subject_kind: payload.subject_kind.clone(),
             subject_pid: payload.subject_pid,
@@ -1181,8 +1192,8 @@ async fn create_scheduled_action(
         },
     )
     .await?;
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "scheduled_action_created",
         caller.actor(),
@@ -1193,7 +1204,7 @@ async fn create_scheduled_action(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -1229,33 +1240,32 @@ async fn list_scheduled_actions(
 ) -> Result<Response> {
     let page = cursor.page(LIST_CAP)?;
     let (limit, offset) = (page.fetch(), page.offset());
-    let mut query =
-        scheduled_actions::Entity::find().filter(scheduled_actions::Column::DeletedAt.is_null());
+    let mut query = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM scheduled_actions WHERE deleted_at IS NULL",
+    );
     let owned = hidden_pids(&ctx, &caller).await?;
     if !owned.is_empty() {
-        query = query.filter(is_none_of("subject_pid", owned));
+        query.push(" AND ");
+        push_none_of(&mut query, "subject_pid", owned);
     }
-    if let Some(status) = params.status.as_deref() {
-        query = query.filter(scheduled_actions::Column::Status.eq(status));
+    if let Some(status) = params.status {
+        query.push(" AND status = ").push_bind(status);
     }
     if let Some(subject) = params.subject {
-        query = query.filter(scheduled_actions::Column::SubjectPid.eq(subject));
+        query.push(" AND subject_pid = ").push_bind(subject);
     }
     if params.overdue.unwrap_or(false) {
         let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
-        query = query
-            .filter(scheduled_actions::Column::Status.eq("pending"))
-            .filter(scheduled_actions::Column::DueAt.lte(now));
+        query
+            .push(" AND status = 'pending' AND due_at <= ")
+            .push_bind(now);
     }
-    let rows = query
-        .order_by_asc(scheduled_actions::Column::DueAt)
-        // A unique last key, so two actions due at the same instant keep their order between pages.
-        .order_by_asc(scheduled_actions::Column::Id)
-        .offset(offset)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // A unique last key, so two actions due at the same instant keep their order between pages.
+    push_page(&mut query, "due_at, id", limit, offset);
+    let rows: Vec<scheduled_actions::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     Ok(page.respond(rows))
 }
 
@@ -1267,9 +1277,8 @@ async fn cancel_scheduled_action(
     caller: MaybeAuthUser,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    let row =
-        cap_models::find_scheduled_action(&ctx.db, crate::models::governance::parse_pid(&pid)?)
-            .await?;
+    let row = cap_models::find_scheduled_action(&ctx, crate::models::governance::parse_pid(&pid)?)
+        .await?;
     if hidden_pids(&ctx, &caller).await?.contains(&row.subject_pid) {
         return Err(Error::NotFound);
     }
@@ -1280,13 +1289,18 @@ async fn cancel_scheduled_action(
         )));
     }
     let row_pid = row.pid;
-    let mut active: scheduled_actions::ActiveModel = row.into();
-    active.status = ActiveValue::set("cancelled".to_string());
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    sqlx::query_scalar::<_, i32>(
+        "UPDATE scheduled_actions SET status = 'cancelled', deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(deleted_at)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row_pid,
         "scheduled_action_cancelled",
         caller.actor(),
@@ -1294,7 +1308,7 @@ async fn cancel_scheduled_action(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -1311,41 +1325,32 @@ async fn cancel_scheduled_action(
 /// Propagates database errors from the due-row query.
 pub async fn sweep_due(ctx: &AppContext) -> Result<(usize, usize, bool)> {
     let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
-    let due = cap_models::due_actions(&ctx.db, now, SWEEP_CAP).await?;
+    let due = cap_models::due_actions(ctx, now, SWEEP_CAP).await?;
     let capped = due.len() as u64 >= SWEEP_CAP;
     let (mut fired, mut skipped) = (0, 0);
     for row in due {
         // Claim it: only the sweep that flips pending → fired acts.
-        let claimed = scheduled_actions::Entity::update_many()
-            .col_expr(
-                scheduled_actions::Column::Status,
-                sea_orm::sea_query::Expr::value("fired"),
-            )
-            .col_expr(
-                scheduled_actions::Column::FiredAt,
-                sea_orm::sea_query::Expr::value(now),
-            )
-            .filter(scheduled_actions::Column::Pid.eq(row.pid))
-            .filter(scheduled_actions::Column::Status.eq("pending"))
-            .exec(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        if claimed.rows_affected != 1 {
+        let claimed = sqlx::query(
+            "UPDATE scheduled_actions SET status = 'fired', fired_at = $1
+             WHERE pid = $2 AND status = 'pending'",
+        )
+        .bind(now)
+        .bind(row.pid)
+        .execute(crate::db::pool(ctx))
+        .await?;
+        if claimed.rows_affected() != 1 {
             skipped += 1;
             continue;
         }
         let outcome = perform_scheduled(ctx, &row).await;
-        scheduled_actions::Entity::update_many()
-            .col_expr(
-                scheduled_actions::Column::Outcome,
-                sea_orm::sea_query::Expr::value(outcome.clone()),
-            )
-            .filter(scheduled_actions::Column::Pid.eq(row.pid))
-            .exec(&ctx.db)
+        sqlx::query("UPDATE scheduled_actions SET outcome = $1 WHERE pid = $2")
+            .bind(&outcome)
+            .bind(row.pid)
+            .execute(crate::db::pool(ctx))
             .await
             .ok();
-        AuditModel::record_or_log(
-            &ctx.db,
+        AuditModel::record_or_log_on(
+            crate::db::pool(ctx),
             row.pid,
             "scheduled_action_fired",
             None,
@@ -1374,8 +1379,8 @@ async fn perform_scheduled(ctx: &AppContext, row: &scheduled_actions::Model) -> 
                 .and_then(serde_json::Value::as_str)
                 .unwrap_or("A scheduled reminder came due");
             match recipient {
-                Some(recipient) => match cap_models::notify(
-                    &ctx.db,
+                Some(recipient) => match cap_models::notify_on(
+                    &mut crate::db::pool(ctx),
                     recipient,
                     &row.subject_kind,
                     row.subject_pid,
@@ -1394,21 +1399,16 @@ async fn perform_scheduled(ctx: &AppContext, row: &scheduled_actions::Model) -> 
         "expire_review" => {
             // Expire only invitations still awaiting a verdict; a
             // submitted or declined review is left exactly as it is.
-            let expired = reviews::Entity::update_many()
-                .col_expr(
-                    reviews::Column::Status,
-                    sea_orm::sea_query::Expr::value("expired"),
-                )
-                .filter(reviews::Column::SubjectPid.eq(row.subject_pid))
-                .filter(
-                    reviews::Column::Status
-                        .is_in(crate::collaboration::LIVE_REVIEW_STATUSES.iter().copied()),
-                )
-                .filter(reviews::Column::DeletedAt.is_null())
-                .exec(&ctx.db)
-                .await;
+            let expired = sqlx::query(
+                "UPDATE reviews SET status = 'expired'
+                 WHERE subject_pid = $1 AND status = ANY($2) AND deleted_at IS NULL",
+            )
+            .bind(row.subject_pid)
+            .bind(crate::collaboration::LIVE_REVIEW_STATUSES.to_vec())
+            .execute(crate::db::pool(ctx))
+            .await;
             match expired {
-                Ok(result) => format!("expired {} review(s)", result.rows_affected),
+                Ok(result) => format!("expired {} review(s)", result.rows_affected()),
                 Err(e) => format!("failed: {e}"),
             }
         }

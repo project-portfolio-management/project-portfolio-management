@@ -3,7 +3,7 @@
 //! Mattermost, Discord, Telegram) or an email address. Pure rules and
 //! renderers in [`crate::sinks`].
 //!
-//! **Never in the notification's path.** `enqueue` only writes a delivery
+//! **Never in the notification's path.** `enqueue_on` only writes a delivery
 //! row; [`run_due`] (the ticker, an admin trigger, tests) sends it later with
 //! bounded retries and growing backoff, so a slow or dead destination can
 //! neither delay nor fail the notification. A failed delivery keeps its last
@@ -17,7 +17,7 @@
 //! body. A person's notification-channel preferences (`webhook` / `chat` /
 //! `email`) are honoured per kind.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::net::IpAddr;
 use std::time::Duration;
 
@@ -25,14 +25,11 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use chrono::Utc;
-use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::auth::AuthUser;
-use crate::models::_entities::{
-    notification_prefs, notification_sinks, notifications, sink_deliveries,
-};
+use crate::models::_entities::{notification_sinks, notifications, sink_deliveries};
 use crate::notification_prefs::recipient_sub;
 use crate::sinks::{self as rules, Note};
 
@@ -42,53 +39,8 @@ fn allow_loopback() -> bool {
 }
 
 /// Enqueue a delivery of `note` to each of its recipient's enabled sinks,
-/// honouring their per-channel preferences. Best-effort and **never an
-/// error**: the notification has already been written.
-pub(crate) async fn enqueue<C: ConnectionTrait>(db: &C, note: &notifications::Model) {
-    let Some(sub) = recipient_sub(&note.recipient_ref) else {
-        return;
-    };
-    let Ok(sinks) = notification_sinks::Entity::find()
-        .filter(notification_sinks::Column::Sub.eq(sub.as_str()))
-        .filter(notification_sinks::Column::Enabled.eq(true))
-        .filter(notification_sinks::Column::DeletedAt.is_null())
-        .all(db)
-        .await
-    else {
-        return;
-    };
-    for sink in sinks {
-        let channel = rules::channel_of(&sink.kind);
-        let opted_out = notification_prefs::Entity::find()
-            .filter(notification_prefs::Column::Sub.eq(sub.as_str()))
-            .filter(notification_prefs::Column::Kind.eq(note.kind.as_str()))
-            .filter(notification_prefs::Column::Channel.eq(channel))
-            .filter(notification_prefs::Column::Enabled.eq(false))
-            .one(db)
-            .await
-            .ok()
-            .flatten()
-            .is_some();
-        if opted_out {
-            continue;
-        }
-        let _ = sink_deliveries::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            sink_pid: ActiveValue::set(sink.pid),
-            notification_pid: ActiveValue::set(note.pid),
-            status: ActiveValue::set("pending".to_string()),
-            attempts: ActiveValue::set(0),
-            next_attempt_at: ActiveValue::set(Some(Utc::now().into())),
-            last_error: ActiveValue::set(None),
-            delivered_at: ActiveValue::set(None),
-            ..Default::default()
-        }
-        .insert(db)
-        .await;
-    }
-}
-
-/// [`enqueue`] on `sqlx` ([`crate::db::Session`]): the same statements, in the same order, and never an error.
+/// honouring their per-channel preferences, in a transaction or on the pool ([`crate::db::Session`]). Best-effort
+/// and **never an error**: the notification has already been written.
 pub(crate) async fn enqueue_on(db: &mut impl crate::db::Session, note: &notifications::Model) {
     let Some(sub) = recipient_sub(&note.recipient_ref) else {
         return;
@@ -239,28 +191,31 @@ pub struct Dispatched {
 /// Propagates database errors; a delivery's own failure is recorded on it.
 pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Dispatched> {
     let now = Utc::now();
-    let due = sink_deliveries::Entity::find()
-        .filter(sink_deliveries::Column::Status.eq("pending"))
-        .filter(sink_deliveries::Column::NextAttemptAt.lte(now))
-        .order_by_asc(sink_deliveries::Column::Id)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let due: Vec<sink_deliveries::Model> = sqlx::query_as(
+        "SELECT * FROM sink_deliveries
+         WHERE status = 'pending' AND next_attempt_at <= $1
+         ORDER BY id
+         LIMIT $2",
+    )
+    .bind(now)
+    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut out = Dispatched::default();
     for d in due {
-        let sink = notification_sinks::Entity::find()
-            .filter(notification_sinks::Column::Pid.eq(d.sink_pid))
-            .filter(notification_sinks::Column::DeletedAt.is_null())
-            .filter(notification_sinks::Column::Enabled.eq(true))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        let note_row = notifications::Entity::find()
-            .filter(notifications::Column::Pid.eq(d.notification_pid))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let sink: Option<notification_sinks::Model> = sqlx::query_as(
+            "SELECT * FROM notification_sinks
+             WHERE pid = $1 AND deleted_at IS NULL AND enabled = true
+             LIMIT 1",
+        )
+        .bind(d.sink_pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
+        let note_row: Option<notifications::Model> =
+            sqlx::query_as("SELECT * FROM notifications WHERE pid = $1 LIMIT 1")
+                .bind(d.notification_pid)
+                .fetch_optional(crate::db::pool(ctx))
+                .await?;
         let (Some(sink), Some(n)) = (sink, note_row) else {
             mark(ctx, d, "skipped", None, None, None).await?;
             out.skipped += 1;
@@ -312,18 +267,26 @@ async fn mark(
     error: Option<String>,
     next: Option<chrono::DateTime<Utc>>,
 ) -> Result<()> {
-    let mut a: sink_deliveries::ActiveModel = d.into();
-    a.status = ActiveValue::set(status.to_string());
+    // The columns `SeaORM`'s update named: `attempts` only when given, `delivered_at` only when sent.
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE sink_deliveries SET status = ");
+    q.push_bind(status);
     if let Some(n) = attempts {
-        a.attempts = ActiveValue::set(n);
+        q.push(", attempts = ").push_bind(n);
     }
-    a.last_error = ActiveValue::set(error);
-    a.next_attempt_at = ActiveValue::set(next.map(Into::into));
+    q.push(", last_error = ").push_bind(error);
+    q.push(", next_attempt_at = ")
+        .push_bind(next.map(chrono::DateTime::<chrono::FixedOffset>::from));
     if status == "sent" {
-        a.delivered_at = ActiveValue::set(Some(Utc::now().into()));
+        q.push(", delivered_at = ")
+            .push_bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()));
     }
-    a.updated_at = ActiveValue::set(Utc::now().into());
-    a.update(&ctx.db).await.map_err(db_err)?;
+    q.push(", updated_at = ")
+        .push_bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()));
+    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    q.push(" WHERE id = ").push_bind(d.id).push(" RETURNING id");
+    q.build_query_scalar::<i64>()
+        .fetch_one(crate::db::pool(ctx))
+        .await?;
     Ok(())
 }
 
@@ -397,31 +360,30 @@ async fn add_sink(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let held = notification_sinks::Entity::find()
-        .filter(notification_sinks::Column::Sub.eq(sub.as_str()))
-        .filter(notification_sinks::Column::DeletedAt.is_null())
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if held >= rules::MAX_PER_PERSON as u64 {
+    let held: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM notification_sinks WHERE sub = $1 AND deleted_at IS NULL",
+    )
+    .bind(sub.as_str())
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
+    if held >= i64::try_from(rules::MAX_PER_PERSON).unwrap_or(i64::MAX) {
         return Err(unprocessable(&format!(
             "at most {} sinks per person",
             rules::MAX_PER_PERSON
         )));
     }
-    let row = notification_sinks::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        sub: ActiveValue::set(sub),
-        kind: ActiveValue::set(b.kind.clone()),
-        destination: ActiveValue::set(b.destination.trim().to_string()),
-        settings: ActiveValue::set(settings),
-        enabled: ActiveValue::set(true),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)?;
+    let row: notification_sinks::Model = sqlx::query_as(
+        "INSERT INTO notification_sinks (pid, sub, kind, destination, settings, enabled, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, true, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(sub)
+    .bind(b.kind.as_str())
+    .bind(b.destination.trim())
+    .bind(settings)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     format::json(view(&row))
 }
 
@@ -429,27 +391,28 @@ async fn add_sink(
 #[debug_handler]
 async fn list_sinks(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Result<Response> {
     let sub = user_id(&claims.sub)?;
-    let rows = notification_sinks::Entity::find()
-        .filter(notification_sinks::Column::Sub.eq(sub))
-        .filter(notification_sinks::Column::DeletedAt.is_null())
-        .order_by_asc(notification_sinks::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<notification_sinks::Model> = sqlx::query_as(
+        "SELECT * FROM notification_sinks WHERE sub = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(sub)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(rows.iter().map(view).collect::<Vec<_>>())
 }
 
 /// Loads one of the caller's own live sinks; another user's sink is `NotFound`, not forbidden, so ids do not leak.
 async fn own_sink(ctx: &AppContext, sub: &str, pid: &str) -> Result<notification_sinks::Model> {
     let pid = super::parse_pid(pid)?;
-    notification_sinks::Entity::find()
-        .filter(notification_sinks::Column::Pid.eq(pid))
-        .filter(notification_sinks::Column::Sub.eq(sub))
-        .filter(notification_sinks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM notification_sinks
+         WHERE pid = $1 AND sub = $2 AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(pid)
+    .bind(sub)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
 /// `POST /api/me/notification-sinks/{pid}/delete` (and `DELETE`) — remove one
@@ -462,9 +425,14 @@ async fn delete_sink(
 ) -> Result<Response> {
     let sub = user_id(&claims.sub)?;
     let row = own_sink(&ctx, &sub, &pid).await?;
-    let mut a: notification_sinks::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    a.update(&ctx.db).await.map_err(db_err)?;
+    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE notification_sinks SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()))
+    .bind(row.id)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     format::empty_json()
 }
 
@@ -478,13 +446,12 @@ async fn sink_log(
 ) -> Result<Response> {
     let sub = user_id(&claims.sub)?;
     let sink = own_sink(&ctx, &sub, &pid).await?;
-    let rows = sink_deliveries::Entity::find()
-        .filter(sink_deliveries::Column::SinkPid.eq(sink.pid))
-        .order_by_desc(sink_deliveries::Column::Id)
-        .limit(50)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<sink_deliveries::Model> = sqlx::query_as(
+        "SELECT * FROM sink_deliveries WHERE sink_pid = $1 ORDER BY id DESC LIMIT 50",
+    )
+    .bind(sink.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(
         rows.iter()
             .map(|d| {

@@ -297,26 +297,9 @@ pub(crate) async fn require_readable_if_any(
     }
 }
 
-/// `column` is none of `pids`, as **one** bound value. [`HiddenScope::owned_pids`] can run past the 65,535 bind parameters
-/// Postgres allows, which `is_not_in` would turn into a failed query. The `SeaORM` form, for `automation`, the last caller
-/// not yet on `sqlx`; [`push_none_of`] is the same condition on a `sqlx` query.
-pub(crate) fn is_none_of(
-    column: &str,
-    pids: impl IntoIterator<Item = Uuid>,
-) -> sea_orm::sea_query::SimpleExpr {
-    let list = pids
-        .into_iter()
-        .map(|p| p.to_string())
-        .collect::<Vec<_>>()
-        .join(",");
-    sea_orm::sea_query::Expr::cust_with_values(
-        format!("{column} <> ALL($1::text::uuid[])"),
-        [format!("{{{list}}}")],
-    )
-}
-
-/// [`is_none_of`] on a `sqlx` query: pushes `{column} <> ALL($n::uuid[])` with the pids bound as one array. `column` is a
-/// literal at every call, never input.
+/// `column` is none of `pids`, as **one** bound value: pushes `{column} <> ALL($n::uuid[])` with the pids bound as one
+/// array. [`HiddenScope::owned_pids`] can run past the 65,535 bind parameters Postgres allows, which one parameter per
+/// pid (`NOT IN (…)`) would turn into a failed query. `column` is a literal at every call, never input.
 pub(crate) fn push_none_of(
     q: &mut sqlx::QueryBuilder<sqlx::Postgres>,
     column: &'static str,

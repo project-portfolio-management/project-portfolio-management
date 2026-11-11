@@ -2235,6 +2235,66 @@ came from grep.
   **Next batch, suggested:** `automation` (98), after which `is_none_of`, the SeaORM `notify` (but for `break_glass`)
   and `capabilities`' remaining finders can go; or `break_glass` with `sinks` (62), after which `notify` and
   `enqueue` can go once `automation` and the exception-breach task call `notify_on`.
+  **Progress 2026-11-11, batch 12 (not ticked).** Automation and the last SeaORM `notify` and `enqueue` callers moved:
+  `automation` (92 lines naming SeaORM, now none), `break_glass` (32, none), `sinks` (61, none) and
+  `tasks/exception_breaches` (7, none), with what they reached SeaORM through: `models/capabilities` (61, now 6, its
+  five `ActiveModelBehavior` impls, left for step (c)) and `plan_access` (2, now none). 249 lines gone, leaving 61 files
+  and 1,672 lines by batch 6's measure (59 by name). Gone, once nothing called them: the SeaORM
+  `capabilities::notify`, `sinks::enqueue`, `plan_access::is_none_of`, and the finders and writers only `automation`
+  used; `find_automation`, `find_scheduled_action`, `enabled_automations` and `due_actions` now take the context and
+  use the pool, and `record_run_on` and `schedule_on` take a `db::Session` (`shift_dependents` and
+  `POST /api/scheduled-actions` call them in their transactions, everything else on the pool). New:
+  `plans::Model::update_data_on`, the sqlx twin of `ActiveModel::update_data` (the same seven columns, re-digested the
+  same way; the SeaORM form stays for `streaming`). `break_glass` calls `notify_on` on its own sqlx transaction, so a
+  grant and its notice (and the notice's sink deliveries) still stand or fall together, and a recipient who switched
+  the notice off still leaves no grant; its audit, daily limit (`MAX_PER_DAY`), one live grant per plan and person,
+  expiry and revoke are unchanged, and the open owner decision on `notify_ref` (checked only for a prefix and some
+  text, so `person: x` with a space after the colon is accepted) is kept exactly. `automation`: rules fire as before,
+  each action's run row and its `record_or_log_on` audit on the pool (the census in `audit_logs.rs` counts the sqlx
+  twin, so `automation.rs` still holds its 2); a scheduled action is still claimed with a conditional update
+  (`status = 'pending'` → `'fired'`, acted on only when one row changed, FR-16d) and a milestone-due pair with
+  `INSERT … ON CONFLICT DO NOTHING RETURNING id` (no row back means already claimed, where SeaORM reported
+  `RecordNotFound`). `sinks`: the same delivery queries, retries, backoff, masking and `transport_error`; `mark`'s
+  update names the columns SeaORM's did (`attempts` only when given, `delivered_at` only when sent). No write changed
+  transaction: every handler that wrote its rows and audit row in one transaction still does, and the automation run,
+  its audit and the sweep's outcome stay separate statements on the pool, as before (the census's "already done, no
+  caller to refuse"). Inserts list the columns SeaORM set; an update by id that finds no row is still an error.
+  A throwaway check (not committed) dumped 590 answers and every row written (audit, automations, runs, scheduled
+  actions, notifications, sinks, sink deliveries, grants, tasks, plans and their integrity digests, reviews,
+  exceptions, milestone claims, emails) for an administrator, a plan's owner, a member of a private plan who is
+  eligible for break-glass, a writer who is a member of nothing, the person told, a person who switched everything
+  off, an identity with no user id and no token: rules created, refused, enabled, disabled and deleted on public,
+  private, missing and every plan; board moves firing assign, set-status (twice), add-label (twice), notify (to an
+  opted-out recipient too), schedule-action, propose-reschedule and shift-dependents (with a lagged, a deleted and a
+  dateless successor, and a watchdog rule on the successor that must not fire), two rules with bad stored actions, a
+  submitted review, and the milestone sweep three times; scheduled actions created, refused, cancelled and swept by two
+  callers at once (eight fired between them, none twice), then again; every list for every caller, filtered and paged;
+  break-glass refused every way, opened, refused again while live, opened with a space after the colon, listed,
+  revoked (by its holder, again, by another, by an administrator), expired and reopened, and run up to the daily limit;
+  sinks refused, registered up to the cap, listed, dispatched through success, retry, permanent failure, a closed port
+  and email to exhaustion, logged and removed; nine delivery exceptions through the breach task twice; then thirteen
+  tables made unreadable in turn. Before and after: the same, once pids, times and ports were normalised, but for one
+  line: the sink dispatcher's error, when `sink_deliveries` is gone, is sqlx's rather than SeaORM's.
+  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's, in a response, a log
+  line, and in what is stored for a failed automation action (`automation_runs.detail.reason`) or scheduled action
+  (`scheduled_actions.outcome`, `failed: …`) (only on a failure; same status). The automation list's hidden plans
+  (`NOT IN (…)`, one parameter per pid) and the expiring review statuses (`IN (…)`) are bound as one array (`<> ALL`,
+  `= ANY`), and the runs' and scheduled actions' hidden pids as a `uuid[]` rather than a text literal cast to one; the
+  counts (break-glass's private check and daily limit, a person's sinks) are a plain `COUNT(*)` rather than SeaORM's
+  wrapped one; updates whose row is not used return its id rather than every column. A break-glass whose notice is
+  switched off now rolls back by dropping its transaction, so a failed rollback no longer answers `500` instead of the
+  `422`.
+  **Found, not changed:** `run_due` does not claim a delivery before sending it, so the sink ticker and
+  `POST /api/notification-sinks/dispatch` running at once can send one delivery twice; registering a sink counts and
+  then inserts, so two at once can pass `MAX_PER_PERSON`; registering and removing a sink write no audit row;
+  `expire_review` matches reviews by `subject_pid` alone, whatever their `subject_kind`; break-glass's audit failure is
+  a plain `500` (`Error::string`) rather than `audit_failed`, so `audit_write_failed_total` does not count it, and
+  `notify_ref` is refused with surrounding spaces although the insert trims it; the exception-breach task notifies and
+  then stamps `breach_notified_at` in two statements, so a failed stamp re-sends the notice on the next run; an
+  automation's `add_label` and `shift_dependents` write the plan without an outbox or live event.
+  **Still on SeaORM through other modules**, for these files: none.
+  **Next batch, suggested:** `streaming` (17) with `models/plans` (69), after which `update_data` and `soft_delete`
+  can go; or `report_schedules` (65), `email_deliveries` (34) and `attachments` (42), about 140 lines.
 
 ## Correctness carried forward (CF-n)
 

@@ -136,7 +136,7 @@ runs several statements takes `&mut impl db::Session`, which is a transaction or
 one.
 
 How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 83 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
+API on 10 November, 88 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
 `meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
 `key_persons`, `ledger`; batch 3: `financials`, `funding`, `tolerances`, `thresholds`, `effort`, `timesheets`,
 `milestones`, `milestone_signoffs`, `announcements`, `components`; batch 4: `escalations`, `deescalation`, `confidence`,
@@ -147,16 +147,19 @@ API on 10 November, 83 have moved (batch 1: `approvals`, `processes`, `controlle
 `assignments`, `sandbox`, `deployment_moves`, `phase`, `guests`, `watchers`, `visibility/dependencies`,
 `visibility/allocations`; batch 8: `workflow`, `engineering/board`, `engineering/agile`, `engineering/devops`,
 `engineering/estate`, `engineering/mod`, `task_bulk`, `task_tree`, `tba`; batch 9: `governance`, `discussion`; batch 10:
-`issues`, `issue_configuration`, `custom_fields`; batch 11: `collaboration`, `feeds`, `notification_prefs`) and 64 are
-left (the grep that measures it still counts 66, because
+`issues`, `issue_configuration`, `custom_fields`; batch 11: `collaboration`, `feeds`, `notification_prefs`; batch 12:
+`automation`, `break_glass`, `sinks`, `tasks/exception_breaches`, `plan_access`) and 59 are left (the grep that
+measures it still counts 61, because
 `engineering/board` and `task_bulk` name enum variants `Set` of their own). Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
-`find_live_task`) and `models/governance`; they still name SeaORM only for unmoved callers (`plan_access::is_none_of`
-builds a SeaORM condition for `automation`, `controllers::db_err` maps SeaORM's error, and
-`models/governance` keeps its `ActiveModelBehavior` impls). Batch 11 gave `is_none_of` a sqlx form,
+`find_live_task`) and `models/governance`; `controllers::db_err` still maps SeaORM's error for unmoved callers, and
+`models/governance` keeps its `ActiveModelBehavior` impls. Batch 11 gave `plan_access::is_none_of` a sqlx form,
 `plan_access::push_none_of`, and moved `HiddenScope::notes_visible` to sqlx (it now pushes its condition onto a
-`QueryBuilder`); `models/capabilities` moved `find_review`, `find_notification` and `reviews_for_subject` and keeps,
-for `automation`, `break_glass` and the exception-breach task, its SeaORM finders, writers and `notify` (whose
-`sinks::enqueue` stays with it); `notify_on` and `sinks::enqueue_on` are their sqlx twins.
+`QueryBuilder`). Batch 12 removed the SeaORM `is_none_of`, `capabilities::notify` and `sinks::enqueue` and the SeaORM
+finders and writers only `automation` used: `notify_on` and `sinks::enqueue_on` serve every caller (break-glass calls
+`notify_on` in its own transaction, so a grant and its notice still stand or fall together); `find_automation`,
+`find_scheduled_action`, `enabled_automations` and `due_actions` take the context, and `record_run_on` and
+`schedule_on` take a `db::Session`. `models/capabilities` keeps only its `ActiveModelBehavior` impls, for step (c).
+`plans::Model::update_data_on` is the sqlx twin of the SeaORM `update_data`, which stays for `streaming`.
 `tba::transition_row`, the SeaORM transition row, stays for the callers not yet moved; `tba::insert_transition_on` is
 its sqlx twin. `custom_fields::store`, the SeaORM writer of custom values, is gone: `custom_fields::store_on` serves
 the board, the bulk routes, `PUT /api/custom-fields/values` (each in its transaction) and the MSPDI batch import (on the

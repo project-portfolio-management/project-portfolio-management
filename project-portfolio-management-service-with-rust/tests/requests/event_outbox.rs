@@ -366,7 +366,7 @@ async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
         counting.await.expect("the count stops when told");
 
         // The dry run lists it, with the code its last attempt kept, and changes nothing.
-        let dry = outbox_retry_failed::run(&ctx.db, None)
+        let dry = outbox_retry_failed::run(&ctx, None)
             .await
             .expect("dry run");
         assert_eq!((dry.failed, dry.retried), (1, 0));
@@ -386,7 +386,7 @@ async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
             by: "ops-test".into(),
             reason: "sink_restored".into(),
         };
-        let applied = outbox_retry_failed::run(&ctx.db, Some(&release))
+        let applied = outbox_retry_failed::run(&ctx, Some(&release))
             .await
             .expect("apply");
         assert_eq!(applied.retried, 1);

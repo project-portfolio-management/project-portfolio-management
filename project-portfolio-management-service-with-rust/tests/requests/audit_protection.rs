@@ -17,9 +17,15 @@ async fn audit_rows_cannot_be_changed_or_deleted_without_the_flags() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
         let entity = Uuid::new_v4();
-        AuditModel::record(&ctx.db, entity, "test_action", Some("tester"), None)
-            .await
-            .expect("record");
+        AuditModel::record_on(
+            project_portfolio_management::db::pool(&ctx),
+            entity,
+            "test_action",
+            Some("tester"),
+            None,
+        )
+        .await
+        .expect("record");
         let filter = format!("WHERE entity_pid = '{entity}'");
 
         // An update is refused.
@@ -57,9 +63,15 @@ async fn audit_rows_cannot_be_changed_or_deleted_without_the_flags() {
         tx.commit().await.expect("commit");
 
         // The flag did not leak: the next unflagged delete is refused again.
-        AuditModel::record(&ctx.db, entity, "again", None, None)
-            .await
-            .expect("record again");
+        AuditModel::record_on(
+            project_portfolio_management::db::pool(&ctx),
+            entity,
+            "again",
+            None,
+            None,
+        )
+        .await
+        .expect("record again");
         assert!(
             ctx.db
                 .execute_unprepared(&format!("DELETE FROM audit_logs {filter}"))

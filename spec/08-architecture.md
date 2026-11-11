@@ -139,7 +139,7 @@ runs several statements takes `&mut impl db::Session`, which is a transaction or
 one.
 
 How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 123 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
+API on 10 November, 134 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
 `meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
 `key_persons`, `ledger`; batch 3: `financials`, `funding`, `tolerances`, `thresholds`, `effort`, `timesheets`,
 `milestones`, `milestone_signoffs`, `announcements`, `components`; batch 4: `escalations`, `deescalation`, `confidence`,
@@ -157,11 +157,17 @@ API on 10 November, 123 have moved (batch 1: `approvals`, `processes`, `controll
 `tracker_import`, `bulk`, `tba/persistence`; batch 16: `cost_rates`, `change_requests`, `canvas`, `ceremony`,
 `oversight`, `snapshots`; batch 17: `strategy`, `scoring`, `prioritization`, `modules`, `pdf`, `handling_marks`,
 `settings`, `compliance`, `subjects`, `visibility/milestones`, `visibility/reports`, `visibility/dashboard`,
-`visibility/mod`) and 24 are left (the grep that measures it still counts 26, because `engineering/board` and
-`task_bulk` name enum variants `Set` of their own; so does `src/task_bulk.rs`, so 23 name the API). After batch 17 no file
-under `src/controllers/` names the SeaORM API but `controllers/mod.rs`, whose `db_err` serves `scheduled_jobs`. Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
-`find_live_task`) and `models/governance`; `controllers::db_err` still maps SeaORM's error for unmoved callers, and
-`models/governance` keeps its `ActiveModelBehavior` impls. Batch 11 gave `plan_access::is_none_of` a sqlx form,
+`visibility/mod`; batch 18, the infrastructure: `app.rs`, `scheduled_jobs`, `retention`, `webhooks`, `relay`,
+`idempotency`, `flow_metrics`, `tasks/search`, `tasks/outbox_retry_failed`, `controllers/mod.rs`, `db.rs`) and 13 are
+left (the grep that measures it counts 15, because `engineering/board` and `task_bulk` name enum variants `Set` of their
+own; so does `src/task_bulk.rs`, so 12 name the API). Those 12 are step (c)'s: `query_count`'s metric callback, which
+counts what still runs through `ctx.db` as a SeaORM connection (the migrator's statements), and the
+`ActiveModelBehavior` impls and entity re-exports of `models/behaviors`, `canvases`, `strategy`, `capabilities`,
+`visibility`, `governance`, `plans`, `merge_records`, `webhook_deliveries`, `saved_views` and `audit_logs`. Beyond the
+grep, `app.rs` still runs the SeaORM migrator (step (b)), and `db::pool`, `db::begin` and `db::for_axa_crate` reach the
+pool through SeaORM's connection until `ctx.db` is the `PgPool` (step (c)). No statement of the service's own runs
+through SeaORM after batch 18. Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
+`find_live_task`) and `models/governance`; `models/governance` keeps its `ActiveModelBehavior` impls. Batch 11 gave `plan_access::is_none_of` a sqlx form,
 `plan_access::push_none_of`, and moved `HiddenScope::notes_visible` to sqlx (it now pushes its condition onto a
 `QueryBuilder`). Batch 12 removed the SeaORM `is_none_of`, `capabilities::notify` and `sinks::enqueue` and the SeaORM
 finders and writers only `automation` used: `notify_on` and `sinks::enqueue_on` serve every caller (break-glass calls
@@ -176,8 +182,11 @@ sqlx form of `write_seaorm`, and counts the statement); the SeaORM `update_data`
 `ActiveModelBehavior` impls, for step (c).
 `tba::insert_transition_on` writes every task transition; the SeaORM `tba::transition_row` is gone (batch 15), and
 so is `AuditModel::record_or_log`: `record_or_log_on` serves every write that keeps a failed audit, and the census
-of those writes counts it. `AuditModel::record` stays for the SeaORM callers not yet moved (3 calls in 2 files after
-batch 17, `retention` and `scheduled_jobs`). `models::visibility`'s finders take the context and read the pool, and
+of those writes counts it. `AuditModel::record` and `controllers::db_err` went with their last callers, `retention`
+and `scheduled_jobs` (batch 18): every audit row is written by `record_on`. A scheduled job's claim and its closing
+record are each one transaction with their audit row, which still refuses with `audit_failed`; a retention sweep's
+delete of each table, its flag and its audit row are one transaction. `outbox_retry_failed` releases every failed
+event in one `db::begin` transaction (`db::Tx::release_outbox`, counted as `write_outbox` is). `models::visibility`'s finders take the context and read the pool, and
 `modules_in_force` and `settings::refresh` take the context (batch 17). `db::Tx::rollback` rolls back and says whether
 it worked, for a caller that answered an error when `SeaORM`'s rollback failed (the subjects preview). The batch import's rate tables, rates and fixed costs are written by `cost_rates`' sqlx helpers, each with
 its audit row in one transaction (batch 16). `snapshots::capture_on` takes a `db::Session`: `POST /api/board/snapshots`

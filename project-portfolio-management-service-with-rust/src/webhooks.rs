@@ -114,7 +114,7 @@
 
 use std::time::Duration;
 
-use sea_orm::DatabaseConnection;
+use axa::AppContext;
 use serde::Deserialize;
 
 use crate::compliance::mac::{self, Domain};
@@ -556,7 +556,7 @@ pub(crate) fn transport_error(err: reqwest::Error) -> String {
 /// error — this is the fire-and-forget body a spawned task runs.
 #[expect(clippy::too_many_arguments)] // one delivery: where, what, which event, which delivery, how often
 pub(crate) async fn deliver_with_retry(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     target: &WebhookTarget,
     entity: &str,
     kind: &str,
@@ -614,8 +614,8 @@ pub(crate) async fn deliver_with_retry(
         status_code,
         error,
     };
-    match DeliveryLog::record(db, &outcome).await {
-        Ok(row) => Some(row.id),
+    match DeliveryLog::record(ctx, &outcome).await {
+        Ok(id) => Some(id),
         Err(err) => {
             tracing::warn!(error = %err, "failed to write webhook delivery-log row");
             None
@@ -624,7 +624,7 @@ pub(crate) async fn deliver_with_retry(
 }
 
 /// The outbound webhook [`EventSink`]. Holds the configured targets and
-/// a database handle for the delivery log.
+/// the context, for the delivery log.
 ///
 /// Constructing this with targets configured but no MAC key enabled is
 /// a caller error — [`crate::relay::spawn`] checks
@@ -633,15 +633,16 @@ pub(crate) async fn deliver_with_retry(
 pub struct WebhookSink {
     /// The configured delivery targets; each event is offered to every one whose kinds match.
     targets: Vec<WebhookTarget>,
-    /// Handle used only to write one delivery-log row per delivery, so a failed write is logged and never blocks delivery.
-    db: DatabaseConnection,
+    /// The context, used only to write one delivery-log row per delivery, so a failed write is logged and never blocks
+    /// delivery.
+    ctx: AppContext,
 }
 
 impl WebhookSink {
     /// Build a sink over the given targets.
     #[must_use]
-    pub fn new(targets: Vec<WebhookTarget>, db: DatabaseConnection) -> Self {
-        Self { targets, db }
+    pub fn new(targets: Vec<WebhookTarget>, ctx: AppContext) -> Self {
+        Self { targets, ctx }
     }
 }
 
@@ -682,10 +683,10 @@ impl EventSink for WebhookSink {
             let target = target.clone();
             let entity = entity.to_string();
             let kind = kind.to_string();
-            let db = self.db.clone();
+            let ctx = self.ctx.clone();
             tokio::spawn(async move {
                 deliver_with_retry(
-                    &db,
+                    &ctx,
                     &target,
                     &entity,
                     &kind,

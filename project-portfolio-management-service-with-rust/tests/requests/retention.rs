@@ -46,7 +46,7 @@ async fn the_purge_removes_only_what_is_past_its_period() {
         let now = Utc::now();
 
         // A dry run counts and changes nothing.
-        let dry = retention::run(db, now, &[], false).await.expect("dry run");
+        let dry = retention::run(&ctx, now, &[], false).await.expect("dry run");
         let n = dry.iter().find(|o| o.rule == "notifications").unwrap();
         assert_eq!((n.matched, n.deleted), (1, 0));
         let w = dry.iter().find(|o| o.rule == "webhook_log").unwrap();
@@ -54,7 +54,7 @@ async fn the_purge_removes_only_what_is_past_its_period() {
         assert_eq!(count(db, "SELECT COUNT(*) AS n FROM notifications").await, 3);
 
         // Applying removes only the old read notification and the old log row.
-        let done = retention::run(db, now, &[], true).await.expect("apply");
+        let done = retention::run(&ctx, now, &[], true).await.expect("apply");
         let n = done.iter().find(|o| o.rule == "notifications").unwrap();
         assert_eq!((n.matched, n.deleted), (1, 1));
         assert_eq!(count(db, "SELECT COUNT(*) AS n FROM notifications").await, 2);
@@ -75,11 +75,11 @@ async fn the_purge_removes_only_what_is_past_its_period() {
         );
 
         // A shorter period reaches the 10-day-old read notification; a second run is a no-op elsewhere.
-        let shorter = retention::run(db, now, &[("notifications".to_string(), 5)], true)
+        let shorter = retention::run(&ctx, now, &[("notifications".to_string(), 5)], true)
             .await
             .expect("shorter");
         assert_eq!(shorter.iter().find(|o| o.rule == "notifications").unwrap().deleted, 1);
-        let again = retention::run(db, now, &[], true).await.expect("again");
+        let again = retention::run(&ctx, now, &[], true).await.expect("again");
         assert!(again.iter().all(|o| o.deleted == 0));
     })
     .await;

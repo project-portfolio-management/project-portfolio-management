@@ -407,7 +407,7 @@ async fn connect(uri: &str) -> Outbox {
 /// key is configured, in which case webhook delivery refuses to start
 /// (logged `error`) rather than send unsigned deliveries; the primary
 /// relay still starts either way.
-pub fn spawn(db: sea_orm::DatabaseConnection, uri: String) {
+pub fn spawn(ctx: &axa::AppContext) {
     if !crate::streaming::transport().is_outbox() || !relay_enabled() {
         return;
     }
@@ -440,6 +440,8 @@ pub fn spawn(db: sea_orm::DatabaseConnection, uri: String) {
         tracing::error!("the event-outbox relay was already started; not starting a second");
         return;
     }
+    let uri = ctx.config.database.uri.clone();
+    let ctx = ctx.clone();
     tokio::spawn(async move {
         let outbox = connect(&uri).await;
         let primary = build_sink(endpoint.as_deref()).await;
@@ -450,7 +452,7 @@ pub fn spawn(db: sea_orm::DatabaseConnection, uri: String) {
                 primary,
                 vec![Box::new(crate::webhooks::WebhookSink::new(
                     webhook_targets,
-                    db.clone(),
+                    ctx,
                 ))],
             ))
         } else {

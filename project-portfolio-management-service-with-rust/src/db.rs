@@ -61,8 +61,8 @@ pub fn pool(ctx: &AppContext) -> Counted<&PgPool> {
 /// (`axa-idempotency`). Those statements are not seen by the query-count guards; nothing in this crate may use
 /// this to run its own.
 #[must_use]
-pub fn for_axa_crate(db: &sea_orm::DatabaseConnection) -> PgPool {
-    db.get_postgres_connection_pool().clone()
+pub fn for_axa_crate(ctx: &AppContext) -> PgPool {
+    ctx.db.get_postgres_connection_pool().clone()
 }
 
 /// An open transaction. Dropped without [`Tx::commit`], it rolls back.
@@ -84,6 +84,23 @@ impl Tx {
     pub async fn write_outbox(&mut self, event: &axa::outbox::Event) -> Result<(), Error> {
         crate::query_count::add_one();
         axa::outbox::write(&mut self.0, event).await
+    }
+
+    /// Puts the `failed` event `event_id` back to be sent (`axa::outbox::release`), on this transaction, naming who
+    /// and why in the outbox's record. `axa-outbox` runs the statement itself, on the transaction; it is counted here
+    /// as one. Whether it was released (`false` when the event was not `failed`).
+    ///
+    /// # Errors
+    ///
+    /// As [`axa::outbox::release`]: a database error, or `by` or `reason` refused.
+    pub async fn release_outbox(
+        &mut self,
+        event_id: uuid::Uuid,
+        by: &str,
+        reason: &str,
+    ) -> Result<bool, Error> {
+        crate::query_count::add_one();
+        axa::outbox::release(&mut self.0, event_id, by, reason).await
     }
 
     /// Commits.

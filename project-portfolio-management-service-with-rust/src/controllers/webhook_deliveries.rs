@@ -132,7 +132,7 @@ async fn redeliver(
     .await
     .map_err(super::audit_failed)?;
     let new_log = webhooks::deliver_with_retry(
-        &ctx.db,
+        &ctx,
         &target,
         &topic,
         &kind,

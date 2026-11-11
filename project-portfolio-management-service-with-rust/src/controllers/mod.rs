@@ -94,16 +94,10 @@ pub fn model_not_found(err: axa::model::ModelError) -> axa::Error {
     }
 }
 
-/// A database error as the service's error type (`500`). One definition for every controller.
-#[must_use]
-pub(crate) fn db_err(e: sea_orm::DbErr) -> axa::Error {
-    axa::Error::Model(axa::model::ModelError::from(e))
-}
-
 /// A write's audit row could not be written, so the write is refused (NFR-6): the audit row is written in
 /// the same transaction as the change, and the transaction is rolled back when this is returned. Logged at
 /// error level and counted in `audit_write_failed_total`, which an operator should alert on.
-/// Takes any error that displays: `AuditModel::record`'s `SeaORM` model error and `record_on`'s service error alike.
+/// Takes any error that displays (`AuditModel::record_on`'s service error).
 #[must_use]
 pub(crate) fn audit_failed(e: impl std::fmt::Display) -> axa::Error {
     crate::metrics::Metrics::global()
@@ -725,20 +719,25 @@ mod helper_census {
 mod database_unavailable {
     use axum::{http::StatusCode, response::IntoResponse};
 
-    /// Since axa 0.11 a database that cannot serve for now is `503` `unavailable` with `Retry-After: 5`, not `500`:
-    /// through [`super::db_err`] (`SeaORM`) and through `?` on a plain `sqlx` error alike.
+    /// Since axa 0.11 a database that cannot serve for now is `503` `unavailable` with `Retry-After: 5`, not `500`,
+    /// through `?` on a plain `sqlx` error. (`SeaORM`'s `db_err` went with its last caller, `scheduled_jobs`, in SQ-1
+    /// batch 18.)
     #[test]
     fn a_database_that_cannot_serve_answers_503_with_retry_after() {
-        let seaorm = super::db_err(sea_orm::DbErr::ConnectionAcquire(
-            sea_orm::error::ConnAcquireErr::Timeout,
-        ));
-        let sqlx: axa::Error = sqlx::Error::PoolTimedOut.into();
-        for response in [seaorm.into_response(), sqlx.into_response()] {
+        for error in [
+            sqlx::Error::PoolTimedOut,
+            sqlx::Error::PoolClosed,
+            sqlx::Error::Io(std::io::Error::from(std::io::ErrorKind::ConnectionRefused)),
+        ] {
+            let response = axa::Error::from(error).into_response();
             assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
             assert_eq!(response.headers()["retry-after"], "5");
         }
         // A database that refused this request is still the service's own `500`.
-        let refused = super::db_err(sea_orm::DbErr::Custom("boom".into())).into_response();
-        assert_eq!(refused.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let refused: axa::Error = sqlx::Error::Protocol("boom".into()).into();
+        assert_eq!(
+            refused.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
     }
 }

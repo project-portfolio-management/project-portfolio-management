@@ -15,11 +15,9 @@
 
 use crate::prelude::*;
 use chrono::{DateTime, Utc};
-use sea_orm::{DatabaseBackend, QueryOrder, Statement};
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::models::_entities::scheduled_job_runs as runs;
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The environment variable naming the jobs to run.
@@ -119,44 +117,41 @@ pub enum Ran {
 /// Claim `job` for this replica: take the advisory lock, and if no run of it started within its interval, record
 /// one. Returns the run's pid when this replica should run it.
 async fn claim(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Option<Uuid>> {
-    let txn = ctx.db.begin().await.map_err(crate::controllers::db_err)?;
-    let got = txn
-        .query_one_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "SELECT pg_try_advisory_xact_lock(hashtext($1)) AS got",
-            [format!("scheduled_job:{}", job.name()).into()],
-        ))
-        .await
-        .map_err(crate::controllers::db_err)?
-        .and_then(|r| r.try_get::<bool>("", "got").ok())
-        .unwrap_or(false);
-    if !got {
+    let mut txn = crate::db::begin(ctx).await?;
+    // The same key as ever: `hashtext('scheduled_job:<name>')`, bound. Taken without waiting; a replica that does not
+    // get it skips.
+    let got: Option<Option<bool>> =
+        sqlx::query_scalar("SELECT pg_try_advisory_xact_lock(hashtext($1)) AS got")
+            .bind(format!("scheduled_job:{}", job.name()))
+            .fetch_optional(txn.conn())
+            .await?;
+    if !got.flatten().unwrap_or(false) {
         return Ok(None);
     }
     let since = now - chrono::Duration::minutes(job.interval_minutes());
-    let recent = runs::Entity::find()
-        .filter(runs::Column::Job.eq(job.name()))
-        .filter(runs::Column::StartedAt.gt(since))
-        .order_by_desc(runs::Column::Id)
-        .one(&txn)
-        .await
-        .map_err(crate::controllers::db_err)?;
+    let recent: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM scheduled_job_runs WHERE job = $1 AND started_at > $2 ORDER BY id DESC LIMIT 1",
+    )
+    .bind(job.name())
+    .bind(since)
+    .fetch_optional(txn.conn())
+    .await?;
     if recent.is_some() {
         return Ok(None);
     }
     let pid = Uuid::new_v4();
-    runs::ActiveModel {
-        pid: ActiveValue::set(pid),
-        job: ActiveValue::set(job.name().to_string()),
-        started_at: ActiveValue::set(now.into()),
-        outcome: ActiveValue::set("running".to_string()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(crate::controllers::db_err)?;
-    AuditModel::record(
-        &txn,
+    // The columns `SeaORM`'s insert set, no more (`created_at`, `updated_at` and `id` are the table's defaults).
+    sqlx::query(
+        "INSERT INTO scheduled_job_runs (pid, job, started_at, outcome) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(pid)
+    .bind(job.name())
+    .bind(now)
+    .bind("running")
+    .execute(txn.conn())
+    .await?;
+    AuditModel::record_on(
+        txn.conn(),
         pid,
         "scheduled_job_started",
         Some(ACTOR),
@@ -164,7 +159,7 @@ async fn claim(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Option<
     )
     .await
     .map_err(crate::controllers::audit_failed)?;
-    txn.commit().await.map_err(crate::controllers::db_err)?;
+    txn.commit().await?;
     Ok(Some(pid))
 }
 
@@ -190,7 +185,7 @@ async fn execute(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Strin
             // WW-1.7: the deployment's periods; a bad setting fails the run rather than purge by the default.
             let overrides =
                 crate::retention::env_overrides().map_err(|m| axa::Error::string(&m))?;
-            let out = crate::retention::run(&ctx.db, now, &overrides, apply).await?;
+            let out = crate::retention::run(ctx, now, &overrides, apply).await?;
             let matched: u64 = out.iter().map(|o| o.matched).sum();
             let deleted: u64 = out.iter().map(|o| o.deleted).sum();
             Ok(format!(
@@ -235,21 +230,26 @@ pub async fn run_job(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<R
         .scheduled_job_runs_total
         .with_label_values(&[job.name(), outcome])
         .inc();
-    let txn = ctx.db.begin().await.map_err(crate::controllers::db_err)?;
-    if let Some(row) = runs::Entity::find()
-        .filter(runs::Column::Pid.eq(pid))
-        .one(&txn)
-        .await
-        .map_err(crate::controllers::db_err)?
-    {
-        let mut a: runs::ActiveModel = row.into();
-        a.finished_at = ActiveValue::set(Some(Utc::now().into()));
-        a.outcome = ActiveValue::set(outcome.to_string());
-        a.detail = ActiveValue::set(Some(detail.clone()));
-        a.update(&txn).await.map_err(crate::controllers::db_err)?;
+    let mut txn = crate::db::begin(ctx).await?;
+    let row: Option<i64> = sqlx::query_scalar("SELECT id FROM scheduled_job_runs WHERE pid = $1")
+        .bind(pid)
+        .fetch_optional(txn.conn())
+        .await?;
+    if let Some(id) = row {
+        // The three columns `SeaORM`'s update set, by id; no row back is an error, as its was.
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE scheduled_job_runs SET finished_at = $1, outcome = $2, detail = $3 WHERE id = $4
+             RETURNING id",
+        )
+        .bind(Utc::now())
+        .bind(outcome)
+        .bind(&detail)
+        .bind(id)
+        .fetch_one(txn.conn())
+        .await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        txn.conn(),
         pid,
         "scheduled_job_finished",
         Some(ACTOR),
@@ -257,7 +257,7 @@ pub async fn run_job(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<R
     )
     .await
     .map_err(crate::controllers::audit_failed)?;
-    txn.commit().await.map_err(crate::controllers::db_err)?;
+    txn.commit().await?;
     Ok(match result {
         Ok(_) => Ran::Ok(detail),
         Err(_) => Ran::Failed(detail),

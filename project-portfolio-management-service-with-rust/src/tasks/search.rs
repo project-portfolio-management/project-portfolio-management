@@ -13,7 +13,6 @@
 //! ```
 
 use crate::prelude::*;
-use sea_orm::{DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder};
 
 use crate::models::_entities::plans;
 
@@ -45,7 +44,7 @@ pub struct ReindexReport {
 /// # Errors
 ///
 /// When the index is unavailable or a database page cannot be read.
-pub async fn reindex(db: &DatabaseConnection, batch: u64) -> Result<ReindexReport> {
+pub async fn reindex(ctx: &AppContext, batch: u64) -> Result<ReindexReport> {
     let engine = crate::search::engine().ok_or_else(|| {
         Error::string(
             "search index unavailable; check PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH",
@@ -54,14 +53,22 @@ pub async fn reindex(db: &DatabaseConnection, batch: u64) -> Result<ReindexRepor
     engine.clear()?;
 
     let mut report = ReindexReport::default();
-    // Paginate rather than `all()`: the table can be far larger than the
-    // process's memory budget.
-    let mut pages = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .order_by_asc(plans::Column::Id)
-        .paginate(db, batch.max(1));
-
-    while let Some(rows) = pages.fetch_and_next().await? {
+    // Page by page rather than all at once: the table can be far larger than the process's memory budget. A page is
+    // `LIMIT`/`OFFSET` in id order, as `SeaORM`'s paginator read it, until a page comes back empty.
+    let size = i64::try_from(batch.max(1)).unwrap_or(i64::MAX);
+    let mut page: i64 = 0;
+    loop {
+        let rows: Vec<plans::Model> = sqlx::query_as(
+            "SELECT * FROM plans WHERE deleted_at IS NULL ORDER BY id ASC LIMIT $1 OFFSET $2",
+        )
+        .bind(size)
+        .bind(size.saturating_mul(page))
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+        if rows.is_empty() {
+            break;
+        }
+        page += 1;
         for row in rows {
             report.scanned += 1;
             match row.to_plan() {
@@ -120,7 +127,7 @@ fn boot_reindex_enabled_for(value: Option<&str>) -> bool {
 /// # Errors
 ///
 /// When the row count fails, or the rebuild itself does.
-pub async fn reindex_if_empty(db: &DatabaseConnection) -> Result<Option<ReindexReport>> {
+pub async fn reindex_if_empty(ctx: &AppContext) -> Result<Option<ReindexReport>> {
     let Some(engine) = crate::search::engine() else {
         // The error was already logged at engine init; nothing to rebuild
         // into.
@@ -129,9 +136,8 @@ pub async fn reindex_if_empty(db: &DatabaseConnection) -> Result<Option<ReindexR
     if engine.stats()?.num_docs > 0 {
         return Ok(None);
     }
-    let rows = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .count(db)
+    let rows: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plans WHERE deleted_at IS NULL")
+        .fetch_one(crate::db::pool(ctx))
         .await?;
     // An empty index over an empty table is the normal fresh-install
     // case, not a rebuild.
@@ -139,20 +145,20 @@ pub async fn reindex_if_empty(db: &DatabaseConnection) -> Result<Option<ReindexR
         return Ok(None);
     }
     tracing::info!(rows, "search index is empty but records exist; reindexing");
-    reindex(db, DEFAULT_BATCH).await.map(Some)
+    reindex(ctx, DEFAULT_BATCH).await.map(Some)
 }
 
 /// Run [`reindex_if_empty`] in the background, so boot is not blocked by
 /// a rebuild proportional to table size. Failures are logged, never
 /// fatal — a service that cannot rebuild its index should still serve
 /// everything else.
-pub fn spawn_reindex_if_empty(db: DatabaseConnection) {
+pub fn spawn_reindex_if_empty(ctx: AppContext) {
     if !boot_reindex_enabled() {
         tracing::debug!("boot reindex disabled by {BOOT_REINDEX_ENV}");
         return;
     }
     tokio::spawn(async move {
-        if let Err(err) = reindex_if_empty(&db).await {
+        if let Err(err) = reindex_if_empty(&ctx).await {
             tracing::error!(error = %err, "boot reindex failed; run `cargo run -- task search_reindex`");
         }
     });
@@ -185,7 +191,7 @@ impl Task for SearchReindex {
                 .map_err(|e| Error::string(&format!("batch must be a positive integer: {e}")))?,
             None => DEFAULT_BATCH,
         };
-        let report = reindex(&ctx.db, batch).await?;
+        let report = reindex(ctx, batch).await?;
         println!(
             "reindexed {} of {} plans ({} skipped)",
             report.indexed, report.scanned, report.skipped

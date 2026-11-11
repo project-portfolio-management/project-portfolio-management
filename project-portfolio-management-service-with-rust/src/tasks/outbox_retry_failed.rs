@@ -14,7 +14,6 @@
 //! the broker had in fact taken is harmless to send again.
 
 use crate::prelude::*;
-use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 
 /// The most failed events the dry run lists; the count covers them all.
 pub const LISTED: i64 = 50;
@@ -94,39 +93,48 @@ const FAILED: &str = "SELECT owed.id, owed.event_id, e.topic, e.kind, owed.charg
     FROM axa_outbox_owed owed JOIN axa_outbox_events e ON e.event_id = owed.event_id
     WHERE owed.state = 'failed' ORDER BY owed.id";
 
+/// One row of [`FAILED`].
+#[derive(sqlx::FromRow)]
+struct Failed {
+    id: i64,
+    event_id: uuid::Uuid,
+    topic: String,
+    kind: String,
+    charges: i32,
+    reason: Option<String>,
+}
+
 /// List the failed events and, given a [`Release`], put them all back in one transaction.
 ///
 /// # Errors
 ///
 /// When a statement fails, or the record refuses `by` or `reason` (empty, over 200 characters, or with a line break).
-pub async fn run(db: &DatabaseConnection, release: Option<&Release>) -> Result<Report> {
-    let rows = db
-        .query_all_raw(Statement::from_string(DatabaseBackend::Postgres, FAILED))
+pub async fn run(ctx: &AppContext, release: Option<&Release>) -> Result<Report> {
+    let rows: Vec<Failed> = sqlx::query_as(FAILED)
+        .fetch_all(crate::db::pool(ctx))
         .await?;
     let failed = i64::try_from(rows.len()).unwrap_or(i64::MAX);
     let mut listed = Vec::new();
     let mut events = Vec::with_capacity(rows.len());
-    for row in &rows {
-        events.push(row.try_get::<uuid::Uuid>("", "event_id")?);
+    for row in rows {
+        events.push(row.event_id);
         if i64::try_from(listed.len()).unwrap_or(i64::MAX) < LISTED {
             listed.push(FailedRow {
-                id: row.try_get("", "id")?,
-                topic: row.try_get("", "topic")?,
-                kind: row.try_get("", "kind")?,
-                attempts: row.try_get("", "charges")?,
-                error: row.try_get("", "reason")?,
+                id: row.id,
+                topic: row.topic,
+                kind: row.kind,
+                attempts: row.charges,
+                error: row.reason,
             });
         }
     }
     let mut retried = 0;
     if let Some(release) = release {
         let outbox_err = |e: sqlx::Error| Error::string(&format!("outbox: {e}"));
-        let mut tx = crate::db::for_axa_crate(db)
-            .begin()
-            .await
-            .map_err(outbox_err)?;
+        let mut tx = crate::db::begin(ctx).await.map_err(outbox_err)?;
         for event in events {
-            if axa::outbox::release(&mut tx, event, &release.by, &release.reason)
+            if tx
+                .release_outbox(event, &release.by, &release.reason)
                 .await
                 .map_err(outbox_err)?
             {
@@ -164,7 +172,7 @@ impl Task for OutboxRetryFailed {
     async fn run(&self, ctx: &AppContext, vars: &task::Vars) -> Result<()> {
         let release = applies(&vars.cli)?;
         let apply = release.is_some();
-        let report = run(&ctx.db, release.as_ref()).await?;
+        let report = run(ctx, release.as_ref()).await?;
         println!(
             "{}: {} failed",
             if apply {

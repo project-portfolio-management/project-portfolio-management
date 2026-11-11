@@ -28,14 +28,12 @@
 use std::time::Duration;
 
 use crate::prelude::*;
-use sea_orm::QuerySelect;
 
 use crate::metrics::Metrics;
-use crate::models::_entities::plans;
 use crate::tba;
 
 /// Plans scanned per pass, matching the insight views' own cap.
-const MAX_PLANS_SCANNED: u64 = 1000;
+const MAX_PLANS_SCANNED: i64 = 1000;
 
 /// Parse a refresh interval, or `None` when the loop is switched off.
 ///
@@ -110,16 +108,16 @@ pub async fn refresh_once(ctx: &AppContext) -> Result<tba::FlowMetricSet> {
             .as_deref(),
     );
 
-    let plans = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .limit(MAX_PLANS_SCANNED)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // Only the pid is used. No `ORDER BY`, as before: which plans a cap of 1000 reaches is the table's order.
+    let plans: Vec<uuid::Uuid> =
+        sqlx::query_scalar("SELECT pid FROM plans WHERE deleted_at IS NULL LIMIT $1")
+            .bind(MAX_PLANS_SCANNED)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
 
     let mut samples = Vec::with_capacity(plans.len());
-    for plan in &plans {
-        let (rows, transitions) = crate::controllers::tba::load_board(ctx, plan.pid, None).await?;
+    for &plan in &plans {
+        let (rows, transitions) = crate::controllers::tba::load_board(ctx, plan, None).await?;
         if rows.is_empty() {
             continue;
         }
@@ -149,7 +147,7 @@ pub async fn refresh_once(ctx: &AppContext) -> Result<tba::FlowMetricSet> {
         });
 
         samples.push(tba::PlanFlowSample {
-            plan_pid: plan.pid.to_string(),
+            plan_pid: plan.to_string(),
             analysis: rollup,
             sle,
             columns_over_limit,

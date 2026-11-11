@@ -60,7 +60,7 @@ impl Task for RetentionPurge {
                 return Err(Error::string(&format!("unknown argument {key:?}")));
             }
         }
-        let outcomes = retention::run(&ctx.db, Utc::now(), &overrides, apply).await?;
+        let outcomes = retention::run(ctx, Utc::now(), &overrides, apply).await?;
         println!(
             "{}",
             if apply {

@@ -1,7 +1,6 @@
 //! `audit_logs` model — record and query the CRUD audit trail.
 
 use crate::prelude::*;
-use sea_orm::ConnectionTrait;
 use uuid::Uuid;
 
 pub use super::_entities::audit_logs::{self, ActiveModel, Entity, Model};
@@ -37,51 +36,17 @@ fn stamped(
 }
 
 impl Model {
-    /// Record one audit entry. `actor` is the caller's `sub` (user `pid`)
-    /// when a verified token was presented, else `None`.
-    ///
-    /// Generic over [`ConnectionTrait`] so it runs either on the pooled
-    /// `&DatabaseConnection` (the best-effort side-channel path, `memory`
-    /// transport) **or** on a `&DatabaseTransaction` — under the `outbox`
-    /// transport the audit row is written in the *same* transaction as the
-    /// entity mutation and its `axa_outbox` row, so the three can never
-    /// disagree (`agents/share/event-bus.md` §3).
-    ///
-    /// # Errors
-    ///
-    /// When the insert fails.
-    pub async fn record<C: ConnectionTrait>(
-        db: &C,
-        entity_pid: Uuid,
-        action: &str,
-        actor: Option<&str>,
-        snapshot: Option<serde_json::Value>,
-    ) -> ModelResult<Self> {
-        let (created_at, digests) = stamped(entity_pid, action, actor, snapshot.as_ref());
-        let entry = audit_logs::ActiveModel {
-            entity_pid: ActiveValue::set(entity_pid),
-            action: ActiveValue::set(action.to_string()),
-            actor: ActiveValue::set(actor.map(ToString::to_string)),
-            snapshot: ActiveValue::set(snapshot),
-            created_at: ActiveValue::set(created_at),
-            hash: ActiveValue::set(Some(digests.sha256)),
-            hash_sha3: ActiveValue::set(Some(digests.sha3)),
-            mac: ActiveValue::set(digests.mac),
-            ..Default::default()
-        }
-        .insert(db)
-        .await?;
-        Ok(entry)
-    }
-
-    /// [`Self::record`] on sqlx: the pool ([`crate::db::pool`]) or a transaction ([`crate::db::Tx::conn`]), so the audit
-    /// row can share the change's transaction here too.
+    /// Record one audit entry, on the pool ([`crate::db::pool`]) or a transaction ([`crate::db::Tx::conn`]), so the
+    /// audit row can share the change's transaction. `actor` is the caller's `sub` (user `pid`) when a verified token
+    /// was presented, else `None`. Under the `outbox` transport the audit row is written in the *same* transaction as
+    /// the entity mutation and its `axa_outbox` row, so the three can never disagree (`agents/share/event-bus.md` §3).
+    /// (The `SeaORM` `record` went when its last callers, `retention` and `scheduled_jobs`, moved: SQ-1 batch 18.)
     ///
     /// # Errors
     ///
     /// When the insert fails: the `sqlx` error itself (`Error::Sqlx`), so a database that cannot serve still answers
-    /// `503` `unavailable` with `Retry-After` and a broken constraint its `409` or `422`, as [`Self::record`]'s
-    /// `SeaORM` error did, where the caller passes it on (`?`). Wrapped as a plain model error it would be a `500`.
+    /// `503` `unavailable` with `Retry-After` and a broken constraint its `409` or `422`, as the `SeaORM` `record`'s
+    /// error did, where the caller passes it on (`?`). Wrapped as a plain model error it would be a `500`.
     pub async fn record_on<'e, E: sqlx::Executor<'e, Database = sqlx::Postgres>>(
         db: E,
         entity_pid: Uuid,
@@ -260,7 +225,7 @@ mod tests {
                 .find(|(f, _)| *f == name)
                 .map_or(0, |(_, n)| *n);
             if found > allowed {
-                faults.push(format!("{name}: {found} calls, {allowed} allowed: put the audit in the write's transaction (record + map_err(audit_failed))"));
+                faults.push(format!("{name}: {found} calls, {allowed} allowed: put the audit in the write's transaction (record_on + map_err(audit_failed))"));
             } else if found < allowed {
                 faults.push(format!(
                     "{name}: {found} calls, {allowed} listed: lower the number in KNOWN"
@@ -272,47 +237,74 @@ mod tests {
 
     /// A handler that holds a transaction must not ask the pool for a second connection: with one connection
     /// (the test and development default) the second request waits for the first, which is waiting for it,
-    /// and under load the same thing starves the pool. Between `let txn = ctx.db.begin()` and `txn.commit()`
-    /// every database call goes through `txn`, so the word `ctx` may not appear there.
+    /// and under load the same thing starves the pool. Between `let mut tx = db::begin(&ctx)` (or `ctx.db.begin()`)
+    /// and `tx.commit()` every database call goes through `tx`, so the word `ctx` may not appear there, after the
+    /// line that opens it. Every file under `src/`, `let mut` included. (Until SQ-1 batch 18 this read only
+    /// `src/controllers/`, without its subdirectories, for `ctx.db.begin()` alone, which no code calls now.)
     #[test]
-    fn no_controller_uses_the_pool_while_it_holds_a_transaction() {
-        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/controllers");
-        let mut faults = Vec::new();
-        for entry in std::fs::read_dir(&dir).expect("read controllers") {
-            let path = entry.expect("entry").path();
-            if path.extension().is_none_or(|e| e != "rs") {
-                continue;
-            }
-            let text = std::fs::read_to_string(&path).expect("read file");
-            for (at, _) in text.match_indices("= ctx.db.begin()") {
-                let Some(open) = text[..at].rfind("let ") else {
+    fn nothing_uses_the_pool_while_it_holds_a_transaction() {
+        const OPENS: [&str; 3] = ["= ctx.db.begin()", "= crate::db::begin(", "= db::begin("];
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut stack = vec![root];
+        let (mut faults, mut seen) = (Vec::new(), 0_usize);
+        while let Some(dir) = stack.pop() {
+            for entry in std::fs::read_dir(&dir).expect("read src") {
+                let path = entry.expect("entry").path();
+                if path.is_dir() {
+                    stack.push(path);
                     continue;
-                };
-                let var = text[open + 4..at].trim().to_string();
-                // The transaction ends at its commit, its rollback, or when it is dropped.
-                let Some(close) = [
-                    format!("{var}.commit()"),
-                    format!("{var}.rollback()"),
-                    format!("drop({var})"),
-                ]
-                .iter()
-                .filter_map(|end| text[at..].find(end))
-                .min() else {
+                }
+                if path.extension().is_none_or(|e| e != "rs")
+                    || path.ends_with("models/audit_logs.rs")
+                {
                     continue;
-                };
-                let window = &text[at + 16..at + close];
-                for (n, line) in window.lines().enumerate() {
-                    let code = line.split("//").next().unwrap_or("");
-                    let uses_ctx = code
-                        .split(|c: char| !(c.is_alphanumeric() || c == '_'))
-                        .any(|w| w == "ctx");
-                    if uses_ctx {
-                        let line_no = text[..at].matches('\n').count() + 1 + n;
-                        faults.push(format!("{}:{line_no}: {}", path.display(), line.trim()));
+                }
+                let text = std::fs::read_to_string(&path).expect("read file");
+                for open_with in OPENS {
+                    for (at, _) in text.match_indices(open_with) {
+                        let Some(open) = text[..at].rfind("let ") else {
+                            continue;
+                        };
+                        let var = text[open + 4..at].trim().trim_start_matches("mut ").trim();
+                        // The transaction ends at its commit, its rollback, or when it is dropped.
+                        let Some(close) = [
+                            format!("{var}.commit()"),
+                            format!("{var}.rollback()"),
+                            format!("drop({var})"),
+                        ]
+                        .iter()
+                        .filter_map(|end| text[at..].find(end.as_str()))
+                        .min() else {
+                            continue;
+                        };
+                        seen += 1;
+                        // From the line after the one that opens it: that line names the context to open it.
+                        let window = &text[at..at + close];
+                        let Some((_, window)) = window.split_once('\n') else {
+                            continue;
+                        };
+                        for (n, line) in window.lines().enumerate() {
+                            let code = line.split("//").next().unwrap_or("");
+                            let uses_ctx = code
+                                .split(|c: char| !(c.is_alphanumeric() || c == '_'))
+                                .any(|w| w == "ctx");
+                            if uses_ctx {
+                                let line_no = text[..at].matches('\n').count() + 2 + n;
+                                faults.push(format!(
+                                    "{}:{line_no}: {}",
+                                    path.display(),
+                                    line.trim()
+                                ));
+                            }
+                        }
                     }
                 }
             }
         }
+        assert!(
+            seen > 100,
+            "the census found only {seen} transactions: has the way to open one changed?"
+        );
         assert!(
             faults.is_empty(),
             "the pool is used while a transaction is open: {faults:#?}"

@@ -2643,6 +2643,72 @@ came from grep.
   and `models/governance` (5 each), `webhooks` (4), `controllers/mod.rs` (4), `flow_metrics` (3), and 2 or 1 in
   `tasks/outbox_retry_failed`, `query_count`, `models/saved_views`, `models/plans`, `models/merge_records`, `relay`,
   `idempotency` and `db.rs` (`src/task_bulk.rs` needs nothing).
+  **Progress 2026-11-11, batch 18 (not ticked), the last of step (a).** The infrastructure moved: `app.rs` (24 lines
+  naming SeaORM, now none: `db truncate` deletes the same tables in the same order, one `DELETE FROM` each on the pool,
+  and remakes the outbox's record with `sqlx::raw_sql`), `scheduled_jobs` (16, none), `tasks/search` (9, none),
+  `retention` (5, none), `webhooks` (4, none), `controllers/mod.rs` (4, none: `db_err` went with its last caller, and its
+  test now checks the `503` through `sqlx`'s pool, closed and connection errors), `flow_metrics` (3, none),
+  `tasks/outbox_retry_failed` (2, none), `relay` (1, none), `idempotency` (1, none) and `db.rs` (1, none), with
+  `models/webhook_deliveries` (17, now 2) and `models/audit_logs` (16, now 2). 99 lines gone, leaving 15 files and 173
+  lines by batch 6's measure: 13 by the count spec §8.3b keeps, and 12 that name the API (`src/task_bulk.rs`'s `Set` is
+  its own). Gone, once nothing called them: the SeaORM `AuditModel::record` (`retention` and `scheduled_jobs` were its
+  last callers; `tests/requests/audit_protection.rs` calls `record_on` on the pool instead, changed at the call only),
+  `controllers::db_err` and `webhook_deliveries::Model::recent` (no caller; the operator list has its own sqlx read).
+  Scheduled jobs: the claim is still one transaction that takes `pg_try_advisory_xact_lock(hashtext('scheduled_job:<name>'))`
+  without waiting, skips when a run of the job started within its interval (`ORDER BY id DESC LIMIT 1`), inserts the
+  run with the columns SeaORM set and writes `scheduled_job_started` in the same transaction; the closing record reads
+  the run by pid and updates `finished_at`, `outcome` and `detail` by id (no row back is an error) with
+  `scheduled_job_finished` in one transaction; both audit rows still refuse with `audit_failed` (`500`
+  `audit_unavailable`), so a run whose start cannot be audited does not run, and one whose end cannot be audited stays
+  `running` and `run_job` returns the error, logged by `run_enabled` (not `record_or_log_on`: these are not
+  controllers, and the census of audits kept after a failure is unchanged). Retention: still a dry run unless `apply`,
+  the same rules, periods, deployment settings and `WHERE` text (the rule's fixed identifiers, the cut-off bound),
+  each table's delete, its `ppm.retention_purge` flag and its `retention_purged` audit row in one transaction, audit
+  rows never purged; errors still `Error::string` of the database error's text. Webhooks: `deliver_with_retry`,
+  `WebhookSink` and `relay::spawn` take the context (`webhook_deliveries`' redeliver passes `&ctx`); signing (v1 and
+  v2 headers), retries, backoff and `transport_error` are untouched; the log row lists the columns SeaORM set and
+  returns only its id. `tasks/search`'s rebuild reads the same pages (`ORDER BY id`, `LIMIT`/`OFFSET`, until a page is
+  empty) and its emptiness check is a plain `COUNT(*)`; `flow_metrics` reads only the plans' pids (`LIMIT 1000`, no
+  `ORDER BY`, as before). `outbox_retry_failed` reads the failed rows through `db::pool` and releases them all in one
+  `db::begin` transaction through the new `db::Tx::release_outbox` (counted, as `write_outbox` is), where it used an
+  uncounted transaction on the raw pool; `apply:true` still needs `by:` and `reason:`. `idempotency::keys` and
+  `db::for_axa_crate` take the context.
+  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (no `Query Error: ` or
+  `Execution Error: ` prefix), in a task's output, a scheduled run's `detail` and its audit snapshot, and the log; only
+  on a failure. Statements SeaORM ran without counting them (`execute_unprepared`: retention's flag, `db truncate`'s
+  outbox statements; and the outbox release on the raw pool) are now counted in `query_count`, so a guard sees more,
+  never less. The read before the closing update and the claim's check read only the id; the flow pass reads only pids.
+  A throwaway check (not committed) dumped the answers, statement counts and rows (runs, audit rows with their digests,
+  delivery log, outbox attempts and owed state, table counts) of: five plans (one deleted, one with an unreadable
+  payload) reindexed at three page sizes and through `reindex_if_empty` on a full and an empty index; a flow pass;
+  `run_enabled` with nothing enabled; two schedulers racing for one job, a repeat within the interval and each job
+  once; retention dry, with a shorter period, applied, again, with `audit_logs` refusing inserts (rolled back, nothing
+  deleted), with a table gone; the scheduled retention applied and with a bad setting; a claim and a closing record
+  whose audit rows are refused; redeliveries to a live receiver (the v1 and v2 signature headers sent), to a dead
+  target whose URL carries a token (stored error without it) and to an unconfigured one; a failed outbox event listed,
+  refused a `by` with a line break, released and listed again; `db truncate` twice. Before and after: the same, once
+  pids and times were normalised, but for the error texts and the statement counts above; two runs before were the same.
+  **Found, not changed:** `db truncate` fails at `audit_logs` (the table refuses `DELETE` outside the retention task,
+  RG-3), after it has emptied the tables before it and remade the outbox, before and after; `flow_metrics`' cap of 1000
+  plans has no `ORDER BY`, so which plans it reaches is the table's order; `reindex` pages by `OFFSET`, so a plan
+  created or deleted during a rebuild can be read twice or missed; a scheduled run whose closing audit row cannot be
+  written stays `running` for good, and the next run of the job waits only for the interval.
+  **Left in `src/`, and why** (for steps (b) and (c)): `app.rs`'s migration runner (`Migrator::up`, `down`, `fresh`
+  and `status`, step (b)); `axa::db::connect`, `AppContext::new` and `query_count::install`, whose metric callback counts
+  the statements still run through `ctx.db` as a SeaORM connection (the migrator's, and the tests' own), and
+  `db::pool`, `db::begin` and `db::for_axa_crate`, which reach the pool through SeaORM's
+  `get_postgres_connection_pool`, all until `ctx.db` is the `PgPool` (step (c)); the `ActiveModelBehavior` impls and
+  entity re-exports in `models/behaviors` (116), `canvases` (8), `strategy` (6), `capabilities` (6), `visibility` (5),
+  `governance` (5), `plans`, `merge_records`, `webhook_deliveries`, `saved_views` and `audit_logs` (2 each), step (c).
+  The sqlx code reads its rows into the `_entities` `Model` structs (141 files name `_entities::`), so step (c) keeps
+  those structs (with `sqlx::FromRow`) when it drops SeaORM's derives.
+  **Census, stricter:** the test that no code uses the pool while it holds a transaction read only `src/controllers/`
+  (not its subdirectories) for `ctx.db.begin()`, which nothing calls now, and missed `let mut`; it now reads every file
+  under `src/` for `db::begin` too, from the line after the one that opens it, and fails if it finds fewer than 100
+  transactions. It finds 299 and no fault; a probe (a pool call put inside one, not committed) was caught.
+  **Verified:** fmt, clippy (all targets, all features), 1,265 unit tests, the whole database suite (`mod`, 220 tests, one run: 219 passed and `requests::attachments::an_upload_larger_than_the_service_wide_body_limit_is_accepted_up_to_the_cap` failed once with `Connection reset by peer` on `127.0.0.1:8001` at its `POST /api/plans`, the known intermittent; nothing listened on port 8001 before the run; run alone five times after, it passed five times; `requests::event_outbox` (the relay tests and the outbox release among them), `requests::idempotency`, `requests::retention`, `requests::scheduled_jobs`, `requests::audit_protection`, `requests::tba` (the flow gauges) and `requests::scale` passed) and the 57 other database test binaries (85 tests, `outbox_audit`, `sqlx_layer` and `webhook_redelivery` among them; `keycloak_entra_broker` and `keycloak_guard` with the `keycloak` feature), on a throwaway database; the status, OpenAPI-bodies and llms checks.
+  **Still on SeaORM through other modules**, for these files: none.
+  **Next, suggested:** step (b), the migration crate to sqlx migrations with the history bridge.
 
 ## Correctness carried forward (CF-n)
 

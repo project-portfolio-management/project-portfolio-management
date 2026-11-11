@@ -11,8 +11,8 @@
 //! one transaction per table and writes one audit row per table. The pure parts ([`Rule`],
 //! [`cutoff`], [`parse_days`]) are unit-tested; the SQL is covered by a database test.
 
+use axa::AppContext;
 use chrono::{DateTime, Duration, Utc};
-use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement, TransactionTrait};
 use uuid::Uuid;
 
 use crate::models::audit_logs::Model as AuditModel;
@@ -193,7 +193,7 @@ pub struct Outcome {
 }
 
 /// Wrap a database error as a framework error carrying only its message.
-fn db_err(e: &sea_orm::DbErr) -> axa::Error {
+fn db_err(e: &impl std::fmt::Display) -> axa::Error {
     axa::Error::string(&e.to_string())
 }
 
@@ -203,7 +203,7 @@ fn db_err(e: &sea_orm::DbErr) -> axa::Error {
 ///
 /// When a database statement fails; earlier tables stay purged, the failing one is rolled back.
 pub async fn run(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     now: DateTime<Utc>,
     overrides: &[(String, i64)],
     apply: bool,
@@ -220,33 +220,31 @@ pub async fn run(
             "SELECT COUNT(*) AS n FROM {} WHERE {where_clause}",
             rule.table
         );
-        let matched = db
-            .query_one_raw(Statement::from_sql_and_values(
-                DatabaseBackend::Postgres,
-                count_sql,
-                [sea_orm::Value::from(cut)],
-            ))
+        // The SQL names only the rule's own fixed identifiers (CQ-12); the cut-off is bound.
+        let matched: Option<i64> = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql))
+            .bind(cut)
+            .fetch_optional(crate::db::pool(ctx))
             .await
-            .map_err(|e| db_err(&e))?
-            .map_or(0, |r| r.try_get::<i64>("", "n").unwrap_or(0));
-        let matched = u64::try_from(matched).unwrap_or(0);
+            .map_err(|e| db_err(&e))?;
+        let matched = u64::try_from(matched.unwrap_or(0)).unwrap_or(0);
         let mut deleted = 0;
         if apply && matched > 0 {
-            let tx = db.begin().await.map_err(|e| db_err(&e))?;
-            tx.execute_unprepared("SELECT set_config('ppm.retention_purge', 'on', true)")
+            let mut tx = crate::db::begin(ctx).await.map_err(|e| db_err(&e))?;
+            sqlx::query("SELECT set_config('ppm.retention_purge', 'on', true)")
+                .execute(tx.conn())
                 .await
                 .map_err(|e| db_err(&e))?;
-            deleted = tx
-                .execute_raw(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    format!("DELETE FROM {} WHERE {where_clause}", rule.table),
-                    [sea_orm::Value::from(cut)],
-                ))
-                .await
-                .map_err(|e| db_err(&e))?
-                .rows_affected();
-            AuditModel::record(
-                &tx,
+            deleted = sqlx::query(sqlx::AssertSqlSafe(format!(
+                "DELETE FROM {} WHERE {where_clause}",
+                rule.table
+            )))
+            .bind(cut)
+            .execute(tx.conn())
+            .await
+            .map_err(|e| db_err(&e))?
+            .rows_affected();
+            AuditModel::record_on(
+                tx.conn(),
                 Uuid::nil(),
                 "retention_purged",
                 Some("system:retention"),

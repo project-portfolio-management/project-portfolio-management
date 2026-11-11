@@ -38,8 +38,8 @@ pub fn covers(method: &Method, path: &str) -> bool {
 
 /// The key store, on the service's own pool.
 #[must_use]
-pub fn keys(db: &sea_orm::DatabaseConnection) -> Idempotency {
-    Idempotency::new(crate::db::for_axa_crate(db), |request| {
+pub fn keys(ctx: &axa::AppContext) -> Idempotency {
+    Idempotency::new(crate::db::for_axa_crate(ctx), |request| {
         request
             .extensions()
             .get::<Caller>()

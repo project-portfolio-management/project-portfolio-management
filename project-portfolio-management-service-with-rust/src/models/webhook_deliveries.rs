@@ -4,11 +4,10 @@
 //! [`Model::record`] is the one write: insert the final outcome of one
 //! target URL's retry-with-backoff sequence for one outbox event. There
 //! is no update — a delivery outcome is immutable once decided, matching
-//! `audit_logs`' append-only posture. [`Model::recent`] is the operator
-//! read, newest first, optionally scoped to one `event_id`.
+//! `audit_logs`' append-only posture. The operator read is
+//! `GET /api/webhook-deliveries` (`controllers::webhook_deliveries`).
 
 use crate::prelude::*;
-use sea_orm::{ColumnTrait, QueryFilter, QueryOrder, QuerySelect};
 
 pub use super::_entities::webhook_deliveries::{self, ActiveModel, Entity, Model};
 
@@ -37,56 +36,34 @@ pub struct DeliveryOutcome {
 }
 
 impl Model {
-    /// Record one delivery outcome.
+    /// Record one delivery outcome, and return its row id.
     ///
     /// # Errors
     ///
     /// When the insert fails.
-    pub async fn record(db: &DatabaseConnection, outcome: &DeliveryOutcome) -> ModelResult<Self> {
-        let row = webhook_deliveries::ActiveModel {
-            event_id: ActiveValue::set(outcome.event_id),
-            entity: ActiveValue::set(outcome.entity.clone()),
-            kind: ActiveValue::set(outcome.kind.clone()),
-            url: ActiveValue::set(outcome.url.clone()),
-            attempts: ActiveValue::set(i32::try_from(outcome.attempts).unwrap_or(i32::MAX)),
-            status: ActiveValue::set(
-                if outcome.delivered {
-                    "delivered"
-                } else {
-                    "failed"
-                }
-                .to_string(),
-            ),
-            status_code: ActiveValue::set(outcome.status_code.map(i32::from)),
-            error: ActiveValue::set(outcome.error.clone()),
-            ..Default::default()
-        }
-        .insert(db)
+    pub async fn record(ctx: &AppContext, outcome: &DeliveryOutcome) -> Result<i32> {
+        // The columns `SeaORM`'s insert set, no more (`created_at` is the table's default).
+        let id = sqlx::query_scalar(
+            "INSERT INTO webhook_deliveries
+                 (event_id, entity, kind, url, attempts, status, status_code, error)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING id",
+        )
+        .bind(outcome.event_id)
+        .bind(&outcome.entity)
+        .bind(&outcome.kind)
+        .bind(&outcome.url)
+        .bind(i32::try_from(outcome.attempts).unwrap_or(i32::MAX))
+        .bind(if outcome.delivered {
+            "delivered"
+        } else {
+            "failed"
+        })
+        .bind(outcome.status_code.map(i32::from))
+        .bind(&outcome.error)
+        .fetch_one(crate::db::pool(ctx))
         .await?;
-        Ok(row)
-    }
-
-    /// The most recent delivery-log rows, newest first, optionally
-    /// scoped to one event.
-    ///
-    /// # Errors
-    ///
-    /// When the query fails.
-    pub async fn recent(
-        db: &DatabaseConnection,
-        event_id: Option<uuid::Uuid>,
-        limit: u64,
-    ) -> ModelResult<Vec<Self>> {
-        let mut query = webhook_deliveries::Entity::find();
-        if let Some(event_id) = event_id {
-            query = query.filter(webhook_deliveries::Column::EventId.eq(event_id));
-        }
-        let rows = query
-            .order_by_desc(webhook_deliveries::Column::Id)
-            .limit(limit)
-            .all(db)
-            .await?;
-        Ok(rows)
+        Ok(id)
     }
 }
 

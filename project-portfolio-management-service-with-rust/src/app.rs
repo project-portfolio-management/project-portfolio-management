@@ -6,7 +6,6 @@ use axa::{
     boot::{BootResult, TestApp},
     cli::{Cli, Command, DbCommand, parse_vars},
     config::{Config as ServiceConfig, Defaults, MB},
-    db::truncate_table,
     health::Checks,
     queue::{Queue, QueueOptions},
     routes::AppRoutes,
@@ -26,12 +25,6 @@ use std::sync::OnceLock;
 #[expect(unused_imports)]
 use crate::{
     auth, controllers,
-    models::_entities::{
-        allocations, audit_logs, automation_runs, automations, benefits, budget_lines,
-        gate_reviews, ideas, merge_records, milestones, notifications, objective_links, objectives,
-        plan_dependencies, plans, proposals, report_definitions, reviews, risks, scenarios,
-        scheduled_actions,
-    },
     observability::{self, Telemetry, TelemetryConfig},
     tasks,
     workers::{bulk::BulkWorker, downloader::DownloadWorker},
@@ -529,7 +522,7 @@ impl App {
         // Durable event bus Phase 3: start the outbox relay loop. A no-op
         // unless `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox` AND `PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY`
         // are set, so the default `memory` transport never spawns it.
-        crate::relay::spawn(ctx.db.clone(), ctx.config.database.uri.clone());
+        crate::relay::spawn(ctx);
         // Optional estate-snapshot ticker (env-gated, default off).
         crate::snapshots::spawn(ctx.clone());
         // Set-and-forget: the optional scheduled-action sweep ticker
@@ -541,12 +534,12 @@ impl App {
         // — the upgrade path for a deployment whose data predates the
         // index, and the recovery path for an index directory that did
         // not survive a restart. A no-op on a normal boot.
-        crate::tasks::search::spawn_reindex_if_empty(ctx.db.clone());
+        crate::tasks::search::spawn_reindex_if_empty(ctx.clone());
         // Blanket JWT enforcement layer. Added unconditionally; enforcement is on
         // unless explicitly turned off (`PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH=false`
         // or a development profile), and the layer is a near-noop then.
         // The key store's table is the migrations'; a missing one stops the boot, not the first write.
-        let keys = crate::idempotency::keys(&ctx.db);
+        let keys = crate::idempotency::keys(ctx);
         keys.check()
             .await
             .map_err(|error| Error::Message(format!("axa_idempotency: {error}")))?;
@@ -665,38 +658,56 @@ impl App {
     ///
     /// Propagates a database error.
     pub async fn truncate(ctx: &AppContext) -> Result<()> {
-        truncate_table(&ctx.db, notifications::Entity).await?;
-        truncate_table(&ctx.db, automation_runs::Entity).await?;
-        truncate_table(&ctx.db, automations::Entity).await?;
-        truncate_table(&ctx.db, scheduled_actions::Entity).await?;
-        truncate_table(&ctx.db, reviews::Entity).await?;
-        truncate_table(&ctx.db, benefits::Entity).await?;
-        truncate_table(&ctx.db, objective_links::Entity).await?;
-        truncate_table(&ctx.db, objectives::Entity).await?;
-        truncate_table(&ctx.db, scenarios::Entity).await?;
-        truncate_table(&ctx.db, ideas::Entity).await?;
-        truncate_table(&ctx.db, report_definitions::Entity).await?;
-        truncate_table(&ctx.db, allocations::Entity).await?;
-        truncate_table(&ctx.db, milestones::Entity).await?;
-        truncate_table(&ctx.db, plan_dependencies::Entity).await?;
-        truncate_table(&ctx.db, budget_lines::Entity).await?;
-        truncate_table(&ctx.db, risks::Entity).await?;
-        truncate_table(&ctx.db, gate_reviews::Entity).await?;
-        truncate_table(&ctx.db, proposals::Entity).await?;
-        sea_orm::ConnectionTrait::execute_unprepared(&ctx.db, "DELETE FROM axa_outbox").await?;
+        // `DELETE FROM` each, in this order, each on its own, as `axa::db::truncate_table` (`SeaORM`'s `delete_many`)
+        // did. The names are fixed literals.
+        for table in [
+            "notifications",
+            "automation_runs",
+            "automations",
+            "scheduled_actions",
+            "reviews",
+            "benefits",
+            "objective_links",
+            "objectives",
+            "scenarios",
+            "ideas",
+            "report_definitions",
+            "allocations",
+            "milestones",
+            "plan_dependencies",
+            "budget_lines",
+            "risks",
+            "gate_reviews",
+            "proposals",
+        ] {
+            Self::delete_all(ctx, table).await?;
+        }
+        sqlx::raw_sql("DELETE FROM axa_outbox")
+            .execute(crate::db::pool(ctx))
+            .await?;
         // The outbox's record refuses DELETE and TRUNCATE by design, so emptying it means making it again.
-        sea_orm::ConnectionTrait::execute_unprepared(
-            &ctx.db,
+        sqlx::raw_sql(
             "DROP TABLE IF EXISTS axa_outbox_attempts, axa_outbox_owed, axa_outbox_leases, \
              axa_outbox_payloads, axa_outbox_events CASCADE",
         )
+        .execute(crate::db::pool(ctx))
         .await?;
         for statement in axa::outbox::SETUP_STATEMENTS {
-            sea_orm::ConnectionTrait::execute_unprepared(&ctx.db, statement).await?;
+            sqlx::raw_sql(statement)
+                .execute(crate::db::pool(ctx))
+                .await?;
         }
-        truncate_table(&ctx.db, merge_records::Entity).await?;
-        truncate_table(&ctx.db, audit_logs::Entity).await?;
-        truncate_table(&ctx.db, plans::Entity).await?;
+        for table in ["merge_records", "audit_logs", "plans"] {
+            Self::delete_all(ctx, table).await?;
+        }
+        Ok(())
+    }
+
+    /// `DELETE FROM <table>`, for [`Self::truncate`]; `table` is one of its fixed names.
+    async fn delete_all(ctx: &AppContext, table: &'static str) -> Result<()> {
+        sqlx::query(sqlx::AssertSqlSafe(format!("DELETE FROM \"{table}\"")))
+            .execute(crate::db::pool(ctx))
+            .await?;
         Ok(())
     }
 }

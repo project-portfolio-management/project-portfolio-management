@@ -109,26 +109,10 @@ impl Model {
         .map_err(Error::from)
     }
 
-    /// [`Self::record`] for a write that is kept even when its audit row cannot be written (CQ-3).
-    /// The failure is never dropped silently: it is logged at error level, with the entity and the
-    /// action, and counted in `audit_write_failed_total`, which an operator can alert on. Whether
-    /// such a write should be refused instead is plan §70 question 2.
-    pub async fn record_or_log<C: ConnectionTrait>(
-        db: &C,
-        entity_pid: Uuid,
-        action: &str,
-        actor: Option<&str>,
-        snapshot: Option<serde_json::Value>,
-    ) {
-        if let Err(error) = Self::record(db, entity_pid, action, actor, snapshot).await {
-            crate::metrics::Metrics::global()
-                .audit_write_failed_total
-                .inc();
-            tracing::error!(%entity_pid, action, %error, "audit row not written");
-        }
-    }
-
-    /// [`Self::record_or_log`] on sqlx: the pool ([`crate::db::pool`]) or a transaction ([`crate::db::Tx::conn`]).
+    /// [`Self::record_on`] for a write that is kept even when its audit row cannot be written (CQ-3), on the pool
+    /// ([`crate::db::pool`]) or a transaction ([`crate::db::Tx::conn`]). The failure is never dropped silently: it is
+    /// logged at error level, with the entity and the action, and counted in `audit_write_failed_total`, which an
+    /// operator can alert on. Whether such a write should be refused instead is plan §70 question 2.
     pub async fn record_or_log_on<'e, E: sqlx::Executor<'e, Database = sqlx::Postgres>>(
         db: E,
         entity_pid: Uuid,
@@ -206,7 +190,7 @@ mod tests {
     }
 
     /// CQ-3: no audit write throws its error away. A call either passes the error on (`?`,
-    /// `map_err`) or goes through `record_or_log`, which logs it and counts it.
+    /// `map_err`) or goes through `record_or_log_on`, which logs it and counts it.
     #[test]
     fn no_source_file_discards_an_audit_error() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
@@ -223,7 +207,11 @@ mod tests {
                     continue;
                 }
                 let text = std::fs::read_to_string(&path).expect("read file");
-                for (at, _) in text.match_indices("Model::record(") {
+                // The sqlx twin too, so moving a call to it cannot slip past this check.
+                let calls = text
+                    .match_indices("Model::record(")
+                    .chain(text.match_indices("Model::record_on("));
+                for (at, _) in calls {
                     let statement = text[at..].split(';').next().unwrap_or("");
                     let squashed: String = statement.split_whitespace().collect();
                     if squashed.ends_with(".ok()") {
@@ -237,7 +225,7 @@ mod tests {
     }
 
     /// NFR-6 / CQ-3: a write's audit row is written in the write's own transaction and a failure refuses the
-    /// write. `record_or_log` (log, count, keep) is what remains for audits of something **already done with
+    /// write. `record_or_log_on` (log, count, keep) is what remains for audits of something **already done with
     /// no caller to refuse**, or that is not a change: the audit of an automation run or a scheduled action
     /// that has fired, of a background job's end, of a report run that failed, the warning that a register is
     /// incomplete, and the record that a scan refused an upload. This list can only shrink: a file's count may

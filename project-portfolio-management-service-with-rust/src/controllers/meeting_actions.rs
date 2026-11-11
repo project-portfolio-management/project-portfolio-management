@@ -219,7 +219,7 @@ async fn commit(
         .bind(now)
         .fetch_one(tx.conn())
         .await?;
-        // The task's creation in the transition log, as `crate::tba::transition_row` writes it.
+        // The task's creation in the transition log, as `crate::tba::insert_transition_on` writes it.
         sqlx::query(
             "INSERT INTO task_transitions
                  (pid, task_pid, plan_pid, from_status, to_status, at, actor_ref, assignee_ref, backfilled)

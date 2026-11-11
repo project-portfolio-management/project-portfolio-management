@@ -12,7 +12,7 @@ look at.
    A route anywhere else reaches a plan by itself, so it checks: `plan_access::require_readable`, `HiddenScope` or `resolve_subject`, on a record's own pid and on any field of the body or query that names another record, and it gives the answer of a record that does not exist. It is listed in `plan-guard-census.txt` with how it does that.
 2. A view that adds up, lists or counts across plans routes its rows through `HiddenScope`, so a private plan contributes to no total. A new parameterless `GET` is named in `tests/private_aggregates.rs` (aggregate or not, with a reason). (service `AGENTS.md`)
 3. Code that parses a path in a guard percent-decodes first and fails closed. (service `AGENTS.md`)
-4. A write is audited before it is committed: `AuditModel::record` inside the transaction, or `record_or_log`; never `record(..).await.ok()`. (service `AGENTS.md`, CQ-3)
+4. A write is audited before it is committed: `AuditModel::record` or `record_on` inside the transaction, or `record_or_log_on`; never `record(..).await.ok()` or `record_on(..).await.ok()`. (service `AGENTS.md`, CQ-3)
 5. Free text from a request is never put into SQL; a table, column or condition in a format string comes from a constant. (`describe` in `controllers/meetings.rs`)
 6. Absent evidence is `null` with a reason, never zero. (service `AGENTS.md`, rule 7)
 7. A token's scope can only narrow: `scope=readonly` and `scope=capture` are decided before the policy, and a policy file cannot widen them. (spec NFR-5)

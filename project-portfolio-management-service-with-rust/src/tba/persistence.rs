@@ -2,42 +2,8 @@
 
 use super::{BTreeMap, Transition, default_classes, parse_classes};
 
-/// Build the `task_transitions` row for one status change.
-///
-/// Kept here rather than in the controller so the two call sites — task
-/// creation and the board move — cannot drift, and so the log's shape
-/// is defined next to the analysis that reads it. The caller inserts it
-/// **inside the same transaction as the change that caused it**
-/// (spec §5.1 invariant 3): a committed move without its transition
-/// would silently shorten the item's recorded life, and nothing
-/// downstream could tell.
-#[must_use]
-pub fn transition_row(
-    task_pid: uuid::Uuid,
-    plan_pid: uuid::Uuid,
-    from_status: Option<String>,
-    to_status: String,
-    at: chrono::DateTime<chrono::Utc>,
-    actor_ref: Option<String>,
-    assignee_ref: Option<String>,
-) -> crate::models::_entities::task_transitions::ActiveModel {
-    use sea_orm::ActiveValue;
-    crate::models::_entities::task_transitions::ActiveModel {
-        pid: ActiveValue::set(uuid::Uuid::new_v4()),
-        task_pid: ActiveValue::set(task_pid),
-        plan_pid: ActiveValue::set(plan_pid),
-        from_status: ActiveValue::set(from_status),
-        to_status: ActiveValue::set(to_status),
-        at: ActiveValue::set(at.into()),
-        actor_ref: ActiveValue::set(actor_ref),
-        assignee_ref: ActiveValue::set(assignee_ref),
-        backfilled: ActiveValue::set(false),
-        ..Default::default()
-    }
-}
-
-/// One status change for [`insert_transition_on`]: the fields [`transition_row`] takes, plus the reason a move into
-/// `blocked` gives.
+/// One status change for [`insert_transition_on`]: the task, its plan, the statuses, when, who, and the reason a move
+/// into `blocked` gives.
 #[derive(Debug, Clone, Copy)]
 pub struct NewTransition<'a> {
     /// The task that moved.
@@ -58,10 +24,12 @@ pub struct NewTransition<'a> {
     pub blocked_reason: Option<&'a str>,
 }
 
-/// [`transition_row`] on `sqlx`: inserts the `task_transitions` row for one status change, in the caller's
-/// transaction ([`crate::db::Tx`]) so it commits with the change that caused it (spec §5.1 invariant 3). The same row
-/// [`transition_row`] builds: a new pid, `backfilled` false, and `blocked_reason` (a column with no default, so an
-/// absent reason is the `NULL` an omitted column gets).
+/// Inserts the `task_transitions` row for one status change, in the caller's transaction ([`crate::db::Tx`]) so it
+/// commits with the change that caused it (spec §5.1 invariant 3): a committed move without its transition would
+/// silently shorten the item's recorded life, and nothing downstream could tell. Kept here rather than in a controller
+/// so the callers (task creation, the board move, the imports, templates) cannot drift, and so the log's shape is
+/// defined next to the analysis that reads it. The row: a new pid, `backfilled` false, and `blocked_reason` (a column
+/// with no default, so an absent reason is the `NULL` an omitted column gets).
 ///
 /// # Errors
 ///

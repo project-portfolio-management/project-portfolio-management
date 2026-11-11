@@ -9,7 +9,6 @@
 //!   unless it is also named in `overwrite_local`.
 
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
@@ -17,11 +16,12 @@ use uuid::Uuid;
 use super::discussion::resolve_subject;
 use super::plan_access::readable_plans;
 use super::plan_templates::{capture, find_template, find_visible_template};
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::blueprint_sync::{self as rules, Kind, Local};
-use crate::models::_entities::{plan_template_links, plan_templates, plans, tasks};
+use crate::models::_entities::{plan_template_links, plan_templates, tasks};
 use crate::models::audit_logs::Model as AuditModel;
+use crate::models::plans::Model as PlanModel;
 use crate::plan_templates::{Snapshot, TplTask};
 
 /// Which of a plan's tasks came from which template task.
@@ -49,12 +49,12 @@ struct Loaded {
 
 /// Load a plan's template link, the template, and the baseline, current and mapped tasks; `404` when the plan has no link, `422` when stored JSON or the plan's node in the template cannot be read.
 async fn load(ctx: &AppContext, plan_pid: Uuid) -> Result<Loaded> {
-    let link = plan_template_links::Entity::find()
-        .filter(plan_template_links::Column::PlanPid.eq(plan_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let link: plan_template_links::Model =
+        sqlx::query_as("SELECT * FROM plan_template_links WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan_pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     let template = find_template(ctx, &link.template_pid.to_string()).await?;
     let snapshot: Snapshot = serde_json::from_value(template.snapshot.clone())
         .map_err(|e| unprocessable(&format!("the template snapshot is unreadable: {e}")))?;
@@ -82,12 +82,11 @@ async fn local_tasks(
     map: &[TaskLink],
 ) -> Result<std::collections::HashMap<Uuid, tasks::Model>> {
     let pids: Vec<Uuid> = map.iter().map(|m| m.task_pid).collect();
-    let rows = tasks::Entity::find()
-        .filter(tasks::Column::Pid.is_in(pids))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<tasks::Model> =
+        sqlx::query_as("SELECT * FROM tasks WHERE pid = ANY($1) AND deleted_at IS NULL")
+            .bind(pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     Ok(rows.into_iter().map(|t| (t.pid, t)).collect())
 }
 
@@ -126,26 +125,25 @@ async fn revise(
     let old: Snapshot = serde_json::from_value(row.snapshot.clone())
         .map_err(|e| unprocessable(&format!("the template snapshot is unreadable: {e}")))?;
     let subject = resolve_subject(&ctx, &caller, "plan", &b.from_plan.to_string()).await?;
-    let root = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(subject.pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let root = PlanModel::find_by_pid(&ctx, &subject.pid.to_string()).await?;
     let (captured, omitted) = capture(&ctx, &caller, root).await?;
     rules::same_shape(&old, &captured).map_err(|m| unprocessable(&m))?;
     let new = rules::rekey(&old, captured);
     let version = row.version + 1;
     let tpl_pid = row.pid;
-    let mut active: plan_templates::ActiveModel = row.into();
-    active.source_plan_pid = ActiveValue::set(Some(subject.pid));
-    active.snapshot = ActiveValue::set(json!(new));
-    active.version = ActiveValue::set(version);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE plan_templates SET source_plan_pid = $1, snapshot = $2, version = $3 WHERE id = $4 RETURNING id",
+    )
+    .bind(subject.pid)
+    .bind(json!(new))
+    .bind(version)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         tpl_pid,
         "plan_template_revised",
         caller.actor(),
@@ -153,7 +151,7 @@ async fn revise(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({
         "pid": tpl_pid,
         "version": version,
@@ -172,22 +170,21 @@ async fn template_plans(
     let template = find_visible_template(&ctx, &caller, &pid).await?;
     let snapshot: Snapshot = serde_json::from_value(template.snapshot.clone())
         .map_err(|e| unprocessable(&format!("the template snapshot is unreadable: {e}")))?;
-    let links = plan_template_links::Entity::find()
-        .filter(plan_template_links::Column::TemplatePid.eq(template.pid))
-        .order_by_asc(plan_template_links::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let links: Vec<plan_template_links::Model> =
+        sqlx::query_as("SELECT * FROM plan_template_links WHERE template_pid = $1 ORDER BY id")
+            .bind(template.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let pids: Vec<Uuid> = links.iter().map(|l| l.plan_pid).collect();
     let readable = readable_plans(&ctx, &caller, &pids).await;
-    let names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(pids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    // Every plan named, soft-deleted ones too, as before; only the pid and the name are read.
+    let names: std::collections::HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(&pids)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .collect();
     let items: Vec<serde_json::Value> = links
         .iter()
         .filter(|l| readable.contains(&l.plan_pid))
@@ -314,7 +311,7 @@ async fn template_sync(
     let mut overwritten: Vec<String> = Vec::new();
     let mut refused: Vec<serde_json::Value> = Vec::new();
     let now = chrono::Utc::now();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     for c in changes.iter().filter(|c| b.accept.contains(&c.id)) {
         let local = local_of(&l.map, &rows, c.key);
         let edited = rules::locally_edited(c, local.as_ref());
@@ -328,7 +325,7 @@ async fn template_sync(
         match (c.kind, &c.to) {
             (Kind::Add, Some(to)) => {
                 let tp = Uuid::new_v4();
-                insert_task(&txn, plan_pid, tp, to, &initial, now, caller.actor()).await?;
+                insert_task(&mut tx, plan_pid, tp, to, &initial, now, caller.actor()).await?;
                 map.push(TaskLink {
                     key: to.key,
                     task_pid: tp,
@@ -343,20 +340,29 @@ async fn template_sync(
                     }));
                     continue;
                 };
-                let mut active: tasks::ActiveModel = row.clone().into();
-                active.title = ActiveValue::set(to.title.clone());
-                active.description = ActiveValue::set(to.description.clone());
-                active.points = ActiveValue::set(to.points);
-                active.update(&txn).await.map_err(db_err)?;
+                // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+                sqlx::query_scalar::<_, i32>(
+                    "UPDATE tasks SET title = $1, description = $2, points = $3 WHERE id = $4 RETURNING id",
+                )
+                .bind(&to.title)
+                .bind(&to.description)
+                .bind(to.points)
+                .bind(row.id)
+                .fetch_one(tx.conn())
+                .await?;
                 if let Some(slot) = baseline.iter_mut().find(|t| t.key == c.key) {
                     *slot = to.clone();
                 }
             }
             (Kind::Remove, _) => {
                 if let Some(row) = local_row(&l.map, &rows, c.key) {
-                    let mut active: tasks::ActiveModel = row.clone().into();
-                    active.deleted_at = ActiveValue::set(Some(now.into()));
-                    active.update(&txn).await.map_err(db_err)?;
+                    sqlx::query_scalar::<_, i32>(
+                        "UPDATE tasks SET deleted_at = $1 WHERE id = $2 RETURNING id",
+                    )
+                    .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+                    .bind(row.id)
+                    .fetch_one(tx.conn())
+                    .await?;
                 }
                 baseline.retain(|t| t.key != c.key);
                 map.retain(|m| m.key != c.key);
@@ -369,15 +375,27 @@ async fn template_sync(
         applied.push(c.id.clone());
     }
     let remaining = rules::diff(&baseline, &l.now).len();
-    let mut link: plan_template_links::ActiveModel = l.link.clone().into();
-    link.baseline = ActiveValue::set(json!(baseline));
-    link.task_map = ActiveValue::set(json!(map));
-    if remaining == 0 {
-        link.template_version = ActiveValue::set(l.template.version);
-    }
-    link.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    // The version moves only when nothing is left waiting; the update names it only then, as `SeaORM`'s did.
+    let link = if remaining == 0 {
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE plan_template_links SET baseline = $1, task_map = $2, template_version = $3 WHERE id = $4
+             RETURNING id",
+        )
+        .bind(json!(baseline))
+        .bind(json!(map))
+        .bind(l.template.version)
+        .bind(l.link.id)
+    } else {
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE plan_template_links SET baseline = $1, task_map = $2 WHERE id = $3 RETURNING id",
+        )
+        .bind(json!(baseline))
+        .bind(json!(map))
+        .bind(l.link.id)
+    };
+    link.fetch_one(tx.conn()).await?;
+    AuditModel::record_on(
+        tx.conn(),
         plan_pid,
         "plan_template_synced",
         caller.actor(),
@@ -390,7 +408,7 @@ async fn template_sync(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(json!({
         "applied": applied,
         "overwritten_local_edits": overwritten,
@@ -411,7 +429,7 @@ fn local_row<'a>(
 
 /// One task at the workflow's initial state, with its first transition, inside the caller's transaction.
 async fn insert_task(
-    txn: &sea_orm::DatabaseTransaction,
+    tx: &mut crate::db::Tx,
     plan_pid: Uuid,
     pid: Uuid,
     t: &TplTask,
@@ -419,39 +437,37 @@ async fn insert_task(
     now: chrono::DateTime<chrono::Utc>,
     actor: Option<&str>,
 ) -> Result<()> {
-    tasks::ActiveModel {
-        pid: ActiveValue::set(pid),
-        plan_pid: ActiveValue::set(plan_pid),
-        sprint_pid: ActiveValue::set(None),
-        title: ActiveValue::set(t.title.clone()),
-        description: ActiveValue::set(t.description.clone()),
-        status: ActiveValue::set(initial.to_string()),
-        assignee_ref: ActiveValue::set(None),
-        points: ActiveValue::set(t.points),
-        due_date: ActiveValue::set(None),
-        component_pid: ActiveValue::set(None),
-        parent_task_pid: ActiveValue::set(None),
-        status_changed_at: ActiveValue::set(now.into()),
-        flow_type: ActiveValue::set(t.flow_type.clone()),
-        done_at: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(txn)
-    .await
-    .map_err(db_err)?;
-    crate::tba::transition_row(
-        pid,
-        plan_pid,
-        None,
-        initial.to_string(),
-        now,
-        actor.map(ToString::to_string),
-        None,
+    // The columns `SeaORM`'s insert set, no more.
+    sqlx::query(
+        "INSERT INTO tasks
+             (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points, due_date, component_pid,
+              parent_task_pid, status_changed_at, flow_type, done_at, deleted_at)
+         VALUES ($1, $2, NULL, $3, $4, $5, NULL, $6, NULL, NULL, NULL, $7, $8, NULL, NULL)",
     )
-    .insert(txn)
-    .await
-    .map_err(db_err)?;
+    .bind(pid)
+    .bind(plan_pid)
+    .bind(&t.title)
+    .bind(&t.description)
+    .bind(initial)
+    .bind(t.points)
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+    .bind(&t.flow_type)
+    .execute(tx.conn())
+    .await?;
+    crate::tba::insert_transition_on(
+        tx,
+        crate::tba::NewTransition {
+            task_pid: pid,
+            plan_pid,
+            from_status: None,
+            to_status: initial,
+            at: now,
+            actor_ref: actor,
+            assignee_ref: None,
+            blocked_reason: None,
+        },
+    )
+    .await?;
     Ok(())
 }
 

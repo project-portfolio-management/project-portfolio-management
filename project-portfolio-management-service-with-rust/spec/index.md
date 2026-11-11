@@ -203,9 +203,10 @@ is expressed by `parent_ref`, never by a collection boundary.
    `deleted`/`merged` (and `linked`/`unlinked`) event. An audit write either
    fails the request (`?`, inside the write's transaction where there is one)
    or, where the write is kept regardless, goes through
-   `AuditModel::record_or_log`, which logs the failure at error level and
+   `AuditModel::record_or_log_on`, which logs the failure at error level and
    counts it in `audit_write_failed_total` (CQ-3); no audit error is discarded
-   silently, and a unit test fails on a `record(..).await.ok()`.
+   silently, and a unit test fails on a `record(..).await.ok()` or a
+   `record_on(..).await.ok()`.
 13. `GET /api/plans/whoami` — echo verified bearer-token claims (`401`
    without a valid token); proves offline PASETO verification.
 14. `GET /api-docs/openapi.json` + `GET /swagger-ui` — OpenAPI 3

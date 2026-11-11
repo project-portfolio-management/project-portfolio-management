@@ -8,7 +8,7 @@ use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::metrics::Metrics;
 use project_portfolio_management::models::audit_logs::Model as AuditModel;
-use sea_orm::{ConnectionTrait, TransactionTrait};
+use sea_orm::ConnectionTrait;
 use serial_test::serial;
 use uuid::Uuid;
 
@@ -21,17 +21,26 @@ async fn a_failed_audit_write_is_counted_not_dropped() {
         let before = failed();
 
         // A good write is not counted.
-        AuditModel::record_or_log(&ctx.db, Uuid::new_v4(), "cq3_ok", None, None).await;
+        AuditModel::record_or_log_on(
+            project_portfolio_management::db::pool(&ctx),
+            Uuid::new_v4(),
+            "cq3_ok",
+            None,
+            None,
+        )
+        .await;
         assert!(
             (failed() - before).abs() < f64::EPSILON,
             "a written row is not a failure"
         );
 
         // An aborted transaction refuses every further statement, the audit insert included.
-        let txn = ctx.db.begin().await.expect("begin");
-        assert!(txn.execute_unprepared("SELECT 1/0").await.is_err());
-        AuditModel::record_or_log(&txn, Uuid::new_v4(), "cq3_failed", None, None).await;
-        txn.rollback().await.expect("rollback");
+        let mut tx = project_portfolio_management::db::begin(&ctx)
+            .await
+            .expect("begin");
+        assert!(sqlx::query("SELECT 1/0").execute(tx.conn()).await.is_err());
+        AuditModel::record_or_log_on(tx.conn(), Uuid::new_v4(), "cq3_failed", None, None).await;
+        drop(tx); // rolls back
         assert!(
             (failed() - before - 1.0).abs() < f64::EPSILON,
             "the failed audit write is counted once"

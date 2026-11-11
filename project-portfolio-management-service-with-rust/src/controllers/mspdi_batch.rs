@@ -20,9 +20,8 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use super::discussion::resolve_subject;
-use super::{db_err, unprocessable_entity as unprocessable};
+use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plan_dependencies, task_relations, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::mspdi::{self, Parsed};
 use crate::mspdi_batch::{self as rules, Mapped, Resolved, Terms};
@@ -149,24 +148,25 @@ async fn store_values(
         .iter()
         .map(|(u, _, _)| format!("mspdi:{u}"))
         .collect();
-    let rows = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan_pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::ExternalRef.is_in(refs))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Only the pid and the reference are read.
+    let rows: Vec<(Uuid, Option<String>)> = sqlx::query_as(
+        "SELECT pid, external_ref FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL AND external_ref = ANY($2)",
+    )
+    .bind(plan_pid)
+    .bind(&refs)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut stored = 0;
     for (uid, key, value) in accepted {
         let ext = format!("mspdi:{uid}");
-        if let Some(t) = rows
+        if let Some((task_pid, _)) = rows
             .iter()
-            .find(|t| t.external_ref.as_deref() == Some(ext.as_str()))
+            .find(|(_, e)| e.as_deref() == Some(ext.as_str()))
         {
             super::custom_fields::store_on(
                 &mut crate::db::pool(ctx),
                 "task",
-                t.pid,
+                *task_pid,
                 &[(key.clone(), Some(value.clone()))],
             )
             .await?;
@@ -292,39 +292,34 @@ async fn link_projects(
     let mut pids: HashMap<(usize, i64), Uuid> = HashMap::new();
     for (idx, plan) in plan_pids.iter().enumerate() {
         let Some(plan) = plan else { continue };
-        for t in tasks::Entity::find()
-            .filter(tasks::Column::PlanPid.eq(*plan))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-        {
-            if let Some(uid) = t
-                .external_ref
+        // Only the pid and the reference are read.
+        let rows: Vec<(Uuid, Option<String>)> = sqlx::query_as(
+            "SELECT pid, external_ref FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL",
+        )
+        .bind(*plan)
+        .fetch_all(crate::db::pool(ctx))
+        .await?;
+        for (task_pid, external_ref) in rows {
+            if let Some(uid) = external_ref
                 .as_deref()
                 .and_then(|e| e.strip_prefix("mspdi:"))
                 .and_then(|u| u.parse().ok())
             {
-                pids.insert((idx, uid), t.pid);
+                pids.insert((idx, uid), task_pid);
             }
         }
     }
-    let mut edges: Vec<(Uuid, Uuid)> = plan_dependencies::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|d| (d.predecessor_pid, d.successor_pid))
-        .collect();
+    // Every dependency and live `precedes` relation (as before, not only these plans'); only the two ends are read.
+    let mut edges: Vec<(Uuid, Uuid)> =
+        sqlx::query_as("SELECT predecessor_pid, successor_pid FROM plan_dependencies")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     edges.extend(
-        task_relations::Entity::find()
-            .filter(task_relations::Column::DeletedAt.is_null())
-            .filter(task_relations::Column::Kind.eq("precedes"))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|r| (r.from_task_pid, r.to_task_pid)),
+        sqlx::query_as::<_, (Uuid, Uuid)>(
+            "SELECT from_task_pid, to_task_pid FROM task_relations WHERE deleted_at IS NULL AND kind = 'precedes'",
+        )
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
     );
     let (mut created, mut present, mut skipped) = (0, 0, Vec::new());
     for l in resolved {
@@ -349,25 +344,22 @@ async fn link_projects(
             );
             continue;
         }
-        plan_dependencies::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            predecessor_pid: ActiveValue::set(pred),
-            successor_pid: ActiveValue::set(succ),
-            lag_days: ActiveValue::set(i32::try_from(l.lag_days).unwrap_or(0)),
-            kind: ActiveValue::set(
-                match l.kind {
-                    crate::cpm::Kind::Fs => "fs",
-                    crate::cpm::Kind::Ss => "ss",
-                    crate::cpm::Kind::Ff => "ff",
-                    crate::cpm::Kind::Sf => "sf",
-                }
-                .to_string(),
-            ),
-            ..Default::default()
-        }
-        .insert(&ctx.db)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO plan_dependencies (pid, predecessor_pid, successor_pid, lag_days, kind)
+             VALUES ($1, $2, $3, $4, $5)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(pred)
+        .bind(succ)
+        .bind(i32::try_from(l.lag_days).unwrap_or(0))
+        .bind(match l.kind {
+            crate::cpm::Kind::Fs => "fs",
+            crate::cpm::Kind::Ss => "ss",
+            crate::cpm::Kind::Ff => "ff",
+            crate::cpm::Kind::Sf => "sf",
+        })
+        .execute(crate::db::pool(ctx))
+        .await?;
         edges.push((pred, succ));
         created += 1;
     }
@@ -521,20 +513,20 @@ async fn store_costs(
     let mut stored = 0;
     if let (false, Some(plan)) = (dry_run, plan_pid) {
         for c in &parsed.fixed_costs {
-            let Some(task) = tasks::Entity::find()
-                .filter(tasks::Column::PlanPid.eq(plan))
-                .filter(tasks::Column::ExternalRef.eq(format!("mspdi:{}", c.uid)))
-                .filter(tasks::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
+            let Some(task_pid) = sqlx::query_scalar::<_, Uuid>(
+                "SELECT pid FROM tasks WHERE plan_pid = $1 AND external_ref = $2 AND deleted_at IS NULL LIMIT 1",
+            )
+            .bind(plan)
+            .bind(format!("mspdi:{}", c.uid))
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
             else {
                 continue;
             };
             if super::cost_rates::import_fixed_cost(
                 ctx,
                 caller.actor(),
-                task.pid,
+                task_pid,
                 "Fixed cost (imported from MS Project)",
                 c.amount_minor,
                 &currency.to_ascii_uppercase(),
@@ -704,8 +696,8 @@ async fn batch(
         json!(store_terms(&ctx, &caller, &b, &terms, dry_run).await?)
     };
     if !dry_run && let Some(pid) = first_plan {
-        AuditModel::record(
-            &ctx.db,
+        AuditModel::record_on(
+            crate::db::pool(&ctx),
             pid,
             "mspdi_batch_import",
             caller.actor(),

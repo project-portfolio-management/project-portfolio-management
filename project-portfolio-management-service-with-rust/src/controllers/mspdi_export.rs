@@ -6,7 +6,6 @@
 //! their stored order. Dependencies come from the plan's links (kind and lag) and from `precedes` task
 //! relations (finish-to-start, no lag).
 
-use super::db_err;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::prelude::*;
@@ -17,7 +16,7 @@ use uuid::Uuid;
 use super::governance::find_item;
 use crate::auth::MaybeAuthUser;
 use crate::cpm;
-use crate::models::_entities::{plan_dependencies, task_relations, tasks};
+use crate::models::_entities::tasks;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::mspdi::{self, MsCalendar, MsConstraint, MsLink, MsTask};
 
@@ -117,12 +116,12 @@ async fn export(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let all = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Unordered, as before: `outline` orders siblings by position and id.
+    let all: Vec<tasks::Model> =
+        sqlx::query_as("SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     if all.len() > mspdi::MAX_TASKS {
         return Err(Error::CustomError(
             StatusCode::PAYLOAD_TOO_LARGE,
@@ -200,28 +199,25 @@ async fn export(
         }
     };
     let pids: Vec<Uuid> = all.iter().map(|t| t.pid).collect();
-    for d in plan_dependencies::Entity::find()
-        .filter(plan_dependencies::Column::SuccessorPid.is_in(pids.clone()))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
-        push(
-            d.predecessor_pid,
-            d.successor_pid,
-            link_kind(&d.kind),
-            i64::from(d.lag_days),
-        );
+    // Unordered, as before; only the columns a link needs are read.
+    let deps: Vec<(Uuid, Uuid, String, i32)> = sqlx::query_as(
+        "SELECT predecessor_pid, successor_pid, kind, lag_days FROM plan_dependencies WHERE successor_pid = ANY($1)",
+    )
+    .bind(&pids)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    for (pred, succ, kind, lag) in deps {
+        push(pred, succ, link_kind(&kind), i64::from(lag));
     }
-    for r in task_relations::Entity::find()
-        .filter(task_relations::Column::DeletedAt.is_null())
-        .filter(task_relations::Column::Kind.eq("precedes"))
-        .filter(task_relations::Column::ToTaskPid.is_in(pids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-    {
-        push(r.from_task_pid, r.to_task_pid, cpm::Kind::Fs, 0);
+    let relations: Vec<(Uuid, Uuid)> = sqlx::query_as(
+        "SELECT from_task_pid, to_task_pid FROM task_relations
+         WHERE deleted_at IS NULL AND kind = 'precedes' AND to_task_pid = ANY($1)",
+    )
+    .bind(&pids)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    for (from, to) in relations {
+        push(from, to, cpm::Kind::Fs, 0);
     }
 
     let calendar = super::calendars::plan_calendar_spec(&ctx, plan.pid)
@@ -243,8 +239,8 @@ async fn export(
         &links,
         calendar.as_ref(),
     );
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        crate::db::pool(&ctx),
         plan.pid,
         "mspdi_export",
         caller.actor(),

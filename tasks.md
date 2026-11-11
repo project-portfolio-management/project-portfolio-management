@@ -2433,6 +2433,73 @@ came from grep.
   **Next batch, suggested:** the three remaining callers of `transition_row`, `blueprint_sync` (45), `mspdi_import`
   (39) and `tracker_import` (34), about 120 lines, after which `transition_row` can go; or `bulk` (165), the last
   caller of `record_or_log`.
+  **Progress 2026-11-11, batch 15 (not ticked).** The imports, the MS Project export, blueprint sync and the bulk jobs
+  moved: `blueprint_sync` (45 lines naming SeaORM, now none), `mspdi_import` (39, none), `mspdi_batch` (21, none),
+  `mspdi_export` (9, none), `tracker_import` (34, none), `bulk` (165, none) and `tba/persistence` (12, none), with
+  `models/audit_logs` (17, now 16). 326 lines gone, leaving 45 files and 951 lines by batch 6's measure (43 by name).
+  Gone, once nothing called them: the SeaORM `tba::transition_row` (every transition is now written by
+  `tba::insert_transition_on`, inside the import's or the sync's transaction) and `AuditModel::record_or_log` (`bulk`
+  was its last caller; its two calls are `record_or_log_on`, and the census of writes that keep a failed audit still
+  counts both names and still allows `bulk.rs` two). `AuditModel::record` stays: 52 SeaORM calls in 15 files still use
+  it (`strategy`, `canvas`, `cost_rates`, `change_requests`, `oversight`, `scheduled_jobs`, `retention` and others), so
+  `models/audit_logs` still names SeaORM beyond the entity re-export. The census that no audit error is thrown away
+  (`.ok()`) now checks `record_on` calls as well as `record` calls (stricter); `requests::audit_failure` exercises
+  `record_or_log_on` on the pool and in an aborted `db::begin` transaction where it exercised `record_or_log`.
+  Imports: MS Project, Jira and Asana (the pasted-rows CSV among them) still store `mspdi:<UID>`, `jira:<key>` and
+  `asana:<id>` (`asana:paste-…`), so a re-import updates what it made and creates nothing; an update names the columns
+  SeaORM's did (the tracker's start date only when the file gives one) by id and fails when no row comes back; a new
+  task's insert lists the columns SeaORM set. The MS Project import's tasks, transitions and links are still one
+  transaction and its audit row is still written after it, on the pool, failing the request when it cannot be written
+  (not one transaction, spec NFR-6, §8.3b); the tracker import's writes and audit row are still one transaction, and
+  its audit failure is now passed on with `?` (the `503` for an outage stays, §8.3b); the batch import is still not
+  one transaction (its doc comment says so). Every upload and import route keeps its `axa::middleware::body_limit`
+  ceiling (5 MiB plus 64 KiB for the MS Project and tracker imports, ten files plus 1 MiB for the batch, the bulk cap
+  plus 64 KiB for the bulk import). The MS Project export reads the same rows in the same (unordered) way and writes
+  the same file. Blueprint sync: revise and sync still write and audit in one transaction; a template change still
+  needs `overwrite_local` for a task the plan edited. Bulk: the job row and its request's audit row are still one
+  transaction, a cancel is still a conditional update audited once, the worker's claim is still a conditional update,
+  progress still `GREATEST`, an export is still audited even with no rows, and the sweep still keeps an expired
+  artifact's row.
+  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (only on a failure;
+  same status), in a response, in a batch import's failed project, and in what is stored for a failed bulk job
+  (`bulk_jobs.failure_reason`, which lost SeaORM's `Query Error: ` prefix). The lists SeaORM bound one parameter per
+  value (`IN (…)`: a sync's task pids, a template's plan names, the export's dependencies and relations, the batch's
+  references, a bulk export chunk) are bound as one array (`= ANY($1)`); reads whose rows were used for a few columns
+  read only those (edges, pids and references, a plan's name, an artifact's expiry, whether a cancel was asked); a
+  new task's pid is made in Rust and not read back.
+  A throwaway check (not committed) dumped 740 answers, 19 function results and 16 tables (audit, tasks with every
+  column, transitions, dependencies, relations, templates and their links, bulk jobs, artifacts, the review queue,
+  plans, custom-field definitions and values, calendars, task costs and cost rates) for an administrator with finance
+  and hard-constraint rights, a plan's owner, a member of a private plan, a writer who is a member of nothing, an
+  identity with no user id, and no token: MS Project files dry-run and imported (twice, then changed, into a plan with
+  a gated workflow, into a private plan by a member and by an outsider, refused every way, over and under the route's
+  ceiling), exported (twice, a round trip, an empty plan; the XML compared byte for byte, raw), Jira, Asana and pasted
+  rows imported twice and changed, the batch import of three files twice and of three paid files twice (fields
+  declared, rates, fixed costs, a cross-file link, a link to a missing file), refused every way and stopped part-way;
+  a template revised (refused every way), its plans listed, diffs read and synced (all, refused for local edits,
+  overwritten, with a corrupt map and a missing node); bulk imports (keyed, replayed, re-run, edited, by owner and
+  code, mixed bad rows, CSV, keyless held for review, refused, over the cap and the route's ceiling), their status,
+  errors and the review queue (confirmed, rejected, twice, a bad candidate), exports (every filter, masked and full,
+  soft-deleted, refused), downloads, job lists, cancels (finished, queued, running, a run cancelled before its first
+  row, an export cancelled), the worker's runs (no source, claimed, missing) and the sweep (expired files, a stale job
+  re-queued, a tampered artifact); then twelve tables made unreadable in turn under every route. Before and after: the
+  same, once pids, times, hashes, the search index's match order and an export's pid order were normalised, but for
+  the error text above. The MS Project files exported were byte-identical before and after.
+  **Found, not changed:** the MS Project import and the batch import read every dependency and every live `precedes`
+  relation in the database (not only the plan's) to check for a cycle; the tracker import reads the plan's tasks and
+  edges before its transaction, and two imports of one file at once can both try to create the same task (the
+  per-plan unique reference refuses one); blueprint sync reads the link and the plan's tasks before its transaction
+  and does not check the link's version on update, so two syncs at once can both add the same task, and two revises
+  at once can both write the same version; any caller who may write can list every review-queue item and confirm or
+  reject one from someone else's import (only hidden matches are taken out), and a decision writes no audit row of its
+  own; confirming creates the plan before, and outside, the update that marks the item, so two confirms at once can
+  both create it; the export's `name_like` keeps `%` and `_` as `LIKE` wildcards; an export's links of one task follow
+  the database's row order (no `ORDER BY`, before or after), so the file is byte-identical only while that order is.
+  **Verified:** fmt, clippy (all targets, all features), 1,265 unit tests, the whole database suite (`mod`, 220 tests, one run: 219 passed and `requests::attachments::an_upload_larger_than_the_service_wide_body_limit_is_accepted_up_to_the_cap` failed once with `Connection reset by peer` on `127.0.0.1:8001` at its `POST /api/plans`, the known intermittent; nothing listened on port 8001 before the run; run alone five times after, it passed five times) and the 57 other database test binaries (85 tests, `keycloak_entra_broker` and `keycloak_guard` with the `keycloak` feature), on a throwaway database; the status, OpenAPI-bodies and llms checks.
+  **Still on SeaORM through other modules**, for these files: `cost_rates::import_fixed_cost` and the rate writers the
+  batch import calls (on the pool, never inside one of these files' transactions).
+  **Next batch, suggested:** `change_requests` (83), `canvas` (81), `ceremony` (36) and `oversight` (25), about 225
+  lines and 19 of the remaining `AuditModel::record` calls; or `cost_rates` (125), which the batch import still reaches.
 
 ## Correctness carried forward (CF-n)
 

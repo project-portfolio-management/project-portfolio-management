@@ -10,19 +10,17 @@
 //! every column, row, link, date and parent that did not come across is listed with the
 //! reason. Assignees are names, not identities: they are kept in the description.
 
-use super::db_err;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
 use axa::middleware::body_limit;
 use axum::body::Bytes;
-use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
-use crate::models::_entities::{plan_dependencies, tasks};
+use crate::models::_entities::tasks;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::tracker_import::{self as reader, Bucket, Item, Source};
 
@@ -150,14 +148,13 @@ async fn run(
 
     let prefix = source.prefix();
     let ext = |key: &str| format!("{prefix}:{key}");
-    let existing: HashMap<String, tasks::Model> = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::ExternalRef.is_not_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
+    let existing: HashMap<String, tasks::Model> = sqlx::query_as::<_, tasks::Model>(
+        "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL AND external_ref IS NOT NULL",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
         .filter_map(|t| t.external_ref.clone().map(|e| (e, t)))
         .collect();
     let to_create = parsed
@@ -170,15 +167,12 @@ async fn run(
 
     let (mut created, mut updated, mut links_created, mut links_existing) = (0, 0, 0, 0);
     if !dry_run {
-        let plan_task_pids: Vec<Uuid> = tasks::Entity::find()
-            .filter(tasks::Column::PlanPid.eq(plan.pid))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|t| t.pid)
-            .collect();
+        // Only the pids are read.
+        let plan_task_pids: Vec<Uuid> =
+            sqlx::query_scalar("SELECT pid FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL")
+                .bind(plan.pid)
+                .fetch_all(crate::db::pool(&ctx))
+                .await?;
         let mut edges: Vec<(Uuid, Uuid)> = super::cpm::deps_touching(&ctx, plan_task_pids)
             .await?
             .into_iter()
@@ -186,53 +180,69 @@ async fn run(
             .collect();
         let have: HashSet<(Uuid, Uuid)> = edges.iter().copied().collect();
         let now = chrono::Utc::now();
-        let txn = ctx.db.begin().await.map_err(db_err)?;
+        let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+        let mut tx = crate::db::begin(&ctx).await?;
         let mut pid_of: HashMap<String, Uuid> = HashMap::new();
         for it in &parsed.items {
             let status = mapping.of(it.bucket);
             if let Some(row) = existing.get(&ext(&it.key)) {
-                let mut a: tasks::ActiveModel = row.clone().into();
-                a.title = ActiveValue::set(title_of(it));
-                a.deadline = ActiveValue::set(deadline_of(it));
-                if it.start.is_some() {
-                    a.start_date = ActiveValue::set(it.start);
-                }
-                a.update(&txn).await.map_err(db_err)?;
+                // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was. The
+                // start date is named only when the file gives one, as before.
+                let update = if it.start.is_some() {
+                    sqlx::query_scalar::<_, i32>(
+                        "UPDATE tasks SET title = $1, deadline = $2, start_date = $3 WHERE id = $4 RETURNING id",
+                    )
+                    .bind(title_of(it))
+                    .bind(deadline_of(it))
+                    .bind(it.start)
+                    .bind(row.id)
+                } else {
+                    sqlx::query_scalar::<_, i32>(
+                        "UPDATE tasks SET title = $1, deadline = $2 WHERE id = $3 RETURNING id",
+                    )
+                    .bind(title_of(it))
+                    .bind(deadline_of(it))
+                    .bind(row.id)
+                };
+                update.fetch_one(tx.conn()).await?;
                 pid_of.insert(it.key.clone(), row.pid);
                 updated += 1;
             } else {
-                let row = tasks::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    plan_pid: ActiveValue::set(plan.pid),
-                    title: ActiveValue::set(title_of(it)),
-                    description: ActiveValue::set(it.description.clone()),
-                    status: ActiveValue::set(status.clone()),
-                    start_date: ActiveValue::set(it.start),
-                    deadline: ActiveValue::set(deadline_of(it)),
-                    external_ref: ActiveValue::set(Some(ext(&it.key))),
-                    status_changed_at: ActiveValue::set(now.into()),
-                    done_at: ActiveValue::set(
-                        crate::workflow::is_done(&workflow, &status).then(|| now.into()),
-                    ),
-                    deleted_at: ActiveValue::set(None),
-                    ..Default::default()
-                }
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
-                crate::tba::transition_row(
-                    row.pid,
-                    plan.pid,
-                    None,
-                    status,
-                    now,
-                    caller.actor().map(ToString::to_string),
-                    None,
+                let task_pid = Uuid::new_v4();
+                // The columns `SeaORM`'s insert set, no more.
+                sqlx::query(
+                    "INSERT INTO tasks
+                         (pid, plan_pid, title, description, status, start_date, deadline, external_ref,
+                          status_changed_at, done_at, deleted_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULL)",
                 )
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
-                pid_of.insert(it.key.clone(), row.pid);
+                .bind(task_pid)
+                .bind(plan.pid)
+                .bind(title_of(it))
+                .bind(&it.description)
+                .bind(&status)
+                .bind(it.start)
+                .bind(deadline_of(it))
+                .bind(ext(&it.key))
+                .bind(at)
+                .bind(crate::workflow::is_done(&workflow, &status).then_some(at))
+                .execute(tx.conn())
+                .await?;
+                crate::tba::insert_transition_on(
+                    &mut tx,
+                    crate::tba::NewTransition {
+                        task_pid,
+                        plan_pid: plan.pid,
+                        from_status: None,
+                        to_status: &status,
+                        at: now,
+                        actor_ref: caller.actor(),
+                        assignee_ref: None,
+                        blocked_reason: None,
+                    },
+                )
+                .await?;
+                pid_of.insert(it.key.clone(), task_pid);
                 created += 1;
             }
         }
@@ -244,15 +254,11 @@ async fn run(
             ) else {
                 continue;
             };
-            tasks::Entity::update_many()
-                .col_expr(
-                    tasks::Column::ParentTaskPid,
-                    sea_orm::sea_query::Expr::value(parent),
-                )
-                .filter(tasks::Column::Pid.eq(me))
-                .exec(&txn)
-                .await
-                .map_err(db_err)?;
+            sqlx::query("UPDATE tasks SET parent_task_pid = $1 WHERE pid = $2")
+                .bind(parent)
+                .bind(me)
+                .execute(tx.conn())
+                .await?;
         }
         for it in &parsed.items {
             for blocked in &it.blocks {
@@ -274,23 +280,21 @@ async fn run(
                     );
                     continue;
                 }
-                plan_dependencies::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    predecessor_pid: ActiveValue::set(pred),
-                    successor_pid: ActiveValue::set(succ),
-                    lag_days: ActiveValue::set(0),
-                    kind: ActiveValue::set("fs".to_string()),
-                    ..Default::default()
-                }
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
+                sqlx::query(
+                    "INSERT INTO plan_dependencies (pid, predecessor_pid, successor_pid, lag_days, kind)
+                     VALUES ($1, $2, $3, 0, 'fs')",
+                )
+                .bind(Uuid::new_v4())
+                .bind(pred)
+                .bind(succ)
+                .execute(tx.conn())
+                .await?;
                 edges.push((pred, succ));
                 links_created += 1;
             }
         }
-        AuditModel::record(
-            &txn,
+        AuditModel::record_on(
+            tx.conn(),
             plan.pid,
             &format!("{prefix}_import"),
             caller.actor(),
@@ -299,9 +303,8 @@ async fn run(
                 "links_created": links_created, "unmapped": unmapped.len() }),
             ),
         )
-        .await
-        .map_err(Error::Model)?;
-        txn.commit().await.map_err(db_err)?;
+        .await?;
+        tx.commit().await?;
     }
     format::json(serde_json::json!({
         "dry_run": dry_run,

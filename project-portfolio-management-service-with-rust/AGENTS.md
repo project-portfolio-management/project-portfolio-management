@@ -81,7 +81,7 @@ full contract; this is the map. One module per area in
 | Audit / auth / docs | `/plans/audit/recent` · `/plans/{pid}/audit` · `/plans/events/recent` · `GET /plans/whoami` · `/api-docs/openapi.json` · `/swagger-ui` · `/metrics.prom` · axa `/_health/live`, `/_health/ready`, `/_health/startup` |
 
 Every plan/record write writes an `audit_logs` row (or, if that insert fails, logs it and counts it in
-`audit_write_failed_total` via `AuditModel::record_or_log`; never `record(..).await.ok()`, CQ-3) and publishes a
+`audit_write_failed_total` via `AuditModel::record_or_log_on`; never `record(..).await.ok()` or `record_on(..).await.ok()`, CQ-3) and publishes a
 `created`/`updated`/`deleted` (and `merged`) event. **Not wired** (spec
 §13): `POST /plans/deduplicate`, `/plans/{pid}/timeline`, gRPC, `posts`/`members` plan
 sub-resources (a `/comments` route exists, as the discussion feature, not

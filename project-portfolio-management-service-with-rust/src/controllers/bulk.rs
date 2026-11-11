@@ -19,7 +19,7 @@
 //! reconcile.
 
 use super::forbidden;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axa::middleware::body_limit;
@@ -28,8 +28,6 @@ use axum::body::Bytes;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use project_portfolio_management_matcher::{MatchConfig, MatchingEngine};
-use sea_orm::sea_query::{Expr, Func};
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -51,6 +49,11 @@ const DEFAULT_IMPORT_MAX: usize = 50 * 1024 * 1024;
 const LEASE_SECS: i64 = 600;
 /// Plans one export may carry.
 const MAX_EXPORT_ROWS: u64 = 100_000;
+
+/// Now, as a time stamp with an offset, the type the time columns bind as.
+fn stamp() -> chrono::DateTime<chrono::FixedOffset> {
+    chrono::Utc::now().into()
+}
 
 /// Maximum accepted import body in bytes: `PROJECT_PORTFOLIO_MANAGEMENT_BULK_MAX_BYTES` when it parses, otherwise the 50 MiB default.
 fn import_max() -> usize {
@@ -102,21 +105,26 @@ async fn store_artifact(
         .await
         .map_err(|e| Error::string(&e.to_string()))?
         .map_err(|e| Error::string(&format!("could not store the file: {e}")))?;
-    artifact_rows::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        kind: ActiveValue::set(kind.to_string()),
-        filename: ActiveValue::set(filename.to_string()),
-        content_type: ActiveValue::set(content_type.to_string()),
-        size_bytes: ActiveValue::set(size),
-        sha256: ActiveValue::set(sha),
-        storage_key: ActiveValue::set(Some(key)),
-        created_by: ActiveValue::set(actor.map(str::to_string)),
-        expires_at: ActiveValue::set(Some((chrono::Utc::now() + ttl()).into())),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
-    .await
-    .map_err(db_err)
+    // The columns `SeaORM`'s insert set, no more.
+    Ok(sqlx::query_as(
+        "INSERT INTO artifacts
+             (pid, kind, filename, content_type, size_bytes, sha256, storage_key, created_by, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(kind)
+    .bind(filename)
+    .bind(content_type)
+    .bind(size)
+    .bind(sha)
+    .bind(key)
+    .bind(actor)
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+        chrono::Utc::now() + ttl(),
+    ))
+    .fetch_one(crate::db::pool(ctx))
+    .await?)
 }
 
 /// Loads an artifact row and its bytes from the store, returning `NotFound` when the row, key or object is missing and an error when the stored hash no longer matches (integrity check).
@@ -124,12 +132,12 @@ pub(crate) async fn read_artifact(
     ctx: &AppContext,
     pid: Uuid,
 ) -> Result<(artifact_rows::Model, Vec<u8>)> {
-    let row = artifact_rows::Entity::find()
-        .filter(artifact_rows::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: artifact_rows::Model =
+        sqlx::query_as("SELECT * FROM artifacts WHERE pid = $1 LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     let key = row.storage_key.clone().ok_or(Error::NotFound)?;
     let bytes = tokio::task::spawn_blocking(move || Store::from_env().get(&key))
         .await
@@ -146,11 +154,10 @@ pub(crate) async fn read_artifact(
 /// Fetches a job by public id; when `kind` is given and differs (import vs export) the job is reported as `NotFound` rather than leaking its existence.
 async fn find_job(ctx: &AppContext, pid: &str, kind: Option<&str>) -> Result<bulk_jobs::Model> {
     let pid = super::parse_pid(pid)?;
-    let job = bulk_jobs::Entity::find()
-        .filter(bulk_jobs::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let job: bulk_jobs::Model = sqlx::query_as("SELECT * FROM bulk_jobs WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)?;
     if kind.is_some_and(|k| job.kind != k) {
         return Err(Error::NotFound);
@@ -213,12 +220,15 @@ fn job_view(
 /// Renders a job as an HTTP JSON response, looking up the expiry of its result (or else source) artifact for the view.
 async fn job_response(ctx: &AppContext, job: &bulk_jobs::Model) -> Result<Response> {
     let expiry = match job.result_artifact.or(job.source_artifact) {
-        Some(a) => artifact_rows::Entity::find()
-            .filter(artifact_rows::Column::Pid.eq(a))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .and_then(|r| r.expires_at.map(|e| e.to_utc())),
+        // Only the expiry is read.
+        Some(a) => sqlx::query_scalar::<_, Option<chrono::DateTime<chrono::FixedOffset>>>(
+            "SELECT expires_at FROM artifacts WHERE pid = $1 LIMIT 1",
+        )
+        .bind(a)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
+        .flatten()
+        .map(|e| e.to_utc()),
         None => None,
     };
     format::json(job_view(job, expiry))
@@ -287,13 +297,13 @@ async fn import(
         .filter(|k| !k.is_empty())
         .map(|k| k.chars().take(200).collect::<String>());
     if let Some(k) = &key
-        && let Some(existing) = bulk_jobs::Entity::find()
-            .filter(bulk_jobs::Column::Entity.eq(ENTITY))
-            .filter(bulk_jobs::Column::Kind.eq("import"))
-            .filter(bulk_jobs::Column::IdempotencyKey.eq(k.as_str()))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
+        && let Some(existing) = sqlx::query_as::<_, bulk_jobs::Model>(
+            "SELECT * FROM bulk_jobs WHERE entity = $1 AND kind = 'import' AND idempotency_key = $2 LIMIT 1",
+        )
+        .bind(ENTITY)
+        .bind(k.as_str())
+        .fetch_optional(crate::db::pool(&ctx))
+        .await?
     {
         // A retried request returns the original job.
         visible(&existing, &caller)?;
@@ -322,9 +332,9 @@ async fn import(
         .await?
         .plan_pids();
     // The job row and the audit row of its request are one change.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     let job = new_job(
-        &txn,
+        &mut tx,
         "import",
         format,
         key,
@@ -333,10 +343,16 @@ async fn import(
         Some(source.pid),
     )
     .await?;
-    AuditModel::record(&txn, job.pid, "bulk_import_requested", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    AuditModel::record_on(
+        tx.conn(),
+        job.pid,
+        "bulk_import_requested",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     queue_job(&ctx, &job).await?;
     // Re-read: in the foreground profile the job has already run.
     let fresh = find_job(&ctx, &job.pid.to_string(), None)
@@ -345,9 +361,10 @@ async fn import(
     Ok(accepted(&fresh))
 }
 
-/// Inserts a new `queued` job row with all counters zero and no timing or failure data. Generic over the connection so callers may use a transaction.
-async fn new_job<C: ConnectionTrait>(
-    db: &C,
+/// Inserts a new `queued` job row with all counters zero and no timing or failure data. On a [`crate::db::Session`],
+/// so a caller may use a transaction.
+async fn new_job(
+    db: &mut impl crate::db::Session,
     kind: &str,
     format: &str,
     key: Option<String>,
@@ -355,36 +372,27 @@ async fn new_job<C: ConnectionTrait>(
     params: serde_json::Value,
     source: Option<Uuid>,
 ) -> Result<bulk_jobs::Model> {
-    bulk_jobs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        entity: ActiveValue::set(ENTITY.to_string()),
-        kind: ActiveValue::set(kind.to_string()),
-        status: ActiveValue::set("queued".to_string()),
-        format: ActiveValue::set(format.to_string()),
-        idempotency_key: ActiveValue::set(key),
-        requested_by: ActiveValue::set(actor.map(str::to_string)),
-        params: ActiveValue::set(params),
-        rows_total: ActiveValue::set(0),
-        rows_created: ActiveValue::set(0),
-        rows_updated: ActiveValue::set(0),
-        rows_unchanged: ActiveValue::set(0),
-        rows_queued_for_review: ActiveValue::set(0),
-        rows_failed: ActiveValue::set(0),
-        rows_omitted: ActiveValue::set(0),
-        source_artifact: ActiveValue::set(source),
-        result_artifact: ActiveValue::set(None),
-        error_artifact: ActiveValue::set(None),
-        started_at: ActiveValue::set(None),
-        finished_at: ActiveValue::set(None),
-        failure_reason: ActiveValue::set(None),
-        progress: ActiveValue::set(0),
-        cancel_requested_at: ActiveValue::set(None),
-        cancelled_by: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(db_err)
+    // The columns `SeaORM`'s insert set, no more.
+    Ok(sqlx::query_as(
+        "INSERT INTO bulk_jobs
+             (pid, entity, kind, status, format, idempotency_key, requested_by, params, rows_total, rows_created,
+              rows_updated, rows_unchanged, rows_queued_for_review, rows_failed, rows_omitted, source_artifact,
+              result_artifact, error_artifact, started_at, finished_at, failure_reason, progress, cancel_requested_at,
+              cancelled_by)
+         VALUES ($1, $2, $3, 'queued', $4, $5, $6, $7, 0, 0, 0, 0, 0, 0, 0, $8, NULL, NULL, NULL, NULL, NULL, 0, NULL,
+                 NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(ENTITY)
+    .bind(kind)
+    .bind(format)
+    .bind(key)
+    .bind(actor)
+    .bind(params)
+    .bind(source)
+    .fetch_one(db.ex())
+    .await?)
 }
 
 // ───────────────────────────── export ─────────────────────────────
@@ -431,26 +439,22 @@ async fn export(
             "a full (unmasked) or soft-deleted export needs the destructive right",
         ));
     }
-    let mut q = plans::Entity::find();
+    // SQL from literals; every filter value is bound.
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM plans WHERE TRUE");
     if !b.include_soft_deleted {
-        q = q.filter(plans::Column::DeletedAt.is_null());
+        q.push(" AND deleted_at IS NULL");
     }
     if let Some(kind) = b.kind.as_deref().filter(|k| !k.trim().is_empty()) {
-        q = q.filter(plans::Column::Kind.eq(kind));
+        q.push(" AND kind = ").push_bind(kind);
     }
     if let Some(like) = b.name_like.as_deref().filter(|n| !n.trim().is_empty()) {
-        // Typed, case-insensitive substring match: no hand-written SQL.
-        // (Scoped import: the trait's `max` would shadow `Ord::max` elsewhere.)
-        use sea_orm::ExprTrait;
+        // A case-insensitive substring match; `%` and `_` in the filter keep their `LIKE` meaning, as before.
         let pattern = format!("%{}%", like.trim().to_lowercase());
-        q = q.filter(Expr::expr(Func::lower(Expr::col(plans::Column::Name))).like(pattern));
+        q.push(" AND LOWER(name) LIKE ").push_bind(pattern);
     }
-    let candidates = q
-        .order_by_asc(plans::Column::Id)
-        .limit(MAX_EXPORT_ROWS + 1)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    q.push(" ORDER BY id LIMIT ")
+        .push_bind(i64::try_from(MAX_EXPORT_ROWS + 1).unwrap_or(i64::MAX));
+    let candidates: Vec<plans::Model> = q.build_query_as().fetch_all(crate::db::pool(&ctx)).await?;
     if candidates.len() as u64 > MAX_EXPORT_ROWS {
         return Err(unprocessable(&format!(
             "an export carries at most {MAX_EXPORT_ROWS} plans; narrow the filter"
@@ -471,7 +475,7 @@ async fn export(
         .collect();
     let omitted = candidates.len() - pids.len();
     let job = new_job(
-        &ctx.db,
+        &mut crate::db::pool(&ctx),
         "export",
         format,
         None,
@@ -515,36 +519,35 @@ async fn cancel_job(
     let who = caller.actor().map(str::to_string);
     // Queued: cancel it before it starts. The claim in `run_job` needs `queued`, so
     // the two cannot both win.
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let queued = bulk_jobs::Entity::update_many()
-        .col_expr(bulk_jobs::Column::Status, Expr::value("cancelled"))
-        .col_expr(bulk_jobs::Column::CancelledBy, Expr::value(who.clone()))
-        .col_expr(bulk_jobs::Column::CancelRequestedAt, Expr::value(now))
-        .col_expr(bulk_jobs::Column::FinishedAt, Expr::value(now))
-        .col_expr(bulk_jobs::Column::UpdatedAt, Expr::value(now))
-        .filter(bulk_jobs::Column::Pid.eq(job.pid))
-        .filter(bulk_jobs::Column::Status.eq("queued"))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    let (changed, kind) = if queued.rows_affected == 1 {
+    let mut tx = crate::db::begin(&ctx).await?;
+    let queued = sqlx::query(
+        "UPDATE bulk_jobs
+         SET status = 'cancelled', cancelled_by = $1, cancel_requested_at = $2, finished_at = $2, updated_at = $2
+         WHERE pid = $3 AND status = 'queued'",
+    )
+    .bind(&who)
+    .bind(now)
+    .bind(job.pid)
+    .execute(tx.conn())
+    .await?;
+    let (changed, kind) = if queued.rows_affected() == 1 {
         (true, "bulk_job_cancelled")
     } else {
-        let running = bulk_jobs::Entity::update_many()
-            .col_expr(bulk_jobs::Column::CancelRequestedAt, Expr::value(now))
-            .col_expr(bulk_jobs::Column::CancelledBy, Expr::value(who.clone()))
-            .col_expr(bulk_jobs::Column::UpdatedAt, Expr::value(now))
-            .filter(bulk_jobs::Column::Pid.eq(job.pid))
-            .filter(bulk_jobs::Column::Status.eq("running"))
-            .filter(bulk_jobs::Column::CancelRequestedAt.is_null())
-            .exec(&txn)
-            .await
-            .map_err(db_err)?;
-        (running.rows_affected == 1, "bulk_job_cancel_requested")
+        let running = sqlx::query(
+            "UPDATE bulk_jobs
+             SET cancel_requested_at = $1, cancelled_by = $2, updated_at = $1
+             WHERE pid = $3 AND status = 'running' AND cancel_requested_at IS NULL",
+        )
+        .bind(now)
+        .bind(&who)
+        .bind(job.pid)
+        .execute(tx.conn())
+        .await?;
+        (running.rows_affected() == 1, "bulk_job_cancel_requested")
     };
     if changed {
-        AuditModel::record(
-            &txn,
+        AuditModel::record_on(
+            tx.conn(),
             job.pid,
             kind,
             caller.actor(),
@@ -553,7 +556,7 @@ async fn cancel_job(
         .await
         .map_err(super::audit_failed)?;
     }
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     let now_job = find_job(&ctx, &id, None).await?;
     format::json(serde_json::json!({
         "job_id": now_job.pid,
@@ -638,19 +641,17 @@ async fn list_jobs(
     caller: MaybeAuthUser,
     Query(p): Query<JobListParams>,
 ) -> Result<Response> {
-    let mut q = bulk_jobs::Entity::find().filter(bulk_jobs::Column::Entity.eq(ENTITY));
+    let mut q =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM bulk_jobs WHERE entity = ");
+    q.push_bind(ENTITY);
     if let Some(k) = p.kind {
-        q = q.filter(bulk_jobs::Column::Kind.eq(k));
+        q.push(" AND kind = ").push_bind(k);
     }
     if let Some(s) = p.status {
-        q = q.filter(bulk_jobs::Column::Status.eq(s));
+        q.push(" AND status = ").push_bind(s);
     }
-    let rows = q
-        .order_by_desc(bulk_jobs::Column::Id)
-        .limit(200)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    q.push(" ORDER BY id DESC LIMIT 200");
+    let rows: Vec<bulk_jobs::Model> = q.build_query_as().fetch_all(crate::db::pool(&ctx)).await?;
     let mine: Vec<serde_json::Value> = rows
         .iter()
         .filter(|j| visible(j, &caller).is_ok())
@@ -746,17 +747,16 @@ async fn list_queue(
     Query(p): Query<QueueParams>,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let mut q = review_queue_items::Entity::find();
-    q = q.filter(review_queue_items::Column::Status.eq(p.status.as_deref().unwrap_or("pending")));
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM review_queue_items WHERE status = ",
+    );
+    q.push_bind(p.status.as_deref().unwrap_or("pending"));
     if let Some(job) = p.job {
-        q = q.filter(review_queue_items::Column::JobPid.eq(job));
+        q.push(" AND job_pid = ").push_bind(job);
     }
-    let rows = q
-        .order_by_asc(review_queue_items::Column::Id)
-        .limit(500)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    q.push(" ORDER BY id LIMIT 500");
+    let rows: Vec<review_queue_items::Model> =
+        q.build_query_as().fetch_all(crate::db::pool(&ctx)).await?;
     format::json(
         rows.into_iter()
             .map(|row| without_hidden(row, &scope))
@@ -789,11 +789,10 @@ fn without_hidden(
 /// Fetches a review-queue item by public id, `NotFound` when unknown.
 async fn find_item(ctx: &AppContext, pid: &str) -> Result<review_queue_items::Model> {
     let pid = super::parse_pid(pid)?;
-    review_queue_items::Entity::find()
-        .filter(review_queue_items::Column::Pid.eq(pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM review_queue_items WHERE pid = $1 LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -819,12 +818,19 @@ async fn confirm_item(
     super::plans::validate(&plan)?;
     super::plans::require_visible_parent(&ctx, &caller, &plan, None).await?;
     let model = streaming::create_and_emit(&ctx, &plan, caller.actor()).await?;
-    let mut a: review_queue_items::ActiveModel = item.into();
-    a.status = ActiveValue::set("confirmed".to_string());
-    a.resolved_by = ActiveValue::set(caller.actor().map(str::to_string));
-    a.resolved_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    a.resolution_pid = ActiveValue::set(Some(model.pid));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    let row: review_queue_items::Model = sqlx::query_as(
+        "UPDATE review_queue_items
+         SET status = 'confirmed', resolved_by = $1, resolved_at = $2, resolution_pid = $3
+         WHERE id = $4
+         RETURNING *",
+    )
+    .bind(caller.actor())
+    .bind(stamp())
+    .bind(model.pid)
+    .bind(item.id)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     format::json(without_hidden(row, &scope))
 }
@@ -844,11 +850,16 @@ async fn reject_item(
             ErrorDetail::new("conflict", format!("the item is already {}", item.status)),
         ));
     }
-    let mut a: review_queue_items::ActiveModel = item.into();
-    a.status = ActiveValue::set("rejected".to_string());
-    a.resolved_by = ActiveValue::set(caller.actor().map(str::to_string));
-    a.resolved_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let row = a.update(&ctx.db).await.map_err(db_err)?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    let row: review_queue_items::Model = sqlx::query_as(
+        "UPDATE review_queue_items SET status = 'rejected', resolved_by = $1, resolved_at = $2 WHERE id = $3
+         RETURNING *",
+    )
+    .bind(caller.actor())
+    .bind(stamp())
+    .bind(item.id)
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     format::json(without_hidden(row, &scope))
 }
@@ -877,35 +888,42 @@ async fn sweep(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Res
 /// Propagates database errors.
 pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
     let now = chrono::Utc::now();
-    let expired = artifact_rows::Entity::find()
-        .filter(artifact_rows::Column::ExpiresAt.lt(now))
-        .filter(artifact_rows::Column::StorageKey.is_not_null())
-        .limit(1000)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Unordered, as before.
+    let expired: Vec<artifact_rows::Model> = sqlx::query_as(
+        "SELECT * FROM artifacts WHERE expires_at < $1 AND storage_key IS NOT NULL LIMIT 1000",
+    )
+    .bind(now)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut deleted = 0usize;
     for a in expired {
         if let Some(key) = a.storage_key.clone() {
             let _ = tokio::task::spawn_blocking(move || Store::from_env().remove(&key)).await;
         }
-        let mut m: artifact_rows::ActiveModel = a.into();
-        m.storage_key = ActiveValue::set(None);
-        m.update(&ctx.db).await.map_err(db_err)?;
+        // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE artifacts SET storage_key = NULL WHERE id = $1 RETURNING id",
+        )
+        .bind(a.id)
+        .fetch_one(crate::db::pool(ctx))
+        .await?;
         deleted += 1;
     }
-    let stale = bulk_jobs::Entity::find()
-        .filter(bulk_jobs::Column::Status.eq("running"))
-        .filter(bulk_jobs::Column::UpdatedAt.lt(now - chrono::Duration::seconds(LEASE_SECS)))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Unordered, as before.
+    let stale: Vec<bulk_jobs::Model> =
+        sqlx::query_as("SELECT * FROM bulk_jobs WHERE status = 'running' AND updated_at < $1")
+            .bind(now - chrono::Duration::seconds(LEASE_SECS))
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut requeued = 0usize;
     for j in stale {
-        let mut m: bulk_jobs::ActiveModel = j.clone().into();
-        m.status = ActiveValue::set("queued".to_string());
-        m.updated_at = ActiveValue::set(now.into());
-        m.update(&ctx.db).await.map_err(db_err)?;
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE bulk_jobs SET status = 'queued', updated_at = $1 WHERE id = $2 RETURNING id",
+        )
+        .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+        .bind(j.id)
+        .fetch_one(crate::db::pool(ctx))
+        .await?;
         queue_job(ctx, &j).await?;
         requeued += 1;
     }
@@ -923,16 +941,15 @@ pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
 /// (`failed` + `failure_reason`) rather than returned.
 pub async fn run_job(ctx: &AppContext, job_pid: Uuid) -> Result<()> {
     let now = chrono::Utc::now();
-    let claimed = bulk_jobs::Entity::update_many()
-        .col_expr(bulk_jobs::Column::Status, Expr::value("running"))
-        .col_expr(bulk_jobs::Column::StartedAt, Expr::value(now))
-        .col_expr(bulk_jobs::Column::UpdatedAt, Expr::value(now))
-        .filter(bulk_jobs::Column::Pid.eq(job_pid))
-        .filter(bulk_jobs::Column::Status.eq("queued"))
-        .exec(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if claimed.rows_affected != 1 {
+    let claimed = sqlx::query(
+        "UPDATE bulk_jobs SET status = 'running', started_at = $1, updated_at = $1
+         WHERE pid = $2 AND status = 'queued'",
+    )
+    .bind(now)
+    .bind(job_pid)
+    .execute(crate::db::pool(ctx))
+    .await?;
+    if claimed.rows_affected() != 1 {
         return Ok(()); // someone else holds it, or it is done
     }
     let job = find_job(ctx, &job_pid.to_string(), None).await?;
@@ -942,12 +959,18 @@ pub async fn run_job(ctx: &AppContext, job_pid: Uuid) -> Result<()> {
         run_export(ctx, &job).await
     };
     if let Err(reason) = outcome {
-        let mut m: bulk_jobs::ActiveModel = find_job(ctx, &job_pid.to_string(), None).await?.into();
-        m.status = ActiveValue::set("failed".to_string());
-        m.failure_reason = ActiveValue::set(Some(reason));
-        m.finished_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-        m.updated_at = ActiveValue::set(chrono::Utc::now().into());
-        m.update(&ctx.db).await.map_err(db_err)?;
+        let failed = find_job(ctx, &job_pid.to_string(), None).await?;
+        sqlx::query_scalar::<_, i64>(
+            "UPDATE bulk_jobs SET status = 'failed', failure_reason = $1, finished_at = $2, updated_at = $3
+             WHERE id = $4
+             RETURNING id",
+        )
+        .bind(reason)
+        .bind(stamp())
+        .bind(stamp())
+        .bind(failed.id)
+        .fetch_one(crate::db::pool(ctx))
+        .await?;
     }
     Ok(())
 }
@@ -977,43 +1000,36 @@ fn text_of(e: &Error) -> String {
 
 /// Finds the live (not soft-deleted) plan matching one import key: by pid, by an identifier scheme/value pair, or by owner organisation and code. The raw SQL binds every imported value as a parameter and orders by id so a duplicate key resolves deterministically.
 async fn find_by_key(ctx: &AppContext, key: &Key) -> Result<Option<PlanModel>> {
-    use sea_orm::{DbBackend, Statement};
+    // Bound parameters in a plain statement: no SQL is built from the imported values.
     let row = match key {
         Key::Pid(p) => {
-            plans::Entity::find()
-                .filter(plans::Column::DeletedAt.is_null())
-                .filter(plans::Column::Pid.eq(*p))
-                .one(&ctx.db)
-                .await
+            sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL AND pid = $1 LIMIT 1")
+                .bind(*p)
+                .fetch_optional(crate::db::pool(ctx))
+                .await?
         }
-        // Bound parameters in a plain statement: no SQL is built from the
-        // imported values.
         Key::Identifier { scheme, value } => {
             let probe = serde_json::json!([{ "scheme": scheme, "value": value }]).to_string();
-            plans::Entity::find()
-                .from_raw_sql(Statement::from_sql_and_values(
-                    DbBackend::Postgres,
-                    "SELECT * FROM plans WHERE deleted_at IS NULL \
-                         AND (data->'identifiers') @> $1::jsonb ORDER BY id LIMIT 1",
-                    [probe.into()],
-                ))
-                .one(&ctx.db)
-                .await
+            sqlx::query_as(
+                "SELECT * FROM plans WHERE deleted_at IS NULL \
+                     AND (data->'identifiers') @> $1::jsonb ORDER BY id LIMIT 1",
+            )
+            .bind(probe)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
         }
         Key::OwnerCode { owner, code } => {
-            plans::Entity::find()
-                .from_raw_sql(Statement::from_sql_and_values(
-                    DbBackend::Postgres,
-                    "SELECT * FROM plans WHERE deleted_at IS NULL \
-                         AND data->>'owner_org_id' = $1 AND data->>'code' = $2 \
-                         ORDER BY id LIMIT 1",
-                    [owner.clone().into(), code.clone().into()],
-                ))
-                .one(&ctx.db)
-                .await
+            sqlx::query_as(
+                "SELECT * FROM plans WHERE deleted_at IS NULL \
+                     AND data->>'owner_org_id' = $1 AND data->>'code' = $2 \
+                     ORDER BY id LIMIT 1",
+            )
+            .bind(owner)
+            .bind(code)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
         }
-    }
-    .map_err(db_err)?;
+    };
     Ok(row)
 }
 
@@ -1071,7 +1087,6 @@ struct ImportRun<'a> {
 }
 
 /// Validates, matches and applies one imported row through the normal create/update path, so events and audit match a single request. Returns the outcome or the row errors; a pid naming no live plan is an error, never a silent create. A row that reaches a plan in `hidden` gets the error of one that matched nothing.
-#[expect(clippy::too_many_lines)] // one linear path: match, refuse, update, hold or create
 async fn process_row(
     ctx: &AppContext,
     d: &Decoded,
@@ -1157,21 +1172,19 @@ async fn process_row(
             }
         }
         if !hits.is_empty() {
-            review_queue_items::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                status: ActiveValue::set("pending".to_string()),
-                provenance: ActiveValue::set("import".to_string()),
-                candidate: ActiveValue::set(serde_json::to_value(plan).unwrap_or_default()),
-                matches: ActiveValue::set(serde_json::json!(hits)),
-                job_pid: ActiveValue::set(Some(run.job_pid)),
-                source_line: ActiveValue::set(i32::try_from(d.source_line).unwrap_or(i32::MAX)),
-                resolved_by: ActiveValue::set(None),
-                resolved_at: ActiveValue::set(None),
-                resolution_pid: ActiveValue::set(None),
-                resolution_comment: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&ctx.db)
+            // The columns `SeaORM`'s insert set, no more.
+            sqlx::query(
+                "INSERT INTO review_queue_items
+                     (pid, status, provenance, candidate, matches, job_pid, source_line, resolved_by, resolved_at,
+                      resolution_pid, resolution_comment)
+                 VALUES ($1, 'pending', 'import', $2, $3, $4, $5, NULL, NULL, NULL, NULL)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(serde_json::to_value(plan).unwrap_or_default())
+            .bind(serde_json::json!(hits))
+            .bind(run.job_pid)
+            .bind(i32::try_from(d.source_line).unwrap_or(i32::MAX))
+            .execute(crate::db::pool(ctx))
             .await
             .map_err(|e| vec![row_error(d, "", "internal", e.to_string())])?;
             return Ok(RowOutcome::Queued);
@@ -1192,49 +1205,58 @@ async fn finish(
     result: Option<Uuid>,
     errors: Option<Uuid>,
 ) -> std::result::Result<(), String> {
-    let mut m: bulk_jobs::ActiveModel = job.clone().into();
-    m.status = ActiveValue::set(c.status().to_string());
-    m.progress = ActiveValue::set(100);
-    m.rows_total = ActiveValue::set(c.total);
-    m.rows_created = ActiveValue::set(c.created);
-    m.rows_updated = ActiveValue::set(c.updated);
-    m.rows_unchanged = ActiveValue::set(c.unchanged);
-    m.rows_queued_for_review = ActiveValue::set(c.queued_for_review);
-    m.rows_failed = ActiveValue::set(c.failed);
-    m.rows_omitted = ActiveValue::set(omitted);
-    m.result_artifact = ActiveValue::set(result);
-    m.error_artifact = ActiveValue::set(errors);
-    m.finished_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    m.updated_at = ActiveValue::set(chrono::Utc::now().into());
-    m.update(&ctx.db)
-        .await
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+    // By id, as `SeaORM`'s update of the job was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE bulk_jobs
+         SET status = $1, progress = 100, rows_total = $2, rows_created = $3, rows_updated = $4,
+             rows_unchanged = $5, rows_queued_for_review = $6, rows_failed = $7, rows_omitted = $8,
+             result_artifact = $9, error_artifact = $10, finished_at = $11, updated_at = $12
+         WHERE id = $13
+         RETURNING id",
+    )
+    .bind(c.status())
+    .bind(c.total)
+    .bind(c.created)
+    .bind(c.updated)
+    .bind(c.unchanged)
+    .bind(c.queued_for_review)
+    .bind(c.failed)
+    .bind(omitted)
+    .bind(result)
+    .bind(errors)
+    .bind(stamp())
+    .bind(stamp())
+    .bind(job.id)
+    .fetch_one(crate::db::pool(ctx))
+    .await
+    .map(|_| ())
+    .map_err(|e| e.to_string())
 }
 
 /// Record how far a running job is. A trigger in the database makes the stored
 /// value monotone even if two updates race or a caller passes a lower number.
 async fn set_progress(ctx: &AppContext, job: Uuid, percent: i32) {
-    let _ = bulk_jobs::Entity::update_many()
-        .col_expr(
-            bulk_jobs::Column::Progress,
-            Expr::cust_with_values("GREATEST(progress, $1)", [percent]),
-        )
-        .filter(bulk_jobs::Column::Pid.eq(job))
-        .filter(bulk_jobs::Column::Status.eq("running"))
-        .exec(&ctx.db)
-        .await;
+    let _ = sqlx::query(
+        "UPDATE bulk_jobs SET progress = GREATEST(progress, $1) WHERE pid = $2 AND status = 'running'",
+    )
+    .bind(percent)
+    .bind(job)
+    .execute(crate::db::pool(ctx))
+    .await;
 }
 
 /// Whether someone asked for this job to stop.
 async fn cancel_requested(ctx: &AppContext, job: Uuid) -> bool {
-    bulk_jobs::Entity::find()
-        .filter(bulk_jobs::Column::Pid.eq(job))
-        .one(&ctx.db)
-        .await
-        .ok()
-        .flatten()
-        .is_some_and(|j| j.cancel_requested_at.is_some())
+    // A failed read is "no", as before.
+    sqlx::query_scalar::<_, bool>(
+        "SELECT cancel_requested_at IS NOT NULL FROM bulk_jobs WHERE pid = $1 LIMIT 1",
+    )
+    .bind(job)
+    .fetch_optional(crate::db::pool(ctx))
+    .await
+    .ok()
+    .flatten()
+    .unwrap_or(false)
 }
 
 /// End a job that was cancelled part-way: `cancelled`, with what was processed kept
@@ -1246,24 +1268,32 @@ async fn finish_cancelled(
     not_reached: i64,
     errors: Option<Uuid>,
 ) -> std::result::Result<(), String> {
-    let mut m: bulk_jobs::ActiveModel = job.clone().into();
-    m.status = ActiveValue::set(bulk::Counters::cancelled_status().to_string());
-    m.rows_total = ActiveValue::set(c.total);
-    m.rows_created = ActiveValue::set(c.created);
-    m.rows_updated = ActiveValue::set(c.updated);
-    m.rows_unchanged = ActiveValue::set(c.unchanged);
-    m.rows_queued_for_review = ActiveValue::set(c.queued_for_review);
-    m.rows_failed = ActiveValue::set(c.failed);
-    m.rows_omitted = ActiveValue::set(not_reached);
-    m.error_artifact = ActiveValue::set(errors);
-    m.finished_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    m.updated_at = ActiveValue::set(chrono::Utc::now().into());
-    m.update(&ctx.db)
-        .await
-        .map(|_| ())
-        .map_err(|e| e.to_string())?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    // By id, as `SeaORM`'s update of the job was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE bulk_jobs
+         SET status = $1, rows_total = $2, rows_created = $3, rows_updated = $4, rows_unchanged = $5,
+             rows_queued_for_review = $6, rows_failed = $7, rows_omitted = $8, error_artifact = $9,
+             finished_at = $10, updated_at = $11
+         WHERE id = $12
+         RETURNING id",
+    )
+    .bind(bulk::Counters::cancelled_status())
+    .bind(c.total)
+    .bind(c.created)
+    .bind(c.updated)
+    .bind(c.unchanged)
+    .bind(c.queued_for_review)
+    .bind(c.failed)
+    .bind(not_reached)
+    .bind(errors)
+    .bind(stamp())
+    .bind(stamp())
+    .bind(job.id)
+    .fetch_one(crate::db::pool(ctx))
+    .await
+    .map_err(|e| e.to_string())?;
+    AuditModel::record_or_log_on(
+        crate::db::pool(ctx),
         job.pid,
         "bulk_job_cancelled",
         job.cancelled_by.as_deref().or(job.requested_by.as_deref()),
@@ -1362,8 +1392,8 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
         .await;
     }
     finish(ctx, job, counters, 0, None, error_artifact).await?;
-    AuditModel::record_or_log(
-        &ctx.db,
+    AuditModel::record_or_log_on(
+        crate::db::pool(ctx),
         job.pid,
         "bulk_import_finished",
         run.actor,
@@ -1414,12 +1444,12 @@ async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
             bulk::progress_percent(i64::try_from(n).unwrap_or(0), chunks),
         )
         .await;
-        let rows = plans::Entity::find()
-            .filter(plans::Column::Pid.is_in(chunk.to_vec()))
-            .order_by_asc(plans::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(|e| e.to_string())?;
+        let rows: Vec<plans::Model> =
+            sqlx::query_as("SELECT * FROM plans WHERE pid = ANY($1) ORDER BY id")
+                .bind(chunk)
+                .fetch_all(crate::db::pool(ctx))
+                .await
+                .map_err(|e| e.to_string())?;
         for r in rows {
             let plan = PlanModel::to_plan(&r).map_err(|e| e.to_string())?;
             let plan = if masked {
@@ -1463,8 +1493,8 @@ async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
     };
     finish(ctx, job, counters, omitted, Some(artifact.pid), None).await?;
     // Every export is audited — **even a zero-row one**.
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        crate::db::pool(ctx),
         job.pid,
         "bulk_export",
         job.requested_by.as_deref(),

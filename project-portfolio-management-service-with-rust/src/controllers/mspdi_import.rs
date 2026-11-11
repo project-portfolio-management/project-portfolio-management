@@ -15,20 +15,18 @@
 //! report says so. Resources are not matched to people (names are not identities):
 //! their names are kept in the task description and listed.
 
-use super::db_err;
 use std::collections::HashMap;
 
 use crate::prelude::*;
 use axa::middleware::body_limit;
 use axum::body::Bytes;
-use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cpm::{self, ConstraintKind};
-use crate::models::_entities::{plan_dependencies, task_relations, tasks};
+use crate::models::_entities::tasks;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::mspdi::{self, MsConstraint};
 
@@ -270,14 +268,13 @@ pub(super) async fn run(
         });
     }
 
-    let existing: HashMap<String, tasks::Model> = tasks::Entity::find()
-        .filter(tasks::Column::PlanPid.eq(plan.pid))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .filter(tasks::Column::ExternalRef.is_not_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
+    let existing: HashMap<String, tasks::Model> = sqlx::query_as::<_, tasks::Model>(
+        "SELECT * FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL AND external_ref IS NOT NULL",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?
+    .into_iter()
         .filter_map(|t| t.external_ref.clone().map(|e| (e, t)))
         .collect();
     let to_create = planned
@@ -305,7 +302,8 @@ pub(super) async fn run(
     let mut calendar_imported = false;
     if !dry_run {
         let now = chrono::Utc::now();
-        let txn = ctx.db.begin().await.map_err(db_err)?;
+        let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+        let mut tx = crate::db::begin(ctx).await?;
         let mut pid_of: HashMap<i64, Uuid> = HashMap::new();
         for p in &planned {
             let parent = p.parent_uid.and_then(|u| pid_of.get(&u).copied());
@@ -314,15 +312,24 @@ pub(super) async fn run(
                 .clone()
                 .map_or((None, None), |(k, d)| (Some(k), Some(d)));
             if let Some(row) = existing.get(&p.ext) {
-                let mut a: tasks::ActiveModel = row.clone().into();
-                a.title = ActiveValue::set(p.title.clone());
-                a.start_date = ActiveValue::set(p.start);
-                a.duration_days = ActiveValue::set(p.duration);
-                a.constraint_kind = ActiveValue::set(ckind);
-                a.constraint_date = ActiveValue::set(cdate);
-                a.deadline = ActiveValue::set(p.deadline);
-                a.parent_task_pid = ActiveValue::set(parent);
-                a.update(&txn).await.map_err(db_err)?;
+                // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+                sqlx::query_scalar::<_, i32>(
+                    "UPDATE tasks
+                     SET title = $1, start_date = $2, duration_days = $3, constraint_kind = $4, constraint_date = $5,
+                         deadline = $6, parent_task_pid = $7
+                     WHERE id = $8
+                     RETURNING id",
+                )
+                .bind(&p.title)
+                .bind(p.start)
+                .bind(p.duration)
+                .bind(ckind)
+                .bind(cdate)
+                .bind(p.deadline)
+                .bind(parent)
+                .bind(row.id)
+                .fetch_one(tx.conn())
+                .await?;
                 pid_of.insert(p.uid, row.pid);
                 updated += 1;
             } else {
@@ -331,62 +338,61 @@ pub(super) async fn run(
                     StatusChoice::Active => active.clone().unwrap_or_else(|| initial.clone()),
                     StatusChoice::Initial => initial.clone(),
                 };
-                let row = tasks::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    plan_pid: ActiveValue::set(plan.pid),
-                    title: ActiveValue::set(p.title.clone()),
-                    description: ActiveValue::set(p.description.clone()),
-                    status: ActiveValue::set(status.clone()),
-                    start_date: ActiveValue::set(p.start),
-                    duration_days: ActiveValue::set(p.duration),
-                    constraint_kind: ActiveValue::set(ckind),
-                    constraint_date: ActiveValue::set(cdate),
-                    deadline: ActiveValue::set(p.deadline),
-                    parent_task_pid: ActiveValue::set(parent),
-                    external_ref: ActiveValue::set(Some(p.ext.clone())),
-                    status_changed_at: ActiveValue::set(now.into()),
-                    done_at: ActiveValue::set(
-                        crate::workflow::is_done(&workflow, &status).then(|| now.into()),
-                    ),
-                    deleted_at: ActiveValue::set(None),
-                    ..Default::default()
-                }
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
-                crate::tba::transition_row(
-                    row.pid,
-                    plan.pid,
-                    None,
-                    status,
-                    now,
-                    caller.actor().map(ToString::to_string),
-                    None,
+                let task_pid = Uuid::new_v4();
+                // The columns `SeaORM`'s insert set, no more.
+                sqlx::query(
+                    "INSERT INTO tasks
+                         (pid, plan_pid, title, description, status, start_date, duration_days, constraint_kind,
+                          constraint_date, deadline, parent_task_pid, external_ref, status_changed_at, done_at,
+                          deleted_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NULL)",
                 )
-                .insert(&txn)
-                .await
-                .map_err(db_err)?;
-                pid_of.insert(p.uid, row.pid);
+                .bind(task_pid)
+                .bind(plan.pid)
+                .bind(&p.title)
+                .bind(&p.description)
+                .bind(&status)
+                .bind(p.start)
+                .bind(p.duration)
+                .bind(ckind)
+                .bind(cdate)
+                .bind(p.deadline)
+                .bind(parent)
+                .bind(&p.ext)
+                .bind(at)
+                .bind(crate::workflow::is_done(&workflow, &status).then_some(at))
+                .execute(tx.conn())
+                .await?;
+                crate::tba::insert_transition_on(
+                    &mut tx,
+                    crate::tba::NewTransition {
+                        task_pid,
+                        plan_pid: plan.pid,
+                        from_status: None,
+                        to_status: &status,
+                        at: now,
+                        actor_ref: caller.actor(),
+                        assignee_ref: None,
+                        blocked_reason: None,
+                    },
+                )
+                .await?;
+                pid_of.insert(p.uid, task_pid);
                 created += 1;
             }
         }
         // Edges: skip a duplicate pair, and refuse one that would close a cycle.
-        let mut edges: Vec<(Uuid, Uuid)> = plan_dependencies::Entity::find()
-            .all(&txn)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|d| (d.predecessor_pid, d.successor_pid))
-            .collect();
+        // Every dependency and live `precedes` relation (as before, not only this plan's); only the two ends are read.
+        let mut edges: Vec<(Uuid, Uuid)> =
+            sqlx::query_as("SELECT predecessor_pid, successor_pid FROM plan_dependencies")
+                .fetch_all(tx.conn())
+                .await?;
         edges.extend(
-            task_relations::Entity::find()
-                .filter(task_relations::Column::DeletedAt.is_null())
-                .filter(task_relations::Column::Kind.eq("precedes"))
-                .all(&txn)
-                .await
-                .map_err(db_err)?
-                .into_iter()
-                .map(|r| (r.from_task_pid, r.to_task_pid)),
+            sqlx::query_as::<_, (Uuid, Uuid)>(
+                "SELECT from_task_pid, to_task_pid FROM task_relations WHERE deleted_at IS NULL AND kind = 'precedes'",
+            )
+            .fetch_all(tx.conn())
+            .await?,
         );
         for l in usable_links {
             let (Some(&pred), Some(&succ)) = (pid_of.get(&l.predecessor), pid_of.get(&l.successor))
@@ -408,29 +414,26 @@ pub(super) async fn run(
                 );
                 continue;
             }
-            plan_dependencies::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                predecessor_pid: ActiveValue::set(pred),
-                successor_pid: ActiveValue::set(succ),
-                lag_days: ActiveValue::set(i32::try_from(l.lag_days).unwrap_or(0)),
-                kind: ActiveValue::set(
-                    match l.kind {
-                        cpm::Kind::Fs => "fs",
-                        cpm::Kind::Ss => "ss",
-                        cpm::Kind::Ff => "ff",
-                        cpm::Kind::Sf => "sf",
-                    }
-                    .to_string(),
-                ),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO plan_dependencies (pid, predecessor_pid, successor_pid, lag_days, kind)
+                 VALUES ($1, $2, $3, $4, $5)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(pred)
+            .bind(succ)
+            .bind(i32::try_from(l.lag_days).unwrap_or(0))
+            .bind(match l.kind {
+                cpm::Kind::Fs => "fs",
+                cpm::Kind::Ss => "ss",
+                cpm::Kind::Ff => "ff",
+                cpm::Kind::Sf => "sf",
+            })
+            .execute(tx.conn())
+            .await?;
             edges.push((pred, succ));
             links_created += 1;
         }
-        txn.commit().await.map_err(db_err)?;
+        tx.commit().await?;
         if let Some(cal) = &parsed.calendar
             && !super::calendars::plan_has_calendar(ctx, plan.pid).await?
         {
@@ -462,8 +465,8 @@ pub(super) async fn run(
         }
         // Not atomic with the import (it is many writes through helpers): a failed audit row fails the
         // request, and the import is idempotent, so asking again converges and records it.
-        AuditModel::record(
-            &ctx.db,
+        AuditModel::record_on(
+            crate::db::pool(ctx),
             plan.pid,
             "mspdi_import",
             caller.actor(),

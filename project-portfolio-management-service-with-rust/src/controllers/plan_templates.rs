@@ -497,8 +497,8 @@ async fn from_template(
                 .await
                 .ok();
             for pid in created.iter().rev() {
-                if let Ok(m) = PlanModel::find_by_pid(&ctx.db, &pid.to_string()).await {
-                    streaming::delete_and_emit(&ctx.db, m, caller.actor())
+                if let Ok(m) = PlanModel::find_by_pid(&ctx, &pid.to_string()).await {
+                    streaming::delete_and_emit(&ctx, m, caller.actor())
                         .await
                         .ok();
                 }
@@ -535,7 +535,7 @@ async fn build(
             None => b.parent_pid.map(|p| p.to_string()),
         };
         super::plans::validate(&plan)?;
-        let model = streaming::create_and_emit(&ctx.db, &plan, caller.actor()).await?;
+        let model = streaming::create_and_emit(ctx, &plan, caller.actor()).await?;
         pids.push(model.pid);
         created.push(model.pid);
         let plan_pid = model.pid;

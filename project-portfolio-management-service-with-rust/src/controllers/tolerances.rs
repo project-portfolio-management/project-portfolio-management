@@ -227,9 +227,7 @@ async fn picture(
     plan: &plans::Model,
     allocs: &[allocations::Model],
 ) -> Result<Value> {
-    let ancestors = PlanModel::ancestor_pids(&ctx.db, plan.pid)
-        .await
-        .map_err(Error::Model)?;
+    let ancestors = PlanModel::ancestor_pids(ctx, plan.pid).await?;
     let mut chain = vec![plan.pid];
     chain.extend(&ancestors);
     let rows = rows_for(ctx, chain).await?;

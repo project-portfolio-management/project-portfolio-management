@@ -90,17 +90,16 @@ pub(crate) async fn require_visible_parent(
     wi: &Plan,
     current: Option<&str>,
 ) -> Result<()> {
-    use crate::models::_entities::plans;
     let parsed = |raw: Option<&str>| raw.and_then(|s| uuid::Uuid::parse_str(s.trim()).ok());
     let parent = parsed(wi.parent_ref.as_deref());
     let Some(parent) = parent.filter(|p| Some(*p) != parsed(current)) else {
         return Ok(());
     };
-    let exists = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(parent))
-        .one(&ctx.db)
-        .await
-        .map_err(super::db_err)?
+    // Any row, deleted or not, as before.
+    let exists = sqlx::query_scalar::<_, i32>("SELECT 1 FROM plans WHERE pid = $1 LIMIT 1")
+        .bind(parent)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .is_some();
     let hidden = super::plan_access::hidden_plans(ctx, &[parent], caller)
         .await
@@ -141,9 +140,7 @@ pub(crate) async fn check_no_cycle(
         }
         // Walk the parent's ancestor chain; if we are in it, this edge
         // closes a loop.
-        let ancestors = PlanModel::ancestor_pids(&ctx.db, parent)
-            .await
-            .map_err(super::model_not_found)?;
+        let ancestors = PlanModel::ancestor_pids(ctx, parent).await?;
         if ancestors.contains(&self_pid) {
             return cycle_error();
         }
@@ -368,7 +365,7 @@ async fn create(
             ));
         }
     };
-    let model = streaming::create_and_emit(&ctx.db, &wi, caller.actor()).await?;
+    let model = streaming::create_and_emit(&ctx, &wi, caller.actor()).await?;
     if modules.is_some() {
         super::modules::set_modules(&ctx, model.pid, modules, caller.actor()).await?;
     }
@@ -397,9 +394,7 @@ async fn get_one(
     caller: MaybeAuthUser,
     Query(params): Query<GetParams>,
 ) -> Result<Response> {
-    let model = PlanModel::find_by_pid(&ctx.db, &pid)
-        .await
-        .map_err(super::model_not_found)?;
+    let model = PlanModel::find_by_pid(&ctx, &pid).await?;
     let plan = model.to_plan()?;
     let obligations = crate::auth::authorize_record(
         &caller,
@@ -444,9 +439,7 @@ async fn get_one(
 /// caller *asking* for the redacted form.
 #[debug_handler]
 async fn get_masked(Path(pid): Path<String>, State(ctx): State<AppContext>) -> Result<Response> {
-    let model = PlanModel::find_by_pid(&ctx.db, &pid)
-        .await
-        .map_err(super::model_not_found)?;
+    let model = PlanModel::find_by_pid(&ctx, &pid).await?;
     format::json(crate::privacy::mask_plan(&model.to_plan()?))
 }
 
@@ -474,9 +467,7 @@ async fn get_export(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let model = PlanModel::find_by_pid(&ctx.db, &pid)
-        .await
-        .map_err(super::model_not_found)?;
+    let model = PlanModel::find_by_pid(&ctx, &pid).await?;
     let plan = model.to_plan()?;
     let obligations = crate::auth::authorize_record(
         &caller,
@@ -485,8 +476,8 @@ async fn get_export(
     )
     .map_err(super::record_rejection)?;
     let masked = obligations.iter().any(|o| o == "mask");
-    AuditModel::record(
-        &ctx.db,
+    AuditModel::record_on(
+        crate::db::pool(&ctx),
         model.pid,
         "exported",
         caller.actor(),
@@ -513,9 +504,7 @@ async fn update(
     Json(wi): Json<Plan>,
 ) -> Result<Response> {
     validate(&wi)?;
-    let model = PlanModel::find_by_pid(&ctx.db, &pid)
-        .await
-        .map_err(super::model_not_found)?;
+    let model = PlanModel::find_by_pid(&ctx, &pid).await?;
     let current = model.to_plan()?.parent_ref;
     require_visible_parent(&ctx, &caller, &wi, current.as_deref()).await?;
     check_no_cycle(&ctx, Some(model.pid), &wi).await?;
@@ -533,7 +522,7 @@ async fn update(
     // Captured before the write, since `target_date` lives in the
     // payload and `model` is about to be consumed.
     let old_target_date = model.to_plan().ok().and_then(|p| p.target_date);
-    let updated = streaming::update_and_emit(&ctx.db, model, &wi, caller.actor()).await?;
+    let updated = streaming::update_and_emit(&ctx, model, &wi, caller.actor()).await?;
     // Audit is written inside `update_and_emit` (see `streaming`).
     Metrics::global().plan_updated_total.inc();
 
@@ -576,9 +565,7 @@ async fn remove(
     State(ctx): State<AppContext>,
     caller: MaybeAuthUser,
 ) -> Result<Response> {
-    let model = PlanModel::find_by_pid(&ctx.db, &pid)
-        .await
-        .map_err(super::model_not_found)?;
+    let model = PlanModel::find_by_pid(&ctx, &pid).await?;
     // A plan with live dependencies to or from tasks of other plans is not deleted from
     // under them: the dependants are named (those the caller may read) and counted.
     let (named, restricted) = super::cpm::external_dependants(&ctx, model.pid, &caller).await?;
@@ -611,7 +598,7 @@ async fn remove(
             ),
         ));
     }
-    let (_entity_pid, _name) = streaming::delete_and_emit(&ctx.db, model, caller.actor()).await?;
+    let (_entity_pid, _name) = streaming::delete_and_emit(&ctx, model, caller.actor()).await?;
     // Audit is written inside `delete_and_emit` (see `streaming`).
     Metrics::global().plan_deleted_total.inc();
     format::empty_json()
@@ -637,7 +624,7 @@ async fn list(
         .as_deref()
         .map(str::trim)
         .filter(|p| !p.is_empty());
-    let rows = PlanModel::list_paged(&ctx.db, parent, limit, offset).await?;
+    let rows = PlanModel::list_paged(&ctx, parent, limit, offset).await?;
     let hidden = super::plan_access::hidden_plans(
         &ctx,
         &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
@@ -694,7 +681,7 @@ async fn search(
         usize::try_from(limit).unwrap_or(usize::MAX),
         usize::try_from(offset).unwrap_or(usize::MAX),
     )?;
-    let rows = PlanModel::find_by_pids(&ctx.db, &parse_pids(&pids)).await?;
+    let rows = PlanModel::find_by_pids(&ctx, &parse_pids(&pids)).await?;
     let hidden = super::plan_access::hidden_plans(
         &ctx,
         &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
@@ -761,7 +748,7 @@ async fn check_duplicates(
         ));
     };
     let candidates = index.candidates(&query, CHECK_DUPLICATES_CANDIDATE_LIMIT)?;
-    let rows = PlanModel::find_by_pids(&ctx.db, &parse_pids(&candidates)).await?;
+    let rows = PlanModel::find_by_pids(&ctx, &parse_pids(&candidates)).await?;
     // A private plan never appears as a duplicate to someone who cannot see it.
     let hidden = super::plan_access::hidden_plans(
         &ctx,
@@ -818,12 +805,8 @@ async fn merge(
             ErrorDetail::new("validation", "main_pid and duplicate_pid must differ"),
         ));
     }
-    let main = PlanModel::find_by_pid(&ctx.db, &req.main_pid)
-        .await
-        .map_err(super::model_not_found)?;
-    let duplicate = PlanModel::find_by_pid(&ctx.db, &req.duplicate_pid)
-        .await
-        .map_err(super::model_not_found)?;
+    let main = PlanModel::find_by_pid(&ctx, &req.main_pid).await?;
+    let duplicate = PlanModel::find_by_pid(&ctx, &req.duplicate_pid).await?;
     // The route needs an administrator, whom a handling mark still binds.
     super::plan_access::require_readable(&ctx, &caller, main.pid).await?;
     super::plan_access::require_readable(&ctx, &caller, duplicate.pid).await?;
@@ -831,11 +814,10 @@ async fn merge(
     let outcome = merge_plans(&main.to_plan()?, &duplicate.to_plan()?);
 
     let (merged, dup_pid, _dup_name) =
-        streaming::merge_and_emit(&ctx.db, main, duplicate, &outcome.merged, caller.actor())
-            .await?;
+        streaming::merge_and_emit(&ctx, main, duplicate, &outcome.merged, caller.actor()).await?;
 
     if let Err(err) = MergeRecordModel::record(
-        &ctx.db,
+        &ctx,
         merged.pid,
         dup_pid,
         req.reason.as_deref(),
@@ -866,7 +848,7 @@ async fn merge(
 async fn recent_merges(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     // A merge that touched a plan the caller may not see is not in their history.
-    let rows: Vec<_> = MergeRecordModel::recent(&ctx.db, 100)
+    let rows: Vec<_> = MergeRecordModel::recent(&ctx, 100)
         .await?
         .into_iter()
         .filter(|m| !scope.plan(&m.main_pid) && !scope.plan(&m.duplicate_pid))
@@ -884,7 +866,7 @@ async fn recent_audit(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> R
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     // Entries about anything in a plan the caller may not see are not in their feed.
     let rows = scope
-        .visible_audit(&ctx, AuditModel::recent(&ctx.db, 100).await?)
+        .visible_audit(&ctx, AuditModel::recent(&ctx, 100).await?)
         .await?;
     format::json(rows)
 }
@@ -906,7 +888,7 @@ async fn entity_audit(
     // The route takes any entity's pid, and the guard only knows plans, so the rows pass the same filter as the feed.
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let rows = scope
-        .visible_audit(&ctx, AuditModel::for_entity(&ctx.db, uuid).await?)
+        .visible_audit(&ctx, AuditModel::for_entity(&ctx, uuid).await?)
         .await?;
     format::json(rows)
 }
@@ -922,7 +904,7 @@ async fn entity_audit(
 async fn recent_events(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let owned = scope.owned_pids(&ctx).await?;
-    let events: Vec<_> = streaming::recent_events(&ctx.db, 100)
+    let events: Vec<_> = streaming::recent_events(&ctx, 100)
         .await?
         .into_iter()
         .filter(|e| {

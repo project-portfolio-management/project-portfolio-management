@@ -1,7 +1,7 @@
 //! `audit_logs` model — record and query the CRUD audit trail.
 
 use crate::prelude::*;
-use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect};
+use sea_orm::ConnectionTrait;
 use uuid::Uuid;
 
 pub use super::_entities::audit_logs::{self, ActiveModel, Entity, Model};
@@ -147,13 +147,13 @@ impl Model {
     /// # Errors
     ///
     /// When the query fails.
-    pub async fn recent(db: &DatabaseConnection, limit: u64) -> ModelResult<Vec<Self>> {
-        let rows = audit_logs::Entity::find()
-            .order_by_desc(audit_logs::Column::Id)
-            .limit(limit)
-            .all(db)
-            .await?;
-        Ok(rows)
+    pub async fn recent(ctx: &AppContext, limit: u64) -> Result<Vec<Self>> {
+        Ok(
+            sqlx::query_as("SELECT * FROM audit_logs ORDER BY id DESC LIMIT $1")
+                .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+                .fetch_all(crate::db::pool(ctx))
+                .await?,
+        )
     }
 
     /// Audit entries for one plan, most-recent first.
@@ -161,13 +161,13 @@ impl Model {
     /// # Errors
     ///
     /// When the query fails.
-    pub async fn for_entity(db: &DatabaseConnection, entity_pid: Uuid) -> ModelResult<Vec<Self>> {
-        let rows = audit_logs::Entity::find()
-            .filter(audit_logs::Column::EntityPid.eq(entity_pid))
-            .order_by_desc(audit_logs::Column::Id)
-            .all(db)
-            .await?;
-        Ok(rows)
+    pub async fn for_entity(ctx: &AppContext, entity_pid: Uuid) -> Result<Vec<Self>> {
+        Ok(
+            sqlx::query_as("SELECT * FROM audit_logs WHERE entity_pid = $1 ORDER BY id DESC")
+                .bind(entity_pid)
+                .fetch_all(crate::db::pool(ctx))
+                .await?,
+        )
     }
 }
 

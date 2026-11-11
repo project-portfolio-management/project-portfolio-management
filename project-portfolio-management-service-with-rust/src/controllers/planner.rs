@@ -6,17 +6,16 @@
 //! as clashes**. A slot on a task the caller can no longer read is omitted
 //! (and counted), never shown masked.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use chrono::{DateTime, NaiveDate, Utc};
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::discussion::resolve_subject;
 use super::plan_access::readable_plans;
 use crate::auth::{AuthUser, MaybeAuthUser};
-use crate::models::_entities::{planned_slots, plans, tasks};
+use crate::models::_entities::{planned_slots, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::planner::{self as rules, Span};
 use crate::tz;
@@ -48,34 +47,34 @@ async fn create_slot(
     }
     let caller = MaybeAuthUser(Some(claims.clone()));
     resolve_subject(&ctx, &caller, "task", &b.task_pid.to_string()).await?;
-    let held = planned_slots::Entity::find()
-        .filter(planned_slots::Column::Sub.eq(claims.sub.as_str()))
-        .filter(planned_slots::Column::DeletedAt.is_null())
-        .count(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if held >= MAX_SLOTS {
+    let held: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM planned_slots WHERE sub = $1 AND deleted_at IS NULL",
+    )
+    .bind(claims.sub.as_str())
+    .fetch_one(crate::db::pool(&ctx))
+    .await?;
+    if u64::try_from(held).unwrap_or(0) >= MAX_SLOTS {
         return Err(unprocessable(&format!(
             "at most {MAX_SLOTS} planned slots per person"
         )));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = planned_slots::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        sub: ActiveValue::set(claims.sub.clone()),
-        task_pid: ActiveValue::set(b.task_pid),
-        starts_at: ActiveValue::set(b.starts_at.into()),
-        ends_at: ActiveValue::set(b.ends_at.into()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "slot_planned", Some(&claims.sub), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: planned_slots::Model = sqlx::query_as(
+        "INSERT INTO planned_slots (pid, sub, task_pid, starts_at, ends_at, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(&claims.sub)
+    .bind(b.task_pid)
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(b.starts_at))
+    .bind(chrono::DateTime::<chrono::FixedOffset>::from(b.ends_at))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "slot_planned", Some(&claims.sub), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -88,22 +87,27 @@ async fn delete_slot(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let row = planned_slots::Entity::find()
-        .filter(planned_slots::Column::Pid.eq(pid))
-        .filter(planned_slots::Column::Sub.eq(claims.sub.as_str()))
-        .filter(planned_slots::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let mut active: planned_slots::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "slot_removed", Some(&claims.sub), None)
+    let row: planned_slots::Model = sqlx::query_as(
+        "SELECT * FROM planned_slots WHERE pid = $1 AND sub = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(claims.sub.as_str())
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // An update that finds no row is an error, as it was.
+    sqlx::query("UPDATE planned_slots SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+            chrono::Utc::now(),
+        ))
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), pid, "slot_removed", Some(&claims.sub), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -126,40 +130,39 @@ async fn my_plan(
 ) -> Result<Response> {
     let zone = tz::parse_zone(&p.tz).map_err(|e| unprocessable(&e))?;
     let (from, to) = rules::day_window(p.day, zone);
-    let slots = planned_slots::Entity::find()
-        .filter(planned_slots::Column::Sub.eq(claims.sub.as_str()))
-        .filter(planned_slots::Column::DeletedAt.is_null())
-        .filter(planned_slots::Column::StartsAt.lt(to))
-        .filter(planned_slots::Column::EndsAt.gt(from))
-        .order_by_asc(planned_slots::Column::StartsAt)
-        .limit(500)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let slots: Vec<planned_slots::Model> = sqlx::query_as(
+        "SELECT * FROM planned_slots
+         WHERE sub = $1 AND deleted_at IS NULL AND starts_at < $2 AND ends_at > $3
+         ORDER BY starts_at
+         LIMIT 500",
+    )
+    .bind(claims.sub.as_str())
+    .bind(to)
+    .bind(from)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let task_pids: Vec<Uuid> = slots.iter().map(|s| s.task_pid).collect();
-    let task_rows = if task_pids.is_empty() {
+    let task_rows: Vec<tasks::Model> = if task_pids.is_empty() {
         Vec::new()
     } else {
-        tasks::Entity::find()
-            .filter(tasks::Column::Pid.is_in(task_pids))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
+        sqlx::query_as("SELECT * FROM tasks WHERE pid = ANY($1) AND deleted_at IS NULL")
+            .bind(task_pids)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
     };
     let caller = MaybeAuthUser(Some(claims.clone()));
     let mut plan_pids: Vec<Uuid> = task_rows.iter().map(|t| t.plan_pid).collect();
     plan_pids.sort();
     plan_pids.dedup();
     let readable = readable_plans(&ctx, &caller, &plan_pids).await;
-    let plan_names: std::collections::HashMap<Uuid, String> = plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(plan_pids))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|p| (p.pid, p.name))
-        .collect();
+    // Deleted plans too, as before: a task's plan is named whatever became of it.
+    let plan_names: std::collections::HashMap<Uuid, String> =
+        sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans WHERE pid = ANY($1)")
+            .bind(plan_pids)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?
+            .into_iter()
+            .collect();
     let mut shown = Vec::new();
     let mut spans = Vec::new();
     let mut omitted = 0usize;
@@ -195,14 +198,14 @@ async fn my_plan(
     let due: Vec<serde_json::Value> = if refs.is_empty() {
         Vec::new()
     } else {
-        let rows = tasks::Entity::find()
-            .filter(tasks::Column::AssigneeRef.is_in(refs))
-            .filter(tasks::Column::DueDate.eq(p.day))
-            .filter(tasks::Column::DeletedAt.is_null())
-            .filter(tasks::Column::DoneAt.is_null())
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?;
+        let rows: Vec<tasks::Model> = sqlx::query_as(
+            "SELECT * FROM tasks
+             WHERE assignee_ref = ANY($1) AND due_date = $2 AND deleted_at IS NULL AND done_at IS NULL",
+        )
+        .bind(refs)
+        .bind(p.day)
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
         let pids: Vec<Uuid> = rows.iter().map(|t| t.plan_pid).collect();
         let ok = readable_plans(&ctx, &caller, &pids).await;
         rows.into_iter()

@@ -22,7 +22,7 @@ use project_portfolio_management::models::plans::Model as PlanModel;
 use project_portfolio_management::relay::{self, EventSink, SinkError};
 use project_portfolio_management::streaming::{ENTITY, Envelope, EventKind, SCHEMA_VERSION};
 use project_portfolio_management_matcher::Plan;
-use sea_orm::{EntityTrait, PaginatorTrait, TransactionTrait};
+use sea_orm::{EntityTrait, PaginatorTrait};
 use serial_test::serial;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -70,10 +70,12 @@ async fn outbox_create_writes_plan_and_one_event_atomically() {
         let wi = Plan::new("Outbox platform migration");
 
         // One transaction spanning the entity insert and the outbox insert.
-        let txn = ctx.db.begin().await.expect("begin tx");
-        let model = PlanModel::create(&txn, &wi).await.expect("create plan");
+        let mut txn = project_portfolio_management::db::begin(&ctx)
+            .await
+            .expect("begin tx");
+        let model = PlanModel::create(&mut txn, &wi).await.expect("create plan");
         let env = created_envelope(&model);
-        event_outbox::write(&txn, &env)
+        event_outbox::write(&mut txn, &env)
             .await
             .expect("enqueue outbox row");
         txn.commit().await.expect("commit tx");
@@ -113,15 +115,18 @@ async fn outbox_failure_rolls_back_both_writes() {
     request::<App, _, _>(|_request, ctx| async move {
         let wi = Plan::new("Rollback platform migration");
 
-        let txn = ctx.db.begin().await.expect("begin tx");
-        let model = PlanModel::create(&txn, &wi).await.expect("create plan");
+        let mut txn = project_portfolio_management::db::begin(&ctx)
+            .await
+            .expect("begin tx");
+        let model = PlanModel::create(&mut txn, &wi).await.expect("create plan");
         let env = created_envelope(&model);
-        event_outbox::write(&txn, &env)
+        event_outbox::write(&mut txn, &env)
             .await
             .expect("enqueue outbox row");
         // Simulate a handler error after both writes but before commit:
         // roll the whole transaction back.
-        txn.rollback().await.expect("rollback tx");
+        // Dropped without a commit, the transaction rolls back.
+        drop(txn);
 
         // Neither write survived — the two are all-or-nothing.
         let wi_count = plans::Entity::find()
@@ -171,8 +176,10 @@ impl EventSink for Recording {
 async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
-        let txn = ctx.db.begin().await.expect("begin tx");
-        let model = PlanModel::create(&txn, &Plan::new("Relayed plan"))
+        let mut txn = project_portfolio_management::db::begin(&ctx)
+            .await
+            .expect("begin tx");
+        let model = PlanModel::create(&mut txn, &Plan::new("Relayed plan"))
             .await
             .expect("create plan");
         for kind in [EventKind::Created, EventKind::Updated, EventKind::Deleted] {
@@ -180,7 +187,7 @@ async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
                 kind,
                 ..created_envelope(&model)
             };
-            event_outbox::write(&txn, &env).await.expect("write");
+            event_outbox::write(&mut txn, &env).await.expect("write");
         }
         txn.commit().await.expect("commit");
 
@@ -272,17 +279,17 @@ async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
     use project_portfolio_management::tasks::outbox_retry_failed::{self, Release};
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
-        let txn = ctx.db.begin().await.expect("begin tx");
-        let stuck = PlanModel::create(&txn, &Plan::new("Stuck plan"))
+        let mut txn = project_portfolio_management::db::begin(&ctx).await.expect("begin tx");
+        let stuck = PlanModel::create(&mut txn, &Plan::new("Stuck plan"))
             .await
             .expect("create plan");
-        let fine = PlanModel::create(&txn, &Plan::new("Fine plan"))
+        let fine = PlanModel::create(&mut txn, &Plan::new("Fine plan"))
             .await
             .expect("create plan");
-        event_outbox::write(&txn, &created_envelope(&stuck))
+        event_outbox::write(&mut txn, &created_envelope(&stuck))
             .await
             .expect("write");
-        event_outbox::write(&txn, &created_envelope(&fine))
+        event_outbox::write(&mut txn, &created_envelope(&fine))
             .await
             .expect("write");
         txn.commit().await.expect("commit");
@@ -487,11 +494,11 @@ async fn a_dead_relays_claim_is_taken_back_and_sent() {
             }
         };
         let write = |name: &'static str| {
-            let db = ctx.db.clone();
+            let ctx = ctx.clone();
             async move {
-                let txn = db.begin().await.expect("begin tx");
-                let model = PlanModel::create(&txn, &Plan::new(name)).await.expect("create plan");
-                event_outbox::write(&txn, &created_envelope(&model)).await.expect("write");
+                let mut txn = project_portfolio_management::db::begin(&ctx).await.expect("begin tx");
+                let model = PlanModel::create(&mut txn, &Plan::new(name)).await.expect("create plan");
+                event_outbox::write(&mut txn, &created_envelope(&model)).await.expect("write");
                 txn.commit().await.expect("commit");
                 model
             }

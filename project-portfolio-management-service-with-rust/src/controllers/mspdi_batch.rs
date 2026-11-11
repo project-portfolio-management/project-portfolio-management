@@ -563,7 +563,7 @@ async fn create_plan(
         ..Default::default()
     };
     super::plans::validate(&plan)?;
-    let model = crate::streaming::create_and_emit(&ctx.db, &plan, caller.actor()).await?;
+    let model = crate::streaming::create_and_emit(ctx, &plan, caller.actor()).await?;
     Ok(model.pid)
 }
 

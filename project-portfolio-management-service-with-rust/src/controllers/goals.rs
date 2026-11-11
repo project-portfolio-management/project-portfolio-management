@@ -47,9 +47,7 @@ async fn load(
     ctx: &AppContext,
     pid: &str,
 ) -> Result<(PlanModel, project_portfolio_management_matcher::Plan)> {
-    let model = PlanModel::find_by_pid(&ctx.db, pid)
-        .await
-        .map_err(super::model_not_found)?;
+    let model = PlanModel::find_by_pid(ctx, pid).await?;
     let plan = model.to_plan().map_err(Error::Model)?;
     Ok((model, plan))
 }
@@ -107,7 +105,7 @@ async fn save(
         &crate::auth::plan_resource_attrs(model.stage.as_deref()),
     )
     .map_err(super::record_rejection)?;
-    let updated = streaming::update_and_emit(&ctx.db, model, &plan, caller.actor()).await?;
+    let updated = streaming::update_and_emit(ctx, model, &plan, caller.actor()).await?;
     Metrics::global().plan_updated_total.inc();
     with_etag(updated.to_plan().map_err(Error::Model)?.goals)
 }

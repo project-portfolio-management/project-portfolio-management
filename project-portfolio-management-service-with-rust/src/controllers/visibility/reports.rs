@@ -217,7 +217,7 @@ pub(crate) async fn execute_report(
         .get("name_like")
         .and_then(|v| v.as_str())
         .map(str::to_lowercase);
-    let rows = scope.keep(crate::models::plans::Model::list(&ctx.db, 1000).await?);
+    let rows = scope.keep(crate::models::plans::Model::list(ctx, 1000).await?);
     let selected: Vec<&plans::Model> = rows
         .iter()
         .filter(|m| {

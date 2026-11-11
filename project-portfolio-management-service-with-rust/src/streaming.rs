@@ -28,9 +28,8 @@
 use std::collections::VecDeque;
 use std::sync::{Mutex, OnceLock};
 
-use axa::prelude::ModelResult;
+use axa::AppContext;
 use project_portfolio_management_matcher::Plan;
-use sea_orm::{DatabaseConnection, DatabaseTransaction, IntoActiveModel, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -287,15 +286,15 @@ pub fn transport() -> EventTransport {
 pub struct OutboxPublisher;
 
 impl OutboxPublisher {
-    /// Write one `axa_outbox` row for `env` **on `txn`**, the entity
+    /// Write one `axa_outbox` row for `env` **on `tx`**, the entity
     /// mutation's own transaction, so the two share one commit. The row's
     /// `created_at` is when it was written (the envelope has no wall-clock time).
     ///
     /// # Errors
     ///
     /// When the envelope pid is not a UUID, or the insert fails.
-    pub async fn publish(self, txn: &DatabaseTransaction, env: &Envelope) -> ModelResult<()> {
-        crate::models::event_outbox::write(txn, env).await
+    pub async fn publish(self, tx: &mut crate::db::Tx, env: &Envelope) -> axa::Result<()> {
+        crate::models::event_outbox::write(tx, env).await
     }
 
     /// The most recent outbox rows, newest first, projected to
@@ -305,12 +304,8 @@ impl OutboxPublisher {
     /// # Errors
     ///
     /// When the query fails.
-    pub async fn recent(
-        self,
-        db: &DatabaseConnection,
-        limit: usize,
-    ) -> ModelResult<Vec<EventView>> {
-        crate::models::event_outbox::recent(db, u64::try_from(limit).unwrap_or(u64::MAX)).await
+    pub async fn recent(self, ctx: &AppContext, limit: usize) -> axa::Result<Vec<EventView>> {
+        crate::models::event_outbox::recent(ctx, u64::try_from(limit).unwrap_or(u64::MAX)).await
     }
 }
 
@@ -321,27 +316,29 @@ impl OutboxPublisher {
 /// # Errors
 ///
 /// When the outbox query fails (`memory` never errors).
-pub async fn recent_events(db: &DatabaseConnection, limit: usize) -> ModelResult<Vec<EventView>> {
+pub async fn recent_events(ctx: &AppContext, limit: usize) -> axa::Result<Vec<EventView>> {
     match transport() {
         EventTransport::Memory => Ok(recent(limit)),
-        EventTransport::Outbox => OutboxPublisher.recent(db, limit).await,
+        EventTransport::Outbox => OutboxPublisher.recent(ctx, limit).await,
     }
 }
 
 /// Best-effort audit on the pooled connection — the `memory`-transport
 /// side channel. A failure is logged, never fatal: the request already
 /// succeeded and audit is secondary here. (Under `outbox` the audit row
-/// is written *inside* the transaction instead — `AuditModel::record(&txn,
+/// is written *inside* the transaction instead — `AuditModel::record_on(tx.conn(),
 /// …)?` — so entity + event + audit commit or roll back together, per
 /// `event-bus.md` §3.)
 async fn audit_best_effort(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     entity_pid: Uuid,
     action: &str,
     actor: Option<&str>,
     snapshot: Option<serde_json::Value>,
 ) {
-    if let Err(err) = AuditModel::record(db, entity_pid, action, actor, snapshot).await {
+    if let Err(err) =
+        AuditModel::record_on(crate::db::pool(ctx), entity_pid, action, actor, snapshot).await
+    {
         tracing::warn!(error = %err, action, "failed to write audit log");
     }
 }
@@ -400,35 +397,42 @@ async fn deindex_best_effort(pid: Uuid) {
 /// When the insert (or, for `outbox`, the transaction / outbox / audit
 /// insert) fails; the transaction rolls back all writes on any error.
 pub async fn create_and_emit(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     wi: &Plan,
     actor: Option<&str>,
-) -> ModelResult<PlanModel> {
+) -> axa::Result<PlanModel> {
     let model = match transport() {
         EventTransport::Memory => {
-            let model = PlanModel::create(db, wi).await?;
+            let model = PlanModel::create(&mut crate::db::pool(ctx), wi).await?;
             publish_with_actor(
                 EventKind::Created,
                 &model.pid.to_string(),
                 &model.name,
                 actor,
             );
-            audit_best_effort(db, model.pid, "created", actor, Some(model.data.clone())).await;
+            audit_best_effort(ctx, model.pid, "created", actor, Some(model.data.clone())).await;
             model
         }
         EventTransport::Outbox => {
-            let txn = db.begin().await?;
-            let model = PlanModel::create(&txn, wi).await?;
+            let mut tx = crate::db::begin(ctx).await?;
+            let model = PlanModel::create(&mut tx, wi).await?;
             let env = envelope(
                 EventKind::Created,
                 &model.pid.to_string(),
                 &model.name,
                 actor,
             );
-            OutboxPublisher.publish(&txn, &env).await?;
+            OutboxPublisher.publish(&mut tx, &env).await?;
             // Audit joins the same transaction — atomic with entity + event.
-            AuditModel::record(&txn, model.pid, "created", actor, Some(model.data.clone())).await?;
-            txn.commit().await?;
+            AuditModel::record_on(
+                tx.conn(),
+                model.pid,
+                "created",
+                actor,
+                Some(model.data.clone()),
+            )
+            .await?;
+            tx.commit().await?;
             model
         }
     };
@@ -447,14 +451,14 @@ pub async fn create_and_emit(
 /// When the update (or, for `outbox`, the transaction / outbox insert)
 /// fails.
 pub async fn update_and_emit(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     model: PlanModel,
     wi: &Plan,
     actor: Option<&str>,
-) -> ModelResult<PlanModel> {
+) -> axa::Result<PlanModel> {
     let updated = match transport() {
         EventTransport::Memory => {
-            let updated = model.into_active_model().update_data(db, wi).await?;
+            let updated = model.update_data_on(&mut crate::db::pool(ctx), wi).await?;
             publish_with_actor(
                 EventKind::Updated,
                 &updated.pid.to_string(),
@@ -462,7 +466,7 @@ pub async fn update_and_emit(
                 actor,
             );
             audit_best_effort(
-                db,
+                ctx,
                 updated.pid,
                 "updated",
                 actor,
@@ -472,24 +476,24 @@ pub async fn update_and_emit(
             updated
         }
         EventTransport::Outbox => {
-            let txn = db.begin().await?;
-            let updated = model.into_active_model().update_data(&txn, wi).await?;
+            let mut tx = crate::db::begin(ctx).await?;
+            let updated = model.update_data_on(&mut tx, wi).await?;
             let env = envelope(
                 EventKind::Updated,
                 &updated.pid.to_string(),
                 &updated.name,
                 actor,
             );
-            OutboxPublisher.publish(&txn, &env).await?;
-            AuditModel::record(
-                &txn,
+            OutboxPublisher.publish(&mut tx, &env).await?;
+            AuditModel::record_on(
+                tx.conn(),
                 updated.pid,
                 "updated",
                 actor,
                 Some(updated.data.clone()),
             )
             .await?;
-            txn.commit().await?;
+            tx.commit().await?;
             updated
         }
     };
@@ -507,24 +511,24 @@ pub async fn update_and_emit(
 /// When the soft-delete (or, for `outbox`, the transaction / outbox
 /// insert) fails.
 pub async fn delete_and_emit(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     model: PlanModel,
     actor: Option<&str>,
-) -> ModelResult<(Uuid, String)> {
+) -> axa::Result<(Uuid, String)> {
     let (pid, name) = (model.pid, model.name.clone());
     match transport() {
         EventTransport::Memory => {
-            model.into_active_model().soft_delete(db).await?;
+            model.soft_delete_on(&mut crate::db::pool(ctx)).await?;
             publish_with_actor(EventKind::Deleted, &pid.to_string(), &name, actor);
-            audit_best_effort(db, pid, "deleted", actor, None).await;
+            audit_best_effort(ctx, pid, "deleted", actor, None).await;
         }
         EventTransport::Outbox => {
-            let txn = db.begin().await?;
-            model.into_active_model().soft_delete(&txn).await?;
+            let mut tx = crate::db::begin(ctx).await?;
+            model.soft_delete_on(&mut tx).await?;
             let env = envelope(EventKind::Deleted, &pid.to_string(), &name, actor);
-            OutboxPublisher.publish(&txn, &env).await?;
-            AuditModel::record(&txn, pid, "deleted", actor, None).await?;
-            txn.commit().await?;
+            OutboxPublisher.publish(&mut tx, &env).await?;
+            AuditModel::record_on(tx.conn(), pid, "deleted", actor, None).await?;
+            tx.commit().await?;
         }
     }
     // A soft-deleted row is invisible to lookups, so it must stop being
@@ -546,17 +550,19 @@ pub async fn delete_and_emit(
 /// When either write (or, for `outbox`, the transaction / outbox inserts)
 /// fails; the transaction rolls back the whole merge on any error.
 pub async fn merge_and_emit(
-    db: &DatabaseConnection,
+    ctx: &AppContext,
     main: PlanModel,
     duplicate: PlanModel,
     merged_wi: &Plan,
     actor: Option<&str>,
-) -> ModelResult<(PlanModel, Uuid, String)> {
+) -> axa::Result<(PlanModel, Uuid, String)> {
     let (dup_pid, dup_name) = (duplicate.pid, duplicate.name.clone());
     let outcome = match transport() {
         EventTransport::Memory => {
-            let merged = main.into_active_model().update_data(db, merged_wi).await?;
-            duplicate.into_active_model().soft_delete(db).await?;
+            let merged = main
+                .update_data_on(&mut crate::db::pool(ctx), merged_wi)
+                .await?;
+            duplicate.soft_delete_on(&mut crate::db::pool(ctx)).await?;
             publish_with_actor(
                 EventKind::Merged,
                 &merged.pid.to_string(),
@@ -564,31 +570,34 @@ pub async fn merge_and_emit(
                 actor,
             );
             publish_with_actor(EventKind::Deleted, &dup_pid.to_string(), &dup_name, actor);
-            audit_best_effort(db, merged.pid, "merged", actor, Some(merged.data.clone())).await;
-            audit_best_effort(db, dup_pid, "merged_into", actor, None).await;
+            audit_best_effort(ctx, merged.pid, "merged", actor, Some(merged.data.clone())).await;
+            audit_best_effort(ctx, dup_pid, "merged_into", actor, None).await;
             (merged, dup_pid, dup_name)
         }
         EventTransport::Outbox => {
-            let txn = db.begin().await?;
-            let merged = main
-                .into_active_model()
-                .update_data(&txn, merged_wi)
-                .await?;
-            duplicate.into_active_model().soft_delete(&txn).await?;
+            let mut tx = crate::db::begin(ctx).await?;
+            let merged = main.update_data_on(&mut tx, merged_wi).await?;
+            duplicate.soft_delete_on(&mut tx).await?;
             let merged_env = envelope(
                 EventKind::Merged,
                 &merged.pid.to_string(),
                 &merged.name,
                 actor,
             );
-            OutboxPublisher.publish(&txn, &merged_env).await?;
+            OutboxPublisher.publish(&mut tx, &merged_env).await?;
             let deleted_env = envelope(EventKind::Deleted, &dup_pid.to_string(), &dup_name, actor);
-            OutboxPublisher.publish(&txn, &deleted_env).await?;
+            OutboxPublisher.publish(&mut tx, &deleted_env).await?;
             // Both audit rows join the same transaction as the merge.
-            AuditModel::record(&txn, merged.pid, "merged", actor, Some(merged.data.clone()))
-                .await?;
-            AuditModel::record(&txn, dup_pid, "merged_into", actor, None).await?;
-            txn.commit().await?;
+            AuditModel::record_on(
+                tx.conn(),
+                merged.pid,
+                "merged",
+                actor,
+                Some(merged.data.clone()),
+            )
+            .await?;
+            AuditModel::record_on(tx.conn(), dup_pid, "merged_into", actor, None).await?;
+            tx.commit().await?;
             (merged, dup_pid, dup_name)
         }
     };

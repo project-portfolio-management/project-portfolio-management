@@ -2295,6 +2295,61 @@ came from grep.
   **Still on SeaORM through other modules**, for these files: none.
   **Next batch, suggested:** `streaming` (17) with `models/plans` (69), after which `update_data` and `soft_delete`
   can go; or `report_schedules` (65), `email_deliveries` (34) and `attachments` (42), about 140 lines.
+  **Progress 2026-11-11, batch 13 (not ticked).** The plan record's core moved: `streaming` (17 lines naming SeaORM,
+  now none), `models/plans` (69, now 2: its re-export and `ActiveModelBehavior` impl, left for step (c)),
+  `models/merge_records` (13, now 2, the same), `controllers/plans` (2, none), `plan_links` (32, none), `planner` (33,
+  none), with what they reached SeaORM through: `models/event_outbox` (3, none) and `models/audit_logs` (24, now 17:
+  `recent` and `for_entity` moved; `record` and `record_or_log` keep their SeaORM callers). 172 lines gone, leaving 56
+  files and 1,500 lines by batch 6's measure (54 by name). Gone, once nothing called them: the SeaORM
+  `plans::ActiveModel::update_data` and `soft_delete`; `update_data_on` and the new `soft_delete_on` (the same seven
+  and five columns, re-digested the same way) take a `db::Session`, and `create` does too. The plan finders (`find_by_pid`,
+  `find_by_pids`, `list`, `list_paged`, `list_children`, `ancestor_pids`, `search`, `search_paged`, `search_count`),
+  `merge_records::Model::record` and `recent`, `AuditModel::recent` and `for_entity`, `event_outbox::recent` and the
+  four `streaming::*_and_emit` and `recent_events` take the context and return the service's `Result`, so a sqlx
+  failure keeps the `503` an unreachable database answers and the `409`/`422` a broken constraint does (axa has no
+  `ModelError` for sqlx without its `sqlx` feature); `find_by_pid` answers `Error::NotFound` itself, so its callers
+  drop `.map_err(model_not_found)` (the same `404` and body). Their callers changed only at the call: `bulk`, `goals`,
+  `lessons`, `tolerances`, `frameworks`, `governance`, `mspdi_batch`, `plan_templates` and `visibility/reports`; none
+  holds a sqlx transaction there. Under the `outbox` transport each of create, update, soft delete and merge still
+  writes the plan (or both plans), its `axa_outbox` event (two for a merge) and its audit row (two for a merge) in one
+  transaction, now a `db::begin` one: `db::Tx::write_outbox` hands that transaction to `axa::outbox::write`, the
+  sqlx form of the `write_seaorm` it replaces (the same statement and default writer, so the same events, payloads
+  and fingerprints), and counts it in `query_count` as SeaORM's callback did. Under `memory` the plan is written on
+  the pool, the live event pushed, and the audit row written best-effort after, as before. The tests that write an
+  outbox event by hand (`requests::event_outbox`) open a `db::begin` transaction, and roll one back by dropping it.
+  A throwaway check (not committed) dumped 644 answers under the `memory` transport and 642 under `outbox`, and every row written (plans with every
+  column and their three digests recomputed, audit, merge records, plan links, planned slots, plan modules, outbox
+  events and payloads with their fingerprints recomputed), for an administrator, a plan's owner, a member of a private
+  plan, a writer who is a member of nothing, the person with planned slots, an identity with no user id and no token:
+  plans created (under public, private, missing, malformed and soft-deleted parents, with and without the personal
+  module preset), read, masked, exported, audited, listed (paged, by parent), searched (exact, fuzzy, phonetic, by
+  kind), checked for duplicates, matched, updated (renamed, re-dated, re-parented, refused for a cycle), merged
+  (refused every way, then twice), and deleted (refused for a dependant in another plan); links added, refused (bad
+  fields, duplicate URL, the per-task cap, a task of another plan, a hidden or deleted plan), listed by system and
+  kind, counted and removed; slots planned, refused, listed in four zones and removed; the model's finders with no
+  route called directly; then `plans`, `audit_logs`, `merge_records`, `plan_links`, `planned_slots`,
+  `axa_outbox_payloads` and `tasks` made unreadable in turn. Before and after: the same, once pids, times, event ids
+  and cursors were normalised and the search index's order (which is not the database's) was compared sorted, but for
+  one line: a direct `find_by_pid` call's error is `NotFound` rather than `EntityNotFound` (both answer the same `404`).
+  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (only on a failure;
+  same status), but for an audit row written through `AuditModel::record_on` (the outbox transport's, and the plan
+  export's), whose failure is a plain model error and so a `500` where an unreachable database answered `503`. The
+  lists SeaORM bound one parameter per value (`IN (…)`: `find_by_pids`, the planner's tasks, plan names and assignee
+  references) are bound as one array (`= ANY($1)`); the parent check reads only whether the row exists, the ancestor
+  walk only `parent_pid`, the planner's plan names only `pid` and `name`, and the slot count is a plain `COUNT(*)`;
+  removing a link or a slot returns the row's id rather than every column; the outbox's refusal of a payload (too
+  large, a denied field) is sqlx's error rather than SeaORM's `Custom` (the same `500`).
+  **Found, not changed:** a plan may be created or moved under a soft-deleted parent (the parent check ignores
+  `deleted_at`, while the cycle walk does not); under the `memory` transport a merge updates the survivor and deletes
+  the duplicate in two statements, so a failure between them leaves half a merge, and the merge record is written
+  after either transport's transaction with its failure only logged; promoting a proposal still creates its plan
+  before, and outside, the transaction that marks the proposal promoted; adding a link checks the cap and the duplicate
+  URL and then inserts, and planning a slot counts and then inserts, so two at once can pass `MAX_PER_PLAN`,
+  `MAX_SLOTS` or the duplicate check; removing a link or a slot reads it on the pool before its transaction;
+  `list_children`, `search`, `search_paged` and `search_count` have no caller.
+  **Still on SeaORM through other modules**, for these files: none.
+  **Next batch, suggested:** `report_schedules` (65), `email_deliveries` (34) and `attachments` (42), about 140 lines;
+  or `plan_templates` (82), the last big caller of the plan core.
 
 ## Correctness carried forward (CF-n)
 

@@ -593,9 +593,7 @@ pub(crate) async fn in_force(
     family: Family,
     plan: Uuid,
 ) -> Result<InForce> {
-    let ancestors = PlanModel::ancestor_pids(&ctx.db, plan)
-        .await
-        .map_err(Error::Model)?;
+    let ancestors = PlanModel::ancestor_pids(ctx, plan).await?;
     let mut chain = vec![plan];
     chain.extend(&ancestors);
     let links: HashMap<Uuid, (Uuid, i32)> = sqlx::query_as::<_, plan_frameworks::Model>(

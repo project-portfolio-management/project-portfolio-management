@@ -818,7 +818,7 @@ async fn confirm_item(
             .map_err(|_| unprocessable("the held candidate is no longer a valid plan"))?;
     super::plans::validate(&plan)?;
     super::plans::require_visible_parent(&ctx, &caller, &plan, None).await?;
-    let model = streaming::create_and_emit(&ctx.db, &plan, caller.actor()).await?;
+    let model = streaming::create_and_emit(&ctx, &plan, caller.actor()).await?;
     let mut a: review_queue_items::ActiveModel = item.into();
     a.status = ActiveValue::set("confirmed".to_string());
     a.resolved_by = ActiveValue::set(caller.actor().map(str::to_string));
@@ -1113,7 +1113,7 @@ async fn process_row(
         if let Err(e) = super::plans::check_no_cycle(ctx, Some(model.pid), plan).await {
             return Err(vec![row_error(d, "parent_ref", "cycle", text_of(&e))]);
         }
-        return streaming::update_and_emit(&ctx.db, model, plan, run.actor)
+        return streaming::update_and_emit(ctx, model, plan, run.actor)
             .await
             .map(|_| RowOutcome::Updated)
             .map_err(|e| vec![row_error(d, "", "internal", e.to_string())]);
@@ -1138,7 +1138,7 @@ async fn process_row(
             .iter()
             .filter_map(|s| Uuid::parse_str(s).ok())
             .collect();
-        let mut rows = PlanModel::find_by_pids(&ctx.db, &pids)
+        let mut rows = PlanModel::find_by_pids(ctx, &pids)
             .await
             .map_err(|e| vec![row_error(d, "", "internal", e.to_string())])?;
         // A title must not find a hidden plan here either: held or created, the answer is the one no match gives.
@@ -1177,7 +1177,7 @@ async fn process_row(
             return Ok(RowOutcome::Queued);
         }
     }
-    streaming::create_and_emit(&ctx.db, plan, run.actor)
+    streaming::create_and_emit(ctx, plan, run.actor)
         .await
         .map(|_| RowOutcome::Created)
         .map_err(|e| vec![row_error(d, "", "internal", e.to_string())])

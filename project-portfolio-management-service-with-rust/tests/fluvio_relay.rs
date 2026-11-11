@@ -51,7 +51,7 @@ async fn fluvio_relay_publishes_an_outbox_row_to_a_real_topic() {
 
     request::<App, _, _>(|_request, ctx| async move {
         let wi = Plan::new("Fluvio Relay Round Trip");
-        let model = streaming::create_and_emit(&ctx.db, &wi, None)
+        let model = streaming::create_and_emit(&ctx, &wi, None)
             .await
             .expect("create_and_emit under outbox transport");
 

@@ -5,9 +5,6 @@
 
 use crate::prelude::*;
 use project_portfolio_management_matcher::Plan as MatchPlan;
-use sea_orm::sea_query::Expr;
-use sea_orm::sea_query::extension::postgres::PgExpr;
-use sea_orm::{ConnectionTrait, PaginatorTrait, QueryOrder, QuerySelect};
 use uuid::Uuid;
 
 pub use super::_entities::plans::{self, ActiveModel, Entity, Model};
@@ -45,9 +42,10 @@ impl Model {
         serde_json::from_value(self.data.clone()).map_err(|e| ModelError::Any(e.into()))
     }
 
-    /// The `SeaORM` `update_data` on `sqlx`, for a caller that holds the plan row: in a transaction or on the
-    /// pool ([`crate::db::Session`]). The same columns, re-digested the same way; an update that finds no row is an
-    /// error, as `SeaORM`'s was.
+    /// Replace the payload of an existing plan (and the denormalized `name`, `kind` and `parent_pid`), in a
+    /// transaction or on the pool ([`crate::db::Session`]), so the update can share a transaction with the outbox
+    /// insert (see [`Model::create`]). The update names only the columns it changes; one that finds no row is an
+    /// error.
     ///
     /// # Errors
     ///
@@ -60,6 +58,7 @@ impl Model {
         let data = serde_json::to_value(pl).map_err(|e| Error::Model(ModelError::Any(e.into())))?;
         let kind = kind_of(pl);
         let parent_pid = parent_pid_of(pl);
+        // Re-digest over the *new* content: leaving the old digests would report every legitimate edit as tampering.
         let d = crate::compliance::record_integrity::digests(
             &crate::compliance::record_integrity::RecordInput {
                 pid: self.pid,
@@ -94,18 +93,51 @@ impl Model {
         .await?)
     }
 
-    /// Insert a new plan, returning the created row.
+    /// Soft-delete: mark inactive, stamp `deleted_at` and re-digest, in a transaction or on the pool. `active` and
+    /// `deleted_at` are both in the pre-image, so a soft delete changes the digest; not re-digesting would make every
+    /// soft-deleted row look tampered with.
     ///
-    /// Generic over [`ConnectionTrait`] so the caller can pass either the
-    /// pooled `&DatabaseConnection` (memory transport) or its own
-    /// `&DatabaseTransaction` (outbox transport — so the row and its
-    /// `axa_outbox` row share one commit boundary).
+    /// # Errors
+    ///
+    /// When the update fails, or finds no row.
+    pub async fn soft_delete_on(&self, db: &mut impl crate::db::Session) -> Result<Model> {
+        let stamp: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+        let d = crate::compliance::record_integrity::digests(
+            &crate::compliance::record_integrity::RecordInput {
+                pid: self.pid,
+                name: &self.name,
+                kind: self.kind.as_deref(),
+                parent_pid: self.parent_pid,
+                stage: self.stage.as_deref(),
+                data: &self.data,
+                active: false,
+                deleted_at_micros: Some(stamp.timestamp_micros()),
+            },
+        );
+        Ok(sqlx::query_as(
+            "UPDATE plans
+             SET active = $1, deleted_at = $2, content_hash = $3, content_hash_sha3 = $4, content_mac = $5
+             WHERE id = $6
+             RETURNING *",
+        )
+        .bind(false)
+        .bind(Some(stamp))
+        .bind(Some(d.sha256))
+        .bind(Some(d.sha3))
+        .bind(d.mac)
+        .bind(self.id)
+        .fetch_one(db.ex())
+        .await?)
+    }
+
+    /// Insert a new plan, returning the created row, in a transaction or on the pool ([`crate::db::Session`]): the
+    /// outbox transport passes its own transaction, so the row and its `axa_outbox` row share one commit.
     ///
     /// # Errors
     ///
     /// When serialization or the insert fails.
-    pub async fn create<C: ConnectionTrait>(db: &C, pl: &MatchPlan) -> ModelResult<Self> {
-        let data = serde_json::to_value(pl).map_err(|e| ModelError::Any(e.into()))?;
+    pub async fn create(db: &mut impl crate::db::Session, pl: &MatchPlan) -> Result<Self> {
+        let data = serde_json::to_value(pl).map_err(|e| Error::Model(ModelError::Any(e.into())))?;
         // Mint the pid before the insert so it is known to the digests.
         let pid = Uuid::new_v4();
         let kind = kind_of(pl);
@@ -125,38 +157,39 @@ impl Model {
                 deleted_at_micros: None,
             },
         );
-        let model = plans::ActiveModel {
-            pid: ActiveValue::set(pid),
-            kind: ActiveValue::set(kind),
-            name: ActiveValue::set(pl.name.clone()),
-            content_hash: ActiveValue::set(Some(digests.sha256.clone())),
-            content_hash_sha3: ActiveValue::set(Some(digests.sha3.clone())),
-            content_mac: ActiveValue::set(digests.mac.clone()),
-            data: ActiveValue::set(data),
-            parent_pid: ActiveValue::set(parent_pid),
-            active: ActiveValue::set(true),
-            deleted_at: ActiveValue::set(None),
-            ..Default::default()
-        }
-        .insert(db)
-        .await?;
-        Ok(model)
+        Ok(sqlx::query_as(
+            "INSERT INTO plans
+                 (pid, kind, name, content_hash, content_hash_sha3, content_mac, data, parent_pid, active, deleted_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL)
+             RETURNING *",
+        )
+        .bind(pid)
+        .bind(kind)
+        .bind(&pl.name)
+        .bind(Some(digests.sha256))
+        .bind(Some(digests.sha3))
+        .bind(digests.mac)
+        .bind(data)
+        .bind(parent_pid)
+        .bind(true)
+        .fetch_one(db.ex())
+        .await?)
     }
 
     /// Find an active plan by its public id.
     ///
     /// # Errors
     ///
-    /// When not found or the query fails.
-    pub async fn find_by_pid(db: &DatabaseConnection, pid: &str) -> ModelResult<Self> {
+    /// [`Error::NotFound`] when there is none (an id that is not a UUID among them), or when the query fails.
+    pub async fn find_by_pid(ctx: &AppContext, pid: &str) -> Result<Self> {
         // An id that is not a UUID names nothing: 404, not a 500.
-        let uuid = Uuid::parse_str(pid).map_err(|_| ModelError::EntityNotFound)?;
-        let row = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(uuid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .one(db)
-            .await?;
-        row.ok_or_else(|| ModelError::EntityNotFound)
+        let uuid = Uuid::parse_str(pid).map_err(|_| Error::NotFound)?;
+        let row: Option<Self> =
+            sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+                .bind(uuid)
+                .fetch_optional(crate::db::pool(ctx))
+                .await?;
+        row.ok_or(Error::NotFound)
     }
 
     /// Fetch the active rows for a list of public ids, **preserving the
@@ -171,16 +204,16 @@ impl Model {
     /// # Errors
     ///
     /// When the query fails.
-    pub async fn find_by_pids(db: &DatabaseConnection, pids: &[Uuid]) -> ModelResult<Vec<Self>> {
+    pub async fn find_by_pids(ctx: &AppContext, pids: &[Uuid]) -> Result<Vec<Self>> {
         if pids.is_empty() {
             return Ok(Vec::new());
         }
-        let rows = plans::Entity::find()
-            .filter(plans::Column::Pid.is_in(pids.iter().copied()))
-            .filter(plans::Column::DeletedAt.is_null())
-            .all(db)
-            .await?;
-        // Re-order to match `pids` (the SQL `IN` result order is
+        let rows: Vec<Self> =
+            sqlx::query_as("SELECT * FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL")
+                .bind(pids)
+                .fetch_all(crate::db::pool(ctx))
+                .await?;
+        // Re-order to match `pids` (the SQL `ANY` result order is
         // unspecified). Linear in `pids` × `rows`, both bounded by the
         // caller's result limit.
         let mut ordered = Vec::with_capacity(rows.len());
@@ -197,8 +230,8 @@ impl Model {
     /// # Errors
     ///
     /// When the query fails.
-    pub async fn list(db: &DatabaseConnection, limit: u64) -> ModelResult<Vec<Self>> {
-        Self::list_paged(db, None, limit, 0).await
+    pub async fn list(ctx: &AppContext, limit: u64) -> Result<Vec<Self>> {
+        Self::list_paged(ctx, None, limit, 0).await
     }
 
     /// One page of active plans (most-recent first), optionally scoped to
@@ -208,23 +241,23 @@ impl Model {
     ///
     /// When `parent` is not a UUID, or the query fails.
     pub async fn list_paged(
-        db: &DatabaseConnection,
+        ctx: &AppContext,
         parent: Option<&str>,
         limit: u64,
         offset: u64,
-    ) -> ModelResult<Vec<Self>> {
-        let mut query = plans::Entity::find().filter(plans::Column::DeletedAt.is_null());
+    ) -> Result<Vec<Self>> {
+        let parent = parent
+            .map(|p| Uuid::parse_str(p).map_err(|e| Error::Model(ModelError::Any(e.into()))))
+            .transpose()?;
+        let mut q = sqlx::QueryBuilder::new("SELECT * FROM plans WHERE deleted_at IS NULL");
         if let Some(parent) = parent {
-            let parent_uuid = Uuid::parse_str(parent).map_err(|e| ModelError::Any(e.into()))?;
-            query = query.filter(plans::Column::ParentPid.eq(parent_uuid));
+            q.push(" AND parent_pid = ").push_bind(parent);
         }
-        let rows = query
-            .order_by_desc(plans::Column::Id)
-            .offset(offset)
-            .limit(limit)
-            .all(db)
-            .await?;
-        Ok(rows)
+        q.push(" ORDER BY id DESC LIMIT ")
+            .push_bind(i64::try_from(limit).unwrap_or(i64::MAX))
+            .push(" OFFSET ")
+            .push_bind(i64::try_from(offset).unwrap_or(i64::MAX));
+        Ok(q.build_query_as().fetch_all(crate::db::pool(ctx)).await?)
     }
 
     /// List active child plans whose denormalized `parent_pid` equals
@@ -233,20 +266,16 @@ impl Model {
     /// # Errors
     ///
     /// When `parent` is not a UUID, or the query fails.
-    pub async fn list_children(
-        db: &DatabaseConnection,
-        parent: &str,
-        limit: u64,
-    ) -> ModelResult<Vec<Self>> {
-        let parent_uuid = Uuid::parse_str(parent).map_err(|e| ModelError::Any(e.into()))?;
-        let rows = plans::Entity::find()
-            .filter(plans::Column::ParentPid.eq(parent_uuid))
-            .filter(plans::Column::DeletedAt.is_null())
-            .order_by_desc(plans::Column::Id)
-            .limit(limit)
-            .all(db)
-            .await?;
-        Ok(rows)
+    pub async fn list_children(ctx: &AppContext, parent: &str, limit: u64) -> Result<Vec<Self>> {
+        let parent_uuid =
+            Uuid::parse_str(parent).map_err(|e| Error::Model(ModelError::Any(e.into())))?;
+        Ok(sqlx::query_as(
+            "SELECT * FROM plans WHERE parent_pid = $1 AND deleted_at IS NULL ORDER BY id DESC LIMIT $2",
+        )
+        .bind(parent_uuid)
+        .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+        .fetch_all(crate::db::pool(ctx))
+        .await?)
     }
 
     /// Walk `parent_pid` from `start` toward the root, returning the chain
@@ -256,7 +285,7 @@ impl Model {
     /// # Errors
     ///
     /// When a query fails.
-    pub async fn ancestor_pids(db: &DatabaseConnection, start: Uuid) -> ModelResult<Vec<Uuid>> {
+    pub async fn ancestor_pids(ctx: &AppContext, start: Uuid) -> Result<Vec<Uuid>> {
         /// Hard cap on how far the containment chain is walked.
         const MAX_DEPTH: usize = 64;
         let mut chain = Vec::new();
@@ -265,12 +294,14 @@ impl Model {
             if chain.len() >= MAX_DEPTH {
                 break;
             }
-            let row = plans::Entity::find()
-                .filter(plans::Column::Pid.eq(pid))
-                .filter(plans::Column::DeletedAt.is_null())
-                .one(db)
-                .await?;
-            match row.and_then(|r| r.parent_pid) {
+            // `None` when there is no live row; `Some(None)` when it is a root.
+            let row: Option<Option<Uuid>> = sqlx::query_scalar(
+                "SELECT parent_pid FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+            )
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?;
+            match row.flatten() {
                 Some(parent) => {
                     chain.push(parent);
                     cursor = Some(parent);
@@ -289,8 +320,8 @@ impl Model {
     /// # Errors
     ///
     /// When the query fails.
-    pub async fn search(db: &DatabaseConnection, q: &str, limit: u64) -> ModelResult<Vec<Self>> {
-        Self::search_paged(db, q, limit, 0).await
+    pub async fn search(ctx: &AppContext, q: &str, limit: u64) -> Result<Vec<Self>> {
+        Self::search_paged(ctx, q, limit, 0).await
     }
 
     /// One page of name-search hits.
@@ -299,21 +330,21 @@ impl Model {
     ///
     /// When the query fails.
     pub async fn search_paged(
-        db: &DatabaseConnection,
+        ctx: &AppContext,
         q: &str,
         limit: u64,
         offset: u64,
-    ) -> ModelResult<Vec<Self>> {
+    ) -> Result<Vec<Self>> {
         let pattern = format!("%{}%", escape_like(q));
-        let rows = plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .filter(Expr::col(plans::Column::Name).ilike(pattern))
-            .order_by_desc(plans::Column::Id)
-            .offset(offset)
-            .limit(limit)
-            .all(db)
-            .await?;
-        Ok(rows)
+        Ok(sqlx::query_as(
+            "SELECT * FROM plans WHERE deleted_at IS NULL AND name ILIKE $1
+             ORDER BY id DESC LIMIT $2 OFFSET $3",
+        )
+        .bind(pattern)
+        .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+        .bind(i64::try_from(offset).unwrap_or(i64::MAX))
+        .fetch_all(crate::db::pool(ctx))
+        .await?)
     }
 
     /// How many active plans match `q`, ignoring any window.
@@ -321,14 +352,15 @@ impl Model {
     /// # Errors
     ///
     /// When the query fails.
-    pub async fn search_count(db: &DatabaseConnection, q: &str) -> ModelResult<u64> {
+    pub async fn search_count(ctx: &AppContext, q: &str) -> Result<u64> {
         let pattern = format!("%{}%", escape_like(q));
-        let total = plans::Entity::find()
-            .filter(plans::Column::DeletedAt.is_null())
-            .filter(Expr::col(plans::Column::Name).ilike(pattern))
-            .count(db)
-            .await?;
-        Ok(total)
+        let total: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM plans WHERE deleted_at IS NULL AND name ILIKE $1",
+        )
+        .bind(pattern)
+        .fetch_one(crate::db::pool(ctx))
+        .await?;
+        Ok(u64::try_from(total).unwrap_or(0))
     }
 }
 
@@ -337,86 +369,6 @@ fn escape_like(q: &str) -> String {
     q.replace('\\', "\\\\")
         .replace('%', "\\%")
         .replace('_', "\\_")
-}
-
-impl ActiveModel {
-    /// Replace the payload of an existing plan (and the denormalized
-    /// `name`, `kind`, and `parent_pid`).
-    ///
-    /// Generic over [`ConnectionTrait`] so the update can run on a
-    /// transaction alongside the outbox insert (see [`Model::create`]).
-    ///
-    /// # Errors
-    ///
-    /// When serialization or the update fails.
-    pub async fn update_data<C: ConnectionTrait>(
-        mut self,
-        db: &C,
-        pl: &MatchPlan,
-    ) -> ModelResult<Model> {
-        let data = serde_json::to_value(pl).map_err(|e| ModelError::Any(e.into()))?;
-        let kind = kind_of(pl);
-        let parent_pid = parent_pid_of(pl);
-        // Re-digest over the *new* content: leaving the old digests would
-        // report every legitimate edit as tampering.
-        let d = crate::compliance::record_integrity::digests(
-            &crate::compliance::record_integrity::RecordInput {
-                pid: self.pid.as_ref().to_owned(),
-                name: &pl.name,
-                kind: kind.as_deref(),
-                parent_pid,
-                stage: self.stage.as_ref().as_deref(),
-                data: &data,
-                active: *self.active.as_ref(),
-                deleted_at_micros: self
-                    .deleted_at
-                    .as_ref()
-                    .as_ref()
-                    .map(chrono::DateTime::timestamp_micros),
-            },
-        );
-        self.name = ActiveValue::set(pl.name.clone());
-        self.kind = ActiveValue::set(kind);
-        self.data = ActiveValue::set(data);
-        self.parent_pid = ActiveValue::set(parent_pid);
-        self.content_hash = ActiveValue::set(Some(d.sha256));
-        self.content_hash_sha3 = ActiveValue::set(Some(d.sha3));
-        self.content_mac = ActiveValue::set(d.mac);
-        self.update(db).await.map_err(ModelError::from)
-    }
-
-    /// Soft-delete: mark inactive and stamp `deleted_at`.
-    ///
-    /// Generic over [`ConnectionTrait`] so the soft-delete can run on a
-    /// transaction alongside the outbox insert (see [`Model::create`]).
-    ///
-    /// # Errors
-    ///
-    /// When the update fails.
-    pub async fn soft_delete<C: ConnectionTrait>(mut self, db: &C) -> ModelResult<Model> {
-        self.active = ActiveValue::set(false);
-        let stamp: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
-        self.deleted_at = ActiveValue::set(Some(stamp));
-        // `active` and `deleted_at` are both in the pre-image, so a soft
-        // delete changes the digest; not re-digesting would make every
-        // soft-deleted row look tampered with.
-        let d = crate::compliance::record_integrity::digests(
-            &crate::compliance::record_integrity::RecordInput {
-                pid: self.pid.as_ref().to_owned(),
-                name: self.name.as_ref(),
-                kind: self.kind.as_ref().as_deref(),
-                parent_pid: *self.parent_pid.as_ref(),
-                stage: self.stage.as_ref().as_deref(),
-                data: self.data.as_ref(),
-                active: false,
-                deleted_at_micros: Some(stamp.timestamp_micros()),
-            },
-        );
-        self.content_hash = ActiveValue::set(Some(d.sha256));
-        self.content_hash_sha3 = ActiveValue::set(Some(d.sha3));
-        self.content_mac = ActiveValue::set(d.mac);
-        self.update(db).await.map_err(ModelError::from)
-    }
 }
 
 #[cfg(test)]

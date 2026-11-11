@@ -1,11 +1,10 @@
 //! Typed links on a plan, or on one of its tasks (LT-8). Pure rules in [`crate::plan_links`]. The
 //! service stores a link and returns it; it never fetches or renders one.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -17,17 +16,23 @@ use crate::plan_links as rules;
 
 /// The live links of a plan (`task` is `None`) or of one of its tasks.
 async fn live(ctx: &AppContext, plan: Uuid, task: Option<Uuid>) -> Result<Vec<plan_links::Model>> {
-    plan_links::Entity::find()
-        .filter(plan_links::Column::PlanPid.eq(plan))
-        .filter(match task {
-            Some(t) => plan_links::Column::TaskPid.eq(t),
-            None => plan_links::Column::TaskPid.is_null(),
-        })
-        .filter(plan_links::Column::DeletedAt.is_null())
-        .order_by_asc(plan_links::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    let mut q = sqlx::QueryBuilder::new("SELECT * FROM plan_links WHERE plan_pid = ");
+    q.push_bind(plan);
+    push_task(&mut q, task);
+    q.push(" AND deleted_at IS NULL ORDER BY id");
+    Ok(q.build_query_as().fetch_all(crate::db::pool(ctx)).await?)
+}
+
+/// The task condition: one task's links, or (`task` is `None`) the plan's own, whose `task_pid` is `NULL`.
+fn push_task(q: &mut sqlx::QueryBuilder<sqlx::Postgres>, task: Option<Uuid>) {
+    match task {
+        Some(t) => {
+            q.push(" AND task_pid = ").push_bind(t);
+        }
+        None => {
+            q.push(" AND task_pid IS NULL");
+        }
+    }
 }
 
 /// `POST /api/plans/{pid}/links` body.
@@ -104,27 +109,28 @@ async fn add(
             ErrorDetail::new("conflict", "this URL is already linked from the plan"),
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = plan_links::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan),
-        task_pid: ActiveValue::set(task),
-        kind: ActiveValue::set(b.kind.clone()),
-        url: ActiveValue::set(b.url.clone()),
-        label: ActiveValue::set(b.label.trim().to_string()),
-        system: ActiveValue::set(b.system.clone()),
-        external_id: ActiveValue::set(b.external_id.clone()),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "plan_link_added", caller.actor(), None)
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: plan_links::Model = sqlx::query_as(
+        "INSERT INTO plan_links
+             (pid, plan_pid, task_pid, kind, url, label, system, external_id, created_by, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan)
+    .bind(task)
+    .bind(&b.kind)
+    .bind(&b.url)
+    .bind(b.label.trim())
+    .bind(&b.system)
+    .bind(&b.external_id)
+    .bind(caller.actor())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "plan_link_added", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -203,18 +209,14 @@ async fn task_link_counts(
     State(ctx): State<AppContext>,
     Path(pid): Path<String>,
 ) -> Result<Response> {
-    use sea_orm::QuerySelect;
     let plan = find_item(&ctx, &pid).await?;
-    let tasks: Vec<Option<Uuid>> = plan_links::Entity::find()
-        .select_only()
-        .column(plan_links::Column::TaskPid)
-        .filter(plan_links::Column::PlanPid.eq(plan.pid))
-        .filter(plan_links::Column::TaskPid.is_not_null())
-        .filter(plan_links::Column::DeletedAt.is_null())
-        .into_tuple()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let tasks: Vec<Option<Uuid>> = sqlx::query_scalar(
+        "SELECT task_pid FROM plan_links
+         WHERE plan_pid = $1 AND task_pid IS NOT NULL AND deleted_at IS NULL",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut counts: std::collections::BTreeMap<String, u32> = std::collections::BTreeMap::new();
     for t in tasks.into_iter().flatten() {
         *counts.entry(t.to_string()).or_insert(0) += 1;
@@ -243,26 +245,28 @@ async fn remove(
     lpid: &str,
 ) -> Result<Response> {
     let lpid = super::parse_pid(lpid)?;
-    let row = plan_links::Entity::find()
-        .filter(plan_links::Column::Pid.eq(lpid))
-        .filter(plan_links::Column::PlanPid.eq(plan))
-        .filter(match task {
-            Some(t) => plan_links::Column::TaskPid.eq(t),
-            None => plan_links::Column::TaskPid.is_null(),
-        })
-        .filter(plan_links::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let mut q = sqlx::QueryBuilder::new("SELECT * FROM plan_links WHERE pid = ");
+    q.push_bind(lpid).push(" AND plan_pid = ").push_bind(plan);
+    push_task(&mut q, task);
+    q.push(" AND deleted_at IS NULL LIMIT 1");
+    let row: plan_links::Model = q
+        .build_query_as()
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)?;
-    let mut a: plan_links::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, lpid, "plan_link_removed", caller.actor(), None)
+    let mut tx = crate::db::begin(ctx).await?;
+    // An update that finds no row is an error, as it was.
+    sqlx::query("UPDATE plan_links SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+            chrono::Utc::now(),
+        ))
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(tx.conn(), lpid, "plan_link_removed", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::empty_json()
 }
 

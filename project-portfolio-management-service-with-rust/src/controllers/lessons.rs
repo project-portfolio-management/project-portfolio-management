@@ -207,7 +207,7 @@ async fn for_proposal(
     };
     let mut hits = Vec::new();
     for (plan_pid, mut rows) in by_plan {
-        let Ok(plan) = PlanModel::find_by_pid(&ctx.db, &plan_pid.to_string()).await else {
+        let Ok(plan) = PlanModel::find_by_pid(&ctx, &plan_pid.to_string()).await else {
             continue;
         };
         let result = engine.match_plans(&query, &plan.to_plan()?);

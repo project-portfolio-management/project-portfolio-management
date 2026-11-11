@@ -57,10 +57,7 @@ async fn an_audit_row_on_sqlx_verifies_and_leaves_with_its_transaction() {
         .unwrap();
         let report = verify(std::slice::from_ref(&row));
         assert_eq!((report.rows, report.intact), (1, 1), "{report:?}");
-        assert_eq!(
-            AuditModel::for_entity(&ctx.db, kept).await.unwrap(),
-            vec![row]
-        );
+        assert_eq!(AuditModel::for_entity(&ctx, kept).await.unwrap(), vec![row]);
 
         let mut tx = db::begin(&ctx).await.unwrap();
         AuditModel::record_on(tx.conn(), dropped, "tested", None, None)
@@ -68,7 +65,7 @@ async fn an_audit_row_on_sqlx_verifies_and_leaves_with_its_transaction() {
             .unwrap();
         drop(tx);
         assert!(
-            AuditModel::for_entity(&ctx.db, dropped)
+            AuditModel::for_entity(&ctx, dropped)
                 .await
                 .unwrap()
                 .is_empty()

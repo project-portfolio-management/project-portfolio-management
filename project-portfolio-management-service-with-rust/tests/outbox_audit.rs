@@ -36,7 +36,7 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
         let wi = Plan::new("Outbox Audit Portfolio");
 
         // The real handler path: entity + event + audit, one transaction.
-        let model = streaming::create_and_emit(&ctx.db, &wi, Some(actor))
+        let model = streaming::create_and_emit(&ctx, &wi, Some(actor))
             .await
             .expect("create_and_emit under outbox transport");
 

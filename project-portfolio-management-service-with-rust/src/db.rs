@@ -75,6 +75,17 @@ impl Tx {
         Counted(&mut self.0)
     }
 
+    /// Writes `event` to `axa-outbox` on this transaction, so it commits or rolls back with the change it describes.
+    /// `axa-outbox` runs the statement itself, on the transaction; it is counted here as one.
+    ///
+    /// # Errors
+    ///
+    /// As [`axa::outbox::write`]: a database error (a repeated `event_id` among them), or a payload refused.
+    pub async fn write_outbox(&mut self, event: &axa::outbox::Event) -> Result<(), Error> {
+        crate::query_count::add_one();
+        axa::outbox::write(&mut self.0, event).await
+    }
+
     /// Commits.
     ///
     /// # Errors

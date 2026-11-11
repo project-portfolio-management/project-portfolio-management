@@ -12,7 +12,6 @@
 
 use crate::prelude::*;
 use axa::outbox::Event;
-use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseTransaction, Statement};
 use uuid::Uuid;
 
 use crate::streaming::{Envelope, EventKind, EventView};
@@ -50,8 +49,8 @@ pub fn event(env: &Envelope) -> ModelResult<Event> {
 /// # Errors
 ///
 /// As [`event`], or when the insert fails (a repeated `event_id` among them).
-pub async fn write(txn: &DatabaseTransaction, env: &Envelope) -> ModelResult<()> {
-    axa::outbox::write_seaorm(txn, &event(env)?).await?;
+pub async fn write(tx: &mut crate::db::Tx, env: &Envelope) -> Result<()> {
+    tx.write_outbox(&event(env)?).await?;
     Ok(())
 }
 
@@ -61,18 +60,16 @@ pub async fn write(txn: &DatabaseTransaction, env: &Envelope) -> ModelResult<()>
 /// # Errors
 ///
 /// When the query fails.
-pub async fn recent<C: ConnectionTrait>(db: &C, limit: u64) -> ModelResult<Vec<EventView>> {
-    let rows = db
-        .query_all_raw(Statement::from_sql_and_values(
-            DatabaseBackend::Postgres,
-            "SELECT p.payload FROM axa_outbox_events e JOIN axa_outbox_payloads p ON p.event_id = e.event_id \
-             WHERE p.payload IS NOT NULL ORDER BY e.id DESC LIMIT $1",
-            [i64::try_from(limit).unwrap_or(i64::MAX).into()],
-        ))
-        .await?;
-    Ok(rows
-        .iter()
-        .filter_map(|row| row.try_get::<serde_json::Value>("", "payload").ok())
+pub async fn recent(ctx: &AppContext, limit: u64) -> Result<Vec<EventView>> {
+    let payloads: Vec<serde_json::Value> = sqlx::query_scalar(
+        "SELECT p.payload FROM axa_outbox_events e JOIN axa_outbox_payloads p ON p.event_id = e.event_id \
+         WHERE p.payload IS NOT NULL ORDER BY e.id DESC LIMIT $1",
+    )
+    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    Ok(payloads
+        .into_iter()
         .filter_map(|payload| serde_json::from_value::<Envelope>(payload).ok())
         .map(|env| EventView::from(&env))
         .collect())

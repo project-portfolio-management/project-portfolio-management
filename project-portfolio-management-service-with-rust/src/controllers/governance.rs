@@ -520,7 +520,7 @@ async fn promote_proposal(
     if let Some(summary) = &row.summary {
         plan.keywords = vec![summary.clone()];
     }
-    let model = streaming::create_and_emit(&ctx.db, &plan, caller.actor()).await?;
+    let model = streaming::create_and_emit(&ctx, &plan, caller.actor()).await?;
     let proposal_pid = row.pid;
     let mut tx = crate::db::begin(&ctx).await?;
     let updated: proposals::Model = sqlx::query_as(
@@ -695,7 +695,7 @@ async fn proposal_duplicates(
     };
     let mut hits: Vec<DemandHit> = Vec::new();
     // Live plans (one recursive collection).
-    let items = PlanModel::list(&ctx.db, super::plans::CHECK_DUPLICATES_SCAN_CAP).await?;
+    let items = PlanModel::list(&ctx, super::plans::CHECK_DUPLICATES_SCAN_CAP).await?;
     let items = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .keep(items);

@@ -9,11 +9,10 @@
 //! owning plan's record-level read check applies to every read and write.
 
 use super::conflict;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
-use sea_orm::{ConnectionTrait, QueryOrder, QuerySelect, TransactionTrait};
 use serde::Deserialize;
 use serde_json::Value;
 use uuid::Uuid;
@@ -21,7 +20,7 @@ use uuid::Uuid;
 use super::discussion::resolve_subject;
 use crate::auth::MaybeAuthUser;
 use crate::custom_fields::{self as rules, Def};
-use crate::models::_entities::{custom_field_defs, custom_field_values, plans};
+use crate::models::_entities::{custom_field_defs, custom_field_values};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Decodes a stored JSON array of strings; anything malformed reads as an empty list rather than failing the request.
@@ -40,13 +39,12 @@ fn def_of(row: &custom_field_defs::Model) -> Def {
 
 /// Live (not soft-deleted) definitions for a subject type, oldest first so the declaration order is stable for clients.
 async fn live_defs(ctx: &AppContext, applies_to: &str) -> Result<Vec<custom_field_defs::Model>> {
-    custom_field_defs::Entity::find()
-        .filter(custom_field_defs::Column::AppliesTo.eq(applies_to))
-        .filter(custom_field_defs::Column::DeletedAt.is_null())
-        .order_by_asc(custom_field_defs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM custom_field_defs WHERE applies_to = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(applies_to)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// `POST /api/custom-fields` body.
@@ -121,26 +119,27 @@ pub(crate) async fn declare(
             "a field with this key already exists for this subject type",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = custom_field_defs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        key: ActiveValue::set(key.to_string()),
-        label: ActiveValue::set(label.trim().to_string()),
-        field_type: ActiveValue::set(field_type.to_string()),
-        applies_to: ActiveValue::set(applies_to.to_string()),
-        kinds: ActiveValue::set(serde_json::json!(kinds)),
-        required: ActiveValue::set(required),
-        options: ActiveValue::set(serde_json::json!(options)),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "custom_field_declared", actor, None)
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: custom_field_defs::Model = sqlx::query_as(
+        "INSERT INTO custom_field_defs
+             (pid, key, label, field_type, applies_to, kinds, required, options, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(key)
+    .bind(label.trim())
+    .bind(field_type)
+    .bind(applies_to)
+    .bind(serde_json::json!(kinds))
+    .bind(required)
+    .bind(serde_json::json!(options))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row.pid, "custom_field_declared", actor, None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     Ok(row)
 }
 
@@ -166,17 +165,16 @@ async fn list_defs(
     State(ctx): State<AppContext>,
     Query(params): Query<ListDefsParams>,
 ) -> Result<Response> {
-    let mut q =
-        custom_field_defs::Entity::find().filter(custom_field_defs::Column::DeletedAt.is_null());
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new(
+        "SELECT * FROM custom_field_defs WHERE deleted_at IS NULL",
+    );
     if let Some(a) = params.applies_to {
-        q = q.filter(custom_field_defs::Column::AppliesTo.eq(a));
+        q.push(" AND applies_to = ").push_bind(a);
     }
-    format::json(
-        q.order_by_asc(custom_field_defs::Column::Id)
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?,
-    )
+    q.push(" ORDER BY id");
+    let rows: Vec<custom_field_defs::Model> =
+        q.build_query_as().fetch_all(crate::db::pool(&ctx)).await?;
+    format::json(rows)
 }
 
 /// `DELETE /api/custom-fields/{pid}` — withdraw a definition. Stored values
@@ -188,21 +186,32 @@ async fn delete_def(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let pid = super::parse_pid(&pid)?;
-    let row = custom_field_defs::Entity::find()
-        .filter(custom_field_defs::Column::Pid.eq(pid))
-        .filter(custom_field_defs::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let mut active: custom_field_defs::ActiveModel = row.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "custom_field_withdrawn", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let id: i64 = sqlx::query_scalar(
+        "SELECT id FROM custom_field_defs WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE custom_field_defs SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(chrono::Utc::now())
+    .bind(id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        pid,
+        "custom_field_withdrawn",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -259,56 +268,9 @@ pub(crate) async fn prepare(
     }
 }
 
-/// Persist prepared values on any connection (so task create can do it in
-/// its own transaction).
-pub(crate) async fn store<C: ConnectionTrait>(
-    db: &C,
-    subject_kind: &str,
-    subject_pid: Uuid,
-    prepared: &[(String, Option<Value>)],
-) -> Result<()> {
-    for (key, value) in prepared {
-        let existing = custom_field_values::Entity::find()
-            .filter(custom_field_values::Column::SubjectKind.eq(subject_kind))
-            .filter(custom_field_values::Column::SubjectPid.eq(subject_pid))
-            .filter(custom_field_values::Column::FieldKey.eq(key.as_str()))
-            .one(db)
-            .await
-            .map_err(db_err)?;
-        match (existing, value) {
-            (Some(row), Some(v)) => {
-                let mut a: custom_field_values::ActiveModel = row.into();
-                a.value = ActiveValue::set(v.clone());
-                a.update(db).await.map_err(db_err)?;
-            }
-            (Some(row), None) => {
-                custom_field_values::Entity::delete_by_id(row.id)
-                    .exec(db)
-                    .await
-                    .map_err(db_err)?;
-            }
-            (None, Some(v)) => {
-                custom_field_values::ActiveModel {
-                    pid: ActiveValue::set(Uuid::new_v4()),
-                    subject_kind: ActiveValue::set(subject_kind.to_string()),
-                    subject_pid: ActiveValue::set(subject_pid),
-                    field_key: ActiveValue::set(key.clone()),
-                    value: ActiveValue::set(v.clone()),
-                    ..Default::default()
-                }
-                .insert(db)
-                .await
-                .map_err(db_err)?;
-            }
-            (None, None) => {}
-        }
-    }
-    Ok(())
-}
-
-/// [`store`] on `sqlx`, for a handler that holds a [`crate::db::Tx`] (task create and copy write the values in the
-/// task's own transaction). The same statements in the same order: per value, find the stored one, then update,
-/// delete or insert it.
+/// Persist prepared values in a transaction (task create and copy write them in the task's own; `PUT
+/// /api/custom-fields/values` in its own) or on the pool (the MSPDI batch import, each statement on its own). Per
+/// value: find the stored one, then update, delete or insert it.
 pub(crate) async fn store_on(
     db: &mut impl crate::db::Session,
     subject_kind: &str,
@@ -373,12 +335,12 @@ fn check_kind(applies_to: &str) -> Result<()> {
 
 /// The kind label of a plan, or `None` when the plan does not exist or has no kind; used to decide which kind-scoped fields apply.
 async fn plan_kind(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<String>> {
-    Ok(plans::Entity::find()
-        .filter(plans::Column::Pid.eq(plan_pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .and_then(|p| p.kind))
+    let kind: Option<Option<String>> =
+        sqlx::query_scalar("SELECT kind FROM plans WHERE pid = $1 LIMIT 1")
+            .bind(plan_pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?;
+    Ok(kind.flatten())
 }
 
 /// `PUT /api/custom-fields/values` body.
@@ -407,10 +369,10 @@ async fn put_values(
         _ => None,
     };
     let prepared = prepare(&ctx, &p.applies_to, kind.as_deref(), &p.values, false).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    store(&txn, &p.applies_to, subject.pid, &prepared).await?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    store_on(&mut tx, &p.applies_to, subject.pid, &prepared).await?;
+    AuditModel::record_on(
+        tx.conn(),
         subject.pid,
         "custom_fields_set",
         caller.actor(),
@@ -418,7 +380,7 @@ async fn put_values(
     )
     .await
     .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     read_values(&ctx, &caller, &p.applies_to, &p.subject_pid).await
 }
 
@@ -440,17 +402,20 @@ async fn read_values(
 ) -> Result<Response> {
     check_kind(applies_to)?;
     let subject = resolve_subject(ctx, caller, applies_to, subject_pid).await?;
-    let stored = custom_field_values::Entity::find()
-        .filter(custom_field_values::Column::SubjectKind.eq(applies_to))
-        .filter(custom_field_values::Column::SubjectPid.eq(subject.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let all_defs = custom_field_defs::Entity::find()
-        .filter(custom_field_defs::Column::AppliesTo.eq(applies_to))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // No `ORDER BY` on either, as before: a value's definition is the first row with its key in the order the
+    // database returns them, which matters only once a withdrawn key has been declared again.
+    let stored: Vec<custom_field_values::Model> = sqlx::query_as(
+        "SELECT * FROM custom_field_values WHERE subject_kind = $1 AND subject_pid = $2",
+    )
+    .bind(applies_to)
+    .bind(subject.pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let all_defs: Vec<custom_field_defs::Model> =
+        sqlx::query_as("SELECT * FROM custom_field_defs WHERE applies_to = $1")
+            .bind(applies_to)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let kind = if applies_to == "plan" {
         plan_kind(ctx, subject.pid).await?
     } else {
@@ -521,22 +486,25 @@ async fn search(
     Query(p): Query<SearchParams>,
 ) -> Result<Response> {
     check_kind(&p.applies_to)?;
-    let def = custom_field_defs::Entity::find()
-        .filter(custom_field_defs::Column::AppliesTo.eq(p.applies_to.as_str()))
-        .filter(custom_field_defs::Column::Key.eq(p.key.as_str()))
-        .filter(custom_field_defs::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or_else(|| unprocessable("unknown custom field"))?;
+    let def: custom_field_defs::Model = sqlx::query_as(
+        "SELECT * FROM custom_field_defs
+         WHERE applies_to = $1 AND key = $2 AND deleted_at IS NULL
+         LIMIT 1",
+    )
+    .bind(p.applies_to.as_str())
+    .bind(p.key.as_str())
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or_else(|| unprocessable("unknown custom field"))?;
     let d = def_of(&def);
-    let rows = custom_field_values::Entity::find()
-        .filter(custom_field_values::Column::SubjectKind.eq(p.applies_to.as_str()))
-        .filter(custom_field_values::Column::FieldKey.eq(p.key.as_str()))
-        .limit(SEARCH_CAP + 1)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<custom_field_values::Model> = sqlx::query_as(
+        "SELECT * FROM custom_field_values WHERE subject_kind = $1 AND field_key = $2 LIMIT $3",
+    )
+    .bind(p.applies_to.as_str())
+    .bind(p.key.as_str())
+    .bind(i64::try_from(SEARCH_CAP + 1).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     // The query fetched one row beyond the cap precisely so truncation can be reported.
     let truncated = rows.len() as u64 > SEARCH_CAP;
     let mut pids = Vec::new();

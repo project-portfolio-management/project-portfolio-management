@@ -2132,6 +2132,55 @@ came from grep.
   **Next batch, suggested:** the issue tracker, `issues`, `issue_configuration` and `custom_fields` (about 240 lines);
   or the inbox, `collaboration`, `feeds`, `notification_prefs` and `models/capabilities` (about 215), after which
   `is_none_of` and `notes_visible` can become sqlx.
+  **Progress 2026-11-11, batch 10 (not ticked).** The issue tracker moved: `issues` (121 lines naming SeaORM, now
+  none), `issue_configuration` (68, none) and `custom_fields` (51, none): 240 lines gone, leaving 69 files and 2,078
+  lines by batch 6's measure (67 by name). `custom_fields::store`, the SeaORM writer of custom values, is gone: its
+  last caller, the MSPDI batch import, now calls `store_on` on the pool (`&mut db::pool(ctx)`), so each statement still
+  commits on its own there, and `PUT /api/custom-fields/values` calls it in its own transaction. Every other function
+  other modules call (`custom_fields::prepare`, `declare` and `is_declared`; `issue_configuration::require_usable_type`,
+  `require_offered_type`, `require_known_roles` and `usable_labels`) kept its signature, so no other caller changed.
+  Every handler here already wrote its rows and audit row in one transaction, so no write changed transaction. Inserts
+  list the columns SeaORM set (an issue raised from a risk or a task still leaves `resolved_at`, `closed_at`,
+  `occurred_at` and `detected_at` to their defaults); updates name the columns SeaORM's did (the issue save the 19 it
+  set, guarded by the status and type it read, `409` when either changed, then read back; a catalogue change the
+  label, the labels only when sent, the description, the permissions only when sent, the position and `retired_at`);
+  an update by id that finds no row is still an error. Unordered reads stay unordered (a subject's stored values and
+  definitions, the role catalogue, the search scan). A throwaway check (not committed) dumped 699 answers and every row
+  written (issues, issue types, roles, plan types, role members, custom field definitions and values, audit) for seven
+  callers (an administrator, a triager and a closer member of a governed plan, a token role `change-manager`, a token
+  role `contractor` bound by field rules, a writer with no role, the owner of a private plan, no token) against a
+  governed plan, a plan with its own field-rule workflow, a private plan with a status only it declares and a plan
+  limited to some types: the catalogues created, translated, reordered, retired, restored and refused (bad key, blank
+  or long label, bad labels, unknown permission, long description, duplicate, non-administrator, missing); workflows
+  naming a misspelt or retired role or type; plan types set, refused and cleared; the issue form's options for every
+  caller on every plan; issues raised, edited, moved through and refused at gates, field rules (required, read-only,
+  role-bound) and type changes, closed with and without a resolution, removed and refused; the list and the register
+  under every filter (status built-in, workflow-declared, private-only and unknown; severity; owner; open; age;
+  limit; plan); issues from a risk and a blocked task, repeated and refused; custom fields declared, refused, set,
+  cleared, refused (required, wrong type, wrong plan kind, unknown, private plan), read, searched, withdrawn,
+  redeclared and read again, before and after: the same once pids and times were normalised (the custom-field
+  search's pid list is sorted by random pid, so it was compared sorted).
+  **Changed, deliberately:** a database failure carries sqlx's error rather than SeaORM's (only on a failure; same
+  status). The plan and catalogue existence checks and the type and status vocabularies read only the columns they use,
+  and `status_is_known` binds the declaring workflows as one array (`= ANY($1)`) where SeaORM bound one parameter per
+  pid.
+  **Found, not changed:** `PUT /api/custom-fields/values`'s audit failure maps to a plain model error, not
+  `audit_failed`, so `audit_write_failed_total` does not count it; a subject's values read their definitions with no
+  `ORDER BY`, so once a withdrawn key has been declared again the label and `live`/`withdrawn` mark shown for its value
+  come from whichever of the two definitions the database returns first; the custom-field search scans the first
+  5,001 values in no set order, so a truncated search does not say which subjects it left out; the MSPDI import writes
+  each value's find and write as separate statements on the pool, so two imports at once can race.
+  **Still on SeaORM through other modules:** none; every function these handlers call (`plan_roles::standing`,
+  `workflow::in_force_issue`, `StatusBook::load`, `plan_access`, `discussion::resolve_subject`) moved in batches 6 to
+  9. So `workflow`'s calls to `issue_configuration::require_usable_type` and `require_known_roles`, and the
+  board's and the MSPDI import's to `custom_fields::prepare`, no longer reach SeaORM.
+  **Seen once again, cause not found:** `requests::attachments::an_upload_larger_than_the_service_wide_body_limit_is_accepted_up_to_the_cap`
+  failed in the first of two full `mod` runs at its first request (`POST /api/plans`: "error writing a body to
+  connection: Connection reset by peer" on the test server's port 8001), and passed five times alone and in the second
+  run.
+  **Next batch, suggested:** the inbox, `collaboration` (68), `feeds` (48), `notification_prefs` (32) and
+  `models/capabilities` (67), about 215 lines, after which `plan_access::is_none_of` and `HiddenScope::notes_visible`
+  can become sqlx.
 
 ## Correctness carried forward (CF-n)
 

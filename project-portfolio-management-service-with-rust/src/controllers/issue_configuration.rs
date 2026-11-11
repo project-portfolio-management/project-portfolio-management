@@ -12,14 +12,13 @@
 
 use crate::prelude::*;
 use axum::http::StatusCode;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::{conflict, db_err, forbidden, unprocessable};
+use super::{conflict, forbidden, unprocessable};
 use crate::auth::MaybeAuthUser;
 use crate::issues as rules;
-use crate::models::_entities::{issue_types, organization_roles, plan_issue_types, plans};
+use crate::models::_entities::{issue_types, organization_roles};
 use crate::models::audit_logs::Model as AuditModel;
 
 use crate::issues::LABEL_MAX;
@@ -63,37 +62,31 @@ pub(crate) fn usable_labels(labels: &Labels) -> Result<Labels> {
 
 /// `422` unless `key` is a type that is not retired: what a person may choose for an issue or a workflow.
 pub(crate) async fn require_usable_type(ctx: &AppContext, key: &str) -> Result<()> {
-    let found = issue_types::Entity::find()
-        .filter(issue_types::Column::Key.eq(key))
-        .filter(issue_types::Column::RetiredAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let found: Option<i32> = sqlx::query_scalar(
+        "SELECT id FROM issue_types WHERE key = $1 AND retired_at IS NULL LIMIT 1",
+    )
+    .bind(key)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
     if found.is_some() {
         return Ok(());
     }
-    let usable = issue_types::Entity::find()
-        .filter(issue_types::Column::RetiredAt.is_null())
-        .order_by_asc(issue_types::Column::Position)
-        .order_by_asc(issue_types::Column::Key)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let keys: Vec<&str> = usable.iter().map(|t| t.key.as_str()).collect();
+    let keys: Vec<String> = sqlx::query_scalar(
+        "SELECT key FROM issue_types WHERE retired_at IS NULL ORDER BY position, key",
+    )
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     Err(unprocessable(&format!("kind must be one of {keys:?}")))
 }
 
 /// The types a plan has limited itself to, in key order. Empty means every type.
 async fn chosen_types(ctx: &AppContext, plan: Uuid) -> Result<Vec<String>> {
-    Ok(plan_issue_types::Entity::find()
-        .filter(plan_issue_types::Column::PlanPid.eq(plan))
-        .order_by_asc(plan_issue_types::Column::TypeKey)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|t| t.type_key)
-        .collect())
+    Ok(sqlx::query_scalar(
+        "SELECT type_key FROM plan_issue_types WHERE plan_pid = $1 ORDER BY type_key",
+    )
+    .bind(plan)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// `422` unless a person may choose `key` for an issue on this plan: a usable type the plan has not left out. An issue
@@ -113,10 +106,10 @@ pub(crate) async fn require_offered_type(ctx: &AppContext, plan: Uuid, key: &str
 /// `422` if the catalogue is in use and a role is not in it. An empty catalogue checks nothing, so a deployment that
 /// has not defined its roles is unchanged, and a retired role is refused, since no new rule should depend on it.
 pub(crate) async fn require_known_roles(ctx: &AppContext, named: &[&str]) -> Result<()> {
-    let catalogue = organization_roles::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let catalogue: Vec<organization_roles::Model> =
+        sqlx::query_as("SELECT * FROM organization_roles")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     if catalogue.is_empty() {
         return Ok(());
     }
@@ -191,16 +184,13 @@ async fn list_types(
     State(ctx): State<AppContext>,
     Query(q): Query<ListParams>,
 ) -> Result<Response> {
-    let mut find = issue_types::Entity::find();
-    if !q.include_retired {
-        find = find.filter(issue_types::Column::RetiredAt.is_null());
-    }
-    let rows = find
-        .order_by_asc(issue_types::Column::Position)
-        .order_by_asc(issue_types::Column::Key)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let sql = if q.include_retired {
+        "SELECT * FROM issue_types ORDER BY position, key"
+    } else {
+        "SELECT * FROM issue_types WHERE retired_at IS NULL ORDER BY position, key"
+    };
+    let rows: Vec<issue_types::Model> =
+        sqlx::query_as(sql).fetch_all(crate::db::pool(&ctx)).await?;
     format::json(rows.iter().map(type_view).collect::<Vec<_>>())
 }
 
@@ -220,29 +210,29 @@ async fn create_type(
     }
     let label = usable_label(&b.label)?;
     let labels = usable_labels(&b.labels)?;
-    let taken = issue_types::Entity::find()
-        .filter(issue_types::Column::Key.eq(key))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let taken: Option<i32> =
+        sqlx::query_scalar("SELECT id FROM issue_types WHERE key = $1 LIMIT 1")
+            .bind(key)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?;
     if taken.is_some() {
         return Err(conflict("an issue type with this key already exists"));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = issue_types::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        key: ActiveValue::set(key.to_string()),
-        label: ActiveValue::set(label),
-        labels: ActiveValue::set(serde_json::json!(labels)),
-        position: ActiveValue::set(b.position),
-        retired_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: issue_types::Model = sqlx::query_as(
+        "INSERT INTO issue_types (pid, key, label, labels, position, retired_at)
+         VALUES ($1, $2, $3, $4, $5, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(key)
+    .bind(label)
+    .bind(serde_json::json!(labels))
+    .bind(b.position)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "issue_type_added",
         caller.actor(),
@@ -250,7 +240,7 @@ async fn create_type(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Ok((StatusCode::CREATED, format::json(type_view(&row))?).into_response())
 }
 
@@ -265,30 +255,32 @@ async fn change_type(
     require_admin(&caller)?;
     let label = usable_label(&b.label)?;
     let labels = b.labels.as_ref().map(usable_labels).transpose()?;
-    let row = issue_types::Entity::find()
-        .filter(issue_types::Column::Key.eq(key.as_str()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: issue_types::Model =
+        sqlx::query_as("SELECT * FROM issue_types WHERE key = $1 LIMIT 1")
+            .bind(key.as_str())
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     let was = type_view(&row);
     let position = b.position.unwrap_or(row.position);
-    let retired_at = match (b.retired, row.retired_at) {
-        (Some(true), None) => Some(chrono::Utc::now().into()),
-        (Some(false), _) => None,
-        (_, kept) => kept,
-    };
-    let mut a: issue_types::ActiveModel = row.into();
-    a.label = ActiveValue::set(label);
+    let retired_at = kept_retired(b.retired, row.retired_at);
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE issue_types SET label = ");
+    q.push_bind(label);
     if let Some(labels) = labels {
-        a.labels = ActiveValue::set(serde_json::json!(labels));
+        q.push(", labels = ").push_bind(serde_json::json!(labels));
     }
-    a.position = ActiveValue::set(position);
-    a.retired_at = ActiveValue::set(retired_at);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    q.push(", position = ")
+        .push_bind(position)
+        .push(", retired_at = ")
+        .push_bind(retired_at)
+        .push(" WHERE id = ")
+        .push_bind(row.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let row: issue_types::Model = q.build_query_as().fetch_one(tx.conn()).await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "issue_type_changed",
         caller.actor(),
@@ -296,8 +288,20 @@ async fn change_type(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(type_view(&row))
+}
+
+/// What `retired` leaves: `true` stamps now unless already retired, `false` clears it, absent keeps it.
+fn kept_retired(
+    retired: Option<bool>,
+    was: Option<chrono::DateTime<chrono::FixedOffset>>,
+) -> Option<chrono::DateTime<chrono::FixedOffset>> {
+    match (retired, was) {
+        (Some(true), None) => Some(chrono::Utc::now().into()),
+        (Some(false), _) => None,
+        (_, kept) => kept,
+    }
 }
 
 /// `POST /api/organization-roles` body.
@@ -389,16 +393,13 @@ async fn list_roles(
     State(ctx): State<AppContext>,
     Query(q): Query<ListParams>,
 ) -> Result<Response> {
-    let mut find = organization_roles::Entity::find();
-    if !q.include_retired {
-        find = find.filter(organization_roles::Column::RetiredAt.is_null());
-    }
-    let rows = find
-        .order_by_asc(organization_roles::Column::Position)
-        .order_by_asc(organization_roles::Column::Key)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let sql = if q.include_retired {
+        "SELECT * FROM organization_roles ORDER BY position, key"
+    } else {
+        "SELECT * FROM organization_roles WHERE retired_at IS NULL ORDER BY position, key"
+    };
+    let rows: Vec<organization_roles::Model> =
+        sqlx::query_as(sql).fetch_all(crate::db::pool(&ctx)).await?;
     format::json(rows.iter().map(role_view).collect::<Vec<_>>())
 }
 
@@ -420,31 +421,32 @@ async fn create_role(
     let labels = usable_labels(&b.labels)?;
     let description = usable_description(b.description.as_ref())?;
     let permissions = usable_permissions(&b.permissions)?;
-    let taken = organization_roles::Entity::find()
-        .filter(organization_roles::Column::Key.eq(key))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let taken: Option<i32> =
+        sqlx::query_scalar("SELECT id FROM organization_roles WHERE key = $1 LIMIT 1")
+            .bind(key)
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?;
     if taken.is_some() {
         return Err(conflict("a role with this key already exists"));
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = organization_roles::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        key: ActiveValue::set(key.to_string()),
-        label: ActiveValue::set(label),
-        labels: ActiveValue::set(serde_json::json!(labels)),
-        description: ActiveValue::set(description),
-        permissions: ActiveValue::set(serde_json::json!(permissions)),
-        position: ActiveValue::set(b.position),
-        retired_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: organization_roles::Model = sqlx::query_as(
+        "INSERT INTO organization_roles
+             (pid, key, label, labels, description, permissions, position, retired_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(key)
+    .bind(label)
+    .bind(serde_json::json!(labels))
+    .bind(description)
+    .bind(serde_json::json!(permissions))
+    .bind(b.position)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "organization_role_added",
         caller.actor(),
@@ -454,7 +456,7 @@ async fn create_role(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     Ok((StatusCode::CREATED, format::json(role_view(&row))?).into_response())
 }
 
@@ -475,34 +477,37 @@ async fn change_role(
         .as_deref()
         .map(usable_permissions)
         .transpose()?;
-    let row = organization_roles::Entity::find()
-        .filter(organization_roles::Column::Key.eq(key.as_str()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let row: organization_roles::Model =
+        sqlx::query_as("SELECT * FROM organization_roles WHERE key = $1 LIMIT 1")
+            .bind(key.as_str())
+            .fetch_optional(crate::db::pool(&ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     let was = role_view(&row);
     let position = b.position.unwrap_or(row.position);
-    let retired_at = match (b.retired, row.retired_at) {
-        (Some(true), None) => Some(chrono::Utc::now().into()),
-        (Some(false), _) => None,
-        (_, kept) => kept,
-    };
-    let mut a: organization_roles::ActiveModel = row.into();
-    a.label = ActiveValue::set(label);
+    let retired_at = kept_retired(b.retired, row.retired_at);
+    let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE organization_roles SET label = ");
+    q.push_bind(label);
     if let Some(labels) = labels {
-        a.labels = ActiveValue::set(serde_json::json!(labels));
+        q.push(", labels = ").push_bind(serde_json::json!(labels));
     }
-    a.description = ActiveValue::set(description);
+    q.push(", description = ").push_bind(description);
     if let Some(permissions) = permissions {
-        a.permissions = ActiveValue::set(serde_json::json!(permissions));
+        q.push(", permissions = ")
+            .push_bind(serde_json::json!(permissions));
     }
-    a.position = ActiveValue::set(position);
-    a.retired_at = ActiveValue::set(retired_at);
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    q.push(", position = ")
+        .push_bind(position)
+        .push(", retired_at = ")
+        .push_bind(retired_at)
+        .push(" WHERE id = ")
+        .push_bind(row.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let row: organization_roles::Model = q.build_query_as().fetch_one(tx.conn()).await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "organization_role_changed",
         caller.actor(),
@@ -510,20 +515,19 @@ async fn change_role(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(role_view(&row))
 }
 
 /// The live plan a path names; `404` otherwise.
 async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
     let plan = super::parse_pid(plan)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(plan))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let _: i64 =
+        sqlx::query_scalar("SELECT id FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(plan)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     Ok(plan)
 }
 
@@ -562,25 +566,21 @@ async fn set_plan_types(
         require_usable_type(&ctx, key).await?;
     }
     let was = chosen_types(&ctx, plan).await?;
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    plan_issue_types::Entity::delete_many()
-        .filter(plan_issue_types::Column::PlanPid.eq(plan))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query("DELETE FROM plan_issue_types WHERE plan_pid = $1")
+        .bind(plan)
+        .execute(tx.conn())
+        .await?;
     for key in &wanted {
-        plan_issue_types::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            plan_pid: ActiveValue::set(plan),
-            type_key: ActiveValue::set(key.clone()),
-            ..Default::default()
-        }
-        .insert(&txn)
-        .await
-        .map_err(db_err)?;
+        sqlx::query("INSERT INTO plan_issue_types (pid, plan_pid, type_key) VALUES ($1, $2, $3)")
+            .bind(Uuid::new_v4())
+            .bind(plan)
+            .bind(key)
+            .execute(tx.conn())
+            .await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan,
         "plan_issue_types_changed",
         caller.actor(),
@@ -588,7 +588,7 @@ async fn set_plan_types(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "plan_pid": plan, "limited": !wanted.is_empty(), "types": wanted }),
     )
@@ -605,12 +605,10 @@ async fn plan_options(
 ) -> Result<Response> {
     let plan = require_plan(&ctx, &plan).await?;
     let chosen = chosen_types(&ctx, plan).await?;
-    let types = issue_types::Entity::find()
-        .order_by_asc(issue_types::Column::Position)
-        .order_by_asc(issue_types::Column::Key)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let types: Vec<issue_types::Model> =
+        sqlx::query_as("SELECT * FROM issue_types ORDER BY position, key")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut out = Vec::with_capacity(types.len());
     for t in &types {
         let workflow = super::workflow::in_force_issue(&ctx, plan, &t.key).await?;

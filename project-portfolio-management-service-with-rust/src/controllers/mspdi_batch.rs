@@ -163,8 +163,8 @@ async fn store_values(
             .iter()
             .find(|t| t.external_ref.as_deref() == Some(ext.as_str()))
         {
-            super::custom_fields::store(
-                &ctx.db,
+            super::custom_fields::store_on(
+                &mut crate::db::pool(ctx),
                 "task",
                 t.pid,
                 &[(key.clone(), Some(value.clone()))],

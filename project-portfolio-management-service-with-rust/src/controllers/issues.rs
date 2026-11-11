@@ -5,19 +5,17 @@
 //! An issue that has been `closed` must carry a resolution (`422` otherwise; the
 //! database enforces it too). `resolved_on` is set by the service, never typed.
 
-use super::db_err;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::{DateTime, NaiveDate, Utc};
-use sea_orm::{QueryOrder, QuerySelect};
+use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::issues as rules;
-use crate::models::_entities::{issues, plans, risks, tasks, workflow_states, workflows};
+use crate::models::_entities::{issues, risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Today's date in the deployment's configured time zone, so ages and due dates agree with what users see.
@@ -47,27 +45,26 @@ fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {
 /// Parses the plan pid and confirms the plan exists and is not soft-deleted; `404` otherwise.
 async fn require_plan(ctx: &AppContext, plan: &str) -> Result<Uuid> {
     let pid = super::parse_pid(plan)?;
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(pid))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let _: i64 =
+        sqlx::query_scalar("SELECT id FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     Ok(pid)
 }
 
 /// Loads one live (not soft-deleted) issue of the given plan; `404` when the pid is unknown or belongs to another plan.
 async fn find(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<issues::Model> {
     let pid = super::parse_pid(pid)?;
-    issues::Entity::find()
-        .filter(issues::Column::Pid.eq(pid))
-        .filter(issues::Column::PlanPid.eq(plan))
-        .filter(issues::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM issues WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
 /// The most issues one plan's list returns; `truncated` says when there were more.
@@ -107,28 +104,28 @@ async fn list(
         q.severity.as_deref(),
     )
     .await?;
-    let mut find = issues::Entity::find()
-        .filter(issues::Column::PlanPid.eq(plan))
-        .filter(issues::Column::DeletedAt.is_null());
+    let mut find =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM issues WHERE plan_pid = ");
+    find.push_bind(plan).push(" AND deleted_at IS NULL");
     if let Some(s) = &q.status {
-        find = find.filter(issues::Column::Status.eq(s.as_str()));
+        find.push(" AND status = ").push_bind(s.as_str());
     }
     if let Some(s) = &q.severity {
-        find = find.filter(issues::Column::Severity.eq(s.as_str()));
+        find.push(" AND severity = ").push_bind(s.as_str());
     }
     if let Some(o) = &q.owner {
-        find = find.filter(issues::Column::OwnerRef.eq(o.as_str()));
+        find.push(" AND owner_ref = ").push_bind(o.as_str());
     }
     if q.open == Some(true) {
-        find = find.filter(issues::Column::StatusCategory.ne("done"));
+        find.push(" AND status_category <> 'done'");
     }
     // At most PLAN_LIST_MAX + 1 rows are read, so one huge plan cannot make one answer unbounded.
-    let mut rows = find
-        .order_by_asc(issues::Column::Id)
-        .limit(PLAN_LIST_MAX + 1)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    find.push(" ORDER BY id LIMIT ")
+        .push_bind(i64::try_from(PLAN_LIST_MAX + 1).unwrap_or(i64::MAX));
+    let mut rows: Vec<issues::Model> = find
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let truncated = rows.len() as u64 > PLAN_LIST_MAX;
     rows.truncate(usize::try_from(PLAN_LIST_MAX).unwrap_or(5000));
     rows.sort_by(|a, b| {
@@ -232,7 +229,7 @@ where
 }
 
 /// A stored time as the rules take it.
-fn utc(t: Option<sea_orm::prelude::DateTimeWithTimeZone>) -> Option<DateTime<Utc>> {
+fn utc(t: Option<DateTime<FixedOffset>>) -> Option<DateTime<Utc>> {
     t.map(Into::into)
 }
 
@@ -269,34 +266,28 @@ async fn status_is_known(
     {
         return Ok(true);
     }
-    let declaring: Vec<Uuid> = workflow_states::Entity::find()
-        .filter(workflow_states::Column::StateKey.eq(status))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|s| s.workflow_pid)
-        .collect();
-    let declared = workflows::Entity::find()
-        .filter(workflows::Column::AppliesTo.eq("issue"))
-        .filter(workflows::Column::Pid.is_in(declaring))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    if declared.iter().any(|w| w.plan_pid.is_none()) {
+    let declaring: Vec<Uuid> =
+        sqlx::query_scalar("SELECT workflow_pid FROM workflow_states WHERE state_key = $1")
+            .bind(status)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    // The plan of each issue workflow declaring it; `None` is a deployment-wide one.
+    let declared: Vec<Option<Uuid>> = sqlx::query_scalar(
+        "SELECT plan_pid FROM workflows WHERE applies_to = 'issue' AND pid = ANY($1)",
+    )
+    .bind(&declaring)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    if declared.iter().any(Option::is_none) {
         return Ok(true);
     }
-    let carrying: Vec<Uuid> = issues::Entity::find()
-        .select_only()
-        .column(issues::Column::PlanPid)
-        .distinct()
-        .filter(issues::Column::Status.eq(status))
-        .filter(issues::Column::DeletedAt.is_null())
-        .into_tuple()
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let mut candidates: Vec<Uuid> = declared.iter().filter_map(|w| w.plan_pid).collect();
+    let carrying: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT DISTINCT plan_pid FROM issues WHERE status = $1 AND deleted_at IS NULL",
+    )
+    .bind(status)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let mut candidates: Vec<Uuid> = declared.iter().filter_map(|w| *w).collect();
     candidates.extend(carrying);
     candidates.retain(|c| plan.is_none_or(|p| p == *c));
     candidates.sort();
@@ -529,40 +520,44 @@ async fn create(
     check_required(&def, &at.status, &standing.roles, &b)?;
     let moment = Utc::now();
     let times = raised_times(&at, moment);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = issues::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan),
-        title: ActiveValue::set(b.title.trim().to_string()),
-        description: ActiveValue::set(trimmed(b.description.as_ref())),
-        kind: ActiveValue::set(kind),
-        severity: ActiveValue::set(b.severity.clone()),
-        priority: ActiveValue::set(trimmed(b.priority.as_ref())),
-        status: ActiveValue::set(at.status.clone()),
-        status_category: ActiveValue::set(at.category.clone()),
-        owner_ref: ActiveValue::set(trimmed(b.owner_ref.as_ref())),
-        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        raised_on: ActiveValue::set(raised_on),
-        due_date: ActiveValue::set(b.due_date),
-        resolution: ActiveValue::set(trimmed(b.resolution.as_ref())),
-        resolved_on: ActiveValue::set(rules::resolved_on(&at.category, None, now)),
-        reported_at: ActiveValue::set(Some(moment.into())),
-        acknowledged_at: ActiveValue::set(times.acknowledged_at.map(Into::into)),
-        resolved_at: ActiveValue::set(times.resolved_at.map(Into::into)),
-        closed_at: ActiveValue::set(times.closed_at.map(Into::into)),
-        occurred_at: ActiveValue::set(stated.occurred_at.map(Into::into)),
-        detected_at: ActiveValue::set(stated.detected_at.map(Into::into)),
-        source_risk_pid: ActiveValue::set(b.source_risk_pid),
-        source_task_pid: ActiveValue::set(b.source_task_pid),
-        change_request_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: issues::Model = sqlx::query_as(
+        "INSERT INTO issues
+             (pid, plan_pid, title, description, kind, severity, priority, status, status_category,
+              owner_ref, raised_by, raised_on, due_date, resolution, resolved_on, reported_at,
+              acknowledged_at, resolved_at, closed_at, occurred_at, detected_at, source_risk_pid,
+              source_task_pid, change_request_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                 $20, $21, $22, $23, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan)
+    .bind(b.title.trim())
+    .bind(trimmed(b.description.as_ref()))
+    .bind(kind)
+    .bind(&b.severity)
+    .bind(trimmed(b.priority.as_ref()))
+    .bind(&at.status)
+    .bind(&at.category)
+    .bind(trimmed(b.owner_ref.as_ref()))
+    .bind(caller.actor())
+    .bind(raised_on)
+    .bind(b.due_date)
+    .bind(trimmed(b.resolution.as_ref()))
+    .bind(rules::resolved_on(&at.category, None, now))
+    .bind(moment)
+    .bind(times.acknowledged_at)
+    .bind(times.resolved_at)
+    .bind(times.closed_at)
+    .bind(stated.occurred_at)
+    .bind(stated.detected_at)
+    .bind(b.source_risk_pid)
+    .bind(b.source_task_pid)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "issue_raised",
         caller.actor(),
@@ -573,7 +568,7 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, now))
 }
 
@@ -629,15 +624,6 @@ fn placed_after_save(
     Ok(at)
 }
 
-/// Writes the times onto a row about to be saved.
-fn set_times(a: &mut issues::ActiveModel, times: rules::Times, stated: Stated) {
-    a.acknowledged_at = ActiveValue::set(times.acknowledged_at.map(Into::into));
-    a.resolved_at = ActiveValue::set(times.resolved_at.map(Into::into));
-    a.closed_at = ActiveValue::set(times.closed_at.map(Into::into));
-    a.occurred_at = ActiveValue::set(stated.occurred_at.map(Into::into));
-    a.detected_at = ActiveValue::set(stated.detected_at.map(Into::into));
-}
-
 /// The times after a save. Only a move writes them, so saving an old issue that is already done gives it no invented time.
 fn times_after_save(
     def: &crate::workflow::WorkflowDef,
@@ -670,6 +656,64 @@ fn times_after_save(
         },
         Utc::now(),
     )
+}
+
+/// Writes a save over the issue as it was read, and reads it back. `409` when its status or type changed since, so a
+/// move that landed in between is not undone past its gate. Names the columns the old update set, no more.
+#[expect(clippy::too_many_arguments)] // what the save leaves, as `update` worked it out
+async fn save_on(
+    tx: &mut crate::db::Tx,
+    row: &issues::Model,
+    b: &Input,
+    kind: &str,
+    at: &Placed,
+    raised_on: NaiveDate,
+    resolved_on: Option<NaiveDate>,
+    times: rules::Times,
+    stated: Stated,
+) -> Result<issues::Model> {
+    let saved = sqlx::query(
+        "UPDATE issues SET
+             title = $1, description = $2, kind = $3, severity = $4, priority = $5, status = $6,
+             status_category = $7, owner_ref = $8, raised_on = $9, due_date = $10, resolution = $11,
+             resolved_on = $12, acknowledged_at = $13, resolved_at = $14, closed_at = $15,
+             occurred_at = $16, detected_at = $17, source_risk_pid = $18, source_task_pid = $19
+         WHERE pid = $20 AND status = $21 AND kind = $22",
+    )
+    .bind(b.title.trim())
+    .bind(trimmed(b.description.as_ref()))
+    .bind(kind)
+    .bind(&b.severity)
+    .bind(trimmed(b.priority.as_ref()))
+    .bind(&at.status)
+    .bind(&at.category)
+    .bind(trimmed(b.owner_ref.as_ref()))
+    .bind(raised_on)
+    .bind(b.due_date)
+    .bind(trimmed(b.resolution.as_ref()))
+    .bind(resolved_on)
+    .bind(times.acknowledged_at)
+    .bind(times.resolved_at)
+    .bind(times.closed_at)
+    .bind(stated.occurred_at)
+    .bind(stated.detected_at)
+    .bind(b.source_risk_pid)
+    .bind(b.source_task_pid)
+    .bind(row.pid)
+    .bind(&row.status)
+    .bind(&row.kind)
+    .execute(tx.conn())
+    .await?;
+    if saved.rows_affected() == 0 {
+        return Err(super::conflict(
+            "this issue moved while it was being saved; reload it and try again",
+        ));
+    }
+    sqlx::query_as("SELECT * FROM issues WHERE pid = $1 LIMIT 1")
+        .bind(row.pid)
+        .fetch_optional(tx.conn())
+        .await?
+        .ok_or(Error::NotFound)
 }
 
 /// `PUT /api/plans/{pid}/issues/{issue_pid}` — replace the fields of an issue.
@@ -724,47 +768,22 @@ async fn update(
         "occurred_at": row.occurred_at, "detected_at": row.detected_at,
     });
     let times = times_after_save(&def, &row, &at, moved);
-    let (issue_pid, read_status, read_kind) = (row.pid, row.status.clone(), row.kind.clone());
     let resolved_on = rules::resolved_on(&at.category, row.resolved_on, now);
-    let mut a: issues::ActiveModel = row.into();
-    a.title = ActiveValue::set(b.title.trim().to_string());
-    a.description = ActiveValue::set(trimmed(b.description.as_ref()));
-    a.kind = ActiveValue::set(kind);
-    a.severity = ActiveValue::set(b.severity.clone());
-    a.priority = ActiveValue::set(trimmed(b.priority.as_ref()));
-    a.status = ActiveValue::set(at.status);
-    a.status_category = ActiveValue::set(at.category);
-    a.owner_ref = ActiveValue::set(trimmed(b.owner_ref.as_ref()));
-    a.raised_on = ActiveValue::set(raised_on);
-    a.due_date = ActiveValue::set(b.due_date);
-    a.resolution = ActiveValue::set(trimmed(b.resolution.as_ref()));
-    a.resolved_on = ActiveValue::set(resolved_on);
-    set_times(&mut a, times, stated);
-    a.source_risk_pid = ActiveValue::set(b.source_risk_pid);
-    a.source_task_pid = ActiveValue::set(b.source_task_pid);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    // Every check above read the issue as it was. If a move landed since, saving would undo it past its gate.
-    let saved = issues::Entity::update_many()
-        .set(a)
-        .filter(issues::Column::Pid.eq(issue_pid))
-        .filter(issues::Column::Status.eq(read_status))
-        .filter(issues::Column::Kind.eq(read_kind))
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    if saved.rows_affected == 0 {
-        return Err(super::conflict(
-            "this issue moved while it was being saved; reload it and try again",
-        ));
-    }
-    let row = issues::Entity::find()
-        .filter(issues::Column::Pid.eq(issue_pid))
-        .one(&txn)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row = save_on(
+        &mut tx,
+        &row,
+        &b,
+        &kind,
+        &at,
+        raised_on,
+        resolved_on,
+        times,
+        stated,
+    )
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "issue_changed",
         caller.actor(),
@@ -776,7 +795,7 @@ async fn update(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, now))
 }
 
@@ -802,14 +821,23 @@ async fn remove(
     let detail = serde_json::json!({
         "plan_pid": plan, "title": row.title, "kind": row.kind, "status": row.status,
     });
-    let mut a: issues::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, pid, "issue_removed", caller.actor(), Some(detail))
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>("UPDATE issues SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(Utc::now())
+        .bind(row.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        pid,
+        "issue_removed",
+        caller.actor(),
+        Some(detail),
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -863,18 +891,19 @@ async fn register(
     if q.min_age_days.is_some_and(|d| d < 0) {
         return Err(unprocessable("min_age_days cannot be negative"));
     }
-    let mut find = issues::Entity::find().filter(issues::Column::DeletedAt.is_null());
+    let mut find =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new("SELECT * FROM issues WHERE deleted_at IS NULL");
     if let Some(p) = q.plan {
-        find = find.filter(issues::Column::PlanPid.eq(p));
+        find.push(" AND plan_pid = ").push_bind(p);
     }
     if let Some(o) = &q.owner {
-        find = find.filter(issues::Column::OwnerRef.eq(o.as_str()));
+        find.push(" AND owner_ref = ").push_bind(o.as_str());
     }
-    let mut rows = find
-        .order_by_asc(issues::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    find.push(" ORDER BY id");
+    let mut rows: Vec<issues::Model> = find
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let mut plan_pids: Vec<Uuid> = rows.iter().map(|i| i.plan_pid).collect();
     plan_pids.sort();
     plan_pids.dedup();
@@ -948,22 +977,42 @@ async fn register(
     }))
 }
 
+/// What an issue can be raised from.
+#[derive(Debug, Clone, Copy)]
+enum Source {
+    /// A risk that has happened (`source_risk_pid`).
+    Risk,
+    /// A blocked task (`source_task_pid`).
+    Task,
+}
+
 /// A live, unfinished issue on this plan already raised from this source, if any. Only this plan's: an issue on another
 /// plan can name any pid, and answering for it would disclose that issue.
 async fn existing_open(
     ctx: &AppContext,
     plan: Uuid,
-    column: issues::Column,
+    from: Source,
     source: Uuid,
 ) -> Result<Option<issues::Model>> {
-    issues::Entity::find()
-        .filter(issues::Column::PlanPid.eq(plan))
-        .filter(column.eq(source))
-        .filter(issues::Column::DeletedAt.is_null())
-        .filter(issues::Column::StatusCategory.ne("done"))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)
+    let sql = match from {
+        Source::Risk => {
+            "SELECT * FROM issues
+             WHERE plan_pid = $1 AND source_risk_pid = $2 AND deleted_at IS NULL
+               AND status_category <> 'done'
+             LIMIT 1"
+        }
+        Source::Task => {
+            "SELECT * FROM issues
+             WHERE plan_pid = $1 AND source_task_pid = $2 AND deleted_at IS NULL
+               AND status_category <> 'done'
+             LIMIT 1"
+        }
+    };
+    Ok(sqlx::query_as(sql)
+        .bind(plan)
+        .bind(source)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?)
 }
 
 /// The `409` returned when an open issue already exists for the same source risk or task; names the existing issue pid.
@@ -998,36 +1047,37 @@ async fn insert_from_source(
     let start = initial(&super::workflow::in_force_issue(ctx, plan, kind).await?);
     let moment = Utc::now();
     let times = raised_times(&start, moment);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = issues::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan),
-        title: ActiveValue::set(title.chars().take(rules::TITLE_MAX).collect()),
-        description: ActiveValue::set(description),
-        kind: ActiveValue::set(kind.to_string()),
-        severity: ActiveValue::set(severity.to_string()),
-        priority: ActiveValue::set(None),
-        status: ActiveValue::set(start.status),
-        status_category: ActiveValue::set(start.category),
-        owner_ref: ActiveValue::set(owner_ref.filter(|o| rules::is_person_ref(o))),
-        raised_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        raised_on: ActiveValue::set(now),
-        due_date: ActiveValue::set(None),
-        resolution: ActiveValue::set(None),
-        resolved_on: ActiveValue::set(None),
-        reported_at: ActiveValue::set(Some(moment.into())),
-        acknowledged_at: ActiveValue::set(times.acknowledged_at.map(Into::into)),
-        source_risk_pid: ActiveValue::set(source_risk_pid),
-        source_task_pid: ActiveValue::set(source_task_pid),
-        change_request_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(ctx).await?;
+    // The columns the old insert set, no more: `resolved_at`, `closed_at`, `occurred_at` and `detected_at` take
+    // their defaults.
+    let row: issues::Model = sqlx::query_as(
+        "INSERT INTO issues
+             (pid, plan_pid, title, description, kind, severity, priority, status, status_category,
+              owner_ref, raised_by, raised_on, due_date, resolution, resolved_on, reported_at,
+              acknowledged_at, source_risk_pid, source_task_pid, change_request_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10, $11, NULL, NULL, NULL, $12, $13, $14,
+                 $15, NULL, NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan)
+    .bind(title.chars().take(rules::TITLE_MAX).collect::<String>())
+    .bind(description)
+    .bind(kind)
+    .bind(severity)
+    .bind(start.status)
+    .bind(start.category)
+    .bind(owner_ref.filter(|o| rules::is_person_ref(o)))
+    .bind(caller.actor())
+    .bind(now)
+    .bind(moment)
+    .bind(times.acknowledged_at)
+    .bind(source_risk_pid)
+    .bind(source_task_pid)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "issue_raised",
         caller.actor(),
@@ -1038,7 +1088,7 @@ async fn insert_from_source(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     Ok(row)
 }
 
@@ -1054,15 +1104,15 @@ async fn from_risk(
     let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
     super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_ADD])?;
     let risk_pid = super::parse_pid(&risk_pid)?;
-    let risk = risks::Entity::find()
-        .filter(risks::Column::Pid.eq(risk_pid))
-        .filter(risks::Column::PlanPid.eq(plan))
-        .filter(risks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    if let Some(found) = existing_open(&ctx, plan, issues::Column::SourceRiskPid, risk.pid).await? {
+    let risk: risks::Model = sqlx::query_as(
+        "SELECT * FROM risks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(risk_pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
+    if let Some(found) = existing_open(&ctx, plan, Source::Risk, risk.pid).await? {
         return Err(already(&found));
     }
     let severity = rules::severity_from_exposure(risk.probability * risk.impact);
@@ -1095,20 +1145,20 @@ async fn from_task(
     let standing = super::plan_roles::standing(&ctx, &caller, plan).await?;
     super::plan_roles::require(&standing, &[crate::plan_roles::ISSUE_ADD])?;
     let task_pid = super::parse_pid(&task_pid)?;
-    let task = tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(task_pid))
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let task: tasks::Model = sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(task_pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if task.status != "blocked" {
         return Err(unprocessable(
             "only a blocked task can be raised as an issue",
         ));
     }
-    if let Some(found) = existing_open(&ctx, plan, issues::Column::SourceTaskPid, task.pid).await? {
+    if let Some(found) = existing_open(&ctx, plan, Source::Task, task.pid).await? {
         return Err(already(&found));
     }
     let row = insert_from_source(

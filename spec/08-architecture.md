@@ -136,7 +136,7 @@ runs several statements takes `&mut impl db::Session`, which is a transaction or
 one.
 
 How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 77 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
+API on 10 November, 80 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
 `meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
 `key_persons`, `ledger`; batch 3: `financials`, `funding`, `tolerances`, `thresholds`, `effort`, `timesheets`,
 `milestones`, `milestone_signoffs`, `announcements`, `components`; batch 4: `escalations`, `deescalation`, `confidence`,
@@ -146,14 +146,16 @@ API on 10 November, 77 have moved (batch 1: `approvals`, `processes`, `controlle
 `portfolio_resources`, `ccpm_estimates`, `hammock`, `cpm`, `plan_roles`, `raci`; batch 7: `calendars`, `task_relations`,
 `assignments`, `sandbox`, `deployment_moves`, `phase`, `guests`, `watchers`, `visibility/dependencies`,
 `visibility/allocations`; batch 8: `workflow`, `engineering/board`, `engineering/agile`, `engineering/devops`,
-`engineering/estate`, `engineering/mod`, `task_bulk`, `task_tree`, `tba`; batch 9: `governance`, `discussion`) and 70 are
-left (the grep that measures it still counts 72, because `engineering/board` and `task_bulk` name enum variants `Set` of
-their own). Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
+`engineering/estate`, `engineering/mod`, `task_bulk`, `task_tree`, `tba`; batch 9: `governance`, `discussion`; batch 10:
+`issues`, `issue_configuration`, `custom_fields`) and 67 are left (the grep that measures it still counts 69, because
+`engineering/board` and `task_bulk` name enum variants `Set` of their own). Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
 `find_live_task`) and `models/governance`; they still name SeaORM only for unmoved callers (`plan_access::is_none_of`
 and `HiddenScope::notes_visible` build SeaORM conditions, `controllers::db_err` maps SeaORM's error, and
 `models/governance` keeps its `ActiveModelBehavior` impls).
 `tba::transition_row`, the SeaORM transition row, stays for the callers not yet moved; `tba::insert_transition_on` is
-its sqlx twin. The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
+its sqlx twin. `custom_fields::store`, the SeaORM writer of custom values, is gone: `custom_fields::store_on` serves
+the board, the bulk routes, `PUT /api/custom-fields/values` (each in its transaction) and the MSPDI batch import (on the
+pool). The migration crate is still `sea-orm-migration`, and `ctx.db` is still SeaORM's
 connection.
 
 ### 8.3 Service layout

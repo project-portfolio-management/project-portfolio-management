@@ -9,14 +9,13 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use project_portfolio_management_matcher::{MatchConfig, MatchingEngine, Plan};
-use sea_orm::QueryOrder;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::plans::parse_kind_label;
 use crate::auth::{self, MaybeAuthUser};
 use crate::governance as rules;
-use crate::models::_entities::{audit_logs, budget_lines, gate_reviews, plans, proposals, risks};
+use crate::models::_entities::{budget_lines, gate_reviews, plans, proposals, risks};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::governance as gov;
 use crate::models::plans::Model as PlanModel;
@@ -64,6 +63,73 @@ fn cap_opt(problems: &mut Vec<String>, field: &str, value: Option<&str>) {
     if let Some(v) = value {
         cap(problems, field, v);
     }
+}
+
+/// The current time, as the timestamp columns store it.
+fn now() -> chrono::DateTime<chrono::FixedOffset> {
+    chrono::Utc::now().into()
+}
+
+/// A live (not soft-deleted) row of one table by public id, or `404`. The table is a literal.
+macro_rules! find_live {
+    ($ctx:expr, $table:literal, $pid:expr) => {
+        sqlx::query_as(concat!(
+            "SELECT * FROM ",
+            $table,
+            " WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+        ))
+        .bind($pid)
+        .fetch_optional(crate::db::pool($ctx))
+        .await?
+        .ok_or(Error::NotFound)
+    };
+}
+
+/// A live proposal by public id, or `404`.
+async fn find_proposal(ctx: &AppContext, pid: Uuid) -> Result<proposals::Model> {
+    find_live!(ctx, "proposals", pid)
+}
+
+/// A live risk by public id, or `404`.
+async fn find_risk(ctx: &AppContext, pid: Uuid) -> Result<risks::Model> {
+    find_live!(ctx, "risks", pid)
+}
+
+/// A live budget line by public id, or `404`.
+async fn find_budget_line(ctx: &AppContext, pid: Uuid) -> Result<budget_lines::Model> {
+    find_live!(ctx, "budget_lines", pid)
+}
+
+/// A plan's gate reviews, oldest first.
+async fn gate_reviews_for(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<gate_reviews::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM gate_reviews WHERE plan_pid = $1 ORDER BY id")
+            .bind(plan_pid)
+            .fetch_all(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
+/// A plan's live risks, oldest first.
+async fn risks_for(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<risks::Model>> {
+    Ok(
+        sqlx::query_as(
+            "SELECT * FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+        )
+        .bind(plan_pid)
+        .fetch_all(crate::db::pool(ctx))
+        .await?,
+    )
+}
+
+/// A plan's live budget lines, oldest first.
+async fn budget_lines_for(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<budget_lines::Model>> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// `POST /api/proposals` body (also the draft-update shape).
@@ -151,31 +217,31 @@ async fn create_proposal(
     if !problems.is_empty() {
         return Err(unprocessable(&problems));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = proposals::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        title: ActiveValue::set(payload.title.clone()),
-        summary: ActiveValue::set(payload.summary.clone()),
-        kind_target: ActiveValue::set(payload.kind_target.clone()),
-        sponsor_ref: ActiveValue::set(payload.sponsor_ref.clone()),
-        strategic_rationale: ActiveValue::set(payload.strategic_rationale.clone()),
-        requested_minor: ActiveValue::set(payload.requested_minor),
-        currency: ActiveValue::set(payload.currency.clone()),
-        status: ActiveValue::set("draft".to_string()),
-        promoted_plan_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        external_ask: ActiveValue::set(payload.external_ask),
-        tradeoff: ActiveValue::set(payload.tradeoff.clone().filter(|t| !t.trim().is_empty())),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "proposal_created", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let (row_pid, status): (Uuid, String) = sqlx::query_as(
+        "INSERT INTO proposals
+             (pid, title, summary, kind_target, sponsor_ref, strategic_rationale, requested_minor, currency, status,
+              promoted_plan_pid, deleted_at, external_ask, tradeoff)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', NULL, NULL, $9, $10)
+         RETURNING pid, status",
+    )
+    .bind(Uuid::new_v4())
+    .bind(payload.title.as_str())
+    .bind(payload.summary.as_deref())
+    .bind(payload.kind_target.as_str())
+    .bind(payload.sponsor_ref.as_deref())
+    .bind(payload.strategic_rationale.as_deref())
+    .bind(payload.requested_minor)
+    .bind(payload.currency.as_deref())
+    .bind(payload.external_ask)
+    .bind(payload.tradeoff.as_deref().filter(|t| !t.trim().is_empty()))
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "proposal_created", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string(), "status": row.status }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string(), "status": status }))
 }
 
 /// `GET /api/proposals?status=` — the intake board (default: every
@@ -194,17 +260,20 @@ async fn list_proposals(
     caller: MaybeAuthUser,
     Query(params): Query<ListParams>,
 ) -> Result<Response> {
-    let mut query = proposals::Entity::find().filter(proposals::Column::DeletedAt.is_null());
-    if let Some(status) = &params.status {
-        query = query.filter(proposals::Column::Status.eq(status.clone()));
+    let rows: Vec<proposals::Model> = if let Some(status) = &params.status {
+        sqlx::query_as(
+            "SELECT * FROM proposals WHERE deleted_at IS NULL AND status = $1 ORDER BY id DESC",
+        )
+        .bind(status.as_str())
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
     } else {
-        query = query.filter(proposals::Column::Status.ne("promoted"));
-    }
-    let rows = query
-        .order_by_desc(proposals::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+        sqlx::query_as(
+            "SELECT * FROM proposals WHERE deleted_at IS NULL AND status <> 'promoted' ORDER BY id DESC",
+        )
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
+    };
     let rows = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .keep(rows);
@@ -217,7 +286,7 @@ pub(super) async fn readable_proposal(
     caller: &MaybeAuthUser,
     pid: &str,
 ) -> Result<proposals::Model> {
-    let row = gov::find_proposal(&ctx.db, gov::parse_pid(pid)?).await?;
+    let row = find_proposal(ctx, gov::parse_pid(pid)?).await?;
     super::plan_access::require_readable_if_any(ctx, caller, row.promoted_plan_pid).await?;
     Ok(row)
 }
@@ -255,25 +324,31 @@ async fn update_proposal(
     // Edit only what the payload carries; the audit row is written in the same
     // transaction so a failed audit rolls the edit back.
     let row_pid = row.pid;
-    let mut active: proposals::ActiveModel = row.into();
-    active.title = ActiveValue::set(payload.title.clone());
-    active.summary = ActiveValue::set(payload.summary.clone());
-    active.kind_target = ActiveValue::set(payload.kind_target.clone());
-    active.sponsor_ref = ActiveValue::set(payload.sponsor_ref.clone());
-    active.strategic_rationale = ActiveValue::set(payload.strategic_rationale.clone());
-    active.requested_minor = ActiveValue::set(payload.requested_minor);
-    active.currency = ActiveValue::set(payload.currency.clone());
-    active.external_ask = ActiveValue::set(payload.external_ask);
-    active.tradeoff = ActiveValue::set(payload.tradeoff.clone().filter(|t| !t.trim().is_empty()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row_pid, "proposal_updated", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let row: proposals::Model = sqlx::query_as(
+        "UPDATE proposals
+         SET title = $1, summary = $2, kind_target = $3, sponsor_ref = $4, strategic_rationale = $5,
+             requested_minor = $6, currency = $7, external_ask = $8, tradeoff = $9
+         WHERE id = $10
+         RETURNING *",
+    )
+    .bind(payload.title.as_str())
+    .bind(payload.summary.as_deref())
+    .bind(payload.kind_target.as_str())
+    .bind(payload.sponsor_ref.as_deref())
+    .bind(payload.strategic_rationale.as_deref())
+    .bind(payload.requested_minor)
+    .bind(payload.currency.as_deref())
+    .bind(payload.external_ask)
+    .bind(payload.tradeoff.as_deref().filter(|t| !t.trim().is_empty()))
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "proposal_updated", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -291,12 +366,10 @@ pub(crate) async fn asks_section(
     period: &str,
     included: &std::collections::HashSet<Uuid>,
 ) -> Result<serde_json::Value> {
-    let rows = proposals::Entity::find()
-        .filter(proposals::Column::ExternalAsk.eq(true))
-        .filter(proposals::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows: Vec<proposals::Model> =
+        sqlx::query_as("SELECT * FROM proposals WHERE external_ask = true AND deleted_at IS NULL")
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
     let mut asks: Vec<serde_json::Value> = rows
         .iter()
         .filter(|p| p.created_at.format("%Y-%m").to_string() == period)
@@ -352,17 +425,23 @@ async fn set_tradeoff(
         return Err(refuse("tradeoff must be 10 to 2000 characters"));
     }
     let row_pid = row.pid;
-    let mut active: proposals::ActiveModel = row.into();
-    active.tradeoff = ActiveValue::set(Some(text));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row_pid, "proposal_tradeoff_set", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: proposals::Model =
+        sqlx::query_as("UPDATE proposals SET tradeoff = $1 WHERE id = $2 RETURNING *")
+            .bind(text)
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "proposal_tradeoff_set",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -388,17 +467,17 @@ async fn transition_proposal(
         ));
     }
     let row_pid = row.pid;
-    let mut active: proposals::ActiveModel = row.into();
-    active.status = ActiveValue::set(next.to_string());
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row_pid, action.token(), caller.actor(), None)
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: proposals::Model =
+        sqlx::query_as("UPDATE proposals SET status = $1 WHERE id = $2 RETURNING *")
+            .bind(next)
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(tx.conn(), row_pid, action.token(), caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     Ok(row)
 }
 
@@ -443,21 +522,22 @@ async fn promote_proposal(
     }
     let model = streaming::create_and_emit(&ctx.db, &plan, caller.actor()).await?;
     let proposal_pid = row.pid;
-    let mut active: proposals::ActiveModel = row.into();
-    active.status = ActiveValue::set(next.to_string());
-    active.promoted_plan_pid = ActiveValue::set(Some(model.pid));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let updated = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let updated: proposals::Model = sqlx::query_as(
+        "UPDATE proposals SET status = $1, promoted_plan_pid = $2 WHERE id = $3 RETURNING *",
+    )
+    .bind(next)
+    .bind(model.pid)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
     let snapshot = serde_json::json!({
         "plan_pid": model.pid.to_string(),
         "collection": updated.kind_target,
         "provenance": "intake",
     });
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         proposal_pid,
         rules::ProposalAction::Promote.token(),
         caller.actor(),
@@ -465,7 +545,7 @@ async fn promote_proposal(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "pid": updated.pid.to_string(),
         "status": updated.status,
@@ -537,20 +617,20 @@ async fn intake_forecast(
 
     // A proposal that became a hidden plan is not part of the intake the caller may see.
     let visible = scope.keep(
-        proposals::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, proposals::Model>("SELECT * FROM proposals")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
     let visible_pids: std::collections::HashSet<Uuid> = visible.iter().map(|p| p.pid).collect();
-    let approved_ms: Vec<i64> = audit_logs::Entity::find()
-        .filter(audit_logs::Column::Action.eq(rules::ProposalAction::Approve.token()))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    let approved: Vec<(Uuid, chrono::DateTime<chrono::FixedOffset>)> =
+        sqlx::query_as("SELECT entity_pid, created_at FROM audit_logs WHERE action = $1")
+            .bind(rules::ProposalAction::Approve.token())
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
+    let approved_ms: Vec<i64> = approved
         .iter()
-        .filter(|row| visible_pids.contains(&row.entity_pid))
-        .map(|row| row.created_at.timestamp_millis())
+        .filter(|(entity_pid, _)| visible_pids.contains(entity_pid))
+        .map(|(_, created_at)| created_at.timestamp_millis())
         .collect();
     let arrival_ms: Vec<i64> = visible
         .iter()
@@ -632,14 +712,14 @@ async fn proposal_duplicates(
         }
     }
     // Other open proposals targeting the same collection.
-    let siblings = proposals::Entity::find()
-        .filter(proposals::Column::DeletedAt.is_null())
-        .filter(proposals::Column::KindTarget.eq(row.kind_target.clone()))
-        .filter(proposals::Column::Status.ne("promoted"))
-        .filter(proposals::Column::Pid.ne(row.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let siblings: Vec<proposals::Model> = sqlx::query_as(
+        "SELECT * FROM proposals
+         WHERE deleted_at IS NULL AND kind_target = $1 AND status <> 'promoted' AND pid <> $2",
+    )
+    .bind(row.kind_target.as_str())
+    .bind(row.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     for sibling in &siblings {
         let candidate = Plan {
             kind: parse_kind_label(&sibling.kind_target),
@@ -666,9 +746,9 @@ async fn proposal_duplicates(
 
 /// Resolve `plans/{pid}` to the stored plan (404 when unknown).
 pub(crate) async fn find_item(ctx: &AppContext, pid: &str) -> Result<plans::Model> {
-    PlanModel::find_by_pid(&ctx.db, pid)
-        .await
-        .map_err(super::model_not_found)
+    // An id that is not a UUID names nothing: `404`.
+    let pid = gov::parse_pid(pid)?;
+    find_live!(ctx, "plans", pid)
 }
 
 /// `POST /api/plans/{pid}/gate-reviews` body.
@@ -719,28 +799,29 @@ async fn create_gate_review(
     let new_stage =
         rules::apply_gate_review(item.stage.as_deref(), &payload.gate, &payload.decision)
             .map_err(|e| refuse(&e))?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let review = gate_reviews::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(item.pid),
-        gate: ActiveValue::set(payload.gate.clone()),
-        decision: ActiveValue::set(payload.decision.clone()),
-        conditions: ActiveValue::set(payload.conditions.clone()),
-        approver_ref: ActiveValue::set(payload.approver_ref.clone()),
-        decided_at: ActiveValue::set(chrono::Utc::now().into()),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let (review_pid, review_gate, review_decision): (Uuid, String, String) = sqlx::query_as(
+        "INSERT INTO gate_reviews (pid, plan_pid, gate, decision, conditions, approver_ref, decided_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING pid, gate, decision",
+    )
+    .bind(Uuid::new_v4())
+    .bind(item.pid)
+    .bind(payload.gate.as_str())
+    .bind(payload.decision.as_str())
+    .bind(payload.conditions.as_deref())
+    .bind(payload.approver_ref.as_deref())
+    .bind(now())
+    .fetch_one(tx.conn())
+    .await?;
     let item_pid = item.pid;
     let old_stage = item.stage.clone();
-    let mut active: plans::ActiveModel = item.into();
-    active.stage = ActiveValue::set(new_stage.clone());
-    active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>("UPDATE plans SET stage = $1 WHERE id = $2 RETURNING id")
+        .bind(new_stage.as_deref())
+        .bind(item.id)
+        .fetch_one(tx.conn())
+        .await?;
     let snapshot = serde_json::json!({
         "gate": payload.gate,
         "decision": payload.decision,
@@ -748,8 +829,8 @@ async fn create_gate_review(
         "to_stage": new_stage,
         "approver_ref": payload.approver_ref,
     });
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         item_pid,
         "gate_reviewed",
         caller.actor(),
@@ -757,11 +838,11 @@ async fn create_gate_review(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
-        "pid": review.pid.to_string(),
-        "gate": review.gate,
-        "decision": review.decision,
+        "pid": review_pid.to_string(),
+        "gate": review_gate,
+        "decision": review_decision,
         "stage": new_stage,
     }))
 }
@@ -773,7 +854,7 @@ async fn list_gate_reviews(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let reviews = gov::gate_reviews_for(&ctx.db, item.pid).await?;
+    let reviews = gate_reviews_for(&ctx, item.pid).await?;
     format::json(serde_json::json!({
         "stage": item.stage,
         "next_gate": rules::next_gate(item.stage.as_deref()),
@@ -843,31 +924,31 @@ async fn create_risk(
         return Err(unprocessable(&problems));
     }
     let item = find_item(&ctx, &pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = risks::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(item.pid),
-        title: ActiveValue::set(payload.title.clone()),
-        description: ActiveValue::set(payload.description.clone()),
-        probability: ActiveValue::set(payload.probability),
-        impact: ActiveValue::set(payload.impact),
-        status: ActiveValue::set("open".to_string()),
-        owner_ref: ActiveValue::set(payload.owner_ref.clone()),
-        mitigation: ActiveValue::set(payload.mitigation.clone()),
-        review_date: ActiveValue::set(payload.review_date),
-        escalated_at: ActiveValue::set(None),
-        category: ActiveValue::set(payload.category.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "risk_raised", caller.actor(), None)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO risks
+             (pid, plan_pid, title, description, probability, impact, status, owner_ref, mitigation, review_date,
+              escalated_at, category, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'open', $7, $8, $9, NULL, $10, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(item.pid)
+    .bind(payload.title.as_str())
+    .bind(payload.description.as_deref())
+    .bind(payload.probability)
+    .bind(payload.impact)
+    .bind(payload.owner_ref.as_deref())
+    .bind(payload.mitigation.as_deref())
+    .bind(payload.review_date)
+    .bind(payload.category.as_deref())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "risk_raised", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/plans/{pid}/risks` — active risks with derived
@@ -875,7 +956,7 @@ async fn create_risk(
 #[debug_handler]
 async fn list_risks(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let mut rows = gov::risks_for(&ctx.db, item.pid).await?;
+    let mut rows = risks_for(&ctx, item.pid).await?;
     // Highest exposure first; negated because sort_by_key is ascending.
     rows.sort_by_key(|r| -(r.probability * r.impact));
     let views: Vec<_> = rows
@@ -928,7 +1009,7 @@ async fn update_risk(
     Json(payload): Json<RiskUpdate>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let risk = gov::find_risk(&ctx.db, gov::parse_pid(&risk_pid)?).await?;
+    let risk = find_risk(&ctx, gov::parse_pid(&risk_pid)?).await?;
     if risk.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -948,27 +1029,35 @@ async fn update_risk(
         return Err(unprocessable(&problems));
     }
     let risk_row_pid = risk.pid;
-    let mut active: risks::ActiveModel = risk.into();
+    // The update names only what changes: the scores always, the rest when the body carries them.
+    let mut update = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE risks SET probability = ");
+    update.push_bind(probability);
+    update.push(", impact = ").push_bind(impact);
     if let Some(status) = payload.status {
-        active.status = ActiveValue::set(status);
+        update.push(", status = ").push_bind(status);
     }
-    active.probability = ActiveValue::set(probability);
-    active.impact = ActiveValue::set(impact);
     if let Some(mitigation) = payload.mitigation {
-        active.mitigation = ActiveValue::set(Some(mitigation));
+        update.push(", mitigation = ").push_bind(mitigation);
     }
     if let Some(review_date) = payload.review_date {
-        active.review_date = ActiveValue::set(Some(review_date));
+        update.push(", review_date = ").push_bind(review_date);
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, risk_row_pid, "risk_updated", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    update
+        .push(" WHERE id = ")
+        .push_bind(risk.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: risks::Model = update.build_query_as().fetch_one(tx.conn()).await?;
+    AuditModel::record_on(
+        tx.conn(),
+        risk_row_pid,
+        "risk_updated",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -982,7 +1071,7 @@ async fn escalate_risk(
     Path((pid, risk_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let risk = gov::find_risk(&ctx.db, gov::parse_pid(&risk_pid)?).await?;
+    let risk = find_risk(&ctx, gov::parse_pid(&risk_pid)?).await?;
     if risk.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -990,18 +1079,25 @@ async fn escalate_risk(
         return Err(refuse(&format!("cannot escalate a {} risk", risk.status)));
     }
     let risk_row_pid = risk.pid;
-    let mut active: risks::ActiveModel = risk.into();
-    active.status = ActiveValue::set("materialized".to_string());
-    active.escalated_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, risk_row_pid, "risk_escalated", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let escalated_at = now();
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: risks::Model = sqlx::query_as(
+        "UPDATE risks SET status = 'materialized', escalated_at = $1 WHERE id = $2 RETURNING *",
+    )
+    .bind(escalated_at)
+    .bind(risk.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        risk_row_pid,
+        "risk_escalated",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -1073,31 +1169,37 @@ async fn create_budget_line(
     if let Some(s) = payload.funding_source_pid {
         super::funding::check_source(&ctx, s).await?;
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = budget_lines::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(item.pid),
-        category: ActiveValue::set(payload.category.clone()),
-        description: ActiveValue::set(payload.description.clone()),
-        currency: ActiveValue::set(payload.currency.clone()),
-        planned_minor: ActiveValue::set(payload.planned_minor),
-        actual_minor: ActiveValue::set(0),
-        period_start: ActiveValue::set(payload.period_start),
-        period_end: ActiveValue::set(payload.period_end),
-        gate: ActiveValue::set(payload.gate.clone()),
-        released_at: ActiveValue::set(None),
-        funding_source_pid: ActiveValue::set(payload.funding_source_pid),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row_pid: Uuid = sqlx::query_scalar(
+        "INSERT INTO budget_lines
+             (pid, plan_pid, category, description, currency, planned_minor, actual_minor, period_start, period_end,
+              gate, released_at, funding_source_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, NULL, $10, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(item.pid)
+    .bind(payload.category.as_str())
+    .bind(payload.description.as_str())
+    .bind(payload.currency.as_str())
+    .bind(payload.planned_minor)
+    .bind(payload.period_start)
+    .bind(payload.period_end)
+    .bind(payload.gate.as_deref())
+    .bind(payload.funding_source_pid)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "budget_line_created",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(&txn, row.pid, "budget_line_created", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/plans/{pid}/budget-lines` — lines + per-currency
@@ -1108,7 +1210,7 @@ async fn list_budget_lines(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let rows = gov::budget_lines_for(&ctx.db, item.pid).await?;
+    let rows = budget_lines_for(&ctx, item.pid).await?;
     format::json(serde_json::json!({
         "lines": rows,
         "totals": budget_totals(&rows),
@@ -1164,7 +1266,7 @@ async fn record_actual(
     Json(payload): Json<ActualPayload>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let line = gov::find_budget_line(&ctx.db, gov::parse_pid(&line_pid)?).await?;
+    let line = find_budget_line(&ctx, gov::parse_pid(&line_pid)?).await?;
     if line.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -1180,20 +1282,20 @@ async fn record_actual(
     let next = rules::accumulate_actual(line.actual_minor, payload.amount_minor)
         .map_err(|e| refuse(&e))?;
     let line_pid = line.pid;
-    let mut active: budget_lines::ActiveModel = line.into();
-    active.actual_minor = ActiveValue::set(next);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: budget_lines::Model =
+        sqlx::query_as("UPDATE budget_lines SET actual_minor = $1 WHERE id = $2 RETURNING *")
+            .bind(next)
+            .bind(line.id)
+            .fetch_one(tx.conn())
+            .await?;
     let snapshot = serde_json::json!({
         "amount_minor": payload.amount_minor,
         "actual_minor": next,
         "note": payload.note,
     });
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         line_pid,
         "budget_actual_recorded",
         caller.actor(),
@@ -1201,7 +1303,7 @@ async fn record_actual(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -1216,7 +1318,7 @@ async fn release_budget_line(
     Path((pid, line_pid)): Path<(String, String)>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let line = gov::find_budget_line(&ctx.db, gov::parse_pid(&line_pid)?).await?;
+    let line = find_budget_line(&ctx, gov::parse_pid(&line_pid)?).await?;
     if line.plan_pid != item.pid {
         return Err(Error::NotFound);
     }
@@ -1236,15 +1338,16 @@ async fn release_budget_line(
     }
     super::register::guard(&ctx, &caller, item.pid, "releasing a budget line").await?;
     let line_pid = line.pid;
-    let mut active: budget_lines::ActiveModel = line.into();
-    active.released_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active
-        .update(&txn)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
-    AuditModel::record(
-        &txn,
+    let released_at = now();
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: budget_lines::Model =
+        sqlx::query_as("UPDATE budget_lines SET released_at = $1 WHERE id = $2 RETURNING *")
+            .bind(released_at)
+            .bind(line.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(
+        tx.conn(),
         line_pid,
         "budget_line_released",
         caller.actor(),
@@ -1252,7 +1355,7 @@ async fn release_budget_line(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -1264,9 +1367,9 @@ async fn governance_summary(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let reviews = gov::gate_reviews_for(&ctx.db, item.pid).await?;
-    let risks = gov::risks_for(&ctx.db, item.pid).await?;
-    let budgets = gov::budget_lines_for(&ctx.db, item.pid).await?;
+    let reviews = gate_reviews_for(&ctx, item.pid).await?;
+    let risks = risks_for(&ctx, item.pid).await?;
+    let budgets = budget_lines_for(&ctx, item.pid).await?;
     let open_risks: Vec<_> = risks
         .iter()
         .filter(|r| matches!(r.status.as_str(), "open" | "mitigating"))

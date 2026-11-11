@@ -7,20 +7,16 @@
 //! the previous body; every mutation audits.
 
 use super::forbidden;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::BTreeMap;
 
 use crate::prelude::*;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::auth::MaybeAuthUser;
 use crate::discussion as rules;
-use crate::models::_entities::{
-    budget_lines, canvas_items, canvases, comment_edits, comments, ideas, plans, proposals,
-    reactions, risks, scenarios, tasks,
-};
+use crate::models::_entities::{comment_edits, comments};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::capabilities as cap_models;
 
@@ -44,72 +40,61 @@ pub(crate) async fn resolve_subject(
     pid: &str,
 ) -> Result<Subject> {
     let pid = super::parse_pid(pid)?;
+    let db = crate::db::pool(ctx);
+    // A live row of one table by pid, or `404`; the table is a literal.
+    macro_rules! live {
+        ($sql:literal) => {
+            sqlx::query_as($sql)
+                .bind(pid)
+                .fetch_optional(db)
+                .await?
+                .ok_or(Error::NotFound)?
+        };
+    }
     let subject = match kind {
         "plan" => {
-            let row = plans::Entity::find()
-                .filter(plans::Column::Pid.eq(pid))
-                .filter(plans::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (plan_pid,): (Uuid,) =
+                live!("SELECT pid FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1");
             Subject {
                 pid,
-                plan_pid: Some(row.pid),
+                plan_pid: Some(plan_pid),
                 owner_ref: None,
             }
         }
         "task" => {
-            let row = tasks::Entity::find()
-                .filter(tasks::Column::Pid.eq(pid))
-                .filter(tasks::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (plan_pid, owner_ref): (Uuid, Option<String>) = live!(
+                "SELECT plan_pid, assignee_ref FROM tasks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+            );
             Subject {
                 pid,
-                plan_pid: Some(row.plan_pid),
-                owner_ref: row.assignee_ref,
+                plan_pid: Some(plan_pid),
+                owner_ref,
             }
         }
         "risk" => {
-            let row = risks::Entity::find()
-                .filter(risks::Column::Pid.eq(pid))
-                .filter(risks::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (plan_pid, owner_ref): (Uuid, Option<String>) = live!(
+                "SELECT plan_pid, owner_ref FROM risks WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+            );
             Subject {
                 pid,
-                plan_pid: Some(row.plan_pid),
-                owner_ref: row.owner_ref,
+                plan_pid: Some(plan_pid),
+                owner_ref,
             }
         }
         "proposal" => {
-            let row = proposals::Entity::find()
-                .filter(proposals::Column::Pid.eq(pid))
-                .filter(proposals::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (promoted,): (Option<Uuid>,) = live!(
+                "SELECT promoted_plan_pid FROM proposals WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+            );
             // One that became a plan is that plan's.
             Subject {
                 pid,
-                plan_pid: row.promoted_plan_pid,
+                plan_pid: promoted,
                 owner_ref: None,
             }
         }
         "idea" => {
-            ideas::Entity::find()
-                .filter(ideas::Column::Pid.eq(pid))
-                .filter(ideas::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (_,): (Uuid,) =
+                live!("SELECT pid FROM ideas WHERE pid = $1 AND deleted_at IS NULL LIMIT 1");
             Subject {
                 pid,
                 plan_pid: None,
@@ -117,48 +102,35 @@ pub(crate) async fn resolve_subject(
             }
         }
         "canvas_item" => {
-            let row = canvas_items::Entity::find()
-                .filter(canvas_items::Column::Pid.eq(pid))
-                .filter(canvas_items::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (canvas_pid, owner_ref): (Uuid, Option<String>) = live!(
+                "SELECT canvas_pid, owner_ref FROM canvas_items WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+            );
             // An item is its canvas's, and a canvas may be free-standing.
-            let canvas = canvases::Entity::find()
-                .filter(canvases::Column::Pid.eq(row.canvas_pid))
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (plan_pid,): (Option<Uuid>,) =
+                sqlx::query_as("SELECT plan_pid FROM canvases WHERE pid = $1 LIMIT 1")
+                    .bind(canvas_pid)
+                    .fetch_optional(db)
+                    .await?
+                    .ok_or(Error::NotFound)?;
             Subject {
                 pid,
-                plan_pid: canvas.plan_pid,
-                owner_ref: row.owner_ref,
+                plan_pid,
+                owner_ref,
             }
         }
         "budget_line" => {
-            let row = budget_lines::Entity::find()
-                .filter(budget_lines::Column::Pid.eq(pid))
-                .filter(budget_lines::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (plan_pid,): (Uuid,) = live!(
+                "SELECT plan_pid FROM budget_lines WHERE pid = $1 AND deleted_at IS NULL LIMIT 1"
+            );
             Subject {
                 pid,
-                plan_pid: Some(row.plan_pid),
+                plan_pid: Some(plan_pid),
                 owner_ref: None,
             }
         }
         "scenario" => {
-            scenarios::Entity::find()
-                .filter(scenarios::Column::Pid.eq(pid))
-                .filter(scenarios::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (_,): (Uuid,) =
+                live!("SELECT pid FROM scenarios WHERE pid = $1 AND deleted_at IS NULL LIMIT 1");
             Subject {
                 pid,
                 plan_pid: None,
@@ -167,25 +139,18 @@ pub(crate) async fn resolve_subject(
         }
         "document_version" => {
             // A document version is read through the plan its document belongs to, if any.
-            let version = crate::models::_entities::document_versions::Entity::find()
-                .filter(crate::models::_entities::document_versions::Column::Pid.eq(pid))
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
-            let doc = crate::models::_entities::controlled_documents::Entity::find()
-                .filter(
-                    crate::models::_entities::controlled_documents::Column::Pid
-                        .eq(version.document_pid),
-                )
-                .filter(crate::models::_entities::controlled_documents::Column::DeletedAt.is_null())
-                .one(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .ok_or(Error::NotFound)?;
+            let (document_pid,): (Uuid,) =
+                live!("SELECT document_pid FROM document_versions WHERE pid = $1 LIMIT 1");
+            let (plan_pid,): (Option<Uuid>,) = sqlx::query_as(
+                "SELECT plan_pid FROM controlled_documents WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+            )
+            .bind(document_pid)
+            .fetch_optional(db)
+            .await?
+            .ok_or(Error::NotFound)?;
             Subject {
                 pid,
-                plan_pid: doc.plan_pid,
+                plan_pid,
                 owner_ref: None,
             }
         }
@@ -205,12 +170,13 @@ pub(crate) async fn resolve_subject(
         {
             return Err(Error::NotFound);
         }
-        let stage = plans::Entity::find()
-            .filter(plans::Column::Pid.eq(plan_pid))
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .and_then(|p| p.stage);
+        let stage: Option<String> = sqlx::query_scalar::<_, Option<String>>(
+            "SELECT stage FROM plans WHERE pid = $1 LIMIT 1",
+        )
+        .bind(plan_pid)
+        .fetch_optional(db)
+        .await?
+        .flatten();
         if crate::auth::authorize_record(
             caller,
             authentication_verifier::Action::Read,
@@ -257,34 +223,33 @@ async fn create_comment(
             return Err(forbidden("this guest grant does not allow commenting"));
         }
     }
-    let prior: Vec<String> = comments::Entity::find()
-        .filter(comments::Column::SubjectKind.eq(payload.subject_kind.as_str()))
-        .filter(comments::Column::SubjectPid.eq(subject.pid))
-        .filter(comments::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .filter_map(|c| c.author_sub)
-        .collect();
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = comments::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set(payload.subject_kind.clone()),
-        subject_pid: ActiveValue::set(subject.pid),
-        author_sub: ActiveValue::set(caller.actor().map(str::to_string)),
-        body: ActiveValue::set(payload.body.clone()),
-        edited_at: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "comment_added", caller.actor(), None)
+    let prior: Vec<String> = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT author_sub FROM comments WHERE subject_kind = $1 AND subject_pid = $2 AND deleted_at IS NULL",
+    )
+    .bind(payload.subject_kind.as_str())
+    .bind(subject.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
+    .flatten()
+    .collect();
+    let mut tx = crate::db::begin(&ctx).await?;
+    let (row_pid,): (Uuid,) = sqlx::query_as(
+        "INSERT INTO comments (pid, subject_kind, subject_pid, author_sub, body, edited_at, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL, NULL)
+         RETURNING pid",
+    )
+    .bind(Uuid::new_v4())
+    .bind(payload.subject_kind.as_str())
+    .bind(subject.pid)
+    .bind(caller.actor())
+    .bind(payload.body.as_str())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "comment_added", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     if let Some(plan_pid) = subject.plan_pid {
         crate::live::publish(
             plan_pid,
@@ -304,8 +269,8 @@ async fn create_comment(
         &watching,
     ) {
         // Best-effort: a failed notification must never lose the comment.
-        cap_models::notify(
-            &ctx.db,
+        cap_models::notify_on(
+            &mut crate::db::pool(&ctx),
             &target,
             &payload.subject_kind,
             subject.pid,
@@ -315,7 +280,7 @@ async fn create_comment(
         .await
         .ok();
     }
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// Query naming a subject.
@@ -336,26 +301,23 @@ async fn list_comments(
     Query(params): Query<SubjectParams>,
 ) -> Result<Response> {
     let subject = resolve_subject(&ctx, &caller, &params.subject_kind, &params.subject_pid).await?;
-    let rows = comments::Entity::find()
-        .filter(comments::Column::SubjectKind.eq(params.subject_kind.as_str()))
-        .filter(comments::Column::SubjectPid.eq(subject.pid))
-        .filter(comments::Column::DeletedAt.is_null())
-        .order_by_asc(comments::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<comments::Model> = sqlx::query_as(
+        "SELECT * FROM comments WHERE subject_kind = $1 AND subject_pid = $2 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(params.subject_kind.as_str())
+    .bind(subject.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(rows)
 }
 
 /// Load a live (not soft-deleted) comment by public id, or 404.
 async fn find_comment(ctx: &AppContext, pid: &str) -> Result<comments::Model> {
     let pid = super::parse_pid(pid)?;
-    comments::Entity::find()
-        .filter(comments::Column::Pid.eq(pid))
-        .filter(comments::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    sqlx::query_as("SELECT * FROM comments WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(Error::NotFound)
 }
 
@@ -399,25 +361,35 @@ async fn edit_comment(
     )
     .await?;
     let comment_pid = comment.pid;
-    let previous = comment.body.clone();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    comment_edits::ActiveModel {
-        comment_pid: ActiveValue::set(comment_pid),
-        previous_body: ActiveValue::set(previous),
-        edited_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "INSERT INTO comment_edits (comment_pid, previous_body, edited_by) VALUES ($1, $2, $3)",
+    )
+    .bind(comment_pid)
+    .bind(comment.body.as_str())
+    .bind(caller.actor())
+    .execute(tx.conn())
+    .await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    let row: comments::Model =
+        sqlx::query_as("UPDATE comments SET body = $1, edited_at = $2 WHERE id = $3 RETURNING *")
+            .bind(payload.body.as_str())
+            .bind(chrono::DateTime::<chrono::FixedOffset>::from(
+                chrono::Utc::now(),
+            ))
+            .bind(comment.id)
+            .fetch_one(tx.conn())
+            .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        comment_pid,
+        "comment_edited",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    let mut active: comments::ActiveModel = comment.into();
-    active.body = ActiveValue::set(payload.body.clone());
-    active.edited_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, comment_pid, "comment_edited", caller.actor(), None)
-        .await
-        .map_err(Error::Model)?;
-    txn.commit().await.map_err(db_err)?;
+    .map_err(Error::Model)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -436,12 +408,11 @@ async fn comment_history(
         &comment.subject_pid.to_string(),
     )
     .await?;
-    let rows = comment_edits::Entity::find()
-        .filter(comment_edits::Column::CommentPid.eq(comment.pid))
-        .order_by_asc(comment_edits::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<comment_edits::Model> =
+        sqlx::query_as("SELECT * FROM comment_edits WHERE comment_pid = $1 ORDER BY id")
+            .bind(comment.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     format::json(rows)
 }
 
@@ -463,14 +434,24 @@ async fn delete_comment(
     )
     .await?;
     let comment_pid = comment.pid;
-    let mut active: comments::ActiveModel = comment.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, comment_pid, "comment_deleted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let mut tx = crate::db::begin(&ctx).await?;
+    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    sqlx::query_scalar::<_, i64>("UPDATE comments SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(deleted_at)
+        .bind(comment.id)
+        .fetch_one(tx.conn())
+        .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        comment_pid,
+        "comment_deleted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -506,26 +487,27 @@ async fn add_reaction(
     let subject =
         resolve_subject(&ctx, &caller, &payload.subject_kind, &payload.subject_pid).await?;
     let sub = reactor(&caller);
-    let existing = reactions::Entity::find()
-        .filter(reactions::Column::SubjectKind.eq(payload.subject_kind.as_str()))
-        .filter(reactions::Column::SubjectPid.eq(subject.pid))
-        .filter(reactions::Column::Sub.eq(sub.as_str()))
-        .filter(reactions::Column::Kind.eq(payload.kind.as_str()))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing = sqlx::query_scalar::<_, i64>(
+        "SELECT id FROM reactions WHERE subject_kind = $1 AND subject_pid = $2 AND sub = $3 AND kind = $4 LIMIT 1",
+    )
+    .bind(payload.subject_kind.as_str())
+    .bind(subject.pid)
+    .bind(sub.as_str())
+    .bind(payload.kind.as_str())
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
     if existing.is_some() {
         return format::json(serde_json::json!({ "created": false }));
     }
-    let inserted = reactions::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        subject_kind: ActiveValue::set(payload.subject_kind.clone()),
-        subject_pid: ActiveValue::set(subject.pid),
-        sub: ActiveValue::set(sub),
-        kind: ActiveValue::set(payload.kind.clone()),
-        ..Default::default()
-    }
-    .insert(&ctx.db)
+    let inserted = sqlx::query(
+        "INSERT INTO reactions (pid, subject_kind, subject_pid, sub, kind) VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(Uuid::new_v4())
+    .bind(payload.subject_kind.as_str())
+    .bind(subject.pid)
+    .bind(sub.as_str())
+    .bind(payload.kind.as_str())
+    .execute(crate::db::pool(&ctx))
     .await;
     // A concurrent identical insert loses to the unique index: that is
     // the same idempotent outcome, not an error.
@@ -557,14 +539,15 @@ async fn remove_reaction(
         return Err(unprocessable(&problems.join("; ")));
     }
     let subject = resolve_subject(&ctx, &caller, &params.subject_kind, &params.subject_pid).await?;
-    reactions::Entity::delete_many()
-        .filter(reactions::Column::SubjectKind.eq(params.subject_kind.as_str()))
-        .filter(reactions::Column::SubjectPid.eq(subject.pid))
-        .filter(reactions::Column::Sub.eq(reactor(&caller)))
-        .filter(reactions::Column::Kind.eq(params.kind.as_str()))
-        .exec(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    sqlx::query(
+        "DELETE FROM reactions WHERE subject_kind = $1 AND subject_pid = $2 AND sub = $3 AND kind = $4",
+    )
+    .bind(params.subject_kind.as_str())
+    .bind(subject.pid)
+    .bind(reactor(&caller))
+    .bind(params.kind.as_str())
+    .execute(crate::db::pool(&ctx))
+    .await?;
     format::empty_json()
 }
 
@@ -597,21 +580,22 @@ async fn list_reactions(
     Query(params): Query<SubjectParams>,
 ) -> Result<Response> {
     let subject = resolve_subject(&ctx, &caller, &params.subject_kind, &params.subject_pid).await?;
-    let rows = reactions::Entity::find()
-        .filter(reactions::Column::SubjectKind.eq(params.subject_kind.as_str()))
-        .filter(reactions::Column::SubjectPid.eq(subject.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<(String, String)> = sqlx::query_as(
+        "SELECT kind, sub FROM reactions WHERE subject_kind = $1 AND subject_pid = $2",
+    )
+    .bind(params.subject_kind.as_str())
+    .bind(subject.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let counts: BTreeMap<&str, usize> =
-        rules::reaction_counts(rows.iter().map(|r| r.kind.as_str()))
+        rules::reaction_counts(rows.iter().map(|(kind, _)| kind.as_str()))
             .into_iter()
             .collect();
     let me = reactor(&caller);
     let mine: Vec<&str> = rows
         .iter()
-        .filter(|r| r.sub == me)
-        .map(|r| r.kind.as_str())
+        .filter(|(_, sub)| *sub == me)
+        .map(|(kind, _)| kind.as_str())
         .collect();
     format::json(serde_json::json!({ "counts": counts, "mine": mine }))
 }

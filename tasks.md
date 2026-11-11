@@ -2081,6 +2081,57 @@ came from grep.
   **Next batch, suggested:** the shared lookups every moved file still reaches SeaORM through: `governance` (99),
   `plan_access` (78), `discussion` (86) and `controllers/mod.rs` (`find_live_task`, `find_live_plan`, 13), about 276
   lines; or the issue tracker, `issues`, `issue_configuration` and `custom_fields` (about 242).
+  **Progress 2026-11-11, batch 9 (not ticked).** The shared lookups moved: `governance` (98 lines naming SeaORM, now
+  none), `discussion` (85, none), `plan_access` (60, now 5), `controllers/mod.rs` (`find_live_plan`, `find_live_task`;
+  13, now 4) and `models/governance` (24, now 5): 266 lines gone, leaving 72 files and 2,318 lines by batch 6's measure
+  (70 by name, as `engineering/board` and `task_bulk` still match on their own `Set`). What is left in them names
+  SeaORM for callers not yet moved, and runs no statement: `plan_access::is_none_of` and `HiddenScope::notes_visible`
+  build SeaORM conditions for `automation`, `feeds`, `notification_prefs` and `collaboration`; `controllers::db_err`
+  and its test serve every unmoved controller; `models/governance` keeps the four `ActiveModelBehavior` impls and
+  `parse_pid`, and loses its finders (`find_proposal`, `find_risk`, `find_budget_line`, `gate_reviews_for`,
+  `risks_for`, `budget_lines_for`), whose only caller was the governance controller, which now has its own. Every
+  public signature kept its shape (`find_item`, `find_live_plan`, `find_live_task`, `readable_plans`,
+  `require_readable`, `require_readable_if_any`, `hidden_plans`, `mark_hidden`, `grant_subs`, `HiddenScope::of` and
+  `owned_pids`, `resolve_subject` all take the context and use the pool), so none of their callers changed; no caller
+  holds a sqlx transaction, so none takes `&mut impl db::Session`. `fail_closed`, `stored_marks` and `mark_hidden`
+  now carry sqlx's error rather than SeaORM's. Every handler here already wrote its rows and audit row in one
+  transaction, so no write changed transaction; the break-glass access audit row is still written on the pool before
+  the request is served, and still refuses the request when it cannot be written. A throwaway check (not committed)
+  dumped 4,348 answers and every row written (audit, comments, comment edits, reactions, proposals, risks, budget
+  lines, gate reviews, plans, access settings, notifications, watchers) for eight callers (an admin with no
+  clearance, the owner and member with `Confidential`, a member of two private plans with `Internal`, a live
+  break-glass grantee, a revoked and an expired grantee, a guest with granted, ungranted and revoked grants, an
+  outsider whom the policy denies a plan at stage `g0_concept`, and no token) against public, private, private and
+  marked, `Confidential`- and `Internal`-marked, staged, deleted and missing plans, plans promoted from proposals (one
+  then made private, one deleted), every subject kind (plan, task, risk, budget line, canvas item on a plan and
+  free-standing, document version, proposal, idea, scenario, missing, unknown kind, malformed pid), the plan guard
+  (with the braced spelling), the access, risk, budget, gate, governance, audit and milestone routes, the plan list,
+  at-a-glance, proposals and their forecast and duplicates, the audit feed, notifications, KPIs, canvases, issues and
+  "my tasks", comments and reactions posted, repeated, edited, deleted and refused after the author lost the plan,
+  and then each of `plan_access_settings`, `plan_handling_marks`, `break_glass_grants`, `tasks`, `plans` and
+  `proposals` made unreadable in turn (every `503`, `500` and fail-closed `404`), before and after: the same once
+  pids, times and audit hashes were normalised.
+  **Changed, deliberately:** the visibility lookups (`hidden_plans`, `readable_plans`, `grant_subs`, the hidden tasks of
+  `HiddenScope::of`, every table of `owned_pids`) bind their pid list as one array (`= ANY($1)`) where SeaORM bound one
+  parameter per pid (`IN (…)`), so a list longer than Postgres's 65,535 parameters is now answered rather than failing
+  (a failure there failed closed: hidden, `503` or `500`). Not reached by any test. `resolve_subject` and
+  `readable_plans` read only the columns they use, so a row with an undecodable column elsewhere no longer fails them.
+  **Found, not changed:** a comment edit whose audit row cannot be written answers a plain model error, not
+  `audit_failed`, so `audit_write_failed_total` does not count it; reactions are not audited, and any failed reaction
+  insert (not only the unique-index race) answers `created: false`; `promote` creates the plan through
+  `streaming::create_and_emit` (still SeaORM) before, and outside, the transaction that marks the proposal promoted,
+  so a failure there leaves a plan no proposal points to; the intake forecast counts soft-deleted proposals among
+  arrivals (it reads every proposal; no route soft-deletes one today).
+  **Guard repaired:** `tests/requests/scale.rs` counted SeaORM's driver spans only, so it saw zero statements for
+  `/capacity/utilization` once the `HiddenScope` lookups moved, and failed; it now counts through `query_count`
+  (SeaORM's callback and sqlx's `db::Counted`), so the same assertions cover more statements. Seen once, cause not
+  found: `requests::attachments::an_upload_larger_than_the_service_wide_body_limit_is_accepted_up_to_the_cap` failed in
+  one of three full `mod` runs and passed alone three times.
+  **Still on SeaORM through other modules**, on the pool and outside these handlers' transactions:
+  `streaming::create_and_emit` (promote), `models::plans::Model::list` (duplicates).
+  **Next batch, suggested:** the issue tracker, `issues`, `issue_configuration` and `custom_fields` (about 240 lines);
+  or the inbox, `collaboration`, `feeds`, `notification_prefs` and `models/capabilities` (about 215), after which
+  `is_none_of` and `notes_visible` can become sqlx.
 
 ## Correctness carried forward (CF-n)
 

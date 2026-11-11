@@ -18,7 +18,7 @@
 //! design: the admin-only bulk reads (board pack, board investments, board trends,
 //! auditor trail, evidence pack), which answer 403 to everyone else.
 
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use std::collections::HashSet;
 
 use crate::prelude::*;
@@ -43,7 +43,7 @@ fn members_of(row: &plan_access::Model) -> Vec<String> {
 /// Record that a visibility lookup failed and is being answered by hiding (CQ-6): an error log naming
 /// the lookup, and `visibility_lookup_failed_total`. Failing closed stays the rule; failing silently
 /// does not, because a database fault would otherwise look like an empty portfolio.
-fn fail_closed(lookup: &'static str, error: &sea_orm::DbErr) {
+fn fail_closed(lookup: &'static str, error: &sqlx::Error) {
     crate::metrics::Metrics::global()
         .visibility_lookup_failed_total
         .inc();
@@ -100,21 +100,25 @@ pub(crate) fn clearance_of(claims: Option<&authentication_verifier::Claims>) -> 
 async fn stored_marks(
     ctx: &AppContext,
     pids: Option<&[Uuid]>,
-) -> std::result::Result<Vec<(Uuid, String)>, sea_orm::DbErr> {
-    use crate::models::_entities::plan_handling_marks as marks;
+) -> std::result::Result<Vec<(Uuid, String)>, sqlx::Error> {
     if !crate::handling_marks::scheme().is_on() {
         return Ok(Vec::new());
     }
-    let mut find = marks::Entity::find();
-    if let Some(p) = pids {
-        find = find.filter(marks::Column::PlanPid.is_in(p.to_vec()));
+    match pids {
+        Some(p) => {
+            sqlx::query_as(
+                "SELECT plan_pid, mark FROM plan_handling_marks WHERE plan_pid = ANY($1)",
+            )
+            .bind(p)
+            .fetch_all(crate::db::pool(ctx))
+            .await
+        }
+        None => {
+            sqlx::query_as("SELECT plan_pid, mark FROM plan_handling_marks")
+                .fetch_all(crate::db::pool(ctx))
+                .await
+        }
     }
-    Ok(find
-        .all(&ctx.db)
-        .await?
-        .into_iter()
-        .map(|m| (m.plan_pid, m.mark))
-        .collect())
 }
 
 /// The plans among `pids` (all marked plans for `None`) hidden from `caller` by their handling mark
@@ -123,7 +127,7 @@ pub(crate) async fn mark_hidden(
     ctx: &AppContext,
     pids: Option<&[Uuid]>,
     caller: &MaybeAuthUser,
-) -> std::result::Result<HashSet<Uuid>, sea_orm::DbErr> {
+) -> std::result::Result<HashSet<Uuid>, sqlx::Error> {
     let scheme = crate::handling_marks::scheme();
     let clearance = clearance_of(caller.claims());
     Ok(stored_marks(ctx, pids)
@@ -141,17 +145,18 @@ pub(crate) async fn grant_subs(
     ctx: &AppContext,
     pids: &[Uuid],
 ) -> std::collections::HashMap<Uuid, Vec<String>> {
-    use crate::models::_entities::break_glass_grants as grants;
     let mut out: std::collections::HashMap<Uuid, Vec<String>> = std::collections::HashMap::new();
     if pids.is_empty() {
         return out;
     }
-    let rows = match grants::Entity::find()
-        .filter(grants::Column::PlanPid.is_in(pids.to_vec()))
-        .filter(grants::Column::RevokedAt.is_null())
-        .filter(grants::Column::ExpiresAt.gt(chrono::Utc::now()))
-        .all(&ctx.db)
-        .await
+    let rows: Vec<(Uuid, String)> = match sqlx::query_as(
+        "SELECT plan_pid, sub FROM break_glass_grants
+         WHERE plan_pid = ANY($1) AND revoked_at IS NULL AND expires_at > $2",
+    )
+    .bind(pids)
+    .bind(chrono::Utc::now())
+    .fetch_all(crate::db::pool(ctx))
+    .await
     {
         Ok(rows) => rows,
         Err(error) => {
@@ -159,8 +164,8 @@ pub(crate) async fn grant_subs(
             return out;
         }
     };
-    for g in rows {
-        out.entry(g.plan_pid).or_default().push(g.sub);
+    for (plan_pid, sub) in rows {
+        out.entry(plan_pid).or_default().push(sub);
     }
     out
 }
@@ -182,11 +187,12 @@ pub(crate) async fn hidden_plans(
             return pids.iter().copied().collect();
         }
     };
-    let rows = match plan_access::Entity::find()
-        .filter(plan_access::Column::PlanPid.is_in(pids.to_vec()))
-        .filter(plan_access::Column::Private.eq(true))
-        .all(&ctx.db)
-        .await
+    let rows: Vec<plan_access::Model> = match sqlx::query_as(
+        "SELECT * FROM plan_access_settings WHERE plan_pid = ANY($1) AND private = true",
+    )
+    .bind(pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await
     {
         Ok(rows) => rows,
         Err(error) => {
@@ -219,15 +225,15 @@ pub(crate) async fn readable_plans(
     caller: &MaybeAuthUser,
     pids: &[Uuid],
 ) -> HashSet<Uuid> {
-    use crate::models::_entities::plans;
     if pids.is_empty() {
         return HashSet::new();
     }
-    let rows = match plans::Entity::find()
-        .filter(plans::Column::Pid.is_in(pids.to_vec()))
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
+    let rows: Vec<(Uuid, Option<String>)> = match sqlx::query_as(
+        "SELECT pid, stage FROM plans WHERE pid = ANY($1) AND deleted_at IS NULL",
+    )
+    .bind(pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await
     {
         Ok(rows) => rows,
         Err(error) => {
@@ -237,16 +243,16 @@ pub(crate) async fn readable_plans(
     };
     let hidden = hidden_plans(ctx, pids, caller).await;
     rows.into_iter()
-        .filter(|p| !hidden.contains(&p.pid))
-        .filter(|p| {
+        .filter(|(pid, _)| !hidden.contains(pid))
+        .filter(|(_, stage)| {
             crate::auth::authorize_record(
                 caller,
                 authentication_verifier::Action::Read,
-                &crate::auth::plan_resource_attrs(p.stage.as_deref()),
+                &crate::auth::plan_resource_attrs(stage.as_deref()),
             )
             .is_ok()
         })
-        .map(|p| p.pid)
+        .map(|(pid, _)| pid)
         .collect()
 }
 
@@ -271,20 +277,19 @@ pub(crate) async fn require_readable_if_any(
     caller: &MaybeAuthUser,
     plan: Option<Uuid>,
 ) -> Result<()> {
-    use crate::models::_entities::plans;
     let Some(plan) = plan else {
         return Ok(());
     };
     if hidden_plans(ctx, &[plan], caller).await.contains(&plan) {
         return Err(Error::NotFound);
     }
-    let live = plans::Entity::find()
-        .filter(plans::Column::Pid.eq(plan))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some();
+    let live = sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .is_some();
     if live {
         require_readable(ctx, caller, plan).await
     } else {
@@ -414,23 +419,12 @@ impl HiddenScope {
     /// A lookup failure is an error, never an empty scope: not knowing what is
     /// private must not turn into showing it.
     pub(crate) async fn of(ctx: &AppContext, caller: &MaybeAuthUser) -> Result<Self> {
-        use crate::models::_entities::tasks;
-        let mut private: Vec<Uuid> = plan_access::Entity::find()
-            .filter(plan_access::Column::Private.eq(true))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|r| r.plan_pid)
-            .collect();
+        let mut private: Vec<Uuid> =
+            sqlx::query_scalar("SELECT plan_pid FROM plan_access_settings WHERE private = true")
+                .fetch_all(crate::db::pool(ctx))
+                .await?;
         // Plans with a handling mark are candidates too (RG-7).
-        private.extend(
-            stored_marks(ctx, None)
-                .await
-                .map_err(db_err)?
-                .into_iter()
-                .map(|(p, _)| p),
-        );
+        private.extend(stored_marks(ctx, None).await?.into_iter().map(|(p, _)| p));
         private.sort();
         private.dedup();
         if private.is_empty() {
@@ -440,14 +434,11 @@ impl HiddenScope {
         if plans.is_empty() {
             return Ok(Self::default());
         }
-        let tasks = tasks::Entity::find()
-            .filter(tasks::Column::PlanPid.is_in(plans.iter().copied().collect::<Vec<_>>()))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|t| t.pid)
-            .collect();
+        let tasks: Vec<Uuid> = sqlx::query_scalar("SELECT pid FROM tasks WHERE plan_pid = ANY($1)")
+            .bind(plans.iter().copied().collect::<Vec<_>>())
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+        let tasks = tasks.into_iter().collect();
         Ok(Self { plans, tasks })
     }
 
@@ -498,7 +489,6 @@ impl HiddenScope {
     /// milestones, bookings, benefits, time entries, sprints, components, controls,
     /// gate reviews, deployments, alignments, RACI rows, checklists): what an audit or
     /// event row about "an entity" must not be shown for.
-    #[expect(clippy::too_many_lines)]
     pub(crate) async fn owned_pids(&self, ctx: &AppContext) -> Result<HashSet<Uuid>> {
         let mut out: HashSet<Uuid> = self
             .plans
@@ -510,17 +500,25 @@ impl HiddenScope {
             return Ok(out);
         }
         let hidden: Vec<Uuid> = self.plans.iter().copied().collect();
+        let db = crate::db::pool(ctx);
+        // The pids of one table's rows whose `$column` is any of `$among`; the table and column are literals.
+        macro_rules! pids_of {
+            ($table:expr, $column:literal, $among:expr) => {
+                sqlx::query_scalar::<_, Uuid>(concat!(
+                    "SELECT pid FROM ",
+                    $table,
+                    " WHERE ",
+                    $column,
+                    " = ANY($1)"
+                ))
+                .bind($among)
+                .fetch_all(db)
+                .await?
+            };
+        }
         macro_rules! owned {
             ($($m:ident),* $(,)?) => {$(
-                out.extend(
-                    crate::models::_entities::$m::Entity::find()
-                        .filter(crate::models::_entities::$m::Column::PlanPid.is_in(hidden.clone()))
-                        .all(&ctx.db)
-                        .await
-                        .map_err(db_err)?
-                        .into_iter()
-                        .map(|r| r.pid),
-                );
+                out.extend(pids_of!(stringify!($m), "plan_pid", &hidden));
             )*};
         }
         owned!(
@@ -557,94 +555,23 @@ impl HiddenScope {
             workflows,
         );
         // The items of a hidden plan's canvases.
-        let canvases: Vec<Uuid> = crate::models::_entities::canvases::Entity::find()
-            .filter(crate::models::_entities::canvases::Column::PlanPid.is_in(hidden.clone()))
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|c| c.pid)
-            .collect();
-        out.extend(
-            crate::models::_entities::canvas_items::Entity::find()
-                .filter(crate::models::_entities::canvas_items::Column::CanvasPid.is_in(canvases))
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .into_iter()
-                .map(|i| i.pid),
-        );
+        let canvases: Vec<Uuid> = pids_of!("canvases", "plan_pid", &hidden);
+        out.extend(pids_of!("canvas_items", "canvas_pid", &canvases));
         // A review of a hidden plan, a proposal that became one, and any review of that proposal.
-        let promoted: Vec<Uuid> = crate::models::_entities::proposals::Entity::find()
-            .filter(
-                crate::models::_entities::proposals::Column::PromotedPlanPid.is_in(hidden.clone()),
-            )
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|p| p.pid)
-            .collect();
+        let promoted: Vec<Uuid> = pids_of!("proposals", "promoted_plan_pid", &hidden);
         out.extend(promoted.iter().copied());
-        out.extend(
-            crate::models::_entities::reviews::Entity::find()
-                .filter(
-                    crate::models::_entities::reviews::Column::SubjectPid
-                        .is_in(hidden.iter().chain(promoted.iter()).copied()),
-                )
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .into_iter()
-                .map(|r| r.pid),
-        );
+        let subjects: Vec<Uuid> = hidden.iter().chain(promoted.iter()).copied().collect();
+        out.extend(pids_of!("reviews", "subject_pid", &subjects));
         // A KPI may belong to a plan (or to none).
-        out.extend(
-            crate::models::_entities::kpis::Entity::find()
-                .filter(crate::models::_entities::kpis::Column::PlanPid.is_in(hidden.clone()))
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .into_iter()
-                .map(|r| r.pid),
-        );
+        out.extend(pids_of!("kpis", "plan_pid", &hidden));
         // Documents of a hidden plan, and their versions.
-        let doc_pids: Vec<Uuid> = crate::models::_entities::controlled_documents::Entity::find()
-            .filter(
-                crate::models::_entities::controlled_documents::Column::PlanPid
-                    .is_in(hidden.clone()),
-            )
-            .all(&ctx.db)
-            .await
-            .map_err(db_err)?
-            .into_iter()
-            .map(|d| d.pid)
-            .collect();
+        let doc_pids: Vec<Uuid> = pids_of!("controlled_documents", "plan_pid", &hidden);
         if !doc_pids.is_empty() {
             out.extend(doc_pids.iter().copied());
-            out.extend(
-                crate::models::_entities::document_versions::Entity::find()
-                    .filter(
-                        crate::models::_entities::document_versions::Column::DocumentPid
-                            .is_in(doc_pids),
-                    )
-                    .all(&ctx.db)
-                    .await
-                    .map_err(db_err)?
-                    .into_iter()
-                    .map(|v| v.pid),
-            );
+            out.extend(pids_of!("document_versions", "document_pid", &doc_pids));
         }
         // A proposal that became a hidden plan is hidden with it.
-        out.extend(
-            crate::models::_entities::proposals::Entity::find()
-                .filter(crate::models::_entities::proposals::Column::PromotedPlanPid.is_in(hidden))
-                .all(&ctx.db)
-                .await
-                .map_err(db_err)?
-                .into_iter()
-                .map(|p| p.pid),
-        );
+        out.extend(pids_of!("proposals", "promoted_plan_pid", &hidden));
         Ok(out)
     }
 
@@ -849,11 +776,12 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
             }
             label = scheme.effective(mark.as_deref()).map(str::to_string);
         }
-        let private = plan_access::Entity::find()
-            .filter(plan_access::Column::PlanPid.eq(plan_pid))
-            .filter(plan_access::Column::Private.eq(true))
-            .one(&ctx.db)
-            .await;
+        let private: std::result::Result<Option<plan_access::Model>, sqlx::Error> = sqlx::query_as(
+            "SELECT * FROM plan_access_settings WHERE plan_pid = $1 AND private = true LIMIT 1",
+        )
+        .bind(plan_pid)
+        .fetch_optional(crate::db::pool(&ctx))
+        .await;
         // Could not tell whether the plan is private: refuse rather than pass (CQ-6). This
         // used to fall through to the handler, which a non-member must not reach.
         if let Err(error) = &private {
@@ -884,8 +812,8 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
                 }
                 // Fail closed: a break-glass request that cannot be audited is not served, so the use
                 // of the grant is never invisible.
-                if let Err(error) = AuditModel::record(
-                    &ctx.db,
+                if let Err(error) = AuditModel::record_on(
+                    crate::db::pool(&ctx),
                     plan_pid,
                     "break_glass_access",
                     sub,
@@ -909,15 +837,21 @@ pub async fn privacy_mw(State(ctx): State<AppContext>, req: Request, next: Next)
     response
 }
 
+/// A plan's access row, if it has one.
+async fn access_row(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<plan_access::Model>> {
+    Ok(
+        sqlx::query_as("SELECT * FROM plan_access_settings WHERE plan_pid = $1 LIMIT 1")
+            .bind(plan_pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?,
+    )
+}
+
 /// `GET /api/plans/{pid}/access`.
 #[debug_handler]
 async fn get_access(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
-    let row = plan_access::Entity::find()
-        .filter(plan_access::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let row = access_row(&ctx, plan.pid).await?;
     format::json(serde_json::json!({
         "plan_pid": plan.pid,
         "private": row.as_ref().is_some_and(|r| r.private),
@@ -960,35 +894,35 @@ async fn put_access(
             members.push(me);
         }
     }
-    let existing = plan_access::Entity::find()
-        .filter(plan_access::Column::PlanPid.eq(plan.pid))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let existing = access_row(&ctx, plan.pid).await?;
     let before = existing.as_ref().map(|r| (r.private, members_of(r)));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
     match existing {
         Some(row) => {
-            let mut active: plan_access::ActiveModel = row.into();
-            active.private = ActiveValue::set(p.private);
-            active.members = ActiveValue::set(serde_json::json!(members));
-            active.update(&txn).await.map_err(db_err)?;
+            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            sqlx::query_scalar::<_, i64>(
+                "UPDATE plan_access_settings SET private = $1, members = $2 WHERE id = $3 RETURNING id",
+            )
+            .bind(p.private)
+            .bind(serde_json::json!(members))
+            .bind(row.id)
+            .fetch_one(tx.conn())
+            .await?;
         }
         None => {
-            plan_access::ActiveModel {
-                pid: ActiveValue::set(Uuid::new_v4()),
-                plan_pid: ActiveValue::set(plan.pid),
-                private: ActiveValue::set(p.private),
-                members: ActiveValue::set(serde_json::json!(members)),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO plan_access_settings (pid, plan_pid, private, members) VALUES ($1, $2, $3, $4)",
+            )
+            .bind(Uuid::new_v4())
+            .bind(plan.pid)
+            .bind(p.private)
+            .bind(serde_json::json!(members))
+            .execute(tx.conn())
+            .await?;
         }
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "plan_access_changed",
         Some(&claims.sub),
@@ -999,7 +933,7 @@ async fn put_access(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(
         serde_json::json!({ "plan_pid": plan.pid, "private": p.private, "members": members }),
     )

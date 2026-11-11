@@ -1,84 +1,37 @@
 //! T-28d: capacity-at-scale regression guard. Seeds a materially large
 //! roster (60 plans, allocations across 40 shared people) and proves
 //! `GET /capacity`, `GET /capacity/utilization`, and `GET /at-a-glance`
-//! each run a **bounded** number of SQL queries — measured directly
-//! via a tracing layer over `SeaORM`'s own driver spans, not timed
-//! (timing is noisy under load; a query count is exact and
-//! deterministic).
+//! each run a **bounded** number of SQL statements — counted exactly by
+//! [`project_portfolio_management::query_count`], which sees every
+//! statement the app runs, `SeaORM`'s (its metric callback) and sqlx's
+//! (`db::Counted`) alike, not timed (timing is noisy under load; a
+//! statement count is exact and deterministic).
+//!
+//! It used to count `SeaORM`'s driver tracing spans only, which went
+//! blind as the routes' statements moved to sqlx (SQ-1): a route whose
+//! last `SeaORM` statement moved counted zero.
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use std::future::Future;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
-use tracing_subscriber::layer::{Context, Layer, SubscriberExt};
 
-/// Counts spans `SeaORM`'s own Postgres driver opens for each round trip
-/// (`execute`, `query_one`, `query_all`, `stream`, `begin`, …) — every
-/// `#[instrument]`-annotated function in `sea_orm::driver::sqlx_postgres`
-/// (checked against `sea-orm` 2.0.2's own source). Filtering on that
-/// module-path target means this can't be confused with an
-/// identically-named span in an unrelated library.
-struct QueryCountLayer {
-    counter: Arc<AtomicUsize>,
-}
-
-impl<S: tracing::Subscriber> Layer<S> for QueryCountLayer {
-    fn on_new_span(
-        &self,
-        attrs: &tracing::span::Attributes<'_>,
-        _id: &tracing::span::Id,
-        _ctx: Context<'_, S>,
-    ) {
-        if attrs.metadata().target().starts_with("sea_orm::driver::") {
-            self.counter.fetch_add(1, Ordering::SeqCst);
-        }
-    }
-}
-
-/// Run `f`, returning its result plus the number of `SeaORM` driver
-/// round trips made while it ran.
-///
-/// Uses `tracing::subscriber::set_default` (a thread-local override,
-/// held across the awaited future) rather than
-/// `set_global_default` (process-wide, settable only once — and this
-/// crate's own `App::init_logger` already claims it at boot). This is
-/// sound specifically because this crate's request tests run on
-/// `#[tokio::test]`'s default **current-thread** runtime (no
-/// `flavor = "multi_thread"` anywhere in this crate): a task can never
-/// migrate to a different OS thread mid-await on that runtime, so the
-/// thread-local override stays active for every task polled while it
-/// is held, not only the top-level one.
-///
-/// `callsite::rebuild_interest_cache()` is required alongside it:
-/// `tracing`'s per-callsite interest is cached the first time each
-/// span callsite fires, and an earlier DB-gated test in this same
-/// process has already fired every `sea_orm::driver::*` callsite under
-/// whatever subscriber `App::init_logger` installed — which does not
-/// raise its filter to `trace` for third-party spans. Without a forced
-/// rebuild, that stale "not interesting" verdict would stick and this
-/// layer would silently see zero spans forever.
-async fn count_queries<F, Fut, T>(f: F) -> (T, usize)
+/// Run `f`, returning its result plus the number of statements (`SeaORM`
+/// and sqlx) the app ran meanwhile. The test is `#[serial]`, so nothing
+/// else in this process runs statements while it is counted.
+async fn count_queries<F, Fut, T>(f: F) -> (T, u64)
 where
     F: FnOnce() -> Fut,
     Fut: Future<Output = T>,
 {
-    let counter = Arc::new(AtomicUsize::new(0));
-    let layer = QueryCountLayer {
-        counter: counter.clone(),
-    };
-    let subscriber = tracing_subscriber::registry().with(layer);
-    let guard = tracing::subscriber::set_default(subscriber);
-    tracing_core::callsite::rebuild_interest_cache();
+    let before = project_portfolio_management::query_count::total();
     let result = f().await;
-    drop(guard);
-    tracing_core::callsite::rebuild_interest_cache();
-    (result, counter.load(Ordering::SeqCst))
+    let after = project_portfolio_management::query_count::total();
+    (result, after - before)
 }
 
 /// Create one plan and one allocation for it; returns the plan pid.

@@ -163,14 +163,11 @@ pub(crate) async fn find_live_plan(
     ctx: &axa::AppContext,
     raw: &str,
 ) -> axa::Result<crate::models::_entities::plans::Model> {
-    use crate::models::_entities::plans;
-    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-    plans::Entity::find()
-        .filter(plans::Column::Pid.eq(parse_pid(raw)?))
-        .filter(plans::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    let pid = parse_pid(raw)?;
+    sqlx::query_as("SELECT * FROM plans WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+        .bind(pid)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?
         .ok_or(axa::Error::NotFound)
 }
 
@@ -184,16 +181,15 @@ pub(crate) async fn find_live_task(
     plan: uuid::Uuid,
     raw: &str,
 ) -> axa::Result<crate::models::_entities::tasks::Model> {
-    use crate::models::_entities::tasks;
-    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-    tasks::Entity::find()
-        .filter(tasks::Column::Pid.eq(parse_pid(raw)?))
-        .filter(tasks::Column::PlanPid.eq(plan))
-        .filter(tasks::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(axa::Error::NotFound)
+    let pid = parse_pid(raw)?;
+    sqlx::query_as(
+        "SELECT * FROM tasks WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(axa::Error::NotFound)
 }
 
 /// Take the transaction-scoped advisory lock for `scope` and `key` (CQ-12) on a `sqlx` transaction

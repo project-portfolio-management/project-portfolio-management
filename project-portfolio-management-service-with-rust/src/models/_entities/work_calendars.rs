@@ -1,18 +1,18 @@
-//! `SeaORM` Entity — `work_calendars`. A working calendar (SC-2): the weekdays that work and a list of holidays, for one plan or one person. A task is scheduled on its plan's calendar; an assigned person's own calendar (plus their recorded absences) narrows it. Also adds the per-task date constraint and deadline columns the critical-path engine reads.
+//! Row — `work_calendars`. A working calendar (SC-2): the weekdays that work and a list of holidays, for one plan or
+//! one person. A task is scheduled on its plan's calendar; an assigned person's own calendar (plus their recorded
+//! absences) narrows it. Also adds the per-task date constraint and deadline columns the critical-path engine reads.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "work_calendars")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub scope: String,
     pub subject: String,
@@ -20,6 +20,3 @@ pub struct Model {
     pub holidays: Json,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

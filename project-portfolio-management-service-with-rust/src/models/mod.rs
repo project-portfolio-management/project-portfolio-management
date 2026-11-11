@@ -1,16 +1,12 @@
-//! Domain models: the `SeaORM` entity and CRUD helpers over the stored
-//! `project_portfolio_management_matcher::Plan` payload.
+//! Domain models: the row structs ([`_entities`]) and helpers over them, the stored
+//! `project_portfolio_management_matcher::Plan` payload among them.
 
 pub mod _entities;
 pub mod audit_logs;
-pub mod behaviors;
-pub mod canvases;
 pub mod capabilities;
 pub mod event_outbox;
 pub mod governance;
 pub mod merge_records;
 pub mod plans;
-pub mod saved_views;
-pub mod strategy;
 pub mod visibility;
 pub mod webhook_deliveries;

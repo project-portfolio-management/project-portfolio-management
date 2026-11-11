@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `peer_demand_sends`. The latest outcome of sending a programme's demand on a linked pool for a
+//! Row — `peer_demand_sends`. The latest outcome of sending a programme's demand on a linked pool for a
 //! month to the workforce service (FB-3). No token and no person is stored.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "peer_demand_sends")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub pool_pid: Uuid,
     pub plan_pid: Uuid,
@@ -29,6 +27,3 @@ pub struct Model {
     pub outcome: String,
     pub detail: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

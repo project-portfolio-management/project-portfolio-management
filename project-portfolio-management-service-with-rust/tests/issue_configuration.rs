@@ -16,9 +16,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [71; 32];
 const ISSUER: &str = "authentication-service";
@@ -81,9 +81,8 @@ fn set_up(keys: &Value) {
 
 /// Each test starts from the migrated catalogue, with no leftover type, role or issue workflow.
 async fn clean(ctx: &AppContext) {
-    ctx.db
-        .execute_unprepared(
-            "DELETE FROM workflows WHERE applies_to = 'issue';
+    sqlx::raw_sql(
+        "DELETE FROM workflows WHERE applies_to = 'issue';
              DELETE FROM plan_role_members;
              DELETE FROM plan_issue_types;
              DELETE FROM organization_roles;
@@ -92,9 +91,10 @@ async fn clean(ctx: &AppContext) {
              DELETE FROM issue_types WHERE key NOT IN
                  ('bug', 'risk', 'blocker', 'question', 'improvement', 'concern');
              UPDATE issue_types SET retired_at = NULL;",
-        )
-        .await
-        .expect("clean");
+    )
+    .execute(project_portfolio_management::db::pool(ctx))
+    .await
+    .expect("clean");
 }
 
 fn triage_workflow(name: &str, issue_type: Option<&str>, plan: Option<&str>) -> Value {
@@ -433,19 +433,15 @@ async fn a_workflow_can_restrict_a_move_by_type_and_role_and_a_status_counts_by_
             .json();
         let text = register.to_string();
         assert!(text.contains("signed_off"), "{text}");
-        let audited = ctx
-            .db
-            .query_one_raw(sea_orm::Statement::from_string(
-                sea_orm::DbBackend::Postgres,
-                format!(
-                    "SELECT count(*)::bigint AS n FROM audit_logs WHERE action = 'issue_changed' \
+        let audited = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT count(*)::bigint AS n FROM audit_logs WHERE action = 'issue_changed' \
                      AND entity_pid = '{pid}'"
-                ),
-            ))
-            .await
-            .expect("audit query")
-            .expect("audit row");
-        assert_eq!(audited.try_get::<i64>("", "n").ok(), Some(3));
+        )))
+        .fetch_optional(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("audit query")
+        .expect("audit row");
+        assert_eq!(audited.try_get::<i64, _>("n").ok(), Some(3));
     })
     .await;
 }
@@ -802,20 +798,16 @@ async fn the_catalogues_and_workflows_keep_what_they_should() {
             .await;
         assert_eq!(gone.status_code(), 200, "{}", gone.text());
         for action in ["workflow_registered", "workflow_withdrawn"] {
-            let row = ctx
-                .db
-                .query_one_raw(sea_orm::Statement::from_string(
-                    sea_orm::DbBackend::Postgres,
-                    format!(
-                        "SELECT count(*)::bigint AS n FROM audit_logs WHERE action = '{action}' \
+            let row = sqlx::query(sqlx::AssertSqlSafe(format!(
+                "SELECT count(*)::bigint AS n FROM audit_logs WHERE action = '{action}' \
                          AND entity_pid = '{plan}' AND snapshot::text LIKE '%{wf}%' \
                          AND snapshot::text LIKE '%change-manager%'"
-                    ),
-                ))
-                .await
-                .expect("audit query")
-                .expect("audit row");
-            assert_eq!(row.try_get::<i64>("", "n").ok(), Some(1), "{action}");
+            )))
+            .fetch_optional(project_portfolio_management::db::pool(&ctx))
+            .await
+            .expect("audit query")
+            .expect("audit row");
+            assert_eq!(row.try_get::<i64, _>("n").ok(), Some(1), "{action}");
         }
     })
     .await;
@@ -2116,22 +2108,18 @@ async fn an_issues_times_come_from_its_moves_and_nothing_is_guessed() {
         assert_eq!(kept["occurred_at"], stated["occurred_at"]);
         assert_eq!(kept["detected_at"], stated["detected_at"]);
         assert!(kept["acknowledged_at"].is_null(), "a save is not a move");
-        let audit = ctx
-            .db
-            .query_one_raw(sea_orm::Statement::from_string(
-                sea_orm::DatabaseBackend::Postgres,
-                format!(
-                    "SELECT count(*)::bigint AS n FROM audit_logs WHERE action = 'issue_changed'
+        let audit = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT count(*)::bigint AS n FROM audit_logs WHERE action = 'issue_changed'
                      AND entity_pid = '{pid}'
                      AND snapshot -> 'to' ->> 'occurred_at' IS NOT NULL
                      AND snapshot -> 'from' ->> 'occurred_at' IS NULL"
-                ),
-            ))
-            .await
-            .expect("audit")
-            .expect("row");
+        )))
+        .fetch_optional(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("audit")
+        .expect("row");
         assert_eq!(
-            audit.try_get::<i64>("", "n").expect("n"),
+            audit.try_get::<i64, _>("n").expect("n"),
             1,
             "the correction is audited"
         );
@@ -2170,14 +2158,14 @@ async fn an_issues_times_come_from_its_moves_and_nothing_is_guessed() {
 
         // An issue from before times were kept: already resolved, with no time. Saving it invents none,
         // and closing it records the closing only.
-        ctx.db
-            .execute_unprepared(&format!(
-                "UPDATE issues SET reported_at = NULL, acknowledged_at = NULL, resolved_at = NULL,
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
+            "UPDATE issues SET reported_at = NULL, acknowledged_at = NULL, resolved_at = NULL,
                      status = 'resolved', status_category = 'done', resolved_on = '2025-06-01'
                  WHERE pid = '{pid}'"
-            ))
-            .await
-            .expect("age the issue");
+        )))
+        .execute(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("age the issue");
         let saved = read(json!({ "title": "Old, renamed" })).await;
         assert!(saved["reported_at"].is_null(), "{saved}");
         assert!(saved["resolved_at"].is_null(), "{saved}");

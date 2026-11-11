@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `criterion_evidence`. Append-only: whether a criterion was met in a quarter, with the evidence (EX-10).
+//! Row — `criterion_evidence`. Append-only: whether a criterion was met in a quarter, with the evidence (EX-10).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "criterion_evidence")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub criterion_pid: Uuid,
     /// `YYYY-Qn`.
@@ -23,6 +21,3 @@ pub struct Model {
     pub recorded_by: Option<String>,
     pub recorded_on: Date,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

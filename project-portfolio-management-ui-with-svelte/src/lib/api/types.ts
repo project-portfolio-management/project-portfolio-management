@@ -243,7 +243,7 @@ export interface MergeResponse {
 
 /**
  * One row of `GET /api/plans/merges/recent` — the `merge_records` table
- * as SeaORM serializes it (`src/models/_entities/merge_records.rs`).
+ * as the service serializes its row (`src/models/_entities/merge_records.rs`).
  */
 export interface MergeRecordRow {
   /** When the merge was recorded (RFC 3339 with offset). */

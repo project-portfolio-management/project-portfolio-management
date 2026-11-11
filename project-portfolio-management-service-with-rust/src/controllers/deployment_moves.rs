@@ -328,7 +328,7 @@ async fn decide(
                 ),
             ));
         }
-        // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+        // `fetch_one`: an update that finds no row is an error, as before SQ-1.
         sqlx::query_scalar::<_, i32>("UPDATE tasks SET start_date = $1 WHERE id = $2 RETURNING id")
             .bind(Some(m.to_start))
             .bind(task.id)

@@ -140,7 +140,7 @@ async fn claim(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Option<
         return Ok(None);
     }
     let pid = Uuid::new_v4();
-    // The columns `SeaORM`'s insert set, no more (`created_at`, `updated_at` and `id` are the table's defaults).
+    // The columns the insert set before SQ-1, no more (`created_at`, `updated_at` and `id` are the table's defaults).
     sqlx::query(
         "INSERT INTO scheduled_job_runs (pid, job, started_at, outcome) VALUES ($1, $2, $3, $4)",
     )
@@ -236,7 +236,7 @@ pub async fn run_job(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<R
         .fetch_optional(txn.conn())
         .await?;
     if let Some(id) = row {
-        // The three columns `SeaORM`'s update set, by id; no row back is an error, as its was.
+        // The three columns the update set before SQ-1, by id; no row back is an error, as its was.
         sqlx::query_scalar::<_, i64>(
             "UPDATE scheduled_job_runs SET finished_at = $1, outcome = $2, detail = $3 WHERE id = $4
              RETURNING id",

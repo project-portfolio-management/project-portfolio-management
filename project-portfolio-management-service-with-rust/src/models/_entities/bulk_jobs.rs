@@ -1,18 +1,18 @@
-//! `SeaORM` Entity — `bulk_jobs`. One bulk import or export job (T-8, spec `bulk-import-export.md` §2). `UNIQUE (entity, kind, idempotency_key)` makes a retried request return the original job. The counters always reconcile: `rows_total = created + updated + unchanged + queued_for_review + failed`. A job is never deleted; only its artifacts expire.
+//! Row — `bulk_jobs`. One bulk import or export job (T-8, spec `bulk-import-export.md` §2). `UNIQUE (entity, kind,
+//! idempotency_key)` makes a retried request return the original job. The counters always reconcile: `rows_total =
+//! created + updated + unchanged + queued_for_review + failed`. A job is never deleted; only its artifacts expire.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "bulk_jobs")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub entity: String,
     pub kind: String,
@@ -38,6 +38,3 @@ pub struct Model {
     pub cancel_requested_at: Option<DateTimeWithTimeZone>,
     pub cancelled_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

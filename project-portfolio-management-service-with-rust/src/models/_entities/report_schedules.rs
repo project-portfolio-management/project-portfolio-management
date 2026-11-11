@@ -1,18 +1,17 @@
-//! `SeaORM` Entity — `report_schedules`. A saved report run on a cadence (T-28e): each due run is stored as an expiring artifact and audited like an export, even at zero rows. Dates are UTC calendar dates (a portfolio view, not a personal one).
+//! Row — `report_schedules`. A saved report run on a cadence (T-28e): each due run is stored as an expiring artifact
+//! and audited like an export, even at zero rows. Dates are UTC calendar dates (a portfolio view, not a personal one).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "report_schedules")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub report_pid: Uuid,
     pub owner: String,
@@ -28,6 +27,3 @@ pub struct Model {
     pub last_error: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

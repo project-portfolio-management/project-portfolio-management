@@ -312,7 +312,7 @@ pub(super) async fn run(
                 .clone()
                 .map_or((None, None), |(k, d)| (Some(k), Some(d)));
             if let Some(row) = existing.get(&p.ext) {
-                // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+                // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
                 sqlx::query_scalar::<_, i32>(
                     "UPDATE tasks
                      SET title = $1, start_date = $2, duration_days = $3, constraint_kind = $4, constraint_date = $5,
@@ -339,7 +339,7 @@ pub(super) async fn run(
                     StatusChoice::Initial => initial.clone(),
                 };
                 let task_pid = Uuid::new_v4();
-                // The columns `SeaORM`'s insert set, no more.
+                // The columns the insert set before SQ-1, no more.
                 sqlx::query(
                     "INSERT INTO tasks
                          (pid, plan_pid, title, description, status, start_date, duration_days, constraint_kind,

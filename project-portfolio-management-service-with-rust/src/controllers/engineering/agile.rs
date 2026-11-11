@@ -350,7 +350,7 @@ pub(super) async fn convert_note(
     .fetch_one(tx.conn())
     .await?;
     let note_pid = note.pid;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let updated: sprint_notes::Model =
         sqlx::query_as("UPDATE sprint_notes SET task_pid = $1 WHERE id = $2 RETURNING *")
             .bind(task.pid)

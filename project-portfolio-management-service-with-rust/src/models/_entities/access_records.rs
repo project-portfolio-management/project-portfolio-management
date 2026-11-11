@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `access_records`. Access granted or revoked, append-only.
+//! Row — `access_records`. Access granted or revoked, append-only.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "access_records")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub case_pid: Option<Uuid>,
@@ -24,6 +22,3 @@ pub struct Model {
     pub recorded_by: Option<String>,
     pub note: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

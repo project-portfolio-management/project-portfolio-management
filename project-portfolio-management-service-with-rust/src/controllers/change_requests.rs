@@ -170,7 +170,7 @@ async fn create(
     let plan = find_item(&ctx, &pid).await?;
     validate(&b)?;
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     let row: change_requests::Model = sqlx::query_as(
         "INSERT INTO change_requests
              (pid, plan_pid, title, description, reason, kind, impact_schedule_days, impact_cost_minor, cost_currency,
@@ -234,7 +234,7 @@ async fn update(
     }
     validate(&b)?;
     let mut tx = crate::db::begin(&ctx).await?;
-    // By id, the nine columns `SeaORM`'s update named; no row back is an error, as its was.
+    // By id, the nine columns the update named before SQ-1; no row back is an error, as its was.
     let row: change_requests::Model = sqlx::query_as(
         "UPDATE change_requests
          SET title = $1, description = $2, reason = $3, kind = $4, impact_schedule_days = $5, impact_cost_minor = $6,
@@ -357,7 +357,8 @@ async fn step(
         ));
     };
     let from = row.status.clone();
-    // By id, the status and the step's own columns, as `SeaORM`'s update named; no row back is an error, as its was.
+    // By id, the status and the step's own columns, as the update named before SQ-1; no row back is an error, as its
+    // was.
     let mut update = sqlx::QueryBuilder::new("UPDATE change_requests SET status = ");
     update.push_bind(to);
     if let Some(approver) = fields.approver_ref {
@@ -593,7 +594,7 @@ async fn put_links(
         return Err(unprocessable("every risk must be a risk of this plan"));
     }
     // Issues: clear the ones no longer listed, set the ones listed.
-    // `<> ALL` of an empty list is true, as `SeaORM`'s `NOT IN ()` was (it writes that as always true).
+    // `<> ALL` of an empty list is true, as the empty `NOT IN ()` was before SQ-1 (always true).
     sqlx::query(
         "UPDATE issues SET change_request_pid = NULL WHERE change_request_pid = $1 AND pid <> ALL($2)",
     )
@@ -700,7 +701,7 @@ async fn baseline(
         .collect();
     let taken = super::schedule_baselines::take(&ctx, &caller, plan.pid, reason).await?;
     let mut tx = crate::db::begin(&ctx).await?;
-    // By id, the one column `SeaORM`'s update named; no row back is an error, as its was. Only the pid is used.
+    // By id, the one column the update named before SQ-1; no row back is an error, as its was. Only the pid is used.
     let row_pid: Uuid = sqlx::query_scalar(
         "UPDATE change_requests SET baseline_pid = $1 WHERE id = $2 RETURNING pid",
     )

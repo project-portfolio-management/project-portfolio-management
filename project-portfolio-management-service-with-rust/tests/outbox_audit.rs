@@ -14,10 +14,9 @@
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::{audit_logs, plans};
+use project_portfolio_management::models::_entities::audit_logs;
 use project_portfolio_management::streaming;
 use project_portfolio_management_matcher::Plan;
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use serial_test::serial;
 
 #[tokio::test]
@@ -42,9 +41,9 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
 
         // Entity committed.
         assert_eq!(
-            plans::Entity::find()
-                .filter(plans::Column::Pid.eq(model.pid))
-                .count(&ctx.db)
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plans WHERE pid = $1")
+                .bind(model.pid)
+                .fetch_one(project_portfolio_management::db::pool(&ctx))
                 .await
                 .expect("count plans"),
             1,
@@ -57,7 +56,7 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
                  JOIN axa_outbox_owed o ON o.event_id = e.event_id WHERE e.key = $1",
         )
         .bind(model.pid.to_string())
-        .fetch_all(ctx.db.get_postgres_connection_pool())
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
         .await
         .expect("load outbox rows");
         assert_eq!(
@@ -68,11 +67,13 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
 
         // ...and the audit row rode the SAME transaction (§3) — not a
         // best-effort after-commit side channel.
-        let audits = audit_logs::Entity::find()
-            .filter(audit_logs::Column::EntityPid.eq(model.pid))
-            .all(&ctx.db)
-            .await
-            .expect("load audit rows");
+        let audits = sqlx::query_as::<_, audit_logs::Model>(
+            "SELECT * FROM audit_logs WHERE entity_pid = $1",
+        )
+        .bind(model.pid)
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("load audit rows");
         assert_eq!(audits.len(), 1, "one audit_logs row, atomic with the event");
         assert_eq!(audits[0].action, "created");
         assert_eq!(audits[0].actor.as_deref(), Some(actor));

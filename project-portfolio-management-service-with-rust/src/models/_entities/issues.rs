@@ -1,22 +1,19 @@
-//! `SeaORM` Entity — `issues`. Something that has already happened and needs managing, under a plan.
+//! Row — `issues`. Something that has already happened and needs managing, under a plan.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "issues")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub title: String,
-    #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     /// A key in `issue_types`.
     pub kind: String,
@@ -31,7 +28,6 @@ pub struct Model {
     pub raised_by: Option<String>,
     pub raised_on: Date,
     pub due_date: Option<Date>,
-    #[sea_orm(column_type = "Text", nullable)]
     pub resolution: Option<String>,
     pub resolved_on: Option<Date>,
     /// When it was reported. None on an issue from before times were kept.
@@ -51,6 +47,3 @@ pub struct Model {
     pub change_request_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

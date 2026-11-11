@@ -6,7 +6,6 @@
 //! Run with `cargo test --test drum_pipeline -- --ignored`.
 
 #![expect(
-    clippy::items_after_statements,
     clippy::many_single_char_names,
     reason = "request-level test: long, linear, short names; recorded under CQ-14"
 )]
@@ -20,6 +19,7 @@ use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -122,14 +122,14 @@ async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
         assert_eq!((v["state"].as_str(), v["reason"].as_str()), (Some("no_drum"), Some("no_skill_pools")), "{v}");
 
         let (apollo, gemini, secret) = (mk("Apollo").await, mk("Gemini").await, mk("Secret").await);
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let eng: Value = with!(request.post("/api/skill-pools"), writer).json(&json!({ "name": "Engineering", "roles": ["Developer"] })).await.json();
         let design: Value = with!(request.post("/api/skill-pools"), writer).json(&json!({ "name": "Design", "roles": ["Designer"] })).await.json();
         let (eng, design) = (eng["pid"].as_str().unwrap().to_string(), design["pid"].as_str().unwrap().to_string());
-        ctx.db.execute_unprepared("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), 'person:d1', 'Developer', now(), now())").await.unwrap();
+        sqlx::raw_sql("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), 'person:d1', 'Developer', now(), now())").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let alloc = |plan: &str, who: &str, percent: i32| format!("INSERT INTO allocations (pid, plan_pid, person_ref, role, percent, start_date, end_date, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{plan}', '{who}', 'Developer', {percent}, '{first}', '{last}', '[]', now(), now())");
         for sql in [alloc(&apollo, "person:d1", 100), alloc(&gemini, "person:d2", 100), alloc(&secret, "person:s1", 100)] {
-            ctx.db.execute_unprepared(&sql).await.unwrap();
+            sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         }
 
         // No drum named: the most overloaded pool (Engineering: 2.0 asked of 1.0).
@@ -156,9 +156,8 @@ async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
 
         // The service proposes and never moves: the allocations are as they were.
         let n: i64 = {
-            use sea_orm::{ConnectionTrait, Statement, DatabaseBackend};
-            let r = ctx.db.query_one_raw(Statement::from_string(DatabaseBackend::Postgres, format!("SELECT count(*) AS n FROM allocations WHERE start_date = '{first}'"))).await.unwrap().unwrap();
-            r.try_get("", "n").unwrap()
+            let r = sqlx::query(sqlx::AssertSqlSafe(format!("SELECT count(*) AS n FROM allocations WHERE start_date = '{first}'"))).fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().unwrap();
+            r.try_get("n").unwrap()
         };
         assert_eq!(n, 3);
 
@@ -180,8 +179,7 @@ async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
 
         assert_eq!(get("/api/portfolio-pipeline?months=0".into(), writer.clone()).await.0, 422);
         assert_eq!(get("/api/portfolio-pipeline?from=nope".into(), writer.clone()).await.0, 422);
-        use sea_orm::ConnectionTrait;
-        assert!(ctx.db.execute_unprepared("DELETE FROM portfolio_drums").await.is_err(), "the history is append-only");
+        assert!(sqlx::raw_sql("DELETE FROM portfolio_drums").execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "the history is append-only");
     })
     .await;
 }

@@ -14,6 +14,7 @@ use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
 use serde::Deserialize;
+use uuid::Uuid;
 
 use super::portfolio_resources::may_manage_people;
 use crate::auth::MaybeAuthUser;

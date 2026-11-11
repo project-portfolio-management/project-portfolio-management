@@ -7,7 +7,6 @@
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::metrics::Metrics;
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use serial_test::serial;
 
@@ -30,17 +29,13 @@ async fn a_failed_privacy_lookup_refuses_and_is_counted() {
 
         let failed = || Metrics::global().visibility_lookup_failed_total.get();
         let before = failed();
-        ctx.db
-            .execute_unprepared(
-                "ALTER TABLE plan_access_settings RENAME TO plan_access_settings_cq6",
-            )
+        sqlx::raw_sql("ALTER TABLE plan_access_settings RENAME TO plan_access_settings_cq6")
+            .execute(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("rename");
         let res = request.get(&format!("/api/plans/{pid}")).await;
-        ctx.db
-            .execute_unprepared(
-                "ALTER TABLE plan_access_settings_cq6 RENAME TO plan_access_settings",
-            )
+        sqlx::raw_sql("ALTER TABLE plan_access_settings_cq6 RENAME TO plan_access_settings")
+            .execute(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("rename back");
 
@@ -71,17 +66,13 @@ async fn a_failed_lookup_under_a_list_answers_503() {
         request.get("/api/plans").await.assert_status_ok();
 
         let before = Metrics::global().visibility_lookup_failed_total.get();
-        ctx.db
-            .execute_unprepared(
-                "ALTER TABLE plan_access_settings RENAME TO plan_access_settings_cq6",
-            )
+        sqlx::raw_sql("ALTER TABLE plan_access_settings RENAME TO plan_access_settings_cq6")
+            .execute(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("rename");
         let res = request.get("/api/plans").await;
-        ctx.db
-            .execute_unprepared(
-                "ALTER TABLE plan_access_settings_cq6 RENAME TO plan_access_settings",
-            )
+        sqlx::raw_sql("ALTER TABLE plan_access_settings_cq6 RENAME TO plan_access_settings")
+            .execute(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("rename back");
 

@@ -1,9 +1,9 @@
-//! The way to the database for `sqlx`. `SeaORM` and `sqlx` share one pool while the service moves across, so a controller can
-//! move on its own; a transaction is not shared, so one handler's writes stay on one side.
+//! The way to the database. `AppContext::db` is `sqlx`'s pool (axa's `sqlx` feature), and every statement of the
+//! service's own goes through [`pool`] or a [`begin`] transaction.
 //!
-//! Every statement goes through [`Counted`], so [`crate::query_count`] sees `sqlx` as it sees `SeaORM`. A guard over that
-//! count can then not pass by seeing nothing. Nothing else in the service takes the raw pool: a census test below holds
-//! that.
+//! Every statement goes through [`Counted`], so [`crate::query_count`] sees each one. A guard over that count can then
+//! not pass by seeing nothing. Nothing else in the service, its tests or its benches takes the raw pool: a census test
+//! below holds that.
 
 use axa::AppContext;
 use futures_core::future::BoxFuture;
@@ -54,7 +54,7 @@ impl<'c, X: Executor<'c, Database = Postgres>> Executor<'c> for Counted<X> {
 /// The shared pool, counted.
 #[must_use]
 pub fn pool(ctx: &AppContext) -> Counted<&PgPool> {
-    Counted(ctx.db.get_postgres_connection_pool())
+    Counted(&ctx.db)
 }
 
 /// The shared pool, **uncounted**, for an `axa` crate that runs statements of its own and takes a [`PgPool`]
@@ -62,7 +62,7 @@ pub fn pool(ctx: &AppContext) -> Counted<&PgPool> {
 /// this to run its own.
 #[must_use]
 pub fn for_axa_crate(ctx: &AppContext) -> PgPool {
-    ctx.db.get_postgres_connection_pool().clone()
+    ctx.db.clone()
 }
 
 /// The shared pool, **uncounted**, for the migration runner (`project_portfolio_management_migration`): sqlx's
@@ -70,7 +70,7 @@ pub fn for_axa_crate(ctx: &AppContext) -> PgPool {
 /// so no query-count guard is meant to see them; nothing else may use this.
 #[must_use]
 pub fn for_migrations(ctx: &AppContext) -> &PgPool {
-    ctx.db.get_postgres_connection_pool()
+    &ctx.db
 }
 
 /// An open transaction. Dropped without [`Tx::commit`], it rolls back.
@@ -121,7 +121,7 @@ impl Tx {
     }
 
     /// Rolls back now. Dropping the transaction rolls it back too, but without saying whether that worked; a
-    /// caller that answered an error when `SeaORM`'s rollback failed uses this to keep doing so.
+    /// caller that answers an error when the rollback fails (the subjects preview) uses this.
     ///
     /// # Errors
     ///
@@ -157,32 +157,87 @@ impl Session for Counted<&PgPool> {
 ///
 /// When no connection can be had.
 pub async fn begin(ctx: &AppContext) -> Result<Tx, Error> {
-    ctx.db.get_postgres_connection_pool().begin().await.map(Tx)
+    ctx.db.begin().await.map(Tx)
 }
 
 #[cfg(test)]
 mod tests {
-    /// A statement on the raw pool would go uncounted, and the query-count guards would pass without seeing it.
+    /// Whether a line of code reaches the context's pool itself: `<context>.db` as a field (not `.db_…` or a call), or
+    /// `get_postgres_connection_pool`, the way to it the service used until SQ-1 (c), anywhere on the line, as the census
+    /// always read it. A `.db` in a comment does not count.
+    fn takes_the_raw_pool(line: &str) -> bool {
+        if line.contains("get_postgres_connection_pool") {
+            return true;
+        }
+        let code = line.split("//").next().unwrap_or("");
+        code.match_indices(".db").any(|(at, _)| {
+            let next = code[at + 3..].chars().next();
+            !next.is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '(')
+        })
+    }
+
+    #[test]
+    fn the_raw_pool_is_recognised() {
+        for line in [
+            "    .fetch_all(&ctx.db)",
+            "let pool = ctx.db.clone();",
+            "boot.app_context.db.begin().await",
+            "sqlx::query(\"SELECT 1\").execute(&self.ctx.db).await",
+            "x.db",
+            "ctx.db.get_postgres_connection_pool()",
+            "// get_postgres_connection_pool",
+        ] {
+            assert!(takes_the_raw_pool(line), "{line}");
+        }
+        for line in [
+            "db::pool(&ctx)",
+            "config.database.uri",
+            "let x = self.db_name;",
+            "crate::db::begin(&ctx)",
+            "// ctx.db is the pool",
+            "let db = axa::db::connect(&config.database).await?;",
+        ] {
+            assert!(!takes_the_raw_pool(line), "{line}");
+        }
+    }
+
+    /// A statement on the raw pool would go uncounted, and the query-count guards would pass without seeing it. Every
+    /// `.rs` file under `src/`, `tests/` and `benches/` but this one; the tests reach the database through
+    /// [`super::pool`] and [`super::begin`] too (the migration tests open throwaway databases of their own). (Until
+    /// SQ-1 (c) this read `src/` alone, for `get_postgres_connection_pool`.)
     #[test]
     fn nothing_outside_this_file_takes_the_raw_pool() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut stack = vec![root];
-        let mut offenders = Vec::new();
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mut stack = vec![
+            manifest.join("src"),
+            manifest.join("tests"),
+            manifest.join("benches"),
+        ];
+        let (mut offenders, mut files) = (Vec::new(), 0_usize);
         while let Some(dir) = stack.pop() {
-            for entry in std::fs::read_dir(&dir).expect("read src") {
+            for entry in std::fs::read_dir(&dir).expect("read dir") {
                 let path = entry.expect("entry").path();
                 if path.is_dir() {
                     stack.push(path);
                 } else if path.extension().is_some_and(|e| e == "rs")
                     && !path.ends_with("src/db.rs")
-                    && std::fs::read_to_string(&path)
-                        .expect("read file")
-                        .contains("get_postgres_connection_pool")
                 {
-                    offenders.push(path.display().to_string());
+                    files += 1;
+                    let text = std::fs::read_to_string(&path).expect("read file");
+                    for (n, line) in text.lines().enumerate() {
+                        if takes_the_raw_pool(line) {
+                            offenders.push(format!(
+                                "{}:{}: {}",
+                                path.display(),
+                                n + 1,
+                                line.trim()
+                            ));
+                        }
+                    }
                 }
             }
         }
-        assert!(offenders.is_empty(), "uncounted statements: {offenders:?}");
+        assert!(files > 500, "read only {files} files");
+        assert!(offenders.is_empty(), "uncounted statements: {offenders:#?}");
     }
 }

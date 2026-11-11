@@ -9,9 +9,9 @@ use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::controllers::email_deliveries::{Delivered, deliver, run_due};
 use project_portfolio_management::email::{self, RecordingSender, SendError};
-use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use serde_json::Value;
 use serial_test::serial;
+use sqlx::Row;
 use uuid::Uuid;
 
 #[tokio::test]
@@ -26,11 +26,10 @@ async fn each_recipient_has_a_delivery_row_and_a_failure_is_recorded_not_lost() 
         unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_EMAIL_FROM", "ppm@example.org") };
         let subject = Uuid::new_v4();
         let status = |who: String| {
-            let db = ctx.db.clone();
+            let db = project_portfolio_management::db::pool(&ctx);
             async move {
-                let r = db.query_one_raw(Statement::from_string(DatabaseBackend::Postgres,
-                    format!("SELECT status, attempts, sender, coalesce(last_error, '') AS err FROM email_deliveries WHERE recipient = '{who}'"))).await.unwrap().unwrap();
-                (r.try_get::<String>("", "status").unwrap(), r.try_get::<i32>("", "attempts").unwrap(), r.try_get::<Option<String>>("", "sender").unwrap(), r.try_get::<String>("", "err").unwrap())
+                let r = sqlx::query(sqlx::AssertSqlSafe(format!("SELECT status, attempts, sender, coalesce(last_error, '') AS err FROM email_deliveries WHERE recipient = '{who}'"))).fetch_optional(db).await.unwrap().unwrap();
+                (r.try_get::<String, _>("status").unwrap(), r.try_get::<i32, _>("attempts").unwrap(), r.try_get::<Option<String>, _>("sender").unwrap(), r.try_get::<String, _>("err").unwrap())
             }
         };
 
@@ -51,7 +50,7 @@ async fn each_recipient_has_a_delivery_row_and_a_failure_is_recorded_not_lost() 
 
         // Bob's retry is not due yet; make it due and run the retry pass.
         assert_eq!(run_due(&ctx, 10).await.unwrap(), 0);
-        ctx.db.execute_unprepared("UPDATE email_deliveries SET next_attempt_at = now() - interval '1 minute' WHERE status = 'retry'").await.unwrap();
+        sqlx::raw_sql("UPDATE email_deliveries SET next_attempt_at = now() - interval '1 minute' WHERE status = 'retry'").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(run_due(&ctx, 10).await.unwrap(), 1);
         assert_eq!(status("bob@example.com".into()).await, ("sent".into(), 2, Some("recording".into()), String::new()), "two attempts; the error belongs to the last attempt, which succeeded");
         assert_eq!(rec.sent().len(), 2);

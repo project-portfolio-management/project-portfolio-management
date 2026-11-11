@@ -1,21 +1,19 @@
-//! `SeaORM` Entity — `workflow_transitions`. An **empty** set for a
+//! Row — `workflow_transitions`. An **empty** set for a
 //! workflow means unconstrained, preserving today's board behaviour.
 //! See entity spec §5.9.1.
 
-// SeaORM-generated entity shape: documented by the migration.
+// The row's shape is documented by the migration.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "workflow_transitions")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub workflow_pid: Uuid,
     pub from_key: String,
@@ -23,8 +21,3 @@ pub struct Model {
     /// Roles allowed to make this move; an empty array means anyone.
     pub roles: Json,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}

@@ -8,7 +8,6 @@
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::audit_logs;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
 use serial_test::serial;
 
@@ -93,12 +92,14 @@ async fn a_disabled_module_hides_its_routes_but_never_its_data() {
             "data survived: {risks}"
         );
 
-        let audit = audit_logs::Entity::find()
-            .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&p).unwrap()))
-            .filter(audit_logs::Column::Action.eq("plan_modules_changed"))
-            .all(&ctx.db)
-            .await
-            .expect("audit");
+        let audit = sqlx::query_as::<_, audit_logs::Model>(
+            "SELECT * FROM audit_logs WHERE entity_pid = $1 AND action = $2",
+        )
+        .bind(uuid::Uuid::parse_str(&p).unwrap())
+        .bind("plan_modules_changed")
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("audit");
         assert_eq!(audit.len(), 2, "set and reset are both audited");
     })
     .await;

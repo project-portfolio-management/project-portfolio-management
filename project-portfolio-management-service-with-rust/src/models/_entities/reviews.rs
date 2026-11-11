@@ -1,21 +1,19 @@
-//! `SeaORM` Entity — `reviews`. A collaborative-review invitation: one
+//! Row — `reviews`. A collaborative-review invitation: one
 //! subject (idea / proposal / plan) delegated to one internal or
 //! external expert, with their verdict once submitted.
 
-// SeaORM-generated entity shape: documented by the migration.
+// The row's shape is documented by the migration.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "reviews")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub subject_kind: String,
     pub subject_pid: Uuid,
@@ -32,6 +30,3 @@ pub struct Model {
     pub submitted_at: Option<DateTimeWithTimeZone>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

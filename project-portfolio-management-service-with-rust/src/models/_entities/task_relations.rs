@@ -1,24 +1,22 @@
-//! `SeaORM` Entity — `task_relations`. Typed relations between tasks (LT-10), with Redmine's concrete behaviours: `blocks` stops the blocked task closing while the blocker is open; `precedes` forbids a successor due on or before its predecessor; `duplicates` closes the duplicate when the primary closes; `related` and `copied_from` are informational. Cross-plan relations are allowed.
+//! Row — `task_relations`. Typed relations between tasks (LT-10), with Redmine's concrete behaviours: `blocks` stops
+//! the blocked task closing while the blocker is open; `precedes` forbids a successor due on or before its predecessor;
+//! `duplicates` closes the duplicate when the primary closes; `related` and `copied_from` are informational. Cross-plan
+//! relations are allowed.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "task_relations")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub from_task_pid: Uuid,
     pub to_task_pid: Uuid,
     pub kind: String,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

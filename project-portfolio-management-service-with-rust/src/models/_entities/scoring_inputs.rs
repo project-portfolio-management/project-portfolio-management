@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `scoring_inputs`. The estimated inputs of the WSJF and RICE models for one plan (NC-6).
+//! Row — `scoring_inputs`. The estimated inputs of the WSJF and RICE models for one plan (NC-6).
 //! Every input is optional; an input nobody has estimated is absent, not zero.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "scoring_inputs")]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub plan_pid: Uuid,
     pub business_value: Option<i16>,
     pub time_criticality: Option<i16>,
@@ -25,6 +23,3 @@ pub struct Model {
     pub effort: Option<f64>,
     pub set_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

@@ -14,8 +14,6 @@
 use axa_test::prelude::*;
 use axum::body::Bytes;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::audit_logs;
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use serde_json::{Value, json};
 use serial_test::serial;
 
@@ -312,12 +310,14 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
             .json();
         assert_eq!(zs["status"], "completed");
         assert_eq!(zs["counts"]["total"], 0);
-        let audited = audit_logs::Entity::find()
-            .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&zid).unwrap()))
-            .filter(audit_logs::Column::Action.eq("bulk_export"))
-            .count(&ctx.db)
-            .await
-            .expect("count");
+        let audited = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM audit_logs WHERE entity_pid = $1 AND action = $2",
+        )
+        .bind(uuid::Uuid::parse_str(&zid).unwrap())
+        .bind("bulk_export")
+        .fetch_one(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("count");
         assert_eq!(audited, 1, "a zero-row export writes its audit record");
 
         // Bad parameters.
@@ -340,26 +340,32 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
 
         // The sweep deletes an expired artifact's file and leaves its row.
         use project_portfolio_management::models::_entities::artifacts;
-        use sea_orm::{ActiveModelTrait, ActiveValue};
-        let one = artifacts::Entity::find()
-            .one(&ctx.db)
+        let one = sqlx::query_as::<_, artifacts::Model>("SELECT * FROM artifacts LIMIT 1")
+            .fetch_optional(project_portfolio_management::db::pool(&ctx))
             .await
             .unwrap()
             .unwrap();
-        let mut a: artifacts::ActiveModel = one.into();
-        a.expires_at = ActiveValue::set(Some(
-            (chrono::Utc::now() - chrono::Duration::hours(1)).into(),
-        ));
-        let expired = a.update(&ctx.db).await.unwrap();
+        let an_hour_ago: chrono::DateTime<chrono::FixedOffset> =
+            (chrono::Utc::now() - chrono::Duration::hours(1)).into();
+        let expired = sqlx::query_as::<_, artifacts::Model>(
+            "UPDATE artifacts SET expires_at = $1 WHERE id = $2 RETURNING *",
+        )
+        .bind(Some(an_hour_ago))
+        .bind(one.id)
+        .fetch_one(project_portfolio_management::db::pool(&ctx))
+        .await
+        .unwrap();
         let swept = project_portfolio_management::controllers::bulk::run_sweep(&ctx)
             .await
             .unwrap();
         assert!(swept["artifacts_deleted"].as_u64().unwrap() >= 1);
-        let after = artifacts::Entity::find_by_id(expired.id)
-            .one(&ctx.db)
-            .await
-            .unwrap()
-            .unwrap();
+        let after =
+            sqlx::query_as::<_, artifacts::Model>("SELECT * FROM artifacts WHERE id = $1 LIMIT 1")
+                .bind(expired.id)
+                .fetch_optional(project_portfolio_management::db::pool(&ctx))
+                .await
+                .unwrap()
+                .unwrap();
         assert!(
             after.storage_key.is_none(),
             "the file is gone, the row remains as a tombstone"
@@ -375,7 +381,6 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
 async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_back() {
     use project_portfolio_management::controllers::bulk::run_job;
     use project_portfolio_management::models::_entities::bulk_jobs;
-    use sea_orm::{ActiveModelTrait, ActiveValue, ConnectionTrait};
     super::isolate_search_index();
     let dir = tempfile::tempdir().expect("tempdir");
     // SAFETY: `#[serial]` — nothing else runs while this is set.
@@ -383,8 +388,8 @@ async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_b
     request::<App, _, _>(|request, ctx| async move {
         use axum::http::StatusCode as S;
         let audits = |action: &'static str| {
-            let db = ctx.db.clone();
-            async move { audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&db).await.unwrap() }
+            let db = project_portfolio_management::db::pool(&ctx);
+            async move { sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind(action).fetch_one(db).await.unwrap() }
         };
         let cancel = |id: &str| {
             let (request, url) = (&request, format!("/api/plans/bulk-jobs/{id}/cancel"));
@@ -409,20 +414,14 @@ async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_b
         assert_eq!(job(&request, &id).await["counts"]["created"], 25, "nothing was undone");
 
         // A queued job is cancelled before it ever runs, and the worker leaves it alone.
-        let queued = bulk_jobs::ActiveModel {
-            pid: ActiveValue::set(uuid::Uuid::new_v4()),
-            entity: ActiveValue::set("plan".to_string()),
-            kind: ActiveValue::set("import".to_string()),
-            status: ActiveValue::set("queued".to_string()),
-            format: ActiveValue::set("jsonl".to_string()),
-            params: ActiveValue::set(json!({})),
-            rows_total: ActiveValue::set(0), rows_created: ActiveValue::set(0), rows_updated: ActiveValue::set(0),
-            rows_unchanged: ActiveValue::set(0), rows_queued_for_review: ActiveValue::set(0),
-            rows_failed: ActiveValue::set(0), rows_omitted: ActiveValue::set(0),
-            progress: ActiveValue::set(0),
-            ..Default::default()
-        }
-        .insert(&ctx.db)
+        let queued = sqlx::query_as::<_, bulk_jobs::Model>(
+            "INSERT INTO bulk_jobs (pid, entity, kind, status, format, params, rows_total, rows_created, rows_updated, \
+             rows_unchanged, rows_queued_for_review, rows_failed, rows_omitted, progress) \
+             VALUES ($1, 'plan', 'import', 'queued', 'jsonl', $2, 0, 0, 0, 0, 0, 0, 0, 0) RETURNING *",
+        )
+        .bind(uuid::Uuid::new_v4())
+        .bind(json!({}))
+        .fetch_one(project_portfolio_management::db::pool(&ctx))
         .await
         .unwrap();
         let qid = queued.pid.to_string();
@@ -439,9 +438,9 @@ async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_b
         // A running job notices between rows, ends cancelled, keeps and counts what it did.
         // (Re-queue the finished import with the cancel flag already raised.)
         let plans_before = plan_count(&request).await;
-        ctx.db.execute_unprepared(&format!(
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
             "UPDATE bulk_jobs SET status='queued', rows_total=0, rows_created=0, rows_updated=0, rows_unchanged=0, rows_queued_for_review=0, rows_failed=0, finished_at=NULL, cancel_requested_at=now() WHERE pid='{id}'"
-        )).await.unwrap();
+        ))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         run_job(&ctx, uuid::Uuid::parse_str(&id).unwrap()).await.unwrap();
         let c = job(&request, &id).await;
         assert_eq!(c["status"], "cancelled", "{c}");
@@ -452,10 +451,10 @@ async fn a_job_can_be_cancelled_keeps_what_it_finished_and_progress_never_goes_b
         assert_eq!(audits("bulk_job_cancelled").await, 2);
 
         // Progress never goes backwards, whatever writes it.
-        ctx.db.execute_unprepared(&format!("UPDATE bulk_jobs SET progress = 60 WHERE pid='{qid}'")).await.unwrap();
-        ctx.db.execute_unprepared(&format!("UPDATE bulk_jobs SET progress = 10 WHERE pid='{qid}'")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE bulk_jobs SET progress = 60 WHERE pid='{qid}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE bulk_jobs SET progress = 10 WHERE pid='{qid}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(job(&request, &qid).await["progress"], 60);
-        assert!(ctx.db.execute_unprepared(&format!("UPDATE bulk_jobs SET progress = 101 WHERE pid='{qid}'")).await.is_err(), "out of range is refused");
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE bulk_jobs SET progress = 101 WHERE pid='{qid}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "out of range is refused");
     })
     .await;
 }

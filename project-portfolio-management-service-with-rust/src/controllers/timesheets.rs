@@ -209,7 +209,7 @@ async fn set_state(
     let now = chrono::Utc::now().fixed_offset();
     match existing {
         Some(row) => {
-            // An update names only the columns it changes, as SeaORM's did: the status; the submission stamp
+            // An update names only the columns it changes, as before SQ-1: the status; the submission stamp
             // and a cleared decision when `submitted`; the decision when `decider` (it wins over the clearing).
             let all = "UPDATE timesheet_weeks
                  SET status = $1, submitted_at = $2, decided_by = $3, decided_at = $4, decision_comment = $5

@@ -66,8 +66,6 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
     )
 }
 
-use sea_orm::ConnectionTrait;
-
 type Who = (axum::http::HeaderName, axum::http::HeaderValue);
 
 const STARTER: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
@@ -246,7 +244,7 @@ async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
         let ex: Value = start(&starter).await.json();
         let e5 = ex["pid"].as_str().unwrap().to_string();
         // A crash between the decision and the step after it: the approval is decided, nothing moved.
-        ctx.db.execute_unprepared(&format!("UPDATE approval_requests SET status='approved', decided_by='{BOB}', decided_at=now() WHERE process_execution_pid='{e5}'")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE approval_requests SET status='approved', decided_by='{BOB}', decided_at=now() WHERE process_execution_pid='{e5}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(get_ex(&e5, &starter).await["current_step"], 1, "still waiting");
         assert_eq!(with!(request.post(&format!("/api/process-executions/{e5}/resume")), dave).await.status_code(), 403);
         let resumed: Value = with!(request.post(&format!("/api/process-executions/{e5}/resume")), starter).await.json();
@@ -262,7 +260,7 @@ async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
             "UPDATE process_versions SET steps = '[]'::jsonb",
             "DELETE FROM process_versions",
         ] {
-            assert!(ctx.db.execute_unprepared(q).await.is_err(), "{q} must be refused");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(q)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{q} must be refused");
         }
 
         // ── who may start, and who may read ──

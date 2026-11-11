@@ -1,4 +1,14 @@
-//! `SeaORM` Entities.
+//! The row structs: one `Model` per table, read with `sqlx::query_as` (`sqlx::FromRow`) and, where a route answers
+//! with a row, its JSON shape (`serde`): field names, order and types as the table's columns. Plain structs, with no
+//! ORM behind them (until SQ-1 (c) they were ORM entities; the module keeps its path so callers did not change). The
+//! file name is the table's, but for `portfolio_drum` (`portfolio_drums`).
+
+/// A `TIMESTAMP WITH TIME ZONE` column.
+pub type DateTimeWithTimeZone = chrono::DateTime<chrono::FixedOffset>;
+/// A `DATE` column.
+pub type Date = chrono::NaiveDate;
+/// A `JSON` or `JSONB` column.
+pub type Json = serde_json::Value;
 
 pub mod access_records;
 pub mod adoption_snapshots;
@@ -117,7 +127,6 @@ pub mod planned_gates;
 pub mod planned_slots;
 pub mod plans;
 pub mod portfolio_drum;
-pub mod prelude;
 pub mod process_execution_logs;
 pub mod process_executions;
 pub mod process_versions;

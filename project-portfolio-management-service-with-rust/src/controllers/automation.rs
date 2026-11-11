@@ -230,7 +230,7 @@ async fn set_enabled(
     require_rule_scope(ctx, caller, row.plan_pid).await?;
     let row_pid = row.pid;
     let mut tx = crate::db::begin(ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: automations::Model =
         sqlx::query_as("UPDATE automations SET enabled = $1 WHERE id = $2 RETURNING *")
             .bind(enabled)
@@ -283,7 +283,7 @@ async fn delete_automation(
     let row_pid = row.pid;
     let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>(
         "UPDATE automations SET enabled = false, deleted_at = $1 WHERE id = $2 RETURNING id",
     )
@@ -418,7 +418,7 @@ async fn act_assign(
         );
     };
     let previous = task.assignee_ref.clone();
-    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let updated = sqlx::query_scalar::<_, i32>(
         "UPDATE tasks SET assignee_ref = $1 WHERE id = $2 RETURNING id",
     )
@@ -1291,7 +1291,7 @@ async fn cancel_scheduled_action(
     let row_pid = row.pid;
     let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>(
         "UPDATE scheduled_actions SET status = 'cancelled', deleted_at = $1 WHERE id = $2 RETURNING id",
     )

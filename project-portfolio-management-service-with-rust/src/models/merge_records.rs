@@ -3,9 +3,7 @@
 use crate::prelude::*;
 use uuid::Uuid;
 
-pub use super::_entities::merge_records::{self, ActiveModel, Entity, Model};
-
-impl ActiveModelBehavior for super::_entities::merge_records::ActiveModel {}
+pub use super::_entities::merge_records::{self, Model};
 
 impl Model {
     /// Record one merge. `actor` is the caller's `sub` when a verified

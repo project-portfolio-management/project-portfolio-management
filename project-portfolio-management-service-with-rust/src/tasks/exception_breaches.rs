@@ -63,7 +63,7 @@ pub async fn run_once(ctx: &AppContext, now: chrono::DateTime<Utc>) -> Result<us
             )
             .await?;
         }
-        // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+        // `fetch_one`: an update that finds no row is an error, as before SQ-1.
         sqlx::query_scalar::<_, i64>(
             "UPDATE delivery_exceptions SET breach_notified_at = $1 WHERE id = $2 RETURNING id",
         )

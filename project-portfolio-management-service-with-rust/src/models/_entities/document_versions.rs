@@ -1,22 +1,19 @@
-//! `SeaORM` Entity — `document_versions`. One version of a controlled document.
+//! Row — `document_versions`. One version of a controlled document.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "document_versions")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub document_pid: Uuid,
     pub version: i32,
-    #[sea_orm(column_type = "Text")]
     pub body: String,
     pub change_summary: Option<String>,
     /// `draft`, `in_review`, `approved`, `effective` or `superseded`.
@@ -27,6 +24,3 @@ pub struct Model {
     pub superseded_by: Option<Uuid>,
     pub created_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

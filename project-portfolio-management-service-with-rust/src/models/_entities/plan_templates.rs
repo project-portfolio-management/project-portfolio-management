@@ -1,18 +1,18 @@
-//! `SeaORM` Entity — `plan_templates`. A reusable plan tree (LT-2). The snapshot is self-contained JSON: once saved, a template does not depend on the plan it was captured from. It carries **no person reference and no identity** (leads, identifiers, codes), and every date is an **offset** from a base date.
+//! Row — `plan_templates`. A reusable plan tree (LT-2). The snapshot is self-contained JSON: once saved, a template
+//! does not depend on the plan it was captured from. It carries **no person reference and no identity** (leads,
+//! identifiers, codes), and every date is an **offset** from a base date.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "plan_templates")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -24,6 +24,3 @@ pub struct Model {
     /// The plan this was saved from, so it is hidden with that plan. `None` for a starter and for a template saved before OC-20.
     pub source_plan_pid: Option<Uuid>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

@@ -7,9 +7,7 @@ use crate::prelude::*;
 use project_portfolio_management_matcher::Plan as MatchPlan;
 use uuid::Uuid;
 
-pub use super::_entities::plans::{self, ActiveModel, Entity, Model};
-
-impl ActiveModelBehavior for super::_entities::plans::ActiveModel {}
+pub use super::_entities::plans::{self, Model};
 
 /// Parse a `parent_ref` payload string into the denormalized
 /// `parent_pid` column value: `Some(uuid)` when it is a valid UUID,

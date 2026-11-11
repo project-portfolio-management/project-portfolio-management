@@ -1,18 +1,18 @@
-//! `SeaORM` Entity — `feed_tokens`. Revocable secrets that let a calendar app or feed reader read one person's own feeds without a bearer token (LT-7 / RM-6). Only the SHA-256 of the token is stored, so a database read never yields a usable token; revoking sets `revoked_at` and takes effect on the next fetch.
+//! Row — `feed_tokens`. Revocable secrets that let a calendar app or feed reader read one person's own feeds without a
+//! bearer token (LT-7 / RM-6). Only the SHA-256 of the token is stored, so a database read never yields a usable token;
+//! revoking sets `revoked_at` and takes effect on the next fetch.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "feed_tokens")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub sub: String,
     pub token_hash: String,
@@ -20,6 +20,3 @@ pub struct Model {
     pub revoked_at: Option<DateTimeWithTimeZone>,
     pub last_used_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

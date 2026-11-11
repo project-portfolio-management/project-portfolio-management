@@ -1,22 +1,17 @@
-//! `SeaORM` Entity — `onboarding_templates`. A custom checklist template for one kind; the built-in one applies when none exists.
+//! Row — `onboarding_templates`. A custom checklist template for one kind; the built-in one applies when none exists.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "onboarding_templates")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub kind: String,
     pub items: Json,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

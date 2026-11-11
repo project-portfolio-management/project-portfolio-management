@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `programme_thresholds`. A programme's pause, reset or stop threshold (EX-7).
+//! Row — `programme_thresholds`. A programme's pause, reset or stop threshold (EX-7).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "programme_thresholds")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     /// `confidence_red_packs`, `forecast_past` or `p80_cap`.
@@ -22,6 +20,3 @@ pub struct Model {
     pub amount_minor: Option<i64>,
     pub currency: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

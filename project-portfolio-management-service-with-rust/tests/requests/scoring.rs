@@ -6,9 +6,9 @@
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use serial_test::serial;
+use sqlx::Row;
 
 #[tokio::test]
 #[serial]
@@ -93,11 +93,8 @@ async fn plans_are_ranked_by_wsjf_and_rice_from_their_estimated_inputs() {
         assert!(request.get("/api/prioritization").await.json::<Value>().get("model").is_none());
 
         // Setting inputs is audited with the before and after.
-        let row = ctx.db.query_one_raw(sea_orm::Statement::from_string(
-            sea_orm::DatabaseBackend::Postgres,
-            "SELECT snapshot::text AS s FROM audit_logs WHERE action = 'scoring_inputs_set' ORDER BY id DESC LIMIT 1",
-        )).await.unwrap().expect("an audit row");
-        let snap: Value = serde_json::from_str(&row.try_get::<String>("", "s").unwrap()).unwrap();
+        let row = sqlx::query("SELECT snapshot::text AS s FROM audit_logs WHERE action = 'scoring_inputs_set' ORDER BY id DESC LIMIT 1").fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().expect("an audit row");
+        let snap: Value = serde_json::from_str(&row.try_get::<String, _>("s").unwrap()).unwrap();
         assert_eq!(snap["before"]["job_size"], 2);
         assert_eq!(snap["after"]["job_size"], Value::Null);
     })

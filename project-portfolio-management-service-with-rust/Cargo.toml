@@ -19,8 +19,8 @@ include = ["src/**/*", "README.md"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
-# The plumbing every service shares. `sea-orm` is transitional, until this crate has moved to sqlx.
-axa = { version = "0.11", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "sea-orm"] }
+# The plumbing every service shares. `sqlx` makes `AppContext::db` sqlx's `PgPool` (spec §8.3b).
+axa = { version = "0.11", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "sqlx"] }
 
 [dependencies]
 # Keyed integrity MACs with production-grade key handling — one audited
@@ -63,15 +63,13 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # rest of the family, so one index format.
 tantivy = { version = "0.27" }
 project-portfolio-management-migration = { version = "0.2.0", path = "migration" }
-sea-orm = { version = "2.0", features = [
-  "sqlx-postgres",
-  "runtime-tokio-rustls",
-  "macros",
-] }
-# Plain SQL, replacing SeaORM one controller at a time on the same pool.
+# Plain SQL, through `src/db.rs` (spec §8.3b).
 futures-core = "0.3"
 sqlx = { version = "0.9", default-features = false, features = ["chrono", "derive", "json", "postgres", "runtime-tokio", "rust_decimal", "uuid"] }
-chrono = { version = "0.4" }
+# `serde` for the row structs' JSON (`src/models/_entities`).
+chrono = { version = "0.4", features = ["serde"] }
+# `total_project_control`'s `NUMERIC` columns; `serde` keeps its row's JSON (a string), as before.
+rust_decimal = { version = "1", default-features = false, features = ["serde", "std"] }
 # IANA zones for per-request "today" (LT-3 / LT-9). Never read from the process.
 chrono-tz = { version = "0.10" }
 uuid = { version = "1.29", features = ["v4", "serde"] }

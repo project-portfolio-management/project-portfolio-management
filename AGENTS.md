@@ -57,6 +57,9 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
   given an explicit `toolchain:` input; bump both by hand together with `rust-toolchain.toml` (the `fresh-clone` job checks they agree).
 - Releases: a `v*.*.*` tag must equal the service crate and UI versions; the workflow pushes an image to GHCR.
 - Use Podman (`podman compose`), not Docker, in instructions and scripts. CI still builds with Docker.
+- The service has no ORM: plain sqlx through `src/db.rs` (`db::pool(&ctx)`, `db::begin(&ctx)`), so every statement
+  is counted; `ctx.db` is the `PgPool`, and a census refuses it outside `src/db.rs`, tests included (spec §8.3b).
+  Rows are read into `src/models/_entities` (`Model` row structs, whose JSON some routes answer with).
 - Migrations are frozen SQL files in `project-portfolio-management-service-with-rust/migration/migrations/`, run by
   sqlx (`_sqlx_migrations`); never edit a released one (its checksum is checked), add a new file. A database the old
   `sea-orm-migration` runner built is bridged once from `seaql_migrations`, which stays

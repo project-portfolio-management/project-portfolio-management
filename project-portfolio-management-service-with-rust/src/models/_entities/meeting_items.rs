@@ -1,16 +1,15 @@
-//! `SeaORM` Entity — `meeting_items`. One agenda item or outcome of a meeting (NC-14).
+//! Row — `meeting_items`. One agenda item or outcome of a meeting (NC-14).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "meeting_items")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
     pub meeting_pid: Uuid,
     pub part: String,
@@ -19,6 +18,3 @@ pub struct Model {
     pub link_kind: Option<String>,
     pub link_pid: Option<Uuid>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

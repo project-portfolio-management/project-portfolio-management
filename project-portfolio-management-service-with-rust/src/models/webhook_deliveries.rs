@@ -9,10 +9,7 @@
 
 use crate::prelude::*;
 
-pub use super::_entities::webhook_deliveries::{self, ActiveModel, Entity, Model};
-
-/// Default `SeaORM` active-model behaviour — no custom hooks.
-impl ActiveModelBehavior for super::_entities::webhook_deliveries::ActiveModel {}
+pub use super::_entities::webhook_deliveries::{self, Model};
 
 /// One delivery outcome to record.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,7 +39,7 @@ impl Model {
     ///
     /// When the insert fails.
     pub async fn record(ctx: &AppContext, outcome: &DeliveryOutcome) -> Result<i32> {
-        // The columns `SeaORM`'s insert set, no more (`created_at` is the table's default).
+        // The columns the insert set before SQ-1, no more (`created_at` is the table's default).
         let id = sqlx::query_scalar(
             "INSERT INTO webhook_deliveries
                  (event_id, entity, kind, url, attempts, status, status_code, error)

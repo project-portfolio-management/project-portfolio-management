@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `programme_triages`. Append-only: a dated triage of a programme (EX-7).
+//! Row — `programme_triages`. Append-only: a dated triage of a programme (EX-7).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "programme_triages")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub triaged_on: Date,
@@ -21,6 +19,3 @@ pub struct Model {
     pub reason: String,
     pub decided_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

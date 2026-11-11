@@ -20,9 +20,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -124,7 +124,7 @@ async fn the_fever_chart_keeps_its_promises() {
         let bare = mk("Program", "Bare").await;
         let project = mk("Project", "A project").await;
         let secret = mk("Program", "Secret").await;
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let buf = |p: &str| format!("/api/plans/{p}/project-buffer");
 
         // A chain of 4 + 3 + 3 = 10 days, and a side task with float.
@@ -224,7 +224,7 @@ async fn the_fever_chart_keeps_its_promises() {
         assert_eq!(again.to_string(), frozen);
 
         // ── a private programme is nowhere ──
-        ctx.db.execute_unprepared(&format!("INSERT INTO programme_buffers (pid, plan_pid, buffer_days, source, declared_on, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', 5, 'declared', current_date, now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO programme_buffers (pid, plan_pid, buffer_days, source, declared_on, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', 5, 'declared', current_date, now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(with!(request.put(&buf(&secret)), writer).json(&json!({ "buffer_days": 5 })).await.status_code(), 404, "not even its creator, when it is private to others");
         assert_eq!(with!(request.get(&buf(&secret)), outsider).await.status_code(), 404);
         assert_eq!(with!(request.put(&buf(&secret)), outsider).json(&json!({ "buffer_days": 5 })).await.status_code(), 404);
@@ -238,11 +238,10 @@ async fn the_fever_chart_keeps_its_promises() {
             ("zero days", format!("INSERT INTO programme_buffers (pid, plan_pid, buffer_days, source, declared_on, created_at, updated_at) VALUES (gen_random_uuid(), '{prog}', 0, 'declared', current_date, now(), now())")),
             ("a rule with no rule", format!("INSERT INTO programme_buffers (pid, plan_pid, buffer_days, source, declared_on, created_at, updated_at) VALUES (gen_random_uuid(), '{prog}', 3, 'rule', current_date, now(), now())")),
         ] {
-            assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
-        let rows = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres,
-            "SELECT actor FROM audit_logs WHERE action = 'project_buffer_set'".to_string())).await.unwrap();
-        assert!(rows.len() >= 3 && rows.iter().all(|r| r.try_get::<String>("", "actor").unwrap() == WRITER));
+        let rows = sqlx::query(sqlx::AssertSqlSafe("SELECT actor FROM audit_logs WHERE action = 'project_buffer_set'".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        assert!(rows.len() >= 3 && rows.iter().all(|r| r.try_get::<String, _>("actor").unwrap() == WRITER));
     })
     .await;
 }

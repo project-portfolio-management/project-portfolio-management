@@ -1,21 +1,20 @@
-//! `SeaORM` Entity — `webhook_deliveries`. The delivery log for the
+//! Row — `webhook_deliveries`. The delivery log for the
 //! outbound webhook sink: one row per target URL's final delivery
 //! outcome for one outbox event.
 
-// SeaORM-generated entity: the field-level shape is documented by the
+// The row's field-level shape is documented by the
 // migration and the `webhook_deliveries` table.
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 /// One recorded webhook delivery outcome.
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "webhook_deliveries")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     /// Row creation timestamp.
     pub created_at: DateTimeWithTimeZone,
     /// Auto-increment pk.
-    #[sea_orm(primary_key)]
     pub id: i32,
     /// The envelope's dedup id, so this row is traceable to its
     /// `axa_outbox` row.
@@ -35,7 +34,3 @@ pub struct Model {
     /// The last error message, when the final attempt failed.
     pub error: Option<String>,
 }
-
-/// `SeaORM` relations for [`Entity`] (none defined).
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

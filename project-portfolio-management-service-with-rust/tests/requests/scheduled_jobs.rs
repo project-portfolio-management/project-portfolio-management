@@ -5,9 +5,8 @@
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::{audit_logs, scheduled_job_runs};
+use project_portfolio_management::models::_entities::scheduled_job_runs;
 use project_portfolio_management::scheduled_jobs::{Job, Ran, run_enabled, run_job};
-use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
 use serial_test::serial;
 
 #[tokio::test]
@@ -19,8 +18,8 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
         // Nothing is enabled in the environment, so the ticker's pass runs nothing.
         run_enabled(&ctx).await;
         assert_eq!(
-            scheduled_job_runs::Entity::find()
-                .count(&ctx.db)
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scheduled_job_runs")
+                .fetch_one(project_portfolio_management::db::pool(&ctx))
                 .await
                 .unwrap(),
             0
@@ -40,10 +39,11 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
             .count();
         assert_eq!((ran, skipped), (1, 1), "{a:?} {b:?}");
 
-        let rows = scheduled_job_runs::Entity::find()
-            .all(&ctx.db)
-            .await
-            .unwrap();
+        let rows =
+            sqlx::query_as::<_, scheduled_job_runs::Model>("SELECT * FROM scheduled_job_runs")
+                .fetch_all(project_portfolio_management::db::pool(&ctx))
+                .await
+                .unwrap();
         assert_eq!(rows.len(), 1);
         assert_eq!(
             (rows[0].job.as_str(), rows[0].outcome.as_str()),
@@ -53,12 +53,14 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
 
         // Started and finished are both audited, as the scheduler.
         for action in ["scheduled_job_started", "scheduled_job_finished"] {
-            let n = audit_logs::Entity::find()
-                .filter(audit_logs::Column::Action.eq(action))
-                .filter(audit_logs::Column::EntityPid.eq(rows[0].pid))
-                .count(&ctx.db)
-                .await
-                .unwrap();
+            let n = sqlx::query_scalar::<_, i64>(
+                "SELECT COUNT(*) FROM audit_logs WHERE action = $1 AND entity_pid = $2",
+            )
+            .bind(action)
+            .bind(rows[0].pid)
+            .fetch_one(project_portfolio_management::db::pool(&ctx))
+            .await
+            .unwrap();
             assert_eq!(n, 1, "{action}");
         }
 

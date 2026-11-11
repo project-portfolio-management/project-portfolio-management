@@ -1,20 +1,18 @@
-//! `SeaORM` Entity — `controls`. The Controlling-process register.
+//! Row — `controls`. The Controlling-process register.
 //! See entity spec §5.9.8 / FR-38.
 
-// SeaORM-generated entity shape: documented by the migration.
+// The row's shape is documented by the migration.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "controls")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub name: String,
@@ -36,8 +34,3 @@ pub struct Model {
     pub enabled: bool,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}

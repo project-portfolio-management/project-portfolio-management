@@ -25,7 +25,6 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -152,9 +151,9 @@ async fn earned_value_over_the_threshold_keeps_its_promises() {
         costed(big.clone(), "Big work", 4000, 2500).await;
         costed(small.clone(), "Small work", 500, 100).await;
         let hidden_work = costed(secret.clone(), "Secret work", 9_000_000, 1).await;
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         // Privacy is per plan and is not inherited by what sits beneath, so the work is made private too.
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{hidden_work}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{hidden_work}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
 
         let live = |q: &'static str| {
             let (request, writer) = (&request, writer.clone());

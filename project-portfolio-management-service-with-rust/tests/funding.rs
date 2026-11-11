@@ -19,7 +19,6 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -114,7 +113,7 @@ async fn money_by_funding_source_keeps_its_promises() {
         let programme = mk("Program", "Digital Care", None).await;
         let project = mk("Project", "Records", Some(programme.clone())).await;
         let secret_project = mk("Project", "Secret works", Some(programme.clone())).await;
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret_project}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret_project}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         // The parent link must have taken: otherwise the lines below are not under the programme.
         let kid_row: Value = with!(request.get(&format!("/api/plans/{project}")), writer).await.json();
         assert!(kid_row.to_string().contains(&programme), "the project sits under the programme: {kid_row}");

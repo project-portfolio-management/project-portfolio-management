@@ -1,18 +1,17 @@
-//! `SeaORM` Entity — `kpis`. A standing measure with a target and a red line (KPI). Its status is derived on read from the latest reading, never stored.
+//! Row — `kpis`. A standing measure with a target and a red line (KPI). Its status is derived on read from the latest
+//! reading, never stored.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "kpis")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     /// The plan it measures; none for a portfolio-level KPI.
     pub plan_pid: Option<Uuid>,
@@ -31,6 +30,3 @@ pub struct Model {
     pub owner_ref: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

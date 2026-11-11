@@ -214,7 +214,6 @@ async fn escalating_the_red_tolerances_raises_one_each_and_only_once() {
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_scheduled_task_escalates_a_red_tolerance_once_and_waits_after_it_is_answered() {
     use project_portfolio_management::controllers::tolerances::raise_all_needed;
-    use sea_orm::ConnectionTrait;
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request
@@ -262,10 +261,9 @@ async fn the_scheduled_task_escalates_a_red_tolerance_once_and_waits_after_it_is
         assert_eq!(count(&request).await.len(), 1, "a recent one holds it back");
 
         // Raised ten days ago and still red: it is raised again.
-        ctx.db
-            .execute_unprepared(&format!(
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
                 "UPDATE escalations SET raised_on = raised_on - 10 WHERE plan_pid = '{p}'"
-            ))
+            ))).execute(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("backdate");
         raise_all_needed(&ctx, 7).await.expect("run");
@@ -279,7 +277,6 @@ async fn the_scheduled_task_escalates_a_red_tolerance_once_and_waits_after_it_is
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_person_an_escalation_names_is_told_in_their_inbox() {
     use project_portfolio_management::models::_entities::notifications;
-    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request
@@ -290,12 +287,14 @@ async fn the_person_an_escalation_names_is_told_in_their_inbox() {
         let p = plan["pid"].as_str().expect("pid").to_string();
         let who = "person:3f2b1c9e-0000-4000-8000-000000000001";
         let told = || async {
-            notifications::Entity::find()
-                .filter(notifications::Column::RecipientRef.eq(who))
-                .filter(notifications::Column::Kind.eq("escalation"))
-                .all(&ctx.db)
-                .await
-                .expect("notifications")
+            sqlx::query_as::<_, notifications::Model>(
+                "SELECT * FROM notifications WHERE recipient_ref = $1 AND kind = $2",
+            )
+            .bind(who)
+            .bind("escalation")
+            .fetch_all(project_portfolio_management::db::pool(&ctx))
+            .await
+            .expect("notifications")
         };
         let raised: Value = request
             .post(&format!("/api/plans/{p}/escalations"))

@@ -15,9 +15,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -163,16 +163,13 @@ async fn an_edit_is_a_new_version_and_following_plans_keep_theirs() {
         assert_eq!(r.status_code(), 422, "{}", r.text());
 
         // The edit is audited with both versions.
-        let row = ctx.db.query_one_raw(sea_orm::Statement::from_string(
-            sea_orm::DatabaseBackend::Postgres,
-            "SELECT actor, snapshot::text AS s FROM audit_logs WHERE action = 'framework_updated' ORDER BY id DESC LIMIT 1",
-        )).await.unwrap().expect("an audit row");
-        let snap: Value = serde_json::from_str(&row.try_get::<String>("", "s").unwrap()).unwrap();
-        assert_eq!((row.try_get::<Option<String>>("", "actor").unwrap().as_deref(), snap["version"].as_i64(), snap["previous_version"].as_i64()), (Some(EDITOR), Some(2), Some(1)));
+        let row = sqlx::query("SELECT actor, snapshot::text AS s FROM audit_logs WHERE action = 'framework_updated' ORDER BY id DESC LIMIT 1").fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().expect("an audit row");
+        let snap: Value = serde_json::from_str(&row.try_get::<String, _>("s").unwrap()).unwrap();
+        assert_eq!((row.try_get::<Option<String>, _>("actor").unwrap().as_deref(), snap["version"].as_i64(), snap["previous_version"].as_i64()), (Some(EDITOR), Some(2), Some(1)));
 
         // A version is never changed or removed: the database refuses it.
-        assert!(ctx.db.execute_unprepared("UPDATE framework_versions SET name = 'x'").await.is_err());
-        assert!(ctx.db.execute_unprepared("DELETE FROM framework_versions").await.is_err());
+        assert!(sqlx::raw_sql("UPDATE framework_versions SET name = 'x'").execute(project_portfolio_management::db::pool(&ctx)).await.is_err());
+        assert!(sqlx::raw_sql("DELETE FROM framework_versions").execute(project_portfolio_management::db::pool(&ctx)).await.is_err());
 
         // A framework a plan owns follows that plan's write access, not the shared right.
         let own = json!({ "name": format!("Own {}", uuid::Uuid::new_v4()), "plan_pid": a, "decision_model": "sponsor" });

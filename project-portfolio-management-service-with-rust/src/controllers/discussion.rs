@@ -370,7 +370,7 @@ async fn edit_comment(
     .bind(caller.actor())
     .execute(tx.conn())
     .await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: comments::Model =
         sqlx::query_as("UPDATE comments SET body = $1, edited_at = $2 WHERE id = $3 RETURNING *")
             .bind(payload.body.as_str())
@@ -435,7 +435,7 @@ async fn delete_comment(
     let comment_pid = comment.pid;
     let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>("UPDATE comments SET deleted_at = $1 WHERE id = $2 RETURNING id")
         .bind(deleted_at)
         .bind(comment.id)

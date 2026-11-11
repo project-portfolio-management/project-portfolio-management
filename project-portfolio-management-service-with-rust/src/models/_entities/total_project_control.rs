@@ -1,21 +1,20 @@
-//! `SeaORM` Entity — `total_project_control`. Devaux's Total Project
+//! Row — `total_project_control`. Devaux's Total Project
 //! Control observations per plan. See entity spec §5.9.7 / FR-37 and
 //! `spec/total-project-control/index.md`.
 
-// SeaORM-generated entity shape: documented by the migration.
+// The row's shape is documented by the migration.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "total_project_control")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     /// ISO 4217. Rankings never cross it — this service does not
@@ -38,8 +37,3 @@ pub struct Model {
     pub total_project_control_cost_estimate_to_complete: Decimal,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}

@@ -71,7 +71,7 @@ async fn rates_of(
     table: &cost_rate_tables::Model,
     source: &'static str,
 ) -> Result<Applicable> {
-    // Only the two columns the rules use are read; the order is `SeaORM`'s (effective date, no tie-break).
+    // Only the two columns the rules use are read; the order is as before SQ-1 (effective date, no tie-break).
     let rows: Vec<(NaiveDate, i64)> = sqlx::query_as(
         "SELECT effective_from, per_hour_minor FROM cost_rates WHERE table_pid = $1 ORDER BY effective_from",
     )
@@ -232,7 +232,7 @@ async fn create_import_table(
     Ok(row)
 }
 
-/// Insert a rate table with the columns `SeaORM`'s insert set, and read it back.
+/// Insert a rate table with the columns the insert set before SQ-1, and read it back.
 async fn insert_table(
     tx: &mut crate::db::Tx,
     name: &str,
@@ -253,7 +253,7 @@ async fn insert_table(
     .await?)
 }
 
-/// Append one rate with the columns `SeaORM`'s insert set, and read it back.
+/// Append one rate with the columns the insert set before SQ-1, and read it back.
 async fn insert_rate(
     tx: &mut crate::db::Tx,
     table_pid: Uuid,
@@ -274,7 +274,7 @@ async fn insert_rate(
     .await?)
 }
 
-/// Insert a task cost with the columns `SeaORM`'s insert set, and read it back.
+/// Insert a task cost with the columns the insert set before SQ-1, and read it back.
 async fn insert_task_cost(
     tx: &mut crate::db::Tx,
     task_pid: Uuid,
@@ -734,7 +734,7 @@ async fn delete_task_cost(
     .ok_or(Error::NotFound)?;
     let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
     let mut tx = crate::db::begin(&ctx).await?;
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE task_costs SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )
@@ -1093,7 +1093,7 @@ async fn record_labour(
     }
     let mut tx = crate::db::begin(&ctx).await?;
     for c in costs {
-        // The columns `SeaORM`'s insert set, no more.
+        // The columns the insert set before SQ-1, no more.
         sqlx::query(
             "INSERT INTO time_entry_costs
                  (pid, time_entry_pid, plan_pid, person_ref, table_pid, spent_on, minutes, per_hour_minor, currency,

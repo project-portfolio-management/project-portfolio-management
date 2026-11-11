@@ -25,7 +25,6 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -124,7 +123,7 @@ async fn the_heatmap_keeps_its_promises() {
         };
         let prog = mk("Care").await;
         let secret = mk("Secret").await;
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
 
         // ── pools: a role is in at most one ──
         let pool = |name: &'static str, roles: Vec<&'static str>| {
@@ -145,7 +144,7 @@ async fn the_heatmap_keeps_its_promises() {
 
         // ── people and demand ──
         for (who, role) in [("person:d1", "Developer"), ("person:g1", "Designer")] {
-            ctx.db.execute_unprepared(&format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), '{who}', '{role}', now(), now())")).await.unwrap();
+            sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), '{who}', '{role}', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         }
         let alloc = |plan: &str, who: &str, role: &str, percent: i32| format!("INSERT INTO allocations (pid, plan_pid, person_ref, role, percent, start_date, end_date, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{plan}', '{who}', '{role}', {percent}, '{first}', '{last}', '[]', now(), now())");
         for sql in [
@@ -155,7 +154,7 @@ async fn the_heatmap_keeps_its_promises() {
             alloc(&prog, "person:t1", "Tester", 100),                                                   // in no pool
             alloc(&secret, "person:s1", "Developer", 500),                                              // private: nowhere
         ] {
-            ctx.db.execute_unprepared(&sql).await.unwrap();
+            sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         }
         let get = |q: String| {
             let (request, writer) = (&request, writer.clone());

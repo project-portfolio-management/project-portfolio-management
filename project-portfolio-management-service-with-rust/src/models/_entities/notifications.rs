@@ -1,21 +1,19 @@
-//! `SeaORM` Entity — `notifications`. The in-app inbox written by
+//! Row — `notifications`. The in-app inbox written by
 //! automations and by the scheduled-action sweep. In-app only: this
 //! service sends no email and no push.
 
-// SeaORM-generated entity shape: documented by the migration.
+// The row's shape is documented by the migration.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "notifications")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub recipient_ref: String,
     pub subject_kind: String,
@@ -25,6 +23,3 @@ pub struct Model {
     pub read_at: Option<DateTimeWithTimeZone>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

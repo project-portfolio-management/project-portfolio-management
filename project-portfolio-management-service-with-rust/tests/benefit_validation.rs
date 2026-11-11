@@ -19,7 +19,6 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -120,9 +119,9 @@ async fn benefits_are_claimed_until_someone_outside_validates_them() {
         let prog = mk("Program", "Care", None).await;
         let project = mk("Project", "Records", Some(prog.clone())).await;
         let secret = mk("Program", "Secret", None).await;
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         // Two people are on the programme: one by an allocation, one as a task assignee.
-        ctx.db.execute_unprepared(&format!("INSERT INTO allocations (pid, plan_pid, person_ref, percent, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{prog}', 'person:{MEMBER}', 50, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO allocations (pid, plan_pid, person_ref, percent, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{prog}', 'person:{MEMBER}', 50, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         with!(request.post(&format!("/api/plans/{project}/tasks")), writer).json(&json!({ "title": "Do it", "assignee_ref": format!("worker:{ASSIGNEE}") })).await.assert_status_ok();
 
         let benefit = |plan: String, title: &'static str, cur: Option<&'static str>, target: Option<i64>| {
@@ -192,7 +191,7 @@ async fn benefits_are_claimed_until_someone_outside_validates_them() {
         // Real evidence: an attachment of the plan.
         let art = uuid::Uuid::new_v4();
         let att = uuid::Uuid::new_v4();
-        ctx.db.execute_unprepared(&format!("INSERT INTO attachments (pid, subject_kind, subject_pid, artifact_pid, created_at, updated_at) VALUES ('{att}', 'plan', '{project}', '{art}', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO attachments (pid, subject_kind, subject_pid, artifact_pid, created_at, updated_at) VALUES ('{att}', 'plan', '{project}', '{art}', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         // An outsider validates part of it; then more. The latest counts, the earlier stays.
         with!(request.post(&url(&saving)), auditor).json(&json!({ "amount_minor": 20_000, "evidence_attachment_pid": att, "note": "Checked the payroll for March" })).await.assert_status_ok();
         let partly = hist(&saving).await;
@@ -210,7 +209,7 @@ async fn benefits_are_claimed_until_someone_outside_validates_them() {
             ("a delete", "DELETE FROM benefit_validations".to_string()),
             ("no validator", format!("INSERT INTO benefit_validations (pid, benefit_pid, plan_pid, amount_minor, currency, validated_on, created_at, updated_at) VALUES (gen_random_uuid(), '{saving}', '{project}', 1, 'GBP', current_date, now(), now())")),
         ] {
-            assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
 
         // ── a private programme is nowhere ──

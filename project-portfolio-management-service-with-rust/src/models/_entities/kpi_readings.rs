@@ -1,18 +1,17 @@
-//! `SeaORM` Entity — `kpi_readings`. One observation of a KPI, dated by when it was observed. Append-only: a correction is a newer reading.
+//! Row — `kpi_readings`. One observation of a KPI, dated by when it was observed. Append-only: a correction is a newer
+//! reading.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "kpi_readings")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub kpi_pid: Uuid,
     pub observed_on: Date,
@@ -20,6 +19,3 @@ pub struct Model {
     pub note: Option<String>,
     pub actor: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

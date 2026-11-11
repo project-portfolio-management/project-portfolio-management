@@ -105,7 +105,7 @@ async fn store_artifact(
         .await
         .map_err(|e| Error::string(&e.to_string()))?
         .map_err(|e| Error::string(&format!("could not store the file: {e}")))?;
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     Ok(sqlx::query_as(
         "INSERT INTO artifacts
              (pid, kind, filename, content_type, size_bytes, sha256, storage_key, created_by, expires_at)
@@ -372,7 +372,7 @@ async fn new_job(
     params: serde_json::Value,
     source: Option<Uuid>,
 ) -> Result<bulk_jobs::Model> {
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     Ok(sqlx::query_as(
         "INSERT INTO bulk_jobs
              (pid, entity, kind, status, format, idempotency_key, requested_by, params, rows_total, rows_created,
@@ -818,7 +818,7 @@ async fn confirm_item(
     super::plans::validate(&plan)?;
     super::plans::require_visible_parent(&ctx, &caller, &plan, None).await?;
     let model = streaming::create_and_emit(&ctx, &plan, caller.actor()).await?;
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     let row: review_queue_items::Model = sqlx::query_as(
         "UPDATE review_queue_items
          SET status = 'confirmed', resolved_by = $1, resolved_at = $2, resolution_pid = $3
@@ -850,7 +850,7 @@ async fn reject_item(
             ErrorDetail::new("conflict", format!("the item is already {}", item.status)),
         ));
     }
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     let row: review_queue_items::Model = sqlx::query_as(
         "UPDATE review_queue_items SET status = 'rejected', resolved_by = $1, resolved_at = $2 WHERE id = $3
          RETURNING *",
@@ -900,7 +900,7 @@ pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
         if let Some(key) = a.storage_key.clone() {
             let _ = tokio::task::spawn_blocking(move || Store::from_env().remove(&key)).await;
         }
-        // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+        // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
         sqlx::query_scalar::<_, i64>(
             "UPDATE artifacts SET storage_key = NULL WHERE id = $1 RETURNING id",
         )
@@ -1172,7 +1172,7 @@ async fn process_row(
             }
         }
         if !hits.is_empty() {
-            // The columns `SeaORM`'s insert set, no more.
+            // The columns the insert set before SQ-1, no more.
             sqlx::query(
                 "INSERT INTO review_queue_items
                      (pid, status, provenance, candidate, matches, job_pid, source_line, resolved_by, resolved_at,
@@ -1205,7 +1205,7 @@ async fn finish(
     result: Option<Uuid>,
     errors: Option<Uuid>,
 ) -> std::result::Result<(), String> {
-    // By id, as `SeaORM`'s update of the job was; no row back is an error, as its was.
+    // By id, as the update of the job was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE bulk_jobs
          SET status = $1, progress = 100, rows_total = $2, rows_created = $3, rows_updated = $4,
@@ -1268,7 +1268,7 @@ async fn finish_cancelled(
     not_reached: i64,
     errors: Option<Uuid>,
 ) -> std::result::Result<(), String> {
-    // By id, as `SeaORM`'s update of the job was; no row back is an error, as its was.
+    // By id, as the update of the job was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE bulk_jobs
          SET status = $1, rows_total = $2, rows_created = $3, rows_updated = $4, rows_unchanged = $5,

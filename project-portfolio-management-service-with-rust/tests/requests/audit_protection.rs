@@ -6,7 +6,6 @@
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::audit_logs::Model as AuditModel;
-use sea_orm::{ConnectionTrait, TransactionTrait};
 use serial_test::serial;
 use uuid::Uuid;
 
@@ -29,37 +28,43 @@ async fn audit_rows_cannot_be_changed_or_deleted_without_the_flags() {
         let filter = format!("WHERE entity_pid = '{entity}'");
 
         // An update is refused.
-        let changed = ctx
-            .db
-            .execute_unprepared(&format!("UPDATE audit_logs SET action = 'x' {filter}"))
-            .await;
+        let changed = sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
+            "UPDATE audit_logs SET action = 'x' {filter}"
+        )))
+        .execute(project_portfolio_management::db::pool(&ctx))
+        .await;
         assert!(changed.is_err(), "an audit row was changed");
         // A delete is refused.
-        let gone = ctx
-            .db
-            .execute_unprepared(&format!("DELETE FROM audit_logs {filter}"))
-            .await;
+        let gone = sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
+            "DELETE FROM audit_logs {filter}"
+        )))
+        .execute(project_portfolio_management::db::pool(&ctx))
+        .await;
         assert!(gone.is_err(), "an audit row was deleted");
 
         // Nothing changed.
-        let rows = ctx
-            .db
-            .query_all_raw(sea_orm::Statement::from_string(
-                sea_orm::DatabaseBackend::Postgres,
-                format!("SELECT action FROM audit_logs {filter}"),
-            ))
-            .await
-            .expect("select");
+        let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT action FROM audit_logs {filter}"
+        )))
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("select");
         assert_eq!(rows.len(), 1);
 
         // The retention task's flag, set for one transaction only, allows the delete.
-        let tx = ctx.db.begin().await.expect("begin");
-        tx.execute_unprepared("SELECT set_config('ppm.retention_purge', 'on', true)")
+        let mut tx = project_portfolio_management::db::begin(&ctx)
+            .await
+            .expect("begin");
+        sqlx::raw_sql("SELECT set_config('ppm.retention_purge', 'on', true)")
+            .execute(tx.conn())
             .await
             .expect("flag");
-        tx.execute_unprepared(&format!("DELETE FROM audit_logs {filter}"))
-            .await
-            .expect("flagged delete");
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
+            "DELETE FROM audit_logs {filter}"
+        )))
+        .execute(tx.conn())
+        .await
+        .expect("flagged delete");
         tx.commit().await.expect("commit");
 
         // The flag did not leak: the next unflagged delete is refused again.
@@ -73,10 +78,12 @@ async fn audit_rows_cannot_be_changed_or_deleted_without_the_flags() {
         .await
         .expect("record again");
         assert!(
-            ctx.db
-                .execute_unprepared(&format!("DELETE FROM audit_logs {filter}"))
-                .await
-                .is_err()
+            sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
+                "DELETE FROM audit_logs {filter}"
+            )))
+            .execute(project_portfolio_management::db::pool(&ctx))
+            .await
+            .is_err()
         );
     })
     .await;

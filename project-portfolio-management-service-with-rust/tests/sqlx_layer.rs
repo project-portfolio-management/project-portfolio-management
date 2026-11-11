@@ -1,5 +1,5 @@
 //! The `sqlx` layer in `src/db.rs`: statements are counted, a transaction is one, and an audit row written on `sqlx` verifies
-//! like one written on `SeaORM`.
+//! and leaves with its transaction.
 //!
 //! `#[ignore]`d: boots the app, so it needs PostgreSQL via `DB_URL`. Run with
 //! `cargo test --test sqlx_layer -- --ignored --test-threads=1`.

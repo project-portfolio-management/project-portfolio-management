@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `director_pack_schedules`. A monthly schedule that drafts (never issues) a pack.
+//! Row — `director_pack_schedules`. A monthly schedule that drafts (never issues) a pack.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "director_pack_schedules")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub audience: String,
     pub day_of_month: i32,
@@ -22,6 +20,3 @@ pub struct Model {
     pub last_result: Option<String>,
     pub created_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

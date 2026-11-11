@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `lessons`. One lesson learned by a plan, recorded at a gate or at closure (NC-8).
+//! Row — `lessons`. One lesson learned by a plan, recorded at a gate or at closure (NC-8).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "lessons")]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub occasion: String,
@@ -26,6 +24,3 @@ pub struct Model {
     pub link_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

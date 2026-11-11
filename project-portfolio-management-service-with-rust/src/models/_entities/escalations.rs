@@ -1,23 +1,20 @@
-//! `SeaORM` Entity — `escalations`. A project referring something upward at a level of its governance escalation
+//! Row — `escalations`. A project referring something upward at a level of its governance escalation
 //! path. Its history is in `escalation_events`.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "escalations")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub title: String,
-    #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     pub reason_kind: String,
     pub tolerance_dimension: Option<String>,
@@ -29,11 +26,7 @@ pub struct Model {
     pub raised_on: Date,
     pub respond_by: Option<Date>,
     pub outcome: Option<String>,
-    #[sea_orm(column_type = "Text", nullable)]
     pub response: Option<String>,
     pub resolved_on: Option<Date>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

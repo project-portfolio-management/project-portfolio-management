@@ -1,22 +1,19 @@
-//! `SeaORM` Entity — `organization_roles`. The roles a deployment recognizes (OC-1), and the issue actions each
+//! Row — `organization_roles`. The roles a deployment recognizes (OC-1), and the issue actions each
 //! allows (OC-3). A role can only narrow what the caller's token already allows; see `crate::plan_roles`.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "organization_roles")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     /// The name, as a token's `role` attribute carries it.
-    #[sea_orm(unique)]
     pub key: String,
     pub label: String,
     /// The label by language code (OC-6).
@@ -27,6 +24,3 @@ pub struct Model {
     pub position: i32,
     pub retired_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

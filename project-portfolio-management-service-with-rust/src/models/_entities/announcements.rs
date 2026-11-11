@@ -1,21 +1,18 @@
-//! `SeaORM` Entity — `announcements`. A message to everyone, with a severity, an optional pin and an optional window.
+//! Row — `announcements`. A message to everyone, with a severity, an optional pin and an optional window.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "announcements")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub title: String,
-    #[sea_orm(column_type = "Text")]
     pub body: String,
     /// `info`, `important` or `urgent`.
     pub severity: String,
@@ -25,6 +22,3 @@ pub struct Model {
     pub author_ref: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

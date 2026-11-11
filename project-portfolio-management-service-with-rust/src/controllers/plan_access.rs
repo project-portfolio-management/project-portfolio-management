@@ -908,7 +908,7 @@ async fn put_access(
     let mut tx = crate::db::begin(&ctx).await?;
     match existing {
         Some(row) => {
-            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            // `fetch_one`: an update that finds no row is an error, as before SQ-1.
             sqlx::query_scalar::<_, i64>(
                 "UPDATE plan_access_settings SET private = $1, members = $2 WHERE id = $3 RETURNING id",
             )

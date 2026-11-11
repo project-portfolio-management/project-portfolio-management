@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `funding_allocations`. Append-only: money a funding source allocated, on a date (EX-12).
+//! Row — `funding_allocations`. Append-only: money a funding source allocated, on a date (EX-12).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "funding_allocations")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub funding_source_pid: Uuid,
     pub amount_minor: i64,
@@ -21,6 +19,3 @@ pub struct Model {
     pub reference: Option<String>,
     pub created_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

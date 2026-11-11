@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `plan_frameworks`. Which framework a plan follows, per family (at most one of each). A plan
+//! Row — `plan_frameworks`. Which framework a plan follows, per family (at most one of each). A plan
 //! with no row for a family inherits its nearest ancestor's; that is resolved on read and never stored.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "plan_frameworks")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub family: String,
@@ -22,6 +20,3 @@ pub struct Model {
     pub version: i32,
     pub set_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

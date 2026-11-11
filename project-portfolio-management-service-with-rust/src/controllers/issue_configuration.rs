@@ -277,7 +277,7 @@ async fn change_type(
         .push_bind(row.id)
         .push(" RETURNING *");
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: issue_types::Model = q.build_query_as().fetch_one(tx.conn()).await?;
     AuditModel::record_on(
         tx.conn(),
@@ -504,7 +504,7 @@ async fn change_role(
         .push_bind(row.id)
         .push(" RETURNING *");
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: organization_roles::Model = q.build_query_as().fetch_one(tx.conn()).await?;
     AuditModel::record_on(
         tx.conn(),

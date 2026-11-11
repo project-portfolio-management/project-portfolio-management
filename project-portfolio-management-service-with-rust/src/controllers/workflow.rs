@@ -657,7 +657,7 @@ async fn change(
     let was = audit_detail(&workflow, &definition_of(&ctx, workflow.pid).await?);
     let target = workflow.plan_pid.unwrap_or(workflow.pid);
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let workflow: workflows::Model =
         sqlx::query_as("UPDATE workflows SET name = $1 WHERE id = $2 RETURNING *")
             .bind(&name)
@@ -854,7 +854,7 @@ async fn remove(
     let detail = audit_detail(&workflow, &definition_of(&ctx, workflow.pid).await?);
     let plan_pid = workflow.plan_pid.unwrap_or(workflow.pid);
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>("UPDATE workflows SET deleted_at = $1 WHERE id = $2 RETURNING id")
         .bind(chrono::DateTime::<chrono::FixedOffset>::from(
             chrono::Utc::now(),

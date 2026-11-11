@@ -19,7 +19,6 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -233,15 +232,12 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(state(&sum)["signoff"]["state"], "delivered_not_met", "withdrawn, so outstanding again");
         assert_eq!(state(&sum)["signoff"]["outstanding"], json!(["Acme Council"]));
         {
-            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management::models::_entities::audit_logs;
-            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("milestone_signoff_withdrawn")).count(&_ctx.db).await.unwrap();
+            let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind("milestone_signoff_withdrawn").fetch_one(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
             assert_eq!(n, 1, "the withdrawal is audited");
         }
         {
-            use sea_orm::ConnectionTrait;
-            assert!(_ctx.db.execute_unprepared("DELETE FROM milestone_signoffs").await.is_err(), "append-only");
-            assert!(_ctx.db.execute_unprepared("UPDATE milestone_signoffs SET reason = 'x'").await.is_err());
+            assert!(sqlx::raw_sql("DELETE FROM milestone_signoffs").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "append-only");
+            assert!(sqlx::raw_sql("UPDATE milestone_signoffs SET reason = 'x'").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err());
         }
         // The pack reports the met share and the gap.
         let d2: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "board" })).await.json();
@@ -284,10 +280,8 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!((care_of(&evm)["state"].as_str(), flow["scope"].as_u64(), flow["open"].as_u64()), (Some("product"), Some(2), Some(2)), "{evm}");
         assert_eq!(flow["burn_up"].as_array().unwrap().len(), 8);
         {
-            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management::models::_entities::audit_logs;
             with!(request.put(&rm), writer).json(&json!({ "method": "product" })).await.assert_status_ok();
-            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("reporting_method_changed")).count(&_ctx.db).await.unwrap();
+            let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind("reporting_method_changed").fetch_one(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
             assert_eq!(n, 1, "the change is audited once, and a repeat is not a change");
         }
 
@@ -324,10 +318,8 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(pack4["body"]["external_asks"]["asks"].as_array().unwrap().len(), 0, "{}", pack4["body"]["external_asks"]);
         {
             // Remove this extra draft so the partner pack drafted below is the month's first.
-            use project_portfolio_management::models::_entities::director_packs;
-            use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
             let d4_pid = uuid::Uuid::parse_str(d4["pid"].as_str().unwrap()).unwrap();
-            director_packs::Entity::delete_many().filter(director_packs::Column::Pid.eq(d4_pid)).exec(&_ctx.db).await.unwrap();
+            sqlx::query("DELETE FROM director_packs WHERE pid = $1").bind(d4_pid).execute(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
         }
 
         // ── EX-1: register completeness, and "no register, no money" ──
@@ -348,9 +340,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         };
         assert_eq!(alloc("committed").await.status_code(), 200, "switch off: the action goes ahead");
         {
-            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management::models::_entities::audit_logs;
-            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("register_incomplete_warning")).count(&_ctx.db).await.unwrap();
+            let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind("register_incomplete_warning").fetch_one(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
             assert_eq!(n, 1, "and the warning is audited");
         }
         // SAFETY: this binary is single-test, so nothing else reads the setting concurrently.
@@ -404,7 +394,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let reg: Value = with!(request.get("/api/key-persons"), manager).await.json();
         assert_eq!(reg["entries"].as_array().unwrap().len(), 2, "one entry per subject, ignoring case: {reg}");
         for who in [ada, bob] {
-            _ctx.db.execute_unprepared(&format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), '{who}', 'Developer', now(), now())")).await.unwrap();
+            sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), '{who}', 'Developer', now(), now())"))).execute(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
         }
         with!(request.put("/api/key-persons/contingent"), manager).json(&json!({ "person_ref": bob, "contingent": true })).await.assert_status_ok();
         let d6: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": earlier, "audience": "board" })).await.json();
@@ -428,7 +418,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         with!(request.put(&tri), writer).json(&json!({ "outcome": "pause", "reason": "Safety case not yet ready" })).await.assert_status_ok();
         let t: Value = with!(request.get(&tri), writer).await.json();
         assert_eq!((t["triage"]["outcome"].as_str(), t["history"].as_array().unwrap().len()), (Some("pause"), 2));
-        assert!(_ctx.db.execute_unprepared("UPDATE programme_triages SET outcome = 'finish'").await.is_err(), "append-only");
+        assert!(sqlx::raw_sql("UPDATE programme_triages SET outcome = 'finish'").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "append-only");
 
         with!(request.post(&format!("/api/director-packs/{np}/issue")), issuer).await.assert_status_ok();
         let th = format!("/api/plans/{prog}/thresholds");
@@ -468,13 +458,11 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         // Decisions are counted in the month they were made, so the earlier month's pack counts none of today's.
         assert_eq!((tt["triage_counts"]["pause"].as_u64(), tt["decisions_in_period"]["override"].as_u64(), tt["decisions_in_period"]["reset"].as_u64()), (Some(1), Some(0), Some(0)), "{tt}");
         {
-            use sea_orm::{EntityTrait, PaginatorTrait};
-            use project_portfolio_management::models::_entities::threshold_decisions;
-            assert_eq!(threshold_decisions::Entity::find().count(&_ctx.db).await.unwrap(), 2, "an override and a reset were recorded");
+            assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM threshold_decisions").fetch_one(project_portfolio_management::db::pool(&_ctx)).await.unwrap(), 2, "an override and a reset were recorded");
         }
         assert_eq!(tt["overrides_in_force"][0]["programme"], "Care");
         assert!(!tt.to_string().contains("person:"), "no one is named: {tt}");
-        assert!(_ctx.db.execute_unprepared("DELETE FROM threshold_decisions").await.is_err(), "append-only");
+        assert!(sqlx::raw_sql("DELETE FROM threshold_decisions").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "append-only");
 
         // ── EX-8: start control: a limit on programmes in active delivery, a queue, an audited override ──
         let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
@@ -519,14 +507,12 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(phase(&beta, "executing", json!({ "start_override_reason": "short" })).await.0, 422, "a thin reason is no override");
         assert_eq!(phase(&beta, "executing", json!({ "start_override_reason": "The sponsor needs it live before the audit" })).await.0, 200);
         {
-            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management::models::_entities::audit_logs;
-            let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("start_override")).count(&_ctx.db).await.unwrap();
+            let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind("start_override").fetch_one(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
             assert_eq!(n, 1, "the override is audited");
         }
         let q3: Value = with!(request.get("/api/start-queue"), writer).await.json();
         assert!(q3["queue"].as_array().unwrap().iter().all(|e| e["name"] != "Beta" && e["name"] != "Delta"), "started and withdrawn are out of the queue: {q3}");
-        assert!(_ctx.db.execute_unprepared("DELETE FROM start_overrides").await.is_err(), "overrides are append-only");
+        assert!(sqlx::raw_sql("DELETE FROM start_overrides").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "overrides are append-only");
         // Paused programmes use no place: pause both, and a third starts without an override.
         for p in [&alpha, &beta] {
             with!(request.post(&format!("/api/plans/{p}/programme-status")), admin).json(&json!({ "status": "paused", "reason": "Paused while the audit runs" })).await.assert_status_ok();
@@ -612,10 +598,8 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let t1: Value = with!(request.get(&format!("/api/plans/{d1}/tasks/{g1}")), writer).await.json();
         assert_eq!(t1["start_date"], "2026-10-12", "refused: unchanged");
         {
-            use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
-            use project_portfolio_management::models::_entities::audit_logs;
             for (action, want) in [("deployment_move_requested", 2), ("deployment_move_approved", 1), ("deployment_move_refused", 1)] {
-                let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&_ctx.db).await.unwrap();
+                let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind(action).fetch_one(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
                 assert_eq!(n, want, "{action}");
             }
         }
@@ -641,9 +625,9 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
             ("editing a criterion", "UPDATE cutover_criteria SET criterion = 'Something easier to meet' WHERE decision_pid IN (SELECT pid FROM cutover_decisions WHERE status <> 'draft')"),
             ("removing one", "DELETE FROM cutover_criteria WHERE decision_pid IN (SELECT pid FROM cutover_decisions WHERE status <> 'draft')"),
         ] {
-            assert!(_ctx.db.execute_unprepared(sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(sql)).execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "{what}");
         }
-        assert!(_ctx.db.execute_unprepared(&format!("INSERT INTO cutover_criteria (pid, decision_pid, position, criterion, created_at, updated_at) VALUES (gen_random_uuid(), '{c1p}', 9, 'A late extra criterion', now(), now())")).await.is_err(), "adding one");
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO cutover_criteria (pid, decision_pid, position, criterion, created_at, updated_at) VALUES (gen_random_uuid(), '{c1p}', 9, 'A late extra criterion', now(), now())"))).execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "adding one");
         with!(request.post(&format!("{one}/open")), writer).await.assert_status_ok();
         // Go is refused until every criterion is met and every role has signed.
         let go = json!({ "outcome": "go", "reason": "All criteria met and signed" });
@@ -663,7 +647,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         with!(request.post(&format!("{one}/cosign")), delivery).json(&json!({ "role": "delivery_organization" })).await.assert_status_ok();
         let decided: Value = with!(request.post(&format!("{one}/decide")), writer).json(&go).await.json();
         assert_eq!((decided["status"].as_str(), decided["outcome"].as_str()), (Some("decided"), Some("go")));
-        assert!(_ctx.db.execute_unprepared("UPDATE cutover_decisions SET outcome = 'no_go' WHERE status = 'decided'").await.is_err(), "a decided decision is final");
+        assert!(sqlx::raw_sql("UPDATE cutover_decisions SET outcome = 'no_go' WHERE status = 'decided'").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "a decided decision is final");
         assert_eq!(with!(request.post(&format!("{one}/new-version")), writer).await.status_code(), 409, "a go is final");
 
         // A delay for safety needs no met criteria, is a decision, and a new version can follow it.
@@ -736,7 +720,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         with!(request.put("/api/deescalation/level"), sponsor).json(&json!({ "level": "Level 2", "note": "Set at the board" })).await.assert_status_ok();
         let t: Value = with!(request.get("/api/deescalation"), writer).await.json();
         assert_eq!(t["level"]["level"], "Level 2", "the level stays what the sponsor set, whatever the run: {t}");
-        assert!(_ctx.db.execute_unprepared("UPDATE escalation_levels SET level = 'Level 0'").await.is_err(), "append-only");
+        assert!(sqlx::raw_sql("UPDATE escalation_levels SET level = 'Level 0'").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "append-only");
         let one: Value = with!(request.get(&format!("/api/scorecards/{scp}?quarters=2")), writer).await.json();
         assert_eq!(one["kpis"].as_array().unwrap().len(), 2);
         let d10: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": (first - chrono::Months::new(3)).format("%Y-%m").to_string(), "audience": "executive" })).await.json();
@@ -790,7 +774,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(tr["benefits"]["validated_by_currency"][0]["validated_minor"], 80_000, "{tr}");
         let all: Value = with!(request.get("/api/funding-allocations"), writer).await.json();
         assert_eq!(all["allocations"][0]["untraced_minor"], 250_000);
-        assert!(_ctx.db.execute_unprepared("DELETE FROM funding_allocations").await.is_err(), "append-only");
+        assert!(sqlx::raw_sql("DELETE FROM funding_allocations").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "append-only");
         // Cost codes and a ledger export.
         with!(request.post(&format!("/api/plans/{proj}/budget-lines/{l2}/actual")), writer).json(&json!({ "amount_minor": 40_000 })).await.assert_status_success();
         for (code, l) in [("CC-100", &l2), ("cc-200", &l1)] {

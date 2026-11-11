@@ -22,9 +22,7 @@ use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::feed_tokens;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -155,10 +153,13 @@ async fn feeds_authenticate_by_token_are_stable_and_revocable() {
             .json();
         let token = issued["token"].as_str().expect("token").to_string();
         assert_eq!(token.len(), 64);
-        let stored = project_portfolio_management::models::_entities::feed_tokens::Entity::find()
-            .all(&ctx.db)
-            .await
-            .expect("tokens");
+        let stored = sqlx::query_as::<
+            _,
+            project_portfolio_management::models::_entities::feed_tokens::Model,
+        >("SELECT * FROM feed_tokens")
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("tokens");
         assert_eq!(stored.len(), 1);
         assert_ne!(stored[0].token_hash, token, "never stored in the clear");
 
@@ -287,16 +288,10 @@ async fn feeds_authenticate_by_token_are_stable_and_revocable() {
             "an earlier token stops on rotation"
         );
         assert_eq!(status(second.clone()).await, 200);
-        feed_tokens::Entity::update_many()
-            .col_expr(
-                feed_tokens::Column::CreatedAt,
-                sea_orm::sea_query::Expr::value(chrono::Utc::now() - chrono::Duration::days(366)),
-            )
-            .filter(
-                feed_tokens::Column::TokenHash
-                    .eq(project_portfolio_management::feeds::hash_token(&second)),
-            )
-            .exec(&ctx.db)
+        sqlx::query("UPDATE feed_tokens SET created_at = $1 WHERE token_hash = $2")
+            .bind(chrono::Utc::now() - chrono::Duration::days(366))
+            .bind(project_portfolio_management::feeds::hash_token(&second))
+            .execute(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("age the token");
         assert_eq!(

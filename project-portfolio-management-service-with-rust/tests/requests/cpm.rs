@@ -533,8 +533,6 @@ async fn an_ms_project_file_imports_once_idempotently_and_reports_what_it_droppe
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn capacity_is_read_per_day_from_availability_ranges() {
-    use project_portfolio_management::models::_entities::person_availabilities;
-    use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
@@ -585,15 +583,15 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
         // ranges at once, past the service and its lock. The exclusion constraint leaves exactly one.
         let raw = format!("person:{}", uuid::Uuid::new_v4());
         let insert = |from: &'static str, to: &'static str| {
-            let (db, raw) = (ctx.db.clone(), raw.clone());
+            let (ctx, raw) = (&ctx, raw.clone());
             async move {
-                let txn = sea_orm::TransactionTrait::begin(&db).await.unwrap();
-                let done = txn
-                    .execute_unprepared(&format!(
-                        "INSERT INTO person_availabilities (pid, person_ref, from_date, to_date, max_percent, created_at, updated_at)
+                let mut txn = project_portfolio_management::db::begin(ctx).await.unwrap();
+                let done = sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
+                    "INSERT INTO person_availabilities (pid, person_ref, from_date, to_date, max_percent, created_at, updated_at)
                          VALUES (gen_random_uuid(), '{raw}', '{from}', '{to}', 50, now(), now())"
-                    ))
-                    .await;
+                )))
+                .execute(txn.conn())
+                .await;
                 match done {
                     Ok(_) => txn.commit().await.is_ok(),
                     Err(_) => false,
@@ -602,14 +600,12 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
         };
         let (x, y) = tokio::join!(insert("2026-12-01", "2026-12-07"), insert("2026-12-05", "2026-12-10"));
         assert_eq!([x, y].iter().filter(|ok| **ok).count(), 1, "exactly one of two overlapping inserts survives");
-        let n = person_availabilities::Entity::find()
-            .filter(person_availabilities::Column::PersonRef.eq(raw.as_str()))
-            .count(&ctx.db)
+        let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM person_availabilities WHERE person_ref = $1").bind(raw.as_str()).fetch_one(project_portfolio_management::db::pool(&ctx))
             .await
             .unwrap();
         assert_eq!(n, 1);
         // A removed range no longer blocks, and a range that only touches in a gap is fine.
-        ctx.db.execute_unprepared(&format!("UPDATE person_availabilities SET deleted_at = now() WHERE person_ref = '{raw}'")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE person_availabilities SET deleted_at = now() WHERE person_ref = '{raw}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert!(insert("2026-12-05", "2026-12-10").await, "a removed range does not block");
 
         // Capacity is per day: the 40% week is over, the full-capacity week is not, and the sum is unchanged.
@@ -1242,8 +1238,6 @@ async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest(
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
-    use project_portfolio_management::models::_entities::audit_logs;
-    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request
@@ -1319,10 +1313,7 @@ async fn leveling_proposes_within_float_and_applies_only_when_confirmed() {
         assert_eq!(start_of(&c).await, "2026-10-07");
 
         // One audit entry per moved task, and nothing is over-allocated now.
-        let n = audit_logs::Entity::find()
-            .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&c).unwrap()))
-            .filter(audit_logs::Column::Action.eq("task_leveled"))
-            .count(&ctx.db)
+        let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE entity_pid = $1 AND action = $2").bind(uuid::Uuid::parse_str(&c).unwrap()).bind("task_leveled").fetch_one(project_portfolio_management::db::pool(&ctx))
             .await
             .unwrap();
         assert_eq!(n, 1);
@@ -1430,8 +1421,6 @@ async fn the_critical_chain_crosses_paths_where_one_person_is_shared() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted() {
-    use project_portfolio_management::models::_entities::audit_logs;
-    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request
@@ -1537,12 +1526,14 @@ async fn aggressive_and_safe_estimates_are_recorded_reused_and_never_defaulted()
             .await
             .json();
         assert_eq!(r["counts"]["missing"], 2);
-        let n = audit_logs::Entity::find()
-            .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&ids[0]).unwrap()))
-            .filter(audit_logs::Column::Action.eq("task_ccpm_estimate_set"))
-            .count(&ctx.db)
-            .await
-            .unwrap();
+        let n = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM audit_logs WHERE entity_pid = $1 AND action = $2",
+        )
+        .bind(uuid::Uuid::parse_str(&ids[0]).unwrap())
+        .bind("task_ccpm_estimate_set")
+        .fetch_one(project_portfolio_management::db::pool(&ctx))
+        .await
+        .unwrap();
         assert_eq!(n, 2, "set, then cleared");
         request
             .get("/api/plans/00000000-0000-0000-0000-000000000000/ccpm-estimates")
@@ -1666,8 +1657,6 @@ async fn buffers_are_sized_from_removed_safety_and_a_feeder_that_would_push_the_
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn buffer_management_reads_consumption_names_the_red_chain_and_records_recovery() {
-    use project_portfolio_management::models::_entities::audit_logs;
-    use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
@@ -1736,7 +1725,7 @@ async fn buffer_management_reads_consumption_names_the_red_chain_and_records_rec
 
         // History per snapshot, and the red buffers are audited.
         request.post(&format!("/api/plans/{p}/buffer-management/snapshots")).await.assert_status_success();
-        let reds = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("buffer_red")).count(&ctx.db).await.unwrap();
+        let reds = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind("buffer_red").fetch_one(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(reds, 2);
         let r: Value = request.get(&manage).await.json();
         assert_eq!(r["snapshots"].as_array().unwrap().len(), 1);
@@ -1758,7 +1747,7 @@ async fn buffer_management_reads_consumption_names_the_red_chain_and_records_rec
         request.put(&status).json(&json!({ "status": "open" })).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
         request.put(&status).json(&json!({ "status": "done" })).await.assert_status_success();
         request.put(&status).json(&json!({ "status": "dropped" })).await.assert_status(axum::http::StatusCode::CONFLICT);
-        let n = audit_logs::Entity::find().filter(audit_logs::Column::Action.like("buffer_recovery_action_%")).count(&ctx.db).await.unwrap();
+        let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action LIKE $1").bind("buffer_recovery_action_%").fetch_one(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(n, 2, "recorded and closed");
 
         // The database does not rely on the service.
@@ -1769,7 +1758,7 @@ async fn buffer_management_reads_consumption_names_the_red_chain_and_records_rec
             ("rewriting a snapshot", "UPDATE buffer_snapshots SET document = '{}'"),
             ("deleting a buffer plan", "DELETE FROM buffer_plans"),
         ] {
-            assert!(ctx.db.execute_unprepared(sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
     })
     .await;
@@ -3105,8 +3094,7 @@ async fn earned_value_can_take_its_actual_cost_from_recorded_labour() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_it_showed() {
-    use project_portfolio_management::models::_entities::{audit_logs, plan_dependencies};
-    use sea_orm::{EntityTrait, PaginatorTrait};
+    use project_portfolio_management::models::_entities::plan_dependencies;
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         use axum::http::StatusCode as S;
@@ -3132,8 +3120,8 @@ async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_i
             async move { request.post(&url).json(&json!({ "edits": edits })).await }
         };
         let audit_count = || {
-            let db = ctx.db.clone();
-            async move { audit_logs::Entity::find().count(&db).await.unwrap() }
+            let db = project_portfolio_management::db::pool(&ctx);
+            async move { sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs").fetch_one(db).await.unwrap() }
         };
         let cpm = || {
             let request = &request;
@@ -3155,7 +3143,7 @@ async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_i
         assert_eq!(r1["plan_etag"], etag.as_str());
         assert_eq!(cpm().await, before_cpm, "the plan is untouched");
         assert_eq!(audit_count().await, audits, "a preview leaves no audit entry");
-        let dep_rows = plan_dependencies::Entity::find().count(&ctx.db).await.unwrap();
+        let dep_rows = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plan_dependencies").fetch_one(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(dep_rows, 1);
 
         // What it shows: A is longer, B moves later, the finish moves, and A's work (so its cost) doubles.
@@ -3229,11 +3217,11 @@ async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_i
         let etag = pv.header("etag").to_str().unwrap().to_string();
         let pv: Value = pv.json();
         assert_eq!(pv["changes"].as_array().unwrap().len(), 2);
-        assert_eq!(plan_dependencies::Entity::find().count(&ctx.db).await.unwrap(), 1, "still the original link");
+        assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plan_dependencies").fetch_one(project_portfolio_management::db::pool(&ctx)).await.unwrap(), 1, "still the original link");
         let audits = audit_count().await;
         commit(link_edits.clone(), Some(&etag)).await.assert_status_ok();
         assert_eq!(audit_count().await, audits + 2);
-        let deps = plan_dependencies::Entity::find().all(&ctx.db).await.unwrap();
+        let deps = sqlx::query_as::<_, plan_dependencies::Model>("SELECT * FROM plan_dependencies").fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(deps.len(), 1);
         assert_eq!((deps[0].kind.as_str(), deps[0].lag_days, deps[0].predecessor_pid.to_string()), ("ss", 1, c.clone()));
     })
@@ -3244,8 +3232,6 @@ async fn the_what_if_sandbox_previews_without_writing_and_commits_exactly_what_i
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn onboarding_checklists_access_closeout_and_handover_work_end_to_end() {
-    use project_portfolio_management::models::_entities::audit_logs;
-    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         use axum::http::StatusCode as S;
@@ -3254,8 +3240,8 @@ async fn onboarding_checklists_access_closeout_and_handover_work_end_to_end() {
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
         let p = plan["pid"].as_str().unwrap().to_string();
         let audits = |action: &'static str| {
-            let db = ctx.db.clone();
-            async move { audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&db).await.unwrap() }
+            let db = project_portfolio_management::db::pool(&ctx);
+            async move { sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind(action).fetch_one(db).await.unwrap() }
         };
 
         // ── templates: built-in, then custom, then back ──
@@ -3886,7 +3872,6 @@ async fn tasks_of_different_plans_can_depend_on_each_other_and_float_follows() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
-    use sea_orm::ConnectionTrait;
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         use axum::http::StatusCode as S;
@@ -3914,14 +3899,14 @@ async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
         // The database refuses a dependency on a hammock even when the API check is raced.
         let b = task(&request, &p, "B", Some("2026-10-12"), Some(1)).await;
         let sql = format!("INSERT INTO plan_dependencies (pid, predecessor_pid, successor_pid, kind, lag_days, created_at, updated_at) VALUES (gen_random_uuid(), '{b}', '{h}', 'finish_to_start', 0, now(), now())");
-        assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "a hammock has no dependencies of its own");
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "a hammock has no dependencies of its own");
 
         // Two open onboarding cases of one kind in one plan cannot exist, API or no API.
         let body = json!({ "kind": "plan_intake", "effective_date": "2026-10-06" });
         request.post(&format!("/api/plans/{p}/onboarding/cases")).json(&body).await.assert_status_ok();
         request.post(&format!("/api/plans/{p}/onboarding/cases")).json(&body).await.assert_status(S::CONFLICT);
         let dup = format!("INSERT INTO onboarding_cases (pid, kind, plan_pid, subject_ref, title, status, created_at, updated_at) VALUES (gen_random_uuid(), 'plan_intake', '{p}', NULL, 'x', 'open', now(), now())");
-        assert!(ctx.db.execute_unprepared(&dup).await.is_err());
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*dup)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err());
     })
     .await;
 }
@@ -3931,8 +3916,7 @@ async fn hammocks_do_not_break_commits_and_the_database_holds_the_line() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn jira_and_asana_exports_import_idempotently_and_report_what_they_drop() {
-    use project_portfolio_management::models::_entities::{plan_dependencies, tasks};
-    use sea_orm::{ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter};
+    use project_portfolio_management::models::_entities::tasks;
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
         use axum::http::StatusCode as S;
@@ -3947,13 +3931,10 @@ P-3,Ship,Done,,,P-1,,P-2,\n";
             async move { request.post(&url).bytes(body.into()).await }
         };
         let count = |ext: &'static str| {
-            let db = ctx.db.clone();
+            let db = project_portfolio_management::db::pool(&ctx);
             let p = p.clone();
             async move {
-                tasks::Entity::find()
-                    .filter(tasks::Column::PlanPid.eq(uuid::Uuid::parse_str(&p).unwrap()))
-                    .filter(tasks::Column::ExternalRef.like(format!("{ext}:%")))
-                    .count(&db)
+                sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM tasks WHERE plan_pid = $1 AND external_ref LIKE $2").bind(uuid::Uuid::parse_str(&p).unwrap()).bind(format!("{ext}:%")).fetch_one(db)
                     .await
                     .unwrap()
             }
@@ -3971,8 +3952,8 @@ P-3,Ship,Done,,,P-1,,P-2,\n";
         assert_eq!((r["tasks_created"].as_i64(), r["links_created"].as_i64()), (Some(3), Some(1)));
         assert_eq!(count("jira").await, 3);
         let get = |key: &'static str| {
-            let db = ctx.db.clone();
-            async move { tasks::Entity::find().filter(tasks::Column::ExternalRef.eq(format!("jira:{key}"))).one(&db).await.unwrap().unwrap() }
+            let db = project_portfolio_management::db::pool(&ctx);
+            async move { sqlx::query_as::<_, tasks::Model>("SELECT * FROM tasks WHERE external_ref = $1 LIMIT 1").bind(format!("jira:{key}")).fetch_optional(db).await.unwrap().unwrap() }
         };
         let (p1, p2, p3) = (get("P-1").await, get("P-2").await, get("P-3").await);
         assert_eq!(p2.parent_task_pid, Some(p1.pid));
@@ -3981,7 +3962,7 @@ P-3,Ship,Done,,,P-1,,P-2,\n";
         assert_eq!(p1.status, "in_progress");
         assert_eq!(p1.deadline.map(|d| d.to_string()).as_deref(), Some("2026-10-15"));
         assert!(p2.description.as_deref().unwrap().contains("Assigned in Jira: Bob"));
-        assert_eq!(plan_dependencies::Entity::find().filter(plan_dependencies::Column::PredecessorPid.eq(p2.pid)).filter(plan_dependencies::Column::SuccessorPid.eq(p3.pid)).count(&ctx.db).await.unwrap(), 1);
+        assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plan_dependencies WHERE predecessor_pid = $1 AND successor_pid = $2").bind(p2.pid).bind(p3.pid).fetch_one(project_portfolio_management::db::pool(&ctx)).await.unwrap(), 1);
 
         // Someone moves P-2 on, then the same file is imported again: nothing duplicates, status stays.
         request.patch(&format!("/api/plans/{p}/tasks/{}", p2.pid)).json(&json!({ "status": "in_progress" })).await.assert_status_ok();
@@ -4005,7 +3986,7 @@ P-3,Ship,Done,,,P-1,,P-2,\n";
         assert_eq!((r["tasks_created"].as_i64(), r["links_created"].as_i64()), (Some(3), Some(1)));
         assert_eq!(count("asana").await, 3);
         assert_eq!(count("jira").await, 3, "the two sources do not collide");
-        let a2 = tasks::Entity::find().filter(tasks::Column::ExternalRef.eq("asana:2")).one(&ctx.db).await.unwrap().unwrap();
+        let a2 = sqlx::query_as::<_, tasks::Model>("SELECT * FROM tasks WHERE external_ref = $1 LIMIT 1").bind("asana:2").fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().unwrap();
         assert_eq!(a2.status, "done");
         assert!(a2.parent_task_pid.is_some());
         post("asana", "?dry_run=false", "x").await.assert_status(S::UNPROCESSABLE_ENTITY);

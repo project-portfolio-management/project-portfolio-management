@@ -1,6 +1,6 @@
 ## 10. Persistence
 
-PostgreSQL via SeaORM 2.0 and sqlx, owned entirely by the service crate. The schema is made by frozen SQL
+PostgreSQL via sqlx 0.9 (no ORM; spec §8.3b), owned entirely by the service crate. The schema is made by frozen SQL
 migrations in `migration/migrations/`, run by sqlx (until 11 November 2026, by `sea-orm-migration`; §8.3b). Family conventions:
 `agents/share/postgresql.md` (shared family guidance, not in this repository).
 

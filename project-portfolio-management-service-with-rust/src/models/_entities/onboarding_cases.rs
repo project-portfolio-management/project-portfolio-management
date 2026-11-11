@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `onboarding_cases`. One onboarding or offboarding, of a person on a plan or of a plan itself.
+//! Row — `onboarding_cases`. One onboarding or offboarding, of a person on a plan or of a plan itself.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "onboarding_cases")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub kind: String,
     pub plan_pid: Uuid,
@@ -25,6 +23,3 @@ pub struct Model {
     pub closed_at: Option<DateTimeWithTimeZone>,
     pub closed_reason: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

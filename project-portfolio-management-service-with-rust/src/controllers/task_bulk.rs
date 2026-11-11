@@ -228,7 +228,7 @@ pub(super) async fn edit_one(
         Ok(t) => t,
         Err(e) => return ItemResult::refused(pid, e.to_string()),
     };
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     if let Err(e) = sqlx::query_scalar::<_, i32>(
         "UPDATE tasks SET assignee_ref = $1, due_date = $2, start_date = $3, component_pid = $4
          WHERE id = $5
@@ -499,7 +499,7 @@ async fn move_one(
         .bind(target)
         .bind(task.id)
     };
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     moved
         .fetch_one(tx.conn())
         .await

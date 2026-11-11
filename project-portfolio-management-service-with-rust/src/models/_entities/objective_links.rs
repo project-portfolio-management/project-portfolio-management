@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `objective_links`. A weighted plan →
+//! Row — `objective_links`. A weighted plan →
 //! objective mapping (PPM-5); unique per pair.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "objective_links")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub objective_pid: Uuid,
     pub plan_pid: Uuid,
@@ -21,6 +19,3 @@ pub struct Model {
     /// A programme's one primary strategic aim (DP-4).
     pub is_primary: bool,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

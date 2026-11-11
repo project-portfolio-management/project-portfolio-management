@@ -212,7 +212,7 @@ async fn update_pool(
 ) -> Result<Response> {
     let row = find_pool(&ctx, pid).await?.ok_or(Error::NotFound)?;
     let mut tx = crate::db::begin(&ctx).await.map_err(|e| db_err(&e))?;
-    // With no `active` given, the row is read back unchanged (as `SeaORM`'s empty update did).
+    // With no `active` given, the row is read back unchanged (as the empty update did before SQ-1).
     let row: pools::Model = if let Some(active) = b.active {
         sqlx::query_as("UPDATE skill_pools SET active = $1 WHERE id = $2 RETURNING *")
             .bind(active)

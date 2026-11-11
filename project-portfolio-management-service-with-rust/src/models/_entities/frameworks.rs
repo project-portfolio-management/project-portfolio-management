@@ -1,23 +1,20 @@
-//! `SeaORM` Entity — `frameworks`. A named, reusable description of how a team works (`ways_of_working`) or is
+//! Row — `frameworks`. A named, reusable description of how a team works (`ways_of_working`) or is
 //! governed (`governance`), organisation-wide or owned by one plan. The family's fields are in `body`.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "frameworks")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub family: String,
     pub name: String,
-    #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     pub body: Json,
     /// The current version; the others are in `framework_versions`.
@@ -26,6 +23,3 @@ pub struct Model {
     pub created_by: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

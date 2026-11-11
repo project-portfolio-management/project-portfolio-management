@@ -1,18 +1,18 @@
-//! `SeaORM` Entity — `schedule_baseline_tasks`. One task's row in a schedule baseline (SC-3): its title and, when it was schedulable then, its early start, early finish, working duration and total float. A task that could not be scheduled is kept with null dates and the reason, so it is neither lost nor given a date it never had. Append-only.
+//! Row — `schedule_baseline_tasks`. One task's row in a schedule baseline (SC-3): its title and, when it was
+//! schedulable then, its early start, early finish, working duration and total float. A task that could not be
+//! scheduled is kept with null dates and the reason, so it is neither lost nor given a date it never had. Append-only.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "schedule_baseline_tasks")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub baseline_pid: Uuid,
     pub task_pid: Uuid,
@@ -23,6 +23,3 @@ pub struct Model {
     pub total_float: Option<i32>,
     pub unscheduled_reason: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

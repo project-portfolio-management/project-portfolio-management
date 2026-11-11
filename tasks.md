@@ -1883,7 +1883,7 @@ came from grep.
 
 ## SeaORM removal (SQ-n)
 
-- [ ] **SQ-1 (L) — Remove SeaORM: finish the move to sqlx ([spec §8.3b](spec/08-architecture.md)).** The owner asked
+- [x] **SQ-1 (L) — Remove SeaORM: finish the move to sqlx ([spec §8.3b](spec/08-architecture.md)).** The owner asked
   to remove all SeaORM. The plan, each step its own commit:
   (a) the controllers and models, in batches of about ten files, to plain sqlx through `src/db.rs` (`db::pool`,
   `db::begin`), each handler's audit row written by `AuditModel::record_on` in the same transaction as its writes;
@@ -2733,6 +2733,21 @@ came from grep.
   once; the image build; the chaos test. **Not done:** `start` without auto-migrate reads no history, so a database
   newer than the binary is refused by the `migrate` job, not at `start`.
   **Next, suggested:** step (c).
+  **Step (c) done 2026-11-11 (ticked).** axa's `sea-orm` feature is off and its `sqlx` feature on, so `ctx.db` is the
+  `PgPool`; `sea-orm` is gone from `Cargo.toml` and `Cargo.lock` (48 crates fewer), and the migration crate names no
+  ORM dependency. `db.rs` reaches the pool directly and still counts every statement; `query_count::install` (SeaORM's
+  metric callback) is gone. The 173 row structs in `src/models/_entities` keep their `Model` (fields, order, types,
+  derives, so their JSON) without SeaORM's derive, attributes, `Relation`, `ActiveModelBehavior` or `prelude`; the
+  module keeps its path, because 136 files under `src/` and the tests read rows into it and a rename would be a
+  mechanical change of its own. `models/behaviors`, `canvases`, `strategy` and `saved_views` are deleted. The 44 test
+  files that used SeaORM use sqlx through `db::pool` and `db::begin`, asserting the same. **Census, stricter:** the
+  raw-pool census now refuses any `<context>.db` outside `src/db.rs` and reads `tests/` and `benches/` too.
+  **Acceptance:** `grep -rniE "sea_orm|sea-orm|seaorm"` over the service's `src`, `tests`, `migration` and `Cargo.toml`
+  finds only the header line of each of the 285 frozen migration files (left: editing it changes the checksum
+  `db migrate` checks) and one sentence of the migration crate's module documentation naming the old migrator, whose
+  `seaql_migrations` the bridge still reads; `Cargo.lock` has no `sea-orm`. Verified: see the root CHANGELOG entry
+  "11 November (SeaORM removal, step (c): SeaORM gone)". A throwaway comparison of the batch 7–17 dump tests before
+  and after found no answer or row changed. **Not verified:** CI; the image build; the chaos test.
 
 ## Correctness carried forward (CF-n)
 

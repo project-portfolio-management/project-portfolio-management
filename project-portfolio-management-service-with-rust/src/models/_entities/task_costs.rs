@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `task_costs`. A material or fixed-cost expense on a task, with the accrual rule that spreads it over the task.
+//! Row — `task_costs`. A material or fixed-cost expense on a task, with the accrual rule that spreads it over the task.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "task_costs")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub task_pid: Uuid,
     /// `material` or `fixed`.
@@ -24,6 +22,3 @@ pub struct Model {
     pub accrual: String,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

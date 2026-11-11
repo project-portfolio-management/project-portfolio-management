@@ -267,7 +267,7 @@ async fn mark(
     error: Option<String>,
     next: Option<chrono::DateTime<Utc>>,
 ) -> Result<()> {
-    // The columns `SeaORM`'s update named: `attempts` only when given, `delivered_at` only when sent.
+    // The columns the update named before SQ-1: `attempts` only when given, `delivered_at` only when sent.
     let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE sink_deliveries SET status = ");
     q.push_bind(status);
     if let Some(n) = attempts {
@@ -282,7 +282,7 @@ async fn mark(
     }
     q.push(", updated_at = ")
         .push_bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()));
-    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     q.push(" WHERE id = ").push_bind(d.id).push(" RETURNING id");
     q.build_query_scalar::<i64>()
         .fetch_one(crate::db::pool(ctx))
@@ -425,7 +425,7 @@ async fn delete_sink(
 ) -> Result<Response> {
     let sub = user_id(&claims.sub)?;
     let row = own_sink(&ctx, &sub, &pid).await?;
-    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>(
         "UPDATE notification_sinks SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )

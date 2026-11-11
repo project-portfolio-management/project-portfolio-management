@@ -146,7 +146,8 @@ async fn update(
         b.name.as_deref().unwrap_or(&row.name),
         b.kind.as_deref().unwrap_or(&row.kind),
     )?;
-    // Only the fields given are written; with none, the row is read back unchanged (as `SeaORM`'s empty update did).
+    // Only the fields given are written; with none, the row is read back unchanged (as the empty update did before
+    // SQ-1).
     let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE organizations SET ");
     let mut set = q.separated(", ");
     let mut any = false;

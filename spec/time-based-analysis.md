@@ -887,7 +887,7 @@ each sum to the lead time; work ≤ process ≤ cycle ≤ lead; ratios in
 | id | Task | Verified by |
 |---|---|---|
 | **TBA-1** | Migration: `task_transitions` + indexes + the labelled backfill (§5.4, §11) | §14.3 backfill test |
-| **TBA-2** | `SeaORM` entity; the status classification with its env override (§5.3) | §14.1 |
+| **TBA-2** | Row struct (`src/models/_entities`; a `SeaORM` entity until SQ-1); the status classification with its env override (§5.3) | §14.1 |
 | **TBA-3** | Pure `src/tba.rs`: intervals, cycle/lead, per-status and per-category splits, rework, handoffs (§6) | §14.1, §14.4 |
 | **TBA-4** | Pure: percentiles, plan rollup, SLE, RFPY (§7) | §14.1 |
 | **TBA-5** | Pure: constraints and flow/Little's Law (§8, §9) | §14.1 |

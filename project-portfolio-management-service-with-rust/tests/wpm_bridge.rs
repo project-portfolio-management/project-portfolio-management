@@ -28,8 +28,6 @@ use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::audit_logs;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
@@ -216,8 +214,8 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         assert_eq!(pool.len(), 36);
         let other: Value = with!(request.post("/api/skill-pools")).json(&json!({ "name": format!("Other {tag}") })).await.json();
         let other = other["pid"].as_str().unwrap().to_string();
-        ctx.db.execute_unprepared(&format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), 'person:b{tag}', '{role}', now(), now())")).await.unwrap();
-        ctx.db.execute_unprepared(&format!("INSERT INTO allocations (pid, plan_pid, person_ref, role, percent, start_date, end_date, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{prog}', 'person:b{tag}', '{role}', 100, '{first}', '{last}', '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), 'person:b{tag}', '{role}', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO allocations (pid, plan_pid, person_ref, role, percent, start_date, end_date, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{prog}', 'person:b{tag}', '{role}', 100, '{first}', '{last}', '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let heat = || async { with!(request.get(&format!("/api/capacity-heatmap?from={month}&months=2"))).await };
         let cell = |v: &Value, m: &str| v["pools"].as_array().unwrap().iter().find(|p| p["name"] == pool_name.as_str()).unwrap()["cells"].as_array().unwrap().iter().find(|c| c["month"] == m).cloned().unwrap();
         let posts = || stub.seen.lock().unwrap().iter().filter(|s| s.0 == "POST").cloned().collect::<Vec<_>>();
@@ -239,7 +237,7 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         assert_eq!(linked.json::<Value>()["peer_pool_ref"], json!(peer));
         assert_eq!(link(other.clone(), json!(peer)).await.status_code(), 409, "one PPM pool per WPM pool");
         let pool_uuid = uuid::Uuid::parse_str(&pool).unwrap();
-        let rows = audit_logs::Entity::find().filter(audit_logs::Column::EntityPid.eq(pool_uuid)).filter(audit_logs::Column::Action.eq("skill_pool_peer_linked")).all(&ctx.db).await.unwrap();
+        let rows = sqlx::query_as::<_, audit_logs::Model>("SELECT * FROM audit_logs WHERE entity_pid = $1 AND action = $2").bind(pool_uuid).bind("skill_pool_peer_linked").fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(rows.len(), 1);
         assert!(rows[0].snapshot.is_none(), "audited with no figure");
         let listed: Value = with!(request.get("/api/skill-pools")).await.json();

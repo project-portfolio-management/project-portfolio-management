@@ -91,7 +91,7 @@ async fn put_mark(
     let mut tx = crate::db::begin(&ctx).await?;
     match (existing, b.mark.as_deref()) {
         (Some(row), Some(new)) => {
-            // The two columns `SeaORM`'s update set, by id; no row back is an error, as before.
+            // The two columns the update set before SQ-1, by id; no row back is an error, as before.
             let _: i64 = sqlx::query_scalar(
                 "UPDATE plan_handling_marks SET mark = $1, set_by = $2 WHERE id = $3 RETURNING id",
             )
@@ -102,7 +102,7 @@ async fn put_mark(
             .await?;
         }
         (Some(row), None) => {
-            // As `SeaORM`'s `delete_by_id`: no row deleted is not an error.
+            // As before SQ-1: no row deleted is not an error.
             sqlx::query("DELETE FROM plan_handling_marks WHERE id = $1")
                 .bind(row.id)
                 .execute(tx.conn())

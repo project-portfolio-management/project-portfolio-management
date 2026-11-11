@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `delivery_exceptions`. Opened when delivery confidence reaches amber-red or red.
+//! Row — `delivery_exceptions`. Opened when delivery confidence reaches amber-red or red.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "delivery_exceptions")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     /// `open` or `closed`.
@@ -22,9 +20,7 @@ pub struct Model {
     pub opened_value: String,
     pub worst_value: String,
     pub worsened_count: i32,
-    #[sea_orm(column_type = "Text", nullable)]
     pub cause: Option<String>,
-    #[sea_orm(column_type = "Text", nullable)]
     pub decision_needed: Option<String>,
     /// A reference to the named owner (used to notify; never shown in a pack).
     pub owner_ref: Option<String>,
@@ -34,12 +30,8 @@ pub struct Model {
     pub completed_at: Option<DateTimeWithTimeZone>,
     pub breach_notified_at: Option<DateTimeWithTimeZone>,
     pub closed_at: Option<DateTimeWithTimeZone>,
-    #[sea_orm(column_type = "Text", nullable)]
     pub decision: Option<String>,
     pub decided_by: Option<String>,
     /// The threshold that opened it (EX-7); none for a confidence exception.
     pub threshold_kind: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

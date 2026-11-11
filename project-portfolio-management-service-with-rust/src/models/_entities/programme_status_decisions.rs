@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `programme_status_decisions`. Append-only: a programme is active until a
+//! Row — `programme_status_decisions`. Append-only: a programme is active until a
 //! recorded decision pauses or stops it.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "programme_status_decisions")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     /// `active`, `paused` or `stopped`.
@@ -26,6 +24,3 @@ pub struct Model {
     /// The delivery exception this decision follows from, if any.
     pub exception_pid: Option<Uuid>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

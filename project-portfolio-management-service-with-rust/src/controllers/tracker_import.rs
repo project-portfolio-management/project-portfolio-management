@@ -186,7 +186,7 @@ async fn run(
         for it in &parsed.items {
             let status = mapping.of(it.bucket);
             if let Some(row) = existing.get(&ext(&it.key)) {
-                // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was. The
+                // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was. The
                 // start date is named only when the file gives one, as before.
                 let update = if it.start.is_some() {
                     sqlx::query_scalar::<_, i32>(
@@ -209,7 +209,7 @@ async fn run(
                 updated += 1;
             } else {
                 let task_pid = Uuid::new_v4();
-                // The columns `SeaORM`'s insert set, no more.
+                // The columns the insert set before SQ-1, no more.
                 sqlx::query(
                     "INSERT INTO tasks
                          (pid, plan_pid, title, description, status, start_date, deadline, external_ref,

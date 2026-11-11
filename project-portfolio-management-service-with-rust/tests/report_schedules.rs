@@ -137,8 +137,7 @@ async fn scheduled_runs_are_claimed_once_audited_and_owner_only() {
         // Audited like an export, even the zero-row run.
         {
             use project_portfolio_management::models::_entities::audit_logs;
-            use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-            let rows = audit_logs::Entity::find().filter(audit_logs::Column::Action.eq("report_run_scheduled")).all(&ctx.db).await.unwrap();
+            let rows = sqlx::query_as::<_, audit_logs::Model>("SELECT * FROM audit_logs WHERE action = $1").bind("report_run_scheduled").fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
             assert_eq!(rows.len(), 2);
             assert!(rows.iter().any(|a| a.snapshot.as_ref().is_some_and(|d| d["rows"] == 0)), "the zero-row run is in the audit log");
         }
@@ -158,12 +157,10 @@ async fn scheduled_runs_are_claimed_once_audited_and_owner_only() {
         // A deleted report fails the run, records why, and does not loop.
         request.delete(&format!("/api/reports/{none}")).add_header(mk.clone(), mv.clone()).await.assert_status_ok();
         {
-            use project_portfolio_management::models::_entities::report_schedules;
-            use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, sea_query::Expr};
-            report_schedules::Entity::update_many()
-                .col_expr(report_schedules::Column::NextRunDate, Expr::value(chrono::NaiveDate::from_ymd_opt(2026, 9, 1).unwrap()))
-                .filter(report_schedules::Column::Pid.eq(uuid::Uuid::parse_str(e["pid"].as_str().unwrap()).unwrap()))
-                .exec(&ctx.db)
+            sqlx::query("UPDATE report_schedules SET next_run_date = $1 WHERE pid = $2")
+                .bind(chrono::NaiveDate::from_ymd_opt(2026, 9, 1).unwrap())
+                .bind(uuid::Uuid::parse_str(e["pid"].as_str().unwrap()).unwrap())
+                .execute(project_portfolio_management::db::pool(&ctx))
                 .await
                 .unwrap();
         }

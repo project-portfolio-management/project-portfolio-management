@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `process_executions`. One run of a process on a subject, pinned to a version.
+//! Row — `process_executions`. One run of a process on a subject, pinned to a version.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "process_executions")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub process_pid: Uuid,
     pub version: i32,
@@ -26,6 +24,3 @@ pub struct Model {
     pub finished_at: Option<DateTimeWithTimeZone>,
     pub note: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

@@ -1,24 +1,20 @@
-//! `SeaORM` Entity — `change_requests`. A controlled proposal to change an approved baseline.
+//! Row — `change_requests`. A controlled proposal to change an approved baseline.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "change_requests")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub title: String,
-    #[sea_orm(column_type = "Text")]
     pub description: String,
-    #[sea_orm(column_type = "Text")]
     pub reason: String,
     /// `scope`, `schedule`, `cost`, `quality` or `other`.
     pub kind: String,
@@ -26,7 +22,6 @@ pub struct Model {
     pub impact_schedule_days: Option<i32>,
     pub impact_cost_minor: Option<i64>,
     pub cost_currency: Option<String>,
-    #[sea_orm(column_type = "Text", nullable)]
     pub impact_summary: Option<String>,
     /// What-if edits (the sandbox's edit list) whose forecast is shown as the impact.
     pub edits: Option<Json>,
@@ -36,12 +31,8 @@ pub struct Model {
     pub approver_ref: Option<String>,
     pub decided_by: Option<String>,
     pub decided_on: Option<Date>,
-    #[sea_orm(column_type = "Text", nullable)]
     pub decision_reason: Option<String>,
     pub implemented_on: Option<Date>,
     pub baseline_pid: Option<Uuid>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

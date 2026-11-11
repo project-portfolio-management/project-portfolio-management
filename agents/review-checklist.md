@@ -20,11 +20,12 @@ look at.
 
 ## Database
 
-1. A new table is named in the plural in the migration, in the entity's `table_name` and in raw SQL, as every table so far is. (service `AGENTS.md`)
+1. A new table is named in the plural in the migration, in its row struct's file (`src/models/_entities/<table>.rs`) and in raw SQL, as every table so far is. (service `AGENTS.md`)
 2. A migration is a new file in `migration/migrations/`, versioned after the last (`<YYYYMMDD><NNNNNN>_<name>`): an `.up.sql` and a `.down.sql`, or a plain `.sql` with a reason in `REFUSED` (`migration/src/lib.rs`) when it cannot be rolled back. No released file is edited (the runner refuses a changed checksum). It can run twice (`IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION` for triggers). (service `AGENTS.md`)
 3. Append-only and immutability rules are database triggers, not only code. (service `AGENTS.md`)
 4. A list is bounded (a cap or `limit`/`offset`), and a list route is in `PAGED_LISTS` or, if the census cannot call it, in `UNREACHED` with a reason in `tests/list_paging.rs`. (`tests/list_paging.rs`)
 5. A multi-row change is one transaction with its audit row; a change made in several steps says what happens when a step fails. (`controllers/plan_templates.rs`)
+6. Every statement runs on `db::pool(&ctx)` or a `db::begin` transaction, never on `ctx.db` itself (the census in `src/db.rs` refuses it in `src/`, `tests/` and `benches/`), and nothing uses the pool while it holds a transaction; SQL text is literals, every value bound. (root spec §8.3b, service `AGENTS.md`)
 
 ## Rust
 

@@ -57,7 +57,7 @@ pub async fn capture_on(db: &mut impl crate::db::Session) -> Result<insight_snap
         "open_exposure": open_exposure,
         "money": money,
     });
-    // The columns `SeaORM`'s insert set, no more (`taken_at` is the table's default).
+    // The columns the insert set before SQ-1, no more (`taken_at` is the table's default).
     Ok(sqlx::query_as(
         "INSERT INTO insight_snapshots (kind, body) VALUES ('estate', $1) RETURNING *",
     )

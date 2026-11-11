@@ -1,24 +1,16 @@
-//! A count of the statements the app's own connection has run (CQ-11), so a request test can assert that a list
-//! endpoint's query count does not grow with the rows it returns. A cloned connection does not see the server's
-//! statements; the callback has to be set on the connection the app builds, in `after_context`. SeaORM reports through
-//! that callback, and sqlx through [`crate::db::Counted`]: the two together are every statement.
+//! A count of the statements the service has run (CQ-11), so a request test can assert that a list endpoint's query
+//! count does not grow with the rows it returns. Every statement of the service's own goes through
+//! [`crate::db::Counted`], which counts it here; a census test in `src/db.rs` refuses the raw pool, so none goes
+//! uncounted. (Until SQ-1 (c) the ORM's statements reached it through a metric callback on its connection.)
 
-use sea_orm::DatabaseConnection;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// Process-wide running total of statements seen by the metric callback. Relaxed ordering is enough: it is only a counter.
+/// Process-wide running total of statements counted. Relaxed ordering is enough: it is only a counter.
 static STATEMENTS: AtomicU64 = AtomicU64::new(0);
 
-/// One statement run through [`crate::db::Counted`], which is how sqlx reaches this count.
+/// One statement run through [`crate::db::Counted`].
 pub fn add_one() {
     STATEMENTS.fetch_add(1, Ordering::Relaxed);
-}
-
-/// Count every statement run on `db` from now on.
-pub fn install(db: &mut DatabaseConnection) {
-    db.set_metric_callback(|_| {
-        STATEMENTS.fetch_add(1, Ordering::Relaxed);
-    });
 }
 
 /// Statements counted since the process started. Take a difference around one request; background work counts too,

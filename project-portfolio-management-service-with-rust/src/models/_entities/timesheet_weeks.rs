@@ -1,18 +1,18 @@
-//! `SeaORM` Entity — `timesheet_weeks`. The approval state of one person's week of time entries (LT-11). A row exists only once a week has been submitted; no row means the week is open. Approved weeks are locked against new entries. `week_start` is the ISO Monday, a zone-free calendar date.
+//! Row — `timesheet_weeks`. The approval state of one person's week of time entries (LT-11). A row exists only once a
+//! week has been submitted; no row means the week is open. Approved weeks are locked against new entries. `week_start`
+//! is the ISO Monday, a zone-free calendar date.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "timesheet_weeks")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub person_ref: String,
     pub week_start: Date,
@@ -22,6 +22,3 @@ pub struct Model {
     pub decided_at: Option<DateTimeWithTimeZone>,
     pub decision_comment: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

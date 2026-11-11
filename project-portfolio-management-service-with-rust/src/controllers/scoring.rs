@@ -12,6 +12,7 @@ use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use uuid::Uuid;
 
 use super::unprocessable;
 use crate::auth::MaybeAuthUser;
@@ -72,7 +73,7 @@ async fn put_inputs(
             .await?;
     let before = existing.as_ref().map(inputs_of);
     let who = caller.actor();
-    // Every input and who set them, as `SeaORM`'s update and insert did; the update by id, where no row back is
+    // Every input and who set them, as the update and insert did before SQ-1; the update by id, where no row back is
     // an error, as before.
     let row: scoring_inputs::Model = if let Some(e) = existing {
         sqlx::query_as(

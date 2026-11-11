@@ -1,16 +1,18 @@
 //! The service's schema migrations: frozen SQL files in `migrations/`, run by sqlx, with a one-time bridge from the
-//! history `SeaORM` kept.
+//! history the old migrator kept in `seaql_migrations` (the service's migrator until SQ-1 (b), `sea-orm-migration`;
+//! the one deliberate mention of it in this crate's code, as the table's name and the frozen files' headers say whose
+//! it was).
 //!
-//! Each file is exactly the statements its `sea-orm-migration` migration ran on PostgreSQL 18, in order, captured
-//! from the server's statement log on 11 November 2026 (task SQ-1 (b)). A migration is named by its old `SeaORM` name
+//! Each file is exactly the statements its old migration ran on PostgreSQL 18, in order, captured
+//! from the server's statement log on 11 November 2026 (task SQ-1 (b)). A migration is named by its old name
 //! turned into a sqlx version: `m20261109_000109_axa_outbox_record` is `20261109000109_axa_outbox_record`, so the
 //! versions sort in the old order. A migration that can be rolled back has an `.up.sql` and a `.down.sql`; one that
 //! is refused today is a plain `.sql`, and [`down`] refuses it with the reason it gave before.
 //!
-//! [`up`] first runs [`bridge`]: on a database the `SeaORM` migrator built, it copies every migration recorded in
+//! [`up`] first runs [`bridge`]: on a database the old migrator built, it copies every migration recorded in
 //! `seaql_migrations` into sqlx's `_sqlx_migrations`, with the checksum of its frozen file, so nothing runs twice.
 //! `seaql_migrations` is left as it is. Then sqlx applies what is pending, each migration in its own transaction, as
-//! `SeaORM` did.
+//! the old migrator did.
 
 // SEC-I3: the runner runs SQL files; forbid unsafe.
 #![forbid(unsafe_code)]
@@ -59,11 +61,12 @@ pub static MIGRATOR: LazyLock<Migrator> = LazyLock::new(|| {
 /// sqlx's history table.
 pub const HISTORY: &str = "_sqlx_migrations";
 
-/// `SeaORM`'s history table, which the bridge reads and never changes.
-pub const SEAORM_HISTORY: &str = "seaql_migrations";
+/// The old migrator's history table, which the bridge reads and never changes.
+pub const OLD_HISTORY: &str = "seaql_migrations";
 
-/// The migrations that refuse to roll back, with the reason each gave under `SeaORM`. A migration with no `.down.sql`
-/// that is missing here is refused with a general reason; a unit test keeps this list and the files in step.
+/// The migrations that refuse to roll back, with the reason each gave under the old migrator. A migration with no
+/// `.down.sql` that is missing here is refused with a general reason; a unit test keeps this list and the files in
+/// step.
 pub const REFUSED: &[(i64, &str)] = &[(
     20_261_109_000_109,
     "the event record cannot be rolled back: its tables refuse every change. axa_outbox is unchanged",
@@ -81,7 +84,7 @@ pub enum Error {
     Unknown(Vec<String>),
     /// The migration refuses to roll back.
     Refused {
-        /// Its `SeaORM` name.
+        /// Its old name.
         name: String,
         /// Why.
         reason: String,
@@ -126,9 +129,9 @@ impl From<MigrateError> for Error {
     }
 }
 
-/// The name `SeaORM` gave a migration: `m` + the date + `_` + the sequence + `_` + the description.
+/// The name the old migrator gave a migration: `m` + the date + `_` + the sequence + `_` + the description.
 #[must_use]
-pub fn seaorm_name(migration: &Migration) -> String {
+pub fn old_name(migration: &Migration) -> String {
     let version = migration.version.to_string();
     let (date, sequence) = version.split_at(version.len().min(8));
     format!(
@@ -154,7 +157,7 @@ async fn exists(conn: &mut PgConnection, table: &str) -> Result<bool, sqlx::Erro
 
 /// The names `seaql_migrations` records that no migration here has.
 fn unknown<'a>(recorded: impl IntoIterator<Item = &'a String>) -> Vec<String> {
-    let known: HashSet<String> = ups().map(seaorm_name).collect();
+    let known: HashSet<String> = ups().map(old_name).collect();
     recorded
         .into_iter()
         .filter(|name| !known.contains(*name))
@@ -166,11 +169,11 @@ fn unknown<'a>(recorded: impl IntoIterator<Item = &'a String>) -> Vec<String> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Bridged(pub usize);
 
-/// The one-time step from `SeaORM`'s history to sqlx's, in one transaction.
+/// The one-time step from the old migrator's history to sqlx's, in one transaction.
 ///
-/// When `seaql_migrations` exists, every name in it must be a migration here, or this refuses ([`Error::Unknown`])
-/// and changes nothing. When `_sqlx_migrations` does not exist yet, it is made and every recorded migration is
-/// copied into it, marked applied with its frozen file's checksum and `SeaORM`'s time; after that, sqlx's table is the
+/// When `seaql_migrations` exists, every name in it must be a migration here, or this refuses ([`Error::Unknown`]) and
+/// changes nothing. When `_sqlx_migrations` does not exist yet, it is made and every recorded migration is copied into
+/// it, marked applied with its frozen file's checksum and the old migrator's time; after that, sqlx's table is the
 /// history and this copies nothing again, so a migration rolled back by [`down`] is not marked applied again.
 /// `seaql_migrations` is left as it is.
 ///
@@ -179,7 +182,7 @@ pub struct Bridged(pub usize);
 /// A statement fails, or the database names a migration this binary does not know.
 pub async fn bridge(conn: &mut PgConnection) -> Result<Bridged, Error> {
     let mut tx = conn.begin().await?;
-    if !exists(&mut tx, SEAORM_HISTORY).await? {
+    if !exists(&mut tx, OLD_HISTORY).await? {
         tx.commit().await?;
         return Ok(Bridged(0));
     }
@@ -196,7 +199,7 @@ pub async fn bridge(conn: &mut PgConnection) -> Result<Bridged, Error> {
         return Ok(Bridged(0));
     }
     tx.ensure_migrations_table(HISTORY).await?;
-    let by_name: HashMap<String, &Migration> = ups().map(|m| (seaorm_name(m), m)).collect();
+    let by_name: HashMap<String, &Migration> = ups().map(|m| (old_name(m), m)).collect();
     for (name, applied_at) in &recorded {
         let migration = by_name[name];
         sqlx::query(
@@ -249,8 +252,9 @@ pub async fn up(pool: &PgPool) -> Result<(), Error> {
     .await
 }
 
-/// Roll back the newest `steps` migrations, newest first, each with its `.down.sql` in its own transaction, as
-/// `SeaORM`'s `down` did. A migration with no down file is refused, and the ones rolled back before it stay rolled back.
+/// Roll back the newest `steps` migrations, newest first, each with its `.down.sql` in its own transaction, as the old
+/// migrator's `down` did. A migration with no down file is refused, and the ones rolled back before it stay rolled
+/// back.
 ///
 /// # Errors
 ///
@@ -280,7 +284,7 @@ pub async fn down(pool: &PgPool, steps: u32) -> Result<(), Error> {
                 .find(|m| m.version == version && m.migration_type.is_down_migration());
             let Some(reverse) = reverse else {
                 let up = ups().find(|m| m.version == version);
-                let name = up.map_or_else(|| version.to_string(), seaorm_name);
+                let name = up.map_or_else(|| version.to_string(), old_name);
                 let reason = REFUSED
                     .iter()
                     .find(|(v, _)| *v == version)
@@ -290,7 +294,7 @@ pub async fn down(pool: &PgPool, steps: u32) -> Result<(), Error> {
                     reason: reason.to_string(),
                 });
             };
-            tracing::info!("Rolling back migration '{}'", seaorm_name(reverse));
+            tracing::info!("Rolling back migration '{}'", old_name(reverse));
             conn.revert(HISTORY, reverse).await?;
         }
         Ok(())
@@ -298,14 +302,14 @@ pub async fn down(pool: &PgPool, steps: u32) -> Result<(), Error> {
     .await
 }
 
-/// Quote a name for SQL, as `SeaORM`'s statement builder did.
+/// Quote a name for SQL, as the old migrator's statement builder did.
 fn quoted(name: &str) -> String {
     format!("\"{}\"", name.replace('"', "\"\""))
 }
 
-/// Drop every table and type in the current schema, then apply every migration (`db reset`, and each test's boot).
-/// It drops what `SeaORM`'s `fresh` dropped, found the same way: the base tables in `current_schema()`, then the types
-/// there that are not array types and belong to no extension. Functions are left, as before (the migrations make
+/// Drop every table and type in the current schema, then apply every migration (`db reset`, and each test's boot). It
+/// drops what the old migrator's `fresh` dropped, found the same way: the base tables in `current_schema()`, then the
+/// types there that are not array types and belong to no extension. Functions are left, as before (the migrations make
 /// theirs with `CREATE OR REPLACE`).
 ///
 /// **This destroys all data.** `axa::cli::parse` refuses `db reset` outside development and test.
@@ -345,7 +349,7 @@ pub async fn fresh(pool: &PgPool) -> Result<(), Error> {
 /// One migration and whether it has run.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Status {
-    /// Its `SeaORM` name, which `db status` has always shown.
+    /// Its old name, which `db status` has always shown.
     pub name: String,
     /// Its sqlx version.
     pub version: i64,
@@ -376,7 +380,7 @@ pub async fn status(pool: &PgPool) -> Result<Vec<Status>, Error> {
             return Err(Error::Unknown(strangers));
         }
         versions.into_iter().collect()
-    } else if exists(&mut conn, SEAORM_HISTORY).await? {
+    } else if exists(&mut conn, OLD_HISTORY).await? {
         let names: Vec<String> =
             sqlx::query_scalar("SELECT version FROM seaql_migrations ORDER BY version")
                 .fetch_all(&mut *conn)
@@ -387,7 +391,7 @@ pub async fn status(pool: &PgPool) -> Result<Vec<Status>, Error> {
         }
         let names: HashSet<String> = names.into_iter().collect();
         ups()
-            .filter(|m| names.contains(&seaorm_name(m)))
+            .filter(|m| names.contains(&old_name(m)))
             .map(|m| m.version)
             .collect()
     } else {
@@ -395,7 +399,7 @@ pub async fn status(pool: &PgPool) -> Result<Vec<Status>, Error> {
     };
     Ok(ups()
         .map(|m| Status {
-            name: seaorm_name(m),
+            name: old_name(m),
             version: m.version,
             applied: applied.contains(&m.version),
         })
@@ -406,13 +410,13 @@ pub async fn status(pool: &PgPool) -> Result<Vec<Status>, Error> {
 mod tests {
     use super::*;
 
-    /// Every name the `SeaORM` migrator wrote into `seaql_migrations`, in its order: the bridge must know each one.
-    const SEAORM_NAMES: &str = include_str!("seaorm_names.txt");
+    /// Every name the old migrator wrote into `seaql_migrations`, in its order: the bridge must know each one.
+    const OLD_NAMES: &str = include_str!("old_names.txt");
 
     #[test]
-    fn every_seaorm_migration_has_its_frozen_file_in_the_same_order() {
-        let names: Vec<String> = ups().map(seaorm_name).collect();
-        let old: Vec<&str> = SEAORM_NAMES.lines().collect();
+    fn every_old_migration_has_its_frozen_file_in_the_same_order() {
+        let names: Vec<String> = ups().map(old_name).collect();
+        let old: Vec<&str> = OLD_NAMES.lines().collect();
         assert_eq!(names, old);
         assert_eq!(names.len(), 143);
     }
@@ -497,7 +501,7 @@ mod tests {
     }
 
     #[test]
-    fn names_are_quoted_as_seaorm_quoted_them() {
+    fn names_are_quoted_as_the_old_migrator_quoted_them() {
         assert_eq!(quoted("plans"), "\"plans\"");
         assert_eq!(quoted("a\"b"), "\"a\"\"b\"");
     }

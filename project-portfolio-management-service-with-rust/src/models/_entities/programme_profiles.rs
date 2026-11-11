@@ -1,21 +1,18 @@
-//! `SeaORM` Entity — `programme_profiles`: a programme's delivery model and delivery owner (EX-2), and its
+//! Row — `programme_profiles`: a programme's delivery model and delivery owner (EX-2), and its
 //! reporting method (EX-14).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "programme_profiles")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
-    #[sea_orm(unique)]
     pub plan_pid: Uuid,
     /// `central_product`, `central_platform_local_deployment` or `local_programme_central_standards`.
     pub delivery_model: Option<String>,
@@ -24,6 +21,3 @@ pub struct Model {
     /// `evm` (the default) or `product` (EX-14).
     pub method: String,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

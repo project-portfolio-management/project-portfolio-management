@@ -253,7 +253,7 @@ async fn revoke(
         return format::json(view(&row, Utc::now()));
     }
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as `SeaORM`'s was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: grants::Model = sqlx::query_as(
         "UPDATE break_glass_grants SET revoked_at = $1, revoked_by = $2 WHERE id = $3 RETURNING *",
     )

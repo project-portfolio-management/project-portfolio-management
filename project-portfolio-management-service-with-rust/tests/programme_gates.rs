@@ -20,9 +20,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -133,7 +133,7 @@ async fn gates_and_programme_status_keep_their_promises() {
         let epsilon = mk("Program", "Epsilon").await;
         let secret = mk("Program", "Secret").await;
         let project = mk("Project", "Just a project").await;
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
 
         // ── gate reviews: passed, failed, held ──
         review(alpha.clone(), "g0_concept", "approved_with_conditions").await;
@@ -176,7 +176,7 @@ async fn gates_and_programme_status_keep_their_promises() {
         with!(request.post(&status(&delta)), decider).json(&json!({ "status": "active", "reason": "Funding confirmed again" })).await.assert_status_ok();
         with!(request.post(&status(&delta)), decider).json(&pause).await.assert_status_ok();
         // An allocation on the paused programme is flagged, never deleted.
-        ctx.db.execute_unprepared(&format!("INSERT INTO allocations (pid, plan_pid, person_ref, percent, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{delta}', 'person:x', 50, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO allocations (pid, plan_pid, person_ref, percent, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{delta}', 'person:x', 50, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let paused: Value = with!(request.get(&status(&delta)), writer).await.json();
         assert_eq!(paused["status"], "paused");
         assert_eq!(paused["history"].as_array().unwrap().len(), 3);
@@ -203,7 +203,7 @@ async fn gates_and_programme_status_keep_their_promises() {
             ("an edit", "UPDATE programme_status_decisions SET reason = 'Rewritten to look better'".to_string()),
             ("a delete", "DELETE FROM programme_status_decisions".to_string()),
         ] {
-            assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
 
         // ── a private programme is nowhere ──
@@ -250,9 +250,8 @@ async fn gates_and_programme_status_keep_their_promises() {
         assert!(status_of("Epsilon").is_some());
 
         // The audit trail names who did what.
-        let rows = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres,
-            "SELECT action, actor FROM audit_logs WHERE action = 'gate_planned' OR action LIKE 'programme_%' ORDER BY id".to_string())).await.unwrap();
-        let trail: Vec<(String, String)> = rows.iter().map(|r| (r.try_get("", "action").unwrap(), r.try_get("", "actor").unwrap())).collect();
+        let rows = sqlx::query(sqlx::AssertSqlSafe("SELECT action, actor FROM audit_logs WHERE action = 'gate_planned' OR action LIKE 'programme_%' ORDER BY id".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        let trail: Vec<(String, String)> = rows.iter().map(|r| (r.try_get("action").unwrap(), r.try_get("actor").unwrap())).collect();
         for a in ["gate_planned", "programme_paused", "programme_resumed", "programme_stopped"] {
             assert!(trail.iter().any(|(t, _)| t == a), "{a} not audited: {trail:?}");
         }

@@ -31,7 +31,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | Migrations | 143 | files in `migration/migrations` (a `.sql` or `.up.sql` each) |
 | Mounted routes | 684 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
 | Documented API paths | 541 | path keys in the service's `openapi.json` |
-| Service tests | 1610, plus 314 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Service tests | 1611, plus 314 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 802 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 374 | `test(` lines in `tests/e2e` |
@@ -58,7 +58,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | PF | 1 | 0 |
 | RG | 16 | 0 |
 | CQ | 24 | 1 |
-| SQ | 0 | 1 |
+| SQ | 1 | 0 |
 | CF | 6 | 1 |
 | WW | 0 | 1 |
 | NC | 13 | 4 |
@@ -70,7 +70,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | UE | 1 | 7 |
 | PE | 1 | 15 |
 | SM | 2 | 15 |
-| **Total** | **241** | **59** |
+| **Total** | **242** | **58** |
 
 <!-- generated:end -->
 

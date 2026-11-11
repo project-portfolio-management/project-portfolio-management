@@ -50,7 +50,7 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo test --lib
-      # The migration crate's own checks: the embedded files are sqlx's reading of migrations/, one per SeaORM name.
+      # The migration crate's own checks: the embedded files are sqlx's reading of migrations/, one per old migration name.
       - run: cargo clippy -p project-portfolio-management-migration --all-targets -- -D warnings
       - run: cargo test -p project-portfolio-management-migration
       - run: >-

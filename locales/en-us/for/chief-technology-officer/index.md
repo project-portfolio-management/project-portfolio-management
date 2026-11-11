@@ -9,7 +9,7 @@ Three subprojects, one entity ([architecture](../../../../spec/08-architecture.m
 | Part | Technology |
 |---|---|
 | Matcher library | Rust; deterministic and probabilistic, explainable pairwise matching; embedded by the service |
-| Service | Rust, axa on axum, SeaORM, PostgreSQL 18; REST under `/api`, OpenAPI derived from the routes |
+| Service | Rust, axa on axum, sqlx, PostgreSQL 18; REST under `/api`, OpenAPI derived from the routes |
 | UI | SvelteKit 3, Svelte 5 SPA with a backend-for-frontend; i18n catalogues |
 
 The toolchain is pinned in [`rust-toolchain.toml`](../../../../rust-toolchain.toml). Persistence is in [spec 10](../../../../spec/10-persistence.md); the API in [spec 09](../../../../spec/09-api-surface.md).

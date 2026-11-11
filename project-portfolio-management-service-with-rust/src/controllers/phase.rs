@@ -119,7 +119,7 @@ async fn set_phase(
         );
     }
     let plan_pid = plan.pid;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>(
         "UPDATE plans SET phase = $1, data = $2 WHERE id = $3 RETURNING id",
     )

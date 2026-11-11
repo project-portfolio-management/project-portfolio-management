@@ -484,7 +484,7 @@ pub(super) async fn update_task(
     if payload.flow_type != FlowTypeField::Keep {
         update = update.bind(payload.flow_type.declared());
     }
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: tasks::Model = update.fetch_one(tx.conn()).await?;
     AuditModel::record_on(tx.conn(), task_pid, "task_updated", caller.actor(), None)
         .await
@@ -646,7 +646,7 @@ pub(super) async fn move_task(
     } else {
         "UPDATE tasks SET status = $1, status_changed_at = $2 WHERE id = $3 RETURNING *"
     };
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: tasks::Model = sqlx::query_as(sql)
         .bind(&payload.status)
         .bind(at)
@@ -725,7 +725,7 @@ pub(super) async fn delete_task(
     let task = find_task(&ctx, item.pid, &t_pid).await?;
     let task_pid = task.pid;
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>("UPDATE tasks SET deleted_at = $1 WHERE id = $2 RETURNING id")
         .bind(chrono::DateTime::<chrono::FixedOffset>::from(
             chrono::Utc::now(),

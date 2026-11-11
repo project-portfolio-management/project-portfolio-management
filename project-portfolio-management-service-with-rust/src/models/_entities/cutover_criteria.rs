@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `cutover_criteria`. A stop criterion of a cutover decision, published before the decision (EX-6).
+//! Row — `cutover_criteria`. A stop criterion of a cutover decision, published before the decision (EX-6).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "cutover_criteria")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub decision_pid: Uuid,
     pub position: i32,
@@ -22,6 +20,3 @@ pub struct Model {
     pub marked_by: Option<String>,
     pub marked_on: Option<Date>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

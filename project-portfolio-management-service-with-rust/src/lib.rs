@@ -12,7 +12,7 @@
 //!
 //! - [`app`] — boot, routes, workers and truncate.
 //! - [`controllers`] — Axum controllers: CRUD, `match`, `check-duplicates`.
-//! - [`models`] — `SeaORM` entity + CRUD helpers over the stored payload.
+//! - [`models`] — the row structs and helpers over the stored payload.
 //! - [`workers`] — background workers (an axa `BackgroundWorker`).
 //! - [`tasks`], [`initializers`], [`data`] — extension points.
 //!

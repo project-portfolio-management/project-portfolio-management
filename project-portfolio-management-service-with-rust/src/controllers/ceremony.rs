@@ -99,7 +99,7 @@ async fn create_ceremony(
 
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more (`held_at` is the table's default, now).
+    // The columns the insert set before SQ-1, no more (`held_at` is the table's default, now).
     sqlx::query(
         "INSERT INTO ceremonies (pid, sprint_pid, kind, facilitator_ref, summary, deleted_at)
          VALUES ($1, $2, $3, $4, $5, NULL)",

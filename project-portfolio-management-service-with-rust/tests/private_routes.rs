@@ -13,7 +13,6 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use serial_test::serial;
 use sha2::{Digest, Sha256};
@@ -237,11 +236,10 @@ async fn proposals_and_objectives_keep_a_private_plan_out() {
         assert_eq!(seen["total_weight"], 3);
 
         // A proposal that became the private plan is the plan's.
-        ctx.db
-            .execute_unprepared(&format!(
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
                 "UPDATE proposals SET status = 'promoted', promoted_plan_pid = '{plan}'
                  WHERE pid = '{proposal}'"
-            ))
+            ))).execute(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("promote");
         let url = format!("/api/proposals/{proposal}");

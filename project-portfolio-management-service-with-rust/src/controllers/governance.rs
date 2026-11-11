@@ -325,7 +325,7 @@ async fn update_proposal(
     // transaction so a failed audit rolls the edit back.
     let row_pid = row.pid;
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: proposals::Model = sqlx::query_as(
         "UPDATE proposals
          SET title = $1, summary = $2, kind_target = $3, sponsor_ref = $4, strategic_rationale = $5,
@@ -816,7 +816,7 @@ async fn create_gate_review(
     .await?;
     let item_pid = item.pid;
     let old_stage = item.stage.clone();
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>("UPDATE plans SET stage = $1 WHERE id = $2 RETURNING id")
         .bind(new_stage.as_deref())
         .bind(item.id)

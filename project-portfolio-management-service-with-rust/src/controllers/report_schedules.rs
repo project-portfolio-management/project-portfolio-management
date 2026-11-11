@@ -165,7 +165,7 @@ async fn remove(
     Path(pid): Path<String>,
 ) -> Result<Response> {
     let row = own(&ctx, &claims.sub, &pid).await?;
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE report_schedules SET deleted_at = $1, enabled = false WHERE id = $2 RETURNING id",
     )

@@ -135,7 +135,7 @@ pub(crate) async fn set_modules(
                     .fetch_optional(tx.conn())
                     .await?;
             if let Some(id) = existing {
-                // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+                // The one column the update set before SQ-1, by id; no row back is an error, as before.
                 let _: i64 = sqlx::query_scalar(
                     "UPDATE plan_modules SET modules = $1 WHERE id = $2 RETURNING id",
                 )

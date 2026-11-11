@@ -28,7 +28,7 @@
 +--------------+-------------------------------+----------------+
                |  path dependency (Cargo)      |
 +--------------v---------------+  +------------v---------------+
-|  project-portfolio-management-matcher           |  |  PostgreSQL (SeaORM 1.1)   |
+|  project-portfolio-management-matcher           |  |  PostgreSQL (sqlx 0.9)     |
 |  pure library, no IO         |  |  plans ({…, data JSONB}) +  |
 |  MatchingEngine ·            |  |  goals(via JSONB) · tasks · |
 |  MatchConfig · Plan ·        |  |  issues · audit_logs ·      |
@@ -123,82 +123,38 @@ still accepts requests while readiness refuses. In production, a `DB_URL` that l
 offers TLS (`ci/postgres-tls`: a self-signed certificate made on first start, TLS 1.3 only) and the API connects with
 `sslmode=require`, encrypted but with the certificate unchecked. A database outside the stack should use `verify-full`.
 
-### 8.3b The move from SeaORM to sqlx
+### 8.3b The database: plain sqlx
 
-The service is moving from SeaORM to plain [sqlx](https://docs.rs/sqlx), one controller at a time. The two share one connection
-pool, so both work side by side. A transaction is not shared, so all of one handler's writes stay on one side, including the audit
-row: `AuditModel::record` is for SeaORM and `AuditModel::record_on` for sqlx. `record_on` fails with sqlx's own error
-(`axa::Error::Sqlx`), never wrapped, so where a caller passes it on (`?`) a database that cannot serve still answers `503`
-`unavailable` with `Retry-After: 5` (§8.3a) and a broken constraint its `409` or `422`, as `record`'s SeaORM error did; a
-caller that refuses the write with `audit_failed` answers `500` `audit_unavailable` on either side.
+The service reaches PostgreSQL through plain [sqlx](https://docs.rs/sqlx) 0.9 and no ORM (task SQ-1 moved it off SeaORM,
+done 11 November 2026). axa's `sqlx` feature makes `AppContext::db` sqlx's `PgPool`, opened by `axa::db::connect` from the
+configuration; `/_health/ready` pings it, and a database that cannot serve answers `503` `unavailable` with
+`Retry-After: 5` (§8.3a), as axa maps sqlx's own error (`axa::Error::Sqlx`).
 
-`src/db.rs` is the only way to sqlx: `db::pool` and `db::begin`. Both count each statement in `query_count`, where SeaORM's
-statements are counted too, so a guard on how many statements a route runs covers both sides. A census test refuses the raw pool
-anywhere else. An update names only the columns it changes, as SeaORM's did, and no row hook exists to carry across. A helper that
-runs several statements takes `&mut impl db::Session`, which is a transaction or the pool, so the caller decides whether they share
-one.
+`src/db.rs` is the only way to the pool: `db::pool(&ctx)` for a statement that commits on its own, and `db::begin(&ctx)`
+for a transaction (`db::Tx`: `conn`, `commit`, `rollback`, and `write_outbox` and `release_outbox`, which hand the
+transaction to `axa-outbox`). Both count each statement in `query_count`, so a guard on how many statements a route runs
+sees every one. Two uncounted ways out exist, each for one caller: `db::for_axa_crate` (the idempotency layer, which runs
+its own statements) and `db::for_migrations` (the migration runner, whose statements are the schema's). A census test in
+`src/db.rs` refuses the raw pool anywhere else, in `src/`, `tests/` and `benches/` alike: no code outside `src/db.rs` may
+name the context's `db` field. A second census (in `models::audit_logs`) refuses the pool inside an open transaction, in
+every file under `src/`.
 
-How far it has got (task SQ-1 in `tasks.md`): of the 147 files under `src/` (outside `src/models/_entities`) that named the SeaORM
-API on 10 November, 134 have moved (batch 1: `approvals`, `processes`, `controlled_documents`, `onboarding`, `handover`,
-`meetings`, `meeting_actions`, `lessons`; batch 2: `okr`, `kpis`, `controls`, `value`, `benefit_validation`, `frameworks`,
-`key_persons`, `ledger`; batch 3: `financials`, `funding`, `tolerances`, `thresholds`, `effort`, `timesheets`,
-`milestones`, `milestone_signoffs`, `announcements`, `components`; batch 4: `escalations`, `deescalation`, `confidence`,
-`exceptions_digest`, `schedule_baselines`, `cost_risk`, `schedule_risk`, `tpc`, `director_packs`, `pack_rhythm`; batch 5:
-`fever`, `programme_gates`, `programme_profile`, `capacity_heatmap`, `cutover`, `status_updates`, `register`,
-`earned_value`, `insights`, `organizations`; batch 6: `start_control`, `drum`, `buffer_management`, `availability`,
-`portfolio_resources`, `ccpm_estimates`, `hammock`, `cpm`, `plan_roles`, `raci`; batch 7: `calendars`, `task_relations`,
-`assignments`, `sandbox`, `deployment_moves`, `phase`, `guests`, `watchers`, `visibility/dependencies`,
-`visibility/allocations`; batch 8: `workflow`, `engineering/board`, `engineering/agile`, `engineering/devops`,
-`engineering/estate`, `engineering/mod`, `task_bulk`, `task_tree`, `tba`; batch 9: `governance`, `discussion`; batch 10:
-`issues`, `issue_configuration`, `custom_fields`; batch 11: `collaboration`, `feeds`, `notification_prefs`; batch 12:
-`automation`, `break_glass`, `sinks`, `tasks/exception_breaches`, `plan_access`; batch 13: `streaming`,
-`controllers/plans`, `plan_links`, `planner`, `models/event_outbox`; batch 14: `attachments`, `email_deliveries`,
-`report_schedules`, `plan_templates`; batch 15: `blueprint_sync`, `mspdi_import`, `mspdi_batch`, `mspdi_export`,
-`tracker_import`, `bulk`, `tba/persistence`; batch 16: `cost_rates`, `change_requests`, `canvas`, `ceremony`,
-`oversight`, `snapshots`; batch 17: `strategy`, `scoring`, `prioritization`, `modules`, `pdf`, `handling_marks`,
-`settings`, `compliance`, `subjects`, `visibility/milestones`, `visibility/reports`, `visibility/dashboard`,
-`visibility/mod`; batch 18, the infrastructure: `app.rs`, `scheduled_jobs`, `retention`, `webhooks`, `relay`,
-`idempotency`, `flow_metrics`, `tasks/search`, `tasks/outbox_retry_failed`, `controllers/mod.rs`, `db.rs`) and 13 are
-left (the grep that measures it counts 15, because `engineering/board` and `task_bulk` name enum variants `Set` of their
-own; so does `src/task_bulk.rs`, so 12 name the API). Those 12 are step (c)'s: `query_count`'s metric callback, which
-counts what still runs through `ctx.db` as a SeaORM connection (the tests' own statements; the migrator's moved to
-sqlx in step (b)), and the
-`ActiveModelBehavior` impls and entity re-exports of `models/behaviors`, `canvases`, `strategy`, `capabilities`,
-`visibility`, `governance`, `plans`, `merge_records`, `webhook_deliveries`, `saved_views` and `audit_logs`. Beyond the
-grep, `db::pool`, `db::begin` and `db::for_axa_crate` reach the
-pool through SeaORM's connection until `ctx.db` is the `PgPool` (step (c)). No statement of the service's own runs
-through SeaORM after batch 18. Batch 9 also moved every statement of `plan_access`, `controllers/mod.rs` (`find_live_plan`,
-`find_live_task`) and `models/governance`; `models/governance` keeps its `ActiveModelBehavior` impls. Batch 11 gave `plan_access::is_none_of` a sqlx form,
-`plan_access::push_none_of`, and moved `HiddenScope::notes_visible` to sqlx (it now pushes its condition onto a
-`QueryBuilder`). Batch 12 removed the SeaORM `is_none_of`, `capabilities::notify` and `sinks::enqueue` and the SeaORM
-finders and writers only `automation` used: `notify_on` and `sinks::enqueue_on` serve every caller (break-glass calls
-`notify_on` in its own transaction, so a grant and its notice still stand or fall together); `find_automation`,
-`find_scheduled_action`, `enabled_automations` and `due_actions` take the context, and `record_run_on` and
-`schedule_on` take a `db::Session`. `models/capabilities` keeps only its `ActiveModelBehavior` impls, for step (c).
-Batch 13 moved the plan record's core: `streaming` writes a plan, its `axa_outbox` event and its audit row in one
-`db::begin` transaction under the `outbox` transport (`db::Tx::write_outbox` hands it to `axa::outbox::write`, the
-sqlx form of `write_seaorm`, and counts the statement); the SeaORM `update_data` and `soft_delete` are gone
-(`update_data_on`, `soft_delete_on` and `create` take a `db::Session`), and the plan finders, `merge_records` and
-`AuditModel::recent` and `for_entity` take the context. `models/plans` and `models/merge_records` keep only their
-`ActiveModelBehavior` impls, for step (c).
-`tba::insert_transition_on` writes every task transition; the SeaORM `tba::transition_row` is gone (batch 15), and
-so is `AuditModel::record_or_log`: `record_or_log_on` serves every write that keeps a failed audit, and the census
-of those writes counts it. `AuditModel::record` and `controllers::db_err` went with their last callers, `retention`
-and `scheduled_jobs` (batch 18): every audit row is written by `record_on`. A scheduled job's claim and its closing
-record are each one transaction with their audit row, which still refuses with `audit_failed`; a retention sweep's
-delete of each table, its flag and its audit row are one transaction. `outbox_retry_failed` releases every failed
-event in one `db::begin` transaction (`db::Tx::release_outbox`, counted as `write_outbox` is). `models::visibility`'s finders take the context and read the pool, and
-`modules_in_force` and `settings::refresh` take the context (batch 17). `db::Tx::rollback` rolls back and says whether
-it worked, for a caller that answered an error when `SeaORM`'s rollback failed (the subjects preview). The batch import's rate tables, rates and fixed costs are written by `cost_rates`' sqlx helpers, each with
-its audit row in one transaction (batch 16). `snapshots::capture_on` takes a `db::Session`: `POST /api/board/snapshots`
-writes the snapshot and its audit row in one transaction, and the optional ticker captures on the pool. The auditor's
-trail and evidence pack still write their audit row on the pool before reading, and are not served when it cannot be
-written (NFR-6). The MS Project import
-writes its tasks and links in one transaction and its audit row after it, on the pool, and a failed audit row fails
-the request (NFR-6): it is not one transaction, and a re-import converges. A scheduled report run writes its artifact row, the schedule's outcome
-and its audit row in one transaction (batch 14). `custom_fields::store`, the SeaORM writer of custom values, is gone: `custom_fields::store_on` serves
-the board, the bulk routes, `PUT /api/custom-fields/values` (each in its transaction) and the MSPDI batch import (on the
-pool). `ctx.db` is still SeaORM's connection (step (c)).
+A helper that runs several statements takes `&mut impl db::Session`, which is a transaction or the pool, so the caller
+decides whether they share one. A handler's writes and its audit row are one transaction: `AuditModel::record_on` writes
+the row on the transaction it is given, and fails with sqlx's own error, so where a caller passes it on (`?`) an outage
+still answers `503` and a broken constraint its `409` or `422`, and a caller that refuses the write with `audit_failed`
+answers `500` `audit_unavailable`. SQL text comes from literals (a column name may come from a fixed list of literals,
+never from input); every value is bound. Rows are read with `sqlx::query_as` into the row structs of
+`src/models/_entities` (one `Model` per table, `sqlx::FromRow`, with the `serde` shape the routes answer with), or into
+small `FromRow` structs of a handler's own; there is no `query!` macro and no offline cache. An insert lists the columns
+it sets, an update names only the columns it changes (and an update that finds no row is an error where it was before),
+and no row hook exists. Under the `outbox` transport a plan, its `axa_outbox` event and its audit row are written in one
+`db::begin` transaction.
+
+What changed for an operator when the last of SeaORM went (step (c)): nothing in the schema, the routes or their answers;
+a database failure's text in a log, a task's output or a stored error is sqlx's (no `Query Error: ` prefix), only on a
+failure; and statements SeaORM ran without counting are now counted. The moves, batch by batch, and what each found are
+in task SQ-1 (`tasks.md`).
 
 **Migrations (step (b), 11 November 2026).** The migration crate runs on sqlx, not `sea-orm-migration`. Each of the
 143 migrations is a SQL file in `migration/migrations/`, frozen from the statements its Rust migration ran on

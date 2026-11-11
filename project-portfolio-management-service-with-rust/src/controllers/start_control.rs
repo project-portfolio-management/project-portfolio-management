@@ -218,7 +218,7 @@ async fn mark_started(
     today: chrono::NaiveDate,
 ) -> Result<()> {
     if let Some(q) = entry {
-        // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+        // `fetch_one`: an update that finds no row is an error, as before SQ-1.
         sqlx::query_scalar::<_, i64>(
             "UPDATE start_queue_entries SET status = $1, resolved_on = $2 WHERE id = $3 RETURNING id",
         )
@@ -339,7 +339,7 @@ pub(crate) async fn gate(
     // The queue entry and the audit row of the refusal are one change.
     let mut tx = crate::db::begin(ctx).await?;
     let position = if let Some(q) = entry {
-        // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+        // `fetch_one`: an update that finds no row is an error, as before SQ-1.
         sqlx::query_scalar::<_, i64>(
             "UPDATE start_queue_entries SET refusals = $1 WHERE id = $2 RETURNING id",
         )
@@ -416,7 +416,7 @@ async fn withdraw(
         .await?
         .ok_or(Error::NotFound)?;
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>(
         "UPDATE start_queue_entries SET status = $1, resolved_on = $2 WHERE id = $3 RETURNING id",
     )

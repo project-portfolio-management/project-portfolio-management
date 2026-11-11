@@ -81,7 +81,7 @@ async fn put_pref(
     .await?;
     let row: notification_prefs::Model =
         match existing {
-            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            // `fetch_one`: an update that finds no row is an error, as before SQ-1.
             Some(id) => sqlx::query_as(
                 "UPDATE notification_prefs SET enabled = $1, digest = $2 WHERE id = $3 RETURNING *",
             )

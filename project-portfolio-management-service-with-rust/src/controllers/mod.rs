@@ -186,8 +186,8 @@ pub(crate) async fn find_live_task(
 /// Take the transaction-scoped advisory lock for `scope` and `key` (CQ-12) on a `sqlx` transaction
 /// ([`crate::db::begin`]): the key is `hashtext('<scope>:<key>')`, bound as a parameter rather than formatted into
 /// the SQL. Two places that must exclude each other (a what-if commit and a plain schedule edit share `sandbox`) use
-/// the same scope. `key` is usually a pid; availability locks on a person ref. (The `SeaORM` twin went when its last
-/// caller moved, SQ-1 batch 7; the key is unchanged.)
+/// the same scope. `key` is usually a pid; availability locks on a person ref. (The key is unchanged
+/// since before SQ-1.)
 ///
 /// # Errors
 ///
@@ -720,8 +720,7 @@ mod database_unavailable {
     use axum::{http::StatusCode, response::IntoResponse};
 
     /// Since axa 0.11 a database that cannot serve for now is `503` `unavailable` with `Retry-After: 5`, not `500`,
-    /// through `?` on a plain `sqlx` error. (`SeaORM`'s `db_err` went with its last caller, `scheduled_jobs`, in SQ-1
-    /// batch 18.)
+    /// through `?` on a plain `sqlx` error.
     #[test]
     fn a_database_that_cannot_serve_answers_503_with_retry_after() {
         for error in [

@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `email_deliveries`: one email to one recipient, and how it ended.
+//! Row — `email_deliveries`: one email to one recipient, and how it ended.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "email_deliveries")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     /// What sent it (`sink`, ...).
     pub kind: String,
@@ -30,6 +28,3 @@ pub struct Model {
     pub next_attempt_at: Option<DateTimeWithTimeZone>,
     pub sent_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

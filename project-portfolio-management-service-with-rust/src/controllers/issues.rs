@@ -822,7 +822,7 @@ async fn remove(
         "plan_pid": plan, "title": row.title, "kind": row.kind, "status": row.status,
     });
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>("UPDATE issues SET deleted_at = $1 WHERE id = $2 RETURNING id")
         .bind(Utc::now())
         .bind(row.id)

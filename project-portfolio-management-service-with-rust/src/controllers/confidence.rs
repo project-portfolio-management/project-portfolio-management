@@ -381,7 +381,7 @@ async fn complete_exception(
             .map(|v| v.trim().to_string())
             .filter(|v| !v.is_empty())
     };
-    // Only the fields given are written; with none given the row is read back unchanged, as `SeaORM`'s empty
+    // Only the fields given are written; with none given the row is read back unchanged, as the empty
     // update did.
     let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE delivery_exceptions SET ");
     let mut set = q.separated(", ");

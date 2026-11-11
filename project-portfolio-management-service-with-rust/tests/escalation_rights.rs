@@ -16,9 +16,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -170,13 +170,10 @@ async fn acknowledging_and_resolving_are_separate_audited_rights() {
 
         // Each act is in the history and in the audit trail, with what was said.
         let audit = |action: &'static str| {
-            let db = ctx.db.clone();
+            let db = project_portfolio_management::db::pool(&ctx);
             async move {
-                let row = db.query_one_raw(sea_orm::Statement::from_string(
-                    sea_orm::DatabaseBackend::Postgres,
-                    format!("SELECT actor, snapshot::text AS s FROM audit_logs WHERE action = '{action}' ORDER BY id DESC LIMIT 1"),
-                )).await.unwrap().unwrap_or_else(|| panic!("an audit row for {action}"));
-                (row.try_get::<Option<String>>("", "actor").unwrap(), serde_json::from_str::<Value>(&row.try_get::<String>("", "s").unwrap()).unwrap())
+                let row = sqlx::query(sqlx::AssertSqlSafe(format!("SELECT actor, snapshot::text AS s FROM audit_logs WHERE action = '{action}' ORDER BY id DESC LIMIT 1"))).fetch_optional(db).await.unwrap().unwrap_or_else(|| panic!("an audit row for {action}"));
+                (row.try_get::<Option<String>, _>("actor").unwrap(), serde_json::from_str::<Value>(&row.try_get::<String, _>("s").unwrap()).unwrap())
             }
         };
         let (actor, snap) = audit("escalation_acknowledged").await;

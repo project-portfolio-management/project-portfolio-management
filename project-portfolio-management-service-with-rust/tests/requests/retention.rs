@@ -7,19 +7,17 @@ use axa_test::prelude::*;
 use chrono::Utc;
 use project_portfolio_management::app::App;
 use project_portfolio_management::retention;
-use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use serial_test::serial;
+use sqlx::Row;
 
-async fn count(db: &sea_orm::DatabaseConnection, sql: &str) -> i64 {
-    db.query_one_raw(Statement::from_string(
-        DatabaseBackend::Postgres,
-        sql.to_string(),
-    ))
-    .await
-    .expect("query")
-    .expect("row")
-    .try_get::<i64>("", "n")
-    .expect("n")
+async fn count(db: project_portfolio_management::db::Counted<&sqlx::PgPool>, sql: &str) -> i64 {
+    sqlx::query(sqlx::AssertSqlSafe(sql.to_string()))
+        .fetch_optional(db)
+        .await
+        .expect("query")
+        .expect("row")
+        .try_get::<i64, _>("n")
+        .expect("n")
 }
 
 #[tokio::test]
@@ -28,7 +26,7 @@ async fn count(db: &sea_orm::DatabaseConnection, sql: &str) -> i64 {
 async fn the_purge_removes_only_what_is_past_its_period() {
     super::isolate_search_index();
     request::<App, _, _>(|_request, ctx| async move {
-        let db = &ctx.db;
+        let db = project_portfolio_management::db::pool(&ctx);
         for sql in [
             // Notifications: read 120 days ago (purge), read 10 days ago (keep), never read (keep).
             "INSERT INTO notifications (pid, recipient_ref, subject_kind, subject_pid, kind, message, read_at, created_at, updated_at) VALUES \
@@ -40,7 +38,7 @@ async fn the_purge_removes_only_what_is_past_its_period() {
              (gen_random_uuid(), 'plan', 'created', 'https://x.example/h', 1, 'delivered', now() - interval '45 days'), \
              (gen_random_uuid(), 'plan', 'created', 'https://x.example/h', 1, 'delivered', now() - interval '2 days')",
         ] {
-            db.execute_unprepared(sql).await.expect("seed");
+            sqlx::raw_sql(sqlx::AssertSqlSafe(sql)).execute(db).await.expect("seed");
         }
 
         let now = Utc::now();

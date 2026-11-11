@@ -77,8 +77,8 @@ owner-scoped schemes never do (see [matching.md](matching.md)).
 
 These hang off a `Plan` by `plan_pid`, each in its own table, and are
 **not** part of the matching surface (goal *titles* bridge in through
-`data.goals[]`). `src/models/_entities/` holds the SeaORM entities (about
-100); the route map is in the service
+`data.goals[]`). `src/models/_entities/` holds the row structs, one `Model` per table
+(about 170, read with sqlx); the route map is in the service
 [AGENTS.md](../project-portfolio-management-service-with-rust/AGENTS.md).
 Representative groups:
 

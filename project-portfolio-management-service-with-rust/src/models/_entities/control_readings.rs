@@ -1,22 +1,20 @@
-//! `SeaORM` Entity — `control_readings`. **Append-only**: correcting a
+//! Row — `control_readings`. **Append-only**: correcting a
 //! reading means recording another one, because a control history that
 //! can be rewritten measures whatever the editor wanted. See entity
 //! spec §5.9.8 / FR-38.
 
-// SeaORM-generated entity shape: documented by the migration.
+// The row's shape is documented by the migration.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "control_readings")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i32,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub control_pid: Uuid,
     pub observed_at: DateTimeWithTimeZone,
@@ -30,8 +28,3 @@ pub struct Model {
     pub accepted_at: Option<DateTimeWithTimeZone>,
     pub accepted_reason: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}

@@ -8,7 +8,6 @@ use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::metrics::Metrics;
 use project_portfolio_management::models::audit_logs::Model as AuditModel;
-use sea_orm::ConnectionTrait;
 use serial_test::serial;
 use uuid::Uuid;
 
@@ -59,14 +58,11 @@ async fn a_write_whose_audit_row_cannot_be_written_is_refused() {
     use serde_json::{Value, json};
     request::<App, _, _>(|request, ctx| async move {
         let failed = || Metrics::global().audit_write_failed_total.get();
-        ctx.db
-            .execute_unprepared(
-                "CREATE OR REPLACE FUNCTION cq3_refuse_audit() RETURNS trigger AS $$
+        sqlx::raw_sql("CREATE OR REPLACE FUNCTION cq3_refuse_audit() RETURNS trigger AS $$
                  BEGIN RAISE EXCEPTION 'cq3: the audit table is unavailable'; END; $$ LANGUAGE plpgsql;
                  DROP TRIGGER IF EXISTS cq3_refuse ON audit_logs;
                  CREATE TRIGGER cq3_refuse BEFORE INSERT ON audit_logs FOR EACH ROW
-                     WHEN (NEW.action = 'announcement_published') EXECUTE FUNCTION cq3_refuse_audit();",
-            )
+                     WHEN (NEW.action = 'announcement_published') EXECUTE FUNCTION cq3_refuse_audit();").execute(project_portfolio_management::db::pool(&ctx))
             .await
             .unwrap();
         let title = format!("Audit refusal {}", Uuid::new_v4());
@@ -78,8 +74,7 @@ async fn a_write_whose_audit_row_cannot_be_written_is_refused() {
         let feed: Value = request.get("/api/announcements").await.json();
         let counted = failed() - before;
         // Put the table back before any assertion can stop the test.
-        ctx.db
-            .execute_unprepared("DROP TRIGGER IF EXISTS cq3_refuse ON audit_logs; DROP FUNCTION IF EXISTS cq3_refuse_audit();")
+        sqlx::raw_sql("DROP TRIGGER IF EXISTS cq3_refuse ON audit_logs; DROP FUNCTION IF EXISTS cq3_refuse_audit();").execute(project_portfolio_management::db::pool(&ctx))
             .await
             .unwrap();
 

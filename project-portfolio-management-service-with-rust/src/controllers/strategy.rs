@@ -80,7 +80,7 @@ async fn create_idea(
     }
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     sqlx::query(
         "INSERT INTO ideas (pid, title, pitch, tags, votes, status, converted_proposal_pid, deleted_at)
          VALUES ($1, $2, $3, $4, 0, 'open', NULL, NULL)",
@@ -138,7 +138,7 @@ async fn vote_idea(
     let row_pid = idea.pid;
     let next = idea.votes.saturating_add(1);
     let mut tx = crate::db::begin(&ctx).await?;
-    // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+    // The one column the update set before SQ-1, by id; no row back is an error, as before.
     let row: ideas::Model = sqlx::query_as("UPDATE ideas SET votes = $1 WHERE id = $2 RETURNING *")
         .bind(next)
         .bind(idea.id)
@@ -216,7 +216,7 @@ async fn convert_idea(
     // Create the proposal and flip the idea in one transaction so a half-converted idea cannot exist.
     let proposal_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more (`external_ask` and `tradeoff` are the table's defaults).
+    // The columns the insert set before SQ-1, no more (`external_ask` and `tradeoff` are the table's defaults).
     sqlx::query(
         "INSERT INTO proposals (pid, title, summary, kind_target, sponsor_ref, strategic_rationale, requested_minor,
              currency, status, promoted_plan_pid, deleted_at)
@@ -230,7 +230,7 @@ async fn convert_idea(
     .execute(tx.conn())
     .await?;
     let idea_pid = idea.pid;
-    // The two columns `SeaORM`'s update set, by id; no row back is an error, as before.
+    // The two columns the update set before SQ-1, by id; no row back is an error, as before.
     let (row_pid, row_status): (Uuid, String) = sqlx::query_as(
         "UPDATE ideas SET status = 'converted', converted_proposal_pid = $1 WHERE id = $2 RETURNING pid, status",
     )
@@ -368,7 +368,7 @@ async fn create_scenario(
     format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
-/// Insert a `draft` scenario: the columns `SeaORM`'s insert set, no more.
+/// Insert a `draft` scenario: the columns the insert set before SQ-1, no more.
 #[expect(clippy::too_many_arguments)] // one per column written
 async fn insert_scenario(
     tx: &mut crate::db::Tx,
@@ -784,7 +784,7 @@ async fn commit_scenario(
     let row_pid = scenario.pid;
     let committed_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The two columns `SeaORM`'s update set, by id; no row back is an error, as before.
+    // The two columns the update set before SQ-1, by id; no row back is an error, as before.
     let row: scenarios::Model = sqlx::query_as(
         "UPDATE scenarios SET status = 'committed', committed_at = $1 WHERE id = $2 RETURNING *",
     )
@@ -1121,7 +1121,7 @@ async fn create_objective(
     }
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     sqlx::query(
         "INSERT INTO objectives (pid, title, description, period, deleted_at) VALUES ($1, $2, $3, $4, NULL)",
     )
@@ -1237,7 +1237,7 @@ async fn link_objective(
     .fetch_optional(crate::db::pool(&ctx))
     .await?;
     let mut tx = crate::db::begin(&ctx).await?;
-    // The update names the one column `SeaORM`'s did, by id (no row back is an error, as before); the insert the
+    // The update names the one column it did before SQ-1, by id (no row back is an error, as before); the insert the
     // columns its insert set (`is_primary` is the table's default).
     let (row_pid, row_weight): (Uuid, i32) = if let Some(id) = existing {
         sqlx::query_as("UPDATE objective_links SET weight = $1 WHERE id = $2 RETURNING pid, weight")
@@ -1353,7 +1353,7 @@ async fn create_benefit(
     let item = super::governance::find_item(&ctx, &pid).await?;
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more (`recurrence`, `annualized_minor`, `classification` and `kpi_pid`
+    // The columns the insert set before SQ-1, no more (`recurrence`, `annualized_minor`, `classification` and `kpi_pid`
     // are the table's defaults).
     sqlx::query(
         "INSERT INTO benefits (pid, plan_pid, title, category, currency, target_minor, realized_minor, target_note,
@@ -1472,7 +1472,7 @@ async fn realize_benefit(
         None => benefit.realized_minor,
     };
     let row_pid = benefit.pid;
-    // The columns `SeaORM`'s update set: the total always, the note and the status only when sent; by id, and no
+    // The columns the update set before SQ-1: the total always, the note and the status only when sent; by id, and no
     // row back is an error, as before.
     let mut update =
         sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE benefits SET realized_minor = ");

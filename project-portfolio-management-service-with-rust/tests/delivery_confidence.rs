@@ -24,9 +24,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -126,7 +126,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         let beta = mk("Beta").await;
         let gamma = mk("Gamma").await;
         let secret = mk("Secret").await;
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{secret}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let conf = |p: &str| format!("/api/plans/{p}/delivery-confidence");
 
         // ── DP-2: nothing assessed is not green ──
@@ -153,7 +153,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
             ("delete", "DELETE FROM delivery_confidence_assessments".to_string()),
             ("a thin rationale", format!("INSERT INTO delivery_confidence_assessments (pid, plan_pid, value, kind, rationale, assessed_on, created_at, updated_at) VALUES (gen_random_uuid(), '{alpha}', 'red', 'self', 'short', current_date, now(), now())")),
         ] {
-            assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
 
         // ── DP-3: an exception opens at amber-red, keeps its clock, is not closed by improving ──
@@ -186,7 +186,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         // A breach: an exception left incomplete for 49 hours is breached, listed, and notified once.
         let g = with!(request.put(&conf(&gamma)), writer).json(&json!({ "value": "red", "kind": "self", "rationale": "Everything is on fire at once" })).await.json::<Value>();
         let gx = g["exception"]["pid"].as_str().unwrap().to_string();
-        ctx.db.execute_unprepared(&format!("UPDATE delivery_exceptions SET opened_at = now() - interval '49 hours', opened_by = '{WRITER}' WHERE pid = '{gx}'")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE delivery_exceptions SET opened_at = now() - interval '49 hours', opened_by = '{WRITER}' WHERE pid = '{gx}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let b: Value = with!(request.get("/api/exceptions?breached=true"), writer).await.json();
         assert_eq!(b["exceptions"].as_array().unwrap().len(), 1);
         assert_eq!(b["exceptions"][0]["breached"], true);
@@ -224,7 +224,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         // A second primary replaces the first; the database allows only one.
         with!(request.put(&format!("/api/plans/{alpha}/primary-aim")), writer).json(&json!({ "objective_pid": safety })).await.assert_status_ok();
         with!(request.put(&format!("/api/plans/{alpha}/primary-aim")), writer).json(&json!({ "objective_pid": growth })).await.assert_status_ok();
-        assert!(ctx.db.execute_unprepared(&format!("UPDATE objective_links SET is_primary = true WHERE plan_pid = '{alpha}'")).await.is_err(), "two primaries");
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE objective_links SET is_primary = true WHERE plan_pid = '{alpha}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "two primaries");
         let map: Value = with!(request.get("/api/portfolio-map"), writer).await.json();
         let groups = map["groups"].as_array().unwrap();
         let find = |aim: &str| groups.iter().find(|g| g["aim"] == aim).unwrap()["programmes"].as_array().unwrap().iter().map(|p| p["name"].as_str().unwrap().to_string()).collect::<Vec<_>>();
@@ -291,9 +291,8 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         assert_eq!(with!(request.get(&format!("/api/director-packs/{p2}")), issuer).await.text(), before);
 
         // The audit trail names who did what.
-        let rows = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres,
-            "SELECT action, actor FROM audit_logs WHERE action LIKE 'delivery_%' OR action LIKE 'strategic_%' OR action = 'primary_aim_set' ORDER BY id".to_string())).await.unwrap();
-        let trail: Vec<String> = rows.iter().map(|r| r.try_get::<String>("", "action").unwrap()).collect();
+        let rows = sqlx::query(sqlx::AssertSqlSafe("SELECT action, actor FROM audit_logs WHERE action LIKE 'delivery_%' OR action LIKE 'strategic_%' OR action = 'primary_aim_set' ORDER BY id".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        let trail: Vec<String> = rows.iter().map(|r| r.try_get::<String, _>("action").unwrap()).collect();
         for a in ["delivery_confidence_set", "delivery_exception_opened", "delivery_exception_worsened", "delivery_exception_updated", "delivery_exception_closed", "strategic_aim_marked", "strategic_aim_unmarked", "primary_aim_set"] {
             assert!(trail.iter().any(|t| t == a), "{a} not audited: {trail:?}");
         }

@@ -18,9 +18,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -137,9 +137,8 @@ async fn only_the_named_approver_decides_and_never_the_requester() {
         assert_eq!(approved["decided_by"], BOB);
 
         // The audit trail names who did each step.
-        let actors = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres,
-            "SELECT action, actor FROM audit_logs WHERE action LIKE 'change_request_%' ORDER BY id".to_string())).await.unwrap();
-        let trail: Vec<(String, String)> = actors.iter().map(|r| (r.try_get("", "action").unwrap(), r.try_get("", "actor").unwrap())).collect();
+        let actors = sqlx::query(sqlx::AssertSqlSafe("SELECT action, actor FROM audit_logs WHERE action LIKE 'change_request_%' ORDER BY id".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        let trail: Vec<(String, String)> = actors.iter().map(|r| (r.try_get("action").unwrap(), r.try_get("actor").unwrap())).collect();
         assert_eq!(trail, [
             ("change_request_drafted".to_string(), ALICE.to_string()),
             ("change_request_submitted".to_string(), ALICE.to_string()),
@@ -154,7 +153,7 @@ async fn only_the_named_approver_decides_and_never_the_requester() {
             ("a cost without a currency", "INSERT INTO change_requests (pid, plan_pid, title, description, reason, kind, status, requested_by, requested_on, impact_cost_minor, created_at, updated_at) VALUES (gen_random_uuid(), gen_random_uuid(), 't', 'd', 'r', 'other', 'draft', 'x', current_date, 5, now(), now())"),
             ("an unknown status", "INSERT INTO change_requests (pid, plan_pid, title, description, reason, kind, status, requested_by, requested_on, created_at, updated_at) VALUES (gen_random_uuid(), gen_random_uuid(), 't', 'd', 'r', 'other', 'done', 'x', current_date, now(), now())"),
         ] {
-            assert!(ctx.db.execute_unprepared(sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
     })
     .await;

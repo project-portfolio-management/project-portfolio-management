@@ -72,7 +72,7 @@ async fn fluvio_relay_publishes_an_outbox_row_to_a_real_topic() {
                  ON e.event_id = a.event_id WHERE e.key = $1 ORDER BY a.id DESC LIMIT 1",
             )
             .bind(model.pid.to_string())
-            .fetch_one(ctx.db.get_postgres_connection_pool())
+            .fetch_one(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("the row exists");
             if status == "delivered" {

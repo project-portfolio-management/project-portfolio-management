@@ -1,18 +1,18 @@
-//! `SeaORM` Entity — `guest_grants`. A scoped, time-boxed, revocable grant letting an external collaborator (a token whose role attribute includes `guest`) see — and optionally comment on — one plan (PL-7). A guest sees only what is granted and gets 404 everywhere else; never people references. `revoked_at` and `expires_at` take effect on the next request.
+//! Row — `guest_grants`. A scoped, time-boxed, revocable grant letting an external collaborator (a token whose role
+//! attribute includes `guest`) see — and optionally comment on — one plan (PL-7). A guest sees only what is granted and
+//! gets 404 everywhere else; never people references. `revoked_at` and `expires_at` take effect on the next request.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "guest_grants")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub guest_sub: String,
     pub subject_kind: String,
@@ -22,6 +22,3 @@ pub struct Model {
     pub granted_by: Option<String>,
     pub revoked_at: Option<DateTimeWithTimeZone>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

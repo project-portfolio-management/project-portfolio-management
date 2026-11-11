@@ -398,7 +398,7 @@ async fn delete_one(
         ));
     }
     let mut tx = crate::db::begin(&ctx).await?;
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error (`500`), as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error (`500`), as it was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE attachments SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )

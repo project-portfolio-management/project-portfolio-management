@@ -418,7 +418,7 @@ pub(crate) async fn commit(
                     .ok_or(Error::NotFound)?;
                 let duration = to.duration_days.and_then(|d| i32::try_from(d).ok());
                 let constraint_kind = to.constraint_kind.map(str::to_string);
-                // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+                // `fetch_one`: an update that finds no row is an error, as before SQ-1.
                 if let Some(r) = e.recomputed.get(pid) {
                     sqlx::query_scalar::<_, i32>(
                         "UPDATE tasks

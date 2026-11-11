@@ -1,17 +1,11 @@
-//! Visibility model helpers (PPM Phase B): `ActiveModelBehavior`
-//! impls and finders for dependencies / milestones / allocations /
-//! report definitions. The finders take the context and read the pool
+//! Visibility model helpers (PPM Phase B): finders for dependencies /
+//! milestones / allocations / report definitions. The finders take the context and read the pool
 //! ([`crate::db::pool`]).
 
 use crate::prelude::*;
 use uuid::Uuid;
 
 use super::_entities::{allocations, milestones, plan_dependencies, report_definitions};
-
-impl ActiveModelBehavior for plan_dependencies::ActiveModel {}
-impl ActiveModelBehavior for milestones::ActiveModel {}
-impl ActiveModelBehavior for allocations::ActiveModel {}
-impl ActiveModelBehavior for report_definitions::ActiveModel {}
 
 /// Every dependency edge (the cycle check and the schedule view both
 /// want the full set — edge volume is operator-scale).

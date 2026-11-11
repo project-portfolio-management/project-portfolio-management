@@ -54,7 +54,7 @@ pub async fn reindex(ctx: &AppContext, batch: u64) -> Result<ReindexReport> {
 
     let mut report = ReindexReport::default();
     // Page by page rather than all at once: the table can be far larger than the process's memory budget. A page is
-    // `LIMIT`/`OFFSET` in id order, as `SeaORM`'s paginator read it, until a page comes back empty.
+    // `LIMIT`/`OFFSET` in id order, as the paginator read it before SQ-1, until a page comes back empty.
     let size = i64::try_from(batch.max(1)).unwrap_or(i64::MAX);
     let mut page: i64 = 0;
     loop {

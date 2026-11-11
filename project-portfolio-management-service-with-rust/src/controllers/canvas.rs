@@ -110,7 +110,7 @@ async fn create_canvas(
     super::plan_access::require_readable_if_any(&ctx, &caller, plan_pid).await?;
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     sqlx::query(
         "INSERT INTO canvases (pid, plan_pid, template, title, description, deleted_at)
          VALUES ($1, $2, $3, $4, $5, NULL)",
@@ -202,13 +202,13 @@ async fn delete_canvas(
     .bind(canvas_pid)
     .execute(tx.conn())
     .await?;
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>("UPDATE canvases SET deleted_at = $1 WHERE id = $2 RETURNING id")
         .bind(now)
         .bind(canvas.id)
         .fetch_one(tx.conn())
         .await?;
-    // Passed on (an outage stays `503`), as the `SeaORM` error was.
+    // Passed on (an outage stays `503`), as before SQ-1.
     AuditModel::record_on(
         tx.conn(),
         canvas_pid,
@@ -271,7 +271,7 @@ async fn add_item(
         .map_or(0, |p| p + 1);
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     sqlx::query(
         "INSERT INTO canvas_items
              (pid, canvas_pid, box_key, body, owner_ref, position, promoted_to_kind, promoted_to_pid, deleted_at)
@@ -339,7 +339,7 @@ async fn update_item(
         return Err(unprocessable(&problems.join("; ")));
     }
     let item_pid = item.pid;
-    // By id, the box and body always and the owner and position when given, as `SeaORM`'s update named; no row
+    // By id, the box and body always and the owner and position when given, as the update named before SQ-1; no row
     // back is an error, as its was.
     let mut update = sqlx::QueryBuilder::new("UPDATE canvas_items SET box_key = ");
     update.push_bind(box_key).push(", body = ").push_bind(body);
@@ -380,7 +380,7 @@ async fn delete_item(
     let item_pid = item.pid;
     let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
     let mut tx = crate::db::begin(&ctx).await?;
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE canvas_items SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )
@@ -440,7 +440,7 @@ async fn promote_item(
     let actor = caller.actor();
     let new_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // Each insert lists the columns `SeaORM`'s set, no more.
+    // Each insert lists the columns it set before SQ-1, no more.
     match target {
         PromoteTarget::Idea => {
             sqlx::query(
@@ -493,7 +493,7 @@ async fn promote_item(
         }
     }
     let source_pid = item.pid;
-    // By id, the two columns `SeaORM`'s update named; no row back is an error, as its was.
+    // By id, the two columns the update named before SQ-1; no row back is an error, as its was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE canvas_items SET promoted_to_kind = $1, promoted_to_pid = $2 WHERE id = $3 RETURNING id",
     )
@@ -503,8 +503,8 @@ async fn promote_item(
     .fetch_one(tx.conn())
     .await?;
     // The target's audit row names its source, so provenance survives
-    // even if the canvas is later deleted. Both audit errors are passed on (an outage stays `503`), as the
-    // `SeaORM` errors were.
+    // even if the canvas is later deleted. Both audit errors are passed on (an outage stays `503`), as before
+    // SQ-1.
     AuditModel::record_on(
         tx.conn(),
         new_pid,

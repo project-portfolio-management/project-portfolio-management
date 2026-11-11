@@ -6,23 +6,21 @@
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
-use sea_orm::{ConnectionTrait, DatabaseBackend, Statement};
 use serde_json::{Value, json};
 use serial_test::serial;
+use sqlx::Row;
 
 const ADA: &str = "3f2c6b7e-0000-4000-8000-00000000000a";
 const BOB: &str = "3f2c6b7e-0000-4000-8000-00000000000b";
 
-async fn count(db: &sea_orm::DatabaseConnection, sql: &str) -> i64 {
-    db.query_one_raw(Statement::from_string(
-        DatabaseBackend::Postgres,
-        sql.to_string(),
-    ))
-    .await
-    .expect("query")
-    .expect("row")
-    .try_get::<i64>("", "n")
-    .expect("n")
+async fn count(db: project_portfolio_management::db::Counted<&sqlx::PgPool>, sql: &str) -> i64 {
+    sqlx::query(sqlx::AssertSqlSafe(sql.to_string()))
+        .fetch_optional(db)
+        .await
+        .expect("query")
+        .expect("row")
+        .try_get::<i64, _>("n")
+        .expect("n")
 }
 
 #[tokio::test]
@@ -31,7 +29,7 @@ async fn count(db: &sea_orm::DatabaseConnection, sql: &str) -> i64 {
 async fn a_person_is_exported_and_pseudonymised_everywhere_and_nobody_else_is_touched() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
-        let db = &ctx.db;
+        let db = project_portfolio_management::db::pool(&ctx);
         // A plan with a task assigned to Ada (person: form), a risk owned by Bob, and audit rows:
         // one by Ada (bare subject), one by Bob.
         let plan: Value = request
@@ -52,10 +50,10 @@ async fn a_person_is_exported_and_pseudonymised_everywhere_and_nobody_else_is_to
             .await
             .assert_status_ok();
         for (actor, action) in [(ADA, "ada_did_a_thing"), (BOB, "bob_did_a_thing")] {
-            db.execute_unprepared(&format!(
+            sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
                 "INSERT INTO audit_logs (entity_pid, action, actor, created_at, updated_at) \
                  VALUES (gen_random_uuid(), '{action}', '{actor}', now(), now())"
-            ))
+            ))).execute(db)
             .await
             .expect("audit seed");
         }
@@ -115,8 +113,7 @@ async fn a_person_is_exported_and_pseudonymised_everywhere_and_nobody_else_is_to
             0
         );
         // The audit guard is back on: an ordinary update is still refused.
-        assert!(db
-            .execute_unprepared("UPDATE audit_logs SET action = 'x' WHERE action = 'bob_did_a_thing'")
+        assert!(sqlx::raw_sql("UPDATE audit_logs SET action = 'x' WHERE action = 'bob_did_a_thing'").execute(db)
             .await
             .is_err());
 
@@ -146,7 +143,7 @@ async fn a_person_is_exported_and_pseudonymised_everywhere_and_nobody_else_is_to
 async fn a_blocked_change_rolls_back_everything_and_says_so() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
-        let db = &ctx.db;
+        let db = project_portfolio_management::db::pool(&ctx);
         let plan: Value = request
             .post("/api/plans")
             .json(&json!({ "kind": "Project", "name": "Apollo" }))
@@ -231,7 +228,7 @@ impl Drop for PolicyGuard {
 async fn a_deployment_can_choose_to_delete_instead_of_pseudonymise() {
     super::isolate_search_index();
     request::<App, _, _>(|request, ctx| async move {
-        let db = &ctx.db;
+        let db = project_portfolio_management::db::pool(&ctx);
         let plan: Value = request
             .post("/api/plans")
             .json(&json!({ "kind": "Project", "name": "Apollo" }))
@@ -245,18 +242,18 @@ async fn a_deployment_can_choose_to_delete_instead_of_pseudonymise() {
             .json();
         let t = task["pid"].as_str().unwrap().to_string();
         for who in [ADA, BOB] {
-            db.execute_unprepared(&format!(
+            sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
                 "INSERT INTO watchers (pid, subject_kind, subject_pid, sub) VALUES (gen_random_uuid(), 'plan', '{p}', '{who}'); \
                  INSERT INTO notifications (pid, recipient_ref, subject_kind, subject_pid, kind, message) \
                  VALUES (gen_random_uuid(), 'person:{who}', 'plan', '{p}', 'note', 'hello')"
-            ))
+            ))).execute(db)
             .await
             .expect("seed");
         }
-        db.execute_unprepared(&format!(
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
             "INSERT INTO audit_logs (entity_pid, action, actor, created_at, updated_at) \
              VALUES (gen_random_uuid(), 'ada_did_a_thing', '{ADA}', now(), now())"
-        ))
+        ))).execute(db)
         .await
         .expect("audit seed");
 
@@ -313,15 +310,11 @@ async fn a_deployment_can_choose_to_delete_instead_of_pseudonymise() {
         // The task and the audit row stay, pointing at a reference that is not Ada and not her pseudonym.
         let salt = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_PSEUDONYM_SALT").unwrap_or_default();
         let pseudo = project_portfolio_management::subjects::pseudonym(ADA, &salt);
-        let row = db
-            .query_one_raw(Statement::from_string(
-                DatabaseBackend::Postgres,
-                format!("SELECT assignee_ref FROM tasks WHERE pid = '{t}'"),
-            ))
+        let row = sqlx::query(sqlx::AssertSqlSafe(format!("SELECT assignee_ref FROM tasks WHERE pid = '{t}'"))).fetch_optional(db)
             .await
             .unwrap()
             .unwrap();
-        let now_ref: String = row.try_get("", "assignee_ref").unwrap();
+        let now_ref: String = row.try_get("assignee_ref").unwrap();
         assert!(now_ref.starts_with("person:"), "{now_ref}");
         assert_ne!(now_ref, format!("person:{ADA}"));
         assert_ne!(now_ref, format!("person:{pseudo}"), "delete is not the stable pseudonym");

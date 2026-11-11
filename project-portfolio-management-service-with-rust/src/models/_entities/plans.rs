@@ -1,4 +1,4 @@
-//! `SeaORM` Entity — `plans`. The full `project_portfolio_management_matcher::Plan`
+//! Row — `plans`. The full `project_portfolio_management_matcher::Plan`
 //! payload is stored in `data` (JSONB); `pid`, `kind`, `name`, and
 //! `parent_pid` are denormalized for lookup, listing, and roll-up.
 //!
@@ -6,22 +6,20 @@
 //! `kind` is an optional descriptive label (metadata only — it no longer
 //! scopes queries); `parent_pid` is the containment link.
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 /// A persisted plan row.
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "plans")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     /// Row creation timestamp.
     pub created_at: DateTimeWithTimeZone,
     /// Row last-update timestamp.
     pub updated_at: DateTimeWithTimeZone,
     /// Internal auto-increment primary key.
-    #[sea_orm(primary_key)]
     pub id: i64,
     /// Public, externally exposed identifier (UUID v4).
-    #[sea_orm(unique)]
     pub pid: Uuid,
     /// Optional descriptive kind label (`Portfolio` / `Project` /
     /// `Product` / `Program`), denormalized from the payload; `None` when
@@ -68,7 +66,3 @@ pub struct Model {
     /// format is published.
     pub content_mac: Option<String>,
 }
-
-/// `SeaORM` relations for [`Entity`] (none defined).
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

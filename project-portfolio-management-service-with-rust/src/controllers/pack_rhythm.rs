@@ -174,7 +174,8 @@ async fn update_schedule(
 ) -> Result<Response> {
     let actor = need(&caller, Power::Editor)?;
     let row = find_schedule(&ctx, pid).await?.ok_or(Error::NotFound)?;
-    // Only the fields given are written; with none, the row is read back unchanged (as `SeaORM`'s empty update did).
+    // Only the fields given are written; with none, the row is read back unchanged (as the empty update did before
+    // SQ-1).
     let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE director_pack_schedules SET ");
     let mut set = q.separated(", ");
     let mut any = false;

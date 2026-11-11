@@ -67,8 +67,6 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
     )
 }
 
-use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter};
-
 type Who = (axum::http::HeaderName, axum::http::HeaderValue);
 
 const OWNER: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
@@ -83,7 +81,6 @@ fn hdr(kid: &str, sub: &str, access: &[&str]) -> Who {
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test controlled_documents -- --ignored`"]
 async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_approval() {
-    use project_portfolio_management::models::_entities::audit_logs;
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
     unsafe {
@@ -100,8 +97,8 @@ async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_
         use axum::http::StatusCode as S;
         macro_rules! with { ($rb:expr, $who:expr) => { $rb.add_header($who.0.clone(), $who.1.clone()) }; }
         let audits = |action: &'static str| {
-            let db = ctx.db.clone();
-            async move { audit_logs::Entity::find().filter(audit_logs::Column::Action.eq(action)).count(&db).await.unwrap() }
+            let db = project_portfolio_management::db::pool(&ctx);
+            async move { sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind(action).fetch_one(db).await.unwrap() }
         };
         let plan: Value = with!(request.post("/api/plans"), owner).json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
         let plan = plan["pid"].as_str().unwrap().to_string();
@@ -136,13 +133,13 @@ async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_
         assert_eq!(make_effective(1, &owner).await.status_code(), 409, "in review is not approved");
 
         // A status flag is not an approval: forced to `approved` in the database with the approval still pending.
-        ctx.db.execute_unprepared(&format!("UPDATE document_versions SET status='approved' WHERE document_pid='{d}' AND version=1")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE document_versions SET status='approved' WHERE document_pid='{d}' AND version=1"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let r = make_effective(1, &owner).await;
         r.assert_status(S::UNPROCESSABLE_ENTITY);
         assert!(r.text().contains("no approval"), "{}", r.text());
-        ctx.db.execute_unprepared(&format!("UPDATE document_versions SET status='in_review' WHERE document_pid='{d}' AND version=1")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE document_versions SET status='in_review' WHERE document_pid='{d}' AND version=1"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         // And the database refuses an approved version with no approval at all.
-        assert!(ctx.db.execute_unprepared(&format!("UPDATE document_versions SET status='approved', approval_pid=NULL WHERE document_pid='{d}' AND version=1")).await.is_err());
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE document_versions SET status='approved', approval_pid=NULL WHERE document_pid='{d}' AND version=1"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err());
 
         // ── the approver decides; the version follows ──
         let ap = with!(request.get("/api/approvals?mine=approver&status=pending"), approver).await.json::<Value>();
@@ -160,8 +157,8 @@ async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_
 
         // ── an effective version is immutable: in the API and in the database ──
         assert_eq!(edit(1, "rewritten history").await.status_code(), 409);
-        assert!(ctx.db.execute_unprepared(&format!("UPDATE document_versions SET body='rewritten' WHERE document_pid='{d}' AND version=1")).await.is_err());
-        assert!(ctx.db.execute_unprepared(&format!("DELETE FROM document_versions WHERE document_pid='{d}' AND version=1")).await.is_err());
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE document_versions SET body='rewritten' WHERE document_pid='{d}' AND version=1"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err());
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("DELETE FROM document_versions WHERE document_pid='{d}' AND version=1"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err());
         let one: Value = with!(request.get(&v(1)), stranger).await.json();
         assert_eq!(one["body"], "Wear boots and a helmet.", "the text is unchanged");
 
@@ -192,7 +189,7 @@ async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_
         with!(request.post(&format!("/api/approvals/{ap}/decide")), approver).json(&json!({ "decision": "approved" })).await.assert_status_ok();
 
         // Exactly one effective: the database refuses a second even if forced.
-        assert!(ctx.db.execute_unprepared(&format!("UPDATE document_versions SET status='effective', effective_from=CURRENT_DATE WHERE document_pid='{d}' AND version=2")).await.is_err(), "two effective versions");
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE document_versions SET status='effective', effective_from=CURRENT_DATE WHERE document_pid='{d}' AND version=2"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "two effective versions");
 
         // ── the successor takes over; the predecessor records it ──
         let eff2: Value = make_effective(2, &admin).await.json();
@@ -209,7 +206,7 @@ async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_
         assert_eq!(on("2099-01-01").await["in_force"]["version"], 2);
         assert!(on("2000-01-01").await["in_force"].is_null(), "nothing was in force before it began");
         assert_eq!(on("2099-01-01").await["in_force"]["body"], "Wear boots, a helmet, gloves and eye protection.");
-        assert!(ctx.db.execute_unprepared(&format!("UPDATE document_versions SET status='effective', superseded_by=NULL, superseded_on=NULL WHERE document_pid='{d}' AND version=1")).await.is_err(), "a superseded version does not come back");
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE document_versions SET status='effective', superseded_by=NULL, superseded_on=NULL WHERE document_pid='{d}' AND version=1"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "a superseded version does not come back");
 
         // ── every transition is audited ──
         for (action, n) in [

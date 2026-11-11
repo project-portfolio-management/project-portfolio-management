@@ -1526,7 +1526,7 @@
       "ui": "project-portfolio-management-ui-with-svelte"
     },
     "stack": [
-      "Rust 1.99.1 (minimum 1.97), axa 0.11, sea-orm 2.0, axum 0.8, PostgreSQL 18",
+      "Rust 1.99.1 (minimum 1.97), axa 0.11, sqlx 0.9, axum 0.8, PostgreSQL 18",
       "SvelteKit 3, Svelte 5 (runes), Node 26, pnpm",
       "Lily Design System widgets (@lilydesignsystem/*)",
       "Podman with Compose to run it"

@@ -1,23 +1,18 @@
-//! `SeaORM` Entity — `resource_roles`. A person's one primary role for capacity planning (SC-7): the role whose supply they count toward in the portfolio resource view. One row per person; changing it replaces the row, and the change is audited.
+//! Row — `resource_roles`. A person's one primary role for capacity planning (SC-7): the role whose supply they count
+//! toward in the portfolio resource view. One row per person; changing it replaces the row, and the change is audited.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "resource_roles")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
-    #[sea_orm(unique)]
     pub person_ref: String,
     pub role: String,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

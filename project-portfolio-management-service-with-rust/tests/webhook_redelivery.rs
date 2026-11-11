@@ -19,7 +19,6 @@ use project_portfolio_management::webhooks::{
     DELIVERY_ID_HEADER, EVENT_ID_HEADER, SIGNATURE_V2_HEADER, TIMESTAMP_HEADER, signing_input_v2,
     timestamp_is_fresh,
 };
-use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait, PaginatorTrait};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -62,10 +61,8 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
         // An event the outbox still holds, and the log row of a delivery that failed.
         let event_id = Uuid::new_v4();
         // As a handler writes it; the record keeps it whatever the relay has done since.
-        let mut tx = ctx.db.get_postgres_connection_pool().begin().await.unwrap();
-        axa::outbox::write(
-            &mut tx,
-            &axa::outbox::Event {
+        let mut tx = project_portfolio_management::db::begin(&ctx).await.unwrap();
+        tx.write_outbox(&axa::outbox::Event {
                 event_id,
                 ..axa::outbox::Event::new(
                     "plan",
@@ -73,23 +70,24 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
                     Uuid::new_v4().to_string(),
                     json!({ "event_id": event_id, "kind": "created", "name": "Redelivered" }),
                 )
-            },
-        )
+        })
         .await
         .unwrap();
         tx.commit().await.unwrap();
-        let log = |event: Uuid, target: &str| webhook_deliveries::ActiveModel {
-            event_id: ActiveValue::set(event),
-            entity: ActiveValue::set("plan".to_string()),
-            kind: ActiveValue::set("created".to_string()),
-            url: ActiveValue::set(target.to_string()),
-            attempts: ActiveValue::set(4),
-            status: ActiveValue::set("failed".to_string()),
-            status_code: ActiveValue::set(Some(503)),
-            error: ActiveValue::set(Some("HTTP 503".to_string())),
-            ..Default::default()
+        let log = |event: Uuid, target: String| {
+            let db = project_portfolio_management::db::pool(&ctx);
+            async move {
+                sqlx::query_as::<_, webhook_deliveries::Model>(
+                    "INSERT INTO webhook_deliveries (event_id, entity, kind, url, attempts, status, status_code, error)
+                     VALUES ($1, 'plan', 'created', $2, 4, 'failed', 503, 'HTTP 503') RETURNING *",
+                )
+                .bind(event)
+                .bind(target)
+                .fetch_one(db)
+                .await
+            }
         };
-        let logged = log(event_id, &url).insert(&ctx.db).await.unwrap();
+        let logged = log(event_id, url.clone()).await.unwrap();
 
         // ---- the log lists it
         let list: Value = request
@@ -151,8 +149,8 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
         // The V1 signature (the body alone) is still sent for receivers that have not moved.
         assert!(get("X-Mxi-Signature").is_some());
         assert_eq!(
-            webhook_deliveries::Entity::find()
-                .count(&ctx.db)
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM webhook_deliveries")
+                .fetch_one(project_portfolio_management::db::pool(&ctx))
                 .await
                 .unwrap(),
             2,
@@ -174,7 +172,7 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
                 .status_code(),
             404
         );
-        let orphan = log(Uuid::new_v4(), &url).insert(&ctx.db).await.unwrap();
+        let orphan = log(Uuid::new_v4(), url.clone()).await.unwrap();
         assert_eq!(
             request
                 .post(&format!("/api/webhook-deliveries/{}/redeliver", orphan.id))
@@ -182,8 +180,7 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
                 .status_code(),
             422
         );
-        let elsewhere = log(event_id, "http://127.0.0.1:9/hook")
-            .insert(&ctx.db)
+        let elsewhere = log(event_id, "http://127.0.0.1:9/hook".to_string())
             .await
             .unwrap();
         assert_eq!(

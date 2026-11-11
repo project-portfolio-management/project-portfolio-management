@@ -100,7 +100,7 @@ pub(super) async fn create_allocation(
     if payload.booking.as_deref() != Some("proposed") {
         super::super::register::guard(&ctx, &caller, item.pid, "booking a firm allocation").await?;
     }
-    // The pid first and then the placeholder's, as the `SeaORM` insert drew them.
+    // The pid first and then the placeholder's, as the insert drew them before SQ-1.
     let row_pid = Uuid::new_v4();
     let person_ref = if payload.placeholder {
         format!(
@@ -265,7 +265,7 @@ pub(super) async fn commit_allocation(
     }
     let row_pid = allocation.pid;
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>("UPDATE allocations SET booking = $1 WHERE id = $2 RETURNING id")
         .bind("committed")
         .bind(allocation.id)
@@ -305,7 +305,7 @@ pub(super) async fn delete_allocation(
     let row_pid = allocation.pid;
     let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>(
         "UPDATE allocations SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )

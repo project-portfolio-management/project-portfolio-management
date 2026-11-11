@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `notification_prefs` (PL-5). Per-user notification
+//! Row — `notification_prefs` (PL-5). Per-user notification
 //! kind × channel choices, keyed by the token `sub`. No row ⇒ the default.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "notification_prefs")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub sub: String,
     pub kind: String,
@@ -21,6 +19,3 @@ pub struct Model {
     pub enabled: bool,
     pub digest: String,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

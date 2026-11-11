@@ -18,9 +18,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [43; 32];
 const ISSUER: &str = "authentication-service";
@@ -105,12 +105,11 @@ async fn a_private_plan_opens_only_for_the_eligible_for_a_while_and_with_a_witne
     let admin = bearer(&kid, ADMIN, &[("access", "admin")]);
     request::<App, _, _>(|request, ctx| async move {
         macro_rules! with { ($rb:expr, $who:expr) => { $rb.add_header($who.0.clone(), $who.1.clone()) }; }
-        let db = &ctx.db;
+        let db = project_portfolio_management::db::pool(&ctx);
         let count = |sql: String| {
-            let db = db.clone();
             async move {
-                db.query_one_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres, sql))
-                    .await.unwrap().unwrap().try_get::<i64>("", "n").unwrap()
+                sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_optional(db)
+                    .await.unwrap().unwrap().try_get::<i64, _>("n").unwrap()
             }
         };
 
@@ -146,12 +145,12 @@ async fn a_private_plan_opens_only_for_the_eligible_for_a_while_and_with_a_witne
 
         // The second person cannot be told: no grant. (Not reachable through the preferences API,
         // which does not list this kind; forced here to prove the guard.)
-        db.execute_unprepared(&format!(
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
             "INSERT INTO notification_prefs (pid, sub, kind, channel, enabled, digest, created_at, updated_at) VALUES (gen_random_uuid(), '{ERIN}', 'break_glass', 'in_app', false, 'instant', now(), now())"
-        )).await.unwrap();
+        ))).execute(db).await.unwrap();
         assert_eq!(bad(body(&p, REASON, json!(30), told.clone())).await, 422, "a witness who has switched the notice off");
         assert_eq!(count("SELECT COUNT(*) AS n FROM break_glass_grants".into()).await, 0, "no witness, no grant");
-        db.execute_unprepared("DELETE FROM notification_prefs WHERE kind = 'break_glass'").await.unwrap();
+        sqlx::raw_sql("DELETE FROM notification_prefs WHERE kind = 'break_glass'").execute(db).await.unwrap();
 
         // The good request.
         let opened: Value = with!(request.post("/api/break-glass"), carol).json(&body(&p, REASON, json!(45), told.clone())).await.json();
@@ -192,24 +191,24 @@ async fn a_private_plan_opens_only_for_the_eligible_for_a_while_and_with_a_witne
         let again: Value = with!(request.post("/api/break-glass"), carol).json(&body(&p, REASON, json!(30), told.clone())).await.json();
         let g2 = again["pid"].as_str().unwrap().to_string();
         assert_eq!(with!(request.get(&format!("/api/plans/{p}")), carol).await.status_code(), 200);
-        db.execute_unprepared(&format!("UPDATE break_glass_grants SET created_at = now() - interval '2 hours', expires_at = now() - interval '1 second' WHERE pid = '{g2}'")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE break_glass_grants SET created_at = now() - interval '2 hours', expires_at = now() - interval '1 second' WHERE pid = '{g2}'"))).execute(db).await.unwrap();
         assert_eq!(with!(request.get(&format!("/api/plans/{p}")), carol).await.status_code(), 404, "expired");
 
         // A day's limit.
         for _ in 0..3 {
-            db.execute_unprepared(&format!(
+            sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
                 "INSERT INTO break_glass_grants (pid, plan_pid, sub, reason, notify_ref, expires_at, revoked_at, created_at, updated_at) VALUES (gen_random_uuid(), '{p}', '{CAROL}', '{REASON}', '{told}', now() + interval '1 minute', now(), now(), now())"
-            )).await.unwrap();
+            ))).execute(db).await.unwrap();
         }
         assert_eq!(bad(body(&p, REASON, json!(30), told.clone())).await, 429, "the sixth in a day");
 
         // The database itself refuses a window over four hours and a thin reason.
-        assert!(db.execute_unprepared(&format!(
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
             "INSERT INTO break_glass_grants (pid, plan_pid, sub, reason, notify_ref, expires_at, created_at, updated_at) VALUES (gen_random_uuid(), '{p}', 'x', '{REASON}', '{told}', now() + interval '5 hours', now(), now())"
-        )).await.is_err());
-        assert!(db.execute_unprepared(&format!(
+        ))).execute(db).await.is_err());
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!(
             "INSERT INTO break_glass_grants (pid, plan_pid, sub, reason, notify_ref, expires_at, created_at, updated_at) VALUES (gen_random_uuid(), '{p}', 'x', 'short', '{told}', now() + interval '1 hour', now(), now())"
-        )).await.is_err());
+        ))).execute(db).await.is_err());
     })
     .await;
 }

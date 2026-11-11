@@ -9,7 +9,6 @@
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
 use project_portfolio_management::models::_entities::audit_logs;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
 use serial_test::serial;
 
@@ -154,12 +153,14 @@ async fn promotion_writes_the_target_audits_the_source_and_is_not_repeatable() {
                 .any(|i| i["pid"] == idea_pid && i["title"] == "Open a new market"),
             "title is the item's first line"
         );
-        let rows = audit_logs::Entity::find()
-            .filter(audit_logs::Column::EntityPid.eq(uuid::Uuid::parse_str(&idea_pid).unwrap()))
-            .filter(audit_logs::Column::Action.eq("idea_from_canvas_item"))
-            .all(&ctx.db)
-            .await
-            .expect("audit");
+        let rows = sqlx::query_as::<_, audit_logs::Model>(
+            "SELECT * FROM audit_logs WHERE entity_pid = $1 AND action = $2",
+        )
+        .bind(uuid::Uuid::parse_str(&idea_pid).unwrap())
+        .bind("idea_from_canvas_item")
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("audit");
         assert_eq!(rows.len(), 1);
         assert_eq!(
             rows[0].snapshot.as_ref().expect("snapshot")["canvas_item_pid"],
@@ -246,18 +247,16 @@ async fn deleting_a_canvas_soft_deletes_its_items() {
                 .status_code(),
             404
         );
-        let live = project_portfolio_management::models::_entities::canvas_items::Entity::find()
-            .filter(
-                project_portfolio_management::models::_entities::canvas_items::Column::CanvasPid
-                    .eq(uuid::Uuid::parse_str(&c).unwrap()),
-            )
-            .filter(
-                project_portfolio_management::models::_entities::canvas_items::Column::DeletedAt
-                    .is_null(),
-            )
-            .all(&ctx.db)
-            .await
-            .expect("items");
+        let live = sqlx::query_as::<
+            _,
+            project_portfolio_management::models::_entities::canvas_items::Model,
+        >(
+            "SELECT * FROM canvas_items WHERE canvas_pid = $1 AND deleted_at IS NULL"
+        )
+        .bind(uuid::Uuid::parse_str(&c).unwrap())
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("items");
         assert!(live.is_empty(), "items soft-deleted with their canvas");
     })
     .await;

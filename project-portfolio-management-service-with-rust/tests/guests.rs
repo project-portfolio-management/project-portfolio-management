@@ -226,13 +226,14 @@ async fn a_guest_sees_only_what_is_granted_masked_and_nothing_else() {
         assert_eq!(status(format!("/api/plans/{p}"), gk.clone(), gv.clone()).await, 200);
         {
             use project_portfolio_management::models::_entities::guest_grants;
-            use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter};
-            let row = guest_grants::Entity::find()
-                .filter(guest_grants::Column::Pid.eq(uuid::Uuid::parse_str(fresh["pid"].as_str().unwrap()).unwrap()))
-                .one(&ctx.db).await.unwrap().unwrap();
-            let mut a: guest_grants::ActiveModel = row.into();
-            a.expires_at = ActiveValue::set(Some((chrono::Utc::now() - chrono::Duration::minutes(1)).into()));
-            a.update(&ctx.db).await.unwrap();
+            let row = sqlx::query_as::<_, guest_grants::Model>("SELECT * FROM guest_grants WHERE pid = $1 LIMIT 1").bind(uuid::Uuid::parse_str(fresh["pid"].as_str().unwrap()).unwrap()).fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().unwrap();
+            let expired: chrono::DateTime<chrono::FixedOffset> = (chrono::Utc::now() - chrono::Duration::minutes(1)).into();
+            sqlx::query("UPDATE guest_grants SET expires_at = $1 WHERE id = $2 RETURNING id")
+                .bind(Some(expired))
+                .bind(row.id)
+                .fetch_one(project_portfolio_management::db::pool(&ctx))
+                .await
+                .unwrap();
         }
         assert_eq!(status(format!("/api/plans/{p}"), gk.clone(), gv.clone()).await, 404, "expired");
 

@@ -9,7 +9,7 @@ Tri is-brosiect, un endid ([pensaernïaeth](../../../../spec/08-architecture.md)
 | Rhan | Technoleg |
 |---|---|
 | Llyfrgell paru | Rust; paru pâr penderfynol a thebygolrwydd y gellir ei egluro; wedi'i fewnosod gan y gwasanaeth |
-| Gwasanaeth | Rust, axa ar axum, SeaORM, PostgreSQL 18; REST o dan `/api`, OpenAPI wedi'i ddeillio o'r llwybrau |
+| Gwasanaeth | Rust, axa ar axum, sqlx, PostgreSQL 18; REST o dan `/api`, OpenAPI wedi'i ddeillio o'r llwybrau |
 | Rhyngwyneb | SvelteKit 3, SPA Svelte 5 gyda ôl-wyneb pwrpasol i'r blaen; catalogau i18n |
 
 Mae'r gadwyn offer wedi'i phinio yn [`rust-toolchain.toml`](../../../../rust-toolchain.toml). Mae parhad yn [manyleb 10](../../../../spec/10-persistence.md); yr API yn [manyleb 09](../../../../spec/09-api-surface.md).

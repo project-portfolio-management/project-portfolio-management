@@ -1,20 +1,18 @@
-//! `SeaORM` Entity — `allocations`. A person's percentage allocation
+//! Row — `allocations`. A person's percentage allocation
 //! to a plan over a timeframe (PPM-8). The person is an
 //! `EntityRef` URN — never copied demographics, never a matcher signal.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "allocations")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     pub person_ref: String,
@@ -32,6 +30,3 @@ pub struct Model {
     /// tag is resolved live against the worker service, never stored.
     pub skills_required: Json,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

@@ -19,9 +19,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -141,7 +141,7 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
         // ── nothing is due yet; then it is ──
         let none: Value = with!(request.post(&format!("{url}/sweep")), editor).await.json();
         assert_eq!((none["drafted"].as_array().unwrap().len(), none["issued"].as_i64()), (0, Some(0)));
-        ctx.db.execute_unprepared("UPDATE director_pack_schedules SET next_run_date = current_date - 1").await.unwrap();
+        sqlx::raw_sql("UPDATE director_pack_schedules SET next_run_date = current_date - 1").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert_eq!(with!(request.post(&format!("{url}/sweep")), writer).await.status_code(), 403);
         let swept: Value = with!(request.post(&format!("{url}/sweep")), editor).await.json();
         assert_eq!(swept["drafted"].as_array().unwrap().len(), 1, "{swept}");
@@ -158,7 +158,7 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
         let packs: Value = with!(request.get("/api/director-packs"), issuer).await.json();
         assert!(packs["packs"].as_array().unwrap().iter().all(|p| p["status"] != "issued"), "still nothing issued");
         // A due schedule with the month already drafted skips it.
-        ctx.db.execute_unprepared("UPDATE director_pack_schedules SET next_run_date = current_date - 1").await.unwrap();
+        sqlx::raw_sql("UPDATE director_pack_schedules SET next_run_date = current_date - 1").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let skipped: Value = with!(request.post(&format!("{url}/sweep")), editor).await.json();
         assert_eq!((skipped["drafted"].as_array().unwrap().len(), skipped["skipped"].as_i64()), (0, Some(1)));
         let listed: Value = with!(request.get(url), editor).await.json();
@@ -176,8 +176,8 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
         with!(request.put(subs), editor).json(&json!({ "audience": "board", "subscribed": true, "person": PARTNER })).await.assert_status_ok();
         let mine: Value = with!(request.get(subs), reader).await.json();
         assert_eq!(mine["subscribed_to"], json!(["board"]));
-        let rows = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres, "SELECT count(*) AS n FROM director_pack_subscriptions".to_string())).await.unwrap();
-        assert_eq!(rows[0].try_get::<i64>("", "n").unwrap(), 2, "the reader and the partner, not the one who left");
+        let rows = sqlx::query(sqlx::AssertSqlSafe("SELECT count(*) AS n FROM director_pack_subscriptions".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        assert_eq!(rows[0].try_get::<i64, _>("n").unwrap(), 2, "the reader and the partner, not the one who left");
 
         // ── the review comes before the issue ──
         assert_eq!(with!(request.post(&format!("/api/director-packs/{pid}/issue")), issuer).await.status_code(), 409, "not reviewed");
@@ -189,9 +189,8 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
         assert_eq!(with!(request.post(&format!("/api/director-packs/{pid}/review")), editor).await.status_code(), 409, "an issued pack is frozen");
 
         // ── the notices: a link, never the body ──
-        let notes = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres,
-            "SELECT recipient_ref, message FROM notifications WHERE kind = 'director_pack_issued' ORDER BY id".to_string())).await.unwrap();
-        let told: Vec<(String, String)> = notes.iter().map(|r| (r.try_get("", "recipient_ref").unwrap(), r.try_get("", "message").unwrap())).collect();
+        let notes = sqlx::query(sqlx::AssertSqlSafe("SELECT recipient_ref, message FROM notifications WHERE kind = 'director_pack_issued' ORDER BY id".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        let told: Vec<(String, String)> = notes.iter().map(|r| (r.try_get("recipient_ref").unwrap(), r.try_get("message").unwrap())).collect();
         assert_eq!(told.len(), 2, "{told:?}");
         assert!(told.iter().any(|(r, _)| r == &format!("person:{READER}")) && told.iter().any(|(r, _)| r == &format!("person:{PARTNER}")));
         assert!(!told.iter().any(|(r, _)| r.contains(&OTHER.to_string())), "the one who left is not told");
@@ -218,7 +217,7 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
 
         // ── off means off ──
         with!(request.put(&format!("{url}/{sid}")), editor).json(&json!({ "enabled": false })).await.assert_status_ok();
-        ctx.db.execute_unprepared("UPDATE director_pack_schedules SET next_run_date = current_date - 1").await.unwrap();
+        sqlx::raw_sql("UPDATE director_pack_schedules SET next_run_date = current_date - 1").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let off: Value = with!(request.post(&format!("{url}/sweep")), editor).await.json();
         assert_eq!((off["drafted"].as_array().unwrap().len(), off["skipped"].as_i64()), (0, Some(0)));
         assert_eq!(with!(request.put(&format!("{url}/{sid}")), editor).json(&json!({ "day_of_month": 31 })).await.status_code(), 422);
@@ -228,11 +227,10 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
             ("a day of 30", "UPDATE director_pack_schedules SET day_of_month = 30".to_string()),
             ("a change to an issued pack's review", format!("UPDATE director_packs SET reviewed_by = 'x' WHERE pid = '{pid}'")),
         ] {
-            assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
-        let trail = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres,
-            "SELECT action, actor FROM audit_logs WHERE action IN ('director_pack_drafted_by_schedule','director_pack_reviewed','director_pack_issued') ORDER BY id".to_string())).await.unwrap();
-        let trail: Vec<(String, String)> = trail.iter().map(|r| (r.try_get("", "action").unwrap(), r.try_get("", "actor").unwrap())).collect();
+        let trail = sqlx::query(sqlx::AssertSqlSafe("SELECT action, actor FROM audit_logs WHERE action IN ('director_pack_drafted_by_schedule','director_pack_reviewed','director_pack_issued') ORDER BY id".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        let trail: Vec<(String, String)> = trail.iter().map(|r| (r.try_get("action").unwrap(), r.try_get("actor").unwrap())).collect();
         assert!(trail.contains(&("director_pack_drafted_by_schedule".to_string(), "schedule".to_string())), "{trail:?}");
         assert!(trail.contains(&("director_pack_reviewed".to_string(), EDITOR.to_string())));
         assert!(trail.contains(&("director_pack_issued".to_string(), ISSUER_SUB.to_string())));

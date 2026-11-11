@@ -470,7 +470,7 @@ async fn auditor_trail(
 ) -> Result<Response> {
     authorize_oversight_read(&caller)?;
     // On the pool, before the read: an export whose audit row cannot be written is not served (NFR-6); the error is
-    // passed on (an outage stays `503`), as the `SeaORM` error was.
+    // passed on (an outage stays `503`), as before SQ-1.
     AuditModel::record_on(
         crate::db::pool(&ctx),
         Uuid::nil(),
@@ -684,7 +684,7 @@ async fn evidence_pack(
     let (from, to) = window(&win);
     let format = query.format.clone().unwrap_or_else(|| "json".to_string());
     // On the pool, before the read: an export whose audit row cannot be written is not served (NFR-6); the error is
-    // passed on (an outage stays `503`), as the `SeaORM` error was.
+    // passed on (an outage stays `503`), as before SQ-1.
     AuditModel::record_on(
         crate::db::pool(&ctx),
         Uuid::nil(),

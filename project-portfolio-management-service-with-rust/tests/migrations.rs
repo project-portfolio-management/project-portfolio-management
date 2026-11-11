@@ -1,9 +1,9 @@
-//! The migration runner on real databases: the bridge from `SeaORM`'s history to sqlx's, and rollback.
+//! The migration runner on real databases: the bridge from the old migrator's history to sqlx's, and rollback.
 //!
 //! Each test makes its own throwaway database on the server `DB_URL` names and drops it after. A database "the
-//! `SeaORM` migrator built" is made the way that migrator left one: the frozen files applied (they are what its
+//! old migrator built" is made the way that migrator left one: the frozen files applied (they are what its
 //! migrations ran; SQ-1 (b) compared the two schemas and data with `pg_dump`), no `_sqlx_migrations`, and
-//! `seaql_migrations` as `SeaORM` created and filled it.
+//! `seaql_migrations` as that migrator created and filled it.
 //!
 //! `#[ignore]`d: needs PostgreSQL via `DB_URL`, and the right to create a database. Run with
 //! `cargo test --test migrations -- --ignored --test-threads=1`.
@@ -86,8 +86,8 @@ fn count() -> usize {
         .count()
 }
 
-/// Leave the database as the `SeaORM` migrator would have after its first `n` migrations.
-async fn as_seaorm_left_it(pool: &PgPool, n: usize) {
+/// Leave the database as the old migrator would have after its first `n` migrations.
+async fn as_the_old_migrator_left_it(pool: &PgPool, n: usize) {
     MIGRATOR
         .run_to(nth(n), pool)
         .await
@@ -97,7 +97,7 @@ async fn as_seaorm_left_it(pool: &PgPool, n: usize) {
         .execute(&mut *tx)
         .await
         .unwrap();
-    // The statement `SeaORM`'s `install` ran.
+    // The statement the old migrator's `install` ran.
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS "seaql_migrations" ( "version" varchar NOT NULL PRIMARY KEY, "applied_at" bigint NOT NULL )"#,
     )
@@ -111,7 +111,7 @@ async fn as_seaorm_left_it(pool: &PgPool, n: usize) {
         .enumerate()
     {
         sqlx::query(r#"INSERT INTO "seaql_migrations" ("version", "applied_at") VALUES ($1, $2)"#)
-            .bind(migrations::seaorm_name(migration))
+            .bind(migrations::old_name(migration))
             .bind(1_794_380_615_i64 + i64::try_from(i).unwrap())
             .execute(&mut *tx)
             .await
@@ -160,7 +160,7 @@ async fn history(pool: &PgPool) -> Vec<(i64, String, String, bool, Vec<u8>, i64)
 }
 
 /// `seaql_migrations`, every column.
-async fn seaorm_history(pool: &PgPool) -> Vec<(String, i64)> {
+async fn old_history(pool: &PgPool) -> Vec<(String, i64)> {
     sqlx::query_as("SELECT version, applied_at FROM seaql_migrations ORDER BY version")
         .fetch_all(pool)
         .await
@@ -186,12 +186,12 @@ async fn the_whole_schema() -> Vec<String> {
 
 #[tokio::test]
 #[ignore = "needs PostgreSQL via DB_URL"]
-async fn a_database_the_seaorm_migrator_built_is_bridged_and_nothing_runs_again() {
+async fn a_database_the_old_migrator_built_is_bridged_and_nothing_runs_again() {
     let whole = the_whole_schema().await;
     let db = Scratch::new().await;
-    as_seaorm_left_it(&db.pool, count()).await;
+    as_the_old_migrator_left_it(&db.pool, count()).await;
     let before = schema(&db.pool).await;
-    let seaorm_before = seaorm_history(&db.pool).await;
+    let old_before = old_history(&db.pool).await;
     assert_eq!(before, whole);
 
     migrations::up(&db.pool).await.unwrap();
@@ -211,8 +211,8 @@ async fn a_database_the_seaorm_migrator_built_is_bridged_and_nothing_runs_again(
         assert_eq!(*took, 0, "{version} was copied, not run");
     }
     assert_eq!(
-        seaorm_history(&db.pool).await,
-        seaorm_before,
+        old_history(&db.pool).await,
+        old_before,
         "seaql_migrations is left as it was"
     );
     assert!(
@@ -227,13 +227,13 @@ async fn a_database_the_seaorm_migrator_built_is_bridged_and_nothing_runs_again(
 
 #[tokio::test]
 #[ignore = "needs PostgreSQL via DB_URL"]
-async fn a_database_the_seaorm_migrator_built_part_way_gets_the_rest_from_sqlx() {
+async fn a_database_the_old_migrator_built_part_way_gets_the_rest_from_sqlx() {
     let whole = the_whole_schema().await;
     let db = Scratch::new().await;
     // Up to the one before `oxford_spelling`, with a risk in the spelling it rewrites.
     let applied = 82;
     assert_eq!(
-        migrations::seaorm_name(
+        migrations::old_name(
             MIGRATOR
                 .iter()
                 .find(|m| m.version == nth(applied + 1))
@@ -241,7 +241,7 @@ async fn a_database_the_seaorm_migrator_built_part_way_gets_the_rest_from_sqlx()
         ),
         "m20261009_000049_oxford_spelling"
     );
-    as_seaorm_left_it(&db.pool, applied).await;
+    as_the_old_migrator_left_it(&db.pool, applied).await;
     sqlx::query(
         "INSERT INTO risks (pid, plan_pid, title, probability, impact, status)
          VALUES (gen_random_uuid(), gen_random_uuid(), 'a risk', 3, 3, 'materialised')",
@@ -253,7 +253,7 @@ async fn a_database_the_seaorm_migrator_built_part_way_gets_the_rest_from_sqlx()
     assert_eq!(
         status.iter().filter(|m| m.applied).count(),
         applied,
-        "status reads SeaORM's history"
+        "status reads the old history"
     );
 
     migrations::up(&db.pool).await.unwrap();
@@ -269,7 +269,7 @@ async fn a_database_the_seaorm_migrator_built_part_way_gets_the_rest_from_sqlx()
         .unwrap();
     assert_eq!(status, "materialized", "the data migration ran");
     assert_eq!(
-        seaorm_history(&db.pool).await.len(),
+        old_history(&db.pool).await.len(),
         applied,
         "seaql_migrations is left as it was"
     );
@@ -280,12 +280,12 @@ async fn a_database_the_seaorm_migrator_built_part_way_gets_the_rest_from_sqlx()
 #[ignore = "needs PostgreSQL via DB_URL"]
 async fn a_second_run_changes_nothing() {
     let db = Scratch::new().await;
-    as_seaorm_left_it(&db.pool, 120).await;
+    as_the_old_migrator_left_it(&db.pool, 120).await;
     migrations::up(&db.pool).await.unwrap();
-    let (schema_after, rows, seaorm) = (
+    let (schema_after, rows, old) = (
         schema(&db.pool).await,
         history(&db.pool).await,
-        seaorm_history(&db.pool).await,
+        old_history(&db.pool).await,
     );
 
     migrations::up(&db.pool).await.unwrap();
@@ -295,20 +295,20 @@ async fn a_second_run_changes_nothing() {
 
     assert_eq!(schema(&db.pool).await, schema_after);
     assert_eq!(history(&db.pool).await, rows);
-    assert_eq!(seaorm_history(&db.pool).await, seaorm);
+    assert_eq!(old_history(&db.pool).await, old);
     db.drop_it().await;
 }
 
 #[tokio::test]
 #[ignore = "needs PostgreSQL via DB_URL"]
-async fn a_seaorm_history_naming_a_migration_this_binary_does_not_know_is_refused() {
+async fn an_old_history_naming_a_migration_this_binary_does_not_know_is_refused() {
     let db = Scratch::new().await;
-    as_seaorm_left_it(&db.pool, count()).await;
+    as_the_old_migrator_left_it(&db.pool, count()).await;
     sqlx::query("INSERT INTO seaql_migrations (version, applied_at) VALUES ('m20991231_000999_from_a_newer_binary', 1)")
         .execute(&db.pool)
         .await
         .unwrap();
-    let before = (schema(&db.pool).await, seaorm_history(&db.pool).await);
+    let before = (schema(&db.pool).await, old_history(&db.pool).await);
 
     let refused = migrations::up(&db.pool).await.unwrap_err();
     assert!(
@@ -324,7 +324,7 @@ async fn a_seaorm_history_naming_a_migration_this_binary_does_not_know_is_refuse
         "nothing was copied"
     );
     assert_eq!(
-        (schema(&db.pool).await, seaorm_history(&db.pool).await),
+        (schema(&db.pool).await, old_history(&db.pool).await),
         before
     );
     assert!(matches!(
@@ -391,16 +391,16 @@ async fn a_rollback_that_worked_before_works_still_and_is_not_undone_by_the_brid
     assert_eq!(history(&db.pool).await.len(), 141);
     db.drop_it().await;
 
-    // On one SeaORM built: the bridge copies 142, the rollback removes 108 from sqlx's history only, and the next run
-    // applies 108 again rather than taking SeaORM's word for it.
+    // On one the old migrator built: the bridge copies 142, the rollback removes 108 from sqlx's history only, and the
+    // next run applies 108 again rather than taking the old history's word for it.
     let whole = the_whole_schema().await;
     let db = Scratch::new().await;
-    as_seaorm_left_it(&db.pool, 142).await;
+    as_the_old_migrator_left_it(&db.pool, 142).await;
     migrations::down(&db.pool, 1).await.unwrap();
     assert!(!exists(&db.pool, "axa_outbox").await);
     assert_eq!(history(&db.pool).await.len(), 141);
     assert_eq!(
-        seaorm_history(&db.pool).await.len(),
+        old_history(&db.pool).await.len(),
         142,
         "seaql_migrations is left as it was"
     );
@@ -416,7 +416,7 @@ async fn a_rollback_that_worked_before_works_still_and_is_not_undone_by_the_brid
 async fn reset_drops_both_histories_and_builds_from_nothing() {
     let whole = the_whole_schema().await;
     let db = Scratch::new().await;
-    as_seaorm_left_it(&db.pool, 60).await;
+    as_the_old_migrator_left_it(&db.pool, 60).await;
     migrations::fresh(&db.pool).await.unwrap();
     assert!(!exists(&db.pool, "seaql_migrations").await);
     assert_eq!(schema(&db.pool).await, whole);

@@ -14,9 +14,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -91,8 +91,7 @@ async fn an_administrator_sets_the_zone_that_defines_today() {
     request::<App, _, _>(|request, ctx| async move {
         let url = "/api/settings/today-time-zone";
         // Start from nothing stored, whatever an earlier run left.
-        ctx.db
-            .execute_unprepared("DELETE FROM deployment_settings WHERE key = 'today_time_zone'")
+        sqlx::raw_sql("DELETE FROM deployment_settings WHERE key = 'today_time_zone'").execute(project_portfolio_management::db::pool(&ctx))
             .await
             .unwrap();
         project_portfolio_management::controllers::settings::refresh(&ctx).await.unwrap();
@@ -126,11 +125,8 @@ async fn an_administrator_sets_the_zone_that_defines_today() {
         assert_eq!(v["today"], chrono::Utc::now().with_timezone(&honolulu).date_naive().to_string());
 
         // The change is audited with the before and after.
-        let row = ctx.db.query_one_raw(sea_orm::Statement::from_string(
-            sea_orm::DatabaseBackend::Postgres,
-            "SELECT snapshot::text AS s FROM audit_logs WHERE action = 'today_time_zone_changed' ORDER BY id DESC LIMIT 1",
-        )).await.unwrap().expect("an audit row");
-        let snap: Value = serde_json::from_str(&row.try_get::<String>("", "s").unwrap()).unwrap();
+        let row = sqlx::query("SELECT snapshot::text AS s FROM audit_logs WHERE action = 'today_time_zone_changed' ORDER BY id DESC LIMIT 1").fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().expect("an audit row");
+        let snap: Value = serde_json::from_str(&row.try_get::<String, _>("s").unwrap()).unwrap();
         assert_eq!((snap["before"].as_str(), snap["after"].as_str()), (Some("UTC"), Some("Pacific/Honolulu")));
 
         // Another instance that missed the change picks it up from the table on its next refresh.

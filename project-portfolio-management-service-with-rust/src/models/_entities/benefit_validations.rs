@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `benefit_validations`. Append-only: an independent person's statement of the
+//! Row — `benefit_validations`. Append-only: an independent person's statement of the
 //! amount of a benefit validated to date, with the evidence.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "benefit_validations")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub benefit_pid: Uuid,
     pub plan_pid: Uuid,
@@ -24,6 +22,3 @@ pub struct Model {
     pub validated_on: Date,
     pub note: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

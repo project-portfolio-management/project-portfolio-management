@@ -731,7 +731,7 @@ deleted wholesale.
 
 ## 10. Persistence
 
-PostgreSQL via SeaORM and sqlx; the migrations are frozen SQL files run by sqlx (root spec §8.3b). `auto_migrate`
+PostgreSQL via sqlx, with no ORM (root spec §8.3b); the migrations are frozen SQL files run by sqlx. `auto_migrate`
 on in development. Tables / migrations:
 
 - `m20220101_000001_plans` — the single plan row table: `id` serial PK,

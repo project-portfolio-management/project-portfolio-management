@@ -3,9 +3,7 @@
 use crate::prelude::*;
 use uuid::Uuid;
 
-pub use super::_entities::audit_logs::{self, ActiveModel, Entity, Model};
-
-impl ActiveModelBehavior for super::_entities::audit_logs::ActiveModel {}
+pub use super::_entities::audit_logs::{self, Model};
 
 /// The time and the digests of an audit row about to be written.
 ///
@@ -40,13 +38,12 @@ impl Model {
     /// audit row can share the change's transaction. `actor` is the caller's `sub` (user `pid`) when a verified token
     /// was presented, else `None`. Under the `outbox` transport the audit row is written in the *same* transaction as
     /// the entity mutation and its `axa_outbox` row, so the three can never disagree (`agents/share/event-bus.md` §3).
-    /// (The `SeaORM` `record` went when its last callers, `retention` and `scheduled_jobs`, moved: SQ-1 batch 18.)
     ///
     /// # Errors
     ///
     /// When the insert fails: the `sqlx` error itself (`Error::Sqlx`), so a database that cannot serve still answers
-    /// `503` `unavailable` with `Retry-After` and a broken constraint its `409` or `422`, as the `SeaORM` `record`'s
-    /// error did, where the caller passes it on (`?`). Wrapped as a plain model error it would be a `500`.
+    /// `503` `unavailable` with `Retry-After` and a broken constraint its `409` or `422`, as before SQ-1, where the
+    /// caller passes it on (`?`). Wrapped as a plain model error it would be a `500`.
     pub async fn record_on<'e, E: sqlx::Executor<'e, Database = sqlx::Postgres>>(
         db: E,
         entity_pid: Uuid,
@@ -125,7 +122,7 @@ impl Model {
 #[cfg(test)]
 mod tests {
     /// A database that cannot serve answers `503` `unavailable` with `Retry-After: 5` (spec §8.3a, NFR-7) through
-    /// `record_on`'s error too, as it did through `record`'s `SeaORM` error: a caller that passes it on with `?` (the
+    /// `record_on`'s error too, as it did before SQ-1: a caller that passes it on with `?` (the
     /// outbox transport's audit row, the plan export's) must not turn an outage into a `500`. The pool here points at a
     /// port nothing listens on, so the insert fails the way an unreachable database does. A database that refused the
     /// statement is still the service's own `500`.
@@ -235,15 +232,21 @@ mod tests {
         assert!(faults.is_empty(), "{faults:#?}");
     }
 
-    /// A handler that holds a transaction must not ask the pool for a second connection: with one connection
-    /// (the test and development default) the second request waits for the first, which is waiting for it,
-    /// and under load the same thing starves the pool. Between `let mut tx = db::begin(&ctx)` (or `ctx.db.begin()`)
-    /// and `tx.commit()` every database call goes through `tx`, so the word `ctx` may not appear there, after the
-    /// line that opens it. Every file under `src/`, `let mut` included. (Until SQ-1 batch 18 this read only
-    /// `src/controllers/`, without its subdirectories, for `ctx.db.begin()` alone, which no code calls now.)
+    /// A handler that holds a transaction must not ask the pool for a second connection: with one connection (the test
+    /// and development default) the second request waits for the first, which is waiting for it, and under load the
+    /// same thing starves the pool. Between `let mut tx = db::begin(&ctx)` (or the raw pool's `begin`) and
+    /// `tx.commit()` every database call goes through `tx`, so the word `ctx` may not appear there, after the line that
+    /// opens it. Every file under `src/`, `let mut` included. (Until SQ-1 batch 18 this read only `src/controllers/`,
+    /// without its subdirectories, for `ctx.db.begin()` alone, which no code calls now.)
     #[test]
     fn nothing_uses_the_pool_while_it_holds_a_transaction() {
-        const OPENS: [&str; 3] = ["= ctx.db.begin()", "= crate::db::begin(", "= db::begin("];
+        // The first is the raw pool's own `begin`, which `db.rs`'s census refuses outright; split so that census does
+        // not read this line as one.
+        const OPENS: [&str; 3] = [
+            concat!("= ctx.", "db.begin()"),
+            "= crate::db::begin(",
+            "= db::begin(",
+        ];
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
         let mut stack = vec![root];
         let (mut faults, mut seen) = (Vec::new(), 0_usize);

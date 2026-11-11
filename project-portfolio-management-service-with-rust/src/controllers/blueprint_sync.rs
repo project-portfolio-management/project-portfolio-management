@@ -132,7 +132,7 @@ async fn revise(
     let version = row.version + 1;
     let tpl_pid = row.pid;
     let mut tx = crate::db::begin(&ctx).await?;
-    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(
         "UPDATE plan_templates SET source_plan_pid = $1, snapshot = $2, version = $3 WHERE id = $4 RETURNING id",
     )
@@ -340,7 +340,7 @@ async fn template_sync(
                     }));
                     continue;
                 };
-                // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+                // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
                 sqlx::query_scalar::<_, i32>(
                     "UPDATE tasks SET title = $1, description = $2, points = $3 WHERE id = $4 RETURNING id",
                 )
@@ -375,7 +375,7 @@ async fn template_sync(
         applied.push(c.id.clone());
     }
     let remaining = rules::diff(&baseline, &l.now).len();
-    // The version moves only when nothing is left waiting; the update names it only then, as `SeaORM`'s did.
+    // The version moves only when nothing is left waiting; the update names it only then, as before SQ-1.
     let link = if remaining == 0 {
         sqlx::query_scalar::<_, i64>(
             "UPDATE plan_template_links SET baseline = $1, task_map = $2, template_version = $3 WHERE id = $4
@@ -437,7 +437,7 @@ async fn insert_task(
     now: chrono::DateTime<chrono::Utc>,
     actor: Option<&str>,
 ) -> Result<()> {
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     sqlx::query(
         "INSERT INTO tasks
              (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points, due_date, component_pid,

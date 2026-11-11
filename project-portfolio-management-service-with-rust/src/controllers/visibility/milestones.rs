@@ -46,7 +46,8 @@ pub(super) async fn create_milestone(
     let item = super::super::governance::find_item(&ctx, &pid).await?;
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more (`completion_mode`, `done_at` and `done_reason` are the table's defaults).
+    // The columns the insert set before SQ-1, no more (`completion_mode`, `done_at` and `done_reason` are the table's
+    // defaults).
     sqlx::query(
         "INSERT INTO milestones (pid, plan_pid, name, due, kind, done, deleted_at)
          VALUES ($1, $2, $3, $4, $5, FALSE, NULL)",
@@ -129,7 +130,7 @@ pub(super) async fn reschedule_milestone(
     let old_due = milestone.due;
     let row_pid = milestone.pid;
     let mut tx = crate::db::begin(&ctx).await?;
-    // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+    // The one column the update set before SQ-1, by id; no row back is an error, as before.
     let row: milestones::Model =
         sqlx::query_as("UPDATE milestones SET due = $1 WHERE id = $2 RETURNING *")
             .bind(payload.due)
@@ -245,7 +246,8 @@ pub(super) async fn complete_milestone(
         .done_at
         .unwrap_or_else(|| chrono::Utc::now().into());
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s update set (`done_reason` only when a reason is given), by id; no row back is an error.
+    // The columns the update set before SQ-1 (`done_reason` only when a reason is given), by id; no row back is an
+    // error.
     let row: milestones::Model = if let Some(reason) = reason.as_deref() {
         sqlx::query_as(
             "UPDATE milestones SET done = TRUE, done_at = $1, done_reason = $2 WHERE id = $3 RETURNING *",

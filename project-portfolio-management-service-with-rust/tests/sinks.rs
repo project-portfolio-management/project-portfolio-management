@@ -208,12 +208,10 @@ async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
         assert_eq!(ctx_run(&ctx).await.retrying + ctx_run(&ctx).await.sent, 0);
         // Make them due, recover the destination, and they go through.
         {
-            use project_portfolio_management::models::_entities::sink_deliveries;
-            use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, sea_query::Expr};
-            sink_deliveries::Entity::update_many()
-                .col_expr(sink_deliveries::Column::NextAttemptAt, Expr::value(chrono::Utc::now() - chrono::Duration::minutes(1)))
-                .filter(sink_deliveries::Column::Status.eq("pending"))
-                .exec(&ctx.db)
+            sqlx::query("UPDATE sink_deliveries SET next_attempt_at = $1 WHERE status = $2")
+                .bind(chrono::Utc::now() - chrono::Duration::minutes(1))
+                .bind("pending")
+                .execute(project_portfolio_management::db::pool(&ctx))
                 .await
                 .unwrap();
         }

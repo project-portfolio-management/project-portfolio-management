@@ -3,13 +3,13 @@
 //! `GET /capacity`, `GET /capacity/utilization`, and `GET /at-a-glance`
 //! each run a **bounded** number of SQL statements — counted exactly by
 //! [`project_portfolio_management::query_count`], which sees every
-//! statement the app runs, `SeaORM`'s (its metric callback) and sqlx's
-//! (`db::Counted`) alike, not timed (timing is noisy under load; a
-//! statement count is exact and deterministic).
+//! statement the app runs (each goes through `db::Counted`), not timed
+//! (timing is noisy under load; a statement count is exact and
+//! deterministic).
 //!
-//! It used to count `SeaORM`'s driver tracing spans only, which went
+//! It used to count the ORM driver's tracing spans only, which went
 //! blind as the routes' statements moved to sqlx (SQ-1): a route whose
-//! last `SeaORM` statement moved counted zero.
+//! last ORM statement moved counted zero.
 //!
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
@@ -20,8 +20,8 @@ use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
 
-/// Run `f`, returning its result plus the number of statements (`SeaORM`
-/// and sqlx) the app ran meanwhile. The test is `#[serial]`, so nothing
+/// Run `f`, returning its result plus the number of statements the app
+/// ran meanwhile. The test is `#[serial]`, so nothing
 /// else in this process runs statements while it is counted.
 async fn count_queries<F, Fut, T>(f: F) -> (T, u64)
 where

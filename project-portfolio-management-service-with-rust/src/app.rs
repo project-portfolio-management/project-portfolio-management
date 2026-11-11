@@ -197,7 +197,6 @@ impl App {
     pub async fn context(environment: Environment, config: ServiceConfig) -> Result<AppContext> {
         let db = axa::db::connect(&config.database).await?;
         let mut ctx = AppContext::new(environment, db, config);
-        crate::query_count::install(&mut ctx.db);
         ctx.shared_store
             .insert(crate::cache::Cache::from_env(&ctx.environment)?);
         ctx.shared_store
@@ -688,8 +687,7 @@ impl App {
     ///
     /// Propagates a database error.
     pub async fn truncate(ctx: &AppContext) -> Result<()> {
-        // `DELETE FROM` each, in this order, each on its own, as `axa::db::truncate_table` (`SeaORM`'s `delete_many`)
-        // did. The names are fixed literals.
+        // `DELETE FROM` each, in this order, each on its own, as before SQ-1. The names are fixed literals.
         for table in [
             "notifications",
             "automation_runs",

@@ -1,20 +1,19 @@
-//! `SeaORM` Entity — `merge_records`. One row per record-merge: which
+//! Row — `merge_records`. One row per record-merge: which
 //! duplicate folded into which survivor, by whom, with a snapshot of the
 //! transferred payload.
 
-// SeaORM-generated entity: the field-level shape is documented by the
+// The row's field-level shape is documented by the
 // migration and the `merge_records` table, not by per-field rustdoc.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "merge_records")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
     pub main_pid: Uuid,
     pub duplicate_pid: Uuid,
@@ -22,6 +21,3 @@ pub struct Model {
     pub actor: Option<String>,
     pub transferred: Option<Json>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

@@ -1,18 +1,16 @@
-//! `SeaORM` Entity — `key_person_entries`: a single point of failure, a person or a role (EX-11).
+//! Row — `key_person_entries`: a single point of failure, a person or a role (EX-11).
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::DateTimeWithTimeZone;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "key_person_entries")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     /// `person` or `role`.
     pub subject_kind: String,
@@ -24,6 +22,3 @@ pub struct Model {
     pub skill_pool_pid: Option<Uuid>,
     pub note: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

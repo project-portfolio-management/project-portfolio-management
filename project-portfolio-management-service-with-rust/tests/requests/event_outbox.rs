@@ -16,13 +16,11 @@
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
-use project_portfolio_management::models::_entities::plans;
 use project_portfolio_management::models::event_outbox;
 use project_portfolio_management::models::plans::Model as PlanModel;
 use project_portfolio_management::relay::{self, EventSink, SinkError};
 use project_portfolio_management::streaming::{ENTITY, Envelope, EventKind, SCHEMA_VERSION};
 use project_portfolio_management_matcher::Plan;
-use sea_orm::{EntityTrait, PaginatorTrait};
 use serial_test::serial;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -43,7 +41,7 @@ fn created_envelope(model: &PlanModel) -> Envelope {
 
 /// The outbox events for a record, oldest first: `(event_id, topic, kind, state)`.
 pub(crate) async fn outbox_rows(
-    db: &sea_orm::DatabaseConnection,
+    db: project_portfolio_management::db::Counted<&sqlx::PgPool>,
     pid: Uuid,
 ) -> Vec<(Uuid, String, String, String)> {
     // While owed, an event's state is `pending`, `claimed` or `failed`; after, its latest attempt (`delivered`).
@@ -53,7 +51,7 @@ pub(crate) async fn outbox_rows(
          LEFT JOIN axa_outbox_owed o ON o.event_id = e.event_id WHERE e.key = $1 ORDER BY e.id",
     )
     .bind(pid.to_string())
-    .fetch_all(db.get_postgres_connection_pool())
+    .fetch_all(db)
     .await
     .expect("load outbox rows")
 }
@@ -81,14 +79,14 @@ async fn outbox_create_writes_plan_and_one_event_atomically() {
         txn.commit().await.expect("commit tx");
 
         // The plan row persisted...
-        let wi_count = plans::Entity::find()
-            .count(&ctx.db)
+        let wi_count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plans")
+            .fetch_one(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("count plans");
         assert_eq!(wi_count, 1, "the plans row committed");
 
         // ...and exactly one outbox row for it, unpublished, correctly mapped.
-        let rows = outbox_rows(&ctx.db, model.pid).await;
+        let rows = outbox_rows(project_portfolio_management::db::pool(&ctx), model.pid).await;
         assert_eq!(
             rows,
             vec![(
@@ -129,13 +127,15 @@ async fn outbox_failure_rolls_back_both_writes() {
         drop(txn);
 
         // Neither write survived — the two are all-or-nothing.
-        let wi_count = plans::Entity::find()
-            .count(&ctx.db)
+        let wi_count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plans")
+            .fetch_one(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("count plans");
         assert_eq!(wi_count, 0, "the plans insert rolled back");
         assert!(
-            outbox_rows(&ctx.db, model.pid).await.is_empty(),
+            outbox_rows(project_portfolio_management::db::pool(&ctx), model.pid)
+                .await
+                .is_empty(),
             "the event insert rolled back with it"
         );
     })
@@ -214,7 +214,7 @@ async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
             rows.into_iter().map(|r| r.3).collect::<Vec<_>>()
         };
         assert!(
-            statuses(outbox_rows(&ctx.db, model.pid).await)
+            statuses(outbox_rows(project_portfolio_management::db::pool(&ctx), model.pid).await)
                 .iter()
                 .all(|s| s != "delivered"),
             "nothing is delivered while the sink is down"
@@ -223,7 +223,7 @@ async fn the_relay_sends_each_row_in_order_and_only_marks_what_was_sent() {
         // Up: each goes out once, in order, and is marked sent.
         sink.down.store(false, std::sync::atomic::Ordering::SeqCst);
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
-        while statuses(outbox_rows(&ctx.db, model.pid).await)
+        while statuses(outbox_rows(project_portfolio_management::db::pool(&ctx), model.pid).await)
             .iter()
             .any(|s| s != "delivered")
         {
@@ -318,9 +318,9 @@ async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
         let (stop_counting, stopped_too) = tokio::sync::watch::channel(false);
 
         let status = |pid| {
-            let db = ctx.db.clone();
+            let db = project_portfolio_management::db::pool(&ctx);
             async move {
-                outbox_rows(&db, pid)
+                outbox_rows(db, pid)
                     .await
                     .into_iter()
                     .map(|r| r.3)
@@ -396,7 +396,7 @@ async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
              WHERE e.key = $1 AND a.outcome = 'released'",
         )
         .bind(stuck.pid.to_string())
-        .fetch_one(ctx.db.get_postgres_connection_pool())
+        .fetch_one(project_portfolio_management::db::pool(&ctx))
         .await
         .expect("the release is on record");
         assert_eq!(
@@ -432,9 +432,9 @@ async fn a_dead_relays_claim_is_taken_back_and_sent() {
             ..relay::options()
         };
         let state = |pid: Uuid| {
-            let db = ctx.db.clone();
+            let db = project_portfolio_management::db::pool(&ctx);
             async move {
-                outbox_rows(&db, pid)
+                outbox_rows(db, pid)
                     .await
                     .into_iter()
                     .map(|r| r.3)
@@ -455,7 +455,7 @@ async fn a_dead_relays_claim_is_taken_back_and_sent() {
         let die_holding = |pid: Uuid| {
             let uri = uri.clone();
             let wait_for = &wait_for;
-            let db = ctx.db.clone();
+            let db = project_portfolio_management::db::pool(&ctx);
             async move {
                 let sink = Arc::new(HangsOn {
                     pid: pid.to_string(),
@@ -474,7 +474,7 @@ async fn a_dead_relays_claim_is_taken_back_and_sent() {
                     "UPDATE axa_outbox_leases SET heard_at = now() - interval '10 minutes' \
                      WHERE claim IN (SELECT claim FROM axa_outbox_owed WHERE state = 'claimed')",
                 )
-                .execute(db.get_postgres_connection_pool())
+                .execute(db)
                 .await
                 .expect("let the dead relay's lease go stale");
             }
@@ -516,7 +516,7 @@ async fn a_dead_relays_claim_is_taken_back_and_sent() {
              WHERE e.key = $1 ORDER BY a.id",
         )
         .bind(spent.pid.to_string())
-        .fetch_all(ctx.db.get_postgres_connection_pool())
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
         .await
         .expect("the record");
         assert_eq!(outcomes, ["claimed", "abandoned"], "an operator can tell why it failed");

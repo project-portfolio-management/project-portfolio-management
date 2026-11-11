@@ -18,9 +18,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::ConnectionTrait;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [47; 32];
 const ISSUER: &str = "authentication-service";
@@ -164,8 +164,7 @@ async fn a_plan_marked_above_your_clearance_does_not_exist_for_you() {
         assert_eq!(with!(request.get(&format!("/api/plans/{p}")), low).await.status_code(), 200, "reset to the lowest level");
 
         // A mark the scheme no longer knows hides from everyone below the highest clearance.
-        ctx.db
-            .execute_unprepared(&format!("INSERT INTO plan_handling_marks (pid, plan_pid, mark, created_at, updated_at) VALUES (gen_random_uuid(), '{p}', 'TOP SECRET', now(), now())"))
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_handling_marks (pid, plan_pid, mark, created_at, updated_at) VALUES (gen_random_uuid(), '{p}', 'TOP SECRET', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx))
             .await
             .unwrap();
         assert_eq!(with!(request.get(&format!("/api/plans/{p}")), mid).await.status_code(), 404);
@@ -175,10 +174,10 @@ async fn a_plan_marked_above_your_clearance_does_not_exist_for_you() {
 
         // The database refuses a mark that is empty, padded or long.
         for bad in ["", " x", "x ", &"y".repeat(41)] {
-            assert!(ctx.db.execute_unprepared(&format!("INSERT INTO plan_handling_marks (pid, plan_pid, mark, created_at, updated_at) VALUES (gen_random_uuid(), gen_random_uuid(), '{bad}', now(), now())")).await.is_err(), "{bad:?}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_handling_marks (pid, plan_pid, mark, created_at, updated_at) VALUES (gen_random_uuid(), gen_random_uuid(), '{bad}', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{bad:?}");
         }
         // Every set and reset was audited.
-        let rows = ctx.db.query_one_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres, "SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'handling_mark_set'".to_string())).await.unwrap().unwrap().try_get::<i64>("", "n").unwrap();
+        let rows = sqlx::query(sqlx::AssertSqlSafe("SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'handling_mark_set'".to_string())).fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().unwrap().try_get::<i64, _>("n").unwrap();
         assert_eq!(rows, 3);
     })
     .await;

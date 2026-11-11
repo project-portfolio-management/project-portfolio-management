@@ -1,29 +1,23 @@
-//! `SeaORM` Entity — `delivery_confidence_assessments`. Append-only history of a plan's stated delivery confidence.
+//! Row — `delivery_confidence_assessments`. Append-only history of a plan's stated delivery confidence.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "delivery_confidence_assessments")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub plan_pid: Uuid,
     /// `green`, `amber_green`, `amber`, `amber_red` or `red`.
     pub value: String,
     /// `self` or `independent`.
     pub kind: String,
-    #[sea_orm(column_type = "Text")]
     pub rationale: String,
     pub assessor: Option<String>,
     pub assessed_on: Date,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

@@ -23,9 +23,9 @@ use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::SigningKey;
 use project_portfolio_management::app::App;
 use rusty_paseto::core::{Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4};
-use sea_orm::{ConnectionTrait, TransactionTrait};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 
 const SEED: [u8; 32] = [53; 32];
 const ISSUER: &str = "authentication-service";
@@ -135,7 +135,7 @@ async fn a_pack_is_drafted_by_some_issued_by_fewer_read_by_audience_and_never_ch
             .json(&json!({ "title": "Build down", "severity": "high", "status": "open" })).await.assert_status_ok();
         with!(request.post(&format!("/api/plans/{privp}/issues")), writer)
             .json(&json!({ "title": "SECRET-ISSUE", "severity": "critical", "status": "open" })).await.assert_status_ok();
-        ctx.db.execute_unprepared(&format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{privp}', true, '[]', now(), now())")).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at) VALUES (gen_random_uuid(), '{privp}', true, '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
 
         // Who may draft: an ordinary writer cannot, whatever the policy says.
         let want = json!({ "period": "2026-10", "audience": "partner" });
@@ -212,9 +212,8 @@ async fn a_pack_is_drafted_by_some_issued_by_fewer_read_by_audience_and_never_ch
         assert_eq!(with!(request.post(&format!("/api/director-packs/{pid}/reissue")), editor).json(&json!({ "change_note": "From the old version" })).await.status_code(), 409, "only the latest is reissued");
 
         // The audit trail.
-        let rows = ctx.db.query_all_raw(sea_orm::Statement::from_string(sea_orm::DatabaseBackend::Postgres,
-            "SELECT action, actor FROM audit_logs WHERE action LIKE 'director_pack_%' ORDER BY id".to_string())).await.unwrap();
-        let trail: Vec<(String, String)> = rows.iter().map(|r| (r.try_get("", "action").unwrap(), r.try_get("", "actor").unwrap())).collect();
+        let rows = sqlx::query(sqlx::AssertSqlSafe("SELECT action, actor FROM audit_logs WHERE action LIKE 'director_pack_%' ORDER BY id".to_string())).fetch_all(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        let trail: Vec<(String, String)> = rows.iter().map(|r| (r.try_get("action").unwrap(), r.try_get("actor").unwrap())).collect();
         assert_eq!(trail.first(), Some(&("director_pack_drafted".to_string(), EDITOR.to_string())));
         assert!(trail.contains(&("director_pack_issued".to_string(), ISSUER_SUB.to_string())));
         assert!(trail.contains(&("director_pack_reissue_drafted".to_string(), EDITOR.to_string())));
@@ -230,20 +229,20 @@ async fn a_pack_is_drafted_by_some_issued_by_fewer_read_by_audience_and_never_ch
             ("issued with no issuer", "INSERT INTO director_packs (pid, period, audience, version, status, cut_off, body, created_at, updated_at) VALUES (gen_random_uuid(), '2026-11', 'board', 1, 'issued', now(), '{}', now(), now())".to_string()),
             ("version 2 without a note", "INSERT INTO director_packs (pid, period, audience, version, status, cut_off, body, supersedes_pid, created_at, updated_at) VALUES (gen_random_uuid(), '2026-11', 'board', 2, 'draft', now(), '{}', gen_random_uuid(), now(), now())".to_string()),
         ] {
-            assert!(ctx.db.execute_unprepared(&sql).await.is_err(), "{what}");
+            assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.is_err(), "{what}");
         }
         assert_eq!(with!(request.get(&format!("/api/director-packs/{pid}")), partner).await.text(), first_text, "and still the same");
 
         // The one allowed change: a data-subject pseudonymisation may blank who drafted or issued it,
         // and nothing else in the row moves, the body included.
-        let tx = ctx.db.begin().await.unwrap();
-        tx.execute_unprepared("SELECT set_config('ppm.audit_pseudonymise', 'on', true)").await.unwrap();
-        tx.execute_unprepared(&format!("UPDATE director_packs SET drafted_by = 'pseudonym-1', issued_by = 'pseudonym-1' WHERE pid = '{pid}'")).await.unwrap();
-        assert!(tx.execute_unprepared(&format!("UPDATE director_packs SET body = '{{}}' WHERE pid = '{pid}'")).await.is_err(), "not even then the body");
+        let mut tx = project_portfolio_management::db::begin(&ctx).await.unwrap();
+        sqlx::raw_sql("SELECT set_config('ppm.audit_pseudonymise', 'on', true)").execute(tx.conn()).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE director_packs SET drafted_by = 'pseudonym-1', issued_by = 'pseudonym-1' WHERE pid = '{pid}'"))).execute(tx.conn()).await.unwrap();
+        assert!(sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE director_packs SET body = '{{}}' WHERE pid = '{pid}'"))).execute(tx.conn()).await.is_err(), "not even then the body");
         tx.rollback().await.unwrap();
-        let tx = ctx.db.begin().await.unwrap();
-        tx.execute_unprepared("SELECT set_config('ppm.audit_pseudonymise', 'on', true)").await.unwrap();
-        tx.execute_unprepared(&format!("UPDATE director_packs SET drafted_by = 'pseudonym-1', issued_by = 'pseudonym-1' WHERE pid = '{pid}'")).await.unwrap();
+        let mut tx = project_portfolio_management::db::begin(&ctx).await.unwrap();
+        sqlx::raw_sql("SELECT set_config('ppm.audit_pseudonymise', 'on', true)").execute(tx.conn()).await.unwrap();
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE director_packs SET drafted_by = 'pseudonym-1', issued_by = 'pseudonym-1' WHERE pid = '{pid}'"))).execute(tx.conn()).await.unwrap();
         tx.commit().await.unwrap();
         let after = with!(request.get(&format!("/api/director-packs/{pid}")), partner).await.text();
         assert!(after.contains("pseudonym-1") && after.ends_with(first_text.split("\"body\":").nth(1).unwrap()), "the body bytes are the same");

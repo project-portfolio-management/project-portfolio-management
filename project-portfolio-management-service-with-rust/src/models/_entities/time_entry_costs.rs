@@ -1,18 +1,17 @@
-//! `SeaORM` Entity — `time_entry_costs`. The cost of a recorded time entry as worked out when it was recorded: the rate used is stored with it, so a later rate change never rewrites an actual.
+//! Row — `time_entry_costs`. The cost of a recorded time entry as worked out when it was recorded: the rate used is
+//! stored with it, so a later rate change never rewrites an actual.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "time_entry_costs")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub time_entry_pid: Uuid,
     pub plan_pid: Uuid,
@@ -24,6 +23,3 @@ pub struct Model {
     pub currency: String,
     pub cost_minor: i64,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

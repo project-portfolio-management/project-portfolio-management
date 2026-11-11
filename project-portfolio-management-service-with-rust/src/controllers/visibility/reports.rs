@@ -93,7 +93,7 @@ pub(super) async fn create_report(
     }
     let row_pid = Uuid::new_v4();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The columns `SeaORM`'s insert set, no more.
+    // The columns the insert set before SQ-1, no more.
     sqlx::query(
         "INSERT INTO report_definitions (pid, name, collection, filters, fields, group_by, deleted_at)
          VALUES ($1, $2, $3, $4, $5, $6, NULL)",
@@ -135,7 +135,7 @@ pub(super) async fn delete_report(
     let row_pid = row.pid;
     let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
-    // The one column `SeaORM`'s update set, by id; no row back is an error, as before.
+    // The one column the update set before SQ-1, by id; no row back is an error, as before.
     let _: i64 = sqlx::query_scalar(
         "UPDATE report_definitions SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )

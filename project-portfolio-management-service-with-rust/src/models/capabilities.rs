@@ -1,5 +1,5 @@
 //! Model glue for the collaboration / automation capability tables:
-//! `ActiveModelBehavior` impls plus the finders and the small set of
+//! the finders and the small set of
 //! writes shared by more than one controller (the notification insert
 //! is written by the automation engine *and* by the scheduled-action
 //! sweep, so it lives here rather than being duplicated).
@@ -8,12 +8,6 @@ use crate::prelude::*;
 use uuid::Uuid;
 
 use super::_entities::{automation_runs, automations, notifications, reviews, scheduled_actions};
-
-impl ActiveModelBehavior for reviews::ActiveModel {}
-impl ActiveModelBehavior for automations::ActiveModel {}
-impl ActiveModelBehavior for automation_runs::ActiveModel {}
-impl ActiveModelBehavior for scheduled_actions::ActiveModel {}
-impl ActiveModelBehavior for notifications::ActiveModel {}
 
 /// Find the live automation by public id, on the pool.
 ///

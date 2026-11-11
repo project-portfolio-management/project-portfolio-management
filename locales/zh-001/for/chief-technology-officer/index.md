@@ -9,7 +9,7 @@
 | 部分 | 技术 |
 |---|---|
 | 匹配库 | Rust；确定性与概率性、可解释的成对匹配；由服务嵌入 |
-| 服务 | Rust、基于 axum 的 axa、SeaORM、PostgreSQL 18；`/api` 下的 REST，OpenAPI 由路由推导 |
+| 服务 | Rust、基于 axum 的 axa、sqlx、PostgreSQL 18；`/api` 下的 REST，OpenAPI 由路由推导 |
 | 界面 | SvelteKit 3、Svelte 5 单页应用，带前端专用后端；i18n 语言目录 |
 
 工具链固定在 [`rust-toolchain.toml`](../../../../rust-toolchain.toml)。持久化见[规范 10](../../../../spec/10-persistence.md)；API 见[规范 09](../../../../spec/09-api-surface.md)。

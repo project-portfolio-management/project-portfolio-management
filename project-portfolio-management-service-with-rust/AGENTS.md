@@ -2,7 +2,7 @@
 
 Entry point for AI coding agents working in the
 `project-portfolio-management` crate (v0.2.0, edition 2024, Rust 1.99.1 with a
-minimum of 1.97, axa 0.11, sea-orm 2.0, axum 0.8): a registry of **plan** records
+minimum of 1.97, axa 0.11, sqlx 0.9, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
 label — **and** a project-management tool.
@@ -176,12 +176,22 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
    `src/openapi.rs`.
 8. **Zero `#[allow]`**; clippy `-D warnings` clean on `--all-targets
    --all-features`.
+9. **The database through `src/db.rs` only** (root spec §8.3b): there is no
+   ORM. `ctx.db` is sqlx's `PgPool`, but nothing outside `src/db.rs` names
+   it (a census refuses it in `src/`, `tests/` and `benches/`): a statement
+   runs on `db::pool(&ctx)` or a `db::begin(&ctx)` transaction, so
+   `query_count` sees it. A handler's writes and its audit row
+   (`AuditModel::record_on`) are one transaction; a helper of several
+   statements takes `&mut impl db::Session`. SQL from literals, every value
+   bound; rows read with `sqlx::query_as` into `src/models/_entities`
+   (`Model` row structs, `sqlx::FromRow` + `serde`, whose JSON some routes
+   answer with) or small `FromRow` structs; no `query!` macros.
 
 ## Gotchas (hard-won)
 
 - **Pool size 1 deadlocks.** `config/{development,test}.yaml` default
   `DB_MAX_CONNECTIONS` to `1` (production 20). Holding a transaction while
-  also querying `ctx.db` waits forever for a second connection. Inside a
+  also querying `db::pool(&ctx)` waits forever for a second connection. Inside a
   transaction use that transaction handle for every query; do reads first
   or after.
 - **The verifier is a process-wide `OnceLock`** (`auth::VERIFIER`, seeded
@@ -242,7 +252,8 @@ src/
 ├── app.rs                  routes, middleware stack, tickers, boot
 ├── controllers/            one file per area (HTTP wiring only); paging.rs, plan_access.rs (privacy_mw, HiddenScope), …
 ├── <area>.rs               pure rules beside each controller (hammock, sandbox, processes, documents, cost_rates, scheduling_rules, work_profile, onboarding, tba, tpc, …)
-├── models/                 helpers + _entities/ (SeaORM)
+├── models/                 helpers + _entities/ (row structs, one per table)
+├── db.rs                   the one way to the pool: pool, begin, Session, Counted
 ├── auth.rs · privacy.rs · version.rs · validation.rs · merge.rs
 ├── search/                 Tantivy index + engine
 ├── streaming.rs · relay.rs · webhooks.rs · sinks.rs      events, outbox, sinks

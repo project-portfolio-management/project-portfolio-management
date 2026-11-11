@@ -172,7 +172,7 @@ async fn set_order(
             .find(|t| t.pid == *task_pid)
             .ok_or(Error::NotFound)?;
         if row.sibling_position != Some(position) {
-            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            // `fetch_one`: an update that finds no row is an error, as before SQ-1.
             sqlx::query_scalar::<_, i32>(
                 "UPDATE tasks SET sibling_position = $1 WHERE id = $2 RETURNING id",
             )

@@ -58,7 +58,7 @@ async fn live_relations_of(
     })
 }
 
-/// Live relations of `kind` pointing at `to`, unordered (as the `SeaORM` read was).
+/// Live relations of `kind` pointing at `to`, unordered (as the read was before SQ-1).
 async fn live_relations_to(
     ctx: &AppContext,
     to: Uuid,
@@ -194,7 +194,7 @@ async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&st
     );
     let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
     let mut tx = crate::db::begin(ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>(
         "UPDATE tasks SET status = $1, status_changed_at = $2, done_at = $3 WHERE id = $4 RETURNING id",
     )
@@ -409,7 +409,7 @@ async fn delete_relation(
     .ok_or(Error::NotFound)?;
     let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
     let mut tx = crate::db::begin(&ctx).await?;
-    // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+    // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>(
         "UPDATE task_relations SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )

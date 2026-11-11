@@ -77,7 +77,7 @@ async fn set(
         }
         (None, true) => {}
         (Some(r), false) => {
-            // `fetch_one`: an update that finds no row is an error, as SeaORM's was.
+            // `fetch_one`: an update that finds no row is an error, as before SQ-1.
             sqlx::query_scalar::<_, i64>(
                 "UPDATE task_ccpm_estimates SET aggressive_days = $1, safe_days = $2 WHERE id = $3 RETURNING id",
             )

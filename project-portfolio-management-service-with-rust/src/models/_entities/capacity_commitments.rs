@@ -1,19 +1,17 @@
-//! `SeaORM` Entity — `capacity_commitments`. Capacity promised to (supply) or work owed on (demand) a
+//! Row — `capacity_commitments`. Capacity promised to (supply) or work owed on (demand) a
 //! programme, for a pool and a month, by a partner or by the organization itself.
 
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{Date, DateTimeWithTimeZone};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "capacity_commitments")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
-    #[sea_orm(primary_key)]
     pub id: i64,
-    #[sea_orm(unique)]
     pub pid: Uuid,
     pub pool_pid: Uuid,
     pub plan_pid: Uuid,
@@ -30,6 +28,3 @@ pub struct Model {
     pub note: Option<String>,
     pub updated_by: Option<String>,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}

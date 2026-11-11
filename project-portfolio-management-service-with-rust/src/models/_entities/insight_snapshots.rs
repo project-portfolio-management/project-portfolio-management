@@ -1,23 +1,16 @@
-//! `SeaORM` Entity — `insight_snapshots`. One row per point-in-time
+//! Row — `insight_snapshots`. One row per point-in-time
 //! estate capture (kind + JSONB body) behind the board/CRO trends.
 
-// SeaORM-generated entity shape: documented by the migration.
+// The row's shape is documented by the migration.
 #![expect(missing_docs)]
 
-use sea_orm::entity::prelude::*;
+use super::{DateTimeWithTimeZone, Json};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize, sqlx::FromRow)]
-#[sea_orm(table_name = "insight_snapshots")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Model {
-    #[sea_orm(primary_key)]
     pub id: i32,
     pub taken_at: DateTimeWithTimeZone,
     pub kind: String,
     pub body: Json,
 }
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}

@@ -10,7 +10,6 @@ use axum::http::StatusCode;
 use project_portfolio_management::app::App;
 use project_portfolio_management::controllers::status_updates::{pack_section, remind_due};
 use project_portfolio_management::models::_entities::{notifications, plan_status_cadences};
-use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
 use serial_test::serial;
 
@@ -65,18 +64,23 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
         // Ten days on it is three days overdue: the cadence was set ten days ago, and nobody has posted. The reminder
         // goes to whoever set it (here a person set directly, since this test is unauthenticated).
         let who = uuid::Uuid::new_v4().to_string();
-        let row = plan_status_cadences::Entity::find()
-            .filter(plan_status_cadences::Column::PlanPid.eq(plan_uuid))
-            .one(&ctx.db)
-            .await
-            .unwrap()
-            .unwrap();
-        let mut a: plan_status_cadences::ActiveModel = row.into();
-        a.set_on = ActiveValue::set(
-            project_portfolio_management::tz::deployment_today() - chrono::Duration::days(10),
-        );
-        a.set_by = ActiveValue::set(Some(who.clone()));
-        a.update(&ctx.db).await.unwrap();
+        let row = sqlx::query_as::<_, plan_status_cadences::Model>(
+            "SELECT * FROM plan_status_cadences WHERE plan_pid = $1 LIMIT 1",
+        )
+        .bind(plan_uuid)
+        .fetch_optional(project_portfolio_management::db::pool(&ctx))
+        .await
+        .unwrap()
+        .unwrap();
+        sqlx::query(
+            "UPDATE plan_status_cadences SET set_on = $1, set_by = $2 WHERE id = $3 RETURNING id",
+        )
+        .bind(project_portfolio_management::tz::deployment_today() - chrono::Duration::days(10))
+        .bind(Some(who.clone()))
+        .bind(row.id)
+        .fetch_one(project_portfolio_management::db::pool(&ctx))
+        .await
+        .unwrap();
         let status: Value = request.get(&format!("/api/plans/{p}/status")).await.json();
         assert_eq!(status["standing"]["overdue"], true, "{status}");
         assert_eq!(status["standing"]["days_overdue"], 3);
@@ -93,12 +97,14 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
         assert!(first.sent >= 1, "{first:?}");
         let again = remind_due(&ctx).await.unwrap();
         assert_eq!((again.sent, again.unaddressed), (0, 0));
-        let told = notifications::Entity::find()
-            .filter(notifications::Column::RecipientRef.eq(format!("person:{who}")))
-            .filter(notifications::Column::Kind.eq("status_update_due"))
-            .all(&ctx.db)
-            .await
-            .unwrap();
+        let told = sqlx::query_as::<_, notifications::Model>(
+            "SELECT * FROM notifications WHERE recipient_ref = $1 AND kind = $2",
+        )
+        .bind(format!("person:{who}"))
+        .bind("status_update_due")
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .unwrap();
         assert_eq!(told.len(), 1);
         assert!(told[0].message.contains("3 day(s) overdue"));
 

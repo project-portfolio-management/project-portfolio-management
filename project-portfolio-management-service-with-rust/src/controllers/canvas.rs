@@ -4,10 +4,8 @@
 //! [`crate::canvas`]; every mutation audits.
 
 use super::conflict;
-use super::{db_err, unprocessable};
+use super::unprocessable;
 use crate::prelude::*;
-use sea_orm::sea_query::Expr;
-use sea_orm::{QueryOrder, TransactionTrait};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -15,7 +13,7 @@ use super::governance::{find_item, valid_ref};
 use crate::auth::MaybeAuthUser;
 use crate::canvas::{self as rules, PromoteTarget};
 use crate::governance as gov_rules;
-use crate::models::_entities::{canvas_items, canvases, ideas, objectives, risks};
+use crate::models::_entities::{canvas_items, canvases};
 use crate::models::audit_logs::Model as AuditModel;
 use crate::validation::MAX_TEXT_LEN;
 
@@ -26,13 +24,12 @@ async fn find_canvas(
     pid: &str,
 ) -> Result<canvases::Model> {
     let pid = super::parse_pid(pid)?;
-    let canvas = canvases::Entity::find()
-        .filter(canvases::Column::Pid.eq(pid))
-        .filter(canvases::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let canvas: canvases::Model =
+        sqlx::query_as("SELECT * FROM canvases WHERE pid = $1 AND deleted_at IS NULL LIMIT 1")
+            .bind(pid)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?
+            .ok_or(Error::NotFound)?;
     super::plan_access::require_readable_if_any(ctx, caller, canvas.plan_pid).await?;
     Ok(canvas)
 }
@@ -44,26 +41,24 @@ async fn find_item_of(
     item_pid: &str,
 ) -> Result<canvas_items::Model> {
     let pid = super::parse_pid(item_pid)?;
-    canvas_items::Entity::find()
-        .filter(canvas_items::Column::Pid.eq(pid))
-        .filter(canvas_items::Column::CanvasPid.eq(canvas.pid))
-        .filter(canvas_items::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM canvas_items WHERE pid = $1 AND canvas_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(canvas.pid)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
 /// Live items of a canvas in display order (position, then insertion order as a tie-break).
 async fn live_items(ctx: &AppContext, canvas_pid: Uuid) -> Result<Vec<canvas_items::Model>> {
-    canvas_items::Entity::find()
-        .filter(canvas_items::Column::CanvasPid.eq(canvas_pid))
-        .filter(canvas_items::Column::DeletedAt.is_null())
-        .order_by_asc(canvas_items::Column::Position)
-        .order_by_asc(canvas_items::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)
+    Ok(sqlx::query_as(
+        "SELECT * FROM canvas_items WHERE canvas_pid = $1 AND deleted_at IS NULL ORDER BY position, id",
+    )
+    .bind(canvas_pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?)
 }
 
 /// `GET /api/canvas-templates` — every built-in template and its boxes.
@@ -113,24 +108,25 @@ async fn create_canvas(
         None => None,
     };
     super::plan_access::require_readable_if_any(&ctx, &caller, plan_pid).await?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = canvases::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan_pid),
-        template: ActiveValue::set(payload.template.clone()),
-        title: ActiveValue::set(payload.title.clone()),
-        description: ActiveValue::set(payload.description.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "canvas_created", caller.actor(), None)
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more.
+    sqlx::query(
+        "INSERT INTO canvases (pid, plan_pid, template, title, description, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL)",
+    )
+    .bind(row_pid)
+    .bind(plan_pid)
+    .bind(&payload.template)
+    .bind(&payload.title)
+    .bind(&payload.description)
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), row_pid, "canvas_created", caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `GET /api/canvases?plan=&template=` query.
@@ -151,19 +147,19 @@ async fn list_canvases(
     caller: MaybeAuthUser,
     Query(params): Query<ListParams>,
 ) -> Result<Response> {
-    let mut query = canvases::Entity::find().filter(canvases::Column::DeletedAt.is_null());
+    let mut query = sqlx::QueryBuilder::new("SELECT * FROM canvases WHERE deleted_at IS NULL");
     if let Some(plan) = params.plan.as_deref() {
         let pid = Uuid::parse_str(plan).map_err(|_| unprocessable("plan must be a UUID"))?;
-        query = query.filter(canvases::Column::PlanPid.eq(pid));
+        query.push(" AND plan_pid = ").push_bind(pid);
     }
     if let Some(template) = params.template {
-        query = query.filter(canvases::Column::Template.eq(template));
+        query.push(" AND template = ").push_bind(template);
     }
-    let rows = query
-        .order_by_asc(canvases::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    query.push(" ORDER BY id");
+    let rows: Vec<canvases::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let rows = super::plan_access::HiddenScope::of(&ctx, &caller)
         .await?
         .keep(rows);
@@ -197,28 +193,32 @@ async fn delete_canvas(
 ) -> Result<Response> {
     let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let canvas_pid = canvas.pid;
-    let now: sea_orm::prelude::DateTimeWithTimeZone = chrono::Utc::now().into();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    canvas_items::Entity::update_many()
-        .col_expr(canvas_items::Column::DeletedAt, Expr::value(now))
-        .filter(canvas_items::Column::CanvasPid.eq(canvas_pid))
-        .filter(canvas_items::Column::DeletedAt.is_null())
-        .exec(&txn)
-        .await
-        .map_err(db_err)?;
-    let mut active: canvases::ActiveModel = canvas.into();
-    active.deleted_at = ActiveValue::set(Some(now));
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, canvas_pid, "canvas_deleted", caller.actor(), None)
-        .await
-        .map_err(db_err_model)?;
-    txn.commit().await.map_err(db_err)?;
+    let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let mut tx = crate::db::begin(&ctx).await?;
+    sqlx::query(
+        "UPDATE canvas_items SET deleted_at = $1 WHERE canvas_pid = $2 AND deleted_at IS NULL",
+    )
+    .bind(now)
+    .bind(canvas_pid)
+    .execute(tx.conn())
+    .await?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>("UPDATE canvases SET deleted_at = $1 WHERE id = $2 RETURNING id")
+        .bind(now)
+        .bind(canvas.id)
+        .fetch_one(tx.conn())
+        .await?;
+    // Passed on (an outage stays `503`), as the `SeaORM` error was.
+    AuditModel::record_on(
+        tx.conn(),
+        canvas_pid,
+        "canvas_deleted",
+        caller.actor(),
+        None,
+    )
+    .await?;
+    tx.commit().await?;
     format::empty_json()
-}
-
-/// Wraps a model error as an API error; used as a `map_err` target in the promote path.
-fn db_err_model(e: ModelError) -> Error {
-    Error::Model(e)
 }
 
 /// `POST …/items` body.
@@ -269,27 +269,33 @@ async fn add_item(
         .map(|i| i.position)
         .max()
         .map_or(0, |p| p + 1);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = canvas_items::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        canvas_pid: ActiveValue::set(canvas.pid),
-        box_key: ActiveValue::set(payload.box_key.clone()),
-        body: ActiveValue::set(payload.body.clone()),
-        owner_ref: ActiveValue::set(payload.owner_ref.clone()),
-        position: ActiveValue::set(position),
-        promoted_to_kind: ActiveValue::set(None),
-        promoted_to_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
+    let row_pid = Uuid::new_v4();
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more.
+    sqlx::query(
+        "INSERT INTO canvas_items
+             (pid, canvas_pid, box_key, body, owner_ref, position, promoted_to_kind, promoted_to_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, NULL)",
+    )
+    .bind(row_pid)
+    .bind(canvas.pid)
+    .bind(&payload.box_key)
+    .bind(&payload.body)
+    .bind(&payload.owner_ref)
+    .bind(position)
+    .execute(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "canvas_item_added",
+        caller.actor(),
+        None,
+    )
     .await
-    .map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "canvas_item_added", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
-    format::json(serde_json::json!({ "pid": row.pid.to_string() }))
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
+    format::json(serde_json::json!({ "pid": row_pid.to_string() }))
 }
 
 /// `PUT …/items/{item_pid}` body — every field optional.
@@ -333,21 +339,32 @@ async fn update_item(
         return Err(unprocessable(&problems.join("; ")));
     }
     let item_pid = item.pid;
-    let mut active: canvas_items::ActiveModel = item.into();
-    active.box_key = ActiveValue::set(box_key);
-    active.body = ActiveValue::set(body);
+    // By id, the box and body always and the owner and position when given, as `SeaORM`'s update named; no row
+    // back is an error, as its was.
+    let mut update = sqlx::QueryBuilder::new("UPDATE canvas_items SET box_key = ");
+    update.push_bind(box_key).push(", body = ").push_bind(body);
     if let Some(owner) = payload.owner_ref {
-        active.owner_ref = ActiveValue::set(Some(owner));
+        update.push(", owner_ref = ").push_bind(owner);
     }
     if let Some(position) = payload.position {
-        active.position = ActiveValue::set(position);
+        update.push(", position = ").push_bind(position);
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, item_pid, "canvas_item_updated", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    update
+        .push(" WHERE id = ")
+        .push_bind(item.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row: canvas_items::Model = update.build_query_as().fetch_one(tx.conn()).await?;
+    AuditModel::record_on(
+        tx.conn(),
+        item_pid,
+        "canvas_item_updated",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::json(row)
 }
 
@@ -361,14 +378,26 @@ async fn delete_item(
     let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let item = find_item_of(&ctx, &canvas, &item_pid).await?;
     let item_pid = item.pid;
-    let mut active: canvas_items::ActiveModel = item.into();
-    active.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    active.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, item_pid, "canvas_item_deleted", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let mut tx = crate::db::begin(&ctx).await?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE canvas_items SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(now)
+    .bind(item.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        item_pid,
+        "canvas_item_deleted",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -410,36 +439,31 @@ async fn promote_item(
     }
     let actor = caller.actor();
     let new_pid = Uuid::new_v4();
-    let txn = ctx.db.begin().await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // Each insert lists the columns `SeaORM`'s set, no more.
     match target {
         PromoteTarget::Idea => {
-            ideas::ActiveModel {
-                pid: ActiveValue::set(new_pid),
-                title: ActiveValue::set(title),
-                pitch: ActiveValue::set(Some(item.body.clone())),
-                tags: ActiveValue::set(serde_json::json!([canvas.template])),
-                votes: ActiveValue::set(0),
-                status: ActiveValue::set("open".to_string()),
-                converted_proposal_pid: ActiveValue::set(None),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO ideas (pid, title, pitch, tags, votes, status, converted_proposal_pid, deleted_at)
+                 VALUES ($1, $2, $3, $4, 0, 'open', NULL, NULL)",
+            )
+            .bind(new_pid)
+            .bind(&title)
+            .bind(&item.body)
+            .bind(serde_json::json!([canvas.template]))
+            .execute(tx.conn())
+            .await?;
         }
         PromoteTarget::Objective => {
-            objectives::ActiveModel {
-                pid: ActiveValue::set(new_pid),
-                title: ActiveValue::set(title),
-                description: ActiveValue::set(Some(item.body.clone())),
-                period: ActiveValue::set(None),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO objectives (pid, title, description, period, deleted_at)
+                 VALUES ($1, $2, $3, NULL, NULL)",
+            )
+            .bind(new_pid)
+            .bind(&title)
+            .bind(&item.body)
+            .execute(tx.conn())
+            .await?;
         }
         PromoteTarget::Risk => {
             let plan_pid = canvas.plan_pid.ok_or_else(|| {
@@ -451,36 +475,38 @@ async fn promote_item(
                 ));
             };
             gov_rules::risk_exposure(probability, impact).map_err(|e| unprocessable(&e))?;
-            risks::ActiveModel {
-                pid: ActiveValue::set(new_pid),
-                plan_pid: ActiveValue::set(plan_pid),
-                title: ActiveValue::set(title),
-                description: ActiveValue::set(Some(item.body.clone())),
-                probability: ActiveValue::set(probability),
-                impact: ActiveValue::set(impact),
-                status: ActiveValue::set("open".to_string()),
-                owner_ref: ActiveValue::set(item.owner_ref.clone()),
-                mitigation: ActiveValue::set(None),
-                review_date: ActiveValue::set(None),
-                escalated_at: ActiveValue::set(None),
-                category: ActiveValue::set(None),
-                deleted_at: ActiveValue::set(None),
-                ..Default::default()
-            }
-            .insert(&txn)
-            .await
-            .map_err(db_err)?;
+            sqlx::query(
+                "INSERT INTO risks
+                     (pid, plan_pid, title, description, probability, impact, status, owner_ref, mitigation,
+                      review_date, escalated_at, category, deleted_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, 'open', $7, NULL, NULL, NULL, NULL, NULL)",
+            )
+            .bind(new_pid)
+            .bind(plan_pid)
+            .bind(&title)
+            .bind(&item.body)
+            .bind(probability)
+            .bind(impact)
+            .bind(&item.owner_ref)
+            .execute(tx.conn())
+            .await?;
         }
     }
     let source_pid = item.pid;
-    let mut active: canvas_items::ActiveModel = item.into();
-    active.promoted_to_kind = ActiveValue::set(Some(target.as_str().to_string()));
-    active.promoted_to_pid = ActiveValue::set(Some(new_pid));
-    active.update(&txn).await.map_err(db_err)?;
+    // By id, the two columns `SeaORM`'s update named; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE canvas_items SET promoted_to_kind = $1, promoted_to_pid = $2 WHERE id = $3 RETURNING id",
+    )
+    .bind(target.as_str())
+    .bind(new_pid)
+    .bind(item.id)
+    .fetch_one(tx.conn())
+    .await?;
     // The target's audit row names its source, so provenance survives
-    // even if the canvas is later deleted.
-    AuditModel::record(
-        &txn,
+    // even if the canvas is later deleted. Both audit errors are passed on (an outage stays `503`), as the
+    // `SeaORM` errors were.
+    AuditModel::record_on(
+        tx.conn(),
         new_pid,
         &format!("{}_from_canvas_item", target.as_str()),
         actor,
@@ -490,18 +516,16 @@ async fn promote_item(
             "template": canvas.template,
         })),
     )
-    .await
-    .map_err(db_err_model)?;
-    AuditModel::record(
-        &txn,
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         source_pid,
         "canvas_item_promoted",
         actor,
         Some(serde_json::json!({ "to_kind": target.as_str(), "to_pid": new_pid.to_string() })),
     )
-    .await
-    .map_err(db_err_model)?;
-    txn.commit().await.map_err(db_err)?;
+    .await?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "kind": target.as_str(),
         "pid": new_pid.to_string(),

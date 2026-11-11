@@ -20,12 +20,10 @@
 //! cost appears in any other response.
 
 use super::conflict;
-use super::db_err;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::prelude::*;
 use chrono::NaiveDate;
-use sea_orm::QueryOrder;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -34,7 +32,7 @@ use super::unprocessable_entity as unprocessable;
 use crate::auth::MaybeAuthUser;
 use crate::cost_rates::{self as rules, Accrual, Rate};
 use crate::models::_entities::{
-    cost_rate_tables, cost_rates, resource_roles, task_costs, time_entries, time_entry_costs,
+    cost_rate_tables, cost_rates, task_costs, time_entries, time_entry_costs,
 };
 use crate::models::audit_logs::Model as AuditModel;
 use crate::work_profile as wp;
@@ -73,21 +71,22 @@ async fn rates_of(
     table: &cost_rate_tables::Model,
     source: &'static str,
 ) -> Result<Applicable> {
-    let rows = cost_rates::Entity::find()
-        .filter(cost_rates::Column::TablePid.eq(table.pid))
-        .order_by_asc(cost_rates::Column::EffectiveFrom)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    // Only the two columns the rules use are read; the order is `SeaORM`'s (effective date, no tie-break).
+    let rows: Vec<(NaiveDate, i64)> = sqlx::query_as(
+        "SELECT effective_from, per_hour_minor FROM cost_rates WHERE table_pid = $1 ORDER BY effective_from",
+    )
+    .bind(table.pid)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     Ok(Applicable {
         table_pid: table.pid,
         currency: table.currency.clone(),
         source,
         rates: rows
-            .iter()
-            .map(|r| Rate {
-                effective_from: r.effective_from,
-                per_hour_minor: r.per_hour_minor,
+            .into_iter()
+            .map(|(effective_from, per_hour_minor)| Rate {
+                effective_from,
+                per_hour_minor,
             })
             .collect(),
     })
@@ -95,36 +94,56 @@ async fn rates_of(
 
 /// The rate table for a person: their own named table, else their primary role's.
 async fn applicable(ctx: &AppContext, person: &str, name: &str) -> Result<Option<Applicable>> {
-    if let Some(t) = cost_rate_tables::Entity::find()
-        .filter(cost_rate_tables::Column::Name.eq(name))
-        .filter(cost_rate_tables::Column::PersonRef.eq(person))
-        .filter(cost_rate_tables::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    if let Some(t) = sqlx::query_as::<_, cost_rate_tables::Model>(
+        "SELECT * FROM cost_rate_tables WHERE name = $1 AND person_ref = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(name)
+    .bind(person)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
     {
         return Ok(Some(rates_of(ctx, &t, "person").await?));
     }
-    let role = resource_roles::Entity::find()
-        .filter(resource_roles::Column::PersonRef.eq(person))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .map(|r| r.role);
+    // Only the role is read.
+    let role: Option<String> =
+        sqlx::query_scalar("SELECT role FROM resource_roles WHERE person_ref = $1 LIMIT 1")
+            .bind(person)
+            .fetch_optional(crate::db::pool(ctx))
+            .await?;
     let Some(role) = role else {
         return Ok(None);
     };
-    match cost_rate_tables::Entity::find()
-        .filter(cost_rate_tables::Column::Name.eq(name))
-        .filter(cost_rate_tables::Column::Role.eq(role))
-        .filter(cost_rate_tables::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
+    match sqlx::query_as::<_, cost_rate_tables::Model>(
+        "SELECT * FROM cost_rate_tables WHERE name = $1 AND role = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(name)
+    .bind(role)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
     {
         Some(t) => Ok(Some(rates_of(ctx, &t, "role").await?)),
         None => Ok(None),
     }
+}
+
+/// The live rate table named `name` whose owner column (`person_ref` or `role`, a literal from the callers) is
+/// `owner`.
+async fn find_live_table(
+    ctx: &AppContext,
+    name: &str,
+    owner_column: &'static str,
+    owner: &str,
+) -> Result<Option<cost_rate_tables::Model>> {
+    let sql = if owner_column == "role" {
+        "SELECT * FROM cost_rate_tables WHERE name = $1 AND deleted_at IS NULL AND role = $2 LIMIT 1"
+    } else {
+        "SELECT * FROM cost_rate_tables WHERE name = $1 AND deleted_at IS NULL AND person_ref = $2 LIMIT 1"
+    };
+    Ok(sqlx::query_as(sql)
+        .bind(name)
+        .bind(owner)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?)
 }
 
 /// What an import did with one rate.
@@ -150,27 +169,25 @@ pub(crate) async fn import_rate(
     per_hour_minor: i64,
 ) -> Result<RateOutcome> {
     let (person_ref, role) = owner;
-    let mut q = cost_rate_tables::Entity::find()
-        .filter(cost_rate_tables::Column::Name.eq(table_name))
-        .filter(cost_rate_tables::Column::DeletedAt.is_null());
-    q = match (person_ref, role) {
-        (Some(p), _) => q.filter(cost_rate_tables::Column::PersonRef.eq(p)),
-        (_, Some(r)) => q.filter(cost_rate_tables::Column::Role.eq(r)),
+    let existing = match (person_ref, role) {
+        (Some(p), _) => find_live_table(ctx, table_name, "person_ref", p).await?,
+        (_, Some(r)) => find_live_table(ctx, table_name, "role", r).await?,
         _ => return Err(unprocessable("name exactly one of person_ref and role")),
     };
-    let existing = q.one(&ctx.db).await.map_err(db_err)?;
     if let Some(t) = &existing {
-        let in_force = cost_rates::Entity::find()
-            .filter(cost_rates::Column::TablePid.eq(t.pid))
-            .filter(cost_rates::Column::EffectiveFrom.lte(effective_from))
-            .order_by_desc(cost_rates::Column::EffectiveFrom)
-            .one(&ctx.db)
-            .await
-            .map_err(db_err)?;
-        if let Some(r) = in_force {
-            return Ok(if r.per_hour_minor == per_hour_minor {
+        // Only the two columns compared are read.
+        let in_force: Option<(NaiveDate, i64)> = sqlx::query_as(
+            "SELECT effective_from, per_hour_minor FROM cost_rates WHERE table_pid = $1 AND effective_from <= $2
+             ORDER BY effective_from DESC LIMIT 1",
+        )
+        .bind(t.pid)
+        .bind(effective_from)
+        .fetch_optional(crate::db::pool(ctx))
+        .await?;
+        if let Some((in_force_from, in_force_rate)) = in_force {
+            return Ok(if in_force_rate == per_hour_minor {
                 RateOutcome::AlreadyThere
-            } else if r.effective_from == effective_from {
+            } else if in_force_from == effective_from {
                 RateOutcome::DiffersFromExisting
             } else {
                 // A different rate was in force earlier; this one starts a new period.
@@ -197,21 +214,10 @@ async fn create_import_table(
     currency: &str,
 ) -> Result<cost_rate_tables::Model> {
     let (person_ref, role) = owner;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = cost_rate_tables::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(table_name.to_string()),
-        person_ref: ActiveValue::set(person_ref.map(str::to_string)),
-        role: ActiveValue::set(role.map(str::to_string)),
-        currency: ActiveValue::set(currency.to_string()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(ctx).await?;
+    let row = insert_table(&mut tx, table_name, person_ref, role, currency).await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "cost_rate_table_created",
         actor,
@@ -222,8 +228,75 @@ async fn create_import_table(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     Ok(row)
+}
+
+/// Insert a rate table with the columns `SeaORM`'s insert set, and read it back.
+async fn insert_table(
+    tx: &mut crate::db::Tx,
+    name: &str,
+    person_ref: Option<&str>,
+    role: Option<&str>,
+    currency: &str,
+) -> Result<cost_rate_tables::Model> {
+    Ok(sqlx::query_as(
+        "INSERT INTO cost_rate_tables (pid, name, person_ref, role, currency, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, NULL) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(name)
+    .bind(person_ref)
+    .bind(role)
+    .bind(currency)
+    .fetch_one(tx.conn())
+    .await?)
+}
+
+/// Append one rate with the columns `SeaORM`'s insert set, and read it back.
+async fn insert_rate(
+    tx: &mut crate::db::Tx,
+    table_pid: Uuid,
+    effective_from: NaiveDate,
+    per_hour_minor: i64,
+    created_by: Option<&str>,
+) -> Result<cost_rates::Model> {
+    Ok(sqlx::query_as(
+        "INSERT INTO cost_rates (pid, table_pid, effective_from, per_hour_minor, created_by)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(table_pid)
+    .bind(effective_from)
+    .bind(per_hour_minor)
+    .bind(created_by)
+    .fetch_one(tx.conn())
+    .await?)
+}
+
+/// Insert a task cost with the columns `SeaORM`'s insert set, and read it back.
+async fn insert_task_cost(
+    tx: &mut crate::db::Tx,
+    task_pid: Uuid,
+    kind: &str,
+    description: &str,
+    amount_minor: i64,
+    currency: &str,
+    accrual: &str,
+) -> Result<task_costs::Model> {
+    Ok(sqlx::query_as(
+        "INSERT INTO task_costs (pid, task_pid, kind, description, amount_minor, currency, accrual, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULL) RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(task_pid)
+    .bind(kind)
+    .bind(description)
+    .bind(amount_minor)
+    .bind(currency)
+    .bind(accrual)
+    .fetch_one(tx.conn())
+    .await?)
 }
 
 /// Append one rate to a table during import, in the same transaction as
@@ -235,20 +308,10 @@ async fn add_import_rate(
     effective_from: NaiveDate,
     per_hour_minor: i64,
 ) -> Result<()> {
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = cost_rates::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        table_pid: ActiveValue::set(table.pid),
-        effective_from: ActiveValue::set(effective_from),
-        per_hour_minor: ActiveValue::set(per_hour_minor),
-        created_by: ActiveValue::set(actor.map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(ctx).await?;
+    let row = insert_rate(&mut tx, table.pid, effective_from, per_hour_minor, actor).await?;
+    AuditModel::record_on(
+        tx.conn(),
         table.pid,
         "cost_rate_added",
         actor,
@@ -257,7 +320,7 @@ async fn add_import_rate(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     Ok(())
 }
 
@@ -272,35 +335,31 @@ pub(crate) async fn import_fixed_cost(
     currency: &str,
     accrual: &str,
 ) -> Result<bool> {
-    let present = task_costs::Entity::find()
-        .filter(task_costs::Column::TaskPid.eq(task_pid))
-        .filter(task_costs::Column::Kind.eq("fixed"))
-        .filter(task_costs::Column::Description.eq(description))
-        .filter(task_costs::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some();
-    if present {
+    // Only whether one exists is read.
+    let present: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM task_costs
+         WHERE task_pid = $1 AND kind = 'fixed' AND description = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(task_pid)
+    .bind(description)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
+    if present.is_some() {
         return Ok(false);
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = task_costs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        task_pid: ActiveValue::set(task_pid),
-        kind: ActiveValue::set("fixed".to_string()),
-        description: ActiveValue::set(description.to_string()),
-        amount_minor: ActiveValue::set(amount_minor),
-        currency: ActiveValue::set(currency.to_string()),
-        accrual: ActiveValue::set(accrual.to_string()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(ctx).await?;
+    let row = insert_task_cost(
+        &mut tx,
+        task_pid,
+        "fixed",
+        description,
+        amount_minor,
+        currency,
+        accrual,
+    )
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "task_cost_added",
         actor,
@@ -311,7 +370,7 @@ pub(crate) async fn import_fixed_cost(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     Ok(true)
 }
 
@@ -365,34 +424,28 @@ async fn create_table(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let mut q = cost_rate_tables::Entity::find()
-        .filter(cost_rate_tables::Column::Name.eq(name))
-        .filter(cost_rate_tables::Column::DeletedAt.is_null());
-    q = match (&b.person_ref, &b.role) {
-        (Some(p), _) => q.filter(cost_rate_tables::Column::PersonRef.eq(p.as_str())),
-        (_, Some(r)) => q.filter(cost_rate_tables::Column::Role.eq(r.trim())),
-        _ => q,
+    // Validation above leaves exactly one of the two owners.
+    let existing = match (&b.person_ref, &b.role) {
+        (Some(p), _) => find_live_table(&ctx, name, "person_ref", p).await?,
+        (_, Some(r)) => find_live_table(&ctx, name, "role", r.trim()).await?,
+        _ => None,
     };
-    if q.one(&ctx.db).await.map_err(db_err)?.is_some() {
+    if existing.is_some() {
         return Err(conflict(
             "that person or role already has a table with that name",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = cost_rate_tables::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        name: ActiveValue::set(name.to_string()),
-        person_ref: ActiveValue::set(b.person_ref.clone()),
-        role: ActiveValue::set(b.role.as_ref().map(|r| r.trim().to_string())),
-        currency: ActiveValue::set(currency),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row = insert_table(
+        &mut tx,
+        name,
+        b.person_ref.as_deref(),
+        b.role.as_deref().map(str::trim),
+        &currency,
+    )
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "cost_rate_table_created",
         caller.actor(),
@@ -403,7 +456,7 @@ async fn create_table(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -427,18 +480,18 @@ async fn list_tables(
 ) -> Result<Response> {
     finance_only(&caller)?;
     let mut query =
-        cost_rate_tables::Entity::find().filter(cost_rate_tables::Column::DeletedAt.is_null());
+        sqlx::QueryBuilder::new("SELECT * FROM cost_rate_tables WHERE deleted_at IS NULL");
     if let Some(p) = &q.person_ref {
-        query = query.filter(cost_rate_tables::Column::PersonRef.eq(p.as_str()));
+        query.push(" AND person_ref = ").push_bind(p.as_str());
     }
     if let Some(r) = &q.role {
-        query = query.filter(cost_rate_tables::Column::Role.eq(r.as_str()));
+        query.push(" AND role = ").push_bind(r.as_str());
     }
-    let tables = query
-        .order_by_asc(cost_rate_tables::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    query.push(" ORDER BY id");
+    let tables: Vec<cost_rate_tables::Model> = query
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     let mut out = Vec::new();
     for t in &tables {
         let rates = rates_of(&ctx, t, "table").await?;
@@ -473,13 +526,13 @@ async fn add_rate(
 ) -> Result<Response> {
     finance_only(&caller)?;
     let pid = super::parse_pid(&pid)?;
-    let table = cost_rate_tables::Entity::find()
-        .filter(cost_rate_tables::Column::Pid.eq(pid))
-        .filter(cost_rate_tables::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
+    let table: cost_rate_tables::Model = sqlx::query_as(
+        "SELECT * FROM cost_rate_tables WHERE pid = $1 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
     if b.per_hour_minor < 0 {
         return Err(unprocessable("per_hour_minor must not be negative"));
     }
@@ -490,32 +543,30 @@ async fn add_rate(
             "effective_from must be between 1970 and 2100",
         ));
     }
-    if cost_rates::Entity::find()
-        .filter(cost_rates::Column::TablePid.eq(table.pid))
-        .filter(cost_rates::Column::EffectiveFrom.eq(b.effective_from))
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .is_some()
-    {
+    // Only whether one exists is read.
+    let taken: Option<i64> = sqlx::query_scalar(
+        "SELECT id FROM cost_rates WHERE table_pid = $1 AND effective_from = $2 LIMIT 1",
+    )
+    .bind(table.pid)
+    .bind(b.effective_from)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?;
+    if taken.is_some() {
         return Err(conflict(
             "that table already has a rate effective from that date; add a later date instead",
         ));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = cost_rates::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        table_pid: ActiveValue::set(table.pid),
-        effective_from: ActiveValue::set(b.effective_from),
-        per_hour_minor: ActiveValue::set(b.per_hour_minor),
-        created_by: ActiveValue::set(caller.actor().map(str::to_string)),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row = insert_rate(
+        &mut tx,
+        table.pid,
+        b.effective_from,
+        b.per_hour_minor,
+        caller.actor(),
+    )
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         table.pid,
         "cost_rate_added",
         caller.actor(),
@@ -523,7 +574,7 @@ async fn add_rate(
             "currency": table.currency })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid, "table_pid": table.pid,
         "effective_from": row.effective_from, "per_hour_minor": row.per_hour_minor, "currency": table.currency }))
 }
@@ -614,23 +665,19 @@ async fn add_task_cost(
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = task_costs::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        task_pid: ActiveValue::set(task.pid),
-        kind: ActiveValue::set(b.kind.clone()),
-        description: ActiveValue::set(b.description.trim().to_string()),
-        amount_minor: ActiveValue::set(b.amount_minor),
-        currency: ActiveValue::set(currency),
-        accrual: ActiveValue::set(b.accrual.clone()),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row = insert_task_cost(
+        &mut tx,
+        task.pid,
+        &b.kind,
+        b.description.trim(),
+        b.amount_minor,
+        &currency,
+        &b.accrual,
+    )
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "task_cost_added",
         caller.actor(),
@@ -638,7 +685,7 @@ async fn add_task_cost(
             "currency": row.currency, "accrual": row.accrual })),
     ).await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "pid": row.pid }))
 }
 
@@ -652,13 +699,12 @@ async fn list_task_costs(
     finance_only(&caller)?;
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let task = find_task(&ctx, plan.pid, &t_pid).await?;
-    let rows = task_costs::Entity::find()
-        .filter(task_costs::Column::TaskPid.eq(task.pid))
-        .filter(task_costs::Column::DeletedAt.is_null())
-        .order_by_asc(task_costs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let rows: Vec<task_costs::Model> = sqlx::query_as(
+        "SELECT * FROM task_costs WHERE task_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(task.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     format::json(
         serde_json::json!({ "costs": rows.iter().map(|c| serde_json::json!({
         "pid": c.pid, "kind": c.kind, "description": c.description,
@@ -677,23 +723,35 @@ async fn delete_task_cost(
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let task = find_task(&ctx, plan.pid, &t_pid).await?;
     let c_pid = super::parse_pid(&c_pid)?;
-    let row = task_costs::Entity::find()
-        .filter(task_costs::Column::Pid.eq(c_pid))
-        .filter(task_costs::Column::TaskPid.eq(task.pid))
-        .filter(task_costs::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)?;
-    let row_pid = row.pid;
-    let mut a: task_costs::ActiveModel = row.into();
-    a.deleted_at = ActiveValue::set(Some(chrono::Utc::now().into()));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row_pid, "task_cost_removed", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    // Only the id and pid are read.
+    let (id, row_pid): (i64, Uuid) = sqlx::query_as(
+        "SELECT id, pid FROM task_costs WHERE pid = $1 AND task_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(c_pid)
+    .bind(task.pid)
+    .fetch_optional(crate::db::pool(&ctx))
+    .await?
+    .ok_or(Error::NotFound)?;
+    let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let mut tx = crate::db::begin(&ctx).await?;
+    // By id, as `SeaORM`'s update of the row read above was; no row back is an error, as its was.
+    sqlx::query_scalar::<_, i64>(
+        "UPDATE task_costs SET deleted_at = $1 WHERE id = $2 RETURNING id",
+    )
+    .bind(now)
+    .bind(id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row_pid,
+        "task_cost_removed",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     format::empty_json()
 }
 
@@ -807,15 +865,12 @@ async fn cost_plan(
         .collect();
 
     // Expenses, accrued over each task's business days.
-    let costs = task_costs::Entity::find()
-        .filter(task_costs::Column::DeletedAt.is_null())
-        .filter(
-            task_costs::Column::TaskPid.is_in(net.rows.iter().map(|t| t.pid).collect::<Vec<_>>()),
-        )
-        .order_by_asc(task_costs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let costs: Vec<task_costs::Model> = sqlx::query_as(
+        "SELECT * FROM task_costs WHERE deleted_at IS NULL AND task_pid = ANY($1) ORDER BY id",
+    )
+    .bind(net.rows.iter().map(|t| t.pid).collect::<Vec<_>>())
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let mut fixed: Vec<(task_costs::Model, Vec<(NaiveDate, i64)>)> = Vec::new();
     let mut unplaced: Vec<serde_json::Value> = Vec::new();
     for c in &costs {
@@ -985,27 +1040,27 @@ async fn record_labour(
     finance_only(&caller)?;
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let table = q.table.unwrap_or_else(|| "standard".to_string());
-    let entries = time_entries::Entity::find()
-        .filter(time_entries::Column::PlanPid.eq(plan.pid))
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .order_by_asc(time_entries::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let done: HashSet<Uuid> = time_entry_costs::Entity::find()
-        .filter(time_entry_costs::Column::PlanPid.eq(plan.pid))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|c| c.time_entry_pid)
-        .collect();
+    let entries: Vec<time_entries::Model> = sqlx::query_as(
+        "SELECT * FROM time_entries WHERE plan_pid = $1 AND deleted_at IS NULL ORDER BY id",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    // Only the entry pids are read.
+    let done: HashSet<Uuid> = sqlx::query_scalar::<_, Uuid>(
+        "SELECT time_entry_pid FROM time_entry_costs WHERE plan_pid = $1",
+    )
+    .bind(plan.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?
+    .into_iter()
+    .collect();
     let mut cache: HashMap<String, Option<Applicable>> = HashMap::new();
     let (mut recorded, mut already) = (0_usize, 0_usize);
     let mut no_rate = Vec::new();
     // Price everything first (this reads); then record every cost and the audit row as one change. The
     // pool may hold a single connection, so nothing is read while the transaction is open.
-    let mut costs: Vec<time_entry_costs::ActiveModel> = Vec::new();
+    let mut costs: Vec<LabourCost> = Vec::new();
     for e in &entries {
         if done.contains(&e.pid) {
             already += 1;
@@ -1028,27 +1083,38 @@ async fn record_labour(
             );
             continue;
         };
-        costs.push(time_entry_costs::ActiveModel {
-            pid: ActiveValue::set(Uuid::new_v4()),
-            time_entry_pid: ActiveValue::set(e.pid),
-            plan_pid: ActiveValue::set(plan.pid),
-            person_ref: ActiveValue::set(e.actor_ref.clone()),
-            table_pid: ActiveValue::set(table_pid),
-            spent_on: ActiveValue::set(e.spent_on),
-            minutes: ActiveValue::set(e.minutes),
-            per_hour_minor: ActiveValue::set(rate),
-            currency: ActiveValue::set(currency),
-            cost_minor: ActiveValue::set(rules::labour_cost_minor(e.minutes, rate)),
-            ..Default::default()
+        costs.push(LabourCost {
+            entry: e,
+            table_pid,
+            per_hour_minor: rate,
+            currency,
         });
         recorded += 1;
     }
-    let txn = ctx.db.begin().await.map_err(db_err)?;
-    for cost in costs {
-        cost.insert(&txn).await.map_err(db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    for c in costs {
+        // The columns `SeaORM`'s insert set, no more.
+        sqlx::query(
+            "INSERT INTO time_entry_costs
+                 (pid, time_entry_pid, plan_pid, person_ref, table_pid, spent_on, minutes, per_hour_minor, currency,
+                  cost_minor)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(c.entry.pid)
+        .bind(plan.pid)
+        .bind(&c.entry.actor_ref)
+        .bind(c.table_pid)
+        .bind(c.entry.spent_on)
+        .bind(c.entry.minutes)
+        .bind(c.per_hour_minor)
+        .bind(&c.currency)
+        .bind(rules::labour_cost_minor(c.entry.minutes, c.per_hour_minor))
+        .execute(tx.conn())
+        .await?;
     }
-    AuditModel::record(
-        &txn,
+    AuditModel::record_on(
+        tx.conn(),
         plan.pid,
         "labour_costs_recorded",
         caller.actor(),
@@ -1059,11 +1125,23 @@ async fn record_labour(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
         "recorded": recorded, "already_recorded": already, "no_rate": no_rate,
         "note": "A recorded cost keeps the rate it was priced at. Recording again never changes one; it prices only entries that have none yet.",
     }))
+}
+
+/// One time entry priced, waiting to be recorded.
+struct LabourCost<'a> {
+    /// The entry priced.
+    entry: &'a time_entries::Model,
+    /// The table the rate came from.
+    table_pid: Uuid,
+    /// The rate in force on the day it was worked.
+    per_hour_minor: i64,
+    /// The table's currency.
+    currency: String,
 }
 
 /// `GET /api/plans/{pid}/labour-costs` — the recorded labour cost, per currency
@@ -1076,18 +1154,16 @@ async fn labour_costs(
 ) -> Result<Response> {
     finance_only(&caller)?;
     let plan = super::governance::find_item(&ctx, &pid).await?;
-    let snaps = time_entry_costs::Entity::find()
-        .filter(time_entry_costs::Column::PlanPid.eq(plan.pid))
-        .order_by_asc(time_entry_costs::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
-    let entries = time_entries::Entity::find()
-        .filter(time_entries::Column::PlanPid.eq(plan.pid))
-        .filter(time_entries::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let snaps: Vec<time_entry_costs::Model> =
+        sqlx::query_as("SELECT * FROM time_entry_costs WHERE plan_pid = $1 ORDER BY id")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
+    let entries: Vec<time_entries::Model> =
+        sqlx::query_as("SELECT * FROM time_entries WHERE plan_pid = $1 AND deleted_at IS NULL")
+            .bind(plan.pid)
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let priced: HashSet<Uuid> = snaps.iter().map(|s| s.time_entry_pid).collect();
     let unpriced: Vec<&time_entries::Model> = entries
         .iter()

@@ -11,16 +11,15 @@
 use super::refuse;
 use crate::prelude::*;
 use axum::http::StatusCode;
-use sea_orm::{PaginatorTrait, QueryOrder, QuerySelect, TransactionTrait};
+use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::db_err;
 use super::governance::find_item;
 use super::unprocessable_entity as unprocessable;
 use crate::auth::{MaybeAuthUser, require_auth};
 use crate::change_requests::{self as rules, Action};
-use crate::models::_entities::{change_request_risks, change_requests, issues, risks};
+use crate::models::_entities::change_requests;
 use crate::models::audit_logs::Model as AuditModel;
 use crate::sandbox::{self, Edit};
 
@@ -39,35 +38,31 @@ fn checks_apply() -> bool {
 /// Loads a live (not soft-deleted) change request by pid, scoped to its plan, so a pid from another plan is `NotFound`.
 async fn find_cr(ctx: &AppContext, plan: Uuid, pid: &str) -> Result<change_requests::Model> {
     let pid = super::parse_pid(pid)?;
-    change_requests::Entity::find()
-        .filter(change_requests::Column::Pid.eq(pid))
-        .filter(change_requests::Column::PlanPid.eq(plan))
-        .filter(change_requests::Column::DeletedAt.is_null())
-        .one(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .ok_or(Error::NotFound)
+    sqlx::query_as(
+        "SELECT * FROM change_requests WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+    )
+    .bind(pid)
+    .bind(plan)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?
+    .ok_or(Error::NotFound)
 }
 
 /// Returns the pids of the live issues and the risks linked to a change request, as `(issues, risks)`.
 async fn links_of(ctx: &AppContext, cr: Uuid) -> Result<(Vec<Uuid>, Vec<Uuid>)> {
-    let issue_pids = issues::Entity::find()
-        .filter(issues::Column::ChangeRequestPid.eq(cr))
-        .filter(issues::Column::DeletedAt.is_null())
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|i| i.pid)
-        .collect();
-    let risk_pids = change_request_risks::Entity::find()
-        .filter(change_request_risks::Column::ChangeRequestPid.eq(cr))
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?
-        .into_iter()
-        .map(|r| r.risk_pid)
-        .collect();
+    // Only the pids are read, in the database's order, as before (no `ORDER BY`).
+    let issue_pids: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT pid FROM issues WHERE change_request_pid = $1 AND deleted_at IS NULL",
+    )
+    .bind(cr)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let risk_pids: Vec<Uuid> = sqlx::query_scalar(
+        "SELECT risk_pid FROM change_request_risks WHERE change_request_pid = $1",
+    )
+    .bind(cr)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     Ok((issue_pids, risk_pids))
 }
 
@@ -156,6 +151,14 @@ fn edits_json(b: &Input) -> Option<serde_json::Value> {
     b.edits.as_ref().and_then(|e| serde_json::to_value(e).ok())
 }
 
+/// The trimmed impact summary; null when none or blank.
+fn summary_of(b: &Input) -> Option<String> {
+    b.impact_summary
+        .as_ref()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
 /// `POST /api/plans/{pid}/change-requests` — draft one.
 #[debug_handler]
 async fn create(
@@ -166,43 +169,34 @@ async fn create(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     validate(&b)?;
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = change_requests::ActiveModel {
-        pid: ActiveValue::set(Uuid::new_v4()),
-        plan_pid: ActiveValue::set(plan.pid),
-        title: ActiveValue::set(b.title.trim().to_string()),
-        description: ActiveValue::set(b.description.trim().to_string()),
-        reason: ActiveValue::set(b.reason.trim().to_string()),
-        kind: ActiveValue::set(b.kind.clone()),
-        impact_schedule_days: ActiveValue::set(
-            b.impact_schedule_days.and_then(|n| i32::try_from(n).ok()),
-        ),
-        impact_cost_minor: ActiveValue::set(b.impact_cost_minor),
-        cost_currency: ActiveValue::set(b.cost_currency.clone()),
-        impact_summary: ActiveValue::set(
-            b.impact_summary
-                .as_ref()
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty()),
-        ),
-        edits: ActiveValue::set(edits_json(&b)),
-        status: ActiveValue::set("draft".to_string()),
-        requested_by: ActiveValue::set(actor_of(&caller)),
-        requested_on: ActiveValue::set(crate::tz::deployment_today()),
-        approver_ref: ActiveValue::set(None),
-        decided_by: ActiveValue::set(None),
-        decided_on: ActiveValue::set(None),
-        decision_reason: ActiveValue::set(None),
-        implemented_on: ActiveValue::set(None),
-        baseline_pid: ActiveValue::set(None),
-        deleted_at: ActiveValue::set(None),
-        ..Default::default()
-    }
-    .insert(&txn)
-    .await
-    .map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // The columns `SeaORM`'s insert set, no more.
+    let row: change_requests::Model = sqlx::query_as(
+        "INSERT INTO change_requests
+             (pid, plan_pid, title, description, reason, kind, impact_schedule_days, impact_cost_minor, cost_currency,
+              impact_summary, edits, status, requested_by, requested_on, approver_ref, decided_by, decided_on,
+              decision_reason, implemented_on, baseline_pid, deleted_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13, NULL, NULL, NULL, NULL, NULL, NULL,
+                 NULL)
+         RETURNING *",
+    )
+    .bind(Uuid::new_v4())
+    .bind(plan.pid)
+    .bind(b.title.trim())
+    .bind(b.description.trim())
+    .bind(b.reason.trim())
+    .bind(&b.kind)
+    .bind(b.impact_schedule_days.and_then(|n| i32::try_from(n).ok()))
+    .bind(b.impact_cost_minor)
+    .bind(&b.cost_currency)
+    .bind(summary_of(&b))
+    .bind(edits_json(&b))
+    .bind(actor_of(&caller))
+    .bind(crate::tz::deployment_today())
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "change_request_drafted",
         caller.actor(),
@@ -210,7 +204,7 @@ async fn create(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(view(&row, None))
 }
 
@@ -239,28 +233,37 @@ async fn update(
         ));
     }
     validate(&b)?;
-    let mut a: change_requests::ActiveModel = row.into();
-    a.title = ActiveValue::set(b.title.trim().to_string());
-    a.description = ActiveValue::set(b.description.trim().to_string());
-    a.reason = ActiveValue::set(b.reason.trim().to_string());
-    a.kind = ActiveValue::set(b.kind.clone());
-    a.impact_schedule_days =
-        ActiveValue::set(b.impact_schedule_days.and_then(|n| i32::try_from(n).ok()));
-    a.impact_cost_minor = ActiveValue::set(b.impact_cost_minor);
-    a.cost_currency = ActiveValue::set(b.cost_currency.clone());
-    a.impact_summary = ActiveValue::set(
-        b.impact_summary
-            .as_ref()
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty()),
-    );
-    a.edits = ActiveValue::set(edits_json(&b));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(&txn, row.pid, "change_request_edited", caller.actor(), None)
-        .await
-        .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // By id, the nine columns `SeaORM`'s update named; no row back is an error, as its was.
+    let row: change_requests::Model = sqlx::query_as(
+        "UPDATE change_requests
+         SET title = $1, description = $2, reason = $3, kind = $4, impact_schedule_days = $5, impact_cost_minor = $6,
+             cost_currency = $7, impact_summary = $8, edits = $9
+         WHERE id = $10
+         RETURNING *",
+    )
+    .bind(b.title.trim())
+    .bind(b.description.trim())
+    .bind(b.reason.trim())
+    .bind(&b.kind)
+    .bind(b.impact_schedule_days.and_then(|n| i32::try_from(n).ok()))
+    .bind(b.impact_cost_minor)
+    .bind(&b.cost_currency)
+    .bind(summary_of(&b))
+    .bind(edits_json(&b))
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        row.pid,
+        "change_request_edited",
+        caller.actor(),
+        None,
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    tx.commit().await?;
     let links = links_of(&ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -293,26 +296,21 @@ async fn list(
             rules::STATUSES
         )));
     }
-    let mut find = change_requests::Entity::find()
-        .filter(change_requests::Column::PlanPid.eq(plan.pid))
-        .filter(change_requests::Column::DeletedAt.is_null());
+    let mut find = sqlx::QueryBuilder::new(
+        "SELECT * FROM change_requests WHERE deleted_at IS NULL AND plan_pid = ",
+    );
+    find.push_bind(plan.pid);
     if let Some(s) = &q.status {
-        find = find.filter(change_requests::Column::Status.eq(s.as_str()));
+        find.push(" AND status = ").push_bind(s.as_str());
     }
     if q.open == Some(true) {
-        find = find.filter(change_requests::Column::Status.is_in([
-            "draft",
-            "submitted",
-            "under_review",
-            "approved",
-        ]));
+        find.push(" AND status IN ('draft', 'submitted', 'under_review', 'approved')");
     }
-    let rows = find
-        .order_by_desc(change_requests::Column::Id)
-        .limit(1000)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    find.push(" ORDER BY id DESC LIMIT 1000");
+    let rows: Vec<change_requests::Model> = find
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
     format::json(serde_json::json!({
         "plan_pid": plan.pid,
         "change_requests": rows.iter().map(|c| view(c, None)).collect::<Vec<_>>(),
@@ -332,13 +330,24 @@ async fn get_one(
     format::json(view(&row, Some(&links)))
 }
 
+/// What a step writes besides the status: each field `Some` is set, the rest are left alone.
+#[derive(Default)]
+struct StepFields {
+    /// The approver named on submit.
+    approver_ref: Option<String>,
+    /// Who decided, on what day, and why.
+    decided: Option<(String, NaiveDate, String)>,
+    /// The day the change was implemented.
+    implemented_on: Option<NaiveDate>,
+}
+
 /// Move a change request by `action`, after the caller's permission has been checked by the caller.
 async fn step(
     ctx: &AppContext,
     caller: &MaybeAuthUser,
     row: change_requests::Model,
     action: Action,
-    edit: impl FnOnce(&mut change_requests::ActiveModel),
+    fields: StepFields,
 ) -> Result<Response> {
     let Some(to) = rules::next(&row.status, action) else {
         return Err(refuse(
@@ -348,13 +357,28 @@ async fn step(
         ));
     };
     let from = row.status.clone();
-    let mut a: change_requests::ActiveModel = row.into();
-    a.status = ActiveValue::set(to.to_string());
-    edit(&mut a);
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    // By id, the status and the step's own columns, as `SeaORM`'s update named; no row back is an error, as its was.
+    let mut update = sqlx::QueryBuilder::new("UPDATE change_requests SET status = ");
+    update.push_bind(to);
+    if let Some(approver) = fields.approver_ref {
+        update.push(", approver_ref = ").push_bind(approver);
+    }
+    if let Some((who, on, reason)) = fields.decided {
+        update.push(", decided_by = ").push_bind(who);
+        update.push(", decided_on = ").push_bind(on);
+        update.push(", decision_reason = ").push_bind(reason);
+    }
+    if let Some(on) = fields.implemented_on {
+        update.push(", implemented_on = ").push_bind(on);
+    }
+    update
+        .push(" WHERE id = ")
+        .push_bind(row.id)
+        .push(" RETURNING *");
+    let mut tx = crate::db::begin(ctx).await?;
+    let row: change_requests::Model = update.build_query_as().fetch_one(tx.conn()).await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         &format!("change_request_{to}"),
         caller.actor(),
@@ -362,7 +386,7 @@ async fn step(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     let links = links_of(ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -395,10 +419,11 @@ async fn submit(
         return Err(unprocessable(&p));
     }
     let approver = b.approver_ref.trim().to_string();
-    step(&ctx, &caller, row, Action::Submit, |a| {
-        a.approver_ref = ActiveValue::set(Some(approver));
-    })
-    .await
+    let fields = StepFields {
+        approver_ref: Some(approver),
+        ..StepFields::default()
+    };
+    step(&ctx, &caller, row, Action::Submit, fields).await
 }
 
 /// Refuses (403) unless the caller is the named approver, when identity checks apply. Administrators are deliberately not exempt: the approval belongs to the named person.
@@ -425,7 +450,7 @@ async fn review(
     let plan = find_item(&ctx, &pid).await?;
     let row = find_cr(&ctx, plan.pid, &cr).await?;
     must_be_approver(&row, &caller)?;
-    step(&ctx, &caller, row, Action::Review, |_| {}).await
+    step(&ctx, &caller, row, Action::Review, StepFields::default()).await
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -461,12 +486,11 @@ async fn decide(
         crate::tz::deployment_today(),
         b.reason.trim().to_string(),
     );
-    step(&ctx, &caller, row, action, |a| {
-        a.decided_by = ActiveValue::set(Some(who));
-        a.decided_on = ActiveValue::set(Some(on));
-        a.decision_reason = ActiveValue::set(Some(reason));
-    })
-    .await
+    let fields = StepFields {
+        decided: Some((who, on, reason)),
+        ..StepFields::default()
+    };
+    step(&ctx, &caller, row, action, fields).await
 }
 
 /// `POST …/{cr}/implement` — the approved change has been carried out.
@@ -478,11 +502,11 @@ async fn implement(
 ) -> Result<Response> {
     let plan = find_item(&ctx, &pid).await?;
     let row = find_cr(&ctx, plan.pid, &cr).await?;
-    let on = crate::tz::deployment_today();
-    step(&ctx, &caller, row, Action::Implement, |a| {
-        a.implemented_on = ActiveValue::set(Some(on));
-    })
-    .await
+    let fields = StepFields {
+        implemented_on: Some(crate::tz::deployment_today()),
+        ..StepFields::default()
+    };
+    step(&ctx, &caller, row, Action::Implement, fields).await
 }
 
 /// `POST …/{cr}/withdraw` — the requester (or an administrator) withdraws it.
@@ -504,7 +528,7 @@ async fn withdraw(
             "only the requester or an administrator can withdraw it",
         ));
     }
-    step(&ctx, &caller, row, Action::Withdraw, |_| {}).await
+    step(&ctx, &caller, row, Action::Withdraw, StepFields::default()).await
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -538,18 +562,18 @@ async fn put_links(
     if b.issue_pids.len() > 200 || b.risk_pids.len() > 200 {
         return Err(unprocessable("at most 200 issues and 200 risks"));
     }
-    let tx = ctx.db.begin().await.map_err(db_err)?;
-    // Every issue and risk must belong to this plan and exist.
+    let mut tx = crate::db::begin(&ctx).await?;
+    // Every issue and risk must belong to this plan and exist. Only the issue's link is read.
     for i in &b.issue_pids {
-        let found = issues::Entity::find()
-            .filter(issues::Column::Pid.eq(*i))
-            .filter(issues::Column::PlanPid.eq(plan.pid))
-            .filter(issues::Column::DeletedAt.is_null())
-            .one(&tx)
-            .await
-            .map_err(db_err)?
-            .ok_or_else(|| unprocessable(&format!("issue {i} is not an issue of this plan")))?;
-        if found.change_request_pid.is_some_and(|c| c != row.pid) {
+        let found: Option<Uuid> = sqlx::query_scalar::<_, Option<Uuid>>(
+            "SELECT change_request_pid FROM issues WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(*i)
+        .bind(plan.pid)
+        .fetch_optional(tx.conn())
+        .await?
+        .ok_or_else(|| unprocessable(&format!("issue {i} is not an issue of this plan")))?;
+        if found.is_some_and(|c| c != row.pid) {
             return Err(refuse(
                 StatusCode::CONFLICT,
                 "conflict",
@@ -557,56 +581,48 @@ async fn put_links(
             ));
         }
     }
-    let known_risks = risks::Entity::find()
-        .filter(risks::Column::PlanPid.eq(plan.pid))
-        .filter(risks::Column::DeletedAt.is_null())
-        .filter(risks::Column::Pid.is_in(b.risk_pids.clone()))
-        .count(&tx)
-        .await
-        .map_err(db_err)?;
+    let known_risks: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM risks WHERE plan_pid = $1 AND deleted_at IS NULL AND pid = ANY($2)",
+    )
+    .bind(plan.pid)
+    .bind(&b.risk_pids)
+    .fetch_one(tx.conn())
+    .await?;
     let distinct_risks: std::collections::HashSet<_> = b.risk_pids.iter().collect();
-    if known_risks != distinct_risks.len() as u64 {
+    if u64::try_from(known_risks).ok() != Some(distinct_risks.len() as u64) {
         return Err(unprocessable("every risk must be a risk of this plan"));
     }
     // Issues: clear the ones no longer listed, set the ones listed.
-    issues::Entity::update_many()
-        .col_expr(
-            issues::Column::ChangeRequestPid,
-            sea_orm::sea_query::Expr::value(Option::<Uuid>::None),
-        )
-        .filter(issues::Column::ChangeRequestPid.eq(row.pid))
-        .filter(issues::Column::Pid.is_not_in(b.issue_pids.clone()))
-        .exec(&tx)
-        .await
-        .map_err(db_err)?;
+    // `<> ALL` of an empty list is true, as `SeaORM`'s `NOT IN ()` was (it writes that as always true).
+    sqlx::query(
+        "UPDATE issues SET change_request_pid = NULL WHERE change_request_pid = $1 AND pid <> ALL($2)",
+    )
+    .bind(row.pid)
+    .bind(&b.issue_pids)
+    .execute(tx.conn())
+    .await?;
     if !b.issue_pids.is_empty() {
-        issues::Entity::update_many()
-            .col_expr(
-                issues::Column::ChangeRequestPid,
-                sea_orm::sea_query::Expr::value(row.pid),
-            )
-            .filter(issues::Column::Pid.is_in(b.issue_pids.clone()))
-            .exec(&tx)
-            .await
-            .map_err(db_err)?;
+        sqlx::query("UPDATE issues SET change_request_pid = $1 WHERE pid = ANY($2)")
+            .bind(row.pid)
+            .bind(&b.issue_pids)
+            .execute(tx.conn())
+            .await?;
     }
-    change_request_risks::Entity::delete_many()
-        .filter(change_request_risks::Column::ChangeRequestPid.eq(row.pid))
-        .exec(&tx)
-        .await
-        .map_err(db_err)?;
+    sqlx::query("DELETE FROM change_request_risks WHERE change_request_pid = $1")
+        .bind(row.pid)
+        .execute(tx.conn())
+        .await?;
     for r in distinct_risks {
-        change_request_risks::ActiveModel {
-            change_request_pid: ActiveValue::set(row.pid),
-            risk_pid: ActiveValue::set(*r),
-            ..Default::default()
-        }
-        .insert(&tx)
-        .await
-        .map_err(db_err)?;
+        sqlx::query(
+            "INSERT INTO change_request_risks (change_request_pid, risk_pid) VALUES ($1, $2)",
+        )
+        .bind(row.pid)
+        .bind(*r)
+        .execute(tx.conn())
+        .await?;
     }
-    AuditModel::record(
-        &tx,
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "change_request_relinked",
         caller.actor(),
@@ -614,7 +630,7 @@ async fn put_links(
     )
     .await
     .map_err(super::audit_failed)?;
-    tx.commit().await.map_err(db_err)?;
+    tx.commit().await?;
     let links = links_of(&ctx, row.pid).await?;
     format::json(view(&row, Some(&links)))
 }
@@ -683,12 +699,17 @@ async fn baseline(
         .take(500)
         .collect();
     let taken = super::schedule_baselines::take(&ctx, &caller, plan.pid, reason).await?;
-    let mut a: change_requests::ActiveModel = row.into();
-    a.baseline_pid = ActiveValue::set(Some(taken.pid));
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = a.update(&txn).await.map_err(db_err)?;
-    AuditModel::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    // By id, the one column `SeaORM`'s update named; no row back is an error, as its was. Only the pid is used.
+    let row_pid: Uuid = sqlx::query_scalar(
+        "UPDATE change_requests SET baseline_pid = $1 WHERE id = $2 RETURNING pid",
+    )
+    .bind(taken.pid)
+    .bind(row.id)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
         row.pid,
         "change_request_baselined",
         caller.actor(),
@@ -696,9 +717,9 @@ async fn baseline(
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({
-        "change_request_pid": row.pid, "baseline_pid": taken.pid, "baseline_version": taken.version,
+        "change_request_pid": row_pid, "baseline_pid": taken.pid, "baseline_version": taken.version,
     }))
 }
 
@@ -729,12 +750,10 @@ async fn portfolio(
             rules::STATUSES
         )));
     }
-    let mut rows = change_requests::Entity::find()
-        .filter(change_requests::Column::DeletedAt.is_null())
-        .order_by_asc(change_requests::Column::Id)
-        .all(&ctx.db)
-        .await
-        .map_err(db_err)?;
+    let mut rows: Vec<change_requests::Model> =
+        sqlx::query_as("SELECT * FROM change_requests WHERE deleted_at IS NULL ORDER BY id")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?;
     let mut plans: Vec<Uuid> = rows.iter().map(|r| r.plan_pid).collect();
     plans.sort();
     plans.dedup();

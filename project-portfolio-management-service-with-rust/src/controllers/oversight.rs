@@ -26,7 +26,6 @@ use std::fmt::Write as _;
 
 use crate::prelude::*;
 use axum::http::HeaderMap;
-use sea_orm::{QueryOrder, QuerySelect};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -42,15 +41,18 @@ use crate::models::_entities::{
 use crate::models::audit_logs::Model as AuditModel;
 use crate::models::visibility as vis_models;
 
-/// Load all live rows of one entity (soft-deleted excluded).
+/// Load all live rows of one entity (soft-deleted excluded), in the database's order as before (no `ORDER BY`). The
+/// table is the entity module's name, a literal in the code.
 macro_rules! live {
-    ($module:ident, $db:expr, $scope:expr) => {
+    ($module:ident, $ctx:expr, $scope:expr) => {
         $scope.keep(
-            $module::Entity::find()
-                .filter($module::Column::DeletedAt.is_null())
-                .all($db)
-                .await
-                .map_err(|e| Error::Model(ModelError::from(e)))?,
+            sqlx::query_as::<_, $module::Model>(concat!(
+                "SELECT * FROM ",
+                stringify!($module),
+                " WHERE deleted_at IS NULL"
+            ))
+            .fetch_all(crate::db::pool($ctx))
+            .await?,
         )
     };
 }
@@ -185,11 +187,11 @@ async fn board_pack_body(
     scope: &super::plan_access::HiddenScope,
 ) -> Result<serde_json::Value> {
     let (from, to) = window(query);
-    let items = live!(plans, &ctx.db, scope);
-    let risk_rows = live!(risks, &ctx.db, scope);
-    let budget_rows = live!(budget_lines, &ctx.db, scope);
-    let milestone_rows = live!(milestones, &ctx.db, scope);
-    let benefit_rows = live!(benefits, &ctx.db, &scope);
+    let items = live!(plans, ctx, scope);
+    let risk_rows = live!(risks, ctx, scope);
+    let budget_rows = live!(budget_lines, ctx, scope);
+    let milestone_rows = live!(milestones, ctx, scope);
+    let benefit_rows = live!(benefits, ctx, &scope);
     let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx.db).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
@@ -230,13 +232,14 @@ async fn board_pack_body(
         .iter()
         .map(|b| (b.pid, b.currency.clone()))
         .collect();
-    let realized_rows = audit_logs::Entity::find()
-        .filter(audit_logs::Column::Action.eq("benefit_realized"))
-        .filter(audit_logs::Column::CreatedAt.gte(from))
-        .filter(audit_logs::Column::CreatedAt.lte(to))
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    // In the database's order, as before (no `ORDER BY`).
+    let realized_rows: Vec<audit_logs::Model> = sqlx::query_as(
+        "SELECT * FROM audit_logs WHERE action = 'benefit_realized' AND created_at >= $1 AND created_at <= $2",
+    )
+    .bind(from)
+    .bind(to)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
     let mut realized_per_currency: std::collections::BTreeMap<String, i64> =
         std::collections::BTreeMap::new();
     let mut realized_unattributed = 0usize;
@@ -305,11 +308,11 @@ async fn board_investments(
 ) -> Result<Response> {
     authorize_oversight_read(&caller)?;
     let scope = privileged_scope();
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut entries: Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)> = Vec::new();
-    for scenario in live!(scenarios, &ctx.db, &scope) {
+    for scenario in live!(scenarios, &ctx, &scope) {
         if let Some(at) = scenario.committed_at {
             let at = at.to_utc();
             entries.push((
@@ -323,7 +326,7 @@ async fn board_investments(
             ));
         }
     }
-    for line in live!(budget_lines, &ctx.db, &scope) {
+    for line in live!(budget_lines, &ctx, &scope) {
         if let Some(at) = line.released_at {
             let at = at.to_utc();
             entries.push((
@@ -339,7 +342,7 @@ async fn board_investments(
             ));
         }
     }
-    for proposal in live!(proposals, &ctx.db, &scope) {
+    for proposal in live!(proposals, &ctx, &scope) {
         if matches!(proposal.status.as_str(), "approved" | "promoted") {
             let at = proposal.updated_at.to_utc();
             entries.push((
@@ -371,12 +374,10 @@ async fn board_investments(
 /// read through the administrators' `GET /api/board/trends`.
 #[debug_handler]
 async fn take_snapshot(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
-    let txn = ctx.db.begin().await.map_err(super::db_err)?;
-    let row = crate::snapshots::capture(&txn)
-        .await
-        .map_err(Error::Model)?;
-    crate::models::audit_logs::Model::record(
-        &txn,
+    let mut tx = crate::db::begin(&ctx).await?;
+    let row = crate::snapshots::capture_on(&mut tx).await?;
+    AuditModel::record_on(
+        tx.conn(),
         Uuid::new_v4(),
         "snapshot_taken",
         caller.actor(),
@@ -384,7 +385,7 @@ async fn take_snapshot(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> 
     )
     .await
     .map_err(super::audit_failed)?;
-    txn.commit().await.map_err(super::db_err)?;
+    tx.commit().await?;
     format::json(serde_json::json!({ "id": row.id, "taken_at": row.taken_at }))
 }
 
@@ -408,13 +409,12 @@ async fn board_trends(
     // they cannot be filtered for someone who may not see them: a privileged read.
     authorize_oversight_read(&caller)?;
     let limit = query.limit.unwrap_or(100).min(500);
-    let rows = insight_snapshots::Entity::find()
-        .filter(insight_snapshots::Column::Kind.eq("estate"))
-        .order_by_asc(insight_snapshots::Column::TakenAt)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    let rows: Vec<insight_snapshots::Model> = sqlx::query_as(
+        "SELECT * FROM insight_snapshots WHERE kind = 'estate' ORDER BY taken_at LIMIT $1",
+    )
+    .bind(i64::try_from(limit).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     let series: Vec<serde_json::Value> = rows
         .iter()
         .map(|row| {
@@ -469,8 +469,10 @@ async fn auditor_trail(
     headers: HeaderMap,
 ) -> Result<Response> {
     authorize_oversight_read(&caller)?;
-    AuditModel::record(
-        &ctx.db,
+    // On the pool, before the read: an export whose audit row cannot be written is not served (NFR-6); the error is
+    // passed on (an outage stays `503`), as the `SeaORM` error was.
+    AuditModel::record_on(
+        crate::db::pool(&ctx),
         Uuid::nil(),
         "oversight_auditor_trail_read",
         caller.actor(),
@@ -483,36 +485,35 @@ async fn auditor_trail(
             "limit": query.limit,
         })),
     )
-    .await
-    .map_err(Error::Model)?;
+    .await?;
     let limit = query.limit.unwrap_or(100).min(500);
-    let mut find = audit_logs::Entity::find();
+    let mut find = sqlx::QueryBuilder::new("SELECT * FROM audit_logs WHERE TRUE");
     if let Some(actor) = query.actor.as_deref() {
-        find = find.filter(audit_logs::Column::Actor.eq(actor));
+        find.push(" AND actor = ").push_bind(actor);
     }
     if let Some(action) = query.action.as_deref() {
-        find = find.filter(audit_logs::Column::Action.eq(action));
+        find.push(" AND action = ").push_bind(action);
     }
     if let Some(entity) = query.entity.as_deref() {
         let pid = super::parse_pid(entity)?;
-        find = find.filter(audit_logs::Column::EntityPid.eq(pid));
+        find.push(" AND entity_pid = ").push_bind(pid);
     }
     if let Some(from) = query
         .from
         .as_deref()
         .and_then(|raw| parse_instant(raw, false))
     {
-        find = find.filter(audit_logs::Column::CreatedAt.gte(from));
+        find.push(" AND created_at >= ").push_bind(from);
     }
     if let Some(to) = query.to.as_deref().and_then(|raw| parse_instant(raw, true)) {
-        find = find.filter(audit_logs::Column::CreatedAt.lte(to));
+        find.push(" AND created_at <= ").push_bind(to);
     }
-    let rows = find
-        .order_by_desc(audit_logs::Column::CreatedAt)
-        .limit(limit)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    find.push(" ORDER BY created_at DESC LIMIT ")
+        .push_bind(i64::try_from(limit).unwrap_or(i64::MAX));
+    let rows: Vec<audit_logs::Model> = find
+        .build_query_as()
+        .fetch_all(crate::db::pool(&ctx))
+        .await?;
 
     let mut per_day: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
     let mut actors: std::collections::BTreeSet<&str> = std::collections::BTreeSet::new();
@@ -552,19 +553,18 @@ async fn auditor_findings(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let items = live!(plans, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let audit_rows = scope
         .visible_audit(
             &ctx,
-            audit_logs::Entity::find()
-                .all(&ctx.db)
-                .await
-                .map_err(|e| Error::Model(ModelError::from(e)))?,
+            sqlx::query_as::<_, audit_logs::Model>("SELECT * FROM audit_logs")
+                .fetch_all(crate::db::pool(&ctx))
+                .await?,
         )
         .await?;
-    let line_item: std::collections::BTreeMap<Uuid, Uuid> = live!(budget_lines, &ctx.db, &scope)
+    let line_item: std::collections::BTreeMap<Uuid, Uuid> = live!(budget_lines, &ctx, &scope)
         .iter()
         .map(|line| (line.pid, line.plan_pid))
         .collect();
@@ -621,10 +621,9 @@ async fn auditor_findings(
     }
 
     // Rule 3: merges recorded with no reason.
-    for merge in merge_records::Entity::find()
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?
+    for merge in sqlx::query_as::<_, merge_records::Model>("SELECT * FROM merge_records")
+        .fetch_all(crate::db::pool(&ctx))
+        .await?
         .into_iter()
         .filter(|m| !scope.plan(&m.main_pid) && !scope.plan(&m.duplicate_pid))
     {
@@ -684,23 +683,23 @@ async fn evidence_pack(
     };
     let (from, to) = window(&win);
     let format = query.format.clone().unwrap_or_else(|| "json".to_string());
-    AuditModel::record(
-        &ctx.db,
+    // On the pool, before the read: an export whose audit row cannot be written is not served (NFR-6); the error is
+    // passed on (an outage stays `503`), as the `SeaORM` error was.
+    AuditModel::record_on(
+        crate::db::pool(&ctx),
         Uuid::nil(),
         "oversight_evidence_pack_exported",
         caller.actor(),
         Some(serde_json::json!({ "from": from, "to": to, "format": format })),
     )
-    .await
-    .map_err(Error::Model)?;
-    let audit_rows = audit_logs::Entity::find()
-        .filter(audit_logs::Column::CreatedAt.gte(from))
-        .filter(audit_logs::Column::CreatedAt.lte(to))
-        .order_by_asc(audit_logs::Column::CreatedAt)
-        .limit(2000)
-        .all(&ctx.db)
-        .await
-        .map_err(|e| Error::Model(ModelError::from(e)))?;
+    .await?;
+    let audit_rows: Vec<audit_logs::Model> = sqlx::query_as(
+        "SELECT * FROM audit_logs WHERE created_at >= $1 AND created_at <= $2 ORDER BY created_at LIMIT 2000",
+    )
+    .bind(from)
+    .bind(to)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
     if query.format.as_deref() == Some("csv") {
         let mut csv = String::from("created_at,actor,action,entity_pid\n");
         for row in &audit_rows {
@@ -769,13 +768,12 @@ async fn compliance_findings(
     let review_days = i64::from(query.review_days.unwrap_or(90).clamp(1, 365));
     let now = chrono::Utc::now();
     let today = now.date_naive();
-    let items = live!(plans, &ctx.db, &scope);
-    let risk_rows = live!(risks, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
+    let risk_rows = live!(risks, &ctx, &scope);
     let review_rows = scope.keep(
-        gate_reviews::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, gate_reviews::Model>("SELECT * FROM gate_reviews")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
     let mut findings: Vec<serde_json::Value> = Vec::new();
 
@@ -875,8 +873,8 @@ async fn risk_heatmap(
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = crate::tz::deployment_today();
-    let items = live!(plans, &ctx.db, &scope);
-    let risk_rows = live!(risks, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
+    let risk_rows = live!(risks, &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let open: Vec<&risks::Model> = risk_rows
@@ -1033,8 +1031,8 @@ async fn security_register(
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let mut body = risk_register_body(&ctx, "security", &scope).await?;
-    let items = live!(plans, &ctx.db, &scope);
-    let risk_rows = live!(risks, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
+    let risk_rows = live!(risks, &ctx, &scope);
     let with_security: std::collections::HashSet<Uuid> = risk_rows
         .iter()
         .filter(|r| r.category.as_deref() == Some("security"))
@@ -1085,14 +1083,13 @@ async fn regulator_extract(
     })?;
     let masked = obligations.iter().any(|o| o == "mask");
 
-    let items = live!(plans, &ctx.db, &scope);
-    let budget_rows = live!(budget_lines, &ctx.db, &scope);
-    let benefit_rows = live!(benefits, &ctx.db, &scope);
+    let items = live!(plans, &ctx, &scope);
+    let budget_rows = live!(budget_lines, &ctx, &scope);
+    let benefit_rows = live!(benefits, &ctx, &scope);
     let review_rows = scope.keep(
-        gate_reviews::Entity::find()
-            .all(&ctx.db)
-            .await
-            .map_err(|e| Error::Model(ModelError::from(e)))?,
+        sqlx::query_as::<_, gate_reviews::Model>("SELECT * FROM gate_reviews")
+            .fetch_all(crate::db::pool(&ctx))
+            .await?,
     );
 
     let mut portfolios = Vec::new();
@@ -1183,8 +1180,8 @@ async fn risk_register_body(
     category: &str,
     scope: &super::plan_access::HiddenScope,
 ) -> Result<serde_json::Value> {
-    let items = live!(plans, &ctx.db, scope);
-    let risk_rows = live!(risks, &ctx.db, scope);
+    let items = live!(plans, ctx, scope);
+    let risk_rows = live!(risks, ctx, scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
     let mut rows = category_risks(&risk_rows, category);

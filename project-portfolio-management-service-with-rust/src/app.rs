@@ -531,7 +531,7 @@ impl App {
         // are set, so the default `memory` transport never spawns it.
         crate::relay::spawn(ctx.db.clone(), ctx.config.database.uri.clone());
         // Optional estate-snapshot ticker (env-gated, default off).
-        crate::snapshots::spawn(ctx.db.clone());
+        crate::snapshots::spawn(ctx.clone());
         // Set-and-forget: the optional scheduled-action sweep ticker
         // (env-gated, default off — the sweep endpoint always works).
         crate::scheduler::spawn(ctx.clone());

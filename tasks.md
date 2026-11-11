@@ -2500,6 +2500,72 @@ came from grep.
   batch import calls (on the pool, never inside one of these files' transactions).
   **Next batch, suggested:** `change_requests` (83), `canvas` (81), `ceremony` (36) and `oversight` (25), about 225
   lines and 19 of the remaining `AuditModel::record` calls; or `cost_rates` (125), which the batch import still reaches.
+  **Progress 2026-11-11, batch 16 (not ticked).** Cost rates, change requests, canvases, ceremonies and the oversight
+  views moved: `cost_rates` (125 lines naming SeaORM, now none), `change_requests` (83, none), `canvas` (81, none),
+  `ceremony` (36, none), `oversight` (25, none) and `snapshots` (12, none), which `POST /api/board/snapshots` reaches.
+  362 lines gone, leaving 39 files and 589 lines by batch 6's measure (37 by name). `models/canvases` keeps its
+  `ActiveModelBehavior` impls (it also serves comments, reactions and plan modules), for step (c). `AuditModel::record`
+  now has 27 SeaORM calls in 10 files (52 in 15 before). Cost rates: a rate table, a rate, a task cost, a cost's soft
+  delete and a labour recording each write their rows and audit row in one transaction, as before; rates are still
+  append-only (a date carries one rate, `409`), looked up from the person's own table and then their primary role's
+  (`LIMIT 1` with no `ORDER BY`, as `SeaORM`'s `one` was), ordered by effective date, and priced in minor units per
+  currency by the same pure rules, so the planned cost, the labour totals the what-if sandbox shows and the recorded
+  actuals give the same numbers; every route is still `404` to a caller outside the finance area. The batch import's
+  writers (`import_rate`, its table and rate helpers, `import_fixed_cost`) have sqlx forms with the same signatures, so
+  `mspdi_batch` is unchanged at the call; each still writes a table, a rate or a cost with its audit row in one
+  transaction, on the pool between them, as before. Change requests: the state machine, the requester-only edit and
+  submit, the named-approver rule for review and decision (an administrator is not exempt), the requester-or-admin
+  withdraw, links (same plan, not another request's issue, at most 200 each, replace-all), the what-if preview and the
+  baseline step are unchanged; the implement step still has no identity check (an open owner decision, kept exactly).
+  Each step's update names the status and only the step's own columns, by id, and still fails when no row comes back.
+  Canvases: plan visibility (`require_readable_if_any`, `HiddenScope::keep`), the item cap, the append position, the
+  three promote targets in one transaction with both audit rows, and the soft delete of a canvas with its items under one
+  timestamp are unchanged. Ceremonies: one planning and one review per sprint, the commitment written once, the
+  commitment's `ETag`. Oversight: the `live!` reads (`SELECT *` of each live table, no `ORDER BY`, as before) go through
+  `db::pool`; the auditor's trail and evidence pack still write their audit row on the pool before reading and are not
+  served when it cannot be written (NFR-6), its error passed on (an outage stays `503`, §8.3b), as `SeaORM`'s was; the
+  regulator extract and the compliance views write no audit row, as before. `snapshots::capture` is `capture_on` and
+  takes a `db::Session`: the board snapshot and its audit row are one transaction, as before, and the optional ticker
+  (`spawn`, now given the context) captures on the pool. `canvas`' delete and promote pass their audit error on with
+  `?`, as their `Error::Model` mapping did; every other audit failure here still answers `audit_failed`.
+  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (only on a failure; same
+  status), including a batch import's failed-project message (no `Query Error: ` prefix). The lists SeaORM bound one
+  parameter each are bound as one array (the cost plan's task pids, a relink's risk count and issue updates as
+  `= ANY($1)`, and its `NOT IN` as `<> ALL($1)`, which is true for an empty list as SeaORM's empty `NOT IN` was); reads
+  whose rows were used for a few columns read only those (a table's rates, a person's role, a rate in force, whether a
+  rate, fixed cost, ceremony or commitment exists, a cost's id and pid, an issue's link, the sprint's task pids, the
+  recorded entries' pids); inserts whose row is not used return nothing, and the baseline step's update returns only the
+  pid.
+  A throwaway check (not committed) dumped 1,367 answers and 18 tables (audit, cost rate tables, rates, task costs,
+  labour costs, change requests with their `edits` column type, their risk links, issues, baselines, canvases, items with
+  their delete stamp compared to the canvas's, ideas, objectives, risks, ceremonies, commitments, snapshots, tasks) for
+  an administrator with finance rights, a plan's owner, a member of a private plan (the approver), a writer who is a
+  member of nothing, a writer with finance rights, an identity with no user id, and no token: rate tables made and
+  refused every way, rates added, duplicated, out of range and backdated, lookups by person, role fallback, other table
+  and none; task costs added, refused, listed and deleted; the cost plan by day, week and month, with another table, an
+  empty plan and a private one; time recorded, priced twice, after a backdated rate and with another table; the
+  sandbox's labour totals; the batch import of three paid files, again at a new rate and on the same day at a different
+  one; change requests through every step by every caller (refusals, the approver rule, implement by an outsider,
+  baselines), relinked every way, listed by every filter and across plans; canvases and items made, refused, moved,
+  deleted and promoted to each target (twice, free-standing, bad scores); ceremonies, commitments and `304`s; every
+  oversight view, the snapshot and the trend series; then 25 tables made unreadable in turn under 38 routes. Before
+  and after: the same, once pids, times, hashes and `ETag`s were normalised and the cost plan's task rows (a map keyed
+  by random pid) sorted by title, but for the error text above; two runs before were the same.
+  **Found, not changed:** a change-request step reads the row and then updates it by id without checking its status, so
+  two steps at once (an approval and a rejection) can both pass the state check, the later one winning with both
+  audited; the baseline step takes the baseline in its own transaction and then links it, so two at once can take two
+  baselines and a failure between leaves one unlinked; promoting a canvas item reads it before the transaction, so two
+  promotions at once can both create a target (the second link overwrites the first); adding a canvas item counts and
+  then inserts, so two at once can pass `MAX_ITEMS` or take the same position; the batch import creates a rate table and
+  adds its first rate in two transactions, so a failure between leaves an empty table; the auditor's trail writes its
+  audit row before it checks the `entity` filter, so a malformed one is audited and then `404`; a ceremony's audit row
+  names the plan, not the ceremony; the change-request list across plans and the oversight views read whole tables.
+  **Verified:** fmt, clippy (all targets, all features), 1,265 unit tests, the whole database suite (`mod`, 220 tests, one run, no failure; nothing listened on port 8001 before the run, and the 3 MiB upload test passed) and the 57 other database test binaries (85 tests, `keycloak_entra_broker` and `keycloak_guard` with the `keycloak` feature), on a throwaway database; the status, OpenAPI-bodies and llms checks.
+  **Still on SeaORM through other modules**, for these files: `models::visibility::all_dependencies` (the board pack
+  passes `ctx.db` to it, as `insights`, `confidence` and `visibility` do).
+  **Next batch, suggested:** `strategy` (141), the largest caller of `AuditModel::record` left (12 calls); or
+  `visibility/milestones` (21), `scoring` (19), `prioritization` (18), `modules` (18) and `visibility/reports` (18), about
+  95 lines.
 
 ## Correctness carried forward (CF-n)
 

@@ -10,29 +10,28 @@
 //! default; parse failure ⇒ off with a warning).
 
 use crate::prelude::*;
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 use crate::insights;
 use crate::models::_entities::{budget_lines, insight_snapshots, plans, risks};
 
-/// Capture one `estate` snapshot row from live data and insert it.
+/// Capture one `estate` snapshot row from live data and insert it, on a transaction or the pool
+/// ([`crate::db::Session`]).
 ///
 /// # Errors
 ///
-/// Returns the model error if a query or the insert fails.
-pub async fn capture<C: ConnectionTrait>(db: &C) -> Result<insight_snapshots::Model, ModelError> {
-    let items = plans::Entity::find()
-        .filter(plans::Column::DeletedAt.is_null())
-        .all(db)
+/// When a query or the insert fails (`sqlx`'s error, so an outage is `503`).
+pub async fn capture_on(db: &mut impl crate::db::Session) -> Result<insight_snapshots::Model> {
+    let items: Vec<plans::Model> = sqlx::query_as("SELECT * FROM plans WHERE deleted_at IS NULL")
+        .fetch_all(db.ex())
         .await?;
-    let risk_rows = risks::Entity::find()
-        .filter(risks::Column::DeletedAt.is_null())
-        .all(db)
-        .await?;
-    let budget_rows = budget_lines::Entity::find()
-        .filter(budget_lines::Column::DeletedAt.is_null())
-        .all(db)
-        .await?;
+    let risk_rows: Vec<risks::Model> =
+        sqlx::query_as("SELECT * FROM risks WHERE deleted_at IS NULL")
+            .fetch_all(db.ex())
+            .await?;
+    let budget_rows: Vec<budget_lines::Model> =
+        sqlx::query_as("SELECT * FROM budget_lines WHERE deleted_at IS NULL")
+            .fetch_all(db.ex())
+            .await?;
 
     let open_exposure: i32 = risk_rows
         .iter()
@@ -58,21 +57,20 @@ pub async fn capture<C: ConnectionTrait>(db: &C) -> Result<insight_snapshots::Mo
         "open_exposure": open_exposure,
         "money": money,
     });
-    insight_snapshots::ActiveModel {
-        kind: ActiveValue::set("estate".to_string()),
-        body: ActiveValue::set(body),
-        ..Default::default()
-    }
-    .insert(db)
-    .await
-    .map_err(ModelError::from)
+    // The columns `SeaORM`'s insert set, no more (`taken_at` is the table's default).
+    Ok(sqlx::query_as(
+        "INSERT INTO insight_snapshots (kind, body) VALUES ('estate', $1) RETURNING *",
+    )
+    .bind(body)
+    .fetch_one(db.ex())
+    .await?)
 }
 
 /// Start the optional snapshot ticker: every
 /// `PROJECT_PORTFOLIO_MANAGEMENT_SNAPSHOT_HOURS` hours, capture one
 /// estate snapshot. Unset / `0` / unparsable ⇒ no ticker (the
 /// default); capture failures are warned and the loop continues.
-pub fn spawn(db: DatabaseConnection) {
+pub fn spawn(ctx: AppContext) {
     let hours = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_SNAPSHOT_HOURS")
         .ok()
         .and_then(|raw| raw.trim().parse::<u64>().ok())
@@ -84,7 +82,7 @@ pub fn spawn(db: DatabaseConnection) {
         let period = std::time::Duration::from_secs(hours.saturating_mul(3600));
         loop {
             tokio::time::sleep(period).await;
-            if let Err(err) = capture(&db).await {
+            if let Err(err) = capture_on(&mut crate::db::pool(&ctx)).await {
                 tracing::warn!("estate snapshot capture failed: {err}");
             }
         }

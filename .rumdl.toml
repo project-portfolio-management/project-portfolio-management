@@ -1,0 +1,164 @@
+# rumdl configuration file for Project Portfolio Management
+#
+# Run: rumdl check .
+# For more info: https://rumdl.dev/
+
+[global]
+# Disable rules that conflict with project style
+# MD001 - Heading levels (we intentionally use all levels)
+# MD003 - Heading style (we use both atx and setext)
+# MD004 - Unordered list style (we use various styles)
+# MD007 - Unordered list indentation (flexible)
+# MD013 - Line length (handled by line_length global setting)
+# MD024 - Duplicate headings (intentional in some cases)
+# MD025 - Multiple H1 (some files need this)
+# MD029 - Ordered list prefix (various styles)
+# MD032 - Blanks around code blocks (we don't always have them)
+# MD033 - Inline HTML (we use HTML tables)
+# MD034 - Bare URLs (many in docs)
+# MD036 - Emphasis instead of heading (we use emphasis for emphasis)
+# MD041 - First line H1 (some files don't start with #)
+# MD046 - Code block style (both fenced and indented)
+# MD048 - Code fence style (both backticks and tildes)
+# MD051 - Link fragments (internal fragments we control)
+disable = [
+    "MD001",
+    "MD003",
+    "MD004",
+    "MD007",
+    "MD013",
+    "MD024",
+    "MD025",
+    "MD029",
+    "MD032",
+    "MD033",
+    "MD034",
+    "MD036",
+    "MD041",
+    "MD046",
+    "MD048",
+    "MD051",
+    "MD060",  # Table alignment is too strict for this project
+    # Directory, crate and package names are lowercase in prose and link text (`project-portfolio-management-service-with-rust`,
+    # `axum 0.8`, `@lilydesignsystem/*`), so a proper-name rule would "fix" them wrongly.
+    "MD044",
+]
+
+# Enable additional rules that are opt-in
+# We'll keep this minimal for now
+extend-enable = []
+
+# Files to include
+include = [
+    "*.md",
+]
+
+# Files/directories to exclude
+exclude = [
+    ".git",
+    ".github",
+    "target",
+    "node_modules",
+    "dist",
+    "build",
+    ".svelte-kit",
+    "**/output",
+    "CHANGELOG.md",
+    "LICENSE.md",
+    "**/LICENSE/*.txt",
+    "locales/cy-gb/**",
+    "llms.json",
+    "llms.txt",
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.gif",
+    "*.svg",
+    "*.pdf",
+    "*.zip",
+    "*.tar",
+    "*.gz",
+    ".claude/agents/**",
+]
+
+# Respect .gitignore
+respect-gitignore = true
+
+# Markdown flavor
+flavor = "gfm"
+
+# Global line length limit
+line_length = 120
+
+# ============================================================================
+# Rule configurations
+# ============================================================================
+
+# MD012 - Multiple consecutive blank lines
+[MD012]
+maximum = 2
+
+# MD022 - Headings should be surrounded by blank lines
+[MD022]
+# Default configuration is fine
+
+# MD026 - Trailing punctuation in headings
+[MD026]
+punctuation = ".,!?:;"
+
+# MD028 - Blank line inside blockquote
+[MD028]
+# Default is fine
+
+# MD044 - Proper names capitalization
+[MD044]
+names = [
+    "Project Portfolio Management",
+    "PPM",
+    "Rust",
+    "Axum",
+    "axa",
+    "sqlx",
+    "PostgreSQL",
+    "SvelteKit",
+    "Svelte",
+    "TypeScript",
+    "JavaScript",
+    "GitHub",
+    "GitLab",
+    "Podman",
+    "Docker",
+    "Keycloak",
+    "OIDC",
+    "Entra",
+    "Microsoft",
+    "Google",
+    "Amazon",
+    "Civo",
+    "Scaleway",
+    "WCAG",
+    "DTAC",
+    "DPIA",
+    "GDPR",
+    "ISO",
+    "SOC",
+    "MIT",
+    "Apache",
+    "GPL",
+    "BSD",
+    "Claude",
+    "Mistral",
+    "Fable",
+]
+
+# MD045 - Images should have alt text
+[MD045]
+# Default is fine
+
+# MD047 - Files should end with newline
+[MD047]
+# Default is fine
+
+# The templates under spec/special-files-for-public-repos/ link to files beside them once copied into a repository.
+[per-file-ignores]
+"spec/special-files-for-public-repos/**" = ["MD057"]

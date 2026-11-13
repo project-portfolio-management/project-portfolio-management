@@ -320,6 +320,21 @@ jobs:
           args: --offline --config lychee.toml .
           fail: true
 
+  # Not yet a merge gate: `rumdl check .` still reports about 110 findings (list spacing, fence languages) in
+  # existing documents. Add it to the `needs` of the gate job below once they are fixed.
+  markdown-lint:
+    name: Markdown linting (rumdl)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install rumdl
+        run: cargo install rumdl --version 0.3.0 --locked
+      - name: Run rumdl check
+        run: rumdl check .
+
   site:
     name: GitHub Pages site (content copy, check, build, Playwright and axe)
     runs-on: ubuntu-latest

@@ -19,3 +19,10 @@ dist/
 **/config/local.yaml
 **/config/*.local.yaml
 chaos-report.json
+
+# Mistral Vibe local agent state.
+.vibe/
+
+# Reports from the load scripts.
+distributed-load-test-results/
+long-running-test-results/

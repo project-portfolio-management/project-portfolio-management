@@ -4,7 +4,7 @@
 
 ## Where things stand
 
-**No independent security test has been done.** No penetration test, third-party audit, independent code review or certification exists for this software, and the project claims none ([production readiness](../../../../governance/production-readiness.md), [SECURITY](../../../../SECURITY.md)). A passive scan runs in the project's continuous integration (rules in `.zap/rules.tsv`), and the project's own tests check the controls listed below; neither is a substitute for a tester who did not write the software.
+**No independent security test has been done.** No penetration test, third-party audit, independent code review or certification exists for this software, and the project claims none ([path to production](../../path-to-production/index.md), [SECURITY](../../../../SECURITY.md)). A passive scan runs in the project's continuous integration (rules in `.zap/rules.tsv`), and the project's own tests check the controls listed below; neither is a substitute for a tester who did not write the software.
 
 This is item 1 and item 9 of the [assurance checklist](../../../../governance/assurance-checklist.md). It belongs to the deployer, with a certified tester, against **your** deployment: the project cannot test your hosting, identity provider, network or keys.
 
@@ -62,4 +62,4 @@ Who tests, when, against what, with what data and under what rules; how findings
 
 ## Read next
 
-[Assurance checklist](../../../../governance/assurance-checklist.md) · [Production readiness](../../../../governance/production-readiness.md) · [Chief Security Officer](../chief-security-officer/index.md) · [Governance, Risk, Compliance](../governance-risk-compliance/index.md)
+[Assurance checklist](../../../../governance/assurance-checklist.md) · [Path to production](../../path-to-production/index.md) · [Chief Security Officer](../chief-security-officer/index.md) · [Governance, Risk, Compliance](../governance-risk-compliance/index.md)

@@ -15,7 +15,7 @@
 - The pack does not yet carry gate decisions, funding by financial year, the buffer fever chart, earned value, validated benefits or the capacity heatmap (`DP-5` to `DP-10` in [`tasks.md`](../../../../tasks.md)). The pack says which sections are not built.
 - "Programme" means a plan whose kind is `Program`, because the data has no other definition; "top-tier" aims are whatever you mark, since objectives have no hierarchy.
 - There is no scenario planning, and no screen yet for the map or the pack: they are available as data.
-- It is not certified, and it has one maintainer ([production readiness](../../../../governance/production-readiness.md)).
+- It is not certified, and it has one maintainer ([path to production](../../path-to-production/index.md)).
 
 ## Decisions that are yours
 

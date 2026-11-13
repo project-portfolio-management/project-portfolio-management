@@ -471,9 +471,14 @@
           "description": "Review record for zh-cn: machine draft, not reviewed"
         },
         {
-          "title": "Production readiness",
+          "title": "Path to production: the evidence",
           "path": "governance/production-readiness.md",
-          "description": "What must hold before production use"
+          "description": "The evidence behind the path to production: what is strong, what is not done yet"
+        },
+        {
+          "title": "Path to production",
+          "path": "locales/en-001/path-to-production/index.md",
+          "description": "What production means here, and each remaining item with a readiness estimate (a slider on the site)"
         },
         {
           "title": "AI statement",

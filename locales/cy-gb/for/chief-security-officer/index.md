@@ -36,4 +36,4 @@ Pwy sy'n cynnal y prawf treiddio a phryd; mynediad amodol a mapio rolau'r darpar
 
 ## Darllenwch nesaf
 
-[Rhestr wirio sicrwydd](../../../../governance/assurance-checklist.md) · [Parodrwydd cynhyrchu](../../../../governance/production-readiness.md) · [Diagram llif data](../../../../governance/data-flow.md)
+[Rhestr wirio sicrwydd](../../../../governance/assurance-checklist.md) · [Y llwybr i gynhyrchu](../../path-to-production/index.md) · [Diagram llif data](../../../../governance/data-flow.md)

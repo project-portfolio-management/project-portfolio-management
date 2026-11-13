@@ -15,6 +15,50 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 13 November (path to production)
+
+- **A path-to-production page in every locale** (`locales/<locale>/path-to-production/index.md`, at
+  `/<locale>/path-to-production/` on the site and in its navigation). It says what "production" means for this software,
+  then lists 14 items, each with the project's readiness estimate and a Lily `Slider` (0 to 100, steps of 5) that starts
+  at the estimate. A reader may move a slider to note their own view; nothing is saved or sent. The site reads each item
+  as `- **Title** — NN%. Text`, and a malformed figure fails the build. Spec: `spec/github-pages-site.md`.
+- **No page calls the software "production-ready" or "not ready for production".** Each such verdict now links to the
+  new page: the home pages, the chief executive and governance briefs in every locale, the other briefs' links to the
+  readiness document, the nine comparisons, the DTAC 2.0 page, `governance/production-readiness.md` (now "Path to
+  production: the evidence", restored from the committed text and reworded), `plan.md` §58 (likewise), the Mistral
+  audit's corrections, spec NFR text, `operations/commitments.md`, `governance/README.md` and `llms.json`. This also
+  replaces the uncommitted rewording to "production-ready for controlled deployment", which overstated the evidence.
+- **Corrected while rewording:** the break-glass row no longer says "a second person told" without saying that the
+  named person is not checked to exist; the retention row names all six purged record kinds.
+- Tests: the site's Playwright suite, 230 tests, all passing. New tests check that every locale's page has one slider
+  per item at its estimate with the same figures as English, that moving a slider changes only the reader's figure and
+  is not kept, that the locale switch keeps the page, and that no locale page uses the old verdict wording. axe runs on
+  all 11 pages under light and dark. `svelte-check`, the content copy, `check-links.py`, `generate-llms.py --check` and
+  the site translation review export were run.
+- Not done or not verified: **the 14 estimates are a first figure written by an AI agent from the evidence, not
+  agreed by the maintainer**. The Arabic, Hindi, Welsh and Chinese pages and the reworded sentences are machine-written
+  and not reviewed. lychee and the UI gates were not run (the UI did not change).
+
+### 13 November (review of the Mistral Vibe additions of 11 to 13 November)
+
+- **Rust 1.100.0.** The toolchain, every CI toolchain step, and the service image (`rust:1.100.0-slim`, which had been
+  left at 1.99.1) are bumped. Verified: the matcher's gates on 1.100.0. Not verified: the service's gates (CI) and the
+  image build.
+- **Makefiles and bin scripts.** `make publish-github-pages` works. `bin/test-demo` no longer deletes the shared
+  database volume and checks the stack it starts. `bin/test-github-discussions` can now fail; today it fails on the
+  repository-to-organization Discussions redirect, a GitHub setting not yet made. Not verified: `bin/test-demo` against
+  a real stack.
+- **Load scripts.** `scripts/long-running-test.mjs` had recorded fixed numbers, and `scripts/distributed-load-test.mjs`
+  miscounted errors and paired the wrong plans and tasks; both now measure real statuses and latencies.
+  Multi-machine mode is not built and says so. `docs/testing/load-testing.md` claimed results that were never
+  measured; it now matches the scripts. Verified against a mock server only.
+- **Markdown lint.** rumdl 0.3.0 runs in CI with a corrected config, but does not block: 109 findings remain.
+- **The Mistral audit report** gains a dated corrections section. **The evaluate page** renders its tables, but its
+  wording is unchanged and partly unsupported.
+- Not committed, awaiting the maintainer: `tests/cargo_load_test.rs` and its `rand` dependency (it fails fmt and
+  clippy, and would break the `api-db` job); the agent's `Cargo.lock` updates; and its edits to dated entries in this
+  file, `tasks.md` and `BENCHMARKS.md`.
+
 ### 11 November (SeaORM removal, step (c): SeaORM gone)
 
 - **The service has no ORM (task SQ-1 (c), ticked; spec §8.3b rewritten as done).** axa's `sea-orm` feature is off and its `sqlx` feature on, so `AppContext::db` is sqlx's `PgPool` (opened by `axa::db::connect`, pinged by `/_health/ready`); `sea-orm` is gone from the service's `Cargo.toml` and from `Cargo.lock` (48 crates fewer, `sea-orm`, `sea-query`, `sea-orm-migration`, `axa-seaorm` among them), and the migration crate names no ORM dependency. `src/db.rs` reaches the pool directly (`pool`, `begin`, `for_axa_crate`, `for_migrations`) and every statement is still counted; `query_count`'s SeaORM metric callback (`install`) is gone, as nothing can run a SeaORM statement. `chrono` gains its `serde` feature and `rust_decimal` (with `serde`) becomes a direct dependency, both features SeaORM used to switch on for the row structs' JSON.

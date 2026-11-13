@@ -35,7 +35,7 @@ Project Portfolio Management is open-source software for recording the plans an 
 
 ## Current status
 
-The software is at an early stage. It has one maintainer, no third-party audit and no support agreement. The project's own assessment is that it is **ready for a controlled pilot** on non-clinical, non-secret data and **not ready for unsupervised production use**. Known limitations are listed on the [comparisons page](topics/comparisons/index.md).
+The software is at an early stage. It has one maintainer, no third-party audit and no support agreement. What production use would take, item by item with an estimate for each, is on the [path to production](path-to-production/index.md) page. Known limitations are listed on the [comparisons page](topics/comparisons/index.md).
 
 ## Demonstration
 

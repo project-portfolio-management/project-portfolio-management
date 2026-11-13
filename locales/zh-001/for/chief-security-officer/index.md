@@ -36,4 +36,4 @@
 
 ## 接着阅读
 
-[保证清单](../../../../governance/assurance-checklist.md) · [生产就绪度](../../../../governance/production-readiness.md) · [数据流图](../../../../governance/data-flow.md)
+[保证清单](../../../../governance/assurance-checklist.md) · [通往生产之路](../../path-to-production/index.md) · [数据流图](../../../../governance/data-flow.md)

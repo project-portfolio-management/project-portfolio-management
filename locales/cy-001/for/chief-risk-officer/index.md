@@ -25,7 +25,7 @@
 
 ## Rheolaethau y mae'r meddalwedd yn eu gorfodi
 
-Mewngofnodi yn ddiofyn, cyfyngu cyfraddau, penawdau diogelwch llym, terfyn amser sesiwn segur (30 munud) a therfyn sesiwn caled, cyrchfannau allan wedi'u cyfyngu i `https` cyhoeddus, atodiadau â llofnod wedi'i wirio, rhesi archwilio anghyfnewidiol, mynediad brys gydag archwilio. Mae pob un wedi'i orchuddio gan brawf a nodir yn [parodrwydd cynhyrchu](../../../../governance/production-readiness.md).
+Mewngofnodi yn ddiofyn, cyfyngu cyfraddau, penawdau diogelwch llym, terfyn amser sesiwn segur (30 munud) a therfyn sesiwn caled, cyrchfannau allan wedi'u cyfyngu i `https` cyhoeddus, atodiadau â llofnod wedi'i wirio, rhesi archwilio anghyfnewidiol, mynediad brys gydag archwilio. Mae pob un wedi'i orchuddio gan brawf a nodir yn [y llwybr i gynhyrchu](../../path-to-production/index.md).
 
 ## Penderfyniadau sy'n eiddo i chi
 
@@ -33,4 +33,4 @@ Awydd risg ar gyfer peilot; y ffenestr eithriad (diofyn 48 awr); y lefel marcio 
 
 ## Darllenwch nesaf
 
-[Parodrwydd cynhyrchu](../../../../governance/production-readiness.md) · [DPIA](../../../../governance/dpia.md) · [Cydymffurfiaeth](../../../../spec/12-compliance.md) · [SECURITY](../../../../SECURITY.md)
+[Y llwybr i gynhyrchu](../../path-to-production/index.md) · [DPIA](../../../../governance/dpia.md) · [Cydymffurfiaeth](../../../../spec/12-compliance.md) · [SECURITY](../../../../SECURITY.md)

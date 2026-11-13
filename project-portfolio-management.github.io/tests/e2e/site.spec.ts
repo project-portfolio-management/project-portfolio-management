@@ -27,6 +27,7 @@ const topicRoutes = HOME_LOCALES.flatMap((l) => TOPIC_KEYS.map((k) => `/${l}/${t
 const compareRoutes = ["/compare/", ...COMPARE_PRODUCTS.map((p) => `/compare/${p}/`)];
 const indexRoutes = BRIEF_LOCALES.map((l) => `/${l}/for/`);
 const briefRoutes = BRIEF_LOCALES.flatMap((l) => ROLES.map((r) => `/${l}/for/${r}/`));
+const pathRoutes = BRIEF_LOCALES.map((l) => `/${l}/path-to-production/`);
 // Audited: every document, every locale's list, and one brief per locale (a different role each time).
 const audited = [
   ...docRoutes,
@@ -36,6 +37,8 @@ const audited = [
   ...indexRoutes,
   ...BRIEF_LOCALES.map((l, i) => `/${l}/for/${ROLES[i % ROLES.length]}/`),
   "/search/?portfolio",
+  "/en-001/evaluate/",
+  ...pathRoutes,
 ];
 
 /** Load a page under a colour scheme and wait until ThemePicker has applied the matching Lily theme. */
@@ -60,7 +63,7 @@ async function axe(page: Page): Promise<string[]> {
 }
 
 test("every page is built and answers 200", async ({ request }) => {
-  const all = [...docRoutes, ...homeRoutes, ...topicRoutes, ...compareRoutes, ...indexRoutes, ...briefRoutes, "/search/"];
+  const all = [...docRoutes, ...homeRoutes, ...topicRoutes, ...compareRoutes, ...indexRoutes, ...briefRoutes, ...pathRoutes, "/search/", "/en-001/evaluate/"];
   expect(new Set(all).size).toBe(all.length);
   for (const route of all) {
     const res = await request.get(route);
@@ -377,7 +380,7 @@ test("the sitemaps list every page and only their locale's", async ({ request })
   const xml = await res.text();
   expect(xml.startsWith("<?xml")).toBe(true);
   const base = "https://project-portfolio-management.github.io";
-  for (const route of [...homeRoutes, ...topicRoutes, ...compareRoutes, ...docRoutes, ...indexRoutes, "/search/"])
+  for (const route of [...homeRoutes, ...topicRoutes, ...compareRoutes, ...docRoutes, ...indexRoutes, ...pathRoutes, "/search/"])
     expect(xml, route).toContain(`<loc>${base}${encodeURI(route)}</loc>`);
   for (const route of briefRoutes.slice(0, 3)) expect(xml, route).toContain(route);
 
@@ -421,7 +424,12 @@ test("a comparison page keeps the honest parts", async ({ page }) => {
     await page.goto(`/compare/${product}/`);
     const text = (await page.locator("main").innerText()).replace(/\s+/g, " ");
     expect(text, product).toMatch(/was not installed or run/);
-    expect(text, product).toMatch(/not ready for unsupervised production use/);
+    expect(text, product).toMatch(/is on the path to production page/);
+    expect(text, product).not.toMatch(/production-ready|ready for (controlled )?deployment|unsupervised production/i);
+    await expect(page.locator("main a", { hasText: "path to production" }).first()).toHaveAttribute(
+      "href",
+      /\/en-001\/path-to-production\/$/,
+    );
     expect(text, product).toMatch(/not affiliated with or endorsed by/);
     expect(text, product).toMatch(/may be the better fit/);
   }
@@ -548,3 +556,65 @@ test("no element carries a style attribute (the CSP allows only SvelteKit's anno
     expect(styled, route).toEqual([]);
   }
 });
+
+/** The readiness items of a path-to-production page's Markdown: `- **Title** — NN%. Text`. */
+function readinessItems(locale: string): { title: string; percent: number }[] {
+  const md = readFileSync(`../locales/${locale}/path-to-production/index.md`, "utf8");
+  return [...md.matchAll(/^- \*\*([^*]+)\*\* — (\d{1,3})%\. /gm)].map((m) => ({
+    title: m[1] ?? "",
+    percent: Number(m[2]),
+  }));
+}
+
+test("every path-to-production page gives each item a slider that starts at its estimate", async ({ page }) => {
+  const english = readinessItems("en-001");
+  expect(english.length).toBeGreaterThan(5);
+  for (const locale of BRIEF_LOCALES) {
+    const items = readinessItems(locale);
+    // Every locale lists the same items with the same estimates, in the same order.
+    expect(items.map((i) => i.percent), locale).toEqual(english.map((i) => i.percent));
+    await page.goto(`/${locale}/path-to-production/`);
+    const sliders = page.locator("main input[type=range]");
+    await expect(sliders, locale).toHaveCount(items.length);
+    for (const [n, item] of items.entries()) {
+      const slider = sliders.nth(n);
+      await expect(slider).toHaveValue(String(item.percent));
+      await expect(slider).toHaveAttribute("min", "0");
+      await expect(slider).toHaveAttribute("max", "100");
+      await expect(slider).toHaveAttribute("aria-label", new RegExp(`^${item.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}: `));
+    }
+  }
+});
+
+test("moving a readiness slider changes only the reader's figure, and it is not kept", async ({ page }) => {
+  await open(page, "/en-001/path-to-production/", "light");
+  const slider = page.getByRole("slider", { name: /^Accessibility: / });
+  await expect(slider).toHaveValue("40");
+  await slider.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(slider).toHaveValue("50");
+  await expect(slider).toHaveAttribute("aria-valuetext", "50%");
+  const item = page.locator(".readiness li").filter({ has: slider });
+  await expect(item.locator("output")).toHaveText("50%");
+  await expect(item.locator(".estimate")).toHaveText("Readiness estimate: 40%");
+  await page.reload();
+  await expect(page.getByRole("slider", { name: /^Accessibility: / })).toHaveValue("40");
+});
+
+test("the locale switcher opens the path to production in the chosen locale", async ({ page }) => {
+  await open(page, "/en-gb/path-to-production/", "light");
+  await chooseLocale(page, "Language", /中文/);
+  await expect(page).toHaveURL(/\/zh-(cn|001)\/path-to-production\/$/);
+  await expect(page.locator("h1").first()).toHaveText("通往生产之路");
+  await expect(page.locator("main input[type=range]").first()).toHaveValue("0");
+});
+
+test("no page calls the software production-ready or not ready for production", () => {
+  const docs = JSON.parse(readFileSync("src/content/docs.json", "utf8")) as { files: Record<string, string> };
+  for (const [path, text] of Object.entries(docs.files)) {
+    if (!path.startsWith("locales/")) continue;
+    expect(text, path).not.toMatch(/production-ready|not ready for (unsupervised )?production|ready for controlled deployment/i);
+  }
+});
+

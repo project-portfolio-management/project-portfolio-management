@@ -15,7 +15,7 @@
 - Nid yw'r pecyn eto'n cynnwys penderfyniadau porth, cyllid yn ôl blwyddyn ariannol, y siart twymyn clustog, gwerth enilledig, buddion wedi'u dilysu na'r map gwres capasiti (`DP-5` i `DP-10` yn [`tasks.md`](../../../../tasks.md)). Mae'r pecyn yn dweud pa adrannau nad ydynt wedi'u hadeiladu.
 - Ystyr "rhaglen" yw cynllun y mae ei fath yn `Program`, gan nad oes diffiniad arall yn y data; nodau "haen uchaf" yw beth bynnag a farciwch, gan nad oes hierarchaeth i amcanion.
 - Dim cynllunio senarios, a dim sgrin eto ar gyfer y map na'r pecyn: maent ar gael fel data.
-- Nid yw wedi'i ardystio, ac mae ganddo un cynhaliwr ([parodrwydd cynhyrchu](../../../../governance/production-readiness.md)).
+- Nid yw wedi'i ardystio, ac mae ganddo un cynhaliwr ([y llwybr i gynhyrchu](../../path-to-production/index.md)).
 
 ## Penderfyniadau sy'n eiddo i chi
 

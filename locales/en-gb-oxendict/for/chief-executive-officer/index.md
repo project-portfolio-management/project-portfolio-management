@@ -17,7 +17,7 @@ A registry of every **plan** the organization funds (portfolios, programmes, pro
 
 - The pack does **not** yet include gate decisions, funding and financial-year money, the buffer fever chart, earned value, validated benefits or the capacity heatmap. They are listed as `DP-5` to `DP-10` in [`tasks.md`](../../../../tasks.md), and the pack says which sections are not yet built rather than leaving a blank.
 - No PDF or screen for the pack: it is delivered as data (`DP-11`).
-- It is **not certified or audited** by anyone. The project's own verdict: ready for a controlled pilot on non-clinical, non-secret data, not for unsupervised production ([production readiness](../../../../governance/production-readiness.md)).
+- It is **not certified or audited** by anyone. What production use would take, item by item with an estimate for each, is on the [path to production](../../path-to-production/index.md) page.
 - One maintainer, no service-level agreement ([governance](../../../../GOVERNANCE.md)).
 
 ## Decisions that are yours
@@ -28,4 +28,4 @@ A registry of every **plan** the organization funds (portfolios, programmes, pro
 
 ## Read next
 
-[Production readiness](../../../../governance/production-readiness.md) · [Roadmap](../../../../spec/15-roadmap.md) · [Open questions](../../../../spec/16-open-questions.md)
+[Path to production](../../path-to-production/index.md) · [Roadmap](../../../../spec/15-roadmap.md) · [Open questions](../../../../spec/16-open-questions.md)

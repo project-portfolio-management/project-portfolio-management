@@ -233,7 +233,8 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   make every other reference unlinkable (WW-1.8; audit rows are never deleted). The limits
   are stated where the controls are: a database administrator can disable the
   trigger; the purge covers only the records whose deletion is unambiguous. The
-  honest assessment is [`governance/production-readiness.md`](../governance/production-readiness.md).
+  item-by-item estimate is the [path to production](../locales/en-001/path-to-production/index.md), with its evidence in
+  [`governance/production-readiness.md`](../governance/production-readiness.md).
 
 ### 7.x Time and time zones
 

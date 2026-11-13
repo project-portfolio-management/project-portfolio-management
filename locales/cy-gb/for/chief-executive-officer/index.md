@@ -17,7 +17,7 @@ Cofrestr o bob **cynllun** y mae'r sefydliad yn ei ariannu (portffolios, rhaglen
 
 - Nid yw'r pecyn **eto** yn cynnwys penderfyniadau porth, cyllid ac arian y flwyddyn ariannol, y siart twymyn clustog, gwerth enilledig, buddion wedi'u dilysu na'r map gwres capasiti. Fe'u rhestrir fel `DP-5` i `DP-10` yn [`tasks.md`](../../../../tasks.md), ac mae'r pecyn yn dweud pa adrannau nad ydynt wedi'u hadeiladu yn hytrach na'u gadael yn wag.
 - Dim PDF na sgrin ar gyfer y pecyn: fe'i darperir fel data (`DP-11`).
-- Nid yw wedi'i **ardystio na'i archwilio** gan neb. Casgliad y prosiect ei hun: yn barod ar gyfer peilot rheoledig ar ddata anghlinigol, nad yw'n gyfrinachol, nid ar gyfer defnydd cynhyrchu heb oruchwyliaeth ([parodrwydd cynhyrchu](../../../../governance/production-readiness.md)).
+- Nid yw wedi'i **ardystio na'i archwilio** gan neb. Mae'r hyn y byddai defnydd cynhyrchu yn ei olygu, fesul eitem gydag amcangyfrif ar gyfer pob un, ar y dudalen [llwybr i gynhyrchu](../../path-to-production/index.md).
 - Un cynhaliwr, dim cytundeb lefel gwasanaeth ([llywodraethu](../../../../GOVERNANCE.md)).
 
 ## Penderfyniadau sy'n eiddo i chi
@@ -28,4 +28,4 @@ Cofrestr o bob **cynllun** y mae'r sefydliad yn ei ariannu (portffolios, rhaglen
 
 ## Darllenwch nesaf
 
-[Parodrwydd cynhyrchu](../../../../governance/production-readiness.md) · [Map ffordd](../../../../spec/15-roadmap.md) · [Cwestiynau agored](../../../../spec/16-open-questions.md)
+[Y llwybr i gynhyrchu](../../path-to-production/index.md) · [Map ffordd](../../../../spec/15-roadmap.md) · [Cwestiynau agored](../../../../spec/16-open-questions.md)

@@ -120,7 +120,8 @@
 - [Translation review: hi-001](governance/translation-reviews/hi-001.md): Review record for hi-001: machine draft, not reviewed
 - [Translation review: zh-001](governance/translation-reviews/zh-001.md): Review record for zh-001: machine draft, not reviewed
 - [Translation review: zh-cn](governance/translation-reviews/zh-cn.md): Review record for zh-cn: machine draft, not reviewed
-- [Production readiness](governance/production-readiness.md): What must hold before production use
+- [Path to production: the evidence](governance/production-readiness.md): The evidence behind the path to production: what is strong, what is not done yet
+- [Path to production](locales/en-001/path-to-production/index.md): What production means here, and each remaining item with a readiness estimate (a slider on the site)
 - [AI statement](AI_STATEMENT.md): How AI was used to build this repository
 - [Assurance checklist](governance/assurance-checklist.md): Assurance checklist
 - [Assurance mapping](governance/assurance-mapping.md): The assurance checklist against ISO/IEC 27001, SOC 2 and national schemes; the docs/<country-or-body>/ convention

@@ -13,7 +13,7 @@
 
 - Risks, issues and change requests per plan; an issues register across readable plans.
 - Missing data is shown as "not assessed", never as green.
-- The project's own open risks (no penetration test, partial retention, single maintainer, draft translations) are in [production readiness](../../../../governance/production-readiness.md). Verdict: ready for a controlled pilot on non-clinical, non-secret data, not for unsupervised production.
+- The project's own open risks (no penetration test, partial retention, single maintainer, draft translations) are on the [path to production](../../path-to-production/index.md) page, item by item with an estimate for each.
 
 ## Compliance
 

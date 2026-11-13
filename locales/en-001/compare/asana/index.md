@@ -27,7 +27,7 @@ An **Asana CSV export** can be imported, with a preview and a stated reason for 
 
 ## Project status
 
-This project is at an early stage, with one maintainer and no third-party audit. Its own assessment is that it is ready for a controlled pilot on non-clinical, non-secret data, and not ready for unsupervised production use. It has no mobile app and no real-time co-editing. See [known limitations](../../topics/comparisons/index.md#known-limitations).
+This project is at an early stage, with one maintainer and no third-party audit. What production use would take, item by item with an estimate for each, is on the [path to production](../../path-to-production/index.md) page. It has no mobile app and no real-time co-editing. See [known limitations](../../topics/comparisons/index.md#known-limitations).
 
 Corrections can be submitted as an [issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) with a source.
 

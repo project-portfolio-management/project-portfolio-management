@@ -35,7 +35,7 @@ Meddalwedd cod agored yw Rheoli Portffolio Prosiectau ar gyfer cofnodi'r cynllun
 
 ## Statws presennol
 
-Mae'r feddalwedd ar gam cynnar. Mae ganddi un cynhaliwr, dim archwiliad trydydd parti a dim cytundeb cymorth. Asesiad y prosiect ei hun yw ei bod yn **barod ar gyfer cynllun peilot rheoledig** ar ddata anghlinigol, anghyfrinachol, ac **nid yw'n barod i'w defnyddio wrth gynhyrchu heb oruchwyliaeth**. Rhestrir y cyfyngiadau hysbys ar y [dudalen gymariaethau](topics/cymariaethau/index.md).
+Mae'r feddalwedd ar gam cynnar. Mae ganddi un cynhaliwr, dim archwiliad trydydd parti a dim cytundeb cymorth. Mae'r hyn y byddai defnydd cynhyrchu yn ei olygu, fesul eitem gydag amcangyfrif ar gyfer pob un, ar y dudalen [llwybr i gynhyrchu](path-to-production/index.md). Rhestrir y cyfyngiadau hysbys ar y [dudalen gymariaethau](topics/cymariaethau/index.md).
 
 ## Arddangosiad
 

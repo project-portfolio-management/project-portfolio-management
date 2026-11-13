@@ -36,6 +36,9 @@ def page_rows(locale):
     rows = [("page:home", stamped(base), stamped(here))]
     for path in sorted((here / "topics").iterdir()):
         rows.append((f"page:{english[peer(path)].name}", stamped(english[peer(path)]), stamped(path)))
+    # The path to production has the same slug in every locale, so it needs no peer id.
+    if (here / "path-to-production").is_dir():
+        rows.append(("page:path-to-production", stamped(base / "path-to-production"), stamped(here / "path-to-production")))
     return rows
 
 

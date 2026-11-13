@@ -1291,12 +1291,14 @@ a **non-clinical** portfolio and project tool (no patient records, no clinical
 decision support); a clinical use would need a clinical safety case this project
 has not written.
 
-## 58. Verdict
+## 58. Where it stood
 
-**Not ready for unsupervised production use at a major medical or governmental
-organization today. Ready for a controlled pilot** on non-clinical, non-secret
-portfolio data, by an organization that will complete its own assurance. The
-gaps are mostly *assurance and lifecycle* (evidence, retention, erasure, access
+On 10 October 2026, production use at a major medical or governmental
+organization needed more than this software then had; the current item-by-item
+estimate is the [path to production](locales/en-001/path-to-production/index.md).
+The suggested start was a pilot on non-clinical, non-secret portfolio data, by an
+organization that will complete its own assurance. The gaps are mostly
+*assurance and lifecycle* (evidence, retention, erasure, access
 review), plus a few *technical controls* that were found missing and are listed
 below. The foundations are better than a typical young project: secure by
 default, tested restore, a governance pack, accessibility audit on every route,

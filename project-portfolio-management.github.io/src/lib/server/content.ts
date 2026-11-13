@@ -101,6 +101,52 @@ export function render(path: string, route: (r: string) => string, body?: string
   return { title: title || path, html };
 }
 
+/** One item of a readiness list: `- **Title** — 40%. Text` in the Markdown. */
+export type ReadinessItem = { title: string; percent: number; html: string };
+export type ReadinessPart = { kind: "html"; html: string } | { kind: "items"; items: ReadinessItem[] };
+
+// The title in bold, a spaced dash, a whole percentage from 0 to 100 and a full stop, then the text. Every locale writes
+// the figure in ASCII digits so that one pattern reads them all.
+const READINESS_ITEM = /^- \*\*([^*]+)\*\* — (\d{1,3})%\. (.+)$/;
+
+/**
+ * A path-to-production page: its Markdown, with each run of readiness items taken out as data (so the page can give
+ * each one a slider) and everything else rendered as usual. A malformed figure fails the build.
+ */
+export function readiness(path: string, route: (r: string) => string): { title: string; parts: ReadinessPart[] } {
+  const lines = source(path).split("\n");
+  const parts: ReadinessPart[] = [];
+  let text: string[] = [];
+  let title = "";
+  const flush = () => {
+    if (text.join("").trim() === "") return;
+    const r = render(path, route, text.join("\n"));
+    if (!title && r.title !== path) title = r.title;
+    parts.push({ kind: "html", html: r.html });
+    text = [];
+  };
+  for (const line of lines) {
+    const m = READINESS_ITEM.exec(line);
+    if (!m) {
+      if (/^- \*\*[^*]+\*\* — /.test(line)) throw new Error(`${path}: a readiness item needs " — NN%. ": ${line}`);
+      text.push(line);
+      continue;
+    }
+    const [, itemTitle = "", figure = "", body = ""] = m;
+    const percent = Number(figure);
+    if (percent > 100) throw new Error(`${path}: ${itemTitle} is over 100%`);
+    flush();
+    const html = render(path, route, body).html.trim().replace(/^<p>([\s\S]*)<\/p>$/, "$1");
+    const last = parts.at(-1);
+    const item = { title: itemTitle.trim(), percent, html };
+    if (last?.kind === "items") last.items.push(item);
+    else parts.push({ kind: "items", items: [item] });
+  }
+  flush();
+  if (!parts.some((p) => p.kind === "items")) throw new Error(`${path}: no readiness items`);
+  return { title: title || path, parts };
+}
+
 /** A brief's title (its H1) and summary (the italic line under it), for the list of briefs. */
 export function briefSummary(path: string): { title: string; summary: string } {
   const text = source(path);

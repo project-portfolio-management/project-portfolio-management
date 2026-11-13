@@ -4,7 +4,7 @@
 
 ## 现状
 
-**尚未进行任何独立安全测试。** 本软件没有渗透测试、第三方审计、独立代码评审或认证，项目也不声称有（[生产就绪度](../../../../governance/production-readiness.md)、[SECURITY](../../../../SECURITY.md)）。项目的持续集成中运行被动扫描（规则在 `.zap/rules.tsv`），项目自己的测试检查下文列出的控制；二者都不能代替一位没有编写过这个软件的测试人员。
+**尚未进行任何独立安全测试。** 本软件没有渗透测试、第三方审计、独立代码评审或认证，项目也不声称有（[通往生产之路](../../path-to-production/index.md)、[SECURITY](../../../../SECURITY.md)）。项目的持续集成中运行被动扫描（规则在 `.zap/rules.tsv`），项目自己的测试检查下文列出的控制；二者都不能代替一位没有编写过这个软件的测试人员。
 
 这是[保证清单](../../../../governance/assurance-checklist.md)的第 1 项和第 9 项。它属于部署方，由持证测试人员针对**您的**部署进行：项目无法测试您的托管、身份提供方、网络或密钥。
 
@@ -62,4 +62,4 @@
 
 ## 接着阅读
 
-[保证清单](../../../../governance/assurance-checklist.md) · [生产就绪度](../../../../governance/production-readiness.md) · [首席安全官](../chief-security-officer/index.md) · [治理、风险、合规](../governance-risk-compliance/index.md)
+[保证清单](../../../../governance/assurance-checklist.md) · [通往生产之路](../../path-to-production/index.md) · [首席安全官](../chief-security-officer/index.md) · [治理、风险、合规](../governance-risk-compliance/index.md)

@@ -13,7 +13,7 @@
 
 - Risgiau, materion a cheisiadau newid fesul cynllun; cofrestr materion ar draws cynlluniau darllenadwy.
 - Dangosir data coll fel "heb ei asesu", byth yn wyrdd.
-- Mae risgiau agored y prosiect ei hun (dim prawf treiddio, cadw rhannol, un cynhaliwr, cyfieithiadau drafft) yn [parodrwydd cynhyrchu](../../../../governance/production-readiness.md). Casgliad: yn barod ar gyfer peilot rheoledig ar ddata anghlinigol, nad yw'n gyfrinachol, nid ar gyfer defnydd cynhyrchu heb oruchwyliaeth.
+- Mae risgiau agored y prosiect ei hun (dim prawf treiddio, cadw rhannol, un cynhaliwr, cyfieithiadau drafft) ar y dudalen [llwybr i gynhyrchu](../../path-to-production/index.md), fesul eitem gydag amcangyfrif ar gyfer pob un.
 
 ## Cydymffurfiaeth
 

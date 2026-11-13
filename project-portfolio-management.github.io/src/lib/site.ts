@@ -135,6 +135,8 @@ export function routeOfRepoPath(path: string): string | null {
   if (topic?.[1] && topic[2] && topicKeyOf(topic[1], topic[2])) return `/${topic[1]}/${topic[2]}/`;
   const product = /^locales\/en-001\/compare\/([^/]+)(?:\/index\.md)?$/.exec(clean);
   if (product?.[1] && COMPARE_PRODUCTS.includes(product[1])) return `/compare/${product[1]}/`;
+  const ptp = /^locales\/([^/]+)\/path-to-production(?:\/index\.md)?$/.exec(clean);
+  if (ptp?.[1] && isBriefLocale(ptp[1])) return `/${ptp[1]}/path-to-production/`;
   const m = /^locales\/([^/]+)\/for(?:\/([^/]+))?(?:\/index\.md)?$/.exec(clean);
   if (m && m[1] && isBriefLocale(m[1])) {
     if (!m[2]) return `/${m[1]}/for/`;

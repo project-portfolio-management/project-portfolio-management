@@ -36,4 +36,4 @@ Who performs the penetration test and when; the identity provider's conditional-
 
 ## Read next
 
-[Assurance checklist](../../../../governance/assurance-checklist.md) · [Production readiness](../../../../governance/production-readiness.md) · [Data flow](../../../../governance/data-flow.md)
+[Assurance checklist](../../../../governance/assurance-checklist.md) · [Path to production](../../path-to-production/index.md) · [Data flow](../../../../governance/data-flow.md)

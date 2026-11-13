@@ -36,4 +36,4 @@
 
 ## आगे पढ़ें
 
-[आश्वासन जाँच-सूची](../../../../governance/assurance-checklist.md) · [उत्पादन-तत्परता](../../../../governance/production-readiness.md) · [डेटा-प्रवाह आरेख](../../../../governance/data-flow.md)
+[आश्वासन जाँच-सूची](../../../../governance/assurance-checklist.md) · [उत्पादन की राह](../../path-to-production/index.md) · [डेटा-प्रवाह आरेख](../../../../governance/data-flow.md)

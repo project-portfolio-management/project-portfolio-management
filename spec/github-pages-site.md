@@ -23,11 +23,19 @@ repository's reference documents. It follows the family pattern written down in 
   `locales/en-001/compare/<product>/index.md`. `/docs/` (`index.md`), `README.md`, `INSTALL.md`,
   `operations/wpm-bridge.md`, `spec/index.md` and the agent skill's `SKILL.md` (front matter dropped). Every role brief
   `locales/<locale>/for/<role>/index.md` at `/<locale>/for/<role>/`, with a list per locale at `/<locale>/for/`.
+- **Path to production.** `/<locale>/path-to-production/`, from `locales/<locale>/path-to-production/index.md` (the
+  same slug in every locale, and in the navigation): what "production" means for this software, then an honest list of
+  what production use would still take. Each list item is written `- **Title** — NN%. Text`, NN a whole number from 0
+  to 100 in ASCII digits; the page shows each item with its estimate and a Lily `Slider` (0 to 100, steps of 5) that
+  starts at the estimate. A reader may move a slider to note their own view; nothing is saved or sent. An item that
+  starts like one but has no figure, or a figure over 100, fails the build. The evidence is in
+  [`governance/production-readiness.md`](../governance/production-readiness.md).
 - **Voice.** The site reads as a neutral business analyst's summary: third person, declarative and specific, with no
   rhetorical questions, slogans or promotional adjectives. Imperatives are for instructions, in the tutorial.
 - **Claims.** The site's words are held to rule 3 of `AGENTS.md`. Every claim about this project comes from its own
-  documents, there are no invented users or figures, and the home page and every comparison repeat the verdict of
-  [production readiness](../governance/production-readiness.md). A comparison page says that the other product was not
+  documents, there are no invented users or figures, and the home page and every comparison link to the path to
+  production. No page calls the software "production-ready" or "not ready for production": what production use would
+  take is said once, item by item, on that page. A comparison page says that the other product was not
   installed or run, describes it in general terms only, scores nothing, says plainly when no importer exists, and
   says that the project is not affiliated with its owner. The tutorial is the seeded demonstration
   ([`operations/demo.md`](../operations/demo.md)).

@@ -4,7 +4,7 @@
 
 ## Lle mae pethau'n sefyll
 
-**Ni wnaed unrhyw brawf diogelwch annibynnol.** Nid oes prawf treiddio, archwiliad trydydd parti, adolygiad cod annibynnol nac ardystio ar gyfer y meddalwedd hwn, ac nid yw'r prosiect yn honni dim ([parodrwydd cynhyrchu](../../../../governance/production-readiness.md), [SECURITY](../../../../SECURITY.md)). Mae sgan goddefol yn rhedeg yn integreiddio parhaus y prosiect (rheolau yn `.zap/rules.tsv`), ac mae profion y prosiect ei hun yn gwirio'r rheolaethau a restrir isod; nid yw'r naill na'r llall yn cymryd lle profwr nad oedd yn ysgrifennu'r meddalwedd.
+**Ni wnaed unrhyw brawf diogelwch annibynnol.** Nid oes prawf treiddio, archwiliad trydydd parti, adolygiad cod annibynnol nac ardystio ar gyfer y meddalwedd hwn, ac nid yw'r prosiect yn honni dim ([y llwybr i gynhyrchu](../../path-to-production/index.md), [SECURITY](../../../../SECURITY.md)). Mae sgan goddefol yn rhedeg yn integreiddio parhaus y prosiect (rheolau yn `.zap/rules.tsv`), ac mae profion y prosiect ei hun yn gwirio'r rheolaethau a restrir isod; nid yw'r naill na'r llall yn cymryd lle profwr nad oedd yn ysgrifennu'r meddalwedd.
 
 Eitem 1 ac eitem 9 o'r [rhestr wirio sicrwydd](../../../../governance/assurance-checklist.md) yw hyn. Mae'n perthyn i'r defnyddiwr, gyda phrofwr ardystiedig, yn erbyn **eich** defnydd chi: ni all y prosiect brofi eich gwesteio, eich darparwr hunaniaeth, eich rhwydwaith na'ch allweddi.
 
@@ -62,4 +62,4 @@ Pwy sy'n profi, pryd, yn erbyn beth, â pha ddata ac o dan ba reolau; sut y grad
 
 ## Darllenwch nesaf
 
-[Rhestr wirio sicrwydd](../../../../governance/assurance-checklist.md) · [Parodrwydd cynhyrchu](../../../../governance/production-readiness.md) · [Prif Swyddog Diogelwch](../chief-security-officer/index.md) · [Llywodraethu, Risg, Cydymffurfiaeth](../governance-risk-compliance/index.md)
+[Rhestr wirio sicrwydd](../../../../governance/assurance-checklist.md) · [Y llwybr i gynhyrchu](../../path-to-production/index.md) · [Prif Swyddog Diogelwch](../chief-security-officer/index.md) · [Llywodraethu, Risg, Cydymffurfiaeth](../governance-risk-compliance/index.md)

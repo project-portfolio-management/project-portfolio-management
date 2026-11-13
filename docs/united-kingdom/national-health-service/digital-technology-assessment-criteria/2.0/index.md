@@ -31,9 +31,9 @@ explainable duplicate detection, and a workspace for tasks, critical-path schedu
 resources, risks and issues, and governance. It holds **no patient data, takes no clinical input and gives no
 clinical output.** It is open-source software the buyer deploys and operates (a Rust service and a SvelteKit web
 client over PostgreSQL); the maintainer does not host it, has no access to any deployment, and receives no
-telemetry. It is **young software with one maintainer**: its own [readiness assessment](../../../../../governance/production-readiness.md)
-says it is **not ready for unsupervised production use** at a large medical or governmental organization, and
-**ready for a controlled pilot on non-clinical, non-secret data**.
+telemetry. It is **young software with one maintainer**: its own [path to production](../../../../../locales/en-001/path-to-production/index.md)
+lists, item by item with an estimate for each, what production use at a large medical or governmental organization
+would still take, and suggests starting with a **pilot on non-clinical, non-secret data**.
 
 ## Where it stands
 
@@ -195,9 +195,8 @@ close in code**, and C2 and C1 each depend on a decision for someone else.
 7. **A.** A legal entity, address and phone number, or a statement that the buyer is contracting with an
    individual.
 
-Separately, the product's own [readiness assessment](../../../../../governance/production-readiness.md) records that
-it is not ready for unsupervised production use in a large medical or governmental organization, whatever DTAC
-says.
+Separately, the product's own [path to production](../../../../../locales/en-001/path-to-production/index.md) lists
+the gaps that remain before production use in a large medical or governmental organization, whatever DTAC says.
 
 ## Limits of this assessment
 

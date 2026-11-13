@@ -48,13 +48,15 @@ function localeDirectories() {
   return readdirSync(join(ROOT, "locales")).sort();
 }
 
-/** The locale home pages, the topic pages and the product comparisons. */
+/** The locale home pages, the topic pages, the product comparisons and the path-to-production pages. */
 function sitePages() {
   const out = [];
   for (const locale of localeDirectories()) {
     if (existsSync(join(ROOT, `locales/${locale}/index.md`))) out.push(`locales/${locale}/index.md`);
     for (const slug of subdirectories(`locales/${locale}/topics`)) out.push(`locales/${locale}/topics/${slug}/index.md`);
     for (const slug of subdirectories(`locales/${locale}/compare`)) out.push(`locales/${locale}/compare/${slug}/index.md`);
+    if (existsSync(join(ROOT, `locales/${locale}/path-to-production/index.md`)))
+      out.push(`locales/${locale}/path-to-production/index.md`);
   }
   return out;
 }

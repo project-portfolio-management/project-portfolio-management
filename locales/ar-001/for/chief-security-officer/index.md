@@ -36,4 +36,4 @@
 
 ## اقرأ بعد ذلك
 
-[قائمة التحقق للضمان](../../../../governance/assurance-checklist.md) · [الجاهزية للإنتاج](../../../../governance/production-readiness.md) · [تدفق البيانات](../../../../governance/data-flow.md)
+[قائمة التحقق للضمان](../../../../governance/assurance-checklist.md) · [الطريق إلى الإنتاج](../../path-to-production/index.md) · [تدفق البيانات](../../../../governance/data-flow.md)

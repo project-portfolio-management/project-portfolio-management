@@ -15,7 +15,7 @@ decisions that belong to the buyer clearly marked.
 | [Personal-data inventory](personal-data-inventory.csv) | Every column that can hold personal data, with class, purpose and retention class (kept true to the schema by a test) |
 | [Accessibility statement](accessibility-statement.md) | WCAG 2.2 AA: what is tested, what is not, known gaps, how to ask |
 | [Language statement](language-statement.md) | Which languages the interface is available in and how complete each is |
-| [Production readiness](production-readiness.md) | An honest assessment of readiness for major medical and governmental organizations: what is strong, what is not ready |
+| [Path to production: the evidence](production-readiness.md) | The evidence behind the [path to production](../locales/en-001/path-to-production/index.md) for major medical and governmental organizations: what is strong, what is not done yet |
 | [Assurance checklist](assurance-checklist.md) | What an assessor will ask for, who owns each item, and what the project can supply |
 | [Assurance mapping](assurance-mapping.md) | The checklist against ISO/IEC 27001 and SOC 2, and national and sector schemes as examples (WW-1.21) |
 | [DTAC checklist](dtac-checklist.md) | Answers to the UK NHS's Digital Technology Assessment Criteria, section by section, with the evidence: one national scheme, kept as a worked example |

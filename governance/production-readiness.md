@@ -1,15 +1,17 @@
-# Production readiness for major medical and governmental organizations
+# Path to production: the evidence
 
-An honest assessment, dated **10 October 2026**, of whether this software can be
-put into production at a large health body or a government department. The
+The evidence behind the [path to production](../locales/en-001/path-to-production/index.md): what this software
+would still need before production use at a large health body or a government department. First written on
+**10 October 2026**; the item-by-item estimates are on that page. The
 reasoning and the evidence are in [`plan.md`](../plan.md) §58 to §63; the work is in
 [`tasks.md`](../tasks.md) (items `RG-n`).
 
-## Verdict
+## Where it stands
 
-**Not ready for unsupervised production use. Ready for a controlled pilot** on
-non-clinical, non-secret portfolio and project data, by an organization that
-completes its own assurance (see the [assurance checklist](assurance-checklist.md)).
+The [path to production](../locales/en-001/path-to-production/index.md) says what production means here and lists,
+item by item with an estimate for each, what it would still take. The project suggests starting with a pilot on
+non-clinical, non-secret portfolio and project data, by an organization that completes its own assurance (see the
+[assurance checklist](assurance-checklist.md)).
 
 "Medical" here means a health organization using this as a **non-clinical**
 portfolio and project tool: no patient records, no clinical decision support. A
@@ -29,15 +31,15 @@ clinical use would need a clinical safety case that this project has not written
 | Data-subject export and pseudonymisation of a person across the schema (administrators only; preview first) | RG-6; request test; a test keeps the column list in step with the inventory |
 | Access review: the grants that stand, oldest first, as a spreadsheet for recertification (administrators only) | RG-9; request test |
 | Attachments: content must match the declared type, programs refused, optional `clamd` scan that fails closed | RG-8; unit and request tests |
-| Break-glass access to private plans: eligible people only, a stated reason, at most four hours, a second person told or no grant, every request audited | RG-10; end-to-end test with real tokens |
+| Break-glass access to private plans: eligible people only, a stated reason, at most four hours, a second person named or no grant, every request audited (the named person is not checked to exist, so a notice can reach no one) | RG-10; end-to-end test with real tokens |
 | Handling marks: a configurable classification scheme, plans above your clearance do not exist for you (administrators too), the mark on every response | RG-7; end-to-end test with real tokens |
 | Backup with a **tested restore**, stated recovery targets, optional encryption | [operations pack](../operations/README.md); RG-5; CI drill (plain and encrypted) |
-| Retention purge for notifications, delivery logs and trend snapshots (dry run by default) | RG-4; request test |
+| Retention purge for notifications, delivery logs, idempotency keys and trend and adoption snapshots, with periods set per deployment (dry run by default) | RG-4; request test |
 | Dependency policy, software bill of materials, build provenance, a security policy | `cargo deny`; `release.yml`; [`SECURITY.md`](../SECURITY.md) |
 | Accessibility: automated WCAG 2.2 AA audit of every route | [statement](accessibility-statement.md) |
 | Information governance documents a buyer can adapt | this folder |
 
-## What is not ready
+## What is not done yet
 
 | Gap | Why it matters | Item |
 |---|---|---|
@@ -66,4 +68,4 @@ clinical use would need a clinical safety case that this project has not written
 ## What this document does not claim
 
 No certification, approval or audit is claimed. This is a self-assessment by the
-project, and the checks listed under "strong" prove what they test.
+project, and the checks listed under "What is strong" prove what they test.

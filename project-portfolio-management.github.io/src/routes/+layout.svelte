@@ -100,11 +100,13 @@
 
   const isHome = $derived(page.route.id === "/" || page.route.id === "/[locale=home]");
   const topic = $derived<TopicKey | null>(page.data.topic ?? null);
+  const pathToProduction = $derived(page.data.pathToProduction === true);
 
   // This page in another locale, or null where it has only the one version (the documents, the search page). Hindi has
   // no home page or topics: its briefs stand in for them.
   function peerRoute(code: string): string | null {
     if (role) return `/${code}/for/${role}/`;
+    if (pathToProduction) return `/${code}/path-to-production/`;
     if (isHome) return isHomeLocale(code) ? `/${code}/` : `/${code}/for/`;
     if (topic) return isHomeLocale(code) ? `/${code}/${topicSlug(code, topic)}/` : `/${code}/for/`;
     return locale ? `/${code}/for/` : null;
@@ -117,6 +119,7 @@
     { label: t("nav.comparisons"), route: topicRoute("comparisons") },
     { label: t("nav.tutorial"), route: topicRoute("tutorial") },
     { label: t("nav.briefs"), route: `/${shownLocale()}/for/` },
+    { label: t("nav.path"), route: `/${shownLocale()}/path-to-production/` },
     { label: t("nav.docs"), route: "/docs/" },
   ]);
   // The link picker adds each reference document.
@@ -146,7 +149,7 @@
 </script>
 
 <svelte:head>
-  {#if role || isHome || topic}
+  {#if role || isHome || topic || pathToProduction}
     {#each BRIEF_LOCALES as code (code)}
       {@const target = peerRoute(code)}
       {#if target}<link rel="alternate" hreflang={langTag(code)} href={href(target)} />{/if}

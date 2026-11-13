@@ -25,7 +25,7 @@
 
 ## 软件强制执行的控制
 
-默认登录、速率限制、严格的安全标头、空闲会话超时（30 分钟）和硬性会话上限、仅限公共 `https` 的出站目的地、校验签名的附件、不可变的审计行、带审计的紧急通道。每一项都有测试覆盖，见[生产就绪度](../../../../governance/production-readiness.md)。
+默认登录、速率限制、严格的安全标头、空闲会话超时（30 分钟）和硬性会话上限、仅限公共 `https` 的出站目的地、校验签名的附件、不可变的审计行、带审计的紧急通道。每一项都有测试覆盖，见[通往生产之路](../../path-to-production/index.md)。
 
 ## 属于您的决定
 
@@ -33,4 +33,4 @@
 
 ## 接着阅读
 
-[生产就绪度](../../../../governance/production-readiness.md) · [DPIA](../../../../governance/dpia.md) · [合规](../../../../spec/12-compliance.md) · [SECURITY](../../../../SECURITY.md)
+[通往生产之路](../../path-to-production/index.md) · [DPIA](../../../../governance/dpia.md) · [合规](../../../../spec/12-compliance.md) · [SECURITY](../../../../SECURITY.md)

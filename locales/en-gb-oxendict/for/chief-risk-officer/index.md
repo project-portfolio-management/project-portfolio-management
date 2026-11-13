@@ -25,7 +25,7 @@
 
 ## Controls the software enforces
 
-Login by default, rate limiting, strict security headers, an idle session timeout (30 minutes) and a hard session limit, outbound destinations restricted to public `https`, signature-checked attachments, immutable audit rows, break-glass with audit. Each is covered by a test cited in [production readiness](../../../../governance/production-readiness.md).
+Login by default, rate limiting, strict security headers, an idle session timeout (30 minutes) and a hard session limit, outbound destinations restricted to public `https`, signature-checked attachments, immutable audit rows, break-glass with audit. Each is covered by a test cited in [path to production](../../path-to-production/index.md).
 
 ## Decisions that are yours
 
@@ -33,4 +33,4 @@ Risk appetite for a pilot; the exception window (default 48 hours); which markin
 
 ## Read next
 
-[Production readiness](../../../../governance/production-readiness.md) · [DPIA](../../../../governance/dpia.md) · [Compliance](../../../../spec/12-compliance.md) · [SECURITY](../../../../SECURITY.md)
+[Path to production](../../path-to-production/index.md) · [DPIA](../../../../governance/dpia.md) · [Compliance](../../../../spec/12-compliance.md) · [SECURITY](../../../../SECURITY.md)

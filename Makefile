@@ -10,8 +10,8 @@ UI := project-portfolio-management-ui-with-svelte
 ##
 .PHONY: default
 default:
-	cd $(SERVICE) && make
-	cd $(UI) && make demo
+	cd $(SERVICE) && $(MAKE)
+	cd $(UI) && $(MAKE) demo
 
 ##
 # make help: Display this help message.
@@ -75,6 +75,13 @@ lint-markdown:
 	@bash scripts/lint-markdown.sh check --quiet
 
 ##
+# make publish-github-pages: Publish the website subproject to its own sibling repository.
+##
+.PHONY: publish-github-pages
+publish-github-pages:
+	bin/publish-github-pages
+
+##
 # make run-demo: Start the demo.
 ##
 .PHONY: run-demo
@@ -85,14 +92,14 @@ run-demo: run-demo-service run-demo-ui
 ##
 .PHONY: run-demo-service
 run-demo-service:
-	cd $(SERVICE) && make demo
+	cd $(SERVICE) && $(MAKE) demo
 
 ##
 # make run-demo-ui: Start the demo front-end UI.
 ##
 .PHONY: run-demo-ui
 run-demo-ui:
-	cd $(UI) && make demo
+	cd $(UI) && $(MAKE) demo
 
 ##
 # make test: Test everything.
@@ -105,14 +112,14 @@ test: test-service test-ui test-github-discussions test-demo
 ##
 .PHONY: test-service
 test-service:
-	cd $(SERVICE) && make test
+	cd $(SERVICE) && $(MAKE) test
 
 ##
 # make test-ui: Test the front-end UI.
 ##
 .PHONY: test-ui
 test-ui:
-	cd $(UI) && make test
+	cd $(UI) && $(MAKE) test
 
 ##
 # make test-demo: Test the demo.

@@ -18,7 +18,6 @@ REPO_SLUG="project-portfolio-management"
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 # Counters
@@ -52,16 +51,16 @@ for declaration in "${DECLARATIONS[@]}"; do
     content=$(cat "$REPO_ROOT/$filepath")
     if [ "$content" = "$expected_content" ]; then
       echo -e "${GREEN}✓${NC} $filepath exists with correct content"
-      ((PASS++))
+      PASS=$((PASS + 1))
     else
       echo -e "${RED}✗${NC} $filepath exists but content mismatch"
       echo "  Expected: $expected_content"
       echo "  Got: $content"
-      ((FAIL++))
+      FAIL=$((FAIL + 1))
     fi
   else
     echo -e "${RED}✗${NC} $filepath does not exist"
-    ((FAIL++))
+    FAIL=$((FAIL + 1))
   fi
 done
 
@@ -73,50 +72,33 @@ echo ""
 echo "Test 2: Verifying GitHub Discussions links..."
 echo ""
 
-# Test the orgs URL
-ORG_URL="https://github.com/orgs/${ORG_SLUG}/discussions"
-echo "Checking: $ORG_URL"
+pass() { echo -e "${GREEN}✓${NC} $1"; PASS=$((PASS + 1)); }
+fail() { echo -e "${RED}✗${NC} $1"; FAIL=$((FAIL + 1)); }
 
-if command -v curl &> /dev/null; then
-  # Check if the URL contains "View All Discussions"
-  response=$(curl -s -L -I "$ORG_URL" 2>/dev/null | head -1 || true)
-  
-  # For a more thorough check, we'd need actual content, but for now just verify reachability
-  if curl -s -L "$ORG_URL" 2>/dev/null | grep -q "View All Discussions" || echo "$response" | grep -q "200 OK"; then
-    echo -e "${GREEN}✓${NC} $ORG_URL is accessible"
-    ((PASS++))
-  else
-    echo -e "${YELLOW}⚠${NC} $ORG_URL - Unable to verify 'View All Discussions' text (may require authentication)"
-    echo "  URL is reachable but content check skipped"
-    ((PASS++))
-  fi
+if ! command -v curl &> /dev/null; then
+  fail "curl is not installed, so the links cannot be checked"
 else
-  echo -e "${YELLOW}⚠${NC} curl not available, skipping URL verification"
-  ((PASS++))
-fi
-
-echo ""
-
-# Test the repo URL redirect
-REPO_URL="https://github.com/${ORG_SLUG}/${REPO_SLUG}/discussions"
-expected_redirect="https://github.com/orgs/${ORG_SLUG}/discussions"
-echo "Checking: $REPO_URL (should redirect to $expected_redirect)"
-
-if command -v curl &> /dev/null; then
-  redirect_url=$(curl -s -L -I "$REPO_URL" 2>/dev/null | grep -i "location:" | tail -1 | sed 's/location: //i' | tr -d '\r' | tr -d ' ' || true)
-  
-  if [ "$redirect_url" = "$expected_redirect" ]; then
-    echo -e "${GREEN}✓${NC} $REPO_URL redirects to $expected_redirect"
-    ((PASS++))
+  # The organization page must contain the text "View all discussions" (GitHub's own casing; matched
+  # case-insensitively so a change of capitalization alone does not fail the test).
+  ORG_URL="https://github.com/orgs/${ORG_SLUG}/discussions"
+  echo "Checking: $ORG_URL"
+  if curl -fsSL "$ORG_URL" 2>/dev/null | grep -qi "View all discussions"; then
+    pass "$ORG_URL contains \"View all discussions\""
   else
-    echo -e "${YELLOW}⚠${NC} $REPO_URL redirects to: $redirect_url"
-    echo "  Expected: $expected_redirect"
-    echo "  Note: GitHub may use different redirect URLs"
-    ((PASS++))
+    fail "$ORG_URL is unreachable or does not contain \"View all discussions\""
   fi
-else
-  echo -e "${YELLOW}⚠${NC} curl not available, skipping redirect verification"
-  ((PASS++))
+  echo ""
+
+  # The repository's discussions URL must end at the organization's discussions (after any redirects).
+  REPO_URL="https://github.com/${ORG_SLUG}/${REPO_SLUG}/discussions"
+  expected="https://github.com/orgs/${ORG_SLUG}/discussions"
+  echo "Checking: $REPO_URL (should redirect to $expected)"
+  final=$(curl -sSL -o /dev/null -w '%{url_effective}' "$REPO_URL" 2>/dev/null || true)
+  if [ "${final%/}" = "$expected" ]; then
+    pass "$REPO_URL redirects to $expected"
+  else
+    fail "$REPO_URL ends at ${final:-nothing}, not $expected"
+  fi
 fi
 
 echo ""

@@ -5,7 +5,7 @@ The public site, `project-portfolio-management.github.io/` in this repository (t
 repository's reference documents. It follows the family pattern written down in the workforce repository
 (`workforce-planning-management/spec/monorepo-github-pages/`): a SvelteKit and Lily Design System subproject named
 `<repo>.github.io/` inside the monorepo, exported with `git subtree` to a read-only sibling repository, published by
-`make github-pages`.
+`make publish-github-pages`.
 
 ## What it is
 
@@ -44,7 +44,7 @@ repository's reference documents. It follows the family pattern written down in 
 The exported repository has no parent directory, so the site cannot read `../README.md` when it builds. The site's
 `scripts/sync-content.mjs` copies the documents into `src/content/docs.json`, and each locale's topic slugs, resolved
 through `.locale-peer-id`, into `src/content/topics.json` (both committed). `--check` fails when the copy
-differs from the repository files; CI runs it, and `bin/make-github-pages` runs it before pushing. The document list
+differs from the repository files; CI runs it, and `bin/publish-github-pages` runs it before pushing. The document list
 is in that script and in `src/lib/site.ts`.
 
 ## Locale and direction
@@ -105,7 +105,7 @@ suite.
 
 ## Publishing
 
-`make github-pages` runs `bin/make-github-pages`, which runs
+`make publish-github-pages` runs `bin/publish-github-pages`, which runs
 `git subtree push --prefix=project-portfolio-management.github.io github-pages main` after checking that the
 `github-pages` remote exists, the content copy is current and the directory has no uncommitted change. The exported
 repository deploys with its own `.github/workflows/deploy.yml` (GitHub Pages' actions; inert inside the monorepo).
@@ -123,4 +123,4 @@ English; the role briefs' slugs are English in every locale, so they fall short 
 language; search does not work with JavaScript off; 15 of the 57 themes fail contrast on the home page; the first paint (or
 a visit with JavaScript off) uses the light fallback tokens whatever the system preference; a page without a locale in
 its address is first painted in English for a reader of another language; nothing publishes the site on a push to the
-monorepo (`make github-pages` is run by hand), so it can lag `main`.
+monorepo (`make publish-github-pages` is run by hand), so it can lag `main`.

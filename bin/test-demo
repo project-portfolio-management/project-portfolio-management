@@ -1,419 +1,93 @@
 #!/usr/bin/env bash
-# Test the demonstration stack end-to-end.
+# Smoke-test the demonstration stack (operations/demo.md).
 #
-# This script:
-# 1. Starts the demo stack (API + UI + database + seed data)
-# 2. Waits for services to be ready
-# 3. Runs end-to-end tests against the running demo
-# 4. Stops the demo stack (optional)
-# 5. Reports results
+# It starts the stack, checks the API from inside its container (the demonstration API publishes no host port),
+# checks the UI on port 3000, and stops the stack. It is a smoke test of the running stack, not the Playwright suite:
+# the UI's `tests/e2e/demo.spec.ts` stubs the API and starts its own server, so it does not test this stack.
 #
 # Usage:
-#   ./bin/test-demo              # Run full test sequence (start, test, stop)
-#   ./bin/test-demo start         # Start demo stack only
-#   ./bin/test-demo stop          # Stop demo stack only
-#   ./bin/test-demo test          # Run tests only (stack must be running)
-#   ./bin/test-demo full          # Full sequence: start, test, stop
+#   bin/test-demo              # start, check, stop (keeps the data)
+#   bin/test-demo start        # start only
+#   bin/test-demo check        # check a running stack
+#   bin/test-demo stop         # stop (keeps the data)
 #
-# Requirements:
-#   - Podman with Compose
-#   - Node 22+ (for test scripts)
-#   - curl
-#   - pnpm (for UI dependencies)
+# The demonstration shares the `postgres` service and its volume with the normal local stack (operations/demo.md).
+# This script never deletes a volume; to delete the demonstration data run
+#   podman compose --profile demo down -v
+# yourself, knowing it also deletes the local database.
 #
+# Requirements: Podman with Compose, curl.
+
 set -euo pipefail
 
-# Configuration
-DEMO_PROFILE="demo"
-COMPOSE_CMD="podman compose"
-TIMEOUT_SECONDS=300
-TEST_BASE_URL="http://127.0.0.1:1241"
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+COMPOSE=(podman compose --profile demo)
 UI_BASE_URL="http://127.0.0.1:3000"
-UI_TEST_PORT=4174  # Playwright serves on this port
 
-# Colors for output
-RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+RED='\033[0;31m'
+NC='\033[0m'
 
-# Helper functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+FAILED=0
+pass() { echo -e "${GREEN}✓${NC} $1"; }
+fail() { echo -e "${RED}✗${NC} $1"; FAILED=$((FAILED + 1)); }
+
+# GET a path on the demonstration API from inside its container; prints the HTTP status.
+api_status() {
+  "${COMPOSE[@]}" exec -T api-demo curl --silent --output /dev/null --write-out '%{http_code}' "http://localhost:1241$1" || echo 000
 }
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-log_step() {
-    echo ""
-    echo -e "${BLUE}=== $1 ===${NC}"
-}
-
-log_success() {
-    echo -e "${GREEN}✓ $1${NC}"
-}
-
-log_failure() {
-    echo -e "${RED}✗ $1${NC}"
-}
-
-# Check if a command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Check if a service is ready (returns 200 OK)
-wait_for_service() {
-    local name="$1"
-    local url="$2"
-    local max_retries="$3"
-    local retry_delay=2
-    local attempt=0
-    
-    log_info "Waiting for $name at $url..."
-    
-    while [ $attempt -lt $max_retries ]; do
-        if curl --output /dev/null --silent --head --fail "$url"; then
-            log_info "$name is ready!"
-            return 0
-        fi
-        attempt=$((attempt + 1))
-        sleep $retry_delay
-        if [ $((attempt % 10)) -eq 0 ]; then
-            log_info "Still waiting for $name... ($attempt/$max_retries)"
-        fi
-    done
-    
-    log_error "$name did not become ready after ${max_retries}s"
-    return 1
-}
-
-# Check if a service is healthy
-check_health() {
-    local name="$1"
-    local url="$2"
-    
-    if curl --output /dev/null --silent --head --fail "$url"; then
-        log_success "$name is healthy"
-        return 0
-    else
-        log_failure "$name is not healthy"
-        return 1
-    fi
-}
-
-# Start the demo stack using Podman Compose
 start_demo() {
-    log_step "Starting Demo Stack"
-    
-    # Check prerequisites
-    if ! command_exists podman; then
-        log_error "Podman is required but not found"
-        return 1
-    fi
-    
-    log_info "Starting demo services with Podman Compose..."
-    POSTGRES_PASSWORD=demo $COMPOSE_CMD --profile $DEMO_PROFILE up -d --build --wait ui-demo
-    
-    log_info "Demo services started. Waiting for them to become ready..."
-    
-    # Wait for API to be ready
-    wait_for_service "API" "$TEST_BASE_URL/_health/ready" $((TIMEOUT_SECONDS / 2)) || return 1
-    
-    # Wait for UI to be ready
-    wait_for_service "UI" "$UI_BASE_URL" $((TIMEOUT_SECONDS / 2)) || return 1
-    
-    log_success "Demo stack is running!"
-    log_info "API available at: $TEST_BASE_URL"
-    log_info "UI available at: $UI_BASE_URL"
-    
-    return 0
+  command -v podman > /dev/null || { echo "Podman is required" >&2; return 1; }
+  # `--wait` returns when every started service is healthy (api-demo and ui-demo have health checks) and the
+  # one-shot seed job has completed. POSTGRES_PASSWORD must match the one the local volume was created with.
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-demo}" "${COMPOSE[@]}" up -d --build --wait ui-demo
 }
 
-# Stop the demo stack
 stop_demo() {
-    log_step "Stopping Demo Stack"
-    
-    log_info "Stopping demo services..."
-    $COMPOSE_CMD --profile $DEMO_PROFILE down -v > /dev/null 2>&1 || true
-    
-    log_success "Demo services stopped."
-    
-    return 0
+  "${COMPOSE[@]}" down
 }
 
-# Run basic health checks
-run_health_checks() {
-    log_step "Running Health Checks"
-    
-    local all_healthy=true
-    
-    # Check API health endpoints
-    check_health "API /_health/live" "$TEST_BASE_URL/_health/live" || all_healthy=false
-    check_health "API /_health/ready" "$TEST_BASE_URL/_health/ready" || all_healthy=false
-    check_health "API /_health/startup" "$TEST_BASE_URL/_health/startup" || all_healthy=false
-    
-    # Check UI is accessible
-    check_health "UI" "$UI_BASE_URL" || all_healthy=false
-    
-    # Check some basic API endpoints
-    check_health "Plans endpoint" "$TEST_BASE_URL/api/plans" || all_healthy=false
-    check_health "OpenAPI spec" "$TEST_BASE_URL/api-docs/openapi.json" || all_healthy=false
-    
-    if [ "$all_healthy" = true ]; then
-        log_success "All health checks passed!"
-        return 0
-    else
-        log_error "Some health checks failed!"
-        return 1
-    fi
+check_demo() {
+  echo "API (inside the api-demo container):"
+  for path in /_health/live /_health/ready /_health/startup /api-docs/openapi.json; do
+    status=$(api_status "$path")
+    if [ "$status" = 200 ]; then pass "GET $path answers 200"; else fail "GET $path answers $status, not 200"; fi
+  done
+  # Login is on in the demonstration, so an unauthenticated list is refused.
+  status=$(api_status /api/plans)
+  if [ "$status" = 401 ]; then pass "GET /api/plans without a token answers 401"; else fail "GET /api/plans without a token answers $status, not 401"; fi
+
+  echo "UI ($UI_BASE_URL):"
+  for path in / /en-001/signin; do
+    status=$(curl --silent --output /dev/null --write-out '%{http_code}' "$UI_BASE_URL$path" || echo 000)
+    if [ "$status" -ge 200 ] && [ "$status" -lt 400 ]; then pass "GET $path answers $status"; else fail "GET $path answers $status"; fi
+  done
+  if curl --silent --head "$UI_BASE_URL/" | grep -qi '^content-type:.*text/html'; then
+    pass "the UI answers HTML"
+  else
+    fail "the UI does not answer HTML"
+  fi
+
+  if [ "$FAILED" -gt 0 ]; then
+    echo -e "${RED}$FAILED check(s) failed${NC}"
+    return 1
+  fi
+  echo -e "${GREEN}All checks passed${NC}"
 }
 
-# Run basic API tests using curl
-run_api_tests() {
-    log_step "Running API Tests"
-    
-    local failed=0
-    
-    # Test 1: Check OpenAPI spec is valid JSON
-    log_info "Testing OpenAPI spec..."
-    if curl --silent "$TEST_BASE_URL/api-docs/openapi.json" | python3 -m json.tool > /dev/null 2>&1; then
-        log_success "OpenAPI spec is valid JSON"
-    else
-        log_failure "OpenAPI spec is not valid JSON"
-        failed=$((failed + 1))
-    fi
-    
-    # Test 2: Check health endpoints return expected content
-    log_info "Testing health endpoint content..."
-    local live_status=$(curl --silent "$TEST_BASE_URL/_health/live" | grep -c "im ok" || echo "0")
-    if [ "$live_status" -gt 0 ]; then
-        log_success "Live health check returns expected content"
-    else
-        log_warn "Live health check content unexpected (may be different format)"
-    fi
-    
-    # Test 3: Check UI returns HTML
-    log_info "Testing UI HTML response..."
-    local content_type=$(curl --silent -I "$UI_BASE_URL" | grep -i "content-type" | head -1 | tr -d '\r')
-    if echo "$content_type" | grep -qi "text/html"; then
-        log_success "UI returns HTML"
-    else
-        log_warn "UI content type: $content_type"
-    fi
-    
-    if [ $failed -eq 0 ]; then
-        log_success "All API tests passed!"
-        return 0
-    else
-        log_error "$failed API tests failed!"
-        return 1
-    fi
-}
-
-# Run seed verification (check if demo data was seeded)
-run_seed_verification() {
-    log_step "Verifying Demo Data Seeding"
-    
-    # The seed-demo script should have created some plans
-    # In demo mode, we need to authenticate, so we'll just check if the service is responsive
-    
-    log_info "Checking if demo data exists..."
-    
-    # Try to access plans (will fail without auth in demo mode, but that's expected)
-    local response=$(curl --silent -I "$TEST_BASE_URL/api/plans" | head -1)
-    if echo "$response" | grep -q "HTTP/1.1 401"; then
-        log_success "API requires authentication (demo mode working)"
-        return 0
-    elif echo "$response" | grep -q "HTTP/1.1 200"; then
-        log_success "API accessible without auth"
-        return 0
-    else
-        log_failure "Unexpected API response: $response"
-        return 1
-    fi
-}
-
-# Run UI tests using curl
-run_ui_tests() {
-    log_step "Running UI Tests"
-    
-    local failed=0
-    
-    # Test 1: UI loads
-    log_info "Testing UI loads..."
-    if curl --output /dev/null --silent --fail "$UI_BASE_URL"; then
-        log_success "UI loads successfully"
-    else
-        log_failure "UI failed to load"
-        failed=$((failed + 1))
-    fi
-    
-    # Test 2: Sign-in page
-    log_info "Testing sign-in page..."
-    if curl --output /dev/null --silent --fail "$UI_BASE_URL/en-001/signin"; then
-        log_success "Sign-in page accessible"
-    else
-        log_failure "Sign-in page not accessible"
-        failed=$((failed + 1))
-    fi
-    
-    # Test 3: Check for demo mode indicator
-    log_info "Testing demo mode..."
-    local page_content=$(curl --silent "$UI_BASE_URL/en-001/signin" || true)
-    if echo "$page_content" | grep -qi "demonstration\|fictitious"; then
-        log_success "Demo mode indicator found"
-    else
-        log_warn "Demo mode indicator not found (may be on a different page)"
-    fi
-    
-    if [ $failed -eq 0 ]; then
-        log_success "All UI tests passed!"
-        return 0
-    else
-        log_error "$failed UI tests failed!"
-        return 1
-    fi
-}
-
-# Run Playwright end-to-end tests
-run_playwright_tests() {
-    log_step "Running Playwright End-to-End Tests"
-    
-    if ! command_exists pnpm; then
-        log_warn "pnpm not found, skipping Playwright tests"
-        return 0
-    fi
-    
-    if ! command_exists npx; then
-        log_warn "npx not found, skipping Playwright tests"
-        return 0
-    fi
-    
-    log_info "Installing Playwright browsers..."
-    cd project-portfolio-management-ui-with-svelte
-    if ! pnpm exec playwright install --with-deps > /dev/null 2>&1; then
-        log_warn "Playwright install failed, skipping tests"
-        return 0
-    fi
-    
-    log_info "Running Playwright tests..."
-    log_info "This may take several minutes..."
-    
-    # Set PW_PORT for tests if not already set
-    export PW_PORT=${PW_PORT:-4174}
-    
-    # Run the demo-specific tests
-    if pnpm exec playwright test tests/e2e/demo.spec.ts; then
-        log_success "Playwright demo tests passed!"
-        return 0
-    else
-        log_error "Playwright demo tests failed!"
-        return 1
-    fi
-}
-
-# Run end-to-end demo tests
-run_e2e_tests() {
-    log_step "Running End-to-End Tests"
-    
-    local failed=0
-    
-    # Run all test suites
-    run_health_checks || failed=$((failed + 1))
-    run_api_tests || failed=$((failed + 1))
-    run_seed_verification || failed=$((failed + 1))
-    run_ui_tests || failed=$((failed + 1))
-    
-    # Try to run Playwright tests
-    if [ $failed -eq 0 ]; then
-        run_playwright_tests || log_warn "Playwright tests failed or skipped"
-    fi
-    
-    if [ $failed -eq 0 ]; then
-        log_success "All end-to-end tests passed!"
-        return 0
-    else
-        log_error "$failed test suites failed!"
-        return 1
-    fi
-}
-
-# Clean up on exit
-cleanup() {
-    if [ "${STOP_AFTER_TEST:-true}" = "true" ]; then
-        log_step "Cleanup"
-        log_info "Stopping demo stack..."
-        stop_demo > /dev/null 2>&1 || true
-        log_success "Cleanup complete."
-    fi
-}
-
-# Main command handling
-case "${1:-}" in
-    start)
-        start_demo
-        ;;
-    stop)
-        stop_demo
-        ;;
-    test)
-        # Don't stop after test
-        STOP_AFTER_TEST=false
-        run_e2e_tests
-        ;;
-    full)
-        # Full sequence: start, test, stop
-        if ! start_demo; then
-            log_error "Failed to start demo stack"
-            exit 1
-        fi
-        
-        if ! run_e2e_tests; then
-            log_error "Demo tests failed"
-            stop_demo > /dev/null 2>&1 || true
-            exit 1
-        fi
-        
-        log_success "Demo tests completed successfully!"
-        stop_demo
-        ;;
-    "")
-        # Default: full sequence
-        if ! start_demo; then
-            log_error "Failed to start demo stack"
-            exit 1
-        fi
-        
-        if ! run_e2e_tests; then
-            log_error "Demo tests failed"
-            stop_demo > /dev/null 2>&1 || true
-            exit 1
-        fi
-        
-        log_success "Demo tests completed successfully!"
-        
-        # By default, keep the stack running for inspection
-        log_info ""
-        log_info "Demo stack is still running for inspection."
-        log_info "To stop it manually, run: $COMPOSE_CMD --profile $DEMO_PROFILE down -v"
-        ;;
-    *)
-        echo "Usage: $0 [start|stop|test|full]"
-        echo ""
-        echo "Commands:"
-        echo "  start   - Start the demo stack only"
-        echo "  stop    - Stop the demo stack only"
-        echo "  test    - Run tests only (stack must be running)"
-        echo "  full    - Full sequence: start, test, stop"
-        echo "  (none)  - Start and test, keep stack running"
-        exit 1
-        ;;
+case "${1:-full}" in
+  start) start_demo ;;
+  stop) stop_demo ;;
+  check) check_demo ;;
+  full)
+    trap stop_demo EXIT
+    start_demo
+    check_demo
+    ;;
+  *)
+    echo "Usage: $0 [start|check|stop|full]" >&2
+    exit 2
+    ;;
 esac

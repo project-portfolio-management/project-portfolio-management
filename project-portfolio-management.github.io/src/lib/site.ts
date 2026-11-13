@@ -35,18 +35,34 @@ export const BRIEF_LOCALES = [
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
+/**
+ * The locales with only a path-to-production page (`locales/<locale>/path-to-production/`): the interface's languages
+ * that have no role briefs or home page (`spec/locales.md`). The site's own words stay English on them.
+ */
+export const PAGE_ONLY_LOCALES = ["de-001", "de-de", "es-001", "fr-001"] as const;
+/** Every locale with a path-to-production page. */
+export const PATH_LOCALES = [...BRIEF_LOCALES, ...PAGE_ONLY_LOCALES].sort();
+export type PathLocale = BriefLocale | (typeof PAGE_ONLY_LOCALES)[number];
+export function isPathLocale(s: string): s is PathLocale {
+  return (PATH_LOCALES as readonly string[]).includes(s);
+}
+
 /** The locale of the site's canonical pages: `/` is this locale's home page. */
 export const DEFAULT_LOCALE: BriefLocale = "en-001";
 
 /** Each locale's name, in that language, in the UI's form (`spec/locales.md`). */
-export const LOCALE_LABELS: Record<BriefLocale, string> = {
+export const LOCALE_LABELS: Record<PathLocale, string> = {
   "ar-001": "العربية",
   "cy-001": "Cymraeg",
   "cy-gb": "Cymraeg - Y Deyrnas Unedig",
+  "de-001": "Deutsch",
+  "de-de": "Deutsch - Deutschland",
   "en-001": "English",
   "en-gb": "English - United Kingdom",
   "en-gb-oxendict": "English - United Kingdom (Oxford)",
   "en-us": "English - United States",
+  "es-001": "Español",
+  "fr-001": "Français",
   "hi-001": "हिन्दी",
   "hi-in": "हिन्दी - भारत",
   "zh-001": "中文",
@@ -113,6 +129,13 @@ export function isRtl(locale: string): boolean {
   return RTL.has(locale.split("-")[0] ?? "");
 }
 
+/** The locale of a site pathname's first segment for `lang` and `dir`: a brief locale, or a page-only one. */
+export function pageLocaleOfPath(pathname: string, base = ""): PathLocale | null {
+  const rest = pathname.startsWith(base) ? pathname.slice(base.length) : pathname;
+  const first = rest.split("/").filter(Boolean)[0] ?? "";
+  return isPathLocale(first) ? first : null;
+}
+
 /** The locale named by a site pathname's first segment, if it is one. */
 export function localeOfPath(pathname: string, base = ""): BriefLocale | null {
   const rest = pathname.startsWith(base) ? pathname.slice(base.length) : pathname;
@@ -136,7 +159,7 @@ export function routeOfRepoPath(path: string): string | null {
   const product = /^locales\/en-001\/compare\/([^/]+)(?:\/index\.md)?$/.exec(clean);
   if (product?.[1] && COMPARE_PRODUCTS.includes(product[1])) return `/compare/${product[1]}/`;
   const ptp = /^locales\/([^/]+)\/path-to-production(?:\/index\.md)?$/.exec(clean);
-  if (ptp?.[1] && isBriefLocale(ptp[1])) return `/${ptp[1]}/path-to-production/`;
+  if (ptp?.[1] && isPathLocale(ptp[1])) return `/${ptp[1]}/path-to-production/`;
   const m = /^locales\/([^/]+)\/for(?:\/([^/]+))?(?:\/index\.md)?$/.exec(clean);
   if (m && m[1] && isBriefLocale(m[1])) {
     if (!m[2]) return `/${m[1]}/for/`;

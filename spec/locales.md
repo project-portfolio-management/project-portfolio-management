@@ -27,7 +27,9 @@ directory or file stem that is named for a locale.
   `hi-001`, `hi-in`, `zh-001`, `zh-cn`. That set is not the interface's (§2): five are regional
   document variants (British, Oxford and US English, Welsh and Hindi with a region) the interface
   does not have, and **`de-001`, `de-de`, `es-001` and `fr-001` have no reader guides:
-  a recorded gap**, to close by the same bar as the interface (a draft labelled unreviewed). The
+  a recorded gap**, to close by the same bar as the interface (a draft labelled unreviewed). Those four have one
+  document each, the path to production (`locales/<code>/path-to-production/index.md`, machine-written, `de-001` a
+  copy of `de-de`); it is in every document locale too. The
   English guides name the applicable data-protection law and treat the UK NHS DTAC as one worked
   example; the Welsh, Hindi and Chinese guides were not updated to match on 2026-10-31 and still
   name UK GDPR and the DTAC alone (a recorded gap).

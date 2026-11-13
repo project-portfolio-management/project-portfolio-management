@@ -11,6 +11,8 @@
   import { choose, homeRoute, restoreChoice, shownLocale, siteDir, siteTag, t, topicRoute, type MessageKey } from "#lib/i18n.svelte.js";
   import {
     BRIEF_LOCALES,
+    PATH_LOCALES,
+    isPathLocale,
     DOC_PAGES,
     LOCALE_LABELS,
     REPO_URL,
@@ -85,13 +87,22 @@
 
   // Arriving on a brief keeps the site in its language when the reader moves on to a document.
   $effect(() => {
-    if (locale) choose(locale, false);
+    // A page-only locale (German, Spanish, French) has no site words of its own, so it does not become the choice.
+    if (locale && isBriefLocale(locale)) choose(locale, false);
   });
 
   // The locale switcher opens the same brief (or the same list) in the chosen locale; on any other page the site's words
   // change and the reader stays where they are. The picker also reports the locale it shows when it starts: nothing to
   // do then.
   function switchLocale(code: string) {
+    // The path to production also exists in locales with no briefs (German, Spanish, French): open it there, and keep
+    // the site's own words in the last brief locale chosen (English if none).
+    if (pathToProduction) {
+      if (!isPathLocale(code) || code === page.data.locale) return;
+      if (isBriefLocale(code)) choose(code, true);
+      void goto(href(`/${code}/path-to-production/`));
+      return;
+    }
     if (!isBriefLocale(code) || code === shownLocale()) return;
     choose(code, true);
     const target = peerRoute(code);
@@ -150,7 +161,7 @@
 
 <svelte:head>
   {#if role || isHome || topic || pathToProduction}
-    {#each BRIEF_LOCALES as code (code)}
+    {#each pathToProduction ? PATH_LOCALES : BRIEF_LOCALES as code (code)}
       {@const target = peerRoute(code)}
       {#if target}<link rel="alternate" hreflang={langTag(code)} href={href(target)} />{/if}
     {/each}
@@ -188,9 +199,9 @@
       }}
       {themesUrl}
       themeProps={{ storageKey: "lily-theme", detectFromSystem: true, defaultValue: "light" }}
-      locales={[...BRIEF_LOCALES]}
+      locales={pathToProduction ? [...PATH_LOCALES] : [...BRIEF_LOCALES]}
       localeProps={{
-        value: shownLocale(),
+        value: pathToProduction ? page.data.locale : shownLocale(),
         localeLabels: LOCALE_LABELS,
         target: localeSink,
         applyDir: false,

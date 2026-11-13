@@ -24,7 +24,9 @@ repository's reference documents. It follows the family pattern written down in 
   `operations/wpm-bridge.md`, `spec/index.md` and the agent skill's `SKILL.md` (front matter dropped). Every role brief
   `locales/<locale>/for/<role>/index.md` at `/<locale>/for/<role>/`, with a list per locale at `/<locale>/for/`.
 - **Path to production.** `/<locale>/path-to-production/`, from `locales/<locale>/path-to-production/index.md` (the
-  same slug in every locale, and in the navigation): what "production" means for this software, then an honest list of
+  same slug in every locale, and in the navigation), in every brief locale and in `de-001`, `de-de`, `es-001` and
+  `fr-001`, which have no other page; on those four the page's `lang` is theirs and the site's own words stay English,
+  and the locale picker on this page lists all fifteen: what "production" means for this software, then an honest list of
   what production use would still take. Each list item is written `- **Title** — NN%. Text`, NN a whole number from 0
   to 100 in ASCII digits; the page shows each item with its estimate and a Lily `Slider` (0 to 100, steps of 5) that
   starts at the estimate. A reader may move a slider to note their own view; nothing is saved or sent. An item that

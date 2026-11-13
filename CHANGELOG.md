@@ -15,6 +15,21 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 13 November (the path to production in German, Spanish and French)
+
+- **`de-001`, `de-de`, `es-001` and `fr-001` now have the path to production**
+  (`locales/<locale>/path-to-production/index.md`; `de-001` is a copy of `de-de`). They are the interface's languages
+  with no other document, and the page is their first. On the site: `/<locale>/path-to-production/` with that locale's
+  `lang`. The page's locale picker lists all fifteen locales. The site's own words stay English on these four (they are
+  in five languages), so a slider's label there is German, Spanish or French with "Readiness estimate" in English. The
+  site translation review gains `site-de.csv`, `site-es.csv` and `site-fr.csv`, each with the page's row alone.
+  Specs: `spec/locales.md`, `spec/github-pages-site.md`.
+- Tests: the site's 239 Playwright tests pass. Every locale's page is checked for one slider per item at the English
+  estimates, with axe under light and dark. A new test checks `lang` and the heading in German, Spanish and French, the
+  switch from English to Deutsch, and that `de-001` equals `de-de`.
+- Not done or not verified: the three translations are machine-written and not reviewed. These locales have no home
+  page, briefs or topics; the root sitemap lists their page, but there is no per-locale sitemap.
+
 ### 13 November (a dropped connection under concurrent requests; a load test in Rust)
 
 - **Fixed: under concurrent requests, about one in a thousand connections dropped.** The tracing middleware

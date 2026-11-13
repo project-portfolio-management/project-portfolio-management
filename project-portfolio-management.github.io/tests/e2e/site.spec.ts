@@ -9,6 +9,7 @@ import {
   COMPARE_PRODUCTS,
   DOC_PAGES,
   HOME_LOCALES,
+  PATH_LOCALES,
   ROLES,
   TOPIC_KEYS,
   topicSlug,
@@ -27,7 +28,7 @@ const topicRoutes = HOME_LOCALES.flatMap((l) => TOPIC_KEYS.map((k) => `/${l}/${t
 const compareRoutes = ["/compare/", ...COMPARE_PRODUCTS.map((p) => `/compare/${p}/`)];
 const indexRoutes = BRIEF_LOCALES.map((l) => `/${l}/for/`);
 const briefRoutes = BRIEF_LOCALES.flatMap((l) => ROLES.map((r) => `/${l}/for/${r}/`));
-const pathRoutes = BRIEF_LOCALES.map((l) => `/${l}/path-to-production/`);
+const pathRoutes = PATH_LOCALES.map((l) => `/${l}/path-to-production/`);
 // Audited: every document, every locale's list, and one brief per locale (a different role each time).
 const audited = [
   ...docRoutes,
@@ -569,7 +570,7 @@ function readinessItems(locale: string): { title: string; percent: number }[] {
 test("every path-to-production page gives each item a slider that starts at its estimate", async ({ page }) => {
   const english = readinessItems("en-001");
   expect(english.length).toBeGreaterThan(5);
-  for (const locale of BRIEF_LOCALES) {
+  for (const locale of PATH_LOCALES) {
     const items = readinessItems(locale);
     // Every locale lists the same items with the same estimates, in the same order.
     expect(items.map((i) => i.percent), locale).toEqual(english.map((i) => i.percent));
@@ -618,3 +619,22 @@ test("no page calls the software production-ready or not ready for production", 
   }
 });
 
+test("the path to production opens in German, Spanish and French, with their own lang", async ({ page }) => {
+  // de-de is copied to de-001.
+  expect(readFileSync("../locales/de-de/path-to-production/index.md", "utf8")).toBe(
+    readFileSync("../locales/de-001/path-to-production/index.md", "utf8"),
+  );
+  for (const [locale, lang, heading] of [
+    ["de-de", "de-DE", "Weg in den Produktivbetrieb"],
+    ["es-001", "es-001", "Camino a producción"],
+    ["fr-001", "fr-001", "Chemin vers la production"],
+  ] as const) {
+    await page.goto(`/${locale}/path-to-production/`);
+    await expect(page.locator("html")).toHaveAttribute("lang", lang);
+    await expect(page.locator("h1").first()).toHaveText(heading);
+  }
+  await open(page, "/en-001/path-to-production/", "light");
+  await chooseLocale(page, "Language", /^Deutsch$/);
+  await expect(page).toHaveURL(/\/de-001\/path-to-production\/$/);
+  await expect(page.locator("h1").first()).toHaveText("Weg in den Produktivbetrieb");
+});

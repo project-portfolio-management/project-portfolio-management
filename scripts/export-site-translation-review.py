@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Write governance/translation-reviews/site-<language>.csv: the public site's words and pages in each translated language, for
+"""Write governance/translation-reviews/site-<language>.csv: the public site's words and pages in each translated language (for
+German, Spanish and French, the path to production alone), for
 the speaker who reviews them (GP-4). Columns: key, english, translation, reviewed_by, reviewed_on, verdict.
 
 Reads project-portfolio-management.github.io/src/lib/messages.json, then adds one row per page: its English and
@@ -17,7 +18,7 @@ outdir = root / "governance" / "translation-reviews"
 messages = json.loads((root / "project-portfolio-management.github.io/src/lib/messages.json").read_text(encoding="utf-8"))
 FIELDS = ["key", "english", "translation", "reviewed_by", "reviewed_on", "verdict"]
 # The locale reviewed for each language: its -001 copy is byte-identical, and the site's tests check that.
-LANGUAGES = {"ar": "ar-001", "cy": "cy-gb", "hi": "hi-in", "zh": "zh-cn"}
+LANGUAGES = {"ar": "ar-001", "cy": "cy-gb", "hi": "hi-in", "zh": "zh-cn", "de": "de-de", "es": "es-001", "fr": "fr-001"}
 
 
 def peer(path):
@@ -33,8 +34,9 @@ def page_rows(locale):
     base = root / "locales" / "en-001"
     here = root / "locales" / locale
     english = {peer(p): p for p in (base / "topics").iterdir()}
-    rows = [("page:home", stamped(base), stamped(here))]
-    for path in sorted((here / "topics").iterdir()):
+    # German, Spanish and French have only the path to production: no home page or topics.
+    rows = [("page:home", stamped(base), stamped(here))] if (here / "index.md").exists() else []
+    for path in sorted((here / "topics").iterdir()) if (here / "topics").is_dir() else []:
         rows.append((f"page:{english[peer(path)].name}", stamped(english[peer(path)]), stamped(path)))
     # The path to production has the same slug in every locale, so it needs no peer id.
     if (here / "path-to-production").is_dir():
@@ -47,7 +49,9 @@ def render(lang, locale, out):
     if out.exists():
         for row in csv.DictReader(out.open(newline="", encoding="utf-8")):
             previous[row["key"]] = row
-    source = [(k, v, messages[lang][k]) for k, v in messages["en"].items()] + page_rows(locale)
+    # The site's own words exist only in its five languages; a page-only language reviews its page alone.
+    words = [(k, v, messages[lang][k]) for k, v in messages["en"].items()] if lang in messages else []
+    source = words + page_rows(locale)
     buffer = io.StringIO()
     writer = csv.DictWriter(buffer, fieldnames=FIELDS, lineterminator="\n")
     writer.writeheader()

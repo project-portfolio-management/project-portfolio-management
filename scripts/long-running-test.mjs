@@ -1,14 +1,10 @@
 #!/usr/bin/env node
 // Long-Running Test Suite for Project Portfolio Management
 //
-// This script runs endurance/soak tests that verify the system remains stable
-// over extended periods of time. Unlike load tests which focus on throughput,
-// long-running tests focus on:
-//   - Memory stability (no leaks)
-//   - Database connection stability
-//   - Cache consistency
-//   - Error rate stability
-//   - Response time consistency
+// A slow sampler for endurance runs: once per `--interval` it runs each chosen scenario one time, timing every
+// request and recording its real status, and (with `--pid`) the service's resident memory. It does not put the
+// service under load; for throughput and a loaded soak use `scripts/load-test.mjs run|soak`. It does not measure
+// database connections or cache consistency.
 //
 // Usage:
 //   # Run for 1 hour with default settings
@@ -25,17 +21,11 @@
 //   - Service running with login OFF (container-dev profile)
 //   - PostgreSQL database
 //
-// Features:
-//   - Configurable test duration (seconds)
-//   - Configurable reporting interval (seconds)
-//   - Memory usage tracking
-//   - Database connection tracking
-//   - Error rate monitoring
-//   - Latency trend analysis
-//   - Real-time console output
-//   - JSON and Markdown reports
+// Output: a Markdown and a JSON report in `--output-dir` (default `long-running-test-results/`, ignored by git):
+// totals, the error rate, latency p50/p95/p99 (send to end of body), per-interval counts and, with `--pid`, RSS.
+// It creates 50 seed plans (500 tasks) per run and leaves them; the CRUD scenario deletes what it creates.
 
-import { execSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
@@ -64,163 +54,129 @@ if (!existsSync(outputDir)) {
 // TEST SCENARIOS
 // ============================================================================
 
+// Every request goes through `call`, which times it (from send to the end of the body), records its real
+// status, and counts it in the current interval. A scenario step that needs an earlier step's answer stops when
+// that answer is not a success, so a failed create is counted once and not followed by requests to `undefined`.
+let currentInterval = null;
+
+async function call(metrics, label, method, path, body) {
+  const started = performance.now();
+  let status = 0;
+  let text = "";
+  try {
+    const res = await fetch(`${baseUrl}${path}`, {
+      method,
+      headers: body === undefined ? undefined : { "content-type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    status = res.status;
+    text = await res.text();
+  } catch (error) {
+    metrics.addError(new Error(`${label}: ${error.message}`));
+  }
+  const latencyMs = performance.now() - started;
+  metrics.addRequest(label, status, latencyMs);
+  if (currentInterval) {
+    currentInterval.requests++;
+    if (status >= 200 && status < 300) currentInterval.successful++;
+    else currentInterval.failed++;
+    currentInterval.latencies.push(latencyMs);
+  }
+  if (status !== 0 && (status < 200 || status >= 300)) {
+    metrics.addError(new Error(`${label}: HTTP ${status} ${text.slice(0, 200)}`));
+  }
+  let json = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    json = null;
+  }
+  return { ok: status >= 200 && status < 300, status, json };
+}
+
 const SCENARIO_FUNCTIONS = {
   crud: {
     name: "CRUD Operations",
     async run(metrics, iteration) {
-      const plan = await createPlan(`Long Test Plan ${iteration}`);
-      metrics.addRequest("POST /api/plans", 200, Date.now() - Date.now(), 100);
-      
-      const task = await createTask(plan.pid, `Task ${iteration}`);
-      metrics.addRequest("POST /api/plans/{pid}/tasks", 200, Date.now() - Date.now(), 100);
-      
-      await readPlan(plan.pid);
-      metrics.addRequest("GET /api/plans/{pid}", 200, Date.now() - Date.now(), 100);
-      
-      await readTask(plan.pid, task.pid);
-      metrics.addRequest("GET /api/plans/{pid}/tasks/{tid}", 200, Date.now() - Date.now(), 100);
-      
-      await updateTask(plan.pid, task.pid, `Updated Task ${iteration}`);
-      metrics.addRequest("PUT /api/plans/{pid}/tasks/{tid}", 200, Date.now() - Date.now(), 100);
-      
-      await deleteTask(plan.pid, task.pid);
-      metrics.addRequest("DELETE /api/plans/{pid}/tasks/{tid}", 200, Date.now() - Date.now(), 100);
-      
-      await deletePlan(plan.pid);
-      metrics.addRequest("DELETE /api/plans/{pid}", 200, Date.now() - Date.now(), 100);
+      const plan = await call(metrics, "POST /api/plans", "POST", "/api/plans", {
+        kind: "Project",
+        name: `Long Test Plan ${testId} ${iteration}`,
+      });
+      if (!plan.ok) return;
+      const pid = plan.json.pid;
+      const task = await call(metrics, "POST /api/plans/{pid}/tasks", "POST", `/api/plans/${pid}/tasks`, {
+        title: `Task ${iteration}`,
+        duration_days: 1,
+      });
+      if (task.ok) {
+        const tid = task.json.pid;
+        await call(metrics, "GET /api/plans/{pid}", "GET", `/api/plans/${pid}`);
+        const read = await call(metrics, "GET /api/plans/{pid}/tasks/{tid}", "GET", `/api/plans/${pid}/tasks/${tid}`);
+        if (read.ok) {
+          // PUT replaces every field, so send the task as read with only the title changed.
+          await call(metrics, "PUT /api/plans/{pid}/tasks/{tid}", "PUT", `/api/plans/${pid}/tasks/${tid}`, {
+            ...read.json,
+            title: `Updated Task ${iteration}`,
+          });
+        }
+        await call(metrics, "DELETE /api/plans/{pid}/tasks/{tid}", "DELETE", `/api/plans/${pid}/tasks/${tid}`);
+      }
+      await call(metrics, "DELETE /api/plans/{pid}", "DELETE", `/api/plans/${pid}`);
     },
   },
-  
+
   read: {
     name: "Read Operations",
     async run(metrics, iteration, seedData) {
-      if (!seedData || seedData.plans.length === 0) {
-        // Create seed data if not exists
-        const plan = await createPlan(`Seed Plan ${iteration}`);
-        seedData.plans.push(plan.pid);
-      }
-      
-      // Random plan from seed data
+      if (seedData.plans.length === 0) return;
       const planPid = seedData.plans[Math.floor(Math.random() * seedData.plans.length)];
-      
-      await readPlan(planPid);
-      metrics.addRequest("GET /api/plans/{pid}", 200, Date.now() - Date.now(), 100);
-      
-      const tasks = await listTasks(planPid);
-      metrics.addRequest("GET /api/plans/{pid}/tasks", 200, Date.now() - Date.now(), 100);
-      
-      if (tasks.items && tasks.items.length > 0) {
-        const task = tasks.items[Math.floor(Math.random() * tasks.items.length)];
-        await readTask(planPid, task.pid);
-        metrics.addRequest("GET /api/plans/{pid}/tasks/{tid}", 200, Date.now() - Date.now(), 100);
+      await call(metrics, "GET /api/plans/{pid}", "GET", `/api/plans/${planPid}`);
+      const list = await call(metrics, "GET /api/plans/{pid}/tasks", "GET", `/api/plans/${planPid}/tasks`);
+      const tasks = list.json?.tasks ?? [];
+      if (tasks.length > 0) {
+        const task = tasks[Math.floor(Math.random() * tasks.length)];
+        await call(metrics, "GET /api/plans/{pid}/tasks/{tid}", "GET", `/api/plans/${planPid}/tasks/${task.pid}`);
       }
     },
   },
-  
+
   search: {
     name: "Search Operations",
     async run(metrics, iteration) {
-      await searchPlans(`test ${iteration}`);
-      metrics.addRequest("GET /api/plans/search", 200, Date.now() - Date.now(), 100);
-      
-      await checkDuplicates({ kind: "Project", name: `Test Project ${iteration}` });
-      metrics.addRequest("POST /api/plans/check-duplicates", 200, Date.now() - Date.now(), 100);
+      await call(metrics, "GET /api/plans/search", "GET", `/api/plans/search?q=${encodeURIComponent(`test ${iteration}`)}`);
+      await call(metrics, "POST /api/plans/check-duplicates", "POST", "/api/plans/check-duplicates", {
+        kind: "Project",
+        name: `Test Project ${iteration}`,
+      });
     },
   },
-  
+
   aggregate: {
     name: "Aggregate Operations",
-    async run(metrics, iteration) {
-      await listAllPlans();
-      metrics.addRequest("GET /api/plans", 200, Date.now() - Date.now(), 100);
-      
-      await getMilestones();
-      metrics.addRequest("GET /api/milestones", 200, Date.now() - Date.now(), 100);
-      
-      await getIssues();
-      metrics.addRequest("GET /api/issues", 200, Date.now() - Date.now(), 100);
+    async run(metrics) {
+      await call(metrics, "GET /api/plans", "GET", "/api/plans?limit=50");
+      await call(metrics, "GET /api/milestones", "GET", "/api/milestones");
+      await call(metrics, "GET /api/issues", "GET", "/api/issues");
     },
   },
 };
 
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-async function createPlan(name) {
-  const response = await fetch(`${baseUrl}/api/plans`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ kind: "Project", name }),
-  });
-  return response.json();
-}
-
-async function readPlan(pid) {
-  return fetch(`${baseUrl}/api/plans/${pid}`);
-}
-
-async function deletePlan(pid) {
-  return fetch(`${baseUrl}/api/plans/${pid}`, { method: "DELETE" });
-}
-
-async function createTask(planPid, title) {
-  const response = await fetch(`${baseUrl}/api/plans/${planPid}/tasks`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ title, duration_days: 1 }),
-  });
-  return response.json();
-}
-
-async function readTask(planPid, tid) {
-  return fetch(`${baseUrl}/api/plans/${planPid}/tasks/${tid}`);
-}
-
-async function updateTask(planPid, tid, title) {
-  return fetch(`${baseUrl}/api/plans/${planPid}/tasks/${tid}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ title }),
-  });
-}
-
-async function deleteTask(planPid, tid) {
-  return fetch(`${baseUrl}/api/plans/${planPid}/tasks/${tid}`, { method: "DELETE" });
-}
-
-async function listTasks(planPid) {
-  const response = await fetch(`${baseUrl}/api/plans/${planPid}/tasks`);
-  return response.json();
-}
-
-async function listAllPlans() {
-  return fetch(`${baseUrl}/api/plans?limit=50`);
-}
-
-async function searchPlans(query) {
-  return fetch(`${baseUrl}/api/plans/search?q=${encodeURIComponent(query)}`);
-}
-
-async function checkDuplicates(body) {
-  return fetch(`${baseUrl}/api/plans/check-duplicates`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-async function getMilestones() {
-  return fetch(`${baseUrl}/api/milestones`);
-}
-
-async function getIssues() {
-  return fetch(`${baseUrl}/api/issues`);
+const unknownScenarios = scenarios.filter((name) => !(name in SCENARIO_FUNCTIONS));
+if (unknownScenarios.length > 0) {
+  console.error(`Unknown scenario(s): ${unknownScenarios.join(", ")}; known: ${Object.keys(SCENARIO_FUNCTIONS).join(", ")}`);
+  process.exit(2);
 }
 
 // ============================================================================
 // METRICS TRACKING
 // ============================================================================
+
+/** Nearest-rank percentile of a list of numbers, or null when the list is empty. */
+function percentile(values, p) {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((x, y) => x - y);
+  return Number(sorted[Math.max(0, Math.ceil(sorted.length * p) - 1)].toFixed(1));
+}
 
 class LongRunningMetrics {
   constructor() {
@@ -242,7 +198,7 @@ class LongRunningMetrics {
     this.intervals.push(intervalData);
   }
 
-  addRequest(method, status, latencyMs, bytes) {
+  addRequest(label, status, latencyMs) {
     this.totalRequests++;
     if (status >= 200 && status < 300) this.successfulRequests++;
     else this.failedRequests++;
@@ -260,7 +216,7 @@ class LongRunningMetrics {
   getRSS(pid) {
     if (!pid) return null;
     try {
-      const rss = execSync(`ps -o rss= -p ${pid}`, { encoding: "utf8" }).trim();
+      const rss = execFileSync("ps", ["-o", "rss=", "-p", String(pid)], { encoding: "utf8" }).trim();
       return rss ? Math.round(Number(rss) / 1024) : null;
     } catch {
       return null;
@@ -278,6 +234,11 @@ class LongRunningMetrics {
       successful_requests: this.successfulRequests,
       failed_requests: this.failedRequests,
       error_rate: this.totalRequests > 0 ? this.failedRequests / this.totalRequests : 0,
+      latency_ms: {
+        p50: percentile(this.latencies, 0.5),
+        p95: percentile(this.latencies, 0.95),
+        p99: percentile(this.latencies, 0.99),
+      },
       memory: this.memoryUsage,
       intervals: this.intervals,
     };
@@ -294,7 +255,8 @@ class LongRunningMetrics {
     md += `| Total Requests | ${summary.total_requests} |\n`;
     md += `| Successful | ${summary.successful_requests} |\n`;
     md += `| Failed | ${summary.failed_requests} |\n`;
-    md += `| Error Rate | ${(summary.error_rate * 100).toFixed(2)}% |\n\n`;
+    md += `| Error Rate | ${(summary.error_rate * 100).toFixed(2)}% |\n`;
+    md += `| Latency p50 / p95 / p99 (ms) | ${summary.latency_ms.p50} / ${summary.latency_ms.p95} / ${summary.latency_ms.p99} |\n\n`;
     
     // Memory trend
     if (this.memoryUsage.length > 0) {
@@ -372,22 +334,27 @@ async function runLongRunningTest() {
     process.exit(1);
   }
   
-  // Pre-seed some data
+  // Pre-seed the plans the read scenario uses (not counted in the metrics). They are left in place so a later
+  // run can be compared on the same data; delete them by name ("Long Test Seed Plan") when done.
   console.log("Pre-seeding test data...");
+  const seedMetrics = new LongRunningMetrics();
   for (let i = 0; i < 50; i++) {
-    try {
-      const plan = await createPlan(`Long Test Seed Plan ${i}`);
-      seedData.plans.push(plan.pid);
-      for (let j = 0; j < 10; j++) {
-        const task = await createTask(plan.pid, `Seed Task ${i}-${j}`);
-        seedData.tasks.push({ planPid: plan.pid, pid: task.pid });
-      }
-    } catch (error) {
-      // Already exists, continue
+    const plan = await call(seedMetrics, "seed plan", "POST", "/api/plans", {
+      kind: "Project",
+      name: `Long Test Seed Plan ${testId} ${i}`,
+    });
+    if (!plan.ok) continue;
+    seedData.plans.push(plan.json.pid);
+    for (let j = 0; j < 10; j++) {
+      const task = await call(seedMetrics, "seed task", "POST", `/api/plans/${plan.json.pid}/tasks`, {
+        title: `Seed Task ${i}-${j}`,
+        duration_days: 1,
+      });
+      if (task.ok) seedData.tasks.push({ planPid: plan.json.pid, pid: task.json.pid });
     }
   }
-  console.log(`✓ Created ${seedData.plans.length} plans with ${seedData.tasks.length} tasks`);
-  
+  console.log(`✓ Created ${seedData.plans.length} plans with ${seedData.tasks.length} tasks (${seedMetrics.failedRequests} seed requests failed)`);
+
   const startTime = Date.now();
   const endTime = startTime + duration * 1000;
   let iteration = 0;
@@ -406,27 +373,17 @@ async function runLongRunningTest() {
       latencies: [],
     };
     
-    // Run each selected scenario
+    // Run each selected scenario once; `call` counts every request into this interval.
+    currentInterval = intervalMetrics;
     for (const scenarioName of scenarios) {
-      const scenario = SCENARIO_FUNCTIONS[scenarioName];
-      if (scenario) {
-        try {
-          await scenario.run(metrics, iteration, seedData);
-          intervalMetrics.requests += scenario.name === "CRUD Operations" ? 7 : 
-                                    scenario.name === "Read Operations" ? 3 :
-                                    scenario.name === "Search Operations" ? 2 :
-                                    3;
-          intervalMetrics.successful += scenario.name === "CRUD Operations" ? 7 :
-                                        scenario.name === "Read Operations" ? 3 :
-                                        scenario.name === "Search Operations" ? 2 :
-                                        3;
-        } catch (error) {
-          metrics.addError(error);
-          intervalMetrics.failed++;
-        }
+      try {
+        await SCENARIO_FUNCTIONS[scenarioName].run(metrics, iteration, seedData);
+      } catch (error) {
+        metrics.addError(error);
       }
     }
-    
+    currentInterval = null;
+
     // Track memory if PID provided
     if (pid) {
       const rss = metrics.getRSS(pid);
@@ -442,21 +399,14 @@ async function runLongRunningTest() {
     
     iteration++;
     
-    // Check if we should report
-    const elapsed = Date.now() - startTime;
-    const nextReport = Math.ceil(elapsed / (interval * 1000)) * interval * 1000;
-    const timeUntilReport = nextReport - elapsed;
-    
-    if (timeUntilReport <= 0 || elapsed >= duration * 1000) {
-      // Report
-      const now = new Date();
-      const elapsedSec = Math.round(elapsed / 1000);
-      const remainingSec = Math.round((endTime - Date.now()) / 1000);
-      
-      console.log(`[${now.toISOString()}] Elapsed: ${elapsedSec}s | Remaining: ${remainingSec}s | ` +
-        `Requests: ${metrics.totalRequests} | Errors: ${metrics.failedRequests}`);
+    // Report every iteration (one iteration per interval).
+    {
+      const elapsedSec = Math.round((Date.now() - startTime) / 1000);
+      const remainingSec = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+      console.log(`[${new Date().toISOString()}] Elapsed: ${elapsedSec}s | Remaining: ${remainingSec}s | ` +
+        `Requests: ${metrics.totalRequests} | Failed: ${metrics.failedRequests}`);
     }
-    
+
     // Sleep until next interval or end
     if (Date.now() < endTime) {
       const sleepTime = Math.min(interval * 1000, endTime - Date.now());
@@ -473,7 +423,8 @@ async function runLongRunningTest() {
   console.log(`Total requests: ${metrics.totalRequests}`);
   console.log(`Successful: ${metrics.successfulRequests}`);
   console.log(`Failed: ${metrics.failedRequests}`);
-  console.log(`Error rate: ${(metrics.failedRequests / metrics.totalRequests * 100).toFixed(2)}%`);
+  const rate = metrics.totalRequests > 0 ? ((metrics.failedRequests / metrics.totalRequests) * 100).toFixed(2) : "n/a";
+  console.log(`Error rate: ${rate}%`);
   
   // Save reports
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");

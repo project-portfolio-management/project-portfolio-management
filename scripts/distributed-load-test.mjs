@@ -1,36 +1,26 @@
 #!/usr/bin/env node
 // Distributed Load Testing Framework for Project Portfolio Management
 //
-// This script coordinates load testing across multiple worker processes (distributed nodes).
-// It can run in two modes:
-//   1. Single-machine multi-process (for development/testing)
-//   2. Multi-machine distributed (for production load testing)
+// Weighted-mix load from one Node process: `--workers` concurrent request loops (async, not separate
+// processes) pick scenarios by weight against seeded plans for `--duration` seconds. For the fixed per-endpoint
+// runs with oha, and the loaded soak with memory, use `scripts/load-test.mjs`.
 //
 // Usage:
-//   # Single machine with 4 workers
 //   node scripts/distributed-load-test.mjs --workers 4 --base http://127.0.0.1:1241 --duration 300
+//   node scripts/distributed-load-test.mjs --scenarios read_only    # or: default, heavy
 //
-//   # Distributed mode: start coordinator
-//   node scripts/distributed-load-test.mjs --mode coordinator --port 8080
-//
-//   # Distributed mode: start worker (on each machine)
-//   node scripts/distributed-load-test.mjs --mode worker --coordinator http://coordinator:8080 --base http://target:1241
+// Not built: running workers on several machines. `--mode coordinator` and `--mode worker` exit with a message;
+// to load from several machines, run this script on each and add up the reports by hand.
 //
 // Requirements:
 //   - Node 22+
 //   - Service running with login OFF (container-dev profile)
-//   - Optional: Redis for coordination in distributed mode
 //
-// Features:
-//   - Ramp-up and ramp-down phases
-//   - Multiple test scenarios with configurable weights
-//   - Real-time metrics collection and reporting
-//   - JSON and Markdown output formats
-//   - Health checks before and during test
+// Each worker seeds 10 plans with 5 tasks and leaves them, and `create_task` adds tasks to them; run it against a
+// throwaway database. Reports (Markdown and JSON) go to `--output-dir` (default
+// `distributed-load-test-results/`, ignored by git). Latency is from send to the end of the body.
 
-import { spawn, execSync } from "node:child_process";
-import { createServer } from "node:http";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
 
@@ -46,8 +36,6 @@ const testId = args["test-id"] ?? randomUUID();
 const duration = Number(args.duration ?? 300); // seconds
 const workers = Number(args.workers ?? 4);
 const baseUrl = (args.base ?? "http://127.0.0.1:1241").replace(/\/$/, "");
-const coordinatorUrl = args.coordinator; // e.g., "http://127.0.0.1:8080"
-const port = Number(args.port ?? 8080);
 const outputDir = args["output-dir"] ?? "distributed-load-test-results";
 const scenarioConfig = args.scenarios ?? "default";
 
@@ -67,12 +55,12 @@ const DEFAULT_SCENARIOS = {
   read_task: { method: "GET", path: "/api/plans/{pid}/tasks/{tid}", weight: 5, params: ["pid", "tid"] },
   search_plans: { method: "GET", path: "/api/plans/search?q=load", weight: 3 },
   critical_path: { method: "GET", path: "/api/plans/{pid}/cpm", weight: 4, params: ["pid"] },
-  burndown: { method: "GET", path: "/api/plans/{pid}/burndown", weight: 3, params: ["pid"] },
   milestones: { method: "GET", path: "/api/milestones", weight: 4 },
   
   // Write scenarios
   create_task: { method: "POST", path: "/api/plans/{pid}/tasks", weight: 2, params: ["pid"], body: { title: "Load test task", duration_days: 1 } },
-  update_task: { method: "PUT", path: "/api/plans/{pid}/tasks/{tid}", weight: 1, params: ["pid", "tid"], body: { title: "Updated task" } },
+  // PUT replaces every field: the worker reads the task first and sends it back with only the title changed.
+  update_task: { method: "PUT", path: "/api/plans/{pid}/tasks/{tid}", weight: 1, params: ["pid", "tid"], readModifyWrite: true },
   
   // Check duplicates
   check_duplicates: { method: "POST", path: "/api/plans/check-duplicates", weight: 3, body: { kind: "Project", name: "Test Project" } },
@@ -81,8 +69,8 @@ const DEFAULT_SCENARIOS = {
 const HEAVY_SCENARIOS = {
   ...DEFAULT_SCENARIOS,
   list_all_plans: { method: "GET", path: "/api/plans?limit=500", weight: 5 },
-  large_plan_cpm: { method: "GET", path: "/api/plans/{pid}/cpm", weight: 3, params: ["pid"], large: true },
-  full_search: { method: "GET", path: "/api/plans/search?q=load", weight: 2 },
+  // The seeded plans are small (5 tasks); for a large plan's critical path use `load-test.mjs seed --large`.
+  plan_cpm_extra: { method: "GET", path: "/api/plans/{pid}/cpm", weight: 3, params: ["pid"] },
 };
 
 const SCENARIO_PRESETS = {
@@ -93,7 +81,11 @@ const SCENARIO_PRESETS = {
   ),
 };
 
-const scenarios = SCENARIO_PRESETS[scenarioConfig] ?? DEFAULT_SCENARIOS;
+if (!(scenarioConfig in SCENARIO_PRESETS)) {
+  console.error(`Unknown --scenarios ${scenarioConfig}; known: ${Object.keys(SCENARIO_PRESETS).join(", ")}`);
+  process.exit(2);
+}
+const scenarios = SCENARIO_PRESETS[scenarioConfig];
 
 // ============================================================================
 // METRICS COLLECTOR
@@ -131,12 +123,15 @@ class MetricsCollector {
   }
 
   getSummary() {
-    const elapsed = (Date.now() - this.startTime) / 1000;
-    const latencies = this.latencies.sort((a, b) => a - b);
-    const p50 = latencies[Math.floor(latencies.length * 0.5)] || 0;
-    const p95 = latencies[Math.floor(latencies.length * 0.95)] || 0;
-    const p99 = latencies[Math.floor(latencies.length * 0.99)] || 0;
-    const max = latencies[latencies.length - 1] || 0;
+    // Throughput counts from when the load started (after the health check and seeding), not from construction.
+    const elapsed = Math.max(0.001, ((this.endTime ?? Date.now()) - (this.loadStartTime ?? this.startTime)) / 1000);
+    const latencies = [...this.latencies].sort((a, b) => a - b);
+    // Nearest rank: the smallest value with at least p of the values at or below it.
+    const rank = (p) => latencies[Math.max(0, Math.ceil(latencies.length * p) - 1)] ?? 0;
+    const p50 = rank(0.5);
+    const p95 = rank(0.95);
+    const p99 = rank(0.99);
+    const max = latencies[latencies.length - 1] ?? 0;
     
     return {
       elapsed_seconds: Math.round(elapsed),
@@ -144,11 +139,11 @@ class MetricsCollector {
       successful_requests: this.successfulRequests,
       failed_requests: this.failedRequests,
       requests_per_second: Math.round(this.totalRequests / elapsed),
-      p50_ms: Math.round(p50),
-      p95_ms: Math.round(p95),
-      p99_ms: Math.round(p99),
-      max_ms: Math.round(max),
-      avg_ms: Math.round(this.latencies.reduce((a, b) => a + b, 0) / this.latencies.length || 0),
+      p50_ms: Number(p50.toFixed(1)),
+      p95_ms: Number(p95.toFixed(1)),
+      p99_ms: Number(p99.toFixed(1)),
+      max_ms: Number(max.toFixed(1)),
+      avg_ms: Number((this.latencies.reduce((a, b) => a + b, 0) / this.latencies.length || 0).toFixed(1)),
       status_codes: this.statusCodes,
       errors: this.errors,
       bytes_received: this.bytesReceived,
@@ -201,24 +196,30 @@ class LoadTestWorker {
     this.duration = duration;
     this.metrics = metrics;
     this.running = false;
+    this.seeded = new Promise((resolve) => { this.markSeeded = resolve; });
   }
 
   async start() {
     this.running = true;
-    const startTime = Date.now();
-    const endTime = startTime + this.duration * 1000;
-    
-    // Pre-seed some plan IDs for parameterized scenarios
+    // Pre-seed some plan IDs for parameterized scenarios (seeding is not counted, nor timed into the duration)
     const seedPlans = await this.seedPlans();
+    this.markSeeded();
+    const endTime = Date.now() + this.duration * 1000;
     
     while (this.running && Date.now() < endTime) {
       const scenario = this.selectScenario();
       const path = this.resolvePath(scenario, seedPlans);
-      
-      try {
+      if (path === null) {
+        // Nothing seeded for this scenario (every seed create failed); do not count a request that was not sent.
+        await sleep(10);
+        continue;
+      }
+      if (scenario.readModifyWrite) {
+        const read = await this.executeRequest("GET", path);
+        if (!read.ok) continue;
+        await this.executeRequest(scenario.method, path, { ...JSON.parse(read.text), title: `Updated task ${Date.now()}` });
+      } else {
         await this.executeRequest(scenario.method, path, scenario.body);
-      } catch (error) {
-        // Errors are recorded in metrics
       }
     }
   }
@@ -230,16 +231,15 @@ class LoadTestWorker {
     
     for (let i = 0; i < 10; i++) {
       try {
-        const plan = await this.createPlan(`Load Test Plan ${this.workerId}-${i}`);
+        const plan = await this.createPlan(`Load Test Plan ${testId} ${this.workerId}-${i}`);
+        if (!plan?.pid) continue;
         planPids.push(plan.pid);
-        
-        // Create some tasks for this plan
         for (let j = 0; j < 5; j++) {
           const task = await this.createTask(plan.pid, `Task ${i}-${j}`);
-          taskPids.push({ planPid: plan.pid, tid: task.pid });
+          if (task?.pid) taskPids.push({ planPid: plan.pid, tid: task.pid });
         }
       } catch (error) {
-        // Plan might already exist, continue
+        console.error(`worker ${this.workerId}: seeding failed: ${error.message}`);
       }
     }
     
@@ -252,7 +252,7 @@ class LoadTestWorker {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ kind: "Project", name }),
     });
-    return response.json();
+    return response.ok ? response.json() : null;
   }
 
   async createTask(planPid, title) {
@@ -261,7 +261,7 @@ class LoadTestWorker {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ title, duration_days: 1 }),
     });
-    return response.json();
+    return response.ok ? response.json() : null;
   }
 
   selectScenario() {
@@ -281,69 +281,37 @@ class LoadTestWorker {
 
   resolvePath(scenario, seedPlans) {
     let path = scenario.path;
-    
-    if (scenario.params) {
-      const replacements = {};
-      
-      scenario.params.forEach((param, index) => {
-        if (param === "pid" && seedPlans.planPids.length > 0) {
-          replacements[`{${param}}`] = seedPlans.planPids[Math.floor(Math.random() * seedPlans.planPids.length)];
-        } else if (param === "tid" && seedPlans.taskPids.length > 0) {
-          const task = seedPlans.taskPids[Math.floor(Math.random() * seedPlans.taskPids.length)];
-          replacements[`{${param}}`] = task.tid;
-        } else {
-          replacements[`{${param}}`] = "placeholder";
-        }
-      });
-      
-      for (const [placeholder, value] of Object.entries(replacements)) {
-        path = path.replace(placeholder, value);
-      }
+    const params = scenario.params ?? [];
+    if (params.includes("tid")) {
+      // A task and the plan it belongs to, picked together.
+      const task = seedPlans.taskPids[Math.floor(Math.random() * seedPlans.taskPids.length)];
+      if (!task) return null;
+      return path.replace("{pid}", task.planPid).replace("{tid}", task.tid);
     }
-    
+    if (params.includes("pid")) {
+      const pid = seedPlans.planPids[Math.floor(Math.random() * seedPlans.planPids.length)];
+      if (!pid) return null;
+      path = path.replace("{pid}", pid);
+    }
     return path;
   }
 
   async executeRequest(method, path, body) {
-    const start = Date.now();
-    
+    const start = performance.now();
     try {
-      const options = {
+      const response = await fetch(`${this.baseUrl}${path}`, {
         method,
-        headers: { "content-type": "application/json" },
-      };
-      
-      if (body) {
-        options.body = JSON.stringify(body);
-      }
-      
-      const response = await fetch(`${this.baseUrl}${path}`, options);
-      const latency = Date.now() - start;
-      const bytes = response.headers.get("content-length") ? 
-        Number(response.headers.get("content-length")) : 
-        (await response.text()).length;
-      
-      this.metrics.addRequest(
-        method,
-        path,
-        response.status,
-        latency,
-        bytes,
-        response.ok ? null : await response.text().slice(0, 200)
-      );
-      
-      return response;
+        headers: body === undefined ? undefined : { "content-type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      // Read the whole body once, before stopping the clock (it also frees the connection).
+      const text = await response.text();
+      const latency = performance.now() - start;
+      this.metrics.addRequest(method, path, response.status, latency, Buffer.byteLength(text), response.ok ? null : `HTTP ${response.status}: ${text.slice(0, 200)}`);
+      return { ok: response.ok, status: response.status, text };
     } catch (error) {
-      const latency = Date.now() - start;
-      this.metrics.addRequest(
-        method,
-        path,
-        0,
-        latency,
-        0,
-        error.message
-      );
-      throw error;
+      this.metrics.addRequest(method, path, 0, performance.now() - start, 0, error.message);
+      return { ok: false, status: 0, text: "" };
     }
   }
 
@@ -353,98 +321,11 @@ class LoadTestWorker {
 }
 
 // ============================================================================
-// COORDINATOR (for distributed mode)
-// ============================================================================
-
-class TestCoordinator {
-  constructor(port) {
-    this.port = port;
-    this.workers = new Map();
-    this.metrics = new MetricsCollector();
-    this.server = null;
-    this.startTime = null;
-    this.testId = randomUUID();
-  }
-
-  start() {
-    this.server = createServer((req, res) => {
-      const url = new URL(req.url, `http://localhost:${this.port}`);
-      
-      if (req.method === "POST" && url.pathname === "/register") {
-        this.handleRegister(req, res);
-      } else if (req.method === "POST" && url.pathname === "/metrics") {
-        this.handleMetrics(req, res);
-      } else if (req.method === "GET" && url.pathname === "/status") {
-        this.handleStatus(req, res);
-      } else {
-        res.writeHead(404);
-        res.end("Not found");
-      }
-    });
-    
-    this.server.listen(this.port, () => {
-      console.log(`Coordinator running on port ${this.port}, test ID: ${this.testId}`);
-    });
-  }
-
-  handleRegister(req, res) {
-    let body = "";
-    req.on("data", (chunk) => body += chunk);
-    req.on("end", () => {
-      try {
-        const workerInfo = JSON.parse(body);
-        const workerId = randomUUID();
-        this.workers.set(workerId, workerInfo);
-        res.writeHead(200);
-        res.end(JSON.stringify({ workerId, testId: this.testId, coordinatorUrl: `http://localhost:${this.port}` }));
-      } catch (error) {
-        res.writeHead(400);
-        res.end("Invalid request");
-      }
-    });
-  }
-
-  handleMetrics(req, res) {
-    let body = "";
-    req.on("data", (chunk) => body += chunk);
-    req.on("end", () => {
-      try {
-        const metrics = JSON.parse(body);
-        // Merge metrics
-        this.metrics.totalRequests += metrics.total_requests;
-        this.metrics.successfulRequests += metrics.successful_requests;
-        this.metrics.failedRequests += metrics.failed_requests;
-        this.metrics.latencies.push(...metrics.latencies);
-        res.writeHead(200);
-        res.end("OK");
-      } catch (error) {
-        res.writeHead(400);
-        res.end("Invalid metrics");
-      }
-    });
-  }
-
-  handleStatus(req, res) {
-    res.writeHead(200);
-    res.end(JSON.stringify({
-      workers: this.workers.size,
-      metrics: this.metrics.getSummary(),
-    }));
-  }
-
-  stop() {
-    if (this.server) {
-      this.server.close();
-    }
-  }
-}
-
-// ============================================================================
 // STANDALONE MODE
 // ============================================================================
 
 async function runStandalone() {
-  console.log(`Starting distributed load test (standalone mode)`);
+  console.log(`Starting load test (${workers} concurrent loops in one process)`);
   console.log(`Test ID: ${testId}`);
   console.log(`Base URL: ${baseUrl}`);
   console.log(`Duration: ${duration}s`);
@@ -468,25 +349,23 @@ async function runStandalone() {
     process.exit(1);
   }
   
-  // Start workers
-  console.log(`\nStarting ${workers} workers...`);
+  // Start workers; each seeds, then runs for the duration. The clock for throughput starts when the first
+  // worker has seeded (close enough: seeding takes the same time in each).
+  console.log(`\nStarting ${workers} workers (seeding first)...`);
+  const runs = [];
   for (let i = 0; i < workers; i++) {
     const worker = new LoadTestWorker(i, baseUrl, scenarios, duration, globalMetrics);
     testWorkers.push(worker);
-    worker.start().catch(() => {});
-    await sleep(100); // Stagger worker starts
+    runs.push(worker.start());
   }
-  
-  // Wait for test duration
-  console.log(`\nRunning for ${duration} seconds... (Press Ctrl+C to stop early)`);
-  await sleep(duration * 1000);
-  
-  // Stop workers
-  console.log("\nStopping workers...");
-  for (const worker of testWorkers) {
-    worker.stop();
-  }
-  
+  globalMetrics.loadStartTime = null;
+  const firstSeeded = Promise.race(testWorkers.map((w) => w.seeded));
+  firstSeeded.then(() => { globalMetrics.loadStartTime = Date.now(); });
+  process.on("SIGINT", () => { for (const w of testWorkers) w.stop(); });
+  console.log(`Running for ${duration} seconds after seeding... (Ctrl+C stops early and still writes the report)`);
+  await Promise.all(runs);
+  globalMetrics.endTime = Date.now();
+
   // Generate reports
   const summary = globalMetrics.getSummary();
   console.log("\n" + globalMetrics.toMarkdown());
@@ -510,29 +389,11 @@ async function runStandalone() {
 // ============================================================================
 
 async function main() {
-  switch (mode) {
-    case "coordinator":
-      const coordinator = new TestCoordinator(port);
-      coordinator.start();
-      console.log("Coordinator started. Workers can now connect.");
-      console.log("Press Ctrl+C to stop.");
-      await new Promise(() => {}); // Run forever
-      break;
-    
-    case "worker":
-      if (!coordinatorUrl) {
-        console.error("--coordinator URL is required for worker mode");
-        process.exit(1);
-      }
-      // Worker would connect to coordinator and receive test parameters
-      console.log(`Worker mode: connecting to ${coordinatorUrl}`);
-      console.log("Distributed worker functionality coming soon...");
-      break;
-    
-    default:
-      await runStandalone();
-      break;
+  if (mode !== "standalone") {
+    console.error(`--mode ${mode} is not built: this script runs on one machine only (see the header).`);
+    process.exit(2);
   }
+  await runStandalone();
 }
 
 main().catch((error) => {

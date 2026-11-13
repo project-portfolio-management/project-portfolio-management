@@ -18,7 +18,7 @@
 # Toolchain: the base image tag below must equal `channel` in the root
 # rust-toolchain.toml; the first RUN step fails the build if they drift.
 
-FROM docker.io/library/rust:1.99.1-slim@sha256:b8e062b1c3a80183df83d9ba187cadd2b5ab84bc78d453dbfeb2fccd5f982247 AS builder
+FROM docker.io/library/rust:1.100.0-slim@sha256:e9d95b74296f7126a83ae3d041aeaba1ff4c478f13abc5cc034fcf7c131c3d4a AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \

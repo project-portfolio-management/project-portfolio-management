@@ -500,7 +500,7 @@ Total Files: 3,000+
 ## Appendix B: Technology Stack
 
 ### Backend
-- **Language**: Rust 1.99.1 (pinned)
+- **Language**: Rust 1.99.1 (pinned when the report was written; 1.100.0 since 13 November)
 - **Framework**: Axum 0.8 + axa
 - **Database**: PostgreSQL 18
 - **ORM**: None (plain sqlx 0.9)

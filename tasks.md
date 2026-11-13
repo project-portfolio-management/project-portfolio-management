@@ -3320,7 +3320,8 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   locales, 11 roles) with a list per locale and a locale switcher that opens the same brief; the UI's colour tokens
   with the `49675dc` contrast fix; a meta content security policy with SvelteKit's hashes and no `style` attribute;
   the documents copied into `src/content/docs.json` by `scripts/sync-content.mjs` (`--check` in CI);
-  `make github-pages` and `bin/make-github-pages` (`git subtree push --prefix=project-portfolio-management.github.io
+  `make github-pages` and `bin/make-github-pages` (since 13 November `make publish-github-pages` and
+  `bin/publish-github-pages`; `git subtree push --prefix=project-portfolio-management.github.io
   github-pages main`); the exported repository's `.github/workflows/deploy.yml`; CI job `site`.
   **Acceptance:** the build prerenders all 126 pages; Playwright with axe (WCAG 2.2 AA tags) finds no serious or
   critical violation on every document, every locale's list and one brief per locale under light and dark, nor on
@@ -3329,11 +3330,11 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   the first paint uses the light fallback tokens.
 - [x] **GP-2 (S, owner) — Publish it.** **Published 2026-11-04** at <https://project-portfolio-management.github.io/>:
   created `project-portfolio-management/project-portfolio-management.github.io` (public, issues and wiki off), set its
-  Pages source to GitHub Actions, added the `github-pages` remote and ran `make github-pages` (the steps are in
+  Pages source to GitHub Actions, added the `github-pages` remote and ran `make github-pages` (now `make publish-github-pages`; the steps are in
   [the site's README](project-portfolio-management.github.io/README.md#publishing)). **Acceptance:** before the push,
   `svelte-check` and the build were clean and all 67 Playwright tests passed; after it, all 126 prerendered pages
   answered 200 on the live host, and seven pages in a browser under light and dark gave no console, CSP or network
-  error. **Not done:** the axe suite ran on the local build, not against the live host; `make github-pages` is by
+  error. **Not done:** the axe suite ran on the local build, not against the live host; `make github-pages` (now `make publish-github-pages`) is by
   hand, so the site can lag `main`; the exported repository has no branch protection to stop a direct push.
 
 - [x] **GP-3 (M) — The whole PickerBar.** **Built 2026-11-04:** Lily `PickerBar` on every page (link, search, theme,

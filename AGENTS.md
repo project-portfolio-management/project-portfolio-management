@@ -39,7 +39,8 @@ cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings &&
 #   then DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1
 #   (or a throwaway database on a local Postgres: createdb -U postgres -O "$USER" <name>, and drop it after)
 #   and every real-token binary, as CI's `db` job loops over tests/*.rs: cargo test --test <name> -- --ignored --test-threads=1
-#   (all but mod, matching, otlp_export, otlp_middleware, licence_files, keycloak_container, fluvio_relay)
+#   (all but mod, matching, otlp_export, otlp_middleware, licence_files, keycloak_container, fluvio_relay,
+#   trace_span_concurrency, and load_test, which needs a running service: see its module docs)
 # restore drill, as CI runs it (the whole suite on a restored copy; run it alone, two at once collide):
 #   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test mod -- --ignored --test-threads=1'
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60

@@ -55,7 +55,8 @@ jobs:
       - run: cargo test -p project-portfolio-management-migration
       - run: >-
           cargo test --test matching --test otlp_export --test otlp_middleware
-          --test licence_files --test personal_data_inventory
+          --test licence_files --test personal_data_inventory --test trace_span_concurrency
+          --test load_test
 
   api-db:
     name: API (Postgres 18 integration tests)
@@ -96,11 +97,12 @@ jobs:
         run: cargo test --test mod -- --ignored --test-threads=1
       - name: Real-token test binaries
         # Every tests/*.rs binary except: mod (above), the DB-free ones (run
-        # in the `api` job), and the feature-gated keycloak_container and
-        # fluvio_relay (they need a container runtime / broker).
+        # in the `api` job), the feature-gated keycloak_container and
+        # fluvio_relay (they need a container runtime / broker), and load_test
+        # (its ignored test needs a service already running, which CI does not start).
         run: |
           set -euo pipefail
-          skip=" mod matching otlp_export otlp_middleware licence_files keycloak_container fluvio_relay "
+          skip=" mod matching otlp_export otlp_middleware licence_files keycloak_container fluvio_relay trace_span_concurrency load_test "
           for f in tests/*.rs; do
             name="$(basename "$f" .rs)"
             case "$skip" in *" $name "*) continue ;; esac

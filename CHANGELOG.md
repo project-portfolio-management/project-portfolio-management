@@ -15,6 +15,27 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 13 November (a dropped connection under concurrent requests; a load test in Rust)
+
+- **Fixed: under concurrent requests, about one in a thousand connections dropped.** The tracing middleware
+  (`observability::trace_mw`) held a `Span::enter` guard across `next.run(req).await`. Concurrent requests stacked each
+  other's spans on the worker threads, the `tracing` registry's reference counts went wrong, and it panicked inside the
+  connection task. The client saw `IncompleteMessage`: 30 of about 30,000 requests in a local run. The span is now
+  attached with `Instrument`. A new test, `tests/trace_span_concurrency.rs`, needs no database and runs in the `api` job.
+  It failed before the fix and passes after, in three runs. This is likely the "unexplained" error in the issues-register
+  row and the 4 errors of the soak in `BENCHMARKS.md`; those runs were not repeated to confirm it.
+- **A load test in Rust, `tests/load_test.rs`** (replacing an untracked draft). Workers send read requests back to
+  back against an already running service, configured by `PPM_LOAD_TEST_BASE`, `PPM_LOAD_TEST_SECONDS` and
+  `PPM_LOAD_TEST_CONCURRENCY`. It prints p50, p95, p99 and max per endpoint, and fails on any 5xx or transport error. It
+  is `#[ignore]`d, and CI's `api-db` loop skips it, because CI starts no service. Its percentile unit test runs in the
+  `api` job. Against a local service with login off, after the fix: 43,191 requests in 10 s at 16 workers, all 200,
+  p50 2.3 to 5.0 ms. `scripts/load-test.mjs` stays the source of the published numbers.
+- **SeaORM wording.** The service spec's outbox entries and open task T-3 in `spec/13-tasks.md` described the
+  current code as SeaORM; they now say sqlx and axa. The frozen migration files, the `seaql_migrations` bridge and dated
+  history keep their SeaORM names.
+- Verified: service fmt, clippy (all targets, all features), 1,266 unit tests, and the DB-free binaries;
+  `generate-status.sh`. Not verified: the database suites (CI), and the new load test on any machine but one laptop.
+
 ### 13 November (GitHub Discussions first posts)
 
 - **A first post for each default Discussions category** (`locales/en-us/communications/github-discussions/`:

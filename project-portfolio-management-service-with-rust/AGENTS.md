@@ -42,7 +42,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 |---|---|
 | Run | `cargo run -- start` (needs Postgres; port 1241; migrations auto-run in development) |
 | Lint (must be clean) | `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` |
-| DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`) |
+| DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`, `--test trace_span_concurrency`) |
 | DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
 | Migrations | `migration/migrations/` (crate `project-portfolio-management-migration`, run by sqlx) — one frozen SQL file per migration, `<version>_<name>.up.sql` with its `.down.sql`, or a plain `.sql` that refuses to roll back; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
@@ -243,6 +243,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 |---|---|
 | Unit | `cargo test --lib` (DB-free) |
 | DB-free binaries | `cargo test --test matching --test otlp_export --test otlp_middleware --test licence_files` |
+| Load test (needs a running service with login off; not in CI) | `PPM_LOAD_TEST_SECONDS=10 PPM_LOAD_TEST_CONCURRENCY=16 cargo test --test load_test -- --ignored --nocapture` |
 | Request suites (`tests/mod.rs` → `tests/requests/*`) | `cargo test --test mod -- --ignored --test-threads=1` (shared database; serial) |
 | Real-token binaries | `cargo test --test <name> -- --ignored` for e.g. `private_aggregates`, `list_paging`, `approvals`, `processes`, `controlled_documents`, `cross_plan` |
 | Keycloak | `cargo test --features keycloak --test keycloak_guard` (in-process test IdP); `--features keycloak --test keycloak_container -- --ignored` needs Podman |

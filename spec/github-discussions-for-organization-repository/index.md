@@ -8,5 +8,11 @@ https://github.com/orgs/[slug]/discussions must contain "View all discussions" (
 
 https://github.com/[slug]/[slug]/discussions must redirect to https://github.com/orgs/[slug]/discussions
 
-`bin/test-github-discussions` checks both links, and the category descriptions in
-`locales/en-us/communications/github-discussions/*.txt`.
+## First posts
+
+Each default category (Announcements, General, Ideas, Polls, Q&A, Show and tell) has a first post, written with the
+`github-discussion-first-post-for-<category>` skill, in `locales/en-us/communications/github-discussions/<category>.txt`
+(`qa` and `show-and-tell` for the last two): the title on the first line, a blank line, then the Markdown body, to paste
+into GitHub. Every claim in a post comes from this repository's own documents.
+
+`bin/test-github-discussions` checks both links above and that each post has a title, a blank line and a body.

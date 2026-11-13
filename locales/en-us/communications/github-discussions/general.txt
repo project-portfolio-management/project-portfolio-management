@@ -1,1 +1,16 @@
-General: Chat about anything and everything here
+Say hello, and tell us what kind of work you want to track
+
+Welcome to the General category of the Project Portfolio Management Discussions. This is the place for introductions and for conversation that does not fit anywhere else.
+
+To start: I maintain the project. The project is meant to let an organization keep one list of the plans it funds, see when two plans look like the same work, and see why a figure is missing instead of a misleading zero.
+
+**Your turn: what kind of work would you want to track with it, and in what kind of organization?** A sentence or two is plenty.
+
+## Where to go for other things
+
+- **Questions** about installing, running, or using it: Q&A.
+- **Suggestions** for features or changes: Ideas.
+- **Something you built:** Show and tell.
+- **Bugs:** [Issues](https://github.com/project-portfolio-management/project-portfolio-management/issues).
+
+Thank you for stopping by. I will reply to the first comments here.

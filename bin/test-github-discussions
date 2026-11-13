@@ -2,7 +2,7 @@
 # Test script for GitHub Discussions
 #
 # This script verifies:
-# 1. Required discussion category files exist
+# 1. Each default category has its first post, as a title, a blank line and a body
 # 2. GitHub Discussions links work correctly
 #
 # Usage: bin/test-github-discussions
@@ -32,35 +32,23 @@ echo ""
 # ============================================================================
 # Test 1: Verify required files exist
 # ============================================================================
-echo "Test 1: Verifying discussion category files exist..."
+echo "Test 1: Verifying each category's first post..."
 echo ""
 
-DECLARATIONS=(
-  "locales/en-us/communications/github-discussions/announcements.txt:Announcements: Updates from maintainers"
-  "locales/en-us/communications/github-discussions/general.txt:General: Chat about anything and everything here"
-  "locales/en-us/communications/github-discussions/ideas.txt:Ideas: Share ideas for new features"
-  "locales/en-us/communications/github-discussions/polls.txt:Polls: Take a vote from the community"
-  "locales/en-us/communications/github-discussions/qa.txt:Q&A: Ask the community for help"
-  "locales/en-us/communications/github-discussions/show-and-tell.txt:Show and tell: Show off something you've made"
-)
-
-for declaration in "${DECLARATIONS[@]}"; do
-  IFS=':' read -r filepath expected_content <<< "$declaration"
-  
-  if [ -f "$REPO_ROOT/$filepath" ]; then
-    content=$(cat "$REPO_ROOT/$filepath")
-    if [ "$content" = "$expected_content" ]; then
-      echo -e "${GREEN}✓${NC} $filepath exists with correct content"
-      PASS=$((PASS + 1))
-    else
-      echo -e "${RED}✗${NC} $filepath exists but content mismatch"
-      echo "  Expected: $expected_content"
-      echo "  Got: $content"
-      FAIL=$((FAIL + 1))
-    fi
-  else
+# One first post per default category, written from the github-discussion-first-post-for-<category> skills:
+# the title on the first line, a blank line, then the Markdown body.
+for category in announcements general ideas polls qa show-and-tell; do
+  filepath="locales/en-us/communications/github-discussions/$category.txt"
+  if [ ! -f "$REPO_ROOT/$filepath" ]; then
     echo -e "${RED}✗${NC} $filepath does not exist"
     FAIL=$((FAIL + 1))
+  elif [ -z "$(sed -n 1p "$REPO_ROOT/$filepath")" ] || [ -n "$(sed -n 2p "$REPO_ROOT/$filepath")" ] \
+    || [ "$(sed -n '3,$p' "$REPO_ROOT/$filepath" | tr -d '[:space:]')" = "" ]; then
+    echo -e "${RED}✗${NC} $filepath needs a title line, a blank line, then a body"
+    FAIL=$((FAIL + 1))
+  else
+    echo -e "${GREEN}✓${NC} $filepath: $(sed -n 1p "$REPO_ROOT/$filepath")"
+    PASS=$((PASS + 1))
   fi
 done
 

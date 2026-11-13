@@ -1,1 +1,24 @@
-Announcements: Updates from maintainers
+Welcome to Project Portfolio Management Discussions
+
+Project Portfolio Management is open-source software for recording the plans an organization funds and managing the work within them: tasks, schedules, cost, resources, risks, and governance. It compares plans to find possible duplicates and shows the evidence for each match. Discussions are now open, so there is a place to ask questions, suggest ideas, and share what you build.
+
+## What this means for you
+
+- You can ask questions and get answers that stay findable for the next person.
+- You can suggest ideas and discuss them before anything is built.
+- Maintainers will post news here: releases, changes of direction, and anything that affects people running the software.
+
+## Where to go for what
+
+- **Questions** about installing, running, or using it: Q&A.
+- **Suggestions** for features or changes: Ideas.
+- **Something you built** with it or on it: Show and tell.
+- **Introductions and anything else:** General.
+- **Bugs:** [Issues](https://github.com/project-portfolio-management/project-portfolio-management/issues).
+- **Security problems:** do not post them here; follow [SECURITY.md](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/SECURITY.md).
+
+Before you contribute code, please read [CONTRIBUTING.md](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/CONTRIBUTING.md). The project has one maintainer and no third-party audit; what production use would take is listed item by item on the [path to production](https://project-portfolio-management.github.io/en-us/path-to-production/).
+
+## Next step
+
+Try the demonstration with fictitious data (it needs Git and Podman; the steps are in the [tutorial](https://project-portfolio-management.github.io/en-us/tutorial/)), then tell us in Q&A or General how it went. Comments and reactions on this post are welcome.

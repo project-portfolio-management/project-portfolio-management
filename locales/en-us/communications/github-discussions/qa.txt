@@ -1,1 +1,26 @@
-Q&A: Ask the community for help
+How to ask a question that gets a quick answer
+
+The Q&A category is for questions about installing, running, and using Project Portfolio Management. Mark the reply that solved your problem as the answer, so the next person can find it.
+
+## Before you post
+
+Search the existing Q&A discussions, and read [INSTALL.md](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/INSTALL.md) and the [operations guides](https://github.com/project-portfolio-management/project-portfolio-management/tree/main/operations).
+
+## What to include
+
+Title your question with the problem itself, such as "How do I sign in with Microsoft Entra ID through Keycloak?" rather than "Help", and use these headings:
+
+- **Goal:** what you are trying to do, in one sentence.
+- **What I tried:** the steps, in order.
+- **Expected:** what you thought would happen.
+- **Actual:** what happened, with the exact error message in a code block.
+- **Environment:** the release or commit, how you run it (Podman Compose or from source), the operating system, and the PostgreSQL version.
+- **Minimal example:** the smallest command, request, or configuration that still shows the problem.
+
+Remove passwords, tokens, keys, and personal data from anything you paste.
+
+## Where else to go
+
+- **Bugs** (the software does something wrong): [Issues](https://github.com/project-portfolio-management/project-portfolio-management/issues).
+- **Security problems:** do not post them here; follow [SECURITY.md](https://github.com/project-portfolio-management/project-portfolio-management/blob/main/SECURITY.md).
+- **Suggestions:** Ideas.

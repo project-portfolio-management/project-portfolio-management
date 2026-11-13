@@ -1,1 +1,23 @@
-Ideas: Share ideas for new features
+How to suggest an idea for Project Portfolio Management
+
+The Ideas category is for proposals: new features, changes to existing ones, and things the project should stop doing. Ideas are discussed here before anything is built, so that the problem is understood first.
+
+## How to suggest an idea
+
+Start a new discussion in Ideas, title it with the problem or outcome (for example, "Export the risk register to a spreadsheet"), and use these headings:
+
+- **Problem:** what is hard or impossible today, who it affects, and when.
+- **Proposal:** what you would like to happen, in plain terms. A short list is fine if it has parts.
+- **Alternatives:** other ways to solve it, the workaround you use now, and what happens if nothing changes.
+- **Costs and trade-offs:** anything you can see about complexity, compatibility, or upkeep.
+- **Open questions:** what you are unsure about.
+
+## What helps most
+
+Say whether the idea would solve your own case, and add a comment or a reaction to ideas you would use. A short real example is worth more than a long description.
+
+## What happens next
+
+The maintainer reads the ideas and the replies. An idea that is agreed becomes an [Issue](https://github.com/project-portfolio-management/project-portfolio-management/issues) or a task in the project's backlog, with a link back to the discussion. Agreeing that a problem is real is not a promise to build a particular solution, and the project has one maintainer, so it may take time.
+
+Bugs belong in [Issues](https://github.com/project-portfolio-management/project-portfolio-management/issues), not here.

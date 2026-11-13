@@ -1,1 +1,27 @@
-Show and tell: Show off something you've made
+Show and tell: share what you have built with Project Portfolio Management
+
+This category is for sharing work: an integration, a report, a deployment write-up, a translation, or a screenshot of how you use it. Here is an example to start.
+
+## Example: the demonstration portfolio
+
+The project includes a demonstration with a fictitious transport authority, so anyone can see every feature without real data. It runs on your own machine with Git and Podman:
+
+```sh
+git clone https://github.com/project-portfolio-management/project-portfolio-management.git
+cd project-portfolio-management
+POSTGRES_PASSWORD=demo podman compose --profile demo up -d --build --wait ui-demo
+```
+
+Then open http://localhost:3000/en-001/signin, leave the address as example@example.com, and choose **Sign in to the demonstration**. You land on a tour of every feature, each with what to look for. A banner on every page says the data is fictitious.
+
+## Share yours
+
+Start a new discussion in Show and tell with:
+
+- **What it is**, in one sentence.
+- **Why you made it.**
+- **A screenshot, a short code sample, or a link.**
+- **How someone else can try it.**
+- **What you would like back:** feedback, contributors, or other people's examples.
+
+Please credit anyone whose work you built on, and keep real personal data out of screenshots.

@@ -1,1 +1,19 @@
-Polls: Take a vote from the community
+Which gap on the path to production would help you most if it were closed next?
+
+The project lists, item by item, what production use at a large organization would still take, on the [path to production](https://project-portfolio-management.github.io/en-us/path-to-production/). Several of those items are software work. This poll asks which of them matters most to you.
+
+## How the result will be used
+
+The poll is advisory, not binding. The maintainer will read the result and, more importantly, the comments when choosing what to work on. Please say why you voted as you did: the votes show what, and the comments show why.
+
+## Poll question
+
+Which gap would help you most if it were closed next?
+
+## Options
+
+1. Retention that also covers plans, tasks, time records, and documents
+2. Finding a person's name in free text, uploaded files, and audit snapshots for data-subject requests
+3. Recording a reviewer's decision in the access review
+4. A load test with many users and across several machines
+5. Something else (explain in comments)

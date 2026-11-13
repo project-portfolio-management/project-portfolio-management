@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 13 November (GitHub Discussions first posts)
+
+- **A first post for each default Discussions category** (`locales/en-us/communications/github-discussions/`:
+  Announcements, General, Ideas, Polls, Q&A, Show and tell), each written with its
+  `github-discussion-first-post-for-<category>` skill. Each file has the title on the first line, a blank line, then
+  the Markdown body. Every claim comes from the repository's own documents. The poll's options are four software gaps
+  from the path to production, and the poll says it is advisory. `bin/test-github-discussions` now checks each post's
+  shape instead of the one-line category descriptions those files held. Spec:
+  `spec/github-discussions-for-organization-repository/index.md`.
+- Not done: nothing is posted to GitHub. The posts link to `/en-us/path-to-production/`, which answers 404 on the live
+  site until it is republished (`make publish-github-pages`). The repository's Discussions URL still does not redirect
+  to the organization's, so that check in the script still fails. There is no code of conduct to link.
+
 ### 13 November (path to production)
 
 - **A path-to-production page in every locale** (`locales/<locale>/path-to-production/index.md`, at

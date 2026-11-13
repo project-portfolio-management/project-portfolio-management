@@ -123,6 +123,7 @@ use opentelemetry_otlp::{MetricExporter, SpanExporter, WithExportConfig};
 use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::metrics::SdkMeterProvider;
 use opentelemetry_sdk::trace::SdkTracerProvider;
+use tracing::Instrument as _;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -494,10 +495,12 @@ pub async fn trace_mw(req: Request, next: Next) -> Response {
         // an undeclared field would be silently dropped.
         http.response.status_code = tracing::field::Empty,
     );
-    let _entered = span.enter();
-
+    // The span is attached to the request's future, never entered with `Span::enter`: a guard held across the
+    // `.await` would stay entered on whichever worker thread the task left, stacking other requests' spans and
+    // breaking the registry's reference counts, which panics in the connection task and drops the connection
+    // (tests/trace_span_concurrency.rs).
     let started = Instant::now();
-    let mut response = next.run(req).await;
+    let mut response = next.run(req).instrument(span.clone()).await;
     let elapsed = started.elapsed().as_secs_f64();
 
     let status = response.status();

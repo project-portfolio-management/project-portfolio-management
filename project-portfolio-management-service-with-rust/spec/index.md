@@ -1220,7 +1220,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   seams (`unpublished`/`mark_published`) are DB-gated via the outbox
   suite.
 - [x] **Durable event bus on `axa-outbox` (2026-11-07).** The outbox
-  is `axa_outbox`, written with `axa::outbox::write_seaorm` on the
+  is `axa_outbox`, written with `axa::outbox::write` (sqlx; `write_seaorm` until SQ-1) on the
   handler's transaction (`models::event_outbox::write`), and the relay is
   `axa::outbox::Outbox::run` with the `EventSink` as its publisher, so the
   claim (`FOR UPDATE SKIP LOCKED`), per-record order, recovery of a dead
@@ -1391,7 +1391,7 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   so the migration's own index DDL (`ON event_outbox`) failed and
   rolled the whole fresh migrate back — no tables were ever created.
   The migration is now explicit SQL creating exactly `event_outbox`
-  (matching the `SeaORM` entity), `IF NOT EXISTS`-guarded; same
+  (matching the `event_outbox` row struct), `IF NOT EXISTS`-guarded; same
   migration name (the old form could never have applied anywhere).
   Found and fixed family-wide from the patient-flow implementation
   round; verified by a live fresh-database migrate. Every other table

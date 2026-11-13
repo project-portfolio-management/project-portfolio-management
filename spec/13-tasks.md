@@ -1228,8 +1228,8 @@ described manual check confirms it. Split tasks too big for one PR
     1.00 in a test; kind-agnostic matching, each rule, and each
     component have a unit test; public-API + doctest suites pass.
 - [ ] **T-3 — Service crate: chassis + thin-record CRUD + matching.**
-  - [ ] loco 0.16 / Axum 0.8 / SeaORM 1.1 chassis; the `plans`
-    migration (nullable `kind`, `parent_pid`); `cargo loco start`;
+  - [ ] axa 0.11 / Axum 0.8 / sqlx 0.9 chassis; the `plans`
+    migration (nullable `kind`, `parent_pid`); `cargo run -- start`;
     config yamls; port 1241.
   - [ ] The controller over the one plans collection: CRUD over the
     thin `Plan` (JSONB `data`), name search (`ILIKE`), `/match`,

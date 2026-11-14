@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (the service's `make demo`)
+
+- **`make demo` in the service ran `cargo run -- task seed`, a task that does not exist.** It now runs the
+  demonstration as `operations/demo.md` does: the compose profile, from the repository root.
+- Not verified: the target was not run here.
+
 ### 14 November (RE-5, part b: a dry run of DHCW's spreadsheet)
 
 - **`task dhcw_roadmaps_dry_run dir:<folder>` reports what the DHCW roadmap spreadsheet's CSV exports would become,**

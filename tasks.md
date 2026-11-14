@@ -3561,6 +3561,7 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   confirmed run. No code goes to their repository, and no contact is made, without the owner.
   **Acceptance:** their four test fixture CSVs (`Roadmaps`, `ProductA`, `ProductB` and `ProductC`, MIT, the notice
   kept) import in a dry run with every row accounted for.
+  **Part (a) written 2026-11-14:** [`operations/dhcw-roadmaps-editor.md`](operations/dhcw-roadmaps-editor.md), operation by operation, with the error mapping, sign-in and CORS. It found two gaps on our side: no list route for editors (every roadmap the caller may read, with its plan id), and no family list with colours. **Not done:** part (b), the dry-run import; any contact with DHCW (OQ-15).
 - [x] **RE-6 (M) — Stored bilingual text that knows when it is out of date.** Each public text field (title,
   description, expected outcome, phase, tags, details) holds English and optional other languages. A translation
   records the hash of the source text it was made from. When the English changes, the translation is kept and marked

@@ -14,6 +14,7 @@ back. Each guide says what was **tested** and what was not.
 | [Sign in with Microsoft Entra ID](sign-in-with-entra.md) | let people sign in through Entra (OpenID Connect), directly or through Keycloak |
 | [The demonstration](demo.md) | a compose profile (`--profile demo`) that fills the app with fictitious data and signs you in as `example@example.com`; never for real data |
 | [Email with Stalwart](email-with-stalwart.md) | an optional Podman/compose mail server (`--profile mail`) for notifications; setup is by hand and delivery is not verified |
+| [The DHCW Roadmap Editor](dhcw-roadmaps-editor.md) | a paper mapping of the DHCW Roadmap Editor's repository port onto this service's routes, with each gap; nothing built or offered (RE-5) |
 
 The scripts live in [`../scripts`](../scripts): `backup.sh`, `restore.sh`,
 `restore-test.sh`, `check-backup-age.sh`. The CI job `restore` runs the restore

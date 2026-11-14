@@ -391,6 +391,11 @@
           "description": "Tutorial: link a pool to the workforce service (WPM), read supply, send demand, read people impact"
         },
         {
+          "title": "The DHCW Roadmap Editor against this service",
+          "path": "operations/dhcw-roadmaps-editor.md",
+          "description": "A paper mapping of the DHCW Roadmap Editor's repository port onto this service, with each gap (RE-5)"
+        },
+        {
           "title": "Operating commitments",
           "path": "operations/commitments.md",
           "description": "Operating commitments"

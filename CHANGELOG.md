@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-5, part a: a mapping onto the DHCW Roadmap Editor's port)
+
+- **`operations/dhcw-roadmaps-editor.md`** maps each operation of the DHCW Roadmap Editor's repository port onto this
+  service and names the gaps: no list route for editors, and no family list with colours.
+- Not done: the dry-run import (part b). Nothing was sent to DHCW, and OQ-15 is the owner's.
+
 ### 14 November (RE-13: what was typed survives an ended session)
 
 - **The plan form keeps what was typed when the session has ended,** offers sign-in in a new tab, and saves on the

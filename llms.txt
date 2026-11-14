@@ -102,6 +102,7 @@
 - [Sign in with Entra](operations/sign-in-with-entra.md): Single sign-on through Keycloak and Microsoft Entra
 - [Email with Stalwart](operations/email-with-stalwart.md): Outgoing mail with a local Stalwart server
 - [Tutorial: the bridge to the workforce service (WPM)](operations/wpm-bridge.md): Tutorial: link a pool to the workforce service (WPM), read supply, send demand, read people impact
+- [The DHCW Roadmap Editor against this service](operations/dhcw-roadmaps-editor.md): A paper mapping of the DHCW Roadmap Editor's repository port onto this service, with each gap (RE-5)
 - [Operating commitments](operations/commitments.md): Operating commitments
 - [Recovery objectives](operations/recovery-objectives.md): Recovery point and recovery time objectives
 - [GitHub Pages site](project-portfolio-management.github.io/README.md): Build, test and the exact steps to publish the documentation site (published)

@@ -15,7 +15,9 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 serde_json = { version = "1", features = ["float_roundtrip", "arbitrary_precision"] }
-project-portfolio-management-matcher = { path = "../../project-portfolio-management-matcher-with-rust" }
+# The same matcher the service takes (its Cargo.toml), so the `Plan` the targets build is the one the service checks.
+# A path dependency here made a second copy of the crate, and the targets did not compile.
+project-portfolio-management-matcher = "0.2.2"
 
 [dependencies.project-portfolio-management]
 path = ".."

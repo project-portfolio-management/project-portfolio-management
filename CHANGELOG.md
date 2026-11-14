@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (the fuzz crate builds again)
+
+- **The service's fuzz crate takes the matcher from crates.io, as the service does,** so its targets compile: with
+  the local path there were two copies of the crate and two `Plan` types. Each target then ran for 16 seconds with
+  `cargo +nightly fuzz run` and found nothing (`validate_json` 10,878 runs, `validate_built` 9,166, `merge_plans` 7,129).
+- Not done: a CI job that builds the fuzz targets.
+
 ### 14 November (axa 0.13)
 
 - **The service moves from axa 0.11 to 0.13, and axa-test from 0.2 to 0.4.** The feature `sqlx` is now
@@ -29,9 +36,9 @@ It is pre-1.0; the first release cut from the root release workflow is
   "Upgrading to axa 0.13".
 - Not adopted: readiness that waits for migrations (`Checks::migrations`), `config::Settings`, the new upload,
   webhooks and HTTP client features. Not verified: a deployed browser on another origin.
-- Found, not fixed: the fuzz crate (`project-portfolio-management-service-with-rust/fuzz`) does not build, on `main`
-  before this change too, because it takes the matcher by path while the service takes it from crates.io, so two
-  `Plan` types meet. CI does not build it. Its lockfile is moved to axa 0.13 as well.
+- Found: the fuzz crate (`project-portfolio-management-service-with-rust/fuzz`) did not build, on `main` before this
+  change too, because it took the matcher by path while the service takes it from crates.io, so two `Plan` types
+  met. CI does not build it. Fixed in the next entry. (Its lockfile is not tracked, so nothing of it is committed.)
 
 ### 14 November (markdown lint is a merge gate)
 

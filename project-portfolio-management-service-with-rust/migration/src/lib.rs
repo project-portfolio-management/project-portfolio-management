@@ -58,6 +58,10 @@ pub static MIGRATOR: LazyLock<Migrator> = LazyLock::new(|| {
     )
 });
 
+/// How many migrations the old migrator knew: the frozen files, in its order. Every later migration is sqlx's own,
+/// has no name in `seaql_migrations`, and is never bridged.
+pub const FROZEN: usize = 143;
+
 /// sqlx's history table.
 pub const HISTORY: &str = "_sqlx_migrations";
 
@@ -415,10 +419,10 @@ mod tests {
 
     #[test]
     fn every_old_migration_has_its_frozen_file_in_the_same_order() {
-        let names: Vec<String> = ups().map(old_name).collect();
+        let names: Vec<String> = ups().take(FROZEN).map(old_name).collect();
         let old: Vec<&str> = OLD_NAMES.lines().collect();
+        assert_eq!(old.len(), FROZEN);
         assert_eq!(names, old);
-        assert_eq!(names.len(), 143);
     }
 
     #[test]

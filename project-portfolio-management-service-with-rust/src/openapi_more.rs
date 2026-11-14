@@ -2009,14 +2009,28 @@ fn organization_paths() -> Value {
                 "Inputs: the organization records. Each has a name, a kind (delivery, partner, sponsor or supplier), whether it is active and the audience string (org:<pid>) under which a director pack can be addressed to it. The list holds no person.",
                 vec![], &[("200", "organizations")]),
             "post": op("organizations", "Create an organization",
-                "Body: name (1 to 200 characters, unique ignoring case) and kind. Audited.",
-                vec![], &[("200", "The organization"), ("409", "The name exists"), ("422", "A bad name or kind")])
+                "Body: name (1 to 200 characters, unique ignoring case) and kind; optionally a short code (a letter or digit, then up to 19 letters, digits or hyphens, unique ignoring case) and national (one organization at most, listed first). Audited.",
+                vec![], &[("200", "The organization"), ("409", "The name or code exists"), ("422", "A bad name, kind or code, or a second national organization")])
         },
         "/api/organizations/{pid}": {
             "put": op("organizations", "Rename, change the kind of, retire or restore an organization",
-                "Body: any of name, kind, active. A retired organization can no longer be named on a commitment or be a pack audience; what already names it stays. Audited.",
+                "Body: any of name, kind, active, code (an empty string clears it) and national. A retired organization can no longer be named on a commitment or be a pack audience; what already names it stays. Audited.",
                 vec![uuid_param("pid")],
-                &[("200", "The organization"), ("404", "Unknown organization"), ("409", "The name exists"), ("422", "A bad name or kind")])
+                &[("200", "The organization"), ("404", "Unknown organization"), ("409", "The name or code exists"), ("422", "A bad name, kind or code, or a second national organization")])
+        },
+        "/api/roadmap-categories": {
+            "get": op("roadmap-categories", "The categories a public product roadmap is filed under (RE-7)",
+                "Inputs: the category records, active first, then by name. Each has a name, its translations (language code to text) and whether it is active. Defined once and linked by id, so a rename shows wherever the category is used. Reads no plan and holds no person.",
+                vec![], &[("200", "categories")]),
+            "post": op("roadmap-categories", "Create a roadmap category",
+                "Body: name (1 to 100 characters, unique ignoring case) and optional translations (language code to text, 1 to 100 characters each, at most 50). Audited.",
+                vec![], &[("200", "The category"), ("409", "The name exists"), ("422", "A bad name or translation")])
+        },
+        "/api/roadmap-categories/{pid}": {
+            "put": op("roadmap-categories", "Rename, translate, retire or restore a roadmap category",
+                "Body: any of name, translations (the whole set, replacing the old one) and active. A retired category can no longer be chosen; a roadmap that names it keeps it. Audited.",
+                vec![uuid_param("pid")],
+                &[("200", "The category"), ("404", "Unknown category"), ("409", "The name exists"), ("422", "A bad name or translation")])
         }
     })
 }

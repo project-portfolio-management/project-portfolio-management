@@ -221,7 +221,9 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   refuses a changed one; a change is a new migration. The 143 files up to
   `20261109000109` are the statements the old `sea-orm-migration` migrations
   ran, frozen; a database that migrator built is bridged once from
-  `seaql_migrations` (kept), so nothing runs twice. Use `CREATE OR REPLACE
+  `seaql_migrations` (kept), so nothing runs twice. Later files (from
+  `20261114000110`, RE-7) are sqlx's own: no old name, never bridged
+  (`migrations::FROZEN` is the count of frozen ones). Use `CREATE OR REPLACE
   FUNCTION` for trigger functions (re-runnable; see migrations 45–47); name
   tables in the plural, as every table so far is. Append-only and
   immutability rules (processes, document versions) are database triggers,

@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-7: lists defined once)
+
+- **Organizations gain a short code and a national scope; roadmap categories are a list of their own.** A code is
+  unique ignoring case, and one organization at most is national (in NHS Wales, All Wales beside the health boards).
+  `/api/roadmap-categories` holds the categories a public product roadmap is filed under, with translations. It is the
+  first migration written for sqlx after the freeze, so the migration census now treats the 143 frozen files as a
+  prefix.
+- Not done: a screen; product families (a product's family is its parent plan); colours.
+
 ### 14 November (the plan's name in every locale)
 
 - **The plan's name field says "Name" in every locale**, as in English, not "Title". The RE-9 snapshots found the

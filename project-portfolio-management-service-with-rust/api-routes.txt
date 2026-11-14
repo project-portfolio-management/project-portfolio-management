@@ -608,6 +608,9 @@ DELETE /api/reviews/{pid}
 POST /api/reviews/{pid}/respond
 POST /api/reviews/{pid}/submit
 GET /api/risk/heatmap
+GET /api/roadmap-categories
+POST /api/roadmap-categories
+PUT /api/roadmap-categories/{pid}
 GET /api/saved-views
 POST /api/saved-views
 DELETE /api/saved-views/{pid}

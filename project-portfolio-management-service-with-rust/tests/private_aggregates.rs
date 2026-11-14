@@ -235,6 +235,10 @@ const NOT_AGGREGATE: &[(&str, &str)] = &[
         "the scorecard names only; the KPIs are read, filtered by the plans the caller may read, from /api/scorecards/{pid} and /api/deescalation",
     ),
     (
+        "/api/roadmap-categories",
+        "a deployment catalogue of category names (RE-7); it reads no plan",
+    ),
+    (
         "/api/scorecard-template",
         "a fixed list of suggested measures built into the service; no record",
     ),

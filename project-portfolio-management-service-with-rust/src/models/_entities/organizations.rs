@@ -16,4 +16,8 @@ pub struct Model {
     /// `delivery`, `partner`, `sponsor` or `supplier`.
     pub kind: String,
     pub active: bool,
+    /// A short code, unique ignoring case, such as a health board's (`SBUHB`); `None` for none (RE-7).
+    pub code: Option<String>,
+    /// The one organization, at most, whose scope is national (All Wales), listed first (RE-7).
+    pub national: bool,
 }

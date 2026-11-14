@@ -491,6 +491,7 @@ impl App {
             .add_route(controllers::buffer_management::routes())
             .add_route(controllers::drum::routes())
             .add_route(controllers::organizations::routes())
+            .add_route(controllers::roadmap_categories::routes())
             .add_route(controllers::ledger::routes())
             .add_route(controllers::deescalation::routes())
             .add_route(controllers::cutover::routes())

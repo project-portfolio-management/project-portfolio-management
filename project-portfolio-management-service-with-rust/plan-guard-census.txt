@@ -331,6 +331,9 @@ DELETE /api/reviews/{pid}	checks
 POST /api/reviews/{pid}/respond	checks
 POST /api/reviews/{pid}/submit	checks
 GET /api/risk/heatmap	filters
+GET /api/roadmap-categories	no-plan
+POST /api/roadmap-categories	no-plan
+PUT /api/roadmap-categories/{pid}	no-plan
 GET /api/saved-views	own
 POST /api/saved-views	own
 DELETE /api/saved-views/{pid}	own

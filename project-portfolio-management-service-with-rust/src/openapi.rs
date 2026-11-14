@@ -2368,6 +2368,7 @@ mod tests {
             crate::controllers::buffer_management::routes(),
             crate::controllers::drum::routes(),
             crate::controllers::organizations::routes(),
+            crate::controllers::roadmap_categories::routes(),
             crate::controllers::ledger::routes(),
             crate::controllers::deescalation::routes(),
             crate::controllers::cutover::routes(),

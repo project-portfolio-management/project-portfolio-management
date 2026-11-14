@@ -18,6 +18,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **Organization codes, a national scope and roadmap categories (RE-7, 2026-11-14).** Migration
+  `20261114000110_roadmap_lists`, the first after the freeze; `/api/roadmap-categories`. Spec FR-16e18. See the root
+  `CHANGELOG.md`, 14 November.
 - **`tests/load_test.rs` (2026-11-13):** a read-only load test against a running service (`#[ignore]`d; not in CI).
 
 ### Changed

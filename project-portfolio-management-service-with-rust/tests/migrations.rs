@@ -189,26 +189,36 @@ async fn the_whole_schema() -> Vec<String> {
 async fn a_database_the_old_migrator_built_is_bridged_and_nothing_runs_again() {
     let whole = the_whole_schema().await;
     let db = Scratch::new().await;
-    as_the_old_migrator_left_it(&db.pool, count()).await;
-    let before = schema(&db.pool).await;
+    // Everything the old migrator ever ran; what came after the freeze is sqlx's own (RE-7 was the first).
+    as_the_old_migrator_left_it(&db.pool, migrations::FROZEN).await;
     let old_before = old_history(&db.pool).await;
-    assert_eq!(before, whole);
 
     migrations::up(&db.pool).await.unwrap();
 
-    assert_eq!(schema(&db.pool).await, before, "nothing ran");
+    assert_eq!(schema(&db.pool).await, whole);
     let rows = history(&db.pool).await;
     assert_eq!(rows.len(), count());
-    for ((version, description, _, success, checksum, took), migration) in rows.iter().zip(
-        MIGRATOR
-            .iter()
-            .filter(|m| m.migration_type.is_up_migration()),
-    ) {
+    for (i, ((version, description, _, success, checksum, took), migration)) in rows
+        .iter()
+        .zip(
+            MIGRATOR
+                .iter()
+                .filter(|m| m.migration_type.is_up_migration()),
+        )
+        .enumerate()
+    {
         assert_eq!(*version, migration.version);
         assert_eq!(description, &*migration.description);
         assert!(success);
         assert_eq!(checksum.as_slice(), &*migration.checksum, "{version}");
-        assert_eq!(*took, 0, "{version} was copied, not run");
+        if i < migrations::FROZEN {
+            assert_eq!(*took, 0, "{version} was copied, not run");
+        } else {
+            assert!(
+                *took > 0,
+                "{version} came after the freeze and was run by sqlx"
+            );
+        }
     }
     assert_eq!(
         old_history(&db.pool).await,
@@ -357,7 +367,11 @@ async fn an_old_history_naming_a_migration_this_binary_does_not_know_is_refused(
 #[ignore = "needs PostgreSQL via DB_URL"]
 async fn a_rollback_refused_before_is_refused_still() {
     let db = Scratch::new().await;
-    migrations::up(&db.pool).await.unwrap();
+    // Up to the last frozen migration, the refused one; what came after the freeze rolls back on its own.
+    MIGRATOR
+        .run_to(nth(migrations::FROZEN), &db.pool)
+        .await
+        .unwrap();
     let (before, rows) = (schema(&db.pool).await, history(&db.pool).await);
 
     let refused = migrations::down(&db.pool, 1).await.unwrap_err();

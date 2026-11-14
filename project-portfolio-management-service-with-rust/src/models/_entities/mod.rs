@@ -145,6 +145,7 @@ pub mod resource_roles;
 pub mod review_queue_items;
 pub mod reviews;
 pub mod risks;
+pub mod roadmap_categories;
 pub mod satisfaction_responses;
 pub mod saved_views;
 pub mod scenarios;

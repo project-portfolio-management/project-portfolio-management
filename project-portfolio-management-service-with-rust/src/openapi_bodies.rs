@@ -696,6 +696,9 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/reviews/{pid}/respond", "collaboration", "`POST /api/reviews/{pid}/respond` — the reviewer accepts or declines the invitation."),
     ("post", "/api/reviews/{pid}/submit", "collaboration", "`POST /api/reviews/{pid}/submit` — record the verdict. Only a reviewer who accepted may submit, so an unanswered invitation never becomes evidence. Submitting fires any `review_submitted` automations."),
     ("get", "/api/risk/heatmap", "oversight", "`GET /api/risk/heatmap` — the CRO view: probability×impact matrix over open risks, top exposures, per-portfolio posture, concentration (disclosed 25% threshold), review hygiene, and the declared risk appetite (or an honest \"not configured\")."),
+    ("get", "/api/roadmap-categories", "roadmap_categories", "`GET /api/roadmap-categories` — every category, active first, then by name."),
+    ("post", "/api/roadmap-categories", "roadmap_categories", "`POST /api/roadmap-categories`"),
+    ("put", "/api/roadmap-categories/{pid}", "roadmap_categories", "`PUT /api/roadmap-categories/{pid}` — rename, translate, retire or restore."),
     ("get", "/api/saved-views", "saved_views", "`GET /api/saved-views?route=` — the caller's own views, optionally narrowed to one route. Never returns another `sub`'s rows."),
     ("post", "/api/saved-views", "saved_views", "`POST /api/saved-views` — save a view under the caller's own `sub`. Requires authentication ([`AuthUser`]): a saved view with no owner is not a saved view."),
     ("delete", "/api/saved-views/{pid}", "saved_views", "`DELETE /api/saved-views/{pid}` — soft-delete, scoped to the caller's own `sub`."),
@@ -1020,6 +1023,8 @@ pub fn attach(paths: &mut Value) {
     body!("post", "/api/reviews", crate::controllers::collaboration::InvitePayload);
     body!("post", "/api/reviews/{pid}/respond", crate::controllers::collaboration::RespondPayload);
     body!("post", "/api/reviews/{pid}/submit", crate::controllers::collaboration::VerdictPayload);
+    body!("post", "/api/roadmap-categories", crate::controllers::roadmap_categories::NewCategory);
+    body!("put", "/api/roadmap-categories/{pid}", crate::controllers::roadmap_categories::CategoryChange);
     body!("post", "/api/saved-views", crate::controllers::saved_views::SavedViewPayload);
     body!("post", "/api/scenarios", crate::controllers::strategy::ScenarioPayload);
     body!("post", "/api/scenarios/generate", crate::controllers::strategy::GeneratePayload);

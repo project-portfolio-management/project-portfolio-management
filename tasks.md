@@ -3566,12 +3566,13 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   (`src/issues.rs`).
   **Acceptance:** changing the English marks the Welsh `needs_review` and keeps it; re-saving the Welsh clears the
   mark; the public reader's fallback follows the setting; an unknown language tag is `422`.
-- [ ] **RE-7 (S–M) — Shared lists defined once.** Bilingual categories and product families, each with an id and a
+- [x] **RE-7 (S–M) — Shared lists defined once.** Bilingual categories and product families, each with an id and a
   colour, linked by id. Organizations gain an optional short `code`, unique per deployment, and a `national` scope
   (one allowed, listed first). A screen shows a roadmap whose copied name or colour differs from its list's. An
   organization code the list does not hold is refused on write; an import (RE-5) keeps it as a warning.
   **Acceptance:** renaming a category renames it on every roadmap that links it; two organizations with one code
   are `409`; a second `national` is `422`.
+  **Built 2026-11-14.** Migration `20261114000110_roadmap_lists`, the first written for sqlx after the freeze: `organizations.code` and `organizations.national` (a check, a unique index ignoring case, and a partial unique index for one national), and `roadmap_categories`. `controllers/organizations.rs` (code, national, national listed first) and `controllers/roadmap_categories.rs` (list, create, change; translations under `issues::label_problems`). Spec FR-16e18. Request tests `requests::roadmap_lists` (code clash in another case `409`, bad code `422`, second national on create and on change `422`, national first, an empty code clears it; a category is trimmed, a clash in another case is `409`, a bad name or language code or blank translation is `422`, a rename replaces the translations, a retired category stays listed, an unknown one is `404`). The migration census now treats the 143 frozen files as a prefix (`migrations::FROZEN`), and the bridge tests run what came after the freeze with sqlx. **Changed from the text above:** a roadmap links a category by id and keeps no copy, so there is no drift to show and no "out of step" screen; product families are the parent plan, not a new table; no colour. "Renaming renames it everywhere" is true by construction and is tested once RE-1 links roadmaps to categories. **Not done:** a screen; an import keeping an unknown code as a warning (RE-5).
 - [ ] **RE-8 (S) — Stable public ids.** A roadmap's public slug is unique per deployment and keeps its old value as a
   redirect when changed. An item's public id is eight random lower-case letters and digits, starting with a letter,
   never reused. Part of RE-4.

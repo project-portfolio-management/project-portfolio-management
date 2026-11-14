@@ -422,6 +422,14 @@ matcher payload (§5.6); every mutation audits (§6.6).
   the request saw: of several concurrent resolvers exactly one succeeds, and the rest get `409` "this allocation already
   names a person". Over capacity is also `409` unless `confirm` is true. An allocation that already names a person is
   `409`. Not built: changing a named person's allocation in place (there is no edit); an `If-Match` header.
+- **FR-16e18 Lists defined once (RE-7).** An organization has an optional short `code` (a letter or digit, then up to
+  19 letters, digits or hyphens; unique ignoring case, `409` on a clash; an empty string clears it) and a `national`
+  flag, held by one organization at most (`422` for a second), which `GET /api/organizations` lists first.
+  `/api/roadmap-categories` (`GET`, `POST`, `PUT /{pid}`) holds the categories a public product roadmap is filed under:
+  a name (1 to 100 characters, unique ignoring case) with translations by language code under the issue-label rule,
+  retired rather than deleted. A roadmap links a category by id and holds no copy, so a rename shows everywhere and
+  nothing can drift. Not built: product families with a colour (a product's family is its parent plan, which the
+  service already has); a category's colour.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

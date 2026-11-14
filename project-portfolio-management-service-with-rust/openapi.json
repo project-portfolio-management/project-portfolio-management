@@ -12752,7 +12752,7 @@
         ]
       },
       "post": {
-        "description": "Body: name (1 to 200 characters, unique ignoring case) and kind. Audited.",
+        "description": "Body: name (1 to 200 characters, unique ignoring case) and kind; optionally a short code (a letter or digit, then up to 19 letters, digits or hyphens, unique ignoring case) and national (one organization at most, listed first). Audited.",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -12760,6 +12760,12 @@
               "schema": {
                 "description": "Request body creating an organization.",
                 "properties": {
+                  "code": {
+                    "default": null,
+                    "description": "A short code (RE-7): a letter or digit, then up to 19 letters, digits or hyphens; unique ignoring case.",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "kind": {
                     "description": "Organization kind; one of KINDS.",
                     "type": "string"
@@ -12767,6 +12773,11 @@
                   "name": {
                     "description": "Organization name, 1 to 200 characters after trimming, unique.",
                     "type": "string"
+                  },
+                  "national": {
+                    "default": false,
+                    "description": "Whether its scope is national (RE-7); one organization at most.",
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -12784,10 +12795,10 @@
             "description": "The organization"
           },
           "409": {
-            "description": "The name exists"
+            "description": "The name or code exists"
           },
           "422": {
-            "description": "A bad name or kind"
+            "description": "A bad name, kind or code, or a second national organization"
           }
         },
         "summary": "Create an organization",
@@ -12798,7 +12809,7 @@
     },
     "/api/organizations/{pid}": {
       "put": {
-        "description": "Body: any of name, kind, active. A retired organization can no longer be named on a commitment or be a pack audience; what already names it stays. Audited.",
+        "description": "Body: any of name, kind, active, code (an empty string clears it) and national. A retired organization can no longer be named on a commitment or be a pack audience; what already names it stays. Audited.",
         "parameters": [
           {
             "in": "path",
@@ -12822,6 +12833,12 @@
                     "nullable": true,
                     "type": "boolean"
                   },
+                  "code": {
+                    "default": null,
+                    "description": "A new short code; an empty string clears it (RE-7).",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "kind": {
                     "default": null,
                     "description": "New kind; one of KINDS.",
@@ -12833,6 +12850,12 @@
                     "description": "New name.",
                     "nullable": true,
                     "type": "string"
+                  },
+                  "national": {
+                    "default": null,
+                    "description": "Whether its scope is national (RE-7); one organization at most.",
+                    "nullable": true,
+                    "type": "boolean"
                   }
                 },
                 "type": "object"
@@ -12849,10 +12872,10 @@
             "description": "Unknown organization"
           },
           "409": {
-            "description": "The name exists"
+            "description": "The name or code exists"
           },
           "422": {
-            "description": "A bad name or kind"
+            "description": "A bad name, kind or code, or a second national organization"
           }
         },
         "summary": "Rename, change the kind of, retire or restore an organization",
@@ -31265,6 +31288,136 @@
         "summary": "CRO heatmap: probability x impact cells, top risks, posture, concentration, hygiene, declared appetite + breaches",
         "tags": [
           "oversight"
+        ]
+      }
+    },
+    "/api/roadmap-categories": {
+      "get": {
+        "description": "Inputs: the category records, active first, then by name. Each has a name, its translations (language code to text) and whether it is active. Defined once and linked by id, so a rename shows wherever the category is used. Reads no plan and holds no person.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "categories"
+          }
+        },
+        "summary": "The categories a public product roadmap is filed under (RE-7)",
+        "tags": [
+          "roadmap-categories"
+        ]
+      },
+      "post": {
+        "description": "Body: name (1 to 100 characters, unique ignoring case) and optional translations (language code to text, 1 to 100 characters each, at most 50). Audited.",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Request body creating a category.",
+                "properties": {
+                  "name": {
+                    "description": "The name, 1 to 100 characters after trimming, unique ignoring case.",
+                    "type": "string"
+                  },
+                  "translations": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": {},
+                    "description": "The name in other languages: language code (`cy`, `zh-cn`) to text, 1 to 100 characters each.",
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The category"
+          },
+          "409": {
+            "description": "The name exists"
+          },
+          "422": {
+            "description": "A bad name or translation"
+          }
+        },
+        "summary": "Create a roadmap category",
+        "tags": [
+          "roadmap-categories"
+        ]
+      }
+    },
+    "/api/roadmap-categories/{pid}": {
+      "put": {
+        "description": "Body: any of name, translations (the whole set, replacing the old one) and active. A retired category can no longer be chosen; a roadmap that names it keeps it. Audited.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Request body changing a category; absent fields are left as they are.",
+                "properties": {
+                  "active": {
+                    "default": null,
+                    "description": "False retires the category, true restores it.",
+                    "nullable": true,
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "default": null,
+                    "description": "A new name.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "translations": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": null,
+                    "description": "The whole set of translations, replacing the old one.",
+                    "nullable": true,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The category"
+          },
+          "404": {
+            "description": "Unknown category"
+          },
+          "409": {
+            "description": "The name exists"
+          },
+          "422": {
+            "description": "A bad name or translation"
+          }
+        },
+        "summary": "Rename, translate, retire or restore a roadmap category",
+        "tags": [
+          "roadmap-categories"
         ]
       }
     },

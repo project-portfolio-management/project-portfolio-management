@@ -297,6 +297,30 @@ async fn put_roadmap(
         .published
         .or(existing.as_ref().map(|r| r.published))
         .unwrap_or(false);
+    // RE-8: a slug once held by another roadmap is never given to this one; this roadmap may take back its own.
+    let held_by: Option<i64> =
+        sqlx::query_scalar("SELECT roadmap_id FROM public_roadmap_slugs WHERE slug = $1")
+            .bind(&slug)
+            .fetch_optional(tx.conn())
+            .await?;
+    if held_by.is_some_and(|id| existing.as_ref().is_none_or(|r| r.id != id)) {
+        return Err(Error::CustomError(
+            axum::http::StatusCode::CONFLICT,
+            axa::error::ErrorDetail::new("conflict", "another roadmap had that slug"),
+        ));
+    }
+    if let Some(r) = existing.as_ref().filter(|r| r.slug != slug) {
+        sqlx::query("DELETE FROM public_roadmap_slugs WHERE slug = $1 AND roadmap_id = $2")
+            .bind(&slug)
+            .bind(r.id)
+            .execute(tx.conn())
+            .await?;
+        sqlx::query("INSERT INTO public_roadmap_slugs (roadmap_id, slug) VALUES ($1, $2)")
+            .bind(r.id)
+            .bind(&r.slug)
+            .execute(tx.conn())
+            .await?;
+    }
     let (row, event): (roadmaps::Model, &str) = if let Some(r) = &existing {
         let row = sqlx::query_as(
             "UPDATE public_roadmaps SET title = $2, slug = $3, vision = $4, service_description = $5,

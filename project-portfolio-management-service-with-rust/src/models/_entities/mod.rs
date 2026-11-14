@@ -138,6 +138,7 @@ pub mod programme_thresholds;
 pub mod programme_triages;
 pub mod proposals;
 pub mod public_roadmap_items;
+pub mod public_roadmap_slugs;
 pub mod public_roadmaps;
 pub mod raci_assignments;
 pub mod reactions;

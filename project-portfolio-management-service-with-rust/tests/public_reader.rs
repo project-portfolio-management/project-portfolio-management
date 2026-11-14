@@ -71,6 +71,7 @@ fn bearer(
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test public_reader -- --ignored`"]
+#[expect(clippy::too_many_lines, reason = "one linear end-to-end story of the reader")]
 async fn the_public_reader_serves_only_what_was_published_from_an_open_plan() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide settings.
@@ -169,6 +170,24 @@ async fn the_public_reader_serves_only_what_was_published_from_an_open_plan() {
         let listed: Value = request.get("/api/public/roadmaps").await.json();
         let slugs: Vec<&str> = listed["roadmaps"].as_array().unwrap().iter().map(|r| r["slug"].as_str().unwrap()).collect();
         assert!(!slugs.iter().any(|s| s.contains(&format!("private-roadmap-{tag}")) || s.contains(&format!("marked-roadmap-{tag}"))));
+
+        // RE-8: a new slug keeps the old one as a redirect, and no other roadmap may take the old one.
+        as_lead(request.put(&url)).json(&json!({ "slug": format!("open-{tag}") })).await.assert_status_ok();
+        let old = request.get(&public).await;
+        assert_eq!(old.status_code(), 301);
+        assert_eq!(old.header("location"), format!("/api/public/roadmaps/open-{tag}").as_str());
+        request.get(&format!("/api/public/roadmaps/open-{tag}")).await.assert_status_ok();
+        let other = product(format!("Another product {tag}")).await;
+        let taken = as_lead(request.put(&format!("/api/plans/{other}/roadmap")))
+            .json(&json!({ "title": "Another", "slug": slug })).await;
+        assert_eq!(taken.status_code(), 409, "an old slug is never given to another roadmap");
+        // The roadmap may take its own old slug back.
+        as_lead(request.put(&url)).json(&json!({ "slug": slug })).await.assert_status_ok();
+        request.get(&public).await.assert_status_ok();
+        assert_eq!(request.get(&format!("/api/public/roadmaps/open-{tag}")).await.status_code(), 301);
+        // A redirect never points at a roadmap that is not served.
+        as_lead(request.put(&format!("/api/plans/{private}/roadmap"))).json(&json!({ "slug": format!("private-new-{tag}") })).await.assert_status_ok();
+        assert_eq!(request.get(&format!("/api/public/roadmaps/private-roadmap-{tag}")).await.status_code(), 404);
 
         // Unpublished again: gone on the next read. And the reader can be turned off.
         as_lead(request.put(&url)).json(&json!({ "published": false })).await.assert_status_ok();

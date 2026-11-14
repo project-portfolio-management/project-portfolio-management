@@ -465,6 +465,11 @@ matcher payload (§5.6); every mutation audits (§6.6).
   translations. Translations carry `needs_review`, and `…_PUBLIC_ROADMAPS_REVIEWED_ONLY=on` leaves those out. A weak
   `ETag` gives `304`; `Cache-Control: public, max-age=60`; `…_PUBLIC_ROADMAPS_NOINDEX=on` adds `X-Robots-Tag:
   noindex`. The rate limiter applies as to every request.
+- **FR-16e23 Stable public addresses (RE-8).** A roadmap's earlier slugs are kept (`public_roadmap_slugs`); the
+  reader answers an earlier slug with `301` to the current address when that roadmap is served, else `404`. A slug,
+  current or earlier, belongs to one roadmap only: another roadmap asking for it is `409`, and a roadmap may take
+  back its own. An item's public id is eight lower-case letters and digits, starting with a letter, drawn again on a
+  clash and never reused, since a removed item keeps its row.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

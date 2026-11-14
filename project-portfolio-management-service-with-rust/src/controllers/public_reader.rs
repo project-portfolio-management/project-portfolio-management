@@ -248,6 +248,30 @@ async fn list(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Respo
     respond(&headers, &json!({ "roadmaps": out }))
 }
 
+/// An earlier slug (RE-8): `301` to the roadmap's current address when that roadmap is servable, else `404`.
+async fn moved(ctx: &AppContext, slug: &str) -> Result<Response> {
+    use axum::response::IntoResponse;
+    let current: Option<String> = sqlx::query_scalar(
+        "SELECT r.slug FROM public_roadmap_slugs s JOIN public_roadmaps r ON r.id = s.roadmap_id WHERE s.slug = $1",
+    )
+    .bind(slug)
+    .fetch_optional(crate::db::pool(ctx))
+    .await?;
+    let Some(current) = current else {
+        return Err(Error::NotFound);
+    };
+    if servable(ctx, Some(&current)).await?.is_empty() {
+        return Err(Error::NotFound);
+    }
+    let location = HeaderValue::from_str(&format!("/api/public/roadmaps/{current}"))
+        .map_err(|e| Error::Any(e.into()))?;
+    Ok((
+        axum::http::StatusCode::MOVED_PERMANENTLY,
+        [(header::LOCATION, location)],
+    )
+        .into_response())
+}
+
 /// `GET /api/public/roadmaps/{slug}` — one published roadmap and its placed items, in page order.
 #[debug_handler]
 async fn show(
@@ -258,11 +282,9 @@ async fn show(
     if !on(ENV) || !rules::is_slug(&slug) {
         return Err(Error::NotFound);
     }
-    let r = servable(&ctx, Some(&slug))
-        .await?
-        .into_iter()
-        .next()
-        .ok_or(Error::NotFound)?;
+    let Some(r) = servable(&ctx, Some(&slug)).await?.into_iter().next() else {
+        return moved(&ctx, &slug).await;
+    };
     let reviewed_only = on(REVIEWED_ONLY_ENV);
     let mut list: Vec<items::Model> = sqlx::query_as(
         "SELECT * FROM public_roadmap_items

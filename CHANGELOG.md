@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-8: stable public addresses)
+
+- **A roadmap's old slug still works:** the public reader answers it with `301` to the new one, and no other roadmap
+  can take it. An item's public id is never reused.
+- Not done: retiring an old slug.
+
 ### 14 November (RE-4: a public reader of published roadmaps, off by default)
 
 - **`GET /api/public/roadmaps` and `/api/public/roadmaps/{slug}` serve published roadmaps with no token,** once a

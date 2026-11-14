@@ -28,7 +28,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | Service version | 0.2.0 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.2 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.2.0 | `version` in the front-end `package.json` |
-| Migrations | 145 | files in `migration/migrations` (a `.sql` or `.up.sql` each) |
+| Migrations | 146 | files in `migration/migrations` (a `.sql` or `.up.sql` each) |
 | Mounted routes | 699 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
 | Documented API paths | 554 | path keys in the service's `openapi.json` |
 | Service tests | 1635, plus 322 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
@@ -70,8 +70,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | UE | 1 | 7 |
 | PE | 1 | 15 |
 | SM | 2 | 15 |
-| RE | 9 | 5 |
-| **Total** | **251** | **63** |
+| RE | 10 | 4 |
+| **Total** | **252** | **62** |
 
 <!-- generated:end -->
 

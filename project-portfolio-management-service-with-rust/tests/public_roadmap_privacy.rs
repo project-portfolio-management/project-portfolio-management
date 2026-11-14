@@ -59,6 +59,66 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
     )
 }
 
+/// Every write `who` tries on the roadmap at `url` is a `404`.
+async fn assert_writes_not_found(
+    request: &axum_test::TestServer,
+    who: &(axum::http::HeaderName, axum::http::HeaderValue),
+    url: &str,
+    item: &str,
+) {
+    for (method, path, body) in [
+        ("put", url.to_string(), json!({ "published": true })),
+        (
+            "post",
+            format!("{url}/items"),
+            json!({ "title": "Planted" }),
+        ),
+        (
+            "post",
+            format!("{url}/items/{item}/move"),
+            json!({ "placement": "later" }),
+        ),
+        (
+            "put",
+            format!("{url}/items/{item}/translations/cy"),
+            json!({ "title": "Cudd" }),
+        ),
+    ] {
+        let r = if method == "put" {
+            request
+                .put(&path)
+                .add_header(who.0.clone(), who.1.clone())
+                .json(&body)
+                .await
+        } else {
+            request
+                .post(&path)
+                .add_header(who.0.clone(), who.1.clone())
+                .json(&body)
+                .await
+        };
+        assert_eq!(r.status_code(), 404, "{method} {path}");
+    }
+}
+
+/// Whether `GET /api/public-roadmaps/stale`, as `who`, lists the roadmap of `plan`.
+async fn stale_lists(
+    request: &axum_test::TestServer,
+    who: &(axum::http::HeaderName, axum::http::HeaderValue),
+    plan: &str,
+) -> bool {
+    let v: Value = request
+        .get("/api/public-roadmaps/stale")
+        .add_header(who.0.clone(), who.1.clone())
+        .await
+        .json();
+    v["roadmaps"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|r| r["plan_pid"] == plan)
+}
+
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test public_roadmap_privacy -- --ignored`"]
 async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
@@ -119,39 +179,7 @@ async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
             .await;
         assert_eq!(seen.status_code(), 404);
         assert!(!seen.text().contains("Hidden"), "{}", seen.text());
-        for (method, path, body) in [
-            ("put", url.clone(), json!({ "published": true })),
-            (
-                "post",
-                format!("{url}/items"),
-                json!({ "title": "Planted" }),
-            ),
-            (
-                "post",
-                format!("{url}/items/{item}/move"),
-                json!({ "placement": "later" }),
-            ),
-            (
-                "put",
-                format!("{url}/items/{item}/translations/cy"),
-                json!({ "title": "Cudd" }),
-            ),
-        ] {
-            let r = if method == "put" {
-                request
-                    .put(&path)
-                    .add_header(bob.0.clone(), bob.1.clone())
-                    .json(&body)
-                    .await
-            } else {
-                request
-                    .post(&path)
-                    .add_header(bob.0.clone(), bob.1.clone())
-                    .json(&body)
-                    .await
-            };
-            assert_eq!(r.status_code(), 404, "{method} {path}");
-        }
+        assert_writes_not_found(&request, &bob, &url, &item).await;
         let mine: Value = request
             .get(&url)
             .add_header(alice.0.clone(), alice.1.clone())
@@ -161,25 +189,11 @@ async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
         assert_eq!(mine["items"].as_array().unwrap().len(), 1);
         assert_eq!(mine["items"][0]["placement"], "now");
         // RE-3: the list of stale roadmaps leaves the private plan out for Bob, and keeps it for Alice.
-        let listed = |v: &Value| {
-            v["roadmaps"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .any(|r| r["plan_pid"] == plan.as_str())
-        };
-        let bobs: Value = request
-            .get("/api/public-roadmaps/stale")
-            .add_header(bob.0.clone(), bob.1.clone())
-            .await
-            .json();
-        assert!(!listed(&bobs), "{bobs}");
-        let alices: Value = request
-            .get("/api/public-roadmaps/stale")
-            .add_header(alice.0.clone(), alice.1.clone())
-            .await
-            .json();
-        assert!(listed(&alices), "never reviewed, so listed: {alices}");
+        assert!(!stale_lists(&request, &bob, &plan).await, "Bob");
+        assert!(
+            stale_lists(&request, &alice, &plan).await,
+            "Alice: never reviewed, so listed"
+        );
     })
     .await;
 }

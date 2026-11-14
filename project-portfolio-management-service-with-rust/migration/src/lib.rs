@@ -448,7 +448,9 @@ mod tests {
             .collect();
         let refused: Vec<i64> = REFUSED.iter().map(|(v, _)| *v).collect();
         assert_eq!(without, refused);
-        assert_eq!(downs.len(), 142);
+        // Every migration has a down file but the refused ones: 142 of the 143 frozen, and every one since.
+        assert_eq!(downs.len(), ups().count() - REFUSED.len());
+        assert!(ups().count() >= FROZEN);
         assert!(MIGRATOR
             .iter()
             .filter(|m| m.migration_type.is_down_migration())
@@ -483,7 +485,9 @@ mod tests {
                 )
             })
             .collect();
-        assert_eq!(ours.len(), 285);
+        // The 285 frozen files (143 up, 142 down), and two for each migration since.
+        assert_eq!(ours.len(), 2 * ups().count() - REFUSED.len());
+        assert!(ours.len() >= 2 * FROZEN - REFUSED.len());
         assert_eq!(ours, theirs);
     }
 

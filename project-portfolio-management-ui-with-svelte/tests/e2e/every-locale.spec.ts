@@ -37,6 +37,9 @@ const NAMES = new Set([
 
 /** German words the same as the English ("Active" in "Status: Active" is the stub's data). */
 const GERMAN = [
+  // "Name" is the German word too (form.title); the plan list's header row reads "Name<tab>pid".
+  "Name",
+  "Name\tpid",
   "← Plan",
   "Board",
   "Budget",

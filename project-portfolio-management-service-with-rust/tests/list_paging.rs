@@ -85,6 +85,18 @@ fn admin(kid: &str) -> (axum::http::HeaderName, axum::http::HeaderValue) {
 /// is unreachable fails the test.
 const UNREACHED: &[(&str, &str)] = &[
     (
+        "/api/public/roadmaps",
+        "the public roadmap reader (RE-4): off unless the deployment turns it on, and off here; tests/public_reader.rs covers it",
+    ),
+    (
+        "/api/public/roadmaps/{slug}",
+        "one published roadmap by slug (an object, not a list; RE-4), off here; tests/public_reader.rs covers it",
+    ),
+    (
+        "/api/plans/{pid}/roadmap",
+        "one product's public product roadmap (an object, not a list; RE-1), 404 until it is made on a Product plan, which this census does not create; its items are listed inside it, in page order",
+    ),
+    (
         "/api/workflows/{pid}",
         "one workflow with its states and moves (an object, not a list); needs a workflow this census does not create",
     ),

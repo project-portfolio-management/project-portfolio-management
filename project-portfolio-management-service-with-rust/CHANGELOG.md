@@ -18,6 +18,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **The public product roadmap, with translations marked for review when their source changes (RE-1, RE-6,
+  2026-11-14).** Migration `20261114000111_public_roadmaps`; `src/public_roadmap.rs`; `controllers/public_roadmaps.rs`;
+  module `roadmap`. Spec FR-16e19, FR-16e20. See the root `CHANGELOG.md`.
 - **Organization codes, a national scope and roadmap categories (RE-7, 2026-11-14).** Migration
   `20261114000110_roadmap_lists`, the first after the freeze; `/api/roadmap-categories`. Spec FR-16e18. See the root
   `CHANGELOG.md`, 14 November.

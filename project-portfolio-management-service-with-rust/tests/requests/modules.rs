@@ -35,7 +35,7 @@ async fn a_disabled_module_hides_its_routes_but_never_its_data() {
         assert_eq!(before["source"], "default", "unconfigured ⇒ the default");
         assert_eq!(
             before["modules"].as_array().unwrap().len(),
-            6,
+            project_portfolio_management::modules::MODULES.len(),
             "all modules"
         );
 

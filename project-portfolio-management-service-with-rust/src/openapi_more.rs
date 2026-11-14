@@ -134,6 +134,7 @@ pub fn paths() -> Value {
     merge(&mut all, buffer_management_paths());
     merge(&mut all, drum_paths());
     merge(&mut all, organization_paths());
+    merge(&mut all, public_roadmap_paths());
     merge(&mut all, milestone_signoff_paths());
     merge(&mut all, programme_profile_paths());
     merge(&mut all, external_ask_paths());
@@ -2672,6 +2673,52 @@ fn document_paths() -> Value {
         "/api/documents/{pid}/versions/{version}/make-effective": {
             "post": op("documents", "Bring an approved version into force today", "Only the creator or an admin. The version's approval request must really be approved (a status flag is not an approval: 422 otherwise). The version in force is superseded the same day, naming this one; no back-dating or future-dating. Audited, once for each of the two changes.",
                 vec![uuid_param("pid"), query("version", true, "the version number")], &[("200", "the version"), ("403", "Not the creator"), ("409", "Not approved"), ("422", "No approved approval")])
+        }
+    })
+}
+
+/// A product plan's public product roadmap (RE-1, RE-6).
+fn public_roadmap_paths() -> Value {
+    let plan = || uuid_param("pid");
+    let item = || uuid_param("ipid");
+    json!({
+        "/api/plans/{pid}/roadmap": {
+            "get": op("roadmap", "A product plan's public product roadmap, with its items in page order",
+                "Inputs: the roadmap's own fields (title, slug, vision, service description, category, published, the date it was last reviewed) and its live items, ordered by placement (recently delivered, now, next, later, delivered this year, not doing, then unplaced) and position. Each translation shows its value and needs_review, true when the source text has changed since it was translated. Not derived from the plan's tasks or milestones.",
+                vec![plan()], &[("200", "The roadmap"), ("404", "No roadmap, or a plan the caller cannot read")]),
+            "put": op("roadmap", "Make a product plan's public product roadmap, or change its own fields",
+                "Body: any of title (required when made, 1 to 200 characters), slug (made from the title when absent), vision, service_description (an empty string clears either), category_pid (an active roadmap category; null clears it) and published. Only a plan of kind Product can have one. Audited.",
+                vec![plan()], &[("200", "The roadmap"), ("404", "Unknown plan"), ("409", "Another roadmap has that slug"), ("422", "A bad field, or not a Product plan")])
+        },
+        "/api/plans/{pid}/roadmap/items": {
+            "post": op("roadmap", "Add an item to a public product roadmap",
+                "Body: title (required), description, expected_outcome, phase, tags (each 1 to 50 characters, no comma, no repeats), organization_pids (active organizations), details (lines of text and level, nested at most three levels, each at most one deeper than the line above) and placement (absent for unplaced). Goes last in its placement and gets a public id of eight characters that is never reused. Audited.",
+                vec![plan()], &[("200", "The item"), ("404", "No roadmap"), ("422", "A bad field")])
+        },
+        "/api/plans/{pid}/roadmap/items/{ipid}": {
+            "put": op("roadmap", "Change an item of a public product roadmap",
+                "Body: any of the fields of an added item except placement (use move). A list given replaces the whole list; an empty string clears a text field. Translations are kept, and those whose source changed read as needing review. Audited.",
+                vec![plan(), item()], &[("200", "The item"), ("404", "No such item"), ("422", "A bad field")])
+        },
+        "/api/plans/{pid}/roadmap/items/{ipid}/move": {
+            "post": op("roadmap", "Move an item to a placement and a place in it",
+                "Body: placement (one of the six, or null for unplaced) and index (its place counted from 0; absent or past the end puts it last). The items of that placement are numbered again in order. Audited with where it came from.",
+                vec![plan(), item()], &[("200", "The item"), ("404", "No such item"), ("422", "A bad placement")])
+        },
+        "/api/plans/{pid}/roadmap/items/{ipid}/delete": {
+            "post": op("roadmap", "Remove an item from a public product roadmap",
+                "No body. The item leaves every list; its row and public id are kept, so the id is never given to another item. Audited.",
+                vec![plan(), item()], &[("200", "Removed"), ("404", "No such item")])
+        },
+        "/api/plans/{pid}/roadmap/translations/{lang}": {
+            "put": op("roadmap", "Translate a public product roadmap's own fields into one language",
+                "Body: field to text, for title, vision and service_description; null or an empty string removes that translation. Each translation records the source text it was made from, so a later change to the source marks it as needing review instead of losing it. The service never writes one language from another. Audited.",
+                vec![plan(), str_param("lang")], &[("200", "The roadmap"), ("404", "No roadmap"), ("422", "A bad language code, field or shape")])
+        },
+        "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}": {
+            "put": op("roadmap", "Translate an item's fields into one language",
+                "Body: field to value: title, description, expected_outcome and phase as text; tags as a list as long as the source's; details as the source's lines at the same levels. Null or an empty string removes that translation. Audited.",
+                vec![plan(), item(), str_param("lang")], &[("200", "The item"), ("404", "No such item"), ("422", "A bad language code, field or shape")])
         }
     })
 }

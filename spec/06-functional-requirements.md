@@ -430,6 +430,26 @@ matcher payload (§5.6); every mutation audits (§6.6).
   retired rather than deleted. A roadmap links a category by id and holds no copy, so a rename shows everywhere and
   nothing can drift. Not built: product families with a colour (a product's family is its parent plan, which the
   service already has); a category's colour.
+- **FR-16e19 The public product roadmap (RE-1).** A plan of kind `Product` may have one public product roadmap
+  (`/api/plans/{pid}/roadmap`, module `roadmap`): a title, a public `slug` (made from the title when not given;
+  unique, `409` on a clash; a rename keeps it), a vision, a service description, an active roadmap category
+  (FR-16e18), `published` and `reviewed_on`. Its items have a title, a description, an expected outcome, a phase,
+  ordered tags (each 1 to 50 characters, no comma, no repeats ignoring case), the active organizations the work is
+  for, details nested at most three levels (each line at most one deeper than the line above) and a placement:
+  `recently_delivered`, `now`, `next`, `later`, `delivered_this_year`, `not_doing`, or none (unplaced, kept for its
+  editors and never public). An item gets a public id of eight lower-case letters and digits starting with a letter;
+  a removed item keeps its row, so an id is never reused. Items are listed in page order, unplaced last; a move puts
+  an item at an index in a placement and numbers the rest again. Text is stored as typed, trimmed. An item is never
+  derived from a task or milestone. Every write is audited, and the plan guard governs every route, so a private
+  plan's roadmap is a `404` to a non-member. Not built: links from an item to the plan's milestones or tasks as
+  evidence; a screen; NC-10 reading it.
+- **FR-16e20 Translations that know when they are out of date (RE-6).** A roadmap's title, vision and service
+  description, and an item's title, description, expected outcome, phase, tags and details, can each be translated
+  (`PUT …/roadmap/translations/{lang}`, `PUT …/items/{ipid}/translations/{lang}`). A translation records the hash of
+  the source it was made from and has the source's shape (text for text; as many tags; the same detail lines at the
+  same levels). When the source changes, the translation is kept and shown with `needs_review: true`; saving it
+  again clears that. A source that is cleared shows no translation. The service never writes one language from
+  another. `null` or an empty value removes a translation; a language code that is not one is `422`.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

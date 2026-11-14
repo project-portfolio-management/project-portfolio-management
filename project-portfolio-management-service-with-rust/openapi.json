@@ -24209,6 +24209,579 @@
         ]
       }
     },
+    "/api/plans/{pid}/roadmap": {
+      "get": {
+        "description": "Inputs: the roadmap's own fields (title, slug, vision, service description, category, published, the date it was last reviewed) and its live items, ordered by placement (recently delivered, now, next, later, delivered this year, not doing, then unplaced) and position. Each translation shows its value and needs_review, true when the source text has changed since it was translated. Not derived from the plan's tasks or milestones.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The roadmap"
+          },
+          "404": {
+            "description": "No roadmap, or a plan the caller cannot read"
+          }
+        },
+        "summary": "A product plan's public product roadmap, with its items in page order",
+        "tags": [
+          "roadmap"
+        ]
+      },
+      "put": {
+        "description": "Body: any of title (required when made, 1 to 200 characters), slug (made from the title when absent), vision, service_description (an empty string clears either), category_pid (an active roadmap category; null clears it) and published. Only a plan of kind Product can have one. Audited.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT /api/plans/{pid}/roadmap` body: absent fields are left as they are; on creation `title` is required.",
+                "properties": {
+                  "category_pid": {
+                    "default": null,
+                    "description": "An active roadmap category; `null` clears it, absent keeps it.",
+                    "format": "uuid",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "published": {
+                    "default": null,
+                    "description": "Whether the public reader shows it.",
+                    "nullable": true,
+                    "type": "boolean"
+                  },
+                  "service_description": {
+                    "default": null,
+                    "description": "What the product is, for a reader who has never heard of it; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "slug": {
+                    "default": null,
+                    "description": "The public address; made from the title when the roadmap is made without one.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "title": {
+                    "default": null,
+                    "description": "The title, 1 to 200 characters; required when the roadmap is made.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "vision": {
+                    "default": null,
+                    "description": "Where the product is going; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The roadmap"
+          },
+          "404": {
+            "description": "Unknown plan"
+          },
+          "409": {
+            "description": "Another roadmap has that slug"
+          },
+          "422": {
+            "description": "A bad field, or not a Product plan"
+          }
+        },
+        "summary": "Make a product plan's public product roadmap, or change its own fields",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
+    "/api/plans/{pid}/roadmap/items": {
+      "post": {
+        "description": "Body: title (required), description, expected_outcome, phase, tags (each 1 to 50 characters, no comma, no repeats), organization_pids (active organizations), details (lines of text and level, nested at most three levels, each at most one deeper than the line above) and placement (absent for unplaced). Goes last in its placement and gets a public id of eight characters that is never reused. Audited.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "An item's fields, for adding one (title required) or changing one (absent fields are left as they are).",
+                "properties": {
+                  "description": {
+                    "default": null,
+                    "description": "What the work is; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "details": {
+                    "default": null,
+                    "description": "Details nested up to three levels; the whole list.",
+                    "items": {
+                      "description": "One line of an item's details.",
+                      "properties": {
+                        "level": {
+                          "description": "0 is the top level; at most one deeper than the line above, at most 2.",
+                          "format": "uint8",
+                          "maximum": 255,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "text": {
+                          "description": "The line, 1 to 300 characters, with no line break.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "level"
+                      ],
+                      "type": "object"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "expected_outcome": {
+                    "default": null,
+                    "description": "What changes, and for whom; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "organization_pids": {
+                    "default": null,
+                    "description": "The organizations the work is for, each an active organization; the whole set.",
+                    "items": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "phase": {
+                    "default": null,
+                    "description": "The phase it is in, in the product's own words; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "placement": {
+                    "default": null,
+                    "description": "On adding: a placement, or absent for unplaced.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "tags": {
+                    "default": null,
+                    "description": "Tags in order, each 1 to 50 characters, no comma, no repeats; the whole list.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "title": {
+                    "default": null,
+                    "description": "The title, 1 to 200 characters.",
+                    "nullable": true,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The item"
+          },
+          "404": {
+            "description": "No roadmap"
+          },
+          "422": {
+            "description": "A bad field"
+          }
+        },
+        "summary": "Add an item to a public product roadmap",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
+    "/api/plans/{pid}/roadmap/items/{ipid}": {
+      "put": {
+        "description": "Body: any of the fields of an added item except placement (use move). A list given replaces the whole list; an empty string clears a text field. Translations are kept, and those whose source changed read as needing review. Audited.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ipid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "An item's fields, for adding one (title required) or changing one (absent fields are left as they are).",
+                "properties": {
+                  "description": {
+                    "default": null,
+                    "description": "What the work is; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "details": {
+                    "default": null,
+                    "description": "Details nested up to three levels; the whole list.",
+                    "items": {
+                      "description": "One line of an item's details.",
+                      "properties": {
+                        "level": {
+                          "description": "0 is the top level; at most one deeper than the line above, at most 2.",
+                          "format": "uint8",
+                          "maximum": 255,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "text": {
+                          "description": "The line, 1 to 300 characters, with no line break.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "level"
+                      ],
+                      "type": "object"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "expected_outcome": {
+                    "default": null,
+                    "description": "What changes, and for whom; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "organization_pids": {
+                    "default": null,
+                    "description": "The organizations the work is for, each an active organization; the whole set.",
+                    "items": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "phase": {
+                    "default": null,
+                    "description": "The phase it is in, in the product's own words; an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "placement": {
+                    "default": null,
+                    "description": "On adding: a placement, or absent for unplaced.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "tags": {
+                    "default": null,
+                    "description": "Tags in order, each 1 to 50 characters, no comma, no repeats; the whole list.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "nullable": true,
+                    "type": "array"
+                  },
+                  "title": {
+                    "default": null,
+                    "description": "The title, 1 to 200 characters.",
+                    "nullable": true,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The item"
+          },
+          "404": {
+            "description": "No such item"
+          },
+          "422": {
+            "description": "A bad field"
+          }
+        },
+        "summary": "Change an item of a public product roadmap",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
+    "/api/plans/{pid}/roadmap/items/{ipid}/delete": {
+      "post": {
+        "description": "No body. The item leaves every list; its row and public id are kept, so the id is never given to another item. Audited.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ipid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed"
+          },
+          "404": {
+            "description": "No such item"
+          }
+        },
+        "summary": "Remove an item from a public product roadmap",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
+    "/api/plans/{pid}/roadmap/items/{ipid}/move": {
+      "post": {
+        "description": "Body: placement (one of the six, or null for unplaced) and index (its place counted from 0; absent or past the end puts it last). The items of that placement are numbered again in order. Audited with where it came from.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ipid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`POST …/items/{ipid}/move` body.",
+                "properties": {
+                  "index": {
+                    "default": null,
+                    "description": "Its place in that placement, counted from 0; absent or past the end puts it last.",
+                    "format": "uint",
+                    "minimum": 0,
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "placement": {
+                    "description": "The placement to move to; `null` makes the item unplaced.",
+                    "nullable": true,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The item"
+          },
+          "404": {
+            "description": "No such item"
+          },
+          "422": {
+            "description": "A bad placement"
+          }
+        },
+        "summary": "Move an item to a placement and a place in it",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
+    "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}": {
+      "put": {
+        "description": "Body: field to value: title, description, expected_outcome and phase as text; tags as a list as long as the source's; details as the source's lines at the same levels. Null or an empty string removes that translation. Audited.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ipid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lang",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "description": "A translation into one language: field to value; `null` or an empty string removes that field's translation.",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The item"
+          },
+          "404": {
+            "description": "No such item"
+          },
+          "422": {
+            "description": "A bad language code, field or shape"
+          }
+        },
+        "summary": "Translate an item's fields into one language",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
+    "/api/plans/{pid}/roadmap/translations/{lang}": {
+      "put": {
+        "description": "Body: field to text, for title, vision and service_description; null or an empty string removes that translation. Each translation records the source text it was made from, so a later change to the source marks it as needing review instead of losing it. The service never writes one language from another. Audited.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lang",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "description": "A translation into one language: field to value; `null` or an empty string removes that field's translation.",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The roadmap"
+          },
+          "404": {
+            "description": "No roadmap"
+          },
+          "422": {
+            "description": "A bad language code, field or shape"
+          }
+        },
+        "summary": "Translate a public product roadmap's own fields into one language",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
     "/api/plans/{pid}/role-members": {
       "get": {
         "description": "`GET /api/plans/{pid}/role-members` — who holds which role here, and whether the plan is enforced.",

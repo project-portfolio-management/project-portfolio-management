@@ -47,6 +47,7 @@ mod plan_links;
 mod plan_templates;
 mod plans;
 mod privacy_lookup_failure;
+mod public_roadmap;
 mod references;
 mod resource_audit;
 mod retention;

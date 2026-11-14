@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-1 and RE-6: the public product roadmap, with translations that know when they are out of date)
+
+- **A product plan can keep a public product roadmap** (`/api/plans/{pid}/roadmap`): what the product is doing now,
+  next and later, in outcome words, for readers outside the organization. Items have a placement (recently
+  delivered, now, next, later, delivered this year, not doing, or none), tags, organizations, nested details and a
+  public id that is never reused. It is not derived from the plan's tasks.
+- **Translations are kept and marked for review when their source changes,** and saving them again clears the mark.
+  The service never writes one language from another.
+- Not done: any screen; links from an item to milestones or tasks; the public reader (RE-4). Not verified:
+  concurrent moves within one placement.
+
 ### 14 November (RE-7: lists defined once)
 
 - **Organizations gain a short code and a national scope; roadmap categories are a list of their own.** A code is

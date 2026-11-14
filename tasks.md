@@ -3515,7 +3515,7 @@ Next / Later lives in one browser. The assessment is in [plan.md](plan.md) §88 
 The source is MIT-licensed, but no code is copied, because the stacks differ. Every item follows the rules in AGENTS.md.
 The name is **public product roadmap** throughout, because "roadmap" already means spec §15 and NC-10.
 
-- [ ] **RE-1 (L) — Public product roadmap items.** A roadmap belongs to a `Product` plan (one per plan). An item has
+- [x] **RE-1 (L) — Public product roadmap items.** A roadmap belongs to a `Product` plan (one per plan). An item has
   a title (required), a description, an expected outcome, a phase, ordered tags, organizations (RE-7), details
   nested up to three levels, and a placement: `recently_delivered`, `now`, `next`, `later`, `delivered_this_year`,
   `not_doing`, or none (unplaced, never shown publicly). Items have an order within each placement. An item may link
@@ -3525,6 +3525,7 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   **Acceptance:** request tests for create, read, update, move between placements and reorder; an unplaced item is
   listed for editors and absent from every public read (RE-4); a private plan's roadmap is a `404` to a non-member;
   a detail list that skips a level is `422`.
+  **Built 2026-11-14.** Migration `20261114000111_public_roadmaps` (`public_roadmaps`, `public_roadmap_items`); pure rules `src/public_roadmap.rs` (8 unit tests: placements, details, tags, text, slugs, public ids including 10,000 draws, translations); `controllers/public_roadmaps.rs` (eight routes, module `roadmap`). Spec FR-16e19. Request test `requests::public_roadmap::a_product_keeps_a_public_roadmap_of_items_placed_now_next_and_later` (only a Product; slug from the title, a clash `409`; page order, unplaced last; a move and a reorder; a level skipped, a start below the top, a blank title, a comma or repeated tag, an unknown organization, an unknown placement `422`; moving by change `422`; organizations without repeats; an empty string clears; a retired category `422`; a removed item leaves the list and a second removal is `404`). With real tokens, `tests/public_roadmap_privacy.rs` (a private plan's roadmap is `404` to a non-member for a read and four writes, none of which lands). **Not done:** links to milestones or tasks as evidence; NC-10's screen reading it; any screen. **Not verified:** two writers moving items in one placement at once (each move locks the roadmap row, so they queue; not run concurrently); an unplaced item is absent from public reads only once RE-4 exists.
 - [ ] **RE-2 (M) — Publish a roadmap as one change set.** `POST …/roadmap/publish` takes every pending change to the
   roadmap and its items. Each changed field carries its **base value**, the value the editor first saw. All of it is
   written in one transaction with one audit row per record, or none of it is. A field whose stored value no longer
@@ -3558,7 +3559,7 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   confirmed run. No code goes to their repository, and no contact is made, without the owner.
   **Acceptance:** their four test fixture CSVs (`Roadmaps`, `ProductA`, `ProductB` and `ProductC`, MIT, the notice
   kept) import in a dry run with every row accounted for.
-- [ ] **RE-6 (M) — Stored bilingual text that knows when it is out of date.** Each public text field (title,
+- [x] **RE-6 (M) — Stored bilingual text that knows when it is out of date.** Each public text field (title,
   description, expected outcome, phase, tags, details) holds English and optional other languages. A translation
   records the hash of the source text it was made from. When the English changes, the translation is kept and marked
   `needs_review`, and the public reader serves it with that mark, or falls back to English if the deployment says so.
@@ -3566,6 +3567,7 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   (`src/issues.rs`).
   **Acceptance:** changing the English marks the Welsh `needs_review` and keeps it; re-saving the Welsh clears the
   mark; the public reader's fallback follows the setting; an unknown language tag is `422`.
+  **Built 2026-11-14** with RE-1 (the `translations` column of both tables; `public_roadmap::{source_hash, translation_problem, stored_translation, shown_translations}`). Spec FR-16e20. Request test `requests::public_roadmap::a_translation_is_kept_and_marked_for_review_when_its_source_changes` (Welsh title and tags; a changed English title marks only the title; saving again clears it; a bad language code, an untranslatable field, a tag list of the wrong length and a field with no source are `422`; an empty value removes; the roadmap's own title the same). **Changed from the text above:** the issues map is not generalized; roadmaps have their own column, with the source hash the issues map lacks. **Not done:** the public reader's fallback (RE-4); a review record in `governance/` for content translations, as there is for interface text.
 - [x] **RE-7 (S–M) — Shared lists defined once.** Bilingual categories and product families, each with an id and a
   colour, linked by id. Organizations gain an optional short `code`, unique per deployment, and a `national` scope
   (one allowed, listed first). A screen shows a roadmap whose copied name or colour differs from its list's. An

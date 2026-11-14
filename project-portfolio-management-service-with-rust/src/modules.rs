@@ -86,6 +86,11 @@ pub const MODULES: &[ModuleDef] = &[
             "director-pack",
         ],
     },
+    ModuleDef {
+        // The public product roadmap (RE-1): a product's statement of what it is doing now, next and later.
+        key: "roadmap",
+        segments: &["roadmap"],
+    },
 ];
 
 /// The modules a **personal** plan (one person's own work) exposes.

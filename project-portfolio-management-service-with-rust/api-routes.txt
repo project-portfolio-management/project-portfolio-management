@@ -460,6 +460,14 @@ PUT /api/plans/{pid}/risks/{r_pid}/cost-impact
 PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact
 PUT /api/plans/{pid}/risks/{risk_pid}
 POST /api/plans/{pid}/risks/{risk_pid}/escalate
+GET /api/plans/{pid}/roadmap
+PUT /api/plans/{pid}/roadmap
+POST /api/plans/{pid}/roadmap/items
+PUT /api/plans/{pid}/roadmap/items/{ipid}
+POST /api/plans/{pid}/roadmap/items/{ipid}/delete
+POST /api/plans/{pid}/roadmap/items/{ipid}/move
+PUT /api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}
+PUT /api/plans/{pid}/roadmap/translations/{lang}
 GET /api/plans/{pid}/role-members
 POST /api/plans/{pid}/role-members
 DELETE /api/plans/{pid}/role-members/{member_pid}

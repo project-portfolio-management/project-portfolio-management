@@ -64,6 +64,7 @@ pub const TAKES_NO_BODY: &[&str] = &[
     "post /api/plans/{pid}/links/{lpid}/delete",
     "post /api/plans/{pid}/meetings/{mid}/cancel",
     "post /api/plans/{pid}/risks/{risk_pid}/escalate",
+    "post /api/plans/{pid}/roadmap/items/{ipid}/delete",
     "post /api/plans/{pid}/sprints/{s_pid}/notes/{n_pid}/convert",
     "post /api/plans/{pid}/start-queue/withdraw",
     "post /api/plans/{pid}/tasks/{tpid}/links/{lpid}/delete",
@@ -550,6 +551,14 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("put", "/api/plans/{pid}/risks/{r_pid}/schedule-impact", "schedule_risk", "`PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact` — make a register risk a schedule event: which task, how many business days, how likely. Any field left out stays unset, and a risk missing one is skipped (and named) by the simulation."),
     ("put", "/api/plans/{pid}/risks/{risk_pid}", "governance", "`PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`."),
     ("post", "/api/plans/{pid}/risks/{risk_pid}/escalate", "governance", "`POST /api/plans/{pid}/risks/{risk_pid}/escalate` — a materialized risk: status → `materialized`, stamped. (Conversion into a tracked issue arrives with the issues sub-resource.)"),
+    ("get", "/api/plans/{pid}/roadmap", "public_roadmaps", "`GET /api/plans/{pid}/roadmap`"),
+    ("put", "/api/plans/{pid}/roadmap", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap`"),
+    ("post", "/api/plans/{pid}/roadmap/items", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items`"),
+    ("put", "/api/plans/{pid}/roadmap/items/{ipid}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/items/{ipid}`"),
+    ("post", "/api/plans/{pid}/roadmap/items/{ipid}/delete", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items/{ipid}/delete`"),
+    ("post", "/api/plans/{pid}/roadmap/items/{ipid}/move", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items/{ipid}/move`"),
+    ("put", "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}` — body: field to value (`title`, `description`, `expected_outcome`, `phase` as text; `tags` as a list as long as the source's; `details` as the source's lines at the same levels); `null` or an empty string removes that translation."),
+    ("put", "/api/plans/{pid}/roadmap/translations/{lang}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/translations/{lang}` — body: field to text (`title`, `vision`, `service_description`); `null` or an empty string removes that translation."),
     ("get", "/api/plans/{pid}/role-members", "plan_roles", "`GET /api/plans/{pid}/role-members` — who holds which role here, and whether the plan is enforced."),
     ("post", "/api/plans/{pid}/role-members", "plan_roles", "`POST /api/plans/{pid}/role-members` — give someone a role on this plan (an administrator). The plan's first member turns enforcement on, so everyone else who can write loses issue actions here. `409` if they already hold it."),
     ("delete", "/api/plans/{pid}/role-members/{member_pid}", "plan_roles", "`DELETE /api/plans/{pid}/role-members/{member_pid}` — take a role away (an administrator). Removing the plan's last member turns enforcement off. The audit row keeps who held it."),
@@ -971,6 +980,12 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/plans/{pid}/risks/{r_pid}/cost-impact", crate::controllers::cost_risk::CostImpactBody);
     body!("put", "/api/plans/{pid}/risks/{r_pid}/schedule-impact", crate::controllers::schedule_risk::ImpactBody);
     body!("put", "/api/plans/{pid}/risks/{risk_pid}", crate::controllers::governance::RiskUpdate);
+    body!("put", "/api/plans/{pid}/roadmap", crate::controllers::public_roadmaps::RoadmapPayload);
+    body!("post", "/api/plans/{pid}/roadmap/items", crate::controllers::public_roadmaps::ItemPayload);
+    body!("put", "/api/plans/{pid}/roadmap/items/{ipid}", crate::controllers::public_roadmaps::ItemPayload);
+    body!("post", "/api/plans/{pid}/roadmap/items/{ipid}/move", crate::controllers::public_roadmaps::MovePayload);
+    body!("put", "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}", crate::controllers::public_roadmaps::TranslationPayload);
+    body!("put", "/api/plans/{pid}/roadmap/translations/{lang}", crate::controllers::public_roadmaps::TranslationPayload);
     body!("post", "/api/plans/{pid}/role-members", crate::controllers::plan_roles::NewMember);
     body!("post", "/api/plans/{pid}/sandbox/commit", crate::controllers::sandbox::EditsBody);
     body!("post", "/api/plans/{pid}/sandbox/preview", crate::controllers::sandbox::EditsBody);

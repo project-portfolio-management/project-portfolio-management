@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-5, part b: a dry run of DHCW's spreadsheet)
+
+- **`task dhcw_roadmaps_dry_run dir:<folder>` reports what the DHCW roadmap spreadsheet's CSV exports would become,**
+  row by row, and writes nothing. On DHCW's example spreadsheet it maps 3 roadmaps and 15 items and skips none.
+- Not done: an apply step; contact with DHCW (OQ-15, the owner's).
+
 ### 14 November (RE-2: publish a roadmap as one change set)
 
 - **`POST /api/plans/{pid}/roadmap/publish` writes every pending change to a roadmap and its items at once, or

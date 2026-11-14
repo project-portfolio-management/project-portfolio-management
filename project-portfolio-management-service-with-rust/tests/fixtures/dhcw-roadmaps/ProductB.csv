@@ -1,0 +1,9 @@
+Title,Description,Outcome,Horizon,Phase,Labels,Organisations,Details
+Building the core service,A smaller roadmap showing that empty horizons and sections are fine.,Users can complete the main task online.,Now,Alpha,Service Z,BCUHB,
+Testing with users,Usability testing of the new design.,Designs updated from research findings.,Now,,,,
+Wider rollout,Making the service available to more teams.,,Next,Beta,,"BCUHB, PHW",
+Integration with another system,Sharing data with Service X so users don’t have to enter it twice.,Less duplicate data entry.,Later,Discovery,"Service X",National,"Agree the data to share
+Build and test the connection
+- Test environment first
+- Then live"
+Prototype,An early prototype we tested with a small group of users.,,Delivered this year,Alpha,,,

@@ -1,0 +1,17 @@
+Title,Description,Outcome,Horizon,Phase,Labels,Organisations,Details,Title (cy),Description (cy),Outcome (cy),Phase (cy),Labels (cy),Details (cy)
+Example card with every column,What this work is. Keep it to a sentence or two.,What changes for users when it is done.,Now,Beta,"Service X, Service Y","CAVUHB, SBUHB","First bullet point
+- Start a line with ""-"" to nest it under the line above
+-- Use two dashes to nest it again
+Another top-level bullet point",Cerdyn enghreifftiol gyda phob colofn,Beth yw’r gwaith hwn. Cadwch ef i frawddeg neu ddwy.,Beth sy’n newid i ddefnyddwyr pan fydd wedi’i gwblhau.,Beta,"Gwasanaeth X, Gwasanaeth Y","Pwynt bwled cyntaf
+- Dechreuwch linell gyda ""-"" i’w nythu o dan y llinell uchod
+-- Defnyddiwch ddau gysylltnod i’w nythu eto
+Pwynt bwled lefel uchaf arall"
+Minimal card,Only Title and Horizon are required; everything else is optional.,,Now,,,,,,,,,,
+Card awaiting release,Work that is finished and waiting to go live.,Users get the change as soon as it is deployed.,Now,,Service X,National,,Cerdyn yn aros i gael ei ryddhau,,,,,
+Card being explored,Work we expect to pick up soon.,What we hope this will achieve.,Next,Alpha,,"BCUHB, HDUHB",,,,,,,
+Discovery card,The Phase column is a free-text tag shown above the title.,A clear understanding of the problem.,Later,Discovery,,CAVUHB,,Cerdyn darganfod,Mae’r golofn Phase yn dag testun rhydd a ddangosir uwchben y teitl.,Dealltwriaeth glir o’r broblem.,Darganfod,,
+Longer-term idea,Direction we expect to take as we learn more.,,Later,,"Service Y, Service Z",National,,,,,,,
+Recently shipped work,Something we shipped in the last few weeks.,What users can do now.,Recently delivered,,,SBUHB,,,,,,,
+Earlier delivery this year,Something we delivered earlier in the year.,,Delivered this year,Live,,National,"What it included
+Another thing it included",,,,,,
+Something we are not doing,Explain why this is out of scope for now.,,Not doing,,,,,,,,,,

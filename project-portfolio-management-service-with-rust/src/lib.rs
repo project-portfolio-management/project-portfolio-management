@@ -123,6 +123,7 @@ pub mod deescalation;
 pub mod delivery_confidence;
 pub mod delivery_model;
 pub mod deployment_moves;
+pub mod dhcw_import;
 pub mod director_pack;
 pub mod director_pack_text;
 pub mod director_summary;

@@ -1,5 +1,8 @@
 //! CLI tasks (extension point).
 
+/// `dhcw_roadmaps_dry_run` — what the DHCW roadmap spreadsheet would become, writing nothing (RE-5).
+pub mod dhcw_roadmaps_dry_run;
+
 /// `director_pack_schedule` — draft the monthly director packs that are due.
 pub mod director_pack_schedule;
 

@@ -64,13 +64,25 @@ allow-list (`PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS`), with the `Authorizatio
 
 ## Moving their spreadsheet in
 
-Part (b) of RE-5 is a dry-run import of their documented spreadsheet format through the bulk-import path, so
-every row is accounted for before anything is written. It is **not built**.
+Part (b) of RE-5 is a **dry run**: it reads the spreadsheet as CSV exports and reports, row by row, what would be
+made and what would not, and why. It writes nothing; there is no apply step yet.
+
+```bash
+# A folder with Roadmaps.csv (the first tab) and one <Sheet>.csv per roadmap tab
+cargo run -- task dhcw_roadmaps_dry_run dir:path/to/exports
+```
+
+The report is JSON on standard output, after the service's own log lines when the log goes there too. Its `totals`
+account for every row (`index_rows = roadmaps_mapped + roadmaps_skipped`, and the same for items). Organization
+codes and category names are matched against this deployment's. On DHCW's example spreadsheet (copied, with its MIT
+notice, to `tests/fixtures/dhcw-roadmaps/`) it maps 3 roadmaps and 15 items and skips none. `Family`, `Status
+label`, `Colour` and `Product Lead` are reported as not mapped; a code this deployment does not have is listed as
+unknown; Welsh that does not have the English's shape is reported, not kept. Rules: `src/dhcw_import.rs`.
 
 ## What it would take, in order
 
 1. A list route for editors, with plan ids (the first gap above).
 2. RE-2's publish, which mirrors their change set closely.
-3. The dry-run import.
+3. An apply step after the dry run (built: the dry run only).
 4. On their side: an `AuthClient` for the deployment's identity provider, and an `ApiRoadmapRepository` as their guide
    describes.

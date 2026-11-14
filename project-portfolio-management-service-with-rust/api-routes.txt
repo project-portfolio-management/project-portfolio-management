@@ -589,6 +589,8 @@ POST /api/proposals/{pid}/review
 POST /api/proposals/{pid}/submit
 PUT /api/proposals/{pid}/tradeoff
 GET /api/public-roadmaps/stale
+GET /api/public/roadmaps
+GET /api/public/roadmaps/{slug}
 DELETE /api/reactions
 GET /api/reactions
 POST /api/reactions

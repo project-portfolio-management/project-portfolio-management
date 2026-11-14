@@ -210,6 +210,8 @@ fn enforce_on_allows_public_paths() {
         "/swagger-ui/index.html",
         "/api/feeds/calendar.ics",
         "/api/feeds/me.atom",
+        "/api/public/roadmaps",
+        "/api/public/roadmaps/video-appointments",
     ] {
         assert!(
             enforce(
@@ -232,7 +234,17 @@ fn enforce_on_allows_public_paths() {
 fn the_old_health_paths_are_not_public() {
     let (keys, _) = test_keys_and_kid();
     let verifier = Verifier::from_paseto_keys_value(&keys, ISSUER, AUDIENCE).unwrap();
-    for path in ["/_ping", "/_health", "/_readiness", "/_health/other"] {
+    // RE-4: only the roadmap reader is public, not anything that starts like it.
+    for path in [
+        "/_ping",
+        "/_health",
+        "/_readiness",
+        "/_health/other",
+        "/api/public",
+        "/api/public/plans",
+        "/api/public/roadmapsx",
+        "/api/public-roadmaps/stale",
+    ] {
         let err = enforce(
             true,
             &Method::GET,

@@ -456,6 +456,15 @@ matcher payload (§5.6); every mutation audits (§6.6).
   days (1 to 3650, default 42) have passed since its review, `unknown` when never reviewed, else `fresh`, by the
   deployment's today. `GET /api/public-roadmaps/stale` lists the stale and unknown ones of live plans the caller may
   read, never-reviewed first.
+- **FR-16e22 The public roadmap reader (RE-4).** `GET /api/public/roadmaps` and `GET /api/public/roadmaps/{slug}`
+  need no token and are off (`404`) unless `PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS=on`. They serve only
+  published roadmaps of live plans that are not private and are at the lowest handling-mark level; unknown,
+  unpublished, private, marked and deleted all answer the same `404`. Only placed, live items are served. The fields
+  are a whitelist (`public_reader::ROADMAP_FIELDS`, `ITEM_FIELDS`), with no person, plan id or internal id; a test
+  fails when a column has no decision. Organizations appear as code, name and national; a category as name and
+  translations. Translations carry `needs_review`, and `…_PUBLIC_ROADMAPS_REVIEWED_ONLY=on` leaves those out. A weak
+  `ETag` gives `304`; `Cache-Control: public, max-age=60`; `…_PUBLIC_ROADMAPS_NOINDEX=on` adds `X-Robots-Tag:
+  noindex`. The rate limiter applies as to every request.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

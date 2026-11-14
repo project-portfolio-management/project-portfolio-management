@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-4: a public reader of published roadmaps, off by default)
+
+- **`GET /api/public/roadmaps` and `/api/public/roadmaps/{slug}` serve published roadmaps with no token,** once a
+  deployment sets `PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS=on`. They serve only plans that are live, not
+  private and not marked above the lowest level, and a fixed list of fields with no person or internal id. Any miss
+  is the same `404`. The DPIA gains risk 17.
+- Not done: a page that renders it; a rate-limit test on this path. Not decided: OQ-14, which the owner has not
+  answered; the reader stays off until a deployment turns it on.
+
 ### 14 November (RE-3: when a public product roadmap is stale)
 
 - **A roadmap's review date changes only when someone says it was reviewed,** never by publishing or editing, so a

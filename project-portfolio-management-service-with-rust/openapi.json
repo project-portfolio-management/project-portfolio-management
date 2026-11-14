@@ -30840,6 +30840,57 @@
         ]
       }
     },
+    "/api/public/roadmaps": {
+      "get": {
+        "description": "Off unless PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS=on; off, 404. Inputs: published roadmaps of live plans that are not private and are at the lowest handling-mark level, as fixed rules. Each: slug, title, category (name and translations), reviewed_on and freshness. No person, plan id or internal id. Weak ETag (If-None-Match gives 304) and Cache-Control: public, max-age=60.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The published roadmaps"
+          },
+          "304": {
+            "description": "Not changed"
+          },
+          "404": {
+            "description": "The reader is off"
+          }
+        },
+        "summary": "The published public product roadmaps, with no token (RE-4)",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/api/public/roadmaps/{slug}": {
+      "get": {
+        "description": "Inputs: the roadmap's slug, title, vision, service description, category, reviewed_on and freshness, and its placed items in page order (public id, title, description, expected outcome, phase, tags, details, placement, and the organizations as code, name and national). Translations show value and needs_review; with PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS_REVIEWED_ONLY=on, those needing review are left out. Unknown, unpublished, private, marked and deleted all answer the same 404.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The roadmap"
+          },
+          "304": {
+            "description": "Not changed"
+          },
+          "404": {
+            "description": "No such published roadmap, or the reader is off"
+          }
+        },
+        "summary": "One published public product roadmap and its placed items, with no token (RE-4)",
+        "tags": [
+          "public"
+        ]
+      }
+    },
     "/api/reactions": {
       "delete": {
         "parameters": [

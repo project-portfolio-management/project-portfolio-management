@@ -2700,6 +2700,16 @@ fn public_roadmap_paths() -> Value {
                 "Inputs: every public product roadmap of a live plan the caller may read, its reviewed_on, and the deployment's stale period (PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS, default 42 calendar days) and today. A roadmap is stale when more calendar days than that have passed since its review, and unknown when it was never reviewed; never-reviewed first, then the oldest review. Private plans the caller is not a member of are left out.",
                 vec![], &[("200", "The stale roadmaps, with the rule")])
         },
+        "/api/public/roadmaps": {
+            "get": op("public", "The published public product roadmaps, with no token (RE-4)",
+                "Off unless PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS=on; off, 404. Inputs: published roadmaps of live plans that are not private and are at the lowest handling-mark level, as fixed rules. Each: slug, title, category (name and translations), reviewed_on and freshness. No person, plan id or internal id. Weak ETag (If-None-Match gives 304) and Cache-Control: public, max-age=60.",
+                vec![], &[("200", "The published roadmaps"), ("304", "Not changed"), ("404", "The reader is off")])
+        },
+        "/api/public/roadmaps/{slug}": {
+            "get": op("public", "One published public product roadmap and its placed items, with no token (RE-4)",
+                "Inputs: the roadmap's slug, title, vision, service description, category, reviewed_on and freshness, and its placed items in page order (public id, title, description, expected outcome, phase, tags, details, placement, and the organizations as code, name and national). Translations show value and needs_review; with PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS_REVIEWED_ONLY=on, those needing review are left out. Unknown, unpublished, private, marked and deleted all answer the same 404.",
+                vec![str_param("slug")], &[("200", "The roadmap"), ("304", "Not changed"), ("404", "No such published roadmap, or the reader is off")])
+        },
         "/api/plans/{pid}/roadmap/items": {
             "post": op("roadmap", "Add an item to a public product roadmap",
                 "Body: title (required), description, expected_outcome, phase, tags (each 1 to 50 characters, no comma, no repeats), organization_pids (active organizations), details (lines of text and level, nested at most three levels, each at most one deeper than the line above) and placement (absent for unplaced). Goes last in its placement and gets a public id of eight characters that is never reused. Audited.",

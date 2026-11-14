@@ -189,8 +189,8 @@ pub fn parse_bool(value: &str) -> bool {
 }
 
 /// Paths that stay public even when enforcement is on: the three health probes, the
-/// `OpenAPI` doc + Swagger UI, and the calendar feeds (which carry their own
-/// token). The Prometheus endpoint is deliberately **not** here: it exposes
+/// `OpenAPI` doc + Swagger UI, the calendar feeds (which carry their own
+/// token) and the public roadmap reader (RE-4). The Prometheus endpoint is deliberately **not** here: it exposes
 /// route and traffic shape, so a scraper presents a bearer token like any
 /// other client. Everything else requires a valid bearer token.
 pub(super) fn is_public_path(path: &str) -> bool {
@@ -205,6 +205,11 @@ pub(super) fn is_public_path(path: &str) -> bool {
         // query string (a calendar app cannot send a bearer header); see
         // `controllers::feeds`.
         || path.starts_with("/api/feeds/")
+        // The public reader of published product roadmaps (RE-4): off unless the deployment turns it on, and it
+        // serves only published text from plans that are neither private nor marked; see
+        // `controllers::public_reader`.
+        || path == "/api/public/roadmaps"
+        || path.starts_with("/api/public/roadmaps/")
 }
 
 /// The blanket-enforcement decision: authentication, then ABAC

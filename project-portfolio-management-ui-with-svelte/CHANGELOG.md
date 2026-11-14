@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — unsaved work survives an ended session (RE-13, 2026-11-14)
+
+The plan form keeps what was typed on a `401`, says the session ended, and links to sign-in in a new tab; the same
+form then saves. Leaving it with changes not saved asks first. `src/lib/unsaved.ts`, `tests/unit/unsaved.test.ts`,
+`tests/e2e/unsaved.spec.ts`; three strings in every locale, machine-written and unreviewed. **Not done:** other long
+forms. **Not verified:** the browser's own close prompt; a real expired token.
+
 ### Added — a ratchet on raw colours (RE-11, 2026-11-14)
 
 `tests/unit/design-tokens.test.ts` refuses a `#hex`, `rgb()` or `hsl()` colour in `src/` outside `src/app.css`,

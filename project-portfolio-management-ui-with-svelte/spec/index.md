@@ -575,6 +575,12 @@ httpOnly cookie — no auth token in `localStorage` (BFF model, §6.15).
 
 ## 11. Testing strategy
 
+**Unsaved work (RE-13).** The plan form (new and edit) keeps everything typed when a save is refused with `401`: it
+says the session ended and links to sign-in in a new tab, so this tab and its contents stay, and the person saves
+again. Nothing is written to browser storage. Leaving the form with changes not yet saved asks first (the browser's
+own prompt on close or reload, a confirm for a link). Rules: `src/lib/unsaved.ts`; tests: `tests/unit/unsaved.test.ts`,
+`tests/e2e/unsaved.spec.ts`.
+
 **Accessibility-tree snapshots (RE-9).** `tests/e2e/structure.spec.ts` holds the `main` region's accessibility tree
 for the plan list, a plan's page, the plan form's blank-name error, the not-found page and sign-in, in `en-001` and
 `cy-001`. A change to a label, heading, landmark or alert there fails until the snapshot is updated on purpose.

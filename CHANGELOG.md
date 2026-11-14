@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-13: what was typed survives an ended session)
+
+- **The plan form keeps what was typed when the session has ended,** offers sign-in in a new tab, and saves on the
+  next try. Leaving it with changes not saved asks first. See the UI changelog.
+- Not done: other long forms. Not verified: the browser's own close prompt; a real expired token.
+
 ### 14 November (RE-11: colours come from design tokens)
 
 - **A new raw colour in the UI fails a unit test;** the 32 files that already had them are listed with their counts,

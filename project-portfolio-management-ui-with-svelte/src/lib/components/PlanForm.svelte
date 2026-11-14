@@ -24,7 +24,9 @@
     PlanKind,
     PlanStatus,
   } from "#lib/api/types.js";
-  import { t } from "#lib/i18n.svelte.js";
+  import { t, localeHref } from "#lib/i18n.svelte.js";
+  import { beforeNavigate } from "$app/navigation";
+  import { isSessionEnded, shouldAskBeforeLeaving } from "#lib/unsaved.js";
   import { enumLabel } from "#lib/enum-labels.js";
 
   let {
@@ -62,6 +64,20 @@
 
   let submitting = $state(false);
   let error = $state<string | null>(null);
+  // RE-13: what was typed stays in memory through an ended session; leaving with changes not saved asks first.
+  let changed = $state(false);
+  let saved = $state(false);
+  let sessionEnded = $state(false);
+
+  beforeNavigate(({ cancel, type }) => {
+    if (submitting || !shouldAskBeforeLeaving(changed, saved)) return;
+    // Closing or reloading the tab: the browser asks in its own words.
+    if (type === "leave") {
+      cancel();
+      return;
+    }
+    if (!confirm(t("form.leaveUnsaved"))) cancel();
+  });
 
   function splitList(s: string): string[] {
     return s
@@ -109,17 +125,27 @@
       return;
     }
     submitting = true;
+    sessionEnded = false;
     try {
       await onsubmit(build());
+      saved = true;
     } catch (err) {
-      error = errorText(err, "form.saveFailed");
+      sessionEnded = isSessionEnded(err);
+      error = sessionEnded ? t("form.sessionEnded") : errorText(err, "form.saveFailed");
     } finally {
       submitting = false;
     }
   }
 </script>
 
-<form class="stack" onsubmit={handleSubmit}>
+<form
+  class="stack"
+  onsubmit={handleSubmit}
+  oninput={() => {
+    changed = true;
+    saved = false;
+  }}
+>
   <label>{t("form.title")}<input type="text" bind:value={name} required /></label>
   <div class="row">
     <label
@@ -205,5 +231,12 @@
   <button class="button" type="submit" disabled={submitting}>
     {submitting ? t("form.saving") : (submitLabel ?? t("form.save"))}
   </button>
-  {#if error}<p class="banner" role="alert">{error}</p>{/if}
+  {#if error}
+    <p class="banner" role="alert">
+      {error}
+      {#if sessionEnded}
+        <a href={localeHref("/signin")} target="_blank" rel="noopener">{t("form.signInNewTab")}</a>
+      {/if}
+    </p>
+  {/if}
 </form>

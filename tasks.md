@@ -3603,11 +3603,12 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   **Acceptance:** `spec/03-stakeholders-and-users.md` links each persona, and no persona claims an answer the owner
   has not given.
   **Built 2026-11-14.** `spec/personas/`: an index and four personas (P1 portfolio office lead, P2 sponsor, P3 project or product lead, P4 public roadmap reader). Each separates what the repository records (with its file), numbered owner answers, open questions for the owner, and what to check with real users. `spec/03-stakeholders-and-users.md` links them. **Not done:** no owner answer is recorded, because none has been given; every persona's answers list is empty. No user research was done, and none is claimed. DHCW's answers (A1, A7, A12, A13) are cited as DHCW's, not as this project's.
-- [ ] **RE-13 (M, UI) — Pending edits survive an expired session.** On the long forms (a plan, a business case, a
+- [x] **RE-13 (M, UI) — Pending edits survive an expired session.** On the long forms (a plan, a business case, a
   roadmap's pending changes), an expired session keeps what was typed in memory and offers to sign in again; leaving
   or reloading with unsaved changes asks first; nothing pending goes to browser storage.
   **Acceptance:** an e2e test expires the token mid-edit, signs in again, and saves what was typed; a reload with
   changes asks first.
+  **Built 2026-11-14, for the plan form.** `src/lib/unsaved.ts` (a `401` on save is an ended session; ask before leaving only with changes not saved), `PlanForm.svelte` (the message and a sign-in link with `target="_blank"`, the fields kept; `beforeNavigate` asks on a link and lets the browser ask on close or reload), three strings in every locale (machine-written, in the review files, unreviewed). Tests: `tests/unit/unsaved.test.ts`; `tests/e2e/unsaved.spec.ts` (a `401` keeps the name typed and offers the link, then the same form saves; a link away asks, and staying keeps the text). **Changed from the text above:** sign-in is a full-page redirect, so the form offers it in a new tab instead of keeping state across a redirect. **Not done:** the business case and other long forms; a roadmap's pending changes (no screen yet). **Not verified:** the browser's own close prompt (Playwright dismisses `beforeunload` differently; only the in-app confirm is tested); a real expired token (the test answers `401`).
 - [x] **RE-14 (S) — A pull request template.** It asks what the change writes to shared data, to an export or to the
   public reader, and what was not done or not verified.
   **Acceptance:** `.github/pull_request_template.md` exists and links AGENTS.md.

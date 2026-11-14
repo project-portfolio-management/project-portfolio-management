@@ -171,6 +171,11 @@ const STRINGS = {
     "form.saving": "جارٍ الحفظ…",
     "form.titleRequired": "الاسم مطلوب.",
     "form.saveFailed": "فشل الحفظ",
+    "form.sessionEnded":
+      "انتهت جلستك. ما كتبته لا يزال هنا: سجّل الدخول مرة أخرى في علامة تبويب جديدة، ثم احفظ.",
+    "form.signInNewTab": "سجّل الدخول مرة أخرى (يفتح علامة تبويب جديدة)",
+    "form.leaveUnsaved":
+      "لديك تغييرات لم تُحفظ. هل تريد مغادرة هذه الصفحة على أي حال؟",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "لوحة المتابعة",
     "ppm.nav.proposals": "المقترحات",
@@ -546,6 +551,11 @@ const STRINGS = {
     "form.saving": "Yn cadw…",
     "form.titleRequired": "Mae angen enw.",
     "form.saveFailed": "Methodd y cadw",
+    "form.sessionEnded":
+      "Mae eich sesiwn wedi dod i ben. Mae'r hyn a deipioch yma o hyd: mewngofnodwch eto mewn tab newydd, yna cadwch.",
+    "form.signInNewTab": "Mewngofnodi eto (yn agor tab newydd)",
+    "form.leaveUnsaved":
+      "Mae gennych newidiadau heb eu cadw. Gadael y dudalen hon beth bynnag?",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "Dangosfwrdd",
     "ppm.nav.proposals": "Cynigion",
@@ -929,6 +939,11 @@ const STRINGS = {
     "form.saving": "Wird gespeichert…",
     "form.titleRequired": "Name ist erforderlich.",
     "form.saveFailed": "Speichern fehlgeschlagen",
+    "form.sessionEnded":
+      "Ihre Sitzung ist abgelaufen. Ihre Eingaben sind noch da: Melden Sie sich in einem neuen Tab erneut an und speichern Sie dann.",
+    "form.signInNewTab": "Erneut anmelden (öffnet einen neuen Tab)",
+    "form.leaveUnsaved":
+      "Sie haben ungespeicherte Änderungen. Diese Seite trotzdem verlassen?",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "Dashboard",
     "ppm.nav.proposals": "Vorschläge",
@@ -1312,6 +1327,11 @@ const STRINGS = {
     "form.saving": "Wird gespeichert…",
     "form.titleRequired": "Name ist erforderlich.",
     "form.saveFailed": "Speichern fehlgeschlagen",
+    "form.sessionEnded":
+      "Ihre Sitzung ist abgelaufen. Ihre Eingaben sind noch da: Melden Sie sich in einem neuen Tab erneut an und speichern Sie dann.",
+    "form.signInNewTab": "Erneut anmelden (öffnet einen neuen Tab)",
+    "form.leaveUnsaved":
+      "Sie haben ungespeicherte Änderungen. Diese Seite trotzdem verlassen?",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "Dashboard",
     "ppm.nav.proposals": "Vorschläge",
@@ -1699,6 +1719,11 @@ const STRINGS = {
     "form.saving": "Saving…",
     "form.titleRequired": "Name is required.",
     "form.saveFailed": "Save failed",
+    "form.sessionEnded":
+      "Your session has ended. What you typed is still here: sign in again in a new tab, then save.",
+    "form.signInNewTab": "Sign in again (opens a new tab)",
+    "form.leaveUnsaved":
+      "You have changes that are not saved. Leave this page anyway?",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "Dashboard",
     "ppm.nav.proposals": "Proposals",
@@ -2082,6 +2107,11 @@ const STRINGS = {
     "form.saving": "Guardando…",
     "form.titleRequired": "El nombre es obligatorio.",
     "form.saveFailed": "Error al guardar",
+    "form.sessionEnded":
+      "Su sesión ha caducado. Lo que escribió sigue aquí: inicie sesión de nuevo en una pestaña nueva y luego guarde.",
+    "form.signInNewTab": "Iniciar sesión de nuevo (abre una pestaña nueva)",
+    "form.leaveUnsaved":
+      "Tiene cambios sin guardar. ¿Salir de esta página de todos modos?",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "Panel",
     "ppm.nav.proposals": "Propuestas",
@@ -2465,6 +2495,11 @@ const STRINGS = {
     "form.saving": "Enregistrement…",
     "form.titleRequired": "Le nom est obligatoire.",
     "form.saveFailed": "Échec de l'enregistrement",
+    "form.sessionEnded":
+      "Votre session a expiré. Ce que vous avez saisi est toujours là : reconnectez-vous dans un nouvel onglet, puis enregistrez.",
+    "form.signInNewTab": "Se reconnecter (ouvre un nouvel onglet)",
+    "form.leaveUnsaved":
+      "Vous avez des modifications non enregistrées. Quitter cette page quand même ?",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "Tableau de bord",
     "ppm.nav.proposals": "Propositions",
@@ -2844,6 +2879,11 @@ const STRINGS = {
     "form.saving": "सहेजा जा रहा है…",
     "form.titleRequired": "नाम आवश्यक है।",
     "form.saveFailed": "सहेजना विफल",
+    "form.sessionEnded":
+      "आपका सत्र समाप्त हो गया है। आपने जो लिखा वह अभी भी यहाँ है: नए टैब में फिर से साइन इन करें, फिर सहेजें।",
+    "form.signInNewTab": "फिर से साइन इन करें (नया टैब खुलता है)",
+    "form.leaveUnsaved":
+      "आपके कुछ बदलाव सहेजे नहीं गए हैं। फिर भी यह पेज छोड़ें?",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "डैशबोर्ड",
     "ppm.nav.proposals": "प्रस्ताव",
@@ -3222,6 +3262,10 @@ const STRINGS = {
     "form.saving": "保存中…",
     "form.titleRequired": "名称为必填项。",
     "form.saveFailed": "保存失败",
+    "form.sessionEnded":
+      "您的会话已结束。您输入的内容仍在此处：请在新标签页中重新登录，然后保存。",
+    "form.signInNewTab": "重新登录（在新标签页中打开）",
+    "form.leaveUnsaved": "您有未保存的更改。仍要离开此页面吗？",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "仪表盘",
     "ppm.nav.proposals": "提案",
@@ -3576,6 +3620,10 @@ const STRINGS = {
     "form.saving": "保存中…",
     "form.titleRequired": "名称为必填项。",
     "form.saveFailed": "保存失败",
+    "form.sessionEnded":
+      "您的会话已结束。您输入的内容仍在此处：请在新标签页中重新登录，然后保存。",
+    "form.signInNewTab": "重新登录（在新标签页中打开）",
+    "form.leaveUnsaved": "您有未保存的更改。仍要离开此页面吗？",
     // PPM catalogue views (added 2026-07-18)
     "ppm.nav.dashboard": "仪表盘",
     "ppm.nav.proposals": "提案",

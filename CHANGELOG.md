@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (the gates on axa 0.13)
+
+- **Every gate passes on axa 0.13.0 and axa-test 0.4.0, the latest:** service, migration and matcher fmt, clippy and
+  unit tests (1,285, 7 and 65); every database test binary, the 227 request tests among them; the restore drill
+  (227 on a restored copy); the UI's lint, check, 1,104 unit tests and 1,107 Playwright tests, every locale
+  included; and the documentation, generator, link, markdown and syncpack checks.
+- **The matcher takes `mimalloc` on MUSL targets only,** where its demo binary uses it; Rust 1.100 had reported it as
+  unused everywhere else.
+- Not run: `keycloak_entra_broker`, `keycloak_container`, `fluvio_relay` and the OpenTelemetry binaries, which need
+  containers this machine does not expose, and a MUSL build.
+
 ### 14 November (the fuzz crate builds again)
 
 - **The service's fuzz crate takes the matcher from crates.io, as the service does,** so its targets compile: with

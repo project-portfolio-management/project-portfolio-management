@@ -10,6 +10,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- **`mimalloc` is a dependency on MUSL targets only (2026-11-14).** Only the demo binary's allocator on a MUSL static
+  build uses it (`src/main.rs`); elsewhere Rust 1.100 reported it as unused. Not verified: a MUSL build (the target is
+  not installed on the machine that made the change).
+
+
 ## [0.2.2] - 2026-10-31
 
 Published to crates.io on 2026-10-31 at the product owner's direction; the service depends on it.

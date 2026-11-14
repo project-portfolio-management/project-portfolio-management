@@ -71,7 +71,10 @@ fn bearer(
 
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test public_reader -- --ignored`"]
-#[expect(clippy::too_many_lines, reason = "one linear end-to-end story of the reader")]
+#[expect(
+    clippy::too_many_lines,
+    reason = "one linear end-to-end story of the reader"
+)]
 async fn the_public_reader_serves_only_what_was_published_from_an_open_plan() {
     let (keys, kid) = keys_and_kid();
     // SAFETY: this binary is single-test, so nothing races the process-wide settings.

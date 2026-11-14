@@ -41,6 +41,8 @@
      same `Idempotency-Key` after a crash now get `409` for a day, not a minute;
    - axa 0.11 renames settings and health routes: follow
      [Upgrading to axa 0.11](#upgrading-to-axa-011) **before** the new image goes out;
+   - axa 0.13 refuses a browser's cross-site write: read [Upgrading to axa 0.13](#upgrading-to-axa-013) if a browser on
+     another origin writes to the API directly;
    - migrations move from `sea-orm-migration` to sqlx: the first `db migrate` copies the history, and from then
      on an older image must not run against the database: read
      [Upgrading to sqlx migrations](#upgrading-to-sqlx-migrations).
@@ -113,6 +115,28 @@ routes. Do these first, in every environment, then deploy. Each item names the o
 
 No migration comes with the axa 0.11 change, so going back is redeploying the previous tag, with the old names and
 probes restored.
+
+## Upgrading to axa 0.13
+
+The release that moves the service from axa 0.11 to 0.13 renames no setting and changes no route. Three things behave
+differently:
+
+1. **A browser's cross-site write is refused.** A `POST`, `PUT`, `PATCH` or `DELETE` that a browser marks
+   `sec-fetch-site: cross-site`, or that carries an `origin` that is not the API's own host, is `403`, code
+   `cross_site_write_refused` or `origin_mismatch`. A request with neither header passes, as from a server, a script
+   or the UI's own proxy, which no longer passes those headers on. A browser page on another origin that writes to
+   the API directly passes once that origin is in `PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS`, as it must already be
+   for the page to read the answer. Check your logs for writes that carry an `Origin` before you deploy.
+2. **A compressed request body is decoded** (`gzip`, `deflate`, `br`, `zstd`), and the body limit counts the decoded
+   bytes, so a small body that expands past `HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT` is `413`. An encoding the service
+   cannot decode is `415`.
+3. **`DB_URL` may come from a file** named by `DB_URL_FILE`, as a mounted secret is. Setting both, or naming a file
+   that cannot be read, stops the boot in every environment. Every database connection is named in
+   `pg_stat_activity` (`DB_APPLICATION_NAME`, the database name by default).
+
+No migration comes with the axa change, so going back is redeploying the previous tag. The same release carries
+migrations `20261114000110` to `20261114000112` (RE-7, RE-1, RE-8), which add tables and columns only, each with a
+down file.
 
 ## Upgrading to sqlx migrations
 

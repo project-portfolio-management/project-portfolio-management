@@ -15,6 +15,24 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (axa 0.13)
+
+- **The service moves from axa 0.11 to 0.13, and axa-test from 0.2 to 0.4.** The feature `sqlx` is now
+  `postgres-sqlx`, and the lockfile changes only axa's own crates (`axa`, `axa-test`, `axa-postgres-sqlx` in place of
+  `axa-sqlx`, `axa-transactional-outbox` 0.3.0). axa 0.13.0, axa-test 0.4.0 and axa-postgres-sqlx 0.2.0 were
+  published the same day, so this update overrode the three-day publish-age rule for axa's crates only, at the
+  owner's request.
+- **What behaves differently:** a browser's cross-site write is refused (`403`); a write from an origin
+  `PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS` lists still passes, because the service's CORS layer no longer passes
+  that origin's `Origin` and `Sec-Fetch-Site` inwards; the UI's proxy no longer forwards them either (previous
+  commit). A compressed request body is decoded, and `DB_URL_FILE` is read. Operators: `operations/upgrade-and-migration.md`,
+  "Upgrading to axa 0.13".
+- Not adopted: readiness that waits for migrations (`Checks::migrations`), `config::Settings`, the new upload,
+  webhooks and HTTP client features. Not verified: a deployed browser on another origin.
+- Found, not fixed: the fuzz crate (`project-portfolio-management-service-with-rust/fuzz`) does not build, on `main`
+  before this change too, because it takes the matcher by path while the service takes it from crates.io, so two
+  `Plan` types meet. CI does not build it. Its lockfile is moved to axa 0.13 as well.
+
 ### 14 November (markdown lint is a merge gate)
 
 - **The 109 rumdl findings are fixed, and the `markdown-lint` job now blocks merging** (it is in `ci-ok`'s needs and

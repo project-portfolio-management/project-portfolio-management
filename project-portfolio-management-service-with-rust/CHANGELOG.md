@@ -36,6 +36,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- **axa 0.13 and axa-test 0.4 (2026-11-14).** Feature `postgres-sqlx`; the cross-site write guard, with a listed
+  CORS origin let through by `http_security::cors_mw`; `tests/requests/cross_site.rs`. See the root `CHANGELOG.md`.
 - Replaced Loco with axa 0.1: see the root `CHANGELOG.md`, 5 November (Loco replaced with axa).
 
 ### Added

@@ -487,6 +487,7 @@ mod tests {
                 csp: None,
                 permissions_policy: None,
                 trusted_proxies: nets,
+                cross_site_paths: Vec::new(),
             },
         )
         .unwrap();

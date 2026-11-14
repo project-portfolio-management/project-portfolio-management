@@ -81,7 +81,11 @@ files. Configuration is the environment, with defaults in code, and `APP_ENV` pi
 `HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT`, `HTTP_REQUEST_HEADER_READ_TIMEOUT_SECONDS`, `HTTP_COMPRESSION`, `WORKER_MODE`,
 `SHUTDOWN_TIMEOUT_SECONDS`, `SHUTDOWN_DRAIN_SECONDS`, `LOG_LEVEL`, `LOG_FORMAT` and `LOG_FILTER` are axa's (since axa 0.11). CORS,
 HSTS, the content security policy and the permissions policy stay with this service's own `http_security` layer, so axa's are turned
-off, and neither `HTTP_CONTENT_SECURITY_POLICY` nor `HTTP_PERMISSIONS_POLICY` changes what is sent. axa 0.10 read four of these under
+off, and neither `HTTP_CONTENT_SECURITY_POLICY` nor `HTTP_PERMISSIONS_POLICY` changes what is sent. Since axa 0.13 the standard
+stack refuses a browser's cross-site write (`403` `cross_site_write_refused`, or `origin_mismatch` for an `origin` that is not the
+service's host); a request with neither header, as the UI's proxy sends, passes, and a write from an origin
+`PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS` lists passes because the service's CORS layer, outside axa's stack, does not pass its
+`origin` and `sec-fetch-site` on (`tests/requests/cross_site.rs`). `DB_URL` may come from `DB_URL_FILE` (not both). axa 0.10 read four of these under
 other names, which axa 0.11 ignores: `DATABASE_URL` (now `DB_URL`), `LOCO_ENV` (now `APP_ENV`), `BODY_LIMIT_BYTES` and
 `HEADER_READ_TIMEOUT_SECONDS`. **The service refuses to start, in every environment, when an old name is set and its new name is
 not**, naming both, rather than silently falling back to a default database, environment or limit. The body limit

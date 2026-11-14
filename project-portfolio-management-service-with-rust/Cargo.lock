@@ -380,9 +380,9 @@ dependencies = [
 
 [[package]]
 name = "axa"
-version = "0.11.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c68930771c74b20f9b2f5d33a6bb16cb00401d373393b13013e76b322ffbb3c"
+checksum = "8bdeddbed117d43108e5123160b668db94196de2a513abf9a5c294f491b58b22"
 dependencies = [
  "async-trait",
  "axa-cursor-pagination",
@@ -390,9 +390,9 @@ dependencies = [
  "axa-idempotency-key",
  "axa-openapi-docs",
  "axa-postgres-job-queue",
+ "axa-postgres-sqlx",
  "axa-problem",
  "axa-request-rate-limit",
- "axa-sqlx",
  "axa-transactional-outbox",
  "axum",
  "clap",
@@ -401,6 +401,7 @@ dependencies = [
  "hyper-util",
  "serde",
  "serde_json",
+ "serde_path_to_error",
  "sqlx",
  "thiserror 2.0.21",
  "tokio",
@@ -471,6 +472,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "axa-postgres-sqlx"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d6f151f37e58d00fccc68cf24dfb06f6c4ab1a20465a43371602da10f31b67f"
+dependencies = [
+ "sqlx",
+]
+
+[[package]]
 name = "axa-problem"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -494,19 +504,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "axa-sqlx"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bee0965a11380488366627d2ffa187352fe84629560eb6f6cbe6b582776d6524"
-dependencies = [
- "sqlx",
-]
-
-[[package]]
 name = "axa-test"
-version = "0.2.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31e4ddef189464f706dcec0a02daf9087f1bf6fbdcb27d070beeb347198fd89f"
+checksum = "db5bef3df06bb3e60315a00e10f4c6511b3b0692e29eb68403efd242be4136f0"
 dependencies = [
  "axa",
  "axum-test",
@@ -514,9 +515,9 @@ dependencies = [
 
 [[package]]
 name = "axa-transactional-outbox"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fa6844d712f88b7884a3b9809203167e66c67448daea1d719bcccca61d92dc3"
+checksum = "3531d9dd1af21b613184a3d9fa361e457d9a15d53506888558509c151c332806"
 dependencies = [
  "serde_json",
  "sqlx",

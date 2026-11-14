@@ -32,6 +32,11 @@
 //! wildcard must never pair with credentials). A listed origin gets the grant
 //! and its preflight (`OPTIONS` with `Access-Control-Request-Method`) is
 //! answered `204` without reaching auth; any other origin gets no CORS header.
+//!
+//! **Cross-site writes (axa 0.13).** axa's standard stack, inside this layer, refuses an unsafe request a browser
+//! marks `sec-fetch-site: cross-site`, or whose `origin` is not the service's own host. A listed origin may write:
+//! this layer drops its `origin` and `sec-fetch-site` before the request goes in. Any other origin is refused (`403`,
+//! `cross_site_write_refused` or `origin_mismatch`).
 
 use std::sync::Arc;
 
@@ -258,7 +263,11 @@ fn append_vary(headers: &mut HeaderMap, value: &'static str) {
 
 /// Apply the CORS allow-list (see the module docs). A no-op when no origin
 /// is configured.
-pub async fn cors_mw(State(config): State<Arc<CorsConfig>>, req: Request, next: Next) -> Response {
+pub async fn cors_mw(
+    State(config): State<Arc<CorsConfig>>,
+    mut req: Request,
+    next: Next,
+) -> Response {
     if !config.is_enabled() {
         return next.run(req).await;
     }
@@ -298,6 +307,12 @@ pub async fn cors_mw(State(config): State<Arc<CorsConfig>>, req: Request, next: 
         append_vary(h, "Access-Control-Request-Headers");
         r
     } else {
+        // axa 0.13 refuses a cross-site write inside this layer, and lets through only an origin in its own CORS list,
+        // which `app.rs` leaves empty because this layer does CORS. An origin this list names may write, so where it
+        // came from is not passed on: with neither header, the guard sees no browser's request and lets it pass.
+        let headers = req.headers_mut();
+        headers.remove(header::ORIGIN);
+        headers.remove(HeaderName::from_static("sec-fetch-site"));
         let mut r = next.run(req).await;
         r.headers_mut().insert(
             header::ACCESS_CONTROL_EXPOSE_HEADERS,

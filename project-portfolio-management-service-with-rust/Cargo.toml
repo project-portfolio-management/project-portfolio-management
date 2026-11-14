@@ -19,8 +19,9 @@ include = ["src/**/*", "README.md"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
-# The plumbing every service shares. `sqlx` makes `AppContext::db` sqlx's `PgPool` (spec §8.3b).
-axa = { version = "0.11", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "sqlx"] }
+# The plumbing every service shares. `postgres-sqlx` (called `sqlx` before axa 0.12) makes `AppContext::db` sqlx's
+# `PgPool` (spec §8.3b).
+axa = { version = "0.13", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "postgres-sqlx"] }
 
 [dependencies]
 # Keyed integrity MACs with production-grade key handling — one audited
@@ -152,7 +153,7 @@ required-features = []
 authentication-verifier = { version = "0.9.1", default-features = false, features = ["test-idp"] }
 criterion = { version = "0.8", features = ["html_reports"] }
 axa = { workspace = true }
-axa-test = { version = "0.2.0" }
+axa-test = { version = "0.4.0" }
 # Name the `TestServer` type in shared request-test helpers.
 axum-test = { version = "21" }
 # `#[tokio::test]` + a local ephemeral-port HTTP listener for the boot-time key-set fetch tests.

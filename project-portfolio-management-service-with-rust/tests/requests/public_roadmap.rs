@@ -351,3 +351,104 @@ async fn a_roadmap_is_reviewed_only_on_purpose_and_stale_after_the_period() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn a_change_set_publishes_all_or_nothing_and_names_each_conflict() {
+    request::<App, _, _>(|request, _ctx| async move {
+        let tag = uuid::Uuid::new_v4().simple().to_string()[..6].to_string();
+        let product = plan(&request, "Product", &format!("Referrals {tag}")).await;
+        let url = format!("/api/plans/{product}/roadmap");
+        request.put(&url).json(&json!({ "title": format!("Referrals {tag}") })).await.assert_status_ok();
+        let item: Value = request
+            .post(&format!("{url}/items"))
+            .json(&json!({ "title": "Refer online", "placement": "next", "description": "For GPs" }))
+            .await
+            .json();
+        let ipid = item["pid"].as_str().unwrap().to_string();
+        let publish = format!("{url}/publish");
+
+        // Two editors change different fields of one item: both land.
+        let a = json!({ "items": [{ "pid": ipid, "fields": { "title": { "base": "Refer online", "value": "Refer a patient online" } } }] });
+        let b = json!({ "items": [{ "pid": ipid, "fields": { "description": { "base": "For GPs", "value": "For GPs and dentists" } } }] });
+        request.post(&publish).json(&a).await.assert_status_ok();
+        let r: Value = request.post(&publish).json(&b).await.json();
+        let it = &r["roadmap"]["items"][0];
+        assert_eq!(it["title"], "Refer a patient online");
+        assert_eq!(it["description"], "For GPs and dentists");
+
+        // The same field, changed to something else meanwhile: 409 with both values, and nothing written at all.
+        let clash = json!({
+            "roadmap": { "vision": { "base": null, "value": "Every referral online" } },
+            "items": [{ "pid": ipid, "fields": {
+                "title": { "base": "Refer online", "value": "Refer by phone" },
+                "placement": { "base": "next", "value": "now" } } }],
+            "new": [{ "title": "Should not be added", "placement": "later" }],
+        });
+        let refused = request.post(&publish).json(&clash).await;
+        assert_eq!(refused.status_code(), StatusCode::CONFLICT);
+        let body: Value = refused.json();
+        assert_eq!(body["conflicts"].as_array().unwrap().len(), 1);
+        assert_eq!(body["conflicts"][0]["field"], "title");
+        assert_eq!(body["conflicts"][0]["base"], "Refer online");
+        assert_eq!(body["conflicts"][0]["value"], "Refer by phone");
+        assert_eq!(body["conflicts"][0]["current"], "Refer a patient online");
+        let r: Value = request.get(&url).await.json();
+        assert_eq!(r["vision"], Value::Null, "nothing written");
+        assert_eq!(r["items"].as_array().unwrap().len(), 1, "no item added");
+        assert_eq!(r["items"][0]["placement"], "next");
+
+        // A field already changed to the same value is not a conflict.
+        let same = json!({ "items": [{ "pid": ipid, "fields": { "title": { "base": "Refer online", "value": "Refer a patient online" } } }] });
+        let r: Value = request.post(&publish).json(&same).await.json();
+        assert_eq!(r["applied"], json!([]));
+
+        // The preview equals what publishing applies; a retry with the same key writes once.
+        let set = json!({
+            "roadmap": { "vision": { "base": null, "value": "  Every referral online  " }, "published": { "base": false, "value": true } },
+            "items": [{ "pid": ipid, "fields": { "placement": { "base": "next", "value": "now" },
+                                                 "tags": { "base": [], "value": ["GPs"] } } }],
+            "new": [{ "title": "Track a referral", "placement": "later" }],
+        });
+        let preview: Value = request.post(&format!("{publish}/preview")).json(&set).await.json();
+        assert_eq!(preview["would_publish"], true);
+        assert_eq!(preview["changes"].as_array().unwrap().len(), 5);
+        let r: Value = request.get(&url).await.json();
+        assert_eq!(r["published"], false, "the preview wrote nothing");
+        let key = format!("publish-{tag}");
+        let first: Value = request
+            .post(&publish)
+            .add_header(axum::http::HeaderName::from_static("idempotency-key"), key.parse::<axum::http::HeaderValue>().unwrap())
+            .json(&set)
+            .await
+            .json();
+        assert_eq!(first["applied"], preview["changes"]);
+        let again = request
+            .post(&publish)
+            .add_header(axum::http::HeaderName::from_static("idempotency-key"), key.parse::<axum::http::HeaderValue>().unwrap())
+            .json(&set)
+            .await;
+        again.assert_status_ok();
+        assert_eq!(again.header("idempotent-replayed"), "true");
+        let r: Value = request.get(&url).await.json();
+        assert_eq!(r["vision"], "Every referral online");
+        assert_eq!(r["published"], true);
+        let titles: Vec<&str> = r["items"].as_array().unwrap().iter().map(|i| i["title"].as_str().unwrap()).collect();
+        assert_eq!(titles, ["Refer a patient online", "Track a referral"], "added once; now before later");
+        assert_eq!(r["items"][0]["tags"], json!(["GPs"]));
+
+        // A bad value or an unknown item refuses the set.
+        let bad = request
+            .post(&publish)
+            .json(&json!({ "items": [{ "pid": ipid, "fields": { "placement": { "base": "now", "value": "soon" } } }] }))
+            .await;
+        assert_eq!(bad.status_code(), StatusCode::UNPROCESSABLE_ENTITY);
+        let gone = request
+            .post(&publish)
+            .json(&json!({ "items": [{ "pid": uuid::Uuid::new_v4(), "fields": { "title": { "base": "x", "value": "y" } } }] }))
+            .await;
+        assert_eq!(gone.status_code(), StatusCode::CONFLICT, "an item that is gone is a conflict");
+    })
+    .await;
+}

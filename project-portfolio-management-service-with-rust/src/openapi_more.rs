@@ -2690,6 +2690,16 @@ fn public_roadmap_paths() -> Value {
                 "Body: any of title (required when made, 1 to 200 characters), slug (made from the title when absent), vision, service_description (an empty string clears either), category_pid (an active roadmap category; null clears it) and published. Only a plan of kind Product can have one. Audited.",
                 vec![plan()], &[("200", "The roadmap"), ("404", "Unknown plan"), ("409", "Another roadmap has that slug"), ("422", "A bad field, or not a Product plan")])
         },
+        "/api/plans/{pid}/roadmap/publish": {
+            "post": op("roadmap", "Publish a public product roadmap's pending changes as one change set (RE-2)",
+                "Body: roadmap (field to { base, value } for title, vision, service_description, category_pid, published), items (each { pid, fields: field to { base, value } } for title, description, expected_outcome, phase, tags, organization_pids, details, placement) and new (items to add, as POST …/items takes them). base is what the editor first saw. A field conflicts when its stored value is neither base nor value; any conflict refuses the whole set with 409 listing each one (subject, item, field, base, value, current), and a field already changed to the same value is not a conflict. Values compare as stored (trimmed, an empty text as none). All of it is written in one transaction with one audit row per record, or none. An Idempotency-Key makes a retry return the first answer.",
+                vec![plan()], &[("200", "applied (what changed) and the roadmap"), ("404", "No roadmap"), ("409", "Conflicts, listed; nothing written"), ("422", "A bad field, listed")])
+        },
+        "/api/plans/{pid}/roadmap/publish/preview": {
+            "post": op("roadmap", "What publishing a change set would change, without writing (RE-2)",
+                "Body: as for publish. Answers changes (subject, item, field, from, to; and each new item), conflicts, problems and would_publish. Built by the same code as publish, so a publish of the same set against the same data applies exactly these changes.",
+                vec![plan()], &[("200", "The changes, conflicts and problems"), ("404", "No roadmap")])
+        },
         "/api/plans/{pid}/roadmap/reviewed": {
             "put": op("roadmap", "Say when a public product roadmap was last reviewed (RE-3)",
                 "Body: today (true marks it reviewed today in the deployment's time zone) or reviewed_on (a date not after today; null clears it). The only write that changes reviewed_on: publishing or editing never does, so fixing a typo does not make an old roadmap look current. Audited with the old and new dates.",

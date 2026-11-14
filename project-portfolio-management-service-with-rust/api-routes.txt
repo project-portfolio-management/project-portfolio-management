@@ -467,6 +467,8 @@ PUT /api/plans/{pid}/roadmap/items/{ipid}
 POST /api/plans/{pid}/roadmap/items/{ipid}/delete
 POST /api/plans/{pid}/roadmap/items/{ipid}/move
 PUT /api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}
+POST /api/plans/{pid}/roadmap/publish
+POST /api/plans/{pid}/roadmap/publish/preview
 PUT /api/plans/{pid}/roadmap/reviewed
 PUT /api/plans/{pid}/roadmap/translations/{lang}
 GET /api/plans/{pid}/role-members

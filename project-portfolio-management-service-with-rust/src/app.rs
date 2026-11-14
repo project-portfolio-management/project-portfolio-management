@@ -494,6 +494,7 @@ impl App {
             .add_route(controllers::roadmap_categories::routes())
             .add_route(controllers::public_roadmaps::routes())
             .add_route(controllers::public_reader::routes())
+            .add_route(controllers::roadmap_publish::routes())
             .add_route(controllers::ledger::routes())
             .add_route(controllers::deescalation::routes())
             .add_route(controllers::cutover::routes())

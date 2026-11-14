@@ -474,7 +474,10 @@ async fn fresh_public_id(tx: &mut crate::db::Tx) -> Result<String> {
 }
 
 /// The plan's roadmap for a write, locked, or `404`.
-async fn roadmap_for_write(tx: &mut crate::db::Tx, plan_pid: Uuid) -> Result<roadmaps::Model> {
+pub(crate) async fn roadmap_for_write(
+    tx: &mut crate::db::Tx,
+    plan_pid: Uuid,
+) -> Result<roadmaps::Model> {
     find_roadmap(tx, plan_pid, true)
         .await?
         .ok_or(Error::NotFound)

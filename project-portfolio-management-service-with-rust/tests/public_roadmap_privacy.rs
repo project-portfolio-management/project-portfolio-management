@@ -83,6 +83,16 @@ async fn assert_writes_not_found(
             format!("{url}/items/{item}/translations/cy"),
             json!({ "title": "Cudd" }),
         ),
+        (
+            "post",
+            format!("{url}/publish"),
+            json!({ "roadmap": { "published": { "base": false, "value": true } } }),
+        ),
+        (
+            "post",
+            format!("{url}/publish/preview"),
+            json!({ "roadmap": { "published": { "base": false, "value": true } } }),
+        ),
     ] {
         let r = if method == "put" {
             request

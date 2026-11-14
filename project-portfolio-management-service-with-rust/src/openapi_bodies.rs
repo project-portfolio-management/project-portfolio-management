@@ -558,6 +558,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plans/{pid}/roadmap/items/{ipid}/delete", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items/{ipid}/delete`"),
     ("post", "/api/plans/{pid}/roadmap/items/{ipid}/move", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items/{ipid}/move`"),
     ("put", "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}` — body: field to value (`title`, `description`, `expected_outcome`, `phase` as text; `tags` as a list as long as the source's; `details` as the source's lines at the same levels); `null` or an empty string removes that translation."),
+    ("post", "/api/plans/{pid}/roadmap/publish", "roadmap_publish", "`POST /api/plans/{pid}/roadmap/publish`"),
+    ("post", "/api/plans/{pid}/roadmap/publish/preview", "roadmap_publish", "`POST /api/plans/{pid}/roadmap/publish/preview`"),
     ("put", "/api/plans/{pid}/roadmap/reviewed", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/reviewed` — the only write that changes `reviewed_on` (RE-3)."),
     ("put", "/api/plans/{pid}/roadmap/translations/{lang}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/translations/{lang}` — body: field to text (`title`, `vision`, `service_description`); `null` or an empty string removes that translation."),
     ("get", "/api/plans/{pid}/role-members", "plan_roles", "`GET /api/plans/{pid}/role-members` — who holds which role here, and whether the plan is enforced."),
@@ -989,6 +991,8 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/plans/{pid}/roadmap/items/{ipid}", crate::controllers::public_roadmaps::ItemPayload);
     body!("post", "/api/plans/{pid}/roadmap/items/{ipid}/move", crate::controllers::public_roadmaps::MovePayload);
     body!("put", "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}", crate::controllers::public_roadmaps::TranslationPayload);
+    body!("post", "/api/plans/{pid}/roadmap/publish", crate::controllers::roadmap_publish::ChangeSet);
+    body!("post", "/api/plans/{pid}/roadmap/publish/preview", crate::controllers::roadmap_publish::ChangeSet);
     body!("put", "/api/plans/{pid}/roadmap/reviewed", crate::controllers::public_roadmaps::ReviewedPayload);
     body!("put", "/api/plans/{pid}/roadmap/translations/{lang}", crate::controllers::public_roadmaps::TranslationPayload);
     body!("post", "/api/plans/{pid}/role-members", crate::controllers::plan_roles::NewMember);

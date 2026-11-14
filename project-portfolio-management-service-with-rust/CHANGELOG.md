@@ -18,6 +18,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **Publishing a roadmap as one change set (RE-2, 2026-11-14).** `controllers/roadmap_publish.rs`. Spec FR-16e24.
 - **Old slugs redirect (RE-8, 2026-11-14).** Migration `20261114000112_public_roadmap_slugs`. Spec FR-16e23.
 - **The public roadmap reader, off by default (RE-4, 2026-11-14).** `controllers/public_reader.rs`,
   `tests/public_reader.rs`. Spec FR-16e22.

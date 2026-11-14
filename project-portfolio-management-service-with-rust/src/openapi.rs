@@ -2371,6 +2371,7 @@ mod tests {
             crate::controllers::roadmap_categories::routes(),
             crate::controllers::public_roadmaps::routes(),
             crate::controllers::public_reader::routes(),
+            crate::controllers::roadmap_publish::routes(),
             crate::controllers::ledger::routes(),
             crate::controllers::deescalation::routes(),
             crate::controllers::cutover::routes(),

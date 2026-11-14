@@ -470,6 +470,14 @@ matcher payload (§5.6); every mutation audits (§6.6).
   current or earlier, belongs to one roadmap only: another roadmap asking for it is `409`, and a roadmap may take
   back its own. An item's public id is eight lower-case letters and digits, starting with a letter, drawn again on a
   clash and never reused, since a removed item keeps its row.
+- **FR-16e24 Publishing a roadmap as one change set (RE-2).** `POST /api/plans/{pid}/roadmap/publish` takes the
+  roadmap's changed fields and its items' changed fields, each as `{ base, value }`, and items to add. A field
+  conflicts when its stored value is neither its base nor its value; a field already at its value is not a conflict
+  and changes nothing; an item that is gone is a conflict. Any conflict is a `409` that lists each one (subject, item,
+  field, base, value, current) and writes nothing; a bad value is a `422` that writes nothing. Values compare as
+  stored. Otherwise every change is written in one transaction with one audit row per record. `…/publish/preview`
+  answers the same changes, conflicts and problems from the same code, and writes nothing. A retry with the same
+  `Idempotency-Key` replays the first answer (BR-1).
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

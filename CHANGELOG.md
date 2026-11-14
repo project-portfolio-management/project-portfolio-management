@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-2: publish a roadmap as one change set)
+
+- **`POST /api/plans/{pid}/roadmap/publish` writes every pending change to a roadmap and its items at once, or
+  none,** and refuses with a list of conflicts when someone else changed a field to something else meanwhile.
+  `…/publish/preview` shows the same changes without writing.
+- Not done: a screen that gathers the changes; translations inside a change set.
+
 ### 14 November (RE-5, part a: a mapping onto the DHCW Roadmap Editor's port)
 
 - **`operations/dhcw-roadmaps-editor.md`** maps each operation of the DHCW Roadmap Editor's repository port onto this

@@ -24731,6 +24731,384 @@
         ]
       }
     },
+    "/api/plans/{pid}/roadmap/publish": {
+      "post": {
+        "description": "Body: roadmap (field to { base, value } for title, vision, service_description, category_pid, published), items (each { pid, fields: field to { base, value } } for title, description, expected_outcome, phase, tags, organization_pids, details, placement) and new (items to add, as POST …/items takes them). base is what the editor first saw. A field conflicts when its stored value is neither base nor value; any conflict refuses the whole set with 409 listing each one (subject, item, field, base, value, current), and a field already changed to the same value is not a conflict. Values compare as stored (trimmed, an empty text as none). All of it is written in one transaction with one audit row per record, or none. An Idempotency-Key makes a retry return the first answer.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "A change set.",
+                "properties": {
+                  "items": {
+                    "description": "Changes to existing items.",
+                    "items": {
+                      "description": "A change to an existing item.",
+                      "properties": {
+                        "fields": {
+                          "additionalProperties": {
+                            "description": "One changed field: what the editor first saw, and what it wants.",
+                            "properties": {
+                              "base": {
+                                "description": "The value when the editor first read it."
+                              },
+                              "value": {
+                                "description": "The value the editor wants."
+                              }
+                            },
+                            "required": [
+                              "base",
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          "description": "Field name to change.",
+                          "type": "object"
+                        },
+                        "pid": {
+                          "description": "The item.",
+                          "format": "uuid",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "pid",
+                        "fields"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "new": {
+                    "description": "Items to add, each as `POST …/roadmap/items` takes it.",
+                    "items": {
+                      "description": "An item's fields, for adding one (title required) or changing one (absent fields are left as they are).",
+                      "properties": {
+                        "description": {
+                          "default": null,
+                          "description": "What the work is; an empty string clears it.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "details": {
+                          "default": null,
+                          "description": "Details nested up to three levels; the whole list.",
+                          "items": {
+                            "description": "One line of an item's details.",
+                            "properties": {
+                              "level": {
+                                "description": "0 is the top level; at most one deeper than the line above, at most 2.",
+                                "format": "uint8",
+                                "maximum": 255,
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "text": {
+                                "description": "The line, 1 to 300 characters, with no line break.",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "text",
+                              "level"
+                            ],
+                            "type": "object"
+                          },
+                          "nullable": true,
+                          "type": "array"
+                        },
+                        "expected_outcome": {
+                          "default": null,
+                          "description": "What changes, and for whom; an empty string clears it.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "organization_pids": {
+                          "default": null,
+                          "description": "The organizations the work is for, each an active organization; the whole set.",
+                          "items": {
+                            "format": "uuid",
+                            "type": "string"
+                          },
+                          "nullable": true,
+                          "type": "array"
+                        },
+                        "phase": {
+                          "default": null,
+                          "description": "The phase it is in, in the product's own words; an empty string clears it.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "placement": {
+                          "default": null,
+                          "description": "On adding: a placement, or absent for unplaced.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "tags": {
+                          "default": null,
+                          "description": "Tags in order, each 1 to 50 characters, no comma, no repeats; the whole list.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "nullable": true,
+                          "type": "array"
+                        },
+                        "title": {
+                          "default": null,
+                          "description": "The title, 1 to 200 characters.",
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "roadmap": {
+                    "additionalProperties": {
+                      "description": "One changed field: what the editor first saw, and what it wants.",
+                      "properties": {
+                        "base": {
+                          "description": "The value when the editor first read it."
+                        },
+                        "value": {
+                          "description": "The value the editor wants."
+                        }
+                      },
+                      "required": [
+                        "base",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "description": "The roadmap's own fields: field name to change.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "applied (what changed) and the roadmap"
+          },
+          "404": {
+            "description": "No roadmap"
+          },
+          "409": {
+            "description": "Conflicts, listed; nothing written"
+          },
+          "422": {
+            "description": "A bad field, listed"
+          }
+        },
+        "summary": "Publish a public product roadmap's pending changes as one change set (RE-2)",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
+    "/api/plans/{pid}/roadmap/publish/preview": {
+      "post": {
+        "description": "Body: as for publish. Answers changes (subject, item, field, from, to; and each new item), conflicts, problems and would_publish. Built by the same code as publish, so a publish of the same set against the same data applies exactly these changes.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "A change set.",
+                "properties": {
+                  "items": {
+                    "description": "Changes to existing items.",
+                    "items": {
+                      "description": "A change to an existing item.",
+                      "properties": {
+                        "fields": {
+                          "additionalProperties": {
+                            "description": "One changed field: what the editor first saw, and what it wants.",
+                            "properties": {
+                              "base": {
+                                "description": "The value when the editor first read it."
+                              },
+                              "value": {
+                                "description": "The value the editor wants."
+                              }
+                            },
+                            "required": [
+                              "base",
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          "description": "Field name to change.",
+                          "type": "object"
+                        },
+                        "pid": {
+                          "description": "The item.",
+                          "format": "uuid",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "pid",
+                        "fields"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "new": {
+                    "description": "Items to add, each as `POST …/roadmap/items` takes it.",
+                    "items": {
+                      "description": "An item's fields, for adding one (title required) or changing one (absent fields are left as they are).",
+                      "properties": {
+                        "description": {
+                          "default": null,
+                          "description": "What the work is; an empty string clears it.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "details": {
+                          "default": null,
+                          "description": "Details nested up to three levels; the whole list.",
+                          "items": {
+                            "description": "One line of an item's details.",
+                            "properties": {
+                              "level": {
+                                "description": "0 is the top level; at most one deeper than the line above, at most 2.",
+                                "format": "uint8",
+                                "maximum": 255,
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "text": {
+                                "description": "The line, 1 to 300 characters, with no line break.",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "text",
+                              "level"
+                            ],
+                            "type": "object"
+                          },
+                          "nullable": true,
+                          "type": "array"
+                        },
+                        "expected_outcome": {
+                          "default": null,
+                          "description": "What changes, and for whom; an empty string clears it.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "organization_pids": {
+                          "default": null,
+                          "description": "The organizations the work is for, each an active organization; the whole set.",
+                          "items": {
+                            "format": "uuid",
+                            "type": "string"
+                          },
+                          "nullable": true,
+                          "type": "array"
+                        },
+                        "phase": {
+                          "default": null,
+                          "description": "The phase it is in, in the product's own words; an empty string clears it.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "placement": {
+                          "default": null,
+                          "description": "On adding: a placement, or absent for unplaced.",
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "tags": {
+                          "default": null,
+                          "description": "Tags in order, each 1 to 50 characters, no comma, no repeats; the whole list.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "nullable": true,
+                          "type": "array"
+                        },
+                        "title": {
+                          "default": null,
+                          "description": "The title, 1 to 200 characters.",
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "roadmap": {
+                    "additionalProperties": {
+                      "description": "One changed field: what the editor first saw, and what it wants.",
+                      "properties": {
+                        "base": {
+                          "description": "The value when the editor first read it."
+                        },
+                        "value": {
+                          "description": "The value the editor wants."
+                        }
+                      },
+                      "required": [
+                        "base",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "description": "The roadmap's own fields: field name to change.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The changes, conflicts and problems"
+          },
+          "404": {
+            "description": "No roadmap"
+          }
+        },
+        "summary": "What publishing a change set would change, without writing (RE-2)",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
     "/api/plans/{pid}/roadmap/reviewed": {
       "put": {
         "description": "Body: today (true marks it reviewed today in the deployment's time zone) or reviewed_on (a date not after today; null clears it). The only write that changes reviewed_on: publishing or editing never does, so fixing a typo does not make an old roadmap look current. Audited with the old and new dates.",

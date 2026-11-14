@@ -65,6 +65,7 @@ pub mod programme_gates;
 pub mod public_reader;
 pub mod public_roadmaps;
 pub mod roadmap_categories;
+pub mod roadmap_publish;
 pub mod sandbox;
 pub mod saved_views;
 pub mod scoring;

@@ -27,6 +27,30 @@ describe("forwardedRequestHeaders (CQ-5)", () => {
     expect(out.get("content-type")).toBe("application/json");
     expect(out.get("idempotency-key")).toBe("k1");
   });
+
+  it("does not pass on where the browser's request came from, which the proxy has judged", () => {
+    const out = forwardedRequestHeaders(
+      new Headers({
+        Origin: APP,
+        Referer: `${APP}/en-001/plans/new`,
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-User": "?1",
+        Accept: "application/json",
+      }),
+    );
+    for (const h of [
+      "origin",
+      "referer",
+      "sec-fetch-site",
+      "sec-fetch-mode",
+      "sec-fetch-dest",
+      "sec-fetch-user",
+    ])
+      expect(out.get(h)).toBeNull();
+    expect(out.get("accept")).toBe("application/json");
+  });
 });
 
 describe("crossSiteRefusal (CQ-5)", () => {

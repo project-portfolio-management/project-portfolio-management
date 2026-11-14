@@ -15,6 +15,14 @@ const DROPPED_REQUEST_HEADERS = [
   "connection",
   "content-length",
   "authorization",
+  // Where the browser's request came from describes the browser-to-app hop, which crossSiteRefusal has already
+  // judged. Sent on, the API (axa 0.13 refuses a cross-site write) would compare the app's origin with its own host.
+  "origin",
+  "referer",
+  "sec-fetch-site",
+  "sec-fetch-mode",
+  "sec-fetch-dest",
+  "sec-fetch-user",
 ];
 
 /** The browser's request headers, as the proxy forwards them (before it adds its own). */

@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the proxy no longer passes on where the browser's request came from (2026-11-14)
+
+`forwardedRequestHeaders` drops `Origin`, `Referer` and the `Sec-Fetch-*` headers. They describe the browser-to-app
+hop, which `crossSiteRefusal` has already judged; sent on, the API would compare the app's origin with its own host,
+and axa 0.13 (the next commit) refuses a cross-site write. Test: `tests/unit/proxy-guard.test.ts`. **Not verified:**
+against a deployed API behind a separate host.
+
 ### Added — unsaved work survives an ended session (RE-13, 2026-11-14)
 
 The plan form keeps what was typed on a `401`, says the session ended, and links to sign-in in a new tab; the same

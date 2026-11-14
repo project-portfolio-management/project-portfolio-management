@@ -104,7 +104,8 @@ maximum = 2
 
 # MD026 - Trailing punctuation in headings
 [MD026]
-punctuation = ".,!?:;"
+# A question mark is allowed: a heading can be a question ("Does it apply?").
+punctuation = ".,!:;"
 
 # MD028 - Blank line inside blockquote
 [MD028]

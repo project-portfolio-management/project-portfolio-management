@@ -72,7 +72,7 @@ regardless of their (optional) `kind` — there is no cross-kind refusal.
 
 ## 5. Algorithm overview
 
-```
+```text
 Input: Plan A, Plan B, MatchConfig
   ├─ R-0 deterministic identifier match?        ─yes─> 1.0
   ├─ R-1 same owner + code?                     ─yes─> 1.0
@@ -414,7 +414,6 @@ this crate has no cap of its own (§23).
   never a match gate, so scoring is unchanged. Pinned by the
   kind-never-gates-matching integration test (every ordered pair of
   the nine labels) and the property-test kind strategy.
-
 - [x] Implement the domain model in code: `Plan`, `PlanKind`
       (closed — **not** `#[non_exhaustive]`, no `Custom`), `Goal` /
       `GoalStatus`, `PlanStatus`, `PlanIdentifier` /

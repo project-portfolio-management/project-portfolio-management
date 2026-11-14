@@ -96,15 +96,12 @@ kept whole rather than split across them:
   Distribution) and their source. Four are delivered under TBA
   vocabulary; **Flow Distribution** — the mix of feature / defect /
   risk / debt work — is the new one. Committed in §1.6.
-
 - [Organization-defined issue types, statuses and roles](issue-configuration.md) — Redmine's trackers, statuses, roles and
   workflow matrix, built on the custom workflows. A role here grants nothing (OC-1).
-
 - [GitHub Pages site](github-pages-site.md) — the public site in
   `project-portfolio-management.github.io/` (SvelteKit, Lily's PickerBar, the UI's colour tokens): home, benefits,
   features, comparisons, tutorial and reference pages, the content copy, locale and direction, the meta content
   security policy, the tests and the `git subtree` publish (GP-1 to GP-6).
-
 - [Special files for public repos](special-files-for-public-repos/index.md) —
   the standard top-level files of a public project (README, LICENSE, CITATION,
   NEWS, COMPARISONS, BENCHMARKS, INSTALL, CONTRIBUTING, RFC, CODEOWNERS,

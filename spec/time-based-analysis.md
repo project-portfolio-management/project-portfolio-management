@@ -263,7 +263,7 @@ keeps the two from being wrongly unified later:
 
 ### 5.1 The transition
 
-```
+```text
 task_transitions
   pid           UUID        public identifier
   task_pid      UUID        the task
@@ -376,7 +376,7 @@ implemented in `src/tba.rs` and unit-tested there.
 
 ### 6.1 Lead time and cycle time are different numbers
 
-```
+```text
 lead_time  = finished_at − created_at          (what the requester waits)
 cycle_time = finished_at − first_started_at    (what the team controls)
 ```

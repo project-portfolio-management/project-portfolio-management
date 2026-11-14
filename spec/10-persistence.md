@@ -312,7 +312,7 @@ Migration files were `migration/src/m20261006_0000NN_*.rs`; they are now frozen 
 Verified by listing `migration/src`; `+table` marks columns added to an
 existing table. Migrations 1-7 are dated `20220101`.
 
-```
+```text
 20220101 01 plans; 02 audit_logs; 03 merge_records; 04 event_outbox; 05 proposals gate_reviews risks budget_lines (+plans); 06 plan_dependencies milestones allocations report_definitions; 07 ideas scenarios objectives objective_links benefits
 20260719 02 (+budget_lines milestones risks); 03 insight_snapshots
 20260720 01 sprints tasks (+milestones); 02 sprint_notes devops_events (+tasks)

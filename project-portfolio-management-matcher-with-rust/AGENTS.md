@@ -65,7 +65,7 @@ crate.
 
 ## File layout
 
-```
+```text
 src/
 ├── lib.rs         public re-exports
 ├── main.rs        demo binary (not SemVer surface)

@@ -201,7 +201,6 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   limits:** Gregorian calendar only; the API's own text, exports' column names and the PDFs are English and ISO; Welsh
   and other catalogues hold only the `one` and `other` plural forms; about 30 catalogue strings still put "%" after a
   number placeholder; chart geometry runs left to right.
-
 - **NFR-20 — Public-repository files.** The repository root carries the
   standard files of a public project, listed in
   [`special-files-for-public-repos`](special-files-for-public-repos/index.md):
@@ -215,7 +214,6 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   sessions carry a `Co-Authored-By` trailer). A test fails when one is missing or
   empty, when the maintainer or owner address is absent from the files that need
   it, or when the citation file lacks its required fields.
-
 - **NFR-21 — Controls for regulated buyers.** A deployment can meet the common
   expectations of a health or government buyer: an **idle session timeout**
   (default 30 minutes, configurable); an **audit trail the database refuses to
@@ -293,4 +291,3 @@ No default was moved. A report that wants a person's own day passes `from`/`to` 
   The answer is stored after the handler commits, in a separate transaction, so a crash between the two leaves the
   key held: the retry is `409` until the key expires, never a second run. Not built: a required key (it is optional everywhere); keys on `PUT`, `PATCH` and
   `DELETE` (already safe to repeat).
-

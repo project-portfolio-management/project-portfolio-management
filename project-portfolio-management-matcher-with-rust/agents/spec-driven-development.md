@@ -74,7 +74,7 @@ from the §1–§18 shape used by the service crates).
 
 ## Anatomy of a Good Task (§23)
 
-```
+```text
 **T-NN — Short imperative title.**
 - [ ] Concrete step.
 - [ ] Another concrete step.
@@ -146,7 +146,7 @@ When you finish a task:
 
 ## Document Hierarchy
 
-```
+```text
 spec.md            ← what the library is, how it is built, and what
                      is queued (§1–§25; live tasks in §23)
 README.md          ← user-facing intro (must stay consistent with spec)

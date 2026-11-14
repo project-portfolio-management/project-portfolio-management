@@ -280,7 +280,7 @@ not a match signal.
 
 #### 5.9.1 Workflow configuration
 
-```
+```text
 Workflow { pid, plan_pid?, applies_to: Task|Issue, name,
            states: Vec<WorkflowState>, transitions: Vec<Transition>,
            is_default: bool }
@@ -339,7 +339,7 @@ before.
 - **Key results and check-ins** hang off an objective, live in their own
   tables, and **never reach the matcher**.
 
-```
+```text
 KeyResult { pid, objective_pid, title,
             metric: Number|Percent|Currency|Boolean,
             start_value, target_value, current_value,
@@ -381,7 +381,7 @@ currency** — no FX conversion, the same restriction ROI already carries.
 
 #### 5.9.3 Sprints, ceremonies, and recorded effort
 
-```
+```text
 Sprint { pid, plan_pid, name, starts_on, ends_on, goal?,
          status: Planned|Active|Closed }
 
@@ -420,7 +420,7 @@ requirements, not preferences (§1.4.3):
 
 #### 5.9.4 Project phase
 
-```
+```text
 PlanPhase = Initiating | Planning | Executing | Controlling | Closing
 
 PhaseTransition { pid, plan_pid, from: Option<PlanPhase>, to: PlanPhase,
@@ -507,7 +507,7 @@ actuals), `budget_lines` (capex/opex), `risks` (probability × impact),
 three genuinely absent inputs: adoption, business-case targets, and
 stakeholder sentiment.
 
-```
+```text
 BusinessCaseTarget { pid, plan_pid, metric, baseline_value,
                      target_value, unit?, currency?,
                      promised_by: Date, source: Charter|GateReview,
@@ -551,7 +551,7 @@ existing `allocations` rows (`person_ref`, `percent`, date range)
 combined with a working-time configuration and recorded non-working
 time:
 
-```
+```text
 WorkingTimeConfig { pid, scope_ref?, hours_per_day, working_days,
                     holidays: Vec<Date> }
 
@@ -581,7 +581,7 @@ still to come worth the money still to spend?** Earned value (SPI / CPI,
 §6.4c) looks backwards at conformance to a baseline; DIPP looks forward
 at whether continuing is rational.
 
-```
+```text
 TpcRecord { pid, plan_pid, currency, observed_at,
             dipp,                                  -- Devaux's Index of Project Performance
             dipp_progress_index_numerator,         -- actual DIPP at this point
@@ -640,7 +640,7 @@ until now was a phase name with no mechanism under it. A control is the
 loop *set a standard → measure → compare → act*, and this section makes
 each of those four a record rather than a habit.
 
-```
+```text
 Control { pid, plan_pid, name,
           timing: Feedforward|Concurrent|Feedback,
           standard: ControlStandard,
@@ -751,4 +751,3 @@ trigger), `cancel_requested_at`, `cancelled_by` and status `cancelled`
 (RM-8) is hidden from non-members everywhere, including aggregates,
 through one `HiddenScope` (FR-45). Cross-plan task links reuse
 `plan_dependencies` (FR-44); no table was added for them.
-

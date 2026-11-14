@@ -265,7 +265,6 @@ matcher payload (§5.6); every mutation audits (§6.6).
   each probable match with its score, confidence and per-component breakdown and that plan's lessons, best match first.
   Plans the caller may not read are not compared. Not built: matching on more than the title; limiting the comparison
   to closed plans; a screen; showing the lessons in the intake form.
-
 - **FR-16e5 CloudEvents webhooks and an AsyncAPI document (NC-11).** A webhook target may set
   `"format": "cloudevents_structured"` (`application/cloudevents+json`, the envelope as `data`) or
   `"cloudevents_binary"` (`ce-specversion`, `ce-id`, `ce-source`, `ce-type`, `ce-subject` headers, the envelope as
@@ -275,7 +274,6 @@ matcher payload (§5.6); every mutation audits (§6.6).
   unchanged: HMAC-SHA256 over the exact request body bytes, `X-Mxi-Signature`. `asyncapi.json` (AsyncAPI 3.0) describes
   the per-plan live stream (`task_created`, `task_updated`, `task_moved`, `raci_updated`, `comment_added`, `resync`)
   and the three webhook shapes. Not built: serving the document over HTTP; CloudEvents on the live stream.
-
 - **FR-16e6 Weekly portfolio-exceptions digest (NC-17).** One short message of what is wrong across the portfolio:
   every red or amber tolerance, every open exception opened by a threshold and every live escalation (overdue ones
   first), worst first, with counts over all of them and at most 20 listed. `GET /api/exceptions/digest` shows it for
@@ -285,7 +283,6 @@ matcher payload (§5.6); every mutation audits (§6.6).
   `PROJECT_PORTFOLIO_MANAGEMENT_DIGEST_RECIPIENTS`; a recipient who already has this week's (Monday to Sunday of the
   deployment's "today") is skipped. Not built: recipients as an administrator setting or a per-person subscription;
   per-recipient content (every recipient gets the same digest); a screen.
-
 - **FR-16e7 Status updates on a cadence (NC-4).** A plan sets how often it expects a status update
   (`PUT /api/plans/{pid}/status-cadence`, 1 to 92 days; setting it restarts the clock). A person posts an
   `on_track`, `at_risk` or `off_track` call with a narrative (`POST /api/plans/{pid}/status-updates`); updates are
@@ -298,7 +295,6 @@ matcher payload (§5.6); every mutation audits (§6.6).
   `status_updates` section: per included plan with a cadence, the latest update posted on or before the cut-off and
   where it stood on the cut-off's date. Not built: removing a cadence; a screen; the pack screen showing the section;
   a reminder to anyone but that one person.
-
 - **FR-16e8 The service runs its own scheduled jobs (NC-5).** Opt in with `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULED_JOBS`
   (comma-separated: `tolerance_escalations`, `exception_breaches`, `retention_purge`, `threshold_sweep`,
   `exceptions_digest`; unset runs none) and the scheduler ticker (`PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES`).

@@ -65,7 +65,7 @@ The PPM entity serves as a **federated identity index** for a worldwide public g
 
 ### 1.2 Architecture Trio
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │           project-portfolio-management-ui-with-svelte         │
 │  SvelteKit 3 SPA • Svelte 5 Runes • TypeScript Strict        │
@@ -487,7 +487,7 @@ The project sets a new standard for what production-grade software should look l
 
 ## Appendix A: File Counts
 
-```
+```text
 Total Files: 3,000+
 - Specification: 19,031 lines across 40+ files
 - Service Rust: ~1,500+ files

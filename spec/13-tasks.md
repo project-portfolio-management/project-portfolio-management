@@ -1396,4 +1396,3 @@ described manual check confirms it. Split tasks too big for one PR
     aging-WIP board, the cross-plan rollup over `parent_ref`, Prometheus
     gauges, and Monte-Carlo delivery forecasting from the cycle-time
     distribution.
-

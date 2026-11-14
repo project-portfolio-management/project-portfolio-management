@@ -117,7 +117,7 @@ match breakdown).
 
 ## 5. Information architecture
 
-```
+```text
 /                            landing → links to /plans
 /dashboard                   PPM dashboard (site tiles + RAG / stage rollups)
 /plans                       list (SVAR DataGrid + FilterBar)
@@ -698,7 +698,6 @@ links are **never** a match signal (entity spec §1).
   flags and their thresholds, the join, the layout) and
   `tests/e2e/balance.spec.ts` (the chart, the table, currency switching, the
   empty and failed states, Welsh, axe).
-
 - [x] **2026-10-02 — LT-3: the "My work" page (`/me`).** The signed-in
   person's open tasks in five due-date buckets (overdue / today / this week /
   later / no due date), computed **in the browser's own IANA zone**, sent
@@ -710,7 +709,6 @@ links are **never** a match signal (entity spec §1).
   the caller's own `person:` URN in the browser, which the BFF does not expose).
   **Not run:** the Playwright mobile audit (no browser in this environment).
   Tests: `tests/unit/ppm.test.ts` (client path).
-
 - [x] **2026-10-03 — RM-7: module-aware plan links.** `/plans/[pid]` hides the
   Governance / Board / Schedule / Flow links whose feature module is off for
   that plan, via the pure `src/lib/modules.ts` (`visiblePlanLinks`) over
@@ -719,7 +717,6 @@ links are **never** a match signal (entity spec §1).
   transient error would be worse than a link the service then refuses with 404.
   The sub-routes stay reachable by URL (the service answers `404
   module_disabled`). Tests: `tests/unit/modules.test.ts`.
-
 - [ ] **FE-2 (M) Masked view + GDPR export UI for `/plans/[pid]`.** The
   service has carried `GET /api/plans/{pid}/masked` and
   `GET /api/plans/{pid}/export` since 2026-08-02 (this crate's own
@@ -738,7 +735,6 @@ links are **never** a match signal (entity spec §1).
   **Acceptance:** new vitest cases pin the two new repository methods'
   URLs; a Playwright smoke test exercises the affordance from
   `/plans/[pid]`.
-
 - [ ] **FE-3 (M) Decide and, if adopted, implement the `requireSignedIn`
   page-visit guard (PRO-H10).** Repo `tasks.md` WEB-1 found the guard
   rolled to 5 of 16 front-ends and explicitly left "the 5/11 roll-out
@@ -757,7 +753,6 @@ links are **never** a match signal (entity spec §1).
   **Acceptance:** either `requireSignedIn` gates the mutating routes
   with a pinned anonymous-303 Playwright test (mirroring person's), or
   spec §8 states the explicit reason portfolio stays unguarded.
-
 - [ ] **FE-4 (M) Consolidate ETag/conditional-GET handling for the
   oversight and executive dashboard views.** The service documents
   every `at-a-glance`/`executive/*`/`board/*`/`auditor/*`/
@@ -781,7 +776,6 @@ links are **never** a match signal (entity spec §1).
   **Acceptance:** a vitest case proves the shared helper reuses the
   cached body on a stubbed `304`; at least the `board`/`auditor`/
   `financials`/`technology` routes are wired to it.
-
 - [x] **2026-08-05 — Wire `/plans` itself to `listPage()`.** The sibling
   gap the entry directly below flagged and deliberately left open:
   `PlanRepository.listPage()` existed and was tested at the repository
@@ -799,7 +793,6 @@ links are **never** a match signal (entity spec §1).
   stub has no pagination headers, so `total` falls back to the page
   length, and the test's assertions were unaffected). svelte-check 0/0,
   68 vitest pass (65 → 68), build green, 23/23 Playwright pass.
-
 - [x] **2026-08-05 — Pagination on the four consuming capability-view
   lists (repo tasks.md PG-1's last sub-bullet).** The service's
   `automations` / `automations/runs` / `scheduled-actions` / `reviews`
@@ -838,7 +831,6 @@ links are **never** a match signal (entity spec §1).
     match. **Closed by the entry directly above** (same day).
   - *Verified:* svelte-check 0 errors/0 warnings; 65 vitest pass
     (62 → 65); `pnpm run build` green.
-
 - [x] **2026-08-03 — FE-1: the record-merge page (`/plans/merge`).**
   A standalone operator page for folding a confirmed-duplicate plan into
   a survivor: survivor pid + duplicate pid + optional reason, an optional
@@ -861,7 +853,6 @@ links are **never** a match signal (entity spec §1).
   merge/recentMerges path pins in `tests/unit/plans.test.ts`, a merge-key
   coverage + placeholder test in `tests/unit/i18n.test.ts`, and two
   Playwright smoke pins. svelte-check 0/0, 62 vitest pass, build green.
-
 - [x] **2026-07-22 — Capability views (service spec §9.4a).**
   `CapabilityClient` + wire types in `src/lib/api/capabilities.ts`, and
   four pages: `/prioritization` (Smart Score queue + per-component
@@ -870,13 +861,11 @@ links are **never** a match signal (entity spec §1).
   deadline queue + manual sweep, and the run log). Nav entries added;
   vitest pins every client path. English-first (locale catalogues not
   extended yet); no standalone notifications page.
-
 - [x] **2026-07-22 — Offer the five new `kind` labels.** `PlanKind` /
   `ALL_KINDS` in `src/lib/api/types.ts` gain `Practice`, `Process`,
   `Purpose`, `Pathway`, `Proposal`, so the `PlanForm` kind `<select>`
   lists them. `COLLECTIONS` gains the matching plural segments except
   `proposals`, which already names the proposals catalogue route.
-
 - [x] **Unify the four collections into one recursive `/api/plans`
   collection + rename the entity to `plan` (2026-07-20).** Collapsed the
   dynamic `[collection]` route directory to a static `plans/` directory
@@ -987,11 +976,9 @@ links are **never** a match signal (entity spec §1).
   outside the widget's default "today's month" view). Verified the
   strengthened assertion actually fails without the fix before
   confirming it passes with it.
-
 - [x] **FE-5: `/verify` crashed with a raw 500 when the authentication service was unreachable.** *(resolved 2026-09-06.)* `src/routes/verify/+page.server.ts` called `await verifyMagicLink(fetch, token)` with no `try`/`catch`. A network-level failure (the authentication service unreachable, timed out, connection reset) makes `fetch` throw rather than resolve — uncaught, that propagated out of `load` and SvelteKit rendered its generic 500 error page instead of this route's own friendly UI. The same bug class was found and fixed first in `place-front-end-with-svelte` (T-26) and `thing-front-end-with-svelte` (T-23); ported here.
   - **Resolved.** A `try`/`catch` around the call, a new `"serviceUnavailable"` error variant, and its message in `+page.svelte`.
   - **Acceptance:** `tests/unit/verify.test.ts` (new) unit-tests the `load` function directly — pinning `missingToken`, the new `serviceUnavailable` (fetch rejects), and `invalidToken` (non-ok response) branches — verified to fail with the `try`/`catch` reverted and pass with it restored. Three-part change: spec (here) + code + test.
-
 - [x] **T-28p (S) Operator onboarding guide** *(landed 2026-09-18)* — a
   role-by-role "first hour" walkthrough (executive, PMO, resource
   manager) at the new `/onboarding` route, each step naming the page it
@@ -1022,7 +1009,6 @@ links are **never** a match signal (entity spec §1).
     errors / 0 warnings, `vitest run` 83/83 (was 79), `pnpm run build`
     green (the new route appears in the build output), `prettier
     --check` clean.
-
 - [x] **T-28f (M) Role-tailored navigation and landing page** *(landed
       2026-09-19)* — tracked at the family level in the service crate's
       own `spec/13-tasks.md` T-28f; implemented here since it is
@@ -1092,7 +1078,6 @@ links are **never** a match signal (entity spec §1).
       end to end; that path is covered by the unit suite above plus
       the auth-service's own DB-gated `current_user_carries_live_abac_attrs`
       test proving `attrs` actually reaches the wire.
-
 - [x] **T-28k (M) Responsive audit at a phone viewport** *(landed
       2026-09-19)* — tracked at the family level in the service crate's
       own `spec/13-tasks.md` T-28k; implemented here since it is a
@@ -1121,20 +1106,20 @@ links are **never** a match signal (entity spec §1).
       each verified by inspecting actual `getBoundingClientRect()`
       output at 390px width, not assumed:
       - `/plans`: the SVAR **`FilterBar`** (not the `Grid`, which was
-        already handled) rendered its internal text input at a fixed
-        ~610px regardless of container width.
+      already handled) rendered its internal text input at a fixed
+      ~610px regardless of container width.
       - `/ideas`: a plain `<input size="40">` — the HTML `size`
-        attribute sizes in characters, ignoring the container.
+      attribute sizes in characters, ignoring the container.
       - `/scenarios`: **corrected, not guessed** — `/scenarios` also
-        carries `size="50"`/`size="12"`/`size="4"` inputs, but removing
-        `/ideas`'s `size="40"` was the only edit that route needed; the
-        global `input { max-width: 100% }` rule below (already
-        sufficient for `/scenarios`'s specific layout, verified by
-        re-running the full mobile suite) covers it without touching
-        the attribute at all — `/scenarios`'s `size` attributes are
-        untouched and it still passes.
+      carries `size="50"`/`size="12"`/`size="4"` inputs, but removing
+      `/ideas`'s `size="40"` was the only edit that route needed; the
+      global `input { max-width: 100% }` rule below (already
+      sufficient for `/scenarios`'s specific layout, verified by
+      re-running the full mobile suite) covers it without touching
+      the attribute at all — `/scenarios`'s `size` attributes are
+      untouched and it still passes.
       - `/reviews`: a bare `<table>` with no responsive handling at
-        all.
+      all.
       **The two SVAR-widget routes** (`/plans`'s `Grid`, `/gantt`'s
       `Gantt` — the family's own T-28k text names exactly these two)
       get a **read-only list fallback**: both markups render

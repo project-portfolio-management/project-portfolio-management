@@ -64,4 +64,3 @@ Entity-level terms. Per-subproject vocabularies: service
 | **Close-out readiness** | `GET …/closeout`: the findings (open tasks, risks, live bookings, unrevoked access, open cases) standing between a plan and closing (FR-50) |
 | **Handover** | Preview then commit (under `If-Match`) of moving or releasing a person's live tasks, bookings, RACI roles and open risks on a plan (FR-50) |
 | **Announcement** | A dated, severity-tagged feed item (`info`, `important`, `urgent`) published by admins or `comms=publish` holders (FR-51) |
-

@@ -843,12 +843,10 @@ is `null` with a reason, never zero.
 - **Hardening pass 2026-10-06 (after PJ-7…PL-6).** An adversarial read of the new backend code found, and this pass fixed (each with a regression test): the private-plan guard parsed the **raw** path, so `/api/plans/%7B<id>%7D/…` skipped it while the handler served the plan (now percent-decoded first; unit + real-token test); onboarding **case** routes had no private-plan check (now 404 like the plan); what-if **commit** was a permanent 409 in any plan containing a hammock (digest rows now match); approval **decide/withdraw** raced (the write now carries `WHERE status='pending'`, so one of two racing calls wins and the other is 409, which also stops a document version stuck `approved` under a withdrawn request); a document owner could **approve their own** document (refused); document submit re-reads under the per-document lock; `task?include=relations` and `GET /api/dependencies?item=` no longer reveal ids across a privacy boundary; process/document reads need sign-in; a process stopped between creation and its first step is recovered by `resume`, and a late `complete_step` no longer double-logs after a cancel; schedule edits, hammock changes, document edits and onboarding case creation are one transaction with their audit row (audit failure now fails the request); DB guards added (migration 48): one open onboarding case per plan/kind/subject, and no dependency on a hammock. **Since fixed:** process and execution lists page in SQL; the document list builds views only for the requested page; the network loaders query only the dependencies touching the plan(s) asked about; hammock link creation and plain schedule edits take a per-plan advisory lock (the latter the same one a what-if commit holds). **Known and not changed:** a named approver can read the whole process execution including its comments even without access to the subject (by design, stated). A plain edit that reads a task before a commit and writes after it still overwrites with the values it was sent (an explicit PUT is last-writer-wins). UI: 529 vitest, 260 Playwright; API: lib 795, `--test mod` 152, every token binary green, clippy clean.
 - [x] **T-28n remainder — Jira and Asana import.** **Landed 2026-10-06** (deferred to the end by owner priority, then started on request). Reader `src/tracker_import.rs` (11 unit tests: RFC 4180 CSV with quotes, embedded newlines, BOM and CRLF; size/row/column/field caps; Jira `15/Oct/26 12:00 AM` and ISO dates, day-first numeric dates refused as ambiguous), controller `src/controllers/tracker_import.rs`: `POST /api/plans/{pid}/import/jira` and `…/import/asana`, body = the CSV, `dry_run` default true. **Idempotent** by `external_ref` (`jira:<key>`, `asana:<task id>`, unique per plan): a re-import updates titles, deadlines, start dates and parents in place and never changes status or description. **Nothing silently dropped:** every unread column, skipped row, link, date and parent is in `unmapped` with a reason. Jira: Issue key, Summary, Status (bucketed by words), Description, Assignee, Due date, Parent, Labels, Blocks links (other link types reported). Asana: Task ID, Name, Notes, Assignee, Due/Start Date, Completed At, Parent Task (by name — used only when exactly one task has it), Tags, Blocked By / Blocking. Parent loops and chains deeper than 10 are cut and said; dependencies that would close a cycle are skipped and said. One transaction, audited (`jira_import`/`asana_import`). UI `/plans/{pid}/import` now also takes **Microsoft Project XML** (the PJ-10 endpoint, which had no screen; a `.mpp` is refused with how to export XML; its report is shown in the same shape, the task UID as the key) (preview first, the same single primary button then imports, unmapped grouped by kind) with `rawBody` on the API client. Tests: DB test for dry run, apply, idempotent re-import (status kept), refusals and source separation; 9 unit + 2 e2e with axe. **Deviations, stated plainly:** CSV only (no JSON export, no live API pull); due dates become **deadlines** and no durations are guessed, so imported tasks have no schedule until given one; assignees are names kept in the description, never matched to people; comments, attachments, sprints, custom fields and worklogs are not imported (reported as columns). **Also fixed on the way:** a plan id that is not a UUID was a 500 everywhere (`find_by_pid`), now 404; the UI client showed the error *code* (`unprocessable_entity`) instead of the reason on every refusal, now the reason.
 - **Owner priority 2026-10-03:** **Jira and Asana import (the remainder of T-28n) was deferred to the end of the backlog and has now landed (2026-10-06).** Focus now: **calendars and visualizations** (the front-end for float, critical chains, calendars and the network diagram — PJ-12, SC-11).
-
 - **Decisions 2026-10-03 ([plan.md §31](plan.md)):** one network of plans and
   tasks; calendars **per person and per plan**; cost rates under ABAC; MSPDI XML
   only; all three scheduling rules; proposed bookings visible to the person they
   name.
-
 - **SC-1 / SC-3 / SC-4:** their "per task" wording assumed task-level dates that
   do not exist (finding F-9); each depends on **PJ-1**. Until then they operate
   on plans, as `critical_path()` does today.
@@ -906,6 +904,7 @@ a reason, never green or zero**; money is per currency, never summed across;
   it); every draft, issue and reissue is audited.
 
   **Built 2026-10-10, with a body that holds only the sections that exist.** `POST/GET /api/director-packs`, `GET /{pid}`, `POST /{pid}/issue`, `POST /{pid}/reissue`; migration 55. The body is computed once at drafting and stored as exact text; a database trigger refuses any change to, or deletion of, an issued pack (the single exception is a data-subject pseudonymisation blanking `drafted_by`/`issued_by`, with the body proven unchanged). One pack per period and audience (409 otherwise); issuing twice is 409; a reissue needs a note of at least 10 characters, keeps v1 readable and links v1 to v2, and only the latest version can be reissued. Drafting needs `access=admin` or `directorpack=editor|issuer`, issuing needs `access=admin` or `directorpack=issuer`; readers hold `pack_audience=<audience>`; a `role=pack_reader` caller (the partner case) is confined by the guest guard to `GET /api/director-packs…`, every live route answering 404 (or 403 where the policy refuses first). The pack counts only plans that are neither private nor carrying a handling mark and says how many were left out. Cover: pack id, version, period, cut-off, what changed against the previous issued pack for the audience (counts, in words), and a data-quality panel that lists the sections not yet built. Tests: rules, and a real-token end-to-end (who drafts and issues, audience reading, confinement, private plan's issue not counted, no person ref or cost rate, byte-identical after data changes and across versions, audit trail, eight database refusals). **Not done, stated:** the body has only issues and change requests (DP-2 to DP-10 add their sections); the cut-off limits records by date but statuses are those at drafting (there is no status history); the data-quality panel is the small one above, not EX-1; no notification on issue (DP-12); no screen; no discard of a draft; audience subscribers and a per-audience content difference do not exist (every audience gets the same body).
+
 - [x] **DP-2 (M) — Delivery confidence: stored, dated, beside the derived RAG.**
   `PUT /api/plans/{pid}/delivery-confidence` with a value on a five-point scale
   (`green`, `amber_green`, `amber`, `amber_red`, `red`; scale configurable,
@@ -919,6 +918,7 @@ a reason, never green or zero**; money is per currency, never summed across;
   never rewritten; who may set `independent` is an ABAC action.
 
   **Built 2026-10-10.** `PUT /api/plans/{pid}/delivery-confidence` appends a stated assessment (five-point scale, `self` or `independent`, rationale of at least 10 characters, date not in the future); `GET` returns the whole history and what the map shows. Append-only: the database refuses edit and delete (the one exception is a data-subject pseudonymisation blanking `assessor`). Recording `independent` needs `access=admin` or `confidence=independent` (a token attribute, not the policy file). The map shows the latest independent value, else the latest self one marked as self, beside the derived RAG and never blended; no assessment is `not_assessed`; older than the pack's period is `stale`; a two-step gap between independent and self, or between the stated value and the derived RAG, is flagged; the trend (`up`, `down`, `same`, `new`, `not_assessed`, or `no_earlier_pack`) compares with the previous issued pack. Migration 56. **Not done, stated:** the five-point scale is fixed, not configurable (§37); the live map (`GET /api/portfolio-map`) shows no trend, only issued packs do; no screen.
+
 - [x] **DP-3 (M) — Exceptions and the 48-hour red rule.**
   Setting confidence to `amber_red` or `red` (or worsening within them) opens an
   **exception** for the programme and starts a clock; the exception is
@@ -933,6 +933,7 @@ a reason, never green or zero**; money is per currency, never summed across;
   period exceptions with owner and decide-by; every change audited.
 
   **Built 2026-10-10.** Recording `amber_red` or `red` opens an exception and starts the clock; a worsening while open is recorded (`worst_value`, `worsened_count`, audited) without restarting it; improving to amber does not close it; only `POST /api/exceptions/{pid}/decision` (at least 10 characters) closes it. `PUT /api/exceptions/{pid}` fills in the cause, the decision needed, a named owner (with the owner's role) and the decide-by date; complete when all four are there. Breach = not complete within the window (default 48 elapsed hours, `PROJECT_PORTFOLIO_MANAGEMENT_EXCEPTION_WINDOW_HOURS`, 1 to 720) from when it opened; the clock is pinned by unit tests at 47h59, 48h00 (still in time) and 48h01, and a late completion stays a breach. `GET /api/exceptions[?status&breached]` across the plans you can read; exceptions on a plan you cannot read are 404 to edit or decide. The task `cargo loco task exception_breaches` notifies each breach once through the notification inbox, to the named owner or else whoever opened it. The pack lists open, breached and closed-in-period exceptions, naming the owner by **role**, never by person. **Not done, stated:** the task must be scheduled by the operator (nothing runs it for you); the notice goes only to one person; the decision is not tied to a gate review; no screen.
+
 - [x] **DP-4 (S) — Strategic aims and the portfolio map.**
   Mark top-tier objectives as **strategic aims**; each programme has one
   **primary aim** (others are cross-references). The map groups programmes by
@@ -942,6 +943,7 @@ a reason, never green or zero**; money is per currency, never summed across;
   "no strategic aim", not dropped; totals never double-count.
 
   **Built 2026-10-10.** `PUT /api/objectives/{pid}/strategic-aim` marks an objective as a strategic aim (unmarking clears programmes' primary flags); `PUT /api/plans/{pid}/primary-aim` sets a programme's one primary aim (the database allows only one; any earlier primary becomes an ordinary link). `GET /api/portfolio-map` and the pack's `portfolio_map` group programmes by primary aim with stage, phase, confidence, derived RAG and trend; a programme appears once with its other aims named; one with no aim, or with aims but none primary, is under "no strategic aim" with the reason; totals do not double-count. **Not done, stated:** "programme" means a plan whose kind is `Program` (there is no other definition in the data); the objectives registry has no hierarchy, so "top-tier" is whatever you mark; the map's rows are not grouped by gate beyond showing stage and phase.
+
 - [x] **DP-5 (M) — Gate decisions in the period; paused and stopped.**
   Add a **planned gate date** per programme and gate; a gate whose planned date
   passed without a review, or reviewed as `hold`, is **deferred**. Map
@@ -1629,7 +1631,6 @@ multi-project pipelining, once listed here, are now taken as CC-n.)
   totals computed with the private plan deleted; a member's equal the full
   totals; a test enumerates the mounted aggregate routes so a new one cannot
   skip the filter.
-
 - [x] **RM-12b (S) — Consistent list paging and `include` on tasks.** **Landed 2026-10-06.** **One layer, not forty edits:** `controllers::paging::paging_mw` gives every `GET` that answers `200` with a **bare JSON array** the same paging — `?limit=` (default and ceiling 500), `?offset=` (above 10 000 is 400, a non-number is 400) and `X-Total-Count` / `X-Limit` / `X-Offset`, the body staying the bare array; handlers that already page in the database (and set the header) are left alone, so **a list added tomorrow pages today**. **Acceptance, as tested** (`tests/list_paging.rs`, real admin token): the test reads the OpenAPI document, seeds one of each kind of record, and calls every documented `GET` it can reach — **39 lists were found and every one** carries the three headers, honours `limit=1`, answers an offset past the end with an empty page that still says the total, refuses an absurd offset and a bad limit, and **documents `limit` and `offset`** (added to the spec from one registry, `openapi::PAGED_LISTS`, which the test keeps equal to what it finds); a documented `GET` it cannot reach must be named with a reason (`UNREACHED`: streams, files, and three lists that need data this census does not set up), so a new list cannot slip past by needing a parameter nobody supplied. **`include` on a task:** `GET /api/plans/{pid}/tasks/{t_pid}[?include=children,relations,transitions,raci,time_entries]` (there was no single-task read): bare task without `include`, `{task, included, omitted}` with it; a module that is off is omitted (`module_disabled`); what names people is omitted for a caller who may not manage them (`masked`, real-token test); an unknown name is **422 listing the allowed ones**; another plan's task and a deleted one are 404. **Deviations, stated plainly:** the layer slices the array a handler already built, so it bounds **what is sent, not what is loaded** (a database-level page would cost less); a list that used to return more than 500 rows now returns 500 and says how many there are; only **bare arrays** are lists — a report or aggregate that wraps arrays in an object is not paged; three lists are unproven by the census (custom-field search, key-result check-ins, a scheduled report's latest run) but are served by the same layer. Split from
   RM-12: give every list endpoint `limit` / `offset` and an `X-Total-Count`
   (only some lists carry them today), and add `include` to task GET.
@@ -1776,7 +1777,7 @@ came from grep.
   pedantic (about 150 warnings). Turn `#[allow]` into `#[expect]`, and remove
   the 174 `#[allow(missing_docs)]` or document the items.
   **Acceptance:** the clippy gate stays green with no new allows.
-  **Progress 2026-10-23 (not ticked).** Pedantic is in `[lints.clippy]`, so tests get it;       21 test files hold a file-level `#![expect]` with a reason (long functions and naming), `assert_is_empty` allowed globally. **Still to do:** the 174 `missing_docs` allows and `#[allow]` to `#[expect]` elsewhere; the `#![expect]` lines should shrink as tests are split.
+  **Progress 2026-10-23 (not ticked).** Pedantic is in `[lints.clippy]`, so tests get it; 21 test files hold a file-level `#![expect]` with a reason (long functions and naming), `assert_is_empty` allowed globally. **Still to do:** the 174 `missing_docs` allows and `#[allow]` to `#[expect]` elsewhere; the `#![expect]` lines should shrink as tests are split.
   **Progress 2026-10-23, later (ticked).** Every `#[allow]` in the service's `src`, `tests` and `migration/src` (355) became `#[expect]`; 33 that clippy reported as unfulfilled were removed, and 173 `missing_docs` expectations remain (they are real: those files have undocumented items). Clippy with `-D warnings` over the workspace and all targets, and the 1069 lib tests, pass. **Two stay `allow` on purpose, each with a comment:** `models/behaviors.rs` (`wildcard_imports` fires in the library build only) and `tests/otlp_collector/mod.rs` (`dead_code`: shared by several test crates that each use a different part). **Not done:** the 173 `missing_docs` items are not documented, only made to fail when they no longer need the exception; the matcher crate and the UI were not touched; the database tests were compiled (clippy) but not run, as only attributes changed.
 - [x] **CQ-15 (M each) — Split the largest modules.** Split `tba.rs` along its
   11 existing sections, `controllers/engineering.rs` by route group, and
@@ -2462,7 +2463,7 @@ came from grep.
   artifact's row.
   **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (only on a failure;
   same status), in a response, in a batch import's failed project, and in what is stored for a failed bulk job
-  (`bulk_jobs.failure_reason`, which lost SeaORM's `Query Error: ` prefix). The lists SeaORM bound one parameter per
+  (`bulk_jobs.failure_reason`, which lost SeaORM's `Query Error:` prefix). The lists SeaORM bound one parameter per
   value (`IN (…)`: a sync's task pids, a template's plan names, the export's dependencies and relations, the batch's
   references, a bulk export chunk) are bound as one array (`= ANY($1)`); reads whose rows were used for a few columns
   read only those (edges, pids and references, a plan's name, an artifact's expiry, whether a cancel was asked); a
@@ -2529,7 +2530,7 @@ came from grep.
   (`spawn`, now given the context) captures on the pool. `canvas`' delete and promote pass their audit error on with
   `?`, as their `Error::Model` mapping did; every other audit failure here still answers `audit_failed`.
   **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (only on a failure; same
-  status), including a batch import's failed-project message (no `Query Error: ` prefix). The lists SeaORM bound one
+  status), including a batch import's failed-project message (no `Query Error:` prefix). The lists SeaORM bound one
   parameter each are bound as one array (the cost plan's task pids, a relink's risk count and issue updates as
   `= ANY($1)`, and its `NOT IN` as `<> ALL($1)`, which is true for an empty list as SeaORM's empty `NOT IN` was); reads
   whose rows were used for a few columns read only those (a table's rates, a person's role, a rate in force, whether a
@@ -2673,8 +2674,8 @@ came from grep.
   `db::begin` transaction through the new `db::Tx::release_outbox` (counted, as `write_outbox` is), where it used an
   uncounted transaction on the raw pool; `apply:true` still needs `by:` and `reason:`. `idempotency::keys` and
   `db::for_axa_crate` take the context.
-  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (no `Query Error: ` or
-  `Execution Error: ` prefix), in a task's output, a scheduled run's `detail` and its audit snapshot, and the log; only
+  **Changed, deliberately:** a database failure carries sqlx's error text rather than SeaORM's (no `Query Error:` or
+  `Execution Error:` prefix), in a task's output, a scheduled run's `detail` and its audit snapshot, and the log; only
   on a failure. Statements SeaORM ran without counting them (`execute_unprepared`: retention's flag, `db truncate`'s
   outbox statements; and the outbox release on the raw pool) are now counted in `query_count`, so a guard sees more,
   never less. The read before the closing update and the claim's check read only the id; the flow pass reads only pids.
@@ -3175,7 +3176,6 @@ Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, t
   clear the index at the start of each test that asserts a count, or assert on the pid rather than the number of hits.
   **Acceptance:** the restore drill and a full run pass with an extra test that creates a plan named "Apollo".
   **Built 2026-10-25.** The search test clears the index (`search::engine().clear()`) before it asserts counts. Shown with the failing condition restored: the meetings test back to a plan named "Apollo", then `scripts/restore-test.sh` running the whole suite on the restored copy: 201 passed (it failed 0 of 1 expected hits before). **Not done:** a per-test index. **Audited 2026-10-26:** the only other test that asserts a hit count is `list_paging` (`q=Paging`, total 5); no other test uses that word, so stale entries cannot add to it. The search checks in `list_search_check_duplicates_authz.rs`, `private_aggregates.rs`, `guests.rs`, `custom_fields.rs` and `attachments.rs` assert on membership (a pid present or absent), not on a count. **Not verified:** by a run; this is a reading of the tests.
-
 - [x] **BR-11 (S, documents) — One page of operating commitments.** `operations/commitments.md`: how often backups
   are taken, how far back a restore goes, the recovery objectives, an uptime objective (stated as an objective, not a
   guarantee, until measured), support response targets, the list of processors, a data processing agreement template,
@@ -3336,7 +3336,6 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   answered 200 on the live host, and seven pages in a browser under light and dark gave no console, CSP or network
   error. **Not done:** the axe suite ran on the local build, not against the live host; `make github-pages` (now `make publish-github-pages`) is by
   hand, so the site can lag `main`; the exported repository has no branch protection to stop a direct push.
-
 - [x] **GP-3 (M) — The whole PickerBar.** **Built 2026-11-04:** Lily `PickerBar` on every page (link, search, theme,
   locale, time zone, text size, share), all 57 themes, and `/search/` over a prerendered index, in the browser.
   **Acceptance:** tests for the order of the bar, each picker working, hover, a dropdown under its button that does not
@@ -3357,11 +3356,9 @@ The family pattern (the workforce repository's `spec/monorepo-github-pages/`): a
   Project, Planview, Smartsheet, Leantime, Redmine, ProjectLibre). **Not done:** no product was installed or run, the
   descriptions of six of them come from general knowledge and not from `plan.md` or `COMPARISONS.md`, and none was
   checked against that product's current documentation, so the owner should read them; English only.
-
 - [x] **GP-7 (S) — Neutral wording.** **Done 2026-11-04:** the home page, topics, comparison pages and site words rewritten in a
   neutral analyst's voice, in English, Welsh and Mandarin, with the same facts and caveats. **Not done:** the role briefs and
   the reference documents keep their wording; the Welsh and Mandarin remain unreviewed machine drafts.
-
 - [x] **GP-8 (M) — The site in Arabic and Hindi.** **Built 2026-11-05:** home page, topics and site words in Arabic and Hindi, role briefs in Arabic, and right-to-left pages. Machine drafts; no speaker has reviewed them.
 
 ## Issue configuration (OC-n, [spec/issue-configuration.md](spec/issue-configuration.md))

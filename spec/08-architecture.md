@@ -2,7 +2,7 @@
 
 ### 8.1 Trio composition
 
-```
+```text
 +--------------------------------------------------------------+
 |              project-portfolio-management-ui-with-svelte                  |
 |  SvelteKit 3 SPA · Svelte 5 runes · TypeScript strict         |
@@ -152,7 +152,7 @@ and no row hook exists. Under the `outbox` transport a plan, its `axa_outbox` ev
 `db::begin` transaction.
 
 What changed for an operator when the last of SeaORM went (step (c)): nothing in the schema, the routes or their answers;
-a database failure's text in a log, a task's output or a stored error is sqlx's (no `Query Error: ` prefix), only on a
+a database failure's text in a log, a task's output or a stored error is sqlx's (no `Query Error:` prefix), only on a
 failure; and statements SeaORM ran without counting are now counted. The moves, batch by batch, and what each found are
 in task SQ-1 (`tasks.md`).
 
@@ -188,7 +188,7 @@ is unchanged but for `_sqlx_migrations` (task SQ-1; `tests/migrations.rs` holds 
 > (T-7, T-8). The real crate groups controllers by *capability* rather
 > than by resource. Drawn from the tree, not from the plan:
 
-```
+```text
 project-portfolio-management-service-with-rust/
 ├── src/
 │   ├── app.rs                       plain functions: routes, workers, boot

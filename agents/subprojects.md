@@ -14,7 +14,7 @@ operational sub-resources and derived views.
 
 ## Dependency direction
 
-```
+```text
 front-end  ──HTTP──▶  service  ──Cargo path dep──▶  matcher
 ```
 

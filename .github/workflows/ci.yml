@@ -327,7 +327,6 @@ jobs:
   markdown-lint:
     name: Markdown linting (rumdl)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -554,6 +553,7 @@ jobs:
       - ui
       - site
       - docs
+      - markdown-lint
       - container
       - zap
       - fresh-clone

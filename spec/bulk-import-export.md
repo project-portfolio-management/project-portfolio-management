@@ -57,7 +57,7 @@ All on the plans collection, under the blanket guard. Import is an
 `Action::Destructive` (the verifier already classes "import" as a
 destructive named POST); export is `Action::Read` plus the gates in §8.
 
-```
+```text
 POST /api/plans/import         202 {job_id}    body: file + params; header Idempotency-Key
 GET  /api/plans/import/{id}    status, counts, errors_url, review_url
 POST /api/plans/export         202 {job_id}    body: params

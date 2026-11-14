@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (markdown lint is a merge gate)
+
+- **The 109 rumdl findings are fixed, and the `markdown-lint` job now blocks merging** (it is in `ci-ok`'s needs and
+  no longer `continue-on-error`). 105 were fixed by `rumdl fmt`: list spacing, code fences given a language
+  (`text`), trailing spaces, blank lines, and spaces inside code spans (`Query Error: ` became `Query Error:`). By
+  hand: three rows of the status table in `spec/14` had a fourth cell, now folded into the third; two notes in the
+  service spec are one blockquote with two paragraphs. A heading may now end in `?` (MD026), so "Does it apply?" in
+  the ISO 14971 page keeps its question mark.
+- Not verified: how the reformatted files render on the site beyond its own checks.
+
 ### 14 November (syncpack in CI)
 
 - **CI's site job now runs `syncpack lint` from the repository root**, as `make lint-packages` does, and Dependabot

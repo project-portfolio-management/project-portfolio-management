@@ -119,7 +119,7 @@ titles feed matching via `data.goals[]`).
 > The matcher's `MatchBreakdown.kind_gate_blocked` remains only as a
 > vestigial, always-`false` field. Containment is expressed with
 > `parent_ref`, not with a collection boundary.
-
+>
 > **Partition rule — within-payload relationships vs cross-service
 > links.** `relationships` inside the `Plan` payload are within-entity
 > and **are** a matcher signal (Jaccard component). Cross-service links
@@ -532,7 +532,7 @@ Design in [`spec/bulk-import-export.md`](../../spec/bulk-import-export.md). Buil
 The five uniform endpoints on the plans collection
 ([`agents/share/bulk-import-export.md`](../../spec/bulk-import-export.md) §4):
 
-```
+```text
 POST /api/plans/import         202 {job_id}
 GET  /api/plans/import/{id}     status + counts + errors_url + review_url
 POST /api/plans/export         202 {job_id}
@@ -979,7 +979,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   in-process gRPC socket). **This closes PRO-H12**: every entity
   registry in the family now exports real OTLP/gRPC traces and
   metrics.
-
 - [x] **2026-08-21 — FUZZ-2: cargo-fuzz harness for the request-path
   logic.** Three coverage-guided targets over the pure, total code that
   faces the network: `validate_json` (bytes → `serde_json` → `Plan` →
@@ -996,7 +995,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   cargo-fuzz is nightly-only. Verified: all three build and run clean,
   and the bounded-report assertion was confirmed live by lowering its
   ceiling until it fired.
-
 - [x] **2026-08-21 — SEC-M8b: the `422` report is bounded, not just the
   work.** `validation::problems` reported an over-long array's
   cardinality violation once and then still walked every entry, so a
@@ -1012,7 +1010,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   added later without it reads as different. Pinned by a test, which was
   confirmed to fail without the cap. Case was the reference
   (repo `tasks.md` SEC-M8/SEC-M8b).
-
 - [x] **2026-08-20 — Search writer held for the process; Criterion
   benchmarks; declared MSRV.** `SearchEngine::index_plan` (and the
   delete/clear paths) built a **new Tantivy `IndexWriter` per call**.
@@ -1033,7 +1030,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `rust-version = "1.95"` — the repository's current-stable-minus-three
   floor (`spec/rust-msrv-n-minus-2/index.md`), enforced by
   `scripts/ci-check.sh msrv`.
-
 - [x] **2026-08-05 — Pagination on the five operational sub-resource
   lists (repo tasks.md PG-1, closing the sub-bullet left open on
   2026-08-01).** `automations`, automation runs, the deadline queue,
@@ -1108,7 +1104,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   distinction, and a DB-gated test confirms it end to end.
   *Verified:* 38 DB-gated + 1 enforcement + 1 outbox-audit green vs
   Postgres 18; 199 lib tests; fmt + clippy clean.
-
 - [x] **2026-07-22 — Collaboration / automation / prioritization
   capabilities (§9.4a).** Migration `m20260722_000001_capabilities`
   (`reviews`, `automations`, `automation_runs`, `scheduled_actions`,
@@ -1124,7 +1119,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   Score (a plan does not link back to its originating idea), and
   record-level ABAC on the new endpoints — they sit behind the blanket
   guard only.
-
 - [x] **2026-07-22 — Accept the five new `kind` labels.**
   `parse_kind_label` maps `practice`/`process`/`purpose`/`pathway`/
   `proposal` (and their plurals) to the matcher's new `PlanKind`
@@ -1132,7 +1126,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   `collection` validation messages list them. Matching stays
   kind-agnostic. The `Proposal` *label* is unrelated to the
   `proposals` intake resource (§9.4).
-
 - [x] **2026-07-20 — Unify the four "work item" kinds into one recursive
   `plan`.** The former Portfolio / Project / Product / Program
   collections are unified into a **single** matchable entity, the
@@ -1384,7 +1377,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   tier, if/when prioritized.
 - [x] Tantivy full-text/fuzzy/phonetic search over the JSONB payload
   (§13 2026-08-02).
-
 - [x] **Fix: fresh-Postgres `db migrate` failed in the `event_outbox`
   migration (2026-07-18).** The loco `create_table` helper pluralizes
   table names (`cruet::to_plural`: `event_outbox` → `event_outboxes`),
@@ -1396,7 +1388,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   Found and fixed family-wide from the patient-flow implementation
   round; verified by a live fresh-database migrate. Every other table
   this crate creates via the helper is already plural (no-op).
-
 - [x] **T-PPM-A — Governance core (PPM-1/3/10/12; spec
   `../spec/15-roadmap.md`), delivered 2026-07-18.** Migration
   `…_000005_governance` (`proposals`, `gate_reviews`, `risks`,
@@ -1420,7 +1411,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   Postgres 18. Events for governance mutations ride the audit trail
   only for now — envelope kinds for them arrive with the Phase-B
   dashboard work.
-
 - [x] **T-PPM-B — Visibility (PPM-6/7/8/9; spec
   `../spec/15-roadmap.md`), delivered 2026-07-18.** Migration
   `…_000006_visibility` (`plan_dependencies`, `milestones`,
@@ -1439,7 +1429,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   RAG / stage rollups and site tiles). 5 DB-gated request tests,
   green vs Postgres 18. Scheduled/artifact report runs await the
   family bulk machinery (roadmap).
-
 - [x] **T-PPM-C — Strategy (PPM-2/4/5/11; spec
   `../spec/15-roadmap.md`), delivered 2026-07-18.** Migration
   `…_000007_strategy` (`ideas`, `scenarios`, `objectives`,
@@ -1458,7 +1447,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   against recorded budget actuals). 4 DB-gated request tests, green
   vs Postgres 18. The full PPM catalogue (Phases A+B+C) is now
   delivered service-side.
-
 - [x] **2026-07-19 — Executive insight areas (CEO / CFO / CTO).**
   Seven read-only derived views over existing tables (no new
   migrations), each ETag-conditional with `as_of` (mirroring
@@ -1481,7 +1469,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   round-trip (incl. ETag 304 replay) green — full `--ignored` suite
   24/24 vs Postgres 18; clippy pedantic clean. Front-end `/executive`,
   `/financials`, `/technology` consume the views.
-
 - [x] **2026-07-19 — Executive moderate fits.** Five follow-ups to the
   insight areas, one migration (`m20260719_000002_insight_columns`, all
   columns nullable so existing rows keep their behaviour):
@@ -1511,7 +1498,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   held_minor drop, debt filter, flow timing, alignment flip, compare
   deltas) green — full `--ignored` suite 25/25 vs Postgres 18; clippy
   pedantic clean; FE svelte-check 0, vitest 45, Playwright 12.
-
 - [x] **2026-07-19/20 — Oversight areas (board / auditor / compliance /
   CRO / CISO / regulator).** Thirteen endpoints in
   `controllers/oversight.rs`, one new table
@@ -1540,7 +1526,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   18; clippy pedantic clean; FE `/board` `/auditor` `/compliance`
   `/risk` `/security` `/regulator` pages with svelte-check 0, vitest
   45, Playwright 18.
-
 - [x] **2026-07-20 — Engineering-team features (the §13 operational
   core).** Migration `m20260720_000001_engineering` (`tasks` +
   `sprints` tables, `milestones.kind`): the **tasks** sub-resource
@@ -1564,7 +1549,6 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   suite 27/27 vs Postgres 18; clippy pedantic clean; FE board page
   (drag-to-move Kanban + burndown + standup), `/calendar`,
   `/engineering` with svelte-check 0, vitest 45, Playwright 21.
-
 - [x] **2026-07-20 — Engineering moderate fits.** Migration
   `m20260720_000002_engineering_moderate`: **story points** on tasks
   (0–100, validated; team-local) + `GET .../velocity` (per-sprint done
@@ -1766,4 +1750,3 @@ Error and reference text that gives an example time zone names several regions (
 `Africa/Lagos`, `Pacific/Auckland`), not one country's. The Swagger UI page (`/swagger-ui`) declares `lang="en"`
 because its labels and the whole `OpenAPI` document are English: the API reference is English only, a stated limit
 (the operator interface is translated; the API's machine fields are language-neutral codes).
-

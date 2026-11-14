@@ -1,0 +1,2 @@
+# RE-9: Playwright writes these accessibility-tree snapshots; reformatting them breaks the match.
+tests/e2e/*-snapshots/

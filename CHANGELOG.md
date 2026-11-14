@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (syncpack)
+
+- **syncpack keeps the UI's and the site's shared packages on the same version.** A private root `package.json`
+  (repository tooling only, never released) has syncpack 15.3.3 as its only dev dependency, installed with pnpm
+  (`pnpm-lock.yaml`). `.syncpackrc` lists the UI's and the site's `package.json` files, and the root package is
+  ignored because it has no version. Run `make lint-packages`, which `make lint` now includes. Its first finding is fixed: the
+  site's `@lilydesignsystem/svelte-headless` goes from 0.6.1 to 0.8.0, the UI's version. The `Slider` API is
+  unchanged, and the site's checks and all 239 Playwright tests pass.
+- Not done: no CI job runs syncpack yet, and Dependabot does not watch the root `package.json`.
+
 ### 13 November (the path to production in German, Spanish and French)
 
 - **`de-001`, `de-de`, `es-001` and `fr-001` now have the path to production**

@@ -65,7 +65,7 @@ check-pnpm:
 # make lint: Proofread everything.
 ##
 .PHONY: lint
-lint: lint-markdown
+lint: lint-markdown lint-packages
 
 ##
 # make lint-markdown: Proofread Markdown files.
@@ -73,6 +73,14 @@ lint: lint-markdown
 .PHONY: lint-markdown
 lint-markdown:
 	@bash scripts/lint-markdown.sh check --quiet
+
+##
+# make lint-packages: Check that the UI and the site use the same versions of shared packages (syncpack).
+##
+.PHONY: lint-packages
+lint-packages:
+	pnpm install --frozen-lockfile
+	pnpm exec syncpack lint
 
 ##
 # make publish-github-pages: Publish the website subproject to its own sibling repository.

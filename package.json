@@ -1,0 +1,8 @@
+{
+  "name": "project-portfolio-management-monorepo",
+  "private": true,
+  "description": "Repository-level Node tooling only (syncpack); each subproject keeps its own package.json and pnpm lockfile.",
+  "devDependencies": {
+    "syncpack": "^15.3.3"
+  }
+}

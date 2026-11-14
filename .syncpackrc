@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/syncpack/schema.json",
+  "source": [
+    "package.json",
+    "project-portfolio-management-ui-with-svelte/package.json",
+    "project-portfolio-management.github.io/package.json"
+  ],
+  "versionGroups": [
+    {
+      "label": "The root package.json holds repository tooling only and is never released, so it has no version",
+      "dependencies": ["project-portfolio-management-monorepo"],
+      "isIgnored": true
+    }
+  ]
+}

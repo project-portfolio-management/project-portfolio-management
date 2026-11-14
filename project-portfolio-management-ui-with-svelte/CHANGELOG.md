@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the plan's name is "Name" in every locale, not "Title" (2026-11-14)
+
+English labels the field "Name" (`form.title`) and says "Name is required." (`form.titleRequired`); the other nine
+locales still said "Title" (Teitl, Titel, Título, Titre, العنوان, शीर्षक, 标题) in the label, the plan list's
+column and the error. The RE-9 snapshots showed it. They now say Enw, Name, Nombre, Nom, الاسم, नाम and 名称, and
+the review files in `governance/` carry the new text, still unreviewed. **Not verified:** by a speaker of any of these
+languages; the text is machine-written, as before.
+
 ### Added — accessibility-tree snapshots in English and Welsh (RE-9, 2026-11-14)
 
 `tests/e2e/structure.spec.ts` snapshots the `main` region with `toMatchAriaSnapshot` in five states (the plan list,

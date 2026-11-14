@@ -1,7 +1,7 @@
 - main:
   - heading "Achos newydd" [level=1]
-  - text: Teitl
-  - textbox "Teitl"
+  - text: Enw
+  - textbox "Enw"
   - text: Math o achos
   - combobox "Math o achos":
     - option "—" [selected]
@@ -47,4 +47,4 @@
     - text: ""
     - button "+ Ychwanegu dynodydd"
   - button "Creu"
-  - alert: Mae angen teitl.
+  - alert: Mae angen enw.

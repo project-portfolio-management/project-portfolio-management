@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (the plan's name in every locale)
+
+- **The plan's name field says "Name" in every locale**, as in English, not "Title". The RE-9 snapshots found the
+  difference. The review files carry the new text. Not verified: by a speaker; the text is machine-written.
+
 ### 14 November (RE-9: accessibility-tree snapshots)
 
 - **Accessibility-tree snapshots of five UI states in English and Welsh** (`tests/e2e/structure.spec.ts`, ten

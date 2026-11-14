@@ -6,7 +6,7 @@
   - paragraph: "1"
   - combobox "Chwilio yn":
     - option "Pob colofn" [selected]
-    - option "Teitl"
+    - option "Enw"
     - option "pid"
   - searchbox "Hidlo rhesi"
   - group "Allforio":
@@ -18,9 +18,9 @@
     - table "Achosion":
       - caption: Achosion
       - rowgroup:
-        - row "Teitl ⇅ pid ⇅":
-          - columnheader "Teitl ⇅":
-            - button "Teitl ⇅"
+        - row "Enw ⇅ pid ⇅":
+          - columnheader "Enw ⇅":
+            - button "Enw ⇅"
           - columnheader "pid ⇅":
             - button "pid ⇅"
       - rowgroup:

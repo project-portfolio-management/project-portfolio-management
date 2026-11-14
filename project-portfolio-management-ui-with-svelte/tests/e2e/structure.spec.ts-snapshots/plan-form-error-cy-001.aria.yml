@@ -1,0 +1,50 @@
+- main:
+  - heading "Achos newydd" [level=1]
+  - text: Teitl
+  - textbox "Teitl"
+  - text: Math o achos
+  - combobox "Math o achos":
+    - option "—" [selected]
+    - option "Portffolio"
+    - option "Prosiect"
+    - option "Cynnyrch"
+    - option "Rhaglen"
+    - option "Ymarfer"
+    - option "Proses"
+    - option "Diben"
+    - option "Llwybr"
+    - option "Cynnig"
+  - text: Statws
+  - combobox "Statws":
+    - option "—" [selected]
+    - option "Arfaethedig"
+    - option "Gweithredol"
+    - option "Wedi'i ohirio"
+    - option "Wedi'i gwblhau"
+    - option "Wedi'i ganslo"
+  - text: Rhif achos
+  - textbox "Rhif achos":
+    - /placeholder: PROJ-2026
+  - text: Dyddiad agor
+  - textbox "Dyddiad agor":
+    - /placeholder: pid y cynllun rhiant (UUID)
+  - text: ID asiantaeth
+  - textbox "ID asiantaeth":
+    - /placeholder: sefydliad:…
+  - text: Enw asiantaeth
+  - textbox "Enw asiantaeth"
+  - text: Teitlau eraill (wedi'u gwahanu gan goma)
+  - textbox "Teitlau eraill (wedi'u gwahanu gan goma)"
+  - text: Allweddeiriau (wedi'u gwahanu gan goma)
+  - textbox "Allweddeiriau (wedi'u gwahanu gan goma)"
+  - text: Pynciau (wedi'u gwahanu gan goma)
+  - textbox "Pynciau (wedi'u gwahanu gan goma)"
+  - text: URLau yr un â (wedi'u gwahanu gan goma)
+  - textbox "URLau yr un â (wedi'u gwahanu gan goma)"
+  - text: /Ieithoedd \(ISO \d+-1 wedi'u gwahanu gan goma\)/
+  - textbox /Ieithoedd \(ISO \d+-1 wedi'u gwahanu gan goma\)/
+  - group "Dynodyddion":
+    - text: ""
+    - button "+ Ychwanegu dynodydd"
+  - button "Creu"
+  - alert: Mae angen teitl.

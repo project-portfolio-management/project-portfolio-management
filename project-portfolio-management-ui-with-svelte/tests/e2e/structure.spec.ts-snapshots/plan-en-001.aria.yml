@@ -1,0 +1,79 @@
+- main:
+  - heading "Website replatform" [level=1]
+  - paragraph:
+    - link "Governance":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/governance
+    - link "Tolerances":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/tolerances
+    - link "Escalations":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/escalations
+    - link "Issues":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/issues
+    - link "Change requests":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/change-requests
+    - link "Ways of working":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/ways-of-working
+    - link "Governance framework":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/governance-framework
+    - link "Links":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/links
+    - link "Board":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/board
+    - link "Schedule":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/schedule
+    - link "Flow":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/flow
+    - link "Critical path":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/critical-path
+    - link "RACI":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/raci
+    - link "Earned value":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/earned-value
+    - link "Calendar":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/calendar
+    - link "Schedule health":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/schedule-health
+    - link "Leveling":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/leveling
+    - link "Critical chain":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/critical-chain
+    - link "Buffer management":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/buffers
+    - link "Deployment moves":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/deployment-moves
+    - link "Cutover go/no-go":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/cutover
+    - link "Schedule risk":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/schedule-risk
+    - link "Cost risk":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/cost-risk
+    - link "Cost and schedule risk":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/joint-risk
+    - link "Work and assignments":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/work
+    - link "What-if":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/what-if
+    - link "Onboarding and offboarding":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/onboarding
+    - link "Handover":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/handover
+    - link "Work breakdown":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/wbs
+    - link "Import":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/import
+    - link "Costs":
+      - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/costs
+  - strong: "Kind:"
+  - text: Project
+  - strong: "Status:"
+  - text: Active
+  - strong: "Code:"
+  - code: /WEB-\d+/
+  - strong: "Keywords:"
+  - text: platform
+  - strong: "ID:"
+  - code: /[0-9a-fA-F-]+/
+  - link "Edit":
+    - /url: /en-001/plans/11111111-1111-4111-8111-111111111111/edit
+  - button "Check duplicates"
+  - button "Delete"

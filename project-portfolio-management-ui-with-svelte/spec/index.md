@@ -575,6 +575,10 @@ httpOnly cookie — no auth token in `localStorage` (BFF model, §6.15).
 
 ## 11. Testing strategy
 
+**Accessibility-tree snapshots (RE-9).** `tests/e2e/structure.spec.ts` holds the `main` region's accessibility tree
+for the plan list, a plan's page, the plan form's blank-name error, the not-found page and sign-in, in `en-001` and
+`cy-001`. A change to a label, heading, landmark or alert there fails until the snapshot is updated on purpose.
+
 **Hermetic e2e (RE-10).** Every spec takes `test` from `tests/e2e/test.ts`. Its automatic fixture routes the browser
 context (popups included) and blocks any request or WebSocket to an origin other than the app and the mock identity
 provider (`localhost:4180`), unless a test faked it, then fails the test with the blocked addresses; service workers

@@ -1,0 +1,79 @@
+- main:
+  - heading "Website replatform" [level=1]
+  - paragraph:
+    - link "Llywodraethu":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/governance
+    - link "Goddefgarwch":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/tolerances
+    - link "Uwchgyfeirio":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/escalations
+    - link "Materion":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/issues
+    - link "Ceisiadau newid":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/change-requests
+    - link "Ffyrdd o weithio":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/ways-of-working
+    - link "Fframwaith llywodraethu":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/governance-framework
+    - link "Dolenni":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/links
+    - link "Bwrdd":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/board
+    - link "Amserlen":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/schedule
+    - link "Llif":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/flow
+    - link "Llwybr critigol":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/critical-path
+    - link "RACI":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/raci
+    - link "Gwerth enilledig":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/earned-value
+    - link "Calendr":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/calendar
+    - link "Iechyd yr amserlen":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/schedule-health
+    - link "Lefelu":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/leveling
+    - link "Cadwyn gritigol":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/critical-chain
+    - link "Rheoli byfferau":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/buffers
+    - link "Symud lleoliadau":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/deployment-moves
+    - link "Mynd/peidio mynd â'r newid":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/cutover
+    - link "Risg amserlen":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/schedule-risk
+    - link "Risg cost":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/cost-risk
+    - link "Risg cost ac amserlen":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/joint-risk
+    - link "Gwaith a neilltuo":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/work
+    - link "Rhedeg-os":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/what-if
+    - link "Ymsefydlu a gadael":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/onboarding
+    - link "Trosglwyddiad":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/handover
+    - link "Dadansoddiad gwaith":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/wbs
+    - link "Mewnforio":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/import
+    - link "Costau":
+      - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/costs
+  - strong: "Math o achos:"
+  - text: Project
+  - strong: "Statws:"
+  - text: Active
+  - strong: "Rhif achos:"
+  - code: /WEB-\d+/
+  - strong: "Allweddeiriau:"
+  - text: platform
+  - strong: "ID:"
+  - code: /[0-9a-fA-F-]+/
+  - link "Golygu":
+    - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111/edit
+  - button "Gwirio dyblygiadau"
+  - button "Dileu"

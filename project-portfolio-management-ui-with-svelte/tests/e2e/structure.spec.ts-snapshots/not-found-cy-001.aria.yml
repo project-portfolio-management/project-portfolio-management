@@ -1,0 +1,6 @@
+- main:
+  - heading /\d+/ [level=1]
+  - alert: Nid yw'r dudalen honno'n bodoli.
+  - paragraph:
+    - link "Yn ôl i'r dechrau":
+      - /url: /cy-001

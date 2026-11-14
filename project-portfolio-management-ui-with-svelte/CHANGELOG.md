@@ -9,9 +9,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — accessibility-tree snapshots in English and Welsh (RE-9, 2026-11-14)
+
+`tests/e2e/structure.spec.ts` snapshots the `main` region with `toMatchAriaSnapshot` in five states (the plan list,
+a plan's page, the new plan form after a blank name is submitted, a page that does not exist, sign-in), each in
+`en-001` and `cy-001`: ten files in `tests/e2e/structure.spec.ts-snapshots/`, reviewed like code and updated only
+with `--update-snapshots` when a change is intended. Stable over two repeats. **Found at once:** every locale but
+English labels the plan's name field "Title" (`form.title`, `form.titleRequired`), while English says "Name"; fixed in
+the next commit. **Not done:** the header and navigation are outside `main` and not snapshotted; no task, risk or
+issue screen. **Not verified:** that removing a label fails the snapshot was checked by reading the files, not by a
+mutation run.
+
 ### Added — hermetic e2e: a test fails when the browser reaches an origin no test faked (RE-10, 2026-11-14)
 
-Every spec now imports `test` and `expect` from `tests/e2e/test.ts` (76 files moved over; ESLint's
+Every spec now imports `test` and `expect` from `tests/e2e/test.ts` (75 files moved over; ESLint's
 `no-restricted-imports` refuses `@playwright/test` in a spec). Its automatic fixture routes the browser context,
 popups included, and blocks any request or WebSocket to an origin other than the app (`baseURL`) and the mock
 identity provider (`localhost:4180`), unless a test faked it with `page.route`. It then fails the test, naming the

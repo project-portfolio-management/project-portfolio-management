@@ -15,11 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-9: accessibility-tree snapshots)
+
+- **Accessibility-tree snapshots of five UI states in English and Welsh** (`tests/e2e/structure.spec.ts`, ten
+  snapshot files). The first run found that every locale but English labels the plan's name "Title".
+- Not done: the header and navigation; task, risk and issue screens.
+
 ### 14 November (RE-10: hermetic e2e)
 
 - **A UI end-to-end test now fails when the browser reaches an origin no test faked.** Every spec imports `test`
   from `tests/e2e/test.ts`, and ESLint refuses Playwright's own. The `chromium` and `mobile` projects pass with the
-  guard on (989 tests). See the UI changelog.
+  guard on (989 tests). See the UI changelog. (75 specs moved over.)
 - Not done: the SvelteKit server side is not covered. Not run locally: the `every-locale` project.
 
 ### 14 November (RE-12: personas)

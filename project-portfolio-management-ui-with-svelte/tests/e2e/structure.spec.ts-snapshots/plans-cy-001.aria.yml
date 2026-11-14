@@ -1,0 +1,36 @@
+- main:
+  - heading "Achosion" [level=1]
+  - paragraph:
+    - link "Achos newydd":
+      - /url: /cy-001/plans/new
+  - paragraph: "1"
+  - combobox "Chwilio yn":
+    - option "Pob colofn" [selected]
+    - option "Teitl"
+    - option "pid"
+  - searchbox "Hidlo rhesi"
+  - group "Allforio":
+    - button "Copïo"
+    - button "CSV"
+    - button "TSV"
+    - button "Excel"
+  - region "Achosion":
+    - table "Achosion":
+      - caption: Achosion
+      - rowgroup:
+        - row "Teitl ⇅ pid ⇅":
+          - columnheader "Teitl ⇅":
+            - button "Teitl ⇅"
+          - columnheader "pid ⇅":
+            - button "pid ⇅"
+      - rowgroup:
+        - row /Website replatform [0-9a-fA-F-]+/:
+          - rowheader "Website replatform":
+            - link "Website replatform":
+              - /url: /cy-001/plans/11111111-1111-4111-8111-111111111111
+          - cell /[0-9a-fA-F-]+/
+  - navigation "Tudalennau":
+    - button "Tudalen flaenorol" [disabled]
+    - text: Tudalen 1 o 1 (1 rhes)
+    - button "Tudalen nesaf" [disabled]
+  - paragraph

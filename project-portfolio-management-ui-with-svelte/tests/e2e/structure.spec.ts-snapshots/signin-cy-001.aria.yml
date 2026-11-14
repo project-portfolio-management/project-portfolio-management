@@ -1,0 +1,8 @@
+- main:
+  - heading "Mewngofnodi" [level=1]
+  - text: E-bost
+  - textbox "E-bost"
+  - button "Anfon dolen hud"
+  - paragraph:
+    - link "Mewngofnodi gyda ⁨Microsoft Entra ID⁩":
+      - /url: /cy-001/signin/oidc

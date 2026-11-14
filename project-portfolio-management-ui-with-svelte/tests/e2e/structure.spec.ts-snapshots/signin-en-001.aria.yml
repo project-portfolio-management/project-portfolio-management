@@ -1,0 +1,8 @@
+- main:
+  - heading "Sign in" [level=1]
+  - text: Email
+  - textbox "Email"
+  - button "Send magic link"
+  - paragraph:
+    - link "Sign in with ⁨Microsoft Entra ID⁩":
+      - /url: /en-001/signin/oidc

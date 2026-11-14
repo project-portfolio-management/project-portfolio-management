@@ -1,0 +1,50 @@
+- main:
+  - heading "New case" [level=1]
+  - text: Name
+  - textbox "Name"
+  - text: Kind
+  - combobox "Kind":
+    - option "—" [selected]
+    - option "Portfolio"
+    - option "Project"
+    - option "Product"
+    - option "Program"
+    - option "Practice"
+    - option "Process"
+    - option "Purpose"
+    - option "Pathway"
+    - option "Proposal"
+  - text: Status
+  - combobox "Status":
+    - option "—" [selected]
+    - option "Proposed"
+    - option "Active"
+    - option "OnHold"
+    - option "Completed"
+    - option "Cancelled"
+  - text: Code
+  - textbox "Code":
+    - /placeholder: PROJ-2026
+  - text: Parent portfolio (pid)
+  - textbox "Parent portfolio (pid)":
+    - /placeholder: parent plan pid (UUID)
+  - text: Owner org id
+  - textbox "Owner org id":
+    - /placeholder: organization:…
+  - text: Owner org name
+  - textbox "Owner org name"
+  - text: Alternate titles (comma-separated)
+  - textbox "Alternate titles (comma-separated)"
+  - text: Keywords (comma-separated)
+  - textbox "Keywords (comma-separated)"
+  - text: Tags (comma-separated)
+  - textbox "Tags (comma-separated)"
+  - text: Same-as URLs (comma-separated)
+  - textbox "Same-as URLs (comma-separated)"
+  - text: /Languages \(comma-separated ISO \d+-1\)/
+  - textbox /Languages \(comma-separated ISO \d+-1\)/
+  - group "Identifiers":
+    - text: ""
+    - button "+ Add identifier"
+  - button "Create"
+  - alert: Name is required.

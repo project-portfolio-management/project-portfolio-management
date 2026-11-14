@@ -34,7 +34,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | Service tests | 1614, plus 315 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 802 | `it(` / `test(` lines in `tests/unit` |
-| Front-end end-to-end tests (Playwright) | 376 | `test(` lines in `tests/e2e` |
+| Front-end end-to-end tests (Playwright) | 381 | `test(` lines in `tests/e2e` |
 | Locales | 10 | entries of `LOCALES` in `src/lib/locales.ts` |
 
 **Task boxes in [`tasks.md`](../tasks.md)** (ticked / open, by prefix):
@@ -70,8 +70,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | UE | 1 | 7 |
 | PE | 1 | 15 |
 | SM | 2 | 15 |
-| RE | 3 | 11 |
-| **Total** | **245** | **69** |
+| RE | 4 | 10 |
+| **Total** | **246** | **68** |
 
 <!-- generated:end -->
 

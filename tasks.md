@@ -3576,15 +3576,16 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   redirect when changed. An item's public id is eight random lower-case letters and digits, starting with a letter,
   never reused. Part of RE-4.
   **Acceptance:** a renamed roadmap's old slug answers `301`; ids are unique under a 10,000-item property test.
-- [ ] **RE-9 (S) — Accessibility-tree snapshots.** Playwright `toMatchAriaSnapshot` for the important states of the
+- [x] **RE-9 (S) — Accessibility-tree snapshots.** Playwright `toMatchAriaSnapshot` for the important states of the
   plan list, a plan page, a form error, the not-found page and the sign-in, each in `en-001` and `cy-001`. The
   snapshots are checked in and reviewed like code.
   **Acceptance:** removing a form label or a heading fails a snapshot that axe passes.
+  **Built 2026-11-14.** `tests/e2e/structure.spec.ts`: `main` in five states (plan list, plan page, new plan form after a blank name, not found, sign-in) × `en-001`, `cy-001`; ten checked-in `.aria.yml` files. **Found:** every locale but English says "Title" for the plan's name (fixed separately). **Not done:** header and navigation (outside `main`); task, risk, issue screens. **Not verified:** the acceptance's mutation (remove a label, see it fail) was not run; it follows from the snapshot holding each label's text.
 - [x] **RE-10 (S) — Hermetic e2e.** The shared fixture blocks every request and WebSocket on the browser context
   that no test has faked, popups included, and fails the test with the blocked URLs, as uncaught page errors do.
   **Acceptance:** a test that forgets a stub fails, naming the URL; the current suite passes or each gap is fixed in
   the same commit.
-  **Built 2026-11-14.** `tests/e2e/test.ts` (an automatic fixture on the browser context; allowed: the app's origin and the mock identity provider on 4180; service workers blocked); all 76 specs import from it, and ESLint refuses `@playwright/test` in a spec. `tests/e2e/hermetic.spec.ts`: the allow rule, a faked origin passes, an unfaked navigation fails (`test.fail`; with the guard off it reports an unexpected pass). The `chromium` and `mobile` projects pass with the guard on (989 tests): no existing test reached an outside origin. **Found:** the CSP already refuses a script's cross-origin `fetch`, so the guard matters for navigations, popups and images. **Not done:** the SvelteKit server side (it reaches only the mock API). **Not run locally:** the `every-locale` project.
+  **Built 2026-11-14.** `tests/e2e/test.ts` (an automatic fixture on the browser context; allowed: the app's origin and the mock identity provider on 4180; service workers blocked); all 75 specs import from it, and ESLint refuses `@playwright/test` in a spec. `tests/e2e/hermetic.spec.ts`: the allow rule, a faked origin passes, an unfaked navigation fails (`test.fail`; with the guard off it reports an unexpected pass). The `chromium` and `mobile` projects pass with the guard on (989 tests): no existing test reached an outside origin. **Found:** the CSP already refuses a script's cross-origin `fetch`, so the guard matters for navigations, popups and images. **Not done:** the SvelteKit server side (it reaches only the mock API). **Not run locally:** the `every-locale` project.
 - [ ] **RE-11 (S–M) — Design-token lint.** A lint that rejects a colour, type size, radius, shadow or focus style
   that does not come from the UI's tokens, with a fixture proving each message, and a unit test of the contrast of
   each token pair the UI uses, against WCAG 2.2 AA.

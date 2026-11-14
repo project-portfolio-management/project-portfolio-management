@@ -1,0 +1,36 @@
+- main:
+  - heading "Plans" [level=1]
+  - paragraph:
+    - link "New":
+      - /url: /en-001/plans/new
+  - paragraph: "1"
+  - combobox "Search in":
+    - option "All columns" [selected]
+    - option "Name"
+    - option "pid"
+  - searchbox "Filter rows"
+  - group "Export":
+    - button "Copy"
+    - button "CSV"
+    - button "TSV"
+    - button "Excel"
+  - region "Plans":
+    - table "Plans":
+      - caption: Plans
+      - rowgroup:
+        - row "Name ⇅ pid ⇅":
+          - columnheader "Name ⇅":
+            - button "Name ⇅"
+          - columnheader "pid ⇅":
+            - button "pid ⇅"
+      - rowgroup:
+        - row /Website replatform [0-9a-fA-F-]+/:
+          - rowheader "Website replatform":
+            - link "Website replatform":
+              - /url: /en-001/plans/11111111-1111-4111-8111-111111111111
+          - cell /[0-9a-fA-F-]+/
+  - navigation "Pages":
+    - button "Previous page" [disabled]
+    - text: Page 1 of 1 (1 rows)
+    - button "Next page" [disabled]
+  - paragraph

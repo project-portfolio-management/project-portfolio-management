@@ -1860,13 +1860,13 @@ It matters to this project for three reasons:
 
 | # | Idea | Why it matters here | Fit | Task |
 |---|---|---|---|---|
-| 1 | **Public product roadmap items**: placement (recently delivered, Now, Next, Later, delivered this year, not doing), expected outcome, phase, tags, organisations, nested details | A product plan has no outcome-worded statement of direction. NC-10 keeps its Now / Next / Later only in one browser | High | RE-1 |
+| 1 | **Public product roadmap items**: placement (recently delivered, Now, Next, Later, delivered this year, not doing), expected outcome, phase, tags, organizations, nested details | A product plan has no outcome-worded statement of direction. NC-10 keeps its Now / Next / Later only in one browser | High | RE-1 |
 | 2 | **Publish as one change set**: per-field base values, a preview, all or nothing, refused with the conflicting fields on a co-lead's change | Many edits by two leads to one roadmap. Same need wherever a plan is edited by several people | High | RE-2 |
 | 3 | **Freshness**: a `reviewed_on` date set only on purpose, stale after a configured period (DHCW uses six weeks) | A typo fix must not make an old roadmap look current | High | RE-3 |
 | 4 | **A public, read-only roadmap reader**: published roadmaps only, fixed fields, stable ids and slugs, `ETag`, no names of people | The public is a stated reader. Today every read needs a token | Medium-high; needs the owner | RE-4 |
 | 5 | **Serve the editor's repository port**, a documented mapping and a contract fixture, and import their spreadsheet once | They plan exactly this API. It is a decision for them and the owner | Medium; only if wanted | RE-5 |
 | 6 | **Bilingual stored text with an out-of-date mark**: when the English changes, the Welsh is kept and marked as needing review | The project's audience has legal language duties; a stale translation must be visible, not silent | High | RE-6 |
-| 7 | **Shared lists defined once**: bilingual categories and families with a colour, and organisations with a short code and a national scope; drift shown | Health board codes (`SBUHB`, `National`) recur across Welsh bodies | Medium | RE-7 |
+| 7 | **Shared lists defined once**: bilingual categories and families with a colour, and organizations with a short code and a national scope; drift shown | Health board codes (`SBUHB`, `National`) recur across Welsh bodies | Medium | RE-7 |
 | 8 | **Stable public ids** for a roadmap and its items | A public link must survive renames and reordering | Medium (part of RE-4) | RE-8 |
 | 9 | **Accessibility-tree snapshots** for key states, in English and Welsh | Catches a lost label or heading that axe passes | High (UI) | RE-9 |
 | 10 | **Hermetic e2e**: refuse any request the test did not fake | A missed stub today falls through silently | High (UI) | RE-10 |

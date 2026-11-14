@@ -3516,7 +3516,7 @@ The source is MIT-licensed, but no code is copied, because the stacks differ. Ev
 The name is **public product roadmap** throughout, because "roadmap" already means spec §15 and NC-10.
 
 - [ ] **RE-1 (L) — Public product roadmap items.** A roadmap belongs to a `Product` plan (one per plan). An item has
-  a title (required), a description, an expected outcome, a phase, ordered tags, organisations (RE-7), details
+  a title (required), a description, an expected outcome, a phase, ordered tags, organizations (RE-7), details
   nested up to three levels, and a placement: `recently_delivered`, `now`, `next`, `later`, `delivered_this_year`,
   `not_doing`, or none (unplaced, never shown publicly). Items have an order within each placement. An item may link
   to the plan's milestones or tasks as evidence, but it is never derived from them. Text is stored as typed and
@@ -3535,9 +3535,9 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   writes once; the preview equals the diff that publishing applies.
 - [ ] **RE-3 (S) — Freshness.** `reviewed_on` (a calendar date in the deployment's time zone) is set only by an
   explicit "mark as reviewed today" or a date a person enters, never as a side effect of publishing. `stale` is
-  derived from a deployment setting (default 42 days, DHCW's six weeks). The portfolio view lists stale public
+  derived from a deployment setting (default 42 calendar days, DHCW's six weeks). The portfolio view lists stale public
   roadmaps. A roadmap never reviewed is `unknown`, not stale.
-  **Acceptance:** publishing a typo fix leaves `reviewed_on` unchanged; day 42 is not stale and day 43 is; an unset
+  **Acceptance:** publishing a typo fix leaves `reviewed_on` unchanged; calendar day 42 is not stale and calendar day 43 is; an unset
   date reports `unknown`.
 - [ ] **RE-4 (M, owner: OQ-14) — A public, read-only roadmap reader.** `GET /public/roadmaps` and
   `GET /public/roadmaps/{slug}`, with no token, are off unless the deployment turns them on. They return only
@@ -3562,15 +3562,15 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   description, expected outcome, phase, tags, details) holds English and optional other languages. A translation
   records the hash of the source text it was made from. When the English changes, the translation is kept and marked
   `needs_review`, and the public reader serves it with that mark, or falls back to English if the deployment says so.
-  The service never writes one language from another. Generalises the per-language map on issues
+  The service never writes one language from another. Generalizes the per-language map on issues
   (`src/issues.rs`).
   **Acceptance:** changing the English marks the Welsh `needs_review` and keeps it; re-saving the Welsh clears the
   mark; the public reader's fallback follows the setting; an unknown language tag is `422`.
 - [ ] **RE-7 (S–M) — Shared lists defined once.** Bilingual categories and product families, each with an id and a
-  colour, linked by id. Organisations gain an optional short `code`, unique per deployment, and a `national` scope
+  colour, linked by id. Organizations gain an optional short `code`, unique per deployment, and a `national` scope
   (one allowed, listed first). A screen shows a roadmap whose copied name or colour differs from its list's. An
-  organisation code the list does not hold is refused on write; an import (RE-5) keeps it as a warning.
-  **Acceptance:** renaming a category renames it on every roadmap that links it; two organisations with one code
+  organization code the list does not hold is refused on write; an import (RE-5) keeps it as a warning.
+  **Acceptance:** renaming a category renames it on every roadmap that links it; two organizations with one code
   are `409`; a second `national` is `422`.
 - [ ] **RE-8 (S) — Stable public ids.** A roadmap's public slug is unique per deployment and keeps its old value as a
   redirect when changed. An item's public id is eight random lower-case letters and digits, starting with a letter,

@@ -45,7 +45,7 @@ enforces SAML), so the repository was read from a public `git clone`.
 ### 1. A roadmap item is not a task (take: RE-1)
 
 An item has a title, a description, an **expected outcome** ("what changes, and for whom"), a phase, free tags,
-the organisations the work is for, and details nested up to three levels. It also has a **placement**: one of three
+the organizations the work is for, and details nested up to three levels. It also has a **placement**: one of three
 horizons (Now, Next, Later) or one of three sections around them (Recently delivered, Delivered this year, Not
 doing). An item with no recognised placement is "unplaced", and the public site skips it. An item should fit on one
 phone-sized card; the editor does not enforce a limit.
@@ -105,7 +105,7 @@ record. No stored content marks a translation as out of date when its source cha
 Families and categories each live in their own tab with an id, English and Welsh names and a colour. A roadmap links
 to them by id, and also keeps copies of the names, because the public site reads the copies. A copy that differs from
 the list is flagged **out of step**, with a "Make it match" action. A family not in the list is flagged too. There is
-also a list of organisations: NHS Wales health boards by code, and `National` (All Wales) first. An unknown code is
+also a list of organizations: NHS Wales health boards by code, and `National` (All Wales) first. An unknown code is
 kept as written, but not shown.
 *Here:* `organizations` exist, but none has a short code or a "national" scope, and portfolios have no shared,
 bilingual category list.

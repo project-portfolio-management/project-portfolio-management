@@ -1,5 +1,5 @@
 // The working calendar (/<locale>/me/calendar) on Lily's CalendarView, over stubbed API answers.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 async function stub(page: Page, saved: { body: string }) {
   await page.route("**/api/me/calendar", (r) => {

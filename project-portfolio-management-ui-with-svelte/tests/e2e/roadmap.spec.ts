@@ -1,5 +1,5 @@
 // NC-10: the impact / effort matrix and Now / Next / Later over ideas and proposals, over stubbed answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const IDEAS = [
   {

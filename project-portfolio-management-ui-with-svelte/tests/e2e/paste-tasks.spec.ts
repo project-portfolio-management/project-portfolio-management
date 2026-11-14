@@ -2,7 +2,7 @@
 // preview flags it and leaves it out, the service's dry run is asked about the other two, and only those two are
 // created. axe passes with the preview open.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle, stubPlansApi } from "./fixtures";
 

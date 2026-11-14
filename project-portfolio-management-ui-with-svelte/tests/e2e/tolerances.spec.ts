@@ -2,7 +2,7 @@
 // shape (never colour alone), say plainly when something could not be measured, and let a limit be set and
 // removed. The service is stubbed; both pages pass the axe audit.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

@@ -1,7 +1,7 @@
 // CQ-18: following a link from one plan to another reuses the plan page, and the page must then
 // show the second plan, not keep the first one under the new address.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { PID } from "./fixtures";
 
 const OTHER = "22222222-2222-4222-8222-222222222222";

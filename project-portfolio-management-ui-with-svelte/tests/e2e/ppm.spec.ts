@@ -2,7 +2,7 @@
 // page.route-stubbed API (mirroring the service contract; unmatched
 // calls 404 so drift fails loud). No Rust service needed.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PROPOSAL = "11111111-1111-4111-8111-111111111111";
 const IDEA = "22222222-2222-4222-8222-222222222222";

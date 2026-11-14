@@ -1,7 +1,7 @@
 // BR-14: the command palette. Ctrl or Cmd with K opens it; a plan is found by name, reached with the keyboard alone;
 // axe passes with it open; Escape closes it and hands focus back; a visit is remembered as a recent item.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle, stubPlansApi } from "./fixtures";
 

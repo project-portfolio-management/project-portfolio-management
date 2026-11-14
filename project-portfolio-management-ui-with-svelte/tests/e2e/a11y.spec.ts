@@ -4,7 +4,7 @@
 // Pages whose data calls are not stubbed render their own error state, which is
 // audited too — an error page must be accessible as well.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { ROUTES, settle, stubPlansApi } from "./fixtures";
 

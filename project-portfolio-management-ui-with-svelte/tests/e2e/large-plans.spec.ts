@@ -2,7 +2,7 @@
 // says so (`truncated`, `total`); the WBS and earned-value pages must say so too, and the critical
 // path page must offer the critical part when the full answer is refused (413).
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import { PID } from "./fixtures";
 
 const task = (n: number) => ({

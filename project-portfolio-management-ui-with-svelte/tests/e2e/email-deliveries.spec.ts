@@ -1,5 +1,5 @@
 // The email deliveries screen (administrators), over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const DATA = {
   deliveries: [

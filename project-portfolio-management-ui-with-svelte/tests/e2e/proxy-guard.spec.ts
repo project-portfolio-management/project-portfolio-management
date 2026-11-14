@@ -2,7 +2,7 @@
 // before it calls the service, so this runs against the real proxy route with
 // no service behind it.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 test("a cross-site write to the proxy is refused with 403", async ({
   request,

@@ -1,6 +1,6 @@
 // Demonstration mode (PPM_DEMO_MODE=true, served on 4174): sign in as example@example.com only, then a
 // guided tour of every feature. The API is stubbed.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 test.use({
   baseURL: `http://localhost:${Number(process.env.PW_PORT ?? 4173) + 1}`,

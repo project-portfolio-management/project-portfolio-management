@@ -1,7 +1,7 @@
 // CQ-19: a page that reads something best-effort stays quiet only when the answer is "not there
 // for you" (404, 403); any other failure is said, so a fault never looks like an empty answer.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PID = "44444444-4444-4444-8444-444444444444";
 const fail = {

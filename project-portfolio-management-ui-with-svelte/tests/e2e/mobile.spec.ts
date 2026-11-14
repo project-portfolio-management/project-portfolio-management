@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { ROUTES, stubPlansApi } from "./fixtures";
 
 // T-28k (repo tasks.md EV-1): a responsive audit at a phone viewport

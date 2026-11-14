@@ -3,7 +3,7 @@
 // service said in plain words after a save (a figure, a withdrawal at zero, a refusal, a supply commitment never
 // sent), the recent sends, the ways in (heatmap, a programme's plan page), Welsh, and axe. The service is stubbed.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

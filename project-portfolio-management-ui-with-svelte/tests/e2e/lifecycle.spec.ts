@@ -1,5 +1,5 @@
 // The lifecycle funnel (CQ-24): every phase with its live and stalled counts, over a stubbed answer.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const FUNNEL = {
   phases: [

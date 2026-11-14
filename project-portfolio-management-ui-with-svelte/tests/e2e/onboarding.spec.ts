@@ -2,7 +2,7 @@
 // shape per item, close-out readiness, the access record (or a plain note when
 // the person may not see it), and handover with a preview and a guarded commit.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, primaryButtons, settle } from "./fixtures";
 

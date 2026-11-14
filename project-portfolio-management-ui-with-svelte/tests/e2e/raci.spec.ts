@@ -1,6 +1,6 @@
 // The RACI matrix (CQ-24): the cells, the gaps named in words, toggling a letter saves the row,
 // the one-Accountable rule says so, and a new person column needs a valid reference.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PID = "55555555-5555-4555-8555-555555555555";
 const ANN = "person:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";

@@ -1,6 +1,6 @@
 // Earned value (CQ-24): the figures and their sentences, how percent complete is counted and
 // changed, the snapshot button, and the states where there is nothing to show.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PID = "77777777-7777-4777-8777-777777777777";
 const BLOCK = {

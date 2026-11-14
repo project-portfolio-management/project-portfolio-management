@@ -575,6 +575,14 @@ httpOnly cookie — no auth token in `localStorage` (BFF model, §6.15).
 
 ## 11. Testing strategy
 
+**Hermetic e2e (RE-10).** Every spec takes `test` from `tests/e2e/test.ts`. Its automatic fixture routes the browser
+context (popups included) and blocks any request or WebSocket to an origin other than the app and the mock identity
+provider (`localhost:4180`), unless a test faked it, then fails the test with the blocked addresses; service workers
+are blocked. `tests/e2e/hermetic.spec.ts` proves the rule, that a faked origin passes, and, with `test.fail`, that an
+unfaked one fails. The app's own Content Security Policy already refuses a script's `fetch` to another origin, so the
+guard matters for navigations, popups, images and anything the policy allows.
+
+
 `pnpm run check` (svelte-check strict, 0/0). **vitest** unit tests
 (`tests/unit/`; the current count is the generated block in the entity spec's
 [§14](../../spec/14-implementation-status.md), 76 files and 650 tests at 2026-10-30) cover, among others

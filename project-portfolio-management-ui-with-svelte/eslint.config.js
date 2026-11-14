@@ -44,6 +44,25 @@ export default ts.config(
     },
   },
   {
+    // RE-10: a spec takes `test` from ./test, whose fixture fails a test that reached an origin no
+    // test faked. Importing Playwright's own `test` would skip that guard.
+    files: ["tests/e2e/**/*.spec.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@playwright/test",
+              message:
+                'Import test and expect from "./test" (RE-10: it blocks unfaked origins).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["src/app.d.ts"],
     rules: { "@typescript-eslint/no-empty-object-type": "off" },
   },

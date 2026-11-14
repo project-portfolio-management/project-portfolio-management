@@ -3,7 +3,7 @@
 // received with its age, hidden, unknown with the reason, never zero; what was entered here beside, not added), in
 // English and Welsh, with axe. The service is stubbed; no workforce service is called.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

@@ -1,7 +1,7 @@
 // BR-17: a person hides a section of the top bar on the Display page; it is gone after a reload, everything else stays,
 // nothing is stored for a section never hidden, and the hidden page still works at its address. axe passes on the page.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle, stubPlansApi } from "./fixtures";
 

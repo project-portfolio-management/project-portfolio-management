@@ -1,7 +1,7 @@
 // FR-52 and LT-8 in a real browser: a plan's ways of working and governance framework (in force, followed, unfollowed,
 // written for the plan) and its links to external tools. The service is stubbed; the pages pass the axe audit.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

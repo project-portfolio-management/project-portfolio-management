@@ -3,7 +3,7 @@
 // part with WPM's reason; no total), shows the reason and no figure when WPM was not asked or did not answer,
 // and passes axe. The service is stubbed; no workforce service is called.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

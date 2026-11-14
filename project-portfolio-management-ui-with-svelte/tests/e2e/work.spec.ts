@@ -2,7 +2,7 @@
 // shows what the rule did, the work table adds up, an unplaced task is named, a
 // finance 404 is a plain note, and each page passes the axe audit.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

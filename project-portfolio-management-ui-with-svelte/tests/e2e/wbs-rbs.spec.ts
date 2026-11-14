@@ -2,7 +2,7 @@
 // a task under an unseen parent sits under "Restricted item", the RBS shows roles
 // with people and skills as demand only, and each page passes the axe audit.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

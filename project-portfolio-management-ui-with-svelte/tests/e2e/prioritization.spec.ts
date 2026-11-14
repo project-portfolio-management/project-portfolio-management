@@ -1,5 +1,5 @@
 // The prioritization queue: a keyboard grid whose columns can be moved (Alt+Arrow on a header).
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const QUEUE = {
   plans: [

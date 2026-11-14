@@ -1,5 +1,5 @@
 // The schedule Gantt (/<locale>/gantt) on Lily's GanttChart, over stubbed API answers.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const SCHEDULE = {
   portfolio_pid: "p1",

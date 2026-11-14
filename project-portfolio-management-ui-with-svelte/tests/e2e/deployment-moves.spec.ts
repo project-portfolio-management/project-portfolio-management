@@ -1,5 +1,5 @@
 // The deployment moves screen (EX-5), over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const PID = "11111111-1111-4111-8111-111111111111";
 const MOVES = {

@@ -6,7 +6,7 @@
 // empty file and one over 10 MiB are refused before any call; a 422 and a 503 say why in words; a file is a link to
 // the service's download and is never drawn in the page; removing one asks first. Welsh reads. The page passes axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

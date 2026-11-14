@@ -1,5 +1,5 @@
 // The milestone sign-off screen (EX-4), over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const DATA = {
   totals: {

@@ -1,7 +1,7 @@
 // CQ-17: changing a filter loads once, not twice. These pages used to load both from an
 // `$effect` that tracked the filter and from the filter's change handler.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PLAN = "33333333-3333-4333-8333-333333333333";
 

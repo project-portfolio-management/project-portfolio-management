@@ -1,7 +1,7 @@
 // The sitemap and robots.txt are served unlocalized, as XML and text, listing only
 // fixed pages in every locale.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 test("sitemap.xml lists static pages per locale and no records or sign-in", async ({
   request,

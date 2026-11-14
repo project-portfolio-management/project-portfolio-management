@@ -5,7 +5,7 @@
 // counted; a link is added and removed; a second copy is refused on the page; a 409, a 422 and a 404 say so in words.
 // Welsh reads. The page passes axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

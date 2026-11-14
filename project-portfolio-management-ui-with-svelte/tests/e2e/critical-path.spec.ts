@@ -1,6 +1,6 @@
 // The critical path (CQ-24): the schedule as a table with its float in words, the chains, a task
 // left unscheduled and why, the editor and what it says moved, and the baselines note.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PID = "66666666-6666-4666-8666-666666666666";
 const node = (pid: string, title: string, over: Record<string, unknown>) => ({

@@ -2,7 +2,7 @@
 // service sends (most serious first), codes appear as words in the reader's language, overdue is
 // said in words, and the filters go to the service as query parameters.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { settle } from "./fixtures";
 
 const ISSUE = {

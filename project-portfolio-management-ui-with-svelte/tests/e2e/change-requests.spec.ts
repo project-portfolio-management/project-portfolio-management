@@ -1,6 +1,6 @@
 // IR-4: the change requests page, over a stubbed `/api/change-requests`.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { settle } from "./fixtures";
 
 const CR = {

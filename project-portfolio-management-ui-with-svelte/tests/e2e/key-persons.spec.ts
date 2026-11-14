@@ -1,5 +1,5 @@
 // The key people screen (EX-11), over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 test.describe("key people", () => {
   let data = {

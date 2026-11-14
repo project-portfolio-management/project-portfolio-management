@@ -1,7 +1,7 @@
 // FR-54 in a real browser: raise an escalation on a plan, work it (acknowledge, take it up a level with a reason,
 // resolve), see the register and the link from a red tolerance. The service is stubbed; the pages pass axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

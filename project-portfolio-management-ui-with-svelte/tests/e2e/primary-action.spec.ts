@@ -2,7 +2,7 @@
 // one most people came for is styled as the primary button, and only one is: when
 // everything shouts, nothing does. Checked on every route as it first renders.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { ROUTES, stubPlansApi } from "./fixtures";
 
 test.describe("at most one primary action per screen (LT-12)", () => {

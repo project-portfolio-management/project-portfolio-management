@@ -1,7 +1,7 @@
 // The sign-in link page (CQ-24). The exchange happens in the server's load, so there is no browser
 // request to stub: a link with no token is refused at once, and one that cannot be exchanged (the
 // test run has no sign-in service) shows a page message, never a 500.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 test.describe("verify", () => {
   test("a link with no token says so and offers a new one", async ({

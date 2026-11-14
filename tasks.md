@@ -3580,10 +3580,11 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   plan list, a plan page, a form error, the not-found page and the sign-in, each in `en-001` and `cy-001`. The
   snapshots are checked in and reviewed like code.
   **Acceptance:** removing a form label or a heading fails a snapshot that axe passes.
-- [ ] **RE-10 (S) — Hermetic e2e.** The shared fixture blocks every request and WebSocket on the browser context
+- [x] **RE-10 (S) — Hermetic e2e.** The shared fixture blocks every request and WebSocket on the browser context
   that no test has faked, popups included, and fails the test with the blocked URLs, as uncaught page errors do.
   **Acceptance:** a test that forgets a stub fails, naming the URL; the current suite passes or each gap is fixed in
   the same commit.
+  **Built 2026-11-14.** `tests/e2e/test.ts` (an automatic fixture on the browser context; allowed: the app's origin and the mock identity provider on 4180; service workers blocked); all 76 specs import from it, and ESLint refuses `@playwright/test` in a spec. `tests/e2e/hermetic.spec.ts`: the allow rule, a faked origin passes, an unfaked navigation fails (`test.fail`; with the guard off it reports an unexpected pass). The `chromium` and `mobile` projects pass with the guard on (989 tests): no existing test reached an outside origin. **Found:** the CSP already refuses a script's cross-origin `fetch`, so the guard matters for navigations, popups and images. **Not done:** the SvelteKit server side (it reaches only the mock API). **Not run locally:** the `every-locale` project.
 - [ ] **RE-11 (S–M) — Design-token lint.** A lint that rejects a colour, type size, radius, shadow or focus style
   that does not come from the UI's tokens, with a fixture proving each message, and a unit test of the contrast of
   each token pair the UI uses, against WCAG 2.2 AA.

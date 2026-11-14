@@ -9,6 +9,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — hermetic e2e: a test fails when the browser reaches an origin no test faked (RE-10, 2026-11-14)
+
+Every spec now imports `test` and `expect` from `tests/e2e/test.ts` (76 files moved over; ESLint's
+`no-restricted-imports` refuses `@playwright/test` in a spec). Its automatic fixture routes the browser context,
+popups included, and blocks any request or WebSocket to an origin other than the app (`baseURL`) and the mock
+identity provider (`localhost:4180`), unless a test faked it with `page.route`. It then fails the test, naming the
+blocked addresses; service workers are blocked too. `tests/e2e/hermetic.spec.ts` proves the allow rule, shows that a
+faked origin passes, and, with `test.fail`, that an unfaked one fails (with the guard switched off, that test
+reports an unexpected pass). The `chromium` and `mobile` projects passed with the guard on (989 tests), so no
+existing test was reaching an outside origin. Found on the way: the app's Content Security Policy already refuses a
+script's `fetch` to another origin, so the guard matters for navigations, popups and whatever the policy allows.
+**Not done:** the SvelteKit server side (load functions, the proxy) is not covered; it reaches only the mock API in
+`playwright.config.ts`. **Not run locally:** the `every-locale` project (about 900 page loads), which CI runs.
+
 ### Added — the access review and emergency (break-glass) access (NC-1 slice 7, RG-9, RG-10, 2026-11-10)
 
 `/security/access`, linked from `/security`. The access review is `GET /api/access-review?plan=&older_than_days=`,

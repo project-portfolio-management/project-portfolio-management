@@ -2,7 +2,7 @@
 // imbalances in words, shows the same figures as a table, never merges currencies, and passes the axe
 // audit. The service is stubbed.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 // Smoke tests over the collection routes. The backend is stubbed so a
 // broken endpoint contract (wrong path / method / field) surfaces as

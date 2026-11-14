@@ -6,7 +6,7 @@
 // refused on the page. A 403, 409 or 422 says the catalogue's sentence, not the service's text. Welsh reads. The page
 // passes axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

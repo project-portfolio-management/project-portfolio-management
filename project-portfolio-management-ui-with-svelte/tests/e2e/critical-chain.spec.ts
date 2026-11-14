@@ -3,7 +3,7 @@
 // to carry a word and a shape as well as a colour, every chart has a table that gives the same figures, and
 // the pages say that nothing is changed.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { settle } from "./fixtures";
 
 const PID = "44444444-4444-4444-8444-444444444444";

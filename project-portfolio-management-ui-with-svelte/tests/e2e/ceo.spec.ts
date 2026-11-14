@@ -3,7 +3,7 @@
 // of the page, in both orientations, with and without long content, and a
 // failing tile must not blank the others.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const LONG = "A very long name that goes on and on ".repeat(6);
 

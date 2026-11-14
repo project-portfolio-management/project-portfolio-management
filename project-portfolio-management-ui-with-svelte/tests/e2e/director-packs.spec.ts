@@ -2,7 +2,7 @@
 // locale with no page catalogue of its own (it falls back to English), and a reading is checked to carry a
 // word and a symbol as well as a colour.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { settle } from "./fixtures";
 import { BODY } from "../unit/fixtures/director-pack-body";
 

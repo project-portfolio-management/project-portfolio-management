@@ -1,6 +1,6 @@
 // Workflow automation (CQ-24): the rules, the deadline queue and the run log, with the actions that
 // change them, over a stubbed service that records what it was asked.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const SUBJECT = "33333333-3333-4333-8333-333333333333";
 const RULE = {

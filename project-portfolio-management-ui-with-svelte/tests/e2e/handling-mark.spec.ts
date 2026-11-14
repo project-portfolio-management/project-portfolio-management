@@ -1,7 +1,7 @@
 // RG-7: a plan page says its handling mark when the deployment has a scheme, in words, in the reader's
 // language, and says nothing when there is none.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { PID, settle, stubPlansApi } from "./fixtures";
 
 test.describe("handling mark banner", () => {

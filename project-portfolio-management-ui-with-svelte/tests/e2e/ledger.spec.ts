@@ -1,5 +1,5 @@
 // The funding ledger screen (EX-12), over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const A = {
   pid: "a1",

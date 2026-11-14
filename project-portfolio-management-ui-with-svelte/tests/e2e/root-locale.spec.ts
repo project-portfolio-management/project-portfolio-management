@@ -3,7 +3,7 @@
 // has no page for resolves to the language's own locale (`cy-GB` -> `/cy-001`); a language
 // it does not have gets English; the reader's remembered choice wins over the browser.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { stubPlansApi } from "./fixtures";
 
 const CASES: [string, string][] = [

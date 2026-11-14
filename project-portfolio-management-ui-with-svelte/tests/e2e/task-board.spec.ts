@@ -1,5 +1,5 @@
 // The plan's task board (/<locale>/plans/<pid>/board) on Lily's KanbanBoard, over stubbed API answers.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const TASK = (
   pid: string,

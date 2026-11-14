@@ -1,6 +1,6 @@
 // The announcements feed (CQ-24): its content, publishing and retracting, and the reader without
 // the publishing permission, over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const NOW = Date.now();
 const iso = (msAgo: number) => new Date(NOW - msAgo).toISOString();

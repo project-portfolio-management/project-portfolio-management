@@ -2,7 +2,7 @@
 // dyslexia-friendly font and reduced motion — and the worker's path to "what do
 // I do today?". Signed out, so choices are kept on the device.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import { stubPlansApi } from "./fixtures";
 
 const EMPTY = { overdue: [], today: [], this_week: [], later: [], undated: [] };

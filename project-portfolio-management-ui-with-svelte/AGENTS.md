@@ -241,6 +241,10 @@ A behavioural change is one PR with three parts:
 - **CEO dashboard** (`/ceo`, `src/lib/ceo-view.ts`) must show every tile with
   no page scroll at **1080x810 and 810x1080** CSS px, with long content and
   with one failing tile (`tests/e2e/ceo.spec.ts`).
+- **Hermetic e2e (RE-10).** A spec imports `test` and `expect` from `./test`, never from `@playwright/test`
+  (ESLint refuses it). That fixture blocks every browser request and WebSocket to an origin other than the app and
+  the mock identity provider, unless the test faked it with `page.route`, and fails the test naming the blocked
+  addresses. The server side of SvelteKit is not covered: it reaches only the mock API the config names.
 - **Accessibility.** `tests/e2e/a11y.spec.ts` runs axe over every page route,
   enumerated from `src/routes`, so a new page is audited automatically; the
   `mobile` project repeats the route list at 390x844. Status is never colour

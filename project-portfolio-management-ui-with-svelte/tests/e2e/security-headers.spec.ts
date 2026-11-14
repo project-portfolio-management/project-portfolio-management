@@ -2,7 +2,7 @@
 // headers on a page response, and that pages load and run under the CSP with
 // no violations (console message or `securitypolicyviolation` event).
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import { ROUTES, stubPlansApi, PID } from "./fixtures";
 
 /** Collects every CSP violation, from the console and from the DOM event. */

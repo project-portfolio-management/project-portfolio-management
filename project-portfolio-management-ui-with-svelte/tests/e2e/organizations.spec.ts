@@ -1,5 +1,5 @@
 // The partner organizations screen (EX-3), over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 test.describe("organizations", () => {
   let list = [

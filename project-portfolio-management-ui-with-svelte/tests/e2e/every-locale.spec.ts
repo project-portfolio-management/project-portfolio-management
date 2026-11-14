@@ -3,7 +3,7 @@
 // line of visible text identical to the English, that is not data, a name or a symbol, is untranslated. Welsh has its
 // own, older spec (`welsh.spec.ts`); it is run here too, so the two cannot drift apart.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { ROUTES, stubPlansApi } from "./fixtures";
 import { LOCALES, LOCALE_LABELS } from "../../src/lib/locales";
 

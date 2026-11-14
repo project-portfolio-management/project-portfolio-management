@@ -7,7 +7,7 @@
 // early. A 403, 404, 409, 422 or 429 says the catalogue's sentence, not the service's text. Welsh reads. The page
 // passes axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

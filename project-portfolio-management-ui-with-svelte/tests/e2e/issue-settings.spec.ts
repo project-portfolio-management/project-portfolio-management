@@ -3,7 +3,7 @@
 // issue form then offers the organization's type, starts where its workflow says, offers only the moves this caller may
 // make, and asks for a resolution in a terminal status whatever it is called. Welsh reads. The pages pass axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

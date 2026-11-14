@@ -5,7 +5,7 @@
 // the box once saved), its deliveries are read (never the service's error text), and it is removed. A 403, 404 or
 // 422 says the catalogue's sentence, not the service's text. Welsh reads. The page passes axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

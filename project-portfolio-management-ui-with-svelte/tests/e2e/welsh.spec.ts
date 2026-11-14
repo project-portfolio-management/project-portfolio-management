@@ -2,7 +2,7 @@
 // is loaded in English and in Welsh over the same stubbed API; any line of visible text that is
 // identical in both and is not data, a name or a symbol is untranslated.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { ROUTES, stubPlansApi } from "./fixtures";
 
 /** Lines that are the same in both languages by design: product, data and fixture names, units. */

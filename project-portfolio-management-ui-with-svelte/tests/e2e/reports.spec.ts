@@ -1,5 +1,5 @@
 // Saved reports (CQ-24): list, save a definition, run it into a table, and the CSV link.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const REPORT = {
   pid: "r1",

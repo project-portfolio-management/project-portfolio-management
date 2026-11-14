@@ -1,7 +1,7 @@
 // T-28n in a real browser: a CSV is previewed (nothing written), the same button then
 // imports, and what was left out is listed. One primary button throughout.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, primaryButtons, settle } from "./fixtures";
 

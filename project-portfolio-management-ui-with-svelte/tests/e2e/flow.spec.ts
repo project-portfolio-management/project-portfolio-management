@@ -2,7 +2,7 @@
 // (mirroring the service contract; unmatched calls 404 so drift fails
 // loud). No Rust service needed.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PLAN = "33333333-3333-4333-8333-333333333333";
 const DAY = 86_400_000;

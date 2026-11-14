@@ -3,7 +3,7 @@
 // and raised from a risk (a second attempt is a 409 and says so in a catalogue sentence, not the service's
 // text). Welsh reads. The page passes axe.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

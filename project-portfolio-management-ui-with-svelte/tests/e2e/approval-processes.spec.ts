@@ -1,7 +1,7 @@
 // PL-2 in a real browser: define an approval process, start a run, follow it and finish the step that is
 // yours, with the service stubbed. The service decides who may do what; here a refusal is shown as a message.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle } from "./fixtures";
 

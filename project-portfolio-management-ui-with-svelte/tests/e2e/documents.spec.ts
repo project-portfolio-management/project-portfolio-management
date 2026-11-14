@@ -2,7 +2,7 @@
 // review, an approved version is brought into force, a final version cannot be edited,
 // each state has one primary button, and the pages pass the axe audit.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { primaryButtons, settle } from "./fixtures";
 

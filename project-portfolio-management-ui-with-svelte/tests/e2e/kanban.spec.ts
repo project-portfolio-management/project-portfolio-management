@@ -1,5 +1,5 @@
 // The user's kanban board (/<locale>/kanban), on Lily's KanbanBoard, over stubbed API answers.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const T = (
   pid: string,

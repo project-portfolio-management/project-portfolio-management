@@ -1,6 +1,6 @@
 // Collaborative review (CQ-24): delegate, accept, give a verdict, withdraw, and the consensus,
 // over a small stubbed service that remembers what was done.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const SUBJECT = "22222222-2222-4222-8222-222222222222";
 const review = (over: Record<string, unknown>) => ({

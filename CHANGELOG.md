@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-10: hermetic e2e)
+
+- **A UI end-to-end test now fails when the browser reaches an origin no test faked.** Every spec imports `test`
+  from `tests/e2e/test.ts`, and ESLint refuses Playwright's own. The `chromium` and `mobile` projects pass with the
+  guard on (989 tests). See the UI changelog.
+- Not done: the SvelteKit server side is not covered. Not run locally: the `every-locale` project.
+
 ### 14 November (RE-12: personas)
 
 - **Four personas in `spec/personas/`:** the portfolio office lead, the sponsor, the project or product lead, and the

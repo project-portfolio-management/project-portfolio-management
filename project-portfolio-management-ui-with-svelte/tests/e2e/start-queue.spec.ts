@@ -1,5 +1,5 @@
 // EX-8: the start queue screen, over stubbed API answers.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 
 const QUEUE = {
   queue: [

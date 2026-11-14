@@ -6,7 +6,7 @@
 // the other side only answers a bearer token the provider issued, so a pass proves the app
 // sent the right one. Nothing here is stubbed in the browser: the sign-in is server to server.
 
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./test";
 import { settle } from "./fixtures";
 
 const IDP = "http://localhost:4180";

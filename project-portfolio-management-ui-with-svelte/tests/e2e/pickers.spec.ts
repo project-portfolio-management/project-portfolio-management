@@ -1,6 +1,6 @@
 // The header's picker bar: link, search, theme, language, text size and share. Each button opens its
 // dropdown under the button, inside the window and not jammed at the far left, without moving the page.
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 
 const PICKERS = [
   { name: "link", button: ".link-picker-button", popup: ".link-picker-list" },

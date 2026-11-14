@@ -1,7 +1,7 @@
 // PJ-9 in a real browser: stage an edit, preview it (nothing is saved), commit
 // exactly that with the preview's etag, see a stale plan refused, or discard.
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, primaryButtons, settle } from "./fixtures";
 

@@ -3,7 +3,7 @@
 // never a pass, that leveling needs an explicit confirm, and an axe audit of
 // every page. No Rust service needed.
 
-import { test, expect, type Page, type Route } from "@playwright/test";
+import { test, expect, type Page, type Route } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { settle } from "./fixtures";
 

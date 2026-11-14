@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (syncpack in CI)
+
+- **CI's site job now runs `syncpack lint` from the repository root**, as `make lint-packages` does, and Dependabot
+  watches the root `package.json`. Both were left undone when syncpack was added.
+- Not verified: the step on GitHub until this push's run; it passed locally, and zizmor finds nothing new.
+
 ### 14 November (the service's `make demo`)
 
 - **`make demo` in the service ran `cargo run -- task seed`, a task that does not exist.** It now runs the

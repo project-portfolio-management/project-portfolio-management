@@ -357,6 +357,11 @@ jobs:
           cache-dependency-path: project-portfolio-management.github.io/pnpm-lock.yaml
       - name: The site's copy of the documents is current
         run: node scripts/sync-content.mjs --check
+      - name: The UI and the site use the same versions of shared packages (syncpack, make lint-packages)
+        working-directory: .
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec syncpack lint
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - run: pnpm run build

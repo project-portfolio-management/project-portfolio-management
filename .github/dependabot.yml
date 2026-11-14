@@ -57,6 +57,16 @@ updates:
       # The same TypeScript 7 hold as the UI (svelte-check).
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+  # The repository-level tooling (syncpack only); see the root package.json.
+  - package-ecosystem: npm
+    directory: /
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: weekly
+    groups:
+      npm-root:
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     # A release is trusted after it has been out a week, not on the day it is published.

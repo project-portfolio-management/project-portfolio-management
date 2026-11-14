@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-14: a pull request template)
+
+- **A pull request template** asks for the task, the specification and the test, what the change writes outside the
+  service (exports, webhooks, feeds, the public reader, migrations), what was not done or verified, and which AI tool
+  helped. CONTRIBUTING.md points at it.
+- Not verified: how GitHub renders it; no pull request has been opened since.
+
 ### 14 November (research: the DHCW Roadmap Editor)
 
 - **Research on the DHCW Roadmap Editor, with 14 proposed tasks.** Digital Health and Care Wales's tool lets Product

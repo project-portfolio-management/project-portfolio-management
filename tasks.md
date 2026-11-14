@@ -3598,6 +3598,7 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   or reloading with unsaved changes asks first; nothing pending goes to browser storage.
   **Acceptance:** an e2e test expires the token mid-edit, signs in again, and saves what was typed; a reload with
   changes asks first.
-- [ ] **RE-14 (S) — A pull request template.** It asks what the change writes to shared data, to an export or to the
+- [x] **RE-14 (S) — A pull request template.** It asks what the change writes to shared data, to an export or to the
   public reader, and what was not done or not verified.
   **Acceptance:** `.github/pull_request_template.md` exists and links AGENTS.md.
+  **Built 2026-11-14.** `.github/pull_request_template.md`: the task, the specification, code and test, what the change writes outside the service (exports, webhooks, feeds, the public reader, migrations), what was not done or verified, and AI tools. CONTRIBUTING.md points at it. **Not verified:** how GitHub renders it, since no pull request has been opened since.

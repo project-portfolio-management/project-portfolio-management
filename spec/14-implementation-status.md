@@ -70,8 +70,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | UE | 1 | 7 |
 | PE | 1 | 15 |
 | SM | 2 | 15 |
-| RE | 0 | 14 |
-| **Total** | **242** | **72** |
+| RE | 1 | 13 |
+| **Total** | **243** | **71** |
 
 <!-- generated:end -->
 

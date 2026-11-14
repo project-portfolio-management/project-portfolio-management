@@ -36,6 +36,8 @@ money, and you can help by telling the project what it gets wrong.
    change.
 5. **Say what you did not run.** If you could not run something, say so rather
    than implying it passed.
+6. **Fill in the pull request template** (`.github/pull_request_template.md`), including
+   what the change writes outside the service.
 
 ## House rules
 

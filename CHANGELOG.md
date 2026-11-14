@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-11: colours come from design tokens)
+
+- **A new raw colour in the UI fails a unit test;** the 32 files that already had them are listed with their counts,
+  which can only fall. See the UI changelog.
+- Not done: the contrast test (axe measures rendered contrast already); sizes, radii and shadows.
+
 ### 14 November (RE-8: stable public addresses)
 
 - **A roadmap's old slug still works:** the public reader answers it with `301` to the new one, and no other roadmap

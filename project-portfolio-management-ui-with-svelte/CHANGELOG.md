@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a ratchet on raw colours (RE-11, 2026-11-14)
+
+`tests/unit/design-tokens.test.ts` refuses a `#hex`, `rgb()` or `hsl()` colour in `src/` outside `src/app.css`,
+except as a `var(--token, …)` fallback. The 32 files that had 154 such literals when it was added, mostly the SVG
+charts, are listed with their counts; a count can only fall, and a lower one must be written down. **Not done:** moving
+those literals onto tokens; a token contrast test (axe checks rendered contrast on every route); sizes, radii, shadows.
+
 ### Fixed — the plan's name is "Name" in every locale, not "Title" (2026-11-14)
 
 English labels the field "Name" (`form.title`) and says "Name is required." (`form.titleRequired`); the other nine

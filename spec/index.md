@@ -82,6 +82,9 @@ kept whole rather than split across them:
   phase.
 - [Brainitive lessons](brainitive-lessons/index.md) — what an open-source team workspace and its MCP server
   teach about retry-safe writes, evidence-backed status, webhook signing and security sweeps (ideas only; AGPL-3.0)
+- [DHCW Roadmap Editor lessons](dhcw-roadmaps-editor-lessons/index.md) — what a Welsh health body's editor for
+  public Now / Next / Later product roadmaps teaches about change sets, freshness, bilingual text and public readers
+  (ideas only; MIT)
 - [Total Project Control](total-project-control/index.md) — Devaux's
   DIPP, expected monetary value and cost estimate to complete: is the
   value still to come worth the money still to spend? Implemented in

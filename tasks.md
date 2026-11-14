@@ -3506,3 +3506,98 @@ Why: what a project delivers goes on running, and its incidents, requests and se
 - [ ] **SM-15 (M) — The cost of running.** Time entries on tickets, beside the budget, and satisfaction per ticket.
 - [ ] **SM-16 (L) — Screens** for each stage as it lands, in 11 locales, with Playwright and axe.
 - [ ] **SM-17 (S, owner) — Confirm SM-D1 to SM-D6.** SM-D1 and SM-D5 are decided (no CRA role claimed; legal advice before any commercial step).
+
+## DHCW Roadmap Editor ideas (RE-n, [spec/dhcw-roadmaps-editor-lessons/index.md](spec/dhcw-roadmaps-editor-lessons/index.md)), proposed 2026-11-14
+
+Why: Digital Health and Care Wales keeps public Now / Next / Later product roadmaps in a Google spreadsheet, and plans
+a PostgreSQL-backed API to replace it. This service has no public statement of a product's direction, and NC-10's Now /
+Next / Later lives in one browser. The assessment is in [plan.md](plan.md) §88 to §92, and the order of work is §92.
+The source is MIT-licensed, but no code is copied, because the stacks differ. Every item follows the rules in AGENTS.md.
+The name is **public product roadmap** throughout, because "roadmap" already means spec §15 and NC-10.
+
+- [ ] **RE-1 (L) — Public product roadmap items.** A roadmap belongs to a `Product` plan (one per plan). An item has
+  a title (required), a description, an expected outcome, a phase, ordered tags, organisations (RE-7), details
+  nested up to three levels, and a placement: `recently_delivered`, `now`, `next`, `later`, `delivered_this_year`,
+  `not_doing`, or none (unplaced, never shown publicly). Items have an order within each placement. An item may link
+  to the plan's milestones or tasks as evidence, but it is never derived from them. Text is stored as typed and
+  trimmed. Off by module. The NC-10 screen gains a "from the product's roadmap" source, and its `localStorage`
+  ratings stay as they are.
+  **Acceptance:** request tests for create, read, update, move between placements and reorder; an unplaced item is
+  listed for editors and absent from every public read (RE-4); a private plan's roadmap is a `404` to a non-member;
+  a detail list that skips a level is `422`.
+- [ ] **RE-2 (M) — Publish a roadmap as one change set.** `POST …/roadmap/publish` takes every pending change to the
+  roadmap and its items. Each changed field carries its **base value**, the value the editor first saw. All of it is
+  written in one transaction with one audit row per record, or none of it is. A field whose stored value no longer
+  equals its base is a `409` that names every conflicting field, with both values. `…/publish/preview` returns what
+  would change and writes nothing. It takes an `Idempotency-Key` (BR-1), so a lost answer can be retried safely.
+  **Acceptance:** two editors change different fields of one item, and both publishes land; they change the same
+  field, and the second is `409` with both values and writes nothing at all; a retried publish with the same key
+  writes once; the preview equals the diff that publishing applies.
+- [ ] **RE-3 (S) — Freshness.** `reviewed_on` (a calendar date in the deployment's time zone) is set only by an
+  explicit "mark as reviewed today" or a date a person enters, never as a side effect of publishing. `stale` is
+  derived from a deployment setting (default 42 days, DHCW's six weeks). The portfolio view lists stale public
+  roadmaps. A roadmap never reviewed is `unknown`, not stale.
+  **Acceptance:** publishing a typo fix leaves `reviewed_on` unchanged; day 42 is not stale and day 43 is; an unset
+  date reports `unknown`.
+- [ ] **RE-4 (M, owner: OQ-14) — A public, read-only roadmap reader.** `GET /public/roadmaps` and
+  `GET /public/roadmaps/{slug}`, with no token, are off unless the deployment turns them on. They return only
+  published roadmaps of plans that are neither private nor carry a handling mark above the lowest level, as fixed
+  rules. The fields are a whitelist: no person, no internal id, no audit data. Responses carry an `ETag` and a
+  `Cache-Control`, are rate-limited, and send `X-Robots-Tag` only if the deployment asks. An unpublish takes effect
+  on the next read. The work starts with a census of every field and path, which a test then guards, as OC-13 did.
+  **Acceptance:** a published roadmap is readable without a token; an unpublished, private or marked one is a `404`
+  that looks the same as a missing one; adding a field to the item model without classifying it fails the census
+  test.
+- [ ] **RE-5 (M, owner: OQ-15) — Interop with the DHCW Roadmap Editor.** (a) A mapping document,
+  `operations/dhcw-roadmaps-editor.md`, from their `RoadmapRepository` operations (`listRoadmaps`,
+  `listRoadmapItems`, `listOrganisations`, `listFamilies`, `listCategories`, `publishRoadmapChanges`) to this
+  service's routes, with their error mapping, CORS from a configured origin, and a sign-in that is the deployment's
+  own identity provider, not Google tokens. It states each gap. (b) A dry-run import of their documented
+  spreadsheet format (the first tab as the roadmap index, one tab per roadmap, `Families` and `Categories`) through
+  the bulk-import path, from CSV exports. It reports what maps, what does not, and nothing is written without a
+  confirmed run. No code goes to their repository, and no contact is made, without the owner.
+  **Acceptance:** their four test fixture CSVs (`Roadmaps`, `ProductA`, `ProductB` and `ProductC`, MIT, the notice
+  kept) import in a dry run with every row accounted for.
+- [ ] **RE-6 (M) — Stored bilingual text that knows when it is out of date.** Each public text field (title,
+  description, expected outcome, phase, tags, details) holds English and optional other languages. A translation
+  records the hash of the source text it was made from. When the English changes, the translation is kept and marked
+  `needs_review`, and the public reader serves it with that mark, or falls back to English if the deployment says so.
+  The service never writes one language from another. Generalises the per-language map on issues
+  (`src/issues.rs`).
+  **Acceptance:** changing the English marks the Welsh `needs_review` and keeps it; re-saving the Welsh clears the
+  mark; the public reader's fallback follows the setting; an unknown language tag is `422`.
+- [ ] **RE-7 (S–M) — Shared lists defined once.** Bilingual categories and product families, each with an id and a
+  colour, linked by id. Organisations gain an optional short `code`, unique per deployment, and a `national` scope
+  (one allowed, listed first). A screen shows a roadmap whose copied name or colour differs from its list's. An
+  organisation code the list does not hold is refused on write; an import (RE-5) keeps it as a warning.
+  **Acceptance:** renaming a category renames it on every roadmap that links it; two organisations with one code
+  are `409`; a second `national` is `422`.
+- [ ] **RE-8 (S) — Stable public ids.** A roadmap's public slug is unique per deployment and keeps its old value as a
+  redirect when changed. An item's public id is eight random lower-case letters and digits, starting with a letter,
+  never reused. Part of RE-4.
+  **Acceptance:** a renamed roadmap's old slug answers `301`; ids are unique under a 10,000-item property test.
+- [ ] **RE-9 (S) — Accessibility-tree snapshots.** Playwright `toMatchAriaSnapshot` for the important states of the
+  plan list, a plan page, a form error, the not-found page and the sign-in, each in `en-001` and `cy-001`. The
+  snapshots are checked in and reviewed like code.
+  **Acceptance:** removing a form label or a heading fails a snapshot that axe passes.
+- [ ] **RE-10 (S) — Hermetic e2e.** The shared fixture blocks every request and WebSocket on the browser context
+  that no test has faked, popups included, and fails the test with the blocked URLs, as uncaught page errors do.
+  **Acceptance:** a test that forgets a stub fails, naming the URL; the current suite passes or each gap is fixed in
+  the same commit.
+- [ ] **RE-11 (S–M) — Design-token lint.** A lint that rejects a colour, type size, radius, shadow or focus style
+  that does not come from the UI's tokens, with a fixture proving each message, and a unit test of the contrast of
+  each token pair the UI uses, against WCAG 2.2 AA.
+  **Acceptance:** a raw `#hex` in a component fails lint; a token pair below 4.5:1 for text fails the test.
+- [ ] **RE-12 (S, docs) — Personas with numbered owner answers.** One file per primary user in `spec/personas/` (the
+  portfolio office, a sponsor, a project manager, a reader of the public roadmap), with facts tied to numbered owner
+  answers and a list of what is still to check with real users. New tasks cite the answers.
+  **Acceptance:** `spec/03-stakeholders-and-users.md` links each persona, and no persona claims an answer the owner
+  has not given.
+- [ ] **RE-13 (M, UI) — Pending edits survive an expired session.** On the long forms (a plan, a business case, a
+  roadmap's pending changes), an expired session keeps what was typed in memory and offers to sign in again; leaving
+  or reloading with unsaved changes asks first; nothing pending goes to browser storage.
+  **Acceptance:** an e2e test expires the token mid-edit, signs in again, and saves what was typed; a reload with
+  changes asks first.
+- [ ] **RE-14 (S) — A pull request template.** It asks what the change writes to shared data, to an export or to the
+  public reader, and what was not done or not verified.
+  **Acceptance:** `.github/pull_request_template.md` exists and links AGENTS.md.

@@ -77,3 +77,12 @@ spec §16 once that crate is scaffolded.
 - **OQ-11 — Service record or help desk?** (**Decided 2026-11-05:** a service record, fed by a service desk where there is one. SM-D1.)
 - **OQ-12 — Who reviews bundled assessment templates?** They touch legal wording. (**Decided 2026-11-05:** they ship as drafts, marked unreviewed, as translations do. PE-D5. No reviewer is named yet.)
 - **OQ-13 — This project's role under the EU Cyber Resilience Act.** A legal question, not answered here. (**Decided 2026-11-05:** no role claimed, as nothing commercial is planned; revisit with legal advice before any commercial step. SM-D5.)
+- **OQ-14 — Should the service serve anything without a token?** A public product roadmap (RE-4) is written for
+  health boards, government and the public, and DHCW publishes theirs on a public site. Today every read needs a
+  token, and public share links (BR-9) were declined. (Lean: yes, but only as an opt-in public reader of roadmaps a
+  person published, from plans that are neither private nor marked, with a whitelisted set of fields that names no
+  person, and a census test in front of it.)
+- **OQ-15 — Offer this service as the API the DHCW Roadmap Editor plans?** Its guide plans a PostgreSQL-backed HTTP API
+  to replace Google Sheets behind one port ([lessons](dhcw-roadmaps-editor-lessons/index.md)). (Lean: write the mapping
+  and a dry-run import (RE-5), and leave any approach to DHCW to the owner. Do not shape the data model to their
+  spreadsheet beyond what RE-1 needs anyway.)

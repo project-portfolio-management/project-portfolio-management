@@ -116,6 +116,11 @@
           "description": "Ideas from an open-source team workspace: retry-safe writes, evidence-backed status, webhook signing, security sweeps"
         },
         {
+          "title": "DHCW Roadmap Editor lessons",
+          "path": "spec/dhcw-roadmaps-editor-lessons/index.md",
+          "description": "Ideas from a Welsh health body's public product roadmap editor: change sets, freshness, bilingual text, public readers"
+        },
+        {
           "title": "Total Project Control",
           "path": "spec/total-project-control/index.md",
           "description": "DIPP, banding and portfolio triage"

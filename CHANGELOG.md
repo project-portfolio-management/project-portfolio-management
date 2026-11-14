@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (research: the DHCW Roadmap Editor)
+
+- **Research on the DHCW Roadmap Editor, with 14 proposed tasks.** Digital Health and Care Wales's tool lets Product
+  Leads keep public Now / Next / Later product roadmaps, and it plans a PostgreSQL-backed API in place of its Google
+  spreadsheet. The map is [`spec/dhcw-roadmaps-editor-lessons/index.md`](spec/dhcw-roadmaps-editor-lessons/index.md);
+  the assessment and advice are `plan.md` §88 to §92; the tasks RE-1 to RE-14 are in `tasks.md`; and the open questions
+  OQ-14 (anything served without a token) and OQ-15 (offering this service as their API) are in
+  `spec/16-open-questions.md`. Ideas only: the source is MIT, and no code was copied.
+- Not done: nothing is built, and no task is confirmed by the owner. Not verified: the editor was read from its
+  documents, types and a public clone at commit `cc81478`, not run; its public site was not read; and no one at DHCW
+  was contacted.
+
 ### 14 November (syncpack)
 
 - **syncpack keeps the UI's and the site's shared packages on the same version.** A private root `package.json`

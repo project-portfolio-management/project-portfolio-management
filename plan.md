@@ -1820,3 +1820,88 @@ was light: searches varied by capability and term of art, and the last rounds ad
 
 **Open questions for the owner:** whether a product that nobody funds belongs in the plan table at all (PE-D1); whether this is a service record or a help desk (SM-D1); who reviews the bundled assessment
 templates, since the owner's rule for translations should hold for legal wording too (PE-D5); and what role this project has under the CRA (SM-D5).
+
+# Research: DHCW Roadmap Editor (RE-n)
+
+Research date: 2026-11-14. Subject:
+[DHCW-Digital-Health-and-Care-Wales/roadmaps-editor](https://github.com/DHCW-Digital-Health-and-Care-Wales/roadmaps-editor),
+read at commit `cc81478`. It is a static React app, MIT-licensed, with 72 commits from 10 to 14 November 2026. The map
+is [spec/dhcw-roadmaps-editor-lessons/index.md](spec/dhcw-roadmaps-editor-lessons/index.md), and this section gives
+the assessment and the advice. The evidence was its documents and types; nothing was run.
+
+## 88. What it is, and why it matters more than its size
+
+Digital Health and Care Wales Product Leads use it to keep public Now / Next / Later roadmaps of their products. A
+separate public site reads the same Google spreadsheet each night. The editor is four days old and has no backend,
+but it is unusually well specified: it has 14 ADRs, a persona with numbered owner answers, a written contract for
+everything it writes to the shared spreadsheet, and 34 accessibility-tree snapshots in English and Welsh.
+
+It matters to this project for three reasons:
+
+1. **It plans the backend we already are.** Its guide
+   [replacing-google-sheets.md](https://github.com/DHCW-Digital-Health-and-Care-Wales/roadmaps-editor/blob/main/docs/operations/replacing-google-sheets.md)
+   says Sheets is temporary, and that a PostgreSQL-backed HTTP API will take its place behind one port. It names the
+   operations and the error mapping.
+2. **It is the audience this project names:** a large public health body, in Wales, with Welsh as a second language.
+3. **It covers a job we do not:** telling health boards, government and the public what a product is doing, in
+   outcome words, with a published or unpublished state and a freshness rule.
+
+## 89. Where we already match or lead
+
+- **Storage, access and audit.** Private plans, handling marks, audit rows in the write's own transaction, and
+  people held as references. They rely on Google's sharing of one sheet, so anyone who can edit the sheet can edit
+  every roadmap.
+- **Translations.** 11 interface locales with a review record, and stored per-language text on issues. They have
+  English and Welsh, with the same rule that the Welsh is machine-written until a speaker reviews it.
+- **Retry and concurrency.** Idempotency keys (BR-1), and `If-Match` on goals, handover and the sandbox.
+- **Products, objectives and milestones** under the roadmap, which their spreadsheet has no room for.
+
+## 90. Gaps worth considering
+
+| # | Idea | Why it matters here | Fit | Task |
+|---|---|---|---|---|
+| 1 | **Public product roadmap items**: placement (recently delivered, Now, Next, Later, delivered this year, not doing), expected outcome, phase, tags, organisations, nested details | A product plan has no outcome-worded statement of direction. NC-10 keeps its Now / Next / Later only in one browser | High | RE-1 |
+| 2 | **Publish as one change set**: per-field base values, a preview, all or nothing, refused with the conflicting fields on a co-lead's change | Many edits by two leads to one roadmap. Same need wherever a plan is edited by several people | High | RE-2 |
+| 3 | **Freshness**: a `reviewed_on` date set only on purpose, stale after a configured period (DHCW uses six weeks) | A typo fix must not make an old roadmap look current | High | RE-3 |
+| 4 | **A public, read-only roadmap reader**: published roadmaps only, fixed fields, stable ids and slugs, `ETag`, no names of people | The public is a stated reader. Today every read needs a token | Medium-high; needs the owner | RE-4 |
+| 5 | **Serve the editor's repository port**, a documented mapping and a contract fixture, and import their spreadsheet once | They plan exactly this API. It is a decision for them and the owner | Medium; only if wanted | RE-5 |
+| 6 | **Bilingual stored text with an out-of-date mark**: when the English changes, the Welsh is kept and marked as needing review | The project's audience has legal language duties; a stale translation must be visible, not silent | High | RE-6 |
+| 7 | **Shared lists defined once**: bilingual categories and families with a colour, and organisations with a short code and a national scope; drift shown | Health board codes (`SBUHB`, `National`) recur across Welsh bodies | Medium | RE-7 |
+| 8 | **Stable public ids** for a roadmap and its items | A public link must survive renames and reordering | Medium (part of RE-4) | RE-8 |
+| 9 | **Accessibility-tree snapshots** for key states, in English and Welsh | Catches a lost label or heading that axe passes | High (UI) | RE-9 |
+| 10 | **Hermetic e2e**: refuse any request the test did not fake | A missed stub today falls through silently | High (UI) | RE-10 |
+| 11 | **Design-token lint and token contrast test** | Nothing stops a raw colour in a class or stylesheet | Medium (UI) | RE-11 |
+| 12 | **A persona with numbered owner answers**, cited by tasks | Our stakeholder list has no answers to cite | Medium (docs) | RE-12 |
+| 13 | **Pending edits survive an expired session; leaving with edits asks** | Long forms in the UI were not checked for either | Medium (UI) | RE-13 |
+| 14 | A **pull request template** that states what a change writes to shared data or to the public reader | Cheap; makes contract changes visible in review | Low-medium | RE-14 |
+
+## 91. Advice
+
+1. **Build the public product roadmap as a feature of a product plan, not as a new module.** RE-1, RE-2 and RE-3
+   make NC-10 real: the items are stored by the service and shared, and the only Now / Next / Later rule is the one a
+   person sets. This stands on its own, whatever DHCW does.
+2. **Do RE-6 with RE-1, not after.** Public text in Wales is bilingual. Retrofitting an out-of-date mark onto stored
+   text is harder than starting with it. Our rule is better than theirs, because a database can keep the Welsh and
+   mark it, where a spreadsheet can only lock the field.
+3. **Treat the public reader (RE-4) as a security change.** Begin with a census of every field it could expose, as
+   OC-13 did for private plans. Keep plans that are private or carry a handling mark out of it, as fixed rules, and
+   name no people. BR-9 was declined for good reasons; this is narrower, because it publishes only text that a
+   person chose to publish.
+4. **Offer, don't build, the adapter (RE-5).** Write the mapping from their port to our routes, and say what is
+   missing. Contact DHCW only through the owner. The one piece worth building on spec is a dry-run import of their
+   spreadsheet's documented format, through the bulk-import path, because it proves the data model fits.
+5. **Take the testing ideas now (RE-9, RE-10).** They are small and independent, and they find real defects.
+6. **Mind the vocabulary.** "Roadmap" already means the project's own plan (spec §15) and the NC-10 matrix. Name
+   this the **public product roadmap** in the spec, the API and the UI.
+
+## 92. Sequencing and open questions
+
+1. **Now, small:** RE-10, RE-9, RE-12, RE-14.
+2. **Data model:** RE-7 (lists), then RE-1 with RE-6, then RE-2, then RE-3.
+3. **Public reader:** RE-4 and RE-8, after the owner answers OQ-14.
+4. **Interop:** RE-5's mapping document and dry-run import, after the owner answers OQ-15.
+5. **UI:** RE-13 and RE-11 alongside the screens for RE-1, not at the end.
+
+**Open questions for the owner:** OQ-14, whether the service should serve anything without a token; OQ-15, whether
+to offer DHCW this service as the API its guide plans; and whether a public roadmap may ever name a person (the
+recommendation is no, and to name a role or a team instead).

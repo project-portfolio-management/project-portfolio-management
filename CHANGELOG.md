@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-12: personas)
+
+- **Four personas in `spec/personas/`:** the portfolio office lead, the sponsor, the project or product lead, and the
+  reader of a public product roadmap. Each one keeps apart what the repository records, the owner's numbered answers,
+  the open questions, and what still needs checking with real users. `spec/03-stakeholders-and-users.md` links them.
+- Not done: no owner answers are recorded (none have been given yet), and no user research was done.
+
 ### 14 November (RE-14: a pull request template)
 
 - **A pull request template** asks for the task, the specification and the test, what the change writes outside the

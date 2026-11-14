@@ -20,3 +20,7 @@ Per-subproject stakeholder detail: service
 [spec §3](../project-portfolio-management-service-with-rust/spec/index.md), matcher
 [spec §3](../project-portfolio-management-matcher-with-rust/spec/index.md), front-end
 [spec §3](../project-portfolio-management-ui-with-svelte/spec/index.md).
+
+The four roles a screen is designed for are written up as personas in [personas/](personas/index.md) (RE-12): the
+portfolio office lead, the sponsor, the project or product lead, and the reader of a public product roadmap. Their
+lists of owner answers are empty until the owner answers them.

@@ -3588,11 +3588,12 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   that does not come from the UI's tokens, with a fixture proving each message, and a unit test of the contrast of
   each token pair the UI uses, against WCAG 2.2 AA.
   **Acceptance:** a raw `#hex` in a component fails lint; a token pair below 4.5:1 for text fails the test.
-- [ ] **RE-12 (S, docs) — Personas with numbered owner answers.** One file per primary user in `spec/personas/` (the
+- [x] **RE-12 (S, docs) — Personas with numbered owner answers.** One file per primary user in `spec/personas/` (the
   portfolio office, a sponsor, a project manager, a reader of the public roadmap), with facts tied to numbered owner
   answers and a list of what is still to check with real users. New tasks cite the answers.
   **Acceptance:** `spec/03-stakeholders-and-users.md` links each persona, and no persona claims an answer the owner
   has not given.
+  **Built 2026-11-14.** `spec/personas/`: an index and four personas (P1 portfolio office lead, P2 sponsor, P3 project or product lead, P4 public roadmap reader). Each separates what the repository records (with its file), numbered owner answers, open questions for the owner, and what to check with real users. `spec/03-stakeholders-and-users.md` links them. **Not done:** no owner answer is recorded, because none has been given; every persona's answers list is empty. No user research was done, and none is claimed. DHCW's answers (A1, A7, A12, A13) are cited as DHCW's, not as this project's.
 - [ ] **RE-13 (M, UI) — Pending edits survive an expired session.** On the long forms (a plan, a business case, a
   roadmap's pending changes), an expired session keeps what was typed in memory and offers to sign in again; leaving
   or reloading with unsaved changes asks first; nothing pending goes to browser storage.

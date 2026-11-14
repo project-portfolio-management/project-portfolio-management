@@ -82,6 +82,8 @@ kept whole rather than split across them:
   phase.
 - [Brainitive lessons](brainitive-lessons/index.md) — what an open-source team workspace and its MCP server
   teach about retry-safe writes, evidence-backed status, webhook signing and security sweeps (ideas only; AGPL-3.0)
+- [Personas](personas/index.md) — the portfolio office lead, the sponsor, the project or product lead and the
+  reader of a public product roadmap, with numbered owner answers (none yet) and open questions (RE-12)
 - [DHCW Roadmap Editor lessons](dhcw-roadmaps-editor-lessons/index.md) — what a Welsh health body's editor for
   public Now / Next / Later product roadmaps teaches about change sets, freshness, bilingual text and public readers
   (ideas only; MIT)

@@ -379,6 +379,52 @@ pub fn shown_translations(stored: &Value, sources: &BTreeMap<&str, Value>) -> Va
     Value::Object(out)
 }
 
+/// The environment variable naming how many calendar days after its last review a roadmap is stale (RE-3).
+pub const STALE_DAYS_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS";
+/// The default: 42 calendar days, the six weeks DHCW uses.
+pub const STALE_DAYS_DEFAULT: i64 = 42;
+
+/// The stale period from the setting: a whole number of calendar days from 1 to 3650; unset or blank is the default.
+///
+/// # Errors
+///
+/// A message when the setting is not such a number, so a typo is not silently the default.
+pub fn parse_stale_days(raw: Option<&str>) -> Result<i64, String> {
+    match raw.map(str::trim).filter(|r| !r.is_empty()) {
+        None => Ok(STALE_DAYS_DEFAULT),
+        Some(r) => r
+            .parse::<i64>()
+            .ok()
+            .filter(|d| (1..=3650).contains(d))
+            .ok_or_else(|| {
+                format!(
+                    "{STALE_DAYS_ENV} is a whole number of calendar days from 1 to 3650, not {r:?}"
+                )
+            }),
+    }
+}
+
+/// The stale period this process uses: the setting, or the default when it is unset or not valid.
+#[must_use]
+pub fn stale_days() -> i64 {
+    parse_stale_days(std::env::var(STALE_DAYS_ENV).ok().as_deref()).unwrap_or(STALE_DAYS_DEFAULT)
+}
+
+/// How fresh a roadmap is (RE-3): `unknown` when never reviewed, `stale` when more than `days` calendar days have
+/// passed since its review, else `fresh`. A review dated after `today` is fresh.
+#[must_use]
+pub fn freshness(
+    reviewed_on: Option<chrono::NaiveDate>,
+    today: chrono::NaiveDate,
+    days: i64,
+) -> &'static str {
+    match reviewed_on {
+        None => "unknown",
+        Some(r) if (today - r).num_days() > days => "stale",
+        Some(_) => "fresh",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -387,6 +433,21 @@ mod tests {
         Detail {
             text: text.to_string(),
             level,
+        }
+    }
+
+    #[test]
+    fn calendar_day_42_is_fresh_and_day_43_is_stale() {
+        let today = chrono::NaiveDate::from_ymd_opt(2026, 11, 14).unwrap();
+        let ago = |n| today - chrono::Duration::days(n);
+        assert_eq!(freshness(None, today, 42), "unknown");
+        assert_eq!(freshness(Some(ago(42)), today, 42), "fresh");
+        assert_eq!(freshness(Some(ago(43)), today, 42), "stale");
+        assert_eq!(freshness(Some(today), today, 42), "fresh");
+        assert_eq!(parse_stale_days(None), Ok(42));
+        assert_eq!(parse_stale_days(Some(" 30 ")), Ok(30));
+        for bad in ["0", "six weeks", "-1", "4000"] {
+            assert!(parse_stale_days(Some(bad)).is_err(), "{bad}");
         }
     }
 

@@ -41,6 +41,8 @@ pub fn routes() -> Routes {
             "/plans/{pid}/roadmap/items/{ipid}/delete",
             post(delete_item),
         )
+        .add("/plans/{pid}/roadmap/reviewed", put(mark_reviewed))
+        .add("/public-roadmaps/stale", get(stale_list))
         .add(
             "/plans/{pid}/roadmap/translations/{lang}",
             put(translate_roadmap),
@@ -90,6 +92,18 @@ pub(crate) fn item_view(i: &items::Model) -> Value {
     })
 }
 
+/// How fresh a roadmap is today, in the deployment's time zone, with the rule that says so (RE-3).
+pub(crate) fn freshness_view(r: &roadmaps::Model) -> Value {
+    let days = rules::stale_days();
+    let today = crate::tz::deployment_today();
+    json!({
+        "state": rules::freshness(r.reviewed_on, today, days),
+        "stale_after_days": days,
+        "stale_from": r.reviewed_on.map(|d| d + chrono::Duration::days(days + 1)),
+        "today": today,
+    })
+}
+
 /// JSON view of a roadmap and its items, in page order, unplaced last.
 pub(crate) fn roadmap_view(r: &roadmaps::Model, list: &[items::Model]) -> Value {
     let mut list: Vec<&items::Model> = list.iter().collect();
@@ -103,7 +117,7 @@ pub(crate) fn roadmap_view(r: &roadmaps::Model, list: &[items::Model]) -> Value 
     json!({
         "pid": r.pid, "plan_pid": r.plan_pid, "slug": r.slug, "title": r.title, "vision": r.vision,
         "service_description": r.service_description, "category_pid": r.category_pid,
-        "published": r.published, "reviewed_on": r.reviewed_on,
+        "published": r.published, "reviewed_on": r.reviewed_on, "freshness": freshness_view(r),
         "translations": rules::shown_translations(&r.translations, &roadmap_sources(r)),
         "items": list.into_iter().map(item_view).collect::<Vec<_>>(),
     })
@@ -859,4 +873,83 @@ async fn translate_item(
     .map_err(super::audit_failed)?;
     tx.commit().await?;
     format::json(item_view(&row))
+}
+
+/// `PUT …/roadmap/reviewed` body: `today` true marks it reviewed today in the deployment's time zone; otherwise
+/// `reviewed_on` is the date, or `null` to clear it.
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub(crate) struct ReviewedPayload {
+    /// Mark it reviewed today.
+    #[serde(default)]
+    today: bool,
+    /// The date it was reviewed, not after today; `null` clears it. Ignored when `today` is true.
+    #[serde(default)]
+    reviewed_on: Option<chrono::NaiveDate>,
+}
+
+/// `PUT /api/plans/{pid}/roadmap/reviewed` — the only write that changes `reviewed_on` (RE-3).
+#[debug_handler]
+async fn mark_reviewed(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    Path(pid): Path<String>,
+    Json(b): Json<ReviewedPayload>,
+) -> Result<Response> {
+    let plan = super::governance::find_item(&ctx, &pid).await?;
+    let today = crate::tz::deployment_today();
+    let date = if b.today { Some(today) } else { b.reviewed_on };
+    if date.is_some_and(|d| d > today) {
+        return Err(unprocessable(&format!(
+            "reviewed_on is not after today ({today})"
+        )));
+    }
+    let mut tx = crate::db::begin(&ctx).await?;
+    let r = roadmap_for_write(&mut tx, plan.pid).await?;
+    let row: roadmaps::Model = sqlx::query_as(
+        "UPDATE public_roadmaps SET reviewed_on = $2, updated_at = now() WHERE id = $1 RETURNING *",
+    )
+    .bind(r.id)
+    .bind(date)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(
+        tx.conn(),
+        plan.pid,
+        "public_roadmap_reviewed",
+        caller.actor(),
+        Some(json!({ "roadmap": row.pid, "from": r.reviewed_on, "to": row.reviewed_on })),
+    )
+    .await
+    .map_err(super::audit_failed)?;
+    let list = live_items(&mut tx, row.id).await?;
+    tx.commit().await?;
+    format::json(roadmap_view(&row, &list))
+}
+
+/// `GET /api/public-roadmaps/stale` — the roadmaps that are stale or were never reviewed, oldest review first,
+/// leaving out plans the caller may not read and plans no longer live.
+#[debug_handler]
+async fn stale_list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Response> {
+    let hidden = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let rows: Vec<roadmaps::Model> = sqlx::query_as(
+        "SELECT r.* FROM public_roadmaps r JOIN plans p ON p.pid = r.plan_pid AND p.active
+         WHERE NOT (r.plan_pid = ANY($1))
+         ORDER BY r.reviewed_on NULLS FIRST, r.id",
+    )
+    .bind(hidden.plan_pids())
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let days = rules::stale_days();
+    let today = crate::tz::deployment_today();
+    let list: Vec<Value> = rows
+        .iter()
+        .filter(|r| rules::freshness(r.reviewed_on, today, days) != "fresh")
+        .map(|r| {
+            json!({ "plan_pid": r.plan_pid, "title": r.title, "slug": r.slug, "published": r.published,
+                    "reviewed_on": r.reviewed_on, "state": rules::freshness(r.reviewed_on, today, days) })
+        })
+        .collect();
+    format::json(
+        json!({ "stale_after_days": days, "today": today, "count": list.len(), "roadmaps": list }),
+    )
 }

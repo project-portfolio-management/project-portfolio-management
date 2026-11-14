@@ -160,6 +160,26 @@ async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
         assert_eq!(mine["published"], false, "Bob's write did not land");
         assert_eq!(mine["items"].as_array().unwrap().len(), 1);
         assert_eq!(mine["items"][0]["placement"], "now");
+        // RE-3: the list of stale roadmaps leaves the private plan out for Bob, and keeps it for Alice.
+        let listed = |v: &Value| {
+            v["roadmaps"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|r| r["plan_pid"] == plan.as_str())
+        };
+        let bobs: Value = request
+            .get("/api/public-roadmaps/stale")
+            .add_header(bob.0.clone(), bob.1.clone())
+            .await
+            .json();
+        assert!(!listed(&bobs), "{bobs}");
+        let alices: Value = request
+            .get("/api/public-roadmaps/stale")
+            .add_header(alice.0.clone(), alice.1.clone())
+            .await
+            .json();
+        assert!(listed(&alices), "never reviewed, so listed: {alices}");
     })
     .await;
 }

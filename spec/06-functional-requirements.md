@@ -450,6 +450,12 @@ matcher payload (§5.6); every mutation audits (§6.6).
   same levels). When the source changes, the translation is kept and shown with `needs_review: true`; saving it
   again clears that. A source that is cleared shows no translation. The service never writes one language from
   another. `null` or an empty value removes a translation; a language code that is not one is `422`.
+- **FR-16e21 Freshness of a public product roadmap (RE-3).** `reviewed_on` changes only through
+  `PUT /api/plans/{pid}/roadmap/reviewed` (`today: true`, a date not after today, or `null`); publishing and editing
+  never touch it. A roadmap reads `stale` when more than `PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS` calendar
+  days (1 to 3650, default 42) have passed since its review, `unknown` when never reviewed, else `fresh`, by the
+  deployment's today. `GET /api/public-roadmaps/stale` lists the stale and unknown ones of live plans the caller may
+  read, never-reviewed first.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

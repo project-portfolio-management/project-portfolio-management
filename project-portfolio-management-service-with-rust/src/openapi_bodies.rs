@@ -558,6 +558,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plans/{pid}/roadmap/items/{ipid}/delete", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items/{ipid}/delete`"),
     ("post", "/api/plans/{pid}/roadmap/items/{ipid}/move", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items/{ipid}/move`"),
     ("put", "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}` — body: field to value (`title`, `description`, `expected_outcome`, `phase` as text; `tags` as a list as long as the source's; `details` as the source's lines at the same levels); `null` or an empty string removes that translation."),
+    ("put", "/api/plans/{pid}/roadmap/reviewed", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/reviewed` — the only write that changes `reviewed_on` (RE-3)."),
     ("put", "/api/plans/{pid}/roadmap/translations/{lang}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/translations/{lang}` — body: field to text (`title`, `vision`, `service_description`); `null` or an empty string removes that translation."),
     ("get", "/api/plans/{pid}/role-members", "plan_roles", "`GET /api/plans/{pid}/role-members` — who holds which role here, and whether the plan is enforced."),
     ("post", "/api/plans/{pid}/role-members", "plan_roles", "`POST /api/plans/{pid}/role-members` — give someone a role on this plan (an administrator). The plan's first member turns enforcement on, so everyone else who can write loses issue actions here. `409` if they already hold it."),
@@ -676,6 +677,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/proposals/{pid}/review", "governance", ""),
     ("post", "/api/proposals/{pid}/submit", "governance", ""),
     ("put", "/api/proposals/{pid}/tradeoff", "governance", "`PUT /api/proposals/{pid}/tradeoff` — name what an external ask displaces (EX-13). Allowed until the proposal is decided, so a reviewer can record it without reopening the draft. Audited."),
+    ("get", "/api/public-roadmaps/stale", "public_roadmaps", "`GET /api/public-roadmaps/stale` — the roadmaps that are stale or were never reviewed, oldest review first, leaving out plans the caller may not read and plans no longer live."),
     ("delete", "/api/reactions", "discussion", "`DELETE /api/reactions` handler. Removes only the caller's own reaction (matched on the reactor identity); removing one that does not exist is not an error."),
     ("get", "/api/reactions", "discussion", "`GET /api/reactions?subject_kind=&subject_pid=` — counts per kind (every kind, zero included) and the caller's own."),
     ("post", "/api/reactions", "discussion", "`POST /api/reactions` — react. **Idempotent**: a repeat is `200` with `created: false` and writes nothing."),
@@ -985,6 +987,7 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/plans/{pid}/roadmap/items/{ipid}", crate::controllers::public_roadmaps::ItemPayload);
     body!("post", "/api/plans/{pid}/roadmap/items/{ipid}/move", crate::controllers::public_roadmaps::MovePayload);
     body!("put", "/api/plans/{pid}/roadmap/items/{ipid}/translations/{lang}", crate::controllers::public_roadmaps::TranslationPayload);
+    body!("put", "/api/plans/{pid}/roadmap/reviewed", crate::controllers::public_roadmaps::ReviewedPayload);
     body!("put", "/api/plans/{pid}/roadmap/translations/{lang}", crate::controllers::public_roadmaps::TranslationPayload);
     body!("post", "/api/plans/{pid}/role-members", crate::controllers::plan_roles::NewMember);
     body!("post", "/api/plans/{pid}/sandbox/commit", crate::controllers::sandbox::EditsBody);

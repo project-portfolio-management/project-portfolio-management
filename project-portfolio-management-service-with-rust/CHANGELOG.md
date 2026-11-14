@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **Freshness of a public product roadmap (RE-3, 2026-11-14).** `PUT …/roadmap/reviewed`,
+  `GET /api/public-roadmaps/stale`, `PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS`. Spec FR-16e21.
 - **The public product roadmap, with translations marked for review when their source changes (RE-1, RE-6,
   2026-11-14).** Migration `20261114000111_public_roadmaps`; `src/public_roadmap.rs`; `controllers/public_roadmaps.rs`;
   module `roadmap`. Spec FR-16e19, FR-16e20. See the root `CHANGELOG.md`.

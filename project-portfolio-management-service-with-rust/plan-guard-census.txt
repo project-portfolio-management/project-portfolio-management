@@ -330,6 +330,7 @@ GET /api/reviews/consensus	checks
 DELETE /api/reviews/{pid}	checks
 POST /api/reviews/{pid}/respond	checks
 POST /api/reviews/{pid}/submit	checks
+GET /api/public-roadmaps/stale	filters
 GET /api/risk/heatmap	filters
 GET /api/roadmap-categories	no-plan
 POST /api/roadmap-categories	no-plan

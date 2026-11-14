@@ -2690,6 +2690,16 @@ fn public_roadmap_paths() -> Value {
                 "Body: any of title (required when made, 1 to 200 characters), slug (made from the title when absent), vision, service_description (an empty string clears either), category_pid (an active roadmap category; null clears it) and published. Only a plan of kind Product can have one. Audited.",
                 vec![plan()], &[("200", "The roadmap"), ("404", "Unknown plan"), ("409", "Another roadmap has that slug"), ("422", "A bad field, or not a Product plan")])
         },
+        "/api/plans/{pid}/roadmap/reviewed": {
+            "put": op("roadmap", "Say when a public product roadmap was last reviewed (RE-3)",
+                "Body: today (true marks it reviewed today in the deployment's time zone) or reviewed_on (a date not after today; null clears it). The only write that changes reviewed_on: publishing or editing never does, so fixing a typo does not make an old roadmap look current. Audited with the old and new dates.",
+                vec![plan()], &[("200", "The roadmap"), ("404", "No roadmap"), ("422", "A date after today")])
+        },
+        "/api/public-roadmaps/stale": {
+            "get": op("roadmap", "Public product roadmaps that are stale or were never reviewed (RE-3)",
+                "Inputs: every public product roadmap of a live plan the caller may read, its reviewed_on, and the deployment's stale period (PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS, default 42 calendar days) and today. A roadmap is stale when more calendar days than that have passed since its review, and unknown when it was never reviewed; never-reviewed first, then the oldest review. Private plans the caller is not a member of are left out.",
+                vec![], &[("200", "The stale roadmaps, with the rule")])
+        },
         "/api/plans/{pid}/roadmap/items": {
             "post": op("roadmap", "Add an item to a public product roadmap",
                 "Body: title (required), description, expected_outcome, phase, tags (each 1 to 50 characters, no comma, no repeats), organization_pids (active organizations), details (lines of text and level, nested at most three levels, each at most one deeper than the line above) and placement (absent for unplaced). Goes last in its placement and gets a public id of eight characters that is never reused. Audited.",

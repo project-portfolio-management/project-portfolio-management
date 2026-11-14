@@ -3534,12 +3534,13 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   **Acceptance:** two editors change different fields of one item, and both publishes land; they change the same
   field, and the second is `409` with both values and writes nothing at all; a retried publish with the same key
   writes once; the preview equals the diff that publishing applies.
-- [ ] **RE-3 (S) — Freshness.** `reviewed_on` (a calendar date in the deployment's time zone) is set only by an
+- [x] **RE-3 (S) — Freshness.** `reviewed_on` (a calendar date in the deployment's time zone) is set only by an
   explicit "mark as reviewed today" or a date a person enters, never as a side effect of publishing. `stale` is
   derived from a deployment setting (default 42 calendar days, DHCW's six weeks). The portfolio view lists stale public
   roadmaps. A roadmap never reviewed is `unknown`, not stale.
   **Acceptance:** publishing a typo fix leaves `reviewed_on` unchanged; calendar day 42 is not stale and calendar day 43 is; an unset
   date reports `unknown`.
+  **Built 2026-11-14.** `public_roadmap::{freshness, parse_stale_days, stale_days}` (unit test: day 42 fresh, day 43 stale, unknown, bad settings); `PUT …/roadmap/reviewed` (audited with old and new dates) and `GET /api/public-roadmaps/stale` in `controllers/public_roadmaps.rs`; every roadmap view carries `freshness` (state, the period, the date it goes stale, today). Spec FR-16e21. Request test `requests::public_roadmap::a_roadmap_is_reviewed_only_on_purpose_and_stale_after_the_period` (unknown, then day 42 fresh, day 43 stale and listed; publishing, editing and adding an item leave the date; today; a future date `422`; clearing). `tests/public_roadmap_privacy.rs` checks that the stale list leaves a private plan out for a non-member. **Not done:** a screen; a notification when a roadmap goes stale. **Changed:** an invalid setting falls back to the default rather than stopping the service; nothing reports it yet.
 - [ ] **RE-4 (M, owner: OQ-14) — A public, read-only roadmap reader.** `GET /public/roadmaps` and
   `GET /public/roadmaps/{slug}`, with no token, are off unless the deployment turns them on. They return only
   published roadmaps of plans that are neither private nor carry a handling mark above the lowest level, as fixed

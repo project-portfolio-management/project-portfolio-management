@@ -258,3 +258,96 @@ async fn a_translation_is_kept_and_marked_for_review_when_its_source_changes() {
     })
     .await;
 }
+
+/// How `GET /api/public-roadmaps/stale` lists the roadmap of `product`, if at all.
+async fn stale_state(request: &axum_test::TestServer, product: &str) -> Option<Value> {
+    let s: Value = request.get("/api/public-roadmaps/stale").await.json();
+    s["roadmaps"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["plan_pid"] == product)
+        .map(|r| r["state"].clone())
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn a_roadmap_is_reviewed_only_on_purpose_and_stale_after_the_period() {
+    request::<App, _, _>(|request, _ctx| async move {
+        let tag = uuid::Uuid::new_v4().simple().to_string()[..6].to_string();
+        let product = plan(&request, "Product", &format!("Results {tag}")).await;
+        let url = format!("/api/plans/{product}/roadmap");
+        let r: Value = request
+            .put(&url)
+            .json(&json!({ "title": format!("Test results online {tag}") }))
+            .await
+            .json();
+        assert_eq!(r["freshness"]["state"], "unknown", "never reviewed");
+        assert_eq!(r["freshness"]["stale_after_days"], 42);
+        let today = chrono::NaiveDate::parse_from_str(
+            r["freshness"]["today"].as_str().unwrap(),
+            "%Y-%m-%d",
+        )
+        .unwrap();
+        let ago = |n: i64| (today - chrono::Duration::days(n)).to_string();
+        assert_eq!(
+            stale_state(&request, &product).await,
+            Some(json!("unknown"))
+        );
+
+        let reviewed = format!("{url}/reviewed");
+        let r: Value = request
+            .put(&reviewed)
+            .json(&json!({ "reviewed_on": ago(42) }))
+            .await
+            .json();
+        assert_eq!(
+            r["freshness"]["state"], "fresh",
+            "calendar day 42 is not stale"
+        );
+        assert_eq!(stale_state(&request, &product).await, None);
+        let r: Value = request
+            .put(&reviewed)
+            .json(&json!({ "reviewed_on": ago(43) }))
+            .await
+            .json();
+        assert_eq!(r["freshness"]["state"], "stale", "calendar day 43 is");
+        assert_eq!(stale_state(&request, &product).await, Some(json!("stale")));
+
+        // Publishing, editing and adding an item never touch the review date.
+        request
+            .put(&url)
+            .json(&json!({ "published": true, "vision": "Results the same day" }))
+            .await
+            .assert_status_ok();
+        request
+            .post(&format!("{url}/items"))
+            .json(&json!({ "title": "Fix a typo", "placement": "now" }))
+            .await
+            .assert_status_ok();
+        let r: Value = request.get(&url).await.json();
+        assert_eq!(r["reviewed_on"], ago(43));
+        assert_eq!(r["freshness"]["state"], "stale");
+
+        let r: Value = request
+            .put(&reviewed)
+            .json(&json!({ "today": true }))
+            .await
+            .json();
+        assert_eq!(r["reviewed_on"], today.to_string());
+        assert_eq!(r["freshness"]["state"], "fresh");
+        let future = request
+            .put(&reviewed)
+            .json(&json!({ "reviewed_on": ago(-1) }))
+            .await;
+        assert_eq!(future.status_code(), StatusCode::UNPROCESSABLE_ENTITY);
+        let r: Value = request
+            .put(&reviewed)
+            .json(&json!({ "reviewed_on": null }))
+            .await
+            .json();
+        assert_eq!(r["freshness"]["state"], "unknown");
+    })
+    .await;
+}

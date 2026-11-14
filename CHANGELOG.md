@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 14 November (RE-3: when a public product roadmap is stale)
+
+- **A roadmap's review date changes only when someone says it was reviewed,** never by publishing or editing, so a
+  typo fix does not make an old roadmap look current. It is stale after 42 calendar days by default
+  (`PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS`), and `GET /api/public-roadmaps/stale` lists the stale ones a
+  caller may read.
+- Not done: a screen; a notification when one goes stale. An invalid setting falls back to 42 without saying so.
+
 ### 14 November (RE-1 and RE-6: the public product roadmap, with translations that know when they are out of date)
 
 - **A product plan can keep a public product roadmap** (`/api/plans/{pid}/roadmap`): what the product is doing now,

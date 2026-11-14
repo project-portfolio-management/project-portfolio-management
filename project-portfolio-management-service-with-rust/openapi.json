@@ -24731,6 +24731,62 @@
         ]
       }
     },
+    "/api/plans/{pid}/roadmap/reviewed": {
+      "put": {
+        "description": "Body: today (true marks it reviewed today in the deployment's time zone) or reviewed_on (a date not after today; null clears it). The only write that changes reviewed_on: publishing or editing never does, so fixing a typo does not make an old roadmap look current. Audited with the old and new dates.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT …/roadmap/reviewed` body: `today` true marks it reviewed today in the deployment's time zone; otherwise\n`reviewed_on` is the date, or `null` to clear it.",
+                "properties": {
+                  "reviewed_on": {
+                    "default": null,
+                    "description": "The date it was reviewed, not after today; `null` clears it. Ignored when `today` is true.",
+                    "format": "date",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "today": {
+                    "default": false,
+                    "description": "Mark it reviewed today.",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The roadmap"
+          },
+          "404": {
+            "description": "No roadmap"
+          },
+          "422": {
+            "description": "A date after today"
+          }
+        },
+        "summary": "Say when a public product roadmap was last reviewed (RE-3)",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
     "/api/plans/{pid}/roadmap/translations/{lang}": {
       "put": {
         "description": "Body: field to text, for title, vision and service_description; null or an empty string removes that translation. Each translation records the source text it was made from, so a later change to the source marks it as needing review instead of losing it. The service never writes one language from another. Audited.",
@@ -30766,6 +30822,21 @@
         "summary": "Name what an external ask displaces",
         "tags": [
           "governance"
+        ]
+      }
+    },
+    "/api/public-roadmaps/stale": {
+      "get": {
+        "description": "Inputs: every public product roadmap of a live plan the caller may read, its reviewed_on, and the deployment's stale period (PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS, default 42 calendar days) and today. A roadmap is stale when more calendar days than that have passed since its review, and unknown when it was never reviewed; never-reviewed first, then the oldest review. Private plans the caller is not a member of are left out.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The stale roadmaps, with the rule"
+          }
+        },
+        "summary": "Public product roadmaps that are stale or were never reviewed (RE-3)",
+        "tags": [
+          "roadmap"
         ]
       }
     },

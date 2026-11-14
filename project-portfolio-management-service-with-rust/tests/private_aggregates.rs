@@ -87,6 +87,7 @@ const PERSON: &str = "person:00000000-0000-4000-8000-0000000000c1";
 /// `{pub}` / `{secret}` are filled with the plans' pids.
 const AGGREGATES: &[&str] = &[
     "/api/at-a-glance",
+    "/api/public-roadmaps/stale",
     "/api/capacity",
     "/api/capacity/utilization?by=plan",
     "/api/capacity/utilization?by=person",

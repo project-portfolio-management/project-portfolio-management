@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the token contrast test, in every theme (RE-11, 2026-11-15)
+
+- `tests/e2e/token-contrast.spec.ts`: nine token text pairs in each of the 63 themes, against 4.5:1. Light and dark
+  pass; 19 themes fail some pair and are listed (RE-15). See the root `CHANGELOG.md`, 15 November.
+
 ### Changed — Playwright 1.65.1 (2026-11-15)
 
 - `@playwright/test` 1.65.0 to 1.65.1, the latest stable; the lockfile changes only `@playwright/test`, `playwright`

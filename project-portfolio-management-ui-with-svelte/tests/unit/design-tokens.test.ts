@@ -4,8 +4,9 @@
 // may keep at most its count, and a lower count must be written here, so the list only shrinks. A new file with a
 // literal fails.
 //
-// Contrast is not checked here: the tokens resolve through the active theme with `color-mix`, and axe's colour
-// contrast rule measures the rendered pairs on every route (tests/e2e/a11y.spec.ts).
+// Contrast is not checked here: the tokens resolve through the active theme with `color-mix`, so only a browser
+// knows the colours. tests/e2e/token-contrast.spec.ts measures every token text pair in every theme, and axe's colour
+// contrast rule the rendered pages under light and dark (tests/e2e/a11y.spec.ts).
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";

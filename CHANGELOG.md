@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the UI's token contrast, in every theme, RE-11)
+
+- **`tests/e2e/token-contrast.spec.ts`** measures nine text/background pairs of the UI's tokens in every one of the
+  63 themes the picker offers, against WCAG 2.2 AA (4.5:1), resolving the colours in the browser. This is RE-11's
+  contrast half, which was not built.
+- **Found:** light and dark pass every pair; 19 other themes fail at least one, the worst at 2.10:1 (links in
+  `retro`). They are listed in the test, which fails on a new failure and on a fixed one still listed. RE-15 records
+  each and recommends offering only the themes that pass until each is fixed; nothing is changed yet.
+- Not done: sizes, radii and shadows; non-text contrast (borders, focus rings).
+
 ### 15 November (the slow portfolio-money view, RG-18)
 
 - **`GET /api/portfolio-money` is about eight times faster:** 494 requests a second at a median of 64 ms on the

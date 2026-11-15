@@ -3617,7 +3617,19 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   that does not come from the UI's tokens, with a fixture proving each message, and a unit test of the contrast of
   each token pair the UI uses, against WCAG 2.2 AA.
   **Acceptance:** a raw `#hex` in a component fails lint; a token pair below 4.5:1 for text fails the test.
-  **Built 2026-11-14, as a ratchet.** `tests/unit/design-tokens.test.ts`: in `src/`, outside `src/app.css`, a `#hex`, `rgb()` or `hsl()` colour that is not the fallback of a `var(--token, …)` fails; 32 files that held 154 such literals when the rule was added (mostly the SVG charts) are listed with their counts, which may only fall, and a lower count must be written down. **Changed from the text above:** a unit test rather than an ESLint rule, because the literals are in `.svelte` style blocks and SVG attributes as well as scripts; existing files are listed rather than fixed. **Not done:** the contrast half: the tokens resolve through the active theme with `color-mix`, so a token-pair test would need the theme's computed colours; axe's colour-contrast rule already measures rendered pairs on every route. Sizes, radii and shadows are not checked.
+  **Built 2026-11-14, as a ratchet.** `tests/unit/design-tokens.test.ts`: in `src/`, outside `src/app.css`, a `#hex`, `rgb()` or `hsl()` colour that is not the fallback of a `var(--token, …)` fails; 32 files that held 154 such literals when the rule was added (mostly the SVG charts) are listed with their counts, which may only fall, and a lower count must be written down. **Changed from the text above:** a unit test rather than an ESLint rule, because the literals are in `.svelte` style blocks and SVG attributes as well as scripts; existing files are listed rather than fixed. **The contrast half built 2026-11-15:** `tests/e2e/token-contrast.spec.ts` resolves each of nine text/background token pairs in the browser (painted to a canvas pixel, so `color-mix` and `oklch` read as sRGB) in every one of the 63 themes the picker offers, against 4.5:1. Light and dark pass every pair; 19 themes do not, and are listed in the test's `KNOWN` with their pairs, which may only shrink (RE-15). Sizes, radii and shadows are not checked.
+- [ ] **RE-15 (S–M, UI) — 19 of the 63 themes fail 4.5:1 for some of the UI's text.** Found by RE-11's contrast
+  test (`tests/e2e/token-contrast.spec.ts`, `KNOWN`), 2026-11-15. Light and dark, the defaults, pass. Measured, the
+  lowest pair each: retro links 2.10:1 on the surface; cupcake 2.45:1, emerald 2.59:1, pastel 2.70:1, wireframe
+  2.75:1, valentine success 2.88:1, corporate button text 2.93:1, bumblebee 3.00:1, abyss 3.14:1, black 3.16:1,
+  business 3.24:1, silk success 3.34:1, winter 3.69:1, garden 3.93:1, cmyk 4.04:1, aqua 4.09:1, lemonade 4.13:1,
+  nord 4.20:1, synthwave 4.36:1. The pairs are the link colour (ten themes), text on the primary button (twelve),
+  and the danger and success colours (seven). The token mixes in `src/app.css` were tuned on light and dark; a
+  fixed mix cannot suit a yellow primary and a navy one alike. **Options:** stronger mixes toward the text colour
+  (changes how every theme looks, light and dark included); per-theme overrides for the 19; or offer only the
+  themes that pass. **Recommendation:** offer only the themes that pass until each is fixed, since a person who picks
+  one now gets text that some readers cannot read. **Acceptance:** `KNOWN` is empty, or holds only themes the picker
+  no longer offers.
 - [x] **RE-12 (S, docs) — Personas with numbered owner answers.** One file per primary user in `spec/personas/` (the
   portfolio office, a sponsor, a project manager, a reader of the public roadmap), with facts tied to numbered owner
   answers and a list of what is still to check with real users. New tasks cite the answers.

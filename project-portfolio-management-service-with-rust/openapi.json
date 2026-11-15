@@ -31203,6 +31203,48 @@
         ]
       }
     },
+    "/api/public-roadmaps": {
+      "get": {
+        "description": "Inputs: every public product roadmap of a live plan, ordered by title ignoring case. Each: pid, plan_pid (which every editor route goes by), slug, title, category_pid, published, reviewed_on, its freshness state (fresh, stale or unknown, as RE-3) and how many live items are placed and unplaced. Private plans the caller is not a member of are left out. A bare array, paged.",
+        "parameters": [
+          {
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The roadmaps",
+            "headers": {
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Every public product roadmap the caller may read, published or not (RE-5)",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
     "/api/public-roadmaps/stale": {
       "get": {
         "description": "Inputs: every public product roadmap of a live plan the caller may read, its reviewed_on, and the deployment's stale period (PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS, default 42 calendar days) and today. A roadmap is stale when more calendar days than that have passed since its review, and unknown when it was never reviewed; never-reviewed first, then the oldest review. Private plans the caller is not a member of are left out.",

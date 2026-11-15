@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the editors' list of roadmaps, RE-5)
+
+- **`GET /api/public-roadmaps`** lists every public product roadmap of a live plan the caller may read, published or
+  not, by title, paged as every list is. Each carries the plan id that the other editor routes go by, its freshness,
+  and how many items are placed and unplaced. This closes the first gap `operations/dhcw-roadmaps-editor.md` found
+  (their `listRoadmaps`). Spec FR-16e25.
+- Tested: a request test (order, counts that leave out a removed item, a plan with no roadmap left out, a page of one
+  names the next, a bad limit `422`); with real tokens, a private plan's roadmap is absent for a non-member and
+  present for a member; the paging and private-aggregate censuses.
+- Not done: families with colours (the second gap), an apply step after the dry run, and any screen. Not verified:
+  against a DHCW client, since nothing has been sent to DHCW (OQ-15).
+
 ### 14 November (the gates on axa 0.13)
 
 - **Every gate passes on axa 0.13.0 and axa-test 0.4.0, the latest:** service, migration and matcher fmt, clippy and

@@ -129,6 +129,39 @@ async fn stale_lists(
         .any(|r| r["plan_pid"] == plan)
 }
 
+/// Whether `GET /api/public-roadmaps`, as `who`, lists the roadmap of `plan` on any page.
+async fn editors_list(
+    request: &axum_test::TestServer,
+    who: &(axum::http::HeaderName, axum::http::HeaderValue),
+    plan: &str,
+) -> bool {
+    let mut url = "/api/public-roadmaps?limit=500".to_string();
+    loop {
+        let r = request
+            .get(&url)
+            .add_header(who.0.clone(), who.1.clone())
+            .await;
+        assert_eq!(r.status_code(), 200, "{url}");
+        let next = r
+            .maybe_header("link")
+            .map(|l| l.to_str().unwrap().to_string());
+        if r.json::<Vec<Value>>().iter().any(|x| x["plan_pid"] == plan) {
+            return true;
+        }
+        match next {
+            Some(l) => {
+                url = l
+                    .trim_start_matches('<')
+                    .split_once('>')
+                    .unwrap()
+                    .0
+                    .to_string();
+            }
+            None => return false,
+        }
+    }
+}
+
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test public_roadmap_privacy -- --ignored`"]
 async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
@@ -204,6 +237,9 @@ async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
             stale_lists(&request, &alice, &plan).await,
             "Alice: never reviewed, so listed"
         );
+        // RE-5: so does the editors' list of every roadmap.
+        assert!(!editors_list(&request, &bob, &plan).await, "Bob");
+        assert!(editors_list(&request, &alice, &plan).await, "Alice");
     })
     .await;
 }

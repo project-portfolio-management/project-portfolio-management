@@ -143,6 +143,7 @@ pub const PAGED_LISTS: &[&str] = &[
     "/api/proposals/{pid}/lessons",
     "/api/plans/{pid}/status-updates",
     "/api/status-updates/due",
+    "/api/public-roadmaps",
 ];
 
 /// Add `limit`, `cursor` and the `Link` header to every list in [`PAGED_LISTS`].

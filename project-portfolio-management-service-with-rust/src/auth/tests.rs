@@ -243,6 +243,7 @@ fn the_old_health_paths_are_not_public() {
         "/api/public",
         "/api/public/plans",
         "/api/public/roadmapsx",
+        "/api/public-roadmaps",
         "/api/public-roadmaps/stale",
     ] {
         let err = enforce(

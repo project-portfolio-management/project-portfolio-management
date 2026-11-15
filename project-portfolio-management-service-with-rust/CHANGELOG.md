@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **The editors' list of roadmaps (RE-5, 2026-11-15).** `GET /api/public-roadmaps`, paged. Spec FR-16e25. See the
+  root `CHANGELOG.md`, 15 November.
 - **A dry run of the DHCW roadmap spreadsheet (RE-5, 2026-11-14).** `src/dhcw_import.rs`, task
   `dhcw_roadmaps_dry_run`, fixtures in `tests/fixtures/dhcw-roadmaps/` (MIT, DHCW's notice kept).
 - **Publishing a roadmap as one change set (RE-2, 2026-11-14).** `controllers/roadmap_publish.rs`. Spec FR-16e24.

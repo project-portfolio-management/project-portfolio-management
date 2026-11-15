@@ -679,6 +679,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/proposals/{pid}/review", "governance", ""),
     ("post", "/api/proposals/{pid}/submit", "governance", ""),
     ("put", "/api/proposals/{pid}/tradeoff", "governance", "`PUT /api/proposals/{pid}/tradeoff` — name what an external ask displaces (EX-13). Allowed until the proposal is decided, so a reviewer can record it without reopening the draft. Audited."),
+    ("get", "/api/public-roadmaps", "public_roadmaps", "`GET /api/public-roadmaps` — every roadmap of a live plan the caller may read, published or not, by title, paged (RE-5: the list an editor opens first). Each carries its plan id, which every other editor route goes by."),
     ("get", "/api/public-roadmaps/stale", "public_roadmaps", "`GET /api/public-roadmaps/stale` — the roadmaps that are stale or were never reviewed, oldest review first, leaving out plans the caller may not read and plans no longer live."),
     ("get", "/api/public/roadmaps", "public_reader", "`GET /api/public/roadmaps` — the published roadmaps, by title."),
     ("get", "/api/public/roadmaps/{slug}", "public_reader", "`GET /api/public/roadmaps/{slug}` — one published roadmap and its placed items, in page order."),

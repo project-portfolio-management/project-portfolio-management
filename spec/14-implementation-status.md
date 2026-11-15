@@ -29,9 +29,9 @@ no network, database or compilation; counts are source lines, not test runs):
 | Matcher version | 0.2.2 | `version` in the matcher `Cargo.toml` |
 | Front-end version | 0.2.0 | `version` in the front-end `package.json` |
 | Migrations | 146 | files in `migration/migrations` (a `.sql` or `.up.sql` each) |
-| Mounted routes | 701 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
-| Documented API paths | 556 | path keys in the service's `openapi.json` |
-| Service tests | 1642, plus 324 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
+| Mounted routes | 702 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
+| Documented API paths | 557 | path keys in the service's `openapi.json` |
+| Service tests | 1643, plus 325 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src` |
 | Matcher tests | 82, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
 | Front-end unit tests (vitest) | 807 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 383 | `test(` lines in `tests/e2e` |

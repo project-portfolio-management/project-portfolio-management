@@ -31,8 +31,8 @@ The background is in [the lessons](../spec/dhcw-roadmaps-editor-lessons/index.md
 
 | Port operation | This service | Gap |
 | --- | --- | --- |
-| `listRoadmaps` | No single route lists every roadmap with its fields for an editor. `GET /api/public-roadmaps/stale` lists only the stale ones; `GET /api/public/roadmaps` only the published ones, with no token | **A list route for editors**: every roadmap the caller may read, published or not |
-| `listRoadmapItems(id)` | `GET /api/plans/{pid}/roadmap` returns the roadmap with its items in page order. The editor would need the plan id behind a slug | A lookup by slug for editors, or the plan id carried in the list |
+| `listRoadmaps` | `GET /api/public-roadmaps` (FR-16e25, built 2026-11-15): every roadmap the caller may read, published or not, by title, paged, with its plan id, freshness and item counts | none; the editor follows `Link: rel="next"` |
+| `listRoadmapItems(id)` | `GET /api/plans/{pid}/roadmap` returns the roadmap with its items in page order, by the plan id the list carries | none |
 | `listOrganisations` | `GET /api/organizations` (name, code, national, active) | Their `shortName` and a Welsh name have no field |
 | `listFamilies` | `GET /api/plans?parent=…` gives a portfolio's children; there is no list of "families" as such | Families as a named list with colours; or the editor drops colours |
 | `listCategories` | `GET /api/roadmap-categories` | none |
@@ -81,7 +81,7 @@ unknown; Welsh that does not have the English's shape is reported, not kept. Rul
 
 ## What it would take, in order
 
-1. A list route for editors, with plan ids (the first gap above).
+1. A list route for editors, with plan ids (built 2026-11-15: `GET /api/public-roadmaps`).
 2. RE-2's publish, which mirrors their change set closely.
 3. An apply step after the dry run (built: the dry run only).
 4. On their side: an `AuthClient` for the deployment's identity provider, and an `ApiRoadmapRepository` as their guide

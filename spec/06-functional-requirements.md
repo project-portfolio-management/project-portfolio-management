@@ -474,6 +474,11 @@ matcher payload (§5.6); every mutation audits (§6.6).
   stored. Otherwise every change is written in one transaction with one audit row per record. `…/publish/preview`
   answers the same changes, conflicts and problems from the same code, and writes nothing. A retry with the same
   `Idempotency-Key` replays the first answer (BR-1).
+- **FR-16e25 The editors' list of roadmaps (RE-5).** `GET /api/public-roadmaps` lists every public product roadmap
+  of a live plan the caller may read, published or not, ordered by title ignoring case, as a bare array paged as
+  every list is (FR-46). Each carries its plan id, which every editor route goes by, its slug, title, category id,
+  published flag, `reviewed_on`, freshness state (FR-16e21) and how many live items are placed and unplaced. Private
+  plans the caller is not a member of are left out, as from every list.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

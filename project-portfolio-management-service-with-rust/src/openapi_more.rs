@@ -2705,6 +2705,11 @@ fn public_roadmap_paths() -> Value {
                 "Body: today (true marks it reviewed today in the deployment's time zone) or reviewed_on (a date not after today; null clears it). The only write that changes reviewed_on: publishing or editing never does, so fixing a typo does not make an old roadmap look current. Audited with the old and new dates.",
                 vec![plan()], &[("200", "The roadmap"), ("404", "No roadmap"), ("422", "A date after today")])
         },
+        "/api/public-roadmaps": {
+            "get": op("roadmap", "Every public product roadmap the caller may read, published or not (RE-5)",
+                "Inputs: every public product roadmap of a live plan, ordered by title ignoring case. Each: pid, plan_pid (which every editor route goes by), slug, title, category_pid, published, reviewed_on, its freshness state (fresh, stale or unknown, as RE-3) and how many live items are placed and unplaced. Private plans the caller is not a member of are left out. A bare array, paged.",
+                vec![], &[("200", "The roadmaps")])
+        },
         "/api/public-roadmaps/stale": {
             "get": op("roadmap", "Public product roadmaps that are stale or were never reviewed (RE-3)",
                 "Inputs: every public product roadmap of a live plan the caller may read, its reviewed_on, and the deployment's stale period (PROJECT_PORTFOLIO_MANAGEMENT_ROADMAP_STALE_DAYS, default 42 calendar days) and today. A roadmap is stale when more calendar days than that have passed since its review, and unknown when it was never reviewed; never-reviewed first, then the oldest review. Private plans the caller is not a member of are left out.",

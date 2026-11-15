@@ -332,6 +332,7 @@ POST /api/reviews/{pid}/respond	checks
 POST /api/reviews/{pid}/submit	checks
 GET /api/public/roadmaps	filters
 GET /api/public/roadmaps/{slug}	checks
+GET /api/public-roadmaps	filters
 GET /api/public-roadmaps/stale	filters
 GET /api/risk/heatmap	filters
 GET /api/roadmap-categories	no-plan

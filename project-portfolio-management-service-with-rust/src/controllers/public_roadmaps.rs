@@ -9,6 +9,7 @@
 //! * `PUT /api/plans/{pid}/roadmap/items/{ipid}`: change an item's text, tags, organizations or details;
 //! * `POST /api/plans/{pid}/roadmap/items/{ipid}/move`: move it to a placement (or none) and a place in it;
 //! * `POST /api/plans/{pid}/roadmap/items/{ipid}/delete`: remove it (its public id is never reused);
+//! * `GET /api/public-roadmaps`: every roadmap the caller may read, published or not, with its plan id, paged;
 //! * `PUT /api/plans/{pid}/roadmap/translations/{lang}` and `…/items/{ipid}/translations/{lang}`: a translation
 //!   of some fields, recorded against the source text it was made from (RE-6).
 //!
@@ -42,6 +43,7 @@ pub fn routes() -> Routes {
             post(delete_item),
         )
         .add("/plans/{pid}/roadmap/reviewed", put(mark_reviewed))
+        .add("/public-roadmaps", get(list_roadmaps))
         .add("/public-roadmaps/stale", get(stale_list))
         .add(
             "/plans/{pid}/roadmap/translations/{lang}",
@@ -951,6 +953,53 @@ async fn mark_reviewed(
     let list = live_items(&mut tx, row.id).await?;
     tx.commit().await?;
     format::json(roadmap_view(&row, &list))
+}
+
+/// A roadmap with how many live items it has placed and unplaced.
+#[derive(sqlx::FromRow)]
+struct ListedRoadmap {
+    #[sqlx(flatten)]
+    r: roadmaps::Model,
+    placed: i64,
+    unplaced: i64,
+}
+
+/// `GET /api/public-roadmaps` — every roadmap of a live plan the caller may read, published or not, by title, paged
+/// (RE-5: the list an editor opens first). Each carries its plan id, which every other editor route goes by.
+#[debug_handler]
+async fn list_roadmaps(
+    State(ctx): State<AppContext>,
+    caller: MaybeAuthUser,
+    cursor: super::pagination::Cursor,
+) -> Result<Response> {
+    let page = cursor.page(200)?;
+    let hidden = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
+    let rows: Vec<ListedRoadmap> = sqlx::query_as(
+        "SELECT r.*,
+                (SELECT count(*) FROM public_roadmap_items i
+                  WHERE i.roadmap_id = r.id AND i.deleted_at IS NULL AND i.placement IS NOT NULL) AS placed,
+                (SELECT count(*) FROM public_roadmap_items i
+                  WHERE i.roadmap_id = r.id AND i.deleted_at IS NULL AND i.placement IS NULL) AS unplaced
+         FROM public_roadmaps r JOIN plans p ON p.pid = r.plan_pid AND p.active
+         WHERE NOT (r.plan_pid = ANY($1))
+         ORDER BY lower(r.title), r.id
+         LIMIT $2 OFFSET $3",
+    )
+    .bind(hidden.plan_pids())
+    .bind(i64::try_from(page.fetch()).unwrap_or(i64::MAX))
+    .bind(i64::try_from(page.offset()).unwrap_or(i64::MAX))
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    let list: Vec<Value> = rows
+        .iter()
+        .map(|ListedRoadmap { r, placed, unplaced }| {
+            json!({ "pid": r.pid, "plan_pid": r.plan_pid, "slug": r.slug, "title": r.title,
+                    "category_pid": r.category_pid, "published": r.published, "reviewed_on": r.reviewed_on,
+                    "freshness": freshness_view(r).get("state").cloned(),
+                    "items": { "placed": placed, "unplaced": unplaced } })
+        })
+        .collect();
+    Ok(page.respond(list))
 }
 
 /// `GET /api/public-roadmaps/stale` — the roadmaps that are stale or were never reviewed, oldest review first,

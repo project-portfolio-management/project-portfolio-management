@@ -452,3 +452,108 @@ async fn a_change_set_publishes_all_or_nothing_and_names_each_conflict() {
     })
     .await;
 }
+
+/// Every roadmap `GET /api/public-roadmaps` lists, following each page's `Link: rel="next"`.
+async fn every_listed(request: &axum_test::TestServer) -> Vec<Value> {
+    let mut url = "/api/public-roadmaps?limit=500".to_string();
+    let mut all = Vec::new();
+    loop {
+        let r = request.get(&url).await;
+        r.assert_status_ok();
+        let next = r
+            .maybe_header("link")
+            .map(|l| l.to_str().unwrap().to_string());
+        all.extend(r.json::<Vec<Value>>());
+        match next {
+            Some(l) => {
+                url = l
+                    .trim_start_matches('<')
+                    .split_once('>')
+                    .unwrap()
+                    .0
+                    .to_string();
+            }
+            None => return all,
+        }
+    }
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn editors_list_every_roadmap_they_may_read_with_its_plan_id() {
+    request::<App, _, _>(|request, _ctx| async move {
+        let tag = uuid::Uuid::new_v4().simple().to_string()[..6].to_string();
+        let first = plan(&request, "Product", &format!("Prescriptions {tag}")).await;
+        let second = plan(&request, "Product", &format!("Appointments {tag}")).await;
+        let none = plan(&request, "Product", &format!("No roadmap {tag}")).await;
+        request
+            .put(&format!("/api/plans/{first}/roadmap"))
+            .json(&json!({ "title": format!("b repeat prescriptions {tag}"), "published": true }))
+            .await
+            .assert_status_ok();
+        request
+            .put(&format!("/api/plans/{second}/roadmap"))
+            .json(&json!({ "title": format!("A appointments {tag}") }))
+            .await
+            .assert_status_ok();
+        for (title, placement) in [
+            ("Now", json!("now")),
+            ("Later", json!("later")),
+            ("Idea", Value::Null),
+        ] {
+            request
+                .post(&format!("/api/plans/{first}/roadmap/items"))
+                .json(&json!({ "title": title, "placement": placement }))
+                .await
+                .assert_status_ok();
+        }
+        let gone: Value = request
+            .post(&format!("/api/plans/{first}/roadmap/items"))
+            .json(&json!({ "title": "Gone", "placement": "next" }))
+            .await
+            .json();
+        request
+            .post(&format!(
+                "/api/plans/{first}/roadmap/items/{}/delete",
+                gone["pid"].as_str().unwrap()
+            ))
+            .await
+            .assert_status_ok();
+
+        let all = every_listed(&request).await;
+        let mine: Vec<&Value> = all
+            .iter()
+            .filter(|r| r["title"].as_str().unwrap().ends_with(&tag))
+            .collect();
+        assert_eq!(mine.len(), 2, "a plan with no roadmap is not listed");
+        assert!(all.iter().all(|r| r["plan_pid"] != none));
+        // By title ignoring case: "A appointments" before "b repeat prescriptions".
+        assert_eq!(mine[0]["plan_pid"], second);
+        assert_eq!(mine[0]["published"], false, "unpublished is listed");
+        assert_eq!(mine[0]["freshness"], "unknown");
+        assert_eq!(mine[0]["items"], json!({ "placed": 0, "unplaced": 0 }));
+        assert_eq!(mine[1]["plan_pid"], first);
+        assert_eq!(mine[1]["published"], true);
+        assert_eq!(mine[1]["slug"], format!("b-repeat-prescriptions-{tag}"));
+        assert_eq!(
+            mine[1]["items"],
+            json!({ "placed": 2, "unplaced": 1 }),
+            "a removed item is not counted"
+        );
+
+        // A page of one names the next.
+        let r = request.get("/api/public-roadmaps?limit=1").await;
+        r.assert_status_ok();
+        assert_eq!(r.json::<Vec<Value>>().len(), 1);
+        assert!(
+            r.maybe_header("link").is_some(),
+            "more than one roadmap exists"
+        );
+        request
+            .get("/api/public-roadmaps?limit=0")
+            .await
+            .assert_status(StatusCode::UNPROCESSABLE_ENTITY);
+    })
+    .await;
+}

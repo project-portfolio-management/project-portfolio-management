@@ -2,18 +2,22 @@
 
 Four scripts put the service under load. None of them runs in CI except the chaos test, weekly. The only measured
 results are in [`BENCHMARKS.md`](../../BENCHMARKS.md): `load-test.mjs run` and `soak` on one machine, on
-2026-10-10. **No result has been recorded from `distributed-load-test.mjs` or `long-running-test.mjs`.**
+2026-10-10, and `run` (login off and on), `ramp` and `soak` on 2026-11-15. **No result has been recorded from `distributed-load-test.mjs` or `long-running-test.mjs`.**
 
 | Script | What it does | Use it for |
 | --- | --- | --- |
-| [`scripts/load-test.mjs`](../../scripts/load-test.mjs) | `seed`, then `run` (each fixed scenario in turn with [oha](https://github.com/hatoo/oha)), or `soak` (a mixed read workload, latency and memory per minute) | The repeatable numbers in `BENCHMARKS.md` (RG-11) |
+| [`scripts/load-test.mjs`](../../scripts/load-test.mjs) | `seed`, then `run` (each fixed scenario in turn with [oha](https://github.com/hatoo/oha)), `ramp` (each scenario at doubling connections, to its knee), or `soak` (a mixed read workload, latency and memory per minute) | The repeatable numbers in `BENCHMARKS.md` (RG-11) |
 | [`scripts/distributed-load-test.mjs`](../../scripts/distributed-load-test.mjs) | `--workers` concurrent loops in **one Node process**, picking weighted scenarios (reads, a few writes) against plans it seeds | A mixed read and write load without oha |
 | [`scripts/long-running-test.mjs`](../../scripts/long-running-test.mjs) | Once per `--interval`, runs each chosen scenario one time and records status, latency and (with `--pid`) RSS | A slow sampler over hours. It does not load the service |
 | [`scripts/chaos-test.sh`](../../scripts/chaos-test.sh) | Random database pauses, killed connections and service restarts under load, then checks recovery and durability | Resilience (weekly in CI, `.github/workflows/chaos.yml`) |
 
-All of them need Node 22 or later. Point the first three at a service with **login and rate limiting off** (the
-`container-dev` profile; see `compose.yaml`) and a **throwaway database**: they create plans and tasks and leave
-them. Otherwise the numbers measure a 401 or a 429.
+All of them need Node 22 or later. Point the first three at a service with **rate limiting off** and a **throwaway
+database**: they create plans and tasks and leave them. Otherwise the numbers measure a 429. Login may be on for
+`load-test.mjs` if you pass `--token` (below); otherwise turn it off too, or the numbers measure a 401.
+
+Another project on the same machine may hold port 1241 (a container published on `127.0.0.1:1241` wins over a
+service listening on every address, silently, mid-run). Start the service on a port of its own with
+`start --binding 127.0.0.1 --port 1251` and pass `--base http://127.0.0.1:1251`.
 
 ```sh
 APP_ENV=container-dev cargo run -- start        # in project-portfolio-management-service-with-rust
@@ -27,7 +31,19 @@ APP_ENV=container-dev cargo run -- start        # in project-portfolio-managemen
 node scripts/load-test.mjs seed --base http://127.0.0.1:1241 --plans 100 --tasks 40 [--large 10000]
 node scripts/load-test.mjs run  --base http://127.0.0.1:1241 --seconds 20 --concurrency 32 [--pid SERVICE_PID]
 node scripts/load-test.mjs soak --base http://127.0.0.1:1241 --minutes 10 --concurrency 16 [--pid SERVICE_PID]
+node scripts/load-test.mjs ramp --base http://127.0.0.1:1241 --seconds 5 --max-concurrency 256 [--slo-p95-ms 250]
 ```
+
+Every command takes `--token TOKEN`, sent as `Authorization: Bearer TOKEN` on every request but the public reader's,
+to run with login on; against the demonstration key (`compose.yaml`'s `api-demo`),
+`node --input-type=module -e "import {mintDemoToken} from './scripts/demo/token.mjs'; console.log(mintDemoToken())"`
+mints one. `--public` adds the two public-reader scenarios, for a service with `PUBLIC_ROADMAPS=on`. `--only
+"read one plan,at a glance"` keeps the scenarios whose name contains one of the fragments.
+
+`run --slo-p95-ms N --max-error-rate R` names every scenario over either limit and exits 1, so a run can gate a
+release. `ramp` doubles the connections from 1 on each scenario until errors appear, p95 passes `--slo-p95-ms`, or two
+steps in a row fail to beat the best throughput by 10%, and reports the knee: the best step before that. It writes
+`ramp-results.json` (or `--out`).
 
 - `seed` writes the plan and task identifiers to `--state` (default `load-test-state.json`), which `run` and
   `soak` read.
@@ -35,7 +51,12 @@ node scripts/load-test.mjs soak --base http://127.0.0.1:1241 --minutes 10 --conc
   scenarios times `--seconds`.
 - `run` prints a Markdown table to standard output and writes JSON to `--out` (default `load-test-results.json`).
 - `soak` writes `soak-results.json` (or `--out`).
-- The scenarios are in the script (`load-test.mjs`, the list after `run`).
+- The scenarios are in the script (`scenarios` in `load-test.mjs`): reads of one plan and its tasks and critical
+  path, the issues and milestones registers, the duplicate check, a task write, seven portfolio-wide aggregates,
+  full-text search, the editors' roadmap list, product families, and with `--public` the public reader; with
+  `seed --large N`, a plan of N tasks.
+- `seed` also makes one product family with a colour, holding every Product plan, each with a roadmap of eight
+  items, every other one published.
 
 ## `distributed-load-test.mjs`
 

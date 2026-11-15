@@ -26,12 +26,21 @@
 //!   input sizes the DB-gated `tests/requests/scale.rs` seeds. This is
 //!   the CPU half; that test proves the *I/O* half (the query count
 //!   feeding these) does not grow with plan/people count.
+//! - **`cpm`** — the critical-path calculation behind `GET …/cpm`, on a chain with a skip dependency every fifth
+//!   task (the load test's seed), from 100 to 12,667 tasks: the size `BENCHMARKS.md` measured over HTTP, so the
+//!   calculation's share of that request can be read off.
+//! - **`auth`** — what the guard does on every request: verify a PASETO `v4.public` token and decide the ABAC policy
+//!   (`auth::enforce`), against refusing a request with no token and passing a public path.
+//! - **`cursor`** — reading and checking a signed list cursor (`pagination::page_with`), which every paged list does.
+//! - **`public_roadmap`** — the roadmap rules on a write: a slug, a public id, a translation's source hash, the
+//!   translations shown for a full item, and the checks on tags and details.
+//! - **`dhcw_import`** — reading DHCW's example spreadsheet (`dhcw_import::parse` and the dry run's report).
 
 use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use project_portfolio_management::{
-    effort, merge,
+    auth, cpm, effort, merge,
     search::{SearchEngine, SearchMode},
     validation, visibility,
 };
@@ -289,11 +298,285 @@ fn bench_capacity_rollups(c: &mut Criterion) {
     group.finish();
 }
 
+/// A chain of `n` one-to-nine-day tasks, the first dated, with a skip dependency every fifth task.
+fn chain(n: u128) -> (Vec<cpm::Node>, Vec<cpm::Edge>) {
+    let start = chrono::NaiveDate::from_ymd_opt(2026, 11, 2).expect("valid date");
+    let id = |i: u128| Uuid::from_u128(i + 1);
+    let nodes = (0..n)
+        .map(|i| cpm::Node {
+            pid: id(i),
+            duration: Some(1 + i64::try_from(i % 9).unwrap_or(0)),
+            planned_start: (i == 0).then_some(start),
+            ..cpm::Node::default()
+        })
+        .collect();
+    let mut edges = Vec::new();
+    let edge = |k: u128, a: u128, b: u128| cpm::Edge {
+        pid: Uuid::from_u128(1 << 64 | k),
+        pred: id(a),
+        succ: id(b),
+        kind: cpm::Kind::Fs,
+        lag: 0,
+    };
+    for i in 1..n {
+        edges.push(edge(i, i - 1, i));
+        if i % 5 == 0 && i >= 3 {
+            edges.push(edge(n + i, i - 3, i));
+        }
+    }
+    (nodes, edges)
+}
+
+fn bench_cpm(c: &mut Criterion) {
+    let mut group = c.benchmark_group("cpm");
+    group.sample_size(20);
+    let calendar = cpm::WorkCalendar::new([true, true, true, true, true, false, false], [])
+        .expect("a working week");
+    for n in [100_u128, 1_000, 4_000, 12_667] {
+        let (nodes, edges) = chain(n);
+        group.throughput(Throughput::Elements(u64::try_from(n).unwrap_or(u64::MAX)));
+        group.bench_with_input(
+            BenchmarkId::new("analyze", n),
+            &(nodes, edges),
+            |b, (nodes, edges)| {
+                b.iter(|| {
+                    cpm::analyze(
+                        black_box(nodes),
+                        black_box(edges),
+                        &calendar,
+                        cpm::Options::default(),
+                    )
+                    .expect("a schedule")
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+#[cfg(feature = "paseto")]
+fn bench_auth(c: &mut Criterion) {
+    use authentication_verifier::{Claims, Policy, Verifier};
+    use axum::http::{HeaderMap, Method, header::AUTHORIZATION};
+    use base64::Engine;
+    use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+    use ed25519_dalek::SigningKey;
+    use rusty_paseto::core::{
+        Footer, Key, Paseto, PasetoAsymmetricPrivateKey, Payload, Public, V4,
+    };
+    use sha2::{Digest, Sha256};
+
+    // A throwaway key, as in the auth unit tests; never a secret.
+    const SEED: [u8; 32] = [5; 32];
+    let public = SigningKey::from_bytes(&SEED).verifying_key().to_bytes();
+    let kid = URL_SAFE_NO_PAD.encode(Sha256::digest(public));
+    let keys = serde_json::json!({ "keys": [{ "kty": "OKP", "crv": "Ed25519", "use": "sig", "kid": kid,
+                                              "x": URL_SAFE_NO_PAD.encode(public) }] });
+    let verifier =
+        Verifier::from_paseto_keys_value(&keys, "authentication-service", "main-x-service")
+            .expect("a verifier");
+    let claims = Claims {
+        sub: "11111111-1111-1111-1111-111111111111".into(),
+        email: "alice@example.com".into(),
+        name: "Alice".into(),
+        iss: "authentication-service".into(),
+        aud: "main-x-service".into(),
+        exp: 4_000_000_000,
+        iat: 1_700_000_000,
+        nbf: None,
+        sid: "bench".into(),
+        scope: Vec::new(),
+        roles: Vec::new(),
+        attrs: [("access".to_string(), vec!["write".to_string()])].into(),
+    };
+    let key = Key::<64>::from(SigningKey::from_bytes(&SEED).to_keypair_bytes());
+    let private = PasetoAsymmetricPrivateKey::<V4, Public>::from(&key);
+    let payload = serde_json::to_string(&claims).expect("claims");
+    let footer = format!(r#"{{"kid":"{kid}"}}"#);
+    let mut builder = Paseto::<V4, Public>::builder();
+    builder.set_payload(Payload::from(payload.as_str()));
+    builder.set_footer(Footer::from(footer.as_str()));
+    let token = builder.try_sign(&private).expect("sign");
+    let mut signed = HeaderMap::new();
+    signed.insert(
+        AUTHORIZATION,
+        format!("Bearer {token}").parse().expect("header"),
+    );
+    let none = HeaderMap::new();
+    let policy = Policy::default_policy();
+
+    let mut group = c.benchmark_group("auth");
+    group.bench_function("enforce_valid_token_read", |b| {
+        b.iter(|| {
+            auth::enforce(
+                true,
+                &Method::GET,
+                "/api/plans",
+                black_box(&signed),
+                &verifier,
+                &policy,
+            )
+        });
+    });
+    group.bench_function("enforce_valid_token_write", |b| {
+        b.iter(|| {
+            auth::enforce(
+                true,
+                &Method::POST,
+                "/api/plans",
+                black_box(&signed),
+                &verifier,
+                &policy,
+            )
+        });
+    });
+    group.bench_function("refuse_no_token", |b| {
+        b.iter(|| {
+            auth::enforce(
+                true,
+                &Method::GET,
+                "/api/plans",
+                black_box(&none),
+                &verifier,
+                &policy,
+            )
+        });
+    });
+    group.bench_function("public_path", |b| {
+        b.iter(|| {
+            auth::enforce(
+                true,
+                &Method::GET,
+                "/_health",
+                black_box(&none),
+                &verifier,
+                &policy,
+            )
+        });
+    });
+    group.finish();
+}
+
+#[cfg(not(feature = "paseto"))]
+fn bench_auth(_c: &mut Criterion) {}
+
+fn bench_cursor(c: &mut Criterion) {
+    use project_portfolio_management::controllers::pagination;
+    let key = axa::cursor_pagination::CursorKey::new(&[9; 32]).expect("a key");
+    let first: axum::http::Uri = "/api/plans?limit=50".parse().expect("uri");
+    let page = pagination::page_with(&key, &first, 200, pagination::MAX_LIMIT).expect("page");
+    let next = page.next_link().expect("a next link");
+    let next: axum::http::Uri = next
+        .to_str()
+        .expect("text")
+        .trim_start_matches('<')
+        .split_once('>')
+        .expect("a link")
+        .0
+        .parse()
+        .expect("uri");
+    let forged: axum::http::Uri =
+        "/api/plans?limit=50&cursor=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            .parse()
+            .expect("uri");
+    let mut group = c.benchmark_group("cursor");
+    group.bench_function("first_page", |b| {
+        b.iter(|| pagination::page_with(&key, black_box(&first), 200, pagination::MAX_LIMIT));
+    });
+    group.bench_function("signed_next_page", |b| {
+        b.iter(|| pagination::page_with(&key, black_box(&next), 200, pagination::MAX_LIMIT));
+    });
+    group.bench_function("refuse_forged_cursor", |b| {
+        b.iter(|| {
+            pagination::page_with(&key, black_box(&forged), 200, pagination::MAX_LIMIT).is_err()
+        });
+    });
+    group.bench_function("next_link", |b| b.iter(|| black_box(&page).next_link()));
+    group.finish();
+}
+
+fn bench_public_roadmap(c: &mut Criterion) {
+    use project_portfolio_management::public_roadmap::{self as rules, Detail};
+    use serde_json::json;
+    let tags: Vec<String> = (0..20).map(|i| format!("Service {i}")).collect();
+    let details: Vec<Detail> = (0..30)
+        .map(|i| Detail {
+            text: format!("Line {i} of the details"),
+            level: u8::try_from(i % 3).unwrap_or(0),
+        })
+        .collect();
+    let sources = std::collections::BTreeMap::from([
+        ("title", json!("Online booking for everyone")),
+        (
+            "description",
+            json!("What the work is, in a sentence or two."),
+        ),
+        ("tags", json!(tags)),
+        ("details", json!(details)),
+    ]);
+    let stored = json!({ "cy": {
+        "title": rules::stored_translation(&sources["title"], &json!("Archebu ar-lein i bawb")),
+        "description": rules::stored_translation(&sources["description"], &json!("Beth yw'r gwaith.")),
+        "tags": rules::stored_translation(&sources["tags"], &json!(tags)),
+        "details": rules::stored_translation(&sources["details"], &json!(details)),
+    }});
+    let mut group = c.benchmark_group("public_roadmap");
+    group.bench_function("slug_from_title", |b| {
+        b.iter(|| rules::slug_from(black_box("Online booking for GP appointments — Wales 2027")));
+    });
+    group.bench_function("public_id", |b| {
+        b.iter(|| rules::public_id_from(black_box(&[7; 16])));
+    });
+    group.bench_function("source_hash_30_detail_lines", |b| {
+        b.iter(|| rules::source_hash(black_box(&sources["details"])));
+    });
+    group.bench_function("shown_translations_full_item", |b| {
+        b.iter(|| rules::shown_translations(black_box(&stored), &sources));
+    });
+    group.bench_function("tag_and_detail_checks", |b| {
+        b.iter(|| {
+            let mut out = Vec::new();
+            rules::tag_problems(black_box(&tags), &mut out);
+            rules::detail_problems(black_box(&details), &mut out);
+            out
+        });
+    });
+    group.finish();
+}
+
+fn bench_dhcw_import(c: &mut Criterion) {
+    use project_portfolio_management::dhcw_import::{self, Input};
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/dhcw-roadmaps");
+    let read = |name: &str| std::fs::read_to_string(dir.join(name)).expect("fixture");
+    let input = Input {
+        index: read("Roadmaps.csv"),
+        tabs: ["ProductA", "ProductB", "ProductC"]
+            .into_iter()
+            .map(|t| (t.to_string(), read(&format!("{t}.csv"))))
+            .collect(),
+        known_codes: vec!["SBUHB".into(), "National".into()],
+        known_categories: vec!["GP & Community Services".into()],
+    };
+    let mut group = c.benchmark_group("dhcw_import");
+    group.bench_function("parse_example_spreadsheet", |b| {
+        b.iter(|| dhcw_import::parse(black_box(&input)));
+    });
+    group.bench_function("dry_run_example_spreadsheet", |b| {
+        b.iter(|| dhcw_import::dry_run(black_box(&input)));
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_validation,
     bench_merge,
     bench_search,
-    bench_capacity_rollups
+    bench_capacity_rollups,
+    bench_cpm,
+    bench_auth,
+    bench_cursor,
+    bench_public_roadmap,
+    bench_dhcw_import
 );
 criterion_main!(benches);

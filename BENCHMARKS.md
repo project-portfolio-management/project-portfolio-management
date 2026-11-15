@@ -38,6 +38,115 @@ relationships or keywords costs more, so the size of those lists matters
 These are microbenchmarks of the library on one machine. They say nothing about
 the service under load.
 
+## The service's CPU-bound work (measured 2026-11-15)
+
+Criterion benchmarks for the pure halves of a request: `project-portfolio-management-service-with-rust/benches/service_bench.rs`.
+Nothing here touches PostgreSQL; the database's share of a request is what the load test below measures.
+
+| | |
+|---|---|
+| Date | 2026-11-15 |
+| Machine | Apple M4 Max, macOS 27.2.1, shared with other work |
+| Toolchain | rustc 1.100.0, release profile |
+| Code | commit `c428fa6a` plus the five new groups |
+| Command | `cargo bench --bench service_bench -- --warm-up-time 1 --measurement-time 3` |
+| Reported | the middle value of Criterion's range (time per call) |
+
+| Benchmark | Time | What it says |
+|---|---|---|
+| `validation/valid_payload` | 100 ns | every create and update |
+| `validation/several_problems` | 174 ns | |
+| `validation/oversized_arrays` | 6.9 µs | refusing an abusive body (SEC-M1) stays cheap |
+| `merge/typical_pair` | 2.0 µs | |
+| `merge/many_keywords_half_overlapping` | 1.47 ms | the cost is in the collections it unions |
+| `search/index_one_document` | 99.6 ms | the per-document commit syncs to disk; group commit (CQ-10) shares it between writers |
+| `search/exact`, `fuzzy`, `phonetic`, `exact_kind_filtered` | 26 µs, 174 µs, 10 µs, 28 µs | |
+| `search/duplicate_candidates/10`, `/50` | 147 µs, 155 µs | |
+| `capacity_rollups/summed_percent/40`, `/400` | 23 ns, 224 ns | |
+| `capacity_rollups/utilization/40`, `/400` | 536 ns, 5.1 µs | |
+| `cpm/analyze/100`, `/1000`, `/4000`, `/12667` | 203 µs, 2.19 ms, 10.4 ms, 53.1 ms | close to linear; the 12,667-task figure matches the 52 ms the earlier one-off probe gave, so of the 331 ms the whole request took (below) the calculation is about a sixth |
+| `auth/enforce_valid_token_read`, `_write` | 25.8 µs, 25.9 µs | the Ed25519 signature check is nearly all of it; the ABAC decision is lost in the noise |
+| `auth/refuse_no_token`, `auth/public_path` | 17.5 ns, 17.7 ns | a request with no token is refused before any cryptography |
+| `cursor/first_page`, `signed_next_page`, `refuse_forged_cursor` | 356 ns, 488 ns, 199 ns | checking a signed cursor costs under half a microsecond |
+| `public_roadmap/slug_from_title`, `public_id` | 236 ns, 11 ns | |
+| `public_roadmap/source_hash_30_detail_lines` | 1.9 µs | |
+| `public_roadmap/shown_translations_full_item` | 11.2 µs | hashing each field's source to decide `needs_review` |
+| `public_roadmap/tag_and_detail_checks` | 1.5 µs | 20 tags and 30 detail lines |
+| `dhcw_import/parse_example_spreadsheet`, `dry_run_example_spreadsheet` | 32.7 µs, 91.2 µs | 3 roadmaps and 15 items |
+
+One run, on a machine doing other things: read these as orders of magnitude, and compare a change against a run
+made the same day on the same machine.
+
+## The service under load, every scenario, with login off and on (measured 2026-11-15)
+
+[`scripts/load-test.mjs`](scripts/load-test.mjs) `seed`, `run`, `ramp` and `soak`, after RG-17 added the
+portfolio-wide aggregates, search, the roadmap routes and the public reader, and login.
+
+| | |
+|---|---|
+| Machine | Apple M4 Max, macOS 27.2.1. **The load tool, the service and PostgreSQL all on this one machine**, the database in a Podman virtual machine, and the machine shared with other work |
+| Service | release build of commit `c428fa6a` plus this change; `container-dev` profile; rate limiting off; `PUBLIC_ROADMAPS=on`; log level `warn`. OTLP export was **on** (to a collector that was not there), because the run set `PROJECT_PORTFOLIO_MANAGEMENT_OTLP_ENDPOINT`, which is not read; the guide now says so |
+| Login | off for the first run; **on** for the second (`REQUIRE_AUTH=true`, the published demonstration key, one PASETO token for every request but the public reader's) |
+| Database | PostgreSQL 18, a fresh database: 200 plans of 50 tasks (10,000 tasks, 9,800 dependencies), 50 Product plans in one product family with a colour, each with a roadmap of 8 items (25 of the 50 roadmaps published), and one plan of 5,000 tasks |
+| Seed | 103 seconds through the API (`seed --plans 200 --tasks 50 --large 5000`) |
+| Command | `run --seconds 10 --concurrency 32 --public` (and `--token …` for login on) |
+
+| Scenario | Req/s, login off | p50 / p95 ms, off | Req/s, login on | p50 / p95 ms, on | Errors (off, on) |
+|---|---|---|---|---|---|
+| list plans (first page) | 1886 | 15 / 28.8 | 1712 | 18 / 24.9 | 0, 0 |
+| read one plan | 4659 | 6.2 / 9.5 | 3213 | 9.8 / 12.6 | 0, 0 |
+| list a plan's tasks | 1790 | 17.2 / 22.9 | 1196 | 26.3 / 32.6 | 0, 0 |
+| critical path of a plan | 4126 | 7.5 / 9.8 | 2803 | 11.1 / 14.9 | 0, 0 |
+| issues register | 1162 | 10.8 / 93.8 | 1985 | 15.8 / 21.6 | 0, 0 |
+| milestones across plans | 2498 | 9.8 / 26.8 | 8452 | 3.6 / 5.5 | 0, 0 |
+| duplicate check | 1226 | 22.7 / 44.9 | 1336 | 23.1 / 30 | 0, 0 |
+| create a task (write) | 1251 | 24.4 / 33 | 906 | 34.4 / 39.9 | 0, 0 |
+| read a task | 2273 | 13.7 / 17.2 | 2537 | 12.3 / 15.4 | 0, 0 |
+| at a glance (aggregate) | 827 | 37.8 / 49.2 | 928 | 32 / 51.4 | 0, 0 |
+| executive health (aggregate) | 902 | 33.9 / 48.4 | 1068 | 29.7 / 34.1 | 0, 0 |
+| lifecycle funnel (aggregate) | 1332 | 23.6 / 29.7 | 1488 | 21.2 / 25.5 | 0, 0 |
+| prioritization (aggregate) | 993 | 31.7 / 39.6 | 1049 | 30 / 34.4 | 0, 0 |
+| capacity (aggregate) | 2794 | 11.1 / 13 | 1834 | 18.1 / 25.9 | 0, 0 |
+| risk heatmap (aggregate) | 1852 | 16.9 / 20.1 | 1622 | 18.4 / 27.8 | 0, 0 |
+| portfolio money (aggregate) | 54 | 466.1 / 825.1 | 67 | 478.2 / 611 | 0, 0 |
+| full-text plan search | 1903 | 15.2 / 27.5 | 2526 | 12.1 / 16.1 | 0, 0 |
+| editors' roadmap list | 2397 | 12.7 / 18.9 | 3456 | 9.1 / 11.9 | 0, 0 |
+| product families | 3673 | 7.9 / 13.8 | 3734 | 6.8 / 19.2 | 0, 0 |
+| public reader: list (no token) | 4263 | 6.9 / 10.4 | 3615 | 7 / 17.8 | 0, 0 |
+| public reader: one roadmap (no token) | 2416 | 12.2 / 19.4 | 2101 | 12.4 / 31.5 | 0, 0 |
+| list tasks of a LARGE plan (5000) | 412 | 75.7 / 103.4 | 303 | 97.2 / 172.6 | 0, 0 |
+| critical path of a LARGE plan (5000) | 218 | 133.4 / 224.2 | 254 | 117.9 / 163.9 | 0, 0 |
+
+**Login costs nothing measurable here.** The two columns differ by about as much as two runs of the same thing do
+on this machine; the benchmark above puts a token check at 26 µs, against requests of milliseconds.
+
+**One aggregate is slow:** `GET /api/portfolio-money` answers 54 to 67 requests a second with a median near half a
+second, where every other aggregate answers 800 to 2,800. With `--slo-p95-ms 250` the run names it and exits 1.
+It is RG-18 in [`tasks.md`](tasks.md); not investigated yet.
+
+**Memory** rose from 158 MB to 1,466 MB over the login-off run and from 34 MB to 1,534 MB over the login-on run.
+A three-minute soak afterwards (`soak --minutes 3 --concurrency 16`, about 636,000 requests, no errors, worst p95
+12.9 to 14.5 ms) held at **1,107 MB every minute**, so it reads as a high-water mark left by the large answers (the
+5,000-task plan's task list and critical path), not a leak. Not run for hours.
+
+**Where throughput stops growing** (`ramp --seconds 5 --max-concurrency 256 --slo-p95-ms 250`, login off): the
+connections are doubled from 1 until two steps in a row fail to beat the best throughput by 10%, p95 passes the SLO,
+or errors appear; the knee is the best step before that.
+
+| Scenario | Knee (connections) | Req/s there | p95 ms there | Why it stopped |
+|---|---|---|---|---|
+| list plans (first page) | 32 | 2125 | 21.5 | throughput no higher than 2125 req/s past 32 connections |
+| read one plan | 32 | 4770 | 8.5 | throughput no higher than 4770 req/s past 32 connections |
+| create a task (write) | 128 | 1235 | 133 | p95 267.2 ms over the 250 ms SLO at 256 connections |
+| at a glance (aggregate) | 16 | 744 | 29.4 | throughput no higher than 744 req/s past 16 connections |
+| portfolio money (aggregate) | - | - | - | p95 420.7 ms over the 250 ms SLO at 1 connections |
+| public reader: list (no token) | 16 | 3541 | 7.8 | throughput no higher than 3541 req/s past 16 connections |
+
+Five-second steps on a shared machine are noisy (a first version of `ramp` that stopped at the first dip put two
+of these knees at 2 connections); read the knee as "about this many", and the 32-connection table above as
+throughput near the knee for most scenarios. Creating tasks keeps scaling to 128 connections because each waits on
+the database, not the CPU.
+
 ## The service under load (measured, with strong caveats)
 
 A repeatable test: [`scripts/load-test.mjs`](scripts/load-test.mjs) (`seed`, `run`, `soak`; needs Node and
@@ -121,9 +230,8 @@ please read this table instead.
 ### Not measured
 
 - A database much larger than 300 plans; any other hardware; network latency between the tiers; the front end
-  (the browser); login and rate limiting switched on; many different users; a long soak (hours or days);
+  (the browser); rate limiting switched on (login on was measured on 2026-11-15, above); many different users; a long soak (hours or days);
   failure behaviour when the database is slow or down.
-- `project-portfolio-management-service-with-rust/benches/service_bench.rs` still has no published results.
 
 ## Creating a plan, before and after moving index writes to the blocking pool (measured 2026-10-23)
 

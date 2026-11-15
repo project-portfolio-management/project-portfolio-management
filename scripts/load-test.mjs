@@ -4,6 +4,15 @@
 //   node scripts/load-test.mjs seed  --base http://127.0.0.1:1241 --plans 200 --tasks 50 [--large 10000]
 //   node scripts/load-test.mjs run   --base http://127.0.0.1:1241 --seconds 20 --concurrency 32 [--pid SERVICE_PID]
 //   node scripts/load-test.mjs soak  --base ... --minutes 10 --concurrency 16 [--pid SERVICE_PID]
+//   node scripts/load-test.mjs ramp  --base ... --seconds 10 --max-concurrency 256 [--only NAME] [--slo-p95-ms 250]
+//
+// Every command takes `--token TOKEN` (sent as `Authorization: Bearer TOKEN`) to run with login on, and `run` and
+// `ramp` take `--only TEXT` (scenarios whose name contains it, comma-separated for several). `run` takes
+// `--slo-p95-ms N` and `--max-error-rate R` (a share, 0.001 is one in a thousand): a scenario over either is named
+// and the command exits 1, so a run can gate a release. `ramp` doubles the connections from 1 up to
+// `--max-concurrency` on each scenario and reports, per step, throughput and p95, and the knee: the last step before
+// throughput stops growing (two steps in a row not 10% above the best) or p95 passes the SLO or errors appear. That is where to read capacity, not the
+// fixed-concurrency table.
 //
 // Needs Node 22+ and `oha` (cargo install oha). Run the service WITHOUT login and rate limiting
 // (the `container-dev` profile, see compose.yaml), so the numbers are the service's work and not a
@@ -29,10 +38,13 @@ const command = process.argv[2];
 const base = (args.base ?? "http://127.0.0.1:1241").replace(/\/$/, "");
 const stateFile = args.state ?? "load-test-state.json";
 
+const token = args.token && args.token !== "true" ? args.token : null;
+const authHeaders = token ? { authorization: `Bearer ${token}` } : {};
+
 async function api(method, path, body) {
   const res = await fetch(base + path, {
     method,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...authHeaders },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await res.text();
@@ -56,11 +68,17 @@ async function seed() {
   const tasks = Number(args.tasks ?? 40);
   const started = Date.now();
   const state = { base, plans: [], tasks: 0, relations: 0 };
+  // One product family, with a colour, holding every Product plan, so the families scenario reads real rows.
+  const family = await api("POST", "/api/plans", { kind: "Portfolio", name: "Load product family" });
+  await api("PUT", `/api/plans/${family.pid}/roadmap-family`, { colour: "#325083" });
+  state.family = family.pid;
   await pool([...Array(plans).keys()], 16, async (i) => {
+    const kind = ["Portfolio", "Project", "Program", "Product"][i % 4];
     const plan = await api("POST", "/api/plans", {
-      kind: ["Portfolio", "Project", "Program", "Product"][i % 4],
+      kind,
       name: `Load plan ${i} ${["alpha", "beta", "gamma", "delta"][i % 4]} migration`,
       code: `LT-${i}`,
+      ...(kind === "Product" ? { parent_ref: family.pid } : {}),
     });
     const pids = [];
     for (let t = 0; t < tasks; t++) {
@@ -80,6 +98,21 @@ async function seed() {
       }
     }
     state.plans.push({ pid: plan.pid, tasks: pids.slice(0, 3) });
+    // Every Product plan gets a public product roadmap of eight items, every other one published, so the roadmap
+    // scenarios read real rows.
+    if (kind === "Product") {
+      await api("PUT", `/api/plans/${plan.pid}/roadmap`, { title: `Load roadmap ${i}`, published: i % 8 === 3 }).catch(() => {});
+      for (let r = 0; r < 8; r++) {
+        await api("POST", `/api/plans/${plan.pid}/roadmap/items`, {
+          title: `Item ${r} of roadmap ${i}`,
+          description: "What the work is, in a sentence or two.",
+          tags: ["Service X", `Theme ${r % 3}`],
+          placement: ["now", "next", "later", "recently_delivered"][r % 4],
+        }).catch(() => {});
+      }
+      state.roadmaps = (state.roadmaps ?? 0) + 1;
+      if (i % 8 === 3) state.public_slug ??= `load-roadmap-${i}`;
+    }
   });
   // A plan the write scenario can grow without changing what the read scenarios measure.
   const writePlan = await api("POST", "/api/plans", { kind: "Project", name: "Load write target" });
@@ -130,13 +163,42 @@ function scenarios(state) {
     { name: "duplicate check", method: "POST", path: "/api/plans/check-duplicates", body: { kind: "Project", name: "Load plan 7 beta migration" } },
     { name: "create a task (write)", method: "POST", path: `/api/plans/${w}/tasks`, body: { title: "Created under load", duration_days: 3 } },
     { name: "read a task", method: "GET", path: `/api/plans/${p}/tasks/${t}` },
+    // Portfolio-wide reads: each spans every plan the caller may read, so they grow with the database.
+    { name: "at a glance (aggregate)", method: "GET", path: "/api/at-a-glance" },
+    { name: "executive health (aggregate)", method: "GET", path: "/api/executive/health" },
+    { name: "lifecycle funnel (aggregate)", method: "GET", path: "/api/lifecycle" },
+    { name: "prioritization (aggregate)", method: "GET", path: "/api/prioritization" },
+    { name: "capacity (aggregate)", method: "GET", path: "/api/capacity" },
+    { name: "risk heatmap (aggregate)", method: "GET", path: "/api/risk/heatmap" },
+    { name: "portfolio money (aggregate)", method: "GET", path: "/api/portfolio-money" },
+    { name: "full-text plan search", method: "GET", path: "/api/plans/search?q=migration" },
+    { name: "editors' roadmap list", method: "GET", path: "/api/public-roadmaps?limit=50" },
+    { name: "product families", method: "GET", path: "/api/roadmap-families?limit=50" },
+    // The public reader answers 404 unless the deployment turns it on (PUBLIC_ROADMAPS=on); with --public.
+    ...(args.public
+      ? [
+          { name: "public reader: list (no token)", method: "GET", path: "/api/public/roadmaps", anonymous: true },
+          ...(state.public_slug ? [{ name: "public reader: one roadmap (no token)", method: "GET", path: `/api/public/roadmaps/${state.public_slug}`, anonymous: true }] : []),
+        ]
+      : []),
     ...large,
   ];
+}
+
+/// The scenarios `--only` names (a comma-separated list of name fragments), or all of them.
+function chosen(state) {
+  const all = scenarios(state);
+  if (!args.only || args.only === "true") return all;
+  const want = args.only.split(",").map((w) => w.trim().toLowerCase()).filter(Boolean);
+  const out = all.filter((s) => want.some((w) => s.name.toLowerCase().includes(w)));
+  if (out.length === 0) throw new Error(`--only ${args.only} names no scenario; they are: ${all.map((s) => s.name).join("; ")}`);
+  return out;
 }
 
 function oha(scn, seconds, concurrency) {
   const a = ["--no-tui", "--output-format", "json", "-z", `${seconds}s`, "-c", String(concurrency), "-m", scn.method];
   if (scn.body) a.push("-T", "application/json", "-d", JSON.stringify(scn.body));
+  if (token && !scn.anonymous) a.push("-H", `Authorization: Bearer ${token}`);
   a.push(base + scn.path);
   const out = spawnSync("oha", a, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   if (out.status !== 0) throw new Error(`oha failed: ${out.stderr}`);
@@ -184,22 +246,93 @@ async function run() {
   const seconds = Number(args.seconds ?? 15);
   const concurrency = Number(args.concurrency ?? 32);
   const before = rssMb(args.pid);
-  const rows = scenarios(state).map((s) => {
+  const rows = chosen(state).map((s) => {
     console.error(`running: ${s.name}`);
     return oha(s, seconds, concurrency);
   });
   const after = rssMb(args.pid);
-  const result = { date: new Date().toISOString(), base, seconds, concurrency, plans: state.plans.length, tasks: state.tasks, rss_mb_before: before, rss_mb_after: after, rows };
+  const breaches = slo(rows);
+  const result = { date: new Date().toISOString(), base, seconds, concurrency, login: Boolean(token), plans: state.plans.length, tasks: state.tasks, rss_mb_before: before, rss_mb_after: after, rows, breaches };
   writeFileSync(args.out ?? "load-test-results.json", JSON.stringify(result, null, 1));
   console.log(table(rows));
   console.log(`\nservice memory (RSS): ${before ?? "n/a"} MB before, ${after ?? "n/a"} MB after`);
+  report(breaches);
+}
+
+/// The rows over `--slo-p95-ms` or `--max-error-rate`, each with why.
+function slo(rows) {
+  const p95 = args["slo-p95-ms"] ? Number(args["slo-p95-ms"]) : null;
+  const rate = args["max-error-rate"] ? Number(args["max-error-rate"]) : null;
+  const out = [];
+  for (const r of rows) {
+    if (p95 !== null && r.p95_ms > p95) out.push({ scenario: r.scenario, why: `p95 ${r.p95_ms} ms > ${p95} ms` });
+    const share = r.requests ? r.errors / r.requests : 1;
+    if (rate !== null && share > rate) out.push({ scenario: r.scenario, why: `error rate ${share.toFixed(4)} > ${rate}` });
+  }
+  return out;
+}
+
+function report(breaches) {
+  if (breaches.length === 0) return;
+  console.log(`\nover the limits:\n${breaches.map((b) => `- ${b.scenario}: ${b.why}`).join("\n")}`);
+  process.exitCode = 1;
+}
+
+/// Double the connections from 1 to `--max-concurrency` on each scenario; the knee is the last step before
+/// throughput grows by less than 10%, p95 passes `--slo-p95-ms`, or errors appear.
+async function ramp() {
+  const state = loadState();
+  const seconds = Number(args.seconds ?? 10);
+  const max = Number(args["max-concurrency"] ?? 256);
+  const p95Limit = args["slo-p95-ms"] ? Number(args["slo-p95-ms"]) : Infinity;
+  const steps = [];
+  for (let c = 1; c <= max; c *= 2) steps.push(c);
+  const out = [];
+  for (const s of chosen(state).filter((x) => !x.large)) {
+    // One short step is noisy on a shared machine, so a single dip does not stop the ramp: it stops on errors, on
+    // p95 over the SLO, or after two steps in a row that do not beat the best throughput so far by 10%. The knee is
+    // the best step before the stop.
+    const rows = [];
+    let best = null;
+    let flat = 0;
+    let why = `no limit reached by ${max} connections`;
+    for (const c of steps) {
+      console.error(`ramp: ${s.name} at ${c}`);
+      const r = { concurrency: c, ...oha(s, seconds, c) };
+      rows.push(r);
+      if (r.errors > 0) {
+        why = `errors at ${c} connection${c === 1 ? "" : "s"}`;
+        break;
+      }
+      if (r.p95_ms > p95Limit) {
+        why = `p95 ${r.p95_ms} ms over the ${p95Limit} ms SLO at ${c} connection${c === 1 ? "" : "s"}`;
+        break;
+      }
+      if (best && r.rps < best.rps * 1.1) {
+        flat += 1;
+        if (flat === 2) {
+          why = `throughput no higher than ${best.rps} req/s past ${best.concurrency} connections`;
+          break;
+        }
+      } else {
+        flat = 0;
+      }
+      if (!best || r.rps > best.rps) best = r;
+    }
+    const knee = best;
+    out.push({ scenario: s.name, knee_concurrency: knee?.concurrency ?? null, knee_rps: knee?.rps ?? null, knee_p95_ms: knee?.p95_ms ?? null, stopped: why, steps: rows.map(({ concurrency, rps, p50_ms, p95_ms, p99_ms, errors }) => ({ concurrency, rps, p50_ms, p95_ms, p99_ms, errors })) });
+    console.log(JSON.stringify(out.at(-1)));
+  }
+  writeFileSync(args.out ?? "ramp-results.json", JSON.stringify({ date: new Date().toISOString(), base, seconds, max_concurrency: max, login: Boolean(token), scenarios: out }, null, 1));
+  console.log("\n| Scenario | Knee (connections) | Req/s there | p95 ms there | Why it stopped |\n|---|---|---|---|---|");
+  for (const r of out) console.log(`| ${r.scenario} | ${r.knee_concurrency ?? "-"} | ${r.knee_rps ?? "-"} | ${r.knee_p95_ms ?? "-"} | ${r.stopped} |`);
 }
 
 async function soak() {
   const state = loadState();
   const minutes = Number(args.minutes ?? 10);
   const concurrency = Number(args.concurrency ?? 16);
-  const mix = scenarios(state).filter((s) => !s.name.includes("(write)") && !s.large).slice(0, 8);
+  const mix = chosen(state).filter((s) => !s.name.includes("(write)") && !s.large && !s.anonymous).slice(0, 8);
   const per = [];
   for (let m = 0; m < minutes; m++) {
     const rows = mix.map((s) => oha(s, Math.max(1, Math.floor(60 / mix.length)), concurrency));
@@ -216,9 +349,9 @@ async function soak() {
   console.log(`\nminute 1 -> ${minutes}: worst p95 ${first.worst_p95_ms} -> ${last.worst_p95_ms} ms; RSS ${first.rss_mb ?? "n/a"} -> ${last.rss_mb ?? "n/a"} MB; errors ${per.reduce((x, p) => x + p.errors, 0)}`);
 }
 
-const commands = { seed, run, soak };
+const commands = { seed, run, soak, ramp };
 if (!commands[command]) {
-  console.error("usage: load-test.mjs seed|run|soak [--base URL] [...]; see the header of this file");
+  console.error("usage: load-test.mjs seed|run|soak|ramp [--base URL] [...]; see the header of this file");
   process.exit(2);
 }
 await commands[command]();

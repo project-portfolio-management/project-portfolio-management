@@ -1597,6 +1597,19 @@ what was **not** tested; claim no certification.
   `governance/production-readiness.md` (the verdict, honestly) and DTAC/DPIA rows
   brought into line with the code. **Acceptance:** link checker passes; no row
   claims a control that the code lacks.
+- [x] **RG-17 (M) — Comprehensive load and benchmark tests (2026-11-15).** Criterion groups for the critical-path
+  calculation (100 to 12,667 tasks), the guard (`auth::enforce` with a real PASETO token), signed cursors, the
+  roadmap rules and the DHCW import (`benches/service_bench.rs`); `scripts/load-test.mjs` gains the portfolio-wide
+  aggregates, search, the editors' roadmap list, families and the public reader as scenarios, a seed with roadmaps
+  and a family, `--token` for runs with login on, `--only`, `--slo-p95-ms` and `--max-error-rate` (exit 1 when over),
+  and `ramp`, which doubles connections to find each scenario's knee. All of it run and recorded in `BENCHMARKS.md`.
+  **Not done:** a CI job for any of it (CI's machines are shared and noisy; `--slo-p95-ms` is there for when one is
+  wanted); many distinct users; a database larger than 200 plans.
+- [ ] **RG-18 (S–M) — `GET /api/portfolio-money` is the one slow aggregate.** Found by RG-17: on 200 plans it
+  answers 54 to 67 requests a second at 32 connections with a median of 466 to 478 ms, and 420 ms at the 95th
+  percentile from a single connection, where every other aggregate answers 800 to 2,800 a second at 12 to 38 ms.
+  Find where the time goes (queries per request, rows read) and bring it into line, with a request test that its
+  query count does not grow with the number of plans, as `tests/requests/scale.rs` does for capacity.
 
 ## Not taken (director pack, escalation, production readiness)
 

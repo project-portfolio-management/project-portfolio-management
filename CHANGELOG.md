@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (comprehensive load and benchmark tests, RG-17)
+
+- **Benchmarks:** five new Criterion groups in the service (`cpm` from 100 to 12,667 tasks, `auth` with a real
+  PASETO token, `cursor`, `public_roadmap`, `dhcw_import`), and the first published results for every group,
+  old and new, in `BENCHMARKS.md`. A token check costs 26 µs; the critical path of 12,667 tasks 53 ms.
+- **Load tests:** `scripts/load-test.mjs` gains seven portfolio-wide aggregates, search, the editors' roadmap list,
+  product families and the public reader as scenarios; a seed with roadmaps and a family; `--token` for login on;
+  `--only`; `--slo-p95-ms` and `--max-error-rate`, which exit 1 when over; and `ramp`, which finds each scenario's
+  knee. Run with login off and on, ramped and soaked; results in `BENCHMARKS.md`, use in
+  `docs/testing/load-testing.md`.
+- **Found:** `GET /api/portfolio-money` is the one slow aggregate (54 to 67 requests a second, a median near half a
+  second; RG-18, not investigated). Login costs nothing measurable. Memory rises to about 1.1 to 1.5 GB after the
+  large plan's answers and then holds flat (a three-minute soak; not run for hours).
+- Not done: a CI job for the load or benchmark tests; many distinct users; rate limiting on; a database above 200
+  plans in this run. OTLP export was on during the runs (see the next entry).
+
 ### 15 November (the deployment guide named three settings wrongly)
 
 - `PORT`, `BINDING` and `HOST` are read with no prefix, and `BINDING`, not `HOST`, is the listen address; the

@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **Benchmarks for the critical path, the guard, cursors, the roadmap rules and the DHCW import (RG-17,
+  2026-11-15).** `benches/service_bench.rs`; results in the root `BENCHMARKS.md`.
 - **Product family colours (RE-5, 2026-11-15).** Migration `20261115000113_roadmap_families`;
   `controllers/roadmap_families.rs`. Spec FR-16e27. See the root `CHANGELOG.md`.
 - **The DHCW import's apply step (RE-5, 2026-11-15).** `src/dhcw_apply.rs`, task `dhcw_roadmaps_apply`,

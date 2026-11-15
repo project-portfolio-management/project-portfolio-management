@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the UI follows the browser's light/dark setting on every visit, and live (2026-11-15)
+
+- `src/lib/theme-choice.ts`; the layout gives the theme picker no storage key. Tests
+  `tests/unit/theme-choice.test.ts`, `tests/e2e/theme-follows-browser.spec.ts`. See the root `CHANGELOG.md`.
+
 ### Changed — light and dark are gated for contrast; other themes are reported (RE-15, 2026-11-15)
 
 - The owner's rule (spec, Theming): `tests/e2e/token-contrast.spec.ts` fails only on `light` or `dark`; every other

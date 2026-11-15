@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the UI uses the browser's light/dark setting)
+
+- **The owner's rule, in the UI spec (Theming):** the UI uses the browser's light/dark setting. It did only on a
+  first visit: the theme picker stored the theme it guessed from the browser as if the person had chosen it, so a
+  browser switched to dark still got light afterwards, and a change while the page was open was ignored.
+- Now the layout keeps only a theme the person picks (`ppm-theme-choice`) and otherwise follows
+  `prefers-color-scheme`, live. Picking the browser's own theme goes back to following it. A stored `light` or `dark`
+  under the old key is dropped once, as most likely the guess; any other stored theme is kept.
+- Tested: unit tests of the rules; browser tests of light and dark, a choice winning, a later visit, a change while
+  open, and a pick through the picker kept across a reload and undone. A person who had picked `light` or `dark`
+  deliberately before this change now follows the browser instead, once; nothing tells them.
+
 ### 15 November (axa 0.14 and axa-test 0.5)
 
 - **axa 0.13 to 0.14.0 and axa-test 0.4 to 0.5.0**, published this morning: the owner approved an exception to the

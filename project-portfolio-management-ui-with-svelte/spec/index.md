@@ -249,12 +249,22 @@ parity with the rest of the family. Selecting a theme via
 `ThemePicker` changes the whole site look: it manages exactly one
 `<link rel="stylesheet" data-lily-theme-picker="theme">` in
 `document.head`, mutating its `href` and the `data-theme` attribute on
-`<html>`. The choice persists to `localStorage` (key `lily-theme`).
+`<html>`.
 Theme stylesheets are served from `static/assets/themes/` (a symlink
 to the shared design-system themes).
 
-With no stored choice the theme follows the system light / dark preference
-(`detectFromSystem`). The app's own colour tokens (`src/app.css`) are
+**The UI uses the browser's light/dark setting** (owner's rule, 2026-11-15):
+with no theme the person picked, the theme is `light` or `dark` as the
+browser's `prefers-color-scheme` says, on every visit, and it changes when the
+setting changes while the page is open. A theme the person picks that is not
+the browser's own is kept (`localStorage`, key `ppm-theme-choice`) and wins
+over the setting; picking the theme the browser asks for clears it, so the UI
+follows the browser again. The picker is given no storage key, because it
+stores every theme it applies, its guess from the browser included, which
+made the setting count only on a first visit (`src/lib/theme-choice.ts`). A
+value under the old key `lily-theme` is read once: `light` or `dark` there
+(most likely that guess) is dropped, any other theme is kept as the choice.
+`tests/e2e/theme-follows-browser.spec.ts` and `tests/unit/theme-choice.test.ts`. The app's own colour tokens (`src/app.css`) are
 derived from the theme's so that text meets WCAG 2 AA (4.5:1) under both
 the `light` and the `dark` theme: `--mxi-color-link` (every link, and text
 written in the primary colour) is the theme's primary mixed 70 / 30 with

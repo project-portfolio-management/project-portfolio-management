@@ -65,7 +65,7 @@ for (const theme of THEMES)
   }) => {
     await stubPlansApi(page);
     await page.addInitScript(
-      (t) => localStorage.setItem("lily-theme", t),
+      (t) => localStorage.setItem("ppm-theme-choice", t),
       theme,
     );
     await page.goto("/en-001");

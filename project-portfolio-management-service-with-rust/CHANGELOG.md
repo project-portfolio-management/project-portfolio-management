@@ -47,6 +47,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- **axa 0.14 and axa-test 0.5 (2026-11-15).** Migration `20261115000114_axa_outbox_tenant` (one way, in
+  `migration::REFUSED`); `tenant: None` on every outbox event; `log_tenant: false` in the rate-limit test's
+  `config::Http`. See the root `CHANGELOG.md`.
 - **axa 0.13 and axa-test 0.4 (2026-11-14).** Feature `postgres-sqlx`; the cross-site write guard, with a listed
   CORS origin let through by `http_security::cors_mw`; `tests/requests/cross_site.rs`. See the root `CHANGELOG.md`.
 - Replaced Loco with axa 0.1: see the root `CHANGELOG.md`, 5 November (Loco replaced with axa).

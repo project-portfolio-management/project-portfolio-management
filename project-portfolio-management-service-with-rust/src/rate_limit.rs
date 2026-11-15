@@ -488,6 +488,7 @@ mod tests {
                 permissions_policy: None,
                 trusted_proxies: nets,
                 cross_site_paths: Vec::new(),
+                log_tenant: false,
             },
         )
         .unwrap();

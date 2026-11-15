@@ -15,6 +15,25 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (axa 0.14 and axa-test 0.5)
+
+- **axa 0.13 to 0.14.0 and axa-test 0.4 to 0.5.0**, published this morning: the owner approved an exception to the
+  three-day minimum package age, so the lock was resolved with `CARGO_REGISTRY_GLOBAL_MIN_PUBLISH_AGE=0`. The lock
+  changes only axa's crates (`axa-cursor-pagination` 0.1.2, `axa-postgres-job-queue` 0.3.0,
+  `axa-transactional-outbox` 0.4.0).
+- axa 0.14 adds tenants to its outbox and job queue. This service is single-tenant: every outbox event has no
+  tenant, and nothing else changes for a caller. **Migration `20261115000114`** runs the outbox crate's 0.4.0 setup
+  statements, which add the `tenant` columns to the tables migrations 108 and 109 made; it **cannot be rolled back**,
+  and the relay must be stopped while it runs. The job queue adds its own column at boot. Steps in
+  `operations/upgrade-and-migration.md`, "Upgrading to axa 0.14".
+- Run locally: fmt, clippy and the 1,289 unit tests; the migration crate's 7 tests; every database test binary CI's
+  `db` job runs. One request test, `status_updates::updates_are_due_then_overdue_then_reminded_once…`, failed in
+  two full runs: the Podman VM's clock had fallen about 1.5 hours behind this machine's (after sleep), past the
+  hour the test allows between the database's clock and the caller's. With the clocks back in step it passes; the
+  cause is the test machine, not axa. Not run: the binaries that need containers this machine does not
+  expose (`keycloak_entra_broker`, `keycloak_container`, `fluvio_relay`, the OpenTelemetry ones), so the relay against
+  a broker on the new outbox is not verified here.
+
 ### 15 November (the fuzz targets run in CI)
 
 - **`.github/workflows/fuzz.yml`:** the three service targets and the two matcher targets, five minutes each, weekly

@@ -40,6 +40,9 @@ pub fn event(env: &Envelope) -> ModelResult<Event> {
         topic: env.entity.to_string(),
         kind: kind_token(env.kind).to_string(),
         key: pid.to_string(),
+        // This service is single-tenant (axa 0.14's outbox can carry one): an event with no tenant keeps the
+        // fingerprint it had before 0.14.
+        tenant: None,
         payload,
     })
 }

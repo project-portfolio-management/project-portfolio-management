@@ -71,10 +71,16 @@ pub const OLD_HISTORY: &str = "seaql_migrations";
 /// The migrations that refuse to roll back, with the reason each gave under the old migrator. A migration with no
 /// `.down.sql` that is missing here is refused with a general reason; a unit test keeps this list and the files in
 /// step.
-pub const REFUSED: &[(i64, &str)] = &[(
-    20_261_109_000_109,
-    "the event record cannot be rolled back: its tables refuse every change. axa_outbox is unchanged",
-)];
+pub const REFUSED: &[(i64, &str)] = &[
+    (
+        20_261_109_000_109,
+        "the event record cannot be rolled back: its tables refuse every change. axa_outbox is unchanged",
+    ),
+    (
+        20_261_115_000_114,
+        "the event record's tenant column cannot be rolled back: its tables refuse every change, and axa 0.14 writes it",
+    ),
+];
 
 /// What the runner can fail with.
 #[derive(Debug)]
@@ -448,7 +454,7 @@ mod tests {
             .collect();
         let refused: Vec<i64> = REFUSED.iter().map(|(v, _)| *v).collect();
         assert_eq!(without, refused);
-        // Every migration has a down file but the refused ones: 142 of the 143 frozen, and every one since.
+        // Every migration has a down file but the refused ones: 142 of the 143 frozen, and every one since but the outbox's.
         assert_eq!(downs.len(), ups().count() - REFUSED.len());
         assert!(ups().count() >= FROZEN);
         assert!(MIGRATOR
@@ -485,7 +491,7 @@ mod tests {
                 )
             })
             .collect();
-        // The 285 frozen files (143 up, 142 down), and two for each migration since.
+        // The 285 frozen files (143 up, 142 down), and two for each migration since (one for a refused one).
         assert_eq!(ours.len(), 2 * ups().count() - REFUSED.len());
         assert!(ours.len() >= 2 * FROZEN - REFUSED.len());
         assert_eq!(ours, theirs);

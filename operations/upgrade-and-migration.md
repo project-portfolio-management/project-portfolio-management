@@ -43,6 +43,8 @@
      [Upgrading to axa 0.11](#upgrading-to-axa-011) **before** the new image goes out;
    - axa 0.13 refuses a browser's cross-site write: read [Upgrading to axa 0.13](#upgrading-to-axa-013) if a browser on
      another origin writes to the API directly;
+   - axa 0.14 adds a `tenant` column to the outbox in migration `20261115000114`, which **cannot be rolled back**:
+     **stop every relay** (`EVENT_RELAY`) before it runs, and read [Upgrading to axa 0.14](#upgrading-to-axa-014);
    - migrations move from `sea-orm-migration` to sqlx: the first `db migrate` copies the history, and from then
      on an older image must not run against the database: read
      [Upgrading to sqlx migrations](#upgrading-to-sqlx-migrations).
@@ -137,6 +139,26 @@ differently:
 No migration comes with the axa change, so going back is redeploying the previous tag. The same release carries
 migrations `20261114000110` to `20261114000112` (RE-7, RE-1, RE-8), which add tables and columns only, each with a
 down file.
+
+## Upgrading to axa 0.14
+
+The release that moves the service from axa 0.13 to 0.14 renames no setting and changes no route or answer. axa 0.14
+adds tenants to its outbox and job queue, which this service, being single-tenant, does not use:
+
+1. **The outbox has a `tenant` column** on `axa_outbox_events` and `axa_outbox_owed`, and a second form of
+   `axa_outbox_fingerprint` that covers it. Migration `20261115000114` adds them: it runs the outbox crate's
+   0.4.0 `SETUP_STATEMENTS`, each safe to repeat, so on the existing tables it adds only what is missing. The relay
+   (`Outbox::connect_existing`) refuses tables without them, so **stop every relay before the migration runs** and
+   start the new image's after. Events already written, and every event this service writes, have no tenant and keep
+   their fingerprints. The migration **cannot be rolled back** (the outbox's tables refuse every change): to go back,
+   restore the backup.
+2. **The job queue has a `tenant` column**, which the service adds itself at boot (`Queue::connect`), with no
+   migration.
+3. **`HTTP_LOG_TENANT`** (no prefix, off by default) would add a `tenant` field to every request's log span. With it
+   off, logs are as they were; there is no tenant to log here.
+
+The same release carries migration `20261115000113` (product family colours), which adds a table only, with a down
+file.
 
 ## Upgrading to sqlx migrations
 

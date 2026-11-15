@@ -82,8 +82,11 @@ spec §16 once that crate is scaffolded.
   token, and public share links (BR-9) were declined. (Lean: yes, but only as an opt-in public reader of roadmaps a
   person published, from plans that are neither private nor marked, with a whitelisted set of fields that names no
   person, and a census test in front of it.)
-  (**Built 2026-11-14 as the lean says, off by default** (RE-4); whether a deployment turns it on is the deployer's
-  choice, and the owner's answer is still open.)
+  (**Built 2026-11-14 as the lean says, off by default** (RE-4). **Decided 2026-11-15 by the owner:** supported as
+  an opt-in. It stays off by default; a deployment that wants public roadmaps turns it on, and the deployment guide
+  documents it as supported, with the rule that roadmap text names a role or a team, never a person. This is a
+  position on what the project supports, not a review of a deployment: it does not change DPIA risk 17, and a
+  deployment that turns the reader on still owns that risk.)
 - **OQ-15 — Offer this service as the API the DHCW Roadmap Editor plans?** Its guide plans a PostgreSQL-backed HTTP API
   to replace Google Sheets behind one port ([lessons](dhcw-roadmaps-editor-lessons/index.md)). (Lean: write the mapping
   and a dry-run import (RE-5), and leave any approach to DHCW to the owner. Do not shape the data model to their

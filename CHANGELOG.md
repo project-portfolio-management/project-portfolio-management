@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (OQ-14 decided: the public roadmap reader is a supported opt-in)
+
+- **The owner decided OQ-14:** the service may serve public product roadmaps with no token, as an opt-in that stays
+  off by default. `operations/deployment.md` now lists the reader's settings, which it did not before, and says that
+  roadmap text names a role or a team, never a person. Recorded in `spec/16-open-questions.md`, `plan.md` §92, the
+  public-reader persona and DPIA risk 17.
+- Not changed: the code, the default (off), and the DPIA's risk rating; nothing checks roadmap text for names. Not
+  done: a public page that renders the reader.
+
 ### 15 November (product family colours, RE-5)
 
 - **A product family's colour is its editors' to choose:** any `#rrggbb`, with its Welsh name, through

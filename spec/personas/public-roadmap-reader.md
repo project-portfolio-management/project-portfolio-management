@@ -9,7 +9,7 @@
 - DHCW ranks its public site's readers as health boards and Welsh Government stakeholders first, then DHCW staff, then
   patients and the public (DHCW answer A13, not this project's).
 - The public reader serves only what a person chose to publish, names no person, and leaves out private and marked
-  plans (RE-4, OQ-14 in [§16](../16-open-questions.md)).
+  plans (RE-4, OQ-14 in [§16](../16-open-questions.md); supported as an opt-in, decided 2026-11-15).
 
 ## Owner answers
 

@@ -1,0 +1,59 @@
+# Fuzz: every cargo-fuzz target in the service and the matcher, a few minutes each, weekly and on demand.
+#
+# The targets need nightly (libFuzzer's sanitizer flags), so this is its own workflow on a dated nightly, not part of
+# ci.yml, whose toolchain must equal rust-toolchain.toml. A crash uploads the input that caused it. Like the chaos
+# test, a red run is a prompt to read the artifact, not a merge gate, and it is not part of `ci-ok`.
+# Targets and what each checks: project-portfolio-management-service-with-rust/fuzz/README.md and the matcher's
+# fuzz/Cargo.toml.
+name: Fuzz
+
+on:
+  schedule:
+    - cron: "41 3 * * 2"
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds per target
+        default: "300"
+
+permissions:
+  contents: read
+
+env:
+  # A dated nightly, so a run is reproducible; move it by hand.
+  FUZZ_TOOLCHAIN: nightly-2026-11-14
+
+jobs:
+  fuzz:
+    name: Fuzz ${{ matrix.crate }} ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { crate: project-portfolio-management-service-with-rust, target: validate_json }
+          - { crate: project-portfolio-management-service-with-rust, target: validate_built }
+          - { crate: project-portfolio-management-service-with-rust, target: merge_plans }
+          - { crate: project-portfolio-management-matcher-with-rust, target: match_plans }
+          - { crate: project-portfolio-management-matcher-with-rust, target: normalize }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@9522411a9bce8484da960823fc2f46e52f981f71 # 1.100.0
+        with:
+          toolchain: ${{ env.FUZZ_TOOLCHAIN }}
+      - name: Install cargo-fuzz
+        run: cargo +"$FUZZ_TOOLCHAIN" install cargo-fuzz --version 0.13.2 --locked
+      - name: Fuzz
+        working-directory: ${{ matrix.crate }}
+        env:
+          TARGET: ${{ matrix.target }}
+          SECONDS_PER_TARGET: ${{ inputs.seconds || '300' }}
+        run: cargo +"$FUZZ_TOOLCHAIN" fuzz run "$TARGET" -- -max_total_time="$SECONDS_PER_TARGET"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: fuzz-${{ matrix.target }}-crash
+          path: ${{ matrix.crate }}/fuzz/artifacts

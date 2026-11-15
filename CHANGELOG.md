@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the fuzz targets run in CI)
+
+- **`.github/workflows/fuzz.yml`:** the three service targets and the two matcher targets, five minutes each, weekly
+  and on demand, on a dated nightly (`nightly-2026-11-14`) with `cargo-fuzz` 0.13.2, uploading the input of any
+  crash. Not a merge gate, as the chaos test is not. Until now they ran only by hand.
+- Checked locally: the pinned-actions check and `zizmor` pass; the matcher targets ran 16 seconds each with no
+  finding (the service targets the day before). Not verified: a run on GitHub, which happens on the first schedule
+  or a manual dispatch.
+
 ### 15 November (the theme contrast rule, RE-15 decided)
 
 - **The owner's rule:** the light and dark themes must meet WCAG 2.2 AA (4.5:1) for every text pair of the UI's

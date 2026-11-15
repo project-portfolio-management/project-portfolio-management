@@ -45,9 +45,12 @@ A crash writes a reproducer under `fuzz/artifacts/<target>/`; replay it
 with `cargo +nightly fuzz run <target> fuzz/artifacts/<target>/<file>`.
 
 `target/`, `corpus/`, `artifacts/`, and `coverage/` are git-ignored, so
-nothing carries between runs — CI's
-`fuzz` stage (family CI script, not in this repository) is a short smoke run
-(`FUZZ_SECONDS`, default 30, per target), not exhaustive fuzzing.
+nothing carries between runs. In this repository,
+[`.github/workflows/fuzz.yml`](../../.github/workflows/fuzz.yml) runs every
+target here and the matcher's for five minutes each (`seconds` on a manual
+run), weekly and on demand, on a dated nightly, and uploads a crash's input.
+It is not a merge gate. Five minutes from an empty corpus is a smoke run,
+not exhaustive fuzzing.
 
 ## Why this sub-crate declares `[workspace]`
 

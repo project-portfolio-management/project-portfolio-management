@@ -287,6 +287,38 @@ fn row_json(r: &Row, names: &HashMap<Uuid, String>) -> serde_json::Value {
     })
 }
 
+/// Each programme in `ids` with every plan beneath it in `include`, the programme first, at most 2,000 plans a tree.
+fn programme_trees(
+    all: &[plans::Model],
+    include: &HashSet<Uuid>,
+    ids: &[&plans::Model],
+) -> Vec<Vec<Uuid>> {
+    let mut children: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
+    for c in all.iter().filter(|c| include.contains(&c.pid)) {
+        if let Some(par) = c.parent_pid {
+            children.entry(par).or_default().push(c.pid);
+        }
+    }
+    ids.iter()
+        .map(|p| {
+            let mut tree = vec![p.pid];
+            let mut seen: HashSet<Uuid> = HashSet::from([p.pid]);
+            let mut i = 0;
+            while i < tree.len() && tree.len() < 2000 {
+                if let Some(cs) = children.get(&tree[i]) {
+                    for c in cs {
+                        if seen.insert(*c) {
+                            tree.push(*c);
+                        }
+                    }
+                }
+                i += 1;
+            }
+            tree
+        })
+        .collect()
+}
+
 /// The money section: programmes by funding source for the financial year containing `day`. Lines on
 /// plans outside `include` (private or marked) are not read.
 ///
@@ -345,31 +377,23 @@ pub(crate) async fn money_section(
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
         .collect();
     ids.sort_by(|a, b| a.name.cmp(&b.name).then(a.pid.cmp(&b.pid)));
-    for p in ids {
-        // The existing whole-life forecast, rolled up over the programme and what is beneath it that
-        // may be read, one row per currency.
-        let mut children: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
-        for c in all.iter().filter(|c| include.contains(&c.pid)) {
-            if let Some(par) = c.parent_pid {
-                children.entry(par).or_default().push(c.pid);
-            }
-        }
-        let mut tree = vec![p.pid];
-        let mut i = 0;
-        while i < tree.len() && tree.len() < 2000 {
-            if let Some(cs) = children.get(&tree[i]) {
-                for c in cs {
-                    if !tree.contains(c) {
-                        tree.push(*c);
-                    }
-                }
-            }
-            i += 1;
-        }
-        let mut fs = Vec::new();
-        for n in &tree {
-            fs.push(super::financials::forecast_of(ctx, *n).await?);
-        }
+    // The existing whole-life forecast, rolled up over each programme and what is beneath it that may be read, one
+    // row per currency. The trees are walked first and every plan's forecast read in one batch (RG-18), so the
+    // statements do not grow with the number of programmes or plans.
+    let trees = programme_trees(&all, include, &ids);
+    let every: Vec<Uuid> = trees
+        .iter()
+        .flatten()
+        .copied()
+        .collect::<HashSet<Uuid>>()
+        .into_iter()
+        .collect();
+    let forecasts = super::financials::forecasts_of(ctx, &every).await?;
+    for (p, tree) in ids.into_iter().zip(&trees) {
+        let fs: Vec<crate::financials::Forecast> = tree
+            .iter()
+            .filter_map(|n| forecasts.get(n).cloned())
+            .collect();
         let roll = crate::financials::rollup_forecast(&fs);
         programmes.push(serde_json::json!({
             "plan_pid": p.pid, "name": p.name,

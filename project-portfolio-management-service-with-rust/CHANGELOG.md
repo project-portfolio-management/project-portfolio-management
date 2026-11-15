@@ -11,6 +11,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- **`GET /api/portfolio-money` no longer reads each plan's forecast on its own (RG-18, 2026-11-15).**
+  `controllers::financials::forecasts_of`; regression test `requests::scale::portfolio_money_does_not_fan_out_with_programmes`.
+  See the root `CHANGELOG.md`.
 - **A dropped connection under concurrent requests (2026-11-13).** `observability::trace_mw` held a `Span::enter` guard
   across an `.await`. The `tracing` registry then panicked in the connection task, about once in a thousand requests,
   and the client's connection dropped. It now uses `Instrument`. Regression test: `tests/trace_span_concurrency.rs`.

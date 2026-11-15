@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the slow portfolio-money view, RG-18)
+
+- **`GET /api/portfolio-money` is about eight times faster:** 494 requests a second at a median of 64 ms on the
+  load test's data, from 54 to 67 at about 470. Each programme's forecast had read every plan beneath it with
+  statements of its own (28 statements at 3 programmes, 133 at 18); `financials::forecasts_of` reads them all in
+  four. The rollup route `GET /api/financials/forecast?plan=` shares it. The answers are unchanged.
+- Tested: a request test that the statement count is the same at 3 and 18 programmes (it failed on the old code)
+  and that each programme's forecast equals the rollup route's; every request and unit test.
+- Not verified: a programme tree above the walk's 2,000-plan ceiling.
+
 ### 15 November (comprehensive load and benchmark tests, RG-17)
 
 - **Benchmarks:** five new Criterion groups in the service (`cpm` from 100 to 12,667 tasks, `auth` with a real

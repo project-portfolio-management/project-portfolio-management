@@ -1605,11 +1605,20 @@ what was **not** tested; claim no certification.
   and `ramp`, which doubles connections to find each scenario's knee. All of it run and recorded in `BENCHMARKS.md`.
   **Not done:** a CI job for any of it (CI's machines are shared and noisy; `--slo-p95-ms` is there for when one is
   wanted); many distinct users; a database larger than 200 plans.
-- [ ] **RG-18 (S–M) — `GET /api/portfolio-money` is the one slow aggregate.** Found by RG-17: on 200 plans it
+- [x] **RG-18 (S–M) — `GET /api/portfolio-money` is the one slow aggregate.** Found by RG-17: on 200 plans it
   answers 54 to 67 requests a second at 32 connections with a median of 466 to 478 ms, and 420 ms at the 95th
   percentile from a single connection, where every other aggregate answers 800 to 2,800 a second at 12 to 38 ms.
   Find where the time goes (queries per request, rows read) and bring it into line, with a request test that its
   query count does not grow with the number of plans, as `tests/requests/scale.rs` does for capacity.
+  **Built 2026-11-15.** The cause: each programme's whole-life forecast read every plan beneath it with three or
+  four statements of its own (`financials::forecast_of`), and rebuilt the map of children for each programme: 28
+  statements at 3 programmes, 133 at 18. `financials::forecasts_of` now reads every plan's baseline, periods, TPC
+  observation and budget lines in four statements, and `forecast_of` is built on it, so there is one rule; the
+  rollup route `GET /api/financials/forecast?plan=` uses it too. Request test
+  `requests::scale::portfolio_money_does_not_fan_out_with_programmes` (the same count at 3 and 18 programmes, which
+  failed on the old code with 28 and 133; each programme's forecast equals the rollup route's). Under load, on a
+  fresh database of the same shape: 494 requests a second at a median of 64 ms, from 54 to 67 at 466 to 478.
+  **Not verified:** a programme tree over 2,000 plans (the walk's ceiling, unchanged).
 
 ## Not taken (director pack, escalation, production readiness)
 

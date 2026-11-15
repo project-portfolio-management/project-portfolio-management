@@ -250,46 +250,104 @@ fn to_i64(value: Option<sqlx::types::Decimal>) -> Option<i64> {
     value.and_then(|d| i64::from_str(&d.trunc().to_string()).ok())
 }
 
-/// The plan's latest TPC observation's own `(currency,
-/// cost_estimate_to_complete)`, if any.
-async fn latest_tpc_cec(ctx: &AppContext, plan_pid: Uuid) -> Result<Option<(String, i64)>> {
-    let row: Option<total_project_control::Model> = sqlx::query_as(
-        "SELECT * FROM total_project_control
-         WHERE plan_pid = $1 AND deleted_at IS NULL
-         ORDER BY observed_at DESC
-         LIMIT 1",
-    )
-    .bind(plan_pid)
-    .fetch_optional(crate::db::pool(ctx))
-    .await?;
-    Ok(row.and_then(|row| {
-        to_i64(Some(row.total_project_control_cost_estimate_to_complete))
-            .map(|cec| (row.currency, cec))
-    }))
-}
-
-/// Every `(currency, actual_minor)` line recorded against the plan.
-async fn actual_lines(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<(String, i64)>> {
-    Ok(sqlx::query_as(
-        "SELECT currency, actual_minor FROM budget_lines WHERE plan_pid = $1 AND deleted_at IS NULL",
-    )
-    .bind(plan_pid)
-    .fetch_all(crate::db::pool(ctx))
-    .await?)
-}
-
 /// Build one plan's forecast from its live inputs.
 pub(crate) async fn forecast_of(ctx: &AppContext, plan_pid: Uuid) -> Result<rules::Forecast> {
-    let baseline = latest_baseline(ctx, plan_pid).await?;
-    let tpc_cec = latest_tpc_cec(ctx, plan_pid).await?;
-    let lines = actual_lines(ctx, plan_pid).await?;
+    let mut all = forecasts_of(ctx, &[plan_pid]).await?;
+    Ok(all
+        .remove(&plan_pid)
+        .unwrap_or_else(|| rules::forecast(&[], None, None, crate::tz::deployment_today())))
+}
+
+/// Every plan's forecast in `plan_pids` from its live inputs, in four statements however many plans there are
+/// (RG-18): each plan's latest baseline and its periods, its latest TPC observation, and its budget lines. Each is
+/// what [`forecast_of`] would give for that plan alone, which is built on this.
+///
+/// # Errors
+///
+/// When a database read fails.
+pub(crate) async fn forecasts_of(
+    ctx: &AppContext,
+    plan_pids: &[Uuid],
+) -> Result<std::collections::HashMap<Uuid, rules::Forecast>> {
+    use std::collections::HashMap;
+    if plan_pids.is_empty() {
+        return Ok(HashMap::new());
+    }
+    let baselines: Vec<budget_baselines::Model> = sqlx::query_as(
+        "SELECT DISTINCT ON (plan_pid) * FROM budget_baselines WHERE plan_pid = ANY($1)
+         ORDER BY plan_pid, version DESC",
+    )
+    .bind(plan_pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let baseline_pids: Vec<Uuid> = baselines.iter().map(|b| b.pid).collect();
+    let periods: Vec<budget_baseline_periods::Model> =
+        sqlx::query_as("SELECT * FROM budget_baseline_periods WHERE baseline_pid = ANY($1)")
+            .bind(&baseline_pids)
+            .fetch_all(crate::db::pool(ctx))
+            .await?;
+    let mut periods_of: HashMap<Uuid, Vec<rules::BaselinePeriod>> = HashMap::new();
+    for p in periods {
+        periods_of
+            .entry(p.baseline_pid)
+            .or_default()
+            .push(rules::BaselinePeriod {
+                period_start: p.period_start,
+                period_end: p.period_end,
+                planned_minor: p.planned_minor,
+            });
+    }
+    let baseline_of: HashMap<Uuid, rules::Baseline> = baselines
+        .into_iter()
+        .map(|row| {
+            let periods = periods_of.remove(&row.pid).unwrap_or_default();
+            (
+                row.plan_pid,
+                rules::Baseline {
+                    version: row.version,
+                    currency: row.currency,
+                    periods,
+                },
+            )
+        })
+        .collect();
+    let tpcs: Vec<total_project_control::Model> = sqlx::query_as(
+        "SELECT DISTINCT ON (plan_pid) * FROM total_project_control
+         WHERE plan_pid = ANY($1) AND deleted_at IS NULL
+         ORDER BY plan_pid, observed_at DESC",
+    )
+    .bind(plan_pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let tpc_of: HashMap<Uuid, (String, i64)> = tpcs
+        .into_iter()
+        .filter_map(|row| {
+            to_i64(Some(row.total_project_control_cost_estimate_to_complete))
+                .map(|cec| (row.plan_pid, (row.currency, cec)))
+        })
+        .collect();
+    let lines: Vec<(Uuid, String, i64)> = sqlx::query_as(
+        "SELECT plan_pid, currency, actual_minor FROM budget_lines WHERE plan_pid = ANY($1) AND deleted_at IS NULL",
+    )
+    .bind(plan_pids)
+    .fetch_all(crate::db::pool(ctx))
+    .await?;
+    let mut lines_of: HashMap<Uuid, Vec<(String, i64)>> = HashMap::new();
+    for (plan, currency, actual) in lines {
+        lines_of.entry(plan).or_default().push((currency, actual));
+    }
     let today = crate::tz::deployment_today();
-    Ok(rules::forecast(
-        &lines,
-        tpc_cec.as_ref().map(|(c, v)| (c.as_str(), *v)),
-        baseline.as_ref(),
-        today,
-    ))
+    Ok(plan_pids
+        .iter()
+        .map(|pid| {
+            let lines = lines_of.get(pid).map(Vec::as_slice).unwrap_or_default();
+            let tpc = tpc_of.get(pid).map(|(c, v)| (c.as_str(), *v));
+            (
+                *pid,
+                rules::forecast(lines, tpc, baseline_of.get(pid), today),
+            )
+        })
+        .collect())
 }
 
 /// `GET /api/plans/{pid}/financials/forecast` — one plan's EAC/ETC.
@@ -370,10 +428,9 @@ async fn rollup(
 
     let walk =
         crate::tba::walk_descendants(&children, root.pid, crate::tba::MAX_ROLLUP_NODES, depth);
-    let mut forecasts = Vec::with_capacity(walk.nodes.len());
-    for node in &walk.nodes {
-        forecasts.push(forecast_of(&ctx, node.pid).await?);
-    }
+    let pids: Vec<Uuid> = walk.nodes.iter().map(|n| n.pid).collect();
+    let mut by_pid = forecasts_of(&ctx, &pids).await?;
+    let forecasts: Vec<rules::Forecast> = pids.iter().filter_map(|p| by_pid.remove(p)).collect();
     let rollup = rules::rollup_forecast(&forecasts);
 
     let body = serde_json::json!({

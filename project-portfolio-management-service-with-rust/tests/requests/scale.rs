@@ -130,3 +130,84 @@ async fn capacity_views_do_not_fan_out_with_scale() {
     })
     .await;
 }
+
+/// A programme with a project beneath it, the project holding a budget line and a baseline; returns the programme.
+async fn seed_programme(request: &axum_test::TestServer, i: usize) -> String {
+    let created = |body: Value| async move {
+        let v: Value = request.post("/api/plans").json(&body).await.json();
+        v["pid"].as_str().expect("pid").to_string()
+    };
+    let programme =
+        created(json!({ "kind": "Program", "name": format!("Money programme {i}") })).await;
+    let project = created(
+        json!({ "kind": "Project", "name": format!("Money project {i}"), "parent_ref": programme }),
+    )
+    .await;
+    request
+        .post(&format!("/api/plans/{project}/budget-lines"))
+        .json(&json!({ "category": "capex", "description": "Build", "currency": "GBP", "planned_minor": 1_000_i64,
+                        "period_start": "2026-05-01", "period_end": "2026-06-30" }))
+        .await
+        .assert_status_ok();
+    request
+        .post(&format!("/api/plans/{project}/budget-baselines"))
+        .json(&json!({ "currency": "GBP", "periods": [
+            { "period_start": "2099-01-01", "period_end": "2099-12-31", "planned_minor": 5_000 } ] }))
+        .await
+        .assert_status_ok();
+    programme
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+// RG-18: GET /portfolio-money read each plan's forecast with its own statements, three or four per plan beneath every
+// programme, and was the one slow aggregate under load. Its statements must not grow with the number of
+// programmes, and each programme's whole-life forecast must equal the rollup route's for that programme.
+async fn portfolio_money_does_not_fan_out_with_programmes() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let mut programmes = Vec::new();
+        for i in 0..3 {
+            programmes.push(seed_programme(&request, i).await);
+        }
+        let (_, small) =
+            count_queries(|| async { request.get("/api/portfolio-money?fy=2026").await }).await;
+        for i in 3..18 {
+            programmes.push(seed_programme(&request, i).await);
+        }
+        let (body, large) =
+            count_queries(|| async { request.get("/api/portfolio-money?fy=2026").await }).await;
+        assert!(small > 0, "the layer observed real queries");
+        assert_eq!(
+            small, large,
+            "GET /portfolio-money's query count must not grow with programme count \
+             (was {small} at 3 programmes, {large} at 18)"
+        );
+        let money: Value = body.json();
+        for pid in &programmes {
+            let shown = money["programmes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|p| p["plan_pid"] == pid.as_str())
+                .expect("every programme is listed");
+            let rollup: Value = request
+                .get(&format!("/api/financials/forecast?plan={pid}"))
+                .await
+                .json();
+            assert_eq!(
+                shown["whole_life_forecast"]["rows"], rollup["rollup"]["rows"],
+                "the programme's forecast is the rollup's"
+            );
+            assert!(
+                !shown["whole_life_forecast"]["rows"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty(),
+                "the baseline and line give a GBP forecast: {shown}"
+            );
+        }
+    })
+    .await;
+}

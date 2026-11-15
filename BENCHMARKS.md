@@ -122,7 +122,10 @@ on this machine; the benchmark above puts a token check at 26 µs, against reque
 
 **One aggregate is slow:** `GET /api/portfolio-money` answers 54 to 67 requests a second with a median near half a
 second, where every other aggregate answers 800 to 2,800. With `--slo-p95-ms 250` the run names it and exits 1.
-It is RG-18 in [`tasks.md`](tasks.md); not investigated yet.
+It was RG-18 in [`tasks.md`](tasks.md): each programme read every plan beneath it with statements of its own.
+**Fixed the same day:** on a fresh database of the same shape, 494 requests a second at a median of 64 ms and a
+p95 of 71 ms (`run --only "portfolio money"`, 32 connections, 10 seconds), about eight times the throughput; the
+neighbouring aggregates in that run (858 and 911 a second) match the table.
 
 **Memory** rose from 158 MB to 1,466 MB over the login-off run and from 34 MB to 1,534 MB over the login-on run.
 A three-minute soak afterwards (`soak --minutes 3 --concurrency 16`, about 636,000 requests, no errors, worst p95

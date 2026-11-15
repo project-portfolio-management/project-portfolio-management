@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (Playwright 1.65.1)
+
+- **`@playwright/test` 1.65.0 to 1.65.1** in the UI and the site, the latest stable (published 13 November, past
+  pnpm's default one-day release age). `@axe-core/playwright` 4.14.0 is already the latest.
+- Run locally on Chromium 1.65.1: the UI's lint, check, unit tests and every Playwright test; the site's Playwright
+  tests. Not run: other browsers, which CI does not install either.
+
 ### 15 November (the editors' list of roadmaps, RE-5)
 
 - **`GET /api/public-roadmaps`** lists every public product roadmap of a live plan the caller may read, published or

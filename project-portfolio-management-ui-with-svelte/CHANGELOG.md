@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — Playwright 1.65.1 (2026-11-15)
+
+- `@playwright/test` 1.65.0 to 1.65.1, the latest stable; the lockfile changes only `@playwright/test`, `playwright`
+  and `playwright-core`. The site (`project-portfolio-management.github.io`) moves with it. See the root
+  `CHANGELOG.md`, 15 November.
+
 ### Changed — the proxy no longer passes on where the browser's request came from (2026-11-14)
 
 `forwardedRequestHeaders` drops `Origin`, `Referer` and the `Sec-Fetch-*` headers. They describe the browser-to-app

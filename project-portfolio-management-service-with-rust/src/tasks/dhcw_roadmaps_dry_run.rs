@@ -3,7 +3,7 @@
 //!
 //! The folder holds `Roadmaps.csv` (the roadmap index, the spreadsheet's first tab) and one `<Sheet>.csv` per roadmap
 //! tab. Organization codes and roadmap categories are matched against this deployment's own. The report is JSON on
-//! standard output; the rules are [`crate::dhcw_import`]. There is no apply step.
+//! standard output; the rules are [`crate::dhcw_import`]. `dhcw_roadmaps_apply` writes what it reports.
 
 use std::collections::BTreeMap;
 

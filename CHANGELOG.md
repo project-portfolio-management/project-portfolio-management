@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the DHCW import's apply step, RE-5)
+
+- **`task dhcw_roadmaps_apply dir:<folder> plans:<file>`** writes the DHCW roadmap spreadsheet onto the existing
+  Product plans that a plans file (`Sheet`, `Plan`) names. Every roadmap it makes is unpublished, whatever `Enabled`
+  says. It never changes a roadmap that exists, and makes no plan, category or organization. Each roadmap is one
+  transaction and one audit row. Spec FR-16e26; `operations/dhcw-roadmaps-editor.md`.
+- Tested: on the example spreadsheet against the database (what the dry run maps lands; Welsh kept; an unknown
+  organization code left off; a Project plan and an unnamed sheet skipped; a second run makes nothing; a slug clash
+  skipped), and the task end to end with a plans file that names no sheet.
+- Not done: product families with colours; updating an existing roadmap from the sheet. Not verified: a real DHCW
+  export, since nothing has been asked of DHCW (OQ-15).
+
 ### 15 November (Playwright 1.65.1)
 
 - **`@playwright/test` 1.65.0 to 1.65.1** in the UI and the site, the latest stable (published 13 November, past

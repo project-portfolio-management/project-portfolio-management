@@ -537,7 +537,31 @@ pub(crate) async fn insert_item(
     roadmap_id: i64,
     b: &ItemPayload,
 ) -> Result<items::Model> {
-    let public_id = fresh_public_id(tx).await?;
+    insert_item_keeping(tx, roadmap_id, b, None).await
+}
+
+/// As [`insert_item`], keeping `keep` as its public id when that is one no item has ever had (an import's own ids).
+pub(crate) async fn insert_item_keeping(
+    tx: &mut crate::db::Tx,
+    roadmap_id: i64,
+    b: &ItemPayload,
+    keep: Option<&str>,
+) -> Result<items::Model> {
+    let kept = match keep.filter(|id| rules::is_public_id(id)) {
+        Some(id) => {
+            let used: Option<i32> =
+                sqlx::query_scalar("SELECT 1 FROM public_roadmap_items WHERE public_id = $1")
+                    .bind(id)
+                    .fetch_optional(tx.conn())
+                    .await?;
+            used.is_none().then(|| id.to_string())
+        }
+        None => None,
+    };
+    let public_id = match kept {
+        Some(id) => id,
+        None => fresh_public_id(tx).await?,
+    };
     let position: i32 = sqlx::query_scalar(
         "SELECT COALESCE(MAX(position) + 1, 0) FROM public_roadmap_items
          WHERE roadmap_id = $1 AND placement IS NOT DISTINCT FROM $2 AND deleted_at IS NULL",

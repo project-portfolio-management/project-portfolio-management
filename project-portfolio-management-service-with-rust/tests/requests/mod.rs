@@ -17,6 +17,7 @@ mod cpm;
 mod cpm_only;
 mod cross_site;
 mod custom_fields;
+mod dhcw_apply;
 mod discussion;
 mod effort;
 mod email;

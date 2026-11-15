@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **The DHCW import's apply step (RE-5, 2026-11-15).** `src/dhcw_apply.rs`, task `dhcw_roadmaps_apply`,
+  `dhcw_import::parse`, `public_roadmaps::insert_item_keeping`. Spec FR-16e26. See the root `CHANGELOG.md`.
 - **The editors' list of roadmaps (RE-5, 2026-11-15).** `GET /api/public-roadmaps`, paged. Spec FR-16e25. See the
   root `CHANGELOG.md`, 15 November.
 - **A dry run of the DHCW roadmap spreadsheet (RE-5, 2026-11-14).** `src/dhcw_import.rs`, task

@@ -683,6 +683,7 @@ impl App {
         tasks.register(crate::tasks::director_pack_schedule::DirectorPackSchedule);
         tasks.register(crate::tasks::outbox_retry_failed::OutboxRetryFailed);
         tasks.register(crate::tasks::dhcw_roadmaps_dry_run::DhcwRoadmapsDryRun);
+        tasks.register(crate::tasks::dhcw_roadmaps_apply::DhcwRoadmapsApply);
         // tasks-inject (do not remove)
     }
 
@@ -778,7 +779,11 @@ mod tests {
     #[test]
     fn every_task_has_been_decided_on_for_production() {
         use axa::task::Task;
-        let decided: [(&str, &dyn Task); 8] = [
+        let decided: [(&str, &dyn Task); 9] = [
+            (
+                "dhcw_roadmaps_apply",
+                &crate::tasks::dhcw_roadmaps_apply::DhcwRoadmapsApply,
+            ),
             (
                 "dhcw_roadmaps_dry_run",
                 &crate::tasks::dhcw_roadmaps_dry_run::DhcwRoadmapsDryRun,

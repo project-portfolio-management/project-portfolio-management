@@ -479,6 +479,13 @@ matcher payload (§5.6); every mutation audits (§6.6).
   every list is (FR-46). Each carries its plan id, which every editor route goes by, its slug, title, category id,
   published flag, `reviewed_on`, freshness state (FR-16e21) and how many live items are placed and unplaced. Private
   plans the caller is not a member of are left out, as from every list.
+- **FR-16e26 Importing the DHCW roadmap spreadsheet (RE-5).** `task dhcw_roadmaps_dry_run dir:` reports what each
+  row would become and writes nothing. `task dhcw_roadmaps_apply dir: plans:` writes the roadmaps whose `Sheet` the
+  plans file (`Sheet`, `Plan`) names onto those existing, live `Product` plans: unpublished whatever `Enabled` says,
+  never onto a plan that has a roadmap, never with a slug another roadmap has or had, and making no plan, category or
+  organization. Each roadmap, with its items and Welsh translations, is one transaction audited once on its plan
+  (`public_roadmap_imported`, actor `system:dhcw-import`); an item the roadmap rules refuse is skipped with the
+  reasons; the report accounts for every roadmap.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

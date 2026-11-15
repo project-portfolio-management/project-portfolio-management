@@ -65,7 +65,7 @@ allow-list (`PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS`), with the `Authorizatio
 ## Moving their spreadsheet in
 
 Part (b) of RE-5 is a **dry run**: it reads the spreadsheet as CSV exports and reports, row by row, what would be
-made and what would not, and why. It writes nothing; there is no apply step yet.
+made and what would not, and why. It writes nothing. The apply step (below) writes what it reports.
 
 ```bash
 # A folder with Roadmaps.csv (the first tab) and one <Sheet>.csv per roadmap tab
@@ -79,10 +79,29 @@ notice, to `tests/fixtures/dhcw-roadmaps/`) it maps 3 roadmaps and 15 items and 
 label`, `Colour` and `Product Lead` are reported as not mapped; a code this deployment does not have is listed as
 unknown; Welsh that does not have the English's shape is reported, not kept. Rules: `src/dhcw_import.rs`.
 
+### Applying it
+
+The spreadsheet names no plan, so a person writes a plans file: CSV with the columns `Sheet` and `Plan`, one row per
+tab to import, the plan being an existing `Product` plan's id. A tab it does not name is left alone.
+
+```bash
+cargo run -- task dhcw_roadmaps_apply dir:path/to/exports plans:path/to/plans.csv
+```
+
+It makes nothing but roadmaps: no plan, no category and no organization (an unknown code is left off the item, a
+category with no match is left empty, both reported). It never changes a roadmap that exists, so a plan that already
+has one is skipped, and running it twice makes nothing the second time. A slug another roadmap has or had is skipped.
+**Every roadmap it makes is unpublished**, whatever `Enabled` says (the report gives it as `enabled_in_sheet`), so a
+person reads it before the public reader can serve it. `Last updated` becomes `reviewed_on` (not if it is after
+today). An `Item ID` that is a valid public id no item has had is kept. Each roadmap is one transaction with its items
+and Welsh translations, audited once on its plan as `public_roadmap_imported` by `system:dhcw-import`; one that fails
+writes nothing, and the others still land. An item this service refuses is skipped with the reasons. Rules:
+`src/dhcw_apply.rs`; test `requests::dhcw_apply`.
+
 ## What it would take, in order
 
 1. A list route for editors, with plan ids (built 2026-11-15: `GET /api/public-roadmaps`).
 2. RE-2's publish, which mirrors their change set closely.
-3. An apply step after the dry run (built: the dry run only).
+3. An apply step after the dry run (built 2026-11-15: `dhcw_roadmaps_apply`).
 4. On their side: an `AuthClient` for the deployment's identity provider, and an `ApiRoadmapRepository` as their guide
    describes.

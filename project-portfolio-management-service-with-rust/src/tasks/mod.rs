@@ -1,5 +1,8 @@
 //! CLI tasks (extension point).
 
+/// `dhcw_roadmaps_apply` — write the DHCW roadmap spreadsheet onto existing Product plans, unpublished (RE-5).
+pub mod dhcw_roadmaps_apply;
+
 /// `dhcw_roadmaps_dry_run` — what the DHCW roadmap spreadsheet would become, writing nothing (RE-5).
 pub mod dhcw_roadmaps_dry_run;
 

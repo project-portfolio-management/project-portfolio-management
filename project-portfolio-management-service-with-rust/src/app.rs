@@ -492,6 +492,7 @@ impl App {
             .add_route(controllers::drum::routes())
             .add_route(controllers::organizations::routes())
             .add_route(controllers::roadmap_categories::routes())
+            .add_route(controllers::roadmap_families::routes())
             .add_route(controllers::public_roadmaps::routes())
             .add_route(controllers::public_reader::routes())
             .add_route(controllers::roadmap_publish::routes())

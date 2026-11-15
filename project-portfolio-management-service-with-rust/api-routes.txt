@@ -462,6 +462,8 @@ PUT /api/plans/{pid}/risks/{risk_pid}
 POST /api/plans/{pid}/risks/{risk_pid}/escalate
 GET /api/plans/{pid}/roadmap
 PUT /api/plans/{pid}/roadmap
+GET /api/plans/{pid}/roadmap-family
+PUT /api/plans/{pid}/roadmap-family
 POST /api/plans/{pid}/roadmap/items
 PUT /api/plans/{pid}/roadmap/items/{ipid}
 POST /api/plans/{pid}/roadmap/items/{ipid}/delete
@@ -626,6 +628,7 @@ GET /api/risk/heatmap
 GET /api/roadmap-categories
 POST /api/roadmap-categories
 PUT /api/roadmap-categories/{pid}
+GET /api/roadmap-families
 GET /api/saved-views
 POST /api/saved-views
 DELETE /api/saved-views/{pid}

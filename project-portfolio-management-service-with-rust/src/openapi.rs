@@ -144,6 +144,7 @@ pub const PAGED_LISTS: &[&str] = &[
     "/api/plans/{pid}/status-updates",
     "/api/status-updates/due",
     "/api/public-roadmaps",
+    "/api/roadmap-families",
 ];
 
 /// Add `limit`, `cursor` and the `Link` header to every list in [`PAGED_LISTS`].
@@ -2370,6 +2371,7 @@ mod tests {
             crate::controllers::drum::routes(),
             crate::controllers::organizations::routes(),
             crate::controllers::roadmap_categories::routes(),
+            crate::controllers::roadmap_families::routes(),
             crate::controllers::public_roadmaps::routes(),
             crate::controllers::public_reader::routes(),
             crate::controllers::roadmap_publish::routes(),

@@ -89,7 +89,7 @@ pub const MODULES: &[ModuleDef] = &[
     ModuleDef {
         // The public product roadmap (RE-1): a product's statement of what it is doing now, next and later.
         key: "roadmap",
-        segments: &["roadmap"],
+        segments: &["roadmap", "roadmap-family"],
     },
 ];
 

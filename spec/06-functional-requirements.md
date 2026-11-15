@@ -486,6 +486,14 @@ matcher payload (§5.6); every mutation audits (§6.6).
   organization. Each roadmap, with its items and Welsh translations, is one transaction audited once on its plan
   (`public_roadmap_imported`, actor `system:dhcw-import`); an item the roadmap rules refuse is skipped with the
   reasons; the report accounts for every roadmap.
+- **FR-16e27 Product family colours (RE-5, RE-7).** A product family is a plan that holds product plans; its
+  editors choose its colour, any `#rrggbb` (stored lower case), and its name in other languages, with
+  `PUT /api/plans/{pid}/roadmap-family` (`colour: null` removes both; audited with the old and new colour). No colour
+  is refused for its contrast: `GET /api/plans/{pid}/roadmap-family`, `GET /api/roadmap-families` (every live plan
+  that holds a live `Product` plan or has a colour, by name, paged) and the family on each row of
+  `GET /api/public-roadmaps` say how it reads under white and under black text (WCAG 2 ratio, and whether each meets
+  AA at 4.5:1), and which reads better. A family the caller may not read is left out and not counted, as is a
+  product.
 - **FR-16f Bird's-eye visibility.** The challenge funnel
   (`/api/lifecycle`) reports every phase even at zero, with live and
   stalled counts, and items in an unresolvable phase counted separately.

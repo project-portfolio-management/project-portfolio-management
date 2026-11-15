@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (product family colours, RE-5)
+
+- **A product family's colour is its editors' to choose:** any `#rrggbb`, with its Welsh name, through
+  `PUT /api/plans/{pid}/roadmap-family`. `GET /api/roadmap-families` lists every family, and each row of the editors'
+  roadmap list carries its family's colour. No colour is refused; every view gives its WCAG contrast under white and
+  black text and which reads better, so a poor choice is visible. Migration `20261115000113_roadmap_families`. Spec
+  FR-16e27. This closes the last gap `operations/dhcw-roadmaps-editor.md` found on this side.
+- Tested: contrast against known values; a request test (lower case kept, a light colour accepted with black text
+  advised, bad colours and translations `422`, the list and the editors' list, removal, the audit row); with real
+  tokens, a private family is `404` to a non-member, whose write does not land; the paging, guard and aggregate
+  censuses.
+- Not done: the import setting a colour from the sheet; the public reader showing it; any screen.
+
 ### 15 November (the DHCW import's apply step, RE-5)
 
 - **`task dhcw_roadmaps_apply dir:<folder> plans:<file>`** writes the DHCW roadmap spreadsheet onto the existing

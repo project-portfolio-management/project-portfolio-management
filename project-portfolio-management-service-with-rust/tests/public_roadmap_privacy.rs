@@ -135,7 +135,17 @@ async fn editors_list(
     who: &(axum::http::HeaderName, axum::http::HeaderValue),
     plan: &str,
 ) -> bool {
-    let mut url = "/api/public-roadmaps?limit=500".to_string();
+    lists(request, who, "/api/public-roadmaps", plan).await
+}
+
+/// Whether the paged list at `path`, as `who`, has a row whose `plan_pid` is `plan`, on any page.
+async fn lists(
+    request: &axum_test::TestServer,
+    who: &(axum::http::HeaderName, axum::http::HeaderValue),
+    path: &str,
+    plan: &str,
+) -> bool {
+    let mut url = format!("{path}?limit=500");
     loop {
         let r = request
             .get(&url)
@@ -160,6 +170,48 @@ async fn editors_list(
             None => return false,
         }
     }
+}
+
+/// A private plan as a product family: its colour is the member's to read and choose, a non-member's read and write
+/// are `404` and the write does not land, and the non-member's family list leaves it out.
+async fn assert_family_private(
+    request: &axum_test::TestServer,
+    alice: &(axum::http::HeaderName, axum::http::HeaderValue),
+    bob: &(axum::http::HeaderName, axum::http::HeaderValue),
+    plan: &str,
+) {
+    let family = format!("/api/plans/{plan}/roadmap-family");
+    request
+        .put(&family)
+        .add_header(alice.0.clone(), alice.1.clone())
+        .json(&json!({ "colour": "#325083" }))
+        .await
+        .assert_status_ok();
+    let seen = request
+        .get(&family)
+        .add_header(bob.0.clone(), bob.1.clone())
+        .await;
+    assert_eq!(seen.status_code(), 404);
+    let wrote = request
+        .put(&family)
+        .add_header(bob.0.clone(), bob.1.clone())
+        .json(&json!({ "colour": "#ff0000" }))
+        .await;
+    assert_eq!(wrote.status_code(), 404);
+    let mine: Value = request
+        .get(&family)
+        .add_header(alice.0.clone(), alice.1.clone())
+        .await
+        .json();
+    assert_eq!(mine["colour"], "#325083", "Bob's write did not land");
+    assert!(
+        !lists(request, bob, "/api/roadmap-families", plan).await,
+        "Bob"
+    );
+    assert!(
+        lists(request, alice, "/api/roadmap-families", plan).await,
+        "Alice"
+    );
 }
 
 #[tokio::test]
@@ -240,6 +292,7 @@ async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
         // RE-5: so does the editors' list of every roadmap.
         assert!(!editors_list(&request, &bob, &plan).await, "Bob");
         assert!(editors_list(&request, &alice, &plan).await, "Alice");
+        assert_family_private(&request, &alice, &bob, &plan).await;
     })
     .await;
 }

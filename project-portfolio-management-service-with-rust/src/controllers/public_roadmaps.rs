@@ -986,6 +986,9 @@ struct ListedRoadmap {
     r: roadmaps::Model,
     placed: i64,
     unplaced: i64,
+    family_pid: Option<Uuid>,
+    family_name: Option<String>,
+    family_colour: Option<String>,
 }
 
 /// `GET /api/public-roadmaps` — every roadmap of a live plan the caller may read, published or not, by title, paged
@@ -1003,8 +1006,12 @@ async fn list_roadmaps(
                 (SELECT count(*) FROM public_roadmap_items i
                   WHERE i.roadmap_id = r.id AND i.deleted_at IS NULL AND i.placement IS NOT NULL) AS placed,
                 (SELECT count(*) FROM public_roadmap_items i
-                  WHERE i.roadmap_id = r.id AND i.deleted_at IS NULL AND i.placement IS NULL) AS unplaced
+                  WHERE i.roadmap_id = r.id AND i.deleted_at IS NULL AND i.placement IS NULL) AS unplaced,
+                fp.pid AS family_pid, fp.name AS family_name, f.colour AS family_colour
          FROM public_roadmaps r JOIN plans p ON p.pid = r.plan_pid AND p.active
+         LEFT JOIN plans fp ON fp.pid = p.parent_pid AND fp.active AND fp.deleted_at IS NULL
+              AND NOT (fp.pid = ANY($1))
+         LEFT JOIN roadmap_families f ON f.plan_pid = fp.pid
          WHERE NOT (r.plan_pid = ANY($1))
          ORDER BY lower(r.title), r.id
          LIMIT $2 OFFSET $3",
@@ -1016,11 +1023,14 @@ async fn list_roadmaps(
     .await?;
     let list: Vec<Value> = rows
         .iter()
-        .map(|ListedRoadmap { r, placed, unplaced }| {
+        .map(|l| {
+            let r = &l.r;
             json!({ "pid": r.pid, "plan_pid": r.plan_pid, "slug": r.slug, "title": r.title,
                     "category_pid": r.category_pid, "published": r.published, "reviewed_on": r.reviewed_on,
                     "freshness": freshness_view(r).get("state").cloned(),
-                    "items": { "placed": placed, "unplaced": unplaced } })
+                    "items": { "placed": l.placed, "unplaced": l.unplaced },
+                    "family": l.family_pid.map(|pid| json!({ "plan_pid": pid, "name": l.family_name,
+                                                            "colour": l.family_colour })) })
         })
         .collect();
     Ok(page.respond(list))

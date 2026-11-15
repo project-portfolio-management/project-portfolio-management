@@ -553,6 +553,8 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plans/{pid}/risks/{risk_pid}/escalate", "governance", "`POST /api/plans/{pid}/risks/{risk_pid}/escalate` — a materialized risk: status → `materialized`, stamped. (Conversion into a tracked issue arrives with the issues sub-resource.)"),
     ("get", "/api/plans/{pid}/roadmap", "public_roadmaps", "`GET /api/plans/{pid}/roadmap`"),
     ("put", "/api/plans/{pid}/roadmap", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap`"),
+    ("get", "/api/plans/{pid}/roadmap-family", "roadmap_families", "`GET /api/plans/{pid}/roadmap-family`"),
+    ("put", "/api/plans/{pid}/roadmap-family", "roadmap_families", "`PUT /api/plans/{pid}/roadmap-family`"),
     ("post", "/api/plans/{pid}/roadmap/items", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items`"),
     ("put", "/api/plans/{pid}/roadmap/items/{ipid}", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap/items/{ipid}`"),
     ("post", "/api/plans/{pid}/roadmap/items/{ipid}/delete", "public_roadmaps", "`POST /api/plans/{pid}/roadmap/items/{ipid}/delete`"),
@@ -715,6 +717,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("get", "/api/roadmap-categories", "roadmap_categories", "`GET /api/roadmap-categories` — every category, active first, then by name."),
     ("post", "/api/roadmap-categories", "roadmap_categories", "`POST /api/roadmap-categories`"),
     ("put", "/api/roadmap-categories/{pid}", "roadmap_categories", "`PUT /api/roadmap-categories/{pid}` — rename, translate, retire or restore."),
+    ("get", "/api/roadmap-families", "roadmap_families", "`GET /api/roadmap-families` — every live plan that holds a live `Product` plan or has a colour, that the caller may read, by name ignoring case, paged; a product the caller may not read is not counted."),
     ("get", "/api/saved-views", "saved_views", "`GET /api/saved-views?route=` — the caller's own views, optionally narrowed to one route. Never returns another `sub`'s rows."),
     ("post", "/api/saved-views", "saved_views", "`POST /api/saved-views` — save a view under the caller's own `sub`. Requires authentication ([`AuthUser`]): a saved view with no owner is not a saved view."),
     ("delete", "/api/saved-views/{pid}", "saved_views", "`DELETE /api/saved-views/{pid}` — soft-delete, scoped to the caller's own `sub`."),
@@ -988,6 +991,7 @@ pub fn attach(paths: &mut Value) {
     body!("put", "/api/plans/{pid}/risks/{r_pid}/schedule-impact", crate::controllers::schedule_risk::ImpactBody);
     body!("put", "/api/plans/{pid}/risks/{risk_pid}", crate::controllers::governance::RiskUpdate);
     body!("put", "/api/plans/{pid}/roadmap", crate::controllers::public_roadmaps::RoadmapPayload);
+    body!("put", "/api/plans/{pid}/roadmap-family", crate::controllers::roadmap_families::FamilyPayload);
     body!("post", "/api/plans/{pid}/roadmap/items", crate::controllers::public_roadmaps::ItemPayload);
     body!("put", "/api/plans/{pid}/roadmap/items/{ipid}", crate::controllers::public_roadmaps::ItemPayload);
     body!("post", "/api/plans/{pid}/roadmap/items/{ipid}/move", crate::controllers::public_roadmaps::MovePayload);

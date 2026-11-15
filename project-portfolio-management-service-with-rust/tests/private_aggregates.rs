@@ -88,6 +88,7 @@ const PERSON: &str = "person:00000000-0000-4000-8000-0000000000c1";
 const AGGREGATES: &[&str] = &[
     "/api/at-a-glance",
     "/api/public-roadmaps",
+    "/api/roadmap-families",
     "/api/public-roadmaps/stale",
     "/api/capacity",
     "/api/capacity/utilization?by=plan",
@@ -620,6 +621,8 @@ const PRODUCT_RECORD_VIEWS: &[&str] = &[
     "/api/plans/events/recent",
     "/api/plans?parent={hub}",
     "/api/regulator/extract",
+    // RE-5: a family lists and counts its products, so it is a family from its first product on.
+    "/api/roadmap-families",
 ];
 
 /// Decision views that a tool someone merely proposed should not move. They count it today, because no product stage

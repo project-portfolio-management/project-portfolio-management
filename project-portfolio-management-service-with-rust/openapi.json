@@ -24319,6 +24319,90 @@
         ]
       }
     },
+    "/api/plans/{pid}/roadmap-family": {
+      "get": {
+        "description": "Inputs: the plan's name, the colour and translations its editors chose (null and {} when none), and how many live Product plans it holds that the caller may read. contrast gives the WCAG 2 contrast ratio of the colour under white and under black text, whether each meets AA for body text (4.5:1), and the better text colour. Any plan may be a family.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The family"
+          },
+          "404": {
+            "description": "Unknown plan"
+          }
+        },
+        "summary": "A plan as a product family: its colour, how the colour reads, and its products (RE-5, RE-7)",
+        "tags": [
+          "roadmap"
+        ]
+      },
+      "put": {
+        "description": "Body: colour (#rrggbb in any case, stored lower case; null removes the colour and translations) and translations (the family's name in other languages, language code to text, 1 to 100 characters each; absent keeps them). Any colour is accepted; the answer's contrast says how it reads. Audited with the old and new colour.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "`PUT /api/plans/{pid}/roadmap-family` body.",
+                "properties": {
+                  "colour": {
+                    "description": "`#rrggbb`, any case; `null` removes the colour and the translations.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "translations": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "default": null,
+                    "description": "The family's name in other languages: language code to text, 1 to 100 characters each; absent keeps them.",
+                    "nullable": true,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The family"
+          },
+          "404": {
+            "description": "Unknown plan"
+          },
+          "422": {
+            "description": "A colour that is not #rrggbb, or a bad translation"
+          }
+        },
+        "summary": "Choose a product family's colour",
+        "tags": [
+          "roadmap"
+        ]
+      }
+    },
     "/api/plans/{pid}/roadmap/items": {
       "post": {
         "description": "Body: title (required), description, expected_outcome, phase, tags (each 1 to 50 characters, no comma, no repeats), organization_pids (active organizations), details (lines of text and level, nested at most three levels, each at most one deeper than the line above) and placement (absent for unplaced). Goes last in its placement and gets a public id of eight characters that is never reused. Audited.",
@@ -31205,7 +31289,7 @@
     },
     "/api/public-roadmaps": {
       "get": {
-        "description": "Inputs: every public product roadmap of a live plan, ordered by title ignoring case. Each: pid, plan_pid (which every editor route goes by), slug, title, category_pid, published, reviewed_on, its freshness state (fresh, stale or unknown, as RE-3) and how many live items are placed and unplaced. Private plans the caller is not a member of are left out. A bare array, paged.",
+        "description": "Inputs: every public product roadmap of a live plan, ordered by title ignoring case. Each: pid, plan_pid (which every editor route goes by), slug, title, category_pid, published, reviewed_on, its freshness state (fresh, stale or unknown, as RE-3) and how many live items are placed and unplaced, and its family (the parent plan: plan_pid, name and colour, or null when it has none or the caller may not read it). Private plans the caller is not a member of are left out. A bare array, paged.",
         "parameters": [
           {
             "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
@@ -32533,6 +32617,48 @@
         "summary": "Rename, translate, retire or restore a roadmap category",
         "tags": [
           "roadmap-categories"
+        ]
+      }
+    },
+    "/api/roadmap-families": {
+      "get": {
+        "description": "Inputs: every live plan that holds a live Product plan or has a colour, ordered by name ignoring case. Each: plan_pid, name, colour (or null), contrast (as for one family), translations and how many live Product plans it holds. Private plans the caller is not a member of are left out, and are not counted. A bare array, paged.",
+        "parameters": [
+          {
+            "description": "Page size, 1 to 500 (500 when absent); outside that a 422",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque: copy it from the previous page's Link header; a made-up, edited or moved one is a 422",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The families",
+            "headers": {
+              "Link": {
+                "description": "<next page>; rel=\"next\" while more rows follow, absent on the last page. There is no total: it would count rows the caller may not see",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Every product family the caller may read, with its colour (RE-5, RE-7)",
+        "tags": [
+          "roadmap"
         ]
       }
     },

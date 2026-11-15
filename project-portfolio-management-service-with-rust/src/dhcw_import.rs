@@ -12,7 +12,7 @@
 //! `Title`, `Description`, `Outcome`, `Horizon`, `Phase`, `Labels`, `Organisations` (matched by code), `Details`
 //! (a hyphen per level), `Item ID` (kept when it is a valid public id), and their `(cy)` columns.
 //!
-//! What does not: `Family`, `Status label` and `Colour` (no field here; a family would be a parent plan), and
+//! What does not: `Family`, `Status label` and `Colour` (a family is the parent plan, and its colour is chosen there), and
 //! `Product Lead`, which names people, and this service holds people as references, not names.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -40,7 +40,10 @@ pub const NOT_MAPPED: [(&str, &str); 6] = [
     ("Family (cy)", "as Family"),
     ("Status label", "no field"),
     ("Status label (cy)", "no field"),
-    ("Colour", "no field"),
+    (
+        "Colour",
+        "the family's colour, chosen on the family plan (PUT /api/plans/{pid}/roadmap-family); not set by the import",
+    ),
     (
         "Product Lead",
         "names people; this service holds people as references, not names",

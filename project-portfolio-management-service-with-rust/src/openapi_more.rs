@@ -2705,9 +2705,22 @@ fn public_roadmap_paths() -> Value {
                 "Body: today (true marks it reviewed today in the deployment's time zone) or reviewed_on (a date not after today; null clears it). The only write that changes reviewed_on: publishing or editing never does, so fixing a typo does not make an old roadmap look current. Audited with the old and new dates.",
                 vec![plan()], &[("200", "The roadmap"), ("404", "No roadmap"), ("422", "A date after today")])
         },
+        "/api/plans/{pid}/roadmap-family": {
+            "get": op("roadmap", "A plan as a product family: its colour, how the colour reads, and its products (RE-5, RE-7)",
+                "Inputs: the plan's name, the colour and translations its editors chose (null and {} when none), and how many live Product plans it holds that the caller may read. contrast gives the WCAG 2 contrast ratio of the colour under white and under black text, whether each meets AA for body text (4.5:1), and the better text colour. Any plan may be a family.",
+                vec![plan()], &[("200", "The family"), ("404", "Unknown plan")]),
+            "put": op("roadmap", "Choose a product family's colour",
+                "Body: colour (#rrggbb in any case, stored lower case; null removes the colour and translations) and translations (the family's name in other languages, language code to text, 1 to 100 characters each; absent keeps them). Any colour is accepted; the answer's contrast says how it reads. Audited with the old and new colour.",
+                vec![plan()], &[("200", "The family"), ("404", "Unknown plan"), ("422", "A colour that is not #rrggbb, or a bad translation")])
+        },
+        "/api/roadmap-families": {
+            "get": op("roadmap", "Every product family the caller may read, with its colour (RE-5, RE-7)",
+                "Inputs: every live plan that holds a live Product plan or has a colour, ordered by name ignoring case. Each: plan_pid, name, colour (or null), contrast (as for one family), translations and how many live Product plans it holds. Private plans the caller is not a member of are left out, and are not counted. A bare array, paged.",
+                vec![], &[("200", "The families")])
+        },
         "/api/public-roadmaps": {
             "get": op("roadmap", "Every public product roadmap the caller may read, published or not (RE-5)",
-                "Inputs: every public product roadmap of a live plan, ordered by title ignoring case. Each: pid, plan_pid (which every editor route goes by), slug, title, category_pid, published, reviewed_on, its freshness state (fresh, stale or unknown, as RE-3) and how many live items are placed and unplaced. Private plans the caller is not a member of are left out. A bare array, paged.",
+                "Inputs: every public product roadmap of a live plan, ordered by title ignoring case. Each: pid, plan_pid (which every editor route goes by), slug, title, category_pid, published, reviewed_on, its freshness state (fresh, stale or unknown, as RE-3) and how many live items are placed and unplaced, and its family (the parent plan: plan_pid, name and colour, or null when it has none or the caller may not read it). Private plans the caller is not a member of are left out. A bare array, paged.",
                 vec![], &[("200", "The roadmaps")])
         },
         "/api/public-roadmaps/stale": {

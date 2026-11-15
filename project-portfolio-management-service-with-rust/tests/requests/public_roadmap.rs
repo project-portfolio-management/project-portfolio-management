@@ -557,3 +557,91 @@ async fn editors_list_every_roadmap_they_may_read_with_its_plan_id() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn a_familys_editors_choose_its_colour() {
+    request::<App, _, _>(|request, _ctx| async move {
+        let tag = uuid::Uuid::new_v4().simple().to_string()[..6].to_string();
+        let family = plan(&request, "Portfolio", &format!("Single Record {tag}")).await;
+        let product: Value = request
+            .post("/api/plans")
+            .json(&json!({ "kind": "Product", "name": format!("Records {tag}"), "parent_ref": family }))
+            .await
+            .json();
+        let product = product["pid"].as_str().unwrap().to_string();
+        let url = format!("/api/plans/{family}/roadmap-family");
+
+        let f: Value = request.get(&url).await.json();
+        assert_eq!(f["colour"], Value::Null, "no colour until one is chosen");
+        assert_eq!(f["products"], 1);
+        assert_eq!(f["name"], format!("Single Record {tag}"));
+
+        let f: Value = request
+            .put(&url)
+            .json(&json!({ "colour": " #32508A ", "translations": { "cy": "Cofnod Sengl" } }))
+            .await
+            .json();
+        assert_eq!(f["colour"], "#32508a", "any colour, kept in lower case");
+        assert_eq!(f["contrast"]["white_text_meets_aa"], true);
+        assert_eq!(f["contrast"]["better_text"], "white");
+        assert_eq!(f["translations"]["cy"], "Cofnod Sengl");
+        // A light colour is kept too; the contrast says white text would not read on it.
+        let f: Value = request.put(&url).json(&json!({ "colour": "#ffeb3b" })).await.json();
+        assert_eq!(f["colour"], "#ffeb3b");
+        assert_eq!(f["contrast"]["white_text_meets_aa"], false);
+        assert_eq!(f["contrast"]["better_text"], "black");
+        assert_eq!(f["translations"]["cy"], "Cofnod Sengl", "absent translations are kept");
+        for bad in [json!({ "colour": "#fff" }), json!({ "colour": "yellow" }),
+                    json!({ "colour": "#ffeb3b", "translations": { "Welsh": "x" } }),
+                    json!({ "colour": null, "translations": { "cy": "x" } })] {
+            request.put(&url).json(&bad).await.assert_status(StatusCode::UNPROCESSABLE_ENTITY);
+        }
+
+        // The family list and the editors' roadmap list both carry it.
+        let listed = |all: Vec<Value>| all.into_iter().find(|f| f["plan_pid"] == family);
+        let all: Vec<Value> = request.get("/api/roadmap-families?limit=500").await.json();
+        let mut found = listed(all);
+        let mut next = None;
+        while found.is_none() {
+            // Walk the pages when other runs left many families.
+            let r = request
+                .get(next.as_deref().unwrap_or("/api/roadmap-families?limit=500"))
+                .await;
+            let link = r.maybe_header("link").map(|l| {
+                l.to_str().unwrap().trim_start_matches('<').split_once('>').unwrap().0.to_string()
+            });
+            found = listed(r.json());
+            assert!(found.is_some() || link.is_some(), "the family is listed");
+            next = link;
+        }
+        let found = found.unwrap();
+        assert_eq!(found["colour"], "#ffeb3b");
+        assert_eq!(found["products"], 1);
+        request
+            .put(&format!("/api/plans/{product}/roadmap"))
+            .json(&json!({ "title": format!("Records roadmap {tag}") }))
+            .await
+            .assert_status_ok();
+        let mine = every_listed(&request)
+            .await
+            .into_iter()
+            .find(|r| r["plan_pid"] == product)
+            .unwrap();
+        assert_eq!(mine["family"]["plan_pid"], family);
+        assert_eq!(mine["family"]["colour"], "#ffeb3b");
+
+        // null removes it; the change is audited.
+        let f: Value = request.put(&url).json(&json!({ "colour": null })).await.json();
+        assert_eq!(f["colour"], Value::Null);
+        assert_eq!(f["translations"], json!({}));
+        let audit: Value = request.get(&format!("/api/plans/{family}/audit")).await.json();
+        assert!(audit.as_array().unwrap().iter().any(|e| e["action"] == "roadmap_family_changed"));
+        request
+            .get("/api/plans/00000000-0000-4000-8000-000000000000/roadmap-family")
+            .await
+            .assert_status_not_found();
+    })
+    .await;
+}

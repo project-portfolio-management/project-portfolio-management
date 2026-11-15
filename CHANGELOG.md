@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the deployment guide named three settings wrongly)
+
+- `PORT`, `BINDING` and `HOST` are read with no prefix, and `BINDING`, not `HOST`, is the listen address; the
+  telemetry settings (`OTLP_ENDPOINT`, `OTLP_SERVICE_NAME`, `RUST_LOG`) have no prefix either. The guide's rule
+  ("names start `PROJECT_PORTFOLIO_MANAGEMENT_` unless shown") read them as prefixed, and the prefixed names are not
+  read: setting `PROJECT_PORTFOLIO_MANAGEMENT_OTLP_ENDPOINT` to empty leaves export on. Found during the load test.
+  Only `operations/deployment.md` changes; the code is as it was.
+
 ### 15 November (OQ-14 decided: the public roadmap reader is a supported opt-in)
 
 - **The owner decided OQ-14:** the service may serve public product roadmaps with no token, as an opt-in that stays

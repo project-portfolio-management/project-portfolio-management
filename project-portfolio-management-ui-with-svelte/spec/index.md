@@ -249,7 +249,7 @@ parity with the rest of the family. Selecting a theme via
 `ThemePicker` changes the whole site look: it manages exactly one
 `<link rel="stylesheet" data-lily-theme-picker="theme">` in
 `document.head`, mutating its `href` and the `data-theme` attribute on
-`<html>`. The choice persists to `localStorage` (key `portfolio:theme`).
+`<html>`. The choice persists to `localStorage` (key `lily-theme`).
 Theme stylesheets are served from `static/assets/themes/` (a symlink
 to the shared design-system themes).
 
@@ -264,8 +264,19 @@ buttons, the sign-in button) is the primary mixed 80 / 20 with the theme's
 neutral (4.14:1 as is under dark); the danger and success colours are mixed
 with the text colour, and the error and success banners sit on a tint of
 the page background. `tests/e2e/a11y.spec.ts` audits every page route
-under both system preferences. The other themes in the catalogue are not
-audited.
+under both system preferences.
+
+**Contrast rule (owner's decision, 2026-11-15; RE-11, RE-15).** The `light`
+and `dark` themes **must** meet WCAG 2.2 AA (4.5:1) for every text pair of
+the app's tokens: a failure there fails the build. Every other theme in the
+catalogue stays offered **even where it does not meet 4.5:1**, because a
+person who picks one has chosen it; nobody gets one by default. Those themes
+are measured and reported, not gated. `tests/e2e/token-contrast.spec.ts`
+resolves nine token pairs (text, muted text and links on the page and on
+surfaces; text on the primary fill; the danger and success colours) in the
+browser for every theme: it fails on `light` or `dark` under 4.5:1 and
+records each other theme's failing pairs as a test annotation. The
+accessibility statement says which themes are tested.
 
 ### Money (WW-1.3)
 

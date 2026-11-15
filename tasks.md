@@ -3617,8 +3617,8 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   that does not come from the UI's tokens, with a fixture proving each message, and a unit test of the contrast of
   each token pair the UI uses, against WCAG 2.2 AA.
   **Acceptance:** a raw `#hex` in a component fails lint; a token pair below 4.5:1 for text fails the test.
-  **Built 2026-11-14, as a ratchet.** `tests/unit/design-tokens.test.ts`: in `src/`, outside `src/app.css`, a `#hex`, `rgb()` or `hsl()` colour that is not the fallback of a `var(--token, …)` fails; 32 files that held 154 such literals when the rule was added (mostly the SVG charts) are listed with their counts, which may only fall, and a lower count must be written down. **Changed from the text above:** a unit test rather than an ESLint rule, because the literals are in `.svelte` style blocks and SVG attributes as well as scripts; existing files are listed rather than fixed. **The contrast half built 2026-11-15:** `tests/e2e/token-contrast.spec.ts` resolves each of nine text/background token pairs in the browser (painted to a canvas pixel, so `color-mix` and `oklch` read as sRGB) in every one of the 63 themes the picker offers, against 4.5:1. Light and dark pass every pair; 19 themes do not, and are listed in the test's `KNOWN` with their pairs, which may only shrink (RE-15). Sizes, radii and shadows are not checked.
-- [ ] **RE-15 (S–M, UI) — 19 of the 63 themes fail 4.5:1 for some of the UI's text.** Found by RE-11's contrast
+  **Built 2026-11-14, as a ratchet.** `tests/unit/design-tokens.test.ts`: in `src/`, outside `src/app.css`, a `#hex`, `rgb()` or `hsl()` colour that is not the fallback of a `var(--token, …)` fails; 32 files that held 154 such literals when the rule was added (mostly the SVG charts) are listed with their counts, which may only fall, and a lower count must be written down. **Changed from the text above:** a unit test rather than an ESLint rule, because the literals are in `.svelte` style blocks and SVG attributes as well as scripts; existing files are listed rather than fixed. **The contrast half built 2026-11-15:** `tests/e2e/token-contrast.spec.ts` resolves each of nine text/background token pairs in the browser (painted to a canvas pixel, so `color-mix` and `oklch` read as sRGB) in every one of the 63 themes the picker offers, against 4.5:1. Light and dark pass every pair; 19 themes do not (RE-15). Per the owner's rule (UI spec, Theming), light and dark are gated and the others are reported as a `contrast-below-aa` annotation. Sizes, radii and shadows are not checked.
+- [x] **RE-15 (S–M, UI) — 19 of the 63 themes fail 4.5:1 for some of the UI's text.** Found by RE-11's contrast
   test (`tests/e2e/token-contrast.spec.ts`, `KNOWN`), 2026-11-15. Light and dark, the defaults, pass. Measured, the
   lowest pair each: retro links 2.10:1 on the surface; cupcake 2.45:1, emerald 2.59:1, pastel 2.70:1, wireframe
   2.75:1, valentine success 2.88:1, corporate button text 2.93:1, bumblebee 3.00:1, abyss 3.14:1, black 3.16:1,
@@ -3630,6 +3630,11 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   themes that pass. **Recommendation:** offer only the themes that pass until each is fixed, since a person who picks
   one now gets text that some readers cannot read. **Acceptance:** `KNOWN` is empty, or holds only themes the picker
   no longer offers.
+  **Decided by the owner 2026-11-15, not as recommended:** light and dark must pass, and other themes stay offered
+  even where they do not, because the person chooses them. Recorded in the UI spec (Theming, "Contrast rule") and
+  the accessibility statement. `tests/e2e/token-contrast.spec.ts` now fails only on light or dark, and records each
+  other theme's failing pairs as a `contrast-below-aa` annotation (19 themes today); the `KNOWN` list is gone.
+  **Not done:** improving the 19 themes; nothing tells a person, when they pick one, that it is below AA.
 - [x] **RE-12 (S, docs) — Personas with numbered owner answers.** One file per primary user in `spec/personas/` (the
   portfolio office, a sponsor, a project manager, a reader of the public roadmap), with facts tied to numbered owner
   answers and a list of what is still to check with real users. New tasks cite the answers.

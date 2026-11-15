@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — light and dark are gated for contrast; other themes are reported (RE-15, 2026-11-15)
+
+- The owner's rule (spec, Theming): `tests/e2e/token-contrast.spec.ts` fails only on `light` or `dark`; every other
+  theme's failing pairs are a `contrast-below-aa` annotation. See the root `CHANGELOG.md`, 15 November.
+
 ### Added — the token contrast test, in every theme (RE-11, 2026-11-15)
 
 - `tests/e2e/token-contrast.spec.ts`: nine token text pairs in each of the 63 themes, against 4.5:1. Light and dark

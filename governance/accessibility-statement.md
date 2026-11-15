@@ -47,6 +47,12 @@ date, the tools and the findings here: **â€¹buyer: date, tester, tools, resultâ€
 
 ## Known issues
 
+**Themes.** The default themes, **light** and **dark** (the one you get follows your system's setting), are tested on
+every change: every page by the audit above, and every pair of text and background colours the interface uses,
+which must reach 4.5:1. The theme picker offers many other themes. They are measured but not required to pass, and
+**19 of them have some text below 4.5:1** (for example links, or text on the main buttons). You get one of them only
+if you choose it. If text is hard to read, switch back to light or dark.
+
 The third-party **Lily Design System** widgets (`@lilydesignsystem`: data grid, Gantt chart, calendar,
 kanban board) are used for some views. They are checked by the same audit, but their internal behaviour is
 not under this project's control. Each of these views also has a table or list

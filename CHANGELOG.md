@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 15 November (the theme contrast rule, RE-15 decided)
+
+- **The owner's rule:** the light and dark themes must meet WCAG 2.2 AA (4.5:1) for every text pair of the UI's
+  tokens, and fail the build if they do not; other themes stay offered even where they do not pass, because the
+  person chooses them. In the UI spec (Theming) and the accessibility statement, which now says 19 themes have some
+  text below 4.5:1 and how to switch back.
+- `tests/e2e/token-contrast.spec.ts` gates light and dark and records each other theme's failing pairs as a
+  `contrast-below-aa` annotation; its list of known failures is gone.
+- Also corrected in the UI spec: the theme is stored under `lily-theme`, not `portfolio:theme`.
+- Not done: improving the 19 themes; a warning when someone picks one.
+
 ### 15 November (the UI's token contrast, in every theme, RE-11)
 
 - **`tests/e2e/token-contrast.spec.ts`** measures nine text/background pairs of the UI's tokens in every one of the

@@ -6,8 +6,10 @@
 // (tests/e2e/a11y.spec.ts) measures the rendered pages, but only under the light and dark system preference; the
 // other themes a person can pick were measured nowhere.
 //
-// Themes that fail a pair are listed in KNOWN with the pairs that fail, so the list can only shrink: a theme that
-// passes a pair it is listed for fails the test until the entry is removed, and a new failure fails it too.
+// The rule (UI spec, Theming; the owner's decision of 2026-11-15): `light` and `dark`, the themes a visitor gets by
+// default, must pass every pair, and the test fails if either does not. Every other theme stays offered even where it
+// does not pass, because a person who picks one has chosen it: its failing pairs are recorded as an annotation on
+// its test (`contrast-below-aa`), shown in the report, and do not fail the run.
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "./test";
@@ -34,78 +36,8 @@ const THEMES = readdirSync(join(process.cwd(), "static/assets/themes"))
   .map((f) => f.replace(/\.css$/, ""))
   .sort();
 
-/**
- * Themes with pairs under 4.5:1 when this test was added (2026-11-15), each with those pairs, in PAIRS order. Only
- * ever shrinks. Nineteen of the 63; light and dark, the themes a visitor gets by default, pass every pair. The
- * contrast each measured is in tasks.md (RE-15).
- */
-const KNOWN: Record<string, readonly string[]> = {
-  abyss: ["--mxi-color-primary-fg on --mxi-color-primary"],
-  aqua: ["--mxi-color-primary-fg on --mxi-color-primary"],
-  black: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-  ],
-  bumblebee: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-    "--mxi-color-primary-fg on --mxi-color-primary",
-  ],
-  business: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-  ],
-  cmyk: ["--mxi-color-link on --mxi-color-surface"],
-  corporate: ["--mxi-color-primary-fg on --mxi-color-primary"],
-  cupcake: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-    "--mxi-color-primary-fg on --mxi-color-primary",
-  ],
-  emerald: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-    "--mxi-color-primary-fg on --mxi-color-primary",
-  ],
-  garden: ["--mxi-color-primary-fg on --mxi-color-primary"],
-  lemonade: [
-    "--mxi-color-primary-fg on --mxi-color-primary",
-    "--mxi-color-danger on --mxi-color-bg",
-  ],
-  nord: [
-    "--mxi-color-primary-fg on --mxi-color-primary",
-    "--mxi-color-success on --mxi-color-bg",
-  ],
-  pastel: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-    "--mxi-color-primary-fg on --mxi-color-primary",
-  ],
-  retro: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-    "--mxi-color-primary-fg on --mxi-color-primary",
-    "--mxi-color-danger on --mxi-color-bg",
-  ],
-  silk: [
-    "--mxi-color-danger on --mxi-color-bg",
-    "--mxi-color-success on --mxi-color-bg",
-  ],
-  synthwave: ["--mxi-color-primary-fg on --mxi-color-primary"],
-  valentine: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-    "--mxi-color-success on --mxi-color-bg",
-  ],
-  winter: [
-    "--mxi-color-danger on --mxi-color-bg",
-    "--mxi-color-success on --mxi-color-bg",
-  ],
-  wireframe: [
-    "--mxi-color-link on --mxi-color-bg",
-    "--mxi-color-link on --mxi-color-surface",
-  ],
-};
+/** The themes that must pass every pair: what a visitor gets with no choice of their own. */
+const GATED: readonly string[] = ["light", "dark"];
 
 function luminance([r, g, b]: number[]): number {
   const c = (v: number) => {
@@ -124,11 +56,13 @@ test("the theme list is the picker's", () => {
   expect(THEMES.length).toBeGreaterThan(2);
   expect(THEMES).toContain("light");
   expect(THEMES).toContain("dark");
-  for (const name of Object.keys(KNOWN)) expect(THEMES, name).toContain(name);
+  for (const name of GATED) expect(THEMES, name).toContain(name);
 });
 
 for (const theme of THEMES)
-  test(`${theme}: every token text pair meets 4.5:1`, async ({ page }) => {
+  test(`${theme}: ${GATED.includes(theme) ? "every token text pair meets 4.5:1" : "token text pairs measured (not gated)"}`, async ({
+    page,
+  }) => {
     await stubPlansApi(page);
     await page.addInitScript(
       (t) => localStorage.setItem("lily-theme", t),
@@ -173,8 +107,12 @@ for (const theme of THEMES)
       ([fg, bg]) =>
         `${fg} on ${bg} ${ratio(colours[fg], colours[bg]).toFixed(2)}:1`,
     );
-    const names = failing.map((f) => f.replace(/ [\d.]+:1$/, ""));
-    expect(names, `${theme}: ${failing.join("; ")}`).toEqual([
-      ...(KNOWN[theme] ?? []),
-    ]);
+    if (GATED.includes(theme)) {
+      expect(failing, `${theme} must meet 4.5:1 for every pair`).toEqual([]);
+    } else if (failing.length > 0) {
+      test.info().annotations.push({
+        type: "contrast-below-aa",
+        description: failing.join("; "),
+      });
+    }
   });

@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — Lily upgraded: headless 0.9.0 and picker bar 0.6.0 (2026-11-16)
+
+- `@lilydesignsystem/svelte-headless` 0.8.0 to 0.9.0 and `@lilydesignsystem/svelte-picker-bar` 0.5.3 to 0.6.0, both
+  published 2026-11-14 and so inside pnpm's minimum release age: added to `minimumReleaseAgeExclude` at the owner's
+  request. `@lilydesignsystem/svelte-theme-picker` stays at 0.3.2, which is its latest release. No code changed. See
+  the root `CHANGELOG.md`.
+
 ### Fixed — the UI follows the browser's light/dark setting on every visit, and live (2026-11-15)
 
 - `src/lib/theme-choice.ts`; the layout gives the theme picker no storage key. Tests

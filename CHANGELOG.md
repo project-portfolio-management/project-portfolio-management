@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 16 November (Lily headless 0.9 and picker bar 0.6)
+
+- **UI: `@lilydesignsystem/svelte-headless` 0.8.0 to 0.9.0 and `@lilydesignsystem/svelte-picker-bar` 0.5.3 to
+  0.6.0.** Both were published on 14 November, inside pnpm's minimum release age. At the owner's request they are
+  added to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`, and the lockfile passes pnpm's supply-chain check.
+  headless 0.9 adds healthcare record components, which this UI does not use. The theme picker
+  (`@lilydesignsystem/svelte-theme-picker`, inside the picker bar) is already at its latest release, 0.3.2, so it
+  is unchanged. No code changed.
+- **Not checked by hand:** how the picker bar looks in a browser. The Playwright suite covers the theme picker and
+  the browser's light/dark setting.
+
 ### 16 November (axa 0.15 and axa-test 0.6)
 
 - **axa 0.14 to 0.15.0 and axa-test 0.5 to 0.6.0**, published today: the owner approved an exception to the

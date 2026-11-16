@@ -62,12 +62,10 @@ export const PAGES_HI: Record<PageKey, string> = {
   "c.CostRiskView.assumptions": "मान्यताएँ",
   "c.CostRiskView.budget": "बजट",
   "c.CostRiskView.budget_2": "बजट",
-  "c.CostRiskView.budget_sum_of_planned_amounts":
-    "बजट (नियोजित राशियों का योग)",
+  "c.CostRiskView.budget_sum_of_planned_amounts": "बजट (नियोजित राशियों का योग)",
   "c.CostRiskView.by_plan": "योजना के अनुसार",
   "c.CostRiskView.cost": "लागत",
-  "c.CostRiskView.cost_at_each_percentile":
-    "प्रत्येक प्रतिशतक पर {currency} लागत",
+  "c.CostRiskView.cost_at_each_percentile": "प्रत्येक प्रतिशतक पर {currency} लागत",
   "c.CostRiskView.cost_from": "लागत का स्रोत",
   "c.CostRiskView.each_bar_is_a_cost":
     "प्रत्येक बार एक लागत सीमा है; ऊँचा बार मतलब अधिक सिमुलेशन वहाँ समाप्त हुए। ठोस रेखाएँ P50, P80 और P90 हैं (लेबल सहित); डैश वाली रेखा बजट है।",
@@ -113,8 +111,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "c.CpmTable.deadline": "समय-सीमा",
   "c.CpmTable.finishes": "समाप्त होता है",
   "c.CpmTable.free_float": "मुक्त फ़्लोट",
-  "c.CpmTable.overrides_its_predecessors":
-    "(अपने पूर्ववर्तियों को ओवरराइड करता है)",
+  "c.CpmTable.overrides_its_predecessors": "(अपने पूर्ववर्तियों को ओवरराइड करता है)",
   "c.CpmTable.plan": "योजना",
   "c.CpmTable.plan_assignee": "योजना + असाइनी",
   "c.CpmTable.starts": "आरंभ होता है",
@@ -198,8 +195,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "c.MilestoneCard.new_due_date": "नई नियत तिथि",
   "c.MilestoneCard.no_reason_given": "कोई कारण नहीं दिया गया",
   "c.MilestoneCard.open": "खुला",
-  "c.MilestoneCard.pick_the_tasks_that_must":
-    "वे कार्य चुनें जो पूरे होने चाहिए",
+  "c.MilestoneCard.pick_the_tasks_that_must": "वे कार्य चुनें जो पूरे होने चाहिए",
   "c.MilestoneCard.reason_required": "कारण (आवश्यक)",
   "c.MilestoneCard.reopen": "फिर से खोलें",
   "c.MilestoneCard.reschedule": "पुनर्निर्धारित करें",
@@ -208,8 +204,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "c.MilestoneCard.tasks_it_waits_for": "जिन कार्यों की यह प्रतीक्षा करता है",
   "c.MilestoneCard.tasks_this_milestone_waits_for":
     "जिन कार्यों की यह मील का पत्थर प्रतीक्षा करता है",
-  "c.MilestoneCard.this_plan_has_no_tasks":
-    "इस योजना में अभी कोई कार्य नहीं है।",
+  "c.MilestoneCard.this_plan_has_no_tasks": "इस योजना में अभी कोई कार्य नहीं है।",
   "c.MilestoneCard.to": "तक",
   "c.MilestoneCard.view_plan": "योजना देखें",
   "c.MilestoneCard.when_all_those_tasks_are": "जब वे सभी कार्य पूरे हो जाएँ",
@@ -234,8 +229,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "c.CommandPalette.cmd_new_plan": "नई योजना",
   "c.CommandPalette.count_one": "{n} परिणाम",
   "c.CommandPalette.count_other": "{n} परिणाम",
-  "c.CommandPalette.failed":
-    "योजना खोज अभी उपलब्ध नहीं है। आदेश अब भी काम करते हैं।",
+  "c.CommandPalette.failed": "योजना खोज अभी उपलब्ध नहीं है। आदेश अब भी काम करते हैं।",
   "c.CommandPalette.kind_command": "आदेश",
   "c.CommandPalette.kind_plan": "योजना",
   "c.CommandPalette.kind_recent": "हाल का",
@@ -362,8 +356,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.announcements.info": "सूचना",
   "p.announcements.loading": "लोड हो रहा है…",
   "p.announcements.message": "संदेश",
-  "p.announcements.nothing_has_been_announced":
-    "कुछ भी घोषित नहीं किया गया है।",
+  "p.announcements.nothing_has_been_announced": "कुछ भी घोषित नहीं किया गया है।",
   "p.announcements.pin_to_the_top": "शीर्ष पर पिन करें",
   "p.announcements.pinned": "· पिन किया गया",
   "p.announcements.publish": "प्रकाशित करें",
@@ -476,8 +469,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.board.taken": "लिया गया",
   "p.board.tranches_released": "जारी की गई किस्तें",
   "p.board.trends": "रुझान",
-  "p.board.unattributed_events":
-    "({unattributed_events} बिना श्रेय वाली घटनाएँ)",
+  "p.board.unattributed_events": "({unattributed_events} बिना श्रेय वाली घटनाएँ)",
   "p.board.what": "क्या",
   "p.board.when": "कब",
   "p.board.window": "अवधि {from} → {to}",
@@ -608,8 +600,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.display.week_start_mon": "सोमवार",
   "p.display.week_start_sun": "रविवार",
   "p.display.week_start_sat": "शनिवार",
-  "p.display.use_the_dyslexia_friendly_font":
-    "डिस्लेक्सिया-अनुकूल फ़ॉन्ट उपयोग करें",
+  "p.display.use_the_dyslexia_friendly_font": "डिस्लेक्सिया-अनुकूल फ़ॉन्ट उपयोग करें",
   "p.display.uses_the_opendyslexic_typeface_with":
     "OpenDyslexic टाइपफ़ेस का उपयोग करता है, अक्षरों, शब्दों और पंक्तियों के बीच अधिक दूरी के साथ।",
   "p.display.you_chose_this": "आपने यह चुना।",
@@ -636,8 +627,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.documents.pid.this_version_s_text_is":
     "इस संस्करण का पाठ अंतिम है। कोई भी बदलाव अगले मसौदे में जाता है।",
   "p.documents.pid.version": "संस्करण {version}",
-  "p.documents.pid.version_was_in_force_on":
-    "संस्करण {version} {on} को लागू था।",
+  "p.documents.pid.version_was_in_force_on": "संस्करण {version} {on} को लागू था।",
   "p.documents.pid.versions": "संस्करण",
   "p.documents.pid.what_changed": "क्या बदला",
   "p.documents.pid.what_was_in_force_on": "किसी तिथि पर क्या लागू था",
@@ -712,8 +702,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.financials.currency": "मुद्रा",
   "p.financials.currency_exposure": "मुद्रा एक्सपोज़र",
   "p.financials.lines": "पंक्तियाँ",
-  "p.financials.no_budget_lines_recorded_yet":
-    "अभी तक कोई बजट पंक्ति दर्ज नहीं।",
+  "p.financials.no_budget_lines_recorded_yet": "अभी तक कोई बजट पंक्ति दर्ज नहीं।",
   "p.financials.planned": "नियोजित",
   "p.financials.ppm": "{t} — PPM",
   "p.financials.remaining": "शेष",
@@ -722,8 +711,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.ideas.convert_target": "रूपांतरण लक्ष्य",
   "p.ideas.ideas_ppm": "विचार — PPM",
   "p.kpis.all": "सभी",
-  "p.kpis.blank_for_the_whole_portfolio":
-    "पूरे पोर्टफ़ोलियो के लिए खाली छोड़ें",
+  "p.kpis.blank_for_the_whole_portfolio": "पूरे पोर्टफ़ोलियो के लिए खाली छोड़ें",
   "p.kpis.daily": "दैनिक",
   "p.kpis.define": "परिभाषित करें",
   "p.kpis.define_a_key_measure_kpi": "एक प्रमुख माप (KPI) परिभाषित करें",
@@ -772,8 +760,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.lifecycle.where_everything_sits_across_the":
     "चुनौती जीवनचक्र में हर चीज़ कहाँ है, ताकि अगला चरण कभी अचानक न आए। ठहरी हुई में वे मदें गिनी जाती हैं जो सीमा से अधिक समय से किसी चरण में हैं।",
   "p.me.calendar.add": "जोड़ें",
-  "p.me.calendar.at_least_one_weekday_must":
-    "कम से कम एक कार्यदिवस होना चाहिए।",
+  "p.me.calendar.at_least_one_weekday_must": "कम से कम एक कार्यदिवस होना चाहिए।",
   "p.me.calendar.from": "से",
   "p.me.calendar.loading": "लोड हो रहा है…",
   "p.me.calendar.most_i_can_commit": "अधिकतम जितना मैं दे सकता हूँ (%)",
@@ -952,8 +939,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.critical_path.compare_with": "इससे तुलना करें",
   "p.plans.pid.critical_path.constraint": "बाधा",
   "p.plans.pid.critical_path.constraint_date": "बाधा तिथि",
-  "p.plans.pid.critical_path.critical_chains":
-    "{count} क्रांतिक शृंखलाएँ{more}।",
+  "p.plans.pid.critical_path.critical_chains": "{count} क्रांतिक शृंखलाएँ{more}।",
   "p.plans.pid.critical_path.critical_path": "क्रांतिक पथ",
   "p.plans.pid.critical_path.critical_path_ppm": "क्रांतिक पथ — PPM",
   "p.plans.pid.critical_path.deadline_a_goal_it_shows":
@@ -1033,8 +1019,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.earned_value.count_tasks": "कार्य गिनें",
   "p.plans.pid.earned_value.critical_path": "क्रांतिक पथ",
   "p.plans.pid.earned_value.earned_value": "अर्जित मूल्य",
-  "p.plans.pid.earned_value.earned_value_figures":
-    "{currency} अर्जित मूल्य आँकड़े",
+  "p.plans.pid.earned_value.earned_value_figures": "{currency} अर्जित मूल्य आँकड़े",
   "p.plans.pid.earned_value.earned_value_ppm": "अर्जित मूल्य — PPM",
   "p.plans.pid.earned_value.final_cost_eac": "अंतिम लागत (EAC)",
   "p.plans.pid.earned_value.finished_only": "केवल पूर्ण",
@@ -1062,8 +1047,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.earned_value.plans": "{plans} योजनाएँ",
   "p.plans.pid.earned_value.progress_against_budget_earned_value":
     "बजट की तुलना में प्रगति (अर्जित मूल्य)",
-  "p.plans.pid.earned_value.record_today_s_figures_now":
-    "आज के आँकड़े अभी दर्ज करें",
+  "p.plans.pid.earned_value.record_today_s_figures_now": "आज के आँकड़े अभी दर्ज करें",
   "p.plans.pid.earned_value.recorded": "दर्ज किया गया।",
   "p.plans.pid.earned_value.save": "सहेजें",
   "p.plans.pid.earned_value.schedule_index": "समय-सारणी सूचकांक (",
@@ -1129,8 +1113,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.flow.no_findings_yet": "अभी तक कोई निष्कर्ष नहीं।",
   "p.plans.pid.flow.no_finished_work_to_measure":
     "मापने के लिए अभी कोई पूरा काम नहीं।",
-  "p.plans.pid.flow.not_enough_finished_items_yet":
-    "अभी पर्याप्त पूर्ण मदें नहीं।",
+  "p.plans.pid.flow.not_enough_finished_items_yet": "अभी पर्याप्त पूर्ण मदें नहीं।",
   "p.plans.pid.flow.not_started_finished_of":
     "{tasks} में से {not_started} आरंभ नहीं · {finished} पूर्ण",
   "p.plans.pid.flow.nothing_in_progress": "कुछ भी प्रगति पर नहीं।",
@@ -1223,8 +1206,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.handover.handover": "हस्तांतरण",
   "p.plans.pid.handover.handover_ppm": "हस्तांतरण — PPM",
   "p.plans.pid.handover.kind": "प्रकार",
-  "p.plans.pid.handover.onboarding_and_offboarding":
-    "ऑनबोर्डिंग और ऑफ़बोर्डिंग",
+  "p.plans.pid.handover.onboarding_and_offboarding": "ऑनबोर्डिंग और ऑफ़बोर्डिंग",
   "p.plans.pid.handover.person": "person:…",
   "p.plans.pid.handover.person_empty_releases_the_work":
     "person:… (खाली छोड़ने पर काम मुक्त हो जाता है)",
@@ -1274,8 +1256,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.joint_risk.cost_risk": "लागत जोखिम",
   "p.plans.pid.joint_risk.critical_path_finish_the_plan":
     "क्रांतिक पथ समाप्ति (योजना की अपनी तिथि)",
-  "p.plans.pid.joint_risk.currency_if_the_plan_has":
-    "मुद्रा (यदि योजना में कई हों)",
+  "p.plans.pid.joint_risk.currency_if_the_plan_has": "मुद्रा (यदि योजना में कई हों)",
   "p.plans.pid.joint_risk.distribution": "वितरण",
   "p.plans.pid.joint_risk.each_dot_is_one_simulation":
     "हर बिंदु एक सिमुलेशन है (छँटा हुआ नमूना)। समय-पर रेखा के दाईं ओर देर है; बजट रेखा के ऊपर बजट से अधिक है। ऊपर की तालिका में पूरी गिनती है।",
@@ -1289,16 +1270,14 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.joint_risk.iterations": "पुनरावृत्तियाँ",
   "p.plans.pid.joint_risk.line": "पंक्ति",
   "p.plans.pid.joint_risk.low_planned_high": "न्यून / नियोजित / उच्च",
-  "p.plans.pid.joint_risk.mean_delay_cost_included":
-    "माध्य (देरी की लागत सहित)",
+  "p.plans.pid.joint_risk.mean_delay_cost_included": "माध्य (देरी की लागत सहित)",
   "p.plans.pid.joint_risk.no_register_risk_was_used":
     "इस रन में रजिस्टर का कोई जोखिम उपयोग नहीं हुआ।",
   "p.plans.pid.joint_risk.not_enough_data": "पर्याप्त डेटा नहीं",
   "p.plans.pid.joint_risk.of_which_delay_cost_on": "जिसमें औसतन देरी की लागत",
   "p.plans.pid.joint_risk.on_time": "समय पर",
   "p.plans.pid.joint_risk.outcome": "परिणाम",
-  "p.plans.pid.joint_risk.per_line_estimate_in":
-    "{currency} में प्रति-पंक्ति अनुमान",
+  "p.plans.pid.joint_risk.per_line_estimate_in": "{currency} में प्रति-पंक्ति अनुमान",
   "p.plans.pid.joint_risk.pert": "PERT",
   "p.plans.pid.joint_risk.plan": "← योजना",
   "p.plans.pid.joint_risk.risks": "जोखिम",
@@ -1334,8 +1313,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.leveling.load_per_task_of_a":
     "प्रति कार्य भार (किसी व्यक्ति के दिन का %)",
   "p.plans.pid.leveling.loading": "लोड हो रहा है…",
-  "p.plans.pid.leveling.no_start_date_would_change":
-    "कोई आरंभ तिथि नहीं बदलेगी।",
+  "p.plans.pid.leveling.no_start_date_would_change": "कोई आरंभ तिथि नहीं बदलेगी।",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "कोई भी अधिक आवंटित नहीं है, इसलिए समतल करने को कुछ नहीं है।",
   "p.plans.pid.leveling.over_allocated_now": "अभी अधिक आवंटित",
@@ -1371,11 +1349,9 @@ export const PAGES_HI: Record<PageKey, string> = {
     "{status} · {effective_date} से · {progressText}",
   "p.plans.pid.onboarding.granted": "प्रदान किया गया",
   "p.plans.pid.onboarding.hand_over_someone_s_work": "किसी का काम सौंपें",
-  "p.plans.pid.onboarding.no_access_is_outstanding":
-    "● कोई एक्सेस लंबित नहीं है।",
+  "p.plans.pid.onboarding.no_access_is_outstanding": "● कोई एक्सेस लंबित नहीं है।",
   "p.plans.pid.onboarding.none_yet": "अभी कोई नहीं।",
-  "p.plans.pid.onboarding.onboarding_and_offboarding":
-    "ऑनबोर्डिंग और ऑफ़बोर्डिंग",
+  "p.plans.pid.onboarding.onboarding_and_offboarding": "ऑनबोर्डिंग और ऑफ़बोर्डिंग",
   "p.plans.pid.onboarding.onboarding_and_offboarding_ppm":
     "ऑनबोर्डिंग और ऑफ़बोर्डिंग — PPM",
   "p.plans.pid.onboarding.person": "person:…",
@@ -1399,8 +1375,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.onboarding.who_holds_what_access_is":
     "किसके पास कौन-सा एक्सेस है, यह लोगों से जुड़ा है, इसलिए इसके लिए लोगों को प्रबंधित करने की अनुमति चाहिए।",
   "p.plans.pid.onboarding.why_skip": "क्यों छोड़ें?",
-  "p.plans.pid.raci.add_a_person_person_or":
-    "व्यक्ति जोड़ें (person:… या worker:…)",
+  "p.plans.pid.raci.add_a_person_person_or": "व्यक्ति जोड़ें (person:… या worker:…)",
   "p.plans.pid.raci.add_a_person_to_start":
     "अक्षर सौंपना शुरू करने के लिए एक व्यक्ति जोड़ें।",
   "p.plans.pid.raci.add_column": "कॉलम जोड़ें",
@@ -1421,10 +1396,8 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.raci.person": "व्यक्ति",
   "p.plans.pid.raci.plan": "← योजना",
   "p.plans.pid.raci.raci_ppm": "RACI — PPM",
-  "p.plans.pid.raci.this_plan_has_no_tasks":
-    "इस योजना में अभी कोई कार्य नहीं है।",
-  "p.plans.pid.raci.who_does_what_raci_matrix":
-    "कौन क्या करता है (RACI मैट्रिक्स)",
+  "p.plans.pid.raci.this_plan_has_no_tasks": "इस योजना में अभी कोई कार्य नहीं है।",
+  "p.plans.pid.raci.who_does_what_raci_matrix": "कौन क्या करता है (RACI मैट्रिक्स)",
   "p.plans.pid.schedule.dependency_violated_successor_starts":
     "निर्भरता का उल्लंघन: उत्तरवर्ती कार्य {actual_start} को शुरू होता है, पर {earliest_start} से पहले शुरू नहीं हो सकता।",
   "p.plans.pid.schedule.schedule_ppm": "समय-सारणी — PPM",
@@ -1500,8 +1473,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.schedule_risk.share": "हिस्सा",
   "p.plans.pid.schedule_risk.simulations": "सिमुलेशन",
   "p.plans.pid.schedule_risk.task": "कार्य",
-  "p.plans.pid.schedule_risk.the_same_figures_as_a":
-    "यही आँकड़े तालिका के रूप में",
+  "p.plans.pid.schedule_risk.the_same_figures_as_a": "यही आँकड़े तालिका के रूप में",
   "p.plans.pid.schedule_risk.triangular": "त्रिकोणीय",
   "p.plans.pid.schedule_risk.weighted_towards_the_likely_value":
     "संभावित मान की ओर भारित (PERT)",
@@ -1535,8 +1507,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.what_if.finish_to_finish": "समाप्ति से समाप्ति",
   "p.plans.pid.what_if.finish_to_start": "समाप्ति से आरंभ",
   "p.plans.pid.what_if.float": "फ़्लोट",
-  "p.plans.pid.what_if.follows":
-    "{name}, {name2} के बाद आता है ({toUpperCase})",
+  "p.plans.pid.what_if.follows": "{name}, {name2} के बाद आता है ({toUpperCase})",
   "p.plans.pid.what_if.joins_the_critical_path":
     "क्रांतिक पथ में शामिल होते हैं: {join}।",
   "p.plans.pid.what_if.lag_business_days": "अंतराल (कार्य-दिवस)",
@@ -1869,8 +1840,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_settings.members_heading": "लोग और भूमिकाएँ",
   "p.plan_settings.members_intro":
     "जब किसी योजना में यहाँ कम से कम एक व्यक्ति सूचीबद्ध हो, तब उस पर समस्याएँ दर्ज करने, संपादित करने, आगे बढ़ाने और हटाने के लिए अनुमति देने वाली भूमिका चाहिए। भूमिका किसी को उसके साइन-इन से अधिक नहीं दे सकती, और यह निजी योजना नहीं खोलती।",
-  "p.plan_settings.enforced":
-    "इस योजना पर समस्या कार्यों के लिए भूमिका आवश्यक है।",
+  "p.plan_settings.enforced": "इस योजना पर समस्या कार्यों के लिए भूमिका आवश्यक है।",
   "p.plan_settings.not_enforced":
     "लिखने की अनुमति वाला कोई भी यहाँ समस्याओं पर कार्य कर सकता है।",
   "p.plan_settings.person": "व्यक्ति की उपयोगकर्ता आईडी",
@@ -1964,18 +1934,15 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.task.links_intro":
     "यह कार्य दूसरे उपकरणों में कहाँ है, जैसे वह Jira या Linear इश्यू जिसके रूप में इसे ट्रैक किया जाता है। पता सहेजा और दिखाया जाता है; इसे कभी फ़ेच नहीं किया जाता और कुछ भी सिंक्रनाइज़ नहीं होता।",
   "p.task.back_board": "बोर्ड पर वापस जाएँ",
-  "p.task.could_not_load_links":
-    "कार्य के अन्य कार्यों से लिंक लोड नहीं हो सके।",
-  "p.task.could_not_load_tasks":
-    "लिंक करने के लिए योजना के कार्य लोड नहीं हो सके।",
+  "p.task.could_not_load_links": "कार्य के अन्य कार्यों से लिंक लोड नहीं हो सके।",
+  "p.task.could_not_load_tasks": "लिंक करने के लिए योजना के कार्य लोड नहीं हो सके।",
   "p.task.edit_heading": "कार्य संपादित करें",
   "p.task.edit_note":
     "स्थिति बोर्ड पर बदलती है। स्प्रिंट, घटक और मूल कार्य जैसे हैं वैसे ही रहते हैं।",
   "p.task.f_title": "शीर्षक",
   "p.task.f_assignee":
     "सौंपा गया (person: या worker: संदर्भ; किसी को नहीं के लिए खाली छोड़ें)",
-  "p.task.f_points":
-    "स्टोरी पॉइंट (0 से 100 तक पूर्ण संख्या; कोई नहीं के लिए खाली छोड़ें)",
+  "p.task.f_points": "स्टोरी पॉइंट (0 से 100 तक पूर्ण संख्या; कोई नहीं के लिए खाली छोड़ें)",
   "p.task.f_due": "नियत तिथि (कोई नहीं के लिए खाली छोड़ें)",
   "p.task.save": "कार्य सहेजें",
   "p.task.saved": "कार्य सहेजा गया।",
@@ -2026,8 +1993,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "यह कार्य अब मौजूद नहीं है, या आप इसे नहीं देख सकते; इसे फिर से पढ़ा गया है।",
   "p.task.refused_link_gone":
     "वह लिंक पहले ही हटाया जा चुका था; लिंक फिर से पढ़े गए हैं।",
-  "p.task.refused_link_exists":
-    "वह लिंक पहले से मौजूद है; लिंक फिर से पढ़े गए हैं।",
+  "p.task.refused_link_exists": "वह लिंक पहले से मौजूद है; लिंक फिर से पढ़े गए हैं।",
   "p.task.refused_edit_invalid":
     "सेवा ने बदलाव स्वीकार नहीं किया: फ़ील्ड जाँचें। नई नियत तिथि को हर ‘पहले आता है’ लिंक का क्रम भी बनाए रखना होगा।",
   "p.task.refused_link_invalid":
@@ -2057,8 +2023,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.notifications.mark_read_named": "पढ़ा हुआ चिह्नित करें: {message}",
   "p.notifications.marked_read": "पढ़ा हुआ चिह्नित किया गया।",
   "p.notifications.could_not_load_inbox": "आपका इनबॉक्स लोड नहीं हो सका।",
-  "p.notifications.could_not_mark":
-    "सूचना को पढ़ा हुआ चिह्नित नहीं किया जा सका।",
+  "p.notifications.could_not_mark": "सूचना को पढ़ा हुआ चिह्नित नहीं किया जा सका।",
   "p.notifications.prefs_heading": "आपको किन बातों की सूचना मिलती है",
   "p.notifications.prefs_intro":
     "हर प्रकार की सूचना को इनबॉक्स के लिए और हर प्रकार के गंतव्य के लिए चालू या बंद करें। वेबहुक, चैट या ईमेल पर प्रति तभी जाती है जब आपने नीचे उस प्रकार का गंतव्य जोड़ा हो। दैनिक सारांश किसी एक चीज़ के बारे में एक दिन की सूचनाओं को इनबॉक्स की एक पंक्ति में इकट्ठा करता है; कुछ भी रोका या हटाया नहीं जाता।",
@@ -2094,8 +2059,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.notifications.add_heading": "गंतव्य जोड़ें",
   "p.notifications.f_kind": "प्रकार",
   "p.notifications.f_destination_email": "ईमेल पता",
-  "p.notifications.f_destination_url":
-    "वेब पता (https, किसी सार्वजनिक होस्ट पर)",
+  "p.notifications.f_destination_url": "वेब पता (https, किसी सार्वजनिक होस्ट पर)",
   "p.notifications.f_chat_id": "टेलीग्राम चैट (उसकी संख्या, या @ और उसका नाम)",
   "p.notifications.add_sink": "गंतव्य जोड़ें",
   "p.notifications.sink_added": "गंतव्य जोड़ा गया: {destination}।",
@@ -2108,8 +2072,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.notifications.problem_destination_required": "वह पता दें जिस पर भेजना है।",
   "p.notifications.problem_email_invalid": "यह ईमेल पता नहीं है।",
   "p.notifications.problem_url_invalid": "यह वेब पता नहीं है।",
-  "p.notifications.problem_url_not_https":
-    "वेब पता https:// से शुरू होना चाहिए।",
+  "p.notifications.problem_url_not_https": "वेब पता https:// से शुरू होना चाहिए।",
   "p.notifications.problem_url_credentials":
     "वेब पते में उपयोगकर्ता नाम या पासवर्ड नहीं होना चाहिए।",
   "p.notifications.problem_url_private":
@@ -2129,17 +2092,14 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.notifications.refused_sink_invalid":
     "सेवा ने गंतव्य स्वीकार नहीं किया: यह ईमेल पता हो, या किसी सार्वजनिक होस्ट का https वेब पता; टेलीग्राम गंतव्य को अपनी चैट चाहिए; और अधिकतम दस हो सकते हैं।",
   "l.enum.notify_kind.approval_decided": "आपके माँगे गए अनुमोदन पर निर्णय हुआ",
-  "l.enum.notify_kind.approval_requested":
-    "आपसे किसी चीज़ का अनुमोदन माँगा गया है",
-  "l.enum.notify_kind.auto_watch":
-    "आप जिस पर काम करते हैं उसे अपने आप फ़ॉलो करना",
+  "l.enum.notify_kind.approval_requested": "आपसे किसी चीज़ का अनुमोदन माँगा गया है",
+  "l.enum.notify_kind.auto_watch": "आप जिस पर काम करते हैं उसे अपने आप फ़ॉलो करना",
   "l.enum.notify_kind.automation": "कोई नियम आपको बताता है",
   "l.enum.notify_kind.comment": "टिप्पणियाँ",
   "l.enum.notify_kind.escalation": "एस्केलेशन",
   "l.enum.notify_kind.exceptions_digest": "अपवादों का साप्ताहिक सारांश",
   "l.enum.notify_kind.reschedule_proposed": "नई तारीख़ प्रस्तावित है",
-  "l.enum.notify_kind.review_invited":
-    "आपको समीक्षा के लिए आमंत्रित किया गया है",
+  "l.enum.notify_kind.review_invited": "आपको समीक्षा के लिए आमंत्रित किया गया है",
   "l.enum.notify_kind.review_submitted": "एक समीक्षा जमा की गई",
   "l.enum.notify_kind.scheduled": "एक निर्धारित अनुस्मारक",
   "l.enum.notify_kind.status_update_due": "स्थिति अपडेट देय है",
@@ -2284,15 +2244,12 @@ export const PAGES_HI: Record<PageKey, string> = {
     "पता http:// या https:// से शुरू होना चाहिए और उसमें होस्ट होना चाहिए।",
   "p.links.label_problem": "इसे एक लेबल दें।",
   "p.links.system_problem": "ट्रैकर लिंक में उसके उपकरण का नाम होना चाहिए।",
-  "p.links.system_kind_problem":
-    "केवल ट्रैकर या टिकट लिंक में उपकरण का नाम होता है।",
-  "p.links.id_problem":
-    "पहचानकर्ता के लिए उपकरण चाहिए और उसमें रिक्त स्थान नहीं होते।",
+  "p.links.system_kind_problem": "केवल ट्रैकर या टिकट लिंक में उपकरण का नाम होता है।",
+  "p.links.id_problem": "पहचानकर्ता के लिए उपकरण चाहिए और उसमें रिक्त स्थान नहीं होते।",
   "p.links.domain_problem": "उस उपकरण के लिंक {domains} पर होते हैं।",
   "p.escalations.intro":
     "जब परियोजना किसी बात को स्वयं नहीं सुलझा सकती या उसे नहीं सुलझाना चाहिए, तो उसे ऊपर भेजें। इसे परियोजना के शासन ढाँचे के एस्केलेशन पथ के किसी स्तर पर उठाया जाता है, स्वीकार किया जाता है, कोई उत्तर न दे तो एक स्तर ऊपर ले जाया जाता है, और अंत में सुलझाया या वापस लिया जाता है। जिस व्यक्ति को ज़िम्मेदार बताया गया है और जिसने इसे उठाया, दोनों को उनके इनबॉक्स में सूचित किया जाता है (कोई ईमेल नहीं भेजा जाता)।",
-  "p.escalations.register_intro":
-    "उन योजनाओं के सभी एस्केलेशन जिन्हें आप पढ़ सकते हैं।",
+  "p.escalations.register_intro": "उन योजनाओं के सभी एस्केलेशन जिन्हें आप पढ़ सकते हैं।",
   "p.escalations.none": "अभी कोई एस्केलेशन नहीं।",
   "p.escalations.none_match": "कोई एस्केलेशन मेल नहीं खाता।",
   "p.escalations.raise_heading": "एस्केलेशन उठाएँ",
@@ -2369,8 +2326,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.resources.rbs.demand_by_skill": "कौशल के अनुसार माँग",
   "p.resources.rbs.demand_fte": "माँग FTE",
   "p.resources.rbs.no_roles_in_this_window": "इस अवधि में कोई भूमिका नहीं।",
-  "p.resources.rbs.no_skill_demand_in_this":
-    "इस अवधि में कौशल की कोई माँग नहीं।",
+  "p.resources.rbs.no_skill_demand_in_this": "इस अवधि में कौशल की कोई माँग नहीं।",
   "p.resources.rbs.not_known": "ज्ञात नहीं",
   "p.resources.rbs.people": "लोग",
   "p.resources.rbs.resource_breakdown": "संसाधन विभाजन",
@@ -2456,8 +2412,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "— अधिकतम संपदा {v}, अधिकतम एकल जोखिम {v2}",
   "p.risk.no_open_risks": "कोई खुला जोखिम नहीं।",
   "p.risk.open_exposure": "खुला एक्सपोज़र",
-  "p.risk.open_risks_estate_open_exposure":
-    "खुले जोखिम · संपदा का खुला एक्सपोज़र",
+  "p.risk.open_risks_estate_open_exposure": "खुले जोखिम · संपदा का खुला एक्सपोज़र",
   "p.risk.overdue_reviews": "विलंबित समीक्षाएँ",
   "p.risk.portfolio": "पोर्टफ़ोलियो",
   "p.risk.posture_by_portfolio": "पोर्टफ़ोलियो के अनुसार स्थिति",
@@ -2512,8 +2467,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.technology.delivery_flow": "डिलीवरी प्रवाह",
   "p.technology.dependency_risk": "निर्भरता जोखिम",
   "p.technology.dependents": "आश्रित",
-  "p.technology.edges_importing_risk_from_a":
-    "लाल पूर्ववर्ती से जोखिम लाने वाले संबंध",
+  "p.technology.edges_importing_risk_from_a": "लाल पूर्ववर्ती से जोखिम लाने वाले संबंध",
   "p.technology.exposure": "एक्सपोज़र",
   "p.technology.item": "मद",
   "p.technology.kind": "प्रकार",
@@ -2530,8 +2484,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "इस अवधि में समय-मापित कोई पूर्णता नहीं।",
   "p.technology.none_all_edges_stay_within":
     "कोई नहीं — सभी संबंध एक ही पोर्टफ़ोलियो के भीतर रहते हैं।",
-  "p.technology.none_no_red_predecessors":
-    "कोई नहीं — कोई लाल पूर्ववर्ती नहीं।",
+  "p.technology.none_no_red_predecessors": "कोई नहीं — कोई लाल पूर्ववर्ती नहीं।",
   "p.technology.open_exposure": "{note} · खुला एक्सपोज़र {open_exposure}",
   "p.technology.over_timed_completions":
     "{timed_completions} समय-मापित पूर्णताओं पर",
@@ -2557,8 +2510,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "{length} उद्देश्य, सबसे कम प्रगति वाला पहले",
   "p.okrs.objective_least_progressed_first_other":
     "{length} उद्देश्य, सबसे कम प्रगति वाले पहले",
-  "p.plans.pid.board.blocked_calendar_day_one":
-    "{blocked_days} कैलेंडर दिन अवरुद्ध",
+  "p.plans.pid.board.blocked_calendar_day_one": "{blocked_days} कैलेंडर दिन अवरुद्ध",
   "p.plans.pid.board.blocked_calendar_day_other":
     "{blocked_days} कैलेंडर दिन अवरुद्ध",
   "p.plans.pid.calendar.holiday_one": "{length} अवकाश: {join}",
@@ -2650,8 +2602,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "{count} रजिस्टर जोखिमों में कोई लागत फ़ील्ड नहीं है और वे इसमें शामिल नहीं हैं।",
   "c.CumulativeFlow.hide_the_numbers": "संख्याएँ छिपाएँ",
   "c.CumulativeFlow.show_the_numbers": "संख्याएँ दिखाएँ",
-  "c.CostRiskView.scope_all_one":
-    "आपके द्वारा पढ़ी जा सकने वाली सभी {plans} योजना",
+  "c.CostRiskView.scope_all_one": "आपके द्वारा पढ़ी जा सकने वाली सभी {plans} योजना",
   "c.CostRiskView.scope_all_other":
     "आपके द्वारा पढ़ी जा सकने वाली सभी {plans} योजनाएँ",
   "c.CostRiskView.scope_this_plan": "यह योजना",
@@ -2664,8 +2615,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "c.VarianceTable.slipped_pulled_on":
     "{slipped} खिसके, {pulled_in} पहले खींचे गए, {on_baseline} बेसलाइन पर{unmeasurable}।",
   "c.VarianceTable.cannot_be_measured": ", {unmeasurable} मापे नहीं जा सकते",
-  "c.VarianceTable.added_removed":
-    "तब से {added} जोड़े गए और {removed} हटाए गए।",
+  "c.VarianceTable.added_removed": "तब से {added} जोड़े गए और {removed} हटाए गए।",
   "c.VarianceTable.finish_later_one":
     "योजना की समाप्ति बेसलाइन से {days} कार्य-दिवस बाद है{note}।",
   "c.VarianceTable.finish_later_other":
@@ -2674,11 +2624,9 @@ export const PAGES_HI: Record<PageKey, string> = {
     "योजना की समाप्ति बेसलाइन से {days} कार्य-दिवस पहले है{note}।",
   "c.VarianceTable.finish_earlier_other":
     "योजना की समाप्ति बेसलाइन से {days} कार्य-दिवस पहले है{note}।",
-  "c.VarianceTable.check_removed":
-    " (हटाए गए कार्य जाँचें: काम हटाना सुधार नहीं है)",
+  "c.VarianceTable.check_removed": " (हटाए गए कार्य जाँचें: काम हटाना सुधार नहीं है)",
   "p.plans.pid.critical_path.finishes": "{date} को समाप्त होती है।",
-  "p.plans.pid.critical_path.nothing_scheduled":
-    "अभी कुछ भी निर्धारित नहीं है।",
+  "p.plans.pid.critical_path.nothing_scheduled": "अभी कुछ भी निर्धारित नहीं है।",
   "p.plans.pid.critical_path.calendar_label": "कैलेंडर: {calendar}।",
   "p.plans.pid.critical_path.calendar_plan": "इस योजना का",
   "p.plans.pid.critical_path.calendar_default": "डिफ़ॉल्ट (हर दिन कार्य-दिवस)",
@@ -2759,8 +2707,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.plan_fallback": "योजना",
   "p.plans.pid.custom_scheme": "कस्टम({name})",
   "p.plans.pid.calendar.own_calendar": "इस योजना का अपना कैलेंडर है।",
-  "p.plans.pid.calendar.no_calendar":
-    "कोई कैलेंडर सेट नहीं: हर दिन कार्य-दिवस है।",
+  "p.plans.pid.calendar.no_calendar": "कोई कैलेंडर सेट नहीं: हर दिन कार्य-दिवस है।",
   "p.plans.pid.calendar.each_person_can_set":
     "हर व्यक्ति अपना कैलेंडर भी सेट कर सकता है (",
   "p.reviews.consensus_line": "औसत अंक: {mean} · बहुमत: {majority} · {state}",
@@ -2774,8 +2721,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.announcement_view.scheduled": "निर्धारित",
   "l.announcement_view.expired": "समाप्त",
   "l.api_ppm.task": "कार्य {uid}",
-  "l.api_ppm.the_project_calendar_comes_across":
-    " प्रोजेक्ट कैलेंडर भी साथ आता है।",
+  "l.api_ppm.the_project_calendar_comes_across": " प्रोजेक्ट कैलेंडर भी साथ आता है।",
   "l.api_tba.calendar_days": "{toFixed} कैलेंडर दिन",
   "l.api_tba.work_in_progress_is_growing": "प्रगतिरत कार्य बढ़ रहा है",
   "l.api_tba.steady_state": "स्थिर अवस्था",
@@ -2836,17 +2782,14 @@ export const PAGES_HI: Record<PageKey, string> = {
     "की कोई आरंभ तिथि नहीं है और इससे पहले का कुछ भी निर्धारित नहीं है",
   "l.cpm_view.has_a_date_outside_the": "की तिथि समर्थित सीमा से बाहर है",
   "l.cpm_view.slipped": "खिसका",
-  "l.cpm_view.finishes_later_than_baselined":
-    "बेसलाइन से {d} बाद समाप्त होता है",
+  "l.cpm_view.finishes_later_than_baselined": "बेसलाइन से {d} बाद समाप्त होता है",
   "l.cpm_view.pulled_in": "पहले खींचा गया",
-  "l.cpm_view.finishes_earlier_than_baselined":
-    "बेसलाइन से {d} पहले समाप्त होता है",
+  "l.cpm_view.finishes_earlier_than_baselined": "बेसलाइन से {d} पहले समाप्त होता है",
   "l.cpm_view.on_baseline": "बेसलाइन पर",
   "l.cpm_view.finishes_when_it_was_baselined":
     "उसी समय समाप्त होता है जिसकी बेसलाइन थी",
   "l.cpm_view.added": "जोड़ा गया",
-  "l.cpm_view.not_in_the_baseline_so":
-    "बेसलाइन में नहीं, इसलिए इसमें कोई देरी नहीं",
+  "l.cpm_view.not_in_the_baseline_so": "बेसलाइन में नहीं, इसलिए इसमें कोई देरी नहीं",
   "l.cpm_view.removed": "हटाया गया",
   "l.cpm_view.was_in_the_baseline_and":
     "बेसलाइन में था और अब नहीं है; इसकी बेसलाइन तिथियाँ रखी गई हैं",
@@ -2883,8 +2826,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.ev_view.by_story_points": "स्टोरी पॉइंट के अनुसार",
   "l.ev_view.counted_by_a_person_entered":
     "{length} व्यक्ति द्वारा दर्ज प्रतिशत से गिने गए (मैन्युअल)",
-  "l.ev_view.with_no_points_carry_no":
-    "बिना अंकों वाले {length} का कोई भार नहीं",
+  "l.ev_view.with_no_points_carry_no": "बिना अंकों वाले {length} का कोई भार नहीं",
   "l.ev_view.no_actual_cost_is_recorded": "कोई वास्तविक लागत दर्ज नहीं है",
   "l.ev_view.the_ratio_it_divides_by":
     "जिस अनुपात से यह भाग देता है वह अभी परिभाषित नहीं है",
@@ -2949,8 +2891,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "यह किस तिथि से प्रभावी होगा, बताएँ।",
   "l.onboarding_view.give_the_person_as_person":
     "व्यक्ति को person:… (या worker:…) के रूप में दें।",
-  "l.onboarding_view.say_what_access_in_words":
-    "शब्दों में बताएँ कि कौन-सी पहुँच।",
+  "l.onboarding_view.say_what_access_in_words": "शब्दों में बताएँ कि कौन-सी पहुँच।",
   "l.onboarding_view.choose_granted_or_revoked": "प्रदत्त या निरस्त चुनें।",
   "l.onboarding_view.give_who_is_handing_over":
     "बताएँ कि कौन सौंप रहा है, person:… के रूप में",
@@ -3054,8 +2995,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "किसी जोखिम द्वारा जोड़े गए कार्य-दिवस 1 से 365 तक की पूर्ण संख्या होने चाहिए।",
   "l.simulation_inputs.give_the_cost_and_its":
     "लागत और उसकी मुद्रा एक साथ दें, या दोनों खाली छोड़ें।",
-  "l.simulation_inputs.the_cost_must_be_an":
-    "लागत शून्य से अधिक राशि होनी चाहिए।",
+  "l.simulation_inputs.the_cost_must_be_an": "लागत शून्य से अधिक राशि होनी चाहिए।",
   "l.simulation_inputs.the_currency_must_be_a":
     "मुद्रा 3 अक्षरों का कोड होनी चाहिए, उदाहरण के लिए EUR, JPY या GBP।",
   "l.simulation_inputs.a_risk_that_changes_the":
@@ -3084,11 +3024,9 @@ export const PAGES_HI: Record<PageKey, string> = {
     "अवधि 0 से 3650 तक के पूर्ण कार्य-दिवसों में होनी चाहिए।",
   "l.whatif_view.choose_a_constraint": "कोई बाध्यता चुनें।",
   "l.whatif_view.a_constraint_needs_a_date": "बाध्यता के लिए तिथि आवश्यक है।",
-  "l.whatif_view.a_hard_constraint_needs_a":
-    "कठोर बाध्यता के लिए कारण आवश्यक है।",
+  "l.whatif_view.a_hard_constraint_needs_a": "कठोर बाध्यता के लिए कारण आवश्यक है।",
   "l.whatif_view.choose_both_tasks": "दोनों कार्य चुनें।",
-  "l.whatif_view.a_task_cannot_depend_on":
-    "कोई कार्य स्वयं पर निर्भर नहीं हो सकता।",
+  "l.whatif_view.a_task_cannot_depend_on": "कोई कार्य स्वयं पर निर्भर नहीं हो सकता।",
   "l.whatif_view.lag_must_be_a_whole":
     "विलंब पूर्ण कार्य-दिवसों में होना चाहिए (ऋणात्मक मान अग्रता है)।",
   "l.whatif_view.choose_a_link": "कोई लिंक चुनें।",
@@ -3097,11 +3035,9 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.whatif_view.for": "“{name}” के लिए {constraint_kind} {constraint_date}",
   "l.whatif_view.clear_the_constraint_on": "“{name}” की बाध्यता हटाएँ",
   "l.whatif_view.lag": ", विलंब {lag_days}",
-  "l.whatif_view.follows":
-    "“{name}” “{name2}” के बाद आता है ({toUpperCase}{v})",
+  "l.whatif_view.follows": "“{name}” “{name2}” के बाद आता है ({toUpperCase}{v})",
   "l.whatif_view.remove_the_link": "लिंक {slice} हटाएँ",
-  "l.whatif_view.the_plan_has_no_finish":
-    "योजना की अभी कोई समाप्ति तिथि नहीं है।",
+  "l.whatif_view.the_plan_has_no_finish": "योजना की अभी कोई समाप्ति तिथि नहीं है।",
   "l.whatif_view.the_finish_stays": "समाप्ति {after} ही रहती है।",
   "l.whatif_view.the_finish_becomes": "समाप्ति {after} हो जाती है।",
   "l.whatif_view.the_plan_no_longer_has":
@@ -3112,8 +3048,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "लागत प्रभाव वित्तीय डेटा है, इसलिए आपको नहीं दिखाया जाता।",
   "l.whatif_view.no_task_with_work_has":
     "काम वाले किसी भी कार्य की कोई दर नहीं है, इसलिए तुलना के लिए कोई लागत नहीं।",
-  "l.work_view.work_must_be_a_number":
-    "काम शून्य से अधिक घंटों की संख्या होना चाहिए।",
+  "l.work_view.work_must_be_a_number": "काम शून्य से अधिक घंटों की संख्या होना चाहिए।",
   "l.work_view.duration_must_be_a_whole":
     "अवधि 1 से 3650 तक के पूर्ण कार्य-दिवसों में होनी चाहिए।",
   "l.work_view.units_must_be_a_whole":
@@ -3129,13 +3064,10 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.work_view.capacity_not_checked_the_task":
     "क्षमता जाँची नहीं गई: कार्य की अभी कोई तिथियाँ नहीं हैं।",
   "l.work_view.within_the_person_s_capacity": "व्यक्ति की क्षमता के भीतर।",
-  "l.work_view.give_1_to_40_whole":
-    "अल्पविराम से अलग 1 से 40 पूर्ण प्रतिशत दें।",
-  "l.work_view.the_percentages_add_up_to":
-    "प्रतिशतों का योग {sum} है, 100 नहीं।",
+  "l.work_view.give_1_to_40_whole": "अल्पविराम से अलग 1 से 40 पूर्ण प्रतिशत दें।",
+  "l.work_view.the_percentages_add_up_to": "प्रतिशतों का योग {sum} है, 100 नहीं।",
   "p.home.main_x_plans": "Main X · योजनाएँ",
-  "p.announcements.could_not_load_the_announcements":
-    "घोषणाएँ लोड नहीं हो सकीं",
+  "p.announcements.could_not_load_the_announcements": "घोषणाएँ लोड नहीं हो सकीं",
   "p.announcements.could_not_publish": "प्रकाशित नहीं हो सका",
   "p.announcements.could_not_retract": "वापस नहीं लिया जा सका",
   "p.auditor.auditor_ppm": "लेखा परीक्षक — PPM",
@@ -3156,8 +3088,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.cost_rates.could_not_load_the_rate": "दर तालिकाएँ लोड नहीं हो सकीं",
   "p.cost_rates.rate_table_added": "दर तालिका जोड़ी गई।",
   "p.cost_rates.could_not_add_the_table": "तालिका जोड़ी नहीं जा सकी",
-  "p.cost_rates.give_a_date_and_an":
-    "एक तिथि और शून्य या अधिक की प्रति घंटा दर दें।",
+  "p.cost_rates.give_a_date_and_an": "एक तिथि और शून्य या अधिक की प्रति घंटा दर दें।",
   "p.cost_rates.rate_added": "दर जोड़ी गई।",
   "p.cost_rates.could_not_add_the_rate": "दर जोड़ी नहीं जा सकी",
   "p.cost_risk.could_not_run_the_simulation": "सिमुलेशन नहीं चलाया जा सका",
@@ -3202,8 +3133,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "सिमुलेशन नहीं चलाया जा सका",
   "p.plans.pid.costs.could_not_load_the_costs": "लागतें लोड नहीं हो सकीं",
   "p.plans.pid.costs.choose_a_task": "कोई कार्य चुनें।",
-  "p.plans.pid.costs.the_amount_must_be_above":
-    "राशि शून्य से अधिक होनी चाहिए।",
+  "p.plans.pid.costs.the_amount_must_be_above": "राशि शून्य से अधिक होनी चाहिए।",
   "p.plans.pid.costs.the_currency_must_be_a":
     "मुद्रा 3 अक्षरों का कोड होनी चाहिए, उदाहरण के लिए EUR, JPY या GBP।",
   "p.money.currency_hint": "उदाहरण के लिए EUR, JPY या GBP",
@@ -3241,8 +3171,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "सिमुलेशन नहीं चलाया जा सका",
   "p.plans.pid.leveling.could_not_propose_a_leveling":
     "समतलीकरण प्रस्तावित नहीं किया जा सका",
-  "p.plans.pid.leveling.could_not_apply_the_moves":
-    "बदलाव लागू नहीं किए जा सके",
+  "p.plans.pid.leveling.could_not_apply_the_moves": "बदलाव लागू नहीं किए जा सके",
   "p.plans.pid.onboarding.could_not_load": "लोड नहीं हो सका",
   "p.plans.pid.onboarding.could_not_open_the_checklist":
     "चेकलिस्ट खोली नहीं जा सकी",
@@ -3298,8 +3227,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.reviews.could_not_load_reviews": "समीक्षाएँ लोड नहीं हो सकीं",
   "p.reviews.invitation_sent": "आमंत्रण भेजा गया",
   "p.reviews.could_not_delegate": "प्रत्यायोजित नहीं किया जा सका",
-  "p.reviews.score_0_100_leave_blank":
-    "अंक 0–100 (कोई नहीं के लिए खाली छोड़ें)",
+  "p.reviews.score_0_100_leave_blank": "अंक 0–100 (कोई नहीं के लिए खाली छोड़ें)",
   "p.reviews.score_must_be_between_0": "अंक 0 और 100 के बीच होने चाहिए",
   "p.reviews.that_action_was_refused": "वह कार्रवाई अस्वीकार कर दी गई",
   "p.reviews.could_not_load_consensus": "सहमति लोड नहीं हो सकी",
@@ -3424,16 +3352,14 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.onboarding.review_the_board_pack": "बोर्ड पैक की समीक्षा करें",
   "l.onboarding.the_pack_a_board_meeting":
     "वह पैक जो बोर्ड बैठक में वास्तव में दिया जाता: निवेश और रुझान।",
-  "l.onboarding.check_budget_variance_and_exposure":
-    "बजट विचलन और एक्सपोज़र जाँचें",
+  "l.onboarding.check_budget_variance_and_exposure": "बजट विचलन और एक्सपोज़र जाँचें",
   "l.onboarding.where_spend_is_diverging_from":
     "कहाँ व्यय योजना से भटक रहा है, प्रति मुद्रा — मुद्राओं को कभी आपस में जोड़ा नहीं जाता।",
   "l.onboarding.compare_two_candidate_portfolios":
     "दो संभावित पोर्टफ़ोलियो की तुलना करें",
   "l.onboarding.what_if_scenarios_side_by":
     'किसी को भी धन देने से पहले "क्या हो अगर" परिदृश्य साथ-साथ।',
-  "l.onboarding.see_what_s_ranked_highest":
-    "देखें कि सबसे ऊपर क्या है, और क्यों",
+  "l.onboarding.see_what_s_ranked_highest": "देखें कि सबसे ऊपर क्या है, और क्यों",
   "l.onboarding.the_smart_score_queue_every":
     "स्मार्ट स्कोर कतार — हर अंक अपने पीछे का प्रमाण दिखाता है, या बताता है कि कोई प्रमाण नहीं है।",
   "l.onboarding.pmo_portfolio_manager": "PMO / पोर्टफ़ोलियो प्रबंधक",
@@ -3451,15 +3377,13 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.onboarding.open_a_plan_s_governance": "किसी योजना का शासन टैब खोलें",
   "l.onboarding.gate_reviews_risks_and_budget":
     "उस एक योजना की गेट समीक्षाएँ, जोखिम और बजट पंक्तियाँ।",
-  "l.onboarding.look_at_the_cross_plan":
-    "सभी योजनाओं की संयुक्त समय-सारणी देखें",
+  "l.onboarding.look_at_the_cross_plan": "सभी योजनाओं की संयुक्त समय-सारणी देखें",
   "l.onboarding.dependencies_the_critical_path_and":
     "निर्भरताएँ, क्रिटिकल पाथ और कोई भी खिसकता उत्तरवर्ती कार्य।",
   "l.onboarding.check_the_risk_register": "जोखिम रजिस्टर जाँचें",
   "l.onboarding.everything_open_or_mitigating_ranked":
     "सब कुछ जो खुला है या जिसका शमन हो रहा है, एक्सपोज़र के अनुसार क्रमित।",
-  "l.onboarding.review_the_compliance_register":
-    "अनुपालन रजिस्टर की समीक्षा करें",
+  "l.onboarding.review_the_compliance_register": "अनुपालन रजिस्टर की समीक्षा करें",
   "l.onboarding.standing_findings_across_the_estate":
     "पूरे पोर्टफ़ोलियो के लंबित निष्कर्ष, केवल एक योजना के नहीं।",
   "l.onboarding.run_a_saved_report": "सहेजी गई रिपोर्ट चलाएँ",
@@ -3477,12 +3401,10 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.onboarding.read_that_plan_s_flow": "उस योजना के प्रवाह आँकड़े पढ़ें",
   "l.onboarding.cycle_time_lead_time_and":
     "साइकिल टाइम, लीड टाइम और प्रवाह दक्षता — बोर्ड के अपने इतिहास से निकाले गए।",
-  "l.onboarding.scan_blocked_items_and_the":
-    "अवरुद्ध मदें और डिलीवरी मिश्रण देखें",
+  "l.onboarding.scan_blocked_items_and_the": "अवरुद्ध मदें और डिलीवरी मिश्रण देखें",
   "l.onboarding.what_s_stuck_the_moscow":
     "क्या अटका है, MoSCoW मिश्रण, और मील के पत्थर का कैलेंडर एक ही दृश्य में।",
-  "l.onboarding.look_at_the_milestone_calendar":
-    "मील के पत्थर का कैलेंडर देखें",
+  "l.onboarding.look_at_the_milestone_calendar": "मील के पत्थर का कैलेंडर देखें",
   "l.onboarding.every_milestone_across_every_plan":
     "हर योजना का हर मील का पत्थर, नियत तिथियों सहित।",
   "l.onboarding.see_what_automations_are_configured":
@@ -3534,8 +3456,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "इसे हल करने से पहले खोज अपनी सीमा पर रुक गई।",
   "l.scheduling_view.no_probability": "कोई संभावना नहीं",
   "l.scheduling_view.no_task_named": "कोई कार्य नामित नहीं",
-  "l.scheduling_view.no_impact_in_business_days":
-    "कार्य-दिवसों में कोई प्रभाव नहीं",
+  "l.scheduling_view.no_impact_in_business_days": "कार्य-दिवसों में कोई प्रभाव नहीं",
   "l.scheduling_view.the_risk_is_not_open": "जोखिम खुला नहीं है",
   "l.scheduling_view.its_task_is_not_on": "इसका कार्य समय-सारणी पर नहीं है",
   "l.scheduling_view.the_plan_has_no_budget":
@@ -3560,8 +3481,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.work_view.front_loaded_more_at_the": "आरंभ-भारित: शुरुआत में अधिक",
   "l.work_view.back_loaded_more_at_the": "अंत-भारित: अंत में अधिक",
   "l.work_view.bell_most_in_the_middle": "घंटी: बीच में सबसे अधिक",
-  "l.work_view.turtle_ramps_up_holds_ramps":
-    "कछुआ: बढ़ता है, टिकता है, घटता है",
+  "l.work_view.turtle_ramps_up_holds_ramps": "कछुआ: बढ़ता है, टिकता है, घटता है",
   "l.work_view.custom_percentages": "कस्टम प्रतिशत",
   "l.work_view.has_no_dates_yet": "की अभी कोई तिथि नहीं है",
   "l.work_view.has_no_business_day_to": "के लिए कोई कार्य-दिवस उपलब्ध नहीं है",
@@ -3638,10 +3558,8 @@ export const PAGES_HI: Record<PageKey, string> = {
     "{days_over} कैलेंडर दिन ({from} से {to} तक) क्षमता से अधिक: यह व्यक्ति की क्षमता से अधिक माँगता है।",
   "p.plans.pid.handover.done_one": "पूर्ण: {count} मद सौंपा और दर्ज किया गया।",
   "p.plans.pid.handover.done_other": "पूर्ण: {count} मद सौंपे और दर्ज किए गए।",
-  "p.plans.pid.what_if.committed_one":
-    "प्रतिबद्ध: {count} बदलाव दर्ज किया गया।",
-  "p.plans.pid.what_if.committed_other":
-    "प्रतिबद्ध: {count} बदलाव दर्ज किए गए।",
+  "p.plans.pid.what_if.committed_one": "प्रतिबद्ध: {count} बदलाव दर्ज किया गया।",
+  "p.plans.pid.what_if.committed_other": "प्रतिबद्ध: {count} बदलाव दर्ज किए गए।",
   "l.import_view.mspdi_hint":
     "Microsoft Project में File → Save As → XML Format का उपयोग करें। .mpp फ़ाइल पढ़ी नहीं जा सकती।",
   "c.CalendarMonth.january": "जनवरी",
@@ -3784,8 +3702,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_issues.register_link": "सभी योजनाओं की समस्याएँ",
   "p.plan_issues.could_not_load": "योजना की समस्याएँ लोड नहीं हो सकीं",
   "p.plan_issues.could_not_save": "समस्या सहेजी नहीं जा सकी",
-  "p.plan_issues.counts":
-    "कुल {total}, {open} खुली या प्रगति में, {overdue} विलंबित",
+  "p.plan_issues.counts": "कुल {total}, {open} खुली या प्रगति में, {overdue} विलंबित",
   "p.plan_issues.actions_col": "कार्रवाइयाँ",
   "p.plan_issues.edit": "संपादित करें",
   "p.plan_issues.raise_heading": "समस्या दर्ज करें",
@@ -3862,8 +3779,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_change_requests.f_reason": "कारण (परिवर्तन क्यों आवश्यक है)",
   "p.plan_change_requests.f_days":
     "अनुसूची पर प्रभाव, कार्य दिवसों में (ऋणात्मक मान समाप्ति को पहले लाता है; आकलन न हुआ हो तो खाली छोड़ें)",
-  "p.plan_change_requests.f_cost":
-    "लागत पर प्रभाव (आकलन न हुआ हो तो खाली छोड़ें)",
+  "p.plan_change_requests.f_cost": "लागत पर प्रभाव (आकलन न हुआ हो तो खाली छोड़ें)",
   "p.plan_change_requests.f_currency": "लागत की मुद्रा (तीन अक्षर, जैसे EUR)",
   "p.plan_change_requests.f_summary": "प्रभाव का सारांश",
   "p.plan_change_requests.save_draft": "मसौदा सहेजें",
@@ -3871,8 +3787,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_change_requests.saved": "मसौदा सहेजा गया।",
   "p.plan_change_requests.problem_title_required":
     "परिवर्तन अनुरोध को एक शीर्षक दें।",
-  "p.plan_change_requests.problem_description_required":
-    "बताएँ कि क्या बदलना है।",
+  "p.plan_change_requests.problem_description_required": "बताएँ कि क्या बदलना है।",
   "p.plan_change_requests.problem_reason_required":
     "बताएँ कि परिवर्तन क्यों आवश्यक है।",
   "p.plan_change_requests.problem_days_not_whole":
@@ -3909,8 +3824,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_change_requests.f_decision": "निर्णय",
   "p.plan_change_requests.approve": "अनुमोदित करें",
   "p.plan_change_requests.reject": "अस्वीकार करें",
-  "p.plan_change_requests.f_decision_reason":
-    "निर्णय का कारण (कम से कम 10 अक्षर)",
+  "p.plan_change_requests.f_decision_reason": "निर्णय का कारण (कम से कम 10 अक्षर)",
   "p.plan_change_requests.decide": "निर्णय सहेजें",
   "p.plan_change_requests.decision_recorded": "निर्णय दर्ज हो गया।",
   "p.plan_change_requests.problem_decision_reason":
@@ -3935,8 +3849,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.change_requests.could_not_load": "परिवर्तन अनुरोध लोड नहीं हो सके",
   "p.change_requests.by_status": "स्थिति के अनुसार परिवर्तन अनुरोध",
   "p.change_requests.awaiting": "निर्णय की प्रतीक्षा",
-  "p.change_requests.oldest_open":
-    "सबसे पुराना खुला: {title} ({days} कैलेंडर दिन)",
+  "p.change_requests.oldest_open": "सबसे पुराना खुला: {title} ({days} कैलेंडर दिन)",
   "p.change_requests.show": "दिखाएँ",
   "p.change_requests.all_statuses": "सभी स्थितियाँ",
   "p.change_requests.open_only": "केवल खुले",
@@ -3974,14 +3887,12 @@ export const PAGES_HI: Record<PageKey, string> = {
     "{period}, {audience}, संस्करण {version} का पैक खोलें",
   "p.director_pack.all_packs": "सभी निदेशक पैक",
   "p.director_pack.pack_heading": "निदेशक पैक {period} — {audience}",
-  "p.director_pack.version_line":
-    "संस्करण {version} · {status} · कट-ऑफ़ {cutoff}",
+  "p.director_pack.version_line": "संस्करण {version} · {status} · कट-ऑफ़ {cutoff}",
   "p.director_pack.issued_on": "{when} को जारी",
   "p.director_pack.draft_note":
     "यह एक मसौदा है। यह अभी जारी नहीं हुआ है, इसलिए स्थिर नहीं है।",
   "p.director_pack.change_note": "परिवर्तन टिप्पणी: {note}",
-  "p.director_pack.previous_pack":
-    "{period} पैक, संस्करण {version} की तुलना में।",
+  "p.director_pack.previous_pack": "{period} पैक, संस्करण {version} की तुलना में।",
   "p.director_pack.download_pdf": "PDF के रूप में डाउनलोड करें",
   "p.director_pack.pdf_note":
     "PDF में वही आँकड़े हैं, पर उसके स्थायी शब्द अंग्रेज़ी में हैं। दूसरी भाषा बनाए रखने के लिए यह पृष्ठ प्रिंट करें।",
@@ -4081,8 +3992,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.director_pack.c_ac": "वास्तविक लागत",
   "p.director_pack.c_spi": "SPI",
   "p.director_pack.c_cpi": "CPI",
-  "p.director_pack.below_threshold":
-    "अर्जित-मूल्य सीमा से नीचे: पूर्णता पर बजट {bac}",
+  "p.director_pack.below_threshold": "अर्जित-मूल्य सीमा से नीचे: पूर्णता पर बजट {bac}",
   "p.director_pack.no_baseline": "कोई आधार-रेखा नहीं",
   "p.director_pack.evm_ratio_note":
     "SPI और CPI दो दशमलव स्थानों तक दिखाए गए हैं; रिक्त का अर्थ अपरिभाषित है, शून्य नहीं।",
@@ -4175,18 +4085,15 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.critical_chain.no_chain": "कोई क्रांतिक शृंखला नहीं है: {reason}",
   "p.critical_chain.reason_no_assignments":
     "किसी अधूरे कार्य पर कोई नियुक्त नहीं है, इसलिए अनुसरण करने के लिए लोगों की कोई प्रतीक्षा नहीं है",
-  "p.critical_chain.reason_no_scheduled_tasks":
-    "किसी कार्य की समय-सारणी नहीं है",
+  "p.critical_chain.reason_no_scheduled_tasks": "किसी कार्य की समय-सारणी नहीं है",
   "p.critical_chain.chain_work": "शृंखला पर कार्य के कार्य दिवस: {days}",
   "p.critical_chain.chain_tasks_count": "शृंखला पर कार्य: {tasks}",
   "p.critical_chain.chain_finish":
     "लोगों के समय का ध्यान रखने पर योजना {finish} को पूरी होती है।",
-  "p.critical_chain.chain_delay_none":
-    "यह क्रांतिक पथ की समाप्ति से बाद में नहीं है।",
+  "p.critical_chain.chain_delay_none": "यह क्रांतिक पथ की समाप्ति से बाद में नहीं है।",
   "p.critical_chain.chain_delay":
     "क्रांतिक पथ की समाप्ति से बाद के कार्य दिवस: {days}",
-  "p.critical_chain.crosses_yes":
-    "शृंखला पथों के बीच जाती है: एक व्यक्ति साझा है।",
+  "p.critical_chain.crosses_yes": "शृंखला पथों के बीच जाती है: एक व्यक्ति साझा है।",
   "p.critical_chain.crosses_no":
     "शृंखला एक ही पथ पर रहती है: कोई व्यक्ति साझा नहीं है।",
   "p.critical_chain.tied":
@@ -4210,8 +4117,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.critical_chain.buffers_h2": "बफ़र",
   "p.critical_chain.buffers_lede":
     "कार्यों को उनके आक्रामक अनुमानों पर निर्धारित किया जाता है; प्रत्येक कार्य से हटाई गई सुरक्षा एक बफ़र में एकत्र की जाती है। आकार कार्य दिवसों में हैं। नियम: {rule}।",
-  "p.critical_chain.rule_cut_and_paste":
-    "हटाई गई सुरक्षा का आधा (कट एंड पेस्ट)",
+  "p.critical_chain.rule_cut_and_paste": "हटाई गई सुरक्षा का आधा (कट एंड पेस्ट)",
   "p.critical_chain.rule_root_sum_squares":
     "हटाई गई सुरक्षा के वर्गों के योग का वर्गमूल",
   "p.critical_chain.no_buffers": "दिखाने के लिए कोई बफ़र नहीं है: {reason}",
@@ -4224,8 +4130,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "शृंखला के कार्यों से हटाई गई सुरक्षा: {days} कार्य दिवस।",
   "p.critical_chain.project_buffer_bar": "परियोजना बफ़र",
   "p.critical_chain.feeding_h3": "फ़ीडिंग बफ़र",
-  "p.critical_chain.feeding_none":
-    "कोई अन्य कार्य-शृंखला क्रांतिक शृंखला से नहीं जुड़ती।",
+  "p.critical_chain.feeding_none": "कोई अन्य कार्य-शृंखला क्रांतिक शृंखला से नहीं जुड़ती।",
   "p.critical_chain.col_feeding_tasks": "फ़ीडिंग कार्य",
   "p.critical_chain.col_joins": "कहाँ जुड़ती है",
   "p.critical_chain.col_buffer": "बफ़र (कार्य दिवस)",
@@ -4348,8 +4253,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.start_queue.col_act": "कार्रवाई",
   "p.start_queue.limit":
     "सभी {limit} स्थान भरे हैं: {in_delivery} कार्यक्रम डिलीवरी में हैं।",
-  "p.start_queue.pool":
-    "बाधा पूल {pool} में इन महीनों में आपूर्ति कम है: {months}।",
+  "p.start_queue.pool": "बाधा पूल {pool} में इन महीनों में आपूर्ति कम है: {months}।",
   "p.start_queue.withdraw": "{name} को कतार से वापस लें",
   "p.start_queue.withdraw_short": "वापस लें",
   "p.start_queue.could_not_load": "आरंभ कतार लोड नहीं हो सकी",
@@ -4435,8 +4339,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.demo.f_earned_value_d":
     "नियोजित मूल्य, अर्जित मूल्य और लागत, समय-सारणी और लागत सूचकांकों के साथ।",
   "p.demo.f_schedule_health_t": "समय-सारणी स्वास्थ्य",
-  "p.demo.f_schedule_health_d":
-    "योजना के तर्क की जाँच: छूटे लिंक, लंबे कार्य, बाधाएँ।",
+  "p.demo.f_schedule_health_d": "योजना के तर्क की जाँच: छूटे लिंक, लंबे कार्य, बाधाएँ।",
   "p.demo.f_wbs_t": "कार्य विभाजन",
   "p.demo.f_wbs_d": "परियोजना को कार्य पैकेजों में बाँटा गया।",
   "p.demo.f_risk_t": "जोखिम रजिस्टर",
@@ -4459,11 +4362,9 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.demo.f_ledger_d":
     "एक अनुदान और एक आरक्षित निधि, उन बजट पंक्तियों तक अनुरेखित जो उनसे राशि लेती हैं। जो धन अभी किसी पंक्ति पर नियोजित नहीं है, उसे अननुरेखित दिखाया जाता है।",
   "p.demo.f_costs_t": "किसी परियोजना की लागतें",
-  "p.demo.f_costs_d":
-    "दर तालिकाओं से श्रम लागत, और कार्य के अनुसार अन्य लागतें।",
+  "p.demo.f_costs_d": "दर तालिकाओं से श्रम लागत, और कार्य के अनुसार अन्य लागतें।",
   "p.demo.f_resources_t": "संसाधन",
-  "p.demo.f_resources_d":
-    "आठ काल्पनिक लोग, उनकी भूमिकाएँ और वे किन कार्यों पर बुक हैं।",
+  "p.demo.f_resources_d": "आठ काल्पनिक लोग, उनकी भूमिकाएँ और वे किन कार्यों पर बुक हैं।",
   "p.demo.f_capacity_t": "क्षमता हीटमैप",
   "p.demo.f_capacity_d":
     "कौशल पूल और माह के अनुसार आपूर्ति और माँग। लाल महीने दिखाते हैं कि सिग्नलिंग इंजीनियरों की कमी कहाँ है।",
@@ -4471,8 +4372,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.demo.f_key_persons_d":
     "विफलता के एकल बिंदु: एक इंजीनियर जिसका अभी कोई विकल्प नहीं है, और एक भूमिका जिसका उत्तराधिकारी तैयार है।",
   "p.demo.f_objectives_t": "उद्देश्य",
-  "p.demo.f_objectives_d":
-    "तीन उद्देश्य, प्रत्येक उन योजनाओं से जुड़ा जो उसे पूरा करती हैं।",
+  "p.demo.f_objectives_d": "तीन उद्देश्य, प्रत्येक उन योजनाओं से जुड़ा जो उसे पूरा करती हैं।",
   "p.demo.f_okrs_t": "लक्ष्य और प्रमुख परिणाम",
   "p.demo.f_okrs_d": "चेक-इन और विश्वास स्तर के साथ प्रमुख परिणाम।",
   "p.demo.f_kpis_t": "प्रमुख माप",
@@ -4508,14 +4408,12 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.demo.f_critical_chain_d":
     "आश्रित कार्यों और उनके साझा लोगों से होकर जाने वाली शृंखला, आक्रामक और सुरक्षित अनुमानों के साथ।",
   "p.demo.f_buffers_t": "बफ़र प्रबंधन",
-  "p.demo.f_buffers_d":
-    "स्थिर की गई बफ़र योजना, फ़ीवर चार्ट और एक सुधार कार्रवाई।",
+  "p.demo.f_buffers_d": "स्थिर की गई बफ़र योजना, फ़ीवर चार्ट और एक सुधार कार्रवाई।",
   "p.demo.f_pipeline_t": "ड्रम और पाइपलाइन",
   "p.demo.f_pipeline_d":
     "वह कौशल पूल जिस पर पोर्टफ़ोलियो सबसे अधिक निर्भर है, और प्रस्तावित क्रमबद्ध आरंभ तिथियाँ।",
   "p.demo.f_search_t": "खोज",
-  "p.demo.f_search_d":
-    "हेडर में आवर्धक लेंस में टाइप करें। यह लिंक “सिग्नल” खोजता है।",
+  "p.demo.f_search_d": "हेडर में आवर्धक लेंस में टाइप करें। यह लिंक “सिग्नल” खोजता है।",
   "p.demo.f_email_deliveries_t": "ईमेल डिलीवरी",
   "p.demo.f_email_deliveries_d":
     "हर ईमेल जिसे सेवा ने भेजने का प्रयास किया। प्रदर्शन से कुछ नहीं भेजा जाता, इसलिए यह सूची खाली है।",
@@ -4542,13 +4440,10 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.kanban.points": "{n} पॉइंट",
   "p.kanban.sign_in": "अपना बोर्ड देखने के लिए साइन इन करें।",
   "p.kanban.could_not_load": "आपका बोर्ड लोड नहीं हो सका",
-  "p.kanban.could_not_move":
-    "कार्य को खिसकाया नहीं जा सका; बोर्ड पहले जैसा है।",
-  "p.kanban.hidden":
-    "{n} कार्य नहीं दिखाए गए क्योंकि उनकी योजनाएँ आप नहीं पढ़ सकते।",
+  "p.kanban.could_not_move": "कार्य को खिसकाया नहीं जा सका; बोर्ड पहले जैसा है।",
+  "p.kanban.hidden": "{n} कार्य नहीं दिखाए गए क्योंकि उनकी योजनाएँ आप नहीं पढ़ सकते।",
   "p.dashboard.my_home": "मेरा होम पेज",
-  "p.demo.banner":
-    "यह काल्पनिक डेटा वाला एक प्रदर्शन है। यहाँ कुछ भी वास्तविक नहीं है।",
+  "p.demo.banner": "यह काल्पनिक डेटा वाला एक प्रदर्शन है। यहाँ कुछ भी वास्तविक नहीं है।",
   "p.demo.banner_tour": "टूर देखें",
   "p.demo.signin_h2": "प्रदर्शन",
   "p.demo.signin_lede":
@@ -4582,8 +4477,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.cutover.none": "कोई कटओवर निर्णय तैयार नहीं किया गया है।",
   "p.cutover.new_h2": "कटओवर निर्णय का मसौदा बनाएँ",
   "p.cutover.new_title": "शीर्षक",
-  "p.cutover.new_criteria":
-    "रोक मानदंड, प्रत्येक पंक्ति पर एक (प्रत्येक 5 से 500 वर्ण)",
+  "p.cutover.new_criteria": "रोक मानदंड, प्रत्येक पंक्ति पर एक (प्रत्येक 5 से 500 वर्ण)",
   "p.cutover.draft": "निर्णय का मसौदा बनाएँ",
   "p.cutover.version": "संस्करण {n}",
   "p.cutover.status_draft": "मसौदा",
@@ -4704,8 +4598,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.signoffs.lede":
     "कुछ मील के पत्थर तभी पूरे माने जाते हैं जब उनमें नामित साझेदार संगठन उनका अनुमोदन कर दें। वितरित का अर्थ है डिलीवरी संगठन का कहना कि कार्य हो गया; पूरा का अर्थ है वितरित और हर अनुमोदन प्रभावी। वापस लिया गया अनुमोदन फिर से लंबित गिना जाता है।",
   "p.signoffs.loading": "अनुमोदन लोड हो रहे हैं…",
-  "p.signoffs.none":
-    "किसी मील के पत्थर को साझेदार के अनुमोदन की आवश्यकता नहीं है।",
+  "p.signoffs.none": "किसी मील के पत्थर को साझेदार के अनुमोदन की आवश्यकता नहीं है।",
   "p.signoffs.totals":
     "अनुमोदन आवश्यक: {n}। वितरित: {delivered}। पूरे: {met}। वितरित पर पूरे नहीं: {gap}। वितरितों में पूरे का अनुपात: {share}।",
   "p.signoffs.no_share": "मापा नहीं गया",
@@ -4736,8 +4629,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "वे लोग और भूमिकाएँ जिन्हें पोर्टफ़ोलियो बिना नुकसान के नहीं खो सकता, उनकी जगह कौन लेगा, और वे कितने तैयार हैं। इसे केवल संसाधन प्रबंधक पढ़ सकते हैं, क्योंकि यह नामित लोगों से संबंधित है।",
   "p.key_persons.loading": "लोड हो रहा है…",
   "p.key_persons.none": "कोई प्रमुख व्यक्ति या भूमिका दर्ज नहीं की गई है।",
-  "p.key_persons.not_allowed":
-    "प्रमुख लोगों की जानकारी केवल संसाधन प्रबंधक पढ़ सकते हैं।",
+  "p.key_persons.not_allowed": "प्रमुख लोगों की जानकारी केवल संसाधन प्रबंधक पढ़ सकते हैं।",
   "p.key_persons.add_h2": "प्रमुख व्यक्ति या भूमिका दर्ज करें",
   "p.key_persons.subject_kind": "व्यक्ति या भूमिका",
   "p.key_persons.kind_person": "व्यक्ति",
@@ -4818,8 +4710,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.email_deliveries.status_retry": "पुनः प्रयास होगा",
   "p.email_deliveries.status_sent": "भेजा गया",
   "p.email_deliveries.status_failed": "विफल",
-  "p.email_deliveries.not_allowed":
-    "ईमेल डिलीवरी केवल व्यवस्थापक पढ़ सकते हैं।",
+  "p.email_deliveries.not_allowed": "ईमेल डिलीवरी केवल व्यवस्थापक पढ़ सकते हैं।",
   "p.email_deliveries.could_not_load": "ईमेल डिलीवरी लोड नहीं हो सकीं",
   "p.director_pack.s_signoffs": "मील के पत्थर का अनुमोदन",
   "p.director_pack.signoffs_note":
@@ -4886,8 +4777,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.director_pack.wm_late":
     "देर से पता चलना: अभी लाल या पीला-लाल, पिछले पैक में हरा",
   "p.director_pack.wm_red": "लाल, अवधि में कोई निर्णय दर्ज नहीं",
-  "p.director_pack.wm_signoff":
-    "वितरितों में से अनुमोदन सहित पूरे मील के पत्थर",
+  "p.director_pack.wm_signoff": "वितरितों में से अनुमोदन सहित पूरे मील के पत्थर",
   "p.director_pack.wm_signoff_of": "{delivered} वितरित में से {met} पूरे",
   "p.director_pack.wm_not_measured": "मापा नहीं गया",
   "p.director_pack.c_measure": "माप",
@@ -4933,8 +4823,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "एस्केलेशन स्तर वही है जो प्रायोजक ने तय किया है, और इसकी गणना यहाँ कभी नहीं की जाती। नीचे का क्रम उन पूरी तिमाहियों को गिनता है जिनमें हर स्कोरकार्ड माप और हर मानदंड पूरा हुआ; यह निर्णय लेने वाले व्यक्ति को प्रस्तुत किया जाता है।",
   "p.director_pack.oc_level": "एस्केलेशन स्तर: {level}, {on} को तय।",
   "p.director_pack.oc_no_level": "कोई एस्केलेशन स्तर दर्ज नहीं किया गया है।",
-  "p.director_pack.oc_run":
-    "लगातार पूरी हुई तिमाहियाँ: {n}। नियम {need} माँगता है।",
+  "p.director_pack.oc_run": "लगातार पूरी हुई तिमाहियाँ: {n}। नियम {need} माँगता है।",
   "p.director_pack.oc_rule_yes":
     "नियम संतुष्ट है। एक स्तर नीचे आना है या नहीं, यह प्रायोजक तय करता है।",
   "p.director_pack.oc_rule_no": "नियम अभी संतुष्ट नहीं है।",
@@ -5081,8 +4970,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.capacity_heatmap.entered_here":
     "यहाँ दर्ज: {fte} (साथ में दिखाया गया, जोड़ा नहीं गया)",
   "p.capacity_heatmap.entered_here_none": "यहाँ दर्ज: कुछ नहीं",
-  "p.capacity_heatmap.partners_short":
-    "साझेदारों ने प्रतिबद्धता से कम वितरित किया",
+  "p.capacity_heatmap.partners_short": "साझेदारों ने प्रतिबद्धता से कम वितरित किया",
   "p.capacity_heatmap.no_pool": "कोई पूल निर्धारित नहीं",
   "p.capacity_heatmap.key":
     "▲ कमी · ◆ तंग · ● पर्याप्त · ○ कोई माँग नहीं · – कोई आपूर्ति दर्ज नहीं · ? आपूर्ति अज्ञात। शब्द भी हमेशा लिखा जाता है।",
@@ -5205,8 +5093,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "कार्यबल सेवा को {fte} पूर्णकालिक समतुल्य (इस पूल और माह के लिए कार्यक्रम का कुल) भेजा जा रहा है। इसका उत्तर हाल में भेजे गए के अंतर्गत दिखेगा।",
   "p.commitments.out_started_zero":
     "इस पूल और माह के लिए इस कार्यक्रम का आँकड़ा कार्यबल सेवा से वापस लिया जा रहा है, क्योंकि कुल अब शून्य है। इसका उत्तर हाल में भेजे गए के अंतर्गत दिखेगा।",
-  "p.commitments.out_sent":
-    "कार्यबल सेवा ने {fte} पूर्णकालिक समतुल्य स्वीकार किया।",
+  "p.commitments.out_sent": "कार्यबल सेवा ने {fte} पूर्णकालिक समतुल्य स्वीकार किया।",
   "p.commitments.out_sent_zero":
     "कार्यबल सेवा ने इस कार्यक्रम, पूल और माह के लिए अपना आँकड़ा वापस ले लिया।",
   "p.commitments.out_duplicate":
@@ -5312,8 +5199,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.discussion.size_b": "{n} बाइट",
   "p.discussion.size_kb": "{n} KB",
   "p.discussion.size_mb": "{n} MB",
-  "p.discussion.refused_sign_in":
-    "पहले साइन इन करें: सेवा नहीं जानती कि आप कौन हैं।",
+  "p.discussion.refused_sign_in": "पहले साइन इन करें: सेवा नहीं जानती कि आप कौन हैं।",
   "p.discussion.refused_not_author":
     "केवल वही व्यक्ति टिप्पणी बदल या हटा सकता है जिसने उसे लिखा।",
   "p.discussion.refused_not_uploader":
@@ -5352,17 +5238,14 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.timesheet.problem_week":
     "यह सप्ताह नहीं है: वर्ष, ‘-W’ और सप्ताह की संख्या लिखें, जैसे 2026-W46।",
   "p.timesheet.mine_heading": "आपका सप्ताह {week}",
-  "p.timesheet.mine_caption":
-    "सप्ताह {week} में आपका समय, योजना और दिन के अनुसार",
+  "p.timesheet.mine_caption": "सप्ताह {week} में आपका समय, योजना और दिन के अनुसार",
   "p.timesheet.status_open": "खुला: अभी स्वीकृति के लिए नहीं भेजा गया",
-  "p.timesheet.status_submitted":
-    "स्वीकृति के लिए भेजा गया: निर्णय की प्रतीक्षा में",
+  "p.timesheet.status_submitted": "स्वीकृति के लिए भेजा गया: निर्णय की प्रतीक्षा में",
   "p.timesheet.status_approved": "स्वीकृत: अंतिम, और नए समय के लिए बंद",
   "p.timesheet.status_rejected": "वापस भेजा गया: इसे बदलें और फिर से भेजें",
   "p.timesheet.rejected_because": "स्वीकृतकर्ता ने लिखा: {comment}",
   "p.timesheet.decision_comment": "इस टिप्पणी के साथ: {comment}",
-  "p.timesheet.no_entries":
-    "इस सप्ताह कोई समय दर्ज नहीं है, इसलिए कोई कुल नहीं है।",
+  "p.timesheet.no_entries": "इस सप्ताह कोई समय दर्ज नहीं है, इसलिए कोई कुल नहीं है।",
   "p.timesheet.col_plan": "योजना का नाम",
   "p.timesheet.col_total": "कुल",
   "p.timesheet.col_billable": "बिल योग्य",
@@ -5383,8 +5266,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.timesheet.submitted_notice": "सप्ताह {week} स्वीकृति के लिए भेजा गया।",
   "p.timesheet.nothing_to_submit":
     "जिस सप्ताह में कोई समय दर्ज नहीं है उसे स्वीकृति के लिए नहीं भेजा जा सकता।",
-  "p.timesheet.waiting":
-    "यह सप्ताह स्वीकृतकर्ता के निर्णय की प्रतीक्षा में है।",
+  "p.timesheet.waiting": "यह सप्ताह स्वीकृतकर्ता के निर्णय की प्रतीक्षा में है।",
   "p.timesheet.locked":
     "स्वीकृत सप्ताह अंतिम होता है: उसमें और समय दर्ज नहीं किया जा सकता।",
   "p.timesheet.could_not_load": "आपका सप्ताह लोड नहीं हो सका।",
@@ -5538,8 +5420,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.access.col_told": "जिसे बताया गया",
   "p.access.col_act": "कार्रवाई",
   "p.access.refused_sign_in": "पहले साइन इन करें।",
-  "p.access.refused_review_forbidden":
-    "पहुँच समीक्षा केवल व्यवस्थापकों के लिए है।",
+  "p.access.refused_review_forbidden": "पहुँच समीक्षा केवल व्यवस्थापकों के लिए है।",
   "p.access.refused_review_invalid":
     "सेवा ने योजना या दिनों की संख्या स्वीकार नहीं की।",
   "p.access.refused_open_forbidden":

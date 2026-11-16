@@ -384,8 +384,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.auditor.rows_distinct_actors_actor_less":
     "{returned} صف · {distinct_actors} منفِّذ مميَّز · {actorless} بلا منفِّذ",
   "p.auditor.rule": "القاعدة",
-  "p.auditor.submitted_without_a_verified_token":
-    "(أُرسل دون رمز مُتحقَّق منه)",
+  "p.auditor.submitted_without_a_verified_token": "(أُرسل دون رمز مُتحقَّق منه)",
   "p.auditor.when": "الوقت",
   "p.automations.action": "الإجراء",
   "p.automations.action_2": "الإجراء",
@@ -639,8 +638,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.engineering.assignee": "المكلَّف",
   "p.engineering.blocked_calendar_days": "محظور (أيام تقويمية)",
   "p.engineering.blocked_work": "العمل المحظور",
-  "p.engineering.declared_cause_failure_rate":
-    "معدل الإخفاق حسب السبب المُعلَن",
+  "p.engineering.declared_cause_failure_rate": "معدل الإخفاق حسب السبب المُعلَن",
   "p.engineering.delivery_links": "روابط التسليم",
   "p.engineering.deploys_mo": "عمليات النشر ({window_months} شهر)",
   "p.engineering.devops_metrics": "مقاييس DevOps",
@@ -1332,8 +1330,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.plans.pid.leveling.suggests_moving_tasks_so_that":
     "يقترح نقل المهام بحيث لا يُكلَّف أحد بأكثر مما يستطيع. لا يتغير شيء حتى تؤكد.",
   "p.plans.pid.leveling.task": "المهمة",
-  "p.plans.pid.leveling.the_search_stopped_at_its":
-    "توقف البحث عند حدّه الأقصى",
+  "p.plans.pid.leveling.the_search_stopped_at_its": "توقف البحث عند حدّه الأقصى",
   "p.plans.pid.leveling.this_is_advice_nothing_changes":
     "هذه نصيحة. لا يتغير شيء حتى تختار التنقلات أدناه وتطبقها.",
   "p.plans.pid.leveling.why_kept_with_each_audit":
@@ -2128,8 +2125,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "l.enum.delivery_status.pending": "بانتظار الإرسال",
   "l.enum.delivery_status.sent": "أُرسل",
   "l.enum.delivery_status.failed": "تُرك",
-  "l.enum.delivery_status.skipped":
-    "لم يُرسل: الوجهة أو الإشعار لم يعد موجودًا",
+  "l.enum.delivery_status.skipped": "لم يُرسل: الوجهة أو الإشعار لم يعد موجودًا",
   "l.link.kind_docs": "المستندات",
   "l.link.kind_repo": "مستودع الشيفرة",
   "l.link.kind_ticket": "تذكرة",
@@ -2684,8 +2680,7 @@ export const PAGES_AR: Record<PageKey, string> = {
     "{currency} · البذرة {seed} · {iterations} تكرار · {distribution} · التقويم {calendar}",
   "p.plans.pid.joint_risk.dist_pert": "PERT",
   "p.plans.pid.joint_risk.dist_triangular": "مثلثي",
-  "p.plans.pid.leveling.applied_one":
-    "طُبِّق {ok} من {requested} نقل{refused}.",
+  "p.plans.pid.leveling.applied_one": "طُبِّق {ok} من {requested} نقل{refused}.",
   "p.plans.pid.leveling.applied_other":
     "طُبِّق {ok} من {requested} عمليات نقل{refused}.",
   "p.plans.pid.leveling.applied_refused": "؛ رُفض {refused}",
@@ -3115,8 +3110,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.executive.executive_ppm": "التنفيذية — PPM",
   "p.financials.financials_ppm": "المالية — PPM",
   "p.gantt.gantt_main_x": "Gantt — Main X",
-  "p.gantt.calendar_failed":
-    "تعذّر تحميل تقويم العمل، لذا لا تُظلَّل أيام العطلة.",
+  "p.gantt.calendar_failed": "تعذّر تحميل تقويم العمل، لذا لا تُظلَّل أيام العطلة.",
   "p.kpis.could_not_load_the_kpis": "تعذّر تحميل مؤشرات KPI",
   "p.kpis.could_not_define_the_kpi": "تعذّر تعريف مؤشر KPI",
   "p.lifecycle.could_not_load_the_funnel": "تعذّر تحميل مسار التحويل",
@@ -3777,16 +3771,14 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.plan_change_requests.f_reason": "السبب (لماذا يلزم التغيير)",
   "p.plan_change_requests.f_days":
     "الأثر على الجدول بأيام العمل (السالب يقدّم موعد الانتهاء؛ اتركه فارغاً إن لم يُقيَّم)",
-  "p.plan_change_requests.f_cost":
-    "الأثر على التكلفة (اتركه فارغاً إن لم يُقيَّم)",
+  "p.plan_change_requests.f_cost": "الأثر على التكلفة (اتركه فارغاً إن لم يُقيَّم)",
   "p.plan_change_requests.f_currency": "عملة التكلفة (ثلاثة أحرف، مثل EUR)",
   "p.plan_change_requests.f_summary": "ملخّص الأثر",
   "p.plan_change_requests.save_draft": "حفظ المسودة",
   "p.plan_change_requests.drafted": "تمت صياغة طلب التغيير.",
   "p.plan_change_requests.saved": "تم حفظ المسودة.",
   "p.plan_change_requests.problem_title_required": "أعطِ طلب التغيير عنواناً.",
-  "p.plan_change_requests.problem_description_required":
-    "اذكر ما الذي سيتغيّر.",
+  "p.plan_change_requests.problem_description_required": "اذكر ما الذي سيتغيّر.",
   "p.plan_change_requests.problem_reason_required": "اذكر لماذا يلزم التغيير.",
   "p.plan_change_requests.problem_days_not_whole":
     "الأثر على الجدول عدد صحيح من أيام العمل.",
@@ -3910,8 +3902,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.director_pack.s_issues": "المشكلات",
   "p.director_pack.s_changes": "طلبات التغيير",
   "p.director_pack.plans_included": "الخطط المشمولة: {n}",
-  "p.director_pack.plans_left_out":
-    "الخطط المستبعدة لأنها خاصة أو معلَّمة: {n}",
+  "p.director_pack.plans_left_out": "الخطط المستبعدة لأنها خاصة أو معلَّمة: {n}",
   "p.director_pack.sections_missing": "أقسام لم تُبنَ بعد: {list}",
   "p.director_pack.all_sections": "كل أقسام الحزمة موجودة.",
   "p.director_pack.nothing_here": "لا شيء لعرضه في هذا القسم.",
@@ -4114,8 +4105,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.critical_chain.buffers_h2": "الاحتياطيات",
   "p.critical_chain.buffers_lede":
     "تُجدول المهام وفق تقديراتها الطموحة؛ ويُجمع هامش الأمان المأخوذ من كل مهمة في احتياطي. الأحجام بأيام العمل. القاعدة: {rule}.",
-  "p.critical_chain.rule_cut_and_paste":
-    "نصف هامش الأمان المُزال (القص واللصق)",
+  "p.critical_chain.rule_cut_and_paste": "نصف هامش الأمان المُزال (القص واللصق)",
   "p.critical_chain.rule_root_sum_squares":
     "الجذر التربيعي لمجموع مربعات هامش الأمان المُزال",
   "p.critical_chain.no_buffers": "لا توجد احتياطيات لعرضها: {reason}",
@@ -4162,8 +4152,7 @@ export const PAGES_AR: Record<PageKey, string> = {
     "احتياطي المشروع في المنطقة الحمراء: استُهلك {consumed}%. السلسلة: {chain}.",
   "p.critical_chain.alert_feeding":
     "احتياطي تغذية في المنطقة الحمراء: استُهلك {consumed}%. السلسلة: {chain}، تنضم إلى {joins}.",
-  "p.critical_chain.needs_action":
-    "لا إجراء تعافٍ مفتوحًا مسجَّلًا لـ: {buffers}.",
+  "p.critical_chain.needs_action": "لا إجراء تعافٍ مفتوحًا مسجَّلًا لـ: {buffers}.",
   "p.critical_chain.charts_h2": "مخططات الحمّى",
   "p.critical_chain.project_label": "احتياطي المشروع",
   "p.critical_chain.feeding_label": "احتياطي التغذية: {chain}",
@@ -4403,8 +4392,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.demo.f_critical_chain_d":
     "السلسلة عبر المهام المترابطة والأشخاص المشتركين بينها، مع التقديرات الطموحة والآمنة.",
   "p.demo.f_buffers_t": "إدارة الاحتياطيات",
-  "p.demo.f_buffers_d":
-    "خطة الاحتياطيات المجمَّدة ومخططات الحمّى وإجراء تعافٍ.",
+  "p.demo.f_buffers_d": "خطة الاحتياطيات المجمَّدة ومخططات الحمّى وإجراء تعافٍ.",
   "p.demo.f_pipeline_t": "الطبل وخط الإمداد",
   "p.demo.f_pipeline_d":
     "مجمّع المهارات الذي تعتمد عليه المحفظة أكثر من غيره، ومواعيد بدء متباعدة مقترحة.",
@@ -4774,8 +4762,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.director_pack.wm_late":
     "اكتشاف متأخر: أحمر أو كهرماني/أحمر الآن، وأخضر في الحزمة السابقة",
   "p.director_pack.wm_red": "أحمر دون قرار مسجَّل خلال الفترة",
-  "p.director_pack.wm_signoff":
-    "المعالم المستوفاة مع اعتماد، من بين المُسلَّمة",
+  "p.director_pack.wm_signoff": "المعالم المستوفاة مع اعتماد، من بين المُسلَّمة",
   "p.director_pack.wm_signoff_of": "{met} مستوفى من {delivered} مُسلَّم",
   "p.director_pack.wm_not_measured": "غير مقيس",
   "p.director_pack.c_measure": "المقياس",
@@ -4837,8 +4824,7 @@ export const PAGES_AR: Record<PageKey, string> = {
     "موقع التكلفة المخططة وقيمة المنافع المستهدفة والمخاطر المفتوحة لكل محفظة مقارنة بالأخرى، وأوجه عدم التوازن الناتجة عن الأرقام.",
   "p.balance.loading": "جارٍ التحميل…",
   "p.balance.could_not_load": "تعذّر تحميل توازن المحفظة",
-  "p.balance.none":
-    "لم تُسجَّل بعد أي تكلفة أو قيمة منفعة أو مخاطر مقابل محفظة.",
+  "p.balance.none": "لم تُسجَّل بعد أي تكلفة أو قيمة منفعة أو مخاطر مقابل محفظة.",
   "p.balance.currency": "العملة",
   "p.balance.unassigned": "بلا محفظة",
   "p.balance.caption":
@@ -4929,8 +4915,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.people_impact.over": "أشهر مجمّعات تجاوزت الالتزام",
   "p.people_impact.over_counts":
     "{over} من {considered} شهرًا للمجمّعات تجاوزت؛ و{unknown} لا يمكن الحكم عليها.",
-  "p.people_impact.no_total":
-    "لا يُعطى إجمالي: قد يُحتسب الشخص في أكثر من مجمّع.",
+  "p.people_impact.no_total": "لا يُعطى إجمالي: قد يُحتسب الشخص في أكثر من مجمّع.",
   "l.enum.pk_heat.supply_unknown": "العرض غير معروف",
   "p.capacity_heatmap.nav": "خريطة السعة الحرارية",
   "p.capacity_heatmap.title": "خريطة السعة الحرارية — PPM",
@@ -5260,8 +5245,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.timesheet.submit": "إرسال هذا الأسبوع للاعتماد",
   "p.timesheet.submit_again": "إرسال هذا الأسبوع للاعتماد مرة أخرى",
   "p.timesheet.submitted_notice": "أُرسل الأسبوع {week} للاعتماد.",
-  "p.timesheet.nothing_to_submit":
-    "لا يمكن إرسال أسبوع بلا وقت مسجّل للاعتماد.",
+  "p.timesheet.nothing_to_submit": "لا يمكن إرسال أسبوع بلا وقت مسجّل للاعتماد.",
   "p.timesheet.waiting": "هذا الأسبوع بانتظار قرار المعتمِد.",
   "p.timesheet.locked":
     "الأسبوع المعتمد نهائي: لا يمكن تسجيل مزيد من الوقت فيه.",

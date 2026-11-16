@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- **axa 0.15.0 and axa-test 0.6.0 (2026-11-16)**, with the owner's exception to the minimum package age. The job
+  queue adds its new columns at boot; no migration. See the root `CHANGELOG.md` and
+  `operations/upgrade-and-migration.md`.
+
 ### Fixed
 
 - **`GET /api/portfolio-money` no longer reads each plan's forecast on its own (RG-18, 2026-11-15).**

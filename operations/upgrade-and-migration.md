@@ -140,6 +140,20 @@ No migration comes with the axa change, so going back is redeploying the previou
 migrations `20261114000110` to `20261114000112` (RE-7, RE-1, RE-8), which add tables and columns only, each with a
 down file.
 
+## Upgrading to axa 0.15
+
+The release that moves the service from axa 0.14 to 0.15 renames no setting, changes no route or answer, and adds
+no migration of its own:
+
+1. **The job queue has a `unique_key` column and an `axa_queue_unique` index, and `axa_schedule` has a `cron`
+   column.** The service adds them itself at boot (`Queue::connect`, as for 0.14's `tenant`), each statement safe
+   to repeat, so there is nothing to run by hand. The service queues no unique job and no cron schedule, so no job
+   behaves differently.
+2. **The outbox is unchanged** (`axa-transactional-outbox` stays at 0.4.0), so the relay need not be stopped.
+
+The same release carries migration `20261116000115` (organization short names and names in other languages), which
+adds two columns, with a down file.
+
 ## Upgrading to axa 0.14
 
 The release that moves the service from axa 0.13 to 0.14 renames no setting and changes no route or answer. axa 0.14

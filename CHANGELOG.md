@@ -15,6 +15,20 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 16 November (axa 0.15 and axa-test 0.6)
+
+- **axa 0.14 to 0.15.0 and axa-test 0.5 to 0.6.0**, published today: the owner approved an exception to the
+  three-day minimum package age, so the lock was resolved with `CARGO_REGISTRY_GLOBAL_MIN_PUBLISH_AGE=0`. Beyond
+  axa's crates (`axa-postgres-job-queue` 0.4.0), the lock adds `croner` 4.0.3 and `strum`/`strum_macros` 0.27.2,
+  each published more than three days ago, so they need no exception.
+- axa 0.15 adds unique jobs and cron schedules to the job queue, and `mail` and `storage` features, which this
+  service does not turn on. The queue adds its new `unique_key` column, `axa_queue_unique` index and `axa_schedule.cron`
+  column itself at boot (`Queue::connect`); there is no migration, and the outbox is unchanged. Steps in
+  `operations/upgrade-and-migration.md`, "Upgrading to axa 0.15". No code changed.
+- **Not done:** using unique jobs or cron schedules (the service's schedules are as they were).
+- **Not run here:** the test binaries that need containers this machine lacks (`keycloak_container`, `fluvio_relay`,
+  the OTLP ones), as for 0.14.
+
 ### 16 November (OQ-15 decided)
 
 - **OQ-15, decided by the owner: the service is not offered to DHCW now, and the path stays open.** The DHCW mapping,

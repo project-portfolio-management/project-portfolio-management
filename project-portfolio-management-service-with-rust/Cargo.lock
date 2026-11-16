@@ -380,9 +380,9 @@ dependencies = [
 
 [[package]]
 name = "axa"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ed3ad5580418df5e3850e87618d710b523d5f49c28040e2bbf86af51e5aa9af"
+checksum = "236e6739b281732fa21c429cee5ec730b48ee6a252df14cedc87e4e5c25eaf3c"
 dependencies = [
  "async-trait",
  "axa-cursor-pagination",
@@ -460,10 +460,11 @@ dependencies = [
 
 [[package]]
 name = "axa-postgres-job-queue"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a384bf23d57b4419d39c900bc46c68b36da6ba4e152fc1956d7d620ba5ea18f7"
+checksum = "909fa288e2f3018b454ba1b04aacf8c6c9b3b4640502dc9cf549334630ce3edf"
 dependencies = [
+ "croner",
  "serde_json",
  "sqlx",
  "tokio",
@@ -505,9 +506,9 @@ dependencies = [
 
 [[package]]
 name = "axa-test"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db37b8bcf68df174dff0756c9b340f8db3091300398334f56e5d51d0f99261eb"
+checksum = "7d741bb39a99a41514fb87ee01e3e87f06004548fd4be9a863bd33cc3ad0c8d8"
 dependencies = [
  "axa",
  "axum-test",
@@ -1277,6 +1278,17 @@ checksum = "d8d80a2f4f5b554395e47b5d8305bc3d27813bacb73493eb1001e8f76dae29ea"
 dependencies = [
  "cast",
  "itertools 0.13.0",
+]
+
+[[package]]
+name = "croner"
+version = "4.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0097e28936e948e8f759478e1b5ec2e5ca70ab62cf38aaa9bd3aa660023e3fca"
+dependencies = [
+ "chrono",
+ "derive_builder",
+ "strum",
 ]
 
 [[package]]
@@ -5692,6 +5704,27 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "152a0b65a590ff6c3da95cabe2353ee04e6167c896b28e3b14478c2636c922fc"
 dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "strum"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
+dependencies = [
+ "strum_macros",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7695ce3845ea4b33927c055a39dc438a45b059f7c1b3d91d38d10355fb8cbca7"
+dependencies = [
+ "heck",
  "proc-macro2",
  "quote",
  "syn 2.0.119",

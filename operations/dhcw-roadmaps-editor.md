@@ -33,7 +33,7 @@ The background is in [the lessons](../spec/dhcw-roadmaps-editor-lessons/index.md
 | --- | --- | --- |
 | `listRoadmaps` | `GET /api/public-roadmaps` (FR-16e25, built 2026-11-15): every roadmap the caller may read, published or not, by title, paged, with its plan id, freshness and item counts | none; the editor follows `Link: rel="next"` |
 | `listRoadmapItems(id)` | `GET /api/plans/{pid}/roadmap` returns the roadmap with its items in page order, by the plan id the list carries | none |
-| `listOrganisations` | `GET /api/organizations` (name, code, national, active) | Their `shortName` and a Welsh name have no field |
+| `listOrganisations` | `GET /api/organizations` (name, code, national, active, `short_name`, and names in other languages under `translations`, such as `translations.cy.name`; FR-16e18, built 2026-11-16) | none; the import does not set them, since it makes no organization |
 | `listFamilies` | `GET /api/roadmap-families` (FR-16e27, built 2026-11-15): every plan that holds a product, with its name, colour, Welsh name and how the colour reads | none |
 | `listCategories` | `GET /api/roadmap-categories` | none |
 | `publishRoadmapChanges(id, changes)` | **RE-2**: `POST /api/plans/{pid}/roadmap/publish` with per-field base values, all or nothing, `409` naming each conflict, and a preview | Their item order is the sheet's row order; ours is `position` within a placement, moved by index |

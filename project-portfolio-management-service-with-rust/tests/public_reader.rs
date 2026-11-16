@@ -114,7 +114,8 @@ async fn the_public_reader_serves_only_what_was_published_from_an_open_plan() {
         as_lead(request.put(&url)).json(&json!({ "title": format!("Open roadmap {tag}"), "vision": "Shown" }))
             .await.assert_status_ok();
         let org: Value = as_lead(request.post("/api/organizations"))
-            .json(&json!({ "name": format!("Board {tag}"), "kind": "partner", "code": format!("B{tag}") })).await.json();
+            .json(&json!({ "name": format!("Board {tag}"), "kind": "partner", "code": format!("B{tag}"),
+                           "short_name": "Board", "translations": { "cy": { "name": format!("Bwrdd {tag}") } } })).await.json();
         let shown: Value = as_lead(request.post(&format!("{url}/items")))
             .json(&json!({ "title": "Shown item", "placement": "now", "organization_pids": [org["pid"]] })).await.json();
         as_lead(request.post(&format!("{url}/items"))).json(&json!({ "title": "Unplaced item" })).await.assert_status_ok();
@@ -143,7 +144,8 @@ async fn the_public_reader_serves_only_what_was_published_from_an_open_plan() {
         assert_eq!(body["title"], format!("Open roadmap {tag}"));
         let titles: Vec<&str> = body["items"].as_array().unwrap().iter().map(|i| i["title"].as_str().unwrap()).collect();
         assert_eq!(titles, ["Shown item"], "no unplaced and no removed item");
-        assert_eq!(body["items"][0]["organizations"], json!([{ "code": format!("B{tag}"), "name": format!("Board {tag}"), "national": false }]));
+        assert_eq!(body["items"][0]["organizations"], json!([{ "code": format!("B{tag}"), "name": format!("Board {tag}"), "national": false,
+            "short_name": "Board", "translations": { "cy": { "name": format!("Bwrdd {tag}") } } }]));
         assert_eq!(body["items"][0]["translations"]["cy"]["title"]["value"], "Eitem a ddangosir");
         let text = body.to_string();
         for internal in [open.as_str(), shown["pid"].as_str().unwrap(), "plan_pid", "\"pid\"", "created_at", "source", "published"] {

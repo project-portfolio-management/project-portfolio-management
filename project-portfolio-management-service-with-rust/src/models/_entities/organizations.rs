@@ -20,4 +20,8 @@ pub struct Model {
     pub code: Option<String>,
     /// The one organization, at most, whose scope is national (All Wales), listed first (RE-7).
     pub national: bool,
+    /// A short name, not unique (`code` is), such as "Swansea Bay"; `None` for none (RE-7).
+    pub short_name: Option<String>,
+    /// Its names in other languages: `{ "<lang>": { "name": …, "short_name": … } }`, `short_name` optional (RE-7).
+    pub translations: serde_json::Value,
 }

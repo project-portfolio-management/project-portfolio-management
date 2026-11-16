@@ -12778,6 +12778,37 @@
                     "default": false,
                     "description": "Whether its scope is national (RE-7); one organization at most.",
                     "type": "boolean"
+                  },
+                  "short_name": {
+                    "default": null,
+                    "description": "A short name (RE-7), at most 50 characters after trimming, not unique; absent or empty for none.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "translations": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "description": "An organization's names in one language.",
+                      "properties": {
+                        "name": {
+                          "description": "Its name in this language, 1 to 200 characters after trimming.",
+                          "type": "string"
+                        },
+                        "short_name": {
+                          "description": "Its short name in this language, at most 50 characters after trimming; absent, `null` or empty for none.",
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "default": null,
+                    "description": "Its names in other languages (RE-7), by language code, such as `cy` or `zh-hans`.",
+                    "nullable": true,
+                    "type": "object"
                   }
                 },
                 "required": [
@@ -12856,6 +12887,37 @@
                     "description": "Whether its scope is national (RE-7); one organization at most.",
                     "nullable": true,
                     "type": "boolean"
+                  },
+                  "short_name": {
+                    "default": null,
+                    "description": "A new short name (RE-7); an empty string clears it.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "translations": {
+                    "additionalProperties": {
+                      "additionalProperties": false,
+                      "description": "An organization's names in one language.",
+                      "properties": {
+                        "name": {
+                          "description": "Its name in this language, 1 to 200 characters after trimming.",
+                          "type": "string"
+                        },
+                        "short_name": {
+                          "description": "Its short name in this language, at most 50 characters after trimming; absent, `null` or empty for none.",
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "default": null,
+                    "description": "Its names in other languages (RE-7), replacing those it has; `{}` removes them all.",
+                    "nullable": true,
+                    "type": "object"
                   }
                 },
                 "type": "object"

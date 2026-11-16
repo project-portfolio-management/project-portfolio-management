@@ -14,7 +14,8 @@
 //! **A whitelist of fields.** [`ROADMAP_FIELDS`] and [`ITEM_FIELDS`] say, for every column of the two tables,
 //! whether the reader serves it and why; a unit test fails when a column is added to either table without a
 //! decision. The reader serves no person, no internal id, no plan id and no audit data. An organization appears as
-//! its code, name and national flag; a category as its name and translations.
+//! its code, name, national flag, short name and names in other languages (which are names it goes by, not
+//! translations of a source, so they carry no `needs_review`); a category as its name and translations.
 //!
 //! **Translations** are served with `needs_review`. With
 //! `PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS_REVIEWED_ONLY=on`, a translation that needs review is left out, so
@@ -115,7 +116,7 @@ pub const ITEM_FIELDS: &[(&str, Exposure, &str)] = &[
     (
         "organization_pids",
         Exposure::Derived,
-        "served as each active organization's code, name and national flag",
+        "served as each active organization's code, name, national flag, short name and names in other languages",
     ),
     ("details", Exposure::Public, "published text"),
     (
@@ -304,17 +305,19 @@ async fn show(
         .iter()
         .flat_map(|i| i.organization_pids.clone())
         .collect();
-    let orgs: HashMap<Uuid, Value> = sqlx::query_as::<_, (Uuid, Option<String>, String, bool)>(
-        "SELECT pid, code, name, national FROM organizations WHERE pid = ANY($1) AND active",
+    let orgs: HashMap<Uuid, Value> = sqlx::query_as::<_, PublicOrg>(
+        "SELECT pid, code, name, national, short_name, translations
+         FROM organizations WHERE pid = ANY($1) AND active",
     )
     .bind(&org_pids)
     .fetch_all(crate::db::pool(&ctx))
     .await?
     .into_iter()
-    .map(|(pid, code, name, national)| {
+    .map(|(pid, code, name, national, short_name, translations)| {
         (
             pid,
-            json!({ "code": code, "name": name, "national": national }),
+            json!({ "code": code, "name": name, "national": national, "short_name": short_name,
+                    "translations": translations }),
         )
     })
     .collect();
@@ -335,6 +338,10 @@ async fn show(
     });
     respond(&headers, &body)
 }
+
+/// The columns of an organization the reader serves: pid (to match, not served), code, name, national, short name
+/// and names in other languages.
+type PublicOrg = (Uuid, Option<String>, String, bool, Option<String>, Value);
 
 #[cfg(test)]
 mod tests {

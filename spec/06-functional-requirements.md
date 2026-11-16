@@ -420,7 +420,13 @@ matcher payload (§5.6); every mutation audits (§6.6).
   `409`. Not built: changing a named person's allocation in place (there is no edit); an `If-Match` header.
 - **FR-16e18 Lists defined once (RE-7).** An organization has an optional short `code` (a letter or digit, then up to
   19 letters, digits or hyphens; unique ignoring case, `409` on a clash; an empty string clears it) and a `national`
-  flag, held by one organization at most (`422` for a second), which `GET /api/organizations` lists first.
+  flag, held by one organization at most (`422` for a second), which `GET /api/organizations` lists first. It may
+  have a `short_name` (at most 50 characters, trimmed, not unique; an empty string clears it) and names in other
+  languages, `translations`, keyed by language code (such as `cy`, `zh-hans` or `en`, so the English name can differ
+  from the stored one): each a `name` (1 to 200 characters) and an optional `short_name` (at most 50), trimmed, in at
+  most 50 languages. A `PUT` with `translations` replaces the set, and `{}` removes it; any problem is one `422` that
+  writes nothing. They are names the organization goes by, not translations of a source, so they carry no
+  `needs_review`. Not built: a name unique within each language; choosing a language for the caller.
   `/api/roadmap-categories` (`GET`, `POST`, `PUT /{pid}`) holds the categories a public product roadmap is filed under:
   a name (1 to 100 characters, unique ignoring case) with translations by language code under the issue-label rule,
   retired rather than deleted. A roadmap links a category by id and holds no copy, so a rename shows everywhere and
@@ -457,7 +463,8 @@ matcher payload (§5.6); every mutation audits (§6.6).
   published roadmaps of live plans that are not private and are at the lowest handling-mark level; unknown,
   unpublished, private, marked and deleted all answer the same `404`. Only placed, live items are served. The fields
   are a whitelist (`public_reader::ROADMAP_FIELDS`, `ITEM_FIELDS`), with no person, plan id or internal id; a test
-  fails when a column has no decision. Organizations appear as code, name and national; a category as name and
+  fails when a column has no decision. Organizations appear as code, name, national, short name and names in other
+  languages (FR-16e18); a category as name and
   translations. Translations carry `needs_review`, and `…_PUBLIC_ROADMAPS_REVIEWED_ONLY=on` leaves those out. A weak
   `ETag` gives `304`; `Cache-Control: public, max-age=60`; `…_PUBLIC_ROADMAPS_NOINDEX=on` adds `X-Robots-Tag:
   noindex`. The rate limiter applies as to every request.

@@ -87,6 +87,89 @@ async fn an_organization_code_is_unique_and_one_organization_at_most_is_national
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn an_organization_has_a_short_name_and_names_in_other_languages() {
+    request::<App, _, _>(|request, _ctx| async move {
+        let tag = uuid::Uuid::new_v4().simple().to_string()[..6].to_string();
+        let made: Value = request
+            .post("/api/organizations")
+            .json(&json!({ "name": format!("Swansea Bay University Health Board {tag}"), "kind": "partner",
+                           "short_name": "  Swansea Bay  ",
+                           "translations": {
+                               "cy": { "name": format!(" Bwrdd Iechyd Prifysgol Bae Abertawe {tag} "),
+                                       "short_name": "Bae Abertawe" },
+                               "zh-hans": { "name": format!("斯旺西湾大学卫生局 {tag}"), "short_name": "" } } }))
+            .await
+            .json();
+        let pid = made["pid"].as_str().unwrap().to_string();
+        assert_eq!(made["short_name"], "Swansea Bay", "trimmed");
+        assert_eq!(
+            made["translations"],
+            json!({ "cy": { "name": format!("Bwrdd Iechyd Prifysgol Bae Abertawe {tag}"), "short_name": "Bae Abertawe" },
+                    "zh-hans": { "name": format!("斯旺西湾大学卫生局 {tag}") } }),
+            "trimmed, and an empty short name is none"
+        );
+        let listed: Value = request.get("/api/organizations").await.json();
+        let row = listed["organizations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|o| o["pid"] == pid.as_str())
+            .unwrap()
+            .clone();
+        assert_eq!(row["translations"], made["translations"]);
+
+        // A short name is not unique: another organization may have the same one.
+        request
+            .post("/api/organizations")
+            .json(&json!({ "name": format!("Another {tag}"), "kind": "partner", "short_name": "Swansea Bay" }))
+            .await
+            .assert_status_ok();
+
+        // Every problem in one 422, and nothing written.
+        let bad = request
+            .put(&format!("/api/organizations/{pid}"))
+            .json(&json!({ "short_name": "S".repeat(51),
+                           "translations": { "Welsh": { "name": "Bwrdd" }, "cy": { "name": " " } } }))
+            .await;
+        assert_eq!(bad.status_code(), StatusCode::UNPROCESSABLE_ENTITY);
+        let text = bad.text();
+        for said in ["short name", "`Welsh` is not a language code", "the `cy` name"] {
+            assert!(text.contains(said), "{said}: {text}");
+        }
+        let unknown_field = request
+            .put(&format!("/api/organizations/{pid}"))
+            .json(&json!({ "translations": { "cy": { "name": "Bwrdd", "title": "x" } } }))
+            .await;
+        assert!(unknown_field.status_code().is_client_error());
+
+        // Changing one field leaves the names; translations replace the set, and `{}` and "" clear.
+        let renamed: Value = request
+            .put(&format!("/api/organizations/{pid}"))
+            .json(&json!({ "kind": "sponsor" }))
+            .await
+            .json();
+        assert_eq!(renamed["short_name"], "Swansea Bay");
+        assert_eq!(renamed["translations"], made["translations"]);
+        let replaced: Value = request
+            .put(&format!("/api/organizations/{pid}"))
+            .json(&json!({ "translations": { "en": { "name": "Swansea Bay UHB" } } }))
+            .await
+            .json();
+        assert_eq!(replaced["translations"], json!({ "en": { "name": "Swansea Bay UHB" } }));
+        let cleared: Value = request
+            .put(&format!("/api/organizations/{pid}"))
+            .json(&json!({ "short_name": "", "translations": {} }))
+            .await
+            .json();
+        assert_eq!(cleared["short_name"], Value::Null);
+        assert_eq!(cleared["translations"], json!({}));
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_roadmap_category_is_defined_once_with_its_translations() {
     request::<App, _, _>(|request, _ctx| async move {
         let tag = uuid::Uuid::new_v4().simple().to_string()[..6].to_string();

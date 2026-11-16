@@ -15,6 +15,21 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 16 November (organization short names and names in other languages)
+
+- **Organizations gain a short name and names in other languages (RE-7).** At the owner's request, an organization
+  may now have a `short_name` (for example "Swansea Bay"). It may also have its name and short name in any language,
+  under `translations`: `cy`, `zh-hans`, or `en` when the English name differs from the stored one. Both come back
+  from `GET`, `POST` and `PUT /api/organizations` and from the public reader. Migration
+  `20261116000115_organization_names` adds two columns and can be rolled back. Spec FR-16e18; tests
+  `requests::roadmap_lists` and `tests/public_reader.rs`. This closes the DHCW mapping's `listOrganisations` gap.
+- **Not done:**
+  - names unique within each language;
+  - picking the caller's language;
+  - any screen, and the UI showing these names;
+  - the DHCW import setting them (it makes no organization).
+- **Not verified:** the Welsh and Chinese names in the tests were written by machine.
+
 ### 15 November (the UI uses the browser's light/dark setting)
 
 - **The owner's rule, in the UI spec (Theming):** the UI uses the browser's light/dark setting. It did only on a

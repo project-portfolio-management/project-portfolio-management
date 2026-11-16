@@ -21,6 +21,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **Organization short names and names in other languages (RE-7, 2026-11-16).** Migration
+  `20261116000115_organization_names`; `controllers/organizations.rs`; the public reader serves them. Spec FR-16e18.
+  See the root `CHANGELOG.md`.
 - **Benchmarks for the critical path, the guard, cursors, the roadmap rules and the DHCW import (RG-17,
   2026-11-15).** `benches/service_bench.rs`; results in the root `BENCHMARKS.md`.
 - **Product family colours (RE-5, 2026-11-15).** Migration `20261115000113_roadmap_families`;

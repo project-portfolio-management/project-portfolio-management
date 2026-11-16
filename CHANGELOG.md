@@ -15,6 +15,29 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 16 November (the site's privacy notice; only choices kept, in localStorage or cookies)
+
+- **A privacy notice for the documentation site:** [`PRIVACY.md`](PRIVACY.md), shown at `/privacy/` and linked from
+  every footer and the page picker. It says what the site keeps in the reader's browser and why: four choices the
+  reader makes in the pickers (theme, language of the site's words, time zone, text size), none identifying, so the
+  next page and the next visit look as chosen without an account. It also says where they are kept and for how long,
+  how to remove them, what the site does not do, and that GitHub receives each request. It covers the site only, not
+  the service or the UI.
+- **Only choices are kept now.** Lily's time zone and text size pickers, like the theme picker before, stored the value
+  they guessed from the browser on a first visit, given a storage key. The site gives every picker no storage key and
+  stores a value only from the picker's second report on (`keepPicked` in the site's `src/lib/choices.ts`, which
+  replaces `theme-choice.ts`). The language was already kept only when picked. A first visit now stores nothing.
+- **localStorage or cookies:** a build with `VITE_CHOICE_STORAGE=cookie` keeps the same four choices in first-party
+  cookies (a year, `Path=/`, `SameSite=Lax`, `Secure` over HTTPS), moving earlier localStorage choices into them once.
+  Lily's ThemePicker 0.3.2 has no cookie option of its own, so the cookie store is the site's code, not Lily's. The
+  published site still uses localStorage. Site spec, "What the browser keeps".
+- Tested: `tests/unit/choices.test.ts` (six, `node --test`, a new CI step); new site browser tests (a first visit
+  stores nothing and loads nothing from another origin, a picked time zone and text size kept and restored, the
+  privacy page); the whole site suite passed, 246 tests. The cookie build was checked by hand in Chromium only (the
+  move from localStorage, a pick, removal, a reload); CI builds and tests only the localStorage site. **Not done:** the
+  UI's own pickers still store their guessed time zone and text size; a reader's earlier stored guess of a time zone
+  or text size stays until changed; the notice is English only and has had no legal review.
+
 ### 16 November (the site keeps a picked theme in localStorage)
 
 - **The documentation site now handles the theme as the UI does.** The picker was given the storage key

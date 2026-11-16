@@ -23,15 +23,33 @@
     topicSlug,
     type TopicKey,
   } from "#lib/site.js";
-  import { nextChoice, readChoice, systemTheme, writeChoice } from "#lib/theme-choice.js";
+  import { browserChoices } from "#lib/browser-choices.js";
+  import {
+    TEXT_SIZE_KEY,
+    TIME_ZONE_KEY,
+    keepPicked,
+    nextChoice,
+    readChoice,
+    readValue,
+    systemTheme,
+    writeChoice,
+  } from "#lib/choices.js";
 
   // The site uses the browser's light/dark setting, following it when it changes, unless the reader picked another
-  // theme, which is kept in localStorage (#lib/theme-choice.ts says why the picker is given no storage key).
-  // `matchMedia` is missing in very old browsers: then the theme is light until picked.
+  // theme. Only what the reader picks is kept, in localStorage or cookies (#lib/choices.ts says why no picker is given
+  // a storage key; PRIVACY.md tells readers). `matchMedia` is missing in very old browsers: then the theme is light
+  // until picked.
   const darkQuery =
     browser && typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
   let browserTheme = $state(systemTheme(darkQuery?.matches ?? false));
-  let themeChoice = $state(browser ? readChoice(localStorage) : "");
+  const choices = browser ? browserChoices() : null;
+  // The time zone and text size the reader picked before, else none, so the picker makes its own guess (not stored).
+  // Made once: each handler skips the picker's first report as it mounts, so it must not be remade on a re-render.
+  const startZone = choices ? readValue(choices, TIME_ZONE_KEY) || undefined : undefined;
+  const startSize = choices ? readValue(choices, TEXT_SIZE_KEY) || undefined : undefined;
+  const onTimeZone = choices ? keepPicked(choices, TIME_ZONE_KEY) : undefined;
+  const onTextSize = choices ? keepPicked(choices, TEXT_SIZE_KEY) : undefined;
+  let themeChoice = $state(choices ? readChoice(choices) : "");
   const themeValue = $derived(themeChoice || browserTheme);
   $effect(() => {
     if (!darkQuery) return;
@@ -45,7 +63,7 @@
     const choice = nextChoice(slug, browserTheme);
     if (choice === themeChoice) return;
     themeChoice = choice;
-    if (browser) writeChoice(localStorage, choice);
+    if (choices) writeChoice(choices, choice);
   }
 
   // Lily ships no third-party URLs: these are the UI's share destinations. SharePicker supplies the page's URL.
@@ -237,8 +255,17 @@
         applyDir: false,
         onChange: switchLocale,
       }}
-      timeZoneProps={{ locale: siteTag(), storageKey: "lily-time-zone" }}
-      textSizeProps={{ storageKey: "lily-text-size", sizeLabels }}
+      timeZoneProps={{
+        locale: siteTag(),
+        // The reader's earlier pick, else the picker's own guess from the browser, which is not stored.
+        value: startZone,
+        onChange: onTimeZone,
+      }}
+      textSizeProps={{
+        sizeLabels,
+        value: startSize,
+        onChange: onTextSize,
+      }}
       {shareTargets}
       shareProps={{
         title: page.data.title ? `${page.data.title} · ${t("brand")}` : t("brand"),
@@ -260,6 +287,7 @@
         >{:else if part === "{tool}"}<code dir="ltr">git subtree</code>{:else}{part}{/if}
     {/each}
   </p>
+  <p><a href={href("/privacy/")}>{t("nav.privacy")}</a></p>
   {#if t("footer.draft")}<p class="draft">{t("footer.draft")}</p>{/if}
 </footer>
 

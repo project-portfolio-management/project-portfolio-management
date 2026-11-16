@@ -111,6 +111,7 @@
 
 - [Information governance pack](governance/README.md): DPIA, records of processing, retention, data flow, assurance checklists
 - [Security policy](SECURITY.md): Reporting a vulnerability and what is covered
+- [Privacy notice for the documentation site](PRIVACY.md): What the site keeps in the reader's browser (theme, language, time zone, text size), where, and why
 - [Accessibility statement](governance/accessibility-statement.md): Conformance and known gaps
 - [Welsh language statement](governance/language-statement.md): What is translated and by whom
 - [Welsh translation review](governance/welsh-translation-review.md): How the machine-written Welsh is reviewed; every string is in the CSV, none reviewed yet

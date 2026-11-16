@@ -363,6 +363,8 @@ jobs:
           pnpm exec syncpack lint
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
+      - name: Unit tests (what the site keeps in the browser, node --test)
+        run: pnpm run test:unit
       - run: pnpm run build
       - run: pnpm exec playwright install --with-deps chromium
       - name: Playwright (every page, axe in light and dark, locale switch, right to left)

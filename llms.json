@@ -426,6 +426,11 @@
           "description": "Reporting a vulnerability and what is covered"
         },
         {
+          "title": "Privacy notice for the documentation site",
+          "path": "PRIVACY.md",
+          "description": "What the site keeps in the reader's browser (theme, language, time zone, text size), where, and why"
+        },
+        {
           "title": "Accessibility statement",
           "path": "governance/accessibility-statement.md",
           "description": "Conformance and known gaps"

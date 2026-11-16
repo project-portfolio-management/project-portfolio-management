@@ -21,6 +21,7 @@ const DOCS = [
   "index.md",
   "README.md",
   "INSTALL.md",
+  "PRIVACY.md",
   "operations/wpm-bridge.md",
   "spec/index.md",
   "project-portfolio-management-skill/SKILL.md",

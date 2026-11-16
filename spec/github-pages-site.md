@@ -69,7 +69,7 @@ rule uses logical properties; code blocks stay left to right.
 
 The site's own words (navigation, wordmark, pickers, footer, search) are in `src/lib/messages.json`, in English, Arabic,
 Hindi, Welsh and Mandarin (Simplified), with their own `lang`. Their language is the address's on a page with a locale, so those
-pages are prerendered in it. Elsewhere it is the reader's choice (`localStorage` `lily-locale`), so those pages are
+pages are prerendered in it. Elsewhere it is the reader's choice (`lily-locale`, see below), so those pages are
 prerendered in English and change as they load, and a note says the document itself is in English.
 
 Each home page and topic has a `.locale-peer-id` that is byte-identical across locales, and a `README.md` symlink. Its
@@ -94,6 +94,24 @@ Lily's own class names (such as `.hero`, which a theme paints) are avoided. An o
 `scrollable-region-focusable`, which the popup test turns off: the list takes focus itself and moves through its options
 with `aria-activedescendant`, and a test reaches the last theme by keyboard.
 
+## What the browser keeps
+
+[`PRIVACY.md`](../PRIVACY.md), shown at `/privacy/` and linked from every footer, is the notice to readers. The site
+keeps only what the reader picks: a theme other than the browser's light or dark setting (`ppm-theme-choice`, the UI's
+key and rules), the language of the site's words when chosen in the picker (`lily-locale`), a time zone
+(`lily-time-zone`) and a text size (`lily-text-size`). A first visit stores nothing. Lily's pickers are given no
+`storageKey`, because each would store the value it guessed from the browser as if it were chosen; the layout passes
+the stored value in and keeps a value only from the picker's second `onChange` on (the first is its own start), in
+`src/lib/choices.ts`. With no theme chosen the site follows `prefers-color-scheme`, live, and picking the browser's
+own theme forgets the choice. An old `lily-theme` of `light` or `dark` is dropped once as the guess; any other moves
+across.
+
+Where: `localStorage` by default. A build with `VITE_CHOICE_STORAGE=cookie` keeps the same four in first-party
+cookies of the same names (a year, `Path=/`, `SameSite=Lax`, `Secure` over HTTPS), moving any choice already in
+`localStorage` into them once. Lily's ThemePicker 0.3.2 has no cookie option of its own (its README gives a recipe:
+read the cookie, pass it as `value`), so the cookie store is the site's. The published site uses `localStorage`.
+Where the browser refuses storage, a choice lasts only for the page.
+
 ## Content security policy
 
 GitHub Pages sends no custom headers, so the policy is SvelteKit's `<meta http-equiv>` with hashes of its own inline
@@ -110,8 +128,10 @@ page, axe with it open); search; every word in every language; the translated he
 the `-001` copies and the dialects; the sitemaps; the honest parts of each comparison; no CSP report
 in the console; `lang` on a brief and on a document; the locale switcher; links on and off the site; four pages under
 a forced `dir="rtl"` (brand at the inline start, no sideways scroll, axe clean in both schemes); no sideways scroll at
-390 px; no element with a `style` attribute. CI job `site` runs the content check, `svelte-check`, the build and the
-suite.
+390 px; no element with a `style` attribute; a first visit storing nothing and loading nothing from another origin;
+a picked theme, time zone and text size kept and restored, the old theme key moved across; the privacy page.
+`tests/unit/choices.test.ts` (`node --test`, no build) holds the rules and the cookie store. CI job `site` runs the
+content check, `svelte-check`, the unit tests, the build and the suite.
 
 ## Publishing
 

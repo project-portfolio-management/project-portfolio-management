@@ -15,6 +15,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test:unit": "node --test tests/unit/",
     "test:e2e": "playwright test"
   },
   "dependencies": {

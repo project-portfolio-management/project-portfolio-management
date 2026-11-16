@@ -5,6 +5,8 @@
 // choice in the locale picker, which only the browser knows: those pages are prerendered in English and change as they load.
 import { page } from "$app/state";
 import messages from "./messages.json" with { type: "json" };
+import { browserChoices } from "./browser-choices.js";
+import { LOCALE_KEY, readValue, writeValue } from "./choices.js";
 import {
   DEFAULT_LOCALE,
   isBriefLocale,
@@ -19,7 +21,6 @@ import {
 export type SiteLang = keyof typeof messages;
 export type MessageKey = keyof typeof messages.en;
 
-const STORAGE_KEY = "lily-locale";
 
 /** The site's language for a locale. */
 export function siteLangOf(locale: string): SiteLang {
@@ -76,20 +77,12 @@ export function t(key: MessageKey, vars: Record<string, string | number> = {}): 
 
 /** Read the reader's choice. Storage can throw (private window, blocked site data): the site then stays in English. */
 export function restoreChoice(): void {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && isBriefLocale(saved)) chosen = saved;
-  } catch {
-    // English it is.
-  }
+  const saved = readValue(browserChoices(), LOCALE_KEY);
+  if (saved && isBriefLocale(saved)) chosen = saved;
 }
 
+/** Show the site's words in `locale`; `persist` only when the reader chose it (arriving on a brief is not a choice). */
 export function choose(locale: BriefLocale, persist: boolean): void {
   chosen = locale;
-  if (!persist) return;
-  try {
-    localStorage.setItem(STORAGE_KEY, locale);
-  } catch {
-    // The choice lasts until the page is reloaded.
-  }
+  if (persist) writeValue(browserChoices(), LOCALE_KEY, locale);
 }

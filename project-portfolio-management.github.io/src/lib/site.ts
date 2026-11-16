@@ -14,6 +14,7 @@ export const DOC_PAGES: readonly DocPage[] = [
   { slug: "docs", path: "index.md" },
   { slug: "readme", path: "README.md" },
   { slug: "install", path: "INSTALL.md" },
+  { slug: "privacy", path: "PRIVACY.md" },
   { slug: "wpm-bridge", path: "operations/wpm-bridge.md" },
   { slug: "spec", path: "spec/index.md" },
   { slug: "skill", path: "project-portfolio-management-skill/SKILL.md" },

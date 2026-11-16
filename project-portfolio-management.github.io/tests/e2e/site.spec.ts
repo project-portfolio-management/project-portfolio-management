@@ -256,6 +256,47 @@ test("with no choice, a later visit and a change while open both follow the brow
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
+test("a first visit stores nothing; a time zone and a text size the reader picks are kept and come back", async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  const elsewhere: string[] = [];
+  page.on("request", (r) => {
+    const url = new URL(r.url());
+    if (/^https?:$/.test(url.protocol) && url.origin !== new URL(baseURL!).origin) elsewhere.push(r.url());
+  });
+  await open(page, "/", "light");
+  const stored = () =>
+    page.evaluate(() =>
+      ["ppm-theme-choice", "lily-theme", "lily-locale", "lily-time-zone", "lily-text-size"].filter(
+        (k) => localStorage.getItem(k) !== null,
+      ),
+    );
+  expect(await stored()).toEqual([]);
+  expect(await context.cookies()).toEqual([]);
+
+  await page.getByRole("button", { name: "Time zone" }).click();
+  await page.locator(".time-zone-picker-option").filter({ hasText: /Japan/ }).first().click();
+  await page.getByRole("button", { name: "Text size" }).click();
+  await page.locator(".text-size-picker-option").filter({ hasText: /^Larger$/ }).click();
+  await expect.poll(stored).toEqual(["lily-time-zone", "lily-text-size"]);
+  const zone = await page.evaluate(() => localStorage.getItem("lily-time-zone"));
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-time-zone", zone!);
+  await expect(page.locator("html")).toHaveAttribute("data-text-size", "larger");
+  expect(await context.cookies()).toEqual([]);
+  // PRIVACY.md: everything the page loads comes from the site itself.
+  expect(elsewhere).toEqual([]);
+});
+
+test("the privacy notice is a page, linked from every footer", async ({ page }) => {
+  await open(page, "/", "light");
+  await page.locator("footer").getByRole("link", { name: "Privacy" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy notice for the documentation site");
+  await expect(page.getByRole("cell", { name: "ppm-theme-choice" })).toBeVisible();
+});
+
 test("the old key moves across once: a stored light or dark was the picker's guess, any other theme was picked", async ({
   page,
 }) => {

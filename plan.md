@@ -1899,10 +1899,10 @@ It matters to this project for three reasons:
 1. **Now, small:** RE-10, RE-9, RE-12, RE-14.
 2. **Data model:** RE-7 (lists), then RE-1 with RE-6, then RE-2, then RE-3.
 3. **Public reader:** RE-4 and RE-8, after the owner answers OQ-14 (built off by default; OQ-14 decided 2026-11-15: supported as an opt-in).
-4. **Interop:** RE-5's mapping document and dry-run import, after the owner answers OQ-15.
+4. **Interop:** RE-5's mapping document and dry-run import (built; OQ-15 decided 2026-11-16: not offered to DHCW now, the path kept open).
 5. **UI:** RE-13 and RE-11 alongside the screens for RE-1, not at the end.
 
 **Open questions for the owner:** OQ-14, whether the service should serve anything without a token (decided
 2026-11-15: yes, as an opt-in that stays off by default); OQ-15, whether
-to offer DHCW this service as the API its guide plans; and whether a public roadmap may ever name a person (the
+to offer DHCW this service as the API its guide plans (decided 2026-11-16: not now, the path kept open); and whether a public roadmap may ever name a person (the
 recommendation is no, and to name a role or a team instead).

@@ -5,7 +5,7 @@ spreadsheet behind its [Roadmap Editor](https://github.com/DHCW-Digital-Health-a
 this service, what would each operation of its repository port call, and what is missing?
 
 **Status.** A paper mapping. No adapter has been written, nothing has been sent to DHCW, and nobody at DHCW has been
-asked. Whether to offer it is the owner's question OQ-15 ([open questions](../spec/16-open-questions.md)). The port
+asked. The owner decided OQ-15 on 2026-11-16 ([open questions](../spec/16-open-questions.md)): it is not offered to DHCW now, and this mapping, the dry run and the apply step stay as interop features. The port
 was read at commit `cc81478` (`src/domain/roadmap/roadmap-repository.ts` and its doc comments, which are its
 contract) and its own guide,
 [replacing-google-sheets.md](https://github.com/DHCW-Digital-Health-and-Care-Wales/roadmaps-editor/blob/main/docs/operations/replacing-google-sheets.md).

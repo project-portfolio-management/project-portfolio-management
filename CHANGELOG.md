@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 16 November (OQ-15 decided)
+
+- **OQ-15, decided by the owner: the service is not offered to DHCW now, and the path stays open.** The DHCW mapping,
+  the dry run and the apply step stay as interop features. Nothing more is built for the Roadmap Editor alone unless
+  DHCW asks. Recorded in `spec/16-open-questions.md`, `plan.md`, `tasks.md` (RE-5) and the mapping document.
+- **Not done:** any contact with DHCW, by decision. No code changed.
+
 ### 16 November (organization short names and names in other languages)
 
 - **Organizations gain a short name and names in other languages (RE-7).** At the owner's request, an organization

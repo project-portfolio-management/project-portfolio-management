@@ -91,3 +91,8 @@ spec §16 once that crate is scaffolded.
   to replace Google Sheets behind one port ([lessons](dhcw-roadmaps-editor-lessons/index.md)). (Lean: write the mapping
   and a dry-run import (RE-5), and leave any approach to DHCW to the owner. Do not shape the data model to their
   spreadsheet beyond what RE-1 needs anyway.)
+  (**Decided 2026-11-16 by the owner: not now, and the path stays open.** Nothing is offered to DHCW. The mapping
+  ([`operations/dhcw-roadmaps-editor.md`](../operations/dhcw-roadmaps-editor.md)), the dry run and the apply step
+  stay as interop features of this service, kept working by their tests. Nothing more is built for the Roadmap
+  Editor alone unless DHCW asks; a change that is useful without them, such as organization short names and names in
+  other languages (FR-16e18), is judged on its own. Revisit when DHCW asks, or when the owner chooses to offer it.)

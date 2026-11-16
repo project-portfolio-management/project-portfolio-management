@@ -3952,6 +3952,41 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Vous avez été déconnecté après une période d'inactivité. Veuillez vous reconnecter.",
   "p.plans.pid.board.only_first_tasks":
     "Ce plan compte {total} tâches ; le tableau affiche les {shown} premières. Filtrez par composant, ou consultez le reste via l'API.",
+  "p.plan_modules.title": "Outils de ce plan",
+  "p.plan_modules.title_ppm": "Outils de ce plan — PPM",
+  "p.plan_modules.back": "← Retour au plan",
+  "p.plan_modules.intro":
+    "Choisissez les outils que ce plan affiche. Un outil désactivé est masqué sur la page du plan, et ses pages répondent « introuvable ». Rien n’est supprimé : réactiver un outil affiche ce qu’il contenait.",
+  "p.plan_modules.source_plan": "Ce plan a son propre choix d’outils.",
+  "p.plan_modules.source_default":
+    "Ce plan utilise les outils par défaut de l’installation.",
+  "p.plan_modules.legend": "Outils affichés par ce plan",
+  "p.plan_modules.module_tasks":
+    "Tâches, le tableau et l’analyse du calendrier",
+  "p.plan_modules.module_time": "Saisie des temps",
+  "p.plan_modules.module_risks": "Risques et problèmes",
+  "p.plan_modules.module_financials": "Budgets, coûts et valeur acquise",
+  "p.plan_modules.module_milestones": "Jalons, le planning et le calendrier",
+  "p.plan_modules.module_governance":
+    "Gouvernance, jalons de décision et demandes de changement",
+  "p.plan_modules.module_roadmap": "Feuille de route publique du produit",
+  "p.plan_modules.none_chosen":
+    "Sans outil choisi, la page du plan affiche sa fiche et aucun outil.",
+  "p.plan_modules.save": "Enregistrer les outils",
+  "p.plan_modules.presets_heading": "Choix prêts à l’emploi",
+  "p.plan_modules.personal_is":
+    "L’ensemble personnel, pour le travail d’une seule personne : {names}.",
+  "p.plan_modules.use_personal": "Utiliser l’ensemble personnel",
+  "p.plan_modules.default_is":
+    "Le choix par défaut de l’installation : {names}.",
+  "p.plan_modules.use_default": "Suivre le choix par défaut",
+  "p.plan_modules.no_tools": "aucun outil",
+  "p.plan_modules.unchanged":
+    "Rien à enregistrer : ce plan suit déjà le choix par défaut, qui est celui-ci.",
+  "p.plan_modules.saved": "Enregistré.",
+  "p.plan_modules.could_not_load":
+    "Les outils de ce plan n’ont pas pu être chargés.",
+  "p.plan_modules.could_not_save": "La modification n’a pas été enregistrée.",
   "p.plans.pid.modules_failed":
     "Les outils utilisés par ce plan n'ont pas pu être vérifiés ; tous les outils sont donc listés.",
   "p._layout_svelte.handling_mark": "Marque de traitement : {mark}",

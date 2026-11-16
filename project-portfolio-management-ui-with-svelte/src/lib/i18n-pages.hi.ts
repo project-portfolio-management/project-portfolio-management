@@ -3747,6 +3747,37 @@ export const PAGES_HI: Record<PageKey, string> = {
     "कुछ समय तक निष्क्रिय रहने के कारण आपको साइन आउट कर दिया गया। कृपया फिर से साइन इन करें।",
   "p.plans.pid.board.only_first_tasks":
     "इस योजना में {total} कार्य हैं; बोर्ड पहले {shown} दिखाता है। इसे घटक के अनुसार सीमित करें, या बाकी API से पढ़ें।",
+  "p.plan_modules.title": "इस योजना के टूल",
+  "p.plan_modules.title_ppm": "इस योजना के टूल — PPM",
+  "p.plan_modules.back": "← योजना पर वापस",
+  "p.plan_modules.intro":
+    "चुनें कि यह योजना कौन-से टूल दिखाए। बंद किया गया टूल योजना पृष्ठ से छिप जाता है, और उसके पृष्ठ “नहीं मिला” का उत्तर देते हैं। कुछ भी हटाया नहीं जाता: टूल को फिर से चालू करने पर उसमें रखा सब दिखता है।",
+  "p.plan_modules.source_plan": "इस योजना की टूल की अपनी पसंद है।",
+  "p.plan_modules.source_default":
+    "यह योजना डिप्लॉयमेंट के डिफ़ॉल्ट टूल का उपयोग करती है।",
+  "p.plan_modules.legend": "इस योजना में दिखने वाले टूल",
+  "p.plan_modules.module_tasks": "कार्य, बोर्ड और समय-सारणी विश्लेषण",
+  "p.plan_modules.module_time": "समय दर्ज करना",
+  "p.plan_modules.module_risks": "जोखिम और समस्याएँ",
+  "p.plan_modules.module_financials": "बजट, लागत और अर्जित मूल्य",
+  "p.plan_modules.module_milestones": "माइलस्टोन, समय-सारणी और कैलेंडर",
+  "p.plan_modules.module_governance": "गवर्नेंस, गेट और परिवर्तन अनुरोध",
+  "p.plan_modules.module_roadmap": "सार्वजनिक उत्पाद रोडमैप",
+  "p.plan_modules.none_chosen":
+    "कोई टूल न चुनने पर योजना पृष्ठ अपना रिकॉर्ड दिखाता है और कोई टूल नहीं।",
+  "p.plan_modules.save": "टूल सहेजें",
+  "p.plan_modules.presets_heading": "तैयार विकल्प",
+  "p.plan_modules.personal_is":
+    "व्यक्तिगत सेट, एक व्यक्ति के अपने काम के लिए: {names}।",
+  "p.plan_modules.use_personal": "व्यक्तिगत सेट का उपयोग करें",
+  "p.plan_modules.default_is": "डिप्लॉयमेंट का डिफ़ॉल्ट: {names}।",
+  "p.plan_modules.use_default": "डिप्लॉयमेंट के डिफ़ॉल्ट का पालन करें",
+  "p.plan_modules.no_tools": "कोई टूल नहीं",
+  "p.plan_modules.unchanged":
+    "सहेजने को कुछ नहीं: यह योजना पहले से डिफ़ॉल्ट का पालन करती है, जो यही विकल्प है।",
+  "p.plan_modules.saved": "सहेजा गया।",
+  "p.plan_modules.could_not_load": "इस योजना के टूल लोड नहीं हो सके।",
+  "p.plan_modules.could_not_save": "बदलाव सहेजा नहीं गया।",
   "p.plans.pid.modules_failed":
     "यह योजना कौन-से टूल उपयोग करती है, यह जाँचा नहीं जा सका, इसलिए हर टूल सूचीबद्ध है।",
   "p._layout_svelte.handling_mark": "हैंडलिंग चिह्न: {mark}",

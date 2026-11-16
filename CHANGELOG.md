@@ -15,6 +15,25 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 16 November (a plan's tools: NC-1 slice 8)
+
+- **UI: `/plans/[pid]/modules` chooses which feature modules a plan shows (RM-7).** It is linked from the plan page
+  and always shown there, so turning every tool off cannot hide the way back. It says whether the plan has its own
+  choice or follows the deployment's default. It saves a chosen set, the personal set (tasks and time) or a return to
+  the default, as the service takes them. Choosing exactly the default again on a plan that follows it sends nothing,
+  so the plan keeps following later changes to the default. A refusal is the catalogue's sentence. UI spec, "A plan's
+  tools"; tests `tests/unit/module-settings.test.ts` and `tests/e2e/plan-modules.spec.ts` (six, with Welsh and axe).
+- **Fixed: the Issues link followed the wrong module.** The plan page hid or showed it by `governance`, but the
+  service gates a plan's issues under `risks`. With risks off, the link led to a refusal; with governance off, a working
+  page was hidden. It now follows `risks`, and a unit test checks it.
+- **Not done:**
+  - hiding the page from people who cannot change it, because the page does not know the caller;
+  - listing which pages each module holds;
+  - the later NC-1 slices.
+- **Not verified:**
+  - against a real service, since the tests use a stubbed one;
+  - the translations, which are machine-written and unreviewed in all seven languages.
+
 ### 16 November (Lily headless 0.9 and picker bar 0.6)
 
 - **UI: `@lilydesignsystem/svelte-headless` 0.8.0 to 0.9.0 and `@lilydesignsystem/svelte-picker-bar` 0.5.3 to

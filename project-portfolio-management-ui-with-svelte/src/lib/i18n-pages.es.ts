@@ -3946,6 +3946,42 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Se cerró su sesión por inactividad prolongada. Vuelva a iniciar sesión.",
   "p.plans.pid.board.only_first_tasks":
     "Este plan tiene {total} tareas; el tablero muestra las primeras {shown}. Acótelo por componente o consulte el resto a través de la API.",
+  "p.plan_modules.title": "Herramientas de este plan",
+  "p.plan_modules.title_ppm": "Herramientas de este plan — PPM",
+  "p.plan_modules.back": "← Volver al plan",
+  "p.plan_modules.intro":
+    "Elija qué herramientas muestra este plan. Una herramienta desactivada se oculta en la página del plan y sus páginas responden «no encontrado». No se elimina nada: al volver a activar una herramienta se muestra lo que contenía.",
+  "p.plan_modules.source_plan":
+    "Este plan tiene su propia selección de herramientas.",
+  "p.plan_modules.source_default":
+    "Este plan usa las herramientas predeterminadas de la instalación.",
+  "p.plan_modules.legend": "Herramientas que muestra este plan",
+  "p.plan_modules.module_tasks":
+    "Tareas, el tablero y el análisis del cronograma",
+  "p.plan_modules.module_time": "Registro de tiempo",
+  "p.plan_modules.module_risks": "Riesgos e incidencias",
+  "p.plan_modules.module_financials": "Presupuestos, costes y valor ganado",
+  "p.plan_modules.module_milestones": "Hitos, el cronograma y el calendario",
+  "p.plan_modules.module_governance":
+    "Gobernanza, puertas y solicitudes de cambio",
+  "p.plan_modules.module_roadmap": "Hoja de ruta pública del producto",
+  "p.plan_modules.none_chosen":
+    "Sin ninguna herramienta elegida, la página del plan muestra su registro y ninguna herramienta.",
+  "p.plan_modules.save": "Guardar herramientas",
+  "p.plan_modules.presets_heading": "Selecciones predefinidas",
+  "p.plan_modules.personal_is":
+    "La selección personal, para el trabajo propio de una persona: {names}.",
+  "p.plan_modules.use_personal": "Usar la selección personal",
+  "p.plan_modules.default_is":
+    "La selección predeterminada de la instalación: {names}.",
+  "p.plan_modules.use_default": "Seguir la selección predeterminada",
+  "p.plan_modules.no_tools": "ninguna herramienta",
+  "p.plan_modules.unchanged":
+    "Nada que guardar: este plan ya sigue la selección predeterminada, que es esta.",
+  "p.plan_modules.saved": "Guardado.",
+  "p.plan_modules.could_not_load":
+    "No se pudieron cargar las herramientas de este plan.",
+  "p.plan_modules.could_not_save": "El cambio no se guardó.",
   "p.plans.pid.modules_failed":
     "No se pudo comprobar qué herramientas usa este plan, por lo que se muestran todas.",
   "p._layout_svelte.handling_mark": "Marca de tratamiento: {mark}",

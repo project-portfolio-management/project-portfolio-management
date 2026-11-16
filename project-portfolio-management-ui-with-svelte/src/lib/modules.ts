@@ -12,7 +12,8 @@ export const PLAN_LINKS = [
   { key: "governance", module: "governance" },
   { key: "tolerances", module: "governance" },
   { key: "escalations", module: "governance" },
-  { key: "issues", module: "governance" },
+  // The service puts `/api/plans/{pid}/issues` in the risks module, not governance.
+  { key: "issues", module: "risks" },
   { key: "change-requests", module: "governance" },
   { key: "ways-of-working", module: "governance" },
   { key: "governance-framework", module: "governance" },

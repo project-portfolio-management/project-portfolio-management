@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a plan's tools: which feature modules it shows (NC-1 slice 8, RM-7, 2026-11-16)
+
+- `/plans/[pid]/modules`, linked from the plan page; `src/lib/module-settings.ts`; 26 catalogue keys in eight
+  languages, machine-written. Tests `tests/unit/module-settings.test.ts`, `tests/e2e/plan-modules.spec.ts`.
+- **Fixed:** the plan page's Issues link now follows the `risks` module, as the service does (`src/lib/modules.ts`).
+  See the root `CHANGELOG.md`.
+
 ### Changed — Lily upgraded: headless 0.9.0 and picker bar 0.6.0 (2026-11-16)
 
 - `@lilydesignsystem/svelte-headless` 0.8.0 to 0.9.0 and `@lilydesignsystem/svelte-picker-bar` 0.5.3 to 0.6.0, both

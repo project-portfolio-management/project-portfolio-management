@@ -3902,6 +3902,38 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Cawsoch eich allgofnodi am eich bod wedi bod yn anweithgar am sbel. Mewngofnodwch eto.",
   "p.plans.pid.board.only_first_tasks":
     "Mae gan y cynllun hwn {total} tasg; mae'r bwrdd yn dangos y {shown} cyntaf. Cyfyngwch yn ôl cydran, neu darllenwch y gweddill drwy'r API.",
+  "p.plan_modules.title": "Offer ar y cynllun hwn",
+  "p.plan_modules.title_ppm": "Offer ar y cynllun hwn — PPM",
+  "p.plan_modules.back": "← Yn ôl i'r cynllun",
+  "p.plan_modules.intro":
+    "Dewiswch pa offer y mae'r cynllun hwn yn eu dangos. Mae offeryn sydd wedi'i ddiffodd wedi'i guddio o dudalen y cynllun, ac mae ei dudalennau'n ateb “heb ei ganfod”. Nid oes dim yn cael ei ddileu: mae troi offeryn ymlaen eto yn dangos yr hyn yr oedd yn ei ddal.",
+  "p.plan_modules.source_plan":
+    "Mae gan y cynllun hwn ei ddewis ei hun o offer.",
+  "p.plan_modules.source_default":
+    "Mae'r cynllun hwn yn defnyddio offer diofyn y gosodiad.",
+  "p.plan_modules.legend": "Offer y mae'r cynllun hwn yn eu dangos",
+  "p.plan_modules.module_tasks": "Tasgau, y bwrdd a dadansoddi'r amserlen",
+  "p.plan_modules.module_time": "Cofnodi amser",
+  "p.plan_modules.module_risks": "Risgiau a materion",
+  "p.plan_modules.module_financials": "Cyllidebau, costau a gwerth a enillwyd",
+  "p.plan_modules.module_milestones": "Cerrig milltir, yr amserlen a'r calendr",
+  "p.plan_modules.module_governance": "Llywodraethu, pyrth a cheisiadau newid",
+  "p.plan_modules.module_roadmap": "Map ffordd cyhoeddus y cynnyrch",
+  "p.plan_modules.none_chosen":
+    "Heb ddewis offeryn, mae tudalen y cynllun yn dangos ei gofnod a dim offer.",
+  "p.plan_modules.save": "Cadw'r offer",
+  "p.plan_modules.presets_heading": "Dewisiadau parod",
+  "p.plan_modules.personal_is":
+    "Y set bersonol, ar gyfer gwaith un person: {names}.",
+  "p.plan_modules.use_personal": "Defnyddio'r set bersonol",
+  "p.plan_modules.default_is": "Diofyn y gosodiad: {names}.",
+  "p.plan_modules.use_default": "Dilyn diofyn y gosodiad",
+  "p.plan_modules.no_tools": "dim offer",
+  "p.plan_modules.unchanged":
+    "Dim i'w gadw: mae'r cynllun hwn eisoes yn dilyn y diofyn, sef y dewis hwn.",
+  "p.plan_modules.saved": "Wedi'i gadw.",
+  "p.plan_modules.could_not_load": "Nid oedd modd llwytho offer y cynllun hwn.",
+  "p.plan_modules.could_not_save": "Ni chafodd y newid ei gadw.",
   "p.plans.pid.modules_failed":
     "Nid oedd modd gwirio pa offer y mae'r cynllun hwn yn eu defnyddio, felly rhestrir pob offeryn.",
   "p._layout_svelte.handling_mark": "Marc trin: {mark}",

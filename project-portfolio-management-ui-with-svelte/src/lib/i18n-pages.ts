@@ -3802,6 +3802,38 @@ export const PAGES_EN = {
     "You were signed out because you were inactive for a while. Please sign in again.",
   "p.plans.pid.board.only_first_tasks":
     "This plan has {total} tasks; the board shows the first {shown}. Narrow it by component, or read the rest through the API.",
+  "p.plan_modules.title": "Tools on this plan",
+  "p.plan_modules.title_ppm": "Tools on this plan — PPM",
+  "p.plan_modules.back": "← Back to the plan",
+  "p.plan_modules.intro":
+    "Choose which tools this plan shows. A tool that is off is hidden from the plan page, and its pages answer “not found”. Nothing is deleted: turning a tool on again shows what it held.",
+  "p.plan_modules.source_plan": "This plan has its own choice of tools.",
+  "p.plan_modules.source_default":
+    "This plan uses the deployment's default tools.",
+  "p.plan_modules.legend": "Tools this plan shows",
+  "p.plan_modules.module_tasks": "Tasks, the board and schedule analysis",
+  "p.plan_modules.module_time": "Time recording",
+  "p.plan_modules.module_risks": "Risks and issues",
+  "p.plan_modules.module_financials": "Budgets, costs and earned value",
+  "p.plan_modules.module_milestones":
+    "Milestones, the schedule and the calendar",
+  "p.plan_modules.module_governance": "Governance, gates and change requests",
+  "p.plan_modules.module_roadmap": "Public product roadmap",
+  "p.plan_modules.none_chosen":
+    "With no tool chosen, the plan page shows its record and no tools.",
+  "p.plan_modules.save": "Save tools",
+  "p.plan_modules.presets_heading": "Ready-made choices",
+  "p.plan_modules.personal_is":
+    "The personal set, for one person's own work: {names}.",
+  "p.plan_modules.use_personal": "Use the personal set",
+  "p.plan_modules.default_is": "The deployment's default: {names}.",
+  "p.plan_modules.use_default": "Follow the deployment's default",
+  "p.plan_modules.no_tools": "no tools",
+  "p.plan_modules.unchanged":
+    "Nothing to save: this plan already follows the default, which is this choice.",
+  "p.plan_modules.saved": "Saved.",
+  "p.plan_modules.could_not_load": "This plan's tools could not be loaded.",
+  "p.plan_modules.could_not_save": "The change was not saved.",
   "p.plans.pid.modules_failed":
     "Which tools this plan uses could not be checked, so every tool is listed.",
   "p._layout_svelte.handling_mark": "Handling mark: {mark}",

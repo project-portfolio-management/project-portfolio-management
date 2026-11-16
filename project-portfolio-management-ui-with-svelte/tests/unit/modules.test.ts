@@ -31,13 +31,14 @@ describe("visiblePlanLinks (RM-7)", () => {
       "governance",
       "tolerances",
       "escalations",
-      "issues",
       "change-requests",
       "ways-of-working",
       "governance-framework",
       "links",
       "cutover",
     ]);
+    // Issues are the risks module's in the service, so they follow risks, not governance.
+    expect(visiblePlanLinks(["risks"])).toEqual(["issues"]);
     expect(visiblePlanLinks(["milestones", "tasks"])).toEqual([
       "board",
       "schedule",

@@ -3955,6 +3955,40 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Sie wurden abgemeldet, weil Sie eine Weile inaktiv waren. Bitte melden Sie sich erneut an.",
   "p.plans.pid.board.only_first_tasks":
     "Dieser Plan hat {total} Aufgaben; das Board zeigt die ersten {shown}. Grenzen Sie es nach Komponente ein oder lesen Sie den Rest über die API.",
+  "p.plan_modules.title": "Werkzeuge dieses Plans",
+  "p.plan_modules.title_ppm": "Werkzeuge dieses Plans — PPM",
+  "p.plan_modules.back": "← Zurück zum Plan",
+  "p.plan_modules.intro":
+    "Wählen Sie, welche Werkzeuge dieser Plan zeigt. Ein ausgeschaltetes Werkzeug ist auf der Planseite ausgeblendet, und seine Seiten antworten mit „nicht gefunden“. Nichts wird gelöscht: Wird ein Werkzeug wieder eingeschaltet, zeigt es, was es enthielt.",
+  "p.plan_modules.source_plan":
+    "Dieser Plan hat eine eigene Auswahl an Werkzeugen.",
+  "p.plan_modules.source_default":
+    "Dieser Plan nutzt die Standardwerkzeuge der Installation.",
+  "p.plan_modules.legend": "Werkzeuge, die dieser Plan zeigt",
+  "p.plan_modules.module_tasks": "Aufgaben, das Board und die Terminanalyse",
+  "p.plan_modules.module_time": "Zeiterfassung",
+  "p.plan_modules.module_risks": "Risiken und Probleme",
+  "p.plan_modules.module_financials": "Budgets, Kosten und Fertigstellungswert",
+  "p.plan_modules.module_milestones":
+    "Meilensteine, der Terminplan und der Kalender",
+  "p.plan_modules.module_governance": "Governance, Gates und Änderungsanträge",
+  "p.plan_modules.module_roadmap": "Öffentliche Produkt-Roadmap",
+  "p.plan_modules.none_chosen":
+    "Ohne gewähltes Werkzeug zeigt die Planseite ihren Datensatz und keine Werkzeuge.",
+  "p.plan_modules.save": "Werkzeuge speichern",
+  "p.plan_modules.presets_heading": "Fertige Auswahlen",
+  "p.plan_modules.personal_is":
+    "Die persönliche Auswahl, für die eigene Arbeit einer Person: {names}.",
+  "p.plan_modules.use_personal": "Persönliche Auswahl verwenden",
+  "p.plan_modules.default_is": "Der Standard der Installation: {names}.",
+  "p.plan_modules.use_default": "Dem Standard der Installation folgen",
+  "p.plan_modules.no_tools": "keine Werkzeuge",
+  "p.plan_modules.unchanged":
+    "Nichts zu speichern: Dieser Plan folgt bereits dem Standard, der dieser Auswahl entspricht.",
+  "p.plan_modules.saved": "Gespeichert.",
+  "p.plan_modules.could_not_load":
+    "Die Werkzeuge dieses Plans konnten nicht geladen werden.",
+  "p.plan_modules.could_not_save": "Die Änderung wurde nicht gespeichert.",
   "p.plans.pid.modules_failed":
     "Welche Werkzeuge dieser Plan verwendet, konnte nicht geprüft werden, daher werden alle Werkzeuge aufgeführt.",
   "p._layout_svelte.handling_mark": "Kennzeichnung: {mark}",

@@ -186,6 +186,8 @@
 
   <div class="row" style:margin-top="1rem">
     <a class="button" href={localeHref(`/plans/${pid}/edit`)}>{t("detail.edit")}</a>
+    <!-- Always shown: the tools page belongs to no module, so turning every tool off cannot hide the way back. -->
+    <a class="button" href={localeHref(`/plans/${pid}/modules`)}>{t("p.plan_modules.title")}</a>
     <button class="button" onclick={handleCheckDuplicates} disabled={checking}>
       {checking ? t("detail.checking") : t("detail.checkDuplicates")}
     </button>

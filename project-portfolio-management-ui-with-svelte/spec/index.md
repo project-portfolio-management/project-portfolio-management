@@ -193,9 +193,12 @@ match breakdown).
                              follow it, react, comment, attach files
                              (NC-1 slice 5); each board card's title
                              links here
+/plans/[pid]/modules         the plan's tools: which feature modules it
+                             shows (NC-1 slice 8); linked from the plan
+                             page
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 106):
+every page; `find src/routes -name +page.svelte` gives all 107):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -1901,3 +1904,31 @@ sentences; the page only wires them.
   not primary, every problem at once and nothing sent; opening with the body sent and the expiry in Auckland's time,
   the grant in force, and ending it early; a 403, 404, 409, 422 and 429 on opening, a 404 on ending and a 401 on the
   list; Welsh; axe). The Welsh and the other six languages are machine-written and unreviewed.
+
+## A plan's tools (NC-1 slice 8, RM-7)
+
+`/plans/[pid]/modules` chooses which feature modules a plan shows, over `GET` and `PUT /api/plans/{pid}/modules`. It
+is linked from the plan page beside "Edit", always: the route belongs to no module, so turning every tool off cannot
+hide the way back. `src/lib/module-settings.ts` holds the rules; the page only wires them.
+
+- **What it says.** Whether the plan has its own choice or follows the deployment's default, each module by a name in
+  the reader's language (tasks, time, risks and issues, financials, milestones, governance, the public roadmap), and
+  what the personal set and the default hold. A module that is off is hidden from the plan page, and the service
+  answers its routes with 404; nothing is deleted.
+- **Three changes, as the service takes them.** A chosen set (`{ modules }`, in the service's order; none at all is
+  a choice, and the page says what it means before it is sent); the personal set (`{ preset: "personal" }`); and
+  back to the default (`{ reset: true }`, offered only when the plan has its own). Choosing exactly the default again
+  on a plan that follows it sends nothing and says so, since saving it would stop the plan following a later change to
+  the default. The page shows the plan as the service answers.
+- **Refusals.** The page does not know whether the caller may change the plan; the service decides, and a refusal or
+  a failed load is the catalogue's sentence, never the service's text.
+- **Issues follow risks.** The plan page's Issues link now follows the `risks` module, as the service gates
+  `/api/plans/{pid}/issues`; it followed `governance` before, so it could show a page the service refused, or hide one
+  it served. A unit test checks each link names a module the service has.
+- **Not built in this slice:** hiding the page from people who cannot change it; showing which pages each module
+  holds (the service's `segments` are API paths, not pages); a setting for the deployment's default (an environment
+  setting, `PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_MODULES`).
+- **Tests:** `tests/unit/module-settings.test.ts`, `tests/unit/modules.test.ts`, and `tests/e2e/plan-modules.spec.ts`
+  (the link, a chosen set, the personal set and the default, nothing sent for the default again, no tools at all, a
+  refusal and a failed load, the plan page hiding a module's links with issues following risks, Welsh, axe). The
+  Welsh and the six other languages are machine-written and unreviewed.

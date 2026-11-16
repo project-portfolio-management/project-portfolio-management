@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 16 November (the site keeps a picked theme in localStorage)
+
+- **The documentation site now handles the theme as the UI does.** The picker was given the storage key
+  `lily-theme`, so it stored the theme it guessed from the browser as if the reader had chosen it. After a first visit
+  the browser's light/dark setting no longer counted, and a change while the page was open was ignored. The site's
+  layout now keeps only a theme the reader picks, in localStorage under `ppm-theme-choice`, the UI's key, and
+  otherwise follows `prefers-color-scheme`, live. Picking the browser's own theme goes back to following it. A stored
+  `light` or `dark` under the old key is dropped once, as most likely the guess; any other stored theme moves across.
+  The rules are `src/lib/theme-choice.ts`, a copy of the UI's file, so the two can drift apart; nothing checks that
+  they are the same.
+- Tested: three new site browser tests (a pick kept in localStorage and undone, a later visit and a live change
+  following the browser, and the old key moving across); the site's whole suite passed, 242 tests. The site has no unit
+  test runner, so the rules are tested only through the browser. Not checked: a browser with storage blocked (the
+  code then follows the browser's setting, as the UI's does, but no test covers it). A reader who had picked `light`
+  or `dark` deliberately now follows the browser instead, once; nothing tells them.
+
 ### 16 November (a plan's tools: NC-1 slice 8)
 
 - **UI: `/plans/[pid]/modules` chooses which feature modules a plan shows (RM-7).** It is linked from the plan page

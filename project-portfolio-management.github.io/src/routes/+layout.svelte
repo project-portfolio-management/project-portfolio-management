@@ -23,6 +23,30 @@
     topicSlug,
     type TopicKey,
   } from "#lib/site.js";
+  import { nextChoice, readChoice, systemTheme, writeChoice } from "#lib/theme-choice.js";
+
+  // The site uses the browser's light/dark setting, following it when it changes, unless the reader picked another
+  // theme, which is kept in localStorage (#lib/theme-choice.ts says why the picker is given no storage key).
+  // `matchMedia` is missing in very old browsers: then the theme is light until picked.
+  const darkQuery =
+    browser && typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  let browserTheme = $state(systemTheme(darkQuery?.matches ?? false));
+  let themeChoice = $state(browser ? readChoice(localStorage) : "");
+  const themeValue = $derived(themeChoice || browserTheme);
+  $effect(() => {
+    if (!darkQuery) return;
+    const follow = () => {
+      browserTheme = systemTheme(darkQuery.matches);
+    };
+    darkQuery.addEventListener("change", follow);
+    return () => darkQuery.removeEventListener("change", follow);
+  });
+  function onThemeChange(slug: string) {
+    const choice = nextChoice(slug, browserTheme);
+    if (choice === themeChoice) return;
+    themeChoice = choice;
+    if (browser) writeChoice(localStorage, choice);
+  }
 
   // Lily ships no third-party URLs: these are the UI's share destinations. SharePicker supplies the page's URL.
   const shareTargets: ShareTarget[] = $derived([
@@ -198,7 +222,13 @@
         share: t("picker.share"),
       }}
       {themesUrl}
-      themeProps={{ storageKey: "lily-theme", detectFromSystem: true, defaultValue: "light" }}
+      themeProps={{
+        // No storageKey: the picker would store the theme it guessed from the browser as if the reader had chosen it.
+        // The value is the reader's choice, else the browser's light/dark setting (see the script above).
+        value: themeValue,
+        defaultValue: "light",
+        onChange: onThemeChange,
+      }}
       locales={pathToProduction ? [...PATH_LOCALES] : [...BRIEF_LOCALES]}
       localeProps={{
         value: pathToProduction ? page.data.locale : shownLocale(),

@@ -224,6 +224,58 @@ test("choosing a theme applies it and it survives a reload", async ({ page }) =>
   await expect(page.locator("html")).toHaveAttribute("data-theme", "nord");
 });
 
+// The site follows the browser's light/dark setting unless the reader picked a theme, which is kept in localStorage
+// under `ppm-theme-choice` (src/lib/theme-choice.ts), as the UI does.
+test("a picked theme is kept in localStorage, and picking the browser's own theme follows the browser again", async ({
+  page,
+}) => {
+  await open(page, "/", "light");
+  const pick = async (name: RegExp) => {
+    await page.getByRole("button", { name: "Theme" }).click();
+    await page.locator(".theme-picker-option").filter({ hasText: name }).click();
+  };
+  await pick(/^Nord$/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("ppm-theme-choice"))).toBe("nord");
+  expect(await page.evaluate(() => localStorage.getItem("lily-theme"))).toBeNull();
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "nord");
+  await pick(/^Dark$/);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("ppm-theme-choice"))).toBeNull();
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+});
+
+test("with no choice, a later visit and a change while open both follow the browser", async ({ page }) => {
+  await open(page, "/", "light");
+  expect(await page.evaluate(() => localStorage.getItem("ppm-theme-choice"))).toBeNull();
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+});
+
+test("the old key moves across once: a stored light or dark was the picker's guess, any other theme was picked", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem("seeded")) {
+      sessionStorage.setItem("seeded", "1");
+      localStorage.setItem("lily-theme", "light");
+    }
+  });
+  await open(page, "/", "dark");
+  expect(await page.evaluate(() => localStorage.getItem("lily-theme"))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem("ppm-theme-choice"))).toBeNull();
+
+  await page.evaluate(() => localStorage.setItem("lily-theme", "nord"));
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "nord");
+  expect(await page.evaluate(() => localStorage.getItem("ppm-theme-choice"))).toBe("nord");
+  expect(await page.evaluate(() => localStorage.getItem("lily-theme"))).toBeNull();
+});
+
 test("the time zone picker records the choice on the page", async ({ page }) => {
   await open(page, "/", "light");
   await page.getByRole("button", { name: "Time zone" }).click();

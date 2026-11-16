@@ -22,7 +22,8 @@ It is pre-1.0; the first release cut from the root release workflow is
   added to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`, and the lockfile passes pnpm's supply-chain check.
   headless 0.9 adds healthcare record components, which this UI does not use. The theme picker
   (`@lilydesignsystem/svelte-theme-picker`, inside the picker bar) is already at its latest release, 0.3.2, so it
-  is unchanged. No code changed.
+  is unchanged. No code changed. The GitHub Pages site takes the same two versions, with the same exception in its
+  own `pnpm-workspace.yaml`, as syncpack requires: the first push missed it and CI's site job failed.
 - **Not checked by hand:** how the picker bar looks in a browser. The Playwright suite covers the theme picker and
   the browser's light/dark setting.
 

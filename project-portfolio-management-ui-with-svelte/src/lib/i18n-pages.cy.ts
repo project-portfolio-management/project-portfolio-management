@@ -5975,6 +5975,36 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.skill_pools.see_heatmap": "Gweld y map gwres capasiti",
   "p.skill_pools.withdrawing":
     "Ffigurau galw sy'n cael eu tynnu'n ôl o gronfa'r gwasanaeth gweithlu yr oedd wedi'i chysylltu â hi: {n}.",
+  "p.skill_pools.add_heading": "Ychwanegu cronfa",
+  "p.skill_pools.add_says":
+    "Mae cronfa'n grwpio rolau adnoddau a sgiliau, fel bod map gwres y capasiti yn cyfrif eu galw a'u cyflenwad unwaith. Mae rôl neu sgìl mewn un gronfa ar y mwyaf.",
+  "p.skill_pools.add": "Ychwanegu'r gronfa",
+  "p.skill_pools.added": "Ychwanegwyd cronfa {name}.",
+  "p.skill_pools.choose_pool": "Dewiswch gronfa",
+  "p.skill_pools.clash_item": "{value} (yn {pool})",
+  "p.skill_pools.conflict_members":
+    "Mae cronfa gyda'r enw hwnnw yn bodoli, neu mae un o'r rolau neu'r sgiliau hyn eisoes mewn cronfa arall.",
+  "p.skill_pools.could_not_add": "Ni ychwanegwyd y gronfa.",
+  "p.skill_pools.f_name": "Enw'r gronfa",
+  "p.skill_pools.f_pool": "Cronfa",
+  "p.skill_pools.f_roles": "Rolau",
+  "p.skill_pools.f_skills": "Sgiliau",
+  "p.skill_pools.list_says":
+    "Gwahanwch y rolau neu'r sgiliau â chomas neu linellau newydd; cedwir ailadroddiad unwaith.",
+  "p.skill_pools.members_heading": "Newid cronfa",
+  "p.skill_pools.members_saved": "Cadwyd rolau a sgiliau {name}.",
+  "p.skill_pools.problem_clash": "Eisoes mewn cronfa arall: {list}.",
+  "p.skill_pools.problem_name_taken":
+    "Mae cronfa gyda'r enw hwnnw yn bodoli eisoes.",
+  "p.skill_pools.problem_name": "Mae enw cronfa rhwng 2 a 120 nod.",
+  "p.skill_pools.restore": "Adfer y gronfa",
+  "p.skill_pools.restored": "Adferwyd cronfa {name}.",
+  "p.skill_pools.retire_says":
+    "Mae cronfa wedi'i hymddeol yn aros ar y cofnod ac yn cadw ei rolau a'i sgiliau; mae ei hadfer yn ei chyfrif eto.",
+  "p.skill_pools.retire": "Ymddeol y gronfa",
+  "p.skill_pools.retired_done": "Ymddeolwyd cronfa {name}.",
+  "p.skill_pools.save_members": "Cadw'r rolau a'r sgiliau",
+  "p.skill_pools.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
   "p.capacity_heatmap.set_commitment": "Gosod ymrwymiad capasiti",
   "p.commitments.title": "Ymrwymiadau capasiti — PPM",
   "p.commitments.h1": "Ymrwymiadau capasiti",

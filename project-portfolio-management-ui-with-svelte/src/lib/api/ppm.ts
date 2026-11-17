@@ -725,6 +725,24 @@ export class PpmClient {
   skillPools(): Promise<{ skill_pools: SkillPool[] }> {
     return this.http.get("/api/skill-pools");
   }
+  /** Add a pool (a name of 2 to 120 characters) with its roles and skills; 409 when the name, or a role or skill,
+   *  is already taken (a role or skill is in at most one pool). DP-10, NC-1 slice 11. */
+  createSkillPool(body: {
+    name: string;
+    roles: string[];
+    skills: string[];
+  }): Promise<SkillPool> {
+    return this.http.post("/api/skill-pools", { body });
+  }
+  /** Retire or restore a pool, or replace its roles or skills; a field left out is kept. */
+  updateSkillPool(
+    pid: string,
+    body: { active?: boolean; roles?: string[]; skills?: string[] },
+  ): Promise<SkillPool> {
+    return this.http.put(`/api/skill-pools/${encodeURIComponent(pid)}`, {
+      body,
+    });
+  }
   /** FB-1: link a skill pool to the workforce service's pool (its id), or remove the link with null. */
   setSkillPoolPeerLink(
     pid: string,

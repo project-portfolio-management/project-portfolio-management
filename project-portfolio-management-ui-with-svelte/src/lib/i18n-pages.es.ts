@@ -6057,6 +6057,37 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.skill_pools.see_heatmap": "Ver el mapa de calor de capacidad",
   "p.skill_pools.withdrawing":
     "Cifras de demanda que se están retirando del grupo del servicio de personal al que estaba vinculado: {n}.",
+  "p.skill_pools.add_heading": "Añadir un grupo",
+  "p.skill_pools.add_says":
+    "Un grupo reúne roles y habilidades de recursos, para que el mapa de calor de capacidad cuente su demanda y oferta una sola vez. Un rol o habilidad está como mucho en un grupo.",
+  "p.skill_pools.add": "Añadir el grupo",
+  "p.skill_pools.added": "Grupo {name} añadido.",
+  "p.skill_pools.choose_pool": "Elija un grupo",
+  "p.skill_pools.clash_item": "{value} (en {pool})",
+  "p.skill_pools.conflict_members":
+    "Ya existe un grupo con ese nombre, o uno de estos roles o habilidades ya está en otro grupo.",
+  "p.skill_pools.could_not_add": "No se añadió el grupo.",
+  "p.skill_pools.f_name": "Nombre del grupo",
+  "p.skill_pools.f_pool": "Grupo",
+  "p.skill_pools.f_roles": "Roles de recurso",
+  "p.skill_pools.f_skills": "Habilidades",
+  "p.skill_pools.list_says":
+    "Separe los roles o habilidades con comas o saltos de línea; una repetición se guarda una vez.",
+  "p.skill_pools.members_heading": "Cambiar un grupo",
+  "p.skill_pools.members_saved":
+    "Se guardaron los roles y habilidades de {name}.",
+  "p.skill_pools.problem_clash": "Ya en otro grupo: {list}.",
+  "p.skill_pools.problem_name_taken": "Ya existe un grupo con ese nombre.",
+  "p.skill_pools.problem_name":
+    "El nombre de un grupo tiene entre 2 y 120 caracteres.",
+  "p.skill_pools.restore": "Restaurar el grupo",
+  "p.skill_pools.restored": "Grupo {name} restaurado.",
+  "p.skill_pools.retire_says":
+    "Un grupo retirado sigue en el registro y conserva sus roles y habilidades; al restaurarlo vuelve a contar.",
+  "p.skill_pools.retire": "Retirar el grupo",
+  "p.skill_pools.retired_done": "Grupo {name} retirado.",
+  "p.skill_pools.save_members": "Guardar los roles y habilidades",
+  "p.skill_pools.unchanged": "No cambió nada, así que no se envió nada.",
   "p.capacity_heatmap.set_commitment": "Establecer un compromiso de capacidad",
   "p.commitments.title": "Compromisos de capacidad — PPM",
   "p.commitments.h1": "Compromisos de capacidad",

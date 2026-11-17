@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — adding and changing skill pools (NC-1 slice 11, DP-10, 2026-11-17)
+
+- `/skill-pools` adds a pool with its roles and skills, changes a pool's roles and skills (only the changed list sent),
+  and retires and restores one. A taken name and a role or skill another pool holds are named before anything is
+  sent; the service's 409, which covers both, has one sentence. Two client methods; `SkillPoolWrites.svelte`,
+  `src/lib/skill-pool-view.ts`; 25 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/skill-pool-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/skill-pool-writes.spec.ts`
+  (four, with Welsh and axe).
+- **Not done:** renaming a pool (no route). **Not verified:** against a real service.
+
 ### Added — benefit classification and validation (NC-1 slice 11, DP-9, 2026-11-17)
 
 - `/plans/[pid]/benefits`, linked from the plan page: each benefit's recurrence, yearly amount (recurring and financial

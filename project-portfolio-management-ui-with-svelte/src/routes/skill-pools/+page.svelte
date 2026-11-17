@@ -4,7 +4,8 @@
   sent (a lower-case hyphenated UUID, as the workforce service writes it); a pool already linked elsewhere (409)
   and an id the service refuses (422) are said plainly; removing a link is confirmed first. The page says that the
   link is set on both sides by a person who can see both, and is never matched by name. Removing or changing a
-  link withdraws every demand figure sent to the old workforce service pool (FB-5); the page says how many.
+  link withdraws every demand figure sent to the old workforce service pool (FB-5); the page says how many. Below,
+  adding a pool and changing its roles, skills and state (`SkillPoolWrites.svelte`, DP-10, NC-1 slice 11).
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -16,6 +17,7 @@
   import { isPeerPoolRef, linkRefusal } from "#lib/capacity-heatmap-view.js";
   import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
+  import SkillPoolWrites from "#lib/components/SkillPoolWrites.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
@@ -155,6 +157,10 @@
   {:else}
     <DataTable label={t("p.skill_pools.h1")} {columns} rows={pools} rowId={(r) => String(r.pid)} searchable />
   {/if}
+{/if}
+
+{#if pools}
+  <SkillPoolWrites {pools} onChanged={load} />
 {/if}
 
 <style>

@@ -2290,3 +2290,24 @@ already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the 
   (the link; classifying a financial benefit with the whole classification sent and a yearly amount only when
   recurring; validating with a bad amount said first, the standing and history; a non-financial benefit's KPI; a
   refused validator; Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.
+
+## Adding and changing skill pools (NC-1 slice 11, DP-10)
+
+`/skill-pools` (already showing every pool and its workforce-service link) gains `SkillPoolWrites.svelte`, over `POST
+/api/skill-pools` and `PUT /api/skill-pools/{pid}`. `src/lib/skill-pool-view.ts` holds the rules.
+
+- **Adding a pool.** A name (2 to 120 characters, no other pool of that name in any case), and roles and skills typed
+  with commas or new lines, kept as the service keeps them (trimmed, blanks dropped, a repeat once in any case). The
+  page says a pool groups roles and skills so the capacity heatmap counts their demand and supply once, and that a
+  role or skill is in at most one pool; a role or skill another pool already holds is named, with that pool, before
+  anything is sent, from the pools already on the page.
+- **Changing a pool.** Choose a pool; its roles and skills are filled in; only a list that changed is sent (the service
+  keeps a list left out), and nothing when neither did. A pool is retired or restored; the page says a retired pool
+  stays on the record with its roles and skills.
+- **Refusals.** The service answers 409 for a taken name and for a role or skill in another pool alike, so the page's
+  sentence names both; it is rare, as both are checked first.
+- **Not built in this slice:** renaming a pool (the service has no route).
+- **Tests:** `tests/unit/skill-pool-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/skill-pool-writes.spec.ts` (adding with a taken name and a clash said first, the lists sent as kept;
+  changing only the changed list, nothing for no change; retiring and restoring; a 409; Welsh; axe). The Welsh and the
+  six other languages are machine-written and unreviewed.

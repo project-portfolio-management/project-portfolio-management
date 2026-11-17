@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (adding and changing skill pools: NC-1 slice 11, part h)
+
+- **UI: `/skill-pools` adds and changes skill pools (DP-10).** A pool is added with its roles and skills, changed, and
+  retired or restored; a role or skill another pool already holds is named before anything is sent. UI spec, "Adding
+  and changing skill pools"; test `tests/e2e/skill-pool-writes.spec.ts` (four, with Welsh and axe).
+- **Not done:** renaming a pool (the service has no route). **Not verified:** against a real service; the
+  translations are machine-written and unreviewed.
+
 ### 17 November (axa 0.17 and axa-test 0.8)
 
 - **The service moves from axa 0.15 to 0.17, and axa-test from 0.6 to 0.8**, with the owner's approval to take them
@@ -26,6 +34,8 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Tested: clippy and the formatter clean; library tests (1,290) and the database suite (232) pass on Postgres 18.
   **Not verified:** the queue's listener under load, and `service health` against a running server (no test runs the
   binary).
+- **Fixed after the push:** clippy had been run before `rust-version` was raised; at 1.98 its lint asks for the new
+  `Option::map_or_default`, so CI failed. The 41 calls are rewritten by `cargo clippy --fix`, with the same behaviour.
 
 ### 17 November (benefit classification and validation: NC-1 slice 11, part g)
 
@@ -34,8 +44,6 @@ It is pre-1.0; the first release cut from the root release workflow is
   "Benefit classification and validation"; test `tests/e2e/plan-benefits.spec.ts` (five, with Welsh and axe).
 - **Not done:** evidence attachments. **Not verified:** against a real service; the translations are machine-written
   and unreviewed.
-- **Fixed after the push:** clippy had been run before `rust-version` was raised; at 1.98 its lint asks for the new
-  `Option::map_or_default`, so CI failed. The 41 calls are rewritten by `cargo clippy --fix`, with the same behaviour.
 
 ### 17 November (a programme's project buffer: NC-1 slice 11, part f)
 

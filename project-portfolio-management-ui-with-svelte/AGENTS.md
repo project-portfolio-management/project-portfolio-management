@@ -205,6 +205,7 @@ the Status note above).
 | Funding sources (`/funding`) | `GET / POST /api/funding-sources` · `PUT …/{pid}` · `PUT /api/plans/{pid}/budget-lines/{line}/funding-source` · `GET /api/portfolio-money?fy=&combine_classes=` · `GET /api/plans/{pid}/budget-lines` · `GET /api/plans` |
 | Ledger writes (`/ledger`, `LedgerWrites.svelte`) | `POST /api/funding-allocations` · `PUT /api/plans/{pid}/budget-lines/{line}/funding-allocation` · `GET / PUT /api/cost-codes` · `POST /api/ledger/reconcile` (CSV text) · `GET /api/funding-sources` · `GET /api/plans/{pid}/budget-lines` |
 | Benefit classification and validation (`/plans/[pid]/benefits`) | `PUT /api/plans/{pid}/benefits/{benefit}/classification` · `GET / POST …/validations` · `GET /api/plans/{pid}/benefits` · `GET /api/kpis?plan=` |
+| Skill pool writes (`/skill-pools`, `SkillPoolWrites.svelte`) | `POST /api/skill-pools` · `PUT /api/skill-pools/{pid}` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

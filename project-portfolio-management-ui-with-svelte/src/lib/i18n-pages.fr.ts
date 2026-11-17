@@ -6074,6 +6074,37 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.skill_pools.see_heatmap": "Voir la carte de chaleur de la capacité",
   "p.skill_pools.withdrawing":
     "Chiffres de demande en cours de retrait du vivier du service des effectifs auquel il était relié : {n}.",
+  "p.skill_pools.add_heading": "Ajouter un vivier",
+  "p.skill_pools.add_says":
+    "Un vivier regroupe des rôles et des compétences, pour que la carte de chaleur des capacités compte une seule fois leur demande et leur offre. Un rôle ou une compétence est dans un vivier au plus.",
+  "p.skill_pools.add": "Ajouter le vivier",
+  "p.skill_pools.added": "Vivier {name} ajouté.",
+  "p.skill_pools.choose_pool": "Choisissez un vivier",
+  "p.skill_pools.clash_item": "{value} (dans {pool})",
+  "p.skill_pools.conflict_members":
+    "Un vivier porte déjà ce nom, ou l'un de ces rôles ou compétences est déjà dans un autre vivier.",
+  "p.skill_pools.could_not_add": "Le vivier n'a pas été ajouté.",
+  "p.skill_pools.f_name": "Nom du vivier",
+  "p.skill_pools.f_pool": "Vivier",
+  "p.skill_pools.f_roles": "Rôles",
+  "p.skill_pools.f_skills": "Compétences",
+  "p.skill_pools.list_says":
+    "Séparez les rôles ou compétences par des virgules ou des retours à la ligne ; une répétition est gardée une fois.",
+  "p.skill_pools.members_heading": "Modifier un vivier",
+  "p.skill_pools.members_saved":
+    "Les rôles et compétences de {name} sont enregistrés.",
+  "p.skill_pools.problem_clash": "Déjà dans un autre vivier : {list}.",
+  "p.skill_pools.problem_name_taken": "Un vivier porte déjà ce nom.",
+  "p.skill_pools.problem_name":
+    "Le nom d'un vivier compte de 2 à 120 caractères.",
+  "p.skill_pools.restore": "Rétablir le vivier",
+  "p.skill_pools.restored": "Vivier {name} rétabli.",
+  "p.skill_pools.retire_says":
+    "Un vivier retiré reste dans l'historique et garde ses rôles et compétences ; le rétablir le compte de nouveau.",
+  "p.skill_pools.retire": "Retirer le vivier",
+  "p.skill_pools.retired_done": "Vivier {name} retiré.",
+  "p.skill_pools.save_members": "Enregistrer les rôles et compétences",
+  "p.skill_pools.unchanged": "Rien n'a changé ; rien n'a été envoyé.",
   "p.capacity_heatmap.set_commitment": "Définir un engagement de capacité",
   "p.commitments.title": "Engagements de capacité — PPM",
   "p.commitments.h1": "Engagements de capacité",

@@ -771,6 +771,21 @@ describe("PpmClient benefit classification and validation (NC-1 slice 11, DP-9)"
   });
 });
 
+describe("PpmClient skill pool writes (NC-1 slice 11, DP-10)", () => {
+  it("adds a pool and changes one", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.createSkillPool({
+      name: "Data",
+      roles: ["Data engineer"],
+      skills: [],
+    });
+    await ppm.updateSkillPool("p1", { active: false });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual(["POST /api/skill-pools", "PUT /api/skill-pools/p1"]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

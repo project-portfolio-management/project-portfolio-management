@@ -6074,6 +6074,38 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.skill_pools.see_heatmap": "Kapazitäts-Heatmap ansehen",
   "p.skill_pools.withdrawing":
     "Bedarfswerte, die aus dem zuvor verknüpften Pool im Personaldienst zurückgezogen werden: {n}.",
+  "p.skill_pools.add_heading": "Pool hinzufügen",
+  "p.skill_pools.add_says":
+    "Ein Pool fasst Ressourcenrollen und Fähigkeiten zusammen, damit die Kapazitäts-Heatmap ihren Bedarf und ihr Angebot einmal zählt. Eine Rolle oder Fähigkeit gehört zu höchstens einem Pool.",
+  "p.skill_pools.add": "Pool hinzufügen",
+  "p.skill_pools.added": "Pool {name} hinzugefügt.",
+  "p.skill_pools.choose_pool": "Pool wählen",
+  "p.skill_pools.clash_item": "{value} (im Pool {pool})",
+  "p.skill_pools.conflict_members":
+    "Ein Pool mit diesem Namen existiert, oder eine dieser Rollen oder Fähigkeiten gehört schon zu einem anderen Pool.",
+  "p.skill_pools.could_not_add": "Der Pool wurde nicht hinzugefügt.",
+  "p.skill_pools.f_name": "Name des Pools",
+  "p.skill_pools.f_pool": "Gewählter Pool",
+  "p.skill_pools.f_roles": "Rollen",
+  "p.skill_pools.f_skills": "Fähigkeiten",
+  "p.skill_pools.list_says":
+    "Trennen Sie Rollen oder Fähigkeiten mit Kommas oder Zeilenumbrüchen; eine Wiederholung zählt einmal.",
+  "p.skill_pools.members_heading": "Pool ändern",
+  "p.skill_pools.members_saved":
+    "Rollen und Fähigkeiten von {name} sind gespeichert.",
+  "p.skill_pools.problem_clash": "Schon in einem anderen Pool: {list}.",
+  "p.skill_pools.problem_name_taken":
+    "Ein Pool mit diesem Namen existiert schon.",
+  "p.skill_pools.problem_name": "Der Name eines Pools hat 2 bis 120 Zeichen.",
+  "p.skill_pools.restore": "Pool wiederherstellen",
+  "p.skill_pools.restored": "Pool {name} wiederhergestellt.",
+  "p.skill_pools.retire_says":
+    "Ein stillgelegter Pool bleibt erfasst und behält seine Rollen und Fähigkeiten; wiederhergestellt zählt er wieder.",
+  "p.skill_pools.retire": "Pool stilllegen",
+  "p.skill_pools.retired_done": "Pool {name} stillgelegt.",
+  "p.skill_pools.save_members": "Rollen und Fähigkeiten speichern",
+  "p.skill_pools.unchanged":
+    "Nichts wurde geändert, daher wurde nichts gesendet.",
   "p.capacity_heatmap.set_commitment": "Kapazitätszusage festlegen",
   "p.commitments.title": "Kapazitätszusagen — PPM",
   "p.commitments.h1": "Kapazitätszusagen",

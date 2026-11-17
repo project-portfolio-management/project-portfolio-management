@@ -4209,6 +4209,63 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.plan_export.download": "MSPDI-Datei herunterladen",
   "p.plan_export.to_import":
     "Stattdessen eine MSPDI-Datei in diesen Plan holen",
+  "p.director_pack.actions_heading": "Prüfen, herausgeben oder neu herausgeben",
+  "p.director_pack.aud_board": "Vorstand",
+  "p.director_pack.aud_escalation_board": "Eskalationsgremium",
+  "p.director_pack.aud_executive": "Geschäftsleitung",
+  "p.director_pack.aud_org": "Organisation: {name}",
+  "p.director_pack.aud_partner": "Partner",
+  "p.director_pack.choose_audience": "Zielgruppe wählen",
+  "p.director_pack.conflict_draft":
+    "Für diesen Zeitraum gibt es schon ein Paket für diese Zielgruppe. Öffnen Sie es: Geben Sie den Entwurf heraus oder geben Sie es mit einer Änderungsnotiz neu heraus.",
+  "p.director_pack.conflict_issue":
+    "Dieses Paket kann jetzt nicht herausgegeben werden: Es ist schon herausgegeben, oder es ist ein geplanter Entwurf, den das Portfoliobüro noch nicht geprüft hat.",
+  "p.director_pack.conflict_reissue":
+    "Nur die neueste herausgegebene Version wird neu herausgegeben, und es gibt schon eine spätere Version.",
+  "p.director_pack.conflict_review":
+    "Dieser Entwurf wurde schon geprüft, oder er ist kein Entwurf mehr.",
+  "p.director_pack.could_not_act": "Die Änderung wurde nicht vorgenommen.",
+  "p.director_pack.could_not_draft": "Das Paket wurde nicht entworfen.",
+  "p.director_pack.cut_off_says":
+    "Leer lassen für jetzt. Das Paket liest die Pläne so, wie sie zum Stichzeitpunkt waren; er darf nicht in der Zukunft und nicht mehr als 400 Tage zurück liegen.",
+  "p.director_pack.draft_heading": "Paket entwerfen",
+  "p.director_pack.draft_says":
+    "Der Entwurf liest die Pläne, die Sie teilen dürfen, zum Stichzeitpunkt und speichert das Ergebnis als Entwurf. Die Zielgruppe erhält nichts, bis jemand es herausgibt.",
+  "p.director_pack.draft": "Paket entwerfen",
+  "p.director_pack.f_audience": "Zielgruppe",
+  "p.director_pack.f_change_note": "Änderungsnotiz",
+  "p.director_pack.f_cut_off": "Stichzeitpunkt (optional)",
+  "p.director_pack.f_period": "Zeitraum (Monat)",
+  "p.director_pack.from_schedule": "vom Monatsplan erstellt",
+  "p.director_pack.is_reviewed": "Vom Portfoliobüro geprüft.",
+  "p.director_pack.is_stale":
+    "veraltet: sein Stichzeitpunkt liegt vor dem Ende seines Zeitraums",
+  "p.director_pack.issue_says":
+    "Die Herausgabe friert das Paket ein und benachrichtigt seine Zielgruppe. Sie lässt sich nicht zurücknehmen; eine spätere Änderung ist eine Neuherausgabe.",
+  "p.director_pack.issue_waits":
+    "Der Monatsplan hat diesen Entwurf erstellt; das Portfoliobüro prüft ihn, bevor er herausgegeben werden kann.",
+  "p.director_pack.issue": "Paket herausgeben",
+  "p.director_pack.issued_done": "Herausgegeben.",
+  "p.director_pack.not_reviewed": "Noch nicht geprüft.",
+  "p.director_pack.problem_audience": "Wählen Sie eine Zielgruppe.",
+  "p.director_pack.problem_cut_off_bad":
+    "Geben Sie den Stichzeitpunkt als Datum und Uhrzeit an.",
+  "p.director_pack.problem_cut_off_future":
+    "Der Stichzeitpunkt darf nicht in der Zukunft liegen.",
+  "p.director_pack.problem_cut_off_old":
+    "Der Stichzeitpunkt darf nicht mehr als 400 Tage zurückliegen.",
+  "p.director_pack.problem_note":
+    "Begründen Sie die neue Version mit mindestens {min} Zeichen.",
+  "p.director_pack.problem_period": "Wählen Sie den Zeitraum als Monat.",
+  "p.director_pack.refused_edit":
+    "Pakete entwerfen, prüfen und neu herausgeben erfordert Bearbeitungsrechte für Direktorenpakete.",
+  "p.director_pack.refused_issue":
+    "Pakete herausgeben erfordert Herausgaberechte für Direktorenpakete.",
+  "p.director_pack.reissue_says":
+    "Die Neuherausgabe entwirft die nächste Version mit Ihrer Notiz; diese Version bleibt unverändert lesbar. Schreiben Sie mindestens {min} Zeichen.",
+  "p.director_pack.reissue": "Mit Änderungsnotiz neu herausgeben",
+  "p.director_pack.review": "Als geprüft markieren",
+  "p.director_pack.reviewed_done": "Als geprüft markiert.",
   "p.plans.pid.modules_failed":
     "Welche Werkzeuge dieser Plan verwendet, konnte nicht geprüft werden, daher werden alle Werkzeuge aufgeführt.",
   "p._layout_svelte.handling_mark": "Kennzeichnung: {mark}",

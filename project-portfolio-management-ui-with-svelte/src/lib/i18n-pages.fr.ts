@@ -4206,6 +4206,63 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Le fichier a été relu par l'importateur de ce service, mais pas encore ouvert dans Microsoft Project lui-même.",
   "p.plan_export.download": "Télécharger le fichier MSPDI",
   "p.plan_export.to_import": "Importer plutôt un fichier MSPDI dans ce plan",
+  "p.director_pack.actions_heading": "Relire, émettre ou réémettre",
+  "p.director_pack.aud_board": "Conseil",
+  "p.director_pack.aud_escalation_board": "Comité d'escalade",
+  "p.director_pack.aud_executive": "Direction",
+  "p.director_pack.aud_org": "Organisation : {name}",
+  "p.director_pack.aud_partner": "Partenaires",
+  "p.director_pack.choose_audience": "Choisissez un public",
+  "p.director_pack.conflict_draft":
+    "Cette période a déjà un dossier pour ce public. Ouvrez-le : émettez son brouillon, ou réémettez-le avec une note de modification.",
+  "p.director_pack.conflict_issue":
+    "Ce dossier ne peut pas être émis maintenant : il est déjà émis, ou c'est un brouillon planifié que le bureau du portefeuille n'a pas relu.",
+  "p.director_pack.conflict_reissue":
+    "Seule la dernière version émise est réémise, et une version plus récente existe déjà.",
+  "p.director_pack.conflict_review":
+    "Ce brouillon a déjà été relu, ou ce n'est plus un brouillon.",
+  "p.director_pack.could_not_act": "La modification n'a pas été faite.",
+  "p.director_pack.could_not_draft": "Le dossier n'a pas été rédigé.",
+  "p.director_pack.cut_off_says":
+    "Laissez vide pour utiliser maintenant. Le dossier lit les plans tels qu'ils étaient à la date d'arrêté ; elle ne peut être ni future ni antérieure de plus de 400 jours.",
+  "p.director_pack.draft_heading": "Rédiger un dossier",
+  "p.director_pack.draft_says":
+    "La rédaction lit les plans que vous pouvez partager tels qu'ils sont à la date d'arrêté et garde le résultat comme brouillon. Rien n'est envoyé au public avant qu'une personne ne l'émette.",
+  "p.director_pack.draft": "Rédiger le dossier",
+  "p.director_pack.f_audience": "Public",
+  "p.director_pack.f_change_note": "Note de modification",
+  "p.director_pack.f_cut_off": "Date d'arrêté (facultative)",
+  "p.director_pack.f_period": "Période (mois)",
+  "p.director_pack.from_schedule": "fait par la planification mensuelle",
+  "p.director_pack.is_reviewed": "Relu par le bureau du portefeuille.",
+  "p.director_pack.is_stale":
+    "périmé : sa date d'arrêté est avant la fin de sa période",
+  "p.director_pack.issue_says":
+    "L'émission fige le dossier et prévient son public. Elle ne peut pas être annulée ; une modification ultérieure est une réémission.",
+  "p.director_pack.issue_waits":
+    "La planification mensuelle a fait ce brouillon : le bureau du portefeuille le relit avant qu'il puisse être émis.",
+  "p.director_pack.issue": "Émettre le dossier",
+  "p.director_pack.issued_done": "Émis.",
+  "p.director_pack.not_reviewed": "Pas encore relu.",
+  "p.director_pack.problem_audience": "Choisissez un public.",
+  "p.director_pack.problem_cut_off_bad":
+    "Écrivez la date d'arrêté comme une date et une heure.",
+  "p.director_pack.problem_cut_off_future":
+    "La date d'arrêté ne peut pas être dans le futur.",
+  "p.director_pack.problem_cut_off_old":
+    "La date d'arrêté ne peut pas remonter à plus de 400 jours.",
+  "p.director_pack.problem_note":
+    "Dites pourquoi il y a une nouvelle version, en au moins {min} caractères.",
+  "p.director_pack.problem_period": "Choisissez la période comme un mois.",
+  "p.director_pack.refused_edit":
+    "Rédiger, relire et réémettre un dossier demande l'accès d'éditeur des dossiers de direction.",
+  "p.director_pack.refused_issue":
+    "Émettre un dossier demande l'accès d'émetteur des dossiers de direction.",
+  "p.director_pack.reissue_says":
+    "La réémission rédige la version suivante avec votre note ; cette version reste lisible telle quelle. Écrivez au moins {min} caractères.",
+  "p.director_pack.reissue": "Réémettre avec une note de modification",
+  "p.director_pack.review": "Marquer comme relu",
+  "p.director_pack.reviewed_done": "Marqué comme relu.",
   "p.plans.pid.modules_failed":
     "Les outils utilisés par ce plan n'ont pas pu être vérifiés ; tous les outils sont donc listés.",
   "p._layout_svelte.handling_mark": "Marque de traitement : {mark}",

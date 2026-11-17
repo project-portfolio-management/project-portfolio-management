@@ -196,6 +196,7 @@ the Status note above).
 | Strategy canvases (`/canvases`, `/plans/[pid]/canvases`, `/canvases/[pid]`, `CanvasList.svelte`) | `GET /api/canvas-templates` · `GET / POST /api/canvases` (`?plan=`) · `GET / DELETE /api/canvases/{pid}` · `POST …/items` · `PUT / DELETE …/items/{item}` · `POST …/items/{item}/promote` |
 | Plan templates (`/plan-templates`, `/plan-templates/[pid]`, `/plans/[pid]/save-as-template`) | `GET /api/plan-templates` · `GET / DELETE /api/plan-templates/{pid}` · `POST /api/plans/{pid}/save-as-template` · `POST /api/plans/from-template/{tpl}` · `GET /api/plans` (the parent picker) |
 | Export to Microsoft Project (`/plans/[pid]/export`) | `GET /api/plans/{pid}/export/mspdi` (a link, never drawn in the page) |
+| Director pack drafting and issue (`/director-packs`, `/director-packs/[pid]`) | `POST /api/director-packs` · `POST …/{pid}/review` · `POST …/{pid}/issue` · `POST …/{pid}/reissue` · `GET /api/organizations` (organizations as audiences) |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

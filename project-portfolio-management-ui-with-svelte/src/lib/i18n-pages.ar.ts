@@ -3978,6 +3978,61 @@ export const PAGES_AR: Record<PageKey, string> = {
     "قرأ مستورد هذه الخدمة الملف مرة أخرى، لكنه لم يُفتح بعد في Microsoft Project نفسه.",
   "p.plan_export.download": "تنزيل ملف MSPDI",
   "p.plan_export.to_import": "إحضار ملف MSPDI إلى هذه الخطة بدلًا من ذلك",
+  "p.director_pack.actions_heading": "المراجعة أو الإصدار أو إعادة الإصدار",
+  "p.director_pack.aud_board": "المجلس",
+  "p.director_pack.aud_escalation_board": "مجلس التصعيد",
+  "p.director_pack.aud_executive": "الإدارة التنفيذية",
+  "p.director_pack.aud_org": "المنظمة: {name}",
+  "p.director_pack.aud_partner": "الشركاء",
+  "p.director_pack.choose_audience": "اختر جمهورًا",
+  "p.director_pack.conflict_draft":
+    "لهذه الفترة حزمة لذلك الجمهور بالفعل. افتحها: أصدر مسودتها، أو أعد إصدارها مع ملاحظة تغيير.",
+  "p.director_pack.conflict_issue":
+    "لا يمكن إصدار هذه الحزمة الآن: إنها صادرة بالفعل، أو هي مسودة مجدولة لم يراجعها مكتب المحفظة.",
+  "p.director_pack.conflict_reissue":
+    "لا يُعاد إصدار إلا آخر نسخة صادرة، وتوجد نسخة أحدث بالفعل.",
+  "p.director_pack.conflict_review":
+    "رُوجعت هذه المسودة بالفعل، أو لم تعد مسودة.",
+  "p.director_pack.could_not_act": "لم يُجرَ التغيير.",
+  "p.director_pack.could_not_draft": "لم تُصَغ مسودة الحزمة.",
+  "p.director_pack.cut_off_says":
+    "اتركه فارغًا لاستخدام الوقت الحالي. تقرأ الحزمة الخطط كما كانت عند تاريخ القطع؛ ولا يجوز أن يكون في المستقبل ولا أقدم من 400 يوم.",
+  "p.director_pack.draft_heading": "صياغة حزمة",
+  "p.director_pack.draft_says":
+    "تقرأ الصياغة الخطط التي يمكنك مشاركتها كما هي عند تاريخ القطع وتحفظ النتيجة مسودة. لا يُرسل شيء إلى الجمهور حتى يصدرها أحد.",
+  "p.director_pack.draft": "صياغة الحزمة",
+  "p.director_pack.f_audience": "الجمهور",
+  "p.director_pack.f_change_note": "ملاحظة التغيير",
+  "p.director_pack.f_cut_off": "تاريخ القطع (اختياري)",
+  "p.director_pack.f_period": "الفترة (شهر)",
+  "p.director_pack.from_schedule": "أنشأها الجدول الشهري",
+  "p.director_pack.is_reviewed": "روجعت من مكتب المحفظة.",
+  "p.director_pack.is_stale": "قديمة: تاريخ قطعها قبل نهاية فترتها",
+  "p.director_pack.issue_says":
+    "يجمّد الإصدار الحزمة ويُعلم جمهورها. لا يمكن التراجع عنه؛ وأي تغيير لاحق إعادة إصدار.",
+  "p.director_pack.issue_waits":
+    "أنشأ الجدول الشهري هذه المسودة، لذا يراجعها مكتب المحفظة قبل أن يمكن إصدارها.",
+  "p.director_pack.issue": "إصدار الحزمة",
+  "p.director_pack.issued_done": "صدرت.",
+  "p.director_pack.not_reviewed": "لم تُراجع بعد.",
+  "p.director_pack.problem_audience": "اختر جمهورًا.",
+  "p.director_pack.problem_cut_off_bad": "اكتب تاريخ القطع تاريخًا ووقتًا.",
+  "p.director_pack.problem_cut_off_future":
+    "لا يجوز أن يكون تاريخ القطع في المستقبل.",
+  "p.director_pack.problem_cut_off_old":
+    "لا يجوز أن يكون تاريخ القطع أقدم من 400 يوم.",
+  "p.director_pack.problem_note":
+    "اذكر سبب وجود نسخة جديدة، في {min} حرفًا على الأقل.",
+  "p.director_pack.problem_period": "اختر الفترة شهرًا.",
+  "p.director_pack.refused_edit":
+    "تحتاج صياغة الحزمة ومراجعتها وإعادة إصدارها إلى صلاحية محرر حزم المديرين.",
+  "p.director_pack.refused_issue":
+    "يحتاج إصدار الحزمة إلى صلاحية مُصدر حزم المديرين.",
+  "p.director_pack.reissue_says":
+    "تصوغ إعادة الإصدار النسخة التالية بملاحظتك؛ وتبقى هذه النسخة مقروءة كما هي. اكتب {min} حرفًا على الأقل.",
+  "p.director_pack.reissue": "إعادة الإصدار مع ملاحظة تغيير",
+  "p.director_pack.review": "وضع علامة مراجَعة",
+  "p.director_pack.reviewed_done": "وُضعت علامة مراجَعة.",
   "p.plans.pid.modules_failed":
     "تعذّر التحقق من الأدوات التي تستخدمها هذه الخطة، لذا تُدرج كل الأدوات.",
   "p._layout_svelte.handling_mark": "علامة التداول: {mark}",

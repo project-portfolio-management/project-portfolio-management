@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (director packs drafted and issued on screen: NC-1 slice 11, first part)
+
+- **UI: director packs can be drafted, reviewed, issued and reissued on screen (DP-1, DP-12).** `/director-packs`
+  drafts a pack for a month and an audience; `/director-packs/[pid]` reviews a draft, issues it (a draft the monthly
+  schedule made waits for its review) and reissues an issued pack with a change note. A refusal names the right the
+  action needs. UI spec, "Director pack drafting and issue"; test `tests/e2e/director-pack-actions.spec.ts` (six, with
+  Welsh and axe).
+- **Counted:** of the 51 write routes the DP- and EX- items added, 13 had a page and 38 had none. `tasks.md` lists
+  them in 13 parts under NC-1; this is part (a).
+- **Not done:** the pack schedules and subscriptions (part b, next); discarding a draft (the service has no route).
+  **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (export to Microsoft Project: NC-1 slice 10)
 
 - **UI: `/plans/[pid]/export` offers a plan as an MSPDI file (PJ-10).** Linked from the plan page beside Import, it

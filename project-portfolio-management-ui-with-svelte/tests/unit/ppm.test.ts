@@ -580,6 +580,24 @@ describe("PpmClient plan template paths (NC-1 slice 9, LT-2)", () => {
   });
 });
 
+describe("PpmClient director pack writes (NC-1 slice 11, DP-1, DP-12)", () => {
+  it("drafts, reviews, issues and reissues", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.draftDirectorPack({ period: "2026-11", audience: "board" });
+    await ppm.reviewDirectorPack("p1");
+    await ppm.issueDirectorPack("p1");
+    await ppm.reissueDirectorPack("p1", "Figures corrected.");
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "POST /api/director-packs",
+      "POST /api/director-packs/p1/review",
+      "POST /api/director-packs/p1/issue",
+      "POST /api/director-packs/p1/reissue",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

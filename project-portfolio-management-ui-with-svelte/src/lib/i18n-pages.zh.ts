@@ -3830,6 +3830,56 @@ export const PAGES_ZH: Record<PageKey, string> = {
     "此文件已由本服务自己的导入器读回，但尚未在 Microsoft Project 中实际打开过。",
   "p.plan_export.download": "下载 MSPDI 文件",
   "p.plan_export.to_import": "改为将 MSPDI 文件导入此计划",
+  "p.director_pack.actions_heading": "审阅、发布或重新发布",
+  "p.director_pack.aud_board": "董事会",
+  "p.director_pack.aud_escalation_board": "升级委员会",
+  "p.director_pack.aud_executive": "高管",
+  "p.director_pack.aud_org": "组织：{name}",
+  "p.director_pack.aud_partner": "合作伙伴",
+  "p.director_pack.choose_audience": "选择受众",
+  "p.director_pack.conflict_draft":
+    "此期间已有面向该受众的报告包。请打开它：发布其草稿，或附上变更说明重新发布。",
+  "p.director_pack.conflict_issue":
+    "此报告包现在无法发布：它已经发布，或者是组合办公室尚未审阅的计划草稿。",
+  "p.director_pack.conflict_reissue":
+    "只能重新发布最新的已发布版本，而更新的版本已经存在。",
+  "p.director_pack.conflict_review": "此草稿已经审阅过，或已不再是草稿。",
+  "p.director_pack.could_not_act": "更改未完成。",
+  "p.director_pack.could_not_draft": "报告包草稿未生成。",
+  "p.director_pack.cut_off_says":
+    "留空则使用当前时间。报告包按截止时间时的计划状态读取；截止时间不能在将来，也不能早于 400 天前。",
+  "p.director_pack.draft_heading": "起草报告包",
+  "p.director_pack.draft_says":
+    "起草会按截止时间读取你可以共享的计划，并将结果保存为草稿。在有人发布之前，不会向受众发送任何内容。",
+  "p.director_pack.draft": "起草报告包",
+  "p.director_pack.f_audience": "受众",
+  "p.director_pack.f_change_note": "变更说明",
+  "p.director_pack.f_cut_off": "截止时间（可选）",
+  "p.director_pack.f_period": "期间（月份）",
+  "p.director_pack.from_schedule": "由每月计划生成",
+  "p.director_pack.is_reviewed": "已由组合办公室审阅。",
+  "p.director_pack.is_stale": "已过时：其截止时间早于期间结束",
+  "p.director_pack.issue_says":
+    "发布会冻结报告包并通知其受众。发布无法撤销；之后的更改需要重新发布。",
+  "p.director_pack.issue_waits":
+    "此草稿由每月计划生成，因此需要组合办公室审阅后才能发布。",
+  "p.director_pack.issue": "发布报告包",
+  "p.director_pack.issued_done": "已发布。",
+  "p.director_pack.not_reviewed": "尚未审阅。",
+  "p.director_pack.problem_audience": "请选择受众。",
+  "p.director_pack.problem_cut_off_bad": "请以日期和时间填写截止时间。",
+  "p.director_pack.problem_cut_off_future": "截止时间不能在将来。",
+  "p.director_pack.problem_cut_off_old": "截止时间不能早于 400 天前。",
+  "p.director_pack.problem_note": "请说明为何有新版本，至少 {min} 个字符。",
+  "p.director_pack.problem_period": "请选择期间（月份）。",
+  "p.director_pack.refused_edit":
+    "起草、审阅和重新发布报告包需要董事报告包编辑权限。",
+  "p.director_pack.refused_issue": "发布报告包需要董事报告包发布权限。",
+  "p.director_pack.reissue_says":
+    "重新发布会以你的说明起草下一个版本；此版本保持原样可读。请至少写 {min} 个字符。",
+  "p.director_pack.reissue": "附变更说明重新发布",
+  "p.director_pack.review": "标记为已审阅",
+  "p.director_pack.reviewed_done": "已标记为已审阅。",
   "p.plans.pid.modules_failed":
     "无法检查本计划使用了哪些工具，因此列出所有工具。",
   "p._layout_svelte.handling_mark": "处理标记：{mark}",

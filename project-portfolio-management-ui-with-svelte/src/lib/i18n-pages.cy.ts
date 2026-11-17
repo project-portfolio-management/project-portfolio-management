@@ -4146,6 +4146,63 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae mewnforiwr y gwasanaeth hwn wedi darllen y ffeil yn ôl, ond nid yw wedi'i hagor yn Microsoft Project ei hun eto.",
   "p.plan_export.download": "Lawrlwytho'r ffeil MSPDI",
   "p.plan_export.to_import": "Dod â ffeil MSPDI i'r cynllun hwn yn lle hynny",
+  "p.director_pack.actions_heading": "Adolygu, cyhoeddi neu ailgyhoeddi",
+  "p.director_pack.aud_board": "Bwrdd",
+  "p.director_pack.aud_escalation_board": "Bwrdd uwchgyfeirio",
+  "p.director_pack.aud_executive": "Gweithredol",
+  "p.director_pack.aud_org": "Sefydliad: {name}",
+  "p.director_pack.aud_partner": "Partneriaid",
+  "p.director_pack.choose_audience": "Dewiswch gynulleidfa",
+  "p.director_pack.conflict_draft":
+    "Mae pecyn eisoes ar gyfer y gynulleidfa honno yn y cyfnod hwn. Agorwch ef: cyhoeddwch ei ddrafft, neu ei ailgyhoeddi gyda nodyn newid.",
+  "p.director_pack.conflict_issue":
+    "Ni ellir cyhoeddi'r pecyn hwn nawr: mae eisoes wedi'i gyhoeddi, neu mae'n ddrafft wedi'i amserlennu nad yw'r swyddfa bortffolio wedi'i adolygu.",
+  "p.director_pack.conflict_reissue":
+    "Dim ond y fersiwn ddiweddaraf a gyhoeddwyd sy'n cael ei hailgyhoeddi, ac mae fersiwn ddiweddarach yn bodoli eisoes.",
+  "p.director_pack.conflict_review":
+    "Mae'r drafft hwn eisoes wedi'i adolygu, neu nid yw'n ddrafft mwyach.",
+  "p.director_pack.could_not_act": "Ni wnaed y newid.",
+  "p.director_pack.could_not_draft": "Ni ddrafftiwyd y pecyn.",
+  "p.director_pack.cut_off_says":
+    "Gadewch yn wag i ddefnyddio'r amser nawr. Mae'r pecyn yn darllen y cynlluniau fel yr oeddent ar y dyddiad terfyn; ni all fod yn y dyfodol na mwy na 400 diwrnod yn ôl.",
+  "p.director_pack.draft_heading": "Drafftio pecyn",
+  "p.director_pack.draft_says":
+    "Mae drafftio'n darllen y cynlluniau y cewch eu rhannu fel y maent ar y dyddiad terfyn ac yn cadw'r canlyniad fel drafft. Nid anfonir dim i'r gynulleidfa nes bod rhywun yn ei gyhoeddi.",
+  "p.director_pack.draft": "Drafftio'r pecyn",
+  "p.director_pack.f_audience": "Cynulleidfa",
+  "p.director_pack.f_change_note": "Nodyn newid",
+  "p.director_pack.f_cut_off": "Dyddiad terfyn (dewisol)",
+  "p.director_pack.f_period": "Cyfnod (mis)",
+  "p.director_pack.from_schedule": "wedi'i wneud gan yr amserlen fisol",
+  "p.director_pack.is_reviewed": "Wedi'i adolygu gan y swyddfa bortffolio.",
+  "p.director_pack.is_stale":
+    "hen: mae ei ddyddiad terfyn cyn diwedd ei gyfnod",
+  "p.director_pack.issue_says":
+    "Mae cyhoeddi'n rhewi'r pecyn ac yn dweud wrth ei gynulleidfa. Ni ellir ei ddadwneud; ailgyhoeddiad yw newid diweddarach.",
+  "p.director_pack.issue_waits":
+    "Gwnaeth yr amserlen fisol y drafft hwn, felly mae'r swyddfa bortffolio'n ei adolygu cyn y gellir ei gyhoeddi.",
+  "p.director_pack.issue": "Cyhoeddi'r pecyn",
+  "p.director_pack.issued_done": "Wedi'i gyhoeddi.",
+  "p.director_pack.not_reviewed": "Heb ei adolygu eto.",
+  "p.director_pack.problem_audience": "Dewiswch gynulleidfa.",
+  "p.director_pack.problem_cut_off_bad":
+    "Ysgrifennwch y dyddiad terfyn fel dyddiad ac amser.",
+  "p.director_pack.problem_cut_off_future":
+    "Ni all y dyddiad terfyn fod yn y dyfodol.",
+  "p.director_pack.problem_cut_off_old":
+    "Ni all y dyddiad terfyn fod yn fwy na 400 diwrnod yn ôl.",
+  "p.director_pack.problem_note":
+    "Dywedwch pam mae fersiwn newydd, mewn o leiaf {min} nod.",
+  "p.director_pack.problem_period": "Dewiswch y cyfnod fel mis.",
+  "p.director_pack.refused_edit":
+    "Mae angen mynediad golygydd pecyn cyfarwyddwyr i ddrafftio, adolygu ac ailgyhoeddi pecyn.",
+  "p.director_pack.refused_issue":
+    "Mae angen mynediad cyhoeddwr pecyn cyfarwyddwyr i gyhoeddi pecyn.",
+  "p.director_pack.reissue_says":
+    "Mae ailgyhoeddi'n drafftio'r fersiwn nesaf gyda'ch nodyn; mae'r fersiwn hon yn aros yn ddarllenadwy fel y mae. Ysgrifennwch o leiaf {min} nod.",
+  "p.director_pack.reissue": "Ailgyhoeddi gyda nodyn newid",
+  "p.director_pack.review": "Nodi ei fod wedi'i adolygu",
+  "p.director_pack.reviewed_done": "Wedi'i nodi fel wedi'i adolygu.",
   "p.plans.pid.modules_failed":
     "Nid oedd modd gwirio pa offer y mae'r cynllun hwn yn eu defnyddio, felly rhestrir pob offeryn.",
   "p._layout_svelte.handling_mark": "Marc trin: {mark}",

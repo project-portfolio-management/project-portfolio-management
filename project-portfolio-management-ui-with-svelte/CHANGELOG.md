@@ -9,6 +9,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — drafting, reviewing, issuing and reissuing director packs (NC-1 slice 11, DP-1, DP-12, 2026-11-17)
+
+- `/director-packs` drafts a pack for a month and an audience (the service's four and each active organization), with
+  an optional cut-off, saying every problem first and opening the new draft. `/director-packs/[pid]` reviews a draft,
+  issues it (disabled, with the reason, for a scheduled draft not yet reviewed) and reissues an issued pack with a
+  change note of at least ten characters. A 403 names the right the action needs, and a 409 what it means for that
+  action. Four client methods; `DirectorPackMeta` gains `origin`, `reviewed`, `stale` and `covers_whole_period`, which
+  the service already sent; `src/lib/pack-actions.ts`; 41 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/pack-actions.test.ts`, the paths in `tests/unit/ppm.test.ts`,
+  `tests/e2e/director-pack-actions.spec.ts` (six, with Welsh and axe); `tests/e2e/director-packs.spec.ts` unchanged and
+  passing.
+- **Not done:** the monthly schedules, sweep and subscriptions; discarding a draft (no service route); audiences in
+  words in the existing list and heading. **Not verified:** against a real service.
+
 ### Added — export a plan to Microsoft Project (NC-1 slice 10, PJ-10, 2026-11-17)
 
 - `/plans/[pid]/export`, linked from the plan page beside Import: says what the MSPDI file carries and leaves out (as

@@ -161,6 +161,7 @@ import type {
   CanvasPromoteBody,
   CanvasTemplate,
   CanvasView,
+  DirectorPackDraftBody,
   InstantiateTemplateBody,
   InstantiatedTemplate,
   PlanTemplate,
@@ -743,6 +744,39 @@ export class PpmClient {
   /** One director pack with its frozen body. */
   directorPack(pid: string): Promise<DirectorPack> {
     return this.http.get(`/api/director-packs/${encodeURIComponent(pid)}`);
+  }
+  /**
+   * Draft the first version of a period's pack for an audience (DP-1): editors and issuers only (403); 409 when the
+   * period already has a pack for that audience; 422 for a bad period, audience or cut-off.
+   */
+  draftDirectorPack(body: DirectorPackDraftBody): Promise<DirectorPackMeta> {
+    return this.http.post("/api/director-packs", { body });
+  }
+  /** The portfolio office has looked over a draft (DP-12); needed before a scheduled draft is issued. Once; drafts only. */
+  reviewDirectorPack(pid: string): Promise<DirectorPackMeta> {
+    return this.http.post(
+      `/api/director-packs/${encodeURIComponent(pid)}/review`,
+      { body: {} },
+    );
+  }
+  /** Freeze a draft (DP-1): issuers only (403); 409 when already issued, or a scheduled draft not yet reviewed. */
+  issueDirectorPack(pid: string): Promise<DirectorPackMeta> {
+    return this.http.post(
+      `/api/director-packs/${encodeURIComponent(pid)}/issue`,
+      { body: {} },
+    );
+  }
+  /** Draft the next version of an issued pack with a change note of at least ten characters (DP-1); the latest only. */
+  reissueDirectorPack(
+    pid: string,
+    changeNote: string,
+  ): Promise<DirectorPackMeta> {
+    return this.http.post(
+      `/api/director-packs/${encodeURIComponent(pid)}/reissue`,
+      {
+        body: { change_note: changeNote },
+      },
+    );
   }
   /** The issues register across the plans the caller can read. */
   issues(

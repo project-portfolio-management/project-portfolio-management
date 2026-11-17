@@ -1472,6 +1472,20 @@ export interface DirectorPackMeta {
   supersedes_pid: string | null;
   issued_at: string | null;
   issued_by: string | null;
+  /** `manual`, or `scheduled` for a draft the monthly schedule made (DP-12), which must be reviewed before issue. */
+  origin?: string;
+  /** Whether the portfolio office has reviewed this draft (DP-12). */
+  reviewed?: boolean;
+  /** A draft whose cut-off is before the end of its period, past that end. */
+  stale?: boolean;
+  covers_whole_period?: boolean;
+}
+
+/** `POST /api/director-packs` body (DP-1): a period `YYYY-MM`, an audience, and a cut-off no later than now. */
+export interface DirectorPackDraftBody {
+  period: string;
+  audience: string;
+  cut_off?: string;
 }
 
 /** `GET /api/director-packs/{pid}`: the pack row and its frozen body, as stored. */

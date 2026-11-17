@@ -4199,6 +4199,63 @@ export const PAGES_ES: Record<PageKey, string> = {
     "El importador de este servicio ha vuelto a leer el archivo, pero aún no se ha abierto en el propio Microsoft Project.",
   "p.plan_export.download": "Descargar el archivo MSPDI",
   "p.plan_export.to_import": "Traer un archivo MSPDI a este plan en su lugar",
+  "p.director_pack.actions_heading": "Revisar, emitir o reemitir",
+  "p.director_pack.aud_board": "Consejo",
+  "p.director_pack.aud_escalation_board": "Comité de escalado",
+  "p.director_pack.aud_executive": "Dirección",
+  "p.director_pack.aud_org": "Organización: {name}",
+  "p.director_pack.aud_partner": "Socios",
+  "p.director_pack.choose_audience": "Elija una audiencia",
+  "p.director_pack.conflict_draft":
+    "Este periodo ya tiene un paquete para esa audiencia. Ábralo: emita su borrador o reemítalo con una nota de cambio.",
+  "p.director_pack.conflict_issue":
+    "Este paquete no se puede emitir ahora: ya está emitido, o es un borrador programado que la oficina de cartera no ha revisado.",
+  "p.director_pack.conflict_reissue":
+    "Solo se reemite la última versión emitida, y ya existe una versión posterior.",
+  "p.director_pack.conflict_review":
+    "Este borrador ya se ha revisado, o ya no es un borrador.",
+  "p.director_pack.could_not_act": "No se hizo el cambio.",
+  "p.director_pack.could_not_draft": "No se redactó el paquete.",
+  "p.director_pack.cut_off_says":
+    "Déjelo vacío para usar ahora. El paquete lee los planes tal como estaban en la fecha de corte; no puede ser futura ni de hace más de 400 días.",
+  "p.director_pack.draft_heading": "Redactar un paquete",
+  "p.director_pack.draft_says":
+    "Redactar lee los planes que usted puede compartir tal como están en la fecha de corte y guarda el resultado como borrador. No se envía nada a la audiencia hasta que alguien lo emita.",
+  "p.director_pack.draft": "Redactar el paquete",
+  "p.director_pack.f_audience": "Audiencia",
+  "p.director_pack.f_change_note": "Nota de cambio",
+  "p.director_pack.f_cut_off": "Fecha de corte (opcional)",
+  "p.director_pack.f_period": "Periodo (mes)",
+  "p.director_pack.from_schedule": "hecho por la programación mensual",
+  "p.director_pack.is_reviewed": "Revisado por la oficina de cartera.",
+  "p.director_pack.is_stale":
+    "desfasado: su fecha de corte es anterior al final de su periodo",
+  "p.director_pack.issue_says":
+    "Emitir congela el paquete y avisa a su audiencia. No se puede deshacer; un cambio posterior es una reemisión.",
+  "p.director_pack.issue_waits":
+    "La programación mensual hizo este borrador, así que la oficina de cartera lo revisa antes de que pueda emitirse.",
+  "p.director_pack.issue": "Emitir el paquete",
+  "p.director_pack.issued_done": "Emitido.",
+  "p.director_pack.not_reviewed": "Aún no revisado.",
+  "p.director_pack.problem_audience": "Elija una audiencia.",
+  "p.director_pack.problem_cut_off_bad":
+    "Escriba la fecha de corte como fecha y hora.",
+  "p.director_pack.problem_cut_off_future":
+    "La fecha de corte no puede ser futura.",
+  "p.director_pack.problem_cut_off_old":
+    "La fecha de corte no puede ser de hace más de 400 días.",
+  "p.director_pack.problem_note":
+    "Diga por qué hay una nueva versión, con al menos {min} caracteres.",
+  "p.director_pack.problem_period": "Elija el periodo como un mes.",
+  "p.director_pack.refused_edit":
+    "Redactar, revisar y reemitir un paquete necesita acceso de editor de paquetes de dirección.",
+  "p.director_pack.refused_issue":
+    "Emitir un paquete necesita acceso de emisor de paquetes de dirección.",
+  "p.director_pack.reissue_says":
+    "Reemitir redacta la versión siguiente con su nota; esta versión sigue legible tal como está. Escriba al menos {min} caracteres.",
+  "p.director_pack.reissue": "Reemitir con una nota de cambio",
+  "p.director_pack.review": "Marcar como revisado",
+  "p.director_pack.reviewed_done": "Marcado como revisado.",
   "p.plans.pid.modules_failed":
     "No se pudo comprobar qué herramientas usa este plan, por lo que se muestran todas.",
   "p._layout_svelte.handling_mark": "Marca de tratamiento: {mark}",

@@ -2030,3 +2030,32 @@ from `GET /api/plans/{pid}/export/mspdi`.
 - **Tests:** the link in `tests/unit/modules.test.ts`, and `tests/e2e/plan-export.spec.ts` (the plan page link, what
   the page says, a download named by the service's header with the page staying put, the link back to import, Welsh,
   axe). The Welsh and the six other languages are machine-written and unreviewed.
+
+## Director pack drafting and issue (NC-1 slice 11, DP-1, DP-12)
+
+`/director-packs` gains a form to draft a pack, and `/director-packs/[pid]` the actions on it, over
+`POST /api/director-packs`, `POST …/{pid}/review`, `POST …/{pid}/issue` and `POST …/{pid}/reissue`. The pages do not know
+the caller's pack rights (`directorpack=editor` or `issuer`, or `access=admin`); the service decides, and each refusal
+is a sentence for that action. `src/lib/pack-actions.ts` holds the rules. This is the first part of NC-1's last slice,
+the director-pack and escalation inputs; the rest are listed in `tasks.md` under NC-1.
+
+- **Drafting.** A period chosen as a month, an audience (the service's four, held to its list by a unit test, and
+  each active organization as `org:<pid>`), and an optional cut-off, not in the future and not more than 400 days
+  old (left out, the service uses now). Every problem is said at once before anything is sent. The page says that
+  nothing reaches the audience until someone issues the pack, and opens the new draft.
+- **On a pack.** A draft says whether the portfolio office has reviewed it, whether the monthly schedule made it and
+  whether it is stale. It offers "Mark as reviewed" (until reviewed) and "Issue the pack"; a scheduled draft not yet
+  reviewed has issue disabled and says why. The page says issuing freezes the pack, tells its audience and cannot be
+  undone. An issued pack offers a reissue with a change note of at least ten characters, said first, and opens the
+  new version.
+- **Refusals.** A 403 says which right the action needs (issuer to issue; editor for the rest); a 409 says what it
+  means for that action (a pack already exists for the period and audience; already issued or waiting for review;
+  not the latest version; already reviewed). Anything else is the general sentence; never the service's text.
+- **Not built in this slice:** the monthly schedules, the sweep and audience subscriptions (DP-12's other routes);
+  discarding a draft (the service has no route); showing audiences in words in the existing list and heading, which
+  still show the stored value.
+- **Tests:** `tests/unit/pack-actions.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/director-pack-actions.spec.ts` (drafting with every problem first and an organization as audience; a
+  manual draft reviewed and issued; a scheduled draft waiting for review; a reissue with a short note refused first;
+  a 403 for issue and for review and a 409 for a draft; Welsh; axe). The Welsh and the six other languages are
+  machine-written and unreviewed.

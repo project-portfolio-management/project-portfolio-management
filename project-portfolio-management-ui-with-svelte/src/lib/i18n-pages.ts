@@ -4047,6 +4047,63 @@ export const PAGES_EN = {
     "The file has been read back by this service's own importer, but not yet opened in Microsoft Project itself.",
   "p.plan_export.download": "Download the MSPDI file",
   "p.plan_export.to_import": "Bring an MSPDI file into this plan instead",
+  "p.director_pack.actions_heading": "Review, issue or reissue",
+  "p.director_pack.aud_board": "Board",
+  "p.director_pack.aud_escalation_board": "Escalation board",
+  "p.director_pack.aud_executive": "Executive",
+  "p.director_pack.aud_org": "Organization: {name}",
+  "p.director_pack.aud_partner": "Partners",
+  "p.director_pack.choose_audience": "Choose an audience",
+  "p.director_pack.conflict_draft":
+    "This period already has a pack for that audience. Open it: issue its draft, or reissue it with a change note.",
+  "p.director_pack.conflict_issue":
+    "This pack cannot be issued now: it is already issued, or it is a scheduled draft the portfolio office has not reviewed.",
+  "p.director_pack.conflict_reissue":
+    "Only the latest issued version is reissued, and a later version already exists.",
+  "p.director_pack.conflict_review":
+    "This draft has already been reviewed, or it is no longer a draft.",
+  "p.director_pack.could_not_act": "The change was not made.",
+  "p.director_pack.could_not_draft": "The pack was not drafted.",
+  "p.director_pack.cut_off_says":
+    "Leave it empty to use now. The pack reads the plans as they were at the cut-off; it may not be in the future or more than 400 days ago.",
+  "p.director_pack.draft_heading": "Draft a pack",
+  "p.director_pack.draft_says":
+    "Drafting reads the plans you may share as they are at the cut-off and keeps the result as a draft. Nothing is sent to the audience until someone issues it.",
+  "p.director_pack.draft": "Draft the pack",
+  "p.director_pack.f_audience": "Audience",
+  "p.director_pack.f_change_note": "Change note",
+  "p.director_pack.f_cut_off": "Cut-off (optional)",
+  "p.director_pack.f_period": "Period (month)",
+  "p.director_pack.from_schedule": "made by the monthly schedule",
+  "p.director_pack.is_reviewed": "Reviewed by the portfolio office.",
+  "p.director_pack.is_stale":
+    "stale: its cut-off is before the end of its period",
+  "p.director_pack.issue_says":
+    "Issuing freezes the pack and tells its audience. It cannot be undone; a later change is a reissue.",
+  "p.director_pack.issue_waits":
+    "The monthly schedule made this draft, so the portfolio office reviews it before it can be issued.",
+  "p.director_pack.issue": "Issue the pack",
+  "p.director_pack.issued_done": "Issued.",
+  "p.director_pack.not_reviewed": "Not reviewed yet.",
+  "p.director_pack.problem_audience": "Choose an audience.",
+  "p.director_pack.problem_cut_off_bad":
+    "Write the cut-off as a date and time.",
+  "p.director_pack.problem_cut_off_future":
+    "The cut-off cannot be in the future.",
+  "p.director_pack.problem_cut_off_old":
+    "The cut-off cannot be more than 400 days ago.",
+  "p.director_pack.problem_note":
+    "Say why there is a new version, in at least {min} characters.",
+  "p.director_pack.problem_period": "Choose the period as a month.",
+  "p.director_pack.refused_edit":
+    "Drafting, reviewing and reissuing a pack needs director pack editor access.",
+  "p.director_pack.refused_issue":
+    "Issuing a pack needs director pack issuer access.",
+  "p.director_pack.reissue_says":
+    "Reissuing drafts the next version with your note; this version stays readable as it is. Write at least {min} characters.",
+  "p.director_pack.reissue": "Reissue with a change note",
+  "p.director_pack.review": "Mark as reviewed",
+  "p.director_pack.reviewed_done": "Marked as reviewed.",
   "p.plans.pid.modules_failed":
     "Which tools this plan uses could not be checked, so every tool is listed.",
   "p._layout_svelte.handling_mark": "Handling mark: {mark}",

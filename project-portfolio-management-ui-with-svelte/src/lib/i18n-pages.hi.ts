@@ -3985,6 +3985,60 @@ export const PAGES_HI: Record<PageKey, string> = {
     "इस सेवा के अपने आयातक ने फ़ाइल को वापस पढ़ा है, पर इसे अभी Microsoft Project में खोलकर नहीं देखा गया है।",
   "p.plan_export.download": "MSPDI फ़ाइल डाउनलोड करें",
   "p.plan_export.to_import": "इसके बजाय इस योजना में MSPDI फ़ाइल लाएँ",
+  "p.director_pack.actions_heading": "समीक्षा, जारी या पुनः जारी करें",
+  "p.director_pack.aud_board": "बोर्ड",
+  "p.director_pack.aud_escalation_board": "एस्केलेशन बोर्ड",
+  "p.director_pack.aud_executive": "कार्यकारी",
+  "p.director_pack.aud_org": "संगठन: {name}",
+  "p.director_pack.aud_partner": "साझेदार",
+  "p.director_pack.choose_audience": "दर्शक चुनें",
+  "p.director_pack.conflict_draft":
+    "इस अवधि में उस दर्शक के लिए पहले से एक पैक है। उसे खोलें: उसका मसौदा जारी करें, या बदलाव टिप्पणी के साथ उसे पुनः जारी करें।",
+  "p.director_pack.conflict_issue":
+    "यह पैक अभी जारी नहीं किया जा सकता: यह पहले से जारी है, या यह एक निर्धारित मसौदा है जिसकी पोर्टफ़ोलियो कार्यालय ने समीक्षा नहीं की है।",
+  "p.director_pack.conflict_reissue":
+    "केवल नवीनतम जारी संस्करण पुनः जारी होता है, और एक बाद का संस्करण पहले से है।",
+  "p.director_pack.conflict_review":
+    "इस मसौदे की समीक्षा पहले ही हो चुकी है, या यह अब मसौदा नहीं है।",
+  "p.director_pack.could_not_act": "बदलाव नहीं हुआ।",
+  "p.director_pack.could_not_draft": "पैक का मसौदा नहीं बना।",
+  "p.director_pack.cut_off_says":
+    "अभी का समय लेने के लिए खाली छोड़ें। पैक योजनाओं को कट-ऑफ के समय जैसी थीं वैसा पढ़ता है; यह भविष्य में या 400 दिन से पुराना नहीं हो सकता।",
+  "p.director_pack.draft_heading": "पैक का मसौदा बनाएँ",
+  "p.director_pack.draft_says":
+    "मसौदा उन योजनाओं को, जिन्हें आप साझा कर सकते हैं, कट-ऑफ के समय जैसी हैं वैसा पढ़ता है और परिणाम को मसौदे के रूप में रखता है। जब तक कोई जारी न करे, दर्शक को कुछ नहीं भेजा जाता।",
+  "p.director_pack.draft": "पैक का मसौदा बनाएँ",
+  "p.director_pack.f_audience": "दर्शक",
+  "p.director_pack.f_change_note": "बदलाव टिप्पणी",
+  "p.director_pack.f_cut_off": "कट-ऑफ (वैकल्पिक)",
+  "p.director_pack.f_period": "अवधि (महीना)",
+  "p.director_pack.from_schedule": "मासिक कार्यक्रम द्वारा बनाया गया",
+  "p.director_pack.is_reviewed": "पोर्टफ़ोलियो कार्यालय द्वारा समीक्षित।",
+  "p.director_pack.is_stale": "पुराना: इसका कट-ऑफ इसकी अवधि के अंत से पहले है",
+  "p.director_pack.issue_says":
+    "जारी करने से पैक स्थिर हो जाता है और उसके दर्शकों को सूचना जाती है। इसे वापस नहीं लिया जा सकता; बाद का बदलाव पुनः जारी करना है।",
+  "p.director_pack.issue_waits":
+    "यह मसौदा मासिक कार्यक्रम ने बनाया है, इसलिए जारी होने से पहले पोर्टफ़ोलियो कार्यालय इसकी समीक्षा करता है।",
+  "p.director_pack.issue": "पैक जारी करें",
+  "p.director_pack.issued_done": "जारी किया गया।",
+  "p.director_pack.not_reviewed": "अभी समीक्षा नहीं हुई।",
+  "p.director_pack.problem_audience": "दर्शक चुनें।",
+  "p.director_pack.problem_cut_off_bad": "कट-ऑफ को तिथि और समय के रूप में लिखें।",
+  "p.director_pack.problem_cut_off_future": "कट-ऑफ भविष्य में नहीं हो सकता।",
+  "p.director_pack.problem_cut_off_old":
+    "कट-ऑफ 400 दिन से अधिक पुराना नहीं हो सकता।",
+  "p.director_pack.problem_note":
+    "बताएँ कि नया संस्करण क्यों है, कम से कम {min} अक्षरों में।",
+  "p.director_pack.problem_period": "अवधि को एक महीने के रूप में चुनें।",
+  "p.director_pack.refused_edit":
+    "पैक का मसौदा बनाने, समीक्षा करने और पुनः जारी करने के लिए निदेशक पैक संपादक पहुँच चाहिए।",
+  "p.director_pack.refused_issue":
+    "पैक जारी करने के लिए निदेशक पैक जारीकर्ता पहुँच चाहिए।",
+  "p.director_pack.reissue_says":
+    "पुनः जारी करने से आपकी टिप्पणी के साथ अगला संस्करण बनता है; यह संस्करण जैसा है वैसा पढ़ने योग्य रहता है। कम से कम {min} अक्षर लिखें।",
+  "p.director_pack.reissue": "बदलाव टिप्पणी के साथ पुनः जारी करें",
+  "p.director_pack.review": "समीक्षित चिह्नित करें",
+  "p.director_pack.reviewed_done": "समीक्षित चिह्नित किया गया।",
   "p.plans.pid.modules_failed":
     "यह योजना कौन-से टूल उपयोग करती है, यह जाँचा नहीं जा सका, इसलिए हर टूल सूचीबद्ध है।",
   "p._layout_svelte.handling_mark": "हैंडलिंग चिह्न: {mark}",

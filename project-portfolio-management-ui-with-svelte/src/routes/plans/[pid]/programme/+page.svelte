@@ -14,6 +14,10 @@
   import { formatDate } from "#lib/locale-format.js";
   import { money } from "#lib/money.js";
   import { PlanRepository } from "#lib/api/plans.js";
+  import DataTable from "#lib/components/DataTable.svelte";
+  import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
+  import { i18n, tDynamic } from "#lib/i18n.svelte.js";
+  import { buildPackView, type Section } from "#lib/pack-view.js";
   import {
     PLAN_GATES,
     PpmClient,
@@ -21,10 +25,14 @@
     type GateJourney,
     type PlannedGates,
     type ProgrammeStatusView,
+    type ProjectBufferView,
   } from "#lib/api/ppm.js";
   import {
+    BUFFER_DAYS_MAX,
     CHANGE_LABELS,
     REASON_MIN,
+    bufferBody,
+    bufferRefusalKey,
     changedGates,
     decisionProblems,
     programmeRefusalKey,
@@ -56,6 +64,57 @@
 
   const choices = $derived(status ? statusChoices(status.status) : []);
 
+  let buffer = $state<ProjectBufferView | null>(null);
+  let bufferHow = $state<"days" | "rule">("days");
+  let bufferDays = $state("");
+  let bufferNote = $state("");
+  let bufferError = $state<string | null>(null);
+  let bufferNotice = $state("");
+  const fever: Section | null = $derived(
+    buffer
+      ? (buildPackView(
+          { buffer_fever: { programmes: [buffer.now], lines: buffer.lines } },
+          { t: (k, v) => tDynamic(k, v), label: (g, v) => enumLabel(g as never, v), locale: i18n.locale },
+        ).find((x) => x.id === "fever") ?? null)
+      : null,
+  );
+  type PackCell = { text: string; symbol?: string; tone?: string };
+  const cellOf = (row: unknown, i: number): PackCell => (row as { cells: PackCell[] }).cells[i] ?? { text: "" };
+  const packColumns = (names: string[]): DataGridColumn[] =>
+    names.map((n, i) => ({ id: `c${i}`, header: n, rowHeader: i === 0, accessor: (row) => cellOf(row, i).text, ...(i === 0 ? {} : { cell: packCell }) }));
+
+  async function loadBuffer() {
+    try {
+      buffer = await ppm.projectBuffer(pid);
+    } catch {
+      buffer = null; // the rest of the page still works; the buffer section then says it could not be read
+      bufferError = t("p.programme.could_not_load_buffer");
+    }
+  }
+  async function declareBuffer(e: SubmitEvent) {
+    e.preventDefault();
+    bufferError = null;
+    bufferNotice = "";
+    const r = bufferBody({ how: bufferHow, days: bufferDays, note: bufferNote });
+    if ("problem" in r) {
+      bufferError = t(r.problem, { max: BUFFER_DAYS_MAX });
+      return;
+    }
+    busy = true;
+    try {
+      const done = await ppm.declareProjectBuffer(pid, r.body);
+      bufferNotice = tn("p.programme.buffer_declared", done.buffer_days, { days: done.buffer_days });
+      bufferDays = "";
+      bufferNote = "";
+      await loadBuffer();
+    } catch (err) {
+      const k = bufferRefusalKey(bufferHow, err);
+      bufferError = k ? t(k) : errorText(err, "p.programme.could_not_declare_buffer");
+    } finally {
+      busy = false;
+    }
+  }
+
   async function loadGates() {
     gates = await ppm.plannedGates(pid);
     dates = Object.fromEntries(PLAN_GATES.map((g) => [g, gates?.planned_gates.find((x) => x.gate === g)?.planned_on ?? ""]));
@@ -71,6 +130,7 @@
       await loadGates();
       if (isProgramme) {
         await loadStatus();
+        void loadBuffer();
         // What a decision may cite: best effort, the form works without them.
         ppm.gateJourney(pid).then((j) => (reviews = j.reviews)).catch(() => (reviews = []));
         ppm
@@ -245,6 +305,49 @@
   </section>
 {/if}
 
+{#snippet packCell({ row, column, formatted }: DataGridCellContext)}
+  {@const c = cellOf(row, Number(column.id.slice(1)))}
+  {#if c.symbol}<span aria-hidden="true" class="sym">{c.symbol}</span>{/if}{formatted}
+{/snippet}
+
+{#if isProgramme}
+  <section aria-labelledby="buffer-h">
+    <h2 id="buffer-h">{t("p.programme.buffer_heading")}</h2>
+    <p class="small muted">{t("p.programme.buffer_says")}</p>
+    {#if fever}
+      {#each fever.lines as line, i (i)}<p>{line}</p>{/each}
+      {#each fever.tables as tb, ti (ti)}
+        <DataTable label={tb.caption} caption={tb.caption} captionVisible columns={packColumns(tb.columns)} rows={tb.rows.map((cells) => ({ cells }))} rowId={(_r, i) => String(i)} sortable={false} />
+      {/each}
+    {/if}
+    {#if bufferError}<p class="banner error" role="alert">{bufferError}</p>{/if}
+    <p class="small" role="status">{bufferNotice}</p>
+    <form class="stack" novalidate onsubmit={declareBuffer}>
+      <fieldset>
+        <legend>{t("p.programme.f_buffer_how")}</legend>
+        <label class="check"><input type="radio" name="buffer-how" value="days" bind:group={bufferHow} /> {t("p.programme.buffer_by_days")}</label>
+        <label class="check"><input type="radio" name="buffer-how" value="rule" bind:group={bufferHow} /> {t("p.programme.buffer_by_rule")}</label>
+      </fieldset>
+      {#if bufferHow === "days"}
+        <label>{t("p.programme.f_buffer_days", { max: BUFFER_DAYS_MAX })}<input type="text" inputmode="numeric" bind:value={bufferDays} size="6" /></label>
+      {/if}
+      <label>{t("p.programme.f_buffer_note")}<input type="text" bind:value={bufferNote} /></label>
+      <div class="row"><button class="button" type="submit" disabled={busy}>{t("p.programme.declare_buffer")}</button></div>
+    </form>
+    {#if buffer && buffer.history.length > 0}
+      <h3>{t("p.programme.buffer_history")}</h3>
+      <ol class="history small" reversed>
+        {#each [...buffer.history].reverse() as h, i (i)}
+          <li>
+            {h.source === "rule" ? tn("p.programme.buffer_was_rule", h.buffer_days, { days: h.buffer_days }) : tn("p.programme.buffer_was_days", h.buffer_days, { days: h.buffer_days })}
+            · {formatDate(h.declared_on)}{#if h.note} · {h.note}{/if}
+          </li>
+        {/each}
+      </ol>
+    {/if}
+  </section>
+{/if}
+
 <style>
   section {
     margin-block-start: 1.5rem;
@@ -274,6 +377,10 @@
   }
   .history p {
     margin-block: 0 0.25rem;
+  }
+  :global(.sym) {
+    display: inline-block;
+    inline-size: 1.25em;
   }
   .reason {
     white-space: pre-wrap;

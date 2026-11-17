@@ -4233,6 +4233,32 @@ export const PAGES_EN = {
     "This programme is stopped. That is final; its record is kept.",
   "p.programme.title_ppm": "Gates and programme status — PPM",
   "p.programme.title": "Gates and programme status",
+  "p.programme.buffer_by_days": "A number of business days",
+  "p.programme.buffer_by_rule": "Half the baselined critical work, rounded up",
+  "p.programme.buffer_declared_one":
+    "Declared: a buffer of {days} business day.",
+  "p.programme.buffer_declared_other":
+    "Declared: a buffer of {days} business days.",
+  "p.programme.buffer_heading": "Project buffer",
+  "p.programme.buffer_says":
+    "The time held back at the end of the programme to absorb delay. The chart sets how much of it is used against how much of the critical work is done. A declaration never replaces an earlier one; the latest is the buffer. A critical-chain buffer plan, where there is one, is used instead.",
+  "p.programme.buffer_history": "Declarations, newest first",
+  "p.programme.buffer_was_days_one": "{days} business day, declared",
+  "p.programme.buffer_was_days_other": "{days} business days, declared",
+  "p.programme.buffer_was_rule_one": "{days} business day, by the rule",
+  "p.programme.buffer_was_rule_other": "{days} business days, by the rule",
+  "p.programme.could_not_declare_buffer": "The buffer was not declared.",
+  "p.programme.could_not_load_buffer": "The project buffer could not be read.",
+  "p.programme.declare_buffer": "Declare the buffer",
+  "p.programme.f_buffer_days": "Business days (1 to {max})",
+  "p.programme.f_buffer_how": "How long the buffer is",
+  "p.programme.f_buffer_note": "Note (optional)",
+  "p.programme.problem_buffer_days":
+    "Write the buffer as a whole number of business days from 1 to 2000.",
+  "p.programme.refused_buffer_rule":
+    "The rule needs a schedule baseline with critical work that has a duration; set a baseline first, or give a number of days.",
+  "p.programme.refused_not_programme_buffer":
+    "Only a plan of kind Program has a project buffer.",
   "p.funding.add": "Add the source",
   "p.funding.added": "Funding source added.",
   "p.funding.choose_plan": "Choose a plan",

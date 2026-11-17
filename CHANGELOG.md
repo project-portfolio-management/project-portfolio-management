@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (a programme's project buffer: NC-1 slice 11, part f)
+
+- **UI: `/plans/[pid]/programme` declares a programme's project buffer (DP-7).** In business days or by the rule (half
+  the baselined critical work); its fever-chart reading is drawn as the director pack draws it. Tests in
+  `tests/e2e/plan-programme.spec.ts`. Part (g), benefit classification and validations, is next.
+- **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (the funding ledger's writes: NC-1 slice 11, part e, second of two)
 
 - **UI: `/ledger` records allocations, draws budget lines on them, maps cost codes and reconciles a finance export

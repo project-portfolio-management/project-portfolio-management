@@ -4,7 +4,7 @@
 
 import { ApiError } from "./api/client.js";
 import type { StringKey } from "./i18n.svelte.js";
-import type { ProgrammeStatus } from "./api/ppm-types.js";
+import type { ProgrammeStatus, ProjectBufferBody } from "./api/ppm-types.js";
 
 /** A reason needs at least this many characters (`MIN_REASON`). */
 export const REASON_MIN = 10;
@@ -54,4 +54,37 @@ export function programmeRefusalKey(err: unknown): StringKey | null {
   if (err.status === 409) return "p.programme.conflict_status";
   if (err.status === 422) return "p.programme.refused_not_programme";
   return null;
+}
+
+/** A buffer is 1 to 2000 business days (`set_buffer`). */
+export const BUFFER_DAYS_MAX = 2000;
+
+/**
+ * What declaring a buffer sends, or the problem: a whole number of business days from 1 to 2000, or the rule (half the
+ * baselined critical work, rounded up); a note only when written.
+ */
+export function bufferBody(form: {
+  how: "days" | "rule";
+  days: string;
+  note: string;
+}): { body: ProjectBufferBody } | { problem: StringKey } {
+  const note = form.note.trim();
+  const extra = note ? { note } : {};
+  if (form.how === "rule")
+    return { body: { rule: "half_of_critical_duration", ...extra } };
+  const n = Number(form.days);
+  if (!/^\d+$/.test(form.days.trim()) || n < 1 || n > BUFFER_DAYS_MAX)
+    return { problem: "p.programme.problem_buffer_days" };
+  return { body: { buffer_days: n, ...extra } };
+}
+
+/** The sentence for a refused declaration: by the rule, a 422 means there is no baseline with critical work to use. */
+export function bufferRefusalKey(
+  how: "days" | "rule",
+  err: unknown,
+): StringKey | null {
+  if (!(err instanceof ApiError) || err.status !== 422) return null;
+  return how === "rule"
+    ? "p.programme.refused_buffer_rule"
+    : "p.programme.refused_not_programme_buffer";
 }

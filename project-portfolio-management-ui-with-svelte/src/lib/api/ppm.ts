@@ -167,6 +167,8 @@ import type {
   FundingSource,
   AllocationBody,
   ReconcileReport,
+  ProjectBufferBody,
+  ProjectBufferView,
   PlannedGates,
   ProgrammeStatusBody,
   ProgrammeStatusView,
@@ -2222,6 +2224,18 @@ export class PpmClient {
       rawBody: csv,
       headers: { "content-type": "text/csv" },
     });
+  }
+  // ---- the project buffer (DP-7, NC-1 slice 11) ----
+  /** A programme's project buffer: its declarations, the fever-chart reading now and the chart's lines. */
+  projectBuffer(planPid: string): Promise<ProjectBufferView> {
+    return this.http.get(`/api/plans/${planPid}/project-buffer`);
+  }
+  /** Declare a programme's buffer in business days (1 to 2000) or by the rule, which needs a schedule baseline (422). */
+  declareProjectBuffer(
+    planPid: string,
+    body: ProjectBufferBody,
+  ): Promise<{ buffer_days: number; source: string }> {
+    return this.http.put(`/api/plans/${planPid}/project-buffer`, { body });
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

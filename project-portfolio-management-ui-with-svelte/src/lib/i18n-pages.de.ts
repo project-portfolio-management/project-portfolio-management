@@ -4402,6 +4402,34 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Dieses Programm ist gestoppt. Das ist endgültig; seine Aufzeichnungen bleiben.",
   "p.programme.title_ppm": "Gates und Programmstatus — PPM",
   "p.programme.title": "Gates und Programmstatus",
+  "p.programme.buffer_by_days": "Eine Zahl von Arbeitstagen",
+  "p.programme.buffer_by_rule":
+    "Die Hälfte der kritischen Arbeit im Basisplan, aufgerundet",
+  "p.programme.buffer_declared_one":
+    "Festgelegt: ein Puffer von {days} Arbeitstag.",
+  "p.programme.buffer_declared_other":
+    "Festgelegt: ein Puffer von {days} Arbeitstagen.",
+  "p.programme.buffer_heading": "Projektpuffer",
+  "p.programme.buffer_says":
+    "Die am Ende des Programms zurückgehaltene Zeit, um Verzug aufzufangen. Die Grafik setzt den verbrauchten Anteil ins Verhältnis zum erledigten Anteil der kritischen Arbeit. Eine Festlegung ersetzt nie eine frühere; die neueste ist der Puffer. Ein Pufferplan der kritischen Kette wird, wo vorhanden, stattdessen verwendet.",
+  "p.programme.buffer_history": "Festlegungen, neueste zuerst",
+  "p.programme.buffer_was_days_one": "{days} Arbeitstag, festgelegt",
+  "p.programme.buffer_was_days_other": "{days} Arbeitstage, festgelegt",
+  "p.programme.buffer_was_rule_one": "{days} Arbeitstag, nach der Regel",
+  "p.programme.buffer_was_rule_other": "{days} Arbeitstage, nach der Regel",
+  "p.programme.could_not_declare_buffer": "Der Puffer wurde nicht festgelegt.",
+  "p.programme.could_not_load_buffer":
+    "Der Projektpuffer konnte nicht gelesen werden.",
+  "p.programme.declare_buffer": "Puffer festlegen",
+  "p.programme.f_buffer_days": "Arbeitstage (1 bis {max})",
+  "p.programme.f_buffer_how": "Wie lang der Puffer ist",
+  "p.programme.f_buffer_note": "Notiz (optional)",
+  "p.programme.problem_buffer_days":
+    "Geben Sie den Puffer als ganze Zahl von Arbeitstagen von 1 bis 2000 an.",
+  "p.programme.refused_buffer_rule":
+    "Die Regel braucht einen Terminbasisplan mit kritischer Arbeit, die eine Dauer hat; legen Sie zuerst einen Basisplan fest oder geben Sie eine Zahl von Tagen an.",
+  "p.programme.refused_not_programme_buffer":
+    "Nur ein Plan der Art Programm hat einen Projektpuffer.",
   "p.funding.add": "Quelle hinzufügen",
   "p.funding.added": "Finanzierungsquelle hinzugefügt.",
   "p.funding.choose_plan": "Plan wählen",

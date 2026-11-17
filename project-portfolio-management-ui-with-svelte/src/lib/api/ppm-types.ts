@@ -3947,3 +3947,27 @@ export interface ReconcileReport {
     reconciled: boolean;
   };
 }
+
+// ---- the project buffer (DP-7, NC-1 slice 11) ----
+
+/** `GET /api/plans/{pid}/project-buffer`: every declaration oldest first (append-only; the latest is the buffer), the
+ * fever-chart reading now (an entry of a director pack's `buffer_fever.programmes`), and the chart's lines. */
+export interface ProjectBufferView {
+  plan_pid: string;
+  history: Array<{
+    buffer_days: number;
+    source: "declared" | "rule";
+    rule: string | null;
+    note: string | null;
+    declared_by: string | null;
+    declared_on: string;
+    baseline_version: number | null;
+  }>;
+  now: Record<string, unknown>;
+  lines: Record<string, unknown>;
+}
+
+/** `PUT /api/plans/{pid}/project-buffer` body: a number of business days, or the rule, not both. */
+export type ProjectBufferBody =
+  | { buffer_days: number; note?: string }
+  | { rule: "half_of_critical_duration"; note?: string };

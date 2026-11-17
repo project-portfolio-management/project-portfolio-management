@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { ApiError } from "../../src/lib/api/client";
 import { PLAN_GATES } from "../../src/lib/api/ppm-types";
 import {
+  bufferBody,
+  bufferRefusalKey,
   changedGates,
   decisionProblems,
   programmeRefusalKey,
@@ -73,5 +75,31 @@ describe("programme status", () => {
       "p.programme.refused_not_programme",
     );
     expect(programmeRefusalKey(new ApiError(500, "x"))).toBeNull();
+  });
+});
+
+describe("the project buffer (DP-7)", () => {
+  it("sends whole business days from 1 to 2000, or the rule, and a note only when written", () => {
+    expect(bufferBody({ how: "days", days: "15", note: " " })).toEqual({
+      body: { buffer_days: 15 },
+    });
+    expect(
+      bufferBody({ how: "rule", days: "", note: " After re-plan " }),
+    ).toEqual({
+      body: { rule: "half_of_critical_duration", note: "After re-plan" },
+    });
+    for (const d of ["0", "2001", "1.5", ""])
+      expect(bufferBody({ how: "days", days: d, note: "" })).toEqual({
+        problem: "p.programme.problem_buffer_days",
+      });
+  });
+  it("reads a 422 by the rule as no baseline to use", () => {
+    expect(bufferRefusalKey("rule", new ApiError(422, "x"))).toBe(
+      "p.programme.refused_buffer_rule",
+    );
+    expect(bufferRefusalKey("days", new ApiError(422, "x"))).toBe(
+      "p.programme.refused_not_programme_buffer",
+    );
+    expect(bufferRefusalKey("rule", new ApiError(403, "x"))).toBeNull();
   });
 });

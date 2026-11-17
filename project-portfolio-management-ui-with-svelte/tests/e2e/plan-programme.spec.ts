@@ -235,6 +235,95 @@ test("a decision without the decider right is refused in the catalogue's words",
   );
 });
 
+test("a programme's buffer is declared by days or by the rule, and its reading drawn as the pack draws it", async ({
+  page,
+}) => {
+  await stubProgramme(page);
+  const history: Array<Record<string, unknown>> = [];
+  const sent: unknown[] = [];
+  let refuseRule = true;
+  await page.route(`**/api/plans/${PID}/project-buffer`, async (route) => {
+    const req = route.request();
+    if (req.method() === "GET")
+      return route.fulfill({
+        json: {
+          plan_pid: PID,
+          history,
+          now: {
+            plan_pid: PID,
+            plan: "Website replatform",
+            point: history.length
+              ? {
+                  chain_completed_pct: 40,
+                  buffer_consumed_pct: 25,
+                  zone: "green",
+                  edge: null,
+                  slip_days: 2,
+                  buffer_days: 8,
+                }
+              : null,
+            no_fever_chart_point: history.length
+              ? null
+              : { code: "no_buffer", reason: "service text" },
+          },
+          lines: {},
+        },
+      });
+    const body = req.postDataJSON();
+    sent.push(body);
+    if (body.rule && refuseRule) {
+      refuseRule = false;
+      return route.fulfill({
+        status: 422,
+        json: { error: "x", description: "service text" },
+      });
+    }
+    history.push({
+      buffer_days: body.buffer_days ?? 8,
+      source: body.rule ? "rule" : "declared",
+      rule: body.rule ?? null,
+      note: body.note ?? null,
+      declared_by: "x",
+      declared_on: "2026-11-17",
+      baseline_version: 1,
+    });
+    return route.fulfill({
+      json: {
+        plan_pid: PID,
+        buffer_days: body.buffer_days ?? 8,
+        source: body.rule ? "rule" : "declared",
+      },
+    });
+  });
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const buffer = page.getByRole("region", { name: "Project buffer" });
+  await buffer.getByLabel("Business days (1 to 2000)").fill("2001");
+  await buffer.getByRole("button", { name: "Declare the buffer" }).click();
+  await expect(buffer.getByRole("alert")).toHaveText(
+    "Write the buffer as a whole number of business days from 1 to 2000.",
+  );
+  await buffer
+    .getByRole("radio", {
+      name: "Half the baselined critical work, rounded up",
+    })
+    .check();
+  await buffer.getByRole("button", { name: "Declare the buffer" }).click();
+  await expect(buffer.getByRole("alert")).toHaveText(
+    /The rule needs a schedule baseline/,
+  );
+  await buffer.getByRole("button", { name: "Declare the buffer" }).click();
+  await expect(buffer.getByRole("status")).toHaveText(
+    "Declared: a buffer of 8 business days.",
+  );
+  await expect(buffer.getByRole("table").first()).toBeVisible();
+  await expect(buffer.getByText("8 business days, by the rule")).toBeVisible();
+  expect(sent).toEqual([
+    { rule: "half_of_critical_duration" },
+    { rule: "half_of_critical_duration" },
+  ]);
+});
+
 test("the page reads in Welsh and passes axe", async ({ page }) => {
   await stubProgramme(page);
   await page.goto(`/cy-001/plans/${PID}/programme`);

@@ -4336,6 +4336,34 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae'r rhaglen hon wedi'i stopio. Mae hynny'n derfynol; cedwir ei chofnod.",
   "p.programme.title_ppm": "Pyrth a statws rhaglen — PPM",
   "p.programme.title": "Pyrth a statws rhaglen",
+  "p.programme.buffer_by_days": "Nifer o ddiwrnodau gwaith",
+  "p.programme.buffer_by_rule":
+    "Hanner y gwaith critigol yn y llinell sylfaen, wedi'i dalgrynnu i fyny",
+  "p.programme.buffer_declared_one":
+    "Wedi'i ddatgan: byffer o {days} diwrnod gwaith.",
+  "p.programme.buffer_declared_other":
+    "Wedi'i ddatgan: byffer o {days} diwrnod gwaith.",
+  "p.programme.buffer_heading": "Byffer prosiect",
+  "p.programme.buffer_says":
+    "Yr amser a gedwir yn ôl ar ddiwedd y rhaglen i amsugno oedi. Mae'r siart yn gosod faint ohono a ddefnyddiwyd yn erbyn faint o'r gwaith critigol sydd wedi'i wneud. Nid yw datganiad byth yn disodli un cynharach; y diweddaraf yw'r byffer. Defnyddir cynllun byffer cadwyn gritigol yn lle hynny, lle mae un.",
+  "p.programme.buffer_history": "Datganiadau, y diweddaraf yn gyntaf",
+  "p.programme.buffer_was_days_one": "{days} diwrnod gwaith, wedi'i ddatgan",
+  "p.programme.buffer_was_days_other": "{days} diwrnod gwaith, wedi'u datgan",
+  "p.programme.buffer_was_rule_one": "{days} diwrnod gwaith, yn ôl y rheol",
+  "p.programme.buffer_was_rule_other": "{days} diwrnod gwaith, yn ôl y rheol",
+  "p.programme.could_not_declare_buffer": "Ni ddatganwyd y byffer.",
+  "p.programme.could_not_load_buffer":
+    "Nid oedd modd darllen byffer y prosiect.",
+  "p.programme.declare_buffer": "Datgan y byffer",
+  "p.programme.f_buffer_days": "Diwrnodau gwaith (1 i {max})",
+  "p.programme.f_buffer_how": "Pa mor hir yw'r byffer",
+  "p.programme.f_buffer_note": "Nodyn (dewisol)",
+  "p.programme.problem_buffer_days":
+    "Ysgrifennwch y byffer fel nifer cyfan o ddiwrnodau gwaith o 1 i 2000.",
+  "p.programme.refused_buffer_rule":
+    "Mae angen llinell sylfaen amserlen gyda gwaith critigol sydd â hyd ar y rheol; gosodwch linell sylfaen yn gyntaf, neu rhowch nifer o ddiwrnodau.",
+  "p.programme.refused_not_programme_buffer":
+    "Dim ond cynllun o fath Rhaglen sydd â byffer prosiect.",
   "p.funding.add": "Ychwanegu'r ffynhonnell",
   "p.funding.added": "Ychwanegwyd y ffynhonnell gyllid.",
   "p.funding.choose_plan": "Dewiswch gynllun",

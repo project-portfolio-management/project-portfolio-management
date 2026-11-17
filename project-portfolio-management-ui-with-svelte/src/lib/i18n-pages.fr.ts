@@ -4397,6 +4397,35 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Ce programme est arrêté. C'est définitif ; son historique est gardé.",
   "p.programme.title_ppm": "Jalons et statut du programme — PPM",
   "p.programme.title": "Jalons et statut du programme",
+  "p.programme.buffer_by_days": "Un nombre de jours ouvrés",
+  "p.programme.buffer_by_rule":
+    "La moitié du travail critique de la référence, arrondie au supérieur",
+  "p.programme.buffer_declared_one":
+    "Déclaré : un tampon de {days} jour ouvré.",
+  "p.programme.buffer_declared_other":
+    "Déclaré : un tampon de {days} jours ouvrés.",
+  "p.programme.buffer_heading": "Tampon du projet",
+  "p.programme.buffer_says":
+    "Le temps gardé en réserve à la fin du programme pour absorber les retards. Le graphique met la part consommée en regard de la part du travail critique achevée. Une déclaration ne remplace jamais une précédente ; la plus récente est le tampon. Un plan de tampons de chaîne critique, s'il existe, est utilisé à la place.",
+  "p.programme.buffer_history":
+    "Déclarations, de la plus récente à la plus ancienne",
+  "p.programme.buffer_was_days_one": "{days} jour ouvré, déclaré",
+  "p.programme.buffer_was_days_other": "{days} jours ouvrés, déclarés",
+  "p.programme.buffer_was_rule_one": "{days} jour ouvré, par la règle",
+  "p.programme.buffer_was_rule_other": "{days} jours ouvrés, par la règle",
+  "p.programme.could_not_declare_buffer": "Le tampon n'a pas été déclaré.",
+  "p.programme.could_not_load_buffer":
+    "Le tampon du projet n'a pas pu être lu.",
+  "p.programme.declare_buffer": "Déclarer le tampon",
+  "p.programme.f_buffer_days": "Jours ouvrés (1 à {max})",
+  "p.programme.f_buffer_how": "Durée du tampon",
+  "p.programme.f_buffer_note": "Note (facultative)",
+  "p.programme.problem_buffer_days":
+    "Écrivez le tampon comme un nombre entier de jours ouvrés de 1 à 2000.",
+  "p.programme.refused_buffer_rule":
+    "La règle demande une référence de planning avec du travail critique ayant une durée ; définissez d'abord une référence ou donnez un nombre de jours.",
+  "p.programme.refused_not_programme_buffer":
+    "Seul un plan de type Programme a un tampon de projet.",
   "p.funding.add": "Ajouter la source",
   "p.funding.added": "Source de financement ajoutée.",
   "p.funding.choose_plan": "Choisissez un plan",

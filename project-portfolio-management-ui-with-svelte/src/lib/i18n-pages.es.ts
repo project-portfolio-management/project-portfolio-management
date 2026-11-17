@@ -4391,6 +4391,34 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Este programa está detenido. Es definitivo; se conserva su registro.",
   "p.programme.title_ppm": "Fases y estado del programa — PPM",
   "p.programme.title": "Fases y estado del programa",
+  "p.programme.buffer_by_days": "Un número de días laborables",
+  "p.programme.buffer_by_rule":
+    "La mitad del trabajo crítico de la línea base, redondeada hacia arriba",
+  "p.programme.buffer_declared_one":
+    "Declarado: un colchón de {days} día laborable.",
+  "p.programme.buffer_declared_other":
+    "Declarado: un colchón de {days} días laborables.",
+  "p.programme.buffer_heading": "Colchón del proyecto",
+  "p.programme.buffer_says":
+    "El tiempo que se reserva al final del programa para absorber retrasos. El gráfico compara cuánto se ha consumido con cuánto trabajo crítico está hecho. Una declaración nunca sustituye a otra anterior; la más reciente es el colchón. Si hay un plan de colchones de cadena crítica, se usa en su lugar.",
+  "p.programme.buffer_history": "Declaraciones, lo más reciente primero",
+  "p.programme.buffer_was_days_one": "{days} día laborable, declarado",
+  "p.programme.buffer_was_days_other": "{days} días laborables, declarados",
+  "p.programme.buffer_was_rule_one": "{days} día laborable, por la regla",
+  "p.programme.buffer_was_rule_other": "{days} días laborables, por la regla",
+  "p.programme.could_not_declare_buffer": "No se declaró el colchón.",
+  "p.programme.could_not_load_buffer":
+    "No se pudo leer el colchón del proyecto.",
+  "p.programme.declare_buffer": "Declarar el colchón",
+  "p.programme.f_buffer_days": "Días laborables (1 a {max})",
+  "p.programme.f_buffer_how": "Cuánto dura el colchón",
+  "p.programme.f_buffer_note": "Nota (opcional)",
+  "p.programme.problem_buffer_days":
+    "Escriba el colchón como un número entero de días laborables de 1 a 2000.",
+  "p.programme.refused_buffer_rule":
+    "La regla necesita una línea base del cronograma con trabajo crítico que tenga duración; fije primero una línea base o dé un número de días.",
+  "p.programme.refused_not_programme_buffer":
+    "Solo un plan de tipo Programa tiene colchón de proyecto.",
   "p.funding.add": "Añadir la fuente",
   "p.funding.added": "Fuente de financiación añadida.",
   "p.funding.choose_plan": "Elija un plan",

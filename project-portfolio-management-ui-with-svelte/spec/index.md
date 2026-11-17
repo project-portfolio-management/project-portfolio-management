@@ -2193,6 +2193,14 @@ exceptions (`GET /api/exceptions`). `src/lib/programme-view.ts` holds the rules.
   stopped; a 422 that only a programme has a status and a cited record must be its own.
 - **Not built in this slice:** clearing a gate date (no route); the cited review or exception named in the history
   (the page says only which kind it was).
+- **Project buffer (DP-7, part f).** For a programme, the page also declares its project buffer over `GET` and `PUT
+  /api/plans/{pid}/project-buffer`: a whole number of business days from 1 to 2000, or the rule (half the baselined
+  critical work, rounded up), with an optional note; the page says a declaration never replaces an earlier one and
+  that a critical-chain buffer plan is used instead where there is one. Its fever-chart reading now is an entry of a
+  director pack's `buffer_fever.programmes`, so the pack's renderer draws it (no point is said in the catalogue's words
+  for its reason). A refusal by the rule (422) says it needs a schedule baseline with critical work. The declarations
+  follow, newest first (plurals). Tests: more in `tests/unit/programme-view.test.ts` and `tests/unit/ppm.test.ts`, and a
+  buffer test in `tests/e2e/plan-programme.spec.ts`.
 - **Tests:** `tests/unit/programme-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, the link in
   `tests/unit/modules.test.ts`, and `tests/e2e/plan-programme.spec.ts` (the link; gate dates sending only what changed;
   a plan that is not a programme; pausing with a cited review, what is held, stopping and its finality; a 403; Welsh;

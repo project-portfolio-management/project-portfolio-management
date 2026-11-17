@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a programme's project buffer (NC-1 slice 11, DP-7, 2026-11-17)
+
+- `/plans/[pid]/programme` gains the project buffer for a programme: declare it in business days (1 to 2000) or by the
+  rule (half the baselined critical work), with an optional note, every problem first; the fever-chart reading now is
+  drawn by the director pack's renderer; the declarations follow, newest first. A refusal by the rule says it needs a
+  schedule baseline. Two client methods and their types; helpers in `src/lib/programme-view.ts`; 20 keys in eight
+  catalogues (three plural groups), machine-written and unreviewed.
+- Tests: more in `tests/unit/programme-view.test.ts` and `tests/unit/ppm.test.ts`; a buffer test in
+  `tests/e2e/plan-programme.spec.ts`.
+- **Not verified:** against a real service; the reading with a real baseline.
+
 ### Added — the funding ledger's writes (NC-1 slice 11, EX-12, 2026-11-17)
 
 - `/ledger` records an allocation (the amount read in the reader's format, sent in minor units; every problem first),

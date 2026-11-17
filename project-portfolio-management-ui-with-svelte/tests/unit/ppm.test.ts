@@ -692,6 +692,15 @@ describe("PpmClient planned gates and programme status (NC-1 slice 11, DP-5)", (
       "GET /api/plans/p1/programme-status",
       "POST /api/plans/p1/programme-status",
     ]);
+    calls.length = 0;
+    await ppm.projectBuffer("p1");
+    await ppm.declareProjectBuffer("p1", { buffer_days: 15 });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/project-buffer",
+      "PUT /api/plans/p1/project-buffer",
+    ]);
   });
 });
 

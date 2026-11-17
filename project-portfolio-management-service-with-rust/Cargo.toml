@@ -33,7 +33,7 @@ sha3 = { version = "0.12" }
 axa = { workspace = true }
 # The command line.
 # Sending mail (src/email.rs) and the shared cache (src/cache.rs).
-lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-platform-verifier", "aws-lc-rs"] }
+lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-platform-verifier", "ring"] }
 redis = { version = "1", default-features = false, features = ["connection-manager", "tokio-comp", "tokio-rustls-comp", "tls-rustls-webpki-roots"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }

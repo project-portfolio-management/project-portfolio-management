@@ -453,7 +453,7 @@ expiry dates (section 17); they MUST be given one at the first review.
 
 | Exception | Reason and what limits the risk | Expiry |
 | --- | --- | --- |
-| `RUSTSEC-2026-0543` (chrono), `RUSTSEC-2026-0555` (chrono-tz), `RUSTSEC-2026-0542` (humantime, only with the `fluvio` feature) ignored in the service's `deny.toml` | Declared unmaintained, not vulnerable; no safe upgrade. `chrono` is used throughout the service and also arrives through its own `sqlx` and `schemars` features, `axum-test` (tests only) and `fluvio`; axa stopped bringing it in 0.19 (2026-11-17). Leaving it is the service's own migration to `jiff`, under way. A vulnerability advisory in any of them is not ignored and still fails `cargo deny`. Added 2026-11-17. | 2027-05-17, or when `sqlx` and `axa` offer a `chrono`-free build, whichever is sooner |
+| `RUSTSEC-2026-0543` (chrono), `RUSTSEC-2026-0542` (humantime, only with the `fluvio` feature) ignored in the service's `deny.toml` | Declared unmaintained, not vulnerable; no safe upgrade. The service moved to `jiff` on 2026-11-17: its own code, its `sqlx` `chrono` and `schemars` `chrono04` features and `chrono-tz` are gone, so the `RUSTSEC-2026-0555` (chrono-tz) exception is **cleared** and removed. `chrono` now arrives only through `axum-test`'s `expect-json` (a dev-dependency: tests only, never in a built service) and `fluvio` (the optional `fluvio` feature, not in the default build or the image); `cargo tree -i chrono -e normal` without features prints nothing. A vulnerability advisory in any of them is not ignored and still fails `cargo deny`. Added 2026-11-17; narrowed 2026-11-17. | 2027-05-17, or when `axum-test` and `fluvio` drop `chrono`, whichever is sooner |
 
 ## 17. Known gaps
 

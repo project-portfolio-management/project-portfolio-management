@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (the service's integration tests are one binary)
+
+- **Service: one integration-test binary**, `tests/main.rs`, with the 69 former `tests/*.rs` binaries as its modules
+  (`autotests = false`). A test that sets process-wide state starts with `own_process!()` and runs alone in a fresh
+  process of the same executable, which fails unless that process ran and passed the one test; 89 tests in 60 modules
+  do. Test counts are unchanged (354: 26 plus 328 ignored, every former binary the same). CI (`api`, `api-db`,
+  `restore`), the Makefile, the root and service `AGENTS.md`, the READMEs, `INSTALL.md`, the skill, `agents/` and the
+  English CTO pages say `cargo test --test main` with a module filter. Test executables: 69 (12.6 GiB) to 1 (267 MiB);
+  a rebuild after a one-line change: 466 s to 251 s of user CPU (wall time not comparable: the machine was loaded).
+- Not done: the CTO page in the non-English locales still says "one test binary each". Not verified: see the service
+  changelog (one statement-count test failed once under heavy load and passed alone; the container, broker and load
+  suites and the restore drill were not run).
+
 ### 17 November (minimum Rust 1.98 everywhere, lighter dev builds, `make test-minimum-supported-rust-version`)
 
 - **The matcher's `rust-version` is now 1.98**, as the service's and the migration crate's already were; the docs that said 1.97 for the matcher (`AGENTS.md`, the skill, `operations/upgrade-and-migration.md`) say 1.98.

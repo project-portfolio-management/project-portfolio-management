@@ -9,6 +9,47 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the integration tests are one binary (2026-11-17)
+
+- **`tests/main.rs` is the one integration-test binary** (`autotests = false`, `[[test]] name = "main"`). The 69
+  `tests/*.rs` files stay where they are and are its modules; the old `tests/mod.rs` root is gone and `tests/requests/`
+  is the module `requests`. `tests/change_requests.rs` is the module `change_request_rights`, so that the filters
+  `requests::` and `change_requests::` each select one module (a libtest filter is a substring). `otlp_collector` is
+  one shared module. Run: `cargo test --test main` (database-free), `cargo test --test main requests:: -- --ignored
+  --test-threads=1`, then `cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::`;
+  one former binary is a module filter (`approvals::`).
+- **Process isolation is kept where it was needed, without a second binary.** `own_process!()` (`tests/own_process.rs`),
+  the first statement of 89 tests in 60 modules, re-runs this same executable for that one test (`--exact
+  --include-ignored --test-threads=1`) and fails unless the child reports exactly one test run and passed. Why each
+  needed it: the auth posture (`REQUIRE_AUTH`) and the ABAC policy are `OnceLock`s read once per process, and most
+  real-token suites turn enforcement on while the request suites need it off; `handling_marks` and `public_reader` set
+  different mark schemes; `webhook_redelivery` the MAC key; `outbox_audit` and `fluvio_relay` the event transport;
+  `oidc_provider` and the `keycloak_*` suites their verifiers; `hardening` the rate limits and CORS list;
+  `trace_span_concurrency` and `otlp_middleware` install a global `tracing` subscriber, which is what they test (a
+  thread-local `set_default` would not reach the runtime's worker threads); and all of them set environment variables.
+  Not isolated, as nothing of theirs outlives a test: `requests`, `matching`, `licence_files`,
+  `personal_data_inventory`, `public_files`, `load_test`, `otlp_export` (already `with_default`), `migrations` (its own
+  scratch databases) and `sqlx_layer`. No test kept a binary of its own. Nothing in `src/` changed.
+- **Counts unchanged:** 354 tests before and after (26 not ignored, 328 ignored), the same names, the same count in
+  every former binary (`mod` 232 ignored, `issue_configuration` 19, `private_routes` 11, `migrations` 7, …).
+- **CI:** `api` runs `cargo test --test main` (it ran seven named DB-free binaries; `public_files`, 6 tests, ran nowhere
+  before, since the `db` loop passed `--ignored`, and now runs here); `api-db` runs the two commands above instead of a
+  loop over `tests/*.rs` (the same exclusions: `load_test`; `keycloak_container`, `keycloak_entra_broker` and
+  `fluvio_relay` build only with their features); `restore` seeds with one filtered run and drills `requests::`.
+- **Measured on a shared 16-core Mac** (other agents' builds kept the load average at about 40 for the baseline and
+  130 to 170 for the second run, so the wall times do not compare): after a warm build and a comment appended to
+  `src/controllers/tba.rs`, `cargo test --no-run --all-features` took 196 s wall, 466 s user, 66 s sys before and
+  498 s wall, 251 s user, 11 s sys after. Test executables: 69 (12,861 MiB) before, 1 (267 MiB) after, plus the lib
+  and bin unit-test executables in both.
+- Tested: fmt, clippy (all targets, all features), `cargo test --lib`, `cargo test --test main`, `keycloak_guard` with
+  `--features keycloak`, `cargo deny --all-features`, and both database commands on a throwaway database: 92 of 92
+  and 231 of 232. **Not verified:** `requests::scale::capacity_views_do_not_fan_out_with_scale` failed once in that run
+  (4 statements at 5 plans, 5 at 60) at a load average near 300 and passed when rerun alone; it counts statements, and
+  a background ticker probably ran one during the window; the suite set in that process is the same as the old `mod`
+  binary's, so the fold is unlikely to be the cause, but it was not shown. Not run: `keycloak_container`,
+  `keycloak_entra_broker`, `fluvio_relay` (container or broker), `load_test` (a running service), the restore drill,
+  and the old binaries' database suites as a baseline. The wall-time saving is not shown on a quiet machine.
+
 ### Changed — axa 0.19 and axa-test 0.10 (2026-11-17)
 
 - `axa` 0.17 to 0.19 (through 0.18), `axa-test` 0.8 to 0.10; with them `axa-postgres-job-queue` 0.5.1 to 0.6.0. The job

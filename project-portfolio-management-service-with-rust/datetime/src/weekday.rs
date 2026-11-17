@@ -1,0 +1,94 @@
+//! The day of the week, written `Mon` … `Sun` (`Debug` and `Display`) as before.
+
+use core::fmt;
+
+/// A day of the week.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+pub enum Weekday {
+    /// Monday.
+    Mon = 0,
+    /// Tuesday.
+    Tue = 1,
+    /// Wednesday.
+    Wed = 2,
+    /// Thursday.
+    Thu = 3,
+    /// Friday.
+    Fri = 4,
+    /// Saturday.
+    Sat = 5,
+    /// Sunday.
+    Sun = 6,
+}
+
+impl Weekday {
+    const ALL: [Weekday; 7] = [
+        Weekday::Mon,
+        Weekday::Tue,
+        Weekday::Wed,
+        Weekday::Thu,
+        Weekday::Fri,
+        Weekday::Sat,
+        Weekday::Sun,
+    ];
+
+    /// Monday is 0, Sunday 6.
+    #[must_use]
+    pub const fn num_days_from_monday(self) -> u32 {
+        self as u32
+    }
+
+    /// Sunday is 0, Saturday 6.
+    #[must_use]
+    pub const fn num_days_from_sunday(self) -> u32 {
+        (self as u32 + 1) % 7
+    }
+
+    /// Monday is 1, Sunday 7.
+    #[must_use]
+    pub const fn number_from_monday(self) -> u32 {
+        self as u32 + 1
+    }
+
+    /// Sunday is 1, Saturday 7.
+    #[must_use]
+    pub const fn number_from_sunday(self) -> u32 {
+        self.num_days_from_sunday() + 1
+    }
+
+    /// The next day.
+    #[must_use]
+    pub const fn succ(self) -> Weekday {
+        Self::ALL[(self as usize + 1) % 7]
+    }
+
+    /// The day before.
+    #[must_use]
+    pub const fn pred(self) -> Weekday {
+        Self::ALL[(self as usize + 6) % 7]
+    }
+
+    pub(crate) fn from_jiff(w: jiff::civil::Weekday) -> Weekday {
+        Self::ALL[usize::try_from(w.to_monday_zero_offset()).unwrap_or(0)]
+    }
+
+    pub(crate) fn to_jiff(self) -> jiff::civil::Weekday {
+        // `self as i8` is 0..=6, always a valid offset.
+        jiff::civil::Weekday::from_monday_zero_offset(self as i8)
+            .unwrap_or(jiff::civil::Weekday::Monday)
+    }
+}
+
+impl fmt::Display for Weekday {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.pad(match self {
+            Weekday::Mon => "Mon",
+            Weekday::Tue => "Tue",
+            Weekday::Wed => "Wed",
+            Weekday::Thu => "Thu",
+            Weekday::Fri => "Fri",
+            Weekday::Sat => "Sat",
+            Weekday::Sun => "Sun",
+        })
+    }
+}

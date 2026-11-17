@@ -1,7 +1,7 @@
 [workspace]
 # The service, its migrations, and the pure domain logic (`domain/`, which may not depend on the service, axum, axa or
 # sqlx; spec §8).
-members = ["domain", "migration"]
+members = ["datetime", "domain", "migration"]
 
 [package]
 name = "project-portfolio-management"

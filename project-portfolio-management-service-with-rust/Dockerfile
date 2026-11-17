@@ -39,12 +39,13 @@ RUN want="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' /tmp/rust-toolchain.toml)" \
 
 WORKDIR /app
 
-# This crate: manifests first, then the nested `migration` and `domain` crates (workspace members, path
+# This crate: manifests first, then the nested `migration`, `domain` and `datetime` crates (workspace members, path
 # dependencies), sources, and benches. Cargo parses the whole manifest even for a --bin build, and
 # Cargo.toml declares `[[bench]]` service_bench and calculation_bench, so benches/ must exist.
 COPY project-portfolio-management-service-with-rust/Cargo.toml project-portfolio-management-service-with-rust/Cargo.lock project-portfolio-management-service-with-rust/
 COPY project-portfolio-management-service-with-rust/migration project-portfolio-management-service-with-rust/migration
 COPY project-portfolio-management-service-with-rust/domain project-portfolio-management-service-with-rust/domain
+COPY project-portfolio-management-service-with-rust/datetime project-portfolio-management-service-with-rust/datetime
 COPY project-portfolio-management-service-with-rust/src project-portfolio-management-service-with-rust/src
 COPY project-portfolio-management-service-with-rust/benches project-portfolio-management-service-with-rust/benches
 

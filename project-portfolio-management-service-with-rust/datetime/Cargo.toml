@@ -1,0 +1,43 @@
+[package]
+name = "project-portfolio-management-datetime"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.98"
+publish = true
+authors = ["Joel Parker Henderson <joel@joelparkerhenderson.com>"]
+description = "The dates, instants, durations and time zones of the project portfolio management service, over jiff, written and read exactly as the service always has"
+readme = "../README.md"
+repository = "https://github.com/project-portfolio-management/project-portfolio-management"
+license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only"
+keywords = ["date", "time", "jiff", "portfolio", "project-management"]
+categories = ["date-and-time"]
+include = ["src/**/*"]
+
+# The layering rule (root spec §8.3c): the domain crate depends on this one without the `sqlx` feature, so it stays
+# free of sqlx; the service turns the feature on for its row structs and binds.
+
+[lib]
+name = "project_portfolio_management_datetime"
+path = "src/lib.rs"
+
+[features]
+default = []
+# `sqlx::Type`, `Encode` and `Decode` (Postgres `timestamptz` and `date`), as sqlx's own `chrono` feature wrote them.
+sqlx = ["dep:sqlx"]
+
+[dependencies]
+# The time zone database is bundled into the binary (`tzdb-bundle-always`) and read only through
+# `TimeZoneDatabase::bundled()`, so the image needs no `/usr/share/zoneinfo` and the process zone is never read
+# (no `tz-system`).
+jiff = { version = "1.0", default-features = false, features = ["std", "tzdb-bundle-always", "tz-fat", "perf-inline"] }
+serde = { version = "1", features = ["derive"] }
+# Request-body schemas: the same inline `{"type":"string","format":…}` that schemars' `chrono04` feature wrote.
+schemars = { version = "1" }
+sqlx = { version = "0.9", default-features = false, features = ["postgres"], optional = true }
+
+[dev-dependencies]
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+assert_is_empty = "allow"

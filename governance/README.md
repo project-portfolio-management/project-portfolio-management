@@ -7,6 +7,7 @@ decisions that belong to the buyer clearly marked.
 
 | Document | What it is |
 |---|---|
+| [Information security policy](security-policy.md) | The project's own security rules, each with the file, test or CI job that enforces it; vulnerability classes and targets; incident response; exceptions; known gaps; a mapping to ISO/IEC 27001 Annex A |
 | [DPIA template](dpia.md) | A data protection impact assessment, filled in for this service as far as the software can know, with the buyer's parts marked |
 | [Data-flow diagram](data-flow.md) | Who and what talks to whom, where personal data is stored, and where it leaves |
 | [Record of processing](record-of-processing.md) | The Article 30-style record: purposes, categories, recipients, transfers, retention, security |

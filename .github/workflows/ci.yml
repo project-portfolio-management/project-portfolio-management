@@ -1,11 +1,11 @@
 name: CI
 
 # One workflow for the whole repository (GitHub only reads the repository-root
-# .github). Branch protection should require the single aggregate check `ci-ok`.
+# .github). Branch protection should require the single aggregate check `ci-ok`; as of 2026-11-17 `main` has none,
+# so nothing yet requires it (governance/security-policy.md, section 17).
 #
-# Action pinning: third-party actions are pinned to a full major version tag.
-# Pinning to a full commit SHA is the stricter option (a tag can be moved);
-# Dependabot (.github/dependabot.yml) keeps these up to date either way.
+# Action pinning: every action is pinned to a full commit SHA with its version in a comment (a tag can be moved);
+# scripts/check-actions-pinned.py and zizmor enforce it in the `pins` job, and Dependabot keeps the pins current.
 
 on:
   push:

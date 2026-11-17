@@ -20,6 +20,14 @@ done within **15 business days**; these are targets, not guarantees. A fix is
 released as a patch version and noted in the changelog, crediting you if you
 wish. No bug bounty is offered.
 
+## The policy behind this page
+
+The [information security policy](governance/security-policy.md) says what the
+project requires of itself (authentication, authorization, secrets, supply
+chain, vulnerability classes and targets, incident response, release
+integrity, exceptions), where each rule is enforced or checked, and its known
+gaps.
+
 ## Supported versions
 
 Only the latest release, and the `main` branch, receive security fixes. The

@@ -28,8 +28,9 @@ that nobody has to guess.
 
 ## Releases
 
-A release is a `vX.Y.Z` tag. The release workflow builds, tests and publishes;
-the notes come from the changelog. The project is pre-1.0 and may change the
+A release is a `vX.Y.Z` tag. The release workflow checks the versions, runs
+`cargo deny`, builds and publishes; it does not re-run the tests, so a release
+relies on CI having passed on the tagged commit. The notes come from the changelog. The project is pre-1.0 and may change the
 API between minor versions; changes are listed in the
 [changelog](CHANGELOG.md).
 

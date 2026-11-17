@@ -11,8 +11,8 @@ updates:
       cargo-api:
         patterns: ["*"]
     ignore:
-      # loco-rs 1.2 depends on axum-test 17 and jsonwebtoken 9; the tests use loco's TestServer, so a different
-      # major here breaks them (mismatched types). Revisit when loco-rs moves.
+      # axum-test follows axa (axa-test depends on it; a different major breaks the tests with mismatched types), and
+      # jsonwebtoken stays at the version the Keycloak and OIDC code was written against (AGENTS.md). Revisit with axa.
       - dependency-name: axum-test
         update-types: ["version-update:semver-major"]
       - dependency-name: jsonwebtoken

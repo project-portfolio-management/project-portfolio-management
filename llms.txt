@@ -128,6 +128,7 @@
 - [Path to production](locales/en-001/path-to-production/index.md): What production means here, and each remaining item with a readiness estimate (a slider on the site)
 - [AI statement](AI_STATEMENT.md): How AI was used to build this repository
 - [Assurance checklist](governance/assurance-checklist.md): Assurance checklist
+- [Information security policy](governance/security-policy.md): The project's security rules with the evidence for each, vulnerability classes and targets, incident response, exceptions and known gaps
 - [Assurance mapping](governance/assurance-mapping.md): The assurance checklist against ISO/IEC 27001, SOC 2 and national schemes; the docs/<country-or-body>/ convention
 - [Data-flow diagram](governance/data-flow.md): Where personal and operational data goes, including the WPM bridge
 - [Data protection impact assessment (template)](governance/dpia.md): Data protection impact assessment

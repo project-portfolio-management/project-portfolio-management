@@ -1,5 +1,5 @@
-# cargo-deny supply-chain policy (SEC-I1). Used by the `security.yml`
-# workflow's `cargo deny check` step. Copied per crate (drift-accepted,
+# cargo-deny supply-chain policy (SEC-I1). Used by the `deny` job in
+# .github/workflows/ci.yml (`cargo deny --all-features check`) and by the release workflow. Copied per crate (drift-accepted,
 # same posture as the other per-crate configs); keep the crates in sync
 # when this policy changes.
 
@@ -15,11 +15,19 @@ ignore = [
     "RUSTSEC-2025-0134", # rustls-pemfile (unmaintained; a thin wrapper over rustls-pki-types), transitive (loco tree); added 2026-10-10
     "RUSTSEC-2026-0440", # astral-tokio-tar (unmaintained), no safe upgrade: test-only, via testcontainers, not in a built service; added 2026-11-05
     "RUSTSEC-2026-0441", # pin-utils (unmaintained), no safe upgrade: only with the optional `fluvio` feature, not in the default build; added 2026-11-05
+    # chrono, and so chrono-tz and humantime, were declared unmaintained (chronotope/chrono#1768). Unmaintained, not
+    # vulnerable; no safe upgrade. chrono is used throughout the service and also arrives through sqlx, axa, schemars
+    # and axum-test, so leaving it is a migration (to jiff or time), not an upgrade. Exceptions under
+    # governance/security-policy.md section 16; added 2026-11-17; expire 2027-05-17, or when sqlx and axa offer a
+    # chrono-free build, whichever is sooner.
+    "RUSTSEC-2026-0543", # chrono (unmaintained)
+    "RUSTSEC-2026-0555", # chrono-tz (unmaintained)
+    "RUSTSEC-2026-0542", # humantime (unmaintained, wraps chrono): only with the optional `fluvio` feature
 ]
 
 [licenses]
 version = 2
-# Permissive licenses used across the Rust / Loco stack. A dependency
+# Permissive licenses used across the Rust stack. A dependency
 # whose license is not listed FAILS the check — a deliberate signal to
 # review a new license, not to silently accept it.
 allow = [

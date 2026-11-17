@@ -2,7 +2,8 @@ name: Release
 
 # Push a tag `vX.Y.Z` to publish a release. The tag must equal the API crate's
 # version; the matcher and UI versions are reported (they version independently).
-# Action pinning: major-version tags; full-SHA pinning is the stricter option.
+# Action pinning: full commit SHAs, enforced by the `pins` job in ci.yml. This workflow does not re-run the tests;
+# it relies on CI having passed on the tagged commit, which nothing yet enforces (governance/security-policy.md, 17).
 
 on:
   push:

@@ -511,6 +511,11 @@
           "description": "Assurance checklist"
         },
         {
+          "title": "Information security policy",
+          "path": "governance/security-policy.md",
+          "description": "The project's security rules with the evidence for each, vulnerability classes and targets, incident response, exceptions and known gaps"
+        },
+        {
           "title": "Assurance mapping",
           "path": "governance/assurance-mapping.md",
           "description": "The assurance checklist against ISO/IEC 27001, SOC 2 and national schemes; the docs/<country-or-body>/ convention"

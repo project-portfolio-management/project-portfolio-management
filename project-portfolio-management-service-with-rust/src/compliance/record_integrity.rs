@@ -1,26 +1,19 @@
-//! Row-level integrity hashing over the `cases` table.
+//! Row-level integrity hashing over the `plans` table.
 //!
-//! The audit chain (`super::audit_chain`) proves the **trail** was not
-//! rewritten. It says nothing about the entity rows themselves: an
-//! attacker with SQL access could edit a stored case and, as long as
-//! they wrote no audit row, the chain would still verify. That gap was
-//! stated plainly in the entity spec's honest limits; this module closes
-//! it.
+//! The audit trail records each change, but it says nothing about the rows themselves: someone with SQL access could
+//! edit a stored plan and, as long as they wrote no audit row, nothing would show it. This module narrows that gap.
+//! There is no hash chain over the audit trail (`super` and `SECURITY.md` say so); the keyed MAC in `super::mac`, when
+//! a key is configured, is the stronger control.
 //!
-//! Each `cases` row carries a `content_hash` — a SHA-256 over its
-//! own content and lifecycle state — recomputed on **every** write. A
-//! change made outside the service (or a bug that writes a row without
-//! rehashing) is then detectable by recomputation.
+//! Each `plans` row carries a `content_hash` (a SHA-256 over its own content and lifecycle state) recomputed on
+//! **every** write. A change made outside the service (or a bug that writes a row without rehashing) is then
+//! detectable by recomputation.
 //!
 //! ## Not a chain
 //!
-//! Unlike `audit_logs`, entity rows are *mutable by design*: an update
-//! replaces the payload. So this is a per-row content hash, not a chain —
-//! it detects **out-of-band modification**, not deletion or reordering. A
-//! row deleted directly in SQL leaves no trace here; the audit chain is
-//! what covers that, because a legitimate delete writes an audit row and
-//! an illegitimate one breaks the chain. The two controls are
-//! complementary, and neither subsumes the other.
+//! Plan rows are *mutable by design*: an update replaces the payload. So this is a per-row content hash, not a chain:
+//! it detects **out-of-band modification**, not deletion or reordering. A row deleted directly in SQL leaves no trace
+//! here.
 //!
 //! ## What is hashed
 //!
@@ -28,13 +21,13 @@
 //! record's content and its lifecycle state.
 //!
 //! **`created_at` / `updated_at` are excluded on purpose.** They are set
-//! by the ORM and the database rather than by this code, so binding them
+//! by the database rather than by this code, so binding them
 //! would make the digest depend on values the writer does not control,
 //! producing false mismatches. The cost is honest and small: an attacker
 //! who alters only a timestamp is not detected here. Anything that
 //! changes what the record *says* is.
 //!
-//! Reproducibility follows the same two rules as the audit chain: time is
+//! Reproducibility follows two rules: time is
 //! hashed as epoch microseconds (so writers must truncate before storing),
 //! and JSON is hashed as `serde_json`'s serialization, whose `BTreeMap`
 //! key order matches what a JSONB round-trip returns.
@@ -337,8 +330,7 @@ pub fn verify(rows: &[plans::Model]) -> RecordIntegrityReport {
 
 #[cfg(test)]
 mod tests {
-    /// As `audit_chain::spec_documents_this_version_tag`: the tag is
-    /// published in `spec/12-compliance.md` §12.4z, and changing it
+    /// The tag is published in `spec/12-compliance.md` §12.4z, and changing it
     /// invalidates every stored digest.
     #[test]
     fn spec_documents_this_version_tag() {

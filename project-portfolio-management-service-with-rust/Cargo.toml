@@ -24,8 +24,8 @@ include = ["src/**/*", "README.md"]
 axa = { version = "0.17", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "postgres-sqlx"] }
 
 [dependencies]
-# Keyed integrity MACs with production-grade key handling — one audited
-# implementation shared by every service, rather than a copy per crate.
+# Keyed integrity MACs with key handling (retired keys, key files): one implementation shared by every service,
+# rather than a copy per crate. It has not been independently audited.
 integrity-mac = "0.2.0"
 # Unkeyed content digests: SHA-256 (FIPS 180-4) and SHA3-256 (FIPS 202).
 sha2 = { version = "0.11" }

@@ -15,6 +15,29 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (a formal information security policy)
+
+- **`governance/security-policy.md`**, version 1.0: the policy behind `SECURITY.md`. Scope and roles;
+  rules for authentication, authorization (private plans), input and output, cryptography and secrets, logging and
+  audit, data protection, the development lifecycle, the supply chain, vulnerability management (CVSS v4.0 classes,
+  with targets of 15 business days for Critical to the next release for Low), incident response (a 90-day coordinated
+  disclosure window), release integrity, backup and exceptions. Each rule names the file, test or CI job that enforces
+  it. A mapping to ISO/IEC 27001:2022 Annex A, with the same caveat as the assurance mapping (the standard's text was
+  not read). Linked from `SECURITY.md`, the governance pack and `llms.json`.
+- **`cargo deny` failed** on three advisories published since the last run: `chrono`, `chrono-tz` and `humantime`
+  declared unmaintained (not vulnerable; no safe upgrade). They are the first exceptions recorded under the policy,
+  with a reason and an expiry of 2027-05-17. The matcher's 11 advisory ignores, carried over from the former Loco
+  tree, were none of them encountered and are removed.
+- **False claims corrected** in comments and docs: the workflows said actions were pinned to major-version tags (they
+  are pinned by SHA); `GOVERNANCE.md` said the release workflow runs the tests (it does not); `deny.toml` named a
+  `security.yml` workflow that does not exist; Dependabot's hold gave a Loco reason; the doc of
+  `src/compliance/record_integrity.rs` described a `cases` table and an audit chain that are not here; `Cargo.toml`
+  called `integrity-mac` "audited".
+- **Not done**, and listed in the policy's known gaps: `main` has no branch protection, so `ci-ok` is not required;
+  the release image job uses the GitHub Actions build cache; private vulnerability reporting, secret scanning and
+  push protection are off; no npm advisory scan; no third-party review. **Not verified:** nothing in the policy has
+  been exercised by a real report or incident; the policy was drafted with an agent and reviewed by reading.
+
 ### 17 November (delivery model and reporting method: NC-1 slice 11, part i)
 
 - **UI: a programme's delivery model, owner and reporting method (EX-2, EX-14)** are set on `/plans/[pid]/programme`.

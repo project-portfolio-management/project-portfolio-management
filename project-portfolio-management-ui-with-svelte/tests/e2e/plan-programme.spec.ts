@@ -1,7 +1,8 @@
 // NC-1 slice 11 (DP-5): a plan's planned gate dates and programme status, in a real browser over a stubbed service.
 // Gate dates send only what changed; a plan that is not a programme says it has no status; a programme is paused with
 // a reason (citing a gate review), shows what it still holds, resumes, and once stopped offers nothing more; a refusal
-// names the right it needs. The delivery model, its owner and the reporting method (EX-2, EX-14). Welsh; axe.
+// names the right it needs. The delivery model, its owner and the reporting method (EX-2, EX-14). Triage and
+// thresholds (EX-7). Welsh; axe.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -45,6 +46,61 @@ async function stubProgramme(
         ],
       },
     }),
+  );
+  // Triage and thresholds (EX-7).
+  const triages: Array<Record<string, unknown>> = [];
+  const thresholds: Array<Record<string, unknown>> = [
+    {
+      kind: "confidence_red_packs",
+      count: 3,
+      date: null,
+      cap_minor: null,
+      currency: null,
+    },
+  ];
+  await page.route(
+    /\/api\/plans\/[^/]+\/(triage|thresholds)$/,
+    async (route) => {
+      const req = route.request();
+      const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
+      if (req.method() === "GET")
+        return route.fulfill({
+          json: path.endsWith("triage")
+            ? { triage: triages[0] ?? null, history: triages }
+            : { thresholds },
+        });
+      const body = req.postDataJSON();
+      sent.push({ method: req.method(), path, body });
+      if (opts.refuse)
+        return route.fulfill({
+          status: opts.refuse,
+          json: { error: "x", description: "service text" },
+        });
+      if (path.endsWith("triage")) {
+        const row = {
+          pid: `t${triages.length + 1}`,
+          triaged_on: "2026-11-17",
+          ...body,
+        };
+        triages.unshift(row);
+        return route.fulfill({ json: row });
+      }
+      const i = thresholds.findIndex((t) => t.kind === body.kind);
+      if (body.remove) {
+        if (i >= 0) thresholds.splice(i, 1);
+        return route.fulfill({ json: { removed: body.kind } });
+      }
+      const row = {
+        kind: body.kind,
+        count: body.count ?? null,
+        date: body.date ?? null,
+        cap_minor: body.cap_minor ?? null,
+        currency: body.currency ?? null,
+      };
+      if (i >= 0) thresholds[i] = row;
+      else thresholds.push(row);
+      return route.fulfill({ json: row });
+    },
   );
   // The delivery model and reporting method (EX-2, EX-14).
   const profile: Record<string, unknown> = {
@@ -433,6 +489,85 @@ test("a refused delivery model is said in the catalogue's words", async ({
   await sec.getByRole("button", { name: "Save the delivery model" }).click();
   await expect(sec.getByRole("alert")).toBeVisible();
   await expect(sec.getByRole("alert")).not.toContainText("service text");
+});
+
+test("a triage is recorded with its reason said first, and thresholds are set, left unchanged and removed", async ({
+  page,
+}) => {
+  const sent = await stubProgramme(page);
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const tri = page.getByRole("region", { name: "Triage", exact: true });
+  await expect(tri.getByText("No triage recorded yet.")).toBeVisible();
+  await tri.getByLabel("Outcome").selectOption("pause");
+  await tri.getByLabel("Reason (at least 10 characters)").fill("too short");
+  await tri.getByRole("button", { name: "Record the triage" }).click();
+  await expect(tri.getByRole("alert")).toHaveText(
+    "The reason must be at least 10 characters.",
+  );
+  await tri
+    .getByLabel("Reason (at least 10 characters)")
+    .fill("Supplier cannot staff the second wave");
+  await tri.getByRole("button", { name: "Record the triage" }).click();
+  await expect(tri.getByRole("status")).toHaveText("Triage recorded.");
+  await expect(
+    tri.getByText(
+      "Latest triage, 17 Nov 2026: Pause. Supplier cannot staff the second wave",
+    ),
+  ).toBeVisible();
+
+  const th = page.getByRole("region", { name: "Thresholds" });
+  const red = th.getByRole("form", {
+    name: "Confidence red for several packs",
+  });
+  await expect(
+    red.getByText("Crossed when confidence is red in 3 issued packs in a row."),
+  ).toBeVisible();
+  await red.getByRole("button", { name: "Save the threshold" }).click();
+  await expect(th.getByRole("status")).toHaveText(
+    "Nothing changed, so nothing was sent.",
+  );
+  await red.getByLabel("Issued packs at red in a row (1 to 24)").fill("30");
+  await red.getByRole("button", { name: "Save the threshold" }).click();
+  await expect(th.getByRole("alert")).toHaveText(
+    "The number of packs must be a whole number from 1 to 24.",
+  );
+  const cap = th.getByRole("form", { name: "P80 cost above a cap" });
+  await cap.getByLabel("Cap amount").fill("250000");
+  await cap.getByLabel("Currency (three letters)").fill("gbx");
+  await cap.getByRole("button", { name: "Save the threshold" }).click();
+  await expect(th.getByRole("alert")).toHaveText(
+    "The currency must be a three-letter ISO 4217 code.",
+  );
+  await cap.getByLabel("Currency (three letters)").fill("gbp");
+  await cap.getByRole("button", { name: "Save the threshold" }).click();
+  await expect(th.getByRole("status")).toHaveText(
+    "Threshold saved: P80 cost above a cap.",
+  );
+  await red.getByRole("button", { name: "Remove the threshold" }).click();
+  await expect(th.getByRole("status")).toHaveText(
+    "Threshold removed: Confidence red for several packs.",
+  );
+  expect(sent.filter((x) => /triage|thresholds/.test(x.path))).toEqual([
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/triage`,
+      body: {
+        outcome: "pause",
+        reason: "Supplier cannot staff the second wave",
+      },
+    },
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/thresholds`,
+      body: { kind: "p80_cap", cap_minor: 25000000, currency: "GBP" },
+    },
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/thresholds`,
+      body: { kind: "confidence_red_packs", remove: true },
+    },
+  ]);
 });
 
 test("the page reads in Welsh and passes axe", async ({ page }) => {

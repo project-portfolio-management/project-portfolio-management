@@ -208,6 +208,8 @@ the Status note above).
 | Skill pool writes (`/skill-pools`, `SkillPoolWrites.svelte`) | `POST /api/skill-pools` · `PUT /api/skill-pools/{pid}` |
 | Delivery model and reporting method (`/plans/[pid]/programme`) | `GET`/`PUT /api/plans/{pid}/delivery-model` · `PUT /api/plans/{pid}/reporting-method` |
 | Cutover stop criteria, draft (`/plans/[pid]/cutover`) | `PUT /api/plans/{pid}/cutover-decisions/{did}/criteria` |
+| Triage and thresholds (`/plans/[pid]/programme`, `ProgrammeThresholds.svelte`) | `GET`/`PUT /api/plans/{pid}/triage` · `GET`/`PUT /api/plans/{pid}/thresholds` |
+| Threshold sweep and decisions (`/exceptions`) | `POST /api/threshold-sweep` · `POST /api/exceptions/{pid}/threshold-decision` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

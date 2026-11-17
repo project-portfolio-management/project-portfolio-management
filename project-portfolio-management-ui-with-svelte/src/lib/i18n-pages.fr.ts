@@ -4254,6 +4254,97 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.exceptions.breached_other":
     "Dépassée : pas complétée dans les {hours} heures après son ouverture.",
   "p.exceptions.cancel": "Annuler",
+  "p.thresholds.could_not_load":
+    "Le triage et les seuils n'ont pas pu être chargés.",
+  "p.thresholds.could_not_save": "La modification n'a pas été enregistrée.",
+  "p.thresholds.could_not_sweep": "Les seuils n'ont pas pu être vérifiés.",
+  "p.thresholds.decide_says":
+    "Enregistrer la décision clôt l'exception. Elle consigne ce qui a été décidé ; elle ne met pas en pause, ne réinitialise ni n'arrête le programme, ce que fait une personne par le statut du programme.",
+  "p.thresholds.decide": "Enregistrer la décision",
+  "p.thresholds.decided_done": "Décision enregistrée : {action}.",
+  "p.thresholds.f_action": "Décision",
+  "p.thresholds.f_amount": "Montant du plafond",
+  "p.thresholds.f_count":
+    "Dossiers publiés au rouge d'affilée (de {min} à {max})",
+  "p.thresholds.f_currency": "Devise (trois lettres)",
+  "p.thresholds.f_date": "Date de fin prévue à ne pas dépasser",
+  "p.thresholds.f_expiry":
+    "Dérogation jusqu'au (dans le futur, au plus {days} jours)",
+  "p.thresholds.f_outcome": "Issue",
+  "p.thresholds.f_reason": "Motif (au moins {min} caractères)",
+  "p.thresholds.history_item": "{date} : {outcome}. {reason}",
+  "p.thresholds.history": "Triages précédents",
+  "p.thresholds.not_set": "Non défini",
+  "p.thresholds.now_cap": "Franchi quand le coût P80 dépasse {amount}.",
+  "p.thresholds.now_forecast":
+    "Franchi quand la fin prévue est après le {date}.",
+  "p.thresholds.now_red_packs_one":
+    "Franchi quand la confiance est au rouge sur {n} dossier publié d'affilée.",
+  "p.thresholds.now_red_packs_other":
+    "Franchi quand la confiance est au rouge sur {n} dossiers publiés d'affilée.",
+  "p.thresholds.opened_by_threshold":
+    "Ouverte parce qu'un seuil du programme a été franchi.",
+  "p.thresholds.problem_action":
+    "Choisissez pause, réinitialisation, arrêt ou dérogation.",
+  "p.thresholds.problem_cap":
+    "Le plafond doit être un montant supérieur à zéro.",
+  "p.thresholds.problem_count":
+    "Le nombre de dossiers doit être un entier de {min} à {max}.",
+  "p.thresholds.problem_currency":
+    "La devise doit être un code ISO 4217 de trois lettres.",
+  "p.thresholds.problem_date": "Choisissez une date.",
+  "p.thresholds.problem_expiry_long":
+    "Une dérogation peut durer au plus {days} jours.",
+  "p.thresholds.problem_expiry_needed":
+    "Une dérogation demande une date jusqu'à laquelle elle vaut.",
+  "p.thresholds.problem_expiry_past":
+    "La date d'une dérogation doit être dans le futur.",
+  "p.thresholds.problem_outcome":
+    "Choisissez terminer, corriger, mettre en pause ou arrêter.",
+  "p.thresholds.problem_reason":
+    "Le motif doit compter au moins {min} caractères.",
+  "p.thresholds.remove_threshold": "Supprimer le seuil",
+  "p.thresholds.save_threshold": "Enregistrer le seuil",
+  "p.thresholds.save_triage": "Enregistrer le triage",
+  "p.thresholds.sweep_done_one":
+    "{checked} seuils vérifiés ; {n} exception ouverte.",
+  "p.thresholds.sweep_done_other":
+    "{checked} seuils vérifiés ; {n} exceptions ouvertes.",
+  "p.thresholds.sweep_item": "{programme} — {kind} : {outcome}",
+  "p.thresholds.sweep_list": "Seuils franchis",
+  "p.thresholds.sweep_says":
+    "La vérification ouvre une exception de livraison pour chaque seuil franchi, ou l'ajoute à celle déjà ouverte ; elle ne met rien en pause, ne réinitialise ni n'arrête rien.",
+  "p.thresholds.sweep": "Vérifier les seuils maintenant",
+  "p.thresholds.threshold_removed": "Seuil supprimé : {kind}.",
+  "p.thresholds.threshold_saved": "Seuil enregistré : {kind}.",
+  "p.thresholds.thresholds_heading": "Seuils",
+  "p.thresholds.thresholds_says":
+    "Franchir un seuil ouvre une exception de livraison, à laquelle une personne répond par une pause, une réinitialisation, un arrêt ou une dérogation datée. Rien n'est mis en pause, réinitialisé ni arrêté automatiquement.",
+  "p.thresholds.triage_heading": "Triage du programme",
+  "p.thresholds.triage_latest": "Dernier triage, {date} : {outcome}. {reason}",
+  "p.thresholds.triage_none": "Aucun triage enregistré pour l'instant.",
+  "p.thresholds.triage_saved": "Triage enregistré.",
+  "p.thresholds.triage_says":
+    "Un triage est un avis daté sur la direction du programme, avec son motif. Il consigne l'avis ; il ne change rien au programme.",
+  "p.thresholds.unchanged": "Rien n'a changé ; rien n'a été envoyé.",
+  "p.thresholds.action_pause": "Mettre en pause",
+  "p.thresholds.action_reset": "Réinitialiser",
+  "p.thresholds.action_stop": "Arrêter",
+  "p.thresholds.action_override": "Déroger",
+  "p.thresholds.kind_confidence_red_packs":
+    "Confiance au rouge sur plusieurs dossiers",
+  "p.thresholds.kind_forecast_past": "Fin prévue après une date",
+  "p.thresholds.kind_p80_cap": "Coût P80 au-dessus d'un plafond",
+  "p.thresholds.outcome_finish": "Terminer",
+  "p.thresholds.outcome_fix": "Corriger",
+  "p.thresholds.outcome_pause": "Mettre en pause",
+  "p.thresholds.outcome_stop": "Arrêter",
+  "p.thresholds.sweep_opened": "exception ouverte",
+  "p.thresholds.sweep_already_open": "exception déjà ouverte",
+  "p.thresholds.sweep_attached_to_open_exception":
+    "ajouté à l'exception ouverte",
+  "p.thresholds.sweep_suppressed_by_override":
+    "non ouverte : une dérogation est en vigueur",
   "p.exceptions.closed_done": "Décision enregistrée ; l'exception est fermée.",
   "p.exceptions.complete_it": "La compléter",
   "p.exceptions.complete_says":

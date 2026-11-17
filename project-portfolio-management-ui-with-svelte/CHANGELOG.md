@@ -9,6 +9,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — triage, thresholds and threshold decisions (NC-1 slice 11, EX-7, 2026-11-17)
+
+- `/plans/[pid]/programme` records a programme's triage and sets, shows and removes its three thresholds;
+  `/exceptions` runs the threshold sweep and answers a threshold exception with pause, reset, stop or an override with
+  an expiry. Every rule is said first; nothing is paused, reset or stopped automatically. A threshold exception no
+  longer shows the code word `threshold` as its confidence value. Six client methods, `src/lib/threshold-view.ts`,
+  `ProgrammeThresholds.svelte`; 67 keys in eight catalogues, machine-written and unreviewed.
+- **Fixed:** the programme page's delivery model and reporting method (part i) could be overwritten by their own
+  late-arriving load, so a choice made at once was lost and "nothing changed" was said; the inputs, and the new
+  threshold inputs, are now disabled until their values have loaded.
+- Tests: `tests/unit/threshold-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, one more in
+  `tests/e2e/plan-programme.spec.ts`, `tests/e2e/threshold-exceptions.spec.ts` (four, with Welsh and axe).
+- **Not done:** naming which threshold opened an exception (the service does not return it in the list). **Not
+  verified:** against a real service.
+
 ### Added — changing a draft cutover's stop criteria (NC-1 slice 11, EX-6, 2026-11-17)
 
 - `/plans/[pid]/cutover` changes a draft decision's stop criteria (sent whole, in order; nothing for no change). The

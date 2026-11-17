@@ -3,16 +3,26 @@
   delivery confidence at amber/red or red opened, newest first. An open one is to be completed within the deployment's
   window (its cause, the decision needed, an owner and a decide-by date) and is closed only by a recorded decision;
   improving confidence does not close it. A breach (not completed in time) stays on the record. Every value is a word
-  and a symbol, never a colour alone. A refusal is the catalogue's sentence.
+  and a symbol, never a colour alone. A refusal is the catalogue's sentence. An exception a programme's threshold
+  opened (EX-7) is closed by a threshold decision: pause, reset, stop, or an override with an expiry; the threshold
+  sweep checks every threshold now and pauses, resets and stops nothing.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
   import { errorText } from "#lib/error-text.js";
   import { enumLabel } from "#lib/enum-labels.js";
-  import { localeHref, t, tn } from "#lib/i18n.svelte.js";
+  import { localeHref, t, tDynamic, tn } from "#lib/i18n.svelte.js";
   import { formatDate } from "#lib/locale-format.js";
   import { PlanRepository } from "#lib/api/plans.js";
-  import { PpmClient, type DeliveryException } from "#lib/api/ppm.js";
+  import { PpmClient, type DeliveryException, type ThresholdSweepRow } from "#lib/api/ppm.js";
+  import {
+    OVERRIDE_MAX_DAYS,
+    REASON_MIN,
+    THRESHOLD_ACTIONS,
+    decisionProblems,
+    isThresholdException,
+    type ThresholdAction,
+  } from "#lib/threshold-view.js";
   import { CONFIDENCE_MARK } from "#lib/confidence-view.js";
   import {
     DECISION_MIN,
@@ -42,6 +52,39 @@
   let error = $state<string | null>(null);
   let notice = $state("");
   let busy = $state(false);
+  // A threshold decision, and the sweep.
+  let action = $state<ThresholdAction>("pause");
+  let expiry = $state("");
+  let sweep = $state<ThresholdSweepRow[] | null>(null);
+  const today = () => new Date().toISOString().slice(0, 10);
+
+  async function runSweep() {
+    error = null;
+    notice = "";
+    busy = true;
+    try {
+      sweep = (await ppm.thresholdSweep()).results;
+      const opened = sweep.filter((r) => r.outcome === "opened").length;
+      notice = tn("p.thresholds.sweep_done", opened, { n: opened, checked: sweep.length });
+      await load();
+    } catch (err) {
+      error = errorText(err, "p.thresholds.could_not_sweep");
+    } finally {
+      busy = false;
+    }
+  }
+
+  function decideThreshold(ev: SubmitEvent, e: DeliveryException) {
+    ev.preventDefault();
+    const problems = decisionProblems(action, decision, expiry, today());
+    if (problems.length > 0) {
+      error = t(problems[0]!, { min: REASON_MIN, days: OVERRIDE_MAX_DAYS });
+      notice = "";
+      return;
+    }
+    const body = { action, reason: decision.trim(), ...(action === "override" ? { expiry } : {}) };
+    void act(() => ppm.thresholdDecision(e.pid, body), t("p.thresholds.decided_done", { action: tDynamic(`p.thresholds.action_${action}`) }), "decide");
+  }
 
   const word = (v: string) => enumLabel("pk_conf", v);
   const mark = (v: string) => CONFIDENCE_MARK[v as keyof typeof CONFIDENCE_MARK] ?? CONFIDENCE_MARK.not_assessed;
@@ -81,6 +124,8 @@
     editing = null;
     deciding = e.pid;
     decision = "";
+    action = "pause";
+    expiry = "";
   }
 
   async function act(run: () => Promise<unknown>, done: string, action: "complete" | "decide") {
@@ -147,7 +192,19 @@
     <input type="checkbox" bind:checked={breachedOnly} onchange={load} />
     {t("p.exceptions.f_breached")}
   </label>
+  <button class="button small" type="button" disabled={busy} onclick={runSweep}>{t("p.thresholds.sweep")}</button>
 </div>
+<p class="small muted">{t("p.thresholds.sweep_says")}</p>
+{#if sweep}
+  {@const crossed = sweep.filter((r) => r.crossed)}
+  {#if crossed.length > 0}
+    <ul class="small" aria-label={t("p.thresholds.sweep_list")}>
+      {#each crossed as r (`${r.plan_pid}-${r.kind}`)}
+        <li>{t("p.thresholds.sweep_item", { programme: r.programme, kind: tDynamic(`p.thresholds.kind_${r.kind}`), outcome: tDynamic(`p.thresholds.sweep_${r.outcome ?? "opened"}`) })}</li>
+      {/each}
+    </ul>
+  {/if}
+{/if}
 
 {#if loadError}<p class="banner error" role="alert">{loadError}</p>{/if}
 {#if error}<p class="banner error" role="alert">{error}</p>{/if}
@@ -162,11 +219,15 @@
         <li>
           <article aria-labelledby={`exc-${e.pid}`}>
             <h2 id={`exc-${e.pid}`}><a href={localeHref(`/plans/${e.plan_pid}/confidence`)}>{planName(e.plan_pid)}</a></h2>
-            <p>
-              <span aria-hidden="true">{mark(e.worst_value).symbol}</span>
-              {t("p.exceptions.worst", { value: word(e.worst_value) })}
-              {#if e.worsened_count > 0} · {tn("p.exceptions.worsened", e.worsened_count, { count: e.worsened_count })}{/if}
-            </p>
+            {#if isThresholdException(e)}
+              <p>{t("p.thresholds.opened_by_threshold")}</p>
+            {:else}
+              <p>
+                <span aria-hidden="true">{mark(e.worst_value).symbol}</span>
+                {t("p.exceptions.worst", { value: word(e.worst_value) })}
+                {#if e.worsened_count > 0} · {tn("p.exceptions.worsened", e.worsened_count, { count: e.worsened_count })}{/if}
+              </p>
+            {/if}
             <p class="small">
               {t("p.exceptions.opened", { when: formatDate(e.opened_at) })} ·
               {e.status === "open" ? t("p.exceptions.is_open") : t("p.exceptions.is_closed", { when: formatDate(e.closed_at ?? "") })}
@@ -208,7 +269,25 @@
                   </div>
                 </form>
               {/if}
-              {#if deciding === e.pid}
+              {#if deciding === e.pid && isThresholdException(e)}
+                <form class="stack" novalidate onsubmit={(ev) => decideThreshold(ev, e)}>
+                  <label>
+                    {t("p.thresholds.f_action")}
+                    <select bind:value={action}>
+                      {#each THRESHOLD_ACTIONS as a (a)}<option value={a}>{tDynamic(`p.thresholds.action_${a}`)}</option>{/each}
+                    </select>
+                  </label>
+                  {#if action === "override"}
+                    <label>{t("p.thresholds.f_expiry", { days: OVERRIDE_MAX_DAYS })}<input type="date" bind:value={expiry} /></label>
+                  {/if}
+                  <label>{t("p.thresholds.f_reason", { min: REASON_MIN })}<textarea bind:value={decision} rows="3"></textarea></label>
+                  <p class="small muted">{t("p.thresholds.decide_says")}</p>
+                  <div class="row">
+                    <button class="button small" type="submit" disabled={busy}>{t("p.thresholds.decide")}</button>
+                    <button class="button small" type="button" onclick={() => (deciding = null)}>{t("p.exceptions.cancel")}</button>
+                  </div>
+                </form>
+              {:else if deciding === e.pid}
                 <form class="stack" novalidate onsubmit={(ev) => decide(ev, e)}>
                   <label>{t("p.exceptions.f_decision", { min: DECISION_MIN })}<textarea bind:value={decision} rows="3"></textarea></label>
                   <p class="small muted">{t("p.exceptions.decide_says")}</p>

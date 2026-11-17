@@ -4023,3 +4023,20 @@ export interface DeliveryProfile {
   /** `evm` (earned value, the default) or `product` (burn-up and flow). */
   reporting_method: "evm" | "product";
 }
+
+// ---- the threshold sweep (EX-7, NC-1 slice 11) ----
+
+/** One threshold checked by `POST /api/threshold-sweep`. */
+export interface ThresholdSweepRow {
+  plan_pid: string;
+  programme: string;
+  kind: "confidence_red_packs" | "forecast_past" | "p80_cap";
+  crossed: boolean;
+  /** Set when it crossed: what the sweep did about it. */
+  outcome?:
+    | "opened"
+    | "already_open"
+    | "attached_to_open_exception"
+    | "suppressed_by_override";
+  exception_pid?: string;
+}

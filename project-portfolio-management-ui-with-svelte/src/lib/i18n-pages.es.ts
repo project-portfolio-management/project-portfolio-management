@@ -4247,6 +4247,94 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.exceptions.breached_other":
     "Incumplida: no se completó en {hours} horas desde que se abrió.",
   "p.exceptions.cancel": "Cancelar",
+  "p.thresholds.could_not_load":
+    "No se pudieron cargar el triaje y los umbrales.",
+  "p.thresholds.could_not_save": "No se guardó el cambio.",
+  "p.thresholds.could_not_sweep": "No se pudieron comprobar los umbrales.",
+  "p.thresholds.decide_says":
+    "Registrar la decisión cierra la excepción. Registra lo decidido; no pausa, reinicia ni detiene el programa, cosa que hace una persona mediante el estado del programa.",
+  "p.thresholds.decide": "Registrar la decisión",
+  "p.thresholds.decided_done": "Decisión registrada: {action}.",
+  "p.thresholds.f_action": "Decisión",
+  "p.thresholds.f_amount": "Importe del límite",
+  "p.thresholds.f_count":
+    "Paquetes emitidos en rojo seguidos (de {min} a {max})",
+  "p.thresholds.f_currency": "Moneda (tres letras)",
+  "p.thresholds.f_date": "Fecha de fin prevista que no debe superarse",
+  "p.thresholds.f_expiry":
+    "Anulación hasta (en el futuro, como mucho {days} días)",
+  "p.thresholds.f_outcome": "Resultado",
+  "p.thresholds.f_reason": "Motivo (al menos {min} caracteres)",
+  "p.thresholds.history_item": "El {date}: {outcome}. {reason}",
+  "p.thresholds.history": "Triajes anteriores",
+  "p.thresholds.not_set": "Sin definir",
+  "p.thresholds.now_cap": "Se cruza cuando el coste P80 supera {amount}.",
+  "p.thresholds.now_forecast":
+    "Se cruza cuando el fin previsto es posterior al {date}.",
+  "p.thresholds.now_red_packs_one":
+    "Se cruza cuando la confianza está en rojo en {n} paquete emitido seguido.",
+  "p.thresholds.now_red_packs_other":
+    "Se cruza cuando la confianza está en rojo en {n} paquetes emitidos seguidos.",
+  "p.thresholds.opened_by_threshold":
+    "Abierta porque se cruzó un umbral del programa.",
+  "p.thresholds.problem_action": "Elija pausar, reiniciar, detener o anular.",
+  "p.thresholds.problem_cap": "El límite debe ser un importe mayor que cero.",
+  "p.thresholds.problem_count":
+    "El número de paquetes debe ser un entero de {min} a {max}.",
+  "p.thresholds.problem_currency":
+    "La moneda debe ser un código ISO 4217 de tres letras.",
+  "p.thresholds.problem_date": "Elija una fecha.",
+  "p.thresholds.problem_expiry_long":
+    "Una anulación puede durar como mucho {days} días.",
+  "p.thresholds.problem_expiry_needed":
+    "Una anulación necesita la fecha hasta la que se mantiene.",
+  "p.thresholds.problem_expiry_past":
+    "La fecha de una anulación debe estar en el futuro.",
+  "p.thresholds.problem_outcome": "Elija terminar, corregir, pausar o detener.",
+  "p.thresholds.problem_reason":
+    "El motivo debe tener al menos {min} caracteres.",
+  "p.thresholds.remove_threshold": "Quitar el umbral",
+  "p.thresholds.save_threshold": "Guardar el umbral",
+  "p.thresholds.save_triage": "Registrar el triaje",
+  "p.thresholds.sweep_done_one":
+    "{checked} umbrales comprobados; {n} excepción abierta.",
+  "p.thresholds.sweep_done_other":
+    "{checked} umbrales comprobados; {n} excepciones abiertas.",
+  "p.thresholds.sweep_item": "{programme} — {kind}: {outcome}",
+  "p.thresholds.sweep_list": "Umbrales cruzados",
+  "p.thresholds.sweep_says":
+    "Comprobar abre una excepción de entrega por cada umbral cruzado, o la añade a la que ya está abierta; no pausa, reinicia ni detiene nada.",
+  "p.thresholds.sweep": "Comprobar los umbrales ahora",
+  "p.thresholds.threshold_removed": "Umbral quitado: {kind}.",
+  "p.thresholds.threshold_saved": "Umbral guardado: {kind}.",
+  "p.thresholds.thresholds_heading": "Umbrales",
+  "p.thresholds.thresholds_says":
+    "Cruzar un umbral abre una excepción de entrega, que una persona responde con pausar, reiniciar, detener o una anulación con caducidad. Nada se pausa, reinicia ni detiene automáticamente.",
+  "p.thresholds.triage_heading": "Triaje",
+  "p.thresholds.triage_latest": "Último triaje, {date}: {outcome}. {reason}",
+  "p.thresholds.triage_none": "Aún no hay triaje registrado.",
+  "p.thresholds.triage_saved": "Triaje registrado.",
+  "p.thresholds.triage_says":
+    "Un triaje es una valoración fechada de hacia dónde debe ir el programa, con el motivo. Registra la valoración; no cambia nada del programa.",
+  "p.thresholds.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.thresholds.action_pause": "Pausar",
+  "p.thresholds.action_reset": "Reiniciar",
+  "p.thresholds.action_stop": "Detener",
+  "p.thresholds.action_override": "Anular",
+  "p.thresholds.kind_confidence_red_packs":
+    "Confianza en rojo durante varios paquetes",
+  "p.thresholds.kind_forecast_past": "Fin previsto después de una fecha",
+  "p.thresholds.kind_p80_cap": "Coste P80 por encima de un límite",
+  "p.thresholds.outcome_finish": "Terminar",
+  "p.thresholds.outcome_fix": "Corregir",
+  "p.thresholds.outcome_pause": "Pausar",
+  "p.thresholds.outcome_stop": "Detener",
+  "p.thresholds.sweep_opened": "excepción abierta",
+  "p.thresholds.sweep_already_open": "excepción ya abierta",
+  "p.thresholds.sweep_attached_to_open_exception":
+    "añadido a la excepción abierta",
+  "p.thresholds.sweep_suppressed_by_override":
+    "no abierta: hay una anulación vigente",
   "p.exceptions.closed_done": "Decisión registrada; la excepción está cerrada.",
   "p.exceptions.complete_it": "Completarla",
   "p.exceptions.complete_says":

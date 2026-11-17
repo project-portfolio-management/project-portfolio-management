@@ -11,6 +11,13 @@ import type { Collection } from "./types";
 import { rowOf } from "#lib/row-of.js";
 import { mspdiReport, simQuery } from "./ppm-types";
 import type { PeopleImpact } from "#lib/people-impact.js";
+import type {
+  Threshold,
+  ThresholdAction,
+  ThresholdKind,
+  Triage,
+  TriageOutcome,
+} from "#lib/threshold-view.js";
 import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type {
   CapacityCommitment,
@@ -255,6 +262,7 @@ import type {
   Velocity,
   WorkCalendarView,
   WorkProfile,
+  ThresholdSweepRow,
 } from "./ppm-types";
 
 export * from "./ppm-types";
@@ -556,6 +564,55 @@ export class PpmClient {
     return this.http.post(`/api/plans/${planPid}/cutover-decisions`, {
       body: { title, criteria },
     });
+  }
+  // ---- triage and thresholds (EX-7, NC-1 slice 11) ----
+  /** A programme's latest triage and its history, newest first. */
+  triage(
+    planPid: string,
+  ): Promise<{ triage: Triage | null; history: Triage[] }> {
+    return this.http.get(`/api/plans/${planPid}/triage`);
+  }
+  /** Record today's triage; it changes nothing about the programme. */
+  setTriage(
+    planPid: string,
+    outcome: TriageOutcome,
+    reason: string,
+  ): Promise<Triage> {
+    return this.http.put(`/api/plans/${planPid}/triage`, {
+      body: { outcome, reason },
+    });
+  }
+  /** A programme's thresholds. */
+  thresholds(planPid: string): Promise<{ thresholds: Threshold[] }> {
+    return this.http.get(`/api/plans/${planPid}/thresholds`);
+  }
+  /** Set one threshold, or remove it with `remove: true`. */
+  setThreshold(
+    planPid: string,
+    body: {
+      kind: ThresholdKind;
+      count?: number;
+      date?: string;
+      cap_minor?: number;
+      currency?: string;
+      remove?: boolean;
+    },
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${planPid}/thresholds`, { body });
+  }
+  /** Check every threshold you can read; a crossing opens a delivery exception. Pauses, resets and stops nothing. */
+  thresholdSweep(): Promise<{ results: ThresholdSweepRow[]; note: string }> {
+    return this.http.post("/api/threshold-sweep", { body: {} });
+  }
+  /** Record pause, reset, stop or an override (with an expiry) on an exception a threshold opened; it closes it. */
+  thresholdDecision(
+    exceptionPid: string,
+    body: { action: ThresholdAction; reason: string; expiry?: string },
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/exceptions/${encodeURIComponent(exceptionPid)}/threshold-decision`,
+      { body },
+    );
   }
   /** Replace a draft decision's stop criteria, in order (EX-6, NC-1 slice 11). */
   replaceCutoverCriteria(

@@ -4093,6 +4093,92 @@ export const PAGES_EN = {
   "p.exceptions.breached_other":
     "Breached: not completed within {hours} hours of opening.",
   "p.exceptions.cancel": "Cancel",
+  "p.thresholds.could_not_load":
+    "The triage and thresholds could not be loaded.",
+  "p.thresholds.could_not_save": "The change was not saved.",
+  "p.thresholds.could_not_sweep": "The thresholds could not be checked.",
+  "p.thresholds.decide_says":
+    "Recording the decision closes the exception. It records what was decided; it does not pause, reset or stop the programme, which a person does through the programme status.",
+  "p.thresholds.decide": "Record the decision",
+  "p.thresholds.decided_done": "Decision recorded: {action}.",
+  "p.thresholds.f_action": "Decision",
+  "p.thresholds.f_amount": "Cap amount",
+  "p.thresholds.f_count": "Issued packs at red in a row ({min} to {max})",
+  "p.thresholds.f_currency": "Currency (three letters)",
+  "p.thresholds.f_date": "Forecast finish date not to pass",
+  "p.thresholds.f_expiry":
+    "Override until (in the future, at most {days} days ahead)",
+  "p.thresholds.f_outcome": "Outcome",
+  "p.thresholds.f_reason": "Reason (at least {min} characters)",
+  "p.thresholds.history_item": "{date}: {outcome}. {reason}",
+  "p.thresholds.history": "Earlier triages",
+  "p.thresholds.not_set": "Not set",
+  "p.thresholds.now_cap": "Crossed when the P80 cost is above {amount}.",
+  "p.thresholds.now_forecast":
+    "Crossed when the forecast finish is after {date}.",
+  "p.thresholds.now_red_packs_one":
+    "Crossed when confidence is red in {n} issued pack in a row.",
+  "p.thresholds.now_red_packs_other":
+    "Crossed when confidence is red in {n} issued packs in a row.",
+  "p.thresholds.opened_by_threshold":
+    "Opened because a threshold of the programme was crossed.",
+  "p.thresholds.problem_action": "Choose pause, reset, stop or an override.",
+  "p.thresholds.problem_cap": "The cap must be an amount above zero.",
+  "p.thresholds.problem_count":
+    "The number of packs must be a whole number from {min} to {max}.",
+  "p.thresholds.problem_currency":
+    "The currency must be a three-letter ISO 4217 code.",
+  "p.thresholds.problem_date": "Choose a date.",
+  "p.thresholds.problem_expiry_long":
+    "An override may last at most {days} days.",
+  "p.thresholds.problem_expiry_needed":
+    "An override needs a date until which it holds.",
+  "p.thresholds.problem_expiry_past":
+    "An override's date must be in the future.",
+  "p.thresholds.problem_outcome": "Choose finish, fix, pause or stop.",
+  "p.thresholds.problem_reason":
+    "The reason must be at least {min} characters.",
+  "p.thresholds.remove_threshold": "Remove the threshold",
+  "p.thresholds.save_threshold": "Save the threshold",
+  "p.thresholds.save_triage": "Record the triage",
+  "p.thresholds.sweep_done_one":
+    "{checked} thresholds checked; {n} exception opened.",
+  "p.thresholds.sweep_done_other":
+    "{checked} thresholds checked; {n} exceptions opened.",
+  "p.thresholds.sweep_item": "{programme}: {kind} — {outcome}",
+  "p.thresholds.sweep_list": "Thresholds crossed",
+  "p.thresholds.sweep_says":
+    "Checking opens a delivery exception for each threshold crossed, or adds to the one already open; it pauses, resets and stops nothing.",
+  "p.thresholds.sweep": "Check the thresholds now",
+  "p.thresholds.threshold_removed": "Threshold removed: {kind}.",
+  "p.thresholds.threshold_saved": "Threshold saved: {kind}.",
+  "p.thresholds.thresholds_heading": "Thresholds",
+  "p.thresholds.thresholds_says":
+    "Crossing a threshold opens a delivery exception, which a person answers with pause, reset, stop or an override with an expiry. Nothing is paused, reset or stopped automatically.",
+  "p.thresholds.triage_heading": "Triage",
+  "p.thresholds.triage_latest": "Latest triage, {date}: {outcome}. {reason}",
+  "p.thresholds.triage_none": "No triage recorded yet.",
+  "p.thresholds.triage_saved": "Triage recorded.",
+  "p.thresholds.triage_says":
+    "A triage is a dated view of where the programme should go, with the reason. It records the view; it changes nothing about the programme.",
+  "p.thresholds.unchanged": "Nothing changed, so nothing was sent.",
+  "p.thresholds.action_pause": "Pause",
+  "p.thresholds.action_reset": "Reset",
+  "p.thresholds.action_stop": "Stop",
+  "p.thresholds.action_override": "Override",
+  "p.thresholds.kind_confidence_red_packs": "Confidence red for several packs",
+  "p.thresholds.kind_forecast_past": "Forecast finish past a date",
+  "p.thresholds.kind_p80_cap": "P80 cost above a cap",
+  "p.thresholds.outcome_finish": "Finish",
+  "p.thresholds.outcome_fix": "Fix",
+  "p.thresholds.outcome_pause": "Pause",
+  "p.thresholds.outcome_stop": "Stop",
+  "p.thresholds.sweep_opened": "exception opened",
+  "p.thresholds.sweep_already_open": "exception already open",
+  "p.thresholds.sweep_attached_to_open_exception":
+    "added to the open exception",
+  "p.thresholds.sweep_suppressed_by_override":
+    "not opened: an override is in force",
   "p.exceptions.closed_done": "Decision recorded; the exception is closed.",
   "p.exceptions.complete_it": "Complete it",
   "p.exceptions.complete_says":

@@ -4192,6 +4192,93 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.exceptions.breached_other":
     "Wedi'i dorri: heb ei gwblhau o fewn {hours} awr i'w agor.",
   "p.exceptions.cancel": "Canslo",
+  "p.thresholds.could_not_load": "Ni ellid llwytho'r brysbennu a'r trothwyon.",
+  "p.thresholds.could_not_save": "Ni chadwyd y newid.",
+  "p.thresholds.could_not_sweep": "Ni ellid gwirio'r trothwyon.",
+  "p.thresholds.decide_says":
+    "Mae cofnodi'r penderfyniad yn cau'r eithriad. Mae'n cofnodi'r hyn a benderfynwyd; nid yw'n oedi, ailosod nac atal y rhaglen, sy'n cael ei wneud gan berson drwy statws y rhaglen.",
+  "p.thresholds.decide": "Cofnodi'r penderfyniad",
+  "p.thresholds.decided_done": "Cofnodwyd y penderfyniad: {action}.",
+  "p.thresholds.f_action": "Penderfyniad",
+  "p.thresholds.f_amount": "Swm y cap",
+  "p.thresholds.f_count":
+    "Pecynnau a gyhoeddwyd yn goch yn olynol ({min} i {max})",
+  "p.thresholds.f_currency": "Arian cyfred (tair llythyren)",
+  "p.thresholds.f_date":
+    "Dyddiad gorffen a ragwelir na ddylid mynd heibio iddo",
+  "p.thresholds.f_expiry":
+    "Diystyru tan (yn y dyfodol, {days} diwrnod ymlaen ar y mwyaf)",
+  "p.thresholds.f_outcome": "Canlyniad",
+  "p.thresholds.f_reason": "Rheswm (o leiaf {min} nod)",
+  "p.thresholds.history_item": "Ar {date}: {outcome}. {reason}",
+  "p.thresholds.history": "Brysbennu blaenorol",
+  "p.thresholds.not_set": "Heb ei osod",
+  "p.thresholds.now_cap": "Croesir pan fo cost P80 yn uwch na {amount}.",
+  "p.thresholds.now_forecast":
+    "Croesir pan fo'r gorffen a ragwelir ar ôl {date}.",
+  "p.thresholds.now_red_packs_one":
+    "Croesir pan fo hyder yn goch mewn {n} pecyn a gyhoeddwyd yn olynol.",
+  "p.thresholds.now_red_packs_other":
+    "Croesir pan fo hyder yn goch mewn {n} o becynnau a gyhoeddwyd yn olynol.",
+  "p.thresholds.opened_by_threshold":
+    "Agorwyd am fod un o drothwyon y rhaglen wedi'i groesi.",
+  "p.thresholds.problem_action": "Dewiswch oedi, ailosod, atal neu ddiystyru.",
+  "p.thresholds.problem_cap": "Rhaid i'r cap fod yn swm uwch na sero.",
+  "p.thresholds.problem_count":
+    "Rhaid i nifer y pecynnau fod yn rhif cyfan o {min} i {max}.",
+  "p.thresholds.problem_currency":
+    "Rhaid i'r arian cyfred fod yn god ISO 4217 tair llythyren.",
+  "p.thresholds.problem_date": "Dewiswch ddyddiad.",
+  "p.thresholds.problem_expiry_long":
+    "Gall diystyru bara {days} diwrnod ar y mwyaf.",
+  "p.thresholds.problem_expiry_needed":
+    "Mae angen dyddiad ar ddiystyru hyd at pryd y mae'n dal.",
+  "p.thresholds.problem_expiry_past":
+    "Rhaid i ddyddiad diystyru fod yn y dyfodol.",
+  "p.thresholds.problem_outcome": "Dewiswch orffen, trwsio, oedi neu atal.",
+  "p.thresholds.problem_reason": "Rhaid i'r rheswm fod yn o leiaf {min} nod.",
+  "p.thresholds.remove_threshold": "Tynnu'r trothwy",
+  "p.thresholds.save_threshold": "Cadw'r trothwy",
+  "p.thresholds.save_triage": "Cofnodi'r brysbennu",
+  "p.thresholds.sweep_done_one":
+    "Gwiriwyd {checked} trothwy; agorwyd {n} eithriad.",
+  "p.thresholds.sweep_done_other":
+    "Gwiriwyd {checked} trothwy; agorwyd {n} o eithriadau.",
+  "p.thresholds.sweep_item": "{programme} — {kind}: {outcome}",
+  "p.thresholds.sweep_list": "Trothwyon a groeswyd",
+  "p.thresholds.sweep_says":
+    "Mae gwirio'n agor eithriad cyflawni ar gyfer pob trothwy a groeswyd, neu'n ychwanegu at yr un sydd eisoes ar agor; nid yw'n oedi, ailosod nac atal dim.",
+  "p.thresholds.sweep": "Gwirio'r trothwyon nawr",
+  "p.thresholds.threshold_removed": "Tynnwyd y trothwy: {kind}.",
+  "p.thresholds.threshold_saved": "Cadwyd y trothwy: {kind}.",
+  "p.thresholds.thresholds_heading": "Trothwyon",
+  "p.thresholds.thresholds_says":
+    "Mae croesi trothwy'n agor eithriad cyflawni, y mae person yn ei ateb ag oedi, ailosod, atal neu ddiystyru gyda dyddiad dod i ben. Nid oes dim yn cael ei oedi, ei ailosod na'i atal yn awtomatig.",
+  "p.thresholds.triage_heading": "Brysbennu",
+  "p.thresholds.triage_latest":
+    "Brysbennu diweddaraf, {date}: {outcome}. {reason}",
+  "p.thresholds.triage_none": "Ni chofnodwyd brysbennu eto.",
+  "p.thresholds.triage_saved": "Cofnodwyd y brysbennu.",
+  "p.thresholds.triage_says":
+    "Mae brysbennu'n farn ddyddiedig am ble y dylai'r rhaglen fynd, gyda'r rheswm. Mae'n cofnodi'r farn; nid yw'n newid dim am y rhaglen.",
+  "p.thresholds.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.thresholds.action_pause": "Oedi",
+  "p.thresholds.action_reset": "Ailosod",
+  "p.thresholds.action_stop": "Atal",
+  "p.thresholds.action_override": "Diystyru",
+  "p.thresholds.kind_confidence_red_packs": "Hyder yn goch am sawl pecyn",
+  "p.thresholds.kind_forecast_past": "Gorffen a ragwelir heibio dyddiad",
+  "p.thresholds.kind_p80_cap": "Cost P80 uwchlaw cap",
+  "p.thresholds.outcome_finish": "Gorffen",
+  "p.thresholds.outcome_fix": "Trwsio",
+  "p.thresholds.outcome_pause": "Oedi",
+  "p.thresholds.outcome_stop": "Atal",
+  "p.thresholds.sweep_opened": "agorwyd eithriad",
+  "p.thresholds.sweep_already_open": "eithriad eisoes ar agor",
+  "p.thresholds.sweep_attached_to_open_exception":
+    "ychwanegwyd at yr eithriad agored",
+  "p.thresholds.sweep_suppressed_by_override":
+    "heb ei agor: mae diystyru mewn grym",
   "p.exceptions.closed_done":
     "Cofnodwyd y penderfyniad; mae'r eithriad ar gau.",
   "p.exceptions.complete_it": "Ei gwblhau",

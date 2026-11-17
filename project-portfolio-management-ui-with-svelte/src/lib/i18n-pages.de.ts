@@ -4257,6 +4257,99 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.exceptions.breached_other":
     "Verletzt: nicht innerhalb von {hours} Stunden nach der Eröffnung vervollständigt.",
   "p.exceptions.cancel": "Abbrechen",
+  "p.thresholds.could_not_load":
+    "Triage und Schwellen konnten nicht geladen werden.",
+  "p.thresholds.could_not_save": "Die Änderung wurde nicht gespeichert.",
+  "p.thresholds.could_not_sweep": "Die Schwellen konnten nicht geprüft werden.",
+  "p.thresholds.decide_says":
+    "Die Entscheidung zu erfassen schließt die Ausnahme. Sie hält fest, was entschieden wurde; sie pausiert, setzt nicht zurück und stoppt das Programm nicht, das tut eine Person über den Programmstatus.",
+  "p.thresholds.decide": "Entscheidung erfassen",
+  "p.thresholds.decided_done": "Entscheidung erfasst: {action}.",
+  "p.thresholds.f_action": "Entscheidung",
+  "p.thresholds.f_amount": "Betrag der Obergrenze",
+  "p.thresholds.f_count":
+    "Veröffentlichte Pakete in Folge auf Rot ({min} bis {max})",
+  "p.thresholds.f_currency": "Währung (drei Buchstaben)",
+  "p.thresholds.f_date":
+    "Prognostiziertes Enddatum, das nicht überschritten werden darf",
+  "p.thresholds.f_expiry":
+    "Übersteuerung bis (in der Zukunft, höchstens {days} Tage voraus)",
+  "p.thresholds.f_outcome": "Ergebnis",
+  "p.thresholds.f_reason": "Begründung (mindestens {min} Zeichen)",
+  "p.thresholds.history_item": "Am {date}: {outcome}. {reason}",
+  "p.thresholds.history": "Frühere Triagen",
+  "p.thresholds.not_set": "Nicht festgelegt",
+  "p.thresholds.now_cap":
+    "Überschritten, wenn die P80-Kosten über {amount} liegen.",
+  "p.thresholds.now_forecast":
+    "Überschritten, wenn das prognostizierte Ende nach dem {date} liegt.",
+  "p.thresholds.now_red_packs_one":
+    "Überschritten, wenn die Zuversicht in {n} veröffentlichtem Paket in Folge rot ist.",
+  "p.thresholds.now_red_packs_other":
+    "Überschritten, wenn die Zuversicht in {n} veröffentlichten Paketen in Folge rot ist.",
+  "p.thresholds.opened_by_threshold":
+    "Geöffnet, weil eine Schwelle des Programms überschritten wurde.",
+  "p.thresholds.problem_action":
+    "Wählen Sie Pause, Zurücksetzen, Stopp oder Übersteuerung.",
+  "p.thresholds.problem_cap": "Die Obergrenze muss ein Betrag über null sein.",
+  "p.thresholds.problem_count":
+    "Die Zahl der Pakete muss eine ganze Zahl von {min} bis {max} sein.",
+  "p.thresholds.problem_currency":
+    "Die Währung muss ein dreistelliger ISO-4217-Code sein.",
+  "p.thresholds.problem_date": "Wählen Sie ein Datum.",
+  "p.thresholds.problem_expiry_long":
+    "Eine Übersteuerung darf höchstens {days} Tage gelten.",
+  "p.thresholds.problem_expiry_needed":
+    "Eine Übersteuerung braucht ein Datum, bis zu dem sie gilt.",
+  "p.thresholds.problem_expiry_past":
+    "Das Datum einer Übersteuerung muss in der Zukunft liegen.",
+  "p.thresholds.problem_outcome":
+    "Wählen Sie Abschließen, Beheben, Pausieren oder Stoppen.",
+  "p.thresholds.problem_reason":
+    "Die Begründung muss mindestens {min} Zeichen haben.",
+  "p.thresholds.remove_threshold": "Schwelle entfernen",
+  "p.thresholds.save_threshold": "Schwelle speichern",
+  "p.thresholds.save_triage": "Triage erfassen",
+  "p.thresholds.sweep_done_one":
+    "{checked} Schwellen geprüft; {n} Ausnahme geöffnet.",
+  "p.thresholds.sweep_done_other":
+    "{checked} Schwellen geprüft; {n} Ausnahmen geöffnet.",
+  "p.thresholds.sweep_item": "{programme} — {kind}: {outcome}",
+  "p.thresholds.sweep_list": "Überschrittene Schwellen",
+  "p.thresholds.sweep_says":
+    "Die Prüfung öffnet für jede überschrittene Schwelle eine Lieferausnahme oder ergänzt die bereits offene; sie pausiert, setzt nicht zurück und stoppt nichts.",
+  "p.thresholds.sweep": "Schwellen jetzt prüfen",
+  "p.thresholds.threshold_removed": "Schwelle entfernt: {kind}.",
+  "p.thresholds.threshold_saved": "Schwelle gespeichert: {kind}.",
+  "p.thresholds.thresholds_heading": "Schwellen",
+  "p.thresholds.thresholds_says":
+    "Eine überschrittene Schwelle öffnet eine Lieferausnahme, die eine Person mit Pause, Zurücksetzen, Stopp oder einer befristeten Übersteuerung beantwortet. Nichts wird automatisch pausiert, zurückgesetzt oder gestoppt.",
+  "p.thresholds.triage_heading": "Triage des Programms",
+  "p.thresholds.triage_latest": "Letzte Triage, {date}: {outcome}. {reason}",
+  "p.thresholds.triage_none": "Noch keine Triage erfasst.",
+  "p.thresholds.triage_saved": "Triage erfasst.",
+  "p.thresholds.triage_says":
+    "Eine Triage ist eine datierte Einschätzung, wohin das Programm gehen soll, mit Begründung. Sie hält die Einschätzung fest; am Programm ändert sie nichts.",
+  "p.thresholds.unchanged":
+    "Nichts wurde geändert, daher wurde nichts gesendet.",
+  "p.thresholds.action_pause": "Pausieren",
+  "p.thresholds.action_reset": "Zurücksetzen",
+  "p.thresholds.action_stop": "Stoppen",
+  "p.thresholds.action_override": "Übersteuern",
+  "p.thresholds.kind_confidence_red_packs":
+    "Zuversicht über mehrere Pakete rot",
+  "p.thresholds.kind_forecast_past": "Prognostiziertes Ende nach einem Datum",
+  "p.thresholds.kind_p80_cap": "P80-Kosten über einer Obergrenze",
+  "p.thresholds.outcome_finish": "Abschließen",
+  "p.thresholds.outcome_fix": "Beheben",
+  "p.thresholds.outcome_pause": "Pausieren",
+  "p.thresholds.outcome_stop": "Stoppen",
+  "p.thresholds.sweep_opened": "Ausnahme geöffnet",
+  "p.thresholds.sweep_already_open": "Ausnahme bereits offen",
+  "p.thresholds.sweep_attached_to_open_exception":
+    "zur offenen Ausnahme hinzugefügt",
+  "p.thresholds.sweep_suppressed_by_override":
+    "nicht geöffnet: eine Übersteuerung gilt",
   "p.exceptions.closed_done":
     "Entscheidung festgehalten; die Ausnahme ist geschlossen.",
   "p.exceptions.complete_it": "Vervollständigen",

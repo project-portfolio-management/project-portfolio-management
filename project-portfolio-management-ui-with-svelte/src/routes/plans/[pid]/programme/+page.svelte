@@ -30,6 +30,7 @@
     type DeliveryProfile,
     type Organization,
   } from "#lib/api/ppm.js";
+  import ProgrammeThresholds from "#lib/components/ProgrammeThresholds.svelte";
   import {
     BUFFER_DAYS_MAX,
     CHANGE_LABELS,
@@ -382,30 +383,32 @@
     <form class="stack" novalidate onsubmit={saveModel}>
       <label>
         {t("p.programme.f_model")}
-        <select bind:value={model}>
+        <select bind:value={model} disabled={!profile}>
           <option value="">{t("p.director_pack.dm_not_stated")}</option>
           {#each DELIVERY_MODELS as m (m)}<option value={m}>{t(`p.director_pack.dm_${m}`)}</option>{/each}
         </select>
       </label>
       <label>
         {t("p.programme.f_owner")}
-        <select bind:value={owner}>
+        <select bind:value={owner} disabled={!profile}>
           <option value="">{t("p.programme.no_owner")}</option>
           {#each orgs as o (o.pid)}<option value={o.pid}>{o.name}</option>{/each}
         </select>
       </label>
       <p class="small muted">{t("p.programme.model_says")}</p>
-      <div class="row"><button class="button" type="submit" disabled={busy}>{t("p.programme.save_model")}</button></div>
+      <div class="row"><button class="button" type="submit" disabled={busy || !profile}>{t("p.programme.save_model")}</button></div>
     </form>
     <form class="stack" novalidate onsubmit={saveMethod}>
       <fieldset>
         <legend>{t("p.programme.f_method")}</legend>
-        <label class="check"><input type="radio" name="method" value="evm" bind:group={method} /> {t("p.programme.method_evm")}</label>
-        <label class="check"><input type="radio" name="method" value="product" bind:group={method} /> {t("p.programme.method_product")}</label>
+        <label class="check"><input type="radio" name="method" value="evm" bind:group={method} disabled={!profile} /> {t("p.programme.method_evm")}</label>
+        <label class="check"><input type="radio" name="method" value="product" bind:group={method} disabled={!profile} /> {t("p.programme.method_product")}</label>
       </fieldset>
-      <div class="row"><button class="button" type="submit" disabled={busy}>{t("p.programme.save_method")}</button></div>
+      <div class="row"><button class="button" type="submit" disabled={busy || !profile}>{t("p.programme.save_method")}</button></div>
     </form>
   </section>
+
+  <ProgrammeThresholds {pid} />
 
   <section aria-labelledby="buffer-h">
     <h2 id="buffer-h">{t("p.programme.buffer_heading")}</h2>

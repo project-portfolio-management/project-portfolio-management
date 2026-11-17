@@ -771,6 +771,31 @@ describe("PpmClient benefit classification and validation (NC-1 slice 11, DP-9)"
   });
 });
 
+describe("PpmClient triage and thresholds (NC-1 slice 11, EX-7)", () => {
+  it("reads and sets triage and thresholds, sweeps, and records a threshold decision", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.triage("p1");
+    await ppm.setTriage("p1", "fix", "A good long reason");
+    await ppm.thresholds("p1");
+    await ppm.setThreshold("p1", { kind: "forecast_past", date: "2027-01-01" });
+    await ppm.thresholdSweep();
+    await ppm.thresholdDecision("e1", {
+      action: "pause",
+      reason: "A good long reason",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/triage",
+      "PUT /api/plans/p1/triage",
+      "GET /api/plans/p1/thresholds",
+      "PUT /api/plans/p1/thresholds",
+      "POST /api/threshold-sweep",
+      "POST /api/exceptions/e1/threshold-decision",
+    ]);
+  });
+});
+
 describe("PpmClient cutover criteria (NC-1 slice 11, EX-6)", () => {
   it("replaces a draft's criteria", async () => {
     const { ppm, calls } = recordingClient();

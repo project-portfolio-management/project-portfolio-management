@@ -2348,3 +2348,27 @@ already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the 
 - **Tests:** `tests/unit/cutover-view.test.ts`, the path in `tests/unit/ppm.test.ts`,
   `tests/e2e/cutover-criteria.spec.ts` (the rules said first, nothing for no change, the list sent whole and in order,
   a 409, the new-draft form's rule; Welsh; axe on the open editor). The translations are machine-written and unreviewed.
+
+## Triage, thresholds and threshold decisions (NC-1 slice 11, EX-7)
+
+A programme's triage and thresholds are set on `/plans/[pid]/programme` (`ProgrammeThresholds.svelte`), and the
+exceptions a threshold opens are answered on `/exceptions`. `src/lib/threshold-view.ts` holds the rules. Nothing is
+paused, reset or stopped automatically; every page says so.
+
+- **Triage** (`GET`/`PUT /api/plans/{pid}/triage`): finish, fix, pause or stop, with a reason of at least 10
+  characters (said first); the latest and the earlier ones are listed. A triage is a view and changes nothing.
+- **Thresholds** (`GET`/`PUT /api/plans/{pid}/thresholds`): each of the three kinds is set, said as a sentence, or
+  removed: confidence red in N issued packs in a row (N a whole number from 1 to 24; a number input's value is read as
+  a number once typed in), the forecast finish past a date, the P80 cost above a cap (an amount above zero, typed in the
+  reader's locale, in an ISO 4217 currency, sent in minor units). Nothing is sent for no change.
+- **The sweep** (`POST /api/threshold-sweep`), from the exceptions register: the notice counts the thresholds checked
+  and the exceptions opened, and lists each crossed threshold with what happened, in the catalogue's words (opened,
+  already open, added to the open exception, not opened under an override); the service's note is not shown.
+- **A threshold exception** (its `opened_value` is `threshold`) says it was opened by a threshold, instead of a
+  confidence value (which it does not have), and its decision form records pause, reset, stop, or an override with an
+  expiry in the future and at most 366 days out (said first; an expiry is sent only with an override).
+- **Not built:** which kind of threshold opened an exception (the exception list does not return `threshold_kind`).
+- **Tests:** `tests/unit/threshold-view.test.ts`, the paths in `tests/unit/ppm.test.ts`;
+  `tests/e2e/plan-programme.spec.ts` (triage and the three thresholds; the page's Welsh and axe test covers the
+  sections), `tests/e2e/threshold-exceptions.spec.ts` (the exception's sentence, an override's expiry rules, a pause
+  without an expiry, the sweep; Welsh; axe). The translations are machine-written and unreviewed.

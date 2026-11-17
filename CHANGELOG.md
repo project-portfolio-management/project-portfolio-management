@@ -21,6 +21,13 @@ It is pre-1.0; the first release cut from the root release workflow is
   user's request). `SECURITY.md` now names it first, with email as the other way; the security policy's known gaps
   drop it and its sources name it. **Not verified:** a report made through it.
 
+### 17 November (triage and thresholds: NC-1 slice 11, part k)
+
+- **UI: a programme's triage and thresholds, the threshold sweep, and threshold decisions (EX-7).** UI spec, "Triage,
+  thresholds and threshold decisions"; tests `tests/e2e/plan-programme.spec.ts`, `tests/e2e/threshold-exceptions.spec.ts`.
+- **Not done:** which threshold opened an exception. **Not verified:** against a real service; the translations are
+  machine-written and unreviewed.
+
 ### 17 November (axa 0.20)
 
 - **Service: axa 0.19 to 0.20 and axa-test 0.10 to 0.11.** Zstd compression is now opt-in in axa and the service leaves

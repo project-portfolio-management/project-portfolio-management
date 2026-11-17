@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (export to Microsoft Project: NC-1 slice 10)
+
+- **UI: `/plans/[pid]/export` offers a plan as an MSPDI file (PJ-10).** Linked from the plan page beside Import, it
+  says what the file carries and what it leaves out, as the service writes into the file, and that a plan of more than
+  5,000 tasks cannot be exported; its link saves the service's own download under the service's file name. UI spec,
+  "Export to Microsoft Project"; test `tests/e2e/plan-export.spec.ts` (with a real download, Welsh and axe).
+- **Not done:** a refused export shows the service's error page, not a sentence in the reader's language. **Not
+  verified:** the file opened in Microsoft Project; against a real service.
+
 ### 17 November (plan templates: NC-1 slice 9, second half)
 
 - **UI: plan templates (LT-2) have screens.** `/plan-templates` lists the saved templates and the built-in starters;

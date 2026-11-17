@@ -68,6 +68,7 @@
     get "governance-framework"() { return t("p.frameworks.gov"); },
     get links() { return t("p.links.links"); },
     get import() { return t("p.plans.pid.import.import"); },
+    get export() { return t("p.plan_export.title"); },
     get costs() { return t("p.plans.pid.work.costs"); },
   };
   const linkLabel = (k: string): string =>

@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — export a plan to Microsoft Project (NC-1 slice 10, PJ-10, 2026-11-17)
+
+- `/plans/[pid]/export`, linked from the plan page beside Import: says what the MSPDI file carries and leaves out (as
+  the service writes into the file), its 5,000-task limit, and that it has been read back only by this service's own
+  importer; and links to the service's download, which the browser saves under the service's file name. 11 keys in
+  eight catalogues, machine-written and unreviewed.
+- Tests: `tests/e2e/plan-export.spec.ts` (two, with a real download over a stub, Welsh and axe); the link in
+  `tests/unit/modules.test.ts`.
+- **Not done:** a refused export (413 over 5,000 tasks) shows the service's own error page, not a catalogue sentence.
+  **Not verified:** the file in Microsoft Project; against a real service.
+
 ### Added — plan templates (NC-1 slice 9, LT-2, 2026-11-17)
 
 - `/plan-templates` (saved templates and the built-in starters; in the navigation), `/plan-templates/[pid]` (what a

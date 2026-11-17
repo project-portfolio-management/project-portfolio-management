@@ -3963,6 +3963,21 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.plan_templates.problem_name_blank": "أعطِ القالب اسمًا.",
   "p.plan_templates.problem_name_long":
     "يمكن أن يتكون اسم القالب من 120 حرفًا على الأكثر.",
+  "p.plan_export.title": "التصدير إلى Microsoft Project",
+  "p.plan_export.title_ppm": "التصدير إلى Microsoft Project — PPM",
+  "p.plan_export.intro":
+    "احفظ مهام هذه الخطة في ملف MSPDI XML، وهو التنسيق الذي يفتحه Microsoft Project وأدوات الجدولة الأخرى.",
+  "p.plan_export.carried_heading": "ما يحمله الملف",
+  "p.plan_export.carried":
+    "كل مهمة بموضعها تحت مهمتها الأم، وتاريخ بدايتها، ومدتها بأيام العمل، والمعالم، والقيود، والموعد النهائي، والملاحظات؛ وهل أُنجزت؛ والروابط بين المهام بنوعها وتأخيرها؛ وتقويم عمل الخطة.",
+  "p.plan_export.not_carried_heading": "ما يُترك",
+  "p.plan_export.not_carried":
+    "الأشخاص المكلفون والموارد؛ أي حالة غير الإنجاز (المهمة منجزة بنسبة 0 أو 100 بالمئة)؛ والسباقات والمكونات؛ والجهد؛ والحقول المخصصة؛ والتعليقات؛ وخطوط الأساس؛ والروابط بين المهام غير «تسبق»؛ والتأخير بالوقت المنقضي (كل تأخير بأيام العمل). والملف يقول ذلك أيضًا.",
+  "p.plan_export.limit": "لا يمكن تصدير خطة تضم أكثر من 5000 مهمة.",
+  "p.plan_export.not_checked":
+    "قرأ مستورد هذه الخدمة الملف مرة أخرى، لكنه لم يُفتح بعد في Microsoft Project نفسه.",
+  "p.plan_export.download": "تنزيل ملف MSPDI",
+  "p.plan_export.to_import": "إحضار ملف MSPDI إلى هذه الخطة بدلًا من ذلك",
   "p.plans.pid.modules_failed":
     "تعذّر التحقق من الأدوات التي تستخدمها هذه الخطة، لذا تُدرج كل الأدوات.",
   "p._layout_svelte.handling_mark": "علامة التداول: {mark}",

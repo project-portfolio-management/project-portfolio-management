@@ -209,9 +209,12 @@ match breakdown).
                              from it; remove a saved one (NC-1 slice 9)
 /plans/[pid]/save-as-template save the plan as a template (NC-1 slice
                              9); linked from the plan page
+/plans/[pid]/export          export the plan to Microsoft Project as an
+                             MSPDI file (NC-1 slice 10); linked from the
+                             plan page
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 113):
+every page; `find src/routes -name +page.svelte` gives all 114):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2006,3 +2009,24 @@ rules.
   name and a parent; a starter sending nothing extra and offering no removal; removing after a question; saving from
   the plan page with a blank name said first and a taken name in the catalogue's words; what was kept and left out;
   Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.
+
+## Export to Microsoft Project (NC-1 slice 10, PJ-10)
+
+`/plans/[pid]/export`, linked from the plan page beside Import (the service files `export` under no module, so it is
+always on; the link sits with import under the tasks module, as import does), offers the plan as an MSPDI XML file
+from `GET /api/plans/{pid}/export/mspdi`.
+
+- **What it says.** What the file carries (tasks with their outline, start, duration in working days, milestones,
+  constraints, deadline and notes; done or not; the links between tasks with kind and lag; the plan's calendar) and
+  what it leaves out, as the service writes into the file itself (people and resources, status other than done,
+  sprints and components, effort, custom fields, comments, baselines, links other than "precedes", elapsed-time lags);
+  that a plan of more than 5,000 tasks cannot be exported; and that the file has been read back only by this
+  service's own importer, not opened in Microsoft Project.
+- **The file.** A plain link to the service's own download through the proxy, which relays its
+  `Content-Disposition: attachment` and file name, so the browser saves it and the page never draws it. No `download`
+  attribute, as for attachments: the service names the file.
+- **Not built in this slice:** a readable answer when the service refuses the export (a plan over 5,000 tasks answers
+  413, and following the link then shows the service's error, not a catalogue sentence); a choice of what to include.
+- **Tests:** the link in `tests/unit/modules.test.ts`, and `tests/e2e/plan-export.spec.ts` (the plan page link, what
+  the page says, a download named by the service's header with the page staying put, the link back to import, Welsh,
+  axe). The Welsh and the six other languages are machine-written and unreviewed.

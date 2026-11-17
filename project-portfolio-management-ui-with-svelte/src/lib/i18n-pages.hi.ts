@@ -3970,6 +3970,21 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_templates.problem_name_blank": "टेम्पलेट को एक नाम दें।",
   "p.plan_templates.problem_name_long":
     "टेम्पलेट का नाम अधिकतम 120 अक्षरों का हो सकता है।",
+  "p.plan_export.title": "Microsoft Project में निर्यात करें",
+  "p.plan_export.title_ppm": "Microsoft Project में निर्यात करें — PPM",
+  "p.plan_export.intro":
+    "इस योजना के कार्यों को MSPDI XML फ़ाइल के रूप में सहेजें, वह प्रारूप जिसे Microsoft Project और अन्य शेड्यूलिंग टूल खोलते हैं।",
+  "p.plan_export.carried_heading": "फ़ाइल में क्या है",
+  "p.plan_export.carried":
+    "हर कार्य अपने मूल कार्य के नीचे अपनी रूपरेखा, आरंभ तिथि, कार्यदिवसों में अवधि, माइलस्टोन, बाधाओं, समय-सीमा और टिप्पणियों के साथ; वह पूरा हुआ या नहीं; कार्यों के बीच की कड़ियाँ उनके प्रकार और विलंब के साथ; और योजना का कार्य कैलेंडर।",
+  "p.plan_export.not_carried_heading": "क्या छूट जाता है",
+  "p.plan_export.not_carried":
+    "सौंपे गए लोग और संसाधन; पूरा होने के अलावा कोई भी स्थिति (कोई कार्य 0 या 100 प्रतिशत पूरा होता है); स्प्रिंट और घटक; प्रयास; कस्टम फ़ील्ड; टिप्पणियाँ; बेसलाइन; “पहले आता है” के अलावा कार्यों के बीच की कड़ियाँ; और बीते समय में विलंब (हर विलंब कार्यदिवसों में है)। फ़ाइल भी यही कहती है।",
+  "p.plan_export.limit": "5,000 से अधिक कार्यों वाली योजना निर्यात नहीं की जा सकती।",
+  "p.plan_export.not_checked":
+    "इस सेवा के अपने आयातक ने फ़ाइल को वापस पढ़ा है, पर इसे अभी Microsoft Project में खोलकर नहीं देखा गया है।",
+  "p.plan_export.download": "MSPDI फ़ाइल डाउनलोड करें",
+  "p.plan_export.to_import": "इसके बजाय इस योजना में MSPDI फ़ाइल लाएँ",
   "p.plans.pid.modules_failed":
     "यह योजना कौन-से टूल उपयोग करती है, यह जाँचा नहीं जा सका, इसलिए हर टूल सूचीबद्ध है।",
   "p._layout_svelte.handling_mark": "हैंडलिंग चिह्न: {mark}",

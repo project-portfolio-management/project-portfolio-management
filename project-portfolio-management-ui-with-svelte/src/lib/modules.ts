@@ -40,6 +40,8 @@ export const PLAN_LINKS = [
   { key: "handover", module: "tasks" },
   { key: "wbs", module: "tasks" },
   { key: "import", module: "tasks" },
+  // The service files `export` under no module (always on); it sits beside import, which is filed under tasks.
+  { key: "export", module: "tasks" },
   { key: "costs", module: "financials" },
 ] as const;
 

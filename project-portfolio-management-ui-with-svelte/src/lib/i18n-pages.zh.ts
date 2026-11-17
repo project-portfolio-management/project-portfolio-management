@@ -3815,6 +3815,21 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.plan_templates.could_not_save": "模板未保存。",
   "p.plan_templates.problem_name_blank": "请为模板命名。",
   "p.plan_templates.problem_name_long": "模板名称最多 120 个字符。",
+  "p.plan_export.title": "导出到 Microsoft Project",
+  "p.plan_export.title_ppm": "导出到 Microsoft Project — PPM",
+  "p.plan_export.intro":
+    "将此计划的任务保存为 MSPDI XML 文件，这是 Microsoft Project 和其他排程工具可以打开的格式。",
+  "p.plan_export.carried_heading": "文件包含的内容",
+  "p.plan_export.carried":
+    "每个任务及其在父任务下的大纲位置、开始日期、以工作日计的工期、里程碑、限制、截止日期和备注；是否已完成；任务之间的链接及其类型和延隔；以及计划的工作日历。",
+  "p.plan_export.not_carried_heading": "未包含的内容",
+  "p.plan_export.not_carried":
+    "已分配的人员和资源；除“已完成”以外的任何状态（任务完成度为 0 或 100%）；冲刺和组件；工作量；自定义字段；评论；基线；“先于”以外的任务链接；以及按经过时间计的延隔（所有延隔均以工作日计）。文件中也注明了这一点。",
+  "p.plan_export.limit": "任务超过 5,000 个的计划无法导出。",
+  "p.plan_export.not_checked":
+    "此文件已由本服务自己的导入器读回，但尚未在 Microsoft Project 中实际打开过。",
+  "p.plan_export.download": "下载 MSPDI 文件",
+  "p.plan_export.to_import": "改为将 MSPDI 文件导入此计划",
   "p.plans.pid.modules_failed":
     "无法检查本计划使用了哪些工具，因此列出所有工具。",
   "p._layout_svelte.handling_mark": "处理标记：{mark}",

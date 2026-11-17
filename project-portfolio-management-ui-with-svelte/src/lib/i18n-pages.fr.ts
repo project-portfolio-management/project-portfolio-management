@@ -4190,6 +4190,22 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.plan_templates.problem_name_blank": "Donnez un nom au modèle.",
   "p.plan_templates.problem_name_long":
     "Le nom d'un modèle peut compter au plus 120 caractères.",
+  "p.plan_export.title": "Exporter vers Microsoft Project",
+  "p.plan_export.title_ppm": "Exporter vers Microsoft Project — PPM",
+  "p.plan_export.intro":
+    "Enregistre les tâches de ce plan dans un fichier XML MSPDI, le format qu'ouvrent Microsoft Project et d'autres outils de planification.",
+  "p.plan_export.carried_heading": "Ce que contient le fichier",
+  "p.plan_export.carried":
+    "Chaque tâche avec son plan hiérarchique sous sa tâche parente, sa date de début, sa durée en jours ouvrés, ses jalons, contraintes, échéance et notes ; si elle est terminée ; les liens entre tâches avec leur type et leur décalage ; et le calendrier de travail du plan.",
+  "p.plan_export.not_carried_heading": "Ce qu'il laisse de côté",
+  "p.plan_export.not_carried":
+    "Les personnes affectées et les ressources ; tout statut autre que terminé (une tâche est à 0 ou 100 pour cent) ; les sprints et composants ; l'effort ; les champs personnalisés ; les commentaires ; les références ; les liens entre tâches autres que « précède » ; et les décalages en temps écoulé (tout décalage est en jours ouvrés). Le fichier le dit aussi.",
+  "p.plan_export.limit":
+    "Un plan de plus de 5 000 tâches ne peut pas être exporté.",
+  "p.plan_export.not_checked":
+    "Le fichier a été relu par l'importateur de ce service, mais pas encore ouvert dans Microsoft Project lui-même.",
+  "p.plan_export.download": "Télécharger le fichier MSPDI",
+  "p.plan_export.to_import": "Importer plutôt un fichier MSPDI dans ce plan",
   "p.plans.pid.modules_failed":
     "Les outils utilisés par ce plan n'ont pas pu être vérifiés ; tous les outils sont donc listés.",
   "p._layout_svelte.handling_mark": "Marque de traitement : {mark}",

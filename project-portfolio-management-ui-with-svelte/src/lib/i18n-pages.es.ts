@@ -4184,6 +4184,21 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.plan_templates.problem_name_blank": "Dé un nombre a la plantilla.",
   "p.plan_templates.problem_name_long":
     "El nombre de una plantilla puede tener como máximo 120 caracteres.",
+  "p.plan_export.title": "Exportar a Microsoft Project",
+  "p.plan_export.title_ppm": "Exportar a Microsoft Project — PPM",
+  "p.plan_export.intro":
+    "Guarda las tareas de este plan como un archivo XML MSPDI, el formato que abren Microsoft Project y otras herramientas de planificación.",
+  "p.plan_export.carried_heading": "Qué contiene el archivo",
+  "p.plan_export.carried":
+    "Cada tarea con su esquema bajo su tarea superior, fecha de inicio, duración en días laborables, hitos, restricciones, fecha límite y notas; si está terminada; los vínculos entre tareas con su tipo y su demora; y el calendario laboral del plan.",
+  "p.plan_export.not_carried_heading": "Qué deja fuera",
+  "p.plan_export.not_carried":
+    "Personas asignadas y recursos; cualquier estado salvo terminada (una tarea está al 0 o al 100 por ciento); sprints y componentes; esfuerzo; campos personalizados; comentarios; líneas base; vínculos entre tareas distintos de «precede»; y demoras en tiempo transcurrido (toda demora va en días laborables). El archivo también lo dice.",
+  "p.plan_export.limit": "No se puede exportar un plan de más de 5.000 tareas.",
+  "p.plan_export.not_checked":
+    "El importador de este servicio ha vuelto a leer el archivo, pero aún no se ha abierto en el propio Microsoft Project.",
+  "p.plan_export.download": "Descargar el archivo MSPDI",
+  "p.plan_export.to_import": "Traer un archivo MSPDI a este plan en su lugar",
   "p.plans.pid.modules_failed":
     "No se pudo comprobar qué herramientas usa este plan, por lo que se muestran todas.",
   "p._layout_svelte.handling_mark": "Marca de tratamiento: {mark}",

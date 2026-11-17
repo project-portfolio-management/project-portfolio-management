@@ -26,6 +26,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "handover",
       "wbs",
       "import",
+      "export",
     ]);
     expect(visiblePlanLinks(["governance"])).toEqual([
       "governance",
@@ -58,6 +59,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "handover",
       "wbs",
       "import",
+      "export",
     ]);
   });
 

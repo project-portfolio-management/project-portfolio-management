@@ -4131,6 +4131,21 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plan_templates.problem_name_blank": "Rhowch enw i'r templed.",
   "p.plan_templates.problem_name_long":
     "Gall enw templed fod yn 120 nod ar y mwyaf.",
+  "p.plan_export.title": "Allforio i Microsoft Project",
+  "p.plan_export.title_ppm": "Allforio i Microsoft Project — PPM",
+  "p.plan_export.intro":
+    "Cadw tasgau'r cynllun hwn fel ffeil XML MSPDI, y fformat y mae Microsoft Project ac offer amserlennu eraill yn ei agor.",
+  "p.plan_export.carried_heading": "Beth sydd yn y ffeil",
+  "p.plan_export.carried":
+    "Pob tasg gyda'i lle o dan ei rhiant, dyddiad dechrau, hyd mewn diwrnodau gwaith, cerrig milltir, cyfyngiadau, dyddiad cau a nodiadau; a yw wedi'i gorffen; y cysylltiadau rhwng tasgau gyda'u math a'u hoedi; a chalendr gwaith y cynllun.",
+  "p.plan_export.not_carried_heading": "Beth sy'n cael ei adael allan",
+  "p.plan_export.not_carried":
+    "Pobl wedi'u neilltuo ac adnoddau; unrhyw statws ond wedi'i gorffen (mae tasg yn 0 neu 100 y cant yn gyflawn); sbrintiau a chydrannau; ymdrech; meysydd personol; sylwadau; llinellau sylfaen; cysylltiadau rhwng tasgau heblaw “yn rhagflaenu”; ac oedi mewn amser a aeth heibio (mae pob oedi mewn diwrnodau gwaith). Mae'r ffeil yn dweud hynny hefyd.",
+  "p.plan_export.limit": "Ni ellir allforio cynllun o fwy na 5,000 o dasgau.",
+  "p.plan_export.not_checked":
+    "Mae mewnforiwr y gwasanaeth hwn wedi darllen y ffeil yn ôl, ond nid yw wedi'i hagor yn Microsoft Project ei hun eto.",
+  "p.plan_export.download": "Lawrlwytho'r ffeil MSPDI",
+  "p.plan_export.to_import": "Dod â ffeil MSPDI i'r cynllun hwn yn lle hynny",
   "p.plans.pid.modules_failed":
     "Nid oedd modd gwirio pa offer y mae'r cynllun hwn yn eu defnyddio, felly rhestrir pob offeryn.",
   "p._layout_svelte.handling_mark": "Marc trin: {mark}",

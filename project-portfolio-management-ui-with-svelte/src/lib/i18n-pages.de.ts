@@ -4192,6 +4192,23 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.plan_templates.problem_name_blank": "Geben Sie der Vorlage einen Namen.",
   "p.plan_templates.problem_name_long":
     "Der Name einer Vorlage darf höchstens 120 Zeichen lang sein.",
+  "p.plan_export.title": "Nach Microsoft Project exportieren",
+  "p.plan_export.title_ppm": "Nach Microsoft Project exportieren — PPM",
+  "p.plan_export.intro":
+    "Speichert die Aufgaben dieses Plans als MSPDI-XML-Datei, das Format, das Microsoft Project und andere Planungswerkzeuge öffnen.",
+  "p.plan_export.carried_heading": "Was die Datei enthält",
+  "p.plan_export.carried":
+    "Jede Aufgabe mit ihrer Gliederung unter ihrer übergeordneten Aufgabe, Startdatum, Dauer in Arbeitstagen, Meilensteinen, Einschränkungen, Stichtag und Notizen; ob sie erledigt ist; die Verknüpfungen zwischen Aufgaben mit Art und Verzögerung; und den Arbeitskalender des Plans.",
+  "p.plan_export.not_carried_heading": "Was fehlt",
+  "p.plan_export.not_carried":
+    "Zugewiesene Personen und Ressourcen; jeder Status außer erledigt (eine Aufgabe ist zu 0 oder 100 Prozent abgeschlossen); Sprints und Komponenten; Aufwand; benutzerdefinierte Felder; Kommentare; Basispläne; Verknüpfungen außer „geht voraus“; und Verzögerungen in verstrichener Zeit (jede Verzögerung zählt in Arbeitstagen). Die Datei sagt das auch.",
+  "p.plan_export.limit":
+    "Ein Plan mit mehr als 5.000 Aufgaben kann nicht exportiert werden.",
+  "p.plan_export.not_checked":
+    "Die Datei wurde vom eigenen Import dieses Dienstes zurückgelesen, aber noch nicht in Microsoft Project selbst geöffnet.",
+  "p.plan_export.download": "MSPDI-Datei herunterladen",
+  "p.plan_export.to_import":
+    "Stattdessen eine MSPDI-Datei in diesen Plan holen",
   "p.plans.pid.modules_failed":
     "Welche Werkzeuge dieser Plan verwendet, konnte nicht geprüft werden, daher werden alle Werkzeuge aufgeführt.",
   "p._layout_svelte.handling_mark": "Kennzeichnung: {mark}",

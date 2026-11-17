@@ -4032,6 +4032,21 @@ export const PAGES_EN = {
   "p.plan_templates.problem_name_blank": "Give the template a name.",
   "p.plan_templates.problem_name_long":
     "A template name can be at most 120 characters.",
+  "p.plan_export.title": "Export to Microsoft Project",
+  "p.plan_export.title_ppm": "Export to Microsoft Project — PPM",
+  "p.plan_export.intro":
+    "Save this plan's tasks as an MSPDI XML file, the format Microsoft Project and other scheduling tools open.",
+  "p.plan_export.carried_heading": "What the file carries",
+  "p.plan_export.carried":
+    "Each task with its outline under its parent, start date, duration in working days, milestones, constraints, deadline and notes; whether it is done; the links between tasks with their kind and lag; and the plan's working calendar.",
+  "p.plan_export.not_carried_heading": "What it leaves out",
+  "p.plan_export.not_carried":
+    "People assigned and resources; any status but done (a task is 0 or 100 percent complete); sprints and components; effort; custom fields; comments; baselines; links between tasks other than “precedes”; and lags in elapsed time (every lag is in working days). The file says so too.",
+  "p.plan_export.limit": "A plan of more than 5,000 tasks cannot be exported.",
+  "p.plan_export.not_checked":
+    "The file has been read back by this service's own importer, but not yet opened in Microsoft Project itself.",
+  "p.plan_export.download": "Download the MSPDI file",
+  "p.plan_export.to_import": "Bring an MSPDI file into this plan instead",
   "p.plans.pid.modules_failed":
     "Which tools this plan uses could not be checked, so every tool is listed.",
   "p._layout_svelte.handling_mark": "Handling mark: {mark}",

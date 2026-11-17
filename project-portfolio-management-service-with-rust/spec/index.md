@@ -149,7 +149,7 @@ is expressed by `parent_ref`, never by a collection boundary.
    own ancestor); `422` on any problem, **all reported together** — also
    enforced on update. Real-time duplicate detection on create returns
    `409 Conflict` with candidate matches (kind-agnostic) when duplicates
-   are found. Rules in [`src/validation.rs`](../src/validation.rs).
+   are found. Rules in [`domain/src/validation.rs`](../domain/src/validation.rs).
 2. `GET /api/plans` — list active (cap 100), `{pid, name}`. `GET
    /api/plans?parent={pid}` — roll up a plan's **direct children** (by
    denormalized `parent_pid`). `GET /api/plans/search?q=` —
@@ -253,6 +253,16 @@ links use the hybrid topology
 (cross-service linking §4):
 the service writes its outbound edges locally and emits events; a
 standalone aggregator builds the queryable graph.
+
+**Where the code lives (root spec §8.3c).** This directory is a Cargo workspace of three crates: the service
+(`src/`), its migrations (`migration/`), and `project-portfolio-management-domain` (`domain/`), which holds the pure
+rule modules (`cpm`, `evm`, `schedule_risk`, `cost_risk`, `leveling`, `tolerances`, `prioritization`, `fever`,
+`buffers`, `ledger`, `mspdi`, `validation`, `tz`, and the rest: 121 modules). The layering rule: the domain crate may
+not depend on the service, `axum`, `axa`, `sqlx` or `tokio`, and reads no `AppContext`; a controller is wiring over a
+domain module. The service re-exports each domain module under its old name in `src/lib.rs`, so `crate::cpm` and
+`project_portfolio_management::cpm` still resolve. Where this spec names a moved module as `src/<module>.rs`, the file
+is now `domain/src/<module>.rs`. Its unit tests run with `cargo test --workspace --lib` (or
+`cargo test -p project-portfolio-management-domain`).
 
 ## 9. API surface
 

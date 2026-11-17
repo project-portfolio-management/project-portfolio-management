@@ -7,7 +7,7 @@ the layout of DHCW's roadmap spreadsheet filled with **fake example data**, unde
 Health and Care Wales. The notice is kept below, in this file, because this repository keeps licence files only
 in `LICENSE/` (a test checks it).
 
-`src/dhcw_import.rs` (RE-5 part b) runs its dry run on them. Never put data from a live spreadsheet here.
+`domain/src/dhcw_import.rs` (RE-5 part b) runs its dry run on them. Never put data from a live spreadsheet here.
 
 ## The licence of these files
 

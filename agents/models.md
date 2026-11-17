@@ -93,7 +93,7 @@ Representative groups:
 | Platform | `audit_logs`, `merge_records`, `event_outbox`, `bulk_jobs`, `webhook_deliveries`, `announcements`, `plan_links` |
 
 `TaskStatus` values are `todo`, `in_progress`, `in_review`, `done`,
-`blocked` (`src/engineering.rs`), unless a custom workflow is in force.
+`blocked` (`domain/src/engineering.rs`), unless a custom workflow is in force.
 `*_ref` fields are opaque references (person `pid`, worker `pid`,
 organization `pid`, auth user id) the service stores verbatim.
 

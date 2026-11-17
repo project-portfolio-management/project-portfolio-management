@@ -9,6 +9,68 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the pure rules move to a crate of their own, `project-portfolio-management-domain` (2026-11-17)
+
+- A pure refactor: no route, answer, OpenAPI or AsyncAPI document, migration or test result changes. 121 top-level
+  modules of `src/` (about 47,300 lines with their tests), the ones that, with everything they import through
+  `crate::`, use none of `axum`, `axa`, `sqlx`, `AppContext`, `crate::db`, the controllers, the models or `app`
+  (comments ignored), move to `domain/src/`, a new workspace member: package `project-portfolio-management-domain`, lib
+  `project_portfolio_management_domain`, 0.2.0, edition 2024, `rust-version` 1.98, the service's licence, authors and
+  lints, `publish = true` as the service. Among them `cpm`, `evm`, `earned_value`, `schedule_risk`, `cost_risk`,
+  `leveling`, `schedule_health`, `tolerances`, `prioritization`, `fever`, `buffers`, `ledger`, `cutover`, `mspdi`,
+  `validation`, `currency`, `tz`, `csv_cell`, `privacy`, `merge`, `governance` and `openapi_more`. The layering rule is
+  root spec §8.3c: the domain crate may not depend on the service, `axum`, `axa`, `sqlx` or `tokio`.
+- `src/lib.rs` re-exports every moved module under its old name (`pub use project_portfolio_management_domain::{…}`),
+  so `crate::cpm` in the service, `project_portfolio_management::cpm` in `tests/` and `benches/`, and doc links are
+  unchanged; no call site was edited. No `pub(crate)` item needed to become `pub`: nothing restricted in a moved module
+  is used from the service.
+- The domain crate's dependencies: `serde`, `serde_json` (with `float_roundtrip`, as the service), `schemars`, `chrono`,
+  `chrono-tz`, `uuid`, `sha2`, `zip`, `roxmltree`, `url` and the matcher; `tempfile` for its tests. `sinks` parses
+  destinations with `url::Url`, the type `reqwest::Url` re-exports, so the crate needs no HTTP client. The service
+  drops `zip` and `roxmltree`, which only the moved `extract` and `mspdi` used (`cargo machete` clean).
+- Guards that read the source tree read both crates: the raw-pool census in `src/db.rs` (also `domain/tests`), the two
+  audit censuses in `models::audit_logs`, the extractor guard in `src/lib.rs`, the live-event census in `asyncapi`; the
+  moved time-zone and CSV-escaping guards in `tz` and `csv_cell` read `domain/src` and the service's `../src`.
+  `clippy.toml`'s `chrono::Local` bans reach the domain crate (clippy reads the file from the parent directory; a
+  probe use of `chrono::Local::now` in a domain module was refused). The golden meeting PDF moves to
+  `domain/tests/fixtures/` with its only test; the DHCW roadmap fixtures stay and the domain test reads them from
+  `../tests/fixtures/`. 24 doc links from domain modules to service items (`crate::controllers::fever` and so on) are
+  plain code spans now, as they cannot resolve from the domain crate.
+- Tooling: `scripts/generate-openapi-bodies.py` looks for `JsonSchema` request types in `domain/src` too (without that
+  its `--check` reports `openapi_bodies.rs` stale); `scripts/generate-status.sh` counts `domain/src` tests (the counts
+  are unchanged, 1,652 and 329 ignored); CI's `api` job, the `Makefile` and the documented gates use `cargo fmt --all`,
+  `cargo clippy --workspace` and `cargo test --workspace --lib`; the `Dockerfile` copies `domain/`.
+- **Left in the service, and why.** Pure but tied to a service module: `blueprint_sync` and `starter_templates`
+  (through `plan_templates`), `plan_templates` and `task_bulk` (through `workflow`), `workflow` and `metrics`
+  (through `tba`), `openapi_schemas` (through `openapi`); `compliance` and `openapi_bodies` use the models and
+  controllers directly. Pure by the rule but kept on purpose: `live` and `content_check` (a `tokio` broadcast channel
+  and a `tokio` TCP client: I/O, not domain rules), `asyncapi` (its tests read the service's own sources and
+  `asyncapi.json`), and the empty `data` and `initializers` extension points. The controllers, models, `db`, `app`,
+  `auth`, `search`, `tba` and the rest stay.
+- Build times, on one machine with a warm build, before and after, touching one file (a comment appended):
+  the machine was never quiet (load average 100 to 285 on 16 cores, from other agents' builds; Cargo runs through
+  the `kache` wrapper, whose daemon does much of the compiling, so `user` time undercounts). Wall time, with `user`:
+
+  | Touched | Before: `cargo build` | Before: `cargo test --no-run` | After: `cargo build` | After: `cargo test --no-run` |
+  | --- | --- | --- | --- | --- |
+  | `src/controllers/fever.rs` (two runs) | 9 m 43 s (3 m 18 s); 1 m 15 s (30 s) | 7 m 54 s (10 m 53 s); 2 m 10 s (2 m 42 s) | 10 m 24 s (2 m 34 s); 3 m 39 s (31 s) | failed (kache daemon `EAGAIN`); 3 m 45 s (2 m 55 s) |
+  | `cpm` (one run) | 2 m 05 s (32 s) | 3 m 29 s (2 m 54 s) | 3 m 13 s (53 s) | failed (kache daemon `EAGAIN`) |
+
+  At this load the numbers do not show the gain, or a loss: the spread between two runs of the same build is larger than
+  any difference. What did change, from Cargo's own output: after a controller edit Cargo recompiles only the service
+  crate, whose `src/` is now about 105,500 lines instead of about 152,800, and the domain crate stays fresh; after an
+  edit to a domain module it recompiles the domain crate (about 47,300 lines) and then the service. A measurement on a
+  quiet machine is still to do.
+- Tested: `cargo fmt --all --check`; `cargo clippy --workspace --all-targets --all-features -- -D warnings`;
+  `cargo test --workspace --lib`: 441 (service) + 849 (domain) passed, 1 ignored, which is the 1,290 passed and 1
+  ignored the service library ran alone before, plus the migration crate's 7; `cargo bench --no-run --all-features`;
+  the database suites on Postgres 18 (`tests/mod.rs` 232 passed, and every real-token binary as CI's `api-db` job runs
+  them: 61 binaries in all, `mod` included, 324 passed, none failed); the DB-free binaries; `cargo deny --all-features check` (advisories, bans, licences, sources
+  ok); `cargo machete`; the docs checks. The container image was **not** built with Podman: at that load a release build in the Podman machine was not practical; the `Dockerfile` change (one `COPY` of `domain/`) is checked by reading only.
+- **Not verified:** the CI jobs on a GitHub runner; `cargo publish` of the domain crate (it is not published, and the
+  service's `publish` would now need it on crates.io first); the release workflow's per-crate SBOM step with a third
+  workspace member; `cargo doc` was not run as a gate (none exists).
+
 ### Changed — the integration tests are one binary (2026-11-17)
 
 - **`tests/main.rs` is the one integration-test binary** (`autotests = false`, `[[test]] name = "main"`). The 69

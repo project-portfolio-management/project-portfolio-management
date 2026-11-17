@@ -90,7 +90,7 @@ kept whole rather than split across them:
 - [Total Project Control](total-project-control/index.md) — Devaux's
   DIPP, expected monetary value and cost estimate to complete: is the
   value still to come worth the money still to spend? Implemented in
-  `src/tpc.rs`.
+  `domain/src/tpc.rs`.
 - [Flow Framework metrics](flow-framework-metrics/index.md) — the five
   value-stream metrics (Flow Time, Velocity, Efficiency, Load,
   Distribution) and their source. Four are delivered under TBA

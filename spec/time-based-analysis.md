@@ -805,7 +805,7 @@ they are what keep the figure honest rather than merely available:
    two or three, anyone who knows one of them can recover the other. The
    count of people (`people_counted`) is still returned. The per-person
    view (`by=person`) is the carve-out above and is unchanged; the minimum
-   is `MIN_GROUP_PEOPLE` in `src/effort.rs`.
+   is `MIN_GROUP_PEOPLE` in `domain/src/effort.rs`.
 4. **It is never the sole ranking key of a person list**, and it ships
    beside its numerator, its denominator, and the queue figures for the
    same period.

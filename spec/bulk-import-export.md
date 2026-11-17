@@ -1,6 +1,6 @@
 # Bulk import / export — design (T-8)
 
-**Status: implemented 2026-10-03** (migrations `…_000017_bulk_jobs`, `…_000018_review_queue_items`; `src/bulk.rs`, `src/controllers/bulk.rs`, `src/workers/bulk.rs`; tests in `tests/requests/bulk.rs`). The owner's open decisions in §12 were taken at their stated defaults — local-directory artifacts, 50 MiB / 100 000 rows, review queue used by import only, `full` export gated by the destructive right. Departures from the design as written are listed in *Implementation notes* at the end. It stands
+**Status: implemented 2026-10-03** (migrations `…_000017_bulk_jobs`, `…_000018_review_queue_items`; `domain/src/bulk.rs`, `src/controllers/bulk.rs`, `src/workers/bulk.rs`; tests in `tests/requests/bulk.rs`). The owner's open decisions in §12 were taken at their stated defaults — local-directory artifacts, 50 MiB / 100 000 rows, review queue used by import only, `full` export gated by the destructive right. Departures from the design as written are listed in *Implementation notes* at the end. It stands
 in for the family document `agents/share/bulk-import-export.md`, which
 `spec/13-tasks.md` T-8 and the API spec §9.8 / §10 cite but which is not
 in this repository. If that document is later supplied, it wins on
@@ -213,7 +213,7 @@ Integration tests (Postgres, in the existing DB-gated suite):
 
 ## 11. Delivery order
 
-1. `bulk_jobs` migration, entity, pure `src/bulk.rs` (codecs, row state
+1. `bulk_jobs` migration, entity, pure `domain/src/bulk.rs` (codecs, row state
    machine, counters) with unit tests — no I/O.
 2. Export (simplest end-to-end: job → worker → artifact → download).
 3. Import without review (keyed upsert + error report).

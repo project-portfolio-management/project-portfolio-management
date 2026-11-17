@@ -12,7 +12,7 @@ Entity-level view; normative inventory in entity spec
 | matcher | Public-API integration | `cargo test --test public_api` | The `lib.rs` re-export surface |
 | matcher | Doctests | `cargo test` | rustdoc examples |
 | service | DB-free embedding tests | `cargo test --test main matching::` | Matcher embedding + `Plan` JSON round-trip (the DTO/JSONB contract) |
-| service | Unit tests | `cargo test --lib` | Pure rules beside each controller; validation pins (`422` on blank name, containment cycle) |
+| service | Unit tests | `cargo test --workspace --lib` | Pure rules beside each controller (most in the `domain/` crate); validation pins (`422` on blank name, containment cycle) |
 | service | Request suites (`tests/main.rs` → `tests/requests/*`) | `cargo test --test main requests:: -- --ignored --test-threads=1` + Postgres `DB_URL` | Plan CRUD, match, merge, paging, bulk, cpm, task bulk, … `#[ignore]`d, so a plain `cargo test` is DB-free; serial because the database is shared |
 | service | Real-token suites | `cargo test --test main <module>:: -- --ignored --test-threads=1` | `private_aggregates` (private plans in every aggregate, enumerates mounted GET routes), `list_paging` (every list vs `openapi::PAGED_LISTS`), `approvals`, `processes`, `controlled_documents`, `cross_plan`, `guests`, … Modules of the one test binary (`tests/main.rs`); each test runs in a process of its own (`own_process!()`), as the auth posture and the ABAC policy are read once per process |
 | service | OTLP | `cargo test --test main otlp_` | Real export to an in-process collector, no database |
@@ -23,10 +23,10 @@ Entity-level view; normative inventory in entity spec
 ## Quality gates (all PRs)
 
 ```bash
-# both Rust crates
-cargo test --lib
-cargo clippy --all-targets --all-features -- -D warnings
-cargo fmt --check
+# both Rust crates (in the service, `--workspace`/`--all` also cover its `domain` and `migration` crates)
+cargo test --workspace --lib
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo fmt --all --check
 
 # front-end
 pnpm run check

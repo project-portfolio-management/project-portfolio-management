@@ -301,8 +301,8 @@ four connections, ten seconds each, the old build and the new build against the 
 Where the remaining 330 ms of one critical-path request goes (a timing probe, since removed): loading the
 network from the database about 110 ms, the scheduling calculation itself about 55 ms, building the answer about
 135 ms, writing it out about 20 ms, for a **10.8 MB** answer. The calculation is not the problem: the pure
-function takes 52 ms for 12,667 tasks and 148 ms for 30,000 (`cargo test --release large_plan_timing --
---ignored --nocapture`). What was avoidable was a linear search inside the per-task loop (quadratic overall),
+function takes 52 ms for 12,667 tasks and 148 ms for 30,000 (`cargo test -p project-portfolio-management-domain --release
+large_plan_timing -- --ignored --nocapture`, from the service directory). What was avoidable was a linear search inside the per-task loop (quadratic overall),
 now a map lookup. Above 5,000 tasks the full answer is now refused with a 413 that names the two ways out (`?only=critical`, `?full=true`), so a 10.8 MB answer is never an accident. `GET …/cpm?only=critical` returns only the critical and near-critical tasks, but **in this
 test every task is critical (it is a single chain), so it did not shrink the answer here**; it is covered by a
 request test on a network with float. The earlier "2.5 s" figure for this request was taken at 32 connections on
@@ -402,7 +402,8 @@ fuzz and chaos runs it is not a merge gate.
 **Not done.** The service is not mutation tested yet. It has about 14,100 mutants, 6,100 of them in controllers whose
 tests need PostgreSQL, so a blanket run would report most of them as missed when `cargo test --lib` cannot reach them.
 Its scope (the pure calculation modules, such as `cpm`, `evm`, `schedule_risk` and `cost_risk`, tested by the
-library tests) is set after its move from `chrono` to `jiff`, which rewrites much of that code. The UI is not mutation
+library tests, and since 17 November all in the `project-portfolio-management-domain` crate, so a run can be
+pointed at that crate alone) is set after its move from `chrono` to `jiff`, which rewrites much of that code. The UI is not mutation
 tested (no Stryker); that is not planned yet.
 
 ## How to add a benchmark

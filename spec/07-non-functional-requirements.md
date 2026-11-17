@@ -236,7 +236,7 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
 
 ### 7.x Time and time zones
 
-Doctrine (LT-9, `src/tz.rs`): **store UTC** (`timestamptz`, from `Utc::now()`);
+Doctrine (LT-9, `domain/src/tz.rs`): **store UTC** (`timestamptz`, from `Utc::now()`);
 a `date` is a **calendar date with no zone**; **the server never reads its own
 zone** (`chrono::Local` is banned by `clippy.toml` and by a unit test, so any
 process `TZ` yields identical answers); **portfolio-wide views use the

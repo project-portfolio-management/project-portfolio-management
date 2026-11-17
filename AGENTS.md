@@ -33,7 +33,9 @@ agents read it: `security-reviewer`, `database-reviewer`, `rust-reviewer` and `u
 ## Gates
 
 ```bash
-# service and matcher
+# service (a workspace: the service, `domain` and `migration`; run from its directory)
+cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features -- -D warnings && cargo test --workspace --lib
+# matcher
 cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
 # service: the one integration-test binary (tests/main.rs; each former tests/*.rs binary is a module of it), database-free part
 cargo test --test main
@@ -56,7 +58,11 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
 ## Things that are easy to get wrong
 
 - The crate is `project-portfolio-management`, the binary the same, the migration crate
-  `project-portfolio-management-migration`; the directories keep their `-service-with-rust` names.
+  `project-portfolio-management-migration`, and the pure domain rules (`cpm`, `evm`, `tz`, `validation`, …) the crate
+  `project-portfolio-management-domain` in `project-portfolio-management-service-with-rust/domain/`; the directories
+  keep their `-service-with-rust` names. The service re-exports each domain module under its old name, so
+  `crate::cpm` still works; the domain crate may not depend on the service, axum, axa, sqlx or tokio (spec §8.3c).
+  Use `--workspace` (`--all` for fmt), or the domain crate's tests and lints are skipped.
 - The UI wraps one table component (`DataTable`) and Lily widgets (`@lilydesignsystem/*`); there is no SVAR.
   Computed styles use Svelte's `style:` directive, never a `style="…"` attribute (the CSP blocks those).
 - `axum-test` follows `axa`, and `jsonwebtoken` stays at the version the Keycloak and OIDC code was written against; do not bump them alone. `dtolnay/rust-toolchain` is pinned by commit SHA and

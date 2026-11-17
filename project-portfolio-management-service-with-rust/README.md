@@ -148,11 +148,11 @@ candidate matches.
 ## Testing
 
 ```bash
-cargo test --lib                       # DB-free unit tests
+cargo test --workspace --lib           # DB-free unit tests (the service and its domain crate, domain/)
 cargo test --test main                 # DB-free integration tests (one binary, tests/main.rs)
 cargo test --test main matching::      # one module: matcher embedding + JSON round-trip
-cargo clippy --all-targets --all-features -- -D warnings
-cargo fmt --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo fmt --all --check
 
 # Need Postgres (DB_URL; compose.test.yaml provides one on 5432):
 cargo test --test main requests:: -- --ignored --test-threads=1                          # request suites

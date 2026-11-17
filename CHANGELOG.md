@@ -15,6 +15,21 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (the service's pure rules in a crate of their own)
+
+- **Service: `project-portfolio-management-domain`.** 121 pure modules of the service (about 47,300 lines with their
+  tests: `cpm`, `evm`, `schedule_risk`, `cost_risk`, `leveling`, `tolerances`, `fever`, `buffers`, `ledger`, `mspdi`,
+  `validation`, `tz`, …) move to a new workspace crate in `project-portfolio-management-service-with-rust/domain/`,
+  so an edit to a controller no longer recompiles them. A pure refactor: routes, answers, the OpenAPI and AsyncAPI
+  documents, migrations and test results are unchanged, and the service re-exports every module under its old name.
+  The layering rule (spec §8.3c): the domain crate may not depend on the service, axum, axa, sqlx or tokio. The
+  source-tree guards, the generators, CI's `api` job and the `Dockerfile` cover the new crate. Timings and the full
+  list of what stayed are in the service `CHANGELOG.md`.
+- **Not done:** seven pure modules tied to service modules (`blueprint_sync`, `metrics`, `openapi_schemas`,
+  `plan_templates`, `starter_templates`, `task_bulk`, `workflow`), `live`, `content_check`, `asyncapi`, `data` and
+  `initializers` stay in the service, as do the controllers and models. **Not verified:** CI on a GitHub runner; the container image build (not run); a
+  crates.io publish of the new crate.
+
 ### 17 November (the service's integration tests are one binary)
 
 - **Service: one integration-test binary**, `tests/main.rs`, with the 69 former `tests/*.rs` binaries as its modules

@@ -77,7 +77,7 @@ account for every row (`index_rows = roadmaps_mapped + roadmaps_skipped`, and th
 codes and category names are matched against this deployment's. On DHCW's example spreadsheet (copied, with its MIT
 notice, to `tests/fixtures/dhcw-roadmaps/`) it maps 3 roadmaps and 15 items and skips none. `Family`, `Status
 label`, `Colour` and `Product Lead` are reported as not mapped; a code this deployment does not have is listed as
-unknown; Welsh that does not have the English's shape is reported, not kept. Rules: `src/dhcw_import.rs`.
+unknown; Welsh that does not have the English's shape is reported, not kept. Rules: `domain/src/dhcw_import.rs`.
 
 ### Applying it
 

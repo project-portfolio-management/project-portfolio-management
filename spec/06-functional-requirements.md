@@ -158,7 +158,7 @@ hang off **any** plan.
   times are specified in [service-management.md](service-management.md) (SM-2).
   An issue's type, its statuses and who may move it are the organization's to define, by issue type; see
   [issue configuration](issue-configuration.md) (OC-1). **Built (IR-1):** the plan-scoped CRUD at `/api/plans/{pid}/issues`
-  (migration 50, entity, rules in `src/issues.rs`, controller, OpenAPI,
+  (migration 50, entity, rules in `domain/src/issues.rs`, controller, OpenAPI,
   audited, soft delete, in the `risks` module). Also built (IR-2): the
   portfolio-wide `GET /api/issues` (readable plans only; filters by plan,
   status, severity, owner, open and `min_age_days`; summary by severity and

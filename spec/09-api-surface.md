@@ -6,7 +6,7 @@ service is implemented (§14); the route inventory in §9.7 is generated
 from the controllers' `routes()` and is the check against drift. The
 tables in §9.2–§9.2c keep their original FR-oriented shape and carry
 verified corrections where the mounted route differs. The documented
-OpenAPI surface is `src/openapi.rs` + `src/openapi_more.rs`.
+OpenAPI surface is `src/openapi.rs` + `domain/src/openapi_more.rs`.
 
 ### 9.0 API versioning
 

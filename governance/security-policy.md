@@ -153,7 +153,7 @@ Security 2).
 5.4. Elevated access to a private plan MUST be break-glass only: eligible people, a stated reason, at most four
 hours, a named second person, every request audited (spec NFR-21). Handling marks MUST hide a plan above a caller's
 clearance, administrators included.
-*Evidence:* `src/break_glass.rs`, `tests/break_glass.rs`; `src/handling_marks.rs`, `tests/handling_marks.rs`.
+*Evidence:* `domain/src/break_glass.rs`, `tests/break_glass.rs`; `src/handling_marks.rs`, `tests/handling_marks.rs`.
 
 5.5. The UI's server-side proxy MUST refuse a cross-site write, and the service MUST refuse a cross-site write whose
 origin is not on the allow-list.
@@ -172,7 +172,7 @@ job runs `zizmor` over `.github`.
 ## 6. Input validation and output encoding
 
 6.1. Request bodies MUST be validated by the service and refused with every problem at once (`422`).
-*Evidence:* `src/validation.rs` and its unit tests; fuzz targets `validate_json` and `validate_built`
+*Evidence:* `domain/src/validation.rs` and its unit tests; fuzz targets `validate_json` and `validate_built`
 (`project-portfolio-management-service-with-rust/fuzz/`).
 
 6.2. Free text from a request MUST NOT be put into SQL. Every value MUST be bound; a table, column or condition in a
@@ -192,7 +192,7 @@ left to review (section 17).
 
 6.5. A user-supplied outbound destination (webhook, sink) MUST be `https` to a public address: no credentials, no
 loopback, private, link-local or internal names, checked again on the resolved address (server-side request forgery).
-*Evidence:* `src/sinks.rs` (`destination_url_ok`, `resolved_ok`) and its unit tests; `tests/sinks.rs`.
+*Evidence:* `domain/src/sinks.rs` (`destination_url_ok`, `resolved_ok`) and its unit tests; `tests/sinks.rs`.
 
 6.6. **Output encoding.** Every API response MUST carry the security headers of spec NFR-13 (`nosniff`, a restrictive
 CSP, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, COOP, CORP, and HSTS over TLS). The UI MUST set
@@ -212,7 +212,7 @@ finding fails except the two reviewed in [`.zap/rules.tsv`](../.zap/rules.tsv)).
 | Token verification | PASETO `v4.public` (Ed25519) | `authentication-verifier` crate; `src/auth/verifier.rs` |
 | Keyed integrity of plan and audit rows | HMAC-SHA256 with HKDF domain separation, off unless `PORTFOLIO_INTEGRITY_MAC_KEY` (or `…_KEY_FILE`) is set | `integrity-mac` crate; `src/compliance/mac.rs` |
 | Unkeyed content digests | SHA-256 and SHA3-256 | `src/compliance/record_integrity.rs`, `src/compliance/audit_integrity.rs` |
-| Stored feed and link tokens | random token; only its SHA-256 is stored | `src/feeds.rs`, `src/link_token.rs` |
+| Stored feed and link tokens | random token; only its SHA-256 is stored | `domain/src/feeds.rs`, `domain/src/link_token.rs` |
 | Transport | rustls for outbound HTTP, SMTP and Redis; PostgreSQL over TLS | `Cargo.toml`; spec [`08-architecture.md`](../spec/08-architecture.md) |
 | Encrypted backups | GnuPG: symmetric AES-256 with a passphrase file, or a public-key recipient | [`scripts/backup.sh`](../scripts/backup.sh) |
 
@@ -269,7 +269,7 @@ state in them what the software does not do. Completing and signing them is the 
 
 9.3. Retention purges MUST be dry runs unless told otherwise and MUST audit what they remove; the data-subject tool
 MUST be administrator-only and preview first (spec NFR-21).
-*Evidence:* `src/retention.rs`, `tests/requests/retention.rs`; `src/subjects.rs`, `tests/requests/subjects.rs`.
+*Evidence:* `src/retention.rs`, `tests/requests/retention.rs`; `domain/src/subjects.rs`, `tests/requests/subjects.rs`.
 
 9.4. Exports MUST mask personal data by default, and a policy's `mask` obligation MUST redact the record on the
 ordinary endpoint and in the export.

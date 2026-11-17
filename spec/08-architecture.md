@@ -183,6 +183,31 @@ not know, and checks that on every run. `seaql_migrations` is left in place. The
 built give the same `pg_dump` schema and data but for the history tables, and an old-built database bridged in place
 is unchanged but for `_sqlx_migrations` (task SQ-1; `tests/migrations.rs` holds the bridge and rollback cases).
 
+### 8.3c The domain crate: pure rules apart from the service
+
+The service's pure rule modules live in their own workspace crate, `project-portfolio-management-domain`
+(`project-portfolio-management-service-with-rust/domain/`, lib `project_portfolio_management_domain`), so that an edit to
+a controller, a model or the router recompiles only the service and not the scheduling, cost, risk and import logic
+(17 November 2026). The layering rule: **the domain crate may not depend on the service, `axum`, `axa`, `sqlx` or
+`tokio`**, nor on the service's `controllers`, `models`, `db`, `app` or any module that does; it reads no
+`AppContext`. Its dependencies are plain libraries (`serde`, `serde_json`, `chrono`, `chrono-tz`, `uuid`, `schemars`,
+`sha2`, `zip`, `roxmltree`, `url` and the matcher).
+
+A module of the service's `src/` belongs in the domain crate when it, and every module it imports through `crate::`,
+uses none of those (comments do not count). Modules that are pure but need a service module (for example `workflow`
+and `metrics` through `tba`, `plan_templates` and `task_bulk` through `workflow`, `openapi_schemas` through
+`openapi`) stay in the service until what they need moves; so do `live` and `content_check`, whose channel and
+network client need `tokio`, `asyncapi`, whose tests read the service's own sources and `asyncapi.json`, and the
+empty `data` and `initializers` extension points.
+
+The service re-exports every domain module under its old name (`pub use project_portfolio_management_domain::{…}` in
+`src/lib.rs`), so `crate::cpm` inside the service and `project_portfolio_management::cpm` in its tests and benches
+name the same module as before; inside the domain crate, `crate::x` is a sibling domain module. Nothing about a
+route, an answer, the OpenAPI or AsyncAPI document, or the schema changes with where a module lives. The guards that
+read the source tree (the raw-pool census in `src/db.rs`, the two audit censuses, the extractor guard, the live-event
+census, the time-zone and CSV-escaping guards, `scripts/generate-openapi-bodies.py` and the test counts of
+`scripts/generate-status.sh`) read `domain/src` as well as `src`.
+
 ### 8.3 Service layout
 
 > **Corrected 2026-08-25.** This section was headed "— planned" and drew
@@ -212,13 +237,15 @@ project-portfolio-management-service-with-rust/
 │   │   ├── compliance.rs            integrity + evidence
 │   │   ├── metrics.rs docs.rs       Prometheus · OpenAPI + Swagger UI
 │   ├── models/                      plans + sub-resource CRUD helpers, _entities/
-│   ├── pure rule modules            governance.rs · engineering.rs · strategy.rs ·
-│   │                                collaboration.rs · automation.rs ·
-│   │                                prioritization.rs · lifecycle.rs · insights.rs ·
-│   │                                visibility.rs · tba.rs · merge.rs · validation.rs
-│   ├── auth/ (verifier · enforcement · policy · areas · identity) streaming.rs relay.rs search/ privacy.rs compliance/
+│   ├── lib.rs                       re-exports the domain crate's modules under their old names (§8.3c)
+│   ├── pure rules tied to the service  tba/ · workflow.rs · metrics.rs · plan_templates.rs · …
+│   ├── auth/ (verifier · enforcement · policy · areas · identity) streaming.rs relay.rs search/ compliance/
 │   ├── flow_metrics.rs scheduler.rs snapshots.rs version.rs
 │   └── workers/                     background jobs
+├── domain/src/                      the pure rule modules (crate project-portfolio-management-domain, §8.3c):
+│                                    governance.rs · engineering.rs · strategy.rs · collaboration.rs ·
+│                                    automation.rs · prioritization.rs · lifecycle.rs · insights.rs ·
+│                                    visibility.rs · merge.rs · validation.rs · privacy.rs · cpm.rs · evm.rs · tz.rs · …
 ├── migration/migrations/            the frozen SQL migrations, run by sqlx: plans,
 │                                    audit_logs, merge_records, event_outbox, governance,
 │                                    visibility, strategy, engineering, capabilities, …

@@ -29,7 +29,7 @@ look at.
 
 ## Rust
 
-1. `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings` are clean; format only the files you touched. (root `AGENTS.md`; memory: CI gates before push)
+1. `cargo fmt --all --check` and `cargo clippy --workspace --all-targets -- -D warnings` are clean (in the service, `--workspace` takes in the `domain` crate); format only the files you touched. (root `AGENTS.md`; memory: CI gates before push)
 2. Every new route is in `src/openapi.rs`/`openapi_bodies.rs` (regenerate with `python3 scripts/generate-openapi-bodies.py`), `api-routes.txt` (`UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`) and `openapi.json` (`UPDATE_OPENAPI_JSON=1 cargo test --lib openapi_json_file`); a new write documents its request body. (service `AGENTS.md`)
 3. Pure rules live in a DB-free module with unit tests; the controller only fetches, calls them and writes. (service `AGENTS.md`)
 4. The matcher `Plan` type is reused, never forked; `kind`, `status` and `phase` are not scored and there is no kind gate. (matcher `AGENTS.md`)

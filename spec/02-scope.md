@@ -175,7 +175,7 @@ CMDB, on-call and vulnerability scanning stay out of scope.
 **Committed but not yet built** — in scope by §1.4–§1.6, no code yet:
 
 - **Custom workflows** (§1.4.1). Task and issue statuses are still
-  compile-time constants (`src/engineering.rs`); nothing declares a
+  compile-time constants (`domain/src/engineering.rs`); nothing declares a
   state vocabulary or its category mapping.
 - **Time tracking** (§1.4.3). Nothing exists — `estimate` / `remaining`
   on a task are forecasts, not recorded effort.

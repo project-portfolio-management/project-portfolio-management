@@ -41,10 +41,11 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 | Question | Answer |
 |---|---|
 | Run | `cargo run -- start` (needs Postgres; port 1241; migrations auto-run in development) |
-| Lint (must be clean) | `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` |
-| DB-free tests | `cargo test --lib` (unit) and `cargo test --test main` (the one integration-test binary, `tests/main.rs`: its database suites are `#[ignore]`d) |
+| Lint (must be clean) | `cargo clippy --workspace --all-targets --all-features -- -D warnings` · `cargo fmt --all --check` |
+| DB-free tests | `cargo test --workspace --lib` (unit, the service's and the domain crate's) and `cargo test --test main` (the one integration-test binary, `tests/main.rs`: its database suites are `#[ignore]`d) |
 | DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
+| Domain crate | `domain/` (crate `project-portfolio-management-domain`): the pure rule modules (`cpm`, `evm`, `tz`, `validation`, … 121 of them), re-exported from `src/lib.rs` under their old names. It may not depend on the service, `axum`, `axa`, `sqlx` or `tokio` (root spec §8.3c) |
 | Migrations | `migration/migrations/` (crate `project-portfolio-management-migration`, run by sqlx) — one frozen SQL file per migration, `<version>_<name>.up.sql` with its `.down.sql`, or a plain `.sql` that refuses to roll back; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
 
 ## API surface
@@ -52,13 +53,14 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 Routes are under `/api/`; plans at `/api/plans`, plan-scoped resources at
 `/api/plans/{pid}/…`. URLs are version-free; select a version with the
 `Accepts-version` header (default `1.0`, `src/version.rs`). The OpenAPI
-document (`src/openapi.rs` + `src/openapi_more.rs`) is hand-written and
+document (`src/openapi.rs` + `domain/src/openapi_more.rs`) is hand-written and
 pinned by tests: **every new route must be added there**, a new write must
 document its `requestBody` (`WRITES_WITHOUT_REQUEST_BODY` only shrinks), and
 `api-routes.txt` (the mounted routes, which the UI's tests check its client
 against) is regenerated with `UPDATE_API_ROUTES=1 cargo test --lib api_routes_file`. Spec §9 is the
 full contract; this is the map. One module per area in
-`src/controllers/`, each with a pure-logic sibling in `src/`.
+`src/controllers/`, each with a pure-logic sibling in `domain/src/` (or, for the few tied to a service module, in
+`src/`).
 
 | Group | Paths |
 |---|---|
@@ -145,7 +147,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   token; `MaybeAuthUser` feeds the audit `actor`. Policy (ABAC,
   `service_rules`) decides record access, areas (`comms`, finance,
   manage-people) and personas.
-- **Privacy** (`src/privacy.rs`): thin field masking (`lead_ref` dropped,
+- **Privacy** (`domain/src/privacy.rs`): thin field masking (`lead_ref` dropped,
   owner org masked to its tail) + audited GDPR export.
 - **Events**: `streaming.rs` in-memory stream (default) or durable outbox
   (`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TRANSPORT=outbox`, relay in
@@ -172,8 +174,10 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 1. **Spec-first.** Behavioural change updates `spec/`; the entity spec owns
    the canonical model (§5).
 2. **Conventional.** Controllers register in `app.rs`; tables are
-   SQL migrations in `migration/migrations/`; pure rules live in `src/<area>.rs` with
-   no I/O and the controller is wiring.
+   SQL migrations in `migration/migrations/`; pure rules live in `domain/src/<area>.rs` with
+   no I/O (the domain crate may not depend on the service, axum, axa, sqlx or tokio; root spec
+   §8.3c) and the controller is wiring. A new domain module is declared in `domain/src/lib.rs`
+   and added to the `pub use project_portfolio_management_domain::{…}` list in `src/lib.rs`.
 3. **Reuse the matcher type**; do not fork a `Plan` DTO.
 4. **One recursive collection**; no per-kind collections.
 5. **Kind-agnostic matching**; dedup, check-duplicates and merge are not
@@ -186,7 +190,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
    --all-features`.
 9. **The database through `src/db.rs` only** (root spec §8.3b): there is no
    ORM. `ctx.db` is sqlx's `PgPool`, but nothing outside `src/db.rs` names
-   it (a census refuses it in `src/`, `tests/` and `benches/`): a statement
+   it (a census refuses it in `src/`, `tests/`, `benches/` and `domain/`): a statement
    runs on `db::pool(&ctx)` or a `db::begin(&ctx)` transaction, so
    `query_count` sees it. A handler's writes and its audit row
    (`AuditModel::record_on`) are one transaction; a helper of several
@@ -245,7 +249,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 
 | Layer | Command |
 |---|---|
-| Unit | `cargo test --lib` (DB-free) |
+| Unit | `cargo test --workspace --lib` (DB-free; the domain crate alone: `cargo test -p project-portfolio-management-domain`) |
 | Integration tests, DB-free | `cargo test --test main`: one binary, `tests/main.rs`, whose modules are the former `tests/*.rs` binaries (`matching`, `otlp_export`, `otlp_middleware`, `licence_files`, `trace_span_concurrency`, …) |
 | Load test (needs a running service with login off; not in CI) | `PPM_LOAD_TEST_SECONDS=10 PPM_LOAD_TEST_CONCURRENCY=16 cargo test --test main load_test:: -- --ignored --nocapture` |
 | Request suites (`tests/requests/*`) | `cargo test --test main requests:: -- --ignored --test-threads=1` (shared database; serial) |
@@ -269,16 +273,18 @@ process of the same executable (`tests/own_process.rs`).
 src/
 ├── app.rs                  routes, middleware stack, tickers, boot
 ├── controllers/            one file per area (HTTP wiring only); paging.rs, plan_access.rs (privacy_mw, HiddenScope), …
-├── <area>.rs               pure rules beside each controller (hammock, sandbox, processes, documents, cost_rates, scheduling_rules, work_profile, onboarding, tba, tpc, …)
+├── lib.rs                  module list; re-exports the domain crate's modules under their old names
+├── <area>.rs               pure rules tied to a service module (tba/, workflow, metrics, plan_templates, task_bulk, …)
 ├── models/                 helpers + _entities/ (row structs, one per table)
 ├── db.rs                   the one way to the pool: pool, begin, Session, Counted
-├── auth.rs · privacy.rs · version.rs · validation.rs · merge.rs
+├── auth/ · version.rs
 ├── search/                 Tantivy index + engine
-├── streaming.rs · relay.rs · webhooks.rs · sinks.rs      events, outbox, sinks
+├── streaming.rs · relay.rs · webhooks.rs      events, outbox, sinks
 ├── observability.rs · metrics.rs · flow_metrics.rs
-├── openapi.rs · openapi_more.rs     hand-written OpenAPI + PAGED_LISTS
+├── openapi.rs              hand-written OpenAPI + PAGED_LISTS (the later entries are domain/src/openapi_more.rs)
 ├── compliance/             keyed integrity (mac, record_integrity, audit_integrity)
 └── tasks/search.rs         search_reindex CLI task
+domain/src/                 the pure rules beside each controller (crate project-portfolio-management-domain): cpm, evm, hammock, sandbox, processes, documents, cost_rates, scheduling_rules, work_profile, onboarding, tpc, privacy, validation, merge, sinks, tz, …
 migration/migrations/       frozen SQL migrations, oldest first (sqlx)
 migration/src/lib.rs        the runner: up, down, fresh, status, and the seaql_migrations bridge
 tests/                      main.rs (the one test binary): requests/ (shared DB and process), one module per real-token suite (each test in its own process), otlp_*
@@ -289,8 +295,8 @@ config/                     development / production / test yaml
 
 `Dockerfile` (multi-stage, Debian 13 slim) must be built with the
 **repository root** as context (it reads the root `rust-toolchain.toml`; the
-matcher, `authentication-verifier` and `integrity-mac` all come from crates.io, and the `migration/` crate is a path
-dependency inside this directory):
+matcher, `authentication-verifier` and `integrity-mac` all come from crates.io, and the `migration/` and `domain/`
+crates are path dependencies inside this directory, which the `Dockerfile` copies):
 `podman build -f project-portfolio-management-service-with-rust/Dockerfile -t project-portfolio-management-service .`
 Exclude every `target/` via `.containerignore`. `GET /_health/live` returns
 `200` once the service listens; `/_health/ready` and `/_health/startup` once Postgres is reachable.

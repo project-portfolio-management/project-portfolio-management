@@ -12,8 +12,8 @@
 //! footing, in business days of the plan's calendar.
 
 use super::conflict;
+use crate::datetime::Timestamp;
 use crate::prelude::*;
-use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -39,7 +39,7 @@ pub(crate) async fn current(
     plan_pid: Uuid,
 ) -> Result<(
     Vec<(Snap, Option<i32>, Option<&'static str>)>,
-    Option<chrono::NaiveDate>,
+    Option<crate::datetime::Date>,
     crate::cpm::WorkCalendar,
     &'static str,
 )> {
@@ -163,7 +163,7 @@ pub(crate) async fn take(
         caller.actor(),
         Some(
             serde_json::json!({ "plan_pid": plan_pid, "version": version, "reason": reason,
-                                  "tasks": snaps.len(), "at": Utc::now() }),
+                                  "tasks": snaps.len(), "at": Timestamp::now() }),
         ),
     )
     .await

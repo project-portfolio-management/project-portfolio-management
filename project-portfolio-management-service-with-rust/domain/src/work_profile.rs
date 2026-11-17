@@ -22,7 +22,7 @@
 //!   about a quarter, a plateau, a ramp down over about a quarter;
 //! * `custom` — percentages summing to 100, stretched evenly over the business days.
 
-use chrono::{Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 
 use crate::portfolio_resources::{self as pr, Period};
@@ -160,9 +160,9 @@ pub enum Unplaced {
 /// [`Unplaced`] when there is work but nowhere (or no weight) to put it.
 pub fn distribute(
     total: i64,
-    working_days: &[NaiveDate],
+    working_days: &[Date],
     contour: &Contour,
-) -> Result<Vec<(NaiveDate, i64)>, Unplaced> {
+) -> Result<Vec<(Date, i64)>, Unplaced> {
     if total == 0 {
         return Ok(working_days.iter().map(|d| (*d, 0)).collect());
     }
@@ -209,7 +209,7 @@ impl Grain {
 /// # Errors
 ///
 /// A sentence when the window is reversed, too long, or has too many periods.
-pub fn periods(from: NaiveDate, to: NaiveDate, grain: Grain) -> Result<Vec<Period>, String> {
+pub fn periods(from: Date, to: Date, grain: Grain) -> Result<Vec<Period>, String> {
     match grain {
         Grain::Week => pr::periods(from, to, pr::Grain::Week),
         Grain::Month => pr::periods(from, to, pr::Grain::Month),
@@ -238,9 +238,9 @@ pub fn periods(from: NaiveDate, to: NaiveDate, grain: Grain) -> Result<Vec<Perio
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct Bucket {
     /// First day.
-    pub from: NaiveDate,
+    pub from: Date,
     /// Last day.
-    pub to: NaiveDate,
+    pub to: Date,
     /// Minutes of work.
     pub minutes: i64,
 }
@@ -248,7 +248,7 @@ pub struct Bucket {
 /// Sum per-day minutes into `periods`. Minutes outside every period are not lost
 /// silently: the second value is how many fell outside the window.
 #[must_use]
-pub fn bucket(per_day: &[(NaiveDate, i64)], periods: &[Period]) -> (Vec<Bucket>, i64) {
+pub fn bucket(per_day: &[(Date, i64)], periods: &[Period]) -> (Vec<Bucket>, i64) {
     let mut out: Vec<Bucket> = periods
         .iter()
         .map(|p| Bucket {
@@ -271,10 +271,10 @@ pub fn bucket(per_day: &[(NaiveDate, i64)], periods: &[Period]) -> (Vec<Bucket>,
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
-    fn week_days() -> Vec<NaiveDate> {
+    fn week_days() -> Vec<Date> {
         (5..=9).map(|n| d(2026, 10, n)).collect()
     }
 
@@ -374,8 +374,8 @@ mod tests {
         assert_eq!(placed.len(), 5);
         assert!(placed.iter().all(|(_, m)| *m == 480));
         assert!(placed.iter().all(|(day, _)| !matches!(
-            chrono::Datelike::weekday(day),
-            chrono::Weekday::Sat | chrono::Weekday::Sun
+            day.weekday(),
+            crate::datetime::Weekday::Sat | crate::datetime::Weekday::Sun
         )));
         let front = distribute(2_400, &days, &Contour::FrontLoaded).unwrap();
         assert!(front[0].1 > front[4].1);

@@ -257,8 +257,8 @@ async fn remove(
     let mut tx = crate::db::begin(ctx).await?;
     // An update that finds no row is an error, as it was.
     sqlx::query("UPDATE plan_links SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-            chrono::Utc::now(),
+        .bind(crate::datetime::OffsetDateTime::from(
+            crate::datetime::Timestamp::now(),
         ))
         .bind(row.id)
         .fetch_one(tx.conn())

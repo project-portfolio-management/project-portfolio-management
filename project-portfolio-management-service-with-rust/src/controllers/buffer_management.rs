@@ -12,10 +12,10 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -66,7 +66,7 @@ fn specs(doc: &Value) -> Vec<(Spec, Value)> {
             .collect();
         let planned = v["planned_finish"]
             .as_str()
-            .and_then(|s| s.parse::<NaiveDate>().ok())?;
+            .and_then(|s| s.parse::<Date>().ok())?;
         let spec = Spec {
             key: v["key"].as_str()?.to_string(),
             days: v["days"].as_i64(),
@@ -101,7 +101,7 @@ async fn readings(ctx: &AppContext, plan: Uuid, doc: &Value) -> Result<Vec<(Read
         .filter(|t| t.status == "done")
         .map(|t| t.pid)
         .collect();
-    let finish: HashMap<Uuid, NaiveDate> = levelled
+    let finish: HashMap<Uuid, Date> = levelled
         .nodes
         .iter()
         .map(|n| (n.pid, n.early_finish))
@@ -372,7 +372,7 @@ pub(crate) struct ActionBody {
     owner_ref: String,
     #[serde(default)]
     /// Optional due date; absent means none set.
-    due_date: Option<NaiveDate>,
+    due_date: Option<Date>,
 }
 
 /// `POST /api/plans/{pid}/buffer-recovery-actions`

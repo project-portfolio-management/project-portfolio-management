@@ -24,7 +24,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use chrono::{Datelike, Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -64,9 +64,9 @@ pub struct Alloc {
     /// Percent of one person (1–100).
     pub percent: i32,
     /// First day; open if absent.
-    pub start: Option<NaiveDate>,
+    pub start: Option<Date>,
     /// Last day; open if absent.
-    pub end: Option<NaiveDate>,
+    pub end: Option<Date>,
     /// Hoped for rather than firm.
     pub proposed: bool,
 }
@@ -86,9 +86,9 @@ pub struct Person {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct Period {
     /// First day.
-    pub from: NaiveDate,
+    pub from: Date,
     /// Last day.
-    pub to: NaiveDate,
+    pub to: Date,
 }
 
 impl Period {
@@ -125,7 +125,7 @@ impl Grain {
 /// # Errors
 ///
 /// A message when the window is reversed, too long, or has too many periods.
-pub fn periods(from: NaiveDate, to: NaiveDate, grain: Grain) -> Result<Vec<Period>, String> {
+pub fn periods(from: Date, to: Date, grain: Grain) -> Result<Vec<Period>, String> {
     if to < from {
         return Err("to is before from".to_string());
     }
@@ -145,7 +145,7 @@ pub fn periods(from: NaiveDate, to: NaiveDate, grain: Grain) -> Result<Vec<Perio
                 } else {
                     (start.year(), start.month() + 1)
                 };
-                NaiveDate::from_ymd_opt(y, m, 1).map_or(to, |d| d - Duration::days(1))
+                Date::from_ymd_opt(y, m, 1).map_or(to, |d| d - Duration::days(1))
             }
         };
         let end = natural_end.min(to);
@@ -162,7 +162,7 @@ pub fn periods(from: NaiveDate, to: NaiveDate, grain: Grain) -> Result<Vec<Perio
 }
 
 /// Calendar days of `[start, end]` (either open) inside `p`.
-fn overlap(start: Option<NaiveDate>, end: Option<NaiveDate>, p: Period) -> i64 {
+fn overlap(start: Option<Date>, end: Option<Date>, p: Period) -> i64 {
     let s = start.map_or(p.from, |s| s.max(p.from));
     let e = end.map_or(p.to, |e| e.min(p.to));
     ((e - s).num_days() + 1).max(0)
@@ -367,11 +367,11 @@ pub struct HoursRow {
 
 /// Working days of `[start, end]` inside `[from, to]`, by `working` (the plan's calendar, WW-1.4).
 fn working_days(
-    start: Option<NaiveDate>,
-    end: Option<NaiveDate>,
-    from: NaiveDate,
-    to: NaiveDate,
-    working: impl Fn(NaiveDate) -> bool,
+    start: Option<Date>,
+    end: Option<Date>,
+    from: Date,
+    to: Date,
+    working: impl Fn(Date) -> bool,
 ) -> i64 {
     let s = start.map_or(from, |s| s.max(from));
     let e = end.map_or(to, |e| e.min(to));
@@ -406,12 +406,12 @@ pub struct Actual {
 /// week), each `minutes_per_day` long (WW-1.4).
 #[must_use]
 pub fn hours<S: std::hash::BuildHasher>(
-    from: NaiveDate,
-    to: NaiveDate,
+    from: Date,
+    to: Date,
     allocs: &[Alloc],
     any_allocation: &HashSet<(Uuid, String), S>,
     actuals: &[Actual],
-    working: impl Fn(Uuid, NaiveDate) -> bool,
+    working: impl Fn(Uuid, Date) -> bool,
     minutes_per_day: i64,
 ) -> Vec<HoursRow> {
     let mut planned: BTreeMap<(Uuid, Option<String>), i64> = BTreeMap::new();
@@ -455,10 +455,10 @@ pub fn hours<S: std::hash::BuildHasher>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Weekday;
+    use crate::datetime::Weekday;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
@@ -636,7 +636,7 @@ mod tests {
         assert_eq!(per.total_demand_percent_days, 420, "each allocation once");
     }
 
-    fn mon_fri(_: Uuid, d: NaiveDate) -> bool {
+    fn mon_fri(_: Uuid, d: Date) -> bool {
         !matches!(d.weekday(), Weekday::Sat | Weekday::Sun)
     }
 
@@ -651,7 +651,7 @@ mod tests {
         ];
         let any: HashSet<(Uuid, String)> = HashSet::new();
         // Plan 1 works Sunday to Thursday; plan 2 Monday to Saturday.
-        let week = |plan: Uuid, day: NaiveDate| {
+        let week = |plan: Uuid, day: Date| {
             let i = day.weekday().num_days_from_monday() as usize;
             let mask = if plan == id(1) { "1111001" } else { "1111110" };
             mask.as_bytes()[i] == b'1'

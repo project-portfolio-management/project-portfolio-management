@@ -338,11 +338,10 @@ mod tests {
     }
 
     use super::*;
-    use chrono::{DateTime, FixedOffset, TimeZone as _, Utc};
+    use crate::datetime::{OffsetDateTime, Timestamp};
 
-    fn at(micros: i64) -> DateTime<FixedOffset> {
-        Utc.timestamp_micros(micros)
-            .single()
+    fn at(micros: i64) -> OffsetDateTime {
+        Timestamp::from_timestamp_micros(micros)
             .expect("valid instant")
             .into()
     }

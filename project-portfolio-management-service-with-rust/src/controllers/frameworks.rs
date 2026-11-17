@@ -416,7 +416,7 @@ async fn remove(
     let pid = row.pid;
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query("UPDATE frameworks SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(row.id)
         .fetch_one(tx.conn())
         .await?;

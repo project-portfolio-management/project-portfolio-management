@@ -603,7 +603,7 @@ async fn set_evidence(
 pub(crate) async fn tracker_view(
     ctx: &AppContext,
     visible: &HashSet<Uuid>,
-    today: chrono::NaiveDate,
+    today: crate::datetime::Date,
     with_detail: bool,
 ) -> Result<Value> {
     let (need, unusable) = rules::required_quarters();

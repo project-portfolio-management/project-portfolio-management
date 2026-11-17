@@ -10,11 +10,11 @@
 //! plan.
 
 use super::unprocessable;
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axum::extract::{Request, State};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response as AxumResponse};
-use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -39,7 +39,7 @@ pub fn caller_is_guest(caller: &MaybeAuthUser) -> bool {
 
 /// A guest's live grants (empty on a lookup failure: fail closed).
 pub(crate) async fn grants_of(ctx: &AppContext, sub: &str) -> Vec<Grant> {
-    let now = Utc::now();
+    let now = Timestamp::now();
     sqlx::query_as::<_, guest_grants::Model>("SELECT * FROM guest_grants WHERE guest_sub = $1")
         .bind(sub)
         .fetch_all(crate::db::pool(ctx))
@@ -168,7 +168,7 @@ pub(crate) struct GrantBody {
     access: String,
     /// When the grant lapses; absent means it stays live until revoked.
     #[serde(default)]
-    expires_at: Option<DateTime<Utc>>,
+    expires_at: Option<Timestamp>,
 }
 
 /// `POST /api/plans/{pid}/guests` — grant a guest access to this plan.
@@ -185,7 +185,7 @@ async fn grant(
             rules::ACCESS
         )));
     }
-    if b.expires_at.is_some_and(|e| e <= Utc::now()) {
+    if b.expires_at.is_some_and(|e| e <= Timestamp::now()) {
         return Err(unprocessable("expires_at must be in the future"));
     }
     let caller = MaybeAuthUser(Some(claims.clone()));
@@ -202,12 +202,9 @@ async fn grant(
     .bind("plan")
     .bind(subject.pid)
     .bind(&b.access)
-    .bind(
-        b.expires_at
-            .map(chrono::DateTime::<chrono::FixedOffset>::from),
-    )
+    .bind(b.expires_at.map(crate::datetime::OffsetDateTime::from))
     .bind(Some(claims.sub.as_str()))
-    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .bind(None::<crate::datetime::OffsetDateTime>)
     .fetch_one(tx.conn())
     .await?;
     AuditModel::record_on(
@@ -236,7 +233,7 @@ async fn list(
             .bind(subject.pid)
             .fetch_all(crate::db::pool(&ctx))
             .await?;
-    let now = Utc::now();
+    let now = Timestamp::now();
     format::json(
         rows.iter()
             .map(|g| {
@@ -269,7 +266,7 @@ async fn revoke(
             .await?
             .ok_or(Error::NotFound)?;
     if row.revoked_at.is_none() {
-        let revoked_at = chrono::DateTime::<chrono::FixedOffset>::from(Utc::now());
+        let revoked_at = crate::datetime::OffsetDateTime::from(Timestamp::now());
         let mut tx = crate::db::begin(&ctx).await?;
         // `fetch_one`: an update that finds no row is an error, as before SQ-1.
         sqlx::query_scalar::<_, i64>(

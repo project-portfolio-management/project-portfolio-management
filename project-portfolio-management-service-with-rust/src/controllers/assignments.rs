@@ -11,8 +11,8 @@
 
 use std::collections::BTreeMap;
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -390,7 +390,7 @@ pub(crate) struct TaskWork {
     /// Total work in minutes; always positive for tasks listed here.
     pub work_minutes: i64,
     /// Minutes on each business day (empty when it could not be placed).
-    pub per_day: Vec<(NaiveDate, i64)>,
+    pub per_day: Vec<(Date, i64)>,
     /// Why it could not be placed.
     pub unplaced: Option<String>,
 }
@@ -401,7 +401,7 @@ pub(crate) fn working_days_of(
     net: &super::cpm::Network,
     analysis: Option<&crate::cpm::CpmResult>,
     i: usize,
-) -> Option<Vec<NaiveDate>> {
+) -> Option<Vec<Date>> {
     let pid = net.rows.get(i)?.pid;
     let node = analysis?.nodes.iter().find(|n| n.pid == pid)?;
     let cal = net.nodes[i]
@@ -414,7 +414,7 @@ pub(crate) fn working_days_of(
         if cal.is_working(d) {
             days.push(d);
         }
-        d += chrono::Duration::days(1);
+        d += crate::datetime::Duration::days(1);
     }
     Some(days)
 }
@@ -465,10 +465,10 @@ pub(crate) fn work_of(
 pub(crate) struct ProfileParams {
     #[serde(default)]
     /// First day of the reporting window; absent means the plan's own start.
-    pub(crate) from: Option<NaiveDate>,
+    pub(crate) from: Option<Date>,
     #[serde(default)]
     /// Last day of the reporting window; absent means the plan's own finish.
-    pub(crate) to: Option<NaiveDate>,
+    pub(crate) to: Option<Date>,
     /// `day`, `week` (default) or `month`.
     #[serde(default)]
     pub(crate) period: Option<String>,
@@ -477,13 +477,8 @@ pub(crate) struct ProfileParams {
 /// The window and periods for a set of placed days.
 pub(crate) fn window(
     q: &ProfileParams,
-    placed: &[&(NaiveDate, i64)],
-) -> Result<(
-    NaiveDate,
-    NaiveDate,
-    Grain,
-    Vec<crate::portfolio_resources::Period>,
-)> {
+    placed: &[&(Date, i64)],
+) -> Result<(Date, Date, Grain, Vec<crate::portfolio_resources::Period>)> {
     let grain = match q.period.as_deref() {
         None => Grain::Week,
         Some(p) => {
@@ -543,7 +538,7 @@ async fn plan_profile(
             "note": "No task carries work, so there is nothing to spread. Set a task's assignment first.",
         }));
     }
-    let placed: Vec<&(NaiveDate, i64)> = work.iter().flat_map(|t| t.per_day.iter()).collect();
+    let placed: Vec<&(Date, i64)> = work.iter().flat_map(|t| t.per_day.iter()).collect();
     let (from, to, grain, periods) = window(&q, &placed)?;
     let see = super::portfolio_resources::may_manage_people(&caller);
     let mut tasks_json = Vec::new();
@@ -629,7 +624,7 @@ async fn portfolio_profile(
             "note": "No plan you can read has a task carrying work.",
         }));
     }
-    let placed: Vec<&(NaiveDate, i64)> = per_plan
+    let placed: Vec<&(Date, i64)> = per_plan
         .iter()
         .flat_map(|(_, w)| w.iter().flat_map(|t| t.per_day.iter()))
         .collect();

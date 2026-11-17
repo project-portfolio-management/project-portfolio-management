@@ -10,9 +10,9 @@
 use super::refuse;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::{DateTime, NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -66,20 +66,20 @@ pub(crate) struct AssessBody {
     rationale: String,
     /// Defaults to today; not in the future.
     #[serde(default)]
-    assessed_on: Option<NaiveDate>,
+    assessed_on: Option<Date>,
 }
 
 /// Renders one exception with its completeness and breach state. A closed exception is judged at its own closing time and an open one against `now`; `window` is the allowed hours to complete it.
-fn exception_json(e: &exceptions::Model, now: DateTime<Utc>, window: i64) -> serde_json::Value {
+fn exception_json(e: &exceptions::Model, now: Timestamp, window: i64) -> serde_json::Value {
     let parts = Parts {
         cause: e.cause.as_deref(),
         decision_needed: e.decision_needed.as_deref(),
         owner_ref: e.owner_ref.as_deref(),
         decide_by: e.decide_by,
     };
-    let opened: DateTime<Utc> = e.opened_at.into();
-    let completed: Option<DateTime<Utc>> = e.completed_at.map(Into::into);
-    let closed: Option<DateTime<Utc>> = e.closed_at.map(Into::into);
+    let opened: Timestamp = e.opened_at.into();
+    let completed: Option<Timestamp> = e.completed_at.map(Into::into);
+    let closed: Option<Timestamp> = e.closed_at.map(Into::into);
     // A closed exception is judged at its completion; an open one by the clock now.
     let breach = rules::breached(opened, completed, closed.unwrap_or(now), window);
     serde_json::json!({
@@ -165,7 +165,7 @@ async fn set_confidence(
         .bind(plan.pid)
         .fetch_optional(tx.conn())
         .await?;
-        let now = Utc::now();
+        let now = Timestamp::now();
         exception = Some(if let Some(open) = open {
             if rules::worsens(&open.worst_value, &b.value) {
                 let updated: exceptions::Model = sqlx::query_as(
@@ -220,7 +220,7 @@ async fn set_confidence(
     tx.commit().await?;
     format::json(serde_json::json!({
         "assessment": assessment_json(&row),
-        "exception": exception.map(|e| exception_json(&e, Utc::now(), rules::window_hours())),
+        "exception": exception.map(|e| exception_json(&e, Timestamp::now(), rules::window_hours())),
     }))
 }
 
@@ -238,7 +238,7 @@ async fn get_confidence(
     .fetch_all(crate::db::pool(&ctx))
     .await?;
     let history: Vec<Assessment> = rows.iter().map(lite).collect();
-    let period = Utc::now().format("%Y-%m").to_string();
+    let period = Timestamp::now().format("%Y-%m").to_string();
     let shown = rules::shown(&history).map(|s| {
         serde_json::json!({
             "value": s.value, "kind": s.kind, "assessed_on": s.assessed_on,
@@ -299,7 +299,7 @@ async fn list_exceptions(
     plans.sort();
     plans.dedup();
     let readable = super::plan_access::readable_plans(&ctx, &caller, &plans).await;
-    let (now, window) = (Utc::now(), rules::window_hours());
+    let (now, window) = (Timestamp::now(), rules::window_hours());
     let shown: Vec<serde_json::Value> = rows
         .iter()
         .filter(|r| readable.contains(&r.plan_pid))
@@ -355,7 +355,7 @@ pub(crate) struct CompleteBody {
     owner_role: Option<String>,
     /// Date by which the decision is needed.
     #[serde(default)]
-    decide_by: Option<NaiveDate>,
+    decide_by: Option<Date>,
 }
 
 /// `PUT /api/exceptions/{pid}` — fill in the cause, the decision needed, the owner and the decide-by date.
@@ -422,7 +422,7 @@ async fn complete_exception(
     let done = rules::missing(&parts).is_empty();
     let saved = if done && merged.completed_at.is_none() {
         sqlx::query_as("UPDATE delivery_exceptions SET completed_at = $1 WHERE id = $2 RETURNING *")
-            .bind(Utc::now())
+            .bind(Timestamp::now())
             .bind(merged.id)
             .fetch_one(tx.conn())
             .await?
@@ -439,7 +439,11 @@ async fn complete_exception(
     .await
     .map_err(|e| Error::string(&e.to_string()))?;
     tx.commit().await?;
-    format::json(exception_json(&saved, Utc::now(), rules::window_hours()))
+    format::json(exception_json(
+        &saved,
+        Timestamp::now(),
+        rules::window_hours(),
+    ))
 }
 
 /// `POST /api/exceptions/{pid}/decision` body.
@@ -474,7 +478,7 @@ async fn decide_exception(
         "UPDATE delivery_exceptions SET status = 'closed', closed_at = $1, decision = $2, decided_by = $3
          WHERE pid = $4 AND status = 'open'",
     )
-    .bind(Utc::now())
+    .bind(Timestamp::now())
     .bind(b.decision.trim())
     .bind(&actor)
     .bind(row.pid)
@@ -500,7 +504,11 @@ async fn decide_exception(
     let now = exception_by_pid(&ctx, row.pid)
         .await?
         .ok_or(Error::NotFound)?;
-    format::json(exception_json(&now, Utc::now(), rules::window_hours()))
+    format::json(exception_json(
+        &now,
+        Timestamp::now(),
+        rules::window_hours(),
+    ))
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -820,7 +828,7 @@ async fn portfolio_map(
 ) -> Result<Response> {
     let period = q
         .period
-        .unwrap_or_else(|| Utc::now().format("%Y-%m").to_string());
+        .unwrap_or_else(|| Timestamp::now().format("%Y-%m").to_string());
     if !crate::director_pack::valid_period(&period) {
         return Err(unprocessable("period must be YYYY-MM"));
     }
@@ -841,7 +849,7 @@ pub(crate) async fn exceptions_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
     period: &str,
-    now: DateTime<Utc>,
+    now: Timestamp,
 ) -> Result<serde_json::Value> {
     let names: HashMap<Uuid, String> =
         sqlx::query_as::<_, (Uuid, String)>("SELECT pid, name FROM plans")
@@ -886,7 +894,7 @@ pub(crate) async fn exceptions_section(
         .filter(|r| {
             r.status == "closed"
                 && r.closed_at.is_some_and(|c| {
-                    let d = DateTime::<Utc>::from(c).date_naive();
+                    let d = Timestamp::from(c).date_naive();
                     start.is_some_and(|s| d >= s && d.format("%Y-%m").to_string() == period)
                 })
         })

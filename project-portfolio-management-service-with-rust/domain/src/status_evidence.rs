@@ -6,7 +6,7 @@
 //! `metric:<key>` (one of [`METRICS`]). Sources are stored as ids and resolved when read. A number that cannot be
 //! known is `None`, never zero.
 
-use chrono::{Days, NaiveDate};
+use crate::datetime::{Date, Days};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -133,7 +133,7 @@ pub fn problems(claims: &[Claim]) -> Vec<String> {
 /// What the counts need to know about one task.
 pub struct TaskFact {
     /// Its due date, if it has one.
-    pub due: Option<NaiveDate>,
+    pub due: Option<Date>,
     /// Its workflow state is not "done".
     pub open: bool,
     /// Its status is `blocked`.
@@ -155,14 +155,14 @@ pub struct Counts {
 
 /// Count the tasks as of `today` (a task due today is not overdue).
 #[must_use]
-pub fn counts(tasks: &[TaskFact], today: NaiveDate) -> Counts {
+pub fn counts(tasks: &[TaskFact], today: Date) -> Counts {
     let open: Vec<&TaskFact> = tasks.iter().filter(|t| t.open).collect();
     let dated = open.iter().filter(|t| t.due.is_some()).count();
     let soon_end = today
         .checked_add_days(Days::new(DUE_SOON_DAYS))
-        .unwrap_or(NaiveDate::MAX);
+        .unwrap_or(Date::MAX);
     let unknown = !open.is_empty() && dated == 0;
-    let n = |f: &dyn Fn(NaiveDate) -> bool| {
+    let n = |f: &dyn Fn(Date) -> bool| {
         (!unknown).then(|| open.iter().filter(|t| t.due.is_some_and(f)).count())
     };
     Counts {
@@ -191,7 +191,7 @@ impl Counts {
 mod tests {
     use super::*;
 
-    fn day(s: &str) -> NaiveDate {
+    fn day(s: &str) -> Date {
         s.parse().unwrap()
     }
 

@@ -112,7 +112,7 @@ pub fn export_plan(plan: &Plan, pid: &str, masked: bool) -> serde_json::Value {
     serde_json::json!({
         "entity": "plan",
         "pid": pid,
-        "exported_at": chrono::Utc::now().to_rfc3339(),
+        "exported_at": crate::datetime::Timestamp::now().to_rfc3339(),
         "masked": masked,
         "record": serde_json::to_value(&record).unwrap_or(serde_json::Value::Null),
         "note": if masked {

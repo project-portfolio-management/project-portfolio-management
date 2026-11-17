@@ -254,15 +254,46 @@ links use the hybrid topology
 the service writes its outbound edges locally and emits events; a
 standalone aggregator builds the queryable graph.
 
-**Where the code lives (root spec §8.3c).** This directory is a Cargo workspace of three crates: the service
-(`src/`), its migrations (`migration/`), and `project-portfolio-management-domain` (`domain/`), which holds the pure
-rule modules (`cpm`, `evm`, `schedule_risk`, `cost_risk`, `leveling`, `tolerances`, `prioritization`, `fever`,
-`buffers`, `ledger`, `mspdi`, `validation`, `tz`, and the rest: 121 modules). The layering rule: the domain crate may
-not depend on the service, `axum`, `axa`, `sqlx` or `tokio`, and reads no `AppContext`; a controller is wiring over a
-domain module. The service re-exports each domain module under its old name in `src/lib.rs`, so `crate::cpm` and
-`project_portfolio_management::cpm` still resolve. Where this spec names a moved module as `src/<module>.rs`, the file
-is now `domain/src/<module>.rs`. Its unit tests run with `cargo test --workspace --lib` (or
-`cargo test -p project-portfolio-management-domain`).
+**Where the code lives (root spec §8.3c).** This directory is a Cargo workspace of four crates: the service
+(`src/`), its migrations (`migration/`), `project-portfolio-management-datetime` (`datetime/`, the dates, instants,
+durations and IANA zones over `jiff`; see **Dates and times** below), and `project-portfolio-management-domain`
+(`domain/`), which holds the pure rule modules (`cpm`, `evm`, `schedule_risk`, `cost_risk`, `leveling`, `tolerances`,
+`prioritization`, `fever`, `buffers`, `ledger`, `mspdi`, `validation`, `tz`, and the rest: 121 modules). The layering
+rule: the domain crate may not depend on the service, `axum`, `axa`, `sqlx` or `tokio`, and reads no `AppContext`; a
+controller is wiring over a domain module. The service re-exports each domain module under its old name in
+`src/lib.rs`, so `crate::cpm` and `project_portfolio_management::cpm` still resolve. Where this spec names a moved
+module as `src/<module>.rs`, the file is now `domain/src/<module>.rs`. Its unit tests run with
+`cargo test --workspace --lib` (or `cargo test -p project-portfolio-management-domain`).
+
+**Dates and times (17 November 2026).** Every date, instant, duration and zone is a type of the datetime crate, over
+`jiff` 1.0 (the service moved from `chrono` and `chrono-tz`, which RUSTSEC-2026-0543 and -0555 declared unmaintained):
+`Timestamp` (an instant in UTC), `OffsetDateTime` (an instant with a fixed offset: the `timestamptz` column type,
+`models::_entities::DateTimeWithTimeZone`), `Date` (a calendar date), `Duration`, `Days`, `Months`, `Weekday` and
+`Tz`. Both the service and the domain crate name them as `crate::datetime::…`; the domain crate uses the crate
+without its `sqlx` feature, so it stays free of sqlx. The move changed nothing a client, a log reader or the database
+can see, and these forms are requirements, pinned byte for byte by `src/datetime/golden.rs`:
+
+- JSON writes an instant as RFC 3339 with `Z` for a zero offset (for both instant types) and the fraction in groups
+  of three digits (`.123400`, never `.1234`); an offset to the minute. `to_rfc3339` writes `+00:00`. `Display` is
+  `2026-10-30 09:15:00 UTC` for a `Timestamp` and `… +00:00` for an `OffsetDateTime`; `Debug` is `…Z` and `…+00:00`.
+  A date is `YYYY-MM-DD`.
+- A request body's instant is read leniently (a space or `t` for `T`, spaces between parts, unpadded fields, `UTC`
+  or `Z`, an offset with or without its colon, U+2212 as minus); a query parameter's (`?as_of=` on `my-work`) strictly
+  (two-digit fields, a colon in the offset); a date with unpadded fields and spaces around the dashes. The error
+  messages (`premature end of input`, `input is out of range`, `input contains invalid characters`,
+  `trailing input`) are the ones clients have always received.
+- Month arithmetic clamps the day to the end of a shorter month; a duration moves a date by its whole days, toward
+  zero; whole-unit counts of a duration truncate toward zero; unix counts round down before 1970.
+- Zone names are matched exactly (`europe/london` is refused); zones come only from the database bundled into the
+  binary (jiff's `TimeZoneDatabase::bundled()`), never `/usr/share/zoneinfo` or the process zone (doctrine LT-9,
+  `domain/src/tz.rs`; `clippy.toml` bans jiff's system-zone and global-database calls).
+- Postgres: `timestamptz` is written as microseconds (sub-microsecond digits dropped toward 2000, as before) and
+  read back with offset zero; `date` as days.
+
+What jiff cannot represent is the documented exception: a leap second (`:60`) is read as `:59`; a year outside
+-9999..=9999, or an instant within about a day of those ends, is out of range (a far date such as `?to=9999-12-31`
+saturates to the last instant); and the zone data are tzdb 2026f (jiff-tzdb) rather than 2025b (chrono-tz), so a
+zone whose rules changed between those releases answers by the newer rules.
 
 ## 9. API surface
 

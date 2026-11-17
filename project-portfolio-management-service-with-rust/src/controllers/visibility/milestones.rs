@@ -17,7 +17,7 @@ pub(crate) struct MilestonePayload {
     /// Milestone name; required and capped at `MAX_TEXT_LEN`.
     name: String,
     /// Due date.
-    due: chrono::NaiveDate,
+    due: crate::datetime::Date,
     /// Optional kind (`milestone` / `demo` / `release` / `checkpoint`);
     /// absent reads as `milestone`.
     #[serde(default)]
@@ -93,7 +93,7 @@ pub(super) async fn list_milestones(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct MilestoneReschedulePayload {
     /// New due date; the `milestone_due_changed` trigger fires only when it differs from the current one.
-    due: chrono::NaiveDate,
+    due: crate::datetime::Date,
     /// Why it moved; kept in the slip history (optional, up to 500 characters).
     #[serde(default)]
     reason: Option<String>,
@@ -242,9 +242,9 @@ pub(super) async fn complete_milestone(
     let row_pid = milestone.pid;
     // Stamp the completion instant for the delivery-flow metrics
     // (idempotent completes keep the first stamp).
-    let done_at: chrono::DateTime<chrono::FixedOffset> = milestone
+    let done_at: crate::datetime::OffsetDateTime = milestone
         .done_at
-        .unwrap_or_else(|| chrono::Utc::now().into());
+        .unwrap_or_else(|| crate::datetime::Timestamp::now().into());
     let mut tx = crate::db::begin(&ctx).await?;
     // The columns the update set before SQ-1 (`done_reason` only when a reason is given), by id; no row back is an
     // error.

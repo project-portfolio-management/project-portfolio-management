@@ -101,7 +101,7 @@ pub(crate) fn freshness_view(r: &roadmaps::Model) -> Value {
     json!({
         "state": rules::freshness(r.reviewed_on, today, days),
         "stale_after_days": days,
-        "stale_from": r.reviewed_on.map(|d| d + chrono::Duration::days(days + 1)),
+        "stale_from": r.reviewed_on.map(|d| d + crate::datetime::Duration::days(days + 1)),
         "today": today,
     })
 }
@@ -937,7 +937,7 @@ pub(crate) struct ReviewedPayload {
     today: bool,
     /// The date it was reviewed, not after today; `null` clears it. Ignored when `today` is true.
     #[serde(default)]
-    reviewed_on: Option<chrono::NaiveDate>,
+    reviewed_on: Option<crate::datetime::Date>,
 }
 
 /// `PUT /api/plans/{pid}/roadmap/reviewed` — the only write that changes `reviewed_on` (RE-3).

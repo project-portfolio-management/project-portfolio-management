@@ -14,14 +14,12 @@ use crate::models::_entities::{Date, DateTimeWithTimeZone, key_result_check_ins}
 // The helpers: the only lines that name the date and time types.
 // ---------------------------------------------------------------------------------------------------------
 
-type Utc = chrono::DateTime<chrono::Utc>;
+type Utc = crate::datetime::Timestamp;
 
 fn utc(y: i32, mo: u32, d: u32, h: u32, mi: u32, s: u32, nanos: u32) -> Utc {
-    use chrono::TimeZone as _;
-    chrono::Utc
-        .with_ymd_and_hms(y, mo, d, h, mi, s)
+    Utc::with_ymd_and_hms(y, mo, d, h, mi, s)
         .unwrap()
-        .checked_add_signed(chrono::Duration::nanoseconds(i64::from(nanos)))
+        .checked_add_signed(crate::datetime::Duration::nanoseconds(i64::from(nanos)))
         .unwrap()
 }
 
@@ -43,7 +41,7 @@ fn column_rfc3339(t: DateTimeWithTimeZone) -> String {
 }
 
 fn utc_rfc3339_micros_z(t: Utc) -> String {
-    t.to_rfc3339_opts(chrono::SecondsFormat::Micros, true)
+    t.to_rfc3339_opts(crate::datetime::SecondsFormat::Micros, true)
 }
 
 fn utc_format(t: Utc, pattern: &str) -> String {
@@ -67,14 +65,14 @@ fn utc_seconds(t: Utc) -> i64 {
 }
 
 fn utc_from_millis(ms: i64) -> Option<Utc> {
-    chrono::DateTime::from_timestamp_millis(ms)
+    Utc::from_timestamp_millis(ms)
 }
 
 fn utc_date(t: Utc) -> Date {
     t.date_naive()
 }
 
-/// A request body's instant: the JSON string decoded as the service's `DateTime<Utc>` decodes it, and
+/// A request body's instant: the JSON string decoded as the service's `Timestamp` decodes it, and
 /// written back; or the decoder's message.
 fn decode_utc(s: &str) -> Result<String, String> {
     serde_json::from_value::<Utc>(json!(s))
@@ -97,14 +95,14 @@ fn decode_column(s: &str) -> Result<String, String> {
 
 /// The strict RFC 3339 parse (`?as_of=` and other query parameters), as an instant in UTC.
 fn parse_rfc3339(s: &str) -> Result<String, String> {
-    chrono::DateTime::parse_from_rfc3339(s)
+    DateTimeWithTimeZone::parse_from_rfc3339(s)
         .map(|t| format!("{:?}", t.to_utc()))
         .map_err(|e| e.to_string())
 }
 
 /// As [`parse_rfc3339`], keeping the offset the text gave.
 fn parse_rfc3339_offset(s: &str) -> Result<String, String> {
-    chrono::DateTime::parse_from_rfc3339(s)
+    DateTimeWithTimeZone::parse_from_rfc3339(s)
         .map(|t| format!("{t:?}"))
         .map_err(|e| e.to_string())
 }
@@ -123,23 +121,23 @@ fn parse_date(s: &str, fmt: &str) -> Result<String, String> {
 
 fn add_months(d: Date, n: i32) -> Option<Date> {
     if n >= 0 {
-        d.checked_add_months(chrono::Months::new(n.unsigned_abs()))
+        d.checked_add_months(crate::datetime::Months::new(n.unsigned_abs()))
     } else {
-        d.checked_sub_months(chrono::Months::new(n.unsigned_abs()))
+        d.checked_sub_months(crate::datetime::Months::new(n.unsigned_abs()))
     }
 }
 
 fn add_days(d: Date, n: i64) -> Option<Date> {
     if n >= 0 {
-        d.checked_add_days(chrono::Days::new(n.unsigned_abs()))
+        d.checked_add_days(crate::datetime::Days::new(n.unsigned_abs()))
     } else {
-        d.checked_sub_days(chrono::Days::new(n.unsigned_abs()))
+        d.checked_sub_days(crate::datetime::Days::new(n.unsigned_abs()))
     }
 }
 
 /// `date + Duration::seconds(secs)`: whole days only, toward zero.
 fn date_plus_seconds(d: Date, secs: i64) -> Date {
-    d + chrono::Duration::seconds(secs)
+    d + crate::datetime::Duration::seconds(secs)
 }
 
 /// `(a - b).num_days()` for dates.
@@ -159,36 +157,31 @@ fn instant_difference(a: Utc, b: Utc) -> (i64, i64, i64, i64) {
 }
 
 fn utc_plus_days(t: Utc, n: i64) -> Utc {
-    t + chrono::Duration::days(n)
+    t + crate::datetime::Duration::days(n)
 }
 
 fn weekday_from_monday(d: Date) -> u32 {
-    use chrono::Datelike as _;
     d.weekday().num_days_from_monday()
 }
 
 fn weekday_debug(d: Date) -> String {
-    use chrono::Datelike as _;
     format!("{:?}", d.weekday())
 }
 
 fn ordinal(d: Date) -> u32 {
-    use chrono::Datelike as _;
     d.ordinal()
 }
 
 fn days_from_ce(d: Date) -> i32 {
-    use chrono::Datelike as _;
     d.num_days_from_ce()
 }
 
 fn iso_week(d: Date) -> (i32, u32) {
-    use chrono::Datelike as _;
     (d.iso_week().year(), d.iso_week().week())
 }
 
 fn from_iso_week_monday(year: i32, week: u32) -> Option<Date> {
-    Date::from_isoywd_opt(year, week, chrono::Weekday::Mon)
+    Date::from_isoywd_opt(year, week, crate::datetime::Weekday::Mon)
 }
 
 fn next_day(d: Date) -> Option<Date> {
@@ -200,7 +193,6 @@ fn previous_day(d: Date) -> Option<Date> {
 }
 
 fn with_day(d: Date, day: u32) -> Option<Date> {
-    use chrono::Datelike as _;
     d.with_day(day)
 }
 

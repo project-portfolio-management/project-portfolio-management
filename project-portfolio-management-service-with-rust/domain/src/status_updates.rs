@@ -2,7 +2,7 @@
 //! on-track / at-risk / off-track call with a narrative; when the next one is due, and whether it is overdue, follows
 //! from the dates alone. DB-free and clock-free: every function is told the date.
 
-use chrono::{Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 
 /// The calls an update can make.
@@ -42,7 +42,7 @@ pub fn cadence_ok(days: i32) -> bool {
 pub struct Standing {
     /// The date the next update is due: a cadence after the last update, or after the cadence was set when there
     /// has been none.
-    pub due_on: NaiveDate,
+    pub due_on: Date,
     /// Today is the due date or later.
     pub due: bool,
     /// Today is after the due date.
@@ -56,9 +56,9 @@ pub struct Standing {
 #[must_use]
 pub fn standing(
     cadence_days: i32,
-    cadence_set_on: NaiveDate,
-    last_update_on: Option<NaiveDate>,
-    today: NaiveDate,
+    cadence_set_on: Date,
+    last_update_on: Option<Date>,
+    today: Date,
 ) -> Standing {
     let from = last_update_on.map_or(cadence_set_on, |u| u.max(cadence_set_on));
     let due_on = from + Duration::days(i64::from(cadence_days));
@@ -75,8 +75,8 @@ pub fn standing(
 mod tests {
     use super::*;
 
-    fn d(m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, m, day).unwrap()
+    fn d(m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(2026, m, day).unwrap()
     }
 
     #[test]

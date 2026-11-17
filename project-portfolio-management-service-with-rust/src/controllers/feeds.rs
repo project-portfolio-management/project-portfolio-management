@@ -82,7 +82,7 @@ async fn issue(
 /// Revoke every live token of `sub`.
 async fn revoke_live(db: &mut impl crate::db::Session, sub: &str) -> Result<()> {
     sqlx::query("UPDATE feed_tokens SET revoked_at = $1 WHERE sub = $2 AND revoked_at IS NULL")
-        .bind(chrono::Utc::now())
+        .bind(crate::datetime::Timestamp::now())
         .bind(sub)
         .execute(db.ex())
         .await?;
@@ -116,16 +116,16 @@ async fn owner_of(ctx: &AppContext, token: &str) -> Result<String> {
     .await?
     .ok_or_else(unauthorized)?;
     let link = link_token::Link {
-        issued_at: row.created_at.with_timezone(&chrono::Utc),
+        issued_at: row.created_at.to_utc(),
         lifetime_days: link_token::FEED_TOKEN_LIFETIME_DAYS,
         revoked_at: None,
         redeemed_at: None,
         single_use: false,
     };
-    link_token::check(&link, chrono::Utc::now()).map_err(|_| unauthorized())?;
+    link_token::check(&link, crate::datetime::Timestamp::now()).map_err(|_| unauthorized())?;
     // Best-effort bookkeeping; never fails the fetch.
     sqlx::query("UPDATE feed_tokens SET last_used_at = $1 WHERE id = $2")
-        .bind(chrono::Utc::now())
+        .bind(crate::datetime::Timestamp::now())
         .bind(row.id)
         .execute(crate::db::pool(ctx))
         .await
@@ -262,7 +262,7 @@ async fn calendar(
     }
     // PL-4: the owner's own planned slots, as timed events (UTC). Slots on a
     // task that is gone are skipped; recent and future ones only.
-    let cutoff = chrono::Utc::now() - chrono::Duration::days(7);
+    let cutoff = crate::datetime::Timestamp::now() - crate::datetime::Duration::days(7);
     let slots: Vec<planned_slots::Model> = sqlx::query_as(
         "SELECT * FROM planned_slots
          WHERE sub = $1 AND deleted_at IS NULL AND ends_at > $2
@@ -293,7 +293,7 @@ async fn calendar(
         });
     }
     events.sort_by(|a, b| a.date.cmp(&b.date).then(a.uid.cmp(&b.uid)));
-    let body = rules::ical("My work", chrono::Utc::now(), &events);
+    let body = rules::ical("My work", crate::datetime::Timestamp::now(), &events);
     Ok((
         [(
             header::CONTENT_TYPE,

@@ -10,8 +10,8 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::{Datelike, NaiveDate};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -221,7 +221,7 @@ pub(crate) struct Window {
 }
 
 /// Validates a [`Window`] and returns its first day and month count, with a `422` for a bad `from` or an out-of-range `months`.
-fn window(q: &Window) -> Result<(NaiveDate, u32)> {
+fn window(q: &Window) -> Result<(Date, u32)> {
     let months = q.months.unwrap_or(6);
     if !(1..=24).contains(&months) {
         return Err(unprocessable("months must be 1 to 24"));

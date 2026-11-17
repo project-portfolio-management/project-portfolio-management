@@ -1,10 +1,17 @@
 # LT-9 timezone doctrine: the server runs in UTC and never consults the
-# process zone. A caller's "today" comes from an explicit IANA zone (domain/src/tz.rs).
-# Clippy finds this file from the `domain` crate too (it looks in the parent directories), so the ban covers both.
-disallowed-types = [
-  { path = "chrono::Local", reason = "never read the process time zone; take an explicit zone via crate::tz" },
-]
+# process zone. A caller's "today" comes from an explicit IANA zone (domain/src/tz.rs), and every zone comes from
+# the database bundled into the binary (datetime/src/zone.rs, `TimeZoneDatabase::bundled()`), never the system's.
+# Clippy finds this file from the `domain` and `datetime` crates too (it looks in the parent directories), so the
+# ban covers all three. (chrono's `Local` was banned here until the move to jiff; chrono is no longer a dependency
+# of the service's own code.)
+disallowed-types = []
 disallowed-methods = [
-  { path = "chrono::Local::now", reason = "never read the process time zone; take an explicit zone via crate::tz" },
-  { path = "chrono::Local::today", reason = "never read the process time zone; take an explicit zone via crate::tz" },
+  { path = "jiff::ZonedDateTime::now", reason = "never read the process time zone; take an explicit zone via crate::tz" },
+  { path = "jiff::tz::TimeZone::system", reason = "never read the process time zone; take an explicit zone via crate::tz" },
+  { path = "jiff::tz::TimeZone::try_system", reason = "never read the process time zone; take an explicit zone via crate::tz" },
+  { path = "jiff::tz::TimeZone::get", reason = "reads jiff's global database, which may be the system's; use crate::datetime::Tz" },
+  { path = "jiff::tz::db", reason = "jiff's global database may be the system's; use crate::datetime::Tz (the bundled one)" },
+  { path = "jiff::Timestamp::in_tz", reason = "reads jiff's global database, which may be the system's; use crate::datetime::Tz" },
+  { path = "jiff::civil::Date::in_tz", reason = "reads jiff's global database, which may be the system's; use crate::datetime::Tz" },
+  { path = "jiff::civil::DateTime::in_tz", reason = "reads jiff's global database, which may be the system's; use crate::datetime::Tz" },
 ]

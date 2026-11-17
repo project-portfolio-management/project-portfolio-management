@@ -113,15 +113,15 @@ pub fn linked_verdict(i: &Inputs, peer_supply: Option<i64>) -> Verdict {
 
 /// The first day of the month `n` months after `from` (a first of a month).
 #[must_use]
-pub fn add_months(from: chrono::NaiveDate, n: u32) -> chrono::NaiveDate {
-    from.checked_add_months(chrono::Months::new(n))
+pub fn add_months(from: crate::datetime::Date, n: u32) -> crate::datetime::Date {
+    from.checked_add_months(crate::datetime::Months::new(n))
         .unwrap_or(from)
 }
 
 /// Parse `YYYY-MM` to the first day of that month.
 #[must_use]
-pub fn parse_month(s: &str) -> Option<chrono::NaiveDate> {
-    chrono::NaiveDate::parse_from_str(&format!("{s}-01"), "%Y-%m-%d").ok()
+pub fn parse_month(s: &str) -> Option<crate::datetime::Date> {
+    crate::datetime::Date::parse_from_str(&format!("{s}-01"), "%Y-%m-%d").ok()
 }
 
 #[cfg(test)]

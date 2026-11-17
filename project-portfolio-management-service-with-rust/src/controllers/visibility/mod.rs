@@ -97,11 +97,12 @@ pub fn routes() -> Routes {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
+    use crate::datetime::Date;
     use serde_json::json;
 
     fn model(data: serde_json::Value) -> plans::Model {
-        let at = chrono::DateTime::parse_from_rfc3339("2026-10-01T09:30:00+00:00").unwrap();
+        let at = crate::datetime::OffsetDateTime::parse_from_rfc3339("2026-10-01T09:30:00+00:00")
+            .unwrap();
         plans::Model {
             created_at: at,
             updated_at: at,
@@ -121,8 +122,8 @@ mod tests {
         }
     }
 
-    fn day(y: i32, m: u32, d: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    fn day(y: i32, m: u32, d: u32) -> Date {
+        Date::from_ymd_opt(y, m, d).unwrap()
     }
 
     #[test]

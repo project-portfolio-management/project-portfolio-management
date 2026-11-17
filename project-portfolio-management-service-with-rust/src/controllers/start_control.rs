@@ -13,7 +13,6 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::Datelike;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -215,7 +214,7 @@ async fn waiting(db: &mut impl crate::db::Session) -> Result<Vec<queue::Model>> 
 async fn mark_started(
     db: &mut impl crate::db::Session,
     entry: Option<queue::Model>,
-    today: chrono::NaiveDate,
+    today: crate::datetime::Date,
 ) -> Result<()> {
     if let Some(q) = entry {
         // `fetch_one`: an update that finds no row is an error, as before SQ-1.

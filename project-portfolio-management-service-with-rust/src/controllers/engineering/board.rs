@@ -13,7 +13,7 @@ use crate::models::audit_logs::Model as AuditModel;
 /// The task wire view (adds blocked-age calendar days to the stored row).
 pub(crate) fn task_view(task: &tasks::Model) -> serde_json::Value {
     let blocked_days = (task.status == "blocked")
-        .then(|| (chrono::Utc::now() - task.status_changed_at.to_utc()).num_days());
+        .then(|| (crate::datetime::Timestamp::now() - task.status_changed_at.to_utc()).num_days());
     serde_json::json!({
         "pid": task.pid,
         "title": task.title,
@@ -63,12 +63,12 @@ pub(crate) struct TaskPayload {
     sprint_pid: Option<Uuid>,
     /// Optional due **calendar date** (`YYYY-MM-DD`, no zone).
     #[serde(default)]
-    due_date: Option<chrono::NaiveDate>,
+    due_date: Option<crate::datetime::Date>,
     /// Optional planned start **calendar date** (PJ-1), honoured on **create**
     /// only; change it afterwards with `PUT …/tasks/{pid}/schedule`, which also
     /// reports what moved.
     #[serde(default)]
-    start_date: Option<chrono::NaiveDate>,
+    start_date: Option<crate::datetime::Date>,
     /// Optional business-day duration (PJ-1; `0` is a milestone), on create only.
     #[serde(default)]
     duration_days: Option<i32>,
@@ -249,12 +249,12 @@ pub(super) async fn create_task(
     )
     .await?;
     super::super::task_tree::check_parent(&ctx, item.pid, None, payload.parent_task_pid).await?;
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     // The task and its opening transition commit together: a task
     // without one would have no measurable start, and the time-based
     // analysis would silently begin its life at the first later move
     // (spec `time-based-analysis.md` §5.1 invariant 3).
-    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let at = crate::datetime::OffsetDateTime::from(now);
     let mut tx = crate::db::begin(&ctx).await?;
     let row: tasks::Model = sqlx::query_as(
         "INSERT INTO tasks
@@ -634,11 +634,11 @@ pub(super) async fn move_task(
     let assignee = task.assignee_ref.clone();
     // Category, not the literal string — see `create_task`.
     let first_done = task.done_at.is_none() && crate::workflow::is_done(&workflow, &payload.status);
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     // The move and its transition commit together. A refused move (an
     // unknown status, a full WIP column) has already returned above, so
     // the log never records a move that did not happen.
-    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let at = crate::datetime::OffsetDateTime::from(now);
     let mut tx = crate::db::begin(&ctx).await?;
     // `done_at` is written only on the first finish (kept thereafter).
     let sql = if first_done {
@@ -727,8 +727,8 @@ pub(super) async fn delete_task(
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>("UPDATE tasks SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-            chrono::Utc::now(),
+        .bind(crate::datetime::OffsetDateTime::from(
+            crate::datetime::Timestamp::now(),
         ))
         .bind(task.id)
         .fetch_one(tx.conn())

@@ -9,9 +9,9 @@
 //! When login is off (a development profile) the identity checks are skipped, as for every write.
 
 use super::refuse;
+use crate::datetime::Date;
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -336,9 +336,9 @@ struct StepFields {
     /// The approver named on submit.
     approver_ref: Option<String>,
     /// Who decided, on what day, and why.
-    decided: Option<(String, NaiveDate, String)>,
+    decided: Option<(String, Date, String)>,
     /// The day the change was implemented.
-    implemented_on: Option<NaiveDate>,
+    implemented_on: Option<Date>,
 }
 
 /// Move a change request by `action`, after the caller's permission has been checked by the caller.

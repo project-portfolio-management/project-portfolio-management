@@ -9,7 +9,7 @@
 //! Ranges for one person may not overlap; that is what makes "the range in force
 //! on a day" a single answer.
 
-use chrono::{Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 
 /// Capacity when no range applies.
@@ -21,16 +21,16 @@ pub const MAX_WINDOW_DAYS: i64 = 3_660;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Range {
     /// First day.
-    pub from: NaiveDate,
+    pub from: Date,
     /// Last day.
-    pub to: NaiveDate,
+    pub to: Date,
     /// The most of their time they can commit (0–100).
     pub max_percent: i32,
 }
 
 /// Every problem with a new range (all of them).
 #[must_use]
-pub fn problems(from: NaiveDate, to: NaiveDate, max_percent: i32) -> Vec<String> {
+pub fn problems(from: Date, to: Date, max_percent: i32) -> Vec<String> {
     let mut out = Vec::new();
     if to < from {
         out.push("to is before from".to_string());
@@ -46,14 +46,14 @@ pub fn problems(from: NaiveDate, to: NaiveDate, max_percent: i32) -> Vec<String>
 
 /// Whether `[from, to]` overlaps any of `existing`.
 #[must_use]
-pub fn overlaps(existing: &[Range], from: NaiveDate, to: NaiveDate) -> bool {
+pub fn overlaps(existing: &[Range], from: Date, to: Date) -> bool {
     existing.iter().any(|r| r.from <= to && r.to >= from)
 }
 
 /// The capacity in force on `day`: the covering range's, else
 /// [`DEFAULT_PERCENT`].
 #[must_use]
-pub fn capacity_on(ranges: &[Range], day: NaiveDate) -> i32 {
+pub fn capacity_on(ranges: &[Range], day: Date) -> i32 {
     ranges
         .iter()
         .find(|r| r.from <= day && r.to >= day)
@@ -66,18 +66,18 @@ pub struct Alloc {
     /// Percent of capacity asked for.
     pub percent: i32,
     /// First day, or open.
-    pub start: Option<NaiveDate>,
+    pub start: Option<Date>,
     /// Last day, or open.
-    pub end: Option<NaiveDate>,
+    pub end: Option<Date>,
 }
 
 /// A run of consecutive days with the same demand and capacity, over capacity.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Over {
     /// First day of the run.
-    pub from: NaiveDate,
+    pub from: Date,
     /// Last day of the run.
-    pub to: NaiveDate,
+    pub to: Date,
     /// Summed percent asked for on each of those days.
     pub demand: i64,
     /// The capacity in force on each of those days.
@@ -101,7 +101,7 @@ pub struct Load {
 /// allocations covering the day, capacity the range in force; a day is over when
 /// demand exceeds capacity. A window longer than [`MAX_WINDOW_DAYS`] is clamped.
 #[must_use]
-pub fn load(from: NaiveDate, to: NaiveDate, allocs: &[Alloc], ranges: &[Range]) -> Load {
+pub fn load(from: Date, to: Date, allocs: &[Alloc], ranges: &[Range]) -> Load {
     let to = to.min(from + Duration::days(MAX_WINDOW_DAYS));
     let mut out = Load {
         peak_demand: 0,
@@ -146,17 +146,17 @@ pub fn load(from: NaiveDate, to: NaiveDate, allocs: &[Alloc], ranges: &[Range]) 
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
-    fn r(a: NaiveDate, b: NaiveDate, p: i32) -> Range {
+    fn r(a: Date, b: Date, p: i32) -> Range {
         Range {
             from: a,
             to: b,
             max_percent: p,
         }
     }
-    fn a(p: i32, s: Option<NaiveDate>, e: Option<NaiveDate>) -> Alloc {
+    fn a(p: i32, s: Option<Date>, e: Option<Date>) -> Alloc {
         Alloc {
             percent: p,
             start: s,

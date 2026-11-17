@@ -10,10 +10,10 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::Utc;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -139,7 +139,7 @@ pub(crate) struct ThresholdBody {
     count: Option<i32>,
     /// `forecast_past`: the date the forecast finish must not pass.
     #[serde(default)]
-    date: Option<chrono::NaiveDate>,
+    date: Option<crate::datetime::Date>,
     /// `p80_cap`: the cap on the P80 cost, minor units, with `currency`.
     #[serde(default)]
     cap_minor: Option<i64>,
@@ -450,7 +450,7 @@ pub(crate) async fn run_sweep(
                 row["exception_pid"] = json!(o.pid);
             }
             None => {
-                let now = Utc::now();
+                let now = Timestamp::now();
                 let mut tx = crate::db::begin(ctx).await?;
                 let e_pid: Uuid = sqlx::query_scalar(
                     "INSERT INTO delivery_exceptions
@@ -501,7 +501,7 @@ pub(crate) struct DecideBody {
     reason: String,
     /// Expiry date, required for an override (in the future, at most a year out) and refused for the other actions.
     #[serde(default)]
-    expiry: Option<chrono::NaiveDate>,
+    expiry: Option<crate::datetime::Date>,
 }
 
 /// `POST /api/exceptions/{pid}/threshold-decision` — record pause, reset, stop or an override; closes it.
@@ -537,7 +537,7 @@ async fn decide(
          WHERE id = $4
          RETURNING id",
     )
-    .bind(Utc::now().fixed_offset())
+    .bind(Timestamp::now().fixed_offset())
     .bind(text)
     .bind(&actor)
     .bind(row.id)

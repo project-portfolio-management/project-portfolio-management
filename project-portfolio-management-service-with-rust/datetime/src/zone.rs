@@ -80,13 +80,15 @@ fn database() -> &'static TimeZoneDatabase {
     DB.get_or_init(TimeZoneDatabase::bundled)
 }
 
-/// Every name in the bundled database, exactly as it is spelled there.
+/// Every name in the bundled database, exactly as it is spelled there, but `Factory` (a placeholder zone with no
+/// offset, which the zone list the service used before did not carry, so it stays refused).
 fn names() -> &'static HashSet<String> {
     static NAMES: OnceLock<HashSet<String>> = OnceLock::new();
     NAMES.get_or_init(|| {
         database()
             .available()
             .map(|n| n.as_str().to_string())
+            .filter(|n| n != "Factory")
             .collect()
     })
 }
@@ -213,6 +215,7 @@ mod tests {
         assert!(Tz::named("Europe/London").is_some());
         assert!(Tz::named("europe/london").is_none());
         assert!(Tz::named("utc").is_none());
+        assert!(Tz::named("Factory").is_none());
         assert_eq!(Tz::named("Etc/UTC").unwrap().name(), "Etc/UTC");
         assert_eq!(Tz::named("UTC"), Some(Tz::UTC));
         assert_eq!(Tz::named("US/Pacific").unwrap().to_string(), "US/Pacific");

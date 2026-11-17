@@ -584,7 +584,7 @@ async fn remove(
     let plan_pid = row.plan_pid;
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query("UPDATE controls SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(row.id)
         .fetch_one(tx.conn())
         .await?;
@@ -743,7 +743,7 @@ async fn add_action(
         sqlx::query(
             "UPDATE control_readings SET accepted_at = $1, accepted_reason = $2 WHERE id = $3 RETURNING id",
         )
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(&payload.reason)
         .bind(reading.id)
         .fetch_one(tx.conn())
@@ -790,7 +790,7 @@ async fn convert_to_issue(
         || ("open".to_string(), "todo".to_string()),
         |s| (s.key.clone(), s.category.token().to_string()),
     );
-    let moment = chrono::Utc::now();
+    let moment = crate::datetime::Timestamp::now();
     let times = crate::issues::times_after(
         crate::issues::Times::default(),
         None,
@@ -915,7 +915,7 @@ async fn convert_action(
         .find(|state| state.is_initial)
         .map_or("todo", |state| state.key.as_str());
 
-    let now = chrono::Utc::now().fixed_offset();
+    let now = crate::datetime::Timestamp::now().fixed_offset();
     // The task and its opening transition commit together with the
     // action's own update, same reasoning as task creation (spec
     // `time-based-analysis.md` §5.1 invariant 3): a converted task
@@ -987,7 +987,7 @@ async fn coverage_of(
     ctx: &AppContext,
     control_rows: Vec<controls::Model>,
 ) -> Result<rules::Coverage> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let mut facts = Vec::with_capacity(control_rows.len());
 
     for control in control_rows {
@@ -1009,9 +1009,7 @@ async fn coverage_of(
                 .await?
                 .is_some();
             reading_facts.push(rules::ReadingFact {
-                age_days: (now - reading.observed_at.with_timezone(&chrono::Utc))
-                    .num_days()
-                    .max(0),
+                age_days: (now - reading.observed_at.to_utc()).num_days().max(0),
                 verdict: parse_verdict(&reading.verdict),
                 answered,
             });
@@ -1045,7 +1043,7 @@ async fn plan_coverage(
     let body = serde_json::json!({
         "plan_pid": plan.pid.to_string(),
         "coverage": coverage_of(&ctx, rows).await?,
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);
     super::conditional_json(&headers, &etag, &body)
@@ -1083,7 +1081,7 @@ async fn portfolio_coverage(
     let body = serde_json::json!({
         "coverage": coverage_of(&ctx, rows).await?,
         "plans_with_no_controls": uncontrolled,
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);
     super::conditional_json(&headers, &etag, &body)

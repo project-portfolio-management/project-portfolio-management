@@ -8,7 +8,7 @@
 
 #![expect(missing_docs)]
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 
 /// The statuses a programme can have.
 pub const STATUSES: &[&str] = &["active", "paused", "stopped"];
@@ -32,14 +32,14 @@ pub fn outcome(decision: &str) -> Option<&'static str> {
 pub struct Review {
     pub gate: String,
     pub decision: String,
-    pub decided_on: NaiveDate,
+    pub decided_on: Date,
 }
 
 /// A gate with a planned date.
 #[derive(Debug, Clone)]
 pub struct Planned {
     pub gate: String,
-    pub planned_on: NaiveDate,
+    pub planned_on: Date,
 }
 
 /// One line of the gate view.
@@ -47,8 +47,8 @@ pub struct Planned {
 pub struct Line {
     pub gate: String,
     pub outcome: &'static str,
-    pub decided_on: Option<NaiveDate>,
-    pub planned_on: Option<NaiveDate>,
+    pub decided_on: Option<Date>,
+    pub planned_on: Option<Date>,
     pub reason: Option<&'static str>,
     /// Days past the planned date at the cut-off, for a deferred gate that has one.
     pub days_late: Option<i64>,
@@ -63,7 +63,7 @@ pub struct View {
 }
 
 /// Whether a date falls in the period given as `YYYY-MM`.
-fn in_period(d: NaiveDate, period: &str) -> bool {
+fn in_period(d: Date, period: &str) -> bool {
     d.format("%Y-%m").to_string() == period
 }
 
@@ -71,7 +71,7 @@ fn in_period(d: NaiveDate, period: &str) -> bool {
 /// outstanding at the cut-off: a gate whose latest review is `hold`, or whose planned date has passed
 /// with no passing or failing review. Reviews after the cut-off are ignored.
 #[must_use]
-pub fn classify(reviews: &[Review], planned: &[Planned], period: &str, cut_off: NaiveDate) -> View {
+pub fn classify(reviews: &[Review], planned: &[Planned], period: &str, cut_off: Date) -> View {
     let known: Vec<&Review> = reviews.iter().filter(|r| r.decided_on <= cut_off).collect();
     let planned_on = |gate: &str| {
         planned
@@ -142,12 +142,12 @@ pub fn classify(reviews: &[Review], planned: &[Planned], period: &str, cut_off: 
 #[derive(Debug, Clone)]
 pub struct Decision {
     pub status: String,
-    pub decided_on: NaiveDate,
+    pub decided_on: Date,
 }
 
 /// The programme's status at a date: the last decision on or before it, else `active`.
 #[must_use]
-pub fn status_at(history: &[Decision], at: NaiveDate) -> &'static str {
+pub fn status_at(history: &[Decision], at: Date) -> &'static str {
     history
         .iter()
         .rfind(|d| d.decided_on <= at)
@@ -180,8 +180,8 @@ pub fn check_transition(from: &str, to: &str) -> Result<(), &'static str> {
 mod tests {
     use super::*;
 
-    fn d(s: &str) -> NaiveDate {
-        NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap()
+    fn d(s: &str) -> Date {
+        Date::parse_from_str(s, "%Y-%m-%d").unwrap()
     }
     fn rev(gate: &str, decision: &str, on: &str) -> Review {
         Review {

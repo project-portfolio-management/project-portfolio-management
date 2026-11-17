@@ -17,7 +17,7 @@
 
 use std::collections::HashMap;
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -239,7 +239,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
 
 /// The finish date as text for a response, if there is one.
 #[must_use]
-pub fn finish_text(d: Option<NaiveDate>) -> Option<String> {
+pub fn finish_text(d: Option<Date>) -> Option<String> {
     d.map(|d| d.to_string())
 }
 
@@ -251,8 +251,8 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn monday() -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, 5).unwrap()
+    fn monday() -> Date {
+        Date::from_ymd_opt(2026, 10, 5).unwrap()
     }
     fn node(n: u128, dur: i64, start: bool) -> Node {
         Node {

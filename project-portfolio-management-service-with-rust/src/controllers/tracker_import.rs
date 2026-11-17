@@ -62,7 +62,7 @@ fn title_of(item: &Item) -> String {
 }
 
 /// An item's due date, if the scheduler accepts it.
-fn deadline_of(item: &Item) -> Option<chrono::NaiveDate> {
+fn deadline_of(item: &Item) -> Option<crate::datetime::Date> {
     item.due
         .filter(|d| crate::cpm::constraint_problems(None, None, Some(*d)).is_empty())
 }
@@ -179,8 +179,8 @@ async fn run(
             .map(|d| (d.predecessor_pid, d.successor_pid))
             .collect();
         let have: HashSet<(Uuid, Uuid)> = edges.iter().copied().collect();
-        let now = chrono::Utc::now();
-        let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+        let now = crate::datetime::Timestamp::now();
+        let at = crate::datetime::OffsetDateTime::from(now);
         let mut tx = crate::db::begin(&ctx).await?;
         let mut pid_of: HashMap<String, Uuid> = HashMap::new();
         for it in &parsed.items {

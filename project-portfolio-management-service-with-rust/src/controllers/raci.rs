@@ -171,7 +171,7 @@ async fn set_row(
         }
         m
     };
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query(
         "UPDATE raci_assignments SET deleted_at = $1 WHERE task_pid = $2 AND deleted_at IS NULL",
@@ -191,7 +191,7 @@ async fn set_row(
             .bind(task.pid)
             .bind(&e.person_ref)
             .bind(r.to_string())
-            .bind(None::<chrono::DateTime<chrono::Utc>>)
+            .bind(None::<crate::datetime::Timestamp>)
             .execute(tx.conn())
             .await
             .map_err(|err| {

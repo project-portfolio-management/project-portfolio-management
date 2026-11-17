@@ -86,22 +86,49 @@ pub struct NaiveDateTime(pub(crate) civil::DateTime);
 impl NaiveDateTime {
     /// The instant this names in UTC.
     ///
-    /// # Panics
-    ///
-    /// Within a day of the ends of the supported range (years -9999 and 9999), where the instant does not fit.
+    /// Within a day or so of the ends of the supported range (-9999-01-01 and 9999-12-31), where the instant
+    /// does not fit jiff's range, this is the earliest or latest instant instead, so a far boundary such as
+    /// `?to=9999-12-31` still means "until the end" rather than failing.
     #[must_use]
     pub fn and_utc(&self) -> crate::Timestamp {
-        crate::Timestamp(
-            jiff::tz::Offset::UTC
-                .to_timestamp(self.0)
-                .expect("a civil date and time within the supported range"),
-        )
+        match jiff::tz::Offset::UTC.to_timestamp(self.0) {
+            Ok(ts) => crate::Timestamp(ts),
+            Err(_) if self.0.date().year() < 0 => crate::Timestamp::MIN_UTC,
+            Err(_) => crate::Timestamp::MAX_UTC,
+        }
     }
 
     /// The date part.
     #[must_use]
     pub fn date(&self) -> Date {
         Date(self.0.date())
+    }
+
+    /// Moved by a duration, or `None` out of range.
+    #[must_use]
+    pub fn checked_add_signed(self, rhs: Duration) -> Option<NaiveDateTime> {
+        self.0.checked_add(rhs.to_jiff()).ok().map(NaiveDateTime)
+    }
+}
+
+impl Default for NaiveDateTime {
+    /// 1970-01-01T00:00:00.
+    fn default() -> NaiveDateTime {
+        NaiveDateTime(civil::DateTime::constant(1970, 1, 1, 0, 0, 0, 0))
+    }
+}
+
+impl Add<Duration> for NaiveDateTime {
+    type Output = NaiveDateTime;
+    fn add(self, rhs: Duration) -> NaiveDateTime {
+        self.checked_add_signed(rhs)
+            .expect("`NaiveDateTime + Duration` overflowed")
+    }
+}
+
+impl AddAssign<Duration> for NaiveDateTime {
+    fn add_assign(&mut self, rhs: Duration) {
+        *self = *self + rhs;
     }
 }
 
@@ -113,8 +140,26 @@ impl Date {
 
     /// The date, or `None` if there is no such day (or the year is outside -9999..=9999).
     #[must_use]
-    pub fn from_ymd_opt(year: i32, month: u32, day: u32) -> Option<Date> {
-        parse::civil_date(year, month, day).map(Date)
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)] // range-checked first
+    pub const fn from_ymd_opt(year: i32, month: u32, day: u32) -> Option<Date> {
+        if year < -9999 || year > 9999 || month < 1 || month > 12 || day < 1 {
+            return None;
+        }
+        let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+        let last = match month {
+            2 if leap => 29,
+            2 => 28,
+            4 | 6 | 9 | 11 => 30,
+            _ => 31,
+        };
+        if day > last {
+            return None;
+        }
+        Some(Date(civil::Date::constant(
+            year as i16,
+            month as i8,
+            day as i8,
+        )))
     }
 
     /// The date of the given ISO week's weekday, or `None` if the year has no such week.
@@ -383,13 +428,9 @@ impl From<Date> for civil::Date {
 
 /// `YYYY-MM-DD`; a year outside 0..=9999 takes a sign (`-0001-01-01`).
 pub(crate) fn write_date(f: &mut (impl fmt::Write + ?Sized), d: civil::Date) -> fmt::Result {
-    let year = d.year();
-    if (0..=9999).contains(&year) {
-        write!(f, "{year:04}")?;
-    } else {
-        write!(f, "{year:+05}")?;
-    }
-    write!(f, "-{:02}-{:02}", d.month(), d.day())
+    let mut b = crate::format::Buf::new();
+    b.date(d);
+    f.write_str(b.as_str())
 }
 
 impl fmt::Debug for Date {
@@ -564,6 +605,11 @@ mod tests {
             Some(d(-9999, 1, 1))
         );
         assert_eq!(format!("{:?}", d(769, 4, 8).iso_week()), "0769-W15");
+        // Past jiff's instant range, the far ends saturate rather than fail.
+        let end = d(9999, 12, 31).and_hms_opt(23, 59, 59).unwrap().and_utc();
+        assert_eq!(end, crate::Timestamp::MAX_UTC);
+        let start = d(-9999, 1, 1).and_hms_opt(0, 0, 0).unwrap().and_utc();
+        assert_eq!(start, crate::Timestamp::MIN_UTC);
         assert_eq!(d(2026, 1, 1).num_days_from_ce(), 739_617);
         assert_eq!(format!("{:?}", d(2027, 1, 1).iso_week()), "2026-W53");
     }

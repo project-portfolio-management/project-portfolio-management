@@ -187,10 +187,12 @@ async fn the_bridge_keeps_one_owner_per_fact() {
     let token = mint(&kid, WRITER, &[("access", "write")]);
     let writer = auth_header(&token);
     let first = {
-        use chrono::Datelike;
-        chrono::Utc::now().date_naive().with_day(1).unwrap()
+        project_portfolio_management::datetime::Timestamp::now()
+            .date_naive()
+            .with_day(1)
+            .unwrap()
     };
-    let next = first + chrono::Months::new(1);
+    let next = first + project_portfolio_management::datetime::Months::new(1);
     let (month, month2) = (
         first.format("%Y-%m").to_string(),
         next.format("%Y-%m").to_string(),
@@ -298,7 +300,7 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         let event = r["peer_demand_send"]["peer_event_id"].as_str().unwrap().to_string();
         let sent_at = body["sent_at"].as_str().unwrap().to_string();
         assert_eq!(body, json!({ "pool_pid": peer, "programme_ref": format!("thing:{prog}"), "month": format!("{first}"), "fte_centi": 150, "peer_event_id": event, "sent_at": sent_at }));
-        let at = chrono::DateTime::parse_from_rfc3339(&sent_at).expect("sent_at is RFC 3339");
+        let at = project_portfolio_management::datetime::OffsetDateTime::parse_from_rfc3339(&sent_at).expect("sent_at is RFC 3339");
         assert!(event.ends_with(&format!(":{}", at.timestamp_micros())), "sent_at is the time of the write the event id names: {event} {sent_at}");
         let mut outcome = Value::Null;
         for _ in 0..50 {
@@ -329,7 +331,7 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         wait_for(5).await;
         let w = posts()[4].3.clone();
         assert_eq!(w, json!({ "pool_pid": peer, "programme_ref": format!("thing:{prog}"), "month": format!("{first}"), "fte_centi": 0, "peer_event_id": z["peer_demand_send"]["peer_event_id"], "sent_at": w["sent_at"] }), "the exact withdrawal");
-        let t = |v: &Value| chrono::DateTime::parse_from_rfc3339(v["sent_at"].as_str().unwrap()).unwrap();
+        let t = |v: &Value| project_portfolio_management::datetime::OffsetDateTime::parse_from_rfc3339(v["sent_at"].as_str().unwrap()).unwrap();
         assert!(t(&w) > t(&posts()[3].3), "a later write, a later sent_at");
         let send_of = |l: &Value, m: &str| l["commitments"].as_array().unwrap().iter().find(|c| c["pool_pid"] == pool.as_str() && c["kind"] == "demand" && c["month"] == m && c["organization"].is_null()).unwrap()["peer_demand_send"].clone();
         let mut s = Value::Null;

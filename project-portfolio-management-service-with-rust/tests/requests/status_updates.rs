@@ -75,7 +75,10 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
         sqlx::query(
             "UPDATE plan_status_cadences SET set_on = $1, set_by = $2 WHERE id = $3 RETURNING id",
         )
-        .bind(project_portfolio_management::tz::deployment_today() - chrono::Duration::days(10))
+        .bind(
+            project_portfolio_management::tz::deployment_today()
+                - project_portfolio_management::datetime::Duration::days(10),
+        )
         .bind(Some(who.clone()))
         .bind(row.id)
         .fetch_one(project_portfolio_management::db::pool(&ctx))
@@ -121,7 +124,8 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
         }
         // An hour either side: an update's time is the database's clock, the cut-off's is the caller's, and on a
         // developer machine with a containerised database the two can differ by more than a test should assume.
-        let before_post = chrono::Utc::now() - chrono::Duration::hours(1);
+        let before_post = project_portfolio_management::datetime::Timestamp::now()
+            - project_portfolio_management::datetime::Duration::hours(1);
         let posted: Value = request
             .post(&format!("/api/plans/{p}/status-updates"))
             .json(&json!({ "status": "at_risk", "narrative": "Supplier slipped a fortnight" }))
@@ -165,7 +169,8 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
         let late = pack_section(
             &ctx,
             &include,
-            chrono::Utc::now() + chrono::Duration::minutes(1),
+            project_portfolio_management::datetime::Timestamp::now()
+                + project_portfolio_management::datetime::Duration::minutes(1),
         )
         .await
         .unwrap();

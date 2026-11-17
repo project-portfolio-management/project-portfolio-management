@@ -15,10 +15,10 @@
 //! a key policy; that decision is open (see the repo `plan.md`).
 
 use super::unprocessable;
+use crate::datetime::{OffsetDateTime, Timestamp};
 use crate::prelude::*;
 use axum::http::header;
 use axum::response::IntoResponse;
-use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -29,10 +29,10 @@ use crate::models::_entities::{milestones, plans};
 use crate::pdf;
 
 /// `?as_of=` — the stamp the document carries.
-fn stamp(raw: Option<&str>) -> Result<DateTime<Utc>> {
+fn stamp(raw: Option<&str>) -> Result<Timestamp> {
     match raw {
-        None => Ok(Utc::now()),
-        Some(s) => DateTime::parse_from_rfc3339(s)
+        None => Ok(Timestamp::now()),
+        Some(s) => OffsetDateTime::parse_from_rfc3339(s)
             .map(|d| d.to_utc())
             .map_err(|_| unprocessable("as_of must be an RFC 3339 instant")),
     }

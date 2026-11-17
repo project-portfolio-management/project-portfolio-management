@@ -13,8 +13,8 @@
 use super::unprocessable;
 use std::collections::HashMap;
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -101,7 +101,7 @@ async fn set_hammock(
             "UPDATE tasks SET is_hammock = $1, start_date = $2 WHERE id = $3 RETURNING *",
         )
         .bind(b.enabled)
-        .bind(None::<chrono::NaiveDate>)
+        .bind(None::<crate::datetime::Date>)
         .bind(task.id)
         .fetch_one(tx.conn())
         .await?
@@ -251,7 +251,7 @@ pub(crate) async fn spans_for(
     .bind(pids.clone())
     .fetch_all(crate::db::pool(ctx))
     .await?;
-    let spans: HashMap<Uuid, (NaiveDate, NaiveDate)> = analysis.map_or_default(|a| {
+    let spans: HashMap<Uuid, (Date, Date)> = analysis.map_or_default(|a| {
         a.nodes
             .iter()
             .map(|n| (n.pid, (n.early_start, n.early_finish)))

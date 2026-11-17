@@ -154,7 +154,7 @@ async fn withdraw(
     .await?
     .ok_or_else(|| Error::NotFound)?;
     sqlx::query("UPDATE lessons SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(row.id)
         .fetch_one(tx.conn())
         .await?;

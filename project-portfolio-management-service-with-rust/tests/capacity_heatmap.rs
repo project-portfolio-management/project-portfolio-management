@@ -107,11 +107,15 @@ async fn the_heatmap_keeps_its_promises() {
     );
     let outsider = bearer(&kid, OUTSIDER, &[("access", "write")]);
     let first = {
-        use chrono::Datelike;
-        chrono::Utc::now().date_naive().with_day(1).unwrap()
+        project_portfolio_management::datetime::Timestamp::now()
+            .date_naive()
+            .with_day(1)
+            .unwrap()
     };
     let month = first.format("%Y-%m").to_string();
-    let last = (first + chrono::Months::new(1)).pred_opt().unwrap();
+    let last = (first + project_portfolio_management::datetime::Months::new(1))
+        .pred_opt()
+        .unwrap();
     request::<App, _, _>(|request, ctx| async move {
         macro_rules! with { ($rb:expr, $who:expr) => { $rb.add_header($who.0.clone(), $who.1.clone()) }; }
         let mk = |name: &'static str| {
@@ -179,7 +183,7 @@ async fn the_heatmap_keeps_its_promises() {
         let nopool = cell(&v, "no pool assigned", &month);
         assert_eq!(nopool["demand_fte"], 1.0, "a role in no pool is shown, not dropped");
         // The next month has no allocations at all.
-        assert_eq!(cell(&v, "Engineering", &(first + chrono::Months::new(1)).format("%Y-%m").to_string())["word"], "no demand", "supply with nothing asked");
+        assert_eq!(cell(&v, "Engineering", &(first + project_portfolio_management::datetime::Months::new(1)).format("%Y-%m").to_string())["word"], "no demand", "supply with nothing asked");
         // Every cell has a word, a shape and a colour, and a table twin carries them all.
         for p in v["pools"].as_array().unwrap() { for c in p["cells"].as_array().unwrap() { assert!(c["word"].is_string() && c["shape"].is_string() && c["colour"].is_string()); } }
         assert_eq!(v["table"].as_array().unwrap().len(), v["pools"].as_array().unwrap().len() * 2);

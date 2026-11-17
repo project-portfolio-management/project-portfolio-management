@@ -69,7 +69,7 @@ impl Model {
                 deleted_at_micros: self
                     .deleted_at
                     .as_ref()
-                    .map(chrono::DateTime::timestamp_micros),
+                    .map(crate::datetime::OffsetDateTime::timestamp_micros),
             },
         );
         Ok(sqlx::query_as(
@@ -99,7 +99,7 @@ impl Model {
     ///
     /// When the update fails, or finds no row.
     pub async fn soft_delete_on(&self, db: &mut impl crate::db::Session) -> Result<Model> {
-        let stamp: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+        let stamp: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
         let d = crate::compliance::record_integrity::digests(
             &crate::compliance::record_integrity::RecordInput {
                 pid: self.pid,

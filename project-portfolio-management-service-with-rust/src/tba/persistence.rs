@@ -15,7 +15,7 @@ pub struct NewTransition<'a> {
     /// The status it entered.
     pub to_status: &'a str,
     /// When.
-    pub at: chrono::DateTime<chrono::Utc>,
+    pub at: crate::datetime::Timestamp,
     /// Who moved it.
     pub actor_ref: Option<&'a str>,
     /// Its assignee at the time.
@@ -49,7 +49,7 @@ pub async fn insert_transition_on(
     .bind(t.plan_pid)
     .bind(t.from_status)
     .bind(t.to_status)
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(t.at))
+    .bind(crate::datetime::OffsetDateTime::from(t.at))
     .bind(t.actor_ref)
     .bind(t.assignee_ref)
     .bind(t.blocked_reason)

@@ -6,7 +6,7 @@
 //! holds no names, so turning a name in the minutes into a URN is the proposer's job) and a due date (inside a window
 //! around the meeting). [`judge`] says whether a proposal may be created; nothing here writes.
 
-use chrono::{Days, NaiveDate};
+use crate::datetime::{Date, Days};
 use serde::{Deserialize, Serialize};
 
 /// The most proposals one request carries. More is refused, never silently cut.
@@ -34,7 +34,7 @@ pub struct ProposalIn {
     pub assignee_ref: Option<String>,
     /// When it is due.
     #[serde(default)]
-    pub due_on: Option<NaiveDate>,
+    pub due_on: Option<Date>,
     /// Story points, if the plan estimates in them.
     #[serde(default)]
     pub points: Option<i32>,
@@ -67,13 +67,13 @@ pub fn excerpt_found(minutes: &str, excerpt: &str) -> bool {
 
 /// Whether `due` falls in the window around the meeting date.
 #[must_use]
-pub fn due_in_window(due: NaiveDate, meeting: NaiveDate) -> bool {
+pub fn due_in_window(due: Date, meeting: Date) -> bool {
     let first = meeting
         .checked_sub_days(Days::new(WINDOW_BEFORE_DAYS))
-        .unwrap_or(NaiveDate::MIN);
+        .unwrap_or(Date::MIN);
     let last = meeting
         .checked_add_days(Days::new(WINDOW_AFTER_DAYS))
-        .unwrap_or(NaiveDate::MAX);
+        .unwrap_or(Date::MAX);
     (first..=last).contains(&due)
 }
 
@@ -82,7 +82,7 @@ pub struct Meeting<'a> {
     /// The minutes.
     pub minutes: &'a str,
     /// The date the meeting was held (or scheduled).
-    pub on: NaiveDate,
+    pub on: Date,
     /// The kind of each outcome, in order.
     pub outcome_kinds: &'a [String],
     /// Which outcomes already have a task.
@@ -124,7 +124,7 @@ pub fn judge(p: &ProposalIn, m: &Meeting<'_>, people: &[String]) -> Verdict {
 mod tests {
     use super::*;
 
-    fn day(s: &str) -> NaiveDate {
+    fn day(s: &str) -> Date {
         s.parse().unwrap()
     }
 

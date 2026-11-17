@@ -69,7 +69,7 @@ async fn a_token_from_a_plain_oidc_provider_is_accepted_and_mapped() {
             r#"{"planners": {"access": ["write"]}, "pm-admins": {"access": ["admin"]}}"#,
         );
     }
-    let now = chrono::Utc::now().timestamp();
+    let now = project_portfolio_management::datetime::Timestamp::now().timestamp();
     let claims = |sub: &str, groups: &[&str], aud: &str| json!({ "iss": issuer, "aud": aud, "sub": sub, "exp": now + 600, "iat": now, "name": sub, "groups": groups });
     let writer = auth(&sign(&claims("ana", &["planners"], "ppm")));
     let admin = auth(&sign(&claims("ola", &["pm-admins"], "ppm")));

@@ -11,10 +11,10 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -47,7 +47,7 @@ pub fn routes() -> Routes {
 /// When a database read fails.
 pub(crate) async fn assessments(
     ctx: &AppContext,
-    delivered: &HashMap<Uuid, Option<NaiveDate>>,
+    delivered: &HashMap<Uuid, Option<Date>>,
 ) -> Result<HashMap<Uuid, Assessment>> {
     let pids: Vec<Uuid> = delivered.keys().copied().collect();
     if pids.is_empty() {
@@ -70,7 +70,7 @@ pub(crate) async fn assessments(
             .map(|o| (o.pid, o.name))
             .collect();
     // The sign-off now in force per milestone and organization: the latest event, if it is a sign.
-    let mut in_force: HashMap<(Uuid, Uuid), Option<NaiveDate>> = HashMap::new();
+    let mut in_force: HashMap<(Uuid, Uuid), Option<Date>> = HashMap::new();
     let signed: Vec<events::Model> = sqlx::query_as(
         "SELECT * FROM milestone_signoffs WHERE milestone_pid = ANY($1) ORDER BY id",
     )

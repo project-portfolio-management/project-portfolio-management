@@ -119,7 +119,7 @@ async fn bulk_edit(
         None => Change::Keep,
         Some(Value::Null) => Change::Clear,
         Some(Value::String(s)) => Change::Set(
-            chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+            crate::datetime::Date::parse_from_str(s, "%Y-%m-%d")
                 .map_err(|_| unprocessable("due_date must be YYYY-MM-DD or null"))?,
         ),
         Some(_) => return Err(unprocessable("due_date must be YYYY-MM-DD or null")),
@@ -138,7 +138,7 @@ async fn bulk_edit(
         None => Change::Keep,
         Some(Value::Null) => Change::Clear,
         Some(Value::String(s)) => Change::Set(
-            chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+            crate::datetime::Date::parse_from_str(s, "%Y-%m-%d")
                 .map_err(|_| unprocessable("start_date must be YYYY-MM-DD or null"))?,
         ),
         Some(_) => return Err(unprocessable("start_date must be YYYY-MM-DD or null")),
@@ -168,11 +168,11 @@ pub(super) struct Edit {
     /// Assignee reference (a person URN); `Clear` unassigns.
     pub(super) assignee: Change<String>,
     /// Due date; `Clear` removes it.
-    pub(super) due: Change<chrono::NaiveDate>,
+    pub(super) due: Change<crate::datetime::Date>,
     /// Component the task belongs to; `Clear` detaches it.
     pub(super) component: Change<Uuid>,
     /// Start date; `Clear` removes it.
-    pub(super) start: Change<chrono::NaiveDate>,
+    pub(super) start: Change<crate::datetime::Date>,
 }
 
 /// Edit one task. `audit_kind` and `audit_detail` name the single audit entry
@@ -332,7 +332,7 @@ async fn copy_one(
         .find(|s| s.is_initial)
         .map_or("todo", |s| s.key.as_str())
         .to_string();
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let new_pid = Uuid::new_v4();
     let assignee = keep_assignee.then(|| src.assignee_ref.clone()).flatten();
     let prepared: Vec<(String, Option<Value>)> = sqlx::query_as::<_, (String, Value)>(
@@ -345,7 +345,7 @@ async fn copy_one(
     .into_iter()
     .map(|(key, value)| (key, Some(value)))
     .collect();
-    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let at = crate::datetime::OffsetDateTime::from(now);
     let mut tx = crate::db::begin(ctx).await.map_err(|e| e.to_string())?;
     let row_pid: Uuid = sqlx::query_scalar(
         "INSERT INTO tasks
@@ -472,8 +472,8 @@ async fn move_one(
         task.assignee_ref.clone(),
         task.plan_pid,
     );
-    let now = chrono::Utc::now();
-    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let now = crate::datetime::Timestamp::now();
+    let at = crate::datetime::OffsetDateTime::from(now);
     let mut tx = crate::db::begin(ctx).await.map_err(|e| e.to_string())?;
     // Plan-specific links do not survive the move; a status the target lacks is mapped and stamped.
     let moved = if mapped {

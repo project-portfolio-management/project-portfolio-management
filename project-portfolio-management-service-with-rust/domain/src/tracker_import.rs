@@ -12,7 +12,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// The largest file read.
@@ -80,9 +80,9 @@ pub struct Item {
     /// Status bucket.
     pub bucket: Bucket,
     /// A start date, if the export has one.
-    pub start: Option<NaiveDate>,
+    pub start: Option<Date>,
     /// A due date, kept as the task's deadline.
-    pub due: Option<NaiveDate>,
+    pub due: Option<Date>,
     /// The parent item's key (resolved), or `None`.
     pub parent: Option<String>,
     /// Keys of items this one must finish before (this blocks them).
@@ -226,13 +226,13 @@ const MONTHS: [&str; 12] = [
 /// Jira's `15/Oct/26 12:00 AM` or `15/Oct/2026`. Day-first numeric forms (`15/10/2026`,
 /// `10/15/2026`) are **not** guessed: the day and month are ambiguous.
 #[must_use]
-pub fn parse_date(s: &str) -> Option<NaiveDate> {
+pub fn parse_date(s: &str) -> Option<Date> {
     let s = s.trim();
     if s.is_empty() {
         return None;
     }
     if let Some(head) = s.get(..10)
-        && let Ok(d) = NaiveDate::parse_from_str(head, "%Y-%m-%d")
+        && let Ok(d) = Date::parse_from_str(head, "%Y-%m-%d")
         && (s.len() == 10 || s[10..].starts_with(['T', ' ']))
     {
         return Some(d);
@@ -250,7 +250,7 @@ pub fn parse_date(s: &str) -> Option<NaiveDate> {
     let day: u32 = day.parse().ok()?;
     let year: i32 = year.parse().ok()?;
     let year = if year < 100 { 2000 + year } else { year };
-    NaiveDate::from_ymd_opt(year, u32::try_from(m).ok()?, day)
+    Date::from_ymd_opt(year, u32::try_from(m).ok()?, day)
 }
 
 /// Where a Jira status text belongs. Words, not a fixed list, because statuses are
@@ -528,7 +528,7 @@ fn head_name(h: &Header, i: usize) -> String {
 }
 
 /// Parse a date cell. An empty cell is None; an unparseable one is also None but is recorded as unmapped with the reason, never guessed.
-fn date_cell(raw: &str, key: &str, unmapped: &mut Vec<Unmapped>) -> Option<NaiveDate> {
+fn date_cell(raw: &str, key: &str, unmapped: &mut Vec<Unmapped>) -> Option<Date> {
     if raw.is_empty() {
         return None;
     }
@@ -811,7 +811,7 @@ mod tests {
 
     #[test]
     fn dates_are_read_in_the_forms_the_exports_use_and_never_guessed() {
-        let d = |y, m, day| NaiveDate::from_ymd_opt(y, m, day);
+        let d = |y, m, day| Date::from_ymd_opt(y, m, day);
         assert_eq!(parse_date("2026-10-15"), d(2026, 10, 15));
         assert_eq!(parse_date("2026-10-15T09:30:00Z"), d(2026, 10, 15));
         assert_eq!(parse_date("15/Oct/26 12:00 AM"), d(2026, 10, 15));
@@ -856,7 +856,7 @@ P-4,Odd,To Do,,31/13/26,,P-9,,,P-99,,,\n";
         let by = |k: &str| p.items.iter().find(|i| i.key == k).unwrap();
         assert_eq!(p.items.len(), 4);
         assert_eq!(by("P-1").bucket, Bucket::Active);
-        assert_eq!(by("P-1").due, NaiveDate::from_ymd_opt(2026, 10, 15));
+        assert_eq!(by("P-1").due, Date::from_ymd_opt(2026, 10, 15));
         assert_eq!(
             by("P-1").description.as_deref(),
             Some("Big thing\n\nAssigned in Jira: Ann\n\nLabels in Jira: a, b")
@@ -926,7 +926,7 @@ P-4,Odd,To Do,,31/13/26,,P-9,,,P-99,,,\n";
             None,
             "a start after the due date is not imported"
         );
-        assert_eq!(by("1").start, NaiveDate::from_ymd_opt(2026, 10, 5));
+        assert_eq!(by("1").start, Date::from_ymd_opt(2026, 10, 5));
         assert_eq!(
             by("1").description.as_deref(),
             Some("Notes here\n\nAssigned in Asana: Ann\n\nLabels in Asana: x")

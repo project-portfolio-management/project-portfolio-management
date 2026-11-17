@@ -12,8 +12,8 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
+use crate::datetime::{Duration, Timestamp};
 use async_trait::async_trait;
-use chrono::{DateTime, Duration, Utc};
 
 /// One message to one recipient.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -275,14 +275,14 @@ pub struct After {
     /// `sent`, `retry` or `failed`.
     pub status: &'static str,
     /// The next attempt, for a retry.
-    pub next: Option<DateTime<Utc>>,
+    pub next: Option<Timestamp>,
 }
 
 /// The state after an attempt, given its result and how many attempts have now been made. A transient
 /// failure is retried after 1, 5, 25, 125 minutes (capped at six hours) until `MAX_ATTEMPTS`; a permanent
 /// one, or the last, ends the delivery as failed.
 #[must_use]
-pub fn after(result: &Result<(), SendError>, attempts: i32, now: DateTime<Utc>) -> After {
+pub fn after(result: &Result<(), SendError>, attempts: i32, now: Timestamp) -> After {
     match result {
         Ok(()) => After {
             status: "sent",
@@ -324,7 +324,7 @@ mod tests {
 
     #[test]
     fn a_transient_failure_retries_with_backoff_then_gives_up() {
-        let now = Utc::now();
+        let now = Timestamp::now();
         let t = Err(SendError::Transient("down".into()));
         let one = after(&t, 1, now);
         assert_eq!(
@@ -342,7 +342,7 @@ mod tests {
 
     #[test]
     fn a_permanent_failure_ends_at_once_and_success_is_sent() {
-        let now = Utc::now();
+        let now = Timestamp::now();
         assert_eq!(
             after(&Err(SendError::Permanent("no".into())), 1, now).status,
             "failed"

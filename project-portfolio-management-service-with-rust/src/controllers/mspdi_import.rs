@@ -49,13 +49,13 @@ struct Planned {
     /// Task description: the file's notes plus a line naming the resources assigned in the source file; `None` when neither exists.
     description: Option<String>,
     /// Start date; `None` for summary tasks or when the schedule data was rejected (absent is not zero).
-    start: Option<chrono::NaiveDate>,
+    start: Option<crate::datetime::Date>,
     /// Duration in working days; `None` for summary tasks or rejected data.
     duration: Option<i32>,
     /// Optional scheduling constraint as (kind token, date); `None` when none was set or it could not be imported.
-    constraint: Option<(String, chrono::NaiveDate)>,
+    constraint: Option<(String, crate::datetime::Date)>,
     /// Optional hard deadline; `None` when absent or out of range.
-    deadline: Option<chrono::NaiveDate>,
+    deadline: Option<crate::datetime::Date>,
     /// UID of the enclosing summary task derived from the outline level; `None` for top-level tasks.
     parent_uid: Option<i64>,
     /// Workflow state the task should take when newly created.
@@ -301,8 +301,8 @@ pub(super) async fn run(
     let mut links_existing = 0;
     let mut calendar_imported = false;
     if !dry_run {
-        let now = chrono::Utc::now();
-        let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+        let now = crate::datetime::Timestamp::now();
+        let at = crate::datetime::OffsetDateTime::from(now);
         let mut tx = crate::db::begin(ctx).await?;
         let mut pid_of: HashMap<i64, Uuid> = HashMap::new();
         for p in &planned {

@@ -221,14 +221,14 @@ async fn a_guest_sees_only_what_is_granted_masked_and_nothing_else() {
         let fresh: Value = request
             .post(&format!("/api/plans/{p}/guests"))
             .add_header(ak.clone(), av.clone())
-            .json(&json!({ "guest_sub": GUEST, "access": "read", "expires_at": (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339() }))
+            .json(&json!({ "guest_sub": GUEST, "access": "read", "expires_at": (project_portfolio_management::datetime::Timestamp::now() + project_portfolio_management::datetime::Duration::hours(1)).to_rfc3339() }))
             .await
             .json();
         assert_eq!(status(format!("/api/plans/{p}"), gk.clone(), gv.clone()).await, 200);
         {
             use project_portfolio_management::models::_entities::guest_grants;
             let row = sqlx::query_as::<_, guest_grants::Model>("SELECT * FROM guest_grants WHERE pid = $1 LIMIT 1").bind(uuid::Uuid::parse_str(fresh["pid"].as_str().unwrap()).unwrap()).fetch_optional(project_portfolio_management::db::pool(&ctx)).await.unwrap().unwrap();
-            let expired: chrono::DateTime<chrono::FixedOffset> = (chrono::Utc::now() - chrono::Duration::minutes(1)).into();
+            let expired: project_portfolio_management::datetime::OffsetDateTime = (project_portfolio_management::datetime::Timestamp::now() - project_portfolio_management::datetime::Duration::minutes(1)).into();
             sqlx::query("UPDATE guest_grants SET expires_at = $1 WHERE id = $2 RETURNING id")
                 .bind(Some(expired))
                 .bind(row.id)

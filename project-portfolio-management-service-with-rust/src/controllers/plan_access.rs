@@ -154,7 +154,7 @@ pub(crate) async fn grant_subs(
          WHERE plan_pid = ANY($1) AND revoked_at IS NULL AND expires_at > $2",
     )
     .bind(pids)
-    .bind(chrono::Utc::now())
+    .bind(crate::datetime::Timestamp::now())
     .fetch_all(crate::db::pool(ctx))
     .await
     {

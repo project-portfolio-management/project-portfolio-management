@@ -21,10 +21,10 @@ use super::unprocessable;
 use std::net::IpAddr;
 use std::time::Duration;
 
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -80,7 +80,7 @@ pub(crate) async fn enqueue_on(db: &mut impl crate::db::Session, note: &notifica
         .bind(Uuid::new_v4())
         .bind(sink.pid)
         .bind(note.pid)
-        .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()))
+        .bind(crate::datetime::OffsetDateTime::from(Timestamp::now()))
         .execute(db.ex())
         .await;
     }
@@ -190,7 +190,7 @@ pub struct Dispatched {
 ///
 /// Propagates database errors; a delivery's own failure is recorded on it.
 pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Dispatched> {
-    let now = Utc::now();
+    let now = Timestamp::now();
     let due: Vec<sink_deliveries::Model> = sqlx::query_as(
         "SELECT * FROM sink_deliveries
          WHERE status = 'pending' AND next_attempt_at <= $1
@@ -241,7 +241,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Dispatched> {
                 out.sent += 1;
             }
             Outcome::Retry(why) => {
-                if let Some(when) = rules::next_attempt(Utc::now(), attempts) {
+                if let Some(when) = rules::next_attempt(Timestamp::now(), attempts) {
                     mark(ctx, d, "pending", Some(attempts), Some(why), Some(when)).await?;
                     out.retrying += 1;
                 } else {
@@ -265,7 +265,7 @@ async fn mark(
     status: &str,
     attempts: Option<i32>,
     error: Option<String>,
-    next: Option<chrono::DateTime<Utc>>,
+    next: Option<crate::datetime::Timestamp>,
 ) -> Result<()> {
     // The columns the update named before SQ-1: `attempts` only when given, `delivered_at` only when sent.
     let mut q = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE sink_deliveries SET status = ");
@@ -275,13 +275,13 @@ async fn mark(
     }
     q.push(", last_error = ").push_bind(error);
     q.push(", next_attempt_at = ")
-        .push_bind(next.map(chrono::DateTime::<chrono::FixedOffset>::from));
+        .push_bind(next.map(crate::datetime::OffsetDateTime::from));
     if status == "sent" {
         q.push(", delivered_at = ")
-            .push_bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()));
+            .push_bind(crate::datetime::OffsetDateTime::from(Timestamp::now()));
     }
     q.push(", updated_at = ")
-        .push_bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()));
+        .push_bind(crate::datetime::OffsetDateTime::from(Timestamp::now()));
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     q.push(" WHERE id = ").push_bind(d.id).push(" RETURNING id");
     q.build_query_scalar::<i64>()
@@ -429,7 +429,7 @@ async fn delete_sink(
     sqlx::query_scalar::<_, i64>(
         "UPDATE notification_sinks SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()))
+    .bind(crate::datetime::OffsetDateTime::from(Timestamp::now()))
     .bind(row.id)
     .fetch_one(crate::db::pool(&ctx))
     .await?;

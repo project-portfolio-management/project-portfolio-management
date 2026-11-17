@@ -5,10 +5,10 @@
 //! An issue that has been `closed` must carry a resolution (`422` otherwise; the
 //! database enforces it too). `resolved_on` is set by the service, never typed.
 
+use crate::datetime::{Date, OffsetDateTime, Timestamp};
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::{DateTime, FixedOffset, NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -19,12 +19,12 @@ use crate::models::_entities::{issues, risks, tasks};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Today's date in the deployment's configured time zone, so ages and due dates agree with what users see.
-fn today() -> NaiveDate {
+fn today() -> Date {
     crate::tz::deployment_today()
 }
 
 /// JSON shape of one issue, with `age_calendar_days` and `overdue` derived from `today` rather than stored.
-fn view(i: &issues::Model, today: NaiveDate) -> serde_json::Value {
+fn view(i: &issues::Model, today: Date) -> serde_json::Value {
     serde_json::json!({
         "pid": i.pid, "plan_pid": i.plan_pid, "title": i.title,
         "description": i.description, "kind": i.kind, "severity": i.severity,
@@ -190,10 +190,10 @@ pub(crate) struct Input {
     owner_ref: Option<String>,
     /// Default today.
     #[serde(default)]
-    raised_on: Option<NaiveDate>,
+    raised_on: Option<Date>,
     #[serde(default)]
     /// Optional date the issue should be dealt with by; absent means no due date, so it is never overdue.
-    due_date: Option<NaiveDate>,
+    due_date: Option<Date>,
     #[serde(default)]
     /// How the issue was resolved; required in a terminal status (`closed` by default), blank is stored as absent.
     resolution: Option<String>,
@@ -209,14 +209,14 @@ pub(crate) struct Input {
         clippy::option_option,
         reason = "left out and `null` mean different things here"
     )]
-    occurred_at: Option<Option<DateTime<Utc>>>,
+    occurred_at: Option<Option<Timestamp>>,
     #[serde(default, deserialize_with = "present")]
     /// When it was noticed, in UTC, as a person states it. Absent keeps what is there, `null` clears it. A correction is audited.
     #[expect(
         clippy::option_option,
         reason = "left out and `null` mean different things here"
     )]
-    detected_at: Option<Option<DateTime<Utc>>>,
+    detected_at: Option<Option<Timestamp>>,
 }
 
 /// Tells a field sent as `null` from one left out, so a screen that does not know a field cannot clear it by saving.
@@ -229,12 +229,12 @@ where
 }
 
 /// A stored time as the rules take it.
-fn utc(t: Option<DateTime<FixedOffset>>) -> Option<DateTime<Utc>> {
+fn utc(t: Option<OffsetDateTime>) -> Option<Timestamp> {
     t.map(Into::into)
 }
 
 /// The times of an issue raised now in this state. `reported_at` is set beside them by the caller's insert.
-fn raised_times(at: &Placed, now: DateTime<Utc>) -> rules::Times {
+fn raised_times(at: &Placed, now: Timestamp) -> rules::Times {
     rules::times_after(
         rules::Times::default(),
         None,
@@ -379,18 +379,14 @@ fn enforce_entry_roles(
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Stated {
     /// When it really began.
-    occurred_at: Option<DateTime<Utc>>,
+    occurred_at: Option<Timestamp>,
     /// When it was noticed.
-    detected_at: Option<DateTime<Utc>>,
+    detected_at: Option<Timestamp>,
 }
 
 impl Stated {
     /// What this body leaves on an issue that has these now.
-    fn after(
-        b: &Input,
-        occurred_at: Option<DateTime<Utc>>,
-        detected_at: Option<DateTime<Utc>>,
-    ) -> Self {
+    fn after(b: &Input, occurred_at: Option<Timestamp>, detected_at: Option<Timestamp>) -> Self {
         Self {
             occurred_at: b.occurred_at.unwrap_or(occurred_at),
             detected_at: b.detected_at.unwrap_or(detected_at),
@@ -399,7 +395,7 @@ impl Stated {
 }
 
 /// Runs the rules module's checks on a request body and turns any problems into one `422` listing them all.
-fn validate(b: &Input, raised_on: NaiveDate, needs_resolution: bool, stated: Stated) -> Result<()> {
+fn validate(b: &Input, raised_on: Date, needs_resolution: bool, stated: Stated) -> Result<()> {
     let problems = rules::problems(&rules::Draft {
         title: &b.title,
         description: b.description.as_deref(),
@@ -411,7 +407,7 @@ fn validate(b: &Input, raised_on: NaiveDate, needs_resolution: bool, stated: Sta
         resolution: b.resolution.as_deref(),
         occurred_at: stated.occurred_at,
         detected_at: stated.detected_at,
-        now: Utc::now(),
+        now: Timestamp::now(),
     });
     if problems.is_empty() {
         Ok(())
@@ -431,7 +427,7 @@ fn changed_fields(
     row: &issues::Model,
     b: &Input,
     kind: &str,
-    raised_on: NaiveDate,
+    raised_on: Date,
     stated: Stated,
 ) -> Vec<&'static str> {
     [
@@ -518,7 +514,7 @@ async fn create(
     let stated = Stated::after(&b, None, None);
     validate(&b, raised_on, at.needs_resolution, stated)?;
     check_required(&def, &at.status, &standing.roles, &b)?;
-    let moment = Utc::now();
+    let moment = Timestamp::now();
     let times = raised_times(&at, moment);
     let mut tx = crate::db::begin(&ctx).await?;
     let row: issues::Model = sqlx::query_as(
@@ -654,7 +650,7 @@ fn times_after_save(
             category: &at.category,
             terminal: at.needs_resolution,
         },
-        Utc::now(),
+        Timestamp::now(),
     )
 }
 
@@ -667,8 +663,8 @@ async fn save_on(
     b: &Input,
     kind: &str,
     at: &Placed,
-    raised_on: NaiveDate,
-    resolved_on: Option<NaiveDate>,
+    raised_on: Date,
+    resolved_on: Option<Date>,
     times: rules::Times,
     stated: Stated,
 ) -> Result<issues::Model> {
@@ -824,7 +820,7 @@ async fn remove(
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>("UPDATE issues SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(Utc::now())
+        .bind(Timestamp::now())
         .bind(row.id)
         .fetch_one(tx.conn())
         .await?;
@@ -1045,7 +1041,7 @@ async fn insert_from_source(
 ) -> Result<issues::Model> {
     let now = today();
     let start = initial(&super::workflow::in_force_issue(ctx, plan, kind).await?);
-    let moment = Utc::now();
+    let moment = Timestamp::now();
     let times = raised_times(&start, moment);
     let mut tx = crate::db::begin(ctx).await?;
     // The columns the old insert set, no more: `resolved_at`, `closed_at`, `occurred_at` and `detected_at` take

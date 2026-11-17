@@ -60,18 +60,19 @@ pub fn valid_period(p: &str) -> bool {
 
 /// The last day of a `YYYY-MM` period.
 #[must_use]
-pub fn period_end(period: &str) -> Option<chrono::NaiveDate> {
+pub fn period_end(period: &str) -> Option<crate::datetime::Date> {
     if !valid_period(period) {
         return None;
     }
-    let first = chrono::NaiveDate::parse_from_str(&format!("{period}-01"), "%Y-%m-%d").ok()?;
-    first.checked_add_months(chrono::Months::new(1))?.pred_opt()
+    let first = crate::datetime::Date::parse_from_str(&format!("{period}-01"), "%Y-%m-%d").ok()?;
+    first
+        .checked_add_months(crate::datetime::Months::new(1))?
+        .pred_opt()
 }
 
 /// The period before the month `today` is in: what a monthly run on `today` drafts.
 #[must_use]
-pub fn previous_period(today: chrono::NaiveDate) -> String {
-    use chrono::Datelike;
+pub fn previous_period(today: crate::datetime::Date) -> String {
     let first = today.with_day(1).unwrap_or(today);
     let prev = first.pred_opt().unwrap_or(first);
     format!("{:04}-{:02}", prev.year(), prev.month())
@@ -80,14 +81,14 @@ pub fn previous_period(today: chrono::NaiveDate) -> String {
 /// Whether the pack's data runs to the end of its period. A draft whose cut-off is before the period
 /// ended was drafted too early, and is **stale**: it cannot say how the period finished.
 #[must_use]
-pub fn covers_whole_period(period: &str, cut_off: chrono::NaiveDate) -> bool {
+pub fn covers_whole_period(period: &str, cut_off: crate::datetime::Date) -> bool {
     period_end(period).is_some_and(|end| cut_off >= end)
 }
 
 /// A draft is stale when it does not cover its whole period. An issued pack is not called stale: it is
 /// what was issued, and `covers_whole_period` says what it covers.
 #[must_use]
-pub fn is_stale(status: &str, period: &str, cut_off: chrono::NaiveDate) -> bool {
+pub fn is_stale(status: &str, period: &str, cut_off: crate::datetime::Date) -> bool {
     status == "draft" && !covers_whole_period(period, cut_off)
 }
 
@@ -132,7 +133,7 @@ pub fn changed_item(key: &str, before: Option<u64>, now: u64) -> serde_json::Val
 mod tests {
     #[test]
     fn a_draft_before_the_end_of_its_period_is_stale() {
-        let d = |x: &str| chrono::NaiveDate::parse_from_str(x, "%Y-%m-%d").unwrap();
+        let d = |x: &str| crate::datetime::Date::parse_from_str(x, "%Y-%m-%d").unwrap();
         assert_eq!(period_end("2026-02"), Some(d("2026-02-28")));
         assert_eq!(period_end("2028-02"), Some(d("2028-02-29")));
         assert_eq!(period_end("2026-12"), Some(d("2026-12-31")));
@@ -156,7 +157,7 @@ mod tests {
 
     #[test]
     fn a_monthly_run_drafts_the_month_that_just_ended() {
-        let d = |x: &str| chrono::NaiveDate::parse_from_str(x, "%Y-%m-%d").unwrap();
+        let d = |x: &str| crate::datetime::Date::parse_from_str(x, "%Y-%m-%d").unwrap();
         assert_eq!(previous_period(d("2026-11-03")), "2026-10");
         assert_eq!(previous_period(d("2026-11-01")), "2026-10");
         assert_eq!(previous_period(d("2027-01-15")), "2026-12");

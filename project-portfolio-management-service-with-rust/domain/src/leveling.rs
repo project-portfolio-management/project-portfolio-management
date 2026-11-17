@@ -30,7 +30,7 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use chrono::{Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -95,9 +95,9 @@ pub struct OverRun {
     /// Who.
     pub person: String,
     /// First day.
-    pub from: NaiveDate,
+    pub from: Date,
     /// Last day.
-    pub to: NaiveDate,
+    pub to: Date,
     /// Summed percent asked for on each day (tasks and background).
     pub demand: i64,
     /// The capacity in force on each day.
@@ -117,15 +117,15 @@ pub struct Move {
     /// Who it is for.
     pub person: String,
     /// Its earliest start today.
-    pub from_start: NaiveDate,
+    pub from_start: Date,
     /// The planned start to set (a lower bound; logic may place it later).
-    pub to_start: NaiveDate,
+    pub to_start: Date,
     /// Where the network then puts it.
-    pub scheduled_start: NaiveDate,
+    pub scheduled_start: Date,
     /// Its earliest finish today.
-    pub from_finish: NaiveDate,
+    pub from_finish: Date,
     /// Its earliest finish afterwards.
-    pub to_finish: NaiveDate,
+    pub to_finish: Date,
     /// Business days later it starts.
     pub delay_days: i64,
     /// It had no float: moving it moves the project finish.
@@ -135,7 +135,7 @@ pub struct Move {
     /// Total float after.
     pub float_after: i64,
     /// The first over-allocated day that caused it.
-    pub because_of: NaiveDate,
+    pub because_of: Date,
 }
 
 /// The advice.
@@ -150,9 +150,9 @@ pub struct Proposal {
     /// What the proposal could not remove, with why.
     pub unresolved: Vec<OverRun>,
     /// Project finish today.
-    pub finish_before: Option<NaiveDate>,
+    pub finish_before: Option<Date>,
     /// Project finish with the proposal applied.
-    pub finish_after: Option<NaiveDate>,
+    pub finish_after: Option<Date>,
     /// Business days the finish moves (0 unless a critical task was allowed to move).
     pub finish_delay_days: i64,
     /// A critical task is among the moves.
@@ -166,7 +166,7 @@ struct OverDay {
     /// The over-allocated person's reference.
     person: String,
     /// The over-allocated calendar day.
-    day: NaiveDate,
+    day: Date,
     /// Summed percent asked for that day, from active tasks plus background assignments.
     demand: i64,
     /// Capacity in force that day, in percent.
@@ -176,7 +176,7 @@ struct OverDay {
 }
 
 /// Run CPM on the input with the given planned-start overrides applied, without near-critical analysis. Used to trial a delay before accepting it.
-fn run(input: &Input, overrides: &HashMap<Uuid, NaiveDate>) -> Result<CpmResult, CpmError> {
+fn run(input: &Input, overrides: &HashMap<Uuid, Date>) -> Result<CpmResult, CpmError> {
     let nodes: Vec<Node> = input
         .nodes
         .iter()
@@ -362,10 +362,10 @@ pub fn propose(input: &Input, params: Params) -> Result<Proposal, CpmError> {
 
     let over_before = runs(&over_days(input, &base), &base, |_| "");
 
-    let mut overrides: HashMap<Uuid, NaiveDate> = HashMap::new();
-    let mut because: HashMap<Uuid, NaiveDate> = HashMap::new();
+    let mut overrides: HashMap<Uuid, Date> = HashMap::new();
+    let mut because: HashMap<Uuid, Date> = HashMap::new();
     let mut frozen: HashMap<Uuid, &'static str> = HashMap::new();
-    let mut skipped: HashSet<(String, NaiveDate)> = HashSet::new();
+    let mut skipped: HashSet<(String, Date)> = HashSet::new();
     let mut current = base.clone();
     let mut truncated = false;
 
@@ -564,11 +564,11 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
     /// Monday 2026-10-05.
-    fn monday() -> NaiveDate {
+    fn monday() -> Date {
         d(2026, 10, 5)
     }
     fn node(n: u128, dur: i64) -> Node {

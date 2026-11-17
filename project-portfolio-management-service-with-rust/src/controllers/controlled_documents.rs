@@ -10,9 +10,9 @@
 
 use super::unprocessable;
 use super::{conflict, forbidden};
+use crate::datetime::Date;
 use crate::db::Tx;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -291,7 +291,7 @@ async fn get_version(
 pub(crate) struct InForceParams {
     /// Date to evaluate; absent means the deployment's current date.
     #[serde(default)]
-    on: Option<NaiveDate>,
+    on: Option<Date>,
 }
 
 /// `GET /api/documents/{pid}/in-force?on=YYYY-MM-DD` — the version in force on a date

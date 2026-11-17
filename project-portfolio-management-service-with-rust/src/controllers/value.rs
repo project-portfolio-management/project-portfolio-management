@@ -335,10 +335,8 @@ async fn value_realization(
             value: row.value,
             method: rules::Method::parse(Some(&row.method)),
             is_first_measurable: row.is_first_measurable,
-            days_from_approval: approved_at.map(|start| {
-                (row.observed_at.with_timezone(&chrono::Utc) - start.with_timezone(&chrono::Utc))
-                    .num_days()
-            }),
+            days_from_approval: approved_at
+                .map(|start| (row.observed_at.to_utc() - start.to_utc()).num_days()),
         })
         .collect();
 
@@ -399,7 +397,7 @@ async fn value_realization(
             "source": t.source,
             "approved_at": t.approved_at,
         })).collect::<Vec<_>>(),
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "asserted": true,
     });
     let etag = super::etag_of(&body);
@@ -478,7 +476,7 @@ async fn performance(
             "reason": reason,
         },
         "detail": format!("/api/plans/{}/earned-value", plan.pid),
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);
     super::conditional_json(&headers, &etag, &body)

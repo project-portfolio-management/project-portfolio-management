@@ -67,7 +67,7 @@ pub(crate) struct BatchBody {
     resource_map: BTreeMap<String, ResourceIdentity>,
     /// The date the imported rates take effect (default: today in the deployment's time zone).
     #[serde(default)]
-    rates_effective_from: Option<chrono::NaiveDate>,
+    rates_effective_from: Option<crate::datetime::Date>,
 }
 
 /// Who a resource of the files is.

@@ -345,8 +345,10 @@ async fn export_masks_by_default_and_a_zero_row_export_is_still_audited() {
             .await
             .unwrap()
             .unwrap();
-        let an_hour_ago: chrono::DateTime<chrono::FixedOffset> =
-            (chrono::Utc::now() - chrono::Duration::hours(1)).into();
+        let an_hour_ago: project_portfolio_management::datetime::OffsetDateTime =
+            (project_portfolio_management::datetime::Timestamp::now()
+                - project_portfolio_management::datetime::Duration::hours(1))
+            .into();
         let expired = sqlx::query_as::<_, artifacts::Model>(
             "UPDATE artifacts SET expires_at = $1 WHERE id = $2 RETURNING *",
         )

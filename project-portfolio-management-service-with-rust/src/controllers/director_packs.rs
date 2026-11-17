@@ -8,9 +8,9 @@
 //! change requests) and says plainly which are not.
 
 use super::refuse;
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axum::http::{StatusCode, header};
-use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -55,8 +55,8 @@ fn meta(p: &packs::Model) -> serde_json::Value {
         "status": p.status, "cut_off": p.cut_off, "change_note": p.change_note,
         "supersedes_pid": p.supersedes_pid, "issued_at": p.issued_at, "issued_by": p.issued_by,
         "origin": p.origin, "reviewed": p.reviewed_at.is_some(),
-        "covers_whole_period": rules::covers_whole_period(&p.period, DateTime::<Utc>::from(p.cut_off).date_naive()),
-        "stale": rules::is_stale(&p.status, &p.period, DateTime::<Utc>::from(p.cut_off).date_naive()),
+        "covers_whole_period": rules::covers_whole_period(&p.period, Timestamp::from(p.cut_off).date_naive()),
+        "stale": rules::is_stale(&p.status, &p.period, Timestamp::from(p.cut_off).date_naive()),
     })
 }
 
@@ -76,7 +76,7 @@ fn may_read(caller: &MaybeAuthUser, p: &packs::Model) -> bool {
 /// many plans were left out for being private or marked.
 async fn inputs(
     ctx: &AppContext,
-    cut_off: DateTime<Utc>,
+    cut_off: Timestamp,
 ) -> Result<(
     Vec<IssueLite>,
     Vec<ChangeLite>,
@@ -159,7 +159,7 @@ async fn compute_body(
     audience: &str,
     version: i32,
     supersedes: Option<Uuid>,
-    cut_off: DateTime<Utc>,
+    cut_off: Timestamp,
     change_note: Option<&str>,
 ) -> Result<String> {
     let (issue_rows, change_rows, included_set, excluded) = inputs(ctx, cut_off).await?;
@@ -272,7 +272,7 @@ pub(crate) struct DraftBody {
     audience: String,
     /// Defaults to now; not in the future and not more than a year old.
     #[serde(default)]
-    cut_off: Option<DateTime<Utc>>,
+    cut_off: Option<Timestamp>,
 }
 
 /// Requires the caller to hold at least the given pack power (editor to draft, issuer to issue) and returns the actor string to record; otherwise a `403` naming the access needed.
@@ -300,7 +300,7 @@ pub(crate) async fn insert_draft(
     audience: &str,
     version: i32,
     supersedes: Option<Uuid>,
-    cut_off: DateTime<Utc>,
+    cut_off: Timestamp,
     note: Option<&str>,
     event: &str,
 ) -> Result<packs::Model> {
@@ -380,9 +380,9 @@ async fn draft(
             ),
         ));
     }
-    let now = Utc::now();
+    let now = Timestamp::now();
     let cut_off = b.cut_off.unwrap_or(now);
-    if cut_off > now || cut_off < now - chrono::Duration::days(400) {
+    if cut_off > now || cut_off < now - crate::datetime::Duration::days(400) {
         return Err(refuse(
             StatusCode::UNPROCESSABLE_ENTITY,
             "unprocessable_entity",
@@ -472,7 +472,7 @@ async fn issue(
          WHERE pid = $3 AND status = 'draft'",
     )
     .bind(&actor)
-    .bind(Utc::now())
+    .bind(Timestamp::now())
     .bind(row.pid)
     .execute(tx.conn())
     .await?;

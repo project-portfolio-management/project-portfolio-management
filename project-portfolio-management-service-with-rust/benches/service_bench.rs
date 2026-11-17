@@ -250,16 +250,21 @@ fn bench_capacity_rollups(c: &mut Criterion) {
     let mut group = c.benchmark_group("capacity_rollups");
 
     for &people in &[40usize, 400] {
-        let allocations: Vec<(i32, Option<chrono::NaiveDate>, Option<chrono::NaiveDate>)> = (0
-            ..people)
+        let allocations: Vec<(
+            i32,
+            Option<project_portfolio_management::datetime::Date>,
+            Option<project_portfolio_management::datetime::Date>,
+        )> = (0..people)
             .map(|i| {
                 let pct = 10 + i32::try_from(i % 90).unwrap_or(0);
                 (pct, None, None)
             })
             .collect();
         let window = (
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 1).expect("valid date"),
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date"),
+            project_portfolio_management::datetime::Date::from_ymd_opt(2026, 1, 1)
+                .expect("valid date"),
+            project_portfolio_management::datetime::Date::from_ymd_opt(2026, 1, 31)
+                .expect("valid date"),
         );
         group.throughput(Throughput::Elements(people as u64));
         group.bench_with_input(
@@ -300,7 +305,8 @@ fn bench_capacity_rollups(c: &mut Criterion) {
 
 /// A chain of `n` one-to-nine-day tasks, the first dated, with a skip dependency every fifth task.
 fn chain(n: u128) -> (Vec<cpm::Node>, Vec<cpm::Edge>) {
-    let start = chrono::NaiveDate::from_ymd_opt(2026, 11, 2).expect("valid date");
+    let start = project_portfolio_management::datetime::Date::from_ymd_opt(2026, 11, 2)
+        .expect("valid date");
     let id = |i: u128| Uuid::from_u128(i + 1);
     let nodes = (0..n)
         .map(|i| cpm::Node {

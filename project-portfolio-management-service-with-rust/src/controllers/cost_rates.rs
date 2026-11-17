@@ -22,8 +22,8 @@
 use super::conflict;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -72,7 +72,7 @@ async fn rates_of(
     source: &'static str,
 ) -> Result<Applicable> {
     // Only the two columns the rules use are read; the order is as before SQ-1 (effective date, no tie-break).
-    let rows: Vec<(NaiveDate, i64)> = sqlx::query_as(
+    let rows: Vec<(Date, i64)> = sqlx::query_as(
         "SELECT effective_from, per_hour_minor FROM cost_rates WHERE table_pid = $1 ORDER BY effective_from",
     )
     .bind(table.pid)
@@ -165,7 +165,7 @@ pub(crate) async fn import_rate(
     owner: (Option<&str>, Option<&str>),
     table_name: &str,
     currency: &str,
-    effective_from: NaiveDate,
+    effective_from: Date,
     per_hour_minor: i64,
 ) -> Result<RateOutcome> {
     let (person_ref, role) = owner;
@@ -176,7 +176,7 @@ pub(crate) async fn import_rate(
     };
     if let Some(t) = &existing {
         // Only the two columns compared are read.
-        let in_force: Option<(NaiveDate, i64)> = sqlx::query_as(
+        let in_force: Option<(Date, i64)> = sqlx::query_as(
             "SELECT effective_from, per_hour_minor FROM cost_rates WHERE table_pid = $1 AND effective_from <= $2
              ORDER BY effective_from DESC LIMIT 1",
         )
@@ -257,7 +257,7 @@ async fn insert_table(
 async fn insert_rate(
     tx: &mut crate::db::Tx,
     table_pid: Uuid,
-    effective_from: NaiveDate,
+    effective_from: Date,
     per_hour_minor: i64,
     created_by: Option<&str>,
 ) -> Result<cost_rates::Model> {
@@ -305,7 +305,7 @@ async fn add_import_rate(
     ctx: &AppContext,
     actor: Option<&str>,
     table: &cost_rate_tables::Model,
-    effective_from: NaiveDate,
+    effective_from: Date,
     per_hour_minor: i64,
 ) -> Result<()> {
     let mut tx = crate::db::begin(ctx).await?;
@@ -509,7 +509,7 @@ async fn list_tables(
 /// `POST /api/cost-rate-tables/{pid}/rates` body.
 pub(crate) struct RateBody {
     /// First day the rate applies; it stays in force until a later rate starts.
-    effective_from: NaiveDate,
+    effective_from: Date,
     /// Minor units of the table's currency per hour.
     per_hour_minor: i64,
 }
@@ -536,8 +536,8 @@ async fn add_rate(
     if b.per_hour_minor < 0 {
         return Err(unprocessable("per_hour_minor must not be negative"));
     }
-    if b.effective_from < NaiveDate::from_ymd_opt(1970, 1, 1).unwrap_or_default()
-        || chrono::Datelike::year(&b.effective_from) > 2100
+    if b.effective_from < Date::from_ymd_opt(1970, 1, 1).unwrap_or_default()
+        || b.effective_from.year() > 2100
     {
         return Err(unprocessable(
             "effective_from must be between 1970 and 2100",
@@ -585,7 +585,7 @@ pub(crate) struct LookupParams {
     /// The person whose rate is wanted.
     person_ref: String,
     /// The day the rate must be in force on.
-    date: NaiveDate,
+    date: Date,
     #[serde(default)]
     /// Table name to look in; defaults to `standard`.
     table: Option<String>,
@@ -732,7 +732,7 @@ async fn delete_task_cost(
     .fetch_optional(crate::db::pool(&ctx))
     .await?
     .ok_or(Error::NotFound)?;
-    let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let now = crate::datetime::OffsetDateTime::from(crate::datetime::Timestamp::now());
     let mut tx = crate::db::begin(&ctx).await?;
     // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(
@@ -760,7 +760,7 @@ async fn delete_task_cost(
 /// Bucket per-day money into reporting periods, one JSON object per
 /// period (`minor` carries money here, reusing the minutes bucketing).
 fn money_buckets(
-    per_day: &[(NaiveDate, i64)],
+    per_day: &[(Date, i64)],
     periods: &[crate::portfolio_resources::Period],
 ) -> Vec<serde_json::Value> {
     wp::bucket(per_day, periods)
@@ -771,10 +771,10 @@ fn money_buckets(
 }
 
 /// Minor units by day.
-type DayMoney = BTreeMap<NaiveDate, i64>;
+type DayMoney = BTreeMap<Date, i64>;
 
 /// Add `days` into the running per-day total, accumulating on equal dates.
-fn add_days(into: &mut BTreeMap<NaiveDate, i64>, days: &[(NaiveDate, i64)]) {
+fn add_days(into: &mut BTreeMap<Date, i64>, days: &[(Date, i64)]) {
     for (d, m) in days {
         *into.entry(*d).or_default() += m;
     }
@@ -810,7 +810,7 @@ async fn cost_plan(
         work.iter().map(|w| (w.pid, w)).collect();
 
     // Everything that will be placed on a day, to choose the window from.
-    let mut every_day: Vec<(NaiveDate, i64)> = Vec::new();
+    let mut every_day: Vec<(Date, i64)> = Vec::new();
     let mut labour: Vec<(Uuid, String, String, rules::Priced, Applicable)> = Vec::new();
     let mut unrated: Vec<serde_json::Value> = Vec::new();
     let mut applicable_cache: HashMap<String, Option<usize>> = HashMap::new();
@@ -871,7 +871,7 @@ async fn cost_plan(
     .bind(net.rows.iter().map(|t| t.pid).collect::<Vec<_>>())
     .fetch_all(crate::db::pool(&ctx))
     .await?;
-    let mut fixed: Vec<(task_costs::Model, Vec<(NaiveDate, i64)>)> = Vec::new();
+    let mut fixed: Vec<(task_costs::Model, Vec<(Date, i64)>)> = Vec::new();
     let mut unplaced: Vec<serde_json::Value> = Vec::new();
     for c in &costs {
         let ix = net.rows.iter().position(|t| t.pid == c.task_pid);
@@ -903,7 +903,7 @@ async fn cost_plan(
             "note": "Nothing could be costed: no task with work has a rate, and no expense can be placed on a day.",
         }));
     }
-    let refs: Vec<&(NaiveDate, i64)> = every_day.iter().collect();
+    let refs: Vec<&(Date, i64)> = every_day.iter().collect();
     let (from, to, grain, periods) = super::assignments::window(&q.window, &refs)?;
 
     let mut by_currency: BTreeMap<String, (DayMoney, DayMoney)> = BTreeMap::new();
@@ -941,13 +941,13 @@ async fn cost_plan(
     let currencies: Vec<serde_json::Value> = by_currency
         .iter()
         .map(|(cur, (lab, fix))| {
-            let lab_days: Vec<(NaiveDate, i64)> = lab.iter().map(|(d, m)| (*d, *m)).collect();
-            let fix_days: Vec<(NaiveDate, i64)> = fix.iter().map(|(d, m)| (*d, *m)).collect();
+            let lab_days: Vec<(Date, i64)> = lab.iter().map(|(d, m)| (*d, *m)).collect();
+            let fix_days: Vec<(Date, i64)> = fix.iter().map(|(d, m)| (*d, *m)).collect();
             let mut both = lab.clone();
             for (d, m) in fix {
                 *both.entry(*d).or_default() += m;
             }
-            let both_days: Vec<(NaiveDate, i64)> = both.iter().map(|(d, m)| (*d, *m)).collect();
+            let both_days: Vec<(Date, i64)> = both.iter().map(|(d, m)| (*d, *m)).collect();
             serde_json::json!({
                 "currency": cur,
                 "labour": { "total_minor": lab.values().sum::<i64>(), "buckets": money_buckets(&lab_days, &periods) },

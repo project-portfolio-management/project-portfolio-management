@@ -4,9 +4,9 @@
 //! file name is the table's, but for `portfolio_drum` (`portfolio_drums`).
 
 /// A `TIMESTAMP WITH TIME ZONE` column.
-pub type DateTimeWithTimeZone = chrono::DateTime<chrono::FixedOffset>;
+pub type DateTimeWithTimeZone = crate::datetime::OffsetDateTime;
 /// A `DATE` column.
-pub type Date = chrono::NaiveDate;
+pub type Date = crate::datetime::Date;
 /// A `JSON` or `JSONB` column.
 pub type Json = serde_json::Value;
 

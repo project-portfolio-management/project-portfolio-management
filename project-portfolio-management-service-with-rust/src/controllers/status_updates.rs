@@ -13,8 +13,8 @@
 
 use std::collections::HashSet;
 
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
-use chrono::{DateTime, NaiveDate, Utc};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -38,7 +38,7 @@ fn update_view(u: &updates::Model) -> Value {
 /// The plan's open-task numbers as of today (BR-2): "open" is a workflow state that is not done.
 async fn counts_of(ctx: &AppContext, plan: Uuid) -> Result<Counts> {
     let workflow = super::workflow::in_force(ctx, plan, "task").await?;
-    let rows: Vec<(Option<NaiveDate>, String)> = sqlx::query_as(
+    let rows: Vec<(Option<Date>, String)> = sqlx::query_as(
         "SELECT due_date, status FROM tasks WHERE plan_pid = $1 AND deleted_at IS NULL",
     )
     .bind(plan)
@@ -115,7 +115,7 @@ async fn metrics() -> Result<Response> {
 async fn latest_before(
     ctx: &AppContext,
     plan: Uuid,
-    at_or_before: Option<DateTime<Utc>>,
+    at_or_before: Option<Timestamp>,
 ) -> Result<Option<updates::Model>> {
     Ok(match at_or_before {
         None => {
@@ -160,7 +160,7 @@ async fn all_cadences(ctx: &AppContext) -> Result<Vec<cadences::Model>> {
 }
 
 /// Whether the plan's update cadence is being kept, from the cadence, its last update and today.
-fn standing_of(c: &cadences::Model, last: Option<&updates::Model>, today: NaiveDate) -> Standing {
+fn standing_of(c: &cadences::Model, last: Option<&updates::Model>, today: Date) -> Standing {
     rules::standing(c.cadence_days, c.set_on, last.map(|u| u.posted_on), today)
 }
 
@@ -205,7 +205,7 @@ async fn put_cadence(
         .bind(body.cadence_days)
         .bind(today)
         .bind(who)
-        .bind(None::<NaiveDate>)
+        .bind(None::<Date>)
         .bind(e.id)
         .fetch_one(tx.conn())
         .await?
@@ -219,7 +219,7 @@ async fn put_cadence(
         .bind(body.cadence_days)
         .bind(today)
         .bind(who)
-        .bind(None::<NaiveDate>)
+        .bind(None::<Date>)
         .fetch_one(tx.conn())
         .await?
     };
@@ -238,7 +238,7 @@ async fn put_cadence(
 }
 
 /// JSON view of a plan's status cadence with its current standing.
-fn cadence_view(c: &cadences::Model, last: Option<&updates::Model>, today: NaiveDate) -> Value {
+fn cadence_view(c: &cadences::Model, last: Option<&updates::Model>, today: Date) -> Value {
     json!({
         "plan_pid": c.plan_pid, "cadence_days": c.cadence_days, "set_on": c.set_on, "set_by": c.set_by,
         "standing": standing_of(c, last, today),
@@ -519,7 +519,7 @@ async fn remind(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<
 pub async fn pack_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
-    cut_off: DateTime<Utc>,
+    cut_off: Timestamp,
 ) -> Result<Value> {
     let day = cut_off.date_naive();
     let all = all_cadences(ctx).await?;

@@ -190,8 +190,8 @@ async fn commit(
         .find(|s| s.is_initial)
         .map_or("todo", |s| s.key.as_str())
         .to_string();
-    let now = chrono::Utc::now();
-    let now: chrono::DateTime<chrono::FixedOffset> = now.into();
+    let now = crate::datetime::Timestamp::now();
+    let now: crate::datetime::OffsetDateTime = now.into();
     let mut tx = crate::db::begin(&ctx).await?;
     let mut created = vec![];
     for (p, verdict) in b.items.iter().zip(&v) {

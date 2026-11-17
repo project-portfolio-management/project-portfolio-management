@@ -210,7 +210,7 @@ async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
         // Make them due, recover the destination, and they go through.
         {
             sqlx::query("UPDATE sink_deliveries SET next_attempt_at = $1 WHERE status = $2")
-                .bind(chrono::Utc::now() - chrono::Duration::minutes(1))
+                .bind(project_portfolio_management::datetime::Timestamp::now() - project_portfolio_management::datetime::Duration::minutes(1))
                 .bind("pending")
                 .execute(project_portfolio_management::db::pool(&ctx))
                 .await

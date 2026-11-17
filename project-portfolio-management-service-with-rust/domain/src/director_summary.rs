@@ -4,7 +4,7 @@
 //! reason**, never a zero, and "nothing recorded" is said in words. A reader who can see no plan at all
 //! gets `available: false` and the reason, not a page of zeros that look like good news.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// What the summary needs of an issue.
@@ -21,11 +21,11 @@ pub struct IssueLite {
     /// Whether that status means the issue is finished: the workflow's category, never the status's name.
     pub done: bool,
     /// When raised.
-    pub raised_on: NaiveDate,
+    pub raised_on: Date,
     /// When resolved or closed.
-    pub resolved_on: Option<NaiveDate>,
+    pub resolved_on: Option<Date>,
     /// When due.
-    pub due_date: Option<NaiveDate>,
+    pub due_date: Option<Date>,
 }
 
 /// What the summary needs of a change request.
@@ -38,9 +38,9 @@ pub struct ChangeLite {
     /// Its status.
     pub status: String,
     /// When requested.
-    pub requested_on: NaiveDate,
+    pub requested_on: Date,
     /// When decided.
-    pub decided_on: Option<NaiveDate>,
+    pub decided_on: Option<Date>,
 }
 
 /// The oldest open item, named.
@@ -108,13 +108,13 @@ const CR_STATUSES: [&str; 7] = [
 ];
 
 /// Whether a date falls in the last `window_days` days up to and including today; future dates never count.
-fn in_window(d: NaiveDate, today: NaiveDate, window_days: i64) -> bool {
+fn in_window(d: Date, today: Date, window_days: i64) -> bool {
     d <= today && (today - d).num_days() < window_days
 }
 
 /// Summarise the issues of the plans a reader can see.
 #[must_use]
-pub fn issues(rows: &[IssueLite], today: NaiveDate, window_days: i64) -> IssuesSummary {
+pub fn issues(rows: &[IssueLite], today: Date, window_days: i64) -> IssuesSummary {
     let open: Vec<&IssueLite> = rows.iter().filter(|i| !i.done).collect();
     let mut by: std::collections::BTreeMap<String, usize> =
         SEVERITIES.iter().map(|s| ((*s).to_string(), 0)).collect();
@@ -169,7 +169,7 @@ pub fn issues(rows: &[IssueLite], today: NaiveDate, window_days: i64) -> IssuesS
 
 /// Summarise the change requests of the plans a reader can see.
 #[must_use]
-pub fn changes(rows: &[ChangeLite], today: NaiveDate, window_days: i64) -> ChangesSummary {
+pub fn changes(rows: &[ChangeLite], today: Date, window_days: i64) -> ChangesSummary {
     let mut by: std::collections::BTreeMap<String, usize> =
         CR_STATUSES.iter().map(|s| ((*s).to_string(), 0)).collect();
     for r in rows {
@@ -222,10 +222,10 @@ pub fn changes(rows: &[ChangeLite], today: NaiveDate, window_days: i64) -> Chang
 mod tests {
     use super::*;
 
-    fn d(m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, m, day).unwrap()
+    fn d(m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(2026, m, day).unwrap()
     }
-    fn issue(title: &str, sev: &str, status: &str, raised: NaiveDate) -> IssueLite {
+    fn issue(title: &str, sev: &str, status: &str, raised: Date) -> IssueLite {
         IssueLite {
             plan_pid: "p".into(),
             title: title.into(),
@@ -289,7 +289,7 @@ mod tests {
 
     #[test]
     fn changes_waiting_and_approved_but_not_done_are_counted_apart() {
-        let cr = |t: &str, st: &str, req: NaiveDate, dec: Option<NaiveDate>| ChangeLite {
+        let cr = |t: &str, st: &str, req: Date, dec: Option<Date>| ChangeLite {
             plan_pid: "p".into(),
             title: t.into(),
             status: st.into(),

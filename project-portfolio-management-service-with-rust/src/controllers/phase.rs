@@ -194,8 +194,8 @@ async fn history(
         "current_phase": current.map(PlanPhase::token),
         "next_phase": rules::next_phase(current).map(PlanPhase::token),
         "transitions": rows,
-        "durations": rules::durations(&facts, chrono::Utc::now().timestamp_millis()),
-        "as_of": chrono::Utc::now(),
+        "durations": rules::durations(&facts, crate::datetime::Timestamp::now().timestamp_millis()),
+        "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);
     super::conditional_json(&headers, &etag, &body)

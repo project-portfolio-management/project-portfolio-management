@@ -44,7 +44,7 @@ redis = { version = "1", default-features = false, features = ["connection-manag
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["float_roundtrip"] }
 # Request-body schemas for the OpenAPI document (CQ-8): derived from the handlers' own types.
-schemars = { version = "1", features = ["chrono04", "uuid1"] }
+schemars = { version = "1", features = ["uuid1"] }
 tokio = { version = "1.54", default-features = false, features = [
   "rt-multi-thread",
   # `sync` for the live-update broadcast channel (src/live.rs); `time` for
@@ -68,15 +68,13 @@ tantivy = { version = "0.27" }
 project-portfolio-management-migration = { version = "0.2.0", path = "migration" }
 # The pure domain modules (`cpm`, `evm`, `tz`, …), re-exported from `src/lib.rs` under their old names.
 project-portfolio-management-domain = { version = "0.2.0", path = "domain" }
+# Dates, instants, durations and IANA zones over jiff (`crate::datetime`), with their Postgres encoding.
+project-portfolio-management-datetime = { version = "0.2.0", path = "datetime", features = ["sqlx"] }
 # Plain SQL, through `src/db.rs` (spec §8.3b).
 futures-core = "0.3"
-sqlx = { version = "0.9", default-features = false, features = ["chrono", "derive", "json", "postgres", "runtime-tokio", "rust_decimal", "uuid"] }
-# `serde` for the row structs' JSON (`src/models/_entities`).
-chrono = { version = "0.4", features = ["serde"] }
+sqlx = { version = "0.9", default-features = false, features = ["derive", "json", "postgres", "runtime-tokio", "rust_decimal", "uuid"] }
 # `total_project_control`'s `NUMERIC` columns; `serde` keeps its row's JSON (a string), as before.
 rust_decimal = { version = "1", default-features = false, features = ["serde", "std"] }
-# IANA zones for per-request "today" (LT-3 / LT-9). Never read from the process.
-chrono-tz = { version = "0.10" }
 uuid = { version = "1.29", features = ["v4", "serde"] }
 mimalloc = { version = "0.1.52" }
 prometheus = { version = "0.14" }

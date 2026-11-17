@@ -66,8 +66,8 @@ fn cap_opt(problems: &mut Vec<String>, field: &str, value: Option<&str>) {
 }
 
 /// The current time, as the timestamp columns store it.
-fn now() -> chrono::DateTime<chrono::FixedOffset> {
-    chrono::Utc::now().into()
+fn now() -> crate::datetime::OffsetDateTime {
+    crate::datetime::Timestamp::now().into()
 }
 
 /// A live (not soft-deleted) row of one table by public id, or `404`. The table is a literal.
@@ -610,7 +610,7 @@ async fn intake_forecast(
         )));
     }
 
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let period_ms = period_days.saturating_mul(crate::tba::DAY_MS);
     let (from_ms, to_ms) =
         crate::tba::history_window(now.timestamp_millis(), history_periods, period_ms);
@@ -622,7 +622,7 @@ async fn intake_forecast(
             .await?,
     );
     let visible_pids: std::collections::HashSet<Uuid> = visible.iter().map(|p| p.pid).collect();
-    let approved: Vec<(Uuid, chrono::DateTime<chrono::FixedOffset>)> =
+    let approved: Vec<(Uuid, crate::datetime::OffsetDateTime)> =
         sqlx::query_as("SELECT entity_pid, created_at FROM audit_logs WHERE action = $1")
             .bind(rules::ProposalAction::Approve.token())
             .fetch_all(crate::db::pool(&ctx))
@@ -651,8 +651,8 @@ async fn intake_forecast(
                  board's completions. arrivals_per_period is contextual only \
                  and does not feed the forecast.",
         "history_window": {
-            "from": chrono::DateTime::from_timestamp_millis(from_ms),
-            "to": chrono::DateTime::from_timestamp_millis(to_ms),
+            "from": crate::datetime::Timestamp::from_timestamp_millis(from_ms),
+            "to": crate::datetime::Timestamp::from_timestamp_millis(to_ms),
             "periods": history_periods,
             "period_days": period_days,
         },
@@ -882,7 +882,7 @@ pub(crate) struct RiskPayload {
     mitigation: Option<String>,
     /// Date by which the risk should next be reviewed; absent means no review scheduled.
     #[serde(default)]
-    review_date: Option<chrono::NaiveDate>,
+    review_date: Option<crate::datetime::Date>,
     /// Optional category (`delivery` / `tech_debt` / `compliance` /
     /// `security` / `other`); absent reads as `delivery`.
     #[serde(default)]
@@ -997,7 +997,7 @@ pub(crate) struct RiskUpdate {
     mitigation: Option<String>,
     /// New review date; absent leaves it unchanged.
     #[serde(default)]
-    review_date: Option<chrono::NaiveDate>,
+    review_date: Option<crate::datetime::Date>,
 }
 
 /// `PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`.
@@ -1114,10 +1114,10 @@ pub(crate) struct BudgetPayload {
     planned_minor: i64,
     /// First day of the period the line covers; absent means open-ended.
     #[serde(default)]
-    period_start: Option<chrono::NaiveDate>,
+    period_start: Option<crate::datetime::Date>,
     /// Last day of the period; must not precede `period_start`. Absent means open-ended.
     #[serde(default)]
-    period_end: Option<chrono::NaiveDate>,
+    period_end: Option<crate::datetime::Date>,
     /// Optional funding gate: the line is HELD (no actuals) until the
     /// plan's stage reaches this gate and the line is released.
     #[serde(default)]

@@ -316,7 +316,7 @@ async fn settle(
         .bind(status)
         .bind(comment)
         .bind(decided_by)
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(pid)
         .execute(tx.conn())
         .await?

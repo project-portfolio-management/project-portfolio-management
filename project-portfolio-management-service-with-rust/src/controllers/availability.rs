@@ -13,10 +13,10 @@
 //! first's range and is refused. (A database exclusion constraint would need the
 //! `btree_gist` extension, which not every deployment may install.)
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -119,9 +119,9 @@ pub(crate) struct Body {
     #[serde(default)]
     person_ref: Option<String>,
     /// First day of the range, inclusive.
-    from: NaiveDate,
+    from: Date,
     /// Last day of the range, inclusive; must not precede `from`.
-    to: NaiveDate,
+    to: Date,
     /// Ceiling on the person's capacity in that range, 0 to 100 percent.
     max_percent: i32,
     /// Optional free-text reason.
@@ -194,7 +194,7 @@ async fn create(
     .bind(b.to)
     .bind(b.max_percent)
     .bind(b.note.clone())
-    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .bind(None::<crate::datetime::OffsetDateTime>)
     .fetch_one(tx.conn())
     .await
     .map_err(overlap_or_db_err)?;
@@ -263,8 +263,8 @@ async fn remove(
     sqlx::query_scalar::<_, i64>(
         "UPDATE person_availabilities SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-        chrono::Utc::now(),
+    .bind(crate::datetime::OffsetDateTime::from(
+        crate::datetime::Timestamp::now(),
     ))
     .bind(row.id)
     .fetch_one(tx.conn())

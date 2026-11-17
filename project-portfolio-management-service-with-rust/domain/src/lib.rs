@@ -12,6 +12,10 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+/// Dates, instants, durations and IANA zones (the `project-portfolio-management-datetime` crate, over jiff), so
+/// `crate::datetime::Date` reads the same here as in the service.
+pub use project_portfolio_management_datetime as datetime;
+
 pub mod access_review;
 pub mod announcements;
 pub mod approvals;

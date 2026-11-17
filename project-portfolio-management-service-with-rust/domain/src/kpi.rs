@@ -14,7 +14,7 @@
 //! twice the interval) is also flagged **stale**: its status is still the last
 //! one measured, but it says how old it is.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// Which way is good.
@@ -139,7 +139,7 @@ pub fn cadence_days(cadence: &str) -> Option<i64> {
 /// Whether a KPI is stale: it has a cadence and its latest reading is older than
 /// twice the interval (or it has never been read). `None` when it has no cadence.
 #[must_use]
-pub fn stale(cadence: Option<&str>, latest: Option<NaiveDate>, as_of: NaiveDate) -> Option<bool> {
+pub fn stale(cadence: Option<&str>, latest: Option<Date>, as_of: Date) -> Option<bool> {
     let days = cadence.and_then(cadence_days)?;
     Some(latest.is_none_or(|l| (as_of - l).num_days() > 2 * days))
 }
@@ -180,8 +180,8 @@ mod tests {
     use super::*;
     use Direction::{HigherBetter, LowerBetter};
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
 
     #[test]

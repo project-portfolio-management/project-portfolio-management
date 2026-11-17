@@ -211,7 +211,7 @@ async fn money_by_funding_source_keeps_its_promises() {
 
         // ── the pack carries it for the financial year of its cut-off ──
         let dr: Value = request.post("/api/director-packs").add_header(issuer.0.clone(), issuer.1.clone())
-            .json(&json!({ "period": chrono::Utc::now().format("%Y-%m").to_string(), "audience": "board" })).await.json();
+            .json(&json!({ "period": project_portfolio_management::datetime::Timestamp::now().format("%Y-%m").to_string(), "audience": "board" })).await.json();
         let pk = dr["pid"].as_str().unwrap().to_string();
         request.post(&format!("/api/director-packs/{pk}/issue")).add_header(issuer.0.clone(), issuer.1.clone()).await.assert_status_ok();
         let pack: Value = with!(request.get(&format!("/api/director-packs/{pk}")), issuer).await.json();

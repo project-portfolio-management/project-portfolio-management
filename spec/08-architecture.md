@@ -190,8 +190,16 @@ The service's pure rule modules live in their own workspace crate, `project-port
 a controller, a model or the router recompiles only the service and not the scheduling, cost, risk and import logic
 (17 November 2026). The layering rule: **the domain crate may not depend on the service, `axum`, `axa`, `sqlx` or
 `tokio`**, nor on the service's `controllers`, `models`, `db`, `app` or any module that does; it reads no
-`AppContext`. Its dependencies are plain libraries (`serde`, `serde_json`, `chrono`, `chrono-tz`, `uuid`, `schemars`,
-`sha2`, `zip`, `roxmltree`, `url` and the matcher).
+`AppContext`. Its dependencies are plain libraries (`serde`, `serde_json`, `uuid`, `schemars`, `sha2`, `zip`,
+`roxmltree`, `url` and the matcher) and the datetime crate below, without its `sqlx` feature.
+
+Dates, instants, durations and IANA zones are a fourth workspace crate, `project-portfolio-management-datetime`
+(`project-portfolio-management-service-with-rust/datetime/`, lib `project_portfolio_management_datetime`; 17 November
+2026), over `jiff` 1.0, which replaced `chrono` and `chrono-tz` (RUSTSEC-2026-0543 and -0555, unmaintained). Its
+types (`Timestamp`, `OffsetDateTime`, `Date`, `Duration`, `Tz`, …) keep every form the service wrote and read under
+chrono, so the move changed no answer, document, log line or stored value (service spec §8, "Dates and times").
+Its `sqlx` feature, which only the service turns on, gives the Postgres encoding; the domain crate re-exports the crate
+as `crate::datetime` and the service as `crate::datetime` too, so both name the types alike.
 
 A module of the service's `src/` belongs in the domain crate when it, and every module it imports through `crate::`,
 uses none of those (comments do not count). Modules that are pure but need a service module (for example `workflow`
@@ -206,7 +214,8 @@ name the same module as before; inside the domain crate, `crate::x` is a sibling
 route, an answer, the OpenAPI or AsyncAPI document, or the schema changes with where a module lives. The guards that
 read the source tree (the raw-pool census in `src/db.rs`, the two audit censuses, the extractor guard, the live-event
 census, the time-zone and CSV-escaping guards, `scripts/generate-openapi-bodies.py` and the test counts of
-`scripts/generate-status.sh`) read `domain/src` as well as `src`.
+`scripts/generate-status.sh`) read `domain/src` as well as `src`; the time-zone guards and the test counts read
+`datetime/src` too.
 
 ### 8.3 Service layout
 
@@ -246,6 +255,8 @@ project-portfolio-management-service-with-rust/
 │                                    governance.rs · engineering.rs · strategy.rs · collaboration.rs ·
 │                                    automation.rs · prioritization.rs · lifecycle.rs · insights.rs ·
 │                                    visibility.rs · merge.rs · validation.rs · privacy.rs · cpm.rs · evm.rs · tz.rs · …
+├── datetime/src/                    dates, instants, durations, zones over jiff (crate
+│                                    project-portfolio-management-datetime, §8.3c): parse.rs · format.rs · postgres.rs · …
 ├── migration/migrations/            the frozen SQL migrations, run by sqlx: plans,
 │                                    audit_logs, merge_records, event_outbox, governance,
 │                                    visibility, strategy, engineering, capabilities, …

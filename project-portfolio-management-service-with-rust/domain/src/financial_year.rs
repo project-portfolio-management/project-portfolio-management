@@ -11,7 +11,7 @@
 
 use std::collections::BTreeMap;
 
-use chrono::{Datelike, NaiveDate};
+use crate::datetime::Date;
 use uuid::Uuid;
 
 /// The month a financial year starts in when the deployment sets none: January (the calendar year).
@@ -38,9 +38,9 @@ pub fn start_month() -> u32 {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Year {
-    pub start: NaiveDate,
+    pub start: Date,
     /// The last day of the year.
-    pub end: NaiveDate,
+    pub end: Date,
     /// `2026` for a calendar year, `2026/27` otherwise.
     pub label: String,
 }
@@ -51,14 +51,14 @@ pub struct Year {
 ///
 /// Never for a real date: the dates built are the first of a month.
 #[must_use]
-pub fn year_of(date: NaiveDate, start_month: u32) -> Year {
+pub fn year_of(date: Date, start_month: u32) -> Year {
     let y = if date.month() >= start_month {
         date.year()
     } else {
         date.year() - 1
     };
-    let start = NaiveDate::from_ymd_opt(y, start_month, 1).expect("first of a month");
-    let next = NaiveDate::from_ymd_opt(y + 1, start_month, 1).expect("first of a month");
+    let start = Date::from_ymd_opt(y, start_month, 1).expect("first of a month");
+    let next = Date::from_ymd_opt(y + 1, start_month, 1).expect("first of a month");
     let label = if start_month == 1 {
         y.to_string()
     } else {
@@ -80,7 +80,7 @@ pub enum Placement {
 
 /// Where a line with this period sits against a year.
 #[must_use]
-pub fn placement(start: Option<NaiveDate>, end: Option<NaiveDate>, year: &Year) -> Placement {
+pub fn placement(start: Option<Date>, end: Option<Date>, year: &Year) -> Placement {
     match start.or(end) {
         None => Placement::Undated,
         Some(d) if d >= year.start && d <= year.end => Placement::InYear,
@@ -90,7 +90,7 @@ pub fn placement(start: Option<NaiveDate>, end: Option<NaiveDate>, year: &Year) 
 
 /// Whether a line's period runs past the end of the year it is placed in.
 #[must_use]
-pub fn spans_years(start: Option<NaiveDate>, end: Option<NaiveDate>, year: &Year) -> bool {
+pub fn spans_years(start: Option<Date>, end: Option<Date>, year: &Year) -> bool {
     start.is_some() && end.is_some_and(|e| e > year.end)
 }
 
@@ -104,8 +104,8 @@ pub struct Line {
     pub currency: String,
     pub planned_minor: i64,
     pub actual_minor: i64,
-    pub period_start: Option<NaiveDate>,
-    pub period_end: Option<NaiveDate>,
+    pub period_start: Option<Date>,
+    pub period_end: Option<Date>,
 }
 
 /// One row: a programme, a funding source (or none), a class and a currency.
@@ -187,8 +187,8 @@ pub fn group(lines: &[Line], year: &Year, combine_classes: bool) -> (Vec<Row>, Q
 mod tests {
     use super::*;
 
-    fn d(s: &str) -> NaiveDate {
-        NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap()
+    fn d(s: &str) -> Date {
+        Date::parse_from_str(s, "%Y-%m-%d").unwrap()
     }
 
     #[test]

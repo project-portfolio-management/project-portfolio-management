@@ -8,7 +8,7 @@
 //!   └────withdraw──────┴────────────withdraw────────────────────────────▶ withdrawn
 //! ```
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 
 /// What kind of change.
 pub const KINDS: &[&str] = &["scope", "schedule", "cost", "quality", "other"];
@@ -177,7 +177,7 @@ pub fn approver_problem(approver: &str, requester: &str) -> Option<String> {
 
 /// The days between the request and now, in calendar days; never negative.
 #[must_use]
-pub fn age_calendar_days(requested_on: NaiveDate, today: NaiveDate) -> i64 {
+pub fn age_calendar_days(requested_on: Date, today: Date) -> i64 {
     (today - requested_on).num_days().max(0)
 }
 
@@ -303,7 +303,7 @@ mod tests {
 
     #[test]
     fn age_is_calendar_days_and_never_negative() {
-        let d = |m, day| NaiveDate::from_ymd_opt(2026, m, day).unwrap();
+        let d = |m, day| Date::from_ymd_opt(2026, m, day).unwrap();
         assert_eq!(age_calendar_days(d(10, 1), d(10, 11)), 10);
         assert_eq!(age_calendar_days(d(10, 11), d(10, 1)), 0);
     }

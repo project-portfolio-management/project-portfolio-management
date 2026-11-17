@@ -12,10 +12,10 @@
 //!
 //! The history (`escalation_events`) is append-only, enforced by a database trigger. Nothing here notifies anyone.
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -28,12 +28,12 @@ use crate::models::_entities::{escalation_events, escalations};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The deployment's local calendar date, used for `raised_on`, ages and overdue tests so they agree with the configured time zone.
-fn today() -> NaiveDate {
+fn today() -> Date {
     crate::tz::deployment_today()
 }
 
 /// JSON view of one escalation, with derived `age_days` (to the resolution date, else `now`) and `overdue` (open or acknowledged and past `respond_by`).
-pub(crate) fn view(e: &escalations::Model, now: NaiveDate) -> Value {
+pub(crate) fn view(e: &escalations::Model, now: Date) -> Value {
     json!({
         "pid": e.pid, "plan_pid": e.plan_pid, "title": e.title, "description": e.description,
         "reason_kind": e.reason_kind, "tolerance_dimension": e.tolerance_dimension,
@@ -122,7 +122,7 @@ pub(crate) struct Input {
     owner_ref: Option<String>,
     /// Date by which a response is expected; absent means no deadline, so it is never overdue.
     #[serde(default)]
-    respond_by: Option<NaiveDate>,
+    respond_by: Option<Date>,
 }
 
 /// Serde default for `reason_kind`.
@@ -190,7 +190,7 @@ pub(crate) struct New {
     /// Owner reference (person or worker); absent means unassigned.
     pub owner_ref: Option<String>,
     /// Response deadline; absent means none.
-    pub respond_by: Option<NaiveDate>,
+    pub respond_by: Option<Date>,
 }
 
 /// Insert an escalation at a level of the plan's governance path, with its first history entry and an audit record.
@@ -395,7 +395,7 @@ enum Change {
     /// Up a level; the body there, when the path names one.
     Level(i32, Option<String>),
     /// Resolved: the outcome, the response and the day.
-    Resolution(String, String, NaiveDate),
+    Resolution(String, String, Date),
 }
 
 /// [`step`], answering the changed row.

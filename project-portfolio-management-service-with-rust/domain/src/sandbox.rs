@@ -16,7 +16,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -34,7 +34,7 @@ pub enum Edit {
         /// The task.
         task_pid: Uuid,
         /// Its new planned start.
-        start_date: NaiveDate,
+        start_date: Date,
     },
     /// Set a task's business-day duration (0 makes it a milestone).
     Duration {
@@ -50,7 +50,7 @@ pub enum Edit {
         /// `snet` … `mfo`, or null to clear.
         constraint_kind: Option<String>,
         /// The constraint's date.
-        constraint_date: Option<NaiveDate>,
+        constraint_date: Option<Date>,
         /// Why — required for a hard constraint.
         #[serde(default)]
         reason: Option<String>,
@@ -153,13 +153,13 @@ pub fn needs_hard_permission(edits: &[Edit]) -> bool {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct TaskFields {
     /// Planned start.
-    pub start_date: Option<NaiveDate>,
+    pub start_date: Option<Date>,
     /// Business days.
     pub duration_days: Option<i64>,
     /// Constraint token.
     pub constraint_kind: Option<&'static str>,
     /// Constraint date.
-    pub constraint_date: Option<NaiveDate>,
+    pub constraint_date: Option<Date>,
 }
 
 /// The lowercase wire token for a constraint kind, as used in the sandbox response.
@@ -400,11 +400,11 @@ fn link_pid(c: &Change) -> Uuid {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Dates {
     /// Earliest start.
-    pub early_start: NaiveDate,
+    pub early_start: Date,
     /// Earliest finish.
-    pub early_finish: NaiveDate,
+    pub early_finish: Date,
     /// Latest finish.
-    pub late_finish: NaiveDate,
+    pub late_finish: Date,
     /// Total float in business days.
     pub total_float: i64,
     /// On the critical path.
@@ -494,8 +494,8 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, day).unwrap()
+    fn d(day: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, day).unwrap()
     }
     fn node(n: u128, dur: i64) -> Node {
         Node {

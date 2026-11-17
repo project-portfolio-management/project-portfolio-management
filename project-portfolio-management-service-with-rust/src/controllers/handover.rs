@@ -12,12 +12,12 @@
 //! it does not check the new person's capacity (the leveling view does that).
 
 use super::unprocessable;
+use crate::datetime::{Date, Timestamp};
 use crate::db::Session;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
-use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -44,7 +44,7 @@ async fn holdings(
     plan: Uuid,
     person: &str,
     def: &WorkflowDef,
-    today: NaiveDate,
+    today: Date,
 ) -> Result<Vec<Holding>> {
     let mut out = Vec::new();
     for t in sqlx::query_as::<_, tasks::Model>(
@@ -131,7 +131,7 @@ enum Moved<'a> {
     /// The new holder (or nobody, for a released task or risk).
     Person(Option<&'a str>),
     /// Released: the row is soft-deleted at this moment.
-    Deleted(chrono::DateTime<chrono::FixedOffset>),
+    Deleted(crate::datetime::OffsetDateTime),
 }
 
 /// Fingerprint of the person, target and the exact holdings found, so a commit with `If-Match` fails when anything changed since the preview.
@@ -265,7 +265,7 @@ async fn commit(
     if etag(&b.from_person, to, &h) != expected {
         return Err(stale());
     }
-    let now: chrono::DateTime<chrono::FixedOffset> = Utc::now().into();
+    let now: crate::datetime::OffsetDateTime = Timestamp::now().into();
     let mut entries = 0;
     for x in &h {
         // Each row is read by its pid, then written by its id naming only the column that moves.

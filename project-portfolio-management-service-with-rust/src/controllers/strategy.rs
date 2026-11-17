@@ -489,7 +489,7 @@ pub(crate) struct EvaluationResult {
     /// The rule-engine verdict for the scenario.
     pub evaluation: rules::Evaluation,
     /// When the evaluation ran (UTC), so repeated evaluations can be told apart.
-    pub as_of: chrono::DateTime<chrono::Utc>,
+    pub as_of: crate::datetime::Timestamp,
     /// Each live row the evaluation read, with its `updated_at`, as provenance.
     pub inputs_read: Vec<rules::InputRead>,
 }
@@ -598,7 +598,7 @@ pub(crate) async fn evaluate(
     scenario: &scenarios::Model,
     fence: &super::plan_access::HiddenScope,
 ) -> Result<EvaluationResult> {
-    let as_of = chrono::Utc::now();
+    let as_of = crate::datetime::Timestamp::now();
     let plan_pids: Vec<Uuid> = scenario
         .members
         .get("plan_pids")
@@ -781,7 +781,7 @@ async fn commit_scenario(
         )));
     }
     let row_pid = scenario.pid;
-    let committed_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let committed_at: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
     // The two columns the update set before SQ-1, by id; no row back is an error, as before.
     let row: scenarios::Model = sqlx::query_as(
@@ -959,7 +959,7 @@ async fn generate_scenario(
     let name = payload.name.unwrap_or_else(|| {
         format!(
             "Generated {}",
-            chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+            crate::datetime::Timestamp::now().format("%Y-%m-%d %H:%M:%S UTC")
         )
     });
     let row_pid = Uuid::new_v4();
@@ -1315,7 +1315,7 @@ pub(crate) struct BenefitPayload {
     target_note: Option<String>,
     /// Date the benefit is expected to be realized; `None` when unknown.
     #[serde(default)]
-    expected_on: Option<chrono::NaiveDate>,
+    expected_on: Option<crate::datetime::Date>,
 }
 
 /// `POST /api/plans/{pid}/benefits` — declare an expected

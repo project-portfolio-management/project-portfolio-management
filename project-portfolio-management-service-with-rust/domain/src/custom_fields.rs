@@ -9,7 +9,7 @@
 //! Types: `text`, `date` (`YYYY-MM-DD`), `bool`, `integer`, `list` (one of
 //! `options`), `multi_list` (a distinct subset of `options`).
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde_json::Value;
 
 /// Field types.
@@ -115,7 +115,7 @@ pub fn validate_value(def: &Def, value: &Value) -> Result<Value, String> {
         "date" => value
             .as_str()
             .and_then(|s| {
-                NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                Date::parse_from_str(s, "%Y-%m-%d")
                     .ok()
                     .map(|d| d.to_string())
             })

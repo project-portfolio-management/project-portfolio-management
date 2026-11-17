@@ -414,8 +414,8 @@ pub fn stale_days() -> i64 {
 /// passed since its review, else `fresh`. A review dated after `today` is fresh.
 #[must_use]
 pub fn freshness(
-    reviewed_on: Option<chrono::NaiveDate>,
-    today: chrono::NaiveDate,
+    reviewed_on: Option<crate::datetime::Date>,
+    today: crate::datetime::Date,
     days: i64,
 ) -> &'static str {
     match reviewed_on {
@@ -438,8 +438,8 @@ mod tests {
 
     #[test]
     fn calendar_day_42_is_fresh_and_day_43_is_stale() {
-        let today = chrono::NaiveDate::from_ymd_opt(2026, 11, 14).unwrap();
-        let ago = |n| today - chrono::Duration::days(n);
+        let today = crate::datetime::Date::from_ymd_opt(2026, 11, 14).unwrap();
+        let ago = |n| today - crate::datetime::Duration::days(n);
         assert_eq!(freshness(None, today, 42), "unknown");
         assert_eq!(freshness(Some(ago(42)), today, 42), "fresh");
         assert_eq!(freshness(Some(ago(43)), today, 42), "stale");

@@ -13,8 +13,8 @@
 //! * **Retention is a dry run** unless `PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULED_RETENTION_APPLY` is `true`, `yes` or
 //!   `1`: nothing is deleted by switching the scheduler on.
 
+use crate::datetime::Timestamp;
 use crate::prelude::*;
-use chrono::{DateTime, Utc};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -116,7 +116,7 @@ pub enum Ran {
 
 /// Claim `job` for this replica: take the advisory lock, and if no run of it started within its interval, record
 /// one. Returns the run's pid when this replica should run it.
-async fn claim(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Option<Uuid>> {
+async fn claim(ctx: &AppContext, job: Job, now: Timestamp) -> Result<Option<Uuid>> {
     let mut txn = crate::db::begin(ctx).await?;
     // The same key as ever: `hashtext('scheduled_job:<name>')`, bound. Taken without waiting; a replica that does not
     // get it skips.
@@ -128,7 +128,7 @@ async fn claim(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Option<
     if !got.flatten().unwrap_or(false) {
         return Ok(None);
     }
-    let since = now - chrono::Duration::minutes(job.interval_minutes());
+    let since = now - crate::datetime::Duration::minutes(job.interval_minutes());
     let recent: Option<i64> = sqlx::query_scalar(
         "SELECT id FROM scheduled_job_runs WHERE job = $1 AND started_at > $2 ORDER BY id DESC LIMIT 1",
     )
@@ -164,7 +164,7 @@ async fn claim(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Option<
 }
 
 /// Run one job and return a one-line outcome for the run record. Retention purge only deletes when the apply setting is on, otherwise it is a dry run; a bad retention setting fails the run rather than purging by default periods.
-async fn execute(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<String> {
+async fn execute(ctx: &AppContext, job: Job, now: Timestamp) -> Result<String> {
     match job {
         Job::ToleranceEscalations => {
             let n = crate::controllers::tolerances::raise_all_needed(
@@ -217,7 +217,7 @@ async fn execute(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Strin
 ///
 /// When the claim or the closing record cannot be written. A failure of the job itself is not an error: it is
 /// [`Ran::Failed`], recorded and counted.
-pub async fn run_job(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<Ran> {
+pub async fn run_job(ctx: &AppContext, job: Job, now: Timestamp) -> Result<Ran> {
     let Some(pid) = claim(ctx, job, now).await? else {
         return Ok(Ran::Skipped);
     };
@@ -241,7 +241,7 @@ pub async fn run_job(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<R
             "UPDATE scheduled_job_runs SET finished_at = $1, outcome = $2, detail = $3 WHERE id = $4
              RETURNING id",
         )
-        .bind(Utc::now())
+        .bind(Timestamp::now())
         .bind(outcome)
         .bind(&detail)
         .bind(id)
@@ -267,7 +267,7 @@ pub async fn run_job(ctx: &AppContext, job: Job, now: DateTime<Utc>) -> Result<R
 /// Run every enabled job that is due. Called by the scheduler ticker; runs nothing when no job is enabled.
 pub async fn run_enabled(ctx: &AppContext) {
     for job in enabled() {
-        match run_job(ctx, job, Utc::now()).await {
+        match run_job(ctx, job, Timestamp::now()).await {
             Ok(Ran::Ok(text)) => tracing::info!(job = job.name(), "{text}"),
             Ok(Ran::Failed(text)) => {
                 tracing::warn!(job = job.name(), "scheduled job failed: {text}");

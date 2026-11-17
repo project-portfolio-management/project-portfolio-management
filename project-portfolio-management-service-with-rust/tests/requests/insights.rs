@@ -645,9 +645,11 @@ async fn engineering_tasks_sprints_and_views() {
         // back and seven forward keeps today inside a 14-calendar-day
         // window, with room before it for the "before any completion"
         // assertion.
-        let today = chrono::Utc::now().date_naive();
-        let starts_on = (today - chrono::Duration::days(6)).to_string();
-        let ends_on = (today + chrono::Duration::days(7)).to_string();
+        let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
+        let starts_on =
+            (today - project_portfolio_management::datetime::Duration::days(6)).to_string();
+        let ends_on =
+            (today + project_portfolio_management::datetime::Duration::days(7)).to_string();
         let sprint: Value = request
             .post(&format!("/api/plans/{pid}/sprints"))
             .json(&json!({ "name": "Sprint 1", "starts_on": starts_on,

@@ -92,9 +92,9 @@ fn cell<'a>(row: &'a Row, name: &str) -> Option<&'a str> {
 
 /// A `Last updated` cell as a date: `YYYY-MM-DD` or `DD/MM/YYYY`.
 #[must_use]
-pub fn date(s: &str) -> Option<chrono::NaiveDate> {
-    chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
-        .or_else(|_| chrono::NaiveDate::parse_from_str(s, "%d/%m/%Y"))
+pub fn date(s: &str) -> Option<crate::datetime::Date> {
+    crate::datetime::Date::parse_from_str(s, "%Y-%m-%d")
+        .or_else(|_| crate::datetime::Date::parse_from_str(s, "%d/%m/%Y"))
         .ok()
 }
 
@@ -381,7 +381,7 @@ pub struct ParsedRoadmap {
     /// Whether `Enabled` is exactly `Yes`.
     pub enabled: bool,
     /// `Last updated`, when it is a date.
-    pub reviewed_on: Option<chrono::NaiveDate>,
+    pub reviewed_on: Option<crate::datetime::Date>,
     /// The Welsh cells: field to text.
     pub welsh: BTreeMap<&'static str, Value>,
     /// The tab's rows that have a title; `None` when the tab is missing or cannot be read, with why.
@@ -642,11 +642,11 @@ mod tests {
     fn cells_read_as_the_editor_reads_them() {
         assert_eq!(
             date("15/09/2026"),
-            chrono::NaiveDate::from_ymd_opt(2026, 9, 15)
+            crate::datetime::Date::from_ymd_opt(2026, 9, 15)
         );
         assert_eq!(
             date("2026-10-01"),
-            chrono::NaiveDate::from_ymd_opt(2026, 10, 1)
+            crate::datetime::Date::from_ymd_opt(2026, 10, 1)
         );
         assert_eq!(date("Sept 2026"), None);
         assert_eq!(

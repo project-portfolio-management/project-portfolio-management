@@ -10,9 +10,9 @@
 //! * A notice carries the period, the audience, the version and a link. It never carries the body.
 
 use super::refuse;
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -70,9 +70,8 @@ pub(crate) struct NewSchedule {
 }
 
 /// The first run date strictly after `today`, on `day` of a month (the same rule the report schedules use).
-fn first_run(day: i32, today: NaiveDate) -> Option<NaiveDate> {
-    use chrono::Datelike;
-    let anchor = NaiveDate::from_ymd_opt(today.year(), today.month(), u32::try_from(day).ok()?)?;
+fn first_run(day: i32, today: Date) -> Option<Date> {
+    let anchor = Date::from_ymd_opt(today.year(), today.month(), u32::try_from(day).ok()?)?;
     crate::report_schedules::next_after("monthly", anchor, today)
         .filter(|d| *d > today)
         .map(|d| {
@@ -235,7 +234,7 @@ pub struct Swept {
 /// # Errors
 ///
 /// When a database statement fails.
-pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
+pub async fn run_due(ctx: &AppContext, today: Date) -> Result<Swept> {
     let due: Vec<schedules::Model> = sqlx::query_as(
         "SELECT * FROM director_pack_schedules WHERE enabled = TRUE AND next_run_date <= $1 ORDER BY id",
     )
@@ -245,7 +244,8 @@ pub async fn run_due(ctx: &AppContext, today: NaiveDate) -> Result<Swept> {
     let mut out = Swept::default();
     for s in due {
         // Claim first: only the sweep that moves the date does the work.
-        let next = first_run(s.day_of_month, today).unwrap_or(today + chrono::Duration::days(28));
+        let next =
+            first_run(s.day_of_month, today).unwrap_or(today + crate::datetime::Duration::days(28));
         let claimed = sqlx::query(
             "UPDATE director_pack_schedules SET next_run_date = $1, last_run_on = $2
              WHERE pid = $3 AND next_run_date = $4",
@@ -345,7 +345,7 @@ async fn review(
          WHERE pid = $3 AND status = 'draft' AND reviewed_at IS NULL",
     )
     .bind(&actor)
-    .bind(Utc::now())
+    .bind(Timestamp::now())
     .bind(row.pid)
     .execute(tx.conn())
     .await?;

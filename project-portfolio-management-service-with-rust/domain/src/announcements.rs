@@ -4,7 +4,7 @@
 //! severity (urgent, important, info), then newest first, and the id breaks a
 //! tie so the order is total and stable.
 
-use chrono::{DateTime, Utc};
+use crate::datetime::Timestamp;
 use serde::Serialize;
 
 /// How loud an announcement is.
@@ -46,11 +46,7 @@ pub enum State {
 
 /// The state of a window at `now`.
 #[must_use]
-pub fn state(
-    publish_at: DateTime<Utc>,
-    expires_at: Option<DateTime<Utc>>,
-    now: DateTime<Utc>,
-) -> State {
+pub fn state(publish_at: Timestamp, expires_at: Option<Timestamp>, now: Timestamp) -> State {
     if now < publish_at {
         State::Scheduled
     } else if expires_at.is_some_and(|e| now >= e) {
@@ -70,7 +66,7 @@ pub struct Sortable {
     /// Severity.
     pub severity: Severity,
     /// When it was published.
-    pub publish_at: DateTime<Utc>,
+    pub publish_at: Timestamp,
 }
 
 /// Sort the feed: pinned, then severity, then newest, then the larger id.
@@ -90,8 +86,8 @@ pub fn problems(
     title: &str,
     body: &str,
     severity: &str,
-    publish_at: DateTime<Utc>,
-    expires_at: Option<DateTime<Utc>>,
+    publish_at: Timestamp,
+    expires_at: Option<Timestamp>,
 ) -> Vec<String> {
     let mut out = Vec::new();
     if title.trim().is_empty() || title.chars().count() > 120 {
@@ -112,10 +108,9 @@ pub fn problems(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
 
-    fn at(h: u32) -> DateTime<Utc> {
-        Utc.with_ymd_and_hms(2026, 10, 5, h, 0, 0).unwrap()
+    fn at(h: u32) -> Timestamp {
+        Timestamp::with_ymd_and_hms(2026, 10, 5, h, 0, 0).unwrap()
     }
 
     #[test]

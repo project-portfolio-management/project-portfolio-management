@@ -11,8 +11,8 @@
 //! `PROJECT_PORTFOLIO_MANAGEMENT_RETENTION_<RULE>_DAYS` (WW-1.7), which the scheduled job reads too; an argument
 //! here wins over it. See `governance/retention-schedule.md` for what is and is not covered.
 
+use crate::datetime::Timestamp;
 use crate::prelude::*;
-use chrono::Utc;
 
 use crate::retention::{self, RULES};
 
@@ -60,7 +60,7 @@ impl Task for RetentionPurge {
                 return Err(Error::string(&format!("unknown argument {key:?}")));
             }
         }
-        let outcomes = retention::run(ctx, Utc::now(), &overrides, apply).await?;
+        let outcomes = retention::run(ctx, Timestamp::now(), &overrides, apply).await?;
         println!(
             "{}",
             if apply {

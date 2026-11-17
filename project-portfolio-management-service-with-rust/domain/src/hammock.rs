@@ -12,7 +12,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -23,9 +23,9 @@ pub enum Span {
     /// Earliest start to latest finish of what it links to.
     Scheduled {
         /// The earliest start among its links.
-        start: NaiveDate,
+        start: Date,
         /// The latest finish among its links.
-        finish: NaiveDate,
+        finish: Date,
     },
     /// No span could be derived.
     Unscheduled {
@@ -66,10 +66,10 @@ fn span_of(
     h: Uuid,
     set: &HashSet<Uuid>,
     members: &HashMap<Uuid, Vec<Uuid>>,
-    spans: &HashMap<Uuid, (NaiveDate, NaiveDate)>,
+    spans: &HashMap<Uuid, (Date, Date)>,
     out: &mut HashMap<Uuid, Span>,
     path: &mut HashSet<Uuid>,
-) -> Option<(NaiveDate, NaiveDate)> {
+) -> Option<(Date, Date)> {
     if let Some(Span::Scheduled { start, finish }) = out.get(&h) {
         return Some((*start, *finish));
     }
@@ -81,8 +81,8 @@ fn span_of(
         path.remove(&h);
         return None;
     };
-    let mut lo: Option<NaiveDate> = None;
-    let mut hi: Option<NaiveDate> = None;
+    let mut lo: Option<Date> = None;
+    let mut hi: Option<Date> = None;
     for m in ms {
         let s = if set.contains(m) {
             span_of(*m, set, members, spans, out, path)
@@ -118,7 +118,7 @@ fn span_of(
 pub fn resolve(
     hammocks: &[Uuid],
     links: &[(Uuid, Uuid)],
-    spans: &HashMap<Uuid, (NaiveDate, NaiveDate)>,
+    spans: &HashMap<Uuid, (Date, Date)>,
 ) -> HashMap<Uuid, Span> {
     let set: HashSet<Uuid> = hammocks.iter().copied().collect();
     let mut members: HashMap<Uuid, Vec<Uuid>> = HashMap::new();
@@ -141,10 +141,10 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, day).unwrap()
+    fn d(day: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, day).unwrap()
     }
-    fn spans() -> HashMap<Uuid, (NaiveDate, NaiveDate)> {
+    fn spans() -> HashMap<Uuid, (Date, Date)> {
         HashMap::from([
             (id(1), (d(5), d(7))),
             (id(2), (d(8), d(14))),

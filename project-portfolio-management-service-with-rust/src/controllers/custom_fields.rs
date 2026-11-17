@@ -198,7 +198,7 @@ async fn delete_def(
     sqlx::query_scalar::<_, i64>(
         "UPDATE custom_field_defs SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )
-    .bind(chrono::Utc::now())
+    .bind(crate::datetime::Timestamp::now())
     .bind(id)
     .fetch_one(tx.conn())
     .await?;

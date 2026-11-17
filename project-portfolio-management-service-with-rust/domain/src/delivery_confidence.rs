@@ -5,7 +5,7 @@
 //! **issued** pack; a worsening to `amber_red` or `red` opens an exception whose clock runs from the
 //! moment it opened.
 
-use chrono::{DateTime, Duration, NaiveDate, Utc};
+use crate::datetime::{Date, Duration, Timestamp};
 
 /// The five-point scale, best first.
 pub const SCALE: [&str; 5] = ["green", "amber_green", "amber", "amber_red", "red"];
@@ -60,7 +60,7 @@ pub struct Shown {
     /// `independent` or `self`.
     pub kind: String,
     /// When it was assessed.
-    pub assessed_on: NaiveDate,
+    pub assessed_on: Date,
 }
 
 /// A single stored assessment, as the rules need it.
@@ -71,7 +71,7 @@ pub struct Assessment {
     /// `self` or `independent`.
     pub kind: String,
     /// When assessed.
-    pub assessed_on: NaiveDate,
+    pub assessed_on: Date,
 }
 
 /// The assessment the map shows.
@@ -87,13 +87,13 @@ pub fn shown(history: &[Assessment]) -> Option<Shown> {
 
 /// The first day of a `YYYY-MM` period.
 #[must_use]
-pub fn period_start(period: &str) -> Option<NaiveDate> {
-    NaiveDate::parse_from_str(&format!("{period}-01"), "%Y-%m-%d").ok()
+pub fn period_start(period: &str) -> Option<Date> {
+    Date::parse_from_str(&format!("{period}-01"), "%Y-%m-%d").ok()
 }
 
 /// An assessment older than the pack's period is stale.
 #[must_use]
-pub fn is_stale(assessed_on: NaiveDate, period: &str) -> bool {
+pub fn is_stale(assessed_on: Date, period: &str) -> bool {
     period_start(period).is_some_and(|s| assessed_on < s)
 }
 
@@ -148,7 +148,7 @@ pub struct Parts<'a> {
     /// A named owner (a reference).
     pub owner_ref: Option<&'a str>,
     /// The date the decision is needed by.
-    pub decide_by: Option<NaiveDate>,
+    pub decide_by: Option<Date>,
 }
 
 /// What is still missing, by name.
@@ -176,9 +176,9 @@ pub fn missing(p: &Parts<'_>) -> Vec<&'static str> {
 /// completed, so a late completion stays a breach on the record.
 #[must_use]
 pub fn breached(
-    opened_at: DateTime<Utc>,
-    completed_at: Option<DateTime<Utc>>,
-    now: DateTime<Utc>,
+    opened_at: Timestamp,
+    completed_at: Option<Timestamp>,
+    now: Timestamp,
     window_hours: i64,
 ) -> bool {
     completed_at.unwrap_or(now) - opened_at > Duration::hours(window_hours)
@@ -187,12 +187,11 @@ pub fn breached(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
-    fn a(value: &str, kind: &str, on: NaiveDate) -> Assessment {
+    fn a(value: &str, kind: &str, on: Date) -> Assessment {
         Assessment {
             value: value.into(),
             kind: kind.into(),
@@ -295,7 +294,7 @@ mod tests {
 
     #[test]
     fn the_clock_is_pinned_at_47h59_48h00_and_48h01() {
-        let opened = Utc.with_ymd_and_hms(2026, 10, 1, 9, 0, 0).unwrap();
+        let opened = Timestamp::with_ymd_and_hms(2026, 10, 1, 9, 0, 0).unwrap();
         let at = |mins: i64| opened + Duration::minutes(mins);
         assert!(!breached(opened, None, at(47 * 60 + 59), 48), "47h59");
         assert!(

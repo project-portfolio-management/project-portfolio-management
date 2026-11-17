@@ -14,11 +14,11 @@
 //! Only the owner can read their schedules and download the latest output.
 
 use super::unprocessable;
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
-use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -29,12 +29,12 @@ use crate::models::audit_logs::Model as AuditModel;
 use crate::report_schedules as rules;
 
 /// How long a scheduled report file is kept: `PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS` days, default 30, never less than 1.
-fn ttl() -> chrono::Duration {
+fn ttl() -> crate::datetime::Duration {
     let days = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REPORT_TTL_DAYS")
         .ok()
         .and_then(|v| v.trim().parse::<i64>().ok())
         .unwrap_or(30);
-    chrono::Duration::days(days.max(1))
+    crate::datetime::Duration::days(days.max(1))
 }
 
 /// JSON view of a report schedule, including the outcome of its last run.
@@ -87,7 +87,7 @@ async fn create(
     let today = crate::tz::deployment_today();
     let start = match b.start.as_deref() {
         None => today,
-        Some(s) => NaiveDate::parse_from_str(s, "%Y-%m-%d")
+        Some(s) => Date::parse_from_str(s, "%Y-%m-%d")
             .map_err(|_| unprocessable("start must be a date, YYYY-MM-DD"))?,
     };
     let held: i64 = sqlx::query_scalar(
@@ -187,7 +187,7 @@ async fn latest(
     let row = own(&ctx, &claims.sub, &pid).await?;
     let artifact = row.last_artifact_pid.ok_or(Error::NotFound)?;
     let (meta, bytes) = super::bulk::read_artifact(&ctx, artifact).await?;
-    if meta.expires_at.is_some_and(|e| e < Utc::now()) {
+    if meta.expires_at.is_some_and(|e| e < Timestamp::now()) {
         return Err(Error::NotFound);
     }
     Ok((
@@ -239,7 +239,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
     let mut out = Swept::default();
     for s in due {
         let next = rules::after_run(&s.cadence, s.anchor_date, today)
-            .unwrap_or(today + chrono::Duration::days(1));
+            .unwrap_or(today + crate::datetime::Duration::days(1));
         // The claim: only one sweeper moves the date off the value it read.
         let claimed = sqlx::query(
             "UPDATE report_schedules SET next_run_date = $1 WHERE pid = $2 AND next_run_date = $3",
@@ -334,7 +334,7 @@ async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::
     .bind(sha)
     .bind(key)
     .bind(&s.owner)
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now() + ttl()))
+    .bind(crate::datetime::OffsetDateTime::from(Timestamp::now() + ttl()))
     .fetch_one(tx.conn())
     .await
     .map_err(|e| e.to_string())?;
@@ -369,8 +369,8 @@ async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::
 }
 
 /// Now, as the `timestamptz` the schedule's columns hold.
-fn now() -> chrono::DateTime<chrono::FixedOffset> {
-    Utc::now().into()
+fn now() -> crate::datetime::OffsetDateTime {
+    Timestamp::now().into()
 }
 
 /// `POST /api/report-schedules/sweep` — run what is due now. Admin only (the

@@ -29,7 +29,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -148,9 +148,9 @@ pub struct Task {
     /// Whether anyone is assigned.
     pub has_resource: bool,
     /// The day it was marked done, if it was.
-    pub done_on: Option<NaiveDate>,
+    pub done_on: Option<Date>,
     /// Its baselined finish, if a baseline names one.
-    pub baseline_finish: Option<NaiveDate>,
+    pub baseline_finish: Option<Date>,
 }
 
 /// The inputs.
@@ -167,7 +167,7 @@ pub struct Input<'a> {
     /// Per-assignee calendars.
     pub own: &'a [WorkCalendar],
     /// The status date.
-    pub as_of: NaiveDate,
+    pub as_of: Date,
     /// A baseline exists for this plan.
     pub baseline_exists: bool,
 }
@@ -359,7 +359,7 @@ pub fn assess(input: &Input, t: &Thresholds) -> Report {
                 r.project_finish,
             )
         });
-        let placed: HashMap<Uuid, (NaiveDate, NaiveDate)> = cpm.as_ref().ok().map_or_default(|r| {
+        let placed: HashMap<Uuid, (Date, Date)> = cpm.as_ref().ok().map_or_default(|r| {
             r.nodes
                 .iter()
                 .map(|n| (n.pid, (n.early_start, n.early_finish)))
@@ -914,11 +914,11 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
     /// Monday 2026-10-05.
-    fn monday() -> NaiveDate {
+    fn monday() -> Date {
         d(2026, 10, 5)
     }
     fn task(n: u128) -> Task {
@@ -951,7 +951,7 @@ mod tests {
         tasks: Vec<Task>,
         nodes: Vec<Node>,
         edges: Vec<Edge>,
-        as_of: NaiveDate,
+        as_of: Date,
         baseline: bool,
     }
     impl Net {

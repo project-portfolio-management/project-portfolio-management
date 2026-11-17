@@ -514,7 +514,7 @@ Gc/gtIhTyl+CZJRNvIA6LLb3PfKHFbXDtr3foVOqWsbuncgcMXm+/vd7
     }
 
     fn now() -> i64 {
-        chrono::Utc::now().timestamp()
+        crate::datetime::Timestamp::now().timestamp()
     }
 
     fn good() -> Value {

@@ -4,7 +4,7 @@
 
 use std::fmt::Write;
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -53,7 +53,7 @@ pub struct Counts {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Digest {
     /// The deployment's date it was made for.
-    pub as_of: NaiveDate,
+    pub as_of: Date,
     /// Counts over every item, listed or not.
     pub counts: Counts,
     /// The worst [`MAX_ITEMS`] items, worst first.
@@ -65,7 +65,7 @@ pub struct Digest {
 /// Order, count and cap `items`: worst severity first, then kind, plan name and summary, so the order never
 /// depends on the order the facts were gathered in.
 #[must_use]
-pub fn build(mut items: Vec<Item>, as_of: NaiveDate) -> Digest {
+pub fn build(mut items: Vec<Item>, as_of: Date) -> Digest {
     items.sort_by(|a, b| {
         (a.severity, a.kind, &a.plan_name, &a.summary, a.plan_pid).cmp(&(
             b.severity,
@@ -127,8 +127,8 @@ mod tests {
         }
     }
 
-    fn day() -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, 26).unwrap()
+    fn day() -> Date {
+        Date::from_ymd_opt(2026, 10, 26).unwrap()
     }
 
     #[test]

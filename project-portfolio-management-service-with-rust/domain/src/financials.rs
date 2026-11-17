@@ -28,9 +28,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BaselinePeriod {
     /// Inclusive.
-    pub period_start: chrono::NaiveDate,
+    pub period_start: crate::datetime::Date,
     /// Inclusive.
-    pub period_end: chrono::NaiveDate,
+    pub period_end: crate::datetime::Date,
     /// Minor units.
     pub planned_minor: i64,
 }
@@ -60,7 +60,7 @@ impl Baseline {
     /// work is done, only whether the window has passed, and
     /// inventing a pro-ration would be a fabricated precision.
     #[must_use]
-    pub fn remaining_planned_minor(&self, today: chrono::NaiveDate) -> i64 {
+    pub fn remaining_planned_minor(&self, today: crate::datetime::Date) -> i64 {
         self.periods
             .iter()
             .filter(|p| p.period_end >= today)
@@ -143,7 +143,7 @@ pub fn forecast(
     actual_lines: &[(String, i64)],
     tpc_cec: Option<(&str, i64)>,
     baseline: Option<&Baseline>,
-    today: chrono::NaiveDate,
+    today: crate::datetime::Date,
 ) -> Forecast {
     let currency = baseline
         .map(|b| b.currency.clone())
@@ -271,8 +271,8 @@ pub fn rollup_forecast(forecasts: &[Forecast]) -> Rollup {
 mod tests {
     use super::*;
 
-    fn date(y: i32, m: u32, d: u32) -> chrono::NaiveDate {
-        chrono::NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    fn date(y: i32, m: u32, d: u32) -> crate::datetime::Date {
+        crate::datetime::Date::from_ymd_opt(y, m, d).unwrap()
     }
 
     fn baseline(

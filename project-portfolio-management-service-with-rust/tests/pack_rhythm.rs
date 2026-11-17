@@ -118,9 +118,8 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
         OTHER,
         &[("access", "write"), ("pack_audience", "board")],
     );
-    let today = chrono::Utc::now().date_naive();
+    let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
     let prev = {
-        use chrono::Datelike;
         let first = today.with_day(1).unwrap();
         let last = first.pred_opt().unwrap();
         format!("{:04}-{:02}", last.year(), last.month())
@@ -204,10 +203,9 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
 
         // ── a hand-made draft that stops short of its period is stale ──
         let early = {
-            use chrono::Datelike;
             let first = today.with_day(1).unwrap();
-            let two_back = first.checked_sub_months(chrono::Months::new(2)).unwrap();
-            two_back + chrono::Duration::days(2)
+            let two_back = first.checked_sub_months(project_portfolio_management::datetime::Months::new(2)).unwrap();
+            two_back + project_portfolio_management::datetime::Duration::days(2)
         };
         let d: Value = with!(request.post("/api/director-packs"), editor)
             .json(&json!({ "period": early.format("%Y-%m").to_string(), "audience": "executive", "cut_off": format!("{early}T12:00:00Z") })).await.json();

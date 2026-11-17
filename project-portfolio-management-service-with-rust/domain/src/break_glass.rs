@@ -2,7 +2,7 @@
 //! limited time by stating a reason; the grant ends by itself. What it grants is *visibility* (the
 //! plan stops being hidden from them); what they may then do is still decided by their attributes.
 
-use chrono::{DateTime, Duration, Utc};
+use crate::datetime::{Duration, Timestamp};
 
 /// The longest a grant may last, in minutes (four hours).
 pub const MAX_MINUTES: i64 = 240;
@@ -51,13 +51,13 @@ pub fn problems(
 
 /// When a grant opened at `now` ends.
 #[must_use]
-pub fn expires_at(now: DateTime<Utc>, minutes: Option<i64>) -> DateTime<Utc> {
+pub fn expires_at(now: Timestamp, minutes: Option<i64>) -> Timestamp {
     now + Duration::minutes(minutes.unwrap_or(DEFAULT_MINUTES).clamp(1, MAX_MINUTES))
 }
 
 /// Whether a grant is in force at `now`: not revoked, and not yet expired.
 #[must_use]
-pub fn is_live(expires_at: DateTime<Utc>, revoked: bool, now: DateTime<Utc>) -> bool {
+pub fn is_live(expires_at: Timestamp, revoked: bool, now: Timestamp) -> bool {
     !revoked && expires_at > now
 }
 
@@ -74,10 +74,12 @@ pub fn notice(grantee: &str, minutes: i64, reason: &str) -> String {
 mod tests {
     use super::*;
 
-    fn at(h: u32, m: u32) -> DateTime<Utc> {
-        DateTime::parse_from_rfc3339(&format!("2026-10-10T{h:02}:{m:02}:00Z"))
-            .unwrap()
-            .with_timezone(&Utc)
+    fn at(h: u32, m: u32) -> Timestamp {
+        crate::datetime::OffsetDateTime::parse_from_rfc3339(&format!(
+            "2026-10-10T{h:02}:{m:02}:00Z"
+        ))
+        .unwrap()
+        .to_utc()
     }
 
     #[test]

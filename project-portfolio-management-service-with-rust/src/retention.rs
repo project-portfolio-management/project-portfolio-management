@@ -11,8 +11,8 @@
 //! one transaction per table and writes one audit row per table. The pure parts ([`Rule`],
 //! [`cutoff`], [`parse_days`]) are unit-tested; the SQL is covered by a database test.
 
+use crate::datetime::{Duration, Timestamp};
 use axa::AppContext;
-use chrono::{DateTime, Duration, Utc};
 use uuid::Uuid;
 
 use crate::models::audit_logs::Model as AuditModel;
@@ -132,7 +132,7 @@ pub fn env_overrides() -> Result<Vec<(String, i64)>, String> {
 
 /// The instant before which a record is past its period.
 #[must_use]
-pub fn cutoff(now: DateTime<Utc>, days: i64) -> DateTime<Utc> {
+pub fn cutoff(now: Timestamp, days: i64) -> Timestamp {
     now - Duration::days(days)
 }
 
@@ -204,7 +204,7 @@ fn db_err(e: &impl std::fmt::Display) -> axa::Error {
 /// When a database statement fails; earlier tables stay purged, the failing one is rolled back.
 pub async fn run(
     ctx: &AppContext,
-    now: DateTime<Utc>,
+    now: Timestamp,
     overrides: &[(String, i64)],
     apply: bool,
 ) -> axa::Result<Vec<Outcome>> {
@@ -272,10 +272,10 @@ pub async fn run(
 mod tests {
     use super::*;
 
-    fn at(d: u32) -> DateTime<Utc> {
-        DateTime::parse_from_rfc3339(&format!("2026-10-{d:02}T12:00:00Z"))
+    fn at(d: u32) -> Timestamp {
+        crate::datetime::OffsetDateTime::parse_from_rfc3339(&format!("2026-10-{d:02}T12:00:00Z"))
             .unwrap()
-            .with_timezone(&Utc)
+            .to_utc()
     }
 
     #[test]

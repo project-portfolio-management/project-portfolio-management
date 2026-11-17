@@ -569,6 +569,38 @@ impl SubAssign<Duration> for Timestamp {
     }
 }
 
+impl Add<Days> for Timestamp {
+    type Output = Timestamp;
+    fn add(self, days: Days) -> Timestamp {
+        self.checked_add_days(days)
+            .expect("`Timestamp + Days` out of range")
+    }
+}
+
+impl Sub<Days> for Timestamp {
+    type Output = Timestamp;
+    fn sub(self, days: Days) -> Timestamp {
+        self.checked_sub_days(days)
+            .expect("`Timestamp - Days` out of range")
+    }
+}
+
+impl Add<Months> for Timestamp {
+    type Output = Timestamp;
+    fn add(self, months: Months) -> Timestamp {
+        self.checked_add_months(months)
+            .expect("`Timestamp + Months` out of range")
+    }
+}
+
+impl Sub<Months> for Timestamp {
+    type Output = Timestamp;
+    fn sub(self, months: Months) -> Timestamp {
+        self.checked_sub_months(months)
+            .expect("`Timestamp - Months` out of range")
+    }
+}
+
 impl Sub<Timestamp> for Timestamp {
     type Output = Duration;
     fn sub(self, rhs: Timestamp) -> Duration {

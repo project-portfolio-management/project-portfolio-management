@@ -402,8 +402,8 @@ async fn delete_one(
     sqlx::query_scalar::<_, i64>(
         "UPDATE attachments SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-        chrono::Utc::now(),
+    .bind(crate::datetime::OffsetDateTime::from(
+        crate::datetime::Timestamp::now(),
     ))
     .bind(att.id)
     .fetch_one(tx.conn())

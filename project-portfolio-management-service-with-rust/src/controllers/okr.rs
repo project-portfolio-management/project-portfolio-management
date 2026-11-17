@@ -400,7 +400,7 @@ async fn plan_okr(
         // all unmeasured sorts last, it does not score bottom.
         "measured": score.is_some(),
         "objectives": detail,
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);
     super::conditional_json(&headers, &etag, &body)
@@ -487,7 +487,7 @@ async fn list_okrs(
     format::json(serde_json::json!({
         "period": q.period,
         "objectives": rows.into_iter().map(|(_, v)| v).collect::<Vec<_>>(),
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "Scores are derived on read. An objective with no measurable key result is unmeasured and sorts last, never as zero. Confidence is recorded beside each key result and never blended into a score.",
     }))
 }
@@ -556,7 +556,7 @@ async fn delete_objective(
     let row_pid = objective.pid;
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query("UPDATE objectives SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(objective.id)
         .fetch_one(tx.conn())
         .await?;
@@ -595,7 +595,7 @@ pub(crate) struct KeyResultUpdate {
     owner_ref: Option<String>,
     #[serde(default)]
     /// Optional due date for the key result.
-    due_date: Option<chrono::NaiveDate>,
+    due_date: Option<crate::datetime::Date>,
 }
 
 /// `PUT /api/key-results/{pid}` — edit a key result's title, target, tolerance,
@@ -668,7 +668,7 @@ async fn delete_key_result(
     let row_pid = kr.pid;
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query("UPDATE key_results SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(kr.id)
         .fetch_one(tx.conn())
         .await?;

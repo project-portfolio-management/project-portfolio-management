@@ -10,7 +10,7 @@
 
 #![expect(missing_docs)]
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -20,7 +20,7 @@ pub struct Required {
     pub organization: Uuid,
     pub name: String,
     /// The date of the sign-off now in force; `None` is outstanding.
-    pub signed_on: Option<NaiveDate>,
+    pub signed_on: Option<Date>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, serde::Deserialize)]
@@ -38,14 +38,14 @@ pub enum State {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Assessment {
     pub state: State,
-    pub delivered_on: Option<NaiveDate>,
-    pub met_on: Option<NaiveDate>,
+    pub delivered_on: Option<Date>,
+    pub met_on: Option<Date>,
     pub outstanding: Vec<String>,
 }
 
 /// Assess a milestone from who is required and the date it was delivered (if it was).
 #[must_use]
-pub fn assess(required: &[Required], delivered_on: Option<NaiveDate>) -> Assessment {
+pub fn assess(required: &[Required], delivered_on: Option<Date>) -> Assessment {
     let outstanding: Vec<String> = required
         .iter()
         .filter(|r| r.signed_on.is_none())
@@ -78,7 +78,7 @@ pub fn assess(required: &[Required], delivered_on: Option<NaiveDate>) -> Assessm
     let met_on = required
         .iter()
         .filter_map(|r| r.signed_on)
-        .fold(delivered, NaiveDate::max);
+        .fold(delivered, Date::max);
     Assessment {
         state: State::Met,
         delivered_on,
@@ -125,8 +125,8 @@ pub fn totals(states: &[State]) -> Totals {
 mod tests {
     use super::*;
 
-    fn d(n: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 3, n).unwrap()
+    fn d(n: u32) -> Date {
+        Date::from_ymd_opt(2026, 3, n).unwrap()
     }
 
     fn req(name: &str, on: Option<u32>) -> Required {

@@ -6,7 +6,7 @@
 
 use std::collections::BTreeMap;
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 
 /// The Kanban task statuses (board column order).
 pub const TASK_STATUSES: &[&str] = &["todo", "in_progress", "in_review", "done", "blocked"];
@@ -30,7 +30,7 @@ pub fn parse_moscow_tag(tag: &str) -> Option<&'static str> {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct BurndownPoint {
     /// The day.
-    pub date: NaiveDate,
+    pub date: Date,
     /// Tasks not yet completed at the end of that day.
     pub remaining: usize,
 }
@@ -41,12 +41,7 @@ pub struct BurndownPoint {
 /// front-end may draw an ideal line, labelled as such). Windows longer
 /// than 366 calendar days are truncated (a sprint is not a year).
 #[must_use]
-pub fn burndown(
-    total: usize,
-    done_dates: &[NaiveDate],
-    from: NaiveDate,
-    to: NaiveDate,
-) -> Vec<BurndownPoint> {
+pub fn burndown(total: usize, done_dates: &[Date], from: Date, to: Date) -> Vec<BurndownPoint> {
     let mut points = Vec::new();
     let mut day = from;
     let mut steps = 0;
@@ -103,7 +98,7 @@ pub fn parse_wip_limits(raw: Option<&str>) -> Option<BTreeMap<String, usize>> {
 mod tests {
     use super::*;
 
-    fn d(s: &str) -> NaiveDate {
+    fn d(s: &str) -> Date {
         s.parse().expect("date")
     }
 

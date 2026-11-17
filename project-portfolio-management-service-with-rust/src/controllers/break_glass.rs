@@ -7,9 +7,9 @@
 //! because of it is audited. A grant ends at its expiry or when it is revoked, and is never deleted.
 
 use super::refuse;
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -19,7 +19,7 @@ use crate::models::_entities::{break_glass_grants as grants, plans};
 use crate::models::audit_logs::Model as AuditModel;
 
 /// The JSON shape for one grant, including whether it is still live (unexpired and not revoked) at `now`.
-fn view(g: &grants::Model, now: chrono::DateTime<Utc>) -> serde_json::Value {
+fn view(g: &grants::Model, now: crate::datetime::Timestamp) -> serde_json::Value {
     serde_json::json!({
         "pid": g.pid, "plan_pid": g.plan_pid, "sub": g.sub, "reason": g.reason,
         "notify_ref": g.notify_ref, "opened_at": g.created_at, "expires_at": g.expires_at,
@@ -48,7 +48,7 @@ async fn preconditions(
     ctx: &AppContext,
     plan_pid: Uuid,
     sub: &str,
-    now: chrono::DateTime<Utc>,
+    now: crate::datetime::Timestamp,
 ) -> Result<plans::Model> {
     // The same answer for "no such plan" and "a plan you could not otherwise name" is not needed here:
     // an eligible person is told whether the plan exists, but only that, never what is in it.
@@ -76,7 +76,7 @@ async fn preconditions(
         "SELECT COUNT(*) FROM break_glass_grants WHERE sub = $1 AND created_at > $2",
     )
     .bind(sub)
-    .bind(now - chrono::Duration::days(1))
+    .bind(now - crate::datetime::Duration::days(1))
     .fetch_one(crate::db::pool(ctx))
     .await?;
     if u64::try_from(recent).unwrap_or(0) >= rules::MAX_PER_DAY {
@@ -142,7 +142,7 @@ async fn open(
             &problems.join("; "),
         ));
     }
-    let now = Utc::now();
+    let now = Timestamp::now();
     let plan = preconditions(&ctx, b.plan_pid, &sub, now).await?;
     let expires = rules::expires_at(now, b.minutes);
     let minutes = b.minutes.unwrap_or(rules::DEFAULT_MINUTES);
@@ -159,7 +159,7 @@ async fn open(
     .bind(&sub)
     .bind(b.reason.trim())
     .bind(b.notify_ref.trim())
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(expires))
+    .bind(crate::datetime::OffsetDateTime::from(expires))
     .fetch_one(tx.conn())
     .await?;
     let told = crate::models::capabilities::notify_on(
@@ -217,7 +217,7 @@ async fn list(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Re
         .build_query_as()
         .fetch_all(crate::db::pool(&ctx))
         .await?;
-    let now = Utc::now();
+    let now = Timestamp::now();
     format::json(serde_json::json!({
         "grants": rows.iter().map(|g| view(g, now)).collect::<Vec<_>>(),
         "live": rows.iter().filter(|g| rules::is_live(g.expires_at.into(), g.revoked_at.is_some(), now)).count(),
@@ -250,14 +250,14 @@ async fn revoke(
         return Err(Error::NotFound);
     }
     if row.revoked_at.is_some() {
-        return format::json(view(&row, Utc::now()));
+        return format::json(view(&row, Timestamp::now()));
     }
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     let row: grants::Model = sqlx::query_as(
         "UPDATE break_glass_grants SET revoked_at = $1, revoked_by = $2 WHERE id = $3 RETURNING *",
     )
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(Utc::now()))
+    .bind(crate::datetime::OffsetDateTime::from(Timestamp::now()))
     .bind(&sub)
     .bind(row.id)
     .fetch_one(tx.conn())
@@ -266,7 +266,7 @@ async fn revoke(
         .await
         .map_err(super::audit_failed)?;
     tx.commit().await?;
-    format::json(view(&row, Utc::now()))
+    format::json(view(&row, Timestamp::now()))
 }
 
 /// The break-glass routes.

@@ -191,9 +191,9 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         let b: Value = with!(request.get("/api/exceptions?breached=true"), writer).await.json();
         assert_eq!(b["exceptions"].as_array().unwrap().len(), 1);
         assert_eq!(b["exceptions"][0]["breached"], true);
-        let told = project_portfolio_management::tasks::exception_breaches::run_once(&ctx, chrono::Utc::now()).await.unwrap();
+        let told = project_portfolio_management::tasks::exception_breaches::run_once(&ctx, project_portfolio_management::datetime::Timestamp::now()).await.unwrap();
         assert_eq!(told, 1);
-        assert_eq!(project_portfolio_management::tasks::exception_breaches::run_once(&ctx, chrono::Utc::now()).await.unwrap(), 0, "notified once");
+        assert_eq!(project_portfolio_management::tasks::exception_breaches::run_once(&ctx, project_portfolio_management::datetime::Timestamp::now()).await.unwrap(), 0, "notified once");
         // A private programme's exception is nowhere for an outsider.
         let sx: Value = with!(request.put(&conf(&secret)), writer).json(&json!({ "value": "red", "kind": "self", "rationale": "Secret programme is failing" })).await.json();
         let sxp = sx["exception"]["pid"].as_str().map(str::to_string);
@@ -248,9 +248,9 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         // ── the pack carries it, with a trend against the previous issued pack ──
         // The packs are for last month and this month, from the clock: the exception closed above is closed today, so a
         // fixed period (this was "2026-10") stops containing it on the first day of the next month.
-        let today = chrono::Utc::now().date_naive();
+        let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
         let this_month = today.format("%Y-%m").to_string();
-        let last_month = (chrono::Datelike::with_day(&today, 1).unwrap() - chrono::Duration::days(1)).format("%Y-%m").to_string();
+        let last_month = (today.with_day(1).unwrap() - project_portfolio_management::datetime::Duration::days(1)).format("%Y-%m").to_string();
         let draft = |period: String| {
             let (request, issuer) = (&request, issuer.clone());
             async move {

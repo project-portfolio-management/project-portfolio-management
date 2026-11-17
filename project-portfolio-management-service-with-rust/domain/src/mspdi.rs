@@ -12,7 +12,7 @@
 //! cap, so a hostile file is a bounded error rather than a resource attack.
 //! Dates are zone-free (the time part is dropped, never converted).
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 
 use crate::cpm::Kind;
 
@@ -82,7 +82,7 @@ pub struct MsTask {
     /// `OutlineLevel` (1 = top).
     pub outline_level: i64,
     /// `Start` date (time dropped).
-    pub start: Option<NaiveDate>,
+    pub start: Option<Date>,
     /// Business days (`Duration` over minutes per day, rounded up).
     pub duration_days: Option<i64>,
     /// `Summary`: a roll-up row.
@@ -92,9 +92,9 @@ pub struct MsTask {
     /// `PercentComplete`, 0–100.
     pub percent_complete: i64,
     /// `ConstraintType` and `ConstraintDate`.
-    pub constraint: Option<(MsConstraint, NaiveDate)>,
+    pub constraint: Option<(MsConstraint, Date)>,
     /// `Deadline`.
-    pub deadline: Option<NaiveDate>,
+    pub deadline: Option<Date>,
     /// `Notes`.
     pub notes: Option<String>,
 }
@@ -129,7 +129,7 @@ pub struct MsCalendar {
     /// Seven `0`/`1`, Monday first.
     pub weekdays: String,
     /// Non-working exception dates.
-    pub holidays: Vec<NaiveDate>,
+    pub holidays: Vec<Date>,
 }
 
 /// A link from a task of this file to a task of another project file (`CrossProject`).
@@ -282,8 +282,8 @@ fn int(n: roxmltree::Node<'_, '_>, name: &str) -> Option<i64> {
 }
 
 /// Calendar date from a named child, reading only the leading `YYYY-MM-DD` and dropping any time and zone suffix; None when missing or malformed.
-fn date(n: roxmltree::Node<'_, '_>, name: &str) -> Option<NaiveDate> {
-    text(n, name).and_then(|t| NaiveDate::parse_from_str(t.get(..10)?, "%Y-%m-%d").ok())
+fn date(n: roxmltree::Node<'_, '_>, name: &str) -> Option<Date> {
+    text(n, name).and_then(|t| Date::parse_from_str(t.get(..10)?, "%Y-%m-%d").ok())
 }
 
 /// Minutes in an ISO 8601 duration as MSPDI writes it (`PT40H0M0S`, `P1DT2H`).
@@ -462,12 +462,14 @@ fn resource_terms_of(root: roxmltree::Node<'_, '_>, minutes_per_day: i64) -> Vec
 }
 
 /// Inclusive list of days from `from` to `to`; empty when `to` precedes `from`, and capped at 367 days so one malformed range cannot allocate without bound.
-fn span(from: NaiveDate, to: NaiveDate) -> Vec<NaiveDate> {
+fn span(from: Date, to: Date) -> Vec<Date> {
     if to < from {
         return Vec::new();
     }
     let n = (to - from).num_days().min(366);
-    (0..=n).map(|i| from + chrono::Duration::days(i)).collect()
+    (0..=n)
+        .map(|i| from + crate::datetime::Duration::days(i))
+        .collect()
 }
 
 /// Parse an MSPDI document.
@@ -1016,8 +1018,8 @@ mod tests {
 
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
 
     const SAMPLE: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

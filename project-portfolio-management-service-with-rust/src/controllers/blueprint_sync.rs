@@ -309,7 +309,7 @@ async fn template_sync(
     let mut applied: Vec<String> = Vec::new();
     let mut overwritten: Vec<String> = Vec::new();
     let mut refused: Vec<serde_json::Value> = Vec::new();
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let mut tx = crate::db::begin(&ctx).await?;
     for c in changes.iter().filter(|c| b.accept.contains(&c.id)) {
         let local = local_of(&l.map, &rows, c.key);
@@ -358,7 +358,7 @@ async fn template_sync(
                     sqlx::query_scalar::<_, i32>(
                         "UPDATE tasks SET deleted_at = $1 WHERE id = $2 RETURNING id",
                     )
-                    .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+                    .bind(crate::datetime::OffsetDateTime::from(now))
                     .bind(row.id)
                     .fetch_one(tx.conn())
                     .await?;
@@ -433,7 +433,7 @@ async fn insert_task(
     pid: Uuid,
     t: &TplTask,
     initial: &str,
-    now: chrono::DateTime<chrono::Utc>,
+    now: crate::datetime::Timestamp,
     actor: Option<&str>,
 ) -> Result<()> {
     // The columns the insert set before SQ-1, no more.
@@ -449,7 +449,7 @@ async fn insert_task(
     .bind(&t.description)
     .bind(initial)
     .bind(t.points)
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+    .bind(crate::datetime::OffsetDateTime::from(now))
     .bind(&t.flow_type)
     .execute(tx.conn())
     .await?;

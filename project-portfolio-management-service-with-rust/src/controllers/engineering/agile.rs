@@ -18,9 +18,9 @@ pub(crate) struct SprintPayload {
     /// Sprint name.
     name: String,
     /// First day of the sprint window (inclusive).
-    starts_on: chrono::NaiveDate,
+    starts_on: crate::datetime::Date,
     /// Last day of the sprint window; must not precede `starts_on`.
-    ends_on: chrono::NaiveDate,
+    ends_on: crate::datetime::Date,
 }
 
 /// `POST /api/plans/{pid}/sprints` — create a time-boxed
@@ -104,7 +104,7 @@ pub(super) async fn burndown(
             .bind(sprint.pid)
             .fetch_all(crate::db::pool(&ctx))
             .await?;
-    let done_dates: Vec<chrono::NaiveDate> = sprint_tasks
+    let done_dates: Vec<crate::datetime::Date> = sprint_tasks
         .iter()
         .filter_map(|task| task.done_at.map(|at| at.to_utc().date_naive()))
         .collect();
@@ -115,7 +115,7 @@ pub(super) async fn burndown(
         sprint.ends_on,
     );
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "sprint": { "pid": sprint.pid, "name": sprint.name,
                      "starts_on": sprint.starts_on, "ends_on": sprint.ends_on },
         "total_tasks": sprint_tasks.len(),
@@ -136,7 +136,7 @@ pub(super) async fn standup(
     headers: HeaderMap,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let since = chrono::Utc::now() - chrono::Days::new(1);
+    let since = crate::datetime::Timestamp::now() - crate::datetime::Days::new(1);
     let item_tasks = plan_tasks(&ctx, item.pid).await?;
     let task_pids: std::collections::HashSet<Uuid> =
         item_tasks.iter().map(|task| task.pid).collect();
@@ -148,7 +148,7 @@ pub(super) async fn standup(
     let recent: Vec<audit_logs::Model> = sqlx::query_as(
         "SELECT * FROM audit_logs WHERE created_at >= $1 ORDER BY created_at DESC LIMIT 500",
     )
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(since))
+    .bind(crate::datetime::OffsetDateTime::from(since))
     .fetch_all(crate::db::pool(&ctx))
     .await?;
     let mut moves = Vec::new();
@@ -185,7 +185,7 @@ pub(super) async fn standup(
         .map(task_view)
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "since": since,
         "item": item_ref(&item),
         "tasks_created": created,
@@ -330,7 +330,7 @@ pub(super) async fn convert_note(
     if note.task_pid.is_some() {
         return Err(refuse("note is already converted"));
     }
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let mut tx = crate::db::begin(&ctx).await?;
     let task: tasks::Model = sqlx::query_as(
         "INSERT INTO tasks
@@ -346,7 +346,7 @@ pub(super) async fn convert_note(
         "from {} note in sprint `{}`",
         note.category, sprint.name
     ))
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+    .bind(crate::datetime::OffsetDateTime::from(now))
     .fetch_one(tx.conn())
     .await?;
     let note_pid = note.pid;
@@ -407,7 +407,7 @@ pub(super) async fn velocity(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "points are team-local; velocity is for this item's own trend only — \
                  never compare across teams or items",
         "sprints": sprints_view,

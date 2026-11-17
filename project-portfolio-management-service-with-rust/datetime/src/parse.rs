@@ -18,6 +18,10 @@
 //! What cannot be kept: a leap second (`:60`) is read as `:59` and the same fraction (jiff has no leap
 //! seconds, and neither has Postgres), and a year outside -9999..=9999, or an instant within a day of either
 //! end of that range, is out of range (jiff's range).
+//!
+//! The scanning functions and the two RFC 3339 readers follow chrono 0.4.45's `format/parse.rs` and
+//! `format/scan.rs` (copyright (c) 2014--2026 Kang Seonghoon and contributors, MIT OR Apache-2.0), adapted to
+//! build jiff values.
 
 use crate::error::{
     BAD_FORMAT, IMPOSSIBLE, INVALID, NOT_ENOUGH, OUT_OF_RANGE, ParseResult, TOO_LONG, TOO_SHORT,
@@ -549,10 +553,65 @@ fn items(pattern: &str) -> ParseResult<Vec<Item<'_>>> {
 
 /// Read `s` with a `%` pattern (chrono's `parse_from_str`): every field the pattern names, and nothing left over.
 pub(crate) fn strptime(s: &str, pattern: &str) -> ParseResult<Parsed> {
-    let items = items(pattern)?;
+    // The patterns the service reads with, without building their steps each time.
+    const YMD: &[Item<'static>] = &[
+        Item::Year,
+        Item::Literal("-"),
+        Item::Month,
+        Item::Literal("-"),
+        Item::Day,
+    ];
+    const DMY: &[Item<'static>] = &[
+        Item::Day,
+        Item::Literal("/"),
+        Item::Month,
+        Item::Literal("/"),
+        Item::Year,
+    ];
+    let built;
+    let items: &[Item<'_>] = match pattern {
+        "%Y-%m-%d" => YMD,
+        "%d/%m/%Y" => DMY,
+        _ => {
+            built = items(pattern)?;
+            &built
+        }
+    };
     let mut parsed = Parsed::default();
-    if !run(&mut parsed, s, &items)?.is_empty() {
+    if !run(&mut parsed, s, items)?.is_empty() {
         return Err(TOO_LONG);
     }
     Ok(parsed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The fixed steps for the two common patterns are what the general builder makes of them.
+    #[test]
+    fn the_fixed_patterns_match_the_builder() {
+        let general = |s: &str, pattern: &str| {
+            let built = items(pattern)?;
+            let mut parsed = Parsed::default();
+            if !run(&mut parsed, s, &built)?.is_empty() {
+                return Err(TOO_LONG);
+            }
+            parsed.to_date()
+        };
+        for s in [
+            " 2026- 1- 3",
+            "3/1/2026",
+            "2026 -10-30",
+            "2026-10-30 ",
+            "30/10/2026",
+            "",
+            "2026-02-29",
+        ] {
+            for pattern in ["%Y-%m-%d", "%d/%m/%Y"] {
+                let fixed = strptime(s, pattern).and_then(|p| p.to_date());
+                assert_eq!(fixed, general(s, pattern), "{pattern} {s:?}");
+            }
+        }
+    }
 }

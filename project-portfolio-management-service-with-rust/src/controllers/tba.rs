@@ -229,7 +229,7 @@ async fn task_time_analysis(
     State(ctx): State<AppContext>,
     Path((pid, t_pid)): Path<(String, String)>,
 ) -> Result<Response> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let item = super::governance::find_item(&ctx, &pid).await?;
     let task = find_task(&ctx, item.pid, &t_pid).await?;
     let rows = task_transitions_of(&ctx, task.pid).await?;
@@ -296,7 +296,7 @@ async fn plan_time_analysis(
     Path(pid): Path<String>,
     Query(query): Query<PlanQuery>,
 ) -> Result<Response> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let percentile = query.percentile()?;
     let sprint = query.sprint()?;
     if query
@@ -342,7 +342,7 @@ async fn plan_constraints(
     Path(pid): Path<String>,
     Query(query): Query<PlanQuery>,
 ) -> Result<Response> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let sprint = query.sprint()?;
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, sprint).await?;
@@ -375,7 +375,7 @@ async fn aging_wip(
     Path(pid): Path<String>,
     Query(query): Query<PlanQuery>,
 ) -> Result<Response> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let percentile = query.percentile()?;
     let sprint = query.sprint()?;
     let item = super::governance::find_item(&ctx, &pid).await?;
@@ -435,12 +435,12 @@ async fn plan_flow(
     Path(pid): Path<String>,
     Query(query): Query<FlowQuery>,
 ) -> Result<Response> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let window_days = query.window_days.unwrap_or(DEFAULT_WINDOW_DAYS);
     if window_days <= 0 || window_days > 3650 {
         return Err(refuse("window_days must be between 1 and 3650"));
     }
-    let since = now - chrono::Duration::days(window_days);
+    let since = now - crate::datetime::Duration::days(window_days);
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, None).await?;
     let classes = classes_for(&ctx, item.pid).await;
@@ -532,7 +532,7 @@ async fn cumulative_flow(
     Path(pid): Path<String>,
     Query(query): Query<CumulativeFlowQuery>,
 ) -> Result<Response> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let days = query.days.unwrap_or(60);
     if days <= 0 || days > 365 {
         return Err(refuse("days must be between 1 and 365 calendar days"));
@@ -625,7 +625,7 @@ async fn rollup(
     Query(query): Query<RollupQuery>,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let as_of_ms = now.timestamp_millis();
     let depth = query.depth.unwrap_or(tba::MAX_ROLLUP_DEPTH);
     if depth == 0 || depth > tba::MAX_ROLLUP_DEPTH {
@@ -768,7 +768,7 @@ async fn forecast(
     Path(pid): Path<String>,
     Query(query): Query<ForecastQuery>,
 ) -> Result<Response> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let period_days = query.period_days.unwrap_or(tba::DEFAULT_PERIOD_DAYS);
     if period_days <= 0 || period_days > 90 {
         return Err(refuse("period_days must be between 1 and 90"));

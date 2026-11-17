@@ -49,13 +49,13 @@ async fn a_digest_with_one_item_of_each_kind_is_built_and_sent_once_a_week() {
             .unwrap()
             .unwrap();
         sqlx::query("UPDATE escalations SET respond_by = $1 WHERE id = $2 RETURNING id")
-            .bind(chrono::NaiveDate::from_ymd_opt(2020, 1, 1))
+            .bind(project_portfolio_management::datetime::Date::from_ymd_opt(2020, 1, 1))
             .bind(row.id)
             .fetch_one(project_portfolio_management::db::pool(&ctx))
             .await
             .expect("move the date back");
         // An open exception opened by a threshold.
-        let opened_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+        let opened_at: project_portfolio_management::datetime::OffsetDateTime = project_portfolio_management::datetime::Timestamp::now().into();
         sqlx::query(
             "INSERT INTO delivery_exceptions (pid, plan_pid, status, opened_at, opened_value, worst_value, worsened_count, threshold_kind) \
              VALUES ($1, $2, 'open', $3, 'threshold', 'threshold', 0, 'pause') RETURNING id",

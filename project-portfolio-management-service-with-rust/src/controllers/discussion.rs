@@ -374,8 +374,8 @@ async fn edit_comment(
     let row: comments::Model =
         sqlx::query_as("UPDATE comments SET body = $1, edited_at = $2 WHERE id = $3 RETURNING *")
             .bind(payload.body.as_str())
-            .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-                chrono::Utc::now(),
+            .bind(crate::datetime::OffsetDateTime::from(
+                crate::datetime::Timestamp::now(),
             ))
             .bind(comment.id)
             .fetch_one(tx.conn())
@@ -433,7 +433,7 @@ async fn delete_comment(
     )
     .await?;
     let comment_pid = comment.pid;
-    let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let deleted_at = crate::datetime::OffsetDateTime::from(crate::datetime::Timestamp::now());
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>("UPDATE comments SET deleted_at = $1 WHERE id = $2 RETURNING id")

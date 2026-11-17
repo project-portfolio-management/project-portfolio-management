@@ -3,12 +3,14 @@
 //! **Doctrine.**
 //!
 //! 1. **Store UTC.** Every instant is `timestamptz`, written from
-//!    `Utc::now()`. Nothing stores a viewer-local wall-clock time.
+//!    `Timestamp::now()`. Nothing stores a viewer-local wall-clock time.
 //! 2. **Dates are calendar dates.** A `date` column or a `YYYY-MM-DD`
 //!    string (a task's `due_date`, a time entry's `spent_on`) names a day
 //!    with **no zone** — "due 2026-10-03" is that day wherever you are.
-//! 3. **The server never reads its own zone.** `chrono::Local` is banned by
-//!    `clippy.toml` and by a test below; the process may run in any `TZ`
+//! 3. **The server never reads its own zone.** Reading the process zone (jiff's
+//!    `TimeZone::system`, `ZonedDateTime::now`, its global database) is banned by
+//!    `clippy.toml` and by a test below, and zones come only from the database
+//!    bundled into the binary; the process may run in any `TZ`
 //!    and every answer is unchanged.
 //! 4. **Portfolio-wide views use the deployment's "today" zone** ("today" in
 //!    `at-a-glance`, overdue risks, …): an explicit administrator setting
@@ -20,8 +22,8 @@
 //!
 //! DB-free and unit-tested.
 
-use chrono::{DateTime, NaiveDate, Utc};
-pub use chrono_tz::Tz;
+pub use crate::datetime::Tz;
+use crate::datetime::{Date, Timestamp};
 
 /// Parse an IANA zone name (`Pacific/Auckland`, `UTC`). Fixed offsets
 /// (`+02:00`) and abbreviations (`PST`) are refused with a message that
@@ -47,7 +49,7 @@ pub fn parse_zone(name: &str) -> Result<Tz, String> {
 /// never the other way round, so a daylight-saving gap or overlap cannot
 /// make this ambiguous.
 #[must_use]
-pub fn local_today(now: DateTime<Utc>, tz: Tz) -> NaiveDate {
+pub fn local_today(now: Timestamp, tz: Tz) -> Date {
     now.with_timezone(&tz).date_naive()
 }
 
@@ -76,31 +78,30 @@ pub fn set_today_zone(zone: Tz) {
 /// testable without touching the shared setting; [`deployment_today`] is this with the clock and
 /// the configured zone.
 #[must_use]
-pub fn deployment_today_at(now: DateTime<Utc>, zone: Tz) -> NaiveDate {
+pub fn deployment_today_at(now: Timestamp, zone: Tz) -> Date {
     local_today(now, zone)
 }
 
 /// The calendar date it is, right now, in the deployment's "today" zone (doctrine 4): what a
 /// portfolio-wide view or a default means by "today", so everyone sees one answer however many
 /// zones they sit in. A personal view takes a zone per request and uses [`local_today`]. Calls name
-/// this rather than `Utc::now().date_naive()`, so each use is findable and a census can ban the raw
+/// this rather than `Timestamp::now().date_naive()`, so each use is findable and a census can ban the raw
 /// form.
 #[must_use]
-pub fn deployment_today() -> NaiveDate {
-    deployment_today_at(Utc::now(), today_zone())
+pub fn deployment_today() -> Date {
+    deployment_today_at(Timestamp::now(), today_zone())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
 
-    fn at(y: i32, m: u32, d: u32, h: u32, min: u32) -> DateTime<Utc> {
-        Utc.with_ymd_and_hms(y, m, d, h, min, 0).unwrap()
+    fn at(y: i32, m: u32, d: u32, h: u32, min: u32) -> Timestamp {
+        Timestamp::with_ymd_and_hms(y, m, d, h, min, 0).unwrap()
     }
 
-    fn day(y: i32, m: u32, d: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    fn day(y: i32, m: u32, d: u32) -> Date {
+        Date::from_ymd_opt(y, m, d).unwrap()
     }
 
     #[test]
@@ -178,10 +179,24 @@ mod tests {
     /// bans it too; this fails even where clippy is not run.
     #[test]
     fn no_source_file_reads_the_process_time_zone() {
-        let needles = [format!("chrono::{}", "Local"), format!("{}::now", "Local")];
-        // This crate's `src` and the service's (`../src`), so a file on either side of the move is read.
+        // chrono's local zone (gone with chrono, still refused), and jiff's ways to the process zone or the
+        // system database: zones come only from `TimeZoneDatabase::bundled()`, in the datetime crate.
+        let needles = [
+            format!("chrono::{}", "Local"),
+            format!("{}::now", "Local"),
+            format!("ZonedDateTime::{}", "now"),
+            format!("TimeZone::{}", "system"),
+            format!("TimeZone::{}", "try_system"),
+            format!("tz::{}()", "db"),
+            format!(".{}(", "in_tz"),
+        ];
+        // This crate's `src`, the service's (`../src`) and the datetime crate's (`../datetime/src`).
         let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        let mut stack = vec![manifest.join("src"), manifest.join("../src")];
+        let mut stack = vec![
+            manifest.join("src"),
+            manifest.join("../src"),
+            manifest.join("../datetime/src"),
+        ];
         let mut offenders = Vec::new();
         while let Some(dir) = stack.pop() {
             for entry in std::fs::read_dir(&dir).expect("read src") {
@@ -216,17 +231,20 @@ mod tests {
                     walk(&p, hits);
                 } else if p.extension().is_some_and(|x| x == "rs") && !p.ends_with("tz.rs") {
                     let text = std::fs::read_to_string(&p).unwrap();
-                    if text.contains("Utc::now().date_naive()") {
+                    if text.contains("Utc::now().date_naive()")
+                        || text.contains("Timestamp::now().date_naive()")
+                    {
                         hits.push(p.display().to_string());
                     }
                 }
             }
         }
         let mut hits = Vec::new();
-        // This crate's `src` and the service's (`../src`).
+        // This crate's `src`, the service's (`../src`) and the datetime crate's (`../datetime/src`).
         let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         walk(&manifest.join("src"), &mut hits);
         walk(&manifest.join("../src"), &mut hits);
+        walk(&manifest.join("../datetime/src"), &mut hits);
         assert!(
             hits.is_empty(),
             "use tz::deployment_today() or tz::local_today(): {hits:?}"
@@ -238,9 +256,9 @@ mod tests {
     #[test]
     fn deployment_today_defaults_to_the_utc_date() {
         assert_eq!(today_zone(), Tz::UTC);
-        let before = Utc::now().date_naive();
+        let before = Timestamp::now().date_naive();
         let t = deployment_today();
-        assert!(t >= before && t <= Utc::now().date_naive());
+        assert!(t >= before && t <= Timestamp::now().date_naive());
     }
 
     /// The configured zone decides the day near midnight. Honolulu is UTC-10 all year: 09:30Z on

@@ -16,7 +16,7 @@
 //! client renders a stable layout and an empty `overdue` reads as good news
 //! rather than a missing field.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// One due-date bucket.
@@ -60,7 +60,7 @@ impl Bucket {
 
 /// Which bucket a task falls in on `today`.
 #[must_use]
-pub fn bucket(due: Option<NaiveDate>, today: NaiveDate) -> Bucket {
+pub fn bucket(due: Option<Date>, today: Date) -> Bucket {
     let Some(due) = due else {
         return Bucket::Undated;
     };
@@ -73,13 +73,13 @@ pub fn bucket(due: Option<NaiveDate>, today: NaiveDate) -> Bucket {
 }
 
 /// Items awaiting grouping, each with its due date.
-type Dated<T> = Vec<(Option<NaiveDate>, T)>;
+type Dated<T> = Vec<(Option<Date>, T)>;
 
 /// Group `(due, item)` pairs into all five buckets, each ordered by due
 /// date ascending (undated last within their bucket) and then by the order
 /// given. The input order is the tiebreak, so callers pass stable data.
 #[must_use]
-pub fn group<T>(items: Vec<(Option<NaiveDate>, T)>, today: NaiveDate) -> Vec<(Bucket, Vec<T>)> {
+pub fn group<T>(items: Vec<(Option<Date>, T)>, today: Date) -> Vec<(Bucket, Vec<T>)> {
     let mut out: Vec<(Bucket, Dated<T>)> = Bucket::ALL.iter().map(|b| (*b, Vec::new())).collect();
     for (due, item) in items {
         let b = bucket(due, today);
@@ -99,8 +99,8 @@ pub fn group<T>(items: Vec<(Option<NaiveDate>, T)>, today: NaiveDate) -> Vec<(Bu
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
 
     #[test]

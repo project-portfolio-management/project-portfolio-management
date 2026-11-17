@@ -28,13 +28,13 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use chrono::{Datelike, Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 use uuid::Uuid;
 
 /// Monday 1970-01-05: the first Monday on or after the Unix epoch, the origin of
 /// the business-day index.
-const EPOCH: NaiveDate = match NaiveDate::from_ymd_opt(1970, 1, 5) {
+const EPOCH: Date = match Date::from_ymd_opt(1970, 1, 5) {
     Some(d) => d,
     None => unreachable!(),
 };
@@ -45,7 +45,7 @@ pub struct WorkCalendar {
     /// Monday = index 0 … Sunday = 6.
     working: [bool; 7],
     /// Dates that are not working days even when their weekday is; kept sorted for deterministic output.
-    holidays: BTreeSet<NaiveDate>,
+    holidays: BTreeSet<Date>,
 }
 
 /// An unusable calendar.
@@ -81,7 +81,7 @@ impl WorkCalendar {
     /// [`CalendarError::NoWorkingDays`] when no weekday works.
     pub fn new(
         working: [bool; 7],
-        holidays: impl IntoIterator<Item = NaiveDate>,
+        holidays: impl IntoIterator<Item = Date>,
     ) -> Result<Self, CalendarError> {
         if !working.iter().any(|w| *w) {
             return Err(CalendarError::NoWorkingDays);
@@ -116,7 +116,7 @@ impl WorkCalendar {
 
     /// Whether `date` is a business day.
     #[must_use]
-    pub fn is_working(&self, date: NaiveDate) -> bool {
+    pub fn is_working(&self, date: Date) -> bool {
         self.working[date.weekday().num_days_from_monday() as usize]
             && !self.holidays.contains(&date)
     }
@@ -125,7 +125,7 @@ impl WorkCalendar {
     /// before it. For a working date this is its own index; a non-working date
     /// maps to the index of the **next** business day. `None` before 1970-01-05.
     #[must_use]
-    pub fn index_of(&self, date: NaiveDate) -> Option<i64> {
+    pub fn index_of(&self, date: Date) -> Option<i64> {
         if date < EPOCH {
             return None;
         }
@@ -149,7 +149,7 @@ impl WorkCalendar {
     /// The date of the business day with `index` (the inverse of
     /// [`index_of`](Self::index_of) on working dates).
     #[must_use]
-    pub fn date_of(&self, index: i64) -> NaiveDate {
+    pub fn date_of(&self, index: i64) -> Date {
         let index = index.max(0);
         let span = (index / self.per_week() + 2) * 7
             + 7 * i64::try_from(self.holidays.len()).unwrap_or(0)
@@ -250,7 +250,7 @@ pub struct Constraint {
     /// Which.
     pub kind: ConstraintKind,
     /// The date it applies to.
-    pub date: NaiveDate,
+    pub date: Date,
 }
 
 /// One schedulable node (a plan with a timeframe, or a task).
@@ -261,12 +261,12 @@ pub struct Node {
     /// Business days; `0` is a milestone; `None` cannot be scheduled.
     pub duration: Option<i64>,
     /// Planned start: a lower bound on the earliest start.
-    pub planned_start: Option<NaiveDate>,
+    pub planned_start: Option<Date>,
     /// A date constraint, if any.
     pub constraint: Option<Constraint>,
     /// A soft deadline: bounds the **late** dates only (negative float when
     /// threatened), never moves an early date.
-    pub deadline: Option<NaiveDate>,
+    pub deadline: Option<Date>,
     /// Index into the `own_calendars` slice of [`analyze_with`]: the calendar
     /// this node's *work* runs on (the plan's intersected with the assignee's).
     pub own_calendar: Option<usize>,
@@ -311,13 +311,13 @@ pub struct NodeResult {
     /// Identity.
     pub pid: Uuid,
     /// Earliest start date.
-    pub early_start: NaiveDate,
+    pub early_start: Date,
     /// Earliest finish date (the last business day; equals the start for a milestone).
-    pub early_finish: NaiveDate,
+    pub early_finish: Date,
     /// Latest start date.
-    pub late_start: NaiveDate,
+    pub late_start: Date,
     /// Latest finish date.
-    pub late_finish: NaiveDate,
+    pub late_finish: Date,
     /// Business days it can slip before the project finish moves.
     pub total_float: i64,
     /// Business days it can slip before any successor is delayed.
@@ -327,7 +327,7 @@ pub struct NodeResult {
     /// `0 < total_float <= near_critical_days`.
     pub near_critical: bool,
     /// The planned start as entered, if any.
-    pub planned_start: Option<NaiveDate>,
+    pub planned_start: Option<Date>,
     /// Business days logic pushes the start **later than planned** (0 if not).
     pub pushed_days: i64,
     /// Business-day index of the earliest start (for [`diff`]).
@@ -359,7 +359,7 @@ pub struct CpmResult {
     /// Edges that touched an unscheduled or unknown node and were not used.
     pub ignored_edges: Vec<Uuid>,
     /// The latest early finish among scheduled nodes.
-    pub project_finish: Option<NaiveDate>,
+    pub project_finish: Option<Date>,
     /// Every critical chain, along driving edges.
     pub chains: Vec<Vec<Uuid>>,
     /// More chains existed than `max_chains`.
@@ -473,7 +473,7 @@ pub fn analyze_with(
         .collect();
 
     // The business-day index of a constraint date, or `None` out of range.
-    let w = |d: NaiveDate| calendar.index_of(d);
+    let w = |d: Date| calendar.index_of(d);
     // The calendar a node's work runs on, when it has its own.
     let own = |i: usize| -> Option<&WorkCalendar> {
         nodes[i].own_calendar.and_then(|k| own_calendars.get(k))
@@ -516,7 +516,7 @@ pub fn analyze_with(
     };
     // Target finish index for a date (exclusive end), for a node of duration d.
     let finish_at =
-        |date: NaiveDate, d: i64| -> Option<i64> { w(date).map(|i| if d > 0 { i + 1 } else { i }) };
+        |date: Date, d: i64| -> Option<i64> { w(date).map(|i| if d > 0 { i + 1 } else { i }) };
 
     // Forward pass.
     let mut es: Vec<Option<i64>> = vec![None; nodes.len()];
@@ -551,7 +551,7 @@ pub fn analyze_with(
         }
         let mut pinned: Option<i64> = None;
         if let Some(c) = nodes[i].constraint {
-            let target_start = |date: NaiveDate| w(date);
+            let target_start = |date: Date| w(date);
             match c.kind {
                 ConstraintKind::Snet => {
                     let b = target_start(c.date).unwrap_or(0);
@@ -770,7 +770,7 @@ pub const MAX_DAYS: i64 = 3650;
 
 /// Everything wrong with a task's schedule fields (all of it, not the first).
 #[must_use]
-pub fn schedule_problems(start: Option<NaiveDate>, duration: Option<i32>) -> Vec<String> {
+pub fn schedule_problems(start: Option<Date>, duration: Option<i32>) -> Vec<String> {
     let mut out = Vec::new();
     if let Some(d) = duration
         && !(0..=i32::try_from(MAX_DAYS).unwrap_or(i32::MAX)).contains(&d)
@@ -793,8 +793,8 @@ pub fn schedule_problems(start: Option<NaiveDate>, duration: Option<i32>) -> Vec
 #[must_use]
 pub fn constraint_problems(
     kind: Option<&str>,
-    date: Option<NaiveDate>,
-    deadline: Option<NaiveDate>,
+    date: Option<Date>,
+    deadline: Option<Date>,
 ) -> Vec<String> {
     let mut out = Vec::new();
     match (kind, date) {
@@ -864,8 +864,8 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
     fn node(n: u128, dur: i64) -> Node {
         Node {
@@ -874,7 +874,7 @@ mod tests {
             ..Node::default()
         }
     }
-    fn anchored(n: u128, dur: i64, start: NaiveDate) -> Node {
+    fn anchored(n: u128, dur: i64, start: Date) -> Node {
         Node {
             pid: id(n),
             duration: Some(dur),
@@ -897,7 +897,7 @@ mod tests {
     fn get(r: &CpmResult, n: u128) -> &NodeResult {
         r.nodes.iter().find(|x| x.pid == id(n)).unwrap()
     }
-    const MON: fn() -> NaiveDate = || d(2026, 10, 5); // a Monday
+    const MON: fn() -> Date = || d(2026, 10, 5); // a Monday
 
     /// The textbook network: A3; B4 and C2 after A; D5 after B and C.
     fn textbook() -> (Vec<Node>, Vec<Edge>) {
@@ -1184,7 +1184,7 @@ mod tests {
         assert!(m(1).is_none(), "A did not move");
     }
 
-    fn constrained(mut n: Node, kind: ConstraintKind, date: NaiveDate) -> Node {
+    fn constrained(mut n: Node, kind: ConstraintKind, date: Date) -> Node {
         n.constraint = Some(Constraint { kind, date });
         n
     }

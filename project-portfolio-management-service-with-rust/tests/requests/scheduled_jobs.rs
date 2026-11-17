@@ -26,7 +26,7 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
         );
 
         // Two schedulers reach for the same job at the same moment: one runs it, one is told it has run.
-        let now = chrono::Utc::now();
+        let now = project_portfolio_management::datetime::Timestamp::now();
         let (a, b) = tokio::join!(
             run_job(&ctx, Job::ExceptionBreaches, now),
             run_job(&ctx, Job::ExceptionBreaches, now)
@@ -81,7 +81,10 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
             Ran::Ok(_)
         ));
         // After the interval it runs again.
-        let later = now + chrono::Duration::minutes(Job::ExceptionBreaches.interval_minutes() + 1);
+        let later = now
+            + project_portfolio_management::datetime::Duration::minutes(
+                Job::ExceptionBreaches.interval_minutes() + 1,
+            );
         assert!(matches!(
             run_job(&ctx, Job::ExceptionBreaches, later).await.unwrap(),
             Ran::Ok(_)

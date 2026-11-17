@@ -11,10 +11,10 @@
 
 use std::collections::{BTreeMap, HashMap};
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -44,7 +44,7 @@ pub(crate) struct NewMove {
     /// The go-live task to move.
     task_pid: Uuid,
     /// The requested new start date for the task.
-    new_start: NaiveDate,
+    new_start: Date,
     /// Why the move is wanted; at least 10 characters after trimming.
     reason: String,
     /// `person:<id>` or `role:<name>`; defaults to `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_APPROVER`.

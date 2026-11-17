@@ -55,9 +55,9 @@ pub(crate) struct BaselinePayload {
 /// One planned-spend period inside a baseline.
 pub(crate) struct PeriodPayload {
     /// First day of the period.
-    period_start: chrono::NaiveDate,
+    period_start: crate::datetime::Date,
     /// Last day of the period; must not precede `period_start`.
-    period_end: chrono::NaiveDate,
+    period_end: crate::datetime::Date,
     /// Planned spend for the period in minor currency units; never negative.
     planned_minor: i64,
 }
@@ -134,7 +134,7 @@ async fn create(
     .bind(plan.pid)
     .bind(version)
     .bind(&currency)
-    .bind(chrono::Utc::now().fixed_offset())
+    .bind(crate::datetime::Timestamp::now().fixed_offset())
     .bind(reason)
     .fetch_one(tx.conn())
     .await?;
@@ -367,7 +367,7 @@ async fn forecast(
     let body = serde_json::json!({
         "plan_pid": plan.pid.to_string(),
         "forecast": forecast,
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);
     super::conditional_json(&headers, &etag, &body)
@@ -434,7 +434,7 @@ async fn rollup(
     let rollup = rules::rollup_forecast(&forecasts);
 
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "root": { "pid": root.pid.to_string(), "name": root.name },
         "note": "one row per currency; currencies are never merged into one sum",
         "tree": {

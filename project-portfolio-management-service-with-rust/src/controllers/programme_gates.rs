@@ -8,9 +8,9 @@
 use super::refuse;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::{DateTime, NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -169,7 +169,7 @@ async fn kept(ctx: &AppContext, tree: &HashSet<Uuid>) -> Result<serde_json::Valu
 /// `PUT /api/plans/{pid}/planned-gates/{gate}` body.
 pub(crate) struct PlannedBody {
     /// The date the plan expects its review at the gate.
-    planned_on: NaiveDate,
+    planned_on: Date,
 }
 
 /// `PUT /api/plans/{pid}/planned-gates/{gate}` — the date the plan expects its review at a gate.
@@ -422,10 +422,7 @@ async fn all_decisions(ctx: &AppContext) -> Result<Vec<decisions::Model>> {
 }
 
 /// Each programme's status at `at`, for the programmes with any decision.
-pub(crate) async fn status_map(
-    ctx: &AppContext,
-    at: NaiveDate,
-) -> Result<HashMap<Uuid, &'static str>> {
+pub(crate) async fn status_map(ctx: &AppContext, at: Date) -> Result<HashMap<Uuid, &'static str>> {
     let rows = all_decisions(ctx).await?;
     let mut by: HashMap<Uuid, Vec<decisions::Model>> = HashMap::new();
     for r in rows {
@@ -443,7 +440,7 @@ pub(crate) async fn gates_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
     period: &str,
-    cut_off: DateTime<Utc>,
+    cut_off: Timestamp,
 ) -> Result<serde_json::Value> {
     let at = cut_off.date_naive();
     let all = live_plans(ctx).await?;
@@ -471,7 +468,7 @@ pub(crate) async fn gates_section(
             .map(|r| Review {
                 gate: r.gate.clone(),
                 decision: r.decision.clone(),
-                decided_on: DateTime::<Utc>::from(r.decided_at).date_naive(),
+                decided_on: Timestamp::from(r.decided_at).date_naive(),
             })
             .collect();
         let planned: Vec<Planned> = plans_planned

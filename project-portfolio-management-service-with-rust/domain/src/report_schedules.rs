@@ -5,7 +5,7 @@
 //! view). A run that was missed (the server was down for a week) runs **once**
 //! and then moves to the next future date: it never replays every missed day.
 
-use chrono::{Datelike, Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 
 /// Cadences.
 pub const CADENCES: &[&str] = &["daily", "weekly", "monthly"];
@@ -18,7 +18,7 @@ pub const MAX_PER_PERSON: u64 = 20;
 /// the month for `monthly` (clamped: a schedule that began on the 31st runs on
 /// the 28th, 29th or 30th in shorter months, and returns to the 31st).
 #[must_use]
-pub fn next_after(cadence: &str, anchor: NaiveDate, after: NaiveDate) -> Option<NaiveDate> {
+pub fn next_after(cadence: &str, anchor: Date, after: Date) -> Option<Date> {
     match cadence {
         "daily" => Some(after + Duration::days(1)),
         "weekly" => Some(after + Duration::days(7)),
@@ -32,7 +32,7 @@ pub fn next_after(cadence: &str, anchor: NaiveDate, after: NaiveDate) -> Option<
                     m += 1;
                 }
                 let last = last_day(y, m)?;
-                let d = NaiveDate::from_ymd_opt(y, m, anchor.day().min(last))?;
+                let d = Date::from_ymd_opt(y, m, anchor.day().min(last))?;
                 if d > after {
                     return Some(d);
                 }
@@ -45,9 +45,9 @@ pub fn next_after(cadence: &str, anchor: NaiveDate, after: NaiveDate) -> Option<
 /// Last day of month `m` in year `y`, or None when the date is out of range. Used to clamp a schedule day to a short month.
 fn last_day(y: i32, m: u32) -> Option<u32> {
     let first_next = if m == 12 {
-        NaiveDate::from_ymd_opt(y + 1, 1, 1)?
+        Date::from_ymd_opt(y + 1, 1, 1)?
     } else {
-        NaiveDate::from_ymd_opt(y, m + 1, 1)?
+        Date::from_ymd_opt(y, m + 1, 1)?
     };
     Some((first_next - Duration::days(1)).day())
 }
@@ -55,13 +55,13 @@ fn last_day(y: i32, m: u32) -> Option<u32> {
 /// After a run on `today`: the next date to run (always in the future, so a
 /// missed run is not replayed).
 #[must_use]
-pub fn after_run(cadence: &str, anchor: NaiveDate, today: NaiveDate) -> Option<NaiveDate> {
+pub fn after_run(cadence: &str, anchor: Date, today: Date) -> Option<Date> {
     next_after(cadence, anchor, today)
 }
 
 /// Whether a schedule is due on `today`.
 #[must_use]
-pub fn is_due(next_run: NaiveDate, enabled: bool, today: NaiveDate) -> bool {
+pub fn is_due(next_run: Date, enabled: bool, today: Date) -> bool {
     enabled && next_run <= today
 }
 
@@ -89,8 +89,8 @@ pub fn rows_in(format: &str, body: &str) -> i32 {
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
 
     #[test]

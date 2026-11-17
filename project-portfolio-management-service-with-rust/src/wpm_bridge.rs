@@ -31,7 +31,7 @@ use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 
-use chrono::{DateTime, NaiveDate, Utc};
+use crate::datetime::{Date, Timestamp};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -91,12 +91,7 @@ pub fn milli_of_centi(centi: i64) -> i64 {
 /// moment of the write that made it. A retry of the same send carries the same id (WPM then changes nothing);
 /// a new write is a new id.
 #[must_use]
-pub fn peer_event_id(
-    pool: Uuid,
-    plan: Uuid,
-    month: NaiveDate,
-    written_at: DateTime<Utc>,
-) -> String {
+pub fn peer_event_id(pool: Uuid, plan: Uuid, month: Date, written_at: Timestamp) -> String {
     format!(
         "ppm:{pool}:{plan}:{}:{}",
         month.format("%Y-%m"),
@@ -159,7 +154,7 @@ pub struct SupplyReading {
     /// Thousandths of an FTE; `None` when hidden or unknown.
     pub milli: Option<i64>,
     /// When WPM took the figure.
-    pub as_of: Option<DateTime<Utc>>,
+    pub as_of: Option<Timestamp>,
     /// Why there is no live figure.
     pub reason: Option<String>,
 }
@@ -170,7 +165,7 @@ pub struct Received {
     /// Hundredths of an FTE; `None` when WPM hides the month.
     pub centi: Option<i64>,
     /// When WPM took the figure.
-    pub as_of: DateTime<Utc>,
+    pub as_of: Timestamp,
 }
 
 /// Read one month: a live figure when this call succeeded, else the last one received with its time, else
@@ -254,7 +249,7 @@ struct CallerFigures {
     /// Logical clock value of the last read or write for this caller; the smallest value marks the caller to evict first.
     seen: u64,
     /// Kept figures keyed by (peer pool reference, month), each with the clock value when received, used to evict the oldest.
-    figures: HashMap<(String, NaiveDate), (u64, Received)>,
+    figures: HashMap<(String, Date), (u64, Received)>,
 }
 
 /// The figures received, by caller, bounded by caller count and by figures per caller.
@@ -281,7 +276,7 @@ impl Kept {
     }
 
     /// Keeps a received figure for this caller, first evicting the least recently seen caller when a new caller would exceed the caller bound, and the oldest-received figure when a new key would exceed the per-caller bound.
-    fn remember(&mut self, caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
+    fn remember(&mut self, caller: &str, peer_pool_ref: &str, month: Date, r: Received) {
         self.tick += 1;
         let tick = self.tick;
         // Evict only when adding a brand-new caller; an existing caller never displaces another.
@@ -313,7 +308,7 @@ impl Kept {
     }
 
     /// Returns this caller's last kept figure for the pool and month, if any, and marks the caller as recently seen. Another caller's figures are never returned.
-    fn recall(&mut self, caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Received> {
+    fn recall(&mut self, caller: &str, peer_pool_ref: &str, month: Date) -> Option<Received> {
         self.tick += 1;
         let tick = self.tick;
         let entry = self.by_caller.get_mut(caller)?;
@@ -332,7 +327,7 @@ fn store() -> &'static Mutex<Kept> {
 }
 
 /// Keeps a figure in the process-wide store; a poisoned lock is recovered because the data is only a cache.
-fn remember(caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
+fn remember(caller: &str, peer_pool_ref: &str, month: Date, r: Received) {
     store()
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -340,7 +335,7 @@ fn remember(caller: &str, peer_pool_ref: &str, month: NaiveDate, r: Received) {
 }
 
 /// Recalls a figure from the process-wide store for the same caller only; tolerant of a poisoned lock.
-fn recall(caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Received> {
+fn recall(caller: &str, peer_pool_ref: &str, month: Date) -> Option<Received> {
     store()
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -384,7 +379,7 @@ async fn allowed(base: &str) -> Result<(), String> {
 /// Wire shape of the peer supply answer.
 struct SupplyBody {
     /// When the peer computed the figures.
-    as_of: DateTime<Utc>,
+    as_of: Timestamp,
     /// One entry per requested month.
     months: Vec<SupplyMonth>,
 }
@@ -393,7 +388,7 @@ struct SupplyBody {
 /// One month of the peer's supply answer.
 struct SupplyMonth {
     /// First day of the month the figure covers.
-    month: NaiveDate,
+    month: Date,
     /// Supply in hundredths of FTE; null when the peer does not know it (never zero).
     supply_centi: Option<i64>,
 }
@@ -413,9 +408,9 @@ async fn fetch_supply(
     base: &str,
     bearer: &str,
     peer_pool_ref: &str,
-    from: NaiveDate,
+    from: Date,
     months: u32,
-) -> Result<Vec<(NaiveDate, Received)>, Fetch> {
+) -> Result<Vec<(Date, Received)>, Fetch> {
     allowed(base).await.map_err(Fetch::Unreachable)?;
     // Every part is a UUID, a date or a number, so nothing needs escaping.
     let url = format!(
@@ -498,7 +493,7 @@ impl SupplyRead {
 /// parallel, each bounded by [`PEER_TIMEOUT`]; every failure is a reason on the reading, never an error.
 pub async fn supply_for(
     linked: &[(Uuid, String)],
-    months: &[NaiveDate],
+    months: &[Date],
     read: &SupplyRead,
 ) -> HashMap<Uuid, Vec<SupplyReading>> {
     supply_at(base_url(), linked, months, read).await
@@ -508,7 +503,7 @@ pub async fn supply_for(
 async fn supply_at(
     base: Option<String>,
     linked: &[(Uuid, String)],
-    months: &[NaiveDate],
+    months: &[Date],
     read: &SupplyRead,
 ) -> HashMap<Uuid, Vec<SupplyReading>> {
     let mut set = tokio::task::JoinSet::new();
@@ -542,7 +537,7 @@ async fn supply_at(
     };
     let mut out = HashMap::new();
     while let Some(Ok((pool, peer, live))) = set.join_next().await {
-        let (got, why, refused): (HashMap<NaiveDate, Received>, Option<String>, bool) = match live {
+        let (got, why, refused): (HashMap<Date, Received>, Option<String>, bool) = match live {
             Ok(rows) => {
                 if let Some(c) = caller {
                     for (m, r) in &rows {
@@ -587,14 +582,14 @@ pub struct DemandSend {
     /// The PPM plan (the programme), sent as `thing:<pid>`.
     pub plan_pid: Uuid,
     /// The first day of the month.
-    pub month: NaiveDate,
+    pub month: Date,
     /// Hundredths of an FTE.
     pub fte_centi: i64,
     /// The id of this version of the figure.
     pub peer_event_id: String,
     /// The time of the PPM write that produced the figure, sent as `sent_at` so that WPM can ignore an older event
     /// that arrives after a newer one.
-    pub sent_at: DateTime<Utc>,
+    pub sent_at: Timestamp,
 }
 
 /// The exact body PPM sends to `POST {WPM}/api/capacity/peer-demand`.
@@ -606,7 +601,7 @@ pub fn demand_body(s: &DemandSend) -> serde_json::Value {
         "month": s.month.format("%Y-%m-%d").to_string(),
         "fte_centi": s.fte_centi,
         "peer_event_id": s.peer_event_id,
-        "sent_at": s.sent_at.to_rfc3339_opts(chrono::SecondsFormat::Micros, true),
+        "sent_at": s.sent_at.to_rfc3339_opts(crate::datetime::SecondsFormat::Micros, true),
     })
 }
 
@@ -683,19 +678,19 @@ const PEOPLE_IMPACT_PARTS: &[&str] = &[
 /// # Errors
 ///
 /// The reason no end date is sent.
-pub fn programme_end(target_date: Option<&str>) -> Result<NaiveDate, &'static str> {
+pub fn programme_end(target_date: Option<&str>) -> Result<Date, &'static str> {
     let Some(t) = target_date.map(str::trim).filter(|t| !t.is_empty()) else {
         return Err("the plan has no target_date, so no end date was sent to WPM");
     };
     t.get(..10)
-        .and_then(|d| NaiveDate::parse_from_str(d, "%Y-%m-%d").ok())
+        .and_then(|d| Date::parse_from_str(d, "%Y-%m-%d").ok())
         .ok_or("the plan's target_date is not a full date (YYYY-MM-DD), so no end date was sent to WPM")
 }
 
 /// The query PPM sends to WPM's people-impact route. Every part is a UUID, a date or a number, so nothing needs
 /// escaping (`:` is allowed in a query).
 #[must_use]
-pub fn people_impact_query(plan: Uuid, ends_on: Option<NaiveDate>, months: Option<u32>) -> String {
+pub fn people_impact_query(plan: Uuid, ends_on: Option<Date>, months: Option<u32>) -> String {
     format!(
         "programme={}{}{}",
         programme_ref(plan),
@@ -782,7 +777,7 @@ fn people_impact_unknown_parts(reason: &str) -> serde_json::Value {
 #[must_use]
 pub fn people_impact_view(
     plan: Uuid,
-    sent_end: &Result<NaiveDate, &'static str>,
+    sent_end: &Result<Date, &'static str>,
     months: Option<u32>,
     got: Result<serde_json::Value, String>,
 ) -> serde_json::Value {
@@ -869,8 +864,8 @@ async fn people_impact_at(
 mod tests {
     use super::*;
 
-    fn d(s: &str) -> NaiveDate {
-        NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap()
+    fn d(s: &str) -> Date {
+        Date::parse_from_str(s, "%Y-%m-%d").unwrap()
     }
 
     #[test]
@@ -887,14 +882,14 @@ mod tests {
     fn the_programme_is_a_thing_ref_and_the_event_id_is_stable_per_version() {
         let (pool, plan) = (Uuid::nil(), Uuid::from_u128(7));
         assert_eq!(programme_ref(plan), format!("thing:{plan}"));
-        let at = DateTime::from_timestamp(1_800_000_000, 123_000).unwrap();
+        let at = Timestamp::from_timestamp(1_800_000_000, 123_000).unwrap();
         let a = peer_event_id(pool, plan, d("2026-11-01"), at);
         assert_eq!(
             a,
             peer_event_id(pool, plan, d("2026-11-01"), at),
             "the same version, the same id"
         );
-        let later = at + chrono::Duration::microseconds(1);
+        let later = at + crate::datetime::Duration::microseconds(1);
         assert_ne!(
             a,
             peer_event_id(pool, plan, d("2026-11-01"), later),
@@ -953,7 +948,7 @@ mod tests {
 
     #[test]
     fn a_month_is_live_then_last_received_with_its_time_then_unknown_never_zero() {
-        let at = DateTime::from_timestamp(1_800_000_000, 0).unwrap();
+        let at = Timestamp::from_timestamp(1_800_000_000, 0).unwrap();
         let r = Received {
             centi: Some(250),
             as_of: at,
@@ -1095,10 +1090,10 @@ mod tests {
         let (base, seen) = serve_demand().await;
         let (pool, plan) = (Uuid::from_u128(1), Uuid::from_u128(2));
         let peer = "3f2c6b7e-0000-4000-8000-0000000000a1".to_string();
-        let at = DateTime::parse_from_rfc3339("2026-10-30T09:15:00.123456Z")
+        let at = crate::datetime::OffsetDateTime::parse_from_rfc3339("2026-10-30T09:15:00.123456Z")
             .unwrap()
-            .with_timezone(&Utc);
-        let send = |centi: i64, written_at: DateTime<Utc>| DemandSend {
+            .to_utc();
+        let send = |centi: i64, written_at: Timestamp| DemandSend {
             base: base.clone(),
             bearer: "caller-token".to_string(),
             peer_pool_ref: peer.clone(),
@@ -1113,7 +1108,7 @@ mod tests {
             send_demand(&figure).await,
             ("sent", "WPM took the figure".to_string())
         );
-        let later = at + chrono::Duration::seconds(5);
+        let later = at + crate::datetime::Duration::seconds(5);
         let zero = send(0, later);
         assert_eq!(
             send_demand(&zero).await,
@@ -1149,9 +1144,9 @@ mod tests {
     fn got(centi: i64) -> Received {
         Received {
             centi: Some(centi),
-            as_of: DateTime::parse_from_rfc3339("2026-10-30T09:00:00Z")
+            as_of: crate::datetime::OffsetDateTime::parse_from_rfc3339("2026-10-30T09:00:00Z")
                 .unwrap()
-                .with_timezone(&Utc),
+                .to_utc(),
         }
     }
 

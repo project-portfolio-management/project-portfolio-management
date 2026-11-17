@@ -99,7 +99,7 @@ pub fn min_tasks_from_env() -> usize {
 /// tick rather than aborting the loop — a metrics refresh must never be
 /// able to take the service down.
 pub async fn refresh_once(ctx: &AppContext) -> Result<tba::FlowMetricSet> {
-    let as_of = chrono::Utc::now();
+    let as_of = crate::datetime::Timestamp::now();
     let as_of_ms = as_of.timestamp_millis();
     let classes = tba::classes_in_force();
     let limits = crate::engineering::parse_wip_limits(

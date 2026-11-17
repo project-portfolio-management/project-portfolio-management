@@ -13,7 +13,7 @@
 //!   successor;
 //! * so at any date **exactly one version, or none, is in force** (`in_force`).
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// Where a version is in its life.
@@ -105,10 +105,7 @@ pub fn problems(title: Option<&str>, body: Option<&str>) -> Vec<String> {
 /// # Errors
 ///
 /// A sentence saying why not.
-pub fn effective_date(
-    today: NaiveDate,
-    previous_from: Option<NaiveDate>,
-) -> Result<NaiveDate, String> {
+pub fn effective_date(today: Date, previous_from: Option<Date>) -> Result<Date, String> {
     match previous_from {
         Some(p) if today < p => Err(format!(
             "the version in force became effective on {p}, which is after today"
@@ -123,15 +120,15 @@ pub struct Span {
     /// The version number.
     pub version: i32,
     /// The first day it was in force.
-    pub effective_from: NaiveDate,
+    pub effective_from: Date,
     /// The day its successor took over; `None` while it is still in force.
-    pub superseded_on: Option<NaiveDate>,
+    pub superseded_on: Option<Date>,
 }
 
 /// The version in force on `date`, or `None`. At most one is, by construction; if the
 /// spans somehow overlapped this answers `None` rather than choosing.
 #[must_use]
-pub fn in_force(spans: &[Span], date: NaiveDate) -> Option<i32> {
+pub fn in_force(spans: &[Span], date: Date) -> Option<i32> {
     let mut hit = spans
         .iter()
         .filter(|s| s.effective_from <= date && s.superseded_on.is_none_or(|e| date < e));
@@ -143,8 +140,8 @@ pub fn in_force(spans: &[Span], date: NaiveDate) -> Option<i32> {
 mod tests {
     use super::*;
 
-    fn d(day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, day).unwrap()
+    fn d(day: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, day).unwrap()
     }
 
     #[test]

@@ -7,8 +7,8 @@
 //! (and counted), never shown masked.
 
 use super::unprocessable;
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
-use chrono::{DateTime, NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -29,9 +29,9 @@ pub(crate) struct SlotBody {
     /// Task the time is blocked for.
     task_pid: Uuid,
     /// Start of the slot (UTC).
-    starts_at: DateTime<Utc>,
+    starts_at: Timestamp,
     /// End of the slot (UTC); validated by `slot_problems`.
-    ends_at: DateTime<Utc>,
+    ends_at: Timestamp,
 }
 
 /// `POST /api/me/planned-slots` — block time for a task.
@@ -67,8 +67,8 @@ async fn create_slot(
     .bind(Uuid::new_v4())
     .bind(&claims.sub)
     .bind(b.task_pid)
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(b.starts_at))
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(b.ends_at))
+    .bind(crate::datetime::OffsetDateTime::from(b.starts_at))
+    .bind(crate::datetime::OffsetDateTime::from(b.ends_at))
     .fetch_one(tx.conn())
     .await?;
     AuditModel::record_on(tx.conn(), row.pid, "slot_planned", Some(&claims.sub), None)
@@ -98,8 +98,8 @@ async fn delete_slot(
     let mut tx = crate::db::begin(&ctx).await?;
     // An update that finds no row is an error, as it was.
     sqlx::query("UPDATE planned_slots SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-            chrono::Utc::now(),
+        .bind(crate::datetime::OffsetDateTime::from(
+            crate::datetime::Timestamp::now(),
         ))
         .bind(row.id)
         .fetch_one(tx.conn())
@@ -115,7 +115,7 @@ async fn delete_slot(
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct PlanParams {
     /// Local calendar day to show.
-    day: NaiveDate,
+    day: Date,
     /// IANA time-zone name the day is read in.
     tz: String,
 }

@@ -11,15 +11,15 @@
 
 #![expect(missing_docs)]
 
-use chrono::{Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 use uuid::Uuid;
 
 /// Capacity asked of the drum over a range of days (inclusive).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Segment {
-    pub start: NaiveDate,
-    pub end: NaiveDate,
+    pub start: Date,
+    pub end: Date,
     pub milli_fte: i64,
 }
 
@@ -48,11 +48,11 @@ pub struct Placement {
     pub plan: Uuid,
     pub name: String,
     pub outcome: Outcome,
-    pub first_use: NaiveDate,
-    pub last_use: NaiveDate,
+    pub first_use: Date,
+    pub last_use: Date,
     pub peak_milli_fte: i64,
     pub delay_days: i64,
-    pub proposed_first_use: NaiveDate,
+    pub proposed_first_use: Date,
     /// In words: what it needs, what it overlaps and what moved.
     pub explanation: String,
 }
@@ -72,7 +72,7 @@ fn shift(s: &Segment, days: i64) -> Segment {
 }
 
 /// Total milli-FTE asked on one day by all segments covering it (ends inclusive).
-fn load_at(day: NaiveDate, segs: &[Segment]) -> i64 {
+fn load_at(day: Date, segs: &[Segment]) -> i64 {
     segs.iter()
         .filter(|s| s.start <= day && day <= s.end)
         .map(|s| s.milli_fte)
@@ -220,11 +220,11 @@ pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> V
 mod tests {
     use super::*;
 
-    fn d(m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, m, day).unwrap()
+    fn d(m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(2026, m, day).unwrap()
     }
 
-    fn project(n: u128, name: &str, from: NaiveDate, to: NaiveDate, milli: i64) -> Project {
+    fn project(n: u128, name: &str, from: Date, to: Date, milli: i64) -> Project {
         Project {
             plan: Uuid::from_u128(n),
             name: name.into(),

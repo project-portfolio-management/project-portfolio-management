@@ -15,7 +15,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use uuid::Uuid;
 
 /// The relation kinds.
@@ -71,7 +71,7 @@ pub fn creates_cycle(edges: &[(Uuid, Uuid)], from: Uuid, to: Uuid) -> bool {
 /// and the successor not strictly after the predecessor. An undated task
 /// constrains nothing.
 #[must_use]
-pub fn precedes_violated(pred_due: Option<NaiveDate>, succ_due: Option<NaiveDate>) -> bool {
+pub fn precedes_violated(pred_due: Option<Date>, succ_due: Option<Date>) -> bool {
     matches!((pred_due, succ_due), (Some(p), Some(s)) if s <= p)
 }
 
@@ -83,8 +83,8 @@ mod tests {
         Uuid::from_u128(n)
     }
 
-    fn d(day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, day).unwrap()
+    fn d(day: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, day).unwrap()
     }
 
     #[test]

@@ -93,11 +93,15 @@ async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
     let writer = bearer(&kid, WRITER, &[("access", "write")]);
     let outsider = bearer(&kid, OUTSIDER, &[("access", "write")]);
     let first = {
-        use chrono::Datelike;
-        chrono::Utc::now().date_naive().with_day(1).unwrap()
+        project_portfolio_management::datetime::Timestamp::now()
+            .date_naive()
+            .with_day(1)
+            .unwrap()
     };
     let month = first.format("%Y-%m").to_string();
-    let last = (first + chrono::Months::new(1)).pred_opt().unwrap();
+    let last = (first + project_portfolio_management::datetime::Months::new(1))
+        .pred_opt()
+        .unwrap();
     let month_days = (last - first).num_days() + 1;
     request::<App, _, _>(|request, ctx| async move {
         macro_rules! with { ($rb:expr, $who:expr) => { $rb.add_header($who.0.clone(), $who.1.clone()) }; }

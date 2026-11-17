@@ -67,7 +67,7 @@ pub struct InputRead {
     /// The row's own pid.
     pub pid: Uuid,
     /// The row's own `updated_at`.
-    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: crate::datetime::Timestamp,
 }
 
 /// A scenario evaluation: totals + named constraint violations.

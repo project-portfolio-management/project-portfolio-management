@@ -10,8 +10,8 @@
 
 use super::conflict;
 use super::unprocessable;
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -127,7 +127,7 @@ pub(crate) async fn ensure_not_blocked(
 pub(crate) async fn check_due_change(
     ctx: &AppContext,
     task_pid: Uuid,
-    new_due: Option<NaiveDate>,
+    new_due: Option<Date>,
 ) -> Result<()> {
     for r in live_relations_of(ctx, Some("precedes")).await? {
         let (pred, succ) = if r.from_task_pid == task_pid {
@@ -186,13 +186,13 @@ async fn close_one(ctx: &AppContext, dup: Uuid, primary: Uuid, actor: Option<&st
     else {
         return Ok(());
     };
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let (from, assignee, plan_pid) = (
         task.status.clone(),
         task.assignee_ref.clone(),
         task.plan_pid,
     );
-    let at = chrono::DateTime::<chrono::FixedOffset>::from(now);
+    let at = crate::datetime::OffsetDateTime::from(now);
     let mut tx = crate::db::begin(ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>(
@@ -303,7 +303,7 @@ async fn create_relation(
     .bind(from)
     .bind(p.to_task_pid)
     .bind(&p.kind)
-    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .bind(None::<crate::datetime::OffsetDateTime>)
     .fetch_one(tx.conn())
     .await?;
     AuditModel::record_on(
@@ -407,7 +407,7 @@ async fn delete_relation(
     .fetch_optional(crate::db::pool(&ctx))
     .await?
     .ok_or(Error::NotFound)?;
-    let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let deleted_at = crate::datetime::OffsetDateTime::from(crate::datetime::Timestamp::now());
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>(

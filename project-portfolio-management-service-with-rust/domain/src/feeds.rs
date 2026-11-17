@@ -12,7 +12,7 @@
 //!
 //! **Atom** (RFC 4287): stable `urn:uuid:` entry ids, XML-escaped text.
 
-use chrono::{DateTime, Datelike, NaiveDate, Utc};
+use crate::datetime::{Date, Timestamp};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
@@ -85,24 +85,24 @@ pub struct Event {
     /// Stable identity: the same item always yields the same UID.
     pub uid: String,
     /// The day.
-    pub date: NaiveDate,
+    pub date: Date,
     /// Title.
     pub summary: String,
     /// Optional longer text.
     pub description: Option<String>,
     /// A timed event's span in UTC (PL-4); `None` is an all-day event on `date`.
-    pub span: Option<(DateTime<Utc>, DateTime<Utc>)>,
+    pub span: Option<(Timestamp, Timestamp)>,
 }
 
 /// Format a date as `YYYYMMDD`, the iCalendar basic date form.
-fn ymd(d: NaiveDate) -> String {
+fn ymd(d: Date) -> String {
     format!("{:04}{:02}{:02}", d.year(), d.month(), d.day())
 }
 
 /// Render a VCALENDAR. `stamp` is the generation instant (DTSTAMP); events
 /// are emitted in the given order, so callers pass a stable sort.
 #[must_use]
-pub fn ical(name: &str, stamp: DateTime<Utc>, events: &[Event]) -> String {
+pub fn ical(name: &str, stamp: Timestamp, events: &[Event]) -> String {
     let mut lines: Vec<String> = vec![
         "BEGIN:VCALENDAR".into(),
         "VERSION:2.0".into(),
@@ -161,7 +161,7 @@ pub struct Entry {
     /// Title.
     pub title: String,
     /// Last updated.
-    pub updated: DateTime<Utc>,
+    pub updated: Timestamp,
     /// Body text.
     pub summary: String,
 }
@@ -177,7 +177,7 @@ pub fn atom(feed_id: Uuid, title: &str, entries: &[Entry]) -> String {
         .iter()
         .map(|e| e.updated)
         .max()
-        .unwrap_or(DateTime::<Utc>::UNIX_EPOCH);
+        .unwrap_or(Timestamp::UNIX_EPOCH);
     let mut out = String::from("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
     out.push_str("<feed xmlns=\"http://www.w3.org/2005/Atom\">\n");
     let _ = writeln!(out, "  <id>urn:uuid:{feed_id}</id>");
@@ -198,10 +198,9 @@ pub fn atom(feed_id: Uuid, title: &str, entries: &[Entry]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
 
-    fn at() -> DateTime<Utc> {
-        Utc.with_ymd_and_hms(2026, 10, 3, 12, 0, 0).unwrap()
+    fn at() -> Timestamp {
+        Timestamp::with_ymd_and_hms(2026, 10, 3, 12, 0, 0).unwrap()
     }
 
     #[test]
@@ -242,7 +241,7 @@ mod tests {
     fn a_calendar_is_well_formed_with_stable_uids_and_exclusive_dtend() {
         let events = [Event {
             uid: "task-1@ppm".into(),
-            date: NaiveDate::from_ymd_opt(2026, 10, 31).unwrap(),
+            date: Date::from_ymd_opt(2026, 10, 31).unwrap(),
             summary: "Ship, then rest".into(),
             description: Some("line1\nline2".into()),
             span: None,
@@ -268,8 +267,8 @@ mod tests {
 
     #[test]
     fn a_timed_event_is_utc_and_not_all_day() {
-        let start = Utc.with_ymd_and_hms(2026, 10, 3, 9, 30, 0).unwrap();
-        let end = Utc.with_ymd_and_hms(2026, 10, 3, 10, 15, 0).unwrap();
+        let start = Timestamp::with_ymd_and_hms(2026, 10, 3, 9, 30, 0).unwrap();
+        let end = Timestamp::with_ymd_and_hms(2026, 10, 3, 10, 15, 0).unwrap();
         let cal = ical(
             "x",
             at(),

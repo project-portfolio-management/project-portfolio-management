@@ -281,7 +281,7 @@ async fn delete_automation(
         cap_models::find_automation(&ctx, crate::models::governance::parse_pid(&pid)?).await?;
     require_rule_scope(&ctx, &caller, row.plan_pid).await?;
     let row_pid = row.pid;
-    let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let deleted_at: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>(
@@ -480,7 +480,7 @@ async fn act_set_task_status(
     }
     let from = task.status.clone();
     let first_done = task.done_at.is_none() && status == "done";
-    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let now: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     // `done_at` only on the first move to done, as before; `fetch_one`: an update that finds no row is an error.
     let sql = if first_done {
         "UPDATE tasks SET status = $1, status_changed_at = $2, done_at = $2 WHERE id = $3 RETURNING id"
@@ -553,7 +553,7 @@ async fn act_schedule(
     else {
         return ("failed", serde_json::json!({ "reason": "no in_days" }));
     };
-    let due_at = chrono::Utc::now() + chrono::Duration::days(days);
+    let due_at = crate::datetime::Timestamp::now() + crate::datetime::Duration::days(days);
     match cap_models::schedule_on(
         &mut crate::db::pool(ctx),
         cap_models::NewScheduledAction {
@@ -725,7 +725,9 @@ async fn load_successors(ctx: &AppContext, plan_pid: Uuid) -> Result<Vec<rules::
 /// Parse the trigger fact's own old/new dates. `plan_timeframe_changed`
 /// carries them in `from_status`/`to_status` (see
 /// `crate::automation::TRIGGER_KINDS`'s own doc comment for why).
-fn shift_dates(fact: &rules::TriggerFact) -> Option<(chrono::NaiveDate, chrono::NaiveDate)> {
+fn shift_dates(
+    fact: &rules::TriggerFact,
+) -> Option<(crate::datetime::Date, crate::datetime::Date)> {
     let old = fact.from_status.as_deref()?.parse().ok()?;
     let new = fact.to_status.as_deref()?.parse().ok()?;
     Some((old, new))
@@ -1174,7 +1176,8 @@ async fn create_scheduled_action(
         &payload.subject_pid.to_string(),
     )
     .await?;
-    let due_at = chrono::Utc::now() + chrono::Duration::days(payload.in_days);
+    let due_at =
+        crate::datetime::Timestamp::now() + crate::datetime::Duration::days(payload.in_days);
     let mut tx = crate::db::begin(&ctx).await?;
     let row = cap_models::schedule_on(
         &mut tx,
@@ -1255,7 +1258,7 @@ async fn list_scheduled_actions(
         query.push(" AND subject_pid = ").push_bind(subject);
     }
     if params.overdue.unwrap_or(false) {
-        let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+        let now: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
         query
             .push(" AND status = 'pending' AND due_at <= ")
             .push_bind(now);
@@ -1289,7 +1292,7 @@ async fn cancel_scheduled_action(
         )));
     }
     let row_pid = row.pid;
-    let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let deleted_at: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>(
@@ -1324,7 +1327,7 @@ async fn cancel_scheduled_action(
 ///
 /// Propagates database errors from the due-row query.
 pub async fn sweep_due(ctx: &AppContext) -> Result<(usize, usize, bool)> {
-    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let now: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     let due = cap_models::due_actions(ctx, now, SWEEP_CAP).await?;
     let capped = due.len() as u64 >= SWEEP_CAP;
     let (mut fired, mut skipped) = (0, 0);
@@ -1427,7 +1430,7 @@ async fn sweep(State(ctx): State<AppContext>) -> Result<Response> {
         "skipped_already_claimed": skipped,
         "capped": capped,
         "cap": SWEEP_CAP,
-        "as_of": chrono::Utc::now().to_rfc3339(),
+        "as_of": crate::datetime::Timestamp::now().to_rfc3339(),
     }))
 }
 
@@ -1445,7 +1448,7 @@ async fn sweep_milestones(State(ctx): State<AppContext>) -> Result<Response> {
         "already_claimed": already_claimed,
         "capped": capped,
         "cap": SWEEP_CAP,
-        "as_of": chrono::Utc::now().to_rfc3339(),
+        "as_of": crate::datetime::Timestamp::now().to_rfc3339(),
     }))
 }
 

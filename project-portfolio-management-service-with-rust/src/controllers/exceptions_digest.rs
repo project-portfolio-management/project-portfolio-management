@@ -9,8 +9,8 @@
 
 use std::collections::HashMap;
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::{Datelike, NaiveDate};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -148,8 +148,8 @@ async fn get_digest(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Res
 }
 
 /// Monday of the week `today` falls in.
-fn week_start(today: NaiveDate) -> NaiveDate {
-    today - chrono::Duration::days(i64::from(today.weekday().num_days_from_monday()))
+fn week_start(today: Date) -> Date {
+    today - crate::datetime::Duration::days(i64::from(today.weekday().num_days_from_monday()))
 }
 
 /// What a run of [`send_weekly`] did.
@@ -242,9 +242,9 @@ mod tests {
 
     #[test]
     fn a_week_starts_on_monday() {
-        let monday = NaiveDate::from_ymd_opt(2026, 10, 26).unwrap();
+        let monday = Date::from_ymd_opt(2026, 10, 26).unwrap();
         assert_eq!(week_start(monday), monday);
-        let sunday = NaiveDate::from_ymd_opt(2026, 11, 1).unwrap();
+        let sunday = Date::from_ymd_opt(2026, 11, 1).unwrap();
         assert_eq!(week_start(sunday), monday);
     }
 }

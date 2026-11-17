@@ -285,12 +285,14 @@ async fn a_roadmap_is_reviewed_only_on_purpose_and_stale_after_the_period() {
             .json();
         assert_eq!(r["freshness"]["state"], "unknown", "never reviewed");
         assert_eq!(r["freshness"]["stale_after_days"], 42);
-        let today = chrono::NaiveDate::parse_from_str(
+        let today = project_portfolio_management::datetime::Date::parse_from_str(
             r["freshness"]["today"].as_str().unwrap(),
             "%Y-%m-%d",
         )
         .unwrap();
-        let ago = |n: i64| (today - chrono::Duration::days(n)).to_string();
+        let ago = |n: i64| {
+            (today - project_portfolio_management::datetime::Duration::days(n)).to_string()
+        };
         assert_eq!(
             stale_state(&request, &product).await,
             Some(json!("unknown"))

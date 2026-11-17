@@ -295,10 +295,10 @@ async fn change_type(
 /// What `retired` leaves: `true` stamps now unless already retired, `false` clears it, absent keeps it.
 fn kept_retired(
     retired: Option<bool>,
-    was: Option<chrono::DateTime<chrono::FixedOffset>>,
-) -> Option<chrono::DateTime<chrono::FixedOffset>> {
+    was: Option<crate::datetime::OffsetDateTime>,
+) -> Option<crate::datetime::OffsetDateTime> {
     match (retired, was) {
-        (Some(true), None) => Some(chrono::Utc::now().into()),
+        (Some(true), None) => Some(crate::datetime::Timestamp::now().into()),
         (Some(false), _) => None,
         (_, kept) => kept,
     }

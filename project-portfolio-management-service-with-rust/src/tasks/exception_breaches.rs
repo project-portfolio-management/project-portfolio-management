@@ -10,8 +10,8 @@
 //! the notice goes through the ordinary notification inbox and its sinks. Breaches also show in the pack
 //! and in `GET /api/exceptions?breached=true` whether or not this task runs.
 
+use crate::datetime::Timestamp;
 use crate::prelude::*;
-use chrono::Utc;
 
 use crate::delivery_confidence as rules;
 use crate::models::_entities::delivery_exceptions as exceptions;
@@ -24,7 +24,7 @@ pub struct ExceptionBreaches;
 /// # Errors
 ///
 /// When a database statement fails.
-pub async fn run_once(ctx: &AppContext, now: chrono::DateTime<Utc>) -> Result<usize> {
+pub async fn run_once(ctx: &AppContext, now: crate::datetime::Timestamp) -> Result<usize> {
     let window = rules::window_hours();
     let open: Vec<exceptions::Model> = sqlx::query_as(
         "SELECT * FROM delivery_exceptions
@@ -67,7 +67,7 @@ pub async fn run_once(ctx: &AppContext, now: chrono::DateTime<Utc>) -> Result<us
         sqlx::query_scalar::<_, i64>(
             "UPDATE delivery_exceptions SET breach_notified_at = $1 WHERE id = $2 RETURNING id",
         )
-        .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+        .bind(crate::datetime::OffsetDateTime::from(now))
         .bind(e.id)
         .fetch_one(crate::db::pool(ctx))
         .await
@@ -93,7 +93,7 @@ impl Task for ExceptionBreaches {
     ///
     /// When a database statement fails.
     async fn run(&self, ctx: &AppContext, _vars: &task::Vars) -> Result<()> {
-        let n = run_once(ctx, Utc::now()).await?;
+        let n = run_once(ctx, Timestamp::now()).await?;
         println!("exception breaches: {n} notified");
         Ok(())
     }

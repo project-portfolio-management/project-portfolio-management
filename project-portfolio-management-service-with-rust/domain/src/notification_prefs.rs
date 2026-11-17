@@ -12,7 +12,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use chrono::{DateTime, NaiveDate, Utc};
+use crate::datetime::{Date, Timestamp};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -93,7 +93,7 @@ pub struct Entry {
     /// Message text.
     pub message: String,
     /// When it was written.
-    pub created_at: DateTime<Utc>,
+    pub created_at: Timestamp,
     /// Whether it has been read.
     pub read: bool,
 }
@@ -116,7 +116,7 @@ pub struct Item {
     /// Whether any of them is unread.
     pub unread: bool,
     /// The newest one's time.
-    pub latest_at: DateTime<Utc>,
+    pub latest_at: Timestamp,
     /// Whether this line is a digest (`count` > 1 by choice, not chance).
     pub digest: bool,
 }
@@ -126,7 +126,7 @@ pub struct Item {
 /// first. Entries are never dropped — a digest lists all of its members.
 #[must_use]
 pub fn collapse(entries: Vec<Entry>, daily_kinds: &BTreeSet<String>, zone: Tz) -> Vec<Item> {
-    type Key = (String, String, Uuid, NaiveDate);
+    type Key = (String, String, Uuid, Date);
     let mut groups: BTreeMap<Key, Vec<Entry>> = BTreeMap::new();
     let mut singles: Vec<Entry> = Vec::new();
     for e in entries {
@@ -171,15 +171,14 @@ fn to_item(mut group: Vec<Entry>, digest: bool) -> Item {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
 
     const U1: &str = "3f2c6b7e-0000-4000-8000-000000000001";
 
-    fn at(d: u32, h: u32) -> DateTime<Utc> {
-        Utc.with_ymd_and_hms(2026, 10, d, h, 0, 0).unwrap()
+    fn at(d: u32, h: u32) -> Timestamp {
+        Timestamp::with_ymd_and_hms(2026, 10, d, h, 0, 0).unwrap()
     }
 
-    fn entry(n: u128, kind: &str, subject: u128, when: DateTime<Utc>, read: bool) -> Entry {
+    fn entry(n: u128, kind: &str, subject: u128, when: Timestamp, read: bool) -> Entry {
         Entry {
             pid: Uuid::from_u128(n),
             kind: kind.to_string(),

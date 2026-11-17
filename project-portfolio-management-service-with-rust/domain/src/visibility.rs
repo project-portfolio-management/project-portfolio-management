@@ -5,22 +5,22 @@
 
 use std::collections::HashMap;
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use uuid::Uuid;
 
 /// Parse the matcher's flexible date shape (`YYYY`, `YYYY-MM`, or
 /// `YYYY-MM-DD`). `end_of_period` selects the last day of a partial
 /// period (for `target_date`) vs the first (for `start_date`).
 #[must_use]
-pub fn parse_flex_date(value: &str, end_of_period: bool) -> Option<NaiveDate> {
+pub fn parse_flex_date(value: &str, end_of_period: bool) -> Option<Date> {
     let value = value.trim();
-    if let Ok(date) = NaiveDate::parse_from_str(value, "%Y-%m-%d") {
+    if let Ok(date) = Date::parse_from_str(value, "%Y-%m-%d") {
         return Some(date);
     }
     if value.len() == 7 {
         let year: i32 = value.get(0..4)?.parse().ok()?;
         let month: u32 = value.get(5..7)?.parse().ok()?;
-        let first = NaiveDate::from_ymd_opt(year, month, 1)?;
+        let first = Date::from_ymd_opt(year, month, 1)?;
         return if end_of_period {
             Some(last_day_of_month(first))
         } else {
@@ -30,24 +30,21 @@ pub fn parse_flex_date(value: &str, end_of_period: bool) -> Option<NaiveDate> {
     if value.len() == 4 {
         let year: i32 = value.parse().ok()?;
         return if end_of_period {
-            NaiveDate::from_ymd_opt(year, 12, 31)
+            Date::from_ymd_opt(year, 12, 31)
         } else {
-            NaiveDate::from_ymd_opt(year, 1, 1)
+            Date::from_ymd_opt(year, 1, 1)
         };
     }
     None
 }
 
 /// The last day of the month containing `date`.
-fn last_day_of_month(date: NaiveDate) -> NaiveDate {
-    let (year, month) = (
-        chrono::Datelike::year(&date),
-        chrono::Datelike::month(&date),
-    );
+fn last_day_of_month(date: Date) -> Date {
+    let (year, month) = (date.year(), date.month());
     let next = if month == 12 {
-        NaiveDate::from_ymd_opt(year + 1, 1, 1)
+        Date::from_ymd_opt(year + 1, 1, 1)
     } else {
-        NaiveDate::from_ymd_opt(year, month + 1, 1)
+        Date::from_ymd_opt(year, month + 1, 1)
     };
     next.and_then(|d| d.pred_opt()).unwrap_or(date)
 }
@@ -86,9 +83,9 @@ pub struct ScheduleItem {
     /// The item's pid.
     pub pid: Uuid,
     /// Parsed start (first day of the flexible period).
-    pub start: Option<NaiveDate>,
+    pub start: Option<Date>,
     /// Parsed target (last day of the flexible period).
-    pub end: Option<NaiveDate>,
+    pub end: Option<Date>,
 }
 
 /// A finish-start edge with lag.
@@ -117,9 +114,9 @@ pub struct Violation {
     /// The successor item.
     pub successor: Uuid,
     /// Predecessor end + lag.
-    pub earliest_start: NaiveDate,
+    pub earliest_start: Date,
     /// The successor's actual planned start.
-    pub actual_start: NaiveDate,
+    pub actual_start: Date,
 }
 
 /// Check every edge whose endpoints both carry the needed dates; an
@@ -138,9 +135,9 @@ pub fn violations(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Violati
             continue;
         };
         let earliest = if edge.lag_days >= 0 {
-            pred_end + chrono::Days::new(u64::try_from(edge.lag_days).unwrap_or(0))
+            pred_end + crate::datetime::Days::new(u64::try_from(edge.lag_days).unwrap_or(0))
         } else {
-            pred_end - chrono::Days::new(u64::try_from(-edge.lag_days).unwrap_or(0))
+            pred_end - crate::datetime::Days::new(u64::try_from(-edge.lag_days).unwrap_or(0))
         };
         if succ_start < earliest {
             out.push(Violation {
@@ -224,8 +221,8 @@ pub fn critical_path(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Uuid
 #[must_use]
 pub fn rag(
     finished: bool,
-    target: Option<NaiveDate>,
-    today: NaiveDate,
+    target: Option<Date>,
+    today: Date,
     materialized_risks: usize,
     max_open_exposure: i32,
     budget_overrun: bool,
@@ -247,9 +244,9 @@ pub fn rag(
 /// add). Over 100 ⇒ over-allocated.
 #[must_use]
 pub fn summed_percent(
-    allocations: &[(i32, Option<NaiveDate>, Option<NaiveDate>)],
-    from: NaiveDate,
-    to: NaiveDate,
+    allocations: &[(i32, Option<Date>, Option<Date>)],
+    from: Date,
+    to: Date,
 ) -> i64 {
     allocations
         .iter()
@@ -334,8 +331,8 @@ pub use crate::csv_cell::field as csv_field;
 mod tests {
     use super::*;
 
-    fn date(y: i32, m: u32, d: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    fn date(y: i32, m: u32, d: u32) -> Date {
+        Date::from_ymd_opt(y, m, d).unwrap()
     }
 
     fn pid(n: u128) -> Uuid {

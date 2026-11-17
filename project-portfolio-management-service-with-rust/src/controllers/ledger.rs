@@ -83,7 +83,7 @@ pub(crate) struct NewAllocation {
     /// ISO currency code; amounts in different currencies are never summed.
     currency: String,
     /// The date the funding source made the allocation.
-    allocated_on: chrono::NaiveDate,
+    allocated_on: crate::datetime::Date,
     #[serde(default)]
     /// Optional external reference (for example a finance document number).
     reference: Option<String>,

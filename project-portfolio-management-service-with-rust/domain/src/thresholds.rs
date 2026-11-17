@@ -10,7 +10,7 @@
 //! * `forecast_past` date: the forecast finish is **after** the date (on the date is not past it);
 //! * `p80_cap` amount: the P80 cost is **above** the cap (at the cap is not over it).
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 
 /// The threshold kinds.
 pub const KINDS: [&str; 3] = ["confidence_red_packs", "forecast_past", "p80_cap"];
@@ -28,7 +28,7 @@ pub fn confidence_crossed(latest_first: &[bool], n: usize) -> bool {
 
 /// The forecast finish is after `limit`; no forecast is not a crossing.
 #[must_use]
-pub fn forecast_crossed(forecast: Option<NaiveDate>, limit: NaiveDate) -> bool {
+pub fn forecast_crossed(forecast: Option<Date>, limit: Date) -> bool {
     forecast.is_some_and(|f| f > limit)
 }
 
@@ -43,8 +43,8 @@ pub fn p80_crossed(p80_minor: Option<i64>, cap_minor: i64) -> bool {
 pub fn decision_problems(
     action: &str,
     reason: &str,
-    expiry: Option<NaiveDate>,
-    today: NaiveDate,
+    expiry: Option<Date>,
+    today: Date,
 ) -> Vec<String> {
     let mut out = Vec::new();
     if !ACTIONS.contains(&action) {
@@ -71,8 +71,8 @@ pub fn decision_problems(
 mod tests {
     use super::*;
 
-    fn d(m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, m, day).unwrap()
+    fn d(m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(2026, m, day).unwrap()
     }
 
     #[test]
@@ -134,7 +134,7 @@ mod tests {
             decision_problems(
                 "override",
                 "Sponsor accepts the risk",
-                Some(d(6, 2) + chrono::Duration::days(400)),
+                Some(d(6, 2) + crate::datetime::Duration::days(400)),
                 today
             ),
             ["an override may last at most a year"]

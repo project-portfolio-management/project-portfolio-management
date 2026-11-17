@@ -95,8 +95,8 @@ fn stall_days() -> i64 {
 }
 
 /// Whole calendar days between `then` and now, never negative.
-fn days_since(then: chrono::DateTime<chrono::FixedOffset>) -> i64 {
-    (chrono::Utc::now() - then.with_timezone(&chrono::Utc))
+fn days_since(then: crate::datetime::OffsetDateTime) -> i64 {
+    (crate::datetime::Timestamp::now() - then.to_utc())
         .num_days()
         .max(0)
 }
@@ -250,7 +250,7 @@ async fn plan_smart_score(
     });
     let etag = super::etag_of(&body);
     let mut with_as_of = body;
-    with_as_of["as_of"] = serde_json::json!(chrono::Utc::now().to_rfc3339());
+    with_as_of["as_of"] = serde_json::json!(crate::datetime::Timestamp::now().to_rfc3339());
     super::conditional_json(&headers, &etag, &with_as_of)
 }
 
@@ -340,7 +340,7 @@ async fn prioritization(
     let body = serde_json::json!({ "plans": rows, "scored_of": estate.plans.len() });
     let etag = super::etag_of(&body);
     let mut with_as_of = body;
-    with_as_of["as_of"] = serde_json::json!(chrono::Utc::now().to_rfc3339());
+    with_as_of["as_of"] = serde_json::json!(crate::datetime::Timestamp::now().to_rfc3339());
     super::conditional_json(&headers, &etag, &with_as_of)
 }
 
@@ -402,7 +402,7 @@ async fn rank_by_inputs(
     });
     let etag = super::etag_of(&body);
     let mut with_as_of = body;
-    with_as_of["as_of"] = serde_json::json!(chrono::Utc::now().to_rfc3339());
+    with_as_of["as_of"] = serde_json::json!(crate::datetime::Timestamp::now().to_rfc3339());
     super::conditional_json(headers, &etag, &with_as_of)
 }
 
@@ -452,7 +452,7 @@ async fn lifecycle(
     });
     let etag = super::etag_of(&body);
     let mut with_as_of = body;
-    with_as_of["as_of"] = serde_json::json!(chrono::Utc::now().to_rfc3339());
+    with_as_of["as_of"] = serde_json::json!(crate::datetime::Timestamp::now().to_rfc3339());
     super::conditional_json(&headers, &etag, &with_as_of)
 }
 
@@ -477,7 +477,7 @@ async fn plan_lifecycle(
             .await?;
     let plan_reviews =
         crate::models::capabilities::reviews_for_subject(&ctx, "plan", plan.pid).await?;
-    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let now: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     // Only how many are overdue is read.
     let overdue: Vec<i32> = sqlx::query_scalar(
         "SELECT id FROM scheduled_actions WHERE subject_pid = $1 AND status = 'pending' AND due_at <= $2 \
@@ -513,7 +513,7 @@ async fn plan_lifecycle(
     });
     let etag = super::etag_of(&body);
     let mut with_as_of = body;
-    with_as_of["as_of"] = serde_json::json!(chrono::Utc::now().to_rfc3339());
+    with_as_of["as_of"] = serde_json::json!(crate::datetime::Timestamp::now().to_rfc3339());
     super::conditional_json(&headers, &etag, &with_as_of)
 }
 

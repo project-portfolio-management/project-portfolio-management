@@ -97,53 +97,12 @@ pub enum SecondsFormat {
     AutoSi,
 }
 
-/// The fraction, as `SecondsFormat::AutoSi` writes it (with its dot), or nothing for a whole second.
-pub(crate) fn write_fraction(
-    w: &mut (impl fmt::Write + ?Sized),
-    nano: i32,
-    secform: SecondsFormat,
-) -> fmt::Result {
-    match secform {
-        SecondsFormat::Secs => Ok(()),
-        SecondsFormat::Millis => write!(w, ".{:03}", nano / 1_000_000),
-        SecondsFormat::Micros => write!(w, ".{:06}", nano / 1000),
-        SecondsFormat::Nanos => write!(w, ".{nano:09}"),
-        SecondsFormat::AutoSi => {
-            if nano == 0 {
-                Ok(())
-            } else if nano % 1_000_000 == 0 {
-                write!(w, ".{:03}", nano / 1_000_000)
-            } else if nano % 1000 == 0 {
-                write!(w, ".{:06}", nano / 1000)
-            } else {
-                write!(w, ".{nano:09}")
-            }
-        }
-    }
-}
-
 /// `HH:MM:SS` and the fraction in groups of three.
 pub(crate) fn write_time(w: &mut (impl fmt::Write + ?Sized), t: civil::Time) -> fmt::Result {
-    write!(w, "{:02}:{:02}:{:02}", t.hour(), t.minute(), t.second())?;
-    write_fraction(w, t.subsec_nanosecond(), SecondsFormat::AutoSi)
-}
-
-/// An offset to the minute (seconds rounded to the nearest minute), `+HH:MM`, or `Z` for zero if `use_z`.
-pub(crate) fn write_offset_minutes(
-    w: &mut (impl fmt::Write + ?Sized),
-    offset: i32,
-    use_z: bool,
-) -> fmt::Result {
-    if use_z && offset == 0 {
-        return w.write_char('Z');
-    }
-    let (sign, off) = if offset < 0 {
-        ('-', -offset)
-    } else {
-        ('+', offset)
-    };
-    let minutes = (off + 30) / 60;
-    write!(w, "{sign}{:02}:{:02}", minutes / 60, minutes % 60)
+    let mut b = Buf::new();
+    b.hms(t.hour(), t.minute(), t.second());
+    b.fraction(t.subsec_nanosecond(), SecondsFormat::AutoSi);
+    w.write_str(b.as_str())
 }
 
 /// An offset as `Display` and `Debug` write it: `+HH:MM`, or `+HH:MM:SS` when it has seconds.
@@ -162,6 +121,92 @@ pub(crate) fn write_offset_exact(w: &mut (impl fmt::Write + ?Sized), offset: i32
     }
 }
 
+/// A small stack buffer the hot writers fill digit by digit and hand over in one `write_str` (the `{:02}`
+/// machinery of `write!` is several times slower, and JSON writes many instants).
+pub(crate) struct Buf {
+    bytes: [u8; 48],
+    len: usize,
+}
+
+impl Buf {
+    pub(crate) const fn new() -> Buf {
+        Buf {
+            bytes: [0; 48],
+            len: 0,
+        }
+    }
+
+    fn byte(&mut self, b: u8) {
+        self.bytes[self.len] = b;
+        self.len += 1;
+    }
+
+    /// `n` (non-negative) as exactly `width` digits.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // a digit is 0..=9
+    fn digits(&mut self, n: i32, width: usize) {
+        let mut v = n.unsigned_abs();
+        for i in (0..width).rev() {
+            self.bytes[self.len + i] = b'0' + (v % 10) as u8;
+            v /= 10;
+        }
+        self.len += width;
+    }
+
+    /// A date: four digits from year 0 to 9999, otherwise a sign and at least four.
+    pub(crate) fn date(&mut self, d: civil::Date) {
+        let year = i32::from(d.year());
+        if (0..=9999).contains(&year) {
+            self.digits(year, 4);
+        } else {
+            self.byte(if year < 0 { b'-' } else { b'+' });
+            self.digits(year, 4);
+        }
+        self.byte(b'-');
+        self.digits(i32::from(d.month()), 2);
+        self.byte(b'-');
+        self.digits(i32::from(d.day()), 2);
+    }
+
+    fn hms(&mut self, h: i8, m: i8, s: i8) {
+        self.digits(i32::from(h), 2);
+        self.byte(b':');
+        self.digits(i32::from(m), 2);
+        self.byte(b':');
+        self.digits(i32::from(s), 2);
+    }
+
+    fn fraction(&mut self, nano: i32, secform: SecondsFormat) {
+        let (v, width) = match secform {
+            SecondsFormat::Secs => return,
+            SecondsFormat::Millis => (nano / 1_000_000, 3),
+            SecondsFormat::Micros => (nano / 1000, 6),
+            SecondsFormat::AutoSi if nano == 0 => return,
+            SecondsFormat::AutoSi if nano % 1_000_000 == 0 => (nano / 1_000_000, 3),
+            SecondsFormat::AutoSi if nano % 1000 == 0 => (nano / 1000, 6),
+            SecondsFormat::Nanos | SecondsFormat::AutoSi => (nano, 9),
+        };
+        self.byte(b'.');
+        self.digits(v, width);
+    }
+
+    fn offset_minutes(&mut self, offset: i32, use_z: bool) {
+        if use_z && offset == 0 {
+            self.byte(b'Z');
+            return;
+        }
+        self.byte(if offset < 0 { b'-' } else { b'+' });
+        let minutes = (offset.abs() + 30) / 60;
+        self.digits(minutes / 60, 2);
+        self.byte(b':');
+        self.digits(minutes % 60, 2);
+    }
+
+    pub(crate) fn as_str(&self) -> &str {
+        // Only ASCII digits and punctuation are ever pushed.
+        core::str::from_utf8(&self.bytes[..self.len]).unwrap_or_default()
+    }
+}
+
 /// RFC 3339: the civil date and time at `offset`, the fraction as `secform` says, and the offset to the minute.
 pub(crate) fn write_rfc3339(
     w: &mut (impl fmt::Write + ?Sized),
@@ -170,29 +215,38 @@ pub(crate) fn write_rfc3339(
     secform: SecondsFormat,
     use_z: bool,
 ) -> fmt::Result {
-    crate::date::write_date(w, dt.date())?;
-    write!(w, "T{:02}:{:02}:{:02}", dt.hour(), dt.minute(), dt.second())?;
-    write_fraction(w, dt.subsec_nanosecond(), secform)?;
-    write_offset_minutes(w, offset, use_z)
+    let mut b = Buf::new();
+    b.date(dt.date());
+    b.byte(b'T');
+    b.hms(dt.hour(), dt.minute(), dt.second());
+    b.fraction(dt.subsec_nanosecond(), secform);
+    b.offset_minutes(offset, use_z);
+    w.write_str(b.as_str())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    fn minutes(offset: i32, use_z: bool) -> String {
+        let mut b = Buf::new();
+        b.offset_minutes(offset, use_z);
+        b.as_str().to_string()
+    }
+
     #[test]
     fn offsets_round_to_the_minute_and_show_seconds_only_where_exact() {
         let mut s = String::new();
-        write_offset_minutes(&mut s, -(43 * 60 + 8), false).unwrap();
+        s.push_str(&minutes(-(43 * 60 + 8), false));
         assert_eq!(s, "-00:43");
         s.clear();
-        write_offset_minutes(&mut s, 44 * 60 + 30, false).unwrap();
+        s.push_str(&minutes(44 * 60 + 30, false));
         assert_eq!(s, "+00:45");
         s.clear();
         write_offset_exact(&mut s, -(43 * 60 + 8)).unwrap();
         assert_eq!(s, "-00:43:08");
         s.clear();
-        write_offset_minutes(&mut s, 0, true).unwrap();
+        s.push_str(&minutes(0, true));
         assert_eq!(s, "Z");
     }
 

@@ -12,7 +12,7 @@
 //!   (`prorated`) in whole minor units that sum to the amount exactly.
 //! * Currencies are never summed here: every function works in one currency.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 use crate::work_profile::spread;
@@ -21,14 +21,14 @@ use crate::work_profile::spread;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Rate {
     /// The first day it applies.
-    pub effective_from: NaiveDate,
+    pub effective_from: Date,
     /// Minor units per hour.
     pub per_hour_minor: i64,
 }
 
 /// The rate in force on `day`: the latest `effective_from` on or before it.
 #[must_use]
-pub fn rate_on(rates: &[Rate], day: NaiveDate) -> Option<i64> {
+pub fn rate_on(rates: &[Rate], day: Date) -> Option<i64> {
     rates
         .iter()
         .filter(|r| r.effective_from <= day)
@@ -47,7 +47,7 @@ pub fn labour_cost_minor(minutes: i64, per_hour_minor: i64) -> i64 {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Priced {
     /// The cost on each day that had a rate, in order; they sum to `total_minor`.
-    pub days: Vec<(NaiveDate, i64)>,
+    pub days: Vec<(Date, i64)>,
     /// The cost of all rated minutes, rounded once.
     pub total_minor: i64,
     /// Minutes on days with no rate in force (their cost is unknown, not zero).
@@ -55,10 +55,7 @@ pub struct Priced {
 }
 
 /// Price `(day, minutes)` pairs with a per-day rate lookup.
-pub fn price_days<F: Fn(NaiveDate) -> Option<i64>>(
-    days: &[(NaiveDate, i64)],
-    rate_for: F,
-) -> Priced {
+pub fn price_days<F: Fn(Date) -> Option<i64>>(days: &[(Date, i64)], rate_for: F) -> Priced {
     let mut numerator: i128 = 0;
     let mut paid: i64 = 0;
     let mut out = Vec::new();
@@ -109,11 +106,7 @@ impl Accrual {
 /// Spread `amount_minor` over `days` by an accrual rule. The parts sum to the
 /// amount exactly. `None` when there is an amount but no day to put it on.
 #[must_use]
-pub fn accrue(
-    amount_minor: i64,
-    days: &[NaiveDate],
-    accrual: Accrual,
-) -> Option<Vec<(NaiveDate, i64)>> {
+pub fn accrue(amount_minor: i64, days: &[Date], accrual: Accrual) -> Option<Vec<(Date, i64)>> {
     if days.is_empty() {
         return (amount_minor == 0).then(Vec::new);
     }
@@ -133,8 +126,8 @@ pub fn accrue(
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
     fn rates() -> Vec<Rate> {
         // Deliberately out of order: lookup must not depend on it.
@@ -191,7 +184,7 @@ mod tests {
     #[test]
     fn daily_costs_sum_exactly_to_the_rounded_total() {
         // Seven days of 70 minutes at 3 333 an hour: each day is 3 888.5 — no drift allowed.
-        let days: Vec<(NaiveDate, i64)> = (1..=7).map(|n| (d(2026, 10, n), 70)).collect();
+        let days: Vec<(Date, i64)> = (1..=7).map(|n| (d(2026, 10, n), 70)).collect();
         let p = price_days(&days, |_| Some(3_333));
         assert_eq!(p.days.len(), 7);
         assert_eq!(p.days.iter().map(|x| x.1).sum::<i64>(), p.total_minor);
@@ -200,8 +193,7 @@ mod tests {
         // And across lots of awkward numbers.
         for rate in [1, 7, 99, 3_333, 12_345, 99_999] {
             for minutes in [1, 13, 70, 479] {
-                let days: Vec<(NaiveDate, i64)> =
-                    (1..=11).map(|n| (d(2026, 10, n), minutes)).collect();
+                let days: Vec<(Date, i64)> = (1..=11).map(|n| (d(2026, 10, n), minutes)).collect();
                 let p = price_days(&days, |_| Some(rate));
                 assert_eq!(p.days.iter().map(|x| x.1).sum::<i64>(), p.total_minor);
                 assert_eq!(
@@ -257,7 +249,7 @@ mod tests {
         assert_eq!(p.iter().map(|x| x.1).collect::<Vec<_>>(), vec![34, 33, 33]);
         for amount in [1, 2, 99, 100, 1_001, 123_457] {
             for n in 1..=9 {
-                let ds: Vec<NaiveDate> = (1..=n).map(|i| d(2026, 10, i)).collect();
+                let ds: Vec<Date> = (1..=n).map(|i| d(2026, 10, i)).collect();
                 for rule in [Accrual::Start, Accrual::Prorated, Accrual::End] {
                     let parts = accrue(amount, &ds, rule).unwrap();
                     assert_eq!(

@@ -6,9 +6,9 @@
 //! * [`run_due`] retries what is waiting after a transient failure;
 //! * `GET /api/email-deliveries` (administrators only; anyone else gets 404) lists them, newest first.
 
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::Utc;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -96,16 +96,13 @@ pub async fn deliver(
                 .await
         }
     };
-    let now = Utc::now();
+    let now = Timestamp::now();
     let after = email::after(&result, attempts, now);
     let error = result.as_ref().err().map(|e| match e {
         SendError::Transient(m) | SendError::Permanent(m) => m.clone(),
     });
-    let next_attempt_at = after
-        .next
-        .map(chrono::DateTime::<chrono::FixedOffset>::from);
-    let sent_at =
-        (after.status == "sent").then(|| chrono::DateTime::<chrono::FixedOffset>::from(now));
+    let next_attempt_at = after.next.map(crate::datetime::OffsetDateTime::from);
+    let sent_at = (after.status == "sent").then(|| crate::datetime::OffsetDateTime::from(now));
     match existing {
         Some(e) => {
             // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
@@ -168,7 +165,7 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<usize> {
          ORDER BY id
          LIMIT $2",
     )
-    .bind(Utc::now())
+    .bind(Timestamp::now())
     .bind(i64::try_from(limit).unwrap_or(i64::MAX))
     .fetch_all(crate::db::pool(ctx))
     .await?;

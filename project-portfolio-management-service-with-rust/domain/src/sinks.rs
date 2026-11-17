@@ -204,7 +204,7 @@ pub struct Note<'a> {
     /// The text.
     pub message: &'a str,
     /// When it was written.
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: crate::datetime::Timestamp,
 }
 
 /// The request body for `kind`, and its content type.
@@ -267,22 +267,21 @@ pub fn render_email(note: &Note<'_>) -> (String, String) {
 /// capped at six hours. `None` once `MAX_ATTEMPTS` is reached.
 #[must_use]
 pub fn next_attempt(
-    now: chrono::DateTime<chrono::Utc>,
+    now: crate::datetime::Timestamp,
     attempts: i32,
-) -> Option<chrono::DateTime<chrono::Utc>> {
+) -> Option<crate::datetime::Timestamp> {
     if attempts >= MAX_ATTEMPTS {
         return None;
     }
     let minutes = 5_i64
         .saturating_pow(u32::try_from(attempts.max(1) - 1).unwrap_or(0))
         .min(360);
-    Some(now + chrono::Duration::minutes(minutes))
+    Some(now + crate::datetime::Duration::minutes(minutes))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
     use uuid::Uuid;
 
     fn note(msg: &str) -> Note<'_> {
@@ -292,7 +291,8 @@ mod tests {
             subject_kind: "task",
             subject_pid: Uuid::from_u128(2),
             message: msg,
-            created_at: chrono::Utc.with_ymd_and_hms(2026, 10, 3, 12, 0, 0).unwrap(),
+            created_at: crate::datetime::Timestamp::with_ymd_and_hms(2026, 10, 3, 12, 0, 0)
+                .unwrap(),
         }
     }
 
@@ -447,7 +447,7 @@ mod tests {
 
     #[test]
     fn retries_back_off_and_stop() {
-        let t = chrono::Utc.with_ymd_and_hms(2026, 10, 3, 12, 0, 0).unwrap();
+        let t = crate::datetime::Timestamp::with_ymd_and_hms(2026, 10, 3, 12, 0, 0).unwrap();
         let mins = |a: i32| next_attempt(t, a).map(|x| (x - t).num_minutes());
         assert_eq!(
             (mins(1), mins(2), mins(3), mins(4)),

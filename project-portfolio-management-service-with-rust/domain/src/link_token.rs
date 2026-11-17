@@ -9,7 +9,7 @@
 //! succeeding only if a row changed), so two simultaneous requests cannot both win; [`check`] is
 //! the read-side rule and the update is the write-side one.
 
-use chrono::{DateTime, Duration, Utc};
+use crate::datetime::{Duration, Timestamp};
 
 /// How long a feed token lives.
 pub const FEED_TOKEN_LIFETIME_DAYS: i64 = 365;
@@ -29,13 +29,13 @@ pub enum Refusal {
 #[derive(Debug, Clone, Copy)]
 pub struct Link {
     /// When it was issued.
-    pub issued_at: DateTime<Utc>,
+    pub issued_at: Timestamp,
     /// How many days it lives.
     pub lifetime_days: i64,
     /// When it was revoked, if it was.
-    pub revoked_at: Option<DateTime<Utc>>,
+    pub revoked_at: Option<Timestamp>,
     /// When it was redeemed, if it was.
-    pub redeemed_at: Option<DateTime<Utc>>,
+    pub redeemed_at: Option<Timestamp>,
     /// Whether redeeming it once uses it up.
     pub single_use: bool,
 }
@@ -44,7 +44,7 @@ pub struct Link {
 ///
 /// # Errors
 /// The first of [`Refusal::Revoked`], [`Refusal::Expired`], [`Refusal::Redeemed`] that applies.
-pub fn check(link: &Link, now: DateTime<Utc>) -> Result<(), Refusal> {
+pub fn check(link: &Link, now: Timestamp) -> Result<(), Refusal> {
     if link.revoked_at.is_some() {
         return Err(Refusal::Revoked);
     }
@@ -60,10 +60,9 @@ pub fn check(link: &Link, now: DateTime<Utc>) -> Result<(), Refusal> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
 
-    fn issued() -> DateTime<Utc> {
-        Utc.with_ymd_and_hms(2026, 10, 1, 9, 0, 0).unwrap()
+    fn issued() -> Timestamp {
+        Timestamp::with_ymd_and_hms(2026, 10, 1, 9, 0, 0).unwrap()
     }
 
     fn link(single_use: bool) -> Link {

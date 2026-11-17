@@ -14,7 +14,7 @@
 
 use std::collections::{BTreeMap, HashSet};
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -27,7 +27,7 @@ pub struct Fact {
     /// Task pid.
     pub pid: Uuid,
     /// Due date, if set.
-    pub due: Option<NaiveDate>,
+    pub due: Option<Date>,
     /// Story points, if estimated.
     pub points: Option<i32>,
     /// Whether it is finished.
@@ -70,7 +70,7 @@ pub struct Rollup {
     /// Finished descendants.
     pub done: usize,
     /// Latest descendant due date.
-    pub due: Derived<NaiveDate>,
+    pub due: Derived<Date>,
     /// Summed story points of estimated descendants.
     pub estimate_points: Derived<i64>,
     /// Estimate-weighted progress in basis points (0..=10000).
@@ -172,8 +172,8 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, day).unwrap()
+    fn d(day: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, day).unwrap()
     }
     fn fact(n: u128, due: Option<u32>, points: Option<i32>, done: bool, spent: i64) -> Fact {
         Fact {

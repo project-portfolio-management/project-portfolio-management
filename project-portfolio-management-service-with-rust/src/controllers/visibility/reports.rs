@@ -133,7 +133,7 @@ pub(super) async fn delete_report(
     let pid = super::super::parse_pid(&pid)?;
     let row = vis_models::find_report(&ctx, pid).await?;
     let row_pid = row.pid;
-    let deleted_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let deleted_at: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     let mut tx = crate::db::begin(&ctx).await?;
     // The one column the update set before SQ-1, by id; no row back is an error, as before.
     let _: i64 = sqlx::query_scalar(
@@ -373,7 +373,8 @@ mod tests {
     use serde_json::json;
 
     fn model(data: serde_json::Value) -> plans::Model {
-        let at = chrono::DateTime::parse_from_rfc3339("2026-10-01T09:30:00+00:00").unwrap();
+        let at = crate::datetime::OffsetDateTime::parse_from_rfc3339("2026-10-01T09:30:00+00:00")
+            .unwrap();
         plans::Model {
             created_at: at,
             updated_at: at,

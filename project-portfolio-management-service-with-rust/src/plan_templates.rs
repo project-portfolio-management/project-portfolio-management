@@ -14,7 +14,7 @@
 //! 3. **Shape, not history.** Tasks come back at the workflow's initial
 //!    state, with no transitions, comments or time.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use project_portfolio_management_matcher::Plan;
 use serde::{Deserialize, Serialize};
 
@@ -86,7 +86,7 @@ pub struct TplNode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
     /// The base date the offsets are measured from (informational).
-    pub base_date: Option<NaiveDate>,
+    pub base_date: Option<Date>,
     /// Whether any date was captured, i.e. whether instantiation needs a
     /// start date.
     pub has_offsets: bool,
@@ -97,14 +97,14 @@ pub struct Snapshot {
 /// Parse a plan date that is a **full** `YYYY-MM-DD`; `YYYY` / `YYYY-MM`
 /// (coarse dates) are not days and cannot be offset.
 #[must_use]
-pub fn full_date(s: &str) -> Option<NaiveDate> {
-    NaiveDate::parse_from_str(s.trim(), "%Y-%m-%d").ok()
+pub fn full_date(s: &str) -> Option<Date> {
+    Date::parse_from_str(s.trim(), "%Y-%m-%d").ok()
 }
 
 /// The base date: the root's start date when it is a full date, else the
 /// earliest known date (a milestone or task due date), else none.
 #[must_use]
-pub fn choose_base(root_start: Option<&str>, other_dates: &[NaiveDate]) -> Option<NaiveDate> {
+pub fn choose_base(root_start: Option<&str>, other_dates: &[Date]) -> Option<Date> {
     root_start
         .and_then(full_date)
         .or_else(|| other_dates.iter().copied().min())
@@ -112,14 +112,14 @@ pub fn choose_base(root_start: Option<&str>, other_dates: &[NaiveDate]) -> Optio
 
 /// Calendar days from `base` to `date` (negative if before).
 #[must_use]
-pub fn offset(base: NaiveDate, date: NaiveDate) -> i64 {
+pub fn offset(base: Date, date: Date) -> i64 {
     (date - base).num_days()
 }
 
 /// `base` shifted by `days`.
 #[must_use]
-pub fn shift(base: NaiveDate, days: i64) -> NaiveDate {
-    base + chrono::Duration::days(days)
+pub fn shift(base: Date, days: i64) -> Date {
+    base + crate::datetime::Duration::days(days)
 }
 
 /// Strip everything that identifies a plan or names a person, keeping its
@@ -145,8 +145,8 @@ pub fn scrub(plan: &Plan) -> Plan {
 mod tests {
     use super::*;
 
-    fn d(m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, m, day).unwrap()
+    fn d(m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(2026, m, day).unwrap()
     }
 
     #[test]

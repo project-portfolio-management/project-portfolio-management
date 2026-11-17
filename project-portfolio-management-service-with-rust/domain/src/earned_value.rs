@@ -26,7 +26,7 @@
 //! nowhere else; the budget-baseline forecast (T-28b) deliberately does *not*
 //! pro-rate.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -223,9 +223,9 @@ pub fn percent_complete(default: DefaultMethod, tasks: &[TaskInput]) -> Option<P
 #[derive(Debug, Clone, Copy)]
 pub struct Period {
     /// First day, inclusive.
-    pub start: NaiveDate,
+    pub start: Date,
     /// Last day, inclusive.
-    pub end: NaiveDate,
+    pub end: Date,
     /// Planned cost, minor units.
     pub planned_minor: i64,
 }
@@ -240,7 +240,7 @@ pub fn bac(periods: &[Period]) -> i64 {
 
 /// The first day of the baseline, or `None` with no periods.
 #[must_use]
-pub fn baseline_start(periods: &[Period]) -> Option<NaiveDate> {
+pub fn baseline_start(periods: &[Period]) -> Option<Date> {
     periods.iter().map(|p| p.start).min()
 }
 
@@ -249,7 +249,7 @@ pub fn baseline_start(periods: &[Period]) -> Option<NaiveDate> {
 /// the period in progress counts linearly (floored to a minor unit), later ones
 /// count nothing.
 #[must_use]
-pub fn pv_after(periods: &[Period], start: NaiveDate, t: i64) -> i64 {
+pub fn pv_after(periods: &[Period], start: Date, t: i64) -> i64 {
     let mut total = 0_i128;
     for p in periods {
         let offset = (p.start - start).num_days();
@@ -344,7 +344,7 @@ pub fn block(
     numerator: i128,
     denominator: i128,
     ac_minor: Option<i64>,
-    as_of: NaiveDate,
+    as_of: Date,
 ) -> Option<Block> {
     let start = baseline_start(periods)?;
     let bac_minor = bac(periods);
@@ -417,8 +417,8 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
     fn task(n: u128, points: Option<i32>, state: TaskState) -> TaskInput {
         TaskInput {

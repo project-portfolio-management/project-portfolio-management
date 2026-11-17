@@ -4,8 +4,8 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use axa_test::prelude::*;
-use chrono::Days;
 use project_portfolio_management::app::App;
+use project_portfolio_management::datetime::Days;
 use serde_json::{Value, json};
 use serial_test::serial;
 

@@ -168,9 +168,9 @@ async fn slots_clash_when_they_overlap_render_in_the_callers_zone_and_stay_priva
         // The feed carries slots that end within the last 7 days or later, so the fixed 2026-10-03
         // slots above age out of it; check the feed with a slot relative to now (it must not be a
         // time bomb).
-        let soon = chrono::Utc::now() + chrono::Duration::days(1);
+        let soon = project_portfolio_management::datetime::Timestamp::now() + project_portfolio_management::datetime::Duration::days(1);
         let begin = soon.format("%Y-%m-%dT%H:00:00Z").to_string();
-        let end = (soon + chrono::Duration::hours(1)).format("%Y-%m-%dT%H:00:00Z").to_string();
+        let end = (soon + project_portfolio_management::datetime::Duration::hours(1)).format("%Y-%m-%dT%H:00:00Z").to_string();
         slot(&begin, &end).await.assert_status_ok();
         let ics = request.get(&format!("/api/feeds/calendar.ics?token={token}")).await.text();
         let dtstart = format!("DTSTART:{}", soon.format("%Y%m%dT%H0000Z"));

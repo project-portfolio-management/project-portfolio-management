@@ -13,7 +13,7 @@
 
 #![expect(missing_docs)]
 
-use chrono::{Datelike, NaiveDate};
+use crate::datetime::Date;
 
 /// A calendar quarter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -27,7 +27,7 @@ pub struct Quarter {
 impl Quarter {
     /// The quarter a date falls in.
     #[must_use]
-    pub fn of(d: NaiveDate) -> Self {
+    pub fn of(d: Date) -> Self {
         Self {
             year: d.year(),
             q: (d.month() - 1) / 3 + 1,
@@ -66,13 +66,13 @@ impl Quarter {
 
     /// The first day.
     #[must_use]
-    pub fn start(self) -> NaiveDate {
-        NaiveDate::from_ymd_opt(self.year, (self.q - 1) * 3 + 1, 1).unwrap_or_default()
+    pub fn start(self) -> Date {
+        Date::from_ymd_opt(self.year, (self.q - 1) * 3 + 1, 1).unwrap_or_default()
     }
 
     /// The last day.
     #[must_use]
-    pub fn end(self) -> NaiveDate {
+    pub fn end(self) -> Date {
         let next = if self.q == 4 {
             Self {
                 year: self.year + 1,
@@ -90,13 +90,13 @@ impl Quarter {
 
 /// The last quarter that has finished by `today`.
 #[must_use]
-pub fn last_finished(today: NaiveDate) -> Quarter {
+pub fn last_finished(today: Date) -> Quarter {
     Quarter::of(today).previous()
 }
 
 /// The quarters to read, oldest first, ending at the last finished quarter.
 #[must_use]
-pub fn window(today: NaiveDate, count: usize) -> Vec<Quarter> {
+pub fn window(today: Date, count: usize) -> Vec<Quarter> {
     let mut out = Vec::new();
     let mut q = last_finished(today);
     for _ in 0..count.clamp(1, 16) {
@@ -224,8 +224,8 @@ pub const TEMPLATE: &[(&str, &str, &str, &str)] = &[
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
 
     fn input(name: &str, met: Option<bool>) -> Input {

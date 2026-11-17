@@ -16,7 +16,7 @@
 
 use std::collections::HashSet;
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -31,7 +31,7 @@ pub struct Spec {
     pub days: Option<i64>,
     /// The tasks it protects and their planned durations.
     pub tasks: Vec<(Uuid, i64)>,
-    pub planned_finish: NaiveDate,
+    pub planned_finish: Date,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -60,7 +60,7 @@ impl Reading {
 pub fn read(
     spec: &Spec,
     done: &HashSet<Uuid>,
-    forecast_finish: Option<NaiveDate>,
+    forecast_finish: Option<Date>,
     calendar: &WorkCalendar,
     lines: &Lines,
 ) -> Reading {
@@ -115,8 +115,8 @@ mod tests {
         Uuid::from_u128(n)
     }
 
-    fn day(d: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 1, d).unwrap()
+    fn day(d: u32) -> Date {
+        Date::from_ymd_opt(2026, 1, d).unwrap()
     }
 
     fn spec(days: Option<i64>) -> Spec {
@@ -128,7 +128,7 @@ mod tests {
         }
     }
 
-    fn at(forecast: NaiveDate, done: &[u128], days: Option<i64>) -> Reading {
+    fn at(forecast: Date, done: &[u128], days: Option<i64>) -> Reading {
         let done: HashSet<Uuid> = done.iter().map(|n| id(*n)).collect();
         read(
             &spec(days),

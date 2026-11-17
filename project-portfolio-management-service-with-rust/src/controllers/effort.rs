@@ -42,7 +42,7 @@ pub(crate) struct EntryPayload {
     /// `person:` or `worker:` URN of who spent the effort (a reference, not a name).
     actor_ref: String,
     /// Calendar date the effort was spent on; an approved timesheet week rejects new entries.
-    spent_on: chrono::NaiveDate,
+    spent_on: crate::datetime::Date,
     /// Minutes spent, 1 to 1440 (one day).
     minutes: i64,
     /// Task the effort belongs to; absent means plan-level effort not tied to a task.
@@ -202,7 +202,7 @@ async fn effort_rollup(
             "task_pid": task,
             "totals": rules::totals(&facts_of(entries)),
         })).collect::<Vec<_>>(),
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);
     super::conditional_json(&headers, &etag, &body)
@@ -266,9 +266,9 @@ pub(crate) struct NonWorkingPayload {
     /// `person:` reference of the person who is away.
     person_ref: String,
     /// First day of the period (inclusive).
-    starts_on: chrono::NaiveDate,
+    starts_on: crate::datetime::Date,
     /// Last day of the period (inclusive); not before `starts_on`.
-    ends_on: chrono::NaiveDate,
+    ends_on: crate::datetime::Date,
     /// One of `leave`, `holiday`, `study_leave` or `non_project_duty`.
     kind: String,
     /// Free-text note; absent means none.
@@ -372,7 +372,7 @@ async fn utilization(
         .window_days
         .filter(|d| *d > 0 && *d <= 366)
         .unwrap_or(DEFAULT_WINDOW_DAYS);
-    let since = crate::tz::deployment_today() - chrono::Duration::days(window_days);
+    let since = crate::tz::deployment_today() - crate::datetime::Duration::days(window_days);
 
     let entries = scope.keep(
         sqlx::query_as::<_, time_entries::Model>(

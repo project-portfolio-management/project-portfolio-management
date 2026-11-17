@@ -9,9 +9,9 @@
 use super::refuse;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::{Datelike, NaiveDate};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -357,7 +357,7 @@ async fn withdraw_on_unlink(
     .fetch_all(crate::db::pool(ctx))
     .await
     .map_err(|e| db_err(&e))?;
-    let unlinked_at = chrono::Utc::now();
+    let unlinked_at = crate::datetime::Timestamp::now();
     let base = bridge::base_url();
     let bearer = bridge::bearer_of(headers);
     let decided = bridge::plan_demand(0, base.is_some(), bearer.is_some());
@@ -660,7 +660,7 @@ async fn start_demand_send(
     pool: Uuid,
     peer: String,
     plan: Uuid,
-    month: NaiveDate,
+    month: Date,
 ) -> Result<serde_json::Value> {
     use crate::wpm_bridge::{self as bridge, DemandPlan};
     let total: i64 = sqlx::query_scalar::<_, i32>(
@@ -677,7 +677,7 @@ async fn start_demand_send(
     .into_iter()
     .map(i64::from)
     .sum();
-    let written_at = chrono::Utc::now();
+    let written_at = crate::datetime::Timestamp::now();
     let event = bridge::peer_event_id(pool, plan, month, written_at);
     let base = bridge::base_url();
     let bearer = bridge::bearer_of(headers);
@@ -733,11 +733,11 @@ async fn record_send(
     ctx: &AppContext,
     pool: Uuid,
     plan: Uuid,
-    month: NaiveDate,
+    month: Date,
     peer: &str,
     centi: Option<i64>,
     event: &str,
-    version_at: chrono::DateTime<chrono::Utc>,
+    version_at: crate::datetime::Timestamp,
     outcome: &str,
     detail: &str,
 ) -> Result<()> {
@@ -799,7 +799,7 @@ async fn list_commitments(
     let belongs = caller
         .claims()
         .is_some_and(|c| c.attrs.contains_key("organization"));
-    let sends: HashMap<(Uuid, Uuid, NaiveDate), peer_demand_sends::Model> =
+    let sends: HashMap<(Uuid, Uuid, Date), peer_demand_sends::Model> =
         sqlx::query_as::<_, peer_demand_sends::Model>("SELECT * FROM peer_demand_sends")
             .fetch_all(crate::db::pool(&ctx))
             .await
@@ -858,7 +858,7 @@ struct Cell {
 pub(crate) async fn heatmap(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
-    from: NaiveDate,
+    from: Date,
     months: u32,
     read: &crate::wpm_bridge::SupplyRead,
 ) -> Result<serde_json::Value> {
@@ -915,7 +915,7 @@ pub(crate) async fn heatmap(
         .iter()
         .filter_map(|p| p.peer_pool_ref.clone().map(|r| (p.pid, r)))
         .collect();
-    let starts: Vec<NaiveDate> = periods.iter().map(|p| p.from).collect();
+    let starts: Vec<Date> = periods.iter().map(|p| p.from).collect();
     let peer = crate::wpm_bridge::supply_for(&linked, &starts, read).await;
     let peer_ref_of: HashMap<Uuid, String> = linked.into_iter().collect();
     let pool_of_role: HashMap<String, Uuid> = pool_members
@@ -939,7 +939,7 @@ pub(crate) async fn heatmap(
             }
         }
     }
-    let by_month: HashMap<NaiveDate, usize> = periods
+    let by_month: HashMap<Date, usize> = periods
         .iter()
         .enumerate()
         .map(|(i, p)| (p.from, i))
@@ -1017,7 +1017,7 @@ pub(crate) async fn heatmap(
                 j["entered_here_supply_fte"] = here.supply.map(fte).into();
                 j["peer_supply"] = serde_json::json!({
                     "source": "wpm", "status": r.status, "supply_fte": r.milli.map(fte),
-                    "as_of": r.as_of, "age_seconds": r.as_of.map(|t| (chrono::Utc::now() - t).num_seconds().max(0)),
+                    "as_of": r.as_of, "age_seconds": r.as_of.map(|t| (crate::datetime::Timestamp::now() - t).num_seconds().max(0)),
                     "reason": r.reason,
                 });
             }
@@ -1072,7 +1072,7 @@ async fn live(
         return Err(unprocessable("months must be 1 to 24"));
     }
     let from = match &q.from {
-        None => chrono::Utc::now()
+        None => crate::datetime::Timestamp::now()
             .date_naive()
             .with_day(1)
             .unwrap_or_default(),
@@ -1096,7 +1096,7 @@ async fn live(
 pub(crate) async fn pack_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
-    cut_off: chrono::DateTime<chrono::Utc>,
+    cut_off: crate::datetime::Timestamp,
 ) -> Result<serde_json::Value> {
     let from = cut_off.date_naive().with_day(1).unwrap_or_default();
     heatmap(ctx, include, from, 6, &crate::wpm_bridge::SupplyRead::Kept).await

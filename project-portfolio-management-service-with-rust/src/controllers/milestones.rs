@@ -17,8 +17,8 @@
 use super::conflict;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -94,7 +94,7 @@ pub(crate) async fn achieved_by_tasks(
 /// Everything derived for a set of milestones.
 pub(crate) struct Derived {
     /// One entry per milestone as (due date, milestone id, JSON view), sorted by due date then id.
-    pub(crate) json: Vec<(NaiveDate, i64, serde_json::Value)>,
+    pub(crate) json: Vec<(Date, i64, serde_json::Value)>,
 }
 
 /// Classify each milestone (achieved, late, due soon, upcoming), forecast it from its linked tasks, and shape the JSON views. `due_soon` is a calendar-day window and `at_risk` is business days of slack; `with_history` adds the forecast history.
@@ -102,7 +102,7 @@ pub(crate) struct Derived {
 pub(crate) async fn derive(
     ctx: &AppContext,
     rows: &[milestones::Model],
-    today: NaiveDate,
+    today: Date,
     due_soon: i64,
     at_risk: i64,
     with_history: bool,
@@ -206,7 +206,7 @@ pub(crate) async fn derive(
                 Some((net, result)) => {
                     let by_pid: HashMap<Uuid, &crate::cpm::NodeResult> =
                         result.nodes.iter().map(|n| (n.pid, n)).collect();
-                    let mut finish: Option<NaiveDate> = None;
+                    let mut finish: Option<Date> = None;
                     let mut unforecast = Vec::new();
                     for t in &open {
                         if let Some(n) = by_pid.get(&t.pid) {
@@ -283,7 +283,7 @@ pub(crate) async fn derive(
     }
     // Partner sign-off (EX-4): delivered keeps its meaning; met is separate. Only a milestone that requires
     // sign-off carries a `signoff` object.
-    let delivered: HashMap<Uuid, Option<NaiveDate>> = out
+    let delivered: HashMap<Uuid, Option<Date>> = out
         .iter()
         .filter_map(|(_, _, v)| {
             let pid = Uuid::parse_str(v["pid"].as_str()?).ok()?;
@@ -327,10 +327,10 @@ pub(crate) struct ListParams {
     kind: Option<String>,
     /// Due on or after.
     #[serde(default)]
-    from: Option<NaiveDate>,
+    from: Option<Date>,
     /// Due on or before.
     #[serde(default)]
-    to: Option<NaiveDate>,
+    to: Option<Date>,
     /// "Due soon" window in calendar days (default 14).
     #[serde(default)]
     due_soon_days: Option<i64>,
@@ -339,7 +339,7 @@ pub(crate) struct ListParams {
     at_risk_days: Option<i64>,
     /// The date "today" means (default today).
     #[serde(default)]
-    as_of: Option<NaiveDate>,
+    as_of: Option<Date>,
 }
 
 /// Validate an optional day-count window (0 to 3650), applying the default when absent; 422 when out of range.

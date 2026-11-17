@@ -180,12 +180,12 @@ pub(super) async fn at_a_glance(
                     .filter(|a| a.person_ref == *person)
                     .map(|a| (a.percent, a.start_date, a.end_date))
                     .collect();
-                rules::summed_percent(&theirs, today, today + chrono::Days::new(30)) > 100
+                rules::summed_percent(&theirs, today, today + crate::datetime::Days::new(30)) > 100
             })
             .count()
     };
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "collections": collections,
         "site_tiles": {
             "plans": items.len(),

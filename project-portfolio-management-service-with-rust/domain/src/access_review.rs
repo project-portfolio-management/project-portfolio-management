@@ -9,7 +9,7 @@
 
 use std::collections::BTreeMap;
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use uuid::Uuid;
 
 /// The default age, in calendar days, after which a standing grant is flagged for review.
@@ -29,7 +29,7 @@ pub struct Entry {
     /// `granted` or `revoked`.
     pub action: String,
     /// The day it was recorded.
-    pub recorded_on: NaiveDate,
+    pub recorded_on: Date,
     /// Who recorded it.
     pub recorded_by: Option<String>,
     /// A note.
@@ -49,7 +49,7 @@ pub struct Standing {
 
 /// The grants that stand at `today`, oldest first. `stale_days` is the review age in calendar days.
 #[must_use]
-pub fn standing(entries: &[Entry], today: NaiveDate, stale_days: i64) -> Vec<Standing> {
+pub fn standing(entries: &[Entry], today: Date, stale_days: i64) -> Vec<Standing> {
     let mut latest: BTreeMap<(Uuid, String, String), &Entry> = BTreeMap::new();
     for e in entries {
         let key = (
@@ -120,11 +120,11 @@ pub fn to_csv(rows: &[Standing]) -> String {
 mod tests {
     use super::*;
 
-    fn day(m: u32, d: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, m, d).unwrap()
+    fn day(m: u32, d: u32) -> Date {
+        Date::from_ymd_opt(2026, m, d).unwrap()
     }
 
-    fn entry(id: i64, person: &str, access: &str, action: &str, on: NaiveDate) -> Entry {
+    fn entry(id: i64, person: &str, access: &str, action: &str, on: Date) -> Entry {
         Entry {
             id,
             plan_pid: Uuid::nil(),

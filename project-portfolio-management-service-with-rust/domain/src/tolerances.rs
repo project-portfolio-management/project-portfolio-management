@@ -15,7 +15,7 @@
 //! up to the limit, red beyond it. A measurement that is zero or favourable is green. One that could not be made
 //! is `unknown`, never green. Absent evidence is not good news.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// The four dimensions.
@@ -219,7 +219,7 @@ pub const fn risk_score(probability: i32, impact: i32) -> i32 {
 
 /// Calendar days `finish` is after `target`, or zero when on or ahead.
 #[must_use]
-pub fn days_late(finish: NaiveDate, target: NaiveDate) -> i64 {
+pub fn days_late(finish: Date, target: Date) -> i64 {
     (finish - target).num_days().max(0)
 }
 
@@ -238,18 +238,18 @@ pub fn overrun_bps(forecast: i64, baseline: i64) -> Option<i64> {
 }
 
 /// One booking: a percentage of a person over a span, each end open when absent.
-pub type Booking = (Option<NaiveDate>, Option<NaiveDate>, i32);
+pub type Booking = (Option<Date>, Option<Date>, i32);
 
 /// The worst over-booking, in percentage points above 100, on any day from `from` to `to` (inclusive) for one
 /// person's `bookings`; zero when never over 100.
 #[must_use]
-pub fn peak_overbooking(bookings: &[Booking], from: NaiveDate, to: NaiveDate) -> i64 {
+pub fn peak_overbooking(bookings: &[Booking], from: Date, to: Date) -> i64 {
     if to < from {
         return 0;
     }
     // Sweep the days on which the total can change: the window start and each booking's first day, and the day
     // after each booking's last day.
-    let mut edges: Vec<NaiveDate> = vec![from];
+    let mut edges: Vec<Date> = vec![from];
     for (s, e, _) in bookings {
         if let Some(s) = s.filter(|s| *s > from && *s <= to) {
             edges.push(s);
@@ -281,8 +281,8 @@ pub fn peak_overbooking(bookings: &[Booking], from: NaiveDate, to: NaiveDate) ->
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).expect("date")
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).expect("date")
     }
 
     #[test]

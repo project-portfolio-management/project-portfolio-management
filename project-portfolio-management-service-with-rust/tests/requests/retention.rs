@@ -4,8 +4,8 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use axa_test::prelude::*;
-use chrono::Utc;
 use project_portfolio_management::app::App;
+use project_portfolio_management::datetime::Timestamp;
 use project_portfolio_management::retention;
 use serial_test::serial;
 use sqlx::Row;
@@ -41,7 +41,7 @@ async fn the_purge_removes_only_what_is_past_its_period() {
             sqlx::raw_sql(sqlx::AssertSqlSafe(sql)).execute(db).await.expect("seed");
         }
 
-        let now = Utc::now();
+        let now = Timestamp::now();
 
         // A dry run counts and changes nothing.
         let dry = retention::run(&ctx, now, &[], false).await.expect("dry run");

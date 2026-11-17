@@ -9,8 +9,8 @@
 
 use std::collections::HashMap;
 
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
-use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -22,11 +22,11 @@ use crate::models::_entities::work_calendars;
 use crate::models::audit_logs::Model as AuditModel;
 
 /// Holiday dates stored on a calendar row; entries that fail to parse as YYYY-MM-DD are silently skipped.
-fn holidays_of(row: &work_calendars::Model) -> Vec<NaiveDate> {
+fn holidays_of(row: &work_calendars::Model) -> Vec<Date> {
     serde_json::from_value::<Vec<String>>(row.holidays.clone())
         .unwrap_or_default()
         .iter()
-        .filter_map(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .filter_map(|s| Date::parse_from_str(s, "%Y-%m-%d").ok())
         .collect()
 }
 
@@ -76,7 +76,7 @@ pub(crate) async fn person_calendars(
     let mut conflicts = Vec::new();
     for r in refs {
         let row = find(&mut crate::db::pool(ctx), "person", r).await?;
-        let absences: Vec<(NaiveDate, NaiveDate)> = sqlx::query_as(
+        let absences: Vec<(Date, Date)> = sqlx::query_as(
             "SELECT starts_on, ends_on FROM non_working_periods
              WHERE person_ref = $1 AND deleted_at IS NULL",
         )
@@ -118,7 +118,7 @@ pub(crate) struct CalendarBody {
     weekdays: String,
     /// Non-working dates; stored sorted. Absent means none.
     #[serde(default)]
-    holidays: Vec<NaiveDate>,
+    holidays: Vec<Date>,
 }
 
 /// Set a plan's calendar (used by the MS Project import as well as the route).
@@ -126,7 +126,7 @@ pub(crate) async fn set_plan_calendar(
     ctx: &AppContext,
     plan_pid: Uuid,
     weekdays: &str,
-    holidays: &[NaiveDate],
+    holidays: &[Date],
     actor: Option<&str>,
 ) -> Result<()> {
     let body = CalendarBody {
@@ -143,7 +143,7 @@ pub(crate) async fn set_person_calendar(
     ctx: &AppContext,
     person_ref: &str,
     weekdays: &str,
-    holidays: &[NaiveDate],
+    holidays: &[Date],
     actor: Option<&str>,
 ) -> Result<()> {
     let body = CalendarBody {
@@ -159,7 +159,7 @@ pub(crate) async fn set_person_calendar(
 pub(crate) async fn plan_calendar_spec(
     ctx: &AppContext,
     plan_pid: Uuid,
-) -> Result<Option<(String, Vec<NaiveDate>)>> {
+) -> Result<Option<(String, Vec<Date>)>> {
     Ok(
         find(&mut crate::db::pool(ctx), "plan", &plan_pid.to_string())
             .await?
@@ -212,7 +212,7 @@ async fn upsert(
             .bind(subject)
             .bind(&b.weekdays)
             .bind(&json)
-            .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+            .bind(None::<crate::datetime::OffsetDateTime>)
             .fetch_one(tx.conn())
             .await?,
         };
@@ -223,7 +223,7 @@ async fn upsert(
         actor,
         Some(
             serde_json::json!({ "scope": scope, "subject": subject, "weekdays": b.weekdays,
-                                  "holidays": holidays.len(), "at": Utc::now() }),
+                                  "holidays": holidays.len(), "at": Timestamp::now() }),
         ),
     )
     .await

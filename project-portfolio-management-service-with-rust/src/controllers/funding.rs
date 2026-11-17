@@ -8,9 +8,9 @@
 use super::refuse;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -241,7 +241,7 @@ async fn portfolio_money(
     let sm = rules::start_month();
     let day = match q.fy {
         Some(y) if (2000..=2100).contains(&y) => {
-            NaiveDate::from_ymd_opt(y, sm, 1).ok_or_else(|| unprocessable("fy is not a year"))?
+            Date::from_ymd_opt(y, sm, 1).ok_or_else(|| unprocessable("fy is not a year"))?
         }
         Some(_) => return Err(unprocessable("fy must be a year between 2000 and 2100")),
         None => crate::tz::deployment_today(),
@@ -328,7 +328,7 @@ fn programme_trees(
 pub(crate) async fn money_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
-    day: NaiveDate,
+    day: Date,
     combine_classes: bool,
 ) -> Result<serde_json::Value> {
     let sm = rules::start_month();
@@ -407,7 +407,7 @@ pub(crate) async fn money_section(
     let loose: Vec<serde_json::Value> = by_programme
         .get(&Uuid::nil())
         .map_or_default(|v| v.iter().map(|r| row_json(r, &names)).collect());
-    let _ = Datelike::year(&day);
+    let _ = day.year();
     Ok(serde_json::json!({
         "financial_year": { "label": year.label, "start": year.start, "end": year.end, "starts_in_month": sm },
         "classes_combined": combine_classes,
@@ -432,7 +432,7 @@ pub(crate) async fn money_section(
 pub(crate) async fn pack_section(
     ctx: &AppContext,
     include: &HashSet<Uuid>,
-    cut_off: DateTime<Utc>,
+    cut_off: Timestamp,
 ) -> Result<serde_json::Value> {
     money_section(ctx, include, cut_off.date_naive(), false).await
 }

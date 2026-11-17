@@ -193,7 +193,7 @@ async fn delete_canvas(
 ) -> Result<Response> {
     let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let canvas_pid = canvas.pid;
-    let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let now = crate::datetime::OffsetDateTime::from(crate::datetime::Timestamp::now());
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query(
         "UPDATE canvas_items SET deleted_at = $1 WHERE canvas_pid = $2 AND deleted_at IS NULL",
@@ -378,7 +378,7 @@ async fn delete_item(
     let canvas = find_canvas(&ctx, &caller, &pid).await?;
     let item = find_item_of(&ctx, &canvas, &item_pid).await?;
     let item_pid = item.pid;
-    let now = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let now = crate::datetime::OffsetDateTime::from(crate::datetime::Timestamp::now());
     let mut tx = crate::db::begin(&ctx).await?;
     // By id, as the update of the row read above was before SQ-1; no row back is an error, as it was.
     sqlx::query_scalar::<_, i64>(

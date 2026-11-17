@@ -53,7 +53,7 @@ pub(super) async fn blocked(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "derivation": "age = calendar days since the task entered blocked (status_changed_at)",
         "blocked": blocked,
     });
@@ -95,7 +95,7 @@ pub(super) async fn moscow(
         }
     }
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "convention": "tag `moscow:<must|should|could|wont>`; the first moscow tag wins; \
                        untagged items are counted, never guessed into a band",
         "bands": bands,
@@ -150,7 +150,7 @@ pub(super) async fn delivery_links(
         }
     }
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "schemes": TRACKER_SCHEMES,
         "tracked": tracked,
         "untracked": untracked,
@@ -209,7 +209,7 @@ pub(super) async fn milestone_calendar(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "kinds": rules::MILESTONE_KINDS,
         "milestones": entries,
     });

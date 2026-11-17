@@ -856,8 +856,8 @@ async fn remove(
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i32>("UPDATE workflows SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-            chrono::Utc::now(),
+        .bind(crate::datetime::OffsetDateTime::from(
+            crate::datetime::Timestamp::now(),
         ))
         .bind(workflow.id)
         .fetch_one(tx.conn())

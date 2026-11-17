@@ -13,7 +13,7 @@
 
 use std::collections::BTreeMap;
 
-use chrono::{Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::{Deserialize, Serialize};
 
 /// What a case is for.
@@ -143,7 +143,7 @@ pub fn template_problems(items: &[Seed]) -> Vec<String> {
 
 /// An item's due date: the effective date plus its offset.
 #[must_use]
-pub fn due_date(effective: NaiveDate, offset_days: i64) -> Option<NaiveDate> {
+pub fn due_date(effective: Date, offset_days: i64) -> Option<Date> {
     effective.checked_add_signed(Duration::days(offset_days))
 }
 
@@ -153,7 +153,7 @@ pub struct ItemState<'a> {
     /// `done`, `skipped`, or none while open.
     pub resolution: Option<&'a str>,
     /// When it is due.
-    pub due: Option<NaiveDate>,
+    pub due: Option<Date>,
 }
 
 /// How far a checklist has got.
@@ -175,7 +175,7 @@ pub struct Progress {
 
 /// Progress as of `today`.
 #[must_use]
-pub fn progress(items: &[ItemState<'_>], today: NaiveDate) -> Progress {
+pub fn progress(items: &[ItemState<'_>], today: Date) -> Progress {
     let done = items
         .iter()
         .filter(|i| i.resolution == Some("done"))
@@ -227,13 +227,13 @@ pub struct Record {
     /// `granted` or `revoked`.
     pub granted: bool,
     /// The day it was recorded.
-    pub on: NaiveDate,
+    pub on: Date,
 }
 
 /// Access that was granted and not revoked since: `(person, access, granted on)`,
 /// ordered by person then access. The latest record for a (person, access) wins.
 #[must_use]
-pub fn outstanding(records: &[Record]) -> Vec<(String, String, NaiveDate)> {
+pub fn outstanding(records: &[Record]) -> Vec<(String, String, Date)> {
     let mut latest: BTreeMap<(&str, &str), &Record> = BTreeMap::new();
     for r in records {
         let key = (r.person.as_str(), r.access.as_str());
@@ -312,8 +312,8 @@ pub fn closeout(c: Counts) -> Vec<Finding> {
 mod tests {
     use super::*;
 
-    fn d(day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, day).unwrap()
+    fn d(day: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, day).unwrap()
     }
 
     #[test]

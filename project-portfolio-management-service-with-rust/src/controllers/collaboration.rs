@@ -109,7 +109,7 @@ pub(crate) struct InvitePayload {
     expertise: Option<String>,
     #[serde(default)]
     /// Optional date the verdict is due; absent means no deadline.
-    due_on: Option<chrono::NaiveDate>,
+    due_on: Option<crate::datetime::Date>,
 }
 
 /// Validate an invitation payload, reporting every problem at once.
@@ -363,7 +363,7 @@ async fn respond_review(
         "UPDATE reviews SET status = $1, responded_at = $2 WHERE id = $3 RETURNING *",
     )
     .bind(target)
-    .bind(chrono::Utc::now())
+    .bind(crate::datetime::Timestamp::now())
     .bind(review.id)
     .fetch_one(tx.conn())
     .await?;
@@ -442,7 +442,7 @@ async fn submit_review(
     .bind(payload.score)
     .bind(payload.recommendation.trim())
     .bind(payload.comment.as_deref())
-    .bind(chrono::Utc::now())
+    .bind(crate::datetime::Timestamp::now())
     .bind(review.id)
     .fetch_one(tx.conn())
     .await?;
@@ -513,7 +513,7 @@ async fn withdraw_review(
     sqlx::query_scalar::<_, i32>(
         "UPDATE reviews SET status = 'withdrawn', deleted_at = $1 WHERE id = $2 RETURNING id",
     )
-    .bind(chrono::Utc::now())
+    .bind(crate::datetime::Timestamp::now())
     .bind(review.id)
     .fetch_one(tx.conn())
     .await?;
@@ -703,7 +703,7 @@ async fn assignee_workload(
         &etag,
         &serde_json::json!({
             "assignees": body["assignees"],
-            "as_of": chrono::Utc::now().to_rfc3339(),
+            "as_of": crate::datetime::Timestamp::now().to_rfc3339(),
         }),
     )
 }
@@ -801,7 +801,7 @@ async fn read_notification(
     }
     let row: notifications::Model =
         sqlx::query_as("UPDATE notifications SET read_at = $1 WHERE id = $2 RETURNING *")
-            .bind(chrono::Utc::now())
+            .bind(crate::datetime::Timestamp::now())
             .bind(row.id)
             .fetch_one(crate::db::pool(&ctx))
             .await?;

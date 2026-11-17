@@ -17,9 +17,9 @@ use super::unprocessable;
 use super::{conflict, forbidden};
 use std::fmt::Write as _;
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axum::http::{StatusCode, header};
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -67,7 +67,7 @@ fn is_self(person: &str, sub: &str) -> bool {
 }
 
 /// Parses an ISO week string (such as `2026-W40`) to its Monday, or a `422` when it is not a valid week.
-fn week_of(raw: &str) -> Result<NaiveDate> {
+fn week_of(raw: &str) -> Result<Date> {
     rules::week_start(raw).ok_or_else(|| unprocessable("week must be an ISO week such as 2026-W40"))
 }
 
@@ -75,7 +75,7 @@ fn week_of(raw: &str) -> Result<NaiveDate> {
 async fn week_entries(
     ctx: &AppContext,
     person: &str,
-    monday: NaiveDate,
+    monday: Date,
 ) -> Result<Vec<time_entries::Model>> {
     Ok(sqlx::query_as(
         "SELECT * FROM time_entries
@@ -85,7 +85,7 @@ async fn week_entries(
     )
     .bind(person)
     .bind(monday)
-    .bind(monday + chrono::Duration::days(6))
+    .bind(monday + crate::datetime::Duration::days(6))
     .bind(ROW_CAP)
     .fetch_all(crate::db::pool(ctx))
     .await?)
@@ -107,7 +107,7 @@ fn fact(e: &time_entries::Model) -> Entry {
 async fn week_row(
     db: &mut impl Session,
     person: &str,
-    monday: NaiveDate,
+    monday: Date,
 ) -> Result<Option<timesheet_weeks::Model>> {
     Ok(sqlx::query_as(
         "SELECT * FROM timesheet_weeks WHERE person_ref = $1 AND week_start = $2 LIMIT 1",
@@ -119,11 +119,7 @@ async fn week_row(
 }
 
 /// Whether `person`'s week containing `date` is approved (and so locked).
-pub(crate) async fn week_is_locked(
-    ctx: &AppContext,
-    person: &str,
-    date: NaiveDate,
-) -> Result<bool> {
+pub(crate) async fn week_is_locked(ctx: &AppContext, person: &str, date: Date) -> Result<bool> {
     Ok(
         week_row(&mut crate::db::pool(ctx), person, rules::monday_of(date))
             .await?
@@ -199,14 +195,14 @@ pub(crate) struct SubmitBody {
 async fn set_state(
     db: &mut impl Session,
     person: &str,
-    monday: NaiveDate,
+    monday: Date,
     status: &str,
     submitted: bool,
     decider: Option<(&str, Option<&str>)>,
 ) -> Result<timesheet_weeks::Model> {
     // Upsert: a week has no row until its first submission or decision.
     let existing = week_row(db, person, monday).await?;
-    let now = chrono::Utc::now().fixed_offset();
+    let now = crate::datetime::Timestamp::now().fixed_offset();
     match existing {
         Some(row) => {
             // An update names only the columns it changes, as before SQ-1: the status; the submission stamp
@@ -236,7 +232,7 @@ async fn set_state(
                     .bind(status)
                     .bind(now)
                     .bind(None::<String>)
-                    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+                    .bind(None::<crate::datetime::OffsetDateTime>)
                     .bind(None::<String>),
                 (false, None) => {
                     sqlx::query_as("UPDATE timesheet_weeks SET status = $1 WHERE id = $2 RETURNING *")
@@ -377,10 +373,10 @@ pub(crate) struct ReportParams {
     group_by: String,
     /// Inclusive start date; absent means 90 calendar days back from the end.
     #[serde(default)]
-    from: Option<NaiveDate>,
+    from: Option<Date>,
     /// Inclusive end date; absent means today.
     #[serde(default)]
-    to: Option<NaiveDate>,
+    to: Option<Date>,
     /// Restrict the report to one plan, by public id; absent covers every readable plan.
     #[serde(default)]
     plan: Option<Uuid>,
@@ -406,7 +402,9 @@ async fn time_report(
         unprocessable("group_by must be person, plan, category, billable or month")
     })?;
     let to = p.to.unwrap_or_else(crate::tz::deployment_today);
-    let from = p.from.unwrap_or_else(|| to - chrono::Duration::days(89));
+    let from = p
+        .from
+        .unwrap_or_else(|| to - crate::datetime::Duration::days(89));
     if from > to {
         return Err(unprocessable("from must not be after to"));
     }

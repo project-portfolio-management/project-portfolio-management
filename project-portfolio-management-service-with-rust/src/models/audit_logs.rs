@@ -17,10 +17,10 @@ fn stamped(
     actor: Option<&str>,
     snapshot: Option<&serde_json::Value>,
 ) -> (
-    chrono::DateTime<chrono::FixedOffset>,
+    crate::datetime::OffsetDateTime,
     crate::compliance::audit_integrity::Digests,
 ) {
-    let created_at: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let created_at: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     let digests = crate::compliance::audit_integrity::digests(
         &crate::compliance::audit_integrity::AuditInput {
             entity_pid,

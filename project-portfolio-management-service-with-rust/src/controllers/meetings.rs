@@ -76,7 +76,7 @@ pub(crate) struct PlanBody {
     /// The meeting's title.
     title: String,
     /// The date it is scheduled for.
-    scheduled_on: chrono::NaiveDate,
+    scheduled_on: crate::datetime::Date,
     /// The agenda, in order.
     #[serde(default)]
     agenda: Vec<AgendaIn>,
@@ -290,7 +290,7 @@ pub(crate) struct HeldBody {
     minutes: String,
     /// The date it was held (default: the scheduled date).
     #[serde(default)]
-    held_on: Option<chrono::NaiveDate>,
+    held_on: Option<crate::datetime::Date>,
     /// Decisions, actions and notes, in order.
     #[serde(default)]
     outcomes: Vec<OutcomeIn>,
@@ -421,7 +421,7 @@ struct Reference {
     /// The meeting's status.
     meeting_status: Option<String>,
     /// The date the meeting is scheduled for.
-    scheduled_on: Option<chrono::NaiveDate>,
+    scheduled_on: Option<crate::datetime::Date>,
     /// `agenda` or `outcome`.
     part: Option<String>,
     /// The outcome's kind; none on an agenda item.

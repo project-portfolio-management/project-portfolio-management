@@ -6,7 +6,7 @@
 //! go), is acknowledged, may be raised to the next level if nobody answers, and ends resolved (with an outcome and a
 //! written response) or withdrawn. Every step is kept in an append-only history.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 
 /// Why something is escalated.
 pub const REASONS: &[&str] = &[
@@ -56,9 +56,9 @@ pub struct Draft<'a> {
     /// A named person it is for.
     pub owner_ref: Option<&'a str>,
     /// When an answer is wanted.
-    pub respond_by: Option<NaiveDate>,
+    pub respond_by: Option<Date>,
     /// Today.
-    pub today: NaiveDate,
+    pub today: Date,
 }
 
 /// Every problem with a new escalation (empty when fine).
@@ -181,13 +181,13 @@ pub fn apply(status: &str, action: Action) -> Result<&'static str, String> {
 
 /// Whole days between `from` and `to`, never negative.
 #[must_use]
-pub fn age_days(from: NaiveDate, to: NaiveDate) -> i64 {
+pub fn age_days(from: Date, to: Date) -> i64 {
     (to - from).num_days().max(0)
 }
 
 /// Whether a live escalation has passed the date an answer was wanted.
 #[must_use]
-pub fn is_overdue(status: &str, respond_by: Option<NaiveDate>, today: NaiveDate) -> bool {
+pub fn is_overdue(status: &str, respond_by: Option<Date>, today: Date) -> bool {
     is_live(status) && respond_by.is_some_and(|r| r < today)
 }
 
@@ -195,8 +195,8 @@ pub fn is_overdue(status: &str, respond_by: Option<NaiveDate>, today: NaiveDate)
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).expect("date")
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).expect("date")
     }
 
     fn ok() -> Draft<'static> {

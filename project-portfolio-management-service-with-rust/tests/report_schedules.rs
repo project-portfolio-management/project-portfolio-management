@@ -159,7 +159,7 @@ async fn scheduled_runs_are_claimed_once_audited_and_owner_only() {
         request.delete(&format!("/api/reports/{none}")).add_header(mk.clone(), mv.clone()).await.assert_status_ok();
         {
             sqlx::query("UPDATE report_schedules SET next_run_date = $1 WHERE pid = $2")
-                .bind(chrono::NaiveDate::from_ymd_opt(2026, 9, 1).unwrap())
+                .bind(project_portfolio_management::datetime::Date::from_ymd_opt(2026, 9, 1).unwrap())
                 .bind(uuid::Uuid::parse_str(e["pid"].as_str().unwrap()).unwrap())
                 .execute(project_portfolio_management::db::pool(&ctx))
                 .await

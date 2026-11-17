@@ -12,9 +12,9 @@
 
 use super::unprocessable;
 use super::{conflict, forbidden};
+use crate::datetime::Timestamp;
 use crate::db::Tx;
 use crate::prelude::*;
-use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -246,7 +246,7 @@ async fn delete_process(
     let pid = p.pid;
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query("UPDATE processes SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(Utc::now().fixed_offset())
+        .bind(Timestamp::now().fixed_offset())
         .bind(p.id)
         .fetch_one(tx.conn())
         .await?;
@@ -304,7 +304,7 @@ async fn finish(
          WHERE id = $4 RETURNING *",
     )
     .bind(status.token())
-    .bind(Utc::now().fixed_offset())
+    .bind(Timestamp::now().fixed_offset())
     .bind(note)
     .bind(ex.id)
     .fetch_one(tx.conn())

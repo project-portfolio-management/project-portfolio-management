@@ -51,8 +51,8 @@ const LEASE_SECS: i64 = 600;
 const MAX_EXPORT_ROWS: u64 = 100_000;
 
 /// Now, as a time stamp with an offset, the type the time columns bind as.
-fn stamp() -> chrono::DateTime<chrono::FixedOffset> {
-    chrono::Utc::now().into()
+fn stamp() -> crate::datetime::OffsetDateTime {
+    crate::datetime::Timestamp::now().into()
 }
 
 /// Maximum accepted import body in bytes: `PROJECT_PORTFOLIO_MANAGEMENT_BULK_MAX_BYTES` when it parses, otherwise the 50 MiB default.
@@ -64,12 +64,12 @@ fn import_max() -> usize {
 }
 
 /// How long a stored source/result artifact lives before it expires: `PROJECT_PORTFOLIO_MANAGEMENT_BULK_TTL_HOURS` (default 24), never less than one hour.
-fn ttl() -> chrono::Duration {
+fn ttl() -> crate::datetime::Duration {
     let hours = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_BULK_TTL_HOURS")
         .ok()
         .and_then(|v| v.trim().parse::<i64>().ok())
         .unwrap_or(24);
-    chrono::Duration::hours(hours.max(1))
+    crate::datetime::Duration::hours(hours.max(1))
 }
 
 /// Whether the caller is an administrator under the plan-access rules (used to let admins see every job).
@@ -120,8 +120,8 @@ async fn store_artifact(
     .bind(sha)
     .bind(key)
     .bind(actor)
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-        chrono::Utc::now() + ttl(),
+    .bind(crate::datetime::OffsetDateTime::from(
+        crate::datetime::Timestamp::now() + ttl(),
     ))
     .fetch_one(crate::db::pool(ctx))
     .await?)
@@ -178,7 +178,7 @@ fn visible(job: &bulk_jobs::Model, caller: &MaybeAuthUser) -> Result<()> {
 /// Builds the JSON representation of a job: status, progress, row counters and artifact references, with the artifact expiry when one is known.
 fn job_view(
     job: &bulk_jobs::Model,
-    artifact_expiry: Option<chrono::DateTime<chrono::Utc>>,
+    artifact_expiry: Option<crate::datetime::Timestamp>,
 ) -> serde_json::Value {
     let id = job.pid;
     let counters = Counters {
@@ -221,7 +221,7 @@ fn job_view(
 async fn job_response(ctx: &AppContext, job: &bulk_jobs::Model) -> Result<Response> {
     let expiry = match job.result_artifact.or(job.source_artifact) {
         // Only the expiry is read.
-        Some(a) => sqlx::query_scalar::<_, Option<chrono::DateTime<chrono::FixedOffset>>>(
+        Some(a) => sqlx::query_scalar::<_, Option<crate::datetime::OffsetDateTime>>(
             "SELECT expires_at FROM artifacts WHERE pid = $1 LIMIT 1",
         )
         .bind(a)
@@ -515,7 +515,7 @@ async fn cancel_job(
 ) -> Result<Response> {
     let job = find_job(&ctx, &id, None).await?;
     visible(&job, &caller)?;
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let who = caller.actor().map(str::to_string);
     // Queued: cancel it before it starts. The claim in `run_job` needs `queued`, so
     // the two cannot both win.
@@ -887,7 +887,7 @@ async fn sweep(State(ctx): State<AppContext>, AuthUser(claims): AuthUser) -> Res
 ///
 /// Propagates database errors.
 pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     // Unordered, as before.
     let expired: Vec<artifact_rows::Model> = sqlx::query_as(
         "SELECT * FROM artifacts WHERE expires_at < $1 AND storage_key IS NOT NULL LIMIT 1000",
@@ -912,7 +912,7 @@ pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
     // Unordered, as before.
     let stale: Vec<bulk_jobs::Model> =
         sqlx::query_as("SELECT * FROM bulk_jobs WHERE status = 'running' AND updated_at < $1")
-            .bind(now - chrono::Duration::seconds(LEASE_SECS))
+            .bind(now - crate::datetime::Duration::seconds(LEASE_SECS))
             .fetch_all(crate::db::pool(ctx))
             .await?;
     let mut requeued = 0usize;
@@ -920,7 +920,7 @@ pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
         sqlx::query_scalar::<_, i64>(
             "UPDATE bulk_jobs SET status = 'queued', updated_at = $1 WHERE id = $2 RETURNING id",
         )
-        .bind(chrono::DateTime::<chrono::FixedOffset>::from(now))
+        .bind(crate::datetime::OffsetDateTime::from(now))
         .bind(j.id)
         .fetch_one(crate::db::pool(ctx))
         .await?;
@@ -940,7 +940,7 @@ pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
 /// Propagates database errors; a job-level failure is recorded on the job
 /// (`failed` + `failure_reason`) rather than returned.
 pub async fn run_job(ctx: &AppContext, job_pid: Uuid) -> Result<()> {
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let claimed = sqlx::query(
         "UPDATE bulk_jobs SET status = 'running', started_at = $1, updated_at = $1
          WHERE pid = $2 AND status = 'queued'",

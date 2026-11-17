@@ -387,8 +387,8 @@ pub fn validate_trigger(
 #[must_use]
 pub fn is_due(
     status: &str,
-    due_at: chrono::DateTime<chrono::Utc>,
-    now: chrono::DateTime<chrono::Utc>,
+    due_at: crate::datetime::Timestamp,
+    now: crate::datetime::Timestamp,
 ) -> bool {
     status == "pending" && due_at <= now
 }
@@ -406,9 +406,9 @@ pub struct SuccessorFact {
     /// May start this many calendar days after the predecessor finishes.
     pub lag_days: i32,
     /// The successor's own current start, when it has one.
-    pub current_start: Option<chrono::NaiveDate>,
+    pub current_start: Option<crate::datetime::Date>,
     /// The successor's own current end, when it has one.
-    pub current_end: Option<chrono::NaiveDate>,
+    pub current_end: Option<crate::datetime::Date>,
 }
 
 /// One proposed (or applied) shift of a direct successor.
@@ -426,9 +426,9 @@ pub struct ProposedShift {
     /// shift amount itself.
     pub delta_days: i64,
     /// `current_start + delta_days`, when the successor has a start.
-    pub proposed_start: Option<chrono::NaiveDate>,
+    pub proposed_start: Option<crate::datetime::Date>,
     /// `current_end + delta_days`, when the successor has an end.
-    pub proposed_end: Option<chrono::NaiveDate>,
+    pub proposed_end: Option<crate::datetime::Date>,
     /// Whether the successor's dependency was **already** violated
     /// before this shift (`current_start < old predecessor end +
     /// lag`) — named rather than silently proposed over. Applying the
@@ -447,27 +447,27 @@ pub struct ProposedShift {
 /// pass a delta inconsistent with the dates it also passes.
 #[must_use]
 pub fn propose_shifts(
-    old_end: chrono::NaiveDate,
-    new_end: chrono::NaiveDate,
+    old_end: crate::datetime::Date,
+    new_end: crate::datetime::Date,
     successors: &[SuccessorFact],
 ) -> Vec<ProposedShift> {
     let delta_days = (new_end - old_end).num_days();
     successors
         .iter()
         .map(|s| {
-            let lag = chrono::Days::new(u64::try_from(s.lag_days.max(0)).unwrap_or(0));
+            let lag = crate::datetime::Days::new(u64::try_from(s.lag_days.max(0)).unwrap_or(0));
             let old_earliest = old_end + lag;
             let already_violated = s.current_start.is_some_and(|start| start < old_earliest);
             ProposedShift {
                 edge_pid: s.edge_pid,
                 successor_pid: s.successor_pid,
                 delta_days,
-                proposed_start: s
-                    .current_start
-                    .and_then(|d| d.checked_add_signed(chrono::Duration::days(delta_days))),
-                proposed_end: s
-                    .current_end
-                    .and_then(|d| d.checked_add_signed(chrono::Duration::days(delta_days))),
+                proposed_start: s.current_start.and_then(|d| {
+                    d.checked_add_signed(crate::datetime::Duration::days(delta_days))
+                }),
+                proposed_end: s.current_end.and_then(|d| {
+                    d.checked_add_signed(crate::datetime::Duration::days(delta_days))
+                }),
                 already_violated,
             }
         })
@@ -768,11 +768,11 @@ mod tests {
 
     #[test]
     fn due_is_a_plain_comparison_and_only_for_pending_rows() {
-        let now = chrono::DateTime::parse_from_rfc3339("2026-07-22T12:00:00Z")
+        let now = crate::datetime::OffsetDateTime::parse_from_rfc3339("2026-07-22T12:00:00Z")
             .expect("fixed timestamp")
-            .with_timezone(&chrono::Utc);
-        let earlier = now - chrono::Duration::minutes(1);
-        let later = now + chrono::Duration::minutes(1);
+            .to_utc();
+        let earlier = now - crate::datetime::Duration::minutes(1);
+        let later = now + crate::datetime::Duration::minutes(1);
         assert!(is_due("pending", earlier, now));
         assert!(is_due("pending", now, now), "due exactly now is due");
         assert!(!is_due("pending", later, now));
@@ -804,8 +804,8 @@ mod tests {
 
     // -- T-28g: propose_shifts ------------------------------------------
 
-    fn date(y: i32, m: u32, d: u32) -> chrono::NaiveDate {
-        chrono::NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    fn date(y: i32, m: u32, d: u32) -> crate::datetime::Date {
+        crate::datetime::Date::from_ymd_opt(y, m, d).unwrap()
     }
 
     /// **Shifting a plan's end by 5 calendar days proposes +5 on a finish-start

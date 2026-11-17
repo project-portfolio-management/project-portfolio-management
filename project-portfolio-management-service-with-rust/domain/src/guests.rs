@@ -9,7 +9,7 @@
 //! The path rules below decide what a guest may *attempt*; the grant decides
 //! whether it is granted. Anything not named here is denied by default.
 
-use chrono::{DateTime, Utc};
+use crate::datetime::Timestamp;
 use uuid::Uuid;
 
 /// Grant levels.
@@ -23,7 +23,7 @@ pub fn is_guest(roles: &[String]) -> bool {
 
 /// Whether a grant is live at `now`.
 #[must_use]
-pub fn grant_live(expires_at: Option<DateTime<Utc>>, revoked: bool, now: DateTime<Utc>) -> bool {
+pub fn grant_live(expires_at: Option<Timestamp>, revoked: bool, now: Timestamp) -> bool {
     !revoked && expires_at.is_none_or(|e| e > now)
 }
 
@@ -101,7 +101,7 @@ pub fn covers(grants: &[Grant], kind: &str, pid: Uuid, need: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Duration;
+    use crate::datetime::Duration;
 
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
@@ -116,7 +116,7 @@ mod tests {
 
     #[test]
     fn a_grant_dies_on_expiry_or_revocation() {
-        let now = Utc::now();
+        let now = Timestamp::now();
         assert!(grant_live(None, false, now));
         assert!(grant_live(Some(now + Duration::hours(1)), false, now));
         assert!(

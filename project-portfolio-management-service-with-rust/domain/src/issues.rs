@@ -3,7 +3,7 @@
 //! kind, a severity and a status; **closing** one needs a resolution; and its
 //! age is counted in **calendar days** since it was raised.
 
-use chrono::{DateTime, NaiveDate, Utc};
+use crate::datetime::{Date, Timestamp};
 
 /// How serious it is, lowest first.
 pub const SEVERITIES: &[&str] = &["low", "med", "high", "critical"];
@@ -27,17 +27,17 @@ pub struct Draft<'a> {
     /// A `person:` or `worker:` reference.
     pub owner_ref: Option<&'a str>,
     /// When it was raised.
-    pub raised_on: NaiveDate,
+    pub raised_on: Date,
     /// When it should be dealt with.
-    pub due_date: Option<NaiveDate>,
+    pub due_date: Option<Date>,
     /// How it was resolved; needed to close it.
     pub resolution: Option<&'a str>,
     /// When it really began, as it will stand after this save.
-    pub occurred_at: Option<DateTime<Utc>>,
+    pub occurred_at: Option<Timestamp>,
     /// When it was noticed, as it will stand after this save.
-    pub detected_at: Option<DateTime<Utc>>,
+    pub detected_at: Option<Timestamp>,
     /// Now, which neither of those may be after.
-    pub now: DateTime<Utc>,
+    pub now: Timestamp,
 }
 
 /// True when the value is absent or only whitespace; both count as not supplied.
@@ -162,11 +162,7 @@ fn is_key(s: &str, max: usize, hyphen: bool) -> bool {
 /// The day an issue was resolved: kept if it already was, today if it just became
 /// resolved or closed, and none while it is open.
 #[must_use]
-pub fn resolved_on(
-    status_category: &str,
-    previously: Option<NaiveDate>,
-    today: NaiveDate,
-) -> Option<NaiveDate> {
+pub fn resolved_on(status_category: &str, previously: Option<Date>, today: Date) -> Option<Date> {
     if is_done(status_category) {
         Some(previously.unwrap_or(today))
     } else {
@@ -187,11 +183,11 @@ pub struct Standing<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Times {
     /// The first move out of `todo`.
-    pub acknowledged_at: Option<DateTime<Utc>>,
+    pub acknowledged_at: Option<Timestamp>,
     /// The move into `done`.
-    pub resolved_at: Option<DateTime<Utc>>,
+    pub resolved_at: Option<Timestamp>,
     /// The move into a terminal state.
-    pub closed_at: Option<DateTime<Utc>>,
+    pub closed_at: Option<Timestamp>,
 }
 
 /// The times after a move, or at raising when `from` is none. A time is written by the crossing it records, so an issue
@@ -202,7 +198,7 @@ pub fn times_after(
     before: Times,
     from: Option<Standing<'_>>,
     to: Standing<'_>,
-    now: DateTime<Utc>,
+    now: Timestamp,
 ) -> Times {
     let crossed_ack = to.category != "todo" && from.is_none_or(|f| f.category == "todo");
     let crossed_done = is_done(to.category) && !from.is_some_and(|f| is_done(f.category));
@@ -225,17 +221,13 @@ pub fn times_after(
 /// Calendar days since the issue was raised, until it was resolved (or until
 /// `today` while it is still open). Never negative.
 #[must_use]
-pub fn age_calendar_days(
-    raised_on: NaiveDate,
-    resolved_on: Option<NaiveDate>,
-    today: NaiveDate,
-) -> i64 {
+pub fn age_calendar_days(raised_on: Date, resolved_on: Option<Date>, today: Date) -> i64 {
     (resolved_on.unwrap_or(today) - raised_on).num_days().max(0)
 }
 
 /// Whether an open issue is past its due date.
 #[must_use]
-pub fn is_overdue(status_category: &str, due: Option<NaiveDate>, today: NaiveDate) -> bool {
+pub fn is_overdue(status_category: &str, due: Option<Date>, today: Date) -> bool {
     !is_done(status_category) && due.is_some_and(|d| d < today)
 }
 
@@ -275,8 +267,8 @@ mod tests {
         assert_eq!(label_problems(&bad).len(), 2);
     }
 
-    fn day(d: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, d).unwrap()
+    fn day(d: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, d).unwrap()
     }
 
     fn draft() -> Draft<'static> {
@@ -291,12 +283,12 @@ mod tests {
             resolution: None,
             occurred_at: None,
             detected_at: None,
-            now: DateTime::from_timestamp(1_800_000_000, 0).unwrap_or_default(),
+            now: Timestamp::from_timestamp(1_800_000_000, 0).unwrap_or_default(),
         }
     }
 
-    fn at(seconds: i64) -> DateTime<Utc> {
-        DateTime::from_timestamp(1_800_000_000 + seconds, 0).unwrap_or_default()
+    fn at(seconds: i64) -> Timestamp {
+        Timestamp::from_timestamp(1_800_000_000 + seconds, 0).unwrap_or_default()
     }
 
     const TODO: Standing<'static> = Standing {
@@ -446,7 +438,7 @@ mod tests {
     #[test]
     fn the_due_date_cannot_precede_the_raised_date() {
         let mut d = draft();
-        d.due_date = Some(day(1) - chrono::Days::new(1));
+        d.due_date = Some(day(1) - crate::datetime::Days::new(1));
         assert_eq!(problems(&d).len(), 1);
     }
 

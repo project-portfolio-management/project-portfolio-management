@@ -11,9 +11,9 @@ use axum::Router;
 use axum::body::Bytes;
 use axum::http::HeaderMap;
 use axum::routing::post;
-use chrono::Utc;
 use project_portfolio_management::app::App;
 use project_portfolio_management::compliance::mac::{self, Domain};
+use project_portfolio_management::datetime::Timestamp;
 use project_portfolio_management::models::_entities::webhook_deliveries;
 use project_portfolio_management::webhooks::{
     DELIVERY_ID_HEADER, EVENT_ID_HEADER, SIGNATURE_V2_HEADER, TIMESTAMP_HEADER, signing_input_v2,
@@ -133,7 +133,7 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
         // The V2 signature verifies over "<timestamp>.<body>", and the timestamp is current.
         let ts: i64 = get(TIMESTAMP_HEADER).unwrap().parse().unwrap();
         let sig = get(SIGNATURE_V2_HEADER).unwrap();
-        assert!(timestamp_is_fresh(ts, Utc::now().timestamp()));
+        assert!(timestamp_is_fresh(ts, Timestamp::now().timestamp()));
         assert!(matches!(
             mac::verify(Domain::Webhook, Some(&sig), &signing_input_v2(ts, body)),
             integrity_mac::MacVerdict::Valid

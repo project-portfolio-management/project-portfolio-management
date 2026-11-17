@@ -10,27 +10,27 @@
 //! week can be resubmitted, and **approved is final** (and locks the week
 //! against new entries).
 
-use chrono::{Datelike, NaiveDate, Weekday};
+use crate::datetime::{Date, Weekday};
 use serde::Serialize;
 use uuid::Uuid;
 
 /// Parse an ISO week (`2026-W40`) to its Monday.
 #[must_use]
-pub fn week_start(iso: &str) -> Option<NaiveDate> {
+pub fn week_start(iso: &str) -> Option<Date> {
     let (year, week) = iso.trim().split_once("-W")?;
-    NaiveDate::from_isoywd_opt(year.parse().ok()?, week.parse().ok()?, Weekday::Mon)
+    Date::from_isoywd_opt(year.parse().ok()?, week.parse().ok()?, Weekday::Mon)
 }
 
 /// The Monday of the ISO week containing `date`.
 #[must_use]
-pub fn monday_of(date: NaiveDate) -> NaiveDate {
-    date - chrono::Duration::days(i64::from(date.weekday().num_days_from_monday()))
+pub fn monday_of(date: Date) -> Date {
+    date - crate::datetime::Duration::days(i64::from(date.weekday().num_days_from_monday()))
 }
 
 /// The seven dates of the week starting `monday`.
 #[must_use]
-pub fn days_of(monday: NaiveDate) -> [NaiveDate; 7] {
-    std::array::from_fn(|i| monday + chrono::Duration::days(i64::try_from(i).unwrap_or(0)))
+pub fn days_of(monday: Date) -> [Date; 7] {
+    std::array::from_fn(|i| monday + crate::datetime::Duration::days(i64::try_from(i).unwrap_or(0)))
 }
 
 /// One time entry as the roll-ups see it.
@@ -41,7 +41,7 @@ pub struct Entry {
     /// Who spent it (an `EntityRef`).
     pub actor_ref: String,
     /// The day.
-    pub date: NaiveDate,
+    pub date: Date,
     /// Whole minutes.
     pub minutes: i64,
     /// Effort category token.
@@ -93,7 +93,7 @@ pub struct GridRow {
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Grid {
     /// The seven dates, Monday first.
-    pub days: [NaiveDate; 7],
+    pub days: [Date; 7],
     /// One row per plan with entries, ordered by plan pid.
     pub rows: Vec<GridRow>,
     /// Minutes per day across plans.
@@ -109,7 +109,7 @@ pub struct Grid {
 /// Build the grid for entries falling in the week starting `monday`.
 /// Entries outside the week are ignored.
 #[must_use]
-pub fn grid(entries: &[Entry], monday: NaiveDate) -> Grid {
+pub fn grid(entries: &[Entry], monday: Date) -> Grid {
     let days = days_of(monday);
     let mut rows: Vec<GridRow> = Vec::new();
     let mut day_totals = [0i64; 7];
@@ -301,8 +301,8 @@ pub fn decide(
 mod tests {
     use super::*;
 
-    fn d(day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, day).unwrap()
+    fn d(day: u32) -> Date {
+        Date::from_ymd_opt(2026, 10, day).unwrap()
     }
     fn p(n: u128) -> Uuid {
         Uuid::from_u128(n)
@@ -320,7 +320,7 @@ mod tests {
 
     #[test]
     fn iso_weeks_parse_to_their_monday() {
-        assert_eq!(week_start("2026-W40"), NaiveDate::from_ymd_opt(2026, 9, 28));
+        assert_eq!(week_start("2026-W40"), Date::from_ymd_opt(2026, 9, 28));
         assert_eq!(week_start("2026-W41"), Some(d(5)));
         assert_eq!(week_start("2026-W54"), None);
         assert_eq!(week_start("nope"), None);

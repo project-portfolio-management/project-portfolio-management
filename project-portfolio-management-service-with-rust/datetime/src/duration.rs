@@ -31,8 +31,8 @@ impl Duration {
         -((i64::MAX % 1000) as i32) * 1_000_000,
     ));
 
-    fn from_total_nanos(nanos: i128) -> Option<Duration> {
-        if !(-MAX_NANOS..=MAX_NANOS).contains(&nanos) {
+    const fn from_total_nanos(nanos: i128) -> Option<Duration> {
+        if nanos < -MAX_NANOS || nanos > MAX_NANOS {
             return None;
         }
         Some(Duration(SignedDuration::from_nanos_i128(nanos)))
@@ -42,8 +42,11 @@ impl Duration {
         self.0.as_nanos()
     }
 
-    fn of(count: i64, nanos_per_unit: i128) -> Option<Duration> {
-        Duration::from_total_nanos(i128::from(count).checked_mul(nanos_per_unit)?)
+    const fn of(count: i64, nanos_per_unit: i128) -> Option<Duration> {
+        match (count as i128).checked_mul(nanos_per_unit) {
+            Some(n) => Duration::from_total_nanos(n),
+            None => None,
+        }
     }
 
     /// A duration of no length.
@@ -54,37 +57,37 @@ impl Duration {
 
     /// `n` weeks, or `None` past the range.
     #[must_use]
-    pub fn try_weeks(n: i64) -> Option<Duration> {
+    pub const fn try_weeks(n: i64) -> Option<Duration> {
         Duration::of(n, 7 * 86_400 * NANOS_PER_SEC)
     }
 
     /// `n` days, or `None` past the range.
     #[must_use]
-    pub fn try_days(n: i64) -> Option<Duration> {
+    pub const fn try_days(n: i64) -> Option<Duration> {
         Duration::of(n, 86_400 * NANOS_PER_SEC)
     }
 
     /// `n` hours, or `None` past the range.
     #[must_use]
-    pub fn try_hours(n: i64) -> Option<Duration> {
+    pub const fn try_hours(n: i64) -> Option<Duration> {
         Duration::of(n, 3600 * NANOS_PER_SEC)
     }
 
     /// `n` minutes, or `None` past the range.
     #[must_use]
-    pub fn try_minutes(n: i64) -> Option<Duration> {
+    pub const fn try_minutes(n: i64) -> Option<Duration> {
         Duration::of(n, 60 * NANOS_PER_SEC)
     }
 
     /// `n` seconds, or `None` past the range.
     #[must_use]
-    pub fn try_seconds(n: i64) -> Option<Duration> {
+    pub const fn try_seconds(n: i64) -> Option<Duration> {
         Duration::of(n, NANOS_PER_SEC)
     }
 
     /// `n` milliseconds, or `None` past the range (never, as the range is `i64` milliseconds).
     #[must_use]
-    pub fn try_milliseconds(n: i64) -> Option<Duration> {
+    pub const fn try_milliseconds(n: i64) -> Option<Duration> {
         Duration::of(n, 1_000_000)
     }
 
@@ -94,7 +97,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
-    pub fn weeks(n: i64) -> Duration {
+    pub const fn weeks(n: i64) -> Duration {
         Duration::try_weeks(n).expect("Duration::weeks out of bounds")
     }
 
@@ -104,7 +107,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
-    pub fn days(n: i64) -> Duration {
+    pub const fn days(n: i64) -> Duration {
         Duration::try_days(n).expect("Duration::days out of bounds")
     }
 
@@ -114,7 +117,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
-    pub fn hours(n: i64) -> Duration {
+    pub const fn hours(n: i64) -> Duration {
         Duration::try_hours(n).expect("Duration::hours out of bounds")
     }
 
@@ -124,7 +127,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
-    pub fn minutes(n: i64) -> Duration {
+    pub const fn minutes(n: i64) -> Duration {
         Duration::try_minutes(n).expect("Duration::minutes out of bounds")
     }
 
@@ -134,7 +137,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
-    pub fn seconds(n: i64) -> Duration {
+    pub const fn seconds(n: i64) -> Duration {
         Duration::try_seconds(n).expect("Duration::seconds out of bounds")
     }
 
@@ -144,19 +147,19 @@ impl Duration {
     ///
     /// Never: every `i64` count of milliseconds is in range.
     #[must_use]
-    pub fn milliseconds(n: i64) -> Duration {
+    pub const fn milliseconds(n: i64) -> Duration {
         Duration::try_milliseconds(n).expect("Duration::milliseconds out of bounds")
     }
 
     /// `n` microseconds.
     #[must_use]
-    pub fn microseconds(n: i64) -> Duration {
+    pub const fn microseconds(n: i64) -> Duration {
         Duration(SignedDuration::from_micros(n))
     }
 
     /// `n` nanoseconds.
     #[must_use]
-    pub fn nanoseconds(n: i64) -> Duration {
+    pub const fn nanoseconds(n: i64) -> Duration {
         Duration(SignedDuration::from_nanos(n))
     }
 

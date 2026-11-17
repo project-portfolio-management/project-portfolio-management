@@ -101,22 +101,22 @@ pub(crate) struct WindowQuery {
 }
 
 /// Parse one boundary: `YYYY-MM-DD` (midnight UTC) or RFC 3339.
-fn parse_instant(raw: &str, end_of_day: bool) -> Option<chrono::DateTime<chrono::Utc>> {
-    if let Ok(instant) = raw.parse::<chrono::DateTime<chrono::Utc>>() {
+fn parse_instant(raw: &str, end_of_day: bool) -> Option<crate::datetime::Timestamp> {
+    if let Ok(instant) = raw.parse::<crate::datetime::Timestamp>() {
         return Some(instant);
     }
-    let date = raw.parse::<chrono::NaiveDate>().ok()?;
+    let date = raw.parse::<crate::datetime::Date>().ok()?;
     let time = if end_of_day {
-        chrono::NaiveTime::from_hms_opt(23, 59, 59)?
+        crate::datetime::NaiveTime::from_hms_opt(23, 59, 59)?
     } else {
-        chrono::NaiveTime::MIN
+        crate::datetime::NaiveTime::MIN
     };
     Some(date.and_time(time).and_utc())
 }
 
 /// Resolve the window (default: trailing 90 calendar days ending now).
-fn window(query: &WindowQuery) -> (chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>) {
-    let now = chrono::Utc::now();
+fn window(query: &WindowQuery) -> (crate::datetime::Timestamp, crate::datetime::Timestamp) {
+    let now = crate::datetime::Timestamp::now();
     let to = query
         .to
         .as_deref()
@@ -126,7 +126,7 @@ fn window(query: &WindowQuery) -> (chrono::DateTime<chrono::Utc>, chrono::DateTi
         .from
         .as_deref()
         .and_then(|raw| parse_instant(raw, false))
-        .unwrap_or(to - chrono::Days::new(90));
+        .unwrap_or(to - crate::datetime::Days::new(90));
     (from, to)
 }
 
@@ -275,7 +275,7 @@ async fn board_pack_body(
     let released_money = insights::variance_by_currency(&money_lines(&released));
 
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "window": { "from": from, "to": to },
         "health_now": {
             "portfolios": status_counts,
@@ -311,7 +311,7 @@ async fn board_investments(
     let items = live!(plans, &ctx, &scope);
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
-    let mut entries: Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)> = Vec::new();
+    let mut entries: Vec<(crate::datetime::Timestamp, serde_json::Value)> = Vec::new();
     for scenario in live!(scenarios, &ctx, &scope) {
         if let Some(at) = scenario.committed_at {
             let at = at.to_utc();
@@ -361,7 +361,7 @@ async fn board_investments(
     let investments: Vec<serde_json::Value> =
         entries.into_iter().take(100).map(|(_, v)| v).collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "investments": investments,
     });
     conditional(&headers, &body)
@@ -425,7 +425,7 @@ async fn board_trends(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "stored snapshots only (POST /api/board/snapshots or the env-gated ticker); no interpolated history",
         "series": series,
     });
@@ -530,7 +530,7 @@ async fn auditor_trail(
         }
     }
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "returned": rows.len(),
         "stats": {
             "per_day": per_day,
@@ -642,7 +642,7 @@ async fn auditor_findings(
     let actorless = audit_rows.iter().filter(|row| row.actor.is_none()).count();
 
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "rules compare recorded audit actors (bearer subjects) only — \
                  never identities from other spaces (e.g. approver_ref URNs)",
         "findings": findings,
@@ -766,7 +766,7 @@ async fn compliance_findings(
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let review_days = i64::from(query.review_days.unwrap_or(90).clamp(1, 365));
-    let now = chrono::Utc::now();
+    let now = crate::datetime::Timestamp::now();
     let today = now.date_naive();
     let items = live!(plans, &ctx, &scope);
     let risk_rows = live!(risks, &ctx, &scope);
@@ -779,7 +779,7 @@ async fn compliance_findings(
 
     // Rule 1: unfinished item past its target date with no gate review
     // in the last `review_days` calendar days.
-    let last_review: std::collections::BTreeMap<Uuid, chrono::DateTime<chrono::Utc>> = review_rows
+    let last_review: std::collections::BTreeMap<Uuid, crate::datetime::Timestamp> = review_rows
         .iter()
         .fold(std::collections::BTreeMap::new(), |mut acc, review| {
             let at = review.decided_at.to_utc();
@@ -998,7 +998,7 @@ async fn risk_heatmap(
     };
 
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "open_risks": open.len(),
         "estate_open_exposure": estate_exposure,
         "cells": cells,
@@ -1163,7 +1163,7 @@ async fn regulator_extract(
         }));
     }
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "masked": masked,
         "note": "deliberately coarse: portfolio-level aggregates only — no person references, no item-level budgets; `mask` obligation additionally withholds names",
         "portfolios": portfolios,
@@ -1210,7 +1210,7 @@ async fn risk_register_body(
         })
         .collect();
     Ok(serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": format!("risks with category `{category}`; exposure = probability x impact"),
         "open_exposure": open_exposure,
         "statuses": statuses,

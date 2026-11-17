@@ -338,7 +338,7 @@ pub fn infer_type<'a>(values: impl IntoIterator<Item = &'a str>) -> &'static str
     if vals.iter().all(|v| v.parse::<i64>().is_ok()) {
         "integer"
     } else if vals.iter().all(|v| {
-        chrono::NaiveDate::parse_from_str(v.get(..10).unwrap_or(v), "%Y-%m-%d").is_ok()
+        crate::datetime::Date::parse_from_str(v.get(..10).unwrap_or(v), "%Y-%m-%d").is_ok()
             && v.len() >= 10
     }) {
         "date"

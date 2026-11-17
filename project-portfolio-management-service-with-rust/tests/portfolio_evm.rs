@@ -123,8 +123,8 @@ async fn earned_value_over_the_threshold_keeps_its_promises() {
         };
         // A project with a baseline of `bac` (half before today, half after), four tasks of which two are
         // done, and `ac` spent: EV is half the BAC.
-        let today = chrono::Utc::now().date_naive();
-        let day = |n: i64| (today + chrono::Duration::days(n)).to_string();
+        let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
+        let day = |n: i64| (today + project_portfolio_management::datetime::Duration::days(n)).to_string();
         let costed = |parent: String, name: &'static str, bac: i64, ac: i64| {
             let (request, writer, day) = (&request, writer.clone(), day);
             let mk = &mk;
@@ -216,7 +216,7 @@ async fn earned_value_over_the_threshold_keeps_its_promises() {
 
         // ── the pack carries it ──
         let d: Value = request.post("/api/director-packs").add_header(issuer.0.clone(), issuer.1.clone())
-            .json(&json!({ "period": chrono::Utc::now().format("%Y-%m").to_string(), "audience": "board" })).await.json();
+            .json(&json!({ "period": project_portfolio_management::datetime::Timestamp::now().format("%Y-%m").to_string(), "audience": "board" })).await.json();
         let pk = d["pid"].as_str().unwrap().to_string();
         request.post(&format!("/api/director-packs/{pk}/issue")).add_header(issuer.0.clone(), issuer.1.clone()).await.assert_status_ok();
         let pack: Value = with!(request.get(&format!("/api/director-packs/{pk}")), issuer).await.json();

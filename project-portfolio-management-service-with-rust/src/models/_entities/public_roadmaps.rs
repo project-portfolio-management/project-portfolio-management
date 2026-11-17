@@ -22,7 +22,7 @@ pub struct Model {
     pub category_pid: Option<Uuid>,
     pub published: bool,
     /// The date someone last said the roadmap was reviewed (RE-3); no other write changes it.
-    pub reviewed_on: Option<chrono::NaiveDate>,
+    pub reviewed_on: Option<crate::datetime::Date>,
     /// Language code to field to `{ value, source }` (RE-6).
     pub translations: serde_json::Value,
 }

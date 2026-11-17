@@ -371,9 +371,9 @@ pub(crate) struct Committed {
     /// How many audit entries were written (one per changed item).
     pub audit_entries: usize,
     /// Plan finish date before the commit; absent when it could not be computed.
-    pub finish_before: Option<chrono::NaiveDate>,
+    pub finish_before: Option<crate::datetime::Date>,
     /// Plan finish date after the commit; absent when it could not be computed.
-    pub finish_after: Option<chrono::NaiveDate>,
+    pub finish_after: Option<crate::datetime::Date>,
 }
 
 /// Apply `edits` for real, in one transaction, one audit entry per changed item.

@@ -3,9 +3,9 @@
 //! `deployment_settings`; each instance keeps it in memory and re-reads it every
 //! `REFRESH_SECS` seconds, so a change made on one instance reaches the others without a restart.
 
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axum::http::StatusCode;
-use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -67,7 +67,7 @@ pub fn spawn(ctx: AppContext) {
 async fn view(ctx: &AppContext) -> Result<Response> {
     let row = stored(ctx).await?;
     let zone = tz::today_zone();
-    let now = Utc::now();
+    let now = Timestamp::now();
     format::json(serde_json::json!({
         "time_zone": zone.name(),
         "source": if row.is_some() { "admin" } else { "default" },

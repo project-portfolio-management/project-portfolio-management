@@ -72,7 +72,7 @@ struct TaskRow {
 /// A baseline's periods, in order (at most 5,000).
 async fn periods_of(ctx: &AppContext, baseline: Uuid) -> Result<Vec<Period>> {
     Ok(
-        sqlx::query_as::<_, (chrono::NaiveDate, chrono::NaiveDate, i64)>(
+        sqlx::query_as::<_, (crate::datetime::Date, crate::datetime::Date, i64)>(
             "SELECT period_start, period_end, planned_minor FROM budget_baseline_periods
          WHERE baseline_pid = $1
          ORDER BY period_start
@@ -187,7 +187,7 @@ impl AcSource {
 pub(crate) async fn compute(
     ctx: &AppContext,
     plan: Uuid,
-    as_of: chrono::NaiveDate,
+    as_of: crate::datetime::Date,
 ) -> Result<Outcome> {
     compute_with(ctx, plan, as_of, AcSource::BudgetLines).await
 }
@@ -196,7 +196,7 @@ pub(crate) async fn compute(
 pub(crate) async fn compute_with(
     ctx: &AppContext,
     plan: Uuid,
-    as_of: chrono::NaiveDate,
+    as_of: crate::datetime::Date,
     source: AcSource,
 ) -> Result<Outcome> {
     let baselines = baselines_of(ctx, plan).await?;
@@ -389,7 +389,7 @@ async fn put_settings(
             .bind(Uuid::new_v4())
             .bind(plan.pid)
             .bind(&b.default_method)
-            .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+            .bind(None::<crate::datetime::OffsetDateTime>)
             .execute(tx.conn())
             .await?;
         }
@@ -620,7 +620,7 @@ pub(crate) async fn snapshot_plan(ctx: &AppContext, plan: Uuid) -> Result<usize>
     };
     // One statement per currency, so two snapshots on the same day cannot race into a
     // unique-index error: the second replaces the first (CQ-11).
-    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let now: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     for (currency, version, b) in &blocks {
         sqlx::query(
             "INSERT INTO earned_value_snapshots
@@ -725,12 +725,12 @@ async fn series(
         };
         let mine: Vec<&earned_value_snapshots::Model> =
             snaps.iter().filter(|s| s.currency == b.currency).collect();
-        let mut dates: Vec<chrono::NaiveDate> = periods
+        let mut dates: Vec<crate::datetime::Date> = periods
             .iter()
             .map(|r| r.end)
             .chain(mine.iter().map(|s| s.as_of))
             .collect();
-        dates.push(start - chrono::Duration::days(1));
+        dates.push(start - crate::datetime::Duration::days(1));
         dates.sort_unstable();
         dates.dedup();
         let points: Vec<serde_json::Value> = dates
@@ -826,7 +826,7 @@ async fn descendants(ctx: &AppContext, root: Uuid) -> Result<Vec<Uuid>> {
 pub(crate) async fn rollup_over(
     ctx: &AppContext,
     plans: &[Uuid],
-    as_of: chrono::NaiveDate,
+    as_of: crate::datetime::Date,
     t: &Thresholds,
     source: AcSource,
     bac_thresholds: Option<&std::collections::BTreeMap<String, i64>>,
@@ -970,7 +970,7 @@ async fn subtree_in(
 pub(crate) async fn portfolio_section(
     ctx: &AppContext,
     include: &std::collections::HashSet<Uuid>,
-    as_of: chrono::NaiveDate,
+    as_of: crate::datetime::Date,
     source: AcSource,
 ) -> Result<serde_json::Value> {
     let (t, defaulted) = thresholds();
@@ -1040,9 +1040,9 @@ pub(crate) async fn portfolio_section(
 async fn product_flow(
     ctx: &AppContext,
     plans: &[Uuid],
-    as_of: chrono::NaiveDate,
+    as_of: crate::datetime::Date,
 ) -> Result<Option<crate::product_flow::Flow>> {
-    type At = chrono::DateTime<chrono::FixedOffset>;
+    type At = crate::datetime::OffsetDateTime;
     let rows: Vec<(At, Option<At>)> = sqlx::query_as(
         "SELECT created_at, done_at FROM tasks
          WHERE plan_pid = ANY($1) AND deleted_at IS NULL AND is_hammock = $2",

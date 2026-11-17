@@ -7,20 +7,20 @@
 
 #![expect(missing_docs)]
 
-use chrono::{Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 use serde::Serialize;
 
 /// One task's stamps.
 #[derive(Debug, Clone, Copy)]
 pub struct Item {
-    pub created: NaiveDate,
-    pub done: Option<NaiveDate>,
+    pub created: Date,
+    pub done: Option<Date>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Point {
     /// The last day of the week the point is for.
-    pub date: NaiveDate,
+    pub date: Date,
     /// Tasks created on or before the date.
     pub scope: usize,
     /// Tasks finished on or before the date.
@@ -42,12 +42,12 @@ pub struct Flow {
 /// programme has no tasks: that is "no flow data", never a flat line.
 #[must_use]
 #[expect(clippy::cast_precision_loss)] // task counts are tiny
-pub fn flow(items: &[Item], as_of: NaiveDate, weeks: u32) -> Option<Flow> {
+pub fn flow(items: &[Item], as_of: Date, weeks: u32) -> Option<Flow> {
     if items.is_empty() {
         return None;
     }
     let weeks = weeks.clamp(1, 26);
-    let at = |d: NaiveDate| Point {
+    let at = |d: Date| Point {
         date: d,
         scope: items.iter().filter(|i| i.created <= d).count(),
         done: items
@@ -80,8 +80,8 @@ pub fn flow(items: &[Item], as_of: NaiveDate, weeks: u32) -> Option<Flow> {
 mod tests {
     use super::*;
 
-    fn d(m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, m, day).unwrap()
+    fn d(m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(2026, m, day).unwrap()
     }
 
     #[test]

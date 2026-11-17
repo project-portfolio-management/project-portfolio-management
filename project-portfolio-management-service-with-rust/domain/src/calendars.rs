@@ -6,7 +6,7 @@
 //! and **recorded absences** narrow it (their work happens only where both
 //! work). Lag and float stay in the plan's business days.
 
-use chrono::{Datelike, Duration, NaiveDate};
+use crate::datetime::{Date, Duration};
 
 use crate::cpm::{CalendarError, WorkCalendar};
 
@@ -40,7 +40,7 @@ pub fn parse_weekdays(mask: &str) -> Result<[bool; 7], String> {
 
 /// Every problem with a calendar definition (all of them).
 #[must_use]
-pub fn problems(weekdays: &str, holidays: &[NaiveDate]) -> Vec<String> {
+pub fn problems(weekdays: &str, holidays: &[Date]) -> Vec<String> {
     let mut out = Vec::new();
     if let Err(e) = parse_weekdays(weekdays) {
         out.push(e);
@@ -54,7 +54,7 @@ pub fn problems(weekdays: &str, holidays: &[NaiveDate]) -> Vec<String> {
     if sorted.len() != holidays.len() {
         out.push("holidays must be distinct".to_string());
     }
-    let earliest = NaiveDate::from_ymd_opt(1970, 1, 5).unwrap_or(NaiveDate::MIN);
+    let earliest = Date::from_ymd_opt(1970, 1, 5).unwrap_or(Date::MIN);
     if holidays.iter().any(|h| *h < earliest || h.year() > 2100) {
         out.push("holidays must fall between 1970-01-05 and 2100-12-31".to_string());
     }
@@ -66,7 +66,7 @@ pub fn problems(weekdays: &str, holidays: &[NaiveDate]) -> Vec<String> {
 /// # Errors
 ///
 /// [`CalendarError`] if no weekday works; a malformed mask is also refused here.
-pub fn build(weekdays: &str, holidays: &[NaiveDate]) -> Result<WorkCalendar, CalendarError> {
+pub fn build(weekdays: &str, holidays: &[Date]) -> Result<WorkCalendar, CalendarError> {
     let days = parse_weekdays(weekdays).map_err(|_| CalendarError::NoWorkingDays)?;
     WorkCalendar::new(days, holidays.iter().copied())
 }
@@ -74,7 +74,7 @@ pub fn build(weekdays: &str, holidays: &[NaiveDate]) -> Result<WorkCalendar, Cal
 /// Expand recorded absences (`[from, to]`, inclusive) into individual dates,
 /// each capped at [`MAX_ABSENCE_DAYS`] and reversed ranges ignored.
 #[must_use]
-pub fn expand_absences(periods: &[(NaiveDate, NaiveDate)]) -> Vec<NaiveDate> {
+pub fn expand_absences(periods: &[(Date, Date)]) -> Vec<Date> {
     let mut out = Vec::new();
     for (from, to) in periods {
         if to < from {
@@ -92,8 +92,8 @@ pub fn expand_absences(periods: &[(NaiveDate, NaiveDate)]) -> Vec<NaiveDate> {
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
 
     #[test]
@@ -116,7 +116,7 @@ mod tests {
             "no business day and duplicate holiday"
         );
         assert_eq!(problems("1111100", &[d(1960, 1, 1)]).len(), 1);
-        let many: Vec<NaiveDate> = (0..=i64::try_from(MAX_HOLIDAYS).unwrap())
+        let many: Vec<Date> = (0..=i64::try_from(MAX_HOLIDAYS).unwrap())
             .map(|i| d(2026, 1, 1) + Duration::days(i))
             .collect();
         assert_eq!(problems("1111100", &many).len(), 1, "too many");

@@ -208,7 +208,7 @@ pub struct NewScheduledAction {
     /// Action-specific detail (recipient, message, …).
     pub payload: serde_json::Value,
     /// When it comes due.
-    pub due_at: chrono::DateTime<chrono::FixedOffset>,
+    pub due_at: crate::datetime::OffsetDateTime,
     /// The automation that scheduled it, when it was not a person.
     pub source_automation_pid: Option<Uuid>,
     /// The actor who configured it.
@@ -261,7 +261,7 @@ pub async fn schedule_on(
 /// Propagates database errors.
 pub async fn due_actions(
     ctx: &AppContext,
-    now: chrono::DateTime<chrono::FixedOffset>,
+    now: crate::datetime::OffsetDateTime,
     cap: u64,
 ) -> Result<Vec<scheduled_actions::Model>> {
     Ok(sqlx::query_as(

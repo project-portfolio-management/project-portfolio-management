@@ -51,7 +51,7 @@ fn intent() -> Vec<(rules::FlowType, i64)> {
 async fn items_for(
     ctx: &AppContext,
     plan_pid: Uuid,
-    since: chrono::DateTime<chrono::Utc>,
+    since: crate::datetime::Timestamp,
 ) -> Result<Vec<rules::FlowType>> {
     let task_rows: Vec<tasks::Model> = sqlx::query_as(
         "SELECT * FROM tasks
@@ -65,10 +65,7 @@ async fn items_for(
 
     let mut items: Vec<rules::FlowType> = task_rows
         .iter()
-        .filter(|row| {
-            row.done_at
-                .is_some_and(|done| done.with_timezone(&chrono::Utc) >= since)
-        })
+        .filter(|row| row.done_at.is_some_and(|done| done.to_utc() >= since))
         .map(|row| rules::FlowType::parse(row.flow_type.as_deref()))
         .collect();
 
@@ -124,7 +121,7 @@ async fn flow_distribution(
         .window_days
         .filter(|d| *d > 0 && *d <= 3650)
         .unwrap_or(DEFAULT_WINDOW_DAYS);
-    let since = chrono::Utc::now() - chrono::Duration::days(window_days);
+    let since = crate::datetime::Timestamp::now() - crate::datetime::Duration::days(window_days);
     let declared = intent();
 
     let (items, scanned_plans, capped) = if params.rollup.unwrap_or(false) {
@@ -167,7 +164,7 @@ async fn flow_distribution(
         // answer than the caller asked for.
         "truncated": capped,
         "distribution": mix,
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "Flow Time, Velocity, Efficiency and Load are served by \
                  /api/plans/{pid}/time-analysis and /flow — the same number \
                  is deliberately not published under two names.",

@@ -28,7 +28,7 @@
 
 use std::collections::HashMap;
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -156,7 +156,7 @@ pub struct Percentile {
     /// The percentile (10, 50, 80, 90).
     pub p: u32,
     /// The finish date at least this share of iterations finished by.
-    pub finish: NaiveDate,
+    pub finish: Date,
 }
 
 /// The run.
@@ -165,18 +165,18 @@ pub struct Outcome {
     /// Iterations run.
     pub iterations: usize,
     /// The deterministic critical-path finish.
-    pub cpm_finish: Option<NaiveDate>,
+    pub cpm_finish: Option<Date>,
     /// Finish percentiles, ascending.
     pub percentiles: Vec<Percentile>,
     /// Share of iterations finishing on or before the CPM finish, in basis
     /// points: how likely the plan's own date is.
     pub cpm_finish_confidence_bp: i64,
     /// Earliest simulated finish.
-    pub earliest: Option<NaiveDate>,
+    pub earliest: Option<Date>,
     /// Latest simulated finish.
-    pub latest: Option<NaiveDate>,
+    pub latest: Option<Date>,
     /// Finish date counts, in date order.
-    pub histogram: Vec<(NaiveDate, usize)>,
+    pub histogram: Vec<(Date, usize)>,
     /// Per-task results, in input order.
     pub tasks: Vec<TaskResult>,
 }
@@ -359,10 +359,7 @@ pub fn simulate<S: std::hash::BuildHasher>(
 ///
 /// As [`simulate`].
 #[expect(clippy::too_many_arguments, clippy::too_many_lines)]
-pub fn simulate_with<
-    S: std::hash::BuildHasher,
-    H: FnMut(usize, NaiveDate, i64, &[Uuid], &mut Rng),
->(
+pub fn simulate_with<S: std::hash::BuildHasher, H: FnMut(usize, Date, i64, &[Uuid], &mut Rng)>(
     nodes: &[Node],
     edges: &[Edge],
     calendar: &WorkCalendar,
@@ -404,7 +401,7 @@ pub fn simulate_with<
 
     let mut rng = Rng::new(params.seed);
     let n = nodes.len();
-    let mut finishes: Vec<NaiveDate> = Vec::with_capacity(params.iterations);
+    let mut finishes: Vec<Date> = Vec::with_capacity(params.iterations);
     let mut finish_idx: Vec<f64> = Vec::with_capacity(params.iterations);
     let mut critical = vec![0usize; n];
     let mut durations: Vec<Vec<f64>> = vec![Vec::with_capacity(params.iterations); n];
@@ -443,7 +440,7 @@ pub fn simulate_with<
         finishes.push(f);
         let delay = calendar.index_of(f).unwrap_or(0) - calendar.index_of(cpm_finish).unwrap_or(0);
         hook(finishes.len() - 1, f, delay, &struck, &mut rng);
-        finish_idx.push(f64::from(chrono::Datelike::num_days_from_ce(&f)));
+        finish_idx.push(f64::from(f.num_days_from_ce()));
         for r in &res.nodes {
             if r.critical
                 && let Some(&i) = index_of.get(&r.pid)
@@ -467,7 +464,7 @@ pub fn simulate_with<
         })
         .collect();
     let on_time = sorted.iter().filter(|f| **f <= cpm_finish).count();
-    let mut histogram: Vec<(NaiveDate, usize)> = Vec::new();
+    let mut histogram: Vec<(Date, usize)> = Vec::new();
     for f in &sorted {
         match histogram.last_mut() {
             Some((d, c)) if d == f => *c += 1,
@@ -513,8 +510,8 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn monday() -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 10, 5).unwrap()
+    fn monday() -> Date {
+        Date::from_ymd_opt(2026, 10, 5).unwrap()
     }
     fn node(n: u128, dur: i64, start: bool) -> Node {
         Node {
@@ -631,7 +628,7 @@ mod tests {
         let (nodes, edges) = diamond();
         let est = estimates(&[(1, 3, 12), (2, 2, 12), (3, 1, 8)]);
         let o = run(&nodes, &edges, &est, &[], Params::default());
-        let p: Vec<NaiveDate> = o.percentiles.iter().map(|x| x.finish).collect();
+        let p: Vec<Date> = o.percentiles.iter().map(|x| x.finish).collect();
         assert!(
             p.windows(2).all(|w| w[0] <= w[1]),
             "P10 <= P50 <= P80 <= P90"

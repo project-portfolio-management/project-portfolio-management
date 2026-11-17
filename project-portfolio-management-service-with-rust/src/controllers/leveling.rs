@@ -15,10 +15,10 @@
 
 use std::collections::{BTreeSet, HashMap};
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_json::Value;
 use uuid::Uuid;
@@ -256,7 +256,7 @@ pub(crate) struct ApplyMove {
     /// The task to move.
     task_pid: Uuid,
     /// The new start date; it must equal the current proposal's `to_start` for the task, else the apply is refused as stale.
-    start_date: NaiveDate,
+    start_date: Date,
 }
 
 /// Body of `POST /api/plans/{pid}/leveling/apply`.

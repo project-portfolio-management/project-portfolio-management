@@ -46,10 +46,10 @@ async fn my_tasks(
 ) -> Result<Response> {
     let zone = tz::parse_zone(&params.tz).map_err(|e| unprocessable(&e))?;
     let now = match params.as_of.as_deref() {
-        Some(raw) => chrono::DateTime::parse_from_rfc3339(raw)
+        Some(raw) => crate::datetime::OffsetDateTime::parse_from_rfc3339(raw)
             .map_err(|_| unprocessable("as_of must be an RFC 3339 instant"))?
             .to_utc(),
-        None => chrono::Utc::now(),
+        None => crate::datetime::Timestamp::now(),
     };
     let today = tz::local_today(now, zone);
 
@@ -150,7 +150,7 @@ async fn my_tasks(
             }
         }
     }
-    let items: Vec<(Option<chrono::NaiveDate>, serde_json::Value)> = rows
+    let items: Vec<(Option<crate::datetime::Date>, serde_json::Value)> = rows
         .iter()
         .filter_map(|t| {
             readable.get(&t.plan_pid).map(|plan_name| {

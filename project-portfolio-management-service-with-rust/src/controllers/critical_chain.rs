@@ -35,7 +35,7 @@ pub(crate) fn schedules(
     let options = Options::default();
     let base = cpm::analyze_with(&net.nodes, &net.edges, &net.plan_cal, &net.own, options)
         .map_err(|cpm::CpmError::Cycle(_)| cycle())?;
-    let starts: HashMap<Uuid, chrono::NaiveDate> = c
+    let starts: HashMap<Uuid, crate::datetime::Date> = c
         .proposal
         .moves
         .iter()

@@ -359,11 +359,11 @@ fn plan_level_cpm(
 mod tests {
     use super::*;
     use crate::cpm::{Kind, WorkCalendar};
-    use chrono::NaiveDate;
+    use crate::datetime::Date;
     use serde_json::json;
 
-    fn day(d: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 3, d).unwrap()
+    fn day(d: u32) -> Date {
+        Date::from_ymd_opt(2026, 3, d).unwrap()
     }
 
     fn item(n: u128, start: u32, end: u32) -> rules::ScheduleItem {
@@ -385,7 +385,8 @@ mod tests {
     }
 
     fn members(n: u128) -> Vec<plans::Model> {
-        let at = chrono::DateTime::parse_from_rfc3339("2026-03-01T00:00:00+00:00").unwrap();
+        let at = crate::datetime::OffsetDateTime::parse_from_rfc3339("2026-03-01T00:00:00+00:00")
+            .unwrap();
         vec![plans::Model {
             created_at: at,
             updated_at: at,

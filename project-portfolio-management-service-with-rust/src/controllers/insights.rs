@@ -54,7 +54,7 @@ pub(crate) fn rag_by_pid(
     risk_rows: &[risks::Model],
     budget_rows: &[budget_lines::Model],
     dependency_rows: &[crate::models::_entities::plan_dependencies::Model],
-    today: chrono::NaiveDate,
+    today: crate::datetime::Date,
 ) -> std::collections::BTreeMap<Uuid, &'static str> {
     let facts: Vec<rules::ScheduleItem> = items.iter().map(schedule_item).collect();
     let edges: Vec<rules::ScheduleEdge> = dependency_rows
@@ -229,7 +229,7 @@ async fn executive_health(
         // floor the row store carries).
         let stale_days = members
             .iter()
-            .map(|m| (chrono::Utc::now() - m.updated_at.to_utc()).num_days())
+            .map(|m| (crate::datetime::Timestamp::now() - m.updated_at.to_utc()).num_days())
             .min()
             .unwrap_or(0);
         portfolios.push(serde_json::json!({
@@ -245,7 +245,7 @@ async fn executive_health(
         }));
     }
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "derivation": "status = worst member RAG (at-a-glance rules); \
                        staleness = calendar days since newest member update",
         "portfolios": portfolios,
@@ -260,11 +260,11 @@ async fn executive_health(
 pub(crate) async fn decision_entries(
     ctx: &AppContext,
     scope: &super::plan_access::HiddenScope,
-) -> Result<Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)>> {
+) -> Result<Vec<(crate::datetime::Timestamp, serde_json::Value)>> {
     let items = live!(plans, "plans", ctx, scope);
     let names: std::collections::BTreeMap<Uuid, &str> =
         items.iter().map(|i| (i.pid, i.name.as_str())).collect();
-    let mut entries: Vec<(chrono::DateTime<chrono::Utc>, serde_json::Value)> = Vec::new();
+    let mut entries: Vec<(crate::datetime::Timestamp, serde_json::Value)> = Vec::new();
 
     for review in scope.keep(
         sqlx::query_as::<_, gate_reviews::Model>("SELECT * FROM gate_reviews")
@@ -372,7 +372,7 @@ async fn executive_decisions(
     let decisions: Vec<serde_json::Value> =
         entries.into_iter().take(limit).map(|(_, v)| v).collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "total": total,
         "returned": decisions.len(),
         "decisions": decisions,
@@ -456,7 +456,7 @@ async fn executive_benefits(
         }));
     }
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "per-currency lines are never merged and never converted; \
                  realization_ratio is null when no positive target exists",
         "portfolios": rows,
@@ -534,7 +534,7 @@ async fn financial_variance(
         }
     }
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "minor units; one row per currency; remaining = planned - actual; no FX conversion",
         "by_collection": by_collection.into_iter().map(|(k, v)| serde_json::json!({"collection": k, "variance": v})).collect::<Vec<_>>(),
         "by_category": by_category.into_iter().map(|(k, v)| serde_json::json!({"category": k, "variance": v})).collect::<Vec<_>>(),
@@ -594,7 +594,7 @@ async fn financial_exposure(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "currencies are reported separately and never converted or merged; \
                  held_minor = planned on stage-gated tranches not yet released",
         "currencies": currencies,
@@ -681,7 +681,7 @@ async fn technology_dependency_risk(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "edges": dependency_rows.len(),
         "top_fan_out": fan_out,
         "cross_portfolio": cross_portfolio,
@@ -761,7 +761,7 @@ async fn technology_radar(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "convention": "tag `tech:<name>` marks usage; `tech:<name>:<ring>` \
                        (assess|trial|adopt|hold) also casts a ring vote; \
                        majority wins, ties break toward the cautious ring",
@@ -856,7 +856,7 @@ async fn executive_alignment(
         .collect();
 
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "derivation": "aligned = has at least one OKR mapping; unaligned list \
                        ranked by largest single-currency planned amount \
                        (currencies never summed)",
@@ -915,7 +915,7 @@ async fn technology_debt(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "note": "risks with category `tech_debt`; exposure = probability x impact",
         "open_exposure": open_exposure,
         "statuses": statuses,
@@ -945,8 +945,8 @@ async fn technology_flow(
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let months = i64::from(query.months.unwrap_or(6).clamp(1, 24));
-    let now = chrono::Utc::now();
-    let window_start = now - chrono::Days::new(u64::try_from(months * 31).unwrap_or(186));
+    let now = crate::datetime::Timestamp::now();
+    let window_start = now - crate::datetime::Days::new(u64::try_from(months * 31).unwrap_or(186));
     let milestone_rows = live!(milestones, "milestones", &ctx, &scope);
 
     let mut per_month: std::collections::BTreeMap<String, usize> =

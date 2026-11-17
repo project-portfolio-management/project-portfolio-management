@@ -510,7 +510,7 @@ async fn attempt_once(
         .header(DELIVERY_ID_HEADER, delivery_id)
         .header(SIGNATURE_HEADER, signature);
     // Signed afresh for this attempt, so a retry after backoff is not stale to a receiver that checks the age.
-    let timestamp = chrono::Utc::now().timestamp();
+    let timestamp = crate::datetime::Timestamp::now().timestamp();
     if let Some(v2) = mac::tag(Domain::Webhook, &signing_input_v2(timestamp, &request.body)) {
         builder = builder
             .header(TIMESTAMP_HEADER, timestamp.to_string())
@@ -933,7 +933,10 @@ mod tests {
             );
         }
         if let Some(t) = attrs.get("time") {
-            assert!(chrono::DateTime::parse_from_rfc3339(t).is_ok(), "RFC 3339");
+            assert!(
+                crate::datetime::OffsetDateTime::parse_from_rfc3339(t).is_ok(),
+                "RFC 3339"
+            );
         }
     }
 

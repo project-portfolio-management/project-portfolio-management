@@ -16,7 +16,7 @@
 //! Slip is read from the append-only reschedule history: the original due date
 //! is the first move's *from*, and `net_days` is how far it has moved in all.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// How a milestone is completed.
@@ -83,7 +83,7 @@ pub enum Status {
 
 /// The status given today and a "due soon" window in calendar days.
 #[must_use]
-pub fn status(is_achieved: bool, due: NaiveDate, today: NaiveDate, due_soon_days: i64) -> Status {
+pub fn status(is_achieved: bool, due: Date, today: Date, due_soon_days: i64) -> Status {
     if is_achieved {
         Status::Achieved
     } else if due < today {
@@ -126,16 +126,16 @@ pub fn schedule_state(slack_days: i64, at_risk_days: i64) -> ScheduleState {
 #[derive(Debug, Clone, Copy)]
 pub struct Slip {
     /// The due date before.
-    pub from: NaiveDate,
+    pub from: Date,
     /// The due date after.
-    pub to: NaiveDate,
+    pub to: Date,
 }
 
 /// How far a milestone has moved.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct SlipSummary {
     /// The due date it started with.
-    pub original_due: NaiveDate,
+    pub original_due: Date,
     /// How many times it was rescheduled.
     pub reschedules: usize,
     /// How many of those moved it later.
@@ -146,7 +146,7 @@ pub struct SlipSummary {
 
 /// The slip summary from the history (oldest first) and the current due date.
 #[must_use]
-pub fn slip_summary(history: &[Slip], current_due: NaiveDate) -> SlipSummary {
+pub fn slip_summary(history: &[Slip], current_due: Date) -> SlipSummary {
     let original = history.first().map_or(current_due, |s| s.from);
     SlipSummary {
         original_due: original,
@@ -160,8 +160,8 @@ pub fn slip_summary(history: &[Slip], current_due: NaiveDate) -> SlipSummary {
 mod tests {
     use super::*;
 
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
 
     #[test]

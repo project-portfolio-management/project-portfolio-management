@@ -108,7 +108,9 @@ async fn gates_and_programme_status_keep_their_promises() {
         &[("access", "write"), ("directorpack", "issuer")],
     );
     let outsider = bearer(&kid, OUTSIDER, &[("access", "write")]);
-    let period = chrono::Utc::now().format("%Y-%m").to_string();
+    let period = project_portfolio_management::datetime::Timestamp::now()
+        .format("%Y-%m")
+        .to_string();
     request::<App, _, _>(|request, ctx| async move {
         macro_rules! with { ($rb:expr, $who:expr) => { $rb.add_header($who.0.clone(), $who.1.clone()) }; }
         let mk = |kind: &'static str, name: &'static str| {

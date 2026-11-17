@@ -30,10 +30,10 @@ pub(crate) struct AllocationPayload {
     percent: i32,
     /// First day of the booking; absent means open-ended at the start.
     #[serde(default)]
-    start_date: Option<chrono::NaiveDate>,
+    start_date: Option<crate::datetime::Date>,
     /// Last day of the booking (not before `start_date`); absent means open-ended.
     #[serde(default)]
-    end_date: Option<chrono::NaiveDate>,
+    end_date: Option<crate::datetime::Date>,
     /// Short skill tags this allocation requires (T-28c). Only the
     /// requirement tags land here — never any resolved skill data.
     #[serde(default)]
@@ -133,7 +133,7 @@ pub(super) async fn create_allocation(
     .bind(payload.requested)
     .bind(payload.start_date)
     .bind(payload.end_date)
-    .bind(None::<chrono::DateTime<chrono::FixedOffset>>)
+    .bind(None::<crate::datetime::OffsetDateTime>)
     .bind(serde_json::json!(payload.skills_required))
     .fetch_one(tx.conn())
     .await?;
@@ -229,7 +229,9 @@ pub(super) async fn commit_allocation(
     // The person's committed load with this booking made firm, over its own span.
     let today = crate::tz::deployment_today();
     let from = allocation.start_date.unwrap_or(today);
-    let to = allocation.end_date.unwrap_or(from + chrono::Days::new(365));
+    let to = allocation
+        .end_date
+        .unwrap_or(from + crate::datetime::Days::new(365));
     let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx)
         .await?
         .iter()
@@ -303,7 +305,7 @@ pub(super) async fn delete_allocation(
         return Err(Error::NotFound);
     }
     let row_pid = allocation.pid;
-    let deleted_at = chrono::DateTime::<chrono::FixedOffset>::from(chrono::Utc::now());
+    let deleted_at = crate::datetime::OffsetDateTime::from(crate::datetime::Timestamp::now());
     let mut tx = crate::db::begin(&ctx).await?;
     // `fetch_one`: an update that finds no row is an error, as before SQ-1.
     sqlx::query_scalar::<_, i64>(
@@ -333,10 +335,10 @@ pub(super) async fn delete_allocation(
 pub(crate) struct CapacityParams {
     /// Window start; absent means today in the deployment's time zone.
     #[serde(default)]
-    from: Option<chrono::NaiveDate>,
+    from: Option<crate::datetime::Date>,
     /// Window end; absent means 30 days after `from`. Not before `from`; at most ten years.
     #[serde(default)]
-    to: Option<chrono::NaiveDate>,
+    to: Option<crate::datetime::Date>,
 }
 
 /// `GET /api/capacity` — per-person capacity over the window, counting only plans the caller may see; proposed bookings are a separate series and never added to committed load.
@@ -349,7 +351,7 @@ pub(super) async fn capacity(
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = crate::tz::deployment_today();
     let from = params.from.unwrap_or(today);
-    let to = params.to.unwrap_or(from + chrono::Days::new(30));
+    let to = params.to.unwrap_or(from + crate::datetime::Days::new(30));
     if to < from {
         return Err(unprocessable("to is before from"));
     }
@@ -373,7 +375,11 @@ pub(super) async fn capacity(
     people.dedup();
     let mut out = Vec::with_capacity(people.len());
     for person in people {
-        let theirs: Vec<(i32, Option<chrono::NaiveDate>, Option<chrono::NaiveDate>)> = rows
+        let theirs: Vec<(
+            i32,
+            Option<crate::datetime::Date>,
+            Option<crate::datetime::Date>,
+        )> = rows
             .iter()
             .filter(|a| a.person_ref == person)
             .map(|a| (a.percent, a.start_date, a.end_date))

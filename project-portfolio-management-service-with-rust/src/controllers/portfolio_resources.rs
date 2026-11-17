@@ -10,10 +10,10 @@
 use super::forbidden;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -98,10 +98,10 @@ async fn scoped_allocations(
 pub(crate) struct PlanParams {
     /// Window start (inclusive); `None` means today.
     #[serde(default)]
-    from: Option<NaiveDate>,
+    from: Option<Date>,
     /// Window end (inclusive); `None` means 89 days after the start.
     #[serde(default)]
-    to: Option<NaiveDate>,
+    to: Option<Date>,
     /// `week` or `month` (default month).
     #[serde(default)]
     period: Option<String>,
@@ -124,7 +124,7 @@ async fn resource_plan(
 ) -> Result<Response> {
     let today = crate::tz::deployment_today();
     let from = q.from.unwrap_or(today);
-    let to = q.to.unwrap_or(from + chrono::Days::new(89));
+    let to = q.to.unwrap_or(from + crate::datetime::Days::new(89));
     let grain = match q.period.as_deref() {
         None => Grain::Month,
         Some(p) => Grain::parse(p).ok_or_else(|| unprocessable("period must be week or month"))?,
@@ -245,10 +245,10 @@ async fn resource_plan(
 pub(crate) struct HoursParams {
     /// Window start (inclusive); `None` means 27 days before the end.
     #[serde(default)]
-    from: Option<NaiveDate>,
+    from: Option<Date>,
     /// Window end (inclusive); `None` means today.
     #[serde(default)]
-    to: Option<NaiveDate>,
+    to: Option<Date>,
 }
 
 /// `GET /api/resource-plan/hours` — planned against actual hours.
@@ -261,7 +261,7 @@ async fn hours(
 ) -> Result<Response> {
     let today = crate::tz::deployment_today();
     let to = q.to.unwrap_or(today);
-    let from = q.from.unwrap_or(to - chrono::Days::new(27));
+    let from = q.from.unwrap_or(to - crate::datetime::Days::new(27));
     if to < from {
         return Err(unprocessable("to is before from"));
     }
@@ -568,7 +568,9 @@ async fn resolve_placeholder(
     if allocation.booking == "committed" {
         let today = crate::tz::deployment_today();
         let from = allocation.start_date.unwrap_or(today);
-        let to = allocation.end_date.unwrap_or(from + chrono::Days::new(365));
+        let to = allocation
+            .end_date
+            .unwrap_or(from + crate::datetime::Days::new(365));
         let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx)
             .await?
             .iter()

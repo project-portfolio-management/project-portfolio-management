@@ -15,8 +15,8 @@
 
 use super::unprocessable;
 use super::{conflict, forbidden};
+use crate::datetime::{Date, Timestamp};
 use crate::prelude::*;
-use chrono::{NaiveDate, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -168,7 +168,7 @@ pub(crate) struct CaseBody {
     #[serde(default)]
     subject_ref: Option<String>,
     /// Date the join, leave, intake or closeout takes effect; must fall within 1970..=2100.
-    effective_date: NaiveDate,
+    effective_date: Date,
     /// Optional case title (non-blank, at most 200 characters); `None` lets the server derive one.
     #[serde(default)]
     title: Option<String>,
@@ -195,7 +195,7 @@ async fn create_case(
     } else if b.subject_ref.is_some() {
         return Err(unprocessable("a plan checklist has no subject_ref"));
     }
-    let year = chrono::Datelike::year(&b.effective_date);
+    let year = b.effective_date.year();
     if !(1970..=2100).contains(&year) {
         return Err(unprocessable(
             "effective_date must be between 1970 and 2100",
@@ -434,7 +434,7 @@ pub(crate) struct ItemBody {
     owner_ref: Option<String>,
     /// New due date; `None` leaves it unchanged.
     #[serde(default)]
-    due_date: Option<NaiveDate>,
+    due_date: Option<Date>,
     /// `done`, `skipped` (needs a note) or `open` (reopens).
     #[serde(default)]
     resolution: Option<String>,
@@ -511,7 +511,7 @@ async fn put_item(
         set.push("resolution = ")
             .push_bind_unseparated(token.map(str::to_string));
         set.push("resolved_at = ").push_bind_unseparated(
-            resolved.then(|| chrono::DateTime::<chrono::FixedOffset>::from(Utc::now())),
+            resolved.then(|| crate::datetime::OffsetDateTime::from(Timestamp::now())),
         );
         set.push("resolved_by = ")
             .push_bind_unseparated(if resolved {
@@ -621,7 +621,7 @@ async fn close(
          WHERE id = $4 RETURNING *",
     )
     .bind(status)
-    .bind(Utc::now().fixed_offset())
+    .bind(Timestamp::now().fixed_offset())
     .bind(&reason)
     .bind(case.id)
     .fetch_one(tx.conn())
@@ -652,7 +652,7 @@ pub(crate) struct AccessBody {
     action: String,
     /// Date the change took effect; `None` lets the server default it.
     #[serde(default)]
-    recorded_on: Option<NaiveDate>,
+    recorded_on: Option<Date>,
     /// Optional free-text note.
     #[serde(default)]
     note: Option<String>,
@@ -744,7 +744,7 @@ async fn plan_records(ctx: &AppContext, plan: Uuid) -> Result<Vec<access_records
 }
 
 /// Reduces the access history to grants that were never revoked, as (person, access, granted-on) triples.
-fn outstanding_of(rows: &[access_records::Model]) -> Vec<(String, String, NaiveDate)> {
+fn outstanding_of(rows: &[access_records::Model]) -> Vec<(String, String, Date)> {
     let recs: Vec<rules::Record> = rows
         .iter()
         .map(|r| rules::Record {
@@ -804,7 +804,7 @@ async fn closeout(State(ctx): State<AppContext>, Path(pid): Path<String>) -> Res
     )
     .await?;
     let today = crate::tz::deployment_today();
-    let active_allocations = sqlx::query_scalar::<_, Option<NaiveDate>>(
+    let active_allocations = sqlx::query_scalar::<_, Option<Date>>(
         "SELECT end_date FROM allocations WHERE plan_pid = $1 AND deleted_at IS NULL",
     )
     .bind(plan.pid)

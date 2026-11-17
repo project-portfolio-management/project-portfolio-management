@@ -17,7 +17,7 @@
 //! A task that could not be scheduled on either side has **no variance**, with
 //! the reason, never a zero.
 
-use chrono::NaiveDate;
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -35,9 +35,9 @@ pub struct Snap {
     /// Its title then.
     pub title: String,
     /// Early start.
-    pub start: Option<NaiveDate>,
+    pub start: Option<Date>,
     /// Early finish.
-    pub finish: Option<NaiveDate>,
+    pub finish: Option<Date>,
     /// Working duration.
     pub duration: Option<i64>,
 }
@@ -70,13 +70,13 @@ pub struct Row {
     /// How it compares.
     pub standing: Standing,
     /// Baselined start.
-    pub baseline_start: Option<NaiveDate>,
+    pub baseline_start: Option<Date>,
     /// Baselined finish.
-    pub baseline_finish: Option<NaiveDate>,
+    pub baseline_finish: Option<Date>,
     /// Current start.
-    pub start: Option<NaiveDate>,
+    pub start: Option<Date>,
     /// Current finish.
-    pub finish: Option<NaiveDate>,
+    pub finish: Option<Date>,
     /// Business days the start moved (positive = later); `None` when unmeasurable.
     pub start_variance_days: Option<i64>,
     /// Business days the finish moved (positive = later); `None` when unmeasurable.
@@ -130,13 +130,12 @@ pub struct Variance {
 pub fn variance(
     then: &[Snap],
     now: &[Snap],
-    then_finish: Option<NaiveDate>,
-    now_finish: Option<NaiveDate>,
+    then_finish: Option<Date>,
+    now_finish: Option<Date>,
     calendar: &WorkCalendar,
 ) -> Variance {
-    let idx = |d: NaiveDate| calendar.index_of(d);
-    let diff = |a: Option<NaiveDate>, b: Option<NaiveDate>| match (a.and_then(idx), b.and_then(idx))
-    {
+    let idx = |d: Date| calendar.index_of(d);
+    let diff = |a: Option<Date>, b: Option<Date>| match (a.and_then(idx), b.and_then(idx)) {
         (Some(x), Some(y)) => Some(y - x),
         _ => None,
     };
@@ -233,15 +232,10 @@ mod tests {
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
     }
-    fn d(y: i32, m: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(y, m, day).unwrap()
+    fn d(y: i32, m: u32, day: u32) -> Date {
+        Date::from_ymd_opt(y, m, day).unwrap()
     }
-    fn snap(
-        n: u128,
-        start: Option<NaiveDate>,
-        finish: Option<NaiveDate>,
-        dur: Option<i64>,
-    ) -> Snap {
+    fn snap(n: u128, start: Option<Date>, finish: Option<Date>, dur: Option<i64>) -> Snap {
         Snap {
             task_pid: id(n),
             title: format!("T{n}"),
@@ -388,7 +382,10 @@ mod tests {
                 snap(
                     n,
                     Some(d(2026, 10, 5)),
-                    Some(d(2026, 10, 9) + chrono::Duration::days(i64::try_from(n).unwrap() - 2)),
+                    Some(
+                        d(2026, 10, 9)
+                            + crate::datetime::Duration::days(i64::try_from(n).unwrap() - 2),
+                    ),
                     Some(5),
                 )
             })

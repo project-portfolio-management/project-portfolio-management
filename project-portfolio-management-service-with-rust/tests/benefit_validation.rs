@@ -153,7 +153,7 @@ async fn benefits_are_claimed_until_someone_outside_validates_them() {
         // A KPI for one of the non-financial benefits; the other has none.
         let k: Value = with!(request.post("/api/kpis"), writer).json(&json!({ "name": "Patient score", "direction": "higher_better", "target_value": 80, "red_value": 50 })).await.json();
         let kpi = k["pid"].as_str().unwrap().to_string();
-        with!(request.post(&format!("/api/kpis/{kpi}/readings")), writer).json(&json!({ "value": 85, "observed_on": chrono::Utc::now().date_naive().to_string() })).await.assert_status_ok();
+        with!(request.post(&format!("/api/kpis/{kpi}/readings")), writer).json(&json!({ "value": 85, "observed_on": project_portfolio_management::datetime::Timestamp::now().date_naive().to_string() })).await.assert_status_ok();
         classify(project.clone(), soft.clone(), json!({ "kpi_pid": kpi, "classification": "societal" })).await.assert_status_ok();
 
         // ── realized is a claim ──
@@ -220,7 +220,7 @@ async fn benefits_are_claimed_until_someone_outside_validates_them() {
 
         // ── the pack ──
         let d: Value = request.post("/api/director-packs").add_header(issuer.0.clone(), issuer.1.clone())
-            .json(&json!({ "period": chrono::Utc::now().format("%Y-%m").to_string(), "audience": "board" })).await.json();
+            .json(&json!({ "period": project_portfolio_management::datetime::Timestamp::now().format("%Y-%m").to_string(), "audience": "board" })).await.json();
         let pk = d["pid"].as_str().unwrap().to_string();
         request.post(&format!("/api/director-packs/{pk}/issue")).add_header(issuer.0.clone(), issuer.1.clone()).await.assert_status_ok();
         let pack: Value = with!(request.get(&format!("/api/director-packs/{pk}")), issuer).await.json();

@@ -38,7 +38,7 @@ pub(crate) struct DevopsEventPayload {
     caused_by_deploy_pid: Option<Uuid>,
     /// When the event happened (UTC); absent means now, at ingestion.
     #[serde(default)]
-    occurred_at: Option<chrono::DateTime<chrono::Utc>>,
+    occurred_at: Option<crate::datetime::Timestamp>,
 }
 
 /// The devops event with this pid, if any.
@@ -134,8 +134,8 @@ pub(super) async fn ingest_devops_event(
     .bind(payload.reference.as_deref())
     .bind(payload.incident_pid)
     .bind(payload.caused_by_deploy_pid)
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-        payload.occurred_at.unwrap_or_else(chrono::Utc::now),
+    .bind(crate::datetime::OffsetDateTime::from(
+        payload.occurred_at.unwrap_or_else(crate::datetime::Timestamp::now),
     ))
     .fetch_one(tx.conn())
     .await?;
@@ -174,14 +174,14 @@ pub(super) async fn devops_metrics(
 ) -> Result<Response> {
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let months = i64::from(query.months.unwrap_or(3).clamp(1, 24));
-    let now = chrono::Utc::now();
-    let window_start = now - chrono::Days::new(u64::try_from(months * 31).unwrap_or(93));
+    let now = crate::datetime::Timestamp::now();
+    let window_start = now - crate::datetime::Days::new(u64::try_from(months * 31).unwrap_or(93));
     let rows = scope.keep(
         sqlx::query_as::<_, devops_events::Model>("SELECT * FROM devops_events")
             .fetch_all(crate::db::pool(&ctx))
             .await?,
     );
-    let in_window = |at: chrono::DateTime<chrono::Utc>| at >= window_start && at <= now;
+    let in_window = |at: crate::datetime::Timestamp| at >= window_start && at <= now;
 
     let mut deploys_by_month: std::collections::BTreeMap<String, usize> =
         std::collections::BTreeMap::new();
@@ -220,7 +220,7 @@ pub(super) async fn devops_metrics(
     }
 
     // MTTR: linked incident→recovery pairs whose incident is in-window.
-    let recovery_of: std::collections::BTreeMap<Uuid, chrono::DateTime<chrono::Utc>> = rows
+    let recovery_of: std::collections::BTreeMap<Uuid, crate::datetime::Timestamp> = rows
         .iter()
         .filter(|row| row.kind == "recovery")
         .filter_map(|row| row.incident_pid.map(|pid| (pid, row.occurred_at.to_utc())))
@@ -303,7 +303,7 @@ pub(super) async fn devops_releases(
         })
         .collect();
     let body = serde_json::json!({
-        "as_of": chrono::Utc::now(),
+        "as_of": crate::datetime::Timestamp::now(),
         "releases": releases,
     });
     conditional(&headers, &body)

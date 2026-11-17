@@ -9,7 +9,7 @@
 //! well double-book on purpose. Touching slots (one ends as the next starts)
 //! are not a clash.
 
-use chrono::{DateTime, Duration, NaiveDate, TimeZone, Utc};
+use crate::datetime::{Date, Duration, Timestamp};
 use uuid::Uuid;
 
 use crate::tz::Tz;
@@ -19,7 +19,7 @@ pub const MAX_SLOT: Duration = Duration::hours(12);
 
 /// Every problem with a slot's times.
 #[must_use]
-pub fn slot_problems(starts: DateTime<Utc>, ends: DateTime<Utc>) -> Vec<String> {
+pub fn slot_problems(starts: Timestamp, ends: Timestamp) -> Vec<String> {
     let mut out = Vec::new();
     if ends <= starts {
         out.push("ends_at must be after starts_at".to_string());
@@ -33,16 +33,16 @@ pub fn slot_problems(starts: DateTime<Utc>, ends: DateTime<Utc>) -> Vec<String> 
 /// `[start, end)`. Uses the first valid instant of each local midnight, so
 /// the window is right on a 23- or 25-hour day.
 #[must_use]
-pub fn day_window(day: NaiveDate, tz: Tz) -> (DateTime<Utc>, DateTime<Utc>) {
-    let midnight = |d: NaiveDate| {
+pub fn day_window(day: Date, tz: Tz) -> (Timestamp, Timestamp) {
+    let midnight = |d: Date| {
         // A local midnight can be skipped (a clock that jumps over it) or
         // repeated; take the earliest real instant at or after it.
         let mut t = d.and_hms_opt(0, 0, 0).unwrap_or_default();
         loop {
             match tz.from_local_datetime(&t) {
-                chrono::LocalResult::Single(x) => return x.with_timezone(&Utc),
-                chrono::LocalResult::Ambiguous(first, _) => return first.with_timezone(&Utc),
-                chrono::LocalResult::None => t += Duration::minutes(15),
+                crate::datetime::LocalResult::Single(x) => return x.to_utc(),
+                crate::datetime::LocalResult::Ambiguous(first, _) => return first.to_utc(),
+                crate::datetime::LocalResult::None => t += Duration::minutes(15),
             }
         }
     };
@@ -55,9 +55,9 @@ pub struct Span {
     /// The slot's id.
     pub id: Uuid,
     /// Start.
-    pub start: DateTime<Utc>,
+    pub start: Timestamp,
     /// End (exclusive).
-    pub end: DateTime<Utc>,
+    pub end: Timestamp,
 }
 
 /// Groups of slots that overlap one another, transitively (A overlaps B and
@@ -69,7 +69,7 @@ pub fn clashes(spans: &[Span]) -> Vec<Vec<Uuid>> {
     sorted.sort_by_key(|s| (s.start, s.end, s.id));
     let mut groups: Vec<Vec<Uuid>> = Vec::new();
     let mut current: Vec<Uuid> = Vec::new();
-    let mut reach: Option<DateTime<Utc>> = None;
+    let mut reach: Option<Timestamp> = None;
     for s in sorted {
         match reach {
             Some(r) if s.start < r => {
@@ -96,8 +96,8 @@ mod tests {
     use super::*;
     use crate::tz::parse_zone;
 
-    fn at(h: u32, m: u32) -> DateTime<Utc> {
-        Utc.with_ymd_and_hms(2026, 10, 3, h, m, 0).unwrap()
+    fn at(h: u32, m: u32) -> Timestamp {
+        Timestamp::with_ymd_and_hms(2026, 10, 3, h, m, 0).unwrap()
     }
     fn span(n: u128, a: (u32, u32), b: (u32, u32)) -> Span {
         Span {
@@ -117,20 +117,20 @@ mod tests {
 
     #[test]
     fn a_day_window_follows_the_callers_zone_and_dst() {
-        let d = NaiveDate::from_ymd_opt(2026, 10, 3).unwrap();
+        let d = Date::from_ymd_opt(2026, 10, 3).unwrap();
         let (s, e) = day_window(d, parse_zone("UTC").unwrap());
         assert_eq!((e - s).num_hours(), 24);
         let (s, _) = day_window(d, parse_zone("Pacific/Auckland").unwrap());
         assert_eq!(
             s,
-            Utc.with_ymd_and_hms(2026, 10, 2, 11, 0, 0).unwrap(),
+            Timestamp::with_ymd_and_hms(2026, 10, 2, 11, 0, 0).unwrap(),
             "NZDT is UTC+13"
         );
         // The day the US falls back (2026-11-01) is 25 hours long.
-        let fall = NaiveDate::from_ymd_opt(2026, 11, 1).unwrap();
+        let fall = Date::from_ymd_opt(2026, 11, 1).unwrap();
         let (s, e) = day_window(fall, parse_zone("America/Los_Angeles").unwrap());
         assert_eq!((e - s).num_hours(), 25);
-        let spring = NaiveDate::from_ymd_opt(2026, 3, 8).unwrap();
+        let spring = Date::from_ymd_opt(2026, 3, 8).unwrap();
         let (s, e) = day_window(spring, parse_zone("America/Los_Angeles").unwrap());
         assert_eq!((e - s).num_hours(), 23);
     }

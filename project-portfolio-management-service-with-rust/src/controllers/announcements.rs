@@ -7,10 +7,10 @@
 //! scheduled and expired ones, which is how a publisher manages the feed.
 
 use super::unprocessable;
+use crate::datetime::Timestamp;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -36,7 +36,7 @@ fn forbidden() -> Error {
 }
 
 /// Renders one announcement for the API, including its computed window state (scheduled, live or expired) relative to `now`.
-fn view(a: &announcements::Model, now: DateTime<Utc>) -> serde_json::Value {
+fn view(a: &announcements::Model, now: Timestamp) -> serde_json::Value {
     serde_json::json!({
         "pid": a.pid, "title": a.title, "body": a.body, "severity": a.severity,
         "pinned": a.pinned, "publish_at": a.publish_at, "expires_at": a.expires_at,
@@ -67,7 +67,7 @@ async fn list(
     if all && !may_publish(&caller) {
         return Err(forbidden());
     }
-    let now = Utc::now();
+    let now = Timestamp::now();
     let rows: Vec<announcements::Model> =
         sqlx::query_as("SELECT * FROM announcements WHERE deleted_at IS NULL ORDER BY id DESC")
             .fetch_all(crate::db::pool(&ctx))
@@ -128,10 +128,10 @@ pub(crate) struct Input {
     pinned: bool,
     /// Default now.
     #[serde(default)]
-    publish_at: Option<DateTime<Utc>>,
+    publish_at: Option<Timestamp>,
     /// When it stops showing; absent means it never expires.
     #[serde(default)]
-    expires_at: Option<DateTime<Utc>>,
+    expires_at: Option<Timestamp>,
 }
 
 /// Serde default for `severity`: `info`.
@@ -149,7 +149,7 @@ async fn create(
     if !may_publish(&caller) {
         return Err(forbidden());
     }
-    let publish_at = b.publish_at.unwrap_or_else(Utc::now);
+    let publish_at = b.publish_at.unwrap_or_else(Timestamp::now);
     let problems = rules::problems(&b.title, &b.text, &b.severity, publish_at, b.expires_at);
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
@@ -175,7 +175,7 @@ async fn create(
         Some(serde_json::json!({ "title": row.title, "severity": row.severity, "pinned": row.pinned }))).await
     .map_err(super::audit_failed)?;
     tx.commit().await?;
-    format::json(view(&row, Utc::now()))
+    format::json(view(&row, Timestamp::now()))
 }
 
 /// Loads a live (not retracted) announcement by public id, `404` when absent.
@@ -234,7 +234,7 @@ async fn update(
     .await
     .map_err(super::audit_failed)?;
     tx.commit().await?;
-    format::json(view(&row, Utc::now()))
+    format::json(view(&row, Timestamp::now()))
 }
 
 /// `DELETE /api/announcements/{pid}` — retract (soft delete, audited).
@@ -251,7 +251,7 @@ async fn retract(
     let pid = row.pid;
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query("UPDATE announcements SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(Utc::now().fixed_offset())
+        .bind(Timestamp::now().fixed_offset())
         .bind(row.id)
         .fetch_one(tx.conn())
         .await?;

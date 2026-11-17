@@ -9,8 +9,8 @@
 use super::unprocessable;
 use std::collections::HashMap;
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -69,7 +69,7 @@ fn latest_two(readings: &[kpi_readings::Model], kpi_pid: Uuid) -> Vec<&kpi_readi
 fn view(
     k: &kpis::Model,
     readings: &[kpi_readings::Model],
-    as_of: NaiveDate,
+    as_of: Date,
 ) -> (Status, serde_json::Value) {
     let direction = Direction::parse(&k.direction).unwrap_or(Direction::HigherBetter);
     let two = latest_two(readings, k.pid);
@@ -236,7 +236,7 @@ pub(crate) struct ListParams {
     status: Option<String>,
     /// The date staleness is judged against (default today).
     #[serde(default)]
-    as_of: Option<NaiveDate>,
+    as_of: Option<Date>,
 }
 
 /// `GET /api/kpis` — KPIs with their derived status, red first, then amber, then
@@ -423,7 +423,7 @@ async fn remove(
     let row_pid = k.pid;
     let mut tx = crate::db::begin(&ctx).await?;
     sqlx::query("UPDATE kpis SET deleted_at = $1 WHERE id = $2 RETURNING id")
-        .bind(chrono::Utc::now().fixed_offset())
+        .bind(crate::datetime::Timestamp::now().fixed_offset())
         .bind(k.id)
         .fetch_one(tx.conn())
         .await?;
@@ -441,7 +441,7 @@ pub(crate) struct ReadingBody {
     value: i64,
     /// The day it was observed (default today; not in the future).
     #[serde(default)]
-    observed_on: Option<NaiveDate>,
+    observed_on: Option<Date>,
     /// Optional note about the reading, such as how it was taken.
     #[serde(default)]
     note: Option<String>,
@@ -463,7 +463,7 @@ async fn add_reading(
     if on > today {
         return Err(unprocessable("observed_on is in the future"));
     }
-    if on < NaiveDate::from_ymd_opt(1970, 1, 1).unwrap_or_default() {
+    if on < Date::from_ymd_opt(1970, 1, 1).unwrap_or_default() {
         return Err(unprocessable("observed_on is too far in the past"));
     }
     if b.note
@@ -511,7 +511,7 @@ async fn list_readings(
     let k = find_kpi(&ctx, &caller, &pid).await?;
     let mut readings = load_readings(&ctx, &[k.pid]).await?;
     readings.sort_by_key(|r| std::cmp::Reverse((r.observed_on, r.id)));
-    let by_day: HashMap<NaiveDate, usize> = readings.iter().fold(HashMap::new(), |mut m, r| {
+    let by_day: HashMap<Date, usize> = readings.iter().fold(HashMap::new(), |mut m, r| {
         *m.entry(r.observed_on).or_default() += 1;
         m
     });

@@ -15,10 +15,10 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::datetime::Date;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -700,7 +700,7 @@ async fn plan_cpm(
 pub(crate) struct ScheduleBody {
     /// New planned start; `None` clears it.
     #[serde(default)]
-    start_date: Option<NaiveDate>,
+    start_date: Option<Date>,
     /// New duration in business days; `None` clears it (unknown, not zero).
     #[serde(default)]
     duration_days: Option<i32>,
@@ -709,10 +709,10 @@ pub(crate) struct ScheduleBody {
     constraint_kind: Option<String>,
     /// Constraint date paired with `constraint_kind`; `None` clears the constraint.
     #[serde(default)]
-    constraint_date: Option<NaiveDate>,
+    constraint_date: Option<Date>,
     /// A soft deadline: late dates only (negative float), never early dates.
     #[serde(default)]
-    deadline: Option<NaiveDate>,
+    deadline: Option<Date>,
     /// Required (and audited) when setting a hard constraint.
     #[serde(default)]
     reason: Option<String>,

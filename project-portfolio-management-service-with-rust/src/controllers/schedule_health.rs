@@ -6,8 +6,8 @@
 
 use std::collections::HashMap;
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -24,7 +24,7 @@ const ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS";
 pub(crate) struct Params {
     /// The status date (default today).
     #[serde(default)]
-    as_of: Option<NaiveDate>,
+    as_of: Option<Date>,
 }
 
 /// `GET /api/plans/{pid}/schedule-health` — run the fourteen checks.
@@ -36,8 +36,8 @@ async fn schedule_health(
 ) -> Result<Response> {
     let plan = super::governance::find_item(&ctx, &pid).await?;
     let as_of = q.as_of.unwrap_or_else(crate::tz::deployment_today);
-    if as_of < chrono::NaiveDate::from_ymd_opt(1970, 1, 5).unwrap_or_default()
-        || chrono::Datelike::year(&as_of) > 2100
+    if as_of < crate::datetime::Date::from_ymd_opt(1970, 1, 5).unwrap_or_default()
+        || as_of.year() > 2100
     {
         return Err(unprocessable(
             "as_of must be between 1970-01-05 and 2100-12-31",
@@ -53,7 +53,7 @@ async fn schedule_health(
     .bind(plan.pid)
     .fetch_optional(crate::db::pool(&ctx))
     .await?;
-    let finishes: HashMap<Uuid, NaiveDate> = match &baseline {
+    let finishes: HashMap<Uuid, Date> = match &baseline {
         None => HashMap::new(),
         Some(b) => sqlx::query_as::<_, schedule_baseline_tasks::Model>(
             "SELECT * FROM schedule_baseline_tasks WHERE baseline_pid = $1",

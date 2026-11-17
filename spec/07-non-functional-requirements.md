@@ -236,10 +236,12 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
 
 ### 7.x Time and time zones
 
-Doctrine (LT-9, `domain/src/tz.rs`): **store UTC** (`timestamptz`, from `Utc::now()`);
+Doctrine (LT-9, `domain/src/tz.rs`): **store UTC** (`timestamptz`, from `Timestamp::now()`);
 a `date` is a **calendar date with no zone**; **the server never reads its own
-zone** (`chrono::Local` is banned by `clippy.toml` and by a unit test, so any
-process `TZ` yields identical answers); **portfolio-wide views use the
+zone** (jiff's `TimeZone::system`, `ZonedDateTime::now` and its global database are
+banned by `clippy.toml` and by a unit test, and zones come only from the database
+bundled into the binary, so any process `TZ` or host zone files yield identical
+answers); **portfolio-wide views use the
 deployment's "today" zone**, an explicit administrator setting (IANA name,
 default `UTC`) so that people in many zones at once all see one answer, and
 the answer says which zone it used; **personal views take an explicit IANA

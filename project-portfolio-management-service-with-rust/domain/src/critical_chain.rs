@@ -215,7 +215,7 @@ pub fn find(
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
+    use crate::datetime::Date;
 
     use super::*;
     use crate::cpm::{Options, WorkCalendar, analyze};
@@ -224,7 +224,7 @@ mod tests {
         Uuid::from_u128(n)
     }
 
-    fn node(n: u128, days: i64, start: Option<NaiveDate>) -> Node {
+    fn node(n: u128, days: i64, start: Option<Date>) -> Node {
         Node {
             pid: id(n),
             duration: Some(days),
@@ -243,8 +243,8 @@ mod tests {
         }
     }
 
-    fn day() -> NaiveDate {
-        NaiveDate::from_ymd_opt(2026, 1, 5).unwrap()
+    fn day() -> Date {
+        Date::from_ymd_opt(2026, 1, 5).unwrap()
     }
 
     fn run(nodes: &[Node], edges: &[Edge]) -> CpmResult {
@@ -276,7 +276,7 @@ mod tests {
         let path: Vec<Uuid> = run(&plain, &edges).chains[0].clone();
         assert_eq!(path, [id(1), id(2)]);
         let mut levelled = plain;
-        levelled[3].planned_start = Some(day() + chrono::Duration::days(5));
+        levelled[3].planned_start = Some(day() + crate::datetime::Duration::days(5));
         let r = run(&levelled, &edges);
         let out = find(&levelled, &edges, &r, &who(&[(2, "x"), (4, "x")]));
         let Outcome::Chain(c) = out else {
@@ -353,7 +353,7 @@ mod tests {
         // B starts three days after the person finished A: they were not waiting for A.
         let nodes = [
             node(1, 2, Some(day())),
-            node(2, 2, Some(day() + chrono::Duration::days(5))),
+            node(2, 2, Some(day() + crate::datetime::Duration::days(5))),
         ];
         let r = run(&nodes, &[]);
         let Outcome::Chain(c) = find(&nodes, &[], &r, &who(&[(1, "x"), (2, "x")])) else {

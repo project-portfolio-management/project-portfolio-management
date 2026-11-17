@@ -13,8 +13,8 @@
 
 use std::collections::HashMap;
 
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use uuid::Uuid;
@@ -59,7 +59,7 @@ impl Measure {
 }
 
 /// The critical-path forecast finish of the plan, or why there is none.
-async fn forecast_finish(ctx: &AppContext, plan: Uuid) -> Result<Result<NaiveDate, Measure>> {
+async fn forecast_finish(ctx: &AppContext, plan: Uuid) -> Result<Result<Date, Measure>> {
     let net = super::cpm::load_network(ctx, plan).await?;
     let Ok(result) = net.analyze(0) else {
         return Ok(Err(Measure::none(
@@ -77,7 +77,7 @@ async fn measure_time(ctx: &AppContext, plan: &plans::Model) -> Result<Measure> 
         .to_plan()
         .ok()
         .and_then(|p| p.target_date)
-        .and_then(|d| NaiveDate::parse_from_str(d.get(..10).unwrap_or(&d), "%Y-%m-%d").ok());
+        .and_then(|d| Date::parse_from_str(d.get(..10).unwrap_or(&d), "%Y-%m-%d").ok());
     let Some(target) = target else {
         return Ok(Measure::none(
             "the plan has no target_date to hold the forecast against",
@@ -158,7 +158,7 @@ async fn measure_risk(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
 }
 
 /// Over-booking of the plan's named, committed people over the next 90 days, across `readable` allocations.
-fn measure_resources(readable: &[allocations::Model], plan: Uuid, today: NaiveDate) -> Measure {
+fn measure_resources(readable: &[allocations::Model], plan: Uuid, today: Date) -> Measure {
     let named = |a: &allocations::Model| {
         !crate::portfolio_resources::is_placeholder(&a.person_ref) && a.booking != "proposed"
     };
@@ -172,7 +172,7 @@ fn measure_resources(readable: &[allocations::Model], plan: Uuid, today: NaiveDa
     if people.is_empty() {
         return Measure::none("no named, committed people are booked on the plan");
     }
-    let to = today + chrono::Days::new(BOOKING_WINDOW_DAYS - 1);
+    let to = today + crate::datetime::Days::new(BOOKING_WINDOW_DAYS - 1);
     let worst = people
         .iter()
         .map(|person| {
@@ -302,7 +302,7 @@ async fn picture(
     Ok(json!({
         "plan_pid": plan.pid, "plan_name": plan.name, "overall": rules::overall(&statuses),
         "escalation_needed": needs_escalation,
-        "as_of": chrono::Utc::now(), "dimensions": dimensions,
+        "as_of": crate::datetime::Timestamp::now(), "dimensions": dimensions,
         "how_to_read": "Green: below amber_from_percent of the limit. Amber: from there up to the limit. Red: beyond it. \
     Unknown: a limit is set but could not be measured (the reason says why); it is never shown as green. not_set: no limit here or above.",
     }))
@@ -636,7 +636,7 @@ pub(crate) fn system_caller() -> MaybeAuthUser {
 pub async fn raise_all_needed(ctx: &AppContext, quiet_days: i64) -> Result<usize> {
     let caller = system_caller();
     let today = crate::tz::deployment_today();
-    let since = today - chrono::Duration::days(quiet_days);
+    let since = today - crate::datetime::Duration::days(quiet_days);
     let plans = live_plans(ctx).await?;
     let allocs = readable_allocations(ctx, &caller).await?;
     let mut raised = 0;

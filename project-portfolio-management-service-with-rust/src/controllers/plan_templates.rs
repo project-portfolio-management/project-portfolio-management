@@ -16,8 +16,8 @@
 
 use super::conflict;
 use super::unprocessable;
+use crate::datetime::Date;
 use crate::prelude::*;
-use chrono::NaiveDate;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -132,7 +132,7 @@ pub(super) async fn capture(
 
     // Dates → offsets from one base.
     let root_plan = raws[0].row.to_plan()?;
-    let mut known: Vec<NaiveDate> = Vec::new();
+    let mut known: Vec<Date> = Vec::new();
     for r in &raws {
         known.extend(r.milestones.iter().map(|m| m.due));
         known.extend(r.tasks.iter().filter_map(|t| t.due_date));
@@ -142,7 +142,7 @@ pub(super) async fn capture(
         }
     }
     let base = rules::choose_base(root_plan.start_date.as_deref(), &known);
-    let off = |d: NaiveDate| base.map(|b| rules::offset(b, d));
+    let off = |d: Date| base.map(|b| rules::offset(b, d));
 
     let mut nodes = Vec::new();
     for (key, r) in raws.iter().enumerate() {
@@ -321,7 +321,7 @@ async fn list_templates(State(ctx): State<AppContext>, caller: MaybeAuthUser) ->
 
 /// A starter (BR-13) as a template row: it is code, so it has no database row and is always version 1.
 fn starter_row(s: &crate::starter_templates::Starter) -> plan_templates::Model {
-    let now: chrono::DateTime<chrono::FixedOffset> = chrono::Utc::now().into();
+    let now: crate::datetime::OffsetDateTime = crate::datetime::Timestamp::now().into();
     plan_templates::Model {
         created_at: now,
         updated_at: now,
@@ -402,8 +402,8 @@ async fn delete_template(
     sqlx::query_scalar::<_, i64>(
         "UPDATE plan_templates SET deleted_at = $1 WHERE id = $2 RETURNING id",
     )
-    .bind(chrono::DateTime::<chrono::FixedOffset>::from(
-        chrono::Utc::now(),
+    .bind(crate::datetime::OffsetDateTime::from(
+        crate::datetime::Timestamp::now(),
     ))
     .bind(row.id)
     .fetch_one(tx.conn())
@@ -429,7 +429,7 @@ pub(crate) struct InstantiateBody {
     name: Option<String>,
     /// Required when the template captured any date.
     #[serde(default)]
-    start_date: Option<NaiveDate>,
+    start_date: Option<Date>,
     /// Put the new root under this plan.
     #[serde(default)]
     parent_pid: Option<Uuid>,
@@ -516,7 +516,7 @@ async fn build(
     caller: &MaybeAuthUser,
     snap: &Snapshot,
     b: &InstantiateBody,
-    date_of: &impl Fn(Option<i64>) -> Option<NaiveDate>,
+    date_of: &impl Fn(Option<i64>) -> Option<Date>,
     template: (Uuid, i32),
     created: &mut Vec<Uuid>,
 ) -> Result<serde_json::Value> {
@@ -566,11 +566,11 @@ async fn build(
             .await?;
             comp_pids.push((name.clone(), c));
         }
-        let now = chrono::Utc::now();
+        let now = crate::datetime::Timestamp::now();
         let mut task_pids: Vec<Uuid> = Vec::new();
         for t in &node.tasks {
             let tp = Uuid::new_v4();
-            let at: chrono::DateTime<chrono::FixedOffset> = now.into();
+            let at: crate::datetime::OffsetDateTime = now.into();
             sqlx::query(
                 "INSERT INTO tasks
                      (pid, plan_pid, sprint_pid, title, description, status, assignee_ref, points, due_date,

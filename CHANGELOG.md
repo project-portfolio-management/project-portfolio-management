@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (axa 0.17 and axa-test 0.8)
+
+- **The service moves from axa 0.15 to 0.17, and axa-test from 0.6 to 0.8**, with the owner's approval to take them
+  before the three-day minimum package age. axa 0.17 needs Rust 1.98, so the service's and the migration crate's
+  `rust-version` is 1.98 (the matcher stays at 1.97; the pinned toolchain is 1.100). The one code change: the CLI's new
+  `health` command is answered with `axa::cli::health` before anything is connected. The job queue now listens for new
+  jobs and takes one more pooled connection to do so; a trailing slash on an API path is a `308`. No migration, no
+  renamed setting, no changed route. Steps in `operations/upgrade-and-migration.md`, "Upgrading to axa 0.17".
+- Tested: clippy and the formatter clean; library tests (1,290) and the database suite (232) pass on Postgres 18.
+  **Not verified:** the queue's listener under load, and `service health` against a running server (no test runs the
+  binary).
+
 ### 17 November (benefit classification and validation: NC-1 slice 11, part g)
 
 - **UI: `/plans/[pid]/benefits` classifies a plan's benefits and validates the financial ones (DP-9).** A realized

@@ -276,6 +276,11 @@ impl App {
             crate::email::Mailer::from_env(&environment)?;
             return Ok(());
         }
+        // `health` asks the server already running on this machine (axa 0.16): it connects to nothing itself, so it is
+        // answered before the configuration is built and before any database or cache is reached.
+        if let Command::Health { ready, port } = cli.command {
+            return axa::cli::health(&environment, &defaults(), ready, port).await;
+        }
         let mut config = service_config(&environment)?;
         if let Command::Start { binding, port, .. } = &cli.command {
             if let Some(binding) = binding {
@@ -295,7 +300,8 @@ impl App {
                 .map_err(migration_error)?;
         }
         match cli.command {
-            Command::Check => Ok(()),
+            // Both are answered above, before anything is connected.
+            Command::Check | Command::Health { .. } => Ok(()),
             Command::Start { worker, all, .. } => Self::start(&ctx, worker, all).await,
             Command::Db { command } => Self::db(&ctx, command).await,
             Command::Task { name, params } => {

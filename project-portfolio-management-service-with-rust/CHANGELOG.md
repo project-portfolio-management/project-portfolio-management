@@ -9,6 +9,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — axa 0.17 and axa-test 0.8 (2026-11-17)
+
+- axa 0.15 to 0.17 and axa-test 0.6 to 0.8, before the three-day minimum package age with the owner's approval;
+  `rust-version` 1.98 here and in the migration crate, as axa 0.17 needs. `App::run` answers the new `health` command
+  with `axa::cli::health` before building the configuration, and the final `match` covers it. The queue's listener
+  takes one more pooled connection. `Cargo.lock` gains `ppp` (PROXY protocol, pulled in by axa).
+- Tested: clippy (all targets and features) and `cargo fmt --check`; `cargo test --lib`, 1,290 passed; the database
+  suite on Postgres 18, 232 passed. **Not verified:** `service health` against a running server; the listener under load.
+
 ### Changed
 
 - **axa 0.15.0 and axa-test 0.6.0 (2026-11-16)**, with the owner's exception to the minimum package age. The job

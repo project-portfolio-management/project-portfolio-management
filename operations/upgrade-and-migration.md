@@ -140,6 +140,28 @@ No migration comes with the axa change, so going back is redeploying the previou
 migrations `20261114000110` to `20261114000112` (RE-7, RE-1, RE-8), which add tables and columns only, each with a
 down file.
 
+## Upgrading to axa 0.17
+
+The release that moves the service from axa 0.15 to 0.17 (through 0.16) renames no setting, changes no route or
+answer, and adds no migration:
+
+1. **Rust 1.98 is the minimum** for the service and its migration crate (`rust-version`), as axa 0.17 needs it. The
+   pinned toolchain is 1.100, so a build changes nothing; only a build on an older toolchain is refused. The matcher
+   builds no axa crate and stays at 1.97.
+2. **The job queue listens for new jobs.** `Queue::connect` adds the `axa_queue_notify` trigger at boot, each statement
+   safe to repeat, so there is nothing to run by hand, and an idle worker starts a queued job at once instead of at the
+   next poll. The queue holds **one more connection** from its pool to listen: size `DB_MAX_CONNECTIONS` (20 by default) for it.
+   A retry now waits a random time in the upper half of its backoff, and a job whose heartbeat cannot report stops
+   before another worker may take it.
+3. **`service health [--ready] [--port PORT]`** asks the server running on this machine for `/_health/live` or
+   `/_health/ready` and exits non-zero unless it answers in 5 seconds, for an image with no `curl`. It connects to
+   nothing else, so it is answered before the configuration is built.
+4. **A trailing slash on a mounted path is a `308`** to the path without it (`/api/plans/` to `/api/plans`), keeping the
+   method and body; a client that got a `404` for it now follows the redirect.
+5. **An idempotent replay sends every value of a repeated header.** The outbox is unchanged
+   (`axa-transactional-outbox` stays at 0.4.0), so the relay need not be stopped. The rate limit is the in-memory one,
+   so 0.17's new keys for a shared limit do not apply.
+
 ## Upgrading to axa 0.15
 
 The release that moves the service from axa 0.14 to 0.15 renames no setting, changes no route or answer, and adds

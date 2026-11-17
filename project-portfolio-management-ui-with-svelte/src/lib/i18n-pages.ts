@@ -4233,6 +4233,52 @@ export const PAGES_EN = {
     "This programme is stopped. That is final; its record is kept.",
   "p.programme.title_ppm": "Gates and programme status — PPM",
   "p.programme.title": "Gates and programme status",
+  "p.funding.add": "Add the source",
+  "p.funding.added": "Funding source added.",
+  "p.funding.choose_plan": "Choose a plan",
+  "p.funding.could_not_load_lines":
+    "This plan's budget lines could not be loaded.",
+  "p.funding.could_not_load_money":
+    "The money by funding source could not be loaded.",
+  "p.funding.could_not_load": "The funding sources could not be loaded.",
+  "p.funding.could_not_save": "The change was not saved.",
+  "p.funding.f_combine": "Combine capital and revenue",
+  "p.funding.f_fy":
+    "Financial year (the year it starts in; empty for this one)",
+  "p.funding.f_name": "New funding source",
+  "p.funding.f_plan": "Plan",
+  "p.funding.f_source": "Funding source",
+  "p.funding.intro":
+    "Where each programme's money comes from. A budget line with no funding source is counted and listed, never hidden.",
+  "p.funding.is_active": "active",
+  "p.funding.is_retired": "retired",
+  "p.funding.line_cleared": "The line no longer has a funding source.",
+  "p.funding.line_set": "The line's funding source is set.",
+  "p.funding.lines_heading": "Budget lines and their funding source",
+  "p.funding.lines_says":
+    "Choose a plan to see its budget lines and give each one a funding source.",
+  "p.funding.money_heading": "Money by funding source",
+  "p.funding.no_lines": "This plan has no budget lines.",
+  "p.funding.no_source": "No funding source",
+  "p.funding.no_sources": "No funding source has been added yet.",
+  "p.funding.problem_fy":
+    "Write the financial year as the year it starts in, from 2000 to 2100.",
+  "p.funding.problem_name_taken":
+    "A funding source with that name already exists.",
+  "p.funding.problem_name": "A funding source's name is 2 to 120 characters.",
+  "p.funding.refused_inactive":
+    "That funding source is retired, so a line cannot be given it.",
+  "p.funding.restore": "Restore",
+  "p.funding.restored": "Funding source restored.",
+  "p.funding.retire_says":
+    "A retired source can no longer be given to a line, but the lines that have it keep it.",
+  "p.funding.retire": "Retire",
+  "p.funding.retired_option": "{name} (retired)",
+  "p.funding.retired": "Funding source retired.",
+  "p.funding.show": "Show",
+  "p.funding.sources_heading": "Funding sources",
+  "p.funding.title_ppm": "Funding — PPM",
+  "p.funding.title": "Funding",
   "p.director_pack.actions_heading": "Review, issue or reissue",
   "p.director_pack.aud_board": "Board",
   "p.director_pack.aud_escalation_board": "Escalation board",

@@ -4391,6 +4391,55 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Este programa está detenido. Es definitivo; se conserva su registro.",
   "p.programme.title_ppm": "Fases y estado del programa — PPM",
   "p.programme.title": "Fases y estado del programa",
+  "p.funding.add": "Añadir la fuente",
+  "p.funding.added": "Fuente de financiación añadida.",
+  "p.funding.choose_plan": "Elija un plan",
+  "p.funding.could_not_load_lines":
+    "No se pudieron cargar las partidas de presupuesto de este plan.",
+  "p.funding.could_not_load_money":
+    "No se pudo cargar el dinero por fuente de financiación.",
+  "p.funding.could_not_load":
+    "No se pudieron cargar las fuentes de financiación.",
+  "p.funding.could_not_save": "No se guardó el cambio.",
+  "p.funding.f_combine": "Combinar capital y gasto corriente",
+  "p.funding.f_fy": "Ejercicio (el año en que empieza; vacío para el actual)",
+  "p.funding.f_name": "Nueva fuente de financiación",
+  "p.funding.f_plan": "Plan elegido",
+  "p.funding.f_source": "Fuente de financiación",
+  "p.funding.intro":
+    "De dónde viene el dinero de cada programa. Una partida de presupuesto sin fuente de financiación se cuenta y se lista, nunca se oculta.",
+  "p.funding.is_active": "activa",
+  "p.funding.is_retired": "retirada",
+  "p.funding.line_cleared": "La partida ya no tiene fuente de financiación.",
+  "p.funding.line_set": "Se ha fijado la fuente de financiación de la partida.",
+  "p.funding.lines_heading":
+    "Partidas de presupuesto y su fuente de financiación",
+  "p.funding.lines_says":
+    "Elija un plan para ver sus partidas de presupuesto y dar a cada una una fuente de financiación.",
+  "p.funding.money_heading": "Dinero por fuente de financiación",
+  "p.funding.no_lines": "Este plan no tiene partidas de presupuesto.",
+  "p.funding.no_source": "Sin fuente de financiación",
+  "p.funding.no_sources":
+    "Todavía no se ha añadido ninguna fuente de financiación.",
+  "p.funding.problem_fy":
+    "Escriba el ejercicio como el año en que empieza, de 2000 a 2100.",
+  "p.funding.problem_name_taken":
+    "Ya existe una fuente de financiación con ese nombre.",
+  "p.funding.problem_name":
+    "El nombre de una fuente de financiación tiene entre 2 y 120 caracteres.",
+  "p.funding.refused_inactive":
+    "Esa fuente de financiación está retirada, así que no se puede dar a una partida.",
+  "p.funding.restore": "Restaurar",
+  "p.funding.restored": "Fuente de financiación restaurada.",
+  "p.funding.retire_says":
+    "Una fuente retirada ya no se puede dar a una partida, pero las partidas que la tienen la conservan.",
+  "p.funding.retire": "Retirar",
+  "p.funding.retired_option": "{name} (retirada)",
+  "p.funding.retired": "Fuente de financiación retirada.",
+  "p.funding.show": "Mostrar",
+  "p.funding.sources_heading": "Fuentes de financiación",
+  "p.funding.title_ppm": "Financiación — PPM",
+  "p.funding.title": "Financiación",
   "p.director_pack.actions_heading": "Revisar, emitir o reemitir",
   "p.director_pack.aud_board": "Consejo",
   "p.director_pack.aud_escalation_board": "Comité de escalado",

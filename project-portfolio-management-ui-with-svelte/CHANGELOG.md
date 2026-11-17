@@ -9,6 +9,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — funding sources (NC-1 slice 11, DP-6, 2026-11-17)
+
+- `/funding`, in the navigation: the funding sources (add one with its name checked first, retire or restore one), a
+  chosen plan's budget lines each with a source or none (a retired source shown only on the line that has it; a
+  refused choice put back), and the money by funding source for a financial year, drawn by the director pack's own
+  renderer. Five client methods, the `FundingSource` type and `funding_source_pid` on budget lines (the service already
+  sent it); `src/lib/funding-view.ts`; 37 keys in eight catalogues, machine-written and unreviewed.
+- **Fixed on the way:** a line's saved notice was cleared by the reload that followed it.
+- Tests: `tests/unit/funding-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/funding.spec.ts` (five,
+  with Welsh and axe).
+- **Not done:** renaming a source (no route); the ledger's allocations, cost codes and reconcile (next). **Not
+  verified:** against a real service.
+
 ### Added — gates and programme status (NC-1 slice 11, DP-5, 2026-11-17)
 
 - `/plans/[pid]/programme`, linked from the plan page: a planned date for each gate (only changed dates are sent; a

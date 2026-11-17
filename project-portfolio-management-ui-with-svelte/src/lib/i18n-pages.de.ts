@@ -4402,6 +4402,54 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Dieses Programm ist gestoppt. Das ist endgültig; seine Aufzeichnungen bleiben.",
   "p.programme.title_ppm": "Gates und Programmstatus — PPM",
   "p.programme.title": "Gates und Programmstatus",
+  "p.funding.add": "Quelle hinzufügen",
+  "p.funding.added": "Finanzierungsquelle hinzugefügt.",
+  "p.funding.choose_plan": "Plan wählen",
+  "p.funding.could_not_load_lines":
+    "Die Budgetposten dieses Plans konnten nicht geladen werden.",
+  "p.funding.could_not_load_money":
+    "Das Geld nach Finanzierungsquelle konnte nicht geladen werden.",
+  "p.funding.could_not_load":
+    "Die Finanzierungsquellen konnten nicht geladen werden.",
+  "p.funding.could_not_save": "Die Änderung wurde nicht gespeichert.",
+  "p.funding.f_combine": "Investiv und konsumtiv zusammenfassen",
+  "p.funding.f_fy":
+    "Geschäftsjahr (das Jahr, in dem es beginnt; leer für das aktuelle)",
+  "p.funding.f_name": "Neue Finanzierungsquelle",
+  "p.funding.f_plan": "Gewählter Plan",
+  "p.funding.f_source": "Finanzierungsquelle",
+  "p.funding.intro":
+    "Woher das Geld jedes Programms kommt. Ein Budgetposten ohne Finanzierungsquelle wird gezählt und aufgeführt, nie versteckt.",
+  "p.funding.is_active": "aktiv",
+  "p.funding.is_retired": "stillgelegt",
+  "p.funding.line_cleared": "Der Posten hat keine Finanzierungsquelle mehr.",
+  "p.funding.line_set": "Die Finanzierungsquelle des Postens ist gesetzt.",
+  "p.funding.lines_heading": "Budgetposten und ihre Finanzierungsquelle",
+  "p.funding.lines_says":
+    "Wählen Sie einen Plan, um seine Budgetposten zu sehen und jedem eine Finanzierungsquelle zu geben.",
+  "p.funding.money_heading": "Geld nach Finanzierungsquelle",
+  "p.funding.no_lines": "Dieser Plan hat keine Budgetposten.",
+  "p.funding.no_source": "Keine Finanzierungsquelle",
+  "p.funding.no_sources": "Noch wurde keine Finanzierungsquelle hinzugefügt.",
+  "p.funding.problem_fy":
+    "Geben Sie das Geschäftsjahr als das Jahr an, in dem es beginnt, von 2000 bis 2100.",
+  "p.funding.problem_name_taken":
+    "Eine Finanzierungsquelle mit diesem Namen gibt es schon.",
+  "p.funding.problem_name":
+    "Der Name einer Finanzierungsquelle hat 2 bis 120 Zeichen.",
+  "p.funding.refused_inactive":
+    "Diese Finanzierungsquelle ist stillgelegt und kann keinem Posten gegeben werden.",
+  "p.funding.restore": "Wiederherstellen",
+  "p.funding.restored": "Finanzierungsquelle wiederhergestellt.",
+  "p.funding.retire_says":
+    "Eine stillgelegte Quelle lässt sich keinem Posten mehr geben, aber Posten, die sie haben, behalten sie.",
+  "p.funding.retire": "Stilllegen",
+  "p.funding.retired_option": "{name} (stillgelegt)",
+  "p.funding.retired": "Finanzierungsquelle stillgelegt.",
+  "p.funding.show": "Anzeigen",
+  "p.funding.sources_heading": "Finanzierungsquellen",
+  "p.funding.title_ppm": "Finanzierung — PPM",
+  "p.funding.title": "Finanzierung",
   "p.director_pack.actions_heading": "Prüfen, herausgeben oder neu herausgeben",
   "p.director_pack.aud_board": "Vorstand",
   "p.director_pack.aud_escalation_board": "Eskalationsgremium",

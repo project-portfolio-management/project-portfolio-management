@@ -695,6 +695,30 @@ describe("PpmClient planned gates and programme status (NC-1 slice 11, DP-5)", (
   });
 });
 
+describe("PpmClient funding sources (NC-1 slice 11, DP-6)", () => {
+  it("lists, adds, retires, sets a line's source and reads the money", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.fundingSources();
+    await ppm.createFundingSource("Capital grant");
+    await ppm.setFundingSourceActive("s1", false);
+    await ppm.setLineFundingSource("p1", "l1", "s1");
+    await ppm.setLineFundingSource("p1", "l1", null);
+    await ppm.portfolioMoney();
+    await ppm.portfolioMoney(2026, true);
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/funding-sources",
+      "POST /api/funding-sources",
+      "PUT /api/funding-sources/s1",
+      "PUT /api/plans/p1/budget-lines/l1/funding-source",
+      "PUT /api/plans/p1/budget-lines/l1/funding-source",
+      "GET /api/portfolio-money",
+      "GET /api/portfolio-money?fy=2026&combine_classes=true",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

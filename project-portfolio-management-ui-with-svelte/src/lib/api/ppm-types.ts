@@ -280,6 +280,8 @@ export interface BudgetBoard {
     /** Low and high final cost for cost risk; the planned amount is the likely one. */
     low_minor?: number | null;
     high_minor?: number | null;
+    /** The funding source the line draws on (DP-6); absent or null for none. */
+    funding_source_pid?: string | null;
   }[];
   totals: {
     currency: string;
@@ -3893,4 +3895,13 @@ export interface ProgrammeStatusBody {
   reason: string;
   gate_review_pid?: string;
   exception_pid?: string;
+}
+
+// ---- funding sources (DP-6, NC-1 slice 11) ----
+
+/** A funding source from the owner-supplied list; a retired one stays on the lines that have it. */
+export interface FundingSource {
+  pid: string;
+  name: string;
+  active: boolean;
 }

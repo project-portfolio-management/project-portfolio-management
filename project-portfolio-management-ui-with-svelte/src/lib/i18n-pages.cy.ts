@@ -4336,6 +4336,52 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae'r rhaglen hon wedi'i stopio. Mae hynny'n derfynol; cedwir ei chofnod.",
   "p.programme.title_ppm": "Pyrth a statws rhaglen — PPM",
   "p.programme.title": "Pyrth a statws rhaglen",
+  "p.funding.add": "Ychwanegu'r ffynhonnell",
+  "p.funding.added": "Ychwanegwyd y ffynhonnell gyllid.",
+  "p.funding.choose_plan": "Dewiswch gynllun",
+  "p.funding.could_not_load_lines":
+    "Nid oedd modd llwytho llinellau cyllideb y cynllun hwn.",
+  "p.funding.could_not_load_money":
+    "Nid oedd modd llwytho'r arian yn ôl ffynhonnell gyllid.",
+  "p.funding.could_not_load": "Nid oedd modd llwytho'r ffynonellau cyllid.",
+  "p.funding.could_not_save": "Ni chadwyd y newid.",
+  "p.funding.f_combine": "Cyfuno cyfalaf a refeniw",
+  "p.funding.f_fy":
+    "Blwyddyn ariannol (y flwyddyn y mae'n dechrau; gwag ar gyfer yr un hon)",
+  "p.funding.f_name": "Ffynhonnell gyllid newydd",
+  "p.funding.f_plan": "Cynllun",
+  "p.funding.f_source": "Ffynhonnell gyllid",
+  "p.funding.intro":
+    "O ble y daw arian pob rhaglen. Caiff llinell gyllideb heb ffynhonnell gyllid ei chyfrif a'i rhestru, byth ei chuddio.",
+  "p.funding.is_active": "gweithredol",
+  "p.funding.is_retired": "wedi'i hymddeol",
+  "p.funding.line_cleared": "Nid oes gan y llinell ffynhonnell gyllid mwyach.",
+  "p.funding.line_set": "Mae ffynhonnell gyllid y llinell wedi'i gosod.",
+  "p.funding.lines_heading": "Llinellau cyllideb a'u ffynhonnell gyllid",
+  "p.funding.lines_says":
+    "Dewiswch gynllun i weld ei linellau cyllideb a rhoi ffynhonnell gyllid i bob un.",
+  "p.funding.money_heading": "Arian yn ôl ffynhonnell gyllid",
+  "p.funding.no_lines": "Nid oes gan y cynllun hwn linellau cyllideb.",
+  "p.funding.no_source": "Dim ffynhonnell gyllid",
+  "p.funding.no_sources": "Nid oes ffynhonnell gyllid wedi'i hychwanegu eto.",
+  "p.funding.problem_fy":
+    "Ysgrifennwch y flwyddyn ariannol fel y flwyddyn y mae'n dechrau, o 2000 i 2100.",
+  "p.funding.problem_name_taken":
+    "Mae ffynhonnell gyllid gyda'r enw hwnnw yn bodoli eisoes.",
+  "p.funding.problem_name": "Mae enw ffynhonnell gyllid rhwng 2 a 120 nod.",
+  "p.funding.refused_inactive":
+    "Mae'r ffynhonnell gyllid honno wedi'i hymddeol, felly ni ellir ei rhoi i linell.",
+  "p.funding.restore": "Adfer",
+  "p.funding.restored": "Adferwyd y ffynhonnell gyllid.",
+  "p.funding.retire_says":
+    "Ni ellir rhoi ffynhonnell wedi'i hymddeol i linell mwyach, ond mae'r llinellau sydd â hi yn ei chadw.",
+  "p.funding.retire": "Ymddeol",
+  "p.funding.retired_option": "{name} (wedi'i hymddeol)",
+  "p.funding.retired": "Ymddeolwyd y ffynhonnell gyllid.",
+  "p.funding.show": "Dangos",
+  "p.funding.sources_heading": "Ffynonellau cyllid",
+  "p.funding.title_ppm": "Cyllid — PPM",
+  "p.funding.title": "Cyllid",
   "p.director_pack.actions_heading": "Adolygu, cyhoeddi neu ailgyhoeddi",
   "p.director_pack.aud_board": "Bwrdd",
   "p.director_pack.aud_escalation_board": "Bwrdd uwchgyfeirio",

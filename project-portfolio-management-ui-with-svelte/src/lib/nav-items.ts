@@ -81,6 +81,12 @@ export function buildNavItems(): NavEntry[] {
         return t("p.aims.title");
       },
     },
+    {
+      href: "/funding",
+      get label() {
+        return t("p.funding.title");
+      },
+    },
     { href: "/scenarios", label: t("ppm.nav.scenarios") },
     { href: "/objectives", label: t("ppm.nav.objectives") },
     {

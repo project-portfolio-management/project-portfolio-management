@@ -4397,6 +4397,54 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Ce programme est arrêté. C'est définitif ; son historique est gardé.",
   "p.programme.title_ppm": "Jalons et statut du programme — PPM",
   "p.programme.title": "Jalons et statut du programme",
+  "p.funding.add": "Ajouter la source",
+  "p.funding.added": "Source de financement ajoutée.",
+  "p.funding.choose_plan": "Choisissez un plan",
+  "p.funding.could_not_load_lines":
+    "Les lignes budgétaires de ce plan n'ont pas pu être chargées.",
+  "p.funding.could_not_load_money":
+    "L'argent par source de financement n'a pas pu être chargé.",
+  "p.funding.could_not_load":
+    "Les sources de financement n'ont pas pu être chargées.",
+  "p.funding.could_not_save": "La modification n'a pas été enregistrée.",
+  "p.funding.f_combine": "Regrouper investissement et fonctionnement",
+  "p.funding.f_fy": "Exercice (l'année où il commence ; vide pour l'actuel)",
+  "p.funding.f_name": "Nouvelle source de financement",
+  "p.funding.f_plan": "Plan concerné",
+  "p.funding.f_source": "Source de financement",
+  "p.funding.intro":
+    "D'où vient l'argent de chaque programme. Une ligne budgétaire sans source de financement est comptée et listée, jamais cachée.",
+  "p.funding.is_active": "en service",
+  "p.funding.is_retired": "retirée",
+  "p.funding.line_cleared": "La ligne n'a plus de source de financement.",
+  "p.funding.line_set": "La source de financement de la ligne est définie.",
+  "p.funding.lines_heading": "Lignes budgétaires et leur source de financement",
+  "p.funding.lines_says":
+    "Choisissez un plan pour voir ses lignes budgétaires et donner une source de financement à chacune.",
+  "p.funding.money_heading": "Argent par source de financement",
+  "p.funding.no_lines": "Ce plan n'a pas de ligne budgétaire.",
+  "p.funding.no_source": "Aucune source de financement",
+  "p.funding.no_sources":
+    "Aucune source de financement n'a encore été ajoutée.",
+  "p.funding.problem_fy":
+    "Écrivez l'exercice comme l'année où il commence, de 2000 à 2100.",
+  "p.funding.problem_name_taken":
+    "Une source de financement porte déjà ce nom.",
+  "p.funding.problem_name":
+    "Le nom d'une source de financement compte de 2 à 120 caractères.",
+  "p.funding.refused_inactive":
+    "Cette source de financement est retirée : elle ne peut pas être donnée à une ligne.",
+  "p.funding.restore": "Rétablir",
+  "p.funding.restored": "Source de financement rétablie.",
+  "p.funding.retire_says":
+    "Une source retirée ne peut plus être donnée à une ligne, mais les lignes qui l'ont la gardent.",
+  "p.funding.retire": "Retirer",
+  "p.funding.retired_option": "{name} (retirée)",
+  "p.funding.retired": "Source de financement retirée.",
+  "p.funding.show": "Afficher",
+  "p.funding.sources_heading": "Sources de financement",
+  "p.funding.title_ppm": "Financement — PPM",
+  "p.funding.title": "Financement",
   "p.director_pack.actions_heading": "Relire, émettre ou réémettre",
   "p.director_pack.aud_board": "Conseil",
   "p.director_pack.aud_escalation_board": "Comité d'escalade",

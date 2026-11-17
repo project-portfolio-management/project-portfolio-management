@@ -164,6 +164,7 @@ import type {
   ConfidenceBody,
   DeliveryException,
   PortfolioMap,
+  FundingSource,
   PlannedGates,
   ProgrammeStatusBody,
   ProgrammeStatusView,
@@ -2142,6 +2143,43 @@ export class PpmClient {
     body: ProgrammeStatusBody,
   ): Promise<{ status: string; decision: string }> {
     return this.http.post(`/api/plans/${planPid}/programme-status`, { body });
+  }
+  // ---- funding sources (DP-6, NC-1 slice 11) ----
+  /** The funding sources, by name, active and retired. */
+  fundingSources(): Promise<{ funding_sources: FundingSource[] }> {
+    return this.http.get("/api/funding-sources");
+  }
+  /** Add a funding source (a name of 2 to 120 characters; 409 when the name exists, in any case). */
+  createFundingSource(name: string): Promise<FundingSource> {
+    return this.http.post("/api/funding-sources", { body: { name } });
+  }
+  /** Retire (`false`) or restore (`true`) a funding source; lines keep a retired one. */
+  setFundingSourceActive(pid: string, active: boolean): Promise<FundingSource> {
+    return this.http.put(`/api/funding-sources/${pid}`, { body: { active } });
+  }
+  /** Set a budget line's funding source, or clear it with `null` (422 for one that is not active). */
+  setLineFundingSource(
+    planPid: string,
+    linePid: string,
+    sourcePid: string | null,
+  ): Promise<unknown> {
+    return this.http.put(
+      `/api/plans/${planPid}/budget-lines/${linePid}/funding-source`,
+      {
+        body: sourcePid ? { funding_source_pid: sourcePid } : {},
+      },
+    );
+  }
+  /** Programme money by funding source for a financial year (the year it starts in; the current one if left out). */
+  portfolioMoney(
+    fy?: number,
+    combineClasses = false,
+  ): Promise<Record<string, unknown>> {
+    const q = new URLSearchParams();
+    if (fy !== undefined) q.set("fy", String(fy));
+    if (combineClasses) q.set("combine_classes", "true");
+    const qs = q.toString();
+    return this.http.get(`/api/portfolio-money${qs ? `?${qs}` : ""}`);
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

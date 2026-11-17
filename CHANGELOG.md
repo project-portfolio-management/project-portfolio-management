@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (funding sources: NC-1 slice 11, part e, first of two)
+
+- **UI: `/funding` keeps the funding sources and gives each budget line one (DP-6).** Sources are added, retired and
+  restored; a plan's lines each get a source or none; the money by funding source for a financial year is drawn as the
+  director pack draws it. UI spec, "Funding sources"; test `tests/e2e/funding.spec.ts` (five, with Welsh and axe).
+- **Not done:** renaming a source (the service has no route); the ledger's writes are next. **Not verified:** against
+  a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (gates and programme status: NC-1 slice 11, part d)
 
 - **UI: `/plans/[pid]/programme` plans a plan's gate dates and decides a programme's status (DP-5).** Gate dates send

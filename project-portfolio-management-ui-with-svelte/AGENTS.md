@@ -202,6 +202,7 @@ the Status note above).
 | Delivery exceptions (`/exceptions`) | `GET /api/exceptions?status=&breached=` · `PUT /api/exceptions/{pid}` · `POST …/{pid}/decision` · `GET /api/plans` (plan names) |
 | Portfolio map and strategic aims (`/portfolio-map`) | `GET /api/portfolio-map?period=` · `PUT /api/objectives/{pid}/strategic-aim` · `PUT /api/plans/{pid}/primary-aim` · `GET /api/objectives` |
 | Gates and programme status (`/plans/[pid]/programme`) | `GET /api/plans/{pid}/planned-gates` · `PUT …/planned-gates/{gate}` · `GET / POST /api/plans/{pid}/programme-status` · `GET …/gate-reviews` and `GET /api/exceptions` (what a decision cites) |
+| Funding sources (`/funding`) | `GET / POST /api/funding-sources` · `PUT …/{pid}` · `PUT /api/plans/{pid}/budget-lines/{line}/funding-source` · `GET /api/portfolio-money?fy=&combine_classes=` · `GET /api/plans/{pid}/budget-lines` · `GET /api/plans` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

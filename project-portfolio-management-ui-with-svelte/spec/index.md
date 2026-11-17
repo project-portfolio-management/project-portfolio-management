@@ -223,9 +223,11 @@ match breakdown).
                              each programme's primary aim (NC-1 slice 11)
 /plans/[pid]/programme       planned gate dates and programme status
                              (NC-1 slice 11); linked from the plan page
+/funding                     funding sources, a plan's lines' sources,
+                             money by funding source (NC-1 slice 11)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 119):
+every page; `find src/routes -name +page.svelte` gives all 120):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2195,3 +2197,29 @@ exceptions (`GET /api/exceptions`). `src/lib/programme-view.ts` holds the rules.
   `tests/unit/modules.test.ts`, and `tests/e2e/plan-programme.spec.ts` (the link; gate dates sending only what changed;
   a plan that is not a programme; pausing with a cited review, what is held, stopping and its finality; a 403; Welsh;
   axe). The Welsh and the six other languages are machine-written and unreviewed.
+
+## Funding sources (NC-1 slice 11, DP-6)
+
+`/funding`, in the navigation, over `GET` and `POST /api/funding-sources`, `PUT …/{pid}`, `PUT
+/api/plans/{pid}/budget-lines/{line}/funding-source` and `GET /api/portfolio-money` (with `fy` and `combine_classes`); a
+plan's lines come from `GET /api/plans/{pid}/budget-lines`, whose rows already carried `funding_source_pid`.
+`src/lib/funding-view.ts` holds the rules.
+
+- **Sources.** The owner-supplied list, active and retired. A new one needs a name of 2 to 120 characters, not already
+  on the list in any case; both are said first. A source is retired or restored; the page says a retired one can no
+  longer be given to a line but the lines that have it keep it. A taken name (409) has its own sentence.
+- **A plan's lines.** Choose a plan; each budget line (description, capital or revenue, planned money) has a source
+  picker: every active source, and the line's own retired one, marked so, only on that line; "no funding source"
+  clears it. A refused choice (422, a retired source) is said and the picker put back to what the line has.
+- **Money by funding source.** The service's money section has the shape of a director pack's `funding`, so the page
+  draws it with the pack's renderer: capital and revenue apart unless combined, currencies never summed, lines with no
+  source counted. A financial year (the year it starts in, 2000 to 2100, or empty for this one) is checked first and
+  asked of the service. It is read again after a line's source changes.
+- **Fixed on the way:** saving a line's source reloaded the lines, and the reload cleared the notice it had just set;
+  only choosing another plan clears it now (the test caught it).
+- **Not built in this slice:** renaming a source (no route); a line's source set from the governance page; the
+  funding allocations, cost codes and reconcile (EX-12, the second half of part e).
+- **Tests:** `tests/unit/funding-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/funding.spec.ts`
+  (adding with a taken and a short name said first, retiring and restoring; a line's source set and cleared, a retired
+  one only on its line; a refusal put back; the money drawn with a year checked and asked; Welsh; axe). The Welsh and
+  the six other languages are machine-written and unreviewed.

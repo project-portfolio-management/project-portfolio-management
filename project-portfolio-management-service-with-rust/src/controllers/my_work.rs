@@ -54,8 +54,7 @@ async fn my_tasks(
     let today = tz::local_today(now, zone);
 
     let refs: Vec<String> = Uuid::parse_str(&claims.sub)
-        .map(|u| vec![format!("person:{u}"), format!("worker:{u}")])
-        .unwrap_or_default();
+        .map_or_default(|u| vec![format!("person:{u}"), format!("worker:{u}")]);
     let (rows, truncated) = if refs.is_empty() {
         (Vec::new(), false)
     } else {

@@ -186,8 +186,7 @@ pub fn mask_destination(kind: &str, destination: &str) -> String {
     }
     let head = reqwest::Url::parse(destination)
         .ok()
-        .map(|u| format!("{}://{}", u.scheme(), u.host_str().unwrap_or("?")))
-        .unwrap_or_default();
+        .map_or_default(|u| format!("{}://{}", u.scheme(), u.host_str().unwrap_or("?")));
     format!("{head}/…{tail}")
 }
 

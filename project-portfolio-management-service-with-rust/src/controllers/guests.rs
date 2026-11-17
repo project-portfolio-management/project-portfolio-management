@@ -44,7 +44,7 @@ pub(crate) async fn grants_of(ctx: &AppContext, sub: &str) -> Vec<Grant> {
         .bind(sub)
         .fetch_all(crate::db::pool(ctx))
         .await
-        .map(|rows| {
+        .map_or_default(|rows| {
             rows.into_iter()
                 .map(|g| Grant {
                     live: rules::grant_live(
@@ -58,7 +58,6 @@ pub(crate) async fn grants_of(ctx: &AppContext, sub: &str) -> Vec<Grant> {
                 })
                 .collect()
         })
-        .unwrap_or_default()
 }
 
 /// Whether a guest holds a live grant covering `plan` for `need`.

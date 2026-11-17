@@ -45,7 +45,7 @@ pub(crate) fn score_by_name(model: &str, inputs: &ModelInputs) -> Option<rules::
 
 /// JSON view of a plan's scoring inputs. `set` is false when none were saved, in which case the inputs are all absent rather than zero.
 fn view(plan: Uuid, row: Option<&scoring_inputs::Model>) -> Value {
-    let inputs = row.map(inputs_of).unwrap_or_default();
+    let inputs = row.map_or_default(inputs_of);
     json!({
         "plan_pid": plan,
         "set": row.is_some(),
@@ -158,7 +158,7 @@ async fn plan_score(
             .bind(plan.pid)
             .fetch_optional(crate::db::pool(&ctx))
             .await?;
-    let inputs = row.as_ref().map(inputs_of).unwrap_or_default();
+    let inputs = row.as_ref().map_or_default(inputs_of);
     let Some(score) = score_by_name(&q.model, &inputs) else {
         return Err(unprocessable(
             "model is wsjf or rice (the Smart Score is GET /api/plans/{pid}/smart-score)",

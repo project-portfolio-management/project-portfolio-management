@@ -417,7 +417,7 @@ async fn every_list_pages_the_same_way() {
                 let refused = request.get(&format!("{url}{sep}{query}")).add_header(who.0.clone(), who.1.clone()).await;
                 if refused.status_code() != status { broken.push(format!("{path}: {why} is {}, not {status}", refused.status_code())); }
             }
-            let params: Vec<&str> = get["parameters"].as_array().map(|a| a.iter().filter_map(|p| p["name"].as_str()).collect()).unwrap_or_default();
+            let params: Vec<&str> = get["parameters"].as_array().map_or_default(|a| a.iter().filter_map(|p| p["name"].as_str()).collect());
             if !(params.contains(&"limit") && params.contains(&"cursor")) { undocumented.push(path.clone()); }
             let _ = get;
         }

@@ -385,7 +385,7 @@ pub fn targets() -> Vec<WebhookTarget> {
             }
         },
     );
-    raw.map(|raw| parse_targets(&raw)).unwrap_or_default()
+    raw.map_or_default(|raw| parse_targets(&raw))
 }
 
 /// Whether a failed attempt should be retried: a `5xx` is presumed

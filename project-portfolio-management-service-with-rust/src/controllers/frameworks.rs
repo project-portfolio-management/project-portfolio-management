@@ -678,8 +678,7 @@ pub(crate) async fn escalation_path(
     let mut path: Vec<crate::frameworks::Escalation> = f
         .record
         .and_then(|r| serde_json::from_value::<crate::frameworks::Governance>(r.body).ok())
-        .map(|g| g.escalation_path)
-        .unwrap_or_default();
+        .map_or_default(|g| g.escalation_path);
     path.sort_by_key(|e| e.level);
     Ok(path)
 }

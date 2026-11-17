@@ -397,7 +397,7 @@ pub(crate) async fn money_section(
         let roll = crate::financials::rollup_forecast(&fs);
         programmes.push(serde_json::json!({
             "plan_pid": p.pid, "name": p.name,
-            "by_funding_source": by_programme.get(&p.pid).map(|v| v.iter().map(|r| row_json(r, &names)).collect::<Vec<_>>()).unwrap_or_default(),
+            "by_funding_source": by_programme.get(&p.pid).map_or_default(|v| v.iter().map(|r| row_json(r, &names)).collect::<Vec<_>>()),
             "whole_life_forecast": {
                 "rows": roll.rows, "plans_without_a_currency_signal": roll.no_currency_signal,
                 "note": "The existing forecast (actual to date plus estimate to complete) over the whole life of the programme, not the financial year; one row per currency.",
@@ -406,8 +406,7 @@ pub(crate) async fn money_section(
     }
     let loose: Vec<serde_json::Value> = by_programme
         .get(&Uuid::nil())
-        .map(|v| v.iter().map(|r| row_json(r, &names)).collect())
-        .unwrap_or_default();
+        .map_or_default(|v| v.iter().map(|r| row_json(r, &names)).collect());
     let _ = Datelike::year(&day);
     Ok(serde_json::json!({
         "financial_year": { "label": year.label, "start": year.start, "end": year.end, "starts_in_month": sm },

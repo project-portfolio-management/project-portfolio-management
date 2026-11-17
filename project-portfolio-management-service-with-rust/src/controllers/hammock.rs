@@ -251,14 +251,12 @@ pub(crate) async fn spans_for(
     .bind(pids.clone())
     .fetch_all(crate::db::pool(ctx))
     .await?;
-    let spans: HashMap<Uuid, (NaiveDate, NaiveDate)> = analysis
-        .map(|a| {
-            a.nodes
-                .iter()
-                .map(|n| (n.pid, (n.early_start, n.early_finish)))
-                .collect()
-        })
-        .unwrap_or_default();
+    let spans: HashMap<Uuid, (NaiveDate, NaiveDate)> = analysis.map_or_default(|a| {
+        a.nodes
+            .iter()
+            .map(|n| (n.pid, (n.early_start, n.early_finish)))
+            .collect()
+    });
     let derived = rules::resolve(&pids, &links, &spans);
     let title: HashMap<Uuid, &str> = rows.iter().map(|t| (t.pid, t.title.as_str())).collect();
     Ok(hammocks

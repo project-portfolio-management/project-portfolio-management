@@ -135,9 +135,7 @@ async fn owner_of(ctx: &AppContext, token: &str) -> Result<String> {
 
 /// The person and worker references a subject id can appear as in assignments; empty when the subject is not a UUID, which yields an empty feed rather than someone else's tasks.
 fn refs_of(sub: &str) -> Vec<String> {
-    Uuid::parse_str(sub)
-        .map(|u| vec![format!("person:{u}"), format!("worker:{u}")])
-        .unwrap_or_default()
+    Uuid::parse_str(sub).map_or_default(|u| vec![format!("person:{u}"), format!("worker:{u}")])
 }
 
 /// The plans among `plans` hidden from a feed's owner. A feed URL carries no claims, so the owner is judged with none: not an

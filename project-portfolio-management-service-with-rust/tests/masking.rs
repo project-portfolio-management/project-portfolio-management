@@ -225,8 +225,7 @@ async fn mask_obligation_redacts_reads_and_exports() {
         .unwrap();
         let export_count = audit
             .as_array()
-            .map(|rows| rows.iter().filter(|r| r["action"] == "exported").count())
-            .unwrap_or_default();
+            .map_or_default(|rows| rows.iter().filter(|r| r["action"] == "exported").count());
         assert_eq!(export_count, 2, "every export is audited: {audit}");
 
         // The always-masked view needs no policy to produce the same

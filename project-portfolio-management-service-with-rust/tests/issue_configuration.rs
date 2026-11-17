@@ -1498,7 +1498,7 @@ async fn a_workflow_changes_in_place_and_its_words_reach_the_register_in_any_lan
             .add_header(admin.0.clone(), admin.1.clone())
             .await
             .json();
-        assert_eq!(listed.as_array().map(Vec::len).unwrap_or_default(), 1, "{listed}");
+        assert_eq!(listed.as_array().map_or_default(Vec::len), 1, "{listed}");
         assert_eq!(listed[0]["name"], "After");
         let audit: Value = request
             .get(&format!("/api/plans/{plan}/audit"))

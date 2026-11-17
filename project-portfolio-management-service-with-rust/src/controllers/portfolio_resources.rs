@@ -513,8 +513,7 @@ async fn list_roles(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Res
     if !may_manage_people(&caller) {
         let me = caller
             .claims()
-            .map(|c| format!("person:{}", c.sub))
-            .unwrap_or_default();
+            .map_or_default(|c| format!("person:{}", c.sub));
         rows.retain(|r| r.person_ref == me);
     }
     format::json(

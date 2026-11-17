@@ -899,7 +899,7 @@ pub(crate) async fn rollup_over(
                 "cpi": { "bp": cpi, "rag": rag_json(evm::rag_ratio(cpi, t)),
                          "absent": (cpi.is_none()).then_some("cost_unknown_for_some_plans_or_zero") },
                 "eac": { "minor": (eac_plans == tot.plans).then_some(eac_minor), "plans_counted": eac_plans, "plans_total": tot.plans,
-                         "variants_used": variants_used.get(cur).map(|v| v.iter().copied().collect::<Vec<_>>()).unwrap_or_default(),
+                         "variants_used": variants_used.get(cur).map_or_default(|v| v.iter().copied().collect::<Vec<_>>()),
                          "note": "the sum of each plan's own recommended EAC; absent unless every plan has one" },
                 "vac_minor": (eac_plans == tot.plans).then(|| tot.bac_minor - eac_minor),
             })

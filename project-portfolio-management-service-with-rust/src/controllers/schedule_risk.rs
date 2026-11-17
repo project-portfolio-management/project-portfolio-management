@@ -372,13 +372,12 @@ async fn schedule_risk(
     let by: HashMap<Uuid, &tasks::Model> = net.rows.iter().map(|t| (t.pid, t)).collect();
     let unscheduled = {
         let base = net.analyze(0).ok();
-        base.map(|r| {
+        base.map_or_default(|r| {
             r.unscheduled
                 .iter()
                 .map(|u| serde_json::json!({ "pid": u.pid, "title": by.get(&u.pid).map(|t| t.title.clone()), "reason": u.reason }))
                 .collect::<Vec<_>>()
         })
-        .unwrap_or_default()
     };
     let fallback_tasks: Vec<Uuid> = outcome
         .tasks

@@ -359,16 +359,12 @@ pub fn assess(input: &Input, t: &Thresholds) -> Report {
                 r.project_finish,
             )
         });
-        let placed: HashMap<Uuid, (NaiveDate, NaiveDate)> = cpm
-            .as_ref()
-            .ok()
-            .map(|r| {
-                r.nodes
-                    .iter()
-                    .map(|n| (n.pid, (n.early_start, n.early_finish)))
-                    .collect()
-            })
-            .unwrap_or_default();
+        let placed: HashMap<Uuid, (NaiveDate, NaiveDate)> = cpm.as_ref().ok().map_or_default(|r| {
+            r.nodes
+                .iter()
+                .map(|n| (n.pid, (n.early_start, n.early_finish)))
+                .collect()
+        });
         let has_pred: HashSet<Uuid> = input
             .edges
             .iter()
@@ -520,8 +516,7 @@ pub fn assess(input: &Input, t: &Thresholds) -> Report {
     let placed_incomplete: Vec<&crate::cpm::NodeResult> = cpm
         .as_ref()
         .ok()
-        .map(|r| r.nodes.iter().filter(|n| is_incomplete(n.pid)).collect())
-        .unwrap_or_default();
+        .map_or_default(|r| r.nodes.iter().filter(|n| is_incomplete(n.pid)).collect());
     let n_placed = i64::try_from(placed_incomplete.len()).unwrap_or(0);
     let cpm_reason = if cpm.is_err() {
         "cycle"

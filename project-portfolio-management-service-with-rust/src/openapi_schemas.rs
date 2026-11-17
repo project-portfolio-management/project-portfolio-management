@@ -897,8 +897,7 @@ mod tests {
                 if !op["responses"][*status].is_object() {
                     let have: Vec<_> = op["responses"]
                         .as_object()
-                        .map(|m| m.keys().cloned().collect())
-                        .unwrap_or_default();
+                        .map_or_default(|m| m.keys().cloned().collect());
                     faults.push(format!(
                         "{method} {path} has no {status} response (has {have:?})"
                     ));

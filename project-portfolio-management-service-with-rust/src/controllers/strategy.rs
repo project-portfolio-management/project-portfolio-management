@@ -579,8 +579,7 @@ async fn proposal_member_fact(
     }
     let planned = proposal
         .and_then(|p| Some((p.currency?, p.requested_minor?)))
-        .map(|(currency, amount)| vec![(currency, amount)])
-        .unwrap_or_default();
+        .map_or_default(|(currency, amount)| vec![(currency, amount)]);
     Ok((
         rules::MemberFact {
             pid,

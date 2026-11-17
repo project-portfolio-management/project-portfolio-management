@@ -145,13 +145,13 @@ fn item(n: usize, row: &Row, known: &BTreeSet<String>, seen_ids: &mut BTreeSet<S
         rules::text_problems(field, cell(row, col), &mut problems);
     }
     rules::phase_problems(cell(row, "Phase"), &mut problems);
-    let tags = cell(row, "Labels").map(list).unwrap_or_default();
+    let tags = cell(row, "Labels").map_or_default(list);
     rules::tag_problems(&tags, &mut problems);
-    let lines = cell(row, "Details").map(details).unwrap_or_default();
+    let lines = cell(row, "Details").map_or_default(details);
     rules::detail_problems(&lines, &mut problems);
     let horizon = cell(row, "Horizon").unwrap_or_default();
     let placed = placement(horizon);
-    let codes = cell(row, "Organisations").map(list).unwrap_or_default();
+    let codes = cell(row, "Organisations").map_or_default(list);
     let (matched, unknown): (Vec<String>, Vec<String>) = codes
         .into_iter()
         .partition(|c| known.contains(&c.to_lowercase()));
@@ -514,10 +514,10 @@ fn parsed_item(n: usize, row: &Row, seen_ids: &mut BTreeSet<String>) -> Option<P
         description: cell(row, "Description").map(str::to_string),
         expected_outcome: cell(row, "Outcome").map(str::to_string),
         phase: cell(row, "Phase").map(str::to_string),
-        tags: cell(row, "Labels").map(list).unwrap_or_default(),
-        details: cell(row, "Details").map(details).unwrap_or_default(),
+        tags: cell(row, "Labels").map_or_default(list),
+        details: cell(row, "Details").map_or_default(details),
         placement: placement(cell(row, "Horizon").unwrap_or_default()),
-        codes: cell(row, "Organisations").map(list).unwrap_or_default(),
+        codes: cell(row, "Organisations").map_or_default(list),
         public_id,
         welsh,
     })

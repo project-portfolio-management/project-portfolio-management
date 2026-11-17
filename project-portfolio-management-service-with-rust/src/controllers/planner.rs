@@ -193,8 +193,7 @@ async fn my_plan(
     }
     // Tasks due that day assigned to the caller: what the day still owes.
     let refs: Vec<String> = Uuid::parse_str(&claims.sub)
-        .map(|u| vec![format!("person:{u}"), format!("worker:{u}")])
-        .unwrap_or_default();
+        .map_or_default(|u| vec![format!("person:{u}"), format!("worker:{u}")]);
     let due: Vec<serde_json::Value> = if refs.is_empty() {
         Vec::new()
     } else {

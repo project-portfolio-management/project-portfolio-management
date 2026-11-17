@@ -340,7 +340,7 @@ pub(crate) async fn forecasts_of(
     Ok(plan_pids
         .iter()
         .map(|pid| {
-            let lines = lines_of.get(pid).map(Vec::as_slice).unwrap_or_default();
+            let lines = lines_of.get(pid).map_or_default(Vec::as_slice);
             let tpc = tpc_of.get(pid).map(|(c, v)| (c.as_str(), *v));
             (
                 *pid,

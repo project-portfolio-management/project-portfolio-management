@@ -238,7 +238,7 @@ async fn search_reaches_secondary_fields_tolerates_typos_and_filters_by_kind() {
         let created = request.post("/api/plans").json(&apollo_project()).await;
         assert_eq!(created.status_code(), 200);
 
-        let hits = |body: Value| body.as_array().map(Vec::len).unwrap_or_default();
+        let hits = |body: Value| body.as_array().map_or_default(Vec::len);
 
         // The defining attribute of a plan is what it is trying to
         // achieve, and it is now searchable, alongside the identifier.

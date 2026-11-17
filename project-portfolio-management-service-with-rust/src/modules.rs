@@ -142,7 +142,7 @@ pub fn problems(requested: &[String]) -> Vec<String> {
 ///
 /// A message naming each unknown module.
 pub fn parse_default(raw: Option<&str>) -> Result<BTreeSet<String>, String> {
-    let raw = raw.map(str::trim).unwrap_or_default();
+    let raw = raw.map_or_default(str::trim);
     if raw.is_empty() || raw.eq_ignore_ascii_case("all") {
         return Ok(all_keys());
     }

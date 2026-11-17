@@ -194,8 +194,7 @@ async fn template_plans(
             let now: Vec<TplTask> = usize::try_from(l.node_key)
                 .ok()
                 .and_then(|k| snapshot.nodes.get(k))
-                .map(|n| n.tasks.clone())
-                .unwrap_or_default();
+                .map_or_default(|n| n.tasks.clone());
             json!({
                 "plan_pid": l.plan_pid,
                 "name": names.get(&l.plan_pid),

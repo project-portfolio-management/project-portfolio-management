@@ -158,8 +158,7 @@ pub(crate) async fn derive(
         let mode = Mode::parse(&m.completion_mode).unwrap_or(Mode::Manual);
         let linked: Vec<&tasks::Model> = links
             .get(&m.pid)
-            .map(|p| p.iter().filter_map(|t| task_rows.get(t)).collect())
-            .unwrap_or_default();
+            .map_or_default(|p| p.iter().filter_map(|t| task_rows.get(t)).collect());
         let progress: Vec<bool> = linked.iter().map(|t| complete(m.plan_pid, t)).collect();
         let how = rules::achieved(mode, m.done, &progress);
         let is_achieved = how != Achieved::No;

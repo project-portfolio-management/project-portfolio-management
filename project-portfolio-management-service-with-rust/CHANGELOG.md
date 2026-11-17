@@ -17,6 +17,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   takes one more pooled connection. `Cargo.lock` gains `ppp` (PROXY protocol, pulled in by axa).
 - Tested: clippy (all targets and features) and `cargo fmt --check`; `cargo test --lib`, 1,290 passed; the database
   suite on Postgres 18, 232 passed. **Not verified:** `service health` against a running server; the listener under load.
+- **Fixed after the push:** clippy had been run before `rust-version` was raised, and at 1.98 its `map_unwrap_or` lint
+  asks for the new `Option::map_or_default`, so CI's clippy failed on 41 `.map(..).unwrap_or_default()` calls. They are
+  rewritten by `cargo clippy --fix` (33 files, the same behaviour); clippy is clean and the library tests pass again.
 
 ### Changed
 

@@ -221,13 +221,11 @@ impl SearchEngine {
                 s.owner_org_id => plan.owner_org_id.clone().unwrap_or_default(),
                 s.kind => plan
                     .kind
-                    .map(|k| format!("{k:?}").to_lowercase())
-                    .unwrap_or_default(),
+                    .map_or_default(|k| format!("{k:?}").to_lowercase()),
                 s.status => plan
                     .status
                     .as_ref()
-                    .map(|t| format!("{t:?}").to_lowercase())
-                    .unwrap_or_default(),
+                    .map_or_default(|t| format!("{t:?}").to_lowercase()),
                 s.active => "true",
             ))
             .map_err(|e| err(&format!("add document: {e}")))?;

@@ -864,7 +864,7 @@ async fn get_access(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
     format::json(serde_json::json!({
         "plan_pid": plan.pid,
         "private": row.as_ref().is_some_and(|r| r.private),
-        "members": row.as_ref().map(members_of).unwrap_or_default(),
+        "members": row.as_ref().map_or_default(members_of),
     }))
 }
 

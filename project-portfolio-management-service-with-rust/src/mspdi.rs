@@ -502,20 +502,18 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
     let mut extended: Vec<MsExtended> = Vec::new();
     let mut cross_links: Vec<MsCrossLink> = Vec::new();
     let mut fixed_costs: Vec<MsFixedCost> = Vec::new();
-    let fields: Vec<MsField> = child(root, "ExtendedAttributes")
-        .map(|fs| {
-            fs.children()
-                .filter(|c| c.is_element() && c.tag_name().name() == "ExtendedAttribute")
-                .filter_map(|f| {
-                    Some(MsField {
-                        field_id: text(f, "FieldID")?.to_string(),
-                        name: text(f, "FieldName").unwrap_or_default().to_string(),
-                        alias: text(f, "Alias").map(str::to_string),
-                    })
+    let fields: Vec<MsField> = child(root, "ExtendedAttributes").map_or_default(|fs| {
+        fs.children()
+            .filter(|c| c.is_element() && c.tag_name().name() == "ExtendedAttribute")
+            .filter_map(|f| {
+                Some(MsField {
+                    field_id: text(f, "FieldID")?.to_string(),
+                    name: text(f, "FieldName").unwrap_or_default().to_string(),
+                    alias: text(f, "Alias").map(str::to_string),
                 })
-                .collect()
-        })
-        .unwrap_or_default();
+            })
+            .collect()
+    });
     if let Some(ts) = child(root, "Tasks") {
         for t in ts
             .children()
@@ -689,32 +687,28 @@ pub fn parse(xml: &str) -> Result<Parsed, ParseError> {
             });
         }
     }
-    let resources: Vec<(i64, String)> = child(root, "Resources")
-        .map(|rs| {
-            rs.children()
-                .filter(|c| c.is_element() && c.tag_name().name() == "Resource")
-                .filter_map(|r| {
-                    Some((
-                        int(r, "UID").filter(|u| *u != 0)?,
-                        text(r, "Name")?.to_string(),
-                    ))
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-    let assignments: Vec<(i64, i64)> = child(root, "Assignments")
-        .map(|asg| {
-            asg.children()
-                .filter(|c| c.is_element() && c.tag_name().name() == "Assignment")
-                .filter_map(|a| {
-                    Some((
-                        int(a, "TaskUID")?,
-                        int(a, "ResourceUID").filter(|r| *r >= 0)?,
-                    ))
-                })
-                .collect()
-        })
-        .unwrap_or_default();
+    let resources: Vec<(i64, String)> = child(root, "Resources").map_or_default(|rs| {
+        rs.children()
+            .filter(|c| c.is_element() && c.tag_name().name() == "Resource")
+            .filter_map(|r| {
+                Some((
+                    int(r, "UID").filter(|u| *u != 0)?,
+                    text(r, "Name")?.to_string(),
+                ))
+            })
+            .collect()
+    });
+    let assignments: Vec<(i64, i64)> = child(root, "Assignments").map_or_default(|asg| {
+        asg.children()
+            .filter(|c| c.is_element() && c.tag_name().name() == "Assignment")
+            .filter_map(|a| {
+                Some((
+                    int(a, "TaskUID")?,
+                    int(a, "ResourceUID").filter(|r| *r >= 0)?,
+                ))
+            })
+            .collect()
+    });
     let resource_terms = resource_terms_of(root, minutes_per_day);
     Ok(Parsed {
         cross_links,

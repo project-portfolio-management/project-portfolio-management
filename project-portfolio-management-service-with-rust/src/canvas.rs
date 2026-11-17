@@ -170,9 +170,8 @@ pub fn canvas_problems(template_key: &str, title: &str) -> Vec<String> {
 pub fn item_problems(template_key: &str, box_key: &str, body: &str) -> Vec<String> {
     let mut out = Vec::new();
     if !valid_box(template_key, box_key) {
-        let allowed: Vec<&str> = template(template_key)
-            .map(|t| t.boxes.iter().map(|b| b.key).collect())
-            .unwrap_or_default();
+        let allowed: Vec<&str> =
+            template(template_key).map_or_default(|t| t.boxes.iter().map(|b| b.key).collect());
         out.push(format!(
             "unknown box {box_key:?} for template {template_key:?} (allowed: {allowed:?})"
         ));

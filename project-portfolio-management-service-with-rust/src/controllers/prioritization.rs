@@ -372,8 +372,7 @@ async fn rank_by_inputs(
         .map(|plan| {
             let inputs = by_plan
                 .get(&plan.pid)
-                .map(super::scoring::inputs_of)
-                .unwrap_or_default();
+                .map_or_default(super::scoring::inputs_of);
             let s =
                 super::scoring::score_by_name(model, &inputs).expect("the model name was checked");
             (

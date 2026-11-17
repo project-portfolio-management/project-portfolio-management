@@ -146,9 +146,8 @@ async fn list(
             .push_bind(subject.pid);
     } else {
         let me = Uuid::parse_str(&claims.sub).ok();
-        let refs: Vec<String> = me
-            .map(|u| vec![format!("person:{u}"), format!("worker:{u}")])
-            .unwrap_or_default();
+        let refs: Vec<String> =
+            me.map_or_default(|u| vec![format!("person:{u}"), format!("worker:{u}")]);
         match p.mine.as_deref() {
             Some("approver") => {
                 q.push("approver_ref = ANY(").push_bind(refs).push(")");

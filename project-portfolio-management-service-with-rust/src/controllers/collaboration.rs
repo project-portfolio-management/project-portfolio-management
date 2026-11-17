@@ -230,10 +230,7 @@ async fn invite_review(
         &format!(
             "You have been asked to review a {}{}",
             payload.subject_kind,
-            payload
-                .due_on
-                .map(|d| format!(" by {d}"))
-                .unwrap_or_default()
+            payload.due_on.map_or_default(|d| format!(" by {d}"))
         ),
     )
     .await
@@ -291,8 +288,7 @@ async fn list_reviews(
         let mut mine: Vec<String> = caller
             .actor()
             .map(str::to_lowercase)
-            .map(|sub| vec![format!("person:{sub}"), format!("worker:{sub}")])
-            .unwrap_or_default();
+            .map_or_default(|sub| vec![format!("person:{sub}"), format!("worker:{sub}")]);
         mine.extend(
             super::organizations::caller_organizations(&caller)
                 .iter()

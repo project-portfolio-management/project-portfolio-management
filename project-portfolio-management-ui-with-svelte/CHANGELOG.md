@@ -9,6 +9,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — gates and programme status (NC-1 slice 11, DP-5, 2026-11-17)
+
+- `/plans/[pid]/programme`, linked from the plan page: a planned date for each gate (only changed dates are sent; a
+  set date can be moved, not cleared), and, for a plan of kind Program, its status, what a paused or stopped one still
+  holds, and a decision to pause, resume or stop it with a reason of ten characters or more, citing a gate review or
+  an exception; stopped is final and the page offers nothing after it. A refusal names the right or rule. Four client
+  methods and their types; `src/lib/programme-view.ts`; 41 keys in eight catalogues (two plural groups),
+  machine-written and unreviewed.
+- Tests: `tests/unit/programme-view.test.ts` (the gates held to the service's), the paths in `tests/unit/ppm.test.ts`,
+  the link in `tests/unit/modules.test.ts`, `tests/e2e/plan-programme.spec.ts` (five, with Welsh and axe).
+- **Not done:** clearing a gate date (no route); naming the cited record in the history. **Not verified:** against a
+  real service.
+
 ### Added — the portfolio map and strategic aims (NC-1 slice 11, DP-4, 2026-11-17)
 
 - `/portfolio-map`, in the navigation: the live map drawn by the director pack's own renderer (the no-aim group in the

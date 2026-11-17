@@ -70,6 +70,7 @@
     get import() { return t("p.plans.pid.import.import"); },
     get export() { return t("p.plan_export.title"); },
     get confidence() { return t("p.confidence.title"); },
+    get programme() { return t("p.programme.title"); },
     get costs() { return t("p.plans.pid.work.costs"); },
   };
   const linkLabel = (k: string): string =>

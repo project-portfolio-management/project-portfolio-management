@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (gates and programme status: NC-1 slice 11, part d)
+
+- **UI: `/plans/[pid]/programme` plans a plan's gate dates and decides a programme's status (DP-5).** Gate dates send
+  only what changed; a programme is paused, resumed or stopped by a recorded decision with a reason, and the page says
+  stopping is final and lists what a paused or stopped programme still holds. UI spec, "Gates and programme status";
+  test `tests/e2e/plan-programme.spec.ts` (five, with Welsh and axe).
+- **Not done:** clearing a gate date (the service has no route). **Not verified:** against a real service; the
+  translations are machine-written and unreviewed.
+
 ### 17 November (the portfolio map and strategic aims: NC-1 slice 11, part c, last of three)
 
 - **UI: `/portfolio-map` shows the live portfolio map and sets strategic aims (DP-4).** The map is drawn as the director

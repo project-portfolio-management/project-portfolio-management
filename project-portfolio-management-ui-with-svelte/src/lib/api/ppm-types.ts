@@ -3841,3 +3841,56 @@ export interface PortfolioMap {
     }>;
   }>;
 }
+
+// ---- planned gates and programme status (DP-5, NC-1 slice 11) ----
+
+/** The gates, in order (`GATES` in the service's `src/governance.rs`). */
+export const PLAN_GATES = [
+  "g0_concept",
+  "g1_feasibility",
+  "g2_definition",
+  "g3_delivery",
+  "g4_launch",
+  "g5_benefits",
+] as const;
+
+/** `GET /api/plans/{pid}/planned-gates`: the dates the plan expects its reviews at, for the gates that have one. */
+export interface PlannedGates {
+  plan_pid: string;
+  planned_gates: Array<{ gate: string; planned_on: string }>;
+}
+
+export type ProgrammeStatus = "active" | "paused" | "stopped";
+
+/** `GET /api/plans/{pid}/programme-status`: the status, the decisions behind it oldest first, and, while paused or
+ * stopped, what the programme still holds. */
+export interface ProgrammeStatusView {
+  plan_pid: string;
+  status: ProgrammeStatus;
+  history: Array<{
+    status: ProgrammeStatus;
+    reason: string;
+    decided_by: string | null;
+    decided_on: string;
+    gate_review_pid: string | null;
+    exception_pid: string | null;
+  }>;
+  still_held: {
+    allocations_flagged: number;
+    money_by_currency: Array<{
+      currency: string;
+      planned_minor: number;
+      actual_minor: number;
+    }>;
+    benefits: number;
+  } | null;
+}
+
+/** `POST /api/plans/{pid}/programme-status` body: pause, resume (`active`) or stop, with a reason of ten characters or
+ * more, citing a gate review or an exception of the programme if it follows from one. */
+export interface ProgrammeStatusBody {
+  status: ProgrammeStatus;
+  reason: string;
+  gate_review_pid?: string;
+  exception_pid?: string;
+}

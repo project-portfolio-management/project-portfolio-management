@@ -4346,6 +4346,62 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.aims.title": "Portfoliokarte",
   "p.aims.to_objectives": "Ziele öffnen",
   "p.aims.unmarked": "Kein strategisches Ziel mehr.",
+  "p.programme.cited_exception":
+    "Sie folgte aus einer Lieferausnahme dieses Programms.",
+  "p.programme.cited_review":
+    "Sie folgte aus einer Gate-Prüfung dieses Programms.",
+  "p.programme.cites_none": "Keines",
+  "p.programme.conflict_status":
+    "Das Programm hat diesen Status schon, oder es ist gestoppt und bleibt es.",
+  "p.programme.could_not_decide": "Die Entscheidung wurde nicht festgehalten.",
+  "p.programme.could_not_load":
+    "Gates und Status dieses Plans konnten nicht geladen werden.",
+  "p.programme.could_not_save_gates":
+    "Nicht jedes Gate-Datum wurde gespeichert; gezeigt werden die Daten, die der Dienst hat.",
+  "p.programme.decide": "Entscheidung festhalten",
+  "p.programme.decided": "Festgehalten: Das Programm ist jetzt {status}.",
+  "p.programme.do_pause": "Programm pausieren",
+  "p.programme.do_resume": "Programm fortsetzen",
+  "p.programme.do_stop": "Programm stoppen",
+  "p.programme.f_change": "Programm ändern auf",
+  "p.programme.f_exception": "Folgt aus einer Ausnahme (optional)",
+  "p.programme.f_reason": "Begründung (mindestens {min} Zeichen)",
+  "p.programme.f_review": "Folgt aus einer Gate-Prüfung (optional)",
+  "p.programme.gates_heading": "Geplante Gate-Termine",
+  "p.programme.gates_says":
+    "Das Datum, an dem dieser Plan seine Prüfung an jedem Gate erwartet. Ein gesetztes Datum lässt sich nicht löschen, nur verschieben.",
+  "p.programme.gates_saved": "Gate-Termine gespeichert.",
+  "p.programme.gates_unchanged":
+    "Kein Gate-Datum wurde geändert, daher wurde nichts gesendet.",
+  "p.programme.held_allocations_one":
+    "{count} Zuweisung ist markiert, nicht gelöscht.",
+  "p.programme.held_allocations_other":
+    "{count} Zuweisungen sind markiert, nicht gelöscht.",
+  "p.programme.held_benefits_one": "{count} Nutzen bleibt erfasst.",
+  "p.programme.held_benefits_other": "{count} Nutzen bleiben erfasst.",
+  "p.programme.held_heading": "Was das Programm noch hält",
+  "p.programme.held_money": "Geld: geplant {planned}, tatsächlich {actual}.",
+  "p.programme.history_heading": "Entscheidungen, neueste zuerst",
+  "p.programme.no_history": "Noch keine Entscheidung: Das Programm ist aktiv.",
+  "p.programme.not_a_programme":
+    "Nur ein Plan der Art Programm hat einen Programmstatus. Seine Gate-Termine lassen sich oben trotzdem planen.",
+  "p.programme.problem_reason": "Begründen Sie mit mindestens {min} Zeichen.",
+  "p.programme.problem_status": "Wählen Sie die Änderung.",
+  "p.programme.refused_decider":
+    "Programme pausieren, fortsetzen oder stoppen erfordert das Recht als Programmentscheider.",
+  "p.programme.refused_not_programme":
+    "Nur ein Plan der Art Programm hat einen Status, und eine genannte Prüfung oder Ausnahme muss zu diesem Programm gehören.",
+  "p.programme.save_gates": "Gate-Termine speichern",
+  "p.programme.status_heading": "Programmstatus",
+  "p.programme.status_is": "Aktueller Stand: {status}",
+  "p.programme.status_says":
+    "Ein Programm ist aktiv, bis eine festgehaltene Entscheidung es pausiert oder stoppt. Eine Pause markiert seine Zuweisungen und löscht keine.",
+  "p.programme.stop_warns":
+    "Stoppen ist endgültig: Das Programm bleibt gestoppt und behält seine Aufzeichnungen.",
+  "p.programme.stopped_final":
+    "Dieses Programm ist gestoppt. Das ist endgültig; seine Aufzeichnungen bleiben.",
+  "p.programme.title_ppm": "Gates und Programmstatus — PPM",
+  "p.programme.title": "Gates und Programmstatus",
   "p.director_pack.actions_heading": "Prüfen, herausgeben oder neu herausgeben",
   "p.director_pack.aud_board": "Vorstand",
   "p.director_pack.aud_escalation_board": "Eskalationsgremium",

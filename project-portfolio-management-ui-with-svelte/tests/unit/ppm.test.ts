@@ -674,6 +674,27 @@ describe("PpmClient strategic aims and the portfolio map (NC-1 slice 11, DP-4)",
   });
 });
 
+describe("PpmClient planned gates and programme status (NC-1 slice 11, DP-5)", () => {
+  it("reads and sets gate dates, and reads and decides a status", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.plannedGates("p1");
+    await ppm.setPlannedGate("p1", "g2_definition", "2027-02-01");
+    await ppm.programmeStatus("p1");
+    await ppm.decideProgrammeStatus("p1", {
+      status: "paused",
+      reason: "Waiting for funding.",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/planned-gates",
+      "PUT /api/plans/p1/planned-gates/g2_definition",
+      "GET /api/plans/p1/programme-status",
+      "POST /api/plans/p1/programme-status",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

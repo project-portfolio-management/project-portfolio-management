@@ -164,6 +164,9 @@ import type {
   ConfidenceBody,
   DeliveryException,
   PortfolioMap,
+  PlannedGates,
+  ProgrammeStatusBody,
+  ProgrammeStatusView,
   ExceptionCompleteBody,
   ConfidenceView,
   ConfidenceAssessment,
@@ -2110,6 +2113,35 @@ export class PpmClient {
     return this.http.put(`/api/plans/${planPid}/primary-aim`, {
       body: { objective_pid: objectivePid },
     });
+  }
+  // ---- planned gates and programme status (DP-5, NC-1 slice 11) ----
+  /** The dates a plan expects its gate reviews at. */
+  plannedGates(planPid: string): Promise<PlannedGates> {
+    return this.http.get(`/api/plans/${planPid}/planned-gates`);
+  }
+  /** Set the date a plan expects its review at one gate. */
+  setPlannedGate(
+    planPid: string,
+    gate: string,
+    plannedOn: string,
+  ): Promise<{ gate: string; planned_on: string }> {
+    return this.http.put(`/api/plans/${planPid}/planned-gates/${gate}`, {
+      body: { planned_on: plannedOn },
+    });
+  }
+  /** A programme's status, its decisions and what it still holds. */
+  programmeStatus(planPid: string): Promise<ProgrammeStatusView> {
+    return this.http.get(`/api/plans/${planPid}/programme-status`);
+  }
+  /**
+   * Pause, resume or stop a programme by a recorded decision: `programme=decider` or admin only (403); a plan of kind
+   * Program only (422); 409 for the status it already has, or for any change once stopped.
+   */
+  decideProgrammeStatus(
+    planPid: string,
+    body: ProgrammeStatusBody,
+  ): Promise<{ status: string; decision: string }> {
+    return this.http.post(`/api/plans/${planPid}/programme-status`, { body });
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

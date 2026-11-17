@@ -12,6 +12,8 @@ export const PLAN_LINKS = [
   { key: "governance", module: "governance" },
   // `delivery-confidence` is owned by no module in the service (always on); it is a governance reading.
   { key: "confidence", module: "governance" },
+  // `planned-gates` and `programme-status` are owned by no module (always on); they are governance.
+  { key: "programme", module: "governance" },
   { key: "tolerances", module: "governance" },
   { key: "escalations", module: "governance" },
   // The service puts `/api/plans/{pid}/issues` in the risks module, not governance.

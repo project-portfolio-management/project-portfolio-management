@@ -221,9 +221,11 @@ match breakdown).
                              and decide exceptions (NC-1 slice 11)
 /portfolio-map               the live portfolio map, strategic aims and
                              each programme's primary aim (NC-1 slice 11)
+/plans/[pid]/programme       planned gate dates and programme status
+                             (NC-1 slice 11); linked from the plan page
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 118):
+every page; `find src/routes -name +page.svelte` gives all 119):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2167,3 +2169,29 @@ rules.
   `tests/e2e/portfolio-map.spec.ts` (the map, a period asked of the service, marking and unmarking an aim, a primary
   set and its current one said first, a refusal putting the box back, Welsh, axe). The Welsh and the six other
   languages are machine-written and unreviewed.
+
+## Gates and programme status (NC-1 slice 11, DP-5)
+
+`/plans/[pid]/programme`, linked from the plan page among the governance links (`planned-gates` and `programme-status`
+are owned by no module), over `GET /api/plans/{pid}/planned-gates`, `PUT …/planned-gates/{gate}` and `GET` and `POST
+/api/plans/{pid}/programme-status`; a decision may cite one of the plan's gate reviews (`GET …/gate-reviews`) or
+exceptions (`GET /api/exceptions`). `src/lib/programme-view.ts` holds the rules.
+
+- **Planned gates.** A date for each of the six gates (held to the service's list by a unit test), each named in the
+  reader's language. Only dates that changed and are set are sent, one call per gate; nothing changed sends nothing.
+  The page says a set date can be moved but not cleared (there is no route to clear one).
+- **Programme status.** Only a plan of kind Program has one; any other plan says so and keeps its gate dates. The
+  status in words; the page says a programme is active until a recorded decision pauses or stops it, and a pause flags
+  allocations and deletes none. While paused or stopped it lists what the programme still holds (allocations flagged,
+  money planned and actual per currency, benefits; plurals). The changes offered never include the current status, and
+  none once stopped, which the page says is final. Choosing stop warns first. A decision needs a reason of at least ten
+  characters and may cite a gate review or an exception of the programme. The decisions follow, newest first, with what
+  each cited.
+- **Refusals.** A 403 says the programme decider right is needed; a 409 that the programme has that status or is
+  stopped; a 422 that only a programme has a status and a cited record must be its own.
+- **Not built in this slice:** clearing a gate date (no route); the cited review or exception named in the history
+  (the page says only which kind it was).
+- **Tests:** `tests/unit/programme-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, the link in
+  `tests/unit/modules.test.ts`, and `tests/e2e/plan-programme.spec.ts` (the link; gate dates sending only what changed;
+  a plan that is not a programme; pausing with a cited review, what is held, stopping and its finality; a 403; Welsh;
+  axe). The Welsh and the six other languages are machine-written and unreviewed.

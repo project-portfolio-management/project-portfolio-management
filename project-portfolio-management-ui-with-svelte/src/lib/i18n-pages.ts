@@ -4178,6 +4178,61 @@ export const PAGES_EN = {
   "p.aims.title": "Portfolio map",
   "p.aims.to_objectives": "Open the objectives",
   "p.aims.unmarked": "No longer a strategic aim.",
+  "p.programme.cited_exception":
+    "It followed from a delivery exception of this programme.",
+  "p.programme.cited_review":
+    "It followed from a gate review of this programme.",
+  "p.programme.cites_none": "Neither",
+  "p.programme.conflict_status":
+    "The programme already has that status, or it is stopped and stays stopped.",
+  "p.programme.could_not_decide": "The decision was not recorded.",
+  "p.programme.could_not_load":
+    "This plan's gates and status could not be loaded.",
+  "p.programme.could_not_save_gates":
+    "Not every gate date was saved; the dates shown are those the service has.",
+  "p.programme.decide": "Record the decision",
+  "p.programme.decided": "Recorded: the programme is now {status}.",
+  "p.programme.do_pause": "Pause the programme",
+  "p.programme.do_resume": "Resume the programme",
+  "p.programme.do_stop": "Stop the programme",
+  "p.programme.f_change": "Change the programme to",
+  "p.programme.f_exception": "It follows from an exception (optional)",
+  "p.programme.f_reason": "Reason (at least {min} characters)",
+  "p.programme.f_review": "It follows from a gate review (optional)",
+  "p.programme.gates_heading": "Planned gate dates",
+  "p.programme.gates_says":
+    "The date this plan expects its review at each gate. A date cannot be cleared once set, only moved.",
+  "p.programme.gates_saved": "Gate dates saved.",
+  "p.programme.gates_unchanged": "No gate date changed, so nothing was sent.",
+  "p.programme.held_allocations_one":
+    "{count} allocation is flagged, not deleted.",
+  "p.programme.held_allocations_other":
+    "{count} allocations are flagged, not deleted.",
+  "p.programme.held_benefits_one": "{count} benefit is kept on record.",
+  "p.programme.held_benefits_other": "{count} benefits are kept on record.",
+  "p.programme.held_heading": "What the programme still holds",
+  "p.programme.held_money": "Money: planned {planned}, actual {actual}.",
+  "p.programme.history_heading": "Decisions, newest first",
+  "p.programme.no_history": "No decision yet: the programme is active.",
+  "p.programme.not_a_programme":
+    "Only a plan of kind Program has a programme status. Its gate dates can still be planned above.",
+  "p.programme.problem_reason": "Give the reason in at least {min} characters.",
+  "p.programme.problem_status": "Choose the change.",
+  "p.programme.refused_decider":
+    "Pausing, resuming or stopping a programme needs the programme decider right.",
+  "p.programme.refused_not_programme":
+    "Only a plan of kind Program has a status, and a cited review or exception must be this programme's.",
+  "p.programme.save_gates": "Save the gate dates",
+  "p.programme.status_heading": "Programme status",
+  "p.programme.status_is": "Status: {status}",
+  "p.programme.status_says":
+    "A programme is active until a recorded decision pauses or stops it. A pause flags its allocations and deletes none.",
+  "p.programme.stop_warns":
+    "Stopping is final: the programme stays stopped and keeps its record.",
+  "p.programme.stopped_final":
+    "This programme is stopped. That is final; its record is kept.",
+  "p.programme.title_ppm": "Gates and programme status — PPM",
+  "p.programme.title": "Gates and programme status",
   "p.director_pack.actions_heading": "Review, issue or reissue",
   "p.director_pack.aud_board": "Board",
   "p.director_pack.aud_escalation_board": "Escalation board",

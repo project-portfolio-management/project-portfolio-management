@@ -4333,6 +4333,64 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.aims.title": "Mapa de cartera",
   "p.aims.to_objectives": "Abrir los objetivos",
   "p.aims.unmarked": "Ya no es un objetivo estratégico.",
+  "p.programme.cited_exception":
+    "Se derivó de una excepción de entrega de este programa.",
+  "p.programme.cited_review":
+    "Se derivó de una revisión de fase de este programa.",
+  "p.programme.cites_none": "Ninguna",
+  "p.programme.conflict_status":
+    "El programa ya tiene ese estado, o está detenido y sigue detenido.",
+  "p.programme.could_not_decide": "No se registró la decisión.",
+  "p.programme.could_not_load":
+    "No se pudieron cargar las fases y el estado de este plan.",
+  "p.programme.could_not_save_gates":
+    "No se guardaron todas las fechas de fase; las que se muestran son las que tiene el servicio.",
+  "p.programme.decide": "Registrar la decisión",
+  "p.programme.decided": "Registrada: el programa está ahora {status}.",
+  "p.programme.do_pause": "Pausar el programa",
+  "p.programme.do_resume": "Reanudar el programa",
+  "p.programme.do_stop": "Detener el programa",
+  "p.programme.f_change": "Cambiar el programa a",
+  "p.programme.f_exception": "Se deriva de una excepción (opcional)",
+  "p.programme.f_reason": "Motivo (al menos {min} caracteres)",
+  "p.programme.f_review": "Se deriva de una revisión de fase (opcional)",
+  "p.programme.gates_heading": "Fechas previstas de fase",
+  "p.programme.gates_says":
+    "La fecha en que este plan espera su revisión en cada fase. Una fecha fijada no se puede borrar, solo mover.",
+  "p.programme.gates_saved": "Fechas de fase guardadas.",
+  "p.programme.gates_unchanged":
+    "No cambió ninguna fecha de fase, así que no se envió nada.",
+  "p.programme.held_allocations_one":
+    "{count} asignación está marcada, no borrada.",
+  "p.programme.held_allocations_other":
+    "{count} asignaciones están marcadas, no borradas.",
+  "p.programme.held_benefits_one":
+    "{count} beneficio se conserva en el registro.",
+  "p.programme.held_benefits_other":
+    "{count} beneficios se conservan en el registro.",
+  "p.programme.held_heading": "Lo que el programa aún mantiene",
+  "p.programme.held_money": "Dinero: previsto {planned}, real {actual}.",
+  "p.programme.history_heading": "Decisiones, lo más reciente primero",
+  "p.programme.no_history": "Aún no hay decisiones: el programa está activo.",
+  "p.programme.not_a_programme":
+    "Solo un plan de tipo Programa tiene estado de programa. Sus fechas de fase pueden planificarse igualmente arriba.",
+  "p.programme.problem_reason": "Dé el motivo con al menos {min} caracteres.",
+  "p.programme.problem_status": "Elija el cambio.",
+  "p.programme.refused_decider":
+    "Pausar, reanudar o detener un programa necesita el derecho de decisor de programas.",
+  "p.programme.refused_not_programme":
+    "Solo un plan de tipo Programa tiene estado, y la revisión o excepción citada debe ser de este programa.",
+  "p.programme.save_gates": "Guardar las fechas de fase",
+  "p.programme.status_heading": "Estado del programa",
+  "p.programme.status_is": "Estado: {status}",
+  "p.programme.status_says":
+    "Un programa está activo hasta que una decisión registrada lo pausa o lo detiene. Una pausa marca sus asignaciones y no borra ninguna.",
+  "p.programme.stop_warns":
+    "Detenerlo es definitivo: el programa sigue detenido y conserva su registro.",
+  "p.programme.stopped_final":
+    "Este programa está detenido. Es definitivo; se conserva su registro.",
+  "p.programme.title_ppm": "Fases y estado del programa — PPM",
+  "p.programme.title": "Fases y estado del programa",
   "p.director_pack.actions_heading": "Revisar, emitir o reemitir",
   "p.director_pack.aud_board": "Consejo",
   "p.director_pack.aud_escalation_board": "Comité de escalado",

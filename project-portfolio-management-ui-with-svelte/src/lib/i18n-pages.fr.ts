@@ -4339,6 +4339,64 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.aims.title": "Carte du portefeuille",
   "p.aims.to_objectives": "Ouvrir les objectifs",
   "p.aims.unmarked": "N'est plus un objectif stratégique.",
+  "p.programme.cited_exception":
+    "Elle découle d'une exception de livraison de ce programme.",
+  "p.programme.cited_review":
+    "Elle découle d'une revue de jalon de ce programme.",
+  "p.programme.cites_none": "Aucune",
+  "p.programme.conflict_status":
+    "Le programme a déjà ce statut, ou il est arrêté et le reste.",
+  "p.programme.could_not_decide": "La décision n'a pas été enregistrée.",
+  "p.programme.could_not_load":
+    "Les jalons et le statut de ce plan n'ont pas pu être chargés.",
+  "p.programme.could_not_save_gates":
+    "Toutes les dates de jalon n'ont pas été enregistrées ; celles affichées sont celles du service.",
+  "p.programme.decide": "Enregistrer la décision",
+  "p.programme.decided": "Enregistrée : le programme est maintenant {status}.",
+  "p.programme.do_pause": "Mettre le programme en pause",
+  "p.programme.do_resume": "Reprendre le programme",
+  "p.programme.do_stop": "Arrêter le programme",
+  "p.programme.f_change": "Passer le programme à",
+  "p.programme.f_exception": "Elle découle d'une exception (facultatif)",
+  "p.programme.f_reason": "Motif (au moins {min} caractères)",
+  "p.programme.f_review": "Elle découle d'une revue de jalon (facultatif)",
+  "p.programme.gates_heading": "Dates de jalon prévues",
+  "p.programme.gates_says":
+    "La date à laquelle ce plan attend sa revue à chaque jalon. Une date fixée ne peut pas être effacée, seulement déplacée.",
+  "p.programme.gates_saved": "Dates de jalon enregistrées.",
+  "p.programme.gates_unchanged":
+    "Aucune date de jalon n'a changé ; rien n'a été envoyé.",
+  "p.programme.held_allocations_one":
+    "{count} affectation est signalée, pas supprimée.",
+  "p.programme.held_allocations_other":
+    "{count} affectations sont signalées, pas supprimées.",
+  "p.programme.held_benefits_one": "{count} bénéfice reste enregistré.",
+  "p.programme.held_benefits_other": "{count} bénéfices restent enregistrés.",
+  "p.programme.held_heading": "Ce que le programme détient encore",
+  "p.programme.held_money": "Argent : prévu {planned}, réel {actual}.",
+  "p.programme.history_heading":
+    "Décisions, de la plus récente à la plus ancienne",
+  "p.programme.no_history":
+    "Aucune décision pour l'instant : le programme est actif.",
+  "p.programme.not_a_programme":
+    "Seul un plan de type Programme a un statut de programme. Ses dates de jalon peuvent quand même être prévues ci-dessus.",
+  "p.programme.problem_reason": "Donnez le motif en au moins {min} caractères.",
+  "p.programme.problem_status": "Choisissez le changement.",
+  "p.programme.refused_decider":
+    "Mettre en pause, reprendre ou arrêter un programme demande le droit de décideur de programme.",
+  "p.programme.refused_not_programme":
+    "Seul un plan de type Programme a un statut, et la revue ou l'exception citée doit être celle de ce programme.",
+  "p.programme.save_gates": "Enregistrer les dates de jalon",
+  "p.programme.status_heading": "Statut du programme",
+  "p.programme.status_is": "Statut : {status}",
+  "p.programme.status_says":
+    "Un programme est actif jusqu'à ce qu'une décision enregistrée le mette en pause ou l'arrête. Une pause signale ses affectations et n'en supprime aucune.",
+  "p.programme.stop_warns":
+    "L'arrêt est définitif : le programme reste arrêté et garde son historique.",
+  "p.programme.stopped_final":
+    "Ce programme est arrêté. C'est définitif ; son historique est gardé.",
+  "p.programme.title_ppm": "Jalons et statut du programme — PPM",
+  "p.programme.title": "Jalons et statut du programme",
   "p.director_pack.actions_heading": "Relire, émettre ou réémettre",
   "p.director_pack.aud_board": "Conseil",
   "p.director_pack.aud_escalation_board": "Comité d'escalade",

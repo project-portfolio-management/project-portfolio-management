@@ -2,14 +2,14 @@
 //! the policy (with the service's own rules in front) decides who may see rates
 //! and labour cost and who may publish announcements.
 //!
-//! Its **own test binary**, for the same reason `enforcement.rs` is:
-//! `verifier` is a process-wide `OnceLock`, read once on first use —
-//! sharing the `tests/requests/mod.rs` binary would race whichever
-//! test happens to touch an authenticated route first.
+//! Its **own process** (`own_process!`), for the same reason `enforcement.rs` is:
+//! the auth posture (`require_auth`) and the ABAC policy are process-wide
+//! `OnceLock`s, read once — sharing a process with the `tests/requests/`
+//! suites would race whichever test happens to boot the app first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
 //! `DB_URL`. Run with
-//! `cargo test --test finance_gate -- --ignored`.
+//! `cargo test --test main finance_gate:: -- --ignored`.
 
 #![expect(
     clippy::similar_names,
@@ -80,10 +80,11 @@ fn bearer(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test finance_gate -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main finance_gate:: -- --ignored`"]
 async fn rates_labour_cost_and_publishing_follow_the_policy() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

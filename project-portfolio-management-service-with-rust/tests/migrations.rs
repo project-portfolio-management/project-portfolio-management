@@ -6,7 +6,7 @@
 //! `seaql_migrations` as that migrator created and filled it.
 //!
 //! `#[ignore]`d: needs PostgreSQL via `DB_URL`, and the right to create a database. Run with
-//! `cargo test --test migrations -- --ignored --test-threads=1`.
+//! `cargo test --test main migrations:: -- --ignored --test-threads=1`.
 
 use project_portfolio_management_migration::{self as migrations, Bridged, Error, MIGRATOR};
 use sqlx::{AssertSqlSafe, PgPool};

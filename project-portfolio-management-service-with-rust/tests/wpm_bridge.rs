@@ -6,8 +6,8 @@
 //! when a pool is unlinked, an unlinked pool exactly as before, and (FB-4) a plan's
 //! people impact passed through from WPM with the plan's own end sent, `unknown` when WPM refuses, is down or slow.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`, and this sets the worker-service URL).
-//! `#[ignore]`d — needs PostgreSQL. Run with `cargo test --test wpm_bridge -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`, and this sets the worker-service URL).
+//! `#[ignore]`d — needs PostgreSQL. Run with `cargo test --test main wpm_bridge:: -- --ignored`.
 //!
 //! The stand-in answers with the shapes read from WPM's `src/controllers/capacity/peer.rs` and `people_impact.rs`; **no running WPM is
 //! called**.
@@ -167,13 +167,14 @@ async fn stand_in(stub: Arc<Stub>) -> String {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test wpm_bridge -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main wpm_bridge:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn the_bridge_keeps_one_owner_per_fact() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     let stub = Arc::new(Stub::default());
     let base = stand_in(stub.clone()).await;
-    // SAFETY: this binary is single-test, so nothing races these settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races these settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

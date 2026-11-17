@@ -42,7 +42,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 |---|---|
 | Run | `cargo run -- start` (needs Postgres; port 1241; migrations auto-run in development) |
 | Lint (must be clean) | `cargo clippy --all-targets --all-features -- -D warnings` · `cargo fmt --check` |
-| DB-free tests | `cargo test --lib` (unit) and the DB-free binaries (`--test matching`, `--test otlp_export`, `--test otlp_middleware`, `--test licence_files`, `--test trace_span_concurrency`) |
+| DB-free tests | `cargo test --lib` (unit) and `cargo test --test main` (the one integration-test binary, `tests/main.rs`: its database suites are `#[ignore]`d) |
 | DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
 | Migrations | `migration/migrations/` (crate `project-portfolio-management-migration`, run by sqlx) — one frozen SQL file per migration, `<version>_<name>.up.sql` with its `.down.sql`, or a plain `.sql` that refuses to roll back; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
@@ -202,12 +202,14 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   also querying `db::pool(&ctx)` waits forever for a second connection. Inside a
   transaction use that transaction handle for every query; do reads first
   or after.
-- **The verifier is a process-wide `OnceLock`** (`auth::VERIFIER`, seeded
-  once by `auth::init`). A test binary can configure only one key set, so
-  every real-token test lives in its **own binary** (`private_aggregates`,
+- **The auth posture and the ABAC policy are read once per process**
+  (`auth::REQUIRE_AUTH`, `auth::policy`; the verifier `auth::VERIFIER` is
+  re-seeded by `auth::init` at each boot). So every real-token test runs in
+  its **own process**: it starts with `own_process!();`, which runs it alone
+  in a fresh process of the one test binary (`private_aggregates`,
   `list_paging`, `approvals`, `processes`, `controlled_documents`,
   `cross_plan`, `guests`, `plan_access`, `enforcement`, …). Do not add
-  real-token tests to `tests/mod.rs`.
+  real-token tests to `tests/requests/`, which share one process.
 - **Percent-decode paths before parsing in guards.** Handlers see decoded
   segments; `plan_pid_of` decodes first because `%7B<uuid>%7D` (braced
   UUID) bypassed a guard that parsed raw text. Any new path-parsing
@@ -244,17 +246,22 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 | Layer | Command |
 |---|---|
 | Unit | `cargo test --lib` (DB-free) |
-| DB-free binaries | `cargo test --test matching --test otlp_export --test otlp_middleware --test licence_files` |
-| Load test (needs a running service with login off; not in CI) | `PPM_LOAD_TEST_SECONDS=10 PPM_LOAD_TEST_CONCURRENCY=16 cargo test --test load_test -- --ignored --nocapture` |
-| Request suites (`tests/mod.rs` → `tests/requests/*`) | `cargo test --test mod -- --ignored --test-threads=1` (shared database; serial) |
-| Real-token binaries | `cargo test --test <name> -- --ignored` for e.g. `private_aggregates`, `list_paging`, `approvals`, `processes`, `controlled_documents`, `cross_plan` |
-| Keycloak | `cargo test --features keycloak --test keycloak_guard` (in-process test IdP); `--features keycloak --test keycloak_container -- --ignored` needs Podman |
+| Integration tests, DB-free | `cargo test --test main`: one binary, `tests/main.rs`, whose modules are the former `tests/*.rs` binaries (`matching`, `otlp_export`, `otlp_middleware`, `licence_files`, `trace_span_concurrency`, …) |
+| Load test (needs a running service with login off; not in CI) | `PPM_LOAD_TEST_SECONDS=10 PPM_LOAD_TEST_CONCURRENCY=16 cargo test --test main load_test:: -- --ignored --nocapture` |
+| Request suites (`tests/requests/*`) | `cargo test --test main requests:: -- --ignored --test-threads=1` (shared database; serial) |
+| Real-token and other database suites | `cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::` (all, as CI runs them), or one module, e.g. `cargo test --test main private_aggregates:: -- --ignored --test-threads=1` (`list_paging`, `approvals`, `processes`, …; `tests/change_requests.rs` is the module `change_request_rights`) |
+| Keycloak | `cargo test --features keycloak --test main keycloak_guard::` (in-process test IdP); `--features keycloak --test main keycloak_container:: -- --ignored` needs Podman |
 | Fluvio | `fluvio_relay.rs`, needs the `fluvio` feature and a broker (`compose.fluvio.yaml`) |
 
 DB tests are `#[ignore]`d so a plain `cargo test` is DB-free. Mint tokens
 in-process (ed25519 + `rusty_paseto`, as `private_aggregates.rs` does); no
 auth-service is needed. A new list belongs in `PAGED_LISTS`; a new
 aggregate GET needs a decision in `private_aggregates`.
+
+A new suite is a module in `tests/main.rs`, not a new binary. A test that sets an environment variable or other
+process-wide state (the auth posture, the ABAC policy, the mark scheme, the MAC key, the event transport, a global
+`tracing` subscriber: each is read once per process) starts with `own_process!();`, which runs it alone in a fresh
+process of the same executable (`tests/own_process.rs`).
 
 ## Layout
 
@@ -274,7 +281,7 @@ src/
 └── tasks/search.rs         search_reindex CLI task
 migration/migrations/       frozen SQL migrations, oldest first (sqlx)
 migration/src/lib.rs        the runner: up, down, fresh, status, and the seaql_migrations bridge
-tests/                      mod.rs + requests/ (shared DB), one binary per real-token suite, otlp_*
+tests/                      main.rs (the one test binary): requests/ (shared DB and process), one module per real-token suite (each test in its own process), otlp_*
 config/                     development / production / test yaml
 ```
 

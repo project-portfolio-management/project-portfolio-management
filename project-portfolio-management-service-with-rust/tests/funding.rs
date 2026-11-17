@@ -3,14 +3,14 @@
 //! capital and revenue apart unless asked, currencies never summed, a private plan that is nowhere, and
 //! the pack carrying the section.
 //!
-//! Its **own test binary**, for the same reason `enforcement.rs` is:
-//! `verifier` is a process-wide `OnceLock`, read once on first use —
-//! sharing the `tests/requests/mod.rs` binary would race whichever
-//! test happens to touch an authenticated route first.
+//! Its **own process** (`own_process!`), for the same reason `enforcement.rs` is:
+//! the auth posture (`require_auth`) and the ABAC policy are process-wide
+//! `OnceLock`s, read once — sharing a process with the `tests/requests/`
+//! suites would race whichever test happens to boot the app first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
 //! `DB_URL`. Run with
-//! `cargo test --test funding -- --ignored`.
+//! `cargo test --test main funding:: -- --ignored`.
 #![cfg(feature = "paseto")]
 
 use axa_test::prelude::*;
@@ -79,11 +79,12 @@ const ISSUER_SUB: &str = "3f2c6b7e-0000-4000-8000-0000000000e2";
 const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000000a9";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test funding -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main funding:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn money_by_funding_source_keeps_its_promises() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");
@@ -131,7 +132,7 @@ async fn money_by_funding_source_keeps_its_promises() {
 
         // ── budget lines: both sides of the 31 March / 1 April boundary ──
         // WW-1.5: the default is the calendar year, so this test sets an April year, as a deployment would.
-        // SAFETY: this binary's tests run one at a time (`--test-threads=1`, `serial`); nothing else reads the
+        // SAFETY: this test runs alone in its process (`own_process!`); nothing else reads the
         // environment concurrently.
         unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_FINANCIAL_YEAR_START_MONTH", "4") };
         let line = |plan: String, category: &'static str, currency: &'static str, planned: i64, start: Option<&'static str>, source: Option<String>| {

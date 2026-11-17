@@ -149,19 +149,22 @@ candidate matches.
 
 ```bash
 cargo test --lib                       # DB-free unit tests
-cargo test --test matching             # DB-free: matcher embedding + JSON round-trip
+cargo test --test main                 # DB-free integration tests (one binary, tests/main.rs)
+cargo test --test main matching::      # one module: matcher embedding + JSON round-trip
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --check
 
 # Need Postgres (DB_URL; compose.test.yaml provides one on 5432):
-cargo test --test mod -- --ignored --test-threads=1      # request suites
-cargo test --test private_aggregates -- --ignored        # real-token binaries,
-cargo test --test list_paging -- --ignored               #   one per binary
+cargo test --test main requests:: -- --ignored --test-threads=1                          # request suites
+cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::  # the rest, as CI runs them
+cargo test --test main private_aggregates:: -- --ignored --test-threads=1                # one module
 ```
 
 DB tests are `#[ignore]`d, so a plain `cargo test` needs no database.
-Tests that sign in with real PASETO tokens each get their own test binary,
-because the token verifier is a process-wide `OnceLock`. Details in
+Every integration test is a module of one binary, `tests/main.rs`. Tests
+that sign in with real PASETO tokens, or set other process-wide state,
+each run in a process of their own (`own_process!()`), because the auth
+posture and the ABAC policy are read once per process. Details in
 [AGENTS.md](./AGENTS.md).
 
 ## Status

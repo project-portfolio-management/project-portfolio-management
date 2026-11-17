@@ -12,7 +12,7 @@
 //! ```text
 //! export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
 //! export TESTCONTAINERS_RYUK_DISABLED=true
-//! cargo test --features keycloak --test keycloak_container -- --ignored
+//! cargo test --features keycloak --test main keycloak_container:: -- --ignored
 //! ```
 //!
 //! The image name is fully qualified because Podman refuses short names.
@@ -69,6 +69,7 @@ async fn token(base: &str, user: &str, password: &str) -> String {
 #[tokio::test]
 #[ignore = "requires a container runtime (Podman); see the module docs"]
 async fn a_real_keycloak_token_is_authenticated_and_authorized_through_the_real_guard() {
+    own_process!();
     let dir = tempfile::tempdir().expect("tempdir");
     let realm_file = dir.path().join("mxi-realm.json");
     std::fs::write(&realm_file, REALM_JSON).expect("write realm");

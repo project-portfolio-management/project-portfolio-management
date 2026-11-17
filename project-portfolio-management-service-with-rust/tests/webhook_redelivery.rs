@@ -1,8 +1,8 @@
 //! BR-5: a webhook delivery carries a timestamped V2 signature and a delivery id; an administrator can list the
 //! delivery log and redeliver one entry, once, from the event the outbox still holds.
 //!
-//! Its **own test binary**: the integrity key and the webhook targets are read from the process environment.
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test webhook_redelivery -- --ignored`.
+//! Its **own process** (`own_process!`): the integrity key and the webhook targets are read from the process environment.
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main webhook_redelivery:: -- --ignored`.
 
 use std::sync::{Arc, Mutex};
 
@@ -25,9 +25,10 @@ use uuid::Uuid;
 type Seen = Arc<Mutex<Vec<(HeaderMap, Vec<u8>)>>>;
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test webhook_redelivery -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main webhook_redelivery:: -- --ignored`"]
 #[expect(clippy::too_many_lines)] // one linear scenario: a receiver, a logged failure, then each redelivery case
 async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
+    own_process!();
     // A receiver on a loopback port, recording what it is sent.
     let seen: Seen = Arc::default();
     let sink = seen.clone();
@@ -45,7 +46,7 @@ async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
     let port = listener.local_addr().unwrap().port();
     tokio::spawn(async move { axum::serve(listener, app).await.ok() });
     let url = format!("http://127.0.0.1:{port}/hook");
-    // SAFETY: this binary is single-test, so nothing races the environment.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the environment.
     unsafe {
         std::env::set_var(
             "PORTFOLIO_INTEGRITY_MAC_KEY",

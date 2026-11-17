@@ -17,13 +17,13 @@
 //!    so the header genuinely points at the trace, rather than merely
 //!    being a plausible-looking string.
 //!
-//! This binary installs a **process-global** subscriber (the middleware
+//! This test installs a **process-global** subscriber (the middleware
 //! emits through the global dispatcher, as it does in production, and an
 //! async request handler cannot rely on a thread-local default), which is
-//! why it is its own test binary rather than another case in
+//! why each of its tests runs in a process of its own (`own_process!`) rather than beside
 //! `otlp_export.rs`.
 
-mod otlp_collector;
+use crate::otlp_collector;
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -39,6 +39,7 @@ use project_portfolio_management::observability::{
 
 #[tokio::test(flavor = "multi_thread")]
 async fn a_served_request_exports_a_span_and_returns_its_traceparent() {
+    own_process!();
     let (endpoint, captured) = otlp_collector::start().await;
 
     let config = TelemetryConfig {

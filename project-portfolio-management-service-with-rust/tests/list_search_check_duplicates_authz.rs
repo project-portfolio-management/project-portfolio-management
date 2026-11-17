@@ -10,11 +10,11 @@
 //! `GET /{pid}` would `403` — a collection read disclosing more than
 //! the equivalent single read (`agents/share/security.md` invariant 5).
 //!
-//! Its **own test binary**, same reason as `tests/masking.rs`:
+//! Its **own process** (`own_process!`), same reason as `tests/masking.rs`:
 //! `require_auth`/`policy`/`verifier` are process-wide `OnceLock`s.
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
 //! `DB_URL`. Run with
-//! `cargo test --test list_search_check_duplicates_authz -- --ignored`.
+//! `cargo test --test main list_search_check_duplicates_authz:: -- --ignored`.
 #![cfg(feature = "paseto")]
 
 use axa_test::prelude::*;
@@ -101,8 +101,9 @@ fn ordinary_plan() -> Value {
 /// the endpoints.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test list_search_check_duplicates_authz -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main list_search_check_duplicates_authz:: -- --ignored`"]
 async fn denied_reader_never_sees_the_plan_via_list_search_or_check_duplicates() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     // `dept=outsider` may not read a plan that has passed gate 0 at all
     // (a `deny`, not a `mask` obligation — first-match-wins per
@@ -123,7 +124,7 @@ async fn denied_reader_never_sees_the_plan_via_list_search_or_check_duplicates()
             "PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY",
             policy.to_string(),
         );
-        // Keep this binary's Tantivy index out of the working directory
+        // Keep this test's Tantivy index out of the working directory
         // and its boot rebuild out of the way (see tests/requests/mod.rs).
         std::env::set_var(
             "PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH",

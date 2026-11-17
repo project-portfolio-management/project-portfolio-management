@@ -4,7 +4,7 @@
 #
 #   podman compose -f compose.test.yaml up -d --wait
 #   DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
-#     cargo test --test mod -- --ignored --test-threads=1
+#     cargo test --test main requests:: -- --ignored --test-threads=1
 #   podman compose -f compose.test.yaml down -v
 #
 # Redis (the production cache provider) is started with Postgres, on 127.0.0.1:6379 with the password `loco`

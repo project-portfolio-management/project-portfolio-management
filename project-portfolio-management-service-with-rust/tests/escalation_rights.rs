@@ -5,8 +5,8 @@
 //! nothing new; a resolution is not overwritten; taking an escalation up a level clears the
 //! acknowledgement; and each act leaves a history event and an audit entry.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
-//! Run with `cargo test --test escalation_rights -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
+//! Run with `cargo test --test main escalation_rights:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -78,10 +78,11 @@ const RESOLVER: &str = "3f2c6b7e-0000-4000-8000-0000000000a3";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test escalation_rights -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main escalation_rights:: -- --ignored`"]
 async fn acknowledging_and_resolving_are_separate_audited_rights() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier or these settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

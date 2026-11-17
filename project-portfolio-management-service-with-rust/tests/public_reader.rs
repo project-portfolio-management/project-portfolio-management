@@ -3,8 +3,8 @@
 //! the same `404`; it carries an `ETag` and caching; an unpublish shows on the next read; and it is off unless turned
 //! on.
 //!
-//! Its **own test binary** (the verifier and the mark scheme are process-wide). `#[ignore]`d: needs PostgreSQL.
-//! `cargo test --features paseto --test public_reader -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier and the mark scheme are process-wide). `#[ignore]`d: needs PostgreSQL.
+//! `cargo test --features paseto --test main public_reader:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -70,14 +70,15 @@ fn bearer(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test public_reader -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main public_reader:: -- --ignored`"]
 #[expect(
     clippy::too_many_lines,
     reason = "one linear end-to-end story of the reader"
 )]
 async fn the_public_reader_serves_only_what_was_published_from_an_open_plan() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

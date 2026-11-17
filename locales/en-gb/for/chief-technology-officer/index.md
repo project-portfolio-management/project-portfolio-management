@@ -18,7 +18,7 @@ The toolchain is pinned in [`rust-toolchain.toml`](../../../../rust-toolchain.to
 
 - **Invariants live in the database where they matter:** the audit log refuses change and deletion; issued director packs and delivery-confidence assessments are immutable or append-only by trigger; CHECK constraints back the service rules.
 - **Guard tests:** census tests fail the build when a new aggregate route skips the private-plan filter, a list route is unpaged, a personal-data column is missing from the inventory, or a route is missing from OpenAPI. They are fixed by classifying the new thing, not by weakening the test.
-- **Real-token tests:** authorisation is tested end to end with signed PASETO tokens (one test binary each, because the verifier is process-wide).
+- **Real-token tests:** authorisation is tested end to end with signed PASETO tokens (each test in a process of its own, because the auth settings are read once per process).
 - **Supply chain:** `cargo deny`, a software bill of materials, build provenance on release, a security policy.
 - **CI** builds and tests everything on every push; see `.github/workflows/`.
 

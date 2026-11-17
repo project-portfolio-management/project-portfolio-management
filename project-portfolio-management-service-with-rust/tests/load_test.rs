@@ -10,7 +10,7 @@
 //! ```sh
 //! APP_ENV=container-dev cargo run -- start      # login and rate limiting off
 //! PPM_LOAD_TEST_BASE=http://127.0.0.1:1241 PPM_LOAD_TEST_SECONDS=10 PPM_LOAD_TEST_CONCURRENCY=16 \
-//!   cargo test --test load_test -- --ignored --nocapture
+//!   cargo test --test main load_test:: -- --ignored --nocapture
 //! ```
 //!
 //! `#[ignore]`d, and skipped by CI's `api-db` job: it needs a service that is

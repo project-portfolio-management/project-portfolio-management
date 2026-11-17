@@ -1,8 +1,8 @@
 //! BR-12: a token that carries `scope=capture` reads, searches and posts a status update, a comment and a lesson, and
 //! is refused every other write, whatever else it holds; the same identity without the scope is unchanged. Real signed tokens through the real guard.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test capture_scope -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main capture_scope:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -62,10 +62,11 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 const SUB: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test capture_scope -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main capture_scope:: -- --ignored`"]
 async fn a_capture_token_posts_three_things_and_is_refused_the_rest() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

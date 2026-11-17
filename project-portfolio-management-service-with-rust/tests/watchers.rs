@@ -1,14 +1,14 @@
 //! Watchers (RM-3), end to end over the real router with real PASETO
 //! identities: following, notification fan-out, auto-watch and its opt-out.
 //!
-//! Its **own test binary**, for the same reason `enforcement.rs` is:
-//! `verifier` is a process-wide `OnceLock`, read once on first use —
-//! sharing the `tests/requests/mod.rs` binary would race whichever
-//! test happens to touch an authenticated route first.
+//! Its **own process** (`own_process!`), for the same reason `enforcement.rs` is:
+//! the auth posture (`require_auth`) and the ABAC policy are process-wide
+//! `OnceLock`s, read once — sharing a process with the `tests/requests/`
+//! suites would race whichever test happens to boot the app first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
 //! `DB_URL`. Run with
-//! `cargo test --test watchers -- --ignored`.
+//! `cargo test --test main watchers:: -- --ignored`.
 
 #![expect(
     clippy::too_many_lines,
@@ -78,10 +78,11 @@ const CAROL: &str = "3f2c6b7e-0000-4000-8000-00000000000c";
 /// user creates, is assigned or comments on, and `auto_watch` off stops it;
 /// a user's watch list and other watchers stay private.
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test watchers -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main watchers:: -- --ignored`"]
 async fn watchers_are_told_once_and_the_actor_never() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so no other test races the
+    // SAFETY: `own_process!` runs this test alone in its process, so no other test races the
     // process-wide verifier `OnceLock` it sets.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());

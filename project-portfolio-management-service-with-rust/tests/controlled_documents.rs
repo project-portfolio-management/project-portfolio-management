@@ -5,8 +5,8 @@
 //! successor**, and every transition is audited. The database itself refuses what the
 //! rules refuse, so the guarantees do not depend on this code being the only writer.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test controlled_documents -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main controlled_documents:: -- --ignored`.
 
 #![expect(
     clippy::too_many_lines,
@@ -79,10 +79,11 @@ fn hdr(kid: &str, sub: &str, access: &[&str]) -> Who {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test controlled_documents -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main controlled_documents:: -- --ignored`"]
 async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_approval() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

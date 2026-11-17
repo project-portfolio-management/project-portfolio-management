@@ -5,12 +5,12 @@
 //!
 //! This drives the real `streaming::create_and_emit` path (not a
 //! hand-built transaction), so it also exercises the transport switch. It
-//! runs in its **own test binary** so the process-wide `transport()`
+//! runs in its **own process** (`own_process!`) so the process-wide `transport()`
 //! `OnceLock` — pinned to `outbox` here — does not leak into the
 //! enforcement-off request suite (which expects the default `memory`).
 //!
 //! `#[ignore]`d: boots the app against Postgres. Run with
-//! `cargo test --test outbox_audit -- --ignored`.
+//! `cargo test --test main outbox_audit:: -- --ignored`.
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
@@ -21,8 +21,9 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test --test outbox_audit -- --ignored"]
+#[ignore = "requires PostgreSQL (DB_URL); run with: cargo test --test main outbox_audit:: -- --ignored"]
 async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
+    own_process!();
     // Select the durable transport BEFORE the app boots (the transport is
     // read once into a process-wide OnceLock). `set_var` is `unsafe` in
     // edition 2024; single-threaded test setup.

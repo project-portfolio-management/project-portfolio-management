@@ -54,7 +54,7 @@ behind the `keycloak` feature; see
 ```sh
 export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
 export TESTCONTAINERS_RYUK_DISABLED=true
-cargo test --features keycloak --test keycloak_container -- --ignored
+cargo test --features keycloak --test main keycloak_container:: -- --ignored
 ```
 
 Token fetch and verifier configuration must use the same origin

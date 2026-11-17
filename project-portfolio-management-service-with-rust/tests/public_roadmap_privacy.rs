@@ -1,8 +1,8 @@
 //! RE-1: a private plan's public product roadmap is a `404` to a non-member, read or written, and the member sees
 //! it. Real signed tokens through the real guard.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test public_roadmap_privacy -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main public_roadmap_privacy:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -215,10 +215,11 @@ async fn assert_family_private(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test public_roadmap_privacy -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main public_roadmap_privacy:: -- --ignored`"]
 async fn a_private_plans_roadmap_is_not_found_for_a_non_member() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

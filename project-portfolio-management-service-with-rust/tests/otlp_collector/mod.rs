@@ -11,10 +11,6 @@
 //! protobuf that actually crossed a socket rather than against in-process
 //! SDK state.
 
-// An `allow`, not an `expect`: this module is shared by several test crates and each uses a
-// different part of it, so the lint fires in some and not in others.
-#![allow(dead_code)]
-
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};

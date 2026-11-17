@@ -2,9 +2,9 @@
 //! key set, the service is configured with nothing but its issuer, audience and role map, and its ES256 tokens
 //! are accepted, mapped, and refused when they should be.
 //!
-//! Its **own test binary**: the verifier is a process-wide `OnceLock` set at boot from the environment.
+//! Its **own process** (`own_process!`): the verifier is a process-wide `OnceLock` set at boot from the environment.
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via `DB_URL`. Run with
-//! `cargo test --test oidc_provider -- --ignored`.
+//! `cargo test --test main oidc_provider:: -- --ignored`.
 
 use axa_test::prelude::*;
 use axum::{Json, Router, routing::get};
@@ -39,8 +39,9 @@ fn auth(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue) {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test oidc_provider -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main oidc_provider:: -- --ignored`"]
 async fn a_token_from_a_plain_oidc_provider_is_accepted_and_mapped() {
+    own_process!();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let issuer = format!("http://127.0.0.1:{}", listener.local_addr().unwrap().port());
     let discovery = json!({ "issuer": issuer, "jwks_uri": format!("{issuer}/jwks") });
@@ -57,7 +58,7 @@ async fn a_token_from_a_plain_oidc_provider_is_accepted_and_mapped() {
         .route("/jwks", get(move || async move { Json(jwks) }));
     tokio::spawn(async move { axum::serve(listener, provider).await.unwrap() });
 
-    // SAFETY: this binary has one test, so nothing races the process-wide settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_OIDC_ISSUER", &issuer);

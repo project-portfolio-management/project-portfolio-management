@@ -2,8 +2,8 @@
 //! key do not collide and each replays only their own answer; a caller the guards refuse (a read-only token, no token
 //! at all) is refused even when the request is an exact replay of someone else's.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test idempotency_callers -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main idempotency_callers:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -61,10 +61,11 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test idempotency_callers -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main idempotency_callers:: -- --ignored`"]
 async fn keys_are_per_caller_and_a_replay_never_skips_the_guards() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

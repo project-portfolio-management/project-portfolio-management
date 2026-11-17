@@ -7,8 +7,8 @@
 //! it cannot reach must be named, with a reason, in `UNREACHED`, so a new list cannot
 //! slip past by needing a parameter nobody supplied.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test list_paging -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main list_paging:: -- --ignored`.
 
 #![expect(
     clippy::similar_names,
@@ -241,10 +241,11 @@ const UNREACHED: &[(&str, &str)] = &[
 ];
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test list_paging -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main list_paging:: -- --ignored`"]
 async fn every_list_pages_the_same_way() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

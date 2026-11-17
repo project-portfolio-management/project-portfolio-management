@@ -11,12 +11,12 @@ Entity-level view; normative inventory in entity spec
 | matcher | Unit tests (`#[cfg(test)]` per module) | `cargo test` | Components, normalization, deterministic rules, kind-agnostic scoring, rank/find_matches |
 | matcher | Public-API integration | `cargo test --test public_api` | The `lib.rs` re-export surface |
 | matcher | Doctests | `cargo test` | rustdoc examples |
-| service | DB-free embedding tests | `cargo test --test matching` | Matcher embedding + `Plan` JSON round-trip (the DTO/JSONB contract) |
+| service | DB-free embedding tests | `cargo test --test main matching::` | Matcher embedding + `Plan` JSON round-trip (the DTO/JSONB contract) |
 | service | Unit tests | `cargo test --lib` | Pure rules beside each controller; validation pins (`422` on blank name, containment cycle) |
-| service | Request suites (`tests/mod.rs` → `tests/requests/*`) | `cargo test --test mod -- --ignored --test-threads=1` + Postgres `DB_URL` | Plan CRUD, match, merge, paging, bulk, cpm, task bulk, … `#[ignore]`d, so a plain `cargo test` is DB-free; serial because the database is shared |
-| service | Real-token binaries | `cargo test --test <name> -- --ignored` | `private_aggregates` (private plans in every aggregate, enumerates mounted GET routes), `list_paging` (every list vs `openapi::PAGED_LISTS`), `approvals`, `processes`, `controlled_documents`, `cross_plan`, `guests`, … One binary each: the token verifier is a process-wide `OnceLock` |
-| service | OTLP | `cargo test --test otlp_export --test otlp_middleware` | Real export to an in-process collector, no database |
-| service | Keycloak | `cargo test --features keycloak --test keycloak_guard` | Keycloak access tokens through the real guard (in-process test IdP) |
+| service | Request suites (`tests/main.rs` → `tests/requests/*`) | `cargo test --test main requests:: -- --ignored --test-threads=1` + Postgres `DB_URL` | Plan CRUD, match, merge, paging, bulk, cpm, task bulk, … `#[ignore]`d, so a plain `cargo test` is DB-free; serial because the database is shared |
+| service | Real-token suites | `cargo test --test main <module>:: -- --ignored --test-threads=1` | `private_aggregates` (private plans in every aggregate, enumerates mounted GET routes), `list_paging` (every list vs `openapi::PAGED_LISTS`), `approvals`, `processes`, `controlled_documents`, `cross_plan`, `guests`, … Modules of the one test binary (`tests/main.rs`); each test runs in a process of its own (`own_process!()`), as the auth posture and the ABAC policy are read once per process |
+| service | OTLP | `cargo test --test main otlp_` | Real export to an in-process collector, no database |
+| service | Keycloak | `cargo test --features keycloak --test main keycloak_guard::` | Keycloak access tokens through the real guard (in-process test IdP) |
 | front-end | Type-level check | `pnpm run check` | svelte-check strict, 0 errors / 0 warnings |
 | front-end | Build | `pnpm run build` | Production build |
 

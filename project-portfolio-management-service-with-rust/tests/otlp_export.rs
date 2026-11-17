@@ -11,7 +11,7 @@
 //! No external collector, nothing `#[ignore]`d, no database: these run in
 //! a normal `cargo test`.
 
-mod otlp_collector;
+use crate::otlp_collector;
 
 use std::time::{Duration, Instant};
 

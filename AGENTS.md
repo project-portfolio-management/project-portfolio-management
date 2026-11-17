@@ -35,14 +35,17 @@ agents read it: `security-reviewer`, `database-reviewer`, `rust-reviewer` and `u
 ```bash
 # service and matcher
 cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
+# service: the one integration-test binary (tests/main.rs; each former tests/*.rs binary is a module of it), database-free part
+cargo test --test main
 # database tests need Postgres 18 (the file also starts a Redis 8 on 127.0.0.1:6379, password `loco`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
-#   then DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test mod -- --ignored --test-threads=1
+#   then, as CI's `api-db` job runs them, the request suites and then everything else that is ignored:
+#   DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test main requests:: -- --ignored --test-threads=1
+#   DB_URL=… cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::
 #   (or a throwaway database on a local Postgres: createdb -U postgres -O "$USER" <name>, and drop it after)
-#   and every real-token binary, as CI's `db` job loops over tests/*.rs: cargo test --test <name> -- --ignored --test-threads=1
-#   (all but mod, matching, otlp_export, otlp_middleware, licence_files, keycloak_container, fluvio_relay,
-#   trace_span_concurrency, and load_test, which needs a running service: see its module docs)
-# restore drill, as CI runs it (the whole suite on a restored copy; run it alone, two at once collide):
-#   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test mod -- --ignored --test-threads=1'
+#   one former binary is a module filter: cargo test --test main approvals:: -- --ignored --test-threads=1
+#   (load_test needs a running service: see its module docs; keycloak_container and fluvio_relay need their features)
+# restore drill, as CI runs it (the request suites on a restored copy; run it alone, two at once collide):
+#   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test main requests:: -- --ignored --test-threads=1'
 # mutation test of the matcher (CI's `mutants` job mutates the changed lines; weekly, every mutant):
 #   cd project-portfolio-management-matcher-with-rust && git diff --relative origin/main -- . > /tmp/d && cargo mutants --in-diff /tmp/d
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60

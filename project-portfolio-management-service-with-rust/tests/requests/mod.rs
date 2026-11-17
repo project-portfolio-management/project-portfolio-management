@@ -82,7 +82,7 @@ use std::sync::Once;
 ///
 /// Must run before the first request that writes a record, because the
 /// engine reads `PROJECT_PORTFOLIO_MANAGEMENT_SEARCH_INDEX_PATH` once
-/// into a `OnceLock` — shared across every test in this binary, not just
+/// into a `OnceLock` — shared across every test in this process, not just
 /// [`plans`]'s. Without it the suite would index into the crate's
 /// working directory and accumulate documents across runs; the boot
 /// rebuild would also race the test bodies' own writes.

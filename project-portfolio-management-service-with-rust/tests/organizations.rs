@@ -2,8 +2,8 @@
 //! names one; a caller who belongs to an organization sees only its commitments; and a director pack can be
 //! addressed to an organization, which alone (besides the pack's editors) can read it.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
-//! Run with `cargo test --test organizations -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
+//! Run with `cargo test --test main organizations:: -- --ignored`.
 
 #![expect(
     clippy::many_single_char_names,
@@ -92,11 +92,12 @@ async fn sweep_call(
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test organizations -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main organizations:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn organizations_are_records_and_a_partner_sees_its_own() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier or these settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");
@@ -343,7 +344,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
             let n = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM audit_logs WHERE action = $1").bind("register_incomplete_warning").fetch_one(project_portfolio_management::db::pool(&_ctx)).await.unwrap();
             assert_eq!(n, 1, "and the warning is audited");
         }
-        // SAFETY: this binary is single-test, so nothing else reads the setting concurrently.
+        // SAFETY: `own_process!` runs this test alone in its process, so nothing else reads the setting concurrently.
         unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED", "on") };
         let refused = alloc("committed").await;
         assert_eq!(refused.status_code(), 422, "switch on: refused");
@@ -486,7 +487,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
             assert_eq!(phase(p, "planning", json!({})).await.0, 200);
         }
         // No limit set: anyone may start.
-        // SAFETY: this binary is single-test, so nothing else reads the setting concurrently.
+        // SAFETY: `own_process!` runs this test alone in its process, so nothing else reads the setting concurrently.
         unsafe { std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT", "1") };
         assert_eq!(phase(&alpha, "executing", json!({})).await.0, 200, "room for the first");
         let (code, text) = phase(&beta, "executing", json!({})).await;

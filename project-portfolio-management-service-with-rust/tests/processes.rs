@@ -4,8 +4,8 @@
 //! resumable, idempotently); the log is append-only; and an edit mid-run does not
 //! change a run already under way (it is pinned by version).
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test processes -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main processes:: -- --ignored`.
 
 #![expect(
     clippy::too_many_lines,
@@ -103,10 +103,11 @@ fn states(ex: &Value) -> Vec<String> {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test processes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main processes:: -- --ignored`"]
 async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

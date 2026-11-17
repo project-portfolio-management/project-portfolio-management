@@ -22,7 +22,7 @@
 //! ```text
 //! export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
 //! export TESTCONTAINERS_RYUK_DISABLED=true
-//! cargo test --features keycloak --test keycloak_entra_broker -- --ignored
+//! cargo test --features keycloak --test main keycloak_entra_broker:: -- --ignored
 //! ```
 //!
 //! The container reaches the mock on the host as `host.containers.internal` (Podman); the
@@ -353,6 +353,7 @@ async fn status(method: &Method, path: &str, headers: &HeaderMap) -> u16 {
 #[tokio::test]
 #[ignore = "requires a container runtime (Podman); see the module docs"]
 async fn an_entra_sign_in_brokered_by_a_real_keycloak_passes_the_real_guard() {
+    own_process!();
     let (port, mock) = start_mock().await;
     let browser_facing = format!("http://localhost:{port}/{TENANT}");
     let from_container = format!("http://host.containers.internal:{port}/{TENANT}");

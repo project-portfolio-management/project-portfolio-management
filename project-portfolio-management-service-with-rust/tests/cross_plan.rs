@@ -5,8 +5,8 @@
 //! side — in the critical-path view, the dependency list, a refused plan delete,
 //! and it cannot be created or removed by someone who cannot read it.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test cross_plan -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main cross_plan:: -- --ignored`.
 #![cfg(feature = "paseto")]
 
 use axa_test::prelude::*;
@@ -77,10 +77,11 @@ const GUEST: &str = "3f2c6b7e-0000-4000-8000-0000000000e1";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test cross_plan -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main cross_plan:: -- --ignored`"]
 async fn a_link_never_reveals_a_plan_its_reader_may_not_see() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

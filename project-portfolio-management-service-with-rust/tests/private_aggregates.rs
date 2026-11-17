@@ -8,8 +8,8 @@
 //! A test also enumerates the mounted GET routes, so a new aggregate cannot be added
 //! without someone deciding whether it filters.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test private_aggregates -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main private_aggregates:: -- --ignored`.
 
 #![expect(
     clippy::too_many_lines,
@@ -649,8 +649,9 @@ const PRODUCT_DECISION_VIEWS: &[&str] = &[
 /// added, and every aggregate that changes must be sorted into one of the two lists above (`spec/product-evaluation.md`).
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_aggregates -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_aggregates:: -- --ignored`"]
 async fn census_of_what_a_product_plan_touches() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: the tests here are `#[serial]`, and each writes the same values.
     unsafe {
@@ -705,8 +706,9 @@ async fn census_of_what_a_product_plan_touches() {
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_aggregates -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_aggregates:: -- --ignored`"]
 async fn a_private_plan_is_in_no_aggregate_for_a_non_member() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: the tests here are `#[serial]`, and each writes the same values.
     unsafe {

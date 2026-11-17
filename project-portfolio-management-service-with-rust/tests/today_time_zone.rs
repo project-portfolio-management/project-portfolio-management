@@ -3,8 +3,8 @@
 //! is not an IANA zone), a change is audited with the before and after, and an instance that missed the
 //! change converges on the stored value when it next refreshes.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
-//! Run with `cargo test --test today_time_zone -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
+//! Run with `cargo test --test main today_time_zone:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -74,10 +74,11 @@ const WRITER: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000ad";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test today_time_zone -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main today_time_zone:: -- --ignored`"]
 async fn an_administrator_sets_the_zone_that_defines_today() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier or these settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

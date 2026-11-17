@@ -7,6 +7,9 @@ edition = "2024"
 rust-version = "1.98"
 publish = true
 default-run = "project-portfolio-management"
+# The integration tests are one binary, `tests/main.rs`, whose modules are the suites under `tests/`; Cargo would
+# otherwise build and link every `tests/*.rs` as a binary of its own (69 links of the whole library).
+autotests = false
 authors = ["Joel Parker Henderson <joel@joelparkerhenderson.com>"]
 description = "Project portfolio management service — plan registry (one recursive plan tree; kind is an optional label, no gate) and full project-management suite: workflows, OKRs, phases, flow, effort, ceremonies, controls, TPC, value realization"
 readme = "README.md"
@@ -148,6 +151,12 @@ assert_is_empty = "allow"
 name = "project-portfolio-management"
 path = "src/bin/main.rs"
 required-features = []
+
+# The one integration-test binary (see `autotests` above). The feature-gated suites (`keycloak_*`, `fluvio_relay`)
+# are `#![cfg(feature = …)]` modules inside it.
+[[test]]
+name = "main"
+path = "tests/main.rs"
 
 [dev-dependencies]
 # A local OIDC provider so tests/keycloak_guard.rs can push a Keycloak access

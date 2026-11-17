@@ -4,8 +4,8 @@
 //! never changes an earlier one: a plan that follows the framework keeps the version it pinned (and the
 //! escalation path that version declares) until it is moved, and `behind` says it is not on the latest.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
-//! Run with `cargo test --test framework_versions -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
+//! Run with `cargo test --test main framework_versions:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -76,10 +76,11 @@ const EDITOR: &str = "3f2c6b7e-0000-4000-8000-0000000000b2";
 const ADMIN: &str = "3f2c6b7e-0000-4000-8000-0000000000bd";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test framework_versions -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main framework_versions:: -- --ignored`"]
 async fn an_edit_is_a_new_version_and_following_plans_keep_theirs() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier or these settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

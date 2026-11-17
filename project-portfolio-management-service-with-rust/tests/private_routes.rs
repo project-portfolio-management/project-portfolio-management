@@ -2,8 +2,8 @@
 //! a private plan gets nothing from a route that reaches that plan's records by their own pid or by a field in the body, and
 //! a person's inbox belongs to that person.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
-//! `cargo test --features paseto --test private_routes -- --ignored --test-threads=1`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
+//! `cargo test --features paseto --test main private_routes:: -- --ignored --test-threads=1`.
 
 #![cfg(feature = "paseto")]
 
@@ -118,8 +118,9 @@ async fn private_plan(request: &axum_test::TestServer, who: &Callers, name: &str
 /// Security audit: `recipient` was a free query parameter, so anyone signed in read anyone's inbox and marked it read.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn an_inbox_belongs_to_its_owner() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -189,8 +190,9 @@ async fn an_inbox_belongs_to_its_owner() {
 /// that became a private plan was readable by pid and in the promoted list.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn proposals_and_objectives_keep_a_private_plan_out() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -272,8 +274,9 @@ async fn proposals_and_objectives_keep_a_private_plan_out() {
 /// Security audit: nothing under `/api/canvases` looked at the plan, and an item's discussion passed as belonging to no plan.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_private_plans_canvas_is_private() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -380,8 +383,9 @@ async fn a_private_plans_canvas_is_private() {
 /// disclosure decision.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_private_plans_reviews_are_private() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -442,8 +446,9 @@ async fn a_private_plans_reviews_are_private() {
 /// with no plan runs on private plans its author cannot see.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_private_plans_automations_are_private() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -578,8 +583,9 @@ async fn a_private_plans_automations_are_private() {
 /// `/api/plans/{pid}` would have refused.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -665,8 +671,9 @@ async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
 /// listing a private plan after its owner lost access to it.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn sprints_and_calendars_keep_a_private_plan_out() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -753,8 +760,9 @@ async fn sprints_and_calendars_keep_a_private_plan_out() {
 /// Security audit: a snapshot of a private plan, tasks and all, was readable and copyable by everyone.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_template_is_hidden_with_its_plan() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -831,8 +839,9 @@ async fn a_template_is_hidden_with_its_plan() {
 /// a private one: block its task, add to its effort, quote its KPI, or learn that a pid exists.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_reference_is_no_way_into_a_private_plan() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -966,8 +975,9 @@ async fn a_reference_is_no_way_into_a_private_plan() {
 /// Security audit: three actions that span every plan answered any writer with what they found on private plans.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_sweep_a_writer_runs_stays_on_their_side() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -1025,8 +1035,9 @@ async fn a_sweep_a_writer_runs_stays_on_their_side() {
 /// words. The reviewer's invitation stays, because it is what lets them in.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test private_routes -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn what_you_were_told_goes_when_your_access_does() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);

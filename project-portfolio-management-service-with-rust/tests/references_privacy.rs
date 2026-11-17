@@ -1,8 +1,8 @@
 //! BR-4: the references of a record in a private plan are a `404` for a non-member, however the request is phrased,
 //! and the member sees them. Real signed tokens through the real guard.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`).
-//! `#[ignore]`d — needs PostgreSQL. `cargo test --test references_privacy -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`).
+//! `#[ignore]`d — needs PostgreSQL. `cargo test --test main references_privacy:: -- --ignored`.
 
 #![cfg(feature = "paseto")]
 
@@ -60,10 +60,11 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test references_privacy -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main references_privacy:: -- --ignored`"]
 async fn a_private_plans_references_are_not_found_for_a_non_member() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

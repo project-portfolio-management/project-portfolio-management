@@ -800,6 +800,19 @@ in-test: un-authed `GET /api/plans` → `401`, public
 these need Postgres, so they are `#[ignore]`-gated; run with
 `cargo test -- --ignored` and a `DB_URL`.
 
+Every integration suite is a module of one test binary, `tests/main.rs`
+(`autotests = false`; until 2026-11-17 each `tests/*.rs` was a binary of
+its own). `cargo test --test main` runs the database-free tests;
+`cargo test --test main requests:: -- --ignored --test-threads=1` the
+request suites; `cargo test --test main -- --ignored --test-threads=1
+--skip requests:: --skip load_test::` the rest, as CI does. A test that
+sets an environment variable or other process-wide state (the auth
+posture, the ABAC policy, the mark scheme, the MAC key, the event
+transport, a global `tracing` subscriber: each read once per process)
+starts with `own_process!();` and so runs alone in a fresh process of
+the same executable, which fails unless that process ran and passed
+exactly that one test (`tests/own_process.rs`).
+
 ## 12. Compliance
 
 Plans are business / operational data (no patient data), so the

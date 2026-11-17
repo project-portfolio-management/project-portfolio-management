@@ -62,7 +62,7 @@ cd project-portfolio-management-service-with-rust
 export DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_development
 cargo run -- start           # migrations auto-run in development
 cargo test --lib             # DB-free unit tests
-cargo test --test matching   # DB-free embedding tests
+cargo test --test main       # DB-free integration tests (matching::, otlp_export::, …)
 
 # Front-end — needs the service running
 cd project-portfolio-management-ui-with-svelte

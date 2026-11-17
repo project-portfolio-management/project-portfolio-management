@@ -4,14 +4,14 @@
 //! setting named, the actual-cost source stated, a private programme that is nowhere, and the pack
 //! carrying the section.
 //!
-//! Its **own test binary**, for the same reason `enforcement.rs` is:
-//! `verifier` is a process-wide `OnceLock`, read once on first use —
-//! sharing the `tests/requests/mod.rs` binary would race whichever
-//! test happens to touch an authenticated route first.
+//! Its **own process** (`own_process!`), for the same reason `enforcement.rs` is:
+//! the auth posture (`require_auth`) and the ABAC policy are process-wide
+//! `OnceLock`s, read once — sharing a process with the `tests/requests/`
+//! suites would race whichever test happens to boot the app first.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
 //! `DB_URL`. Run with
-//! `cargo test --test portfolio_evm -- --ignored`.
+//! `cargo test --test main portfolio_evm:: -- --ignored`.
 
 #![expect(
     clippy::many_single_char_names,
@@ -85,11 +85,12 @@ const ISSUER_SUB: &str = "3f2c6b7e-0000-4000-8000-0000000000e2";
 const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000000a9";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test portfolio_evm -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main portfolio_evm:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn earned_value_over_the_threshold_keeps_its_promises() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier or these settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

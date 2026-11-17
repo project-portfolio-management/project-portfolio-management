@@ -2,7 +2,7 @@
 //! and leaves with its transaction.
 //!
 //! `#[ignore]`d: boots the app, so it needs PostgreSQL via `DB_URL`. Run with
-//! `cargo test --test sqlx_layer -- --ignored --test-threads=1`.
+//! `cargo test --test main sqlx_layer:: -- --ignored --test-threads=1`.
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;

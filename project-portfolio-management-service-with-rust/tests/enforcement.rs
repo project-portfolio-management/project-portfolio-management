@@ -9,14 +9,14 @@
 //! status. Activation is the moment this service stops being open, so it
 //! deserves a test that fails if the wiring is ever lost.
 //!
-//! Its **own test binary**, because `require_auth` / `policy` /
+//! Its **own process** (`own_process!`), because `require_auth` / `policy` /
 //! `verifier` are process-wide `OnceLock`s: the enforcement-*off*
 //! request suite would otherwise cache the flag before this test sets
 //! it.
 //!
 //! `#[ignore]`d — boots the app, so it needs PostgreSQL via
 //! `DB_URL`. Run with
-//! `cargo test --test enforcement -- --ignored`.
+//! `cargo test --test main enforcement:: -- --ignored`.
 #![cfg(feature = "paseto")]
 
 use axa_test::prelude::*;
@@ -96,8 +96,9 @@ fn plan_body() -> Value {
 /// while requiring `access=write` to write.
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test enforcement -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main enforcement:: -- --ignored`"]
 async fn enforcement_on_gates_the_real_router() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
     // Set BEFORE the app boots — the flag, key set and policy are read
     // into process-wide `OnceLock`s on first use. No

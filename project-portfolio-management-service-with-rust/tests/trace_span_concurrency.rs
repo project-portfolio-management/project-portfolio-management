@@ -29,6 +29,7 @@ async fn handler() -> &'static str {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn concurrent_requests_through_the_trace_middleware_all_complete() {
+    own_process!();
     // A registry with a layer that records span names, which is what the service's JSON log layer does.
     let subscriber = tracing_subscriber::registry().with(
         tracing_subscriber::fmt::layer()
@@ -36,7 +37,7 @@ async fn concurrent_requests_through_the_trace_middleware_all_complete() {
             .with_writer(std::io::sink),
     );
     tracing::subscriber::set_global_default(subscriber)
-        .expect("the only subscriber in this binary");
+        .expect("the only subscriber in this process");
 
     let app = Router::new()
         .route("/", get(handler))

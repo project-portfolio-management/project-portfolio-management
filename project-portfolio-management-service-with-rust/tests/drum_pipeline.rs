@@ -2,8 +2,8 @@
 //! overloaded pool, two projects needing it at once are staggered with a stated reason and a capacity
 //! buffer, nothing is moved, and a private plan is neither shown nor allowed to hold up another.
 //!
-//! Its **own test binary** (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
-//! Run with `cargo test --test drum_pipeline -- --ignored`.
+//! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
+//! Run with `cargo test --test main drum_pipeline:: -- --ignored`.
 
 #![expect(
     clippy::many_single_char_names,
@@ -77,10 +77,11 @@ const WRITER: &str = "3f2c6b7e-0000-4000-8000-0000000000a1";
 const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000000a9";
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test drum_pipeline -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main drum_pipeline:: -- --ignored`"]
 async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
+    own_process!();
     let (keys, kid) = keys_and_kid();
-    // SAFETY: this binary is single-test, so nothing races the process-wide verifier or these settings.
+    // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier or these settings.
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", keys.to_string());
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH", "1");

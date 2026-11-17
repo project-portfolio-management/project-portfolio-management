@@ -4,13 +4,13 @@
 //! The pure behaviour is pinned by the unit tests in `src/http_security.rs`
 //! and `src/rate_limit.rs`; what they cannot show is that the layers are
 //! *wired* onto the router axa builds, in the right order (so a `429` carries
-//! the security headers, and health stays exempt). Its **own test binary**
+//! the security headers, and health stays exempt). Its **own process** (`own_process!`)
 //! because the CORS list and the limits are read once at boot from the
 //! environment, before the first request.
 //!
 //! `#[ignore]`d — boots the app, so it needs `PostgreSQL` via
 //! `DB_URL`. Run with
-//! `cargo test --test hardening -- --ignored`.
+//! `cargo test --test main hardening:: -- --ignored`.
 
 use axa_test::prelude::*;
 use project_portfolio_management::app::App;
@@ -18,8 +18,9 @@ use serial_test::serial;
 
 #[tokio::test]
 #[serial]
-#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test hardening -- --ignored`"]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main hardening:: -- --ignored`"]
 async fn the_real_router_carries_headers_cors_and_rate_limits() {
+    own_process!();
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT", "on");
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT_GENERAL_BURST", "6");

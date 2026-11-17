@@ -53,10 +53,9 @@ jobs:
       # The migration crate's own checks: the embedded files are sqlx's reading of migrations/, one per old migration name.
       - run: cargo clippy -p project-portfolio-management-migration --all-targets -- -D warnings
       - run: cargo test -p project-portfolio-management-migration
-      - run: >-
-          cargo test --test matching --test otlp_export --test otlp_middleware
-          --test licence_files --test personal_data_inventory --test trace_span_concurrency
-          --test load_test
+      # The one integration-test binary (tests/main.rs): every test that needs no database or container. The rest
+      # are `#[ignore]`d and run in `api-db`.
+      - run: cargo test --test main
 
   api-db:
     name: API (Postgres 18 integration tests)
@@ -93,23 +92,15 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: ${{ env.API }}
-      - name: Request-level suite (tests/mod.rs)
-        run: cargo test --test mod -- --ignored --test-threads=1
-      - name: Real-token test binaries
-        # Every tests/*.rs binary except: mod (above), the DB-free ones (run
-        # in the `api` job), the feature-gated keycloak_container and
-        # fluvio_relay (they need a container runtime / broker), and load_test
-        # (its ignored test needs a service already running, which CI does not start).
-        run: |
-          set -euo pipefail
-          skip=" mod matching otlp_export otlp_middleware licence_files keycloak_container fluvio_relay trace_span_concurrency load_test "
-          for f in tests/*.rs; do
-            name="$(basename "$f" .rs)"
-            case "$skip" in *" $name "*) continue ;; esac
-            echo "::group::cargo test --test $name -- --ignored"
-            cargo test --test "$name" -- --ignored --test-threads=1
-            echo "::endgroup::"
-          done
+      # Both steps run the one integration-test binary (tests/main.rs); a suite that changes process-wide state runs
+      # each of its tests in a process of its own (tests/own_process.rs).
+      - name: Request-level suites (tests/requests)
+        run: cargo test --test main requests:: -- --ignored --test-threads=1
+      - name: Real-token and other database suites
+        # Every other `#[ignore]`d test, except load_test (it needs a service already running, which CI does not
+        # start). keycloak_container and fluvio_relay need a container runtime or a broker; they are built only with
+        # their features, which this job does not turn on.
+        run: cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::
 
   restore:
     name: Restore drill (pg_dump, restore, compare, run the test suite on it)
@@ -161,15 +152,13 @@ jobs:
       - name: Put real data in the source database (migrations + a few suites that leave rows)
         run: |
           set -euo pipefail
-          for t in approvals feeds planner private_aggregates; do
-            cargo test --test "$t" -- --ignored
-          done
+          cargo test --test main approvals:: feeds:: planner:: private_aggregates:: -- --ignored --test-threads=1
           mkdir -p "$ARTIFACT_DIR/ab/cd" && echo "attachment bytes" > "$ARTIFACT_DIR/ab/cd/example"
       - name: Back up, restore into a scratch database, compare, run the suite on it
         working-directory: .
         run: >-
           scripts/restore-test.sh
-          -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test mod -- --ignored --test-threads=1'
+          -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test main requests:: -- --ignored --test-threads=1'
       - name: The same drill with an encrypted backup (passphrase)
         working-directory: .
         run: |

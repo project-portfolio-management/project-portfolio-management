@@ -96,12 +96,12 @@ jobs:
       # Both steps run the one integration-test binary (tests/main.rs); a suite that changes process-wide state runs
       # each of its tests in a process of its own (tests/own_process.rs).
       - name: Request-level suites (tests/requests)
-        run: cargo test --test main requests:: -- --ignored --test-threads=1
+        run: 'cargo test --test main requests:: -- --ignored --test-threads=1'
       - name: Real-token and other database suites
         # Every other `#[ignore]`d test, except load_test (it needs a service already running, which CI does not
         # start). keycloak_container and fluvio_relay need a container runtime or a broker; they are built only with
         # their features, which this job does not turn on.
-        run: cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::
+        run: 'cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::'
 
   restore:
     name: Restore drill (pg_dump, restore, compare, run the test suite on it)

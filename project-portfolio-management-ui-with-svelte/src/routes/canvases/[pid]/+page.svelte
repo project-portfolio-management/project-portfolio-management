@@ -229,7 +229,7 @@
                   {/if}
                 </div>
                 {#if promoting === item.pid}
-                  <form class="stack promote" onsubmit={(e) => promote(e, item)}>
+                  <form class="stack promote" novalidate onsubmit={(e) => promote(e, item)}>
                     <fieldset>
                       <legend>{t("p.canvas.promote_legend")}</legend>
                       {#each promoteTargets(canvas.plan_pid) as k (k)}

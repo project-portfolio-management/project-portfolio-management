@@ -4266,6 +4266,63 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.director_pack.reissue": "Mit Änderungsnotiz neu herausgeben",
   "p.director_pack.review": "Als geprüft markieren",
   "p.director_pack.reviewed_done": "Als geprüft markiert.",
+  "p.director_pack.add_schedule_heading": "Zeitplan hinzufügen",
+  "p.director_pack.add_schedule": "Zeitplan hinzufügen",
+  "p.director_pack.conflict_schedule":
+    "Diese Zielgruppe hat schon einen Zeitplan; ändern Sie stattdessen seinen Tag.",
+  "p.director_pack.could_not_change_schedule":
+    "Der Zeitplan wurde nicht geändert.",
+  "p.director_pack.could_not_load_schedules":
+    "Die Zeitpläne konnten nicht geladen werden.",
+  "p.director_pack.could_not_load_subscriptions":
+    "Über welche Pakete Sie benachrichtigt werden, konnte nicht geladen werden.",
+  "p.director_pack.could_not_subscribe":
+    "Die Änderung wurde nicht gespeichert.",
+  "p.director_pack.day_says":
+    "Ein Tag von 1 bis 28, damit jeder Monat ihn hat. Der erste Lauf ist der nächste solche Tag.",
+  "p.director_pack.f_day": "Tag des Monats",
+  "p.director_pack.last_drafted":
+    "Letzter Lauf {when}: Paket für {period} entworfen.",
+  "p.director_pack.last_run": "Letzter Lauf {when}.",
+  "p.director_pack.last_skipped":
+    "Letzter Lauf {when}: {period} übersprungen, dafür gab es schon ein Paket.",
+  "p.director_pack.move_day": "Auf diesen Tag legen",
+  "p.director_pack.no_schedules":
+    "Noch wird kein Paket nach Zeitplan entworfen.",
+  "p.director_pack.problem_day":
+    "Wählen Sie einen Tag des Monats von 1 bis 28.",
+  "p.director_pack.refused_subscribe":
+    "Sie können nur über Zielgruppen benachrichtigt werden, deren Pakete Sie lesen dürfen.",
+  "p.director_pack.schedule_added": "Zeitplan hinzugefügt.",
+  "p.director_pack.schedule_off":
+    "Ausgeschaltet. Er würde am {day}. jedes Monats entwerfen.",
+  "p.director_pack.schedule_on":
+    "Entwirft am {day}. jedes Monats; nächster Lauf am {next}.",
+  "p.director_pack.schedule_saved": "Gespeichert.",
+  "p.director_pack.schedule_switched_off": "Ausgeschaltet.",
+  "p.director_pack.schedule_switched_on": "Eingeschaltet.",
+  "p.director_pack.schedule_unchanged":
+    "Das ist schon sein Tag, daher wurde nichts gesendet.",
+  "p.director_pack.schedules_intro":
+    "Jeder Zeitplan entwirft das Paket einer Zielgruppe an einem Tag jedes Monats. Er gibt nie eines heraus: Das Portfoliobüro prüft den Entwurf, und eine Person gibt ihn heraus.",
+  "p.director_pack.schedules_link": "Monatliche Zeitpläne",
+  "p.director_pack.schedules_title_ppm": "Monatliche Zeitpläne — PPM",
+  "p.director_pack.schedules_title": "Monatliche Zeitpläne",
+  "p.director_pack.subs_heading":
+    "Benachrichtigen, wenn ein Paket herausgegeben wird",
+  "p.director_pack.subs_legend": "Pakete, über die ich benachrichtigt werde",
+  "p.director_pack.subs_says":
+    "Sie werden im Dienst mit einem Link benachrichtigt, wenn ein Paket für eine gewählte Zielgruppe herausgegeben wird. Die Nachricht enthält nie das Paket selbst.",
+  "p.director_pack.subscribed": "Sie werden benachrichtigt.",
+  "p.director_pack.sweep_heading": "Fälliges jetzt ausführen",
+  "p.director_pack.sweep_result":
+    "Entworfen: {drafted}; übersprungen, weil es schon ein Paket gab: {skipped}.",
+  "p.director_pack.sweep_says":
+    "Entwirft jedes Paket, dessen Tag gekommen ist und das noch keines hat. Nichts wird herausgegeben.",
+  "p.director_pack.sweep": "Fällige Zeitpläne ausführen",
+  "p.director_pack.switch_off": "Ausschalten",
+  "p.director_pack.switch_on": "Einschalten",
+  "p.director_pack.unsubscribed": "Sie werden nicht mehr benachrichtigt.",
   "p.plans.pid.modules_failed":
     "Welche Werkzeuge dieser Plan verwendet, konnte nicht geprüft werden, daher werden alle Werkzeuge aufgeführt.",
   "p._layout_svelte.handling_mark": "Kennzeichnung: {mark}",

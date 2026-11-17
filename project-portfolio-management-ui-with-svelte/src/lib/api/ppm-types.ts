@@ -1488,6 +1488,19 @@ export interface DirectorPackDraftBody {
   cut_off?: string;
 }
 
+/** A monthly director-pack schedule (DP-12): it drafts the audience's pack on a day of each month; it never issues. */
+export interface PackSchedule {
+  pid: string;
+  audience: string;
+  /** 1 to 28, so that every month has it. */
+  day_of_month: number;
+  next_run_date: string;
+  enabled: boolean;
+  last_run_on: string | null;
+  /** The service's own words for the last run: `drafted YYYY-MM` or `skipped YYYY-MM: …`. */
+  last_result: string | null;
+}
+
 /** `GET /api/director-packs/{pid}`: the pack row and its frozen body, as stored. */
 export interface DirectorPack {
   pack: DirectorPackMeta;

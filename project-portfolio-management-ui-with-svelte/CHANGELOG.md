@@ -9,6 +9,23 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — director pack schedules and subscriptions (NC-1 slice 11, DP-12, 2026-11-17)
+
+- `/director-packs/schedules`: each audience's monthly schedule with its day, next run and last result (in the reader's
+  language for the service's two forms, else not shown); add one for an audience without one (a day from 1 to 28, said
+  first), move its day, switch it off and on, and run what is due (drafts, never issues). A reader without editor
+  rights is told which right is needed. `/director-packs` gains a box per audience to be told when a pack is issued; a
+  refused box is put back. Six client methods and the `PackSchedule` type; helpers in `src/lib/pack-actions.ts`; 38 keys
+  in eight catalogues, machine-written and unreviewed.
+- **Fixed:** two forms had `min`/`max` on number inputs, so the browser stopped an out-of-range value with its own
+  bubble, in the browser's language, before the page's check ran: the new schedule form and the canvas page's promote
+  form (slice 9). Both have `novalidate` now, and tests check the page's sentence.
+- **Fixed on the way:** a refused subscription left its box ticked (the value had not changed, so it was not redrawn);
+  the box is put back by hand.
+- Tests: `tests/e2e/director-pack-rhythm.spec.ts` (five, with Welsh and axe), more in `tests/unit/pack-actions.test.ts`
+  and `tests/unit/ppm.test.ts`, and a probability of 6 in `tests/e2e/canvases.spec.ts`.
+- **Not done:** subscribing someone else; listing who is subscribed. **Not verified:** against a real service.
+
 ### Added — drafting, reviewing, issuing and reissuing director packs (NC-1 slice 11, DP-1, DP-12, 2026-11-17)
 
 - `/director-packs` drafts a pack for a month and an audience (the service's four and each active organization), with

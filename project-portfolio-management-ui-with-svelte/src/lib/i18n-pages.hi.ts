@@ -4039,6 +4039,56 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.director_pack.reissue": "बदलाव टिप्पणी के साथ पुनः जारी करें",
   "p.director_pack.review": "समीक्षित चिह्नित करें",
   "p.director_pack.reviewed_done": "समीक्षित चिह्नित किया गया।",
+  "p.director_pack.add_schedule_heading": "कार्यक्रम जोड़ें",
+  "p.director_pack.add_schedule": "कार्यक्रम जोड़ें",
+  "p.director_pack.conflict_schedule":
+    "उस दर्शक का पहले से एक कार्यक्रम है; इसके बजाय उसका दिन बदलें।",
+  "p.director_pack.could_not_change_schedule": "कार्यक्रम नहीं बदला।",
+  "p.director_pack.could_not_load_schedules": "कार्यक्रम लोड नहीं हो सके।",
+  "p.director_pack.could_not_load_subscriptions":
+    "आपको किन पैकों की सूचना मिलती है, यह लोड नहीं हो सका।",
+  "p.director_pack.could_not_subscribe": "बदलाव नहीं सहेजा गया।",
+  "p.director_pack.day_says":
+    "1 से 28 तक का दिन, ताकि हर महीने में हो। पहली बार अगला ऐसा दिन चलेगा।",
+  "p.director_pack.f_day": "महीने का दिन",
+  "p.director_pack.last_drafted": "पिछली बार {when}: {period} का पैक बनाया।",
+  "p.director_pack.last_run": "पिछली बार {when}।",
+  "p.director_pack.last_skipped":
+    "पिछली बार {when}: {period} छोड़ा, उसका पैक पहले से था।",
+  "p.director_pack.move_day": "इस दिन पर ले जाएँ",
+  "p.director_pack.no_schedules": "अभी कोई पैक कार्यक्रम से नहीं बनता।",
+  "p.director_pack.problem_day": "महीने का 1 से 28 तक का दिन चुनें।",
+  "p.director_pack.refused_subscribe":
+    "आपको केवल उन दर्शकों की सूचना मिल सकती है जिनके पैक आप पढ़ सकते हैं।",
+  "p.director_pack.schedule_added": "कार्यक्रम जोड़ा गया।",
+  "p.director_pack.schedule_off":
+    "बंद है। यह हर महीने के दिन {day} को मसौदा बनाता।",
+  "p.director_pack.schedule_on":
+    "हर महीने के दिन {day} को मसौदा बनाता है; अगला {next} को।",
+  "p.director_pack.schedule_saved": "सहेजा गया।",
+  "p.director_pack.schedule_switched_off": "बंद किया गया।",
+  "p.director_pack.schedule_switched_on": "चालू किया गया।",
+  "p.director_pack.schedule_unchanged":
+    "यह पहले से इसका दिन है, इसलिए कुछ नहीं भेजा गया।",
+  "p.director_pack.schedules_intro":
+    "हर कार्यक्रम हर महीने के एक दिन किसी दर्शक का पैक मसौदे के रूप में बनाता है। यह कभी जारी नहीं करता: पोर्टफ़ोलियो कार्यालय मसौदे की समीक्षा करता है और एक व्यक्ति उसे जारी करता है।",
+  "p.director_pack.schedules_link": "मासिक कार्यक्रम",
+  "p.director_pack.schedules_title_ppm": "मासिक कार्यक्रम — PPM",
+  "p.director_pack.schedules_title": "मासिक कार्यक्रम",
+  "p.director_pack.subs_heading": "पैक जारी होने पर मुझे बताएँ",
+  "p.director_pack.subs_legend": "जिन पैकों की सूचना चाहिए",
+  "p.director_pack.subs_says":
+    "आपके चुने दर्शक का पैक जारी होने पर सेवा में एक लिंक के साथ आपको बताया जाता है। सूचना में पैक कभी नहीं होता।",
+  "p.director_pack.subscribed": "आपको बताया जाएगा।",
+  "p.director_pack.sweep_heading": "जो देय है उसे अभी चलाएँ",
+  "p.director_pack.sweep_result":
+    "बनाए गए: {drafted}; पहले से पैक होने के कारण छोड़े गए: {skipped}।",
+  "p.director_pack.sweep_says":
+    "हर वह पैक बनाता है जिसका दिन आ गया है और जो अभी नहीं है। कुछ भी जारी नहीं होता।",
+  "p.director_pack.sweep": "देय कार्यक्रम चलाएँ",
+  "p.director_pack.switch_off": "बंद करें",
+  "p.director_pack.switch_on": "चालू करें",
+  "p.director_pack.unsubscribed": "अब आपको नहीं बताया जाएगा।",
   "p.plans.pid.modules_failed":
     "यह योजना कौन-से टूल उपयोग करती है, यह जाँचा नहीं जा सका, इसलिए हर टूल सूचीबद्ध है।",
   "p._layout_svelte.handling_mark": "हैंडलिंग चिह्न: {mark}",

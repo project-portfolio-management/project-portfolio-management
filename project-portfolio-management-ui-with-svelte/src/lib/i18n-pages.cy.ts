@@ -4203,6 +4203,59 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.director_pack.reissue": "Ailgyhoeddi gyda nodyn newid",
   "p.director_pack.review": "Nodi ei fod wedi'i adolygu",
   "p.director_pack.reviewed_done": "Wedi'i nodi fel wedi'i adolygu.",
+  "p.director_pack.add_schedule_heading": "Ychwanegu amserlen",
+  "p.director_pack.add_schedule": "Ychwanegu'r amserlen",
+  "p.director_pack.conflict_schedule":
+    "Mae gan y gynulleidfa honno amserlen eisoes; newidiwch ei diwrnod yn lle hynny.",
+  "p.director_pack.could_not_change_schedule": "Ni newidiwyd yr amserlen.",
+  "p.director_pack.could_not_load_schedules":
+    "Nid oedd modd llwytho'r amserlenni.",
+  "p.director_pack.could_not_load_subscriptions":
+    "Nid oedd modd llwytho pa becynnau y cewch wybod amdanynt.",
+  "p.director_pack.could_not_subscribe": "Ni chadwyd y newid.",
+  "p.director_pack.day_says":
+    "Diwrnod o 1 i 28, fel bod pob mis yn ei gynnwys. Y rhediad cyntaf yw'r diwrnod hwnnw nesaf.",
+  "p.director_pack.f_day": "Diwrnod o'r mis",
+  "p.director_pack.last_drafted":
+    "Rhediad olaf {when}: drafftiwyd y pecyn ar gyfer {period}.",
+  "p.director_pack.last_run": "Rhediad olaf {when}.",
+  "p.director_pack.last_skipped":
+    "Rhediad olaf {when}: hepgorwyd {period}, a oedd â phecyn eisoes.",
+  "p.director_pack.move_day": "Symud i'r diwrnod hwn",
+  "p.director_pack.no_schedules":
+    "Nid oes pecyn yn cael ei ddrafftio ar amserlen eto.",
+  "p.director_pack.problem_day": "Dewiswch ddiwrnod o'r mis o 1 i 28.",
+  "p.director_pack.refused_subscribe":
+    "Dim ond am y cynulleidfaoedd y cewch ddarllen eu pecynnau y gallwch gael gwybod.",
+  "p.director_pack.schedule_added": "Ychwanegwyd yr amserlen.",
+  "p.director_pack.schedule_off":
+    "Wedi'i diffodd. Byddai'n drafftio ar ddiwrnod {day} o bob mis.",
+  "p.director_pack.schedule_on":
+    "Yn drafftio ar ddiwrnod {day} o bob mis; nesaf ar {next}.",
+  "p.director_pack.schedule_saved": "Wedi'i chadw.",
+  "p.director_pack.schedule_switched_off": "Wedi'i diffodd.",
+  "p.director_pack.schedule_switched_on": "Wedi'i throi ymlaen.",
+  "p.director_pack.schedule_unchanged":
+    "Dyna ei diwrnod eisoes, felly ni anfonwyd dim.",
+  "p.director_pack.schedules_intro":
+    "Mae pob amserlen yn drafftio pecyn cynulleidfa ar ddiwrnod o bob mis. Nid yw byth yn cyhoeddi un: mae'r swyddfa bortffolio'n adolygu'r drafft a pherson yn ei gyhoeddi.",
+  "p.director_pack.schedules_link": "Amserlenni misol",
+  "p.director_pack.schedules_title_ppm": "Amserlenni misol — PPM",
+  "p.director_pack.schedules_title": "Amserlenni misol",
+  "p.director_pack.subs_heading": "Dywedwch wrthyf pan gyhoeddir pecyn",
+  "p.director_pack.subs_legend": "Pecynnau i gael gwybod amdanynt",
+  "p.director_pack.subs_says":
+    "Cewch wybod yn y gwasanaeth, gyda dolen, pan gyhoeddir pecyn ar gyfer cynulleidfa a ddewiswch. Nid yw'r hysbysiad byth yn cynnwys y pecyn ei hun.",
+  "p.director_pack.subscribed": "Cewch wybod.",
+  "p.director_pack.sweep_heading": "Rhedeg yr hyn sy'n ddyledus nawr",
+  "p.director_pack.sweep_result":
+    "Wedi'u drafftio: {drafted}; wedi'u hepgor am fod pecyn eisoes: {skipped}.",
+  "p.director_pack.sweep_says":
+    "Yn drafftio pob pecyn y mae ei ddiwrnod wedi dod ac nad oes ganddo un eto. Ni chyhoeddir dim.",
+  "p.director_pack.sweep": "Rhedeg yr amserlenni dyledus",
+  "p.director_pack.switch_off": "Diffodd",
+  "p.director_pack.switch_on": "Troi ymlaen",
+  "p.director_pack.unsubscribed": "Ni chewch wybod mwyach.",
   "p.plans.pid.modules_failed":
     "Nid oedd modd gwirio pa offer y mae'r cynllun hwn yn eu defnyddio, felly rhestrir pob offeryn.",
   "p._layout_svelte.handling_mark": "Marc trin: {mark}",

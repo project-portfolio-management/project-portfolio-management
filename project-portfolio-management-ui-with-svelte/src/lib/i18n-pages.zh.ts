@@ -3880,6 +3880,53 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.director_pack.reissue": "附变更说明重新发布",
   "p.director_pack.review": "标记为已审阅",
   "p.director_pack.reviewed_done": "已标记为已审阅。",
+  "p.director_pack.add_schedule_heading": "添加计划",
+  "p.director_pack.add_schedule": "添加此计划",
+  "p.director_pack.conflict_schedule": "该受众已有计划；请改为更改其日期。",
+  "p.director_pack.could_not_change_schedule": "计划未更改。",
+  "p.director_pack.could_not_load_schedules": "无法加载计划。",
+  "p.director_pack.could_not_load_subscriptions":
+    "无法加载你会收到通知的报告包。",
+  "p.director_pack.could_not_subscribe": "更改未保存。",
+  "p.director_pack.day_says":
+    "1 到 28 之间的日期，确保每个月都有。首次运行是下一个这样的日期。",
+  "p.director_pack.f_day": "每月日期",
+  "p.director_pack.last_drafted": "上次运行 {when}：已起草 {period} 的报告包。",
+  "p.director_pack.last_run": "上次运行 {when}。",
+  "p.director_pack.last_skipped":
+    "上次运行 {when}：已跳过 {period}，它已有报告包。",
+  "p.director_pack.move_day": "改到此日期",
+  "p.director_pack.no_schedules": "还没有按计划起草的报告包。",
+  "p.director_pack.problem_day": "请选择 1 到 28 之间的每月日期。",
+  "p.director_pack.refused_subscribe":
+    "你只能接收你可阅读其报告包的受众的通知。",
+  "p.director_pack.schedule_added": "已添加计划。",
+  "p.director_pack.schedule_off": "已关闭。它会在每月 {day} 日起草。",
+  "p.director_pack.schedule_on": "每月 {day} 日起草；下一次在 {next}。",
+  "p.director_pack.schedule_saved": "已保存。",
+  "p.director_pack.schedule_switched_off": "已关闭。",
+  "p.director_pack.schedule_switched_on": "已开启。",
+  "p.director_pack.schedule_unchanged":
+    "这已经是它的日期，因此未发送任何内容。",
+  "p.director_pack.schedules_intro":
+    "每个计划在每月的某一天为一个受众起草报告包。它从不发布：由组合办公室审阅草稿，再由一个人发布。",
+  "p.director_pack.schedules_link": "每月计划",
+  "p.director_pack.schedules_title_ppm": "每月计划 — PPM",
+  "p.director_pack.schedules_title": "每月计划",
+  "p.director_pack.subs_heading": "报告包发布时通知我",
+  "p.director_pack.subs_legend": "要接收通知的报告包",
+  "p.director_pack.subs_says":
+    "当你选择的受众的报告包发布时，会在服务中通过链接通知你。通知中从不包含报告包本身。",
+  "p.director_pack.subscribed": "你将收到通知。",
+  "p.director_pack.sweep_heading": "立即运行到期的计划",
+  "p.director_pack.sweep_result":
+    "已起草：{drafted}；因已有报告包而跳过：{skipped}。",
+  "p.director_pack.sweep_says":
+    "起草所有已到日期且尚无报告包的报告包。不会发布任何内容。",
+  "p.director_pack.sweep": "运行到期的计划",
+  "p.director_pack.switch_off": "关闭",
+  "p.director_pack.switch_on": "开启",
+  "p.director_pack.unsubscribed": "你将不再收到通知。",
   "p.plans.pid.modules_failed":
     "无法检查本计划使用了哪些工具，因此列出所有工具。",
   "p._layout_svelte.handling_mark": "处理标记：{mark}",

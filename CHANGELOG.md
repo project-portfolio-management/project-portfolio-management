@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (director pack schedules and subscriptions: NC-1 slice 11, part b)
+
+- **UI: the monthly director-pack schedules and the subscriptions have screens (DP-12).** `/director-packs/schedules`
+  adds, moves, switches off and runs the schedules, which draft and never issue; `/director-packs` lets a reader choose
+  the audiences to be told about when a pack is issued. UI spec, "Director pack schedules and subscriptions"; test
+  `tests/e2e/director-pack-rhythm.spec.ts` (five, with Welsh and axe).
+- **Fixed:** the canvas page's risk scores and the new schedule day were checked by the browser's own bubble, in the
+  browser's language, before the page's sentence could say it; both forms now leave the check to the page.
+- **Not done:** subscribing someone else. **Not verified:** against a real service; the translations are
+  machine-written and unreviewed.
+
 ### 17 November (director packs drafted and issued on screen: NC-1 slice 11, first part)
 
 - **UI: director packs can be drafted, reviewed, issued and reissued on screen (DP-1, DP-12).** `/director-packs`

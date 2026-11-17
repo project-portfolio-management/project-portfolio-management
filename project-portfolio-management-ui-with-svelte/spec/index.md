@@ -212,9 +212,11 @@ match breakdown).
 /plans/[pid]/export          export the plan to Microsoft Project as an
                              MSPDI file (NC-1 slice 10); linked from the
                              plan page
+/director-packs/schedules    the monthly pack schedules: add, move,
+                             switch off, run what is due (NC-1 slice 11)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 114):
+every page; `find src/routes -name +page.svelte` gives all 115):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2051,11 +2053,37 @@ the director-pack and escalation inputs; the rest are listed in `tasks.md` under
 - **Refusals.** A 403 says which right the action needs (issuer to issue; editor for the rest); a 409 says what it
   means for that action (a pack already exists for the period and audience; already issued or waiting for review;
   not the latest version; already reviewed). Anything else is the general sentence; never the service's text.
-- **Not built in this slice:** the monthly schedules, the sweep and audience subscriptions (DP-12's other routes);
+- **Not built in this slice:** the monthly schedules, the sweep and audience subscriptions (built next, below);
   discarding a draft (the service has no route); showing audiences in words in the existing list and heading, which
   still show the stored value.
 - **Tests:** `tests/unit/pack-actions.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
   `tests/e2e/director-pack-actions.spec.ts` (drafting with every problem first and an organization as audience; a
   manual draft reviewed and issued; a scheduled draft waiting for review; a reissue with a short note refused first;
   a 403 for issue and for review and a 409 for a draft; Welsh; axe). The Welsh and the six other languages are
+  machine-written and unreviewed.
+
+## Director pack schedules and subscriptions (NC-1 slice 11, DP-12)
+
+`/director-packs/schedules`, linked from `/director-packs`, holds the monthly schedules (`GET` and `POST
+/api/director-pack-schedules`, `PUT …/{pid}`, `POST …/sweep`); `/director-packs` gains the reader's subscriptions (`GET`
+and `PUT /api/director-pack-subscriptions`).
+
+- **Schedules.** Each audience's schedule (one per audience) says whether it is on, its day and its next run, and its
+  last run's result in the reader's language when it is one the page knows ("drafted" or "skipped" a period, as the
+  service writes them); any other result text is not shown, since it would be the service's English. A schedule is
+  added for an audience that has none (a day from 1 to 28, checked by the page; the form has `novalidate`, so a day out
+  of range is the page's sentence, not the browser's bubble), moved to another day (nothing is sent for the same day),
+  and switched off and on. "Run the due schedules" drafts what is due and says how many were drafted and skipped; the
+  page says that a schedule never issues a pack. A reader without editor rights is told which right the page needs.
+- **Subscriptions.** On `/director-packs`, a box per audience (the four and each active organization) to be told,
+  with a link and never the pack, when a pack for it is issued. A refusal (an audience the reader may not read) is said
+  in the catalogue's words and the box is put back, since nothing changed.
+- **Also fixed:** the canvas page's promote form (slice 9) now has `novalidate` too: a probability or impact of 6 was
+  stopped by the browser's own bubble, in the browser's language, before the page's check could say it.
+- **Not built in this slice:** subscribing someone else (an editor may, by `person`); a list of who is subscribed.
+- **Tests:** `tests/unit/pack-actions.test.ts` (the day, the last result, the refusals), the paths in
+  `tests/unit/ppm.test.ts`, `tests/e2e/director-pack-rhythm.spec.ts` (the schedules with next run and last result; an
+  audience with a schedule not offered again; a day of 29 said first and nothing sent; adding, moving, switching off,
+  running what is due; a 403 on the list; subscribing and unsubscribing, and a refusal putting the box back; Welsh;
+  axe), and `tests/e2e/canvases.spec.ts` (a probability of 6). The Welsh and the six other languages are
   machine-written and unreviewed.

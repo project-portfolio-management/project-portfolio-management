@@ -4104,6 +4104,58 @@ export const PAGES_EN = {
   "p.director_pack.reissue": "Reissue with a change note",
   "p.director_pack.review": "Mark as reviewed",
   "p.director_pack.reviewed_done": "Marked as reviewed.",
+  "p.director_pack.add_schedule_heading": "Add a schedule",
+  "p.director_pack.add_schedule": "Add the schedule",
+  "p.director_pack.conflict_schedule":
+    "That audience already has a schedule; change its day instead.",
+  "p.director_pack.could_not_change_schedule": "The schedule was not changed.",
+  "p.director_pack.could_not_load_schedules":
+    "The schedules could not be loaded.",
+  "p.director_pack.could_not_load_subscriptions":
+    "Which packs you are told about could not be loaded.",
+  "p.director_pack.could_not_subscribe": "The change was not saved.",
+  "p.director_pack.day_says":
+    "A day from 1 to 28, so that every month has it. The first run is the next such day.",
+  "p.director_pack.f_day": "Day of the month",
+  "p.director_pack.last_drafted":
+    "Last run {when}: drafted the pack for {period}.",
+  "p.director_pack.last_run": "Last run {when}.",
+  "p.director_pack.last_skipped":
+    "Last run {when}: skipped {period}, which already had a pack.",
+  "p.director_pack.move_day": "Move to this day",
+  "p.director_pack.no_schedules": "No pack is drafted on a schedule yet.",
+  "p.director_pack.problem_day": "Choose a day of the month from 1 to 28.",
+  "p.director_pack.refused_subscribe":
+    "You can be told only about the audiences whose packs you may read.",
+  "p.director_pack.schedule_added": "Schedule added.",
+  "p.director_pack.schedule_off":
+    "Switched off. It would draft on day {day} of each month.",
+  "p.director_pack.schedule_on":
+    "Drafts on day {day} of each month; next on {next}.",
+  "p.director_pack.schedule_saved": "Saved.",
+  "p.director_pack.schedule_switched_off": "Switched off.",
+  "p.director_pack.schedule_switched_on": "Switched on.",
+  "p.director_pack.schedule_unchanged":
+    "That is already its day, so nothing was sent.",
+  "p.director_pack.schedules_intro":
+    "Each schedule drafts an audience's pack on a day of each month. It never issues one: the portfolio office reviews the draft and a person issues it.",
+  "p.director_pack.schedules_link": "Monthly schedules",
+  "p.director_pack.schedules_title_ppm": "Monthly schedules — PPM",
+  "p.director_pack.schedules_title": "Monthly schedules",
+  "p.director_pack.subs_heading": "Tell me when a pack is issued",
+  "p.director_pack.subs_legend": "Packs to be told about",
+  "p.director_pack.subs_says":
+    "You are told in the service, with a link, when a pack for an audience you choose is issued. The notice never holds the pack itself.",
+  "p.director_pack.subscribed": "You will be told.",
+  "p.director_pack.sweep_heading": "Run what is due now",
+  "p.director_pack.sweep_result":
+    "Drafted: {drafted}; skipped because a pack already existed: {skipped}.",
+  "p.director_pack.sweep_says":
+    "Drafts every pack whose day has come and that has none yet. Nothing is issued.",
+  "p.director_pack.sweep": "Run the due schedules",
+  "p.director_pack.switch_off": "Switch off",
+  "p.director_pack.switch_on": "Switch on",
+  "p.director_pack.unsubscribed": "You will no longer be told.",
   "p.plans.pid.modules_failed":
     "Which tools this plan uses could not be checked, so every tool is listed.",
   "p._layout_svelte.handling_mark": "Handling mark: {mark}",

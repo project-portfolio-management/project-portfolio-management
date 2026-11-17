@@ -598,6 +598,28 @@ describe("PpmClient director pack writes (NC-1 slice 11, DP-1, DP-12)", () => {
   });
 });
 
+describe("PpmClient director pack schedules and subscriptions (NC-1 slice 11, DP-12)", () => {
+  it("lists, adds, changes and runs schedules, and reads and sets subscriptions", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.packSchedules();
+    await ppm.createPackSchedule({ audience: "board", day_of_month: 3 });
+    await ppm.updatePackSchedule("s1", { enabled: false });
+    await ppm.sweepPackSchedules();
+    await ppm.packSubscriptions();
+    await ppm.setPackSubscription({ audience: "board", subscribed: true });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/director-pack-schedules",
+      "POST /api/director-pack-schedules",
+      "PUT /api/director-pack-schedules/s1",
+      "POST /api/director-pack-schedules/sweep",
+      "GET /api/director-pack-subscriptions",
+      "PUT /api/director-pack-subscriptions",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

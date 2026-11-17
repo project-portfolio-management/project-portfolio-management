@@ -162,6 +162,7 @@ import type {
   CanvasTemplate,
   CanvasView,
   DirectorPackDraftBody,
+  PackSchedule,
   InstantiateTemplateBody,
   InstantiatedTemplate,
   PlanTemplate,
@@ -766,6 +767,47 @@ export class PpmClient {
       { body: {} },
     );
   }
+  /** The monthly pack schedules (DP-12); editors and issuers only (403). */
+  packSchedules(): Promise<{ schedules: PackSchedule[] }> {
+    return this.http.get("/api/director-pack-schedules");
+  }
+  /** Draft an audience's pack on a day (1 to 28) of each month; one schedule per audience (409 for a second). */
+  createPackSchedule(body: {
+    audience: string;
+    day_of_month: number;
+  }): Promise<PackSchedule> {
+    return this.http.post("/api/director-pack-schedules", { body });
+  }
+  /** Switch a schedule on or off, or move its day; a field left out is kept. */
+  updatePackSchedule(
+    pid: string,
+    body: { enabled?: boolean; day_of_month?: number },
+  ): Promise<PackSchedule> {
+    return this.http.put(
+      `/api/director-pack-schedules/${encodeURIComponent(pid)}`,
+      { body },
+    );
+  }
+  /** Run the schedules that are due now: it drafts, never issues. */
+  sweepPackSchedules(): Promise<{
+    drafted: string[];
+    skipped: number;
+    issued: number;
+  }> {
+    return this.http.post("/api/director-pack-schedules/sweep", { body: {} });
+  }
+  /** The audiences the caller is told about when a pack is issued. */
+  packSubscriptions(): Promise<{ subscribed_to: string[] }> {
+    return this.http.get("/api/director-pack-subscriptions");
+  }
+  /** Be told, or stop being told, when a pack for an audience is issued (403 for an audience the caller cannot read). */
+  setPackSubscription(body: {
+    audience: string;
+    subscribed: boolean;
+  }): Promise<{ audience: string; subscribed: boolean }> {
+    return this.http.put("/api/director-pack-subscriptions", { body });
+  }
+
   /** Draft the next version of an issued pack with a change note of at least ten characters (DP-1); the latest only. */
   reissueDirectorPack(
     pid: string,

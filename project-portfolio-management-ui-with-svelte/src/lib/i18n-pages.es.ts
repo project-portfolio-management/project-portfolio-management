@@ -4256,6 +4256,59 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.director_pack.reissue": "Reemitir con una nota de cambio",
   "p.director_pack.review": "Marcar como revisado",
   "p.director_pack.reviewed_done": "Marcado como revisado.",
+  "p.director_pack.add_schedule_heading": "Añadir una programación",
+  "p.director_pack.add_schedule": "Añadir la programación",
+  "p.director_pack.conflict_schedule":
+    "Esa audiencia ya tiene una programación; cambie su día en su lugar.",
+  "p.director_pack.could_not_change_schedule": "No se cambió la programación.",
+  "p.director_pack.could_not_load_schedules":
+    "No se pudieron cargar las programaciones.",
+  "p.director_pack.could_not_load_subscriptions":
+    "No se pudo cargar de qué paquetes se le avisa.",
+  "p.director_pack.could_not_subscribe": "No se guardó el cambio.",
+  "p.director_pack.day_says":
+    "Un día del 1 al 28, para que todos los meses lo tengan. La primera ejecución es el siguiente día así.",
+  "p.director_pack.f_day": "Día del mes",
+  "p.director_pack.last_drafted":
+    "Última ejecución {when}: redactó el paquete de {period}.",
+  "p.director_pack.last_run": "Última ejecución {when}.",
+  "p.director_pack.last_skipped":
+    "Última ejecución {when}: omitió {period}, que ya tenía paquete.",
+  "p.director_pack.move_day": "Pasar a este día",
+  "p.director_pack.no_schedules":
+    "Todavía no se redacta ningún paquete según una programación.",
+  "p.director_pack.problem_day": "Elija un día del mes del 1 al 28.",
+  "p.director_pack.refused_subscribe":
+    "Solo se le puede avisar de las audiencias cuyos paquetes puede leer.",
+  "p.director_pack.schedule_added": "Programación añadida.",
+  "p.director_pack.schedule_off":
+    "Desactivada. Redactaría el día {day} de cada mes.",
+  "p.director_pack.schedule_on":
+    "Redacta el día {day} de cada mes; la próxima, el {next}.",
+  "p.director_pack.schedule_saved": "Guardado.",
+  "p.director_pack.schedule_switched_off": "Desactivada.",
+  "p.director_pack.schedule_switched_on": "Activada.",
+  "p.director_pack.schedule_unchanged":
+    "Ese ya es su día, así que no se envió nada.",
+  "p.director_pack.schedules_intro":
+    "Cada programación redacta el paquete de una audiencia un día de cada mes. Nunca emite ninguno: la oficina de cartera revisa el borrador y una persona lo emite.",
+  "p.director_pack.schedules_link": "Programaciones mensuales",
+  "p.director_pack.schedules_title_ppm": "Programaciones mensuales — PPM",
+  "p.director_pack.schedules_title": "Programaciones mensuales",
+  "p.director_pack.subs_heading": "Avisarme cuando se emita un paquete",
+  "p.director_pack.subs_legend": "Paquetes de los que avisar",
+  "p.director_pack.subs_says":
+    "Se le avisa en el servicio, con un enlace, cuando se emite un paquete para una audiencia que elija. El aviso nunca contiene el paquete.",
+  "p.director_pack.subscribed": "Se le avisará.",
+  "p.director_pack.sweep_heading": "Ejecutar lo pendiente ahora",
+  "p.director_pack.sweep_result":
+    "Redactados: {drafted}; omitidos porque ya había paquete: {skipped}.",
+  "p.director_pack.sweep_says":
+    "Redacta cada paquete cuyo día ha llegado y que aún no existe. No se emite nada.",
+  "p.director_pack.sweep": "Ejecutar las programaciones pendientes",
+  "p.director_pack.switch_off": "Desactivar",
+  "p.director_pack.switch_on": "Activar",
+  "p.director_pack.unsubscribed": "Ya no se le avisará.",
   "p.plans.pid.modules_failed":
     "No se pudo comprobar qué herramientas usa este plan, por lo que se muestran todas.",
   "p._layout_svelte.handling_mark": "Marca de tratamiento: {mark}",

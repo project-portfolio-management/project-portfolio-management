@@ -7,10 +7,13 @@ import { ApiError } from "../../src/lib/api/client";
 import {
   CUT_OFF_MAX_DAYS,
   PACK_AUDIENCES,
+  dayProblem,
   draftProblems,
+  lastResult,
   noteProblem,
   packActions,
   refusalKey,
+  rhythmRefusalKey,
 } from "../../src/lib/pack-actions";
 
 const err = (status: number) => new ApiError(status, "x", "service text");
@@ -112,5 +115,42 @@ describe("what a pack's state allows", () => {
     );
     expect(refusalKey("issue", err(422))).toBeNull();
     expect(refusalKey("issue", new Error("offline"))).toBeNull();
+  });
+});
+
+describe("schedules and subscriptions (DP-12)", () => {
+  it("takes a day of the month from 1 to 28 only", () => {
+    expect(dayProblem("1")).toBeNull();
+    expect(dayProblem("28")).toBeNull();
+    expect(dayProblem("29")).toBe("p.director_pack.problem_day");
+    expect(dayProblem("0")).toBe("p.director_pack.problem_day");
+    expect(dayProblem("2.5")).toBe("p.director_pack.problem_day");
+    expect(dayProblem("")).toBe("p.director_pack.problem_day");
+  });
+  it("reads the service's two last-run results and shows nothing for any other text", () => {
+    expect(lastResult("drafted 2026-10")).toEqual({
+      key: "p.director_pack.last_drafted",
+      period: "2026-10",
+    });
+    expect(lastResult("skipped 2026-10: a pack for it already exists")).toEqual(
+      {
+        key: "p.director_pack.last_skipped",
+        period: "2026-10",
+      },
+    );
+    expect(lastResult("failed: database")).toBeNull();
+    expect(lastResult(null)).toBeNull();
+  });
+  it("names the refusals: editor rights for a schedule, a readable audience for a subscription", () => {
+    expect(rhythmRefusalKey("schedule", err(403))).toBe(
+      "p.director_pack.refused_edit",
+    );
+    expect(rhythmRefusalKey("schedule", err(409))).toBe(
+      "p.director_pack.conflict_schedule",
+    );
+    expect(rhythmRefusalKey("subscription", err(403))).toBe(
+      "p.director_pack.refused_subscribe",
+    );
+    expect(rhythmRefusalKey("subscription", err(409))).toBeNull();
   });
 });

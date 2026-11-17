@@ -14,7 +14,7 @@
   import { goto } from "$app/navigation";
   import { errorText } from "#lib/error-text.js";
   import { PpmClient, type DirectorPackMeta, type Organization } from "#lib/api/ppm.js";
-  import { PACK_AUDIENCES, draftProblems, refusalKey } from "#lib/pack-actions.js";
+  import { PACK_AUDIENCES, draftProblems, refusalKey, rhythmRefusalKey } from "#lib/pack-actions.js";
 
   const ppm = PpmClient.withFetch();
   const loaded = resource(async () => (await ppm.directorPacks()).packs, "p.director_pack.could_not_load");
@@ -30,9 +30,46 @@
       orgs = [];
     }
   }
+  // The audiences the reader is told about when a pack is issued (DP-12). Without them the checkboxes are not shown.
+  let subscribed = $state<string[] | null>(null);
+  let subError = $state<string | null>(null);
+  let subNotice = $state("");
+  let subBusy = $state(false);
+  async function loadSubs() {
+    try {
+      subscribed = (await ppm.packSubscriptions()).subscribed_to;
+    } catch (err) {
+      subscribed = null;
+      subError = errorText(err, "p.director_pack.could_not_load_subscriptions");
+    }
+  }
+  async function toggleSub(a: string, on: boolean, box: HTMLInputElement) {
+    subError = null;
+    subNotice = "";
+    subBusy = true;
+    try {
+      await ppm.setPackSubscription({ audience: a, subscribed: on });
+      const before = (subscribed ?? []).filter((x) => x !== a);
+      subscribed = on ? [...before, a] : before;
+      subNotice = on ? t("p.director_pack.subscribed") : t("p.director_pack.unsubscribed");
+    } catch (err) {
+      const k = rhythmRefusalKey("subscription", err);
+      subError = k ? t(k) : errorText(err, "p.director_pack.could_not_subscribe");
+      // The box shows the reader's click until told otherwise: put it back, since nothing changed.
+      box.checked = !on;
+    } finally {
+      subBusy = false;
+    }
+  }
+  const audienceChoices = $derived([
+    ...PACK_AUDIENCES.map((a) => ({ value: a.key, label: t(a.label) })),
+    ...orgs.map((o) => ({ value: o.audience, label: t("p.director_pack.aud_org", { name: o.name }) })),
+  ]);
+
   onMount(() => {
     void loaded.reload();
     void loadOrgs();
+    void loadSubs();
   });
 
   let period = $state("");
@@ -94,6 +131,31 @@
   <p class="muted">{t("p.director_pack.loading")}</p>
 {/if}
 
+<section class="draft" aria-labelledby="subs-h">
+  <h2 id="subs-h">{t("p.director_pack.subs_heading")}</h2>
+  <p class="small muted">{t("p.director_pack.subs_says")}</p>
+  {#if subError}<p class="banner error" role="alert">{subError}</p>{/if}
+  <p class="small" role="status">{subNotice}</p>
+  {#if subscribed}
+    <fieldset class="subs">
+      <legend>{t("p.director_pack.subs_legend")}</legend>
+      {#each audienceChoices as a (a.value)}
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={subscribed.includes(a.value)}
+            disabled={subBusy}
+            onchange={(e) => toggleSub(a.value, e.currentTarget.checked, e.currentTarget)}
+          />
+          {a.label}
+        </label>
+      {/each}
+    </fieldset>
+  {/if}
+</section>
+
+<p class="small"><a href={localeHref("/director-packs/schedules")}>{t("p.director_pack.schedules_link")}</a></p>
+
 <section class="draft" aria-labelledby="draft-h">
   <h2 id="draft-h">{t("p.director_pack.draft_heading")}</h2>
   <p class="small muted">{t("p.director_pack.draft_says")}</p>
@@ -128,5 +190,19 @@
 <style>
   .draft {
     margin-block-start: 2rem;
+  }
+  .subs {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .check input {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    margin: 0;
   }
 </style>

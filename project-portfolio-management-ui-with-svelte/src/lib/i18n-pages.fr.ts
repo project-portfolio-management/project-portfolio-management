@@ -4263,6 +4263,61 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.director_pack.reissue": "Réémettre avec une note de modification",
   "p.director_pack.review": "Marquer comme relu",
   "p.director_pack.reviewed_done": "Marqué comme relu.",
+  "p.director_pack.add_schedule_heading": "Ajouter une planification",
+  "p.director_pack.add_schedule": "Ajouter la planification",
+  "p.director_pack.conflict_schedule":
+    "Ce public a déjà une planification ; changez plutôt son jour.",
+  "p.director_pack.could_not_change_schedule":
+    "La planification n'a pas été modifiée.",
+  "p.director_pack.could_not_load_schedules":
+    "Les planifications n'ont pas pu être chargées.",
+  "p.director_pack.could_not_load_subscriptions":
+    "Les dossiers dont vous êtes prévenu n'ont pas pu être chargés.",
+  "p.director_pack.could_not_subscribe":
+    "La modification n'a pas été enregistrée.",
+  "p.director_pack.day_says":
+    "Un jour de 1 à 28, pour que chaque mois l'ait. La première exécution est le prochain jour de ce type.",
+  "p.director_pack.f_day": "Jour du mois",
+  "p.director_pack.last_drafted":
+    "Dernière exécution {when} : dossier de {period} rédigé.",
+  "p.director_pack.last_run": "Dernière exécution {when}.",
+  "p.director_pack.last_skipped":
+    "Dernière exécution {when} : {period} ignoré, il avait déjà un dossier.",
+  "p.director_pack.move_day": "Passer à ce jour",
+  "p.director_pack.no_schedules":
+    "Aucun dossier n'est encore rédigé selon une planification.",
+  "p.director_pack.problem_day": "Choisissez un jour du mois de 1 à 28.",
+  "p.director_pack.refused_subscribe":
+    "Vous ne pouvez être prévenu que pour les publics dont vous pouvez lire les dossiers.",
+  "p.director_pack.schedule_added": "Planification ajoutée.",
+  "p.director_pack.schedule_off":
+    "Désactivée. Elle rédigerait le {day} de chaque mois.",
+  "p.director_pack.schedule_on":
+    "Rédige le {day} de chaque mois ; prochaine fois le {next}.",
+  "p.director_pack.schedule_saved": "Enregistré.",
+  "p.director_pack.schedule_switched_off": "Désactivée.",
+  "p.director_pack.schedule_switched_on": "Activée.",
+  "p.director_pack.schedule_unchanged":
+    "C'est déjà son jour : rien n'a été envoyé.",
+  "p.director_pack.schedules_intro":
+    "Chaque planification rédige le dossier d'un public un jour de chaque mois. Elle n'en émet jamais : le bureau du portefeuille relit le brouillon et une personne l'émet.",
+  "p.director_pack.schedules_link": "Planifications mensuelles",
+  "p.director_pack.schedules_title_ppm": "Planifications mensuelles — PPM",
+  "p.director_pack.schedules_title": "Planifications mensuelles",
+  "p.director_pack.subs_heading": "Me prévenir quand un dossier est émis",
+  "p.director_pack.subs_legend": "Dossiers dont être prévenu",
+  "p.director_pack.subs_says":
+    "Vous êtes prévenu dans le service, avec un lien, quand un dossier pour un public choisi est émis. L'avis ne contient jamais le dossier lui-même.",
+  "p.director_pack.subscribed": "Vous serez prévenu.",
+  "p.director_pack.sweep_heading": "Exécuter ce qui est dû maintenant",
+  "p.director_pack.sweep_result":
+    "Rédigés : {drafted} ; ignorés car un dossier existait déjà : {skipped}.",
+  "p.director_pack.sweep_says":
+    "Rédige chaque dossier dont le jour est venu et qui n'existe pas encore. Rien n'est émis.",
+  "p.director_pack.sweep": "Exécuter les planifications dues",
+  "p.director_pack.switch_off": "Désactiver",
+  "p.director_pack.switch_on": "Activer",
+  "p.director_pack.unsubscribed": "Vous ne serez plus prévenu.",
   "p.plans.pid.modules_failed":
     "Les outils utilisés par ce plan n'ont pas pu être vérifiés ; tous les outils sont donc listés.",
   "p._layout_svelte.handling_mark": "Marque de traitement : {mark}",

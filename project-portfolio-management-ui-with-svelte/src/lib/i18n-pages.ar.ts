@@ -4033,6 +4033,54 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.director_pack.reissue": "إعادة الإصدار مع ملاحظة تغيير",
   "p.director_pack.review": "وضع علامة مراجَعة",
   "p.director_pack.reviewed_done": "وُضعت علامة مراجَعة.",
+  "p.director_pack.add_schedule_heading": "إضافة جدول",
+  "p.director_pack.add_schedule": "إضافة الجدول",
+  "p.director_pack.conflict_schedule":
+    "لهذا الجمهور جدول بالفعل؛ غيّر يومه بدلًا من ذلك.",
+  "p.director_pack.could_not_change_schedule": "لم يُغيَّر الجدول.",
+  "p.director_pack.could_not_load_schedules": "تعذر تحميل الجداول.",
+  "p.director_pack.could_not_load_subscriptions":
+    "تعذر تحميل الحزم التي تُبلَّغ بها.",
+  "p.director_pack.could_not_subscribe": "لم يُحفظ التغيير.",
+  "p.director_pack.day_says":
+    "يوم من 1 إلى 28، ليكون في كل شهر. أول تشغيل هو اليوم التالي المطابق.",
+  "p.director_pack.f_day": "يوم الشهر",
+  "p.director_pack.last_drafted": "آخر تشغيل {when}: صيغت حزمة {period}.",
+  "p.director_pack.last_run": "آخر تشغيل {when}.",
+  "p.director_pack.last_skipped":
+    "آخر تشغيل {when}: تُرك {period}، إذ كانت له حزمة.",
+  "p.director_pack.move_day": "النقل إلى هذا اليوم",
+  "p.director_pack.no_schedules": "لا تُصاغ أي حزمة وفق جدول بعد.",
+  "p.director_pack.problem_day": "اختر يومًا من الشهر من 1 إلى 28.",
+  "p.director_pack.refused_subscribe":
+    "لا يمكن إبلاغك إلا بالجماهير التي يمكنك قراءة حزمها.",
+  "p.director_pack.schedule_added": "أُضيف الجدول.",
+  "p.director_pack.schedule_off": "متوقف. كان سيصوغ في اليوم {day} من كل شهر.",
+  "p.director_pack.schedule_on":
+    "يصوغ في اليوم {day} من كل شهر؛ التالي في {next}.",
+  "p.director_pack.schedule_saved": "حُفظ.",
+  "p.director_pack.schedule_switched_off": "أُوقف.",
+  "p.director_pack.schedule_switched_on": "شُغّل.",
+  "p.director_pack.schedule_unchanged": "هذا يومه بالفعل، فلم يُرسل شيء.",
+  "p.director_pack.schedules_intro":
+    "يصوغ كل جدول حزمة جمهور في يوم من كل شهر. ولا يصدر أيًّا منها أبدًا: يراجع مكتب المحفظة المسودة ويصدرها شخص.",
+  "p.director_pack.schedules_link": "الجداول الشهرية",
+  "p.director_pack.schedules_title_ppm": "الجداول الشهرية — PPM",
+  "p.director_pack.schedules_title": "الجداول الشهرية",
+  "p.director_pack.subs_heading": "أبلغني عند إصدار حزمة",
+  "p.director_pack.subs_legend": "الحزم التي أُبلَّغ بها",
+  "p.director_pack.subs_says":
+    "تُبلَّغ في الخدمة، مع رابط، عند إصدار حزمة لجمهور تختاره. ولا يحتوي الإشعار الحزمة نفسها أبدًا.",
+  "p.director_pack.subscribed": "ستُبلَّغ.",
+  "p.director_pack.sweep_heading": "تشغيل المستحق الآن",
+  "p.director_pack.sweep_result":
+    "صيغت: {drafted}؛ تُركت لأن حزمة كانت موجودة: {skipped}.",
+  "p.director_pack.sweep_says":
+    "يصوغ كل حزمة حلّ يومها وليست لها حزمة بعد. لا يصدر شيء.",
+  "p.director_pack.sweep": "تشغيل الجداول المستحقة",
+  "p.director_pack.switch_off": "إيقاف",
+  "p.director_pack.switch_on": "تشغيل",
+  "p.director_pack.unsubscribed": "لن تُبلَّغ بعد الآن.",
   "p.plans.pid.modules_failed":
     "تعذّر التحقق من الأدوات التي تستخدمها هذه الخطة، لذا تُدرج كل الأدوات.",
   "p._layout_svelte.handling_mark": "علامة التداول: {mark}",

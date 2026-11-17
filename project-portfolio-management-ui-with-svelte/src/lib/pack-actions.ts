@@ -88,3 +88,44 @@ export function refusalKey(action: PackAction, err: unknown): StringKey | null {
   }
   return null;
 }
+
+/** The problem with a schedule's day of the month, or `null`: a whole number from 1 to 28, so every month has it. */
+export function dayProblem(day: string): StringKey | null {
+  const n = Number(day);
+  return /^\d+$/.test(day.trim()) && n >= 1 && n <= 28
+    ? null
+    : "p.director_pack.problem_day";
+}
+
+/**
+ * A schedule's last result in the reader's language: the service writes `drafted YYYY-MM` or `skipped YYYY-MM: …`.
+ * Anything else is not shown (`null`), since it would be the service's own English.
+ */
+export function lastResult(
+  result: string | null,
+): { key: StringKey; period: string } | null {
+  const m = result?.match(/^(drafted|skipped) (\d{4}-\d{2})\b/);
+  if (!m) return null;
+  return {
+    key:
+      m[1] === "drafted"
+        ? "p.director_pack.last_drafted"
+        : "p.director_pack.last_skipped",
+    period: m[2]!,
+  };
+}
+
+/** The sentence for a refused schedule or subscription change; `null` for anything else. */
+export function rhythmRefusalKey(
+  what: "schedule" | "subscription",
+  err: unknown,
+): StringKey | null {
+  if (!(err instanceof ApiError)) return null;
+  if (err.status === 403)
+    return what === "schedule"
+      ? "p.director_pack.refused_edit"
+      : "p.director_pack.refused_subscribe";
+  if (err.status === 409 && what === "schedule")
+    return "p.director_pack.conflict_schedule";
+  return null;
+}

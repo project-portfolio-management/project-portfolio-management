@@ -379,6 +379,14 @@ test("an item becomes an idea once; a risk only on a plan's canvas, with both sc
   await expect(page.getByRole("alert")).toHaveText(
     "A risk needs a probability and an impact, each a whole number from 1 to 5.",
   );
+  // Out of range: the page's sentence, not the browser's own bubble (the form has novalidate).
+  await page.getByLabel("Probability (1 to 5)").fill("6");
+  await page.getByLabel("Impact (1 to 5)").fill("5");
+  await page.getByRole("button", { name: "Turn it into this" }).click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "A risk needs a probability and an impact, each a whole number from 1 to 5.",
+  );
+  await page.getByLabel("Probability (1 to 5)").fill("4");
   await page.getByLabel("Impact (1 to 5)").fill("5");
   await page.getByRole("button", { name: "Turn it into this" }).click();
   await expect(

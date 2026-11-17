@@ -155,8 +155,8 @@ mod tests {
     /// `map_err`) or goes through `record_or_log_on`, which logs it and counts it.
     #[test]
     fn no_source_file_discards_an_audit_error() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut stack = vec![root];
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mut stack = vec![manifest.join("src"), manifest.join("domain/src")];
         let mut offenders = Vec::new();
         while let Some(dir) = stack.pop() {
             for entry in std::fs::read_dir(&dir).expect("read src") {
@@ -247,8 +247,8 @@ mod tests {
             "= crate::db::begin(",
             "= db::begin(",
         ];
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut stack = vec![root];
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let mut stack = vec![manifest.join("src"), manifest.join("domain/src")];
         let (mut faults, mut seen) = (Vec::new(), 0_usize);
         while let Some(dir) = stack.pop() {
             for entry in std::fs::read_dir(&dir).expect("read src") {

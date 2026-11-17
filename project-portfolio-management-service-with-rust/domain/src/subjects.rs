@@ -1,0 +1,429 @@
+//! Data-subject requests (RG-6): everything held about one person reference, and its replacement by
+//! a pseudonym. The pure parts, unit-tested; the SQL runner is in `project_portfolio_management::controllers::subjects`.
+//!
+//! **Policy: the deployment chooses (WW-1.8), pseudonymise by default.** [`ErasurePolicy::Pseudonymise`]
+//! replaces the reference with a stable pseudonym: the audit trail keeps showing that one (unnamed)
+//! person did these things, and the link to the person is gone (plan §62 question 2 recommended it).
+//! [`ErasurePolicy::Delete`] deletes the rows that exist only for the person ([`OWN_ROWS`]: their
+//! preferences, tokens, saved views, notifications and the like) and replaces every other reference,
+//! the audit trail's included, with a random reference that nothing can recompute, so even records of
+//! the same person are no longer known to be one person's. Shared records (a task, a risk, an audit
+//! row) are never deleted under either policy: they are other people's evidence too. The policy is
+//! `PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY`; which one a law requires is for the deployment's
+//! data-protection officer, and this code takes no position on it.
+//!
+//! **What this does not find:** a name or an e-mail address typed into free text (a title, a comment,
+//! a document), the content of uploaded files, the `snapshot` JSON of an audit row, the `actor` inside an
+//! outbox event's `payload` (`axa_outbox_payloads`, kept with no end date as the record of what was disclosed; owner
+//! decision, 9 November 2026), the operator in an outbox attempt's `by`, and backups.
+//! Those need a human search and the retention schedule.
+
+use sha2::{Digest, Sha256};
+use uuid::Uuid;
+
+/// Whether `name` is a plain SQL identifier (lower-case letters, digits, `_`), as every table and
+/// column in [`COLUMNS`] is. The only names written into the subjects SQL are these (CQ-12).
+#[must_use]
+pub fn is_plain_identifier(name: &str) -> bool {
+    !name.is_empty()
+        && !name.starts_with(|c: char| c.is_ascii_digit())
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+}
+
+/// Every `(table, column)` that holds a **person reference** (a token subject, or a
+/// `person:`/`worker:` reference). A test keeps this in step with
+/// `governance/personal-data-inventory.csv`.
+pub const COLUMNS: &[(&str, &str)] = &[
+    ("access_records", "person_ref"),
+    ("access_records", "recorded_by"),
+    ("allocations", "person_ref"),
+    ("announcements", "author_ref"),
+    ("approval_requests", "approver_ref"),
+    ("approval_requests", "decided_by"),
+    ("approval_requests", "requested_by"),
+    ("artifacts", "created_by"),
+    ("attachments", "uploaded_by"),
+    ("audit_logs", "actor"),
+    ("bulk_jobs", "cancelled_by"),
+    ("bulk_jobs", "requested_by"),
+    ("business_case_targets", "approved_by_ref"),
+    ("canvas_items", "owner_ref"),
+    ("ceremonies", "facilitator_ref"),
+    ("comment_edits", "edited_by"),
+    ("comments", "author_sub"),
+    ("components", "lead_ref"),
+    ("control_actions", "owner_ref"),
+    ("controlled_documents", "created_by"),
+    ("controls", "owner_ref"),
+    ("cost_rate_tables", "person_ref"),
+    ("cost_rates", "created_by"),
+    ("document_versions", "created_by"),
+    ("feed_tokens", "sub"),
+    ("gate_reviews", "approver_ref"),
+    ("guest_grants", "granted_by"),
+    ("guest_grants", "guest_sub"),
+    ("key_result_check_ins", "actor"),
+    ("key_results", "owner_ref"),
+    ("kpi_readings", "actor"),
+    ("kpis", "owner_ref"),
+    ("merge_records", "actor"),
+    ("milestone_slips", "actor"),
+    ("non_working_periods", "person_ref"),
+    ("notification_prefs", "sub"),
+    ("notification_sinks", "sub"),
+    ("notifications", "recipient_ref"),
+    ("onboarding_cases", "created_by"),
+    ("onboarding_cases", "subject_ref"),
+    ("onboarding_items", "owner_ref"),
+    ("onboarding_items", "resolved_by"),
+    ("person_availabilities", "person_ref"),
+    ("phase_transitions", "actor"),
+    ("plan_links", "created_by"),
+    ("frameworks", "created_by"),
+    ("plan_frameworks", "set_by"),
+    ("plan_tolerances", "set_by"),
+    ("scoring_inputs", "set_by"),
+    ("axa_idempotency", "caller"),
+    ("lessons", "recorded_by"),
+    ("meetings", "created_by"),
+    ("meetings", "held_by"),
+    ("plan_status_cadences", "set_by"),
+    ("status_updates", "posted_by"),
+    ("escalations", "raised_by"),
+    ("escalations", "owner_ref"),
+    ("escalation_events", "actor"),
+    ("plan_templates", "created_by"),
+    ("planned_slots", "sub"),
+    ("process_execution_logs", "actor"),
+    ("process_executions", "started_by"),
+    ("process_versions", "created_by"),
+    ("processes", "created_by"),
+    ("proposals", "sponsor_ref"),
+    ("raci_assignments", "person_ref"),
+    ("reactions", "sub"),
+    ("report_schedules", "owner"),
+    ("resource_roles", "person_ref"),
+    ("review_queue_items", "resolved_by"),
+    ("reviews", "invited_by"),
+    ("reviews", "reviewer_ref"),
+    ("risks", "owner_ref"),
+    ("saved_views", "sub"),
+    ("schedule_baselines", "created_by"),
+    ("scheduled_actions", "created_by"),
+    ("task_transitions", "actor_ref"),
+    ("task_transitions", "assignee_ref"),
+    ("tasks", "assignee_ref"),
+    ("time_entries", "actor_ref"),
+    ("time_entry_costs", "person_ref"),
+    ("timesheet_weeks", "decided_by"),
+    ("timesheet_weeks", "person_ref"),
+    ("value_points", "actor"),
+    ("watchers", "sub"),
+    ("plan_handling_marks", "set_by"),
+    ("delivery_confidence_assessments", "assessor"),
+    ("delivery_exceptions", "opened_by"),
+    ("delivery_exceptions", "decided_by"),
+    ("delivery_exceptions", "owner_ref"),
+    ("strategic_aims", "marked_by"),
+    ("planned_gates", "set_by"),
+    ("funding_sources", "created_by"),
+    ("programme_buffers", "declared_by"),
+    ("funding_allocations", "created_by"),
+    ("cost_code_maps", "created_by"),
+    ("escalation_levels", "set_by"),
+    ("criterion_evidence", "recorded_by"),
+    ("cutover_decisions", "decided_by"),
+    ("cutover_criteria", "marked_by"),
+    ("cutover_cosignatures", "signed_by"),
+    ("deployment_moves", "requested_by"),
+    ("deployment_moves", "decided_by"),
+    ("deployment_moves", "approver_ref"),
+    ("start_overrides", "decided_by"),
+    ("email_deliveries", "recipient"),
+    ("programme_triages", "decided_by"),
+    ("threshold_decisions", "decided_by"),
+    ("key_person_entries", "subject"),
+    ("key_person_entries", "successor_ref"),
+    ("contingent_workers", "person_ref"),
+    ("milestone_signoffs", "signed_by"),
+    ("buffer_recovery_actions", "owner_ref"),
+    ("benefit_validations", "validator"),
+    ("capacity_commitments", "updated_by"),
+    ("director_packs", "reviewed_by"),
+    ("director_pack_schedules", "created_by"),
+    ("director_pack_subscriptions", "person_ref"),
+    ("programme_status_decisions", "decided_by"),
+    ("director_packs", "drafted_by"),
+    ("director_packs", "issued_by"),
+    ("change_requests", "requested_by"),
+    ("change_requests", "approver_ref"),
+    ("change_requests", "decided_by"),
+    ("break_glass_grants", "sub"),
+    ("break_glass_grants", "notify_ref"),
+    ("break_glass_grants", "revoked_by"),
+    ("issues", "owner_ref"),
+    ("issues", "raised_by"),
+    ("plan_role_members", "person_ref"),
+    ("plan_role_members", "added_by"),
+    ("framework_versions", "created_by"),
+];
+
+/// The `(table, column)` pairs whose rows exist only for the person they name: under
+/// [`ErasurePolicy::Delete`] those rows are deleted rather than re-pointed. Each is also in [`COLUMNS`]
+/// (a test checks), and no table refers to these rows by a foreign key.
+pub const OWN_ROWS: &[(&str, &str)] = &[
+    ("director_pack_subscriptions", "person_ref"),
+    ("feed_tokens", "sub"),
+    ("notification_prefs", "sub"),
+    ("notification_sinks", "sub"),
+    ("notifications", "recipient_ref"),
+    ("plan_role_members", "person_ref"),
+    ("planned_slots", "sub"),
+    ("reactions", "sub"),
+    ("saved_views", "sub"),
+    ("watchers", "sub"),
+];
+
+/// The deployment setting that chooses the erasure policy (WW-1.8).
+pub const POLICY_ENV: &str = "PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY";
+
+/// What an erasure does to a person's references (WW-1.8). See the module documentation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErasurePolicy {
+    /// Replace every reference with a stable pseudonym (the default).
+    Pseudonymise,
+    /// Delete the person's own rows and replace every other reference with a random one.
+    Delete,
+}
+
+impl ErasurePolicy {
+    /// The policy's name, as the setting and the answer spell it.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Pseudonymise => "pseudonymise",
+            Self::Delete => "delete",
+        }
+    }
+}
+
+/// The policy from the setting's text: unset or blank is [`ErasurePolicy::Pseudonymise`].
+///
+/// # Errors
+///
+/// Any other value than `pseudonymise` or `delete` (in any case): an erasure must not run under a
+/// policy nobody chose.
+pub fn parse_policy(raw: Option<&str>) -> Result<ErasurePolicy, String> {
+    match raw.map(|v| v.trim().to_ascii_lowercase()).as_deref() {
+        None | Some("" | "pseudonymise" | "pseudonymize") => Ok(ErasurePolicy::Pseudonymise),
+        Some("delete") => Ok(ErasurePolicy::Delete),
+        Some(other) => Err(format!(
+            "{POLICY_ENV} must be pseudonymise or delete (got {other:?})"
+        )),
+    }
+}
+
+/// The deployment's erasure policy ([`parse_policy`] of [`POLICY_ENV`]).
+///
+/// # Errors
+///
+/// As [`parse_policy`].
+pub fn deployment_policy() -> Result<ErasurePolicy, String> {
+    parse_policy(std::env::var(POLICY_ENV).ok().as_deref())
+}
+
+/// A random reference for [`ErasurePolicy::Delete`]: a version-8 UUID like a pseudonym (so it is
+/// refused as a subject again), but from random bytes, so neither the salt nor the identifier can
+/// recompute it.
+#[must_use]
+pub fn erasure_marker() -> Uuid {
+    let mut bytes = *Uuid::new_v4().as_bytes();
+    bytes[6] = (bytes[6] & 0x0f) | 0x80;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Uuid::from_bytes(bytes)
+}
+
+/// Identifier columns in the inventory that are **not** person references, with the reason.
+pub const EXCLUDED: &[(&str, &str, &str)] = &[
+    (
+        "axa_outbox_attempts",
+        "by",
+        "the operator who released or erased an outgoing event, kept in a record whose tables refuse every change, so it can be neither pseudonymized nor erased; not searched either (a known gap)",
+    ),
+    (
+        "email_deliveries",
+        "subject_ref",
+        "the pid of the record the email is about (a sink delivery), not a person",
+    ),
+    (
+        "delivery_confidence_assessments",
+        "value",
+        "a point on a five-point scale",
+    ),
+    ("delivery_exceptions", "decide_by", "a date"),
+    ("adoption_snapshots", "active_users", "a count"),
+    ("adoption_snapshots", "target_users", "a count"),
+    ("business_case_targets", "promised_by", "a date"),
+    (
+        "document_versions",
+        "superseded_by",
+        "a version id, not a person",
+    ),
+    ("hammock_links", "member_pid", "a plan id, not a person"),
+    (
+        "report_definitions",
+        "group_by",
+        "a grouping name, not a person",
+    ),
+    ("reviews", "reviewer_scope", "a scope label, not a person"),
+    (
+        "notification_sinks",
+        "destination",
+        "a contact address; listed in the export, removed by the person in their preferences",
+    ),
+];
+
+/// The values a stored reference to this person can take: the bare identifier (a token subject, as
+/// the audit trail and many `*_by` columns store it), and `person:<id>` / `worker:<id>`. Input may be
+/// any of those forms. Empty for a blank input.
+#[must_use]
+pub fn forms(subject: &str) -> Vec<String> {
+    let s = subject.trim();
+    let id = s
+        .strip_prefix("person:")
+        .or_else(|| s.strip_prefix("worker:"))
+        .unwrap_or(s)
+        .trim();
+    if id.is_empty() {
+        return Vec::new();
+    }
+    vec![
+        id.to_string(),
+        format!("person:{id}"),
+        format!("worker:{id}"),
+    ]
+}
+
+/// The identifier inside any form of a reference.
+#[must_use]
+pub fn bare(subject: &str) -> String {
+    forms(subject).into_iter().next().unwrap_or_default()
+}
+
+/// A stable pseudonym for a person: a UUID derived from SHA-256 of the salt and the bare identifier.
+/// The same person always gets the same pseudonym, so records stay linked to each other. With an empty
+/// salt, anyone who already knows the identifier can recompute it; set a secret salt to prevent that.
+#[must_use]
+pub fn pseudonym(subject: &str, salt: &str) -> Uuid {
+    let mut hasher = Sha256::new();
+    hasher.update(b"ppm-subject-pseudonym-v1\0");
+    hasher.update(salt.as_bytes());
+    hasher.update(b"\0");
+    hasher.update(bare(subject).as_bytes());
+    let digest = hasher.finalize();
+    let mut bytes = [0_u8; 16];
+    bytes.copy_from_slice(&digest[..16]);
+    // Mark it as a version-8 (custom) UUID so it is recognisable and valid.
+    bytes[6] = (bytes[6] & 0x0f) | 0x80;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Uuid::from_bytes(bytes)
+}
+
+/// Whether a value is already a pseudonym this module produced (version 8, variant 1) in any form.
+#[must_use]
+pub fn is_pseudonym(value: &str) -> bool {
+    Uuid::parse_str(&bare(value)).is_ok_and(|u| u.get_version_num() == 8)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// CQ-12: every name the subjects SQL is built from is a plain identifier, and the check
+    /// refuses anything that could close a quote or start a second statement.
+    #[test]
+    fn every_listed_name_is_a_plain_identifier() {
+        for (table, column) in COLUMNS {
+            assert!(is_plain_identifier(table), "{table}");
+            assert!(is_plain_identifier(column), "{column}");
+        }
+        for bad in ["", "a\"b", "a;drop", "A", "1a", "a b", "a-b"] {
+            assert!(!is_plain_identifier(bad), "{bad}");
+        }
+    }
+
+    #[test]
+    fn every_form_of_a_reference_names_the_same_person() {
+        let id = "3f2c6b7e-0000-4000-8000-00000000000a";
+        let expected = vec![
+            id.to_string(),
+            format!("person:{id}"),
+            format!("worker:{id}"),
+        ];
+        assert_eq!(forms(id), expected);
+        assert_eq!(forms(&format!("person:{id}")), expected);
+        assert_eq!(forms(&format!(" worker:{id} ")), expected);
+        assert!(forms("  ").is_empty());
+        assert!(forms("person:").is_empty());
+    }
+
+    #[test]
+    fn the_pseudonym_is_stable_distinct_and_salted() {
+        let a = pseudonym("person:ada", "");
+        assert_eq!(a, pseudonym("ada", ""));
+        assert_eq!(a, pseudonym("worker:ada", ""));
+        assert_ne!(a, pseudonym("bob", ""));
+        assert_ne!(a, pseudonym("ada", "secret"));
+        assert_eq!(a.get_version_num(), 8);
+        assert!(is_pseudonym(&a.to_string()));
+        assert!(is_pseudonym(&format!("person:{a}")));
+        assert!(!is_pseudonym("3f2c6b7e-0000-4000-8000-00000000000a"));
+    }
+
+    /// WW-1.8: the deployment chooses the policy; unset is pseudonymise; a typo is refused.
+    #[test]
+    fn the_erasure_policy_is_a_setting() {
+        assert_eq!(parse_policy(None), Ok(ErasurePolicy::Pseudonymise));
+        assert_eq!(parse_policy(Some(" ")), Ok(ErasurePolicy::Pseudonymise));
+        assert_eq!(
+            parse_policy(Some("Pseudonymize")),
+            Ok(ErasurePolicy::Pseudonymise)
+        );
+        assert_eq!(parse_policy(Some(" DELETE ")), Ok(ErasurePolicy::Delete));
+        let e = parse_policy(Some("purge")).unwrap_err();
+        assert!(e.contains(POLICY_ENV), "{e}");
+        assert_eq!(ErasurePolicy::Delete.name(), "delete");
+    }
+
+    #[test]
+    fn the_erasure_marker_is_random_and_refused_as_a_subject() {
+        let (a, b) = (erasure_marker(), erasure_marker());
+        assert_ne!(a, b);
+        assert!(is_pseudonym(&a.to_string()));
+        assert!(is_pseudonym(&format!("person:{b}")));
+    }
+
+    #[test]
+    fn a_persons_own_rows_are_listed_columns() {
+        for pair in OWN_ROWS {
+            assert!(COLUMNS.contains(pair), "{pair:?} is not in COLUMNS");
+        }
+        // The audit trail and shared work records are never among the rows deleted.
+        for shared in ["audit_logs", "tasks", "risks", "time_entries", "comments"] {
+            assert!(!OWN_ROWS.iter().any(|(t, _)| *t == shared), "{shared}");
+        }
+    }
+
+    #[test]
+    fn the_column_list_has_no_duplicates_and_no_overlap_with_the_exclusions() {
+        for (i, a) in COLUMNS.iter().enumerate() {
+            assert!(!COLUMNS[i + 1..].contains(a), "{a:?} twice");
+            assert!(
+                !EXCLUDED.iter().any(|(t, c, _)| (*t, *c) == *a),
+                "{a:?} is both included and excluded"
+            );
+        }
+    }
+}

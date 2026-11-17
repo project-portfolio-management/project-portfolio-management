@@ -43,8 +43,8 @@ generate() {
   mounted=$(grep -cE '^[A-Z]+ /' "$API/api-routes.txt" || true)
   # openapi.json is written by a test with sorted keys and two-space indent: a path key sits four spaces in.
   documented=$(grep -cE '^    "/' "$API/openapi.json" || true)
-  svc_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$API/src" "$API/tests" "$API/migration/src")
-  svc_ignored=$(count_rs '^[[:space:]]*#\[ignore' "$API/src" "$API/tests" "$API/migration/src")
+  svc_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$API/src" "$API/tests" "$API/migration/src" "$API/domain/src")
+  svc_ignored=$(count_rs '^[[:space:]]*#\[ignore' "$API/src" "$API/tests" "$API/migration/src" "$API/domain/src")
   mat_tests=$(count_rs '^[[:space:]]*#\[(tokio::)?test' "$MATCHER/src" "$MATCHER/tests")
   mat_ignored=$(count_rs '^[[:space:]]*#\[ignore' "$MATCHER/src" "$MATCHER/tests")
   vitest=$(count_ts '^[[:space:]]*(it|test)(\.each)?[(`]' "$UI/tests/unit")
@@ -66,7 +66,7 @@ generate() {
   echo "| Migrations | $migrations | files in \`migration/migrations\` (a \`.sql\` or \`.up.sql\` each) |"
   echo "| Mounted routes | $mounted | \`METHOD /path\` lines in the service's \`api-routes.txt\` (one per method, so this exceeds the path count) |"
   echo "| Documented API paths | $documented | path keys in the service's \`openapi.json\` |"
-  echo "| Service tests | $svc_tests, plus $svc_ignored \`#[ignore]\`d (database or container gated) | \`#[test]\` and \`#[tokio::test]\` lines; \`#[ignore]\` lines, in \`src\`, \`tests\`, \`migration/src\` |"
+  echo "| Service tests | $svc_tests, plus $svc_ignored \`#[ignore]\`d (database or container gated) | \`#[test]\` and \`#[tokio::test]\` lines; \`#[ignore]\` lines, in \`src\`, \`tests\`, \`migration/src\`, \`domain/src\` |"
   echo "| Matcher tests | $mat_tests, plus $mat_ignored \`#[ignore]\`d | the same patterns in the matcher \`src\` and \`tests\` |"
   echo "| Front-end unit tests (vitest) | $vitest | \`it(\` / \`test(\` lines in \`tests/unit\` |"
   echo "| Front-end end-to-end tests (Playwright) | $playwright | \`test(\` lines in \`tests/e2e\` |"

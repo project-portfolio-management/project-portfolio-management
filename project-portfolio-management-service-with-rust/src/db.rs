@@ -212,6 +212,8 @@ mod tests {
             manifest.join("src"),
             manifest.join("tests"),
             manifest.join("benches"),
+            manifest.join("domain/src"),
+            manifest.join("domain/tests"),
         ];
         let (mut offenders, mut files) = (Vec::new(), 0_usize);
         while let Some(dir) = stack.pop() {

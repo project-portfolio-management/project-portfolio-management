@@ -283,7 +283,8 @@ mod tests {
     #[test]
     fn every_published_live_event_kind_is_described() {
         let mut published = std::collections::BTreeSet::new();
-        let mut stack = vec![std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src")];
+        let manifest = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let mut stack = vec![manifest.join("src"), manifest.join("domain/src")];
         while let Some(dir) = stack.pop() {
             for entry in std::fs::read_dir(dir).unwrap().flatten() {
                 let path = entry.path();

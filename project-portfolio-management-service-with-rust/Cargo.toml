@@ -1,4 +1,7 @@
 [workspace]
+# The service, its migrations, and the pure domain logic (`domain/`, which may not depend on the service, axum, axa or
+# sqlx; spec §8).
+members = ["domain", "migration"]
 
 [package]
 name = "project-portfolio-management"
@@ -51,12 +54,8 @@ tokio = { version = "1.54", default-features = false, features = [
   # `net` for the sink dispatcher's DNS check (src/controllers/sinks.rs).
   "net",
 ] }
-# Office documents are zip containers: read their XML for text extraction
-# (PL-8). Deflate only; no encryption, no unsafe formats.
-zip = { version = "9", default-features = false, features = ["deflate"] }
-# Read-only XML parsing for MS Project (MSPDI) import (PJ-10): no external
-# entities, a node cap, and no DTD.
-roxmltree = "0.21"
+# `zip` (office text extraction, PL-8) and `roxmltree` (MSPDI import, PJ-10) moved to the domain crate with
+# `extract` and `mspdi`.
 # Server-sent events (PL-3): a stream built from the broadcast receiver.
 async-stream = { version = "0.3" }
 async-trait = { version = "0.1" }
@@ -67,6 +66,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # rest of the family, so one index format.
 tantivy = { version = "0.27" }
 project-portfolio-management-migration = { version = "0.2.0", path = "migration" }
+# The pure domain modules (`cpm`, `evm`, `tz`, …), re-exported from `src/lib.rs` under their old names.
+project-portfolio-management-domain = { version = "0.2.0", path = "domain" }
 # Plain SQL, through `src/db.rs` (spec §8.3b).
 futures-core = "0.3"
 sqlx = { version = "0.9", default-features = false, features = ["chrono", "derive", "json", "postgres", "runtime-tokio", "rust_decimal", "uuid"] }

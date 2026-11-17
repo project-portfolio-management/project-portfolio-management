@@ -116,19 +116,22 @@ _OTHER = None
 
 
 def other_type(name):
-    """`crate::module::Name` for a type with `JsonSchema` defined outside the controllers, if exactly one is."""
+    """`crate::module::Name` for a type with `JsonSchema` defined outside the controllers, if exactly one is.
+
+    The service's own `src/` and the domain crate's `domain/src/`, whose modules the service re-exports under the
+    same names, so `crate::meetings::…` names a domain type too."""
     global _OTHER
     if _OTHER is None:
         _OTHER = {}
-        root = SERVICE / "src"
-        for f in root.rglob("*.rs"):
-            if "controllers" in f.parts:
-                continue
-            text = f.read_text()
-            for m in re.finditer(r"JsonSchema\)\]\s*(?:(?:#\[[^\n]*\]|///[^\n]*)\s*)*pub (?:struct|enum) (\w+)", text):
-                rel = f.relative_to(root).with_suffix("")
-                parts = [p for p in rel.parts if p != "mod"]
-                _OTHER.setdefault(m.group(1), []).append("crate::" + "::".join(parts) + "::" + m.group(1))
+        for root in (SERVICE / "src", SERVICE / "domain" / "src"):
+            for f in root.rglob("*.rs"):
+                if "controllers" in f.relative_to(root).parts:
+                    continue
+                text = f.read_text()
+                for m in re.finditer(r"JsonSchema\)\]\s*(?:(?:#\[[^\n]*\]|///[^\n]*)\s*)*pub (?:struct|enum) (\w+)", text):
+                    rel = f.relative_to(root).with_suffix("")
+                    parts = [p for p in rel.parts if p != "mod"]
+                    _OTHER.setdefault(m.group(1), []).append("crate::" + "::".join(parts) + "::" + m.group(1))
     found = _OTHER.get(name, [])
     return found[0] if len(found) == 1 else None
 

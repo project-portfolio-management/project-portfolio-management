@@ -4252,12 +4252,12 @@ dependencies = [
  "opentelemetry-proto",
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
+ "project-portfolio-management-domain",
  "project-portfolio-management-matcher",
  "project-portfolio-management-migration",
  "prometheus",
  "redis",
  "reqwest 0.13.5",
- "roxmltree",
  "rstest",
  "rust_decimal",
  "rustls",
@@ -4280,6 +4280,23 @@ dependencies = [
  "tracing-core",
  "tracing-opentelemetry",
  "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "project-portfolio-management-domain"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "project-portfolio-management-matcher",
+ "roxmltree",
+ "schemars 1.2.3",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "tempfile",
+ "url",
  "uuid",
  "zip",
 ]

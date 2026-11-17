@@ -1,0 +1,50 @@
+[package]
+name = "project-portfolio-management-domain"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.98"
+publish = true
+authors = ["Joel Parker Henderson <joel@joelparkerhenderson.com>"]
+description = "The pure domain logic of the project portfolio management service: scheduling, earned value, risk, buffers, tolerances, prioritization, ledgers, imports and validation, with no HTTP, database or application context"
+readme = "../README.md"
+repository = "https://github.com/project-portfolio-management/project-portfolio-management"
+license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only"
+keywords = ["portfolio", "project", "scheduling", "earned-value", "project-management"]
+categories = ["development-tools", "rust-patterns"]
+include = ["src/**/*"]
+
+# The layering rule (service spec §8): this crate may not depend on the service, axum, axa or sqlx, nor on tokio.
+
+[lib]
+name = "project_portfolio_management_domain"
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+# The same features as the service, so a standalone build of this crate parses numbers as the service does.
+serde_json = { version = "1", features = ["float_roundtrip"] }
+# Request-body schemas for the OpenAPI document (CQ-8), derived from the types defined here.
+schemars = { version = "1", features = ["chrono04", "uuid1"] }
+chrono = { version = "0.4", features = ["serde"] }
+# IANA zones for per-request "today" (LT-3 / LT-9), in `tz`. Never read from the process.
+chrono-tz = { version = "0.10" }
+uuid = { version = "1.29", features = ["v4", "serde"] }
+# Content digests (`artifacts`, `feeds`, `public_roadmap`, `subjects`).
+sha2 = { version = "0.11" }
+# Office documents are zip containers: read their XML for text extraction (PL-8, `extract`). Deflate only.
+zip = { version = "9", default-features = false, features = ["deflate"] }
+# Read-only XML parsing for MS Project (MSPDI) import (PJ-10, `mspdi`): no external entities, a node cap, no DTD.
+roxmltree = "0.21"
+# URL parsing for sink destinations (`sinks`): the type `reqwest::Url` re-exports, without the HTTP client.
+url = "2.5"
+# The canonical `Plan` model.
+project-portfolio-management-matcher = "0.2.2"
+
+[dev-dependencies]
+# Temp directories for the artifact-store tests.
+tempfile = { version = "3" }
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# As in the service: `assert!(x.is_empty())` reads better than what Rust 1.99 clippy suggests.
+assert_is_empty = "allow"

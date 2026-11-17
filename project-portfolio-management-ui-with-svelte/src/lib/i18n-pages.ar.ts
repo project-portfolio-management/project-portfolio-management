@@ -3978,6 +3978,45 @@ export const PAGES_AR: Record<PageKey, string> = {
     "قرأ مستورد هذه الخدمة الملف مرة أخرى، لكنه لم يُفتح بعد في Microsoft Project نفسه.",
   "p.plan_export.download": "تنزيل ملف MSPDI",
   "p.plan_export.to_import": "إحضار ملف MSPDI إلى هذه الخطة بدلًا من ذلك",
+  "p.confidence.assess_heading": "إضافة تقييم",
+  "p.confidence.assess_says":
+    "القيمة المصرّح بها رأي شخص في ما إذا كانت الخطة ستُنجز. تُضاف إلى السجل ولا تحل محل قيمة سابقة أبدًا.",
+  "p.confidence.choose_value": "اختر قيمة",
+  "p.confidence.could_not_load": "تعذر تحميل ثقة الإنجاز لهذه الخطة.",
+  "p.confidence.could_not_save": "لم يُضف التقييم.",
+  "p.confidence.f_assessed_on": "تاريخ التقييم (اختياري؛ اليوم إن تُرك فارغًا)",
+  "p.confidence.f_kind": "من يقول ذلك",
+  "p.confidence.f_rationale": "لماذا (على الأقل {min} حرفًا)",
+  "p.confidence.f_value": "ثقة الإنجاز",
+  "p.confidence.history_heading": "السجل، الأحدث أولًا",
+  "p.confidence.intro":
+    "رأي مصرّح به من شخص في ما إذا كانت هذه الخطة ستُنجز، يُحفظ بجانب مؤشر RAG المحسوب من بيانات الخطة ولا يُخلط به أبدًا.",
+  "p.confidence.kind_independent": "تقييم مستقل",
+  "p.confidence.kind_self": "فريق الخطة نفسه (تقييم ذاتي)",
+  "p.confidence.no_history": "لم يُصرَّح بأي تقييم بعد.",
+  "p.confidence.none_yet":
+    "غير مقيَّم: لم يصرّح أحد برأي بعد. وهذا ليس مثل الأخضر.",
+  "p.confidence.opens_exception":
+    "الكهرماني/الأحمر أو الأحمر يفتح استثناءً لهذه الخطة، أو يزيد سوء الاستثناء المفتوح. ثم يجب أن يستكمله أحد.",
+  "p.confidence.problem_future": "لا يجوز أن يكون تاريخ التقييم في المستقبل.",
+  "p.confidence.problem_kind": "اختر من يقول ذلك.",
+  "p.confidence.problem_rationale": "اذكر السبب في {min} حرفًا على الأقل.",
+  "p.confidence.problem_value": "اختر قيمة.",
+  "p.confidence.refused_independent":
+    "يحتاج التقييم المستقل إلى صلاحية المقيّم المستقل. يمكنك إضافة تقييم ذاتي.",
+  "p.confidence.save": "إضافة التقييم",
+  "p.confidence.saved_exception_one":
+    "أُضيف. لهذه الخطة الآن استثناء مفتوح: يجب استكماله خلال {hours} ساعة.",
+  "p.confidence.saved_exception_other":
+    "أُضيف. لهذه الخطة الآن استثناء مفتوح: يجب استكماله خلال {hours} ساعة.",
+  "p.confidence.saved": "أُضيف.",
+  "p.confidence.shown_heading": "ما تعرضه خريطة المحفظة",
+  "p.confidence.shown_independent": "تقييم مستقل بتاريخ {when}.",
+  "p.confidence.shown_self":
+    "تقييم ذاتي بتاريخ {when}؛ وكان التقييم المستقل سيُعرض بدلًا منه.",
+  "p.confidence.stale": "قديم: أقدم من هذا الشهر",
+  "p.confidence.title_ppm": "ثقة الإنجاز — PPM",
+  "p.confidence.title": "ثقة الإنجاز",
   "p.director_pack.actions_heading": "المراجعة أو الإصدار أو إعادة الإصدار",
   "p.director_pack.aud_board": "المجلس",
   "p.director_pack.aud_escalation_board": "مجلس التصعيد",

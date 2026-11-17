@@ -214,9 +214,12 @@ match breakdown).
                              plan page
 /director-packs/schedules    the monthly pack schedules: add, move,
                              switch off, run what is due (NC-1 slice 11)
+/plans/[pid]/confidence      the plan's delivery confidence: what the
+                             map shows, its history, add one (NC-1 slice
+                             11); linked from the plan page
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 115):
+every page; `find src/routes -name +page.svelte` gives all 116):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2087,3 +2090,28 @@ and `PUT /api/director-pack-subscriptions`).
   running what is due; a 403 on the list; subscribing and unsubscribing, and a refusal putting the box back; Welsh;
   axe), and `tests/e2e/canvases.spec.ts` (a probability of 6). The Welsh and the six other languages are
   machine-written and unreviewed.
+
+## Delivery confidence (NC-1 slice 11, DP-2)
+
+`/plans/[pid]/confidence`, linked from the plan page among the governance links (the service files
+`delivery-confidence` under no module, so the route is always on; the link follows governance), over `GET` and `PUT
+/api/plans/{pid}/delivery-confidence`. `src/lib/confidence-view.ts` holds the rules.
+
+- **What it says.** What the portfolio map shows: the latest independent assessment, else the latest self-assessment,
+  else "not assessed", which the page says is not the same as green. Each value is its word and a symbol (the director
+  pack's), never a colour alone; whether it is independent or self-assessed and when; and whether it is stale. The
+  page says a stated value is kept beside the RAG worked out from the plan's data and never mixed with it.
+- **Adding one.** A value from the service's five-point scale (held to it by a unit test), who says it (self or
+  independent), why (at least ten characters) and an optional date, not in the future; every problem is said at once
+  before anything is sent (`novalidate`). Choosing amber/red or red says first that it opens an exception, or worsens
+  the open one; the answer then says within how many hours it is to be completed (a plural, as the window is set by
+  the deployment). An assessment never replaces one; the history follows, newest first, with each rationale.
+- **Refusals.** An independent assessment without `confidence=independent` or admin (403) says so and that a
+  self-assessment is open; anything else is the general sentence.
+- **Not built in this slice:** the exceptions register (next part); the assessor shown by name (the service keeps the
+  actor string, which the page does not show); the derived RAG beside it on this page. The date check uses the
+  browser's today; the service uses the deployment's, so a date on the edge can be refused by the service.
+- **Tests:** `tests/unit/confidence-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, the link in
+  `tests/unit/modules.test.ts`, and `tests/e2e/plan-confidence.spec.ts` (the link and "not assessed"; every problem
+  first; amber/red's warning and the answer's hours; the history newest first; a refused independent assessment;
+  Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.

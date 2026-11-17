@@ -3985,6 +3985,45 @@ export const PAGES_HI: Record<PageKey, string> = {
     "इस सेवा के अपने आयातक ने फ़ाइल को वापस पढ़ा है, पर इसे अभी Microsoft Project में खोलकर नहीं देखा गया है।",
   "p.plan_export.download": "MSPDI फ़ाइल डाउनलोड करें",
   "p.plan_export.to_import": "इसके बजाय इस योजना में MSPDI फ़ाइल लाएँ",
+  "p.confidence.assess_heading": "आकलन जोड़ें",
+  "p.confidence.assess_says":
+    "बताया गया मान किसी व्यक्ति का यह मत है कि योजना पूरी होगी या नहीं। यह इतिहास में जुड़ता है और किसी पहले वाले को कभी नहीं बदलता।",
+  "p.confidence.choose_value": "मान चुनें",
+  "p.confidence.could_not_load": "इस योजना का डिलीवरी भरोसा लोड नहीं हो सका।",
+  "p.confidence.could_not_save": "आकलन नहीं जुड़ा।",
+  "p.confidence.f_assessed_on": "आकलन की तिथि (वैकल्पिक; खाली हो तो आज)",
+  "p.confidence.f_kind": "कौन कह रहा है",
+  "p.confidence.f_rationale": "क्यों (कम से कम {min} अक्षर)",
+  "p.confidence.f_value": "डिलीवरी भरोसा",
+  "p.confidence.history_heading": "इतिहास, नवीनतम पहले",
+  "p.confidence.intro":
+    "इस योजना के पूरा होने पर किसी व्यक्ति का बताया गया मत, योजना के आँकड़ों से निकाले गए RAG के साथ रखा गया और उसमें कभी मिलाया नहीं गया।",
+  "p.confidence.kind_independent": "एक स्वतंत्र आकलन",
+  "p.confidence.kind_self": "योजना की अपनी टीम (स्व-आकलन)",
+  "p.confidence.no_history": "अभी कोई आकलन नहीं बताया गया है।",
+  "p.confidence.none_yet":
+    "आकलन नहीं हुआ: अभी किसी ने मत नहीं बताया। यह हरे के समान नहीं है।",
+  "p.confidence.opens_exception":
+    "एम्बर/लाल या लाल इस योजना के लिए एक अपवाद खोलता है, या पहले से खुले अपवाद को और बिगाड़ता है। फिर किसी को उसे पूरा करना होता है।",
+  "p.confidence.problem_future": "आकलन की तिथि भविष्य में नहीं हो सकती।",
+  "p.confidence.problem_kind": "चुनें कि कौन कह रहा है।",
+  "p.confidence.problem_rationale": "कारण बताएँ, कम से कम {min} अक्षरों में।",
+  "p.confidence.problem_value": "मान चुनें।",
+  "p.confidence.refused_independent":
+    "स्वतंत्र आकलन के लिए स्वतंत्र आकलनकर्ता का अधिकार चाहिए। आप स्व-आकलन जोड़ सकते हैं।",
+  "p.confidence.save": "आकलन जोड़ें",
+  "p.confidence.saved_exception_one":
+    "जुड़ गया। इस योजना में अब एक खुला अपवाद है: इसे {hours} घंटे में पूरा करना है।",
+  "p.confidence.saved_exception_other":
+    "जुड़ गया। इस योजना में अब एक खुला अपवाद है: इसे {hours} घंटों में पूरा करना है।",
+  "p.confidence.saved": "जुड़ गया।",
+  "p.confidence.shown_heading": "पोर्टफ़ोलियो मानचित्र क्या दिखाता है",
+  "p.confidence.shown_independent": "{when} का स्वतंत्र आकलन।",
+  "p.confidence.shown_self":
+    "{when} का स्व-आकलन; स्वतंत्र आकलन होता तो वही दिखाया जाता।",
+  "p.confidence.stale": "पुराना: इस महीने से पहले का",
+  "p.confidence.title_ppm": "डिलीवरी भरोसा — PPM",
+  "p.confidence.title": "डिलीवरी भरोसा",
   "p.director_pack.actions_heading": "समीक्षा, जारी या पुनः जारी करें",
   "p.director_pack.aud_board": "बोर्ड",
   "p.director_pack.aud_escalation_board": "एस्केलेशन बोर्ड",

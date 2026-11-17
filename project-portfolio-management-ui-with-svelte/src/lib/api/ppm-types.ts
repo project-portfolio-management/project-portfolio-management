@@ -3738,3 +3738,48 @@ export interface InstantiatedTemplate {
   tasks_created: number;
   milestones_created: number;
 }
+
+// ---- delivery confidence (DP-2, NC-1 slice 11) ----
+
+/** The five-point scale, best first (`SCALE` in the service's `src/delivery_confidence.rs`). */
+export const CONFIDENCE_SCALE = [
+  "green",
+  "amber_green",
+  "amber",
+  "amber_red",
+  "red",
+] as const;
+export type ConfidenceValue = (typeof CONFIDENCE_SCALE)[number];
+
+/** One stated assessment; the history is append-only. `assessor` is the recorded actor, not a resolved person. */
+export interface ConfidenceAssessment {
+  pid: string;
+  plan_pid: string;
+  value: ConfidenceValue;
+  kind: "self" | "independent";
+  rationale: string;
+  assessor: string | null;
+  assessed_on: string;
+}
+
+/** `GET /api/plans/{pid}/delivery-confidence`: what the map shows (the latest independent one, else the latest self
+ * one, else `not_assessed`) and the whole history, oldest first. */
+export interface ConfidenceView {
+  plan_pid: string;
+  shown: {
+    value: ConfidenceValue | "not_assessed";
+    kind?: "self" | "independent";
+    assessed_on?: string;
+    stale?: boolean;
+    marked_self?: boolean;
+  };
+  history: ConfidenceAssessment[];
+}
+
+/** `PUT /api/plans/{pid}/delivery-confidence` body: a value, who says it, why (ten characters or more), and when. */
+export interface ConfidenceBody {
+  value: ConfidenceValue;
+  kind: "self" | "independent";
+  rationale: string;
+  assessed_on?: string;
+}

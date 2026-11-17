@@ -9,6 +9,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a plan's delivery confidence (NC-1 slice 11, DP-2, 2026-11-17)
+
+- `/plans/[pid]/confidence`, linked from the plan page: what the portfolio map shows (independent, else self, else
+  "not assessed", said not to be green), each value as a word and a symbol; the history newest first; and a form to
+  add an assessment (value, self or independent, a rationale of ten characters or more, an optional date not in the
+  future), every problem first. Amber/red or red warns that it opens an exception, and the answer says within how many
+  hours it is due. A refused independent assessment says which right it needs. Two client methods and their types;
+  `src/lib/confidence-view.ts`; 31 keys in eight catalogues (one plural group), machine-written and unreviewed.
+- Tests: `tests/unit/confidence-view.test.ts` (the scale held to the service's), the paths in `tests/unit/ppm.test.ts`,
+  the link in `tests/unit/modules.test.ts`, `tests/e2e/plan-confidence.spec.ts` (four, with Welsh and axe).
+- **Not done:** the exceptions register; the assessor by name; the derived RAG beside it here. **Not verified:**
+  against a real service; a date on the edge of today where the browser's and the deployment's differ.
+
 ### Added — director pack schedules and subscriptions (NC-1 slice 11, DP-12, 2026-11-17)
 
 - `/director-packs/schedules`: each audience's monthly schedule with its day, next run and last result (in the reader's

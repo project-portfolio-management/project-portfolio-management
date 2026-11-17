@@ -4146,6 +4146,46 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae mewnforiwr y gwasanaeth hwn wedi darllen y ffeil yn ôl, ond nid yw wedi'i hagor yn Microsoft Project ei hun eto.",
   "p.plan_export.download": "Lawrlwytho'r ffeil MSPDI",
   "p.plan_export.to_import": "Dod â ffeil MSPDI i'r cynllun hwn yn lle hynny",
+  "p.confidence.assess_heading": "Ychwanegu asesiad",
+  "p.confidence.assess_says":
+    "Gwerth a nodir yw barn person ynghylch a fydd y cynllun yn cyflawni. Caiff ei ychwanegu at yr hanes ac nid yw byth yn disodli un cynharach.",
+  "p.confidence.choose_value": "Dewiswch werth",
+  "p.confidence.could_not_load":
+    "Nid oedd modd llwytho hyder cyflawni'r cynllun hwn.",
+  "p.confidence.could_not_save": "Ni ychwanegwyd yr asesiad.",
+  "p.confidence.f_assessed_on": "Dyddiad asesu (dewisol; heddiw os yn wag)",
+  "p.confidence.f_kind": "Pwy sy'n ei ddweud",
+  "p.confidence.f_rationale": "Pam (o leiaf {min} nod)",
+  "p.confidence.f_value": "Hyder cyflawni",
+  "p.confidence.history_heading": "Hanes, y diweddaraf yn gyntaf",
+  "p.confidence.intro":
+    "Barn a nodwyd gan berson ynghylch a fydd y cynllun hwn yn cyflawni, wedi'i chadw ochr yn ochr â'r RAG a gyfrifwyd o ddata'r cynllun a heb ei chymysgu ag ef.",
+  "p.confidence.kind_independent": "Asesiad annibynnol",
+  "p.confidence.kind_self": "Tîm y cynllun ei hun (hunanasesiad)",
+  "p.confidence.no_history": "Nid oes asesiad wedi'i nodi eto.",
+  "p.confidence.none_yet":
+    "Heb ei asesu: nid oes neb wedi nodi barn eto. Nid yw hynny'r un peth â gwyrdd.",
+  "p.confidence.opens_exception":
+    "Mae ambr/coch neu goch yn agor eithriad ar gyfer y cynllun hwn, neu'n gwaethygu'r un sydd eisoes ar agor. Rhaid i rywun ei gwblhau wedyn.",
+  "p.confidence.problem_future": "Ni all dyddiad yr asesiad fod yn y dyfodol.",
+  "p.confidence.problem_kind": "Dewiswch pwy sy'n ei ddweud.",
+  "p.confidence.problem_rationale": "Dywedwch pam, mewn o leiaf {min} nod.",
+  "p.confidence.problem_value": "Dewiswch werth.",
+  "p.confidence.refused_independent":
+    "Mae angen hawl asesydd annibynnol ar gyfer asesiad annibynnol. Gallwch ychwanegu hunanasesiad.",
+  "p.confidence.save": "Ychwanegu'r asesiad",
+  "p.confidence.saved_exception_one":
+    "Wedi'i ychwanegu. Mae gan y cynllun hwn eithriad agored nawr: mae i'w gwblhau o fewn {hours} awr.",
+  "p.confidence.saved_exception_other":
+    "Wedi'i ychwanegu. Mae gan y cynllun hwn eithriad agored nawr: mae i'w gwblhau o fewn {hours} awr.",
+  "p.confidence.saved": "Wedi'i ychwanegu.",
+  "p.confidence.shown_heading": "Beth mae map y portffolio yn ei ddangos",
+  "p.confidence.shown_independent": "Asesiad annibynnol ar {when}.",
+  "p.confidence.shown_self":
+    "Hunanasesiad ar {when}; byddai asesiad annibynnol yn cael ei ddangos yn lle hynny.",
+  "p.confidence.stale": "hen: yn hŷn na'r mis hwn",
+  "p.confidence.title_ppm": "Hyder cyflawni — PPM",
+  "p.confidence.title": "Hyder cyflawni",
   "p.director_pack.actions_heading": "Adolygu, cyhoeddi neu ailgyhoeddi",
   "p.director_pack.aud_board": "Bwrdd",
   "p.director_pack.aud_escalation_board": "Bwrdd uwchgyfeirio",

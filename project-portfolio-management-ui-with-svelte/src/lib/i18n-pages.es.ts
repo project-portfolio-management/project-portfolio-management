@@ -4199,6 +4199,48 @@ export const PAGES_ES: Record<PageKey, string> = {
     "El importador de este servicio ha vuelto a leer el archivo, pero aún no se ha abierto en el propio Microsoft Project.",
   "p.plan_export.download": "Descargar el archivo MSPDI",
   "p.plan_export.to_import": "Traer un archivo MSPDI a este plan en su lugar",
+  "p.confidence.assess_heading": "Añadir una valoración",
+  "p.confidence.assess_says":
+    "Un valor declarado es la opinión de una persona sobre si el plan cumplirá. Se añade al historial y nunca sustituye a uno anterior.",
+  "p.confidence.choose_value": "Elija un valor",
+  "p.confidence.could_not_load":
+    "No se pudo cargar la confianza de entrega de este plan.",
+  "p.confidence.could_not_save": "No se añadió la valoración.",
+  "p.confidence.f_assessed_on": "Valorado el (opcional; hoy si se deja vacío)",
+  "p.confidence.f_kind": "Quién lo dice",
+  "p.confidence.f_rationale": "Por qué (al menos {min} caracteres)",
+  "p.confidence.f_value": "Confianza de entrega",
+  "p.confidence.history_heading": "Historial, lo más reciente primero",
+  "p.confidence.intro":
+    "La opinión declarada de una persona sobre si este plan cumplirá, guardada junto al semáforo calculado con los datos del plan y nunca mezclada con él.",
+  "p.confidence.kind_independent": "Una valoración independiente",
+  "p.confidence.kind_self": "El propio equipo del plan (autoevaluación)",
+  "p.confidence.no_history": "Todavía no se ha declarado ninguna valoración.",
+  "p.confidence.none_yet":
+    "Sin valorar: nadie ha declarado una opinión todavía. No es lo mismo que verde.",
+  "p.confidence.opens_exception":
+    "Ámbar/rojo o rojo abre una excepción para este plan, o agrava la que ya está abierta. Luego alguien tiene que completarla.",
+  "p.confidence.problem_future":
+    "La fecha de la valoración no puede ser futura.",
+  "p.confidence.problem_kind": "Elija quién lo dice.",
+  "p.confidence.problem_rationale":
+    "Diga por qué, en al menos {min} caracteres.",
+  "p.confidence.problem_value": "Elija un valor.",
+  "p.confidence.refused_independent":
+    "Una valoración independiente necesita el derecho de evaluador independiente. Puede añadir una autoevaluación.",
+  "p.confidence.save": "Añadir la valoración",
+  "p.confidence.saved_exception_one":
+    "Añadida. Este plan tiene ahora una excepción abierta: debe completarse en {hours} hora.",
+  "p.confidence.saved_exception_other":
+    "Añadida. Este plan tiene ahora una excepción abierta: debe completarse en {hours} horas.",
+  "p.confidence.saved": "Añadida.",
+  "p.confidence.shown_heading": "Lo que muestra el mapa de cartera",
+  "p.confidence.shown_independent": "Valoración independiente del {when}.",
+  "p.confidence.shown_self":
+    "Autoevaluación del {when}; una valoración independiente se mostraría en su lugar.",
+  "p.confidence.stale": "desfasada: anterior a este mes",
+  "p.confidence.title_ppm": "Confianza de entrega — PPM",
+  "p.confidence.title": "Confianza de entrega",
   "p.director_pack.actions_heading": "Revisar, emitir o reemitir",
   "p.director_pack.aud_board": "Consejo",
   "p.director_pack.aud_escalation_board": "Comité de escalado",

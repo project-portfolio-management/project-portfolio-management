@@ -198,6 +198,7 @@ the Status note above).
 | Export to Microsoft Project (`/plans/[pid]/export`) | `GET /api/plans/{pid}/export/mspdi` (a link, never drawn in the page) |
 | Director pack drafting and issue (`/director-packs`, `/director-packs/[pid]`) | `POST /api/director-packs` · `POST …/{pid}/review` · `POST …/{pid}/issue` · `POST …/{pid}/reissue` · `GET /api/organizations` (organizations as audiences) |
 | Director pack schedules and subscriptions (`/director-packs/schedules`, `/director-packs`) | `GET / POST /api/director-pack-schedules` · `PUT …/{pid}` · `POST …/sweep` · `GET / PUT /api/director-pack-subscriptions` |
+| Delivery confidence (`/plans/[pid]/confidence`) | `GET / PUT /api/plans/{pid}/delivery-confidence` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

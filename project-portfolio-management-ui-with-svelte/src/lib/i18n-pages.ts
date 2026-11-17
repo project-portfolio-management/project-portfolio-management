@@ -4047,6 +4047,46 @@ export const PAGES_EN = {
     "The file has been read back by this service's own importer, but not yet opened in Microsoft Project itself.",
   "p.plan_export.download": "Download the MSPDI file",
   "p.plan_export.to_import": "Bring an MSPDI file into this plan instead",
+  "p.confidence.assess_heading": "Add an assessment",
+  "p.confidence.assess_says":
+    "A stated value is a person's view of whether the plan will deliver. It is added to the history and never replaces an earlier one.",
+  "p.confidence.choose_value": "Choose a value",
+  "p.confidence.could_not_load":
+    "This plan's delivery confidence could not be loaded.",
+  "p.confidence.could_not_save": "The assessment was not added.",
+  "p.confidence.f_assessed_on": "Assessed on (optional; today if left empty)",
+  "p.confidence.f_kind": "Who is saying it",
+  "p.confidence.f_rationale": "Why (at least {min} characters)",
+  "p.confidence.f_value": "Delivery confidence",
+  "p.confidence.history_heading": "History, newest first",
+  "p.confidence.intro":
+    "A person's stated view of whether this plan will deliver, kept beside the RAG worked out from the plan's data and never mixed with it.",
+  "p.confidence.kind_independent": "An independent assessment",
+  "p.confidence.kind_self": "The plan's own team (self-assessed)",
+  "p.confidence.no_history": "No assessment has been stated yet.",
+  "p.confidence.none_yet":
+    "Not assessed: no one has stated a view yet. That is not the same as green.",
+  "p.confidence.opens_exception":
+    "Amber/red or red opens an exception for this plan, or worsens the one already open. Someone then has to complete it.",
+  "p.confidence.problem_future": "The assessment date cannot be in the future.",
+  "p.confidence.problem_kind": "Choose who is saying it.",
+  "p.confidence.problem_rationale": "Say why, in at least {min} characters.",
+  "p.confidence.problem_value": "Choose a value.",
+  "p.confidence.refused_independent":
+    "An independent assessment needs the independent assessor right. You can add a self-assessment.",
+  "p.confidence.save": "Add the assessment",
+  "p.confidence.saved_exception_one":
+    "Added. This plan now has an open exception: it is to be completed within {hours} hour.",
+  "p.confidence.saved_exception_other":
+    "Added. This plan now has an open exception: it is to be completed within {hours} hours.",
+  "p.confidence.saved": "Added.",
+  "p.confidence.shown_heading": "What the portfolio map shows",
+  "p.confidence.shown_independent": "Independent assessment of {when}.",
+  "p.confidence.shown_self":
+    "Self-assessed on {when}; an independent assessment would be shown instead.",
+  "p.confidence.stale": "stale: older than this month",
+  "p.confidence.title_ppm": "Delivery confidence — PPM",
+  "p.confidence.title": "Delivery confidence",
   "p.director_pack.actions_heading": "Review, issue or reissue",
   "p.director_pack.aud_board": "Board",
   "p.director_pack.aud_escalation_board": "Escalation board",

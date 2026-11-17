@@ -4209,6 +4209,48 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.plan_export.download": "MSPDI-Datei herunterladen",
   "p.plan_export.to_import":
     "Stattdessen eine MSPDI-Datei in diesen Plan holen",
+  "p.confidence.assess_heading": "Einschätzung hinzufügen",
+  "p.confidence.assess_says":
+    "Ein genannter Wert ist die Sicht einer Person darauf, ob der Plan liefern wird. Er wird dem Verlauf hinzugefügt und ersetzt nie einen früheren.",
+  "p.confidence.choose_value": "Wert wählen",
+  "p.confidence.could_not_load":
+    "Die Liefersicherheit dieses Plans konnte nicht geladen werden.",
+  "p.confidence.could_not_save": "Die Einschätzung wurde nicht hinzugefügt.",
+  "p.confidence.f_assessed_on": "Eingeschätzt am (optional; leer heißt heute)",
+  "p.confidence.f_kind": "Wer sagt es",
+  "p.confidence.f_rationale": "Warum (mindestens {min} Zeichen)",
+  "p.confidence.f_value": "Liefersicherheit",
+  "p.confidence.history_heading": "Verlauf, neueste zuerst",
+  "p.confidence.intro":
+    "Die genannte Sicht einer Person darauf, ob dieser Plan liefern wird, neben der aus den Plandaten berechneten Ampel gehalten und nie mit ihr vermischt.",
+  "p.confidence.kind_independent": "Eine unabhängige Einschätzung",
+  "p.confidence.kind_self": "Das eigene Team des Plans (Selbsteinschätzung)",
+  "p.confidence.no_history": "Noch wurde keine Einschätzung genannt.",
+  "p.confidence.none_yet":
+    "Nicht eingeschätzt: Noch niemand hat eine Sicht genannt. Das ist nicht dasselbe wie Grün.",
+  "p.confidence.opens_exception":
+    "Gelb/Rot oder Rot eröffnet eine Ausnahme für diesen Plan oder verschärft die schon offene. Danach muss jemand sie vervollständigen.",
+  "p.confidence.problem_future":
+    "Das Datum der Einschätzung darf nicht in der Zukunft liegen.",
+  "p.confidence.problem_kind": "Wählen Sie, wer es sagt.",
+  "p.confidence.problem_rationale":
+    "Begründen Sie es mit mindestens {min} Zeichen.",
+  "p.confidence.problem_value": "Wählen Sie einen Wert.",
+  "p.confidence.refused_independent":
+    "Eine unabhängige Einschätzung erfordert das Recht als unabhängiger Prüfer. Sie können eine Selbsteinschätzung hinzufügen.",
+  "p.confidence.save": "Einschätzung hinzufügen",
+  "p.confidence.saved_exception_one":
+    "Hinzugefügt. Dieser Plan hat jetzt eine offene Ausnahme: Sie ist innerhalb von {hours} Stunde zu vervollständigen.",
+  "p.confidence.saved_exception_other":
+    "Hinzugefügt. Dieser Plan hat jetzt eine offene Ausnahme: Sie ist innerhalb von {hours} Stunden zu vervollständigen.",
+  "p.confidence.saved": "Hinzugefügt.",
+  "p.confidence.shown_heading": "Was die Portfoliokarte zeigt",
+  "p.confidence.shown_independent": "Unabhängige Einschätzung vom {when}.",
+  "p.confidence.shown_self":
+    "Selbsteinschätzung vom {when}; eine unabhängige Einschätzung würde stattdessen gezeigt.",
+  "p.confidence.stale": "veraltet: älter als dieser Monat",
+  "p.confidence.title_ppm": "Liefersicherheit — PPM",
+  "p.confidence.title": "Liefersicherheit",
   "p.director_pack.actions_heading": "Prüfen, herausgeben oder neu herausgeben",
   "p.director_pack.aud_board": "Vorstand",
   "p.director_pack.aud_escalation_board": "Eskalationsgremium",

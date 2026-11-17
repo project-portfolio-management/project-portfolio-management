@@ -161,6 +161,9 @@ import type {
   CanvasPromoteBody,
   CanvasTemplate,
   CanvasView,
+  ConfidenceBody,
+  ConfidenceView,
+  ConfidenceAssessment,
   DirectorPackDraftBody,
   PackSchedule,
   InstantiateTemplateBody,
@@ -2036,6 +2039,24 @@ export class PpmClient {
   /** Remove a saved template (422 for a starter); plans already made from it stay. */
   deletePlanTemplate(pid: string): Promise<unknown> {
     return this.http.delete(`/api/plan-templates/${pid}`);
+  }
+  // ---- delivery confidence (DP-2, NC-1 slice 11) ----
+  /** A plan's stated delivery confidence: what is shown and the whole history. */
+  deliveryConfidence(planPid: string): Promise<ConfidenceView> {
+    return this.http.get(`/api/plans/${planPid}/delivery-confidence`);
+  }
+  /**
+   * Add a stated assessment; it never replaces one. An independent one needs `confidence=independent` or admin (403).
+   * Amber/red or red opens an exception, or worsens the open one; the answer carries it.
+   */
+  assessDeliveryConfidence(
+    planPid: string,
+    body: ConfidenceBody,
+  ): Promise<{
+    assessment: ConfidenceAssessment;
+    exception: { pid: string; window_hours: number } | null;
+  }> {
+    return this.http.put(`/api/plans/${planPid}/delivery-confidence`, { body });
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (a plan's delivery confidence: NC-1 slice 11, part c, first of three)
+
+- **UI: `/plans/[pid]/confidence` shows and adds a plan's stated delivery confidence (DP-2).** It says what the
+  portfolio map shows, and that "not assessed" is not green; each value is a word and a symbol; the history is newest
+  first; amber/red or red warns that it opens an exception. A refused independent assessment says which right it
+  needs. UI spec, "Delivery confidence"; test `tests/e2e/plan-confidence.spec.ts` (four, with Welsh and axe).
+- **Not done:** the exceptions register and strategic aims (the rest of part c). **Not verified:** against a real
+  service; the translations are machine-written and unreviewed.
+
 ### 17 November (director pack schedules and subscriptions: NC-1 slice 11, part b)
 
 - **UI: the monthly director-pack schedules and the subscriptions have screens (DP-12).** `/director-packs/schedules`

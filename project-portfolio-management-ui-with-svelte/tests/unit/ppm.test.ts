@@ -620,6 +620,24 @@ describe("PpmClient director pack schedules and subscriptions (NC-1 slice 11, DP
   });
 });
 
+describe("PpmClient delivery confidence (NC-1 slice 11, DP-2)", () => {
+  it("reads and adds an assessment", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.deliveryConfidence("p1");
+    await ppm.assessDeliveryConfidence("p1", {
+      value: "amber",
+      kind: "self",
+      rationale: "Two suppliers late.",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/delivery-confidence",
+      "PUT /api/plans/p1/delivery-confidence",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

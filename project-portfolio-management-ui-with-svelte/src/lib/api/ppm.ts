@@ -153,6 +153,14 @@ import type {
   TimesheetSubmitBody,
   TimesheetWeek,
   TimesheetWeekState,
+  Canvas,
+  CanvasCreateBody,
+  CanvasItem,
+  CanvasItemBody,
+  CanvasItemUpdateBody,
+  CanvasPromoteBody,
+  CanvasTemplate,
+  CanvasView,
   Objective,
   OkrList,
   OnboardingCase,
@@ -1919,6 +1927,54 @@ export class PpmClient {
   /** An approver approves or rejects someone else's submitted week (LT-11); approved is final. */
   decideTimesheet(body: TimesheetDecideBody): Promise<TimesheetWeekState> {
     return this.http.post(`/api/timesheets/decide`, { body });
+  }
+  // ---- strategy canvases (LT-1, NC-1 slice 9) ----
+  /** Every built-in canvas template and its boxes, in display order. */
+  canvasTemplates(): Promise<CanvasTemplate[]> {
+    return this.http.get(`/api/canvas-templates`);
+  }
+  /** Live canvases, of one plan or of every scope; a canvas on a plan the caller cannot read is left out. */
+  listCanvases(plan?: string): Promise<Canvas[]> {
+    const q = plan ? `?${new URLSearchParams({ plan }).toString()}` : "";
+    return this.http.get(`/api/canvases${q}`);
+  }
+  /** One canvas, every box of its template, and its items in order (404 when absent or on an unreadable plan). */
+  canvas(pid: string): Promise<CanvasView> {
+    return this.http.get(`/api/canvases/${pid}`);
+  }
+  /** Create a canvas from a built-in template, on a plan or free-standing. */
+  createCanvas(body: CanvasCreateBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/canvases`, { body });
+  }
+  /** Remove a canvas and its items (soft-deleted; an item already promoted keeps what it became). */
+  deleteCanvas(pid: string): Promise<unknown> {
+    return this.http.delete(`/api/canvases/${pid}`);
+  }
+  /** Add an item at the end of a box (a canvas holds at most 500). */
+  addCanvasItem(pid: string, body: CanvasItemBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/canvases/${pid}/items`, { body });
+  }
+  /** Edit an item's text or move it to another box of the same template. */
+  updateCanvasItem(
+    pid: string,
+    item: string,
+    body: CanvasItemUpdateBody,
+  ): Promise<CanvasItem> {
+    return this.http.put(`/api/canvases/${pid}/items/${item}`, { body });
+  }
+  /** Remove one item. */
+  deleteCanvasItem(pid: string, item: string): Promise<unknown> {
+    return this.http.delete(`/api/canvases/${pid}/items/${item}`);
+  }
+  /** Turn an item into an idea, a risk (plan canvases only) or an objective; once only (409 after). */
+  promoteCanvasItem(
+    pid: string,
+    item: string,
+    body: CanvasPromoteBody,
+  ): Promise<{ kind: "idea" | "risk" | "objective"; pid: string }> {
+    return this.http.post(`/api/canvases/${pid}/items/${item}/promote`, {
+      body,
+    });
   }
   /**
    * The access grants that stand today, oldest first (RG-9, NC-1 slice 7): administrators only (403 otherwise), plans

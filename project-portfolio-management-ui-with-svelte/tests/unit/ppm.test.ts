@@ -526,6 +526,38 @@ describe("PpmClient access review and break-glass paths (NC-1 slice 7, RG-9, RG-
   });
 });
 
+describe("PpmClient canvas paths (NC-1 slice 9, LT-1)", () => {
+  it("lists, reads, creates and removes canvases, and adds, edits, removes and promotes items", async () => {
+    const { ppm, calls } = recordingClient();
+    const c = "22222222-2222-4222-8222-222222222222";
+    const i = "44444444-4444-4444-8444-444444444444";
+    await ppm.canvasTemplates();
+    await ppm.listCanvases();
+    await ppm.listCanvases("11111111-1111-4111-8111-111111111111");
+    await ppm.canvas(c);
+    await ppm.createCanvas({ template: "swot", title: "T" });
+    await ppm.deleteCanvas(c);
+    await ppm.addCanvasItem(c, { box: "threats", body: "b" });
+    await ppm.updateCanvasItem(c, i, { box: "strengths" });
+    await ppm.deleteCanvasItem(c, i);
+    await ppm.promoteCanvasItem(c, i, { target: "idea" });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/canvas-templates",
+      "GET /api/canvases",
+      "GET /api/canvases?plan=11111111-1111-4111-8111-111111111111",
+      `GET /api/canvases/${c}`,
+      "POST /api/canvases",
+      `DELETE /api/canvases/${c}`,
+      `POST /api/canvases/${c}/items`,
+      `PUT /api/canvases/${c}/items/${i}`,
+      `DELETE /api/canvases/${c}/items/${i}`,
+      `POST /api/canvases/${c}/items/${i}/promote`,
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

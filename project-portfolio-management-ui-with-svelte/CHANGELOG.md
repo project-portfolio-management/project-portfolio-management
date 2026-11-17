@@ -9,6 +9,28 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — strategy canvases (NC-1 slice 9, LT-1, 2026-11-17)
+
+- `/canvases` (every canvas the caller may read, and a new free-standing one; in the navigation),
+  `/plans/[pid]/canvases` (a plan's, and a new one on it; linked from the plan page, always) and `/canvases/[pid]`
+  (one canvas), over the LT-1 routes that had no screen. A canvas shows every box of its template, empty ones too, and
+  its items; an item is added, edited or moved to another box (only what changed is sent, nothing when nothing did),
+  removed after a question, and turned into an idea, an objective or, on a plan's canvas, a risk with both scores,
+  once. Removing a canvas asks first and goes back. Template and box names are in the reader's language; a unit test
+  holds them to the service's table. Every check the service makes is said first; a refusal is the catalogue's
+  sentence. Ten client methods and their types; `src/lib/canvas-view.ts`, `CanvasList.svelte`; 116 keys in eight
+  catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/canvas-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/canvases.spec.ts` (six,
+  with Welsh and axe).
+- `tests/e2e/hidden-sections.spec.ts` now closes the menu before unchecking a section on the Display page: with one
+  more navigation item the open menu lay over the checkbox, and the click waited until the test timed out. The
+  assertions are unchanged. Full Playwright suite: 1,213 passed.
+- **Not done:** reordering items in a box; setting an item's owner; editing a canvas's title or description (no
+  service route); a link back from what an item became; plan templates (LT-2), next.
+- **Not verified:** against a real service (the browser tests stub it).
+- **Service finding, not changed here:** `PUT …/items/{item}` takes an `owner_ref` but cannot clear one (a `null` is
+  read as "keep").
+
 ### Added — a plan's tools: which feature modules it shows (NC-1 slice 8, RM-7, 2026-11-16)
 
 - `/plans/[pid]/modules`, linked from the plan page; `src/lib/module-settings.ts`; 26 catalogue keys in eight

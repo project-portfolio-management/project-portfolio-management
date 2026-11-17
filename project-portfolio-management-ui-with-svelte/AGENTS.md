@@ -193,6 +193,7 @@ the Status note above).
 | My notifications (`/me/notifications`) | `GET /api/me/inbox?tz=` · `POST /api/notifications/{pid}/read` · `GET / PUT /api/me/notification-prefs` · `POST …/reset` · `GET / POST /api/me/notification-sinks` · `POST …/{pid}/delete` · `GET …/{pid}/deliveries` |
 | Access review and emergency access (`/security/access`) | `GET /api/access-review?plan=&older_than_days=` (and `&format=csv`, a link) · `GET / POST /api/break-glass` · `POST …/{pid}/revoke` · `GET /api/plans/{pid}` (plan names) |
 | My timesheet (`/me/timesheet`) | `GET /api/timesheets?week=&person=` · `POST /api/timesheets/submit` · `POST /api/timesheets/decide` · `GET /api/plans/{pid}` (plan names) |
+| Strategy canvases (`/canvases`, `/plans/[pid]/canvases`, `/canvases/[pid]`, `CanvasList.svelte`) | `GET /api/canvas-templates` · `GET / POST /api/canvases` (`?plan=`) · `GET / DELETE /api/canvases/{pid}` · `POST …/items` · `PUT / DELETE …/items/{item}` · `POST …/items/{item}/promote` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

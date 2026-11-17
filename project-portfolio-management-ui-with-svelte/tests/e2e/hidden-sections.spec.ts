@@ -12,6 +12,12 @@ async function openMenu(page: Page) {
   if ((await button.getAttribute("aria-expanded")) !== "true")
     await button.click();
 }
+// The open menu lies over the page; close it before using the page beneath it.
+async function closeMenu(page: Page) {
+  const button = page.locator("button.hamburger");
+  if ((await button.getAttribute("aria-expanded")) === "true")
+    await button.click();
+}
 const stored = (page: Page) =>
   page.evaluate(
     () =>
@@ -34,6 +40,7 @@ test("a hidden section is gone after a reload, the rest stay, and showing all ag
   ).toBeVisible();
   expect(await stored(page)).toEqual({});
 
+  await closeMenu(page);
   await page.getByRole("checkbox", { name: "Goals (OKRs)" }).uncheck();
   await expect(
     bar(page).getByRole("link", { name: "Goals (OKRs)" }),

@@ -3552,3 +3552,77 @@ export interface BreakGlassList {
   grants: BreakGlassGrant[];
   live: number;
 }
+
+// ---- strategy canvases (LT-1, NC-1 slice 9) ----
+
+/** One box of a built-in canvas template (`GET /api/canvas-templates`); `title` is the service's English label. */
+export interface CanvasBoxDef {
+  key: string;
+  title: string;
+}
+
+/** A built-in canvas template: an ordered list of boxes. */
+export interface CanvasTemplate {
+  key: string;
+  title: string;
+  boxes: CanvasBoxDef[];
+}
+
+/** A canvas row; `plan_pid` is `null` for a free-standing canvas. */
+export interface Canvas {
+  pid: string;
+  plan_pid: string | null;
+  template: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One item on a canvas. `promoted_to_*` are set once it has become an idea, a risk or an objective. */
+export interface CanvasItem {
+  pid: string;
+  canvas_pid: string;
+  box_key: string;
+  body: string;
+  owner_ref: string | null;
+  position: number;
+  promoted_to_kind: "idea" | "risk" | "objective" | null;
+  promoted_to_pid: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** `GET /api/canvases/{pid}`: the canvas, every box of its template (empty ones at count 0) and its items in order. */
+export interface CanvasView {
+  canvas: Canvas;
+  boxes: Array<{ key: string; title: string; count: number }>;
+  items: CanvasItem[];
+}
+
+/** `POST /api/canvases` body. */
+export interface CanvasCreateBody {
+  template: string;
+  title: string;
+  description?: string;
+  plan_pid?: string;
+}
+
+/** `POST /api/canvases/{pid}/items` body. */
+export interface CanvasItemBody {
+  box: string;
+  body: string;
+}
+
+/** `PUT /api/canvases/{pid}/items/{item}` body; a field left out is kept. */
+export interface CanvasItemUpdateBody {
+  box?: string;
+  body?: string;
+}
+
+/** `POST …/items/{item}/promote` body; a risk needs probability and impact, 1 to 5, never defaulted. */
+export interface CanvasPromoteBody {
+  target: "idea" | "risk" | "objective";
+  probability?: number;
+  impact?: number;
+}

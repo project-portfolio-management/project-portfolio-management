@@ -57,6 +57,12 @@ export function buildNavItems(): NavEntry[] {
     },
     { href: "/proposals", label: t("ppm.nav.proposals") },
     { href: "/ideas", label: t("ppm.nav.ideas") },
+    {
+      href: "/canvases",
+      get label() {
+        return t("p.canvas.title");
+      },
+    },
     { href: "/scenarios", label: t("ppm.nav.scenarios") },
     { href: "/objectives", label: t("ppm.nav.objectives") },
     {

@@ -188,6 +188,8 @@
     <a class="button" href={localeHref(`/plans/${pid}/edit`)}>{t("detail.edit")}</a>
     <!-- Always shown: the tools page belongs to no module, so turning every tool off cannot hide the way back. -->
     <a class="button" href={localeHref(`/plans/${pid}/modules`)}>{t("p.plan_modules.title")}</a>
+    <!-- Canvases belong to no module (the service gates them by the plan's readability only), so this is always shown. -->
+    <a class="button" href={localeHref(`/plans/${pid}/canvases`)}>{t("p.canvas.plan_title")}</a>
     <button class="button" onclick={handleCheckDuplicates} disabled={checking}>
       {checking ? t("detail.checking") : t("detail.checkDuplicates")}
     </button>

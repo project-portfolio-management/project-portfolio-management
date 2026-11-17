@@ -196,9 +196,16 @@ match breakdown).
 /plans/[pid]/modules         the plan's tools: which feature modules it
                              shows (NC-1 slice 8); linked from the plan
                              page
+/canvases                    strategy canvases of every scope, and a new
+                             free-standing one (NC-1 slice 9)
+/plans/[pid]/canvases        the plan's canvases, and a new one on it
+                             (NC-1 slice 9); linked from the plan page
+/canvases/[pid]              one canvas: every box, its items, add,
+                             edit, move, remove, turn into an idea, an
+                             objective or a risk (NC-1 slice 9)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 107):
+every page; `find src/routes -name +page.svelte` gives all 110):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -1932,3 +1939,33 @@ hide the way back. `src/lib/module-settings.ts` holds the rules; the page only w
   (the link, a chosen set, the personal set and the default, nothing sent for the default again, no tools at all, a
   refusal and a failed load, the plan page hiding a module's links with issues following risks, Welsh, axe). The
   Welsh and the six other languages are machine-written and unreviewed.
+
+## Strategy canvases (NC-1 slice 9, LT-1)
+
+`/canvases` lists every canvas the caller may read and starts a free-standing one; `/plans/[pid]/canvases` lists one
+plan's and starts one on it (linked from the plan page, always: canvases belong to no module); `/canvases/[pid]` is one
+canvas. They use `GET /api/canvas-templates` and the `/api/canvases` routes. `src/lib/canvas-view.ts` holds the rules,
+and `CanvasList.svelte` is shared by the two lists.
+
+- **Names in the reader's language.** The seven built-in templates and their 37 box names come from the catalogue,
+  not the service's English titles; a template or box the service adds later shows the service's title. A unit test
+  reads the service's `TEMPLATES` table and fails when a template or box has no catalogue name, or the catalogue names
+  one the service does not have.
+- **A canvas.** Every box of its template, in order, empty ones too ("Nothing here yet": an empty box is itself the
+  finding), each with its items in the service's order. An item is added at the end of a box; edited (text) or moved
+  to another box, sending only what changed and nothing when nothing did; removed after a question. An item becomes an
+  idea, an objective or, on a plan's canvas only, a risk on that plan with a probability and an impact from 1 to 5,
+  never defaulted; once only, after which it links to what it became. Removing the canvas asks first, removes its
+  items, and goes back to the list it came from; what items became stays.
+- **Checks before sending, as the service makes them.** A title that is blank or over 200 characters, a description or
+  item over 2,000, blank item text, a risk without both scores, and a full canvas (500 items, when the add forms go).
+  Text is sent trimmed. A refusal or a failed load is the catalogue's sentence, never the service's text.
+- **Not built in this slice:** reordering items within a box (the service takes a `position`); setting an item's owner
+  (`owner_ref` is shown when the service has one, as the reference); editing a canvas's title or description (the
+  service has no route); a link from an idea, objective or risk back to the item it came from; plan templates (LT-2),
+  the second half of this slice's place in the order.
+- **Tests:** `tests/unit/canvas-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/canvases.spec.ts`
+  (starting a free-standing canvas and one on a plan from the plan page, problems said with nothing sent, every box
+  shown, add, an unchanged edit sending nothing, a move sending only the box, removing after a question, an idea once,
+  a risk only on a plan's canvas and only with both scores, a refusal and a failed load, removing a canvas, Welsh,
+  axe). The Welsh and the six other languages are machine-written and unreviewed.

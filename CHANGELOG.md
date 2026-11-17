@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (strategy canvases: NC-1 slice 9, first half)
+
+- **UI: strategy canvases (LT-1) have screens.** `/canvases` lists every canvas the caller may read and starts a
+  free-standing one; `/plans/[pid]/canvases`, linked from the plan page, lists a plan's and starts one on it;
+  `/canvases/[pid]` shows every box of the canvas's template, empty ones too. Items are added, edited, moved to another
+  box, removed after a question, and turned into an idea, an objective or, on a plan's canvas, a risk, once. Template
+  and box names are in the reader's language. UI spec, "Strategy canvases"; tests `tests/unit/canvas-view.test.ts` and
+  `tests/e2e/canvases.spec.ts` (six, with Welsh and axe).
+- **Not done:** reordering items within a box, setting an item's owner, editing a canvas's title (the service has no
+  route), and plan templates (LT-2), the second half of this slice. **Not verified:** against a real service; the
+  translations are machine-written and unreviewed.
+
 ### 16 November (the site's privacy notice; only choices kept, in localStorage or cookies)
 
 - **A privacy notice for the documentation site:** [`PRIVACY.md`](PRIVACY.md), shown at `/privacy/` and linked from

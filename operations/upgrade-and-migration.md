@@ -147,7 +147,7 @@ answer, and adds no migration:
 
 1. **Rust 1.98 is the minimum** for the service and its migration crate (`rust-version`), as axa 0.17 needs it. The
    pinned toolchain is 1.100, so a build changes nothing; only a build on an older toolchain is refused. The matcher
-   builds no axa crate and stays at 1.97.
+   builds no axa crate; it was at 1.97 and is now 1.98 too, so every crate shares one minimum.
 2. **The job queue listens for new jobs.** `Queue::connect` adds the `axa_queue_notify` trigger at boot, each statement
    safe to repeat, so there is nothing to run by hand, and an idle worker starts a queued job at once instead of at the
    next poll. The queue holds **one more connection** from its pool to listen: size `DB_MAX_CONNECTIONS` (20 by default) for it.

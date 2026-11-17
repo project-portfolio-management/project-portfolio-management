@@ -43,6 +43,8 @@ cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings &&
 #   trace_span_concurrency, and load_test, which needs a running service: see its module docs)
 # restore drill, as CI runs it (the whole suite on a restored copy; run it alone, two at once collide):
 #   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test mod -- --ignored --test-threads=1'
+# mutation test of the matcher (CI's `mutants` job mutates the changed lines; weekly, every mutant):
+#   cd project-portfolio-management-matcher-with-rust && git diff --relative origin/main -- . > /tmp/d && cargo mutants --in-diff /tmp/d
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60
 # UI (other projects on this machine may hold port 4173: use PW_PORT)
 cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run check && npx vitest run && PW_PORT=4183 CI=true pnpm exec playwright test

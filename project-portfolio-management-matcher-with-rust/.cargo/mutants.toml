@@ -1,0 +1,15 @@
+# cargo-mutants configuration for the matcher (governance/security-policy.md, section 10.5; BENCHMARKS.md style:
+# every exclusion says why). Run: `cargo mutants` from this directory. CI: the `mutants` job in .github/workflows/ci.yml.
+#
+# Each entry below is an equivalent mutant: the mutated code behaves identically for every input, so no test can
+# tell them apart. Excluding them keeps "missed" meaning "a test is missing". Re-check an entry whenever its function
+# changes.
+exclude_re = [
+    # The binary only forwards to the library's CLI; it is exercised by hand, not by unit tests.
+    'src/main\.rs:.*replace main with \(\)',
+    # At exactly the ceiling, the bonus is clamped back to the ceiling, so `<` and `<=` agree.
+    'replace < with <= in name_score$',
+    # The Jaccard index of an empty set and a non-empty set is 0, which is what the early return gives.
+    'replace \|\| with && in set_jaccard$',
+]
+timeout_multiplier = 3.0

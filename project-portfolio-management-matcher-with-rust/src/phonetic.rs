@@ -142,6 +142,23 @@ pub fn same(a: &str, b: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+
+    // Kills mutants that drop a spelled-out letter or the L group (2026-11-17).
+    #[test]
+    fn letters_outside_ascii_are_spelled_out_and_l_is_four() {
+        for (written, spelled) in [
+            ("Æsir", "Aesir"),
+            ("Œuvre", "Oeuvre"),
+            ("Łukasz", "Lukasz"),
+            ("Đorđe", "Dorde"),
+            ("Þór", "Thor"),
+        ] {
+            assert_eq!(soundex(written), soundex(spelled), "{written}");
+            assert!(soundex(written).is_some(), "{written}");
+        }
+        assert_eq!(soundex("Miller").as_deref(), Some("M460"));
+    }
+
     use super::*;
 
     // Pins the canonical textbook Soundex codes (Robert/Rupert → R163,

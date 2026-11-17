@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (mutation testing, the matcher)
+
+- **Matcher: from 36 missed mutants to none.** `cargo-mutants` showed four public functions with no test of their
+  result, no February date anywhere in the date tests, and untested gates in the code, timeframe and name components;
+  each has a test now. Three equivalent mutants are excluded with reasons. CI's new `mutants` job (part of `ci-ok`)
+  mutates the changed matcher lines on every run; `mutants.yml` runs every mutant weekly. `BENCHMARKS.md`, "Mutation
+  testing", has the numbers.
+- **Not done:** the service (14,100 mutants, most in database-bound code; its scope is set after the move to `jiff`)
+  and the UI. **Not verified:** the jobs on a GitHub runner.
+
 ### 17 November (a formal information security policy)
 
 - **`governance/security-policy.md`**, version 1.0: the policy behind `SECURITY.md`. Scope and roles;

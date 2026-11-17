@@ -283,6 +283,49 @@ What it does not show: only four to six runs, large variance, a growing database
 These are wall-clock times from the development machine on 2026-10-10, useful for
 planning CI, not for comparing products.
 
+## Mutation testing (measured 2026-11-17)
+
+Mutation testing changes the code in small ways (a `<` to `<=`, a function's result to a default) and runs the tests
+against each change; a change no test notices is a *missed* mutant, a missing test. Tool: `cargo-mutants` 27.1.0.
+
+| | |
+|---|---|
+| Date | 2026-11-17 |
+| Machine | Apple M4 Max, macOS 27.2.1, shared with other work |
+| Command | `cargo mutants --jobs 4` in `project-portfolio-management-matcher-with-rust` |
+
+| Run | Mutants | Caught | Missed | Timeout | Unviable | Time |
+|---|---|---|---|---|---|---|
+| Matcher, before | 267 | 225 | 36 | 0 | 6 | 23 min |
+| Matcher, after the new tests | 264 | 254 | **0** | 4 | 6 | 13 min |
+
+How to read it:
+
+- **The 36 missed mutants were real gaps, not noise.** Four public functions had no test of their result
+  (`MatchingEngine::config`, `match_one_to_many`, `rank`, `find_matches`); no test used a February date, so a broken
+  month shift in `days_from_civil` went unnoticed; nothing checked that a shared value under two *different* identifier
+  schemes is not a deterministic match, or that a phonetic agreement adds exactly its bonus; the code component's
+  owner and empty-code gates, the timeframe's zero-width fallback and its averaging, five spelled-out letters and the
+  `L` group in Soundex, the phase helpers, and a zero weight being valid were all untested. Each now has a test that
+  fails on its mutant.
+- **Three are equivalent** (no input can tell the mutant apart) and are excluded with their reasons in
+  `project-portfolio-management-matcher-with-rust/.cargo/mutants.toml`, with `main` (the binary forwards to the
+  library). The patterns are anchored, and the excluded set was checked against the full list, so an exclusion cannot
+  quietly cover a mutant that is caught.
+- **The four timeouts** are mutants of `rank` and `find_matches` that make the property tests fail; the time is
+  proptest shrinking the failure. They are detected, but they are the slowest part of a run.
+- **"Unviable"** mutants do not compile; they say nothing about the tests.
+
+**In CI.** The `mutants` job in `ci.yml` (part of `ci-ok`) mutates only the matcher lines a push or pull request
+changed (`--in-diff`) and fails on a survivor. `mutants.yml` runs every mutant weekly and uploads the report; like the
+fuzz and chaos runs it is not a merge gate.
+
+**Not done.** The service is not mutation tested yet. It has about 14,100 mutants, 6,100 of them in controllers whose
+tests need PostgreSQL, so a blanket run would report most of them as missed when `cargo test --lib` cannot reach them.
+Its scope (the pure calculation modules, such as `cpm`, `evm`, `schedule_risk` and `cost_risk`, tested by the
+library tests) is set after its move from `chrono` to `jiff`, which rewrites much of that code. The UI is not mutation
+tested (no Stryker); that is not planned yet.
+
 ## How to add a benchmark
 
 Add it under `benches/`, run it with `cargo bench`, and record here the date,

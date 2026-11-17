@@ -199,6 +199,45 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo test
 
+  mutants:
+    name: Matcher mutation test of the changed lines (cargo-mutants)
+    # Mutates only the lines this push or pull request changed (`--in-diff`) and fails if a mutant survives: a
+    # survivor is a change no test notices. Equivalent mutants are excluded, each with its reason, in the crate's
+    # .cargo/mutants.toml. The full suites run weekly in mutants.yml. The service joins once its scope is set
+    # (BENCHMARKS.md, "Mutation testing").
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: project-portfolio-management-matcher-with-rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@9522411a9bce8484da960823fc2f46e52f981f71 # 1.100.0
+        with:
+          toolchain: 1.100.0
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: ${{ env.MATCHER }}
+      - name: Install cargo-mutants
+        run: cargo install cargo-mutants --version 27.1.0 --locked
+      - name: The diff, relative to the crate
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -n "$BASE_REF" ]; then base="origin/$BASE_REF"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then base="$BEFORE"
+          else base="HEAD^"; fi
+          git diff --relative "$base"...HEAD -- . > "$RUNNER_TEMP/changes.diff"
+          wc -l < "$RUNNER_TEMP/changes.diff"
+      - name: Mutate the changed lines
+        run: |
+          if [ ! -s "$RUNNER_TEMP/changes.diff" ]; then echo "No matcher change; nothing to mutate."; exit 0; fi
+          cargo mutants --in-diff "$RUNNER_TEMP/changes.diff" --no-shuffle
+
   deny:
     name: cargo deny (advisories, licenses, bans, sources)
     runs-on: ubuntu-latest
@@ -552,6 +591,7 @@ jobs:
       - matcher
       - deny
       - machete
+      - mutants
       - ui
       - site
       - docs

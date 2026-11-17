@@ -487,6 +487,98 @@ fn jaccard(a_set: &[String], b_set: &[String]) -> f64 {
 
 #[cfg(test)]
 mod tests {
+
+    // ---- Tests added to kill mutants cargo-mutants found surviving (2026-11-17) ----
+
+    #[test]
+    fn the_engine_lends_out_the_configuration_it_was_built_with() {
+        let engine = MatchingEngine::new(MatchConfig {
+            threshold: 0.42,
+            ..MatchConfig::default()
+        });
+        assert!((engine.config().threshold - 0.42).abs() < 1e-12);
+    }
+
+    #[test]
+    fn one_to_many_keeps_input_order_rank_sorts_and_find_matches_filters() {
+        let engine = MatchingEngine::default_config();
+        let query = project("Apollo launch");
+        let candidates = [
+            project("Zebra farm"),
+            project("Apollo launch"),
+            project("Apollo lunch"),
+        ];
+        let all = engine.match_one_to_many(&query, &candidates);
+        assert_eq!(all.len(), 3);
+        assert!(all[1].score > all[0].score, "result i is candidate i");
+        let ranked = engine.rank(&query, &candidates);
+        assert_eq!(ranked.iter().map(|(i, _)| *i).collect::<Vec<_>>()[0], 1);
+        assert_eq!(ranked.len(), 3);
+        assert!(ranked.windows(2).all(|w| w[0].1.score >= w[1].1.score));
+        let found = engine.find_matches(&query, &candidates);
+        assert!(!found.is_empty());
+        assert!(found.iter().all(|(_, r)| r.is_match));
+        assert!(
+            found.iter().all(|(i, _)| *i != 0),
+            "the unrelated candidate is dropped"
+        );
+    }
+
+    #[test]
+    fn a_shared_value_under_two_different_schemes_is_not_deterministic() {
+        let mut a = project("A");
+        let mut b = project("B");
+        a.identifiers = vec![ident(IdentifierScheme::JiraProjectKey, "ABC")];
+        b.identifiers = vec![ident(IdentifierScheme::AsanaGid, "ABC")];
+        assert!(!deterministic_match(&a, &b));
+        b.identifiers = vec![ident(IdentifierScheme::JiraProjectKey, "abc")];
+        assert!(deterministic_match(&a, &b));
+    }
+
+    #[test]
+    fn a_phonetic_agreement_adds_exactly_the_bonus_below_the_ceiling() {
+        let (a, b) = (project("Robert"), project("Rupert"));
+        let literal = jaro_winkler(&normalize::fold("Robert"), &normalize::fold("Rupert"));
+        assert!(
+            literal + PHONETIC_BONUS < PHONETIC_CEILING,
+            "the pair must sit below the ceiling"
+        );
+        assert!((name_score(&a, &b) - (literal + PHONETIC_BONUS)).abs() < 1e-12);
+    }
+
+    #[test]
+    fn the_code_component_needs_two_codes_and_one_owner() {
+        let with = |code: Option<&str>, owner: Option<&str>| {
+            let mut p = project("P");
+            p.code = code.map(Into::into);
+            p.owner_org_id = owner.map(Into::into);
+            p
+        };
+        let same = with(Some("X-1"), Some("o1"));
+        assert_eq!(code_score(&same, &with(Some("x 1"), Some("o1"))), Some(1.0));
+        assert_eq!(code_score(&same, &with(Some("Y-2"), Some("o1"))), Some(0.0));
+        assert_eq!(code_score(&same, &with(Some("X-1"), Some("o2"))), None);
+        assert_eq!(code_score(&same, &with(Some(""), Some("o1"))), None);
+        assert_eq!(code_score(&with(Some(""), Some("o1")), &same), None);
+        assert_eq!(code_score(&same, &with(None, Some("o1"))), None);
+    }
+
+    #[test]
+    fn a_zero_sigma_falls_back_to_one_day_and_pairs_are_averaged() {
+        let dated = |start: &str, target: &str| {
+            let mut p = project("P");
+            p.start_date = Some(start.into());
+            p.target_date = Some(target.into());
+            p
+        };
+        let a = dated("2026-01-01", "2026-06-01");
+        let b = dated("2026-01-02", "2026-06-01");
+        // One day apart at sigma 1: exp(-1/2); the target pair scores 1.0; the mean of the two.
+        let expected = f64::midpoint(f64::exp(-0.5), 1.0);
+        assert!((timeframe_score(&a, &b, 0.0).unwrap() - expected).abs() < 1e-12);
+        assert!((timeframe_score(&a, &b, 1.0).unwrap() - expected).abs() < 1e-12);
+    }
+
     use super::*;
     use crate::plan::{
         Goal, IdentifierScheme, PlanIdentifier, PlanKind, PlanPhase, PlanRelationship, PlanStatus,

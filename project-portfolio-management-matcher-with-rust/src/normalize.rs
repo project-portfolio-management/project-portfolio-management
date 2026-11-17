@@ -145,6 +145,24 @@ fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
 
 #[cfg(test)]
 mod tests {
+
+    // Kills mutants in the era step for years before 1 and in the month shift (2026-11-17): year 0 is a leap
+    // year, and 400 years are exactly 146,097 calendar days.
+    #[test]
+    fn days_from_civil_is_exact_before_year_one() {
+        assert_eq!(days_from_civil(1970, 1, 1), 0);
+        assert_eq!(days_from_civil(0, 3, 1) - days_from_civil(-1, 3, 1), 366);
+        assert_eq!(
+            days_from_civil(0, 3, 1) - days_from_civil(-400, 3, 1),
+            146_097
+        );
+        assert_eq!(days_from_civil(-1, 12, 31) + 1, days_from_civil(0, 1, 1));
+        // February counts from the shifted year's end (kills `m > 2` to `m >= 2`).
+        assert_eq!(days_from_civil(2024, 2, 29), 19_782);
+        assert_eq!(days_from_civil(2024, 3, 1), 19_783);
+        assert_eq!(days_from_civil(2023, 2, 1), 19_389);
+    }
+
     use super::*;
 
     #[test]

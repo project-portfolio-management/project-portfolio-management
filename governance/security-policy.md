@@ -304,6 +304,9 @@ request, and the single aggregate job `ci-ok` fails if any job fails, is cancell
 
 - a passive ZAP baseline scan of the running stack on every CI run (the `zap` job);
 - a restore drill of a real backup, plain and encrypted (the `restore` job);
+- mutation testing of the matcher: the changed lines on every CI run (the `mutants` job, a merge gate) and every
+  mutant weekly ([`mutants.yml`](../.github/workflows/mutants.yml)); the service is not yet mutation tested
+  ([`BENCHMARKS.md`](../BENCHMARKS.md#mutation-testing-measured-2026-11-17));
 - weekly fuzzing of five targets in the service and the matcher ([`fuzz.yml`](../.github/workflows/fuzz.yml));
 - a weekly chaos test of database and service faults under load ([`chaos.yml`](../.github/workflows/chaos.yml),
   `scripts/chaos-test.sh`).

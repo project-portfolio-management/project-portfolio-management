@@ -188,6 +188,19 @@ impl MatchConfig {
 
 #[cfg(test)]
 mod tests {
+
+    // Kills the `< 0.0` to `<= 0.0` mutant (2026-11-17): a weight of zero turns a component off and is valid.
+    #[test]
+    fn a_zero_weight_is_valid_and_a_negative_one_is_not() {
+        let mut config = MatchConfig {
+            tags_weight: 0.0,
+            ..MatchConfig::default()
+        };
+        assert!(config.clone().validated().is_ok());
+        config.tags_weight = -0.01;
+        assert!(config.validated().is_err());
+    }
+
     use super::*;
 
     // Pins the core invariant: the default weights sum to exactly 1.0.

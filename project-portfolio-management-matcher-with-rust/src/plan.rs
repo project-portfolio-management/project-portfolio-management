@@ -383,6 +383,22 @@ impl IdentifierScheme {
 
 #[cfg(test)]
 mod tests {
+
+    // Kills mutants in the phase helpers (2026-11-17).
+    #[test]
+    fn every_phase_has_its_own_ordinal_and_token_and_parses_back() {
+        for (i, phase) in PlanPhase::ALL.into_iter().enumerate() {
+            assert_eq!(phase.ordinal(), i);
+            assert_eq!(PlanPhase::parse(phase.token()), Some(phase));
+            assert_eq!(
+                PlanPhase::parse(&format!("  {}  ", phase.token().to_uppercase())),
+                Some(phase)
+            );
+        }
+        assert_eq!(PlanPhase::Controlling.token(), "controlling");
+        assert_eq!(PlanPhase::parse("execution"), None);
+    }
+
     use super::*;
 
     #[test]

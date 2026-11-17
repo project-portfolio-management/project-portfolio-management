@@ -10,6 +10,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — mutation testing (2026-11-17)
+
+- `cargo-mutants` found 36 of 261 viable mutants surviving; each was a missing test, and now has one (unit tests in
+  `matcher.rs`, `normalize.rs`, `phonetic.rs`, `plan.rs` and `config.rs`), so none survives. Three equivalent
+  mutants and `main` are excluded, with reasons, in `.cargo/mutants.toml`. CI mutates the changed lines on every run
+  and every mutant weekly. Results: the root `BENCHMARKS.md`, "Mutation testing".
+- No behaviour changed. **Not verified:** the CI jobs' timings on a GitHub runner (measured only locally).
+
 ### Changed
 
 - **`mimalloc` is a dependency on MUSL targets only (2026-11-14).** Only the demo binary's allocator on a MUSL static

@@ -1403,7 +1403,6 @@ async fn run_import(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
     Ok(())
 }
 
-#[expect(clippy::too_many_lines)]
 /// Worker body for an export: loads the plans authorized when the job was requested, encodes them in the job's format and masking profile, stores the result artifact and finishes the job.
 async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Result<(), String> {
     let pids: Vec<Uuid> = job.params["pids"].as_array().map_or_default(|a| {

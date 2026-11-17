@@ -19,7 +19,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   suite on Postgres 18, 232 passed. **Not verified:** `service health` against a running server; the listener under load.
 - **Fixed after the push:** clippy had been run before `rust-version` was raised, and at 1.98 its `map_unwrap_or` lint
   asks for the new `Option::map_or_default`, so CI's clippy failed on 41 `.map(..).unwrap_or_default()` calls. They are
-  rewritten by `cargo clippy --fix` (33 files, the same behaviour); clippy is clean and the library tests pass again.
+  rewritten by `cargo clippy --fix` (33 files, the same behaviour). `cargo fmt` then shortened `run_export` below
+  clippy's length limit, so its `#[expect(clippy::too_many_lines)]` went unfulfilled and is removed. Clippy, run after
+  the formatter, is clean and the library tests pass again.
 
 ### Changed
 

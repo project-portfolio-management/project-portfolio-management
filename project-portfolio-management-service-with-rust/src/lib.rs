@@ -105,6 +105,7 @@ pub mod content_check;
 pub mod controllers;
 pub mod cursor;
 pub mod data;
+pub mod datetime;
 pub mod db;
 pub mod dhcw_apply;
 pub mod email;

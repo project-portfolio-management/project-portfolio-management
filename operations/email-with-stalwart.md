@@ -13,7 +13,7 @@ export PPM_MAIL_ADMIN='admin:<choose a password>'      # optional: pins the boot
 podman compose --profile mail up -d mail               # the mail server on its own
 ```
 
-- The image is pinned to the `v0.16` line (`docker.io/stalwartlabs/stalwart:v0.16`), not `latest`.
+- The image is pinned to the `v1.0` line (`docker.io/stalwartlabs/stalwart:v1.0`), not `latest`.
 - Data is in the volumes `mail-config` and `mail-data`. They are **not** in the database backup: back them up
   with the rest of the deployment ([backup and restore](backup-and-restore.md)) or accept losing mail.
 - Everything is published on `127.0.0.1` only: administration and web mail `8081`, SMTP in `2525`,

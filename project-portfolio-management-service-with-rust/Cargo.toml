@@ -216,6 +216,11 @@ tracing-core = { version = "0.1" }
 name = "service_bench"
 harness = false
 
+# The calculation engines and date and time handling; names no chrono type (see its module docs).
+[[bench]]
+name = "calculation_bench"
+harness = false
+
 # cargo-mutants builds every mutant once in a throwaway copy of the tree: no debug information and no
 # incremental state make each build quicker and smaller. `.cargo/mutants.toml` selects it.
 [profile.mutants]

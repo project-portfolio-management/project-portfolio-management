@@ -15,6 +15,26 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (benchmarks of the calculation engines and the chrono baseline)
+
+- **Service: `benches/calculation_bench.rs`**, a second Criterion file: the schedule and cost Monte Carlo at their
+  default iterations, leveling, the schedule health checks, MSPDI import and export (the unit tests' sample and
+  generated files of 1,000 and 5,000 tasks), earned value and EVM, and a `timestamps` group (row structs to and from
+  JSON, ISO dates and RFC 3339 instants, the service's date parsers and calendar arithmetic). The file names no
+  `chrono` type, so it compiles unchanged after the move to `jiff`; its `timestamps` numbers in `BENCHMARKS.md` are
+  the chrono baseline. CI builds no release bench (it would add 8 to 22 minutes); the `api` job's clippy
+  `--all-targets` already type-checks and lints every bench.
+- **Found:** two paths that grow with the square of their input, the MSPDI export (each task scans every link) and
+  earned schedule in `earned_value::block` (each elapsed day re-walks every period): 12 ms for 5,000 tasks and 3.5 ms
+  for five years of weekly periods, so not urgent, and not changed here. A schedule-risk run is 2,000 CPM runs (11.7 s
+  for 1,000 tasks on the loaded machine); leveling 201 tasks stops at its 3,000-re-analysis cap.
+- **Not measured:** anything that needs the database; the response encoding of the engines' outcomes; a timestamp
+  helper that takes a `DateTime<Utc>` (`retention::cutoff`, `break_glass::expires_at`, `tz::local_today`), which this
+  file cannot build without naming chrono. **Not verified:** whether the JSON
+  fixtures' timestamp text still decodes after the migration (if the wire format changes, that is the one edit
+  allowed). One run, on a machine so loaded by other projects' builds that the CPM ran three times slower
+  than on 2026-11-15; the before and after for `jiff` should be run back to back on a quiet machine.
+
 ### 17 November (mutation testing, the matcher)
 
 - **Matcher: from 36 missed mutants to none.** `cargo-mutants` showed four public functions with no test of their

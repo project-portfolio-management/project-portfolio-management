@@ -41,7 +41,7 @@ WORKDIR /app
 
 # This crate: manifests first, then the nested `migration` crate, sources,
 # and benches. Cargo parses the whole manifest even for a --bin build, and
-# Cargo.toml declares `[[bench]] name = "service_bench"`, so benches/ must exist.
+# Cargo.toml declares `[[bench]]` service_bench and calculation_bench, so benches/ must exist.
 COPY project-portfolio-management-service-with-rust/Cargo.toml project-portfolio-management-service-with-rust/Cargo.lock project-portfolio-management-service-with-rust/
 COPY project-portfolio-management-service-with-rust/migration project-portfolio-management-service-with-rust/migration
 COPY project-portfolio-management-service-with-rust/src project-portfolio-management-service-with-rust/src

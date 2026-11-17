@@ -77,6 +77,85 @@ Nothing here touches PostgreSQL; the database's share of a request is what the l
 One run, on a machine doing other things: read these as orders of magnitude, and compare a change against a run
 made the same day on the same machine.
 
+## The calculation engines and date handling (measured 2026-11-17, a heavily loaded machine)
+
+Criterion benchmarks for the pure engines behind the schedule-risk, cost-risk, leveling, schedule-health, MSPDI and
+earned-value routes, and for the date and time handling the move from `chrono` to `jiff` will change:
+`project-portfolio-management-service-with-rust/benches/calculation_bench.rs`. Nothing here touches PostgreSQL. The
+file names no `chrono` type and calls no `chrono` function (its module docs say why), so it compiles and measures
+unchanged after the migration.
+
+| | |
+|---|---|
+| Date | 2026-11-17 |
+| Machine | Apple M4 Max, macOS 27.2.1. **Heavily loaded**: other projects' builds and mutation runs held the load average between 97 and 190 for the whole run, and did not stop in the quarter of an hour waited for them |
+| Toolchain | rustc 1.100.0, release profile |
+| Code | commit `b1d8748c` plus this file |
+| Command | `cargo bench --bench calculation_bench -- --warm-up-time 1 --measurement-time 3` |
+| Reported | the middle value of Criterion's range (time per call) |
+
+**How loaded:** `service_bench`'s `cpm/analyze/100` and `/1000`, run straight after on the same machine, took 767 µs
+and 5.77 ms, against 203 µs and 2.19 ms on 2026-11-15: about three times slower. Read every figure below as up to
+three times what a quiet machine gives.
+
+| Benchmark | Time | What it says |
+|---|---|---|
+| `schedule_risk/simulate_default_iterations/100`, `/1000` | 1.96 s, 11.7 s | 2,000 iterations (`DEFAULT_ITERATIONS`), each a critical-path run: 2,000 times the same-day `cpm/analyze` (767 µs, 5.77 ms) is 1.5 s and 11.5 s, so nearly all of it is the 2,000 CPM runs. From the 2026-11-15 CPM figures, a quiet machine would take about 0.4 s and 4.4 s (not measured) |
+| `cost_risk/simulate_default_iterations/100`, `/900` | 24.8 ms, 223 ms | 5,000 iterations over lines plus a risk event per ten lines; linear in lines. 900 lines and 90 events is near the most the work cap allows at the default iterations |
+| `leveling/propose/51` | 3.18 ms | 5 streams of 10 tasks sharing 3 people: 20 over-runs, 4 moves, 2 left unresolved |
+| `leveling/propose/201` | 1.82 s | 20 streams: 40 over-runs, 18 moves, 44 unresolved, and the proposal **truncated** at `MAX_ITERATIONS` (3,000 re-analyses); the cap is what bounds it |
+| `schedule_health/assess/100`, `/1000` | 766 µs, 7.57 ms | the fourteen checks, two CPM runs among them; linear |
+| `mspdi/parse/sample` | 16.6 µs | the unit tests' sample file (3 KB, 5 tasks) |
+| `mspdi/parse/generated_1000`, `generated_5000` | 2.19 ms, 12.0 ms | 399 KB and 2.0 MB; linear in the file |
+| `mspdi/write/sample`, `generated_1000`, `generated_5000` | 3.86 µs, 829 µs, 12.1 ms | the export. **Grows with the square of the plan**: five times the tasks costs about fifteen times as much, because each task scans every link for its predecessors (`links.iter().filter(…)` in `mspdi::write`) |
+| `earned_value/percent_complete_points/100`, `/1000` | 564 ns, 4.73 µs | linear |
+| `earned_value/block/12_monthly_periods` | 23.2 µs | one currency's figures over a one-year baseline |
+| `earned_value/block/60_monthly_periods`, `260_weekly_periods` | 1.30 ms, 3.50 ms | five-year baselines. **Quadratic**: five times the periods costs fifty-six times as much, because earned schedule tries each elapsed day in turn and each try (`pv_after`, 1.3 µs at 60 periods) walks every period |
+| `earned_value/pv_after/12_monthly_periods`, `60_…`, `260_weekly_…` | 111 ns, 1.34 µs, 1.63 µs | one planned-value reading |
+| `earned_value/eac_variants_tcpi_recommended` | 41.7 ns | the EVM arithmetic is nothing |
+| `timestamps/decode_plans/1`, `/1000` | 1.15 µs, 1.47 ms | `plans` rows from JSON (two timestamps, a small payload in `data`) |
+| `timestamps/encode_plans/1`, `/1000` | 2.13 µs, 1.30 ms | and back |
+| `timestamps/decode_tasks/1`, `/1000` | 2.23 µs, 1.94 ms | `tasks` rows: four timestamps and four dates of 36 columns |
+| `timestamps/encode_tasks/1`, `/1000` | 4.49 µs, 1.12 ms | |
+| `timestamps/decode_audit_logs/1`, `/1000` | 778 ns, 908 µs | |
+| `timestamps/encode_audit_logs/1`, `/1000` | 845 ns, 489 µs | |
+| `timestamps/decode_iso_dates_1000`, `encode_iso_dates_1000` | 126 µs, 100 µs | the `Date` alias through serde, about 0.1 µs a date |
+| `timestamps/decode_rfc3339_instants_1000`, `encode_rfc3339_instants_1000` | 182 µs, 300 µs | the `DateTimeWithTimeZone` alias; writing an instant costs more than reading one |
+| `timestamps/full_date_1000`, `tracker_import_parse_date_iso_1000` | 59.8 µs, 59.1 µs | the service's `YYYY-MM-DD` parsers |
+| `timestamps/tracker_import_parse_date_jira_1000` | 114 µs | Jira's `15/Oct/26 12:00 AM` |
+| `timestamps/parse_flex_date_mixed_1000` | 148 µs | `YYYY`, `YYYY-MM` and `YYYY-MM-DD`, a third each |
+| `timestamps/iso_week_start_and_days_1000` | 83.5 µs | `2026-W40` to its Monday and seven days |
+| `timestamps/parse_month_add_months_1000` | 251 µs | `YYYY-MM`, then thirteen months on |
+| `timestamps/business_day_index_1000` | 55.3 µs | `WorkCalendar::is_working` and `index_of` |
+| `timestamps/report_schedule_next_monthly_1000` | 33.7 µs | `report_schedules::next_after` |
+| `timestamps/financial_year_of_1000` | 174 µs | `financial_year::year_of`, which formats each year's label; the bench keeps the 1,000 years |
+| `timestamps/expand_absences_20` | 2.33 µs | twenty absences of one to four weeks, to days |
+
+How to read it:
+
+- **The `timestamps` numbers are the `chrono` baseline.** Re-run the same command on the same machine after the move
+  to `jiff` and compare. Because this run was so loaded, the fair comparison is to run this file on the last `chrono`
+  commit and on the `jiff` commit **back to back**, on a quiet machine, rather than against this table.
+- **Two quadratics.** The MSPDI export and earned schedule both grow with the square of their input. Neither is a
+  problem at the sizes measured (12 ms for the largest file the import accepts; 3.5 ms for five years of weekly
+  periods), but both are a map lookup (links by successor) or a binary search (planned value only rises with time)
+  away from linear. Not changed here.
+- **The Monte Carlo is the CPM, 2,000 times.** A schedule-risk request on a 1,000-task plan takes seconds even on a
+  quiet machine; the work cap (`MAX_WORK`, 5,000,000 iterations times tasks) is what keeps a larger one from taking
+  longer. Making the CPM cheaper per run is the lever, not the sampling.
+- **Leveling is bounded by its cap,** not by the plan: the 201-task case stops at 3,000 re-analyses and says so
+  (`truncated`).
+
+### Not measured
+
+- Anything that needs the database: loading the network, the baselines or the rows, and the whole request.
+- Encoding the engines' outcomes as the response JSON.
+- The timestamp helpers that take a `DateTime<Utc>` (`retention::cutoff`, `break_glass::expires_at`,
+  `tz::local_today`, `planner::day_window`): this file cannot build one without naming `chrono`, and the
+  `DateTimeWithTimeZone` alias is a fixed-offset type, not `Utc`. Parsing a query parameter's RFC 3339 instant is
+  private to its handlers, so the closest measured is `decode_rfc3339_instants_1000`.
+- A quiet machine: see "How loaded" above.
+
 ## The service under load, every scenario, with login off and on (measured 2026-11-15)
 
 [`scripts/load-test.mjs`](scripts/load-test.mjs) `seed`, `run`, `ramp` and `soak`, after RG-17 added the
@@ -331,3 +410,10 @@ tested (no Stryker); that is not planned yet.
 Add it under `benches/`, run it with `cargo bench`, and record here the date,
 the machine, the command and the numbers. A benchmark without a recorded run
 does not belong on this page.
+
+The bench files: the matcher's `benches/match_pair.rs`, and the service's `benches/service_bench.rs` (the request
+path) and `benches/calculation_bench.rs` (the calculation engines and date handling; it must not name a `chrono` or
+`jiff` type, see its module docs). A new file needs its own `[[bench]]` entry with `harness = false`. CI's `api`
+job type-checks and lints every bench (`cargo clippy --all-targets --all-features`, so a bench cannot rot) but runs
+none: a shared runner's timings are not comparable from run to run. A release build of the benches was left out on
+purpose; it would add 8 to 22 minutes to the job.

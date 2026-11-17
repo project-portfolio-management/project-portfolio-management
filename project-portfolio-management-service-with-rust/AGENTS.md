@@ -237,7 +237,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   lookups through `controllers::model_not_found`.
 - There are no configuration files: `src/app.rs` reads the environment (`spec/08-architecture.md` §8.3a). The family
   issues PASETO, and the Dockerfile must `COPY benches/`
-  (manifest declares `[[bench]] service_bench`).
+  (manifest declares `[[bench]] service_bench` and `calculation_bench`).
 
 ## Testing
 

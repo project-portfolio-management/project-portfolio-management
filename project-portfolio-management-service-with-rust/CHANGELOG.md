@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — axa 0.20 and axa-test 0.11 (2026-11-17)
+
+- `axa` 0.19 to 0.20, `axa-test` 0.10 to 0.11; nothing else in the lockfile moved. axa's Zstd support is now behind a
+  `zstd` feature, off by default; the service leaves it off (nothing in the service, its specs or tests uses Zstd), so a
+  `zstd` request body is a `415` and a `zstd`-only `Accept-Encoding` gets an uncompressed answer. Gzip, Brotli and
+  deflate are unchanged. Upgrade notes: `operations/upgrade-and-migration.md`.
+- **Publish-age exception, approved by the user on 2026-11-17:** axa 0.20.0 and axa-test 0.11.0, published minutes
+  before, resolved with `CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow`; nothing else was added.
+- **Not verified:** a client that sends Zstd against a running service.
+
 ### Fixed — every HTTP client installs the TLS provider first (2026-11-17)
 
 - `reqwest` is built with `rustls-no-provider` and `ring` was installed only in `App::context`, so 14 unit tests and 2

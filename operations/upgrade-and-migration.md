@@ -140,6 +140,16 @@ No migration comes with the axa change, so going back is redeploying the previou
 migrations `20261114000110` to `20261114000112` (RE-7, RE-1, RE-8), which add tables and columns only, each with a
 down file.
 
+## Upgrading to axa 0.20
+
+The release that moves the service from axa 0.19 to 0.20 renames no setting, changes no route or answer, and adds no
+migration. Only `axa` and `axa-test` (0.11) change.
+
+1. **Zstd is behind axa's `zstd` feature, off by default.** The service does not enable it: no client of the service is
+   known to send `content-encoding: zstd` bodies, and a browser that accepts Zstd also accepts Brotli and gzip, which
+   are unchanged. A `zstd` request body is now a `415` problem, and a caller asking for `zstd` alone gets an
+   uncompressed answer. A deployment whose clients send Zstd needs the feature turned on in `Cargo.toml` and a rebuild.
+
 ## Upgrading to axa 0.19
 
 The release that moves the service from axa 0.17 to 0.19 (through 0.18) renames no setting, changes no route or

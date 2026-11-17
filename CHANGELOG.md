@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (axa 0.20)
+
+- **Service: axa 0.19 to 0.20 and axa-test 0.10 to 0.11.** Zstd compression is now opt-in in axa and the service leaves
+  it off; gzip, Brotli and deflate are unchanged. No migration, no setting. A publish-age exception, approved by the
+  user, for the two crates. Upgrade notes: `operations/upgrade-and-migration.md`. **Not verified:** a Zstd client
+  against a running service.
+
 ### 17 November (the service's pure rules in a crate of their own)
 
 - **Service: `project-portfolio-management-domain`.** 121 pure modules of the service (about 47,300 lines with their

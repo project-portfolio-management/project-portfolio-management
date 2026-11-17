@@ -5443,6 +5443,89 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.ledger.no_gate": "sin fase",
   "p.ledger.could_not_load": "No se pudo cargar el libro",
   "p.ledger.could_not_trace": "No se pudo rastrear la asignación",
+  "p.ledger.a_line":
+    "una partida de presupuesto (elija su plan arriba para verla)",
+  "p.ledger.choose_line": "Elija una partida",
+  "p.ledger.choose_plan_first": "Elija primero un plan arriba",
+  "p.ledger.choose_plan": "Elija un plan",
+  "p.ledger.choose_source": "Elija una fuente de financiación",
+  "p.ledger.code_mapped": "Código de coste asignado.",
+  "p.ledger.codes_heading": "Códigos de coste",
+  "p.ledger.codes_says":
+    "Cada código de coste financiero corresponde a una partida de presupuesto, para poder poner una exportación financiera junto al registro. Asignar un código ya asignado lo mueve.",
+  "p.ledger.could_not_load_lines":
+    "No se pudieron cargar las partidas de presupuesto de este plan.",
+  "p.ledger.could_not_reconcile": "No se pudo conciliar la exportación.",
+  "p.ledger.could_not_record": "No se registró la asignación.",
+  "p.ledger.could_not_save": "No se guardó el cambio.",
+  "p.ledger.f_allocation": "Asignación de la que tira",
+  "p.ledger.f_amount": "Importe",
+  "p.ledger.f_code_line": "Partida de presupuesto (del plan de arriba)",
+  "p.ledger.f_code": "Código de coste",
+  "p.ledger.f_csv": "O pegue la exportación (CSV)",
+  "p.ledger.f_currency": "Moneda",
+  "p.ledger.f_file": "Archivo de exportación financiera (CSV)",
+  "p.ledger.f_on": "Asignado el",
+  "p.ledger.f_plan": "Plan elegido",
+  "p.ledger.f_reference": "Referencia (opcional)",
+  "p.ledger.f_source": "Fuente de financiación",
+  "p.ledger.line_detached": "La partida ya no tira de ninguna asignación.",
+  "p.ledger.line_drawn": "La partida ahora tira de esa asignación.",
+  "p.ledger.lines_heading":
+    "Partidas de presupuesto y las asignaciones de las que tiran",
+  "p.ledger.lines_says":
+    "Una partida tira de una asignación de su propia fuente de financiación y moneda; fije primero su fuente en la página Financiación.",
+  "p.ledger.map_code": "Asignar el código de coste",
+  "p.ledger.matched_heading": "Códigos de coste coincidentes",
+  "p.ledger.matched_line":
+    "en la exportación {ledger}, en el registro {register}, diferencia {difference}",
+  "p.ledger.mismatch_heading": "Filas en otra moneda que su partida",
+  "p.ledger.mismatch_line":
+    "fila en {row}, partida en {line}: {amount}, no sumada",
+  "p.ledger.needs_source": "necesita antes una fuente de financiación",
+  "p.ledger.no_allocation": "No tira de ninguna asignación",
+  "p.ledger.no_codes": "Todavía no hay ningún código de coste asignado.",
+  "p.ledger.no_lines": "Este plan no tiene partidas de presupuesto.",
+  "p.ledger.no_matching_allocation":
+    "Aún no hay asignación de la fuente y moneda de esta partida",
+  "p.ledger.no_source": "sin fuente de financiación",
+  "p.ledger.not_reconciled":
+    "Sin conciliar: algo no coincide. No se escribió nada.",
+  "p.ledger.problem_amount": "Escriba el importe como un número mayor que 0.",
+  "p.ledger.problem_code_line": "Elija la partida de presupuesto del código.",
+  "p.ledger.problem_code": "Un código de coste tiene entre 1 y 60 caracteres.",
+  "p.ledger.problem_currency": "Escriba la moneda con tres letras, como GBP.",
+  "p.ledger.problem_date_future": "La fecha de asignación no puede ser futura.",
+  "p.ledger.problem_date": "Elija la fecha de la asignación.",
+  "p.ledger.problem_export_empty":
+    "Elija un archivo o pegue antes la exportación.",
+  "p.ledger.problem_export_header":
+    "La primera línea de la exportación debe nombrar cost_code, amount_minor y currency.",
+  "p.ledger.problem_export_large": "La exportación supera 1 MB: divídala.",
+  "p.ledger.problem_reference":
+    "Una referencia puede tener como máximo 120 caracteres.",
+  "p.ledger.problem_source": "Elija una fuente de financiación.",
+  "p.ledger.reconcile_heading": "Conciliar una exportación financiera",
+  "p.ledger.reconcile_says":
+    "El código de coste de cada fila se busca en la tabla y sus importes se suman junto a lo que el registro tiene como gastado en la partida. No se escribe nada.",
+  "p.ledger.reconcile": "Conciliar",
+  "p.ledger.reconciled":
+    "Conciliada: cada fila coincidió con una partida, en su moneda, sin diferencia.",
+  "p.ledger.record_heading": "Registrar una asignación",
+  "p.ledger.record_says":
+    "Dinero que asignó una fuente de financiación. Las asignaciones se conservan tal como se registraron y nunca cambian.",
+  "p.ledger.record": "Registrar la asignación",
+  "p.ledger.recorded": "Asignación registrada.",
+  "p.ledger.refused_export":
+    "No se pudo leer la exportación: cada fila necesita un código de coste, un importe entero en unidades menores y una moneda, sin superar lo que admite el servicio.",
+  "p.ledger.refused_line":
+    "La partida no puede tirar de esa asignación: deben tener la misma fuente de financiación y la misma moneda.",
+  "p.ledger.rows_read_one": "{n} fila leída.",
+  "p.ledger.rows_read_other": "{n} filas leídas.",
+  "p.ledger.to_funding":
+    "Añada fuentes de financiación en la página Financiación",
+  "p.ledger.unmatched_heading":
+    "Códigos de coste sin una partida que pueda leer",
   "p.signoffs.nav": "Aprobación de hitos",
   "p.signoffs.title": "Aprobación de hitos — PPM",
   "p.signoffs.h1": "Aprobación de hitos",

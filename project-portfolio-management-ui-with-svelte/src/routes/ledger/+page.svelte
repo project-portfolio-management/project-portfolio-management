@@ -1,6 +1,7 @@
 <!--
   The funding ledger (`/ledger`, EX-12): each allocation and what it bought. Untraced money is shown with its
-  amount and why.
+  amount and why. Below, recording allocations, drawing budget lines on them, cost codes and reconciling a finance
+  export (`LedgerWrites.svelte`, NC-1 slice 11).
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -11,6 +12,7 @@
   import { resource } from "#lib/resource.svelte.js";
   import { PpmClient, money, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
+  import LedgerWrites from "#lib/components/LedgerWrites.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
@@ -88,4 +90,8 @@
       <DataTable label={t("p.ledger.lines_h3")} columns={lineColumns} rows={trace.lines} rowId={(r) => String(r.line_pid)} />
     {/if}
   </section>
+{/if}
+
+{#if allocations}
+  <LedgerWrites {allocations} onChanged={() => loaded.reload()} />
 {/if}

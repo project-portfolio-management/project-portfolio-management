@@ -2218,8 +2218,39 @@ plan's lines come from `GET /api/plans/{pid}/budget-lines`, whose rows already c
 - **Fixed on the way:** saving a line's source reloaded the lines, and the reload cleared the notice it had just set;
   only choosing another plan clears it now (the test caught it).
 - **Not built in this slice:** renaming a source (no route); a line's source set from the governance page; the
-  funding allocations, cost codes and reconcile (EX-12, the second half of part e).
+  funding allocations, cost codes and reconcile (EX-12, built next, below).
 - **Tests:** `tests/unit/funding-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/funding.spec.ts`
   (adding with a taken and a short name said first, retiring and restoring; a line's source set and cleared, a retired
   one only on its line; a refusal put back; the money drawn with a year checked and asked; Welsh; axe). The Welsh and
   the six other languages are machine-written and unreviewed.
+
+## The funding ledger's writes (NC-1 slice 11, EX-12)
+
+`/ledger` (already showing each allocation and what it bought) gains `LedgerWrites.svelte`, over `POST
+/api/funding-allocations`, `PUT /api/plans/{pid}/budget-lines/{line}/funding-allocation`, `GET` and `PUT /api/cost-codes` and
+`POST /api/ledger/reconcile`; sources from `GET /api/funding-sources`, a plan's lines from `GET …/budget-lines`, whose rows
+already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the rules.
+
+- **Recording an allocation.** A source (active ones), an amount read in the reader's own number format and sent in
+  minor units of a three-letter currency (above 0), a date not after today, and an optional reference of at most 120
+  characters; every problem is said at once. The page says allocations are kept as recorded and never changed.
+- **A plan's lines.** Each line shows its funding source and offers only the allocations of that source and currency,
+  as the service requires; a line with no source says it needs one first (set on `/funding`), and "draws on no
+  allocation" detaches it. A refused draw (422) is said and the choice put back.
+- **Cost codes.** The codes mapped to lines the reader can read, each with its line's description when the line's plan
+  is the one chosen above; a code (1 to 60 characters) is mapped to a line of that plan, and the page says mapping a
+  code already mapped moves it.
+- **Reconciling.** A finance export chosen as a file or pasted, sent as CSV text, after the page checks it is not empty,
+  is under 1 MB and names `cost_code`, `amount_minor` and `currency` in its first line. The report says whether it
+  reconciled and how many rows were read (a plural), with each matched code's export and register amounts and their
+  difference, each unmatched code and amount, and each row in another currency than its line; the page says nothing is
+  written. A refused file (422; the service lists its problems by line, in English) is the catalogue's sentence.
+- **Found, not changed here:** the trace already on this page shows the service's `untraced_reason`, its own English
+  text, as it was before this slice.
+- **Not built in this slice:** each unmatched code mapped from the report; the service's per-line problems with a file
+  shown in the reader's language.
+- **Tests:** `tests/unit/ledger-actions.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/ledger-writes.spec.ts` (recording with every problem first and minor units sent; a line's choices by source
+  and currency and one with no source; a refused draw put back; a code mapped; an export's header checked, sent as text
+  and its report; Welsh; axe); `tests/e2e/ledger.spec.ts` unchanged and passing. The Welsh and the six other languages
+  are machine-written and unreviewed.

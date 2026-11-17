@@ -5456,6 +5456,92 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.ledger.no_gate": "aucun jalon de décision",
   "p.ledger.could_not_load": "Impossible de charger le registre",
   "p.ledger.could_not_trace": "Impossible de tracer l'allocation",
+  "p.ledger.a_line":
+    "une ligne budgétaire (choisissez son plan ci-dessus pour la voir)",
+  "p.ledger.choose_line": "Choisissez une ligne",
+  "p.ledger.choose_plan_first": "Choisissez d'abord un plan ci-dessus",
+  "p.ledger.choose_plan": "Choisissez un plan",
+  "p.ledger.choose_source": "Choisissez une source de financement",
+  "p.ledger.code_mapped": "Code de coût rattaché.",
+  "p.ledger.codes_heading": "Codes de coût",
+  "p.ledger.codes_says":
+    "Chaque code de coût de la comptabilité correspond à une ligne budgétaire, pour qu'un export comptable puisse être mis à côté du registre. Rattacher un code déjà rattaché le déplace.",
+  "p.ledger.could_not_load_lines":
+    "Les lignes budgétaires de ce plan n'ont pas pu être chargées.",
+  "p.ledger.could_not_reconcile": "L'export n'a pas pu être rapproché.",
+  "p.ledger.could_not_record": "L'allocation n'a pas été enregistrée.",
+  "p.ledger.could_not_save": "La modification n'a pas été enregistrée.",
+  "p.ledger.f_allocation": "Allocation sur laquelle elle tire",
+  "p.ledger.f_amount": "Montant",
+  "p.ledger.f_code_line": "Ligne budgétaire (du plan ci-dessus)",
+  "p.ledger.f_code": "Code de coût",
+  "p.ledger.f_csv": "Ou collez l'export (CSV)",
+  "p.ledger.f_currency": "Devise",
+  "p.ledger.f_file": "Fichier d'export comptable (CSV)",
+  "p.ledger.f_on": "Allouée le",
+  "p.ledger.f_plan": "Plan concerné",
+  "p.ledger.f_reference": "Référence (facultative)",
+  "p.ledger.f_source": "Source de financement",
+  "p.ledger.line_detached": "La ligne ne tire plus sur aucune allocation.",
+  "p.ledger.line_drawn": "La ligne tire maintenant sur cette allocation.",
+  "p.ledger.lines_heading":
+    "Lignes budgétaires et allocations sur lesquelles elles tirent",
+  "p.ledger.lines_says":
+    "Une ligne tire sur une allocation de sa propre source de financement et de sa devise ; définissez d'abord sa source sur la page Financement.",
+  "p.ledger.map_code": "Rattacher le code de coût",
+  "p.ledger.matched_heading": "Codes de coût rapprochés",
+  "p.ledger.matched_line":
+    "dans l'export {ledger}, dans le registre {register}, écart {difference}",
+  "p.ledger.mismatch_heading":
+    "Lignes dans une autre devise que leur ligne budgétaire",
+  "p.ledger.mismatch_line":
+    "ligne en {row}, ligne budgétaire en {line} : {amount}, non additionné",
+  "p.ledger.needs_source": "a d'abord besoin d'une source de financement",
+  "p.ledger.no_allocation": "Ne tire sur aucune allocation",
+  "p.ledger.no_codes": "Aucun code de coût n'est encore rattaché.",
+  "p.ledger.no_lines": "Ce plan n'a pas de ligne budgétaire.",
+  "p.ledger.no_matching_allocation":
+    "Pas encore d'allocation de cette source et de cette devise",
+  "p.ledger.no_source": "aucune source de financement",
+  "p.ledger.not_reconciled":
+    "Non rapproché : quelque chose ne correspond pas. Rien n'a été écrit.",
+  "p.ledger.problem_amount":
+    "Écrivez le montant comme un nombre supérieur à 0.",
+  "p.ledger.problem_code_line": "Choisissez la ligne budgétaire du code.",
+  "p.ledger.problem_code": "Un code de coût compte de 1 à 60 caractères.",
+  "p.ledger.problem_currency":
+    "Écrivez la devise en trois lettres, par exemple GBP.",
+  "p.ledger.problem_date_future":
+    "La date d'allocation ne peut pas être dans le futur.",
+  "p.ledger.problem_date": "Choisissez la date de l'allocation.",
+  "p.ledger.problem_export_empty":
+    "Choisissez d'abord un fichier ou collez l'export.",
+  "p.ledger.problem_export_header":
+    "La première ligne de l'export doit nommer cost_code, amount_minor et currency.",
+  "p.ledger.problem_export_large": "L'export dépasse 1 Mo : découpez-le.",
+  "p.ledger.problem_reference":
+    "Une référence peut compter au plus 120 caractères.",
+  "p.ledger.problem_source": "Choisissez une source de financement.",
+  "p.ledger.reconcile_heading": "Rapprocher un export comptable",
+  "p.ledger.reconcile_says":
+    "Le code de coût de chaque ligne est cherché dans la table et ses montants sont additionnés à côté de ce que le registre tient pour dépensé sur la ligne. Rien n'est écrit.",
+  "p.ledger.reconcile": "Rapprocher",
+  "p.ledger.reconciled":
+    "Rapproché : chaque ligne correspond à une ligne budgétaire, dans sa devise, sans écart.",
+  "p.ledger.record_heading": "Enregistrer une allocation",
+  "p.ledger.record_says":
+    "L'argent qu'une source de financement a alloué. Les allocations sont gardées telles qu'enregistrées et jamais modifiées.",
+  "p.ledger.record": "Enregistrer l'allocation",
+  "p.ledger.recorded": "Allocation enregistrée.",
+  "p.ledger.refused_export":
+    "L'export n'a pas pu être lu : chaque ligne demande un code de coût, un montant entier en unités mineures et une devise, sans dépasser ce que le service accepte.",
+  "p.ledger.refused_line":
+    "La ligne ne peut pas tirer sur cette allocation : elles doivent avoir la même source de financement et la même devise.",
+  "p.ledger.rows_read_one": "{n} ligne lue.",
+  "p.ledger.rows_read_other": "{n} lignes lues.",
+  "p.ledger.to_funding":
+    "Ajouter des sources de financement sur la page Financement",
+  "p.ledger.unmatched_heading": "Codes de coût sans ligne que vous pouvez lire",
   "p.signoffs.nav": "Validation des jalons",
   "p.signoffs.title": "Validation des jalons — PPM",
   "p.signoffs.h1": "Validation des jalons",

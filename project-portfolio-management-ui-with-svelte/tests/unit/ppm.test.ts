@@ -719,6 +719,33 @@ describe("PpmClient funding sources (NC-1 slice 11, DP-6)", () => {
   });
 });
 
+describe("PpmClient ledger writes (NC-1 slice 11, EX-12)", () => {
+  it("records, draws a line, maps a code and reconciles a CSV as text", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.recordAllocation({
+      funding_source_pid: "s1",
+      amount_minor: 100,
+      currency: "GBP",
+      allocated_on: "2026-11-01",
+    });
+    await ppm.setLineAllocation("p1", "l1", "a1");
+    await ppm.setLineAllocation("p1", "l1", null);
+    await ppm.costCodes();
+    await ppm.mapCostCode("CC-1", "l1");
+    await ppm.reconcileLedger("cost_code,amount_minor,currency\nCC-1,100,GBP");
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "POST /api/funding-allocations",
+      "PUT /api/plans/p1/budget-lines/l1/funding-allocation",
+      "PUT /api/plans/p1/budget-lines/l1/funding-allocation",
+      "GET /api/cost-codes",
+      "PUT /api/cost-codes",
+      "POST /api/ledger/reconcile",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

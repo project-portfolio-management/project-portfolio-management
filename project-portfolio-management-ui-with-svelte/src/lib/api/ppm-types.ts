@@ -282,6 +282,8 @@ export interface BudgetBoard {
     high_minor?: number | null;
     /** The funding source the line draws on (DP-6); absent or null for none. */
     funding_source_pid?: string | null;
+    /** The funding allocation the line draws on (EX-12); absent or null for none. */
+    funding_allocation_pid?: string | null;
   }[];
   totals: {
     currency: string;
@@ -3904,4 +3906,44 @@ export interface FundingSource {
   pid: string;
   name: string;
   active: boolean;
+}
+
+// ---- the ledger's writes (EX-12, NC-1 slice 11) ----
+
+/** `POST /api/funding-allocations` body; allocations are append-only. */
+export interface AllocationBody {
+  funding_source_pid: string;
+  amount_minor: number;
+  currency: string;
+  allocated_on: string;
+  reference?: string;
+}
+
+/** `POST /api/ledger/reconcile`'s answer: nothing is written. */
+export interface ReconcileReport {
+  rows: number;
+  report: {
+    matched: Array<{
+      cost_code: string;
+      line_pid: string;
+      currency: string;
+      ledger_minor: number;
+      register_minor: number;
+      difference_minor: number;
+      rows: number;
+    }>;
+    unmatched: Array<{
+      cost_code: string;
+      currency: string;
+      amount_minor: number;
+      rows: number;
+    }>;
+    currency_mismatches: Array<{
+      cost_code: string;
+      row_currency: string;
+      line_currency: string;
+      amount_minor: number;
+    }>;
+    reconciled: boolean;
+  };
 }

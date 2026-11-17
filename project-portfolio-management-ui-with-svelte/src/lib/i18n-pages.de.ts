@@ -5457,6 +5457,91 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.ledger.no_gate": "kein Gate",
   "p.ledger.could_not_load": "Das Buch konnte nicht geladen werden",
   "p.ledger.could_not_trace": "Die Zuweisung konnte nicht verfolgt werden",
+  "p.ledger.a_line":
+    "ein Budgetposten (wählen Sie oben seinen Plan, um ihn zu sehen)",
+  "p.ledger.choose_line": "Posten wählen",
+  "p.ledger.choose_plan_first": "Wählen Sie zuerst oben einen Plan",
+  "p.ledger.choose_plan": "Plan wählen",
+  "p.ledger.choose_source": "Finanzierungsquelle wählen",
+  "p.ledger.code_mapped": "Kostencode zugeordnet.",
+  "p.ledger.codes_heading": "Kostencodes",
+  "p.ledger.codes_says":
+    "Jeder Kostencode der Finanzbuchhaltung gehört zu einem Budgetposten, damit ein Finanzexport neben das Register gelegt werden kann. Ein schon zugeordneter Code wird verschoben.",
+  "p.ledger.could_not_load_lines":
+    "Die Budgetposten dieses Plans konnten nicht geladen werden.",
+  "p.ledger.could_not_reconcile": "Der Export konnte nicht abgeglichen werden.",
+  "p.ledger.could_not_record": "Die Zuweisung wurde nicht erfasst.",
+  "p.ledger.could_not_save": "Die Änderung wurde nicht gespeichert.",
+  "p.ledger.f_allocation": "Zuweisung, aus der er schöpft",
+  "p.ledger.f_amount": "Betrag",
+  "p.ledger.f_code_line": "Budgetposten (aus dem Plan oben)",
+  "p.ledger.f_code": "Kostencode",
+  "p.ledger.f_csv": "Oder den Export einfügen (CSV)",
+  "p.ledger.f_currency": "Währung",
+  "p.ledger.f_file": "Datei des Finanzexports (CSV)",
+  "p.ledger.f_on": "Zugewiesen am",
+  "p.ledger.f_plan": "Gewählter Plan",
+  "p.ledger.f_reference": "Referenz (optional)",
+  "p.ledger.f_source": "Finanzierungsquelle",
+  "p.ledger.line_detached": "Der Posten schöpft aus keiner Zuweisung mehr.",
+  "p.ledger.line_drawn": "Der Posten schöpft jetzt aus dieser Zuweisung.",
+  "p.ledger.lines_heading":
+    "Budgetposten und die Zuweisungen, aus denen sie schöpfen",
+  "p.ledger.lines_says":
+    "Ein Posten schöpft aus einer Zuweisung seiner eigenen Finanzierungsquelle und Währung; legen Sie seine Quelle zuerst auf der Seite Finanzierung fest.",
+  "p.ledger.map_code": "Kostencode zuordnen",
+  "p.ledger.matched_heading": "Zugeordnete Kostencodes",
+  "p.ledger.matched_line":
+    "im Export {ledger}, im Register {register}, Differenz {difference}",
+  "p.ledger.mismatch_heading": "Zeilen in einer anderen Währung als ihr Posten",
+  "p.ledger.mismatch_line":
+    "Zeile in {row}, Posten in {line}: {amount}, nicht mitgezählt",
+  "p.ledger.needs_source": "braucht zuerst eine Finanzierungsquelle",
+  "p.ledger.no_allocation": "Schöpft aus keiner Zuweisung",
+  "p.ledger.no_codes": "Noch ist kein Kostencode zugeordnet.",
+  "p.ledger.no_lines": "Dieser Plan hat keine Budgetposten.",
+  "p.ledger.no_matching_allocation":
+    "Noch keine Zuweisung dieser Quelle und Währung",
+  "p.ledger.no_source": "keine Finanzierungsquelle",
+  "p.ledger.not_reconciled":
+    "Nicht abgeglichen: Etwas stimmt nicht überein. Nichts wurde geschrieben.",
+  "p.ledger.problem_amount": "Geben Sie den Betrag als Zahl über 0 an.",
+  "p.ledger.problem_code_line": "Wählen Sie den Budgetposten für den Code.",
+  "p.ledger.problem_code": "Ein Kostencode hat 1 bis 60 Zeichen.",
+  "p.ledger.problem_currency":
+    "Geben Sie die Währung mit drei Buchstaben an, etwa GBP.",
+  "p.ledger.problem_date_future":
+    "Das Zuweisungsdatum darf nicht in der Zukunft liegen.",
+  "p.ledger.problem_date": "Wählen Sie das Datum der Zuweisung.",
+  "p.ledger.problem_export_empty":
+    "Wählen Sie zuerst eine Datei oder fügen Sie den Export ein.",
+  "p.ledger.problem_export_header":
+    "Die erste Zeile des Exports muss cost_code, amount_minor und currency nennen.",
+  "p.ledger.problem_export_large":
+    "Der Export ist größer als 1 MB: Teilen Sie ihn.",
+  "p.ledger.problem_reference":
+    "Eine Referenz darf höchstens 120 Zeichen lang sein.",
+  "p.ledger.problem_source": "Wählen Sie eine Finanzierungsquelle.",
+  "p.ledger.reconcile_heading": "Finanzexport abgleichen",
+  "p.ledger.reconcile_says":
+    "Der Kostencode jeder Zeile wird in der Zuordnung gesucht und die Beträge werden neben das gelegt, was das Register als ausgegeben für den Posten führt. Nichts wird geschrieben.",
+  "p.ledger.reconcile": "Abgleichen",
+  "p.ledger.reconciled":
+    "Abgeglichen: Jede Zeile passte zu einem Posten, in seiner Währung, ohne Differenz.",
+  "p.ledger.record_heading": "Zuweisung erfassen",
+  "p.ledger.record_says":
+    "Geld, das eine Finanzierungsquelle zugewiesen hat. Zuweisungen bleiben wie erfasst und werden nie geändert.",
+  "p.ledger.record": "Zuweisung erfassen",
+  "p.ledger.recorded": "Zuweisung erfasst.",
+  "p.ledger.refused_export":
+    "Der Export konnte nicht gelesen werden: Jede Zeile braucht einen Kostencode, einen ganzen Betrag in kleinsten Einheiten und eine Währung, und nicht mehr, als der Dienst annimmt.",
+  "p.ledger.refused_line":
+    "Der Posten kann nicht aus dieser Zuweisung schöpfen: Beide brauchen dieselbe Finanzierungsquelle und Währung.",
+  "p.ledger.rows_read_one": "{n} Zeile gelesen.",
+  "p.ledger.rows_read_other": "{n} Zeilen gelesen.",
+  "p.ledger.to_funding":
+    "Finanzierungsquellen auf der Seite Finanzierung hinzufügen",
+  "p.ledger.unmatched_heading": "Kostencodes ohne Posten, den Sie lesen dürfen",
   "p.signoffs.nav": "Meilenstein-Abnahme",
   "p.signoffs.title": "Meilenstein-Abnahme — PPM",
   "p.signoffs.h1": "Meilenstein-Abnahme",

@@ -165,6 +165,8 @@ import type {
   DeliveryException,
   PortfolioMap,
   FundingSource,
+  AllocationBody,
+  ReconcileReport,
   PlannedGates,
   ProgrammeStatusBody,
   ProgrammeStatusView,
@@ -2180,6 +2182,46 @@ export class PpmClient {
     if (combineClasses) q.set("combine_classes", "true");
     const qs = q.toString();
     return this.http.get(`/api/portfolio-money${qs ? `?${qs}` : ""}`);
+  }
+  // ---- the ledger's writes (EX-12, NC-1 slice 11) ----
+  /** Record money a funding source allocated (append-only): above 0, an ISO currency, not dated in the future. */
+  recordAllocation(body: AllocationBody): Promise<unknown> {
+    return this.http.post("/api/funding-allocations", { body });
+  }
+  /** Draw a budget line on an allocation of its own source and currency (422 otherwise), or detach it with `null`. */
+  setLineAllocation(
+    planPid: string,
+    linePid: string,
+    allocationPid: string | null,
+  ): Promise<unknown> {
+    return this.http.put(
+      `/api/plans/${planPid}/budget-lines/${linePid}/funding-allocation`,
+      {
+        body: allocationPid ? { funding_allocation_pid: allocationPid } : {},
+      },
+    );
+  }
+  /** The finance cost codes mapped to budget lines the caller may read. */
+  costCodes(): Promise<{
+    cost_codes: Array<{ cost_code: string; budget_line_pid: string }>;
+  }> {
+    return this.http.get("/api/cost-codes");
+  }
+  /** Map a finance cost code (1 to 60 characters; the same code in any case is moved) to a budget line. */
+  mapCostCode(
+    costCode: string,
+    linePid: string,
+  ): Promise<{ cost_code: string; budget_line_pid: string }> {
+    return this.http.put("/api/cost-codes", {
+      body: { cost_code: costCode, budget_line_pid: linePid },
+    });
+  }
+  /** Reconcile a finance export (CSV with cost_code, amount_minor and currency; under 1 MB) against the register. */
+  reconcileLedger(csv: string): Promise<ReconcileReport> {
+    return this.http.post("/api/ledger/reconcile", {
+      rawBody: csv,
+      headers: { "content-type": "text/csv" },
+    });
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

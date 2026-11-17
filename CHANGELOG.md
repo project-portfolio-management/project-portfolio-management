@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (the funding ledger's writes: NC-1 slice 11, part e, second of two)
+
+- **UI: `/ledger` records allocations, draws budget lines on them, maps cost codes and reconciles a finance export
+  (EX-12).** The amount is read in the reader's own number format; a line draws only on allocations of its own source
+  and currency; the reconciliation writes nothing and says what matched and what did not. UI spec, "The funding
+  ledger's writes"; test `tests/e2e/ledger-writes.spec.ts` (five, with Welsh and axe). Part (e) is done.
+- **Found:** the ledger's trace shows one sentence of the service's English. **Not verified:** against a real service;
+  the translations are machine-written and unreviewed.
+
 ### 17 November (funding sources: NC-1 slice 11, part e, first of two)
 
 - **UI: `/funding` keeps the funding sources and gives each budget line one (DP-6).** Sources are added, retired and

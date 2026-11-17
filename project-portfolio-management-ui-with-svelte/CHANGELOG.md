@@ -9,6 +9,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the funding ledger's writes (NC-1 slice 11, EX-12, 2026-11-17)
+
+- `/ledger` records an allocation (the amount read in the reader's format, sent in minor units; every problem first),
+  draws a plan's budget lines on allocations of their own source and currency (a line with no source is told to get
+  one; a refused draw put back), maps finance cost codes to lines, and reconciles a finance export sent as CSV text
+  (its header and size checked first) with a report of what matched, what did not and what is in another currency.
+  Five client methods and their types; `funding_allocation_pid` on budget lines (the service already sent it);
+  `LedgerWrites.svelte`, `src/lib/ledger-actions.ts`; 67 keys in eight catalogues (one plural group), machine-written
+  and unreviewed.
+- Tests: `tests/unit/ledger-actions.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/ledger-writes.spec.ts`
+  (five, with Welsh and axe); `tests/e2e/ledger.spec.ts` unchanged and passing.
+- **Found, not changed:** the trace on this page shows the service's English `untraced_reason`.
+- **Not done:** mapping an unmatched code from the report; a refused file's per-line problems in the reader's language.
+  **Not verified:** against a real service.
+
 ### Added — funding sources (NC-1 slice 11, DP-6, 2026-11-17)
 
 - `/funding`, in the navigation: the funding sources (add one with its name checked first, retire or restore one), a

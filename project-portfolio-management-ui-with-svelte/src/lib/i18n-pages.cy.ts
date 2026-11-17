@@ -5367,6 +5367,87 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.ledger.no_gate": "dim porth",
   "p.ledger.could_not_load": "Methu llwytho'r cyfriflyfr",
   "p.ledger.could_not_trace": "Methu olrhain y dyraniad",
+  "p.ledger.a_line": "llinell gyllideb (dewiswch ei chynllun uchod i'w gweld)",
+  "p.ledger.choose_line": "Dewiswch linell",
+  "p.ledger.choose_plan_first": "Dewiswch gynllun uchod yn gyntaf",
+  "p.ledger.choose_plan": "Dewiswch gynllun",
+  "p.ledger.choose_source": "Dewiswch ffynhonnell gyllid",
+  "p.ledger.code_mapped": "Mapiwyd y cod cost.",
+  "p.ledger.codes_heading": "Codau cost",
+  "p.ledger.codes_says":
+    "Mae pob cod cost cyllid yn mapio i un llinell gyllideb, fel y gellir gosod allforyn cyllid ochr yn ochr â'r gofrestr. Mae mapio cod sydd eisoes wedi'i fapio yn ei symud.",
+  "p.ledger.could_not_load_lines":
+    "Nid oedd modd llwytho llinellau cyllideb y cynllun hwn.",
+  "p.ledger.could_not_reconcile": "Nid oedd modd cysoni'r allforyn.",
+  "p.ledger.could_not_record": "Ni chofnodwyd y dyraniad.",
+  "p.ledger.could_not_save": "Ni chadwyd y newid.",
+  "p.ledger.f_allocation": "Dyraniad y mae'n tynnu arno",
+  "p.ledger.f_amount": "Swm",
+  "p.ledger.f_code_line": "Llinell gyllideb (o'r cynllun uchod)",
+  "p.ledger.f_code": "Cod cost",
+  "p.ledger.f_csv": "Neu gludo'r allforyn (CSV)",
+  "p.ledger.f_currency": "Arian cyfred",
+  "p.ledger.f_file": "Ffeil allforyn cyllid (CSV)",
+  "p.ledger.f_on": "Dyrannwyd ar",
+  "p.ledger.f_plan": "Cynllun",
+  "p.ledger.f_reference": "Cyfeirnod (dewisol)",
+  "p.ledger.f_source": "Ffynhonnell gyllid",
+  "p.ledger.line_detached": "Nid yw'r llinell yn tynnu ar ddyraniad mwyach.",
+  "p.ledger.line_drawn": "Mae'r llinell nawr yn tynnu ar y dyraniad hwnnw.",
+  "p.ledger.lines_heading":
+    "Llinellau cyllideb a'r dyraniadau y maent yn tynnu arnynt",
+  "p.ledger.lines_says":
+    "Mae llinell yn tynnu ar ddyraniad o'i ffynhonnell gyllid a'i harian cyfred ei hun; gosodwch ei ffynhonnell ar y dudalen Cyllid yn gyntaf.",
+  "p.ledger.map_code": "Mapio'r cod cost",
+  "p.ledger.matched_heading": "Codau cost a gydweddwyd",
+  "p.ledger.matched_line":
+    "yn yr allforyn {ledger}, yn y gofrestr {register}, gwahaniaeth {difference}",
+  "p.ledger.mismatch_heading": "Rhesi mewn arian cyfred gwahanol i'w llinell",
+  "p.ledger.mismatch_line":
+    "rhes yn {row}, llinell yn {line}: {amount}, heb ei adio",
+  "p.ledger.needs_source": "angen ffynhonnell gyllid yn gyntaf",
+  "p.ledger.no_allocation": "Nid yw'n tynnu ar unrhyw ddyraniad",
+  "p.ledger.no_codes": "Nid oes cod cost wedi'i fapio eto.",
+  "p.ledger.no_lines": "Nid oes gan y cynllun hwn linellau cyllideb.",
+  "p.ledger.no_matching_allocation":
+    "Dim dyraniad o ffynhonnell ac arian cyfred y llinell hon eto",
+  "p.ledger.no_source": "dim ffynhonnell gyllid",
+  "p.ledger.not_reconciled":
+    "Heb ei gysoni: nid yw rhywbeth yn cyfateb. Ni ysgrifennwyd dim.",
+  "p.ledger.problem_amount": "Ysgrifennwch y swm fel rhif uwchlaw 0.",
+  "p.ledger.problem_code_line": "Dewiswch y llinell gyllideb ar gyfer y cod.",
+  "p.ledger.problem_code": "Mae cod cost rhwng 1 a 60 nod.",
+  "p.ledger.problem_currency":
+    "Ysgrifennwch yr arian cyfred fel tair llythyren, fel GBP.",
+  "p.ledger.problem_date_future": "Ni all dyddiad y dyraniad fod yn y dyfodol.",
+  "p.ledger.problem_date": "Dewiswch y dyddiad y'i dyrannwyd.",
+  "p.ledger.problem_export_empty":
+    "Dewiswch ffeil neu gludo'r allforyn yn gyntaf.",
+  "p.ledger.problem_export_header":
+    "Rhaid i linell gyntaf yr allforyn enwi cost_code, amount_minor a currency.",
+  "p.ledger.problem_export_large": "Mae'r allforyn dros 1 MB: rhannwch ef.",
+  "p.ledger.problem_reference": "Gall cyfeirnod fod yn 120 nod ar y mwyaf.",
+  "p.ledger.problem_source": "Dewiswch ffynhonnell gyllid.",
+  "p.ledger.reconcile_heading": "Cysoni allforyn cyllid",
+  "p.ledger.reconcile_says":
+    "Edrychir am god cost pob rhes yn y map ac adio ei symiau ochr yn ochr â'r hyn y mae'r gofrestr yn ei ddal fel wedi'i wario ar y llinell. Ni ysgrifennir dim.",
+  "p.ledger.reconcile": "Cysoni",
+  "p.ledger.reconciled":
+    "Wedi'i gysoni: cydweddodd pob rhes â llinell, yn ei harian cyfred, heb wahaniaeth.",
+  "p.ledger.record_heading": "Cofnodi dyraniad",
+  "p.ledger.record_says":
+    "Arian a ddyrannwyd gan ffynhonnell gyllid. Cedwir dyraniadau fel y'u cofnodwyd ac ni chânt byth eu newid.",
+  "p.ledger.record": "Cofnodi'r dyraniad",
+  "p.ledger.recorded": "Cofnodwyd y dyraniad.",
+  "p.ledger.refused_export":
+    "Nid oedd modd darllen yr allforyn: mae angen cod cost, swm cyfan mewn unedau lleiaf ac arian cyfred ar bob rhes, heb fwy nag y mae'r gwasanaeth yn ei dderbyn.",
+  "p.ledger.refused_line":
+    "Ni all y llinell dynnu ar y dyraniad hwnnw: rhaid iddynt fod â'r un ffynhonnell gyllid a'r un arian cyfred.",
+  "p.ledger.rows_read_one": "Darllenwyd {n} rhes.",
+  "p.ledger.rows_read_other": "Darllenwyd {n} rhes.",
+  "p.ledger.to_funding": "Ychwanegu ffynonellau cyllid ar y dudalen Cyllid",
+  "p.ledger.unmatched_heading":
+    "Codau cost heb eu mapio i linell y gallwch ei darllen",
   "p.signoffs.nav": "Llofnodi cerrig milltir",
   "p.signoffs.title": "Llofnodi cerrig milltir — PPM",
   "p.signoffs.h1": "Llofnodi cerrig milltir",

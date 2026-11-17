@@ -4143,6 +4143,41 @@ export const PAGES_EN = {
   "p.exceptions.worsened_one": "Worsened {count} time since it opened",
   "p.exceptions.worsened_other": "Worsened {count} times since it opened",
   "p.exceptions.worst": "Worst confidence: {value}",
+  "p.aims.aims_heading": "Strategic aims",
+  "p.aims.aims_legend": "Objectives that are strategic aims",
+  "p.aims.aims_says":
+    "A strategic aim is an objective the portfolio is organized around. Unmarking one also stops it being any programme's primary aim.",
+  "p.aims.choose_aim": "Choose an aim",
+  "p.aims.choose_programme": "Choose a programme",
+  "p.aims.could_not_load": "The portfolio map could not be loaded.",
+  "p.aims.could_not_save": "The change was not saved.",
+  "p.aims.f_aim": "Primary aim",
+  "p.aims.f_period": "Month (empty for this month)",
+  "p.aims.f_programme": "Programme",
+  "p.aims.intro":
+    "The programmes you can read, each once under its primary strategic aim. Delivery confidence is the stated value, shown beside the RAG worked out from the data, never mixed with it; not assessed is not green.",
+  "p.aims.map_heading": "Portfolio map, {period}",
+  "p.aims.marked": "Marked as a strategic aim.",
+  "p.aims.no_aims":
+    "No objective is a strategic aim yet; mark one above first.",
+  "p.aims.no_objectives": "There are no objectives yet.",
+  "p.aims.no_programmes":
+    "There are no programmes on the map: a programme is a plan of kind Program.",
+  "p.aims.primary_heading": "A programme's primary aim",
+  "p.aims.primary_says":
+    "A programme appears on the map under its one primary aim; any other aims it serves are named beside it. Choosing a new primary makes the earlier one an ordinary link.",
+  "p.aims.primary_set": "Primary aim set.",
+  "p.aims.problem_already_primary":
+    "That is already this programme's primary aim.",
+  "p.aims.problem_choose": "Choose a programme and an aim.",
+  "p.aims.problem_period":
+    "Choose the month as YYYY-MM, or leave it empty for this month.",
+  "p.aims.set_primary": "Set the primary aim",
+  "p.aims.show": "Show",
+  "p.aims.title_ppm": "Portfolio map — PPM",
+  "p.aims.title": "Portfolio map",
+  "p.aims.to_objectives": "Open the objectives",
+  "p.aims.unmarked": "No longer a strategic aim.",
   "p.director_pack.actions_heading": "Review, issue or reissue",
   "p.director_pack.aud_board": "Board",
   "p.director_pack.aud_escalation_board": "Escalation board",

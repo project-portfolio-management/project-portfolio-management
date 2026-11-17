@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (the portfolio map and strategic aims: NC-1 slice 11, part c, last of three)
+
+- **UI: `/portfolio-map` shows the live portfolio map and sets strategic aims (DP-4).** The map is drawn as the director
+  pack draws it; objectives are marked as strategic aims, and each programme gets one primary aim. UI spec, "Portfolio
+  map and strategic aims"; test `tests/e2e/portfolio-map.spec.ts` (four, with Welsh and axe). Part (c) of the slice is
+  done; part (d), planned gates and programme status, is next.
+- **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (the delivery exceptions register: NC-1 slice 11, part c, second of three)
 
 - **UI: `/exceptions` lists, completes and decides delivery exceptions (DP-3).** Each exception says its plan, its worst

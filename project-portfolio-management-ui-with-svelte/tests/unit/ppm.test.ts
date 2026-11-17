@@ -656,6 +656,24 @@ describe("PpmClient delivery exceptions (NC-1 slice 11, DP-3)", () => {
   });
 });
 
+describe("PpmClient strategic aims and the portfolio map (NC-1 slice 11, DP-4)", () => {
+  it("reads the map, marks an aim and sets a primary", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.portfolioMap();
+    await ppm.portfolioMap("2026-10");
+    await ppm.markStrategicAim("o1", true);
+    await ppm.setPrimaryAim("p1", "o1");
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/portfolio-map",
+      "GET /api/portfolio-map?period=2026-10",
+      "PUT /api/objectives/o1/strategic-aim",
+      "PUT /api/plans/p1/primary-aim",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

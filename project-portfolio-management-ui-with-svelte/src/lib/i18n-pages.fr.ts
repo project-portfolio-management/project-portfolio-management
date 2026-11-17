@@ -4304,6 +4304,41 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.exceptions.worsened_one": "Aggravée {count} fois depuis son ouverture",
   "p.exceptions.worsened_other": "Aggravée {count} fois depuis son ouverture",
   "p.exceptions.worst": "Pire confiance : {value}",
+  "p.aims.aims_heading": "Objectifs stratégiques",
+  "p.aims.aims_legend": "Objectifs qui sont des objectifs stratégiques",
+  "p.aims.aims_says":
+    "Un objectif stratégique est un objectif autour duquel le portefeuille est organisé. Le retirer cesse aussi d'en faire l'objectif principal d'un programme.",
+  "p.aims.choose_aim": "Choisissez un objectif",
+  "p.aims.choose_programme": "Choisissez un programme",
+  "p.aims.could_not_load": "La carte du portefeuille n'a pas pu être chargée.",
+  "p.aims.could_not_save": "La modification n'a pas été enregistrée.",
+  "p.aims.f_aim": "Objectif principal",
+  "p.aims.f_period": "Mois (vide pour ce mois)",
+  "p.aims.f_programme": "Programme concerné",
+  "p.aims.intro":
+    "Les programmes que vous pouvez lire, chacun une fois sous son objectif stratégique principal. La confiance de livraison est la valeur déclarée, montrée à côté du RAG calculé à partir des données, jamais mélangée avec lui ; non évalué n'est pas vert.",
+  "p.aims.map_heading": "Carte du portefeuille, {period}",
+  "p.aims.marked": "Marqué comme objectif stratégique.",
+  "p.aims.no_aims":
+    "Aucun objectif n'est encore stratégique ; marquez-en un ci-dessus d'abord.",
+  "p.aims.no_objectives": "Il n'y a pas encore d'objectifs.",
+  "p.aims.no_programmes":
+    "Il n'y a aucun programme sur la carte : un programme est un plan de type Programme.",
+  "p.aims.primary_heading": "L'objectif principal d'un programme",
+  "p.aims.primary_says":
+    "Un programme apparaît sur la carte sous son seul objectif principal ; les autres objectifs qu'il sert sont nommés à côté. Choisir un nouvel objectif principal fait du précédent un lien ordinaire.",
+  "p.aims.primary_set": "Objectif principal défini.",
+  "p.aims.problem_already_primary":
+    "C'est déjà l'objectif principal de ce programme.",
+  "p.aims.problem_choose": "Choisissez un programme et un objectif.",
+  "p.aims.problem_period":
+    "Choisissez le mois sous la forme AAAA-MM, ou laissez vide pour ce mois.",
+  "p.aims.set_primary": "Définir l'objectif principal",
+  "p.aims.show": "Afficher",
+  "p.aims.title_ppm": "Carte du portefeuille — PPM",
+  "p.aims.title": "Carte du portefeuille",
+  "p.aims.to_objectives": "Ouvrir les objectifs",
+  "p.aims.unmarked": "N'est plus un objectif stratégique.",
   "p.director_pack.actions_heading": "Relire, émettre ou réémettre",
   "p.director_pack.aud_board": "Conseil",
   "p.director_pack.aud_escalation_board": "Comité d'escalade",

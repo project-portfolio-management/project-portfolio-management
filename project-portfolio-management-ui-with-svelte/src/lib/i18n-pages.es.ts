@@ -4298,6 +4298,41 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.exceptions.worsened_one": "Empeoró {count} vez desde que se abrió",
   "p.exceptions.worsened_other": "Empeoró {count} veces desde que se abrió",
   "p.exceptions.worst": "Peor confianza: {value}",
+  "p.aims.aims_heading": "Objetivos estratégicos",
+  "p.aims.aims_legend": "Objetivos que son objetivos estratégicos",
+  "p.aims.aims_says":
+    "Un objetivo estratégico es un objetivo en torno al cual se organiza la cartera. Desmarcarlo también hace que deje de ser el objetivo principal de cualquier programa.",
+  "p.aims.choose_aim": "Elija un objetivo",
+  "p.aims.choose_programme": "Elija un programa",
+  "p.aims.could_not_load": "No se pudo cargar el mapa de cartera.",
+  "p.aims.could_not_save": "No se guardó el cambio.",
+  "p.aims.f_aim": "Objetivo principal",
+  "p.aims.f_period": "Mes (vacío para este mes)",
+  "p.aims.f_programme": "Programa",
+  "p.aims.intro":
+    "Los programas que puede leer, cada uno una vez bajo su objetivo estratégico principal. La confianza de entrega es el valor declarado, junto al semáforo calculado con los datos y nunca mezclado con él; sin valorar no es verde.",
+  "p.aims.map_heading": "Mapa de cartera, {period}",
+  "p.aims.marked": "Marcado como objetivo estratégico.",
+  "p.aims.no_aims":
+    "Ningún objetivo es estratégico todavía; marque uno arriba primero.",
+  "p.aims.no_objectives": "Todavía no hay objetivos.",
+  "p.aims.no_programmes":
+    "No hay programas en el mapa: un programa es un plan de tipo Programa.",
+  "p.aims.primary_heading": "El objetivo principal de un programa",
+  "p.aims.primary_says":
+    "Un programa aparece en el mapa bajo su único objetivo principal; los demás objetivos a los que sirve se nombran a su lado. Elegir uno nuevo convierte el anterior en un vínculo normal.",
+  "p.aims.primary_set": "Objetivo principal fijado.",
+  "p.aims.problem_already_primary":
+    "Ese ya es el objetivo principal de este programa.",
+  "p.aims.problem_choose": "Elija un programa y un objetivo.",
+  "p.aims.problem_period":
+    "Elija el mes como AAAA-MM, o déjelo vacío para este mes.",
+  "p.aims.set_primary": "Fijar el objetivo principal",
+  "p.aims.show": "Mostrar",
+  "p.aims.title_ppm": "Mapa de cartera — PPM",
+  "p.aims.title": "Mapa de cartera",
+  "p.aims.to_objectives": "Abrir los objetivos",
+  "p.aims.unmarked": "Ya no es un objetivo estratégico.",
   "p.director_pack.actions_heading": "Revisar, emitir o reemitir",
   "p.director_pack.aud_board": "Consejo",
   "p.director_pack.aud_escalation_board": "Comité de escalado",

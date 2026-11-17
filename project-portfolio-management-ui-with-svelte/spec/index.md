@@ -219,9 +219,11 @@ match breakdown).
                              11); linked from the plan page
 /exceptions                  the delivery exceptions register: complete
                              and decide exceptions (NC-1 slice 11)
+/portfolio-map               the live portfolio map, strategic aims and
+                             each programme's primary aim (NC-1 slice 11)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 117):
+every page; `find src/routes -name +page.svelte` gives all 118):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2142,3 +2144,26 @@ rules; plan names come from `GET /api/plans` (best effort: without them an excep
   (the list with plan, worst value, worsening, breach and what is needed; the filters as sent; completing with only
   what changed, nothing for no change, a short part said first; a decision closing one and a short one said first; a
   threshold refusal; Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.
+
+## Portfolio map and strategic aims (NC-1 slice 11, DP-4)
+
+`/portfolio-map`, in the navigation, over `GET /api/portfolio-map` (with `period`), `PUT /api/objectives/{pid}/strategic-aim`
+and `PUT /api/plans/{pid}/primary-aim`; the objectives come from `GET /api/objectives`. `src/lib/aims-view.ts` holds the
+rules.
+
+- **The map.** The live map has the shape of a director pack's `portfolio_map`, so the page draws it with the pack's
+  own renderer (`buildPackView`, its map section only): each programme once under its primary aim, confidence a word
+  and a symbol beside the derived RAG, and the group of programmes with no primary aim in the catalogue's words, never
+  the service's "no strategic aim". A month (or none, for this one) is asked of the service.
+- **Strategic aims.** A box per objective, ticked when the map lists it as an aim (every aim is a group of the map, with
+  or without programmes, so the map is the list). The page says that unmarking an aim also stops it being any
+  programme's primary aim. A refusal is the catalogue's sentence and the box is put back.
+- **Primary aim.** A programme and an aim, both from the map; choosing the programme's current primary is said first
+  and nothing is sent; the page says a new primary makes the earlier one an ordinary link.
+- **Not built in this slice:** the other aims a programme serves (an ordinary link) set here; the trend, which only
+  issued packs carry.
+- **Tests:** `tests/unit/aims-view.test.ts` (aims and programmes from the map, the checks, the map drawn by the pack's
+  renderer with the no-aim group from the catalogue), the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/portfolio-map.spec.ts` (the map, a period asked of the service, marking and unmarking an aim, a primary
+  set and its current one said first, a refusal putting the box back, Welsh, axe). The Welsh and the six other
+  languages are machine-written and unreviewed.

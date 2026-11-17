@@ -163,6 +163,7 @@ import type {
   CanvasView,
   ConfidenceBody,
   DeliveryException,
+  PortfolioMap,
   ExceptionCompleteBody,
   ConfidenceView,
   ConfidenceAssessment,
@@ -2083,6 +2084,31 @@ export class PpmClient {
   decideException(pid: string, decision: string): Promise<DeliveryException> {
     return this.http.post(`/api/exceptions/${pid}/decision`, {
       body: { decision },
+    });
+  }
+  // ---- strategic aims and the portfolio map (DP-4, NC-1 slice 11) ----
+  /** The live portfolio map for a period `YYYY-MM` (the current month when left out). */
+  portfolioMap(period?: string): Promise<PortfolioMap> {
+    return this.http.get(
+      `/api/portfolio-map${period ? `?${new URLSearchParams({ period }).toString()}` : ""}`,
+    );
+  }
+  /** Mark or unmark an objective as a strategic aim; unmarking clears it as any programme's primary aim. */
+  markStrategicAim(
+    objectivePid: string,
+    strategic: boolean,
+  ): Promise<{ objective_pid: string; strategic: boolean }> {
+    return this.http.put(`/api/objectives/${objectivePid}/strategic-aim`, {
+      body: { strategic },
+    });
+  }
+  /** Make a strategic aim a programme's one primary aim (422 for an objective that is not an aim). */
+  setPrimaryAim(
+    planPid: string,
+    objectivePid: string,
+  ): Promise<{ plan_pid: string; primary_aim: string }> {
+    return this.http.put(`/api/plans/${planPid}/primary-aim`, {
+      body: { objective_pid: objectivePid },
     });
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----

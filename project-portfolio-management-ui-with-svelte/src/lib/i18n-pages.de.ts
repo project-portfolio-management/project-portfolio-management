@@ -4311,6 +4311,41 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.exceptions.worsened_other":
     "Seit der Eröffnung {count}-mal verschlechtert",
   "p.exceptions.worst": "Schlechteste Liefersicherheit: {value}",
+  "p.aims.aims_heading": "Strategische Ziele",
+  "p.aims.aims_legend": "Ziele, die strategische Ziele sind",
+  "p.aims.aims_says":
+    "Ein strategisches Ziel ist ein Ziel, um das das Portfolio geordnet ist. Wird eines abgewählt, ist es auch für kein Programm mehr das Hauptziel.",
+  "p.aims.choose_aim": "Ziel wählen",
+  "p.aims.choose_programme": "Programm wählen",
+  "p.aims.could_not_load": "Die Portfoliokarte konnte nicht geladen werden.",
+  "p.aims.could_not_save": "Die Änderung wurde nicht gespeichert.",
+  "p.aims.f_aim": "Hauptziel",
+  "p.aims.f_period": "Monat (leer für diesen Monat)",
+  "p.aims.f_programme": "Programm",
+  "p.aims.intro":
+    "Die Programme, die Sie lesen dürfen, jedes einmal unter seinem strategischen Hauptziel. Die Liefersicherheit ist der genannte Wert, neben der aus den Daten berechneten Ampel gezeigt und nie mit ihr vermischt; nicht eingeschätzt ist nicht grün.",
+  "p.aims.map_heading": "Portfoliokarte, {period}",
+  "p.aims.marked": "Als strategisches Ziel markiert.",
+  "p.aims.no_aims":
+    "Noch kein Ziel ist ein strategisches Ziel; markieren Sie zuerst oben eines.",
+  "p.aims.no_objectives": "Es gibt noch keine Ziele.",
+  "p.aims.no_programmes":
+    "Es gibt keine Programme auf der Karte: Ein Programm ist ein Plan der Art Programm.",
+  "p.aims.primary_heading": "Hauptziel eines Programms",
+  "p.aims.primary_says":
+    "Ein Programm erscheint auf der Karte unter seinem einen Hauptziel; weitere Ziele, denen es dient, werden daneben genannt. Ein neues Hauptziel macht das frühere zu einer gewöhnlichen Verknüpfung.",
+  "p.aims.primary_set": "Hauptziel festgelegt.",
+  "p.aims.problem_already_primary":
+    "Das ist schon das Hauptziel dieses Programms.",
+  "p.aims.problem_choose": "Wählen Sie ein Programm und ein Ziel.",
+  "p.aims.problem_period":
+    "Wählen Sie den Monat als JJJJ-MM oder lassen Sie ihn leer für diesen Monat.",
+  "p.aims.set_primary": "Hauptziel festlegen",
+  "p.aims.show": "Anzeigen",
+  "p.aims.title_ppm": "Portfoliokarte — PPM",
+  "p.aims.title": "Portfoliokarte",
+  "p.aims.to_objectives": "Ziele öffnen",
+  "p.aims.unmarked": "Kein strategisches Ziel mehr.",
   "p.director_pack.actions_heading": "Prüfen, herausgeben oder neu herausgeben",
   "p.director_pack.aud_board": "Vorstand",
   "p.director_pack.aud_escalation_board": "Eskalationsgremium",

@@ -75,6 +75,12 @@ export function buildNavItems(): NavEntry[] {
         return t("p.exceptions.title");
       },
     },
+    {
+      href: "/portfolio-map",
+      get label() {
+        return t("p.aims.title");
+      },
+    },
     { href: "/scenarios", label: t("ppm.nav.scenarios") },
     { href: "/objectives", label: t("ppm.nav.objectives") },
     {

@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the portfolio map and strategic aims (NC-1 slice 11, DP-4, 2026-11-17)
+
+- `/portfolio-map`, in the navigation: the live map drawn by the director pack's own renderer (the no-aim group in the
+  catalogue's words), for this month or a chosen one; a box per objective to mark it as a strategic aim (a refused box
+  is put back); and each programme's one primary aim, its current one said first. Three client methods and the
+  `PortfolioMap` type; `src/lib/aims-view.ts`; 28 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/aims-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/portfolio-map.spec.ts` (four,
+  with Welsh and axe).
+- **Not done:** other aims a programme serves; the trend (issued packs only). **Not verified:** against a real
+  service.
+
 ### Added — the delivery exceptions register (NC-1 slice 11, DP-3, 2026-11-17)
 
 - `/exceptions`, in the navigation and linked from each plan's confidence page: the exceptions across the plans the

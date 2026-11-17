@@ -3822,3 +3822,22 @@ export interface ExceptionCompleteBody {
   owner_role?: string;
   decide_by?: string;
 }
+
+// ---- strategic aims and the portfolio map (DP-4, NC-1 slice 11) ----
+
+/** `GET /api/portfolio-map`: the programmes (plans of kind Program) the caller can read, each once, under its primary
+ * strategic aim; every aim is listed, with or without programmes, and the last group (`aim_pid: null`) is the
+ * programmes with no primary aim. The same shape as a director pack's `portfolio_map`. */
+export interface PortfolioMap {
+  period: string;
+  programmes_total: number;
+  groups: Array<{
+    aim_pid: string | null;
+    aim: string;
+    programmes: Array<{
+      plan_pid: string;
+      name: string;
+      [field: string]: unknown;
+    }>;
+  }>;
+}

@@ -1,7 +1,7 @@
 // NC-1 slice 11 (DP-5): a plan's planned gate dates and programme status, in a real browser over a stubbed service.
 // Gate dates send only what changed; a plan that is not a programme says it has no status; a programme is paused with
 // a reason (citing a gate review), shows what it still holds, resumes, and once stopped offers nothing more; a refusal
-// names the right it needs. Welsh; axe.
+// names the right it needs. The delivery model, its owner and the reporting method (EX-2, EX-14). Welsh; axe.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -45,6 +45,57 @@ async function stubProgramme(
         ],
       },
     }),
+  );
+  // The delivery model and reporting method (EX-2, EX-14).
+  const profile: Record<string, unknown> = {
+    delivery_model: null,
+    delivery_owner: null,
+    delivered_by_organization: null,
+    reporting_method: "evm",
+  };
+  await page.route(/\/api\/organizations/, (route) =>
+    route.fulfill({
+      json: {
+        organizations: [
+          {
+            pid: "o1",
+            name: "Digital Service",
+            kind: "delivery",
+            active: true,
+          },
+          { pid: "o2", name: "Old Partner", kind: "partner", active: false },
+        ],
+      },
+    }),
+  );
+  await page.route(
+    /\/api\/plans\/[^/]+\/(delivery-model|reporting-method)$/,
+    async (route) => {
+      const req = route.request();
+      const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
+      if (req.method() === "GET") return route.fulfill({ json: profile });
+      const body = req.postDataJSON();
+      sent.push({ method: req.method(), path, body });
+      if (opts.refuse)
+        return route.fulfill({
+          status: opts.refuse,
+          json: { error: "x", description: "service text" },
+        });
+      if (path.endsWith("reporting-method")) {
+        profile.reporting_method = body.method;
+        return route.fulfill({
+          json: { plan_pid: PID, reporting_method: body.method },
+        });
+      }
+      profile.delivery_model = body.delivery_model;
+      profile.delivery_owner = body.delivery_owner_organization_pid
+        ? {
+            organization_pid: body.delivery_owner_organization_pid,
+            name: "Digital Service",
+          }
+        : null;
+      return route.fulfill({ json: profile });
+    },
   );
   await page.route(/\/api\/exceptions/, (route) =>
     route.fulfill({ json: { exceptions: [], window_hours: 48 } }),
@@ -322,6 +373,66 @@ test("a programme's buffer is declared by days or by the rule, and its reading d
     { rule: "half_of_critical_duration" },
     { rule: "half_of_critical_duration" },
   ]);
+});
+
+test("a programme's delivery model and owner are saved together, and its reporting method changed", async ({
+  page,
+}) => {
+  const sent = await stubProgramme(page);
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const sec = page.getByRole("region", {
+    name: "Delivery model and reporting",
+  });
+  await sec.getByRole("button", { name: "Save the delivery model" }).click();
+  await expect(sec.getByRole("status")).toHaveText(
+    "Nothing changed, so nothing was sent.",
+  );
+  // Only an active organization is offered.
+  await expect(
+    sec.getByLabel("Owning organization").locator("option"),
+  ).toHaveText(["No owning organization", "Digital Service"]);
+  await sec.getByLabel("Delivery model").selectOption("central_product");
+  await sec.getByLabel("Owning organization").selectOption("o1");
+  await sec.getByRole("button", { name: "Save the delivery model" }).click();
+  await expect(sec.getByRole("status")).toHaveText(
+    "The delivery model is saved.",
+  );
+  await sec.getByLabel("Burn-up and flow (a product programme)").check();
+  await sec.getByRole("button", { name: "Save the reporting method" }).click();
+  await expect(sec.getByRole("status")).toHaveText(
+    "The programme now reports by burn-up and flow.",
+  );
+  expect(sent).toEqual([
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/delivery-model`,
+      body: {
+        delivery_model: "central_product",
+        delivery_owner_organization_pid: "o1",
+      },
+    },
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/reporting-method`,
+      body: { method: "product" },
+    },
+  ]);
+});
+
+test("a refused delivery model is said in the catalogue's words", async ({
+  page,
+}) => {
+  await stubProgramme(page, { refuse: 422 });
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const sec = page.getByRole("region", {
+    name: "Delivery model and reporting",
+  });
+  await sec.getByLabel("Delivery model").selectOption("central_product");
+  await sec.getByRole("button", { name: "Save the delivery model" }).click();
+  await expect(sec.getByRole("alert")).toBeVisible();
+  await expect(sec.getByRole("alert")).not.toContainText("service text");
 });
 
 test("the page reads in Welsh and passes axe", async ({ page }) => {

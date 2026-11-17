@@ -771,6 +771,25 @@ describe("PpmClient benefit classification and validation (NC-1 slice 11, DP-9)"
   });
 });
 
+describe("PpmClient delivery model and reporting method (NC-1 slice 11, EX-2, EX-14)", () => {
+  it("reads and sets a programme's delivery model, and sets its reporting method", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.deliveryProfile("p1");
+    await ppm.setDeliveryModel("p1", {
+      delivery_model: null,
+      delivery_owner_organization_pid: null,
+    });
+    await ppm.setReportingMethod("p1", "product");
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/delivery-model",
+      "PUT /api/plans/p1/delivery-model",
+      "PUT /api/plans/p1/reporting-method",
+    ]);
+  });
+});
+
 describe("PpmClient skill pool writes (NC-1 slice 11, DP-10)", () => {
   it("adds a pool and changes one", async () => {
     const { ppm, calls } = recordingClient();

@@ -26,6 +26,9 @@
     type PlannedGates,
     type ProgrammeStatusView,
     type ProjectBufferView,
+    DELIVERY_MODELS,
+    type DeliveryProfile,
+    type Organization,
   } from "#lib/api/ppm.js";
   import {
     BUFFER_DAYS_MAX,
@@ -63,6 +66,65 @@
   let exceptionPid = $state("");
 
   const choices = $derived(status ? statusChoices(status.status) : []);
+
+  // The delivery model and the reporting method (EX-2, EX-14).
+  let profile = $state<DeliveryProfile | null>(null);
+  let orgs = $state<Organization[]>([]);
+  let model = $state("");
+  let owner = $state("");
+  let method = $state<"evm" | "product">("evm");
+  let profileError = $state<string | null>(null);
+  let profileNotice = $state("");
+  async function loadProfile() {
+    try {
+      profile = await ppm.deliveryProfile(pid);
+      model = profile.delivery_model ?? "";
+      owner = profile.delivery_owner?.organization_pid ?? "";
+      method = profile.reporting_method;
+    } catch {
+      profile = null;
+      profileError = t("p.programme.could_not_load_profile");
+    }
+  }
+  async function saveModel(e: SubmitEvent) {
+    e.preventDefault();
+    profileError = null;
+    profileNotice = "";
+    if (profile && (profile.delivery_model ?? "") === model && (profile.delivery_owner?.organization_pid ?? "") === owner) {
+      profileNotice = t("p.programme.profile_unchanged");
+      return;
+    }
+    busy = true;
+    try {
+      // Both are sent: the service clears a field left out.
+      await ppm.setDeliveryModel(pid, { delivery_model: model || null, delivery_owner_organization_pid: owner || null });
+      profileNotice = t("p.programme.model_saved");
+      await loadProfile();
+    } catch (err) {
+      profileError = errorText(err, "p.programme.could_not_save_profile");
+    } finally {
+      busy = false;
+    }
+  }
+  async function saveMethod(e: SubmitEvent) {
+    e.preventDefault();
+    profileError = null;
+    profileNotice = "";
+    if (profile && profile.reporting_method === method) {
+      profileNotice = t("p.programme.profile_unchanged");
+      return;
+    }
+    busy = true;
+    try {
+      await ppm.setReportingMethod(pid, method);
+      profileNotice = method === "product" ? t("p.programme.method_saved_product") : t("p.programme.method_saved_evm");
+      await loadProfile();
+    } catch (err) {
+      profileError = errorText(err, "p.programme.could_not_save_profile");
+    } finally {
+      busy = false;
+    }
+  }
 
   let buffer = $state<ProjectBufferView | null>(null);
   let bufferHow = $state<"days" | "rule">("days");
@@ -131,6 +193,8 @@
       if (isProgramme) {
         await loadStatus();
         void loadBuffer();
+        void loadProfile();
+        ppm.organizations().then((r) => (orgs = r.organizations.filter((o) => o.active))).catch(() => (orgs = []));
         // What a decision may cite: best effort, the form works without them.
         ppm.gateJourney(pid).then((j) => (reviews = j.reviews)).catch(() => (reviews = []));
         ppm
@@ -311,6 +375,38 @@
 {/snippet}
 
 {#if isProgramme}
+  <section aria-labelledby="profile-h">
+    <h2 id="profile-h">{t("p.programme.profile_heading")}</h2>
+    {#if profileError}<p class="banner error" role="alert">{profileError}</p>{/if}
+    <p class="small" role="status">{profileNotice}</p>
+    <form class="stack" novalidate onsubmit={saveModel}>
+      <label>
+        {t("p.programme.f_model")}
+        <select bind:value={model}>
+          <option value="">{t("p.director_pack.dm_not_stated")}</option>
+          {#each DELIVERY_MODELS as m (m)}<option value={m}>{t(`p.director_pack.dm_${m}`)}</option>{/each}
+        </select>
+      </label>
+      <label>
+        {t("p.programme.f_owner")}
+        <select bind:value={owner}>
+          <option value="">{t("p.programme.no_owner")}</option>
+          {#each orgs as o (o.pid)}<option value={o.pid}>{o.name}</option>{/each}
+        </select>
+      </label>
+      <p class="small muted">{t("p.programme.model_says")}</p>
+      <div class="row"><button class="button" type="submit" disabled={busy}>{t("p.programme.save_model")}</button></div>
+    </form>
+    <form class="stack" novalidate onsubmit={saveMethod}>
+      <fieldset>
+        <legend>{t("p.programme.f_method")}</legend>
+        <label class="check"><input type="radio" name="method" value="evm" bind:group={method} /> {t("p.programme.method_evm")}</label>
+        <label class="check"><input type="radio" name="method" value="product" bind:group={method} /> {t("p.programme.method_product")}</label>
+      </fieldset>
+      <div class="row"><button class="button" type="submit" disabled={busy}>{t("p.programme.save_method")}</button></div>
+    </form>
+  </section>
+
   <section aria-labelledby="buffer-h">
     <h2 id="buffer-h">{t("p.programme.buffer_heading")}</h2>
     <p class="small muted">{t("p.programme.buffer_says")}</p>

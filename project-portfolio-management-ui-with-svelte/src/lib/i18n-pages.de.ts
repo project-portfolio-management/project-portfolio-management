@@ -4430,6 +4430,27 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Die Regel braucht einen Terminbasisplan mit kritischer Arbeit, die eine Dauer hat; legen Sie zuerst einen Basisplan fest oder geben Sie eine Zahl von Tagen an.",
   "p.programme.refused_not_programme_buffer":
     "Nur ein Plan der Art Programm hat einen Projektpuffer.",
+  "p.programme.profile_heading": "Liefermodell und Berichterstattung",
+  "p.programme.f_model": "Liefermodell",
+  "p.programme.f_owner": "Verantwortliche Organisation",
+  "p.programme.no_owner": "Keine verantwortliche Organisation",
+  "p.programme.model_says":
+    "Das Liefermodell sagt, wer baut und wer ausrollt; das Direktorenpaket zeigt es neben dem Programm. Modell und Organisation werden zusammen gespeichert.",
+  "p.programme.save_model": "Liefermodell speichern",
+  "p.programme.model_saved": "Das Liefermodell ist gespeichert.",
+  "p.programme.f_method": "Wie das Programm über den Fortschritt berichtet",
+  "p.programme.method_evm": "Earned Value (Kosten- und Terminleistung)",
+  "p.programme.method_product": "Burn-up und Fluss (ein Produktprogramm)",
+  "p.programme.save_method": "Berichtsmethode speichern",
+  "p.programme.method_saved_evm":
+    "Das Programm berichtet jetzt nach Earned Value.",
+  "p.programme.method_saved_product":
+    "Das Programm berichtet jetzt nach Burn-up und Fluss.",
+  "p.programme.profile_unchanged":
+    "Nichts wurde geändert, daher wurde nichts gesendet.",
+  "p.programme.could_not_load_profile":
+    "Das Liefermodell konnte nicht geladen werden.",
+  "p.programme.could_not_save_profile": "Die Änderung wurde nicht gespeichert.",
   "p.benefits.classified": "Einordnung gespeichert.",
   "p.benefits.classify_says":
     "Beim Speichern wird die ganze Einordnung gesendet: Eine als nicht angegeben belassene Wahl wird gelöscht.",

@@ -2311,3 +2311,20 @@ already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the 
   `tests/e2e/skill-pool-writes.spec.ts` (adding with a taken name and a clash said first, the lists sent as kept;
   changing only the changed list, nothing for no change; retiring and restoring; a 409; Welsh; axe). The Welsh and the
   six other languages are machine-written and unreviewed.
+
+## A programme's delivery model and reporting method (NC-1 slice 11, EX-2, EX-14)
+
+`/plans/[pid]/programme`, for a plan of kind Program, gains "Delivery model and reporting", over `GET`/`PUT
+/api/plans/{pid}/delivery-model` and `PUT /api/plans/{pid}/reporting-method`.
+
+- **Delivery model.** One of the three models (central product; central platform, local deployment; local programme,
+  central standards; labelled as the director pack labels them) or not stated, and an owning organization from the
+  active organizations, or none. The two are saved together, because the service clears a field left out of the body;
+  nothing is sent when neither changed.
+- **Reporting method.** Earned value (the default) or burn-up and flow for a product programme; the pack reports the
+  programme the chosen way. Nothing is sent when it did not change.
+- **Refusals** (a plan that is not a programme, an organization made inactive since the page loaded) are said in the
+  catalogue's words.
+- **Tests:** the client paths in `tests/unit/ppm.test.ts`; `tests/e2e/plan-programme.spec.ts` (saving the model and
+  owner together, only active organizations offered, the method changed, a refusal; the page's Welsh and axe test).
+  The translations are machine-written and unreviewed.

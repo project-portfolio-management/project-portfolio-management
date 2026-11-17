@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a programme's delivery model and reporting method (NC-1 slice 11, EX-2, EX-14, 2026-11-17)
+
+- `/plans/[pid]/programme` sets a programme's delivery model and owning organization (active ones only), saved
+  together, and its reporting method (earned value, or burn-up and flow). Nothing is sent for no change. Three client
+  methods and a `DeliveryProfile` type; 16 keys in eight catalogues, machine-written and unreviewed.
+- Tests: the client paths in `tests/unit/ppm.test.ts`; two more in `tests/e2e/plan-programme.spec.ts`.
+- **Not verified:** against a real service.
+
 ### Added — adding and changing skill pools (NC-1 slice 11, DP-10, 2026-11-17)
 
 - `/skill-pools` adds a pool with its roles and skills, changes a pool's roles and skills (only the changed list sent),

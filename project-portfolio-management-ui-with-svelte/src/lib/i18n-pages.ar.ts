@@ -4178,6 +4178,24 @@ export const PAGES_AR: Record<PageKey, string> = {
     "تحتاج القاعدة إلى خط أساسي للجدول فيه عمل حرج ذو مدة؛ حدّد خطًا أساسيًا أولًا، أو أعطِ عددًا من الأيام.",
   "p.programme.refused_not_programme_buffer":
     "لا يكون احتياطي المشروع إلا لخطة من نوع Program.",
+  "p.programme.profile_heading": "نموذج التسليم وإعداد التقارير",
+  "p.programme.f_model": "نموذج التسليم",
+  "p.programme.f_owner": "المؤسسة المالكة",
+  "p.programme.no_owner": "لا مؤسسة مالكة",
+  "p.programme.model_says":
+    "يبيّن نموذج التسليم من يبني ومن ينشر؛ وتعرضه حزمة المدير بجانب البرنامج. ويُحفظ النموذج والمالك معًا.",
+  "p.programme.save_model": "حفظ نموذج التسليم",
+  "p.programme.model_saved": "حُفظ نموذج التسليم.",
+  "p.programme.f_method": "كيف يُبلغ البرنامج عن تقدمه",
+  "p.programme.method_evm": "القيمة المكتسبة (أداء التكلفة والجدول)",
+  "p.programme.method_product": "الإنجاز التراكمي والتدفق (برنامج منتج)",
+  "p.programme.save_method": "حفظ طريقة الإبلاغ",
+  "p.programme.method_saved_evm": "يُبلغ البرنامج الآن بالقيمة المكتسبة.",
+  "p.programme.method_saved_product":
+    "يُبلغ البرنامج الآن بالإنجاز التراكمي والتدفق.",
+  "p.programme.profile_unchanged": "لم يتغير شيء، فلم يُرسل شيء.",
+  "p.programme.could_not_load_profile": "تعذّر تحميل نموذج التسليم.",
+  "p.programme.could_not_save_profile": "لم يُحفظ التغيير.",
   "p.benefits.classified": "حُفظ التصنيف.",
   "p.benefits.classify_says":
     "يرسل الحفظ التصنيف كاملًا: الخيار المتروك دون تحديد يُمسح.",

@@ -4184,6 +4184,24 @@ export const PAGES_HI: Record<PageKey, string> = {
     "नियम के लिए ऐसी शेड्यूल बेसलाइन चाहिए जिसमें अवधि वाला महत्वपूर्ण कार्य हो; पहले बेसलाइन तय करें, या दिनों की संख्या दें।",
   "p.programme.refused_not_programme_buffer":
     "केवल प्रकार Program की योजना का परियोजना बफ़र होता है।",
+  "p.programme.profile_heading": "डिलीवरी मॉडल और रिपोर्टिंग",
+  "p.programme.f_model": "डिलीवरी मॉडल",
+  "p.programme.f_owner": "स्वामी संगठन",
+  "p.programme.no_owner": "कोई स्वामी संगठन नहीं",
+  "p.programme.model_says":
+    "डिलीवरी मॉडल बताता है कि कौन बनाता है और कौन तैनात करता है; निदेशक पैक इसे कार्यक्रम के साथ दिखाता है। मॉडल और स्वामी एक साथ सहेजे जाते हैं।",
+  "p.programme.save_model": "डिलीवरी मॉडल सहेजें",
+  "p.programme.model_saved": "डिलीवरी मॉडल सहेजा गया।",
+  "p.programme.f_method": "कार्यक्रम प्रगति की रिपोर्ट कैसे करता है",
+  "p.programme.method_evm": "अर्जित मूल्य (लागत और समय-सारणी प्रदर्शन)",
+  "p.programme.method_product": "बर्न-अप और प्रवाह (एक उत्पाद कार्यक्रम)",
+  "p.programme.save_method": "रिपोर्टिंग पद्धति सहेजें",
+  "p.programme.method_saved_evm": "कार्यक्रम अब अर्जित मूल्य से रिपोर्ट करता है।",
+  "p.programme.method_saved_product":
+    "कार्यक्रम अब बर्न-अप और प्रवाह से रिपोर्ट करता है।",
+  "p.programme.profile_unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.programme.could_not_load_profile": "डिलीवरी मॉडल लोड नहीं हो सका।",
+  "p.programme.could_not_save_profile": "बदलाव सहेजा नहीं गया।",
   "p.benefits.classified": "वर्गीकरण सहेजा गया।",
   "p.benefits.classify_says":
     "सहेजने पर पूरा वर्गीकरण भेजा जाता है: 'बताया नहीं गया' छोड़ा गया विकल्प हट जाता है।",

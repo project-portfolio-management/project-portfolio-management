@@ -4364,6 +4364,25 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae angen llinell sylfaen amserlen gyda gwaith critigol sydd â hyd ar y rheol; gosodwch linell sylfaen yn gyntaf, neu rhowch nifer o ddiwrnodau.",
   "p.programme.refused_not_programme_buffer":
     "Dim ond cynllun o fath Rhaglen sydd â byffer prosiect.",
+  "p.programme.profile_heading": "Model cyflawni ac adrodd",
+  "p.programme.f_model": "Model cyflawni",
+  "p.programme.f_owner": "Sefydliad perchennog",
+  "p.programme.no_owner": "Dim sefydliad perchennog",
+  "p.programme.model_says":
+    "Mae'r model cyflawni'n dweud pwy sy'n adeiladu a phwy sy'n defnyddio; mae pecyn y cyfarwyddwr yn ei ddangos wrth ymyl y rhaglen. Cedwir y model a'r perchennog gyda'i gilydd.",
+  "p.programme.save_model": "Cadw'r model cyflawni",
+  "p.programme.model_saved": "Cadwyd y model cyflawni.",
+  "p.programme.f_method": "Sut mae'r rhaglen yn adrodd ar gynnydd",
+  "p.programme.method_evm": "Gwerth a enillwyd (perfformiad cost ac amserlen)",
+  "p.programme.method_product": "Llosgi i fyny a llif (rhaglen cynnyrch)",
+  "p.programme.save_method": "Cadw'r dull adrodd",
+  "p.programme.method_saved_evm":
+    "Mae'r rhaglen bellach yn adrodd yn ôl gwerth a enillwyd.",
+  "p.programme.method_saved_product":
+    "Mae'r rhaglen bellach yn adrodd yn ôl llosgi i fyny a llif.",
+  "p.programme.profile_unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.programme.could_not_load_profile": "Ni ellid llwytho'r model cyflawni.",
+  "p.programme.could_not_save_profile": "Ni chadwyd y newid.",
   "p.benefits.classified": "Cadwyd y dosbarthiad.",
   "p.benefits.classify_says":
     "Mae cadw'n anfon y dosbarthiad cyfan: mae dewis a adewir heb ei nodi yn ei glirio.",

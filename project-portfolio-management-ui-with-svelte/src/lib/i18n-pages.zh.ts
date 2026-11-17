@@ -4020,6 +4020,23 @@ export const PAGES_ZH: Record<PageKey, string> = {
     "该规则需要一个含有带工期关键工作的进度基线；请先设置基线，或给出天数。",
   "p.programme.refused_not_programme_buffer":
     "只有类型为 Program 的计划才有项目缓冲。",
+  "p.programme.profile_heading": "交付模式与报告",
+  "p.programme.f_model": "交付模式",
+  "p.programme.f_owner": "负责组织",
+  "p.programme.no_owner": "无负责组织",
+  "p.programme.model_says":
+    "交付模式说明由谁构建、由谁部署；主管资料包会在项目群旁显示它。模式和负责组织一起保存。",
+  "p.programme.save_model": "保存交付模式",
+  "p.programme.model_saved": "已保存交付模式。",
+  "p.programme.f_method": "项目群如何报告进展",
+  "p.programme.method_evm": "挣值（成本和进度绩效）",
+  "p.programme.method_product": "燃起图和流动（产品型项目群）",
+  "p.programme.save_method": "保存报告方式",
+  "p.programme.method_saved_evm": "项目群现在按挣值报告。",
+  "p.programme.method_saved_product": "项目群现在按燃起图和流动报告。",
+  "p.programme.profile_unchanged": "没有任何更改，因此未发送任何内容。",
+  "p.programme.could_not_load_profile": "无法加载交付模式。",
+  "p.programme.could_not_save_profile": "更改未保存。",
   "p.benefits.classified": "已保存分类。",
   "p.benefits.classify_says":
     "保存会发送完整分类：保留为未说明的选项会被清除。",

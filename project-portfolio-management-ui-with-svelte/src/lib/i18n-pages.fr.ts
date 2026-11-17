@@ -4426,6 +4426,28 @@ export const PAGES_FR: Record<PageKey, string> = {
     "La règle demande une référence de planning avec du travail critique ayant une durée ; définissez d'abord une référence ou donnez un nombre de jours.",
   "p.programme.refused_not_programme_buffer":
     "Seul un plan de type Programme a un tampon de projet.",
+  "p.programme.profile_heading": "Modèle de livraison et compte rendu",
+  "p.programme.f_model": "Modèle de livraison",
+  "p.programme.f_owner": "Organisation responsable",
+  "p.programme.no_owner": "Aucune organisation responsable",
+  "p.programme.model_says":
+    "Le modèle de livraison dit qui construit et qui déploie ; le dossier du directeur l'affiche à côté du programme. Le modèle et l'organisation sont enregistrés ensemble.",
+  "p.programme.save_model": "Enregistrer le modèle de livraison",
+  "p.programme.model_saved": "Le modèle de livraison est enregistré.",
+  "p.programme.f_method": "Comment le programme rend compte de l'avancement",
+  "p.programme.method_evm":
+    "Valeur acquise (performance des coûts et des délais)",
+  "p.programme.method_product": "Burn-up et flux (un programme produit)",
+  "p.programme.save_method": "Enregistrer la méthode de compte rendu",
+  "p.programme.method_saved_evm":
+    "Le programme rend désormais compte par valeur acquise.",
+  "p.programme.method_saved_product":
+    "Le programme rend désormais compte par burn-up et flux.",
+  "p.programme.profile_unchanged": "Rien n'a changé ; rien n'a été envoyé.",
+  "p.programme.could_not_load_profile":
+    "Le modèle de livraison n'a pas pu être chargé.",
+  "p.programme.could_not_save_profile":
+    "La modification n'a pas été enregistrée.",
   "p.benefits.classified": "Classement enregistré.",
   "p.benefits.classify_says":
     "L'enregistrement envoie tout le classement : un choix laissé non indiqué est effacé.",

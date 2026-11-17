@@ -4419,6 +4419,25 @@ export const PAGES_ES: Record<PageKey, string> = {
     "La regla necesita una línea base del cronograma con trabajo crítico que tenga duración; fije primero una línea base o dé un número de días.",
   "p.programme.refused_not_programme_buffer":
     "Solo un plan de tipo Programa tiene colchón de proyecto.",
+  "p.programme.profile_heading": "Modelo de entrega e informes",
+  "p.programme.f_model": "Modelo de entrega",
+  "p.programme.f_owner": "Organización responsable",
+  "p.programme.no_owner": "Sin organización responsable",
+  "p.programme.model_says":
+    "El modelo de entrega dice quién construye y quién despliega; el paquete del director lo muestra junto al programa. El modelo y la organización se guardan juntos.",
+  "p.programme.save_model": "Guardar el modelo de entrega",
+  "p.programme.model_saved": "Se guardó el modelo de entrega.",
+  "p.programme.f_method": "Cómo informa el programa de su avance",
+  "p.programme.method_evm": "Valor ganado (rendimiento de coste y plazo)",
+  "p.programme.method_product": "Burn-up y flujo (un programa de producto)",
+  "p.programme.save_method": "Guardar el método de informe",
+  "p.programme.method_saved_evm": "El programa ahora informa por valor ganado.",
+  "p.programme.method_saved_product":
+    "El programa ahora informa por burn-up y flujo.",
+  "p.programme.profile_unchanged": "No cambió nada, así que no se envió nada.",
+  "p.programme.could_not_load_profile":
+    "No se pudo cargar el modelo de entrega.",
+  "p.programme.could_not_save_profile": "No se guardó el cambio.",
   "p.benefits.classified": "Clasificación guardada.",
   "p.benefits.classify_says":
     "Guardar envía la clasificación completa: una opción dejada sin indicar se borra.",

@@ -171,6 +171,7 @@ import type {
   ProjectBufferView,
   BenefitClassifyBody,
   BenefitValidations,
+  DeliveryProfile,
   PlannedGates,
   ProgrammeStatusBody,
   ProgrammeStatusView,
@@ -2288,6 +2289,30 @@ export class PpmClient {
       `/api/plans/${planPid}/benefits/${benefitPid}/validations`,
       { body },
     );
+  }
+  // ---- delivery model and reporting method (EX-2, EX-14, NC-1 slice 11) ----
+  /** A programme's delivery model, owning organization and reporting method. */
+  deliveryProfile(planPid: string): Promise<DeliveryProfile> {
+    return this.http.get(`/api/plans/${planPid}/delivery-model`);
+  }
+  /** Set a programme's delivery model and owning organization; a `null` clears it, and a field left out is cleared too. */
+  setDeliveryModel(
+    planPid: string,
+    body: {
+      delivery_model: string | null;
+      delivery_owner_organization_pid: string | null;
+    },
+  ): Promise<DeliveryProfile> {
+    return this.http.put(`/api/plans/${planPid}/delivery-model`, { body });
+  }
+  /** How a programme reports in the pack: earned value, or burn-up and flow for a product programme. */
+  setReportingMethod(
+    planPid: string,
+    method: "evm" | "product",
+  ): Promise<{ reporting_method: string }> {
+    return this.http.put(`/api/plans/${planPid}/reporting-method`, {
+      body: { method },
+    });
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

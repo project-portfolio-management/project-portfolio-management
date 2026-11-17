@@ -4259,6 +4259,25 @@ export const PAGES_EN = {
     "The rule needs a schedule baseline with critical work that has a duration; set a baseline first, or give a number of days.",
   "p.programme.refused_not_programme_buffer":
     "Only a plan of kind Program has a project buffer.",
+  "p.programme.profile_heading": "Delivery model and reporting",
+  "p.programme.f_model": "Delivery model",
+  "p.programme.f_owner": "Owning organization",
+  "p.programme.no_owner": "No owning organization",
+  "p.programme.model_says":
+    "The delivery model says who builds and who deploys; the director pack shows it beside the programme. The model and the owner are saved together.",
+  "p.programme.save_model": "Save the delivery model",
+  "p.programme.model_saved": "The delivery model is saved.",
+  "p.programme.f_method": "How the programme reports progress",
+  "p.programme.method_evm": "Earned value (cost and schedule performance)",
+  "p.programme.method_product": "Burn-up and flow (a product programme)",
+  "p.programme.save_method": "Save the reporting method",
+  "p.programme.method_saved_evm": "The programme now reports by earned value.",
+  "p.programme.method_saved_product":
+    "The programme now reports by burn-up and flow.",
+  "p.programme.profile_unchanged": "Nothing changed, so nothing was sent.",
+  "p.programme.could_not_load_profile":
+    "The delivery model could not be loaded.",
+  "p.programme.could_not_save_profile": "The change was not saved.",
   "p.benefits.classified": "Classification saved.",
   "p.benefits.classify_says":
     "Saving sends the whole classification: a choice left as not stated clears it.",

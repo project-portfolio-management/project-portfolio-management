@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (delivery model and reporting method: NC-1 slice 11, part i)
+
+- **UI: a programme's delivery model, owner and reporting method (EX-2, EX-14)** are set on `/plans/[pid]/programme`.
+  UI spec, "A programme's delivery model and reporting method"; tests in `tests/e2e/plan-programme.spec.ts`.
+- **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (adding and changing skill pools: NC-1 slice 11, part h)
 
 - **UI: `/skill-pools` adds and changes skill pools (DP-10).** A pool is added with its roles and skills, changed, and

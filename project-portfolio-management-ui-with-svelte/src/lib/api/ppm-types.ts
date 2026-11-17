@@ -4005,3 +4005,21 @@ export interface BenefitValidations {
     note: string | null;
   }>;
 }
+
+// ---- delivery model and reporting method (EX-2, EX-14, NC-1 slice 11) ----
+
+/** The delivery models (`MODELS` in the service's `src/delivery_model.rs`). */
+export const DELIVERY_MODELS = [
+  "central_product",
+  "central_platform_local_deployment",
+  "local_programme_central_standards",
+] as const;
+
+/** `GET /api/plans/{pid}/delivery-model`: a programme's delivery model, its owning organization and its reporting method. */
+export interface DeliveryProfile {
+  delivery_model: (typeof DELIVERY_MODELS)[number] | null;
+  delivery_owner: { organization_pid: string; name: string | null } | null;
+  delivered_by_organization: boolean | null;
+  /** `evm` (earned value, the default) or `product` (burn-up and flow). */
+  reporting_method: "evm" | "product";
+}

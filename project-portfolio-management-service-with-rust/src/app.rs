@@ -176,6 +176,12 @@ pub fn renamed_settings(
 /// The service: plain functions, called in order from [`App::run`].
 pub struct App;
 
+/// Choose `ring` as rustls's process-wide crypto provider. reqwest is built with `rustls-no-provider`, so nothing else
+/// installs one. An already-installed provider is left alone, so this is safe to call more than once.
+pub fn install_tls_provider() {
+    let _ = rustls::crypto::ring::default_provider().install_default();
+}
+
 impl App {
     /// The version shown to operators: the crate version and the commit it was built from.
     #[must_use]
@@ -195,6 +201,7 @@ impl App {
     ///
     /// When any of those cannot be set up.
     pub async fn context(environment: Environment, config: ServiceConfig) -> Result<AppContext> {
+        install_tls_provider();
         let db = axa::db::connect(&config.database).await?;
         let mut ctx = AppContext::new(environment, db, config);
         ctx.shared_store

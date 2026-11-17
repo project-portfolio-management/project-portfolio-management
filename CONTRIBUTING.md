@@ -28,10 +28,12 @@ money, and you can help by telling the project what it gets wrong.
 2. **Change the three together.** A material change lands with its specification
    text, its code and its test in one change ([`spec/18-change-control.md`](spec/18-change-control.md)).
 3. **Run the checks** for what you touched:
-   - Rust: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`,
-     `cargo test` (and `cargo test -- --ignored` against PostgreSQL for the service).
-   - Front end: `pnpm run check`, `npx vitest run`, `npx playwright test`.
-   - Documents: `python3 scripts/check-links.py` and `scripts/generate-status.sh --check`.
+   - Rust (the service is a workspace; run from its directory): `cargo fmt --all --check`,
+     `cargo clippy --workspace --all-targets --all-features -- -D warnings`,
+     `cargo test --workspace --lib` and `cargo test --test main`. The database suites need PostgreSQL:
+     see [`AGENTS.md`](AGENTS.md#gates). The matcher is a separate crate with the same `fmt`, `clippy` and `cargo test`.
+   - Front end: `pnpm run lint`, `pnpm run check`, `npx vitest run`, `npx playwright test`.
+   - Documents: `python3 scripts/check-links.py` and `bash scripts/generate-status.sh --check`.
 4. **Never weaken a test to make it pass.** If a test is wrong, say why in the
    change.
 5. **Say what you did not run.** If you could not run something, say so rather

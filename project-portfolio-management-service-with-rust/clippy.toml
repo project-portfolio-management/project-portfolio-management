@@ -1,5 +1,6 @@
 # LT-9 timezone doctrine: the server runs in UTC and never consults the
-# process zone. A caller's "today" comes from an explicit IANA zone (src/tz.rs).
+# process zone. A caller's "today" comes from an explicit IANA zone (domain/src/tz.rs).
+# Clippy finds this file from the `domain` crate too (it looks in the parent directories), so the ban covers both.
 disallowed-types = [
   { path = "chrono::Local", reason = "never read the process time zone; take an explicit zone via crate::tz" },
 ]

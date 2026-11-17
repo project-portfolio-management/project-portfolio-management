@@ -9,7 +9,7 @@ demo:
 
 # The database-free gates from the root AGENTS.md (the database tests need Postgres; see AGENTS.md).
 test:
-	cargo fmt --check
-	cargo clippy --all-targets --all-features -- -D warnings
-	cargo test --lib
+	cargo fmt --all --check
+	cargo clippy --workspace --all-targets --all-features -- -D warnings
+	cargo test --workspace --lib
 	cargo test --test main

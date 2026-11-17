@@ -289,6 +289,7 @@ impl OidcVerifier {
     /// A verifier that fetches the provider's keys over HTTPS.
     #[must_use]
     pub fn new(settings: OidcSettings) -> Self {
+        crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
         let http = reqwest::Client::builder()
             .timeout(Duration::from_secs(10))
             .redirect(reqwest::redirect::Policy::none())

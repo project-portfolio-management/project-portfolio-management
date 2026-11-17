@@ -185,6 +185,7 @@ pub(super) fn spawn_paseto_key_refresh() {
 /// against a local HTTP listener without touching the process global.
 #[cfg(feature = "paseto")]
 pub async fn fetch_or(url: &str, issuer: &str, audience: &str, fallback: Verifier) -> Verifier {
+    crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
     match Verifier::from_paseto_keys_url(url, issuer, audience).await {
         Ok(fetched) => {
             tracing::info!(

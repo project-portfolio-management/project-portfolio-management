@@ -48,6 +48,7 @@ async fn concurrent_requests_through_the_trace_middleware_all_complete() {
     let address = listener.local_addr().expect("an address");
     tokio::spawn(async move { axum::serve(listener, app).await.expect("serve") });
 
+    project_portfolio_management::app::install_tls_provider(); // reqwest has no bundled provider.
     let client = reqwest::Client::new();
     let failed = Arc::new(AtomicUsize::new(0));
     let workers: Vec<_> = (0..16)

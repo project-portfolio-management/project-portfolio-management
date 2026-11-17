@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — every HTTP client installs the TLS provider first (2026-11-17)
+
+- `reqwest` is built with `rustls-no-provider` and `ring` was installed only in `App::context`, so 14 unit tests and 2
+  integration tests (anything that builds a client without booting the app: `workers_client`, `wpm_bridge`, webhooks,
+  the PASETO key fetch, the OTLP and trace tests) panicked with "No rustls crypto provider is configured". Each place
+  that builds a client (`workers_client`, `wpm_bridge`, `webhooks`, `auth::oidc`, `auth::verifier::fetch_or`, and the
+  integration tests that make their own) now calls `app::install_tls_provider()` first; it is idempotent, so the boot
+  call is unchanged. Tested: `cargo test --workspace --lib` (1,297), `cargo test --test main`, `keycloak_guard`.
+  **Not verified:** the Keycloak container and Entra broker tests (they need containers) and the load test.
+
 ### Changed — the pure rules move to a crate of their own, `project-portfolio-management-domain` (2026-11-17)
 
 - A pure refactor: no route, answer, OpenAPI or AsyncAPI document, migration or test result changes. 121 top-level

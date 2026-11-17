@@ -352,6 +352,7 @@ fn recall(caller: &str, peer_pool_ref: &str, month: NaiveDate) -> Option<Receive
 /// Shared HTTP client for calls to the worker service: bounded by [`PEER_TIMEOUT`] and never following redirects, so a peer cannot bounce a bearer token elsewhere.
 fn client() -> &'static reqwest::Client {
     static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
     CLIENT.get_or_init(|| {
         reqwest::Client::builder()
             .timeout(PEER_TIMEOUT)

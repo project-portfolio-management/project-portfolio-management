@@ -261,6 +261,7 @@ impl Jar {
 /// Returns the Keycloak access token.
 async fn sign_in(kc: &str, mock: &Mock, user: &str) -> String {
     mock.state.lock().unwrap().user = user.to_string();
+    project_portfolio_management::app::install_tls_provider(); // reqwest has no bundled provider.
     let http = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .build()

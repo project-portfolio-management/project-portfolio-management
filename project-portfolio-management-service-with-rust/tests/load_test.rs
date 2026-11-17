@@ -99,6 +99,7 @@ async fn read_endpoints_under_concurrent_load() {
     let seconds: u64 = setting("PPM_LOAD_TEST_SECONDS", 5);
     let concurrency: usize = setting("PPM_LOAD_TEST_CONCURRENCY", 8);
 
+    project_portfolio_management::app::install_tls_provider(); // reqwest has no bundled provider.
     let client = Client::builder()
         .timeout(Duration::from_secs(30))
         .connect_timeout(Duration::from_secs(5))

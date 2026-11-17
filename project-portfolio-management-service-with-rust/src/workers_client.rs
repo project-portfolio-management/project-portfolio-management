@@ -106,6 +106,7 @@ fn store(pid: Uuid, result: &Result<Vec<String>, String>) {
 /// operator-configured worker-service base URL.
 fn client() -> &'static reqwest::Client {
     static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
     CLIENT.get_or_init(|| {
         reqwest::Client::builder()
             .timeout(Duration::from_secs(5))

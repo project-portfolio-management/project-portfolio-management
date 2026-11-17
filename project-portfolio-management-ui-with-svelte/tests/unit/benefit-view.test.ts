@@ -102,7 +102,7 @@ describe("classifying a benefit", () => {
     const rules = readFileSync(
       join(
         process.cwd(),
-        "../project-portfolio-management-service-with-rust/src/benefit_validation.rs",
+        "../project-portfolio-management-service-with-rust/domain/src/benefit_validation.rs",
       ),
       "utf8",
     );

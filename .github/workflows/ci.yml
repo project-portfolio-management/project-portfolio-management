@@ -153,7 +153,8 @@ jobs:
       - name: Put real data in the source database (migrations + a few suites that leave rows)
         run: |
           set -euo pipefail
-          cargo test --test main approvals:: feeds:: planner:: private_aggregates:: -- --ignored --test-threads=1
+          # Libtest takes several name filters after `--`; Cargo takes one before it.
+          cargo test --test main -- approvals:: feeds:: planner:: private_aggregates:: --ignored --test-threads=1
           mkdir -p "$ARTIFACT_DIR/ab/cd" && echo "attachment bytes" > "$ARTIFACT_DIR/ab/cd/example"
       - name: Back up, restore into a scratch database, compare, run the suite on it
         working-directory: .

@@ -37,7 +37,7 @@ describe("canvas names", () => {
   const source = readFileSync(
     join(
       process.cwd(),
-      "../project-portfolio-management-service-with-rust/src/canvas.rs",
+      "../project-portfolio-management-service-with-rust/domain/src/canvas.rs",
     ),
     "utf8",
   );

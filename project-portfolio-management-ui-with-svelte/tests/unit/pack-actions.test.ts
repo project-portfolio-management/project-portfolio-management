@@ -23,7 +23,7 @@ describe("audiences", () => {
     const rules = readFileSync(
       join(
         process.cwd(),
-        "../project-portfolio-management-service-with-rust/src/director_pack.rs",
+        "../project-portfolio-management-service-with-rust/domain/src/director_pack.rs",
       ),
       "utf8",
     );

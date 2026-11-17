@@ -21,7 +21,7 @@ describe("the scale", () => {
     const rules = readFileSync(
       join(
         process.cwd(),
-        "../project-portfolio-management-service-with-rust/src/delivery_confidence.rs",
+        "../project-portfolio-management-service-with-rust/domain/src/delivery_confidence.rs",
       ),
       "utf8",
     );

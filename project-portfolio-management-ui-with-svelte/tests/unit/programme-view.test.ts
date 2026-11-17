@@ -19,7 +19,7 @@ describe("gates", () => {
     const rules = readFileSync(
       join(
         process.cwd(),
-        "../project-portfolio-management-service-with-rust/src/governance.rs",
+        "../project-portfolio-management-service-with-rust/domain/src/governance.rs",
       ),
       "utf8",
     );

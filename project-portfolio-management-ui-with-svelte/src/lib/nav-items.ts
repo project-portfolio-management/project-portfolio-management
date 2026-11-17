@@ -63,6 +63,12 @@ export function buildNavItems(): NavEntry[] {
         return t("p.canvas.title");
       },
     },
+    {
+      href: "/plan-templates",
+      get label() {
+        return t("p.plan_templates.title");
+      },
+    },
     { href: "/scenarios", label: t("ppm.nav.scenarios") },
     { href: "/objectives", label: t("ppm.nav.objectives") },
     {

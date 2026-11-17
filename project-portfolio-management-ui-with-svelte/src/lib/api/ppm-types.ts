@@ -3626,3 +3626,88 @@ export interface CanvasPromoteBody {
   probability?: number;
   impact?: number;
 }
+
+// ---- plan templates (LT-2, NC-1 slice 9) ----
+
+/** One row of `GET /api/plan-templates`: name, description and size, not the snapshot. A starter is built in (BR-13). */
+export interface PlanTemplateSummary {
+  pid: string;
+  name: string;
+  description: string | null;
+  starter: boolean;
+  plans: number;
+  needs_start_date: boolean;
+}
+
+/** One task as a template keeps it: no person, no date but an offset in days from the start. */
+export interface TemplateTask {
+  key: number;
+  title: string;
+  description: string | null;
+  points: number | null;
+  flow_type: string | null;
+  due_offset_days: number | null;
+  component: string | null;
+  parent: number | null;
+}
+
+/** One plan as a template keeps it; `parent` is the key of its parent within the template. */
+export interface TemplateNode {
+  key: number;
+  parent: number | null;
+  plan: { name: string; kind?: string | null; [field: string]: unknown };
+  start_offset_days: number | null;
+  target_offset_days: number | null;
+  components: string[];
+  tasks: TemplateTask[];
+  milestones: Array<{ name: string; kind: string | null; offset_days: number }>;
+}
+
+/** `GET /api/plan-templates/{pid}`: the template and its whole snapshot, parents before children. */
+export interface PlanTemplate {
+  pid: string;
+  name: string;
+  description: string | null;
+  version: number;
+  created_by: string | null;
+  source_plan_pid: string | null;
+  created_at: string;
+  updated_at: string;
+  snapshot: {
+    base_date: string | null;
+    has_offsets: boolean;
+    nodes: TemplateNode[];
+  };
+}
+
+/** `POST /api/plans/{pid}/save-as-template` body. */
+export interface SaveTemplateBody {
+  name: string;
+  description?: string;
+}
+
+/** What saving a plan as a template captured; `omitted_unreadable` counts plans under it the caller cannot read. */
+export interface SavedTemplate {
+  pid: string;
+  name: string;
+  plans: number;
+  tasks: number;
+  milestones: number;
+  needs_start_date: boolean;
+  omitted_unreadable: number;
+}
+
+/** `POST /api/plans/from-template/{tpl}` body. `start_date` is required when the template carries dates. */
+export interface InstantiateTemplateBody {
+  name?: string;
+  start_date?: string;
+  parent_pid?: string;
+}
+
+/** What starting a plan from a template made; `root_pid` is the new top plan. */
+export interface InstantiatedTemplate {
+  root_pid: string;
+  plans: string[];
+  tasks_created: number;
+  milestones_created: number;
+}

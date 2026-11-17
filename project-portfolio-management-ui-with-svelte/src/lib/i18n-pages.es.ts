@@ -4111,6 +4111,79 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.canvas.confirm_remove_canvas":
     "¿Quitar el lienzo «{title}» y sus elementos?",
   "p.canvas.could_not_remove_canvas": "No se quitó el lienzo.",
+  "p.plan_templates.title": "Plantillas de plan",
+  "p.plan_templates.title_ppm": "Plantillas de plan — PPM",
+  "p.plan_templates.intro":
+    "Una plantilla es un plan y los planes que tiene debajo, guardados sin personas y con cada fecha como un número de días tras el inicio, para que nuevos planes puedan empezar a partir de ella.",
+  "p.plan_templates.saved_heading": "Plantillas guardadas",
+  "p.plan_templates.starters_heading": "Plantillas de inicio incluidas",
+  "p.plan_templates.none_saved":
+    "Todavía no se ha guardado ninguna plantilla. Guarde una desde la página de un plan.",
+  "p.plan_templates.none_starters": "No hay plantillas de inicio incluidas.",
+  "p.plan_templates.plans_count_one": "{count} plan incluido",
+  "p.plan_templates.plans_count_other": "{count} planes incluidos",
+  "p.plan_templates.needs_start": "necesita una fecha de inicio",
+  "p.plan_templates.could_not_load_list":
+    "No se pudieron cargar las plantillas.",
+  "p.plan_templates.one_title": "Plantilla de plan",
+  "p.plan_templates.one_title_ppm": "Plantilla de plan — PPM",
+  "p.plan_templates.back": "← Volver a las plantillas",
+  "p.plan_templates.is_starter":
+    "Una plantilla de inicio incluida. No se puede cambiar ni quitar; empiece un plan a partir de ella y guárdelo con su propio nombre.",
+  "p.plan_templates.is_saved": "Una plantilla guardada, versión {version}.",
+  "p.plan_templates.holds_heading": "Qué contiene",
+  "p.plan_templates.holds_says":
+    "Cada plan, el número de sus tareas y sus hitos como días tras el inicio. No se guarda ninguna persona.",
+  "p.plan_templates.tasks_count_one": "{count} tarea",
+  "p.plan_templates.tasks_count_other": "{count} tareas",
+  "p.plan_templates.milestone_at": "{name}: día {days}",
+  "p.plan_templates.start_heading": "Empezar planes a partir de ella",
+  "p.plan_templates.start_says":
+    "Los nuevos planes se crean a partir de la plantilla, con las fechas contadas desde la fecha de inicio. Las tareas empiezan en su primer paso.",
+  "p.plan_templates.f_plan_name": "Nombre del plan superior (opcional)",
+  "p.plan_templates.f_start": "Fecha de inicio",
+  "p.plan_templates.no_dates":
+    "Esta plantilla no tiene fechas, así que no hace falta fecha de inicio.",
+  "p.plan_templates.f_parent": "Ponerlo bajo",
+  "p.plan_templates.no_parent": "Ningún plan: un nuevo plan de primer nivel",
+  "p.plan_templates.start": "Empezar los planes",
+  "p.plan_templates.started":
+    "Hecho. Planes: {plans}; tareas: {tasks}; hitos: {milestones}.",
+  "p.plan_templates.open_new": "Abrir el nuevo plan",
+  "p.plan_templates.could_not_load": "No se pudo cargar esta plantilla.",
+  "p.plan_templates.could_not_start": "No se empezaron los planes.",
+  "p.plan_templates.problem_plan_name_long":
+    "El nombre de un plan puede tener como máximo 1.024 caracteres.",
+  "p.plan_templates.problem_start_needed":
+    "Elija una fecha de inicio: esta plantilla tiene fechas.",
+  "p.plan_templates.problem_start_bad":
+    "Escriba la fecha de inicio como un día, por ejemplo 2027-01-04.",
+  "p.plan_templates.remove_heading": "Quitar la plantilla",
+  "p.plan_templates.remove_says":
+    "Quitar la plantilla no cambia los planes ya creados a partir de ella.",
+  "p.plan_templates.remove": "Quitar esta plantilla",
+  "p.plan_templates.confirm_remove": "¿Quitar la plantilla «{name}»?",
+  "p.plan_templates.could_not_remove": "No se quitó la plantilla.",
+  "p.plan_templates.save_title": "Guardar como plantilla",
+  "p.plan_templates.save_title_ppm": "Guardar como plantilla — PPM",
+  "p.plan_templates.save_says":
+    "Guarda este plan y los planes que tiene debajo y que usted puede leer, con sus tareas, componentes, hitos y flujos de trabajo. No se guarda ninguna persona, y cada fecha pasa a ser un número de días tras el inicio. Cambiar el plan después no cambia la plantilla.",
+  "p.plan_templates.f_name": "Nombre de la plantilla",
+  "p.plan_templates.f_description": "Descripción (opcional)",
+  "p.plan_templates.save": "Guardar la plantilla",
+  "p.plan_templates.saved":
+    "Guardada. Planes: {plans}; tareas: {tasks}; hitos: {milestones}.",
+  "p.plan_templates.omitted_one":
+    "Se dejó fuera {count} plan que está debajo, porque usted no puede leerlo.",
+  "p.plan_templates.omitted_other":
+    "Se dejaron fuera {count} planes que están debajo, porque usted no puede leerlos.",
+  "p.plan_templates.open_template": "Abrir la plantilla",
+  "p.plan_templates.name_taken":
+    "Ya existe una plantilla con este nombre. Elija otro nombre.",
+  "p.plan_templates.could_not_save": "No se guardó la plantilla.",
+  "p.plan_templates.problem_name_blank": "Dé un nombre a la plantilla.",
+  "p.plan_templates.problem_name_long":
+    "El nombre de una plantilla puede tener como máximo 120 caracteres.",
   "p.plans.pid.modules_failed":
     "No se pudo comprobar qué herramientas usa este plan, por lo que se muestran todas.",
   "p._layout_svelte.handling_mark": "Marca de tratamiento: {mark}",

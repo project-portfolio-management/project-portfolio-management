@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (plan templates: NC-1 slice 9, second half)
+
+- **UI: plan templates (LT-2) have screens.** `/plan-templates` lists the saved templates and the built-in starters;
+  `/plan-templates/[pid]` shows what a template holds and starts plans from it, asking for a start date only when it
+  carries dates; `/plans/[pid]/save-as-template`, linked from the plan page, saves a plan as a template and says what
+  was kept and what was left out as unreadable. A saved template is removed after a question; a starter cannot be.
+  UI spec, "Plan templates"; tests `tests/unit/template-view.test.ts` and `tests/e2e/plan-templates.spec.ts` (seven,
+  with Welsh and axe). NC-1's slice 9 is done; MSPDI export is next.
+- **Not done:** revising a template and listing the plans made from it (NC-12); the starters' names are the service's
+  English. **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (strategy canvases: NC-1 slice 9, first half)
 
 - **UI: strategy canvases (LT-1) have screens.** `/canvases` lists every canvas the caller may read and starts a

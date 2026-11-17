@@ -4117,6 +4117,81 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.canvas.confirm_remove_canvas":
     "Den Canvas „{title}“ und seine Einträge entfernen?",
   "p.canvas.could_not_remove_canvas": "Der Canvas wurde nicht entfernt.",
+  "p.plan_templates.title": "Planvorlagen",
+  "p.plan_templates.title_ppm": "Planvorlagen — PPM",
+  "p.plan_templates.intro":
+    "Eine Vorlage ist ein Plan mit den Plänen darunter, gespeichert ohne Personen und mit jedem Datum als Anzahl Tage nach dem Start, damit neue Pläne von ihr ausgehen können.",
+  "p.plan_templates.saved_heading": "Gespeicherte Vorlagen",
+  "p.plan_templates.starters_heading": "Mitgelieferte Startvorlagen",
+  "p.plan_templates.none_saved":
+    "Noch keine Vorlage gespeichert. Speichern Sie eine von der Seite eines Plans aus.",
+  "p.plan_templates.none_starters":
+    "Es gibt keine mitgelieferten Startvorlagen.",
+  "p.plan_templates.plans_count_one": "{count} Plan",
+  "p.plan_templates.plans_count_other": "{count} Pläne",
+  "p.plan_templates.needs_start": "braucht ein Startdatum",
+  "p.plan_templates.could_not_load_list":
+    "Die Vorlagen konnten nicht geladen werden.",
+  "p.plan_templates.one_title": "Planvorlage",
+  "p.plan_templates.one_title_ppm": "Planvorlage — PPM",
+  "p.plan_templates.back": "← Zurück zu den Vorlagen",
+  "p.plan_templates.is_starter":
+    "Eine mitgelieferte Startvorlage. Sie kann nicht geändert oder entfernt werden; beginnen Sie einen Plan daraus und speichern Sie diesen unter eigenem Namen.",
+  "p.plan_templates.is_saved": "Eine gespeicherte Vorlage, Version {version}.",
+  "p.plan_templates.holds_heading": "Was sie enthält",
+  "p.plan_templates.holds_says":
+    "Jeder Plan, die Zahl seiner Aufgaben und seine Meilensteine als Tage nach dem Start. Keine Person wird gespeichert.",
+  "p.plan_templates.tasks_count_one": "{count} Aufgabe",
+  "p.plan_templates.tasks_count_other": "{count} Aufgaben",
+  "p.plan_templates.milestone_at": "{name}: Tag {days}",
+  "p.plan_templates.start_heading": "Pläne daraus beginnen",
+  "p.plan_templates.start_says":
+    "Neue Pläne werden aus der Vorlage erstellt, die Daten ab dem Startdatum gezählt. Aufgaben beginnen in ihrem ersten Schritt.",
+  "p.plan_templates.f_plan_name": "Name des obersten Plans (optional)",
+  "p.plan_templates.f_start": "Startdatum",
+  "p.plan_templates.no_dates":
+    "Diese Vorlage enthält keine Daten, daher ist kein Startdatum nötig.",
+  "p.plan_templates.f_parent": "Darunter einordnen",
+  "p.plan_templates.no_parent": "Kein Plan: ein neuer Plan auf oberster Ebene",
+  "p.plan_templates.start": "Pläne beginnen",
+  "p.plan_templates.started":
+    "Erstellt. Pläne: {plans}; Aufgaben: {tasks}; Meilensteine: {milestones}.",
+  "p.plan_templates.open_new": "Den neuen Plan öffnen",
+  "p.plan_templates.could_not_load":
+    "Diese Vorlage konnte nicht geladen werden.",
+  "p.plan_templates.could_not_start": "Die Pläne wurden nicht begonnen.",
+  "p.plan_templates.problem_plan_name_long":
+    "Der Name eines Plans darf höchstens 1.024 Zeichen lang sein.",
+  "p.plan_templates.problem_start_needed":
+    "Wählen Sie ein Startdatum: Diese Vorlage enthält Daten.",
+  "p.plan_templates.problem_start_bad":
+    "Schreiben Sie das Startdatum als Tag, etwa 2027-01-04.",
+  "p.plan_templates.remove_heading": "Vorlage entfernen",
+  "p.plan_templates.remove_says":
+    "Das Entfernen der Vorlage ändert die bereits daraus erstellten Pläne nicht.",
+  "p.plan_templates.remove": "Diese Vorlage entfernen",
+  "p.plan_templates.confirm_remove": "Die Vorlage „{name}“ entfernen?",
+  "p.plan_templates.could_not_remove": "Die Vorlage wurde nicht entfernt.",
+  "p.plan_templates.save_title": "Als Vorlage speichern",
+  "p.plan_templates.save_title_ppm": "Als Vorlage speichern — PPM",
+  "p.plan_templates.save_says":
+    "Speichert diesen Plan und die Pläne darunter, die Sie lesen dürfen, mit ihren Aufgaben, Komponenten, Meilensteinen und Abläufen. Keine Person wird gespeichert, und jedes Datum wird zu einer Anzahl Tage nach dem Start. Spätere Änderungen am Plan ändern die Vorlage nicht.",
+  "p.plan_templates.f_name": "Name der Vorlage",
+  "p.plan_templates.f_description": "Beschreibung (optional)",
+  "p.plan_templates.save": "Vorlage speichern",
+  "p.plan_templates.saved":
+    "Gespeichert. Pläne: {plans}; Aufgaben: {tasks}; Meilensteine: {milestones}.",
+  "p.plan_templates.omitted_one":
+    "{count} Plan darunter wurde ausgelassen, weil Sie ihn nicht lesen dürfen.",
+  "p.plan_templates.omitted_other":
+    "{count} Pläne darunter wurden ausgelassen, weil Sie sie nicht lesen dürfen.",
+  "p.plan_templates.open_template": "Die Vorlage öffnen",
+  "p.plan_templates.name_taken":
+    "Eine Vorlage mit diesem Namen gibt es schon. Wählen Sie einen anderen Namen.",
+  "p.plan_templates.could_not_save": "Die Vorlage wurde nicht gespeichert.",
+  "p.plan_templates.problem_name_blank": "Geben Sie der Vorlage einen Namen.",
+  "p.plan_templates.problem_name_long":
+    "Der Name einer Vorlage darf höchstens 120 Zeichen lang sein.",
   "p.plans.pid.modules_failed":
     "Welche Werkzeuge dieser Plan verwendet, konnte nicht geprüft werden, daher werden alle Werkzeuge aufgeführt.",
   "p._layout_svelte.handling_mark": "Kennzeichnung: {mark}",

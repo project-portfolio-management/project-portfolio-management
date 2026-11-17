@@ -4116,6 +4116,80 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.canvas.confirm_remove_canvas":
     "Retirer le canevas « {title} » et ses éléments ?",
   "p.canvas.could_not_remove_canvas": "Le canevas n'a pas été retiré.",
+  "p.plan_templates.title": "Modèles de plan",
+  "p.plan_templates.title_ppm": "Modèles de plan — PPM",
+  "p.plan_templates.intro":
+    "Un modèle est un plan et les plans qui sont sous lui, gardés sans personnes et avec chaque date en nombre de jours après le début, pour que de nouveaux plans puissent en partir.",
+  "p.plan_templates.saved_heading": "Modèles enregistrés",
+  "p.plan_templates.starters_heading": "Modèles de départ fournis",
+  "p.plan_templates.none_saved":
+    "Aucun modèle n'a encore été enregistré. Enregistrez-en un depuis la page d'un plan.",
+  "p.plan_templates.none_starters": "Il n'y a pas de modèle de départ fourni.",
+  "p.plan_templates.plans_count_one": "{count} plan inclus",
+  "p.plan_templates.plans_count_other": "{count} plans inclus",
+  "p.plan_templates.needs_start": "demande une date de début",
+  "p.plan_templates.could_not_load_list":
+    "Les modèles n'ont pas pu être chargés.",
+  "p.plan_templates.one_title": "Modèle de plan",
+  "p.plan_templates.one_title_ppm": "Modèle de plan — PPM",
+  "p.plan_templates.back": "← Retour aux modèles",
+  "p.plan_templates.is_starter":
+    "Un modèle de départ fourni. Il ne peut être ni modifié ni retiré ; commencez un plan à partir de lui et enregistrez-le sous votre propre nom.",
+  "p.plan_templates.is_saved": "Un modèle enregistré, version {version}.",
+  "p.plan_templates.holds_heading": "Ce qu'il contient",
+  "p.plan_templates.holds_says":
+    "Chaque plan, le nombre de ses tâches, et ses jalons en jours après le début. Aucune personne n'est gardée.",
+  "p.plan_templates.tasks_count_one": "{count} tâche",
+  "p.plan_templates.tasks_count_other": "{count} tâches",
+  "p.plan_templates.milestone_at": "{name} : jour {days}",
+  "p.plan_templates.start_heading": "Commencer des plans à partir de lui",
+  "p.plan_templates.start_says":
+    "Les nouveaux plans sont créés à partir du modèle, les dates comptées depuis la date de début. Les tâches commencent à leur première étape.",
+  "p.plan_templates.f_plan_name": "Nom du plan du haut (facultatif)",
+  "p.plan_templates.f_start": "Date de début",
+  "p.plan_templates.no_dates":
+    "Ce modèle ne contient aucune date : aucune date de début n'est nécessaire.",
+  "p.plan_templates.f_parent": "Le placer sous",
+  "p.plan_templates.no_parent":
+    "Aucun plan : un nouveau plan de premier niveau",
+  "p.plan_templates.start": "Commencer les plans",
+  "p.plan_templates.started":
+    "Fait. Plans : {plans} ; tâches : {tasks} ; jalons : {milestones}.",
+  "p.plan_templates.open_new": "Ouvrir le nouveau plan",
+  "p.plan_templates.could_not_load": "Ce modèle n'a pas pu être chargé.",
+  "p.plan_templates.could_not_start": "Les plans n'ont pas été commencés.",
+  "p.plan_templates.problem_plan_name_long":
+    "Le nom d'un plan peut compter au plus 1 024 caractères.",
+  "p.plan_templates.problem_start_needed":
+    "Choisissez une date de début : ce modèle contient des dates.",
+  "p.plan_templates.problem_start_bad":
+    "Écrivez la date de début comme un jour, par exemple 2027-01-04.",
+  "p.plan_templates.remove_heading": "Retirer le modèle",
+  "p.plan_templates.remove_says":
+    "Retirer le modèle ne change pas les plans déjà créés à partir de lui.",
+  "p.plan_templates.remove": "Retirer ce modèle",
+  "p.plan_templates.confirm_remove": "Retirer le modèle « {name} » ?",
+  "p.plan_templates.could_not_remove": "Le modèle n'a pas été retiré.",
+  "p.plan_templates.save_title": "Enregistrer comme modèle",
+  "p.plan_templates.save_title_ppm": "Enregistrer comme modèle — PPM",
+  "p.plan_templates.save_says":
+    "Garde ce plan et les plans sous lui que vous pouvez lire, avec leurs tâches, composants, jalons et flux de travail. Aucune personne n'est gardée, et chaque date devient un nombre de jours après le début. Modifier le plan ensuite ne change pas le modèle.",
+  "p.plan_templates.f_name": "Nom du modèle",
+  "p.plan_templates.f_description": "Description (facultative)",
+  "p.plan_templates.save": "Enregistrer le modèle",
+  "p.plan_templates.saved":
+    "Enregistré. Plans : {plans} ; tâches : {tasks} ; jalons : {milestones}.",
+  "p.plan_templates.omitted_one":
+    "{count} plan sous celui-ci a été laissé de côté, car vous ne pouvez pas le lire.",
+  "p.plan_templates.omitted_other":
+    "{count} plans sous celui-ci ont été laissés de côté, car vous ne pouvez pas les lire.",
+  "p.plan_templates.open_template": "Ouvrir le modèle",
+  "p.plan_templates.name_taken":
+    "Un modèle porte déjà ce nom. Choisissez-en un autre.",
+  "p.plan_templates.could_not_save": "Le modèle n'a pas été enregistré.",
+  "p.plan_templates.problem_name_blank": "Donnez un nom au modèle.",
+  "p.plan_templates.problem_name_long":
+    "Le nom d'un modèle peut compter au plus 120 caractères.",
   "p.plans.pid.modules_failed":
     "Les outils utilisés par ce plan n'ont pas pu être vérifiés ; tous les outils sont donc listés.",
   "p._layout_svelte.handling_mark": "Marque de traitement : {mark}",

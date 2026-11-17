@@ -161,6 +161,12 @@ import type {
   CanvasPromoteBody,
   CanvasTemplate,
   CanvasView,
+  InstantiateTemplateBody,
+  InstantiatedTemplate,
+  PlanTemplate,
+  PlanTemplateSummary,
+  SaveTemplateBody,
+  SavedTemplate,
   Objective,
   OkrList,
   OnboardingCase,
@@ -1927,6 +1933,33 @@ export class PpmClient {
   /** An approver approves or rejects someone else's submitted week (LT-11); approved is final. */
   decideTimesheet(body: TimesheetDecideBody): Promise<TimesheetWeekState> {
     return this.http.post(`/api/timesheets/decide`, { body });
+  }
+  // ---- plan templates (LT-2, NC-1 slice 9) ----
+  /** Saved templates the caller may see, then the built-in starters. */
+  planTemplates(): Promise<PlanTemplateSummary[]> {
+    return this.http.get(`/api/plan-templates`);
+  }
+  /** One template and its whole snapshot (404 when absent or of a plan hidden from the caller). */
+  planTemplate(pid: string): Promise<PlanTemplate> {
+    return this.http.get(`/api/plan-templates/${pid}`);
+  }
+  /** Save a plan and the plans under it that the caller can read as a template; 409 when the name is taken. */
+  saveAsTemplate(
+    planPid: string,
+    body: SaveTemplateBody,
+  ): Promise<SavedTemplate> {
+    return this.http.post(`/api/plans/${planPid}/save-as-template`, { body });
+  }
+  /** Start new plans from a template, dates shifted to `start_date` (422 without one when the template has dates). */
+  instantiateTemplate(
+    pid: string,
+    body: InstantiateTemplateBody,
+  ): Promise<InstantiatedTemplate> {
+    return this.http.post(`/api/plans/from-template/${pid}`, { body });
+  }
+  /** Remove a saved template (422 for a starter); plans already made from it stay. */
+  deletePlanTemplate(pid: string): Promise<unknown> {
+    return this.http.delete(`/api/plan-templates/${pid}`);
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

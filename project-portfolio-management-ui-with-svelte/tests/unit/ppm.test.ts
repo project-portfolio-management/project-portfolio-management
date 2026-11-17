@@ -558,6 +558,28 @@ describe("PpmClient canvas paths (NC-1 slice 9, LT-1)", () => {
   });
 });
 
+describe("PpmClient plan template paths (NC-1 slice 9, LT-2)", () => {
+  it("lists, reads, saves, starts from and removes templates", async () => {
+    const { ppm, calls } = recordingClient();
+    const p = "11111111-1111-4111-8111-111111111111";
+    const tpl = "66666666-6666-4666-8666-666666666666";
+    await ppm.planTemplates();
+    await ppm.planTemplate(tpl);
+    await ppm.saveAsTemplate(p, { name: "N" });
+    await ppm.instantiateTemplate(tpl, { start_date: "2027-01-04" });
+    await ppm.deletePlanTemplate(tpl);
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plan-templates",
+      `GET /api/plan-templates/${tpl}`,
+      `POST /api/plans/${p}/save-as-template`,
+      `POST /api/plans/from-template/${tpl}`,
+      `DELETE /api/plan-templates/${tpl}`,
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

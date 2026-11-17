@@ -3901,6 +3901,75 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.canvas.remove_canvas": "यह कैनवास हटाएँ",
   "p.canvas.confirm_remove_canvas": "कैनवास “{title}” और उसके आइटम हटाएँ?",
   "p.canvas.could_not_remove_canvas": "कैनवास नहीं हटाया गया।",
+  "p.plan_templates.title": "योजना टेम्पलेट",
+  "p.plan_templates.title_ppm": "योजना टेम्पलेट — PPM",
+  "p.plan_templates.intro":
+    "टेम्पलेट एक योजना और उसके नीचे की योजनाएँ हैं, जो लोगों के बिना और हर तिथि को शुरुआत के बाद के दिनों की संख्या के रूप में रखी जाती हैं, ताकि नई योजनाएँ उससे शुरू हो सकें।",
+  "p.plan_templates.saved_heading": "सहेजे गए टेम्पलेट",
+  "p.plan_templates.starters_heading": "अंतर्निहित आरंभिक टेम्पलेट",
+  "p.plan_templates.none_saved":
+    "अभी कोई टेम्पलेट सहेजा नहीं गया है। किसी योजना के पन्ने से एक सहेजें।",
+  "p.plan_templates.none_starters": "कोई अंतर्निहित आरंभिक टेम्पलेट नहीं है।",
+  "p.plan_templates.plans_count_one": "{count} योजना",
+  "p.plan_templates.plans_count_other": "{count} योजनाएँ",
+  "p.plan_templates.needs_start": "आरंभ तिथि चाहिए",
+  "p.plan_templates.could_not_load_list": "टेम्पलेट लोड नहीं हो सके।",
+  "p.plan_templates.one_title": "योजना टेम्पलेट",
+  "p.plan_templates.one_title_ppm": "योजना टेम्पलेट — PPM",
+  "p.plan_templates.back": "← टेम्पलेटों पर वापस",
+  "p.plan_templates.is_starter":
+    "एक अंतर्निहित आरंभिक टेम्पलेट। इसे बदला या हटाया नहीं जा सकता; इससे एक योजना शुरू करें और उसे अपने नाम से सहेजें।",
+  "p.plan_templates.is_saved": "एक सहेजा गया टेम्पलेट, संस्करण {version}।",
+  "p.plan_templates.holds_heading": "इसमें क्या है",
+  "p.plan_templates.holds_says":
+    "हर योजना, उसके कार्यों की संख्या, और शुरुआत के बाद के दिनों के रूप में उसके माइलस्टोन। किसी व्यक्ति को नहीं रखा जाता।",
+  "p.plan_templates.tasks_count_one": "{count} कार्य",
+  "p.plan_templates.tasks_count_other": "{count} कार्य",
+  "p.plan_templates.milestone_at": "{name}: दिन {days}",
+  "p.plan_templates.start_heading": "इससे योजनाएँ शुरू करें",
+  "p.plan_templates.start_says":
+    "टेम्पलेट से नई योजनाएँ बनती हैं, तिथियाँ आरंभ तिथि से गिनी जाती हैं। कार्य अपने पहले चरण से शुरू होते हैं।",
+  "p.plan_templates.f_plan_name": "सबसे ऊपर की योजना का नाम (वैकल्पिक)",
+  "p.plan_templates.f_start": "आरंभ तिथि",
+  "p.plan_templates.no_dates":
+    "इस टेम्पलेट में कोई तिथि नहीं है, इसलिए आरंभ तिथि की ज़रूरत नहीं।",
+  "p.plan_templates.f_parent": "इसके नीचे रखें",
+  "p.plan_templates.no_parent": "कोई योजना नहीं: एक नई शीर्ष-स्तरीय योजना",
+  "p.plan_templates.start": "योजनाएँ शुरू करें",
+  "p.plan_templates.started":
+    "बन गईं। योजनाएँ: {plans}; कार्य: {tasks}; माइलस्टोन: {milestones}।",
+  "p.plan_templates.open_new": "नई योजना खोलें",
+  "p.plan_templates.could_not_load": "यह टेम्पलेट लोड नहीं हो सका।",
+  "p.plan_templates.could_not_start": "योजनाएँ शुरू नहीं हुईं।",
+  "p.plan_templates.problem_plan_name_long":
+    "योजना का नाम अधिकतम 1,024 अक्षरों का हो सकता है।",
+  "p.plan_templates.problem_start_needed": "आरंभ तिथि चुनें: इस टेम्पलेट में तिथियाँ हैं।",
+  "p.plan_templates.problem_start_bad":
+    "आरंभ तिथि को एक दिन के रूप में लिखें, जैसे 2027-01-04।",
+  "p.plan_templates.remove_heading": "टेम्पलेट हटाएँ",
+  "p.plan_templates.remove_says": "टेम्पलेट हटाने से उससे पहले बनी योजनाएँ नहीं बदलतीं।",
+  "p.plan_templates.remove": "यह टेम्पलेट हटाएँ",
+  "p.plan_templates.confirm_remove": "टेम्पलेट “{name}” हटाएँ?",
+  "p.plan_templates.could_not_remove": "टेम्पलेट नहीं हटाया गया।",
+  "p.plan_templates.save_title": "टेम्पलेट के रूप में सहेजें",
+  "p.plan_templates.save_title_ppm": "टेम्पलेट के रूप में सहेजें — PPM",
+  "p.plan_templates.save_says":
+    "इस योजना और इसके नीचे की उन योजनाओं को, जिन्हें आप पढ़ सकते हैं, उनके कार्यों, घटकों, माइलस्टोन और कार्यप्रवाहों के साथ रखता है। किसी व्यक्ति को नहीं रखा जाता, और हर तिथि शुरुआत के बाद के दिनों की संख्या बन जाती है। बाद में योजना बदलने से टेम्पलेट नहीं बदलता।",
+  "p.plan_templates.f_name": "टेम्पलेट का नाम",
+  "p.plan_templates.f_description": "विवरण (वैकल्पिक)",
+  "p.plan_templates.save": "टेम्पलेट सहेजें",
+  "p.plan_templates.saved":
+    "सहेजा गया। योजनाएँ: {plans}; कार्य: {tasks}; माइलस्टोन: {milestones}।",
+  "p.plan_templates.omitted_one":
+    "इसके नीचे की {count} योजना छोड़ दी गई, क्योंकि आप उसे पढ़ नहीं सकते।",
+  "p.plan_templates.omitted_other":
+    "इसके नीचे की {count} योजनाएँ छोड़ दी गईं, क्योंकि आप उन्हें पढ़ नहीं सकते।",
+  "p.plan_templates.open_template": "टेम्पलेट खोलें",
+  "p.plan_templates.name_taken": "इस नाम का टेम्पलेट पहले से है। कोई दूसरा नाम चुनें।",
+  "p.plan_templates.could_not_save": "टेम्पलेट नहीं सहेजा गया।",
+  "p.plan_templates.problem_name_blank": "टेम्पलेट को एक नाम दें।",
+  "p.plan_templates.problem_name_long":
+    "टेम्पलेट का नाम अधिकतम 120 अक्षरों का हो सकता है।",
   "p.plans.pid.modules_failed":
     "यह योजना कौन-से टूल उपयोग करती है, यह जाँचा नहीं जा सका, इसलिए हर टूल सूचीबद्ध है।",
   "p._layout_svelte.handling_mark": "हैंडलिंग चिह्न: {mark}",

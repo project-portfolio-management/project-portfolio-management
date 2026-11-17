@@ -42,6 +42,7 @@ export const KNOWN_NAV_HREFS = [
   "/proposals",
   "/ideas",
   "/canvases",
+  "/plan-templates",
   "/scenarios",
   "/objectives",
   "/okrs",

@@ -9,6 +9,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — plan templates (NC-1 slice 9, LT-2, 2026-11-17)
+
+- `/plan-templates` (saved templates and the built-in starters; in the navigation), `/plan-templates/[pid]` (what a
+  template holds, as an outline of its plans with their task counts and milestones as days after the start; start
+  plans from it; remove a saved one after a question) and `/plans/[pid]/save-as-template` (linked from the plan page),
+  over the LT-2 routes that had no screen. Starting sends a name only when given, a start date only when the template
+  carries dates (then required and checked as a calendar day) and a parent only when chosen, and links to the new top
+  plan. Saving says what was kept and how many plans were left out as unreadable, and a taken name has its own
+  sentence. Five client methods and their types; `src/lib/template-view.ts`; 55 keys in eight catalogues (three
+  plural groups), machine-written and unreviewed.
+- Tests: `tests/unit/template-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/plan-templates.spec.ts`
+  (seven, with Welsh and axe).
+- **Not done:** revising a template and listing the plans made from it (NC-12's routes); the starters' names and
+  descriptions are the service's English; the outline gives task counts, not the tasks.
+- **Not verified:** against a real service (the browser tests stub it).
+
 ### Added — strategy canvases (NC-1 slice 9, LT-1, 2026-11-17)
 
 - `/canvases` (every canvas the caller may read, and a new free-standing one; in the navigation),

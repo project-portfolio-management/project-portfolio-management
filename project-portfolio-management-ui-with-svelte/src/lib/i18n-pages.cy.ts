@@ -4059,6 +4059,78 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.canvas.remove_canvas": "Tynnu'r cynfas hwn",
   "p.canvas.confirm_remove_canvas": "Tynnu'r cynfas “{title}” a'i eitemau?",
   "p.canvas.could_not_remove_canvas": "Ni thynnwyd y cynfas.",
+  "p.plan_templates.title": "Templedi cynllun",
+  "p.plan_templates.title_ppm": "Templedi cynllun — PPM",
+  "p.plan_templates.intro":
+    "Cynllun a'r cynlluniau oddi tano yw templed, wedi'i gadw heb bobl a phob dyddiad yn nifer o ddyddiau ar ôl y dechrau, fel y gall cynlluniau newydd ddechrau ohono.",
+  "p.plan_templates.saved_heading": "Templedi wedi'u cadw",
+  "p.plan_templates.starters_heading": "Templedi cychwyn adeiledig",
+  "p.plan_templates.none_saved":
+    "Nid oes templed wedi'i gadw eto. Cadwch un o dudalen cynllun.",
+  "p.plan_templates.none_starters": "Nid oes templedi cychwyn adeiledig.",
+  "p.plan_templates.plans_count_one": "{count} cynllun",
+  "p.plan_templates.plans_count_other": "{count} cynllun",
+  "p.plan_templates.needs_start": "angen dyddiad dechrau",
+  "p.plan_templates.could_not_load_list": "Nid oedd modd llwytho'r templedi.",
+  "p.plan_templates.one_title": "Templed cynllun",
+  "p.plan_templates.one_title_ppm": "Templed cynllun — PPM",
+  "p.plan_templates.back": "← Yn ôl i'r templedi",
+  "p.plan_templates.is_starter":
+    "Templed cychwyn adeiledig. Ni ellir ei newid na'i dynnu; dechreuwch gynllun ohono a chadwch hwnnw dan eich enw eich hun.",
+  "p.plan_templates.is_saved": "Templed wedi'i gadw, fersiwn {version}.",
+  "p.plan_templates.holds_heading": "Beth sydd ynddo",
+  "p.plan_templates.holds_says":
+    "Pob cynllun, nifer ei dasgau, a'i gerrig milltir fel dyddiau ar ôl y dechrau. Ni chedwir unrhyw berson.",
+  "p.plan_templates.tasks_count_one": "{count} dasg",
+  "p.plan_templates.tasks_count_other": "{count} tasg",
+  "p.plan_templates.milestone_at": "{name}: diwrnod {days}",
+  "p.plan_templates.start_heading": "Dechrau cynlluniau ohono",
+  "p.plan_templates.start_says":
+    "Gwneir cynlluniau newydd o'r templed, gyda dyddiadau wedi'u cyfrif o'r dyddiad dechrau. Mae tasgau'n dechrau ar eu cam cyntaf.",
+  "p.plan_templates.f_plan_name": "Enw'r cynllun uchaf (dewisol)",
+  "p.plan_templates.f_start": "Dyddiad dechrau",
+  "p.plan_templates.no_dates":
+    "Nid oes dyddiadau yn y templed hwn, felly nid oes angen dyddiad dechrau.",
+  "p.plan_templates.f_parent": "Ei roi o dan",
+  "p.plan_templates.no_parent": "Dim cynllun: cynllun lefel uchaf newydd",
+  "p.plan_templates.start": "Dechrau'r cynlluniau",
+  "p.plan_templates.started":
+    "Wedi'u gwneud. Cynlluniau: {plans}; tasgau: {tasks}; cerrig milltir: {milestones}.",
+  "p.plan_templates.open_new": "Agor y cynllun newydd",
+  "p.plan_templates.could_not_load": "Nid oedd modd llwytho'r templed hwn.",
+  "p.plan_templates.could_not_start": "Ni ddechreuwyd y cynlluniau.",
+  "p.plan_templates.problem_plan_name_long":
+    "Gall enw cynllun fod yn 1,024 nod ar y mwyaf.",
+  "p.plan_templates.problem_start_needed":
+    "Dewiswch ddyddiad dechrau: mae dyddiadau yn y templed hwn.",
+  "p.plan_templates.problem_start_bad":
+    "Ysgrifennwch y dyddiad dechrau fel diwrnod, fel 2027-01-04.",
+  "p.plan_templates.remove_heading": "Tynnu'r templed",
+  "p.plan_templates.remove_says":
+    "Nid yw tynnu'r templed yn newid y cynlluniau a wnaed ohono eisoes.",
+  "p.plan_templates.remove": "Tynnu'r templed hwn",
+  "p.plan_templates.confirm_remove": "Tynnu'r templed “{name}”?",
+  "p.plan_templates.could_not_remove": "Ni thynnwyd y templed.",
+  "p.plan_templates.save_title": "Cadw fel templed",
+  "p.plan_templates.save_title_ppm": "Cadw fel templed — PPM",
+  "p.plan_templates.save_says":
+    "Yn cadw'r cynllun hwn a'r cynlluniau oddi tano y gallwch eu darllen, gyda'u tasgau, cydrannau, cerrig milltir a llifoedd gwaith. Ni chedwir unrhyw berson, a daw pob dyddiad yn nifer o ddyddiau ar ôl y dechrau. Nid yw newid y cynllun yn nes ymlaen yn newid y templed.",
+  "p.plan_templates.f_name": "Enw'r templed",
+  "p.plan_templates.f_description": "Disgrifiad (dewisol)",
+  "p.plan_templates.save": "Cadw'r templed",
+  "p.plan_templates.saved":
+    "Wedi'i gadw. Cynlluniau: {plans}; tasgau: {tasks}; cerrig milltir: {milestones}.",
+  "p.plan_templates.omitted_one":
+    "Gadawyd {count} cynllun o dan hwn allan, am na allwch ei ddarllen.",
+  "p.plan_templates.omitted_other":
+    "Gadawyd {count} cynllun o dan hwn allan, am na allwch eu darllen.",
+  "p.plan_templates.open_template": "Agor y templed",
+  "p.plan_templates.name_taken":
+    "Mae templed gyda'r enw hwn yn bodoli eisoes. Dewiswch enw arall.",
+  "p.plan_templates.could_not_save": "Ni chadwyd y templed.",
+  "p.plan_templates.problem_name_blank": "Rhowch enw i'r templed.",
+  "p.plan_templates.problem_name_long":
+    "Gall enw templed fod yn 120 nod ar y mwyaf.",
   "p.plans.pid.modules_failed":
     "Nid oedd modd gwirio pa offer y mae'r cynllun hwn yn eu defnyddio, felly rhestrir pob offeryn.",
   "p._layout_svelte.handling_mark": "Marc trin: {mark}",

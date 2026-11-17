@@ -203,9 +203,15 @@ match breakdown).
 /canvases/[pid]              one canvas: every box, its items, add,
                              edit, move, remove, turn into an idea, an
                              objective or a risk (NC-1 slice 9)
+/plan-templates              saved plan templates and the built-in
+                             starters (NC-1 slice 9)
+/plan-templates/[pid]        one template: what it holds; start plans
+                             from it; remove a saved one (NC-1 slice 9)
+/plans/[pid]/save-as-template save the plan as a template (NC-1 slice
+                             9); linked from the plan page
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 110):
+every page; `find src/routes -name +page.svelte` gives all 113):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -1963,9 +1969,40 @@ and `CanvasList.svelte` is shared by the two lists.
 - **Not built in this slice:** reordering items within a box (the service takes a `position`); setting an item's owner
   (`owner_ref` is shown when the service has one, as the reference); editing a canvas's title or description (the
   service has no route); a link from an idea, objective or risk back to the item it came from; plan templates (LT-2),
-  the second half of this slice's place in the order.
+  built in the same slice, below.
 - **Tests:** `tests/unit/canvas-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/canvases.spec.ts`
   (starting a free-standing canvas and one on a plan from the plan page, problems said with nothing sent, every box
   shown, add, an unchanged edit sending nothing, a move sending only the box, removing after a question, an idea once,
   a risk only on a plan's canvas and only with both scores, a refusal and a failed load, removing a canvas, Welsh,
   axe). The Welsh and the six other languages are machine-written and unreviewed.
+
+## Plan templates (NC-1 slice 9, LT-2)
+
+`/plan-templates` lists the saved templates the caller may see and the built-in starters (BR-13), each with its number
+of plans and whether starting from it needs a start date. `/plan-templates/[pid]` is one template;
+`/plans/[pid]/save-as-template`, linked from the plan page, saves a plan as one. They use `GET /api/plan-templates`,
+`GET` and `DELETE /api/plan-templates/{pid}`, `POST /api/plans/{pid}/save-as-template` and
+`POST /api/plans/from-template/{tpl}`; the plan picker reads `GET /api/plans`. `src/lib/template-view.ts` holds the
+rules.
+
+- **What a template holds.** Its plans as an outline in the service's order (a plan whose parent is missing is put at
+  the top rather than lost), each with its number of tasks and its milestones as "day N" after the start. The page
+  says no person is kept. A starter is marked as built in and offers no removal; a saved one gives its version.
+- **Starting plans from it.** A name for the top plan (left out when blank, so the service uses the template's own,
+  shown as the placeholder), a start date only when the template carries dates (required then, and checked as a real
+  calendar day), and an optional plan to put it under (none means a new top-level plan). The answer counts the plans,
+  tasks and milestones made and links to the new top plan.
+- **Saving a plan as a template.** A name (needed, at most 120 characters, as the service checks) and an optional
+  description. The page says what is kept and that later changes to the plan do not change the template. The answer
+  counts what was kept, says how many plans under it were left out because the caller cannot read them, and links to
+  the template. A taken name (409) has its own sentence; other refusals are the catalogue's sentences.
+- **Removing.** A saved template is removed after a question, and the page goes back to the list; plans already made
+  from it stay.
+- **Not built in this slice:** revising a template from its plan and the plans made from it (NC-12's
+  `POST /api/plan-templates/{pid}/revise` and `GET …/plans`); the starters' names and descriptions are the service's
+  English text, shown as it sends them; a task list inside the outline (counts only).
+- **Tests:** `tests/unit/template-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/plan-templates.spec.ts` (the two lists; what a template holds; a start date needed and the body sent with a
+  name and a parent; a starter sending nothing extra and offering no removal; removing after a question; saving from
+  the plan page with a blank name said first and a taken name in the catalogue's words; what was kept and left out;
+  Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.

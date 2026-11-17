@@ -3960,6 +3960,78 @@ export const PAGES_EN = {
   "p.canvas.confirm_remove_canvas":
     "Remove the canvas “{title}” and its items?",
   "p.canvas.could_not_remove_canvas": "The canvas was not removed.",
+  "p.plan_templates.title": "Plan templates",
+  "p.plan_templates.title_ppm": "Plan templates — PPM",
+  "p.plan_templates.intro":
+    "A template is a plan and the plans under it, kept without people and with every date as a number of days after the start, so new plans can start from it.",
+  "p.plan_templates.saved_heading": "Saved templates",
+  "p.plan_templates.starters_heading": "Built-in starters",
+  "p.plan_templates.none_saved":
+    "No template has been saved yet. Save one from a plan's page.",
+  "p.plan_templates.none_starters": "There are no built-in starters.",
+  "p.plan_templates.plans_count_one": "{count} plan",
+  "p.plan_templates.plans_count_other": "{count} plans",
+  "p.plan_templates.needs_start": "needs a start date",
+  "p.plan_templates.could_not_load_list": "The templates could not be loaded.",
+  "p.plan_templates.one_title": "Plan template",
+  "p.plan_templates.one_title_ppm": "Plan template — PPM",
+  "p.plan_templates.back": "← Back to the templates",
+  "p.plan_templates.is_starter":
+    "A built-in starter. It cannot be changed or removed; start a plan from it and save that under your own name.",
+  "p.plan_templates.is_saved": "A saved template, version {version}.",
+  "p.plan_templates.holds_heading": "What it holds",
+  "p.plan_templates.holds_says":
+    "Each plan, the number of its tasks, and its milestones as days after the start. No person is kept.",
+  "p.plan_templates.tasks_count_one": "{count} task",
+  "p.plan_templates.tasks_count_other": "{count} tasks",
+  "p.plan_templates.milestone_at": "{name}: day {days}",
+  "p.plan_templates.start_heading": "Start plans from it",
+  "p.plan_templates.start_says":
+    "New plans are made from the template, with dates counted from the start date. Tasks start at their first step.",
+  "p.plan_templates.f_plan_name": "Name of the top plan (optional)",
+  "p.plan_templates.f_start": "Start date",
+  "p.plan_templates.no_dates":
+    "This template carries no dates, so no start date is needed.",
+  "p.plan_templates.f_parent": "Put it under",
+  "p.plan_templates.no_parent": "No plan: a new top-level plan",
+  "p.plan_templates.start": "Start the plans",
+  "p.plan_templates.started":
+    "Made. Plans: {plans}; tasks: {tasks}; milestones: {milestones}.",
+  "p.plan_templates.open_new": "Open the new plan",
+  "p.plan_templates.could_not_load": "This template could not be loaded.",
+  "p.plan_templates.could_not_start": "The plans were not started.",
+  "p.plan_templates.problem_plan_name_long":
+    "A plan's name can be at most 1,024 characters.",
+  "p.plan_templates.problem_start_needed":
+    "Choose a start date: this template carries dates.",
+  "p.plan_templates.problem_start_bad":
+    "Write the start date as a day, such as 2027-01-04.",
+  "p.plan_templates.remove_heading": "Remove the template",
+  "p.plan_templates.remove_says":
+    "Removing the template does not change the plans already made from it.",
+  "p.plan_templates.remove": "Remove this template",
+  "p.plan_templates.confirm_remove": "Remove the template “{name}”?",
+  "p.plan_templates.could_not_remove": "The template was not removed.",
+  "p.plan_templates.save_title": "Save as a template",
+  "p.plan_templates.save_title_ppm": "Save as a template — PPM",
+  "p.plan_templates.save_says":
+    "Keeps this plan and the plans under it that you can read, with their tasks, components, milestones and workflows. No person is kept, and every date becomes a number of days after the start. Changing the plan later does not change the template.",
+  "p.plan_templates.f_name": "Template name",
+  "p.plan_templates.f_description": "Description (optional)",
+  "p.plan_templates.save": "Save the template",
+  "p.plan_templates.saved":
+    "Saved. Plans: {plans}; tasks: {tasks}; milestones: {milestones}.",
+  "p.plan_templates.omitted_one":
+    "{count} plan under this one was left out, because you cannot read it.",
+  "p.plan_templates.omitted_other":
+    "{count} plans under this one were left out, because you cannot read them.",
+  "p.plan_templates.open_template": "Open the template",
+  "p.plan_templates.name_taken":
+    "A template with this name already exists. Choose another name.",
+  "p.plan_templates.could_not_save": "The template was not saved.",
+  "p.plan_templates.problem_name_blank": "Give the template a name.",
+  "p.plan_templates.problem_name_long":
+    "A template name can be at most 120 characters.",
   "p.plans.pid.modules_failed":
     "Which tools this plan uses could not be checked, so every tool is listed.",
   "p._layout_svelte.handling_mark": "Handling mark: {mark}",

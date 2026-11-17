@@ -3894,6 +3894,75 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.canvas.remove_canvas": "إزالة هذه اللوحة",
   "p.canvas.confirm_remove_canvas": "إزالة اللوحة «{title}» وعناصرها؟",
   "p.canvas.could_not_remove_canvas": "لم تُزل اللوحة.",
+  "p.plan_templates.title": "قوالب الخطط",
+  "p.plan_templates.title_ppm": "قوالب الخطط — PPM",
+  "p.plan_templates.intro":
+    "القالب خطة والخطط التي تحتها، محفوظة دون أشخاص وكل تاريخ فيها عدد أيام بعد البداية، لتبدأ منه خطط جديدة.",
+  "p.plan_templates.saved_heading": "القوالب المحفوظة",
+  "p.plan_templates.starters_heading": "قوالب البداية المضمّنة",
+  "p.plan_templates.none_saved": "لم يُحفظ أي قالب بعد. احفظ واحدًا من صفحة خطة.",
+  "p.plan_templates.none_starters": "لا توجد قوالب بداية مضمّنة.",
+  "p.plan_templates.plans_count_one": "{count} خطة",
+  "p.plan_templates.plans_count_other": "{count} خطط",
+  "p.plan_templates.needs_start": "يحتاج إلى تاريخ بداية",
+  "p.plan_templates.could_not_load_list": "تعذر تحميل القوالب.",
+  "p.plan_templates.one_title": "قالب خطة",
+  "p.plan_templates.one_title_ppm": "قالب خطة — PPM",
+  "p.plan_templates.back": "← العودة إلى القوالب",
+  "p.plan_templates.is_starter":
+    "قالب بداية مضمّن. لا يمكن تغييره ولا إزالته؛ ابدأ منه خطة واحفظها باسمك.",
+  "p.plan_templates.is_saved": "قالب محفوظ، الإصدار {version}.",
+  "p.plan_templates.holds_heading": "ما يحتويه",
+  "p.plan_templates.holds_says":
+    "كل خطة، وعدد مهامها، ومعالمها بالأيام بعد البداية. لا يُحفظ أي شخص.",
+  "p.plan_templates.tasks_count_one": "{count} مهمة",
+  "p.plan_templates.tasks_count_other": "{count} مهام",
+  "p.plan_templates.milestone_at": "{name}: اليوم {days}",
+  "p.plan_templates.start_heading": "بدء خطط منه",
+  "p.plan_templates.start_says":
+    "تُنشأ خطط جديدة من القالب، وتُعدّ التواريخ من تاريخ البداية. تبدأ المهام في خطوتها الأولى.",
+  "p.plan_templates.f_plan_name": "اسم الخطة العليا (اختياري)",
+  "p.plan_templates.f_start": "تاريخ البداية",
+  "p.plan_templates.no_dates":
+    "لا يحمل هذا القالب تواريخ، فلا حاجة إلى تاريخ بداية.",
+  "p.plan_templates.f_parent": "وضعها تحت",
+  "p.plan_templates.no_parent": "لا خطة: خطة جديدة في المستوى الأعلى",
+  "p.plan_templates.start": "بدء الخطط",
+  "p.plan_templates.started":
+    "تم. الخطط: {plans}؛ المهام: {tasks}؛ المعالم: {milestones}.",
+  "p.plan_templates.open_new": "فتح الخطة الجديدة",
+  "p.plan_templates.could_not_load": "تعذر تحميل هذا القالب.",
+  "p.plan_templates.could_not_start": "لم تبدأ الخطط.",
+  "p.plan_templates.problem_plan_name_long":
+    "يمكن أن يتكون اسم الخطة من 1024 حرفًا على الأكثر.",
+  "p.plan_templates.problem_start_needed":
+    "اختر تاريخ بداية: هذا القالب يحمل تواريخ.",
+  "p.plan_templates.problem_start_bad":
+    "اكتب تاريخ البداية يومًا، مثل 2027-01-04.",
+  "p.plan_templates.remove_heading": "إزالة القالب",
+  "p.plan_templates.remove_says": "إزالة القالب لا تغيّر الخطط التي أُنشئت منه.",
+  "p.plan_templates.remove": "إزالة هذا القالب",
+  "p.plan_templates.confirm_remove": "إزالة القالب «{name}»؟",
+  "p.plan_templates.could_not_remove": "لم يُزل القالب.",
+  "p.plan_templates.save_title": "حفظ كقالب",
+  "p.plan_templates.save_title_ppm": "حفظ كقالب — PPM",
+  "p.plan_templates.save_says":
+    "يحفظ هذه الخطة والخطط التي تحتها مما يمكنك قراءته، مع مهامها ومكوناتها ومعالمها وسير عملها. لا يُحفظ أي شخص، ويصبح كل تاريخ عدد أيام بعد البداية. تغيير الخطة لاحقًا لا يغيّر القالب.",
+  "p.plan_templates.f_name": "اسم القالب",
+  "p.plan_templates.f_description": "الوصف (اختياري)",
+  "p.plan_templates.save": "حفظ القالب",
+  "p.plan_templates.saved":
+    "حُفظ. الخطط: {plans}؛ المهام: {tasks}؛ المعالم: {milestones}.",
+  "p.plan_templates.omitted_one":
+    "تُركت {count} خطة تحت هذه الخطة لأنك لا تستطيع قراءتها.",
+  "p.plan_templates.omitted_other":
+    "تُركت {count} خطط تحت هذه الخطة لأنك لا تستطيع قراءتها.",
+  "p.plan_templates.open_template": "فتح القالب",
+  "p.plan_templates.name_taken": "يوجد قالب بهذا الاسم بالفعل. اختر اسمًا آخر.",
+  "p.plan_templates.could_not_save": "لم يُحفظ القالب.",
+  "p.plan_templates.problem_name_blank": "أعطِ القالب اسمًا.",
+  "p.plan_templates.problem_name_long":
+    "يمكن أن يتكون اسم القالب من 120 حرفًا على الأكثر.",
   "p.plans.pid.modules_failed":
     "تعذّر التحقق من الأدوات التي تستخدمها هذه الخطة، لذا تُدرج كل الأدوات.",
   "p._layout_svelte.handling_mark": "علامة التداول: {mark}",

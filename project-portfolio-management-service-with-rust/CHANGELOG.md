@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — axa 0.19 and axa-test 0.10 (2026-11-17)
+
+- `axa` 0.17 to 0.19 (through 0.18), `axa-test` 0.8 to 0.10; with them `axa-postgres-job-queue` 0.5.1 to 0.6.0. The job
+  queue's times are `jiff` inside axa, stored and scheduled in UTC as before: no migration, no setting. axa no longer
+  brings `chrono` (through `croner` or its `sqlx` features); the service's own use remains until its move to `jiff`.
+  No service code named the changed types. Upgrade notes: `operations/upgrade-and-migration.md`.
+- **Publish-age exception, approved by the user on 2026-11-17:** axa 0.19.0, axa-postgres-job-queue 0.6.0, axa-test
+  0.10.0 (published that day) and jiff, jiff-core, jiff-sqlx and jiff-static 1.0.0 (published 2026-11-15) were
+  resolved under the 2-day minimum with `CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow`; nothing else was added.
+- Tested: fmt, clippy (all targets, all features), `cargo test --lib`, the database suite, `cargo deny --all-features`.
+  **Not verified:** the real-token binaries other than `mod`, and the job queue under load.
+
 ### Changed — axa 0.17 and axa-test 0.8 (2026-11-17)
 
 - axa 0.15 to 0.17 and axa-test 0.6 to 0.8, before the three-day minimum package age with the owner's approval;

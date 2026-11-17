@@ -22,6 +22,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 - **`make test-minimum-supported-rust-version`** runs `bin/make-test-minimum-supported-rust-version`: `cargo check --all-targets` and `cargo test` on 1.98 and 1.99, for the service and the matcher.
 - Not done: the move from `chrono` to `jiff` (about 800 uses in 213 files, through sqlx's compile-checked row types; the `deny.toml` exceptions stay). Not verified: `make test-minimum-supported-rust-version` end to end; only `cargo +1.98 check --all-targets` was run.
 
+### 17 November (axa 0.19)
+
+- **Service: axa 0.17 to 0.19 and axa-test 0.8 to 0.10.** axa no longer brings `chrono`; the job queue's tables and
+  schedules are unchanged, so no migration. A publish-age exception, approved by the user, for the new axa crates and
+  jiff 1.0. Upgrade notes: `operations/upgrade-and-migration.md`.
+- **Not done:** the service's own move from `chrono` to `jiff`, which clears the advisory. **Not verified:** the
+  real-token test binaries other than `mod`.
+
 ### 17 November (benchmarks of the calculation engines and the chrono baseline)
 
 - **Service: `benches/calculation_bench.rs`**, a second Criterion file: the schedule and cost Monte Carlo at their

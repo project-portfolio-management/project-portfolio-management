@@ -15,6 +15,9 @@ ignore = [
     "RUSTSEC-2025-0134", # rustls-pemfile (unmaintained; a thin wrapper over rustls-pki-types), transitive (loco tree); added 2026-10-10
     "RUSTSEC-2026-0440", # astral-tokio-tar (unmaintained), no safe upgrade: test-only, via testcontainers, not in a built service; added 2026-11-05
     "RUSTSEC-2026-0441", # pin-utils (unmaintained), no safe upgrade: only with the optional `fluvio` feature, not in the default build; added 2026-11-05
+    # Since axa 0.19 (2026-11-17), axa brings no chrono: it now comes from the service's own code, its sqlx `chrono` and
+    # schemars `chrono04` features, chrono-tz, axum-test's expect-json (tests only) and fluvio (humantime); the service's
+    # move to jiff leaves only the last two.
     # chrono, and so chrono-tz and humantime, were declared unmaintained (chronotope/chrono#1768). Unmaintained, not
     # vulnerable; no safe upgrade. chrono is used throughout the service and also arrives through sqlx, axa, schemars
     # and axum-test, so leaving it is a migration (to jiff or time), not an upgrade. Exceptions under

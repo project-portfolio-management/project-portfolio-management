@@ -140,6 +140,19 @@ No migration comes with the axa change, so going back is redeploying the previou
 migrations `20261114000110` to `20261114000112` (RE-7, RE-1, RE-8), which add tables and columns only, each with a
 down file.
 
+## Upgrading to axa 0.19
+
+The release that moves the service from axa 0.17 to 0.19 (through 0.18) renames no setting, changes no route or
+answer, and adds no migration. Only `axa`, `axa-postgres-job-queue` (0.6.0) and `axa-test` change; the outbox,
+idempotency and rate-limit crates are the same versions.
+
+1. **The job queue's times are `jiff` values inside axa.** The queue stores times as before, on the database's clock in
+   UTC, and still evaluates cron schedules in UTC, so its tables do not change and there is nothing to run by hand.
+2. **axa no longer brings `chrono`** into the service: `croner` and axa's own `sqlx` features leave it out. The
+   service still uses `chrono` itself until its own move to `jiff`.
+3. **0.18's HTTP-client change does not apply**: the service does not enable axa's `http-client` feature, and
+   `reqwest` is unchanged.
+
 ## Upgrading to axa 0.17
 
 The release that moves the service from axa 0.15 to 0.17 (through 0.16) renames no setting, changes no route or

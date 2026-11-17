@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (GitHub private vulnerability reporting on)
+
+- **GitHub private vulnerability reporting is turned on** for the repository (a setting, set through the API at the
+  user's request). `SECURITY.md` now names it first, with email as the other way; the security policy's known gaps
+  drop it and its sources name it. **Not verified:** a report made through it.
+
 ### 17 November (axa 0.20)
 
 - **Service: axa 0.19 to 0.20 and axa-test 0.10 to 0.11.** Zstd compression is now opt-in in axa and the service leaves

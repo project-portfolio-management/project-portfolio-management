@@ -348,7 +348,8 @@ section 16.
 
 ## 12. Vulnerability management
 
-12.1. **Sources.** Reports under [`SECURITY.md`](../SECURITY.md); RustSec advisories through `cargo deny`; Dependabot;
+12.1. **Sources.** Reports under [`SECURITY.md`](../SECURITY.md) (GitHub private vulnerability reporting, on since
+2026-11-17, or email); RustSec advisories through `cargo deny`; Dependabot;
 findings of the ZAP scan, fuzzing, chaos test and review.
 
 12.2. **Severity.** A confirmed vulnerability MUST be scored with CVSS v4.0 (base, and threat metrics where known) and
@@ -473,11 +474,10 @@ them true)
 
 1. The `main` branch has no branch protection and no ruleset, so `ci-ok` is not a required check and a push to `main`
    is not blocked by a failing gate.
-2. GitHub's private vulnerability reporting is off; reports go by email only, as [`SECURITY.md`](../SECURITY.md) says.
-3. GitHub secret scanning, push protection and Dependabot security updates are off. Secrets are caught by gitleaks in
+2. GitHub secret scanning, push protection and Dependabot security updates are off. Secrets are caught by gitleaks in
    CI after the push, not before; a RustSec advisory fails `cargo deny` in CI, but no security-update pull request is
    raised, and version updates wait for the weekly run and the 7-day cooldown.
-4. Commit signing is the maintainer's local practice, not enforced; the release tag `v0.2.0` is annotated but not
+3. Commit signing is the maintainer's local practice, not enforced; the release tag `v0.2.0` is annotated but not
    signed.
 
 **Release**

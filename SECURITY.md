@@ -4,7 +4,10 @@
 
 Please report a suspected vulnerability **privately**, not in a public issue.
 
-- Email **joel@joelparkerhenderson.com** with the subject `SECURITY: project-portfolio-management`.
+- Use GitHub's private vulnerability reporting: the repository's **Security** tab, then **Report a vulnerability**
+  (<https://github.com/project-portfolio-management/project-portfolio-management/security/advisories/new>). Only the
+  maintainer sees the report, and a fix can be prepared in a private fork.
+- Or email **joel@joelparkerhenderson.com** with the subject `SECURITY: project-portfolio-management`.
 - Say what you found, how to reproduce it, which version or commit, and what you
   think the impact is. A proof of concept helps; please do not use it against
   anyone's live system.

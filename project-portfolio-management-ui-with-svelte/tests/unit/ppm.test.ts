@@ -771,6 +771,16 @@ describe("PpmClient benefit classification and validation (NC-1 slice 11, DP-9)"
   });
 });
 
+describe("PpmClient cutover criteria (NC-1 slice 11, EX-6)", () => {
+  it("replaces a draft's criteria", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.replaceCutoverCriteria("p1", "d1", ["Rollback rehearsed"]);
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual(["PUT /api/plans/p1/cutover-decisions/d1/criteria"]);
+  });
+});
+
 describe("PpmClient delivery model and reporting method (NC-1 slice 11, EX-2, EX-14)", () => {
   it("reads and sets a programme's delivery model, and sets its reporting method", async () => {
     const { ppm, calls } = recordingClient();

@@ -5462,6 +5462,20 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.cutover.decide": "Registrar la decisión",
   "p.cutover.could_not_load": "No se pudieron cargar las decisiones",
   "p.cutover.could_not_save": "No se pudo guardar",
+  "p.cutover.cancel_edit": "Dejar de editar",
+  "p.cutover.criteria_frozen":
+    "Esta decisión está publicada, así que sus criterios están congelados: cree una versión nueva para cambiarlos.",
+  "p.cutover.criteria_rules":
+    "Un criterio de parada por línea: de 1 a 30, cada uno de 5 a 500 caracteres. Se pueden cambiar hasta que se publique la decisión.",
+  "p.cutover.criteria_saved": "Se guardaron los criterios de parada.",
+  "p.cutover.criteria_unchanged": "No cambió nada, así que no se envió nada.",
+  "p.cutover.edit_criteria_label": "Criterios de parada, uno por línea",
+  "p.cutover.edit_criteria": "Cambiar los criterios de parada",
+  "p.cutover.problem_count":
+    "Una decisión necesita de 1 a 30 criterios de parada.",
+  "p.cutover.problem_length":
+    "El criterio de parada {line} debe tener de 5 a 500 caracteres.",
+  "p.cutover.save_criteria": "Guardar los criterios de parada",
   "p.moves.link": "Movimientos de despliegue",
   "p.moves.title": "Movimientos de despliegue — PPM",
   "p.moves.h1": "Movimientos de despliegue",

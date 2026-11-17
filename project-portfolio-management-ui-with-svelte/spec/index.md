@@ -2328,3 +2328,23 @@ already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the 
 - **Tests:** the client paths in `tests/unit/ppm.test.ts`; `tests/e2e/plan-programme.spec.ts` (saving the model and
   owner together, only active organizations offered, the method changed, a refusal; the page's Welsh and axe test).
   The translations are machine-written and unreviewed.
+
+## Changing a draft cutover's stop criteria (NC-1 slice 11, EX-6)
+
+`/plans/[pid]/cutover` gains, on a decision still in draft, "Change the stop criteria", over `PUT
+/api/plans/{pid}/cutover-decisions/{did}/criteria`. `src/lib/cutover-view.ts` holds the rules.
+
+- **The criteria** are edited one per line, filled in with the draft's own; they are kept as the service keeps them
+  (trimmed, blank lines dropped) and sent whole, in the order written. Nothing is sent when the list did not change.
+- **The rules are said first,** here and on the new-draft form: 1 to 30 criteria, each 5 to 500 characters (counted as
+  characters, not bytes), naming the first line that breaks it.
+- **A decision published meanwhile** answers 409; the page says its criteria are frozen and that a new version changes
+  them, in the catalogue's words.
+- **Not built in this slice:** choosing which organizations must sign a milestone off (EX-4,
+  `PUT …/milestones/{m}/signoff-required`). That route replaces the whole set, but no read returns the set: a
+  milestone's `signoff.outstanding` drops an organization once it has signed. A screen could not show what is there and
+  would drop signed organizations on save. The service will first return the required organizations, with their
+  sign-off dates; the screen follows.
+- **Tests:** `tests/unit/cutover-view.test.ts`, the path in `tests/unit/ppm.test.ts`,
+  `tests/e2e/cutover-criteria.spec.ts` (the rules said first, nothing for no change, the list sent whole and in order,
+  a 409, the new-draft form's rule; Welsh; axe on the open editor). The translations are machine-written and unreviewed.

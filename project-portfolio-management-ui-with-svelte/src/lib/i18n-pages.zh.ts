@@ -4950,6 +4950,18 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.cutover.decide": "记录决策",
   "p.cutover.could_not_load": "无法加载决策",
   "p.cutover.could_not_save": "无法保存",
+  "p.cutover.cancel_edit": "停止编辑",
+  "p.cutover.criteria_frozen":
+    "该决定已发布，其标准已冻结：如需更改，请创建新版本。",
+  "p.cutover.criteria_rules":
+    "每行一条停止标准：1 到 30 条，每条 5 到 500 个字符。在决定发布前都可以更改。",
+  "p.cutover.criteria_saved": "停止标准已保存。",
+  "p.cutover.criteria_unchanged": "没有任何更改，因此未发送任何内容。",
+  "p.cutover.edit_criteria_label": "停止标准，每行一条",
+  "p.cutover.edit_criteria": "更改停止标准",
+  "p.cutover.problem_count": "一个决定需要 1 到 30 条停止标准。",
+  "p.cutover.problem_length": "停止标准 {line} 必须为 5 到 500 个字符。",
+  "p.cutover.save_criteria": "保存停止标准",
   "p.moves.link": "部署调整",
   "p.moves.title": "部署调整 — PPM",
   "p.moves.h1": "部署调整",

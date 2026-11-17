@@ -5269,6 +5269,19 @@ export const PAGES_EN = {
   "p.cutover.decide": "Record the decision",
   "p.cutover.could_not_load": "Could not load the decisions",
   "p.cutover.could_not_save": "Could not save",
+  "p.cutover.cancel_edit": "Stop editing",
+  "p.cutover.criteria_frozen":
+    "This decision has been published, so its criteria are frozen: make a new version to change them.",
+  "p.cutover.criteria_rules":
+    "One stop criterion per line: 1 to 30 of them, each 5 to 500 characters. They can be changed until the decision is published.",
+  "p.cutover.criteria_saved": "The stop criteria are saved.",
+  "p.cutover.criteria_unchanged": "Nothing changed, so nothing was sent.",
+  "p.cutover.edit_criteria_label": "Stop criteria, one per line",
+  "p.cutover.edit_criteria": "Change the stop criteria",
+  "p.cutover.problem_count": "A decision needs 1 to 30 stop criteria.",
+  "p.cutover.problem_length":
+    "Stop criterion {line} must be 5 to 500 characters.",
+  "p.cutover.save_criteria": "Save the stop criteria",
   "p.moves.link": "Deployment moves",
   "p.moves.title": "Deployment moves — PPM",
   "p.moves.h1": "Deployment moves",

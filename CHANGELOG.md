@@ -22,6 +22,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 - **`make test-minimum-supported-rust-version`** runs `bin/make-test-minimum-supported-rust-version`: `cargo check --all-targets` and `cargo test` on 1.98 and 1.99, for the service and the matcher.
 - Not done: the move from `chrono` to `jiff` (about 800 uses in 213 files, through sqlx's compile-checked row types; the `deny.toml` exceptions stay). Not verified: `make test-minimum-supported-rust-version` end to end; only `cargo +1.98 check --all-targets` was run.
 
+### 17 November (a draft cutover's stop criteria: NC-1 slice 11, part j)
+
+- **UI: a draft cutover decision's stop criteria can be changed (EX-6)**, with the service's rules said first. UI
+  spec, "Changing a draft cutover's stop criteria"; test `tests/e2e/cutover-criteria.spec.ts`.
+- **Not done:** the other half of part (j), choosing which organizations must sign a milestone off (EX-4). The service's
+  `PUT …/signoff-required` replaces the whole set but no read returns it, so a screen would drop organizations that
+  have already signed; the service change (return the required set with sign-off dates) comes first, after the move
+  of the pure modules to `project-portfolio-management-domain`. **Not verified:** against a real service.
+
 ### 17 November (axa 0.19)
 
 - **Service: axa 0.17 to 0.19 and axa-test 0.8 to 0.10.** axa no longer brings `chrono`; the job queue's tables and

@@ -5476,6 +5476,19 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.cutover.decide": "Enregistrer la décision",
   "p.cutover.could_not_load": "Impossible de charger les décisions",
   "p.cutover.could_not_save": "Impossible d'enregistrer",
+  "p.cutover.cancel_edit": "Arrêter la modification",
+  "p.cutover.criteria_frozen":
+    "Cette décision est publiée, ses critères sont donc figés : créez une nouvelle version pour les changer.",
+  "p.cutover.criteria_rules":
+    "Un critère d'arrêt par ligne : de 1 à 30, chacun de 5 à 500 caractères. Ils peuvent être changés jusqu'à la publication de la décision.",
+  "p.cutover.criteria_saved": "Les critères d'arrêt sont enregistrés.",
+  "p.cutover.criteria_unchanged": "Rien n'a changé ; rien n'a été envoyé.",
+  "p.cutover.edit_criteria_label": "Critères d'arrêt, un par ligne",
+  "p.cutover.edit_criteria": "Modifier les critères d'arrêt",
+  "p.cutover.problem_count": "Une décision demande de 1 à 30 critères d'arrêt.",
+  "p.cutover.problem_length":
+    "Le critère d'arrêt {line} doit compter de 5 à 500 caractères.",
+  "p.cutover.save_criteria": "Enregistrer les critères d'arrêt",
   "p.moves.link": "Décalages de déploiement",
   "p.moves.title": "Décalages de déploiement — PPM",
   "p.moves.h1": "Décalages de déploiement",

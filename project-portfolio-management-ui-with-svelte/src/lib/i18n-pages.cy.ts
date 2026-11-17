@@ -5385,6 +5385,20 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cutover.decide": "Cofnodi'r penderfyniad",
   "p.cutover.could_not_load": "Methu llwytho'r penderfyniadau",
   "p.cutover.could_not_save": "Methu cadw",
+  "p.cutover.cancel_edit": "Rhoi'r gorau i olygu",
+  "p.cutover.criteria_frozen":
+    "Mae'r penderfyniad hwn wedi'i gyhoeddi, felly mae ei feini prawf wedi'u rhewi: gwnewch fersiwn newydd i'w newid.",
+  "p.cutover.criteria_rules":
+    "Un maen prawf atal i bob llinell: 1 i 30 ohonynt, pob un yn 5 i 500 nod. Gellir eu newid nes cyhoeddi'r penderfyniad.",
+  "p.cutover.criteria_saved": "Cadwyd y meini prawf atal.",
+  "p.cutover.criteria_unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.cutover.edit_criteria_label": "Meini prawf atal, un i bob llinell",
+  "p.cutover.edit_criteria": "Newid y meini prawf atal",
+  "p.cutover.problem_count":
+    "Mae angen 1 i 30 maen prawf atal ar benderfyniad.",
+  "p.cutover.problem_length":
+    "Rhaid i faen prawf atal {line} fod yn 5 i 500 nod.",
+  "p.cutover.save_criteria": "Cadw'r meini prawf atal",
   "p.moves.link": "Symud lleoliadau",
   "p.moves.title": "Symud lleoliadau — PPM",
   "p.moves.h1": "Symud lleoliadau",

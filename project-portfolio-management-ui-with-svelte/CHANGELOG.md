@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — changing a draft cutover's stop criteria (NC-1 slice 11, EX-6, 2026-11-17)
+
+- `/plans/[pid]/cutover` changes a draft decision's stop criteria (sent whole, in order; nothing for no change). The
+  rules (1 to 30 criteria, each 5 to 500 characters) are said first there and on the new-draft form, which until now
+  let the service refuse a short line. A 409 (published meanwhile) has its own sentence. One client method,
+  `src/lib/cutover-view.ts`; 10 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/cutover-view.test.ts`, the path in `tests/unit/ppm.test.ts`, `tests/e2e/cutover-criteria.spec.ts`
+  (four, with Welsh and axe).
+- **Not done:** the milestone sign-off-required screen (EX-4): the service returns no read of the required set, so a
+  screen would drop organizations that have signed. **Not verified:** against a real service.
+
 ### Added — a programme's delivery model and reporting method (NC-1 slice 11, EX-2, EX-14, 2026-11-17)
 
 - `/plans/[pid]/programme` sets a programme's delivery model and owning organization (active ones only), saved

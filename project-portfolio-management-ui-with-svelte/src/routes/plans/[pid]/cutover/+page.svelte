@@ -1,7 +1,7 @@
 <!--
   Cutover go/no-go (`/plans/[pid]/cutover`, EX-6): stop criteria published and frozen before the decision,
   evidence against each, co-signatures by role, and the decision. A no-go or a delay for safety is a decision,
-  not slippage.
+  not slippage. A draft's criteria can be changed until it is published (NC-1 slice 11); the rules are said first.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -14,6 +14,8 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import type { Snippet } from "svelte";
+  import { ApiError } from "#lib/api/client.js";
+  import { criteriaProblem, parseCriteria, sameCriteria } from "#lib/cutover-view.js";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
@@ -26,6 +28,41 @@
   let role = $state<Record<string, string>>({});
   let outcome = $state<Record<string, string>>({});
   let reason = $state<Record<string, string>>({});
+  let draftProblem = $state<string | null>(null);
+  // Editing a draft's criteria: the text per decision, and what was last said about it.
+  let editing = $state<Record<string, string>>({});
+  let editProblem = $state<Record<string, string>>({});
+  let editNotice = $state<Record<string, string>>({});
+
+  const problemText = (p: NonNullable<ReturnType<typeof criteriaProblem>>) =>
+    p.key === "p.cutover.problem_length" ? t(p.key, { line: p.line }) : t(p.key);
+
+  async function saveCriteria(d: CutoverDecision) {
+    editProblem[d.pid] = "";
+    editNotice[d.pid] = "";
+    const next = parseCriteria(editing[d.pid] ?? "");
+    const problem = criteriaProblem(next);
+    if (problem) {
+      editProblem[d.pid] = problemText(problem);
+      return;
+    }
+    if (sameCriteria(d.criteria.map((c) => c.criterion), next)) {
+      editNotice[d.pid] = t("p.cutover.criteria_unchanged");
+      return;
+    }
+    busy = true;
+    try {
+      await ppm.replaceCutoverCriteria(pid, d.pid, next);
+      await load();
+      editNotice[d.pid] = t("p.cutover.criteria_saved");
+      delete editing[d.pid];
+    } catch (err) {
+      editProblem[d.pid] =
+        err instanceof ApiError && err.status === 409 ? t("p.cutover.criteria_frozen") : errorText(err, "p.cutover.could_not_save");
+    } finally {
+      busy = false;
+    }
+  }
 
   async function load() {
     try {
@@ -49,7 +86,14 @@
     }
   }
   const draft = async () => {
-    await run(() => ppm.createCutoverDecision(pid, title.trim(), criteriaText.split("\n").map((l) => l.trim()).filter(Boolean)));
+    draftProblem = null;
+    const criteria = parseCriteria(criteriaText);
+    const problem = criteriaProblem(criteria);
+    if (problem) {
+      draftProblem = problemText(problem);
+      return;
+    }
+    await run(() => ppm.createCutoverDecision(pid, title.trim(), criteria));
     if (!error) { title = ""; criteriaText = ""; }
   };
   const status = (s: string) => tDynamic(`p.cutover.status_${s}`);
@@ -82,11 +126,13 @@
 {#if decisions}
   <section aria-labelledby="co-new">
     <h2 id="co-new">{t("p.cutover.new_h2")}</h2>
+    {#if draftProblem}<p class="banner error" role="alert">{draftProblem}</p>{/if}
     <form onsubmit={(e) => { e.preventDefault(); if (title.trim() && criteriaText.trim()) void draft(); }}>
       <label>{t("p.cutover.new_title")} <input bind:value={title} required maxlength="200" /></label>
       <label>{t("p.cutover.new_criteria")} <textarea bind:value={criteriaText} rows="4" required></textarea></label>
       <button class="button" type="submit" disabled={busy || !title.trim() || !criteriaText.trim()}>{t("p.cutover.draft")}</button>
     </form>
+    <p class="small muted">{t("p.cutover.criteria_rules")}</p>
   </section>
 
   {#if decisions.length === 0}
@@ -109,6 +155,20 @@
 
       <h3>{t("p.cutover.criteria_h3")}</h3>
       <DataTable label={`${d.title}: ${t("p.cutover.criteria_h3")}`} columns={cols} rows={d.criteria} rowId={(r) => `${d.pid}-${r.n}`} />
+      {#if d.status === "draft"}
+        {#if editProblem[d.pid]}<p class="banner error" role="alert">{editProblem[d.pid]}</p>{/if}
+        <p class="small" role="status">{editNotice[d.pid] ?? ""}</p>
+        {#if editing[d.pid] === undefined}
+          <button class="button" type="button" disabled={busy} onclick={() => { editing[d.pid] = d.criteria.map((c) => c.criterion).join("\n"); editNotice[d.pid] = ""; }}>{t("p.cutover.edit_criteria")}</button>
+        {:else}
+          <form novalidate onsubmit={(e) => { e.preventDefault(); void saveCriteria(d); }}>
+            <label>{t("p.cutover.edit_criteria_label")} <textarea bind:value={editing[d.pid]} rows="5"></textarea></label>
+            <button class="button" type="submit" disabled={busy}>{t("p.cutover.save_criteria")}</button>
+            <button class="button" type="button" disabled={busy} onclick={() => { delete editing[d.pid]; editProblem[d.pid] = ""; }}>{t("p.cutover.cancel_edit")}</button>
+          </form>
+          <p class="small muted">{t("p.cutover.criteria_rules")}</p>
+        {/if}
+      {/if}
 
       <h3>{t("p.cutover.cosign_h3")}</h3>
       <p>{t("p.cutover.cosign_signed", { roles: list(d.cosignatures.signed.map((s) => s.role)) })} {t("p.cutover.cosign_missing", { roles: list(d.cosignatures.missing) })}</p>

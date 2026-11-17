@@ -5147,6 +5147,19 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.cutover.decide": "تسجيل القرار",
   "p.cutover.could_not_load": "تعذّر تحميل القرارات",
   "p.cutover.could_not_save": "تعذّر الحفظ",
+  "p.cutover.cancel_edit": "إيقاف التعديل",
+  "p.cutover.criteria_frozen":
+    "نُشر هذا القرار، فمعاييره مجمّدة: أنشئ نسخة جديدة لتغييرها.",
+  "p.cutover.criteria_rules":
+    "معيار إيقاف واحد في كل سطر: من 1 إلى 30، كل منها من 5 إلى 500 حرف. ويمكن تغييرها حتى يُنشر القرار.",
+  "p.cutover.criteria_saved": "حُفظت معايير الإيقاف.",
+  "p.cutover.criteria_unchanged": "لم يتغير شيء، فلم يُرسل شيء.",
+  "p.cutover.edit_criteria_label": "معايير الإيقاف، واحد في كل سطر",
+  "p.cutover.edit_criteria": "تغيير معايير الإيقاف",
+  "p.cutover.problem_count": "يحتاج القرار إلى 1 إلى 30 معيار إيقاف.",
+  "p.cutover.problem_length":
+    "يجب أن يكون معيار الإيقاف {line} من 5 إلى 500 حرف.",
+  "p.cutover.save_criteria": "حفظ معايير الإيقاف",
   "p.moves.link": "نقل مواعيد النشر",
   "p.moves.title": "نقل مواعيد النشر — PPM",
   "p.moves.h1": "نقل مواعيد النشر",

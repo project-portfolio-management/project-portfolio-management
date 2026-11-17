@@ -5163,6 +5163,18 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.cutover.decide": "निर्णय दर्ज करें",
   "p.cutover.could_not_load": "निर्णय लोड नहीं हो सके",
   "p.cutover.could_not_save": "सहेजा नहीं जा सका",
+  "p.cutover.cancel_edit": "संपादन बंद करें",
+  "p.cutover.criteria_frozen":
+    "यह निर्णय प्रकाशित हो चुका है, इसलिए इसके मानदंड स्थिर हैं: इन्हें बदलने के लिए नया संस्करण बनाएँ।",
+  "p.cutover.criteria_rules":
+    "प्रति पंक्ति एक रोक मानदंड: 1 से 30, हर एक 5 से 500 अक्षरों का। निर्णय प्रकाशित होने तक इन्हें बदला जा सकता है।",
+  "p.cutover.criteria_saved": "रोक मानदंड सहेजे गए।",
+  "p.cutover.criteria_unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.cutover.edit_criteria_label": "रोक मानदंड, प्रति पंक्ति एक",
+  "p.cutover.edit_criteria": "रोक मानदंड बदलें",
+  "p.cutover.problem_count": "किसी निर्णय के लिए 1 से 30 रोक मानदंड चाहिए।",
+  "p.cutover.problem_length": "रोक मानदंड {line} 5 से 500 अक्षरों का होना चाहिए।",
+  "p.cutover.save_criteria": "रोक मानदंड सहेजें",
   "p.moves.link": "परिनियोजन परिवर्तन",
   "p.moves.title": "परिनियोजन परिवर्तन — PPM",
   "p.moves.h1": "परिनियोजन परिवर्तन",

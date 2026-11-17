@@ -5475,6 +5475,21 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.cutover.decide": "Entscheidung erfassen",
   "p.cutover.could_not_load": "Die Entscheidungen konnten nicht geladen werden",
   "p.cutover.could_not_save": "Speichern nicht möglich",
+  "p.cutover.cancel_edit": "Bearbeiten beenden",
+  "p.cutover.criteria_frozen":
+    "Diese Entscheidung ist veröffentlicht, ihre Kriterien sind daher eingefroren: Legen Sie eine neue Version an, um sie zu ändern.",
+  "p.cutover.criteria_rules":
+    "Ein Abbruchkriterium pro Zeile: 1 bis 30, jedes 5 bis 500 Zeichen. Sie lassen sich bis zur Veröffentlichung der Entscheidung ändern.",
+  "p.cutover.criteria_saved": "Die Abbruchkriterien sind gespeichert.",
+  "p.cutover.criteria_unchanged":
+    "Nichts wurde geändert, daher wurde nichts gesendet.",
+  "p.cutover.edit_criteria_label": "Abbruchkriterien, eines pro Zeile",
+  "p.cutover.edit_criteria": "Abbruchkriterien ändern",
+  "p.cutover.problem_count":
+    "Eine Entscheidung braucht 1 bis 30 Abbruchkriterien.",
+  "p.cutover.problem_length":
+    "Abbruchkriterium {line} muss 5 bis 500 Zeichen haben.",
+  "p.cutover.save_criteria": "Abbruchkriterien speichern",
   "p.moves.link": "Verschiebungen der Bereitstellung",
   "p.moves.title": "Verschiebungen der Bereitstellung — PPM",
   "p.moves.h1": "Verschiebungen der Bereitstellung",

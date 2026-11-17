@@ -557,6 +557,17 @@ export class PpmClient {
       body: { title, criteria },
     });
   }
+  /** Replace a draft decision's stop criteria, in order (EX-6, NC-1 slice 11). */
+  replaceCutoverCriteria(
+    planPid: string,
+    did: string,
+    criteria: string[],
+  ): Promise<CutoverDecision> {
+    return this.http.put(
+      `/api/plans/${planPid}/cutover-decisions/${did}/criteria`,
+      { body: { criteria } },
+    );
+  }
   /** One step on a decision: publish, open or new-version. */
   cutoverStep(
     planPid: string,

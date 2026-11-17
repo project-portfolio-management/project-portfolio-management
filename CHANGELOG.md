@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (minimum Rust 1.98 everywhere, lighter dev builds, `make test-minimum-supported-rust-version`)
+
+- **The matcher's `rust-version` is now 1.98**, as the service's and the migration crate's already were; the docs that said 1.97 for the matcher (`AGENTS.md`, the skill, `operations/upgrade-and-migration.md`) say 1.98.
+- **Cargo profiles:** `[profile.dev]` has `debug = "line-tables-only"` and `split-debuginfo = "unpacked"`, dependencies have no debug information, in the service, the matcher and the two fuzz crates; the service and matcher already had `[profile.mutants]`.
+- **`make test-minimum-supported-rust-version`** runs `bin/make-test-minimum-supported-rust-version`: `cargo check --all-targets` and `cargo test` on 1.98 and 1.99, for the service and the matcher.
+- Not done: the move from `chrono` to `jiff` (about 800 uses in 213 files, through sqlx's compile-checked row types; the `deny.toml` exceptions stay). Not verified: `make test-minimum-supported-rust-version` end to end; only `cargo +1.98 check --all-targets` was run.
+
 ### 17 November (benchmarks of the calculation engines and the chrono baseline)
 
 - **Service: `benches/calculation_bench.rs`**, a second Criterion file: the schedule and cost Monte Carlo at their

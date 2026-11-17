@@ -9,6 +9,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the delivery exceptions register (NC-1 slice 11, DP-3, 2026-11-17)
+
+- `/exceptions`, in the navigation and linked from each plan's confidence page: the exceptions across the plans the
+  reader can read, with the plan, the worst value as a word and a symbol, worsening, breach and what is still needed;
+  open, closed or every one, and breached only, as the service filters. Completing sends only the parts that changed,
+  never a blank; a decision of ten characters or more closes one. A refusal for one a threshold opened says how that
+  kind closes. Three client methods and the `DeliveryException` type; `src/lib/exception-view.ts`; 46 keys in eight
+  catalogues (three plural groups), machine-written and unreviewed.
+- Tests: `tests/unit/exception-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/exceptions.spec.ts` (five,
+  with Welsh and axe).
+- **Service finding, not changed here:** the exception list leaves out `threshold_kind`, so a screen cannot tell which
+  exceptions close by a threshold decision until it tries; the page reads the 422 as that case.
+- **Not done:** the threshold decision (part k); the owner by name. **Not verified:** against a real service.
+
 ### Added — a plan's delivery confidence (NC-1 slice 11, DP-2, 2026-11-17)
 
 - `/plans/[pid]/confidence`, linked from the plan page: what the portfolio map shows (independent, else self, else

@@ -69,6 +69,12 @@ export function buildNavItems(): NavEntry[] {
         return t("p.plan_templates.title");
       },
     },
+    {
+      href: "/exceptions",
+      get label() {
+        return t("p.exceptions.title");
+      },
+    },
     { href: "/scenarios", label: t("ppm.nav.scenarios") },
     { href: "/objectives", label: t("ppm.nav.objectives") },
     {

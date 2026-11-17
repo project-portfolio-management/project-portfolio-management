@@ -217,9 +217,11 @@ match breakdown).
 /plans/[pid]/confidence      the plan's delivery confidence: what the
                              map shows, its history, add one (NC-1 slice
                              11); linked from the plan page
+/exceptions                  the delivery exceptions register: complete
+                             and decide exceptions (NC-1 slice 11)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 116):
+every page; `find src/routes -name +page.svelte` gives all 117):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2108,10 +2110,35 @@ and `PUT /api/director-pack-subscriptions`).
   the deployment). An assessment never replaces one; the history follows, newest first, with each rationale.
 - **Refusals.** An independent assessment without `confidence=independent` or admin (403) says so and that a
   self-assessment is open; anything else is the general sentence.
-- **Not built in this slice:** the exceptions register (next part); the assessor shown by name (the service keeps the
+- **Not built in this slice:** the exceptions register (built next, below); the assessor shown by name (the service keeps the
   actor string, which the page does not show); the derived RAG beside it on this page. The date check uses the
   browser's today; the service uses the deployment's, so a date on the edge can be refused by the service.
 - **Tests:** `tests/unit/confidence-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, the link in
   `tests/unit/modules.test.ts`, and `tests/e2e/plan-confidence.spec.ts` (the link and "not assessed"; every problem
   first; amber/red's warning and the answer's hours; the history newest first; a refused independent assessment;
   Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.
+
+## Delivery exceptions register (NC-1 slice 11, DP-3)
+
+`/exceptions`, in the navigation and linked from each plan's confidence page, over `GET /api/exceptions` (with
+`status` and `breached`), `PUT /api/exceptions/{pid}` and `POST …/{pid}/decision`. `src/lib/exception-view.ts` holds the
+rules; plan names come from `GET /api/plans` (best effort: without them an exception names "a plan" and still links).
+
+- **What it says.** Each exception across the plans the reader can read, newest first, open ones by default: the
+  plan (linked to its confidence page), the worst value as a word and a symbol, how often it worsened, when it opened
+  and closed, a breach (not completed within the deployment's window, a plural), and while open whether it is complete
+  or what is still needed, in the reader's words. The page says an exception is closed only by a recorded decision,
+  never by improving confidence. Filters (open, closed or every one; breached only) ask the service.
+- **Completing.** The cause, the decision needed, an owner (a person reference) and the owner's role, and a decide-by
+  date, filled from what is there. Only parts that changed are sent, trimmed; a blank is never sent, since the service
+  would keep what it had; nothing changed sends nothing. A text part of one or two characters is said first not to
+  count, as the service judges it.
+- **Deciding.** A decision of at least ten characters closes the exception. One a threshold opened (EX-7) closes
+  another way and is refused (422); the register does not say which those are (the service's list leaves
+  `threshold_kind` out), so the page reads a 422 on a checked decision as that case. A 409 is one already closed.
+- **Not built in this slice:** the threshold decision (part k); the owner shown by name; a notice when an exception
+  breaches.
+- **Tests:** `tests/unit/exception-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/exceptions.spec.ts`
+  (the list with plan, worst value, worsening, breach and what is needed; the filters as sent; completing with only
+  what changed, nothing for no change, a short part said first; a decision closing one and a short one said first; a
+  threshold refusal; Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.

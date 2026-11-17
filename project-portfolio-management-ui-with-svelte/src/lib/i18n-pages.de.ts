@@ -4251,6 +4251,66 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.confidence.stale": "veraltet: älter als dieser Monat",
   "p.confidence.title_ppm": "Liefersicherheit — PPM",
   "p.confidence.title": "Liefersicherheit",
+  "p.exceptions.a_plan": "Ein Plan",
+  "p.exceptions.breached_one":
+    "Verletzt: nicht innerhalb von {hours} Stunde nach der Eröffnung vervollständigt.",
+  "p.exceptions.breached_other":
+    "Verletzt: nicht innerhalb von {hours} Stunden nach der Eröffnung vervollständigt.",
+  "p.exceptions.cancel": "Abbrechen",
+  "p.exceptions.closed_done":
+    "Entscheidung festgehalten; die Ausnahme ist geschlossen.",
+  "p.exceptions.complete_it": "Vervollständigen",
+  "p.exceptions.complete_says":
+    "Eine Ausnahme ist vollständig, wenn Ursache, nötige Entscheidung, Verantwortliche Person und Entscheidungsdatum vorliegen. Ein leer gelassenes Feld behält seinen Wert.",
+  "p.exceptions.complete":
+    "Vollständig: Ursache, nötige Entscheidung, Verantwortliche Person und Entscheidungsdatum liegen vor.",
+  "p.exceptions.conflict_closed": "Diese Ausnahme ist schon geschlossen.",
+  "p.exceptions.could_not_load": "Die Ausnahmen konnten nicht geladen werden.",
+  "p.exceptions.could_not_save": "Die Änderung wurde nicht gespeichert.",
+  "p.exceptions.decide_it": "Entscheidung festhalten",
+  "p.exceptions.decide_says":
+    "Das Festhalten der Entscheidung schließt die Ausnahme. Eine bessere Liefersicherheit schließt sie nie von selbst.",
+  "p.exceptions.decide": "Entscheidung festhalten und schließen",
+  "p.exceptions.f_breached": "Nur verletzte",
+  "p.exceptions.f_decision": "Entscheidung (mindestens {min} Zeichen)",
+  "p.exceptions.f_owner_ref": "Verantwortlich (Personenverweis)",
+  "p.exceptions.f_owner_role":
+    "Rolle der verantwortlichen Person (was ein Paket zeigt)",
+  "p.exceptions.f_status": "Anzeigen",
+  "p.exceptions.intro_one":
+    "Eine Ausnahme wird eröffnet, wenn die Liefersicherheit eines Plans Gelb/Rot oder Rot erreicht. Sie ist innerhalb von {hours} Stunde zu vervollständigen und wird nur durch eine festgehaltene Entscheidung geschlossen.",
+  "p.exceptions.intro_other":
+    "Eine Ausnahme wird eröffnet, wenn die Liefersicherheit eines Plans Gelb/Rot oder Rot erreicht. Sie ist innerhalb von {hours} Stunden zu vervollständigen und wird nur durch eine festgehaltene Entscheidung geschlossen.",
+  "p.exceptions.is_closed": "geschlossen {when}",
+  "p.exceptions.is_open": "offen",
+  "p.exceptions.missing": "Es fehlt noch: {parts}.",
+  "p.exceptions.none": "Keine Ausnahme passt.",
+  "p.exceptions.opened": "Eröffnet {when}",
+  "p.exceptions.part_cause": "Ursache",
+  "p.exceptions.part_decide_by": "Entscheiden bis",
+  "p.exceptions.part_decision_needed": "Nötige Entscheidung",
+  "p.exceptions.part_decision": "Entscheidung",
+  "p.exceptions.part_owner": "Verantwortlich",
+  "p.exceptions.problem_decision":
+    "Schreiben Sie die Entscheidung mit mindestens {min} Zeichen.",
+  "p.exceptions.problem_part_short":
+    "Ursache, nötige Entscheidung oder Verantwortlich brauchen mindestens {min} Zeichen, um zu zählen.",
+  "p.exceptions.refused_threshold":
+    "Diese Ausnahme wurde durch einen Schwellenwert eröffnet; sie wird durch Pause, Neustart, Stopp oder festgehaltene Übersteuerung geschlossen, nicht durch eine Entscheidung hier.",
+  "p.exceptions.save": "Speichern",
+  "p.exceptions.saved": "Gespeichert.",
+  "p.exceptions.see_register": "Ausnahmenregister öffnen",
+  "p.exceptions.status_all": "Alle Ausnahmen",
+  "p.exceptions.status_closed": "Geschlossen",
+  "p.exceptions.status_open": "Offen",
+  "p.exceptions.title_ppm": "Ausnahmen — PPM",
+  "p.exceptions.title": "Ausnahmen",
+  "p.exceptions.unchanged":
+    "Nichts wurde geändert, daher wurde nichts gesendet.",
+  "p.exceptions.worsened_one": "Seit der Eröffnung {count}-mal verschlechtert",
+  "p.exceptions.worsened_other":
+    "Seit der Eröffnung {count}-mal verschlechtert",
+  "p.exceptions.worst": "Schlechteste Liefersicherheit: {value}",
   "p.director_pack.actions_heading": "Prüfen, herausgeben oder neu herausgeben",
   "p.director_pack.aud_board": "Vorstand",
   "p.director_pack.aud_escalation_board": "Eskalationsgremium",

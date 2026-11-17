@@ -4241,6 +4241,63 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.confidence.stale": "desfasada: anterior a este mes",
   "p.confidence.title_ppm": "Confianza de entrega — PPM",
   "p.confidence.title": "Confianza de entrega",
+  "p.exceptions.a_plan": "Un plan",
+  "p.exceptions.breached_one":
+    "Incumplida: no se completó en {hours} hora desde que se abrió.",
+  "p.exceptions.breached_other":
+    "Incumplida: no se completó en {hours} horas desde que se abrió.",
+  "p.exceptions.cancel": "Cancelar",
+  "p.exceptions.closed_done": "Decisión registrada; la excepción está cerrada.",
+  "p.exceptions.complete_it": "Completarla",
+  "p.exceptions.complete_says":
+    "Una excepción está completa cuando tiene su causa, la decisión necesaria, un responsable y una fecha límite de decisión. Una parte que se deja vacía conserva lo que tenía.",
+  "p.exceptions.complete":
+    "Completa: tiene su causa, la decisión necesaria, un responsable y una fecha límite de decisión.",
+  "p.exceptions.conflict_closed": "Esta excepción ya está cerrada.",
+  "p.exceptions.could_not_load": "No se pudieron cargar las excepciones.",
+  "p.exceptions.could_not_save": "No se guardó el cambio.",
+  "p.exceptions.decide_it": "Registrar la decisión",
+  "p.exceptions.decide_says":
+    "Registrar la decisión cierra la excepción. Que mejore la confianza nunca la cierra por sí solo.",
+  "p.exceptions.decide": "Registrar la decisión y cerrar",
+  "p.exceptions.f_breached": "Solo incumplidas",
+  "p.exceptions.f_decision": "Decisión (al menos {min} caracteres)",
+  "p.exceptions.f_owner_ref": "Responsable (una referencia de persona)",
+  "p.exceptions.f_owner_role":
+    "Rol del responsable (lo que muestra un paquete)",
+  "p.exceptions.f_status": "Mostrar",
+  "p.exceptions.intro_one":
+    "Una excepción se abre cuando la confianza de entrega de un plan llega a ámbar/rojo o rojo. Debe completarse en {hours} hora y solo se cierra con una decisión registrada.",
+  "p.exceptions.intro_other":
+    "Una excepción se abre cuando la confianza de entrega de un plan llega a ámbar/rojo o rojo. Debe completarse en {hours} horas y solo se cierra con una decisión registrada.",
+  "p.exceptions.is_closed": "cerrada el {when}",
+  "p.exceptions.is_open": "abierta",
+  "p.exceptions.missing": "Aún falta: {parts}.",
+  "p.exceptions.none": "Ninguna excepción coincide.",
+  "p.exceptions.opened": "Abierta el {when}",
+  "p.exceptions.part_cause": "Causa",
+  "p.exceptions.part_decide_by": "Decidir antes del",
+  "p.exceptions.part_decision_needed": "Decisión necesaria",
+  "p.exceptions.part_decision": "Decisión",
+  "p.exceptions.part_owner": "Responsable",
+  "p.exceptions.problem_decision":
+    "Escriba la decisión con al menos {min} caracteres.",
+  "p.exceptions.problem_part_short":
+    "Una causa, una decisión necesaria o un responsable necesitan al menos {min} caracteres para contar.",
+  "p.exceptions.refused_threshold":
+    "Esta excepción la abrió un umbral, así que se cierra con una pausa, un reinicio, una parada o una anulación registrada, no con una decisión aquí.",
+  "p.exceptions.save": "Guardar",
+  "p.exceptions.saved": "Guardado.",
+  "p.exceptions.see_register": "Abrir el registro de excepciones",
+  "p.exceptions.status_all": "Todas las excepciones",
+  "p.exceptions.status_closed": "Cerradas",
+  "p.exceptions.status_open": "Abiertas",
+  "p.exceptions.title_ppm": "Excepciones — PPM",
+  "p.exceptions.title": "Excepciones",
+  "p.exceptions.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.exceptions.worsened_one": "Empeoró {count} vez desde que se abrió",
+  "p.exceptions.worsened_other": "Empeoró {count} veces desde que se abrió",
+  "p.exceptions.worst": "Peor confianza: {value}",
   "p.director_pack.actions_heading": "Revisar, emitir o reemitir",
   "p.director_pack.aud_board": "Consejo",
   "p.director_pack.aud_escalation_board": "Comité de escalado",

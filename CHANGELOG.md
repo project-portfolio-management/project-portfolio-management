@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (the delivery exceptions register: NC-1 slice 11, part c, second of three)
+
+- **UI: `/exceptions` lists, completes and decides delivery exceptions (DP-3).** Each exception says its plan, its worst
+  value as a word and a symbol, whether it breached the completion window and what it still needs; completing sends
+  only what changed; a recorded decision closes it, and the page says improving confidence never does. UI spec,
+  "Delivery exceptions register"; test `tests/e2e/exceptions.spec.ts` (five, with Welsh and axe).
+- **Found:** the service's exception list does not say which exceptions a threshold opened, so the page learns it only
+  from the refusal. **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (a plan's delivery confidence: NC-1 slice 11, part c, first of three)
 
 - **UI: `/plans/[pid]/confidence` shows and adds a plan's stated delivery confidence (DP-2).** It says what the

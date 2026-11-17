@@ -3783,3 +3783,42 @@ export interface ConfidenceBody {
   rationale: string;
   assessed_on?: string;
 }
+
+// ---- delivery exceptions (DP-3, NC-1 slice 11) ----
+
+/** One delivery exception: opened when confidence reaches amber/red or red; complete when its cause, the decision
+ * needed, an owner and a decide-by date are there; closed only by a recorded decision. */
+export interface DeliveryException {
+  pid: string;
+  plan_pid: string;
+  status: "open" | "closed";
+  opened_at: string;
+  opened_value: string;
+  worst_value: string;
+  worsened_count: number;
+  cause: string | null;
+  decision_needed: string | null;
+  owner_ref: string | null;
+  owner_role: string | null;
+  decide_by: string | null;
+  completed_at: string | null;
+  complete: boolean;
+  /** Which of `cause`, `decision_needed`, `owner` and `decide_by` are still missing. */
+  missing: Array<"cause" | "decision_needed" | "owner" | "decide_by">;
+  /** Not completed within the window, counted from when it opened; a late completion stays a breach. */
+  breached: boolean;
+  window_hours: number;
+  hours_open: number;
+  closed_at: string | null;
+  decision: string | null;
+  decided_by: string | null;
+}
+
+/** `PUT /api/exceptions/{pid}` body; a field left out keeps its stored value. */
+export interface ExceptionCompleteBody {
+  cause?: string;
+  decision_needed?: string;
+  owner_ref?: string;
+  owner_role?: string;
+  decide_by?: string;
+}

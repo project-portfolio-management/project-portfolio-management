@@ -4186,6 +4186,64 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.confidence.stale": "hen: yn hŷn na'r mis hwn",
   "p.confidence.title_ppm": "Hyder cyflawni — PPM",
   "p.confidence.title": "Hyder cyflawni",
+  "p.exceptions.a_plan": "Cynllun",
+  "p.exceptions.breached_one":
+    "Wedi'i dorri: heb ei gwblhau o fewn {hours} awr i'w agor.",
+  "p.exceptions.breached_other":
+    "Wedi'i dorri: heb ei gwblhau o fewn {hours} awr i'w agor.",
+  "p.exceptions.cancel": "Canslo",
+  "p.exceptions.closed_done":
+    "Cofnodwyd y penderfyniad; mae'r eithriad ar gau.",
+  "p.exceptions.complete_it": "Ei gwblhau",
+  "p.exceptions.complete_says":
+    "Mae eithriad yn gyflawn pan fo'i achos, y penderfyniad sydd ei angen, perchennog a dyddiad penderfynu i gyd yno. Mae rhan a adewir yn wag yn cadw'r hyn oedd ganddi.",
+  "p.exceptions.complete":
+    "Cyflawn: mae ganddo ei achos, y penderfyniad sydd ei angen, perchennog a dyddiad penderfynu.",
+  "p.exceptions.conflict_closed": "Mae'r eithriad hwn eisoes ar gau.",
+  "p.exceptions.could_not_load": "Nid oedd modd llwytho'r eithriadau.",
+  "p.exceptions.could_not_save": "Ni chadwyd y newid.",
+  "p.exceptions.decide_it": "Cofnodi'r penderfyniad",
+  "p.exceptions.decide_says":
+    "Mae cofnodi'r penderfyniad yn cau'r eithriad. Nid yw gwella hyder byth yn ei gau ar ei ben ei hun.",
+  "p.exceptions.decide": "Cofnodi'r penderfyniad a chau",
+  "p.exceptions.f_breached": "Wedi'u torri yn unig",
+  "p.exceptions.f_decision": "Penderfyniad (o leiaf {min} nod)",
+  "p.exceptions.f_owner_ref": "Perchennog (cyfeirnod person)",
+  "p.exceptions.f_owner_role":
+    "Rôl y perchennog (yr hyn a ddangosir mewn pecyn)",
+  "p.exceptions.f_status": "Dangos",
+  "p.exceptions.intro_one":
+    "Mae eithriad yn agor pan fo hyder cyflawni cynllun yn cyrraedd ambr/coch neu goch. Mae i'w gwblhau o fewn {hours} awr ac fe'i caeir dim ond gan benderfyniad a gofnodwyd.",
+  "p.exceptions.intro_other":
+    "Mae eithriad yn agor pan fo hyder cyflawni cynllun yn cyrraedd ambr/coch neu goch. Mae i'w gwblhau o fewn {hours} awr ac fe'i caeir dim ond gan benderfyniad a gofnodwyd.",
+  "p.exceptions.is_closed": "ar gau {when}",
+  "p.exceptions.is_open": "ar agor",
+  "p.exceptions.missing": "Dal ei angen: {parts}.",
+  "p.exceptions.none": "Nid oes eithriad yn cyfateb.",
+  "p.exceptions.opened": "Agorwyd {when}",
+  "p.exceptions.part_cause": "Achos",
+  "p.exceptions.part_decide_by": "Penderfynu erbyn",
+  "p.exceptions.part_decision_needed": "Penderfyniad sydd ei angen",
+  "p.exceptions.part_decision": "Penderfyniad",
+  "p.exceptions.part_owner": "Perchennog",
+  "p.exceptions.problem_decision":
+    "Ysgrifennwch y penderfyniad mewn o leiaf {min} nod.",
+  "p.exceptions.problem_part_short":
+    "Mae angen o leiaf {min} nod ar achos, penderfyniad sydd ei angen neu berchennog i gyfrif.",
+  "p.exceptions.refused_threshold":
+    "Agorwyd yr eithriad hwn gan drothwy, felly caiff ei gau gan saib, ailosod, stop neu ddiystyru a gofnodwyd, nid gan benderfyniad yma.",
+  "p.exceptions.save": "Cadw",
+  "p.exceptions.saved": "Wedi'i gadw.",
+  "p.exceptions.see_register": "Agor y gofrestr eithriadau",
+  "p.exceptions.status_all": "Pob eithriad",
+  "p.exceptions.status_closed": "Ar gau",
+  "p.exceptions.status_open": "Ar agor",
+  "p.exceptions.title_ppm": "Eithriadau — PPM",
+  "p.exceptions.title": "Eithriadau",
+  "p.exceptions.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.exceptions.worsened_one": "Wedi gwaethygu {count} waith ers ei agor",
+  "p.exceptions.worsened_other": "Wedi gwaethygu {count} gwaith ers ei agor",
+  "p.exceptions.worst": "Hyder gwaethaf: {value}",
   "p.director_pack.actions_heading": "Adolygu, cyhoeddi neu ailgyhoeddi",
   "p.director_pack.aud_board": "Bwrdd",
   "p.director_pack.aud_escalation_board": "Bwrdd uwchgyfeirio",

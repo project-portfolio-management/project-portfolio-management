@@ -162,6 +162,8 @@ import type {
   CanvasTemplate,
   CanvasView,
   ConfidenceBody,
+  DeliveryException,
+  ExceptionCompleteBody,
   ConfidenceView,
   ConfidenceAssessment,
   DirectorPackDraftBody,
@@ -2057,6 +2059,31 @@ export class PpmClient {
     exception: { pid: string; window_hours: number } | null;
   }> {
     return this.http.put(`/api/plans/${planPid}/delivery-confidence`, { body });
+  }
+  // ---- delivery exceptions (DP-3, NC-1 slice 11) ----
+  /** Exceptions across the plans the caller can read, newest first; `status` and `breached` filter. */
+  deliveryExceptions(
+    filter: { status?: "open" | "closed"; breached?: boolean } = {},
+  ): Promise<{ exceptions: DeliveryException[]; window_hours: number }> {
+    const q = new URLSearchParams();
+    if (filter.status) q.set("status", filter.status);
+    if (filter.breached !== undefined)
+      q.set("breached", String(filter.breached));
+    const qs = q.toString();
+    return this.http.get(`/api/exceptions${qs ? `?${qs}` : ""}`);
+  }
+  /** Fill in an open exception's cause, decision needed, owner and decide-by date (409 when it is closed). */
+  completeException(
+    pid: string,
+    body: ExceptionCompleteBody,
+  ): Promise<DeliveryException> {
+    return this.http.put(`/api/exceptions/${pid}`, { body });
+  }
+  /** Record the decision (ten characters or more), which closes it; 422 for one a threshold opened (EX-7). */
+  decideException(pid: string, decision: string): Promise<DeliveryException> {
+    return this.http.post(`/api/exceptions/${pid}/decision`, {
+      body: { decision },
+    });
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

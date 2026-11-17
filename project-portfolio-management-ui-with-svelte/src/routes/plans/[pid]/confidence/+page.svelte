@@ -119,6 +119,7 @@
       <ul class="banner error" role="alert">{#each problems as p (p)}<li>{p}</li>{/each}</ul>
     {/if}
     <p class="small" role="status">{notice}</p>
+    <p class="small"><a href={localeHref("/exceptions")}>{t("p.exceptions.see_register")}</a></p>
     <form class="stack" novalidate onsubmit={save}>
       <label>
         {t("p.confidence.f_value")}

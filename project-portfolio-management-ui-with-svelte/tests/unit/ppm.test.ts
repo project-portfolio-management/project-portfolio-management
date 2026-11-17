@@ -638,6 +638,24 @@ describe("PpmClient delivery confidence (NC-1 slice 11, DP-2)", () => {
   });
 });
 
+describe("PpmClient delivery exceptions (NC-1 slice 11, DP-3)", () => {
+  it("lists with filters, completes and decides", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.deliveryExceptions();
+    await ppm.deliveryExceptions({ status: "open", breached: true });
+    await ppm.completeException("e1", { cause: "Supplier late" });
+    await ppm.decideException("e1", "Fund a second supplier.");
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/exceptions",
+      "GET /api/exceptions?status=open&breached=true",
+      "PUT /api/exceptions/e1",
+      "POST /api/exceptions/e1/decision",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

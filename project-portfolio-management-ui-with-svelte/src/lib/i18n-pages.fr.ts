@@ -4426,6 +4426,50 @@ export const PAGES_FR: Record<PageKey, string> = {
     "La règle demande une référence de planning avec du travail critique ayant une durée ; définissez d'abord une référence ou donnez un nombre de jours.",
   "p.programme.refused_not_programme_buffer":
     "Seul un plan de type Programme a un tampon de projet.",
+  "p.benefits.classified": "Classement enregistré.",
+  "p.benefits.classify_says":
+    "L'enregistrement envoie tout le classement : un choix laissé non indiqué est effacé.",
+  "p.benefits.could_not_load":
+    "Les bénéfices de ce plan n'ont pas pu être chargés.",
+  "p.benefits.could_not_save": "Le classement n'a pas été enregistré.",
+  "p.benefits.could_not_validate": "La validation n'a pas été enregistrée.",
+  "p.benefits.f_annual": "Montant annuel ({currency})",
+  "p.benefits.f_classification": "Classement du bénéfice",
+  "p.benefits.f_kpi": "Indicateur qui le mesure",
+  "p.benefits.f_note": "Note (facultative)",
+  "p.benefits.f_recurrence": "Récurrence",
+  "p.benefits.f_validated": "Montant validé à ce jour ({currency})",
+  "p.benefits.intro":
+    "Un montant réalisé est une déclaration. Il n'est validé que par une validation enregistrée d'une personne extérieure au programme ; chacune indique le montant validé à ce jour, et la plus récente compte.",
+  "p.benefits.measured_by_kpi":
+    "Un bénéfice non financier se mesure par son indicateur, il n'est pas validé comme un montant.",
+  "p.benefits.money_line": "Cible {target} ; réalisé (déclaré) {realized}.",
+  "p.benefits.no_kpi": "Aucun indicateur",
+  "p.benefits.non_financial": "Un bénéfice non financier.",
+  "p.benefits.none": "Ce plan n'a pas encore de bénéfice.",
+  "p.benefits.problem_annual_amount":
+    "Écrivez le montant annuel comme un nombre, pas en dessous de 0.",
+  "p.benefits.problem_annual_financial":
+    "Seul un bénéfice financier, avec une devise, a un montant annuel.",
+  "p.benefits.problem_annual_recurring":
+    "Seul un bénéfice récurrent a un montant annuel : choisissez d'abord récurrent.",
+  "p.benefits.problem_validated_amount":
+    "Écrivez le montant validé à ce jour comme un nombre, pas en dessous de 0.",
+  "p.benefits.refused_member":
+    "Un validateur ne peut pas être membre du programme : demandez à une personne extérieure de valider.",
+  "p.benefits.save": "Enregistrer le classement",
+  "p.benefits.standing_claimed": "Déclaré, pas encore validé",
+  "p.benefits.standing_not_claimed": "Rien de déclaré pour l'instant",
+  "p.benefits.standing_partly_validated": "Validé en partie",
+  "p.benefits.standing_validated": "Validé",
+  "p.benefits.title_ppm": "Bénéfices — PPM",
+  "p.benefits.title": "Bénéfices : classement et validation",
+  "p.benefits.validate": "Enregistrer la validation",
+  "p.benefits.validated_done": "Validation enregistrée.",
+  "p.benefits.validated_to_date": "{amount} validé à ce jour",
+  "p.benefits.validation_heading": "Validation du bénéfice",
+  "p.benefits.validation_says":
+    "Les validations sont gardées telles qu'enregistrées ; une nouvelle indique le montant validé à ce jour et n'en remplace aucune.",
   "p.funding.add": "Ajouter la source",
   "p.funding.added": "Source de financement ajoutée.",
   "p.funding.choose_plan": "Choisissez un plan",

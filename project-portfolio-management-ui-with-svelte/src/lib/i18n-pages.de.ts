@@ -4430,6 +4430,50 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Die Regel braucht einen Terminbasisplan mit kritischer Arbeit, die eine Dauer hat; legen Sie zuerst einen Basisplan fest oder geben Sie eine Zahl von Tagen an.",
   "p.programme.refused_not_programme_buffer":
     "Nur ein Plan der Art Programm hat einen Projektpuffer.",
+  "p.benefits.classified": "Einordnung gespeichert.",
+  "p.benefits.classify_says":
+    "Beim Speichern wird die ganze Einordnung gesendet: Eine als nicht angegeben belassene Wahl wird gelöscht.",
+  "p.benefits.could_not_load":
+    "Die Nutzen dieses Plans konnten nicht geladen werden.",
+  "p.benefits.could_not_save": "Die Einordnung wurde nicht gespeichert.",
+  "p.benefits.could_not_validate": "Die Validierung wurde nicht erfasst.",
+  "p.benefits.f_annual": "Jährlicher Betrag ({currency})",
+  "p.benefits.f_classification": "Einordnung",
+  "p.benefits.f_kpi": "Messende Kennzahl",
+  "p.benefits.f_note": "Notiz (optional)",
+  "p.benefits.f_recurrence": "Wiederkehrend",
+  "p.benefits.f_validated": "Bisher validierter Betrag ({currency})",
+  "p.benefits.intro":
+    "Ein realisierter Betrag ist eine Behauptung. Er gilt nur durch eine erfasste Validierung von jemandem außerhalb des Programms als validiert; jede nennt den bisher validierten Betrag, und die neueste zählt.",
+  "p.benefits.measured_by_kpi":
+    "Ein nichtfinanzieller Nutzen wird über seine Kennzahl gemessen, nicht als Betrag validiert.",
+  "p.benefits.money_line": "Ziel {target}; realisiert (behauptet) {realized}.",
+  "p.benefits.no_kpi": "Keine Kennzahl",
+  "p.benefits.non_financial": "Ein nichtfinanzieller Nutzen.",
+  "p.benefits.none": "Dieser Plan hat noch keine Nutzen.",
+  "p.benefits.problem_annual_amount":
+    "Geben Sie den jährlichen Betrag als Zahl an, nicht unter 0.",
+  "p.benefits.problem_annual_financial":
+    "Nur ein finanzieller Nutzen, einer mit Währung, hat einen jährlichen Betrag.",
+  "p.benefits.problem_annual_recurring":
+    "Nur ein wiederkehrender Nutzen hat einen jährlichen Betrag: Wählen Sie zuerst wiederkehrend.",
+  "p.benefits.problem_validated_amount":
+    "Geben Sie den bisher validierten Betrag als Zahl an, nicht unter 0.",
+  "p.benefits.refused_member":
+    "Wer validiert, darf nicht zum Programm gehören: Bitten Sie jemanden außerhalb, zu validieren.",
+  "p.benefits.save": "Einordnung speichern",
+  "p.benefits.standing_claimed": "Behauptet, noch nicht validiert",
+  "p.benefits.standing_not_claimed": "Noch nichts behauptet",
+  "p.benefits.standing_partly_validated": "Teilweise validiert",
+  "p.benefits.standing_validated": "Validiert",
+  "p.benefits.title_ppm": "Nutzen — PPM",
+  "p.benefits.title": "Nutzen: Einordnung und Validierung",
+  "p.benefits.validate": "Validierung erfassen",
+  "p.benefits.validated_done": "Validierung erfasst.",
+  "p.benefits.validated_to_date": "{amount} bisher validiert",
+  "p.benefits.validation_heading": "Validierung",
+  "p.benefits.validation_says":
+    "Validierungen bleiben wie erfasst; eine neue nennt den bisher validierten Betrag und ersetzt keine.",
   "p.funding.add": "Quelle hinzufügen",
   "p.funding.added": "Finanzierungsquelle hinzugefügt.",
   "p.funding.choose_plan": "Plan wählen",

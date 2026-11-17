@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (benefit classification and validation: NC-1 slice 11, part g)
+
+- **UI: `/plans/[pid]/benefits` classifies a plan's benefits and validates the financial ones (DP-9).** A realized
+  amount is shown as a claim; only someone outside the programme can validate it, and the page says so. UI spec,
+  "Benefit classification and validation"; test `tests/e2e/plan-benefits.spec.ts` (five, with Welsh and axe).
+- **Not done:** evidence attachments. **Not verified:** against a real service; the translations are machine-written
+  and unreviewed.
+
 ### 17 November (a programme's project buffer: NC-1 slice 11, part f)
 
 - **UI: `/plans/[pid]/programme` declares a programme's project buffer (DP-7).** In business days or by the rule (half

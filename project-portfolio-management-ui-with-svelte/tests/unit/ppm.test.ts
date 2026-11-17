@@ -755,6 +755,22 @@ describe("PpmClient ledger writes (NC-1 slice 11, EX-12)", () => {
   });
 });
 
+describe("PpmClient benefit classification and validation (NC-1 slice 11, DP-9)", () => {
+  it("classifies, reads validations and validates", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.classifyBenefit("p1", "b1", { recurrence: "recurring" });
+    await ppm.benefitValidations("p1", "b1");
+    await ppm.validateBenefit("p1", "b1", { amount_minor: 100 });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "PUT /api/plans/p1/benefits/b1/classification",
+      "GET /api/plans/p1/benefits/b1/validations",
+      "POST /api/plans/p1/benefits/b1/validations",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

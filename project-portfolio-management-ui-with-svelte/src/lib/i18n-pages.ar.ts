@@ -4178,6 +4178,48 @@ export const PAGES_AR: Record<PageKey, string> = {
     "تحتاج القاعدة إلى خط أساسي للجدول فيه عمل حرج ذو مدة؛ حدّد خطًا أساسيًا أولًا، أو أعطِ عددًا من الأيام.",
   "p.programme.refused_not_programme_buffer":
     "لا يكون احتياطي المشروع إلا لخطة من نوع Program.",
+  "p.benefits.classified": "حُفظ التصنيف.",
+  "p.benefits.classify_says":
+    "يرسل الحفظ التصنيف كاملًا: الخيار المتروك دون تحديد يُمسح.",
+  "p.benefits.could_not_load": "تعذر تحميل منافع هذه الخطة.",
+  "p.benefits.could_not_save": "لم يُحفظ التصنيف.",
+  "p.benefits.could_not_validate": "لم يُسجَّل التحقق.",
+  "p.benefits.f_annual": "المبلغ السنوي ({currency})",
+  "p.benefits.f_classification": "التصنيف",
+  "p.benefits.f_kpi": "مؤشر الأداء الذي يقيسه",
+  "p.benefits.f_note": "ملاحظة (اختيارية)",
+  "p.benefits.f_recurrence": "التكرار",
+  "p.benefits.f_validated": "المبلغ المتحقَّق منه حتى الآن ({currency})",
+  "p.benefits.intro":
+    "المبلغ المحقَّق ادعاء. ولا يُتحقق منه إلا بتحقق مسجّل من شخص خارج البرنامج؛ كل تحقق يذكر المبلغ المتحقَّق منه حتى الآن، والأحدث هو المعتمد.",
+  "p.benefits.measured_by_kpi":
+    "تُقاس المنفعة غير المالية بمؤشر أدائها، ولا يُتحقق منها كمبلغ.",
+  "p.benefits.money_line": "المستهدف {target}؛ المحقَّق (المدّعى) {realized}.",
+  "p.benefits.no_kpi": "لا مؤشر أداء",
+  "p.benefits.non_financial": "منفعة غير مالية.",
+  "p.benefits.none": "لا منافع لهذه الخطة بعد.",
+  "p.benefits.problem_annual_amount": "اكتب المبلغ السنوي رقمًا، ليس أقل من 0.",
+  "p.benefits.problem_annual_financial":
+    "لا يكون مبلغ سنوي إلا لمنفعة مالية لها عملة.",
+  "p.benefits.problem_annual_recurring":
+    "لا يكون مبلغ سنوي إلا لمنفعة متكررة: اختر متكررة أولًا.",
+  "p.benefits.problem_validated_amount":
+    "اكتب المبلغ المتحقَّق منه حتى الآن رقمًا، ليس أقل من 0.",
+  "p.benefits.refused_member":
+    "لا يجوز أن يكون المتحقِّق عضوًا في البرنامج: اطلب من شخص خارجه أن يتحقق.",
+  "p.benefits.save": "حفظ التصنيف",
+  "p.benefits.standing_claimed": "مدّعى، لم يُتحقق منه بعد",
+  "p.benefits.standing_not_claimed": "لا ادعاء بعد",
+  "p.benefits.standing_partly_validated": "متحقَّق منه جزئيًا",
+  "p.benefits.standing_validated": "متحقَّق منه",
+  "p.benefits.title_ppm": "المنافع — PPM",
+  "p.benefits.title": "المنافع: التصنيف والتحقق",
+  "p.benefits.validate": "تسجيل التحقق",
+  "p.benefits.validated_done": "سُجّل التحقق.",
+  "p.benefits.validated_to_date": "{amount} متحقَّق منه حتى الآن",
+  "p.benefits.validation_heading": "التحقق",
+  "p.benefits.validation_says":
+    "تُحفظ عمليات التحقق كما سُجلت؛ ويذكر التحقق الجديد المبلغ المتحقَّق منه حتى الآن ولا يحل محل أي منها.",
   "p.funding.add": "إضافة المصدر",
   "p.funding.added": "أُضيف مصدر التمويل.",
   "p.funding.choose_plan": "اختر خطة",

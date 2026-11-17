@@ -1780,6 +1780,14 @@ export interface BenefitBoard {
     target_note: string | null;
     status: string;
     expected_on: string | null;
+    /** DP-9: `recurring` or `one_off`; null when not stated. */
+    recurrence?: string | null;
+    /** DP-9: the yearly amount of a recurring, financial benefit, in minor units. */
+    annualized_minor?: number | null;
+    /** DP-9: `cash_releasing`, `non_cash_releasing` or `societal`; null when not stated. */
+    classification?: string | null;
+    /** DP-9: the KPI that measures a non-financial benefit. */
+    kpi_pid?: string | null;
   }[];
   totals: {
     currency: string;
@@ -3971,3 +3979,29 @@ export interface ProjectBufferView {
 export type ProjectBufferBody =
   | { buffer_days: number; note?: string }
   | { rule: "half_of_critical_duration"; note?: string };
+
+// ---- benefit classification and validation (DP-9, NC-1 slice 11) ----
+
+/** `PUT …/benefits/{benefit}/classification` body: a field left out is cleared, so the whole classification is sent. */
+export interface BenefitClassifyBody {
+  recurrence?: "recurring" | "one_off";
+  annualized_minor?: number;
+  classification?: "cash_releasing" | "non_cash_releasing" | "societal";
+  kpi_pid?: string;
+}
+
+/** `GET …/benefits/{benefit}/validations`: the claim, the latest validated amount, the standing, and the history. */
+export interface BenefitValidations {
+  benefit: string;
+  claimed_minor: number;
+  validated_minor: number | null;
+  standing: "not_claimed" | "claimed" | "partly_validated" | "validated";
+  history: Array<{
+    amount_minor: number;
+    currency: string;
+    validator: string | null;
+    validated_on: string;
+    evidence_attachment_pid: string | null;
+    note: string | null;
+  }>;
+}

@@ -169,6 +169,8 @@ import type {
   ReconcileReport,
   ProjectBufferBody,
   ProjectBufferView,
+  BenefitClassifyBody,
+  BenefitValidations,
   PlannedGates,
   ProgrammeStatusBody,
   ProgrammeStatusView,
@@ -2236,6 +2238,38 @@ export class PpmClient {
     body: ProjectBufferBody,
   ): Promise<{ buffer_days: number; source: string }> {
     return this.http.put(`/api/plans/${planPid}/project-buffer`, { body });
+  }
+  // ---- benefit classification and validation (DP-9, NC-1 slice 11) ----
+  /** Set a benefit's recurrence, yearly amount, classification and KPI; a field left out is cleared. */
+  classifyBenefit(
+    planPid: string,
+    benefitPid: string,
+    body: BenefitClassifyBody,
+  ): Promise<unknown> {
+    return this.http.put(
+      `/api/plans/${planPid}/benefits/${benefitPid}/classification`,
+      { body },
+    );
+  }
+  /** A benefit's validations: the claim, the latest validated amount, its standing and the history. */
+  benefitValidations(
+    planPid: string,
+    benefitPid: string,
+  ): Promise<BenefitValidations> {
+    return this.http.get(
+      `/api/plans/${planPid}/benefits/${benefitPid}/validations`,
+    );
+  }
+  /** State the amount validated to date; refused (403) from a member of the programme; append-only. */
+  validateBenefit(
+    planPid: string,
+    benefitPid: string,
+    body: { amount_minor: number; note?: string },
+  ): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${planPid}/benefits/${benefitPid}/validations`,
+      { body },
+    );
   }
   // ---- strategy canvases (LT-1, NC-1 slice 9) ----
   /** Every built-in canvas template and its boxes, in display order. */

@@ -4184,6 +4184,49 @@ export const PAGES_HI: Record<PageKey, string> = {
     "नियम के लिए ऐसी शेड्यूल बेसलाइन चाहिए जिसमें अवधि वाला महत्वपूर्ण कार्य हो; पहले बेसलाइन तय करें, या दिनों की संख्या दें।",
   "p.programme.refused_not_programme_buffer":
     "केवल प्रकार Program की योजना का परियोजना बफ़र होता है।",
+  "p.benefits.classified": "वर्गीकरण सहेजा गया।",
+  "p.benefits.classify_says":
+    "सहेजने पर पूरा वर्गीकरण भेजा जाता है: 'बताया नहीं गया' छोड़ा गया विकल्प हट जाता है।",
+  "p.benefits.could_not_load": "इस योजना के लाभ लोड नहीं हो सके।",
+  "p.benefits.could_not_save": "वर्गीकरण नहीं सहेजा गया।",
+  "p.benefits.could_not_validate": "सत्यापन दर्ज नहीं हुआ।",
+  "p.benefits.f_annual": "वार्षिक राशि ({currency})",
+  "p.benefits.f_classification": "वर्गीकरण",
+  "p.benefits.f_kpi": "इसे मापने वाला KPI",
+  "p.benefits.f_note": "टिप्पणी (वैकल्पिक)",
+  "p.benefits.f_recurrence": "आवर्ती",
+  "p.benefits.f_validated": "अब तक सत्यापित राशि ({currency})",
+  "p.benefits.intro":
+    "प्राप्त राशि एक दावा है। यह केवल कार्यक्रम से बाहर के किसी व्यक्ति के दर्ज सत्यापन से सत्यापित होती है; हर सत्यापन अब तक सत्यापित राशि बताता है, और नवीनतम ही गिना जाता है।",
+  "p.benefits.measured_by_kpi":
+    "गैर-वित्तीय लाभ अपने KPI से मापा जाता है, राशि के रूप में सत्यापित नहीं होता।",
+  "p.benefits.money_line": "लक्ष्य {target}; प्राप्त (दावा) {realized}।",
+  "p.benefits.no_kpi": "कोई KPI नहीं",
+  "p.benefits.non_financial": "एक गैर-वित्तीय लाभ।",
+  "p.benefits.none": "इस योजना के अभी कोई लाभ नहीं हैं।",
+  "p.benefits.problem_annual_amount":
+    "वार्षिक राशि संख्या के रूप में लिखें, 0 से कम नहीं।",
+  "p.benefits.problem_annual_financial":
+    "केवल वित्तीय लाभ, जिसकी मुद्रा हो, की वार्षिक राशि होती है।",
+  "p.benefits.problem_annual_recurring":
+    "केवल आवर्ती लाभ की वार्षिक राशि होती है: पहले आवर्ती चुनें।",
+  "p.benefits.problem_validated_amount":
+    "अब तक सत्यापित राशि संख्या के रूप में लिखें, 0 से कम नहीं।",
+  "p.benefits.refused_member":
+    "सत्यापनकर्ता कार्यक्रम का सदस्य नहीं हो सकता: कार्यक्रम से बाहर किसी से सत्यापन करवाएँ।",
+  "p.benefits.save": "वर्गीकरण सहेजें",
+  "p.benefits.standing_claimed": "दावा किया, अभी सत्यापित नहीं",
+  "p.benefits.standing_not_claimed": "अभी कोई दावा नहीं",
+  "p.benefits.standing_partly_validated": "आंशिक रूप से सत्यापित",
+  "p.benefits.standing_validated": "सत्यापित",
+  "p.benefits.title_ppm": "लाभ — PPM",
+  "p.benefits.title": "लाभ: वर्गीकरण और सत्यापन",
+  "p.benefits.validate": "सत्यापन दर्ज करें",
+  "p.benefits.validated_done": "सत्यापन दर्ज हुआ।",
+  "p.benefits.validated_to_date": "{amount} अब तक सत्यापित",
+  "p.benefits.validation_heading": "सत्यापन",
+  "p.benefits.validation_says":
+    "सत्यापन जैसे दर्ज हुए वैसे रखे जाते हैं; नया सत्यापन अब तक सत्यापित राशि बताता है और किसी को नहीं बदलता।",
   "p.funding.add": "स्रोत जोड़ें",
   "p.funding.added": "वित्त स्रोत जोड़ा गया।",
   "p.funding.choose_plan": "योजना चुनें",

@@ -225,9 +225,12 @@ match breakdown).
                              (NC-1 slice 11); linked from the plan page
 /funding                     funding sources, a plan's lines' sources,
                              money by funding source (NC-1 slice 11)
+/plans/[pid]/benefits        a plan's benefits: classification and
+                             validation (NC-1 slice 11); linked from the
+                             plan page
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 120):
+every page; `find src/routes -name +page.svelte` gives all 121):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2262,3 +2265,28 @@ already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the 
   and currency and one with no source; a refused draw put back; a code mapped; an export's header checked, sent as text
   and its report; Welsh; axe); `tests/e2e/ledger.spec.ts` unchanged and passing. The Welsh and the six other languages
   are machine-written and unreviewed.
+
+## Benefit classification and validation (NC-1 slice 11, DP-9)
+
+`/plans/[pid]/benefits`, linked from the plan page with the financial links (`benefits` is owned by no module), over
+`PUT /api/plans/{pid}/benefits/{benefit}/classification`, `GET` and `POST …/validations`; the benefits come from `GET
+/api/plans/{pid}/benefits`, whose rows already carried the classification fields, and a plan's KPIs from `GET
+/api/kpis?plan=`. `src/lib/benefit-view.ts` holds the rules.
+
+- **What it says.** Each benefit, financial ones with their target and realized (claimed) money. The page says a
+  realized amount is a claim, validated only by a recorded validation from someone outside the programme, each
+  stating the amount validated to date, the latest counting.
+- **Classifying.** Whether it recurs, its yearly amount (shown only for a recurring, financial benefit, read in the
+  reader's own number format), its classification and, for a non-financial one, the KPI that measures it; the words
+  come from the existing `pk_recur` and `pk_cls` labels, held to the service's lists by a unit test. A field left out
+  is cleared by the service, so the page sends the whole classification and says so. Problems are said first.
+- **Validating.** A financial benefit's standing in words (not claimed, claimed, partly validated, validated), the
+  latest validated amount and the history, newest first; a new validation states the amount to date (not below 0) and
+  an optional note. A non-financial benefit says it is measured by its KPI and offers no validation. A validator who is
+  a member of the programme (403) is told to ask someone outside it.
+- **Not built in this slice:** evidence as an attachment (`evidence_attachment_pid`); the portfolio's benefits view
+  (`GET /api/portfolio-benefits`).
+- **Tests:** `tests/unit/benefit-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/plan-benefits.spec.ts`
+  (the link; classifying a financial benefit with the whole classification sent and a yearly amount only when
+  recurring; validating with a bad amount said first, the standing and history; a non-financial benefit's KPI; a
+  refused validator; Welsh; axe). The Welsh and the six other languages are machine-written and unreviewed.

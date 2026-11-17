@@ -4259,6 +4259,49 @@ export const PAGES_EN = {
     "The rule needs a schedule baseline with critical work that has a duration; set a baseline first, or give a number of days.",
   "p.programme.refused_not_programme_buffer":
     "Only a plan of kind Program has a project buffer.",
+  "p.benefits.classified": "Classification saved.",
+  "p.benefits.classify_says":
+    "Saving sends the whole classification: a choice left as not stated clears it.",
+  "p.benefits.could_not_load": "This plan's benefits could not be loaded.",
+  "p.benefits.could_not_save": "The classification was not saved.",
+  "p.benefits.could_not_validate": "The validation was not recorded.",
+  "p.benefits.f_annual": "Yearly amount ({currency})",
+  "p.benefits.f_classification": "Classification",
+  "p.benefits.f_kpi": "KPI that measures it",
+  "p.benefits.f_note": "Note (optional)",
+  "p.benefits.f_recurrence": "Recurs",
+  "p.benefits.f_validated": "Amount validated to date ({currency})",
+  "p.benefits.intro":
+    "A realized amount is a claim. It is validated only by a recorded validation from someone outside the programme; each states the amount validated to date, and the latest counts.",
+  "p.benefits.measured_by_kpi":
+    "A non-financial benefit is measured by its KPI, not validated as an amount.",
+  "p.benefits.money_line": "Target {target}; realized (claimed) {realized}.",
+  "p.benefits.no_kpi": "No KPI",
+  "p.benefits.non_financial": "A non-financial benefit.",
+  "p.benefits.none": "This plan has no benefits yet.",
+  "p.benefits.problem_annual_amount":
+    "Write the yearly amount as a number, not below 0.",
+  "p.benefits.problem_annual_financial":
+    "Only a financial benefit, one with a currency, has a yearly amount.",
+  "p.benefits.problem_annual_recurring":
+    "Only a recurring benefit has a yearly amount: choose recurring first.",
+  "p.benefits.problem_validated_amount":
+    "Write the amount validated to date as a number, not below 0.",
+  "p.benefits.refused_member":
+    "A validator may not be a member of the programme: ask someone outside it to validate.",
+  "p.benefits.save": "Save the classification",
+  "p.benefits.standing_claimed": "Claimed, not yet validated",
+  "p.benefits.standing_not_claimed": "Nothing claimed yet",
+  "p.benefits.standing_partly_validated": "Partly validated",
+  "p.benefits.standing_validated": "Validated",
+  "p.benefits.title_ppm": "Benefits — PPM",
+  "p.benefits.title": "Benefits: classification and validation",
+  "p.benefits.validate": "Record the validation",
+  "p.benefits.validated_done": "Validation recorded.",
+  "p.benefits.validated_to_date": "{amount} validated to date",
+  "p.benefits.validation_heading": "Validation",
+  "p.benefits.validation_says":
+    "Validations are kept as recorded; a new one states the amount validated to date and replaces none.",
   "p.funding.add": "Add the source",
   "p.funding.added": "Funding source added.",
   "p.funding.choose_plan": "Choose a plan",

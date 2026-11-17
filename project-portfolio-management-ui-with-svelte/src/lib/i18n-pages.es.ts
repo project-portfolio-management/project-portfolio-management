@@ -4419,6 +4419,51 @@ export const PAGES_ES: Record<PageKey, string> = {
     "La regla necesita una línea base del cronograma con trabajo crítico que tenga duración; fije primero una línea base o dé un número de días.",
   "p.programme.refused_not_programme_buffer":
     "Solo un plan de tipo Programa tiene colchón de proyecto.",
+  "p.benefits.classified": "Clasificación guardada.",
+  "p.benefits.classify_says":
+    "Guardar envía la clasificación completa: una opción dejada sin indicar se borra.",
+  "p.benefits.could_not_load":
+    "No se pudieron cargar los beneficios de este plan.",
+  "p.benefits.could_not_save": "No se guardó la clasificación.",
+  "p.benefits.could_not_validate": "No se registró la validación.",
+  "p.benefits.f_annual": "Importe anual ({currency})",
+  "p.benefits.f_classification": "Clasificación",
+  "p.benefits.f_kpi": "KPI que lo mide",
+  "p.benefits.f_note": "Nota (opcional)",
+  "p.benefits.f_recurrence": "Recurrencia",
+  "p.benefits.f_validated": "Importe validado hasta la fecha ({currency})",
+  "p.benefits.intro":
+    "Un importe realizado es una afirmación. Solo se valida con una validación registrada por alguien de fuera del programa; cada una indica el importe validado hasta la fecha, y cuenta la más reciente.",
+  "p.benefits.measured_by_kpi":
+    "Un beneficio no financiero se mide con su KPI, no se valida como importe.",
+  "p.benefits.money_line":
+    "Objetivo {target}; realizado (afirmado) {realized}.",
+  "p.benefits.no_kpi": "Sin KPI",
+  "p.benefits.non_financial": "Un beneficio no financiero.",
+  "p.benefits.none": "Este plan aún no tiene beneficios.",
+  "p.benefits.problem_annual_amount":
+    "Escriba el importe anual como un número, no menor que 0.",
+  "p.benefits.problem_annual_financial":
+    "Solo un beneficio financiero, con moneda, tiene importe anual.",
+  "p.benefits.problem_annual_recurring":
+    "Solo un beneficio recurrente tiene importe anual: elija primero recurrente.",
+  "p.benefits.problem_validated_amount":
+    "Escriba el importe validado hasta la fecha como un número, no menor que 0.",
+  "p.benefits.refused_member":
+    "Quien valida no puede ser miembro del programa: pida a alguien de fuera que lo valide.",
+  "p.benefits.save": "Guardar la clasificación",
+  "p.benefits.standing_claimed": "Afirmado, aún sin validar",
+  "p.benefits.standing_not_claimed": "Nada afirmado aún",
+  "p.benefits.standing_partly_validated": "Validado en parte",
+  "p.benefits.standing_validated": "Validado",
+  "p.benefits.title_ppm": "Beneficios — PPM",
+  "p.benefits.title": "Beneficios: clasificación y validación",
+  "p.benefits.validate": "Registrar la validación",
+  "p.benefits.validated_done": "Validación registrada.",
+  "p.benefits.validated_to_date": "{amount} validado hasta la fecha",
+  "p.benefits.validation_heading": "Validación",
+  "p.benefits.validation_says":
+    "Las validaciones se conservan tal como se registraron; una nueva indica el importe validado hasta la fecha y no sustituye a ninguna.",
   "p.funding.add": "Añadir la fuente",
   "p.funding.added": "Fuente de financiación añadida.",
   "p.funding.choose_plan": "Elija un plan",

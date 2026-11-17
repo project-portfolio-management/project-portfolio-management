@@ -4364,6 +4364,50 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae angen llinell sylfaen amserlen gyda gwaith critigol sydd â hyd ar y rheol; gosodwch linell sylfaen yn gyntaf, neu rhowch nifer o ddiwrnodau.",
   "p.programme.refused_not_programme_buffer":
     "Dim ond cynllun o fath Rhaglen sydd â byffer prosiect.",
+  "p.benefits.classified": "Cadwyd y dosbarthiad.",
+  "p.benefits.classify_says":
+    "Mae cadw'n anfon y dosbarthiad cyfan: mae dewis a adewir heb ei nodi yn ei glirio.",
+  "p.benefits.could_not_load": "Nid oedd modd llwytho buddion y cynllun hwn.",
+  "p.benefits.could_not_save": "Ni chadwyd y dosbarthiad.",
+  "p.benefits.could_not_validate": "Ni chofnodwyd y dilysiad.",
+  "p.benefits.f_annual": "Swm blynyddol ({currency})",
+  "p.benefits.f_classification": "Dosbarthiad",
+  "p.benefits.f_kpi": "DPA sy'n ei fesur",
+  "p.benefits.f_note": "Nodyn (dewisol)",
+  "p.benefits.f_recurrence": "Yn ailadrodd",
+  "p.benefits.f_validated": "Swm a ddilyswyd hyd yma ({currency})",
+  "p.benefits.intro":
+    "Hawliad yw swm a wireddwyd. Caiff ei ddilysu dim ond drwy ddilysiad a gofnodwyd gan rywun y tu allan i'r rhaglen; mae pob un yn nodi'r swm a ddilyswyd hyd yma, a'r diweddaraf sy'n cyfrif.",
+  "p.benefits.measured_by_kpi":
+    "Caiff budd anariannol ei fesur gan ei DPA, nid ei ddilysu fel swm.",
+  "p.benefits.money_line":
+    "Targed {target}; wedi'i wireddu (wedi'i hawlio) {realized}.",
+  "p.benefits.no_kpi": "Dim DPA",
+  "p.benefits.non_financial": "Budd anariannol.",
+  "p.benefits.none": "Nid oes gan y cynllun hwn fuddion eto.",
+  "p.benefits.problem_annual_amount":
+    "Ysgrifennwch y swm blynyddol fel rhif, nid o dan 0.",
+  "p.benefits.problem_annual_financial":
+    "Dim ond budd ariannol, un ag arian cyfred, sydd â swm blynyddol.",
+  "p.benefits.problem_annual_recurring":
+    "Dim ond budd sy'n ailadrodd sydd â swm blynyddol: dewiswch yn ailadrodd yn gyntaf.",
+  "p.benefits.problem_validated_amount":
+    "Ysgrifennwch y swm a ddilyswyd hyd yma fel rhif, nid o dan 0.",
+  "p.benefits.refused_member":
+    "Ni chaiff dilyswr fod yn aelod o'r rhaglen: gofynnwch i rywun y tu allan iddi ddilysu.",
+  "p.benefits.save": "Cadw'r dosbarthiad",
+  "p.benefits.standing_claimed": "Wedi'i hawlio, heb ei ddilysu eto",
+  "p.benefits.standing_not_claimed": "Dim wedi'i hawlio eto",
+  "p.benefits.standing_partly_validated": "Wedi'i ddilysu'n rhannol",
+  "p.benefits.standing_validated": "Wedi'i ddilysu",
+  "p.benefits.title_ppm": "Buddion — PPM",
+  "p.benefits.title": "Buddion: dosbarthiad a dilysu",
+  "p.benefits.validate": "Cofnodi'r dilysiad",
+  "p.benefits.validated_done": "Cofnodwyd y dilysiad.",
+  "p.benefits.validated_to_date": "{amount} wedi'i ddilysu hyd yma",
+  "p.benefits.validation_heading": "Dilysiad",
+  "p.benefits.validation_says":
+    "Cedwir dilysiadau fel y'u cofnodwyd; mae un newydd yn nodi'r swm a ddilyswyd hyd yma ac nid yw'n disodli dim.",
   "p.funding.add": "Ychwanegu'r ffynhonnell",
   "p.funding.added": "Ychwanegwyd y ffynhonnell gyllid.",
   "p.funding.choose_plan": "Dewiswch gynllun",

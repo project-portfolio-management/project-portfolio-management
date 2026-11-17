@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — benefit classification and validation (NC-1 slice 11, DP-9, 2026-11-17)
+
+- `/plans/[pid]/benefits`, linked from the plan page: each benefit's recurrence, yearly amount (recurring and financial
+  only), classification and, for a non-financial one, its KPI, sent whole since a field left out is cleared; and, for a
+  financial one, its standing, latest validated amount and history, with a new validation of the amount to date. A
+  validator who is a member of the programme is told to ask someone outside it. Three client methods and their types;
+  the classification fields on benefit rows (the service already sent them); `src/lib/benefit-view.ts`; 34 keys in eight
+  catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/benefit-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/plan-benefits.spec.ts`
+  (five, with Welsh and axe).
+- **Not done:** evidence attachments; the portfolio benefits view. **Not verified:** against a real service.
+
 ### Added — a programme's project buffer (NC-1 slice 11, DP-7, 2026-11-17)
 
 - `/plans/[pid]/programme` gains the project buffer for a programme: declare it in business days (1 to 2000) or by the

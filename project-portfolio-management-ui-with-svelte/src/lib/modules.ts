@@ -47,6 +47,8 @@ export const PLAN_LINKS = [
   // The service files `export` under no module (always on); it sits beside import, which is filed under tasks.
   { key: "export", module: "tasks" },
   { key: "costs", module: "financials" },
+  // `benefits` is owned by no module in the service (always on); it sits with the money, under financials.
+  { key: "benefits", module: "financials" },
 ] as const;
 
 export type PlanLinkKey = (typeof PLAN_LINKS)[number]["key"];

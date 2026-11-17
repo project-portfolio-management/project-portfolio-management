@@ -263,6 +263,10 @@ import type {
   WorkCalendarView,
   WorkProfile,
   ThresholdSweepRow,
+  DeescalationTracker,
+  ScorecardRow,
+  ScorecardView,
+  TemplateMeasure,
 } from "./ppm-types";
 
 export * from "./ppm-types";
@@ -611,6 +615,75 @@ export class PpmClient {
   ): Promise<unknown> {
     return this.http.post(
       `/api/exceptions/${encodeURIComponent(exceptionPid)}/threshold-decision`,
+      { body },
+    );
+  }
+  // ---- scorecards and the de-escalation tracker (EX-10, NC-1 slice 11) ----
+  /** Every scorecard, by name. */
+  scorecards(): Promise<{ scorecards: ScorecardRow[] }> {
+    return this.http.get("/api/scorecards");
+  }
+  /** Add a scorecard; `for_deescalation` makes it the one the tracker reads (at most one is). */
+  createScorecard(body: {
+    name: string;
+    for_deescalation?: boolean;
+  }): Promise<{ pid: string; name: string; for_deescalation: boolean }> {
+    return this.http.post("/api/scorecards", { body });
+  }
+  /** A scorecard's KPIs by finished quarter (the service shows 4 unless asked). */
+  scorecard(pid: string, quarters?: number): Promise<ScorecardView> {
+    const q = quarters === undefined ? "" : `?quarters=${quarters}`;
+    return this.http.get(`/api/scorecards/${encodeURIComponent(pid)}${q}`);
+  }
+  /** Replace a scorecard's KPIs (at most 60). */
+  setScorecardKpis(
+    pid: string,
+    kpiPids: string[],
+  ): Promise<{ scorecard_pid: string; kpi_pids: string[] }> {
+    return this.http.put(`/api/scorecards/${encodeURIComponent(pid)}/kpis`, {
+      body: { kpi_pids: kpiPids },
+    });
+  }
+  /** The starter measures: names, directions and units, with no targets. Nothing is applied by reading it. */
+  scorecardTemplate(): Promise<{ measures: TemplateMeasure[]; note?: string }> {
+    return this.http.get("/api/scorecard-template");
+  }
+  /** Create the picked template measures as KPIs with your targets and red lines, and put them on the scorecard. */
+  scorecardFromTemplate(
+    pid: string,
+    measures: Array<{ key: string; target_value: number; red_value: number }>,
+  ): Promise<{ scorecard_pid: string; kpi_pids: string[] }> {
+    return this.http.post(
+      `/api/scorecards/${encodeURIComponent(pid)}/from-template`,
+      { body: { measures } },
+    );
+  }
+  /** The de-escalation tracker: the level as the sponsor set it, the run of quarters met, the criteria. */
+  deescalation(): Promise<DeescalationTracker> {
+    return this.http.get("/api/deescalation");
+  }
+  /** Record the escalation level the sponsor set (the sponsor or an administrator only). */
+  setEscalationLevel(body: {
+    level: string;
+    note?: string;
+  }): Promise<{ level: string; set_on: string }> {
+    return this.http.put("/api/deescalation/level", { body });
+  }
+  /** Add a criterion for coming down; criteria are never edited or retired. */
+  addDeescalationCriterion(
+    criterion: string,
+  ): Promise<{ pid: string; criterion: string }> {
+    return this.http.post("/api/deescalation/criteria", {
+      body: { criterion },
+    });
+  }
+  /** Record whether a criterion was met in a finished quarter; the latest record speaks. */
+  setCriterionEvidence(
+    criterionPid: string,
+    body: { quarter: string; met: boolean; note: string; link?: string },
+  ): Promise<{ criterion_pid: string; quarter: string; met: boolean }> {
+    return this.http.put(
+      `/api/deescalation/criteria/${encodeURIComponent(criterionPid)}/evidence`,
       { body },
     );
   }

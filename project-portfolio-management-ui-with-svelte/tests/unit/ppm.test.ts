@@ -796,6 +796,44 @@ describe("PpmClient triage and thresholds (NC-1 slice 11, EX-7)", () => {
   });
 });
 
+describe("PpmClient scorecards and de-escalation (NC-1 slice 11, EX-10)", () => {
+  it("reads and writes scorecards, the template and the tracker", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.scorecards();
+    await ppm.createScorecard({ name: "Outcomes", for_deescalation: true });
+    await ppm.scorecard("s1");
+    await ppm.scorecard("s1", 8);
+    await ppm.setScorecardKpis("s1", ["k1"]);
+    await ppm.scorecardTemplate();
+    await ppm.scorecardFromTemplate("s1", [
+      { key: "milestones_met_on_time", target_value: 90, red_value: 70 },
+    ]);
+    await ppm.deescalation();
+    await ppm.setEscalationLevel({ level: "Level 3" });
+    await ppm.addDeescalationCriterion("Independent review passed");
+    await ppm.setCriterionEvidence("c1", {
+      quarter: "2026-Q3",
+      met: true,
+      note: "Audit report signed",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/scorecards",
+      "POST /api/scorecards",
+      "GET /api/scorecards/s1",
+      "GET /api/scorecards/s1?quarters=8",
+      "PUT /api/scorecards/s1/kpis",
+      "GET /api/scorecard-template",
+      "POST /api/scorecards/s1/from-template",
+      "GET /api/deescalation",
+      "PUT /api/deescalation/level",
+      "POST /api/deescalation/criteria",
+      "PUT /api/deescalation/criteria/c1/evidence",
+    ]);
+  });
+});
+
 describe("PpmClient cutover criteria (NC-1 slice 11, EX-6)", () => {
   it("replaces a draft's criteria", async () => {
     const { ppm, calls } = recordingClient();

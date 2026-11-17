@@ -6555,4 +6555,202 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Rydych wedi agor y mwyaf o fynediad brys a ganiateir mewn diwrnod (pump, wedi'u cyfrif dros y 24 awr ddiwethaf).",
   "p.access.refused_revoke_not_found":
     "Ni chafwyd hyd i'r caniatâd hwnnw, neu nid chi sydd i'w ddiweddu.",
+  "p.deescalation.nav": "Cardiau sgorio a dad-ddwysáu",
+  "p.deescalation.title": "Cardiau sgorio a dad-ddwysáu — PPM",
+  "p.deescalation.h1": "Cardiau sgorio a dad-ddwysáu",
+  "p.deescalation.lede":
+    "Y lefel uwchgyfeirio fel y'i gosodwyd gan y noddwr, y meini prawf ar gyfer dod i lawr gyda'u tystiolaeth bob chwarter, a'r cardiau sgorio y darllenir eu mesurau allweddol fesul chwarter gorffenedig.",
+  "p.deescalation.tracker_heading": "Y traciwr dad-ddwysáu",
+  "p.deescalation.tracker_says":
+    "Cofnodir y lefel fel y'i gosodwyd gan y noddwr. Nid yw byth yn cael ei chyfrifo yma, ac nid oes dim ar y dudalen hon yn ei symud: cynigir y rhediad o chwarteri a gyflawnwyd i'r sawl sy'n penderfynu.",
+  "p.deescalation.loading": "Wrthi'n llwytho…",
+  "p.deescalation.could_not_load": "Ni ellid llwytho'r traciwr dad-ddwysáu.",
+  "p.deescalation.could_not_save": "Ni chadwyd y newid.",
+  "p.deescalation.level_heading": "Lefel uwchgyfeirio",
+  "p.deescalation.level_now": "Lefel {level}, a osodwyd ar {date}.",
+  "p.deescalation.level_note": "Nodyn y noddwr: {note}",
+  "p.deescalation.level_none":
+    "Nid oes lefel uwchgyfeirio wedi'i chofnodi eto.",
+  "p.deescalation.level_history": "Lefelau cynharach",
+  "p.deescalation.level_history_item": "{level}, a osodwyd ar {date}",
+  "p.deescalation.run_heading": "Chwarteri a gyflawnwyd yn olynol",
+  "p.deescalation.run_one":
+    "{n} chwarter gorffenedig wedi'i gyflawni yn olynol, o'r {need} y mae'r rheol yn gofyn amdanynt.",
+  "p.deescalation.run_other":
+    "{n} o chwarteri gorffenedig wedi'u cyflawni yn olynol, o'r {need} y mae'r rheol yn gofyn amdanynt.",
+  "p.deescalation.rule_satisfied":
+    "Mae'r rheol wedi'i bodloni. Mater i'r noddwr yw pwyso hyn; nid yw'r lefel yn newid ohoni ei hun.",
+  "p.deescalation.rule_not_satisfied": "Nid yw'r rheol wedi'i bodloni eto.",
+  "p.deescalation.setting_unusable":
+    "Ni ellid defnyddio gosodiad y system ar gyfer faint o chwarteri y mae'r rheol yn gofyn amdanynt, felly mae'r rhagosodiad o {n} yn berthnasol.",
+  "p.deescalation.reads_scorecard":
+    "Mae'r traciwr yn darllen y cerdyn sgorio {name}.",
+  "p.deescalation.reads_no_scorecard":
+    "Nid oes cerdyn sgorio yn un y mae'r traciwr yn ei ddarllen, felly dim ond y meini prawf sy'n cyfrif. Marciwch un felly wrth ei ychwanegu, isod.",
+  "p.deescalation.hidden_kpis_one":
+    "Mae {n} mesur allweddol ar y cerdyn sgorio hwn yn perthyn i gynllun na chewch ei ddarllen: nid yw'n cael ei ddangos na'i gyfrif yma.",
+  "p.deescalation.hidden_kpis_other":
+    "Mae {n} o fesurau allweddol ar y cerdyn sgorio hwn yn perthyn i gynlluniau na chewch eu darllen: nid ydynt yn cael eu dangos na'u cyfrif yma.",
+  "p.deescalation.quarters_label": "Pob chwarter gorffenedig",
+  "p.deescalation.col_quarter": "Chwarter",
+  "p.deescalation.col_state": "Safle",
+  "p.deescalation.col_reasons": "Pam",
+  "p.deescalation.state_met": "Wedi'i gyflawni",
+  "p.deescalation.state_not_met": "Heb ei gyflawni",
+  "p.deescalation.state_missing": "Dim wedi'i gofnodi",
+  "p.deescalation.state_with_value": "{state} (gwerth {value})",
+  "p.deescalation.reason_all_met":
+    "Cyflawnwyd pob mesur allweddol a phob maen prawf.",
+  "p.deescalation.reason_nothing":
+    "Does dim i'w fesur: dim mesur allweddol a dim maen prawf.",
+  "p.deescalation.reason_no_kpis":
+    "Nid oes gan y cerdyn sgorio fesur allweddol y gallwch ei ddarllen.",
+  "p.deescalation.reason_not_met": "Heb eu cyflawni: {list}.",
+  "p.deescalation.reason_missing": "Dim wedi'i gofnodi ar gyfer: {list}.",
+  "p.deescalation.quarter": "Ch{q} {year}",
+  "p.deescalation.quarter_standing": "{quarter} — {state}. {reasons}",
+  "p.deescalation.tracker_kpis_label":
+    "Cerdyn sgorio'r traciwr, fesul chwarter",
+  "p.deescalation.set_level_heading": "Cofnodi'r lefel uwchgyfeirio",
+  "p.deescalation.set_level_says":
+    "Dim ond y noddwr (rhywun â'r rôl sponsor) neu weinyddwr all gofnodi'r lefel, fel y maent wedi'i gosod. Mae lefel rhwng {min} a {max} nod; mae'r nodyn yn ddewisol.",
+  "p.deescalation.f_level": "Lefel",
+  "p.deescalation.f_level_note": "Nodyn (dewisol)",
+  "p.deescalation.save_level": "Cofnodi'r lefel",
+  "p.deescalation.level_saved": "Cofnodwyd lefel {level}.",
+  "p.deescalation.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.deescalation.problem_level": "Mae lefel rhwng {min} a {max} nod.",
+  "p.deescalation.refused_level_forbidden":
+    "Gwrthodwyd: dim ond y noddwr neu weinyddwr all gofnodi'r lefel uwchgyfeirio.",
+  "p.deescalation.criteria_heading": "Meini prawf ar gyfer dod i lawr",
+  "p.deescalation.criteria_says":
+    "Mae maen prawf yn cael ei ychwanegu ac nid yw byth yn cael ei olygu na'i ymddeol. Cofnodir ei dystiolaeth ar gyfer chwarter gorffenedig, a'r cofnod diweddaraf ar gyfer y chwarter hwnnw sy'n cyfrif.",
+  "p.deescalation.criteria_none": "Dim meini prawf eto.",
+  "p.deescalation.evidence_of": "Tystiolaeth ar gyfer: {criterion}",
+  "p.deescalation.evidence_link": "Tystiolaeth",
+  "p.deescalation.add_criterion_heading": "Ychwanegu maen prawf",
+  "p.deescalation.f_criterion": "Maen prawf (rhwng {min} a {max} nod)",
+  "p.deescalation.add_criterion": "Ychwanegu'r maen prawf",
+  "p.deescalation.criterion_added": "Ychwanegwyd y maen prawf.",
+  "p.deescalation.problem_criterion": "Mae maen prawf rhwng {min} a {max} nod.",
+  "p.deescalation.evidence_heading": "Cofnodi tystiolaeth",
+  "p.deescalation.evidence_says":
+    "Dewiswch faen prawf a chwarter gorffenedig (ni ellir cofnodi chwarter sy'n dal i fynd), dywedwch a gafodd ei gyflawni, a rhowch nodyn o {min} nod o leiaf. Mae dolen yn ddewisol: cyfeiriad http neu https heb fylchau, hyd at {max} nod.",
+  "p.deescalation.f_ev_criterion": "Maen prawf",
+  "p.deescalation.f_ev_quarter": "Chwarter gorffenedig",
+  "p.deescalation.f_ev_met": "A gafodd ei gyflawni?",
+  "p.deescalation.f_ev_note": "Nodyn ({min} nod o leiaf)",
+  "p.deescalation.f_ev_link": "Dolen i'r dystiolaeth (dewisol)",
+  "p.deescalation.save_evidence": "Cofnodi'r dystiolaeth",
+  "p.deescalation.evidence_saved": "Cofnodwyd tystiolaeth ar gyfer {quarter}.",
+  "p.deescalation.problem_criterion_choose":
+    "Ychwanegwch faen prawf yn gyntaf, yna cofnodwch ei dystiolaeth.",
+  "p.deescalation.problem_quarter": "Dewiswch chwarter gorffenedig.",
+  "p.deescalation.problem_quarter_unfinished":
+    "Nid yw'r chwarter hwnnw wedi gorffen, felly ni ellir ei gofnodi eto.",
+  "p.deescalation.problem_met": "Dywedwch a gafodd y maen prawf ei gyflawni.",
+  "p.deescalation.problem_note": "Mae angen nodyn o {min} nod o leiaf.",
+  "p.deescalation.problem_link":
+    "Mae dolen yn gyfeiriad http neu https heb fylchau, hyd at {max} nod.",
+  "p.deescalation.refused_evidence":
+    "Gwrthodwyd: rhaid i'r chwarter fod wedi gorffen, rhaid i'r nodyn fod yn bum nod o leiaf, a rhaid i ddolen fod yn gyfeiriad http neu https heb fylchau.",
+  "p.deescalation.refused_gone":
+    "Nid yw'r cofnod hwnnw yno mwyach. Ail-lwythwch y dudalen.",
+  "p.deescalation.scorecards_heading": "Cardiau sgorio",
+  "p.deescalation.scorecards_says":
+    "Mae cerdyn sgorio yn set o fesurau allweddol ag enw, a ddarllenir fesul chwarter gorffenedig. Mae mesur allweddol wedi'i gyflawni mewn chwarter pan fo'i ddarlleniad diweddaraf yn y chwarter hwnnw ar ei darged neu'n well; mae chwarter heb ddarlleniad ar goll, nad yw'r un peth â heb ei gyflawni.",
+  "p.deescalation.scorecards_none": "Dim cardiau sgorio eto.",
+  "p.deescalation.could_not_load_scorecards":
+    "Ni ellid llwytho'r cardiau sgorio.",
+  "p.deescalation.col_scorecard": "Cerdyn sgorio",
+  "p.deescalation.col_tracker": "Yn cael ei ddarllen gan y traciwr",
+  "p.deescalation.is_tracker": "Ydy, yr un y mae'r traciwr yn ei ddarllen",
+  "p.deescalation.not_tracker": "Nac ydy",
+  "p.deescalation.add_scorecard_heading": "Ychwanegu cerdyn sgorio",
+  "p.deescalation.add_scorecard_says":
+    "Enw rhwng {min} a {max} nod, nad yw wedi'i ddefnyddio eisoes (mewn unrhyw achos). Dim ond un cerdyn sgorio ar y mwyaf yw'r un y mae'r traciwr yn ei ddarllen.",
+  "p.deescalation.f_name": "Enw",
+  "p.deescalation.f_for_tracker": "Yr un y mae'r traciwr yn ei ddarllen",
+  "p.deescalation.add_scorecard": "Ychwanegu'r cerdyn sgorio",
+  "p.deescalation.scorecard_added": "Ychwanegwyd y cerdyn sgorio {name}.",
+  "p.deescalation.problem_name":
+    "Mae enw cerdyn sgorio rhwng {min} a {max} nod.",
+  "p.deescalation.problem_name_taken":
+    "Mae gan gerdyn sgorio yr enw hwnnw eisoes.",
+  "p.deescalation.problem_tracker_taken":
+    "Y cerdyn sgorio {name} yw'r un y mae'r traciwr yn ei ddarllen eisoes.",
+  "p.deescalation.refused_create_conflict_tracker":
+    "Gwrthodwyd: mae gan gerdyn sgorio yr enw hwnnw eisoes, neu mae un arall eisoes yn un y mae'r traciwr yn ei ddarllen.",
+  "p.deescalation.scorecard_heading": "Cerdyn sgorio fesul chwarter",
+  "p.deescalation.f_scorecard": "Cerdyn sgorio",
+  "p.deescalation.choose_scorecard": "Dewiswch gerdyn sgorio",
+  "p.deescalation.could_not_load_scorecard":
+    "Ni ellid llwytho'r cerdyn sgorio.",
+  "p.deescalation.scorecard_says":
+    "Pob mesur allweddol fesul chwarter gorffenedig: wedi'i gyflawni, heb ei gyflawni, neu ddim wedi'i gofnodi.",
+  "p.deescalation.scorecard_kpis_label":
+    "Mesurau allweddol {name}, fesul chwarter",
+  "p.deescalation.scorecard_quarters_label": "Pob chwarter o'r cerdyn sgorio",
+  "p.deescalation.col_kpi": "Mesur allweddol",
+  "p.deescalation.col_target": "Targed",
+  "p.deescalation.target_at_least": "o leiaf {value} {unit}",
+  "p.deescalation.target_at_most": "ar y mwyaf {value} {unit}",
+  "p.deescalation.no_kpis":
+    "Nid oes gan y cerdyn sgorio hwn fesurau allweddol y gallwch eu darllen.",
+  "p.deescalation.unit_percent": "y cant",
+  "p.deescalation.unit_count": "cyfrif",
+  "p.deescalation.kpis_heading": "Dewis ei fesurau allweddol (KPIs)",
+  "p.deescalation.kpis_says":
+    "Ticiwch y mesurau allweddol sydd ar y cerdyn sgorio hwn, {max} ar y mwyaf. Mae cadw yn disodli'r set; mae un ar gynllun na chewch ei ddarllen yn aros ar y cerdyn.",
+  "p.deescalation.f_kpis": "Mesurau allweddol ar y cerdyn sgorio",
+  "p.deescalation.kpis_none":
+    "Nid oes mesurau allweddol i'w dewis. Ychwanegwch nhw ar dudalen y mesurau allweddol, neu o'r templed isod.",
+  "p.deescalation.save_kpis": "Cadw'r mesurau allweddol",
+  "p.deescalation.kpis_saved_one":
+    "Mae gan y cerdyn sgorio {n} mesur allweddol bellach.",
+  "p.deescalation.kpis_saved_other":
+    "Mae gan y cerdyn sgorio {n} o fesurau allweddol bellach.",
+  "p.deescalation.problem_kpis_max":
+    "Mae cerdyn sgorio yn dal {max} mesur allweddol ar y mwyaf.",
+  "p.deescalation.refused_kpis":
+    "Gwrthodwyd: rhaid i bob un fod yn fesur allweddol y gallwch ei ddarllen, ac mae cerdyn sgorio yn dal 60 ar y mwyaf.",
+  "p.deescalation.template_heading": "Ychwanegu mesurau o'r templed",
+  "p.deescalation.template_says":
+    "Set gychwynnol, a gynigir ac nas cymhwysir. Nid oes ganddi dargedau: chi sy'n gosod pob targed a llinell goch, ac mae'r mesurau a ddewiswch yn dod yn fesurau allweddol ar y cerdyn sgorio hwn.",
+  "p.deescalation.template_rule":
+    "Lle mae uwch yn well, rhaid i'r llinell goch fod o dan y targed; lle mae is yn well, uwch ei ben. Mae targedau a llinellau coch yn rhifau cyfan.",
+  "p.deescalation.could_not_load_template": "Ni ellid llwytho'r templed.",
+  "p.deescalation.higher_better": "Uwch sy'n well",
+  "p.deescalation.lower_better": "Is sy'n well",
+  "p.deescalation.unit": "wedi'i fesur fel {unit}",
+  "p.deescalation.f_pick": "Ychwanegu {measure}",
+  "p.deescalation.f_target": "Targed",
+  "p.deescalation.f_red": "Llinell goch",
+  "p.deescalation.add_measures": "Ychwanegu'r mesurau",
+  "p.deescalation.measures_added_one":
+    "Ychwanegwyd {n} mesur at y cerdyn sgorio.",
+  "p.deescalation.measures_added_other":
+    "Ychwanegwyd {n} o fesurau at y cerdyn sgorio.",
+  "p.deescalation.problem_pick_one": "Dewiswch o leiaf un mesur.",
+  "p.deescalation.problem_whole":
+    "{measure}: mae'r targed a'r llinell goch yn rhifau cyfan.",
+  "p.deescalation.problem_red_higher":
+    "{measure}: uwch sy'n well, felly rhaid i'r llinell goch fod o dan y targed.",
+  "p.deescalation.problem_red_lower":
+    "{measure}: is sy'n well, felly rhaid i'r llinell goch fod uwchben y targed.",
+  "p.deescalation.problem_not_in_template": "Nid yw {measure} yn y templed.",
+  "p.deescalation.refused_template":
+    "Gwrthodwyd: gwiriwch bob targed a llinell goch yn erbyn rheol y cyfeiriad.",
+  "p.deescalation.measure_programmes_with_independent_assurance":
+    "Rhaglenni â sicrwydd annibynnol yn y chwarter diwethaf",
+  "p.deescalation.measure_milestones_met_on_time":
+    "Cerrig milltir a gyflawnwyd ar eu dyddiad neu cyn hynny",
+  "p.deescalation.measure_benefits_validated":
+    "Buddion a gynlluniwyd a ddilyswyd gan rywun y tu allan i'r rhaglen",
+  "p.deescalation.measure_red_without_decision":
+    "Rhaglenni ar goch heb benderfyniad wedi'i gofnodi",
+  "p.deescalation.measure_open_critical_issues":
+    "Materion agored o ddifrifoldeb critigol",
+  "p.deescalation.measure_change_requests_waiting":
+    "Ceisiadau newid sy'n aros mwy na 30 diwrnod am benderfyniad",
 };

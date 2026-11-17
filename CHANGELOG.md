@@ -21,6 +21,13 @@ It is pre-1.0; the first release cut from the root release workflow is
   user's request). `SECURITY.md` now names it first, with email as the other way; the security policy's known gaps
   drop it and its sources name it. **Not verified:** a report made through it.
 
+### 17 November (scorecards and de-escalation: NC-1 slice 11, part l)
+
+- **UI: scorecards and the de-escalation tracker on a new page, `/deescalation` (EX-10).** UI spec, "Scorecards and
+  de-escalation"; tests `tests/unit/deescalation-view.test.ts`, `tests/e2e/deescalation.spec.ts`.
+- **Not done:** retiring or renaming a scorecard, editing a criterion (no routes). **Not verified:** against a real
+  service; the translations are machine-written and unreviewed.
+
 ### 17 November (triage and thresholds: NC-1 slice 11, part k)
 
 - **UI: a programme's triage and thresholds, the threshold sweep, and threshold decisions (EX-7).** UI spec, "Triage,

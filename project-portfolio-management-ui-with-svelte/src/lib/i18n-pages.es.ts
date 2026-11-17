@@ -6642,4 +6642,206 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Ha abierto el máximo de accesos de emergencia permitidos en un día (cinco, contados en las últimas 24 horas).",
   "p.access.refused_revoke_not_found":
     "No se encontró ese acceso, o no le corresponde terminarlo.",
+  "p.deescalation.nav": "Cuadros de mando y desescalada",
+  "p.deescalation.title": "Cuadros de mando y desescalada — PPM",
+  "p.deescalation.h1": "Cuadros de mando y desescalada",
+  "p.deescalation.lede":
+    "El nivel de escalada tal como lo fijó el patrocinador, los criterios para bajarlo con su evidencia en cada trimestre y los cuadros de mando cuyos indicadores clave se leen por trimestre terminado.",
+  "p.deescalation.tracker_heading": "El seguimiento de la desescalada",
+  "p.deescalation.tracker_says":
+    "El nivel se registra tal como lo fijó el patrocinador. Nunca se calcula aquí y nada en esta página lo mueve: la racha de trimestres cumplidos se ofrece a la persona que decide.",
+  "p.deescalation.loading": "Cargando…",
+  "p.deescalation.could_not_load":
+    "No se pudo cargar el seguimiento de la desescalada.",
+  "p.deescalation.could_not_save": "El cambio no se guardó.",
+  "p.deescalation.level_heading": "Nivel de escalada",
+  "p.deescalation.level_now": "Nivel {level}, fijado el {date}.",
+  "p.deescalation.level_note": "Nota del patrocinador: {note}",
+  "p.deescalation.level_none":
+    "Todavía no se ha registrado ningún nivel de escalada.",
+  "p.deescalation.level_history": "Niveles anteriores",
+  "p.deescalation.level_history_item": "{level}, fijado el {date}",
+  "p.deescalation.run_heading": "Trimestres cumplidos seguidos",
+  "p.deescalation.run_one":
+    "{n} trimestre terminado cumplido seguido, de los {need} que pide la regla.",
+  "p.deescalation.run_other":
+    "{n} trimestres terminados cumplidos seguidos, de los {need} que pide la regla.",
+  "p.deescalation.rule_satisfied":
+    "La regla se cumple. Le corresponde al patrocinador valorarlo; el nivel no cambia por sí solo.",
+  "p.deescalation.rule_not_satisfied": "La regla todavía no se cumple.",
+  "p.deescalation.setting_unusable":
+    "No se pudo usar el ajuste de la instalación sobre cuántos trimestres pide la regla, así que se aplica el valor por defecto de {n}.",
+  "p.deescalation.reads_scorecard":
+    "El seguimiento lee el cuadro de mando {name}.",
+  "p.deescalation.reads_no_scorecard":
+    "Ningún cuadro de mando es el que lee el seguimiento, así que solo cuentan los criterios. Marque uno como tal al añadirlo, más abajo.",
+  "p.deescalation.hidden_kpis_one":
+    "{n} indicador clave de este cuadro de mando pertenece a un plan que usted no puede leer: aquí no se muestra ni se cuenta.",
+  "p.deescalation.hidden_kpis_other":
+    "{n} indicadores clave de este cuadro de mando pertenecen a planes que usted no puede leer: aquí no se muestran ni se cuentan.",
+  "p.deescalation.quarters_label": "Cada trimestre terminado",
+  "p.deescalation.col_quarter": "Trimestre",
+  "p.deescalation.col_state": "Situación",
+  "p.deescalation.col_reasons": "Por qué",
+  "p.deescalation.state_met": "Cumplido",
+  "p.deescalation.state_not_met": "No cumplido",
+  "p.deescalation.state_missing": "Nada registrado",
+  "p.deescalation.state_with_value": "{state} (valor {value})",
+  "p.deescalation.reason_all_met":
+    "Se cumplieron todos los indicadores clave y todos los criterios.",
+  "p.deescalation.reason_nothing":
+    "No hay nada que medir: ningún indicador clave y ningún criterio.",
+  "p.deescalation.reason_no_kpis":
+    "El cuadro de mando no tiene ningún indicador clave que usted pueda leer.",
+  "p.deescalation.reason_not_met": "No cumplido: {list}.",
+  "p.deescalation.reason_missing": "Nada registrado para: {list}.",
+  "p.deescalation.quarter": "T{q} {year}",
+  "p.deescalation.quarter_standing": "{quarter} · {state}. {reasons}",
+  "p.deescalation.tracker_kpis_label":
+    "El cuadro de mando del seguimiento, por trimestre",
+  "p.deescalation.set_level_heading": "Registrar el nivel de escalada",
+  "p.deescalation.set_level_says":
+    "Solo el patrocinador (alguien con el rol sponsor) o un administrador puede registrar el nivel, tal como lo ha fijado. Un nivel tiene de {min} a {max} caracteres; la nota es opcional.",
+  "p.deescalation.f_level": "Nivel",
+  "p.deescalation.f_level_note": "Nota (opcional)",
+  "p.deescalation.save_level": "Registrar el nivel",
+  "p.deescalation.level_saved": "Nivel {level} registrado.",
+  "p.deescalation.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.deescalation.problem_level": "Un nivel tiene de {min} a {max} caracteres.",
+  "p.deescalation.refused_level_forbidden":
+    "Rechazado: solo el patrocinador o un administrador puede registrar el nivel de escalada.",
+  "p.deescalation.criteria_heading": "Criterios para bajar",
+  "p.deescalation.criteria_says":
+    "Un criterio se añade y nunca se edita ni se retira. Su evidencia se registra para un trimestre terminado, y cuenta el registro más reciente de ese trimestre.",
+  "p.deescalation.criteria_none": "Todavía no hay criterios.",
+  "p.deescalation.evidence_of": "Evidencia de: {criterion}",
+  "p.deescalation.evidence_link": "Evidencia",
+  "p.deescalation.add_criterion_heading": "Añadir un criterio",
+  "p.deescalation.f_criterion": "Criterio (de {min} a {max} caracteres)",
+  "p.deescalation.add_criterion": "Añadir el criterio",
+  "p.deescalation.criterion_added": "Criterio añadido.",
+  "p.deescalation.problem_criterion":
+    "Un criterio tiene de {min} a {max} caracteres.",
+  "p.deescalation.evidence_heading": "Registrar evidencia",
+  "p.deescalation.evidence_says":
+    "Elija un criterio y un trimestre terminado (un trimestre en curso no se puede registrar), indique si se cumplió y escriba una nota de al menos {min} caracteres. Un enlace es opcional: una dirección http o https sin espacios, de hasta {max} caracteres.",
+  "p.deescalation.f_ev_criterion": "Criterio",
+  "p.deescalation.f_ev_quarter": "Trimestre terminado",
+  "p.deescalation.f_ev_met": "¿Se cumplió?",
+  "p.deescalation.f_ev_note": "Nota (al menos {min} caracteres)",
+  "p.deescalation.f_ev_link": "Enlace a la evidencia (opcional)",
+  "p.deescalation.save_evidence": "Registrar la evidencia",
+  "p.deescalation.evidence_saved": "Evidencia registrada para {quarter}.",
+  "p.deescalation.problem_criterion_choose":
+    "Añada primero un criterio y después registre su evidencia.",
+  "p.deescalation.problem_quarter": "Elija un trimestre terminado.",
+  "p.deescalation.problem_quarter_unfinished":
+    "Ese trimestre no ha terminado, así que todavía no se puede registrar.",
+  "p.deescalation.problem_met": "Indique si se cumplió el criterio.",
+  "p.deescalation.problem_note":
+    "Hace falta una nota de al menos {min} caracteres.",
+  "p.deescalation.problem_link":
+    "Un enlace es una dirección http o https sin espacios, de hasta {max} caracteres.",
+  "p.deescalation.refused_evidence":
+    "Rechazado: el trimestre debe haber terminado, la nota debe tener al menos cinco caracteres y un enlace debe ser una dirección http o https sin espacios.",
+  "p.deescalation.refused_gone":
+    "Ese registro ya no existe. Vuelva a cargar la página.",
+  "p.deescalation.scorecards_heading": "Cuadros de mando",
+  "p.deescalation.scorecards_says":
+    "Un cuadro de mando es un conjunto con nombre de indicadores clave, leído por trimestre terminado. Un indicador clave se cumple en un trimestre cuando su lectura más reciente en ese trimestre alcanza o mejora su objetivo; un trimestre sin lectura falta, lo que no es lo mismo que no cumplido.",
+  "p.deescalation.scorecards_none": "Todavía no hay cuadros de mando.",
+  "p.deescalation.could_not_load_scorecards":
+    "No se pudieron cargar los cuadros de mando.",
+  "p.deescalation.col_scorecard": "Cuadro de mando",
+  "p.deescalation.col_tracker": "Lo lee el seguimiento",
+  "p.deescalation.is_tracker": "Sí, el que lee el seguimiento",
+  "p.deescalation.not_tracker": "No lo lee",
+  "p.deescalation.add_scorecard_heading": "Añadir un cuadro de mando",
+  "p.deescalation.add_scorecard_says":
+    "Un nombre de {min} a {max} caracteres que no esté ya en uso (sin distinguir mayúsculas). Como mucho un cuadro de mando es el que lee el seguimiento.",
+  "p.deescalation.f_name": "Nombre",
+  "p.deescalation.f_for_tracker": "El que lee el seguimiento",
+  "p.deescalation.add_scorecard": "Añadir el cuadro de mando",
+  "p.deescalation.scorecard_added": "Cuadro de mando {name} añadido.",
+  "p.deescalation.problem_name":
+    "El nombre de un cuadro de mando tiene de {min} a {max} caracteres.",
+  "p.deescalation.problem_name_taken":
+    "Ya hay un cuadro de mando con ese nombre.",
+  "p.deescalation.problem_tracker_taken":
+    "El cuadro de mando {name} ya es el que lee el seguimiento.",
+  "p.deescalation.refused_create_conflict_tracker":
+    "Rechazado: ya hay un cuadro de mando con ese nombre, u otro ya es el que lee el seguimiento.",
+  "p.deescalation.scorecard_heading": "Un cuadro de mando por trimestre",
+  "p.deescalation.f_scorecard": "Cuadro de mando",
+  "p.deescalation.choose_scorecard": "Elija un cuadro de mando",
+  "p.deescalation.could_not_load_scorecard":
+    "No se pudo cargar el cuadro de mando.",
+  "p.deescalation.scorecard_says":
+    "Cada indicador clave por trimestre terminado: cumplido, no cumplido o nada registrado.",
+  "p.deescalation.scorecard_kpis_label":
+    "Indicadores clave de {name}, por trimestre",
+  "p.deescalation.scorecard_quarters_label":
+    "Cada trimestre del cuadro de mando",
+  "p.deescalation.col_kpi": "Indicador clave",
+  "p.deescalation.col_target": "Objetivo",
+  "p.deescalation.target_at_least": "al menos {value} {unit}",
+  "p.deescalation.target_at_most": "como mucho {value} {unit}",
+  "p.deescalation.no_kpis":
+    "Este cuadro de mando no tiene indicadores clave que usted pueda leer.",
+  "p.deescalation.unit_percent": "por ciento",
+  "p.deescalation.unit_count": "un recuento",
+  "p.deescalation.kpis_heading": "Elegir sus indicadores clave (KPI)",
+  "p.deescalation.kpis_says":
+    "Marque los indicadores clave que tiene este cuadro de mando, como mucho {max}. Guardar sustituye el conjunto; uno de un plan que usted no puede leer se queda en el cuadro.",
+  "p.deescalation.f_kpis": "Indicadores clave del cuadro de mando",
+  "p.deescalation.kpis_none":
+    "No hay indicadores clave que elegir. Añádalos en la página de indicadores clave o desde la plantilla de abajo.",
+  "p.deescalation.save_kpis": "Guardar los indicadores clave",
+  "p.deescalation.kpis_saved_one":
+    "El cuadro de mando tiene ahora {n} indicador clave.",
+  "p.deescalation.kpis_saved_other":
+    "El cuadro de mando tiene ahora {n} indicadores clave.",
+  "p.deescalation.problem_kpis_max":
+    "Un cuadro de mando tiene como mucho {max} indicadores clave.",
+  "p.deescalation.refused_kpis":
+    "Rechazado: cada uno debe ser un indicador clave que usted pueda leer, y un cuadro de mando tiene como mucho 60.",
+  "p.deescalation.template_heading": "Añadir medidas desde la plantilla",
+  "p.deescalation.template_says":
+    "Un conjunto inicial, ofrecido y no aplicado. No tiene objetivos: usted fija cada objetivo y cada línea roja, y las medidas que elija pasan a ser indicadores clave de este cuadro de mando.",
+  "p.deescalation.template_rule":
+    "Donde más es mejor, la línea roja debe estar por debajo del objetivo; donde menos es mejor, por encima. Los objetivos y las líneas rojas son números enteros.",
+  "p.deescalation.could_not_load_template": "No se pudo cargar la plantilla.",
+  "p.deescalation.higher_better": "Más es mejor",
+  "p.deescalation.lower_better": "Menos es mejor",
+  "p.deescalation.unit": "medido como {unit}",
+  "p.deescalation.f_pick": "Añadir {measure}",
+  "p.deescalation.f_target": "Objetivo",
+  "p.deescalation.f_red": "Línea roja",
+  "p.deescalation.add_measures": "Añadir las medidas",
+  "p.deescalation.measures_added_one": "{n} medida añadida al cuadro de mando.",
+  "p.deescalation.measures_added_other":
+    "{n} medidas añadidas al cuadro de mando.",
+  "p.deescalation.problem_pick_one": "Elija al menos una medida.",
+  "p.deescalation.problem_whole":
+    "{measure}: el objetivo y la línea roja son números enteros.",
+  "p.deescalation.problem_red_higher":
+    "{measure}: más es mejor, así que la línea roja debe estar por debajo del objetivo.",
+  "p.deescalation.problem_red_lower":
+    "{measure}: menos es mejor, así que la línea roja debe estar por encima del objetivo.",
+  "p.deescalation.problem_not_in_template":
+    "{measure} no está en la plantilla.",
+  "p.deescalation.refused_template":
+    "Rechazado: compruebe cada objetivo y cada línea roja con la regla de dirección.",
+  "p.deescalation.measure_programmes_with_independent_assurance":
+    "Programas con aseguramiento independiente en el último trimestre",
+  "p.deescalation.measure_milestones_met_on_time":
+    "Hitos cumplidos en su fecha o antes",
+  "p.deescalation.measure_benefits_validated":
+    "Beneficios previstos validados por alguien ajeno al programa",
+  "p.deescalation.measure_red_without_decision":
+    "Programas en rojo sin decisión registrada",
+  "p.deescalation.measure_open_critical_issues":
+    "Incidencias abiertas de gravedad crítica",
+  "p.deescalation.measure_change_requests_waiting":
+    "Solicitudes de cambio que esperan más de 30 días una decisión",
 };

@@ -76,6 +76,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/deescalation",
+      get label() {
+        return t("p.deescalation.nav");
+      },
+    },
+    {
       href: "/portfolio-map",
       get label() {
         return t("p.aims.title");

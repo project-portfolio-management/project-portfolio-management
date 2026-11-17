@@ -9,6 +9,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — scorecards and de-escalation (NC-1 slice 11, EX-10, 2026-11-17)
+
+- A new page, `/deescalation`, in the navigation: the de-escalation tracker (the escalation level as the sponsor set
+  it, recorded by the sponsor or an administrator; the run of finished quarters met against the rule; each quarter's
+  state as a word and a symbol with the reasons the page builds from the detail; criteria and their evidence by
+  finished quarter) and the scorecards (add one, perhaps as the one the tracker reads; see its key measures by quarter;
+  choose its key measures; add measures from the template with targets and red lines, the direction rule said first).
+  Every rule is said first and nothing is sent for no change. No service sentence is shown (the quarter's `because`,
+  the template's names, the service's notes). Ten client methods, `src/lib/deescalation-view.ts`, `DeescalationTracker.svelte`,
+  `Scorecards.svelte`, `KpiQuarterTable.svelte`; 143 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/deescalation-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/deescalation.spec.ts`
+  (five, with Welsh and axe).
+- **Not done:** retiring or renaming a scorecard, a scorecard's number of quarters, editing a criterion (the service
+  has no routes for the first and last; the page uses the service's four quarters). **Not verified:** against a real
+  service, and with a caller who holds the sponsor role (the 403 is stubbed).
+
 ### Added — triage, thresholds and threshold decisions (NC-1 slice 11, EX-7, 2026-11-17)
 
 - `/plans/[pid]/programme` records a programme's triage and sets, shows and removes its three thresholds;

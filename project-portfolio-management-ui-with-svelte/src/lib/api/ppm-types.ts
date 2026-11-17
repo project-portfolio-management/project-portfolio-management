@@ -4040,3 +4040,91 @@ export interface ThresholdSweepRow {
     | "suppressed_by_override";
   exception_pid?: string;
 }
+
+// ---- scorecards and the de-escalation tracker (EX-10, NC-1 slice 11) ----
+
+/**
+ * How a finished quarter stands. `because` is the service's own English (`"X: nothing recorded"`) and is never
+ * shown: the page names what is not met or missing from the detail (`deescalation-view.ts`, `quarterReasons`).
+ */
+export type QuarterState =
+  | { state: "met" }
+  | { state: "not_met"; because: string[] }
+  | { state: "missing"; because: string[] };
+
+/** A quarter's label (`2026-Q3`) and its state. */
+export interface QuarterStanding {
+  quarter: string;
+  state: QuarterState;
+}
+
+/** One scorecard in `GET /api/scorecards`. */
+export interface ScorecardRow {
+  pid: string;
+  name: string;
+  for_deescalation: boolean;
+  active: boolean;
+}
+
+/** One KPI of a scorecard by finished quarter; `met` is null when nothing was recorded in the quarter. */
+export interface ScorecardKpi {
+  kpi_pid: string;
+  name: string;
+  unit: string | null;
+  direction: KpiDirection;
+  target_value: number;
+  quarters: Array<{
+    quarter: string;
+    value: number | null;
+    observed_on: string | null;
+    met: boolean | null;
+  }>;
+}
+
+/** `GET /api/scorecards/{pid}?quarters=N`. `note` is the service's English and is not shown. */
+export interface ScorecardView {
+  scorecard: { pid: string; name: string; for_deescalation: boolean };
+  quarters: string[];
+  kpis: ScorecardKpi[];
+  kpis_you_may_not_read: number;
+  by_quarter: QuarterStanding[];
+  note?: string;
+}
+
+/** One measure of `GET /api/scorecard-template`: no target. `name` is English and is not shown. */
+export interface TemplateMeasure {
+  key: string;
+  name: string;
+  direction: KpiDirection;
+  unit: string;
+}
+
+/** A de-escalation criterion with the latest evidence per quarter (`met` null: nothing recorded). */
+export interface DeescalationCriterion {
+  pid: string;
+  criterion: string;
+  quarters: Array<{
+    quarter: string;
+    met: boolean | null;
+    link: string | null;
+    note: string | null;
+  }>;
+}
+
+/** `GET /api/deescalation`. `level_note` is the service's English and is not shown. */
+export interface DeescalationTracker {
+  level: { level: string; set_on: string; note: string | null } | null;
+  level_note?: string;
+  scorecard: { pid: string; name: string } | null;
+  required_quarters: number;
+  required_quarters_setting_unusable: boolean;
+  consecutive_quarters_met: number;
+  rule_satisfied: boolean;
+  by_quarter: QuarterStanding[];
+  criteria_count: number;
+  kpis_you_may_not_read: number;
+  kpis: ScorecardKpi[];
+  criteria: DeescalationCriterion[];
+  /** Newest first. */
+  level_history: Array<{ level: string; set_on: string }>;
+}

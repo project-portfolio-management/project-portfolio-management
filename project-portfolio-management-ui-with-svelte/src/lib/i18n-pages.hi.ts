@@ -6271,4 +6271,186 @@ export const PAGES_HI: Record<PageKey, string> = {
     "आपने एक दिन में अनुमत अधिकतम आपातकालीन पहुँच खोल ली है (पाँच, पिछले 24 घंटों में गिनी गई)।",
   "p.access.refused_revoke_not_found":
     "वह अनुदान नहीं मिला, या उसे समाप्त करना आपका काम नहीं है।",
+  "p.deescalation.nav": "स्कोरकार्ड और डी-एस्केलेशन",
+  "p.deescalation.title": "स्कोरकार्ड और डी-एस्केलेशन — पीपीएम",
+  "p.deescalation.h1": "स्कोरकार्ड और डी-एस्केलेशन",
+  "p.deescalation.lede":
+    "प्रायोजक द्वारा तय किया गया एस्केलेशन स्तर, नीचे आने के मानदंड और हर तिमाही उनके साक्ष्य, और वे स्कोरकार्ड जिनके मुख्य माप हर पूरी हुई तिमाही के अनुसार पढ़े जाते हैं।",
+  "p.deescalation.tracker_heading": "डी-एस्केलेशन ट्रैकर",
+  "p.deescalation.tracker_says":
+    "स्तर वैसा ही दर्ज होता है जैसा प्रायोजक ने तय किया। इसकी गणना यहाँ कभी नहीं होती, और इस पृष्ठ पर कुछ भी इसे नहीं बदलता: पूरी हुई तिमाहियों का क्रम निर्णय लेने वाले व्यक्ति के सामने रखा जाता है।",
+  "p.deescalation.loading": "लोड हो रहा है…",
+  "p.deescalation.could_not_load": "डी-एस्केलेशन ट्रैकर लोड नहीं हो सका।",
+  "p.deescalation.could_not_save": "बदलाव सहेजा नहीं गया।",
+  "p.deescalation.level_heading": "एस्केलेशन स्तर",
+  "p.deescalation.level_now": "स्तर {level}, {date} को तय किया गया।",
+  "p.deescalation.level_note": "प्रायोजक की टिप्पणी: {note}",
+  "p.deescalation.level_none": "अभी तक कोई एस्केलेशन स्तर दर्ज नहीं किया गया है।",
+  "p.deescalation.level_history": "पिछले स्तर",
+  "p.deescalation.level_history_item": "{level}, {date} को तय किया गया",
+  "p.deescalation.run_heading": "लगातार पूरी हुई तिमाहियाँ",
+  "p.deescalation.run_one":
+    "लगातार {n} पूरी हुई तिमाही में लक्ष्य मिला, नियम द्वारा माँगी गई {need} में से।",
+  "p.deescalation.run_other":
+    "लगातार {n} पूरी हुई तिमाहियों में लक्ष्य मिला, नियम द्वारा माँगी गई {need} में से।",
+  "p.deescalation.rule_satisfied":
+    "नियम पूरा हो गया है। इस पर विचार करना प्रायोजक का काम है; स्तर अपने आप नहीं बदलता।",
+  "p.deescalation.rule_not_satisfied": "नियम अभी पूरा नहीं हुआ है।",
+  "p.deescalation.setting_unusable":
+    "नियम कितनी तिमाहियाँ माँगता है, इसकी परिनियोजन सेटिंग का उपयोग नहीं हो सका, इसलिए डिफ़ॉल्ट {n} लागू है।",
+  "p.deescalation.reads_scorecard": "ट्रैकर स्कोरकार्ड {name} पढ़ता है।",
+  "p.deescalation.reads_no_scorecard":
+    "कोई भी स्कोरकार्ड वह नहीं है जिसे ट्रैकर पढ़ता है, इसलिए केवल मानदंड गिने जाते हैं। नीचे जोड़ते समय किसी एक को ऐसा चिह्नित करें।",
+  "p.deescalation.hidden_kpis_one":
+    "इस स्कोरकार्ड का {n} मुख्य माप ऐसी योजना का है जिसे आप नहीं पढ़ सकते: वह यहाँ न दिखाया जाता है, न गिना जाता है।",
+  "p.deescalation.hidden_kpis_other":
+    "इस स्कोरकार्ड के {n} मुख्य माप ऐसी योजनाओं के हैं जिन्हें आप नहीं पढ़ सकते: वे यहाँ न दिखाए जाते हैं, न गिने जाते हैं।",
+  "p.deescalation.quarters_label": "हर पूरी हुई तिमाही",
+  "p.deescalation.col_quarter": "तिमाही",
+  "p.deescalation.col_state": "स्थिति",
+  "p.deescalation.col_reasons": "क्यों",
+  "p.deescalation.state_met": "पूरा हुआ",
+  "p.deescalation.state_not_met": "पूरा नहीं हुआ",
+  "p.deescalation.state_missing": "कुछ दर्ज नहीं",
+  "p.deescalation.state_with_value": "{state} (मान {value})",
+  "p.deescalation.reason_all_met": "हर मुख्य माप और हर मानदंड पूरा हुआ।",
+  "p.deescalation.reason_nothing":
+    "मापने के लिए कुछ नहीं है: न कोई मुख्य माप, न कोई मानदंड।",
+  "p.deescalation.reason_no_kpis":
+    "स्कोरकार्ड में ऐसा कोई मुख्य माप नहीं है जिसे आप पढ़ सकें।",
+  "p.deescalation.reason_not_met": "पूरा नहीं हुआ: {list}।",
+  "p.deescalation.reason_missing": "इनके लिए कुछ दर्ज नहीं: {list}।",
+  "p.deescalation.quarter": "तिमाही {q}, {year}",
+  "p.deescalation.quarter_standing": "{quarter} — {state}। {reasons}",
+  "p.deescalation.tracker_kpis_label": "ट्रैकर का स्कोरकार्ड, तिमाही के अनुसार",
+  "p.deescalation.set_level_heading": "एस्केलेशन स्तर दर्ज करें",
+  "p.deescalation.set_level_says":
+    "केवल प्रायोजक (sponsor भूमिका वाला व्यक्ति) या कोई प्रशासक स्तर दर्ज कर सकता है, जैसा उन्होंने तय किया है। स्तर {min} से {max} अक्षरों का होता है; टिप्पणी वैकल्पिक है।",
+  "p.deescalation.f_level": "स्तर",
+  "p.deescalation.f_level_note": "टिप्पणी (वैकल्पिक)",
+  "p.deescalation.save_level": "स्तर दर्ज करें",
+  "p.deescalation.level_saved": "स्तर {level} दर्ज किया गया।",
+  "p.deescalation.unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.deescalation.problem_level": "स्तर {min} से {max} अक्षरों का होता है।",
+  "p.deescalation.refused_level_forbidden":
+    "अस्वीकृत: केवल प्रायोजक या कोई प्रशासक एस्केलेशन स्तर दर्ज कर सकता है।",
+  "p.deescalation.criteria_heading": "नीचे आने के मानदंड",
+  "p.deescalation.criteria_says":
+    "मानदंड जोड़ा जाता है और कभी संपादित या हटाया नहीं जाता। इसका साक्ष्य किसी पूरी हुई तिमाही के लिए दर्ज होता है, और उस तिमाही का सबसे नया रिकॉर्ड ही गिना जाता है।",
+  "p.deescalation.criteria_none": "अभी कोई मानदंड नहीं।",
+  "p.deescalation.evidence_of": "इसके साक्ष्य: {criterion}",
+  "p.deescalation.evidence_link": "साक्ष्य",
+  "p.deescalation.add_criterion_heading": "मानदंड जोड़ें",
+  "p.deescalation.f_criterion": "मानदंड ({min} से {max} अक्षर)",
+  "p.deescalation.add_criterion": "मानदंड जोड़ें",
+  "p.deescalation.criterion_added": "मानदंड जोड़ा गया।",
+  "p.deescalation.problem_criterion": "मानदंड {min} से {max} अक्षरों का होता है।",
+  "p.deescalation.evidence_heading": "साक्ष्य दर्ज करें",
+  "p.deescalation.evidence_says":
+    "एक मानदंड और एक पूरी हुई तिमाही चुनें (चल रही तिमाही दर्ज नहीं की जा सकती), बताएँ कि वह पूरा हुआ या नहीं, और कम से कम {min} अक्षरों की टिप्पणी दें। लिंक वैकल्पिक है: बिना रिक्त स्थान का http या https पता, {max} अक्षरों तक।",
+  "p.deescalation.f_ev_criterion": "मानदंड",
+  "p.deescalation.f_ev_quarter": "पूरी हुई तिमाही",
+  "p.deescalation.f_ev_met": "क्या यह पूरा हुआ?",
+  "p.deescalation.f_ev_note": "टिप्पणी (कम से कम {min} अक्षर)",
+  "p.deescalation.f_ev_link": "साक्ष्य का लिंक (वैकल्पिक)",
+  "p.deescalation.save_evidence": "साक्ष्य दर्ज करें",
+  "p.deescalation.evidence_saved": "{quarter} के लिए साक्ष्य दर्ज किया गया।",
+  "p.deescalation.problem_criterion_choose":
+    "पहले एक मानदंड जोड़ें, फिर उसका साक्ष्य दर्ज करें।",
+  "p.deescalation.problem_quarter": "एक पूरी हुई तिमाही चुनें।",
+  "p.deescalation.problem_quarter_unfinished":
+    "वह तिमाही अभी पूरी नहीं हुई है, इसलिए उसे अभी दर्ज नहीं किया जा सकता।",
+  "p.deescalation.problem_met": "बताएँ कि मानदंड पूरा हुआ या नहीं।",
+  "p.deescalation.problem_note": "कम से कम {min} अक्षरों की टिप्पणी चाहिए।",
+  "p.deescalation.problem_link":
+    "लिंक बिना रिक्त स्थान का http या https पता होता है, {max} अक्षरों तक।",
+  "p.deescalation.refused_evidence":
+    "अस्वीकृत: तिमाही पूरी हो चुकी होनी चाहिए, टिप्पणी कम से कम पाँच अक्षरों की होनी चाहिए, और लिंक बिना रिक्त स्थान का http या https पता होना चाहिए।",
+  "p.deescalation.refused_gone": "वह रिकॉर्ड अब मौजूद नहीं है। पृष्ठ फिर से लोड करें।",
+  "p.deescalation.scorecards_heading": "स्कोरकार्ड",
+  "p.deescalation.scorecards_says":
+    "स्कोरकार्ड मुख्य मापों का एक नामित समूह है, जिसे हर पूरी हुई तिमाही के अनुसार पढ़ा जाता है। कोई मुख्य माप किसी तिमाही में पूरा होता है जब उस तिमाही की उसकी सबसे नई रीडिंग उसके लक्ष्य पर या उससे बेहतर हो; बिना रीडिंग वाली तिमाही अनुपलब्ध है, जो पूरा न होने के समान नहीं है।",
+  "p.deescalation.scorecards_none": "अभी कोई स्कोरकार्ड नहीं।",
+  "p.deescalation.could_not_load_scorecards": "स्कोरकार्ड लोड नहीं हो सके।",
+  "p.deescalation.col_scorecard": "स्कोरकार्ड का नाम",
+  "p.deescalation.col_tracker": "ट्रैकर द्वारा पढ़ा गया",
+  "p.deescalation.is_tracker": "हाँ, जिसे ट्रैकर पढ़ता है",
+  "p.deescalation.not_tracker": "नहीं",
+  "p.deescalation.add_scorecard_heading": "स्कोरकार्ड जोड़ें",
+  "p.deescalation.add_scorecard_says":
+    "{min} से {max} अक्षरों का नाम, जो पहले से उपयोग में न हो (बड़े-छोटे अक्षरों का भेद किए बिना)। अधिक से अधिक एक स्कोरकार्ड वह होता है जिसे ट्रैकर पढ़ता है।",
+  "p.deescalation.f_name": "नाम",
+  "p.deescalation.f_for_tracker": "वह जिसे ट्रैकर पढ़ता है",
+  "p.deescalation.add_scorecard": "स्कोरकार्ड जोड़ें",
+  "p.deescalation.scorecard_added": "स्कोरकार्ड {name} जोड़ा गया।",
+  "p.deescalation.problem_name":
+    "स्कोरकार्ड का नाम {min} से {max} अक्षरों का होता है।",
+  "p.deescalation.problem_name_taken": "उस नाम का स्कोरकार्ड पहले से है।",
+  "p.deescalation.problem_tracker_taken":
+    "स्कोरकार्ड {name} पहले से वह है जिसे ट्रैकर पढ़ता है।",
+  "p.deescalation.refused_create_conflict_tracker":
+    "अस्वीकृत: उस नाम का स्कोरकार्ड पहले से है, या कोई दूसरा पहले से वह है जिसे ट्रैकर पढ़ता है।",
+  "p.deescalation.scorecard_heading": "तिमाही के अनुसार एक स्कोरकार्ड",
+  "p.deescalation.f_scorecard": "कौन-सा स्कोरकार्ड",
+  "p.deescalation.choose_scorecard": "स्कोरकार्ड चुनें",
+  "p.deescalation.could_not_load_scorecard": "स्कोरकार्ड लोड नहीं हो सका।",
+  "p.deescalation.scorecard_says":
+    "हर मुख्य माप, हर पूरी हुई तिमाही के अनुसार: पूरा हुआ, पूरा नहीं हुआ, या कुछ दर्ज नहीं।",
+  "p.deescalation.scorecard_kpis_label": "{name} के मुख्य माप, तिमाही के अनुसार",
+  "p.deescalation.scorecard_quarters_label": "स्कोरकार्ड की हर तिमाही",
+  "p.deescalation.col_kpi": "मुख्य माप",
+  "p.deescalation.col_target": "लक्ष्य",
+  "p.deescalation.target_at_least": "कम से कम {value} {unit}",
+  "p.deescalation.target_at_most": "अधिक से अधिक {value} {unit}",
+  "p.deescalation.no_kpis": "इस स्कोरकार्ड में ऐसे कोई मुख्य माप नहीं हैं जिन्हें आप पढ़ सकें।",
+  "p.deescalation.unit_percent": "प्रतिशत",
+  "p.deescalation.unit_count": "गिनती",
+  "p.deescalation.kpis_heading": "इसके मुख्य माप (KPI) चुनें",
+  "p.deescalation.kpis_says":
+    "वे मुख्य माप चुनें जो इस स्कोरकार्ड में हों, अधिक से अधिक {max}। सहेजने पर समूह बदल जाता है; ऐसी योजना का माप जिसे आप नहीं पढ़ सकते, कार्ड पर बना रहता है।",
+  "p.deescalation.f_kpis": "स्कोरकार्ड पर मुख्य माप",
+  "p.deescalation.kpis_none":
+    "चुनने के लिए कोई मुख्य माप नहीं है। उन्हें मुख्य माप पृष्ठ पर, या नीचे दिए टेम्पलेट से जोड़ें।",
+  "p.deescalation.save_kpis": "मुख्य माप सहेजें",
+  "p.deescalation.kpis_saved_one": "स्कोरकार्ड में अब {n} मुख्य माप है।",
+  "p.deescalation.kpis_saved_other": "स्कोरकार्ड में अब {n} मुख्य माप हैं।",
+  "p.deescalation.problem_kpis_max":
+    "एक स्कोरकार्ड में अधिक से अधिक {max} मुख्य माप होते हैं।",
+  "p.deescalation.refused_kpis":
+    "अस्वीकृत: हर एक ऐसा मुख्य माप होना चाहिए जिसे आप पढ़ सकें, और एक स्कोरकार्ड में अधिक से अधिक 60 होते हैं।",
+  "p.deescalation.template_heading": "टेम्पलेट से माप जोड़ें",
+  "p.deescalation.template_says":
+    "एक शुरुआती समूह, जो प्रस्तुत है और लागू नहीं किया गया। इसमें कोई लक्ष्य नहीं है: आप हर लक्ष्य और लाल रेखा तय करते हैं, और आपके चुने माप इस स्कोरकार्ड के मुख्य माप बन जाते हैं।",
+  "p.deescalation.template_rule":
+    "जहाँ अधिक बेहतर है, वहाँ लाल रेखा लक्ष्य से नीचे होनी चाहिए; जहाँ कम बेहतर है, वहाँ ऊपर। लक्ष्य और लाल रेखाएँ पूर्ण संख्याएँ होती हैं।",
+  "p.deescalation.could_not_load_template": "टेम्पलेट लोड नहीं हो सका।",
+  "p.deescalation.higher_better": "अधिक बेहतर है",
+  "p.deescalation.lower_better": "कम बेहतर है",
+  "p.deescalation.unit": "{unit} में मापा गया",
+  "p.deescalation.f_pick": "{measure} जोड़ें",
+  "p.deescalation.f_target": "लक्ष्य",
+  "p.deescalation.f_red": "लाल रेखा",
+  "p.deescalation.add_measures": "माप जोड़ें",
+  "p.deescalation.measures_added_one": "{n} माप स्कोरकार्ड में जोड़ा गया।",
+  "p.deescalation.measures_added_other": "{n} माप स्कोरकार्ड में जोड़े गए।",
+  "p.deescalation.problem_pick_one": "कम से कम एक माप चुनें।",
+  "p.deescalation.problem_whole": "{measure}: लक्ष्य और लाल रेखा पूर्ण संख्याएँ हैं।",
+  "p.deescalation.problem_red_higher":
+    "{measure}: अधिक बेहतर है, इसलिए लाल रेखा लक्ष्य से नीचे होनी चाहिए।",
+  "p.deescalation.problem_red_lower":
+    "{measure}: कम बेहतर है, इसलिए लाल रेखा लक्ष्य से ऊपर होनी चाहिए।",
+  "p.deescalation.problem_not_in_template": "{measure} टेम्पलेट में नहीं है।",
+  "p.deescalation.refused_template":
+    "अस्वीकृत: हर लक्ष्य और लाल रेखा को दिशा के नियम से जाँचें।",
+  "p.deescalation.measure_programmes_with_independent_assurance":
+    "पिछली तिमाही में स्वतंत्र आश्वासन वाले कार्यक्रम",
+  "p.deescalation.measure_milestones_met_on_time":
+    "अपनी तारीख पर या उससे पहले पूरे हुए माइलस्टोन",
+  "p.deescalation.measure_benefits_validated":
+    "कार्यक्रम के बाहर के किसी व्यक्ति द्वारा सत्यापित नियोजित लाभ",
+  "p.deescalation.measure_red_without_decision":
+    "लाल स्थिति वाले कार्यक्रम जिनका कोई निर्णय दर्ज नहीं",
+  "p.deescalation.measure_open_critical_issues": "गंभीर स्तर के खुले मुद्दे",
+  "p.deescalation.measure_change_requests_waiting":
+    "30 दिनों से अधिक समय से निर्णय की प्रतीक्षा कर रहे परिवर्तन अनुरोध",
 };

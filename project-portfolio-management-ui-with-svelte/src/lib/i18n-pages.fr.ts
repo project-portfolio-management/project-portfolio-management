@@ -6669,4 +6669,205 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Vous avez ouvert le maximum d'accès d'urgence autorisé en une journée (cinq, comptés sur les dernières 24 heures).",
   "p.access.refused_revoke_not_found":
     "Cet accès est introuvable, ou il ne vous revient pas d'y mettre fin.",
+  "p.deescalation.nav": "Tableaux de bord et désescalade",
+  "p.deescalation.title": "Tableaux de bord et désescalade — PPM",
+  "p.deescalation.h1": "Tableaux de bord et désescalade",
+  "p.deescalation.lede":
+    "Le niveau d'escalade tel que le commanditaire l'a fixé, les critères pour redescendre avec leurs preuves à chaque trimestre, et les tableaux de bord dont les indicateurs clés sont lus par trimestre terminé.",
+  "p.deescalation.tracker_heading": "Le suivi de la désescalade",
+  "p.deescalation.tracker_says":
+    "Le niveau est enregistré tel que le commanditaire l'a fixé. Il n'est jamais calculé ici, et rien sur cette page ne le modifie : la série de trimestres atteints est proposée à la personne qui décide.",
+  "p.deescalation.loading": "Chargement…",
+  "p.deescalation.could_not_load":
+    "Le suivi de la désescalade n'a pas pu être chargé.",
+  "p.deescalation.could_not_save": "La modification n'a pas été enregistrée.",
+  "p.deescalation.level_heading": "Niveau d'escalade",
+  "p.deescalation.level_now": "Niveau {level}, fixé le {date}.",
+  "p.deescalation.level_note": "Note du commanditaire : {note}",
+  "p.deescalation.level_none":
+    "Aucun niveau d'escalade n'a encore été enregistré.",
+  "p.deescalation.level_history": "Niveaux précédents",
+  "p.deescalation.level_history_item": "{level}, fixé le {date}",
+  "p.deescalation.run_heading": "Trimestres atteints d'affilée",
+  "p.deescalation.run_one":
+    "{n} trimestre terminé atteint d'affilée, sur les {need} que demande la règle.",
+  "p.deescalation.run_other":
+    "{n} trimestres terminés atteints d'affilée, sur les {need} que demande la règle.",
+  "p.deescalation.rule_satisfied":
+    "La règle est satisfaite. C'est au commanditaire d'en juger ; le niveau ne change pas de lui-même.",
+  "p.deescalation.rule_not_satisfied": "La règle n'est pas encore satisfaite.",
+  "p.deescalation.setting_unusable":
+    "Le réglage de l'installation sur le nombre de trimestres que demande la règle n'a pas pu être utilisé ; la valeur par défaut de {n} s'applique donc.",
+  "p.deescalation.reads_scorecard": "Le suivi lit le tableau de bord {name}.",
+  "p.deescalation.reads_no_scorecard":
+    "Aucun tableau de bord n'est celui que lit le suivi ; seuls les critères comptent donc. Marquez-en un comme tel en l'ajoutant, ci-dessous.",
+  "p.deescalation.hidden_kpis_one":
+    "{n} indicateur clé de ce tableau de bord appartient à un plan que vous ne pouvez pas lire : il n'est ni affiché ni compté ici.",
+  "p.deescalation.hidden_kpis_other":
+    "{n} indicateurs clés de ce tableau de bord appartiennent à des plans que vous ne pouvez pas lire : ils ne sont ni affichés ni comptés ici.",
+  "p.deescalation.quarters_label": "Chaque trimestre terminé",
+  "p.deescalation.col_quarter": "Trimestre",
+  "p.deescalation.col_state": "Situation",
+  "p.deescalation.col_reasons": "Pourquoi",
+  "p.deescalation.state_met": "Atteint",
+  "p.deescalation.state_not_met": "Non atteint",
+  "p.deescalation.state_missing": "Rien d'enregistré",
+  "p.deescalation.state_with_value": "{state} (valeur {value})",
+  "p.deescalation.reason_all_met":
+    "Chaque indicateur clé et chaque critère ont été atteints.",
+  "p.deescalation.reason_nothing":
+    "Il n'y a rien à mesurer : aucun indicateur clé et aucun critère.",
+  "p.deescalation.reason_no_kpis":
+    "Le tableau de bord n'a aucun indicateur clé que vous pouvez lire.",
+  "p.deescalation.reason_not_met": "Non atteints : {list}.",
+  "p.deescalation.reason_missing": "Rien d'enregistré pour : {list}.",
+  "p.deescalation.quarter": "T{q} {year}",
+  "p.deescalation.quarter_standing": "{quarter} : {state}. {reasons}",
+  "p.deescalation.tracker_kpis_label":
+    "Le tableau de bord du suivi, par trimestre",
+  "p.deescalation.set_level_heading": "Enregistrer le niveau d'escalade",
+  "p.deescalation.set_level_says":
+    "Seul le commanditaire (une personne ayant le rôle sponsor) ou un administrateur peut enregistrer le niveau, tel qu'il l'a fixé. Un niveau compte de {min} à {max} caractères ; la note est facultative.",
+  "p.deescalation.f_level": "Niveau",
+  "p.deescalation.f_level_note": "Note (facultative)",
+  "p.deescalation.save_level": "Enregistrer le niveau",
+  "p.deescalation.level_saved": "Niveau {level} enregistré.",
+  "p.deescalation.unchanged": "Rien n'a changé, donc rien n'a été envoyé.",
+  "p.deescalation.problem_level":
+    "Un niveau compte de {min} à {max} caractères.",
+  "p.deescalation.refused_level_forbidden":
+    "Refusé : seul le commanditaire ou un administrateur peut enregistrer le niveau d'escalade.",
+  "p.deescalation.criteria_heading": "Critères pour redescendre",
+  "p.deescalation.criteria_says":
+    "Un critère est ajouté et n'est jamais modifié ni retiré. Sa preuve est enregistrée pour un trimestre terminé, et c'est le dernier enregistrement de ce trimestre qui compte.",
+  "p.deescalation.criteria_none": "Aucun critère pour l'instant.",
+  "p.deescalation.evidence_of": "Preuves pour : {criterion}",
+  "p.deescalation.evidence_link": "Preuve",
+  "p.deescalation.add_criterion_heading": "Ajouter un critère",
+  "p.deescalation.f_criterion": "Critère (de {min} à {max} caractères)",
+  "p.deescalation.add_criterion": "Ajouter le critère",
+  "p.deescalation.criterion_added": "Critère ajouté.",
+  "p.deescalation.problem_criterion":
+    "Un critère compte de {min} à {max} caractères.",
+  "p.deescalation.evidence_heading": "Enregistrer une preuve",
+  "p.deescalation.evidence_says":
+    "Choisissez un critère et un trimestre terminé (un trimestre en cours ne peut pas être enregistré), indiquez s'il a été atteint et rédigez une note d'au moins {min} caractères. Un lien est facultatif : une adresse http ou https sans espaces, jusqu'à {max} caractères.",
+  "p.deescalation.f_ev_criterion": "Critère",
+  "p.deescalation.f_ev_quarter": "Trimestre terminé",
+  "p.deescalation.f_ev_met": "A-t-il été atteint ?",
+  "p.deescalation.f_ev_note": "Note (au moins {min} caractères)",
+  "p.deescalation.f_ev_link": "Lien vers la preuve (facultatif)",
+  "p.deescalation.save_evidence": "Enregistrer la preuve",
+  "p.deescalation.evidence_saved": "Preuve enregistrée pour {quarter}.",
+  "p.deescalation.problem_criterion_choose":
+    "Ajoutez d'abord un critère, puis enregistrez sa preuve.",
+  "p.deescalation.problem_quarter": "Choisissez un trimestre terminé.",
+  "p.deescalation.problem_quarter_unfinished":
+    "Ce trimestre n'est pas terminé ; il ne peut donc pas encore être enregistré.",
+  "p.deescalation.problem_met": "Indiquez si le critère a été atteint.",
+  "p.deescalation.problem_note":
+    "Une note d'au moins {min} caractères est nécessaire.",
+  "p.deescalation.problem_link":
+    "Un lien est une adresse http ou https sans espaces, jusqu'à {max} caractères.",
+  "p.deescalation.refused_evidence":
+    "Refusé : le trimestre doit être terminé, la note doit compter au moins cinq caractères et un lien doit être une adresse http ou https sans espaces.",
+  "p.deescalation.refused_gone":
+    "Cet enregistrement n'existe plus. Rechargez la page.",
+  "p.deescalation.scorecards_heading": "Tableaux de bord",
+  "p.deescalation.scorecards_says":
+    "Un tableau de bord est un ensemble nommé d'indicateurs clés, lu par trimestre terminé. Un indicateur clé est atteint dans un trimestre quand sa dernière mesure de ce trimestre atteint ou dépasse sa cible ; un trimestre sans mesure est manquant, ce qui n'est pas la même chose que non atteint.",
+  "p.deescalation.scorecards_none": "Aucun tableau de bord pour l'instant.",
+  "p.deescalation.could_not_load_scorecards":
+    "Les tableaux de bord n'ont pas pu être chargés.",
+  "p.deescalation.col_scorecard": "Tableau de bord",
+  "p.deescalation.col_tracker": "Lu par le suivi",
+  "p.deescalation.is_tracker": "Oui, celui que lit le suivi",
+  "p.deescalation.not_tracker": "Non",
+  "p.deescalation.add_scorecard_heading": "Ajouter un tableau de bord",
+  "p.deescalation.add_scorecard_says":
+    "Un nom de {min} à {max} caractères, pas encore utilisé (sans tenir compte de la casse). Au plus un tableau de bord est celui que lit le suivi.",
+  "p.deescalation.f_name": "Nom",
+  "p.deescalation.f_for_tracker": "Celui que lit le suivi",
+  "p.deescalation.add_scorecard": "Ajouter le tableau de bord",
+  "p.deescalation.scorecard_added": "Tableau de bord {name} ajouté.",
+  "p.deescalation.problem_name":
+    "Le nom d'un tableau de bord compte de {min} à {max} caractères.",
+  "p.deescalation.problem_name_taken": "Un tableau de bord porte déjà ce nom.",
+  "p.deescalation.problem_tracker_taken":
+    "Le tableau de bord {name} est déjà celui que lit le suivi.",
+  "p.deescalation.refused_create_conflict_tracker":
+    "Refusé : un tableau de bord porte déjà ce nom, ou un autre est déjà celui que lit le suivi.",
+  "p.deescalation.scorecard_heading": "Un tableau de bord par trimestre",
+  "p.deescalation.f_scorecard": "Tableau de bord",
+  "p.deescalation.choose_scorecard": "Choisir un tableau de bord",
+  "p.deescalation.could_not_load_scorecard":
+    "Le tableau de bord n'a pas pu être chargé.",
+  "p.deescalation.scorecard_says":
+    "Chaque indicateur clé par trimestre terminé : atteint, non atteint ou rien d'enregistré.",
+  "p.deescalation.scorecard_kpis_label":
+    "Indicateurs clés de {name}, par trimestre",
+  "p.deescalation.scorecard_quarters_label":
+    "Chaque trimestre du tableau de bord",
+  "p.deescalation.col_kpi": "Indicateur clé",
+  "p.deescalation.col_target": "Cible",
+  "p.deescalation.target_at_least": "au moins {value} {unit}",
+  "p.deescalation.target_at_most": "au plus {value} {unit}",
+  "p.deescalation.no_kpis":
+    "Ce tableau de bord n'a aucun indicateur clé que vous pouvez lire.",
+  "p.deescalation.unit_percent": "pour cent",
+  "p.deescalation.unit_count": "un décompte",
+  "p.deescalation.kpis_heading": "Choisir ses indicateurs clés (KPI)",
+  "p.deescalation.kpis_says":
+    "Cochez les indicateurs clés de ce tableau de bord, {max} au plus. Enregistrer remplace l'ensemble ; un indicateur d'un plan que vous ne pouvez pas lire reste sur le tableau.",
+  "p.deescalation.f_kpis": "Indicateurs clés du tableau de bord",
+  "p.deescalation.kpis_none":
+    "Il n'y a aucun indicateur clé à choisir. Ajoutez-en sur la page des indicateurs clés, ou depuis le modèle ci-dessous.",
+  "p.deescalation.save_kpis": "Enregistrer les indicateurs clés",
+  "p.deescalation.kpis_saved_one":
+    "Le tableau de bord compte désormais {n} indicateur clé.",
+  "p.deescalation.kpis_saved_other":
+    "Le tableau de bord compte désormais {n} indicateurs clés.",
+  "p.deescalation.problem_kpis_max":
+    "Un tableau de bord compte au plus {max} indicateurs clés.",
+  "p.deescalation.refused_kpis":
+    "Refusé : chacun doit être un indicateur clé que vous pouvez lire, et un tableau de bord en compte au plus 60.",
+  "p.deescalation.template_heading": "Ajouter des mesures depuis le modèle",
+  "p.deescalation.template_says":
+    "Un ensemble de départ, proposé et non appliqué. Il n'a pas de cibles : vous fixez chaque cible et chaque ligne rouge, et les mesures choisies deviennent des indicateurs clés de ce tableau de bord.",
+  "p.deescalation.template_rule":
+    "Quand plus haut est meilleur, la ligne rouge doit être sous la cible ; quand plus bas est meilleur, au-dessus. Les cibles et les lignes rouges sont des nombres entiers.",
+  "p.deescalation.could_not_load_template": "Le modèle n'a pas pu être chargé.",
+  "p.deescalation.higher_better": "Plus haut est meilleur",
+  "p.deescalation.lower_better": "Plus bas est meilleur",
+  "p.deescalation.unit": "mesuré en {unit}",
+  "p.deescalation.f_pick": "Ajouter {measure}",
+  "p.deescalation.f_target": "Cible",
+  "p.deescalation.f_red": "Ligne rouge",
+  "p.deescalation.add_measures": "Ajouter les mesures",
+  "p.deescalation.measures_added_one": "{n} mesure ajoutée au tableau de bord.",
+  "p.deescalation.measures_added_other":
+    "{n} mesures ajoutées au tableau de bord.",
+  "p.deescalation.problem_pick_one": "Choisissez au moins une mesure.",
+  "p.deescalation.problem_whole":
+    "{measure} : la cible et la ligne rouge sont des nombres entiers.",
+  "p.deescalation.problem_red_higher":
+    "{measure} : plus haut est meilleur, donc la ligne rouge doit être sous la cible.",
+  "p.deescalation.problem_red_lower":
+    "{measure} : plus bas est meilleur, donc la ligne rouge doit être au-dessus de la cible.",
+  "p.deescalation.problem_not_in_template":
+    "{measure} ne figure pas dans le modèle.",
+  "p.deescalation.refused_template":
+    "Refusé : vérifiez chaque cible et chaque ligne rouge selon la règle de sens.",
+  "p.deescalation.measure_programmes_with_independent_assurance":
+    "Programmes ayant eu une assurance indépendante au dernier trimestre",
+  "p.deescalation.measure_milestones_met_on_time":
+    "Jalons atteints à leur date ou avant",
+  "p.deescalation.measure_benefits_validated":
+    "Bénéfices prévus validés par une personne extérieure au programme",
+  "p.deescalation.measure_red_without_decision":
+    "Programmes au rouge sans décision enregistrée",
+  "p.deescalation.measure_open_critical_issues":
+    "Problèmes ouverts de gravité critique",
+  "p.deescalation.measure_change_requests_waiting":
+    "Demandes de changement en attente de décision depuis plus de 30 jours",
 };

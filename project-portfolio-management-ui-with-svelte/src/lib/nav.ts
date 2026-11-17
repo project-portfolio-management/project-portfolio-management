@@ -44,6 +44,7 @@ export const KNOWN_NAV_HREFS = [
   "/canvases",
   "/plan-templates",
   "/exceptions",
+  "/deescalation",
   "/portfolio-map",
   "/funding",
   "/scenarios",

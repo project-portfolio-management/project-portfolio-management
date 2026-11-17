@@ -6412,6 +6412,198 @@ export const PAGES_EN = {
     "You have opened the most emergency access allowed in a day (five, counted over the last 24 hours).",
   "p.access.refused_revoke_not_found":
     "That grant was not found, or it is not yours to end.",
+  "p.deescalation.nav": "Scorecards and de-escalation",
+  "p.deescalation.title": "Scorecards and de-escalation — PPM",
+  "p.deescalation.h1": "Scorecards and de-escalation",
+  "p.deescalation.lede":
+    "The escalation level as the sponsor set it, the criteria for coming down with their evidence each quarter, and the scorecards whose key measures are read by finished quarter.",
+  "p.deescalation.tracker_heading": "The de-escalation tracker",
+  "p.deescalation.tracker_says":
+    "The level is recorded as the sponsor set it. It is never worked out here, and nothing on this page moves it: the run of quarters met is offered to the person who decides.",
+  "p.deescalation.loading": "Loading…",
+  "p.deescalation.could_not_load":
+    "The de-escalation tracker could not be loaded.",
+  "p.deescalation.could_not_save": "The change was not saved.",
+  "p.deescalation.level_heading": "Escalation level",
+  "p.deescalation.level_now": "Level {level}, set on {date}.",
+  "p.deescalation.level_note": "The sponsor's note: {note}",
+  "p.deescalation.level_none": "No escalation level has been recorded yet.",
+  "p.deescalation.level_history": "Earlier levels",
+  "p.deescalation.level_history_item": "{level}, set on {date}",
+  "p.deescalation.run_heading": "Quarters met in a row",
+  "p.deescalation.run_one":
+    "{n} finished quarter met in a row, of the {need} the rule asks for.",
+  "p.deescalation.run_other":
+    "{n} finished quarters met in a row, of the {need} the rule asks for.",
+  "p.deescalation.rule_satisfied":
+    "The rule is satisfied. This is for the sponsor to weigh; the level does not change by itself.",
+  "p.deescalation.rule_not_satisfied": "The rule is not satisfied yet.",
+  "p.deescalation.setting_unusable":
+    "The deployment's setting for how many quarters the rule asks for could not be used, so the default of {n} applies.",
+  "p.deescalation.reads_scorecard": "The tracker reads the scorecard {name}.",
+  "p.deescalation.reads_no_scorecard":
+    "No scorecard is the one the tracker reads, so only the criteria count. Mark one as it when you add it, below.",
+  "p.deescalation.hidden_kpis_one":
+    "{n} key measure on this scorecard belongs to a plan you may not read: it is not shown and not counted here.",
+  "p.deescalation.hidden_kpis_other":
+    "{n} key measures on this scorecard belong to plans you may not read: they are not shown and not counted here.",
+  "p.deescalation.quarters_label": "Each finished quarter",
+  "p.deescalation.col_quarter": "Quarter",
+  "p.deescalation.col_state": "Standing",
+  "p.deescalation.col_reasons": "Why",
+  "p.deescalation.state_met": "Met",
+  "p.deescalation.state_not_met": "Not met",
+  "p.deescalation.state_missing": "Nothing recorded",
+  "p.deescalation.state_with_value": "{state} ({value})",
+  "p.deescalation.reason_all_met":
+    "Every key measure and every criterion was met.",
+  "p.deescalation.reason_nothing":
+    "There is nothing to measure: no key measure and no criterion.",
+  "p.deescalation.reason_no_kpis":
+    "The scorecard has no key measure you can read.",
+  "p.deescalation.reason_not_met": "Not met: {list}.",
+  "p.deescalation.reason_missing": "Nothing recorded for: {list}.",
+  "p.deescalation.quarter": "Q{q} {year}",
+  "p.deescalation.quarter_standing": "{quarter}: {state}. {reasons}",
+  "p.deescalation.tracker_kpis_label": "The tracker's scorecard, by quarter",
+  "p.deescalation.set_level_heading": "Record the escalation level",
+  "p.deescalation.set_level_says":
+    "Only the sponsor (someone with the role sponsor) or an administrator can record the level, as they have set it. A level is {min} to {max} characters; the note is optional.",
+  "p.deescalation.f_level": "Level",
+  "p.deescalation.f_level_note": "Note (optional)",
+  "p.deescalation.save_level": "Record the level",
+  "p.deescalation.level_saved": "Level {level} recorded.",
+  "p.deescalation.unchanged": "Nothing changed, so nothing was sent.",
+  "p.deescalation.problem_level": "A level is {min} to {max} characters.",
+  "p.deescalation.refused_level_forbidden":
+    "Refused: only the sponsor or an administrator can record the escalation level.",
+  "p.deescalation.criteria_heading": "Criteria for coming down",
+  "p.deescalation.criteria_says":
+    "A criterion is added and never edited or retired. Its evidence is recorded for a finished quarter, and the latest record for that quarter is the one that counts.",
+  "p.deescalation.criteria_none": "No criteria yet.",
+  "p.deescalation.evidence_of": "Evidence for: {criterion}",
+  "p.deescalation.evidence_link": "Evidence",
+  "p.deescalation.add_criterion_heading": "Add a criterion",
+  "p.deescalation.f_criterion": "Criterion ({min} to {max} characters)",
+  "p.deescalation.add_criterion": "Add the criterion",
+  "p.deescalation.criterion_added": "Criterion added.",
+  "p.deescalation.problem_criterion":
+    "A criterion is {min} to {max} characters.",
+  "p.deescalation.evidence_heading": "Record evidence",
+  "p.deescalation.evidence_says":
+    "Choose a criterion and a finished quarter (a quarter still running cannot be recorded), say whether it was met, and give a note of at least {min} characters. A link is optional: an http or https address with no spaces, up to {max} characters.",
+  "p.deescalation.f_ev_criterion": "Criterion",
+  "p.deescalation.f_ev_quarter": "Finished quarter",
+  "p.deescalation.f_ev_met": "Was it met?",
+  "p.deescalation.f_ev_note": "Note (at least {min} characters)",
+  "p.deescalation.f_ev_link": "Link to the evidence (optional)",
+  "p.deescalation.save_evidence": "Record the evidence",
+  "p.deescalation.evidence_saved": "Evidence recorded for {quarter}.",
+  "p.deescalation.problem_criterion_choose":
+    "Add a criterion first, then record its evidence.",
+  "p.deescalation.problem_quarter": "Choose a finished quarter.",
+  "p.deescalation.problem_quarter_unfinished":
+    "That quarter has not finished, so it cannot be recorded yet.",
+  "p.deescalation.problem_met": "Say whether the criterion was met.",
+  "p.deescalation.problem_note":
+    "A note of at least {min} characters is needed.",
+  "p.deescalation.problem_link":
+    "A link is an http or https address with no spaces, up to {max} characters.",
+  "p.deescalation.refused_evidence":
+    "Refused: the quarter must have finished, the note must be at least five characters, and a link must be an http or https address with no spaces.",
+  "p.deescalation.refused_gone":
+    "That record is no longer there. Reload the page.",
+  "p.deescalation.scorecards_heading": "Scorecards",
+  "p.deescalation.scorecards_says":
+    "A scorecard is a named set of key measures, read by finished quarter. A key measure is met in a quarter when its latest reading in that quarter is at or better than its target; a quarter with no reading is missing, which is not the same as not met.",
+  "p.deescalation.scorecards_none": "No scorecards yet.",
+  "p.deescalation.could_not_load_scorecards":
+    "The scorecards could not be loaded.",
+  "p.deescalation.col_scorecard": "Scorecard",
+  "p.deescalation.col_tracker": "Read by the tracker",
+  "p.deescalation.is_tracker": "Yes, the one the tracker reads",
+  "p.deescalation.not_tracker": "No",
+  "p.deescalation.add_scorecard_heading": "Add a scorecard",
+  "p.deescalation.add_scorecard_says":
+    "A name of {min} to {max} characters, not already used (in any case). At most one scorecard is the one the tracker reads.",
+  "p.deescalation.f_name": "Name",
+  "p.deescalation.f_for_tracker": "The one the tracker reads",
+  "p.deescalation.add_scorecard": "Add the scorecard",
+  "p.deescalation.scorecard_added": "Scorecard {name} added.",
+  "p.deescalation.problem_name":
+    "A scorecard's name is {min} to {max} characters.",
+  "p.deescalation.problem_name_taken": "A scorecard already has that name.",
+  "p.deescalation.problem_tracker_taken":
+    "The scorecard {name} is already the one the tracker reads.",
+  "p.deescalation.refused_create_conflict_tracker":
+    "Refused: a scorecard already has that name, or another is already the one the tracker reads.",
+  "p.deescalation.scorecard_heading": "A scorecard by quarter",
+  "p.deescalation.f_scorecard": "Scorecard",
+  "p.deescalation.choose_scorecard": "Choose a scorecard",
+  "p.deescalation.could_not_load_scorecard":
+    "The scorecard could not be loaded.",
+  "p.deescalation.scorecard_says":
+    "Each key measure by finished quarter: met, not met, or nothing recorded.",
+  "p.deescalation.scorecard_kpis_label": "Key measures of {name}, by quarter",
+  "p.deescalation.scorecard_quarters_label": "Each quarter of the scorecard",
+  "p.deescalation.col_kpi": "Key measure",
+  "p.deescalation.col_target": "Target",
+  "p.deescalation.target_at_least": "at least {value} {unit}",
+  "p.deescalation.target_at_most": "at most {value} {unit}",
+  "p.deescalation.no_kpis": "This scorecard has no key measures you can read.",
+  "p.deescalation.unit_percent": "per cent",
+  "p.deescalation.unit_count": "a count",
+  "p.deescalation.kpis_heading": "Choose its key measures (KPIs)",
+  "p.deescalation.kpis_says":
+    "Tick the key measures this scorecard holds, at most {max}. Saving replaces the set; one on a plan you may not read stays on the card.",
+  "p.deescalation.f_kpis": "Key measures on the scorecard",
+  "p.deescalation.kpis_none":
+    "There are no key measures to choose. Add them on the key measures page, or from the template below.",
+  "p.deescalation.save_kpis": "Save the key measures",
+  "p.deescalation.kpis_saved_one": "The scorecard now holds {n} key measure.",
+  "p.deescalation.kpis_saved_other":
+    "The scorecard now holds {n} key measures.",
+  "p.deescalation.problem_kpis_max":
+    "A scorecard holds at most {max} key measures.",
+  "p.deescalation.refused_kpis":
+    "Refused: each must be a key measure you can read, and a scorecard holds at most 60.",
+  "p.deescalation.template_heading": "Add measures from the template",
+  "p.deescalation.template_says":
+    "A starter set, offered and not applied. It has no targets: you set each target and red line, and the measures you pick become key measures on this scorecard.",
+  "p.deescalation.template_rule":
+    "Where higher is better, the red line must be below the target; where lower is better, above it. Targets and red lines are whole numbers.",
+  "p.deescalation.could_not_load_template": "The template could not be loaded.",
+  "p.deescalation.higher_better": "Higher is better",
+  "p.deescalation.lower_better": "Lower is better",
+  "p.deescalation.unit": "measured as {unit}",
+  "p.deescalation.f_pick": "Add {measure}",
+  "p.deescalation.f_target": "Target",
+  "p.deescalation.f_red": "Red line",
+  "p.deescalation.add_measures": "Add the measures",
+  "p.deescalation.measures_added_one": "{n} measure added to the scorecard.",
+  "p.deescalation.measures_added_other": "{n} measures added to the scorecard.",
+  "p.deescalation.problem_pick_one": "Pick at least one measure.",
+  "p.deescalation.problem_whole":
+    "{measure}: the target and the red line are whole numbers.",
+  "p.deescalation.problem_red_higher":
+    "{measure}: higher is better, so the red line must be below the target.",
+  "p.deescalation.problem_red_lower":
+    "{measure}: lower is better, so the red line must be above the target.",
+  "p.deescalation.problem_not_in_template": "{measure} is not in the template.",
+  "p.deescalation.refused_template":
+    "Refused: check each target and red line against the direction rule.",
+  "p.deescalation.measure_programmes_with_independent_assurance":
+    "Programmes with independent assurance in the last quarter",
+  "p.deescalation.measure_milestones_met_on_time":
+    "Milestones met on or before their date",
+  "p.deescalation.measure_benefits_validated":
+    "Planned benefits validated by someone outside the programme",
+  "p.deescalation.measure_red_without_decision":
+    "Programmes at red with no decision recorded",
+  "p.deescalation.measure_open_critical_issues":
+    "Open issues at critical severity",
+  "p.deescalation.measure_change_requests_waiting":
+    "Change requests waiting more than 30 days for a decision",
 } as const;
 
 /** A key in the page and component catalogue. */

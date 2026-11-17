@@ -6672,4 +6672,203 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Sie haben die an einem Tag erlaubte Höchstzahl an Notfallzugriffen geöffnet (fünf, gezählt über die letzten 24 Stunden).",
   "p.access.refused_revoke_not_found":
     "Dieser Zugriff wurde nicht gefunden, oder Sie dürfen ihn nicht beenden.",
+  "p.deescalation.nav": "Scorecards und Deeskalation",
+  "p.deescalation.title": "Scorecards und Deeskalation — PPM",
+  "p.deescalation.h1": "Scorecards und Deeskalation",
+  "p.deescalation.lede":
+    "Die Eskalationsstufe, wie der Sponsor sie festgelegt hat, die Kriterien für die Rückstufung mit ihren Nachweisen je Quartal und die Scorecards, deren Kennzahlen je abgeschlossenem Quartal gelesen werden.",
+  "p.deescalation.tracker_heading": "Der Deeskalations-Tracker",
+  "p.deescalation.tracker_says":
+    "Die Stufe wird so erfasst, wie der Sponsor sie festgelegt hat. Sie wird hier nie berechnet, und nichts auf dieser Seite verändert sie: Die Reihe erfüllter Quartale wird der entscheidenden Person angeboten.",
+  "p.deescalation.loading": "Wird geladen…",
+  "p.deescalation.could_not_load":
+    "Der Deeskalations-Tracker konnte nicht geladen werden.",
+  "p.deescalation.could_not_save": "Die Änderung wurde nicht gespeichert.",
+  "p.deescalation.level_heading": "Eskalationsstufe",
+  "p.deescalation.level_now": "Stufe {level}, festgelegt am {date}.",
+  "p.deescalation.level_note": "Notiz des Sponsors: {note}",
+  "p.deescalation.level_none": "Es wurde noch keine Eskalationsstufe erfasst.",
+  "p.deescalation.level_history": "Frühere Stufen",
+  "p.deescalation.level_history_item": "{level}, festgelegt am {date}",
+  "p.deescalation.run_heading": "Erfüllte Quartale in Folge",
+  "p.deescalation.run_one":
+    "{n} abgeschlossenes Quartal in Folge erfüllt, von den {need}, die die Regel verlangt.",
+  "p.deescalation.run_other":
+    "{n} abgeschlossene Quartale in Folge erfüllt, von den {need}, die die Regel verlangt.",
+  "p.deescalation.rule_satisfied":
+    "Die Regel ist erfüllt. Das abzuwägen ist Sache des Sponsors; die Stufe ändert sich nicht von selbst.",
+  "p.deescalation.rule_not_satisfied": "Die Regel ist noch nicht erfüllt.",
+  "p.deescalation.setting_unusable":
+    "Die Einstellung der Installation, wie viele Quartale die Regel verlangt, war nicht verwendbar; daher gilt der Standardwert {n}.",
+  "p.deescalation.reads_scorecard": "Der Tracker liest die Scorecard {name}.",
+  "p.deescalation.reads_no_scorecard":
+    "Keine Scorecard ist die, die der Tracker liest; daher zählen nur die Kriterien. Markieren Sie eine beim Hinzufügen unten entsprechend.",
+  "p.deescalation.hidden_kpis_one":
+    "{n} Kennzahl auf dieser Scorecard gehört zu einem Plan, den Sie nicht lesen dürfen: Sie wird hier weder gezeigt noch gezählt.",
+  "p.deescalation.hidden_kpis_other":
+    "{n} Kennzahlen auf dieser Scorecard gehören zu Plänen, die Sie nicht lesen dürfen: Sie werden hier weder gezeigt noch gezählt.",
+  "p.deescalation.quarters_label": "Jedes abgeschlossene Quartal",
+  "p.deescalation.col_quarter": "Quartal",
+  "p.deescalation.col_state": "Stand",
+  "p.deescalation.col_reasons": "Warum",
+  "p.deescalation.state_met": "Erfüllt",
+  "p.deescalation.state_not_met": "Nicht erfüllt",
+  "p.deescalation.state_missing": "Nichts erfasst",
+  "p.deescalation.state_with_value": "{state} (Wert {value})",
+  "p.deescalation.reason_all_met":
+    "Jede Kennzahl und jedes Kriterium wurde erfüllt.",
+  "p.deescalation.reason_nothing":
+    "Es gibt nichts zu messen: keine Kennzahl und kein Kriterium.",
+  "p.deescalation.reason_no_kpis":
+    "Die Scorecard hat keine Kennzahl, die Sie lesen können.",
+  "p.deescalation.reason_not_met": "Nicht erfüllt: {list}.",
+  "p.deescalation.reason_missing": "Nichts erfasst für: {list}.",
+  "p.deescalation.quarter": "{q}. Quartal {year}",
+  "p.deescalation.quarter_standing": "{quarter} – {state}. {reasons}",
+  "p.deescalation.tracker_kpis_label": "Die Scorecard des Trackers, je Quartal",
+  "p.deescalation.set_level_heading": "Die Eskalationsstufe erfassen",
+  "p.deescalation.set_level_says":
+    "Nur der Sponsor (jemand mit der Rolle sponsor) oder ein Administrator kann die Stufe erfassen, so wie sie festgelegt wurde. Eine Stufe hat {min} bis {max} Zeichen; die Notiz ist optional.",
+  "p.deescalation.f_level": "Stufe",
+  "p.deescalation.f_level_note": "Notiz (optional)",
+  "p.deescalation.save_level": "Stufe erfassen",
+  "p.deescalation.level_saved": "Stufe {level} erfasst.",
+  "p.deescalation.unchanged":
+    "Nichts hat sich geändert, daher wurde nichts gesendet.",
+  "p.deescalation.problem_level": "Eine Stufe hat {min} bis {max} Zeichen.",
+  "p.deescalation.refused_level_forbidden":
+    "Abgelehnt: Nur der Sponsor oder ein Administrator kann die Eskalationsstufe erfassen.",
+  "p.deescalation.criteria_heading": "Kriterien für die Rückstufung",
+  "p.deescalation.criteria_says":
+    "Ein Kriterium wird hinzugefügt und nie bearbeitet oder stillgelegt. Sein Nachweis wird für ein abgeschlossenes Quartal erfasst, und es zählt der neueste Eintrag für dieses Quartal.",
+  "p.deescalation.criteria_none": "Noch keine Kriterien.",
+  "p.deescalation.evidence_of": "Nachweise für: {criterion}",
+  "p.deescalation.evidence_link": "Nachweis",
+  "p.deescalation.add_criterion_heading": "Ein Kriterium hinzufügen",
+  "p.deescalation.f_criterion": "Kriterium ({min} bis {max} Zeichen)",
+  "p.deescalation.add_criterion": "Kriterium hinzufügen",
+  "p.deescalation.criterion_added": "Kriterium hinzugefügt.",
+  "p.deescalation.problem_criterion":
+    "Ein Kriterium hat {min} bis {max} Zeichen.",
+  "p.deescalation.evidence_heading": "Nachweis erfassen",
+  "p.deescalation.evidence_says":
+    "Wählen Sie ein Kriterium und ein abgeschlossenes Quartal (ein laufendes Quartal kann nicht erfasst werden), geben Sie an, ob es erfüllt wurde, und schreiben Sie eine Notiz von mindestens {min} Zeichen. Ein Link ist optional: eine http- oder https-Adresse ohne Leerzeichen, bis zu {max} Zeichen.",
+  "p.deescalation.f_ev_criterion": "Kriterium",
+  "p.deescalation.f_ev_quarter": "Abgeschlossenes Quartal",
+  "p.deescalation.f_ev_met": "Wurde es erfüllt?",
+  "p.deescalation.f_ev_note": "Notiz (mindestens {min} Zeichen)",
+  "p.deescalation.f_ev_link": "Link zum Nachweis (optional)",
+  "p.deescalation.save_evidence": "Nachweis erfassen",
+  "p.deescalation.evidence_saved": "Nachweis für {quarter} erfasst.",
+  "p.deescalation.problem_criterion_choose":
+    "Fügen Sie zuerst ein Kriterium hinzu und erfassen Sie dann seinen Nachweis.",
+  "p.deescalation.problem_quarter": "Wählen Sie ein abgeschlossenes Quartal.",
+  "p.deescalation.problem_quarter_unfinished":
+    "Dieses Quartal ist noch nicht abgeschlossen und kann daher noch nicht erfasst werden.",
+  "p.deescalation.problem_met": "Geben Sie an, ob das Kriterium erfüllt wurde.",
+  "p.deescalation.problem_note":
+    "Eine Notiz von mindestens {min} Zeichen ist nötig.",
+  "p.deescalation.problem_link":
+    "Ein Link ist eine http- oder https-Adresse ohne Leerzeichen, bis zu {max} Zeichen.",
+  "p.deescalation.refused_evidence":
+    "Abgelehnt: Das Quartal muss abgeschlossen sein, die Notiz mindestens fünf Zeichen haben und ein Link eine http- oder https-Adresse ohne Leerzeichen sein.",
+  "p.deescalation.refused_gone":
+    "Dieser Eintrag ist nicht mehr vorhanden. Laden Sie die Seite neu.",
+  "p.deescalation.scorecards_heading": "Alle Scorecards",
+  "p.deescalation.scorecards_says":
+    "Eine Scorecard ist eine benannte Gruppe von Kennzahlen, die je abgeschlossenem Quartal gelesen wird. Eine Kennzahl ist in einem Quartal erfüllt, wenn ihr neuester Messwert in diesem Quartal ihr Ziel erreicht oder übertrifft; ein Quartal ohne Messwert fehlt, was nicht dasselbe ist wie nicht erfüllt.",
+  "p.deescalation.scorecards_none": "Noch keine Scorecards.",
+  "p.deescalation.could_not_load_scorecards":
+    "Die Scorecards konnten nicht geladen werden.",
+  "p.deescalation.col_scorecard": "Bezeichnung der Scorecard",
+  "p.deescalation.col_tracker": "Vom Tracker gelesen",
+  "p.deescalation.is_tracker": "Ja, die der Tracker liest",
+  "p.deescalation.not_tracker": "Nein",
+  "p.deescalation.add_scorecard_heading": "Eine Scorecard hinzufügen",
+  "p.deescalation.add_scorecard_says":
+    "Ein Name mit {min} bis {max} Zeichen, der noch nicht vergeben ist (ohne Rücksicht auf Groß- und Kleinschreibung). Höchstens eine Scorecard ist die, die der Tracker liest.",
+  "p.deescalation.f_name": "Bezeichnung",
+  "p.deescalation.f_for_tracker": "Die, die der Tracker liest",
+  "p.deescalation.add_scorecard": "Scorecard hinzufügen",
+  "p.deescalation.scorecard_added": "Scorecard {name} hinzugefügt.",
+  "p.deescalation.problem_name":
+    "Der Name einer Scorecard hat {min} bis {max} Zeichen.",
+  "p.deescalation.problem_name_taken":
+    "Eine Scorecard hat bereits diesen Namen.",
+  "p.deescalation.problem_tracker_taken":
+    "Die Scorecard {name} ist bereits die, die der Tracker liest.",
+  "p.deescalation.refused_create_conflict_tracker":
+    "Abgelehnt: Eine Scorecard hat bereits diesen Namen, oder eine andere ist bereits die, die der Tracker liest.",
+  "p.deescalation.scorecard_heading": "Eine Scorecard je Quartal",
+  "p.deescalation.f_scorecard": "Welche Scorecard",
+  "p.deescalation.choose_scorecard": "Scorecard wählen",
+  "p.deescalation.could_not_load_scorecard":
+    "Die Scorecard konnte nicht geladen werden.",
+  "p.deescalation.scorecard_says":
+    "Jede Kennzahl je abgeschlossenem Quartal: erfüllt, nicht erfüllt oder nichts erfasst.",
+  "p.deescalation.scorecard_kpis_label": "Kennzahlen von {name}, je Quartal",
+  "p.deescalation.scorecard_quarters_label": "Jedes Quartal der Scorecard",
+  "p.deescalation.col_kpi": "Kennzahl",
+  "p.deescalation.col_target": "Ziel",
+  "p.deescalation.target_at_least": "mindestens {value} {unit}",
+  "p.deescalation.target_at_most": "höchstens {value} {unit}",
+  "p.deescalation.no_kpis":
+    "Diese Scorecard hat keine Kennzahlen, die Sie lesen können.",
+  "p.deescalation.unit_percent": "Prozent",
+  "p.deescalation.unit_count": "eine Anzahl",
+  "p.deescalation.kpis_heading": "Ihre Kennzahlen (KPIs) wählen",
+  "p.deescalation.kpis_says":
+    "Kreuzen Sie die Kennzahlen an, die diese Scorecard enthält, höchstens {max}. Speichern ersetzt die Gruppe; eine Kennzahl auf einem Plan, den Sie nicht lesen dürfen, bleibt auf der Karte.",
+  "p.deescalation.f_kpis": "Kennzahlen auf der Scorecard",
+  "p.deescalation.kpis_none":
+    "Es gibt keine Kennzahlen zur Auswahl. Fügen Sie sie auf der Kennzahlenseite hinzu oder unten aus der Vorlage.",
+  "p.deescalation.save_kpis": "Kennzahlen speichern",
+  "p.deescalation.kpis_saved_one": "Die Scorecard enthält jetzt {n} Kennzahl.",
+  "p.deescalation.kpis_saved_other":
+    "Die Scorecard enthält jetzt {n} Kennzahlen.",
+  "p.deescalation.problem_kpis_max":
+    "Eine Scorecard enthält höchstens {max} Kennzahlen.",
+  "p.deescalation.refused_kpis":
+    "Abgelehnt: Jede muss eine Kennzahl sein, die Sie lesen können, und eine Scorecard enthält höchstens 60.",
+  "p.deescalation.template_heading": "Messgrößen aus der Vorlage hinzufügen",
+  "p.deescalation.template_says":
+    "Ein Startsatz, angeboten und nicht angewendet. Er hat keine Ziele: Sie legen jedes Ziel und jede rote Linie fest, und die gewählten Messgrößen werden Kennzahlen auf dieser Scorecard.",
+  "p.deescalation.template_rule":
+    "Wo höher besser ist, muss die rote Linie unter dem Ziel liegen; wo niedriger besser ist, darüber. Ziele und rote Linien sind ganze Zahlen.",
+  "p.deescalation.could_not_load_template":
+    "Die Vorlage konnte nicht geladen werden.",
+  "p.deescalation.higher_better": "Höher ist besser",
+  "p.deescalation.lower_better": "Niedriger ist besser",
+  "p.deescalation.unit": "gemessen als {unit}",
+  "p.deescalation.f_pick": "{measure} hinzufügen",
+  "p.deescalation.f_target": "Ziel",
+  "p.deescalation.f_red": "Rote Linie",
+  "p.deescalation.add_measures": "Messgrößen hinzufügen",
+  "p.deescalation.measures_added_one":
+    "{n} Messgröße zur Scorecard hinzugefügt.",
+  "p.deescalation.measures_added_other":
+    "{n} Messgrößen zur Scorecard hinzugefügt.",
+  "p.deescalation.problem_pick_one": "Wählen Sie mindestens eine Messgröße.",
+  "p.deescalation.problem_whole":
+    "{measure}: Ziel und rote Linie sind ganze Zahlen.",
+  "p.deescalation.problem_red_higher":
+    "{measure}: Höher ist besser, daher muss die rote Linie unter dem Ziel liegen.",
+  "p.deescalation.problem_red_lower":
+    "{measure}: Niedriger ist besser, daher muss die rote Linie über dem Ziel liegen.",
+  "p.deescalation.problem_not_in_template":
+    "{measure} ist nicht in der Vorlage.",
+  "p.deescalation.refused_template":
+    "Abgelehnt: Prüfen Sie jedes Ziel und jede rote Linie anhand der Richtungsregel.",
+  "p.deescalation.measure_programmes_with_independent_assurance":
+    "Programme mit unabhängiger Prüfung im letzten Quartal",
+  "p.deescalation.measure_milestones_met_on_time":
+    "Meilensteine, die zu oder vor ihrem Datum erreicht wurden",
+  "p.deescalation.measure_benefits_validated":
+    "Geplante Nutzen, die von jemandem außerhalb des Programms bestätigt wurden",
+  "p.deescalation.measure_red_without_decision":
+    "Programme auf Rot ohne erfasste Entscheidung",
+  "p.deescalation.measure_open_critical_issues":
+    "Offene Probleme mit kritischem Schweregrad",
+  "p.deescalation.measure_change_requests_waiting":
+    "Änderungsanträge, die mehr als 30 Tage auf eine Entscheidung warten",
 };

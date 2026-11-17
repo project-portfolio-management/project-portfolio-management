@@ -228,9 +228,11 @@ match breakdown).
 /plans/[pid]/benefits        a plan's benefits: classification and
                              validation (NC-1 slice 11); linked from the
                              plan page
+/deescalation                the de-escalation tracker and the
+                             scorecards it reads (NC-1 slice 11)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 121):
+every page; `find src/routes -name +page.svelte` gives all 122):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -2372,3 +2374,53 @@ paused, reset or stopped automatically; every page says so.
   `tests/e2e/plan-programme.spec.ts` (triage and the three thresholds; the page's Welsh and axe test covers the
   sections), `tests/e2e/threshold-exceptions.spec.ts` (the exception's sentence, an override's expiry rules, a pause
   without an expiry, the sweep; Welsh; axe). The translations are machine-written and unreviewed.
+
+## Scorecards and de-escalation (NC-1 slice 11, EX-10)
+
+`/deescalation`, in the navigation, holds the de-escalation tracker (`DeescalationTracker.svelte`, over `GET
+/api/deescalation`, `PUT /api/deescalation/level`, `POST /api/deescalation/criteria` and `PUT
+/api/deescalation/criteria/{pid}/evidence`) and the scorecards (`Scorecards.svelte`, over `GET` and `POST
+/api/scorecards`, `GET /api/scorecards/{pid}`, `PUT …/{pid}/kpis`, `GET /api/scorecard-template` and `POST
+…/{pid}/from-template`; the KPIs to choose from `GET /api/kpis`). `src/lib/deescalation-view.ts` holds the rules. A
+change to a scorecard reads the tracker again.
+
+- **The level.** Shown as the sponsor set it, with its date, the sponsor's note and the earlier levels. The page says,
+  in its own words, that the level is never worked out here and that nothing on the page moves it (the service's
+  `level_note` is not shown). Recording it says first that only the sponsor (role `sponsor`) or an administrator may,
+  and that a level is 1 to 60 characters with an optional note; the same level and note is not sent again; a 403 is the
+  catalogue's sentence.
+- **The run.** The consecutive finished quarters met against the number the rule asks for, and whether the rule is
+  satisfied, offered to the person who decides; a deployment setting the service could not use is said, with the
+  default it applied. The scorecard the tracker reads is named, or its absence said. Key measures on plans the reader
+  may not read are counted, not shown.
+- **Each quarter** (a `DataTable`): its state as a word and a symbol (met ✓, not met ✗, nothing recorded ?), never a
+  colour alone, and why. The service's `because` sentences are English and are not shown: the page names each key
+  measure and criterion not met, and each with nothing recorded, from the detail (`kpis[].quarters[].met` and
+  `criteria[].quarters[].met`, null being nothing recorded). The tracker's scorecard is drawn by quarter below
+  (`KpiQuarterTable.svelte`: the target as "at least" or "at most" by direction, each quarter's state and reading).
+- **Criteria and evidence** are added, never edited or retired; the latest record for a quarter counts (said first). A
+  criterion is 5 to 500 characters. Evidence names a criterion and a finished quarter (offered from the tracker's
+  quarters, and a quarter not yet finished refused before sending), met or not met (chosen, never assumed), a note of at
+  least 5 characters and an optional link (http or https, no spaces, at most 500 bytes). Evidence the latest record
+  already says is not sent again. The evidence form is disabled until the tracker has loaded.
+- **Scorecards.** Listed with the one the tracker reads. A new one has a name of 3 to 120 characters not already used
+  in any case, and may be the one the tracker reads only when no other is (both said first; a 409 is the catalogue's
+  sentence). A chosen scorecard shows its key measures by quarter and each quarter's state with the reasons built the
+  same way. Its key measures are chosen from the KPI list (at most 60; nothing sent for the same set, in any order;
+  one on a plan the reader may not read stays on the card, as the service keeps it). The checkboxes are disabled until
+  the scorecard and the KPI list have loaded.
+- **The template** has no targets and is not applied by reading it. Each measure is named from the catalogue by its
+  key (the service's English name is not shown), with its direction and unit; the reader picks measures and sets each
+  target and red line as whole numbers (a number input's value read as a number once typed in). The direction rule is
+  said first: where higher is better the red line is below the target, where lower is better above it.
+- **Not built:** retiring or renaming a scorecard, choosing how many quarters a scorecard shows (the service's default
+  of four is used), and editing or retiring a criterion (no routes). The template's six keys are named in the catalogue;
+  a key the catalogue does not know is shown as its key. **Service gap:** a measure added from the template becomes a
+  KPI named with the service's English name, so after it is added it is shown in English like any other KPI's name
+  (data, not catalogue text); and the two 409s on adding a scorecard (name taken, another already the tracker's) share
+  one error code, so the page says both when the second was asked for.
+- **Tests:** `tests/unit/deescalation-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/deescalation.spec.ts`
+  (the level, run and reasons from the detail with no service text; the level's rule, no change, a 403; criteria and
+  evidence with their rules, no change and a 422; a scorecard added, its key measures chosen and measures added from
+  the template with the direction rule; Welsh; axe with the forms open). The translations are machine-written and
+  unreviewed.

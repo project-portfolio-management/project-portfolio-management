@@ -6246,4 +6246,189 @@ export const PAGES_AR: Record<PageKey, string> = {
     "لقد فتحت أقصى عدد مسموح به من الوصول الطارئ في يوم واحد (خمسة، محسوبة على آخر 24 ساعة).",
   "p.access.refused_revoke_not_found":
     "لم يُعثر على هذا المنح، أو ليس لك أن تنهيه.",
+  "p.deescalation.nav": "بطاقات الأداء وخفض التصعيد",
+  "p.deescalation.title": "بطاقات الأداء وخفض التصعيد — إدارة المحافظ",
+  "p.deescalation.h1": "بطاقات الأداء وخفض التصعيد",
+  "p.deescalation.lede":
+    "مستوى التصعيد كما حدده الراعي، ومعايير النزول مع أدلتها في كل ربع، وبطاقات الأداء التي تُقرأ مقاييسها الرئيسية حسب كل ربع منتهٍ.",
+  "p.deescalation.tracker_heading": "متتبع خفض التصعيد",
+  "p.deescalation.tracker_says":
+    "يُسجَّل المستوى كما حدده الراعي. لا يُحسب هنا أبدًا، ولا شيء في هذه الصفحة يغيّره: تُعرض سلسلة الأرباع المحققة على الشخص الذي يقرر.",
+  "p.deescalation.loading": "جارٍ التحميل…",
+  "p.deescalation.could_not_load": "تعذّر تحميل متتبع خفض التصعيد.",
+  "p.deescalation.could_not_save": "لم يُحفظ التغيير.",
+  "p.deescalation.level_heading": "مستوى التصعيد",
+  "p.deescalation.level_now": "المستوى {level}، حُدد في {date}.",
+  "p.deescalation.level_note": "ملاحظة الراعي: {note}",
+  "p.deescalation.level_none": "لم يُسجَّل أي مستوى تصعيد بعد.",
+  "p.deescalation.level_history": "المستويات السابقة",
+  "p.deescalation.level_history_item": "{level}، حُدد في {date}",
+  "p.deescalation.run_heading": "الأرباع المحققة على التوالي",
+  "p.deescalation.run_one":
+    "تحقق {n} ربع منتهٍ على التوالي، من أصل {need} تطلبها القاعدة.",
+  "p.deescalation.run_other":
+    "تحققت {n} من الأرباع المنتهية على التوالي، من أصل {need} تطلبها القاعدة.",
+  "p.deescalation.rule_satisfied":
+    "القاعدة مستوفاة. تقدير ذلك متروك للراعي؛ ولا يتغير المستوى من تلقاء نفسه.",
+  "p.deescalation.rule_not_satisfied": "القاعدة غير مستوفاة بعد.",
+  "p.deescalation.setting_unusable":
+    "تعذّر استخدام إعداد النشر لعدد الأرباع التي تطلبها القاعدة، لذا تُطبَّق القيمة الافتراضية {n}.",
+  "p.deescalation.reads_scorecard": "يقرأ المتتبع بطاقة الأداء {name}.",
+  "p.deescalation.reads_no_scorecard":
+    "لا توجد بطاقة أداء يقرؤها المتتبع، لذا تُحسب المعايير فقط. عيّن واحدة كذلك عند إضافتها أدناه.",
+  "p.deescalation.hidden_kpis_one":
+    "{n} مقياس رئيسي في بطاقة الأداء هذه يتبع خطة لا يُسمح لك بقراءتها: لا يُعرض هنا ولا يُحسب.",
+  "p.deescalation.hidden_kpis_other":
+    "{n} من المقاييس الرئيسية في بطاقة الأداء هذه تتبع خططًا لا يُسمح لك بقراءتها: لا تُعرض هنا ولا تُحسب.",
+  "p.deescalation.quarters_label": "كل ربع منتهٍ",
+  "p.deescalation.col_quarter": "الربع",
+  "p.deescalation.col_state": "الحالة",
+  "p.deescalation.col_reasons": "السبب",
+  "p.deescalation.state_met": "محقق",
+  "p.deescalation.state_not_met": "غير محقق",
+  "p.deescalation.state_missing": "لا شيء مسجّل",
+  "p.deescalation.state_with_value": "{state} (القيمة {value})",
+  "p.deescalation.reason_all_met": "تحقق كل مقياس رئيسي وكل معيار.",
+  "p.deescalation.reason_nothing": "لا يوجد ما يُقاس: لا مقياس رئيسي ولا معيار.",
+  "p.deescalation.reason_no_kpis":
+    "لا تحتوي بطاقة الأداء على مقياس رئيسي يمكنك قراءته.",
+  "p.deescalation.reason_not_met": "غير محقق: {list}.",
+  "p.deescalation.reason_missing": "لا شيء مسجّل لـ: {list}.",
+  "p.deescalation.quarter": "الربع {q} من {year}",
+  "p.deescalation.quarter_standing": "{quarter} — {state}. {reasons}",
+  "p.deescalation.tracker_kpis_label": "بطاقة أداء المتتبع، حسب الربع",
+  "p.deescalation.set_level_heading": "تسجيل مستوى التصعيد",
+  "p.deescalation.set_level_says":
+    "لا يمكن تسجيل المستوى إلا للراعي (شخص له الدور sponsor) أو لمسؤول، كما حدده. يتكون المستوى من {min} إلى {max} حرفًا؛ والملاحظة اختيارية.",
+  "p.deescalation.f_level": "المستوى",
+  "p.deescalation.f_level_note": "ملاحظة (اختيارية)",
+  "p.deescalation.save_level": "تسجيل المستوى",
+  "p.deescalation.level_saved": "سُجّل المستوى {level}.",
+  "p.deescalation.unchanged": "لم يتغير شيء، لذا لم يُرسل شيء.",
+  "p.deescalation.problem_level": "يتكون المستوى من {min} إلى {max} حرفًا.",
+  "p.deescalation.refused_level_forbidden":
+    "مرفوض: لا يمكن تسجيل مستوى التصعيد إلا للراعي أو لمسؤول.",
+  "p.deescalation.criteria_heading": "معايير النزول",
+  "p.deescalation.criteria_says":
+    "يُضاف المعيار ولا يُعدَّل أو يُسحب أبدًا. يُسجَّل دليله لربع منتهٍ، والسجل الأحدث لذلك الربع هو الذي يُحتسب.",
+  "p.deescalation.criteria_none": "لا توجد معايير بعد.",
+  "p.deescalation.evidence_of": "أدلة: {criterion}",
+  "p.deescalation.evidence_link": "الدليل",
+  "p.deescalation.add_criterion_heading": "إضافة معيار",
+  "p.deescalation.f_criterion": "المعيار (من {min} إلى {max} حرفًا)",
+  "p.deescalation.add_criterion": "إضافة المعيار",
+  "p.deescalation.criterion_added": "أُضيف المعيار.",
+  "p.deescalation.problem_criterion": "يتكون المعيار من {min} إلى {max} حرفًا.",
+  "p.deescalation.evidence_heading": "تسجيل دليل",
+  "p.deescalation.evidence_says":
+    "اختر معيارًا وربعًا منتهيًا (لا يمكن تسجيل ربع ما زال جاريًا)، وبيّن هل تحقق، واكتب ملاحظة من {min} أحرف على الأقل. الرابط اختياري: عنوان http أو https بلا مسافات، حتى {max} حرف.",
+  "p.deescalation.f_ev_criterion": "المعيار",
+  "p.deescalation.f_ev_quarter": "الربع المنتهي",
+  "p.deescalation.f_ev_met": "هل تحقق؟",
+  "p.deescalation.f_ev_note": "ملاحظة ({min} أحرف على الأقل)",
+  "p.deescalation.f_ev_link": "رابط الدليل (اختياري)",
+  "p.deescalation.save_evidence": "تسجيل الدليل",
+  "p.deescalation.evidence_saved": "سُجّل الدليل لـ {quarter}.",
+  "p.deescalation.problem_criterion_choose": "أضف معيارًا أولًا، ثم سجّل دليله.",
+  "p.deescalation.problem_quarter": "اختر ربعًا منتهيًا.",
+  "p.deescalation.problem_quarter_unfinished":
+    "لم ينتهِ ذلك الربع، لذا لا يمكن تسجيله بعد.",
+  "p.deescalation.problem_met": "بيّن هل تحقق المعيار.",
+  "p.deescalation.problem_note": "يلزم إدخال ملاحظة من {min} أحرف على الأقل.",
+  "p.deescalation.problem_link":
+    "الرابط عنوان http أو https بلا مسافات، حتى {max} حرف.",
+  "p.deescalation.refused_evidence":
+    "مرفوض: يجب أن يكون الربع قد انتهى، وأن تكون الملاحظة خمسة أحرف على الأقل، وأن يكون الرابط عنوان http أو https بلا مسافات.",
+  "p.deescalation.refused_gone": "لم يعد ذلك السجل موجودًا. أعد تحميل الصفحة.",
+  "p.deescalation.scorecards_heading": "بطاقات الأداء",
+  "p.deescalation.scorecards_says":
+    "بطاقة الأداء مجموعة مسمّاة من المقاييس الرئيسية تُقرأ حسب كل ربع منتهٍ. يتحقق المقياس الرئيسي في ربع عندما تكون أحدث قراءة له في ذلك الربع عند هدفه أو أفضل؛ والربع الذي لا قراءة فيه مفقود، وهذا ليس مثل غير محقق.",
+  "p.deescalation.scorecards_none": "لا توجد بطاقات أداء بعد.",
+  "p.deescalation.could_not_load_scorecards": "تعذّر تحميل بطاقات الأداء.",
+  "p.deescalation.col_scorecard": "بطاقة الأداء",
+  "p.deescalation.col_tracker": "يقرؤها المتتبع",
+  "p.deescalation.is_tracker": "نعم، هي التي يقرؤها المتتبع",
+  "p.deescalation.not_tracker": "لا",
+  "p.deescalation.add_scorecard_heading": "إضافة بطاقة أداء",
+  "p.deescalation.add_scorecard_says":
+    "اسم من {min} إلى {max} حرفًا غير مستخدم من قبل (بصرف النظر عن حالة الأحرف). بطاقة أداء واحدة على الأكثر هي التي يقرؤها المتتبع.",
+  "p.deescalation.f_name": "الاسم",
+  "p.deescalation.f_for_tracker": "التي يقرؤها المتتبع",
+  "p.deescalation.add_scorecard": "إضافة بطاقة الأداء",
+  "p.deescalation.scorecard_added": "أُضيفت بطاقة الأداء {name}.",
+  "p.deescalation.problem_name":
+    "يتكون اسم بطاقة الأداء من {min} إلى {max} حرفًا.",
+  "p.deescalation.problem_name_taken": "توجد بطاقة أداء بهذا الاسم بالفعل.",
+  "p.deescalation.problem_tracker_taken":
+    "بطاقة الأداء {name} هي بالفعل التي يقرؤها المتتبع.",
+  "p.deescalation.refused_create_conflict_tracker":
+    "مرفوض: توجد بطاقة أداء بهذا الاسم بالفعل، أو أن أخرى هي بالفعل التي يقرؤها المتتبع.",
+  "p.deescalation.scorecard_heading": "بطاقة أداء حسب الربع",
+  "p.deescalation.f_scorecard": "أي بطاقة أداء",
+  "p.deescalation.choose_scorecard": "اختر بطاقة أداء",
+  "p.deescalation.could_not_load_scorecard": "تعذّر تحميل بطاقة الأداء.",
+  "p.deescalation.scorecard_says":
+    "كل مقياس رئيسي حسب كل ربع منتهٍ: محقق، أو غير محقق، أو لا شيء مسجّل.",
+  "p.deescalation.scorecard_kpis_label":
+    "المقاييس الرئيسية لـ {name}، حسب الربع",
+  "p.deescalation.scorecard_quarters_label": "كل ربع من بطاقة الأداء",
+  "p.deescalation.col_kpi": "المقياس الرئيسي",
+  "p.deescalation.col_target": "الهدف",
+  "p.deescalation.target_at_least": "{value} {unit} على الأقل",
+  "p.deescalation.target_at_most": "{value} {unit} على الأكثر",
+  "p.deescalation.no_kpis":
+    "لا تحتوي بطاقة الأداء هذه على مقاييس رئيسية يمكنك قراءتها.",
+  "p.deescalation.unit_percent": "بالمئة",
+  "p.deescalation.unit_count": "عدد",
+  "p.deescalation.kpis_heading": "اختيار مقاييسها الرئيسية (KPI)",
+  "p.deescalation.kpis_says":
+    "حدّد المقاييس الرئيسية التي تضمها بطاقة الأداء هذه، {max} على الأكثر. الحفظ يستبدل المجموعة؛ والمقياس التابع لخطة لا يُسمح لك بقراءتها يبقى على البطاقة.",
+  "p.deescalation.f_kpis": "المقاييس الرئيسية في بطاقة الأداء",
+  "p.deescalation.kpis_none":
+    "لا توجد مقاييس رئيسية للاختيار. أضفها في صفحة المقاييس الرئيسية، أو من القالب أدناه.",
+  "p.deescalation.save_kpis": "حفظ المقاييس الرئيسية",
+  "p.deescalation.kpis_saved_one": "تضم بطاقة الأداء الآن {n} مقياسًا رئيسيًا.",
+  "p.deescalation.kpis_saved_other":
+    "تضم بطاقة الأداء الآن {n} من المقاييس الرئيسية.",
+  "p.deescalation.problem_kpis_max":
+    "تضم بطاقة الأداء {max} مقياسًا رئيسيًا على الأكثر.",
+  "p.deescalation.refused_kpis":
+    "مرفوض: يجب أن يكون كل واحد مقياسًا رئيسيًا يمكنك قراءته، وتضم بطاقة الأداء 60 على الأكثر.",
+  "p.deescalation.template_heading": "إضافة مقاييس من القالب",
+  "p.deescalation.template_says":
+    "مجموعة بداية، معروضة وغير مطبّقة. لا أهداف فيها: أنت تحدد كل هدف وكل خط أحمر، وتصبح المقاييس التي تختارها مقاييس رئيسية في بطاقة الأداء هذه.",
+  "p.deescalation.template_rule":
+    "حيث يكون الأعلى أفضل، يجب أن يكون الخط الأحمر تحت الهدف؛ وحيث يكون الأدنى أفضل، فوقه. الأهداف والخطوط الحمراء أعداد صحيحة.",
+  "p.deescalation.could_not_load_template": "تعذّر تحميل القالب.",
+  "p.deescalation.higher_better": "الأعلى أفضل",
+  "p.deescalation.lower_better": "الأدنى أفضل",
+  "p.deescalation.unit": "يُقاس بـ {unit}",
+  "p.deescalation.f_pick": "إضافة {measure}",
+  "p.deescalation.f_target": "الهدف",
+  "p.deescalation.f_red": "الخط الأحمر",
+  "p.deescalation.add_measures": "إضافة المقاييس",
+  "p.deescalation.measures_added_one": "أُضيف {n} مقياس إلى بطاقة الأداء.",
+  "p.deescalation.measures_added_other":
+    "أُضيفت {n} من المقاييس إلى بطاقة الأداء.",
+  "p.deescalation.problem_pick_one": "اختر مقياسًا واحدًا على الأقل.",
+  "p.deescalation.problem_whole": "{measure}: الهدف والخط الأحمر عددان صحيحان.",
+  "p.deescalation.problem_red_higher":
+    "{measure}: الأعلى أفضل، لذا يجب أن يكون الخط الأحمر تحت الهدف.",
+  "p.deescalation.problem_red_lower":
+    "{measure}: الأدنى أفضل، لذا يجب أن يكون الخط الأحمر فوق الهدف.",
+  "p.deescalation.problem_not_in_template": "{measure} ليس في القالب.",
+  "p.deescalation.refused_template":
+    "مرفوض: تحقّق من كل هدف وكل خط أحمر وفق قاعدة الاتجاه.",
+  "p.deescalation.measure_programmes_with_independent_assurance":
+    "البرامج التي حظيت بضمان مستقل في الربع الماضي",
+  "p.deescalation.measure_milestones_met_on_time":
+    "المعالم المحققة في موعدها أو قبله",
+  "p.deescalation.measure_benefits_validated":
+    "الفوائد المخططة التي تحقق منها شخص من خارج البرنامج",
+  "p.deescalation.measure_red_without_decision":
+    "البرامج في الأحمر دون قرار مسجّل",
+  "p.deescalation.measure_open_critical_issues":
+    "المشكلات المفتوحة ذات الخطورة الحرجة",
+  "p.deescalation.measure_change_requests_waiting":
+    "طلبات التغيير التي تنتظر قرارًا منذ أكثر من 30 يومًا",
 };

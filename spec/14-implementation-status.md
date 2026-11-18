@@ -59,7 +59,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | RG | 18 | 0 |
 | CQ | 24 | 1 |
 | SQ | 1 | 0 |
-| CF | 6 | 1 |
+| CF | 6 | 2 |
 | WW | 0 | 1 |
 | NC | 13 | 4 |
 | BR | 15 | 2 |
@@ -71,7 +71,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | PE | 1 | 15 |
 | SM | 2 | 15 |
 | RE | 15 | 0 |
-| **Total** | **259** | **58** |
+| **Total** | **259** | **59** |
 
 <!-- generated:end -->
 

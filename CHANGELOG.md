@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (a possible private-plan leak, recorded as CF-8)
+
+- **Recorded, not yet checked:** four read routes found by slice 12 part (j) take no caller
+  (`…/skill-gap`, `…/okr`, `/api/objectives/{pid}/key-results`, `/api/key-results/{pid}/check-ins`); the last two sit
+  outside the plan guard. CF-8 in `tasks.md` says what to check and what would close it. **Not verified** either way.
+
 ### 18 November (NC-1 slice 12 part j: the board, sprints, resources and the OKR and KPI reads)
 
 - **UI:** many tasks at once on the board (set, copy, move after a question, delete after a question), following the

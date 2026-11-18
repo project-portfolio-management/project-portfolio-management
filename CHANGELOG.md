@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (what is still built only at the API: an audit, and NC-1's slice 12 plan)
+
+- **Docs: an audit of the backlog's "no screen" notes against the route table, the UI client and its pages.** 21
+  entries in `tasks.md` that said "no screen" have one now and carry a dated screen note (EX-2 to EX-8, EX-10, EX-11,
+  EX-13, EX-14, CC-1, CC-3 to CC-5, CR-3, IR-3, IR-4, BR-13, BR-17, OC-1); twelve of those screens were
+  built by their own items before slice 11 and never marked. NC-1 gains a slice 12 plan in parts (a) to (p): the
+  service gaps slice 11 recorded first, then status updates, the rest of issues and change requests, escalation
+  records and register completeness, meetings and lessons, live programme money, ranking, a person's own work, the
+  rest of scheduling, the board and resources, templates and jobs, roadmaps, access and privacy, configuration,
+  controls and reports, and the routes left without a screen on purpose.
+- **Size:** of 705 routes, 253 have no client method (123 reads, 130 writes by HTTP method); 31 of them need no screen
+  (twins, linked downloads, machine routes and sweeps), which leaves 222 (112 reads, 110 writes). Counted with the
+  parser of `tests/unit/client-routes.test.ts` in a scratch script.
+- **No code changed.** **Not verified:** the counts are not held by a committed test; which page calls a client method
+  was found by searching for its name; the screens behind the 21 notes were read from the page sources, not run.
+
 ### 18 November (who must sign a milestone off: NC-1 slice 11, part j, the rest)
 
 - **Service: a milestone's `signoff` names every required organization** (`required`, with each one's sign-off date),

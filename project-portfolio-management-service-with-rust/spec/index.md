@@ -1817,3 +1817,14 @@ organization (`organization_pid`, `name`, `signed_on`, null while outstanding), 
 drops an organization once it signs, so a client that replaced the set from it would drop that organization; `required`
 is the set to show and keep. Tests: `domain/src/milestone_signoff.rs`
 (`the_required_set_is_kept_whole_signed_or_not`), `tests/organizations.rs`.
+
+## Codes and fields a screen reads (NC-1 slice 12, part a)
+
+Each refusal a screen must tell apart has its own machine `code` (the problem's `code` member), keeping its HTTP status
+and its English `detail`; each fact a screen must show is a field, not only English text. Fixed on 2026-11-18:
+
+- **Which threshold opened an exception.** Every delivery exception the service answers with (`GET /api/exceptions`,
+  `PUT /api/exceptions/{pid}`, `POST /api/exceptions/{pid}/decision`, and the `exception` of
+  `PUT /api/plans/{pid}/delivery-confidence`) carries `threshold_kind`: `confidence_red_packs`, `forecast_past` or
+  `p80_cap` for one a threshold opened or joined (EX-7), null for one opened by delivery confidence alone. Tests:
+  `tests/organizations.rs` (both kinds in the list), `tests/delivery_confidence.rs` (null).

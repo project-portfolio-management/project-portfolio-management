@@ -460,6 +460,10 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(by_kind(&r3, "confidence_red_packs")["outcome"], "suppressed_by_override", "an override holds until it expires");
         assert_eq!(by_kind(&r3, "p80_cap")["outcome"], "opened", "the other threshold now has room to open");
         let ex2 = by_kind(&r3, "p80_cap")["exception_pid"].as_str().unwrap().to_string();
+        // The list says which threshold opened each one, so a screen need not guess.
+        let listed: Value = with!(request.get("/api/exceptions"), writer).await.json();
+        let kind_of = |pid: &str| listed["exceptions"].as_array().unwrap().iter().find(|e| e["pid"] == pid).map(|e| e["threshold_kind"].clone());
+        assert_eq!((kind_of(&ex_pid), kind_of(&ex2)), (Some(json!("confidence_red_packs")), Some(json!("p80_cap"))), "{listed}");
         with!(request.post(&format!("/api/exceptions/{ex2}/threshold-decision")), writer).json(&json!({ "action": "reset", "reason": "Re-plan the build with a lower ceiling" })).await.assert_status_ok();
         let d7: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": earlier, "audience": "executive" })).await.json();
         let pack7: Value = with!(request.get(&format!("/api/director-packs/{}", d7["pid"].as_str().unwrap())), issuer).await.json();

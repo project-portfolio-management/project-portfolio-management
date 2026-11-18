@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (the service gaps that block screens: NC-1 slice 12 part a)
+
+- **Service: which threshold opened a delivery exception.** `GET /api/exceptions` (and every answer that carries an
+  exception) returns `threshold_kind`, null for one opened by delivery confidence. **Not done:** no screen reads it
+  yet (slice 12 parts c and k).
+
 ### 18 November (test coverage measured, with cargo-tarpaulin)
 
 - **Service workspace: test coverage is measured.** cargo-tarpaulin 0.37.6 with the LLVM engine, configured in

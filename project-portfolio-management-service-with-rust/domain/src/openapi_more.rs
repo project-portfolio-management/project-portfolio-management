@@ -1149,7 +1149,7 @@ fn confidence_paths() -> Value {
         },
         "/api/exceptions": {
             "get": op("exceptions", "Delivery exceptions across the plans you can read",
-                "Each with what is missing to make it complete (cause, decision_needed, owner, decide_by), whether it is breached (not complete within the window of hours counted from when it opened; exactly the window is still in time) and the hours open. ?status=open|closed and ?breached=true filter; at most 1000. Inputs: stored exceptions and the window in hours, PROJECT_PORTFOLIO_MANAGEMENT_EXCEPTION_WINDOW_HOURS (default 48).",
+                "Each with what is missing to make it complete (cause, decision_needed, owner, decide_by), whether it is breached (not complete within the window of hours counted from when it opened; exactly the window is still in time), the hours open, and threshold_kind: the threshold that opened it (confidence_red_packs, forecast_past or p80_cap; EX-7), null for one opened by delivery confidence. ?status=open|closed and ?breached=true filter; at most 1000. Inputs: stored exceptions and the window in hours, PROJECT_PORTFOLIO_MANAGEMENT_EXCEPTION_WINDOW_HOURS (default 48).",
                 vec![query("status", false, "open or closed"), query("breached", false, "true or false")],
                 &[("200", "exceptions, window_hours"), ("422", "Unknown status")])
         },

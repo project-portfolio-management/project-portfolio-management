@@ -91,6 +91,8 @@ fn exception_json(e: &exceptions::Model, now: Timestamp, window: i64) -> serde_j
         "breached": breach, "window_hours": window,
         "hours_open": (closed.unwrap_or(now) - opened).num_hours(),
         "closed_at": e.closed_at, "decision": e.decision, "decided_by": e.decided_by,
+        // The threshold that opened it (EX-7), or null for one opened by delivery confidence.
+        "threshold_kind": e.threshold_kind,
     })
 }
 

@@ -9,6 +9,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the codes and fields a screen reads (NC-1 slice 12 part a, 18 November 2026)
+
+Service spec, "Codes and fields a screen reads (NC-1 slice 12, part a)", is the contract for each item.
+
+- **`threshold_kind` on every delivery exception** (`GET /api/exceptions` and the other answers built the same way):
+  `confidence_red_packs`, `forecast_past` or `p80_cap` for one a threshold opened or joined, null for one opened by
+  delivery confidence. The column was stored (EX-7) but not returned. Tests: `tests/organizations.rs`,
+  `tests/delivery_confidence.rs`. **Not changed:** there is still no `GET /api/exceptions/{pid}`.
+
 ### Added — test coverage with cargo-tarpaulin, and its baseline (2026-11-18)
 
 - **Tool and engine.** cargo-tarpaulin 0.37.6 (published 2026-11-05, past the two-day publish age; installed with

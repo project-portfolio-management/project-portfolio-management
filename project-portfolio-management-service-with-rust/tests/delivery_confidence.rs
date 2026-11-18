@@ -172,6 +172,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         assert!(r["exception"].is_null(), "improving to amber opens nothing");
         let open: Value = with!(request.get("/api/exceptions?status=open"), writer).await.json();
         assert_eq!(open["exceptions"].as_array().unwrap().len(), 1, "and does not close it");
+        assert!(open["exceptions"][0]["threshold_kind"].is_null(), "opened by confidence, not by a threshold: {open}");
         // Complete it. Owner by role is what a pack shows.
         let done: Value = with!(request.put(&format!("/api/exceptions/{xp}")), writer).json(&json!({
             "cause": "Supplier administration", "decision_needed": "Approve the replacement supplier",

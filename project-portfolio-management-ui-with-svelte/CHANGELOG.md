@@ -9,6 +9,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the "contrast flake" was a real first-paint failure (2026-11-18)
+
+- `--mxi-color-muted` falls back, before the theme stylesheet arrives, to a mix of `#6b7280`, which is `#80808d`:
+  3.75:1 on `#fafafa` and 3.91:1 on white (needs 4.5:1). Every other colour token falls back to near-black. axe caught
+  it whenever it audited a page before the theme had loaded, which looked like a flake but was what a reader sees at
+  first paint. The fallback is now `#4b5563` (5.51:1 and 5.75:1 by the same OKLCH mix). Tested: lint, check, 1,506 unit
+  and 1,499 Playwright tests, no contrast failure. **Not verified:** that no other first-paint colour fails (only the
+  muted one was ever reported).
+
 ### Added — a person's own work (NC-1 slice 12 part h, PL-4, LT-7, RM-3, LT-11, RM-10, PJ-5, 2026-11-18)
 
 - `/me`: *Planned time* (`MyDayPlanner.svelte`): one local day of the person's slots (`GET /api/me/plan?day=&tz=`, the

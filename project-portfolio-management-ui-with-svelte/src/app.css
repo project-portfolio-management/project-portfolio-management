@@ -9,9 +9,12 @@
   --mxi-color-bg: var(--color-base-100, #fafafa);
   --mxi-color-fg: var(--color-base-content, #111827);
   /* 88%, not 78%: Lily themes 0.6 made the base text colour lighter, and 78% fell to 4.07:1 (needs 4.5:1). */
+  /* The fallback (first paint, before the theme stylesheet arrives) is #4b5563, not #6b7280: mixed the same way,
+     #6b7280 gave #80808d, 3.75:1 on #fafafa, which axe caught whenever it audited a page before the theme had loaded
+     (the "contrast flake"). #4b5563 gives 5.51:1 there and 5.75:1 on white. */
   --mxi-color-muted: color-mix(
     in oklch,
-    var(--color-base-content, #6b7280) 88%,
+    var(--color-base-content, #4b5563) 88%,
     var(--color-base-100, #fafafa)
   );
   --mxi-color-border: var(--color-base-300, #e5e7eb);

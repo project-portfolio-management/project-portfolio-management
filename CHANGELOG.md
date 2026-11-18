@@ -15,6 +15,11 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (the "contrast flake" was a real first-paint contrast failure)
+
+- **UI:** the muted text colour's first-paint fallback mixed to 3.75:1 (needs 4.5:1), which axe caught whenever it ran
+  before the theme stylesheet arrived; it is now 5.51:1. Every earlier "contrast flake" rerun was this.
+
 ### 18 November (a calendar feed's token in its address: checked, and recorded as a known gap)
 
 - **Checked:** the service does not log a request's address (its request span records the method and status only),

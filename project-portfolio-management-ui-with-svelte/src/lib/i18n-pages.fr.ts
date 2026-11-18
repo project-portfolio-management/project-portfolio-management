@@ -6820,8 +6820,6 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.deescalation.problem_name_taken": "Un tableau de bord porte déjà ce nom.",
   "p.deescalation.problem_tracker_taken":
     "Le tableau de bord {name} est déjà celui que lit le suivi.",
-  "p.deescalation.refused_create_conflict_tracker":
-    "Refusé : un tableau de bord porte déjà ce nom, ou un autre est déjà celui que lit le suivi.",
   "p.deescalation.scorecard_heading": "Un tableau de bord par trimestre",
   "p.deescalation.f_scorecard": "Tableau de bord",
   "p.deescalation.choose_scorecard": "Choisir un tableau de bord",
@@ -7017,11 +7015,31 @@ export const PAGES_FR: Record<PageKey, string> = {
     "{title} est une demande externe : nommez son arbitrage ({min} caractères ou plus) avant de l'approuver.",
   "p.proposals.refused_create":
     "Refusé : une proposition a besoin d'un titre, un montant d'une devise, et un arbitrage compte au plus {max} caractères.",
-  "p.proposals.refused_approve":
-    "Refusé : seule une proposition en examen peut être approuvée, et une demande externe a d'abord besoin d'un arbitrage nommé de {min} caractères ou plus.",
   "p.proposals.refused_tradeoff":
     "Refusé : un arbitrage compte de {min} à {max} caractères, sur une demande externe pas encore tranchée.",
   "p.proposals.refused_step":
     "Refusé : cette étape ne découle pas du statut de la proposition.",
   "p.proposals.refused_gone": "Cette proposition n'existe plus.",
+  "p.thresholds.opened_by_kind":
+    "Ouverte parce que le programme a franchi son seuil : {kind}.",
+  "p.thresholds.joined_by_kind":
+    "Pendant qu'elle était ouverte, le programme a aussi franchi un seuil : {kind}.",
+  "p.deescalation.refused_tracker_taken":
+    "Refusé : un autre tableau de bord est déjà celui que lit le suivi.",
+  "p.deescalation.level_now_by": "Niveau {level}, fixé le {date} par {who}.",
+  "p.deescalation.level_history_item_by": "{level}, fixé le {date} par {who}",
+  "p.deescalation.evidence_recorded_by": "enregistrée par {who} le {date}",
+  "p.deescalation.evidence_recorded_on": "enregistrée le {date}",
+  "p.proposals.refused_approve_status":
+    "Refusé : seule une proposition en examen peut être approuvée.",
+  "p.proposals.refused_tradeoff_required":
+    "Refusé : une demande externe doit nommer un arbitrage de {min} caractères ou plus avant de pouvoir être approuvée.",
+  "p.ledger.untraced_no_readable_line":
+    "Aucune ligne budgétaire que vous pouvez lire ne puise dans cette allocation : on ne peut donc pas suivre ici où va son argent.",
+  "p.ledger.untraced_not_on_a_line":
+    "Une partie de cette allocation n'est encore prévue sur aucune ligne budgétaire.",
+  "p.ledger.untraced_lines_over_plan":
+    "Les lignes budgétaires prévoient plus que ce que contient cette allocation.",
+  "p.ledger.untraced_other":
+    "Une partie de l'argent de cette allocation ne peut pas être suivie.",
 };

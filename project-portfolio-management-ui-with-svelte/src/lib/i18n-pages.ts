@@ -6558,8 +6558,6 @@ export const PAGES_EN = {
   "p.deescalation.problem_name_taken": "A scorecard already has that name.",
   "p.deescalation.problem_tracker_taken":
     "The scorecard {name} is already the one the tracker reads.",
-  "p.deescalation.refused_create_conflict_tracker":
-    "Refused: a scorecard already has that name, or another is already the one the tracker reads.",
   "p.deescalation.scorecard_heading": "A scorecard by quarter",
   "p.deescalation.f_scorecard": "Scorecard",
   "p.deescalation.choose_scorecard": "Choose a scorecard",
@@ -6742,13 +6740,33 @@ export const PAGES_EN = {
     "{title} is an external ask: name its trade-off ({min} or more characters) before approving it.",
   "p.proposals.refused_create":
     "Refused: a proposal needs a title, an amount needs a currency, and a trade-off is at most {max} characters.",
-  "p.proposals.refused_approve":
-    "Refused: only a proposal in review can be approved, and an external ask needs a named trade-off of {min} or more characters first.",
   "p.proposals.refused_tradeoff":
     "Refused: a trade-off is {min} to {max} characters, on an external ask that is not yet decided.",
   "p.proposals.refused_step":
     "Refused: that step does not follow from the proposal's status.",
   "p.proposals.refused_gone": "That proposal no longer exists.",
+  "p.thresholds.opened_by_kind":
+    "Opened because the programme crossed its threshold: {kind}.",
+  "p.thresholds.joined_by_kind":
+    "While this was open, the programme also crossed a threshold: {kind}.",
+  "p.deescalation.refused_tracker_taken":
+    "Refused: another scorecard is already the one the tracker reads.",
+  "p.deescalation.level_now_by": "Level {level}, set on {date} by {who}.",
+  "p.deescalation.level_history_item_by": "{level}, set on {date} by {who}",
+  "p.deescalation.evidence_recorded_by": "recorded by {who} on {date}",
+  "p.deescalation.evidence_recorded_on": "recorded on {date}",
+  "p.proposals.refused_approve_status":
+    "Refused: only a proposal in review can be approved.",
+  "p.proposals.refused_tradeoff_required":
+    "Refused: an external ask needs a named trade-off of {min} or more characters before it can be approved.",
+  "p.ledger.untraced_no_readable_line":
+    "No budget line you may read draws on this allocation, so where its money goes cannot be traced here.",
+  "p.ledger.untraced_not_on_a_line":
+    "Part of this allocation is not yet planned on any budget line.",
+  "p.ledger.untraced_lines_over_plan":
+    "The budget lines plan more than this allocation holds.",
+  "p.ledger.untraced_other":
+    "Part of this allocation's money cannot be traced.",
 } as const;
 
 /** A key in the page and component catalogue. */

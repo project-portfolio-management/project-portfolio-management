@@ -6133,8 +6133,6 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.deescalation.problem_name_taken": "已有计分卡使用该名称。",
   "p.deescalation.problem_tracker_taken":
     "计分卡 {name} 已是跟踪所读取的那一张。",
-  "p.deescalation.refused_create_conflict_tracker":
-    "已拒绝：已有计分卡使用该名称，或另一张已是跟踪所读取的。",
   "p.deescalation.scorecard_heading": "按季度查看计分卡",
   "p.deescalation.f_scorecard": "哪张计分卡",
   "p.deescalation.choose_scorecard": "选择计分卡",
@@ -6305,10 +6303,25 @@ export const PAGES_ZH: Record<PageKey, string> = {
     "{title}是外部请求：批准前请写明其取舍（{min} 个或更多字符）。",
   "p.proposals.refused_create":
     "已拒绝：提案需要标题，金额需要币种，取舍最多 {max} 个字符。",
-  "p.proposals.refused_approve":
-    "已拒绝：只有评审中的提案才能批准，外部请求须先写明 {min} 个或更多字符的取舍。",
   "p.proposals.refused_tradeoff":
     "已拒绝：取舍须为 {min} 到 {max} 个字符，且只适用于尚未决定的外部请求。",
   "p.proposals.refused_step": "已拒绝：该步骤与提案的状态不符。",
   "p.proposals.refused_gone": "该提案已不存在。",
+  "p.thresholds.opened_by_kind": "因项目群越过其阈值而开启：{kind}。",
+  "p.thresholds.joined_by_kind":
+    "在此异常开启期间，项目群还越过了一个阈值：{kind}。",
+  "p.deescalation.refused_tracker_taken":
+    "已拒绝：另一张计分卡已是跟踪所读取的那一张。",
+  "p.deescalation.level_now_by": "级别 {level}，由 {who} 于 {date} 设定。",
+  "p.deescalation.level_history_item_by": "{level}，由 {who} 于 {date} 设定",
+  "p.deescalation.evidence_recorded_by": "由 {who} 于 {date} 记录",
+  "p.deescalation.evidence_recorded_on": "于 {date} 记录",
+  "p.proposals.refused_approve_status": "已拒绝：只有评审中的提案才能批准。",
+  "p.proposals.refused_tradeoff_required":
+    "已拒绝：外部请求须先写明 {min} 个或更多字符的取舍，才能批准。",
+  "p.ledger.untraced_no_readable_line":
+    "没有您可读取的预算行使用此拨款，因此无法在此追踪其资金去向。",
+  "p.ledger.untraced_not_on_a_line": "此拨款的一部分尚未规划到任何预算行。",
+  "p.ledger.untraced_lines_over_plan": "预算行规划的金额超过了此拨款的金额。",
+  "p.ledger.untraced_other": "此拨款的部分资金无法追踪。",
 };

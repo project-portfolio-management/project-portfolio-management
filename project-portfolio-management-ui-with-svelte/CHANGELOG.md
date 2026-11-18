@@ -9,6 +9,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the service's new codes and fields, read (NC-1 slice 12 part a, 2026-11-18)
+
+- `/exceptions` names the threshold that opened an exception, or joined it while it was open, from `threshold_kind`
+  in the catalogue's words (`exceptionThreshold`).
+- `/deescalation`: the two 409s on a new scorecard (`scorecard_name_taken`, `tracker_scorecard_taken`) are a sentence
+  each (the one sentence covering both is gone); who set the level and each earlier one (`set_by`) and who recorded
+  each piece of evidence and when (`recorded_by`, `recorded_on`) are shown as the service returns them; a KPI made
+  from the template is named from the catalogue by its `template_key` in the tables by quarter, the reasons and the
+  key measures to choose (`kpiName`).
+- `/proposals`: `proposal_status_refused` and `tradeoff_required` are a sentence each (the one covering both is gone);
+  a pipeline 422 with neither code is the generic sentence.
+- `/plans/[pid]/programme`: a refused start is worded from the refusal's `errors.refusals` and
+  `errors.queue_position` (`startRefusedFields`); the start check is no longer read again after a refusal.
+- `/ledger`: why money is untraced is the catalogue's sentence for `untraced_reason_code`; the service's English
+  `untraced_reason` is no longer shown.
+- 13 keys in eight catalogues and two removed, machine-written and unreviewed. Tests: five unit files and five e2e
+  specs (`threshold-exceptions`, `deescalation`, `proposals`, `plan-programme`, `ledger`), each stub carrying
+  `"service text"` that must not show. **Not done:** names for people's references; `/kpis` still shows a template
+  KPI's stored name. **Not verified:** against a real service.
+
 ### Added — who must sign a milestone off (NC-1 slice 11, EX-4, 2026-11-18)
 
 - `/plans/[pid]/governance` shows each milestone's required organizations and who has signed, and replaces the set

@@ -1,7 +1,8 @@
 <!--
   The funding ledger (`/ledger`, EX-12): each allocation and what it bought. Untraced money is shown with its
-  amount and why. Below, recording allocations, drawing budget lines on them, cost codes and reconciling a finance
-  export (`LedgerWrites.svelte`, NC-1 slice 11).
+  amount and why, the why in the catalogue's words from the trace's `untraced_reason_code` (NC-1 slice 12 part a).
+  Below, recording allocations, drawing budget lines on them, cost codes and reconciling a finance export
+  (`LedgerWrites.svelte`, NC-1 slice 11).
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -13,6 +14,7 @@
   import { PpmClient, money, type FundingAllocation, type AllocationTrace } from "#lib/api/ppm.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import LedgerWrites from "#lib/components/LedgerWrites.svelte";
+  import { untracedReasonKey } from "#lib/ledger-actions.js";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
 
   const ppm = PpmClient.withFetch();
@@ -33,6 +35,8 @@
     }
   }
   const cur = () => trace?.currency ?? "";
+  // Why money is untraced, in the catalogue's words from its code; the service's English is never shown.
+  const untracedKey = $derived(trace ? untracedReasonKey(trace.money) : null);
   const label = (a: FundingAllocation) => `${a.funding_source} ${formatDate(a.allocated_on)}`;
   const num = (a: unknown, b: unknown) => Number(a) - Number(b);
   const allocColumns: DataGridColumn[] = $derived([
@@ -79,7 +83,7 @@
   <section aria-labelledby="lg-trace">
     <h2 id="lg-trace">{t("p.ledger.trace_h2", { name: label(trace.allocation) })}</h2>
     <p>{t("p.ledger.money", { allocated: money(trace.money.allocated_minor, trace.currency), planned: money(trace.money.planned_on_lines_minor, trace.currency), spent: money(trace.money.spent_minor, trace.currency), untraced: money(trace.money.untraced_minor, trace.currency), currency: trace.currency })}</p>
-    {#if trace.money.untraced_reason}<p class="banner" role="note">{trace.money.untraced_reason}</p>{/if}
+    {#if untracedKey}<p class="banner" role="note">{t(untracedKey)}</p>{/if}
     <p>{t("p.ledger.gates", { gated: trace.gates.lines_with_a_gate, released: trace.gates.released })}</p>
     <p>{t("p.ledger.milestones_met", { met: trace.milestones.met, total: trace.milestones.total })}</p>
     <p>{t("p.ledger.benefits", { n: trace.benefits.benefits })}

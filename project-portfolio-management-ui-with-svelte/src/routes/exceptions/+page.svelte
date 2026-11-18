@@ -5,7 +5,8 @@
   improving confidence does not close it. A breach (not completed in time) stays on the record. Every value is a word
   and a symbol, never a colour alone. A refusal is the catalogue's sentence. An exception a programme's threshold
   opened (EX-7) is closed by a threshold decision: pause, reset, stop, or an override with an expiry; the threshold
-  sweep checks every threshold now and pauses, resets and stops nothing.
+  sweep checks every threshold now and pauses, resets and stops nothing. The threshold that opened or joined an
+  exception is named from its `threshold_kind` in the catalogue's words (NC-1 slice 12 part a).
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -20,6 +21,7 @@
     REASON_MIN,
     THRESHOLD_ACTIONS,
     decisionProblems,
+    exceptionThreshold,
     isThresholdException,
     type ThresholdAction,
   } from "#lib/threshold-view.js";
@@ -216,17 +218,19 @@
   {:else}
     <ul class="exceptions">
       {#each list as e (e.pid)}
+        {@const th = exceptionThreshold(e)}
         <li>
           <article aria-labelledby={`exc-${e.pid}`}>
             <h2 id={`exc-${e.pid}`}><a href={localeHref(`/plans/${e.plan_pid}/confidence`)}>{planName(e.plan_pid)}</a></h2>
             {#if isThresholdException(e)}
-              <p>{t("p.thresholds.opened_by_threshold")}</p>
+              <p data-testid="threshold-line">{th ? t(th.key, { kind: tDynamic(`p.thresholds.kind_${th.kind}`) }) : t("p.thresholds.opened_by_threshold")}</p>
             {:else}
               <p>
                 <span aria-hidden="true">{mark(e.worst_value).symbol}</span>
                 {t("p.exceptions.worst", { value: word(e.worst_value) })}
                 {#if e.worsened_count > 0} · {tn("p.exceptions.worsened", e.worsened_count, { count: e.worsened_count })}{/if}
               </p>
+              {#if th}<p class="small" data-testid="threshold-line">{t(th.key, { kind: tDynamic(`p.thresholds.kind_${th.kind}`) })}</p>{/if}
             {/if}
             <p class="small">
               {t("p.exceptions.opened", { when: formatDate(e.opened_at) })} ·

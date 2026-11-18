@@ -6412,8 +6412,6 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.deescalation.problem_name_taken": "उस नाम का स्कोरकार्ड पहले से है।",
   "p.deescalation.problem_tracker_taken":
     "स्कोरकार्ड {name} पहले से वह है जिसे ट्रैकर पढ़ता है।",
-  "p.deescalation.refused_create_conflict_tracker":
-    "अस्वीकृत: उस नाम का स्कोरकार्ड पहले से है, या कोई दूसरा पहले से वह है जिसे ट्रैकर पढ़ता है।",
   "p.deescalation.scorecard_heading": "तिमाही के अनुसार एक स्कोरकार्ड",
   "p.deescalation.f_scorecard": "कौन-सा स्कोरकार्ड",
   "p.deescalation.choose_scorecard": "स्कोरकार्ड चुनें",
@@ -6589,10 +6587,29 @@ export const PAGES_HI: Record<PageKey, string> = {
     "{title} एक बाहरी अनुरोध है: स्वीकृत करने से पहले उसका समझौता बताएँ ({min} या अधिक अक्षर)।",
   "p.proposals.refused_create":
     "अस्वीकृत: प्रस्ताव का शीर्षक चाहिए, राशि के साथ मुद्रा चाहिए, और समझौता अधिकतम {max} अक्षरों का होता है।",
-  "p.proposals.refused_approve":
-    "अस्वीकृत: केवल समीक्षा में चल रहा प्रस्ताव स्वीकृत हो सकता है, और बाहरी अनुरोध के लिए पहले {min} या अधिक अक्षरों का समझौता बताना होगा।",
   "p.proposals.refused_tradeoff":
     "अस्वीकृत: समझौता {min} से {max} अक्षरों का होता है, ऐसे बाहरी अनुरोध पर जिस पर अभी निर्णय नहीं हुआ।",
   "p.proposals.refused_step": "अस्वीकृत: वह कदम प्रस्ताव की स्थिति से मेल नहीं खाता।",
   "p.proposals.refused_gone": "वह प्रस्ताव अब मौजूद नहीं है।",
+  "p.thresholds.opened_by_kind":
+    "खोला गया क्योंकि कार्यक्रम ने अपनी सीमा पार की: {kind}।",
+  "p.thresholds.joined_by_kind":
+    "जब यह खुला था, कार्यक्रम ने एक सीमा भी पार की: {kind}।",
+  "p.deescalation.refused_tracker_taken":
+    "अस्वीकृत: कोई दूसरा स्कोरकार्ड पहले से वह है जिसे ट्रैकर पढ़ता है।",
+  "p.deescalation.level_now_by": "स्तर {level}, {date} को {who} द्वारा तय।",
+  "p.deescalation.level_history_item_by": "{level}, {date} को {who} द्वारा तय",
+  "p.deescalation.evidence_recorded_by": "{who} द्वारा {date} को दर्ज",
+  "p.deescalation.evidence_recorded_on": "{date} को दर्ज",
+  "p.proposals.refused_approve_status":
+    "अस्वीकृत: केवल समीक्षा में चल रहा प्रस्ताव स्वीकृत हो सकता है।",
+  "p.proposals.refused_tradeoff_required":
+    "अस्वीकृत: किसी बाहरी अनुरोध को स्वीकृत होने से पहले {min} या अधिक अक्षरों का नामित समझौता चाहिए।",
+  "p.ledger.untraced_no_readable_line":
+    "कोई भी बजट पंक्ति जिसे आप पढ़ सकते हैं इस आवंटन से नहीं लेती, इसलिए यहाँ यह पता नहीं चल सकता कि इसका पैसा कहाँ जाता है।",
+  "p.ledger.untraced_not_on_a_line":
+    "इस आवंटन का कुछ हिस्सा अभी किसी बजट पंक्ति पर नियोजित नहीं है।",
+  "p.ledger.untraced_lines_over_plan":
+    "बजट पंक्तियाँ इस आवंटन में जितना है उससे अधिक नियोजित करती हैं।",
+  "p.ledger.untraced_other": "इस आवंटन के पैसे का कुछ हिस्सा ट्रेस नहीं किया जा सकता।",
 };

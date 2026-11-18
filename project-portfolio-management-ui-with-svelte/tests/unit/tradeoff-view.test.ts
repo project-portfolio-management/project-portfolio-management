@@ -110,8 +110,18 @@ describe("approving", () => {
   });
   it("is refused in the catalogue's words", () => {
     const e422 = new ApiError(422, "x", { code: "unprocessable" });
-    expect(proposalRefusalKey("approve", e422)).toBe(
-      "p.proposals.refused_approve",
+    // A 422 with no code this page knows is the generic sentence.
+    expect(proposalRefusalKey("approve", e422)).toBeNull();
+    const coded = (code: string) =>
+      new ApiError(422, "service text", { code, detail: "service text" });
+    expect(
+      proposalRefusalKey("approve", coded("proposal_status_refused")),
+    ).toBe("p.proposals.refused_approve_status");
+    expect(proposalRefusalKey("approve", coded("tradeoff_required"))).toBe(
+      "p.proposals.refused_tradeoff_required",
+    );
+    expect(proposalRefusalKey("submit", coded("proposal_status_refused"))).toBe(
+      "p.proposals.refused_step",
     );
     expect(proposalRefusalKey("tradeoff", e422)).toBe(
       "p.proposals.refused_tradeoff",
@@ -119,7 +129,7 @@ describe("approving", () => {
     expect(proposalRefusalKey("create", e422)).toBe(
       "p.proposals.refused_create",
     );
-    expect(proposalRefusalKey("submit", e422)).toBe("p.proposals.refused_step");
+    expect(proposalRefusalKey("submit", e422)).toBeNull();
     expect(proposalRefusalKey("approve", new ApiError(404, "x"))).toBe(
       "p.proposals.refused_gone",
     );

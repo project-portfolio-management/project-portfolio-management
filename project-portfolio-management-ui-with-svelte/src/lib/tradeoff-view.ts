@@ -88,7 +88,9 @@ export function approveProblem(
     : null;
 }
 
-/** The sentence for a refusal of `action`, or `null` for the generic one. */
+/** The sentence for a refusal of `action`, or `null` for the generic one. The pipeline's two 422s have a code each
+ * (NC-1 slice 12 part a): `proposal_status_refused` (the step does not follow from the status) and
+ * `tradeoff_required` (an external ask approved with no named trade-off). */
 export function proposalRefusalKey(
   action: "create" | "submit" | "review" | "approve" | "reject" | "tradeoff",
   err: unknown,
@@ -97,7 +99,13 @@ export function proposalRefusalKey(
   if (err.status === 404) return "p.proposals.refused_gone";
   if (err.status !== 422) return null;
   if (action === "create") return "p.proposals.refused_create";
-  if (action === "approve") return "p.proposals.refused_approve";
   if (action === "tradeoff") return "p.proposals.refused_tradeoff";
-  return "p.proposals.refused_step";
+  const code = (err.body as { code?: unknown } | undefined)?.code;
+  if (code === "tradeoff_required")
+    return "p.proposals.refused_tradeoff_required";
+  if (code === "proposal_status_refused")
+    return action === "approve"
+      ? "p.proposals.refused_approve_status"
+      : "p.proposals.refused_step";
+  return null;
 }

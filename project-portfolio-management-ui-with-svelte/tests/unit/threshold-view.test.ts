@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   decisionProblems,
+  exceptionThreshold,
   isThresholdException,
   sameThreshold,
   thresholdBody,
@@ -126,5 +127,36 @@ describe("an exception", () => {
   it("was opened by a threshold when its opening value is `threshold`", () => {
     expect(isThresholdException({ opened_value: "threshold" })).toBe(true);
     expect(isThresholdException({ opened_value: "red" })).toBe(false);
+  });
+});
+
+describe("the threshold behind an exception (NC-1 slice 12 part a)", () => {
+  it("names the kind that opened a threshold exception", () => {
+    expect(
+      exceptionThreshold({
+        opened_value: "threshold",
+        threshold_kind: "p80_cap",
+      }),
+    ).toEqual({ key: "p.thresholds.opened_by_kind", kind: "p80_cap" });
+  });
+  it("names the kind that joined a confidence exception while it was open", () => {
+    expect(
+      exceptionThreshold({
+        opened_value: "red",
+        threshold_kind: "forecast_past",
+      }),
+    ).toEqual({ key: "p.thresholds.joined_by_kind", kind: "forecast_past" });
+  });
+  it("names none for one confidence alone opened, or a kind with no words", () => {
+    expect(
+      exceptionThreshold({ opened_value: "red", threshold_kind: null }),
+    ).toBeNull();
+    expect(exceptionThreshold({ opened_value: "red" })).toBeNull();
+    expect(
+      exceptionThreshold({
+        opened_value: "threshold",
+        threshold_kind: "new_kind" as "p80_cap",
+      }),
+    ).toBeNull();
   });
 });

@@ -2145,8 +2145,8 @@ rules; plan names come from `GET /api/plans` (best effort: without them an excep
   would keep what it had; nothing changed sends nothing. A text part of one or two characters is said first not to
   count, as the service judges it.
 - **Deciding.** A decision of at least ten characters closes the exception. One a threshold opened (EX-7) closes
-  another way and is refused (422); the register does not say which those are (the service's list leaves
-  `threshold_kind` out), so the page reads a 422 on a checked decision as that case. A 409 is one already closed.
+  another way, by a threshold decision (see "Triage, thresholds and threshold decisions"); a 422 on a checked decision
+  is still read as that case. A 409 is one already closed.
 - **Not built in this slice:** the threshold decision (part k); the owner shown by name; a notice when an exception
   breaches.
 - **Tests:** `tests/unit/exception-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/exceptions.spec.ts`
@@ -2258,8 +2258,11 @@ already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the 
   reconciled and how many rows were read (a plural), with each matched code's export and register amounts and their
   difference, each unmatched code and amount, and each row in another currency than its line; the page says nothing is
   written. A refused file (422; the service lists its problems by line, in English) is the catalogue's sentence.
-- **Found, not changed here:** the trace already on this page shows the service's `untraced_reason`, its own English
-  text, as it was before this slice.
+- **Why money is untraced** (NC-1 slice 12 part a): the trace's banner is the catalogue's sentence for its
+  `untraced_reason_code` (no budget line the reader may read draws on the allocation; money not yet planned on a
+  line; lines planning more than was allocated), a general sentence when money is untraced with no code the page
+  knows, and nothing when every unit is traced. The service's English `untraced_reason` is no longer shown (slice 11
+  showed it). Tests: `tests/unit/ledger-actions.test.ts`, `tests/e2e/ledger.spec.ts` (each code, Welsh).
 - **Not built in this slice:** each unmatched code mapped from the report; the service's per-line problems with a file
   shown in the reader's language.
 - **Tests:** `tests/unit/ledger-actions.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
@@ -2369,7 +2372,11 @@ paused, reset or stopped automatically; every page says so.
 - **A threshold exception** (its `opened_value` is `threshold`) says it was opened by a threshold, instead of a
   confidence value (which it does not have), and its decision form records pause, reset, stop, or an override with an
   expiry in the future and at most 366 days out (said first; an expiry is sent only with an override).
-- **Not built:** which kind of threshold opened an exception (the exception list does not return `threshold_kind`).
+- **Which threshold** (NC-1 slice 12 part a): every exception now carries `threshold_kind`. A threshold exception
+  names its kind in the catalogue's words ("Opened because the programme crossed its threshold: P80 cost above a
+  cap."); a confidence exception a threshold joined while it was open says so with the kind; one delivery confidence
+  alone opened names none; a threshold exception with no kind (an older answer) keeps the plain sentence.
+  `exceptionThreshold` in `src/lib/threshold-view.ts`.
 - **Tests:** `tests/unit/threshold-view.test.ts`, the paths in `tests/unit/ppm.test.ts`;
   `tests/e2e/plan-programme.spec.ts` (triage and the three thresholds; the page's Welsh and axe test covers the
   sections), `tests/e2e/threshold-exceptions.spec.ts` (the exception's sentence, an override's expiry rules, a pause
@@ -2386,7 +2393,9 @@ change to a scorecard reads the tracker again.
 
 - **The level.** Shown as the sponsor set it, with its date, the sponsor's note and the earlier levels. The page says,
   in its own words, that the level is never worked out here and that nothing on the page moves it (the service's
-  `level_note` is not shown). Recording it says first that only the sponsor (role `sponsor`) or an administrator may,
+  `level_note` is not shown). Who set the level and each earlier one (`set_by`, NC-1 slice 12 part a) is shown as the
+  service returns it, a reference to a person and not a name, as `decided_by` is elsewhere; a level with no one
+  recorded gives only its date. Recording it says first that only the sponsor (role `sponsor`) or an administrator may,
   and that a level is 1 to 60 characters with an optional note; the same level and note is not sent again; a 403 is the
   catalogue's sentence.
 - **The run.** The consecutive finished quarters met against the number the rule asks for, and whether the rule is
@@ -2402,23 +2411,30 @@ change to a scorecard reads the tracker again.
   criterion is 5 to 500 characters. Evidence names a criterion and a finished quarter (offered from the tracker's
   quarters, and a quarter not yet finished refused before sending), met or not met (chosen, never assumed), a note of at
   least 5 characters and an optional link (http or https, no spaces, at most 500 bytes). Evidence the latest record
-  already says is not sent again. The evidence form is disabled until the tracker has loaded.
+  already says is not sent again. The evidence form is disabled until the tracker has loaded. Each quarter's evidence
+  says who recorded it and when (`recorded_by`, `recorded_on`, NC-1 slice 12 part a), the person as a reference.
 - **Scorecards.** Listed with the one the tracker reads. A new one has a name of 3 to 120 characters not already used
-  in any case, and may be the one the tracker reads only when no other is (both said first; a 409 is the catalogue's
-  sentence). A chosen scorecard shows its key measures by quarter and each quarter's state with the reasons built the
+  in any case, and may be the one the tracker reads only when no other is (both said first). The service's two 409s
+  have a code each (NC-1 slice 12 part a): `scorecard_name_taken` is the taken-name sentence and
+  `tracker_scorecard_taken` says another scorecard is already the tracker's; a 409 with neither code is the generic
+  sentence. A chosen scorecard shows its key measures by quarter and each quarter's state with the reasons built the
   same way. Its key measures are chosen from the KPI list (at most 60; nothing sent for the same set, in any order;
   one on a plan the reader may not read stays on the card, as the service keeps it). The checkboxes are disabled until
   the scorecard and the KPI list have loaded.
 - **The template** has no targets and is not applied by reading it. Each measure is named from the catalogue by its
   key (the service's English name is not shown), with its direction and unit; the reader picks measures and sets each
   target and red line as whole numbers (a number input's value read as a number once typed in). The direction rule is
-  said first: where higher is better the red line is below the target, where lower is better above it.
+  said first: where higher is better the red line is below the target, where lower is better above it. A KPI made
+  from the template carries its `template_key` (NC-1 slice 12 part a) and is named from the catalogue by that key
+  wherever this page shows it (the tracker's and a scorecard's tables by quarter, the reasons for a quarter, the key
+  measures to choose); a KPI without a key, or with one the catalogue does not know, keeps its stored name. A rename of
+  a template KPI is therefore not shown here, as the service spec says. Other pages (`/kpis`) still show the stored
+  name.
 - **Not built:** retiring or renaming a scorecard, choosing how many quarters a scorecard shows (the service's default
   of four is used), and editing or retiring a criterion (no routes). The template's six keys are named in the catalogue;
-  a key the catalogue does not know is shown as its key. **Service gap:** a measure added from the template becomes a
-  KPI named with the service's English name, so after it is added it is shown in English like any other KPI's name
-  (data, not catalogue text); and the two 409s on adding a scorecard (name taken, another already the tracker's) share
-  one error code, so the page says both when the second was asked for.
+  a key the catalogue does not know is shown as its key. **Left:** people are shown by reference, not by name (the
+  service stores references); KPIs made from the template before migration `20261118000116` have no key and keep
+  their English name (the service does not backfill them).
 - **Tests:** `tests/unit/deescalation-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/deescalation.spec.ts`
   (the level, run and reasons from the detail with no service text; the level's rule, no change, a 403; criteria and
   evidence with their rules, no change and a 422; a scorecard added, its key measures chosen and measures added from
@@ -2453,15 +2469,16 @@ Program has the start check. `src/lib/phase-view.ts` holds the rules.
   than 10 characters after trimming is refused before sending (the service would ignore it and refuse the start), and
   an override is sent only on a programme's move into Executing.
 - **Refusals.** A refused start (422 `start_refused`) is said in the catalogue's words with the programme's place in
-  the queue and the reasons, both read from the start check again after the refusal: **the 422 carries only the
-  service's English sentence, with no structured reasons or place**, so the page does not use it. Any other 422 says
-  the three phase rules (one step forward, a reason to go back, not the current phase); a 404 that the plan no longer
-  exists; anything else is the generic sentence.
+  the queue and the reasons, read from the fields the refusal carries (`errors.refusals`, each tagged by `reason` with
+  its numbers, and `errors.queue_position`; NC-1 slice 12 part a, `startRefusedFields`). The start check is shown
+  before sending and is not read again after a refusal; a reason of a kind the page cannot word is left out, and a
+  refusal without the fields says only that the start was refused. The English `detail` is never shown. Any other 422
+  says the three phase rules (one step forward, a reason to go back, not the current phase); a 404 that the plan no
+  longer exists; anything else is the generic sentence.
 - **Not built:** the transitions themselves, each with its reason (the page shows the time in each phase only); the
   phase anywhere but this page (the plan page does not show it); withdrawing from the queue here (that is
   `/start-queue`); demand set against free supply (the check gives this programme's demand, not the pool's free
-  supply). **Service gap:** the 422 `start_refused` names its reasons and the place only in English text, so the page
-  reads the check a second time; between the refusal and that read the reasons could change.
+  supply).
 - **Tests:** `tests/unit/phase-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
   `tests/e2e/plan-programme.spec.ts` (the check said first with its reasons and demand; nothing sent before a phase is
   chosen; a short override refused first; a refused start in the catalogue's words with its place and no service
@@ -2485,9 +2502,11 @@ Program has the start check. `src/lib/phase-view.ts` holds the rules.
   trade-off", which opens a form below the table with the rule said first (10 to 2000 characters, until the proposal
   is decided, each change recorded); the same text again sends nothing and says so.
 - **Approving.** Approving an external ask without a named trade-off is refused before anything is sent, naming the
-  proposal. The service's 422 on approval says, in the catalogue's words, both reasons it can have (only a proposal in
-  review can be approved; an external ask needs a named trade-off first), as the service gives one code for both; a
-  422 on the trade-off and on creating a proposal says its rules; a 404 that the proposal no longer exists.
+  proposal. The service's pipeline 422s have a code each (NC-1 slice 12 part a): `proposal_status_refused` says only
+  a proposal in review can be approved (on approving) or that the step does not follow from the status (submitting,
+  reviewing, rejecting), and `tradeoff_required` says an external ask needs a named trade-off of 10 or more characters
+  first; a pipeline 422 with neither code is the generic sentence. A 422 on the trade-off and on creating a proposal
+  says its rules; a 404 that the proposal no longer exists.
 - **Not built:** tagging an existing proposal as an external ask, or untagging one (that is the draft update, `PUT
   /api/proposals/{pid}`, which no page calls); the pack's external-asks section is shown by the director pack pages,
   not here.
@@ -2514,3 +2533,27 @@ requirement, and the page says so. `/milestone-signoffs` shows and records the s
   `tests/e2e/milestone-signoff-required.spec.ts` (a signed organization kept when another is added; no change sends
   nothing; an inactive one unticked on purpose; clearing; Welsh; axe). The translations are machine-written and
   unreviewed.
+
+## The service's new codes and fields, read (NC-1 slice 12 part a)
+
+The service now answers with a code or a field for each refusal and fact slice 11 could only read as English (service
+spec, "Codes and fields a screen reads (NC-1 slice 12, part a)"). Each workaround above is replaced, and no page shows
+the service's text:
+
+- `/exceptions` names the threshold that opened or joined an exception from `threshold_kind`.
+- `/deescalation` gives each of the two 409s on a new scorecard its own sentence (`scorecard_name_taken`,
+  `tracker_scorecard_taken`), shows who set the level and each earlier one (`set_by`) and who recorded each piece of
+  evidence and when (`recorded_by`, `recorded_on`), and names a KPI made from the template by its `template_key`.
+- `/proposals` gives each pipeline 422 its own sentence (`proposal_status_refused`, `tradeoff_required`).
+- `/plans/[pid]/programme` words a refused start from the refusal's `errors` (its reasons and queue place) and no
+  longer reads the start check a second time.
+- `/ledger` says why money is untraced from `untraced_reason_code`.
+
+**Tests:** `tests/unit/threshold-view.test.ts`, `tests/unit/deescalation-view.test.ts`, `tests/unit/tradeoff-view.test.ts`,
+`tests/unit/phase-view.test.ts`, `tests/unit/ledger-actions.test.ts`; `tests/e2e/threshold-exceptions.spec.ts` (each
+kind, a joined one, none, an older answer; Welsh), `tests/e2e/deescalation.spec.ts` (who set and recorded, a template
+KPI by its key, each 409 code), `tests/e2e/proposals.spec.ts` (each 422 code), `tests/e2e/plan-programme.spec.ts`
+(the refusal's own reasons and place, the check not read again), `tests/e2e/ledger.spec.ts` (each code; Welsh). Every
+stub carries `"service text"` where the service would put English, and each test checks it is not shown. 13 keys in
+eight catalogues and two removed (the sentences that covered two refusals each), machine-written and unreviewed.
+**Not verified:** against a real service.

@@ -5,7 +5,7 @@
 import { ApiError } from "./api/client.js";
 import type { StringKey } from "./i18n.svelte.js";
 import type { AllocationBody, BudgetBoard } from "./api/ppm-types.js";
-import type { FundingAllocation } from "./api/ppm.js";
+import type { AllocationTrace, FundingAllocation } from "./api/ppm.js";
 import { currencyCode, toMinor } from "./money.js";
 
 /** The service's limits: a reference, a cost code, and a finance export. */
@@ -106,4 +106,27 @@ export function ledgerRefusalKey(
   if (action === "line") return "p.ledger.refused_line";
   if (action === "reconcile") return "p.ledger.refused_export";
   return null;
+}
+
+/** Why the trace's money is untraced, in the catalogue's words (NC-1 slice 12 part a): the sentence for the trace's
+ * `untraced_reason_code`, a general one when money is untraced for a reason this page has no code for, and `null`
+ * when every unit is traced. The service's English `untraced_reason` is never shown. */
+export function untracedReasonKey(
+  money: Pick<
+    AllocationTrace["money"],
+    "untraced_minor" | "untraced_reason" | "untraced_reason_code"
+  >,
+): StringKey | null {
+  switch (money.untraced_reason_code) {
+    case "no_readable_line":
+      return "p.ledger.untraced_no_readable_line";
+    case "not_on_a_line":
+      return "p.ledger.untraced_not_on_a_line";
+    case "lines_over_plan":
+      return "p.ledger.untraced_lines_over_plan";
+    default:
+      return money.untraced_reason || money.untraced_minor !== 0
+        ? "p.ledger.untraced_other"
+        : null;
+  }
 }

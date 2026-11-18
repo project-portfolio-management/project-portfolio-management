@@ -6704,8 +6704,6 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae gan gerdyn sgorio yr enw hwnnw eisoes.",
   "p.deescalation.problem_tracker_taken":
     "Y cerdyn sgorio {name} yw'r un y mae'r traciwr yn ei ddarllen eisoes.",
-  "p.deescalation.refused_create_conflict_tracker":
-    "Gwrthodwyd: mae gan gerdyn sgorio yr enw hwnnw eisoes, neu mae un arall eisoes yn un y mae'r traciwr yn ei ddarllen.",
   "p.deescalation.scorecard_heading": "Cerdyn sgorio fesul chwarter",
   "p.deescalation.f_scorecard": "Cerdyn sgorio",
   "p.deescalation.choose_scorecard": "Dewiswch gerdyn sgorio",
@@ -6895,11 +6893,32 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae {title} yn gais allanol: enwch ei gyfaddawd ({min} nod neu fwy) cyn ei gymeradwyo.",
   "p.proposals.refused_create":
     "Gwrthodwyd: mae angen teitl ar gynnig, mae angen arian cyfred ar swm, ac mae cyfaddawd yn {max} nod ar y mwyaf.",
-  "p.proposals.refused_approve":
-    "Gwrthodwyd: dim ond cynnig sy'n cael ei adolygu y gellir ei gymeradwyo, ac mae cais allanol angen cyfaddawd wedi'i enwi o {min} nod neu fwy yn gyntaf.",
   "p.proposals.refused_tradeoff":
     "Gwrthodwyd: mae cyfaddawd yn {min} i {max} nod, ar gais allanol nad yw wedi'i benderfynu eto.",
   "p.proposals.refused_step":
     "Gwrthodwyd: nid yw'r cam hwnnw'n dilyn o statws y cynnig.",
   "p.proposals.refused_gone": "Nid yw'r cynnig hwnnw'n bodoli mwyach.",
+  "p.thresholds.opened_by_kind":
+    "Agorwyd oherwydd i'r rhaglen groesi ei throthwy: {kind}.",
+  "p.thresholds.joined_by_kind":
+    "Tra oedd hwn ar agor, croesodd y rhaglen drothwy hefyd: {kind}.",
+  "p.deescalation.refused_tracker_taken":
+    "Gwrthodwyd: mae cerdyn sgorio arall eisoes yn un y mae'r traciwr yn ei ddarllen.",
+  "p.deescalation.level_now_by":
+    "Lefel {level}, wedi'i gosod ar {date} gan {who}.",
+  "p.deescalation.level_history_item_by":
+    "{level}, wedi'i gosod ar {date} gan {who}",
+  "p.deescalation.evidence_recorded_by": "cofnodwyd gan {who} ar {date}",
+  "p.deescalation.evidence_recorded_on": "cofnodwyd ar {date}",
+  "p.proposals.refused_approve_status":
+    "Gwrthodwyd: dim ond cynnig sy'n cael ei adolygu y gellir ei gymeradwyo.",
+  "p.proposals.refused_tradeoff_required":
+    "Gwrthodwyd: mae angen cyfaddawd wedi'i enwi o {min} nod neu fwy ar gais allanol cyn y gellir ei gymeradwyo.",
+  "p.ledger.untraced_no_readable_line":
+    "Nid oes llinell gyllideb y cewch ei darllen yn tynnu ar y dyraniad hwn, felly ni ellir olrhain i ble mae ei arian yn mynd yma.",
+  "p.ledger.untraced_not_on_a_line":
+    "Nid yw rhan o'r dyraniad hwn wedi'i chynllunio ar unrhyw linell gyllideb eto.",
+  "p.ledger.untraced_lines_over_plan":
+    "Mae'r llinellau cyllideb yn cynllunio mwy nag sydd yn y dyraniad hwn.",
+  "p.ledger.untraced_other": "Ni ellir olrhain rhan o arian y dyraniad hwn.",
 };

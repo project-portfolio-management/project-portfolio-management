@@ -6824,8 +6824,6 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Eine Scorecard hat bereits diesen Namen.",
   "p.deescalation.problem_tracker_taken":
     "Die Scorecard {name} ist bereits die, die der Tracker liest.",
-  "p.deescalation.refused_create_conflict_tracker":
-    "Abgelehnt: Eine Scorecard hat bereits diesen Namen, oder eine andere ist bereits die, die der Tracker liest.",
   "p.deescalation.scorecard_heading": "Eine Scorecard je Quartal",
   "p.deescalation.f_scorecard": "Welche Scorecard",
   "p.deescalation.choose_scorecard": "Scorecard wählen",
@@ -7022,11 +7020,33 @@ export const PAGES_DE: Record<PageKey, string> = {
     "{title} ist eine externe Anfrage: Benennen Sie ihren Zielkonflikt ({min} oder mehr Zeichen), bevor Sie sie genehmigen.",
   "p.proposals.refused_create":
     "Abgelehnt: Ein Vorschlag braucht einen Titel, ein Betrag eine Währung, und ein Zielkonflikt hat höchstens {max} Zeichen.",
-  "p.proposals.refused_approve":
-    "Abgelehnt: Nur ein Vorschlag in Prüfung kann genehmigt werden, und eine externe Anfrage braucht zuerst einen benannten Zielkonflikt von {min} oder mehr Zeichen.",
   "p.proposals.refused_tradeoff":
     "Abgelehnt: Ein Zielkonflikt hat {min} bis {max} Zeichen und gehört zu einer externen Anfrage, über die noch nicht entschieden ist.",
   "p.proposals.refused_step":
     "Abgelehnt: Dieser Schritt folgt nicht aus dem Status des Vorschlags.",
   "p.proposals.refused_gone": "Diesen Vorschlag gibt es nicht mehr.",
+  "p.thresholds.opened_by_kind":
+    "Geöffnet, weil das Programm seine Schwelle überschritten hat: {kind}.",
+  "p.thresholds.joined_by_kind":
+    "Während dies offen war, hat das Programm auch eine Schwelle überschritten: {kind}.",
+  "p.deescalation.refused_tracker_taken":
+    "Abgelehnt: Eine andere Scorecard ist bereits die, die der Tracker liest.",
+  "p.deescalation.level_now_by":
+    "Stufe {level}, festgelegt am {date} von {who}.",
+  "p.deescalation.level_history_item_by":
+    "{level}, festgelegt am {date} von {who}",
+  "p.deescalation.evidence_recorded_by": "erfasst von {who} am {date}",
+  "p.deescalation.evidence_recorded_on": "erfasst am {date}",
+  "p.proposals.refused_approve_status":
+    "Abgelehnt: Nur ein Vorschlag in Prüfung kann genehmigt werden.",
+  "p.proposals.refused_tradeoff_required":
+    "Abgelehnt: Eine externe Anfrage braucht einen benannten Zielkonflikt von {min} oder mehr Zeichen, bevor sie genehmigt werden kann.",
+  "p.ledger.untraced_no_readable_line":
+    "Keine Budgetzeile, die Sie lesen dürfen, greift auf diese Zuweisung zu, daher lässt sich hier nicht verfolgen, wohin ihr Geld geht.",
+  "p.ledger.untraced_not_on_a_line":
+    "Ein Teil dieser Zuweisung ist noch auf keiner Budgetzeile geplant.",
+  "p.ledger.untraced_lines_over_plan":
+    "Die Budgetzeilen planen mehr, als diese Zuweisung enthält.",
+  "p.ledger.untraced_other":
+    "Ein Teil des Geldes dieser Zuweisung lässt sich nicht verfolgen.",
 };

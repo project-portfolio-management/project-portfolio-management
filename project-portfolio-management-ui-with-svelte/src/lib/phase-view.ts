@@ -3,8 +3,8 @@
 // said before anything is sent. The service still decides. A move forward is one step at a time; a move back needs a
 // reason; a programme (kind Program) moving into executing meets the start check (the limit on programmes in active
 // delivery and the constraint pool), and a refused start goes ahead only with an override reason of 10 or more
-// characters. The refusal's 422 carries the service's English sentence and no structured reasons, so the page builds
-// its sentence from the start check instead (read again after the refusal).
+// characters. The refusal's 422 (`start_refused`) carries its reasons and the queue place as fields (the problem's
+// `errors` member, NC-1 slice 12 part a), so the page words the refusal from them and never shows the English `detail`.
 
 import { ApiError } from "./api/client.js";
 import type { StringKey } from "./i18n.svelte.js";
@@ -104,6 +104,31 @@ export function isStartRefused(err: unknown): boolean {
   if (!(err instanceof ApiError) || err.status !== 422) return false;
   const body = err.body as { code?: unknown } | undefined;
   return body?.code === "start_refused";
+}
+
+/** The reasons and the queue place a refused start carries (`errors: { refusals, queue_position }`), or `null` when the
+ * refusal does not carry them in a shape this page reads. A reason of a kind this page does not know is left out. */
+export function startRefusedFields(
+  err: unknown,
+): { refusals: StartRefusal[]; queuePosition: number | null } | null {
+  if (!isStartRefused(err)) return null;
+  const errors = ((err as ApiError).body as { errors?: unknown } | undefined)
+    ?.errors as { refusals?: unknown; queue_position?: unknown } | undefined;
+  if (!errors || !Array.isArray(errors.refusals)) return null;
+  const refusals = (errors.refusals as Array<Record<string, unknown>>).filter(
+    (r): r is StartRefusal & Record<string, unknown> =>
+      (r?.reason === "limit_reached" &&
+        typeof r.in_delivery === "number" &&
+        typeof r.limit === "number") ||
+      (r?.reason === "constraint_pool_over" &&
+        typeof r.pool === "string" &&
+        Array.isArray(r.months)),
+  );
+  const q = errors.queue_position;
+  return {
+    refusals,
+    queuePosition: typeof q === "number" && Number.isSafeInteger(q) ? q : null,
+  };
 }
 
 /** The sentence for any other refusal of a phase move, or `null` for the generic one. */

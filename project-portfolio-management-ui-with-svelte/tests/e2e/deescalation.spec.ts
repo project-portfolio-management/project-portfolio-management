@@ -56,7 +56,11 @@ const kpiRows = () => [
 
 async function stub(
   page: Page,
-  opts: { levelStatus?: number; evidenceStatus?: number } = {},
+  opts: {
+    levelStatus?: number;
+    evidenceStatus?: number;
+    createCode?: string;
+  } = {},
 ) {
   const byQuarter = [
     { quarter: QA, state: { state: "met" } },
@@ -67,6 +71,7 @@ async function stub(
       level: "Level 3",
       set_on: "2026-10-01",
       note: "Board asked for a monthly review",
+      set_by: "person:sponsor-1",
     },
     level_note: "service text",
     scorecard: { pid: "s1", name: "Outcomes" },
@@ -77,7 +82,22 @@ async function stub(
     by_quarter: byQuarter,
     criteria_count: 1,
     kpis_you_may_not_read: 1,
-    kpis: kpiRows(),
+    // A KPI made from the template carries its key; its stored name is the service's English and is not shown.
+    kpis: [
+      ...kpiRows(),
+      {
+        kpi_pid: "k4",
+        name: "service text",
+        template_key: "open_critical_issues",
+        unit: "count",
+        direction: "lower_better",
+        target_value: 0,
+        quarters: [
+          { quarter: QA, value: 0, observed_on: null, met: true },
+          { quarter: QB, value: 0, observed_on: null, met: true },
+        ],
+      },
+    ],
     criteria: [
       {
         pid: "c1",
@@ -88,14 +108,23 @@ async function stub(
             met: true,
             link: "https://evidence.example/a",
             note: "Audit signed",
+            recorded_by: "person:auditor-2",
+            recorded_on: "2026-10-05",
           },
-          { quarter: QB, met: null, link: null, note: null },
+          {
+            quarter: QB,
+            met: null,
+            link: null,
+            note: null,
+            recorded_by: null,
+            recorded_on: null,
+          },
         ],
       },
     ],
     level_history: [
-      { level: "Level 3", set_on: "2026-10-01" },
-      { level: "Level 4", set_on: "2026-07-01" },
+      { level: "Level 3", set_on: "2026-10-01", set_by: "person:sponsor-1" },
+      { level: "Level 4", set_on: "2026-07-01", set_by: null },
     ],
   };
   const scorecards = [
@@ -170,7 +199,14 @@ async function stub(
               kpis: [
                 kpi("k1", "Milestones on time"),
                 kpi("k2", "Assurance"),
-                kpi("k3", "Benefits validated"),
+                // Made from the template: named from the catalogue by its key, not its stored English.
+                {
+                  ...kpi("k3", "service text"),
+                  kpi: {
+                    ...kpi("k3", "service text").kpi,
+                    template_key: "benefits_validated",
+                  },
+                },
               ],
               summary: { green: 0, amber: 0, red: 0, no_data: 3 },
               note: "service text",
@@ -195,6 +231,11 @@ async function stub(
       if (path.endsWith("/evidence") && opts.evidenceStatus)
         return refuse(opts.evidenceStatus);
       if (path === "/api/scorecards") {
+        if (opts.createCode)
+          return route.fulfill({
+            status: 409,
+            json: { code: opts.createCode, detail: "service text" },
+          });
         scorecards.push({
           pid: "s2",
           active: true,
@@ -220,14 +261,20 @@ test("the tracker shows the level, the run and each quarter's reasons from the d
     exact: true,
   });
   await expect(tracker.getByTestId("level-now")).toHaveText(
-    /^Level Level 3, set on .+\.$/,
+    /^Level Level 3, set on .+ by person:sponsor-1\.$/,
   );
   await expect(
     tracker.getByText("The sponsor's note: Board asked for a monthly review"),
   ).toBeVisible();
-  await expect(
-    tracker.getByRole("list", { name: "Earlier levels" }).getByRole("listitem"),
-  ).toHaveCount(2);
+  // Who set each level is shown as the service returns it; one with no one recorded says only its date.
+  const earlier = tracker
+    .getByRole("list", { name: "Earlier levels" })
+    .getByRole("listitem");
+  await expect(earlier).toHaveCount(2);
+  await expect(earlier.first()).toHaveText(
+    /^Level 3, set on .+ by person:sponsor-1$/,
+  );
+  await expect(earlier.last()).toHaveText(/^Level 4, set on [^b]+$/);
   await expect(tracker.getByTestId("run")).toHaveText(
     "0 finished quarters met in a row, of the 2 the rule asks for. The rule is not satisfied yet.",
   );
@@ -258,6 +305,10 @@ test("the tracker shows the level, the run and each quarter's reasons from the d
   await expect(
     kpis.getByRole("row", { name: /Milestones on time/ }),
   ).toContainText("at least 80 per cent");
+  // A KPI made from the template is named from the catalogue by its key.
+  await expect(
+    kpis.getByRole("row", { name: /Open issues at critical severity/ }),
+  ).toContainText("at most 0");
   await expect(page.getByText("service text")).toHaveCount(0);
 });
 
@@ -318,6 +369,13 @@ test("criteria and evidence: the rules said first, nothing sent for no change, a
       .getByRole("listitem")
       .first(),
   ).toContainText(`${name(QA)}: ✓ Met — Audit signed`);
+  // Who recorded the evidence, and when, as the service returns them.
+  await expect(
+    region
+      .getByRole("list", { name: "Evidence for: Independent review passed" })
+      .getByRole("listitem")
+      .first(),
+  ).toContainText(/\(recorded by person:auditor-2 on .+\)/);
 
   await region.getByLabel("Criterion (5 to 500 characters)").fill("Four");
   await region.getByRole("button", { name: "Add the criterion" }).click();
@@ -428,7 +486,9 @@ test("a scorecard is added, its KPIs chosen, and measures added from the templat
   ).toHaveText(
     `? ${name(QB)}: Nothing recorded. Not met: Milestones on time. Nothing recorded for: Assurance.`,
   );
-  const third = card.getByRole("checkbox", { name: "Benefits validated" });
+  const third = card.getByRole("checkbox", {
+    name: "Planned benefits validated by someone outside the programme",
+  });
   await expect(third).toBeEnabled();
   await expect(card.getByRole("checkbox", { name: "Assurance" })).toBeChecked();
   const saveKpis = card.getByRole("button", { name: "Save the key measures" });
@@ -492,6 +552,34 @@ test("a scorecard is added, its KPIs chosen, and measures added from the templat
   });
 });
 
+for (const [code, sentence] of [
+  ["scorecard_name_taken", "A scorecard already has that name."],
+  [
+    "tracker_scorecard_taken",
+    "Refused: another scorecard is already the one the tracker reads.",
+  ],
+] as const) {
+  test(`a new scorecard refused with ${code} is its own sentence, never the service's`, async ({
+    page,
+  }) => {
+    const sent = await stub(page, { createCode: code });
+    await page.goto("/en-001/deescalation");
+    await settle(page);
+    const add = page.getByRole("region", { name: "Scorecards", exact: true });
+    await add.getByLabel("Name", { exact: true }).fill("Delivery health");
+    await add.getByRole("button", { name: "Add the scorecard" }).click();
+    await expect(add.getByRole("alert")).toHaveText(sentence);
+    await expect(page.getByText("service text")).toHaveCount(0);
+    expect(sent).toEqual([
+      {
+        method: "POST",
+        path: "/api/scorecards",
+        body: { name: "Delivery health" },
+      },
+    ]);
+  });
+}
+
 test("the page reads in Welsh and passes axe with its forms open", async ({
   page,
 }) => {
@@ -513,7 +601,9 @@ test("the page reads in Welsh and passes axe with its forms open", async ({
     .getByRole("combobox", { name: /^Cerdyn sgorio/ })
     .selectOption("s1");
   await expect(
-    page.getByRole("checkbox", { name: "Benefits validated" }),
+    page.getByRole("checkbox", {
+      name: "Buddion a gynlluniwyd a ddilyswyd gan rywun y tu allan i'r rhaglen",
+    }),
   ).toBeEnabled();
   await expect(
     page.getByRole("group", {

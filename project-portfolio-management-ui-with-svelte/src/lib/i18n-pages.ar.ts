@@ -6383,8 +6383,6 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.deescalation.problem_name_taken": "توجد بطاقة أداء بهذا الاسم بالفعل.",
   "p.deescalation.problem_tracker_taken":
     "بطاقة الأداء {name} هي بالفعل التي يقرؤها المتتبع.",
-  "p.deescalation.refused_create_conflict_tracker":
-    "مرفوض: توجد بطاقة أداء بهذا الاسم بالفعل، أو أن أخرى هي بالفعل التي يقرؤها المتتبع.",
   "p.deescalation.scorecard_heading": "بطاقة أداء حسب الربع",
   "p.deescalation.f_scorecard": "أي بطاقة أداء",
   "p.deescalation.choose_scorecard": "اختر بطاقة أداء",
@@ -6566,10 +6564,28 @@ export const PAGES_AR: Record<PageKey, string> = {
     "{title} طلب خارجي: سمِّ مقايضته ({min} حرفًا أو أكثر) قبل الموافقة عليه.",
   "p.proposals.refused_create":
     "مرفوض: يحتاج المقترح إلى عنوان، ويحتاج المبلغ إلى عملة، والمقايضة {max} حرفًا على الأكثر.",
-  "p.proposals.refused_approve":
-    "مرفوض: لا تمكن الموافقة إلا على مقترح قيد المراجعة، ويحتاج الطلب الخارجي أولًا إلى مقايضة مسمّاة من {min} حرفًا أو أكثر.",
   "p.proposals.refused_tradeoff":
     "مرفوض: المقايضة من {min} إلى {max} حرفًا، على طلب خارجي لم يُحسم بعد.",
   "p.proposals.refused_step": "مرفوض: هذه الخطوة لا تتبع من حالة المقترح.",
   "p.proposals.refused_gone": "ذلك المقترح لم يعد موجودًا.",
+  "p.thresholds.opened_by_kind": "فُتح لأن البرنامج تجاوز عتبته: {kind}.",
+  "p.thresholds.joined_by_kind":
+    "بينما كان هذا مفتوحًا، تجاوز البرنامج أيضًا عتبة: {kind}.",
+  "p.deescalation.refused_tracker_taken":
+    "مرفوض: بطاقة أداء أخرى هي بالفعل التي يقرؤها المتتبع.",
+  "p.deescalation.level_now_by": "المستوى {level}، حدده {who} في {date}.",
+  "p.deescalation.level_history_item_by": "{level}، حدده {who} في {date}",
+  "p.deescalation.evidence_recorded_by": "سجّله {who} في {date}",
+  "p.deescalation.evidence_recorded_on": "سُجّل في {date}",
+  "p.proposals.refused_approve_status":
+    "مرفوض: لا تمكن الموافقة إلا على مقترح قيد المراجعة.",
+  "p.proposals.refused_tradeoff_required":
+    "مرفوض: يحتاج الطلب الخارجي إلى مقايضة مسمّاة من {min} حرفًا أو أكثر قبل الموافقة عليه.",
+  "p.ledger.untraced_no_readable_line":
+    "لا يسحب أي بند ميزانية يمكنك قراءته من هذا التخصيص، لذا لا يمكن تتبع وجهة أمواله هنا.",
+  "p.ledger.untraced_not_on_a_line":
+    "جزء من هذا التخصيص غير مخطط بعد على أي بند ميزانية.",
+  "p.ledger.untraced_lines_over_plan":
+    "تخطط بنود الميزانية لأكثر مما يحويه هذا التخصيص.",
+  "p.ledger.untraced_other": "لا يمكن تتبع جزء من أموال هذا التخصيص.",
 };

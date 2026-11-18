@@ -4,6 +4,8 @@
   is offered to the person who decides and moves no level; each quarter's state with the reasons, which this page
   names from the detail (the KPIs and criteria not met or with nothing recorded), never from the service's sentences;
   the criteria with each quarter's evidence. Criteria and evidence are added, never edited: the latest record speaks.
+  Who set the level (and each earlier one) and who recorded each piece of evidence, and when, are shown as the service
+  returns them: references to people, not names (NC-1 slice 12 part a).
   Every rule the service checks is said first; a refusal is the catalogue's sentence.
 -->
 <script lang="ts">
@@ -12,7 +14,7 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import KpiQuarterTable from "#lib/components/KpiQuarterTable.svelte";
   import { errorText } from "#lib/error-text.js";
-  import { t, tn } from "#lib/i18n.svelte.js";
+  import { t, tDynamic, tn } from "#lib/i18n.svelte.js";
   import { formatDate } from "#lib/locale-format.js";
   import { rowOf } from "#lib/row-of.js";
   import { PpmClient, type DeescalationTracker, type QuarterState } from "#lib/api/ppm.js";
@@ -27,6 +29,7 @@
     criterionProblem,
     deescalationRefusalKey,
     evidenceBody,
+    kpiName,
     levelBody,
     levelProblem,
     quarterName,
@@ -85,7 +88,9 @@
 
   function reasons(quarter: string, state: QuarterState): string {
     if (!tracker) return "";
-    const r = quarterReasons(quarter, tracker.kpis, tracker.criteria);
+    const r = quarterReasons(quarter, tracker.kpis, tracker.criteria, (k) =>
+      kpiName(k, (key) => tDynamic(`p.deescalation.measure_${key}`)),
+    );
     if (r.nothing) return t("p.deescalation.reason_nothing");
     if (state.state === "met") return t("p.deescalation.reason_all_met");
     const parts: string[] = [];
@@ -221,7 +226,11 @@
   {#if tracker}
     <h3>{t("p.deescalation.level_heading")}</h3>
     {#if tracker.level}
-      <p data-testid="level-now">{t("p.deescalation.level_now", { level: tracker.level.level, date: formatDate(tracker.level.set_on) })}</p>
+      <p data-testid="level-now">
+        {tracker.level.set_by
+          ? t("p.deescalation.level_now_by", { level: tracker.level.level, date: formatDate(tracker.level.set_on), who: tracker.level.set_by })
+          : t("p.deescalation.level_now", { level: tracker.level.level, date: formatDate(tracker.level.set_on) })}
+      </p>
       {#if tracker.level.note}<p class="small">{t("p.deescalation.level_note", { note: tracker.level.note })}</p>{/if}
     {:else}
       <p class="muted">{t("p.deescalation.level_none")}</p>
@@ -229,7 +238,11 @@
     {#if tracker.level_history.length > 1}
       <ul class="small" aria-label={t("p.deescalation.level_history")}>
         {#each tracker.level_history as h, i (i)}
-          <li>{t("p.deescalation.level_history_item", { level: h.level, date: formatDate(h.set_on) })}</li>
+          <li>
+            {h.set_by
+              ? t("p.deescalation.level_history_item_by", { level: h.level, date: formatDate(h.set_on), who: h.set_by })
+              : t("p.deescalation.level_history_item", { level: h.level, date: formatDate(h.set_on) })}
+          </li>
         {/each}
       </ul>
     {/if}
@@ -288,6 +301,13 @@
                   {t(STATE_MARK[s].key)}
                   {#if q.note}— {q.note}{/if}
                   {#if q.link}<a href={q.link} rel="noopener noreferrer" target="_blank">{t("p.deescalation.evidence_link")}</a>{/if}
+                  {#if q.recorded_on}
+                    <span class="muted">
+                      ({q.recorded_by
+                        ? t("p.deescalation.evidence_recorded_by", { who: q.recorded_by, date: formatDate(q.recorded_on) })
+                        : t("p.deescalation.evidence_recorded_on", { date: formatDate(q.recorded_on) })})
+                    </span>
+                  {/if}
                 </li>
               {/each}
             </ul>

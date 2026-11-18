@@ -9,6 +9,9 @@ import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle, stubPlansApi } from "./fixtures";
 
+/** How many times the stubbed start check was read since the last `stubProgramme`. */
+let startChecks = 0;
+
 async function stubProgramme(
   page: Page,
   opts: {
@@ -23,6 +26,7 @@ async function stubProgramme(
   let status = "active";
   const history: Array<Record<string, unknown>> = [];
   const sent: Array<{ method: string; path: string; body: unknown }> = [];
+  startChecks = 0;
   await stubPlansApi(page);
   await page.route(`**/api/plans/${PID}`, async (route) => {
     const res = await route.fetch().catch(() => null);
@@ -203,7 +207,10 @@ async function stubProgramme(
       const req = route.request();
       const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
       if (req.method() === "GET") {
-        if (path.endsWith("start-check")) return route.fulfill({ json: check });
+        if (path.endsWith("start-check")) {
+          startChecks += 1;
+          return route.fulfill({ json: check });
+        }
         return route.fulfill({
           json: {
             plan_pid: PID,
@@ -242,10 +249,18 @@ async function stubProgramme(
         opts.refuseStart &&
         !body.start_override_reason
       ) {
-        check.queue_position = 2;
+        // The refusal carries its own reasons and place (NC-1 slice 12 part a), here not the check's, so the
+        // page is seen to word them from the 422 and not from a second read of the check.
         return route.fulfill({
           status: 422,
-          json: { code: "start_refused", detail: "service text" },
+          json: {
+            code: "start_refused",
+            detail: "service text",
+            errors: {
+              refusals: [{ reason: "limit_reached", in_delivery: 4, limit: 3 }],
+              queue_position: 2,
+            },
+          },
         });
       }
       phase = body.phase;
@@ -736,16 +751,20 @@ test("a programme's start check is said first, a refused start joins the queue i
   expect(sent).toEqual([]);
 
   await override.fill("");
+  const checksBefore = startChecks;
   await move.click();
   await expect(region.getByRole("alert")).toHaveText(
     "The start was refused, so the programme is number 2 in the start queue. To start it anyway, give an override reason.",
   );
   await expect(
-    region.getByRole("list", { name: "Why the start was refused" }),
-  ).toContainText("All 3 places for programmes in active delivery are taken");
-  await expect(checkList).toContainText(
-    "This programme is number 2 in the start queue.",
-  );
+    region
+      .getByRole("list", { name: "Why the start was refused" })
+      .getByRole("listitem"),
+  ).toHaveText([
+    "All 3 places for programmes in active delivery are taken (4 in delivery).",
+  ]);
+  // The reasons came with the refusal: the start check is not read again.
+  expect(startChecks).toBe(checksBefore);
   await expect(page.getByText("service text")).toHaveCount(0);
 
   await override.fill("  The board agreed to run it in parallel.  ");

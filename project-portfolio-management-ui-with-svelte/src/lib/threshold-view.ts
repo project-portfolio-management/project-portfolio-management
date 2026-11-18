@@ -175,3 +175,23 @@ export function isThresholdException(
 ): boolean {
   return e.opened_value === "threshold";
 }
+
+/** Which sentence names the threshold behind an exception, and its kind (NC-1 slice 12 part a): one a threshold
+ * opened, or one a threshold joined while it was open (a confidence exception); `null` when no threshold is named
+ * (opened by delivery confidence alone, or a kind this page has no words for). */
+export function exceptionThreshold(
+  e: Pick<DeliveryException, "opened_value" | "threshold_kind">,
+): {
+  key: "p.thresholds.opened_by_kind" | "p.thresholds.joined_by_kind";
+  kind: ThresholdKind;
+} | null {
+  const kind = e.threshold_kind;
+  if (!kind || !(THRESHOLD_KINDS as readonly string[]).includes(kind))
+    return null;
+  return {
+    key: isThresholdException(e)
+      ? "p.thresholds.opened_by_kind"
+      : "p.thresholds.joined_by_kind",
+    kind,
+  };
+}

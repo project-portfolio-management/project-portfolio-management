@@ -30,9 +30,10 @@ const row = {
   closed_at: null,
   decision: null,
   decided_by: null,
+  threshold_kind: "p80_cap",
 };
 
-async function stub(page: Page) {
+async function stub(page: Page, extra: Array<Record<string, unknown>> = []) {
   const r = structuredClone(row);
   const sent: Array<{ method: string; path: string; body: unknown }> = [];
   await stubPlansApi(page);
@@ -41,7 +42,10 @@ async function stub(page: Page) {
     const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
     if (req.method() === "GET")
       return route.fulfill({
-        json: { window_hours: 48, exceptions: r.status === "open" ? [r] : [] },
+        json: {
+          window_hours: 48,
+          exceptions: [...(r.status === "open" ? [r] : []), ...extra],
+        },
       });
     const body = req.postDataJSON();
     sent.push({ method: req.method(), path, body });
@@ -85,9 +89,9 @@ test("a threshold exception says so, and an override needs a future expiry withi
   const sent = await stub(page);
   await page.goto("/en-001/exceptions");
   await settle(page);
-  await expect(
-    page.getByText("Opened because a threshold of the programme was crossed."),
-  ).toBeVisible();
+  await expect(page.getByTestId("threshold-line")).toHaveText(
+    "Opened because the programme crossed its threshold: P80 cost above a cap.",
+  );
   await expect(page.getByText("Worst value")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Record the decision: Website replatform" })
@@ -154,6 +158,43 @@ test("a pause sends no expiry", async ({ page }) => {
   ]);
 });
 
+test("each exception names the threshold that opened or joined it, in the catalogue's words", async ({
+  page,
+}) => {
+  await stub(page, [
+    // A confidence exception a threshold joined while it was open.
+    {
+      ...row,
+      pid: "66666666-6666-4666-8666-666666666664",
+      opened_value: "red",
+      worst_value: "red",
+      threshold_kind: "forecast_past",
+    },
+    // One delivery confidence alone opened: no threshold named.
+    {
+      ...row,
+      pid: "66666666-6666-4666-8666-666666666665",
+      opened_value: "amber_red",
+      worst_value: "amber_red",
+      threshold_kind: null,
+    },
+    // A threshold exception from before the kind was returned keeps the plain sentence.
+    {
+      ...row,
+      pid: "66666666-6666-4666-8666-666666666666",
+      threshold_kind: undefined,
+    },
+  ]);
+  await page.goto("/en-001/exceptions");
+  await settle(page);
+  await expect(page.getByTestId("threshold-line")).toHaveText([
+    "Opened because the programme crossed its threshold: P80 cost above a cap.",
+    "While this was open, the programme also crossed a threshold: Forecast finish past a date.",
+    "Opened because a threshold of the programme was crossed.",
+  ]);
+  await expect(page.getByText(/forecast_past|p80_cap/)).toHaveCount(0);
+});
+
 test("the sweep lists what it crossed in the catalogue's words", async ({
   page,
 }) => {
@@ -184,7 +225,9 @@ test("the threshold decision reads in Welsh and passes axe", async ({
   await page.goto("/cy-001/exceptions");
   await settle(page);
   await expect(
-    page.getByText("Agorwyd am fod un o drothwyon y rhaglen wedi'i groesi."),
+    page.getByText(
+      "Agorwyd oherwydd i'r rhaglen groesi ei throthwy: Cost P80 uwchlaw cap.",
+    ),
   ).toBeVisible();
   await page
     .getByRole("button", { name: /Website replatform/ })

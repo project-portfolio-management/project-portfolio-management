@@ -5,6 +5,7 @@ import {
   demandGrid,
   isBack,
   isStartRefused,
+  startRefusedFields,
   meetsStartCheck,
   phaseChoices,
   phaseMoveBody,
@@ -207,5 +208,54 @@ describe("the demand", () => {
     expect(wholeDays(0)).toBe(0);
     expect(wholeDays(86_400_000 * 2 - 1)).toBe(1);
     expect(wholeDays(86_400_000 * 3)).toBe(3);
+  });
+});
+
+describe("a refused start's fields (NC-1 slice 12 part a)", () => {
+  const refused = (errors: unknown) =>
+    new ApiError(422, "service text", {
+      code: "start_refused",
+      detail: "service text",
+      errors,
+    });
+  it("reads the reasons and the queue place the 422 carries", () => {
+    expect(
+      startRefusedFields(
+        refused({
+          refusals: [
+            { reason: "limit_reached", in_delivery: 3, limit: 3 },
+            {
+              reason: "constraint_pool_over",
+              pool: "Data",
+              months: ["2026-11"],
+            },
+          ],
+          queue_position: 2,
+        }),
+      ),
+    ).toEqual({
+      refusals: [
+        { reason: "limit_reached", in_delivery: 3, limit: 3 },
+        { reason: "constraint_pool_over", pool: "Data", months: ["2026-11"] },
+      ],
+      queuePosition: 2,
+    });
+  });
+  it("leaves out a reason it cannot word, and a place that is not a number", () => {
+    expect(
+      startRefusedFields(
+        refused({
+          refusals: [{ reason: "something_new" }, { reason: "limit_reached" }],
+          queue_position: "2",
+        }),
+      ),
+    ).toEqual({ refusals: [], queuePosition: null });
+  });
+  it("is null with no fields, or for any other refusal", () => {
+    expect(startRefusedFields(refused(undefined))).toBeNull();
+    expect(
+      startRefusedFields(new ApiError(422, "x", { code: "unprocessable" })),
+    ).toBeNull();
+    expect(startRefusedFields(new Error("x"))).toBeNull();
   });
 });

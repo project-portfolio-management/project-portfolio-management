@@ -10,6 +10,7 @@ import {
   costCodeProblem,
   exportProblem,
   ledgerRefusalKey,
+  untracedReasonKey,
 } from "../../src/lib/ledger-actions";
 
 const form = {
@@ -137,5 +138,36 @@ describe("cost codes and exports", () => {
     );
     expect(ledgerRefusalKey("allocation", new ApiError(422, "x"))).toBeNull();
     expect(ledgerRefusalKey("line", new ApiError(403, "x"))).toBeNull();
+  });
+});
+
+describe("why money is untraced (NC-1 slice 12 part a)", () => {
+  const m = (
+    code: "no_readable_line" | "not_on_a_line" | "lines_over_plan" | null,
+    untraced = 100,
+  ) => ({
+    untraced_minor: untraced,
+    untraced_reason: code ? "service text" : null,
+    untraced_reason_code: code,
+  });
+  it("is the catalogue's sentence for each code", () => {
+    expect(untracedReasonKey(m("no_readable_line"))).toBe(
+      "p.ledger.untraced_no_readable_line",
+    );
+    expect(untracedReasonKey(m("not_on_a_line"))).toBe(
+      "p.ledger.untraced_not_on_a_line",
+    );
+    expect(untracedReasonKey(m("lines_over_plan", -100))).toBe(
+      "p.ledger.untraced_lines_over_plan",
+    );
+  });
+  it("is nothing when every unit is traced, and a general sentence for a reason with no code", () => {
+    expect(untracedReasonKey(m(null, 0))).toBeNull();
+    expect(
+      untracedReasonKey({
+        untraced_minor: 100,
+        untraced_reason: "service text",
+      }),
+    ).toBe("p.ledger.untraced_other");
   });
 });

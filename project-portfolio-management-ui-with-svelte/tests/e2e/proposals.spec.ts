@@ -23,7 +23,10 @@ const row = (over: Record<string, unknown>) => ({
   ...over,
 });
 
-async function stub(page: Page, opts: { approveStatus?: number } = {}) {
+async function stub(
+  page: Page,
+  opts: { approveStatus?: number; approveCode?: string } = {},
+) {
   const proposals = [
     row({
       pid: "a1",
@@ -73,7 +76,10 @@ async function stub(page: Page, opts: { approveStatus?: number } = {}) {
       if (opts.approveStatus)
         return route.fulfill({
           status: opts.approveStatus,
-          json: { code: "unprocessable", detail: "service text" },
+          json: {
+            code: opts.approveCode ?? "unprocessable",
+            detail: "service text",
+          },
         });
       p.status = "approved";
       return route.fulfill({ json: p });
@@ -237,18 +243,27 @@ test("a new proposal is tagged as an external ask, with or without its trade-off
   ]);
 });
 
-test("a refused approval is the catalogue's sentence, never the service's", async ({
-  page,
-}) => {
-  await stub(page, { approveStatus: 422 });
-  await page.goto("/en-001/proposals");
-  await settle(page);
-  await page.getByRole("button", { name: "Approve Office move" }).click();
-  await expect(page.getByRole("alert")).toHaveText(
-    "Refused: only a proposal in review can be approved, and an external ask needs a named trade-off of 10 or more characters first.",
-  );
-  await expect(page.getByText("service text")).toHaveCount(0);
-});
+for (const [code, sentence] of [
+  [
+    "proposal_status_refused",
+    "Refused: only a proposal in review can be approved.",
+  ],
+  [
+    "tradeoff_required",
+    "Refused: an external ask needs a named trade-off of 10 or more characters before it can be approved.",
+  ],
+] as const) {
+  test(`a refused approval (${code}) is its own sentence, never the service's`, async ({
+    page,
+  }) => {
+    await stub(page, { approveStatus: 422, approveCode: code });
+    await page.goto("/en-001/proposals");
+    await settle(page);
+    await page.getByRole("button", { name: "Approve Office move" }).click();
+    await expect(page.getByRole("alert")).toHaveText(sentence);
+    await expect(page.getByText("service text")).toHaveCount(0);
+  });
+}
 
 test("the board reads in Welsh and passes axe with its forms open", async ({
   page,

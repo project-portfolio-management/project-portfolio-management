@@ -34,7 +34,8 @@ const TRACE = {
     planned_on_lines_minor: 750000,
     spent_minor: 200000,
     untraced_minor: 250000,
-    untraced_reason: "allocated but not yet planned on any budget line",
+    untraced_reason: "service text",
+    untraced_reason_code: "not_on_a_line",
   },
   gates: { lines_with_a_gate: 1, released: 0 },
   milestones: { met: 1, total: 2, items: [] },
@@ -76,20 +77,54 @@ test.describe("funding ledger", () => {
         "Allocated £10,000.00, planned on lines £7,500.00, spent £2,000.00, untraced £2,500.00 (GBP).",
       ),
     ).toBeVisible();
-    await expect(
-      page.getByText("allocated but not yet planned on any budget line"),
-    ).toBeVisible();
+    // Why money is untraced, in the catalogue's words from its code; the service's English is not shown.
+    await expect(page.getByRole("note")).toHaveText(
+      "Part of this allocation is not yet planned on any budget line.",
+    );
+    await expect(page.getByText("service text")).toHaveCount(0);
     await expect(
       page.getByRole("row", { name: /Apollo.*Build.*G2: held/ }),
     ).toBeVisible();
     await expect(page.getByText("Milestones met: 1 of 2.")).toBeVisible();
   });
 
+  for (const [code, sentence] of [
+    [
+      "no_readable_line",
+      "No budget line you may read draws on this allocation, so where its money goes cannot be traced here.",
+    ],
+    [
+      "lines_over_plan",
+      "The budget lines plan more than this allocation holds.",
+    ],
+  ] as const) {
+    test(`says why money is untraced for ${code}`, async ({ page }) => {
+      await page.route("**/api/funding-allocations/a1/trace", (r) =>
+        r.fulfill({
+          json: {
+            ...TRACE,
+            money: { ...TRACE.money, untraced_reason_code: code },
+          },
+        }),
+      );
+      await page.goto("/en-001/ledger", { waitUntil: "networkidle" });
+      await page
+        .getByRole("button", { name: "Trace Treasury 1 Apr 2026" })
+        .click();
+      await expect(page.getByRole("note")).toHaveText(sentence);
+      await expect(page.getByText("service text")).toHaveCount(0);
+    });
+  }
+
   test("reads in Welsh", async ({ page }) => {
     await page.goto("/cy-001/ledger", { waitUntil: "networkidle" });
     await expect(
       page.getByRole("heading", { level: 1, name: "Cyfriflyfr cyllid" }),
     ).toBeVisible();
+    await page.getByRole("button", { name: /^Olrhain Treasury/ }).click();
+    await expect(page.getByRole("note")).toHaveText(
+      "Nid yw rhan o'r dyraniad hwn wedi'i chynllunio ar unrhyw linell gyllideb eto.",
+    );
   });
 
   for (const locale of ["en-001", "cy-001", "zh-cn"]) {

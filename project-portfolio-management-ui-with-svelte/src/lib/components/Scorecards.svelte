@@ -3,7 +3,9 @@
   them; add one, perhaps as the one the de-escalation tracker reads (at most one is); choose one and see its KPIs by
   quarter (met, not met, or nothing recorded, as a word and a symbol); choose its KPIs from the KPI list (at most 60;
   nothing is sent for no change); and add measures from the starter template, which has no targets: the reader sets each
-  target and red line, the direction rule said first. A refusal is the catalogue's sentence.
+  target and red line, the direction rule said first. A refusal is the catalogue's sentence, one for each of the two
+  409s on a new scorecard (by code). A KPI made from the template is named from the catalogue by its `template_key`
+  (NC-1 slice 12 part a).
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -20,6 +22,7 @@
     STATE_MARK,
     TEMPLATE_KEYS,
     deescalationRefusalKey,
+    kpiName,
     kpisBody,
     quarterName,
     quarterReasons,
@@ -56,6 +59,8 @@
   const qn = (q: string) => quarterName(q, t);
   const measureName = (key: string) =>
     (TEMPLATE_KEYS as readonly string[]).includes(key) ? tDynamic(`p.deescalation.measure_${key}`) : key;
+  // A KPI made from the template is named from the catalogue by its key; any other keeps its stored name.
+  const nameOf = (k: { name: string; template_key?: string | null }) => kpiName(k, measureName);
   const unitWord = (unit: string) =>
     unit === "percent" ? t("p.deescalation.unit_percent") : unit === "count" ? t("p.deescalation.unit_count") : unit;
 
@@ -86,7 +91,7 @@
   }
   async function loadKpis() {
     try {
-      allKpis = (await ppm.kpis()).kpis.map((k) => ({ pid: k.kpi.pid, name: k.kpi.name }));
+      allKpis = (await ppm.kpis()).kpis.map((k) => ({ pid: k.kpi.pid, name: nameOf(k.kpi) }));
     } catch (err) {
       viewError = errorText(err, "p.deescalation.could_not_load_scorecard");
     }
@@ -119,7 +124,7 @@
   /** Every KPI that can be put on the card: the KPI list, and any on the card it does not hold. */
   const kpiOptions = $derived.by(() => {
     const out = [...(allKpis ?? [])];
-    for (const k of view?.kpis ?? []) if (!out.some((x) => x.pid === k.kpi_pid)) out.push({ pid: k.kpi_pid, name: k.name });
+    for (const k of view?.kpis ?? []) if (!out.some((x) => x.pid === k.kpi_pid)) out.push({ pid: k.kpi_pid, name: nameOf(k) });
     return out;
   });
 
@@ -145,8 +150,8 @@
       await load();
       await onChanged();
     } catch (err) {
-      const k = deescalationRefusalKey("create", err, forTracker);
-      createError = k ? t(k, { min: SCORECARD_NAME_MIN, max: SCORECARD_NAME_MAX, name: "" }) : errorText(err, "p.deescalation.could_not_save");
+      const k = deescalationRefusalKey("create", err);
+      createError = k ? t(k, { min: SCORECARD_NAME_MIN, max: SCORECARD_NAME_MAX }) : errorText(err, "p.deescalation.could_not_save");
     } finally {
       busy = false;
     }
@@ -219,7 +224,7 @@
 
   function standing(quarter: string, state: "met" | "not_met" | "missing"): string {
     if (!view) return "";
-    const r = quarterReasons(quarter, view.kpis, []);
+    const r = quarterReasons(quarter, view.kpis, [], nameOf);
     const parts: string[] = [];
     if (r.nothing) parts.push(t("p.deescalation.reason_no_kpis"));
     if (r.notMet.length > 0) parts.push(t("p.deescalation.reason_not_met", { list: r.notMet.join("; ") }));

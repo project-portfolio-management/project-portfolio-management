@@ -6,6 +6,7 @@ import {
   criterionProblem,
   deescalationRefusalKey,
   evidenceBody,
+  kpiName,
   kpisBody,
   lastFinishedQuarter,
   levelBody,
@@ -313,6 +314,20 @@ describe("the reasons for a quarter", () => {
       nothing: false,
     });
   });
+  it("name a KPI the way the page is told to (a template KPI by its key)", () => {
+    const r = quarterReasons(
+      "2026-Q3",
+      [
+        {
+          ...kpi("Milestones met", false),
+          template_key: "milestones_met_on_time",
+        },
+      ],
+      [],
+      (k) => kpiName(k, (key) => `catalogue:${key}`),
+    );
+    expect(r.notMet).toEqual(["catalogue:milestones_met_on_time"]);
+  });
   it("say there is nothing to measure when there is no KPI and no criterion", () => {
     expect(quarterReasons("2026-Q3", [], [])).toEqual({
       notMet: [],
@@ -338,12 +353,17 @@ describe("a refusal", () => {
     expect(deescalationRefusalKey("level", e(422))).toBe(
       "p.deescalation.problem_level",
     );
-    expect(deescalationRefusalKey("create", e(409))).toBe(
-      "p.deescalation.problem_name_taken",
-    );
-    expect(deescalationRefusalKey("create", e(409), true)).toBe(
-      "p.deescalation.refused_create_conflict_tracker",
-    );
+    // The two 409s on a new scorecard have a code each (NC-1 slice 12 part a); one with no code is the generic one.
+    const coded = (code: string) =>
+      new ApiError(409, "service text", { code, detail: "service text" });
+    expect(
+      deescalationRefusalKey("create", coded("scorecard_name_taken")),
+    ).toBe("p.deescalation.problem_name_taken");
+    expect(
+      deescalationRefusalKey("create", coded("tracker_scorecard_taken")),
+    ).toBe("p.deescalation.refused_tracker_taken");
+    expect(deescalationRefusalKey("create", e(409))).toBeNull();
+    expect(deescalationRefusalKey("create", coded("conflict"))).toBeNull();
     expect(deescalationRefusalKey("kpis", e(422))).toBe(
       "p.deescalation.refused_kpis",
     );
@@ -363,5 +383,32 @@ describe("a refusal", () => {
   it("falls back to the generic sentence otherwise", () => {
     expect(deescalationRefusalKey("criterion", e(500))).toBeNull();
     expect(deescalationRefusalKey("kpis", new Error("x"))).toBeNull();
+  });
+});
+
+describe("a KPI's name (NC-1 slice 12 part a)", () => {
+  const measure = (key: string) => `catalogue:${key}`;
+  it("is the catalogue's words for a KPI made from the template", () => {
+    expect(
+      kpiName(
+        {
+          name: "Open issues at critical severity",
+          template_key: "open_critical_issues",
+        },
+        measure,
+      ),
+    ).toBe("catalogue:open_critical_issues");
+  });
+  it("is the stored name for any other KPI, or a key the catalogue does not know", () => {
+    expect(kpiName({ name: "Cycle time" }, measure)).toBe("Cycle time");
+    expect(kpiName({ name: "Cycle time", template_key: null }, measure)).toBe(
+      "Cycle time",
+    );
+    expect(
+      kpiName(
+        { name: "Something new", template_key: "a_new_measure" },
+        measure,
+      ),
+    ).toBe("Something new");
   });
 });

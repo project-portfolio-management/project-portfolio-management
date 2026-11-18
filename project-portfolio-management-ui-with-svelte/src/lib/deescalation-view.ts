@@ -43,6 +43,19 @@ export const TEMPLATE_KEYS = [
 
 const chars = (s: string) => [...s.trim()].length;
 
+/** A KPI's name for the reader (NC-1 slice 12 part a): one made from the template carries its `template_key` and is
+ * named from the catalogue by that key (`measure` gives the catalogue's words); any other keeps its stored name, as
+ * does one whose key the catalogue does not know. A rename of a template KPI is not shown, as the service says. */
+export function kpiName(
+  k: { name: string; template_key?: string | null },
+  measure: (key: (typeof TEMPLATE_KEYS)[number]) => string,
+): string {
+  const key = k.template_key;
+  return key && (TEMPLATE_KEYS as readonly string[]).includes(key)
+    ? measure(key as (typeof TEMPLATE_KEYS)[number])
+    : k.name;
+}
+
 /** What is wrong with a new scorecard, or `null`: a name of 3 to 120 characters not taken in any case, and at most one
  * scorecard the tracker reads. */
 export function scorecardProblem(
@@ -276,12 +289,13 @@ export function quarterReasons(
   quarter: string,
   kpis: readonly ScorecardKpi[],
   criteria: readonly Pick<DeescalationCriterion, "criterion" | "quarters">[],
+  nameOf: (k: ScorecardKpi) => string = (k) => k.name,
 ): { notMet: string[]; missing: string[]; nothing: boolean } {
   const notMet: string[] = [];
   const missing: string[] = [];
   const inputs: Array<{ name: string; met: boolean | null }> = [
     ...kpis.map((k) => ({
-      name: k.name,
+      name: nameOf(k),
       met: k.quarters.find((q) => q.quarter === quarter)?.met ?? null,
     })),
     ...criteria.map((c) => ({
@@ -296,19 +310,25 @@ export function quarterReasons(
   return { notMet, missing, nothing: inputs.length === 0 };
 }
 
-/** The sentence for a refusal of `action`, or `null` for the generic one. */
+/** The problem's machine `code`, or `null`. */
+function codeOf(err: ApiError): string | null {
+  const body = err.body as { code?: unknown } | undefined;
+  return typeof body?.code === "string" ? body.code : null;
+}
+
+/** The sentence for a refusal of `action`, or `null` for the generic one. A new scorecard's two 409s have a code each
+ * (NC-1 slice 12 part a): `scorecard_name_taken` and `tracker_scorecard_taken`. */
 export function deescalationRefusalKey(
   action: "create" | "kpis" | "template" | "level" | "criterion" | "evidence",
   err: unknown,
-  forDeescalation = false,
 ): StringKey | null {
   if (!(err instanceof ApiError)) return null;
   const s = err.status;
   if (action === "create") {
-    if (s === 409)
-      return forDeescalation
-        ? "p.deescalation.refused_create_conflict_tracker"
-        : "p.deescalation.problem_name_taken";
+    if (s === 409 && codeOf(err) === "scorecard_name_taken")
+      return "p.deescalation.problem_name_taken";
+    if (s === 409 && codeOf(err) === "tracker_scorecard_taken")
+      return "p.deescalation.refused_tracker_taken";
     if (s === 422) return "p.deescalation.problem_name";
   }
   if (action === "kpis" && s === 422) return "p.deescalation.refused_kpis";

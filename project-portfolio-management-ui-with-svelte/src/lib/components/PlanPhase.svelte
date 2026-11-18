@@ -4,7 +4,8 @@
   into executing) meets the start check: the limit on programmes in active delivery and the constraint pool. The check
   is shown first, with this programme's firm demand by skill pool and month; a refused start joins the start queue,
   and an override with a reason of 10 or more characters starts it anyway. The refusal's sentence is built from the
-  start check, read again after the refusal: the service's own text is never shown. Rules in `src/lib/phase-view.ts`.
+  reasons and the queue place the refusal carries as fields (NC-1 slice 12 part a); the start check is not read again,
+  and the service's own text is never shown. Rules in `src/lib/phase-view.ts`.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -24,6 +25,7 @@
     phaseMoveBody,
     phaseRefusalKey,
     startRefusalText,
+    startRefusedFields,
     wholeDays,
   } from "#lib/phase-view.js";
 
@@ -37,6 +39,8 @@
   let error = $state<string | null>(null);
   let notice = $state("");
   let refused = $state(false);
+  // The reasons the last refused start carried, as fields.
+  let refusedWhy = $state<StartCheck["refusals"]>([]);
   let busy = $state(false);
   let to = $state<PhaseToken | "">("");
   let reason = $state("");
@@ -108,15 +112,17 @@
       reason = "";
       override = "";
       refused = false;
+      refusedWhy = [];
       await load();
     } catch (err) {
       if (isStartRefused(err)) {
         refused = true;
-        // The 422 says why only in the service's English: read the check again for the reasons and the place.
-        await loadCheck();
+        // The 422 carries its reasons and the queue place as fields: the sentence is built from them.
+        const fields = startRefusedFields(err);
+        refusedWhy = fields?.refusals ?? [];
         error =
-          check?.queue_position != null
-            ? t("p.phase.start_refused_place", { n: check.queue_position })
+          fields?.queuePosition != null
+            ? t("p.phase.start_refused_place", { n: fields.queuePosition })
             : t("p.phase.start_refused");
       } else {
         const k = phaseRefusalKey(err);
@@ -204,8 +210,8 @@
     {#if showOverride}
       <label>{t("p.phase.f_override", { min: OVERRIDE_MIN })}<textarea bind:value={override} rows="2"></textarea></label>
     {/if}
-    {#if refused && check && check.refusals.length > 0}
-      <ul class="small" aria-label={t("p.phase.refused_why")}>{#each check.refusals as r (r.reason)}<li>{why(r)}</li>{/each}</ul>
+    {#if refused && refusedWhy.length > 0}
+      <ul class="small" aria-label={t("p.phase.refused_why")}>{#each refusedWhy as r (r.reason)}<li>{why(r)}</li>{/each}</ul>
     {/if}
     <div class="row"><button class="button" type="submit" disabled={busy || !history}>{t("p.phase.move")}</button></div>
   </form>

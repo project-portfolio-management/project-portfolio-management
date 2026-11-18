@@ -2975,7 +2975,11 @@ export interface AllocationTrace {
     planned_on_lines_minor: number;
     spent_minor: number;
     untraced_minor: number;
+    /** The service's English; never shown (the page words `untraced_reason_code`). */
     untraced_reason: string | null;
+    /** Why money is untraced, as a code (NC-1 slice 12 part a); null when every unit is traced. */
+    untraced_reason_code?:
+      "no_readable_line" | "not_on_a_line" | "lines_over_plan" | null;
   };
   gates: { lines_with_a_gate: number; released: number };
   milestones: {

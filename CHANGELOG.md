@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (the UI reads part a's codes and fields: NC-1 slice 12 part a)
+
+- **UI: slice 11's workarounds replaced.** `/exceptions` names the threshold behind an exception; `/deescalation` gives
+  each 409 on a new scorecard its own sentence, shows who set the level and who recorded each piece of evidence and
+  when (as references), and names a KPI made from the template by its key; `/proposals` gives each pipeline 422 its
+  own sentence; the phase section words a refused start from the refusal's own reasons and place and no longer reads
+  the start check again; `/ledger` says why money is untraced in the catalogue's words. UI spec, "The service's new
+  codes and fields, read". 13 keys in eight catalogues, two removed.
+- **Not done:** people by name (the service stores references); `/kpis` and other pages still show a template KPI's
+  stored English name. **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 18 November (the service gaps that block screens: NC-1 slice 12 part a)
 
 - **Service: which threshold opened a delivery exception.** `GET /api/exceptions` (and every answer that carries an

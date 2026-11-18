@@ -6793,8 +6793,6 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Ya hay un cuadro de mando con ese nombre.",
   "p.deescalation.problem_tracker_taken":
     "El cuadro de mando {name} ya es el que lee el seguimiento.",
-  "p.deescalation.refused_create_conflict_tracker":
-    "Rechazado: ya hay un cuadro de mando con ese nombre, u otro ya es el que lee el seguimiento.",
   "p.deescalation.scorecard_heading": "Un cuadro de mando por trimestre",
   "p.deescalation.f_scorecard": "Cuadro de mando",
   "p.deescalation.choose_scorecard": "Elija un cuadro de mando",
@@ -6988,11 +6986,31 @@ export const PAGES_ES: Record<PageKey, string> = {
     "{title} es una petición externa: indique su contrapartida ({min} o más caracteres) antes de aprobarla.",
   "p.proposals.refused_create":
     "Rechazado: una propuesta necesita un título, un importe necesita una moneda y una contrapartida tiene como máximo {max} caracteres.",
-  "p.proposals.refused_approve":
-    "Rechazado: solo se puede aprobar una propuesta en revisión, y una petición externa necesita antes una contrapartida indicada de {min} o más caracteres.",
   "p.proposals.refused_tradeoff":
     "Rechazado: una contrapartida tiene de {min} a {max} caracteres, en una petición externa aún no decidida.",
   "p.proposals.refused_step":
     "Rechazado: ese paso no corresponde al estado de la propuesta.",
   "p.proposals.refused_gone": "Esa propuesta ya no existe.",
+  "p.thresholds.opened_by_kind":
+    "Abierta porque el programa cruzó su umbral: {kind}.",
+  "p.thresholds.joined_by_kind":
+    "Mientras estaba abierta, el programa también cruzó un umbral: {kind}.",
+  "p.deescalation.refused_tracker_taken":
+    "Rechazado: otro cuadro de mando ya es el que lee el seguimiento.",
+  "p.deescalation.level_now_by": "Nivel {level}, fijado el {date} por {who}.",
+  "p.deescalation.level_history_item_by": "{level}, fijado el {date} por {who}",
+  "p.deescalation.evidence_recorded_by": "registrada por {who} el {date}",
+  "p.deescalation.evidence_recorded_on": "registrada el {date}",
+  "p.proposals.refused_approve_status":
+    "Rechazado: solo se puede aprobar una propuesta en revisión.",
+  "p.proposals.refused_tradeoff_required":
+    "Rechazado: una petición externa necesita una contrapartida indicada de {min} o más caracteres antes de poder aprobarse.",
+  "p.ledger.untraced_no_readable_line":
+    "Ninguna línea presupuestaria que pueda leer usa esta asignación, así que aquí no se puede rastrear adónde va su dinero.",
+  "p.ledger.untraced_not_on_a_line":
+    "Parte de esta asignación aún no está planificada en ninguna línea presupuestaria.",
+  "p.ledger.untraced_lines_over_plan":
+    "Las líneas presupuestarias planifican más de lo que contiene esta asignación.",
+  "p.ledger.untraced_other":
+    "Parte del dinero de esta asignación no se puede rastrear.",
 };

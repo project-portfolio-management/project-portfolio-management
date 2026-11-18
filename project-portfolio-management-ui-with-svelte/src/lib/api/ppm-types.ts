@@ -1743,6 +1743,9 @@ export interface Kpi {
   red_value: number;
   cadence: KpiCadence | null;
   owner_ref: string | null;
+  /** The scorecard template measure it was made from (NC-1 slice 12 part a), or null; a page names such a KPI from
+   * its catalogue by this key. */
+  template_key?: string | null;
 }
 
 export interface KpiReading {
@@ -3845,6 +3848,9 @@ export interface DeliveryException {
   closed_at: string | null;
   decision: string | null;
   decided_by: string | null;
+  /** The threshold that opened or joined it (EX-7, NC-1 slice 12 part a); null for one delivery confidence alone
+   * opened. */
+  threshold_kind?: "confidence_red_packs" | "forecast_past" | "p80_cap" | null;
 }
 
 /** `PUT /api/exceptions/{pid}` body; a field left out keeps its stored value. */
@@ -4091,6 +4097,8 @@ export interface ScorecardRow {
 export interface ScorecardKpi {
   kpi_pid: string;
   name: string;
+  /** The template measure it was made from, or null (NC-1 slice 12 part a). */
+  template_key?: string | null;
   unit: string | null;
   direction: KpiDirection;
   target_value: number;
@@ -4129,12 +4137,22 @@ export interface DeescalationCriterion {
     met: boolean | null;
     link: string | null;
     note: string | null;
+    /** Who recorded the latest evidence (a person's reference, as stored) and when; null where nothing is recorded
+     * (NC-1 slice 12 part a). */
+    recorded_by?: string | null;
+    recorded_on?: string | null;
   }>;
 }
 
 /** `GET /api/deescalation`. `level_note` is the service's English and is not shown. */
 export interface DeescalationTracker {
-  level: { level: string; set_on: string; note: string | null } | null;
+  /** `set_by` is a person's reference as stored (NC-1 slice 12 part a), shown as returned. */
+  level: {
+    level: string;
+    set_on: string;
+    note: string | null;
+    set_by?: string | null;
+  } | null;
   level_note?: string;
   scorecard: { pid: string; name: string } | null;
   required_quarters: number;
@@ -4147,5 +4165,9 @@ export interface DeescalationTracker {
   kpis: ScorecardKpi[];
   criteria: DeescalationCriterion[];
   /** Newest first. */
-  level_history: Array<{ level: string; set_on: string }>;
+  level_history: Array<{
+    level: string;
+    set_on: string;
+    set_by?: string | null;
+  }>;
 }

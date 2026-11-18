@@ -34,6 +34,10 @@ It is pre-1.0; the first release cut from the root release workflow is
   `20261118000116`), so the UI can name it in the reader's language instead of the service's English. **Not done:** no
   backfill of KPIs made before; the plan-template starters stay English.
 - **Service: the ledger trace says why money is untraced as a code** (`untraced_reason_code`), beside the English.
+- **Left from part (a):** the routes it names that do not exist (retiring or renaming a scorecard, editing a criterion,
+  and the rest), which are not built; the MSPDI 413, which is the export page's to handle (it links straight to the
+  download); the plan-template starters' English; a read of what the policy allows the caller; names for people's
+  references. `tasks.md` lists them under NC-1's slice 12 part (a).
 
 ### 18 November (test coverage measured, with cargo-tarpaulin)
 

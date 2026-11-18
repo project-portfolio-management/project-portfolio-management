@@ -93,6 +93,11 @@ import type {
   EarnedValue,
   Escalation,
   EscalationRegister,
+  EscalationAcknowledgement,
+  AcknowledgeEscalationBody,
+  EscalationResolution,
+  ResolveEscalationBody,
+  RegisterCompleteness,
   EvForecast,
   EvRollup,
   EvSeries,
@@ -1411,6 +1416,47 @@ export class PpmClient {
     return this.http.post(`/api/plans/${pid}/escalations/${epid}/${action}`, {
       body,
     });
+  }
+  /** The acknowledgement at the escalation's current level (CF-4); 404 when there is none yet. */
+  escalationAcknowledgement(
+    pid: string,
+    epid: string,
+  ): Promise<EscalationAcknowledgement> {
+    return this.http.get(
+      `/api/plans/${pid}/escalations/${epid}/acknowledgement`,
+    );
+  }
+  /** Acknowledge it (CF-4); needs the acknowledgement right; repeating it answers the one already there. */
+  acknowledgeEscalation(
+    pid: string,
+    epid: string,
+    body: AcknowledgeEscalationBody,
+  ): Promise<EscalationAcknowledgement> {
+    return this.http.put(
+      `/api/plans/${pid}/escalations/${epid}/acknowledgement`,
+      { body },
+    );
+  }
+  /** The resolution of a resolved escalation (CF-4); 404 until it is resolved. */
+  escalationResolution(
+    pid: string,
+    epid: string,
+  ): Promise<EscalationResolution> {
+    return this.http.get(`/api/plans/${pid}/escalations/${epid}/resolution`);
+  }
+  /** Resolve it (CF-4); needs the resolution right; a resolution is never overwritten (409 for a different one). */
+  resolveEscalation(
+    pid: string,
+    epid: string,
+    body: ResolveEscalationBody,
+  ): Promise<EscalationResolution> {
+    return this.http.put(`/api/plans/${pid}/escalations/${epid}/resolution`, {
+      body,
+    });
+  }
+  /** Every readable programme's register completeness, and whether "no register, no money" is on (EX-1). */
+  registerCompleteness(): Promise<RegisterCompleteness> {
+    return this.http.get("/api/register-completeness");
   }
   escalationRegister(
     params: { status?: string; overdue?: boolean } = {},

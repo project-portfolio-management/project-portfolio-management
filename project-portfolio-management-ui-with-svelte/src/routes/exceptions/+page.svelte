@@ -180,6 +180,7 @@
 
 <h1>{t("p.exceptions.title")}</h1>
 <p class="small muted">{tn("p.exceptions.intro", windowHours, { hours: windowHours })}</p>
+<p class="small"><a href={localeHref("/register-completeness")}>{t("p.register_completeness.link")}</a></p>
 
 <div class="row filters">
   <label>

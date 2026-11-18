@@ -154,7 +154,7 @@
   {/if}
 </section>
 
-<p class="small"><a href={localeHref("/director-packs/schedules")}>{t("p.director_pack.schedules_link")}</a></p>
+<p class="small"><a href={localeHref("/director-packs/schedules")}>{t("p.director_pack.schedules_link")}</a> · <a href={localeHref("/register-completeness")}>{t("p.register_completeness.link")}</a></p>
 
 <section class="draft" aria-labelledby="draft-h">
   <h2 id="draft-h">{t("p.director_pack.draft_heading")}</h2>

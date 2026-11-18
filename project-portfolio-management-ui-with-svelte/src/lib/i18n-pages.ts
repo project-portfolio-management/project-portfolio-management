@@ -7032,6 +7032,76 @@ export const PAGES_EN = {
   "p.plan_change_requests.baseline_take": "Take a baseline",
   "p.plan_change_requests.baseline_not_yet":
     "A baseline can be taken once the change is approved.",
+  "p.escalations.problem_outcome":
+    "Choose an outcome: decided, guidance given or rejected.",
+  "p.escalations.problem_response":
+    "Write a response of {min} to {max} characters.",
+  "p.escalations.refused_ack_right":
+    "Refused: acknowledging an escalation needs the right to acknowledge escalations (an administrator holds it). Nothing was recorded.",
+  "p.escalations.refused_resolve_right":
+    "Refused: resolving an escalation needs the right to resolve escalations (an administrator holds it). Nothing was recorded.",
+  "p.escalations.refused_ack_state":
+    "Refused: this escalation was resolved or withdrawn meanwhile, so it cannot be acknowledged. It was read again.",
+  "p.escalations.refused_resolve_state":
+    "Refused: this escalation was withdrawn, or is already resolved with a different outcome or response; a resolution is never overwritten. It was read again.",
+  "p.escalations.refused_resolve_invalid":
+    "Refused: the outcome or the response was not accepted. Check the rules above and try again.",
+  "p.escalations.refused_gone":
+    "This escalation is gone, or you can no longer see it. The list was read again.",
+  "p.escalations.could_not_save": "That was not recorded.",
+  "p.escalations.by_unrecorded": "someone not recorded",
+  "p.escalations.ack_record": "Acknowledged at level {level} by {by}, {at}.",
+  "p.escalations.resolution_record": "Resolved {at} by {by}: {outcome}.",
+  "p.escalations.outcome_unrecorded": "no outcome recorded",
+  "p.escalations.records_heading": "Acknowledgement and resolution",
+  "p.escalations.records_failed":
+    "The acknowledgement or the resolution could not be read; the history below still shows what happened.",
+  "p.escalations.ack_note_line": "Note: {note}",
+  "p.escalations.ack_none": "Not acknowledged at its current level.",
+  "p.escalations.resolution_kept":
+    "A resolution is a record: it is not changed or overwritten.",
+  "p.escalations.records_rules":
+    "Acknowledging needs the right to acknowledge escalations, and resolving the right to resolve them; an administrator holds both, and this page cannot tell beforehand whether you do. An acknowledgement counts at the current level: taking it up a level clears it. A resolution is a record and is never overwritten.",
+  "p.escalations.ack_heading": "Acknowledge this escalation",
+  "p.escalations.ack_note": "Note (optional)",
+  "p.escalations.ack_done": "Acknowledged; the record is shown below.",
+  "p.escalations.resolve_heading": "Resolve this escalation",
+  "p.escalations.resolve_says":
+    "The response is {min} to {max} characters. You are asked before it is recorded, and it cannot be changed afterwards.",
+  "p.escalations.confirm_resolve":
+    "Record this resolution of “{title}”? It cannot be changed or overwritten afterwards.",
+  "p.escalations.resolution_done": "Resolved; the record is shown below.",
+  "p.register_completeness.link": "Register completeness",
+  "p.register_completeness.title": "Register completeness",
+  "p.register_completeness.title_ppm": "Register completeness — PPM",
+  "p.register_completeness.intro":
+    "How complete each programme's register is: of the things a programme should have on record, the share it has, and every one missing, named. Only the programmes (plans of kind Program) you can read are listed.",
+  "p.register_completeness.rules":
+    "The ten: a senior responsible owner (the programme's lead stands for one), partners, a stage, a schedule baseline, a target date, a budget, a funding source on each budget line, a delivery-confidence assessment, risks and dependencies. Partners are asked only where the delivery model has partners, and a funding source only where there is a budget line. The programme and the plans under it count together.",
+  "p.register_completeness.switch_on":
+    "“No register, no money” is on: releasing a budget line or booking a firm allocation on an incomplete programme is refused, naming what is missing.",
+  "p.register_completeness.switch_off":
+    "“No register, no money” is off: releasing a budget line or booking a firm allocation on an incomplete programme goes ahead, and the warning is kept in the audit trail.",
+  "p.register_completeness.count_one":
+    "{complete} of {n} programme is complete.",
+  "p.register_completeness.count_other":
+    "{complete} of {n} programmes are complete.",
+  "p.register_completeness.none": "There is no programme you can read.",
+  "p.register_completeness.loading": "Loading…",
+  "p.register_completeness.could_not_load":
+    "Could not load the register completeness.",
+  "p.register_completeness.table": "Programmes and their registers",
+  "p.register_completeness.col_programme": "Programme",
+  "p.register_completeness.col_state": "State",
+  "p.register_completeness.col_score": "Share on record",
+  "p.register_completeness.col_on_record": "Fields on record",
+  "p.register_completeness.col_missing": "Missing",
+  "p.register_completeness.col_not_asked": "Not asked",
+  "p.register_completeness.of": "{present} of {applicable}",
+  "p.register_completeness.state_complete": "complete",
+  "p.register_completeness.state_incomplete": "incomplete",
+  "p.register_completeness.field_other": "another field",
+  "p.register_completeness.none_listed": "none",
 } as const;
 
 /** A key in the page and component catalogue. */

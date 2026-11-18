@@ -584,6 +584,61 @@ export interface EscalationRegister {
   overdue: number;
 }
 
+/** `GET`/`PUT /api/plans/{pid}/escalations/{epid}/acknowledgement` (CF-4): the acknowledgement at the current level. */
+export interface EscalationAcknowledgement {
+  escalation_pid: string;
+  plan_pid: string;
+  level: number;
+  /** A reference (`person:…`), not a name; `null` when the service recorded none. */
+  acknowledged_by: string | null;
+  acknowledged_at: string;
+  note: string | null;
+}
+
+/** `PUT …/acknowledgement` body: a note is optional (a blank one is stored as none). */
+export interface AcknowledgeEscalationBody {
+  note?: string;
+}
+
+/** `GET`/`PUT /api/plans/{pid}/escalations/{epid}/resolution` (CF-4): a record, never overwritten. */
+export interface EscalationResolution {
+  escalation_pid: string;
+  plan_pid: string;
+  outcome: string | null;
+  response: string | null;
+  resolved_on: string | null;
+  resolved_by: string | null;
+  resolved_at: string | null;
+}
+
+/** `PUT …/resolution` body. */
+export interface ResolveEscalationBody {
+  outcome: string;
+  response: string;
+}
+
+/** One programme in `GET /api/register-completeness` (EX-1). */
+export interface RegisterProgramme {
+  plan_pid: string;
+  name: string;
+  complete: boolean;
+  score_pct: number;
+  present: number;
+  applicable: number;
+  /** Field keys (`sro`, `partners`, …) that apply and are missing. */
+  missing: string[];
+  /** Field keys that are not asked of this programme. */
+  not_applicable: string[];
+}
+
+/** `GET /api/register-completeness` (EX-1). `note` is the service's English and is not shown. */
+export interface RegisterCompleteness {
+  enforced: boolean;
+  programmes: RegisterProgramme[];
+  fields: string[];
+  note?: string;
+}
+
 export type ToleranceStatus = "green" | "amber" | "red" | "unknown" | "not_set";
 
 /** One dimension of a plan's tolerances (`GET /api/plans/{pid}/tolerances`). */

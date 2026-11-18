@@ -7315,4 +7315,78 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.plan_change_requests.baseline_take": "Prendre une référence",
   "p.plan_change_requests.baseline_not_yet":
     "Une référence peut être prise une fois le changement approuvé.",
+  "p.escalations.problem_outcome":
+    "Choisissez un résultat : décidé, orientation donnée ou rejeté.",
+  "p.escalations.problem_response":
+    "Rédigez une réponse de {min} à {max} caractères.",
+  "p.escalations.refused_ack_right":
+    "Refusé : accuser réception d'une escalade exige le droit d'accuser réception des escalades (un administrateur le détient). Rien n'a été enregistré.",
+  "p.escalations.refused_resolve_right":
+    "Refusé : résoudre une escalade exige le droit de résoudre les escalades (un administrateur le détient). Rien n'a été enregistré.",
+  "p.escalations.refused_ack_state":
+    "Refusé : cette escalade a été résolue ou retirée entre-temps, on ne peut donc plus en accuser réception. Elle a été relue.",
+  "p.escalations.refused_resolve_state":
+    "Refusé : cette escalade a été retirée, ou elle est déjà résolue avec un autre résultat ou une autre réponse ; une résolution n'est jamais écrasée. Elle a été relue.",
+  "p.escalations.refused_resolve_invalid":
+    "Refusé : le résultat ou la réponse n'a pas été accepté. Vérifiez les règles ci-dessus et réessayez.",
+  "p.escalations.refused_gone":
+    "Cette escalade n'existe plus, ou vous ne pouvez plus la voir. La liste a été relue.",
+  "p.escalations.could_not_save": "Cela n'a pas été enregistré.",
+  "p.escalations.by_unrecorded": "une personne non enregistrée",
+  "p.escalations.ack_record":
+    "Réception accusée au niveau {level} par {by}, {at}.",
+  "p.escalations.resolution_record": "Résolue {at} par {by} : {outcome}.",
+  "p.escalations.outcome_unrecorded": "aucun résultat enregistré",
+  "p.escalations.records_heading": "Accusé de réception et résolution",
+  "p.escalations.records_failed":
+    "L'accusé de réception ou la résolution n'a pas pu être lu ; l'historique ci-dessous montre toujours ce qui s'est passé.",
+  "p.escalations.ack_note_line": "Remarque : {note}",
+  "p.escalations.ack_none": "Pas d'accusé de réception à son niveau actuel.",
+  "p.escalations.resolution_kept":
+    "Une résolution est un enregistrement : elle n'est ni modifiée ni écrasée.",
+  "p.escalations.records_rules":
+    "Accuser réception exige le droit d'accuser réception des escalades, et résoudre le droit de les résoudre ; un administrateur détient les deux, et cette page ne peut pas savoir à l'avance si vous les détenez. Un accusé de réception vaut au niveau actuel : faire monter l'escalade d'un niveau l'efface. Une résolution est un enregistrement et n'est jamais écrasée.",
+  "p.escalations.ack_heading": "Accuser réception de cette escalade",
+  "p.escalations.ack_note": "Remarque (facultative)",
+  "p.escalations.ack_done":
+    "Réception accusée ; l'enregistrement figure ci-dessous.",
+  "p.escalations.resolve_heading": "Résoudre cette escalade",
+  "p.escalations.resolve_says":
+    "La réponse compte de {min} à {max} caractères. On vous demande confirmation avant de l'enregistrer, et elle ne peut plus être modifiée ensuite.",
+  "p.escalations.confirm_resolve":
+    "Enregistrer cette résolution de « {title} » ? Elle ne pourra plus être modifiée ni écrasée ensuite.",
+  "p.escalations.resolution_done":
+    "Résolue ; l'enregistrement figure ci-dessous.",
+  "p.register_completeness.link": "Complétude du registre",
+  "p.register_completeness.title": "Complétude du registre",
+  "p.register_completeness.title_ppm": "Complétude du registre — PPM",
+  "p.register_completeness.intro":
+    "Le degré de complétude du registre de chaque programme : parmi les éléments qu'un programme devrait avoir enregistrés, la part qu'il a, et chaque élément manquant, nommé. Seuls les programmes (plans de type Programme) que vous pouvez lire sont listés.",
+  "p.register_completeness.rules":
+    "Les dix : un responsable principal (le responsable du programme en tient lieu), des partenaires, une étape, une référence de calendrier, une date cible, un budget, une source de financement sur chaque ligne budgétaire, une évaluation de la confiance de livraison, des risques et des dépendances. Les partenaires ne sont demandés que si le modèle de livraison en comporte, et une source de financement que s'il existe une ligne budgétaire. Le programme et les plans qui en dépendent comptent ensemble.",
+  "p.register_completeness.switch_on":
+    "« Pas de registre, pas d'argent » est activé : libérer une ligne budgétaire ou réserver une affectation ferme sur un programme incomplet est refusé, en nommant ce qui manque.",
+  "p.register_completeness.switch_off":
+    "« Pas de registre, pas d'argent » est désactivé : libérer une ligne budgétaire ou réserver une affectation ferme sur un programme incomplet se fait, et l'avertissement est conservé dans la piste d'audit.",
+  "p.register_completeness.count_one":
+    "{complete} programme sur {n} est complet.",
+  "p.register_completeness.count_other":
+    "{complete} programmes sur {n} sont complets.",
+  "p.register_completeness.none":
+    "Il n'y a aucun programme que vous pouvez lire.",
+  "p.register_completeness.loading": "Chargement…",
+  "p.register_completeness.could_not_load":
+    "Impossible de charger la complétude du registre.",
+  "p.register_completeness.table": "Les programmes et leurs registres",
+  "p.register_completeness.col_programme": "Nom du programme",
+  "p.register_completeness.col_state": "État",
+  "p.register_completeness.col_score": "Part enregistrée",
+  "p.register_completeness.col_on_record": "Éléments enregistrés",
+  "p.register_completeness.col_missing": "Manquant",
+  "p.register_completeness.col_not_asked": "Non demandé",
+  "p.register_completeness.of": "{present} sur {applicable}",
+  "p.register_completeness.state_complete": "complet",
+  "p.register_completeness.state_incomplete": "incomplet",
+  "p.register_completeness.field_other": "un autre élément",
+  "p.register_completeness.none_listed": "aucun",
 };

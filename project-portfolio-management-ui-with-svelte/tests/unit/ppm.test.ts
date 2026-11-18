@@ -816,6 +816,29 @@ describe("PpmClient status updates and their evidence (NC-1 slice 12 part b, NC-
   });
 });
 
+describe("PpmClient escalation records and register completeness (NC-1 slice 12 part d, CF-4, EX-1)", () => {
+  it("reads and records the acknowledgement and the resolution, and reads the register", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.escalationAcknowledgement("p1", "e1");
+    await ppm.acknowledgeEscalation("p1", "e1", { note: "Seen" });
+    await ppm.escalationResolution("p1", "e1");
+    await ppm.resolveEscalation("p1", "e1", {
+      outcome: "decided",
+      response: "Funded from contingency",
+    });
+    await ppm.registerCompleteness();
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/escalations/e1/acknowledgement",
+      "PUT /api/plans/p1/escalations/e1/acknowledgement",
+      "GET /api/plans/p1/escalations/e1/resolution",
+      "PUT /api/plans/p1/escalations/e1/resolution",
+      "GET /api/register-completeness",
+    ]);
+  });
+});
+
 describe("PpmClient milestone sign-off required (NC-1 slice 11, EX-4)", () => {
   it("replaces the organizations a milestone needs", async () => {
     const { ppm, calls } = recordingClient();

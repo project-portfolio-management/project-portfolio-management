@@ -7326,4 +7326,75 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.plan_change_requests.baseline_take": "Basislinie erstellen",
   "p.plan_change_requests.baseline_not_yet":
     "Eine Basislinie kann erstellt werden, sobald die Änderung genehmigt ist.",
+  "p.escalations.problem_outcome":
+    "Wählen Sie ein Ergebnis: entschieden, Orientierung gegeben oder abgelehnt.",
+  "p.escalations.problem_response":
+    "Schreiben Sie eine Antwort mit {min} bis {max} Zeichen.",
+  "p.escalations.refused_ack_right":
+    "Abgelehnt: Das Bestätigen einer Eskalation erfordert das Recht, Eskalationen zu bestätigen (eine Administratorin oder ein Administrator hat es). Es wurde nichts erfasst.",
+  "p.escalations.refused_resolve_right":
+    "Abgelehnt: Das Lösen einer Eskalation erfordert das Recht, Eskalationen zu lösen (eine Administratorin oder ein Administrator hat es). Es wurde nichts erfasst.",
+  "p.escalations.refused_ack_state":
+    "Abgelehnt: Diese Eskalation wurde inzwischen gelöst oder zurückgezogen und kann daher nicht bestätigt werden. Sie wurde neu gelesen.",
+  "p.escalations.refused_resolve_state":
+    "Abgelehnt: Diese Eskalation wurde zurückgezogen oder ist bereits mit einem anderen Ergebnis oder einer anderen Antwort gelöst; eine Lösung wird nie überschrieben. Sie wurde neu gelesen.",
+  "p.escalations.refused_resolve_invalid":
+    "Abgelehnt: Das Ergebnis oder die Antwort wurde nicht angenommen. Prüfen Sie die Regeln oben und versuchen Sie es erneut.",
+  "p.escalations.refused_gone":
+    "Diese Eskalation gibt es nicht mehr, oder Sie können sie nicht mehr sehen. Die Liste wurde neu gelesen.",
+  "p.escalations.could_not_save": "Das wurde nicht erfasst.",
+  "p.escalations.by_unrecorded": "eine nicht erfasste Person",
+  "p.escalations.ack_record": "Bestätigt auf Stufe {level} von {by}, {at}.",
+  "p.escalations.resolution_record": "Gelöst {at} von {by}: {outcome}.",
+  "p.escalations.outcome_unrecorded": "kein Ergebnis erfasst",
+  "p.escalations.records_heading": "Bestätigung und Lösung",
+  "p.escalations.records_failed":
+    "Die Bestätigung oder die Lösung konnte nicht gelesen werden; der Verlauf unten zeigt dennoch, was geschehen ist.",
+  "p.escalations.ack_note_line": "Notiz: {note}",
+  "p.escalations.ack_none": "Auf der aktuellen Stufe nicht bestätigt.",
+  "p.escalations.resolution_kept":
+    "Eine Lösung ist ein Nachweis: Sie wird weder geändert noch überschrieben.",
+  "p.escalations.records_rules":
+    "Das Bestätigen erfordert das Recht, Eskalationen zu bestätigen, das Lösen das Recht, sie zu lösen; Administratoren haben beide, und diese Seite kann vorher nicht erkennen, ob Sie sie haben. Eine Bestätigung gilt auf der aktuellen Stufe: Wird die Eskalation eine Stufe höher gegeben, entfällt sie. Eine Lösung ist ein Nachweis und wird nie überschrieben.",
+  "p.escalations.ack_heading": "Diese Eskalation bestätigen",
+  "p.escalations.ack_note": "Notiz (optional)",
+  "p.escalations.ack_done": "Bestätigt; der Nachweis steht unten.",
+  "p.escalations.resolve_heading": "Diese Eskalation lösen",
+  "p.escalations.resolve_says":
+    "Die Antwort hat {min} bis {max} Zeichen. Sie werden vor dem Erfassen gefragt, und danach kann sie nicht mehr geändert werden.",
+  "p.escalations.confirm_resolve":
+    "Diese Lösung von „{title}“ erfassen? Sie kann danach weder geändert noch überschrieben werden.",
+  "p.escalations.resolution_done": "Gelöst; der Nachweis steht unten.",
+  "p.register_completeness.link": "Vollständigkeit des Registers",
+  "p.register_completeness.title": "Vollständigkeit des Registers",
+  "p.register_completeness.title_ppm": "Vollständigkeit des Registers — PPM",
+  "p.register_completeness.intro":
+    "Wie vollständig das Register jedes Programms ist: von den Angaben, die ein Programm erfasst haben sollte, der Anteil, den es hat, und jede fehlende Angabe mit Namen. Aufgeführt werden nur die Programme (Pläne der Art Programm), die Sie lesen dürfen.",
+  "p.register_completeness.rules":
+    "Die zehn: eine verantwortliche Führungskraft (die Leitung des Programms steht dafür), Partner, eine Phase, ein Terminplan-Basisplan, ein Zieldatum, ein Budget, eine Finanzierungsquelle für jede Budgetzeile, eine Bewertung der Liefersicherheit, Risiken und Abhängigkeiten. Partner werden nur verlangt, wo das Liefermodell Partner hat, und eine Finanzierungsquelle nur, wo es eine Budgetzeile gibt. Das Programm und die Pläne darunter zählen zusammen.",
+  "p.register_completeness.switch_on":
+    "„Kein Register, kein Geld“ ist eingeschaltet: Das Freigeben einer Budgetzeile oder das Buchen einer festen Zuteilung für ein unvollständiges Programm wird abgelehnt, mit Nennung der fehlenden Angaben.",
+  "p.register_completeness.switch_off":
+    "„Kein Register, kein Geld“ ist ausgeschaltet: Das Freigeben einer Budgetzeile oder das Buchen einer festen Zuteilung für ein unvollständiges Programm wird ausgeführt, und die Warnung wird im Prüfprotokoll festgehalten.",
+  "p.register_completeness.count_one":
+    "{complete} von {n} Programm ist vollständig.",
+  "p.register_completeness.count_other":
+    "{complete} von {n} Programmen sind vollständig.",
+  "p.register_completeness.none":
+    "Es gibt kein Programm, das Sie lesen dürfen.",
+  "p.register_completeness.loading": "Wird geladen…",
+  "p.register_completeness.could_not_load":
+    "Die Vollständigkeit des Registers konnte nicht geladen werden.",
+  "p.register_completeness.table": "Programme und ihre Register",
+  "p.register_completeness.col_programme": "Programm",
+  "p.register_completeness.col_state": "Zustand",
+  "p.register_completeness.col_score": "Anteil erfasst",
+  "p.register_completeness.col_on_record": "Erfasste Angaben",
+  "p.register_completeness.col_missing": "Fehlt",
+  "p.register_completeness.col_not_asked": "Nicht verlangt",
+  "p.register_completeness.of": "{present} von {applicable}",
+  "p.register_completeness.state_complete": "vollständig",
+  "p.register_completeness.state_incomplete": "unvollständig",
+  "p.register_completeness.field_other": "eine weitere Angabe",
+  "p.register_completeness.none_listed": "keine",
 };

@@ -6564,4 +6564,69 @@ export const PAGES_ZH: Record<PageKey, string> = {
     "是否建立基线由人决定；不会自动重新建立基线。每个变更一条基线，其原因注明该请求，且无法撤销。",
   "p.plan_change_requests.baseline_take": "建立基线",
   "p.plan_change_requests.baseline_not_yet": "变更获批后即可建立基线。",
+  "p.escalations.problem_outcome": "请选择结果：已决定、已给出指导或已拒绝。",
+  "p.escalations.problem_response": "请写 {min} 至 {max} 个字符的回复。",
+  "p.escalations.refused_ack_right":
+    "已拒绝：确认升级需要确认升级的权限（管理员拥有该权限）。未记录任何内容。",
+  "p.escalations.refused_resolve_right":
+    "已拒绝：解决升级需要解决升级的权限（管理员拥有该权限）。未记录任何内容。",
+  "p.escalations.refused_ack_state":
+    "已拒绝：此升级在此期间已被解决或撤回，因此无法确认。已重新读取。",
+  "p.escalations.refused_resolve_state":
+    "已拒绝：此升级已被撤回，或已以不同的结果或回复解决；解决记录从不被覆盖。已重新读取。",
+  "p.escalations.refused_resolve_invalid":
+    "已拒绝：结果或回复未被接受。请检查上面的规则后重试。",
+  "p.escalations.refused_gone":
+    "此升级已不存在，或您已无法查看。已重新读取列表。",
+  "p.escalations.could_not_save": "未能记录。",
+  "p.escalations.by_unrecorded": "未记录的人员",
+  "p.escalations.ack_record": "由 {by} 在第 {level} 级确认，{at}。",
+  "p.escalations.resolution_record": "由 {by} 于 {at} 解决：{outcome}。",
+  "p.escalations.outcome_unrecorded": "未记录结果",
+  "p.escalations.records_heading": "确认与解决",
+  "p.escalations.records_failed":
+    "无法读取确认或解决记录；下面的历史仍显示所发生的事情。",
+  "p.escalations.ack_note_line": "备注：{note}",
+  "p.escalations.ack_none": "在当前级别尚未确认。",
+  "p.escalations.resolution_kept": "解决是一项记录：不会被更改或覆盖。",
+  "p.escalations.records_rules":
+    "确认需要确认升级的权限，解决需要解决升级的权限；管理员两者都有，本页面无法事先判断您是否拥有。确认只在当前级别有效：升级到上一级会将其清除。解决是一项记录，从不被覆盖。",
+  "p.escalations.ack_heading": "确认此升级",
+  "p.escalations.ack_note": "备注（可选）",
+  "p.escalations.ack_done": "已确认；记录显示在下方。",
+  "p.escalations.resolve_heading": "解决此升级",
+  "p.escalations.resolve_says":
+    "回复为 {min} 至 {max} 个字符。记录前会先询问您，之后无法更改。",
+  "p.escalations.confirm_resolve":
+    "记录对“{title}”的此项解决？之后将无法更改或覆盖。",
+  "p.escalations.resolution_done": "已解决；记录显示在下方。",
+  "p.register_completeness.link": "登记册完整性",
+  "p.register_completeness.title": "登记册完整性",
+  "p.register_completeness.title_ppm": "登记册完整性 — PPM",
+  "p.register_completeness.intro":
+    "每个项目群登记册的完整程度：在项目群应记录的事项中已记录的比例，以及逐项列出的每个缺失事项。只列出您可以读取的项目群（类型为项目群的计划）。",
+  "p.register_completeness.rules":
+    "十项为：高级责任负责人（由项目群负责人代为担任）、合作伙伴、阶段、进度基线、目标日期、预算、每条预算行的资金来源、交付信心评估、风险和依赖关系。只有在交付模式包含合作伙伴时才要求合作伙伴，只有存在预算行时才要求资金来源。项目群及其下属计划合并计算。",
+  "p.register_completeness.switch_on":
+    "“无登记，不拨款”已开启：对不完整的项目群发放预算行或预订确定分配会被拒绝，并列出缺失事项。",
+  "p.register_completeness.switch_off":
+    "“无登记，不拨款”已关闭：对不完整的项目群发放预算行或预订确定分配会照常进行，警告保存在审计记录中。",
+  "p.register_completeness.count_one": "{n} 个项目群中有 {complete} 个已完整。",
+  "p.register_completeness.count_other":
+    "{n} 个项目群中有 {complete} 个已完整。",
+  "p.register_completeness.none": "没有您可以读取的项目群。",
+  "p.register_completeness.loading": "正在加载…",
+  "p.register_completeness.could_not_load": "无法加载登记册完整性。",
+  "p.register_completeness.table": "项目群及其登记册",
+  "p.register_completeness.col_programme": "项目群",
+  "p.register_completeness.col_state": "状态",
+  "p.register_completeness.col_score": "已记录比例",
+  "p.register_completeness.col_on_record": "已记录事项",
+  "p.register_completeness.col_missing": "缺失",
+  "p.register_completeness.col_not_asked": "不要求",
+  "p.register_completeness.of": "{applicable} 项中的 {present} 项",
+  "p.register_completeness.state_complete": "完整",
+  "p.register_completeness.state_incomplete": "不完整",
+  "p.register_completeness.field_other": "其他事项",
+  "p.register_completeness.none_listed": "无",
 };

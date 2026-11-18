@@ -236,7 +236,7 @@ match breakdown).
                              scorecards it reads (NC-1 slice 11)
 
 Also built, described in the sections below (the list above is not
-every page; `find src/routes -name +page.svelte` gives all 122):
+every page; `find src/routes -name +page.svelte` gives all 124):
 /announcements /approval-processes /automations /balance /ceo /change-
 requests /cost-rates /cost-risk /demo /director-packs /director-
 packs/[pid] /display /documents /documents/[pid] /email-deliveries
@@ -252,7 +252,8 @@ risk /plans/[pid]/leveling /plans/[pid]/links /plans/[pid]/onboarding
 risk /plans/[pid]/tasks/[tpid] /plans/[pid]/tolerances
 /plans/[pid]/ways-of-working /plans/[pid]/wbs /plans/[pid]/what-if
 /plans/[pid]/work /plans/merge /prioritization /resources /resources/rbs
-/reviews /search /start-queue /tolerances /tour /issue-settings
+/register-completeness /reviews /search /start-queue /tolerances /tour
+/issue-settings
 
 Roadmap (per-plan project-management sub-routes, §13/§15; not built):
 /plans/[pid]/timeline        Gantt / timeline (goal milestones + task date ranges)
@@ -2680,3 +2681,58 @@ before anything is sent; refusals are the catalogue's sentences by route and sta
   no change or out of range; only the changed fields sent, a score as a number; a 422 and a 404; Welsh; axe). Every
   stub carries `"service text"` where the service would put English, and each test checks it is not shown. The
   translations are machine-written and unreviewed. **Not verified:** against a real service.
+
+## Escalation follow-through and register completeness (NC-1 slice 12 part d, CF-4, EX-1)
+
+CF-4's records of an escalation's acknowledgement and resolution, on the page that already works escalations, and a
+page for EX-1's register completeness. Every rule is said before anything is sent; refusals are the catalogue's
+sentences by action and status; the service's text is never shown.
+
+- **`/plans/[pid]/escalations`.** Acknowledging and resolving now go through the records (`PUT
+  /api/plans/{pid}/escalations/{epid}/acknowledgement` with `{note?}`, `PUT …/resolution` with `{outcome, response}`)
+  instead of the older `POST …/acknowledge` and `…/resolve` (which stay in the client and the service; taking it up a
+  level and withdrawing still use theirs). Opening an escalation reads its records as well as its history: the
+  acknowledgement (`GET …/acknowledgement`) when it is acknowledged, resolved or withdrawn, and the resolution (`GET
+  …/resolution`) when it is resolved; an open one has no acknowledgement at its level, so nothing is read for it. The
+  acknowledgement says the level, who (a reference, not a name; "not recorded" when the service has none), when and
+  the note; one not acknowledged at its current level says so. The resolution says the outcome in words, who, when
+  and the response, and that it is a record that is not changed. Said first, above the actions: acknowledging needs
+  the right to acknowledge escalations and resolving the right to resolve them (an administrator holds both), and the
+  page cannot tell beforehand who holds them; an acknowledgement counts at the current level, and taking it up a level
+  clears it; a resolution is a record, never overwritten. The acknowledgement takes an optional note (a blank note is
+  not sent). A resolution's response is 10 to 10,000 characters and its outcome one of the three; both are checked
+  before sending, and the page asks before recording it (Cancel sends nothing). Acknowledge is offered only while it
+  is open and the resolution form only while it is live, so a repeat is never sent. A 403 says which right is needed;
+  a 409 says it has moved on (resolved or withdrawn meanwhile, or, for a resolution, already resolved differently) and
+  reads it again; a 422 says the outcome or response was not accepted; a 404 says it is gone and reads the list again.
+  A record that cannot be read says so in the catalogue's words.
+- **`/register-completeness`**, linked from `/director-packs` and `/exceptions`, over `GET /api/register-completeness`:
+  each programme the caller can read (a plan of kind Program), incomplete ones first and the least complete first;
+  its state as a word and a shape; the share of applicable fields on record as a percentage and as a count ("7 of 9");
+  every missing field named and every field not asked of it named, in the catalogue's words (the ten field keys of
+  `fields`; one the page does not know is "another field"); the name linking to the plan. Said first: what the ten
+  fields are, that the programme's lead stands for the senior responsible owner, that partners are asked only where
+  the delivery model has partners and a funding source only where there is a budget line. Whether "no register, no
+  money" is on is said from `enforced`: on, releasing a budget line or booking a firm allocation on an incomplete
+  programme is refused, naming the fields; off, the action goes ahead and the warning is kept in the audit trail. A
+  count says how many of the programmes are complete (a plural). The service's `note` is English and is not shown.
+- **Decided (the plainest option):** the records replace the older acknowledge and resolve calls on this page rather
+  than sitting beside them; the records are read when an escalation is opened, not for every row; the register page is
+  read-only and is not in the navigation (two links reach it).
+- **Not built:** offering or hiding acknowledge and resolve by the caller's rights (no service read says what the
+  policy allows); the people as names; a sentence of its own for the "no register, no money" refusal on the pages that
+  release a budget line or book a firm allocation (they show the general 422 sentence); a filter on the register page
+  beyond the table's own. **Service gaps:** a 404 on reading an acknowledgement or a resolution has the code
+  `not_found` both for "none yet" and for an escalation or plan that is gone, so the page reads a 404 there as "none"
+  and relies on the history read just before it; the 409s on resolving (withdrawn, already resolved differently) and
+  on acknowledging share `conflict`, and every 422 is `unprocessable` with English text, so one sentence covers each;
+  the register's `note` is English.
+- **Tests:** `tests/unit/escalation-view.test.ts` (which records to read, the resolution's rules, the note's body, the
+  refusal keys, the records' words), `tests/unit/register-completeness-view.test.ts`, the paths in
+  `tests/unit/ppm.test.ts`; `tests/e2e/escalations.spec.ts` (acknowledging with a note and the record shown, with axe;
+  the resolution's rules first and nothing sent, the question, Cancel sending nothing, the record shown and no form
+  after; each refusal in the catalogue's words; a record that cannot be read; Welsh) and
+  `tests/e2e/register-completeness.spec.ts` (the switch on and off, the fields named, the order, the count, the links
+  from both pages, with axe; a failed read; none; Welsh). Every stub carries `"service text"` where the service would
+  put English, and each test checks it is not shown. The translations are machine-written and unreviewed. **Not
+  verified:** against a real service.

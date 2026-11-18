@@ -7288,4 +7288,75 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.plan_change_requests.baseline_take": "Tomar una línea base",
   "p.plan_change_requests.baseline_not_yet":
     "Se puede tomar una línea base cuando el cambio esté aprobado.",
+  "p.escalations.problem_outcome":
+    "Elija un resultado: decidido, orientación dada o rechazado.",
+  "p.escalations.problem_response":
+    "Escriba una respuesta de {min} a {max} caracteres.",
+  "p.escalations.refused_ack_right":
+    "Rechazado: reconocer una escalada requiere el derecho a reconocer escaladas (lo tiene un administrador). No se registró nada.",
+  "p.escalations.refused_resolve_right":
+    "Rechazado: resolver una escalada requiere el derecho a resolver escaladas (lo tiene un administrador). No se registró nada.",
+  "p.escalations.refused_ack_state":
+    "Rechazado: esta escalada se resolvió o se retiró entretanto, así que no se puede reconocer. Se volvió a leer.",
+  "p.escalations.refused_resolve_state":
+    "Rechazado: esta escalada se retiró, o ya está resuelta con otro resultado u otra respuesta; una resolución nunca se sobrescribe. Se volvió a leer.",
+  "p.escalations.refused_resolve_invalid":
+    "Rechazado: no se aceptó el resultado o la respuesta. Revise las reglas de arriba e inténtelo de nuevo.",
+  "p.escalations.refused_gone":
+    "Esta escalada ya no existe, o ya no puede verla. Se volvió a leer la lista.",
+  "p.escalations.could_not_save": "Eso no se registró.",
+  "p.escalations.by_unrecorded": "alguien no registrado",
+  "p.escalations.ack_record": "Reconocida en el nivel {level} por {by}, {at}.",
+  "p.escalations.resolution_record": "Resuelta {at} por {by}: {outcome}.",
+  "p.escalations.outcome_unrecorded": "sin resultado registrado",
+  "p.escalations.records_heading": "Reconocimiento y resolución",
+  "p.escalations.records_failed":
+    "No se pudo leer el reconocimiento o la resolución; el historial de abajo sigue mostrando lo que pasó.",
+  "p.escalations.ack_note_line": "Nota: {note}",
+  "p.escalations.ack_none": "Sin reconocer en su nivel actual.",
+  "p.escalations.resolution_kept":
+    "Una resolución es un registro: no se cambia ni se sobrescribe.",
+  "p.escalations.records_rules":
+    "Reconocer requiere el derecho a reconocer escaladas, y resolver el derecho a resolverlas; un administrador tiene ambos, y esta página no puede saber de antemano si usted los tiene. Un reconocimiento cuenta en el nivel actual: subirla de nivel lo borra. Una resolución es un registro y nunca se sobrescribe.",
+  "p.escalations.ack_heading": "Reconocer esta escalada",
+  "p.escalations.ack_note": "Nota (opcional)",
+  "p.escalations.ack_done": "Reconocida; el registro se muestra abajo.",
+  "p.escalations.resolve_heading": "Resolver esta escalada",
+  "p.escalations.resolve_says":
+    "La respuesta tiene de {min} a {max} caracteres. Se le pregunta antes de registrarla, y después no se puede cambiar.",
+  "p.escalations.confirm_resolve":
+    "¿Registrar esta resolución de «{title}»? Después no se podrá cambiar ni sobrescribir.",
+  "p.escalations.resolution_done": "Resuelta; el registro se muestra abajo.",
+  "p.register_completeness.link": "Integridad del registro",
+  "p.register_completeness.title": "Integridad del registro",
+  "p.register_completeness.title_ppm": "Integridad del registro — PPM",
+  "p.register_completeness.intro":
+    "Lo completo que está el registro de cada programa: de lo que un programa debería tener registrado, la parte que tiene, y cada dato que falta, nombrado. Solo se listan los programas (planes de tipo Programa) que usted puede leer.",
+  "p.register_completeness.rules":
+    "Los diez: un responsable sénior (el líder del programa hace sus veces), socios, una etapa, una línea base del calendario, una fecha objetivo, un presupuesto, una fuente de financiación en cada línea presupuestaria, una evaluación de la confianza en la entrega, riesgos y dependencias. Los socios solo se piden donde el modelo de entrega tiene socios, y una fuente de financiación solo donde hay una línea presupuestaria. El programa y los planes que tiene debajo cuentan juntos.",
+  "p.register_completeness.switch_on":
+    "«Sin registro, no hay dinero» está activado: se rechaza liberar una línea presupuestaria o reservar una asignación firme en un programa incompleto, nombrando lo que falta.",
+  "p.register_completeness.switch_off":
+    "«Sin registro, no hay dinero» está desactivado: liberar una línea presupuestaria o reservar una asignación firme en un programa incompleto sigue adelante, y el aviso queda en el registro de auditoría.",
+  "p.register_completeness.count_one":
+    "{complete} de {n} programa está completo.",
+  "p.register_completeness.count_other":
+    "{complete} de {n} programas están completos.",
+  "p.register_completeness.none":
+    "No hay ningún programa que usted pueda leer.",
+  "p.register_completeness.loading": "Cargando…",
+  "p.register_completeness.could_not_load":
+    "No se pudo cargar la integridad del registro.",
+  "p.register_completeness.table": "Programas y sus registros",
+  "p.register_completeness.col_programme": "Programa",
+  "p.register_completeness.col_state": "Estado",
+  "p.register_completeness.col_score": "Parte registrada",
+  "p.register_completeness.col_on_record": "Datos registrados",
+  "p.register_completeness.col_missing": "Falta",
+  "p.register_completeness.col_not_asked": "No se pide",
+  "p.register_completeness.of": "{present} de {applicable}",
+  "p.register_completeness.state_complete": "completo",
+  "p.register_completeness.state_incomplete": "incompleto",
+  "p.register_completeness.field_other": "otro dato",
+  "p.register_completeness.none_listed": "ninguno",
 };

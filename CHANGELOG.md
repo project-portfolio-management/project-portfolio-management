@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (escalation follow-through and register completeness: NC-1 slice 12 part d)
+
+- **UI: escalation follow-through (CF-4) and register completeness (EX-1).** `/plans/[pid]/escalations` acknowledges
+  and resolves through the acknowledgement and resolution records and shows them (who acknowledged at the current
+  level, and a resolution that is never overwritten, asked about before it is recorded); the rights each needs and
+  the response's rules are said first. A new `/register-completeness`, linked from `/director-packs` and `/exceptions`,
+  lists each programme's completeness with every missing field named and says whether "no register, no money" is on.
+  The service's text is never shown. UI spec, "Escalation follow-through and register completeness"; tests
+  `tests/e2e/register-completeness.spec.ts` and additions to `escalations.spec.ts`. 50 keys in eight catalogues,
+  machine-written. **Not done:** offering the actions by the caller's rights. **Service gaps:** one `not_found` for
+  "no record yet" and "gone"; shared `conflict` and `unprocessable` codes on the records; the register's English
+  `note`. **Not verified:** against a real service.
+
 ### 18 November (issues, change requests and risks, the rest: NC-1 slice 12 part c)
 
 - **UI: the rest of issues and change requests (IR-3, IR-4), and changing a risk.** `/plans/[pid]/issues` reads an

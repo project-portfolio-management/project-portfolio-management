@@ -6844,4 +6844,68 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.plan_change_requests.baseline_take": "خذ خط أساس",
   "p.plan_change_requests.baseline_not_yet":
     "يمكن أخذ خط أساس بعد اعتماد التغيير.",
+  "p.escalations.problem_outcome": "اختر نتيجة: تقرّر، أو قُدّم توجيه، أو رُفض.",
+  "p.escalations.problem_response": "اكتب ردًا من {min} إلى {max} حرفًا.",
+  "p.escalations.refused_ack_right":
+    "رُفض: الإقرار بتصعيد يحتاج إلى حق الإقرار بالتصعيدات (يملكه المسؤول). لم يُسجَّل شيء.",
+  "p.escalations.refused_resolve_right":
+    "رُفض: حل تصعيد يحتاج إلى حق حل التصعيدات (يملكه المسؤول). لم يُسجَّل شيء.",
+  "p.escalations.refused_ack_state":
+    "رُفض: حُلّ هذا التصعيد أو سُحب في الأثناء، فلا يمكن الإقرار به. قُرئ من جديد.",
+  "p.escalations.refused_resolve_state":
+    "رُفض: سُحب هذا التصعيد، أو حُلّ من قبل بنتيجة أو رد مختلفين؛ لا يُكتب فوق الحل أبدًا. قُرئ من جديد.",
+  "p.escalations.refused_resolve_invalid":
+    "رُفض: لم تُقبل النتيجة أو الرد. راجع القواعد أعلاه وحاول مرة أخرى.",
+  "p.escalations.refused_gone":
+    "لم يعد هذا التصعيد موجودًا، أو لم تعد تستطيع رؤيته. قُرئت القائمة من جديد.",
+  "p.escalations.could_not_save": "لم يُسجَّل ذلك.",
+  "p.escalations.by_unrecorded": "شخص غير مسجَّل",
+  "p.escalations.ack_record": "أُقرّ به في المستوى {level} من قِبل {by}، {at}.",
+  "p.escalations.resolution_record": "حُلّ {at} من قِبل {by}: {outcome}.",
+  "p.escalations.outcome_unrecorded": "لا نتيجة مسجَّلة",
+  "p.escalations.records_heading": "الإقرار والحل",
+  "p.escalations.records_failed":
+    "تعذّرت قراءة الإقرار أو الحل؛ السجل أدناه ما زال يبيّن ما جرى.",
+  "p.escalations.ack_note_line": "ملاحظة: {note}",
+  "p.escalations.ack_none": "لم يُقرّ به في مستواه الحالي.",
+  "p.escalations.resolution_kept": "الحل سجلّ: لا يُغيَّر ولا يُكتب فوقه.",
+  "p.escalations.records_rules":
+    "الإقرار يحتاج إلى حق الإقرار بالتصعيدات، والحل إلى حق حلها؛ يملك المسؤول الاثنين، ولا تستطيع هذه الصفحة أن تعرف مسبقًا إن كنت تملكهما. يُحتسب الإقرار في المستوى الحالي: رفعه مستوى يمحوه. الحل سجلّ ولا يُكتب فوقه أبدًا.",
+  "p.escalations.ack_heading": "الإقرار بهذا التصعيد",
+  "p.escalations.ack_note": "ملاحظة (اختيارية)",
+  "p.escalations.ack_done": "أُقرّ به؛ السجل معروض أدناه.",
+  "p.escalations.resolve_heading": "حل هذا التصعيد",
+  "p.escalations.resolve_says":
+    "الرد من {min} إلى {max} حرفًا. يُطلب تأكيدك قبل تسجيله، ولا يمكن تغييره بعد ذلك.",
+  "p.escalations.confirm_resolve":
+    "هل تسجّل هذا الحل لـ «{title}»؟ لا يمكن تغييره ولا الكتابة فوقه بعد ذلك.",
+  "p.escalations.resolution_done": "حُلّ؛ السجل معروض أدناه.",
+  "p.register_completeness.link": "اكتمال السجل",
+  "p.register_completeness.title": "اكتمال السجل",
+  "p.register_completeness.title_ppm": "اكتمال السجل — PPM",
+  "p.register_completeness.intro":
+    "مدى اكتمال سجل كل برنامج: من الأمور التي ينبغي أن تكون مسجّلة للبرنامج، النسبة الموجودة، وكل أمر ناقص مسمّى. لا تُدرج إلا البرامج (خطط من نوع برنامج) التي يمكنك قراءتها.",
+  "p.register_completeness.rules":
+    "الأمور العشرة: مالك مسؤول أول (يقوم قائد البرنامج مقامه)، وشركاء، ومرحلة، وخط أساس للجدول، وتاريخ مستهدف، وميزانية، ومصدر تمويل لكل بند ميزانية، وتقييم للثقة في التسليم، ومخاطر، وتبعيات. لا يُطلب الشركاء إلا حيث يتضمن نموذج التسليم شركاء، ولا يُطلب مصدر التمويل إلا حيث يوجد بند ميزانية. يُحتسب البرنامج والخطط التي تحته معًا.",
+  "p.register_completeness.switch_on":
+    "«لا سجل، لا مال» مفعّل: يُرفض الإفراج عن بند ميزانية أو حجز تخصيص مؤكد على برنامج غير مكتمل، مع تسمية ما ينقص.",
+  "p.register_completeness.switch_off":
+    "«لا سجل، لا مال» معطّل: يمضي الإفراج عن بند ميزانية أو حجز تخصيص مؤكد على برنامج غير مكتمل، ويُحفظ التحذير في سجل التدقيق.",
+  "p.register_completeness.count_one": "{complete} من {n} برنامج مكتمل.",
+  "p.register_completeness.count_other": "{complete} من {n} برامج مكتملة.",
+  "p.register_completeness.none": "لا يوجد برنامج يمكنك قراءته.",
+  "p.register_completeness.loading": "جارٍ التحميل…",
+  "p.register_completeness.could_not_load": "تعذّر تحميل اكتمال السجل.",
+  "p.register_completeness.table": "البرامج وسجلاتها",
+  "p.register_completeness.col_programme": "البرنامج",
+  "p.register_completeness.col_state": "الحالة",
+  "p.register_completeness.col_score": "النسبة المسجّلة",
+  "p.register_completeness.col_on_record": "الأمور المسجّلة",
+  "p.register_completeness.col_missing": "ناقص",
+  "p.register_completeness.col_not_asked": "غير مطلوب",
+  "p.register_completeness.of": "{present} من {applicable}",
+  "p.register_completeness.state_complete": "مكتمل",
+  "p.register_completeness.state_incomplete": "غير مكتمل",
+  "p.register_completeness.field_other": "أمر آخر",
+  "p.register_completeness.none_listed": "لا شيء",
 };

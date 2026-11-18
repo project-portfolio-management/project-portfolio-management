@@ -14,7 +14,17 @@ import {
   outcomeLabel,
   raiseProblems,
   reasonLabel,
+  RESPONSE_MAX,
+  acknowledgeBody,
+  acknowledgementText,
+  isNoRecord,
+  recordRefusalKey,
+  recordsToRead,
+  resolutionProblems,
+  resolutionText,
+  resolveBody,
 } from "../../src/lib/escalation-view";
+import { ApiError } from "../../src/lib/api/client";
 
 const draft = {
   title: "Cost is over",
@@ -97,5 +107,123 @@ describe("escalation drafts", () => {
     expect(noteOk("   exactly ten ")).toBe(true);
     expect(noteOk("123456789")).toBe(false);
     expect(noteOk("")).toBe(false);
+  });
+});
+
+describe("the acknowledgement and the resolution as records (NC-1 slice 12 part d, CF-4)", () => {
+  it("reads only the records a state can have", () => {
+    expect(recordsToRead("open")).toEqual({
+      acknowledgement: false,
+      resolution: false,
+    });
+    expect(recordsToRead("acknowledged")).toEqual({
+      acknowledgement: true,
+      resolution: false,
+    });
+    expect(recordsToRead("resolved")).toEqual({
+      acknowledgement: true,
+      resolution: true,
+    });
+    expect(recordsToRead("withdrawn")).toEqual({
+      acknowledgement: true,
+      resolution: false,
+    });
+  });
+
+  it("sends a note only when one is written, trimmed", () => {
+    expect(acknowledgeBody("")).toEqual({});
+    expect(acknowledgeBody("   ")).toEqual({});
+    expect(acknowledgeBody("  Seen it ")).toEqual({ note: "Seen it" });
+  });
+
+  it("checks a resolution's outcome and its response of 10 to 10,000 characters", () => {
+    expect(resolutionProblems("decided", "Funded from contingency")).toEqual(
+      [],
+    );
+    expect(resolutionProblems("maybe", "Funded from contingency")).toEqual([
+      "Choose an outcome: decided, guidance given or rejected.",
+    ]);
+    expect(resolutionProblems("decided", "  too short ")).toEqual([
+      "Write a response of 10 to 10,000 characters.",
+    ]);
+    expect(resolutionProblems("rejected", "x".repeat(RESPONSE_MAX))).toEqual(
+      [],
+    );
+    expect(
+      resolutionProblems("rejected", "x".repeat(RESPONSE_MAX + 1)),
+    ).toHaveLength(1);
+    // Characters, not UTF-16 units: ten emoji are ten characters.
+    expect(resolutionProblems("decided", "🙂".repeat(10))).toEqual([]);
+    expect(resolutionProblems("", "")).toHaveLength(2);
+    expect(resolveBody("decided", "  Funded from contingency ")).toEqual({
+      outcome: "decided",
+      response: "Funded from contingency",
+    });
+  });
+
+  it("gives each refusal its sentence by action and status", () => {
+    const err = (status: number, code: string) =>
+      new ApiError(status, "service text", { code, detail: "service text" });
+    expect(recordRefusalKey("acknowledge", err(403, "forbidden"))).toBe(
+      "p.escalations.refused_ack_right",
+    );
+    expect(recordRefusalKey("resolve", err(403, "forbidden"))).toBe(
+      "p.escalations.refused_resolve_right",
+    );
+    expect(recordRefusalKey("acknowledge", err(409, "conflict"))).toBe(
+      "p.escalations.refused_ack_state",
+    );
+    expect(recordRefusalKey("resolve", err(409, "conflict"))).toBe(
+      "p.escalations.refused_resolve_state",
+    );
+    expect(recordRefusalKey("resolve", err(422, "unprocessable"))).toBe(
+      "p.escalations.refused_resolve_invalid",
+    );
+    expect(recordRefusalKey("acknowledge", err(422, "unprocessable"))).toBe(
+      null,
+    );
+    expect(recordRefusalKey("acknowledge", err(404, "not_found"))).toBe(
+      "p.escalations.refused_gone",
+    );
+    expect(recordRefusalKey("resolve", err(500, "internal"))).toBe(null);
+    expect(recordRefusalKey("resolve", new Error("offline"))).toBe(null);
+  });
+
+  it("reads a 404 on a record as none yet, and nothing else", () => {
+    expect(isNoRecord(new ApiError(404, "x"))).toBe(true);
+    expect(isNoRecord(new ApiError(403, "x"))).toBe(false);
+    expect(isNoRecord(new Error("offline"))).toBe(false);
+  });
+
+  it("says who acknowledged and resolved, as references, or that it is not recorded", () => {
+    const ack = {
+      escalation_pid: "e1",
+      plan_pid: "p1",
+      level: 2,
+      acknowledged_by: "person:ana",
+      acknowledged_at: "2026-11-18",
+      note: null,
+    };
+    expect(acknowledgementText(ack)).toBe(
+      "Acknowledged at level 2 by person:ana, 18 Nov 2026.",
+    );
+    expect(acknowledgementText({ ...ack, acknowledged_by: null })).toBe(
+      "Acknowledged at level 2 by someone not recorded, 18 Nov 2026.",
+    );
+    const res = {
+      escalation_pid: "e1",
+      plan_pid: "p1",
+      outcome: "guidance_given",
+      response: "Use the contingency",
+      resolved_on: "2026-11-18",
+      resolved_by: "person:ben",
+      resolved_at: null,
+    };
+    expect(resolutionText(res)).toBe(
+      "Resolved 18 Nov 2026 by person:ben: Guidance given.",
+    );
+    expect(resolutionText({ ...res, outcome: null, resolved_by: null })).toBe(
+      "Resolved 18 Nov 2026 by someone not recorded: no outcome recorded.",
+    );
   });
 });

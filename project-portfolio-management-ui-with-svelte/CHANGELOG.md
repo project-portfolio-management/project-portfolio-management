@@ -9,6 +9,34 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — escalation follow-through and register completeness (NC-1 slice 12 part d, CF-4, EX-1, 2026-11-18)
+
+- `/plans/[pid]/escalations`: acknowledging and resolving go through CF-4's records (`PUT …/acknowledgement` with an
+  optional note, `PUT …/resolution`) instead of the older `POST …/acknowledge` and
+  `…/resolve`; an opened escalation reads and shows them (`GET …/acknowledgement` when acknowledged, resolved or
+  withdrawn; `GET …/resolution` when resolved): who acknowledged at the current level and when, with the note, and the
+  resolution's outcome, who, when and response, said to be a record that is not changed. Said first: the two rights
+  (an administrator holds both; the page cannot tell beforehand), that an acknowledgement counts at the current level,
+  that a resolution is never overwritten, and the response's 10 to 10,000 characters; the resolution is asked about
+  before it is recorded (Cancel sends nothing); a blank note is not sent; a repeat is never offered. Each refusal (403,
+  409, 422, 404) has its own sentence per action; a record that cannot be read says so.
+- `/register-completeness` (new; linked from `/director-packs` and `/exceptions`) over `GET /api/register-completeness`:
+  each programme the caller can read, incomplete first and least complete first, its state as a word and a shape, the
+  share on record as a percentage and a count, every missing field and every field not asked named in the catalogue's
+  words ("another field" for one it does not know), whether "no register, no money" is on, and how many are complete.
+  The service's `note` is not shown.
+- Five client methods; rules added to `src/lib/escalation-view.ts`; `src/lib/register-completeness-view.ts` (the field
+  names reuse the director pack's `rf_*` keys); 50 keys in eight catalogues, machine-written and unreviewed.
+- Tests: additions to `tests/unit/escalation-view.test.ts` and `ppm.test.ts`; `tests/unit/register-completeness-view.test.ts`;
+  six new tests in `tests/e2e/escalations.spec.ts` (and its first test now resolves through the record, after the
+  question) and `tests/e2e/register-completeness.spec.ts` (five), with Welsh and axe; every stub that would carry the
+  service's English carries "service text" and the tests check it never shows.
+- **Not done:** offering or hiding acknowledge and resolve by the caller's rights (no read of what the policy allows);
+  people by name; a sentence of its own for the 422 `register_incomplete` on the pages that release a budget line or
+  book a firm allocation. **Service gaps:** a 404 on reading an acknowledgement or a resolution is `not_found` both for
+  "none yet" and for a gone escalation; the 409s on each record share `conflict` and every 422 is `unprocessable` with
+  English text; the register's `note` is English. **Not verified:** against a real service.
+
 ### Added — issues, change requests and risks, the rest (NC-1 slice 12 part c, IR-3, IR-4, 2026-11-18)
 
 - `/plans/[pid]/issues`: editing reads the issue as stored (`GET …/issues/{issue_pid}`) and says when and by whom it

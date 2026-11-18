@@ -7195,4 +7195,73 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plan_change_requests.baseline_take": "Cymryd llinell sylfaen",
   "p.plan_change_requests.baseline_not_yet":
     "Gellir cymryd llinell sylfaen unwaith y bydd y newid wedi'i gymeradwyo.",
+  "p.escalations.problem_outcome":
+    "Dewiswch ganlyniad: penderfynwyd, rhoddwyd arweiniad neu gwrthodwyd.",
+  "p.escalations.problem_response": "Ysgrifennwch ymateb o {min} i {max} nod.",
+  "p.escalations.refused_ack_right":
+    "Gwrthodwyd: mae cydnabod uwchgyfeiriad yn gofyn am yr hawl i gydnabod uwchgyfeiriadau (mae gan weinyddwr yr hawl honno). Ni chofnodwyd dim.",
+  "p.escalations.refused_resolve_right":
+    "Gwrthodwyd: mae datrys uwchgyfeiriad yn gofyn am yr hawl i ddatrys uwchgyfeiriadau (mae gan weinyddwr yr hawl honno). Ni chofnodwyd dim.",
+  "p.escalations.refused_ack_state":
+    "Gwrthodwyd: cafodd yr uwchgyfeiriad hwn ei ddatrys neu ei dynnu'n ôl yn y cyfamser, felly ni ellir ei gydnabod. Fe'i darllenwyd eto.",
+  "p.escalations.refused_resolve_state":
+    "Gwrthodwyd: cafodd yr uwchgyfeiriad hwn ei dynnu'n ôl, neu mae eisoes wedi'i ddatrys gyda chanlyniad neu ymateb gwahanol; nid yw datrysiad byth yn cael ei drosysgrifo. Fe'i darllenwyd eto.",
+  "p.escalations.refused_resolve_invalid":
+    "Gwrthodwyd: ni dderbyniwyd y canlyniad na'r ymateb. Gwiriwch y rheolau uchod a rhowch gynnig arall arni.",
+  "p.escalations.refused_gone":
+    "Mae'r uwchgyfeiriad hwn wedi mynd, neu ni allwch ei weld mwyach. Darllenwyd y rhestr eto.",
+  "p.escalations.could_not_save": "Ni chofnodwyd hynny.",
+  "p.escalations.by_unrecorded": "rhywun heb ei gofnodi",
+  "p.escalations.ack_record": "Cydnabuwyd ar lefel {level} gan {by}, {at}.",
+  "p.escalations.resolution_record": "Datryswyd {at} gan {by}: {outcome}.",
+  "p.escalations.outcome_unrecorded": "dim canlyniad wedi'i gofnodi",
+  "p.escalations.records_heading": "Cydnabyddiaeth a datrysiad",
+  "p.escalations.records_failed":
+    "Ni ellid darllen y gydnabyddiaeth na'r datrysiad; mae'r hanes isod yn dal i ddangos beth ddigwyddodd.",
+  "p.escalations.ack_note_line": "Nodyn: {note}",
+  "p.escalations.ack_none": "Heb ei gydnabod ar ei lefel bresennol.",
+  "p.escalations.resolution_kept":
+    "Cofnod yw datrysiad: nid yw'n cael ei newid na'i drosysgrifo.",
+  "p.escalations.records_rules":
+    "Mae cydnabod yn gofyn am yr hawl i gydnabod uwchgyfeiriadau, a datrys am yr hawl i'w datrys; mae gan weinyddwr y ddwy, ac ni all y dudalen hon ddweud ymlaen llaw a oes gennych chi nhw. Mae cydnabyddiaeth yn cyfrif ar y lefel bresennol: mae mynd ag ef i fyny lefel yn ei chlirio. Cofnod yw datrysiad ac nid yw byth yn cael ei drosysgrifo.",
+  "p.escalations.ack_heading": "Cydnabod yr uwchgyfeiriad hwn",
+  "p.escalations.ack_note": "Nodyn (dewisol)",
+  "p.escalations.ack_done": "Cydnabuwyd; dangosir y cofnod isod.",
+  "p.escalations.resolve_heading": "Datrys yr uwchgyfeiriad hwn",
+  "p.escalations.resolve_says":
+    "Mae'r ymateb rhwng {min} a {max} nod. Gofynnir i chi cyn iddo gael ei gofnodi, ac ni ellir ei newid wedyn.",
+  "p.escalations.confirm_resolve":
+    "Cofnodi'r datrysiad hwn o “{title}”? Ni ellir ei newid na'i drosysgrifo wedyn.",
+  "p.escalations.resolution_done": "Datryswyd; dangosir y cofnod isod.",
+  "p.register_completeness.link": "Cyflawnrwydd y gofrestr",
+  "p.register_completeness.title": "Cyflawnrwydd y gofrestr",
+  "p.register_completeness.title_ppm": "Cyflawnrwydd y gofrestr — PPM",
+  "p.register_completeness.intro":
+    "Pa mor gyflawn yw cofrestr pob rhaglen: o'r pethau y dylai rhaglen eu cael ar gofnod, y gyfran sydd ganddi, a phob un sydd ar goll, wedi'i enwi. Dim ond y rhaglenni (cynlluniau o'r math Rhaglen) y gallwch eu darllen a restrir.",
+  "p.register_completeness.rules":
+    "Y deg: uwch berchennog cyfrifol (mae arweinydd y rhaglen yn sefyll yn lle un), partneriaid, cam, llinell sylfaen amserlen, dyddiad targed, cyllideb, ffynhonnell gyllid ar bob llinell gyllideb, asesiad hyder cyflawni, risgiau a dibyniaethau. Gofynnir am bartneriaid dim ond lle mae gan y model cyflawni bartneriaid, ac am ffynhonnell gyllid dim ond lle mae llinell gyllideb. Mae'r rhaglen a'r cynlluniau oddi tani yn cyfrif gyda'i gilydd.",
+  "p.register_completeness.switch_on":
+    "Mae “dim cofrestr, dim arian” ymlaen: gwrthodir rhyddhau llinell gyllideb neu archebu dyraniad cadarn ar raglen anghyflawn, gan enwi'r hyn sydd ar goll.",
+  "p.register_completeness.switch_off":
+    "Mae “dim cofrestr, dim arian” i ffwrdd: mae rhyddhau llinell gyllideb neu archebu dyraniad cadarn ar raglen anghyflawn yn mynd yn ei flaen, a chedwir y rhybudd yn y trywydd archwilio.",
+  "p.register_completeness.count_one":
+    "Mae {complete} o {n} rhaglen yn gyflawn.",
+  "p.register_completeness.count_other":
+    "Mae {complete} o {n} rhaglen yn gyflawn.",
+  "p.register_completeness.none": "Nid oes rhaglen y gallwch ei darllen.",
+  "p.register_completeness.loading": "Wrthi'n llwytho…",
+  "p.register_completeness.could_not_load":
+    "Ni ellid llwytho cyflawnrwydd y gofrestr.",
+  "p.register_completeness.table": "Rhaglenni a'u cofrestrau",
+  "p.register_completeness.col_programme": "Rhaglen",
+  "p.register_completeness.col_state": "Cyflwr",
+  "p.register_completeness.col_score": "Cyfran ar gofnod",
+  "p.register_completeness.col_on_record": "Meysydd ar gofnod",
+  "p.register_completeness.col_missing": "Ar goll",
+  "p.register_completeness.col_not_asked": "Heb ofyn amdano",
+  "p.register_completeness.of": "{present} o {applicable}",
+  "p.register_completeness.state_complete": "cyflawn",
+  "p.register_completeness.state_incomplete": "anghyflawn",
+  "p.register_completeness.field_other": "maes arall",
+  "p.register_completeness.none_listed": "dim",
 };

@@ -6873,4 +6873,72 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_change_requests.baseline_take": "बेसलाइन लें",
   "p.plan_change_requests.baseline_not_yet":
     "परिवर्तन स्वीकृत होने के बाद बेसलाइन ली जा सकती है।",
+  "p.escalations.problem_outcome":
+    "एक परिणाम चुनें: तय किया गया, मार्गदर्शन दिया गया या अस्वीकार किया गया।",
+  "p.escalations.problem_response": "{min} से {max} वर्णों का उत्तर लिखें।",
+  "p.escalations.refused_ack_right":
+    "अस्वीकृत: किसी एस्केलेशन को स्वीकार करने के लिए एस्केलेशन स्वीकार करने का अधिकार चाहिए (यह व्यवस्थापक के पास होता है)। कुछ भी दर्ज नहीं हुआ।",
+  "p.escalations.refused_resolve_right":
+    "अस्वीकृत: किसी एस्केलेशन को हल करने के लिए एस्केलेशन हल करने का अधिकार चाहिए (यह व्यवस्थापक के पास होता है)। कुछ भी दर्ज नहीं हुआ।",
+  "p.escalations.refused_ack_state":
+    "अस्वीकृत: यह एस्केलेशन इस बीच हल कर दिया गया या वापस ले लिया गया, इसलिए इसे स्वीकार नहीं किया जा सकता। इसे फिर से पढ़ा गया।",
+  "p.escalations.refused_resolve_state":
+    "अस्वीकृत: यह एस्केलेशन वापस ले लिया गया, या पहले ही किसी अलग परिणाम या उत्तर के साथ हल हो चुका है; समाधान कभी अधिलेखित नहीं होता। इसे फिर से पढ़ा गया।",
+  "p.escalations.refused_resolve_invalid":
+    "अस्वीकृत: परिणाम या उत्तर स्वीकार नहीं हुआ। ऊपर दिए नियम देखें और फिर से प्रयास करें।",
+  "p.escalations.refused_gone":
+    "यह एस्केलेशन अब नहीं है, या आप इसे अब नहीं देख सकते। सूची फिर से पढ़ी गई।",
+  "p.escalations.could_not_save": "वह दर्ज नहीं हुआ।",
+  "p.escalations.by_unrecorded": "कोई व्यक्ति जो दर्ज नहीं है",
+  "p.escalations.ack_record":
+    "स्तर {level} पर {by} द्वारा स्वीकार किया गया, {at}।",
+  "p.escalations.resolution_record":
+    "{at} को {by} द्वारा हल किया गया: {outcome}।",
+  "p.escalations.outcome_unrecorded": "कोई परिणाम दर्ज नहीं",
+  "p.escalations.records_heading": "स्वीकृति और समाधान",
+  "p.escalations.records_failed":
+    "स्वीकृति या समाधान पढ़ा नहीं जा सका; नीचे का इतिहास फिर भी बताता है कि क्या हुआ।",
+  "p.escalations.ack_note_line": "टिप्पणी: {note}",
+  "p.escalations.ack_none": "अपने वर्तमान स्तर पर स्वीकार नहीं किया गया।",
+  "p.escalations.resolution_kept":
+    "समाधान एक अभिलेख है: इसे न बदला जाता है, न अधिलेखित किया जाता है।",
+  "p.escalations.records_rules":
+    "स्वीकार करने के लिए एस्केलेशन स्वीकार करने का अधिकार चाहिए, और हल करने के लिए उन्हें हल करने का अधिकार; व्यवस्थापक के पास दोनों होते हैं, और यह पृष्ठ पहले से नहीं बता सकता कि आपके पास हैं या नहीं। स्वीकृति वर्तमान स्तर पर गिनी जाती है: इसे एक स्तर ऊपर ले जाने से वह हट जाती है। समाधान एक अभिलेख है और कभी अधिलेखित नहीं होता।",
+  "p.escalations.ack_heading": "इस एस्केलेशन को स्वीकार करें",
+  "p.escalations.ack_note": "टिप्पणी (वैकल्पिक)",
+  "p.escalations.ack_done": "स्वीकार किया गया; अभिलेख नीचे दिखाया गया है।",
+  "p.escalations.resolve_heading": "इस एस्केलेशन को हल करें",
+  "p.escalations.resolve_says":
+    "उत्तर {min} से {max} वर्णों का होता है। दर्ज करने से पहले आपसे पूछा जाता है, और बाद में इसे बदला नहीं जा सकता।",
+  "p.escalations.confirm_resolve":
+    "“{title}” का यह समाधान दर्ज करें? बाद में इसे न बदला जा सकेगा, न अधिलेखित किया जा सकेगा।",
+  "p.escalations.resolution_done": "हल किया गया; अभिलेख नीचे दिखाया गया है।",
+  "p.register_completeness.link": "रजिस्टर की पूर्णता",
+  "p.register_completeness.title": "रजिस्टर की पूर्णता",
+  "p.register_completeness.title_ppm": "रजिस्टर की पूर्णता — PPM",
+  "p.register_completeness.intro":
+    "हर कार्यक्रम का रजिस्टर कितना पूरा है: जो बातें किसी कार्यक्रम के अभिलेख में होनी चाहिए, उनमें से कितना हिस्सा है, और जो भी कमी है, उसका नाम। केवल वे कार्यक्रम (Program प्रकार की योजनाएँ) सूचीबद्ध हैं जिन्हें आप पढ़ सकते हैं।",
+  "p.register_completeness.rules":
+    "दस बातें: एक वरिष्ठ उत्तरदायी स्वामी (कार्यक्रम का प्रमुख उसकी जगह गिना जाता है), साझेदार, एक चरण, अनुसूची आधार-रेखा, लक्ष्य तिथि, बजट, हर बजट पंक्ति पर निधि स्रोत, वितरण-विश्वास आकलन, जोखिम और निर्भरताएँ। साझेदार केवल वहीं पूछे जाते हैं जहाँ वितरण मॉडल में साझेदार हों, और निधि स्रोत केवल वहीं जहाँ बजट पंक्ति हो। कार्यक्रम और उसके नीचे की योजनाएँ साथ गिनी जाती हैं।",
+  "p.register_completeness.switch_on":
+    "“रजिस्टर नहीं, तो पैसा नहीं” चालू है: किसी अधूरे कार्यक्रम पर बजट पंक्ति जारी करना या पक्का आवंटन बुक करना अस्वीकार किया जाता है, और बताया जाता है कि क्या कमी है।",
+  "p.register_completeness.switch_off":
+    "“रजिस्टर नहीं, तो पैसा नहीं” बंद है: किसी अधूरे कार्यक्रम पर बजट पंक्ति जारी करना या पक्का आवंटन बुक करना हो जाता है, और चेतावनी लेखा-परीक्षा अभिलेख में रखी जाती है।",
+  "p.register_completeness.count_one": "{n} में से {complete} कार्यक्रम पूरा है।",
+  "p.register_completeness.count_other": "{n} में से {complete} कार्यक्रम पूरे हैं।",
+  "p.register_completeness.none": "ऐसा कोई कार्यक्रम नहीं है जिसे आप पढ़ सकें।",
+  "p.register_completeness.loading": "लोड हो रहा है…",
+  "p.register_completeness.could_not_load": "रजिस्टर की पूर्णता लोड नहीं हो सकी।",
+  "p.register_completeness.table": "कार्यक्रम और उनके रजिस्टर",
+  "p.register_completeness.col_programme": "कार्यक्रम",
+  "p.register_completeness.col_state": "स्थिति",
+  "p.register_completeness.col_score": "दर्ज हिस्सा",
+  "p.register_completeness.col_on_record": "दर्ज बातें",
+  "p.register_completeness.col_missing": "कमी",
+  "p.register_completeness.col_not_asked": "पूछा नहीं गया",
+  "p.register_completeness.of": "{applicable} में से {present}",
+  "p.register_completeness.state_complete": "पूरा",
+  "p.register_completeness.state_incomplete": "अधूरा",
+  "p.register_completeness.field_other": "कोई अन्य बात",
+  "p.register_completeness.none_listed": "कुछ नहीं",
 };

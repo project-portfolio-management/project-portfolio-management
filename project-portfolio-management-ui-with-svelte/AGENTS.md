@@ -209,6 +209,7 @@ the Status note above).
 | Delivery model and reporting method (`/plans/[pid]/programme`) | `GET`/`PUT /api/plans/{pid}/delivery-model` · `PUT /api/plans/{pid}/reporting-method` |
 | Cutover stop criteria, draft (`/plans/[pid]/cutover`) | `PUT /api/plans/{pid}/cutover-decisions/{did}/criteria` |
 | Triage and thresholds (`/plans/[pid]/programme`, `ProgrammeThresholds.svelte`) | `GET`/`PUT /api/plans/{pid}/triage` · `GET`/`PUT /api/plans/{pid}/thresholds` |
+| Who must sign a milestone off (`/plans/[pid]/governance`, `MilestoneSignoffRequired.svelte`) | `GET /api/milestones?plan=` · `PUT /api/plans/{pid}/milestones/{m}/signoff-required` |
 | Threshold sweep and decisions (`/exceptions`) | `POST /api/threshold-sweep` · `POST /api/exceptions/{pid}/threshold-decision` |
 | Scorecards and de-escalation (`/deescalation`, `DeescalationTracker.svelte`, `Scorecards.svelte`) | `GET /api/deescalation` · `PUT …/level` · `POST …/criteria` · `PUT …/criteria/{pid}/evidence` · `GET / POST /api/scorecards` · `GET /api/scorecards/{pid}` · `PUT …/{pid}/kpis` · `POST …/{pid}/from-template` · `GET /api/scorecard-template` · `GET /api/kpis` |
 | Phase and start (`/plans/[pid]/programme`, `PlanPhase.svelte`) | `GET /api/plans/{pid}/phase-history` · `PUT …/phase` (`start_override_reason` for a refused start) · `GET …/start-check` |

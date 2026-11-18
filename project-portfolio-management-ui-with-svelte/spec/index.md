@@ -2496,3 +2496,21 @@ Program has the start check. `src/lib/phase-view.ts` holds the rules.
   then approving; a new external ask with and without its trade-off; a 422 in the catalogue's words and no service
   text; Welsh; axe with both forms open), and `tests/e2e/ppm.spec.ts` (the board as before). The translations are
   machine-written and unreviewed.
+
+## Who must sign a milestone off (NC-1 slice 11, EX-4)
+
+On `/plans/[pid]/governance`, under the milestones, `MilestoneSignoffRequired.svelte` lists each milestone's partner
+sign-off: every required organization and whether it has signed (with the date), or that none is needed. "Change who
+must sign" offers the active organizations, and any inactive one the milestone still requires, ticked. Saving calls
+`PUT /api/plans/{pid}/milestones/{m}/signoff-required` with the whole set, built from the milestone's
+`signoff.required` (on `GET /api/milestones?plan=`), never from `outstanding`, which drops an organization once it signs.
+`src/lib/signoff-view.ts` holds the rules, said first: at most 20; an inactive organization cannot be required, so it
+must be unticked on purpose (it is not dropped silently); nothing is sent for no change; an empty set clears the
+requirement, and the page says so. `/milestone-signoffs` shows and records the sign-offs and now points here.
+
+- **Fixed on the way:** the governance page's new-milestone date input had no accessible name (axe, critical); it
+  has one.
+- **Tests:** `tests/unit/signoff-view.test.ts`, the path in `tests/unit/ppm.test.ts`,
+  `tests/e2e/milestone-signoff-required.spec.ts` (a signed organization kept when another is added; no change sends
+  nothing; an inactive one unticked on purpose; clearing; Welsh; axe). The translations are machine-written and
+  unreviewed.

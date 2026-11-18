@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (who must sign a milestone off: NC-1 slice 11, part j, the rest)
+
+- **Service: a milestone's `signoff` names every required organization** (`required`, with each one's sign-off date),
+  so the set can be shown and replaced without dropping one that has signed. **UI:** the plan's governance page chooses
+  who must sign each milestone. UI spec, "Who must sign a milestone off"; test
+  `tests/e2e/milestone-signoff-required.spec.ts`. Fixed on the way: an unlabelled date input on the governance page.
+- **Not verified:** against a real service; the translations are machine-written and unreviewed.
+
 ### 17 November (a plan's phase, a programme's start, and the trade-off on a new ask: NC-1 slice 11, part m)
 
 - **UI: the phase and the start, and the named trade-off (EX-8, EX-13).** `/plans/[pid]/programme` moves a plan's

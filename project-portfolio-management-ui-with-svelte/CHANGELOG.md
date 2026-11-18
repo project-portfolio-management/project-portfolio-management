@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — who must sign a milestone off (NC-1 slice 11, EX-4, 2026-11-18)
+
+- `/plans/[pid]/governance` shows each milestone's required organizations and who has signed, and replaces the set
+  from the milestone's `signoff.required`, so an organization that has signed is kept. An inactive organization still
+  required must be unticked on purpose; at most 20; nothing sent for no change; clearing is said. One client method,
+  `src/lib/signoff-view.ts`, `MilestoneSignoffRequired.svelte`; 19 keys in eight catalogues (and the sign-offs page's
+  note, which said this was API-only), machine-written and unreviewed.
+- **Fixed:** the new-milestone date input on the governance page had no accessible name (axe, critical).
+- Tests: `tests/unit/signoff-view.test.ts`, the path in `tests/unit/ppm.test.ts`,
+  `tests/e2e/milestone-signoff-required.spec.ts` (three, with Welsh and axe). **Not verified:** against a real service.
+
 ### Added — a plan's phase, a programme's start, and the trade-off on a new ask (NC-1 slice 11, EX-8, EX-13, 2026-11-17)
 
 - `/plans/[pid]/programme` gains a phase section (`PlanPhase.svelte`) for every plan: the phase now and the time in

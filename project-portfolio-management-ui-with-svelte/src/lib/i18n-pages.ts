@@ -1183,6 +1183,7 @@ export const PAGES_EN = {
   "p.plans.pid.governance.new_benefit": "New benefit",
   "p.plans.pid.governance.new_budget_line": "New budget line",
   "p.plans.pid.governance.new_milestone": "New milestone",
+  "p.plans.pid.governance.new_milestone_due": "Due date of the new milestone",
   "p.plans.pid.governance.new_risk": "New risk",
   "p.plans.pid.governance.next": "next: {next_gate}",
   "p.plans.pid.governance.objective": "Objective",
@@ -5547,7 +5548,29 @@ export const PAGES_EN = {
   "p.signoffs.sign_for": "Sign {name} as the chosen organization",
   "p.signoffs.withdraw_for": "Withdraw the sign-off for {name}",
   "p.signoffs.not_built":
-    "Choosing which organizations a milestone needs is done through the API; this screen shows and records the sign-offs.",
+    "Which organizations a milestone needs is chosen on each plan's governance page; this screen shows and records the sign-offs.",
+  "p.signoffs.problem_inactive":
+    "{name} is no longer active, so it cannot be required: untick it to save.",
+  "p.signoffs.problem_too_many":
+    "A milestone may require at most {max} organizations.",
+  "p.signoffs.required_cancel": "Cancel",
+  "p.signoffs.required_change_for": "Change who must sign {name}",
+  "p.signoffs.required_change": "Change who must sign",
+  "p.signoffs.required_cleared": "{name} no longer needs a partner sign-off.",
+  "p.signoffs.required_heading": "Partner sign-off",
+  "p.signoffs.required_inactive": "{name} (no longer active)",
+  "p.signoffs.required_legend":
+    "Organizations that must sign {name} off (at most {max})",
+  "p.signoffs.required_link": "Record a sign-off",
+  "p.signoffs.required_no_orgs": "There is no active organization to choose.",
+  "p.signoffs.required_none": "no partner sign-off needed",
+  "p.signoffs.required_save": "Save who must sign",
+  "p.signoffs.required_saved": "Who must sign {name} is saved.",
+  "p.signoffs.required_says":
+    "A milestone with partner sign-off is met only when every organization below has signed; delivered and met are separate dates.",
+  "p.signoffs.required_signed": "{name} signed on {date}",
+  "p.signoffs.required_unchanged": "Nothing changed, so nothing was sent.",
+  "p.signoffs.required_waiting": "{name} has not signed yet",
   "p.signoffs.could_not_load": "Could not load the sign-offs",
   "p.signoffs.could_not_save": "Could not record the sign-off",
   "p.key_persons.nav": "Key people",

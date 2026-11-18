@@ -1996,7 +1996,7 @@ fn milestone_signoff_paths() -> Value {
         },
         "/api/milestone-signoffs": {
             "get": op("milestones", "Delivered, met and the delivered-not-met gap across milestones that need sign-off",
-                "Inputs: the milestones, on plans the caller may read, that require sign-off, when each was delivered (marked done, or its linked tasks all done), and the sign-offs now in force. Each carries state (not_delivered, delivered_not_met or met), its delivered and met dates and the organizations outstanding; totals give the number requiring sign-off, delivered, met, delivered-not-met and the met share of those delivered. The state is as now. Milestones listed by GET /api/milestones carry the same signoff object when they require sign-off.",
+                "Inputs: the milestones, on plans the caller may read, that require sign-off, when each was delivered (marked done, or its linked tasks all done), and the sign-offs now in force. Each carries state (not_delivered, delivered_not_met or met), its delivered and met dates, the organizations outstanding, and the whole required set (organization_pid, name, and signed_on, null while outstanding), which PUT …/signoff-required replaces; totals give the number requiring sign-off, delivered, met, delivered-not-met and the met share of those delivered. The state is as now. Milestones listed by GET /api/milestones carry the same signoff object when they require sign-off.",
                 vec![], &[("200", "totals, milestones, note")])
         }
     })

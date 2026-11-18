@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a milestone's `signoff` names every required organization (EX-4, 2026-11-18)
+
+- The `signoff` object on `GET /api/milestones` and `GET /api/milestone-signoffs` gains `required`: every organization
+  the milestone requires (`organization_pid`, `name`, `signed_on`, null while outstanding), in the stored order.
+  `PUT …/signoff-required` replaces the whole set, and `outstanding` drops an organization once it signs, so until now
+  no client could show the set or replace it without dropping one that had signed. Spec, "Milestone sign-off by partner
+  organizations (EX-4)"; the OpenAPI description says it. Tests: `the_required_set_is_kept_whole_signed_or_not`
+  (domain), and `tests/organizations.rs` checks the set once one has signed.
+- **Not changed:** the order is the stored order, which is not the order the request gave (the set is de-duplicated
+  through a hash set). **Not verified:** the field on `GET /api/milestones/{pid}`, which is built the same way.
+
 ### Changed — from `chrono` and `chrono-tz` to `jiff` 1.0, with nothing observable changed (2026-11-17)
 
 - **Why:** RUSTSEC-2026-0543 (chrono) and RUSTSEC-2026-0555 (chrono-tz), unmaintained. The service's own code, sqlx's

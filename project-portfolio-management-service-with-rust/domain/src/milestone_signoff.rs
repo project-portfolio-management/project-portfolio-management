@@ -41,6 +41,9 @@ pub struct Assessment {
     pub delivered_on: Option<Date>,
     pub met_on: Option<Date>,
     pub outstanding: Vec<String>,
+    /// Every required organization, with the date of its sign-off now in force (`None` when outstanding), in the
+    /// stored order: the set `PUT …/signoff-required` replaces, so a screen can show it and keep it.
+    pub required: Vec<Required>,
 }
 
 /// Assess a milestone from who is required and the date it was delivered (if it was).
@@ -57,6 +60,7 @@ pub fn assess(required: &[Required], delivered_on: Option<Date>) -> Assessment {
             delivered_on,
             met_on: delivered_on,
             outstanding,
+            required: required.to_vec(),
         };
     }
     let Some(delivered) = delivered_on else {
@@ -65,6 +69,7 @@ pub fn assess(required: &[Required], delivered_on: Option<Date>) -> Assessment {
             delivered_on: None,
             met_on: None,
             outstanding,
+            required: required.to_vec(),
         };
     };
     if !outstanding.is_empty() {
@@ -73,6 +78,7 @@ pub fn assess(required: &[Required], delivered_on: Option<Date>) -> Assessment {
             delivered_on,
             met_on: None,
             outstanding,
+            required: required.to_vec(),
         };
     }
     let met_on = required
@@ -84,6 +90,7 @@ pub fn assess(required: &[Required], delivered_on: Option<Date>) -> Assessment {
         delivered_on,
         met_on: Some(met_on),
         outstanding,
+        required: required.to_vec(),
     }
 }
 
@@ -141,6 +148,17 @@ mod tests {
     fn no_requirement_means_delivered_is_met() {
         let a = assess(&[], Some(d(5)));
         assert_eq!((a.state, a.met_on), (State::NotRequired, Some(d(5))));
+    }
+
+    /// The full required set comes back, signed or not: `outstanding` drops an
+    /// organization once it signs, so a screen that replaced the set from `outstanding` would drop it.
+    #[test]
+    fn the_required_set_is_kept_whole_signed_or_not() {
+        let required = [req("Signed", Some(2)), req("Other", None)];
+        let a = assess(&required, Some(d(1)));
+        assert_eq!(a.required, required.to_vec());
+        assert_eq!(a.outstanding, ["Other"]);
+        assert!(assess(&[], None).required.is_empty());
     }
 
     #[test]

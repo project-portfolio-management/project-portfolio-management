@@ -221,6 +221,12 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(sign(acme_user.clone(), &acme_pid, "sign", None).await, 200);
         let sum: Value = with!(request.get("/api/milestone-signoffs"), writer).await.json();
         assert_eq!(state(&sum)["signoff"]["outstanding"], json!(["Other Health Trust"]));
+        // The whole required set stays visible once one has signed, so a screen can replace it without dropping Acme.
+        let required = state(&sum)["signoff"]["required"].as_array().unwrap().clone();
+        let by_pid = |pid: &str| required.iter().find(|r| r["organization_pid"] == pid).cloned().unwrap_or_default();
+        assert_eq!(required.len(), 2, "{required:?}");
+        assert_eq!(by_pid(&acme_pid)["name"], "Acme Council");
+        assert!(!by_pid(&acme_pid)["signed_on"].is_null() && by_pid(&other_pid)["signed_on"].is_null(), "{required:?}");
         assert_eq!(sign(other_user.clone(), &other_pid, "sign", None).await, 200);
         let sum: Value = with!(request.get("/api/milestone-signoffs"), writer).await.json();
         assert_eq!(state(&sum)["signoff"]["state"], "met");

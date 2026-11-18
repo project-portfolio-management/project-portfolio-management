@@ -108,6 +108,7 @@ pub(crate) fn assessment_json(a: &Assessment) -> Value {
     json!({
         "state": a.state, "delivered_on": a.delivered_on, "met_on": a.met_on,
         "outstanding": a.outstanding,
+        "required": a.required.iter().map(|r| json!({ "organization_pid": r.organization, "name": r.name, "signed_on": r.signed_on })).collect::<Vec<_>>(),
     })
 }
 

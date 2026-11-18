@@ -6,6 +6,7 @@
   add-form. Every action maps 1:1 to a service endpoint.
 -->
 <script lang="ts">
+  import MilestoneSignoffRequired from "#lib/components/MilestoneSignoffRequired.svelte";
   import { rowOf } from "#lib/row-of.js";
   import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -441,9 +442,10 @@
     }}
   >
     <input placeholder={t("p.plans.pid.governance.new_milestone")} bind:value={milestoneName} required />
-    <input type="date" bind:value={milestoneDue} required />
+    <input type="date" bind:value={milestoneDue} required aria-label={t("p.plans.pid.governance.new_milestone_due")} />
     <button class="button small" type="submit">{t("ppm.gov.add")}</button>
   </form>
+  <MilestoneSignoffRequired {pid} />
 </details>
 
 <details>

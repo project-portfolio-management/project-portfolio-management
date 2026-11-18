@@ -1208,6 +1208,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plans.pid.governance.new_benefit": "Budd newydd",
   "p.plans.pid.governance.new_budget_line": "Llinell gyllideb newydd",
   "p.plans.pid.governance.new_milestone": "Carreg filltir newydd",
+  "p.plans.pid.governance.new_milestone_due":
+    "Dyddiad dyledus y garreg filltir newydd",
   "p.plans.pid.governance.new_risk": "Risg newydd",
   "p.plans.pid.governance.next": "nesaf: {next_gate}",
   "p.plans.pid.governance.objective": "Amcan",
@@ -5667,7 +5669,30 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.signoffs.sign_for": "Llofnodi {name} fel y sefydliad a ddewiswyd",
   "p.signoffs.withdraw_for": "Tynnu'n ôl llofnod {name}",
   "p.signoffs.not_built":
-    "Gwneir dewis pa sefydliadau sydd eu hangen ar garreg filltir drwy'r API; mae'r sgrin hon yn dangos ac yn cofnodi'r llofnodion.",
+    "Dewisir pa sefydliadau sydd eu hangen ar garreg filltir ar dudalen lywodraethu pob cynllun; mae'r sgrin hon yn dangos ac yn cofnodi'r llofnodion.",
+  "p.signoffs.problem_inactive":
+    "Nid yw {name} yn weithredol mwyach, felly ni ellir ei gwneud yn ofynnol: dad-diciwch hi i gadw.",
+  "p.signoffs.problem_too_many":
+    "Gall carreg filltir ofyn am {max} sefydliad ar y mwyaf.",
+  "p.signoffs.required_cancel": "Canslo",
+  "p.signoffs.required_change_for": "Newid pwy sy'n gorfod llofnodi {name}",
+  "p.signoffs.required_change": "Newid pwy sy'n gorfod llofnodi",
+  "p.signoffs.required_cleared":
+    "Nid oes angen llofnod partner ar {name} mwyach.",
+  "p.signoffs.required_heading": "Llofnod partner",
+  "p.signoffs.required_inactive": "{name} (nid yw'n weithredol mwyach)",
+  "p.signoffs.required_legend":
+    "Sefydliadau sy'n gorfod llofnodi {name} (ar y mwyaf {max})",
+  "p.signoffs.required_link": "Cofnodi llofnod",
+  "p.signoffs.required_no_orgs": "Nid oes sefydliad gweithredol i'w ddewis.",
+  "p.signoffs.required_none": "nid oes angen llofnod partner",
+  "p.signoffs.required_save": "Cadw pwy sy'n gorfod llofnodi",
+  "p.signoffs.required_saved": "Cadwyd pwy sy'n gorfod llofnodi {name}.",
+  "p.signoffs.required_says":
+    "Dim ond pan fo pob sefydliad isod wedi llofnodi y mae carreg filltir sydd angen llofnod partner wedi'i chyflawni; mae cyflwyno a chyflawni'n ddyddiadau gwahanol.",
+  "p.signoffs.required_signed": "Llofnododd {name} ar {date}",
+  "p.signoffs.required_unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.signoffs.required_waiting": "Nid yw {name} wedi llofnodi eto",
   "p.signoffs.could_not_load": "Methu llwytho'r llofnodion",
   "p.signoffs.could_not_save": "Methu cofnodi'r llofnod",
   "p.key_persons.nav": "Pobl allweddol",

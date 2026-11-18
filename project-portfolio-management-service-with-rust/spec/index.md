@@ -1804,3 +1804,16 @@ Error and reference text that gives an example time zone names several regions (
 `Africa/Lagos`, `Pacific/Auckland`), not one country's. The Swagger UI page (`/swagger-ui`) declares `lang="en"`
 because its labels and the whole `OpenAPI` document are English: the API reference is English only, a stated limit
 (the operator interface is translated; the API's machine fields are language-neutral codes).
+
+## Milestone sign-off by partner organizations (EX-4)
+
+A milestone may require sign-off from named organizations (`PUT /api/plans/{pid}/milestones/{m}/signoff-required`,
+which **replaces** the set; at most 20, each active; an empty list clears it). *Delivered* (the delivery organization
+says it is done) and *met* (delivered, with every required organization's sign-off in force) are separate dates; a
+milestone with a sign-off outstanding is delivered-not-met. `POST …/signoffs` signs or withdraws (a withdrawal needs a
+reason). A milestone's `signoff` object (on `GET /api/milestones` and `GET /api/milestone-signoffs`) carries `state`,
+`delivered_on`, `met_on`, `outstanding` (the names still to sign) and, since 2026-11-18, **`required`**: every required
+organization (`organization_pid`, `name`, `signed_on`, null while outstanding), in the stored order. `outstanding`
+drops an organization once it signs, so a client that replaced the set from it would drop that organization; `required`
+is the set to show and keep. Tests: `domain/src/milestone_signoff.rs`
+(`the_required_set_is_kept_whole_signed_or_not`), `tests/organizations.rs`.

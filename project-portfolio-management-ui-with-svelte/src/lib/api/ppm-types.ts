@@ -918,6 +918,21 @@ export interface MilestoneSlip {
 }
 
 /** A milestone with everything derived on read. */
+/** A milestone's partner sign-off (EX-4), when it requires one. */
+export interface MilestoneSignoff {
+  state: "met" | "delivered_not_met" | "not_delivered" | "not_required";
+  delivered_on: string | null;
+  met_on: string | null;
+  /** The names still to sign. Drops an organization once it signs: use `required` for the set. */
+  outstanding: string[];
+  /** Every required organization, signed or not: the set `PUT …/signoff-required` replaces. */
+  required: Array<{
+    organization_pid: string;
+    name: string;
+    signed_on: string | null;
+  }>;
+}
+
 export interface MilestoneView {
   pid: string;
   plan_pid: string;
@@ -935,6 +950,8 @@ export interface MilestoneView {
   open_tasks: number;
   links: MilestoneLink[];
   slip: MilestoneSlip;
+  /** Only when the milestone requires partner sign-off. */
+  signoff?: MilestoneSignoff;
   /** Only on `GET /api/milestones/{pid}`. */
   history?: {
     from: string;

@@ -1170,6 +1170,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.governance.new_benefit": "नया लाभ",
   "p.plans.pid.governance.new_budget_line": "नई बजट पंक्ति",
   "p.plans.pid.governance.new_milestone": "नया मील का पत्थर",
+  "p.plans.pid.governance.new_milestone_due": "नए माइलस्टोन की नियत तिथि",
   "p.plans.pid.governance.new_risk": "नया जोखिम",
   "p.plans.pid.governance.next": "अगला: {next_gate}",
   "p.plans.pid.governance.objective": "उद्देश्य",
@@ -5427,7 +5428,30 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.signoffs.sign_for": "चुने गए संगठन के रूप में {name} पर हस्ताक्षर करें",
   "p.signoffs.withdraw_for": "{name} का अनुमोदन वापस लें",
   "p.signoffs.not_built":
-    "किसी मील के पत्थर के लिए कौन-से संगठन आवश्यक हैं, यह API के माध्यम से चुना जाता है; यह स्क्रीन अनुमोदन दिखाती और दर्ज करती है।",
+    "किसी माइलस्टोन को किन संगठनों की आवश्यकता है, यह हर योजना के गवर्नेंस पृष्ठ पर चुना जाता है; यह स्क्रीन स्वीकृतियाँ दिखाती और दर्ज करती है।",
+  "p.signoffs.problem_inactive":
+    "{name} अब सक्रिय नहीं है, इसलिए इसे आवश्यक नहीं किया जा सकता: सहेजने के लिए इसका चिह्न हटाएँ।",
+  "p.signoffs.problem_too_many":
+    "किसी माइलस्टोन के लिए अधिकतम {max} संगठन आवश्यक हो सकते हैं।",
+  "p.signoffs.required_cancel": "रद्द करें",
+  "p.signoffs.required_change_for": "बदलें कि {name} पर किसे हस्ताक्षर करने हैं",
+  "p.signoffs.required_change": "बदलें कि किसे हस्ताक्षर करने हैं",
+  "p.signoffs.required_cleared":
+    "{name} को अब साझेदार की स्वीकृति की आवश्यकता नहीं है।",
+  "p.signoffs.required_heading": "साझेदार स्वीकृति",
+  "p.signoffs.required_inactive": "{name} (अब सक्रिय नहीं)",
+  "p.signoffs.required_legend":
+    "वे संगठन जिन्हें {name} स्वीकृत करना है (अधिकतम {max})",
+  "p.signoffs.required_link": "स्वीकृति दर्ज करें",
+  "p.signoffs.required_no_orgs": "चुनने के लिए कोई सक्रिय संगठन नहीं है।",
+  "p.signoffs.required_none": "साझेदार स्वीकृति आवश्यक नहीं",
+  "p.signoffs.required_save": "सहेजें कि किसे हस्ताक्षर करने हैं",
+  "p.signoffs.required_saved": "{name} पर किसे हस्ताक्षर करने हैं, यह सहेजा गया।",
+  "p.signoffs.required_says":
+    "साझेदार स्वीकृति वाला माइलस्टोन तभी पूरा होता है जब नीचे का हर संगठन हस्ताक्षर कर दे; डिलीवर और पूरा अलग-अलग तिथियाँ हैं।",
+  "p.signoffs.required_signed": "{name} ने {date} को हस्ताक्षर किए",
+  "p.signoffs.required_unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.signoffs.required_waiting": "{name} ने अभी हस्ताक्षर नहीं किए",
   "p.signoffs.could_not_load": "अनुमोदन लोड नहीं हो सके",
   "p.signoffs.could_not_save": "अनुमोदन दर्ज नहीं हो सका",
   "p.key_persons.nav": "प्रमुख लोग",

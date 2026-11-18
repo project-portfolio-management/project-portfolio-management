@@ -1204,6 +1204,8 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.plans.pid.governance.new_benefit": "Neuer Nutzen",
   "p.plans.pid.governance.new_budget_line": "Neue Budgetposition",
   "p.plans.pid.governance.new_milestone": "Neuer Meilenstein",
+  "p.plans.pid.governance.new_milestone_due":
+    "Fälligkeitsdatum des neuen Meilensteins",
   "p.plans.pid.governance.new_risk": "Neues Risiko",
   "p.plans.pid.governance.next": "nächstes: {next_gate}",
   "p.plans.pid.governance.objective": "Ziel",
@@ -5770,7 +5772,32 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.signoffs.sign_for": "{name} als gewählte Organisation abnehmen",
   "p.signoffs.withdraw_for": "Abnahme für {name} zurückziehen",
   "p.signoffs.not_built":
-    "Welche Organisationen ein Meilenstein benötigt, wird über die API festgelegt; diese Ansicht zeigt und erfasst die Abnahmen.",
+    "Welche Organisationen ein Meilenstein braucht, wird auf der Governance-Seite jedes Plans gewählt; diese Seite zeigt und erfasst die Abzeichnungen.",
+  "p.signoffs.problem_inactive":
+    "{name} ist nicht mehr aktiv und kann daher nicht verlangt werden: entfernen Sie das Häkchen, um zu speichern.",
+  "p.signoffs.problem_too_many":
+    "Ein Meilenstein kann höchstens {max} Organisationen verlangen.",
+  "p.signoffs.required_cancel": "Abbrechen",
+  "p.signoffs.required_change_for": "Ändern, wer {name} abzeichnen muss",
+  "p.signoffs.required_change": "Ändern, wer abzeichnen muss",
+  "p.signoffs.required_cleared":
+    "{name} braucht keine Partnerabzeichnung mehr.",
+  "p.signoffs.required_heading": "Partnerabzeichnung",
+  "p.signoffs.required_inactive": "{name} (nicht mehr aktiv)",
+  "p.signoffs.required_legend":
+    "Organisationen, die {name} abzeichnen müssen (höchstens {max})",
+  "p.signoffs.required_link": "Abzeichnung erfassen",
+  "p.signoffs.required_no_orgs":
+    "Es gibt keine aktive Organisation zur Auswahl.",
+  "p.signoffs.required_none": "keine Partnerabzeichnung nötig",
+  "p.signoffs.required_save": "Speichern, wer abzeichnen muss",
+  "p.signoffs.required_saved": "Gespeichert, wer {name} abzeichnen muss.",
+  "p.signoffs.required_says":
+    "Ein Meilenstein mit Partnerabzeichnung ist erst erreicht, wenn jede Organisation unten abgezeichnet hat; geliefert und erreicht sind getrennte Daten.",
+  "p.signoffs.required_signed": "{name} hat am {date} abgezeichnet",
+  "p.signoffs.required_unchanged":
+    "Nichts wurde geändert, daher wurde nichts gesendet.",
+  "p.signoffs.required_waiting": "{name} hat noch nicht abgezeichnet",
   "p.signoffs.could_not_load": "Die Abnahmen konnten nicht geladen werden",
   "p.signoffs.could_not_save": "Die Abnahme konnte nicht erfasst werden",
   "p.key_persons.nav": "Schlüsselpersonen",

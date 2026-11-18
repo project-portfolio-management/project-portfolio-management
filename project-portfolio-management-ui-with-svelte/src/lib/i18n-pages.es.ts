@@ -1208,6 +1208,7 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.plans.pid.governance.new_benefit": "Nuevo beneficio",
   "p.plans.pid.governance.new_budget_line": "Nueva línea de presupuesto",
   "p.plans.pid.governance.new_milestone": "Nuevo hito",
+  "p.plans.pid.governance.new_milestone_due": "Fecha prevista del nuevo hito",
   "p.plans.pid.governance.new_risk": "Nuevo riesgo",
   "p.plans.pid.governance.next": "siguiente: {next_gate}",
   "p.plans.pid.governance.objective": "Objetivo",
@@ -5747,7 +5748,30 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.signoffs.sign_for": "Firmar {name} como la organización elegida",
   "p.signoffs.withdraw_for": "Retirar la aprobación de {name}",
   "p.signoffs.not_built":
-    "La elección de las organizaciones que necesita un hito se realiza mediante la API; esta pantalla muestra y registra las aprobaciones.",
+    "Qué organizaciones necesita un hito se elige en la página de gobernanza de cada plan; esta pantalla muestra y registra las firmas.",
+  "p.signoffs.problem_inactive":
+    "{name} ya no está activa, así que no puede exigirse: desmárquela para guardar.",
+  "p.signoffs.problem_too_many":
+    "Un hito puede exigir como mucho {max} organizaciones.",
+  "p.signoffs.required_cancel": "Cancelar",
+  "p.signoffs.required_change_for": "Cambiar quién debe firmar {name}",
+  "p.signoffs.required_change": "Cambiar quién debe firmar",
+  "p.signoffs.required_cleared": "{name} ya no necesita la firma de un socio.",
+  "p.signoffs.required_heading": "Firma de socios",
+  "p.signoffs.required_inactive": "{name} (ya no activa)",
+  "p.signoffs.required_legend":
+    "Organizaciones que deben firmar {name} (como mucho {max})",
+  "p.signoffs.required_link": "Registrar una firma",
+  "p.signoffs.required_no_orgs":
+    "No hay ninguna organización activa para elegir.",
+  "p.signoffs.required_none": "no necesita firma de socios",
+  "p.signoffs.required_save": "Guardar quién debe firmar",
+  "p.signoffs.required_saved": "Se guardó quién debe firmar {name}.",
+  "p.signoffs.required_says":
+    "Un hito con firma de socios solo se cumple cuando todas las organizaciones de abajo han firmado; entregado y cumplido son fechas distintas.",
+  "p.signoffs.required_signed": "{name} firmó el {date}",
+  "p.signoffs.required_unchanged": "No cambió nada, así que no se envió nada.",
+  "p.signoffs.required_waiting": "{name} aún no ha firmado",
   "p.signoffs.could_not_load": "No se pudieron cargar las aprobaciones",
   "p.signoffs.could_not_save": "No se pudo registrar la aprobación",
   "p.key_persons.nav": "Personas clave",

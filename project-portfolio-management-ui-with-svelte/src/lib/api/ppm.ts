@@ -267,6 +267,7 @@ import type {
   ScorecardRow,
   ScorecardView,
   TemplateMeasure,
+  MilestoneSignoff,
 } from "./ppm-types";
 
 export * from "./ppm-types";
@@ -558,6 +559,19 @@ export class PpmClient {
     return this.http.put(
       `/api/plans/${encodeURIComponent(pid)}/buffer-recovery-actions/${encodeURIComponent(actionPid)}/status`,
       { body: { status } },
+    );
+  }
+  /** Replace the organizations whose sign-off a milestone needs (EX-4); an empty list clears it. */
+  setSignoffRequired(
+    planPid: string,
+    milestonePid: string,
+    organizationPids: string[],
+  ): Promise<unknown> {
+    return this.http.put(
+      `/api/plans/${planPid}/milestones/${milestonePid}/signoff-required`,
+      {
+        body: { organization_pids: organizationPids },
+      },
     );
   }
   /** The cutover go/no-go decisions of a plan, newest first. */
@@ -2924,12 +2938,7 @@ export interface MilestoneSignoffs {
     plan_pid: string;
     name: string;
     due: string | null;
-    signoff: {
-      state: "met" | "delivered_not_met" | "not_delivered" | "not_required";
-      delivered_on: string | null;
-      met_on: string | null;
-      outstanding: string[];
-    };
+    signoff: MilestoneSignoff;
   }[];
   note: string;
 }

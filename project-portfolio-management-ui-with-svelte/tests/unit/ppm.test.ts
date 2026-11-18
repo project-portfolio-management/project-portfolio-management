@@ -771,6 +771,16 @@ describe("PpmClient benefit classification and validation (NC-1 slice 11, DP-9)"
   });
 });
 
+describe("PpmClient milestone sign-off required (NC-1 slice 11, EX-4)", () => {
+  it("replaces the organizations a milestone needs", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.setSignoffRequired("p1", "m1", ["o1"]);
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual(["PUT /api/plans/p1/milestones/m1/signoff-required"]);
+  });
+});
+
 describe("PpmClient triage and thresholds (NC-1 slice 11, EX-7)", () => {
   it("reads and sets triage and thresholds, sweeps, and records a threshold decision", async () => {
     const { ppm, calls } = recordingClient();

@@ -1209,6 +1209,8 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.plans.pid.governance.new_benefit": "Nouveau bénéfice",
   "p.plans.pid.governance.new_budget_line": "Nouvelle ligne budgétaire",
   "p.plans.pid.governance.new_milestone": "Nouvelle étape clé",
+  "p.plans.pid.governance.new_milestone_due":
+    "Date d'échéance du nouveau jalon",
   "p.plans.pid.governance.new_risk": "Nouveau risque",
   "p.plans.pid.governance.next": "suivant : {next_gate}",
   "p.plans.pid.governance.objective": "Objectif",
@@ -5768,7 +5770,30 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.signoffs.sign_for": "Signer {name} au nom de l'organisation choisie",
   "p.signoffs.withdraw_for": "Retirer la validation de {name}",
   "p.signoffs.not_built":
-    "Le choix des organisations dont un jalon a besoin se fait via l'API ; cet écran affiche et enregistre les validations.",
+    "Les organisations dont un jalon a besoin se choisissent sur la page de gouvernance de chaque plan ; cet écran affiche et enregistre les validations.",
+  "p.signoffs.problem_inactive":
+    "{name} n'est plus active et ne peut donc pas être exigée : décochez-la pour enregistrer.",
+  "p.signoffs.problem_too_many":
+    "Un jalon peut exiger au plus {max} organisations.",
+  "p.signoffs.required_cancel": "Annuler",
+  "p.signoffs.required_change_for": "Modifier qui doit valider {name}",
+  "p.signoffs.required_change": "Modifier qui doit valider",
+  "p.signoffs.required_cleared":
+    "{name} n'a plus besoin de la validation d'un partenaire.",
+  "p.signoffs.required_heading": "Validation des partenaires",
+  "p.signoffs.required_inactive": "{name} (plus active)",
+  "p.signoffs.required_legend":
+    "Organisations qui doivent valider {name} (au plus {max})",
+  "p.signoffs.required_link": "Enregistrer une validation",
+  "p.signoffs.required_no_orgs": "Aucune organisation active à choisir.",
+  "p.signoffs.required_none": "aucune validation de partenaire requise",
+  "p.signoffs.required_save": "Enregistrer qui doit valider",
+  "p.signoffs.required_saved": "Qui doit valider {name} est enregistré.",
+  "p.signoffs.required_says":
+    "Un jalon soumis à la validation de partenaires n'est atteint que lorsque chaque organisation ci-dessous a validé ; livré et atteint sont des dates distinctes.",
+  "p.signoffs.required_signed": "{name} a validé le {date}",
+  "p.signoffs.required_unchanged": "Rien n'a changé ; rien n'a été envoyé.",
+  "p.signoffs.required_waiting": "{name} n'a pas encore validé",
   "p.signoffs.could_not_load": "Impossible de charger les validations",
   "p.signoffs.could_not_save": "Impossible d'enregistrer la validation",
   "p.key_persons.nav": "Personnes clés",

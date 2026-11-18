@@ -77,6 +77,48 @@ Nothing here touches PostgreSQL; the database's share of a request is what the l
 One run, on a machine doing other things: read these as orders of magnitude, and compare a change against a run
 made the same day on the same machine.
 
+## Date handling before and after the move from chrono to jiff (measured 2026-11-18, back to back)
+
+The `timestamps` group of `benches/calculation_bench.rs`, built twice in release: from the last chrono commit
+(`19e53748`, the datetime crate present but unused) and from the jiff commit, each run twice, alternating
+(chrono, jiff, chrono, jiff), with the same command as below. The file and its JSON fixtures are unchanged (the
+fixtures' `+00:00` still decodes). The machine was the same Apple M4 Max, **not quiet** but quieter than before: the
+load average was between 8 and 18 for these rounds (other projects' builds; the earlier rounds, at 20 to 65, are not
+used). "Ratio" is jiff's faster round over chrono's faster round; under 1 is faster.
+
+| Benchmark | chrono (two rounds) | jiff (two rounds) | Ratio |
+|---|---|---|---|
+| `decode_plans/1`, `/1000` | 824 ns; 867 µs | 790 ns; 823 µs | 0.96, 0.95 |
+| `encode_plans/1`, `/1000` | 673 ns; 581 µs | 543 ns; 448 µs | 0.81, 0.77 |
+| `decode_tasks/1`, `/1000` | 1.3 µs; 1.19 ms | 1.2 µs; 1.14 ms | 0.96, 0.96 |
+| `encode_tasks/1`, `/1000` | 1.2 µs; 1.00 ms | 840 ns; 712 µs | 0.72, 0.71 |
+| `decode_audit_logs/1`, `/1000` | 614 ns; 608 µs | 577 ns; 568 µs | 0.94, 0.93 |
+| `encode_audit_logs/1`, `/1000` | 450 ns; 410 µs | 338 ns; 274 µs | 0.75, 0.67 |
+| `decode_iso_dates_1000`, `encode_iso_dates_1000` | 41.9 µs; 35.7 µs | 35.6 µs; 16.4 µs | 0.85, 0.46 |
+| `decode_rfc3339_instants_1000`, `encode_…` | 93.5 µs; 89.9 µs | 76.5 µs; 33.7 µs | 0.82, 0.37 |
+| `full_date_1000`, `tracker_import_parse_date_iso_1000` | 52.3 µs; 51.0 µs | 28.1 µs; 29.0 µs | 0.54, 0.57 |
+| `tracker_import_parse_date_jira_1000` | 90.3 µs | 87.0 µs | 0.96 |
+| `parse_flex_date_mixed_1000` | 38.0 µs | 25.6 µs | 0.67 |
+| `parse_month_add_months_1000` | 86.5 µs | 67.4 µs | 0.78 |
+| `financial_year_of_1000` | 33.9 µs | 39.6 µs | 1.17 |
+| `iso_week_start_and_days_1000` | 27.0 µs | 68.3 µs | **2.53** |
+| `business_day_index_1000` | 13.5 µs | 28.1 µs | **2.08** |
+| `report_schedule_next_monthly_1000` | 6.6 µs | 20.4 µs | **3.10** |
+| `expand_absences_20` | 1.4 µs | 4.3 µs | **3.14** |
+
+How to read it:
+
+- **JSON, parsing and formatting are faster** (row encoding by a quarter to a third, instants written in under half
+  the time), because the datetime crate writes digits into a stack buffer and reads the common patterns with fixed
+  steps. A first build, with `write!` padding, per-call pattern building and no `#[inline]` across the crate
+  boundary, was up to three times slower than chrono here; that is what the rewrite fixed.
+- **Calendar arithmetic is 2 to 3 times slower**, in absolute terms 14 to 40 ns more per date (business-day index,
+  ISO week to Monday and seven days, the next monthly report, absence expansion). chrono's `NaiveDate` is one packed
+  integer with an ordinal; jiff's is year, month and day, so a day step or a weekday is a conversion. Day steps within
+  a month, ISO weeks and comparisons already avoid the slow paths. Not changed further: a 1,000-date calendar walk
+  costs about 30 µs, against milliseconds for the database round trip around it.
+- **Not measured:** the database encoding (microseconds and days since 2000, as before), and anything under load.
+
 ## The calculation engines and date handling (measured 2026-11-17, a heavily loaded machine)
 
 Criterion benchmarks for the pure engines behind the schedule-risk, cost-risk, leveling, schedule-health, MSPDI and
@@ -135,7 +177,8 @@ How to read it:
 
 - **The `timestamps` numbers are the `chrono` baseline.** Re-run the same command on the same machine after the move
   to `jiff` and compare. Because this run was so loaded, the fair comparison is to run this file on the last `chrono`
-  commit and on the `jiff` commit **back to back**, on a quiet machine, rather than against this table.
+  commit and on the `jiff` commit **back to back**, on a quiet machine, rather than against this table. (Done on
+  2026-11-18, back to back on a quieter machine: the section above.)
 - **Two quadratics.** The MSPDI export and earned schedule both grow with the square of their input. Neither is a
   problem at the sizes measured (12 ms for the largest file the import accepts; 3.5 ms for five years of weekly
   periods), but both are a map lookup (links by successor) or a binary search (planned value only rises with time)

@@ -9,6 +9,88 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — from `chrono` and `chrono-tz` to `jiff` 1.0, with nothing observable changed (2026-11-17)
+
+- **Why:** RUSTSEC-2026-0543 (chrono) and RUSTSEC-2026-0555 (chrono-tz), unmaintained. The service's own code, sqlx's
+  `chrono` feature, schemars' `chrono04` feature and `chrono-tz` are gone; so are `phf` and `phf_shared`, which only
+  chrono-tz used. `cargo tree -i chrono -e normal` prints nothing; with `--all-features` it prints only `fluvio`.
+- **A fourth workspace crate, `project-portfolio-management-datetime` (`datetime/`),** holds the types, over jiff:
+  `Timestamp` (was `DateTime<Utc>`), `OffsetDateTime` (was `DateTime<FixedOffset>`, the `timestamptz` column type, so
+  `models::_entities::DateTimeWithTimeZone`), `Date` (`NaiveDate`, and the `Date` alias), `Duration` (`TimeDelta`),
+  `Days`, `Months`, `Weekday`, `IsoWeek`, `NaiveDateTime`, `NaiveTime`, `LocalResult` and `Tz` (`chrono_tz::Tz`). They
+  keep chrono's method names where the service called them, so 215 files changed mostly in their imports. The service
+  and the domain crate both name them `crate::datetime::…` (the service's `src/datetime/mod.rs` and the domain's
+  `lib.rs` re-export the crate); the domain crate uses it without its `sqlx` feature, so it stays free of sqlx (root
+  spec §8.3c). Service spec §8, "Dates and times", is the contract.
+- **Golden tests first.** `src/datetime/golden.rs` (14 tests, written on chrono 0.4.45 and chrono-tz 0.10.4 and
+  committed before any type changed) passes unchanged on jiff; only its helpers, the lines that name the types, were
+  edited.
+- **The serde helpers and readers** (`datetime/src/`): `instant.rs` and `date.rs` serialize as chrono did (`Z` for a
+  zero offset for both instant types, the fraction in groups of three, the offset to the minute rounded to the
+  nearest, years outside 0..=9999 with a sign) and give the same `Display`, `Debug`, `to_rfc3339`, `to_rfc3339_opts` and
+  serde `expecting` messages; `parse.rs` is a port of chrono's relaxed RFC 3339 reader (request bodies, `str::parse`),
+  its strict one (`parse_from_rfc3339`, query parameters), its `NaiveDate` reader and its `%Y %m %d %H %M %S %.f %#z`
+  patterns (`%Y-%m-%d`, `%d/%m/%Y`, the database's text form), with chrono's order of checks and its error messages;
+  `format.rs` writes the `%Y %m %d %H %M %S` patterns the service uses; `schema.rs` gives the inline
+  `{"type":"string","format":"date-time"}` / `"date"` schemas of schemars' `chrono04` (its `jiff02` feature is for jiff
+  0.2); `postgres.rs` (feature `sqlx`) encodes `timestamptz` (microseconds since 2000, sub-microsecond digits dropped
+  toward zero) and `date` (days since 2000) as sqlx's `chrono` feature did, by OID, with the same text decoding;
+  `zone.rs` reads zones only from jiff's bundled database (`TimeZoneDatabase::bundled()`) and matches names exactly.
+- **Checked against chrono in a scratch crate outside the repository** (depending on chrono 0.4.45, chrono-tz 0.10.4
+  and this crate, so chrono is not a dev-dependency here): 28.4 million comparisons, no unexplained difference.
+  Random and mutated text through every reader (relaxed, strict, date, the three patterns, serde, non-string JSON);
+  random instants with random offsets through JSON, `to_rfc3339`, `to_rfc3339_opts` (every form, with and without
+  `Z`), `Display`, `Debug`, the seven patterns, unix counts, sub-second parts, fields and round trips; date arithmetic
+  (months both ways, days both ways, a duration's whole days, differences, weekdays, ordinals, ISO weeks and
+  `from_isoywd_opt`, days from CE both ways, `succ`/`pred`, `with_day`/`with_month`, leap years); durations (every
+  count, `Debug`, `Display`, `*`, `/`, `to_std`, `abs`); and every zone's offset at 2,900 instants from 1800 to 2100
+  and its civil-time lookups (gaps and folds). Two bugs this found were fixed before commit (an ISO week's `Debug`
+  padding, and a day count past 2.9 million days that jiff takes in one step).
+- **Where behaviour could have differed, and what was chosen:** month arithmetic clamps the day, as chrono did (ported,
+  not jiff's spans); a `Duration` added to a date moves it by whole days toward zero; `Date - Date` is whole days;
+  `num_days`/`num_hours`/… truncate toward zero; `timestamp`, `timestamp_millis` and `timestamp_micros` round down
+  before 1970 (jiff's `as_millisecond` truncates; floor is computed instead); a `Duration` keeps chrono's range
+  (`i64::MAX` milliseconds) and its `/` keeps chrono's rounding of a sub-nanosecond quotient; `OffsetDateTime`
+  compares and hashes by instant, across both types, as chrono did; a zone gap is `LocalResult::None` and a fold is
+  `Ambiguous(earlier, later)`, as chrono-tz gave (`planner::day_window` walks a gap in 15-minute steps as before);
+  zone names are case-sensitive (jiff's lookup is not); a zone's `Debug` and `Display` are its name and its parse error
+  is `failed to parse timezone`, as chrono-tz's; `Weekday`'s `Display` pads like chrono's. Each is pinned by a test in
+  `datetime/src/` or `src/datetime/golden.rs`.
+- **The unavoidable differences** (jiff cannot represent them; documented in service spec §8): a leap second (`:60`) is
+  read as `:59` with its fraction (chrono kept `:60`); a year outside -9999..=9999, or an instant within about a day of
+  those ends, is out of range (chrono went to ±262,143), and `NaiveDateTime::and_utc` saturates there rather than fail,
+  so `?to=9999-12-31` still means "to the end"; a stored date or instant outside that range (`infinity`) is a decode
+  error, where chrono panicked. **The zone data:** chrono-tz 0.10.4 carries tzdb 2025b, jiff-tzdb 1.0.0 tzdb 2026f
+  (rearguard form). Compared zone by zone, 1970 to 2099 differ: from late 2026, `America/Vancouver`, `Edmonton`,
+  `Winnipeg`, `Inuvik`, `Yellowknife`, `Rainy_River` and their `Canada/*` aliases (2026f keeps them on daylight time),
+  `America/Havana` and `Cuba`, `Africa/Casablanca` and `El_Aaiun`; and `America/Tijuana` (with `Ensenada`,
+  `Santa_Isabel`, `Mexico/BajaNorte`) in some 1970s summers. Before 1970, `EST5EDT`, `CST6CDT`, `MST7MDT`, `PST8PDT`
+  (separate zones in rearguard data, links in 2025b) and `Europe/Dublin` around 1925; from 2100, chrono-tz stops
+  applying daylight saving rules and jiff does not. The two accept the same 597 names; jiff-tzdb also lists `Factory`,
+  which is refused, as before. A caller in those zones now gets the newer rules' "today" and slot times.
+- **Dependencies:** removed `chrono` and `chrono-tz` (service and domain), sqlx's `chrono` and schemars' `chrono04`
+  features, `phf`, `phf_shared`. Added `jiff-tzdb` 1.0.0 (the bundled zone database: the reason the image needs no
+  `/usr/share/zoneinfo`); `jiff` 1.0.0 was already in the lockfile through axa, now with `default-features = false`
+  and `std`, `tzdb-bundle-always`, `tz-fat`, `perf-inline` (no `tz-system`). No other crate moved.
+- **`deny.toml`:** the RUSTSEC-2026-0555 (chrono-tz) exception is removed; RUSTSEC-2026-0543's reason is narrowed to
+  axum-test's `expect-json` (tests only) and the optional `fluvio` feature; RUSTSEC-2026-0542 (humantime, fluvio)
+  stays. `governance/security-policy.md` §16.4 says the same.
+- **Guards:** `clippy.toml` bans jiff's ways to the process zone or its global database (`ZonedDateTime::now`,
+  `TimeZone::system`, `TimeZone::try_system`, `TimeZone::get`, `tz::db`, and `in_tz` on `Timestamp`, `Date` and
+  `DateTime`) in place of `chrono::Local`; `tz.rs`'s source guard keeps the chrono needles and adds the jiff ones and
+  `Timestamp::now().date_naive()`, and both its guards also read `datetime/src`.
+- **Tested:** `cargo fmt --all --check`; `cargo clippy --workspace --all-targets --all-features -- -D warnings` (and
+  without `--all-features`); `cargo test --workspace --lib` (455 service, 849 domain, 16 datetime, 7 migration); `cargo test --test main` (25, 325 ignored);
+  the database suites as CI runs them, each on a throwaway database (`requests::` 232; the rest, without `load_test::`, 92); the UI's `npx vitest run` (1236, 3 skipped), as its tests read two changed domain files; `cargo deny --all-features check` (advisories, bans, licences and
+  sources ok). `openapi.json` and `asyncapi.json` are unchanged (their pinning tests pass; `git diff` shows no change),
+  and `python3 scripts/generate-openapi-bodies.py --check` passes. `benches/calculation_bench.rs` compiles and runs
+  unchanged, its fixtures too; its `timestamps` group, chrono and jiff back to back (`BENCHMARKS.md`): JSON encoding a quarter to a third faster, instants written in under half the time, the date parsers about 45% faster, and calendar arithmetic (business-day index, ISO weeks, report schedules, absence expansion) 2 to 3 times slower, 14 to 40 ns more per date. A first build was up to three times slower than chrono on the serde paths; the writers now fill a stack buffer, the two common patterns use fixed steps, day moves within a month and ISO weeks avoid jiff's checked arithmetic, dates compare as one packed integer, and the small methods are `#[inline]` across the crate boundary.
+- **Not verified:** the container image build (not run; the `Dockerfile` copies `datetime/`); the real-token test
+  binaries outside `tests/main.rs`, the Keycloak and Fluvio container tests and the load test (not run); a request
+  against a running service, a log line from one, or a PDF/CSV/MSPDI export byte-compared with the chrono build
+  (covered only by the unit, golden and database tests); the tzdb differences above against any source but the two
+  databases themselves.
+
 ### Changed — axa 0.20 and axa-test 0.11 (2026-11-17)
 
 - `axa` 0.19 to 0.20, `axa-test` 0.10 to 0.11; nothing else in the lockfile moved. axa's Zstd support is now behind a

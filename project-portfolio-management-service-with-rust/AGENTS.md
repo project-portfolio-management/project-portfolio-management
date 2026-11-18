@@ -46,6 +46,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 | DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `loco`/`loco` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
 | Domain crate | `domain/` (crate `project-portfolio-management-domain`): the pure rule modules (`cpm`, `evm`, `tz`, `validation`, … 121 of them), re-exported from `src/lib.rs` under their old names. It may not depend on the service, `axum`, `axa`, `sqlx` or `tokio` (root spec §8.3c) |
+| Dates and times | `datetime/` (crate `project-portfolio-management-datetime`, over `jiff` 1.0; there is no `chrono`): `crate::datetime::{Timestamp, OffsetDateTime, Date, Duration, Tz, …}` on both sides. They write and read exactly as chrono did (`src/datetime/golden.rs` pins it; service spec §8 "Dates and times"); zones come only from the bundled database |
 | Migrations | `migration/migrations/` (crate `project-portfolio-management-migration`, run by sqlx) — one frozen SQL file per migration, `<version>_<name>.up.sql` with its `.down.sql`, or a plain `.sql` that refuses to roll back; the count is in the entity spec's [§14 generated block](../spec/14-implementation-status.md) |
 
 ## API surface

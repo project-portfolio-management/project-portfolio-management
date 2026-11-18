@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (the service moves from chrono to jiff)
+
+- **Service: `chrono` and `chrono-tz` are gone from the service's code**, for `jiff` 1.0, through a new workspace
+  crate, `project-portfolio-management-datetime` (`datetime/`), whose types keep every form the service wrote and read
+  under chrono: JSON's `Z` and fractions in groups of three, `to_rfc3339`'s `+00:00`, `Display` and `Debug`, chrono's
+  lenient and strict RFC 3339 readers and its date reader with their error messages, month-end clamping, the OpenAPI
+  schemas, and the Postgres encoding. Golden tests written on chrono pass unchanged, and a scratch comparison against
+  chrono ran 28.4 million checks with no unexplained difference. `deny.toml` drops the RUSTSEC-2026-0555 (chrono-tz)
+  exception and narrows RUSTSEC-2026-0543 to axum-test (tests only) and the optional `fluvio` feature
+  (`governance/security-policy.md` §16.4). Service spec §8, "Dates and times"; root spec §8.3c.
+- **Not kept, by necessity:** a leap second is read as `:59`; years beyond ±9999 are out of range; the zone data are
+  tzdb 2026f rather than 2025b, which changes some zones' rules from late 2026 (Vancouver, Edmonton, Winnipeg and
+  their aliases, Havana, Casablanca; the list is in the service changelog). **Not verified:** the container image
+  build, the real-token binaries outside `tests/main.rs`, the container and load tests, and a running service's logs
+  and exports byte for byte.
+
 ### 17 November (GitHub private vulnerability reporting on)
 
 - **GitHub private vulnerability reporting is turned on** for the repository (a setting, set through the API at the

@@ -76,6 +76,9 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
   sqlx (`_sqlx_migrations`); never edit a released one (its checksum is checked), add a new file. A database the old
   `sea-orm-migration` runner built is bridged once from `seaql_migrations`, which stays
   ([`operations/upgrade-and-migration.md`](operations/upgrade-and-migration.md)).
+- Dates, instants and zones in the service are `crate::datetime` types (the `datetime/` crate, over `jiff` 1.0), which
+  keep chrono's wire forms and readers on purpose; do not add `chrono` back, and use `Tz` (the bundled database),
+  never jiff's system zone or global database (`clippy.toml` refuses them).
 - The service binary is started with `cargo run -- start` (and `cargo run -- task <name>`); there is no
   framework subcommand.
 - The bridge to the workforce service (WPM) is entity spec §8.5a and service spec §9.10a; it is off (stub mode)

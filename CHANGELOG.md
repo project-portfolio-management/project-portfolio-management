@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (NC-1 slice 12 part j: the board, sprints, resources and the OKR and KPI reads)
+
+- **UI:** many tasks at once on the board (set, copy, move after a question, delete after a question), following the
+  board's changes on asking, and a sprint's ceremonies and commitment; a placeholder given a person or removed,
+  planned against recorded hours, a plan's skill gaps and the cost rate in force on `/resources`; effort against
+  capacity on `/capacity`; a plan's goal score and key results' check-ins on `/okrs`; every KPI reading on `/kpis`;
+  adoption recorded on a plan's benefits (RM-9, PL-3, FR-29, SC-7, PJ-2, PJ-3, KO-1, KO-2). Every rule said and checked
+  first; each refusal in the catalogue's words; translations machine-written and unreviewed. **Not built:** an action
+  item turned into a task (part o); satisfaction (SM-15). **Service gaps:** English-only per-task bulk refusals and one
+  422 code for each of the bulk, ceremony and adoption refusals; no live event for bulk changes; an empty sprint's
+  commitment answered as never committed; the skill-gap and OKR reads check no plan's readability; a bad utilization
+  window read as 28 days. **Not verified:** against a real service.
+
 ### 18 November (security: lettre 0.11.24 for six SMTP vulnerabilities)
 
 - **Service:** `lettre` 0.11.23 to 0.11.24, which fixes RUSTSEC-2026-0560 to 0565 (STARTTLS reply injection, SMTP

@@ -4,7 +4,8 @@
   measure yet says "Not measured" and sorts last — never 0%. Confidence sits
   beside a key result and is not part of any score.
 
-  English-first, like the other recent views.
+  English-first, like the other recent views. NC-1 slice 12 part j: a plan's score read on asking
+  (`PlanOkrScore.svelte`) and each key result's check-ins (`ObjectiveCard.svelte`).
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -12,6 +13,7 @@
   import { onMount } from "svelte";
   import { PpmClient, type OkrList } from "#lib/api/ppm.js";
   import ObjectiveCard from "#lib/components/ObjectiveCard.svelte";
+  import PlanOkrScore from "#lib/components/PlanOkrScore.svelte";
 
   const ppm = PpmClient.withFetch();
   let list = $state<OkrList | null>(null);
@@ -65,6 +67,8 @@
     <button class="button small primary" type="submit">{t("p.okrs.create")}</button>
   </form>
 </details>
+
+<PlanOkrScore titleOf={(o) => list?.objectives.find((x) => x.objective.pid === o)?.objective.title} />
 
 {#if list}
   {#if list.objectives.length === 0}

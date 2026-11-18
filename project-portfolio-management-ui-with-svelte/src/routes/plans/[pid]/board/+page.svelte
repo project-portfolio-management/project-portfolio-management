@@ -5,9 +5,12 @@
   stamps status_changed_at / first done_at, so flow data stays true), each
   card shows its assignee and points as typed fields and a blocked task says
   so in words, plus sprint create/select with the honest burndown
-  (real completions only — the server's derivation note is shown) and
+  (real completions only — said in the catalogue's words) and
   the last-24h standup digest. A card's title links to the task's page, where it is edited and linked to other
-  tasks (NC-1 slice 3).
+  tasks (NC-1 slice 3). NC-1 slice 12 part j: many tasks at once (`BoardBulk.svelte`), the chosen sprint's ceremonies
+  and commitment (`SprintCeremonies.svelte`) and, on asking, following the board's changes as they happen (`GET
+  /api/plans/{pid}/live`, `src/lib/live-board-view.ts`). The burndown's and velocity's notes are the service's English
+  and are not shown; the catalogue says what they are.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -29,6 +32,11 @@
   } from "#lib/api/ppm.js";
   import { t, tn, localeHref } from "#lib/i18n.svelte.js";
   import PasteTasks from "#lib/components/PasteTasks.svelte";
+  import BoardBulk from "#lib/components/BoardBulk.svelte";
+  import SprintCeremonies from "#lib/components/SprintCeremonies.svelte";
+  import { LIVE_EVENTS, LIVE_STATE_KEY, liveEventKey, stateAfterError, type LiveState } from "#lib/live-board-view.js";
+  import { formatTime } from "#lib/locale-format.js";
+  import { onDestroy } from "svelte";
   import { exportLabels, searchAnnouncement } from "#lib/table-labels.js";
   // Reactive, so the page follows the URL to another plan (CQ-18); the load effect reads it.
   const pid = $derived(page.params.pid ?? "");
@@ -81,6 +89,38 @@
       error = errorText(err, "ppm.common.loadFailed");
     }
   }
+  // Following the board's changes as they happen (PL-3), only on asking; any event reads the board again.
+  let live = $state<LiveState>("off");
+  let lastChange = $state<{ kind: string; at: string } | null>(null);
+  let source: EventSource | null = null;
+  let reloadTimer: ReturnType<typeof setTimeout> | null = null;
+  function stopFollowing(state: LiveState = "off") {
+    source?.close();
+    source = null;
+    live = state;
+  }
+  function follow() {
+    stopFollowing("connecting");
+    const es = new EventSource(ppm.liveUrl(pid));
+    source = es;
+    es.onopen = () => (live = "on");
+    es.onerror = () => {
+      live = stateAfterError(es.readyState);
+      if (live === "stopped") stopFollowing("stopped");
+    };
+    for (const kind of LIVE_EVENTS)
+      es.addEventListener(kind, () => {
+        live = "on";
+        lastChange = { kind, at: new Date().toISOString() };
+        if (reloadTimer) clearTimeout(reloadTimer);
+        reloadTimer = setTimeout(() => void load(), 300);
+      });
+  }
+  onDestroy(() => {
+    stopFollowing();
+    if (reloadTimer) clearTimeout(reloadTimer);
+  });
+
   // A different plan in the URL starts over: its sprints are not the last plan's (CQ-18).
   let loadedFor = "";
   $effect(() => {
@@ -89,6 +129,8 @@
       selectedSprint = "";
       burndown = null;
       notes = [];
+      stopFollowing();
+      lastChange = null;
     }
     void load();
   });
@@ -223,6 +265,21 @@
 
 <PasteTasks {pid} onDone={() => void load()} />
 
+<section class="live" aria-labelledby="live-h" data-testid="board-live">
+  <h2 id="live-h">{t("p.live.heading")}</h2>
+  <p class="small muted">{t("p.live.says")}</p>
+  <p role="status">
+    {t(LIVE_STATE_KEY[live])}{#if lastChange}{` ${t("p.live.last_change", { change: t(liveEventKey(lastChange.kind)), time: formatTime(lastChange.at) })}`}{/if}
+  </p>
+  {#if live === "off" || live === "stopped"}
+    <button class="button" type="button" onclick={follow}>{t("p.live.follow")}</button>
+  {:else}
+    <button class="button" type="button" onclick={() => stopFollowing()}>{t("p.live.stop")}</button>
+  {/if}
+</section>
+
+{#if tasks !== null}<BoardBulk {pid} {tasks} onchanged={() => void load()} />{/if}
+
 {#if tasks !== null}
   <div class="board-wrap" data-testid="task-board">
     <KanbanBoard
@@ -259,7 +316,7 @@
 
 {#if burndown}
   <h2>{t("p.plans.pid.board.burndown", { name: burndown.sprint.name })}</h2>
-  <p class="muted">{burndown.derivation}</p>
+  <p class="muted">{t("p.live.burndown_says")}</p>
   <DataTable label={t("p.plans.pid.board.remaining_of", { total_tasks: burndown.total_tasks })} columns={burndownColumns(burndown.total_tasks)} rows={burndown.points} rowId={(r) => String(r.date)} sortable={false} testid="burndown" />
 {/if}
 
@@ -277,6 +334,10 @@
       </ul>
     {/if}
   </div>
+{/if}
+
+{#if selectedSprint && tasks !== null}
+  <SprintCeremonies sprintPid={selectedSprint} sprintName={sprints.find((s) => s.pid === selectedSprint)?.name ?? ""} {tasks} />
 {/if}
 
 {#if selectedSprint}
@@ -323,7 +384,7 @@
 
 {#if velocity && velocity.sprints.length > 0}
   <h2>{t("p.plans.pid.board.velocity")}</h2>
-  <p class="muted">{velocity.note}</p>
+  <p class="muted">{t("p.live.velocity_says")}</p>
   <DataTable label={t("p.plans.pid.board.sprint")} columns={velocityColumns} rows={velocity.sprints} rowId={(r) => String(rowOf<{ sprint: { pid: string } }>(r).sprint.pid)} testid="velocity" />
 {/if}
 

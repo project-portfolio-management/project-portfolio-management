@@ -5,6 +5,11 @@
   size of the gap — colour is never the only signal. Skill rows are demand only
   (supply is not known for skills) and overlap. A caller who may not manage people
   sees roles and totals only. The whole of it is also available as a long table.
+
+  NC-1 slice 12 part j (SC-7): a placeholder given a person or removed (`PlaceholderActions.svelte`), planned against
+  recorded hours (`PlannedHours.svelte`), a plan's skill gaps (`SkillGapView.svelte`) and the cost rate in force
+  (`RateLookupForm.svelte`), each read on asking; plan names from `GET /api/plans` (best effort). The service's note is
+  not shown.
 -->
 <script lang="ts">
   import { resource } from "#lib/resource.svelte.js";
@@ -15,6 +20,12 @@
   import { onMount } from "svelte";
   import { PpmClient, type ResourcePlan } from "#lib/api/ppm.js";
   import { gapCell, maxAbsGap, periodLabel } from "#lib/scheduling-view.js";
+  import { PlanRepository } from "#lib/api/plans.js";
+  import type { PlanRef } from "#lib/api/types.js";
+  import PlaceholderActions from "#lib/components/PlaceholderActions.svelte";
+  import PlannedHours from "#lib/components/PlannedHours.svelte";
+  import SkillGapView from "#lib/components/SkillGapView.svelte";
+  import RateLookupForm from "#lib/components/RateLookupForm.svelte";
 
   const ppm = PpmClient.withFetch();
   let from = $state("");
@@ -30,6 +41,17 @@
   const error = $derived(loaded.error);
   const load = () => loaded.reload();
   onMount(load);
+
+  // Plan names for the placeholders, the hours and the skill gaps; without them a plan is the start of its id.
+  let plans = $state<PlanRef[] | null>(null);
+  onMount(async () => {
+    try {
+      plans = await PlanRepository.withFetch().list();
+    } catch {
+      plans = [];
+    }
+  });
+  const planName = (pid: string) => plans?.find((p) => p.pid === pid)?.name ?? pid.slice(0, 8);
 
   const keys = $derived(
     [...new Set((plan?.periods ?? []).flatMap((p) => p.rows.map((r) => r.key)))].sort(),
@@ -126,11 +148,16 @@
         <li>{ph.role ?? t("p.resources.unclassified")}: {formatPercentValue(ph.percent)} {ph.start_date ? t("p.resources.from_date", { date: formatDate(ph.start_date) }) : ""} {ph.end_date ? t("p.resources.to_date", { date: formatDate(ph.end_date) }) : ""} ({ph.booking})</li>
       {/each}
     </ul>
+    <PlaceholderActions placeholders={plan.placeholders} {planName} onchanged={() => void load()} />
   {/if}
-  <p class="small muted">{plan.note}</p>
+  <p class="small muted">{t("p.hours.fte_says")}</p>
 {:else if !error}
   <p class="muted">{t("p.resources.loading")}</p>
 {/if}
+
+<PlannedHours {planName} />
+<SkillGapView {plans} />
+<RateLookupForm />
 
 <style>
   table {

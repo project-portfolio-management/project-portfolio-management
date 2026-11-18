@@ -2,7 +2,8 @@
   One KPI: its derived status (a word and a shape, never colour alone), latest
   reading, trend, staleness, thresholds, and the forms to add a reading, view
   the history, edit and delete. "No data yet" is its own state: not red, not
-  green.
+  green. The history is every reading (`GET /api/kpis/{pid}/readings`, NC-1 slice 12 part j), one a later reading
+  that day replaced marked "replaced" in words.
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -10,7 +11,8 @@
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t } from "#lib/i18n.svelte.js";
   import { askConfirm } from "#lib/confirm.svelte.js";
-  import type { KpiView, KpiCadence, PpmClient, KpiReading } from "#lib/api/ppm.js";
+  import type { KpiView, KpiCadence, PpmClient, KpiReadingRow } from "#lib/api/ppm.js";
+  import { formatDate } from "#lib/locale-format.js";
   import { STATUS_SYMBOL, STATUS_TEXT, staleText, thresholdText, trendText, valueText } from "#lib/kpi-view.js";
 
   let {
@@ -53,11 +55,11 @@
     });
   };
 
-  let history = $state<KpiReading[] | null>(null);
+  let history = $state<KpiReadingRow[] | null>(null);
   async function loadHistory(e: Event) {
     if (!(e.currentTarget as HTMLDetailsElement).open) return;
     try {
-      history = (await ppm.kpi(k.pid)).history ?? [];
+      history = (await ppm.kpiReadings(k.pid)).readings;
     } catch (err) {
       onerror(errorText(err, "c.KpiCard.could_not_load_the_history"));
     }
@@ -95,8 +97,9 @@
   };
 
   const historyColumns: DataGridColumn[] = $derived([
-    { id: "observed_on", header: t("c.KpiCard.observed"), rowHeader: true },
+    { id: "observed_on", header: t("c.KpiCard.observed"), rowHeader: true, format: (v) => formatDate(String(v)) },
     { id: "value", header: t("c.KpiCard.value"), align: "end", format: (v) => valueText(Number(v), k.unit) },
+    { id: "superseded", header: t("p.kpireadings.col_standing"), format: (v) => (v ? t("p.kpireadings.replaced") : t("p.kpireadings.counted")) },
     { id: "note", header: t("c.KpiCard.note"), format: (v) => (v ? String(v) : "") },
   ]);
 </script>
@@ -137,6 +140,7 @@
     {:else if history.length === 0}
       <p class="small muted">{t("c.KpiCard.no_readings")}</p>
     {:else}
+      <p class="small muted">{t("p.kpireadings.says")}</p>
       <DataTable label={t("c.KpiCard.observed")} columns={historyColumns} rows={history} rowId={(r) => String(r.pid)} sortable={false} />
     {/if}
   </details>

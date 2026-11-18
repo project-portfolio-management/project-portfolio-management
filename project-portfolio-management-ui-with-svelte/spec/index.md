@@ -3243,3 +3243,136 @@ reasons and labels are never shown. Rules in `src/lib/hammock-view.ts`, `src/lib
   stub that would carry the service's English carries `"service text"`, and each test checks it is not shown. The
   translations are machine-written and unreviewed. **Not verified:** against a real service; how the critical path
   draws a network with many linked plans (up to eight plans and 3,000 tasks).
+
+## The board, sprints, resources and the OKR and KPI reads (NC-1 slice 12 part j, RM-9, PL-3, FR-29, SC-7, PJ-2, PJ-3, KO-1, KO-2)
+
+Many tasks at once, a sprint's ceremonies and commitment, and following the board's changes on `/plans/[pid]/board`;
+placeholders, planned against recorded hours, a plan's skill gaps and the cost rate in force on `/resources`; effort
+against capacity on `/capacity`; a plan's goal score and a key result's check-ins on `/okrs`; every reading of a KPI
+on `/kpis`; adoption recorded on `/plans/[pid]/benefits`. Every rule is said before anything is sent and checked
+first, every problem at once; each refusal is the catalogue's sentence by action and status (and, for a placeholder's
+409, the service's machine `code`); the service's notes, reasons and per-task refusal notes are never shown. Rules in
+`src/lib/board-bulk-view.ts`, `src/lib/live-board-view.ts`, `src/lib/sprint-ceremony-view.ts`,
+`src/lib/resource-actions-view.ts` and `src/lib/okr-reads-view.ts`.
+
+- **`/plans/[pid]/board`: many tasks at once (RM-9, `BoardBulk.svelte`).** A closed section; opening it reads the
+  plans (`GET /api/plans`; the plan list disabled until read). Said first: at most 200 tasks a call; the status is
+  changed on the board, one card at a time; the start date runs from 1970-01-05 to 2100-12-31; a copy starts in that
+  plan's first state and keeps the assignee only if asked; a move clears the sprint, component and parent task, and a
+  task with sub-tasks is not moved. The tasks are chosen by checkbox (all or none at a stroke; the count said).
+  *Set on the chosen tasks*: the assignee (a `person:` or `worker:` reference and an id), the due date and the start
+  date each left as it is, set or cleared; checked first (a task and a field chosen, the reference, real dates, the
+  start's range); nothing sent when every chosen task already has the assignee and due date asked for (the board does
+  not read a start date, so one is always sent); then `POST /api/tasks/bulk` with only the fields set or cleared.
+  *Copy to the plan* (`POST /api/tasks/copy`, `keep_assignee` only when kept; this plan may be chosen) and *Move to
+  the plan* (`POST /api/tasks/move`; this plan refused first; asked first, naming the plan and what is cleared; Cancel
+  sends nothing). The answer is said as "Done for {done} of {requested} tasks", a move's tasks whose status that plan
+  lacks counted (the note is English and not shown), and the refused tasks named, said to be refused for a reason the
+  service gives only in English. *Delete the chosen tasks* is asked first, then `DELETE /api/plans/{pid}/tasks/{t_pid}`
+  one call each; those already gone counted apart, those refused named. A 422 says the service did not take the values
+  (an edit) or that the plan cannot be seen or the list was refused (a copy or move); a 404 that the plan is gone; a
+  403 that the reader may not change them. The board is read again after each.
+- **`/plans/[pid]/board`: following the board's changes (PL-3).** Never started on its own: *Follow changes as they
+  happen* opens an `EventSource` on `GET /api/plans/{pid}/live` through the proxy; its state is said in words (not
+  following, connecting, following, connection lost and trying again, stopped when the service would not send), with
+  the last change in words and the time in the reader's locale. Any event (`task_created`, `task_moved`,
+  `task_updated`, `raci_updated`, `comment_added`, `resync`) reads the board again (once for a burst); the browser
+  reconnects by itself with the last event's id. *Stop following* closes it, as do leaving the page and another plan
+  in the address. The burndown's derivation and the velocity's note are English and are replaced by the catalogue's
+  sentences.
+- **`/plans/[pid]/board`: the chosen sprint's ceremonies and commitment (FR-29, `SprintCeremonies.svelte`).** `GET
+  /api/sprints/{pid}/ceremonies` and `GET /api/sprints/{pid}/commitment` (the form disabled until read): every kind
+  counted, "○ … not held" for none (a sprint that held no retrospective is a finding), and each ceremony with its time
+  in the reader's locale, facilitator and summary. Said first: one planning and one review, any number of daily
+  stand-ups and retrospectives. *Record the ceremony*: a kind, a facilitator (a reference, optional) and what was
+  decided (optional, blank not sent); a second planning or review and a facilitator that is not a reference refused
+  first; then `POST …/ceremonies`. *What the sprint committed to*: said first to be taken once; not committed says how
+  many tasks are in it now; *Commit the sprint's tasks* is refused first for a sprint with no tasks, asked first
+  (naming the count and that it cannot be changed), then `POST /api/sprints/{pid}/commit`; committed says committed
+  against now, the tasks added and removed since named from the board ("▲", "▼"), or that nothing changed. A 422 on a
+  ceremony says the sprint may have held it already; on the commitment that it is committed already; a 404 that the
+  sprint is gone.
+- **`/resources`: a placeholder given a person or removed (SC-7, `PlaceholderActions.svelte`).** Below the roles
+  asked for with no person, a placeholder chosen by its role, plan (named from `GET /api/plans`), share and dates.
+  Said first: giving it is a resource manager's call, and going over capacity is asked first. *Give it to the person*:
+  the reference checked first; `POST /api/plans/{pid}/allocations/{a_pid}/resolve` (`{person_ref}`); a 409
+  `over_capacity` asks whether to go ahead (Cancel says nothing changed) and then sends `confirm: true`. *Remove the
+  placeholder* is asked first, then `DELETE /api/plans/{pid}/allocations/{a_pid}`. A 403 says only an administrator or
+  a resource manager can; a 409 `conflict` that it names a person already; a 422 that the person was not taken; a 404
+  that the booking is gone. The resource plan is read again after each. Its own note is English and is replaced by the
+  catalogue's sentence.
+- **`/resources`: planned against recorded hours (SC-7, `PlannedHours.svelte`), on asking.** `GET
+  /api/resource-plan/hours` (blank days not sent: the four weeks to today; real dates, the last not before the first,
+  at most 3,660 days, checked first): the window in the reader's locale, the totals, people hidden from a reader who
+  may not manage them, a list cut short, a table by plan (planned, of which unassigned, recorded or "nothing recorded"
+  (never zero), recorded less planned), and time recorded by people with no booking on a plan, with their count.
+- **`/resources`: a plan's skill gaps (SC-7, `SkillGapView.svelte`), on asking.** A plan chosen, then `GET
+  /api/plans/{pid}/skill-gap`: how many skills are held, missing and not known, and a table of person, skill and
+  standing ("✓ held", "▲ missing", "? not known"; the reason a skill is not known is English and not shown).
+- **`/resources`: the cost rate in force (PJ-2, `RateLookupForm.svelte`), on asking.** A person's reference and a day
+  (both checked first) and a table (`standard`, not sent): `GET /api/cost-rates/lookup` says the rate an hour in its
+  currency, on the day, from the person's own table or their role's, and since when; none in force is said, never a
+  zero. A 404 says rates are shown to finance only (the service answers anyone else as if there were none).
+- **`/capacity`: effort against capacity (PJ-3, `UtilizationView.svelte`), on asking.** A closed section; opening it
+  reads the plans. The team or by person, the days back from today (1 to 366, checked first, as the service would
+  quietly read another as 28; 28 not sent) and optionally a plan: `GET /api/capacity/utilization`. The team's figure,
+  or a table by person: the use of capacity as a percentage, "▲ … at or over capacity: a warning, not an achievement",
+  or why there is none in words (no capacity declared, away the whole window (not 0%), too little to report, too few
+  people to show); effort, available and away in hours; the people counted; what is withheld.
+- **`/okrs`: a plan's goal score (KO-2, `PlanOkrScore.svelte`), on asking.** A plan chosen (`GET /api/plans`, the choice
+  disabled until read), then `GET /api/plans/{pid}/okr`: the score weighted by alignment, or "not measured" (never
+  0%); how many objectives are left out as not measured; each objective named from the page's list (else "An
+  objective" and the start of its id) with its score, weight and key results; an objective's key results read on
+  opening (`GET /api/objectives/{pid}/key-results`), each with its progress or why it has none in words (its start and
+  target the same, held steady with no tolerance, figures too large).
+- **`/okrs`: a key result's check-ins (KO-2, `ObjectiveCard.svelte`).** Read on opening (`GET
+  /api/key-results/{pid}/check-ins`), newest first: the day in the reader's locale, the value, the confidence (never
+  part of a score) and the note.
+- **`/kpis`: every reading of a KPI (KO-1, `KpiCard.svelte`).** The history now reads `GET /api/kpis/{pid}/readings`:
+  the day in the reader's locale, the value, whether it counts or was replaced by a later reading that day (kept), and
+  the note.
+- **`/plans/[pid]/benefits`: adoption recorded (`AdoptionForm.svelte`).** Its own section below the value realized.
+  Said first: active users against the users it is for, over a window of days, with what counted as active kept
+  beside it. Active users (a whole number, 0 or more), the users it is for (above 0), the days (30 filled in, 1 or
+  more) and the definition (required) checked first; then `POST /api/plans/{pid}/adoption`, and the value realized is
+  read again. A 422 says the figures were not taken; a 404 that the plan is gone; a 403 that the reader may not.
+- **Decided (the plainest option):** each part is a section of the page the plan names; following live changes sits
+  on the board (the events are the board's) and only on asking; adoption is recorded on the benefits page, beside the
+  adoption it reads; the hours, skill gaps, rate, use of capacity and plan score are read on asking; deleting tasks is
+  part of choosing many, one call each after one question; a move, a delete, a commitment and removing a placeholder
+  are asked first, a copy is not (it only adds); utilization is offered for the team and by person (the service's
+  `by=plan` answers the same single figure as the team).
+- **Not built:** an action item turned into a task (`POST /api/actions/{pid}/convert`): no screen lists a control's
+  actions yet (part o); `POST /api/plans/{pid}/satisfaction` waits for SM-15; a bulk edit of the component (no
+  component picker yet, part n); the hours by person and unplanned time by person for a manager (the totals and counts
+  only); a person picker (typed references); a list of rate tables (a typed name). **Service gaps:** a bulk call's
+  per-task refusal is English text with no code, and a moved task's mapped status is said only in that English; every
+  whole bulk refusal is one 422 `unprocessable` with English text; the bulk edit, copy, move and delete publish no live
+  event, so a follower does not see them; a ceremony's wrong kind and a second planning or review are one 422
+  `unprocessable` with English text, and `facilitator_ref` is not checked to be a reference; committing a sprint with
+  no tasks records nothing and answers `was_committed: false`, so it could be committed again (the page does not
+  offer it); a placeholder's 409 `over_capacity` carries its days and peak only in English, so the question cannot say
+  them; `GET /api/plans/{pid}/skill-gap`, `GET /api/plans/{pid}/okr`, `GET /api/objectives/{pid}/key-results` and `GET
+  /api/key-results/{pid}/check-ins` take no caller and check no plan's readability; a skill gap's `reason`, the hours'
+  `note` (which still says an 8-hour day while the code reads the organization's working day), the utilization's
+  `note` and the commitment's `note` are English; `…/utilization` quietly reads a window outside 1 to 366 as 28 days
+  and answers `by=plan` as one team figure; `GET /api/cost-rates/lookup` answers a reader outside finance 404, and
+  does not check `person_ref`; every adoption refusal is one 422 `unprocessable` with English text.
+- **Tests:** `tests/unit/board-bulk-view.test.ts` (the edit body with only the fields set, nothing for no change,
+  every problem, copy and move with a move to the same plan refused, the outcome naming the refused, refusals, the
+  live events' words and states), `tests/unit/sprint-ceremony-view.test.ts` (every kind counted, the body with blanks
+  left out, a second planning or review, the commitment's checks, the scope change named, refusals),
+  `tests/unit/resource-actions-view.test.ts` (the resolve body and `confirm`, over capacity told from named, the hours
+  window, skill counts, the rate query with the standard table left out, the utilization query with the defaults left
+  out and a window refused first, the words), `tests/unit/okr-reads-view.test.ts` (unmeasured left out, the progress
+  words, the adoption body and every problem, refusals), the paths in `tests/unit/ppm.test.ts` (bodies checked against
+  `openapi.json` by `client-bodies.test.ts`); `tests/e2e/board-resources.spec.ts` (new: many tasks at once, checked
+  first, nothing sent for no change, the refused named; copy, move and delete with the questions; a refused move;
+  ceremonies and the commitment with the question; refused ones; following the board; a placeholder over capacity
+  asked first and removed; a refused placeholder; hours, skill gaps and the rate with the defaults not sent; a rate
+  kept from the reader; effort against capacity; the plan's score, key results, check-ins and a KPI's readings; Welsh;
+  axe with the sections open), an adoption test in `tests/e2e/plan-benefits.spec.ts`, and the board's burndown note in
+  `tests/e2e/ppm.spec.ts` now the catalogue's. Every stub that would carry the service's English carries `"service
+  text"`, and each test checks it is not shown. The translations are machine-written and unreviewed. **Not verified:**
+  against a real service; a live stream held open for long through the proxy, or across replicas (the service's hub is
+  per process).

@@ -8852,4 +8852,367 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.task.is_hammock":
     "Diese Aufgabe ist ein Sammelvorgang: Ihre Termine kommen aus den Aufgaben, die sie umfasst.",
   "p.task.hammock_link": "Ihre Spanne auf dem kritischen Pfad ansehen",
+  "p.adoption.could_not": "Die Nutzung konnte nicht erfasst werden.",
+  "p.adoption.f_active": "Aktive Nutzer",
+  "p.adoption.f_definition": "Was als aktiver Nutzer zählte",
+  "p.adoption.f_target": "Vorgesehene Nutzer",
+  "p.adoption.f_window": "Über wie viele Tage",
+  "p.adoption.form": "Nutzung erfassen",
+  "p.adoption.heading": "Wie viele Menschen es nutzen",
+  "p.adoption.problem_active":
+    "Geben Sie die aktiven Nutzer als ganze Zahl ab 0 an.",
+  "p.adoption.problem_definition":
+    "Geben Sie an, was als aktiver Nutzer zählte, damit spätere Werte vergleichbar sind.",
+  "p.adoption.problem_target":
+    "Geben Sie die vorgesehenen Nutzer als ganze Zahl über 0 an.",
+  "p.adoption.problem_window":
+    "Geben Sie den Zeitraum als ganze Zahl von Tagen ab 1 an.",
+  "p.adoption.record": "Nutzung erfassen",
+  "p.adoption.refused": "Der Dienst hat diese Zahlen nicht angenommen.",
+  "p.adoption.refused_forbidden":
+    "Sie dürfen für diesen Plan keine Nutzung erfassen.",
+  "p.adoption.refused_gone": "Dieser Plan existiert nicht mehr.",
+  "p.adoption.saved": "Nutzung erfasst.",
+  "p.adoption.says":
+    "Aktive Nutzer im Verhältnis zu den vorgesehenen Nutzern über einen Zeitraum von Tagen. Was als aktiv zählte, wird neben der Zahl gespeichert, damit ein späterer Wert vergleichbar ist.",
+  "p.bulk.apply": "Für die gewählten Aufgaben setzen",
+  "p.bulk.choose_all": "Alle Aufgaben wählen",
+  "p.bulk.choose_none": "Keine wählen",
+  "p.bulk.choose_plan": "Plan wählen",
+  "p.bulk.chosen_one": "{n} Aufgabe gewählt",
+  "p.bulk.chosen_other": "{n} Aufgaben gewählt",
+  "p.bulk.confirm_delete_one":
+    "{n} Aufgabe löschen? Sie verschwindet vom Board und aus allen Planansichten.",
+  "p.bulk.confirm_delete_other":
+    "{n} Aufgaben löschen? Sie verschwinden vom Board und aus allen Planansichten.",
+  "p.bulk.confirm_move_one":
+    "{n} Aufgabe nach {plan} verschieben? Sprint, Komponente und übergeordnete Aufgabe werden geleert, und ein Status, den jener Plan nicht kennt, wird zu dessen erstem.",
+  "p.bulk.confirm_move_other":
+    "{n} Aufgaben nach {plan} verschieben? Sprint, Komponente und übergeordnete Aufgabe werden geleert, und ein Status, den jener Plan nicht kennt, wird zu dessen erstem.",
+  "p.bulk.copy": "In den Plan kopieren",
+  "p.bulk.could_not": "Die Aufgaben konnten nicht geändert werden.",
+  "p.bulk.could_not_load_plans": "Die Pläne konnten nicht gelesen werden.",
+  "p.bulk.delete": "Gewählte Aufgaben löschen",
+  "p.bulk.delete_failed": "Nicht gelöscht: {titles}.",
+  "p.bulk.deleted_gone_one": "{n} Aufgabe war schon weg.",
+  "p.bulk.deleted_gone_other": "{n} Aufgaben waren schon weg.",
+  "p.bulk.deleted_one": "{n} Aufgabe gelöscht.",
+  "p.bulk.deleted_other": "{n} Aufgaben gelöscht.",
+  "p.bulk.done_one": "Erledigt für {done} von {requested} Aufgabe.",
+  "p.bulk.done_other": "Erledigt für {done} von {requested} Aufgaben.",
+  "p.bulk.edit_form": "Felder der gewählten Aufgaben setzen",
+  "p.bulk.f_assignee": "Zuständig",
+  "p.bulk.f_due": "Fälligkeitsdatum",
+  "p.bulk.f_plan": "Ziel-Plan",
+  "p.bulk.f_start": "Startdatum",
+  "p.bulk.f_value": "Neu: {field}",
+  "p.bulk.heading": "Viele Aufgaben auf einmal ändern",
+  "p.bulk.keep_assignee": "Beim Kopieren die Zuständigkeit behalten",
+  "p.bulk.mapped_one":
+    "{n} Aufgabe hatte einen Status, den jener Plan nicht kennt, und beginnt in dessen erstem Status.",
+  "p.bulk.mapped_other":
+    "{n} Aufgaben hatten einen Status, den jener Plan nicht kennt, und beginnen in dessen erstem Status.",
+  "p.bulk.mode_clear": "Leeren",
+  "p.bulk.mode_keep": "Unverändert lassen",
+  "p.bulk.mode_set": "Setzen auf",
+  "p.bulk.move": "In den Plan verschieben",
+  "p.bulk.no_tasks": "Dieser Plan hat keine Aufgaben.",
+  "p.bulk.problem_assignee":
+    "Geben Sie die Zuständigkeit als person: oder worker: mit einer ID an.",
+  "p.bulk.problem_due": "Geben Sie ein gültiges Fälligkeitsdatum an.",
+  "p.bulk.problem_no_field":
+    "Wählen Sie mindestens ein Feld zum Setzen oder Leeren.",
+  "p.bulk.problem_none": "Wählen Sie mindestens eine Aufgabe.",
+  "p.bulk.problem_plan":
+    "Wählen Sie den Plan, in den kopiert oder verschoben wird.",
+  "p.bulk.problem_same_plan":
+    "Die Aufgaben sind schon in diesem Plan: Wählen Sie einen anderen als Ziel.",
+  "p.bulk.problem_start":
+    "Geben Sie ein gültiges Startdatum von {min} bis {latest} an.",
+  "p.bulk.problem_too_many": "Wählen Sie höchstens {max} Aufgaben auf einmal.",
+  "p.bulk.refused_edit": "Der Dienst hat diese Werte nicht angenommen.",
+  "p.bulk.refused_forbidden": "Sie dürfen diese Aufgaben nicht ändern.",
+  "p.bulk.refused_plan_gone":
+    "Jener Plan existiert nicht mehr oder ist für Sie nicht sichtbar.",
+  "p.bulk.refused_titles":
+    "Abgelehnt, aus einem Grund, den der Dienst nur auf Englisch nennt: {titles}.",
+  "p.bulk.refused_transfer":
+    "Jener Plan ist für Sie nicht sichtbar, oder der Dienst hat die Liste nicht angenommen.",
+  "p.bulk.says":
+    "Wählen Sie Aufgaben und setzen Sie für alle dieselbe Zuständigkeit, Fälligkeit oder denselben Start, kopieren oder verschieben Sie sie in einen Plan, oder löschen Sie sie. Höchstens {max} auf einmal; der Start liegt zwischen {min} und {latest}. Der Status wird auf dem Board geändert, Karte für Karte. Eine Kopie beginnt im ersten Status jenes Plans und behält die Zuständigkeit nur auf Wunsch; beim Verschieben werden Sprint, Komponente und übergeordnete Aufgabe geleert, und eine Aufgabe mit Unteraufgaben wird nicht verschoben.",
+  "p.bulk.this_plan": "{name} (dieser Plan)",
+  "p.bulk.transfer_form": "Gewählte Aufgaben kopieren oder verschieben",
+  "p.bulk.unchanged":
+    "Die gewählten Aufgaben haben diese Werte schon, daher wurde nichts gesendet.",
+  "p.ceremony.choose_kind": "Zeremonie wählen",
+  "p.ceremony.could_not_load":
+    "Die Zeremonien des Sprints konnten nicht gelesen werden.",
+  "p.ceremony.could_not_save": "Die Zeremonie konnte nicht erfasst werden.",
+  "p.ceremony.counts": "Abgehaltene Zeremonien",
+  "p.ceremony.f_facilitator":
+    "Moderation (person: oder worker: mit ID, freiwillig)",
+  "p.ceremony.f_kind": "Zeremonie",
+  "p.ceremony.f_summary": "Was entschieden wurde (freiwillig)",
+  "p.ceremony.facilitated_by": "moderiert von {ref}",
+  "p.ceremony.form": "Zeremonie erfassen",
+  "p.ceremony.heading": "Zeremonien von {name}",
+  "p.ceremony.held_count_one": "{kind}: {n}-mal abgehalten",
+  "p.ceremony.held_count_other": "{kind}: {n}-mal abgehalten",
+  "p.ceremony.held_saved": "Erfasst: {kind}.",
+  "p.ceremony.kind_daily": "Tägliches Stand-up",
+  "p.ceremony.kind_other": "Andere Zeremonie",
+  "p.ceremony.kind_planning": "Planung",
+  "p.ceremony.kind_retrospective": "Retrospektive",
+  "p.ceremony.kind_review": "Sprint-Review",
+  "p.ceremony.none_held": "{kind}: nicht abgehalten",
+  "p.ceremony.problem_facilitator":
+    "Geben Sie die Moderation als person: oder worker: mit ID an, oder lassen Sie das Feld leer.",
+  "p.ceremony.problem_kind": "Wählen Sie die Zeremonie.",
+  "p.ceremony.problem_once":
+    "Dieser Sprint hat {kind} schon abgehalten: ein zweites Mal ist eine Neuplanung, also ein neuer Sprint.",
+  "p.ceremony.record": "Zeremonie eintragen",
+  "p.ceremony.refused_ceremony":
+    "Der Dienst hat abgelehnt: Dieser Sprint hat diese Zeremonie vielleicht schon abgehalten.",
+  "p.ceremony.refused_forbidden":
+    "Sie dürfen dies für den Sprint nicht erfassen.",
+  "p.ceremony.refused_gone": "Dieser Sprint existiert nicht mehr.",
+  "p.ceremony.says":
+    "Ein Sprint hat eine Planung und ein Review sowie beliebig viele tägliche Stand-ups und Retrospektiven. Jede Art wird gezählt, auch wenn keine stattfand.",
+  "p.checkins.heading": "Stände zu {title}",
+  "p.checkins.none": "Noch keine Stände.",
+  "p.checkins.row": "{date}: Wert {value}",
+  "p.commitment.added_one": "{n} Aufgabe seither hinzugekommen: {titles}.",
+  "p.commitment.added_other": "{n} Aufgaben seither hinzugekommen: {titles}.",
+  "p.commitment.commit": "Aufgaben des Sprints zusagen",
+  "p.commitment.confirm_one":
+    "Die {n} Aufgabe in {name} jetzt zusagen? Das geschieht einmal und lässt sich nicht ändern; später hinzugefügte oder entfernte Aufgaben erscheinen als Änderung.",
+  "p.commitment.confirm_other":
+    "Die {n} Aufgaben in {name} jetzt zusagen? Das geschieht einmal und lässt sich nicht ändern; später hinzugefügte oder entfernte Aufgaben erscheinen als Änderung.",
+  "p.commitment.could_not": "Der Sprint konnte nicht zugesagt werden.",
+  "p.commitment.heading": "Wozu sich der Sprint verpflichtet hat",
+  "p.commitment.not_yet_one":
+    "Noch nicht zugesagt; jetzt ist {n} Aufgabe im Sprint.",
+  "p.commitment.not_yet_other":
+    "Noch nicht zugesagt; jetzt sind {n} Aufgaben im Sprint.",
+  "p.commitment.problem_done":
+    "Dieser Sprint ist schon zugesagt: Eine Zusage wird nie neu geschrieben.",
+  "p.commitment.problem_empty": "Dieser Sprint hat keine Aufgaben zum Zusagen.",
+  "p.commitment.problem_unread":
+    "Die Zusage des Sprints wurde noch nicht gelesen.",
+  "p.commitment.refused_commit":
+    "Der Dienst hat abgelehnt: Dieser Sprint ist schon zugesagt.",
+  "p.commitment.removed_one": "{n} Aufgabe seither entfernt: {titles}.",
+  "p.commitment.removed_other": "{n} Aufgaben seither entfernt: {titles}.",
+  "p.commitment.saved_one": "{n} Aufgabe zugesagt.",
+  "p.commitment.saved_other": "{n} Aufgaben zugesagt.",
+  "p.commitment.says":
+    "Die Aufgaben des Sprints zum Zeitpunkt der Zusage, einmal festgehalten, damit eine später hinzugefügte oder entfernte Aufgabe als Änderung erscheint und nicht als von Anfang an geplant.",
+  "p.commitment.state": "{committed} zugesagt; jetzt {current} im Sprint.",
+  "p.commitment.unchanged": "Seither nichts hinzugefügt oder entfernt.",
+  "p.hours.col_actual": "Erfasst",
+  "p.hours.col_placeholder": "Davon ohne Person",
+  "p.hours.col_plan": "Plan des Projekts",
+  "p.hours.col_planned": "Geplant",
+  "p.hours.col_variance": "Erfasst minus geplant",
+  "p.hours.could_not": "Die Stunden konnten nicht gelesen werden.",
+  "p.hours.f_from": "Ab",
+  "p.hours.f_to": "Bis",
+  "p.hours.form": "Geplante gegenüber erfassten Stunden",
+  "p.hours.fte_says":
+    "Vollzeitäquivalente sind Prozent-Tage geteilt durch 100 mal die Tage des Zeitraums; eine Lücke ist Angebot minus Bedarf (unter null fehlt etwas). Vorgeschlagene Buchungen sind eine eigene Reihe.",
+  "p.hours.h": "{h} Std.",
+  "p.hours.heading": "Geplante und erfasste Stunden",
+  "p.hours.masked":
+    "Personen werden nicht gezeigt: Sie dürfen sie nicht verwalten.",
+  "p.hours.none":
+    "Kein Plan hatte in diesem Zeitraum geplante oder erfasste Stunden.",
+  "p.hours.nothing_recorded": "nichts erfasst",
+  "p.hours.problem_from":
+    "Geben Sie den ersten Tag als gültiges Datum an oder lassen Sie ihn leer.",
+  "p.hours.problem_order": "Der letzte Tag kann nicht vor dem ersten liegen.",
+  "p.hours.problem_span": "Der Zeitraum darf höchstens {max} Tage umfassen.",
+  "p.hours.problem_to":
+    "Geben Sie den letzten Tag als gültiges Datum an oder lassen Sie ihn leer.",
+  "p.hours.read": "Stunden lesen",
+  "p.hours.refused": "Der Dienst hat diesen Zeitraum nicht angenommen.",
+  "p.hours.says":
+    "Geplant ist der Anteil einer benannten, festen Buchung an jedem Arbeitstag; erfasst ist die eingetragene Zeit, genehmigt oder nicht. Lassen Sie die Tage leer für die vier Wochen bis heute; höchstens {max} Tage.",
+  "p.hours.table": "Stunden je Plan",
+  "p.hours.totals": "Geplant {planned}; erfasst {actual}.",
+  "p.hours.truncated":
+    "Nur die ersten Einträge wurden gelesen; die Summen können zu niedrig sein.",
+  "p.hours.unplanned": "{plan}: {hours} erfasst",
+  "p.hours.unplanned_heading": "Zeit von Personen ohne Buchung im Plan",
+  "p.hours.unplanned_people_one": "({n} Person)",
+  "p.hours.unplanned_people_other": "({n} Personen)",
+  "p.hours.window": "Vom {from} bis {to}.",
+  "p.kpireadings.col_standing": "Stellung",
+  "p.kpireadings.counted": "gezählt",
+  "p.kpireadings.replaced": "durch einen späteren Wert am selben Tag ersetzt",
+  "p.kpireadings.says":
+    "Alle Werte, die neuesten zuerst. Ein späterer Wert am selben Tag ersetzt einen früheren, der erhalten bleibt.",
+  "p.live.burndown_says":
+    "Verbleibende Aufgaben je Tag, aus den erfassten Abschlüssen; keine Ideallinie, nichts wird ergänzt.",
+  "p.live.event_comment_added": "ein Kommentar hinzugefügt",
+  "p.live.event_other": "eine Änderung",
+  "p.live.event_raci_updated": "Zuständigkeiten geändert",
+  "p.live.event_resync": "das Board vollständig neu gelesen",
+  "p.live.event_task_created": "eine Aufgabe hinzugefügt",
+  "p.live.event_task_moved": "eine Aufgabe verschoben",
+  "p.live.event_task_updated": "eine Aufgabe geändert",
+  "p.live.follow": "Änderungen live verfolgen",
+  "p.live.heading": "Änderungen in Echtzeit",
+  "p.live.last_change": "Zuletzt: {change} um {time}.",
+  "p.live.says":
+    "Solange verfolgt wird, wird das Board neu gelesen, sobald jemand hier eine Aufgabe hinzufügt, verschiebt oder ändert. Es endet, wenn Sie die Seite verlassen.",
+  "p.live.state_connecting": "Verbindung wird aufgebaut…",
+  "p.live.state_off": "Nicht verfolgt.",
+  "p.live.state_on": "Wird verfolgt.",
+  "p.live.state_retrying": "Verbindung verloren; neuer Versuch.",
+  "p.live.state_stopped": "Beendet: Der Dienst sendet keine Änderungen.",
+  "p.live.stop": "Verfolgen beenden",
+  "p.live.velocity_says":
+    "In jedem Sprint erledigte Aufgaben und Punkte, vom Board gezählt; dies ist kein Flussmaß.",
+  "p.placeholder.choose": "Platzhalter wählen",
+  "p.placeholder.confirm_over":
+    "Die Zuweisung an {person} würde an manchen Tagen die Kapazität überschreiten. Trotzdem?",
+  "p.placeholder.confirm_remove":
+    "Diesen Platzhalter entfernen: {what}? Der Bedarf, für den er stand, entfällt mit.",
+  "p.placeholder.could_not": "Der Platzhalter konnte nicht geändert werden.",
+  "p.placeholder.f_person": "Person (person: oder worker: mit ID)",
+  "p.placeholder.f_placeholder": "Platzhalter",
+  "p.placeholder.form": "Platzhalter einer Person geben",
+  "p.placeholder.give": "Der Person geben",
+  "p.placeholder.given": "An {person} gegeben.",
+  "p.placeholder.heading": "Platzhalter einer Person geben oder entfernen",
+  "p.placeholder.not_given": "Nicht vergeben: nichts wurde geändert.",
+  "p.placeholder.open": "offen",
+  "p.placeholder.option": "{role} in {plan}, {percent}, {from} bis {to}",
+  "p.placeholder.problem_choose": "Wählen Sie einen Platzhalter.",
+  "p.placeholder.problem_person":
+    "Geben Sie die Person als person: oder worker: mit ID an.",
+  "p.placeholder.refused_forbidden":
+    "Nur eine Administration oder Ressourcenleitung kann das.",
+  "p.placeholder.refused_gone": "Diese Buchung existiert nicht mehr.",
+  "p.placeholder.refused_named":
+    "Diese Buchung nennt schon eine Person; die Liste wurde neu gelesen.",
+  "p.placeholder.refused_person":
+    "Der Dienst hat diese Person nicht angenommen.",
+  "p.placeholder.remove": "Platzhalter entfernen",
+  "p.placeholder.removed": "Platzhalter entfernt.",
+  "p.placeholder.says":
+    "Ein Platzhalter ist eine angefragte Rolle ohne Person. Ihn zu vergeben entscheidet die Ressourcenleitung; würde das die Kapazität überschreiten, werden Sie zuerst gefragt.",
+  "p.planokr.as_of": "berechnet {at}",
+  "p.planokr.choose_plan": "Plan wählen",
+  "p.planokr.could_not": "Die Ziele des Plans konnten nicht gelesen werden.",
+  "p.planokr.could_not_load_plans": "Die Pläne konnten nicht gelesen werden.",
+  "p.planokr.currencies": "Schlüsselergebnisse in mehr als einer Währung",
+  "p.planokr.f_plan": "Plan für Ziele",
+  "p.planokr.form": "Zielwert eines Plans",
+  "p.planokr.heading": "Zielwert eines Plans",
+  "p.planokr.its_key_results": "Schlüsselergebnisse von {title}",
+  "p.planokr.key_results_one": "{n} Schlüsselergebnis",
+  "p.planokr.key_results_other": "{n} Schlüsselergebnisse",
+  "p.planokr.left_out_one":
+    "{n} Ziel ist nicht messbar und fließt nicht in den Wert ein.",
+  "p.planokr.left_out_other":
+    "{n} Ziele sind nicht messbar und fließen nicht in den Wert ein.",
+  "p.planokr.no_objectives": "Kein Ziel ist mit diesem Plan verknüpft.",
+  "p.planokr.not_measured":
+    "Nicht gemessen: Kein verknüpftes Ziel ist bisher messbar.",
+  "p.planokr.objective_not_measured": "nicht gemessen",
+  "p.planokr.problem_plan": "Wählen Sie einen Plan.",
+  "p.planokr.read": "Wert lesen",
+  "p.planokr.refused_gone":
+    "Dieser Plan oder dieses Ziel existiert nicht mehr.",
+  "p.planokr.says":
+    "Der Wert jedes mit dem Plan verknüpften Ziels, gewichtet nach der Stärke der Verknüpfung. Ein nicht messbares Ziel fließt nicht ein und zählt nie als 0 %.",
+  "p.planokr.score": "Wert {score}",
+  "p.planokr.unmeasurable_no_range":
+    "kein Fortschritt: Start und Ziel sind gleich",
+  "p.planokr.unmeasurable_no_tolerance":
+    "kein Fortschritt: zu halten, aber ohne Toleranz",
+  "p.planokr.unmeasurable_other": "kein Fortschritt berechenbar",
+  "p.planokr.unmeasurable_overflow":
+    "kein Fortschritt: die Zahlen sind zu groß",
+  "p.planokr.unnamed": "Ein Ziel ({id})",
+  "p.planokr.weight": "Gewicht {weight}",
+  "p.rate.answer_person":
+    "{rate} je Stunde am {date}, aus der eigenen Tabelle der Person, gültig seit {from}.",
+  "p.rate.answer_role":
+    "{rate} je Stunde am {date}, aus der Tabelle ihrer Rolle, gültig seit {from}.",
+  "p.rate.could_not": "Der Satz konnte nicht gelesen werden.",
+  "p.rate.f_date": "Am",
+  "p.rate.f_person": "Person (Referenz)",
+  "p.rate.f_table": "Tabelle",
+  "p.rate.form": "Der geltende Kostensatz",
+  "p.rate.heading": "Der geltende Kostensatz",
+  "p.rate.none": "Für diese Person gilt am {date} kein Satz.",
+  "p.rate.problem_date": "Geben Sie den Tag als gültiges Datum an.",
+  "p.rate.problem_person": "Geben Sie die Referenz der Person an.",
+  "p.rate.read": "Satz lesen",
+  "p.rate.refused_hidden":
+    "Kein für Sie sichtbarer Satz: Sätze sieht nur die Finanzabteilung.",
+  "p.rate.refused_query": "Der Dienst hat diese Abfrage nicht angenommen.",
+  "p.rate.says":
+    "Der an einem Tag geltende Stundensatz einer Person: aus ihrer eigenen Tabelle, sonst aus der ihrer Rolle. Die Standardtabelle, wenn Sie keine andere nennen.",
+  "p.skillgap.choose_plan": "Plan wählen",
+  "p.skillgap.col_person": "Person (Referenz)",
+  "p.skillgap.col_skill": "Fähigkeit",
+  "p.skillgap.col_status": "Stand",
+  "p.skillgap.could_not": "Die Kompetenzlücken konnten nicht gelesen werden.",
+  "p.skillgap.count_covered_one": "{n} Fähigkeit vorhanden;",
+  "p.skillgap.count_covered_other": "{n} Fähigkeiten vorhanden;",
+  "p.skillgap.count_missing_one": "{n} Fähigkeit fehlt;",
+  "p.skillgap.count_missing_other": "{n} Fähigkeiten fehlen;",
+  "p.skillgap.count_unknown_one": "{n} unbekannt.",
+  "p.skillgap.count_unknown_other": "{n} unbekannt.",
+  "p.skillgap.f_plan": "Plan prüfen",
+  "p.skillgap.form": "Kompetenzlücken eines Plans",
+  "p.skillgap.heading": "Von den Buchungen verlangte Fähigkeiten",
+  "p.skillgap.none": "Keine Buchung in diesem Plan verlangt eine Fähigkeit.",
+  "p.skillgap.problem_plan": "Wählen Sie einen Plan.",
+  "p.skillgap.read": "Kompetenzlücken lesen",
+  "p.skillgap.says":
+    "Jede von einer Buchung im Plan verlangte Fähigkeit im Vergleich zu dem, was die Person im Personaldienst hat. Unbekannt heißt, ihre Fähigkeiten waren nicht lesbar; ein Platzhalter hat noch keine Person und fehlt hier.",
+  "p.skillgap.status_covered": "vorhanden",
+  "p.skillgap.status_missing": "fehlt",
+  "p.skillgap.status_unknown": "unbekannt",
+  "p.skillgap.table": "Fähigkeiten je Buchung",
+  "p.util.by_person": "Je Person",
+  "p.util.by_team": "Das Team",
+  "p.util.col_available": "Verfügbar",
+  "p.util.col_away": "Abwesend",
+  "p.util.col_effort": "Aufwand",
+  "p.util.col_figure": "Auslastung",
+  "p.util.col_person": "Person (Referenz)",
+  "p.util.could_not": "Die Auslastung konnte nicht gelesen werden.",
+  "p.util.every_plan": "Alle Pläne",
+  "p.util.f_by": "Anzeigen",
+  "p.util.f_plan": "Nur Plan",
+  "p.util.f_window": "Tage zurück ab heute",
+  "p.util.form": "Aufwand gegenüber Kapazität",
+  "p.util.heading": "Aufwand gegenüber Kapazität",
+  "p.util.none":
+    "In diesem Zeitraum hat niemand Aufwand oder Abwesenheit erfasst.",
+  "p.util.over": "an oder über der Kapazität: eine Warnung, keine Leistung",
+  "p.util.people_counted_one": "{n} Person gezählt.",
+  "p.util.people_counted_other": "{n} Personen gezählt.",
+  "p.util.problem_window":
+    "Geben Sie den Zeitraum als ganze Zahl von Tagen von 1 bis {max} an.",
+  "p.util.read": "Auslastung lesen",
+  "p.util.refused": "Der Dienst hat diese Abfrage nicht angenommen.",
+  "p.util.says":
+    "Erfasster Aufwand im Verhältnis zur erklärten Kapazität abzüglich Abwesenheit, über die {days} Tage bis heute, sofern Sie nicht 1 bis {max} wählen. An oder über der Kapazität ist eine Warnung vor dem Stau. Kleine Gruppen und kleine Werte werden zurückgehalten.",
+  "p.util.suppression":
+    "Zurückgehalten: eine Gruppe unter {people} Personen oder ein Wert unter {hours}.",
+  "p.util.table": "Auslastung je Person",
+  "p.util.team_detail": "{effort} von {available} verfügbar, {away} abwesend",
+  "p.util.unavailable_all_away": "den ganzen Zeitraum abwesend, nicht 0 %",
+  "p.util.unavailable_below_floor": "zu wenig für eine Angabe",
+  "p.util.unavailable_no_capacity": "keine Kapazität erklärt",
+  "p.util.unavailable_other": "nicht berichtbar",
+  "p.util.unavailable_small_group": "zu wenige Personen für eine Anzeige",
+  "p.util.window_one": "Über den letzten {n} Tag.",
+  "p.util.window_other": "Über die letzten {n} Tage.",
 };

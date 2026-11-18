@@ -1,6 +1,7 @@
 <!--
   Resource capacity (`/capacity`, PPM-8): the per-person rollup over
-  a window; summed percent over 100 flags over-allocation.
+  a window; summed percent over 100 flags over-allocation. NC-1 slice 12 part j: effort against the capacity declared,
+  read on asking (`UtilizationView.svelte`, `GET /api/capacity/utilization`).
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -12,6 +13,7 @@
   import { onMount } from "svelte";
   import { PpmClient, type CapacityView } from "#lib/api/ppm.js";
   import CapacityMeter from "#lib/components/CapacityMeter.svelte";
+  import UtilizationView from "#lib/components/UtilizationView.svelte";
 
   const ppm = PpmClient.withFetch();
   let from = $state("");
@@ -72,6 +74,8 @@
     <p class="small muted">{t("ppm.capacity.empty")}</p>
   {/if}
 {/if}
+
+<UtilizationView />
 
 <style>
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.8rem 0; }

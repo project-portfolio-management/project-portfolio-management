@@ -339,8 +339,27 @@ import type {
   PlanWorkflow,
   TaskRollup,
   WorkingTimeBody,
+  AdoptionBody,
+  BulkEditBody,
+  BulkResult,
+  BulkTransferBody,
+  CeremonyBody,
+  KeyResultCheckIn,
+  KpiReadings,
+  ObjectiveKeyResult,
+  PlanOkr,
+  PlannedHours,
+  PlannedHoursQuery,
+  RateLookup,
+  RateLookupQuery,
+  ResolvePlaceholderBody,
+  SkillGap,
+  SprintCeremonies,
+  SprintCommitment,
+  Utilization,
+  UtilizationQuery,
 } from "./ppm-types";
-import { readingSearch, timeReportSearch } from "./ppm-types";
+import { querySearch, readingSearch, timeReportSearch } from "./ppm-types";
 
 export * from "./ppm-types";
 
@@ -2815,6 +2834,104 @@ export class PpmClient {
   /** Record a person's leave or other time away from project work. */
   recordNonWorking(body: NonWorkingBody): Promise<{ pid: string }> {
     return this.http.post(`/api/non-working`, { body });
+  }
+
+  // ---- the board, sprints, resources and the OKR and KPI reads (RM-9, PL-3, SC-7, KO-1, KO-2; NC-1 slice 12 part j) ----
+  /** Set the same fields on many tasks (up to 200); one result per task, a refusal's reason in English only. */
+  bulkEditTasks(body: BulkEditBody): Promise<BulkResult> {
+    return this.http.post(`/api/tasks/bulk`, { body });
+  }
+  /** Copy tasks into a plan, each a new task in that plan's first state. */
+  copyTasks(body: BulkTransferBody): Promise<BulkResult> {
+    return this.http.post(`/api/tasks/copy`, { body });
+  }
+  /** Move tasks to another plan; their sprint, component and parent are cleared, a status it lacks mapped. */
+  moveTasks(body: BulkTransferBody): Promise<BulkResult> {
+    return this.http.post(`/api/tasks/move`, { body });
+  }
+  /** Delete one task (kept, marked deleted, and audited). */
+  deleteTask(pid: string, taskPid: string): Promise<void> {
+    return this.http.delete(`/api/plans/${pid}/tasks/${taskPid}`);
+  }
+  /** The address of the plan's live board changes (`text/event-stream`), through the proxy. */
+  liveUrl(pid: string): string {
+    return `${API_BASE_URL}/api/plans/${encodeURIComponent(pid)}/live`;
+  }
+  /** A sprint's ceremonies, every kind counted (FR-29). */
+  sprintCeremonies(sprintPid: string): Promise<SprintCeremonies> {
+    return this.http.get(`/api/sprints/${sprintPid}/ceremonies`);
+  }
+  /** Record a ceremony held; a second planning or review is refused (422). */
+  holdCeremony(
+    sprintPid: string,
+    body: CeremonyBody,
+  ): Promise<{ pid: string }> {
+    return this.http.post(`/api/sprints/${sprintPid}/ceremonies`, { body });
+  }
+  /** The tasks committed to a sprint beside those in it now. */
+  sprintCommitment(sprintPid: string): Promise<SprintCommitment> {
+    return this.http.get(`/api/sprints/${sprintPid}/commitment`);
+  }
+  /** Commit the sprint's tasks as they are now, once (a second is 422). */
+  commitSprint(sprintPid: string): Promise<{ committed: number }> {
+    return this.http.post(`/api/sprints/${sprintPid}/commit`, { body: {} });
+  }
+  /** Effort against the capacity declared; left-out values are the service's defaults. */
+  utilization(q: UtilizationQuery = {}): Promise<Utilization> {
+    return this.http.get(
+      `/api/capacity/utilization${querySearch({ by: q.by, window_days: q.window_days, plan_pid: q.plan_pid })}`,
+    );
+  }
+  /** Planned against recorded hours per plan, over a window. */
+  plannedHours(q: PlannedHoursQuery = {}): Promise<PlannedHours> {
+    return this.http.get(
+      `/api/resource-plan/hours${querySearch({ from: q.from, to: q.to })}`,
+    );
+  }
+  /** Each required skill of the plan's allocations against what the person holds. */
+  skillGap(pid: string): Promise<SkillGap> {
+    return this.http.get(`/api/plans/${pid}/skill-gap`);
+  }
+  /** The cost rate in force for a person on a day (finance only: anyone else is answered 404). */
+  rateLookup(q: RateLookupQuery): Promise<RateLookup> {
+    return this.http.get(
+      `/api/cost-rates/lookup${querySearch({ person_ref: q.person_ref, date: q.date, table: q.table })}`,
+    );
+  }
+  /** Give a placeholder a named person; 409 `over_capacity` unless `confirm`. */
+  resolvePlaceholder(
+    pid: string,
+    allocationPid: string,
+    body: ResolvePlaceholderBody,
+  ): Promise<{ pid: string; person_ref: string; over_capacity: boolean }> {
+    return this.http.post(
+      `/api/plans/${pid}/allocations/${allocationPid}/resolve`,
+      { body },
+    );
+  }
+  /** Remove an allocation (kept, marked deleted, and audited). */
+  removeAllocation(pid: string, allocationPid: string): Promise<void> {
+    return this.http.delete(`/api/plans/${pid}/allocations/${allocationPid}`);
+  }
+  /** A plan's alignment-weighted score and the objectives behind it. */
+  planOkr(pid: string): Promise<PlanOkr> {
+    return this.http.get(`/api/plans/${pid}/okr`);
+  }
+  /** An objective's key results, each with its progress or why it has none. */
+  objectiveKeyResults(objectivePid: string): Promise<ObjectiveKeyResult[]> {
+    return this.http.get(`/api/objectives/${objectivePid}/key-results`);
+  }
+  /** A key result's check-ins, newest first. */
+  keyResultCheckIns(keyResultPid: string): Promise<KeyResultCheckIn[]> {
+    return this.http.get(`/api/key-results/${keyResultPid}/check-ins`);
+  }
+  /** Every reading of a KPI, newest first, each one a later reading that day replaced marked. */
+  kpiReadings(kpiPid: string): Promise<KpiReadings> {
+    return this.http.get(`/api/kpis/${kpiPid}/readings`);
+  }
+  /** Record how many people use what the plan delivered, against how many it is for. */
+  recordAdoption(pid: string, body: AdoptionBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/plans/${pid}/adoption`, { body });
   }
   // ---- plan templates (LT-2, NC-1 slice 9) ----
   /** Saved templates the caller may see, then the built-in starters. */

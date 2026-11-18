@@ -8829,4 +8829,367 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.task.is_hammock":
     "Cette tâche est un hamac : ses dates viennent des tâches qu'elle couvre.",
   "p.task.hammock_link": "Voir son étendue sur le chemin critique",
+  "p.adoption.could_not": "Impossible d'enregistrer l'adoption.",
+  "p.adoption.f_active": "Utilisateurs actifs",
+  "p.adoption.f_definition": "Ce qui comptait comme utilisateur actif",
+  "p.adoption.f_target": "Utilisateurs visés",
+  "p.adoption.f_window": "Sur combien de jours",
+  "p.adoption.form": "Enregistrer l'adoption",
+  "p.adoption.heading": "Combien de personnes l'utilisent",
+  "p.adoption.problem_active":
+    "Indiquez les utilisateurs actifs en nombre entier, 0 ou plus.",
+  "p.adoption.problem_definition":
+    "Dites ce qui comptait comme utilisateur actif, pour comparer les relevés suivants.",
+  "p.adoption.problem_target":
+    "Indiquez les utilisateurs visés en nombre entier supérieur à 0.",
+  "p.adoption.problem_window":
+    "Indiquez la période en nombre entier de jours, 1 ou plus.",
+  "p.adoption.record": "Enregistrer cette adoption",
+  "p.adoption.refused": "Le service n'a pas accepté ces chiffres.",
+  "p.adoption.refused_forbidden":
+    "Vous ne pouvez pas enregistrer l'adoption de ce plan.",
+  "p.adoption.refused_gone": "Ce plan n'existe plus.",
+  "p.adoption.saved": "Adoption enregistrée.",
+  "p.adoption.says":
+    "Utilisateurs actifs rapportés aux utilisateurs visés, sur une période de jours. Ce qui comptait comme actif est gardé à côté du chiffre, pour comparer un relevé ultérieur.",
+  "p.bulk.apply": "Appliquer aux tâches choisies",
+  "p.bulk.choose_all": "Choisir toutes les tâches",
+  "p.bulk.choose_none": "N'en choisir aucune",
+  "p.bulk.choose_plan": "Choisissez un plan",
+  "p.bulk.chosen_one": "{n} tâche choisie",
+  "p.bulk.chosen_other": "{n} tâches choisies",
+  "p.bulk.confirm_delete_one":
+    "Supprimer {n} tâche ? Elle quitte le tableau et toutes les vues du plan.",
+  "p.bulk.confirm_delete_other":
+    "Supprimer {n} tâches ? Elles quittent le tableau et toutes les vues du plan.",
+  "p.bulk.confirm_move_one":
+    "Déplacer {n} tâche vers {plan} ? Son sprint, son composant et sa tâche parente sont effacés, et un statut que ce plan n'a pas devient son premier.",
+  "p.bulk.confirm_move_other":
+    "Déplacer {n} tâches vers {plan} ? Leur sprint, leur composant et leur tâche parente sont effacés, et un statut que ce plan n'a pas devient son premier.",
+  "p.bulk.copy": "Copier vers le plan",
+  "p.bulk.could_not": "Impossible de modifier les tâches.",
+  "p.bulk.could_not_load_plans": "Impossible de lire les plans.",
+  "p.bulk.delete": "Supprimer les tâches choisies",
+  "p.bulk.delete_failed": "Non supprimées : {titles}.",
+  "p.bulk.deleted_gone_one": "{n} tâche n'existait déjà plus.",
+  "p.bulk.deleted_gone_other": "{n} tâches n'existaient déjà plus.",
+  "p.bulk.deleted_one": "{n} tâche supprimée.",
+  "p.bulk.deleted_other": "{n} tâches supprimées.",
+  "p.bulk.done_one": "Fait pour {done} tâche sur {requested}.",
+  "p.bulk.done_other": "Fait pour {done} tâches sur {requested}.",
+  "p.bulk.edit_form": "Définir des champs sur les tâches choisies",
+  "p.bulk.f_assignee": "Responsable",
+  "p.bulk.f_due": "Date d'échéance",
+  "p.bulk.f_plan": "Plan de destination",
+  "p.bulk.f_start": "Date de début",
+  "p.bulk.f_value": "Nouvelle valeur : {field}",
+  "p.bulk.heading": "Modifier plusieurs tâches à la fois",
+  "p.bulk.keep_assignee": "Garder le responsable lors de la copie",
+  "p.bulk.mapped_one":
+    "{n} tâche avait un statut que ce plan n'a pas : elle commence dans son premier état.",
+  "p.bulk.mapped_other":
+    "{n} tâches avaient un statut que ce plan n'a pas : elles commencent dans son premier état.",
+  "p.bulk.mode_clear": "L'effacer",
+  "p.bulk.mode_keep": "Le laisser tel quel",
+  "p.bulk.mode_set": "Le définir à",
+  "p.bulk.move": "Déplacer vers le plan",
+  "p.bulk.no_tasks": "Ce plan n'a aucune tâche.",
+  "p.bulk.problem_assignee":
+    "Indiquez le responsable sous la forme person: ou worker: suivi d'un id.",
+  "p.bulk.problem_due": "Indiquez une date d'échéance valide.",
+  "p.bulk.problem_no_field":
+    "Choisissez au moins un champ à définir ou à effacer.",
+  "p.bulk.problem_none": "Choisissez au moins une tâche.",
+  "p.bulk.problem_plan": "Choisissez le plan vers lequel copier ou déplacer.",
+  "p.bulk.problem_same_plan":
+    "Les tâches sont déjà dans ce plan : choisissez-en un autre où les déplacer.",
+  "p.bulk.problem_start":
+    "Indiquez une date de début valide entre {min} et {latest}.",
+  "p.bulk.problem_too_many": "Choisissez au plus {max} tâches à la fois.",
+  "p.bulk.refused_edit": "Le service n'a pas accepté ces valeurs.",
+  "p.bulk.refused_forbidden": "Vous ne pouvez pas modifier ces tâches.",
+  "p.bulk.refused_plan_gone":
+    "Ce plan n'existe plus ou vous ne pouvez pas le voir.",
+  "p.bulk.refused_titles":
+    "Refusées, pour une raison que le service ne donne qu'en anglais : {titles}.",
+  "p.bulk.refused_transfer":
+    "Vous ne pouvez pas voir ce plan, ou le service n'a pas accepté la liste.",
+  "p.bulk.says":
+    "Choisissez des tâches, puis donnez-leur à toutes le même responsable, la même échéance ou le même début, copiez-les ou déplacez-les vers un plan, ou supprimez-les. Au plus {max} à la fois ; le début va du {min} au {latest}. Le statut se change sur le tableau, carte par carte. Une copie commence dans le premier état de ce plan et ne garde le responsable que sur demande ; un déplacement efface le sprint, le composant et la tâche parente, et une tâche avec des sous-tâches n'est pas déplacée.",
+  "p.bulk.this_plan": "{name} (ce plan)",
+  "p.bulk.transfer_form": "Copier ou déplacer les tâches choisies",
+  "p.bulk.unchanged":
+    "Les tâches choisies ont déjà ces valeurs : rien n'a été envoyé.",
+  "p.ceremony.choose_kind": "Choisissez une cérémonie",
+  "p.ceremony.could_not_load": "Impossible de lire les cérémonies du sprint.",
+  "p.ceremony.could_not_save": "Impossible d'enregistrer la cérémonie.",
+  "p.ceremony.counts": "Cérémonies tenues",
+  "p.ceremony.f_facilitator":
+    "Animateur (person: ou worker: suivi d'un id, facultatif)",
+  "p.ceremony.f_kind": "Cérémonie",
+  "p.ceremony.f_summary": "Ce qui a été décidé (facultatif)",
+  "p.ceremony.facilitated_by": "animée par {ref}",
+  "p.ceremony.form": "Enregistrer une cérémonie",
+  "p.ceremony.heading": "Cérémonies de {name}",
+  "p.ceremony.held_count_one": "{kind} : tenue {n} fois",
+  "p.ceremony.held_count_other": "{kind} : tenue {n} fois",
+  "p.ceremony.held_saved": "Enregistrée : {kind}.",
+  "p.ceremony.kind_daily": "Point quotidien",
+  "p.ceremony.kind_other": "Autre cérémonie",
+  "p.ceremony.kind_planning": "Planification",
+  "p.ceremony.kind_retrospective": "Rétrospective",
+  "p.ceremony.kind_review": "Revue",
+  "p.ceremony.none_held": "{kind} : pas tenue",
+  "p.ceremony.problem_facilitator":
+    "Indiquez l'animateur sous la forme person: ou worker: suivi d'un id, ou laissez vide.",
+  "p.ceremony.problem_kind": "Choisissez la cérémonie.",
+  "p.ceremony.problem_once":
+    "Ce sprint a déjà tenu sa {kind} : une seconde est une replanification, donc un nouveau sprint.",
+  "p.ceremony.record": "Enregistrer cette cérémonie",
+  "p.ceremony.refused_ceremony":
+    "Le service l'a refusé : ce sprint a peut-être déjà tenu cette cérémonie.",
+  "p.ceremony.refused_forbidden":
+    "Vous ne pouvez pas enregistrer cela pour le sprint.",
+  "p.ceremony.refused_gone": "Ce sprint n'existe plus.",
+  "p.ceremony.says":
+    "Un sprint tient une planification et une revue, et autant de points quotidiens et de rétrospectives que voulu. Chaque type est compté, même s'il n'a pas eu lieu.",
+  "p.checkins.heading": "Points d'étape de {title}",
+  "p.checkins.none": "Aucun point d'étape pour l'instant.",
+  "p.checkins.row": "{date} : valeur {value}",
+  "p.commitment.added_one": "{n} tâche ajoutée depuis : {titles}.",
+  "p.commitment.added_other": "{n} tâches ajoutées depuis : {titles}.",
+  "p.commitment.commit": "Engager les tâches du sprint",
+  "p.commitment.confirm_one":
+    "Engager maintenant la {n} tâche de {name} ? C'est fait une fois et ne peut être changé ; les tâches ajoutées ou retirées ensuite apparaissent comme un changement.",
+  "p.commitment.confirm_other":
+    "Engager maintenant les {n} tâches de {name} ? C'est fait une fois et ne peut être changé ; les tâches ajoutées ou retirées ensuite apparaissent comme un changement.",
+  "p.commitment.could_not": "Impossible d'engager le sprint.",
+  "p.commitment.heading": "Ce à quoi le sprint s'est engagé",
+  "p.commitment.not_yet_one":
+    "Pas encore engagé ; {n} tâche est dans le sprint.",
+  "p.commitment.not_yet_other":
+    "Pas encore engagé ; {n} tâches sont dans le sprint.",
+  "p.commitment.problem_done":
+    "Ce sprint est déjà engagé : un engagement n'est jamais réécrit.",
+  "p.commitment.problem_empty": "Ce sprint n'a aucune tâche à engager.",
+  "p.commitment.problem_unread":
+    "L'engagement du sprint n'a pas encore été lu.",
+  "p.commitment.refused_commit":
+    "Le service l'a refusé : ce sprint est déjà engagé.",
+  "p.commitment.removed_one": "{n} tâche retirée depuis : {titles}.",
+  "p.commitment.removed_other": "{n} tâches retirées depuis : {titles}.",
+  "p.commitment.saved_one": "{n} tâche engagée.",
+  "p.commitment.saved_other": "{n} tâches engagées.",
+  "p.commitment.says":
+    "Les tâches du sprint telles qu'elles sont à l'engagement, prises une fois, afin qu'une tâche ajoutée ou retirée ensuite se lise comme un changement et non comme le plan d'origine.",
+  "p.commitment.state":
+    "{committed} engagées ; {current} dans le sprint maintenant.",
+  "p.commitment.unchanged": "Rien d'ajouté ni de retiré depuis.",
+  "p.hours.col_actual": "Saisies",
+  "p.hours.col_placeholder": "Dont non attribuées",
+  "p.hours.col_plan": "Plan du projet",
+  "p.hours.col_planned": "Prévues",
+  "p.hours.col_variance": "Saisies moins prévues",
+  "p.hours.could_not": "Impossible de lire les heures.",
+  "p.hours.f_from": "Du",
+  "p.hours.f_to": "Au",
+  "p.hours.form": "Heures prévues face aux heures saisies",
+  "p.hours.fte_says":
+    "Les équivalents temps plein sont des jours-pour-cent divisés par 100 fois les jours de la période ; un écart est l'offre moins la demande (sous zéro, il manque). Les réservations proposées sont une série à part.",
+  "p.hours.h": "{h} h",
+  "p.hours.heading": "Heures prévues et saisies",
+  "p.hours.masked":
+    "Les personnes ne sont pas affichées : vous ne pouvez pas les gérer.",
+  "p.hours.none":
+    "Aucun plan n'avait d'heures prévues ou saisies sur cette période.",
+  "p.hours.nothing_recorded": "rien de saisi",
+  "p.hours.problem_from":
+    "Indiquez le premier jour par une date valide, ou laissez vide.",
+  "p.hours.problem_order": "Le dernier jour ne peut précéder le premier.",
+  "p.hours.problem_span": "La période peut compter au plus {max} jours.",
+  "p.hours.problem_to":
+    "Indiquez le dernier jour par une date valide, ou laissez vide.",
+  "p.hours.read": "Lire les heures",
+  "p.hours.refused": "Le service n'a pas accepté cette période.",
+  "p.hours.says":
+    "Le prévu est la part de chaque jour ouvré d'une réservation ferme et nommée ; le saisi est le temps entré, approuvé ou non. Laissez les jours vides pour les quatre semaines jusqu'à aujourd'hui ; au plus {max} jours.",
+  "p.hours.table": "Heures par plan",
+  "p.hours.totals": "Prévues {planned} ; saisies {actual}.",
+  "p.hours.truncated":
+    "Seules les premières saisies ont été lues ; les totaux peuvent être bas.",
+  "p.hours.unplanned": "{plan} : {hours} saisies",
+  "p.hours.unplanned_heading":
+    "Temps saisi par des personnes sans réservation sur le plan",
+  "p.hours.unplanned_people_one": "({n} personne)",
+  "p.hours.unplanned_people_other": "({n} personnes)",
+  "p.hours.window": "Du {from} au {to}.",
+  "p.kpireadings.col_standing": "Situation",
+  "p.kpireadings.counted": "comptée",
+  "p.kpireadings.replaced": "remplacée par un relevé ultérieur ce jour-là",
+  "p.kpireadings.says":
+    "Tous les relevés, du plus récent au plus ancien. Un relevé ultérieur le même jour remplace le précédent, qui est conservé.",
+  "p.live.burndown_says":
+    "Tâches restantes chaque jour, d'après les achèvements enregistrés ; aucune ligne idéale, rien n'est complété.",
+  "p.live.event_comment_added": "un commentaire ajouté",
+  "p.live.event_other": "un changement",
+  "p.live.event_raci_updated": "qui fait quoi a changé",
+  "p.live.event_resync": "le tableau relu en entier",
+  "p.live.event_task_created": "une tâche ajoutée",
+  "p.live.event_task_moved": "une tâche déplacée",
+  "p.live.event_task_updated": "une tâche modifiée",
+  "p.live.follow": "Suivre les changements en direct",
+  "p.live.heading": "Changements en temps réel",
+  "p.live.last_change": "Dernier : {change} à {time}.",
+  "p.live.says":
+    "Pendant le suivi, le tableau est relu chaque fois que quelqu'un ajoute, déplace ou modifie une tâche ici. Il s'arrête quand vous quittez la page.",
+  "p.live.state_connecting": "Connexion…",
+  "p.live.state_off": "Pas de suivi.",
+  "p.live.state_on": "Suivi actif.",
+  "p.live.state_retrying": "Connexion perdue ; nouvel essai.",
+  "p.live.state_stopped": "Arrêté : le service n'envoie pas les changements.",
+  "p.live.stop": "Arrêter le suivi",
+  "p.live.velocity_says":
+    "Tâches et points terminés à chaque sprint, comptés depuis le tableau ; ce n'est pas une mesure de flux.",
+  "p.placeholder.choose": "Choisissez un espace réservé",
+  "p.placeholder.confirm_over":
+    "Le donner à {person} dépasserait sa capacité certains jours. Le faire quand même ?",
+  "p.placeholder.confirm_remove":
+    "Retirer cet espace réservé : {what} ? La demande qu'il représentait part avec lui.",
+  "p.placeholder.could_not": "Impossible de modifier l'espace réservé.",
+  "p.placeholder.f_person": "Personne (person: ou worker: suivi d'un id)",
+  "p.placeholder.f_placeholder": "Espace réservé",
+  "p.placeholder.form": "Attribuer un espace réservé à une personne",
+  "p.placeholder.give": "L'attribuer à la personne",
+  "p.placeholder.given": "Attribué à {person}.",
+  "p.placeholder.heading":
+    "Attribuer un espace réservé à une personne, ou le retirer",
+  "p.placeholder.not_given": "Non attribué : rien n'a changé.",
+  "p.placeholder.open": "ouvert",
+  "p.placeholder.option": "{role} sur {plan}, {percent}, du {from} au {to}",
+  "p.placeholder.problem_choose": "Choisissez un espace réservé.",
+  "p.placeholder.problem_person":
+    "Indiquez la personne sous la forme person: ou worker: suivi d'un id.",
+  "p.placeholder.refused_forbidden":
+    "Seul un administrateur ou un gestionnaire des ressources peut le faire.",
+  "p.placeholder.refused_gone": "Cette réservation n'existe plus.",
+  "p.placeholder.refused_named":
+    "Cette réservation nomme déjà une personne ; la liste a été relue.",
+  "p.placeholder.refused_person": "Le service n'a pas accepté cette personne.",
+  "p.placeholder.remove": "Retirer l'espace réservé",
+  "p.placeholder.removed": "Espace réservé retiré.",
+  "p.placeholder.says":
+    "Un espace réservé est un rôle demandé sans personne encore. L'attribuer relève d'un gestionnaire des ressources ; si cela dépasse la capacité, on vous le demande d'abord.",
+  "p.planokr.as_of": "calculé le {at}",
+  "p.planokr.choose_plan": "Choisissez un plan",
+  "p.planokr.could_not": "Impossible de lire les objectifs du plan.",
+  "p.planokr.could_not_load_plans": "Impossible de lire les plans.",
+  "p.planokr.currencies": "résultats clés dans plusieurs devises",
+  "p.planokr.f_plan": "Plan à évaluer",
+  "p.planokr.form": "Score d'objectifs d'un plan",
+  "p.planokr.heading": "Score d'objectifs d'un plan",
+  "p.planokr.its_key_results": "Résultats clés de {title}",
+  "p.planokr.key_results_one": "{n} résultat clé",
+  "p.planokr.key_results_other": "{n} résultats clés",
+  "p.planokr.left_out_one":
+    "{n} objectif n'est pas mesuré et reste hors du score.",
+  "p.planokr.left_out_other":
+    "{n} objectifs ne sont pas mesurés et restent hors du score.",
+  "p.planokr.no_objectives": "Aucun objectif n'est aligné sur ce plan.",
+  "p.planokr.not_measured":
+    "Non mesuré : aucun objectif aligné ne peut encore être mesuré.",
+  "p.planokr.objective_not_measured": "non mesuré",
+  "p.planokr.problem_plan": "Choisissez un plan.",
+  "p.planokr.read": "Lire le score",
+  "p.planokr.refused_gone": "Ce plan ou cet objectif n'existe plus.",
+  "p.planokr.says":
+    "Le score de chaque objectif aligné sur le plan, pondéré par la force de l'alignement. Un objectif que rien ne mesure est laissé de côté, jamais compté à 0 %.",
+  "p.planokr.score": "Note {score}",
+  "p.planokr.unmeasurable_no_range":
+    "pas de progression : départ et cible identiques",
+  "p.planokr.unmeasurable_no_tolerance":
+    "pas de progression : à maintenir sans tolérance",
+  "p.planokr.unmeasurable_other": "aucune progression calculable",
+  "p.planokr.unmeasurable_overflow":
+    "pas de progression : chiffres trop grands",
+  "p.planokr.unnamed": "Un objectif ({id})",
+  "p.planokr.weight": "poids {weight}",
+  "p.rate.answer_person":
+    "{rate} de l'heure le {date}, d'après la table propre à la personne, en vigueur depuis le {from}.",
+  "p.rate.answer_role":
+    "{rate} de l'heure le {date}, d'après la table de son rôle, en vigueur depuis le {from}.",
+  "p.rate.could_not": "Impossible de lire le taux.",
+  "p.rate.f_date": "Le",
+  "p.rate.f_person": "Personne",
+  "p.rate.f_table": "Table des taux",
+  "p.rate.form": "Le taux de coût en vigueur",
+  "p.rate.heading": "Le taux de coût en vigueur",
+  "p.rate.none": "Aucun taux n'est en vigueur pour cette personne le {date}.",
+  "p.rate.problem_date": "Indiquez le jour par une date valide.",
+  "p.rate.problem_person": "Indiquez la référence de la personne.",
+  "p.rate.read": "Lire le taux",
+  "p.rate.refused_hidden":
+    "Aucun taux visible pour vous : les taux ne sont montrés qu'aux finances.",
+  "p.rate.refused_query": "Le service n'a pas accepté cette demande.",
+  "p.rate.says":
+    "Le taux horaire en vigueur pour une personne un jour donné : celui de sa propre table, sinon celui de son rôle. La table standard sauf si vous en nommez une autre.",
+  "p.skillgap.choose_plan": "Choisissez un plan",
+  "p.skillgap.col_person": "Personne",
+  "p.skillgap.col_skill": "Compétence",
+  "p.skillgap.col_status": "Situation",
+  "p.skillgap.could_not": "Impossible de lire les écarts de compétences.",
+  "p.skillgap.count_covered_one": "{n} compétence acquise ;",
+  "p.skillgap.count_covered_other": "{n} compétences acquises ;",
+  "p.skillgap.count_missing_one": "{n} compétence manquante ;",
+  "p.skillgap.count_missing_other": "{n} compétences manquantes ;",
+  "p.skillgap.count_unknown_one": "{n} inconnue.",
+  "p.skillgap.count_unknown_other": "{n} inconnues.",
+  "p.skillgap.f_plan": "Plan à examiner",
+  "p.skillgap.form": "Écarts de compétences d'un plan",
+  "p.skillgap.heading": "Compétences demandées par les réservations",
+  "p.skillgap.none": "Aucune réservation de ce plan ne demande de compétence.",
+  "p.skillgap.problem_plan": "Choisissez un plan.",
+  "p.skillgap.read": "Lire les écarts",
+  "p.skillgap.says":
+    "Chaque compétence demandée par une réservation du plan, face à ce que la personne détient dans le service des effectifs. Inconnue signifie que ses compétences n'ont pu être lues ; un espace réservé n'a pas encore de personne et est exclu.",
+  "p.skillgap.status_covered": "acquise",
+  "p.skillgap.status_missing": "manquante",
+  "p.skillgap.status_unknown": "inconnue",
+  "p.skillgap.table": "Compétences par réservation",
+  "p.util.by_person": "Par personne",
+  "p.util.by_team": "L'équipe",
+  "p.util.col_available": "Disponible",
+  "p.util.col_away": "Absent",
+  "p.util.col_effort": "Effort fourni",
+  "p.util.col_figure": "Utilisation de la capacité",
+  "p.util.col_person": "Personne",
+  "p.util.could_not": "Impossible de lire l'utilisation de la capacité.",
+  "p.util.every_plan": "Tous les plans",
+  "p.util.f_by": "Afficher",
+  "p.util.f_plan": "Seulement le plan",
+  "p.util.f_window": "Jours en arrière depuis aujourd'hui",
+  "p.util.form": "Effort face à la capacité",
+  "p.util.heading": "Effort face à la capacité",
+  "p.util.none": "Personne n'a saisi d'effort ni d'absence sur cette période.",
+  "p.util.over":
+    "à ou au-delà de la capacité : un avertissement, pas un exploit",
+  "p.util.people_counted_one": "{n} personne comptée.",
+  "p.util.people_counted_other": "{n} personnes comptées.",
+  "p.util.problem_window":
+    "Indiquez la période en nombre entier de jours de 1 à {max}.",
+  "p.util.read": "Lire l'utilisation de la capacité",
+  "p.util.refused": "Le service n'a pas accepté cette demande.",
+  "p.util.says":
+    "Effort saisi rapporté à la capacité déclarée, moins les absences, sur les {days} jours jusqu'à aujourd'hui sauf si vous choisissez de 1 à {max}. À ou au-delà de la capacité, c'est un avertissement sur la file. Les petits groupes et petits chiffres sont masqués.",
+  "p.util.suppression":
+    "Masqués : un groupe de moins de {people} personnes, ou un chiffre sous {hours}.",
+  "p.util.table": "Utilisation de la capacité par personne",
+  "p.util.team_detail":
+    "{effort} sur {available} disponibles, {away} d'absence",
+  "p.util.unavailable_all_away": "absent toute la période, pas 0 %",
+  "p.util.unavailable_below_floor": "trop peu pour être indiqué",
+  "p.util.unavailable_no_capacity": "aucune capacité déclarée",
+  "p.util.unavailable_other": "non communicable",
+  "p.util.unavailable_small_group": "trop peu de personnes pour afficher",
+  "p.util.window_one": "Sur le dernier {n} jour.",
+  "p.util.window_other": "Sur les {n} derniers jours.",
 };

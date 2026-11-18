@@ -5304,3 +5304,244 @@ export function readingSearch(
   const qs = s.toString();
   return qs ? `?${qs}` : "";
 }
+
+// ---- the board, sprints, resources and the OKR and KPI reads (NC-1 slice 12 part j) ----
+
+/** A query string from the values given, text included; a left-out or empty value is not sent. */
+export function querySearch(
+  q: Record<string, string | number | boolean | undefined>,
+): string {
+  const s = new URLSearchParams();
+  for (const [k, v] of Object.entries(q))
+    if (v !== undefined && v !== "") s.set(k, String(v));
+  const qs = s.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/** `POST /api/tasks/bulk` body: the same fields set on many tasks; `null` clears one. */
+export interface BulkEditBody {
+  ids: string[];
+  set: {
+    assignee_ref?: string | null;
+    due_date?: string | null;
+    start_date?: string | null;
+  };
+}
+
+/** `POST /api/tasks/copy` and `/move` body; `keep_assignee` is the copy's only, false when left out. */
+export interface BulkTransferBody {
+  ids: string[];
+  to_plan_pid: string;
+  keep_assignee?: boolean;
+}
+
+/** One requested task's outcome; the `note` is the service's English and is never shown. */
+export interface BulkItemResult {
+  pid: string;
+  result: "ok" | "refused";
+  note: string | null;
+}
+
+/** The answer to every bulk call: `ok + refused === requested`, after duplicates are removed. */
+export interface BulkResult {
+  requested: number;
+  ok: number;
+  refused: number;
+  results: BulkItemResult[];
+}
+
+export type CeremonyKind = "planning" | "daily" | "review" | "retrospective";
+
+/** `POST /api/sprints/{pid}/ceremonies` body. */
+export interface CeremonyBody {
+  kind: CeremonyKind;
+  facilitator_ref?: string;
+  summary?: string;
+}
+
+/** One ceremony held. */
+export interface Ceremony {
+  pid: string;
+  sprint_pid: string;
+  kind: string;
+  held_at: string;
+  facilitator_ref: string | null;
+  summary: string | null;
+}
+
+/** `GET /api/sprints/{pid}/ceremonies`: those held, every kind counted (zero too), and the retrospective notes. */
+export interface SprintCeremonies {
+  ceremonies: Ceremony[];
+  held: { kind: string; count: number }[];
+  retrospective_notes: unknown[];
+}
+
+/** `GET /api/sprints/{pid}/commitment`: the committed set beside the current one. The `note` is English. */
+export interface SprintCommitment {
+  sprint_pid: string;
+  committed: number;
+  current: number;
+  added_after_commitment: string[];
+  removed_after_commitment: string[];
+  was_committed: boolean;
+  note: string;
+}
+
+/** `GET /api/capacity/utilization` query; left-out values are the defaults (`team`, 28 days, every plan). */
+export interface UtilizationQuery {
+  by?: "team" | "person";
+  window_days?: number;
+  plan_pid?: string;
+}
+
+export type UtilizationUnavailable =
+  "no_declared_capacity" | "all_non_working" | "below_floor" | "small_group";
+
+/** One person's (or the group's) effort against the capacity declared. */
+export interface UtilizationFigure {
+  actor_ref: string;
+  basis_points: number | null;
+  unavailable: UtilizationUnavailable | null;
+  effort_minutes: number;
+  available_minutes: number;
+  declared_minutes: number;
+  non_working_minutes: number;
+  asserted: boolean;
+  at_or_over_capacity: boolean;
+}
+
+/** `GET /api/capacity/utilization`: one figure for the team, a list by person. The `note` is English. */
+export interface Utilization {
+  by: string;
+  window_days: number;
+  utilization: UtilizationFigure | UtilizationFigure[];
+  people_counted?: number;
+  suppression: { floor_minutes: number; min_group_people: number };
+  note?: string;
+}
+
+/** `GET /api/resource-plan/hours`: planned against recorded hours, per plan. The `note` is English. */
+export interface PlannedHours {
+  from: string;
+  to: string;
+  plans: {
+    plan_pid: string;
+    planned_minutes: number;
+    placeholder_planned_minutes: number;
+    actual_minutes: number | null;
+    actual_reason: "no_actuals" | null;
+    variance_minutes: number | null;
+  }[];
+  unplanned_actuals: {
+    plan_pid: string;
+    minutes: number;
+    people_count?: number;
+  }[];
+  total_planned_minutes: number;
+  total_actual_minutes: number | null;
+  total_actual_reason: "no_actuals" | null;
+  truncated: boolean;
+  masked: boolean;
+  note: string;
+}
+
+/** `GET /api/resource-plan/hours` query; a left-out end is today, a left-out start 27 days before the end. */
+export interface PlannedHoursQuery {
+  from?: string;
+  to?: string;
+}
+
+/** One required skill of an allocation against what its person holds; `reason` is English and never shown. */
+export interface SkillGapFinding {
+  allocation_pid: string;
+  person_ref: string;
+  tag: string;
+  status: "covered" | "missing" | "unknown";
+  reason?: string;
+}
+
+/** `GET /api/plans/{pid}/skill-gap`. */
+export interface SkillGap {
+  plan_pid: string;
+  findings: SkillGapFinding[];
+}
+
+/** `GET /api/cost-rates/lookup` query; `table` left out is `standard`. */
+export interface RateLookupQuery {
+  person_ref: string;
+  date: string;
+  table?: string;
+}
+
+/** `GET /api/cost-rates/lookup`: the rate in force, from the person's own table or their role's, or none. */
+export interface RateLookup {
+  person_ref: string;
+  date: string;
+  table: string;
+  rate: {
+    per_hour_minor: number;
+    currency: string;
+    effective_from: string | null;
+    table_pid: string;
+    source: "person" | "role";
+  } | null;
+  reason: "no_rate" | null;
+}
+
+/** `POST /api/plans/{pid}/allocations/{a_pid}/resolve` body; `confirm` only to go over capacity. */
+export interface ResolvePlaceholderBody {
+  person_ref: string;
+  confirm?: boolean;
+}
+
+/** `GET /api/plans/{pid}/okr`: the plan's alignment-weighted score and the objectives behind it. */
+export interface PlanOkr {
+  plan_pid: string;
+  score_basis_points: number | null;
+  measured: boolean;
+  objectives: {
+    objective_pid: string;
+    weight: number;
+    score_basis_points: number | null;
+    measured: boolean;
+    key_results: number;
+    single_currency: boolean;
+  }[];
+  as_of: string;
+}
+
+/** One key result of `GET /api/objectives/{pid}/key-results`, its progress derived on read or why it has none. */
+export interface ObjectiveKeyResult {
+  key_result: KeyResult;
+  progress_basis_points: number | null;
+  unmeasurable: string | null;
+}
+
+/** One check-in of `GET /api/key-results/{pid}/check-ins`, newest first. */
+export interface KeyResultCheckIn {
+  pid: string;
+  key_result_pid: string;
+  observed_at: string;
+  value: number;
+  confidence: number | null;
+  note: string | null;
+  actor: string | null;
+}
+
+/** One reading of `GET /api/kpis/{pid}/readings`, newest first; `superseded` when a later one that day replaced it. */
+export interface KpiReadingRow extends KpiReading {
+  superseded: boolean;
+}
+
+/** `GET /api/kpis/{pid}/readings`. */
+export interface KpiReadings {
+  readings: KpiReadingRow[];
+}
+
+/** `POST /api/plans/{pid}/adoption` body. */
+export interface AdoptionBody {
+  active_users: number;
+  target_users: number;
+  window_days: number;
+  definition: string;
+}

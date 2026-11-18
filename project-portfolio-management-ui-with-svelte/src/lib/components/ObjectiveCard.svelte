@@ -9,7 +9,9 @@
   import { t } from "#lib/i18n.svelte.js";
   import { formatDate } from "#lib/locale-format.js";
   import { askConfirm } from "#lib/confirm.svelte.js";
-  import type { OkrObjective, PpmClient, KeyResultMetric, KeyResultDirection } from "#lib/api/ppm.js";
+  import type { OkrObjective, PpmClient, KeyResultMetric, KeyResultDirection, KeyResultCheckIn } from "#lib/api/ppm.js";
+  import { formatInteger } from "#lib/locale-format.js";
+  import { okrReadRefusalKey } from "#lib/okr-reads-view.js";
   import { percentText, progressValue, keyResultProgress, valueText, confidenceText } from "#lib/okr-view.js";
 
   let {
@@ -96,6 +98,18 @@
       checkNote[pid] = "";
     });
   };
+  // Each key result's check-ins, read on opening (NC-1 slice 12 part j, `GET /api/key-results/{pid}/check-ins`).
+  let checkIns = $state<Record<string, KeyResultCheckIn[]>>({});
+  async function readCheckIns(e: Event, pid: string) {
+    if (!(e.currentTarget as HTMLDetailsElement).open) return;
+    try {
+      checkIns[pid] = await ppm.keyResultCheckIns(pid);
+    } catch (err) {
+      const key = okrReadRefusalKey(err);
+      onerror(key ? t(key) : errorText(err, "c.ObjectiveCard.that_did_not_work"));
+    }
+  }
+
   let editTitle = $state<Record<string, string>>({});
   let editTarget = $state<Record<string, string>>({});
   const saveKeyResult = (pid: string, tol: number | null, krUnit: string | null) => (e: SubmitEvent) => {
@@ -155,6 +169,22 @@
               {#if kr.latest_check_in.note}· “{kr.latest_check_in.note}”{/if}
             {/if}
           </p>
+          <details ontoggle={(e) => void readCheckIns(e, k.pid)} data-testid="check-ins">
+            <summary>{t("p.checkins.heading", { title: k.title })}</summary>
+            {#if checkIns[k.pid]}
+              {#if (checkIns[k.pid] ?? []).length === 0}
+                <p class="small">{t("p.checkins.none")}</p>
+              {:else}
+                <ul class="small">
+                  {#each checkIns[k.pid] ?? [] as c (c.pid)}
+                    <li>
+                      {t("p.checkins.row", { date: formatDate(c.observed_at), value: formatInteger(c.value) })}{#if confidenceText(c.confidence)}{` · ${confidenceText(c.confidence)}`}{/if}{#if c.note}{` · “${c.note}”`}{/if}
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+            {/if}
+          </details>
           <details>
             <summary>{t("c.ObjectiveCard.check_in")}</summary>
             <form onsubmit={checkIn(k.pid)} class="inline">

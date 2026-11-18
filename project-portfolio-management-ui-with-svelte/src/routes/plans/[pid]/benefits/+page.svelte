@@ -4,7 +4,8 @@
   realized amount is a claim; it is validated only by a recorded validation from someone outside the programme, each
   stating the amount validated to date, and the latest counts. The service decides who may; a refusal is the
   catalogue's sentence. Below (NC-1 slice 12 part f), the plan's realized value read live (return on investment, time
-  to value, adoption, the business case) and an observed value recorded (`value-view.ts`, said first).
+  to value, adoption, the business case) and an observed value recorded (`value-view.ts`, said first). NC-1 slice 12
+  part j: how many people use what the plan delivered, recorded (`AdoptionForm.svelte`).
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -16,6 +17,7 @@
   import { money } from "#lib/money.js";
   import { PpmClient, type BenefitBoard, type BenefitValidations, type KpiView, type ValueRealization } from "#lib/api/ppm.js";
   import { askConfirm } from "#lib/confirm.svelte.js";
+  import AdoptionForm from "#lib/components/AdoptionForm.svelte";
   import {
     METHODS,
     METHOD_KEY,
@@ -325,6 +327,10 @@
   </form>
   {#if pointProblem}<p class="banner error" role="alert">{pointProblem}</p>{/if}
   {#if pointNotice}<p class="small" role="status">{pointNotice}</p>{/if}
+</section>
+
+<section aria-labelledby="adoption-h" data-testid="adoption">
+  <AdoptionForm {pid} onsaved={() => void loadValue()} />
 </section>
 
 <style>

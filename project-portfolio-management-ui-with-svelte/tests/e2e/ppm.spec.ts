@@ -1104,7 +1104,15 @@ test("task board renders columns, burndown, and the standup digest", async ({
   await expect(
     page.getByTestId("task-board").getByText("blocked 2 calendar days"),
   ).toBeVisible();
-  await expect(page.getByText("no ideal line, no interpolation")).toBeVisible();
+  // The service's derivation note is English and is not shown (NC-1 slice 12 part j); the catalogue says what it is.
+  await expect(
+    page.getByText(
+      "Remaining tasks each day, from the completions recorded; no ideal line is drawn and nothing is filled in.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText("no ideal line, no interpolation")).toHaveCount(
+    0,
+  );
   await expect(page.getByTestId("burndown")).toBeVisible();
   await expect(
     page.getByTestId("standup").getByText("1 blocked now"),

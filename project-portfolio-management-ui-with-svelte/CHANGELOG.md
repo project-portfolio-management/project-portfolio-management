@@ -9,6 +9,37 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the board, sprints, resources and the OKR and KPI reads (NC-1 slice 12 part j, RM-9, PL-3, FR-29, SC-7, PJ-2, PJ-3, KO-1, KO-2, 2026-11-18)
+
+- `/plans/[pid]/board`: many tasks at once (`BoardBulk.svelte`: the assignee, due date and start date left, set or
+  cleared on the chosen tasks, nothing sent for no change; copied or moved to a plan, a move asked first; deleted after
+  a question, one call each; the answer counted and the refused named, their English reasons not shown); following
+  the plan's changes on asking (`GET /api/plans/{pid}/live` through the proxy, any event reading the board again, the
+  state in words); the chosen sprint's ceremonies and commitment (`SprintCeremonies.svelte`: every kind counted, none
+  held said, a second planning or review refused first, committed once after a question, the tasks added and removed
+  since named). The burndown's and velocity's English notes are now the catalogue's sentences.
+- `/resources`: a placeholder given a person, over capacity asked first and then `confirm`, or removed after a
+  question (`PlaceholderActions.svelte`); planned against recorded hours, a plan's skill gaps and the cost rate in
+  force, each read on asking (`PlannedHours.svelte`, `SkillGapView.svelte`, `RateLookupForm.svelte`); the resource
+  plan's English note is now the catalogue's. `/capacity`: effort against capacity (`UtilizationView.svelte`, a window
+  of 1 to 366 days checked first as the service would quietly read 28).
+- `/okrs`: a plan's goal score with each objective's key results (`PlanOkrScore.svelte`) and each key result's
+  check-ins (`ObjectiveCard.svelte`). `/kpis`: every reading, a replaced one marked (`KpiCard.svelte`).
+  `/plans/[pid]/benefits`: adoption recorded (`AdoptionForm.svelte`).
+- Rules in `src/lib/board-bulk-view.ts`, `live-board-view.ts`, `sprint-ceremony-view.ts`, `resource-actions-view.ts`
+  and `okr-reads-view.ts`; 21 client methods; four new unit test files and one more in `ppm.test.ts`;
+  `tests/e2e/board-resources.spec.ts` (fourteen, with Welsh and axe), an adoption test in `plan-benefits.spec.ts` and
+  the burndown note in `ppm.spec.ts` now the catalogue's; 291 keys in eight catalogues, machine-written and
+  unreviewed. Tested: lint, check, 1,599 unit tests, Playwright 1,526 passed.
+- **Not built:** an action item turned into a task (no screen lists a control's actions; part o); satisfaction
+  (SM-15); a bulk change of the component; hours by person; a person picker. **Service gaps:** a bulk call's per-task
+  refusal and a move's mapped status are English only, and its whole refusals one 422 code; the bulk edit, copy, move
+  and delete publish no live event; a ceremony's refusals are one 422 code and the facilitator is not checked;
+  committing an empty sprint answers as never committed; a placeholder's over-capacity days are English only; the
+  skill-gap, plan-score, key-result and check-in reads check no plan's readability; the notes and reasons are English;
+  a bad utilization window is read as 28 days; the rate lookup answers a reader outside finance 404. **Not verified:**
+  against a real service; a live stream held open for long through the proxy.
+
 ### Fixed — checkboxes and radios keep their 24px target in a flex label (2026-11-18)
 
 - On the benefits page's value-point form, the "first measurable" checkbox sat in a flex label and shrank to 15.5px

@@ -1251,6 +1251,64 @@ describe("PpmClient scheduling, the rest (NC-1 slice 12 part i)", () => {
   });
 });
 
+describe("PpmClient the board, sprints, resources and the OKR and KPI reads (NC-1 slice 12 part j)", () => {
+  it("reaches every route, defaults left out of the queries", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.bulkEditTasks({ ids: ["t1"], set: { due_date: null } });
+    await ppm.copyTasks({ ids: ["t1"], to_plan_pid: "p2" });
+    await ppm.moveTasks({ ids: ["t1"], to_plan_pid: "p2" });
+    await ppm.deleteTask("p1", "t1");
+    await ppm.sprintCeremonies("s1");
+    await ppm.holdCeremony("s1", { kind: "daily" });
+    await ppm.sprintCommitment("s1");
+    await ppm.commitSprint("s1");
+    await ppm.utilization();
+    await ppm.utilization({ by: "person", window_days: 90, plan_pid: "p1" });
+    await ppm.plannedHours();
+    await ppm.plannedHours({ from: "2026-11-01", to: "2026-11-28" });
+    await ppm.skillGap("p1");
+    await ppm.rateLookup({ person_ref: "person:a", date: "2026-11-18" });
+    await ppm.resolvePlaceholder("p1", "a1", { person_ref: "person:a" });
+    await ppm.removeAllocation("p1", "a1");
+    await ppm.planOkr("p1");
+    await ppm.objectiveKeyResults("o1");
+    await ppm.keyResultCheckIns("k1");
+    await ppm.kpiReadings("m1");
+    await ppm.recordAdoption("p1", {
+      active_users: 1,
+      target_users: 2,
+      window_days: 30,
+      definition: "x",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "POST /api/tasks/bulk",
+      "POST /api/tasks/copy",
+      "POST /api/tasks/move",
+      "DELETE /api/plans/p1/tasks/t1",
+      "GET /api/sprints/s1/ceremonies",
+      "POST /api/sprints/s1/ceremonies",
+      "GET /api/sprints/s1/commitment",
+      "POST /api/sprints/s1/commit",
+      "GET /api/capacity/utilization",
+      "GET /api/capacity/utilization?by=person&window_days=90&plan_pid=p1",
+      "GET /api/resource-plan/hours",
+      "GET /api/resource-plan/hours?from=2026-11-01&to=2026-11-28",
+      "GET /api/plans/p1/skill-gap",
+      "GET /api/cost-rates/lookup?person_ref=person%3Aa&date=2026-11-18",
+      "POST /api/plans/p1/allocations/a1/resolve",
+      "DELETE /api/plans/p1/allocations/a1",
+      "GET /api/plans/p1/okr",
+      "GET /api/objectives/o1/key-results",
+      "GET /api/key-results/k1/check-ins",
+      "GET /api/kpis/m1/readings",
+      "POST /api/plans/p1/adoption",
+    ]);
+    expect(ppm.liveUrl("p 1")).toMatch(/\/api\/plans\/p%201\/live$/);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

@@ -358,6 +358,63 @@ test("an observed value: its rules said first, the first measurable one asked fi
   await expect(page.getByText("service text")).toHaveCount(0);
 });
 
+test("adoption: every problem said first, the four figures sent, a refusal in the catalogue's words", async ({
+  page,
+}) => {
+  // NC-1 slice 12 part (j): how many people use what the plan delivered.
+  await stubBenefits(page);
+  await stubValue(page);
+  const sent: Array<{ path: string; body: unknown }> = [];
+  let refuse = 0;
+  await page.route(/\/api\/plans\/[^/]+\/adoption$/, async (route) => {
+    const req = route.request();
+    sent.push({
+      path: new URL(req.url()).pathname.replace(/^\/api\/proxy/, ""),
+      body: req.postDataJSON(),
+    });
+    if (refuse)
+      return route.fulfill({
+        status: refuse,
+        json: { code: "unprocessable", detail: "service text" },
+      });
+    return route.fulfill({ json: { pid: "ad1" } });
+  });
+  await page.goto(`/en-001/plans/${PID}/benefits`);
+  await settle(page);
+  const a = page.getByRole("region", { name: "How many people use it" });
+  await a.getByRole("button", { name: "Record the adoption" }).click();
+  await expect(a.getByRole("alert")).toHaveText(
+    "Give the active users as a whole number, 0 or more. Give the users it is for as a whole number above 0. Say what counted as an active user, so later readings compare.",
+  );
+  expect(sent).toEqual([]);
+  await a.getByLabel("Active users").fill("120");
+  await a.getByLabel("Users it is for").fill("400");
+  await a
+    .getByLabel("What counted as an active user")
+    .fill(" Signed in this month ");
+  await a.getByRole("button", { name: "Record the adoption" }).click();
+  await expect(a.getByRole("status")).toHaveText("Recorded the adoption.");
+  expect(sent).toEqual([
+    {
+      path: `/api/plans/${PID}/adoption`,
+      body: {
+        active_users: 120,
+        target_users: 400,
+        window_days: 30,
+        definition: "Signed in this month",
+      },
+    },
+  ]);
+  refuse = 422;
+  await a.getByLabel("Active users").fill("130");
+  await a.getByLabel("Users it is for").fill("400");
+  await a.getByRole("button", { name: "Record the adoption" }).click();
+  await expect(a.getByRole("alert")).toHaveText(
+    "The service did not take these figures.",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
 test("the benefits page reads in Welsh and passes axe", async ({ page }) => {
   await stubBenefits(page);
   await stubValue(page);

@@ -184,15 +184,19 @@ match breakdown).
 /signin · /verify            BFF magic-link sign-in / verification
 
 /plans/[pid]/issues          the plan's issues register: raise, edit,
-                             raise from a risk (NC-1 slice 1)
+                             raise from a risk (NC-1 slice 1); read one
+                             as stored, remove one (slice 12 part c)
 /plans/[pid]/change-requests the plan's change requests: draft, edit a
                              draft, submit, review, decide, withdraw
-                             (NC-1 slice 2)
+                             (NC-1 slice 2); read one, implement, the
+                             issues and risks it answers, the what-if
+                             forecast, a baseline (slice 12 part c)
 /plans/[pid]/tasks/[tpid]    one task: edit its fields, add and remove
                              its links to other tasks (NC-1 slice 3);
                              follow it, react, comment, attach files
-                             (NC-1 slice 5); each board card's title
-                             links here
+                             (NC-1 slice 5); raise an issue from it
+                             while blocked (slice 12 part c); each
+                             board card's title links here
 /plans/[pid]/modules         the plan's tools: which feature modules it
                              shows (NC-1 slice 8); linked from the plan
                              page
@@ -1638,7 +1642,8 @@ plan page (module `governance`) and from the title of each row in the all-plans 
   sentence for a conflict, never the service's text.
 - **Not built in this slice:** deleting an issue; a "raise as issue" button on each risk row of the governance
   page; `source_task_pid` (raise from a task); `priority`; picking the owner from a list of people (the
-  owner is a typed `person:` or `worker:` reference).
+  owner is a typed `person:` or `worker:` reference). (Deleting and raising from a task were built in slice 12
+  part c, below.)
 - **Tests:** `tests/unit/issue-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
   `tests/e2e/plan-issues.spec.ts` (raise, edit, the refused close, raise from a risk, the 409, Welsh, axe).
   The Welsh is machine-written and listed in `governance/welsh-translation-review.csv`.
@@ -1673,7 +1678,9 @@ It is linked from the plan page (module `governance`) and from the title of each
   own text is never shown.
 - **Not built in this slice:** marking an approved change implemented (`…/implement`); linking issues and risks
   (`…/links`); the what-if forecast (`…/preview`) and attaching what-if edits; taking a baseline for an approved
-  change (`…/baseline`); a confirmation before withdrawing; picking the approver from a list of people.
+  change (`…/baseline`); a confirmation before withdrawing; picking the approver from a list of people. (All but
+  attaching what-if edits, the confirmation before withdrawing and the approver picker were built in slice 12 part c,
+  below.)
 - **Tests:** `tests/unit/change-request-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
   `tests/e2e/plan-change-requests.spec.ts` (draft, refused draft, edit, submit, review, decide, withdraw, the
   409, Welsh, axe). The Welsh and the other six languages are machine-written and unreviewed.
@@ -2610,3 +2617,66 @@ whose update is due from `GET /api/status-updates/due`. `src/lib/status-view.ts`
   sent as a number; a plan with no cadence and a 422; an update's rules first, a claim's sentence needed, numbers and a
   record cited, the body sent; a 422 in the catalogue's words; the dashboard's due list; Welsh; axe with a claim open).
   The translations are machine-written and unreviewed.
+
+## Issues, change requests and risks, the rest (NC-1 slice 12 part c, IR-3, IR-4)
+
+The issue, change-request and risk routes that still had no screen, on the pages they belong to. Every rule is said
+before anything is sent; refusals are the catalogue's sentences by route and status; the service's text is never shown.
+
+- **`/plans/[pid]/issues`.** "Edit" reads the issue as stored now (`GET /api/plans/{pid}/issues/{issue_pid}`) before
+  filling the form, because the save replaces every field; above the form it says when it was raised and by whom (a
+  reference, not a name), the risk it was raised from (by the risk's own title), a link to the blocked task it was
+  raised from, a link to the change requests when one answers it, and when it was resolved. "Remove" (`DELETE …`) asks
+  first (Cancel sends nothing); the page says first that removing cannot be undone here and that, under a workflow that
+  gates moves or fields, only an administrator removes one: on a plan whose issue actions are not role-checked, a
+  caller who is not an administrator is told so for such an issue and nothing is sent. The button is offered only to a
+  caller holding `issue_delete` when the options say. A 403 says who may remove; a 404 says the issue is gone and reads
+  the list again.
+- **`/plans/[pid]/tasks/[tpid]`.** A section raises an issue from the task (`POST
+  /api/plans/{pid}/issues/from-task/{task_pid}`). Said first: only a blocked task, once while that issue is open; the
+  issue is a blocker of medium severity owned by the task's assignee; the task is not changed. The plan's issues are
+  read (best effort) so an open issue already raised from the task is named instead of the button; a task not blocked
+  says so and offers nothing; the button is disabled until the issues have been read. A 409 (one already open) reads
+  the issues again; a 422 (no longer blocked) and a 404 read the task again; a 403 says the caller may not raise issues.
+- **`/plans/[pid]/change-requests`.** "Steps" reads the one request as stored (`GET …/change-requests/{cr}`, with the
+  issues and risks it answers) and shows its stated impact and implementation date. An approved request is marked
+  implemented (`POST …/implement`; the state machine's step, offered beside withdraw). **What it answers** (`PUT
+  …/links`): the plan's issues and risks as checkboxes, read once and disabled until read; said first: only while the
+  request is open (draft, submitted, under review, approved), an issue answers one change request at most, up to 200
+  issues and 200 risks, and saving replaces the whole set. An issue already answering another request cannot be ticked;
+  the sets are sent once each; nothing is sent for the sets the request already has. A closed request says it cannot be
+  relinked. **The forecast** (`GET …/preview`): offered only when the request carries what-if edits
+  (`has_forecast_edits`; otherwise said, with no call); shown labelled a forecast in which nothing was changed: the
+  plan's finish now and with the change, the tasks whose finish moves (their own titles, furthest first, in business
+  days, a plural), and the planned labour cost's change per currency or why it is not shown (no access to rates, no
+  costed work). The service's `label` and `note` are English and are not shown. **A baseline** (`POST …/baseline`):
+  said first that it is a person's choice, one per change, and cannot be undone; asked before sending; offered only for
+  an approved or implemented request with none taken; the version taken is said, then that one has been taken.
+- **`/plans/[pid]/governance`.** Each risk row has "Change", which opens `RiskEditForm.svelte` below the table (`PUT
+  /api/plans/{pid}/risks/{risk_pid}`): status, likelihood, impact, mitigation and review date. Said first: likelihood
+  and impact are whole numbers from 1 to 5; the mitigation is at most 1024 bytes (the service counts bytes); a review
+  date can be changed but not removed; only what changes is sent; "materialized" is recorded by Escalate (which stamps
+  when), so it is offered only for a risk already materialized. Every problem is said at once before sending; the score
+  inputs bind numbers; nothing is sent for no change. A 422 is one sentence (the service's 422 here has one code for
+  every rule); a 404 says the risk is gone. The risk table now names each status in words (`l.enum.risk_status.*`).
+- **Decided (the plainest option):** the change request's links are checkboxes, not a search; the forecast lists the
+  tasks whose finish moves rather than every date; removing an issue needs a confirmation, implementing does not;
+  "materialized" stays Escalate's.
+- **Not built:** attaching or editing a request's what-if edits; a confirmation before withdrawing; the people as
+  names; showing the baseline itself (it is on `/plans/[pid]/schedule`). **Service gaps:** the issue raised from a task
+  is titled by the service in English (`Blocked:` and the task's title), so that word is shown in every language; the
+  two 409s on relinking (a closed request, an issue answering another) share the code `conflict`, as do the two on the
+  baseline (not approved, already taken), so the page checks both first and one sentence covers both; every 422 on
+  changing a risk is `validation` with English text; no route clears a risk's review date or mitigation to nothing
+  (an empty mitigation is sent as empty text).
+- **Tests:** `tests/unit/issue-view.test.ts`, `tests/unit/change-request-view.test.ts`, `tests/unit/risk-edit-view.test.ts`,
+  the paths in `tests/unit/ppm.test.ts`; `tests/e2e/plan-issues.spec.ts` (editing reads the stored issue and says where
+  it came from, with axe; removing after a question, Cancel sending nothing; the administrator-only rule said first,
+  nothing sent; a 403; an issue gone; Welsh), `tests/e2e/plan-task-edit.spec.ts` (a blocked task raises one issue, the
+  rule first, with axe; a task not blocked; a 409 and a 422; Welsh), `tests/e2e/plan-change-requests.spec.ts`
+  (implement and a baseline after a question; the links' rules first, one answering elsewhere disabled, nothing for no
+  change, the sets sent; a refused relink and baseline; the forecast labelled, no service text, with axe; a request
+  with no edits asks nothing; a refused forecast; Welsh), `tests/e2e/risk-edit.spec.ts` (the rules first, nothing for
+  no change or out of range; only the changed fields sent, a score as a number; a 422 and a 404; Welsh; axe). Every
+  stub carries `"service text"` where the service would put English, and each test checks it is not shown. The
+  translations are machine-written and unreviewed. **Not verified:** against a real service.

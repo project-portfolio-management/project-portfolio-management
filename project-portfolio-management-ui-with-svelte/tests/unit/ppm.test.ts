@@ -250,6 +250,9 @@ describe("PpmClient issue paths (NC-1, IR-2, IR-3)", () => {
     await ppm.raiseIssue("p1", { title: "T" });
     await ppm.updateIssue("p1", "i1", { title: "T2", status: "resolved" });
     await ppm.raiseIssueFromRisk("p1", "r1");
+    await ppm.raiseIssueFromTask("p1", "t1");
+    await ppm.issue("p1", "i1");
+    await ppm.removeIssue("p1", "i1");
     expect(
       calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
     ).toEqual([
@@ -257,6 +260,9 @@ describe("PpmClient issue paths (NC-1, IR-2, IR-3)", () => {
       "POST /api/plans/p1/issues",
       "PUT /api/plans/p1/issues/i1",
       "POST /api/plans/p1/issues/from-risk/r1",
+      "POST /api/plans/p1/issues/from-task/t1",
+      "GET /api/plans/p1/issues/i1",
+      "DELETE /api/plans/p1/issues/i1",
     ]);
   });
 });
@@ -275,6 +281,15 @@ describe("PpmClient change-request paths (NC-1 slice 2, IR-4)", () => {
       reason: "Within tolerance",
     });
     await ppm.withdrawChangeRequest("p1", "c1");
+    await ppm.changeRequest("p1", "c1");
+    await ppm.implementChangeRequest("p1", "c1");
+    await ppm.setChangeRequestLinks("p1", "c1", {
+      issue_pids: ["i1"],
+      risk_pids: [],
+    });
+    await ppm.changeRequestPreview("p1", "c1");
+    await ppm.baselineChangeRequest("p1", "c1");
+    await ppm.updateRisk("p1", "r1", { status: "mitigating", impact: 2 });
     expect(
       calls.map((c) => `${c.method} ${c.url.replace("http://svc", "")}`),
     ).toEqual([
@@ -285,6 +300,12 @@ describe("PpmClient change-request paths (NC-1 slice 2, IR-4)", () => {
       "POST /api/plans/p1/change-requests/c1/review",
       "POST /api/plans/p1/change-requests/c1/decision",
       "POST /api/plans/p1/change-requests/c1/withdraw",
+      "GET /api/plans/p1/change-requests/c1",
+      "POST /api/plans/p1/change-requests/c1/implement",
+      "PUT /api/plans/p1/change-requests/c1/links",
+      "GET /api/plans/p1/change-requests/c1/preview",
+      "POST /api/plans/p1/change-requests/c1/baseline",
+      "PUT /api/plans/p1/risks/r1",
     ]);
   });
 });

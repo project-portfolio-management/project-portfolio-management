@@ -5,7 +5,13 @@
 // approver who is a `person:` or `worker:` reference and not the requester). The service decides; this only saves a
 // round trip and lets the page say which field is wrong, in the reader's language.
 
-import type { ChangeRequest, ChangeRequestBody } from "./api/ppm-types.js";
+import type {
+  ChangeRequest,
+  ChangeRequestBody,
+  ChangeRequestLinksBody,
+  ChangeRequestPreview,
+  Issue,
+} from "./api/ppm-types.js";
 import { currencyCode, currentLocale, minorToInput, toMinor } from "./money.js";
 
 export const CR_KINDS = [
@@ -139,7 +145,7 @@ export function changeRequestBody(
 
 /** A step a person takes on a change request from this screen. */
 export type ChangeRequestStep =
-  "edit" | "submit" | "review" | "decide" | "withdraw";
+  "edit" | "submit" | "review" | "decide" | "implement" | "withdraw";
 
 /**
  * The steps a status allows, in the service's state machine. Who may take each (the requester, the named approver,
@@ -154,7 +160,7 @@ export function stepsFor(status: ChangeRequest["status"]): ChangeRequestStep[] {
     case "under_review":
       return ["decide", "withdraw"];
     case "approved":
-      return ["withdraw"];
+      return ["implement", "withdraw"];
     default:
       return [];
   }
@@ -188,28 +194,183 @@ export function decisionReasonShort(reason: string): boolean {
   return [...reason.trim()].length < MIN_DECISION_REASON;
 }
 
-/**
- * The catalogue sentence for a refusal of `step`, by HTTP status: 403 says who may take it, 409 that the request
- * has moved on, 422 what the service did not accept. `null` for anything else, so the page uses the general rule.
- */
-export function refusalKey(
-  step: ChangeRequestStep | "draft",
-  status: number,
-):
+/** What else a person does with one request besides its steps (NC-1 slice 12 part c). */
+export type ChangeRequestAction =
+  ChangeRequestStep | "draft" | "read" | "links" | "preview" | "baseline";
+
+/** The refusal sentences this screen has. */
+export type ChangeRequestRefusal =
   | "p.plan_change_requests.refused_requester"
   | "p.plan_change_requests.refused_withdraw"
   | "p.plan_change_requests.refused_approver"
   | "p.plan_change_requests.refused_state"
   | "p.plan_change_requests.refused_invalid"
-  | null {
+  | "p.plan_change_requests.refused_gone"
+  | "p.plan_change_requests.refused_links_conflict"
+  | "p.plan_change_requests.refused_links_invalid"
+  | "p.plan_change_requests.refused_preview"
+  | "p.plan_change_requests.refused_baseline";
+
+/**
+ * The catalogue sentence for a refusal of `action`, by HTTP status: 403 says who may take it, 409 that the request
+ * has moved on, 422 what the service did not accept, 404 that the request is gone. `null` for anything else, so the
+ * page uses the general rule. The service's 409s and 422s here carry the codes `conflict` and `unprocessable`, so the
+ * route and the status say which refusal it is; where one route has two (relinking, the baseline) the page checks
+ * both before sending and the sentence covers both.
+ */
+export function refusalKey(
+  action: ChangeRequestAction,
+  status: number,
+): ChangeRequestRefusal | null {
+  // A 404 on drafting is the plan, not a request: the general rule says it.
+  if (status === 404)
+    return action === "draft" ? null : "p.plan_change_requests.refused_gone";
+  if (action === "links") {
+    if (status === 409) return "p.plan_change_requests.refused_links_conflict";
+    if (status === 422) return "p.plan_change_requests.refused_links_invalid";
+    return null;
+  }
+  if (action === "preview")
+    return status === 422 ? "p.plan_change_requests.refused_preview" : null;
+  if (action === "baseline")
+    return status === 409 ? "p.plan_change_requests.refused_baseline" : null;
+  if (action === "read") return null;
   if (status === 409) return "p.plan_change_requests.refused_state";
   if (status === 422) return "p.plan_change_requests.refused_invalid";
   if (status === 403) {
-    if (step === "review" || step === "decide")
+    if (action === "review" || action === "decide")
       return "p.plan_change_requests.refused_approver";
-    if (step === "withdraw") return "p.plan_change_requests.refused_withdraw";
-    if (step === "edit" || step === "submit")
+    if (action === "withdraw") return "p.plan_change_requests.refused_withdraw";
+    if (action === "edit" || action === "submit")
       return "p.plan_change_requests.refused_requester";
   }
   return null;
+}
+
+// ---- links, the forecast and the baseline (NC-1 slice 12 part c; IR-4, IR-5) ---------------------------------
+
+/** The most issues, and the most risks, one request may answer. */
+export const LINKS_MAX = 200;
+
+/** Whether a request in `status` can be relinked: only while it is open (draft, submitted, under review, approved). */
+export function canRelink(status: ChangeRequest["status"]): boolean {
+  return (
+    status === "draft" ||
+    status === "submitted" ||
+    status === "under_review" ||
+    status === "approved"
+  );
+}
+
+/** Whether a baseline can be taken because of `cr`: approved or implemented, and none taken for it yet. */
+export function canBaseline(cr: ChangeRequest): boolean {
+  return (
+    (cr.status === "approved" || cr.status === "implemented") &&
+    !cr.baseline_pid
+  );
+}
+
+/** Whether `issue` already answers a change request other than `crPid`, so it cannot be linked to this one. */
+export function answeredElsewhere(issue: Issue, crPid: string): boolean {
+  return !!issue.change_request_pid && issue.change_request_pid !== crPid;
+}
+
+/** What is wrong with linking these, or `null`. An issue answered by another request is named. */
+export function linksProblem(
+  issuePids: readonly string[],
+  riskPids: readonly string[],
+  issues: readonly Issue[],
+  crPid: string,
+):
+  | { key: "p.plan_change_requests.problem_links_too_many" }
+  | { key: "p.plan_change_requests.problem_links_elsewhere"; title: string }
+  | null {
+  if (new Set(issuePids).size > LINKS_MAX || new Set(riskPids).size > LINKS_MAX)
+    return { key: "p.plan_change_requests.problem_links_too_many" };
+  for (const p of issuePids) {
+    const i = issues.find((x) => x.pid === p);
+    if (i && answeredElsewhere(i, crPid))
+      return {
+        key: "p.plan_change_requests.problem_links_elsewhere",
+        title: i.title,
+      };
+  }
+  return null;
+}
+
+const sameSet = (a: readonly string[], b: readonly string[]): boolean => {
+  const x = new Set(a);
+  return x.size === new Set(b).size && b.every((p) => x.has(p));
+};
+
+/** The body for `PUT …/links`, or `null` when the sets are the ones the request already has (nothing is sent). */
+export function linksBody(
+  current: { issue_pids?: string[] | null; risk_pids?: string[] | null },
+  issuePids: readonly string[],
+  riskPids: readonly string[],
+): ChangeRequestLinksBody | null {
+  const issues = [...new Set(issuePids)];
+  const risks = [...new Set(riskPids)];
+  if (
+    sameSet(current.issue_pids ?? [], issues) &&
+    sameSet(current.risk_pids ?? [], risks)
+  )
+    return null;
+  return { issue_pids: issues, risk_pids: risks };
+}
+
+/** One task the forecast moves: its title (the plan's own data; `null` when the answer has none) and how many
+ * business days its finish moves (positive is later). */
+export interface MovedTask {
+  pid: string;
+  title: string | null;
+  finishDays: number;
+}
+
+/** What the page shows of a forecast. The service's `label` and `note` are English and are not used; the page says
+ * in its own words that this is a forecast and nothing was changed. */
+export interface ForecastView {
+  finishBefore: string | null;
+  finishAfter: string | null;
+  /** Tasks whose finish moves, the furthest first. */
+  moved: MovedTask[];
+  /** The planned labour cost's change per currency, or why it is not shown. */
+  labour:
+    | { shown: true; deltas: Array<{ currency: string; deltaMinor: number }> }
+    | { shown: false; why: "no_finance_access" | "no_costed_work" | "other" };
+}
+
+export function forecastView(p: ChangeRequestPreview): ForecastView {
+  const f = p.forecast;
+  const titles = new Map((f.tasks ?? []).map((t) => [t.pid, t.title]));
+  const moved = (f.moved ?? [])
+    .filter((m) => m.finish_days !== 0)
+    .map((m) => ({
+      pid: m.pid,
+      title: titles.get(m.pid) || null,
+      finishDays: m.finish_days,
+    }))
+    .sort((a, b) => Math.abs(b.finishDays) - Math.abs(a.finishDays));
+  const c = f.cost_impact;
+  const labour: ForecastView["labour"] = c?.available
+    ? {
+        shown: true,
+        deltas: c.labour.map((l) => ({
+          currency: l.currency,
+          deltaMinor: l.delta_minor,
+        })),
+      }
+    : {
+        shown: false,
+        why:
+          c?.reason === "no_finance_access" || c?.reason === "no_costed_work"
+            ? c.reason
+            : "other",
+      };
+  return {
+    finishBefore: f.finish?.before ?? null,
+    finishAfter: f.finish?.after ?? null,
+    moved,
+    labour,
+  };
 }

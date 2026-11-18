@@ -18,6 +18,15 @@ export interface CreateRiskBody {
   review_date?: string | null;
 }
 
+/** `PUT /api/plans/{pid}/risks/{risk_pid}`: only the fields that change; one left out keeps what is stored. */
+export interface RiskUpdateBody {
+  status?: string;
+  probability?: number;
+  impact?: number;
+  mitigation?: string;
+  review_date?: string;
+}
+
 /** `POST /api/plans/{pid}/tasks`. */
 export interface CreateTaskBody {
   title: string;
@@ -989,6 +998,12 @@ export interface Issue {
   /** Calendar days since raised, until resolved. */
   age_calendar_days: number;
   overdue: boolean;
+  /** The risk it was raised from (IR-3), if any; the risk is never changed by it. */
+  source_risk_pid?: string | null;
+  /** The blocked task it was raised from (IR-3), if any; the task is never changed by it. */
+  source_task_pid?: string | null;
+  /** The change request that answers it (IR-4), if any; an issue answers one at most. */
+  change_request_pid?: string | null;
 }
 
 /** A label by lowercase language code (`cy`, `zh-cn`). An organization writes these itself (OC-6). */
@@ -1241,6 +1256,10 @@ export interface ChangeRequest {
   edits?: unknown[] | null;
   implemented_on?: string | null;
   baseline_pid?: string | null;
+  /** The issues it answers: on one request (`GET …/{cr}`) and after a step; `null` on a list (not loaded). */
+  issue_pids?: string[] | null;
+  /** The risks it answers, as `issue_pids`. */
+  risk_pids?: string[] | null;
 }
 
 /**
@@ -1268,6 +1287,33 @@ export interface ChangeRequestSubmitBody {
 export interface ChangeRequestDecisionBody {
   decision: "approve" | "reject";
   reason: string;
+}
+
+/** `PUT …/change-requests/{cr}/links`: the whole sets, which replace the request's links (IR-4). */
+export interface ChangeRequestLinksBody {
+  issue_pids: string[];
+  risk_pids: string[];
+}
+
+/** `GET …/change-requests/{cr}/preview` (IR-5): the scheduler's forecast for the request's what-if edits, beside the
+ * impact the requester stated. Its `label` and `note` are the service's English and are never shown. */
+export interface ChangeRequestPreview {
+  change_request_pid: string;
+  label: string;
+  note: string;
+  stated_impact: {
+    schedule_business_days: number | null;
+    cost_minor: number | null;
+    cost_currency: string | null;
+  };
+  forecast: SandboxPreview;
+}
+
+/** `POST …/change-requests/{cr}/baseline` (IR-5). */
+export interface ChangeRequestBaselined {
+  change_request_pid: string;
+  baseline_pid: string;
+  baseline_version: number;
 }
 
 /** `GET /api/plans/{pid}/change-requests`. */

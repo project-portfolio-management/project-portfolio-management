@@ -7035,4 +7035,164 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.status.group_risk": "Risgiau",
   "p.status.group_milestone": "Cerrig milltir",
   "p.status.group_issue": "Materion",
+  "l.enum.risk_status.open": "Ar agor",
+  "l.enum.risk_status.mitigating": "Yn lliniaru",
+  "l.enum.risk_status.closed": "Wedi cau",
+  "l.enum.risk_status.materialized": "Wedi digwydd",
+  "p.risk_edit.change": "Newid",
+  "p.risk_edit.change_named": "Newid: {title}",
+  "p.risk_edit.heading": "Newid y risg “{title}”",
+  "p.risk_edit.says":
+    "Mae tebygolrwydd ac effaith yn rhifau cyfan o {min} i {max}; y datguddiad yw eu lluoswm. Mae'r lliniaru yn {max_bytes} beit ar y mwyaf (llai o nodau mewn rhai sgriptiau). Gellir newid dyddiad adolygu ond nid ei dynnu. Dim ond yr hyn a newidiwch a anfonir.",
+  "p.risk_edit.says_escalate":
+    "I gofnodi bod risg wedi digwydd, defnyddiwch Uwchgyfeirio yn y tabl, sydd hefyd yn cofnodi pryd.",
+  "p.risk_edit.problem_status": "Dewiswch statws.",
+  "p.risk_edit.problem_score":
+    "Rhaid i debygolrwydd ac effaith fod yn rhif cyfan o {min} i {max} yr un.",
+  "p.risk_edit.problem_mitigation":
+    "Mae'r lliniaru yn hirach na {max_bytes} beit.",
+  "p.risk_edit.problem_review_cleared":
+    "Ni ellir tynnu dyddiad adolygu ar ôl ei osod; dewiswch ddyddiad arall.",
+  "p.risk_edit.problem_review_date": "Nid yw'r dyddiad adolygu yn ddyddiad.",
+  "p.risk_edit.unchanged": "Dim byd wedi newid, felly ni anfonwyd dim.",
+  "p.risk_edit.saved": "Cadwyd y risg “{title}”.",
+  "p.risk_edit.could_not_save": "Methu cadw'r risg",
+  "p.risk_edit.refused_gone":
+    "Nid yw'r risg honno ar y cynllun hwn mwyach; darllenwyd y rhestr eto.",
+  "p.risk_edit.refused_invalid":
+    "Gwrthodwyd: ni dderbyniodd y gwasanaeth y statws, y sgorau na'r lliniaru. Ni newidiwyd dim.",
+  "p.risk_edit.f_status": "Statws y risg",
+  "p.risk_edit.f_probability": "Tebygolrwydd ({min} i {max})",
+  "p.risk_edit.f_impact": "Effaith ({min} i {max})",
+  "p.risk_edit.f_mitigation": "Lliniaru",
+  "p.risk_edit.f_review_date": "Dyddiad adolygu",
+  "p.risk_edit.save": "Cadw'r risg",
+  "p.risk_edit.close": "Cau'r ffurflen",
+  "p.plan_issues.refused_gone":
+    "Nid yw'r mater hwnnw ar y cynllun hwn mwyach; darllenwyd y rhestr eto.",
+  "p.plan_issues.refused_remove":
+    "Gwrthodwyd: ni chewch dynnu materion ar y cynllun hwn. Ni thynnwyd dim.",
+  "p.plan_issues.refused_remove_admin":
+    "Gwrthodwyd: dim ond gweinyddwr all dynnu mater dan lif gwaith y math hwn. Ni thynnwyd dim.",
+  "p.plan_issues.remove_admin_only":
+    "Dim ond gweinyddwr all dynnu “{title}”: mae llif gwaith ei fath yn rheoli ei symudiadau neu ei feysydd. Ni anfonwyd dim.",
+  "p.plan_issues.confirm_remove":
+    "Tynnu'r mater “{title}”? Bydd yn gadael pob rhestr; cedwir y cofnod ohono ar gyfer yr archwiliad.",
+  "p.plan_issues.removed": "Tynnwyd y mater “{title}”.",
+  "p.plan_issues.remove": "Tynnu",
+  "p.plan_issues.remove_named": "Tynnu: {title}",
+  "p.plan_issues.remove_says":
+    "Mae tynnu mater yn ei dynnu oddi ar bob rhestr ac ni ellir ei ddadwneud yma; mae'r archwiliad yn cadw cofnod. Dan lif gwaith sy'n rheoli symudiadau neu feysydd, dim ond gweinyddwr all dynnu un.",
+  "p.plan_issues.raised_on_by": "Codwyd ar {date} gan {who}.",
+  "p.plan_issues.raised_on": "Codwyd ar {date}.",
+  "p.plan_issues.from_risk_named": "Codwyd o'r risg “{title}”.",
+  "p.plan_issues.from_a_risk": "Codwyd o risg nad yw wedi'i rhestru mwyach.",
+  "p.plan_issues.from_a_task": "Codwyd o dasg wedi'i rhwystro (agor y dasg)",
+  "p.plan_issues.answered_by_change":
+    "Wedi'i ateb gan gais newid (gweld ceisiadau newid y cynllun)",
+  "p.plan_issues.resolved_on": "Datryswyd ar {date}.",
+  "p.task.issue_heading": "Mater o'r dasg hon",
+  "p.task.issue_says":
+    "Dim ond tasg wedi'i rhwystro y gellir ei chodi'n fater, a hynny unwaith tra bo'r mater hwnnw ar agor. Mae'r mater yn rhwystr o ddifrifoldeb canolig, a pherchennog yw aseinai'r dasg; nid yw'r dasg ei hun yn newid.",
+  "p.task.issue_raised": "Codwyd y mater.",
+  "p.task.issue_open_list": "Gweld materion y cynllun",
+  "p.task.issue_exists": "Codwyd mater agored o'r dasg hon: “{title}”.",
+  "p.task.issue_not_blocked":
+    "Nid yw'r dasg hon wedi'i rhwystro, felly ni ellir ei chodi'n fater. Marciwch hi'n rhwystredig ar y bwrdd yn gyntaf.",
+  "p.task.issue_raise": "Codi mater o'r dasg hon",
+  "p.task.refused_from_task_not_blocked":
+    "Gwrthodwyd: dim ond tasg wedi'i rhwystro y gellir ei chodi'n fater, ac nid yw hon wedi'i rhwystro mwyach. Darllenwyd y dasg eto.",
+  "p.task.refused_from_task_exists":
+    "Gwrthodwyd: mae mater agored eisoes wedi'i godi o'r dasg hon. Darllenwyd y materion eto.",
+  "p.task.refused_from_task_forbidden":
+    "Gwrthodwyd: ni chewch godi materion ar y cynllun hwn.",
+  "p.task.refused_from_task_gone":
+    "Nid yw'r dasg honno ar y cynllun hwn mwyach.",
+  "p.plan_change_requests.refused_gone":
+    "Nid yw'r cais newid hwnnw ar y cynllun hwn mwyach; darllenwyd y rhestr eto.",
+  "p.plan_change_requests.refused_links_conflict":
+    "Gwrthodwyd: mae'r cais wedi cau, neu mae un o'r materion bellach yn ateb cais newid arall. Darllenwyd y cais a materion y cynllun eto.",
+  "p.plan_change_requests.refused_links_invalid":
+    "Gwrthodwyd: nid yw mater neu risg a ddewiswyd ar y cynllun hwn mwyach. Darllenwyd materion a risgiau'r cynllun eto.",
+  "p.plan_change_requests.refused_preview":
+    "Gwrthodwyd: nid oes gan y cais hwn olygiadau beth-os y gall yr amserlennydd eu darllen, felly nid oes rhagolwg.",
+  "p.plan_change_requests.refused_baseline":
+    "Gwrthodwyd: mae llinell sylfaen eisoes wedi'i chymryd ar gyfer y newid hwn, neu nid yw wedi'i gymeradwyo mwyach. Darllenwyd y cais eto.",
+  "p.plan_change_requests.problem_links_too_many":
+    "Dewiswch {max} mater a {max} risg ar y mwyaf.",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "Mae “{title}” eisoes yn ateb cais newid arall; dad-diciwch ef.",
+  "p.plan_change_requests.links_unchanged":
+    "Dim byd wedi newid, felly ni anfonwyd dim.",
+  "p.plan_change_requests.links_saved":
+    "Cadwyd y materion a'r risgiau y mae'r newid hwn yn eu hateb.",
+  "p.plan_change_requests.confirm_baseline":
+    "Cymryd llinell sylfaen amserlen oherwydd “{title}”? Dim ond un y gellir ei chymryd ar gyfer y newid hwn, ac ni ellir ei dadwneud.",
+  "p.plan_change_requests.baseline_taken":
+    "Cymerwyd fersiwn {version} o'r llinell sylfaen oherwydd y newid hwn.",
+  "p.plan_change_requests.stated_impact":
+    "Effaith a nodwyd gan y ceisydd: {impact}.",
+  "p.plan_change_requests.implemented_on": "Gweithredwyd ar {date}.",
+  "p.plan_change_requests.implement": "Marcio wedi'i weithredu",
+  "p.plan_change_requests.implemented": "Marciwyd y newid wedi'i weithredu.",
+  "p.plan_change_requests.links_heading":
+    "Materion a risgiau y mae'r newid hwn yn eu hateb",
+  "p.plan_change_requests.links_none":
+    "Nid yw'n ateb unrhyw fater na risg eto.",
+  "p.plan_change_requests.answers_issue": "Mater: {title}",
+  "p.plan_change_requests.answers_risk": "Risg: {title}",
+  "p.plan_change_requests.an_issue": "mater nad yw wedi'i restru mwyach",
+  "p.plan_change_requests.a_risk": "risg nad yw wedi'i rhestru mwyach",
+  "p.plan_change_requests.links_says":
+    "Fe'u dewisir tra bo'r cais ar agor (drafft, wedi'i gyflwyno, dan adolygiad neu wedi'i gymeradwyo). Mae mater yn ateb un cais newid ar y mwyaf; hyd at {max} mater a {max} risg. Mae cadw yn disodli'r set gyfan.",
+  "p.plan_change_requests.links_issues": "Materion y cynllun hwn",
+  "p.plan_change_requests.issue_elsewhere":
+    "{title} (yn ateb cais newid arall)",
+  "p.plan_change_requests.links_no_issues":
+    "Nid oes gan y cynllun hwn faterion.",
+  "p.plan_change_requests.links_risks": "Risgiau'r cynllun hwn",
+  "p.plan_change_requests.links_no_risks": "Nid oes gan y cynllun hwn risgiau.",
+  "p.plan_change_requests.links_save": "Cadw'r hyn y mae'n ei ateb",
+  "p.plan_change_requests.links_closed":
+    "Ni ellir ail-gysylltu cais sydd wedi cau.",
+  "p.plan_change_requests.forecast_heading": "Rhagolwg beth-os",
+  "p.plan_change_requests.forecast_says":
+    "Rhagolwg o'r amserlen bresennol gyda golygiadau beth-os y cais hwn wedi'u cymhwyso. Nid yw ei ddarllen yn newid dim; ffigur y ceisydd ei hun yw'r effaith a nodwyd uchod.",
+  "p.plan_change_requests.forecast_show": "Dangos y rhagolwg",
+  "p.plan_change_requests.forecast_label": "Rhagolwg — ni newidiwyd dim",
+  "p.plan_change_requests.forecast_finish":
+    "Diwedd y cynllun: {before} nawr, {after} gyda'r newid.",
+  "p.plan_change_requests.forecast_finish_unknown":
+    "Ni ellir rhagweld diwedd y cynllun.",
+  "p.plan_change_requests.forecast_moved_one":
+    "Byddai 1 dasg yn gorffen ar ddiwrnod gwahanol.",
+  "p.plan_change_requests.forecast_moved_other":
+    "Byddai {n} tasg yn gorffen ar ddiwrnod gwahanol.",
+  "p.plan_change_requests.forecast_later_one":
+    "{title}: yn gorffen 1 diwrnod gwaith yn hwyrach",
+  "p.plan_change_requests.forecast_later_other":
+    "{title}: yn gorffen {n} diwrnod gwaith yn hwyrach",
+  "p.plan_change_requests.forecast_earlier_one":
+    "{title}: yn gorffen 1 diwrnod gwaith yn gynharach",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title}: yn gorffen {n} diwrnod gwaith yn gynharach",
+  "p.plan_change_requests.a_task": "Tasg",
+  "p.plan_change_requests.forecast_labour":
+    "Byddai'r gost llafur a gynlluniwyd yn newid {amount}.",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "Dim ond i bobl a gaiff weld cyfraddau cost y dangosir y rhagolwg cost llafur.",
+  "p.plan_change_requests.forecast_labour_none":
+    "Dim gwaith wedi'i gostio, felly dim rhagolwg cost llafur.",
+  "p.plan_change_requests.forecast_labour_unknown": "Dim rhagolwg cost llafur.",
+  "p.plan_change_requests.forecast_no_edits":
+    "Nid oes gan y cais hwn olygiadau beth-os, felly nid oes rhagolwg; ffigur y ceisydd ei hun yw ei effaith a nodwyd.",
+  "p.plan_change_requests.baseline_heading":
+    "Llinell sylfaen oherwydd y newid hwn",
+  "p.plan_change_requests.baseline_done":
+    "Mae llinell sylfaen amserlen wedi'i chymryd oherwydd y newid hwn.",
+  "p.plan_change_requests.baseline_says":
+    "Dewis person yw cymryd un; nid oes dim yn cael llinell sylfaen newydd yn awtomatig. Un llinell sylfaen i bob newid, a'i rheswm yn enwi'r cais, ac ni ellir ei dadwneud.",
+  "p.plan_change_requests.baseline_take": "Cymryd llinell sylfaen",
+  "p.plan_change_requests.baseline_not_yet":
+    "Gellir cymryd llinell sylfaen unwaith y bydd y newid wedi'i gymeradwyo.",
 };

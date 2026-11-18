@@ -6719,4 +6719,158 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.status.group_risk": "जोखिम सूची",
   "p.status.group_milestone": "माइलस्टोन सूची",
   "p.status.group_issue": "मुद्दे",
+  "l.enum.risk_status.open": "खुला",
+  "l.enum.risk_status.mitigating": "शमन जारी",
+  "l.enum.risk_status.closed": "बंद",
+  "l.enum.risk_status.materialized": "घटित",
+  "p.risk_edit.change": "बदलें",
+  "p.risk_edit.change_named": "बदलें: {title}",
+  "p.risk_edit.heading": "जोखिम “{title}” बदलें",
+  "p.risk_edit.says":
+    "संभावना और प्रभाव {min} से {max} तक की पूर्ण संख्याएँ हैं; जोखिम-स्तर इनका गुणनफल है। शमन अधिकतम {max_bytes} बाइट का हो सकता है (कुछ लिपियों में कम अक्षर)। समीक्षा तिथि बदली जा सकती है, हटाई नहीं जा सकती। केवल वही भेजा जाता है जो आप बदलते हैं।",
+  "p.risk_edit.says_escalate":
+    "यह दर्ज करने के लिए कि जोखिम घटित हो गया है, तालिका में एस्केलेट का उपयोग करें, जो समय भी दर्ज करता है।",
+  "p.risk_edit.problem_status": "एक स्थिति चुनें।",
+  "p.risk_edit.problem_score":
+    "संभावना और प्रभाव दोनों {min} से {max} तक की पूर्ण संख्या होने चाहिए।",
+  "p.risk_edit.problem_mitigation": "शमन {max_bytes} बाइट से लंबा है।",
+  "p.risk_edit.problem_review_cleared":
+    "समीक्षा तिथि एक बार तय होने पर हटाई नहीं जा सकती; कोई दूसरी तिथि चुनें।",
+  "p.risk_edit.problem_review_date": "समीक्षा तिथि कोई तिथि नहीं है।",
+  "p.risk_edit.unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.risk_edit.saved": "जोखिम “{title}” सहेजा गया।",
+  "p.risk_edit.could_not_save": "जोखिम सहेजा नहीं जा सका",
+  "p.risk_edit.refused_gone": "वह जोखिम अब इस योजना में नहीं है; सूची फिर से पढ़ी गई।",
+  "p.risk_edit.refused_invalid":
+    "अस्वीकृत: सेवा ने स्थिति, अंक या शमन स्वीकार नहीं किए। कुछ नहीं बदला गया।",
+  "p.risk_edit.f_status": "जोखिम की स्थिति",
+  "p.risk_edit.f_probability": "संभावना ({min} से {max})",
+  "p.risk_edit.f_impact": "प्रभाव ({min} से {max})",
+  "p.risk_edit.f_mitigation": "शमन",
+  "p.risk_edit.f_review_date": "समीक्षा तिथि",
+  "p.risk_edit.save": "जोखिम सहेजें",
+  "p.risk_edit.close": "फ़ॉर्म बंद करें",
+  "p.plan_issues.refused_gone":
+    "वह मुद्दा अब इस योजना में नहीं है; सूची फिर से पढ़ी गई।",
+  "p.plan_issues.refused_remove":
+    "अस्वीकृत: आप इस योजना के मुद्दे नहीं हटा सकते। कुछ नहीं हटाया गया।",
+  "p.plan_issues.refused_remove_admin":
+    "अस्वीकृत: इस प्रकार के वर्कफ़्लो वाले मुद्दे को केवल व्यवस्थापक हटा सकता है। कुछ नहीं हटाया गया।",
+  "p.plan_issues.remove_admin_only":
+    "“{title}” को केवल व्यवस्थापक हटा सकता है: इसके प्रकार का वर्कफ़्लो इसकी चालों या फ़ील्डों को नियंत्रित करता है। कुछ नहीं भेजा गया।",
+  "p.plan_issues.confirm_remove":
+    "मुद्दा “{title}” हटाएँ? यह हर सूची से हट जाएगा; इसका रिकॉर्ड ऑडिट के लिए रखा जाता है।",
+  "p.plan_issues.removed": "मुद्दा “{title}” हटा दिया गया।",
+  "p.plan_issues.remove": "हटाएँ",
+  "p.plan_issues.remove_named": "हटाएँ: {title}",
+  "p.plan_issues.remove_says":
+    "मुद्दा हटाने से वह हर सूची से हट जाता है और यहाँ वापस नहीं लाया जा सकता; ऑडिट रिकॉर्ड रखता है। जिस वर्कफ़्लो में चालें या फ़ील्ड नियंत्रित हों, उसमें केवल व्यवस्थापक ही मुद्दा हटा सकता है।",
+  "p.plan_issues.raised_on_by": "{date} को {who} द्वारा उठाया गया।",
+  "p.plan_issues.raised_on": "{date} को उठाया गया।",
+  "p.plan_issues.from_risk_named": "जोखिम “{title}” से उठाया गया।",
+  "p.plan_issues.from_a_risk": "ऐसे जोखिम से उठाया गया जो अब सूची में नहीं है।",
+  "p.plan_issues.from_a_task": "अवरुद्ध कार्य से उठाया गया (कार्य खोलें)",
+  "p.plan_issues.answered_by_change":
+    "एक परिवर्तन अनुरोध द्वारा उत्तरित (योजना के परिवर्तन अनुरोध देखें)",
+  "p.plan_issues.resolved_on": "{date} को हल हुआ।",
+  "p.task.issue_heading": "इस कार्य से एक मुद्दा",
+  "p.task.issue_says":
+    "केवल अवरुद्ध कार्य को ही मुद्दे के रूप में उठाया जा सकता है, और वह मुद्दा खुला रहने तक केवल एक बार। मुद्दा मध्यम गंभीरता का अवरोध होता है, जिसका स्वामी कार्य का असाइनी होता है; कार्य स्वयं नहीं बदलता।",
+  "p.task.issue_raised": "मुद्दा उठाया गया।",
+  "p.task.issue_open_list": "योजना के मुद्दे देखें",
+  "p.task.issue_exists": "इस कार्य से एक खुला मुद्दा उठाया गया है: “{title}”।",
+  "p.task.issue_not_blocked":
+    "यह कार्य अवरुद्ध नहीं है, इसलिए इसे मुद्दे के रूप में नहीं उठाया जा सकता। पहले बोर्ड पर इसे अवरुद्ध चिह्नित करें।",
+  "p.task.issue_raise": "इस कार्य से मुद्दा उठाएँ",
+  "p.task.refused_from_task_not_blocked":
+    "अस्वीकृत: केवल अवरुद्ध कार्य को मुद्दे के रूप में उठाया जा सकता है, और यह अब अवरुद्ध नहीं है। कार्य फिर से पढ़ा गया।",
+  "p.task.refused_from_task_exists":
+    "अस्वीकृत: इस कार्य से एक खुला मुद्दा पहले ही उठाया जा चुका है। मुद्दे फिर से पढ़े गए।",
+  "p.task.refused_from_task_forbidden":
+    "अस्वीकृत: आप इस योजना पर मुद्दे नहीं उठा सकते।",
+  "p.task.refused_from_task_gone": "वह कार्य अब इस योजना में नहीं है।",
+  "p.plan_change_requests.refused_gone":
+    "वह परिवर्तन अनुरोध अब इस योजना में नहीं है; सूची फिर से पढ़ी गई।",
+  "p.plan_change_requests.refused_links_conflict":
+    "अस्वीकृत: अनुरोध बंद हो चुका है, या कोई मुद्दा अब किसी दूसरे परिवर्तन अनुरोध से जुड़ा है। अनुरोध और योजना के मुद्दे फिर से पढ़े गए।",
+  "p.plan_change_requests.refused_links_invalid":
+    "अस्वीकृत: चुना गया कोई मुद्दा या जोखिम अब इस योजना में नहीं है। योजना के मुद्दे और जोखिम फिर से पढ़े गए।",
+  "p.plan_change_requests.refused_preview":
+    "अस्वीकृत: इस अनुरोध में ऐसे क्या-होगा-अगर संपादन नहीं हैं जिन्हें शेड्यूलर पढ़ सके, इसलिए कोई पूर्वानुमान नहीं है।",
+  "p.plan_change_requests.refused_baseline":
+    "अस्वीकृत: इस परिवर्तन के लिए बेसलाइन पहले ही ली जा चुकी है, या यह अब स्वीकृत नहीं है। अनुरोध फिर से पढ़ा गया।",
+  "p.plan_change_requests.problem_links_too_many":
+    "अधिकतम {max} मुद्दे और {max} जोखिम चुनें।",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "“{title}” पहले से किसी दूसरे परिवर्तन अनुरोध से जुड़ा है; इसका चयन हटाएँ।",
+  "p.plan_change_requests.links_unchanged":
+    "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.plan_change_requests.links_saved":
+    "यह परिवर्तन जिन मुद्दों और जोखिमों का उत्तर देता है, वे सहेजे गए।",
+  "p.plan_change_requests.confirm_baseline":
+    "“{title}” के कारण शेड्यूल बेसलाइन लें? इस परिवर्तन के लिए केवल एक ली जा सकती है, और इसे वापस नहीं लिया जा सकता।",
+  "p.plan_change_requests.baseline_taken":
+    "इस परिवर्तन के कारण बेसलाइन संस्करण {version} लिया गया।",
+  "p.plan_change_requests.stated_impact":
+    "अनुरोधकर्ता द्वारा बताया गया प्रभाव: {impact}।",
+  "p.plan_change_requests.implemented_on": "{date} को लागू किया गया।",
+  "p.plan_change_requests.implement": "लागू के रूप में चिह्नित करें",
+  "p.plan_change_requests.implemented":
+    "परिवर्तन को लागू के रूप में चिह्नित किया गया।",
+  "p.plan_change_requests.links_heading":
+    "यह परिवर्तन जिन मुद्दों और जोखिमों का उत्तर देता है",
+  "p.plan_change_requests.links_none":
+    "यह अभी किसी मुद्दे या जोखिम का उत्तर नहीं देता।",
+  "p.plan_change_requests.answers_issue": "मुद्दा: {title}",
+  "p.plan_change_requests.answers_risk": "जोखिम: {title}",
+  "p.plan_change_requests.an_issue": "ऐसा मुद्दा जो अब सूची में नहीं है",
+  "p.plan_change_requests.a_risk": "ऐसा जोखिम जो अब सूची में नहीं है",
+  "p.plan_change_requests.links_says":
+    "अनुरोध खुला रहने तक चुने जाते हैं (मसौदा, प्रस्तुत, समीक्षाधीन या स्वीकृत)। एक मुद्दा अधिकतम एक परिवर्तन अनुरोध से जुड़ता है; अधिकतम {max} मुद्दे और {max} जोखिम। सहेजने से पूरा समूह बदल जाता है।",
+  "p.plan_change_requests.links_issues": "इस योजना के मुद्दे",
+  "p.plan_change_requests.issue_elsewhere":
+    "{title} (किसी दूसरे परिवर्तन अनुरोध से जुड़ा)",
+  "p.plan_change_requests.links_no_issues": "इस योजना में कोई मुद्दा नहीं है।",
+  "p.plan_change_requests.links_risks": "इस योजना के जोखिम",
+  "p.plan_change_requests.links_no_risks": "इस योजना में कोई जोखिम नहीं है।",
+  "p.plan_change_requests.links_save": "यह किसका उत्तर देता है, सहेजें",
+  "p.plan_change_requests.links_closed": "बंद अनुरोध को फिर से नहीं जोड़ा जा सकता।",
+  "p.plan_change_requests.forecast_heading": "क्या-होगा-अगर पूर्वानुमान",
+  "p.plan_change_requests.forecast_says":
+    "वर्तमान शेड्यूल से, इस अनुरोध के क्या-होगा-अगर संपादन लागू करके बना पूर्वानुमान। इसे पढ़ने से कुछ नहीं बदलता; ऊपर बताया गया प्रभाव अनुरोधकर्ता का अपना आँकड़ा है।",
+  "p.plan_change_requests.forecast_show": "पूर्वानुमान दिखाएँ",
+  "p.plan_change_requests.forecast_label": "पूर्वानुमान — कुछ नहीं बदला गया",
+  "p.plan_change_requests.forecast_finish":
+    "योजना की समाप्ति: अभी {before}, परिवर्तन के साथ {after}।",
+  "p.plan_change_requests.forecast_finish_unknown":
+    "योजना की समाप्ति का पूर्वानुमान नहीं लगाया जा सकता।",
+  "p.plan_change_requests.forecast_moved_one":
+    "1 कार्य किसी दूसरे दिन समाप्त होगा।",
+  "p.plan_change_requests.forecast_moved_other":
+    "{n} कार्य किसी दूसरे दिन समाप्त होंगे।",
+  "p.plan_change_requests.forecast_later_one": "{title}: 1 कार्यदिवस बाद समाप्त",
+  "p.plan_change_requests.forecast_later_other":
+    "{title}: {n} कार्यदिवस बाद समाप्त",
+  "p.plan_change_requests.forecast_earlier_one":
+    "{title}: 1 कार्यदिवस पहले समाप्त",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title}: {n} कार्यदिवस पहले समाप्त",
+  "p.plan_change_requests.a_task": "एक कार्य",
+  "p.plan_change_requests.forecast_labour": "नियोजित श्रम लागत {amount} बदलेगी।",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "श्रम लागत का पूर्वानुमान केवल उन्हें दिखाया जाता है जो लागत दरें देख सकते हैं।",
+  "p.plan_change_requests.forecast_labour_none":
+    "कोई लागत-युक्त कार्य नहीं, इसलिए श्रम लागत का पूर्वानुमान नहीं।",
+  "p.plan_change_requests.forecast_labour_unknown":
+    "श्रम लागत का कोई पूर्वानुमान नहीं।",
+  "p.plan_change_requests.forecast_no_edits":
+    "इस अनुरोध में कोई क्या-होगा-अगर संपादन नहीं हैं, इसलिए कोई पूर्वानुमान नहीं; इसका बताया गया प्रभाव अनुरोधकर्ता का अपना आँकड़ा है।",
+  "p.plan_change_requests.baseline_heading": "इस परिवर्तन के कारण बेसलाइन",
+  "p.plan_change_requests.baseline_done":
+    "इस परिवर्तन के कारण शेड्यूल बेसलाइन ली जा चुकी है।",
+  "p.plan_change_requests.baseline_says":
+    "बेसलाइन लेना किसी व्यक्ति का निर्णय है; कुछ भी अपने-आप फिर से बेसलाइन नहीं होता। प्रति परिवर्तन एक बेसलाइन, जिसका कारण अनुरोध का नाम लेता है, और इसे वापस नहीं लिया जा सकता।",
+  "p.plan_change_requests.baseline_take": "बेसलाइन लें",
+  "p.plan_change_requests.baseline_not_yet":
+    "परिवर्तन स्वीकृत होने के बाद बेसलाइन ली जा सकती है।",
 };

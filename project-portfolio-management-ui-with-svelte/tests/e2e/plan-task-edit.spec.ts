@@ -3,7 +3,8 @@
 // were, and no status); bad points are refused on the page before any call; a 422 or a 403 from the service says the
 // catalogue's sentence, not the service's text. The task's links read from its own side ("Blocked by"), a hidden one is
 // counted; a link is added and removed; a second copy is refused on the page; a 409, a 422 and a 404 say so in words.
-// Welsh reads. The page passes axe.
+// Welsh reads. The page passes axe. NC-1 slice 12 part (c) (IR-3): a blocked task raises an issue, once while it is
+// open; the rule is said first; a task not blocked offers nothing; a 409 and a 422 say the catalogue's sentence.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -391,4 +392,158 @@ test("passes the accessibility audit, with links listed", async ({ page }) => {
       .filter((v) => v.impact === "serious" || v.impact === "critical")
       .map((v) => v.id),
   ).toEqual([]);
+});
+
+/** The task blocked, and the plan's issues as the service would list them; `raised` once the issue exists. */
+async function blockedWithIssues(page: Page) {
+  const state = { raised: false };
+  await page.route(`**/api/plans/${PID}/tasks/${T1}`, (route) =>
+    route.request().method() === "GET"
+      ? route.fulfill({
+          json: task(T1, "Write the spec", {
+            status: "blocked",
+            assignee_ref: ASSIGNEE,
+          }),
+        })
+      : route.fallback(),
+  );
+  await page.route(`**/api/plans/${PID}/issues`, (route) =>
+    route.fulfill({
+      json: {
+        plan_pid: PID,
+        issues: state.raised
+          ? [
+              {
+                pid: "i1",
+                plan_pid: PID,
+                title: "Supplier has not delivered",
+                kind: "blocker",
+                severity: "med",
+                status: "open",
+                status_category: "todo",
+                source_task_pid: T1,
+              },
+            ]
+          : [],
+        total: 0,
+        open: 0,
+        overdue: 0,
+        as_of: "2026-11-18",
+      },
+    }),
+  );
+  return state;
+}
+
+test("a blocked task raises an issue once, with the rule said first", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  const state = await blockedWithIssues(page);
+  await page.route(`**/api/plans/${PID}/issues/from-task/${T1}`, (route) => {
+    sent.push({
+      method: "POST",
+      path: new URL(route.request().url()).pathname,
+      body: null,
+    });
+    state.raised = true;
+    return route.fulfill({
+      json: { pid: "i1", title: "Supplier has not delivered" },
+    });
+  });
+  await open(page);
+  const region = page.getByRole("region", { name: "An issue from this task" });
+  await expect(region).toContainText(
+    "Only a blocked task can be raised as an issue, and only once while that issue is open.",
+  );
+  await region
+    .getByRole("button", { name: "Raise an issue from this task" })
+    .click();
+  await expect(region.getByRole("status")).toContainText(
+    "The issue was raised.",
+  );
+  await expect(
+    region
+      .getByRole("status")
+      .getByRole("link", { name: "See the plan's issues" }),
+  ).toHaveAttribute("href", `/en-001/plans/${PID}/issues`);
+  await expect(region.getByTestId("task-issue")).toContainText(
+    "An open issue was raised from this task: “Supplier has not delivered”.",
+  );
+  await expect(
+    region.getByRole("button", { name: "Raise an issue from this task" }),
+  ).toHaveCount(0);
+  expect(sent).toEqual([
+    {
+      method: "POST",
+      path: `/api/proxy/api/plans/${PID}/issues/from-task/${T1}`,
+      body: null,
+    },
+  ]);
+  await settle(page);
+  const r = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(
+    r.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => v.id),
+  ).toEqual([]);
+});
+
+test("a task that is not blocked says so and offers nothing", async ({
+  page,
+}) => {
+  await stub(page);
+  await open(page);
+  const region = page.getByRole("region", { name: "An issue from this task" });
+  await expect(region.getByTestId("task-issue")).toHaveText(
+    "This task is not blocked, so it cannot be raised as an issue. Mark it blocked on the board first.",
+  );
+  await expect(region.getByRole("button")).toHaveCount(0);
+});
+
+for (const [code, words] of [
+  [
+    409,
+    "Refused: an open issue has already been raised from this task. The issues were read again.",
+  ],
+  [
+    422,
+    "Refused: only a blocked task can be raised as an issue, and this one is no longer blocked. The task was read again.",
+  ],
+] as const) {
+  test(`a ${code} on raising an issue says the catalogue's sentence`, async ({
+    page,
+  }) => {
+    await stub(page);
+    await blockedWithIssues(page);
+    await page.route(`**/api/plans/${PID}/issues/from-task/${T1}`, (route) =>
+      route.fulfill({
+        status: code,
+        json: {
+          code: code === 409 ? "conflict" : "unprocessable",
+          detail: "service text",
+        },
+      }),
+    );
+    await open(page);
+    await page
+      .getByRole("button", { name: "Raise an issue from this task" })
+      .click();
+    await expect(page.getByRole("alert")).toHaveText(words);
+    await expect(page.getByText("service text")).toHaveCount(0);
+  });
+}
+
+test("raising an issue from a task reads in Welsh", async ({ page }) => {
+  await stub(page);
+  await blockedWithIssues(page);
+  await open(page, "cy-001");
+  await expect(
+    page.getByRole("heading", { name: "Mater o'r dasg hon" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Codi mater o'r dasg hon" }),
+  ).toBeVisible();
 });

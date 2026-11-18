@@ -1,7 +1,10 @@
 <!--
   A plan's issues (`/plans/[pid]/issues`, NC-1 slice 1): the plan's issues most serious first, raise one, edit one
   (the service replaces all its fields; closing needs a resolution), and raise one from a risk that has happened
-  (IR-3: one open issue per risk). Failures say the catalogue's sentence, never the service's own text.
+  (IR-3: one open issue per risk). NC-1 slice 12 part (c): editing reads the issue as stored now
+  (`GET …/issues/{issue_pid}`) and shows where it came from; an issue is removed after a question (`DELETE`), and
+  where only an administrator may remove it that is said before anything is sent. Failures say the catalogue's
+  sentence, never the service's own text.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -13,6 +16,9 @@
   import { enumLabel } from "#lib/enum-labels.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
+  import { ApiError } from "#lib/api/client.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
+  import { formatDate } from "#lib/locale-format.js";
   import type { RuleField } from "#lib/issue-settings-view.js";
   import { PpmClient, type Issue, type IssueOptions, type PlanIssueList, type Risk } from "#lib/api/ppm.js";
   import {
@@ -23,6 +29,8 @@
     initialStatus,
     issueBody,
     issueProblem,
+    issueRefusalKey,
+    removeNeedsAdmin,
     missingFields,
     needsResolution,
     readOnlyFields,
@@ -67,6 +75,8 @@
 
   let form = $state(emptyIssueForm());
   let editing = $state<string | null>(null);
+  // The issue being edited, as the service returned it when editing began: where it came from, who raised it.
+  let editingIssue = $state<Issue | null>(null);
   // The status the issue had when editing began, which is where a move starts from.
   let startedAt = $state<string | null>(null);
   // The type it had then, whose workflow locks its fields.
@@ -109,20 +119,65 @@
         : t("p.plan_issues.problem_due_before_raised");
   }
 
-  function startEdit(issue: Issue) {
-    editing = issue.pid;
-    startedAt = issue.status;
-    startedKind = issue.kind;
-    form = formFromIssue(issue);
+  /** Edit an issue from what is stored now, not the row the list showed: the save replaces every field. */
+  async function startEdit(row: Issue) {
     notice = "";
     actionError = null;
+    saving = true;
+    try {
+      const issue = await ppm.issue(pid, row.pid);
+      editing = issue.pid;
+      editingIssue = issue;
+      startedAt = issue.status;
+      startedKind = issue.kind;
+      form = formFromIssue(issue);
+    } catch (err) {
+      await refused(err, "read");
+    } finally {
+      saving = false;
+    }
   }
   function reset() {
     editing = null;
+    editingIssue = null;
     startedAt = null;
     startedKind = null;
     form = emptyIssueForm();
   }
+
+  /** A refusal in the catalogue's words; an issue that is gone is dropped from the list. */
+  async function refused(err: unknown, action: "read" | "remove", adminOnly = false) {
+    const key = err instanceof ApiError ? issueRefusalKey(action, err.status, adminOnly) : null;
+    actionError = key ? t(key) : errorText(err, "p.plan_issues.could_not_save");
+    if (err instanceof ApiError && err.status === 404) {
+      reset();
+      await loaded.reload();
+    }
+  }
+
+  async function remove(issue: Issue) {
+    notice = "";
+    actionError = null;
+    const adminOnly = removeNeedsAdmin(options, workflowFor(options, issue.kind));
+    if (adminOnly) {
+      actionError = t("p.plan_issues.remove_admin_only", { title: issue.title });
+      return;
+    }
+    if (!(await askConfirm(t("p.plan_issues.confirm_remove", { title: issue.title })))) return;
+    saving = true;
+    try {
+      await ppm.removeIssue(pid, issue.pid);
+      notice = t("p.plan_issues.removed", { title: issue.title });
+      if (editing === issue.pid) reset();
+      await loaded.reload();
+    } catch (err) {
+      await refused(err, "remove", adminOnly);
+    } finally {
+      saving = false;
+    }
+  }
+
+  const riskTitle = (riskPid: string) => risks.find((r) => r.pid === riskPid)?.title ?? null;
 
   async function save(e: SubmitEvent) {
     e.preventDefault();
@@ -190,9 +245,14 @@
 
 {#snippet actionsCell({ row }: DataGridCellContext)}
   {@const issue = rowOf<Issue>(row)}
-  {#if allowed.edit || allowed.move}
-    <button class="button small" type="button" onclick={() => startEdit(issue)} aria-label={`${t("p.plan_issues.edit")}: ${issue.title}`}>{t("p.plan_issues.edit")}</button>
-  {/if}
+  <span class="row-actions">
+    {#if allowed.edit || allowed.move}
+      <button class="button small" type="button" disabled={saving} onclick={() => void startEdit(issue)} aria-label={`${t("p.plan_issues.edit")}: ${issue.title}`}>{t("p.plan_issues.edit")}</button>
+    {/if}
+    {#if allowed.remove}
+      <button class="button small" type="button" disabled={saving} onclick={() => void remove(issue)} aria-label={t("p.plan_issues.remove_named", { title: issue.title })}>{t("p.plan_issues.remove")}</button>
+    {/if}
+  </span>
 {/snippet}
 
 <svelte:head><title>{t("p.plan_issues.title_ppm")}</title></svelte:head>
@@ -204,6 +264,7 @@
 </p>
 <h1>{t("p.plan_issues.title")}</h1>
 <p class="small muted">{t("p.plan_issues.intro")}</p>
+{#if allowed.remove}<p class="small muted">{t("p.plan_issues.remove_says")}</p>{/if}
 
 {#if error}<p class="banner" role="alert">{error}</p>{/if}
 <p class="small" role="status">{notice}</p>
@@ -224,6 +285,24 @@
 {#if editing || allowed.add}
 <section aria-labelledby="issue-form-h">
   <h2 id="issue-form-h">{editing ? t("p.plan_issues.edit_heading") : t("p.plan_issues.raise_heading")}</h2>
+  {#if editingIssue}
+    <ul class="small" data-testid="issue-origin">
+      <li>{editingIssue.raised_by
+          ? t("p.plan_issues.raised_on_by", { date: formatDate(editingIssue.raised_on), who: editingIssue.raised_by })
+          : t("p.plan_issues.raised_on", { date: formatDate(editingIssue.raised_on) })}</li>
+      {#if editingIssue.source_risk_pid}
+        {@const title = riskTitle(editingIssue.source_risk_pid)}
+        <li>{title ? t("p.plan_issues.from_risk_named", { title }) : t("p.plan_issues.from_a_risk")}</li>
+      {/if}
+      {#if editingIssue.source_task_pid}
+        <li><a href={localeHref(`/plans/${pid}/tasks/${editingIssue.source_task_pid}`)}>{t("p.plan_issues.from_a_task")}</a></li>
+      {/if}
+      {#if editingIssue.change_request_pid}
+        <li><a href={localeHref(`/plans/${pid}/change-requests`)}>{t("p.plan_issues.answered_by_change")}</a></li>
+      {/if}
+      {#if editingIssue.resolved_on}<li>{t("p.plan_issues.resolved_on", { date: formatDate(editingIssue.resolved_on) })}</li>{/if}
+    </ul>
+  {/if}
   <form class="issue-form" onsubmit={save} aria-labelledby="issue-form-h">
     <label>{t("p.plan_issues.f_title")}
       <input bind:value={form.title} maxlength="200" required disabled={!open("title")} />
@@ -297,5 +376,10 @@
   .issue-form label {
     display: grid;
     gap: 0.2rem;
+  }
+  .row-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
   }
 </style>

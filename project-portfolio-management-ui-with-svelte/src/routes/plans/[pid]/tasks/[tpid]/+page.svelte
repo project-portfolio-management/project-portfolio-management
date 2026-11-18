@@ -4,8 +4,10 @@
   back as they are, and a status change stays the board's move); its links to other tasks of the plan (LT-10:
   blocks, comes before, related, duplicate, copied from), added and removed here; and its links to outside systems,
   such as the Jira or Linear issue it is tracked as (the service stores a link's address and never fetches it); and
-  (NC-1 slice 5) following it, reactions, comments and attached files, in `Discussion.svelte`. Each card on the board
-  links here. Refusals say the catalogue's sentence, never the service's own text.
+  (NC-1 slice 5) following it, reactions, comments and attached files, in `Discussion.svelte`; and (NC-1 slice 12
+  part c, IR-3) raising an issue from it while it is blocked, once while that issue is open (said before anything is
+  sent; the task is not changed). Each card on the board links here. Refusals say the catalogue's sentence, never the
+  service's own text.
 -->
 <script lang="ts">
   import { resource } from "#lib/resource.svelte.js";
@@ -15,7 +17,8 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
-  import { PpmClient, type Task, type TaskRelationKind, type TaskRelationList } from "#lib/api/ppm.js";
+  import { PpmClient, type Issue, type Task, type TaskRelationKind, type TaskRelationList } from "#lib/api/ppm.js";
+  import { issueRefusalKey, openIssueFromTask } from "#lib/issue-view.js";
   import LinksPanel from "#lib/components/LinksPanel.svelte";
   import Discussion from "#lib/components/Discussion.svelte";
   import {
@@ -42,6 +45,21 @@
   // The plan's other tasks, to link to.
   const planTasks = resource<Task[]>(async () => (await ppm.listTasks(pid)).tasks, "p.task.could_not_load_tasks");
   const others = $derived((planTasks.data ?? []).filter((o) => o.pid !== tpid));
+  // The plan's issues, to say whether one is already open from this task (IR-3). Best effort: without them the
+  // button is offered and the service decides.
+  let planIssues = $state<Issue[] | null>(null);
+  let issuesLoaded = $state(false);
+  async function loadIssues() {
+    try {
+      planIssues = (await ppm.planIssues(pid)).issues;
+    } catch {
+      planIssues = null;
+    }
+    issuesLoaded = true;
+  }
+  const raisedFromHere = $derived(planIssues ? openIssueFromTask(planIssues, tpid) : null);
+  let issueNotice = $state("");
+  let issueError = $state<string | null>(null);
 
   let form = $state<TaskForm>({ title: "", description: "", assignee: "", points: "", dueDate: "" });
   let linkKind = $state<TaskRelationKind>("blocks");
@@ -84,7 +102,27 @@
     void loadTask();
     void relations.reload();
     void planTasks.reload();
+    void loadIssues();
   });
+
+  async function raiseIssue() {
+    if (!task) return;
+    issueNotice = "";
+    issueError = null;
+    saving = true;
+    try {
+      await ppm.raiseIssueFromTask(pid, task.pid);
+      issueNotice = t("p.task.issue_raised");
+      await loadIssues();
+    } catch (err) {
+      const key = err instanceof ApiError ? issueRefusalKey("from_task", err.status) : null;
+      issueError = key ? t(key) : errorText(err, "ppm.common.actionFailed");
+      if (err instanceof ApiError && err.status === 409) await loadIssues();
+      if (err instanceof ApiError && (err.status === 422 || err.status === 404)) await loadTask();
+    } finally {
+      saving = false;
+    }
+  }
 
   /** The sentence for a failed step: a refusal in the catalogue's words; what changed is read again. */
   async function refused(err: unknown, step: TaskStep) {
@@ -258,6 +296,26 @@
         <button class="button" type="submit" disabled={saving}>{t("p.task.add_link")}</button>
       </div>
     </form>
+  </section>
+
+  <section aria-labelledby="task-issue-h">
+    <h2 id="task-issue-h">{t("p.task.issue_heading")}</h2>
+    <p class="small muted">{t("p.task.issue_says")}</p>
+    {#if issueError}<p class="banner error" role="alert">{issueError}</p>{/if}
+    <p class="small" role="status">
+      {issueNotice}
+      {#if issueNotice}<a href={localeHref(`/plans/${pid}/issues`)}>{t("p.task.issue_open_list")}</a>{/if}
+    </p>
+    {#if raisedFromHere}
+      <p data-testid="task-issue">{t("p.task.issue_exists", { title: raisedFromHere.title })}
+        <a href={localeHref(`/plans/${pid}/issues`)}>{t("p.task.issue_open_list")}</a></p>
+    {:else if task.status !== "blocked"}
+      <p data-testid="task-issue" class="muted">{t("p.task.issue_not_blocked")}</p>
+    {:else}
+      <div class="row">
+        <button class="button" type="button" disabled={saving || !issuesLoaded} onclick={() => void raiseIssue()}>{t("p.task.issue_raise")}</button>
+      </div>
+    {/if}
   </section>
 
   <p class="small muted">{t("p.task.links_intro")}</p>

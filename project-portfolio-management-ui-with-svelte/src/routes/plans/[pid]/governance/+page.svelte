@@ -7,6 +7,8 @@
 -->
 <script lang="ts">
   import MilestoneSignoffRequired from "#lib/components/MilestoneSignoffRequired.svelte";
+  import RiskEditForm from "#lib/components/RiskEditForm.svelte";
+  import { enumLabel } from "#lib/enum-labels.js";
   import { rowOf } from "#lib/row-of.js";
   import { errorReason, errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
@@ -46,6 +48,9 @@
   let milestones = $state<Milestone[]>([]);
   let allocations = $state<Allocation[]>([]);
   let error = $state<string | null>(null);
+  // The risk being changed (NC-1 slice 12 part c), by pid, so a refresh shows its stored values.
+  let editingRisk = $state<string | null>(null);
+  const riskBeingEdited = $derived(risks.find((r) => r.pid === editingRisk) ?? null);
 
   // Add-form state (one small form per section).
   let gateDecision = $state("approved");
@@ -122,7 +127,7 @@
   const riskColumns: DataGridColumn[] = $derived([
     { id: "title", header: t("p.plans.pid.governance.risk"), rowHeader: true, cell: riskCell },
     { id: "exposure", header: "P×I", align: "end", cell: exposureCell },
-    { id: "status", header: t("p.plans.pid.governance.status"), cell: riskStatus },
+    { id: "status", header: t("p.plans.pid.governance.status"), format: (v) => enumLabel("risk_status", String(v)), cell: riskStatus },
     { id: "pid", header: "", sortable: false, cell: riskActions },
   ]);
   const lineColumns: DataGridColumn[] = $derived([
@@ -158,6 +163,7 @@
 
 {#snippet riskActions({ row }: DataGridCellContext)}
   {@const risk = rowOf<Risk>(row)}
+  <button class="button small" type="button" onclick={() => (editingRisk = risk.pid)} aria-label={t("p.risk_edit.change_named", { title: risk.title })}>{t("p.risk_edit.change")}</button>
   {#if risk.status === "open" || risk.status === "mitigating"}
     <button class="button danger small" onclick={() => act(() => ppm.escalateRisk(pid, risk.pid))}>{t("ppm.gov.escalate")}</button>
   {/if}
@@ -277,6 +283,11 @@
 <details open>
   <summary><h2>{t("ppm.gov.risks")}</h2></summary>
     <DataTable label={t("p.plans.pid.governance.risk")} columns={riskColumns} rows={risks} rowId={(r) => String(r.pid)} />
+  {#if riskBeingEdited}
+    {#key riskBeingEdited.pid}
+      <RiskEditForm {pid} risk={riskBeingEdited} onsaved={refresh} onclose={() => (editingRisk = null)} />
+    {/key}
+  {/if}
   <form
     class="row"
     onsubmit={(e) => {

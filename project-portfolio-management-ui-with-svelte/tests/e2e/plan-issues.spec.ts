@@ -1,7 +1,9 @@
 // NC-1 slice 1 (IR-2, IR-3): a plan's issues page in a real browser, over a stubbed service. An issue is
 // raised, edited (the whole body is replaced, and closing without a resolution is refused before any call),
 // and raised from a risk (a second attempt is a 409 and says so in a catalogue sentence, not the service's
-// text). Welsh reads. The page passes axe.
+// text). Welsh reads. The page passes axe. NC-1 slice 12 part (c): editing reads the issue as stored and shows where
+// it came from; removing asks first (Cancel sends nothing); where only an administrator may remove it that is said
+// before anything is sent; a 403 and a 404 say the catalogue's sentence, never the service's text.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -27,7 +29,14 @@ const issue = (over: Record<string, unknown>) => ({
   ...over,
 });
 
-async function stub(page: Page) {
+async function stub(
+  page: Page,
+  opts: {
+    options?: unknown;
+    refuseDelete?: number;
+    stored?: Record<string, unknown>;
+  } = {},
+) {
   let issues = [issue({})];
   const sent: { method: string; url: string; body: unknown }[] = [];
   let fromRiskCalls = 0;
@@ -35,6 +44,37 @@ async function stub(page: Page) {
     const req = route.request();
     const path = new URL(req.url()).pathname;
     const body = req.postDataJSON?.() ?? null;
+    if (req.method() === "GET" && path.endsWith("/issues/options")) {
+      return opts.options
+        ? route.fulfill({ json: opts.options })
+        : route.fulfill({
+            status: 404,
+            json: { code: "not_found", detail: "service text" },
+          });
+    }
+    const one = /\/issues\/(i\d+)$/.exec(path);
+    if (req.method() === "GET" && one) {
+      const found = issues.find((i) => i.pid === one[1]);
+      return found
+        ? route.fulfill({ json: { ...found, ...(opts.stored ?? {}) } })
+        : route.fulfill({
+            status: 404,
+            json: { code: "not_found", detail: "service text" },
+          });
+    }
+    if (req.method() === "DELETE" && one) {
+      sent.push({ method: "DELETE", url: path, body: null });
+      if (opts.refuseDelete)
+        return route.fulfill({
+          status: opts.refuseDelete,
+          json: {
+            code: opts.refuseDelete === 403 ? "forbidden" : "not_found",
+            detail: "service text",
+          },
+        });
+      issues = issues.filter((i) => i.pid !== one[1]);
+      return route.fulfill({ json: {} });
+    }
     if (req.method() === "GET") {
       return route.fulfill({
         json: {
@@ -194,4 +234,186 @@ test("passes the accessibility audit", async ({ page }) => {
       .filter((v) => v.impact === "serious" || v.impact === "critical")
       .map((v) => v.id),
   ).toEqual([]);
+});
+
+test("editing reads the issue as stored and says where it came from", async ({
+  page,
+}) => {
+  await stub(page, {
+    stored: {
+      title: "Build server is down (stored)",
+      raised_by: "person:ada",
+      source_risk_pid: "r1",
+      source_task_pid: "t7",
+      change_request_pid: "c1",
+    },
+  });
+  await page.goto(`/en-001/plans/${PID}/issues`, { waitUntil: "networkidle" });
+  await page
+    .getByRole("button", { name: "Edit: Build server is down" })
+    .click();
+  await expect(page.getByLabel("Title", { exact: true })).toHaveValue(
+    "Build server is down (stored)",
+  );
+  const origin = page.getByTestId("issue-origin");
+  await expect(origin).toContainText("Raised on 1 Oct 2026 by person:ada.");
+  await expect(origin).toContainText("Raised from the risk “Supplier fails”.");
+  await expect(
+    origin.getByRole("link", {
+      name: "Raised from a blocked task (open the task)",
+    }),
+  ).toHaveAttribute("href", `/en-001/plans/${PID}/tasks/t7`);
+  await expect(
+    origin.getByRole("link", { name: /Answered by a change request/ }),
+  ).toBeVisible();
+  await settle(page);
+  const r = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(
+    r.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => v.id),
+  ).toEqual([]);
+});
+
+test("an issue is removed after a question, and Cancel sends nothing", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  await page.goto(`/en-001/plans/${PID}/issues`, { waitUntil: "networkidle" });
+  await expect(
+    page.getByText("Removing an issue takes it off every list"),
+  ).toBeVisible();
+  const ask = page.getByRole("alertdialog");
+  await page
+    .getByRole("button", { name: "Remove: Build server is down" })
+    .click();
+  await expect(ask).toContainText("Remove the issue “Build server is down”?");
+  await ask.getByRole("button", { name: "Cancel" }).click();
+  expect(sent).toHaveLength(0);
+  await page
+    .getByRole("button", { name: "Remove: Build server is down" })
+    .click();
+  await ask.getByRole("button", { name: "OK" }).click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "The issue “Build server is down” was removed." }),
+  ).toBeVisible();
+  expect(sent).toEqual([
+    {
+      method: "DELETE",
+      url: `/api/proxy/api/plans/${PID}/issues/i1`,
+      body: null,
+    },
+  ]);
+  await expect(page.getByText("No issues recorded.")).toBeVisible();
+});
+
+test("only an administrator may remove an issue under a gating workflow: said first, nothing sent", async ({
+  page,
+}) => {
+  const workflow = {
+    states: [
+      {
+        key: "open",
+        label: "Open",
+        category: "todo",
+        is_initial: true,
+        is_terminal: false,
+      },
+      {
+        key: "closed",
+        label: "Closed",
+        category: "done",
+        is_initial: false,
+        is_terminal: true,
+      },
+    ],
+    transitions: [{ from: "open", to: "closed", roles: [] }],
+  };
+  const sent = await stub(page, {
+    options: {
+      types: [
+        {
+          key: "blocker",
+          label: "Blocker",
+          position: 0,
+          retired: false,
+          workflow,
+        },
+      ],
+      caller_roles: [],
+      enforced: false,
+      caller_admin: false,
+      caller_permissions: [
+        "issue_add",
+        "issue_edit",
+        "issue_move",
+        "issue_delete",
+      ],
+    },
+  });
+  await page.goto(`/en-001/plans/${PID}/issues`, { waitUntil: "networkidle" });
+  await page
+    .getByRole("button", { name: "Remove: Build server is down" })
+    .click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Only an administrator can remove “Build server is down”: its type's workflow controls its moves or fields. Nothing was sent.",
+  );
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+  expect(sent).toHaveLength(0);
+});
+
+test("a refused removal says the catalogue's sentence; an issue gone is read again", async ({
+  page,
+}) => {
+  const sent = await stub(page, { refuseDelete: 403 });
+  await page.goto(`/en-001/plans/${PID}/issues`, { waitUntil: "networkidle" });
+  await page
+    .getByRole("button", { name: "Remove: Build server is down" })
+    .click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Refused: you may not remove issues on this plan. Nothing was removed.",
+  );
+  expect(sent).toHaveLength(1);
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
+test("an issue gone when editing begins says so", async ({ page }) => {
+  await stub(page);
+  await page.route(`**/api/plans/${PID}/issues/i1`, (route) =>
+    route.fulfill({
+      status: 404,
+      json: { code: "not_found", detail: "service text" },
+    }),
+  );
+  await page.goto(`/en-001/plans/${PID}/issues`, { waitUntil: "networkidle" });
+  await page
+    .getByRole("button", { name: "Edit: Build server is down" })
+    .click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "That issue is no longer on this plan; the list was read again.",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Edit the issue" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
+test("removing reads in Welsh", async ({ page }) => {
+  await stub(page);
+  await page.goto(`/cy-001/plans/${PID}/issues`, { waitUntil: "networkidle" });
+  await expect(
+    page.getByRole("button", { name: "Tynnu: Build server is down" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Golygu: Build server is down" })
+    .click();
+  await expect(page.getByTestId("issue-origin")).toContainText("Codwyd ar");
 });

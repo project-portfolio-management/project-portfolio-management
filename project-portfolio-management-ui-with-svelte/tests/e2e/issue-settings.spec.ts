@@ -344,6 +344,12 @@ async function stubPlan(
         },
       });
     }
+    // Editing reads the one issue as stored (NC-1 slice 12 part c).
+    if (
+      req.method() === "GET" &&
+      new URL(req.url()).pathname.endsWith(`/issues/${issue.pid}`)
+    )
+      return route.fulfill({ json: issue });
     if (req.method() === "GET") {
       return route.fulfill({
         json: {
@@ -386,7 +392,7 @@ test("the issue form uses the organization's types and statuses, and only the ca
   ).toContainText(["bug", "Incident"]);
 
   // Without the role, the sign-off is not offered.
-  await page.getByRole("button", { name: /Signal failure/ }).click();
+  await page.getByRole("button", { name: "Edit: Signal failure" }).click();
   await expect(status.locator("option")).toHaveText(["Fixed"]);
 });
 
@@ -396,7 +402,7 @@ test("with the role, the sign-off is offered and asks for a resolution", async (
   const sent = await stubPlan(page, ["change-manager"]);
   await page.goto(`/en-001/plans/${PID}/issues`);
   await settle(page);
-  await page.getByRole("button", { name: /Signal failure/ }).click();
+  await page.getByRole("button", { name: "Edit: Signal failure" }).click();
   const form = page.locator("form.issue-form").first();
   const status = form.getByLabel("Status");
   await expect(status.locator("option")).toHaveText(["Fixed", "Signed off"]);
@@ -440,7 +446,7 @@ test("the form follows the caller's permissions and the status's field rules", a
   await expect(
     page.getByRole("heading", { name: "Raise an issue from a risk" }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: /Signal failure/ }).click();
+  await page.getByRole("button", { name: "Edit: Signal failure" }).click();
   const form = page.locator("form.issue-form").first();
   await expect(form.getByLabel("Title")).toBeDisabled();
   await expect(form.getByLabel("Status")).toBeDisabled();

@@ -2,7 +2,12 @@
   A plan's change requests (`/plans/[pid]/change-requests`, NC-1 slice 2, IR-4): the plan's change requests newest
   first, draft one, edit a draft (the service replaces all its fields), and take the steps its status allows: submit
   (naming the approver), start the review, record the decision, withdraw. The page offers steps by status only; the
-  service decides who may take them. Refusals say the catalogue's sentence, never the service's own text.
+  service decides who may take them. NC-1 slice 12 part (c): the steps read the one request as stored now
+  (`GET …/{cr}`, with the issues and risks it answers); an approved change is marked implemented; the issues and risks
+  it answers are chosen while it is open (`PUT …/links`; an issue answers one request at most; nothing sent for no
+  change); the forecast of its what-if edits is shown, labelled a forecast (`GET …/preview`); and a baseline is taken
+  because of it, once, on a person's choice after a question (`POST …/baseline`). Every rule is said first. Refusals
+  say the catalogue's sentence, never the service's own text.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -16,10 +21,20 @@
   import { page } from "$app/state";
   import { ApiError } from "#lib/api/client.js";
   import { formatDate } from "#lib/locale-format.js";
-  import { PpmClient, money, type ChangeRequest, type PlanChangeRequestList } from "#lib/api/ppm.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
+  import { PpmClient, money, type ChangeRequest, type Issue, type PlanChangeRequestList, type Risk } from "#lib/api/ppm.js";
   import {
     CR_KINDS,
+    LINKS_MAX,
+    answeredElsewhere,
     approverProblem,
+    canBaseline,
+    canRelink,
+    forecastView,
+    linksBody,
+    linksProblem,
+    type ChangeRequestAction,
+    type ForecastView,
     changeRequestBody,
     changeRequestProblem,
     decisionReasonShort,
@@ -28,7 +43,6 @@
     refusalKey,
     stepsFor,
     type ChangeRequestProblem,
-    type ChangeRequestStep,
   } from "#lib/change-request-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -44,10 +58,17 @@
   let form = $state(emptyChangeRequestForm());
   // The draft being edited, kept whole so its what-if edits go back unchanged.
   let editing = $state<ChangeRequest | null>(null);
-  // The request whose steps are open.
+  // The request whose steps are open, as `GET …/{cr}` returned it (with the issues and risks it answers).
   let chosenPid = $state<string | null>(null);
-  const chosen = $derived(list?.change_requests.find((c) => c.pid === chosenPid) ?? null);
+  let chosen = $state<ChangeRequest | null>(null);
   const steps = $derived(chosen ? stepsFor(chosen.status) : []);
+  // The plan's issues and risks a request may answer, read when steps are first opened.
+  let planIssueRows = $state<Issue[]>([]);
+  let planRisks = $state<Risk[]>([]);
+  let linkablesLoaded = $state(false);
+  let chosenIssues = $state<string[]>([]);
+  let chosenRisks = $state<string[]>([]);
+  let forecast = $state<ForecastView | null>(null);
   let approver = $state("");
   let decision = $state<"approve" | "reject">("approve");
   let decisionReason = $state("");
@@ -68,11 +89,43 @@
     currency_invalid: "p.plan_change_requests.problem_currency_invalid",
   };
 
-  /** The sentence for a failed step: a refusal in the catalogue's words; the list is read again after a 409. */
-  async function refused(err: unknown, step: ChangeRequestStep | "draft") {
-    const key = err instanceof ApiError ? refusalKey(step, err.status) : null;
+  /** The sentence for a failed action: a refusal in the catalogue's words; what changed is read again. */
+  async function refused(err: unknown, action: ChangeRequestAction) {
+    const key = err instanceof ApiError ? refusalKey(action, err.status) : null;
     actionError = key ? t(key) : errorText(err, "p.plan_change_requests.could_not_save");
-    if (err instanceof ApiError && err.status === 409) await loaded.reload();
+    if (!(err instanceof ApiError)) return;
+    if (err.status === 404) {
+      chosenPid = null;
+      chosen = null;
+      await loaded.reload();
+      return;
+    }
+    if (err.status === 409) {
+      await loaded.reload();
+      await readChosen();
+    }
+    if (action === "links" && (err.status === 409 || err.status === 422)) await loadLinkables();
+  }
+
+  /** Read the open request again, as stored now, and its links into the form. */
+  async function readChosen() {
+    if (!chosenPid) return;
+    const cr = await ppm.changeRequest(pid, chosenPid);
+    chosen = cr;
+    chosenIssues = [...(cr.issue_pids ?? [])];
+    chosenRisks = [...(cr.risk_pids ?? [])];
+  }
+
+  /** The plan's issues and risks, for the links. A failure leaves the links' form disabled. */
+  async function loadLinkables() {
+    try {
+      const [issues, risks] = await Promise.all([ppm.planIssues(pid), ppm.listRisks(pid)]);
+      planIssueRows = issues.issues;
+      planRisks = risks;
+      linkablesLoaded = true;
+    } catch {
+      linkablesLoaded = false;
+    }
   }
 
   function startEdit(cr: ChangeRequest) {
@@ -85,13 +138,27 @@
     editing = null;
     form = emptyChangeRequestForm();
   }
-  function openSteps(cr: ChangeRequest) {
+  async function openSteps(cr: ChangeRequest) {
     chosenPid = cr.pid;
+    chosen = null;
+    forecast = null;
     approver = cr.approver_ref ?? "";
     decision = "approve";
     decisionReason = "";
     notice = "";
     actionError = null;
+    if (!linkablesLoaded) void loadLinkables();
+    try {
+      await readChosen();
+      approver = (chosen as ChangeRequest | null)?.approver_ref ?? approver;
+    } catch (err) {
+      await refused(err, "read");
+    }
+  }
+  function closeSteps() {
+    chosenPid = null;
+    chosen = null;
+    forecast = null;
   }
 
   async function save(e: SubmitEvent) {
@@ -117,8 +184,8 @@
     }
   }
 
-  /** Take a step on the chosen request, then read the list again. */
-  async function take(step: ChangeRequestStep, call: () => Promise<unknown>, done: StringKey) {
+  /** Take an action on the chosen request, then read the list and the request again. */
+  async function take(action: ChangeRequestAction, call: () => Promise<unknown>, done: StringKey) {
     actionError = null;
     notice = "";
     saving = true;
@@ -126,12 +193,75 @@
       await call();
       notice = t(done);
       await loaded.reload();
+      await readChosen();
     } catch (err) {
-      await refused(err, step);
+      await refused(err, action);
     } finally {
       saving = false;
     }
   }
+
+  function saveLinks(e: SubmitEvent) {
+    e.preventDefault();
+    if (!chosen) return;
+    actionError = null;
+    notice = "";
+    const problem = linksProblem(chosenIssues, chosenRisks, planIssueRows, chosen.pid);
+    if (problem) {
+      actionError =
+        problem.key === "p.plan_change_requests.problem_links_elsewhere"
+          ? t(problem.key, { title: problem.title })
+          : t(problem.key, { max: LINKS_MAX });
+      return;
+    }
+    const body = linksBody(chosen, chosenIssues, chosenRisks);
+    if (body === null) {
+      notice = t("p.plan_change_requests.links_unchanged");
+      return;
+    }
+    const cr = chosen.pid;
+    void take("links", async () => {
+      await ppm.setChangeRequestLinks(pid, cr, body);
+      await loadLinkables();
+    }, "p.plan_change_requests.links_saved");
+  }
+
+  async function showForecast() {
+    if (!chosen) return;
+    actionError = null;
+    notice = "";
+    saving = true;
+    try {
+      forecast = forecastView(await ppm.changeRequestPreview(pid, chosen.pid));
+    } catch (err) {
+      forecast = null;
+      await refused(err, "preview");
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function takeBaseline() {
+    if (!chosen) return;
+    if (!(await askConfirm(t("p.plan_change_requests.confirm_baseline", { title: chosen.title })))) return;
+    const cr = chosen.pid;
+    actionError = null;
+    notice = "";
+    saving = true;
+    try {
+      const taken = await ppm.baselineChangeRequest(pid, cr);
+      notice = t("p.plan_change_requests.baseline_taken", { version: taken.baseline_version });
+      await loaded.reload();
+      await readChosen();
+    } catch (err) {
+      await refused(err, "baseline");
+    } finally {
+      saving = false;
+    }
+  }
+
+  const issueTitle = (p: string) => planIssueRows.find((i) => i.pid === p)?.title ?? null;
+  const riskTitle = (p: string) => planRisks.find((r) => r.pid === p)?.title ?? null;
 
   function submit(e: SubmitEvent) {
     e.preventDefault();
@@ -190,7 +320,7 @@
     {#if cr.status === "draft"}
       <button class="button small" type="button" onclick={() => startEdit(cr)} aria-label={`${t("p.plan_issues.edit")}: ${cr.title}`}>{t("p.plan_issues.edit")}</button>
     {/if}
-    <button class="button small" type="button" onclick={() => openSteps(cr)} aria-label={`${t("p.plan_change_requests.steps")}: ${cr.title}`}>{t("p.plan_change_requests.steps")}</button>
+    <button class="button small" type="button" onclick={() => void openSteps(cr)} aria-label={`${t("p.plan_change_requests.steps")}: ${cr.title}`}>{t("p.plan_change_requests.steps")}</button>
   </span>
 {/snippet}
 
@@ -223,6 +353,10 @@
 <section aria-labelledby="cr-steps-h">
   <h2 id="cr-steps-h">{t("p.plan_change_requests.steps_heading", { title: chosen.title })}</h2>
   <p>{t("p.plan_change_requests.status_now", { status: enumLabel("cr_status", chosen.status) })}</p>
+  <p class="small">{t("p.plan_change_requests.stated_impact", { impact: impactText(chosen) })}</p>
+  {#if chosen.implemented_on}
+    <p class="small">{t("p.plan_change_requests.implemented_on", { date: formatDate(chosen.implemented_on) })}</p>
+  {/if}
   {#if chosen.decided_on && chosen.decision_reason}
     <p class="small">{t("p.plan_change_requests.decided", { who: chosen.decided_by ?? "", on: formatDate(chosen.decided_on), reason: chosen.decision_reason })}</p>
   {/if}
@@ -247,7 +381,7 @@
   {#if steps.includes("review")}
     <div class="row">
       <button class="button" type="button" disabled={saving}
-        onclick={() => { const cr = chosen.pid; void take("review", () => ppm.reviewChangeRequest(pid, cr), "p.plan_change_requests.review_started"); }}
+        onclick={() => { const cr = chosen?.pid ?? ""; void take("review", () => ppm.reviewChangeRequest(pid, cr), "p.plan_change_requests.review_started"); }}
       >{t("p.plan_change_requests.review")}</button>
     </div>
   {/if}
@@ -270,13 +404,119 @@
     </form>
   {/if}
 
+  {#if steps.includes("implement")}
+    <div class="row">
+      <button class="button" type="button" disabled={saving}
+        onclick={() => { const cr = chosen?.pid ?? ""; void take("implement", () => ppm.implementChangeRequest(pid, cr), "p.plan_change_requests.implemented"); }}
+      >{t("p.plan_change_requests.implement")}</button>
+    </div>
+  {/if}
+
+  <section aria-labelledby="cr-links-h">
+    <h3 id="cr-links-h">{t("p.plan_change_requests.links_heading")}</h3>
+    {#if (chosen.issue_pids ?? []).length + (chosen.risk_pids ?? []).length === 0}
+      <p class="small" data-testid="cr-answers">{t("p.plan_change_requests.links_none")}</p>
+    {:else}
+      <ul class="small" data-testid="cr-answers">
+        {#each chosen.issue_pids ?? [] as p (p)}<li>{t("p.plan_change_requests.answers_issue", { title: issueTitle(p) ?? t("p.plan_change_requests.an_issue") })}</li>{/each}
+        {#each chosen.risk_pids ?? [] as p (p)}<li>{t("p.plan_change_requests.answers_risk", { title: riskTitle(p) ?? t("p.plan_change_requests.a_risk") })}</li>{/each}
+      </ul>
+    {/if}
+    {#if canRelink(chosen.status)}
+      <p class="small muted">{t("p.plan_change_requests.links_says", { max: LINKS_MAX })}</p>
+      <form class="cr-form" novalidate onsubmit={saveLinks} aria-labelledby="cr-links-h">
+        <fieldset>
+          <legend>{t("p.plan_change_requests.links_issues")}</legend>
+          {#each planIssueRows as i (i.pid)}
+            {@const elsewhere = answeredElsewhere(i, chosen.pid)}
+            <label class="check">
+              <input type="checkbox" value={i.pid} bind:group={chosenIssues} disabled={!linkablesLoaded || (elsewhere && !chosenIssues.includes(i.pid))} />
+              {elsewhere ? t("p.plan_change_requests.issue_elsewhere", { title: i.title }) : i.title}
+            </label>
+          {/each}
+          {#if linkablesLoaded && planIssueRows.length === 0}<p class="small muted">{t("p.plan_change_requests.links_no_issues")}</p>{/if}
+        </fieldset>
+        <fieldset>
+          <legend>{t("p.plan_change_requests.links_risks")}</legend>
+          {#each planRisks as r (r.pid)}
+            <label class="check">
+              <input type="checkbox" value={r.pid} bind:group={chosenRisks} disabled={!linkablesLoaded} />
+              {r.title}
+            </label>
+          {/each}
+          {#if linkablesLoaded && planRisks.length === 0}<p class="small muted">{t("p.plan_change_requests.links_no_risks")}</p>{/if}
+        </fieldset>
+        <div class="row">
+          <button class="button" type="submit" disabled={saving || !linkablesLoaded}>{t("p.plan_change_requests.links_save")}</button>
+        </div>
+      </form>
+    {:else}
+      <p class="small muted">{t("p.plan_change_requests.links_closed")}</p>
+    {/if}
+  </section>
+
+  <section aria-labelledby="cr-forecast-h">
+    <h3 id="cr-forecast-h">{t("p.plan_change_requests.forecast_heading")}</h3>
+    {#if chosen.impact.has_forecast_edits}
+      <p class="small muted">{t("p.plan_change_requests.forecast_says")}</p>
+      <div class="row">
+        <button class="button" type="button" disabled={saving} onclick={() => void showForecast()}>{t("p.plan_change_requests.forecast_show")}</button>
+      </div>
+      {#if forecast}
+        <div data-testid="cr-forecast">
+          <p><strong>{t("p.plan_change_requests.forecast_label")}</strong></p>
+          <p>{forecast.finishBefore && forecast.finishAfter
+              ? t("p.plan_change_requests.forecast_finish", { before: formatDate(forecast.finishBefore), after: formatDate(forecast.finishAfter) })
+              : t("p.plan_change_requests.forecast_finish_unknown")}</p>
+          <p>{tn("p.plan_change_requests.forecast_moved", forecast.moved.length, { n: forecast.moved.length })}</p>
+          {#if forecast.moved.length > 0}
+            <ul class="small">
+              {#each forecast.moved as m (m.pid)}
+                <li>{m.finishDays > 0
+                    ? tn("p.plan_change_requests.forecast_later", m.finishDays, { title: m.title ?? t("p.plan_change_requests.a_task"), n: m.finishDays })
+                    : tn("p.plan_change_requests.forecast_earlier", -m.finishDays, { title: m.title ?? t("p.plan_change_requests.a_task"), n: -m.finishDays })}</li>
+              {/each}
+            </ul>
+          {/if}
+          {#if forecast.labour.shown}
+            {#each forecast.labour.deltas as d (d.currency)}
+              <p class="small">{t("p.plan_change_requests.forecast_labour", { amount: money(d.deltaMinor, d.currency) })}</p>
+            {/each}
+          {:else if forecast.labour.why === "no_finance_access"}
+            <p class="small muted">{t("p.plan_change_requests.forecast_labour_hidden")}</p>
+          {:else if forecast.labour.why === "no_costed_work"}
+            <p class="small muted">{t("p.plan_change_requests.forecast_labour_none")}</p>
+          {:else}
+            <p class="small muted">{t("p.plan_change_requests.forecast_labour_unknown")}</p>
+          {/if}
+        </div>
+      {/if}
+    {:else}
+      <p class="small muted">{t("p.plan_change_requests.forecast_no_edits")}</p>
+    {/if}
+  </section>
+
+  <section aria-labelledby="cr-baseline-h">
+    <h3 id="cr-baseline-h">{t("p.plan_change_requests.baseline_heading")}</h3>
+    {#if chosen.baseline_pid}
+      <p class="small" data-testid="cr-baseline">{t("p.plan_change_requests.baseline_done")}</p>
+    {:else if canBaseline(chosen)}
+      <p class="small muted">{t("p.plan_change_requests.baseline_says")}</p>
+      <div class="row">
+        <button class="button" type="button" disabled={saving} onclick={() => void takeBaseline()}>{t("p.plan_change_requests.baseline_take")}</button>
+      </div>
+    {:else}
+      <p class="small muted" data-testid="cr-baseline">{t("p.plan_change_requests.baseline_not_yet")}</p>
+    {/if}
+  </section>
+
   <div class="row">
     {#if steps.includes("withdraw")}
       <button class="button" type="button" disabled={saving}
-        onclick={() => { const cr = chosen.pid; void take("withdraw", () => ppm.withdrawChangeRequest(pid, cr), "p.plan_change_requests.withdrawn"); }}
+        onclick={() => { const cr = chosen?.pid ?? ""; void take("withdraw", () => ppm.withdrawChangeRequest(pid, cr), "p.plan_change_requests.withdrawn"); }}
       >{t("p.plan_change_requests.withdraw")}</button>
     {/if}
-    <button class="button" type="button" onclick={() => (chosenPid = null)}>{t("p.plan_change_requests.close_steps")}</button>
+    <button class="button" type="button" onclick={closeSteps}>{t("p.plan_change_requests.close_steps")}</button>
   </div>
 </section>
 {/if}
@@ -331,6 +571,16 @@
   .row-actions {
     display: inline-flex;
     flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .check {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    min-block-size: 24px;
+  }
+  fieldset {
+    display: grid;
     gap: 0.25rem;
   }
 </style>

@@ -9,6 +9,33 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — issues, change requests and risks, the rest (NC-1 slice 12 part c, IR-3, IR-4, 2026-11-18)
+
+- `/plans/[pid]/issues`: editing reads the issue as stored (`GET …/issues/{issue_pid}`) and says when and by whom it
+  was raised, the risk or blocked task it came from and the change request answering it; an issue is removed after a
+  question (`DELETE`), and where only an administrator may remove it (a workflow that gates moves or fields, on a plan
+  without role checks) that is said and nothing is sent.
+- `/plans/[pid]/tasks/[tpid]`: a blocked task raises an issue (`POST …/issues/from-task/{task_pid}`), once while it is
+  open; the rule is said first, an open one is named instead of the button, a task not blocked offers nothing.
+- `/plans/[pid]/change-requests`: the steps read the one request (`GET …/{cr}`, with what it answers); an approved
+  change is marked implemented (`…/implement`); the issues and risks it answers are chosen while it is open (`PUT
+  …/links`: an issue answering another request cannot be ticked, at most 200 of each, nothing sent for no change); the
+  forecast of its what-if edits (`…/preview`) is shown labelled one, in the page's words (finish now and with the
+  change, the tasks that move, the labour cost's change or why it is not shown); a baseline is taken after a question,
+  once (`…/baseline`).
+- `/plans/[pid]/governance`: "Change" on each risk opens `RiskEditForm.svelte` (`PUT …/risks/{risk_pid}`): status,
+  likelihood and impact 1 to 5, mitigation up to 1024 bytes, review date; every rule said first; only the fields that
+  change are sent; "materialized" stays Escalate's. The risk table names statuses in words.
+- Nine client methods; `src/lib/risk-edit-view.ts`, rules added to `issue-view.ts` and `change-request-view.ts`; 105
+  keys in eight catalogues (with `l.enum.risk_status.*`), machine-written and unreviewed.
+- Tests: `tests/unit/risk-edit-view.test.ts`, additions to `issue-view.test.ts`, `change-request-view.test.ts` and
+  `ppm.test.ts`; `tests/e2e/risk-edit.spec.ts` (five) and additions to `plan-issues.spec.ts` (six),
+  `plan-task-edit.spec.ts` (five) and `plan-change-requests.spec.ts` (six), with Welsh and axe.
+- **Not done:** attaching or editing what-if edits on a request; a confirmation before withdrawing; people shown by
+  name. **Service gaps:** the issue raised from a task is titled in English by the service (`Blocked:`); the two 409s
+  on relinking and the two on the baseline each share `conflict`; every 422 on a risk is `validation`; no route clears
+  a risk's review date. **Not verified:** against a real service.
+
 ### Added — status updates on a cadence, with their evidence (NC-1 slice 12 part b, NC-4, BR-2, 2026-11-18)
 
 - New route `/plans/[pid]/status`, linked from the plan page (`PLAN_LINKS` key `status`): where the plan stands (the

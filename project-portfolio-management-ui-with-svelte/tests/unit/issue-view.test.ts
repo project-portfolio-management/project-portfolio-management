@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   allowedActions,
+  issueRefusalKey,
+  openIssueFromTask,
+  removeNeedsAdmin,
+  restrictsSaves,
   emptyIssueForm,
   formFromIssue,
   humanize,
@@ -319,7 +323,12 @@ describe("roles, field rules, plan types and translated words", () => {
   });
 
   it("hides what the caller's roles do not allow, and nothing without options", () => {
-    expect(allowedActions(null)).toEqual({ add: true, edit: true, move: true });
+    expect(allowedActions(null)).toEqual({
+      add: true,
+      edit: true,
+      move: true,
+      remove: true,
+    });
     const options: IssueOptions = {
       types: [],
       caller_roles: [],
@@ -329,6 +338,7 @@ describe("roles, field rules, plan types and translated words", () => {
       add: false,
       edit: false,
       move: true,
+      remove: false,
     });
   });
 
@@ -400,5 +410,130 @@ describe("roles, field rules, plan types and translated words", () => {
     expect(workflowBody(draft).is_default).toBe(true);
     draft.states[0]!.labels = "nonsense";
     expect(workflowProblem(draft)).toBe("bad_translations");
+  });
+});
+
+// NC-1 slice 12 part (c): removing an issue, and an issue from a blocked task (IR-3).
+describe("removing an issue, and one raised from a task", () => {
+  const free: IssueWorkflow = {
+    states: [
+      {
+        key: "open",
+        label: "Open",
+        category: "todo",
+        is_initial: true,
+        is_terminal: false,
+      },
+      {
+        key: "closed",
+        label: "Closed",
+        category: "done",
+        is_initial: false,
+        is_terminal: true,
+      },
+    ],
+    transitions: [],
+  };
+  const gated = {
+    ...free,
+    transitions: [{ from: "open", to: "closed", roles: [] }],
+  } as IssueWorkflow;
+  const ruled = {
+    ...free,
+    states: [
+      {
+        ...free.states[0]!,
+        field_rules: [{ field: "owner_ref", rule: "required", roles: [] }],
+      },
+      free.states[1]!,
+    ],
+  } as IssueWorkflow;
+
+  it("a workflow gates saves when it constrains moves or a status has field rules", () => {
+    expect(restrictsSaves(free)).toBe(false);
+    expect(restrictsSaves(gated)).toBe(true);
+    expect(restrictsSaves(ruled)).toBe(true);
+  });
+
+  it("only an administrator removes an issue under a gating workflow on a plan without role checks", () => {
+    const opts = (o: Partial<IssueOptions>): IssueOptions => ({
+      types: [],
+      caller_roles: [],
+      ...o,
+    });
+    expect(removeNeedsAdmin(null, gated)).toBe(false);
+    expect(removeNeedsAdmin(opts({}), free)).toBe(false);
+    expect(removeNeedsAdmin(opts({}), gated)).toBe(true);
+    expect(removeNeedsAdmin(opts({ caller_admin: true }), gated)).toBe(false);
+    expect(removeNeedsAdmin(opts({ enforced: true }), gated)).toBe(false);
+  });
+
+  it("finds the open issue raised from a task, not a closed one or another task's", () => {
+    const base = {
+      plan_pid: "p",
+      description: null,
+      kind: "blocker",
+      severity: "med",
+      priority: null,
+      status: "open",
+      owner_ref: null,
+      raised_by: null,
+      raised_on: "2026-11-01",
+      due_date: null,
+      resolution: null,
+      resolved_on: null,
+      age_calendar_days: 1,
+      overdue: false,
+    } as const;
+    const issues: Issue[] = [
+      {
+        ...base,
+        pid: "i1",
+        title: "Old",
+        source_task_pid: "t1",
+        status: "closed",
+        status_category: "done",
+      },
+      {
+        ...base,
+        pid: "i2",
+        title: "Other",
+        source_task_pid: "t2",
+        status_category: "todo",
+      },
+      {
+        ...base,
+        pid: "i3",
+        title: "Now",
+        source_task_pid: "t1",
+        status_category: "active",
+      },
+    ];
+    expect(openIssueFromTask(issues, "t1")?.pid).toBe("i3");
+    expect(openIssueFromTask(issues.slice(0, 2), "t1")).toBeNull();
+    expect(openIssueFromTask([], "t1")).toBeNull();
+  });
+
+  it("names each refusal by route and status", () => {
+    expect(issueRefusalKey("from_task", 422)).toBe(
+      "p.task.refused_from_task_not_blocked",
+    );
+    expect(issueRefusalKey("from_task", 409)).toBe(
+      "p.task.refused_from_task_exists",
+    );
+    expect(issueRefusalKey("from_task", 403)).toBe(
+      "p.task.refused_from_task_forbidden",
+    );
+    expect(issueRefusalKey("from_task", 404)).toBe(
+      "p.task.refused_from_task_gone",
+    );
+    expect(issueRefusalKey("from_task", 500)).toBeNull();
+    expect(issueRefusalKey("read", 404)).toBe("p.plan_issues.refused_gone");
+    expect(issueRefusalKey("remove", 404)).toBe("p.plan_issues.refused_gone");
+    expect(issueRefusalKey("remove", 403)).toBe("p.plan_issues.refused_remove");
+    expect(issueRefusalKey("remove", 403, true)).toBe(
+      "p.plan_issues.refused_remove_admin",
+    );
+    expect(issueRefusalKey("read", 403)).toBeNull();
   });
 });

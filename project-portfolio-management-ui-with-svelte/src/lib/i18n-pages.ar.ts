@@ -6693,4 +6693,155 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.status.group_risk": "المخاطر",
   "p.status.group_milestone": "المراحل الرئيسية",
   "p.status.group_issue": "المشكلات",
+  "l.enum.risk_status.open": "مفتوح",
+  "l.enum.risk_status.mitigating": "قيد التخفيف",
+  "l.enum.risk_status.closed": "مغلق",
+  "l.enum.risk_status.materialized": "تحقّق",
+  "p.risk_edit.change": "تغيير",
+  "p.risk_edit.change_named": "تغيير: {title}",
+  "p.risk_edit.heading": "تغيير الخطر “{title}”",
+  "p.risk_edit.says":
+    "الاحتمال والأثر عددان صحيحان من {min} إلى {max}؛ والتعرّض حاصل ضربهما. يصل التخفيف إلى {max_bytes} بايت على الأكثر (أحرف أقل في بعض الكتابات). يمكن تغيير تاريخ المراجعة لا إزالته. لا يُرسل إلا ما تغيّره.",
+  "p.risk_edit.says_escalate":
+    "لتسجيل أن خطرًا قد وقع، استخدم التصعيد في الجدول، فهو يسجّل الوقت أيضًا.",
+  "p.risk_edit.problem_status": "اختر حالة.",
+  "p.risk_edit.problem_score":
+    "يجب أن يكون كل من الاحتمال والأثر عددًا صحيحًا من {min} إلى {max}.",
+  "p.risk_edit.problem_mitigation": "التخفيف أطول من {max_bytes} بايت.",
+  "p.risk_edit.problem_review_cleared":
+    "لا يمكن إزالة تاريخ المراجعة بعد تحديده؛ اختر تاريخًا آخر.",
+  "p.risk_edit.problem_review_date": "تاريخ المراجعة ليس تاريخًا.",
+  "p.risk_edit.unchanged": "لم يتغيّر شيء، فلم يُرسل شيء.",
+  "p.risk_edit.saved": "حُفظ الخطر “{title}”.",
+  "p.risk_edit.could_not_save": "تعذّر حفظ الخطر",
+  "p.risk_edit.refused_gone":
+    "لم يعد ذلك الخطر ضمن هذه الخطة؛ أُعيدت قراءة القائمة.",
+  "p.risk_edit.refused_invalid":
+    "مرفوض: لم تقبل الخدمة الحالة أو الدرجات أو التخفيف. لم يتغيّر شيء.",
+  "p.risk_edit.f_status": "حالة الخطر",
+  "p.risk_edit.f_probability": "الاحتمال ({min} إلى {max})",
+  "p.risk_edit.f_impact": "الأثر ({min} إلى {max})",
+  "p.risk_edit.f_mitigation": "التخفيف",
+  "p.risk_edit.f_review_date": "تاريخ المراجعة",
+  "p.risk_edit.save": "حفظ الخطر",
+  "p.risk_edit.close": "إغلاق النموذج",
+  "p.plan_issues.refused_gone":
+    "لم تعد تلك المشكلة ضمن هذه الخطة؛ أُعيدت قراءة القائمة.",
+  "p.plan_issues.refused_remove":
+    "مرفوض: لا يحق لك إزالة مشكلات من هذه الخطة. لم يُزل شيء.",
+  "p.plan_issues.refused_remove_admin":
+    "مرفوض: لا يزيل مشكلة خاضعة لسير عمل هذا النوع إلا مسؤول. لم يُزل شيء.",
+  "p.plan_issues.remove_admin_only":
+    "لا يزيل “{title}” إلا مسؤول: سير عمل نوعها يضبط انتقالاتها أو حقولها. لم يُرسل شيء.",
+  "p.plan_issues.confirm_remove":
+    "إزالة المشكلة “{title}”؟ ستختفي من كل القوائم؛ ويُحفظ سجلّها للتدقيق.",
+  "p.plan_issues.removed": "أُزيلت المشكلة “{title}”.",
+  "p.plan_issues.remove": "إزالة",
+  "p.plan_issues.remove_named": "إزالة: {title}",
+  "p.plan_issues.remove_says":
+    "إزالة مشكلة تخرجها من كل القوائم ولا يمكن التراجع عنها هنا؛ ويحتفظ التدقيق بسجل. وفي سير عمل يضبط الانتقالات أو الحقول لا يزيلها إلا مسؤول.",
+  "p.plan_issues.raised_on_by": "أُثيرت في {date} بواسطة {who}.",
+  "p.plan_issues.raised_on": "أُثيرت في {date}.",
+  "p.plan_issues.from_risk_named": "أُثيرت من الخطر “{title}”.",
+  "p.plan_issues.from_a_risk": "أُثيرت من خطر لم يعد مدرجًا.",
+  "p.plan_issues.from_a_task": "أُثيرت من مهمة محظورة (افتح المهمة)",
+  "p.plan_issues.answered_by_change":
+    "تجيب عنها طلب تغيير (اعرض طلبات التغيير في الخطة)",
+  "p.plan_issues.resolved_on": "حُلّت في {date}.",
+  "p.task.issue_heading": "مشكلة من هذه المهمة",
+  "p.task.issue_says":
+    "لا تُثار مشكلة إلا من مهمة محظورة، ومرة واحدة فقط ما دامت تلك المشكلة مفتوحة. المشكلة عائق متوسط الخطورة، يملكها المكلَّف بالمهمة؛ ولا تتغيّر المهمة نفسها.",
+  "p.task.issue_raised": "أُثيرت المشكلة.",
+  "p.task.issue_open_list": "اعرض مشكلات الخطة",
+  "p.task.issue_exists": "أُثيرت من هذه المهمة مشكلة مفتوحة: “{title}”.",
+  "p.task.issue_not_blocked":
+    "هذه المهمة غير محظورة، فلا يمكن إثارتها مشكلة. علّمها محظورة على اللوحة أولًا.",
+  "p.task.issue_raise": "أثر مشكلة من هذه المهمة",
+  "p.task.refused_from_task_not_blocked":
+    "مرفوض: لا تُثار مشكلة إلا من مهمة محظورة، وهذه لم تعد محظورة. أُعيدت قراءة المهمة.",
+  "p.task.refused_from_task_exists":
+    "مرفوض: أُثيرت بالفعل مشكلة مفتوحة من هذه المهمة. أُعيدت قراءة المشكلات.",
+  "p.task.refused_from_task_forbidden":
+    "مرفوض: لا يحق لك إثارة مشكلات في هذه الخطة.",
+  "p.task.refused_from_task_gone": "لم تعد تلك المهمة ضمن هذه الخطة.",
+  "p.plan_change_requests.refused_gone":
+    "لم يعد طلب التغيير ذلك ضمن هذه الخطة؛ أُعيدت قراءة القائمة.",
+  "p.plan_change_requests.refused_links_conflict":
+    "مرفوض: أُغلق الطلب، أو صارت إحدى المشكلات تابعة لطلب تغيير آخر. أُعيدت قراءة الطلب ومشكلات الخطة.",
+  "p.plan_change_requests.refused_links_invalid":
+    "مرفوض: لم تعد مشكلة أو خطر مختار ضمن هذه الخطة. أُعيدت قراءة مشكلات الخطة ومخاطرها.",
+  "p.plan_change_requests.refused_preview":
+    "مرفوض: لا يحمل هذا الطلب تعديلات افتراضية يستطيع المجدول قراءتها، فلا توقّع.",
+  "p.plan_change_requests.refused_baseline":
+    "مرفوض: أُخذ خط أساس لهذا التغيير من قبل، أو لم يعد معتمدًا. أُعيدت قراءة الطلب.",
+  "p.plan_change_requests.problem_links_too_many":
+    "اختر {max} مشكلة و{max} خطرًا على الأكثر.",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "“{title}” تابعة لطلب تغيير آخر بالفعل؛ ألغِ تحديدها.",
+  "p.plan_change_requests.links_unchanged": "لم يتغيّر شيء، فلم يُرسل شيء.",
+  "p.plan_change_requests.links_saved":
+    "حُفظت المشكلات والمخاطر التي يجيب عنها هذا التغيير.",
+  "p.plan_change_requests.confirm_baseline":
+    "أخذ خط أساس للجدول الزمني بسبب “{title}”؟ لا يؤخذ إلا خط واحد لهذا التغيير، ولا يمكن التراجع عنه.",
+  "p.plan_change_requests.baseline_taken":
+    "أُخذ الإصدار {version} من خط الأساس بسبب هذا التغيير.",
+  "p.plan_change_requests.stated_impact":
+    "الأثر كما ذكره مقدّم الطلب: {impact}.",
+  "p.plan_change_requests.implemented_on": "نُفّذ في {date}.",
+  "p.plan_change_requests.implement": "تعليم كمنفَّذ",
+  "p.plan_change_requests.implemented": "عُلّم التغيير كمنفَّذ.",
+  "p.plan_change_requests.links_heading":
+    "المشكلات والمخاطر التي يجيب عنها هذا التغيير",
+  "p.plan_change_requests.links_none": "لا يجيب بعد عن أي مشكلة أو خطر.",
+  "p.plan_change_requests.answers_issue": "مشكلة: {title}",
+  "p.plan_change_requests.answers_risk": "خطر: {title}",
+  "p.plan_change_requests.an_issue": "مشكلة لم تعد مدرجة",
+  "p.plan_change_requests.a_risk": "خطر لم يعد مدرجًا",
+  "p.plan_change_requests.links_says":
+    "تُختار ما دام الطلب مفتوحًا (مسودة، مُقدَّم، قيد المراجعة أو معتمد). تتبع المشكلة طلب تغيير واحدًا على الأكثر؛ حتى {max} مشكلة و{max} خطرًا. الحفظ يستبدل المجموعة كلها.",
+  "p.plan_change_requests.links_issues": "مشكلات هذه الخطة",
+  "p.plan_change_requests.issue_elsewhere": "{title} (تابعة لطلب تغيير آخر)",
+  "p.plan_change_requests.links_no_issues": "لا مشكلات في هذه الخطة.",
+  "p.plan_change_requests.links_risks": "مخاطر هذه الخطة",
+  "p.plan_change_requests.links_no_risks": "لا مخاطر في هذه الخطة.",
+  "p.plan_change_requests.links_save": "حفظ ما يجيب عنه",
+  "p.plan_change_requests.links_closed": "لا يمكن إعادة ربط طلب مغلق.",
+  "p.plan_change_requests.forecast_heading": "التوقّع الافتراضي",
+  "p.plan_change_requests.forecast_says":
+    "توقّع من الجدول الحالي بعد تطبيق التعديلات الافتراضية لهذا الطلب. قراءته لا تغيّر شيئًا؛ والأثر المذكور أعلاه رقم مقدّم الطلب نفسه.",
+  "p.plan_change_requests.forecast_show": "اعرض التوقّع",
+  "p.plan_change_requests.forecast_label": "توقّع — لم يتغيّر شيء",
+  "p.plan_change_requests.forecast_finish":
+    "نهاية الخطة: {before} الآن، و{after} مع التغيير.",
+  "p.plan_change_requests.forecast_finish_unknown": "لا يمكن توقّع نهاية الخطة.",
+  "p.plan_change_requests.forecast_moved_one":
+    "ستنتهي مهمة واحدة في يوم مختلف.",
+  "p.plan_change_requests.forecast_moved_other":
+    "ستنتهي {n} مهام في يوم مختلف.",
+  "p.plan_change_requests.forecast_later_one":
+    "{title}: ينتهي بعد يوم عمل واحد",
+  "p.plan_change_requests.forecast_later_other":
+    "{title}: ينتهي بعد {n} أيام عمل",
+  "p.plan_change_requests.forecast_earlier_one":
+    "{title}: ينتهي قبل يوم عمل واحد",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title}: ينتهي قبل {n} أيام عمل",
+  "p.plan_change_requests.a_task": "مهمة",
+  "p.plan_change_requests.forecast_labour":
+    "ستتغيّر تكلفة العمل المخطّطة بمقدار {amount}.",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "لا يُعرض توقّع تكلفة العمل إلا لمن يحق له رؤية أسعار التكلفة.",
+  "p.plan_change_requests.forecast_labour_none":
+    "لا عمل مُسعَّر، فلا توقّع لتكلفة العمل.",
+  "p.plan_change_requests.forecast_labour_unknown": "لا توقّع لتكلفة العمل.",
+  "p.plan_change_requests.forecast_no_edits":
+    "لا يحمل هذا الطلب تعديلات افتراضية، فلا توقّع؛ وأثره المذكور رقم مقدّم الطلب نفسه.",
+  "p.plan_change_requests.baseline_heading": "خط أساس بسبب هذا التغيير",
+  "p.plan_change_requests.baseline_done":
+    "أُخذ خط أساس للجدول الزمني بسبب هذا التغيير.",
+  "p.plan_change_requests.baseline_says":
+    "أخذه قرار شخص؛ لا يُعاد خط الأساس تلقائيًا. خط أساس واحد لكل تغيير، يذكر سببه الطلب، ولا يمكن التراجع عنه.",
+  "p.plan_change_requests.baseline_take": "خذ خط أساس",
+  "p.plan_change_requests.baseline_not_yet":
+    "يمكن أخذ خط أساس بعد اعتماد التغيير.",
 };

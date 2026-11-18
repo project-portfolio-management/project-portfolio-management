@@ -6876,6 +6876,162 @@ export const PAGES_EN = {
   "p.status.group_risk": "Risks",
   "p.status.group_milestone": "Milestones",
   "p.status.group_issue": "Issues",
+  "l.enum.risk_status.open": "Open",
+  "l.enum.risk_status.mitigating": "Mitigating",
+  "l.enum.risk_status.closed": "Closed",
+  "l.enum.risk_status.materialized": "Materialized",
+  "p.risk_edit.change": "Change",
+  "p.risk_edit.change_named": "Change: {title}",
+  "p.risk_edit.heading": "Change the risk “{title}”",
+  "p.risk_edit.says":
+    "Likelihood and impact are whole numbers from {min} to {max}; the exposure is their product. The mitigation is at most {max_bytes} bytes (fewer characters in some scripts). A review date can be changed but not removed. Only what you change is sent.",
+  "p.risk_edit.says_escalate":
+    "To record that a risk has happened, use Escalate in the table, which also records when.",
+  "p.risk_edit.problem_status": "Choose a status.",
+  "p.risk_edit.problem_score":
+    "Likelihood and impact must each be a whole number from {min} to {max}.",
+  "p.risk_edit.problem_mitigation":
+    "The mitigation is longer than {max_bytes} bytes.",
+  "p.risk_edit.problem_review_cleared":
+    "A review date cannot be removed once set; choose another date.",
+  "p.risk_edit.problem_review_date": "The review date is not a date.",
+  "p.risk_edit.unchanged": "Nothing changed, so nothing was sent.",
+  "p.risk_edit.saved": "The risk “{title}” was saved.",
+  "p.risk_edit.could_not_save": "Could not save the risk",
+  "p.risk_edit.refused_gone":
+    "That risk is no longer on this plan; the list was read again.",
+  "p.risk_edit.refused_invalid":
+    "Refused: the service did not accept the status, scores or mitigation. Nothing was changed.",
+  "p.risk_edit.f_status": "Status of the risk",
+  "p.risk_edit.f_probability": "Likelihood ({min} to {max})",
+  "p.risk_edit.f_impact": "Impact ({min} to {max})",
+  "p.risk_edit.f_mitigation": "Mitigation",
+  "p.risk_edit.f_review_date": "Review date",
+  "p.risk_edit.save": "Save the risk",
+  "p.risk_edit.close": "Close the form",
+  "p.plan_issues.refused_gone":
+    "That issue is no longer on this plan; the list was read again.",
+  "p.plan_issues.refused_remove":
+    "Refused: you may not remove issues on this plan. Nothing was removed.",
+  "p.plan_issues.refused_remove_admin":
+    "Refused: only an administrator can remove an issue under this type's workflow. Nothing was removed.",
+  "p.plan_issues.remove_admin_only":
+    "Only an administrator can remove “{title}”: its type's workflow controls its moves or fields. Nothing was sent.",
+  "p.plan_issues.confirm_remove":
+    "Remove the issue “{title}”? It leaves every list; the record of it is kept for the audit.",
+  "p.plan_issues.removed": "The issue “{title}” was removed.",
+  "p.plan_issues.remove": "Remove",
+  "p.plan_issues.remove_named": "Remove: {title}",
+  "p.plan_issues.remove_says":
+    "Removing an issue takes it off every list and cannot be undone here; the audit keeps a record. Under a workflow that controls moves or fields, only an administrator can remove one.",
+  "p.plan_issues.raised_on_by": "Raised on {date} by {who}.",
+  "p.plan_issues.raised_on": "Raised on {date}.",
+  "p.plan_issues.from_risk_named": "Raised from the risk “{title}”.",
+  "p.plan_issues.from_a_risk": "Raised from a risk no longer listed.",
+  "p.plan_issues.from_a_task": "Raised from a blocked task (open the task)",
+  "p.plan_issues.answered_by_change":
+    "Answered by a change request (see the plan's change requests)",
+  "p.plan_issues.resolved_on": "Resolved on {date}.",
+  "p.task.issue_heading": "An issue from this task",
+  "p.task.issue_says":
+    "Only a blocked task can be raised as an issue, and only once while that issue is open. The issue is a blocker of medium severity, owned by the task's assignee; the task itself is not changed.",
+  "p.task.issue_raised": "The issue was raised.",
+  "p.task.issue_open_list": "See the plan's issues",
+  "p.task.issue_exists": "An open issue was raised from this task: “{title}”.",
+  "p.task.issue_not_blocked":
+    "This task is not blocked, so it cannot be raised as an issue. Mark it blocked on the board first.",
+  "p.task.issue_raise": "Raise an issue from this task",
+  "p.task.refused_from_task_not_blocked":
+    "Refused: only a blocked task can be raised as an issue, and this one is no longer blocked. The task was read again.",
+  "p.task.refused_from_task_exists":
+    "Refused: an open issue has already been raised from this task. The issues were read again.",
+  "p.task.refused_from_task_forbidden":
+    "Refused: you may not raise issues on this plan.",
+  "p.task.refused_from_task_gone": "That task is no longer on this plan.",
+  "p.plan_change_requests.refused_gone":
+    "That change request is no longer on this plan; the list was read again.",
+  "p.plan_change_requests.refused_links_conflict":
+    "Refused: the request has closed, or one of the issues now answers another change request. The request and the plan's issues were read again.",
+  "p.plan_change_requests.refused_links_invalid":
+    "Refused: an issue or risk chosen is no longer on this plan. The plan's issues and risks were read again.",
+  "p.plan_change_requests.refused_preview":
+    "Refused: this request carries no what-if edits the scheduler can read, so there is no forecast.",
+  "p.plan_change_requests.refused_baseline":
+    "Refused: a baseline has already been taken for this change, or it is no longer approved. The request was read again.",
+  "p.plan_change_requests.problem_links_too_many":
+    "Choose at most {max} issues and {max} risks.",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "“{title}” already answers another change request; untick it.",
+  "p.plan_change_requests.links_unchanged":
+    "Nothing changed, so nothing was sent.",
+  "p.plan_change_requests.links_saved":
+    "The issues and risks this change answers were saved.",
+  "p.plan_change_requests.confirm_baseline":
+    "Take a schedule baseline because of “{title}”? Only one can be taken for this change, and it cannot be undone.",
+  "p.plan_change_requests.baseline_taken":
+    "Baseline version {version} was taken because of this change.",
+  "p.plan_change_requests.stated_impact":
+    "Impact stated by the requester: {impact}.",
+  "p.plan_change_requests.implemented_on": "Implemented on {date}.",
+  "p.plan_change_requests.implement": "Mark as implemented",
+  "p.plan_change_requests.implemented": "The change was marked implemented.",
+  "p.plan_change_requests.links_heading":
+    "Issues and risks this change answers",
+  "p.plan_change_requests.links_none": "It answers no issue or risk yet.",
+  "p.plan_change_requests.answers_issue": "Issue: {title}",
+  "p.plan_change_requests.answers_risk": "Risk: {title}",
+  "p.plan_change_requests.an_issue": "an issue no longer listed",
+  "p.plan_change_requests.a_risk": "a risk no longer listed",
+  "p.plan_change_requests.links_says":
+    "Chosen while the request is open (draft, submitted, under review or approved). An issue answers one change request at most; up to {max} issues and {max} risks. Saving replaces the whole set.",
+  "p.plan_change_requests.links_issues": "Issues of this plan",
+  "p.plan_change_requests.issue_elsewhere":
+    "{title} (answers another change request)",
+  "p.plan_change_requests.links_no_issues": "This plan has no issues.",
+  "p.plan_change_requests.links_risks": "Risks of this plan",
+  "p.plan_change_requests.links_no_risks": "This plan has no risks.",
+  "p.plan_change_requests.links_save": "Save what it answers",
+  "p.plan_change_requests.links_closed": "A closed request cannot be relinked.",
+  "p.plan_change_requests.forecast_heading": "What-if forecast",
+  "p.plan_change_requests.forecast_says":
+    "A forecast from the current schedule with this request's what-if edits applied. Reading it changes nothing; the impact stated above is the requester's own figure.",
+  "p.plan_change_requests.forecast_show": "Show the forecast",
+  "p.plan_change_requests.forecast_label": "Forecast — nothing was changed",
+  "p.plan_change_requests.forecast_finish":
+    "Plan finish: {before} now, {after} with the change.",
+  "p.plan_change_requests.forecast_finish_unknown":
+    "The plan's finish cannot be forecast.",
+  "p.plan_change_requests.forecast_moved_one":
+    "1 task would finish on a different day.",
+  "p.plan_change_requests.forecast_moved_other":
+    "{n} tasks would finish on a different day.",
+  "p.plan_change_requests.forecast_later_one":
+    "{title}: finishes 1 business day later",
+  "p.plan_change_requests.forecast_later_other":
+    "{title}: finishes {n} business days later",
+  "p.plan_change_requests.forecast_earlier_one":
+    "{title}: finishes 1 business day earlier",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title}: finishes {n} business days earlier",
+  "p.plan_change_requests.a_task": "A task",
+  "p.plan_change_requests.forecast_labour":
+    "Planned labour cost would change by {amount}.",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "The labour cost forecast is shown only to people who may see cost rates.",
+  "p.plan_change_requests.forecast_labour_none":
+    "No costed work, so no labour cost forecast.",
+  "p.plan_change_requests.forecast_labour_unknown": "No labour cost forecast.",
+  "p.plan_change_requests.forecast_no_edits":
+    "This request carries no what-if edits, so there is no forecast; its stated impact is the requester's own figure.",
+  "p.plan_change_requests.baseline_heading":
+    "A baseline because of this change",
+  "p.plan_change_requests.baseline_done":
+    "A schedule baseline has been taken because of this change.",
+  "p.plan_change_requests.baseline_says":
+    "Taking one is a person's choice; nothing is re-baselined automatically. One baseline per change, its reason naming the request, and it cannot be undone.",
+  "p.plan_change_requests.baseline_take": "Take a baseline",
+  "p.plan_change_requests.baseline_not_yet":
+    "A baseline can be taken once the change is approved.",
 } as const;
 
 /** A key in the page and component catalogue. */

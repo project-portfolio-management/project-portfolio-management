@@ -18,6 +18,7 @@ export type EnumGroup =
   | "issue_kind"
   | "cr_status"
   | "cr_kind"
+  | "risk_status"
   | "pk_conf"
   | "pk_trend"
   | "pk_status"

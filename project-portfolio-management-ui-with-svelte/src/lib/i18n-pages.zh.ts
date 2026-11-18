@@ -6427,4 +6427,141 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.status.group_risk": "风险列表",
   "p.status.group_milestone": "里程碑列表",
   "p.status.group_issue": "问题列表",
+  "l.enum.risk_status.open": "未关闭",
+  "l.enum.risk_status.mitigating": "缓解中",
+  "l.enum.risk_status.closed": "已关闭",
+  "l.enum.risk_status.materialized": "已发生",
+  "p.risk_edit.change": "更改",
+  "p.risk_edit.change_named": "更改：{title}",
+  "p.risk_edit.heading": "更改风险“{title}”",
+  "p.risk_edit.says":
+    "可能性和影响均为 {min} 到 {max} 的整数；暴露度是二者之积。缓解措施最多 {max_bytes} 字节（某些文字的字符数更少）。复核日期可以更改，但不能删除。只发送您更改的内容。",
+  "p.risk_edit.says_escalate":
+    "要记录风险已经发生，请使用表格中的“升级”，它还会记录发生时间。",
+  "p.risk_edit.problem_status": "请选择一个状态。",
+  "p.risk_edit.problem_score": "可能性和影响都必须是 {min} 到 {max} 的整数。",
+  "p.risk_edit.problem_mitigation": "缓解措施超过 {max_bytes} 字节。",
+  "p.risk_edit.problem_review_cleared":
+    "复核日期一经设定便不能删除；请选择另一个日期。",
+  "p.risk_edit.problem_review_date": "复核日期不是有效日期。",
+  "p.risk_edit.unchanged": "没有任何更改，因此未发送任何内容。",
+  "p.risk_edit.saved": "风险“{title}”已保存。",
+  "p.risk_edit.could_not_save": "无法保存风险",
+  "p.risk_edit.refused_gone": "该风险已不在此计划中；已重新读取列表。",
+  "p.risk_edit.refused_invalid":
+    "已拒绝：服务未接受该状态、评分或缓解措施。没有任何更改。",
+  "p.risk_edit.f_status": "风险状态",
+  "p.risk_edit.f_probability": "可能性（{min} 到 {max}）",
+  "p.risk_edit.f_impact": "影响（{min} 到 {max}）",
+  "p.risk_edit.f_mitigation": "缓解措施",
+  "p.risk_edit.f_review_date": "复核日期",
+  "p.risk_edit.save": "保存风险",
+  "p.risk_edit.close": "关闭表单",
+  "p.plan_issues.refused_gone": "该问题已不在此计划中；已重新读取列表。",
+  "p.plan_issues.refused_remove":
+    "已拒绝：您不能删除此计划的问题。未删除任何内容。",
+  "p.plan_issues.refused_remove_admin":
+    "已拒绝：受此类型工作流约束的问题只能由管理员删除。未删除任何内容。",
+  "p.plan_issues.remove_admin_only":
+    "只有管理员才能删除“{title}”：其类型的工作流控制着它的状态变更或字段。未发送任何内容。",
+  "p.plan_issues.confirm_remove":
+    "删除问题“{title}”？它将从所有列表中消失；其记录会保留以供审计。",
+  "p.plan_issues.removed": "问题“{title}”已删除。",
+  "p.plan_issues.remove": "删除",
+  "p.plan_issues.remove_named": "删除：{title}",
+  "p.plan_issues.remove_says":
+    "删除问题会将其从所有列表中移除，且无法在此撤销；审计会保留记录。在控制状态变更或字段的工作流下，只有管理员才能删除问题。",
+  "p.plan_issues.raised_on_by": "由 {who} 于 {date} 提出。",
+  "p.plan_issues.raised_on": "于 {date} 提出。",
+  "p.plan_issues.from_risk_named": "由风险“{title}”提出。",
+  "p.plan_issues.from_a_risk": "由一个已不在列表中的风险提出。",
+  "p.plan_issues.from_a_task": "由一个受阻任务提出（打开该任务）",
+  "p.plan_issues.answered_by_change":
+    "已由一个变更请求处理（查看本计划的变更请求）",
+  "p.plan_issues.resolved_on": "于 {date} 解决。",
+  "p.task.issue_heading": "由此任务提出问题",
+  "p.task.issue_says":
+    "只有受阻任务才能提出为问题，且在该问题未关闭期间只能提出一次。该问题为中等严重度的阻碍，负责人为任务的执行人；任务本身不会改变。",
+  "p.task.issue_raised": "问题已提出。",
+  "p.task.issue_open_list": "查看本计划的问题",
+  "p.task.issue_exists": "已由此任务提出一个未关闭的问题：“{title}”。",
+  "p.task.issue_not_blocked":
+    "此任务未受阻，因此不能提出为问题。请先在看板上将其标记为受阻。",
+  "p.task.issue_raise": "由此任务提出问题",
+  "p.task.refused_from_task_not_blocked":
+    "已拒绝：只有受阻任务才能提出为问题，而此任务已不再受阻。已重新读取该任务。",
+  "p.task.refused_from_task_exists":
+    "已拒绝：已由此任务提出过一个未关闭的问题。已重新读取问题。",
+  "p.task.refused_from_task_forbidden": "已拒绝：您不能在此计划中提出问题。",
+  "p.task.refused_from_task_gone": "该任务已不在此计划中。",
+  "p.plan_change_requests.refused_gone":
+    "该变更请求已不在此计划中；已重新读取列表。",
+  "p.plan_change_requests.refused_links_conflict":
+    "已拒绝：该请求已关闭，或其中某个问题现已由另一个变更请求处理。已重新读取该请求和本计划的问题。",
+  "p.plan_change_requests.refused_links_invalid":
+    "已拒绝：所选的某个问题或风险已不在此计划中。已重新读取本计划的问题和风险。",
+  "p.plan_change_requests.refused_preview":
+    "已拒绝：此请求没有排程器可读取的假设编辑，因此没有预测。",
+  "p.plan_change_requests.refused_baseline":
+    "已拒绝：已为此变更建立过基线，或它已不再处于批准状态。已重新读取该请求。",
+  "p.plan_change_requests.problem_links_too_many":
+    "最多选择 {max} 个问题和 {max} 个风险。",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "“{title}”已由另一个变更请求处理；请取消勾选。",
+  "p.plan_change_requests.links_unchanged":
+    "没有任何更改，因此未发送任何内容。",
+  "p.plan_change_requests.links_saved": "此变更所处理的问题和风险已保存。",
+  "p.plan_change_requests.confirm_baseline":
+    "因“{title}”建立进度基线？此变更只能建立一条基线，且无法撤销。",
+  "p.plan_change_requests.baseline_taken": "已因此变更建立基线版本 {version}。",
+  "p.plan_change_requests.stated_impact": "请求人陈述的影响：{impact}。",
+  "p.plan_change_requests.implemented_on": "于 {date} 实施。",
+  "p.plan_change_requests.implement": "标记为已实施",
+  "p.plan_change_requests.implemented": "该变更已标记为已实施。",
+  "p.plan_change_requests.links_heading": "此变更所处理的问题和风险",
+  "p.plan_change_requests.links_none": "它尚未处理任何问题或风险。",
+  "p.plan_change_requests.answers_issue": "问题：{title}",
+  "p.plan_change_requests.answers_risk": "风险：{title}",
+  "p.plan_change_requests.an_issue": "一个已不在列表中的问题",
+  "p.plan_change_requests.a_risk": "一个已不在列表中的风险",
+  "p.plan_change_requests.links_says":
+    "在请求未关闭（草稿、已提交、审核中或已批准）期间选择。一个问题最多由一个变更请求处理；最多 {max} 个问题和 {max} 个风险。保存会替换整个集合。",
+  "p.plan_change_requests.links_issues": "本计划的问题",
+  "p.plan_change_requests.issue_elsewhere": "{title}（由另一个变更请求处理）",
+  "p.plan_change_requests.links_no_issues": "本计划没有问题。",
+  "p.plan_change_requests.links_risks": "本计划的风险",
+  "p.plan_change_requests.links_no_risks": "本计划没有风险。",
+  "p.plan_change_requests.links_save": "保存所处理的内容",
+  "p.plan_change_requests.links_closed": "已关闭的请求不能重新关联。",
+  "p.plan_change_requests.forecast_heading": "假设预测",
+  "p.plan_change_requests.forecast_says":
+    "根据当前进度并应用此请求的假设编辑得出的预测。读取它不会改变任何内容；上面陈述的影响是请求人自己的数字。",
+  "p.plan_change_requests.forecast_show": "显示预测",
+  "p.plan_change_requests.forecast_label": "预测——未做任何更改",
+  "p.plan_change_requests.forecast_finish":
+    "计划完成日期：目前为 {before}，变更后为 {after}。",
+  "p.plan_change_requests.forecast_finish_unknown": "无法预测计划的完成日期。",
+  "p.plan_change_requests.forecast_moved_one": "有 1 个任务的完成日期会改变。",
+  "p.plan_change_requests.forecast_moved_other":
+    "有 {n} 个任务的完成日期会改变。",
+  "p.plan_change_requests.forecast_later_one": "{title}：晚 1 个工作日完成",
+  "p.plan_change_requests.forecast_later_other": "{title}：晚 {n} 个工作日完成",
+  "p.plan_change_requests.forecast_earlier_one": "{title}：早 1 个工作日完成",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title}：早 {n} 个工作日完成",
+  "p.plan_change_requests.a_task": "一个任务",
+  "p.plan_change_requests.forecast_labour": "计划人工成本将变化 {amount}。",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "人工成本预测仅向有权查看费率的人显示。",
+  "p.plan_change_requests.forecast_labour_none":
+    "没有计价的工作，因此没有人工成本预测。",
+  "p.plan_change_requests.forecast_labour_unknown": "没有人工成本预测。",
+  "p.plan_change_requests.forecast_no_edits":
+    "此请求没有假设编辑，因此没有预测；其陈述的影响是请求人自己的数字。",
+  "p.plan_change_requests.baseline_heading": "因此变更建立的基线",
+  "p.plan_change_requests.baseline_done": "已因此变更建立进度基线。",
+  "p.plan_change_requests.baseline_says":
+    "是否建立基线由人决定；不会自动重新建立基线。每个变更一条基线，其原因注明该请求，且无法撤销。",
+  "p.plan_change_requests.baseline_take": "建立基线",
+  "p.plan_change_requests.baseline_not_yet": "变更获批后即可建立基线。",
 };

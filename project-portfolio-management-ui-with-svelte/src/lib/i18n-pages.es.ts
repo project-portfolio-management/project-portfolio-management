@@ -7128,4 +7128,164 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.status.group_risk": "Riesgos",
   "p.status.group_milestone": "Hitos",
   "p.status.group_issue": "Incidencias",
+  "l.enum.risk_status.open": "Abierto",
+  "l.enum.risk_status.mitigating": "En mitigación",
+  "l.enum.risk_status.closed": "Cerrado",
+  "l.enum.risk_status.materialized": "Materializado",
+  "p.risk_edit.change": "Cambiar",
+  "p.risk_edit.change_named": "Cambiar: {title}",
+  "p.risk_edit.heading": "Cambiar el riesgo «{title}»",
+  "p.risk_edit.says":
+    "La probabilidad y el impacto son números enteros de {min} a {max}; la exposición es su producto. La mitigación tiene como máximo {max_bytes} bytes (menos caracteres en algunas escrituras). Una fecha de revisión puede cambiarse, pero no quitarse. Solo se envía lo que cambie.",
+  "p.risk_edit.says_escalate":
+    "Para registrar que un riesgo se ha producido, use Escalar en la tabla, que también registra cuándo.",
+  "p.risk_edit.problem_status": "Elija un estado.",
+  "p.risk_edit.problem_score":
+    "La probabilidad y el impacto deben ser cada uno un número entero de {min} a {max}.",
+  "p.risk_edit.problem_mitigation":
+    "La mitigación supera los {max_bytes} bytes.",
+  "p.risk_edit.problem_review_cleared":
+    "Una fecha de revisión no puede quitarse una vez fijada; elija otra fecha.",
+  "p.risk_edit.problem_review_date": "La fecha de revisión no es una fecha.",
+  "p.risk_edit.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.risk_edit.saved": "Se guardó el riesgo «{title}».",
+  "p.risk_edit.could_not_save": "No se pudo guardar el riesgo",
+  "p.risk_edit.refused_gone":
+    "Ese riesgo ya no está en este plan; se volvió a leer la lista.",
+  "p.risk_edit.refused_invalid":
+    "Rechazado: el servicio no aceptó el estado, las puntuaciones ni la mitigación. No se cambió nada.",
+  "p.risk_edit.f_status": "Estado del riesgo",
+  "p.risk_edit.f_probability": "Probabilidad ({min} a {max})",
+  "p.risk_edit.f_impact": "Impacto ({min} a {max})",
+  "p.risk_edit.f_mitigation": "Mitigación",
+  "p.risk_edit.f_review_date": "Fecha de revisión",
+  "p.risk_edit.save": "Guardar el riesgo",
+  "p.risk_edit.close": "Cerrar el formulario",
+  "p.plan_issues.refused_gone":
+    "Esa incidencia ya no está en este plan; se volvió a leer la lista.",
+  "p.plan_issues.refused_remove":
+    "Rechazado: no puede quitar incidencias de este plan. No se quitó nada.",
+  "p.plan_issues.refused_remove_admin":
+    "Rechazado: solo un administrador puede quitar una incidencia bajo el flujo de trabajo de este tipo. No se quitó nada.",
+  "p.plan_issues.remove_admin_only":
+    "Solo un administrador puede quitar «{title}»: el flujo de trabajo de su tipo controla sus cambios de estado o sus campos. No se envió nada.",
+  "p.plan_issues.confirm_remove":
+    "¿Quitar la incidencia «{title}»? Desaparece de todas las listas; su registro se conserva para la auditoría.",
+  "p.plan_issues.removed": "Se quitó la incidencia «{title}».",
+  "p.plan_issues.remove": "Quitar",
+  "p.plan_issues.remove_named": "Quitar: {title}",
+  "p.plan_issues.remove_says":
+    "Quitar una incidencia la saca de todas las listas y no se puede deshacer aquí; la auditoría guarda un registro. Bajo un flujo de trabajo que controla cambios o campos, solo un administrador puede quitarla.",
+  "p.plan_issues.raised_on_by": "Registrada el {date} por {who}.",
+  "p.plan_issues.raised_on": "Registrada el {date}.",
+  "p.plan_issues.from_risk_named": "Registrada a partir del riesgo «{title}».",
+  "p.plan_issues.from_a_risk":
+    "Registrada a partir de un riesgo que ya no figura.",
+  "p.plan_issues.from_a_task":
+    "Registrada a partir de una tarea bloqueada (abrir la tarea)",
+  "p.plan_issues.answered_by_change":
+    "Respondida por una solicitud de cambio (ver las solicitudes de cambio del plan)",
+  "p.plan_issues.resolved_on": "Resuelta el {date}.",
+  "p.task.issue_heading": "Una incidencia a partir de esta tarea",
+  "p.task.issue_says":
+    "Solo una tarea bloqueada puede registrarse como incidencia, y solo una vez mientras esa incidencia siga abierta. La incidencia es un bloqueo de gravedad media, cuyo responsable es el asignado de la tarea; la tarea en sí no cambia.",
+  "p.task.issue_raised": "Se registró la incidencia.",
+  "p.task.issue_open_list": "Ver las incidencias del plan",
+  "p.task.issue_exists":
+    "Desde esta tarea se registró una incidencia abierta: «{title}».",
+  "p.task.issue_not_blocked":
+    "Esta tarea no está bloqueada, así que no puede registrarse como incidencia. Márquela como bloqueada en el tablero primero.",
+  "p.task.issue_raise": "Registrar una incidencia desde esta tarea",
+  "p.task.refused_from_task_not_blocked":
+    "Rechazado: solo una tarea bloqueada puede registrarse como incidencia, y esta ya no lo está. Se volvió a leer la tarea.",
+  "p.task.refused_from_task_exists":
+    "Rechazado: ya se registró una incidencia abierta desde esta tarea. Se volvieron a leer las incidencias.",
+  "p.task.refused_from_task_forbidden":
+    "Rechazado: no puede registrar incidencias en este plan.",
+  "p.task.refused_from_task_gone": "Esa tarea ya no está en este plan.",
+  "p.plan_change_requests.refused_gone":
+    "Esa solicitud de cambio ya no está en este plan; se volvió a leer la lista.",
+  "p.plan_change_requests.refused_links_conflict":
+    "Rechazado: la solicitud se ha cerrado, o una de las incidencias ya responde a otra solicitud de cambio. Se volvieron a leer la solicitud y las incidencias del plan.",
+  "p.plan_change_requests.refused_links_invalid":
+    "Rechazado: una incidencia o un riesgo elegido ya no está en este plan. Se volvieron a leer las incidencias y los riesgos del plan.",
+  "p.plan_change_requests.refused_preview":
+    "Rechazado: esta solicitud no lleva cambios hipotéticos que el planificador pueda leer, así que no hay previsión.",
+  "p.plan_change_requests.refused_baseline":
+    "Rechazado: ya se tomó una línea base por este cambio, o ya no está aprobado. Se volvió a leer la solicitud.",
+  "p.plan_change_requests.problem_links_too_many":
+    "Elija como máximo {max} incidencias y {max} riesgos.",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "«{title}» ya responde a otra solicitud de cambio; desmárquela.",
+  "p.plan_change_requests.links_unchanged":
+    "No cambió nada, así que no se envió nada.",
+  "p.plan_change_requests.links_saved":
+    "Se guardaron las incidencias y los riesgos a los que responde este cambio.",
+  "p.plan_change_requests.confirm_baseline":
+    "¿Tomar una línea base del cronograma por «{title}»? Solo se puede tomar una para este cambio, y no se puede deshacer.",
+  "p.plan_change_requests.baseline_taken":
+    "Se tomó la versión {version} de la línea base por este cambio.",
+  "p.plan_change_requests.stated_impact":
+    "Impacto indicado por el solicitante: {impact}.",
+  "p.plan_change_requests.implemented_on": "Implementado el {date}.",
+  "p.plan_change_requests.implement": "Marcar como implementado",
+  "p.plan_change_requests.implemented": "El cambio se marcó como implementado.",
+  "p.plan_change_requests.links_heading":
+    "Incidencias y riesgos a los que responde este cambio",
+  "p.plan_change_requests.links_none":
+    "Todavía no responde a ninguna incidencia ni riesgo.",
+  "p.plan_change_requests.answers_issue": "Incidencia: {title}",
+  "p.plan_change_requests.answers_risk": "Riesgo: {title}",
+  "p.plan_change_requests.an_issue": "una incidencia que ya no figura",
+  "p.plan_change_requests.a_risk": "un riesgo que ya no figura",
+  "p.plan_change_requests.links_says":
+    "Se eligen mientras la solicitud está abierta (borrador, enviada, en revisión o aprobada). Una incidencia responde como máximo a una solicitud de cambio; hasta {max} incidencias y {max} riesgos. Guardar sustituye el conjunto entero.",
+  "p.plan_change_requests.links_issues": "Incidencias de este plan",
+  "p.plan_change_requests.issue_elsewhere":
+    "{title} (responde a otra solicitud de cambio)",
+  "p.plan_change_requests.links_no_issues": "Este plan no tiene incidencias.",
+  "p.plan_change_requests.links_risks": "Riesgos de este plan",
+  "p.plan_change_requests.links_no_risks": "Este plan no tiene riesgos.",
+  "p.plan_change_requests.links_save": "Guardar a qué responde",
+  "p.plan_change_requests.links_closed":
+    "Una solicitud cerrada no puede volver a vincularse.",
+  "p.plan_change_requests.forecast_heading": "Previsión hipotética",
+  "p.plan_change_requests.forecast_says":
+    "Una previsión a partir del cronograma actual con los cambios hipotéticos de esta solicitud aplicados. Leerla no cambia nada; el impacto indicado arriba es la cifra del propio solicitante.",
+  "p.plan_change_requests.forecast_show": "Mostrar la previsión",
+  "p.plan_change_requests.forecast_label": "Previsión: no se cambió nada",
+  "p.plan_change_requests.forecast_finish":
+    "Fin del plan: {before} ahora, {after} con el cambio.",
+  "p.plan_change_requests.forecast_finish_unknown":
+    "No se puede prever el fin del plan.",
+  "p.plan_change_requests.forecast_moved_one": "1 tarea terminaría otro día.",
+  "p.plan_change_requests.forecast_moved_other":
+    "{n} tareas terminarían otro día.",
+  "p.plan_change_requests.forecast_later_one":
+    "{title}: termina 1 día hábil más tarde",
+  "p.plan_change_requests.forecast_later_other":
+    "{title}: termina {n} días hábiles más tarde",
+  "p.plan_change_requests.forecast_earlier_one":
+    "{title}: termina 1 día hábil antes",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title}: termina {n} días hábiles antes",
+  "p.plan_change_requests.a_task": "Una tarea",
+  "p.plan_change_requests.forecast_labour":
+    "El coste de mano de obra previsto cambiaría en {amount}.",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "La previsión del coste de mano de obra solo se muestra a quien puede ver las tarifas.",
+  "p.plan_change_requests.forecast_labour_none":
+    "No hay trabajo con coste, así que no hay previsión del coste de mano de obra.",
+  "p.plan_change_requests.forecast_labour_unknown":
+    "Sin previsión del coste de mano de obra.",
+  "p.plan_change_requests.forecast_no_edits":
+    "Esta solicitud no lleva cambios hipotéticos, así que no hay previsión; su impacto indicado es la cifra del propio solicitante.",
+  "p.plan_change_requests.baseline_heading": "Una línea base por este cambio",
+  "p.plan_change_requests.baseline_done":
+    "Se ha tomado una línea base del cronograma por este cambio.",
+  "p.plan_change_requests.baseline_says":
+    "Tomarla es decisión de una persona; nunca se toma una línea base nueva automáticamente. Una línea base por cambio, con un motivo que nombra la solicitud, y no se puede deshacer.",
+  "p.plan_change_requests.baseline_take": "Tomar una línea base",
+  "p.plan_change_requests.baseline_not_yet":
+    "Se puede tomar una línea base cuando el cambio esté aprobado.",
 };

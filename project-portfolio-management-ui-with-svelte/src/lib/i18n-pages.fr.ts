@@ -7153,4 +7153,166 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.status.group_risk": "Risques",
   "p.status.group_milestone": "Jalons",
   "p.status.group_issue": "Problèmes",
+  "l.enum.risk_status.open": "Ouvert",
+  "l.enum.risk_status.mitigating": "En atténuation",
+  "l.enum.risk_status.closed": "Clos",
+  "l.enum.risk_status.materialized": "Survenu",
+  "p.risk_edit.change": "Modifier",
+  "p.risk_edit.change_named": "Modifier : {title}",
+  "p.risk_edit.heading": "Modifier le risque « {title} »",
+  "p.risk_edit.says":
+    "La probabilité et l'impact sont des nombres entiers de {min} à {max} ; l'exposition est leur produit. L'atténuation fait au plus {max_bytes} octets (moins de caractères dans certaines écritures). Une date de revue peut être changée mais pas retirée. Seul ce que vous modifiez est envoyé.",
+  "p.risk_edit.says_escalate":
+    "Pour consigner qu'un risque s'est produit, utilisez « Escalader » dans le tableau, qui en note aussi le moment.",
+  "p.risk_edit.problem_status": "Choisissez un statut.",
+  "p.risk_edit.problem_score":
+    "La probabilité et l'impact doivent chacun être un nombre entier de {min} à {max}.",
+  "p.risk_edit.problem_mitigation": "L'atténuation dépasse {max_bytes} octets.",
+  "p.risk_edit.problem_review_cleared":
+    "Une date de revue ne peut pas être retirée une fois fixée ; choisissez une autre date.",
+  "p.risk_edit.problem_review_date": "La date de revue n'est pas une date.",
+  "p.risk_edit.unchanged": "Rien n'a changé, donc rien n'a été envoyé.",
+  "p.risk_edit.saved": "Le risque « {title} » a été enregistré.",
+  "p.risk_edit.could_not_save": "Impossible d'enregistrer le risque",
+  "p.risk_edit.refused_gone":
+    "Ce risque n'est plus sur ce plan ; la liste a été relue.",
+  "p.risk_edit.refused_invalid":
+    "Refusé : le service n'a pas accepté le statut, les notes ou l'atténuation. Rien n'a été modifié.",
+  "p.risk_edit.f_status": "Statut du risque",
+  "p.risk_edit.f_probability": "Probabilité ({min} à {max})",
+  "p.risk_edit.f_impact": "Impact ({min} à {max})",
+  "p.risk_edit.f_mitigation": "Atténuation",
+  "p.risk_edit.f_review_date": "Date de revue",
+  "p.risk_edit.save": "Enregistrer le risque",
+  "p.risk_edit.close": "Fermer le formulaire",
+  "p.plan_issues.refused_gone":
+    "Ce problème n'est plus sur ce plan ; la liste a été relue.",
+  "p.plan_issues.refused_remove":
+    "Refusé : vous ne pouvez pas retirer de problèmes de ce plan. Rien n'a été retiré.",
+  "p.plan_issues.refused_remove_admin":
+    "Refusé : seul un administrateur peut retirer un problème soumis au workflow de ce type. Rien n'a été retiré.",
+  "p.plan_issues.remove_admin_only":
+    "Seul un administrateur peut retirer « {title} » : le workflow de son type encadre ses transitions ou ses champs. Rien n'a été envoyé.",
+  "p.plan_issues.confirm_remove":
+    "Retirer le problème « {title} » ? Il quitte toutes les listes ; sa trace est conservée pour l'audit.",
+  "p.plan_issues.removed": "Le problème « {title} » a été retiré.",
+  "p.plan_issues.remove": "Retirer",
+  "p.plan_issues.remove_named": "Retirer : {title}",
+  "p.plan_issues.remove_says":
+    "Retirer un problème l'ôte de toutes les listes et ne peut pas être annulé ici ; l'audit en garde une trace. Sous un workflow qui encadre transitions ou champs, seul un administrateur peut en retirer un.",
+  "p.plan_issues.raised_on_by": "Signalé le {date} par {who}.",
+  "p.plan_issues.raised_on": "Signalé le {date}.",
+  "p.plan_issues.from_risk_named": "Signalé à partir du risque « {title} ».",
+  "p.plan_issues.from_a_risk":
+    "Signalé à partir d'un risque qui n'est plus listé.",
+  "p.plan_issues.from_a_task":
+    "Signalé à partir d'une tâche bloquée (ouvrir la tâche)",
+  "p.plan_issues.answered_by_change":
+    "Traité par une demande de changement (voir les demandes de changement du plan)",
+  "p.plan_issues.resolved_on": "Résolu le {date}.",
+  "p.task.issue_heading": "Un problème à partir de cette tâche",
+  "p.task.issue_says":
+    "Seule une tâche bloquée peut être signalée comme problème, et une seule fois tant que ce problème est ouvert. Le problème est un blocage de gravité moyenne, confié à la personne assignée à la tâche ; la tâche elle-même n'est pas modifiée.",
+  "p.task.issue_raised": "Le problème a été signalé.",
+  "p.task.issue_open_list": "Voir les problèmes du plan",
+  "p.task.issue_exists":
+    "Un problème ouvert a été signalé à partir de cette tâche : « {title} ».",
+  "p.task.issue_not_blocked":
+    "Cette tâche n'est pas bloquée ; elle ne peut donc pas être signalée comme problème. Marquez-la d'abord comme bloquée sur le tableau.",
+  "p.task.issue_raise": "Signaler un problème à partir de cette tâche",
+  "p.task.refused_from_task_not_blocked":
+    "Refusé : seule une tâche bloquée peut être signalée comme problème, et celle-ci ne l'est plus. La tâche a été relue.",
+  "p.task.refused_from_task_exists":
+    "Refusé : un problème ouvert a déjà été signalé à partir de cette tâche. Les problèmes ont été relus.",
+  "p.task.refused_from_task_forbidden":
+    "Refusé : vous ne pouvez pas signaler de problèmes sur ce plan.",
+  "p.task.refused_from_task_gone": "Cette tâche n'est plus sur ce plan.",
+  "p.plan_change_requests.refused_gone":
+    "Cette demande de changement n'est plus sur ce plan ; la liste a été relue.",
+  "p.plan_change_requests.refused_links_conflict":
+    "Refusé : la demande est close, ou l'un des problèmes relève désormais d'une autre demande de changement. La demande et les problèmes du plan ont été relus.",
+  "p.plan_change_requests.refused_links_invalid":
+    "Refusé : un problème ou un risque choisi n'est plus sur ce plan. Les problèmes et les risques du plan ont été relus.",
+  "p.plan_change_requests.refused_preview":
+    "Refusé : cette demande ne porte aucune modification de simulation lisible par l'ordonnanceur ; il n'y a donc pas de prévision.",
+  "p.plan_change_requests.refused_baseline":
+    "Refusé : une référence a déjà été prise pour ce changement, ou il n'est plus approuvé. La demande a été relue.",
+  "p.plan_change_requests.problem_links_too_many":
+    "Choisissez au plus {max} problèmes et {max} risques.",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "« {title} » relève déjà d'une autre demande de changement ; décochez-le.",
+  "p.plan_change_requests.links_unchanged":
+    "Rien n'a changé, donc rien n'a été envoyé.",
+  "p.plan_change_requests.links_saved":
+    "Les problèmes et les risques traités par ce changement ont été enregistrés.",
+  "p.plan_change_requests.confirm_baseline":
+    "Prendre une référence de planning à cause de « {title} » ? Une seule peut être prise pour ce changement, et elle ne peut pas être annulée.",
+  "p.plan_change_requests.baseline_taken":
+    "La version {version} de la référence a été prise à cause de ce changement.",
+  "p.plan_change_requests.stated_impact":
+    "Impact indiqué par le demandeur : {impact}.",
+  "p.plan_change_requests.implemented_on": "Mis en œuvre le {date}.",
+  "p.plan_change_requests.implement": "Marquer comme mis en œuvre",
+  "p.plan_change_requests.implemented":
+    "Le changement a été marqué comme mis en œuvre.",
+  "p.plan_change_requests.links_heading":
+    "Problèmes et risques traités par ce changement",
+  "p.plan_change_requests.links_none":
+    "Il ne traite encore aucun problème ni risque.",
+  "p.plan_change_requests.answers_issue": "Problème : {title}",
+  "p.plan_change_requests.answers_risk": "Risque : {title}",
+  "p.plan_change_requests.an_issue": "un problème qui n'est plus listé",
+  "p.plan_change_requests.a_risk": "un risque qui n'est plus listé",
+  "p.plan_change_requests.links_says":
+    "Choisis tant que la demande est ouverte (brouillon, soumise, en revue ou approuvée). Un problème relève d'au plus une demande de changement ; jusqu'à {max} problèmes et {max} risques. Enregistrer remplace tout l'ensemble.",
+  "p.plan_change_requests.links_issues": "Problèmes de ce plan",
+  "p.plan_change_requests.issue_elsewhere":
+    "{title} (relève d'une autre demande de changement)",
+  "p.plan_change_requests.links_no_issues": "Ce plan n'a aucun problème.",
+  "p.plan_change_requests.links_risks": "Risques de ce plan",
+  "p.plan_change_requests.links_no_risks": "Ce plan n'a aucun risque.",
+  "p.plan_change_requests.links_save": "Enregistrer ce qu'il traite",
+  "p.plan_change_requests.links_closed":
+    "Une demande close ne peut pas être reliée de nouveau.",
+  "p.plan_change_requests.forecast_heading": "Prévision de simulation",
+  "p.plan_change_requests.forecast_says":
+    "Une prévision tirée du planning actuel avec les modifications de simulation de cette demande appliquées. La lire ne change rien ; l'impact indiqué plus haut est le chiffre du demandeur lui-même.",
+  "p.plan_change_requests.forecast_show": "Afficher la prévision",
+  "p.plan_change_requests.forecast_label": "Prévision — rien n'a été modifié",
+  "p.plan_change_requests.forecast_finish":
+    "Fin du plan : {before} actuellement, {after} avec le changement.",
+  "p.plan_change_requests.forecast_finish_unknown":
+    "La fin du plan ne peut pas être prévue.",
+  "p.plan_change_requests.forecast_moved_one":
+    "1 tâche se terminerait un autre jour.",
+  "p.plan_change_requests.forecast_moved_other":
+    "{n} tâches se termineraient un autre jour.",
+  "p.plan_change_requests.forecast_later_one":
+    "{title} : se termine 1 jour ouvré plus tard",
+  "p.plan_change_requests.forecast_later_other":
+    "{title} : se termine {n} jours ouvrés plus tard",
+  "p.plan_change_requests.forecast_earlier_one":
+    "{title} : se termine 1 jour ouvré plus tôt",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title} : se termine {n} jours ouvrés plus tôt",
+  "p.plan_change_requests.a_task": "Une tâche",
+  "p.plan_change_requests.forecast_labour":
+    "Le coût de main-d'œuvre prévu changerait de {amount}.",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "La prévision du coût de main-d'œuvre n'est montrée qu'aux personnes autorisées à voir les taux.",
+  "p.plan_change_requests.forecast_labour_none":
+    "Aucun travail chiffré, donc pas de prévision du coût de main-d'œuvre.",
+  "p.plan_change_requests.forecast_labour_unknown":
+    "Pas de prévision du coût de main-d'œuvre.",
+  "p.plan_change_requests.forecast_no_edits":
+    "Cette demande ne porte aucune modification de simulation ; il n'y a donc pas de prévision, et son impact indiqué est le chiffre du demandeur lui-même.",
+  "p.plan_change_requests.baseline_heading":
+    "Une référence à cause de ce changement",
+  "p.plan_change_requests.baseline_done":
+    "Une référence de planning a été prise à cause de ce changement.",
+  "p.plan_change_requests.baseline_says":
+    "En prendre une est le choix d'une personne ; rien n'est re-référencé automatiquement. Une référence par changement, dont le motif nomme la demande, et elle ne peut pas être annulée.",
+  "p.plan_change_requests.baseline_take": "Prendre une référence",
+  "p.plan_change_requests.baseline_not_yet":
+    "Une référence peut être prise une fois le changement approuvé.",
 };

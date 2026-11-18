@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (issues, change requests and risks, the rest: NC-1 slice 12 part c)
+
+- **UI: the rest of issues and change requests (IR-3, IR-4), and changing a risk.** `/plans/[pid]/issues` reads an
+  issue before editing it and removes one after a question; the task page raises an issue from a blocked task;
+  `/plans/[pid]/change-requests` reads one request, marks an approved one implemented, chooses the issues and risks it
+  answers, shows the forecast of its what-if edits and takes a baseline because of it, once; the governance page changes
+  a risk's status, scores, mitigation and review date, sending only what changed. Every rule is said first; the
+  service's text is never shown. UI spec, "Issues, change requests and risks, the rest"; tests
+  `tests/e2e/risk-edit.spec.ts` and additions to `plan-issues`, `plan-task-edit` and `plan-change-requests`. 105 keys in
+  eight catalogues, machine-written. **Not done:** attaching what-if edits to a request. **Service gaps:** the issue from
+  a task is titled in English; shared `conflict` codes on relinking and the baseline; one `validation` code for every
+  risk 422. **Not verified:** against a real service.
+
 ### 18 November (status updates and their evidence: NC-1 slice 12 part b)
 
 - **UI: a plan's status updates (NC-4, BR-2).** `/plans/[pid]/status`, linked from the plan page, shows where the plan

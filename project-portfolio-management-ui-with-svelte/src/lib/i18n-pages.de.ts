@@ -7162,4 +7162,168 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.status.group_risk": "Risiken",
   "p.status.group_milestone": "Meilensteine",
   "p.status.group_issue": "Probleme",
+  "l.enum.risk_status.open": "Offen",
+  "l.enum.risk_status.mitigating": "In Minderung",
+  "l.enum.risk_status.closed": "Geschlossen",
+  "l.enum.risk_status.materialized": "Eingetreten",
+  "p.risk_edit.change": "Ändern",
+  "p.risk_edit.change_named": "Ändern: {title}",
+  "p.risk_edit.heading": "Risiko „{title}“ ändern",
+  "p.risk_edit.says":
+    "Wahrscheinlichkeit und Auswirkung sind ganze Zahlen von {min} bis {max}; die Exposition ist ihr Produkt. Die Minderung umfasst höchstens {max_bytes} Byte (in manchen Schriften weniger Zeichen). Ein Überprüfungsdatum kann geändert, aber nicht entfernt werden. Gesendet wird nur, was Sie ändern.",
+  "p.risk_edit.says_escalate":
+    "Um festzuhalten, dass ein Risiko eingetreten ist, verwenden Sie „Eskalieren“ in der Tabelle; das hält auch den Zeitpunkt fest.",
+  "p.risk_edit.problem_status": "Wählen Sie einen Status.",
+  "p.risk_edit.problem_score":
+    "Wahrscheinlichkeit und Auswirkung müssen jeweils eine ganze Zahl von {min} bis {max} sein.",
+  "p.risk_edit.problem_mitigation":
+    "Die Minderung ist länger als {max_bytes} Byte.",
+  "p.risk_edit.problem_review_cleared":
+    "Ein gesetztes Überprüfungsdatum kann nicht entfernt werden; wählen Sie ein anderes Datum.",
+  "p.risk_edit.problem_review_date": "Das Überprüfungsdatum ist kein Datum.",
+  "p.risk_edit.unchanged": "Nichts geändert, daher wurde nichts gesendet.",
+  "p.risk_edit.saved": "Das Risiko „{title}“ wurde gespeichert.",
+  "p.risk_edit.could_not_save": "Das Risiko konnte nicht gespeichert werden",
+  "p.risk_edit.refused_gone":
+    "Dieses Risiko gehört nicht mehr zu diesem Plan; die Liste wurde neu gelesen.",
+  "p.risk_edit.refused_invalid":
+    "Abgelehnt: Der Dienst hat Status, Bewertungen oder Minderung nicht angenommen. Nichts wurde geändert.",
+  "p.risk_edit.f_status": "Status des Risikos",
+  "p.risk_edit.f_probability": "Wahrscheinlichkeit ({min} bis {max})",
+  "p.risk_edit.f_impact": "Auswirkung ({min} bis {max})",
+  "p.risk_edit.f_mitigation": "Minderung",
+  "p.risk_edit.f_review_date": "Überprüfungsdatum",
+  "p.risk_edit.save": "Risiko speichern",
+  "p.risk_edit.close": "Formular schließen",
+  "p.plan_issues.refused_gone":
+    "Dieses Problem gehört nicht mehr zu diesem Plan; die Liste wurde neu gelesen.",
+  "p.plan_issues.refused_remove":
+    "Abgelehnt: Sie dürfen auf diesem Plan keine Probleme entfernen. Nichts wurde entfernt.",
+  "p.plan_issues.refused_remove_admin":
+    "Abgelehnt: Nur eine Administratorin oder ein Administrator kann ein Problem unter dem Workflow dieses Typs entfernen. Nichts wurde entfernt.",
+  "p.plan_issues.remove_admin_only":
+    "Nur eine Administratorin oder ein Administrator kann „{title}“ entfernen: Der Workflow seines Typs regelt seine Übergänge oder Felder. Nichts wurde gesendet.",
+  "p.plan_issues.confirm_remove":
+    "Das Problem „{title}“ entfernen? Es verschwindet aus allen Listen; der Eintrag bleibt für die Prüfung erhalten.",
+  "p.plan_issues.removed": "Das Problem „{title}“ wurde entfernt.",
+  "p.plan_issues.remove": "Entfernen",
+  "p.plan_issues.remove_named": "Entfernen: {title}",
+  "p.plan_issues.remove_says":
+    "Ein entferntes Problem verschwindet aus allen Listen und lässt sich hier nicht wiederherstellen; die Prüfung behält einen Eintrag. Unter einem Workflow, der Übergänge oder Felder regelt, kann nur eine Administratorin oder ein Administrator eines entfernen.",
+  "p.plan_issues.raised_on_by": "Am {date} erfasst von {who}.",
+  "p.plan_issues.raised_on": "Am {date} erfasst.",
+  "p.plan_issues.from_risk_named": "Aus dem Risiko „{title}“ erfasst.",
+  "p.plan_issues.from_a_risk":
+    "Aus einem nicht mehr aufgeführten Risiko erfasst.",
+  "p.plan_issues.from_a_task":
+    "Aus einer blockierten Aufgabe erfasst (Aufgabe öffnen)",
+  "p.plan_issues.answered_by_change":
+    "Durch einen Änderungsantrag beantwortet (Änderungsanträge des Plans ansehen)",
+  "p.plan_issues.resolved_on": "Am {date} gelöst.",
+  "p.task.issue_heading": "Ein Problem aus dieser Aufgabe",
+  "p.task.issue_says":
+    "Nur eine blockierte Aufgabe kann als Problem erfasst werden, und nur einmal, solange dieses Problem offen ist. Das Problem ist ein Blocker mittlerer Schwere, zuständig ist die der Aufgabe zugewiesene Person; die Aufgabe selbst bleibt unverändert.",
+  "p.task.issue_raised": "Das Problem wurde erfasst.",
+  "p.task.issue_open_list": "Probleme des Plans ansehen",
+  "p.task.issue_exists":
+    "Aus dieser Aufgabe wurde ein offenes Problem erfasst: „{title}“.",
+  "p.task.issue_not_blocked":
+    "Diese Aufgabe ist nicht blockiert und kann daher nicht als Problem erfasst werden. Markieren Sie sie zuerst auf dem Board als blockiert.",
+  "p.task.issue_raise": "Problem aus dieser Aufgabe erfassen",
+  "p.task.refused_from_task_not_blocked":
+    "Abgelehnt: Nur eine blockierte Aufgabe kann als Problem erfasst werden, und diese ist nicht mehr blockiert. Die Aufgabe wurde neu gelesen.",
+  "p.task.refused_from_task_exists":
+    "Abgelehnt: Aus dieser Aufgabe wurde bereits ein offenes Problem erfasst. Die Probleme wurden neu gelesen.",
+  "p.task.refused_from_task_forbidden":
+    "Abgelehnt: Sie dürfen auf diesem Plan keine Probleme erfassen.",
+  "p.task.refused_from_task_gone":
+    "Diese Aufgabe gehört nicht mehr zu diesem Plan.",
+  "p.plan_change_requests.refused_gone":
+    "Dieser Änderungsantrag gehört nicht mehr zu diesem Plan; die Liste wurde neu gelesen.",
+  "p.plan_change_requests.refused_links_conflict":
+    "Abgelehnt: Der Antrag ist geschlossen, oder eines der Probleme gehört inzwischen zu einem anderen Änderungsantrag. Der Antrag und die Probleme des Plans wurden neu gelesen.",
+  "p.plan_change_requests.refused_links_invalid":
+    "Abgelehnt: Ein gewähltes Problem oder Risiko gehört nicht mehr zu diesem Plan. Probleme und Risiken des Plans wurden neu gelesen.",
+  "p.plan_change_requests.refused_preview":
+    "Abgelehnt: Dieser Antrag enthält keine für die Terminplanung lesbaren Was-wäre-wenn-Änderungen, daher gibt es keine Prognose.",
+  "p.plan_change_requests.refused_baseline":
+    "Abgelehnt: Für diese Änderung wurde bereits eine Basislinie erstellt, oder sie ist nicht mehr genehmigt. Der Antrag wurde neu gelesen.",
+  "p.plan_change_requests.problem_links_too_many":
+    "Wählen Sie höchstens {max} Probleme und {max} Risiken.",
+  "p.plan_change_requests.problem_links_elsewhere":
+    "„{title}“ gehört bereits zu einem anderen Änderungsantrag; entfernen Sie das Häkchen.",
+  "p.plan_change_requests.links_unchanged":
+    "Nichts geändert, daher wurde nichts gesendet.",
+  "p.plan_change_requests.links_saved":
+    "Die Probleme und Risiken, auf die diese Änderung antwortet, wurden gespeichert.",
+  "p.plan_change_requests.confirm_baseline":
+    "Wegen „{title}“ eine Terminbasislinie erstellen? Für diese Änderung ist nur eine möglich, und sie lässt sich nicht rückgängig machen.",
+  "p.plan_change_requests.baseline_taken":
+    "Basislinie Version {version} wurde wegen dieser Änderung erstellt.",
+  "p.plan_change_requests.stated_impact":
+    "Von der antragstellenden Person angegebene Auswirkung: {impact}.",
+  "p.plan_change_requests.implemented_on": "Am {date} umgesetzt.",
+  "p.plan_change_requests.implement": "Als umgesetzt markieren",
+  "p.plan_change_requests.implemented":
+    "Die Änderung wurde als umgesetzt markiert.",
+  "p.plan_change_requests.links_heading":
+    "Probleme und Risiken, auf die diese Änderung antwortet",
+  "p.plan_change_requests.links_none":
+    "Sie antwortet noch auf kein Problem und kein Risiko.",
+  "p.plan_change_requests.answers_issue": "Problem: {title}",
+  "p.plan_change_requests.answers_risk": "Risiko: {title}",
+  "p.plan_change_requests.an_issue": "ein nicht mehr aufgeführtes Problem",
+  "p.plan_change_requests.a_risk": "ein nicht mehr aufgeführtes Risiko",
+  "p.plan_change_requests.links_says":
+    "Auswählbar, solange der Antrag offen ist (Entwurf, eingereicht, in Prüfung oder genehmigt). Ein Problem gehört zu höchstens einem Änderungsantrag; bis zu {max} Probleme und {max} Risiken. Speichern ersetzt die gesamte Auswahl.",
+  "p.plan_change_requests.links_issues": "Probleme dieses Plans",
+  "p.plan_change_requests.issue_elsewhere":
+    "{title} (gehört zu einem anderen Änderungsantrag)",
+  "p.plan_change_requests.links_no_issues": "Dieser Plan hat keine Probleme.",
+  "p.plan_change_requests.links_risks": "Risiken dieses Plans",
+  "p.plan_change_requests.links_no_risks": "Dieser Plan hat keine Risiken.",
+  "p.plan_change_requests.links_save": "Zuordnung speichern",
+  "p.plan_change_requests.links_closed":
+    "Ein geschlossener Antrag kann nicht neu verknüpft werden.",
+  "p.plan_change_requests.forecast_heading": "Was-wäre-wenn-Prognose",
+  "p.plan_change_requests.forecast_says":
+    "Eine Prognose aus dem aktuellen Terminplan mit den Was-wäre-wenn-Änderungen dieses Antrags. Das Lesen ändert nichts; die oben angegebene Auswirkung ist die eigene Zahl der antragstellenden Person.",
+  "p.plan_change_requests.forecast_show": "Prognose anzeigen",
+  "p.plan_change_requests.forecast_label": "Prognose – nichts wurde geändert",
+  "p.plan_change_requests.forecast_finish":
+    "Planende: jetzt {before}, mit der Änderung {after}.",
+  "p.plan_change_requests.forecast_finish_unknown":
+    "Das Planende lässt sich nicht prognostizieren.",
+  "p.plan_change_requests.forecast_moved_one":
+    "1 Aufgabe würde an einem anderen Tag enden.",
+  "p.plan_change_requests.forecast_moved_other":
+    "{n} Aufgaben würden an einem anderen Tag enden.",
+  "p.plan_change_requests.forecast_later_one":
+    "{title}: endet 1 Arbeitstag später",
+  "p.plan_change_requests.forecast_later_other":
+    "{title}: endet {n} Arbeitstage später",
+  "p.plan_change_requests.forecast_earlier_one":
+    "{title}: endet 1 Arbeitstag früher",
+  "p.plan_change_requests.forecast_earlier_other":
+    "{title}: endet {n} Arbeitstage früher",
+  "p.plan_change_requests.a_task": "Eine Aufgabe",
+  "p.plan_change_requests.forecast_labour":
+    "Die geplanten Arbeitskosten würden sich um {amount} ändern.",
+  "p.plan_change_requests.forecast_labour_hidden":
+    "Die Arbeitskostenprognose sehen nur Personen, die Kostensätze sehen dürfen.",
+  "p.plan_change_requests.forecast_labour_none":
+    "Keine bewertete Arbeit, daher keine Arbeitskostenprognose.",
+  "p.plan_change_requests.forecast_labour_unknown":
+    "Keine Arbeitskostenprognose.",
+  "p.plan_change_requests.forecast_no_edits":
+    "Dieser Antrag enthält keine Was-wäre-wenn-Änderungen, daher gibt es keine Prognose; die angegebene Auswirkung ist die eigene Zahl der antragstellenden Person.",
+  "p.plan_change_requests.baseline_heading":
+    "Eine Basislinie wegen dieser Änderung",
+  "p.plan_change_requests.baseline_done":
+    "Wegen dieser Änderung wurde eine Terminbasislinie erstellt.",
+  "p.plan_change_requests.baseline_says":
+    "Eine zu erstellen ist die Entscheidung einer Person; nichts erhält automatisch eine neue Basislinie. Eine Basislinie pro Änderung, ihr Grund nennt den Antrag, und sie lässt sich nicht rückgängig machen.",
+  "p.plan_change_requests.baseline_take": "Basislinie erstellen",
+  "p.plan_change_requests.baseline_not_yet":
+    "Eine Basislinie kann erstellt werden, sobald die Änderung genehmigt ist.",
 };

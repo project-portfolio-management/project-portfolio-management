@@ -49,6 +49,9 @@ import type {
   ChangeRequestDecisionBody,
   ChangeRequestList,
   ChangeRequestSubmitBody,
+  ChangeRequestLinksBody,
+  ChangeRequestPreview,
+  ChangeRequestBaselined,
   PlanChangeRequestList,
   Closeout,
   ConformanceFindings,
@@ -213,6 +216,7 @@ import type {
   ResourcePlan,
   ReviewGateBody,
   Risk,
+  RiskUpdateBody,
   RiskHeatmap,
   RiskRegister,
   RoleTasks,
@@ -362,6 +366,14 @@ export class PpmClient {
   createRisk(pid: string, body: CreateRiskBody): Promise<{ pid: string }> {
     return this.http.post(`/api/plans/${pid}/risks`, { body });
   }
+  /** Change a risk's status, scores, mitigation or review date (only the fields sent; 422 for a rule broken). */
+  updateRisk(
+    pid: string,
+    riskPid: string,
+    body: RiskUpdateBody,
+  ): Promise<Risk> {
+    return this.http.put(`/api/plans/${pid}/risks/${riskPid}`, { body });
+  }
   escalateRisk(pid: string, riskPid: string): Promise<Risk> {
     return this.http.post(`/api/plans/${pid}/risks/${riskPid}/escalate`, {
       body: {},
@@ -507,6 +519,44 @@ export class PpmClient {
   withdrawChangeRequest(pid: string, crPid: string): Promise<ChangeRequest> {
     return this.http.post(
       `/api/plans/${pid}/change-requests/${crPid}/withdraw`,
+      { body: {} },
+    );
+  }
+  /** One change request, with the issues and risks it answers (IR-4). */
+  changeRequest(pid: string, crPid: string): Promise<ChangeRequest> {
+    return this.http.get(`/api/plans/${pid}/change-requests/${crPid}`);
+  }
+  /** Mark an approved change as carried out (IR-4); 409 unless approved. */
+  implementChangeRequest(pid: string, crPid: string): Promise<ChangeRequest> {
+    return this.http.post(
+      `/api/plans/${pid}/change-requests/${crPid}/implement`,
+      { body: {} },
+    );
+  }
+  /** Replace the issues and risks an open request answers (IR-4). */
+  setChangeRequestLinks(
+    pid: string,
+    crPid: string,
+    body: ChangeRequestLinksBody,
+  ): Promise<ChangeRequest> {
+    return this.http.put(`/api/plans/${pid}/change-requests/${crPid}/links`, {
+      body,
+    });
+  }
+  /** The forecast of the request's what-if edits (IR-5); 422 when it carries none. Writes nothing. */
+  changeRequestPreview(
+    pid: string,
+    crPid: string,
+  ): Promise<ChangeRequestPreview> {
+    return this.http.get(`/api/plans/${pid}/change-requests/${crPid}/preview`);
+  }
+  /** Take a schedule baseline because of an approved or implemented request, once (IR-5). */
+  baselineChangeRequest(
+    pid: string,
+    crPid: string,
+  ): Promise<ChangeRequestBaselined> {
+    return this.http.post(
+      `/api/plans/${pid}/change-requests/${crPid}/baseline`,
       { body: {} },
     );
   }
@@ -1187,6 +1237,20 @@ export class PpmClient {
     return this.http.post(`/api/plans/${pid}/issues/from-risk/${riskPid}`, {
       body: {},
     });
+  }
+  /** Raise a blocker issue from a blocked task (IR-3); 422 unless blocked, 409 when one is already open for it. */
+  raiseIssueFromTask(pid: string, taskPid: string): Promise<Issue> {
+    return this.http.post(`/api/plans/${pid}/issues/from-task/${taskPid}`, {
+      body: {},
+    });
+  }
+  /** One issue, as stored now (IR-2). */
+  issue(pid: string, issuePid: string): Promise<Issue> {
+    return this.http.get(`/api/plans/${pid}/issues/${issuePid}`);
+  }
+  /** Remove an issue (IR-2; kept for the audit, gone from every list). */
+  removeIssue(pid: string, issuePid: string): Promise<void> {
+    return this.http.delete(`/api/plans/${pid}/issues/${issuePid}`);
   }
   milestone(pid: string): Promise<MilestoneView> {
     return this.http.get(`/api/milestones/${pid}`);

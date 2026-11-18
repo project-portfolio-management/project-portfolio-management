@@ -309,13 +309,85 @@ export function allowedActions(options: IssueOptions | null): {
   add: boolean;
   edit: boolean;
   move: boolean;
+  remove: boolean;
 } {
   const held = options?.caller_permissions;
   return {
     add: held?.includes("issue_add") ?? true,
     edit: held?.includes("issue_edit") ?? true,
     move: held?.includes("issue_move") ?? true,
+    remove: held?.includes("issue_delete") ?? true,
   };
+}
+
+/** Whether a workflow gates saves: it constrains moves, or a status has field rules. */
+export function restrictsSaves(workflow: IssueWorkflow): boolean {
+  return (
+    workflow.transitions.length > 0 ||
+    workflow.states.some((s) => (s.field_rules ?? []).length > 0)
+  );
+}
+
+/**
+ * Whether only an administrator may remove an issue under `workflow` (IR-2, the service's `remove`): on a plan whose
+ * issue actions are not role-checked, an issue under a workflow that gates moves or fields is removed only by an
+ * administrator, because removing one and raising another would step round the gates. With no options, `false`: the
+ * service decides.
+ */
+export function removeNeedsAdmin(
+  options: IssueOptions | null,
+  workflow: IssueWorkflow,
+): boolean {
+  if (!options) return false;
+  return !options.enforced && !options.caller_admin && restrictsSaves(workflow);
+}
+
+/** The open issue already raised from task `taskPid`, if any (IR-3: one open issue per task). */
+export function openIssueFromTask(
+  issues: readonly Issue[],
+  taskPid: string,
+): Issue | null {
+  return (
+    issues.find(
+      (i) => i.source_task_pid === taskPid && i.status_category !== "done",
+    ) ?? null
+  );
+}
+
+/** What an issue action is, for its refusal sentence. */
+export type IssueAction = "read" | "remove" | "from_task";
+
+/**
+ * The catalogue sentence for a refused issue action, by HTTP status, or `null` for the general rule. Each route has one
+ * refusal per status, so the status says which: `from-task` is 422 only for a task not blocked and 409 only for an
+ * open issue already raised from it.
+ */
+export function issueRefusalKey(
+  action: IssueAction,
+  status: number,
+  adminOnly = false,
+):
+  | "p.plan_issues.refused_gone"
+  | "p.plan_issues.refused_remove"
+  | "p.plan_issues.refused_remove_admin"
+  | "p.task.refused_from_task_not_blocked"
+  | "p.task.refused_from_task_exists"
+  | "p.task.refused_from_task_forbidden"
+  | "p.task.refused_from_task_gone"
+  | null {
+  if (action === "from_task") {
+    if (status === 422) return "p.task.refused_from_task_not_blocked";
+    if (status === 409) return "p.task.refused_from_task_exists";
+    if (status === 403) return "p.task.refused_from_task_forbidden";
+    if (status === 404) return "p.task.refused_from_task_gone";
+    return null;
+  }
+  if (status === 404) return "p.plan_issues.refused_gone";
+  if (action === "remove" && status === 403)
+    return adminOnly
+      ? "p.plan_issues.refused_remove_admin"
+      : "p.plan_issues.refused_remove";
+  return null;
 }
 
 /** The types a person can choose: those not retired that the plan offers, and the one the issue already has. */

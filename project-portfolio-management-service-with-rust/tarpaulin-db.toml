@@ -57,7 +57,9 @@ exclude-files = [
 test = ["main"]
 args = ["requests::", "--ignored", "--test-threads=1"]
 engine = "Llvm"
-timeout = "600s"
+# The whole run, not one test: the instrumented request suites took over 10 minutes on a GitHub runner
+# (2026-11-18), so 600 s stopped them part-way. Generous, as the job is not a merge gate.
+timeout = "1800s"
 target-dir = "target/tarpaulin"
 skip-clean = true
 exclude-files = [
@@ -83,7 +85,9 @@ exclude-files = [
 test = ["main"]
 args = ["--ignored", "--test-threads=1", "--skip", "requests::", "--skip", "load_test::"]
 engine = "Llvm"
-timeout = "600s"
+# The whole run, not one test: the instrumented request suites took over 10 minutes on a GitHub runner
+# (2026-11-18), so 600 s stopped them part-way. Generous, as the job is not a merge gate.
+timeout = "1800s"
 target-dir = "target/tarpaulin"
 skip-clean = true
 exclude-files = [

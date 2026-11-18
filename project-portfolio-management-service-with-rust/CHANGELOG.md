@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the coverage job's database runs get 30 minutes (2026-11-18)
+
+- `tarpaulin-db.toml`'s `timeout` is for a whole run, not one test, and the instrumented request suites took over 10
+  minutes on a GitHub runner, so the coverage job stopped at 600 s ("Timed out waiting for test response") on its
+  second run, part-way through `requests::`. The two database runs now have 1,800 s. The tests themselves passed in the
+  `api-db` job. **Not verified:** the next run's time.
+
 ### Changed — the codes and fields a screen reads (NC-1 slice 12 part a, 18 November 2026)
 
 Service spec, "Codes and fields a screen reads (NC-1 slice 12, part a)", is the contract for each item.

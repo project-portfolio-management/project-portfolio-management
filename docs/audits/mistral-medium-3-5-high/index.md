@@ -5,6 +5,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ---
 
 # 🎯 **PART 1: Community Growth, Onboarding & Promotion**
+
 *Improve accessibility for new visitors, expand reach, and enable upskilling*
 
 ---
@@ -12,6 +13,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🌐 **1.1 Onboarding & Discoverability**
 
 ### **1.1.1 Quick Start Improvements**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **ON-1** | Create a **"5-minute demo"** guide in README.md with copy-paste commands to: (1) clone, (2) start Postgres via Podman, (3) run service, (4) open UI, (5) create first plan. Link from repo root README. | S | High | Docs | ⬜ |
@@ -21,6 +23,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **ON-5** | Create a **"Try it now"** section with one-click deploy options: (a) GitPod config, (b) GitHub Codespaces template, (c) Docker Compose for local demo. | M | High | Infra | ⬜ |
 
 ### **1.1.2 Documentation Structure**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **ON-6** | Create `docs/` directory at repo root with: `README.md` (index), `install.md`, `configuration.md`, `tutorials/`, `reference/`, `operations/`. Migrate existing docs. | M | High | Docs | ⬜ |
@@ -33,6 +36,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 📢 **1.2 Promotion & Visibility**
 
 ### **1.2.1 Project Marketing**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **PM-1** | Publish project to **awesome lists**: submit to `awesome-selfhosted`, `awesome-project-management`, `awesome-rust`, `awesome-svelte`. | S | High | Community | ⬜ |
@@ -42,6 +46,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **PM-5** | Create **social media presence**: Twitter/X account for announcements, LinkedIn page for professional audience. | S | Medium | Community | ⬜ |
 
 ### **1.2.2 Community Building**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **CB-1** | Add **CODEOWNERS** file to define maintainers for each subproject. Currently missing. | S | High | Governance | ⬜ |
@@ -55,6 +60,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🎓 **1.3 Upskilling & Learning**
 
 ### **1.3.1 Developer Education**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **ED-1** | Create **architecture decision records (ADRs)** in `docs/adrs/` for major decisions: (1) Why Axum/axa, (2) Why SvelteKit, (3) Why spec-first, (4) Why no ORM, (5) Why Tantivy for search, (6) Why jiff over chrono. | M | High | Docs | ⬜ |
@@ -64,6 +70,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **ED-5** | Create **comparison documents**: (1) PPM vs Jira, (2) PPM vs Leantime, (3) PPM vs MS Project, (4) PPM vs OpenProject. Focus on features, architecture, licensing. | M | Medium | Docs | ⬜ |
 
 ### **1.3.2 Translation & Localization**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **TL-1** | **Recruit Welsh translator** to review all 101+ Welsh UI strings in `governance/welsh-translation-review.csv`. Create a translation guide. | M | High | Community | ⬜ |
@@ -76,6 +83,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ---
 
 # 🔧 **PART 2: Engineering, Coding, Testing & Auditing**
+
 *Strengthen the technical foundation, improve quality, and harden the system*
 
 ---
@@ -83,6 +91,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🛠️ **2.1 Code Quality & Maintainability**
 
 ### **2.1.1 Code Health**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **CQ-1** | **Eliminate `#[allow]` annotations** - Run audit to find all `#[allow]` in codebase. Each must be: (1) justified with comment explaining why, (2) or removed by fixing the underlying issue. Target: zero uncommented allows. | M | High | Service/UI/Matcher | ⬜ |
@@ -92,6 +101,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **CQ-5** | **Refactor long functions** - Identify functions >100 lines. Split into smaller, testable units. Track in `COVERAGE.md`. | L | Medium | All | ⬜ |
 
 ### **2.1.2 Documentation**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **CD-1** | **Add doc comments** to all public items in domain crate. Currently some modules lack documentation. Use `cargo doc --document-private-items --no-deps` to verify. | M | High | Domain | ⬜ |
@@ -105,6 +115,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🧪 **2.2 Testing Improvements**
 
 ### **2.2.1 Test Coverage**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **TC-1** | **Add tests for least-covered domain modules**: `director_pack_text.rs` (74.1%), `validation.rs` (83.8%), `dhcw_import.rs` (85.8%), `joint_risk.rs` (87.3%), `extract.rs` (89.5%). Target: 90%+ for each. | M | High | Domain | ⬜ |
@@ -114,6 +125,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **TC-5** | **Add integration tests for UI** - Currently Playwright tests stub the backend. Add tests that run against real service with test database. | L | Medium | UI | ⬜ |
 
 ### **2.2.2 Test Infrastructure**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **TI-1** | **Set up test coverage threshold** in CI. Start with current baseline (91.9% with DB, 33.7% without) and gradually increase. | M | High | CI | ⬜ |
@@ -127,6 +139,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🐞 **2.3 Bug Fixes & Robustness**
 
 ### **2.3.1 Known Issues**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **BF-1** | **Fix 422 error messages** - Many service routes return English text in 422 responses. Replace with structured error codes that UI can localize. Tracked in `CHANGELOG.md`. | M | High | Service | ⬜ |
@@ -136,6 +149,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **BF-5** | **Fix missing person names** - Service stores references, not names. UI shows "unknown" for people. Add endpoint to resolve references to names (requires auth service integration). | M | High | Service | ⬜ |
 
 ### **2.3.2 Error Handling**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **EH-1** | **Standardize error responses** - Ensure all endpoints return consistent error format: `{error: {code, message, details?, timestamp}}`. Document all error codes in OpenAPI. | M | High | Service | ⬜ |
@@ -148,6 +162,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🔒 **2.4 Security Hardening**
 
 ### **2.4.1 Security Audits**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **SA-1** | **Run cargo-audit** on all Rust crates. Fix any vulnerabilities. Currently RUSTSEC advisories exist for chrono (but being replaced by jiff). | S | High | All | ⬜ |
@@ -157,6 +172,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **SA-5** | **Implement rate limiting** for all authenticated endpoints. Currently rate limiting is off by default. Configure and test. | M | High | Service | ⬜ |
 
 ### **2.4.2 Authentication & Authorization**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **AA-1** | **Add multi-factor authentication** support for UI BFF. Integrate with auth service or implement TOTP. | L | Medium | UI | ⬜ |
@@ -170,6 +186,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 📊 **2.5 Performance Optimization**
 
 ### **2.5.1 Service Performance**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **PO-1** | **Optimize portfolio-money query** - Current implementation reads every plan beneath each programme with separate statements (28 at 3 programmes, 133 at 18). Rewrite to use 4 statements total. | M | High | Service | ⬜ |
@@ -179,6 +196,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **PO-5** | **Optimize JSON serialization** - Profile serialization time for large responses (e.g., 5000-task plan). Consider: (1) serde JSON config, (2) compression, (3) streaming. | M | Medium | Service | ⬜ |
 
 ### **2.5.2 Benchmarking**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **BM-1** | **Add CI benchmark job** - Run benchmarks on PRs that change performance-critical code. Store results and compare against baseline. | M | High | CI | ⬜ |
@@ -191,6 +209,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🗃️ **2.6 Data & Storage**
 
 ### **2.6.1 Database Improvements**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **DB-1** | **Add database indexes** for frequently queried columns. Review query plans for slow queries. | M | High | Service | ⬜ |
@@ -200,6 +219,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **DB-5** | **Add database health checks** - Monitor: (1) connection count, (2) query performance, (3) disk space, (4) replication lag. | M | Medium | Service | ⬜ |
 
 ### **2.6.2 Search & Indexing**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **SI-1** | **Optimize Tantivy index** - Review: (1) index schema, (2) tokenization, (3) query performance. Target: <100ms for all searches. | M | High | Service | ⬜ |
@@ -212,6 +232,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🔄 **2.7 DevOps & CI/CD**
 
 ### **2.7.1 CI/CD Improvements**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **CI-1** | **Reduce CI build time** - Currently ~30+ minutes for full run. Target: <15 minutes. Optimize: (1) parallel jobs, (2) caching, (3) test splitting. | L | High | CI | ⬜ |
@@ -221,6 +242,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **CI-5** | **Implement rollback procedure** - Document and test rollback for: (1) service, (2) database migrations, (3) UI. | M | Medium | Infra | ⬜ |
 
 ### **2.7.2 Monitoring & Observability**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **MO-1** | **Add Prometheus metrics** for: (1) request count/rates, (2) error rates, (3) latency percentiles, (4) database metrics. | M | High | Service | ⬜ |
@@ -234,6 +256,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 ## 🏗️ **2.8 Infrastructure & Deployment**
 
 ### **2.8.1 Deployment Improvements**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **DP-1** | **Create Helm chart** for Kubernetes deployment. Include: (1) service, (2) Postgres, (3) Redis, (4) ingress. | L | High | Infra | ⬜ |
@@ -243,6 +266,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 | **DP-5** | **Implement blue-green deployments** - Enable zero-downtime deployments. | L | Medium | Infra | ⬜ |
 
 ### **2.8.2 Scalability**
+
 | ID | Task | Size | Impact | Owner | Status |
 |---|---|---|---|---|---|
 | **SC-1** | **Add horizontal scaling** support - Test and document scaling service instances. Consider: (1) stateless design, (2) shared database, (3) distributed caching. | L | High | Infra | ⬜ |
@@ -302,6 +326,7 @@ Here is a **prioritized, actionable roadmap** of quality improvement tasks for t
 3. Update `tasks.md` with new items or link to issues.
 
 ## **Metrics to Track**
+
 | Metric | Current | Target | Measurement |
 |--------|---------|--------|-------------|
 | Code coverage (with DB) | 91.9% | 95% | cargo-tarpaulin |

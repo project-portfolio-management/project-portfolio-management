@@ -15,6 +15,25 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (programme money, value and benefits, read live: NC-1 slice 12 part f)
+
+- **UI: the director pack's programme readings, a plan's forecast and baselines, and its realized value, read live
+  (DP-7, DP-8, DP-9).** `/portfolio-map` reads the buffer fever chart, earned value over the threshold (its actual cost
+  chosen), validated benefits and issues and change requests (over a window of days) now, each drawn by the pack's own
+  renderer, which now also shows every further issues and change-request figure. `/financials` rolls the forecast at
+  completion up from a chosen plan, one row per currency. `/plans/[pid]/costs` shows the plan's forecast, its budget
+  baselines and a new version (frozen once approved, after a question; one the same as the latest not sent), releases a
+  tranche once its gate has passed (after a question; an incomplete register read from its code), and records a
+  business-case target. `/plans/[pid]/benefits` shows the value realized (return on investment, time to value,
+  adoption, targets, each absent figure with its reason) and records an observed value, the first measurable one asked
+  first. The rules are said first; the service's text is never shown. UI spec, "Programme money, value and benefits,
+  read live"; tests `tests/e2e/money-live.spec.ts` and additions to `portfolio-map.spec.ts` and `plan-benefits.spec.ts`.
+  168 keys in eight catalogues, machine-written. **Not done:** a list of value points (no service read); adoption and
+  satisfaction readings and the performance view; the fever chart as a picture. **Service gaps:** the 422s here are
+  `unprocessable` with English text, the three release refusals among them; `value-realization` names no currency for
+  its realized and investment figures, nor a target's unit; a forecast's other-currency amount carries no currency.
+  **Not verified:** against a real service.
+
 ### 18 November (meetings, lessons and references: NC-1 slice 12 part e)
 
 - **UI: meetings (NC-14), tasks from their actions (BR-3), lessons learned (NC-8) and what refers to a record (BR-4).**

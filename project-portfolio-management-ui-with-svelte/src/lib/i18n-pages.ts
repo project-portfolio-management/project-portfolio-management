@@ -7339,6 +7339,221 @@ export const PAGES_EN = {
     "That proposal no longer exists, or you cannot read it.",
   "p.lessons.could_not_read_similar":
     "Could not read the lessons of similar plans.",
+  "p.director_pack.open_by_severity": "Open by severity: {list}",
+  "p.director_pack.issues_overdue": "Overdue issues: {n}",
+  "p.director_pack.issues_in_window":
+    "In the period: {raised} raised, {resolved} resolved",
+  "p.director_pack.oldest_issue":
+    "Oldest open issue: {title} (calendar days open: {n})",
+  "p.director_pack.approved_not_implemented":
+    "Approved but not yet implemented: {n}",
+  "p.director_pack.decided_in_window": "Decided in the period: {n}",
+  "p.director_pack.changes_by_status": "By status: {list}",
+  "p.director_pack.oldest_change":
+    "Oldest open change request: {title} (calendar days open: {n})",
+  "p.live_pack.heading": "Programme readings, now",
+  "p.live_pack.says":
+    "Read now from the plans you can read, drawn as the director pack draws them. An issued pack keeps the figures it was issued with; the fever chart's previous point comes only from an issued pack.",
+  "p.live_pack.f_ac": "Actual cost for earned value",
+  "p.live_pack.ac_budget_lines": "Budget lines (the default)",
+  "p.live_pack.ac_labour": "Recorded labour cost",
+  "p.live_pack.ac_both": "Budget lines and labour cost",
+  "p.live_pack.f_window":
+    "Issues and change requests over the last days ({min} to {max}; empty for 30)",
+  "p.live_pack.read_again": "Read again",
+  "p.live_pack.problem_window":
+    "The number of days must be a whole number from {min} to {max}, or empty for 30.",
+  "p.live_pack.could_not_read_fever": "Could not read the buffer fever chart.",
+  "p.live_pack.could_not_read_evm": "Could not read the earned value.",
+  "p.live_pack.could_not_read_benefits": "Could not read the benefits.",
+  "p.live_pack.could_not_read_issues":
+    "Could not read the issues and change requests.",
+  "p.live_pack.issues_heading": "Issues and change requests",
+  "p.live_pack.issues_none":
+    "You can read no plan with issues or change requests.",
+  "p.live_pack.nothing": "Nothing to show.",
+  "p.forecast.heading": "Forecast at completion",
+  "p.forecast.says":
+    "The estimate at completion is the actual cost so far plus the estimate to complete. The estimate to complete is the latest total project control figure in the forecast's currency, or else what the latest baseline still plans. Read now; nothing is stored.",
+  "p.forecast.absent_no_currency":
+    "No forecast: the plan has no budget baseline and no total project control figure, so there is no currency to forecast in.",
+  "p.forecast.c_actual": "Actual cost so far",
+  "p.forecast.c_etc": "Estimate to complete",
+  "p.forecast.c_eac": "Estimate at completion",
+  "p.forecast.c_plans": "Plans",
+  "p.forecast.not_known": "not known",
+  "p.forecast.etc_tpc": "from the latest total project control figure",
+  "p.forecast.etc_baseline": "from what the baseline still plans",
+  "p.forecast.no_baseline_used": "No budget baseline was used.",
+  "p.forecast.baseline_used": "Uses budget baseline version {version}.",
+  "p.forecast.as_of": "Read {date}.",
+  "p.forecast.other_currency":
+    "Actual cost recorded in a currency other than {currency} is not added in.",
+  "p.forecast.baselines_heading": "Budget baselines",
+  "p.forecast.baselines_says":
+    "A baseline is the approved budget by period, in one currency. Once approved it is frozen and never edited; a re-baseline is a new version, and every version after the first needs a reason. A baseline holds 1 to {max} periods, each with an end not before its start and a planned amount not below zero.",
+  "p.forecast.no_baselines": "No budget baseline has been approved.",
+  "p.forecast.version_line": "Version {version} · {currency} · approved {date}",
+  "p.forecast.period_line": "{start} to {end}: {amount}",
+  "p.forecast.first_baseline_heading": "Approve the first baseline",
+  "p.forecast.rebaseline_heading": "Approve version {version}",
+  "p.forecast.f_currency": "Currency (three letters)",
+  "p.forecast.periods_legend": "Periods",
+  "p.forecast.f_start": "Period {n} starts",
+  "p.forecast.f_end": "Period {n} ends",
+  "p.forecast.f_amount": "Period {n} planned amount",
+  "p.forecast.remove_period": "Remove period {n}",
+  "p.forecast.add_period": "Add a period",
+  "p.forecast.f_reason": "Reason (optional for the first)",
+  "p.forecast.f_reason_needed": "Why the budget is re-baselined (needed)",
+  "p.forecast.approve": "Approve the baseline",
+  "p.forecast.confirm_baseline":
+    "Approve budget baseline version {version}? Once approved it is frozen and cannot be changed or removed.",
+  "p.forecast.baseline_approved": "Version {version} approved.",
+  "p.forecast.problem_currency":
+    "The currency must be a three-letter code, such as GBP or EUR.",
+  "p.forecast.problem_no_periods": "Give at least one period.",
+  "p.forecast.problem_too_many": "A baseline holds at most {max} periods.",
+  "p.forecast.problem_dates": "Each period needs a start date and an end date.",
+  "p.forecast.problem_order": "A period cannot end before it starts.",
+  "p.forecast.problem_amount":
+    "Each planned amount must be a number, not below zero.",
+  "p.forecast.problem_reason": "A re-baseline needs a reason.",
+  "p.forecast.problem_reason_long":
+    "The reason is too long: at most {bytes} bytes.",
+  "p.forecast.problem_same":
+    "This is the same as the latest version; nothing was sent.",
+  "p.forecast.refused_gone":
+    "This plan no longer exists, or you cannot read it.",
+  "p.forecast.refused_baseline":
+    "The baseline was refused: another version may have been approved meanwhile, which makes a reason needed. The list has been read again.",
+  "p.forecast.could_not_approve": "Could not approve the baseline.",
+  "p.forecast.could_not_read": "Could not read the forecast.",
+  "p.forecast.could_not_read_baselines": "Could not read the budget baselines.",
+  "p.forecast.could_not_read_lines": "Could not read the budget lines.",
+  "p.forecast.tranches_heading": "Funding held until a gate",
+  "p.forecast.tranches_says":
+    "A budget line with a funding gate is held until the plan's stage reaches that gate; then it may be released, once, and only then can actual cost be recorded against it. A release cannot be undone.",
+  "p.forecast.stage_now": "The plan's stage: {stage}.",
+  "p.forecast.stage_none": "The plan has passed no gate yet.",
+  "p.forecast.no_tranches": "No budget line is held until a gate.",
+  "p.forecast.gate_line": "held until {gate}",
+  "p.forecast.state_released": "released {date}",
+  "p.forecast.state_held": "still held: the gate has not passed",
+  "p.forecast.release": "Release {description}",
+  "p.forecast.confirm_release":
+    "Release {description}, held until {gate}? A release cannot be undone.",
+  "p.forecast.released": "{description} released.",
+  "p.forecast.refused_line_gone": "That budget line or plan no longer exists.",
+  "p.forecast.refused_register":
+    "Refused: the programme's register is incomplete. Complete it on the register completeness page first.",
+  "p.forecast.refused_release":
+    "Refused: the line is no longer held, or its gate has not passed. The lines have been read again.",
+  "p.forecast.could_not_release": "Could not release the line.",
+  "p.forecast.rollup_heading": "Forecast at completion, rolled up",
+  "p.forecast.rollup_says":
+    "From one plan over the plans beneath it, up to {max} levels deep, one row per currency: currencies are never added together. Plans with no currency to forecast in are counted, not added.",
+  "p.forecast.f_plan": "Plan",
+  "p.forecast.choose_plan": "Choose a plan",
+  "p.forecast.f_depth": "Levels deep (1 to {max}; empty for all)",
+  "p.forecast.show_rollup": "Show the forecast",
+  "p.forecast.problem_plan": "Choose a plan.",
+  "p.forecast.problem_depth":
+    "Levels deep must be a whole number from 1 to {max}, or empty.",
+  "p.forecast.refused_plan_gone":
+    "That plan no longer exists, or you cannot read it.",
+  "p.forecast.could_not_read_rollup": "Could not read the rolled-up forecast.",
+  "p.forecast.rollup_line_one": "From {name}: {n} plan read, {date}.",
+  "p.forecast.rollup_line_other": "From {name}: {n} plans read, {date}.",
+  "p.forecast.rollup_truncated":
+    "The tree is larger than the service walks; the figures cover part of it.",
+  "p.forecast.rollup_revisits_one":
+    "{n} plan was reached twice and counted once.",
+  "p.forecast.rollup_revisits_other":
+    "{n} plans were reached twice and counted once.",
+  "p.forecast.rollup_no_currency_one":
+    "{n} plan has no currency to forecast in and is not added.",
+  "p.forecast.rollup_no_currency_other":
+    "{n} plans have no currency to forecast in and are not added.",
+  "p.forecast.rollup_empty": "No plan here has a forecast.",
+  "p.value.heading": "Value realized",
+  "p.value.says":
+    "Read now from the value recorded; nothing is stored. The return on investment sets every value point against the actual cost recorded, and is withheld when the budget lines use more than one currency, as no currency is converted. A figure that cannot be stated says why, never zero.",
+  "p.value.roi": "Return on investment: {pct}",
+  "p.value.roi_absent": "Return on investment not stated: {reason}",
+  "p.value.measured_share": "measured evidence: {pct} of the value points",
+  "p.value.ttv_one":
+    "Time to value: median {p50} calendar days, 85th percentile {p85} ({n} observation)",
+  "p.value.ttv_other":
+    "Time to value: median {p50} calendar days, 85th percentile {p85} ({n} observations)",
+  "p.value.ttv_absent": "Time to value not stated: {reason}",
+  "p.value.adoption":
+    "Adoption: {pct} ({active} of {target} users active over {days} days)",
+  "p.value.adoption_definition": "an active user is: {definition}",
+  "p.value.adoption_absent": "Adoption not stated: {reason}",
+  "p.value.adoption_none": "No adoption reading is recorded.",
+  "p.value.absent_unrealized": "no value has been recorded",
+  "p.value.absent_no_denominator":
+    "there is nothing to set it against (no actual cost, or no target)",
+  "p.value.absent_mixed_currency":
+    "the budget lines use more than one currency",
+  "p.value.absent_no_baseline": "there is no budget baseline",
+  "p.value.absent_no_responses": "nobody has responded",
+  "p.value.absent_overflow": "the figure is too large to work out",
+  "p.value.absent_other": "the service did not say why",
+  "p.value.case_heading": "Business case targets",
+  "p.value.no_targets": "No business-case target is recorded.",
+  "p.value.target_line":
+    "{metric}: from {baseline} to {target} · {source} · approved {date}",
+  "p.value.source_charter": "the charter",
+  "p.value.source_gate_review": "a gate review",
+  "p.value.source_other": "another source",
+  "p.value.to_costs": "Record a target on the costs page",
+  "p.value.point_heading": "Record an observed value",
+  "p.value.point_says":
+    "A value is measured, estimated or asserted. With a currency it is an amount of money; without one, a whole number in the measure's own unit. A value point cannot be changed here once recorded. One value point per plan may be the first measurable value: it stops the time-to-value clock, which the first business-case target started, and cannot be moved.",
+  "p.value.f_value": "Value",
+  "p.value.f_currency": "Currency (three letters, or empty)",
+  "p.value.f_method": "How it was arrived at",
+  "p.value.method_measured": "measured",
+  "p.value.method_estimated": "estimated",
+  "p.value.method_asserted": "asserted",
+  "p.value.f_evidence": "Evidence (a link or reference, optional)",
+  "p.value.f_first": "This is the first measurable value",
+  "p.value.record_point": "Record the value",
+  "p.value.confirm_first":
+    "Record this as the plan's first measurable value? It stops the time-to-value clock and cannot be moved.",
+  "p.value.point_recorded": "Value recorded.",
+  "p.value.problem_currency":
+    "The currency must be a three-letter code, or empty.",
+  "p.value.problem_amount": "The value must be an amount of money.",
+  "p.value.problem_whole":
+    "Without a currency, the value must be a whole number.",
+  "p.value.problem_method": "Choose how the value was arrived at.",
+  "p.value.refused_first_taken":
+    "Refused: this plan already has a first measurable value; the clock stops once.",
+  "p.value.refused_value": "The value was refused.",
+  "p.value.refused_gone": "This plan no longer exists, or you cannot read it.",
+  "p.value.could_not_read": "Could not read the value realized.",
+  "p.value.could_not_record_point": "Could not record the value.",
+  "p.value.case_says":
+    "A target is a measure promised in the charter or at a gate review, with its value at approval and the value promised, as whole numbers in the measure's unit. The date it is approved starts the time-to-value clock and cannot be changed, and a target cannot be changed or removed here.",
+  "p.value.to_benefits": "The value realized is on the benefits page.",
+  "p.value.f_metric": "Measure",
+  "p.value.f_baseline": "Value at approval",
+  "p.value.f_target": "Value promised",
+  "p.value.f_unit": "Unit (optional)",
+  "p.value.f_source": "Promised in",
+  "p.value.record_target": "Record the target",
+  "p.value.confirm_target":
+    "Record the target {metric}? It cannot be changed or removed here.",
+  "p.value.target_recorded": "Target {metric} recorded.",
+  "p.value.problem_metric": "Name the measure.",
+  "p.value.problem_target_values":
+    "The value at approval and the value promised must be whole numbers.",
+  "p.value.problem_source": "Choose where the target was promised.",
+  "p.value.refused_target": "The target was refused.",
+  "p.value.could_not_record_target": "Could not record the target.",
 } as const;
 
 /** A key in the page and component catalogue. */

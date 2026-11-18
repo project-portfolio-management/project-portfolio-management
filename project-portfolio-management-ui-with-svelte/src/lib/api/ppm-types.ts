@@ -297,6 +297,10 @@ export interface BudgetBoard {
     funding_source_pid?: string | null;
     /** The funding allocation the line draws on (EX-12); absent or null for none. */
     funding_allocation_pid?: string | null;
+    /** The gate a stage-gated tranche is held until; null for an ordinary line. */
+    gate?: string | null;
+    /** When a gated line was released; null while held. */
+    released_at?: string | null;
   }[];
   totals: {
     currency: string;
@@ -4498,3 +4502,157 @@ export interface ProposalLessonMatch {
   };
   lessons: Lesson[];
 }
+
+// ---- programme money, value and benefits, read live (NC-1 slice 12 part f, DP-7, DP-8, DP-9) ----
+
+/** Where a forecast's estimate to complete came from. */
+export type EtcSource = "tpc" | "baseline_remaining";
+
+/** One plan's estimate at completion (`EAC = AC + ETC`), as `domain/src/financials.rs` builds it. */
+export interface Forecast {
+  /** `null` only when neither a baseline nor a total project control observation names a currency. */
+  currency: string | null;
+  actual_minor: number;
+  /** Actual cost recorded in another currency than the forecast's: disclosed, never added in. */
+  excluded_other_currency_minor: number;
+  estimate_to_complete_minor: number | null;
+  etc_source: EtcSource | null;
+  estimate_at_completion_minor: number | null;
+  baseline_version: number | null;
+  absent: "no_currency_signal" | null;
+}
+
+/** `GET /api/plans/{pid}/financials/forecast`. */
+export interface PlanForecast {
+  plan_pid: string;
+  forecast: Forecast;
+  as_of: string;
+}
+
+/** `GET /api/financials/forecast?plan=&depth=`: the forecast rolled up over the plans beneath one, a row per currency.
+ * Its `note` is the service's English and is not shown. */
+export interface ForecastRollup {
+  as_of: string;
+  root: { pid: string; name: string };
+  note?: string;
+  tree: {
+    plans: number;
+    depth_limit: number;
+    truncated: boolean;
+    revisits: number;
+  };
+  rollup: {
+    rows: {
+      currency: string;
+      actual_minor: number;
+      estimate_to_complete_minor: number;
+      estimate_at_completion_minor: number;
+      plans: number;
+    }[];
+    no_currency_signal: number;
+  };
+}
+
+/** One phased budget baseline period. */
+export interface BaselinePeriod {
+  period_start: string;
+  period_end: string;
+  planned_minor: number;
+}
+
+/** One phased budget baseline version, newest first in `GET /api/plans/{pid}/budget-baselines`. */
+export interface BudgetBaseline {
+  pid: string;
+  version: number;
+  currency: string;
+  approved_at: string;
+  reason: string | null;
+  periods: BaselinePeriod[];
+}
+
+/** `POST /api/plans/{pid}/budget-baselines`: a new version, frozen once approved. */
+export interface BudgetBaselineBody {
+  currency: string;
+  periods: BaselinePeriod[];
+  reason?: string;
+}
+
+/** A budget line as `GET /api/plans/{pid}/budget-lines` sends it, with its funding gate (a held tranche). */
+export interface GatedBudgetLine {
+  pid: string;
+  description: string;
+  currency: string;
+  planned_minor: number;
+  gate?: string | null;
+  released_at?: string | null;
+}
+
+/** `POST /api/plans/{pid}/business-case`: a promised target, in the metric's own unit. */
+export interface BusinessCaseBody {
+  metric: string;
+  baseline_value: number;
+  target_value: number;
+  unit?: string;
+  source?: "charter" | "gate_review";
+}
+
+/** How a value point was arrived at. */
+export type ValueMethod = "measured" | "estimated" | "asserted";
+
+/** `POST /api/plans/{pid}/value-points`: an observed value. */
+export interface ValuePointBody {
+  value: number;
+  method: ValueMethod;
+  currency?: string;
+  is_first_measurable?: boolean;
+  evidence_ref?: string;
+}
+
+/** Why a value figure is absent (`domain/src/value.rs`). */
+export type ValueAbsent =
+  | "unrealized"
+  | "no_denominator"
+  | "mixed_currency"
+  | "no_baseline"
+  | "no_responses"
+  | "overflow";
+
+/** `GET /api/plans/{pid}/value-realization`. The adoption `reason` is the service's English and is not shown. */
+export interface ValueRealization {
+  plan_pid: string;
+  transformation_roi: {
+    basis_points: number | null;
+    absent: ValueAbsent | null;
+    realized_minor: number;
+    investment_minor: number;
+    measured_share_basis_points: number | null;
+  };
+  time_to_value: {
+    observations: number;
+    p50_days: number | null;
+    p85_days: number | null;
+    absent: ValueAbsent | null;
+  };
+  adoption: {
+    measured: boolean;
+    basis_points?: number | null;
+    absent?: ValueAbsent | null;
+    active_users?: number;
+    target_users?: number;
+    definition?: string;
+    window_days?: number;
+    reason?: string;
+  };
+  performance_to_business_case: {
+    metric: string;
+    baseline_value: number;
+    target_value: number;
+    promised_by: string | null;
+    source: string;
+    approved_at: string;
+  }[];
+  as_of: string;
+}
+
+/** Which actual cost the portfolio's earned value reads. */
+export type AcSource = "budget_lines" | "labour" | "both";

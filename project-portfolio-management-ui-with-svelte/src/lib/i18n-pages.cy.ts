@@ -7502,4 +7502,232 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.lessons.refused_proposal_gone":
     "Nid yw'r cynnig hwnnw'n bodoli mwyach, neu ni allwch ei ddarllen.",
   "p.lessons.could_not_read_similar": "Methu darllen gwersi cynlluniau tebyg.",
+  "p.director_pack.open_by_severity": "Ar agor yn ôl difrifoldeb: {list}",
+  "p.director_pack.issues_overdue": "Materion hwyr: {n}",
+  "p.director_pack.issues_in_window":
+    "Yn y cyfnod: {raised} wedi'u codi, {resolved} wedi'u datrys",
+  "p.director_pack.oldest_issue":
+    "Y mater agored hynaf: {title} (diwrnodau calendr ar agor: {n})",
+  "p.director_pack.approved_not_implemented":
+    "Wedi'u cymeradwyo ond heb eu gweithredu eto: {n}",
+  "p.director_pack.decided_in_window": "Penderfynwyd yn y cyfnod: {n}",
+  "p.director_pack.changes_by_status": "Yn ôl statws: {list}",
+  "p.director_pack.oldest_change":
+    "Y cais newid agored hynaf: {title} (diwrnodau calendr ar agor: {n})",
+  "p.live_pack.heading": "Darlleniadau'r rhaglenni, nawr",
+  "p.live_pack.says":
+    "Wedi'u darllen nawr o'r cynlluniau y gallwch eu darllen, wedi'u llunio fel y mae pecyn y cyfarwyddwyr yn eu llunio. Mae pecyn a gyhoeddwyd yn cadw'r ffigurau y cafodd ei gyhoeddi gyda nhw; dim ond o becyn a gyhoeddwyd y daw pwynt blaenorol y siart twymyn.",
+  "p.live_pack.f_ac": "Cost gwirioneddol ar gyfer gwerth a enillwyd",
+  "p.live_pack.ac_budget_lines": "Llinellau cyllideb (y rhagosodiad)",
+  "p.live_pack.ac_labour": "Cost llafur a gofnodwyd",
+  "p.live_pack.ac_both": "Llinellau cyllideb a chost llafur",
+  "p.live_pack.f_window":
+    "Materion a cheisiadau newid dros y diwrnodau diwethaf ({min} i {max}; gwag am 30)",
+  "p.live_pack.read_again": "Darllen eto",
+  "p.live_pack.problem_window":
+    "Rhaid i nifer y diwrnodau fod yn rhif cyfan o {min} i {max}, neu'n wag am 30.",
+  "p.live_pack.could_not_read_fever": "Methu darllen siart twymyn y byffer.",
+  "p.live_pack.could_not_read_evm": "Methu darllen y gwerth a enillwyd.",
+  "p.live_pack.could_not_read_benefits": "Methu darllen y buddion.",
+  "p.live_pack.could_not_read_issues":
+    "Methu darllen y materion a'r ceisiadau newid.",
+  "p.live_pack.issues_heading": "Materion a cheisiadau newid",
+  "p.live_pack.issues_none":
+    "Ni allwch ddarllen unrhyw gynllun sydd â materion neu geisiadau newid.",
+  "p.live_pack.nothing": "Dim byd i'w ddangos.",
+  "p.forecast.heading": "Rhagolwg wrth gwblhau",
+  "p.forecast.says":
+    "Yr amcangyfrif wrth gwblhau yw'r cost gwirioneddol hyd yma ynghyd â'r amcangyfrif i gwblhau. Yr amcangyfrif i gwblhau yw'r ffigur rheoli prosiect cyfan diweddaraf yn arian cyfred y rhagolwg, neu fel arall yr hyn y mae'r llinell sylfaen ddiweddaraf yn dal i'w gynllunio. Wedi'i ddarllen nawr; ni chedwir dim.",
+  "p.forecast.absent_no_currency":
+    "Dim rhagolwg: nid oes gan y cynllun linell sylfaen cyllideb na ffigur rheoli prosiect cyfan, felly nid oes arian cyfred i ragweld ynddo.",
+  "p.forecast.c_actual": "Cost gwirioneddol hyd yma",
+  "p.forecast.c_etc": "Amcangyfrif i gwblhau",
+  "p.forecast.c_eac": "Amcangyfrif wrth gwblhau",
+  "p.forecast.c_plans": "Cynlluniau",
+  "p.forecast.not_known": "anhysbys",
+  "p.forecast.etc_tpc": "o'r ffigur rheoli prosiect cyfan diweddaraf",
+  "p.forecast.etc_baseline":
+    "o'r hyn y mae'r llinell sylfaen yn dal i'w gynllunio",
+  "p.forecast.no_baseline_used": "Ni ddefnyddiwyd llinell sylfaen cyllideb.",
+  "p.forecast.baseline_used":
+    "Yn defnyddio fersiwn {version} o'r llinell sylfaen cyllideb.",
+  "p.forecast.as_of": "Darllenwyd {date}.",
+  "p.forecast.other_currency":
+    "Nid yw cost gwirioneddol a gofnodwyd mewn arian cyfred heblaw {currency} wedi'i ychwanegu.",
+  "p.forecast.baselines_heading": "Llinellau sylfaen cyllideb",
+  "p.forecast.baselines_says":
+    "Llinell sylfaen yw'r gyllideb a gymeradwywyd fesul cyfnod, mewn un arian cyfred. Unwaith y caiff ei chymeradwyo mae wedi'i rhewi ac ni chaiff ei golygu byth; fersiwn newydd yw ail-sylfaenu, ac mae angen rheswm ar bob fersiwn ar ôl y cyntaf. Mae llinell sylfaen yn dal 1 i {max} cyfnod, pob un â diwedd nad yw cyn ei ddechrau a swm a gynlluniwyd nad yw'n is na sero.",
+  "p.forecast.no_baselines": "Ni chymeradwywyd unrhyw linell sylfaen cyllideb.",
+  "p.forecast.version_line":
+    "Fersiwn {version} · {currency} · cymeradwywyd {date}",
+  "p.forecast.period_line": "{start} i {end}: {amount}",
+  "p.forecast.first_baseline_heading": "Cymeradwyo'r llinell sylfaen gyntaf",
+  "p.forecast.rebaseline_heading": "Cymeradwyo fersiwn {version}",
+  "p.forecast.f_currency": "Arian cyfred (tair llythyren)",
+  "p.forecast.periods_legend": "Cyfnodau",
+  "p.forecast.f_start": "Cyfnod {n} yn dechrau",
+  "p.forecast.f_end": "Cyfnod {n} yn gorffen",
+  "p.forecast.f_amount": "Swm a gynlluniwyd cyfnod {n}",
+  "p.forecast.remove_period": "Tynnu cyfnod {n}",
+  "p.forecast.add_period": "Ychwanegu cyfnod",
+  "p.forecast.f_reason": "Rheswm (dewisol ar gyfer y cyntaf)",
+  "p.forecast.f_reason_needed":
+    "Pam mae'r gyllideb yn cael ei hail-sylfaenu (angenrheidiol)",
+  "p.forecast.approve": "Cymeradwyo'r llinell sylfaen",
+  "p.forecast.confirm_baseline":
+    "Cymeradwyo fersiwn {version} o'r llinell sylfaen cyllideb? Unwaith y caiff ei chymeradwyo mae wedi'i rhewi ac ni ellir ei newid na'i thynnu.",
+  "p.forecast.baseline_approved": "Fersiwn {version} wedi'i chymeradwyo.",
+  "p.forecast.problem_currency":
+    "Rhaid i'r arian cyfred fod yn god tair llythyren, fel GBP neu EUR.",
+  "p.forecast.problem_no_periods": "Rhowch o leiaf un cyfnod.",
+  "p.forecast.problem_too_many":
+    "Mae llinell sylfaen yn dal {max} cyfnod ar y mwyaf.",
+  "p.forecast.problem_dates":
+    "Mae angen dyddiad dechrau a dyddiad gorffen ar bob cyfnod.",
+  "p.forecast.problem_order": "Ni all cyfnod orffen cyn iddo ddechrau.",
+  "p.forecast.problem_amount":
+    "Rhaid i bob swm a gynlluniwyd fod yn rhif, heb fod yn is na sero.",
+  "p.forecast.problem_reason": "Mae angen rheswm ar gyfer ail-sylfaenu.",
+  "p.forecast.problem_reason_long":
+    "Mae'r rheswm yn rhy hir: {bytes} beit ar y mwyaf.",
+  "p.forecast.problem_same":
+    "Mae hyn yr un fath â'r fersiwn ddiweddaraf; ni anfonwyd dim.",
+  "p.forecast.refused_gone":
+    "Nid yw'r cynllun hwn yn bodoli mwyach, neu ni allwch ei ddarllen.",
+  "p.forecast.refused_baseline":
+    "Gwrthodwyd y llinell sylfaen: efallai bod fersiwn arall wedi'i chymeradwyo yn y cyfamser, sy'n golygu bod angen rheswm. Darllenwyd y rhestr eto.",
+  "p.forecast.could_not_approve": "Methu cymeradwyo'r llinell sylfaen.",
+  "p.forecast.could_not_read": "Methu darllen y rhagolwg.",
+  "p.forecast.could_not_read_baselines":
+    "Methu darllen y llinellau sylfaen cyllideb.",
+  "p.forecast.could_not_read_lines": "Methu darllen y llinellau cyllideb.",
+  "p.forecast.tranches_heading": "Cyllid a ddelir tan borth",
+  "p.forecast.tranches_says":
+    "Mae llinell gyllideb â phorth cyllido yn cael ei dal nes bod cam y cynllun yn cyrraedd y porth hwnnw; yna gellir ei rhyddhau, unwaith, a dim ond wedyn y gellir cofnodi cost gwirioneddol yn ei herbyn. Ni ellir dadwneud rhyddhau.",
+  "p.forecast.stage_now": "Cam y cynllun: {stage}.",
+  "p.forecast.stage_none": "Nid yw'r cynllun wedi pasio unrhyw borth eto.",
+  "p.forecast.no_tranches":
+    "Nid oes llinell gyllideb yn cael ei dal tan borth.",
+  "p.forecast.gate_line": "wedi'i dal tan {gate}",
+  "p.forecast.state_released": "rhyddhawyd {date}",
+  "p.forecast.state_held": "yn dal wedi'i dal: nid yw'r porth wedi'i basio",
+  "p.forecast.release": "Rhyddhau {description}",
+  "p.forecast.confirm_release":
+    "Rhyddhau {description}, a ddelir tan {gate}? Ni ellir dadwneud rhyddhau.",
+  "p.forecast.released": "{description} wedi'i ryddhau.",
+  "p.forecast.refused_line_gone":
+    "Nid yw'r llinell gyllideb neu'r cynllun hwnnw'n bodoli mwyach.",
+  "p.forecast.refused_register":
+    "Gwrthodwyd: mae cofrestr y rhaglen yn anghyflawn. Cwblhewch hi ar dudalen cyflawnrwydd y gofrestr yn gyntaf.",
+  "p.forecast.refused_release":
+    "Gwrthodwyd: nid yw'r llinell yn cael ei dal mwyach, neu nid yw ei phorth wedi'i basio. Darllenwyd y llinellau eto.",
+  "p.forecast.could_not_release": "Methu rhyddhau'r llinell.",
+  "p.forecast.rollup_heading": "Rhagolwg wrth gwblhau, wedi'i grynhoi",
+  "p.forecast.rollup_says":
+    "O un cynllun dros y cynlluniau oddi tano, hyd at {max} lefel o ddyfnder, un rhes i bob arian cyfred: nid yw arian cyfred byth yn cael eu hadio at ei gilydd. Mae cynlluniau heb arian cyfred i ragweld ynddo yn cael eu cyfrif, nid eu hadio.",
+  "p.forecast.f_plan": "Cynllun",
+  "p.forecast.choose_plan": "Dewiswch gynllun",
+  "p.forecast.f_depth": "Lefelau o ddyfnder (1 i {max}; gwag am y cyfan)",
+  "p.forecast.show_rollup": "Dangos y rhagolwg",
+  "p.forecast.problem_plan": "Dewiswch gynllun.",
+  "p.forecast.problem_depth":
+    "Rhaid i'r lefelau o ddyfnder fod yn rhif cyfan o 1 i {max}, neu'n wag.",
+  "p.forecast.refused_plan_gone":
+    "Nid yw'r cynllun hwnnw'n bodoli mwyach, neu ni allwch ei ddarllen.",
+  "p.forecast.could_not_read_rollup":
+    "Methu darllen y rhagolwg wedi'i grynhoi.",
+  "p.forecast.rollup_line_one": "O {name}: darllenwyd {n} cynllun, {date}.",
+  "p.forecast.rollup_line_other":
+    "O {name}: darllenwyd {n} o gynlluniau, {date}.",
+  "p.forecast.rollup_truncated":
+    "Mae'r goeden yn fwy nag y mae'r gwasanaeth yn ei cherdded; mae'r ffigurau'n cwmpasu rhan ohoni.",
+  "p.forecast.rollup_revisits_one":
+    "Cyrhaeddwyd {n} cynllun ddwywaith a'i gyfrif unwaith.",
+  "p.forecast.rollup_revisits_other":
+    "Cyrhaeddwyd {n} o gynlluniau ddwywaith a'u cyfrif unwaith.",
+  "p.forecast.rollup_no_currency_one":
+    "Nid oes gan {n} cynllun arian cyfred i ragweld ynddo ac nid yw wedi'i adio.",
+  "p.forecast.rollup_no_currency_other":
+    "Nid oes gan {n} o gynlluniau arian cyfred i ragweld ynddo ac nid ydynt wedi'u hadio.",
+  "p.forecast.rollup_empty": "Nid oes gan unrhyw gynllun yma ragolwg.",
+  "p.value.heading": "Gwerth a wireddwyd",
+  "p.value.says":
+    "Wedi'i ddarllen nawr o'r gwerth a gofnodwyd; ni chedwir dim. Mae'r elw ar fuddsoddiad yn gosod pob pwynt gwerth yn erbyn y cost gwirioneddol a gofnodwyd, ac fe'i hatelir pan fo'r llinellau cyllideb yn defnyddio mwy nag un arian cyfred, gan nad oes arian cyfred yn cael ei drosi. Mae ffigur na ellir ei nodi yn dweud pam, byth sero.",
+  "p.value.roi": "Elw ar fuddsoddiad: {pct}",
+  "p.value.roi_absent": "Elw ar fuddsoddiad heb ei nodi: {reason}",
+  "p.value.measured_share":
+    "tystiolaeth wedi'i mesur: {pct} o'r pwyntiau gwerth",
+  "p.value.ttv_one":
+    "Amser i werth: canolrif {p50} diwrnod calendr, 85fed canradd {p85} ({n} arsylwad)",
+  "p.value.ttv_other":
+    "Amser i werth: canolrif {p50} diwrnod calendr, 85fed canradd {p85} ({n} o arsylwadau)",
+  "p.value.ttv_absent": "Amser i werth heb ei nodi: {reason}",
+  "p.value.adoption":
+    "Mabwysiadu: {pct} ({active} o {target} defnyddiwr yn weithredol dros {days} diwrnod)",
+  "p.value.adoption_definition": "defnyddiwr gweithredol yw: {definition}",
+  "p.value.adoption_absent": "Mabwysiadu heb ei nodi: {reason}",
+  "p.value.adoption_none": "Ni chofnodwyd unrhyw ddarlleniad mabwysiadu.",
+  "p.value.absent_unrealized": "ni chofnodwyd unrhyw werth",
+  "p.value.absent_no_denominator":
+    "nid oes dim i'w osod yn ei erbyn (dim cost gwirioneddol, na tharged)",
+  "p.value.absent_mixed_currency":
+    "mae'r llinellau cyllideb yn defnyddio mwy nag un arian cyfred",
+  "p.value.absent_no_baseline": "nid oes llinell sylfaen cyllideb",
+  "p.value.absent_no_responses": "nid oes neb wedi ymateb",
+  "p.value.absent_overflow": "mae'r ffigur yn rhy fawr i'w gyfrifo",
+  "p.value.absent_other": "ni ddywedodd y gwasanaeth pam",
+  "p.value.case_heading": "Targedau'r achos busnes",
+  "p.value.no_targets": "Ni chofnodwyd unrhyw darged achos busnes.",
+  "p.value.target_line":
+    "{metric}: o {baseline} i {target} · {source} · cymeradwywyd {date}",
+  "p.value.source_charter": "y siarter",
+  "p.value.source_gate_review": "adolygiad porth",
+  "p.value.source_other": "ffynhonnell arall",
+  "p.value.to_costs": "Cofnodi targed ar y dudalen costau",
+  "p.value.point_heading": "Cofnodi gwerth a arsylwyd",
+  "p.value.point_says":
+    "Mae gwerth wedi'i fesur, wedi'i amcangyfrif neu wedi'i honni. Gydag arian cyfred mae'n swm o arian; hebddo, rhif cyfan yn uned y mesur ei hun. Ni ellir newid pwynt gwerth yma unwaith y caiff ei gofnodi. Gall un pwynt gwerth i bob cynllun fod y gwerth mesuradwy cyntaf: mae'n atal cloc amser i werth, a ddechreuwyd gan y targed achos busnes cyntaf, ac ni ellir ei symud.",
+  "p.value.f_value": "Gwerth",
+  "p.value.f_currency": "Arian cyfred (tair llythyren, neu'n wag)",
+  "p.value.f_method": "Sut y cyrhaeddwyd ato",
+  "p.value.method_measured": "wedi'i fesur",
+  "p.value.method_estimated": "wedi'i amcangyfrif",
+  "p.value.method_asserted": "wedi'i honni",
+  "p.value.f_evidence": "Tystiolaeth (dolen neu gyfeirnod, dewisol)",
+  "p.value.f_first": "Dyma'r gwerth mesuradwy cyntaf",
+  "p.value.record_point": "Cofnodi'r gwerth",
+  "p.value.confirm_first":
+    "Cofnodi hwn fel gwerth mesuradwy cyntaf y cynllun? Mae'n atal y cloc amser i werth ac ni ellir ei symud.",
+  "p.value.point_recorded": "Gwerth wedi'i gofnodi.",
+  "p.value.problem_currency":
+    "Rhaid i'r arian cyfred fod yn god tair llythyren, neu'n wag.",
+  "p.value.problem_amount": "Rhaid i'r gwerth fod yn swm o arian.",
+  "p.value.problem_whole":
+    "Heb arian cyfred, rhaid i'r gwerth fod yn rhif cyfan.",
+  "p.value.problem_method": "Dewiswch sut y cyrhaeddwyd at y gwerth.",
+  "p.value.refused_first_taken":
+    "Gwrthodwyd: mae gan y cynllun hwn werth mesuradwy cyntaf eisoes; mae'r cloc yn stopio unwaith.",
+  "p.value.refused_value": "Gwrthodwyd y gwerth.",
+  "p.value.refused_gone":
+    "Nid yw'r cynllun hwn yn bodoli bellach, neu ni allwch ei ddarllen.",
+  "p.value.could_not_read": "Methu darllen y gwerth a wireddwyd.",
+  "p.value.could_not_record_point": "Methu cofnodi'r gwerth.",
+  "p.value.case_says":
+    "Mesur a addawyd yn y siarter neu mewn adolygiad porth yw targed, gyda'i werth wrth gymeradwyo a'r gwerth a addawyd, fel rhifau cyfan yn uned y mesur. Mae'r dyddiad y caiff ei gymeradwyo yn dechrau'r cloc amser i werth ac ni ellir ei newid, ac ni ellir newid na thynnu targed yma.",
+  "p.value.to_benefits": "Mae'r gwerth a wireddwyd ar y dudalen buddion.",
+  "p.value.f_metric": "Mesur",
+  "p.value.f_baseline": "Gwerth wrth gymeradwyo",
+  "p.value.f_target": "Gwerth a addawyd",
+  "p.value.f_unit": "Uned (dewisol)",
+  "p.value.f_source": "Addawyd yn",
+  "p.value.record_target": "Cofnodi'r targed",
+  "p.value.confirm_target":
+    "Cofnodi'r targed {metric}? Ni ellir ei newid na'i dynnu yma.",
+  "p.value.target_recorded": "Targed {metric} wedi'i gofnodi.",
+  "p.value.problem_metric": "Enwch y mesur.",
+  "p.value.problem_target_values":
+    "Rhaid i'r gwerth wrth gymeradwyo a'r gwerth a addawyd fod yn rhifau cyfan.",
+  "p.value.problem_source": "Dewiswch ble yr addawyd y targed.",
+  "p.value.refused_target": "Gwrthodwyd y targed.",
+  "p.value.could_not_record_target": "Methu cofnodi'r targed.",
 };

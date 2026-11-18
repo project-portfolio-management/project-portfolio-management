@@ -7606,4 +7606,224 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Esa propuesta ya no existe, o usted no puede leerla.",
   "p.lessons.could_not_read_similar":
     "No se pudieron leer las lecciones de planes similares.",
+  "p.director_pack.open_by_severity": "Abiertas por gravedad: {list}",
+  "p.director_pack.issues_overdue": "Incidencias vencidas: {n}",
+  "p.director_pack.issues_in_window":
+    "En el periodo: {raised} planteadas, {resolved} resueltas",
+  "p.director_pack.oldest_issue":
+    "Incidencia abierta más antigua: {title} (días naturales abierta: {n})",
+  "p.director_pack.approved_not_implemented":
+    "Aprobadas pero aún no implantadas: {n}",
+  "p.director_pack.decided_in_window": "Decididas en el periodo: {n}",
+  "p.director_pack.changes_by_status": "Por estado: {list}",
+  "p.director_pack.oldest_change":
+    "Solicitud de cambio abierta más antigua: {title} (días naturales abierta: {n})",
+  "p.live_pack.heading": "Lecturas de los programas, ahora",
+  "p.live_pack.says":
+    "Leídas ahora de los planes que puede leer, presentadas como las presenta el informe para la dirección. Un informe emitido conserva sus cifras; el punto anterior del gráfico de fiebre solo procede de un informe emitido.",
+  "p.live_pack.f_ac": "Coste real para el valor ganado",
+  "p.live_pack.ac_budget_lines": "Partidas presupuestarias (predeterminado)",
+  "p.live_pack.ac_labour": "Coste de mano de obra registrado",
+  "p.live_pack.ac_both": "Partidas presupuestarias y coste de mano de obra",
+  "p.live_pack.f_window":
+    "Incidencias y solicitudes de cambio de los últimos días ({min} a {max}; vacío para 30)",
+  "p.live_pack.read_again": "Volver a leer",
+  "p.live_pack.problem_window":
+    "El número de días debe ser un entero de {min} a {max}, o vacío para 30.",
+  "p.live_pack.could_not_read_fever":
+    "No se pudo leer el gráfico de fiebre del colchón.",
+  "p.live_pack.could_not_read_evm": "No se pudo leer el valor ganado.",
+  "p.live_pack.could_not_read_benefits": "No se pudieron leer los beneficios.",
+  "p.live_pack.could_not_read_issues":
+    "No se pudieron leer las incidencias y solicitudes de cambio.",
+  "p.live_pack.issues_heading": "Incidencias y solicitudes de cambio",
+  "p.live_pack.issues_none":
+    "No puede leer ningún plan con incidencias o solicitudes de cambio.",
+  "p.live_pack.nothing": "Nada que mostrar.",
+  "p.forecast.heading": "Previsión al finalizar",
+  "p.forecast.says":
+    "La estimación al finalizar es el coste real hasta ahora más la estimación hasta finalizar. La estimación hasta finalizar es la última cifra de control total del proyecto en la moneda de la previsión, o si no, lo que la última línea base aún planifica. Leída ahora; no se guarda nada.",
+  "p.forecast.absent_no_currency":
+    "Sin previsión: el plan no tiene línea base de presupuesto ni cifra de control total del proyecto, así que no hay moneda en la que prever.",
+  "p.forecast.c_actual": "Coste real hasta ahora",
+  "p.forecast.c_etc": "Estimación hasta finalizar",
+  "p.forecast.c_eac": "Estimación al finalizar",
+  "p.forecast.c_plans": "Planes",
+  "p.forecast.not_known": "desconocido",
+  "p.forecast.etc_tpc": "de la última cifra de control total del proyecto",
+  "p.forecast.etc_baseline": "de lo que la línea base aún planifica",
+  "p.forecast.no_baseline_used": "No se usó ninguna línea base de presupuesto.",
+  "p.forecast.baseline_used":
+    "Usa la versión {version} de la línea base de presupuesto.",
+  "p.forecast.as_of": "Leído el {date}.",
+  "p.forecast.other_currency":
+    "El coste real registrado en una moneda distinta de {currency} no se suma.",
+  "p.forecast.baselines_heading": "Líneas base de presupuesto",
+  "p.forecast.baselines_says":
+    "Una línea base es el presupuesto aprobado por periodo, en una moneda. Una vez aprobada queda congelada y nunca se edita; una nueva línea base es una versión nueva, y cada versión después de la primera necesita un motivo. Una línea base tiene de 1 a {max} periodos, cada uno con un final no anterior a su inicio y un importe previsto no inferior a cero.",
+  "p.forecast.no_baselines":
+    "No se ha aprobado ninguna línea base de presupuesto.",
+  "p.forecast.version_line":
+    "Versión {version} · {currency} · aprobada el {date}",
+  "p.forecast.period_line": "{start} a {end}: {amount}",
+  "p.forecast.first_baseline_heading": "Aprobar la primera línea base",
+  "p.forecast.rebaseline_heading": "Aprobar la versión {version}",
+  "p.forecast.f_currency": "Moneda (tres letras)",
+  "p.forecast.periods_legend": "Periodos",
+  "p.forecast.f_start": "Inicio del periodo {n}",
+  "p.forecast.f_end": "Fin del periodo {n}",
+  "p.forecast.f_amount": "Importe previsto del periodo {n}",
+  "p.forecast.remove_period": "Quitar el periodo {n}",
+  "p.forecast.add_period": "Añadir un periodo",
+  "p.forecast.f_reason": "Motivo (opcional para la primera)",
+  "p.forecast.f_reason_needed": "Por qué se rehace la línea base (obligatorio)",
+  "p.forecast.approve": "Aprobar la línea base",
+  "p.forecast.confirm_baseline":
+    "¿Aprobar la versión {version} de la línea base de presupuesto? Una vez aprobada queda congelada y no se puede cambiar ni quitar.",
+  "p.forecast.baseline_approved": "Versión {version} aprobada.",
+  "p.forecast.problem_currency":
+    "La moneda debe ser un código de tres letras, como GBP o EUR.",
+  "p.forecast.problem_no_periods": "Indique al menos un periodo.",
+  "p.forecast.problem_too_many":
+    "Una línea base tiene como máximo {max} periodos.",
+  "p.forecast.problem_dates":
+    "Cada periodo necesita una fecha de inicio y una de fin.",
+  "p.forecast.problem_order": "Un periodo no puede terminar antes de empezar.",
+  "p.forecast.problem_amount":
+    "Cada importe previsto debe ser un número, no inferior a cero.",
+  "p.forecast.problem_reason": "Una nueva línea base necesita un motivo.",
+  "p.forecast.problem_reason_long":
+    "El motivo es demasiado largo: como máximo {bytes} bytes.",
+  "p.forecast.problem_same":
+    "Es igual que la última versión; no se envió nada.",
+  "p.forecast.refused_gone": "Este plan ya no existe, o no puede leerlo.",
+  "p.forecast.refused_baseline":
+    "Se rechazó la línea base: puede que se haya aprobado otra versión entretanto, lo que hace necesario un motivo. Se ha vuelto a leer la lista.",
+  "p.forecast.could_not_approve": "No se pudo aprobar la línea base.",
+  "p.forecast.could_not_read": "No se pudo leer la previsión.",
+  "p.forecast.could_not_read_baselines":
+    "No se pudieron leer las líneas base de presupuesto.",
+  "p.forecast.could_not_read_lines":
+    "No se pudieron leer las partidas presupuestarias.",
+  "p.forecast.tranches_heading": "Financiación retenida hasta una puerta",
+  "p.forecast.tranches_says":
+    "Una partida con puerta de financiación se retiene hasta que la fase del plan alcanza esa puerta; entonces puede liberarse, una vez, y solo entonces se puede registrar coste real contra ella. Una liberación no se puede deshacer.",
+  "p.forecast.stage_now": "Fase del plan: {stage}.",
+  "p.forecast.stage_none": "El plan aún no ha superado ninguna puerta.",
+  "p.forecast.no_tranches": "Ninguna partida se retiene hasta una puerta.",
+  "p.forecast.gate_line": "retenida hasta {gate}",
+  "p.forecast.state_released": "liberada el {date}",
+  "p.forecast.state_held": "aún retenida: la puerta no se ha superado",
+  "p.forecast.release": "Liberar {description}",
+  "p.forecast.confirm_release":
+    "¿Liberar {description}, retenida hasta {gate}? Una liberación no se puede deshacer.",
+  "p.forecast.released": "{description} liberada.",
+  "p.forecast.refused_line_gone": "Esa partida o ese plan ya no existe.",
+  "p.forecast.refused_register":
+    "Rechazado: el registro del programa está incompleto. Complételo primero en la página de integridad del registro.",
+  "p.forecast.refused_release":
+    "Rechazado: la partida ya no está retenida, o su puerta no se ha superado. Se han vuelto a leer las partidas.",
+  "p.forecast.could_not_release": "No se pudo liberar la partida.",
+  "p.forecast.rollup_heading": "Previsión al finalizar, agregada",
+  "p.forecast.rollup_says":
+    "Desde un plan sobre los planes que tiene debajo, hasta {max} niveles, una fila por moneda: las monedas nunca se suman. Los planes sin moneda en la que prever se cuentan, no se suman.",
+  "p.forecast.f_plan": "Plan de partida",
+  "p.forecast.choose_plan": "Elija un plan",
+  "p.forecast.f_depth": "Niveles de profundidad (1 a {max}; vacío para todos)",
+  "p.forecast.show_rollup": "Mostrar la previsión",
+  "p.forecast.problem_plan": "Elija un plan.",
+  "p.forecast.problem_depth":
+    "Los niveles deben ser un entero de 1 a {max}, o vacío.",
+  "p.forecast.refused_plan_gone": "Ese plan ya no existe, o no puede leerlo.",
+  "p.forecast.could_not_read_rollup": "No se pudo leer la previsión agregada.",
+  "p.forecast.rollup_line_one": "Desde {name}: {n} plan leído, {date}.",
+  "p.forecast.rollup_line_other": "Desde {name}: {n} planes leídos, {date}.",
+  "p.forecast.rollup_truncated":
+    "El árbol es mayor de lo que recorre el servicio; las cifras cubren una parte.",
+  "p.forecast.rollup_revisits_one":
+    "{n} plan se alcanzó dos veces y se contó una.",
+  "p.forecast.rollup_revisits_other":
+    "{n} planes se alcanzaron dos veces y se contaron una.",
+  "p.forecast.rollup_no_currency_one":
+    "{n} plan no tiene moneda en la que prever y no se suma.",
+  "p.forecast.rollup_no_currency_other":
+    "{n} planes no tienen moneda en la que prever y no se suman.",
+  "p.forecast.rollup_empty": "Ningún plan aquí tiene previsión.",
+  "p.value.heading": "Valor obtenido",
+  "p.value.says":
+    "Leído ahora del valor registrado; no se guarda nada. El retorno de la inversión compara cada punto de valor con el coste real registrado y se omite cuando las partidas usan más de una moneda, pues no se convierte ninguna. Una cifra que no puede indicarse dice por qué, nunca cero.",
+  "p.value.roi": "Retorno de la inversión: {pct}",
+  "p.value.roi_absent": "Retorno de la inversión no indicado: {reason}",
+  "p.value.measured_share": "evidencia medida: {pct} de los puntos de valor",
+  "p.value.ttv_one":
+    "Tiempo hasta el valor: mediana {p50} días naturales, percentil 85 {p85} ({n} observación)",
+  "p.value.ttv_other":
+    "Tiempo hasta el valor: mediana {p50} días naturales, percentil 85 {p85} ({n} observaciones)",
+  "p.value.ttv_absent": "Tiempo hasta el valor no indicado: {reason}",
+  "p.value.adoption":
+    "Adopción: {pct} ({active} de {target} usuarios activos en {days} días)",
+  "p.value.adoption_definition": "un usuario activo es: {definition}",
+  "p.value.adoption_absent": "Adopción no indicada: {reason}",
+  "p.value.adoption_none": "No hay ninguna lectura de adopción registrada.",
+  "p.value.absent_unrealized": "no se ha registrado ningún valor",
+  "p.value.absent_no_denominator":
+    "no hay nada con que compararlo (sin coste real o sin objetivo)",
+  "p.value.absent_mixed_currency": "las partidas usan más de una moneda",
+  "p.value.absent_no_baseline": "no hay línea base de presupuesto",
+  "p.value.absent_no_responses": "nadie ha respondido",
+  "p.value.absent_overflow": "la cifra es demasiado grande para calcularla",
+  "p.value.absent_other": "el servicio no dijo por qué",
+  "p.value.case_heading": "Objetivos del caso de negocio",
+  "p.value.no_targets":
+    "No hay ningún objetivo del caso de negocio registrado.",
+  "p.value.target_line":
+    "{metric}: de {baseline} a {target} · {source} · aprobado el {date}",
+  "p.value.source_charter": "el acta de constitución",
+  "p.value.source_gate_review": "una revisión de puerta",
+  "p.value.source_other": "otra fuente",
+  "p.value.to_costs": "Registrar un objetivo en la página de costes",
+  "p.value.point_heading": "Registrar un valor observado",
+  "p.value.point_says":
+    "Un valor es medido, estimado o declarado. Con moneda es una cantidad de dinero; sin ella, un entero en la unidad de la medida. Un punto de valor no se puede cambiar aquí una vez registrado. Un punto de valor por plan puede ser el primer valor medible: detiene el reloj del tiempo hasta el valor, que inició el primer objetivo del caso de negocio, y no se puede mover.",
+  "p.value.f_value": "Valor",
+  "p.value.f_currency": "Moneda (tres letras, o vacío)",
+  "p.value.f_method": "Cómo se obtuvo",
+  "p.value.method_measured": "medido",
+  "p.value.method_estimated": "estimado",
+  "p.value.method_asserted": "declarado",
+  "p.value.f_evidence": "Evidencia (enlace o referencia, opcional)",
+  "p.value.f_first": "Este es el primer valor medible",
+  "p.value.record_point": "Registrar el valor",
+  "p.value.confirm_first":
+    "¿Registrar esto como el primer valor medible del plan? Detiene el reloj del tiempo hasta el valor y no se puede mover.",
+  "p.value.point_recorded": "Valor registrado.",
+  "p.value.problem_currency":
+    "La moneda debe ser un código de tres letras, o vacía.",
+  "p.value.problem_amount": "El valor debe ser una cantidad de dinero.",
+  "p.value.problem_whole": "Sin moneda, el valor debe ser un número entero.",
+  "p.value.problem_method": "Elija cómo se obtuvo el valor.",
+  "p.value.refused_first_taken":
+    "Rechazado: este plan ya tiene un primer valor medible; el reloj se detiene una vez.",
+  "p.value.refused_value": "Se rechazó el valor.",
+  "p.value.refused_gone": "Este plan ya no existe, o usted no puede leerlo.",
+  "p.value.could_not_read": "No se pudo leer el valor obtenido.",
+  "p.value.could_not_record_point": "No se pudo registrar el valor.",
+  "p.value.case_says":
+    "Un objetivo es una medida prometida en el acta de constitución o en una revisión de puerta, con su valor en la aprobación y el valor prometido, como enteros en la unidad de la medida. La fecha de aprobación inicia el reloj del tiempo hasta el valor y no se puede cambiar; un objetivo no se puede cambiar ni quitar aquí.",
+  "p.value.to_benefits": "El valor obtenido está en la página de beneficios.",
+  "p.value.f_metric": "Medida",
+  "p.value.f_baseline": "Valor en la aprobación",
+  "p.value.f_target": "Valor prometido",
+  "p.value.f_unit": "Unidad (opcional)",
+  "p.value.f_source": "Prometido en",
+  "p.value.record_target": "Registrar el objetivo",
+  "p.value.confirm_target":
+    "¿Registrar el objetivo {metric}? No se puede cambiar ni quitar aquí.",
+  "p.value.target_recorded": "Objetivo {metric} registrado.",
+  "p.value.problem_metric": "Nombre la medida.",
+  "p.value.problem_target_values":
+    "El valor en la aprobación y el valor prometido deben ser números enteros.",
+  "p.value.problem_source": "Elija dónde se prometió el objetivo.",
+  "p.value.refused_target": "Se rechazó el objetivo.",
+  "p.value.could_not_record_target": "No se pudo registrar el objetivo.",
 };

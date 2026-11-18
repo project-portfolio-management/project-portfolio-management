@@ -294,6 +294,14 @@ import type {
   TaskProposalCommit,
   TaskProposalPreview,
   TaskProposalsBody,
+  AcSource,
+  BudgetBaseline,
+  BudgetBaselineBody,
+  BusinessCaseBody,
+  ForecastRollup,
+  PlanForecast,
+  ValuePointBody,
+  ValueRealization,
 } from "./ppm-types";
 
 export * from "./ppm-types";
@@ -1552,6 +1560,74 @@ export class PpmClient {
   /** Lessons from plans whose title is like the proposal's, best match first, with the match's evidence (NC-8). */
   proposalLessons(proposalPid: string): Promise<ProposalLessonMatch[]> {
     return this.http.get(`/api/proposals/${proposalPid}/lessons`);
+  }
+  // ---- programme money, value and benefits, read live (NC-1 slice 12 part f, DP-7, DP-8, DP-9) ----
+  /** The fever chart of the programmes the reader can read, now: the shape of a pack's `buffer_fever` (DP-7). */
+  bufferFever(): Promise<Record<string, unknown>> {
+    return this.http.get("/api/buffer-fever");
+  }
+  /** Earned value over the threshold, now: the shape of a pack's `earned_value` (DP-8); no `ac` is the service's default. */
+  portfolioEarnedValue(ac?: AcSource): Promise<Record<string, unknown>> {
+    return this.http.get(
+      `/api/portfolio-earned-value${ac ? `?${new URLSearchParams({ ac })}` : ""}`,
+    );
+  }
+  /** Validated benefits, now: the shape of a pack's `benefits` (DP-9). */
+  portfolioBenefits(): Promise<Record<string, unknown>> {
+    return this.http.get("/api/portfolio-benefits");
+  }
+  /** Issues and change requests over the plans the reader can read, counted over `windowDays` (IR-6). */
+  issuesAndChanges(windowDays?: number): Promise<Record<string, unknown>> {
+    const q =
+      windowDays === undefined
+        ? ""
+        : `?${new URLSearchParams({ window_days: String(windowDays) })}`;
+    return this.http.get(`/api/director-pack/issues-and-changes${q}`);
+  }
+  /** The estimate at completion rolled up from `plan` over the plans beneath it, one row per currency. */
+  forecastRollup(plan: string, depth?: number): Promise<ForecastRollup> {
+    const q = new URLSearchParams({ plan });
+    if (depth !== undefined) q.set("depth", String(depth));
+    return this.http.get(`/api/financials/forecast?${q}`);
+  }
+  /** One plan's estimate at completion. */
+  planForecast(pid: string): Promise<PlanForecast> {
+    return this.http.get(`/api/plans/${pid}/financials/forecast`);
+  }
+  /** Every budget baseline version of a plan, newest first. */
+  budgetBaselines(pid: string): Promise<BudgetBaseline[]> {
+    return this.http.get(`/api/plans/${pid}/budget-baselines`);
+  }
+  /** Approve a new budget baseline version (frozen once approved; a later one needs a reason). */
+  approveBudgetBaseline(
+    pid: string,
+    body: BudgetBaselineBody,
+  ): Promise<{ pid: string; version: number }> {
+    return this.http.post(`/api/plans/${pid}/budget-baselines`, { body });
+  }
+  /** Release a stage-gated budget line once its gate has passed (it cannot be held again). */
+  releaseBudgetLine(pid: string, linePid: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${pid}/budget-lines/${linePid}/release`, {
+      body: {},
+    });
+  }
+  /** Record a promised business-case target; its approval date has no update path. */
+  recordBusinessCase(
+    pid: string,
+    body: BusinessCaseBody,
+  ): Promise<{ pid: string }> {
+    return this.http.post(`/api/plans/${pid}/business-case`, { body });
+  }
+  /** The plan's realized gains: return on investment, time to value, adoption and its business case. */
+  valueRealization(pid: string): Promise<ValueRealization> {
+    return this.http.get(`/api/plans/${pid}/value-realization`);
+  }
+  /** Record an observed value. */
+  recordValuePoint(
+    pid: string,
+    body: ValuePointBody,
+  ): Promise<{ pid: string }> {
+    return this.http.post(`/api/plans/${pid}/value-points`, { body });
   }
   escalationRegister(
     params: { status?: string; overdue?: boolean } = {},

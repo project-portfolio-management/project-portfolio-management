@@ -3,17 +3,28 @@
   whether it recurs, its yearly amount, its classification and, for a non-financial one, the KPI that measures it. A
   realized amount is a claim; it is validated only by a recorded validation from someone outside the programme, each
   stating the amount validated to date, and the latest counts. The service decides who may; a refusal is the
-  catalogue's sentence.
+  catalogue's sentence. Below (NC-1 slice 12 part f), the plan's realized value read live (return on investment, time
+  to value, adoption, the business case) and an observed value recorded (`value-view.ts`, said first).
 -->
 <script lang="ts">
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { errorText } from "#lib/error-text.js";
   import { enumLabel } from "#lib/enum-labels.js";
-  import { localeHref, t } from "#lib/i18n.svelte.js";
-  import { formatDate } from "#lib/locale-format.js";
+  import { localeHref, t, tn } from "#lib/i18n.svelte.js";
+  import { formatBasisPoints, formatDate, formatInteger } from "#lib/locale-format.js";
   import { money } from "#lib/money.js";
-  import { PpmClient, type BenefitBoard, type BenefitValidations, type KpiView } from "#lib/api/ppm.js";
+  import { PpmClient, type BenefitBoard, type BenefitValidations, type KpiView, type ValueRealization } from "#lib/api/ppm.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
+  import {
+    METHODS,
+    METHOD_KEY,
+    absentKey,
+    sourceKey,
+    valuePointBody,
+    valuePointRefusalKey,
+    type ValuePointForm,
+  } from "#lib/value-view.js";
   import {
     STANDING_LABELS,
     classifyBody,
@@ -27,6 +38,44 @@
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
+
+  // The plan's realized value, read live, and an observed value (NC-1 slice 12 part f).
+  let value = $state<ValueRealization | null>(null);
+  let valueError = $state<string | null>(null);
+  let pointForm = $state<ValuePointForm>({ value: "", currency: "", method: "measured", first: false, evidence: "" });
+  let pointProblem = $state<string | null>(null);
+  let pointNotice = $state("");
+  async function loadValue() {
+    try {
+      value = await ppm.valueRealization(pid);
+      valueError = null;
+    } catch (err) {
+      valueError = errorText(err, "p.value.could_not_read");
+    }
+  }
+  async function recordPoint(e: SubmitEvent) {
+    e.preventDefault();
+    pointNotice = "";
+    const r = valuePointBody(pointForm);
+    if ("problems" in r) {
+      pointProblem = r.problems.map((k) => t(k)).join(" ");
+      return;
+    }
+    pointProblem = null;
+    if (r.body.is_first_measurable && !(await askConfirm(t("p.value.confirm_first")))) return;
+    busy = true;
+    try {
+      await ppm.recordValuePoint(pid, r.body);
+      pointNotice = t("p.value.point_recorded");
+      pointForm = { value: "", currency: pointForm.currency, method: pointForm.method, first: false, evidence: "" };
+      await loadValue();
+    } catch (err) {
+      const k = valuePointRefusalKey(err, Boolean(r.body.is_first_measurable));
+      pointProblem = k ? t(k) : errorText(err, "p.value.could_not_record_point");
+    } finally {
+      busy = false;
+    }
+  }
 
   let benefits = $state<Benefit[] | null>(null);
   let kpis = $state<KpiView[]>([]);
@@ -59,6 +108,7 @@
       loadError = errorText(err, "p.benefits.could_not_load");
     }
     ppm.kpis({ plan: pid }).then((r) => (kpis = r.kpis)).catch(() => (kpis = []));
+    void loadValue();
   });
 
   function say(b: Benefit, error: string | null, notice = "") {
@@ -211,7 +261,89 @@
   {/if}
 {/if}
 
+<section aria-labelledby="value-h" data-testid="value">
+  <h2 id="value-h">{t("p.value.heading")}</h2>
+  <p class="small muted">{t("p.value.says")}</p>
+  {#if valueError}<p class="banner error" role="alert">{valueError}</p>{/if}
+  {#if value}
+    {@const roi = value.transformation_roi}
+    {@const ttv = value.time_to_value}
+    {@const ad = value.adoption}
+    <ul class="small figures">
+      <li data-testid="value-roi">
+        {#if roi.basis_points !== null}
+          {t("p.value.roi", { pct: formatBasisPoints(roi.basis_points, 1) })}
+        {:else}
+          {t("p.value.roi_absent", { reason: t(absentKey(roi.absent)) })}
+        {/if}
+        {#if roi.measured_share_basis_points !== null}{` · ${t("p.value.measured_share", { pct: formatBasisPoints(roi.measured_share_basis_points, 0) })}`}{/if}
+      </li>
+      <li data-testid="value-ttv">
+        {#if ttv.absent === null && ttv.p50_days !== null}
+          {tn("p.value.ttv", ttv.observations, { p50: formatInteger(ttv.p50_days), p85: formatInteger(ttv.p85_days ?? ttv.p50_days), n: ttv.observations })}
+        {:else}
+          {t("p.value.ttv_absent", { reason: t(absentKey(ttv.absent)) })}
+        {/if}
+      </li>
+      <li data-testid="value-adoption">
+        {#if ad.measured && ad.basis_points != null}
+          {t("p.value.adoption", { pct: formatBasisPoints(ad.basis_points, 0), active: formatInteger(ad.active_users ?? 0), target: formatInteger(ad.target_users ?? 0), days: formatInteger(ad.window_days ?? 0) })}{#if ad.definition}{` · ${t("p.value.adoption_definition", { definition: ad.definition })}`}{/if}
+        {:else if ad.absent}
+          {t("p.value.adoption_absent", { reason: t(absentKey(ad.absent)) })}
+        {:else}
+          {t("p.value.adoption_none")}
+        {/if}
+      </li>
+    </ul>
+    <h3>{t("p.value.case_heading")}</h3>
+    {#if value.performance_to_business_case.length === 0}
+      <p class="small muted">{t("p.value.no_targets")}</p>
+    {:else}
+      <ul class="small" data-testid="value-targets">
+        {#each value.performance_to_business_case as c, i (i)}
+          <li>{t("p.value.target_line", { metric: c.metric, baseline: formatInteger(c.baseline_value), target: formatInteger(c.target_value), source: t(sourceKey(c.source)), date: formatDate(c.approved_at) })}</li>
+        {/each}
+      </ul>
+    {/if}
+    <p class="small"><a href={localeHref(`/plans/${pid}/costs`)}>{t("p.value.to_costs")}</a></p>
+  {/if}
+
+  <h3>{t("p.value.point_heading")}</h3>
+  <p class="small muted">{t("p.value.point_says")}</p>
+  <form class="grid" novalidate onsubmit={recordPoint} data-testid="value-point-form">
+    <label>{t("p.value.f_value")}<input type="text" inputmode="decimal" bind:value={pointForm.value} /></label>
+    <label>{t("p.value.f_currency")}<input bind:value={pointForm.currency} maxlength="3" size="4" placeholder={t("p.money.currency_hint")} /></label>
+    <label>
+      {t("p.value.f_method")}
+      <select bind:value={pointForm.method}>
+        {#each METHODS as m (m)}<option value={m}>{t(METHOD_KEY[m])}</option>{/each}
+      </select>
+    </label>
+    <label>{t("p.value.f_evidence")}<input bind:value={pointForm.evidence} /></label>
+    <label class="check"><input type="checkbox" bind:checked={pointForm.first} /> {t("p.value.f_first")}</label>
+    <div class="row"><button class="button small" type="submit" disabled={busy}>{t("p.value.record_point")}</button></div>
+  </form>
+  {#if pointProblem}<p class="banner error" role="alert">{pointProblem}</p>{/if}
+  {#if pointNotice}<p class="small" role="status">{pointNotice}</p>{/if}
+</section>
+
 <style>
+  #value-h {
+    margin-block-start: 2rem;
+  }
+  .figures {
+    padding-inline-start: 1.25rem;
+  }
+  .grid .check {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .check input {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    margin: 0;
+  }
   .benefits {
     list-style: none;
     padding: 0;

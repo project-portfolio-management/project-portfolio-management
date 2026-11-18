@@ -1070,13 +1070,63 @@ export function buildPackView(
       : [],
   );
 
-  add("issues", [
-    d.t(`${K}open_issues`, { n: numOrNull(obj(body.issues).open) ?? 0 }),
-  ]);
-  add("changes", [
-    d.t(`${K}awaiting`, {
-      n: numOrNull(obj(body.change_requests).awaiting_decision) ?? 0,
-    }),
-  ]);
+  // Issues and change requests (IR-6): the counts, and each further figure the summary carries (the live reading and
+  // an issued pack carry them all; the service's `statement` is English and is not shown).
+  const iss = obj(body.issues);
+  const issueLines = [d.t(`${K}open_issues`, { n: numOrNull(iss.open) ?? 0 })];
+  const bySeverity = countList(obj(iss.open_by_severity), "severity", d);
+  if (bySeverity)
+    issueLines.push(d.t(`${K}open_by_severity`, { list: bySeverity }));
+  if (numOrNull(iss.overdue) !== null)
+    issueLines.push(
+      d.t(`${K}issues_overdue`, { n: numOrNull(iss.overdue) ?? 0 }),
+    );
+  if (numOrNull(iss.raised_in_window) !== null)
+    issueLines.push(
+      d.t(`${K}issues_in_window`, {
+        raised: numOrNull(iss.raised_in_window) ?? 0,
+        resolved: numOrNull(iss.resolved_in_window) ?? 0,
+      }),
+    );
+  const oldestIssue = oldestText(iss.oldest_open, `${K}oldest_issue`, d);
+  if (oldestIssue) issueLines.push(oldestIssue);
+  add("issues", issueLines);
+
+  const cr = obj(body.change_requests);
+  const changeLines = [
+    d.t(`${K}awaiting`, { n: numOrNull(cr.awaiting_decision) ?? 0 }),
+  ];
+  if (numOrNull(cr.approved_not_implemented) !== null)
+    changeLines.push(
+      d.t(`${K}approved_not_implemented`, {
+        n: numOrNull(cr.approved_not_implemented) ?? 0,
+      }),
+    );
+  if (numOrNull(cr.decided_in_window) !== null)
+    changeLines.push(
+      d.t(`${K}decided_in_window`, { n: numOrNull(cr.decided_in_window) ?? 0 }),
+    );
+  const byStatus = countList(obj(cr.by_status), "cr_status", d);
+  if (byStatus)
+    changeLines.push(d.t(`${K}changes_by_status`, { list: byStatus }));
+  const oldestChange = oldestText(cr.oldest_open, `${K}oldest_change`, d);
+  if (oldestChange) changeLines.push(oldestChange);
+  add("changes", changeLines);
   return out;
+}
+
+/** Counts by a word the service sends ("high 2, low 1"), each word in the reader's language; `""` when none. */
+function countList(counts: J, group: string, d: Deps): string {
+  return Object.entries(counts)
+    .filter(([, n]) => typeof n === "number" && n > 0)
+    .map(([k, n]) => `${d.label(group, k)} ${String(n)}`)
+    .join(", ");
+}
+
+/** The oldest open record's line (its title, as entered, and its age in calendar days), or `null` when there is none. */
+function oldestText(v: unknown, key: string, d: Deps): string | null {
+  const o = obj(v);
+  const title = str(o.title);
+  if (!title) return null;
+  return d.t(key, { title, n: numOrNull(o.age_calendar_days) ?? 0 });
 }

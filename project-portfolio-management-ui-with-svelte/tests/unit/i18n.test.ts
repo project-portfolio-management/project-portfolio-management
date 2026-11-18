@@ -94,18 +94,21 @@ describe("i18n catalog", () => {
       ),
     ) as string[];
     expect(baseline.length).toBeGreaterThan(300);
+    // One lookup per key in a set, and one assertion per locale and rule: the same guard as an assertion per key, which
+    // scanned the whole key list for each of the catalogue's thousands of keys and ran past the 5-second limit under a
+    // full run's load (NC-1 slice 12 part f).
+    const known = new Set<string>(STRING_KEYS);
     for (const locale of LOCALES) {
       const table = STRINGS_BY_LOCALE[locale];
-      for (const key of baseline) {
-        expect(table[key], `${locale} missing ${key}`).toBeTruthy();
-      }
+      expect(
+        baseline.filter((key) => !table[key]),
+        `${locale} missing keys`,
+      ).toEqual([]);
       // Nothing beyond the English source of truth.
-      for (const key of Object.keys(table)) {
-        expect(
-          STRING_KEYS as readonly string[],
-          `${locale} has an extra key ${key}`,
-        ).toContain(key);
-      }
+      expect(
+        Object.keys(table).filter((key) => !known.has(key)),
+        `${locale} has extra keys`,
+      ).toEqual([]);
     }
   });
 

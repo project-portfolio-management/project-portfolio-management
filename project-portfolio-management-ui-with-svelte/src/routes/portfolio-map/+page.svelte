@@ -3,7 +3,9 @@
   reader can read, each once under its primary strategic aim, drawn as the director pack draws it (`buildPackView`'s
   map section: confidence a word and a symbol, beside the derived RAG, never blended). Below, which objectives are
   strategic aims, and each programme's one primary aim. The service decides who may change them; a refusal is the
-  catalogue's sentence.
+  catalogue's sentence. Last (NC-1 slice 12 part f), the pack's programme readings read now, each drawn by the pack's
+  renderer: the buffer fever chart, earned value over the threshold (its actual cost chosen), validated benefits, and
+  issues and change requests over a window of days (`live-pack-view.ts`).
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -15,8 +17,61 @@
   import { PpmClient, type Objective, type PortfolioMap } from "#lib/api/ppm.js";
   import { buildPackView, type Section } from "#lib/pack-view.js";
   import { aimsOf, mapPeriodProblem, primaryProblem, programmesOf } from "#lib/aims-view.js";
+  import type { AcSource } from "#lib/api/ppm.js";
+  import {
+    AC_KEY,
+    AC_SOURCES,
+    WINDOW_MAX,
+    WINDOW_MIN,
+    acParam,
+    issuesUnavailable,
+    liveSections,
+    windowParam,
+    windowProblem,
+    type LiveId,
+  } from "#lib/live-pack-view.js";
 
   const ppm = PpmClient.withFetch();
+
+  // The pack's programme readings, read now (NC-1 slice 12 part f).
+  type Body = Record<string, unknown>;
+  type Reading = "fever" | "evm" | "benefits" | "issues";
+  let live = $state<Record<Reading, Body | null>>({ fever: null, evm: null, benefits: null, issues: null });
+  let liveErrors = $state<Partial<Record<Reading, string>>>({});
+  let liveProblem = $state<string | null>(null);
+  let ac = $state<AcSource>("budget_lines");
+  let windowDays = $state<number | null>(null);
+  const sections = $derived(
+    liveSections(live, { t: (k, v) => tDynamic(k, v), label: (g, v) => enumLabel(g as never, v), locale: i18n.locale }),
+  );
+  const READINGS: Array<{ id: Reading; shows: LiveId[]; fails: "p.live_pack.could_not_read_fever" | "p.live_pack.could_not_read_evm" | "p.live_pack.could_not_read_benefits" | "p.live_pack.could_not_read_issues" }> = [
+    { id: "fever", shows: ["fever"], fails: "p.live_pack.could_not_read_fever" },
+    { id: "evm", shows: ["evm"], fails: "p.live_pack.could_not_read_evm" },
+    { id: "benefits", shows: ["benefits"], fails: "p.live_pack.could_not_read_benefits" },
+    { id: "issues", shows: ["issues", "changes"], fails: "p.live_pack.could_not_read_issues" },
+  ];
+  async function readOne(id: Reading, run: () => Promise<Body>, fails: (typeof READINGS)[number]["fails"]) {
+    try {
+      live[id] = await run();
+      liveErrors = { ...liveErrors, [id]: undefined };
+    } catch (err) {
+      live[id] = null;
+      liveErrors = { ...liveErrors, [id]: errorText(err, fails) };
+    }
+  }
+  function loadLive(e?: SubmitEvent) {
+    e?.preventDefault();
+    const problem = windowProblem(windowDays);
+    liveProblem = problem ? t(problem, { min: WINDOW_MIN, max: WINDOW_MAX }) : null;
+    if (problem) return;
+    const runs: Record<Reading, () => Promise<Body>> = {
+      fever: () => ppm.bufferFever(),
+      evm: () => ppm.portfolioEarnedValue(acParam(ac)),
+      benefits: () => ppm.portfolioBenefits(),
+      issues: () => ppm.issuesAndChanges(windowParam(windowDays)),
+    };
+    for (const r of READINGS) void readOne(r.id, runs[r.id], r.fails);
+  }
 
   let map = $state<PortfolioMap | null>(null);
   let objectives = $state<Objective[] | null>(null);
@@ -74,6 +129,7 @@
   onMount(() => {
     void loadMap();
     void loadObjectives();
+    loadLive();
   });
 
   async function change(run: () => Promise<unknown>, done: string) {
@@ -195,6 +251,45 @@
     {/if}
   </section>
 {/if}
+
+<section aria-labelledby="live-h" data-testid="live-readings">
+  <h2 id="live-h">{t("p.live_pack.heading")}</h2>
+  <p class="small muted">{t("p.live_pack.says")}</p>
+  <form class="row period" novalidate onsubmit={loadLive}>
+    <label>
+      {t("p.live_pack.f_ac")}
+      <select bind:value={ac}>
+        {#each AC_SOURCES as a (a)}<option value={a}>{t(AC_KEY[a])}</option>{/each}
+      </select>
+    </label>
+    <label>
+      {t("p.live_pack.f_window", { min: WINDOW_MIN, max: WINDOW_MAX })}
+      <input type="number" min={WINDOW_MIN} max={WINDOW_MAX} step="1" bind:value={windowDays} />
+    </label>
+    <button class="button" type="submit">{t("p.live_pack.read_again")}</button>
+  </form>
+  {#if liveProblem}<p class="banner error" role="alert">{liveProblem}</p>{/if}
+  {#each READINGS as r (r.id)}
+    {#if liveErrors[r.id]}<p class="banner error" role="alert">{liveErrors[r.id]}</p>{/if}
+    {#if r.id === "issues" && issuesUnavailable(live.issues)}
+      <h3>{t("p.live_pack.issues_heading")}</h3>
+      <p class="muted" data-testid="live-issues-none">{t("p.live_pack.issues_none")}</p>
+    {/if}
+    {#each r.shows as id (id)}
+      {@const s = sections[id]}
+      {#if s}
+        <section aria-labelledby={`live-${id}`} data-testid={`live-${id}`}>
+          <h3 id={`live-${id}`}>{s.title}</h3>
+          {#each s.lines as line, i (i)}<p class="small">{line}</p>{/each}
+          {#each s.tables as tb, ti (ti)}
+            <DataTable label={tb.caption} caption={tb.caption} captionVisible columns={packColumns(tb.columns)} rows={tb.rows.map((cells) => ({ cells }))} rowId={(_r, i) => String(i)} sortable={false} />
+          {/each}
+          {#if s.lines.length === 0 && s.tables.length === 0}<p class="muted">{t("p.live_pack.nothing")}</p>{/if}
+        </section>
+      {/if}
+    {/each}
+  {/each}
+</section>
 
 <style>
   section {

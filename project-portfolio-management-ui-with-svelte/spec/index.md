@@ -161,7 +161,9 @@ match breakdown).
 /executive                   CEO area: portfolio-health briefing,
                              decision log, benefits realization
 /financials                  CFO area: budget variance + per-currency
-                             exposure (server-derived; no FX)
+                             exposure (server-derived; no FX); the
+                             forecast at completion rolled up from a plan
+                             (NC-1 slice 12 part f)
 /technology                  CTO area: technology radar + dependency
                              risk lens + tech-debt register + flow
                              metrics
@@ -224,14 +226,17 @@ match breakdown).
 /exceptions                  the delivery exceptions register: complete
                              and decide exceptions (NC-1 slice 11)
 /portfolio-map               the live portfolio map, strategic aims and
-                             each programme's primary aim (NC-1 slice 11)
+                             each programme's primary aim (NC-1 slice 11);
+                             the pack's programme readings, now (slice 12
+                             part f)
 /plans/[pid]/programme       planned gate dates and programme status
                              (NC-1 slice 11); linked from the plan page
 /funding                     funding sources, a plan's lines' sources,
                              money by funding source (NC-1 slice 11)
 /plans/[pid]/benefits        a plan's benefits: classification and
                              validation (NC-1 slice 11); linked from the
-                             plan page
+                             plan page; the value realized and an
+                             observed value (slice 12 part f)
 /deescalation                the de-escalation tracker and the
                              scorecards it reads (NC-1 slice 11)
 
@@ -2298,7 +2303,8 @@ already carried `funding_allocation_pid`. `src/lib/ledger-actions.ts` holds the 
   an optional note. A non-financial benefit says it is measured by its KPI and offers no validation. A validator who is
   a member of the programme (403) is told to ask someone outside it.
 - **Not built in this slice:** evidence as an attachment (`evidence_attachment_pid`); the portfolio's benefits view
-  (`GET /api/portfolio-benefits`).
+  (`GET /api/portfolio-benefits`), since read live on `/portfolio-map` (slice 12 part f, which also adds the value
+  realized and an observed value to this page).
 - **Tests:** `tests/unit/benefit-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and `tests/e2e/plan-benefits.spec.ts`
   (the link; classifying a financial benefit with the whole classification sent and a yearly amount only when
   recurring; validating with a bad amount said first, the standing and history; a non-financial benefit's KPI; a
@@ -2816,3 +2822,91 @@ text is never shown.
   `tests/e2e/proposals.spec.ts` (similar plans' lessons, none, a 404). Every stub that would carry the service's English
   carries `"service text"`, and each test checks it is not shown. The translations are machine-written and unreviewed.
   **Not verified:** against a real service; the PDF in a reader.
+
+## Programme money, value and benefits, read live (NC-1 slice 12 part f, DP-7, DP-8, DP-9)
+
+Readings that were seen only inside an issued director pack, and a plan's forecast, baselines and realized value, read
+live on the pages they belong to. Every rule is said before anything is sent; each refusal is the catalogue's sentence
+by action and status (the incomplete register by its machine `code`); the service's text is never shown. Rules in
+`src/lib/live-pack-view.ts`, `src/lib/forecast-view.ts` and `src/lib/value-view.ts`.
+
+- **`/portfolio-map`: the pack's programme readings, now.** The buffer fever chart (`GET /api/buffer-fever`), earned
+  value over the threshold (`GET /api/portfolio-earned-value`, with `ac` when another actual cost than budget lines is
+  chosen: labour, or both), validated benefits (`GET /api/portfolio-benefits`) and issues and change requests (`GET
+  /api/director-pack/issues-and-changes`, with `window_days` when a window other than 30 is given). Each answer has the
+  shape of the pack's own section, so the page draws it with the pack's renderer (`buildPackView`): the fever chart's
+  table and the reason a programme has no point, earned value per programme and currency, benefits per currency,
+  recurrence and classification, never added across. Said first: read now from the plans the reader can read; an issued
+  pack keeps its own figures; the previous fever point comes only from an issued pack. The window is a whole number of
+  days from 1 to 366, or empty for 30 (not sent); a bad one is said and nothing is asked. A reading that fails says so
+  alone, the others still shown; an answer with `available: false` says the reader can read no plan with issues or
+  change requests. The pack renderer's issues and change-requests sections show every figure the summary carries
+  (open, by severity in the reader's words, overdue, raised and resolved in the period, the oldest open one with its
+  age; awaiting a decision, approved but not implemented, decided in the period, by status, the oldest open one), so
+  an issued pack shows them too; the summary's `statement` and the answer's `reason` are not shown.
+- **`/financials`: the forecast at completion, rolled up** (`GET /api/financials/forecast?plan=&depth=`). A plan (the
+  list disabled until loaded) and an optional depth (1 to 32; empty walks as deep as the service allows), checked
+  first. One row per currency (actual cost, estimate to complete, estimate at completion, plans), never added across;
+  how many plans were read, a tree larger than the service walks, plans reached twice (a plural), and plans with no
+  currency to forecast in (a plural, not added). A 404 says the plan is gone or cannot be read. The `note` is not shown.
+- **`/plans/[pid]/costs`.** *Forecast at completion* (`GET /api/plans/{pid}/financials/forecast`): actual cost so far,
+  the estimate to complete and where it came from (the latest total project control figure, or what the baseline
+  still plans), the estimate at completion, the baseline version used, and that actual cost in another currency is not
+  added in; with no currency to forecast in, that is said instead. *Budget baselines* (`GET`/`POST
+  /api/plans/{pid}/budget-baselines`): every version newest first with its currency, approval date, reason and periods;
+  a new version starts from the latest one's currency and periods (the inputs disabled until the list has loaded).
+  Said first: a baseline is frozen once approved and never edited, a re-baseline is a new version, every version after
+  the first needs a reason, and a baseline holds 1 to 256 periods each with an end not before its start and a planned
+  amount not below zero. Checked first, every problem at once: a three-letter currency, at least one period (a period
+  with nothing typed is left out), at most 256, both dates, the order, the amount (read in the reader's number format
+  at the currency's ISO 4217 exponent), the reason when one is needed, and at most 1024 bytes of reason (counted as
+  bytes, as the service counts). One the same as the latest version is not sent. Approving asks first; Cancel sends
+  nothing. A 422 after the checks says another version may have been approved meanwhile and reads the list again; a 404
+  says the plan is gone. *Funding held until a gate* (`GET /api/plans/{pid}/budget-lines`, the plan's stage from `GET
+  /api/plans/{pid}/governance`, `POST …/budget-lines/{line}/release`): each line with a gate, its amount and gate, and
+  whether it is released (✓ and the date), still held (○: the gate has not passed, by the service's gate order) or ready
+  to release. Said first: a held line can be released once its gate has passed, only then can actual cost be recorded
+  against it, and a release cannot be undone. Releasing asks first. A 422 with `register_incomplete` says the
+  programme's register is incomplete; another 422 that the line is no longer held or its gate has not passed (the lines
+  are read again); a 404 that the line or plan is gone. *Business case targets* (`POST /api/plans/{pid}/business-case`):
+  a measure, its value at approval and the value promised (whole numbers in its unit; the number inputs bind numbers),
+  an optional unit (blank not sent) and where it was promised (the charter or a gate review). Said first: the
+  approval date starts the time-to-value clock and cannot be changed; a target cannot be changed or removed here.
+  Recording asks first.
+- **`/plans/[pid]/benefits`: the value realized** (`GET /api/plans/{pid}/value-realization`): the return on investment
+  as a percentage with the share of measured evidence, time to value (the median and 85th percentile in calendar days,
+  with the observations, a plural), adoption (its rate, users, window and definition), and the business-case targets
+  (measure, from and to, where promised, approval date). Each absent figure says its reason in words (no value
+  recorded, nothing to set it against, several currencies, no baseline, no responses, too large; an unknown reason a
+  general sentence), never zero. Said first: read now, nothing stored; the return sets every value point against the
+  actual cost recorded and is withheld across currencies. *Record an observed value* (`POST
+  /api/plans/{pid}/value-points`): a value (money in minor units when a currency is given, else a whole number), an
+  optional currency, how it was arrived at (measured, estimated, asserted), optional evidence (blank not sent), and
+  whether it is the first measurable value (sent only when ticked). Said first: a value point cannot be changed here,
+  and one per plan may be the first measurable value, which stops the clock and cannot be moved; ticking it asks first.
+  A 422 for a first measurable value says the plan already has one; another 422 is a general refusal.
+- **Decided (the plainest option):** the live readings sit on `/portfolio-map` (which already draws the pack's map
+  live), not on `/executive`; the roll-up on `/financials`; a target is recorded on `/plans/[pid]/costs` and read on
+  `/plans/[pid]/benefits`; a target's values are whole numbers in its unit, with no currency offered, because the
+  service's reading returns none.
+- **Not built:** a list of the value points recorded (the service has no read of them); adoption and satisfaction
+  readings and `GET /api/plans/{pid}/performance`; the fever chart drawn as a picture; the previous fever point (only
+  an issued pack carries it). **Service gaps:** every 422 on the baseline, business-case and value-point routes is
+  `unprocessable` with English text, and the three release refusals (no gate, already released, gate not passed) share
+  it; `value-realization` names no currency for its realized and investment figures, nor a target's unit or currency,
+  so the page shows the ratio only and a target's values as plain numbers; a forecast's amount in other currencies
+  carries no currency (there may be several), so the page says only that some exists.
+- **Tests:** `tests/unit/live-pack-view.test.ts` (the window and actual cost asked; each answer drawn by the pack's
+  renderer; the further issues figures; Welsh; no readable plan), `tests/unit/forecast-view.test.ts` (the depth; a
+  baseline's body and every problem; the reason in bytes; one the same as the latest; the gate order and a line's
+  state; each refusal, the register by its code), `tests/unit/value-view.test.ts` (a value point's body and problems;
+  a target's body and problems; each absent reason; each refusal), the paths in `tests/unit/ppm.test.ts` (bodies checked
+  against `openapi.json` by `client-bodies.test.ts`); `tests/e2e/money-live.spec.ts` (the forecast; a new baseline's
+  rules, the same as the latest not sent, the question and Cancel, the body; the first baseline and a refusal; a release
+  after a question and one still held; the register refusal; a target's rules, question and body; the roll-up, its depth
+  checked first and a 404; Welsh and axe with the forms open), three more in `tests/e2e/portfolio-map.spec.ts` (the
+  readings drawn as the pack draws them; the window checked first and the window and actual cost asked; a failed
+  reading and no readable plan) and two more in `tests/e2e/plan-benefits.spec.ts` (the value realized; an observed
+  value's rules, the first measurable one's question and its refusal). Every stub that would carry the service's English
+  carries `"service text"`, and each test checks it is not shown. The translations are machine-written and unreviewed.
+  **Not verified:** against a real service.

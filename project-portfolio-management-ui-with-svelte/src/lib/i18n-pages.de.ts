@@ -7646,4 +7646,233 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Dieser Vorschlag existiert nicht mehr, oder Sie können ihn nicht lesen.",
   "p.lessons.could_not_read_similar":
     "Die Lektionen ähnlicher Pläne konnten nicht gelesen werden.",
+  "p.director_pack.open_by_severity": "Offen nach Schweregrad: {list}",
+  "p.director_pack.issues_overdue": "Überfällige Probleme: {n}",
+  "p.director_pack.issues_in_window":
+    "Im Zeitraum: {raised} gemeldet, {resolved} gelöst",
+  "p.director_pack.oldest_issue":
+    "Ältestes offenes Problem: {title} (Kalendertage offen: {n})",
+  "p.director_pack.approved_not_implemented":
+    "Genehmigt, aber noch nicht umgesetzt: {n}",
+  "p.director_pack.decided_in_window": "Im Zeitraum entschieden: {n}",
+  "p.director_pack.changes_by_status": "Nach Status: {list}",
+  "p.director_pack.oldest_change":
+    "Älteste offene Änderungsanforderung: {title} (Kalendertage offen: {n})",
+  "p.live_pack.heading": "Programmwerte, jetzt",
+  "p.live_pack.says":
+    "Jetzt aus den Plänen gelesen, die Sie lesen dürfen, dargestellt wie im Direktorenbericht. Ein herausgegebener Bericht behält seine Zahlen; der vorherige Punkt im Fieberdiagramm stammt nur aus einem herausgegebenen Bericht.",
+  "p.live_pack.f_ac": "Istkosten für den Fertigstellungswert",
+  "p.live_pack.ac_budget_lines": "Budgetposten (Standard)",
+  "p.live_pack.ac_labour": "Erfasste Arbeitskosten",
+  "p.live_pack.ac_both": "Budgetposten und Arbeitskosten",
+  "p.live_pack.f_window":
+    "Probleme und Änderungsanforderungen der letzten Tage ({min} bis {max}; leer für 30)",
+  "p.live_pack.read_again": "Erneut lesen",
+  "p.live_pack.problem_window":
+    "Die Anzahl der Tage muss eine ganze Zahl von {min} bis {max} sein, oder leer für 30.",
+  "p.live_pack.could_not_read_fever":
+    "Das Puffer-Fieberdiagramm konnte nicht gelesen werden.",
+  "p.live_pack.could_not_read_evm":
+    "Der Fertigstellungswert konnte nicht gelesen werden.",
+  "p.live_pack.could_not_read_benefits":
+    "Die Nutzen konnten nicht gelesen werden.",
+  "p.live_pack.could_not_read_issues":
+    "Die Probleme und Änderungsanforderungen konnten nicht gelesen werden.",
+  "p.live_pack.issues_heading": "Probleme und Änderungsanforderungen",
+  "p.live_pack.issues_none":
+    "Sie können keinen Plan mit Problemen oder Änderungsanforderungen lesen.",
+  "p.live_pack.nothing": "Nichts anzuzeigen.",
+  "p.forecast.heading": "Prognose bei Fertigstellung",
+  "p.forecast.says":
+    "Die Schätzung bei Fertigstellung ist die bisherige Ist-Kosten plus die Restschätzung. Die Restschätzung ist der neueste Wert der Gesamtprojektsteuerung in der Währung der Prognose, sonst das, was die neueste Basislinie noch plant. Jetzt gelesen; nichts wird gespeichert.",
+  "p.forecast.absent_no_currency":
+    "Keine Prognose: Der Plan hat keine Budget-Basislinie und keinen Wert der Gesamtprojektsteuerung, also keine Währung für eine Prognose.",
+  "p.forecast.c_actual": "Bisherige Ist-Kosten",
+  "p.forecast.c_etc": "Restschätzung",
+  "p.forecast.c_eac": "Schätzung bei Fertigstellung",
+  "p.forecast.c_plans": "Pläne",
+  "p.forecast.not_known": "nicht bekannt",
+  "p.forecast.etc_tpc": "aus dem neuesten Wert der Gesamtprojektsteuerung",
+  "p.forecast.etc_baseline": "aus dem, was die Basislinie noch plant",
+  "p.forecast.no_baseline_used": "Es wurde keine Budget-Basislinie verwendet.",
+  "p.forecast.baseline_used": "Verwendet Budget-Basislinie Version {version}.",
+  "p.forecast.as_of": "Gelesen am {date}.",
+  "p.forecast.other_currency":
+    "In einer anderen Währung als {currency} erfasste Ist-Kosten sind nicht eingerechnet.",
+  "p.forecast.baselines_heading": "Budget-Basislinien",
+  "p.forecast.baselines_says":
+    "Eine Basislinie ist das genehmigte Budget nach Zeitraum, in einer Währung. Nach der Genehmigung ist sie eingefroren und wird nie bearbeitet; eine Neufestlegung ist eine neue Version, und jede Version nach der ersten braucht eine Begründung. Eine Basislinie enthält 1 bis {max} Zeiträume, jeder mit einem Ende nicht vor dem Beginn und einem geplanten Betrag nicht unter null.",
+  "p.forecast.no_baselines": "Es wurde noch keine Budget-Basislinie genehmigt.",
+  "p.forecast.version_line":
+    "Version {version} · {currency} · genehmigt am {date}",
+  "p.forecast.period_line": "{start} bis {end}: {amount}",
+  "p.forecast.first_baseline_heading": "Erste Basislinie genehmigen",
+  "p.forecast.rebaseline_heading": "Version {version} genehmigen",
+  "p.forecast.f_currency": "Währung (drei Buchstaben)",
+  "p.forecast.periods_legend": "Zeiträume",
+  "p.forecast.f_start": "Zeitraum {n} beginnt",
+  "p.forecast.f_end": "Zeitraum {n} endet",
+  "p.forecast.f_amount": "Geplanter Betrag Zeitraum {n}",
+  "p.forecast.remove_period": "Zeitraum {n} entfernen",
+  "p.forecast.add_period": "Zeitraum hinzufügen",
+  "p.forecast.f_reason": "Begründung (für die erste optional)",
+  "p.forecast.f_reason_needed":
+    "Warum das Budget neu festgelegt wird (erforderlich)",
+  "p.forecast.approve": "Basislinie genehmigen",
+  "p.forecast.confirm_baseline":
+    "Budget-Basislinie Version {version} genehmigen? Nach der Genehmigung ist sie eingefroren und kann weder geändert noch entfernt werden.",
+  "p.forecast.baseline_approved": "Version {version} genehmigt.",
+  "p.forecast.problem_currency":
+    "Die Währung muss ein Code aus drei Buchstaben sein, etwa GBP oder EUR.",
+  "p.forecast.problem_no_periods": "Geben Sie mindestens einen Zeitraum an.",
+  "p.forecast.problem_too_many":
+    "Eine Basislinie enthält höchstens {max} Zeiträume.",
+  "p.forecast.problem_dates":
+    "Jeder Zeitraum braucht ein Start- und ein Enddatum.",
+  "p.forecast.problem_order":
+    "Ein Zeitraum kann nicht vor seinem Beginn enden.",
+  "p.forecast.problem_amount":
+    "Jeder geplante Betrag muss eine Zahl sein, nicht unter null.",
+  "p.forecast.problem_reason": "Eine Neufestlegung braucht eine Begründung.",
+  "p.forecast.problem_reason_long":
+    "Die Begründung ist zu lang: höchstens {bytes} Byte.",
+  "p.forecast.problem_same":
+    "Das entspricht der neuesten Version; es wurde nichts gesendet.",
+  "p.forecast.refused_gone":
+    "Dieser Plan existiert nicht mehr, oder Sie können ihn nicht lesen.",
+  "p.forecast.refused_baseline":
+    "Die Basislinie wurde abgelehnt: Inzwischen wurde möglicherweise eine andere Version genehmigt, sodass eine Begründung nötig ist. Die Liste wurde neu gelesen.",
+  "p.forecast.could_not_approve":
+    "Die Basislinie konnte nicht genehmigt werden.",
+  "p.forecast.could_not_read": "Die Prognose konnte nicht gelesen werden.",
+  "p.forecast.could_not_read_baselines":
+    "Die Budget-Basislinien konnten nicht gelesen werden.",
+  "p.forecast.could_not_read_lines":
+    "Die Budgetposten konnten nicht gelesen werden.",
+  "p.forecast.tranches_heading": "Bis zu einem Gate zurückgehaltene Mittel",
+  "p.forecast.tranches_says":
+    "Ein Budgetposten mit Finanzierungs-Gate wird zurückgehalten, bis die Phase des Plans dieses Gate erreicht; dann kann er einmal freigegeben werden, und erst dann lassen sich Ist-Kosten darauf buchen. Eine Freigabe lässt sich nicht rückgängig machen.",
+  "p.forecast.stage_now": "Phase des Plans: {stage}.",
+  "p.forecast.stage_none": "Der Plan hat noch kein Gate passiert.",
+  "p.forecast.no_tranches":
+    "Kein Budgetposten wird bis zu einem Gate zurückgehalten.",
+  "p.forecast.gate_line": "zurückgehalten bis {gate}",
+  "p.forecast.state_released": "freigegeben am {date}",
+  "p.forecast.state_held": "noch zurückgehalten: das Gate ist nicht passiert",
+  "p.forecast.release": "{description} freigeben",
+  "p.forecast.confirm_release":
+    "{description} freigeben, zurückgehalten bis {gate}? Eine Freigabe lässt sich nicht rückgängig machen.",
+  "p.forecast.released": "{description} freigegeben.",
+  "p.forecast.refused_line_gone":
+    "Dieser Budgetposten oder Plan existiert nicht mehr.",
+  "p.forecast.refused_register":
+    "Abgelehnt: Das Register des Programms ist unvollständig. Vervollständigen Sie es zuerst auf der Seite zur Registervollständigkeit.",
+  "p.forecast.refused_release":
+    "Abgelehnt: Der Posten wird nicht mehr zurückgehalten, oder sein Gate ist nicht passiert. Die Posten wurden neu gelesen.",
+  "p.forecast.could_not_release": "Der Posten konnte nicht freigegeben werden.",
+  "p.forecast.rollup_heading": "Prognose bei Fertigstellung, zusammengefasst",
+  "p.forecast.rollup_says":
+    "Von einem Plan über die Pläne darunter, bis zu {max} Ebenen tief, eine Zeile je Währung: Währungen werden nie addiert. Pläne ohne Währung für eine Prognose werden gezählt, nicht addiert.",
+  "p.forecast.f_plan": "Ausgangsplan",
+  "p.forecast.choose_plan": "Plan wählen",
+  "p.forecast.f_depth": "Ebenen tief (1 bis {max}; leer für alle)",
+  "p.forecast.show_rollup": "Prognose anzeigen",
+  "p.forecast.problem_plan": "Wählen Sie einen Plan.",
+  "p.forecast.problem_depth":
+    "Die Ebenentiefe muss eine ganze Zahl von 1 bis {max} sein, oder leer.",
+  "p.forecast.refused_plan_gone":
+    "Dieser Plan existiert nicht mehr, oder Sie dürfen ihn nicht lesen.",
+  "p.forecast.could_not_read_rollup":
+    "Die zusammengefasste Prognose konnte nicht gelesen werden.",
+  "p.forecast.rollup_line_one": "Ab {name}: {n} Plan gelesen, {date}.",
+  "p.forecast.rollup_line_other": "Ab {name}: {n} Pläne gelesen, {date}.",
+  "p.forecast.rollup_truncated":
+    "Der Baum ist größer, als der Dienst durchläuft; die Zahlen decken einen Teil ab.",
+  "p.forecast.rollup_revisits_one":
+    "{n} Plan wurde zweimal erreicht und einmal gezählt.",
+  "p.forecast.rollup_revisits_other":
+    "{n} Pläne wurden zweimal erreicht und einmal gezählt.",
+  "p.forecast.rollup_no_currency_one":
+    "{n} Plan hat keine Währung für eine Prognose und ist nicht eingerechnet.",
+  "p.forecast.rollup_no_currency_other":
+    "{n} Pläne haben keine Währung für eine Prognose und sind nicht eingerechnet.",
+  "p.forecast.rollup_empty": "Kein Plan hier hat eine Prognose.",
+  "p.value.heading": "Realisierter Wert",
+  "p.value.says":
+    "Jetzt aus dem erfassten Wert gelesen; nichts wird gespeichert. Die Kapitalrendite stellt jeden Wertpunkt den erfassten Ist-Kosten gegenüber und entfällt, wenn die Budgetposten mehr als eine Währung verwenden, da keine Währung umgerechnet wird. Eine Zahl, die sich nicht angeben lässt, nennt den Grund, nie null.",
+  "p.value.roi": "Kapitalrendite: {pct}",
+  "p.value.roi_absent": "Kapitalrendite nicht angegeben: {reason}",
+  "p.value.measured_share": "gemessene Belege: {pct} der Wertpunkte",
+  "p.value.ttv_one":
+    "Zeit bis zum Wert: Median {p50} Kalendertage, 85. Perzentil {p85} ({n} Beobachtung)",
+  "p.value.ttv_other":
+    "Zeit bis zum Wert: Median {p50} Kalendertage, 85. Perzentil {p85} ({n} Beobachtungen)",
+  "p.value.ttv_absent": "Zeit bis zum Wert nicht angegeben: {reason}",
+  "p.value.adoption":
+    "Nutzung: {pct} ({active} von {target} Nutzern aktiv über {days} Tage)",
+  "p.value.adoption_definition": "aktiver Nutzer bedeutet: {definition}",
+  "p.value.adoption_absent": "Nutzung nicht angegeben: {reason}",
+  "p.value.adoption_none": "Es ist kein Nutzungswert erfasst.",
+  "p.value.absent_unrealized": "es ist kein Wert erfasst",
+  "p.value.absent_no_denominator":
+    "es gibt nichts zum Vergleichen (keine Ist-Kosten oder kein Ziel)",
+  "p.value.absent_mixed_currency":
+    "die Budgetposten verwenden mehr als eine Währung",
+  "p.value.absent_no_baseline": "es gibt keine Budget-Basislinie",
+  "p.value.absent_no_responses": "niemand hat geantwortet",
+  "p.value.absent_overflow": "die Zahl ist zu groß zum Berechnen",
+  "p.value.absent_other": "der Dienst hat keinen Grund genannt",
+  "p.value.case_heading": "Ziele des Business Case",
+  "p.value.no_targets": "Es ist kein Ziel des Business Case erfasst.",
+  "p.value.target_line":
+    "{metric}: von {baseline} auf {target} · {source} · genehmigt am {date}",
+  "p.value.source_charter": "die Projektcharta",
+  "p.value.source_gate_review": "eine Gate-Prüfung",
+  "p.value.source_other": "eine andere Quelle",
+  "p.value.to_costs": "Ein Ziel auf der Kostenseite erfassen",
+  "p.value.point_heading": "Beobachteten Wert erfassen",
+  "p.value.point_says":
+    "Ein Wert ist gemessen, geschätzt oder behauptet. Mit Währung ist er ein Geldbetrag; ohne, eine ganze Zahl in der Einheit der Kennzahl. Ein erfasster Wertpunkt lässt sich hier nicht ändern. Ein Wertpunkt je Plan kann der erste messbare Wert sein: Er stoppt die Uhr bis zum Wert, die das erste Ziel des Business Case gestartet hat, und lässt sich nicht verschieben.",
+  "p.value.f_value": "Wert",
+  "p.value.f_currency": "Währung (drei Buchstaben, oder leer)",
+  "p.value.f_method": "Wie er ermittelt wurde",
+  "p.value.method_measured": "gemessen",
+  "p.value.method_estimated": "geschätzt",
+  "p.value.method_asserted": "behauptet",
+  "p.value.f_evidence": "Beleg (Link oder Verweis, optional)",
+  "p.value.f_first": "Dies ist der erste messbare Wert",
+  "p.value.record_point": "Wert erfassen",
+  "p.value.confirm_first":
+    "Dies als ersten messbaren Wert des Plans erfassen? Er stoppt die Uhr bis zum Wert und lässt sich nicht verschieben.",
+  "p.value.point_recorded": "Wert erfasst.",
+  "p.value.problem_currency":
+    "Die Währung muss ein Code aus drei Buchstaben sein, oder leer.",
+  "p.value.problem_amount": "Der Wert muss ein Geldbetrag sein.",
+  "p.value.problem_whole": "Ohne Währung muss der Wert eine ganze Zahl sein.",
+  "p.value.problem_method": "Wählen Sie, wie der Wert ermittelt wurde.",
+  "p.value.refused_first_taken":
+    "Abgelehnt: Dieser Plan hat bereits einen ersten messbaren Wert; die Uhr stoppt nur einmal.",
+  "p.value.refused_value": "Der Wert wurde abgelehnt.",
+  "p.value.refused_gone":
+    "Dieser Plan existiert nicht mehr, oder Sie haben keinen Lesezugriff.",
+  "p.value.could_not_read": "Der realisierte Wert konnte nicht gelesen werden.",
+  "p.value.could_not_record_point": "Der Wert konnte nicht erfasst werden.",
+  "p.value.case_says":
+    "Ein Ziel ist eine in der Projektcharta oder bei einer Gate-Prüfung versprochene Kennzahl, mit ihrem Wert bei Genehmigung und dem versprochenen Wert, als ganze Zahlen in der Einheit der Kennzahl. Das Genehmigungsdatum startet die Uhr bis zum Wert und lässt sich nicht ändern; ein Ziel lässt sich hier weder ändern noch entfernen.",
+  "p.value.to_benefits": "Der realisierte Wert steht auf der Nutzenseite.",
+  "p.value.f_metric": "Kennzahl",
+  "p.value.f_baseline": "Wert bei Genehmigung",
+  "p.value.f_target": "Versprochener Wert",
+  "p.value.f_unit": "Einheit (optional)",
+  "p.value.f_source": "Versprochen in",
+  "p.value.record_target": "Ziel erfassen",
+  "p.value.confirm_target":
+    "Ziel {metric} erfassen? Es lässt sich hier weder ändern noch entfernen.",
+  "p.value.target_recorded": "Ziel {metric} erfasst.",
+  "p.value.problem_metric": "Nennen Sie die Kennzahl.",
+  "p.value.problem_target_values":
+    "Der Wert bei Genehmigung und der versprochene Wert müssen ganze Zahlen sein.",
+  "p.value.problem_source": "Wählen Sie, wo das Ziel versprochen wurde.",
+  "p.value.refused_target": "Das Ziel wurde abgelehnt.",
+  "p.value.could_not_record_target": "Das Ziel konnte nicht erfasst werden.",
 };

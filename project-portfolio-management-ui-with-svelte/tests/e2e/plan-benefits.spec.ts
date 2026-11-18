@@ -1,11 +1,59 @@
 // NC-1 slice 11 (DP-9): a plan's benefit classification and validation, in a real browser over a stubbed service.
 // The plan page links here; a financial benefit is classified (the whole classification sent, a yearly amount only when
 // recurring) and validated by an amount to date, its standing and history shown; a non-financial one is given a KPI
-// and says it is measured by it; a validator in the programme is refused in the catalogue's words. Welsh; axe.
+// and says it is measured by it; a validator in the programme is refused in the catalogue's words. NC-1 slice 12 part
+// (f): the value realized read live (no service text), and an observed value recorded (its rules said first, the first
+// measurable one asked first, a refusal in the catalogue's words). Welsh; axe.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
 import { PID, settle, stubPlansApi } from "./fixtures";
+
+const VALUE = {
+  plan_pid: PID,
+  transformation_roi: {
+    basis_points: 2500,
+    absent: null,
+    realized_minor: 500000,
+    investment_minor: 400000,
+    measured_share_basis_points: 5000,
+  },
+  time_to_value: { observations: 1, p50_days: 40, p85_days: 40, absent: null },
+  adoption: { measured: false, reason: "service text" },
+  performance_to_business_case: [
+    {
+      metric: "Beds freed",
+      baseline_value: 10,
+      target_value: 40,
+      promised_by: null,
+      source: "charter",
+      approved_at: "2026-10-01T09:00:00Z",
+    },
+  ],
+  as_of: "2026-11-18T10:00:00Z",
+  asserted: true,
+};
+
+/** The realized-value reading and the value points recorded (NC-1 slice 12 part f). */
+async function stubValue(page: Page, opts: { refuse?: number } = {}) {
+  const sent: Array<{ path: string; body: unknown }> = [];
+  await page.route(
+    /\/api\/plans\/[^/]+\/(value-realization|value-points)/,
+    async (route) => {
+      const req = route.request();
+      const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
+      if (req.method() === "GET") return route.fulfill({ json: VALUE });
+      sent.push({ path, body: req.postDataJSON() });
+      if (opts.refuse)
+        return route.fulfill({
+          status: opts.refuse,
+          json: { code: "unprocessable", detail: "service text" },
+        });
+      return route.fulfill({ json: { pid: "v1" } });
+    },
+  );
+  return sent;
+}
 
 async function stubBenefits(page: Page, opts: { refuse?: number } = {}) {
   const benefits = [
@@ -216,13 +264,112 @@ test("a validator in the programme is refused in the catalogue's words", async (
   );
 });
 
+test("the value realized is read live, each figure in the catalogue's words, never the service's", async ({
+  page,
+}) => {
+  await stubBenefits(page);
+  await stubValue(page);
+  await page.goto(`/en-001/plans/${PID}/benefits`);
+  await settle(page);
+  const v = page.getByRole("region", { name: "Value realized" });
+  await expect(v.getByTestId("value-roi")).toHaveText(
+    "Return on investment: 25.0% · measured evidence: 50% of the value points",
+  );
+  await expect(v.getByTestId("value-ttv")).toHaveText(
+    "Time to value: median 40 calendar days, 85th percentile 40 (1 observation)",
+  );
+  await expect(v.getByTestId("value-adoption")).toHaveText(
+    "No adoption reading is recorded.",
+  );
+  await expect(v.getByTestId("value-targets")).toContainText(
+    "Beds freed: from 10 to 40 · the charter · approved",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
+test("an observed value: its rules said first, the first measurable one asked first, a refusal in the catalogue's words", async ({
+  page,
+}) => {
+  await stubBenefits(page);
+  const sent = await stubValue(page);
+  await page.goto(`/en-001/plans/${PID}/benefits`);
+  await settle(page);
+  const v = page.getByRole("region", { name: "Value realized" });
+  await expect(v).toContainText(
+    "One value point per plan may be the first measurable value",
+  );
+  await v.getByLabel("Value", { exact: true }).fill("2.5");
+  await v.getByRole("button", { name: "Record the value" }).click();
+  await expect(v.getByRole("alert")).toHaveText(
+    "Without a currency, the value must be a whole number.",
+  );
+  expect(sent).toEqual([]);
+  await v.getByLabel("Value", { exact: true }).fill("1,250.50");
+  await v.getByLabel("Currency (three letters, or empty)").fill("gbp");
+  await v.getByLabel("How it was arrived at").selectOption("estimated");
+  await v
+    .getByLabel("Evidence (a link or reference, optional)")
+    .fill(" doc:7 ");
+  await v.getByRole("button", { name: "Record the value" }).click();
+  await expect(v.getByRole("status")).toHaveText("Value recorded.");
+  expect(sent).toEqual([
+    {
+      path: `/api/plans/${PID}/value-points`,
+      body: {
+        value: 125050,
+        method: "estimated",
+        currency: "GBP",
+        evidence_ref: "doc:7",
+      },
+    },
+  ]);
+
+  await v.getByLabel("Value", { exact: true }).fill("10");
+  await v.getByLabel("This is the first measurable value").check();
+  await v.getByRole("button", { name: "Record the value" }).click();
+  const ask = page.getByRole("alertdialog");
+  await expect(ask).toContainText(
+    "Record this as the plan's first measurable value? It stops the time-to-value clock and cannot be moved.",
+  );
+  await ask.getByRole("button", { name: "Cancel" }).click();
+  expect(sent).toHaveLength(1);
+
+  await page.unroute(/\/api\/plans\/[^/]+\/(value-realization|value-points)/);
+  const refused = await stubValue(page, { refuse: 422 });
+  await v.getByRole("button", { name: "Record the value" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(v.getByRole("alert")).toHaveText(
+    "Refused: this plan already has a first measurable value; the clock stops once.",
+  );
+  expect(refused).toEqual([
+    {
+      path: `/api/plans/${PID}/value-points`,
+      body: {
+        value: 1000,
+        method: "estimated",
+        currency: "GBP",
+        is_first_measurable: true,
+      },
+    },
+  ]);
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
 test("the benefits page reads in Welsh and passes axe", async ({ page }) => {
   await stubBenefits(page);
+  await stubValue(page);
   await page.goto(`/cy-001/plans/${PID}/benefits`);
   await settle(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Buddion: dosbarthiad a dilysu",
   );
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Gwerth a wireddwyd" }),
+  ).toBeVisible();
+  await expect(page.getByText("service text")).toHaveCount(0);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();

@@ -9,6 +9,60 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — programme money, value and benefits, read live (NC-1 slice 12 part f, DP-7, DP-8, DP-9, 2026-11-18)
+
+- `/portfolio-map`: "Programme readings, now", the director pack's readings read live and drawn by the pack's own
+  renderer (`buildPackView`): the buffer fever chart (`GET /api/buffer-fever`), earned value over the threshold (`GET
+  /api/portfolio-earned-value`, its actual cost chosen: budget lines, labour or both), validated benefits (`GET
+  /api/portfolio-benefits`), and issues and change requests (`GET /api/director-pack/issues-and-changes`) over a window
+  of 1 to 366 days (empty for the service's 30, which is not sent; checked first). A reading that fails says so on its
+  own; no readable plan with issues is said in the catalogue's words. The pack renderer's issues and change-requests
+  sections now also show every further figure the summary carries (open by severity, overdue, raised and resolved in
+  the period, the oldest open one; approved not implemented, decided in the period, by status, the oldest open one),
+  so an issued pack shows them too; the service's `statement` is never shown.
+- `/financials`: the forecast at completion rolled up from a chosen plan over the plans beneath it (`GET
+  /api/financials/forecast?plan=&depth=`), one row per currency (actual, estimate to complete, estimate at completion,
+  plans), how many plans were read, reached twice or had no currency; the depth (1 to 32, empty for all) checked first;
+  a 404 said. The roll-up's `note` is not shown.
+- `/plans/[pid]/costs`: the plan's forecast at completion (`GET /api/plans/{pid}/financials/forecast`) with where its
+  estimate to complete came from and the baseline version used; the budget baselines (`GET`/`POST
+  /api/plans/{pid}/budget-baselines`), every version with its periods, and a new one started from the latest (a
+  currency, 1 to 256 periods with an end not before the start and an amount not below zero, a reason needed after the
+  first, at most 1024 bytes), every problem said at once, one the same as the latest not sent, approved after a
+  question; the tranches held until a gate (`POST …/budget-lines/{line}/release`), each released after a question once
+  the plan's stage has reached its gate (the service's gate order), the incomplete register read from its code
+  (`register_incomplete`); and a business-case target (`POST /api/plans/{pid}/business-case`: a measure, two whole
+  numbers in its unit, an optional unit, the charter or a gate review) recorded after a question.
+- `/plans/[pid]/benefits`: the value realized read live (`GET /api/plans/{pid}/value-realization`): the return on
+  investment with the share of measured evidence, time to value (median and 85th percentile), adoption, and the
+  business-case targets; every absent figure with its reason in words, never zero; an observed value recorded (`POST
+  /api/plans/{pid}/value-points`): money in minor units with a currency, a whole number without, measured, estimated or
+  asserted, optional evidence, the first measurable one asked first.
+- Twelve client methods; `src/lib/live-pack-view.ts`, `src/lib/forecast-view.ts`, `src/lib/value-view.ts`; additions to
+  `src/lib/pack-view.ts`; 168 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/live-pack-view.test.ts` (seven), `tests/unit/forecast-view.test.ts` (fifteen),
+  `tests/unit/value-view.test.ts` (eleven), one more in `ppm.test.ts`; `tests/e2e/money-live.spec.ts` (nine, new), three
+  more in `portfolio-map.spec.ts` and two more in `plan-benefits.spec.ts`, with Welsh and axe; every stub that would
+  carry the service's English carries "service text" and the tests check it never shows.
+- `tests/unit/i18n.test.ts`'s frozen-baseline test ran past its 5-second limit under a full run's load (an assertion
+  per key, each scanning the whole key list); it now looks each key up in a set and asserts once per locale and rule.
+  The guard is the same: a missing baseline key or an extra key in any locale still fails it.
+- **Decided (the plainest option):** the live readings sit on `/portfolio-map` (it already draws the pack's map live),
+  not `/executive`; the roll-up sits on `/financials`; a business-case target is recorded on `/plans/[pid]/costs`, as
+  the plan says, and read on `/plans/[pid]/benefits`; a target's values are whole numbers in its unit, and no currency
+  is offered for it, because the service's reading does not return one.
+- **Not done:** a list of the value points recorded (the service has no read of them); adoption and satisfaction
+  readings (`POST …/adoption`, `…/satisfaction`) and the six-dimension `GET …/performance`; the fever chart drawn as a
+  picture (a table, as the pack); the previous fever point, which only an issued pack carries. **Service gaps:** every
+  422 on the baseline, business-case and value-point routes is `unprocessable` with English text (the page checks
+  every rule it can first, so a 422 after that is read as the one it cannot: a version approved meanwhile, or a first
+  measurable point already recorded); the three release refusals (no gate, already released, gate not passed) share
+  `unprocessable`; `value-realization` names no currency for its realized and investment figures, nor a target's unit
+  or currency, so the page shows the ratio only and a target's values as plain numbers; a forecast's amount in other
+  currencies carries no currency, so the page says only that some exists; the adoption reading's `reason`, the
+  roll-up's `note` and the issues answer's `reason` and `statement` are English and are not shown. **Not verified:**
+  against a real service.
+
 ### Added — meetings, lessons and references (NC-1 slice 12 part e, NC-14, BR-3, NC-8, BR-4, 2026-11-18)
 
 - `/plans/[pid]/meetings` (new; linked from the plan page): plan a meeting (a title, a date, an agenda whose items may

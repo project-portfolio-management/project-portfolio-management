@@ -898,6 +898,50 @@ describe("PpmClient meetings, lessons and references (NC-1 slice 12 part e, NC-1
   });
 });
 
+describe("PpmClient programme money, value and benefits, read live (NC-1 slice 12 part f, DP-7, DP-8, DP-9)", () => {
+  it("reads and writes at the service's paths, the defaults left out of the query", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.bufferFever();
+    await ppm.portfolioEarnedValue();
+    await ppm.portfolioEarnedValue("labour");
+    await ppm.portfolioBenefits();
+    await ppm.issuesAndChanges();
+    await ppm.issuesAndChanges(90);
+    await ppm.forecastRollup("p1");
+    await ppm.forecastRollup("p1", 3);
+    await ppm.planForecast("p1");
+    await ppm.budgetBaselines("p1");
+    await ppm.approveBudgetBaseline("p1", { currency: "GBP", periods: [] });
+    await ppm.releaseBudgetLine("p1", "l1");
+    await ppm.recordBusinessCase("p1", {
+      metric: "Beds",
+      baseline_value: 1,
+      target_value: 2,
+    });
+    await ppm.valueRealization("p1");
+    await ppm.recordValuePoint("p1", { value: 1, method: "measured" });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/buffer-fever",
+      "GET /api/portfolio-earned-value",
+      "GET /api/portfolio-earned-value?ac=labour",
+      "GET /api/portfolio-benefits",
+      "GET /api/director-pack/issues-and-changes",
+      "GET /api/director-pack/issues-and-changes?window_days=90",
+      "GET /api/financials/forecast?plan=p1",
+      "GET /api/financials/forecast?plan=p1&depth=3",
+      "GET /api/plans/p1/financials/forecast",
+      "GET /api/plans/p1/budget-baselines",
+      "POST /api/plans/p1/budget-baselines",
+      "POST /api/plans/p1/budget-lines/l1/release",
+      "POST /api/plans/p1/business-case",
+      "GET /api/plans/p1/value-realization",
+      "POST /api/plans/p1/value-points",
+    ]);
+  });
+});
+
 describe("PpmClient milestone sign-off required (NC-1 slice 11, EX-4)", () => {
   it("replaces the organizations a milestone needs", async () => {
     const { ppm, calls } = recordingClient();

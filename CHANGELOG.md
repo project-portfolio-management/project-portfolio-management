@@ -27,6 +27,9 @@ It is pre-1.0; the first release cut from the root release workflow is
 - **Service: `start_refused` says why as fields.** The refusal of a programme's start carries `errors.refusals` (each a
   reason code with its numbers) and `errors.queue_position`, so the phase page need not read the start check again.
   **Not done:** the page still reads the check.
+- **Service: the de-escalation tracker says who set the level and who recorded the evidence** (`set_by`,
+  `recorded_by`, `recorded_on`), as references; a director pack's copy leaves the people out. **Not done:** names (the
+  service stores references only).
 
 ### 18 November (test coverage measured, with cargo-tarpaulin)
 

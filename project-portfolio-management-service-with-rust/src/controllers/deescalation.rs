@@ -653,7 +653,9 @@ pub(crate) async fn tracker_view(
     let states: Vec<QuarterState> = inputs.iter().map(|i| rules::quarter_state(i)).collect();
     let run = rules::consecutive_met(&states);
     let mut out = json!({
-        "level": level.as_ref().map(|l| json!({ "level": l.level, "set_on": l.set_on, "note": l.note })),
+        // Who set the level and who recorded each piece of evidence are references to people (the personal-data
+        // inventory lists both): the tracker shows them, and the pack leaves them out (`pack_section`).
+        "level": level.as_ref().map(|l| json!({ "level": l.level, "set_on": l.set_on, "note": l.note, "set_by": l.set_by })),
         "level_note": "The level is recorded as the sponsor set it. It is never computed here, and nothing below changes it.",
         "scorecard": sc.as_ref().map(|s| json!({ "pid": s.pid, "name": s.name })),
         "required_quarters": need, "required_quarters_setting_unusable": unusable,
@@ -666,12 +668,12 @@ pub(crate) async fn tracker_view(
         out["kpis"] = json!(kpi_rows_v);
         out["criteria"] = json!(criteria.iter().map(|c| json!({
             "pid": c.pid, "criterion": c.criterion,
-            "quarters": qs.iter().map(|q| { let e = latest.get(&(c.pid, q.label())); json!({ "quarter": q.label(), "met": e.map(|x| x.met), "link": e.and_then(|x| x.link.clone()), "note": e.map(|x| x.note.clone()) }) }).collect::<Vec<_>>(),
+            "quarters": qs.iter().map(|q| { let e = latest.get(&(c.pid, q.label())); json!({ "quarter": q.label(), "met": e.map(|x| x.met), "link": e.and_then(|x| x.link.clone()), "note": e.map(|x| x.note.clone()), "recorded_by": e.and_then(|x| x.recorded_by.clone()), "recorded_on": e.map(|x| x.recorded_on) }) }).collect::<Vec<_>>(),
         })).collect::<Vec<_>>());
         out["level_history"] = json!(
             history
                 .iter()
-                .map(|l| json!({ "level": l.level, "set_on": l.set_on }))
+                .map(|l| json!({ "level": l.level, "set_on": l.set_on, "set_by": l.set_by }))
                 .collect::<Vec<_>>()
         );
     }
@@ -692,13 +694,25 @@ async fn tracker(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result
 /// When a database read fails.
 pub(crate) async fn pack_section(ctx: &AppContext, include: &HashSet<Uuid>) -> Result<Value> {
     let mut v = tracker_view(ctx, include, crate::tz::deployment_today(), true).await?;
-    // The pack carries the level, the run and the KPI figures; the evidence notes and links stay in the tracker.
+    // The pack carries the level, the run and the KPI figures; the evidence notes and links stay in the tracker, and so
+    // do the people: who set the level and who recorded the evidence (a pack names no one).
+    if let Some(l) = v.get_mut("level").and_then(Value::as_object_mut) {
+        l.remove("set_by");
+    }
+    if let Some(h) = v.get_mut("level_history").and_then(Value::as_array_mut) {
+        for l in h.iter_mut().filter_map(Value::as_object_mut) {
+            l.remove("set_by");
+        }
+    }
     if let Some(c) = v.get_mut("criteria").and_then(Value::as_array_mut) {
         for x in c {
             if let Some(qs) = x.get_mut("quarters").and_then(Value::as_array_mut) {
                 for q in qs {
                     q["note"] = Value::Null;
                     q["link"] = Value::Null;
+                    if let Some(o) = q.as_object_mut() {
+                        o.remove("recorded_by");
+                    }
                 }
             }
         }

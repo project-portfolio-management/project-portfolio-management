@@ -1841,3 +1841,10 @@ and its English `detail`; each fact a screen must show is a field, not only Engl
   `pool` and `months`), the shapes `GET /api/plans/{pid}/start-check` gives (`domain/src/start_control.rs`
   `refused_errors`). The place counts only the queued programmes the caller may read, as the `detail` does. Tests:
   `a_refusal_carries_its_reason_as_a_code_and_its_numbers` (domain), `tests/organizations.rs`.
+- **Who set the level and who recorded the evidence.** `GET /api/deescalation` (EX-10) returns `set_by` on `level` and
+  on each `level_history` entry, and `recorded_by` and `recorded_on` on each criterion's quarter (null where nothing is
+  recorded). They are references to people as stored (the token subject), not names; the personal-data inventory
+  lists `escalation_levels.set_by` and `criterion_evidence.recorded_by` (class `identifier`, retention `AUD`), and the
+  data-subject tools cover them. The same tracker inside a director pack leaves all three people fields out, as it
+  leaves out the evidence notes and links: a pack names no one. Test: `tests/organizations.rs` (the tracker shows them;
+  the pack's `outcomes` holds neither subject).

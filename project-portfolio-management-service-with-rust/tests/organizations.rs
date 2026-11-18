@@ -743,6 +743,11 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         with!(request.put("/api/deescalation/level"), sponsor).json(&json!({ "level": "Level 2", "note": "Set at the board" })).await.assert_status_ok();
         let t: Value = with!(request.get("/api/deescalation"), writer).await.json();
         assert_eq!(t["level"]["level"], "Level 2", "the level stays what the sponsor set, whatever the run: {t}");
+        // Who set it and who recorded the evidence, as the tables store them.
+        let sponsor_sub = "3f2c6b7e-0000-4000-8000-0000000000d5";
+        assert_eq!((t["level"]["set_by"].as_str(), t["level_history"][0]["set_by"].as_str()), (Some(sponsor_sub), Some(sponsor_sub)), "{t}");
+        let recorded = t["criteria"][0]["quarters"].as_array().unwrap().iter().find(|q| q["quarter"] == lf.label().as_str()).unwrap();
+        assert_eq!((recorded["recorded_by"].as_str(), recorded["recorded_on"].as_str()), (Some(WRITER), Some(today.to_string().as_str())), "{recorded}");
         assert!(sqlx::raw_sql("UPDATE escalation_levels SET level = 'Level 0'").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "append-only");
         let one: Value = with!(request.get(&format!("/api/scorecards/{scp}?quarters=2")), writer).await.json();
         assert_eq!(one["kpis"].as_array().unwrap().len(), 2);
@@ -750,6 +755,8 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let pack10: Value = with!(request.get(&format!("/api/director-packs/{}", d10["pid"].as_str().unwrap())), issuer).await.json();
         assert_eq!(pack10["body"]["outcomes"]["level"]["level"], "Level 2");
         assert!(pack10["body"]["outcomes"]["criteria"][0]["quarters"][0]["link"].is_null(), "the pack carries no evidence link");
+        let outcomes = pack10["body"]["outcomes"].to_string();
+        assert!(!outcomes.contains(sponsor_sub) && !outcomes.contains(WRITER) && !outcomes.contains("set_by") && !outcomes.contains("recorded_by"), "a pack names no one: {outcomes}");
 
         // ── EX-12: the portfolio ledger: what did this allocation buy? ──
         let fs: Value = with!(request.post("/api/funding-sources"), writer).json(&json!({ "name": "Treasury grant" })).await.json();

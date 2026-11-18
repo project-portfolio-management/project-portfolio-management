@@ -32,6 +32,13 @@ Service spec, "Codes and fields a screen reads (NC-1 slice 12, part a)", is the 
   and now built by `start_control::Refusal::message` in the domain crate. Tests:
   `a_refusal_carries_its_reason_as_a_code_and_its_numbers`, `tests/organizations.rs` (the limit case). **Not
   verified:** the `constraint_pool_over` case through the route (the domain test covers its shape).
+- **The de-escalation tracker names who acted.** `GET /api/deescalation` returns `set_by` on the level and the level
+  history, and `recorded_by` and `recorded_on` on criterion evidence, as stored. Checked first: both people columns are
+  in `governance/personal-data-inventory.csv` and covered by the data-subject tools, and other reads already return
+  such references (an exception's `opened_by` and `decided_by`). The director pack's copy of the tracker
+  (`pack_section`) removes them. Test: `tests/organizations.rs`. **Not done:** the references are token subjects, not
+  names; the service holds no directory to turn one into a name, so a screen shows the reference (the same limit as a
+  confidence assessment's assessor).
 
 ### Added — test coverage with cargo-tarpaulin, and its baseline (2026-11-18)
 

@@ -60,66 +60,77 @@ macro_rules! instant_methods {
     () => {
         /// Whole seconds since 1970-01-01T00:00:00Z, rounded down.
         #[must_use]
+        #[inline]
         pub fn timestamp(&self) -> i64 {
             floor_div(self.instant(), NANOS_PER_SEC)
         }
 
         /// Whole milliseconds since 1970-01-01T00:00:00Z, rounded down.
         #[must_use]
+        #[inline]
         pub fn timestamp_millis(&self) -> i64 {
             floor_div(self.instant(), 1_000_000)
         }
 
         /// Whole microseconds since 1970-01-01T00:00:00Z, rounded down.
         #[must_use]
+        #[inline]
         pub fn timestamp_micros(&self) -> i64 {
             floor_div(self.instant(), 1000)
         }
 
         /// Nanoseconds since 1970-01-01T00:00:00Z, or `None` outside `i64` (before 1677 or after 2262).
         #[must_use]
+        #[inline]
         pub fn timestamp_nanos_opt(&self) -> Option<i64> {
             i64::try_from(self.instant().as_nanosecond()).ok()
         }
 
         /// The milliseconds past the second (0 to 999).
         #[must_use]
+        #[inline]
         pub fn timestamp_subsec_millis(&self) -> u32 {
             subsec(self.instant()) / 1_000_000
         }
 
         /// The microseconds past the second (0 to 999 999).
         #[must_use]
+        #[inline]
         pub fn timestamp_subsec_micros(&self) -> u32 {
             subsec(self.instant()) / 1000
         }
 
         /// The nanoseconds past the second (0 to 999 999 999).
         #[must_use]
+        #[inline]
         pub fn timestamp_subsec_nanos(&self) -> u32 {
             subsec(self.instant())
         }
 
         /// The civil date and time in UTC.
         #[must_use]
+        #[inline]
         pub fn naive_utc(&self) -> NaiveDateTime {
             NaiveDateTime(Offset::UTC.to_datetime(self.instant()))
         }
 
         /// The civil date and time at this value's own offset (UTC for a [`Timestamp`]).
         #[must_use]
+        #[inline]
         pub fn naive_local(&self) -> NaiveDateTime {
             NaiveDateTime(self.local())
         }
 
         /// The calendar date at this value's own offset (UTC for a [`Timestamp`]).
         #[must_use]
+        #[inline]
         pub fn date_naive(&self) -> Date {
             Date(self.local().date())
         }
 
         /// The year at this value's own offset.
         #[must_use]
+        #[inline]
         pub fn year(&self) -> i32 {
             i32::from(self.local().year())
         }
@@ -127,6 +138,7 @@ macro_rules! instant_methods {
         /// The month (1 to 12) at this value's own offset.
         #[must_use]
         #[allow(clippy::cast_sign_loss)]
+        #[inline]
         pub fn month(&self) -> u32 {
             self.local().month() as u32
         }
@@ -134,18 +146,21 @@ macro_rules! instant_methods {
         /// The day of the month at this value's own offset.
         #[must_use]
         #[allow(clippy::cast_sign_loss)]
+        #[inline]
         pub fn day(&self) -> u32 {
             self.local().day() as u32
         }
 
         /// The day of the week at this value's own offset.
         #[must_use]
+        #[inline]
         pub fn weekday(&self) -> Weekday {
             self.date_naive().weekday()
         }
 
         /// The day of the year at this value's own offset.
         #[must_use]
+        #[inline]
         pub fn ordinal(&self) -> u32 {
             self.date_naive().ordinal()
         }
@@ -153,6 +168,7 @@ macro_rules! instant_methods {
         /// The hour (0 to 23) at this value's own offset.
         #[must_use]
         #[allow(clippy::cast_sign_loss)]
+        #[inline]
         pub fn hour(&self) -> u32 {
             self.local().hour() as u32
         }
@@ -160,6 +176,7 @@ macro_rules! instant_methods {
         /// The minute at this value's own offset.
         #[must_use]
         #[allow(clippy::cast_sign_loss)]
+        #[inline]
         pub fn minute(&self) -> u32 {
             self.local().minute() as u32
         }
@@ -167,6 +184,7 @@ macro_rules! instant_methods {
         /// The second.
         #[must_use]
         #[allow(clippy::cast_sign_loss)]
+        #[inline]
         pub fn second(&self) -> u32 {
             self.local().second() as u32
         }
@@ -174,18 +192,21 @@ macro_rules! instant_methods {
         /// The nanoseconds past the second.
         #[must_use]
         #[allow(clippy::cast_sign_loss)]
+        #[inline]
         pub fn nanosecond(&self) -> u32 {
             self.local().subsec_nanosecond() as u32
         }
 
         /// RFC 3339 with the offset written out (`+00:00`, never `Z`) and the fraction in groups of three.
         #[must_use]
+        #[inline]
         pub fn to_rfc3339(&self) -> String {
             self.to_rfc3339_opts(SecondsFormat::AutoSi, false)
         }
 
         /// RFC 3339 with a chosen fraction, and `Z` for a zero offset if `use_z`.
         #[must_use]
+        #[inline]
         pub fn to_rfc3339_opts(&self, secform: SecondsFormat, use_z: bool) -> String {
             let mut s = String::with_capacity(32);
             // Writing to a `String` cannot fail.
@@ -196,12 +217,14 @@ macro_rules! instant_methods {
 
         /// Written with a `%` pattern (`%Y %m %d %H %M %S %%`) at this value's own offset.
         #[must_use]
+        #[inline]
         pub fn format<'a>(&self, pattern: &'a str) -> format::Formatted<'a> {
             format::Formatted::new(Fields::datetime(self.local()), pattern)
         }
 
         /// The same instant with offset zero.
         #[must_use]
+        #[inline]
         pub fn fixed_offset(&self) -> OffsetDateTime {
             OffsetDateTime {
                 ts: self.instant(),
@@ -211,24 +234,28 @@ macro_rules! instant_methods {
 
         /// The same instant, in UTC.
         #[must_use]
+        #[inline]
         pub fn to_utc(&self) -> Timestamp {
             Timestamp(self.instant())
         }
 
         /// The same instant shown in a time zone: with the zone's offset at that instant.
         #[must_use]
+        #[inline]
         pub fn with_timezone(&self, zone: &crate::Tz) -> OffsetDateTime {
             zone.at(self.to_utc())
         }
 
         /// The `jiff` instant underneath.
         #[must_use]
+        #[inline]
         pub fn to_jiff(&self) -> jiff::Timestamp {
             self.instant()
         }
 
         /// The whole duration from `rhs` to `self`.
         #[must_use]
+        #[inline]
         pub fn signed_duration_since<T: Into<Timestamp>>(&self, rhs: T) -> Duration {
             let rhs: Timestamp = rhs.into();
             duration_between(self.instant(), rhs.0)
@@ -251,19 +278,23 @@ impl Timestamp {
 
     /// The current instant, from the system clock.
     #[must_use]
+    #[inline]
     pub fn now() -> Timestamp {
         Timestamp(jiff::Timestamp::now())
     }
 
+    #[inline]
     fn instant(&self) -> jiff::Timestamp {
         self.0
     }
 
     #[allow(clippy::unused_self)]
+    #[inline]
     fn offset_seconds(&self) -> i32 {
         0
     }
 
+    #[inline]
     fn local(&self) -> jiff::civil::DateTime {
         Offset::UTC.to_datetime(self.0)
     }
@@ -272,12 +303,14 @@ impl Timestamp {
 
     /// From the `jiff` instant.
     #[must_use]
+    #[inline]
     pub const fn from_jiff(ts: jiff::Timestamp) -> Timestamp {
         Timestamp(ts)
     }
 
     /// The instant at this civil date and time in UTC, or `None` if there is no such date or time.
     #[must_use]
+    #[inline]
     pub fn with_ymd_and_hms(
         year: i32,
         month: u32,
@@ -295,6 +328,7 @@ impl Timestamp {
     /// `secs` seconds and `nsecs` nanoseconds (below a second) after 1970-01-01T00:00:00Z, or `None` out of
     /// range.
     #[must_use]
+    #[inline]
     pub fn from_timestamp(secs: i64, nsecs: u32) -> Option<Timestamp> {
         if i128::from(nsecs) >= NANOS_PER_SEC {
             return None;
@@ -304,12 +338,14 @@ impl Timestamp {
 
     /// `millis` milliseconds after 1970-01-01T00:00:00Z, or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn from_timestamp_millis(millis: i64) -> Option<Timestamp> {
         from_nanos(i128::from(millis) * 1_000_000).map(Timestamp)
     }
 
     /// `micros` microseconds after 1970-01-01T00:00:00Z, or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn from_timestamp_micros(micros: i64) -> Option<Timestamp> {
         from_nanos(i128::from(micros) * 1000).map(Timestamp)
     }
@@ -320,6 +356,7 @@ impl Timestamp {
     ///
     /// Never: every `i64` count of nanoseconds (1677 to 2262) is in range.
     #[must_use]
+    #[inline]
     pub fn from_timestamp_nanos(nanos: i64) -> Timestamp {
         Timestamp(
             from_nanos(i128::from(nanos)).expect("every i64 count of nanoseconds is in range"),
@@ -331,36 +368,42 @@ impl Timestamp {
     /// # Errors
     ///
     /// The text is not RFC 3339 or names no such instant.
+    #[inline]
     pub fn parse_from_rfc3339(s: &str) -> ParseResult<Timestamp> {
         parse::rfc3339_strict(s).map(|(ts, _)| Timestamp(ts))
     }
 
     /// Moved by a duration, or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn checked_add_signed(self, rhs: Duration) -> Option<Timestamp> {
         self.0.checked_add(rhs.to_jiff()).ok().map(Timestamp)
     }
 
     /// Moved back by a duration, or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn checked_sub_signed(self, rhs: Duration) -> Option<Timestamp> {
         self.0.checked_sub(rhs.to_jiff()).ok().map(Timestamp)
     }
 
     /// The same time of day `days` later in UTC, or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn checked_add_days(self, days: Days) -> Option<Timestamp> {
         self.checked_add_signed(Duration::try_days(i64::try_from(days.0).ok()?)?)
     }
 
     /// The same time of day `days` earlier in UTC, or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn checked_sub_days(self, days: Days) -> Option<Timestamp> {
         self.checked_sub_signed(Duration::try_days(i64::try_from(days.0).ok()?)?)
     }
 
     /// The same time of day `months` later in UTC (the day clamped to the end of a shorter month).
     #[must_use]
+    #[inline]
     pub fn checked_add_months(self, months: Months) -> Option<Timestamp> {
         let local = self.naive_utc();
         let date = local.date().checked_add_months(months)?;
@@ -372,6 +415,7 @@ impl Timestamp {
 
     /// The same time of day `months` earlier in UTC (the day clamped to the end of a shorter month).
     #[must_use]
+    #[inline]
     pub fn checked_sub_months(self, months: Months) -> Option<Timestamp> {
         let local = self.naive_utc();
         let date = local.date().checked_sub_months(months)?;
@@ -383,14 +427,17 @@ impl Timestamp {
 }
 
 impl OffsetDateTime {
+    #[inline]
     fn instant(&self) -> jiff::Timestamp {
         self.ts
     }
 
+    #[inline]
     fn offset_seconds(&self) -> i32 {
         self.offset
     }
 
+    #[inline]
     fn local(&self) -> jiff::civil::DateTime {
         offset_of(self.offset).to_datetime(self.ts)
     }
@@ -399,6 +446,7 @@ impl OffsetDateTime {
 
     /// The instant at `ts` shown at `offset_seconds` east of UTC, or `None` for an offset of a day or more.
     #[must_use]
+    #[inline]
     pub fn from_instant(ts: Timestamp, offset_seconds: i32) -> Option<OffsetDateTime> {
         (offset_seconds.unsigned_abs() < 86_400).then_some(OffsetDateTime {
             ts: ts.0,
@@ -408,6 +456,7 @@ impl OffsetDateTime {
 
     /// The offset, in seconds east of UTC.
     #[must_use]
+    #[inline]
     pub fn offset_local_minus_utc(&self) -> i32 {
         self.offset
     }
@@ -417,6 +466,7 @@ impl OffsetDateTime {
     /// # Errors
     ///
     /// The text is not RFC 3339 or names no such instant.
+    #[inline]
     pub fn parse_from_rfc3339(s: &str) -> ParseResult<OffsetDateTime> {
         parse::rfc3339_strict(s).map(|(ts, offset)| OffsetDateTime { ts, offset })
     }
@@ -426,6 +476,7 @@ impl OffsetDateTime {
     /// # Errors
     ///
     /// The text does not match the pattern, names no such instant, or the pattern names no offset.
+    #[inline]
     pub fn parse_from_str(s: &str, pattern: &str) -> ParseResult<OffsetDateTime> {
         parse::strptime(s, pattern)?
             .to_instant()
@@ -434,6 +485,7 @@ impl OffsetDateTime {
 
     /// Moved by a duration (keeping the offset), or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn checked_add_signed(self, rhs: Duration) -> Option<OffsetDateTime> {
         let ts = self.ts.checked_add(rhs.to_jiff()).ok()?;
         Some(OffsetDateTime {
@@ -444,6 +496,7 @@ impl OffsetDateTime {
 
     /// Moved back by a duration (keeping the offset), or `None` out of range.
     #[must_use]
+    #[inline]
     pub fn checked_sub_signed(self, rhs: Duration) -> Option<OffsetDateTime> {
         let ts = self.ts.checked_sub(rhs.to_jiff()).ok()?;
         Some(OffsetDateTime {
@@ -455,6 +508,7 @@ impl OffsetDateTime {
 
 impl Default for Timestamp {
     /// 1970-01-01T00:00:00Z.
+    #[inline]
     fn default() -> Timestamp {
         Timestamp::UNIX_EPOCH
     }
@@ -462,36 +516,42 @@ impl Default for Timestamp {
 
 impl Default for OffsetDateTime {
     /// 1970-01-01T00:00:00+00:00.
+    #[inline]
     fn default() -> OffsetDateTime {
         Timestamp::UNIX_EPOCH.fixed_offset()
     }
 }
 
 impl From<Timestamp> for OffsetDateTime {
+    #[inline]
     fn from(t: Timestamp) -> OffsetDateTime {
         t.fixed_offset()
     }
 }
 
 impl From<OffsetDateTime> for Timestamp {
+    #[inline]
     fn from(t: OffsetDateTime) -> Timestamp {
         t.to_utc()
     }
 }
 
 impl From<jiff::Timestamp> for Timestamp {
+    #[inline]
     fn from(t: jiff::Timestamp) -> Timestamp {
         Timestamp(t)
     }
 }
 
 impl From<Timestamp> for jiff::Timestamp {
+    #[inline]
     fn from(t: Timestamp) -> jiff::Timestamp {
         t.0
     }
 }
 
 impl PartialEq for OffsetDateTime {
+    #[inline]
     fn eq(&self, other: &OffsetDateTime) -> bool {
         self.ts == other.ts
     }
@@ -500,42 +560,49 @@ impl PartialEq for OffsetDateTime {
 impl Eq for OffsetDateTime {}
 
 impl PartialOrd for OffsetDateTime {
+    #[inline]
     fn partial_cmp(&self, other: &OffsetDateTime) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for OffsetDateTime {
+    #[inline]
     fn cmp(&self, other: &OffsetDateTime) -> Ordering {
         self.ts.cmp(&other.ts)
     }
 }
 
 impl Hash for OffsetDateTime {
+    #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.ts.hash(state);
     }
 }
 
 impl PartialEq<Timestamp> for OffsetDateTime {
+    #[inline]
     fn eq(&self, other: &Timestamp) -> bool {
         self.ts == other.0
     }
 }
 
 impl PartialEq<OffsetDateTime> for Timestamp {
+    #[inline]
     fn eq(&self, other: &OffsetDateTime) -> bool {
         self.0 == other.ts
     }
 }
 
 impl PartialOrd<Timestamp> for OffsetDateTime {
+    #[inline]
     fn partial_cmp(&self, other: &Timestamp) -> Option<Ordering> {
         Some(self.ts.cmp(&other.0))
     }
 }
 
 impl PartialOrd<OffsetDateTime> for Timestamp {
+    #[inline]
     fn partial_cmp(&self, other: &OffsetDateTime) -> Option<Ordering> {
         Some(self.0.cmp(&other.ts))
     }
@@ -543,6 +610,7 @@ impl PartialOrd<OffsetDateTime> for Timestamp {
 
 impl Add<Duration> for Timestamp {
     type Output = Timestamp;
+    #[inline]
     fn add(self, rhs: Duration) -> Timestamp {
         self.checked_add_signed(rhs)
             .expect("`Timestamp + Duration` overflowed")
@@ -551,6 +619,7 @@ impl Add<Duration> for Timestamp {
 
 impl Sub<Duration> for Timestamp {
     type Output = Timestamp;
+    #[inline]
     fn sub(self, rhs: Duration) -> Timestamp {
         self.checked_sub_signed(rhs)
             .expect("`Timestamp - Duration` overflowed")
@@ -558,12 +627,14 @@ impl Sub<Duration> for Timestamp {
 }
 
 impl AddAssign<Duration> for Timestamp {
+    #[inline]
     fn add_assign(&mut self, rhs: Duration) {
         *self = *self + rhs;
     }
 }
 
 impl SubAssign<Duration> for Timestamp {
+    #[inline]
     fn sub_assign(&mut self, rhs: Duration) {
         *self = *self - rhs;
     }
@@ -571,6 +642,7 @@ impl SubAssign<Duration> for Timestamp {
 
 impl Add<Days> for Timestamp {
     type Output = Timestamp;
+    #[inline]
     fn add(self, days: Days) -> Timestamp {
         self.checked_add_days(days)
             .expect("`Timestamp + Days` out of range")
@@ -579,6 +651,7 @@ impl Add<Days> for Timestamp {
 
 impl Sub<Days> for Timestamp {
     type Output = Timestamp;
+    #[inline]
     fn sub(self, days: Days) -> Timestamp {
         self.checked_sub_days(days)
             .expect("`Timestamp - Days` out of range")
@@ -587,6 +660,7 @@ impl Sub<Days> for Timestamp {
 
 impl Add<Months> for Timestamp {
     type Output = Timestamp;
+    #[inline]
     fn add(self, months: Months) -> Timestamp {
         self.checked_add_months(months)
             .expect("`Timestamp + Months` out of range")
@@ -595,6 +669,7 @@ impl Add<Months> for Timestamp {
 
 impl Sub<Months> for Timestamp {
     type Output = Timestamp;
+    #[inline]
     fn sub(self, months: Months) -> Timestamp {
         self.checked_sub_months(months)
             .expect("`Timestamp - Months` out of range")
@@ -603,6 +678,7 @@ impl Sub<Months> for Timestamp {
 
 impl Sub<Timestamp> for Timestamp {
     type Output = Duration;
+    #[inline]
     fn sub(self, rhs: Timestamp) -> Duration {
         duration_between(self.0, rhs.0)
     }
@@ -610,6 +686,7 @@ impl Sub<Timestamp> for Timestamp {
 
 impl Add<Duration> for OffsetDateTime {
     type Output = OffsetDateTime;
+    #[inline]
     fn add(self, rhs: Duration) -> OffsetDateTime {
         self.checked_add_signed(rhs)
             .expect("`OffsetDateTime + Duration` overflowed")
@@ -618,6 +695,7 @@ impl Add<Duration> for OffsetDateTime {
 
 impl Sub<Duration> for OffsetDateTime {
     type Output = OffsetDateTime;
+    #[inline]
     fn sub(self, rhs: Duration) -> OffsetDateTime {
         self.checked_sub_signed(rhs)
             .expect("`OffsetDateTime - Duration` overflowed")
@@ -625,12 +703,14 @@ impl Sub<Duration> for OffsetDateTime {
 }
 
 impl AddAssign<Duration> for OffsetDateTime {
+    #[inline]
     fn add_assign(&mut self, rhs: Duration) {
         *self = *self + rhs;
     }
 }
 
 impl SubAssign<Duration> for OffsetDateTime {
+    #[inline]
     fn sub_assign(&mut self, rhs: Duration) {
         *self = *self - rhs;
     }
@@ -638,6 +718,7 @@ impl SubAssign<Duration> for OffsetDateTime {
 
 impl Sub<OffsetDateTime> for OffsetDateTime {
     type Output = Duration;
+    #[inline]
     fn sub(self, rhs: OffsetDateTime) -> Duration {
         duration_between(self.ts, rhs.ts)
     }
@@ -645,6 +726,7 @@ impl Sub<OffsetDateTime> for OffsetDateTime {
 
 /// `2026-10-30 09:15:00.123400 UTC`.
 impl fmt::Display for Timestamp {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let dt = self.local();
         crate::date::write_date(f, dt.date())?;
@@ -656,6 +738,7 @@ impl fmt::Display for Timestamp {
 
 /// `2026-10-30T09:15:00.123400Z`.
 impl fmt::Debug for Timestamp {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let dt = self.local();
         crate::date::write_date(f, dt.date())?;
@@ -667,6 +750,7 @@ impl fmt::Debug for Timestamp {
 
 /// `2026-10-30 09:15:00.123400 +00:00`.
 impl fmt::Display for OffsetDateTime {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let dt = self.local();
         crate::date::write_date(f, dt.date())?;
@@ -679,6 +763,7 @@ impl fmt::Display for OffsetDateTime {
 
 /// `2026-10-30T09:15:00.123400+00:00`.
 impl fmt::Debug for OffsetDateTime {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let dt = self.local();
         crate::date::write_date(f, dt.date())?;
@@ -691,6 +776,7 @@ impl fmt::Debug for OffsetDateTime {
 /// The relaxed reading (see [`crate::parse`]), converted to UTC.
 impl FromStr for Timestamp {
     type Err = ParseError;
+    #[inline]
     fn from_str(s: &str) -> ParseResult<Timestamp> {
         parse::rfc3339_relaxed(s).map(|(ts, _)| Timestamp(ts))
     }
@@ -699,6 +785,7 @@ impl FromStr for Timestamp {
 /// The relaxed reading (see [`crate::parse`]), keeping the offset.
 impl FromStr for OffsetDateTime {
     type Err = ParseError;
+    #[inline]
     fn from_str(s: &str) -> ParseResult<OffsetDateTime> {
         parse::rfc3339_relaxed(s).map(|(ts, offset)| OffsetDateTime { ts, offset })
     }
@@ -711,6 +798,7 @@ struct Rfc3339Json<'a>(
 );
 
 impl fmt::Display for Rfc3339Json<'_> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         format::write_rfc3339(f, self.0, self.1, SecondsFormat::AutoSi, true)
     }
@@ -718,6 +806,7 @@ impl fmt::Display for Rfc3339Json<'_> {
 
 /// RFC 3339 with `Z` for a zero offset and the fraction in groups of three.
 impl serde::Serialize for Timestamp {
+    #[inline]
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.collect_str(&Rfc3339Json(self.local(), 0, core::marker::PhantomData))
     }
@@ -725,6 +814,7 @@ impl serde::Serialize for Timestamp {
 
 /// RFC 3339 with `Z` for a zero offset and the fraction in groups of three.
 impl serde::Serialize for OffsetDateTime {
+    #[inline]
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.collect_str(&Rfc3339Json(
             self.local(),
@@ -739,10 +829,12 @@ struct InstantVisitor;
 impl serde::de::Visitor<'_> for InstantVisitor {
     type Value = OffsetDateTime;
 
+    #[inline]
     fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("an RFC 3339 formatted date and time string")
     }
 
+    #[inline]
     fn visit_str<E: serde::de::Error>(self, value: &str) -> Result<OffsetDateTime, E> {
         value.parse().map_err(E::custom)
     }
@@ -750,6 +842,7 @@ impl serde::de::Visitor<'_> for InstantVisitor {
 
 /// The relaxed reading, converted to UTC.
 impl<'de> serde::Deserialize<'de> for Timestamp {
+    #[inline]
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Timestamp, D::Error> {
         deserializer
             .deserialize_str(InstantVisitor)
@@ -759,6 +852,7 @@ impl<'de> serde::Deserialize<'de> for Timestamp {
 
 /// The relaxed reading, keeping the offset.
 impl<'de> serde::Deserialize<'de> for OffsetDateTime {
+    #[inline]
     fn deserialize<D: serde::Deserializer<'de>>(
         deserializer: D,
     ) -> Result<OffsetDateTime, D::Error> {

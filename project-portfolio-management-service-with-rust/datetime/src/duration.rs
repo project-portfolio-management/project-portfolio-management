@@ -31,6 +31,7 @@ impl Duration {
         -((i64::MAX % 1000) as i32) * 1_000_000,
     ));
 
+    #[inline]
     const fn from_total_nanos(nanos: i128) -> Option<Duration> {
         if nanos < -MAX_NANOS || nanos > MAX_NANOS {
             return None;
@@ -38,11 +39,25 @@ impl Duration {
         Some(Duration(SignedDuration::from_nanos_i128(nanos)))
     }
 
+    #[inline]
     fn total_nanos(self) -> i128 {
         self.0.as_nanos()
     }
 
+    /// `count` whole units of `nanos_per_unit` (a whole number of seconds, or milliseconds), on `i64`
+    /// seconds where it can be: these constructors are in the calendar code's hot loops.
+    #[allow(clippy::cast_possible_truncation)] // a unit of a second or more is a whole number of seconds below i64
+    #[inline]
     const fn of(count: i64, nanos_per_unit: i128) -> Option<Duration> {
+        if nanos_per_unit % NANOS_PER_SEC == 0 {
+            let secs_per_unit = (nanos_per_unit / NANOS_PER_SEC) as i64;
+            return match count.checked_mul(secs_per_unit) {
+                Some(secs) if secs.unsigned_abs() <= (i64::MAX / 1000).unsigned_abs() => {
+                    Some(Duration(SignedDuration::from_secs(secs)))
+                }
+                _ => None,
+            };
+        }
         match (count as i128).checked_mul(nanos_per_unit) {
             Some(n) => Duration::from_total_nanos(n),
             None => None,
@@ -51,42 +66,49 @@ impl Duration {
 
     /// A duration of no length.
     #[must_use]
+    #[inline]
     pub const fn zero() -> Duration {
         Duration(SignedDuration::ZERO)
     }
 
     /// `n` weeks, or `None` past the range.
     #[must_use]
+    #[inline]
     pub const fn try_weeks(n: i64) -> Option<Duration> {
         Duration::of(n, 7 * 86_400 * NANOS_PER_SEC)
     }
 
     /// `n` days, or `None` past the range.
     #[must_use]
+    #[inline]
     pub const fn try_days(n: i64) -> Option<Duration> {
         Duration::of(n, 86_400 * NANOS_PER_SEC)
     }
 
     /// `n` hours, or `None` past the range.
     #[must_use]
+    #[inline]
     pub const fn try_hours(n: i64) -> Option<Duration> {
         Duration::of(n, 3600 * NANOS_PER_SEC)
     }
 
     /// `n` minutes, or `None` past the range.
     #[must_use]
+    #[inline]
     pub const fn try_minutes(n: i64) -> Option<Duration> {
         Duration::of(n, 60 * NANOS_PER_SEC)
     }
 
     /// `n` seconds, or `None` past the range.
     #[must_use]
+    #[inline]
     pub const fn try_seconds(n: i64) -> Option<Duration> {
         Duration::of(n, NANOS_PER_SEC)
     }
 
     /// `n` milliseconds, or `None` past the range (never, as the range is `i64` milliseconds).
     #[must_use]
+    #[inline]
     pub const fn try_milliseconds(n: i64) -> Option<Duration> {
         Duration::of(n, 1_000_000)
     }
@@ -97,6 +119,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
+    #[inline]
     pub const fn weeks(n: i64) -> Duration {
         Duration::try_weeks(n).expect("Duration::weeks out of bounds")
     }
@@ -107,6 +130,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
+    #[inline]
     pub const fn days(n: i64) -> Duration {
         Duration::try_days(n).expect("Duration::days out of bounds")
     }
@@ -117,6 +141,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
+    #[inline]
     pub const fn hours(n: i64) -> Duration {
         Duration::try_hours(n).expect("Duration::hours out of bounds")
     }
@@ -127,6 +152,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
+    #[inline]
     pub const fn minutes(n: i64) -> Duration {
         Duration::try_minutes(n).expect("Duration::minutes out of bounds")
     }
@@ -137,6 +163,7 @@ impl Duration {
     ///
     /// Past the range.
     #[must_use]
+    #[inline]
     pub const fn seconds(n: i64) -> Duration {
         Duration::try_seconds(n).expect("Duration::seconds out of bounds")
     }
@@ -147,48 +174,56 @@ impl Duration {
     ///
     /// Never: every `i64` count of milliseconds is in range.
     #[must_use]
+    #[inline]
     pub const fn milliseconds(n: i64) -> Duration {
         Duration::try_milliseconds(n).expect("Duration::milliseconds out of bounds")
     }
 
     /// `n` microseconds.
     #[must_use]
+    #[inline]
     pub const fn microseconds(n: i64) -> Duration {
         Duration(SignedDuration::from_micros(n))
     }
 
     /// `n` nanoseconds.
     #[must_use]
+    #[inline]
     pub const fn nanoseconds(n: i64) -> Duration {
         Duration(SignedDuration::from_nanos(n))
     }
 
     /// Whole weeks, toward zero.
     #[must_use]
+    #[inline]
     pub const fn num_weeks(&self) -> i64 {
         self.num_seconds() / (7 * 86_400)
     }
 
     /// Whole days, toward zero.
     #[must_use]
+    #[inline]
     pub const fn num_days(&self) -> i64 {
         self.num_seconds() / 86_400
     }
 
     /// Whole hours, toward zero.
     #[must_use]
+    #[inline]
     pub const fn num_hours(&self) -> i64 {
         self.num_seconds() / 3600
     }
 
     /// Whole minutes, toward zero.
     #[must_use]
+    #[inline]
     pub const fn num_minutes(&self) -> i64 {
         self.num_seconds() / 60
     }
 
     /// Whole seconds, toward zero.
     #[must_use]
+    #[inline]
     pub const fn num_seconds(&self) -> i64 {
         self.0.as_secs()
     }
@@ -196,60 +231,70 @@ impl Duration {
     /// Whole milliseconds, toward zero.
     #[must_use]
     #[allow(clippy::cast_possible_truncation)] // within ±i64::MAX milliseconds by construction
+    #[inline]
     pub const fn num_milliseconds(&self) -> i64 {
         self.0.as_millis() as i64
     }
 
     /// Whole microseconds, toward zero, or `None` past `i64`.
     #[must_use]
+    #[inline]
     pub fn num_microseconds(&self) -> Option<i64> {
         i64::try_from(self.0.as_micros()).ok()
     }
 
     /// Nanoseconds, or `None` past `i64`.
     #[must_use]
+    #[inline]
     pub fn num_nanoseconds(&self) -> Option<i64> {
         i64::try_from(self.0.as_nanos()).ok()
     }
 
     /// The part below a second, with the duration's sign.
     #[must_use]
+    #[inline]
     pub const fn subsec_nanos(&self) -> i32 {
         self.0.subsec_nanos()
     }
 
     /// Fractional seconds.
     #[must_use]
+    #[inline]
     pub fn as_seconds_f64(self) -> f64 {
         self.0.as_secs_f64()
     }
 
     /// Whether this is of no length.
     #[must_use]
+    #[inline]
     pub const fn is_zero(&self) -> bool {
         self.0.is_zero()
     }
 
     /// The length, without its sign.
     #[must_use]
+    #[inline]
     pub const fn abs(&self) -> Duration {
         Duration(self.0.abs())
     }
 
     /// The sum, or `None` past the range.
     #[must_use]
+    #[inline]
     pub fn checked_add(&self, rhs: &Duration) -> Option<Duration> {
         Duration::from_total_nanos(self.total_nanos() + rhs.total_nanos())
     }
 
     /// The difference, or `None` past the range.
     #[must_use]
+    #[inline]
     pub fn checked_sub(&self, rhs: &Duration) -> Option<Duration> {
         Duration::from_total_nanos(self.total_nanos() - rhs.total_nanos())
     }
 
     /// The product, or `None` past the range.
     #[must_use]
+    #[inline]
     pub fn checked_mul(&self, rhs: i32) -> Option<Duration> {
         Duration::from_total_nanos(self.total_nanos().checked_mul(i128::from(rhs))?)
     }
@@ -257,6 +302,7 @@ impl Duration {
     /// The quotient, or `None` for a divisor of zero. Computed as before, on whole seconds rounded down and the
     /// non-negative nanosecond rest, so a quotient below a nanosecond rounds as it always did.
     #[must_use]
+    #[inline]
     pub fn checked_div(&self, rhs: i32) -> Option<Duration> {
         if rhs == 0 {
             return None;
@@ -277,6 +323,7 @@ impl Duration {
     /// # Errors
     ///
     /// When this duration is negative.
+    #[inline]
     pub fn to_std(&self) -> Result<std::time::Duration, OutOfRangeError> {
         std::time::Duration::try_from(self.0).map_err(|_| OutOfRangeError(()))
     }
@@ -286,6 +333,7 @@ impl Duration {
     /// # Errors
     ///
     /// When it is longer than [`Duration::MAX`].
+    #[inline]
     pub fn from_std(d: std::time::Duration) -> Result<Duration, OutOfRangeError> {
         i128::try_from(d.as_nanos())
             .ok()
@@ -295,17 +343,20 @@ impl Duration {
 
     /// The `jiff` duration underneath.
     #[must_use]
+    #[inline]
     pub const fn to_jiff(self) -> SignedDuration {
         self.0
     }
 
     /// From a `jiff` duration, or `None` past the range.
     #[must_use]
+    #[inline]
     pub fn from_jiff(d: SignedDuration) -> Option<Duration> {
         Duration::from_total_nanos(d.as_nanos())
     }
 
     /// Seconds rounded down and a non-negative nanosecond part, as the older representation kept them.
+    #[inline]
     fn floor_parts(self) -> (i64, i32) {
         let n = self.total_nanos();
         // Within ±i64::MAX milliseconds, the floored seconds fit in an `i64`.
@@ -319,6 +370,7 @@ impl Duration {
 
 impl Neg for Duration {
     type Output = Duration;
+    #[inline]
     fn neg(self) -> Duration {
         Duration(-self.0)
     }
@@ -326,6 +378,7 @@ impl Neg for Duration {
 
 impl Add for Duration {
     type Output = Duration;
+    #[inline]
     fn add(self, rhs: Duration) -> Duration {
         self.checked_add(&rhs)
             .expect("`Duration + Duration` overflowed")
@@ -334,6 +387,7 @@ impl Add for Duration {
 
 impl Sub for Duration {
     type Output = Duration;
+    #[inline]
     fn sub(self, rhs: Duration) -> Duration {
         self.checked_sub(&rhs)
             .expect("`Duration - Duration` overflowed")
@@ -341,12 +395,14 @@ impl Sub for Duration {
 }
 
 impl AddAssign for Duration {
+    #[inline]
     fn add_assign(&mut self, rhs: Duration) {
         *self = *self + rhs;
     }
 }
 
 impl SubAssign for Duration {
+    #[inline]
     fn sub_assign(&mut self, rhs: Duration) {
         *self = *self - rhs;
     }
@@ -354,6 +410,7 @@ impl SubAssign for Duration {
 
 impl Mul<i32> for Duration {
     type Output = Duration;
+    #[inline]
     fn mul(self, rhs: i32) -> Duration {
         self.checked_mul(rhs).expect("`Duration * i32` overflowed")
     }
@@ -361,18 +418,21 @@ impl Mul<i32> for Duration {
 
 impl Div<i32> for Duration {
     type Output = Duration;
+    #[inline]
     fn div(self, rhs: i32) -> Duration {
         self.checked_div(rhs).expect("`i32` is zero")
     }
 }
 
 impl core::iter::Sum for Duration {
+    #[inline]
     fn sum<I: Iterator<Item = Duration>>(iter: I) -> Duration {
         iter.fold(Duration::zero(), |a, b| a + b)
     }
 }
 
 impl<'a> core::iter::Sum<&'a Duration> for Duration {
+    #[inline]
     fn sum<I: Iterator<Item = &'a Duration>>(iter: I) -> Duration {
         iter.fold(Duration::zero(), |a, b| a + *b)
     }
@@ -380,6 +440,7 @@ impl<'a> core::iter::Sum<&'a Duration> for Duration {
 
 /// As the older type's derived `Debug`: seconds rounded down and a non-negative nanosecond part.
 impl fmt::Debug for Duration {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (secs, nanos) = self.floor_parts();
         f.debug_struct("TimeDelta")
@@ -391,6 +452,7 @@ impl fmt::Debug for Duration {
 
 /// ISO 8601, in seconds: `PT90S`, `PT1.5S`, `-PT3600S`, and `P0D` for zero.
 impl fmt::Display for Duration {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (secs, _) = self.floor_parts();
         let (abs, sign) = if secs < 0 { (-*self, "-") } else { (*self, "") };
@@ -420,6 +482,7 @@ pub struct Days(pub(crate) u64);
 impl Days {
     /// `n` days.
     #[must_use]
+    #[inline]
     pub const fn new(n: u64) -> Days {
         Days(n)
     }
@@ -432,12 +495,14 @@ pub struct Months(pub(crate) u32);
 impl Months {
     /// `n` months.
     #[must_use]
+    #[inline]
     pub const fn new(n: u32) -> Months {
         Months(n)
     }
 
     /// The count.
     #[must_use]
+    #[inline]
     pub const fn as_u32(&self) -> u32 {
         self.0
     }

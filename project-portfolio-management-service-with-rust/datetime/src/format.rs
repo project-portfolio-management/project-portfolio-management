@@ -21,10 +21,12 @@ pub(crate) struct Fields {
 }
 
 impl Fields {
+    #[inline]
     pub(crate) fn date(date: civil::Date) -> Fields {
         Fields { date, time: None }
     }
 
+    #[inline]
     pub(crate) fn datetime(dt: civil::DateTime) -> Fields {
         Fields {
             date: dt.date(),
@@ -40,6 +42,7 @@ pub struct Formatted<'a> {
 }
 
 impl<'a> Formatted<'a> {
+    #[inline]
     pub(crate) fn new(fields: Fields, pattern: &'a str) -> Formatted<'a> {
         Formatted { fields, pattern }
     }
@@ -54,6 +57,7 @@ fn write_year(f: &mut fmt::Formatter<'_>, year: i16) -> fmt::Result {
 }
 
 impl fmt::Display for Formatted<'_> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut rest = self.pattern;
         while let Some(i) = rest.find('%') {
@@ -77,6 +81,7 @@ impl fmt::Display for Formatted<'_> {
 }
 
 impl fmt::Debug for Formatted<'_> {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, f)
     }
@@ -129,6 +134,7 @@ pub(crate) struct Buf {
 }
 
 impl Buf {
+    #[inline]
     pub(crate) const fn new() -> Buf {
         Buf {
             bytes: [0; 48],
@@ -136,6 +142,7 @@ impl Buf {
         }
     }
 
+    #[inline]
     fn byte(&mut self, b: u8) {
         self.bytes[self.len] = b;
         self.len += 1;
@@ -143,6 +150,7 @@ impl Buf {
 
     /// `n` (non-negative) as exactly `width` digits.
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // a digit is 0..=9
+    #[inline]
     fn digits(&mut self, n: i32, width: usize) {
         let mut v = n.unsigned_abs();
         for i in (0..width).rev() {
@@ -153,6 +161,7 @@ impl Buf {
     }
 
     /// A date: four digits from year 0 to 9999, otherwise a sign and at least four.
+    #[inline]
     pub(crate) fn date(&mut self, d: civil::Date) {
         let year = i32::from(d.year());
         if (0..=9999).contains(&year) {
@@ -167,6 +176,7 @@ impl Buf {
         self.digits(i32::from(d.day()), 2);
     }
 
+    #[inline]
     fn hms(&mut self, h: i8, m: i8, s: i8) {
         self.digits(i32::from(h), 2);
         self.byte(b':');
@@ -175,6 +185,7 @@ impl Buf {
         self.digits(i32::from(s), 2);
     }
 
+    #[inline]
     fn fraction(&mut self, nano: i32, secform: SecondsFormat) {
         let (v, width) = match secform {
             SecondsFormat::Secs => return,
@@ -189,6 +200,7 @@ impl Buf {
         self.digits(v, width);
     }
 
+    #[inline]
     fn offset_minutes(&mut self, offset: i32, use_z: bool) {
         if use_z && offset == 0 {
             self.byte(b'Z');
@@ -201,6 +213,7 @@ impl Buf {
         self.digits(minutes % 60, 2);
     }
 
+    #[inline]
     pub(crate) fn as_str(&self) -> &str {
         // Only ASCII digits and punctuation are ever pushed.
         core::str::from_utf8(&self.bytes[..self.len]).unwrap_or_default()

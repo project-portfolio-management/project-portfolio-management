@@ -34,45 +34,56 @@ impl Weekday {
 
     /// Monday is 0, Sunday 6.
     #[must_use]
+    #[inline]
     pub const fn num_days_from_monday(self) -> u32 {
         self as u32
     }
 
     /// Sunday is 0, Saturday 6.
     #[must_use]
+    #[inline]
     pub const fn num_days_from_sunday(self) -> u32 {
         (self as u32 + 1) % 7
     }
 
     /// Monday is 1, Sunday 7.
     #[must_use]
+    #[inline]
     pub const fn number_from_monday(self) -> u32 {
         self as u32 + 1
     }
 
     /// Sunday is 1, Saturday 7.
     #[must_use]
+    #[inline]
     pub const fn number_from_sunday(self) -> u32 {
         self.num_days_from_sunday() + 1
     }
 
     /// The next day.
     #[must_use]
+    #[inline]
     pub const fn succ(self) -> Weekday {
         Self::ALL[(self as usize + 1) % 7]
     }
 
     /// The day before.
     #[must_use]
+    #[inline]
     pub const fn pred(self) -> Weekday {
         Self::ALL[(self as usize + 6) % 7]
     }
 
-    pub(crate) fn from_jiff(w: jiff::civil::Weekday) -> Weekday {
-        Self::ALL[usize::try_from(w.to_monday_zero_offset()).unwrap_or(0)]
+    /// Monday is 0; `n` must be 0..=6.
+    #[inline]
+    pub(crate) fn from_monday_offset(n: i64) -> Weekday {
+        Self::ALL[usize::try_from(n).unwrap_or(0) % 7]
     }
 
-    pub(crate) fn to_jiff(self) -> jiff::civil::Weekday {
+    /// The same day as jiff's weekday.
+    #[inline]
+    #[must_use]
+    pub fn to_jiff(self) -> jiff::civil::Weekday {
         // `self as i8` is 0..=6, always a valid offset.
         jiff::civil::Weekday::from_monday_zero_offset(self as i8)
             .unwrap_or(jiff::civil::Weekday::Monday)
@@ -80,6 +91,7 @@ impl Weekday {
 }
 
 impl fmt::Display for Weekday {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.pad(match self {
             Weekday::Mon => "Mon",

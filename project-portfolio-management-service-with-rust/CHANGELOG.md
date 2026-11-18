@@ -9,6 +9,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Security — lettre 0.11.24 for RUSTSEC-2026-0560 to 0565 (2026-11-18)
+
+- `lettre` 0.11.23 had six advisories published on 18 November: a STARTTLS reply injection that lets a man in the middle
+  forge SMTP replies, SMTP command injection through a bare CR or LF (missing dot-stuffing), mail for an address with a
+  quoted local part sent to a different address, and two denial-of-service panics (an `EHLO` line of white space, and
+  CR or LF in a display name). 0.11.24 fixes all six; `cargo deny --all-features check` is clean again.
+- **Publish-age exception, approved by the user on 2026-11-18:** 0.11.24 was published 2026-11-17 16:58 UTC, inside the
+  2-day minimum. Only `lettre`'s version and checksum changed in `Cargo.lock`; a plain re-resolve would also have
+  re-picked `windows-sys`, `socket2` and `getrandom` for unrelated crates, so it was not used. A normal locked build
+  accepts the lockfile.
+- Tested: clippy (all targets, all features), the email unit tests, `cargo deny`. **Not verified:** sending through a
+  real SMTP server, and whether any message was ever affected (the service sends to the addresses its operators
+  configure).
+
 ### Fixed — the coverage job's database runs get 30 minutes (2026-11-18)
 
 - `tarpaulin-db.toml`'s `timeout` is for a whole run, not one test, and the instrumented request suites took over 10

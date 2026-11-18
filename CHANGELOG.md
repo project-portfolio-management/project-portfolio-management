@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (security: lettre 0.11.24 for six SMTP vulnerabilities)
+
+- **Service:** `lettre` 0.11.23 to 0.11.24, which fixes RUSTSEC-2026-0560 to 0565 (STARTTLS reply injection, SMTP
+  command injection through a bare CR or LF, mail for a quoted local part sent to another address, and two
+  denial-of-service panics). They failed CI's `cargo deny`. **Publish-age exception, approved by the user:** 0.11.24 was
+  about 20 hours old. **Not verified:** sending through a real SMTP server.
+
 ### 18 November (NC-1 slice 12 part i: scheduling, the rest)
 
 - **UI:** hammocks, the tasks of linked plans drawn and the plan's readings (flow across contained plans, time

@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (a calendar feed's token in its address: checked, and recorded as a known gap)
+
+- **Checked:** the service does not log a request's address (its request span records the method and status only),
+  and the UI's `/api/proxy` logs none, so the feed token that the new calendar-feed section shows (slice 12 part h) is
+  not written to either's logs. **Recorded** in the security policy's known gaps (section 17, Software, item 8): the
+  token is in the address, as calendar apps need, so a deployer's access logs or a subscriber's settings can hold it;
+  hashed, expiring, replaceable and revocable. **Not verified:** any deployer's reverse proxy.
+
 ### 18 November (a person's own work: NC-1 slice 12 part h)
 
 - **UI: the day's plan, the calendar feed, what I follow, the work over time, recording time and the time report

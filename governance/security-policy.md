@@ -516,6 +516,12 @@ them true)
    retention purge covers only part of the data ([retention schedule](retention-schedule.md#known-gaps)).
 7. Attachment checks are signature-level; no virus scanner is bundled, and the `clamd` hook was tested only against
    a stand-in.
+8. A calendar feed's token travels in its address (`/api/feeds/calendar.ics?token=…`), as calendar apps need, so it can
+   be recorded wherever the address is: a deployer's reverse proxy or load-balancer access log, the subscriber's
+   calendar settings, a shared screenshot. Checked 2026-11-18: the service's request span records only the method and
+   status (`src/observability.rs`, `trace_mw`), and the UI's proxy (`/api/proxy`) logs no address. Only the token's
+   hash is stored, it expires after 365 days, a new token replaces the old, and the owner can revoke it
+   (`src/controllers/feeds.rs`). A deployer should keep query strings out of its access logs for that path.
 
 **Process**
 

@@ -262,6 +262,12 @@ table {
 .muted {
   color: var(--mxi-color-muted);
 }
+/* A checkbox or radio inside a flex label must not shrink below its size when the label is long: on a narrow layout one
+   fell to 15.5px wide and failed axe's 24px target size (CI on Linux, 2026-11-18). */
+input[type="checkbox"],
+input[type="radio"] {
+  flex: none;
+}
 .small {
   font-size: 0.875rem;
 }

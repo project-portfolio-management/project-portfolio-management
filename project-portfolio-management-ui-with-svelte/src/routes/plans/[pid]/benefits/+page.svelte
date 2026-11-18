@@ -339,9 +339,12 @@
     align-items: center;
     gap: 0.35rem;
   }
+  /* A flex item shrinks by default: with a long label on a narrow layout the box fell to 15.5px wide (axe target-size,
+     CI on Linux, 2026-11-18). It keeps its 24px. */
   .check input {
     inline-size: 1.5rem;
     block-size: 1.5rem;
+    flex: none;
     margin: 0;
   }
   .benefits {

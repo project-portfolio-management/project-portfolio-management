@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — checkboxes and radios keep their 24px target in a flex label (2026-11-18)
+
+- On the benefits page's value-point form, the "first measurable" checkbox sat in a flex label and shrank to 15.5px
+  wide on CI's Linux runner (axe `target-size`; macOS draws it differently, so it passed locally). The input now has
+  `flex: none`, and `src/app.css` gives every checkbox and radio `flex: none`, as many other forms use the same label.
+  Tested: lint, check, Playwright 1,511 passed locally. **Not verified:** the Linux run, until CI.
+
 ### Added — scheduling, the rest (NC-1 slice 12 part i, PJ-7, PJ-13, LT-10, CC-2, CC-3, RM-5, SC-4, 2026-11-18)
 
 - `/plans/[pid]/critical-path`: the tasks of linked plans drawn (`ExternalTasks.svelte`: the critical path's

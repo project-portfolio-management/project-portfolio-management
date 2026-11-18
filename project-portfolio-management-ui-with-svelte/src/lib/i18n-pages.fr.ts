@@ -5070,7 +5070,7 @@ export const PAGES_FR: Record<PageKey, string> = {
   "l.enum.pk_cls.non_cash_releasing": "non générateur de trésorerie",
   "l.enum.pk_cls.societal": "sociétal",
   "l.enum.pk_cls.not_stated": "non précisé",
-  "l.enum.pk_gate.g0_concept": "G0 concept",
+  "l.enum.pk_gate.g0_concept": "G0 conception",
   "l.enum.pk_gate.g1_feasibility": "G1 faisabilité",
   "l.enum.pk_gate.g2_definition": "G2 définition",
   "l.enum.pk_gate.g3_delivery": "G3 réalisation",
@@ -7389,4 +7389,252 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.register_completeness.state_incomplete": "incomplet",
   "p.register_completeness.field_other": "un autre élément",
   "p.register_completeness.none_listed": "aucun",
+  "p.meetings.title": "Réunions",
+  "p.meetings.title_ppm": "Réunions — PPM",
+  "p.meetings.link": "Réunions, procès-verbaux et actions à mener",
+  "p.meetings.intro":
+    "Une réunion est planifiée avec un titre, une date et un ordre du jour. Ensuite, elle est enregistrée une seule fois comme tenue, avec son procès-verbal et ses résultats (décisions, actions à mener et remarques), ou bien elle est annulée. Une réunion tenue ou annulée est un enregistrement : un procès-verbal enregistré ne peut pas être corrigé et une réunion annulée ne peut pas être rétablie. Les participants ne sont pas enregistrés.",
+  "p.meetings.plan_heading": "Planifier une réunion",
+  "p.meetings.plan_says":
+    "Un titre de {title} caractères au plus et une date. L'ordre du jour contient au plus {items} points de {chars} caractères au plus chacun ; un point peut renvoyer à une tâche, un risque, une étape clé ou un problème de ce plan.",
+  "p.meetings.f_title": "Titre ({max} caractères au plus)",
+  "p.meetings.f_date": "Date prévue",
+  "p.meetings.agenda_item": "Point {n} de l'ordre du jour",
+  "p.meetings.f_item_text":
+    "Sujet du point {n} de l'ordre du jour ({max} caractères au plus)",
+  "p.meetings.f_item_link":
+    "L'élément concerné par le point {n} de l'ordre du jour",
+  "p.meetings.no_record": "Aucun élément",
+  "p.meetings.records_loading": "Chargement des éléments du plan…",
+  "p.meetings.remove_item": "Retirer le point {n} de l'ordre du jour",
+  "p.meetings.add_item": "Ajouter un point à l'ordre du jour",
+  "p.meetings.plan": "Planifier la réunion",
+  "p.meetings.planned": "Planifiée : {title}, le {date}.",
+  "p.meetings.list_heading":
+    "Les réunions du plan, de la plus récente à la plus ancienne",
+  "p.meetings.pdf_says":
+    "Chaque réunion se télécharge en document PDF reprenant ce que montre cette page ; ses mots fixes (les titres et l'état) sont en anglais.",
+  "p.meetings.loading": "Chargement des réunions…",
+  "p.meetings.none": "Aucune réunion pour l'instant.",
+  "p.meetings.status_planned": "planifiée",
+  "p.meetings.status_held": "tenue",
+  "p.meetings.status_cancelled": "annulée",
+  "p.meetings.held_on": "tenue le {date}",
+  "p.meetings.scheduled_on": "prévue le {date}",
+  "p.meetings.show": "Ouvrir la réunion {title}",
+  "p.meetings.hide": "Fermer la réunion {title}",
+  "p.meetings.pdf": "Télécharger en PDF",
+  "p.meetings.pdf_named": "Télécharger la réunion {title} en PDF",
+  "p.meetings.agenda_heading": "Ordre du jour",
+  "p.meetings.agenda_none": "Aucun point à l'ordre du jour.",
+  "p.meetings.minutes_heading": "Procès-verbal",
+  "p.meetings.outcomes_heading": "Résultats",
+  "p.meetings.outcomes_none": "Aucun résultat n'a été enregistré.",
+  "p.meetings.outcome_decision": "Décision",
+  "p.meetings.outcome_action": "Action à mener",
+  "p.meetings.outcome_note": "Remarque",
+  "p.meetings.about": "concerne {record}",
+  "p.meetings.link_gone": "concerne un élément qui n'existe plus",
+  "p.meetings.task_made": "la tâche créée à partir du résultat {n}",
+  "p.meetings.held_kept":
+    "Cette réunion est un enregistrement : son procès-verbal et ses résultats ne sont pas modifiés.",
+  "p.meetings.cancelled_kept":
+    "Cette réunion a été annulée. C'est un enregistrement et elle ne peut pas être rétablie.",
+  "p.meetings.held_heading": "Enregistrer {title} comme tenue",
+  "p.meetings.held_says":
+    "Un procès-verbal de {minutes} caractères au plus, et jusqu'à {items} résultats de {chars} caractères au plus chacun : chacun est une décision, une action à mener ou une remarque, et peut renvoyer à un élément de ce plan. La date de tenue est la date prévue, sauf si vous en indiquez une autre. Cette opération se fait une seule fois : le procès-verbal ne pourra plus être corrigé ensuite.",
+  "p.meetings.f_minutes": "Procès-verbal ({max} caractères au plus)",
+  "p.meetings.f_held_on": "Date de tenue (vide pour la date prévue)",
+  "p.meetings.outcome_n": "Résultat {n}",
+  "p.meetings.f_outcome_kind": "Nature du résultat {n}",
+  "p.meetings.choose_kind": "Choisir…",
+  "p.meetings.f_outcome_text":
+    "Le résultat {n} en quelques mots ({max} caractères au plus)",
+  "p.meetings.f_outcome_link": "L'élément concerné par le résultat {n}",
+  "p.meetings.remove_outcome": "Retirer le résultat {n}",
+  "p.meetings.add_outcome": "Ajouter un résultat",
+  "p.meetings.record_held": "Enregistrer comme tenue",
+  "p.meetings.cancel_meeting": "Annuler la réunion {title}",
+  "p.meetings.confirm_held":
+    "Enregistrer {title} comme tenue ? Son procès-verbal et ses résultats ne pourront plus être corrigés ensuite.",
+  "p.meetings.confirm_cancel":
+    "Annuler {title} ? Une réunion annulée ne peut pas être rétablie.",
+  "p.meetings.held_done": "Enregistrée comme tenue : {title}.",
+  "p.meetings.cancelled_done": "Annulée : {title}.",
+  "p.meetings.problem_title":
+    "Saisissez un titre de {title} caractères au plus.",
+  "p.meetings.problem_date": "Saisissez une date.",
+  "p.meetings.problem_agenda_count":
+    "Un ordre du jour contient au plus {items} points.",
+  "p.meetings.problem_outcome_count":
+    "Une réunion contient au plus {items} résultats.",
+  "p.meetings.problem_item_text": "Rédigez-le en {chars} caractères au plus.",
+  "p.meetings.problem_minutes":
+    "Rédigez le procès-verbal, en {minutes} caractères au plus.",
+  "p.meetings.problem_outcome_kind":
+    "Choisissez une décision, une action à mener ou une remarque.",
+  "p.meetings.problem_on_line": "Pour {line} : {problem}",
+  "p.meetings.could_not_load": "Impossible de charger les réunions.",
+  "p.meetings.could_not_save": "La réunion n'a pas été modifiée.",
+  "p.meetings.refused_gone":
+    "Refusé : cette réunion, ou le plan, n'existe plus. La liste a été relue.",
+  "p.meetings.refused_settled":
+    "Refusé : cette réunion a déjà été tenue ou annulée ; c'est donc un enregistrement et elle n'est pas modifiée. Elle a été relue.",
+  "p.meetings.refused_link":
+    "Refusé : un élément auquel renvoie un point n'appartient plus à ce plan. Rien n'a été enregistré ; choisissez de nouveau les éléments.",
+  "p.meetings.refused_not_held":
+    "Refusé : des tâches ne sont proposées qu'à partir d'une réunion tenue et dotée d'un procès-verbal.",
+  "p.meetings.refused_commit_state":
+    "Refusé : la réunion n'est pas tenue, ou l'une de ces actions à mener a entre-temps une tâche. Rien n'a été créé ; la réunion a été relue, vérifiez de nouveau.",
+  "p.meetings.refused_commit_invalid":
+    "Refusé : une proposition n'est plus prête. Rien n'a été créé ; vérifiez de nouveau les propositions.",
+  "p.meetings.refused_proposals":
+    "Refusé : envoyez entre 1 et {count} propositions.",
+  "p.meetings.tasks_heading": "Tâches issues des actions à mener",
+  "p.meetings.tasks_says":
+    "Pour chaque action à mener sans tâche, vous pouvez en proposer une : un titre de {max} caractères au plus et un passage du procès-verbal qui l'appuie, d'au moins {min} caractères (majuscules et espacement ignorés). Un responsable est facultatif et doit déjà figurer parmi les tâches de ce plan ou son tableau des responsabilités, sous la forme d'une référence telle que person:… ; une date limite est facultative, du {first} au {last} ; les points vont de 0 à {points}. Jusqu'à {count} à la fois. La vérification n'écrit rien ; les tâches sont ensuite créées toutes ou aucune, et une action à mener n'obtient qu'une seule tâche.",
+  "p.meetings.proposal_legend": "Action à mener {n} : {text}",
+  "p.meetings.f_propose": "Proposer une tâche pour l'action à mener {n}",
+  "p.meetings.f_task_title":
+    "Titre de la tâche pour l'action à mener {n} ({max} caractères au plus)",
+  "p.meetings.f_excerpt":
+    "Passage du procès-verbal pour l'action à mener {n} (au moins {min} caractères)",
+  "p.meetings.f_assignee":
+    "Responsable de l'action à mener {n} (référence facultative)",
+  "p.meetings.f_due": "Date limite de l'action à mener {n} (facultative)",
+  "p.meetings.f_points":
+    "Points de l'action à mener {n} (facultatifs, de 0 à {max})",
+  "p.meetings.check": "Vérifier les propositions",
+  "p.meetings.create_tasks": "Créer les tâches",
+  "p.meetings.none_chosen":
+    "Aucune proposition n'est choisie ; rien n'a donc été envoyé.",
+  "p.meetings.checked_one":
+    "Vérifié, rien n'est écrit : {n} proposition est prête, {dropped} ne le sont pas.",
+  "p.meetings.checked_other":
+    "Vérifié, rien n'est écrit : {n} propositions sont prêtes, {dropped} ne le sont pas.",
+  "p.meetings.ready": "Prête, sans responsable.",
+  "p.meetings.ready_for": "Prête, pour {who}.",
+  "p.meetings.not_all_ready":
+    "Chaque proposition choisie doit être prête avant de pouvoir créer les tâches : modifiez ou décochez celles qui ne le sont pas, puis vérifiez de nouveau.",
+  "p.meetings.check_again":
+    "Les propositions ont changé depuis leur vérification : vérifiez-les de nouveau.",
+  "p.meetings.confirm_tasks_one":
+    "Créer {n} tâche à partir des actions à mener de {title} ? Une action à mener n'obtient qu'une seule tâche.",
+  "p.meetings.confirm_tasks_other":
+    "Créer {n} tâches à partir des actions à mener de {title} ? Une action à mener n'obtient qu'une seule tâche.",
+  "p.meetings.tasks_made_one":
+    "{n} tâche créée ; elle est liée sous son action à mener.",
+  "p.meetings.tasks_made_other":
+    "{n} tâches créées ; chacune est liée sous son action à mener.",
+  "p.meetings.could_not_check": "Impossible de vérifier les propositions.",
+  "p.meetings.could_not_create": "Les tâches n'ont pas été créées.",
+  "p.meetings.dropped_title_invalid":
+    "Non prête : le titre est vide ou trop long.",
+  "p.meetings.dropped_excerpt_not_in_minutes":
+    "Non prête : le passage est introuvable dans le procès-verbal, ou trop court.",
+  "p.meetings.dropped_outcome_not_found":
+    "Non prête : la réunion n'a pas un tel résultat.",
+  "p.meetings.dropped_outcome_not_an_action":
+    "Non prête : ce résultat n'est pas une action à mener.",
+  "p.meetings.dropped_outcome_already_has_a_task":
+    "Non prête : cette action à mener a déjà une tâche.",
+  "p.meetings.dropped_due_outside_window":
+    "Non prête : la date limite est en dehors des dates autorisées.",
+  "p.meetings.dropped_points_invalid":
+    "Non prête : les points sont en dehors de la plage autorisée.",
+  "p.meetings.dropped_assignee_not_in_plan":
+    "Non prête : le responsable ne fait pas partie des personnes de ce plan (dans ses tâches ou son tableau des responsabilités).",
+  "p.meetings.dropped_outcome_proposed_twice":
+    "Non prête : la même action à mener est proposée deux fois.",
+  "p.meetings.dropped_other":
+    "Non prête, pour une raison que cette page ne connaît pas.",
+  "p.meetings.problem_proposals_count":
+    "Proposez au plus {count} tâches à la fois.",
+  "p.meetings.problem_task_title":
+    "Donnez à la tâche un titre de {max} caractères au plus.",
+  "p.meetings.problem_excerpt":
+    "Citez un passage d'au moins {min} caractères qui figure dans le procès-verbal.",
+  "p.meetings.problem_due":
+    "La date limite doit se situer entre une semaine avant la réunion et un an après.",
+  "p.meetings.problem_points":
+    "Les points sont un nombre entier de 0 à {points}.",
+  "p.lessons.title": "Leçons apprises",
+  "p.lessons.title_ppm": "Leçons apprises — PPM",
+  "p.lessons.link": "Leçons apprises",
+  "p.lessons.intro":
+    "Une leçon est enregistrée à un jalon de phase ou à la clôture du plan. Elle n'est jamais modifiée : elle peut seulement être retirée, et une leçon retirée n'est plus affichée (elle reste dans la piste d'audit). Une nouvelle proposition dont le titre ressemble à celui de ce plan voit s'afficher ses leçons.",
+  "p.lessons.record_heading": "Enregistrer une leçon",
+  "p.lessons.record_says":
+    "Quand (un jalon ou la clôture), de quoi il s'agit, un résumé de {max} caractères au plus et, si vous le souhaitez, un détail de {bytes} octets au plus (une lettre accentuée ou un autre alphabet occupe plus d'un octet) ainsi que la tâche, le risque, l'étape clé ou le problème de ce plan qu'elle concerne.",
+  "p.lessons.f_occasion": "Quand",
+  "p.lessons.choose_occasion": "Choisir un jalon ou la clôture…",
+  "p.lessons.closure": "Clôture",
+  "p.lessons.occasion_other": "Une autre occasion",
+  "p.lessons.f_category": "De quoi il s'agit",
+  "p.lessons.category_went_well": "S'est bien passé",
+  "p.lessons.category_went_badly": "S'est mal passé",
+  "p.lessons.category_recommendation": "Recommandation",
+  "p.lessons.category_other": "Un autre type",
+  "p.lessons.f_summary": "Résumé ({max} caractères au plus)",
+  "p.lessons.f_detail": "Détail (facultatif, {bytes} octets au plus)",
+  "p.lessons.f_link": "L'élément concerné (facultatif)",
+  "p.lessons.record": "Enregistrer la leçon",
+  "p.lessons.recorded": "Enregistrée : {summary}",
+  "p.lessons.problem_occasion": "Choisissez un jalon ou la clôture.",
+  "p.lessons.problem_category":
+    "Choisissez s'est bien passé, s'est mal passé ou recommandation.",
+  "p.lessons.problem_summary": "Rédigez un résumé de {max} caractères au plus.",
+  "p.lessons.problem_detail": "Le détail dépasse {bytes} octets.",
+  "p.lessons.list_heading":
+    "Les leçons du plan, de la plus ancienne à la plus récente",
+  "p.lessons.loading": "Chargement des leçons…",
+  "p.lessons.none": "Aucune leçon pour l'instant.",
+  "p.lessons.count_one": "{n} leçon.",
+  "p.lessons.count_other": "{n} leçons.",
+  "p.lessons.recorded_on": "enregistrée le {date}",
+  "p.lessons.recorded_on_by": "enregistrée le {date} par {who}",
+  "p.lessons.link_unlisted":
+    "concerne un élément qui ne figure pas parmi les tâches, risques, étapes clés et problèmes du plan listés ici",
+  "p.lessons.withdraw": "Retirer la leçon {summary}",
+  "p.lessons.withdraw_short": "Retirer",
+  "p.lessons.confirm_withdraw":
+    "Retirer la leçon « {summary} » ? Elle ne sera plus affichée, ni ici ni dans les nouvelles propositions ; elle reste dans la piste d'audit.",
+  "p.lessons.withdrawn": "Retirée : {summary}",
+  "p.lessons.could_not_load": "Impossible de charger les leçons.",
+  "p.lessons.could_not_save": "La leçon n'a pas été modifiée.",
+  "p.lessons.refused_gone": "Refusé : le plan n'existe plus.",
+  "p.lessons.refused_withdrawn":
+    "Refusé : cette leçon a déjà été retirée. La liste a été relue.",
+  "p.lessons.refused_link":
+    "Refusé : l'élément choisi n'appartient plus à ce plan. Rien n'a été enregistré ; choisissez-le de nouveau.",
+  "p.lessons.refs_heading": "Ce qui renvoie à un élément",
+  "p.lessons.refs_says":
+    "Choisissez une tâche, un risque, une étape clé ou un problème du plan pour lister les points de réunion et les leçons qui y renvoient (jusqu'à 100 de chaque).",
+  "p.lessons.f_target": "L'élément",
+  "p.lessons.choose_target": "Choisir un élément…",
+  "p.lessons.show_refs": "Afficher ce qui y renvoie",
+  "p.lessons.problem_target": "Choisissez d'abord un élément.",
+  "p.lessons.refs_count_one": "{n} point y renvoie.",
+  "p.lessons.refs_count_other": "{n} points y renvoient.",
+  "p.lessons.refs_meetings": "Points de réunion",
+  "p.lessons.refs_lessons": "Leçons qui y renvoient",
+  "p.lessons.refs_agenda": "Ordre du jour",
+  "p.lessons.refused_no_record":
+    "Cet élément n'appartient plus à ce plan, ou vous ne pouvez pas le lire.",
+  "p.lessons.could_not_read_refs": "Impossible de lire ce qui y renvoie.",
+  "p.lessons.similar": "Leçons de plans similaires",
+  "p.lessons.similar_named": "Leçons de plans semblables à {title}",
+  "p.lessons.similar_heading": "Leçons de plans semblables à {title}",
+  "p.lessons.similar_says":
+    "Rapprochement sur le titre seulement, avec tous les plans ayant des leçons, clos ou non, le meilleur rapprochement en premier. Le score et la confiance sont ceux du moteur de rapprochement.",
+  "p.lessons.similar_none": "Aucun plan similaire n'a de leçons.",
+  "p.lessons.match": "correspondance {score}, confiance {confidence}.",
+  "p.lessons.match_title": "Titres semblables à {score}.",
+  "p.lessons.confidence_high": "élevée",
+  "p.lessons.confidence_medium": "moyenne",
+  "p.lessons.confidence_low": "faible",
+  "p.lessons.refused_proposal_gone":
+    "Cette proposition n'existe plus, ou vous ne pouvez pas la lire.",
+  "p.lessons.could_not_read_similar":
+    "Impossible de lire les leçons des plans similaires.",
 };

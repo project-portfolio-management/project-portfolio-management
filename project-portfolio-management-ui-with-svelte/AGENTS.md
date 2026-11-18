@@ -218,6 +218,8 @@ the Status note above).
 | Changing a risk (`/plans/[pid]/governance`, `RiskEditForm.svelte`) | `PUT /api/plans/{pid}/risks/{risk_pid}` (only the fields that change) |
 | An escalation's acknowledgement and resolution as records (`/plans/[pid]/escalations`) | `GET`/`PUT /api/plans/{pid}/escalations/{epid}/acknowledgement` (`{note?}`) · `GET`/`PUT …/resolution` (`{outcome, response}`, after a question; never overwritten) · `POST …/raise-level` and `…/withdraw` (unchanged) |
 | Register completeness (`/register-completeness`, linked from `/director-packs` and `/exceptions`) | `GET /api/register-completeness` (the `note` is not shown) |
+| Meetings and tasks from their actions (`/plans/[pid]/meetings`, `MeetingTasks.svelte`) | `GET`/`POST /api/plans/{pid}/meetings` · `GET …/meetings/{mid}` · `POST …/{mid}/held` and `…/{mid}/cancel` (after a question) · `GET …/{mid}/pdf` (a link) · `POST …/{mid}/task-proposals/preview` · `POST …/{mid}/task-proposals/commit` (after a question, one idempotency key) · `GET /api/plans/{pid}/{tasks,risks,milestones,issues}` (what an item may point at) |
+| Lessons learned and what refers to a record (`/plans/[pid]/lessons`; similar plans' lessons on `/proposals`) | `GET`/`POST /api/plans/{pid}/lessons` · `POST …/lessons/{lpid}/withdraw` (after a question) · `GET /api/plans/{pid}/references?kind=&pid=` · `GET /api/proposals/{pid}/lessons` |
 | Phase and start (`/plans/[pid]/programme`, `PlanPhase.svelte`) | `GET /api/plans/{pid}/phase-history` · `PUT …/phase` (`start_override_reason` for a refused start) · `GET …/start-check` |
 | Trade-off on a new ask (`/proposals`) | `POST /api/proposals` (`external_ask`, `tradeoff`) · `PUT /api/proposals/{pid}/tradeoff` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
@@ -282,7 +284,7 @@ A behavioural change is one PR with three parts:
   under `/plans/[pid]/`: `work`, `costs`, `what-if`, `onboarding`, `handover`,
   `wbs`, `critical-path`, `earned-value`, `raci`, `leveling`,
   `schedule-health`, `schedule-risk`, `cost-risk`, `joint-risk`, `flow`,
-  `calendar`, `status`.
+  `calendar`, `status`, `meetings`, `lessons`.
 - **Plan workspace links** are listed in `PLAN_LINKS` (`src/lib/modules.ts`);
   a new per-plan page needs an entry there and a matching assertion in
   `tests/unit/modules.test.ts`.

@@ -295,3 +295,81 @@ test("the board reads in Welsh and passes axe with its forms open", async ({
     ),
   ).toEqual([]);
 });
+
+// NC-1 slice 12 part (e) (NC-8): a proposal's lessons from plans whose title is like its own.
+test("a proposal shows the lessons of similar plans, with how they were matched said first and no service text", async ({
+  page,
+}) => {
+  await stub(page);
+  await page.route(/\/api\/proposals\/[^/]+\/lessons$/, (route) => {
+    const pid = new URL(route.request().url()).pathname.split("/").at(-2);
+    if (pid === "a3")
+      return route.fulfill({
+        status: 404,
+        json: { code: "not_found", detail: "service text" },
+      });
+    if (pid === "a2") return route.fulfill({ json: [] });
+    return route.fulfill({
+      json: [
+        {
+          plan_pid: "p7",
+          plan_name: "Sponsor dashboards 2025",
+          match: {
+            score: 0.874,
+            confidence: "Medium",
+            breakdown: { name_score: 0.912, goals_score: null },
+          },
+          lessons: [
+            {
+              pid: "l1",
+              plan_pid: "p7",
+              occasion: "closure",
+              category: "recommendation",
+              summary: "Agree the data feeds first.",
+              detail: "service text",
+              recorded_by: null,
+              link_kind: null,
+              link_pid: null,
+              created_at: "2025-06-01T00:00:00Z",
+            },
+          ],
+        },
+      ],
+    });
+  });
+  await page.goto("/en-001/proposals");
+  await settle(page);
+  await page
+    .getByRole("button", { name: "Lessons from plans like Sponsor dashboard" })
+    .click();
+  const shown = page.getByRole("region", {
+    name: "Lessons from plans like Sponsor dashboard",
+  });
+  await expect(shown).toContainText(
+    "Matched on the title only, against every plan with lessons, closed or not, best match first.",
+  );
+  await expect(
+    shown.getByRole("link", { name: "Sponsor dashboards 2025" }),
+  ).toHaveAttribute("href", "/en-001/plans/p7");
+  await expect(shown).toContainText(
+    "match 87%, medium confidence. Titles 91% alike.",
+  );
+  await expect(shown.getByRole("listitem").getByRole("listitem")).toHaveText(
+    "→ Recommendation · Closure: Agree the data feeds first.",
+  );
+  await page
+    .getByRole("button", { name: "Lessons from plans like Partner portal" })
+    .click();
+  await expect(
+    page.getByRole("region", {
+      name: "Lessons from plans like Partner portal",
+    }),
+  ).toContainText("No similar plan has lessons.");
+  await page
+    .getByRole("button", { name: "Lessons from plans like Office move" })
+    .click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "That proposal no longer exists, or you cannot read it.",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+});

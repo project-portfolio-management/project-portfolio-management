@@ -2736,3 +2736,83 @@ sentences by action and status; the service's text is never shown.
   from both pages, with axe; a failed read; none; Welsh). Every stub carries `"service text"` where the service would
   put English, and each test checks it is not shown. The translations are machine-written and unreviewed. **Not
   verified:** against a real service.
+
+## Meetings, lessons and references (NC-1 slice 12 part e, NC-14, BR-3, NC-8, BR-4)
+
+Two new per-plan pages, linked from the plan page (`PLAN_LINKS` keys `meetings` and `lessons`, with the governance
+links: the service files these routes under no module, so they are always on), and a reading on `/proposals`. The
+records an agenda item, an outcome or a lesson may point at come from the plan's tasks, risks, milestones and issues
+(`src/lib/plan-records.ts`, each kind best effort; the list, `RecordPicker.svelte`, is disabled until they have loaded).
+Every rule is said before anything is sent; refusals are the catalogue's sentences by action and status; the service's
+text is never shown.
+
+- **`/plans/[pid]/meetings`** over `GET`/`POST /api/plans/{pid}/meetings`, `GET …/meetings/{mid}`, `POST …/{mid}/held`,
+  `POST …/{mid}/cancel` and a link to `GET …/{mid}/pdf`. Said first: a meeting is planned with a title, a date and an
+  agenda, then recorded once as held (minutes and outcomes) or cancelled; a held or cancelled meeting is a record, held
+  minutes cannot be corrected, a cancelled meeting cannot be restored, and attendees are not recorded. Planning: a title
+  of up to 200 characters, a date, up to 50 agenda items of up to 500 characters each, each optionally pointing at a
+  record; an agenda line with neither text nor record is left out; every problem is said at once, naming its line.
+  The list is newest first, each meeting's state a word and a shape (planned ○, held ✓, cancelled ✗) with its date,
+  and a link that downloads it as a PDF (said first: its fixed words are English). One meeting is open at a time: its
+  agenda, and once held its minutes and outcomes (decision, action or note, in words), each link named as the record is
+  now ("a record that is no longer there" when gone), and the task made from an outcome linked to the task's page. A
+  planned meeting offers "Record as held" (minutes of up to 20,000 characters, an optional date held, blank for the
+  planned date and then not sent, and up to 50 outcomes, each a kind and up to 500 characters with an optional record)
+  and "Cancel the meeting"; each asks first and Cancel sends nothing. A 404 says the meeting or plan is gone; a 409 that
+  it is already held or cancelled (it is read again); a 422 after the page's checks that a linked record is no longer
+  the plan's.
+- **Tasks from the actions** (`MeetingTasks.svelte`, BR-3), on a held meeting with minutes, for each action with no task
+  yet: a checkbox to propose one, a title (the action's text to start with, up to 200 characters), a passage of the
+  minutes of at least 8 characters, an optional assignee reference (already on the plan's tasks or RACI chart), an
+  optional due date (from a week before the day held to a year after, shown as dates) and optional points (0 to 1000;
+  the number input binds a number). Said first, with the rest: up to 20 at a time; checking writes nothing; creating is
+  all or none, one task per action. Nothing is sent when none is chosen; the passage is looked for in the minutes as
+  the service looks (capitals and spacing ignored) before sending. "Check the proposals" (`POST
+  …/task-proposals/preview`) says, for each, ready (and for whom) or why not, in the catalogue's words by the service's
+  reason code (an unknown code has a general sentence). "Create the tasks" is enabled only while that check is current
+  (a change after it says to check again) and every proposal is ready; it asks first, then sends `POST
+  …/task-proposals/commit` with the checked body under one idempotency key kept for a retry, and reads the meeting
+  again, which shows the tasks under their actions. A 409 on checking says only a held meeting with minutes has
+  actions; on creating, that it is not held or an action has a task meanwhile (one code for both); a 422 on creating
+  that a proposal is no longer ready.
+- **`/plans/[pid]/lessons`** over `GET`/`POST /api/plans/{pid}/lessons` and `POST …/lessons/{lpid}/withdraw`. Said
+  first: a lesson is recorded at a phase gate or at closure, is never changed and can only be withdrawn (no longer
+  shown, kept in the audit trail), and a new proposal with a like title is shown it. Recording: the occasion (G0 to G5
+  in the gate words, or closure), what it is (went well ✓, went badly ✗, recommendation →), a summary of up to 300
+  characters, an optional detail of up to 1024 bytes (counted as bytes, as the service counts; a blank detail is not
+  sent) and an optional record; every problem said at once. The list, oldest first with a count (a plural), shows each
+  lesson's category as a word and a shape, its occasion, when and by whom (a reference) it was recorded, its detail,
+  and the record it is about named from the records read ("not among the records listed here" when it is not found).
+  Withdrawing asks first and Cancel sends nothing; a 404 says it was already withdrawn and the list is read again; a 422
+  on recording says the record chosen is no longer the plan's.
+- **What refers to a record** (BR-4), on the lessons page, over `GET /api/plans/{pid}/references?kind=&pid=`: choose one
+  of the plan's records; the page lists the meeting items (the meeting's title linked to the meetings page, its state
+  and date, the agenda or the outcome's kind, the text) and the lessons that point at it, and how many (a plural). Said
+  first: up to 100 of each. Nothing is sent without a record chosen; a 404 says the record is no longer the plan's or
+  cannot be read.
+- **`/proposals`** (NC-8): each proposal has "Lessons from similar plans" (`GET /api/proposals/{pid}/lessons`), which
+  shows each matching plan (linked), best match first, with the match's score as a percentage, its confidence in words
+  and the titles' likeness from the breakdown, and that plan's lessons (category, occasion, summary). Said first:
+  matched on the title only, against every plan with lessons, closed or not; the score and confidence are the
+  matcher's. A plan with none says so; a 404 says the proposal is gone or hidden.
+- **Decided (the plainest option):** one meeting open at a time; links offered to tasks, risks, milestones and issues,
+  not change requests or cutover decisions (a link made elsewhere is still shown, as "Record"); an assignee is typed as
+  a reference (the service holds no names); references sit on the lessons page; proposals are numbered by their
+  outcome's place among the outcomes.
+- **Not built:** attendees and correcting held minutes (the service has neither; said on the page); linking an existing
+  lesson to a record; lessons recorded from a gate decision or closure automatically; lessons in the intake form itself;
+  people as names. **Service gaps:** every 422 on these routes is `unprocessable` with English text (the page checks
+  the rules first, so a 422 after that is read as the one rule it cannot check); the two 409s on creating tasks (not
+  held, an outcome taken meanwhile) share `conflict`; a 404 on withdrawing is the same for "already withdrawn" and "plan
+  gone"; a task made from minutes gets an English description from the service ("Created from the minutes of the
+  meeting …"); the PDF's fixed words are English.
+- **Tests:** `tests/unit/meeting-view.test.ts`, `tests/unit/lesson-view.test.ts`, the paths and the commit's
+  idempotency key in `tests/unit/ppm.test.ts`, `tests/unit/modules.test.ts` (the links); `tests/e2e/meetings.spec.ts`
+  (the link, the rules, states and links with no service text; planning's rules then the body; recording as held with
+  the question and Cancel; cancelling with the question; tasks from the actions: nothing for none chosen or a rule
+  failing, a dropped verdict, a stale check, the question, the commit and its key; refusals; Welsh and axe with the
+  forms open), `tests/e2e/lessons.spec.ts` (the link and list; recording's rules and body; withdrawing with the
+  question, Cancel and a 404; what refers to a record and a 404; a 422; Welsh and axe) and an addition to
+  `tests/e2e/proposals.spec.ts` (similar plans' lessons, none, a 404). Every stub that would carry the service's English
+  carries `"service text"`, and each test checks it is not shown. The translations are machine-written and unreviewed.
+  **Not verified:** against a real service; the PDF in a reader.

@@ -7102,6 +7102,243 @@ export const PAGES_EN = {
   "p.register_completeness.state_incomplete": "incomplete",
   "p.register_completeness.field_other": "another field",
   "p.register_completeness.none_listed": "none",
+  "p.meetings.title": "Meetings",
+  "p.meetings.title_ppm": "Meetings — PPM",
+  "p.meetings.link": "Meetings, minutes and actions",
+  "p.meetings.intro":
+    "A meeting is planned with a title, a date and an agenda. Afterwards it is recorded once as held, with its minutes and its outcomes (decisions, actions and notes), or it is cancelled. A held or cancelled meeting is a record: held minutes cannot be corrected and a cancelled meeting cannot be restored. Attendees are not recorded.",
+  "p.meetings.plan_heading": "Plan a meeting",
+  "p.meetings.plan_says":
+    "A title of up to {title} characters and a date. The agenda holds up to {items} items of up to {chars} characters each; an item may point at a task, risk, milestone or issue of this plan.",
+  "p.meetings.f_title": "Title (up to {max} characters)",
+  "p.meetings.f_date": "Date it is planned for",
+  "p.meetings.agenda_item": "Agenda item {n}",
+  "p.meetings.f_item_text":
+    "What agenda item {n} is about (up to {max} characters)",
+  "p.meetings.f_item_link": "The record agenda item {n} concerns",
+  "p.meetings.no_record": "No record",
+  "p.meetings.records_loading": "Loading the plan's records…",
+  "p.meetings.remove_item": "Remove agenda item {n}",
+  "p.meetings.add_item": "Add an agenda item",
+  "p.meetings.plan": "Plan the meeting",
+  "p.meetings.planned": "Planned: {title}, on {date}.",
+  "p.meetings.list_heading": "The plan's meetings, newest first",
+  "p.meetings.pdf_says":
+    "Each meeting downloads as a PDF document holding what this page shows; its fixed words (the headings and the state) are in English.",
+  "p.meetings.loading": "Loading the meetings…",
+  "p.meetings.none": "No meetings yet.",
+  "p.meetings.status_planned": "planned",
+  "p.meetings.status_held": "held",
+  "p.meetings.status_cancelled": "cancelled",
+  "p.meetings.held_on": "held on {date}",
+  "p.meetings.scheduled_on": "planned for {date}",
+  "p.meetings.show": "Open the meeting {title}",
+  "p.meetings.hide": "Close the meeting {title}",
+  "p.meetings.pdf": "Download as PDF",
+  "p.meetings.pdf_named": "Download the meeting {title} as PDF",
+  "p.meetings.agenda_heading": "Agenda",
+  "p.meetings.agenda_none": "No agenda items.",
+  "p.meetings.minutes_heading": "Minutes",
+  "p.meetings.outcomes_heading": "Outcomes",
+  "p.meetings.outcomes_none": "No outcomes were recorded.",
+  "p.meetings.outcome_decision": "Decision",
+  "p.meetings.outcome_action": "Action",
+  "p.meetings.outcome_note": "Note",
+  "p.meetings.about": "about {record}",
+  "p.meetings.link_gone": "about a record that is no longer there",
+  "p.meetings.task_made": "the task made from outcome {n}",
+  "p.meetings.held_kept":
+    "This meeting is a record: its minutes and outcomes are not changed.",
+  "p.meetings.cancelled_kept":
+    "This meeting was cancelled. It is a record and cannot be restored.",
+  "p.meetings.held_heading": "Record {title} as held",
+  "p.meetings.held_says":
+    "Minutes of up to {minutes} characters, and up to {items} outcomes of up to {chars} characters each: each a decision, an action or a note, and each may point at a record of this plan. The date held is the planned date unless you give another. This is done once: the minutes cannot be corrected afterwards.",
+  "p.meetings.f_minutes": "Minutes (up to {max} characters)",
+  "p.meetings.f_held_on": "Date it was held (blank for the planned date)",
+  "p.meetings.outcome_n": "Outcome {n}",
+  "p.meetings.f_outcome_kind": "What outcome {n} is",
+  "p.meetings.choose_kind": "Choose…",
+  "p.meetings.f_outcome_text": "Outcome {n} in words (up to {max} characters)",
+  "p.meetings.f_outcome_link": "The record outcome {n} concerns",
+  "p.meetings.remove_outcome": "Remove outcome {n}",
+  "p.meetings.add_outcome": "Add an outcome",
+  "p.meetings.record_held": "Record as held",
+  "p.meetings.cancel_meeting": "Cancel the meeting {title}",
+  "p.meetings.confirm_held":
+    "Record {title} as held? Its minutes and outcomes cannot be corrected afterwards.",
+  "p.meetings.confirm_cancel":
+    "Cancel {title}? A cancelled meeting cannot be restored.",
+  "p.meetings.held_done": "Recorded as held: {title}.",
+  "p.meetings.cancelled_done": "Cancelled: {title}.",
+  "p.meetings.problem_title": "Give a title of up to {title} characters.",
+  "p.meetings.problem_date": "Give a date.",
+  "p.meetings.problem_agenda_count": "An agenda holds at most {items} items.",
+  "p.meetings.problem_outcome_count":
+    "A meeting holds at most {items} outcomes.",
+  "p.meetings.problem_item_text": "Write it in up to {chars} characters.",
+  "p.meetings.problem_minutes":
+    "Write the minutes, in up to {minutes} characters.",
+  "p.meetings.problem_outcome_kind": "Choose a decision, an action or a note.",
+  "p.meetings.problem_on_line": "For {line}: {problem}",
+  "p.meetings.could_not_load": "Could not load the meetings.",
+  "p.meetings.could_not_save": "The meeting was not changed.",
+  "p.meetings.refused_gone":
+    "Refused: this meeting, or the plan, no longer exists. The list was read again.",
+  "p.meetings.refused_settled":
+    "Refused: this meeting has already been held or cancelled, so it is a record and is not changed. It was read again.",
+  "p.meetings.refused_link":
+    "Refused: a record an item points at is no longer a record of this plan. Nothing was saved; choose the records again.",
+  "p.meetings.refused_not_held":
+    "Refused: tasks are proposed only from a meeting that was held and has minutes.",
+  "p.meetings.refused_commit_state":
+    "Refused: the meeting is not held, or one of these actions has a task meanwhile. Nothing was created; the meeting was read again, so check again.",
+  "p.meetings.refused_commit_invalid":
+    "Refused: a proposal is no longer ready. Nothing was created; check the proposals again.",
+  "p.meetings.refused_proposals":
+    "Refused: send between 1 and {count} proposals.",
+  "p.meetings.tasks_heading": "Tasks from the actions",
+  "p.meetings.tasks_says":
+    "For each action with no task yet you may propose one: a title of up to {max} characters and a passage of the minutes that supports it, of at least {min} characters (capitals and spacing are ignored). An assignee is optional and must already be on this plan's tasks or its responsibility chart, as a reference such as person:…; a due date is optional, from {first} to {last}; points run from 0 to {points}. Up to {count} at a time. Checking writes nothing; the tasks are then created all or none, and an action gets one task only.",
+  "p.meetings.proposal_legend": "Action {n}: {text}",
+  "p.meetings.f_propose": "Propose a task for action {n}",
+  "p.meetings.f_task_title":
+    "Task title for action {n} (up to {max} characters)",
+  "p.meetings.f_excerpt":
+    "Passage of the minutes for action {n} (at least {min} characters)",
+  "p.meetings.f_assignee": "Assignee for action {n} (optional reference)",
+  "p.meetings.f_due": "Due date for action {n} (optional)",
+  "p.meetings.f_points": "Points for action {n} (optional, 0 to {max})",
+  "p.meetings.check": "Check the proposals",
+  "p.meetings.create_tasks": "Create the tasks",
+  "p.meetings.none_chosen": "No proposal is chosen, so nothing was sent.",
+  "p.meetings.checked_one":
+    "Checked, nothing written: {n} proposal is ready, {dropped} not.",
+  "p.meetings.checked_other":
+    "Checked, nothing written: {n} proposals are ready, {dropped} not.",
+  "p.meetings.ready": "Ready, with no assignee.",
+  "p.meetings.ready_for": "Ready, for {who}.",
+  "p.meetings.not_all_ready":
+    "Every chosen proposal must be ready before the tasks can be created: change or untick those that are not, and check again.",
+  "p.meetings.check_again":
+    "The proposals changed since they were checked: check them again.",
+  "p.meetings.confirm_tasks_one":
+    "Create {n} task from the actions of {title}? An action gets one task only.",
+  "p.meetings.confirm_tasks_other":
+    "Create {n} tasks from the actions of {title}? An action gets one task only.",
+  "p.meetings.tasks_made_one":
+    "{n} task created; it is linked under its action.",
+  "p.meetings.tasks_made_other":
+    "{n} tasks created; each is linked under its action.",
+  "p.meetings.could_not_check": "The proposals could not be checked.",
+  "p.meetings.could_not_create": "The tasks were not created.",
+  "p.meetings.dropped_title_invalid":
+    "Not ready: the title is blank or too long.",
+  "p.meetings.dropped_excerpt_not_in_minutes":
+    "Not ready: the passage is not found in the minutes, or is too short.",
+  "p.meetings.dropped_outcome_not_found":
+    "Not ready: the meeting has no such outcome.",
+  "p.meetings.dropped_outcome_not_an_action":
+    "Not ready: that outcome is not an action.",
+  "p.meetings.dropped_outcome_already_has_a_task":
+    "Not ready: that action already has a task.",
+  "p.meetings.dropped_due_outside_window":
+    "Not ready: the due date is outside the dates allowed.",
+  "p.meetings.dropped_points_invalid":
+    "Not ready: the points are outside the range allowed.",
+  "p.meetings.dropped_assignee_not_in_plan":
+    "Not ready: the assignee is not one of this plan's people (on its tasks or its responsibility chart).",
+  "p.meetings.dropped_outcome_proposed_twice":
+    "Not ready: the same action is proposed twice.",
+  "p.meetings.dropped_other":
+    "Not ready, for a reason this page does not know.",
+  "p.meetings.problem_proposals_count":
+    "Propose at most {count} tasks at a time.",
+  "p.meetings.problem_task_title":
+    "Give the task a title of up to {max} characters.",
+  "p.meetings.problem_excerpt":
+    "Quote a passage of at least {min} characters that is in the minutes.",
+  "p.meetings.problem_due":
+    "The due date must fall from a week before the meeting to a year after it.",
+  "p.meetings.problem_points": "Points are a whole number from 0 to {points}.",
+  "p.lessons.title": "Lessons learned",
+  "p.lessons.title_ppm": "Lessons learned — PPM",
+  "p.lessons.link": "Lessons learned",
+  "p.lessons.intro":
+    "A lesson is recorded at a phase gate or at the plan's closure. It is never changed: it can only be withdrawn, and a withdrawn lesson is no longer shown (it stays in the audit trail). A new proposal whose title is like this plan's is shown its lessons.",
+  "p.lessons.record_heading": "Record a lesson",
+  "p.lessons.record_says":
+    "When (a gate or closure), what it is, a summary of up to {max} characters and, if you wish, a detail of up to {bytes} bytes (an accented letter or another script takes more than one) and the task, risk, milestone or issue of this plan it is about.",
+  "p.lessons.f_occasion": "When",
+  "p.lessons.choose_occasion": "Choose a gate or closure…",
+  "p.lessons.closure": "Closure",
+  "p.lessons.occasion_other": "Another occasion",
+  "p.lessons.f_category": "What it is",
+  "p.lessons.category_went_well": "Went well",
+  "p.lessons.category_went_badly": "Went badly",
+  "p.lessons.category_recommendation": "Recommendation",
+  "p.lessons.category_other": "Another kind",
+  "p.lessons.f_summary": "Summary (up to {max} characters)",
+  "p.lessons.f_detail": "Detail (optional, up to {bytes} bytes)",
+  "p.lessons.f_link": "The record it is about (optional)",
+  "p.lessons.record": "Record the lesson",
+  "p.lessons.recorded": "Recorded: {summary}",
+  "p.lessons.problem_occasion": "Choose a gate or closure.",
+  "p.lessons.problem_category":
+    "Choose went well, went badly or recommendation.",
+  "p.lessons.problem_summary": "Write a summary of up to {max} characters.",
+  "p.lessons.problem_detail": "The detail is longer than {bytes} bytes.",
+  "p.lessons.list_heading": "The plan's lessons, oldest first",
+  "p.lessons.loading": "Loading the lessons…",
+  "p.lessons.none": "No lessons yet.",
+  "p.lessons.count_one": "{n} lesson.",
+  "p.lessons.count_other": "{n} lessons.",
+  "p.lessons.recorded_on": "recorded on {date}",
+  "p.lessons.recorded_on_by": "recorded on {date} by {who}",
+  "p.lessons.link_unlisted":
+    "about a record that is not among the plan's tasks, risks, milestones and issues listed here",
+  "p.lessons.withdraw": "Withdraw the lesson {summary}",
+  "p.lessons.withdraw_short": "Withdraw",
+  "p.lessons.confirm_withdraw":
+    "Withdraw the lesson “{summary}”? It will no longer be shown, here or to new proposals; it stays in the audit trail.",
+  "p.lessons.withdrawn": "Withdrawn: {summary}",
+  "p.lessons.could_not_load": "Could not load the lessons.",
+  "p.lessons.could_not_save": "The lesson was not changed.",
+  "p.lessons.refused_gone": "Refused: the plan no longer exists.",
+  "p.lessons.refused_withdrawn":
+    "Refused: that lesson has already been withdrawn. The list was read again.",
+  "p.lessons.refused_link":
+    "Refused: the record chosen is no longer a record of this plan. Nothing was recorded; choose it again.",
+  "p.lessons.refs_heading": "What refers to a record",
+  "p.lessons.refs_says":
+    "Choose one of the plan's tasks, risks, milestones or issues to list the meeting items and lessons that point at it (up to 100 of each).",
+  "p.lessons.f_target": "The record",
+  "p.lessons.choose_target": "Choose a record…",
+  "p.lessons.show_refs": "Show what refers to it",
+  "p.lessons.problem_target": "Choose a record first.",
+  "p.lessons.refs_count_one": "{n} item refers to it.",
+  "p.lessons.refs_count_other": "{n} items refer to it.",
+  "p.lessons.refs_meetings": "Meeting items",
+  "p.lessons.refs_lessons": "Lessons that point at it",
+  "p.lessons.refs_agenda": "Agenda",
+  "p.lessons.refused_no_record":
+    "That record is no longer a record of this plan, or you cannot read it.",
+  "p.lessons.could_not_read_refs": "Could not read what refers to it.",
+  "p.lessons.similar": "Lessons from similar plans",
+  "p.lessons.similar_named": "Lessons from plans like {title}",
+  "p.lessons.similar_heading": "Lessons from plans like {title}",
+  "p.lessons.similar_says":
+    "Matched on the title only, against every plan with lessons, closed or not, best match first. The score and the confidence are the matcher's.",
+  "p.lessons.similar_none": "No similar plan has lessons.",
+  "p.lessons.match": "match {score}, {confidence} confidence.",
+  "p.lessons.match_title": "Titles {score} alike.",
+  "p.lessons.confidence_high": "high",
+  "p.lessons.confidence_medium": "medium",
+  "p.lessons.confidence_low": "low",
+  "p.lessons.refused_proposal_gone":
+    "That proposal no longer exists, or you cannot read it.",
+  "p.lessons.could_not_read_similar":
+    "Could not read the lessons of similar plans.",
 } as const;
 
 /** A key in the page and component catalogue. */

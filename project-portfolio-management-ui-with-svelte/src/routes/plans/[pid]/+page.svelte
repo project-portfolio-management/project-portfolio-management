@@ -72,6 +72,8 @@
     get confidence() { return t("p.confidence.title"); },
     get programme() { return t("p.programme.title"); },
     get status() { return t("p.status.link"); },
+    get meetings() { return t("p.meetings.link"); },
+    get lessons() { return t("p.lessons.link"); },
     get benefits() { return t("p.benefits.title"); },
     get costs() { return t("p.plans.pid.work.costs"); },
   };

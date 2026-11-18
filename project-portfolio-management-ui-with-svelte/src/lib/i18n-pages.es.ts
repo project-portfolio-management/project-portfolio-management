@@ -7359,4 +7359,251 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.register_completeness.state_incomplete": "incompleto",
   "p.register_completeness.field_other": "otro dato",
   "p.register_completeness.none_listed": "ninguno",
+  "p.meetings.title": "Reuniones",
+  "p.meetings.title_ppm": "Reuniones — PPM",
+  "p.meetings.link": "Reuniones, actas y acciones",
+  "p.meetings.intro":
+    "Una reunión se planifica con un título, una fecha y un orden del día. Después se registra una sola vez como celebrada, con su acta y sus resultados (decisiones, acciones y notas), o se cancela. Una reunión celebrada o cancelada es un registro: el acta de una reunión celebrada no se puede corregir y una reunión cancelada no se puede restaurar. No se registran los asistentes.",
+  "p.meetings.plan_heading": "Planificar una reunión",
+  "p.meetings.plan_says":
+    "Un título de hasta {title} caracteres y una fecha. El orden del día contiene hasta {items} puntos de hasta {chars} caracteres cada uno; un punto puede referirse a una tarea, un riesgo, un hito o una incidencia de este plan.",
+  "p.meetings.f_title": "Título (hasta {max} caracteres)",
+  "p.meetings.f_date": "Fecha prevista",
+  "p.meetings.agenda_item": "Punto del orden del día {n}",
+  "p.meetings.f_item_text":
+    "De qué trata el punto {n} del orden del día (hasta {max} caracteres)",
+  "p.meetings.f_item_link":
+    "El registro al que se refiere el punto {n} del orden del día",
+  "p.meetings.no_record": "Ningún registro",
+  "p.meetings.records_loading": "Cargando los registros del plan…",
+  "p.meetings.remove_item": "Quitar el punto {n} del orden del día",
+  "p.meetings.add_item": "Añadir un punto al orden del día",
+  "p.meetings.plan": "Planificar la reunión",
+  "p.meetings.planned": "Planificada: {title}, el {date}.",
+  "p.meetings.list_heading":
+    "Las reuniones del plan, de la más reciente a la más antigua",
+  "p.meetings.pdf_says":
+    "Cada reunión se descarga como un documento PDF con lo que muestra esta página; sus textos fijos (los encabezados y el estado) están en inglés.",
+  "p.meetings.loading": "Cargando las reuniones…",
+  "p.meetings.none": "Aún no hay reuniones.",
+  "p.meetings.status_planned": "planificada",
+  "p.meetings.status_held": "celebrada",
+  "p.meetings.status_cancelled": "cancelada",
+  "p.meetings.held_on": "celebrada el {date}",
+  "p.meetings.scheduled_on": "prevista para el {date}",
+  "p.meetings.show": "Abrir la reunión {title}",
+  "p.meetings.hide": "Cerrar la reunión {title}",
+  "p.meetings.pdf": "Descargar como PDF",
+  "p.meetings.pdf_named": "Descargar la reunión {title} como PDF",
+  "p.meetings.agenda_heading": "Orden del día",
+  "p.meetings.agenda_none": "No hay puntos en el orden del día.",
+  "p.meetings.minutes_heading": "Acta",
+  "p.meetings.outcomes_heading": "Resultados",
+  "p.meetings.outcomes_none": "No se registró ningún resultado.",
+  "p.meetings.outcome_decision": "Decisión",
+  "p.meetings.outcome_action": "Acción",
+  "p.meetings.outcome_note": "Nota",
+  "p.meetings.about": "sobre {record}",
+  "p.meetings.link_gone": "sobre un registro que ya no existe",
+  "p.meetings.task_made": "la tarea creada a partir del resultado {n}",
+  "p.meetings.held_kept":
+    "Esta reunión es un registro: su acta y sus resultados no se modifican.",
+  "p.meetings.cancelled_kept":
+    "Esta reunión se canceló. Es un registro y no se puede restaurar.",
+  "p.meetings.held_heading": "Registrar {title} como celebrada",
+  "p.meetings.held_says":
+    "Un acta de hasta {minutes} caracteres y hasta {items} resultados de hasta {chars} caracteres cada uno: cada uno es una decisión, una acción o una nota, y cada uno puede referirse a un registro de este plan. La fecha de celebración es la fecha prevista, salvo que indique otra. Esto se hace una sola vez: después no se podrá corregir el acta.",
+  "p.meetings.f_minutes": "Acta (hasta {max} caracteres)",
+  "p.meetings.f_held_on":
+    "Fecha en que se celebró (en blanco para la fecha prevista)",
+  "p.meetings.outcome_n": "Resultado {n}",
+  "p.meetings.f_outcome_kind": "Qué es el resultado {n}",
+  "p.meetings.choose_kind": "Elija…",
+  "p.meetings.f_outcome_text":
+    "El resultado {n} con palabras (hasta {max} caracteres)",
+  "p.meetings.f_outcome_link": "El registro al que se refiere el resultado {n}",
+  "p.meetings.remove_outcome": "Quitar el resultado {n}",
+  "p.meetings.add_outcome": "Añadir un resultado",
+  "p.meetings.record_held": "Registrar como celebrada",
+  "p.meetings.cancel_meeting": "Cancelar la reunión {title}",
+  "p.meetings.confirm_held":
+    "¿Registrar {title} como celebrada? Después no se podrán corregir su acta ni sus resultados.",
+  "p.meetings.confirm_cancel":
+    "¿Cancelar {title}? Una reunión cancelada no se puede restaurar.",
+  "p.meetings.held_done": "Registrada como celebrada: {title}.",
+  "p.meetings.cancelled_done": "Cancelada: {title}.",
+  "p.meetings.problem_title": "Indique un título de hasta {title} caracteres.",
+  "p.meetings.problem_date": "Indique una fecha.",
+  "p.meetings.problem_agenda_count":
+    "Un orden del día contiene como máximo {items} puntos.",
+  "p.meetings.problem_outcome_count":
+    "Una reunión contiene como máximo {items} resultados.",
+  "p.meetings.problem_item_text":
+    "Escríbalo en un máximo de {chars} caracteres.",
+  "p.meetings.problem_minutes":
+    "Escriba el acta, en un máximo de {minutes} caracteres.",
+  "p.meetings.problem_outcome_kind":
+    "Elija una decisión, una acción o una nota.",
+  "p.meetings.problem_on_line": "En {line}: {problem}",
+  "p.meetings.could_not_load": "No se pudieron cargar las reuniones.",
+  "p.meetings.could_not_save": "La reunión no se modificó.",
+  "p.meetings.refused_gone":
+    "Rechazado: esta reunión, o el plan, ya no existe. Se volvió a leer la lista.",
+  "p.meetings.refused_settled":
+    "Rechazado: esta reunión ya se celebró o se canceló, así que es un registro y no se modifica. Se volvió a leer.",
+  "p.meetings.refused_link":
+    "Rechazado: un registro al que remite un punto ya no es un registro de este plan. No se guardó nada; elija de nuevo los registros.",
+  "p.meetings.refused_not_held":
+    "Rechazado: las tareas solo se proponen a partir de una reunión celebrada que tenga acta.",
+  "p.meetings.refused_commit_state":
+    "Rechazado: la reunión no está celebrada, o una de estas acciones ya tiene una tarea. No se creó nada; se volvió a leer la reunión, así que revise de nuevo.",
+  "p.meetings.refused_commit_invalid":
+    "Rechazado: una propuesta ya no está lista. No se creó nada; revise de nuevo las propuestas.",
+  "p.meetings.refused_proposals":
+    "Rechazado: envíe entre 1 y {count} propuestas.",
+  "p.meetings.tasks_heading": "Tareas a partir de las acciones",
+  "p.meetings.tasks_says":
+    "Para cada acción que aún no tenga tarea puede proponer una: un título de hasta {max} caracteres y un pasaje del acta que la respalde, de al menos {min} caracteres (se ignoran las mayúsculas y los espacios). La persona asignada es opcional y ya debe figurar en las tareas de este plan o en su matriz de responsabilidades, como una referencia del tipo person:…; la fecha de vencimiento es opcional, entre {first} y {last}; los puntos van de 0 a {points}. Hasta {count} a la vez. La comprobación no escribe nada; después las tareas se crean todas o ninguna, y una acción recibe una sola tarea.",
+  "p.meetings.proposal_legend": "Acción {n}: {text}",
+  "p.meetings.f_propose": "Proponer una tarea para la acción {n}",
+  "p.meetings.f_task_title":
+    "Título de la tarea para la acción {n} (hasta {max} caracteres)",
+  "p.meetings.f_excerpt":
+    "Pasaje del acta para la acción {n} (al menos {min} caracteres)",
+  "p.meetings.f_assignee":
+    "Persona asignada a la acción {n} (referencia opcional)",
+  "p.meetings.f_due": "Fecha de vencimiento de la acción {n} (opcional)",
+  "p.meetings.f_points": "Puntos de la acción {n} (opcional, de 0 a {max})",
+  "p.meetings.check": "Comprobar las propuestas",
+  "p.meetings.create_tasks": "Crear las tareas",
+  "p.meetings.none_chosen":
+    "No se eligió ninguna propuesta, así que no se envió nada.",
+  "p.meetings.checked_one":
+    "Comprobado, nada escrito: {n} propuesta está lista, {dropped} no.",
+  "p.meetings.checked_other":
+    "Comprobado, nada escrito: {n} propuestas están listas, {dropped} no.",
+  "p.meetings.ready": "Lista, sin persona asignada.",
+  "p.meetings.ready_for": "Lista, para {who}.",
+  "p.meetings.not_all_ready":
+    "Todas las propuestas elegidas deben estar listas antes de crear las tareas: cambie o desmarque las que no lo estén y compruebe de nuevo.",
+  "p.meetings.check_again":
+    "Las propuestas cambiaron desde que se comprobaron: compruébelas de nuevo.",
+  "p.meetings.confirm_tasks_one":
+    "¿Crear {n} tarea a partir de las acciones de {title}? Una acción recibe una sola tarea.",
+  "p.meetings.confirm_tasks_other":
+    "¿Crear {n} tareas a partir de las acciones de {title}? Una acción recibe una sola tarea.",
+  "p.meetings.tasks_made_one":
+    "Se creó {n} tarea; está vinculada bajo su acción.",
+  "p.meetings.tasks_made_other":
+    "Se crearon {n} tareas; cada una está vinculada bajo su acción.",
+  "p.meetings.could_not_check": "No se pudieron comprobar las propuestas.",
+  "p.meetings.could_not_create": "No se crearon las tareas.",
+  "p.meetings.dropped_title_invalid":
+    "No está lista: el título está en blanco o es demasiado largo.",
+  "p.meetings.dropped_excerpt_not_in_minutes":
+    "No está lista: el pasaje no se encuentra en el acta, o es demasiado corto.",
+  "p.meetings.dropped_outcome_not_found":
+    "No está lista: la reunión no tiene ese resultado.",
+  "p.meetings.dropped_outcome_not_an_action":
+    "No está lista: ese resultado no es una acción.",
+  "p.meetings.dropped_outcome_already_has_a_task":
+    "No está lista: esa acción ya tiene una tarea.",
+  "p.meetings.dropped_due_outside_window":
+    "No está lista: la fecha de vencimiento queda fuera de las fechas permitidas.",
+  "p.meetings.dropped_points_invalid":
+    "No está lista: los puntos quedan fuera del intervalo permitido.",
+  "p.meetings.dropped_assignee_not_in_plan":
+    "No está lista: la persona asignada no es una de las personas de este plan (en sus tareas o en su matriz de responsabilidades).",
+  "p.meetings.dropped_outcome_proposed_twice":
+    "No está lista: la misma acción se propone dos veces.",
+  "p.meetings.dropped_other":
+    "No está lista, por un motivo que esta página no conoce.",
+  "p.meetings.problem_proposals_count":
+    "Proponga como máximo {count} tareas a la vez.",
+  "p.meetings.problem_task_title":
+    "Dé a la tarea un título de hasta {max} caracteres.",
+  "p.meetings.problem_excerpt":
+    "Cite un pasaje del acta de al menos {min} caracteres.",
+  "p.meetings.problem_due":
+    "La fecha de vencimiento debe estar entre una semana antes de la reunión y un año después.",
+  "p.meetings.problem_points":
+    "Los puntos son un número entero de 0 a {points}.",
+  "p.lessons.title": "Lecciones aprendidas",
+  "p.lessons.title_ppm": "Lecciones aprendidas — PPM",
+  "p.lessons.link": "Lecciones aprendidas",
+  "p.lessons.intro":
+    "Una lección se registra en una puerta de fase o al cierre del plan. Nunca se modifica: solo se puede retirar, y una lección retirada ya no se muestra (queda en el registro de auditoría). A una propuesta nueva cuyo título se parezca al de este plan se le muestran sus lecciones.",
+  "p.lessons.record_heading": "Registrar una lección",
+  "p.lessons.record_says":
+    "Cuándo (una puerta de fase o el cierre), qué es, un resumen de hasta {max} caracteres y, si lo desea, un detalle de hasta {bytes} bytes (una letra con acento u otra escritura ocupa más de uno) y la tarea, el riesgo, el hito o la incidencia de este plan a que se refiere.",
+  "p.lessons.f_occasion": "Cuándo",
+  "p.lessons.choose_occasion": "Elija una puerta de fase o el cierre…",
+  "p.lessons.closure": "Cierre",
+  "p.lessons.occasion_other": "Otra ocasión",
+  "p.lessons.f_category": "Qué es",
+  "p.lessons.category_went_well": "Salió bien",
+  "p.lessons.category_went_badly": "Salió mal",
+  "p.lessons.category_recommendation": "Recomendación",
+  "p.lessons.category_other": "Otro tipo",
+  "p.lessons.f_summary": "Resumen (hasta {max} caracteres)",
+  "p.lessons.f_detail": "Detalle (opcional, hasta {bytes} bytes)",
+  "p.lessons.f_link": "El registro al que se refiere (opcional)",
+  "p.lessons.record": "Registrar la lección",
+  "p.lessons.recorded": "Registrada: {summary}",
+  "p.lessons.problem_occasion": "Elija una puerta de fase o el cierre.",
+  "p.lessons.problem_category": "Elija salió bien, salió mal o recomendación.",
+  "p.lessons.problem_summary": "Escriba un resumen de hasta {max} caracteres.",
+  "p.lessons.problem_detail": "El detalle supera los {bytes} bytes.",
+  "p.lessons.list_heading":
+    "Las lecciones del plan, de la más antigua a la más reciente",
+  "p.lessons.loading": "Cargando las lecciones…",
+  "p.lessons.none": "Aún no hay lecciones.",
+  "p.lessons.count_one": "{n} lección.",
+  "p.lessons.count_other": "{n} lecciones.",
+  "p.lessons.recorded_on": "registrada el {date}",
+  "p.lessons.recorded_on_by": "registrada el {date} por {who}",
+  "p.lessons.link_unlisted":
+    "sobre un registro que no figura entre las tareas, los riesgos, los hitos y las incidencias del plan que se listan aquí",
+  "p.lessons.withdraw": "Retirar la lección {summary}",
+  "p.lessons.withdraw_short": "Retirar",
+  "p.lessons.confirm_withdraw":
+    "¿Retirar la lección “{summary}”? Ya no se mostrará, ni aquí ni en las propuestas nuevas; queda en el registro de auditoría.",
+  "p.lessons.withdrawn": "Retirada: {summary}",
+  "p.lessons.could_not_load": "No se pudieron cargar las lecciones.",
+  "p.lessons.could_not_save": "La lección no se modificó.",
+  "p.lessons.refused_gone": "Rechazado: el plan ya no existe.",
+  "p.lessons.refused_withdrawn":
+    "Rechazado: esa lección ya se retiró. Se volvió a leer la lista.",
+  "p.lessons.refused_link":
+    "Rechazado: el registro elegido ya no es un registro de este plan. No se registró nada; elíjalo de nuevo.",
+  "p.lessons.refs_heading": "Qué hace referencia a un registro",
+  "p.lessons.refs_says":
+    "Elija una de las tareas, riesgos, hitos o incidencias del plan para listar los puntos de reunión y las lecciones que remiten a él (hasta 100 de cada tipo).",
+  "p.lessons.f_target": "El registro",
+  "p.lessons.choose_target": "Elija un registro…",
+  "p.lessons.show_refs": "Mostrar qué hace referencia a él",
+  "p.lessons.problem_target": "Elija primero un registro.",
+  "p.lessons.refs_count_one": "{n} elemento hace referencia a él.",
+  "p.lessons.refs_count_other": "{n} elementos hacen referencia a él.",
+  "p.lessons.refs_meetings": "Puntos de reunión",
+  "p.lessons.refs_lessons": "Lecciones que remiten a él",
+  "p.lessons.refs_agenda": "Orden del día",
+  "p.lessons.refused_no_record":
+    "Ese registro ya no es un registro de este plan, o usted no puede leerlo.",
+  "p.lessons.could_not_read_refs": "No se pudo leer qué hace referencia a él.",
+  "p.lessons.similar": "Lecciones de planes similares",
+  "p.lessons.similar_named": "Lecciones de planes como {title}",
+  "p.lessons.similar_heading": "Lecciones de planes como {title}",
+  "p.lessons.similar_says":
+    "Coincidencia solo por el título, con todos los planes que tienen lecciones, cerrados o no, de mejor a peor coincidencia. La puntuación y la confianza son las del comparador.",
+  "p.lessons.similar_none": "Ningún plan similar tiene lecciones.",
+  "p.lessons.match": "coincidencia {score}, confianza {confidence}.",
+  "p.lessons.match_title": "Títulos parecidos en un {score}.",
+  "p.lessons.confidence_high": "alta",
+  "p.lessons.confidence_medium": "media",
+  "p.lessons.confidence_low": "baja",
+  "p.lessons.refused_proposal_gone":
+    "Esa propuesta ya no existe, o usted no puede leerla.",
+  "p.lessons.could_not_read_similar":
+    "No se pudieron leer las lecciones de planes similares.",
 };

@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (meetings, lessons and references: NC-1 slice 12 part e)
+
+- **UI: meetings (NC-14), tasks from their actions (BR-3), lessons learned (NC-8) and what refers to a record (BR-4).**
+  A new `/plans/[pid]/meetings` plans a meeting with an agenda, records it once as held with minutes and outcomes or
+  cancels it (each after a question), shows each link as the record is now, links the PDF, and proposes tasks from a
+  held meeting's actions: checked by the service first, each verdict in the catalogue's words, created all or none
+  after a question under one idempotency key. A new `/plans/[pid]/lessons` records and withdraws lessons and lists what
+  refers to one of the plan's records; `/proposals` shows the lessons of similar plans with the match's evidence. The
+  rules are said first (no attendees; held minutes cannot be corrected; a lesson is only withdrawn); the service's text
+  is never shown. UI spec, "Meetings, lessons and references"; tests `tests/e2e/meetings.spec.ts`,
+  `tests/e2e/lessons.spec.ts` and an addition to `proposals.spec.ts`. 182 keys in eight catalogues, machine-written.
+  **Not done:** attendees and correcting minutes (no service support); linking an existing lesson; people by name.
+  **Service gaps:** every 422 here is `unprocessable` with English text; the two 409s on creating tasks share
+  `conflict`; a task made from minutes gets an English description; the PDF's fixed words are English. **Not
+  verified:** against a real service.
+
 ### 18 November (escalation follow-through and register completeness: NC-1 slice 12 part d)
 
 - **UI: escalation follow-through (CF-4) and register completeness (EX-1).** `/plans/[pid]/escalations` acknowledges

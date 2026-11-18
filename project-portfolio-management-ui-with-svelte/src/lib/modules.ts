@@ -17,6 +17,10 @@ export const PLAN_LINKS = [
   // `status`, `status-cadence` and `status-updates` are owned by no module in the service (always on); a status update
   // is a governance reading, so it sits beside the programme page (NC-4, NC-1 slice 12 part b).
   { key: "status", module: "governance" },
+  // `meetings`, `lessons` and `references` are owned by no module in the service (always on); meetings and lessons are
+  // governance records, so they sit beside the status page (NC-14, NC-8, NC-1 slice 12 part e).
+  { key: "meetings", module: "governance" },
+  { key: "lessons", module: "governance" },
   { key: "tolerances", module: "governance" },
   { key: "escalations", module: "governance" },
   // The service puts `/api/plans/{pid}/issues` in the risks module, not governance.

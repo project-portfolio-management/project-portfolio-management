@@ -4357,3 +4357,144 @@ export interface StatusUpdateBody {
   narrative: string;
   claims?: Array<{ text: string; sources: string[] }>;
 }
+
+// ---- meetings, lessons and references (NC-14, BR-3, NC-8, BR-4; NC-1 slice 12 part e) ----------------------------
+
+/** A meeting's state: planned, then held or cancelled; a held or cancelled meeting is a record and is not edited. */
+export type MeetingStatus = "planned" | "held" | "cancelled";
+/** What a meeting's outcome is. */
+export type OutcomeKind = "decision" | "action" | "note";
+
+/** A pointer from an agenda item, an outcome or a lesson to a record of the plan. */
+export interface RecordLink {
+  kind: string;
+  pid: string;
+}
+
+/** One meeting in `GET /api/plans/{pid}/meetings`, newest first, without its items. */
+export interface MeetingSummary {
+  pid: string;
+  title: string;
+  scheduled_on: string;
+  status: MeetingStatus;
+  held_on: string | null;
+}
+
+/** An agenda item or outcome as `GET …/meetings/{mid}` returns it; `link.name` is the record's own title now, `null`
+ * when the record is no longer there. */
+export interface MeetingItem {
+  kind: OutcomeKind | null;
+  text: string;
+  link: { kind: string; pid: string; name: string | null } | null;
+}
+
+/** `GET /api/plans/{pid}/meetings/{mid}`: an outcome carries its position and the task made from it (BR-3). */
+export interface Meeting extends MeetingSummary {
+  minutes: string | null;
+  agenda: MeetingItem[];
+  outcomes: Array<MeetingItem & { index: number; task_pid: string | null }>;
+}
+
+/** `POST /api/plans/{pid}/meetings` body. */
+export interface PlanMeetingBody {
+  title: string;
+  scheduled_on: string;
+  agenda?: Array<{ text: string; link?: RecordLink }>;
+}
+
+/** `POST …/meetings/{mid}/held` body. */
+export interface HeldMeetingBody {
+  minutes: string;
+  held_on?: string;
+  outcomes?: Array<{ kind: OutcomeKind; text: string; link?: RecordLink }>;
+}
+
+/** One proposed task from a held meeting's minutes (BR-3). */
+export interface TaskProposal {
+  title: string;
+  excerpt: string;
+  outcome: number;
+  assignee_ref?: string;
+  due_on?: string;
+  points?: number;
+}
+
+/** `POST …/task-proposals/preview` and `…/commit` body. */
+export interface TaskProposalsBody {
+  items: TaskProposal[];
+}
+
+/** `POST …/task-proposals/preview`: each proposal ready (with its assignee) or dropped with a reason code. */
+export interface TaskProposalPreview {
+  meeting: string;
+  counts: { ready: number; dropped: number };
+  items: Array<
+    | { index: number; status: "ready"; assignee: string | null }
+    | { index: number; status: "dropped"; reason: string }
+  >;
+}
+
+/** `POST …/task-proposals/commit`: the tasks made, each with the outcome it came from. */
+export interface TaskProposalCommit {
+  meeting: string;
+  created: Array<{ index: number; outcome: number; task_pid: string }>;
+}
+
+/** A lesson's category. */
+export type LessonCategory = "went_well" | "went_badly" | "recommendation";
+
+/** One lesson as stored (append-only; withdrawn ones are not listed). `recorded_by` is a reference, not a name. */
+export interface Lesson {
+  pid: string;
+  plan_pid: string;
+  occasion: string;
+  category: LessonCategory;
+  summary: string;
+  detail: string | null;
+  recorded_by: string | null;
+  link_kind: string | null;
+  link_pid: string | null;
+  created_at: string;
+}
+
+/** `POST /api/plans/{pid}/lessons` body. */
+export interface LessonBody {
+  occasion: string;
+  category: LessonCategory;
+  summary: string;
+  detail?: string;
+  link?: RecordLink;
+}
+
+/** `GET /api/plans/{pid}/references?kind=&pid=`: the meetings and lessons that point at one record (BR-4). */
+export interface RecordReferences {
+  target: { kind: string; pid: string; title: string };
+  meetings: Array<{
+    meeting_pid: string;
+    meeting_title: string;
+    meeting_status: MeetingStatus;
+    scheduled_on: string;
+    part: "agenda" | "outcome";
+    outcome_kind: OutcomeKind | null;
+    text: string;
+  }>;
+  lessons: Array<{
+    lesson_pid: string;
+    occasion: string;
+    category: LessonCategory;
+    summary: string;
+  }>;
+  count: number;
+}
+
+/** One similar plan in `GET /api/proposals/{pid}/lessons`, best match first, with the match's evidence. */
+export interface ProposalLessonMatch {
+  plan_pid: string;
+  plan_name: string;
+  match: {
+    score: number;
+    confidence: "High" | "Medium" | "Low";
+    breakdown: Record<string, number | boolean | null>;
+  };
+  lessons: Lesson[];
+}

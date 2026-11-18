@@ -6908,4 +6908,233 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.register_completeness.state_incomplete": "غير مكتمل",
   "p.register_completeness.field_other": "أمر آخر",
   "p.register_completeness.none_listed": "لا شيء",
+  "p.meetings.title": "الاجتماعات",
+  "p.meetings.title_ppm": "الاجتماعات — PPM",
+  "p.meetings.link": "الاجتماعات والمحاضر والإجراءات",
+  "p.meetings.intro":
+    "يُخطَّط للاجتماع بعنوان وتاريخ وجدول أعمال. وبعده يُسجَّل مرة واحدة بوصفه منعقدًا مع محضره ونتائجه (القرارات والإجراءات والملاحظات)، أو يُلغى. الاجتماع المنعقد أو الملغى سجل ثابت: لا يمكن تصحيح محضر اجتماع منعقد، ولا يمكن استعادة اجتماع ملغى. لا يُسجَّل الحاضرون.",
+  "p.meetings.plan_heading": "تخطيط اجتماع",
+  "p.meetings.plan_says":
+    "عنوان بحد أقصى {title} حرفًا وتاريخ. يضم جدول الأعمال حتى {items} بندًا، في كل بند حتى {chars} حرفًا؛ ويمكن أن يشير البند إلى مهمة أو خطر أو معلم أو مشكلة من هذه الخطة.",
+  "p.meetings.f_title": "العنوان (حتى {max} حرفًا)",
+  "p.meetings.f_date": "التاريخ المخطَّط له",
+  "p.meetings.agenda_item": "بند جدول الأعمال {n}",
+  "p.meetings.f_item_text": "موضوع بند جدول الأعمال {n} (حتى {max} حرفًا)",
+  "p.meetings.f_item_link": "السجل الذي يخصه بند جدول الأعمال {n}",
+  "p.meetings.no_record": "لا سجل",
+  "p.meetings.records_loading": "جارٍ تحميل سجلات الخطة…",
+  "p.meetings.remove_item": "إزالة بند جدول الأعمال {n}",
+  "p.meetings.add_item": "إضافة بند إلى جدول الأعمال",
+  "p.meetings.plan": "تخطيط الاجتماع",
+  "p.meetings.planned": "تم التخطيط: {title}، في {date}.",
+  "p.meetings.list_heading": "اجتماعات الخطة، الأحدث أولًا",
+  "p.meetings.pdf_says":
+    "يُنزَّل كل اجتماع بوصفه مستند PDF يضم ما تعرضه هذه الصفحة؛ وكلماته الثابتة (العناوين والحالة) بالإنجليزية.",
+  "p.meetings.loading": "جارٍ تحميل الاجتماعات…",
+  "p.meetings.none": "لا اجتماعات بعد.",
+  "p.meetings.status_planned": "مخطَّط له",
+  "p.meetings.status_held": "منعقد",
+  "p.meetings.status_cancelled": "ملغى",
+  "p.meetings.held_on": "انعقد في {date}",
+  "p.meetings.scheduled_on": "مخطَّط له في {date}",
+  "p.meetings.show": "فتح الاجتماع {title}",
+  "p.meetings.hide": "إغلاق الاجتماع {title}",
+  "p.meetings.pdf": "تنزيل بصيغة PDF",
+  "p.meetings.pdf_named": "تنزيل الاجتماع {title} بصيغة PDF",
+  "p.meetings.agenda_heading": "جدول الأعمال",
+  "p.meetings.agenda_none": "لا بنود في جدول الأعمال.",
+  "p.meetings.minutes_heading": "المحضر",
+  "p.meetings.outcomes_heading": "النتائج",
+  "p.meetings.outcomes_none": "لم تُسجَّل أي نتائج.",
+  "p.meetings.outcome_decision": "قرار",
+  "p.meetings.outcome_action": "إجراء",
+  "p.meetings.outcome_note": "ملاحظة",
+  "p.meetings.about": "بخصوص {record}",
+  "p.meetings.link_gone": "بخصوص سجل لم يعد موجودًا",
+  "p.meetings.task_made": "المهمة المنشأة من النتيجة {n}",
+  "p.meetings.held_kept": "هذا الاجتماع سجل ثابت: لا يتغير محضره ولا نتائجه.",
+  "p.meetings.cancelled_kept":
+    "أُلغي هذا الاجتماع. وهو سجل ثابت ولا يمكن استعادته.",
+  "p.meetings.held_heading": "تسجيل {title} بوصفه منعقدًا",
+  "p.meetings.held_says":
+    "محضر بحد أقصى {minutes} حرفًا، وحتى {items} نتيجة في كل منها حتى {chars} حرفًا: كل نتيجة قرار أو إجراء أو ملاحظة، ويمكن أن تشير كل نتيجة إلى سجل من هذه الخطة. تاريخ الانعقاد هو التاريخ المخطَّط له ما لم تحدد تاريخًا آخر. يتم هذا مرة واحدة: لا يمكن تصحيح المحضر بعد ذلك.",
+  "p.meetings.f_minutes": "المحضر (حتى {max} حرفًا)",
+  "p.meetings.f_held_on": "تاريخ انعقاده (اتركه فارغًا للتاريخ المخطَّط له)",
+  "p.meetings.outcome_n": "النتيجة {n}",
+  "p.meetings.f_outcome_kind": "نوع النتيجة {n}",
+  "p.meetings.choose_kind": "اختر…",
+  "p.meetings.f_outcome_text": "النتيجة {n} بالكلمات (حتى {max} حرفًا)",
+  "p.meetings.f_outcome_link": "السجل الذي تخصه النتيجة {n}",
+  "p.meetings.remove_outcome": "إزالة النتيجة {n}",
+  "p.meetings.add_outcome": "إضافة نتيجة",
+  "p.meetings.record_held": "تسجيله منعقدًا",
+  "p.meetings.cancel_meeting": "إلغاء الاجتماع {title}",
+  "p.meetings.confirm_held":
+    "هل تريد تسجيل {title} بوصفه منعقدًا؟ لا يمكن تصحيح محضره ونتائجه بعد ذلك.",
+  "p.meetings.confirm_cancel":
+    "هل تريد إلغاء {title}؟ لا يمكن استعادة اجتماع ملغى.",
+  "p.meetings.held_done": "سُجِّل بوصفه منعقدًا: {title}.",
+  "p.meetings.cancelled_done": "أُلغي: {title}.",
+  "p.meetings.problem_title": "اكتب عنوانًا بحد أقصى {title} حرفًا.",
+  "p.meetings.problem_date": "اكتب تاريخًا.",
+  "p.meetings.problem_agenda_count":
+    "يضم جدول الأعمال {items} بندًا على الأكثر.",
+  "p.meetings.problem_outcome_count": "يضم الاجتماع {items} نتيجة على الأكثر.",
+  "p.meetings.problem_item_text": "اكتبه في حدود {chars} حرفًا على الأكثر.",
+  "p.meetings.problem_minutes":
+    "اكتب المحضر في حدود {minutes} حرفًا على الأكثر.",
+  "p.meetings.problem_outcome_kind": "اختر قرارًا أو إجراءً أو ملاحظة.",
+  "p.meetings.problem_on_line": "في {line}: {problem}",
+  "p.meetings.could_not_load": "تعذّر تحميل الاجتماعات.",
+  "p.meetings.could_not_save": "لم يتغير الاجتماع.",
+  "p.meetings.refused_gone":
+    "مرفوض: هذا الاجتماع، أو الخطة، لم يعد موجودًا. أُعيدت قراءة القائمة.",
+  "p.meetings.refused_settled":
+    "مرفوض: هذا الاجتماع انعقد أو أُلغي بالفعل، فهو سجل ثابت ولا يتغير. أُعيدت قراءته.",
+  "p.meetings.refused_link":
+    "مرفوض: سجل يشير إليه أحد البنود لم يعد سجلًا من هذه الخطة. لم يُحفظ شيء؛ اختر السجلات من جديد.",
+  "p.meetings.refused_not_held":
+    "مرفوض: لا تُقترح المهام إلا من اجتماع انعقد وله محضر.",
+  "p.meetings.refused_commit_state":
+    "مرفوض: الاجتماع غير منعقد، أو أن لأحد هذه الإجراءات مهمة في الأثناء. لم يُنشأ شيء؛ وأُعيدت قراءة الاجتماع، فتحقق مرة أخرى.",
+  "p.meetings.refused_commit_invalid":
+    "مرفوض: اقتراح لم يعد جاهزًا. لم يُنشأ شيء؛ تحقق من المقترحات مرة أخرى.",
+  "p.meetings.refused_proposals": "مرفوض: أرسل ما بين 1 و{count} من المقترحات.",
+  "p.meetings.tasks_heading": "مهام من الإجراءات",
+  "p.meetings.tasks_says":
+    "لكل إجراء لا مهمة له بعد يمكنك اقتراح مهمة: عنوان بحد أقصى {max} حرفًا ومقطع من المحضر يسندها لا يقل عن {min} حرفًا (يُتجاهل اختلاف حالة الأحرف والمسافات). المكلَّف اختياري ويجب أن يكون واردًا أصلًا في مهام هذه الخطة أو في مخطط مسؤولياتها، بصيغة مرجع مثل person:…؛ وتاريخ الاستحقاق اختياري، من {first} إلى {last}؛ وتتراوح النقاط من 0 إلى {points}. حتى {count} في المرة الواحدة. التحقق لا يكتب شيئًا؛ ثم تُنشأ المهام كلها أو لا شيء منها، ويحصل الإجراء على مهمة واحدة فقط.",
+  "p.meetings.proposal_legend": "الإجراء {n}: {text}",
+  "p.meetings.f_propose": "اقتراح مهمة للإجراء {n}",
+  "p.meetings.f_task_title": "عنوان المهمة للإجراء {n} (حتى {max} حرفًا)",
+  "p.meetings.f_excerpt": "مقطع من المحضر للإجراء {n} (لا يقل عن {min} حرفًا)",
+  "p.meetings.f_assignee": "المكلَّف للإجراء {n} (مرجع اختياري)",
+  "p.meetings.f_due": "تاريخ الاستحقاق للإجراء {n} (اختياري)",
+  "p.meetings.f_points": "النقاط للإجراء {n} (اختياري، من 0 إلى {max})",
+  "p.meetings.check": "التحقق من المقترحات",
+  "p.meetings.create_tasks": "إنشاء المهام",
+  "p.meetings.none_chosen": "لم يُختر أي مقترح، فلم يُرسل شيء.",
+  "p.meetings.checked_one":
+    "تم التحقق دون كتابة شيء: المقترحات الجاهزة {n}، وغير الجاهزة {dropped}.",
+  "p.meetings.checked_other":
+    "تم التحقق دون كتابة شيء: المقترحات الجاهزة {n}، وغير الجاهزة {dropped}.",
+  "p.meetings.ready": "جاهز، دون مكلَّف.",
+  "p.meetings.ready_for": "جاهز، لـ{who}.",
+  "p.meetings.not_all_ready":
+    "يجب أن يكون كل مقترح مختار جاهزًا قبل إنشاء المهام: عدِّل غير الجاهزة أو ألغِ تحديدها، ثم تحقق مرة أخرى.",
+  "p.meetings.check_again":
+    "تغيّرت المقترحات منذ التحقق منها: تحقق منها مرة أخرى.",
+  "p.meetings.confirm_tasks_one":
+    "هل تريد إنشاء مهام عددها {n} من إجراءات {title}؟ يحصل الإجراء على مهمة واحدة فقط.",
+  "p.meetings.confirm_tasks_other":
+    "هل تريد إنشاء مهام عددها {n} من إجراءات {title}؟ يحصل الإجراء على مهمة واحدة فقط.",
+  "p.meetings.tasks_made_one":
+    "عدد المهام المنشأة: {n}؛ وكل مهمة مرتبطة تحت إجرائها.",
+  "p.meetings.tasks_made_other":
+    "عدد المهام المنشأة: {n}؛ وكل مهمة مرتبطة تحت إجرائها.",
+  "p.meetings.could_not_check": "تعذّر التحقق من المقترحات.",
+  "p.meetings.could_not_create": "لم تُنشأ المهام.",
+  "p.meetings.dropped_title_invalid":
+    "غير جاهز: العنوان فارغ أو أطول من اللازم.",
+  "p.meetings.dropped_excerpt_not_in_minutes":
+    "غير جاهز: المقطع غير موجود في المحضر، أو أنه أقصر من اللازم.",
+  "p.meetings.dropped_outcome_not_found":
+    "غير جاهز: لا توجد في الاجتماع نتيجة كهذه.",
+  "p.meetings.dropped_outcome_not_an_action":
+    "غير جاهز: هذه النتيجة ليست إجراءً.",
+  "p.meetings.dropped_outcome_already_has_a_task":
+    "غير جاهز: لهذا الإجراء مهمة بالفعل.",
+  "p.meetings.dropped_due_outside_window":
+    "غير جاهز: تاريخ الاستحقاق خارج التواريخ المسموح بها.",
+  "p.meetings.dropped_points_invalid":
+    "غير جاهز: النقاط خارج النطاق المسموح به.",
+  "p.meetings.dropped_assignee_not_in_plan":
+    "غير جاهز: المكلَّف ليس من أشخاص هذه الخطة (في مهامها أو في مخطط مسؤولياتها).",
+  "p.meetings.dropped_outcome_proposed_twice":
+    "غير جاهز: الإجراء نفسه مقترح مرتين.",
+  "p.meetings.dropped_other": "غير جاهز، لسبب لا تعرفه هذه الصفحة.",
+  "p.meetings.problem_proposals_count":
+    "اقترح {count} مهمة على الأكثر في المرة الواحدة.",
+  "p.meetings.problem_task_title": "اكتب للمهمة عنوانًا بحد أقصى {max} حرفًا.",
+  "p.meetings.problem_excerpt":
+    "اقتبس مقطعًا لا يقل عن {min} حرفًا وموجودًا في المحضر.",
+  "p.meetings.problem_due":
+    "يجب أن يقع تاريخ الاستحقاق بين أسبوع قبل الاجتماع وسنة بعده.",
+  "p.meetings.problem_points": "النقاط عدد صحيح من 0 إلى {points}.",
+  "p.lessons.title": "الدروس المستفادة",
+  "p.lessons.title_ppm": "الدروس المستفادة — PPM",
+  "p.lessons.link": "الدروس المستفادة",
+  "p.lessons.intro":
+    "يُسجَّل الدرس عند بوابة مرحلة أو عند إغلاق الخطة. ولا يتغير أبدًا: يمكن سحبه فقط، والدرس المسحوب لا يُعرض بعد ذلك (ويبقى في سجل التدقيق). أي اقتراح جديد يشبه عنوانه عنوان هذه الخطة تُعرض له دروسها.",
+  "p.lessons.record_heading": "تسجيل درس",
+  "p.lessons.record_says":
+    "متى (بوابة أو إغلاق)، وما هو، وملخص بحد أقصى {max} حرفًا، وإن شئت تفصيل بحد أقصى {bytes} بايتًا (الحرف المشكَّل أو من كتابة أخرى يشغل أكثر من بايت واحد)، والمهمة أو الخطر أو المعلم أو المشكلة من هذه الخطة التي يخصها.",
+  "p.lessons.f_occasion": "متى",
+  "p.lessons.choose_occasion": "اختر بوابة أو إغلاقًا…",
+  "p.lessons.closure": "الإغلاق",
+  "p.lessons.occasion_other": "مناسبة أخرى",
+  "p.lessons.f_category": "ما هو",
+  "p.lessons.category_went_well": "سار على نحو جيد",
+  "p.lessons.category_went_badly": "سار على نحو سيئ",
+  "p.lessons.category_recommendation": "توصية",
+  "p.lessons.category_other": "نوع آخر",
+  "p.lessons.f_summary": "الملخص (حتى {max} حرفًا)",
+  "p.lessons.f_detail": "التفصيل (اختياري، حتى {bytes} بايتًا)",
+  "p.lessons.f_link": "السجل الذي يخصه (اختياري)",
+  "p.lessons.record": "تسجيل الدرس",
+  "p.lessons.recorded": "سُجِّل: {summary}",
+  "p.lessons.problem_occasion": "اختر بوابة أو إغلاقًا.",
+  "p.lessons.problem_category":
+    "اختر: سار على نحو جيد، أو سار على نحو سيئ، أو توصية.",
+  "p.lessons.problem_summary": "اكتب ملخصًا بحد أقصى {max} حرفًا.",
+  "p.lessons.problem_detail": "التفصيل أطول من {bytes} بايتًا.",
+  "p.lessons.list_heading": "دروس الخطة، الأقدم أولًا",
+  "p.lessons.loading": "جارٍ تحميل الدروس…",
+  "p.lessons.none": "لا دروس بعد.",
+  "p.lessons.count_one": "عدد الدروس: {n}.",
+  "p.lessons.count_other": "عدد الدروس: {n}.",
+  "p.lessons.recorded_on": "سُجِّل في {date}",
+  "p.lessons.recorded_on_by": "سُجِّل في {date} بواسطة {who}",
+  "p.lessons.link_unlisted":
+    "بخصوص سجل ليس من مهام الخطة ومخاطرها ومعالمها ومشكلاتها المعروضة هنا",
+  "p.lessons.withdraw": "سحب الدرس {summary}",
+  "p.lessons.withdraw_short": "سحب",
+  "p.lessons.confirm_withdraw":
+    "هل تريد سحب الدرس «{summary}»؟ لن يُعرض بعد ذلك، لا هنا ولا للاقتراحات الجديدة؛ ويبقى في سجل التدقيق.",
+  "p.lessons.withdrawn": "سُحب: {summary}",
+  "p.lessons.could_not_load": "تعذّر تحميل الدروس.",
+  "p.lessons.could_not_save": "لم يتغير الدرس.",
+  "p.lessons.refused_gone": "مرفوض: الخطة لم تعد موجودة.",
+  "p.lessons.refused_withdrawn":
+    "مرفوض: سُحب هذا الدرس بالفعل. أُعيدت قراءة القائمة.",
+  "p.lessons.refused_link":
+    "مرفوض: السجل المختار لم يعد سجلًا من هذه الخطة. لم يُسجَّل شيء؛ اختره من جديد.",
+  "p.lessons.refs_heading": "ما يشير إلى سجل",
+  "p.lessons.refs_says":
+    "اختر إحدى مهام الخطة أو مخاطرها أو معالمها أو مشكلاتها لعرض بنود الاجتماعات والدروس التي تشير إليه (حتى 100 من كل نوع).",
+  "p.lessons.f_target": "السجل",
+  "p.lessons.choose_target": "اختر سجلًا…",
+  "p.lessons.show_refs": "عرض ما يشير إليه",
+  "p.lessons.problem_target": "اختر سجلًا أولًا.",
+  "p.lessons.refs_count_one": "عدد البنود التي تشير إليه: {n}.",
+  "p.lessons.refs_count_other": "عدد البنود التي تشير إليه: {n}.",
+  "p.lessons.refs_meetings": "بنود الاجتماعات",
+  "p.lessons.refs_lessons": "الدروس التي تشير إليه",
+  "p.lessons.refs_agenda": "جدول الأعمال",
+  "p.lessons.refused_no_record":
+    "هذا السجل لم يعد سجلًا من هذه الخطة، أو لا يمكنك قراءته.",
+  "p.lessons.could_not_read_refs": "تعذّرت قراءة ما يشير إليه.",
+  "p.lessons.similar": "دروس من خطط مشابهة",
+  "p.lessons.similar_named": "دروس من خطط مثل {title}",
+  "p.lessons.similar_heading": "دروس من خطط مثل {title}",
+  "p.lessons.similar_says":
+    "المطابقة بالعنوان وحده، مع كل خطة لها دروس، مغلقة كانت أم لا، وأفضل مطابقة أولًا. الدرجة ومستوى الثقة من أداة المطابقة.",
+  "p.lessons.similar_none": "لا توجد خطة مشابهة لها دروس.",
+  "p.lessons.match": "مطابقة {score}، وثقة {confidence}.",
+  "p.lessons.match_title": "تشابه العناوين {score}.",
+  "p.lessons.confidence_high": "عالية",
+  "p.lessons.confidence_medium": "متوسطة",
+  "p.lessons.confidence_low": "منخفضة",
+  "p.lessons.refused_proposal_gone":
+    "هذا الاقتراح لم يعد موجودًا، أو لا يمكنك قراءته.",
+  "p.lessons.could_not_read_similar": "تعذّرت قراءة دروس الخطط المشابهة.",
 };

@@ -839,6 +839,65 @@ describe("PpmClient escalation records and register completeness (NC-1 slice 12 
   });
 });
 
+describe("PpmClient meetings, lessons and references (NC-1 slice 12 part e, NC-14, BR-3, NC-8, BR-4)", () => {
+  it("reads and writes meetings, proposed tasks, lessons and references at the service's paths", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.meetings("p1");
+    await ppm.planMeeting("p1", {
+      title: "Kick-off",
+      scheduled_on: "2026-11-24",
+    });
+    await ppm.meeting("p1", "m1");
+    await ppm.holdMeeting("p1", "m1", { minutes: "We met." });
+    await ppm.cancelMeeting("p1", "m1");
+    await ppm.previewMeetingTasks("p1", "m1", { items: [] });
+    await ppm.commitMeetingTasks("p1", "m1", { items: [] }, "k1");
+    await ppm.lessons("p1");
+    await ppm.recordLesson("p1", {
+      occasion: "closure",
+      category: "went_well",
+      summary: "s",
+    });
+    await ppm.withdrawLesson("p1", "l1");
+    await ppm.references("p1", "task", "t1");
+    await ppm.proposalLessons("pr1");
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/meetings",
+      "POST /api/plans/p1/meetings",
+      "GET /api/plans/p1/meetings/m1",
+      "POST /api/plans/p1/meetings/m1/held",
+      "POST /api/plans/p1/meetings/m1/cancel",
+      "POST /api/plans/p1/meetings/m1/task-proposals/preview",
+      "POST /api/plans/p1/meetings/m1/task-proposals/commit",
+      "GET /api/plans/p1/lessons",
+      "POST /api/plans/p1/lessons",
+      "POST /api/plans/p1/lessons/l1/withdraw",
+      "GET /api/plans/p1/references?kind=task&pid=t1",
+      "GET /api/proposals/pr1/lessons",
+    ]);
+  });
+  it("creates the tasks under the key it is given, so a retry is the same request", async () => {
+    const keys: Array<string | null> = [];
+    const fetchFn = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit) => {
+        keys.push(new Headers(init?.headers).get("idempotency-key"));
+        return new Response("{}", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    ) as unknown as typeof fetch;
+    const ppm = new PpmClient(
+      new ApiClient({ baseUrl: "http://svc", fetch: fetchFn }),
+    );
+    await ppm.commitMeetingTasks("p1", "m1", { items: [] }, "key-1");
+    await ppm.commitMeetingTasks("p1", "m1", { items: [] }, "key-1");
+    expect(keys).toEqual(["key-1", "key-1"]);
+  });
+});
+
 describe("PpmClient milestone sign-off required (NC-1 slice 11, EX-4)", () => {
   it("replaces the organizations a milestone needs", async () => {
     const { ppm, calls } = recordingClient();

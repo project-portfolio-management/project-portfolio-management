@@ -7264,4 +7264,242 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.register_completeness.state_incomplete": "anghyflawn",
   "p.register_completeness.field_other": "maes arall",
   "p.register_completeness.none_listed": "dim",
+  "p.meetings.title": "Cyfarfodydd",
+  "p.meetings.title_ppm": "Cyfarfodydd — PPM",
+  "p.meetings.link": "Cyfarfodydd, cofnodion a gweithredoedd",
+  "p.meetings.intro":
+    "Caiff cyfarfod ei gynllunio gyda theitl, dyddiad ac rhaglen. Wedyn caiff ei gofnodi unwaith fel un a gynhaliwyd, gyda'i gofnodion a'i ganlyniadau (penderfyniadau, gweithredoedd a nodiadau), neu caiff ei ganslo. Mae cyfarfod a gynhaliwyd neu a ganslwyd yn gofnod: ni ellir cywiro cofnodion cyfarfod a gynhaliwyd ac ni ellir adfer cyfarfod a ganslwyd. Ni chofnodir y rhai a oedd yn bresennol.",
+  "p.meetings.plan_heading": "Cynllunio cyfarfod",
+  "p.meetings.plan_says":
+    "Teitl o hyd at {title} nod a dyddiad. Mae'r rhaglen yn dal hyd at {items} eitem o hyd at {chars} nod yr un; gall eitem bwyntio at dasg, risg, carreg filltir neu fater o'r cynllun hwn.",
+  "p.meetings.f_title": "Teitl (hyd at {max} nod)",
+  "p.meetings.f_date": "Y dyddiad y mae wedi'i gynllunio ar ei gyfer",
+  "p.meetings.agenda_item": "Eitem rhaglen {n}",
+  "p.meetings.f_item_text": "Pwnc eitem rhaglen {n} (hyd at {max} nod)",
+  "p.meetings.f_item_link": "Y cofnod y mae eitem rhaglen {n} yn ymwneud ag ef",
+  "p.meetings.no_record": "Dim cofnod",
+  "p.meetings.records_loading": "Yn llwytho cofnodion y cynllun…",
+  "p.meetings.remove_item": "Tynnu eitem rhaglen {n}",
+  "p.meetings.add_item": "Ychwanegu eitem rhaglen",
+  "p.meetings.plan": "Cynllunio'r cyfarfod",
+  "p.meetings.planned": "Wedi'i gynllunio: {title}, ar {date}.",
+  "p.meetings.list_heading": "Cyfarfodydd y cynllun, y diweddaraf yn gyntaf",
+  "p.meetings.pdf_says":
+    "Mae pob cyfarfod yn llwytho i lawr fel dogfen PDF sy'n dal yr hyn y mae'r dudalen hon yn ei ddangos; mae ei eiriau sefydlog (y penawdau a'r cyflwr) yn Saesneg.",
+  "p.meetings.loading": "Yn llwytho'r cyfarfodydd…",
+  "p.meetings.none": "Dim cyfarfodydd eto.",
+  "p.meetings.status_planned": "wedi'i gynllunio",
+  "p.meetings.status_held": "wedi'i gynnal",
+  "p.meetings.status_cancelled": "wedi'i ganslo",
+  "p.meetings.held_on": "cynhaliwyd ar {date}",
+  "p.meetings.scheduled_on": "wedi'i gynllunio ar gyfer {date}",
+  "p.meetings.show": "Agor y cyfarfod {title}",
+  "p.meetings.hide": "Cau'r cyfarfod {title}",
+  "p.meetings.pdf": "Llwytho i lawr fel PDF",
+  "p.meetings.pdf_named": "Llwytho'r cyfarfod {title} i lawr fel PDF",
+  "p.meetings.agenda_heading": "Rhaglen",
+  "p.meetings.agenda_none": "Dim eitemau rhaglen.",
+  "p.meetings.minutes_heading": "Cofnodion",
+  "p.meetings.outcomes_heading": "Canlyniadau",
+  "p.meetings.outcomes_none": "Ni chofnodwyd unrhyw ganlyniadau.",
+  "p.meetings.outcome_decision": "Penderfyniad",
+  "p.meetings.outcome_action": "Gweithred",
+  "p.meetings.outcome_note": "Nodyn",
+  "p.meetings.about": "ynghylch {record}",
+  "p.meetings.link_gone": "ynghylch cofnod nad yw yno mwyach",
+  "p.meetings.task_made": "y dasg a wnaed o ganlyniad {n}",
+  "p.meetings.held_kept":
+    "Mae'r cyfarfod hwn yn gofnod: ni newidir ei gofnodion na'i ganlyniadau.",
+  "p.meetings.cancelled_kept":
+    "Canslwyd y cyfarfod hwn. Mae'n gofnod ac ni ellir ei adfer.",
+  "p.meetings.held_heading": "Cofnodi {title} fel un a gynhaliwyd",
+  "p.meetings.held_says":
+    "Cofnodion o hyd at {minutes} nod, a hyd at {items} canlyniad o hyd at {chars} nod yr un: pob un yn benderfyniad, yn weithred neu'n nodyn, a gall pob un bwyntio at gofnod o'r cynllun hwn. Y dyddiad a gynhaliwyd yw'r dyddiad a gynlluniwyd oni roddwch un arall. Gwneir hyn unwaith: ni ellir cywiro'r cofnodion wedyn.",
+  "p.meetings.f_minutes": "Cofnodion (hyd at {max} nod)",
+  "p.meetings.f_held_on":
+    "Y dyddiad y cynhaliwyd ef (gwag ar gyfer y dyddiad a gynlluniwyd)",
+  "p.meetings.outcome_n": "Canlyniad {n}",
+  "p.meetings.f_outcome_kind": "Beth yw canlyniad {n}",
+  "p.meetings.choose_kind": "Dewiswch…",
+  "p.meetings.f_outcome_text": "Canlyniad {n} mewn geiriau (hyd at {max} nod)",
+  "p.meetings.f_outcome_link": "Y cofnod y mae canlyniad {n} yn ymwneud ag ef",
+  "p.meetings.remove_outcome": "Tynnu canlyniad {n}",
+  "p.meetings.add_outcome": "Ychwanegu canlyniad",
+  "p.meetings.record_held": "Cofnodi fel un a gynhaliwyd",
+  "p.meetings.cancel_meeting": "Canslo'r cyfarfod {title}",
+  "p.meetings.confirm_held":
+    "Cofnodi {title} fel un a gynhaliwyd? Ni ellir cywiro ei gofnodion na'i ganlyniadau wedyn.",
+  "p.meetings.confirm_cancel":
+    "Canslo {title}? Ni ellir adfer cyfarfod a ganslwyd.",
+  "p.meetings.held_done": "Wedi'i gofnodi fel un a gynhaliwyd: {title}.",
+  "p.meetings.cancelled_done": "Wedi'i ganslo: {title}.",
+  "p.meetings.problem_title": "Rhowch deitl o hyd at {title} nod.",
+  "p.meetings.problem_date": "Rhowch ddyddiad.",
+  "p.meetings.problem_agenda_count":
+    "Mae rhaglen yn dal {items} eitem ar y mwyaf.",
+  "p.meetings.problem_outcome_count":
+    "Mae cyfarfod yn dal {items} canlyniad ar y mwyaf.",
+  "p.meetings.problem_item_text": "Ysgrifennwch ef mewn hyd at {chars} nod.",
+  "p.meetings.problem_minutes":
+    "Ysgrifennwch y cofnodion, mewn hyd at {minutes} nod.",
+  "p.meetings.problem_outcome_kind":
+    "Dewiswch benderfyniad, gweithred neu nodyn.",
+  "p.meetings.problem_on_line": "Ar gyfer {line}: {problem}",
+  "p.meetings.could_not_load": "Methu llwytho'r cyfarfodydd.",
+  "p.meetings.could_not_save": "Ni newidiwyd y cyfarfod.",
+  "p.meetings.refused_gone":
+    "Gwrthodwyd: nid yw'r cyfarfod hwn, na'r cynllun, yn bodoli mwyach. Darllenwyd y rhestr eto.",
+  "p.meetings.refused_settled":
+    "Gwrthodwyd: mae'r cyfarfod hwn eisoes wedi'i gynnal neu ei ganslo, felly mae'n gofnod ac ni chaiff ei newid. Darllenwyd ef eto.",
+  "p.meetings.refused_link":
+    "Gwrthodwyd: nid yw cofnod y mae eitem yn pwyntio ato yn gofnod o'r cynllun hwn mwyach. Ni chadwyd dim; dewiswch y cofnodion eto.",
+  "p.meetings.refused_not_held":
+    "Gwrthodwyd: cynigir tasgau o gyfarfod a gynhaliwyd ac sydd â chofnodion yn unig.",
+  "p.meetings.refused_commit_state":
+    "Gwrthodwyd: nid yw'r cyfarfod wedi'i gynnal, neu mae gan un o'r gweithredoedd hyn dasg erbyn hyn. Ni chrëwyd dim; darllenwyd y cyfarfod eto, felly gwiriwch eto.",
+  "p.meetings.refused_commit_invalid":
+    "Gwrthodwyd: nid yw cynnig yn barod mwyach. Ni chrëwyd dim; gwiriwch y cynigion eto.",
+  "p.meetings.refused_proposals":
+    "Gwrthodwyd: anfonwch rhwng 1 a {count} cynnig.",
+  "p.meetings.tasks_heading": "Tasgau o'r gweithredoedd",
+  "p.meetings.tasks_says":
+    "Ar gyfer pob gweithred heb dasg eto gallwch gynnig un: teitl o hyd at {max} nod a darn o'r cofnodion sy'n ei gefnogi, o {min} nod o leiaf (anwybyddir priflythrennau a bylchau). Mae aseinai yn ddewisol a rhaid iddo fod eisoes ar dasgau'r cynllun hwn neu ar ei siart cyfrifoldebau, fel cyfeiriad megis person:…; mae dyddiad dyledus yn ddewisol, o {first} i {last}; mae pwyntiau'n mynd o 0 i {points}. Hyd at {count} ar y tro. Nid yw gwirio'n ysgrifennu dim; crëir y tasgau wedyn i gyd neu ddim, a chaiff gweithred un dasg yn unig.",
+  "p.meetings.proposal_legend": "Gweithred {n}: {text}",
+  "p.meetings.f_propose": "Cynnig tasg ar gyfer gweithred {n}",
+  "p.meetings.f_task_title":
+    "Teitl y dasg ar gyfer gweithred {n} (hyd at {max} nod)",
+  "p.meetings.f_excerpt":
+    "Darn o'r cofnodion ar gyfer gweithred {n} (o {min} nod o leiaf)",
+  "p.meetings.f_assignee": "Aseinai ar gyfer gweithred {n} (cyfeiriad dewisol)",
+  "p.meetings.f_due": "Dyddiad dyledus ar gyfer gweithred {n} (dewisol)",
+  "p.meetings.f_points": "Pwyntiau ar gyfer gweithred {n} (dewisol, 0 i {max})",
+  "p.meetings.check": "Gwirio'r cynigion",
+  "p.meetings.create_tasks": "Creu'r tasgau",
+  "p.meetings.none_chosen":
+    "Ni ddewiswyd unrhyw gynnig, felly ni anfonwyd dim.",
+  "p.meetings.checked_one":
+    "Gwiriwyd, ni ysgrifennwyd dim: mae {n} cynnig yn barod, {dropped} heb fod yn barod.",
+  "p.meetings.checked_other":
+    "Gwiriwyd, ni ysgrifennwyd dim: mae {n} cynnig yn barod, {dropped} heb fod yn barod.",
+  "p.meetings.ready": "Yn barod, heb aseinai.",
+  "p.meetings.ready_for": "Yn barod, ar gyfer {who}.",
+  "p.meetings.not_all_ready":
+    "Rhaid i bob cynnig a ddewiswyd fod yn barod cyn y gellir creu'r tasgau: newidiwch y rhai nad ydynt yn barod neu dad-diciwch hwy, a gwiriwch eto.",
+  "p.meetings.check_again":
+    "Mae'r cynigion wedi newid ers eu gwirio: gwiriwch hwy eto.",
+  "p.meetings.confirm_tasks_one":
+    "Creu {n} tasg o weithredoedd {title}? Caiff gweithred un dasg yn unig.",
+  "p.meetings.confirm_tasks_other":
+    "Creu {n} tasg o weithredoedd {title}? Caiff gweithred un dasg yn unig.",
+  "p.meetings.tasks_made_one":
+    "Crëwyd {n} tasg; mae wedi'i chysylltu o dan ei gweithred.",
+  "p.meetings.tasks_made_other":
+    "Crëwyd {n} tasg; mae pob un wedi'i chysylltu o dan ei gweithred.",
+  "p.meetings.could_not_check": "Ni ellid gwirio'r cynigion.",
+  "p.meetings.could_not_create": "Ni chrëwyd y tasgau.",
+  "p.meetings.dropped_title_invalid":
+    "Heb fod yn barod: mae'r teitl yn wag neu'n rhy hir.",
+  "p.meetings.dropped_excerpt_not_in_minutes":
+    "Heb fod yn barod: ni cheir y darn yn y cofnodion, neu mae'n rhy fyr.",
+  "p.meetings.dropped_outcome_not_found":
+    "Heb fod yn barod: nid oes gan y cyfarfod ganlyniad o'r fath.",
+  "p.meetings.dropped_outcome_not_an_action":
+    "Heb fod yn barod: nid gweithred yw'r canlyniad hwnnw.",
+  "p.meetings.dropped_outcome_already_has_a_task":
+    "Heb fod yn barod: mae gan y weithred honno dasg eisoes.",
+  "p.meetings.dropped_due_outside_window":
+    "Heb fod yn barod: mae'r dyddiad dyledus y tu allan i'r dyddiadau a ganiateir.",
+  "p.meetings.dropped_points_invalid":
+    "Heb fod yn barod: mae'r pwyntiau y tu allan i'r amrediad a ganiateir.",
+  "p.meetings.dropped_assignee_not_in_plan":
+    "Heb fod yn barod: nid yw'r aseinai yn un o bobl y cynllun hwn (ar ei dasgau neu ei siart cyfrifoldebau).",
+  "p.meetings.dropped_outcome_proposed_twice":
+    "Heb fod yn barod: cynigir yr un weithred ddwywaith.",
+  "p.meetings.dropped_other":
+    "Heb fod yn barod, am reswm nad yw'r dudalen hon yn ei wybod.",
+  "p.meetings.problem_proposals_count":
+    "Cynigiwch {count} tasg ar y mwyaf ar y tro.",
+  "p.meetings.problem_task_title": "Rhowch deitl o hyd at {max} nod i'r dasg.",
+  "p.meetings.problem_excerpt":
+    "Dyfynnwch ddarn o {min} nod o leiaf sydd yn y cofnodion.",
+  "p.meetings.problem_due":
+    "Rhaid i'r dyddiad dyledus syrthio o wythnos cyn y cyfarfod i flwyddyn ar ei ôl.",
+  "p.meetings.problem_points": "Mae pwyntiau'n rhif cyfan o 0 i {points}.",
+  "p.lessons.title": "Gwersi a ddysgwyd",
+  "p.lessons.title_ppm": "Gwersi a ddysgwyd — PPM",
+  "p.lessons.link": "Gwersi a ddysgwyd",
+  "p.lessons.intro":
+    "Caiff gwers ei chofnodi ar borth cyfnod neu pan gaiff y cynllun ei gau. Ni chaiff byth ei newid: gellir ei thynnu'n ôl yn unig, ac nid yw gwers a dynnwyd yn ôl yn cael ei dangos mwyach (erys yn y llwybr archwilio). Dangosir ei gwersi i gynnig newydd y mae ei deitl yn debyg i deitl y cynllun hwn.",
+  "p.lessons.record_heading": "Cofnodi gwers",
+  "p.lessons.record_says":
+    "Pryd (porth neu gau), beth ydyw, crynodeb o hyd at {max} nod ac, os dymunwch, manylion o hyd at {bytes} beit (mae llythyren ag acen neu sgript arall yn cymryd mwy nag un) a'r dasg, y risg, y garreg filltir neu'r mater o'r cynllun hwn y mae'n ymwneud ag ef.",
+  "p.lessons.f_occasion": "Pryd",
+  "p.lessons.choose_occasion": "Dewiswch borth neu gau…",
+  "p.lessons.closure": "Cau",
+  "p.lessons.occasion_other": "Achlysur arall",
+  "p.lessons.f_category": "Beth ydyw",
+  "p.lessons.category_went_well": "Aeth yn dda",
+  "p.lessons.category_went_badly": "Aeth yn wael",
+  "p.lessons.category_recommendation": "Argymhelliad",
+  "p.lessons.category_other": "Math arall",
+  "p.lessons.f_summary": "Crynodeb (hyd at {max} nod)",
+  "p.lessons.f_detail": "Manylion (dewisol, hyd at {bytes} beit)",
+  "p.lessons.f_link": "Y cofnod y mae'n ymwneud ag ef (dewisol)",
+  "p.lessons.record": "Cofnodi'r wers",
+  "p.lessons.recorded": "Wedi'i chofnodi: {summary}",
+  "p.lessons.problem_occasion": "Dewiswch borth neu gau.",
+  "p.lessons.problem_category":
+    "Dewiswch aeth yn dda, aeth yn wael neu argymhelliad.",
+  "p.lessons.problem_summary": "Ysgrifennwch grynodeb o hyd at {max} nod.",
+  "p.lessons.problem_detail": "Mae'r manylion yn hirach na {bytes} beit.",
+  "p.lessons.list_heading": "Gwersi'r cynllun, yr hynaf yn gyntaf",
+  "p.lessons.loading": "Yn llwytho'r gwersi…",
+  "p.lessons.none": "Dim gwersi eto.",
+  "p.lessons.count_one": "{n} wers.",
+  "p.lessons.count_other": "{n} gwers.",
+  "p.lessons.recorded_on": "cofnodwyd ar {date}",
+  "p.lessons.recorded_on_by": "cofnodwyd ar {date} gan {who}",
+  "p.lessons.link_unlisted":
+    "ynghylch cofnod nad yw ymhlith tasgau, risgiau, cerrig milltir a materion y cynllun a restrir yma",
+  "p.lessons.withdraw": "Tynnu'r wers {summary} yn ôl",
+  "p.lessons.withdraw_short": "Tynnu'n ôl",
+  "p.lessons.confirm_withdraw":
+    "Tynnu'r wers “{summary}” yn ôl? Ni chaiff ei dangos mwyach, yma nac i gynigion newydd; erys yn y llwybr archwilio.",
+  "p.lessons.withdrawn": "Wedi'i thynnu'n ôl: {summary}",
+  "p.lessons.could_not_load": "Methu llwytho'r gwersi.",
+  "p.lessons.could_not_save": "Ni newidiwyd y wers.",
+  "p.lessons.refused_gone": "Gwrthodwyd: nid yw'r cynllun yn bodoli mwyach.",
+  "p.lessons.refused_withdrawn":
+    "Gwrthodwyd: mae'r wers honno eisoes wedi'i thynnu'n ôl. Darllenwyd y rhestr eto.",
+  "p.lessons.refused_link":
+    "Gwrthodwyd: nid yw'r cofnod a ddewiswyd yn gofnod o'r cynllun hwn mwyach. Ni chofnodwyd dim; dewiswch ef eto.",
+  "p.lessons.refs_heading": "Yr hyn sy'n cyfeirio at gofnod",
+  "p.lessons.refs_says":
+    "Dewiswch un o dasgau, risgiau, cerrig milltir neu faterion y cynllun i restru'r eitemau cyfarfod a'r gwersi sy'n pwyntio ato (hyd at 100 o bob un).",
+  "p.lessons.f_target": "Y cofnod",
+  "p.lessons.choose_target": "Dewiswch gofnod…",
+  "p.lessons.show_refs": "Dangos yr hyn sy'n cyfeirio ato",
+  "p.lessons.problem_target": "Dewiswch gofnod yn gyntaf.",
+  "p.lessons.refs_count_one": "Mae {n} eitem yn cyfeirio ato.",
+  "p.lessons.refs_count_other": "Mae {n} eitem yn cyfeirio ato.",
+  "p.lessons.refs_meetings": "Eitemau cyfarfod",
+  "p.lessons.refs_lessons": "Gwersi sy'n pwyntio ato",
+  "p.lessons.refs_agenda": "Rhaglen",
+  "p.lessons.refused_no_record":
+    "Nid yw'r cofnod hwnnw'n gofnod o'r cynllun hwn mwyach, neu ni allwch ei ddarllen.",
+  "p.lessons.could_not_read_refs": "Methu darllen yr hyn sy'n cyfeirio ato.",
+  "p.lessons.similar": "Gwersi o gynlluniau tebyg",
+  "p.lessons.similar_named": "Gwersi o gynlluniau fel {title}",
+  "p.lessons.similar_heading": "Gwersi o gynlluniau fel {title}",
+  "p.lessons.similar_says":
+    "Paru ar y teitl yn unig, yn erbyn pob cynllun sydd â gwersi, wedi'i gau ai peidio, y paru gorau yn gyntaf. Y paruwr sy'n rhoi'r sgôr a'r hyder.",
+  "p.lessons.similar_none": "Nid oes gan unrhyw gynllun tebyg wersi.",
+  "p.lessons.match": "paru {score}, hyder {confidence}.",
+  "p.lessons.match_title": "Teitlau {score} yn debyg.",
+  "p.lessons.confidence_high": "uchel",
+  "p.lessons.confidence_medium": "canolig",
+  "p.lessons.confidence_low": "isel",
+  "p.lessons.refused_proposal_gone":
+    "Nid yw'r cynnig hwnnw'n bodoli mwyach, neu ni allwch ei ddarllen.",
+  "p.lessons.could_not_read_similar": "Methu darllen gwersi cynlluniau tebyg.",
 };

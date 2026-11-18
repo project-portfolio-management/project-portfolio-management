@@ -7397,4 +7397,253 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.register_completeness.state_incomplete": "unvollständig",
   "p.register_completeness.field_other": "eine weitere Angabe",
   "p.register_completeness.none_listed": "keine",
+  "p.meetings.title": "Besprechungen",
+  "p.meetings.title_ppm": "Besprechungen — PPM",
+  "p.meetings.link": "Besprechungen, Protokolle und Aktionen",
+  "p.meetings.intro":
+    "Eine Besprechung wird mit Titel, Datum und Tagesordnung geplant. Danach wird sie einmalig als abgehalten erfasst, mit ihrem Protokoll und ihren Ergebnissen (Entscheidungen, Aktionen und Notizen), oder sie wird abgesagt. Eine abgehaltene oder abgesagte Besprechung ist ein Datensatz: Ein abgehaltenes Protokoll kann nicht korrigiert und eine abgesagte Besprechung nicht wiederhergestellt werden. Teilnehmende werden nicht erfasst.",
+  "p.meetings.plan_heading": "Besprechung planen",
+  "p.meetings.plan_says":
+    "Ein Titel mit bis zu {title} Zeichen und ein Datum. Die Tagesordnung enthält bis zu {items} Punkte mit je bis zu {chars} Zeichen; ein Punkt kann auf eine Aufgabe, ein Risiko, einen Meilenstein oder einen Vorgang dieses Plans verweisen.",
+  "p.meetings.f_title": "Titel (bis zu {max} Zeichen)",
+  "p.meetings.f_date": "Geplantes Datum",
+  "p.meetings.agenda_item": "Tagesordnungspunkt {n}",
+  "p.meetings.f_item_text":
+    "Worum es im Tagesordnungspunkt {n} geht (bis zu {max} Zeichen)",
+  "p.meetings.f_item_link":
+    "Der Datensatz, den Tagesordnungspunkt {n} betrifft",
+  "p.meetings.no_record": "Kein Datensatz",
+  "p.meetings.records_loading": "Die Datensätze des Plans werden geladen…",
+  "p.meetings.remove_item": "Tagesordnungspunkt {n} entfernen",
+  "p.meetings.add_item": "Tagesordnungspunkt hinzufügen",
+  "p.meetings.plan": "Besprechung planen",
+  "p.meetings.planned": "Geplant: {title}, am {date}.",
+  "p.meetings.list_heading": "Die Besprechungen des Plans, die neuesten zuerst",
+  "p.meetings.pdf_says":
+    "Jede Besprechung wird als PDF-Dokument mit dem heruntergeladen, was diese Seite zeigt; die festen Wörter darin (die Überschriften und der Status) sind englisch.",
+  "p.meetings.loading": "Die Besprechungen werden geladen…",
+  "p.meetings.none": "Noch keine Besprechungen.",
+  "p.meetings.status_planned": "geplant",
+  "p.meetings.status_held": "abgehalten",
+  "p.meetings.status_cancelled": "abgesagt",
+  "p.meetings.held_on": "abgehalten am {date}",
+  "p.meetings.scheduled_on": "geplant für {date}",
+  "p.meetings.show": "Besprechung {title} öffnen",
+  "p.meetings.hide": "Besprechung {title} schließen",
+  "p.meetings.pdf": "Als PDF herunterladen",
+  "p.meetings.pdf_named": "Besprechung {title} als PDF herunterladen",
+  "p.meetings.agenda_heading": "Tagesordnung",
+  "p.meetings.agenda_none": "Keine Tagesordnungspunkte.",
+  "p.meetings.minutes_heading": "Protokoll",
+  "p.meetings.outcomes_heading": "Ergebnisse",
+  "p.meetings.outcomes_none": "Es wurden keine Ergebnisse erfasst.",
+  "p.meetings.outcome_decision": "Entscheidung",
+  "p.meetings.outcome_action": "Aktion",
+  "p.meetings.outcome_note": "Notiz",
+  "p.meetings.about": "zu {record}",
+  "p.meetings.link_gone": "zu einem Datensatz, den es nicht mehr gibt",
+  "p.meetings.task_made": "die aus Ergebnis {n} erstellte Aufgabe",
+  "p.meetings.held_kept":
+    "Diese Besprechung ist ein Datensatz: Ihr Protokoll und ihre Ergebnisse werden nicht geändert.",
+  "p.meetings.cancelled_kept":
+    "Diese Besprechung wurde abgesagt. Sie ist ein Datensatz und kann nicht wiederhergestellt werden.",
+  "p.meetings.held_heading": "{title} als abgehalten erfassen",
+  "p.meetings.held_says":
+    "Ein Protokoll mit bis zu {minutes} Zeichen und bis zu {items} Ergebnisse mit je bis zu {chars} Zeichen: jeweils eine Entscheidung, eine Aktion oder eine Notiz, und jedes kann auf einen Datensatz dieses Plans verweisen. Als Datum der Besprechung gilt das geplante Datum, sofern Sie kein anderes angeben. Das geschieht nur einmal: Das Protokoll kann danach nicht korrigiert werden.",
+  "p.meetings.f_minutes": "Protokoll (bis zu {max} Zeichen)",
+  "p.meetings.f_held_on":
+    "Datum, an dem sie abgehalten wurde (leer für das geplante Datum)",
+  "p.meetings.outcome_n": "Ergebnis {n}",
+  "p.meetings.f_outcome_kind": "Was Ergebnis {n} ist",
+  "p.meetings.choose_kind": "Auswählen…",
+  "p.meetings.f_outcome_text": "Ergebnis {n} in Worten (bis zu {max} Zeichen)",
+  "p.meetings.f_outcome_link": "Der Datensatz, den Ergebnis {n} betrifft",
+  "p.meetings.remove_outcome": "Ergebnis {n} entfernen",
+  "p.meetings.add_outcome": "Ergebnis hinzufügen",
+  "p.meetings.record_held": "Als abgehalten erfassen",
+  "p.meetings.cancel_meeting": "Besprechung {title} absagen",
+  "p.meetings.confirm_held":
+    "{title} als abgehalten erfassen? Protokoll und Ergebnisse können danach nicht korrigiert werden.",
+  "p.meetings.confirm_cancel":
+    "{title} absagen? Eine abgesagte Besprechung kann nicht wiederhergestellt werden.",
+  "p.meetings.held_done": "Als abgehalten erfasst: {title}.",
+  "p.meetings.cancelled_done": "Abgesagt: {title}.",
+  "p.meetings.problem_title":
+    "Geben Sie einen Titel mit bis zu {title} Zeichen an.",
+  "p.meetings.problem_date": "Geben Sie ein Datum an.",
+  "p.meetings.problem_agenda_count":
+    "Eine Tagesordnung enthält höchstens {items} Punkte.",
+  "p.meetings.problem_outcome_count":
+    "Eine Besprechung enthält höchstens {items} Ergebnisse.",
+  "p.meetings.problem_item_text":
+    "Schreiben Sie es in höchstens {chars} Zeichen.",
+  "p.meetings.problem_minutes":
+    "Schreiben Sie das Protokoll in höchstens {minutes} Zeichen.",
+  "p.meetings.problem_outcome_kind":
+    "Wählen Sie eine Entscheidung, eine Aktion oder eine Notiz.",
+  "p.meetings.problem_on_line": "Bei {line}: {problem}",
+  "p.meetings.could_not_load":
+    "Die Besprechungen konnten nicht geladen werden.",
+  "p.meetings.could_not_save": "Die Besprechung wurde nicht geändert.",
+  "p.meetings.refused_gone":
+    "Abgelehnt: Diese Besprechung oder der Plan existiert nicht mehr. Die Liste wurde neu gelesen.",
+  "p.meetings.refused_settled":
+    "Abgelehnt: Diese Besprechung wurde bereits abgehalten oder abgesagt, ist also ein Datensatz und wird nicht geändert. Sie wurde neu gelesen.",
+  "p.meetings.refused_link":
+    "Abgelehnt: Ein Datensatz, auf den ein Punkt verweist, gehört nicht mehr zu diesem Plan. Es wurde nichts gespeichert; wählen Sie die Datensätze erneut aus.",
+  "p.meetings.refused_not_held":
+    "Abgelehnt: Aufgaben werden nur aus einer Besprechung vorgeschlagen, die abgehalten wurde und ein Protokoll hat.",
+  "p.meetings.refused_commit_state":
+    "Abgelehnt: Die Besprechung wurde nicht abgehalten, oder zu einer dieser Aktionen gibt es inzwischen eine Aufgabe. Es wurde nichts erstellt; die Besprechung wurde neu gelesen, prüfen Sie also erneut.",
+  "p.meetings.refused_commit_invalid":
+    "Abgelehnt: Ein Vorschlag ist nicht mehr bereit. Es wurde nichts erstellt; prüfen Sie die Vorschläge erneut.",
+  "p.meetings.refused_proposals":
+    "Abgelehnt: Senden Sie zwischen 1 und {count} Vorschläge.",
+  "p.meetings.tasks_heading": "Aufgaben aus den Aktionen",
+  "p.meetings.tasks_says":
+    "Für jede Aktion ohne Aufgabe können Sie eine vorschlagen: einen Titel mit bis zu {max} Zeichen und eine Textstelle aus dem Protokoll, die ihn stützt, mit mindestens {min} Zeichen (Groß- und Kleinschreibung sowie Abstände werden ignoriert). Eine zuständige Person ist optional und muss bereits zu den Aufgaben dieses Plans oder seiner Verantwortungsmatrix gehören, als Verweis wie person:…; ein Fälligkeitsdatum ist optional, von {first} bis {last}; die Punkte reichen von 0 bis {points}. Bis zu {count} auf einmal. Beim Prüfen wird nichts geschrieben; die Aufgaben werden danach ganz oder gar nicht erstellt, und eine Aktion erhält nur eine Aufgabe.",
+  "p.meetings.proposal_legend": "Aktion {n}: {text}",
+  "p.meetings.f_propose": "Aufgabe für Aktion {n} vorschlagen",
+  "p.meetings.f_task_title":
+    "Aufgabentitel für Aktion {n} (bis zu {max} Zeichen)",
+  "p.meetings.f_excerpt":
+    "Textstelle aus dem Protokoll für Aktion {n} (mindestens {min} Zeichen)",
+  "p.meetings.f_assignee":
+    "Zuständige Person für Aktion {n} (optionaler Verweis)",
+  "p.meetings.f_due": "Fälligkeitsdatum für Aktion {n} (optional)",
+  "p.meetings.f_points": "Punkte für Aktion {n} (optional, 0 bis {max})",
+  "p.meetings.check": "Vorschläge prüfen",
+  "p.meetings.create_tasks": "Aufgaben erstellen",
+  "p.meetings.none_chosen":
+    "Es ist kein Vorschlag ausgewählt, daher wurde nichts gesendet.",
+  "p.meetings.checked_one":
+    "Geprüft, nichts geschrieben: {n} Vorschlag ist bereit, {dropped} nicht.",
+  "p.meetings.checked_other":
+    "Geprüft, nichts geschrieben: {n} Vorschläge sind bereit, {dropped} nicht.",
+  "p.meetings.ready": "Bereit, ohne zuständige Person.",
+  "p.meetings.ready_for": "Bereit, für {who}.",
+  "p.meetings.not_all_ready":
+    "Jeder ausgewählte Vorschlag muss bereit sein, bevor die Aufgaben erstellt werden können: Ändern Sie die nicht bereiten oder entfernen Sie deren Häkchen, und prüfen Sie erneut.",
+  "p.meetings.check_again":
+    "Die Vorschläge haben sich seit der Prüfung geändert: Prüfen Sie sie erneut.",
+  "p.meetings.confirm_tasks_one":
+    "{n} Aufgabe aus den Aktionen von {title} erstellen? Eine Aktion erhält nur eine Aufgabe.",
+  "p.meetings.confirm_tasks_other":
+    "{n} Aufgaben aus den Aktionen von {title} erstellen? Eine Aktion erhält nur eine Aufgabe.",
+  "p.meetings.tasks_made_one":
+    "{n} Aufgabe erstellt; sie ist unter ihrer Aktion verknüpft.",
+  "p.meetings.tasks_made_other":
+    "{n} Aufgaben erstellt; jede ist unter ihrer Aktion verknüpft.",
+  "p.meetings.could_not_check": "Die Vorschläge konnten nicht geprüft werden.",
+  "p.meetings.could_not_create": "Die Aufgaben wurden nicht erstellt.",
+  "p.meetings.dropped_title_invalid":
+    "Nicht bereit: Der Titel ist leer oder zu lang.",
+  "p.meetings.dropped_excerpt_not_in_minutes":
+    "Nicht bereit: Die Textstelle ist im Protokoll nicht zu finden oder zu kurz.",
+  "p.meetings.dropped_outcome_not_found":
+    "Nicht bereit: Die Besprechung hat kein solches Ergebnis.",
+  "p.meetings.dropped_outcome_not_an_action":
+    "Nicht bereit: Dieses Ergebnis ist keine Aktion.",
+  "p.meetings.dropped_outcome_already_has_a_task":
+    "Nicht bereit: Zu dieser Aktion gibt es bereits eine Aufgabe.",
+  "p.meetings.dropped_due_outside_window":
+    "Nicht bereit: Das Fälligkeitsdatum liegt außerhalb der zulässigen Daten.",
+  "p.meetings.dropped_points_invalid":
+    "Nicht bereit: Die Punkte liegen außerhalb des zulässigen Bereichs.",
+  "p.meetings.dropped_assignee_not_in_plan":
+    "Nicht bereit: Die zuständige Person gehört nicht zu den Personen dieses Plans (in seinen Aufgaben oder seiner Verantwortungsmatrix).",
+  "p.meetings.dropped_outcome_proposed_twice":
+    "Nicht bereit: Dieselbe Aktion wird zweimal vorgeschlagen.",
+  "p.meetings.dropped_other":
+    "Nicht bereit, aus einem Grund, den diese Seite nicht kennt.",
+  "p.meetings.problem_proposals_count":
+    "Schlagen Sie höchstens {count} Aufgaben auf einmal vor.",
+  "p.meetings.problem_task_title":
+    "Geben Sie der Aufgabe einen Titel mit bis zu {max} Zeichen.",
+  "p.meetings.problem_excerpt":
+    "Zitieren Sie eine Textstelle mit mindestens {min} Zeichen, die im Protokoll steht.",
+  "p.meetings.problem_due":
+    "Das Fälligkeitsdatum muss zwischen einer Woche vor der Besprechung und einem Jahr danach liegen.",
+  "p.meetings.problem_points":
+    "Punkte sind eine ganze Zahl von 0 bis {points}.",
+  "p.lessons.title": "Gelernte Lektionen",
+  "p.lessons.title_ppm": "Gelernte Lektionen — PPM",
+  "p.lessons.link": "Gelernte Lektionen",
+  "p.lessons.intro":
+    "Eine Lektion wird an einem Phasen-Gate oder beim Abschluss des Plans erfasst. Sie wird nie geändert: Sie kann nur zurückgezogen werden, und eine zurückgezogene Lektion wird nicht mehr angezeigt (sie bleibt im Audit-Protokoll). Bei einem neuen Vorschlag, dessen Titel dem Titel dieses Plans ähnelt, werden dessen Lektionen angezeigt.",
+  "p.lessons.record_heading": "Lektion erfassen",
+  "p.lessons.record_says":
+    "Wann (ein Gate oder der Abschluss), was es ist, eine Zusammenfassung mit bis zu {max} Zeichen und, wenn Sie möchten, ein Detail mit bis zu {bytes} Bytes (ein Buchstabe mit Akzent oder eine andere Schrift braucht mehr als eines) sowie die Aufgabe, das Risiko, den Meilenstein oder den Vorgang dieses Plans, um den es geht.",
+  "p.lessons.f_occasion": "Wann",
+  "p.lessons.choose_occasion": "Gate oder Abschluss auswählen…",
+  "p.lessons.closure": "Abschluss",
+  "p.lessons.occasion_other": "Ein anderer Anlass",
+  "p.lessons.f_category": "Was es ist",
+  "p.lessons.category_went_well": "Lief gut",
+  "p.lessons.category_went_badly": "Lief schlecht",
+  "p.lessons.category_recommendation": "Empfehlung",
+  "p.lessons.category_other": "Eine andere Art",
+  "p.lessons.f_summary": "Zusammenfassung (bis zu {max} Zeichen)",
+  "p.lessons.f_detail": "Detail (optional, bis zu {bytes} Bytes)",
+  "p.lessons.f_link": "Der Datensatz, um den es geht (optional)",
+  "p.lessons.record": "Lektion erfassen",
+  "p.lessons.recorded": "Erfasst: {summary}",
+  "p.lessons.problem_occasion": "Wählen Sie ein Gate oder den Abschluss.",
+  "p.lessons.problem_category":
+    "Wählen Sie lief gut, lief schlecht oder Empfehlung.",
+  "p.lessons.problem_summary":
+    "Schreiben Sie eine Zusammenfassung mit bis zu {max} Zeichen.",
+  "p.lessons.problem_detail": "Das Detail ist länger als {bytes} Bytes.",
+  "p.lessons.list_heading": "Die Lektionen des Plans, die ältesten zuerst",
+  "p.lessons.loading": "Die Lektionen werden geladen…",
+  "p.lessons.none": "Noch keine Lektionen.",
+  "p.lessons.count_one": "{n} Lektion.",
+  "p.lessons.count_other": "{n} Lektionen.",
+  "p.lessons.recorded_on": "erfasst am {date}",
+  "p.lessons.recorded_on_by": "erfasst am {date} von {who}",
+  "p.lessons.link_unlisted":
+    "zu einem Datensatz, der nicht zu den hier aufgeführten Aufgaben, Risiken, Meilensteinen und Vorgängen des Plans gehört",
+  "p.lessons.withdraw": "Lektion {summary} zurückziehen",
+  "p.lessons.withdraw_short": "Zurückziehen",
+  "p.lessons.confirm_withdraw":
+    "Lektion „{summary}“ zurückziehen? Sie wird weder hier noch bei neuen Vorschlägen mehr angezeigt; sie bleibt im Audit-Protokoll.",
+  "p.lessons.withdrawn": "Zurückgezogen: {summary}",
+  "p.lessons.could_not_load": "Die Lektionen konnten nicht geladen werden.",
+  "p.lessons.could_not_save": "Die Lektion wurde nicht geändert.",
+  "p.lessons.refused_gone": "Abgelehnt: Der Plan existiert nicht mehr.",
+  "p.lessons.refused_withdrawn":
+    "Abgelehnt: Diese Lektion wurde bereits zurückgezogen. Die Liste wurde neu gelesen.",
+  "p.lessons.refused_link":
+    "Abgelehnt: Der gewählte Datensatz gehört nicht mehr zu diesem Plan. Es wurde nichts erfasst; wählen Sie ihn erneut aus.",
+  "p.lessons.refs_heading": "Was auf einen Datensatz verweist",
+  "p.lessons.refs_says":
+    "Wählen Sie eine Aufgabe, ein Risiko, einen Meilenstein oder einen Vorgang des Plans, um die Besprechungspunkte und Lektionen aufzulisten, die darauf verweisen (jeweils bis zu 100).",
+  "p.lessons.f_target": "Der Datensatz",
+  "p.lessons.choose_target": "Datensatz auswählen…",
+  "p.lessons.show_refs": "Anzeigen, was darauf verweist",
+  "p.lessons.problem_target": "Wählen Sie zuerst einen Datensatz.",
+  "p.lessons.refs_count_one": "{n} Eintrag verweist darauf.",
+  "p.lessons.refs_count_other": "{n} Einträge verweisen darauf.",
+  "p.lessons.refs_meetings": "Besprechungspunkte",
+  "p.lessons.refs_lessons": "Lektionen, die darauf verweisen",
+  "p.lessons.refs_agenda": "Tagesordnung",
+  "p.lessons.refused_no_record":
+    "Dieser Datensatz gehört nicht mehr zu diesem Plan, oder Sie können ihn nicht lesen.",
+  "p.lessons.could_not_read_refs":
+    "Es konnte nicht gelesen werden, was darauf verweist.",
+  "p.lessons.similar": "Lektionen aus ähnlichen Plänen",
+  "p.lessons.similar_named": "Lektionen aus Plänen wie {title}",
+  "p.lessons.similar_heading": "Lektionen aus Plänen wie {title}",
+  "p.lessons.similar_says":
+    "Abgeglichen wird nur der Titel, gegen jeden Plan mit Lektionen, abgeschlossen oder nicht, die beste Übereinstimmung zuerst. Die Bewertung und die Zuverlässigkeit stammen vom Abgleich.",
+  "p.lessons.similar_none": "Kein ähnlicher Plan hat Lektionen.",
+  "p.lessons.match": "Übereinstimmung {score}, {confidence} Zuverlässigkeit.",
+  "p.lessons.match_title": "Titel zu {score} ähnlich.",
+  "p.lessons.confidence_high": "hohe",
+  "p.lessons.confidence_medium": "mittlere",
+  "p.lessons.confidence_low": "geringe",
+  "p.lessons.refused_proposal_gone":
+    "Dieser Vorschlag existiert nicht mehr, oder Sie können ihn nicht lesen.",
+  "p.lessons.could_not_read_similar":
+    "Die Lektionen ähnlicher Pläne konnten nicht gelesen werden.",
 };

@@ -33,6 +33,8 @@ describe("visiblePlanLinks (RM-7)", () => {
       "confidence",
       "programme",
       "status",
+      "meetings",
+      "lessons",
       "tolerances",
       "escalations",
       "change-requests",

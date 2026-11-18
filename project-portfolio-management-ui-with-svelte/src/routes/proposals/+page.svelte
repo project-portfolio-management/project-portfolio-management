@@ -7,6 +7,10 @@
   what it displaces (a trade-off of 10 to 2000 characters) before it is
   approved; the trade-off is named or changed until the proposal is
   decided. Rules in `src/lib/tradeoff-view.ts`, said before anything is sent.
+
+  NC-8 (NC-1 slice 12 part e): each proposal shows, on asking, the lessons of plans whose title is like its own
+  (`GET /api/proposals/{pid}/lessons`), best match first, each with the match's score and confidence in words and the
+  title's similarity; how they are matched is said first. Rules in `src/lib/lesson-view.ts`.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -14,11 +18,11 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { t, localeHref } from "#lib/i18n.svelte.js";
-  import { formatDecimal } from "#lib/locale-format.js";
+  import { formatDecimal, formatPercent } from "#lib/locale-format.js";
   import { enumLabel } from "#lib/enum-labels.js";
   import { currencyCode, toMinor } from "#lib/money.js";
   import { onMount } from "svelte";
-  import { PpmClient, type DemandHit, type Proposal, money } from "#lib/api/ppm.js";
+  import { PpmClient, type DemandHit, type Proposal, type ProposalLessonMatch, money } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
   import {
     TRADEOFF_MAX,
@@ -31,6 +35,7 @@
     proposalRefusalKey,
     tradeoffBody,
   } from "#lib/tradeoff-view.js";
+  import { CATEGORY_MARK, CONFIDENCE_KEY, isGate, lessonRefusalKey, nameScore, scorePercent } from "#lib/lesson-view.js";
 
   type Step = "submit" | "review" | "approve" | "reject";
   const STEP_LABELS = {
@@ -51,6 +56,7 @@
   let statusFilter = $state<string>("");
   let error = $state<string | null>(null);
   let duplicates = $state<Record<string, DemandHit[]>>({});
+  let lessonsOf = $state<Record<string, ProposalLessonMatch[]>>({});
 
   let title = $state("");
   let summary = $state("");
@@ -179,6 +185,17 @@
     }
   }
 
+  async function showLessons(pid: string) {
+    error = null;
+    try {
+      lessonsOf = { ...lessonsOf, [pid]: await ppm.proposalLessons(pid) };
+    } catch (err) {
+      const k = lessonRefusalKey("proposal", err);
+      error = k ? t(k) : errorText(err, "p.lessons.could_not_read_similar");
+    }
+  }
+  const occasionLabel = (o: string) => (isGate(o) ? enumLabel("pk_gate", o) : o === "closure" ? t("p.lessons.closure") : t("p.lessons.occasion_other"));
+
   /** The pipeline actions legal from a status. */
   function actionsFor(status: Proposal["status"]): Step[] {
     if (status === "draft") return ["submit"];
@@ -235,6 +252,7 @@
   {:else}
     <button class="button small" onclick={() => showDuplicates(proposal.pid)}>{t("ppm.proposals.duplicates")}</button>
   {/if}
+  <button class="button small" aria-label={t("p.lessons.similar_named", { title: proposal.title })} onclick={() => showLessons(proposal.pid)}>{t("p.lessons.similar")}</button>
 {/snippet}
 
 
@@ -306,7 +324,34 @@
   </section>
 {/each}
 
+{#each proposals.filter((p) => lessonsOf[p.pid]) as proposal (proposal.pid)}
+  {@const matches = lessonsOf[proposal.pid] ?? []}
+  <section class="lessons" aria-label={t("p.lessons.similar_heading", { title: proposal.title })}>
+    <h2>{t("p.lessons.similar_heading", { title: proposal.title })}</h2>
+    <p class="small muted">{t("p.lessons.similar_says")}</p>
+    {#if matches.length === 0}
+      <p class="small">{t("p.lessons.similar_none")}</p>
+    {:else}
+      <ol>
+        {#each matches as hit (hit.plan_pid)}
+          {@const named = nameScore(hit.match)}
+          <li>
+            <a href={localeHref(`/plans/${hit.plan_pid}`)}>{hit.plan_name}</a>:
+            {t("p.lessons.match", { score: formatPercent(scorePercent(hit.match.score) / 100), confidence: t(CONFIDENCE_KEY[hit.match.confidence] ?? "p.lessons.confidence_low") })}{named === null ? "" : ` ${t("p.lessons.match_title", { score: formatPercent(named / 100) })}`}
+            <ul>
+              {#each hit.lessons as l (l.pid)}
+                <li><span aria-hidden="true">{CATEGORY_MARK[l.category]?.symbol ?? "·"}</span> {CATEGORY_MARK[l.category] ? t(CATEGORY_MARK[l.category].key) : t("p.lessons.category_other")} · {occasionLabel(l.occasion)}: {l.summary}</li>
+              {/each}
+            </ul>
+          </li>
+        {/each}
+      </ol>
+    {/if}
+  </section>
+{/each}
+
 <style>
+  .lessons { margin-block: 1.5rem; }
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.8rem 0; }
   .check { display: flex; align-items: center; gap: 0.35rem; }
   .wide { display: grid; gap: 0.25rem; max-width: 40rem; }

@@ -283,6 +283,17 @@ import type {
   StatusMetrics,
   StatusUpdate,
   StatusUpdateBody,
+  HeldMeetingBody,
+  Lesson,
+  LessonBody,
+  Meeting,
+  MeetingSummary,
+  PlanMeetingBody,
+  ProposalLessonMatch,
+  RecordReferences,
+  TaskProposalCommit,
+  TaskProposalPreview,
+  TaskProposalsBody,
 } from "./ppm-types";
 
 export * from "./ppm-types";
@@ -1457,6 +1468,90 @@ export class PpmClient {
   /** Every readable programme's register completeness, and whether "no register, no money" is on (EX-1). */
   registerCompleteness(): Promise<RegisterCompleteness> {
     return this.http.get("/api/register-completeness");
+  }
+
+  // ---- meetings, lessons and references (NC-14, BR-3, NC-8, BR-4; NC-1 slice 12 part e) ----
+  /** The plan's meetings, newest first, without their items. */
+  meetings(pid: string): Promise<MeetingSummary[]> {
+    return this.http.get(`/api/plans/${pid}/meetings`);
+  }
+  /** Plan a meeting with its agenda. */
+  planMeeting(
+    pid: string,
+    body: PlanMeetingBody,
+  ): Promise<{ pid: string; status: string }> {
+    return this.http.post(`/api/plans/${pid}/meetings`, { body });
+  }
+  /** One meeting with its agenda, minutes and outcomes, each link named as the record is now. */
+  meeting(pid: string, mid: string): Promise<Meeting> {
+    return this.http.get(`/api/plans/${pid}/meetings/${mid}`);
+  }
+  /** Record a planned meeting as held, with its minutes and outcomes, once; 409 once held or cancelled. */
+  holdMeeting(
+    pid: string,
+    mid: string,
+    body: HeldMeetingBody,
+  ): Promise<{ pid: string; status: string }> {
+    return this.http.post(`/api/plans/${pid}/meetings/${mid}/held`, { body });
+  }
+  /** Cancel a planned meeting; 409 once held or cancelled. */
+  cancelMeeting(
+    pid: string,
+    mid: string,
+  ): Promise<{ pid: string; status: string }> {
+    return this.http.post(`/api/plans/${pid}/meetings/${mid}/cancel`, {
+      body: {},
+    });
+  }
+  /** Judge proposed tasks against a held meeting's minutes and the plan's people; nothing is written (BR-3). */
+  previewMeetingTasks(
+    pid: string,
+    mid: string,
+    body: TaskProposalsBody,
+  ): Promise<TaskProposalPreview> {
+    return this.http.post(
+      `/api/plans/${pid}/meetings/${mid}/task-proposals/preview`,
+      { body },
+    );
+  }
+  /** Create the proposed tasks, all or none, once per outcome; `key` is the idempotency key, kept across a retry. */
+  commitMeetingTasks(
+    pid: string,
+    mid: string,
+    body: TaskProposalsBody,
+    key: string,
+  ): Promise<TaskProposalCommit> {
+    return this.http.post(
+      `/api/plans/${pid}/meetings/${mid}/task-proposals/commit`,
+      { body, idempotencyKey: key },
+    );
+  }
+  /** The plan's lessons, oldest first; withdrawn ones are not listed (NC-8). */
+  lessons(pid: string): Promise<Lesson[]> {
+    return this.http.get(`/api/plans/${pid}/lessons`);
+  }
+  /** Record a lesson (append-only). */
+  recordLesson(pid: string, body: LessonBody): Promise<Lesson> {
+    return this.http.post(`/api/plans/${pid}/lessons`, { body });
+  }
+  /** Withdraw a lesson: it is no longer shown, and stays in the audit trail. */
+  withdrawLesson(pid: string, lpid: string): Promise<{ withdrawn: string }> {
+    return this.http.post(`/api/plans/${pid}/lessons/${lpid}/withdraw`, {
+      body: {},
+    });
+  }
+  /** The meetings and lessons that point at one record of the plan (BR-4). */
+  references(
+    pid: string,
+    kind: string,
+    recordPid: string,
+  ): Promise<RecordReferences> {
+    const q = new URLSearchParams({ kind, pid: recordPid });
+    return this.http.get(`/api/plans/${pid}/references?${q}`);
+  }
+  /** Lessons from plans whose title is like the proposal's, best match first, with the match's evidence (NC-8). */
+  proposalLessons(proposalPid: string): Promise<ProposalLessonMatch[]> {
+    return this.http.get(`/api/proposals/${proposalPid}/lessons`);
   }
   escalationRegister(
     params: { status?: string; overdue?: boolean } = {},

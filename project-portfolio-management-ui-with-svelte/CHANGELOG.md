@@ -9,6 +9,37 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — meetings, lessons and references (NC-1 slice 12 part e, NC-14, BR-3, NC-8, BR-4, 2026-11-18)
+
+- `/plans/[pid]/meetings` (new; linked from the plan page): plan a meeting (a title, a date, an agenda whose items may
+  point at the plan's tasks, risks, milestones and issues), list them newest first with their state as a word and a
+  shape, open one to read its agenda, minutes and outcomes with each link named as the record is now, download it as a
+  PDF, record a planned one as held (minutes, an optional date, outcomes) or cancel it, each after a question. Said
+  first: held minutes cannot be corrected, a cancelled meeting cannot be restored, attendees are not recorded, the
+  PDF's fixed words are English.
+- Tasks from a held meeting's actions (`MeetingTasks.svelte`): propose one per action with a title, a passage of the
+  minutes, an optional assignee reference, due date and points; every rule said first and checked before sending
+  (the passage looked for as the service looks); "Check the proposals" shows each verdict in the catalogue's words by
+  the service's reason code; "Create the tasks" only from a check still current with every proposal ready, after a
+  question, under one idempotency key; the tasks then show under their actions.
+- `/plans/[pid]/lessons` (new; linked from the plan page): record a lesson at a gate or closure (a category as a word
+  and a shape, a summary of up to 300 characters, a detail of up to 1024 bytes counted as bytes, an optional record),
+  list them with a count, and withdraw one after a question; what refers to a record lists the meeting items and
+  lessons that point at it, with a count.
+- `/proposals`: "Lessons from similar plans" per proposal, each similar plan with the match's score, confidence and
+  the titles' likeness, and its lessons; how they are matched is said first.
+- Twelve client methods; `src/lib/meeting-view.ts`, `src/lib/lesson-view.ts`, `src/lib/plan-records.ts`,
+  `RecordPicker.svelte`; 182 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/meeting-view.test.ts`, `tests/unit/lesson-view.test.ts`, additions to `ppm.test.ts` and
+  `modules.test.ts`; `tests/e2e/meetings.spec.ts` (seven), `tests/e2e/lessons.spec.ts` (seven) and one more in
+  `tests/e2e/proposals.spec.ts`, with Welsh and axe; every stub that would carry the service's English carries
+  "service text" and the tests check it never shows.
+- **Not done:** attendees and correcting held minutes (the service has neither); linking an existing lesson; lessons
+  recorded automatically at a gate or closure; lessons inside the intake form; people by name. **Service gaps:** every
+  422 is `unprocessable` with English text; the two 409s on creating tasks share `conflict`; a 404 on withdrawing is
+  the same for "already withdrawn" and "plan gone"; a task made from minutes gets an English description; the PDF's
+  fixed words are English. **Not verified:** against a real service; the PDF in a reader.
+
 ### Added — escalation follow-through and register completeness (NC-1 slice 12 part d, CF-4, EX-1, 2026-11-18)
 
 - `/plans/[pid]/escalations`: acknowledging and resolving go through CF-4's records (`PUT …/acknowledgement` with an

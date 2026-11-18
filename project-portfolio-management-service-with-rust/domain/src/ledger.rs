@@ -230,9 +230,49 @@ pub fn untraced(allocated_minor: i64, planned_on_lines_minor: i64) -> i64 {
     allocated_minor - planned_on_lines_minor
 }
 
+/// Why money on an allocation is untraced, as a code and its English sentence: `no_readable_line` when no budget line
+/// the caller may read draws on it, `not_on_a_line` when some is allocated but planned on no line, `lines_over_plan`
+/// when the lines plan more than was allocated; none when every unit is traced.
+#[must_use]
+pub fn untraced_reason(
+    any_line: bool,
+    untraced_minor: i64,
+) -> Option<(&'static str, &'static str)> {
+    if !any_line {
+        Some((
+            "no_readable_line",
+            "no budget line you may read draws on this allocation",
+        ))
+    } else if untraced_minor > 0 {
+        Some((
+            "not_on_a_line",
+            "allocated but not yet planned on any budget line",
+        ))
+    } else if untraced_minor < 0 {
+        Some(("lines_over_plan", "lines plan more than was allocated"))
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn untraced_money_says_why_as_a_code() {
+        assert_eq!(
+            untraced_reason(false, 0).map(|r| r.0),
+            Some("no_readable_line"),
+            "no line, even at zero"
+        );
+        assert_eq!(untraced_reason(true, 5).map(|r| r.0), Some("not_on_a_line"));
+        assert_eq!(
+            untraced_reason(true, -5).map(|r| r.0),
+            Some("lines_over_plan")
+        );
+        assert_eq!(untraced_reason(true, 0), None, "every unit traced");
+    }
 
     fn line(cur: &str, actual: i64) -> Line {
         Line {

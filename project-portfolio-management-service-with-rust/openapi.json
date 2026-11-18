@@ -9044,7 +9044,7 @@
     },
     "/api/funding-allocations/{pid}/trace": {
       "get": {
-        "description": "Inputs: the budget lines that draw on the allocation (plans the caller may read), their gates and whether each is released, the milestones of those plans and whether each is met, and the benefits of those plans with the amounts validated by someone outside the programme, per currency. money.untraced_minor is the allocation less what the lines plan, with the reason: money allocated but not on any line is untraced and its amount is stated, never dropped.",
+        "description": "Inputs: the budget lines that draw on the allocation (plans the caller may read), their gates and whether each is released, the milestones of those plans and whether each is met, and the benefits of those plans with the amounts validated by someone outside the programme, per currency. money.untraced_minor is the allocation less what the lines plan, with the reason as English (untraced_reason) and as a code (untraced_reason_code: no_readable_line, not_on_a_line or lines_over_plan; both null when every unit is traced): money allocated but not on any line is untraced and its amount is stated, never dropped.",
         "parameters": [
           {
             "in": "path",

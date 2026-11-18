@@ -33,6 +33,7 @@ It is pre-1.0; the first release cut from the root release workflow is
 - **Service: a KPI made from the scorecard template keeps the measure's key** (`template_key`, migration
   `20261118000116`), so the UI can name it in the reader's language instead of the service's English. **Not done:** no
   backfill of KPIs made before; the plan-template starters stay English.
+- **Service: the ledger trace says why money is untraced as a code** (`untraced_reason_code`), beside the English.
 
 ### 18 November (test coverage measured, with cargo-tarpaulin)
 

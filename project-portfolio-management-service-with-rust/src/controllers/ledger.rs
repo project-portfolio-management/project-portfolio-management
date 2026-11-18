@@ -382,6 +382,7 @@ async fn trace(
     let gated = lines.iter().filter(|l| l.gate.is_some()).count();
     let released = lines.iter().filter(|l| l.released_at.is_some()).count();
     let untraced = rules::untraced(a.amount_minor, planned);
+    let why = rules::untraced_reason(!lines.is_empty(), untraced);
     format::json(json!({
         "allocation": view(&a, &source),
         "currency": a.currency,
@@ -390,7 +391,7 @@ async fn trace(
         "money": {
             "allocated_minor": a.amount_minor, "planned_on_lines_minor": planned, "spent_minor": actual,
             "untraced_minor": untraced,
-            "untraced_reason": if lines.is_empty() { Some("no budget line you may read draws on this allocation") } else if untraced > 0 { Some("allocated but not yet planned on any budget line") } else if untraced < 0 { Some("lines plan more than was allocated") } else { None },
+            "untraced_reason": why.map(|w| w.1), "untraced_reason_code": why.map(|w| w.0),
         },
         "gates": { "lines_with_a_gate": gated, "released": released },
         "milestones": { "met": met, "total": milestone_rows.len(), "items": milestone_rows },

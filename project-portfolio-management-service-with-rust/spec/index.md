@@ -1858,3 +1858,8 @@ and its English `detail`; each fact a screen must show is a field, not only Engl
   the catalogue's name for a key ignores that rename. Tests:
   `the_template_has_no_targets_and_every_direction_is_valid` (domain: every key fits the check),
   `tests/organizations.rs`.
+- **Why money is untraced, as a code.** The ledger trace (`GET /api/funding-allocations/{pid}/trace`, EX-12) keeps
+  `money.untraced_reason` (English) and adds `money.untraced_reason_code`: `no_readable_line` (no budget line the caller
+  may read draws on the allocation), `not_on_a_line` (allocated but planned on no line) or `lines_over_plan` (the lines
+  plan more than was allocated); both are null when every unit is traced (`domain/src/ledger.rs` `untraced_reason`).
+  Tests: `untraced_money_says_why_as_a_code` (domain), `tests/organizations.rs`.

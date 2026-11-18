@@ -1682,7 +1682,7 @@ fn ledger_paths() -> Value {
         },
         "/api/funding-allocations/{pid}/trace": {
             "get": op("financials", "What an allocation bought: lines, gates, milestones met and benefits validated, per currency",
-                "Inputs: the budget lines that draw on the allocation (plans the caller may read), their gates and whether each is released, the milestones of those plans and whether each is met, and the benefits of those plans with the amounts validated by someone outside the programme, per currency. money.untraced_minor is the allocation less what the lines plan, with the reason: money allocated but not on any line is untraced and its amount is stated, never dropped.",
+                "Inputs: the budget lines that draw on the allocation (plans the caller may read), their gates and whether each is released, the milestones of those plans and whether each is met, and the benefits of those plans with the amounts validated by someone outside the programme, per currency. money.untraced_minor is the allocation less what the lines plan, with the reason as English (untraced_reason) and as a code (untraced_reason_code: no_readable_line, not_on_a_line or lines_over_plan; both null when every unit is traced): money allocated but not on any line is untraced and its amount is stated, never dropped.",
                 vec![uuid_param("pid")], &[("200", "allocation, lines, money, gates, milestones, benefits"), ("404", "Unknown allocation")])
         },
         "/api/plans/{pid}/budget-lines/{line}/funding-allocation": {

@@ -47,6 +47,10 @@ Service spec, "Codes and fields a screen reads (NC-1 slice 12, part a)", is the 
   `tests/organizations.rs` reads the key back. **Not done:** KPIs made from the template before this migration have
   no key (nothing is backfilled: a name match could be wrong); the template answer's `name` stays English; the plan
   templates' starter names and text are English too (BR-13), untouched.
+- **The ledger trace's untraced reason as a code.** `money.untraced_reason_code` (`no_readable_line`, `not_on_a_line`,
+  `lines_over_plan`, or null) beside the English `untraced_reason`, both from `ledger::untraced_reason` in the domain
+  crate. Tests: `untraced_money_says_why_as_a_code`, `tests/organizations.rs` (`not_on_a_line`). **Not verified:** the
+  other two codes through the route (the domain test covers them).
 
 ### Added — test coverage with cargo-tarpaulin, and its baseline (2026-11-18)
 

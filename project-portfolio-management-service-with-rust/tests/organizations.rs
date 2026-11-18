@@ -802,6 +802,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(tr["money"]["planned_on_lines_minor"], 750_000);
         assert_eq!(tr["money"]["untraced_minor"], 250_000, "allocated but on no line: untraced, with its amount");
         assert!(tr["money"]["untraced_reason"].is_string());
+        assert_eq!(tr["money"]["untraced_reason_code"], "not_on_a_line", "the reason as a code too: {tr}");
         assert_eq!((tr["gates"]["lines_with_a_gate"].as_u64(), tr["gates"]["released"].as_u64()), (Some(1), Some(0)));
         assert_eq!((tr["milestones"]["total"].as_u64(), tr["milestones"]["met"].as_u64()), (Some(1), Some(1)), "the Cutover milestone was delivered: {tr}");
         assert_eq!(tr["currency"], "GBP");

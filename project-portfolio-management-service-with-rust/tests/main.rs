@@ -39,6 +39,7 @@ mod capture_scope;
 #[path = "change_requests.rs"]
 mod change_request_rights;
 mod controlled_documents;
+mod coverage_config;
 mod cross_plan;
 mod delivery_confidence;
 mod director_packs;

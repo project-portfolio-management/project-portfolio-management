@@ -671,6 +671,11 @@
           "description": "Measured performance and the machine it was measured on"
         },
         {
+          "title": "Test coverage",
+          "path": "COVERAGE.md",
+          "description": "Line coverage of the service workspace by its tests (cargo-tarpaulin), the baseline and where tests are most needed"
+        },
+        {
           "title": "News",
           "path": "NEWS.md",
           "description": "Release announcements"

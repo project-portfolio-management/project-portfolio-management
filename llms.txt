@@ -166,6 +166,7 @@
 - [Governance](GOVERNANCE.md): Decision making and maintainers
 - [Comparisons](COMPARISONS.md): How this compares with other tools
 - [Benchmarks](BENCHMARKS.md): Measured performance and the machine it was measured on
+- [Test coverage](COVERAGE.md): Line coverage of the service workspace by its tests (cargo-tarpaulin), the baseline and where tests are most needed
 - [News](NEWS.md): Release announcements
 - [Request for comments](RFC.md): Open proposals
 - [Licence](LICENSE.md): The licence choices and their texts

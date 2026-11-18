@@ -15,6 +15,21 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (test coverage measured, with cargo-tarpaulin)
+
+- **Service workspace: test coverage is measured.** cargo-tarpaulin 0.37.6 with the LLVM engine, configured in
+  `tarpaulin.toml` (unit and database-free integration tests: `make coverage`) and `tarpaulin-db.toml` (both database
+  suites as well: `make coverage-db`, and CI's new `coverage` job, which uploads the HTML, lcov and JSON reports and
+  writes the totals by crate to the job summary). `scripts/coverage-summary.py` gives the totals by crate and the
+  least-covered files. The baseline, in the new [`COVERAGE.md`](COVERAGE.md): 91.9% of lines with the database suites
+  (domain 96.3%, service 91.2%, migration 88.3%, datetime 73.8%), 33.7% without them (the controllers 3.8%). It names
+  the ten least-covered domain modules and the least-covered controllers; with the database suites no controller is
+  left unreached.
+- **Not done:** no threshold is set, and the `coverage` job is not part of `ci-ok`, until the maintainers decide on a
+  gate; none of the missing tests were written; the matcher and the UI are not measured; the `keycloak` and `fluvio`
+  features, the container and broker suites and `load_test` are not in the figures. **Not verified:** the job on a
+  GitHub runner (it has not run in CI yet), and its run time there.
+
 ### 18 November (benchmarks where their code lives, and cheaper calendar arithmetic)
 
 - **Service: the Criterion benchmarks follow the code.** The calculation engines' benchmarks and the domain

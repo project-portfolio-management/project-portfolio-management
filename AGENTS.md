@@ -30,6 +30,12 @@ Versions: service 0.2.0, matcher 0.2.2, UI 0.2.0 (tag `v0.2.0`). Rust 1.100.0 (p
 agents read it: `security-reviewer`, `database-reviewer`, `rust-reviewer` and `ui-reviewer`
 ([`.claude/agents/`](.claude/agents/)). They add no rule of their own.
 
+## Coverage
+
+[`COVERAGE.md`](COVERAGE.md) records the service workspace's test coverage (cargo-tarpaulin, CI's `coverage` job),
+its baseline by crate, and where tests are most needed. No threshold is set yet; do not add one without the
+maintainers' decision.
+
 ## Gates
 
 ```bash
@@ -51,6 +57,9 @@ cargo test --test main
 # mutation test of the matcher (CI's `mutants` job mutates the changed lines; weekly, every mutant):
 #   cd project-portfolio-management-matcher-with-rust && git diff --relative origin/main -- . > /tmp/d && cargo mutants --in-diff /tmp/d
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60
+# test coverage (cargo-tarpaulin 0.37.6, `cargo install cargo-tarpaulin --version 0.37.6 --locked`; no threshold yet, COVERAGE.md):
+#   cd project-portfolio-management-service-with-rust && make coverage   (unit + DB-free integration; reports in target/coverage/)
+#   make coverage-db with DB_URL set adds the database suites, as CI's `coverage` job runs them
 # UI (other projects on this machine may hold port 4173: use PW_PORT)
 cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run check && npx vitest run && PW_PORT=4183 CI=true pnpm exec playwright test
 ```

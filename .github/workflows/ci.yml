@@ -103,6 +103,63 @@ jobs:
         # their features, which this job does not turn on.
         run: 'cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::'
 
+  coverage:
+    name: API test coverage (cargo-tarpaulin, LLVM engine, the database suites included)
+    # Line coverage of the service's workspace (the service, the domain, datetime and migration crates) by the unit
+    # tests, the database-free integration tests and both database suites, merged into one report: tarpaulin-db.toml
+    # (which explains the engine and every file left out). No threshold is set yet (COVERAGE.md), so this job fails
+    # only if tarpaulin or a test fails, never on a coverage figure. The reports (HTML, lcov, JSON) are uploaded and
+    # the totals by crate written to the job summary.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: project-portfolio-management-service-with-rust
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+        env:
+          POSTGRES_USER: loco
+          POSTGRES_PASSWORD: loco
+          POSTGRES_DB: project_portfolio_management_test
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U loco -d project_portfolio_management_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DB_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_test
+      # As in api-db: the one-connection test pool waits up to 10 s, so a slow runner does not fail a request.
+      DB_CONNECT_TIMEOUT: "10000"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # `toolchain` must equal rust-toolchain.toml (the fresh-clone job checks it).
+      - uses: dtolnay/rust-toolchain@9522411a9bce8484da960823fc2f46e52f981f71 # 1.100.0
+        with:
+          toolchain: 1.100.0
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: ${{ env.API }}
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin --version 0.37.6 --locked
+      - name: Coverage (unit, DB-free integration, request suites, other database suites)
+        run: cargo tarpaulin --locked --config tarpaulin-db.toml
+      - name: Totals by crate, and the least-covered files
+        if: always()
+        run: |
+          python3 ../scripts/coverage-summary.py --least 15
+          python3 ../scripts/coverage-summary.py --least 15 --markdown >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-api
+          path: project-portfolio-management-service-with-rust/target/coverage
+          if-no-files-found: warn
+          retention-days: 30
+
   restore:
     name: Restore drill (pg_dump, restore, compare, run the test suite on it)
     runs-on: ubuntu-latest
@@ -571,7 +628,8 @@ jobs:
           tool: zizmor
       - run: zizmor --offline .github
 
-  # Single required check for branch protection.
+  # Single required check for branch protection. `coverage` is left out on purpose: a failing test already fails
+  # `api` or `api-db`, and no coverage threshold has been decided (COVERAGE.md, "In CI").
   ci-ok:
     name: ci-ok
     if: always()

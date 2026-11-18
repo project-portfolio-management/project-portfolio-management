@@ -309,7 +309,10 @@ request, and the single aggregate job `ci-ok` fails if any job fails, is cancell
   ([`BENCHMARKS.md`](../BENCHMARKS.md#mutation-testing-measured-2026-11-17));
 - weekly fuzzing of five targets in the service and the matcher ([`fuzz.yml`](../.github/workflows/fuzz.yml));
 - a weekly chaos test of database and service faults under load ([`chaos.yml`](../.github/workflows/chaos.yml),
-  `scripts/chaos-test.sh`).
+  `scripts/chaos-test.sh`);
+- line coverage of the service's workspace by every test suite, the database suites included, measured with
+  cargo-tarpaulin on every CI run (the `coverage` job) and reported, with no threshold yet
+  ([`COVERAGE.md`](../COVERAGE.md) has the baseline and the places tests are most needed).
 
 The fuzz and chaos runs are not merge gates; a red run MUST be read and either fixed or recorded in
 [`tasks.md`](../tasks.md).

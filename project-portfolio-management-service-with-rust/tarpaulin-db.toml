@@ -1,0 +1,107 @@
+# Test coverage with cargo-tarpaulin 0.37.6, the database suites included: CI's `coverage` job and `make coverage-db`
+# (needs Postgres and DB_URL, as the database tests do; see AGENTS.md). Pass it with `--config tarpaulin-db.toml`.
+#
+# The same as tarpaulin.toml (which explains the engine, the target directory and every exclusion), with two more
+# runs: the request suites and every other `#[ignore]`d suite, split as CI's `api-db` job splits them. Keep the
+# `exclude-files` lists identical in every section of both files (`tests/coverage_config.rs` checks).
+#
+# No threshold (`fail-under`): the baseline is in COVERAGE.md, and a gate is still to be decided.
+
+[unit]
+workspace = true
+run-types = ["Lib"]
+engine = "Llvm"
+timeout = "600s"
+target-dir = "target/tarpaulin"
+skip-clean = true
+exclude-files = [
+  "tests/*",
+  "domain/tests/*",
+  "benches/*",
+  "domain/benches/*",
+  "datetime/benches/*",
+  "fuzz/*",
+  "migration/build.rs",
+  "src/openapi_bodies.rs",
+  "src/auth/tests.rs",
+  "src/auth/area_tests.rs",
+  "src/tba/tests.rs",
+  "src/datetime/golden.rs",
+  "target/*",
+]
+
+[integration]
+test = ["main"]
+engine = "Llvm"
+timeout = "600s"
+target-dir = "target/tarpaulin"
+skip-clean = true
+exclude-files = [
+  "tests/*",
+  "domain/tests/*",
+  "benches/*",
+  "domain/benches/*",
+  "datetime/benches/*",
+  "fuzz/*",
+  "migration/build.rs",
+  "src/openapi_bodies.rs",
+  "src/auth/tests.rs",
+  "src/auth/area_tests.rs",
+  "src/tba/tests.rs",
+  "src/datetime/golden.rs",
+  "target/*",
+]
+
+[requests]
+# `cargo test --test main requests:: -- --ignored --test-threads=1`: the request suites (shared database, serial).
+test = ["main"]
+args = ["requests::", "--ignored", "--test-threads=1"]
+engine = "Llvm"
+timeout = "600s"
+target-dir = "target/tarpaulin"
+skip-clean = true
+exclude-files = [
+  "tests/*",
+  "domain/tests/*",
+  "benches/*",
+  "domain/benches/*",
+  "datetime/benches/*",
+  "fuzz/*",
+  "migration/build.rs",
+  "src/openapi_bodies.rs",
+  "src/auth/tests.rs",
+  "src/auth/area_tests.rs",
+  "src/tba/tests.rs",
+  "src/datetime/golden.rs",
+  "target/*",
+]
+
+[database]
+# `cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::`: the real-token and other
+# database suites (each real-token test in a process of its own; LLVM writes a profile for each). `load_test` needs a
+# running service and is left out, as in CI.
+test = ["main"]
+args = ["--ignored", "--test-threads=1", "--skip", "requests::", "--skip", "load_test::"]
+engine = "Llvm"
+timeout = "600s"
+target-dir = "target/tarpaulin"
+skip-clean = true
+exclude-files = [
+  "tests/*",
+  "domain/tests/*",
+  "benches/*",
+  "domain/benches/*",
+  "datetime/benches/*",
+  "fuzz/*",
+  "migration/build.rs",
+  "src/openapi_bodies.rs",
+  "src/auth/tests.rs",
+  "src/auth/area_tests.rs",
+  "src/tba/tests.rs",
+  "src/datetime/golden.rs",
+  "target/*",
+]
+
+[report]
+out = ["Html", "Lcov", "Json"]
+output-dir = "target/coverage"

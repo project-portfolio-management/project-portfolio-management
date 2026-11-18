@@ -9,6 +9,37 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — test coverage with cargo-tarpaulin, and its baseline (2026-11-18)
+
+- **Tool and engine.** cargo-tarpaulin 0.37.6 (published 2026-11-05, past the two-day publish age; installed with
+  `--locked --version`), LLVM engine on macOS and Linux: macOS has no other, the figures then compare, and the
+  `own_process!()` suites run tests in child processes, each of which LLVM's runtime profiles (`%m-%p`) where ptrace
+  would need `--follow-exec`.
+- **Configuration.** `tarpaulin.toml` (read by `cargo tarpaulin` itself): two runs merged into one report, `--workspace
+  --lib` and `--test main`. `tarpaulin-db.toml` (`--config`): the same and the two database runs split as `api-db`
+  splits them (`requests:: --ignored --test-threads=1`; `--ignored --test-threads=1 --skip requests:: --skip
+  load_test::`). Every run builds into `target/tarpaulin` with `skip-clean` (tarpaulin's default deletes
+  `target/debug` before each run). Left out of the denominator, each with its reason in a comment: `tests/*`,
+  `domain/tests/*`, the three `benches/` directories, `fuzz/*`, `migration/build.rs`, the generated
+  `src/openapi_bodies.rs`, the unit-test module files `src/auth/tests.rs`, `src/auth/area_tests.rs`,
+  `src/tba/tests.rs` and `src/datetime/golden.rs`, and `target/*`. Reports (HTML, lcov, JSON) go to
+  `target/coverage/`.
+- **Commands.** `make coverage` and `make coverage-db` (this directory's `Makefile`), each followed by
+  `../scripts/coverage-summary.py` (totals by crate; `--least N` for the least-covered files, `--markdown` for CI).
+- **CI.** A `coverage` job in `ci.yml`: Postgres 18 as in `api-db`, `cargo tarpaulin --locked --config
+  tarpaulin-db.toml`, the summary printed and added to the job summary, `target/coverage` uploaded as `coverage-api`.
+  No `fail-under`; not in `ci-ok` (COVERAGE.md says why). Actions pinned by SHA as the other jobs are.
+- **Test.** `tests/coverage_config.rs` (DB-free, in `tests/main.rs`): every run section of both files sets the LLVM
+  engine, `skip-clean` and `target/tarpaulin`, and excludes exactly the same files, and every excluded path but
+  `target/*` exists.
+- **Baseline** (`COVERAGE.md`, 2026-11-18, macOS, a throwaway database): with the database suites 91.9% (48,968 of
+  53,272 lines; domain 96.3%, service 91.2%, controllers 92.0%, migration 88.3%, datetime 73.8%); without them 33.7%
+  (controllers 3.8%). `make coverage` took 4 minutes with the instrumented build, `make coverage-db` 9 minutes 46
+  seconds after it.
+- **Not done:** a threshold; the tests COVERAGE.md says are most needed; coverage of the `keycloak` and `fluvio`
+  features, the container and broker suites, `load_test` and doctests; branch coverage (tarpaulin has none). **Not
+  verified:** the CI job itself (not yet run on GitHub), and so its run time on a runner.
+
 ### Changed — the benchmarks where their code lives, and the datetime crate's calendar arithmetic cheaper (2026-11-18)
 
 - **Bench layout.** Before: `benches/service_bench.rs` (the request path) and `benches/calculation_bench.rs` (the

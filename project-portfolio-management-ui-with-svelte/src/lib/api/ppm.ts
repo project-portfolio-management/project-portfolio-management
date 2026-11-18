@@ -268,6 +268,12 @@ import type {
   ScorecardView,
   TemplateMeasure,
   MilestoneSignoff,
+  PlanStatus,
+  StatusCadence,
+  StatusDue,
+  StatusMetrics,
+  StatusUpdate,
+  StatusUpdateBody,
 } from "./ppm-types";
 
 export * from "./ppm-types";
@@ -560,6 +566,36 @@ export class PpmClient {
       `/api/plans/${encodeURIComponent(pid)}/buffer-recovery-actions/${encodeURIComponent(actionPid)}/status`,
       { body: { status } },
     );
+  }
+  /** A plan's latest status update and where it stands against its cadence (NC-4). */
+  planStatus(pid: string): Promise<PlanStatus> {
+    return this.http.get(`/api/plans/${pid}/status`);
+  }
+  /** A plan's status cadence, with who set it and when; a 404 when none is set (NC-4). */
+  statusCadence(pid: string): Promise<StatusCadence> {
+    return this.http.get(`/api/plans/${pid}/status-cadence`);
+  }
+  /** Set how often a plan expects a status update, 1 to 92 days; this restarts the clock (NC-4). */
+  setStatusCadence(pid: string, cadenceDays: number): Promise<StatusCadence> {
+    return this.http.put(`/api/plans/${pid}/status-cadence`, {
+      body: { cadence_days: cadenceDays },
+    });
+  }
+  /** A plan's status updates, newest first, each claim's sources resolved for the reader (NC-4, BR-2). */
+  statusUpdates(pid: string): Promise<StatusUpdate[]> {
+    return this.http.get(`/api/plans/${pid}/status-updates`);
+  }
+  /** Post a status update with its claims (NC-4, BR-2). */
+  postStatusUpdate(pid: string, body: StatusUpdateBody): Promise<StatusUpdate> {
+    return this.http.post(`/api/plans/${pid}/status-updates`, { body });
+  }
+  /** How each number a claim may cite is counted (BR-2). */
+  statusMetrics(): Promise<StatusMetrics> {
+    return this.http.get("/api/status-metrics");
+  }
+  /** The plans the caller can read whose status update is due, most overdue first (NC-4). */
+  statusUpdatesDue(): Promise<StatusDue[]> {
+    return this.http.get("/api/status-updates/due");
   }
   /** Replace the organizations whose sign-off a milestone needs (EX-4); an empty list clears it. */
   setSignoffRequired(

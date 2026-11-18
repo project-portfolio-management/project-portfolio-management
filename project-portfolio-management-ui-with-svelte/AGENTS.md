@@ -212,6 +212,7 @@ the Status note above).
 | Who must sign a milestone off (`/plans/[pid]/governance`, `MilestoneSignoffRequired.svelte`) | `GET /api/milestones?plan=` · `PUT /api/plans/{pid}/milestones/{m}/signoff-required` |
 | Threshold sweep and decisions (`/exceptions`) | `POST /api/threshold-sweep` · `POST /api/exceptions/{pid}/threshold-decision` |
 | Scorecards and de-escalation (`/deescalation`, `DeescalationTracker.svelte`, `Scorecards.svelte`) | `GET /api/deescalation` · `PUT …/level` · `POST …/criteria` · `PUT …/criteria/{pid}/evidence` · `GET / POST /api/scorecards` · `GET /api/scorecards/{pid}` · `PUT …/{pid}/kpis` · `POST …/{pid}/from-template` · `GET /api/scorecard-template` · `GET /api/kpis` |
+| Status updates and their evidence (`/plans/[pid]/status`, `StatusUpdateForm.svelte`; the due list on `/dashboard`) | `GET /api/plans/{pid}/status` · `GET`/`PUT /api/plans/{pid}/status-cadence` · `GET`/`POST /api/plans/{pid}/status-updates` · `GET /api/status-metrics` · `GET /api/status-updates/due` · `GET /api/plans/{pid}/{tasks,risks,milestones,issues}` (what a claim may cite) |
 | Phase and start (`/plans/[pid]/programme`, `PlanPhase.svelte`) | `GET /api/plans/{pid}/phase-history` · `PUT …/phase` (`start_override_reason` for a refused start) · `GET …/start-check` |
 | Trade-off on a new ask (`/proposals`) | `POST /api/proposals` (`external_ask`, `tradeoff`) · `PUT /api/proposals/{pid}/tradeoff` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
@@ -276,7 +277,7 @@ A behavioural change is one PR with three parts:
   under `/plans/[pid]/`: `work`, `costs`, `what-if`, `onboarding`, `handover`,
   `wbs`, `critical-path`, `earned-value`, `raci`, `leveling`,
   `schedule-health`, `schedule-risk`, `cost-risk`, `joint-risk`, `flow`,
-  `calendar`.
+  `calendar`, `status`.
 - **Plan workspace links** are listed in `PLAN_LINKS` (`src/lib/modules.ts`);
   a new per-plan page needs an entry there and a matching assertion in
   `tests/unit/modules.test.ts`.

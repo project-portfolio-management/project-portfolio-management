@@ -7013,4 +7013,119 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Las líneas presupuestarias planifican más de lo que contiene esta asignación.",
   "p.ledger.untraced_other":
     "Parte del dinero de esta asignación no se puede rastrear.",
+  "p.status.title_ppm": "Actualizaciones de estado — PPM",
+  "p.status.title": "Actualizaciones de estado",
+  "p.status.link": "Actualizaciones de estado y su evidencia",
+  "p.status.intro":
+    "Una actualización de estado es la valoración de una persona sobre cómo va el plan (en curso, en riesgo o desviado), con lo que ocurre en palabras. Aquí no se calcula ninguna puntuación.",
+  "p.status.could_not_load": "No se pudo cargar el estado del plan",
+  "p.status.now_heading": "Dónde está el plan",
+  "p.status.no_update":
+    "Aún no se ha publicado ninguna actualización de estado.",
+  "p.status.cadence_is_one": "Se espera una actualización cada día.",
+  "p.status.cadence_is_other": "Se espera una actualización cada {n} días.",
+  "p.status.standing_overdue_one":
+    "La próxima actualización vencía el {date}: lleva {n} día de retraso.",
+  "p.status.standing_overdue_other":
+    "La próxima actualización vencía el {date}: lleva {n} días de retraso.",
+  "p.status.standing_due": "Hoy, {date}, vence una actualización.",
+  "p.status.standing_next": "La próxima actualización vence el {date}.",
+  "p.status.no_cadence":
+    "No hay cadencia fijada, así que ninguna actualización vence ni se retrasa.",
+  "p.status.as_of": "A fecha de {date}, en la zona horaria de la instalación.",
+  "p.status.loading": "Cargando…",
+  "p.status.posted_on_by": "publicada el {date} por {who}",
+  "p.status.posted_on": "publicada el {date}",
+  "p.status.claims_of": "Afirmaciones de la actualización del {date}",
+  "p.status.source_metric": "{metric}: {value} ahora",
+  "p.status.source_metric_unknown": "{metric}: desconocido (no cero)",
+  "p.status.source_unavailable": "Una fuente que ya no está disponible",
+  "p.status.kind_task": "Tarea: {title}",
+  "p.status.kind_risk": "Riesgo: {title}",
+  "p.status.kind_milestone": "Hito: {title}",
+  "p.status.kind_issue": "Incidencia: {title}",
+  "p.status.kind_other": "Registro: {title}",
+  "p.status.metric_overdue": "Tareas vencidas",
+  "p.status.metric_due_soon": "Tareas que vencen pronto",
+  "p.status.metric_blocked": "Tareas bloqueadas",
+  "p.status.metric_no_due_date": "Tareas sin fecha de vencimiento",
+  "p.status.metric_def_overdue":
+    "Tareas abiertas cuya fecha de vencimiento es anterior a hoy. Una tarea que vence hoy no está vencida. Desconocido cuando hay tareas abiertas y ninguna tiene fecha de vencimiento.",
+  "p.status.metric_def_due_soon":
+    "Tareas abiertas que vencen hoy o en los próximos {days} días. Desconocido cuando hay tareas abiertas y ninguna tiene fecha de vencimiento.",
+  "p.status.metric_def_blocked": "Tareas abiertas cuyo estado es bloqueado.",
+  "p.status.metric_def_no_due_date":
+    "Tareas abiertas sin fecha de vencimiento: las que las demás cifras no pueden ver.",
+  "p.status.metrics_heading": "Cómo se cuentan las cifras",
+  "p.status.metrics_says":
+    "Sobre las tareas abiertas del plan (una tarea cuyo estado no es terminado), contadas al leer una actualización, no al publicarla.",
+  "p.status.cadence_heading": "Con qué frecuencia se espera una actualización",
+  "p.status.cadence_says":
+    "Cada {min} a {max} días. Fijarla reinicia el reloj desde hoy, así que la misma cadencia no se vuelve a enviar. Una cadencia no se puede quitar una vez fijada.",
+  "p.status.cadence_set_by": "Fijada el {date} por {who}.",
+  "p.status.cadence_set_on": "Fijada el {date}.",
+  "p.status.f_cadence": "Días entre actualizaciones ({min} a {max})",
+  "p.status.save_cadence": "Guardar la cadencia",
+  "p.status.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.status.problem_cadence":
+    "Una cadencia es un número entero de días de {min} a {max}.",
+  "p.status.cadence_saved_one":
+    "Ahora se espera una actualización cada día; el reloj empieza hoy.",
+  "p.status.cadence_saved_other":
+    "Ahora se espera una actualización cada {n} días; el reloj empieza hoy.",
+  "p.status.could_not_save": "No se pudo guardar la cadencia",
+  "p.status.refused_gone": "Ese plan ya no existe.",
+  "p.status.history_heading":
+    "Todas las actualizaciones, las más recientes primero",
+  "p.status.history_says":
+    "Las actualizaciones nunca se cambian ni se quitan. Cada fuente se muestra como está ahora: un registro que ya no existe no está disponible, y cada cifra tiene su valor de hoy.",
+  "p.status.history_none": "Aún no hay actualizaciones.",
+  "p.status.post_heading": "Publicar una actualización",
+  "p.status.post_says":
+    "Elija la valoración y diga qué está ocurriendo (hasta {max} caracteres). Una actualización no se puede cambiar ni quitar una vez publicada, y publicar una reinicia el reloj de la cadencia.",
+  "p.status.claims_rule":
+    "Puede añadir hasta {claims} afirmaciones, cada una una frase de hasta {chars} caracteres que cite hasta {sources} fuentes: las cifras de abajo, o las tareas, riesgos, hitos e incidencias del plan. Cada fuente se comprueba al publicar la actualización.",
+  "p.status.f_call": "La valoración",
+  "p.status.call_on_track": "En curso",
+  "p.status.call_at_risk": "En riesgo",
+  "p.status.call_off_track": "Desviado",
+  "p.status.f_narrative": "Qué está ocurriendo (hasta {max} caracteres)",
+  "p.status.claim_legend": "Afirmación {n}",
+  "p.status.f_claim_text": "La afirmación (hasta {chars} caracteres)",
+  "p.status.f_metrics": "Cifras que cita",
+  "p.status.f_record": "Un registro del plan que cita la afirmación {n}",
+  "p.status.choose_record": "Elija un registro",
+  "p.status.add_record": "Añadir el registro a la afirmación {n}",
+  "p.status.claim_records": "Registros que cita la afirmación {n}",
+  "p.status.remove": "Quitar",
+  "p.status.remove_source": "Quitar {source} de la afirmación {n}",
+  "p.status.remove_claim": "Quitar la afirmación {n}",
+  "p.status.add_claim": "Añadir una afirmación",
+  "p.status.post": "Publicar la actualización",
+  "p.status.posted": "Actualización publicada: {call}.",
+  "p.status.could_not_post": "No se pudo publicar la actualización",
+  "p.status.problem_call": "Elija en curso, en riesgo o desviado.",
+  "p.status.problem_narrative":
+    "Diga qué está ocurriendo, en hasta {max} caracteres.",
+  "p.status.problem_claims":
+    "Una actualización lleva como máximo {claims} afirmaciones.",
+  "p.status.problem_claim_text":
+    "Una afirmación es una frase de hasta {chars} caracteres.",
+  "p.status.problem_sources":
+    "Una afirmación cita como máximo {sources} fuentes.",
+  "p.status.problem_in_claim": "Afirmación {n}: {problem}",
+  "p.status.refused_update":
+    "Rechazado: puede que una fuente ya no sea un registro de este plan. No se publicó nada; revise las afirmaciones y publique de nuevo.",
+  "p.status.due_heading": "Actualizaciones de estado pendientes",
+  "p.status.due_none":
+    "Ningún plan que pueda leer tiene una actualización de estado pendiente.",
+  "p.status.due_could_not_load":
+    "No se pudieron cargar las actualizaciones de estado pendientes",
+  "p.status.a_plan": "Un plan",
+  "p.status.due_last": "Última actualización: {call}, el {date}.",
+  "p.status.due_never": "Aún sin actualización.",
+  "p.status.group_task": "Tareas",
+  "p.status.group_risk": "Riesgos",
+  "p.status.group_milestone": "Hitos",
+  "p.status.group_issue": "Incidencias",
 };

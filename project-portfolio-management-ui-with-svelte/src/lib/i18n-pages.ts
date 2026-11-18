@@ -6767,6 +6767,115 @@ export const PAGES_EN = {
     "The budget lines plan more than this allocation holds.",
   "p.ledger.untraced_other":
     "Part of this allocation's money cannot be traced.",
+  "p.status.title_ppm": "Status updates — PPM",
+  "p.status.title": "Status updates",
+  "p.status.link": "Status updates and their evidence",
+  "p.status.intro":
+    "A status update is a person's call on how the plan is going (on track, at risk or off track), with what is happening in words. Nothing here works out a score.",
+  "p.status.could_not_load": "Could not load the plan's status",
+  "p.status.now_heading": "Where the plan stands",
+  "p.status.no_update": "No status update has been posted yet.",
+  "p.status.cadence_is_one": "An update is expected every day.",
+  "p.status.cadence_is_other": "An update is expected every {n} days.",
+  "p.status.standing_overdue_one":
+    "The next update was due on {date}: it is {n} day overdue.",
+  "p.status.standing_overdue_other":
+    "The next update was due on {date}: it is {n} days overdue.",
+  "p.status.standing_due": "An update is due today, {date}.",
+  "p.status.standing_next": "The next update is due on {date}.",
+  "p.status.no_cadence":
+    "No cadence is set, so no update is ever due or overdue.",
+  "p.status.as_of": "As of {date}, in the deployment's time zone.",
+  "p.status.loading": "Loading…",
+  "p.status.posted_on_by": "posted on {date} by {who}",
+  "p.status.posted_on": "posted on {date}",
+  "p.status.claims_of": "Claims in the update of {date}",
+  "p.status.source_metric": "{metric}: {value} now",
+  "p.status.source_metric_unknown": "{metric}: unknown (not zero)",
+  "p.status.source_unavailable": "A source that is no longer available",
+  "p.status.kind_task": "Task: {title}",
+  "p.status.kind_risk": "Risk: {title}",
+  "p.status.kind_milestone": "Milestone: {title}",
+  "p.status.kind_issue": "Issue: {title}",
+  "p.status.kind_other": "Record: {title}",
+  "p.status.metric_overdue": "Overdue tasks",
+  "p.status.metric_due_soon": "Tasks due soon",
+  "p.status.metric_blocked": "Blocked tasks",
+  "p.status.metric_no_due_date": "Tasks with no due date",
+  "p.status.metric_def_overdue":
+    "Open tasks whose due date is before today. A task due today is not overdue. Unknown when there are open tasks and none has a due date.",
+  "p.status.metric_def_due_soon":
+    "Open tasks due today or within the next {days} days. Unknown when there are open tasks and none has a due date.",
+  "p.status.metric_def_blocked": "Open tasks whose status is blocked.",
+  "p.status.metric_def_no_due_date":
+    "Open tasks with no due date: the tasks the other numbers cannot see.",
+  "p.status.metrics_heading": "How the numbers are counted",
+  "p.status.metrics_says":
+    "Over the plan's open tasks (a task whose state is not done), counted when an update is read, not when it was posted.",
+  "p.status.cadence_heading": "How often an update is expected",
+  "p.status.cadence_says":
+    "Every {min} to {max} days. Setting it restarts the clock from today, so the same cadence is not sent again. A cadence cannot be removed once it is set.",
+  "p.status.cadence_set_by": "Set on {date} by {who}.",
+  "p.status.cadence_set_on": "Set on {date}.",
+  "p.status.f_cadence": "Days between updates ({min} to {max})",
+  "p.status.save_cadence": "Save the cadence",
+  "p.status.unchanged": "Nothing changed, so nothing was sent.",
+  "p.status.problem_cadence":
+    "A cadence is a whole number of days from {min} to {max}.",
+  "p.status.cadence_saved_one":
+    "An update is now expected every day; the clock starts today.",
+  "p.status.cadence_saved_other":
+    "An update is now expected every {n} days; the clock starts today.",
+  "p.status.could_not_save": "Could not save the cadence",
+  "p.status.refused_gone": "That plan no longer exists.",
+  "p.status.history_heading": "Every update, newest first",
+  "p.status.history_says":
+    "Updates are never changed or removed. Each source is shown as it is now: a record that has gone is no longer available, and each number is its value today.",
+  "p.status.history_none": "No updates yet.",
+  "p.status.post_heading": "Post an update",
+  "p.status.post_says":
+    "Choose the call and say what is happening (up to {max} characters). An update cannot be changed or removed once posted, and posting one restarts the cadence's clock.",
+  "p.status.claims_rule":
+    "You may add up to {claims} claims, each a sentence of up to {chars} characters citing up to {sources} sources: the numbers below, or the plan's tasks, risks, milestones and issues. Each source is checked when the update is posted.",
+  "p.status.f_call": "The call",
+  "p.status.call_on_track": "On track",
+  "p.status.call_at_risk": "At risk",
+  "p.status.call_off_track": "Off track",
+  "p.status.f_narrative": "What is happening (up to {max} characters)",
+  "p.status.claim_legend": "Claim {n}",
+  "p.status.f_claim_text": "The claim (up to {chars} characters)",
+  "p.status.f_metrics": "Numbers it cites",
+  "p.status.f_record": "A record of the plan claim {n} cites",
+  "p.status.choose_record": "Choose a record",
+  "p.status.add_record": "Add the record to claim {n}",
+  "p.status.claim_records": "Records claim {n} cites",
+  "p.status.remove": "Remove",
+  "p.status.remove_source": "Remove {source} from claim {n}",
+  "p.status.remove_claim": "Remove claim {n}",
+  "p.status.add_claim": "Add a claim",
+  "p.status.post": "Post the update",
+  "p.status.posted": "Update posted: {call}.",
+  "p.status.could_not_post": "Could not post the update",
+  "p.status.problem_call": "Choose on track, at risk or off track.",
+  "p.status.problem_narrative":
+    "Say what is happening, in up to {max} characters.",
+  "p.status.problem_claims": "An update carries at most {claims} claims.",
+  "p.status.problem_claim_text":
+    "A claim is a sentence of up to {chars} characters.",
+  "p.status.problem_sources": "A claim cites at most {sources} sources.",
+  "p.status.problem_in_claim": "Claim {n}: {problem}",
+  "p.status.refused_update":
+    "Refused: a source may no longer be a record of this plan. Nothing was posted; check the claims and post again.",
+  "p.status.due_heading": "Status updates due",
+  "p.status.due_none": "No plan you can read has a status update due.",
+  "p.status.due_could_not_load": "Could not load the status updates due",
+  "p.status.a_plan": "A plan",
+  "p.status.due_last": "Last update: {call}, on {date}.",
+  "p.status.due_never": "No update yet.",
+  "p.status.group_task": "Tasks",
+  "p.status.group_risk": "Risks",
+  "p.status.group_milestone": "Milestones",
+  "p.status.group_issue": "Issues",
 } as const;
 
 /** A key in the page and component catalogue. */

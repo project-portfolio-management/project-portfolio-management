@@ -771,6 +771,30 @@ describe("PpmClient benefit classification and validation (NC-1 slice 11, DP-9)"
   });
 });
 
+describe("PpmClient status updates and their evidence (NC-1 slice 12 part b, NC-4, BR-2)", () => {
+  it("reads and sets the cadence, reads and posts updates, the numbers and the due list", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.planStatus("p1");
+    await ppm.statusCadence("p1");
+    await ppm.setStatusCadence("p1", 7);
+    await ppm.statusUpdates("p1");
+    await ppm.postStatusUpdate("p1", { status: "on_track", narrative: "x" });
+    await ppm.statusMetrics();
+    await ppm.statusUpdatesDue();
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/status",
+      "GET /api/plans/p1/status-cadence",
+      "PUT /api/plans/p1/status-cadence",
+      "GET /api/plans/p1/status-updates",
+      "POST /api/plans/p1/status-updates",
+      "GET /api/status-metrics",
+      "GET /api/status-updates/due",
+    ]);
+  });
+});
+
 describe("PpmClient milestone sign-off required (NC-1 slice 11, EX-4)", () => {
   it("replaces the organizations a milestone needs", async () => {
     const { ppm, calls } = recordingClient();

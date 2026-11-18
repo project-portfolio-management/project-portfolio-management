@@ -2557,3 +2557,56 @@ KPI by its key, each 409 code), `tests/e2e/proposals.spec.ts` (each 422 code), `
 stub carries `"service text"` where the service would put English, and each test checks it is not shown. 13 keys in
 eight catalogues and two removed (the sentences that covered two refusals each), machine-written and unreviewed.
 **Not verified:** against a real service.
+
+## Status updates on a cadence, with their evidence (NC-1 slice 12 part b, NC-4, BR-2)
+
+`/plans/[pid]/status`, linked from the plan page (`PLAN_LINKS` key `status`, with the governance links: the service
+files the status routes under no module, so they are always on), over `GET /api/plans/{pid}/status`, `GET` and `PUT
+/api/plans/{pid}/status-cadence`, `GET` and `POST /api/plans/{pid}/status-updates` and `GET /api/status-metrics`; the
+records a claim may cite come from the plan's tasks, risks, milestones and issues (`GET …/tasks`, `…/risks`,
+`…/milestones`, `…/issues`, each best effort: a kind that cannot be read is not offered). `/dashboard` lists the plans
+whose update is due from `GET /api/status-updates/due`. `src/lib/status-view.ts` holds the rules;
+`StatusUpdateForm.svelte` posts an update. A status update is a person's call; the page says nothing works out a score.
+
+- **Where the plan stands.** The latest update: its call as a word and a symbol (on track ✓, at risk !, off track ✗;
+  never a colour alone), when it was posted and by whom (a person's reference as the service returns it, not a name),
+  and its narrative; or that none has been posted. Against the cadence: how often an update is expected (a plural)
+  and the service's standing, said as overdue by so many days (a plural), due today, or the date the next is due; a
+  plan with no cadence says no update is ever due. The date is the service's `as_of`, in the deployment's time zone.
+  Nothing is worked out here.
+- **The cadence.** Said first: 1 to 92 days; setting it restarts the clock from today, so the same cadence is not sent
+  again; a cadence cannot be removed once set. Who set it and when are shown. The number input binds a number and is
+  disabled until the cadence has loaded (a 404 is a plan with none); a value outside 1 to 92 or not whole is refused
+  before sending; a 422 is the same sentence.
+- **Posting an update.** Said first: the call and a narrative of up to 4000 characters; an update cannot be changed or
+  removed once posted, and posting one restarts the clock; up to 10 claims, each a sentence of up to 500 characters
+  citing up to 5 sources, each checked by the service when posted. A claim's sources are the four published numbers
+  (checkboxes) and the plan's records (a list grouped by kind, with "Add the record"; each chosen record can be
+  removed). Every problem is said at once before sending, naming the claim it is on; an empty claim (no sentence, no
+  source) is left out; the narrative and claims are sent trimmed and each source once. The form is disabled until the
+  plan's status has loaded. A 422 says a source may no longer be a record of this plan (the page checks everything else
+  first); a 404 that the plan no longer exists.
+- **The history**, newest first: each update as above, with its claims and each source as the service resolves it for
+  the reader now: a record's kind and its own title, a number's value now ("unknown (not zero)" when it cannot be
+  known), or "a source that is no longer available". The page says updates are never changed and that sources are
+  read as they are now.
+- **How the numbers are counted.** Each number the service publishes is named and defined in the catalogue's words
+  by its key (the "due soon" window from the service's `due_soon_days`); the service's English `label`, `definition`
+  and `note` are not shown, nor a number's `definition` inside a claim.
+- **The due list** on `/dashboard`: each plan the reader may read whose update is due, most overdue first, linked to
+  its status page, overdue by so many days or due today, with its last call and date or that it has none. A 403 or
+  404 shows nothing; any other failure is a short sentence.
+- **Decisions taken here (the plainest option):** the page offers tasks, risks, milestones and issues as sources, not
+  change requests or cutover decisions (the service accepts them; a claim already citing one is shown as a record);
+  records are chosen from a list rather than typed as `kind:<pid>`; the link sits with the governance links.
+- **Not built:** removing a cadence (no route, NC-4); claims in the director pack; reminders (`POST
+  /api/status-updates/remind` is a sweep, part p); the people as names. **Service gaps:** every 422 on posting an
+  update is `unprocessable` with English text, whichever rule it is (the call, the narrative, the claims, a source not
+  a record of the plan), so the page checks the rules first and reads a 422 as the one it cannot check; the
+  numbers' labels and definitions are English only (the page uses its own words by key).
+- **Tests:** `tests/unit/status-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/unit/modules.test.ts` (the
+  link), `tests/e2e/plan-status.spec.ts` (the link from the plan page; where the plan stands and the history with each
+  kind of source and no service text; the cadence's rule first, nothing for the same cadence, out of range refused,
+  sent as a number; a plan with no cadence and a 422; an update's rules first, a claim's sentence needed, numbers and a
+  record cited, the body sent; a 422 in the catalogue's words; the dashboard's due list; Welsh; axe with a claim open).
+  The translations are machine-written and unreviewed.

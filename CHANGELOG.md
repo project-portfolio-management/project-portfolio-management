@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (status updates and their evidence: NC-1 slice 12 part b)
+
+- **UI: a plan's status updates (NC-4, BR-2).** `/plans/[pid]/status`, linked from the plan page, shows where the plan
+  stands against its cadence, sets the cadence (1 to 92 days; nothing sent for the same one), posts an update with
+  claims citing the published numbers and the plan's tasks, risks, milestones and issues (every rule said first), and
+  lists the history with each source as the service resolves it; `/dashboard` lists the plans whose update is due. UI
+  spec, "Status updates on a cadence, with their evidence"; test `tests/e2e/plan-status.spec.ts`. 91 keys in eight
+  catalogues.
+- **Not done:** removing a cadence (no route); claims in the director pack; change requests and cutover decisions as
+  sources. **Service gap:** every 422 on posting an update shares the code `unprocessable`. **Not verified:** against
+  a real service; the translations are machine-written and unreviewed.
+
 ### 18 November (the UI reads part a's codes and fields: NC-1 slice 12 part a)
 
 - **UI: slice 11's workarounds replaced.** `/exceptions` names the threshold behind an exception; `/deescalation` gives

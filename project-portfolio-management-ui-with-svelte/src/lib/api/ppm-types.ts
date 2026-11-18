@@ -4171,3 +4171,88 @@ export interface DeescalationTracker {
     set_by?: string | null;
   }>;
 }
+
+// ---- status updates on a cadence, with their evidence (NC-4, BR-2, NC-1 slice 12 part b) ----
+
+/** The call a status update makes. */
+export type StatusCall = "on_track" | "at_risk" | "off_track";
+
+/** Where a plan stands against its cadence, today in the deployment's time zone. */
+export interface StatusStanding {
+  due_on: string;
+  due: boolean;
+  overdue: boolean;
+  days_overdue: number;
+}
+
+/**
+ * One source of a claim, resolved for the reader: a record of the plan with its title (the record's own data), a
+ * published number with its value now (`known: false` and `value: null` when it cannot be known, never zero), or
+ * `unavailable` (gone, or not a record of the plan). A number's `definition` is the service's English and is not shown.
+ */
+export type StatusSource =
+  | {
+      source: string;
+      state: "ok";
+      kind: "metric";
+      key: string;
+      value: number | null;
+      known: boolean;
+      definition?: string | null;
+    }
+  | { source: string; state: "ok"; kind: string; pid: string; title: string }
+  | { source: string; state: "unavailable" };
+
+/** One status update, as posted (append-only). `posted_by` is a person's reference as stored, not a name. */
+export interface StatusUpdate {
+  pid: string;
+  plan_pid: string;
+  status: StatusCall;
+  narrative: string;
+  posted_on: string;
+  posted_by: string | null;
+  posted_at: string;
+  claims: Array<{ text: string; sources: StatusSource[] }>;
+}
+
+/** `GET /api/plans/{pid}/status`: the latest update and where the plan stands; both cadence fields null with none. */
+export interface PlanStatus {
+  plan_pid: string;
+  as_of: string;
+  latest: StatusUpdate | null;
+  cadence_days: number | null;
+  standing: StatusStanding | null;
+}
+
+/** `GET`/`PUT /api/plans/{pid}/status-cadence` (the GET is a 404 when no cadence is set). */
+export interface StatusCadence {
+  plan_pid: string;
+  cadence_days: number;
+  set_on: string;
+  set_by: string | null;
+  standing: StatusStanding;
+}
+
+/** `GET /api/status-metrics`. `label`, `definition` and `note` are the service's English and are not shown. */
+export interface StatusMetrics {
+  due_soon_days: number;
+  metrics: Array<{ key: string; label: string; definition: string }>;
+  note: string;
+}
+
+/** One plan in `GET /api/status-updates/due`, most overdue first. `plan_name` is the plan's own data. */
+export interface StatusDue {
+  plan_pid: string;
+  plan_name: string | null;
+  cadence_days: number;
+  standing: StatusStanding;
+  latest_status: StatusCall | null;
+  last_update_on: string | null;
+}
+
+/** `POST /api/plans/{pid}/status-updates` body. */
+export interface StatusUpdateBody {
+  status: StatusCall;
+  narrative: string;
+  claims?: Array<{ text: string; sources: string[] }>;
+}

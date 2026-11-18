@@ -7042,4 +7042,115 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Les lignes budgétaires prévoient plus que ce que contient cette allocation.",
   "p.ledger.untraced_other":
     "Une partie de l'argent de cette allocation ne peut pas être suivie.",
+  "p.status.title_ppm": "Points d'état — PPM",
+  "p.status.title": "Points d'état",
+  "p.status.link": "Points d'état et leurs preuves",
+  "p.status.intro":
+    "Un point d'état est l'appréciation d'une personne sur l'avancement du plan (dans les temps, à risque ou hors trajectoire), avec ce qui se passe en mots. Rien ici ne calcule de note.",
+  "p.status.could_not_load": "Impossible de charger l'état du plan",
+  "p.status.now_heading": "Où en est le plan",
+  "p.status.no_update": "Aucun point d'état n'a encore été publié.",
+  "p.status.cadence_is_one": "Un point est attendu chaque jour.",
+  "p.status.cadence_is_other": "Un point est attendu tous les {n} jours.",
+  "p.status.standing_overdue_one":
+    "Le prochain point était dû le {date} : il a {n} jour de retard.",
+  "p.status.standing_overdue_other":
+    "Le prochain point était dû le {date} : il a {n} jours de retard.",
+  "p.status.standing_due": "Un point est dû aujourd'hui, le {date}.",
+  "p.status.standing_next": "Le prochain point est dû le {date}.",
+  "p.status.no_cadence":
+    "Aucune cadence n'est fixée : aucun point n'est donc jamais dû ni en retard.",
+  "p.status.as_of": "Au {date}, dans le fuseau horaire du déploiement.",
+  "p.status.loading": "Chargement…",
+  "p.status.posted_on_by": "publié le {date} par {who}",
+  "p.status.posted_on": "publié le {date}",
+  "p.status.claims_of": "Affirmations du point du {date}",
+  "p.status.source_metric": "{metric} : {value} actuellement",
+  "p.status.source_metric_unknown": "{metric} : inconnu (pas zéro)",
+  "p.status.source_unavailable": "Une source qui n'est plus disponible",
+  "p.status.kind_task": "Tâche : {title}",
+  "p.status.kind_risk": "Risque : {title}",
+  "p.status.kind_milestone": "Jalon : {title}",
+  "p.status.kind_issue": "Problème : {title}",
+  "p.status.kind_other": "Enregistrement : {title}",
+  "p.status.metric_overdue": "Tâches en retard",
+  "p.status.metric_due_soon": "Tâches bientôt dues",
+  "p.status.metric_blocked": "Tâches bloquées",
+  "p.status.metric_no_due_date": "Tâches sans échéance",
+  "p.status.metric_def_overdue":
+    "Tâches ouvertes dont l'échéance est avant aujourd'hui. Une tâche due aujourd'hui n'est pas en retard. Inconnu quand il y a des tâches ouvertes et qu'aucune n'a d'échéance.",
+  "p.status.metric_def_due_soon":
+    "Tâches ouvertes dues aujourd'hui ou dans les {days} prochains jours. Inconnu quand il y a des tâches ouvertes et qu'aucune n'a d'échéance.",
+  "p.status.metric_def_blocked": "Tâches ouvertes dont le statut est bloqué.",
+  "p.status.metric_def_no_due_date":
+    "Tâches ouvertes sans échéance : celles que les autres chiffres ne voient pas.",
+  "p.status.metrics_heading": "Comment les chiffres sont comptés",
+  "p.status.metrics_says":
+    "Sur les tâches ouvertes du plan (une tâche dont l'état n'est pas terminé), comptées quand un point est lu, pas quand il a été publié.",
+  "p.status.cadence_heading": "À quelle fréquence un point est attendu",
+  "p.status.cadence_says":
+    "Tous les {min} à {max} jours. La fixer relance l'horloge à partir d'aujourd'hui : la même cadence n'est donc pas renvoyée. Une cadence ne peut pas être retirée une fois fixée.",
+  "p.status.cadence_set_by": "Fixée le {date} par {who}.",
+  "p.status.cadence_set_on": "Fixée le {date}.",
+  "p.status.f_cadence": "Jours entre deux points ({min} à {max})",
+  "p.status.save_cadence": "Enregistrer la cadence",
+  "p.status.unchanged": "Rien n'a changé, donc rien n'a été envoyé.",
+  "p.status.problem_cadence":
+    "Une cadence est un nombre entier de jours de {min} à {max}.",
+  "p.status.cadence_saved_one":
+    "Un point est désormais attendu chaque jour ; l'horloge démarre aujourd'hui.",
+  "p.status.cadence_saved_other":
+    "Un point est désormais attendu tous les {n} jours ; l'horloge démarre aujourd'hui.",
+  "p.status.could_not_save": "Impossible d'enregistrer la cadence",
+  "p.status.refused_gone": "Ce plan n'existe plus.",
+  "p.status.history_heading": "Tous les points, du plus récent au plus ancien",
+  "p.status.history_says":
+    "Les points ne sont jamais modifiés ni retirés. Chaque source est montrée telle qu'elle est maintenant : un enregistrement disparu n'est plus disponible, et chaque chiffre a sa valeur d'aujourd'hui.",
+  "p.status.history_none": "Aucun point pour l'instant.",
+  "p.status.post_heading": "Publier un point",
+  "p.status.post_says":
+    "Choisissez l'appréciation et dites ce qui se passe (jusqu'à {max} caractères). Un point ne peut être ni modifié ni retiré une fois publié, et en publier un relance l'horloge de la cadence.",
+  "p.status.claims_rule":
+    "Vous pouvez ajouter jusqu'à {claims} affirmations, chacune une phrase de {chars} caractères au plus citant jusqu'à {sources} sources : les chiffres ci-dessous, ou les tâches, risques, jalons et problèmes du plan. Chaque source est vérifiée à la publication.",
+  "p.status.f_call": "L'appréciation",
+  "p.status.call_on_track": "Dans les temps",
+  "p.status.call_at_risk": "À risque",
+  "p.status.call_off_track": "Hors trajectoire",
+  "p.status.f_narrative": "Ce qui se passe (jusqu'à {max} caractères)",
+  "p.status.claim_legend": "Affirmation {n}",
+  "p.status.f_claim_text": "L'affirmation (jusqu'à {chars} caractères)",
+  "p.status.f_metrics": "Chiffres qu'elle cite",
+  "p.status.f_record": "Un enregistrement du plan que cite l'affirmation {n}",
+  "p.status.choose_record": "Choisir un enregistrement",
+  "p.status.add_record": "Ajouter l'enregistrement à l'affirmation {n}",
+  "p.status.claim_records": "Enregistrements que cite l'affirmation {n}",
+  "p.status.remove": "Retirer",
+  "p.status.remove_source": "Retirer {source} de l'affirmation {n}",
+  "p.status.remove_claim": "Retirer l'affirmation {n}",
+  "p.status.add_claim": "Ajouter une affirmation",
+  "p.status.post": "Publier le point",
+  "p.status.posted": "Point publié : {call}.",
+  "p.status.could_not_post": "Impossible de publier le point",
+  "p.status.problem_call":
+    "Choisissez dans les temps, à risque ou hors trajectoire.",
+  "p.status.problem_narrative":
+    "Dites ce qui se passe, en {max} caractères au plus.",
+  "p.status.problem_claims": "Un point porte au plus {claims} affirmations.",
+  "p.status.problem_claim_text":
+    "Une affirmation est une phrase de {chars} caractères au plus.",
+  "p.status.problem_sources": "Une affirmation cite au plus {sources} sources.",
+  "p.status.problem_in_claim": "Affirmation {n} : {problem}",
+  "p.status.refused_update":
+    "Refusé : une source n'est peut-être plus un enregistrement de ce plan. Rien n'a été publié ; vérifiez les affirmations et publiez à nouveau.",
+  "p.status.due_heading": "Points d'état dus",
+  "p.status.due_none":
+    "Aucun plan que vous pouvez lire n'a de point d'état dû.",
+  "p.status.due_could_not_load": "Impossible de charger les points d'état dus",
+  "p.status.a_plan": "Un plan",
+  "p.status.due_last": "Dernier point : {call}, le {date}.",
+  "p.status.due_never": "Aucun point pour l'instant.",
+  "p.status.group_task": "Tâches",
+  "p.status.group_risk": "Risques",
+  "p.status.group_milestone": "Jalons",
+  "p.status.group_issue": "Problèmes",
 };

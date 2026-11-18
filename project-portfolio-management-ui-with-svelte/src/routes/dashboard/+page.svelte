@@ -1,25 +1,40 @@
 <!--
   PPM dashboard (`/dashboard`, PPM-7): site tiles + per-collection
   RAG / stage rollups from the ETag-conditional `/api/at-a-glance`.
-  English-first (locale catalogues extend as a follow-up).
+  English-first (locale catalogues extend as a follow-up). Below, the plans whose status update is due or overdue
+  (`GET /api/status-updates/due`, most overdue first, NC-1 slice 12 part b), each linked to its status page.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t } from "#lib/i18n.svelte.js";
+  import { localeHref, t, tn } from "#lib/i18n.svelte.js";
+  import { isAbsent } from "#lib/absent.js";
+  import { errorText } from "#lib/error-text.js";
+  import { CALL_MARK, standingOf } from "#lib/status-view.js";
   import { formatDate } from "#lib/locale-format.js";
   import { onMount } from "svelte";
   import { resource } from "#lib/resource.svelte.js";
   import { page } from "$app/state";
-  import { PpmClient, type Dashboard } from "#lib/api/ppm.js";
+  import { PpmClient, type Dashboard, type StatusDue } from "#lib/api/ppm.js";
 
   const ppm = PpmClient.withFetch();
   const loaded = resource(() => ppm.dashboard(), "ppm.common.loadFailed");
   const board = $derived(loaded.data);
   const error = $derived(loaded.error);
 
-  onMount(() => void loaded.reload());
+  // The status updates due: best effort, and quiet when the caller may not read them.
+  let due = $state<StatusDue[] | null>(null);
+  let dueError = $state<string | null>(null);
+  onMount(() => {
+    void loaded.reload();
+    ppm
+      .statusUpdatesDue()
+      .then((d) => (due = d))
+      .catch((err: unknown) => {
+        if (!isAbsent(err)) dueError = errorText(err, "p.status.due_could_not_load");
+      });
+  });
 
   type Collection = Dashboard["collections"][number];
   const columns: DataGridColumn[] = $derived([
@@ -57,6 +72,34 @@
   <p class="small muted">{t("ppm.common.asOf")} {formatDate(board.as_of)}</p>
 {:else if !error}
   <p>{t("ppm.common.loading")}</p>
+{/if}
+
+{#if due || dueError}
+  <section aria-labelledby="status-due-h">
+    <h2 id="status-due-h">{t("p.status.due_heading")}</h2>
+    {#if dueError}
+      <p class="small muted">{dueError}</p>
+    {:else if due && due.length === 0}
+      <p class="small muted">{t("p.status.due_none")}</p>
+    {:else if due}
+      <ul class="due" aria-labelledby="status-due-h">
+        {#each due as d (d.plan_pid)}
+          {@const st = standingOf(d.standing)}
+          <li>
+            <a href={localeHref(`/plans/${d.plan_pid}/status`)}>{d.plan_name ?? t("p.status.a_plan")}</a>:
+            {#if st.is === "overdue"}
+              <span aria-hidden="true">✗</span> {tn("p.status.standing_overdue", st.days, { date: formatDate(st.date), n: st.days })}
+            {:else}
+              <span aria-hidden="true">!</span> {t("p.status.standing_due", { date: formatDate(st.date) })}
+            {/if}
+            {d.latest_status
+              ? t("p.status.due_last", { call: t(CALL_MARK[d.latest_status].key), date: formatDate(d.last_update_on ?? "") })
+              : t("p.status.due_never")}
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
 {/if}
 
 <style>

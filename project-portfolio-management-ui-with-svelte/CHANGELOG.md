@@ -9,6 +9,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — status updates on a cadence, with their evidence (NC-1 slice 12 part b, NC-4, BR-2, 2026-11-18)
+
+- New route `/plans/[pid]/status`, linked from the plan page (`PLAN_LINKS` key `status`): where the plan stands (the
+  latest call as a word and a symbol, who posted it as a reference, the narrative, the cadence and the service's
+  standing); the cadence (1 to 92 days, the rule said first, nothing sent for the same cadence, a number input that
+  binds a number and is disabled until loaded); posting an update (`StatusUpdateForm.svelte`: a call, a narrative of up
+  to 4000 characters, up to 10 claims of up to 500 characters each citing up to 5 sources, every problem said at once
+  before sending); the history newest first with each source as resolved for the reader (a record's title, a number's
+  value now, unknown never zero, or no longer available); the numbers named and defined in the catalogue's words by key.
+- `/dashboard` lists the plans whose status update is due, most overdue first, each linked to its status page.
+- Seven client methods, `src/lib/status-view.ts`; 91 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/status-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, the link in
+  `tests/unit/modules.test.ts`, `tests/e2e/plan-status.spec.ts` (seven, with Welsh and axe).
+- **Decided:** change requests and cutover decisions are not offered as sources (the service accepts them); records are
+  chosen from a list. **Not done:** removing a cadence (no route); claims in the director pack. **Service gap:** every
+  422 on posting an update is `unprocessable`, so the page checks the rules first. **Not verified:** against a real
+  service.
+
 ### Changed — the service's new codes and fields, read (NC-1 slice 12 part a, 2026-11-18)
 
 - `/exceptions` names the threshold that opened an exception, or joined it while it was open, from `threshold_kind`

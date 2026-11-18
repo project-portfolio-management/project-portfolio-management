@@ -7049,4 +7049,117 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Die Budgetzeilen planen mehr, als diese Zuweisung enthält.",
   "p.ledger.untraced_other":
     "Ein Teil des Geldes dieser Zuweisung lässt sich nicht verfolgen.",
+  "p.status.title_ppm": "Statusberichte — PPM",
+  "p.status.title": "Statusberichte",
+  "p.status.link": "Statusberichte und ihre Belege",
+  "p.status.intro":
+    "Ein Statusbericht ist die Einschätzung einer Person, wie der Plan läuft (im Plan, gefährdet oder nicht im Plan), mit dem Geschehen in Worten. Hier wird kein Wert berechnet.",
+  "p.status.could_not_load": "Der Status des Plans konnte nicht geladen werden",
+  "p.status.now_heading": "Wo der Plan steht",
+  "p.status.no_update": "Es wurde noch kein Statusbericht veröffentlicht.",
+  "p.status.cadence_is_one": "Ein Bericht wird jeden Tag erwartet.",
+  "p.status.cadence_is_other": "Ein Bericht wird alle {n} Tage erwartet.",
+  "p.status.standing_overdue_one":
+    "Der nächste Bericht war am {date} fällig: er ist {n} Tag überfällig.",
+  "p.status.standing_overdue_other":
+    "Der nächste Bericht war am {date} fällig: er ist {n} Tage überfällig.",
+  "p.status.standing_due": "Heute, am {date}, ist ein Bericht fällig.",
+  "p.status.standing_next": "Der nächste Bericht ist am {date} fällig.",
+  "p.status.no_cadence":
+    "Es ist kein Rhythmus festgelegt, daher ist nie ein Bericht fällig oder überfällig.",
+  "p.status.as_of": "Stand {date}, in der Zeitzone der Installation.",
+  "p.status.loading": "Wird geladen…",
+  "p.status.posted_on_by": "veröffentlicht am {date} von {who}",
+  "p.status.posted_on": "veröffentlicht am {date}",
+  "p.status.claims_of": "Aussagen im Bericht vom {date}",
+  "p.status.source_metric": "{metric}: derzeit {value}",
+  "p.status.source_metric_unknown": "{metric}: unbekannt (nicht null)",
+  "p.status.source_unavailable": "Eine Quelle, die nicht mehr verfügbar ist",
+  "p.status.kind_task": "Aufgabe: {title}",
+  "p.status.kind_risk": "Risiko: {title}",
+  "p.status.kind_milestone": "Meilenstein: {title}",
+  "p.status.kind_issue": "Problem: {title}",
+  "p.status.kind_other": "Eintrag: {title}",
+  "p.status.metric_overdue": "Überfällige Aufgaben",
+  "p.status.metric_due_soon": "Bald fällige Aufgaben",
+  "p.status.metric_blocked": "Blockierte Aufgaben",
+  "p.status.metric_no_due_date": "Aufgaben ohne Fälligkeitsdatum",
+  "p.status.metric_def_overdue":
+    "Offene Aufgaben, deren Fälligkeitsdatum vor heute liegt. Eine heute fällige Aufgabe ist nicht überfällig. Unbekannt, wenn es offene Aufgaben gibt und keine ein Fälligkeitsdatum hat.",
+  "p.status.metric_def_due_soon":
+    "Offene Aufgaben, die heute oder in den nächsten {days} Tagen fällig sind. Unbekannt, wenn es offene Aufgaben gibt und keine ein Fälligkeitsdatum hat.",
+  "p.status.metric_def_blocked": "Offene Aufgaben mit dem Status blockiert.",
+  "p.status.metric_def_no_due_date":
+    "Offene Aufgaben ohne Fälligkeitsdatum: die Aufgaben, die die anderen Zahlen nicht sehen.",
+  "p.status.metrics_heading": "Wie die Zahlen gezählt werden",
+  "p.status.metrics_says":
+    "Über die offenen Aufgaben des Plans (eine Aufgabe, deren Zustand nicht erledigt ist), gezählt, wenn ein Bericht gelesen wird, nicht als er veröffentlicht wurde.",
+  "p.status.cadence_heading": "Wie oft ein Bericht erwartet wird",
+  "p.status.cadence_says":
+    "Alle {min} bis {max} Tage. Das Festlegen startet die Uhr ab heute neu, daher wird derselbe Rhythmus nicht erneut gesendet. Ein einmal festgelegter Rhythmus kann nicht entfernt werden.",
+  "p.status.cadence_set_by": "Festgelegt am {date} von {who}.",
+  "p.status.cadence_set_on": "Festgelegt am {date}.",
+  "p.status.f_cadence": "Tage zwischen Berichten ({min} bis {max})",
+  "p.status.save_cadence": "Rhythmus speichern",
+  "p.status.unchanged":
+    "Nichts hat sich geändert, daher wurde nichts gesendet.",
+  "p.status.problem_cadence":
+    "Ein Rhythmus ist eine ganze Zahl von Tagen von {min} bis {max}.",
+  "p.status.cadence_saved_one":
+    "Jetzt wird jeden Tag ein Bericht erwartet; die Uhr beginnt heute.",
+  "p.status.cadence_saved_other":
+    "Jetzt wird alle {n} Tage ein Bericht erwartet; die Uhr beginnt heute.",
+  "p.status.could_not_save": "Der Rhythmus konnte nicht gespeichert werden",
+  "p.status.refused_gone": "Diesen Plan gibt es nicht mehr.",
+  "p.status.history_heading": "Alle Berichte, die neuesten zuerst",
+  "p.status.history_says":
+    "Berichte werden nie geändert oder entfernt. Jede Quelle wird so gezeigt, wie sie jetzt ist: Ein verschwundener Eintrag ist nicht mehr verfügbar, und jede Zahl hat ihren heutigen Wert.",
+  "p.status.history_none": "Noch keine Berichte.",
+  "p.status.post_heading": "Einen Bericht veröffentlichen",
+  "p.status.post_says":
+    "Wählen Sie die Einschätzung und sagen Sie, was geschieht (bis zu {max} Zeichen). Ein Bericht kann nach dem Veröffentlichen nicht geändert oder entfernt werden, und jeder neue startet die Uhr des Rhythmus neu.",
+  "p.status.claims_rule":
+    "Sie können bis zu {claims} Aussagen hinzufügen, jede ein Satz von bis zu {chars} Zeichen mit bis zu {sources} Quellen: den Zahlen unten oder den Aufgaben, Risiken, Meilensteinen und Problemen des Plans. Jede Quelle wird beim Veröffentlichen geprüft.",
+  "p.status.f_call": "Die Einschätzung",
+  "p.status.call_on_track": "Im Plan",
+  "p.status.call_at_risk": "Gefährdet",
+  "p.status.call_off_track": "Nicht im Plan",
+  "p.status.f_narrative": "Was geschieht (bis zu {max} Zeichen)",
+  "p.status.claim_legend": "Aussage {n}",
+  "p.status.f_claim_text": "Die Aussage (bis zu {chars} Zeichen)",
+  "p.status.f_metrics": "Zahlen, die sie anführt",
+  "p.status.f_record": "Ein Eintrag des Plans, den Aussage {n} anführt",
+  "p.status.choose_record": "Einen Eintrag wählen",
+  "p.status.add_record": "Den Eintrag zu Aussage {n} hinzufügen",
+  "p.status.claim_records": "Einträge, die Aussage {n} anführt",
+  "p.status.remove": "Entfernen",
+  "p.status.remove_source": "{source} aus Aussage {n} entfernen",
+  "p.status.remove_claim": "Aussage {n} entfernen",
+  "p.status.add_claim": "Eine Aussage hinzufügen",
+  "p.status.post": "Den Bericht veröffentlichen",
+  "p.status.posted": "Bericht veröffentlicht: {call}.",
+  "p.status.could_not_post": "Der Bericht konnte nicht veröffentlicht werden",
+  "p.status.problem_call": "Wählen Sie im Plan, gefährdet oder nicht im Plan.",
+  "p.status.problem_narrative":
+    "Sagen Sie, was geschieht, in bis zu {max} Zeichen.",
+  "p.status.problem_claims": "Ein Bericht enthält höchstens {claims} Aussagen.",
+  "p.status.problem_claim_text":
+    "Eine Aussage ist ein Satz von bis zu {chars} Zeichen.",
+  "p.status.problem_sources":
+    "Eine Aussage führt höchstens {sources} Quellen an.",
+  "p.status.problem_in_claim": "Aussage {n}: {problem}",
+  "p.status.refused_update":
+    "Abgelehnt: Eine Quelle ist möglicherweise kein Eintrag dieses Plans mehr. Nichts wurde veröffentlicht; prüfen Sie die Aussagen und veröffentlichen Sie erneut.",
+  "p.status.due_heading": "Fällige Statusberichte",
+  "p.status.due_none":
+    "Kein Plan, den Sie lesen können, hat einen fälligen Statusbericht.",
+  "p.status.due_could_not_load":
+    "Die fälligen Statusberichte konnten nicht geladen werden",
+  "p.status.a_plan": "Ein Plan",
+  "p.status.due_last": "Letzter Bericht: {call}, am {date}.",
+  "p.status.due_never": "Noch kein Bericht.",
+  "p.status.group_task": "Aufgaben",
+  "p.status.group_risk": "Risiken",
+  "p.status.group_milestone": "Meilensteine",
+  "p.status.group_issue": "Probleme",
 };

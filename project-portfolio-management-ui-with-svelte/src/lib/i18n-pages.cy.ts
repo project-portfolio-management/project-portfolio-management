@@ -6921,4 +6921,118 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.ledger.untraced_lines_over_plan":
     "Mae'r llinellau cyllideb yn cynllunio mwy nag sydd yn y dyraniad hwn.",
   "p.ledger.untraced_other": "Ni ellir olrhain rhan o arian y dyraniad hwn.",
+  "p.status.title_ppm": "Diweddariadau statws — PPM",
+  "p.status.title": "Diweddariadau statws",
+  "p.status.link": "Diweddariadau statws a'u tystiolaeth",
+  "p.status.intro":
+    "Mae diweddariad statws yn farn person ar sut mae'r cynllun yn mynd (ar y trywydd iawn, mewn perygl neu oddi ar y trywydd), gyda'r hyn sy'n digwydd mewn geiriau. Nid oes dim yma'n cyfrifo sgôr.",
+  "p.status.could_not_load": "Methu llwytho statws y cynllun",
+  "p.status.now_heading": "Ble mae'r cynllun yn sefyll",
+  "p.status.no_update": "Nid oes diweddariad statws wedi'i bostio eto.",
+  "p.status.cadence_is_one": "Disgwylir diweddariad bob dydd.",
+  "p.status.cadence_is_other": "Disgwylir diweddariad bob {n} diwrnod.",
+  "p.status.standing_overdue_one":
+    "Roedd y diweddariad nesaf yn ddyledus ar {date}: mae {n} diwrnod yn hwyr.",
+  "p.status.standing_overdue_other":
+    "Roedd y diweddariad nesaf yn ddyledus ar {date}: mae {n} diwrnod yn hwyr.",
+  "p.status.standing_due": "Mae diweddariad yn ddyledus heddiw, {date}.",
+  "p.status.standing_next": "Mae'r diweddariad nesaf yn ddyledus ar {date}.",
+  "p.status.no_cadence":
+    "Nid oes amlder wedi'i osod, felly nid oes diweddariad byth yn ddyledus nac yn hwyr.",
+  "p.status.as_of": "Ar {date}, yng nghylchfa amser y gosodiad.",
+  "p.status.loading": "Wrthi'n llwytho…",
+  "p.status.posted_on_by": "postiwyd ar {date} gan {who}",
+  "p.status.posted_on": "postiwyd ar {date}",
+  "p.status.claims_of": "Honiadau yn niweddariad {date}",
+  "p.status.source_metric": "{metric}: {value} nawr",
+  "p.status.source_metric_unknown": "{metric}: anhysbys (nid sero)",
+  "p.status.source_unavailable": "Ffynhonnell nad yw ar gael mwyach",
+  "p.status.kind_task": "Tasg: {title}",
+  "p.status.kind_risk": "Risg: {title}",
+  "p.status.kind_milestone": "Carreg filltir: {title}",
+  "p.status.kind_issue": "Mater: {title}",
+  "p.status.kind_other": "Cofnod: {title}",
+  "p.status.metric_overdue": "Tasgau hwyr",
+  "p.status.metric_due_soon": "Tasgau sy'n ddyledus cyn bo hir",
+  "p.status.metric_blocked": "Tasgau wedi'u rhwystro",
+  "p.status.metric_no_due_date": "Tasgau heb ddyddiad dyledus",
+  "p.status.metric_def_overdue":
+    "Tasgau agored y mae eu dyddiad dyledus cyn heddiw. Nid yw tasg sy'n ddyledus heddiw yn hwyr. Anhysbys pan fo tasgau agored a dim un â dyddiad dyledus.",
+  "p.status.metric_def_due_soon":
+    "Tasgau agored sy'n ddyledus heddiw neu o fewn y {days} diwrnod nesaf. Anhysbys pan fo tasgau agored a dim un â dyddiad dyledus.",
+  "p.status.metric_def_blocked":
+    "Tasgau agored y mae eu statws wedi'i rwystro.",
+  "p.status.metric_def_no_due_date":
+    "Tasgau agored heb ddyddiad dyledus: y tasgau na all y rhifau eraill eu gweld.",
+  "p.status.metrics_heading": "Sut mae'r rhifau'n cael eu cyfrif",
+  "p.status.metrics_says":
+    "Dros dasgau agored y cynllun (tasg nad yw ei chyflwr wedi'i gwblhau), wedi'u cyfrif pan ddarllenir diweddariad, nid pan gafodd ei bostio.",
+  "p.status.cadence_heading": "Pa mor aml y disgwylir diweddariad",
+  "p.status.cadence_says":
+    "Bob {min} i {max} diwrnod. Mae ei osod yn ailgychwyn y cloc o heddiw, felly nid anfonir yr un amlder eto. Ni ellir dileu amlder unwaith y caiff ei osod.",
+  "p.status.cadence_set_by": "Gosodwyd ar {date} gan {who}.",
+  "p.status.cadence_set_on": "Gosodwyd ar {date}.",
+  "p.status.f_cadence": "Diwrnodau rhwng diweddariadau ({min} i {max})",
+  "p.status.save_cadence": "Cadw'r amlder",
+  "p.status.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.status.problem_cadence":
+    "Mae amlder yn nifer cyfan o ddiwrnodau o {min} i {max}.",
+  "p.status.cadence_saved_one":
+    "Disgwylir diweddariad bob dydd nawr; mae'r cloc yn dechrau heddiw.",
+  "p.status.cadence_saved_other":
+    "Disgwylir diweddariad bob {n} diwrnod nawr; mae'r cloc yn dechrau heddiw.",
+  "p.status.could_not_save": "Methu cadw'r amlder",
+  "p.status.refused_gone": "Nid yw'r cynllun hwnnw'n bodoli mwyach.",
+  "p.status.history_heading": "Pob diweddariad, y mwyaf newydd yn gyntaf",
+  "p.status.history_says":
+    "Ni chaiff diweddariadau byth eu newid na'u dileu. Dangosir pob ffynhonnell fel y mae nawr: nid yw cofnod sydd wedi mynd ar gael mwyach, a gwerth heddiw yw pob rhif.",
+  "p.status.history_none": "Dim diweddariadau eto.",
+  "p.status.post_heading": "Postio diweddariad",
+  "p.status.post_says":
+    "Dewiswch y farn a dywedwch beth sy'n digwydd (hyd at {max} nod). Ni ellir newid na dileu diweddariad unwaith y caiff ei bostio, ac mae postio un yn ailgychwyn cloc yr amlder.",
+  "p.status.claims_rule":
+    "Gallwch ychwanegu hyd at {claims} honiad, pob un yn frawddeg o hyd at {chars} nod sy'n cyfeirio at hyd at {sources} ffynhonnell: y rhifau isod, neu dasgau, risgiau, cerrig milltir a materion y cynllun. Caiff pob ffynhonnell ei gwirio pan bostir y diweddariad.",
+  "p.status.f_call": "Y farn",
+  "p.status.call_on_track": "Ar y trywydd iawn",
+  "p.status.call_at_risk": "Mewn perygl",
+  "p.status.call_off_track": "Oddi ar y trywydd",
+  "p.status.f_narrative": "Beth sy'n digwydd (hyd at {max} nod)",
+  "p.status.claim_legend": "Honiad {n}",
+  "p.status.f_claim_text": "Yr honiad (hyd at {chars} nod)",
+  "p.status.f_metrics": "Rhifau y mae'n cyfeirio atynt",
+  "p.status.f_record": "Cofnod o'r cynllun y mae honiad {n} yn cyfeirio ato",
+  "p.status.choose_record": "Dewiswch gofnod",
+  "p.status.add_record": "Ychwanegu'r cofnod at honiad {n}",
+  "p.status.claim_records": "Cofnodion y mae honiad {n} yn cyfeirio atynt",
+  "p.status.remove": "Tynnu",
+  "p.status.remove_source": "Tynnu {source} o honiad {n}",
+  "p.status.remove_claim": "Tynnu honiad {n}",
+  "p.status.add_claim": "Ychwanegu honiad",
+  "p.status.post": "Postio'r diweddariad",
+  "p.status.posted": "Diweddariad wedi'i bostio: {call}.",
+  "p.status.could_not_post": "Methu postio'r diweddariad",
+  "p.status.problem_call":
+    "Dewiswch ar y trywydd iawn, mewn perygl neu oddi ar y trywydd.",
+  "p.status.problem_narrative":
+    "Dywedwch beth sy'n digwydd, mewn hyd at {max} nod.",
+  "p.status.problem_claims":
+    "Mae diweddariad yn cario {claims} honiad ar y mwyaf.",
+  "p.status.problem_claim_text": "Mae honiad yn frawddeg o hyd at {chars} nod.",
+  "p.status.problem_sources":
+    "Mae honiad yn cyfeirio at {sources} ffynhonnell ar y mwyaf.",
+  "p.status.problem_in_claim": "Honiad {n}: {problem}",
+  "p.status.refused_update":
+    "Gwrthodwyd: efallai nad yw ffynhonnell yn gofnod o'r cynllun hwn mwyach. Ni phostiwyd dim; gwiriwch yr honiadau a phostio eto.",
+  "p.status.due_heading": "Diweddariadau statws sy'n ddyledus",
+  "p.status.due_none":
+    "Nid oes gan unrhyw gynllun y gallwch ei ddarllen ddiweddariad statws yn ddyledus.",
+  "p.status.due_could_not_load":
+    "Methu llwytho'r diweddariadau statws sy'n ddyledus",
+  "p.status.a_plan": "Cynllun",
+  "p.status.due_last": "Diweddariad olaf: {call}, ar {date}.",
+  "p.status.due_never": "Dim diweddariad eto.",
+  "p.status.group_task": "Tasgau",
+  "p.status.group_risk": "Risgiau",
+  "p.status.group_milestone": "Cerrig milltir",
+  "p.status.group_issue": "Materion",
 };

@@ -1835,3 +1835,9 @@ and its English `detail`; each fact a screen must show is a field, not only Engl
   trade-off (absent, or under 10 characters once trimmed; `domain/src/governance.rs` `needs_named_tradeoff`) answers 422
   `tradeoff_required`; both were `unprocessable`. Tests: `only_an_external_ask_needs_a_named_tradeoff` (domain),
   `tests/organizations.rs` (all four codes).
+- **Why a start was refused, as fields.** The 422 `start_refused` from `PUT /api/plans/{pid}/phase` (EX-8) keeps its
+  English `detail` and gains the problem's `errors` member: `{ "refusals": [...], "queue_position": n }`, each refusal
+  tagged by `reason` with its numbers (`limit_reached` with `in_delivery` and `limit`; `constraint_pool_over` with
+  `pool` and `months`), the shapes `GET /api/plans/{pid}/start-check` gives (`domain/src/start_control.rs`
+  `refused_errors`). The place counts only the queued programmes the caller may read, as the `detail` does. Tests:
+  `a_refusal_carries_its_reason_as_a_code_and_its_numbers` (domain), `tests/organizations.rs`.

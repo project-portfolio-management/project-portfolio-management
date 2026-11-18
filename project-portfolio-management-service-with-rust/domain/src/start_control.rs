@@ -67,9 +67,58 @@ pub fn refusals(
     out
 }
 
+impl Refusal {
+    /// The English sentence for one refusal, as the 422's `detail` gives it.
+    #[must_use]
+    pub fn message(&self) -> String {
+        match self {
+            Self::LimitReached { in_delivery, limit } => format!(
+                "{in_delivery} of {limit} places for programmes in active delivery are taken"
+            ),
+            Self::ConstraintPoolOver { pool, months } => format!(
+                "the {pool} pool is short of supply in {}",
+                months.join(", ")
+            ),
+        }
+    }
+}
+
+/// The structured part of a 422 `start_refused` (its `errors` member): the refusals, each tagged by `reason` with its
+/// numbers (`limit_reached` with `in_delivery` and `limit`; `constraint_pool_over` with `pool` and `months`), and the
+/// programme's place in the queue among those the caller may read. The same shapes as
+/// `GET /api/plans/{pid}/start-check`'s `refusals` and `queue_position`, so a client need not read the check again.
+#[must_use]
+pub fn refused_errors(refusals: &[Refusal], queue_position: usize) -> serde_json::Value {
+    serde_json::json!({ "refusals": refusals, "queue_position": queue_position })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_refusal_carries_its_reason_as_a_code_and_its_numbers() {
+        let m = vec!["2026-11".to_string()];
+        let e = refused_errors(&refusals(3, Some(3), Some(("Data", &m))), 2);
+        assert_eq!(
+            e,
+            serde_json::json!({
+                "refusals": [
+                    { "reason": "limit_reached", "in_delivery": 3, "limit": 3 },
+                    { "reason": "constraint_pool_over", "pool": "Data", "months": ["2026-11"] },
+                ],
+                "queue_position": 2,
+            })
+        );
+        assert_eq!(
+            Refusal::LimitReached {
+                in_delivery: 1,
+                limit: 1
+            }
+            .message(),
+            "1 of 1 places for programmes in active delivery are taken"
+        );
+    }
 
     #[test]
     fn only_an_active_programme_in_executing_or_controlling_uses_a_place() {

@@ -24,6 +24,9 @@ It is pre-1.0; the first release cut from the root release workflow is
   second tracker scorecard (`tracker_scorecard_taken`), both 409; a proposal in the wrong status
   (`proposal_status_refused`) and an external ask with no trade-off (`tradeoff_required`), both 422. A client that
   matched `conflict` or `unprocessable` there must change; the UI did not.
+- **Service: `start_refused` says why as fields.** The refusal of a programme's start carries `errors.refusals` (each a
+  reason code with its numbers) and `errors.queue_position`, so the phase page need not read the start check again.
+  **Not done:** the page still reads the check.
 
 ### 18 November (test coverage measured, with cargo-tarpaulin)
 

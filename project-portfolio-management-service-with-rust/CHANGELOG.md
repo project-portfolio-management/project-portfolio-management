@@ -26,6 +26,12 @@ Service spec, "Codes and fields a screen reads (NC-1 slice 12, part a)", is the 
   `only_an_external_ask_needs_a_named_tradeoff`, `tests/organizations.rs`. **Breaking** for a client that matched
   the old codes; none in this repository did. **Not changed:** the other 422s of the proposal routes (a bad body,
   `PUT …/tradeoff`'s refusals) keep `unprocessable`.
+- **`start_refused` carries its reasons as fields.** The 422 from `PUT /api/plans/{pid}/phase` adds the problem's
+  `errors` member, `{ refusals, queue_position }`, in the shapes of `GET /api/plans/{pid}/start-check` (`limit_reached`
+  with `in_delivery` and `limit`; `constraint_pool_over` with `pool` and `months`); the English `detail` is unchanged
+  and now built by `start_control::Refusal::message` in the domain crate. Tests:
+  `a_refusal_carries_its_reason_as_a_code_and_its_numbers`, `tests/organizations.rs` (the limit case). **Not
+  verified:** the `constraint_pool_over` case through the route (the domain test covers its shape).
 
 ### Added — test coverage with cargo-tarpaulin, and its baseline (2026-11-18)
 

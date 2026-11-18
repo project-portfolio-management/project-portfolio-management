@@ -509,6 +509,9 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let (code, text) = phase(&beta, "executing", json!({})).await;
         assert_eq!(code, 422, "{text}");
         assert!(text.contains("start_refused") && text.contains("1 of 1 places") && text.contains("number 1 in the queue"), "{text}");
+        // The same as fields, so a page need not read the start check again.
+        let refused: Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(refused["errors"], json!({ "refusals": [{ "reason": "limit_reached", "in_delivery": 1, "limit": 1 }], "queue_position": 1 }), "{text}");
         assert_eq!(phase(&delta, "executing", json!({})).await.0, 422);
         let q: Value = with!(request.get("/api/start-queue"), writer).await.json();
         let names: Vec<&str> = q["queue"].as_array().unwrap().iter().filter(|e| e["name"] == "Beta" || e["name"] == "Delta").map(|e| e["name"].as_str().unwrap()).collect();

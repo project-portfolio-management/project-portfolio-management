@@ -371,15 +371,7 @@ pub(crate) async fn gate(
     let why = e
         .refusals
         .iter()
-        .map(|r| match r {
-            Refusal::LimitReached { in_delivery, limit } => format!(
-                "{in_delivery} of {limit} places for programmes in active delivery are taken"
-            ),
-            Refusal::ConstraintPoolOver { pool, months } => format!(
-                "the {pool} pool is short of supply in {}",
-                months.join(", ")
-            ),
-        })
+        .map(Refusal::message)
         .collect::<Vec<_>>()
         .join("; ");
     AuditModel::record_on(
@@ -392,15 +384,17 @@ pub(crate) async fn gate(
     .await
     .map_err(super::audit_failed)?;
     tx.commit().await?;
-    Err(Error::CustomError(
-        StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new(
+    // The reasons and the place as fields too (the `errors` member), so a client need not read the check again.
+    let detail = ErrorDetail {
+        errors: Some(rules::refused_errors(&e.refusals, place)),
+        ..ErrorDetail::new(
             "start_refused",
             format!(
                 "this programme cannot start yet: {why}. It is number {place} in the queue; send start_override_reason (10 or more characters) to start anyway."
             ),
-        ),
-    ))
+        )
+    };
+    Err(Error::CustomError(StatusCode::UNPROCESSABLE_ENTITY, detail))
 }
 
 /// `POST /api/plans/{pid}/start-queue/withdraw` — leave the queue.

@@ -109,6 +109,13 @@ pub fn proposal_transition(status: &str, action: ProposalAction) -> Result<&'sta
     }
 }
 
+/// Whether an approval must be refused for want of a named trade-off (EX-13): an external ask whose trade-off is
+/// absent, or shorter than 10 characters once trimmed. Any other proposal never needs one.
+#[must_use]
+pub fn needs_named_tradeoff(external_ask: bool, tradeoff: Option<&str>) -> bool {
+    external_ask && tradeoff.is_none_or(|t| t.trim().chars().count() < 10)
+}
+
 /// Whether a proposal may still be edited (only before submission).
 #[must_use]
 pub fn proposal_editable(status: &str) -> bool {
@@ -305,5 +312,22 @@ mod tests {
         assert!(!gate_reached(Some("g0_concept"), "g1_feasibility"));
         assert!(!gate_reached(Some("nonsense"), "g0_concept"));
         assert!(!gate_reached(Some("g5_benefits"), "nonsense"));
+    }
+
+    #[test]
+    fn only_an_external_ask_needs_a_named_tradeoff() {
+        assert!(
+            !needs_named_tradeoff(false, None),
+            "an ordinary proposal never needs one"
+        );
+        assert!(needs_named_tradeoff(true, None));
+        assert!(
+            needs_named_tradeoff(true, Some("  short   ")),
+            "fewer than 10 characters once trimmed"
+        );
+        assert!(!needs_named_tradeoff(
+            true,
+            Some("Displaces the records migration")
+        ));
     }
 }

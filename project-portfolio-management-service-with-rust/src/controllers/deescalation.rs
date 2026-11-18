@@ -25,20 +25,22 @@ use crate::models::_entities::{
 };
 use crate::models::audit_logs::Model as AuditModel;
 
-/// Map a database error to an API error; unique-constraint violations on scorecard name or the single de-escalation scorecard become 409 conflicts, anything else a generic error.
+/// Map a database error to an API error; unique-constraint violations on scorecard name or the single de-escalation
+/// scorecard become 409s, each with its own code (`scorecard_name_taken`, `tracker_scorecard_taken`) so a screen can say
+/// which; anything else a generic error.
 fn db_err(e: &sqlx::Error) -> Error {
     let t = e.to_string();
     if t.contains("sc_name") {
         return Error::CustomError(
             StatusCode::CONFLICT,
-            ErrorDetail::new("conflict", "a scorecard with that name exists"),
+            ErrorDetail::new("scorecard_name_taken", "a scorecard with that name exists"),
         );
     }
     if t.contains("sc_one_deescalation") {
         return Error::CustomError(
             StatusCode::CONFLICT,
             ErrorDetail::new(
-                "conflict",
+                "tracker_scorecard_taken",
                 "another scorecard is already the one the de-escalation tracker reads",
             ),
         );

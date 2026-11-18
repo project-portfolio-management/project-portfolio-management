@@ -31080,23 +31080,30 @@
     },
     "/api/proposals/{pid}/approve": {
       "post": {
-        "description": "No description has been written for this route yet.",
+        "description": "No body. Moves an in_review proposal to approved. Two refusals, each with its own code: 422 proposal_status_refused when the proposal is not in review (the code the submit, review, reject and promote steps also give for a wrong status), and 422 tradeoff_required when it is an external ask with no named trade-off (PUT /api/proposals/{pid}/tradeoff, 10 or more characters; EX-13). Audited.",
         "parameters": [
           {
             "in": "path",
             "name": "pid",
             "required": true,
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK; the response shape is not documented yet."
+            "description": "The proposal"
+          },
+          "404": {
+            "description": "Unknown proposal, or one you may not read"
+          },
+          "422": {
+            "description": "proposal_status_refused or tradeoff_required"
           }
         },
-        "summary": "POST /api/proposals/{pid}/approve",
+        "summary": "Approve a proposal in review",
         "tags": [
           "governance"
         ]
@@ -31300,7 +31307,7 @@
     },
     "/api/proposals/{pid}/tradeoff": {
       "put": {
-        "description": "Body: tradeoff, 10 to 2000 characters. Only for a proposal tagged external_ask; allowed until it is decided (draft, submitted or in review), so a reviewer can record it without reopening the draft. Approving an external ask without a named trade-off is refused with 422. Audited.",
+        "description": "Body: tradeoff, 10 to 2000 characters. Only for a proposal tagged external_ask; allowed until it is decided (draft, submitted or in review), so a reviewer can record it without reopening the draft. Approving an external ask without a named trade-off is refused with 422 tradeoff_required. Audited.",
         "parameters": [
           {
             "in": "path",
@@ -33343,7 +33350,7 @@
             "description": "pid, name"
           },
           "409": {
-            "description": "The name exists, or another scorecard is the tracker's"
+            "description": "scorecard_name_taken: the name exists; tracker_scorecard_taken: another scorecard is the tracker's"
           },
           "422": {
             "description": "A bad name"

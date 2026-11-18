@@ -1828,3 +1828,10 @@ and its English `detail`; each fact a screen must show is a field, not only Engl
   `PUT /api/plans/{pid}/delivery-confidence`) carries `threshold_kind`: `confidence_red_packs`, `forecast_past` or
   `p80_cap` for one a threshold opened or joined (EX-7), null for one opened by delivery confidence alone. Tests:
   `tests/organizations.rs` (both kinds in the list), `tests/delivery_confidence.rs` (null).
+- **Two refusals, two codes.** `POST /api/scorecards` answers 409 `scorecard_name_taken` when the name is taken
+  (ignoring case) and 409 `tracker_scorecard_taken` when another scorecard is already the one the de-escalation tracker
+  reads; both were `conflict`. A proposal pipeline step (`submit`, `review`, `approve`, `reject`, `promote`) on a
+  proposal in the wrong status answers 422 `proposal_status_refused`, and approving an external ask with no named
+  trade-off (absent, or under 10 characters once trimmed; `domain/src/governance.rs` `needs_named_tradeoff`) answers 422
+  `tradeoff_required`; both were `unprocessable`. Tests: `only_an_external_ask_needs_a_named_tradeoff` (domain),
+  `tests/organizations.rs` (all four codes).

@@ -1712,7 +1712,7 @@ fn scorecard_paths() -> Value {
         "/api/scorecards": {
             "post": op("kpis", "Create a scorecard: a named set of KPIs",
                 "Body: name (3 to 120 characters, unique ignoring case) and for_deescalation (at most one scorecard is the one the tracker reads). Audited.",
-                vec![], &[("200", "pid, name"), ("409", "The name exists, or another scorecard is the tracker's"), ("422", "A bad name")]),
+                vec![], &[("200", "pid, name"), ("409", "scorecard_name_taken: the name exists; tracker_scorecard_taken: another scorecard is the tracker's"), ("422", "A bad name")]),
             "get": op("kpis", "The scorecards",
                 "Inputs: the scorecard records (names only; the KPIs are read from GET /api/scorecards/{pid}).",
                 vec![], &[("200", "scorecards")])
@@ -1950,9 +1950,15 @@ fn external_ask_paths() -> Value {
     json!({
         "/api/proposals/{pid}/tradeoff": {
             "put": op("governance", "Name what an external ask displaces",
-                "Body: tradeoff, 10 to 2000 characters. Only for a proposal tagged external_ask; allowed until it is decided (draft, submitted or in review), so a reviewer can record it without reopening the draft. Approving an external ask without a named trade-off is refused with 422. Audited.",
+                "Body: tradeoff, 10 to 2000 characters. Only for a proposal tagged external_ask; allowed until it is decided (draft, submitted or in review), so a reviewer can record it without reopening the draft. Approving an external ask without a named trade-off is refused with 422 tradeoff_required. Audited.",
                 vec![uuid_param("pid")],
                 &[("200", "The proposal"), ("404", "Unknown proposal"), ("422", "Not an external ask, already decided, or a trade-off that is too short or long")])
+        },
+        "/api/proposals/{pid}/approve": {
+            "post": op("governance", "Approve a proposal in review",
+                "No body. Moves an in_review proposal to approved. Two refusals, each with its own code: 422 proposal_status_refused when the proposal is not in review (the code the submit, review, reject and promote steps also give for a wrong status), and 422 tradeoff_required when it is an external ask with no named trade-off (PUT /api/proposals/{pid}/tradeoff, 10 or more characters; EX-13). Audited.",
+                vec![uuid_param("pid")],
+                &[("200", "The proposal"), ("404", "Unknown proposal, or one you may not read"), ("422", "proposal_status_refused or tradeoff_required")])
         }
     })
 }

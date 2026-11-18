@@ -32,9 +32,14 @@ fn unprocessable(problems: &[String]) -> Error {
 
 /// One-problem `422` for state-machine refusals.
 fn refuse(message: &str) -> Error {
+    refuse_as("unprocessable", message)
+}
+
+/// A 422 with its own machine code, for a refusal a screen must tell apart from the others.
+fn refuse_as(code: &str, message: &str) -> Error {
     Error::CustomError(
         StatusCode::UNPROCESSABLE_ENTITY,
-        ErrorDetail::new("unprocessable", message),
+        ErrorDetail::new(code, message),
     )
 }
 
@@ -453,16 +458,15 @@ async fn transition_proposal(
     action: rules::ProposalAction,
 ) -> Result<proposals::Model> {
     let row = readable_proposal(ctx, caller, pid).await?;
-    let next = rules::proposal_transition(&row.status, action).map_err(|e| refuse(&e))?;
+    // Each refusal has its own code, so a screen can tell a proposal in the wrong status from an ask with no trade-off.
+    let next = rules::proposal_transition(&row.status, action)
+        .map_err(|e| refuse_as("proposal_status_refused", &e))?;
     // A new ask from the sponsor must name what it displaces before it is approved (EX-13).
     if matches!(action, rules::ProposalAction::Approve)
-        && row.external_ask
-        && row
-            .tradeoff
-            .as_deref()
-            .is_none_or(|t| t.trim().chars().count() < 10)
+        && rules::needs_named_tradeoff(row.external_ask, row.tradeoff.as_deref())
     {
-        return Err(refuse(
+        return Err(refuse_as(
+            "tradeoff_required",
             "an external ask needs a named trade-off before approval: set tradeoff to what it displaces (10 or more characters)",
         ));
     }
@@ -511,7 +515,7 @@ async fn promote_proposal(
 ) -> Result<Response> {
     let row = readable_proposal(&ctx, &caller, &pid).await?;
     let next = rules::proposal_transition(&row.status, rules::ProposalAction::Promote)
-        .map_err(|e| refuse(&e))?;
+        .map_err(|e| refuse_as("proposal_status_refused", &e))?;
     let mut plan = Plan {
         kind: parse_kind_label(&row.kind_target),
         name: row.title.clone(),

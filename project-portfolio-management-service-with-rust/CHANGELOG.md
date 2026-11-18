@@ -17,6 +17,15 @@ Service spec, "Codes and fields a screen reads (NC-1 slice 12, part a)", is the 
   `confidence_red_packs`, `forecast_past` or `p80_cap` for one a threshold opened or joined, null for one opened by
   delivery confidence. The column was stored (EX-7) but not returned. Tests: `tests/organizations.rs`,
   `tests/delivery_confidence.rs`. **Not changed:** there is still no `GET /api/exceptions/{pid}`.
+- **Each refusal its own code.** `POST /api/scorecards`: 409 `conflict` becomes `scorecard_name_taken` (a name taken)
+  or `tracker_scorecard_taken` (another scorecard is the tracker's). The proposal pipeline: 422 `unprocessable` becomes
+  `proposal_status_refused` (wrong status, on `submit`, `review`, `approve`, `reject` and `promote`) or
+  `tradeoff_required` (approving an external ask with no named trade-off; the rule is now
+  `governance::needs_named_tradeoff` in the domain crate). Statuses and `detail` text are unchanged.
+  `POST /api/proposals/{pid}/approve` gains a hand-written OpenAPI operation naming both. Tests:
+  `only_an_external_ask_needs_a_named_tradeoff`, `tests/organizations.rs`. **Breaking** for a client that matched
+  the old codes; none in this repository did. **Not changed:** the other 422s of the proposal routes (a bad body,
+  `PUT …/tradeoff`'s refusals) keep `unprocessable`.
 
 ### Added — test coverage with cargo-tarpaulin, and its baseline (2026-11-18)
 

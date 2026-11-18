@@ -20,6 +20,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 - **Service: which threshold opened a delivery exception.** `GET /api/exceptions` (and every answer that carries an
   exception) returns `threshold_kind`, null for one opened by delivery confidence. **Not done:** no screen reads it
   yet (slice 12 parts c and k).
+- **Service: two refusals that shared a code now have one each.** A scorecard name taken (`scorecard_name_taken`) and a
+  second tracker scorecard (`tracker_scorecard_taken`), both 409; a proposal in the wrong status
+  (`proposal_status_refused`) and an external ask with no trade-off (`tradeoff_required`), both 422. A client that
+  matched `conflict` or `unprocessable` there must change; the UI did not.
 
 ### 18 November (test coverage measured, with cargo-tarpaulin)
 

@@ -303,12 +303,16 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
             with!(request.post(&format!("/api/proposals/{p}/submit")), writer).await.assert_status_ok();
             with!(request.post(&format!("/api/proposals/{p}/review")), writer).await.assert_status_ok();
         }
-        assert_eq!(with!(request.post(&format!("/api/proposals/{ap}/approve")), writer).await.status_code(), 422, "an ask with no trade-off");
+        let r = with!(request.post(&format!("/api/proposals/{ap}/approve")), writer).await;
+        assert_eq!(r.status_code(), 422, "an ask with no trade-off");
+        assert_eq!(r.json::<Value>()["code"], "tradeoff_required", "its own code, not the wrong-status one");
         assert_eq!(with!(request.put(&format!("/api/proposals/{pp}/tradeoff")), writer).json(&json!({ "tradeoff": "Nothing at all really" })).await.status_code(), 422, "not an external ask");
         assert_eq!(with!(request.put(&format!("/api/proposals/{ap}/tradeoff")), writer).json(&json!({ "tradeoff": "short" })).await.status_code(), 422);
         with!(request.put(&format!("/api/proposals/{ap}/tradeoff")), writer).json(&json!({ "tradeoff": "Displaces the records migration by one quarter" })).await.assert_status_ok();
         with!(request.post(&format!("/api/proposals/{ap}/approve")), writer).await.assert_status_ok();
         with!(request.post(&format!("/api/proposals/{pp}/approve")), writer).await.assert_status_ok();
+        let r = with!(request.post(&format!("/api/proposals/{pp}/approve")), writer).await;
+        assert_eq!((r.status_code().as_u16(), r.json::<Value>()["code"].clone()), (422, json!("proposal_status_refused")), "approving twice: not in review");
         assert_eq!(with!(request.put(&format!("/api/proposals/{ap}/tradeoff")), writer).json(&json!({ "tradeoff": "Changed my mind about it" })).await.status_code(), 422, "decided");
         let d3: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": month, "audience": "executive" })).await.json();
         let pack3: Value = with!(request.get(&format!("/api/director-packs/{}", d3["pid"].as_str().unwrap())), issuer).await.json();
@@ -688,7 +692,10 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert!(tpl["measures"].as_array().unwrap().iter().all(|m| m.get("target_value").is_none()), "the template carries no targets");
         let sc: Value = with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "Recovery outcomes", "for_deescalation": true })).await.json();
         let scp = sc["pid"].as_str().unwrap().to_string();
-        assert_eq!(with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "Another", "for_deescalation": true })).await.status_code(), 409, "only one is the tracker's");
+        let r = with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "Another", "for_deescalation": true })).await;
+        assert_eq!((r.status_code().as_u16(), r.json::<Value>()["code"].clone()), (409, json!("tracker_scorecard_taken")), "only one is the tracker's");
+        let r = with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "recovery OUTCOMES" })).await;
+        assert_eq!((r.status_code().as_u16(), r.json::<Value>()["code"].clone()), (409, json!("scorecard_name_taken")), "a name taken, ignoring case");
         assert_eq!(with!(request.post(&format!("/api/scorecards/{scp}/from-template")), writer).json(&json!({ "measures": [{ "key": "milestones_met_on_time", "target_value": 50, "red_value": 80 }] })).await.status_code(), 422, "red must be on the worse side");
         assert_eq!(with!(request.post(&format!("/api/scorecards/{scp}/from-template")), writer).json(&json!({ "measures": [{ "key": "mood", "target_value": 1, "red_value": 0 }] })).await.status_code(), 422);
         let made: Value = with!(request.post(&format!("/api/scorecards/{scp}/from-template")), writer).json(&json!({ "measures": [

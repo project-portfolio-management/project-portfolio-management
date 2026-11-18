@@ -6871,4 +6871,135 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Offene Probleme mit kritischem Schweregrad",
   "p.deescalation.measure_change_requests_waiting":
     "Änderungsanträge, die mehr als 30 Tage auf eine Entscheidung warten",
+  "p.phase.name_initiating": "Initiierung",
+  "p.phase.name_planning": "Planung",
+  "p.phase.name_executing": "Durchführung",
+  "p.phase.name_controlling": "Steuerung",
+  "p.phase.name_closing": "Abschluss",
+  "p.phase.heading": "Phase des Plans",
+  "p.phase.heading_programme": "Phase und Start",
+  "p.phase.says":
+    "Ein Plan rückt jeweils um eine Phase vor; er kann mit einer Begründung, die mit dem Wechsel erfasst wird, in eine frühere Phase zurückgehen. Die Phase verhindert nie, dass Arbeit erfasst wird.",
+  "p.phase.could_not_load": "Die Phase des Plans konnte nicht geladen werden",
+  "p.phase.now": "Der Plan ist in der Phase {phase}.",
+  "p.phase.none":
+    "Noch ist keine Phase erfasst: Der erste Wechsel führt in die Initiierung.",
+  "p.phase.time_heading": "Zeit in jeder Phase",
+  "p.phase.days_in_one": "{phase}: {days} Tag",
+  "p.phase.days_in_other": "{phase}: {days} Tage",
+  "p.phase.visits_one": "{visits}-mal betreten",
+  "p.phase.visits_other": "{visits}-mal betreten",
+  "p.phase.current": "aktuell",
+  "p.phase.check_heading": "Startprüfung",
+  "p.phase.check_says":
+    "Ein Programm startet, wenn seine Phase zu Durchführung wechselt. Der Start wird abgelehnt, wenn alle Plätze für Programme in aktiver Umsetzung belegt sind (pausierte und gestoppte Programme belegen keinen) oder wenn der Engpass-Pool in einem der nächsten sechs Monate zu wenig Angebot hat. Ein abgelehntes Programm kommt in die Startwarteschlange und behält seinen Platz; es kann trotzdem mit einer Übersteuerungsbegründung von {min} oder mehr Zeichen starten, die erfasst und protokolliert wird. Das Lesen der Prüfung bewegt nichts.",
+  "p.phase.could_not_check": "Die Startprüfung konnte nicht gelesen werden",
+  "p.phase.places":
+    "{in_delivery} von {limit} Plätzen für Programme in aktiver Umsetzung sind belegt.",
+  "p.phase.no_limit":
+    "Für Programme in aktiver Umsetzung ist keine Grenze gesetzt.",
+  "p.phase.limit_unusable":
+    "Die Grenze der Installation für Programme in Umsetzung war nicht verwendbar, daher gilt keine Grenze.",
+  "p.phase.pool_is": "Der Engpass-Pool ist {pool}.",
+  "p.phase.no_pool": "Es ist kein Engpass-Pool bestimmt.",
+  "p.phase.would_refuse": "Ein Start wäre jetzt abgelehnt:",
+  "p.phase.would_start": "Ein Start wäre jetzt möglich.",
+  "p.phase.in_queue":
+    "Dieses Programm ist Nummer {n} in der Startwarteschlange.",
+  "p.phase.see_queue": "Startwarteschlange ansehen",
+  "p.phase.refusal_limit":
+    "Alle {limit} Plätze für Programme in aktiver Umsetzung sind belegt ({in_delivery} in Umsetzung).",
+  "p.phase.refusal_pool":
+    "Der Engpass-Pool {pool} hat zu wenig Angebot in {months}.",
+  "p.phase.demand_heading": "Feste Nachfrage dieses Programms",
+  "p.phase.demand_caption":
+    "Vollzeitäquivalente nach Kompetenzpool und Monat, aus festen Zuordnungen auf diesem Programm und den Plänen darunter",
+  "p.phase.no_demand":
+    "Keine feste Nachfrage dieses Programms in einem Kompetenzpool in den nächsten sechs Monaten.",
+  "p.phase.col_pool": "Kompetenzpool",
+  "p.phase.check_again": "Erneut prüfen",
+  "p.phase.move_heading": "Phase ändern",
+  "p.phase.f_to": "Wechseln zu",
+  "p.phase.forward_to": "Weiter zu {phase}",
+  "p.phase.back_to": "Zurück zu {phase}",
+  "p.phase.back_needs_reason": "Ein Wechsel zurück braucht eine Begründung.",
+  "p.phase.f_reason":
+    "Begründung (nötig für einen Wechsel zurück; wird mit dem Wechsel erfasst)",
+  "p.phase.start_may_queue":
+    "Der Wechsel zu Durchführung ist der Start dieses Programms: Findet die Prüfung beim Senden keinen Platz, wird der Start abgelehnt und das Programm kommt in die Startwarteschlange.",
+  "p.phase.start_would_queue":
+    "Dieser Start würde abgelehnt. Ohne Übersteuerungsbegründung gesendet, kommt das Programm in die Startwarteschlange (oder behält dort seinen Platz).",
+  "p.phase.f_override":
+    "Übersteuerungsbegründung, um trotzdem zu starten ({min} oder mehr Zeichen; wird erfasst und protokolliert)",
+  "p.phase.refused_why": "Warum der Start abgelehnt wurde",
+  "p.phase.move": "Phase wechseln",
+  "p.phase.moved": "Der Plan ist jetzt in der Phase {phase}.",
+  "p.phase.started_override":
+    "Das Programm wurde per Übersteuerung gestartet: Es ist jetzt in der Phase {phase}, und die Übersteuerung ist erfasst.",
+  "p.phase.start_refused_place":
+    "Der Start wurde abgelehnt, daher ist das Programm Nummer {n} in der Startwarteschlange. Um es trotzdem zu starten, geben Sie eine Übersteuerungsbegründung an.",
+  "p.phase.start_refused":
+    "Der Start wurde abgelehnt, und das Programm kam in die Startwarteschlange. Um es trotzdem zu starten, geben Sie eine Übersteuerungsbegründung an.",
+  "p.phase.could_not_move": "Die Phase konnte nicht gewechselt werden",
+  "p.phase.problem_choose":
+    "Wählen Sie die Phase, zu der gewechselt werden soll.",
+  "p.phase.problem_same":
+    "Der Plan ist bereits in dieser Phase, daher wurde nichts gesendet.",
+  "p.phase.problem_skip": "Vorwärts geht es jeweils nur um eine Phase.",
+  "p.phase.problem_reason":
+    "Für einen Wechsel zurück ist eine Begründung nötig.",
+  "p.phase.problem_override":
+    "Eine Übersteuerungsbegründung hat {min} oder mehr Zeichen.",
+  "p.phase.refused_move":
+    "Abgelehnt: Vorwärts geht es um eine Phase auf einmal, zurück nur mit Begründung, und der Plan darf nicht schon in dieser Phase sein.",
+  "p.phase.refused_gone": "Diesen Plan gibt es nicht mehr.",
+  "p.proposals.act_submit": "Einreichen",
+  "p.proposals.act_review": "Prüfung beginnen",
+  "p.proposals.act_approve": "Genehmigen",
+  "p.proposals.act_reject": "Ablehnen",
+  "p.proposals.act_submit_named": "{title} einreichen",
+  "p.proposals.act_review_named": "Prüfung von {title} beginnen",
+  "p.proposals.act_approve_named": "{title} genehmigen",
+  "p.proposals.act_reject_named": "{title} ablehnen",
+  "p.proposals.ask_rule":
+    "Eine externe Anfrage des Sponsors muss benennen, was sie verdrängt (ein Zielkonflikt von {min} oder mehr Zeichen), bevor sie genehmigt werden kann.",
+  "p.proposals.new_form": "Neuer Vorschlag",
+  "p.proposals.f_external_ask": "Eine externe Anfrage des Sponsors",
+  "p.proposals.f_new_tradeoff":
+    "Was sie verdrängt (der Zielkonflikt, {min} bis {max} Zeichen; er kann später, vor der Genehmigung, benannt werden)",
+  "p.proposals.col_tradeoff": "Externe Anfrage und Zielkonflikt",
+  "p.proposals.not_ask": "Keine externe Anfrage",
+  "p.proposals.ask_with": "Externe Anfrage. Zielkonflikt: {tradeoff}",
+  "p.proposals.ask_without": "Externe Anfrage. Noch kein Zielkonflikt benannt.",
+  "p.proposals.tradeoff_name": "Zielkonflikt benennen",
+  "p.proposals.tradeoff_change": "Zielkonflikt ändern",
+  "p.proposals.tradeoff_name_named": "Zielkonflikt benennen für {title}",
+  "p.proposals.tradeoff_change_named": "Zielkonflikt ändern für {title}",
+  "p.proposals.tradeoff_heading": "Zielkonflikt von {title}",
+  "p.proposals.tradeoff_says":
+    "Benennen Sie, was diese Anfrage verdrängt, in {min} bis {max} Zeichen. Das geht, bis der Vorschlag genehmigt oder abgelehnt ist, und jede Änderung wird erfasst.",
+  "p.proposals.f_tradeoff": "Was sie verdrängt ({min} bis {max} Zeichen)",
+  "p.proposals.tradeoff_save": "Zielkonflikt speichern",
+  "p.proposals.tradeoff_close": "Formular zum Zielkonflikt schließen",
+  "p.proposals.tradeoff_unchanged":
+    "Nichts geändert, daher wurde nichts gesendet.",
+  "p.proposals.tradeoff_saved": "Zielkonflikt für {title} gespeichert.",
+  "p.proposals.problem_title": "Ein Vorschlag braucht einen Titel.",
+  "p.proposals.problem_tradeoff":
+    "Ein Zielkonflikt hat {min} bis {max} Zeichen.",
+  "p.proposals.problem_not_ask":
+    "Nur eine externe Anfrage hat einen Zielkonflikt.",
+  "p.proposals.problem_decided":
+    "Über den Vorschlag ist entschieden, daher kann sich sein Zielkonflikt nicht mehr ändern.",
+  "p.proposals.problem_approve":
+    "{title} ist eine externe Anfrage: Benennen Sie ihren Zielkonflikt ({min} oder mehr Zeichen), bevor Sie sie genehmigen.",
+  "p.proposals.refused_create":
+    "Abgelehnt: Ein Vorschlag braucht einen Titel, ein Betrag eine Währung, und ein Zielkonflikt hat höchstens {max} Zeichen.",
+  "p.proposals.refused_approve":
+    "Abgelehnt: Nur ein Vorschlag in Prüfung kann genehmigt werden, und eine externe Anfrage braucht zuerst einen benannten Zielkonflikt von {min} oder mehr Zeichen.",
+  "p.proposals.refused_tradeoff":
+    "Abgelehnt: Ein Zielkonflikt hat {min} bis {max} Zeichen und gehört zu einer externen Anfrage, über die noch nicht entschieden ist.",
+  "p.proposals.refused_step":
+    "Abgelehnt: Dieser Schritt folgt nicht aus dem Status des Vorschlags.",
+  "p.proposals.refused_gone": "Diesen Vorschlag gibt es nicht mehr.",
 };

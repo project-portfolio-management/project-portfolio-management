@@ -6604,6 +6604,128 @@ export const PAGES_EN = {
     "Open issues at critical severity",
   "p.deescalation.measure_change_requests_waiting":
     "Change requests waiting more than 30 days for a decision",
+  "p.phase.name_initiating": "Initiating",
+  "p.phase.name_planning": "Planning",
+  "p.phase.name_executing": "Executing",
+  "p.phase.name_controlling": "Controlling",
+  "p.phase.name_closing": "Closing",
+  "p.phase.heading": "Phase",
+  "p.phase.heading_programme": "Phase and start",
+  "p.phase.says":
+    "A plan moves forward one phase at a time; it may move back to an earlier phase with a reason, which is recorded with the move. The phase never stops work being recorded.",
+  "p.phase.could_not_load": "Could not load the plan's phase",
+  "p.phase.now": "The plan is in the {phase} phase.",
+  "p.phase.none":
+    "No phase is recorded yet: the first move is into Initiating.",
+  "p.phase.time_heading": "Time in each phase",
+  "p.phase.days_in_one": "{phase}: {days} day",
+  "p.phase.days_in_other": "{phase}: {days} days",
+  "p.phase.visits_one": "entered {visits} time",
+  "p.phase.visits_other": "entered {visits} times",
+  "p.phase.current": "now",
+  "p.phase.check_heading": "Start check",
+  "p.phase.check_says":
+    "A programme starts when its phase moves to Executing. The start is refused when every place for programmes in active delivery is taken (paused and stopped programmes use none) or when the constraint pool is short of supply in any of the next six months. A refused programme joins the start queue and keeps its place; it can start anyway with an override reason of {min} or more characters, which is recorded and audited. Reading the check moves nothing.",
+  "p.phase.could_not_check": "Could not read the start check",
+  "p.phase.places":
+    "{in_delivery} of {limit} places for programmes in active delivery are taken.",
+  "p.phase.no_limit": "No limit on programmes in active delivery is set.",
+  "p.phase.limit_unusable":
+    "The deployment's limit on programmes in delivery could not be used, so no limit applies.",
+  "p.phase.pool_is": "The constraint pool is {pool}.",
+  "p.phase.no_pool": "No constraint pool is identified.",
+  "p.phase.would_refuse": "A start now would be refused:",
+  "p.phase.would_start": "A start now would go ahead.",
+  "p.phase.in_queue": "This programme is number {n} in the start queue.",
+  "p.phase.see_queue": "See the start queue",
+  "p.phase.refusal_limit":
+    "All {limit} places for programmes in active delivery are taken ({in_delivery} in delivery).",
+  "p.phase.refusal_pool":
+    "The constraint pool {pool} is short of supply in {months}.",
+  "p.phase.demand_heading": "This programme's firm demand",
+  "p.phase.demand_caption":
+    "Full-time equivalents by skill pool and month, from firm allocations on this programme and the plans under it",
+  "p.phase.no_demand":
+    "No firm demand on this programme in a skill pool in the next six months.",
+  "p.phase.col_pool": "Skill pool",
+  "p.phase.check_again": "Check again",
+  "p.phase.move_heading": "Change the phase",
+  "p.phase.f_to": "Move to",
+  "p.phase.forward_to": "Forward to {phase}",
+  "p.phase.back_to": "Back to {phase}",
+  "p.phase.back_needs_reason": "A move back needs a reason.",
+  "p.phase.f_reason": "Reason (needed to move back; recorded with the move)",
+  "p.phase.start_may_queue":
+    "Moving into Executing is this programme's start: if the check finds no room when it is sent, the start is refused and the programme joins the start queue.",
+  "p.phase.start_would_queue":
+    "This start would be refused. Sent without an override reason, the programme joins the start queue (or keeps its place there).",
+  "p.phase.f_override":
+    "Override reason, to start anyway ({min} or more characters; recorded and audited)",
+  "p.phase.refused_why": "Why the start was refused",
+  "p.phase.move": "Move the phase",
+  "p.phase.moved": "The plan is now in the {phase} phase.",
+  "p.phase.started_override":
+    "The programme started with an override: it is now in the {phase} phase, and the override is recorded.",
+  "p.phase.start_refused_place":
+    "The start was refused, so the programme is number {n} in the start queue. To start it anyway, give an override reason.",
+  "p.phase.start_refused":
+    "The start was refused, and the programme joined the start queue. To start it anyway, give an override reason.",
+  "p.phase.could_not_move": "Could not move the phase",
+  "p.phase.problem_choose": "Choose the phase to move to.",
+  "p.phase.problem_same":
+    "The plan is already in that phase, so nothing was sent.",
+  "p.phase.problem_skip": "A move forward is one phase at a time.",
+  "p.phase.problem_reason": "A move back needs a reason.",
+  "p.phase.problem_override": "An override reason is {min} or more characters.",
+  "p.phase.refused_move":
+    "Refused: a move forward is one phase at a time, a move back needs a reason, and the plan must not already be in that phase.",
+  "p.phase.refused_gone": "That plan no longer exists.",
+  "p.proposals.act_submit": "Submit",
+  "p.proposals.act_review": "Start review",
+  "p.proposals.act_approve": "Approve",
+  "p.proposals.act_reject": "Reject",
+  "p.proposals.act_submit_named": "Submit {title}",
+  "p.proposals.act_review_named": "Start review of {title}",
+  "p.proposals.act_approve_named": "Approve {title}",
+  "p.proposals.act_reject_named": "Reject {title}",
+  "p.proposals.ask_rule":
+    "An external ask from the sponsor must name what it displaces (a trade-off of {min} or more characters) before it can be approved.",
+  "p.proposals.new_form": "New proposal",
+  "p.proposals.f_external_ask": "An external ask from the sponsor",
+  "p.proposals.f_new_tradeoff":
+    "What it displaces (the trade-off, {min} to {max} characters; it can be named later, before approval)",
+  "p.proposals.col_tradeoff": "External ask and trade-off",
+  "p.proposals.not_ask": "Not an external ask",
+  "p.proposals.ask_with": "External ask. Trade-off: {tradeoff}",
+  "p.proposals.ask_without": "External ask. No trade-off named yet.",
+  "p.proposals.tradeoff_name": "Name the trade-off",
+  "p.proposals.tradeoff_change": "Change the trade-off",
+  "p.proposals.tradeoff_name_named": "Name the trade-off of {title}",
+  "p.proposals.tradeoff_change_named": "Change the trade-off of {title}",
+  "p.proposals.tradeoff_heading": "The trade-off of {title}",
+  "p.proposals.tradeoff_says":
+    "Name what this ask displaces, in {min} to {max} characters. It can be named or changed until the proposal is approved or rejected, and each change is recorded.",
+  "p.proposals.f_tradeoff": "What it displaces ({min} to {max} characters)",
+  "p.proposals.tradeoff_save": "Save the trade-off",
+  "p.proposals.tradeoff_close": "Close the trade-off form",
+  "p.proposals.tradeoff_unchanged": "Nothing changed, so nothing was sent.",
+  "p.proposals.tradeoff_saved": "Trade-off saved for {title}.",
+  "p.proposals.problem_title": "A proposal needs a title.",
+  "p.proposals.problem_tradeoff": "A trade-off is {min} to {max} characters.",
+  "p.proposals.problem_not_ask": "Only an external ask has a trade-off.",
+  "p.proposals.problem_decided":
+    "The proposal is decided, so its trade-off can no longer change.",
+  "p.proposals.problem_approve":
+    "{title} is an external ask: name its trade-off ({min} or more characters) before approving it.",
+  "p.proposals.refused_create":
+    "Refused: a proposal needs a title, an amount needs a currency, and a trade-off is at most {max} characters.",
+  "p.proposals.refused_approve":
+    "Refused: only a proposal in review can be approved, and an external ask needs a named trade-off of {min} or more characters first.",
+  "p.proposals.refused_tradeoff":
+    "Refused: a trade-off is {min} to {max} characters, on an external ask that is not yet decided.",
+  "p.proposals.refused_step":
+    "Refused: that step does not follow from the proposal's status.",
+  "p.proposals.refused_gone": "That proposal no longer exists.",
 } as const;
 
 /** A key in the page and component catalogue. */

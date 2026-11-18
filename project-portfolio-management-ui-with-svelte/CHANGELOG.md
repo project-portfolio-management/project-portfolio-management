@@ -9,6 +9,30 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a plan's phase, a programme's start, and the trade-off on a new ask (NC-1 slice 11, EX-8, EX-13, 2026-11-17)
+
+- `/plans/[pid]/programme` gains a phase section (`PlanPhase.svelte`) for every plan: the phase now and the time in
+  each phase, a move one step forward or back to any earlier phase with a reason (said first). No page moved a phase
+  before. For a programme, the start check is shown first (places taken of the limit, the constraint pool, whether a
+  start would be refused and why, the place in the start queue, the firm demand by skill pool and month in a
+  `DataTable`); a move into Executing that the service refuses is said in the catalogue's words with the reasons and
+  the place read from the start check again, and an override reason of 10 or more characters (said first) starts it
+  anyway. Three client methods; `src/lib/phase-view.ts`.
+- `/proposals`: a new proposal can be tagged as an external ask from the sponsor, with or without its trade-off; the
+  board shows which proposals are external asks and their trade-off or that none is named, with the rule said above
+  it; the trade-off is named or changed while the proposal is undecided (nothing sent for the same text); approving an
+  ask without one is refused before sending, and the service's 422s are the catalogue's sentences. The pipeline
+  buttons are now the catalogue's words, not the service's action names. One client method; `src/lib/tradeoff-view.ts`.
+- 96 keys in eight catalogues, machine-written and unreviewed. Tests: `tests/unit/phase-view.test.ts`,
+  `tests/unit/tradeoff-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, four more in
+  `tests/e2e/plan-programme.spec.ts` (its Welsh and axe test opens the override field), and
+  `tests/e2e/proposals.spec.ts` (five, with Welsh and axe).
+- **Not done:** listing each phase transition with its reason; the phase on any other page; tagging an existing
+  proposal as an external ask (the draft update has no page). **Service gap:** the 422 `start_refused` carries its
+  reasons and the queue place only as English text, so the page reads the start check again; the approval 422 has one
+  code for its two reasons, so the page says both. **Not verified:** against a real service, or with a
+  `PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT` set.
+
 ### Added — scorecards and de-escalation (NC-1 slice 11, EX-10, 2026-11-17)
 
 - A new page, `/deescalation`, in the navigation: the de-escalation tracker (the escalation level as the sponsor set

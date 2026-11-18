@@ -6753,4 +6753,128 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Materion agored o ddifrifoldeb critigol",
   "p.deescalation.measure_change_requests_waiting":
     "Ceisiadau newid sy'n aros mwy na 30 diwrnod am benderfyniad",
+  "p.phase.name_initiating": "Cychwyn",
+  "p.phase.name_planning": "Cynllunio",
+  "p.phase.name_executing": "Cyflawni",
+  "p.phase.name_controlling": "Rheoli",
+  "p.phase.name_closing": "Cau",
+  "p.phase.heading": "Cyfnod",
+  "p.phase.heading_programme": "Cyfnod a chychwyn",
+  "p.phase.says":
+    "Mae cynllun yn symud ymlaen un cyfnod ar y tro; gall symud yn ôl i gyfnod cynharach gyda rheswm, sy'n cael ei gofnodi gyda'r symud. Nid yw'r cyfnod byth yn atal cofnodi gwaith.",
+  "p.phase.could_not_load": "Methu llwytho cyfnod y cynllun",
+  "p.phase.now": "Mae'r cynllun yn y cyfnod {phase}.",
+  "p.phase.none":
+    "Nid oes cyfnod wedi'i gofnodi eto: mae'r symud cyntaf i Cychwyn.",
+  "p.phase.time_heading": "Amser ym mhob cyfnod",
+  "p.phase.days_in_one": "{phase}: {days} diwrnod",
+  "p.phase.days_in_other": "{phase}: {days} o ddiwrnodau",
+  "p.phase.visits_one": "wedi'i gyrraedd {visits} waith",
+  "p.phase.visits_other": "wedi'i gyrraedd {visits} o weithiau",
+  "p.phase.current": "nawr",
+  "p.phase.check_heading": "Gwiriad cychwyn",
+  "p.phase.check_says":
+    "Mae rhaglen yn cychwyn pan fydd ei chyfnod yn symud i Cyflawni. Gwrthodir y cychwyn pan fydd pob lle i raglenni sy'n cael eu cyflawni wedi'i gymryd (nid yw rhaglenni wedi'u hoedi neu eu hatal yn defnyddio un) neu pan fydd y gronfa gyfyngol yn brin o gyflenwad mewn unrhyw un o'r chwe mis nesaf. Mae rhaglen a wrthodwyd yn ymuno â'r ciw cychwyn ac yn cadw ei lle; gall gychwyn beth bynnag gyda rheswm diystyru o {min} nod neu fwy, sy'n cael ei gofnodi a'i archwilio. Nid yw darllen y gwiriad yn symud dim.",
+  "p.phase.could_not_check": "Methu darllen y gwiriad cychwyn",
+  "p.phase.places":
+    "Mae {in_delivery} o {limit} lle i raglenni sy'n cael eu cyflawni wedi'u cymryd.",
+  "p.phase.no_limit":
+    "Nid oes terfyn wedi'i osod ar raglenni sy'n cael eu cyflawni.",
+  "p.phase.limit_unusable":
+    "Nid oedd modd defnyddio terfyn y gosodiad ar raglenni sy'n cael eu cyflawni, felly nid oes terfyn yn berthnasol.",
+  "p.phase.pool_is": "Y gronfa gyfyngol yw {pool}.",
+  "p.phase.no_pool": "Nid oes cronfa gyfyngol wedi'i nodi.",
+  "p.phase.would_refuse": "Byddai cychwyn nawr yn cael ei wrthod:",
+  "p.phase.would_start": "Byddai cychwyn nawr yn mynd yn ei flaen.",
+  "p.phase.in_queue": "Mae'r rhaglen hon yn rhif {n} yn y ciw cychwyn.",
+  "p.phase.see_queue": "Gweld y ciw cychwyn",
+  "p.phase.refusal_limit":
+    "Mae pob un o'r {limit} lle i raglenni sy'n cael eu cyflawni wedi'u cymryd ({in_delivery} yn cael eu cyflawni).",
+  "p.phase.refusal_pool":
+    "Mae'r gronfa gyfyngol {pool} yn brin o gyflenwad yn {months}.",
+  "p.phase.demand_heading": "Galw cadarn y rhaglen hon",
+  "p.phase.demand_caption":
+    "Cyfwerth ag amser llawn fesul cronfa sgiliau a mis, o ddyraniadau cadarn ar y rhaglen hon a'r cynlluniau oddi tani",
+  "p.phase.no_demand":
+    "Dim galw cadarn ar y rhaglen hon mewn cronfa sgiliau yn y chwe mis nesaf.",
+  "p.phase.col_pool": "Cronfa sgiliau",
+  "p.phase.check_again": "Gwirio eto",
+  "p.phase.move_heading": "Newid y cyfnod",
+  "p.phase.f_to": "Symud i",
+  "p.phase.forward_to": "Ymlaen i {phase}",
+  "p.phase.back_to": "Yn ôl i {phase}",
+  "p.phase.back_needs_reason": "Mae symud yn ôl angen rheswm.",
+  "p.phase.f_reason":
+    "Rheswm (ei angen i symud yn ôl; wedi'i gofnodi gyda'r symud)",
+  "p.phase.start_may_queue":
+    "Symud i Cyflawni yw cychwyn y rhaglen hon: os nad yw'r gwiriad yn dod o hyd i le pan gaiff ei anfon, gwrthodir y cychwyn ac mae'r rhaglen yn ymuno â'r ciw cychwyn.",
+  "p.phase.start_would_queue":
+    "Byddai'r cychwyn hwn yn cael ei wrthod. Wedi'i anfon heb reswm diystyru, mae'r rhaglen yn ymuno â'r ciw cychwyn (neu'n cadw ei lle yno).",
+  "p.phase.f_override":
+    "Rheswm diystyru, i gychwyn beth bynnag ({min} nod neu fwy; wedi'i gofnodi a'i archwilio)",
+  "p.phase.refused_why": "Pam y gwrthodwyd y cychwyn",
+  "p.phase.move": "Symud y cyfnod",
+  "p.phase.moved": "Mae'r cynllun nawr yn y cyfnod {phase}.",
+  "p.phase.started_override":
+    "Cychwynnodd y rhaglen gyda diystyru: mae nawr yn y cyfnod {phase}, ac mae'r diystyru wedi'i gofnodi.",
+  "p.phase.start_refused_place":
+    "Gwrthodwyd y cychwyn, felly mae'r rhaglen yn rhif {n} yn y ciw cychwyn. I'w chychwyn beth bynnag, rhowch reswm diystyru.",
+  "p.phase.start_refused":
+    "Gwrthodwyd y cychwyn, ac ymunodd y rhaglen â'r ciw cychwyn. I'w chychwyn beth bynnag, rhowch reswm diystyru.",
+  "p.phase.could_not_move": "Methu symud y cyfnod",
+  "p.phase.problem_choose": "Dewiswch y cyfnod i symud iddo.",
+  "p.phase.problem_same":
+    "Mae'r cynllun eisoes yn y cyfnod hwnnw, felly ni anfonwyd dim.",
+  "p.phase.problem_skip": "Mae symud ymlaen yn un cyfnod ar y tro.",
+  "p.phase.problem_reason": "Mae angen rheswm i symud yn ôl.",
+  "p.phase.problem_override": "Mae rheswm diystyru yn {min} nod neu fwy.",
+  "p.phase.refused_move":
+    "Gwrthodwyd: mae symud ymlaen yn un cyfnod ar y tro, mae symud yn ôl angen rheswm, a rhaid nad yw'r cynllun eisoes yn y cyfnod hwnnw.",
+  "p.phase.refused_gone": "Nid yw'r cynllun hwnnw'n bodoli mwyach.",
+  "p.proposals.act_submit": "Cyflwyno",
+  "p.proposals.act_review": "Dechrau adolygu",
+  "p.proposals.act_approve": "Cymeradwyo",
+  "p.proposals.act_reject": "Gwrthod",
+  "p.proposals.act_submit_named": "Cyflwyno {title}",
+  "p.proposals.act_review_named": "Dechrau adolygu {title}",
+  "p.proposals.act_approve_named": "Cymeradwyo {title}",
+  "p.proposals.act_reject_named": "Gwrthod {title}",
+  "p.proposals.ask_rule":
+    "Rhaid i gais allanol gan y noddwr enwi'r hyn y mae'n ei ddisodli (cyfaddawd o {min} nod neu fwy) cyn y gellir ei gymeradwyo.",
+  "p.proposals.new_form": "Cynnig newydd",
+  "p.proposals.f_external_ask": "Cais allanol gan y noddwr",
+  "p.proposals.f_new_tradeoff":
+    "Yr hyn y mae'n ei ddisodli (y cyfaddawd, {min} i {max} nod; gellir ei enwi'n ddiweddarach, cyn cymeradwyo)",
+  "p.proposals.col_tradeoff": "Cais allanol a chyfaddawd",
+  "p.proposals.not_ask": "Nid cais allanol",
+  "p.proposals.ask_with": "Cais allanol. Cyfaddawd: {tradeoff}",
+  "p.proposals.ask_without": "Cais allanol. Dim cyfaddawd wedi'i enwi eto.",
+  "p.proposals.tradeoff_name": "Enwi'r cyfaddawd",
+  "p.proposals.tradeoff_change": "Newid y cyfaddawd",
+  "p.proposals.tradeoff_name_named": "Enwi'r cyfaddawd ar gyfer {title}",
+  "p.proposals.tradeoff_change_named": "Newid y cyfaddawd ar gyfer {title}",
+  "p.proposals.tradeoff_heading": "Cyfaddawd {title}",
+  "p.proposals.tradeoff_says":
+    "Enwch yr hyn y mae'r cais hwn yn ei ddisodli, mewn {min} i {max} nod. Gellir ei enwi neu ei newid nes bod y cynnig wedi'i gymeradwyo neu ei wrthod, ac mae pob newid yn cael ei gofnodi.",
+  "p.proposals.f_tradeoff": "Yr hyn y mae'n ei ddisodli ({min} i {max} nod)",
+  "p.proposals.tradeoff_save": "Cadw'r cyfaddawd",
+  "p.proposals.tradeoff_close": "Cau ffurflen y cyfaddawd",
+  "p.proposals.tradeoff_unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.proposals.tradeoff_saved": "Cyfaddawd wedi'i gadw ar gyfer {title}.",
+  "p.proposals.problem_title": "Mae angen teitl ar gynnig.",
+  "p.proposals.problem_tradeoff": "Mae cyfaddawd yn {min} i {max} nod.",
+  "p.proposals.problem_not_ask": "Dim ond cais allanol sydd â chyfaddawd.",
+  "p.proposals.problem_decided":
+    "Mae'r cynnig wedi'i benderfynu, felly ni all ei gyfaddawd newid mwyach.",
+  "p.proposals.problem_approve":
+    "Mae {title} yn gais allanol: enwch ei gyfaddawd ({min} nod neu fwy) cyn ei gymeradwyo.",
+  "p.proposals.refused_create":
+    "Gwrthodwyd: mae angen teitl ar gynnig, mae angen arian cyfred ar swm, ac mae cyfaddawd yn {max} nod ar y mwyaf.",
+  "p.proposals.refused_approve":
+    "Gwrthodwyd: dim ond cynnig sy'n cael ei adolygu y gellir ei gymeradwyo, ac mae cais allanol angen cyfaddawd wedi'i enwi o {min} nod neu fwy yn gyntaf.",
+  "p.proposals.refused_tradeoff":
+    "Gwrthodwyd: mae cyfaddawd yn {min} i {max} nod, ar gais allanol nad yw wedi'i benderfynu eto.",
+  "p.proposals.refused_step":
+    "Gwrthodwyd: nid yw'r cam hwnnw'n dilyn o statws y cynnig.",
+  "p.proposals.refused_gone": "Nid yw'r cynnig hwnnw'n bodoli mwyach.",
 };

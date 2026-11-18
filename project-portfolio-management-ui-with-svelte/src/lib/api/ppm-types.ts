@@ -217,6 +217,10 @@ export interface Proposal {
   status:
     "draft" | "submitted" | "in_review" | "approved" | "rejected" | "promoted";
   promoted_plan_pid: string | null;
+  /** An ask from the sponsor (EX-13): approving it needs a named trade-off. */
+  external_ask: boolean;
+  /** What the ask displaces; `null` when none is named. */
+  tradeoff: string | null;
 }
 
 export interface DemandHit {

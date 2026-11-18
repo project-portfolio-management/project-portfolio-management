@@ -834,6 +834,27 @@ describe("PpmClient scorecards and de-escalation (NC-1 slice 11, EX-10)", () => 
   });
 });
 
+describe("PpmClient trade-off, phase and start check (NC-1 slice 11, EX-13, EX-8)", () => {
+  it("names a trade-off, reads the phase and the start check, and moves the phase", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.setProposalTradeoff("p1", "Delays the CRM upgrade");
+    await ppm.phaseHistory("g1");
+    await ppm.startCheck("g1");
+    await ppm.setPhase("g1", {
+      phase: "executing",
+      start_override_reason: "The board agreed",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "PUT /api/proposals/p1/tradeoff",
+      "GET /api/plans/g1/phase-history",
+      "GET /api/plans/g1/start-check",
+      "PUT /api/plans/g1/phase",
+    ]);
+  });
+});
+
 describe("PpmClient cutover criteria (NC-1 slice 11, EX-6)", () => {
   it("replaces a draft's criteria", async () => {
     const { ppm, calls } = recordingClient();

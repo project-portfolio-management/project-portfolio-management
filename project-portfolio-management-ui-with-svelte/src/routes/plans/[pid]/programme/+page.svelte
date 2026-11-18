@@ -3,7 +3,8 @@
   review at each gate, and, for a plan of kind Program, its status (active, paused or stopped), the decisions behind
   it, and what a paused or stopped programme still holds. A decision pauses, resumes or stops it with a reason, citing a
   gate review or an exception of the programme if it follows from one. Stopped is final and keeps the record; a pause
-  flags allocations and deletes none. The service decides who may; a refusal is the catalogue's sentence.
+  flags allocations and deletes none. The service decides who may; a refusal is the catalogue's sentence. Every plan's
+  phase, and a programme's start check and start (`PlanPhase.svelte`, EX-8).
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -31,6 +32,7 @@
     type Organization,
   } from "#lib/api/ppm.js";
   import ProgrammeThresholds from "#lib/components/ProgrammeThresholds.svelte";
+  import PlanPhase from "#lib/components/PlanPhase.svelte";
   import {
     BUFFER_DAYS_MAX,
     CHANGE_LABELS,
@@ -368,6 +370,10 @@
       </ol>
     {/if}
   </section>
+{/if}
+
+{#if isProgramme !== null}
+  <PlanPhase {pid} {isProgramme} />
 {/if}
 
 {#snippet packCell({ row, column, formatted }: DataGridCellContext)}

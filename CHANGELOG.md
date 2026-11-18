@@ -15,6 +15,20 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 17 November (a plan's phase, a programme's start, and the trade-off on a new ask: NC-1 slice 11, part m)
+
+- **UI: the phase and the start, and the named trade-off (EX-8, EX-13).** `/plans/[pid]/programme` moves a plan's
+  phase (one step forward, or back with a reason) and, for a programme, shows the start check first and starts it,
+  saying a refusal in the catalogue's words from the check and taking an override reason; `/proposals` tags a new
+  external ask, shows its trade-off or that none is named, names and changes it, and refuses an approval without one
+  before sending. UI spec, "A plan's phase and a programme's start" and "The named trade-off on a new ask"; tests
+  `tests/unit/phase-view.test.ts`, `tests/unit/tradeoff-view.test.ts`, `tests/e2e/plan-programme.spec.ts`,
+  `tests/e2e/proposals.spec.ts`. This is the last part of NC-1 slice 11; what it leaves undone is listed under NC-1 in
+  `tasks.md`.
+- **Not done:** each phase transition with its reason; tagging an existing proposal. **Service gap:** the 422
+  `start_refused` gives its reasons and place only as English text. **Not verified:** against a real service; the
+  translations are machine-written and unreviewed.
+
 ### 17 November (the service moves from chrono to jiff)
 
 - **Service: `chrono` and `chrono-tz` are gone from the service's code**, for `jiff` 1.0, through a new workspace

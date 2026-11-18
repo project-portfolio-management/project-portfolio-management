@@ -6431,4 +6431,123 @@ export const PAGES_AR: Record<PageKey, string> = {
     "المشكلات المفتوحة ذات الخطورة الحرجة",
   "p.deescalation.measure_change_requests_waiting":
     "طلبات التغيير التي تنتظر قرارًا منذ أكثر من 30 يومًا",
+  "p.phase.name_initiating": "البدء",
+  "p.phase.name_planning": "التخطيط",
+  "p.phase.name_executing": "التنفيذ",
+  "p.phase.name_controlling": "المراقبة",
+  "p.phase.name_closing": "الإغلاق",
+  "p.phase.heading": "المرحلة",
+  "p.phase.heading_programme": "المرحلة والبدء",
+  "p.phase.says":
+    "تتقدم الخطة مرحلة واحدة في كل مرة؛ ويمكنها العودة إلى مرحلة سابقة مع سبب يُسجَّل مع الانتقال. ولا تمنع المرحلة أبدًا تسجيل العمل.",
+  "p.phase.could_not_load": "تعذّر تحميل مرحلة الخطة",
+  "p.phase.now": "الخطة في مرحلة {phase}.",
+  "p.phase.none": "لم تُسجَّل أي مرحلة بعد: الانتقال الأول يكون إلى البدء.",
+  "p.phase.time_heading": "الوقت في كل مرحلة",
+  "p.phase.days_in_one": "{phase}: {days} يوم",
+  "p.phase.days_in_other": "{phase}: {days} أيام",
+  "p.phase.visits_one": "دخلتها {visits} مرة",
+  "p.phase.visits_other": "دخلتها {visits} مرات",
+  "p.phase.current": "الآن",
+  "p.phase.check_heading": "فحص البدء",
+  "p.phase.check_says":
+    "يبدأ البرنامج عندما تنتقل مرحلته إلى التنفيذ. ويُرفض البدء عندما تكون كل الأماكن المخصصة للبرامج قيد التنفيذ النشط مشغولة (البرامج الموقوفة مؤقتًا أو المتوقفة لا تشغل أي مكان) أو عندما يعاني المجمّع المقيِّد من نقص في المعروض في أي من الأشهر الستة القادمة. وينضم البرنامج المرفوض إلى قائمة انتظار البدء ويحتفظ بمكانه؛ ويمكنه البدء رغم ذلك بسبب تجاوز من {min} حرفًا أو أكثر، يُسجَّل ويُدقَّق. قراءة الفحص لا تغيّر شيئًا.",
+  "p.phase.could_not_check": "تعذّرت قراءة فحص البدء",
+  "p.phase.places":
+    "{in_delivery} من {limit} أماكن للبرامج قيد التنفيذ النشط مشغولة.",
+  "p.phase.no_limit": "لم يُحدَّد حدّ للبرامج قيد التنفيذ النشط.",
+  "p.phase.limit_unusable":
+    "تعذّر استخدام حدّ النشر للبرامج قيد التنفيذ، لذا لا يُطبَّق أي حدّ.",
+  "p.phase.pool_is": "المجمّع المقيِّد هو {pool}.",
+  "p.phase.no_pool": "لم يُحدَّد مجمّع مقيِّد.",
+  "p.phase.would_refuse": "سيُرفض البدء الآن:",
+  "p.phase.would_start": "سيمضي البدء الآن.",
+  "p.phase.in_queue": "هذا البرنامج رقم {n} في قائمة انتظار البدء.",
+  "p.phase.see_queue": "عرض قائمة انتظار البدء",
+  "p.phase.refusal_limit":
+    "كل الأماكن الـ {limit} للبرامج قيد التنفيذ النشط مشغولة ({in_delivery} قيد التنفيذ).",
+  "p.phase.refusal_pool":
+    "يعاني المجمّع المقيِّد {pool} من نقص في المعروض في {months}.",
+  "p.phase.demand_heading": "الطلب المؤكد لهذا البرنامج",
+  "p.phase.demand_caption":
+    "مكافئ الدوام الكامل حسب مجمّع المهارات والشهر، من التخصيصات المؤكدة على هذا البرنامج والخطط التابعة له",
+  "p.phase.no_demand":
+    "لا يوجد طلب مؤكد لهذا البرنامج في أي مجمّع مهارات خلال الأشهر الستة القادمة.",
+  "p.phase.col_pool": "مجمّع المهارات",
+  "p.phase.check_again": "افحص مرة أخرى",
+  "p.phase.move_heading": "تغيير المرحلة",
+  "p.phase.f_to": "الانتقال إلى",
+  "p.phase.forward_to": "التقدم إلى {phase}",
+  "p.phase.back_to": "العودة إلى {phase}",
+  "p.phase.back_needs_reason": "تحتاج العودة إلى الخلف إلى سبب.",
+  "p.phase.f_reason": "السبب (مطلوب للعودة إلى الخلف؛ ويُسجَّل مع الانتقال)",
+  "p.phase.start_may_queue":
+    "الانتقال إلى التنفيذ هو بدء هذا البرنامج: إذا لم يجد الفحص مكانًا عند الإرسال، يُرفض البدء وينضم البرنامج إلى قائمة انتظار البدء.",
+  "p.phase.start_would_queue":
+    "سيُرفض هذا البدء. وإذا أُرسل دون سبب تجاوز، ينضم البرنامج إلى قائمة انتظار البدء (أو يحتفظ بمكانه فيها).",
+  "p.phase.f_override":
+    "سبب التجاوز للبدء رغم ذلك ({min} حرفًا أو أكثر؛ يُسجَّل ويُدقَّق)",
+  "p.phase.refused_why": "سبب رفض البدء",
+  "p.phase.move": "نقل المرحلة",
+  "p.phase.moved": "الخطة الآن في مرحلة {phase}.",
+  "p.phase.started_override":
+    "بدأ البرنامج بتجاوز: وهو الآن في مرحلة {phase}، وقد سُجِّل التجاوز.",
+  "p.phase.start_refused_place":
+    "رُفض البدء، لذا أصبح البرنامج رقم {n} في قائمة انتظار البدء. ولبدئه رغم ذلك، أدخل سبب تجاوز.",
+  "p.phase.start_refused":
+    "رُفض البدء، وانضم البرنامج إلى قائمة انتظار البدء. ولبدئه رغم ذلك، أدخل سبب تجاوز.",
+  "p.phase.could_not_move": "تعذّر نقل المرحلة",
+  "p.phase.problem_choose": "اختر المرحلة المراد الانتقال إليها.",
+  "p.phase.problem_same": "الخطة في تلك المرحلة بالفعل، لذا لم يُرسَل شيء.",
+  "p.phase.problem_skip": "يكون التقدم مرحلة واحدة في كل مرة.",
+  "p.phase.problem_reason": "العودة إلى الخلف تتطلب سببًا.",
+  "p.phase.problem_override": "سبب التجاوز {min} حرفًا أو أكثر.",
+  "p.phase.refused_move":
+    "مرفوض: التقدم مرحلة واحدة في كل مرة، والعودة تحتاج إلى سبب، ويجب ألا تكون الخطة في تلك المرحلة بالفعل.",
+  "p.phase.refused_gone": "تلك الخطة لم تعد موجودة.",
+  "p.proposals.act_submit": "إرسال",
+  "p.proposals.act_review": "بدء المراجعة",
+  "p.proposals.act_approve": "موافقة",
+  "p.proposals.act_reject": "رفض",
+  "p.proposals.act_submit_named": "إرسال {title}",
+  "p.proposals.act_review_named": "بدء مراجعة {title}",
+  "p.proposals.act_approve_named": "موافقة على {title}",
+  "p.proposals.act_reject_named": "رفض {title}",
+  "p.proposals.ask_rule":
+    "يجب أن يسمّي الطلب الخارجي من الراعي ما يُزيحه (مقايضة من {min} حرفًا أو أكثر) قبل أن تمكن الموافقة عليه.",
+  "p.proposals.new_form": "مقترح جديد",
+  "p.proposals.f_external_ask": "طلب خارجي من الراعي",
+  "p.proposals.f_new_tradeoff":
+    "ما الذي يُزيحه (المقايضة، من {min} إلى {max} حرفًا؛ ويمكن تسميتها لاحقًا قبل الموافقة)",
+  "p.proposals.col_tradeoff": "الطلب الخارجي والمقايضة",
+  "p.proposals.not_ask": "ليس طلبًا خارجيًا",
+  "p.proposals.ask_with": "طلب خارجي. المقايضة: {tradeoff}",
+  "p.proposals.ask_without": "طلب خارجي. لم تُسمَّ مقايضة بعد.",
+  "p.proposals.tradeoff_name": "سمِّ المقايضة",
+  "p.proposals.tradeoff_change": "غيّر المقايضة",
+  "p.proposals.tradeoff_name_named": "سمِّ المقايضة لـ {title}",
+  "p.proposals.tradeoff_change_named": "غيّر المقايضة لـ {title}",
+  "p.proposals.tradeoff_heading": "مقايضة {title}",
+  "p.proposals.tradeoff_says":
+    "سمِّ ما يُزيحه هذا الطلب، في {min} إلى {max} حرفًا. يمكن تسميته أو تغييره حتى تتم الموافقة على المقترح أو رفضه، ويُسجَّل كل تغيير.",
+  "p.proposals.f_tradeoff": "ما الذي يُزيحه (من {min} إلى {max} حرفًا)",
+  "p.proposals.tradeoff_save": "احفظ المقايضة",
+  "p.proposals.tradeoff_close": "أغلق نموذج المقايضة",
+  "p.proposals.tradeoff_unchanged": "لم يتغيّر شيء، لذا لم يُرسَل شيء.",
+  "p.proposals.tradeoff_saved": "حُفظت المقايضة لـ {title}.",
+  "p.proposals.problem_title": "يحتاج المقترح إلى عنوان.",
+  "p.proposals.problem_tradeoff": "المقايضة من {min} إلى {max} حرفًا.",
+  "p.proposals.problem_not_ask": "المقايضة للطلب الخارجي فقط.",
+  "p.proposals.problem_decided":
+    "حُسم المقترح، لذا لم يعد بالإمكان تغيير مقايضته.",
+  "p.proposals.problem_approve":
+    "{title} طلب خارجي: سمِّ مقايضته ({min} حرفًا أو أكثر) قبل الموافقة عليه.",
+  "p.proposals.refused_create":
+    "مرفوض: يحتاج المقترح إلى عنوان، ويحتاج المبلغ إلى عملة، والمقايضة {max} حرفًا على الأكثر.",
+  "p.proposals.refused_approve":
+    "مرفوض: لا تمكن الموافقة إلا على مقترح قيد المراجعة، ويحتاج الطلب الخارجي أولًا إلى مقايضة مسمّاة من {min} حرفًا أو أكثر.",
+  "p.proposals.refused_tradeoff":
+    "مرفوض: المقايضة من {min} إلى {max} حرفًا، على طلب خارجي لم يُحسم بعد.",
+  "p.proposals.refused_step": "مرفوض: هذه الخطوة لا تتبع من حالة المقترح.",
+  "p.proposals.refused_gone": "ذلك المقترح لم يعد موجودًا.",
 };

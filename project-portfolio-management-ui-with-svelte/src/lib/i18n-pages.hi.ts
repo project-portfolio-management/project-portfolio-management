@@ -6453,4 +6453,122 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.deescalation.measure_open_critical_issues": "गंभीर स्तर के खुले मुद्दे",
   "p.deescalation.measure_change_requests_waiting":
     "30 दिनों से अधिक समय से निर्णय की प्रतीक्षा कर रहे परिवर्तन अनुरोध",
+  "p.phase.name_initiating": "आरंभ",
+  "p.phase.name_planning": "योजना",
+  "p.phase.name_executing": "निष्पादन",
+  "p.phase.name_controlling": "नियंत्रण",
+  "p.phase.name_closing": "समापन",
+  "p.phase.heading": "चरण",
+  "p.phase.heading_programme": "चरण और शुरुआत",
+  "p.phase.says":
+    "योजना एक बार में एक चरण आगे बढ़ती है; वह कारण देकर पहले के चरण में लौट सकती है, और कारण बदलाव के साथ दर्ज होता है। चरण कभी काम दर्ज करने से नहीं रोकता।",
+  "p.phase.could_not_load": "योजना का चरण लोड नहीं हो सका",
+  "p.phase.now": "योजना {phase} चरण में है।",
+  "p.phase.none": "अभी कोई चरण दर्ज नहीं है: पहला बदलाव आरंभ में होता है।",
+  "p.phase.time_heading": "हर चरण में समय",
+  "p.phase.days_in_one": "{phase}: {days} दिन",
+  "p.phase.days_in_other": "{phase}: {days} दिन",
+  "p.phase.visits_one": "{visits} बार प्रवेश",
+  "p.phase.visits_other": "{visits} बार प्रवेश",
+  "p.phase.current": "अभी",
+  "p.phase.check_heading": "शुरुआत की जाँच",
+  "p.phase.check_says":
+    "कार्यक्रम तब शुरू होता है जब उसका चरण निष्पादन में जाता है। शुरुआत तब अस्वीकार होती है जब सक्रिय डिलीवरी वाले कार्यक्रमों के सभी स्थान भरे हों (रुके या बंद कार्यक्रम कोई स्थान नहीं लेते) या जब बाधक पूल में अगले छह महीनों में से किसी में आपूर्ति कम हो। अस्वीकृत कार्यक्रम शुरुआत कतार में जुड़ता है और अपना स्थान रखता है; वह {min} या अधिक अक्षरों के ओवरराइड कारण के साथ फिर भी शुरू हो सकता है, जो दर्ज और ऑडिट होता है। जाँच पढ़ने से कुछ नहीं बदलता।",
+  "p.phase.could_not_check": "शुरुआत की जाँच पढ़ी नहीं जा सकी",
+  "p.phase.places":
+    "सक्रिय डिलीवरी वाले कार्यक्रमों के {limit} में से {in_delivery} स्थान भरे हैं।",
+  "p.phase.no_limit": "सक्रिय डिलीवरी वाले कार्यक्रमों पर कोई सीमा तय नहीं है।",
+  "p.phase.limit_unusable":
+    "डिप्लॉयमेंट की डिलीवरी वाले कार्यक्रमों की सीमा उपयोग नहीं हो सकी, इसलिए कोई सीमा लागू नहीं है।",
+  "p.phase.pool_is": "बाधक पूल {pool} है।",
+  "p.phase.no_pool": "कोई बाधक पूल पहचाना नहीं गया है।",
+  "p.phase.would_refuse": "अभी शुरुआत अस्वीकार होगी:",
+  "p.phase.would_start": "अभी शुरुआत हो जाएगी।",
+  "p.phase.in_queue": "यह कार्यक्रम शुरुआत कतार में {n} क्रमांक पर है।",
+  "p.phase.see_queue": "शुरुआत कतार देखें",
+  "p.phase.refusal_limit":
+    "सक्रिय डिलीवरी वाले कार्यक्रमों के सभी {limit} स्थान भरे हैं ({in_delivery} डिलीवरी में)।",
+  "p.phase.refusal_pool": "बाधक पूल {pool} में {months} में आपूर्ति कम है।",
+  "p.phase.demand_heading": "इस कार्यक्रम की पक्की माँग",
+  "p.phase.demand_caption":
+    "इस कार्यक्रम और उसके नीचे की योजनाओं पर पक्के आवंटनों से, कौशल पूल और महीने के अनुसार पूर्णकालिक समकक्ष",
+  "p.phase.no_demand":
+    "अगले छह महीनों में किसी कौशल पूल में इस कार्यक्रम की कोई पक्की माँग नहीं है।",
+  "p.phase.col_pool": "कौशल पूल",
+  "p.phase.check_again": "फिर से जाँचें",
+  "p.phase.move_heading": "चरण बदलें",
+  "p.phase.f_to": "इसमें ले जाएँ",
+  "p.phase.forward_to": "आगे {phase} में",
+  "p.phase.back_to": "वापस {phase} में",
+  "p.phase.back_needs_reason": "पीछे जाने के लिए कारण चाहिए।",
+  "p.phase.f_reason": "कारण (पीछे जाने के लिए आवश्यक; बदलाव के साथ दर्ज)",
+  "p.phase.start_may_queue":
+    "निष्पादन में जाना इस कार्यक्रम की शुरुआत है: भेजते समय जाँच में जगह न मिले तो शुरुआत अस्वीकार होती है और कार्यक्रम शुरुआत कतार में जुड़ता है।",
+  "p.phase.start_would_queue":
+    "यह शुरुआत अस्वीकार होगी। ओवरराइड कारण के बिना भेजने पर कार्यक्रम शुरुआत कतार में जुड़ता है (या वहाँ अपना स्थान रखता है)।",
+  "p.phase.f_override":
+    "फिर भी शुरू करने के लिए ओवरराइड कारण ({min} या अधिक अक्षर; दर्ज और ऑडिट)",
+  "p.phase.refused_why": "शुरुआत क्यों अस्वीकार हुई",
+  "p.phase.move": "चरण बदलकर भेजें",
+  "p.phase.moved": "योजना अब {phase} चरण में है।",
+  "p.phase.started_override":
+    "कार्यक्रम ओवरराइड के साथ शुरू हुआ: अब वह {phase} चरण में है, और ओवरराइड दर्ज है।",
+  "p.phase.start_refused_place":
+    "शुरुआत अस्वीकार हुई, इसलिए कार्यक्रम शुरुआत कतार में {n} क्रमांक पर है। फिर भी शुरू करने के लिए ओवरराइड कारण दें।",
+  "p.phase.start_refused":
+    "शुरुआत अस्वीकार हुई, और कार्यक्रम शुरुआत कतार में जुड़ गया। फिर भी शुरू करने के लिए ओवरराइड कारण दें।",
+  "p.phase.could_not_move": "चरण नहीं बदला जा सका",
+  "p.phase.problem_choose": "वह चरण चुनें जिसमें जाना है।",
+  "p.phase.problem_same": "योजना पहले से उस चरण में है, इसलिए कुछ नहीं भेजा गया।",
+  "p.phase.problem_skip": "आगे एक बार में एक ही चरण जाया जाता है।",
+  "p.phase.problem_reason": "पीछे जाने के लिए कारण देना आवश्यक है।",
+  "p.phase.problem_override": "ओवरराइड कारण {min} या अधिक अक्षरों का होता है।",
+  "p.phase.refused_move":
+    "अस्वीकृत: आगे एक बार में एक चरण जाया जाता है, पीछे जाने के लिए कारण चाहिए, और योजना पहले से उस चरण में नहीं होनी चाहिए।",
+  "p.phase.refused_gone": "वह योजना अब मौजूद नहीं है।",
+  "p.proposals.act_submit": "जमा करें",
+  "p.proposals.act_review": "समीक्षा शुरू करें",
+  "p.proposals.act_approve": "स्वीकृत करें",
+  "p.proposals.act_reject": "अस्वीकार करें",
+  "p.proposals.act_submit_named": "{title} जमा करें",
+  "p.proposals.act_review_named": "{title} की समीक्षा शुरू करें",
+  "p.proposals.act_approve_named": "{title} स्वीकृत करें",
+  "p.proposals.act_reject_named": "{title} अस्वीकार करें",
+  "p.proposals.ask_rule":
+    "प्रायोजक के बाहरी अनुरोध को स्वीकृति से पहले बताना होगा कि वह क्या हटाता है ({min} या अधिक अक्षरों का समझौता)।",
+  "p.proposals.new_form": "नया प्रस्ताव",
+  "p.proposals.f_external_ask": "प्रायोजक का बाहरी अनुरोध",
+  "p.proposals.f_new_tradeoff":
+    "यह क्या हटाता है (समझौता, {min} से {max} अक्षर; इसे बाद में, स्वीकृति से पहले, बताया जा सकता है)",
+  "p.proposals.col_tradeoff": "बाहरी अनुरोध और समझौता",
+  "p.proposals.not_ask": "बाहरी अनुरोध नहीं",
+  "p.proposals.ask_with": "बाहरी अनुरोध। समझौता: {tradeoff}",
+  "p.proposals.ask_without": "बाहरी अनुरोध। अभी कोई समझौता नहीं बताया गया।",
+  "p.proposals.tradeoff_name": "समझौता बताएँ",
+  "p.proposals.tradeoff_change": "समझौता बदलें",
+  "p.proposals.tradeoff_name_named": "समझौता बताएँ: {title}",
+  "p.proposals.tradeoff_change_named": "समझौता बदलें: {title}",
+  "p.proposals.tradeoff_heading": "{title} का समझौता",
+  "p.proposals.tradeoff_says":
+    "बताएँ कि यह अनुरोध क्या हटाता है, {min} से {max} अक्षरों में। प्रस्ताव स्वीकृत या अस्वीकृत होने तक इसे बताया या बदला जा सकता है, और हर बदलाव दर्ज होता है।",
+  "p.proposals.f_tradeoff": "यह क्या हटाता है ({min} से {max} अक्षर)",
+  "p.proposals.tradeoff_save": "समझौता सहेजें",
+  "p.proposals.tradeoff_close": "समझौता फ़ॉर्म बंद करें",
+  "p.proposals.tradeoff_unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.proposals.tradeoff_saved": "{title} के लिए समझौता सहेजा गया।",
+  "p.proposals.problem_title": "प्रस्ताव का शीर्षक होना चाहिए।",
+  "p.proposals.problem_tradeoff": "समझौता {min} से {max} अक्षरों का होता है।",
+  "p.proposals.problem_not_ask": "केवल बाहरी अनुरोध का समझौता होता है।",
+  "p.proposals.problem_decided":
+    "प्रस्ताव पर निर्णय हो चुका है, इसलिए उसका समझौता अब नहीं बदल सकता।",
+  "p.proposals.problem_approve":
+    "{title} एक बाहरी अनुरोध है: स्वीकृत करने से पहले उसका समझौता बताएँ ({min} या अधिक अक्षर)।",
+  "p.proposals.refused_create":
+    "अस्वीकृत: प्रस्ताव का शीर्षक चाहिए, राशि के साथ मुद्रा चाहिए, और समझौता अधिकतम {max} अक्षरों का होता है।",
+  "p.proposals.refused_approve":
+    "अस्वीकृत: केवल समीक्षा में चल रहा प्रस्ताव स्वीकृत हो सकता है, और बाहरी अनुरोध के लिए पहले {min} या अधिक अक्षरों का समझौता बताना होगा।",
+  "p.proposals.refused_tradeoff":
+    "अस्वीकृत: समझौता {min} से {max} अक्षरों का होता है, ऐसे बाहरी अनुरोध पर जिस पर अभी निर्णय नहीं हुआ।",
+  "p.proposals.refused_step": "अस्वीकृत: वह कदम प्रस्ताव की स्थिति से मेल नहीं खाता।",
+  "p.proposals.refused_gone": "वह प्रस्ताव अब मौजूद नहीं है।",
 };

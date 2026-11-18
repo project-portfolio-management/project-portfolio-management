@@ -304,6 +304,12 @@ export class PpmClient {
   ): Promise<{ plan_pid: string; kind_target: string | null }> {
     return this.http.post(`/api/proposals/${pid}/promote`, { body: {} });
   }
+  /** Name what an external ask displaces (EX-13), until the proposal is decided. */
+  setProposalTradeoff(pid: string, tradeoff: string): Promise<Proposal> {
+    return this.http.put(`/api/proposals/${pid}/tradeoff`, {
+      body: { tradeoff },
+    });
+  }
   proposalDuplicates(pid: string): Promise<DemandHit[]> {
     return this.http.get(`/api/proposals/${pid}/duplicates`);
   }
@@ -839,6 +845,26 @@ export class PpmClient {
   /** Programmes refused a start, in the order they asked. */
   startQueue(): Promise<StartQueue> {
     return this.http.get("/api/start-queue");
+  }
+  /** What a start (a move into executing) would meet now, with this programme's firm demand; moves nothing (EX-8). */
+  startCheck(planPid: string): Promise<StartCheck> {
+    return this.http.get(`/api/plans/${planPid}/start-check`);
+  }
+  /** A plan's phase, its transitions and the time spent in each phase. */
+  phaseHistory(planPid: string): Promise<PhaseHistory> {
+    return this.http.get(`/api/plans/${planPid}/phase-history`);
+  }
+  /** Move a plan's phase: one step forward, or back with a reason; a programme moving into executing meets the start
+   * check, and `start_override_reason` starts a refused one anyway. */
+  setPhase(
+    planPid: string,
+    body: {
+      phase: PhaseToken;
+      reason?: string;
+      start_override_reason?: string;
+    },
+  ): Promise<{ phase: PhaseToken; next_phase: PhaseToken | null }> {
+    return this.http.put(`/api/plans/${planPid}/phase`, { body });
   }
   /** Take a programme out of the start queue. */
   withdrawFromStartQueue(planPid: string): Promise<unknown> {
@@ -2790,6 +2816,50 @@ export class PpmClient {
 export type StartRefusal =
   | { reason: "limit_reached"; in_delivery: number; limit: number }
   | { reason: "constraint_pool_over"; pool: string; months: string[] };
+
+/** A plan's phase (FR-30), in order. */
+export type PhaseToken =
+  "initiating" | "planning" | "executing" | "controlling" | "closing";
+
+/** `GET /api/plans/{pid}/start-check` (EX-8). */
+export interface StartCheck {
+  plan_pid: string;
+  wip: {
+    limit: number | null;
+    limit_setting_unusable: boolean;
+    in_delivery: number;
+  };
+  constraint_pool: string | null;
+  demand_by_pool: {
+    pool: string;
+    months: { month: string; demand_fte: number }[];
+  }[];
+  would_be_refused: boolean;
+  refusals: StartRefusal[];
+  queue_position: number | null;
+  note: string;
+}
+
+/** `GET /api/plans/{pid}/phase-history`. */
+export interface PhaseHistory {
+  plan_pid: string;
+  current_phase: PhaseToken | null;
+  next_phase: PhaseToken | null;
+  transitions: {
+    pid: string;
+    from_phase: PhaseToken | null;
+    to_phase: PhaseToken;
+    reason: string | null;
+    occurred_at: string;
+  }[];
+  durations: {
+    phase: PhaseToken;
+    ms: number;
+    visits: number;
+    current: boolean;
+  }[];
+  as_of: string;
+}
 
 export interface StartQueue {
   queue: {

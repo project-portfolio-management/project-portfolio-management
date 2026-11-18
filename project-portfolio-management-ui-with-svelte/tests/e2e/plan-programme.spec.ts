@@ -2,7 +2,8 @@
 // Gate dates send only what changed; a plan that is not a programme says it has no status; a programme is paused with
 // a reason (citing a gate review), shows what it still holds, resumes, and once stopped offers nothing more; a refusal
 // names the right it needs. The delivery model, its owner and the reporting method (EX-2, EX-14). Triage and
-// thresholds (EX-7). Welsh; axe.
+// thresholds (EX-7). The phase and a programme's start (EX-8): the start check said first, a refused start in the
+// catalogue's words, an override, a move back with its reason, a plan with no phase. Welsh; axe.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -10,7 +11,13 @@ import { PID, settle, stubPlansApi } from "./fixtures";
 
 async function stubProgramme(
   page: Page,
-  opts: { kind?: string; refuse?: number } = {},
+  opts: {
+    kind?: string;
+    refuse?: number;
+    phase?: string | null;
+    refuseStart?: boolean;
+    phaseRefuse?: number;
+  } = {},
 ) {
   const gates = [{ gate: "g1_feasibility", planned_on: "2026-12-01" }];
   let status = "active";
@@ -151,6 +158,104 @@ async function stubProgramme(
           }
         : null;
       return route.fulfill({ json: profile });
+    },
+  );
+  // The phase and the start check (FR-30, EX-8).
+  const PHASES = [
+    "initiating",
+    "planning",
+    "executing",
+    "controlling",
+    "closing",
+  ];
+  let phase: string | null = opts.phase === undefined ? "planning" : opts.phase;
+  const check: Record<string, unknown> = {
+    plan_pid: PID,
+    wip: { limit: 3, limit_setting_unusable: false, in_delivery: 3 },
+    constraint_pool: "Engineering",
+    demand_by_pool: [
+      {
+        pool: "Engineering",
+        months: [
+          { month: "2026-12", demand_fte: 1.5 },
+          { month: "2027-01", demand_fte: 2 },
+        ],
+      },
+      { pool: "Design", months: [{ month: "2027-01", demand_fte: 0.25 }] },
+    ],
+    would_be_refused: opts.refuseStart ?? false,
+    refusals: opts.refuseStart
+      ? [
+          { reason: "limit_reached", in_delivery: 3, limit: 3 },
+          {
+            reason: "constraint_pool_over",
+            pool: "Engineering",
+            months: ["2026-12", "2027-01"],
+          },
+        ]
+      : [],
+    queue_position: null,
+    note: "service text",
+  };
+  await page.route(
+    /\/api\/plans\/[^/]+\/(phase|phase-history|start-check)$/,
+    async (route) => {
+      const req = route.request();
+      const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
+      if (req.method() === "GET") {
+        if (path.endsWith("start-check")) return route.fulfill({ json: check });
+        return route.fulfill({
+          json: {
+            plan_pid: PID,
+            current_phase: phase,
+            next_phase: PHASES[PHASES.indexOf(phase ?? "") + 1] ?? null,
+            transitions: phase
+              ? [
+                  {
+                    pid: "pt1",
+                    from_phase: null,
+                    to_phase: "initiating",
+                    reason: null,
+                    occurred_at: "2026-10-01T09:00:00Z",
+                  },
+                ]
+              : [],
+            durations: PHASES.map((p, i) => ({
+              phase: p,
+              ms: i === 0 ? 86_400_000 * 3 : i === 1 ? 86_400_000 : 0,
+              visits: i <= PHASES.indexOf(phase ?? "") ? 1 : 0,
+              current: p === phase,
+            })),
+            as_of: "2026-11-17T09:00:00Z",
+          },
+        });
+      }
+      const body = req.postDataJSON();
+      sent.push({ method: req.method(), path, body });
+      if (opts.phaseRefuse)
+        return route.fulfill({
+          status: opts.phaseRefuse,
+          json: { code: "unprocessable", detail: "service text" },
+        });
+      if (
+        body.phase === "executing" &&
+        opts.refuseStart &&
+        !body.start_override_reason
+      ) {
+        check.queue_position = 2;
+        return route.fulfill({
+          status: 422,
+          json: { code: "start_refused", detail: "service text" },
+        });
+      }
+      phase = body.phase;
+      check.queue_position = null;
+      return route.fulfill({
+        json: {
+          phase,
+          next_phase: PHASES[PHASES.indexOf(phase ?? "") + 1] ?? null,
+        },
+      });
     },
   );
   await page.route(/\/api\/exceptions/, (route) =>
@@ -570,12 +675,214 @@ test("a triage is recorded with its reason said first, and thresholds are set, l
   ]);
 });
 
+test("a programme's start check is said first, a refused start joins the queue in the catalogue's words, and an override starts it", async ({
+  page,
+}) => {
+  const sent = await stubProgramme(page, { refuseStart: true });
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const region = page.getByRole("region", { name: "Phase and start" });
+  await expect(region.getByTestId("phase-now")).toHaveText(
+    "The plan is in the Planning phase.",
+  );
+  await expect(
+    region
+      .getByRole("list", { name: "Time in each phase" })
+      .getByRole("listitem"),
+  ).toHaveText([
+    "Initiating: 3 days · entered 1 time",
+    "Planning: 1 day · entered 1 time · now",
+  ]);
+  const checkList = region.getByTestId("start-check");
+  await expect(checkList).toContainText(
+    "3 of 3 places for programmes in active delivery are taken.",
+  );
+  await expect(checkList).toContainText("The constraint pool is Engineering.");
+  await expect(checkList).toContainText("A start now would be refused:");
+  await expect(checkList).toContainText(
+    "All 3 places for programmes in active delivery are taken (3 in delivery).",
+  );
+  await expect(checkList).toContainText(
+    "The constraint pool Engineering is short of supply in December 2026, January 2027.",
+  );
+  const demand = region.getByRole("table", {
+    name: "This programme's firm demand",
+  });
+  await expect(demand.getByRole("row", { name: /Engineering/ })).toContainText(
+    "1.50",
+  );
+  await expect(demand.getByRole("row", { name: /Design/ })).toContainText("—");
+
+  // Nothing is sent before a phase is chosen.
+  const move = region.getByRole("button", { name: "Move the phase" });
+  await move.click();
+  await expect(region.getByRole("alert")).toHaveText(
+    "Choose the phase to move to.",
+  );
+  expect(sent).toEqual([]);
+
+  await region.getByRole("radio", { name: "Forward to Executing" }).check();
+  await expect(
+    region.getByText(
+      "This start would be refused. Sent without an override reason, the programme joins the start queue (or keeps its place there).",
+    ),
+  ).toBeVisible();
+  const override = region.getByLabel(/^Override reason, to start anyway/);
+  await override.fill(" Too short ");
+  await move.click();
+  await expect(region.getByRole("alert")).toHaveText(
+    "An override reason is 10 or more characters.",
+  );
+  expect(sent).toEqual([]);
+
+  await override.fill("");
+  await move.click();
+  await expect(region.getByRole("alert")).toHaveText(
+    "The start was refused, so the programme is number 2 in the start queue. To start it anyway, give an override reason.",
+  );
+  await expect(
+    region.getByRole("list", { name: "Why the start was refused" }),
+  ).toContainText("All 3 places for programmes in active delivery are taken");
+  await expect(checkList).toContainText(
+    "This programme is number 2 in the start queue.",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+
+  await override.fill("  The board agreed to run it in parallel.  ");
+  await move.click();
+  await expect(region.getByRole("status")).toHaveText(
+    "The programme started with an override: it is now in the Executing phase, and the override is recorded.",
+  );
+  await expect(region.getByTestId("phase-now")).toHaveText(
+    "The plan is in the Executing phase.",
+  );
+  expect(sent).toEqual([
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/phase`,
+      body: { phase: "executing" },
+    },
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/phase`,
+      body: {
+        phase: "executing",
+        start_override_reason: "The board agreed to run it in parallel.",
+      },
+    },
+  ]);
+});
+
+test("a programme with room starts with nothing more, and its check says so", async ({
+  page,
+}) => {
+  const sent = await stubProgramme(page);
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const region = page.getByRole("region", { name: "Phase and start" });
+  await expect(region.getByTestId("start-check")).toContainText(
+    "A start now would go ahead.",
+  );
+  await region.getByRole("radio", { name: "Forward to Executing" }).check();
+  await expect(
+    region.getByText(/^Moving into Executing is this programme's start/),
+  ).toBeVisible();
+  await expect(region.getByLabel(/^Override reason/)).toHaveCount(0);
+  await region.getByRole("button", { name: "Move the phase" }).click();
+  await expect(region.getByRole("status")).toHaveText(
+    "The plan is now in the Executing phase.",
+  );
+  expect(sent).toEqual([
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/phase`,
+      body: { phase: "executing" },
+    },
+  ]);
+});
+
+test("a plan's phase moves back only with a reason, said first, has no start check, and a refusal is the catalogue's", async ({
+  page,
+}) => {
+  const sent = await stubProgramme(page, {
+    kind: "Project",
+    phase: "executing",
+    phaseRefuse: 422,
+  });
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const region = page.getByRole("region", { name: "Phase", exact: true });
+  await expect(region.getByTestId("phase-now")).toHaveText(
+    "The plan is in the Executing phase.",
+  );
+  await expect(region.getByTestId("start-check")).toHaveCount(0);
+  await expect(region.getByRole("radio")).toHaveCount(3);
+  await region.getByRole("radio", { name: "Back to Planning" }).check();
+  await expect(region.getByRole("note")).toHaveText(
+    "A move back needs a reason.",
+  );
+  const move = region.getByRole("button", { name: "Move the phase" });
+  await move.click();
+  await expect(region.getByRole("alert")).toHaveText(
+    "A move back needs a reason.",
+  );
+  expect(sent).toEqual([]);
+  await region
+    .getByLabel(/^Reason \(needed to move back/)
+    .fill("  The scope changed after the review.  ");
+  await move.click();
+  await expect(region.getByRole("alert")).toHaveText(
+    "Refused: a move forward is one phase at a time, a move back needs a reason, and the plan must not already be in that phase.",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+  expect(sent).toEqual([
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/phase`,
+      body: {
+        phase: "planning",
+        reason: "The scope changed after the review.",
+      },
+    },
+  ]);
+});
+
+test("a plan with no phase yet offers only Initiating", async ({ page }) => {
+  const sent = await stubProgramme(page, { kind: "Project", phase: null });
+  await page.goto(`/en-001/plans/${PID}/programme`);
+  await settle(page);
+  const region = page.getByRole("region", { name: "Phase", exact: true });
+  await expect(region.getByTestId("phase-now")).toHaveText(
+    "No phase is recorded yet: the first move is into Initiating.",
+  );
+  await expect(region.getByRole("radio")).toHaveCount(1);
+  await region.getByRole("radio", { name: "Forward to Initiating" }).check();
+  await region.getByRole("button", { name: "Move the phase" }).click();
+  await expect(region.getByRole("status")).toHaveText(
+    "The plan is now in the Initiating phase.",
+  );
+  expect(sent).toEqual([
+    {
+      method: "PUT",
+      path: `/api/plans/${PID}/phase`,
+      body: { phase: "initiating" },
+    },
+  ]);
+});
+
 test("the page reads in Welsh and passes axe", async ({ page }) => {
-  await stubProgramme(page);
+  await stubProgramme(page, { refuseStart: true });
   await page.goto(`/cy-001/plans/${PID}/programme`);
   await settle(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Pyrth a statws rhaglen",
+  );
+  // The phase form open on a refused start, so its override field is audited too.
+  const phase = page.getByRole("region", { name: "Cyfnod a chychwyn" });
+  await phase.getByRole("radio", { name: "Ymlaen i Cyflawni" }).check();
+  await expect(phase.getByLabel(/^Rheswm diystyru/)).toBeVisible();
+  await expect(phase.getByTestId("phase-now")).toHaveText(
+    "Mae'r cynllun yn y cyfnod Cynllunio.",
   );
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])

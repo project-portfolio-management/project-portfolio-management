@@ -2424,3 +2424,75 @@ change to a scorecard reads the tracker again.
   evidence with their rules, no change and a 422; a scorecard added, its key measures chosen and measures added from
   the template with the direction rule; Welsh; axe with the forms open). The translations are machine-written and
   unreviewed.
+
+## A plan's phase and a programme's start (NC-1 slice 11, FR-30, EX-8)
+
+`/plans/[pid]/programme` holds the phase section (`PlanPhase.svelte`, over `GET /api/plans/{pid}/phase-history`, `PUT
+/api/plans/{pid}/phase` and, for a programme, `GET /api/plans/{pid}/start-check`), beside the gates, the programme
+status, the delivery model and the thresholds: it is the page about where a plan is in its life, and until now no
+page moved a phase at all. Every plan has a phase, so the section is shown for every plan; only a plan of kind
+Program has the start check. `src/lib/phase-view.ts` holds the rules.
+
+- **The phase.** The current phase in words (or that none is recorded yet), and the time in each phase entered, in
+  whole days, with how many times it was entered and which is now. The moves offered are the ones the service
+  allows: one step forward (only Initiating for a plan with no phase; none after Closing) and every earlier phase. A
+  move back needs a reason (said when one is chosen, and refused before sending without one); a reason given for a
+  move forward is sent and recorded too. Nothing is sent before a phase is chosen; the current phase is never offered.
+  The page says the phase never stops work being recorded.
+- **The start check** (a programme only). What a start would meet now, read without moving anything: the places for
+  programmes in active delivery taken of the limit (or that no limit is set, or that the deployment's setting could
+  not be used), the constraint pool (or that none is identified), whether a start now would go ahead or be refused
+  and why (each refusal built from its structured fields: the limit and the count, the pool and its short months in
+  the reader's month names), the programme's place in the start queue when it is waiting, with a link to
+  `/start-queue`, and its firm demand by skill pool and month in full-time equivalents (a `DataTable`; a dash where a
+  pool has none that month). The rule is said first: a refused start joins the queue and keeps its place, and can go
+  ahead with an override reason of 10 or more characters, recorded and audited. "Check again" reads it again.
+- **The start.** Moving a programme into Executing is its start. Choosing it says first whether the check expects a
+  refusal (and that, sent without an override, the programme joins the queue) or that the start may still be refused
+  when sent. When the check expects a refusal, or after one, an override reason field is shown; an override shorter
+  than 10 characters after trimming is refused before sending (the service would ignore it and refuse the start), and
+  an override is sent only on a programme's move into Executing.
+- **Refusals.** A refused start (422 `start_refused`) is said in the catalogue's words with the programme's place in
+  the queue and the reasons, both read from the start check again after the refusal: **the 422 carries only the
+  service's English sentence, with no structured reasons or place**, so the page does not use it. Any other 422 says
+  the three phase rules (one step forward, a reason to go back, not the current phase); a 404 that the plan no longer
+  exists; anything else is the generic sentence.
+- **Not built:** the transitions themselves, each with its reason (the page shows the time in each phase only); the
+  phase anywhere but this page (the plan page does not show it); withdrawing from the queue here (that is
+  `/start-queue`); demand set against free supply (the check gives this programme's demand, not the pool's free
+  supply). **Service gap:** the 422 `start_refused` names its reasons and the place only in English text, so the page
+  reads the check a second time; between the refusal and that read the reasons could change.
+- **Tests:** `tests/unit/phase-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, and
+  `tests/e2e/plan-programme.spec.ts` (the check said first with its reasons and demand; nothing sent before a phase is
+  chosen; a short override refused first; a refused start in the catalogue's words with its place and no service
+  text; an override that starts it; a start with room; a move back with its reason said first, no start check on a
+  project, a 422 in the catalogue's words; a plan with no phase; Welsh; axe with the override field open). The
+  translations are machine-written and unreviewed.
+
+## The named trade-off on a new ask (NC-1 slice 11, EX-13)
+
+`/proposals` (over `GET` and `POST /api/proposals`, the pipeline actions and `PUT /api/proposals/{pid}/tradeoff`).
+`src/lib/tradeoff-view.ts` holds the rules.
+
+- **Tagging.** A new proposal can be tagged as an external ask from the sponsor; it may name its trade-off (what it
+  displaces) at once, in 10 to 2000 characters, or leave it to be named before approval. An ordinary proposal sends
+  neither field. The form is `novalidate` and says a missing title before sending.
+- **The board** says the rule above the table (an external ask must name a trade-off of 10 or more characters before
+  it can be approved) and, in its own column, whether each proposal is an external ask and its trade-off, or that none
+  is named yet (words and a ⚠ symbol, never a colour). The pipeline buttons are now the catalogue's words (they were
+  the service's action names), each named with its proposal.
+- **Naming and changing it.** An external ask not yet approved or rejected offers "Name the trade-off" or "Change the
+  trade-off", which opens a form below the table with the rule said first (10 to 2000 characters, until the proposal
+  is decided, each change recorded); the same text again sends nothing and says so.
+- **Approving.** Approving an external ask without a named trade-off is refused before anything is sent, naming the
+  proposal. The service's 422 on approval says, in the catalogue's words, both reasons it can have (only a proposal in
+  review can be approved; an external ask needs a named trade-off first), as the service gives one code for both; a
+  422 on the trade-off and on creating a proposal says its rules; a 404 that the proposal no longer exists.
+- **Not built:** tagging an existing proposal as an external ask, or untagging one (that is the draft update, `PUT
+  /api/proposals/{pid}`, which no page calls); the pack's external-asks section is shown by the director pack pages,
+  not here.
+- **Tests:** `tests/unit/tradeoff-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, `tests/e2e/proposals.spec.ts`
+  (the board's column and rule; an approval refused first; naming a trade-off with its rule, nothing for the same text,
+  then approving; a new external ask with and without its trade-off; a 422 in the catalogue's words and no service
+  text; Welsh; axe with both forms open), and `tests/e2e/ppm.spec.ts` (the board as before). The translations are
+  machine-written and unreviewed.

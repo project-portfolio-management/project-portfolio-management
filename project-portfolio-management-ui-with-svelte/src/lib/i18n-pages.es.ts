@@ -6844,4 +6844,131 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Incidencias abiertas de gravedad crítica",
   "p.deescalation.measure_change_requests_waiting":
     "Solicitudes de cambio que esperan más de 30 días una decisión",
+  "p.phase.name_initiating": "Inicio",
+  "p.phase.name_planning": "Planificación",
+  "p.phase.name_executing": "Ejecución",
+  "p.phase.name_controlling": "Control",
+  "p.phase.name_closing": "Cierre",
+  "p.phase.heading": "Fase",
+  "p.phase.heading_programme": "Fase e inicio",
+  "p.phase.says":
+    "Un plan avanza una fase cada vez; puede volver a una fase anterior con un motivo, que se registra con el cambio. La fase nunca impide registrar trabajo.",
+  "p.phase.could_not_load": "No se pudo cargar la fase del plan",
+  "p.phase.now": "El plan está en la fase {phase}.",
+  "p.phase.none": "Aún no hay fase registrada: el primer cambio es a Inicio.",
+  "p.phase.time_heading": "Tiempo en cada fase",
+  "p.phase.days_in_one": "{phase}: {days} día",
+  "p.phase.days_in_other": "{phase}: {days} días",
+  "p.phase.visits_one": "con {visits} entrada",
+  "p.phase.visits_other": "con {visits} entradas",
+  "p.phase.current": "actual",
+  "p.phase.check_heading": "Comprobación de inicio",
+  "p.phase.check_says":
+    "Un programa empieza cuando su fase pasa a Ejecución. El inicio se rechaza cuando todas las plazas para programas en ejecución activa están ocupadas (los programas en pausa o detenidos no ocupan ninguna) o cuando el grupo restrictivo tiene falta de oferta en alguno de los seis meses siguientes. Un programa rechazado entra en la cola de inicio y conserva su puesto; puede empezar igualmente con un motivo de excepción de {min} o más caracteres, que se registra y audita. Leer la comprobación no mueve nada.",
+  "p.phase.could_not_check": "No se pudo leer la comprobación de inicio",
+  "p.phase.places":
+    "Hay {in_delivery} de {limit} plazas ocupadas para programas en ejecución activa.",
+  "p.phase.no_limit":
+    "No hay límite fijado para programas en ejecución activa.",
+  "p.phase.limit_unusable":
+    "No se pudo usar el límite de la instalación para programas en ejecución, así que no se aplica ninguno.",
+  "p.phase.pool_is": "El grupo restrictivo es {pool}.",
+  "p.phase.no_pool": "No se ha identificado ningún grupo restrictivo.",
+  "p.phase.would_refuse": "Un inicio ahora se rechazaría:",
+  "p.phase.would_start": "Un inicio ahora seguiría adelante.",
+  "p.phase.in_queue": "Este programa es el número {n} de la cola de inicio.",
+  "p.phase.see_queue": "Ver la cola de inicio",
+  "p.phase.refusal_limit":
+    "Las {limit} plazas para programas en ejecución activa están ocupadas ({in_delivery} en ejecución).",
+  "p.phase.refusal_pool":
+    "El grupo restrictivo {pool} tiene falta de oferta en {months}.",
+  "p.phase.demand_heading": "Demanda firme de este programa",
+  "p.phase.demand_caption":
+    "Equivalentes a tiempo completo por grupo de competencias y mes, de asignaciones firmes en este programa y los planes que dependen de él",
+  "p.phase.no_demand":
+    "No hay demanda firme de este programa en un grupo de competencias en los próximos seis meses.",
+  "p.phase.col_pool": "Grupo de competencias",
+  "p.phase.check_again": "Comprobar de nuevo",
+  "p.phase.move_heading": "Cambiar la fase",
+  "p.phase.f_to": "Pasar a",
+  "p.phase.forward_to": "Avanzar a {phase}",
+  "p.phase.back_to": "Volver a {phase}",
+  "p.phase.back_needs_reason": "Volver atrás necesita un motivo.",
+  "p.phase.f_reason":
+    "Motivo (necesario para volver atrás; se registra con el cambio)",
+  "p.phase.start_may_queue":
+    "Pasar a Ejecución es el inicio de este programa: si al enviarlo la comprobación no encuentra sitio, el inicio se rechaza y el programa entra en la cola de inicio.",
+  "p.phase.start_would_queue":
+    "Este inicio se rechazaría. Si se envía sin motivo de excepción, el programa entra en la cola de inicio (o conserva su puesto en ella).",
+  "p.phase.f_override":
+    "Motivo de excepción, para empezar igualmente ({min} o más caracteres; se registra y audita)",
+  "p.phase.refused_why": "Por qué se rechazó el inicio",
+  "p.phase.move": "Mover la fase",
+  "p.phase.moved": "El plan está ahora en la fase {phase}.",
+  "p.phase.started_override":
+    "El programa empezó con una excepción: ahora está en la fase {phase} y la excepción queda registrada.",
+  "p.phase.start_refused_place":
+    "Se rechazó el inicio, así que el programa es el número {n} de la cola de inicio. Para empezarlo igualmente, indique un motivo de excepción.",
+  "p.phase.start_refused":
+    "Se rechazó el inicio y el programa entró en la cola de inicio. Para empezarlo igualmente, indique un motivo de excepción.",
+  "p.phase.could_not_move": "No se pudo mover la fase",
+  "p.phase.problem_choose": "Elija la fase a la que pasar.",
+  "p.phase.problem_same":
+    "El plan ya está en esa fase, así que no se envió nada.",
+  "p.phase.problem_skip": "Se avanza una fase cada vez.",
+  "p.phase.problem_reason": "Para volver atrás hace falta un motivo.",
+  "p.phase.problem_override":
+    "Un motivo de excepción tiene {min} o más caracteres.",
+  "p.phase.refused_move":
+    "Rechazado: se avanza una fase cada vez, volver atrás necesita un motivo y el plan no debe estar ya en esa fase.",
+  "p.phase.refused_gone": "Ese plan ya no existe.",
+  "p.proposals.act_submit": "Enviar",
+  "p.proposals.act_review": "Iniciar revisión",
+  "p.proposals.act_approve": "Aprobar",
+  "p.proposals.act_reject": "Rechazar",
+  "p.proposals.act_submit_named": "Enviar {title}",
+  "p.proposals.act_review_named": "Iniciar revisión de {title}",
+  "p.proposals.act_approve_named": "Aprobar {title}",
+  "p.proposals.act_reject_named": "Rechazar {title}",
+  "p.proposals.ask_rule":
+    "Una petición externa del patrocinador debe indicar qué desplaza (una contrapartida de {min} o más caracteres) antes de poder aprobarse.",
+  "p.proposals.new_form": "Nueva propuesta",
+  "p.proposals.f_external_ask": "Una petición externa del patrocinador",
+  "p.proposals.f_new_tradeoff":
+    "Qué desplaza (la contrapartida, de {min} a {max} caracteres; puede indicarse más tarde, antes de aprobar)",
+  "p.proposals.col_tradeoff": "Petición externa y contrapartida",
+  "p.proposals.not_ask": "No es una petición externa",
+  "p.proposals.ask_with": "Petición externa. Contrapartida: {tradeoff}",
+  "p.proposals.ask_without":
+    "Petición externa. Aún no hay contrapartida indicada.",
+  "p.proposals.tradeoff_name": "Indicar la contrapartida",
+  "p.proposals.tradeoff_change": "Cambiar la contrapartida",
+  "p.proposals.tradeoff_name_named": "Indicar la contrapartida de {title}",
+  "p.proposals.tradeoff_change_named": "Cambiar la contrapartida de {title}",
+  "p.proposals.tradeoff_heading": "Contrapartida de {title}",
+  "p.proposals.tradeoff_says":
+    "Indique qué desplaza esta petición, en {min} a {max} caracteres. Puede indicarse o cambiarse hasta que la propuesta se apruebe o rechace, y cada cambio queda registrado.",
+  "p.proposals.f_tradeoff": "Qué desplaza (de {min} a {max} caracteres)",
+  "p.proposals.tradeoff_save": "Guardar la contrapartida",
+  "p.proposals.tradeoff_close": "Cerrar el formulario de contrapartida",
+  "p.proposals.tradeoff_unchanged": "No cambió nada, así que no se envió nada.",
+  "p.proposals.tradeoff_saved": "Contrapartida guardada para {title}.",
+  "p.proposals.problem_title": "Una propuesta necesita un título.",
+  "p.proposals.problem_tradeoff":
+    "Una contrapartida tiene de {min} a {max} caracteres.",
+  "p.proposals.problem_not_ask":
+    "Solo una petición externa tiene contrapartida.",
+  "p.proposals.problem_decided":
+    "La propuesta ya está decidida, así que su contrapartida ya no puede cambiar.",
+  "p.proposals.problem_approve":
+    "{title} es una petición externa: indique su contrapartida ({min} o más caracteres) antes de aprobarla.",
+  "p.proposals.refused_create":
+    "Rechazado: una propuesta necesita un título, un importe necesita una moneda y una contrapartida tiene como máximo {max} caracteres.",
+  "p.proposals.refused_approve":
+    "Rechazado: solo se puede aprobar una propuesta en revisión, y una petición externa necesita antes una contrapartida indicada de {min} o más caracteres.",
+  "p.proposals.refused_tradeoff":
+    "Rechazado: una contrapartida tiene de {min} a {max} caracteres, en una petición externa aún no decidida.",
+  "p.proposals.refused_step":
+    "Rechazado: ese paso no corresponde al estado de la propuesta.",
+  "p.proposals.refused_gone": "Esa propuesta ya no existe.",
 };

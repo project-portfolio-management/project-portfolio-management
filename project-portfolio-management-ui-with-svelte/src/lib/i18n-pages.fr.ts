@@ -6870,4 +6870,133 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Problèmes ouverts de gravité critique",
   "p.deescalation.measure_change_requests_waiting":
     "Demandes de changement en attente de décision depuis plus de 30 jours",
+  "p.phase.name_initiating": "Lancement",
+  "p.phase.name_planning": "Planification",
+  "p.phase.name_executing": "Exécution",
+  "p.phase.name_controlling": "Pilotage",
+  "p.phase.name_closing": "Clôture",
+  "p.phase.heading": "Phase du plan",
+  "p.phase.heading_programme": "Phase et démarrage",
+  "p.phase.says":
+    "Un plan avance d'une phase à la fois ; il peut revenir à une phase antérieure avec une raison, enregistrée avec le changement. La phase n'empêche jamais d'enregistrer du travail.",
+  "p.phase.could_not_load": "Impossible de charger la phase du plan",
+  "p.phase.now": "Le plan est dans la phase {phase}.",
+  "p.phase.none":
+    "Aucune phase n'est encore enregistrée : le premier passage se fait vers Lancement.",
+  "p.phase.time_heading": "Temps passé dans chaque phase",
+  "p.phase.days_in_one": "{phase} : {days} jour",
+  "p.phase.days_in_other": "{phase} : {days} jours",
+  "p.phase.visits_one": "{visits} entrée",
+  "p.phase.visits_other": "{visits} entrées",
+  "p.phase.current": "en cours",
+  "p.phase.check_heading": "Contrôle de démarrage",
+  "p.phase.check_says":
+    "Un programme démarre quand sa phase passe à Exécution. Le démarrage est refusé quand toutes les places pour les programmes en réalisation active sont prises (les programmes en pause ou arrêtés n'en occupent aucune) ou quand le pool contraint manque d'offre dans l'un des six prochains mois. Un programme refusé entre dans la file de démarrage et garde sa place ; il peut démarrer quand même avec une raison de dérogation de {min} caractères ou plus, enregistrée et auditée. Lire le contrôle ne change rien.",
+  "p.phase.could_not_check": "Impossible de lire le contrôle de démarrage",
+  "p.phase.places":
+    "{in_delivery} places sur {limit} pour les programmes en réalisation active sont prises.",
+  "p.phase.no_limit":
+    "Aucune limite n'est fixée pour les programmes en réalisation active.",
+  "p.phase.limit_unusable":
+    "La limite de l'installation pour les programmes en réalisation n'a pas pu être utilisée ; aucune limite ne s'applique donc.",
+  "p.phase.pool_is": "Le pool contraint est {pool}.",
+  "p.phase.no_pool": "Aucun pool contraint n'est identifié.",
+  "p.phase.would_refuse": "Un démarrage maintenant serait refusé :",
+  "p.phase.would_start": "Un démarrage maintenant serait accepté.",
+  "p.phase.in_queue":
+    "Ce programme est le numéro {n} dans la file de démarrage.",
+  "p.phase.see_queue": "Voir la file de démarrage",
+  "p.phase.refusal_limit":
+    "Les {limit} places pour les programmes en réalisation active sont prises ({in_delivery} en réalisation).",
+  "p.phase.refusal_pool":
+    "Le pool contraint {pool} manque d'offre en {months}.",
+  "p.phase.demand_heading": "Demande ferme de ce programme",
+  "p.phase.demand_caption":
+    "Équivalents temps plein par pool de compétences et par mois, issus des affectations fermes sur ce programme et les plans en dessous",
+  "p.phase.no_demand":
+    "Aucune demande ferme de ce programme dans un pool de compétences au cours des six prochains mois.",
+  "p.phase.col_pool": "Pool de compétences",
+  "p.phase.check_again": "Vérifier à nouveau",
+  "p.phase.move_heading": "Changer de phase",
+  "p.phase.f_to": "Passer à",
+  "p.phase.forward_to": "Avancer à {phase}",
+  "p.phase.back_to": "Revenir à {phase}",
+  "p.phase.back_needs_reason": "Un retour en arrière demande une raison.",
+  "p.phase.f_reason":
+    "Raison (nécessaire pour revenir en arrière ; enregistrée avec le changement)",
+  "p.phase.start_may_queue":
+    "Passer à Exécution est le démarrage de ce programme : si le contrôle ne trouve pas de place à l'envoi, le démarrage est refusé et le programme entre dans la file de démarrage.",
+  "p.phase.start_would_queue":
+    "Ce démarrage serait refusé. Envoyé sans raison de dérogation, le programme entre dans la file de démarrage (ou y garde sa place).",
+  "p.phase.f_override":
+    "Raison de dérogation, pour démarrer quand même ({min} caractères ou plus ; enregistrée et auditée)",
+  "p.phase.refused_why": "Pourquoi le démarrage a été refusé",
+  "p.phase.move": "Déplacer la phase",
+  "p.phase.moved": "Le plan est maintenant dans la phase {phase}.",
+  "p.phase.started_override":
+    "Le programme a démarré par dérogation : il est maintenant dans la phase {phase}, et la dérogation est enregistrée.",
+  "p.phase.start_refused_place":
+    "Le démarrage a été refusé : le programme est donc le numéro {n} dans la file de démarrage. Pour le démarrer quand même, donnez une raison de dérogation.",
+  "p.phase.start_refused":
+    "Le démarrage a été refusé et le programme est entré dans la file de démarrage. Pour le démarrer quand même, donnez une raison de dérogation.",
+  "p.phase.could_not_move": "Impossible de changer la phase",
+  "p.phase.problem_choose": "Choisissez la phase vers laquelle passer.",
+  "p.phase.problem_same":
+    "Le plan est déjà dans cette phase ; rien n'a donc été envoyé.",
+  "p.phase.problem_skip": "On avance d'une phase à la fois.",
+  "p.phase.problem_reason": "Revenir en arrière nécessite une raison.",
+  "p.phase.problem_override":
+    "Une raison de dérogation compte {min} caractères ou plus.",
+  "p.phase.refused_move":
+    "Refusé : on avance d'une phase à la fois, un retour en arrière demande une raison, et le plan ne doit pas déjà être dans cette phase.",
+  "p.phase.refused_gone": "Ce plan n'existe plus.",
+  "p.proposals.act_submit": "Soumettre",
+  "p.proposals.act_review": "Commencer l'examen",
+  "p.proposals.act_approve": "Approuver",
+  "p.proposals.act_reject": "Rejeter",
+  "p.proposals.act_submit_named": "Soumettre {title}",
+  "p.proposals.act_review_named": "Commencer l'examen de {title}",
+  "p.proposals.act_approve_named": "Approuver {title}",
+  "p.proposals.act_reject_named": "Rejeter {title}",
+  "p.proposals.ask_rule":
+    "Une demande externe du commanditaire doit nommer ce qu'elle déplace (un arbitrage de {min} caractères ou plus) avant de pouvoir être approuvée.",
+  "p.proposals.new_form": "Nouvelle proposition",
+  "p.proposals.f_external_ask": "Une demande externe du commanditaire",
+  "p.proposals.f_new_tradeoff":
+    "Ce qu'elle déplace (l'arbitrage, de {min} à {max} caractères ; il peut être nommé plus tard, avant l'approbation)",
+  "p.proposals.col_tradeoff": "Demande externe et arbitrage",
+  "p.proposals.not_ask": "Pas une demande externe",
+  "p.proposals.ask_with": "Demande externe. Arbitrage : {tradeoff}",
+  "p.proposals.ask_without":
+    "Demande externe. Aucun arbitrage nommé pour l'instant.",
+  "p.proposals.tradeoff_name": "Nommer l'arbitrage",
+  "p.proposals.tradeoff_change": "Modifier l'arbitrage",
+  "p.proposals.tradeoff_name_named": "Nommer l'arbitrage de {title}",
+  "p.proposals.tradeoff_change_named": "Modifier l'arbitrage de {title}",
+  "p.proposals.tradeoff_heading": "Arbitrage de {title}",
+  "p.proposals.tradeoff_says":
+    "Nommez ce que cette demande déplace, en {min} à {max} caractères. Il peut être nommé ou modifié jusqu'à ce que la proposition soit approuvée ou rejetée, et chaque modification est enregistrée.",
+  "p.proposals.f_tradeoff": "Ce qu'elle déplace (de {min} à {max} caractères)",
+  "p.proposals.tradeoff_save": "Enregistrer l'arbitrage",
+  "p.proposals.tradeoff_close": "Fermer le formulaire d'arbitrage",
+  "p.proposals.tradeoff_unchanged":
+    "Rien n'a changé ; rien n'a donc été envoyé.",
+  "p.proposals.tradeoff_saved": "Arbitrage enregistré pour {title}.",
+  "p.proposals.problem_title": "Une proposition a besoin d'un titre.",
+  "p.proposals.problem_tradeoff":
+    "Un arbitrage compte de {min} à {max} caractères.",
+  "p.proposals.problem_not_ask": "Seule une demande externe a un arbitrage.",
+  "p.proposals.problem_decided":
+    "La proposition est tranchée ; son arbitrage ne peut donc plus changer.",
+  "p.proposals.problem_approve":
+    "{title} est une demande externe : nommez son arbitrage ({min} caractères ou plus) avant de l'approuver.",
+  "p.proposals.refused_create":
+    "Refusé : une proposition a besoin d'un titre, un montant d'une devise, et un arbitrage compte au plus {max} caractères.",
+  "p.proposals.refused_approve":
+    "Refusé : seule une proposition en examen peut être approuvée, et une demande externe a d'abord besoin d'un arbitrage nommé de {min} caractères ou plus.",
+  "p.proposals.refused_tradeoff":
+    "Refusé : un arbitrage compte de {min} à {max} caractères, sur une demande externe pas encore tranchée.",
+  "p.proposals.refused_step":
+    "Refusé : cette étape ne découle pas du statut de la proposition.",
+  "p.proposals.refused_gone": "Cette proposition n'existe plus.",
 };

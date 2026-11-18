@@ -7875,4 +7875,272 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.value.problem_source": "Wählen Sie, wo das Ziel versprochen wurde.",
   "p.value.refused_target": "Das Ziel wurde abgelehnt.",
   "p.value.could_not_record_target": "Das Ziel konnte nicht erfasst werden.",
+  "p.scoring.rank_by": "Reihen nach",
+  "p.scoring.model_smart": "Smart-Score (aus Belegen)",
+  "p.scoring.model_wsjf": "WSJF (gewichtete kürzeste Aufgabe zuerst)",
+  "p.scoring.model_rice": "RICE (Reichweite, Wirkung, Zuversicht, Aufwand)",
+  "p.scoring.models_say":
+    "Der Smart-Score stammt aus den Belegen, die der Dienst hält; WSJF und RICE werden aus den Schätzungen einer Person berechnet, die für jeden Plan unter seiner Schaltfläche „Schätzungen“ gesetzt werden. Ein Plan ohne jede Eingabe, die ein Modell braucht, bleibt ohne Wert und steht zuletzt, nie mit null bewertet. Das Band gehört zum Smart-Score.",
+  "p.scoring.of_plans_one":
+    "{length} von {scored_of} Plan, gereiht nach {model}",
+  "p.scoring.of_plans_other":
+    "{length} von {scored_of} Plänen, gereiht nach {model}",
+  "p.scoring.ranked_by": "Pläne gereiht nach {model}",
+  "p.scoring.waiting_for": "Wartet auf",
+  "p.scoring.open": "Schätzungen",
+  "p.scoring.open_named": "Die Schätzungen von {name} öffnen",
+  "p.scoring.heading": "Schätzungen für {name}",
+  "p.scoring.form": "Die Schätzungen von {name}",
+  "p.scoring.says":
+    "WSJF und RICE werden aus diesen Schätzungen berechnet. Fehlt eine Eingabe, gibt es keinen Wert, nie eine Vermutung; eine angegebene Null ist keine fehlende Eingabe. Speichern ersetzt jede Schätzung: ein leeres Feld löscht sie.",
+  "p.scoring.last_set": "Zuletzt gesetzt {when}.",
+  "p.scoring.none_set": "Es sind keine Schätzungen gesetzt.",
+  "p.scoring.wsjf_inputs":
+    "WSJF-Eingaben, jede eine ganze Zahl von {min} bis {max}",
+  "p.scoring.rice_inputs": "RICE-Eingaben",
+  "p.scoring.input_business_value": "Geschäftswert",
+  "p.scoring.input_time_criticality": "Zeitkritikalität",
+  "p.scoring.input_risk_reduction": "Risikominderung oder eröffnete Chance",
+  "p.scoring.input_job_size": "Umfang der Arbeit",
+  "p.scoring.input_reach":
+    "Reichweite (Personen oder Ereignisse in einem Zeitraum)",
+  "p.scoring.input_impact": "Wirkung",
+  "p.scoring.input_confidence": "Zuversicht (Prozent)",
+  "p.scoring.input_effort": "Aufwand (Personenmonate)",
+  "p.scoring.input_other": "eine andere Eingabe",
+  "p.scoring.component_cost_of_delay": "Verzögerungskosten",
+  "p.scoring.impact_minimal": "sehr gering",
+  "p.scoring.impact_low": "gering",
+  "p.scoring.impact_medium": "mittel",
+  "p.scoring.impact_high": "hoch",
+  "p.scoring.impact_massive": "gewaltig",
+  "p.scoring.impact_value": "{value} (Wirkung {word})",
+  "p.scoring.not_estimated": "nicht geschätzt",
+  "p.scoring.save": "Schätzungen speichern",
+  "p.scoring.close": "Schätzungen schließen",
+  "p.scoring.unchanged":
+    "Die Schätzungen sind wie gespeichert; es wurde nichts gesendet.",
+  "p.scoring.saved": "Schätzungen für {name} gespeichert.",
+  "p.scoring.could_not_read": "Die Schätzungen konnten nicht gelesen werden.",
+  "p.scoring.could_not_save":
+    "Die Schätzungen konnten nicht gespeichert werden.",
+  "p.scoring.refused_gone":
+    "Dieser Plan existiert nicht mehr, oder Sie können ihn nicht lesen.",
+  "p.scoring.refused_inputs":
+    "Die Schätzungen wurden abgelehnt: eine Eingabe liegt außerhalb ihres Bereichs.",
+  "p.scoring.problem_wsjf":
+    "{input} muss eine ganze Zahl von {min} bis {max} sein.",
+  "p.scoring.problem_reach":
+    "{input} muss eine ganze Zahl sein, nicht unter null.",
+  "p.scoring.problem_impact": "{input} muss 0,25, 0,5, 1, 2 oder 3 sein.",
+  "p.scoring.problem_confidence":
+    "{input} muss eine ganze Zahl von 0 bis 100 sein.",
+  "p.scoring.problem_effort": "{input} muss über null liegen.",
+  "p.scoring.problem_number": "{input} muss eine Zahl sein.",
+  "p.scoring.formula_wsjf":
+    "WSJF ist (Geschäftswert + Zeitkritikalität + Risikominderung oder eröffnete Chance) ÷ Umfang der Arbeit.",
+  "p.scoring.formula_rice":
+    "RICE ist Reichweite × Wirkung × Zuversicht ÷ Aufwand.",
+  "p.scoring.score_is": "Wert: {score}",
+  "p.scoring.no_score": "Kein Wert: er wartet auf diese Eingaben.",
+  "p.scoring.needs_delay_part": "sie ist Teil der Verzögerungskosten",
+  "p.scoring.needs_divisor":
+    "sie ist der Divisor: ohne sie gibt es keinen Wert je Arbeitseinheit",
+  "p.scoring.needs_reach":
+    "sie sagt, wie viele Personen die Arbeit in einem Zeitraum erreicht",
+  "p.scoring.needs_impact":
+    "sie sagt, wie viel die Arbeit jeder erreichten Person bedeutet",
+  "p.scoring.needs_confidence":
+    "sie mindert die Schätzungen danach, wie sicher sie sind",
+  "p.scoring.needs_other": "der Wert braucht sie",
+  "p.scoring.means_business_value":
+    "relativer Wert für die Nutzer oder das Geschäft, 1 bis 20",
+  "p.scoring.means_time_criticality":
+    "wie schnell der Wert verfällt, wenn es spät wird, 1 bis 20",
+  "p.scoring.means_risk_reduction":
+    "das Risiko, das es beseitigt, oder die Chance, die es eröffnet, 1 bis 20",
+  "p.scoring.means_cost_of_delay":
+    "die Summe der drei oben: was eine Verzögerung kostet",
+  "p.scoring.means_job_size":
+    "der relative Umfang der Arbeit, 1 bis 20; der Divisor",
+  "p.scoring.means_reach":
+    "in einem Zeitraum erreichte Personen oder Ereignisse",
+  "p.scoring.means_impact":
+    "0,25 sehr gering, 0,5 gering, 1 mittel, 2 hoch, 3 gewaltig",
+  "p.scoring.means_confidence": "wie sicher die Schätzungen sind",
+  "p.scoring.means_effort": "Personenmonate Arbeit; der Divisor",
+  "p.scoring.means_other": "ein Bestandteil, den diese Seite nicht kennt",
+  "p.frontier.heading": "Ein Portfolio wählen",
+  "p.frontier.says":
+    "Der Generator bewertet jeden Plan, den Sie lesen können, nach seinem Smart-Score und bepreist ihn nach seinen Budgetzeilen; dann nimmt er Pläne nach Wert je Kosteneinheit, bis die Obergrenze erreicht ist. Pläne, die enthalten sein müssen, werden zuerst genommen, was sie auch kosten. Ein Plan ohne Smart-Score bleibt draußen; ein Plan ohne Budgetzeilen kostet nichts. Die Wahl ist nicht immer die bestmögliche, daher wird eine Obergrenze, die nicht mehr Wert kauft als eine günstigere, markiert, nicht versteckt.",
+  "p.frontier.must_include":
+    "Pläne, die jede Wahl enthalten muss (bis zu {max})",
+  "p.frontier.plans_loading": "Die Pläne werden gelesen…",
+  "p.frontier.plans_none": "Es gibt keine Pläne, die Sie lesen können.",
+  "p.frontier.frontier_heading": "Effizienzgrenze",
+  "p.frontier.frontier_says":
+    "Der Generator läuft einmal je Obergrenze, und nichts wird gespeichert. Verteilen Sie {min} bis {max} Obergrenzen gleichmäßig von null bis zu den Kosten aller bepreisbaren Pläne (leer für {fallback}), oder nennen Sie selbst bis zu {list} Obergrenzen, jede ein Betrag nicht unter null.",
+  "p.frontier.f_currency": "Währung der Kosten (drei Buchstaben)",
+  "p.frontier.f_how": "Welche Budgetobergrenzen",
+  "p.frontier.how_steps": "Gleichmäßig verteilt",
+  "p.frontier.how_caps": "Selbst genannte Obergrenzen",
+  "p.frontier.f_steps": "Wie viele Obergrenzen (leer für {fallback})",
+  "p.frontier.f_caps": "Budgetobergrenzen, eine je Zeile (bis zu {list})",
+  "p.frontier.run": "Die Grenze zeichnen",
+  "p.frontier.value_is":
+    "Der Wert ist die Summe der Smart-Scores der gewählten Pläne.",
+  "p.frontier.table": "Die Grenze, Punkt für Punkt",
+  "p.frontier.col_cap": "Budgetobergrenze",
+  "p.frontier.col_cost": "Kosten der Wahl",
+  "p.frontier.col_value": "Wert",
+  "p.frontier.col_included": "Gewählte Pläne",
+  "p.frontier.col_more": "Kauft mehr Wert",
+  "p.frontier.more_yes": "Ja",
+  "p.frontier.more_no": "Nein: eine günstigere Obergrenze erreicht ebenso viel",
+  "p.frontier.show_choice": "Die Wahl zeigen",
+  "p.frontier.show_choice_named": "Die Wahl bei {cap} zeigen",
+  "p.frontier.save_point": "Als Entwurf speichern",
+  "p.frontier.save_point_named": "Die Wahl bei {cap} als Entwurf speichern",
+  "p.frontier.point_name": "Grenze bei {cap}",
+  "p.frontier.axis_cost": "Kosten der gewählten Pläne",
+  "p.frontier.axis_value": "Wert (summierter Smart-Score)",
+  "p.frontier.chart_points_one": "{n} Budgetobergrenze.",
+  "p.frontier.chart_points_other": "{n} Budgetobergrenzen.",
+  "p.frontier.chart_best": "Der höchste Wert, {value}, kostet {cost}.",
+  "p.frontier.chart_dominated_one":
+    "{n} Obergrenze kauft nicht mehr Wert als eine günstigere.",
+  "p.frontier.chart_dominated_other":
+    "{n} Obergrenzen kaufen nicht mehr Wert als eine günstigere.",
+  "p.frontier.legend_efficient": "kauft mehr Wert",
+  "p.frontier.legend_dominated":
+    "kauft nicht mehr Wert als eine günstigere Obergrenze",
+  "p.frontier.no_points": "Die Grenze hat keine Punkte.",
+  "p.frontier.generate_heading": "Einen Entwurf erzeugen",
+  "p.frontier.generate_says":
+    "Als Entwurfsszenario gespeichert, zum Bewerten, Vergleichen und Festlegen wie jedes andere. Ein Name ist nötig, höchstens {bytes} Bytes. Mit einer Währung wird jeder Plan in ihr bepreist; eine Obergrenze braucht ihre Währung.",
+  "p.frontier.g_name": "Name des Entwurfs",
+  "p.frontier.g_cap": "Budgetobergrenze (optional)",
+  "p.frontier.g_currency": "Währung (nötig mit einer Obergrenze)",
+  "p.frontier.generate": "Den Entwurf erzeugen",
+  "p.frontier.draft_saved":
+    "Entwurf {name} gespeichert; er steht in der Liste oben.",
+  "p.frontier.choice_at": "Was eine Obergrenze von {cap} wählt",
+  "p.frontier.choice_of": "Was {name} gewählt hat",
+  "p.frontier.chosen_count_one": "{n} Plan von {of} gewählt.",
+  "p.frontier.chosen_count_other": "{n} Pläne von {of} gewählt.",
+  "p.frontier.col_plan": "Plan in der Wahl",
+  "p.frontier.col_chosen": "Gewählt oder nicht",
+  "p.frontier.col_score": "Sein Smart-Score",
+  "p.frontier.col_plan_cost": "Seine Kosten",
+  "p.frontier.col_why": "Warum draußen",
+  "p.frontier.chosen": "gewählt",
+  "p.frontier.left_out": "draußen gelassen",
+  "p.frontier.no_score": "kein Smart-Score",
+  "p.frontier.plan_unknown":
+    "Ein Plan, den Sie nicht lesen können oder der nicht mehr existiert",
+  "p.frontier.reason_no_score":
+    "er hat keinen Smart-Score, was kein Wert von null ist",
+  "p.frontier.reason_foreign_currency":
+    "seine Budgetzeilen sind alle in einer anderen Währung, daher kann er nicht bepreist werden",
+  "p.frontier.reason_over_cap": "die Obergrenze war vor ihm erreicht",
+  "p.frontier.reason_must_include_conflict":
+    "er muss enthalten sein, ist aber kein Plan, den Sie lesen können",
+  "p.frontier.reason_other":
+    "aus einem Grund draußen, den diese Seite nicht kennt",
+  "p.frontier.problem_currency":
+    "Geben Sie die Währung mit drei Buchstaben an.",
+  "p.frontier.problem_steps":
+    "Die Zahl der Obergrenzen muss eine ganze Zahl von {min} bis {max} sein.",
+  "p.frontier.problem_caps_none": "Nennen Sie mindestens eine Obergrenze.",
+  "p.frontier.problem_caps_many": "Nennen Sie höchstens {list} Obergrenzen.",
+  "p.frontier.problem_caps_amount":
+    "Jede Obergrenze muss ein Betrag nicht unter null sein.",
+  "p.frontier.problem_must_include":
+    "Wählen Sie höchstens {list} Pläne zum Einschließen.",
+  "p.frontier.problem_name": "Geben Sie dem Entwurf einen Namen.",
+  "p.frontier.problem_name_long": "Der Name ist länger als {bytes} Bytes.",
+  "p.frontier.problem_cap_currency": "Eine Obergrenze braucht ihre Währung.",
+  "p.frontier.problem_cap_amount":
+    "Die Obergrenze muss ein Betrag nicht unter null sein.",
+  "p.frontier.refused_frontier": "Die Grenze wurde abgelehnt.",
+  "p.frontier.refused_generate": "Der Entwurf wurde abgelehnt.",
+  "p.frontier.could_not_read": "Die Grenze konnte nicht gezeichnet werden.",
+  "p.frontier.could_not_generate": "Der Entwurf konnte nicht erzeugt werden.",
+  "p.frontier.rollback": "Zurücknehmen",
+  "p.frontier.rollback_named": "{name} zurücknehmen",
+  "p.frontier.rollback_says":
+    "Ein festgelegtes Szenario kann nach einer Rückfrage wieder zum Entwurf werden; es ändert nichts außer dem Szenario.",
+  "p.frontier.confirm_rollback":
+    "{name} wieder zum Entwurf machen? Es ist dann nicht mehr das festgelegte Portfolio; die Festlegung bleibt im Prüfprotokoll.",
+  "p.frontier.rolled_back": "{name} ist wieder ein Entwurf.",
+  "p.frontier.refused_rollback_status":
+    "{name} ist nicht mehr festgelegt, daher gibt es nichts zurückzunehmen. Die Liste wurde neu gelesen.",
+  "p.frontier.refused_rollback_gone":
+    "{name} existiert nicht mehr, oder Sie können es nicht lesen. Die Liste wurde neu gelesen.",
+  "p.frontier.could_not_roll_back":
+    "Das Szenario konnte nicht zurückgenommen werden.",
+  "p.frontier.status_draft": "Entwurf",
+  "p.frontier.status_committed": "festgelegt",
+  "p.frontier.violations_one": "{n} Bedingung verletzt",
+  "p.frontier.violations_other": "{n} Bedingungen verletzt",
+  "p.frontier.compare_note":
+    "B minus A, je eine Währung; Währungen werden nie zusammengezählt.",
+  "p.intake.edit": "Bearbeiten",
+  "p.intake.edit_named": "Den Entwurf {title} bearbeiten",
+  "p.intake.edit_heading": "{title} bearbeiten",
+  "p.intake.edit_heading_loading": "Der Entwurf wird gelesen…",
+  "p.intake.edit_form": "Die Felder des Entwurfs",
+  "p.intake.edit_says":
+    "Nur ein Entwurf kann bearbeitet werden; dort wird ein Vorschlag auch als externe Anfrage markiert. Ein Titel ist nötig; Titel und Zusammenfassung haben je höchstens {bytes} Bytes; ein Betrag braucht seine Währung; ein genannter Zielkonflikt hat {min} bis {max} Zeichen. Speichern ersetzt jedes Feld.",
+  "p.intake.save": "Den Entwurf speichern",
+  "p.intake.saved": "{title} gespeichert.",
+  "p.intake.unchanged": "Nichts hat sich geändert; es wurde nichts gesendet.",
+  "p.intake.could_not_read_draft": "Der Entwurf konnte nicht gelesen werden.",
+  "p.intake.problem_not_draft": "Nur ein Entwurf kann bearbeitet werden.",
+  "p.intake.problem_title_long": "Der Titel ist länger als {bytes} Bytes.",
+  "p.intake.problem_summary_long":
+    "Die Zusammenfassung ist länger als {bytes} Bytes.",
+  "p.intake.refused_not_draft":
+    "Die Bearbeitung wurde abgelehnt: der Vorschlag ist kein Entwurf mehr. Die Liste wurde neu gelesen.",
+  "p.intake.refused_edit":
+    "Die Bearbeitung wurde abgelehnt: ein Feld liegt außerhalb dessen, was der Dienst annimmt.",
+  "p.intake.forecast_heading": "Wie viele genehmigt werden",
+  "p.intake.forecast_says":
+    "Durch Simulation daraus gezogen, wie viele Vorschläge in jedem vergangenen Zeitraum genehmigt wurden; eingehende Vorschläge fließen nicht ein. Eine Prognose braucht mindestens {needed} Zeiträume Verlauf.",
+  "p.intake.f_periods": "Zeiträume voraus (1 bis {max}; leer für {fallback})",
+  "p.intake.f_period_days":
+    "Tage je Zeitraum (1 bis {max}; leer für {fallback})",
+  "p.intake.f_history": "Zeiträume Verlauf (1 bis {max}; leer für {fallback})",
+  "p.intake.forecast_run": "Prognostizieren",
+  "p.intake.problem_periods":
+    "Die Zeiträume voraus müssen eine ganze Zahl von 1 bis {periods} sein.",
+  "p.intake.problem_period_days":
+    "Ein Zeitraum muss eine ganze Zahl von Tagen von 1 bis {days} sein.",
+  "p.intake.problem_history":
+    "Der Verlauf muss eine ganze Zahl von Zeiträumen von 1 bis {history} sein.",
+  "p.intake.refused_forecast": "Die Prognose wurde abgelehnt.",
+  "p.intake.could_not_forecast": "Die Prognose konnte nicht erstellt werden.",
+  "p.intake.window":
+    "Verlauf vom {from} bis {to}, in Zeiträumen von {days} Tagen.",
+  "p.intake.at_least_label_one":
+    "Im nächsten {n} Zeitraum ({days} Tage), mindestens",
+  "p.intake.at_least_label_other":
+    "In den nächsten {n} Zeiträumen ({days} Tage), mindestens",
+  "p.intake.at_least_means": "mit 85 % Zuversicht: die Zahl, mit der man plant",
+  "p.intake.median_label": "Üblicherweise",
+  "p.intake.median_means":
+    "die Hälfte der Durchläufe genehmigt mehr, die Hälfte weniger: ein Münzwurf, keine Zusage",
+  "p.intake.at_most_label": "Höchstens",
+  "p.intake.at_most_means":
+    "das hoffnungsvolle Ende: 85 % der Durchläufe genehmigen nicht mehr",
+  "p.intake.proposals_n_one": "{n} Vorschlag",
+  "p.intake.proposals_n_other": "{n} Vorschläge",
+  "p.intake.absent_history":
+    "Keine Prognose: sie braucht mindestens {needed} Zeiträume Verlauf, und es gibt {n}.",
+  "p.intake.absent_other":
+    "Aus diesem Verlauf ließ sich keine Prognose ziehen.",
+  "p.intake.approvals_history":
+    "Genehmigt je Zeitraum, die ältesten zuerst: {list}",
+  "p.intake.arrivals_history":
+    "Eingehende Vorschläge je Zeitraum, die ältesten zuerst (daneben gezeigt; sie fließen nicht in die Prognose ein): {list}",
 };

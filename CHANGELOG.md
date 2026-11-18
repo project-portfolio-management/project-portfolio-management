@@ -15,6 +15,22 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (ranking and choosing: NC-1 slice 12 part g)
+
+- **UI: WSJF and RICE, the efficient frontier, a scenario's rollback, and editing a proposal (NC-6, NC-7, EX-13).**
+  `/prioritization` ranks by the Smart Score, WSJF or RICE, and each plan's estimates are set there (read first, every
+  rule said and checked first, nothing sent for no change, all eight inputs sent) with each model's score explained in
+  the catalogue's words. `/scenarios` draws the efficient frontier as a chart with a table twin, shows each point's
+  choice plan by plan with why a plan was left out, saves a point or a generated draft, and rolls a committed scenario
+  back after a question. `/proposals` edits a draft as stored, which is where an existing proposal is tagged as an
+  external ask (its two 422s told apart by code), and forecasts how many proposals will be approved. The service's text
+  is never shown. UI spec, "Ranking and choosing"; tests `tests/e2e/scenarios.spec.ts` and additions to
+  `prioritization.spec.ts` and `proposals.spec.ts`. 199 keys in eight catalogues, machine-written. **Not done:**
+  configurable weights; an optimal choice; the forecast's trials and seed; editing a proposal's sponsor or rationale.
+  **Service gaps:** the 422s on scoring inputs, the frontier, generate and the forecast are `unprocessable` with English
+  text; the WSJF and RICE derivations, the frontier's `value`, the forecast's `note` and `reason`, a generated
+  scenario's default name and an evaluation's violations are English only. **Not verified:** against a real service.
+
 ### 18 November (programme money, value and benefits, read live: NC-1 slice 12 part f)
 
 - **UI: the director pack's programme readings, a plan's forecast and baselines, and its realized value, read live

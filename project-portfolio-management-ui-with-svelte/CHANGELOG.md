@@ -9,6 +9,49 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — ranking and choosing (NC-1 slice 12 part g, NC-6, NC-7, EX-13, 2026-11-18)
+
+- `/prioritization`: "Rank by" chooses the Smart Score (the default, not sent), WSJF or RICE (`GET
+  /api/prioritization?model=`); the band filter is offered only with the Smart Score; a WSJF or RICE row says the
+  inputs its score waits for in the catalogue's words. Each row's "Estimates" opens the plan's estimates
+  (`ScoringEstimates.svelte`): the eight inputs read as stored (`GET /api/plans/{pid}/scoring-inputs`, the inputs
+  disabled until read), their bounds said and checked first, every problem at once; nothing sent for what is stored;
+  all eight sent on saving (`PUT`), an emptied box as `null`; each model's score (`GET /api/plans/{pid}/score?model=`)
+  with its formula, every component and each input it waits for named and explained by the catalogue.
+- `/scenarios`: "Choosing a portfolio": how the generator chooses, said first; the plans every choice must include,
+  ticked from the plans the reader can read; the efficient frontier (`GET /api/scenarios/frontier`: a currency, 2 to 50
+  caps spread evenly, ten not sent, or up to 50 named in the reader's number format), drawn as a chart
+  (`FrontierChart.svelte`) with its table twin, each point's choice plan by plan with why a plan was left out in words,
+  and a point saved as a draft; a generated draft (`POST /api/scenarios/generate`: a name needed here, an optional cap
+  with its currency), its choice shown; a committed scenario rolled back to a draft after a question (`POST
+  /api/scenarios/{pid}/rollback`; Cancel sends nothing; a 409 said as no longer committed). The list's status is in
+  words, a comparison's `note` is the catalogue's sentence and an evaluation's violations are counted, so the page
+  shows no service text.
+- `/proposals`: a draft is read as stored (`GET /api/proposals/{pid}`) and edited (`PUT /api/proposals/{pid}`), which is
+  where an existing proposal is tagged as an external ask: every rule said and checked first, nothing sent for no
+  change, the sponsor and strategic rationale sent back as stored, the two 422s told apart by their code
+  (`unprocessable`: no longer a draft; `validation`: a field out of bounds); "How many will be approved" (`GET
+  /api/proposals/forecast`): periods ahead, days in a period and periods of history (each default not sent), the
+  figures in the page's words (at least, with 85% confidence; typically; at most), too little history said with its
+  count, and the approvals and arrivals per period.
+- Thirteen client methods; `src/lib/scoring-view.ts`, `src/lib/frontier-view.ts`, `src/lib/intake-view.ts`; 199 keys in
+  eight catalogues, machine-written and unreviewed.
+- `/prioritization`'s "high" band chip takes the `--mxi-color-success` token instead of a literal that failed axe's
+  colour contrast (4.37:1) once the page was audited; its count in `tests/unit/design-tokens.test.ts` falls from 3 to 2.
+- Tests: `tests/unit/scoring-view.test.ts` (twelve), `tests/unit/frontier-view.test.ts` (fourteen),
+  `tests/unit/intake-view.test.ts` (ten), one more in `ppm.test.ts`; `tests/e2e/scenarios.spec.ts` (seven, new), four
+  more in `prioritization.spec.ts` and five more in `proposals.spec.ts`, with Welsh and axe; every stub that would carry
+  the service's English carries "service text" and the tests check it never shows.
+- **Decided (the plainest option):** a plan's estimates are a section of `/prioritization`, opened from its row; one
+  list of plans to include serves the frontier and the generated draft; a frontier point is saved under a name in the
+  page's words; a generated draft needs a name here.
+- **Not done:** configurable WSJF or RICE weights (the service has none); an optimal choice; the forecast's `trials`
+  and `seed`; editing a proposal's sponsor or strategic rationale; editing after submission (the service refuses it).
+  **Service gaps:** every 422 on the scoring-inputs, frontier, generate and forecast routes is `unprocessable` with
+  English text; the WSJF and RICE answers carry their formula, explanations and reasons in English only; the frontier's
+  `value` and the forecast's `note` and `reason` are English; a scenario generated without a name is named in English;
+  an evaluation's violations are English with no code. **Not verified:** against a real service.
+
 ### Added — programme money, value and benefits, read live (NC-1 slice 12 part f, DP-7, DP-8, DP-9, 2026-11-18)
 
 - `/portfolio-map`: "Programme readings, now", the director pack's readings read live and drawn by the pack's own

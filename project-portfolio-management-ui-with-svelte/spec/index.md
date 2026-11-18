@@ -2910,3 +2910,102 @@ by action and status (the incomplete register by its machine `code`); the servic
   value's rules, the first measurable one's question and its refusal). Every stub that would carry the service's English
   carries `"service text"`, and each test checks it is not shown. The translations are machine-written and unreviewed.
   **Not verified:** against a real service.
+
+## Ranking and choosing (NC-1 slice 12 part g, NC-6, NC-7, EX-13)
+
+How the queue is ranked, how a portfolio is chosen within a budget, and the intake's remaining screens, on the pages
+they belong to. Every rule is said before anything is sent; each refusal is the catalogue's sentence by action and
+status (a proposal edit's two 422s by their machine `code`); the service's text is never shown. Rules in
+`src/lib/scoring-view.ts`, `src/lib/frontier-view.ts` and `src/lib/intake-view.ts`.
+
+- **`/prioritization`: the model, and a plan's estimates (NC-6).** "Rank by" chooses the Smart Score (the default, not
+  sent), WSJF or RICE (`GET /api/prioritization?model=wsjf|rice`); the band filter is the Smart Score's and is offered
+  only with it, as the service refuses a band with the other two. Said first: the Smart Score comes from the evidence
+  the service holds, WSJF and RICE from a person's estimates; a plan without every input a model needs is unscored and
+  ranked last, never scored zero. A WSJF or RICE row shows its score and the inputs it waits for, named by the
+  catalogue (the service's `reason` is not shown). Every row has "Estimates", which opens the plan's estimates
+  (`ScoringEstimates.svelte`): the eight inputs as stored (`GET /api/plans/{pid}/scoring-inputs`; the inputs disabled
+  until read; when they were last set), WSJF's four (whole numbers from 1 to 20) and RICE's four (reach a whole number
+  not below zero and at most 2147483647, impact one of 0.25, 0.5, 1, 2 or 3 with its word, confidence a whole
+  percentage from 0 to 100, effort in person-months above zero); the number inputs bind numbers. Said first: a score
+  with any input missing is not given, a stated zero is not a missing input, and saving replaces every estimate, an
+  empty box clearing it. Checked first, every problem at once, by input; nothing is sent for what is stored; `PUT`
+  sends all eight, an emptied box as `null`. Each model's score (`GET /api/plans/{pid}/score?model=`): its formula in
+  the catalogue's words, the score to two decimals or "no score" with each input it waits for and why, and every
+  component named and explained by the catalogue (confidence as a percentage, impact with its word); the service's
+  `formula`, `explanation` and `reason` are not shown. A 422 says an input is out of its range; a 404 that the plan is
+  gone. Saving reads the ranking again.
+- **`/scenarios`: the efficient frontier, a generated draft and a rollback (NC-7).** *Choosing a portfolio* says first
+  how the generator chooses: each plan the reader can read scored by its Smart Score and priced by its budget lines,
+  taken by score per unit of cost until the cap runs out; the plans that must be included first, whatever they cost; a
+  plan with no Smart Score left out, one with no budget lines costing nothing; the greedy choice not always the best,
+  so a cap that buys no more value than a cheaper one is marked, not hidden. The plans every choice must include are
+  ticked from the plans the reader can read (`GET /api/plans`; said while loading), at most 50. *Efficient frontier*
+  (`GET /api/scenarios/frontier`): a currency (three letters, needed), and either 2 to 50 caps spread evenly (empty or
+  10, the service's default, not sent) or up to 50 caps named one per line in the reader's number format, each an
+  amount not below zero; every problem said at once and nothing asked. The frontier is drawn as a chart
+  (`FrontierChart.svelte`: cost across, value up; a point that buys more value a filled circle on the line, one that
+  does not a hollow square; a caption saying the number of caps, the most value and its cost, and how many caps buy no
+  more, with a legend in words) and its table twin (cap, cost, value, plans chosen, whether it buys more value). Value
+  is said as the sum of the Smart Scores of the plans chosen (the answer's `value` is not shown). Each point shows its
+  choice on asking, plan by plan (chosen or left out, its Smart Score or none, its cost, and why it was left out in
+  words: no Smart Score, which is not a score of zero; budget lines all in another currency; the cap ran out; must be
+  included but not a plan the reader can read; an unknown reason a general sentence); a plan the reader has no name for
+  is said to be unknown. A point is saved as a draft on asking (`POST /api/scenarios/generate` with the point's cap,
+  currency and plans to include), named in the page's words ("Frontier at {cap}"). *Generate a draft* (`POST
+  /api/scenarios/generate`): a name (needed here, so the list never carries the service's English default name; at
+  most 1024 bytes, counted as bytes), an optional cap in the reader's number format and a currency (needed with a cap;
+  without a cap a currency is still sent, so each plan is priced in it), and the plans to include; checked first, every
+  problem at once. The saved draft's choice is shown as a point's is, and the list is read again. *Roll back*: a
+  committed scenario offers "Roll back" (`POST /api/scenarios/{pid}/rollback`), said first and asked first (it becomes
+  a draft again; the commitment stays in the audit trail); Cancel sends nothing; a 409 says it is no longer committed
+  and a 404 that it is gone, each after the list is read again. The list's status is in words, a comparison's `note`
+  is the catalogue's sentence, and an evaluation's violations are counted (a plural) rather than shown in the
+  service's words.
+- **`/proposals`: editing a draft and the intake's forecast (EX-13).** A draft has "Edit", which reads it as stored
+  (`GET /api/proposals/{pid}`; the form disabled until read) and edits it (`PUT /api/proposals/{pid}`): title, summary,
+  target collection, requested amount and currency, and whether it is an external ask with its trade-off, which is
+  where an existing proposal is tagged as an external ask. Said first: only a draft can be edited; a title is needed; a
+  title and a summary are at most 1024 bytes each (counted as bytes); an amount needs its currency; a named trade-off
+  is 10 to 2000 characters; saving replaces every field. Checked first, every problem at once; nothing sent for no
+  change; the sponsor and strategic rationale, which the page does not show, are sent back as stored; a blank summary
+  or trade-off is left out (cleared); untagging an ask keeps what its trade-off named. A 422 with `unprocessable` says
+  the proposal is no longer a draft and reads the list again; one with `validation` that a field is outside what the
+  service accepts; a 404 that it is gone. *How many will be approved* (`GET /api/proposals/forecast`): periods ahead (1
+  to 520, empty for 4), days in a period (1 to 90, empty for 7) and periods of history (1 to 260, empty for 12), each
+  default not sent; checked first. Said first: drawn by simulation from the approvals in each past period, proposals
+  arriving not feeding it, and at least 6 periods of history needed. The answer: the history's window; at least (the
+  15th percentile, with 85% confidence: the figure to plan on), typically (the median: a coin-flip, not a commitment)
+  and at most (the hopeful end), each a plural; with no figures, too little history said with the count, else a
+  general sentence; approvals and arrivals per period, oldest first. The service's `note`, the forecast's `note` and
+  its `reason` are not shown.
+- **Decided (the plainest option):** a plan's estimates are a section of `/prioritization`, opened from each row, not
+  a section of the plan page; the plans to include are one list shared by the frontier and the generated draft; a
+  frontier point is saved under a name in the page's words; a generated draft needs a name on this page, though the
+  service would supply one in English.
+- **Not built:** configurable weights or scales for WSJF and RICE (the service has none); an optimal (knapsack)
+  choice; the forecast's `trials` and `seed` (the service's defaults are used);
+  editing the sponsor or the strategic rationale (sent back as stored); editing a proposal after submission (the
+  service refuses it). **Service gaps:** every 422 on `PUT …/scoring-inputs`, the frontier, generate and the forecast
+  is `unprocessable` with English text, so the page checks every rule first and reads a 422 as the one sentence for
+  its action; the WSJF and RICE answers carry the formula, each component's explanation and each missing input's
+  reason in English only (the page names them by key); the frontier's `value` and the forecast's `note` and `reason`
+  are English; a generated scenario with no name is named by the service in English (`Generated …`); an evaluation's
+  violations are English sentences with no code, so the page counts them.
+- **Tests:** `tests/unit/scoring-view.test.ts` (the models and words; each input's bounds, every problem at once; all
+  eight sent, an emptied box as null, a stated zero kept; nothing for what is stored; each component and missing input
+  by key; each refusal), `tests/unit/frontier-view.test.ts` (the frontier's query, the ten steps not sent, named caps in
+  the reader's format; a draft's name in bytes, cap and currency; a point's body; each reason; the chart's geometry;
+  each refusal, the rollback's 409), `tests/unit/intake-view.test.ts` (the forecast's bounds and defaults; too little
+  history; a draft's form, body, fields sent back as stored, nothing for no change, every problem, a draft only; the two
+  422 codes), the paths in `tests/unit/ppm.test.ts` (bodies checked against `openapi.json` by `client-bodies.test.ts`);
+  `tests/e2e/scenarios.spec.ts` (new: the frontier's rules and checks, the chart and its table, a point's choice with
+  its reasons and an unknown plan; named caps and plans to include sent, a point saved; a draft's checks, body and
+  choice, and a refusal; a rollback after a question, Cancel sending nothing, a draft offering none; the 409; Welsh and
+  axe), four more in `tests/e2e/prioritization.spec.ts` (WSJF ranking, the band only with the Smart Score, what a score
+  waits for; the estimates read first, every problem said, nothing for what is stored, all eight sent, each component
+  explained; a refusal; Welsh and axe) and five more in `tests/e2e/proposals.spec.ts` (a draft read first, nothing for
+  no change, every problem said, tagged as an external ask with every field sent; an edit refused as no longer a draft;
+  the forecast's checks, defaults not sent and figures; too little history; Welsh and axe). Every stub that would carry
+  the service's English carries `"service text"`, and each test checks it is not shown. The translations are
+  machine-written and unreviewed. **Not verified:** against a real service.

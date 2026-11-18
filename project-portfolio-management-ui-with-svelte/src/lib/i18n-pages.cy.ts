@@ -7730,4 +7730,260 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.value.problem_source": "Dewiswch ble yr addawyd y targed.",
   "p.value.refused_target": "Gwrthodwyd y targed.",
   "p.value.could_not_record_target": "Methu cofnodi'r targed.",
+  "p.scoring.rank_by": "Trefnu yn ôl",
+  "p.scoring.model_smart": "Sgôr Smart (o dystiolaeth)",
+  "p.scoring.model_wsjf": "WSJF (y gwaith byrraf wedi'i bwysoli yn gyntaf)",
+  "p.scoring.model_rice": "RICE (cyrhaeddiad, effaith, hyder, ymdrech)",
+  "p.scoring.models_say":
+    "Daw'r Sgôr Smart o'r dystiolaeth sydd gan y gwasanaeth; caiff WSJF a RICE eu sgorio o amcangyfrifon person, a osodir ar gyfer pob cynllun o dan ei fotwm Amcangyfrifon. Mae cynllun heb bob mewnbwn sydd ei angen ar fodel heb sgôr ac yn olaf, byth yn sgôr o sero. Mae'r band yn perthyn i'r Sgôr Smart.",
+  "p.scoring.of_plans_one":
+    "{length} o {scored_of} cynllun, wedi'u trefnu yn ôl {model}",
+  "p.scoring.of_plans_other":
+    "{length} o {scored_of} cynllun, wedi'u trefnu yn ôl {model}",
+  "p.scoring.ranked_by": "Cynlluniau wedi'u trefnu yn ôl {model}",
+  "p.scoring.waiting_for": "Yn aros am",
+  "p.scoring.open": "Amcangyfrifon",
+  "p.scoring.open_named": "Agor amcangyfrifon {name}",
+  "p.scoring.heading": "Amcangyfrifon ar gyfer {name}",
+  "p.scoring.form": "Amcangyfrifon {name}",
+  "p.scoring.says":
+    "Caiff WSJF a RICE eu sgorio o'r amcangyfrifon hyn. Ni roddir sgôr os oes unrhyw fewnbwn ar goll, ac ni chaiff ei dyfalu; nid yw sero a nodwyd yn fewnbwn coll. Mae cadw yn disodli pob amcangyfrif: mae blwch gwag yn ei glirio.",
+  "p.scoring.last_set": "Gosodwyd ddiwethaf {when}.",
+  "p.scoring.none_set": "Nid oes amcangyfrifon wedi'u gosod.",
+  "p.scoring.wsjf_inputs":
+    "Mewnbynnau WSJF, pob un yn rhif cyfan o {min} i {max}",
+  "p.scoring.rice_inputs": "Mewnbynnau RICE",
+  "p.scoring.input_business_value": "Gwerth busnes",
+  "p.scoring.input_time_criticality": "Pa mor dyngedfennol yw amser",
+  "p.scoring.input_risk_reduction": "Lleihau risg neu alluogi cyfle",
+  "p.scoring.input_job_size": "Maint y gwaith",
+  "p.scoring.input_reach": "Cyrhaeddiad (pobl neu ddigwyddiadau mewn cyfnod)",
+  "p.scoring.input_impact": "Effaith",
+  "p.scoring.input_confidence": "Hyder (y cant)",
+  "p.scoring.input_effort": "Ymdrech (misoedd person)",
+  "p.scoring.input_other": "mewnbwn arall",
+  "p.scoring.component_cost_of_delay": "Cost oedi",
+  "p.scoring.impact_minimal": "lleiaf",
+  "p.scoring.impact_low": "isel",
+  "p.scoring.impact_medium": "canolig",
+  "p.scoring.impact_high": "uchel",
+  "p.scoring.impact_massive": "enfawr",
+  "p.scoring.impact_value": "{value} (effaith {word})",
+  "p.scoring.not_estimated": "heb ei amcangyfrif",
+  "p.scoring.save": "Cadw'r amcangyfrifon",
+  "p.scoring.close": "Cau'r amcangyfrifon",
+  "p.scoring.unchanged":
+    "Mae'r amcangyfrifon fel y'u cadwyd, felly ni anfonwyd dim.",
+  "p.scoring.saved": "Cadwyd amcangyfrifon {name}.",
+  "p.scoring.could_not_read": "Methu darllen yr amcangyfrifon.",
+  "p.scoring.could_not_save": "Methu cadw'r amcangyfrifon.",
+  "p.scoring.refused_gone":
+    "Nid yw'r cynllun hwnnw'n bodoli mwyach, neu ni allwch ei ddarllen.",
+  "p.scoring.refused_inputs":
+    "Gwrthodwyd yr amcangyfrifon: mae mewnbwn y tu allan i'w ystod.",
+  "p.scoring.problem_wsjf":
+    "Rhaid i {input} fod yn rhif cyfan o {min} i {max}.",
+  "p.scoring.problem_reach":
+    "Rhaid i {input} fod yn rhif cyfan, heb fod yn llai na sero.",
+  "p.scoring.problem_impact":
+    "Rhaid i {input} fod yn un o 0.25, 0.5, 1, 2 neu 3.",
+  "p.scoring.problem_confidence":
+    "Rhaid i {input} fod yn rhif cyfan o 0 i 100.",
+  "p.scoring.problem_effort": "Rhaid i {input} fod yn fwy na sero.",
+  "p.scoring.problem_number": "Rhaid i {input} fod yn rhif.",
+  "p.scoring.formula_wsjf":
+    "WSJF yw (gwerth busnes + pa mor dyngedfennol yw amser + lleihau risg neu alluogi cyfle) ÷ maint y gwaith.",
+  "p.scoring.formula_rice": "RICE yw cyrhaeddiad × effaith × hyder ÷ ymdrech.",
+  "p.scoring.score_is": "Sgôr: {score}",
+  "p.scoring.no_score": "Dim sgôr: mae'n aros am y mewnbynnau hyn.",
+  "p.scoring.needs_delay_part": "mae'n rhan o gost oedi",
+  "p.scoring.needs_divisor":
+    "dyma'r rhannydd: hebddo nid oes gwerth fesul uned o waith",
+  "p.scoring.needs_reach":
+    "mae'n dweud faint o bobl y mae'r gwaith yn eu cyffwrdd mewn cyfnod",
+  "p.scoring.needs_impact":
+    "mae'n dweud faint mae'r gwaith yn bwysig i bob un a gyrhaeddir",
+  "p.scoring.needs_confidence":
+    "mae'n disgowntio'r amcangyfrifon yn ôl pa mor sicr ydynt",
+  "p.scoring.needs_other": "mae'r sgôr ei angen",
+  "p.scoring.means_business_value":
+    "gwerth cymharol i'r defnyddiwr neu'r busnes, 1 i 20",
+  "p.scoring.means_time_criticality":
+    "pa mor gyflym y mae'r gwerth yn pylu os yw'n hwyr, 1 i 20",
+  "p.scoring.means_risk_reduction":
+    "y risg y mae'n ei dileu neu'r cyfle y mae'n ei agor, 1 i 20",
+  "p.scoring.means_cost_of_delay": "swm y tri uchod: beth mae oedi'n ei gostio",
+  "p.scoring.means_job_size": "maint cymharol y gwaith, 1 i 20; y rhannydd",
+  "p.scoring.means_reach": "pobl neu ddigwyddiadau a gyrhaeddir mewn cyfnod",
+  "p.scoring.means_impact":
+    "0.25 lleiaf, 0.5 isel, 1 canolig, 2 uchel, 3 enfawr",
+  "p.scoring.means_confidence": "pa mor sicr yw'r amcangyfrifon",
+  "p.scoring.means_effort": "misoedd person o waith; y rhannydd",
+  "p.scoring.means_other": "cydran nad yw'r dudalen hon yn ei hadnabod",
+  "p.frontier.heading": "Dewis portffolio",
+  "p.frontier.says":
+    "Mae'r generadur yn sgorio pob cynllun y gallwch ei ddarllen yn ôl ei Sgôr Smart ac yn ei brisio yn ôl ei linellau cyllideb, yna'n cymryd cynlluniau yn ôl sgôr fesul uned o gost nes bod y terfyn wedi'i ddefnyddio. Cymerir y cynlluniau y mae'n rhaid eu cynnwys yn gyntaf, beth bynnag eu cost. Gadewir allan gynllun heb Sgôr Smart; nid yw cynllun heb linellau cyllideb yn costio dim. Nid y dewis gorau posibl yw hwn bob amser, felly caiff terfyn nad yw'n prynu mwy o werth nag un rhatach ei farcio, nid ei guddio.",
+  "p.frontier.must_include":
+    "Cynlluniau y mae'n rhaid i bob dewis eu cynnwys (hyd at {max})",
+  "p.frontier.plans_loading": "Yn darllen y cynlluniau…",
+  "p.frontier.plans_none": "Nid oes cynlluniau y gallwch eu darllen.",
+  "p.frontier.frontier_heading": "Ffin effeithlon",
+  "p.frontier.frontier_says":
+    "Rhedir y generadur unwaith ar bob terfyn, ac ni chedwir dim. Taenwch {min} i {max} terfyn yn wastad o ddim i gost pob cynllun y gellir ei brisio (gwag am {fallback}), neu enwch hyd at {list} terfyn eich hun, pob un yn swm heb fod yn llai na sero.",
+  "p.frontier.f_currency": "Arian cyfred y costau (tair llythyren)",
+  "p.frontier.f_how": "Pa derfynau cyllideb",
+  "p.frontier.how_steps": "Wedi'u taenu'n wastad",
+  "p.frontier.how_caps": "Terfynau a enwaf",
+  "p.frontier.f_steps": "Faint o derfynau (gwag am {fallback})",
+  "p.frontier.f_caps": "Terfynau cyllideb, un i bob llinell (hyd at {list})",
+  "p.frontier.run": "Llunio'r ffin",
+  "p.frontier.value_is": "Gwerth yw swm Sgorau Smart y cynlluniau a ddewiswyd.",
+  "p.frontier.table": "Y ffin, pwynt wrth bwynt",
+  "p.frontier.col_cap": "Terfyn cyllideb",
+  "p.frontier.col_cost": "Cost y dewis",
+  "p.frontier.col_value": "Gwerth",
+  "p.frontier.col_included": "Cynlluniau a ddewiswyd",
+  "p.frontier.col_more": "Yn prynu mwy o werth",
+  "p.frontier.more_yes": "Ydy",
+  "p.frontier.more_no": "Nac ydy: mae terfyn rhatach yn cyrraedd cymaint",
+  "p.frontier.show_choice": "Dangos y dewis",
+  "p.frontier.show_choice_named": "Dangos y dewis ar {cap}",
+  "p.frontier.save_point": "Cadw fel drafft",
+  "p.frontier.save_point_named": "Cadw'r dewis ar {cap} fel drafft",
+  "p.frontier.point_name": "Ffin ar {cap}",
+  "p.frontier.axis_cost": "Cost y cynlluniau a ddewiswyd",
+  "p.frontier.axis_value": "Gwerth (cyfanswm y Sgôr Smart)",
+  "p.frontier.chart_points_one": "{n} terfyn cyllideb.",
+  "p.frontier.chart_points_other": "{n} terfyn cyllideb.",
+  "p.frontier.chart_best": "Mae'r gwerth mwyaf, {value}, yn costio {cost}.",
+  "p.frontier.chart_dominated_one":
+    "Nid yw {n} terfyn yn prynu mwy o werth nag un rhatach.",
+  "p.frontier.chart_dominated_other":
+    "Nid yw {n} terfyn yn prynu mwy o werth nag un rhatach.",
+  "p.frontier.legend_efficient": "yn prynu mwy o werth",
+  "p.frontier.legend_dominated":
+    "nid yw'n prynu mwy o werth na therfyn rhatach",
+  "p.frontier.no_points": "Nid oes pwyntiau ar y ffin.",
+  "p.frontier.generate_heading": "Cynhyrchu drafft",
+  "p.frontier.generate_says":
+    "Caiff ei gadw fel senario drafft, i'w werthuso, ei gymharu a'i ymrwymo fel unrhyw un arall. Mae angen enw, hyd at {bytes} beit. Gydag arian cyfred caiff pob cynllun ei brisio ynddo; mae angen arian cyfred gyda therfyn.",
+  "p.frontier.g_name": "Enw'r drafft",
+  "p.frontier.g_cap": "Terfyn cyllideb (dewisol)",
+  "p.frontier.g_currency": "Arian cyfred (ei angen gyda therfyn)",
+  "p.frontier.generate": "Cynhyrchu'r drafft",
+  "p.frontier.draft_saved": "Cadwyd y drafft {name}; mae yn y rhestr uchod.",
+  "p.frontier.choice_at": "Beth mae terfyn o {cap} yn ei ddewis",
+  "p.frontier.choice_of": "Beth ddewisodd {name}",
+  "p.frontier.chosen_count_one": "Dewiswyd {n} cynllun o {of}.",
+  "p.frontier.chosen_count_other": "Dewiswyd {n} cynllun o {of}.",
+  "p.frontier.col_plan": "Cynllun yn y dewis",
+  "p.frontier.col_chosen": "Wedi'i ddewis neu beidio",
+  "p.frontier.col_score": "Ei Sgôr Smart",
+  "p.frontier.col_plan_cost": "Ei gost",
+  "p.frontier.col_why": "Pam y'i gadawyd allan",
+  "p.frontier.chosen": "wedi'i ddewis",
+  "p.frontier.left_out": "wedi'i adael allan",
+  "p.frontier.no_score": "dim Sgôr Smart",
+  "p.frontier.plan_unknown":
+    "Cynllun na allwch ei ddarllen, neu nad yw'n bodoli mwyach",
+  "p.frontier.reason_no_score":
+    "nid oes ganddo Sgôr Smart, nad yw'n sgôr o sero",
+  "p.frontier.reason_foreign_currency":
+    "mae ei linellau cyllideb i gyd mewn arian cyfred arall, felly ni ellir ei brisio",
+  "p.frontier.reason_over_cap": "defnyddiwyd y terfyn cyn ei gyrraedd",
+  "p.frontier.reason_must_include_conflict":
+    "rhaid ei gynnwys, ond nid yw'n gynllun y gallwch ei ddarllen",
+  "p.frontier.reason_other":
+    "wedi'i adael allan am reswm nad yw'r dudalen hon yn ei wybod",
+  "p.frontier.problem_currency": "Rhowch yr arian cyfred fel tair llythyren.",
+  "p.frontier.problem_steps":
+    "Rhaid i nifer y terfynau fod yn rhif cyfan o {min} i {max}.",
+  "p.frontier.problem_caps_none": "Enwch o leiaf un terfyn.",
+  "p.frontier.problem_caps_many": "Enwch {list} terfyn ar y mwyaf.",
+  "p.frontier.problem_caps_amount":
+    "Rhaid i bob terfyn fod yn swm heb fod yn llai na sero.",
+  "p.frontier.problem_must_include":
+    "Dewiswch {list} cynllun ar y mwyaf i'w cynnwys.",
+  "p.frontier.problem_name": "Rhowch enw i'r drafft.",
+  "p.frontier.problem_name_long": "Mae'r enw yn hirach na {bytes} beit.",
+  "p.frontier.problem_cap_currency": "Mae angen arian cyfred gyda therfyn.",
+  "p.frontier.problem_cap_amount":
+    "Rhaid i'r terfyn fod yn swm heb fod yn llai na sero.",
+  "p.frontier.refused_frontier": "Gwrthodwyd y ffin.",
+  "p.frontier.refused_generate": "Gwrthodwyd y drafft.",
+  "p.frontier.could_not_read": "Methu llunio'r ffin.",
+  "p.frontier.could_not_generate": "Methu cynhyrchu'r drafft.",
+  "p.frontier.rollback": "Dadwneud yr ymrwymiad",
+  "p.frontier.rollback_named": "Dadwneud ymrwymiad {name}",
+  "p.frontier.rollback_says":
+    "Gellir troi senario wedi'i ymrwymo yn ôl yn ddrafft, ar ôl cwestiwn; nid yw'n newid dim ond y senario.",
+  "p.frontier.confirm_rollback":
+    "Troi {name} yn ôl yn ddrafft? Ni fydd yn bortffolio wedi'i ymrwymo mwyach; mae'r ymrwymiad yn aros yn y trywydd archwilio.",
+  "p.frontier.rolled_back": "Mae {name} yn ddrafft eto.",
+  "p.frontier.refused_rollback_status":
+    "Nid yw {name} wedi'i ymrwymo mwyach, felly nid oes dim i'w ddadwneud. Mae'r rhestr wedi'i darllen eto.",
+  "p.frontier.refused_rollback_gone":
+    "Nid yw {name} yn bodoli mwyach, neu ni allwch ei ddarllen. Mae'r rhestr wedi'i darllen eto.",
+  "p.frontier.could_not_roll_back": "Methu dadwneud ymrwymiad y senario.",
+  "p.frontier.status_draft": "drafft",
+  "p.frontier.status_committed": "wedi'i ymrwymo",
+  "p.frontier.violations_one": "{n} cyfyngiad wedi'i dorri",
+  "p.frontier.violations_other": "{n} cyfyngiad wedi'u torri",
+  "p.frontier.compare_note":
+    "B llai A, un arian cyfred ar y tro; ni chaiff arian cyfred byth eu hadio at ei gilydd.",
+  "p.intake.edit": "Golygu",
+  "p.intake.edit_named": "Golygu'r drafft {title}",
+  "p.intake.edit_heading": "Golygu {title}",
+  "p.intake.edit_heading_loading": "Yn darllen y drafft…",
+  "p.intake.edit_form": "Meysydd y drafft",
+  "p.intake.edit_says":
+    "Dim ond drafft y gellir ei olygu, a dyna hefyd lle caiff cynnig ei dagio fel cais allanol. Mae angen teitl; mae teitl a chrynodeb yn {bytes} beit yr un ar y mwyaf; mae angen arian cyfred gyda swm; mae cyfaddawd a enwir rhwng {min} a {max} nod. Mae cadw yn disodli pob maes.",
+  "p.intake.save": "Cadw'r drafft",
+  "p.intake.saved": "Cadwyd {title}.",
+  "p.intake.unchanged": "Nid oes dim wedi newid, felly ni anfonwyd dim.",
+  "p.intake.could_not_read_draft": "Methu darllen y drafft.",
+  "p.intake.problem_not_draft": "Dim ond drafft y gellir ei olygu.",
+  "p.intake.problem_title_long": "Mae'r teitl yn hirach na {bytes} beit.",
+  "p.intake.problem_summary_long": "Mae'r crynodeb yn hirach na {bytes} beit.",
+  "p.intake.refused_not_draft":
+    "Gwrthodwyd y golygiad: nid yw'r cynnig yn ddrafft mwyach. Mae'r rhestr wedi'i darllen eto.",
+  "p.intake.refused_edit":
+    "Gwrthodwyd y golygiad: mae maes y tu allan i'r hyn y mae'r gwasanaeth yn ei dderbyn.",
+  "p.intake.forecast_heading": "Faint fydd yn cael eu cymeradwyo",
+  "p.intake.forecast_says":
+    "Wedi'i lunio drwy efelychiad o faint o gynigion a gymeradwywyd ym mhob cyfnod a fu; nid yw cynigion sy'n cyrraedd yn ei fwydo. Mae angen o leiaf {needed} cyfnod o hanes ar ragolwg.",
+  "p.intake.f_periods": "Cyfnodau o'n blaenau (1 i {max}; gwag am {fallback})",
+  "p.intake.f_period_days":
+    "Dyddiau mewn cyfnod (1 i {max}; gwag am {fallback})",
+  "p.intake.f_history": "Cyfnodau o hanes (1 i {max}; gwag am {fallback})",
+  "p.intake.forecast_run": "Rhagweld",
+  "p.intake.problem_periods":
+    "Rhaid i'r cyfnodau o'n blaenau fod yn rhif cyfan o 1 i {periods}.",
+  "p.intake.problem_period_days":
+    "Rhaid i gyfnod fod yn rhif cyfan o ddyddiau o 1 i {days}.",
+  "p.intake.problem_history":
+    "Rhaid i'r hanes fod yn rhif cyfan o gyfnodau o 1 i {history}.",
+  "p.intake.refused_forecast": "Gwrthodwyd y rhagolwg.",
+  "p.intake.could_not_forecast": "Methu llunio'r rhagolwg.",
+  "p.intake.window": "Hanes o {from} i {to}, mewn cyfnodau o {days} diwrnod.",
+  "p.intake.at_least_label_one":
+    "Yn y {n} cyfnod nesaf ({days} diwrnod), o leiaf",
+  "p.intake.at_least_label_other":
+    "Yn y {n} cyfnod nesaf ({days} diwrnod), o leiaf",
+  "p.intake.at_least_means": "gyda hyder o 85%: y ffigur i gynllunio arno",
+  "p.intake.median_label": "Fel arfer",
+  "p.intake.median_means":
+    "mae hanner y treialon yn cymeradwyo mwy, hanner yn llai: taflu ceiniog, nid ymrwymiad",
+  "p.intake.at_most_label": "Ar y mwyaf",
+  "p.intake.at_most_means":
+    "y pen gobeithiol: nid yw 85% o'r treialon yn cymeradwyo mwy",
+  "p.intake.proposals_n_one": "{n} cynnig",
+  "p.intake.proposals_n_other": "{n} cynnig",
+  "p.intake.absent_history":
+    "Dim rhagolwg: mae angen o leiaf {needed} cyfnod o hanes, ac mae {n}.",
+  "p.intake.absent_other": "Nid oedd modd llunio rhagolwg o'r hanes hwn.",
+  "p.intake.approvals_history":
+    "Wedi'u cymeradwyo fesul cyfnod, yr hynaf yn gyntaf: {list}",
+  "p.intake.arrivals_history":
+    "Cynigion yn cyrraedd fesul cyfnod, yr hynaf yn gyntaf (wedi'u dangos wrth ei ochr; nid ydynt yn bwydo'r rhagolwg): {list}",
 };

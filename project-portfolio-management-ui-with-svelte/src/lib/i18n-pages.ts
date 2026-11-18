@@ -7554,6 +7554,254 @@ export const PAGES_EN = {
   "p.value.problem_source": "Choose where the target was promised.",
   "p.value.refused_target": "The target was refused.",
   "p.value.could_not_record_target": "Could not record the target.",
+  "p.scoring.rank_by": "Rank by",
+  "p.scoring.model_smart": "Smart Score (from evidence)",
+  "p.scoring.model_wsjf": "WSJF (weighted shortest job first)",
+  "p.scoring.model_rice": "RICE (reach, impact, confidence, effort)",
+  "p.scoring.models_say":
+    "The Smart Score is drawn from the evidence the service holds; WSJF and RICE are scored from a person's estimates, set for each plan under its Estimates button. A plan without every input a model needs is unscored and ranked last, never scored zero. The band is the Smart Score's.",
+  "p.scoring.of_plans_one": "{length} of {scored_of} plan, ranked by {model}",
+  "p.scoring.of_plans_other":
+    "{length} of {scored_of} plans, ranked by {model}",
+  "p.scoring.ranked_by": "Plans ranked by {model}",
+  "p.scoring.waiting_for": "Waiting for",
+  "p.scoring.open": "Estimates",
+  "p.scoring.open_named": "Open the estimates of {name}",
+  "p.scoring.heading": "Estimates for {name}",
+  "p.scoring.form": "The estimates of {name}",
+  "p.scoring.says":
+    "WSJF and RICE are scored from these estimates. A score with any input missing is not given, never guessed, and a stated zero is not a missing input. Saving replaces every estimate: an empty box clears it.",
+  "p.scoring.last_set": "Last set {when}.",
+  "p.scoring.none_set": "No estimates have been set.",
+  "p.scoring.wsjf_inputs":
+    "WSJF inputs, each a whole number from {min} to {max}",
+  "p.scoring.rice_inputs": "RICE inputs",
+  "p.scoring.input_business_value": "Business value",
+  "p.scoring.input_time_criticality": "Time criticality",
+  "p.scoring.input_risk_reduction": "Risk reduction or opportunity enablement",
+  "p.scoring.input_job_size": "Job size",
+  "p.scoring.input_reach": "Reach (people or events in a period)",
+  "p.scoring.input_impact": "Impact",
+  "p.scoring.input_confidence": "Confidence (percent)",
+  "p.scoring.input_effort": "Effort (person-months)",
+  "p.scoring.input_other": "another input",
+  "p.scoring.component_cost_of_delay": "Cost of delay",
+  "p.scoring.impact_minimal": "minimal",
+  "p.scoring.impact_low": "low",
+  "p.scoring.impact_medium": "medium",
+  "p.scoring.impact_high": "high",
+  "p.scoring.impact_massive": "massive",
+  "p.scoring.impact_value": "{value} ({word} impact)",
+  "p.scoring.not_estimated": "not estimated",
+  "p.scoring.save": "Save the estimates",
+  "p.scoring.close": "Close the estimates",
+  "p.scoring.unchanged": "The estimates are as stored, so nothing was sent.",
+  "p.scoring.saved": "Estimates for {name} saved.",
+  "p.scoring.could_not_read": "Could not read the estimates.",
+  "p.scoring.could_not_save": "Could not save the estimates.",
+  "p.scoring.refused_gone":
+    "That plan no longer exists, or you cannot read it.",
+  "p.scoring.refused_inputs":
+    "The estimates were refused: an input is out of its range.",
+  "p.scoring.problem_wsjf":
+    "{input} must be a whole number from {min} to {max}.",
+  "p.scoring.problem_reach": "{input} must be a whole number, not below zero.",
+  "p.scoring.problem_impact": "{input} must be one of 0.25, 0.5, 1, 2 or 3.",
+  "p.scoring.problem_confidence":
+    "{input} must be a whole number from 0 to 100.",
+  "p.scoring.problem_effort": "{input} must be above zero.",
+  "p.scoring.problem_number": "{input} must be a number.",
+  "p.scoring.formula_wsjf":
+    "WSJF is (business value + time criticality + risk reduction or opportunity enablement) ÷ job size.",
+  "p.scoring.formula_rice": "RICE is reach × impact × confidence ÷ effort.",
+  "p.scoring.score_is": "Score: {score}",
+  "p.scoring.no_score": "No score: it waits for these inputs.",
+  "p.scoring.needs_delay_part": "it is part of the cost of delay",
+  "p.scoring.needs_divisor":
+    "it is the divisor: without it there is no value per unit of work",
+  "p.scoring.needs_reach":
+    "it says how many people the work touches in a period",
+  "p.scoring.needs_impact":
+    "it says how much the work matters to each one reached",
+  "p.scoring.needs_confidence":
+    "it discounts the estimates by how sure they are",
+  "p.scoring.needs_other": "the score needs it",
+  "p.scoring.means_business_value":
+    "relative value to the user or the business, 1 to 20",
+  "p.scoring.means_time_criticality":
+    "how fast the value decays if it is late, 1 to 20",
+  "p.scoring.means_risk_reduction":
+    "the risk it removes or the opportunity it opens, 1 to 20",
+  "p.scoring.means_cost_of_delay":
+    "the sum of the three above: what a delay costs",
+  "p.scoring.means_job_size":
+    "the relative size of the work, 1 to 20; the divisor",
+  "p.scoring.means_reach": "people or events reached in a period",
+  "p.scoring.means_impact":
+    "0.25 minimal, 0.5 low, 1 medium, 2 high, 3 massive",
+  "p.scoring.means_confidence": "how sure the estimates are",
+  "p.scoring.means_effort": "person-months of work; the divisor",
+  "p.scoring.means_other": "a component this page does not know",
+  "p.frontier.heading": "Choosing a portfolio",
+  "p.frontier.says":
+    "The generator scores each plan you can read by its Smart Score and prices it by its budget lines, then takes plans by score per unit of cost until the cap runs out. Plans that must be included are taken first, whatever they cost. A plan with no Smart Score is left out; a plan with no budget lines costs nothing. The choice is not always the best possible, so a cap that buys no more value than a cheaper one is marked, not hidden.",
+  "p.frontier.must_include": "Plans every choice must include (up to {max})",
+  "p.frontier.plans_loading": "Reading the plans…",
+  "p.frontier.plans_none": "There are no plans you can read.",
+  "p.frontier.frontier_heading": "Efficient frontier",
+  "p.frontier.frontier_says":
+    "The generator is run once at each cap, and nothing is saved. Spread {min} to {max} caps evenly from nothing to the cost of every plan that can be priced (empty for {fallback}), or name up to {list} caps yourself, each an amount not below zero.",
+  "p.frontier.f_currency": "Currency of the costs (three letters)",
+  "p.frontier.f_how": "Which budget caps",
+  "p.frontier.how_steps": "Spread evenly",
+  "p.frontier.how_caps": "Caps I name",
+  "p.frontier.f_steps": "How many caps (empty for {fallback})",
+  "p.frontier.f_caps": "Budget caps, one per line (up to {list})",
+  "p.frontier.run": "Draw the frontier",
+  "p.frontier.value_is":
+    "Value is the sum of the Smart Scores of the plans chosen.",
+  "p.frontier.table": "The frontier, point by point",
+  "p.frontier.col_cap": "Budget cap",
+  "p.frontier.col_cost": "Cost of the choice",
+  "p.frontier.col_value": "Value",
+  "p.frontier.col_included": "Plans chosen",
+  "p.frontier.col_more": "Buys more value",
+  "p.frontier.more_yes": "Yes",
+  "p.frontier.more_no": "No: a cheaper cap reaches as much",
+  "p.frontier.show_choice": "Show the choice",
+  "p.frontier.show_choice_named": "Show the choice at {cap}",
+  "p.frontier.save_point": "Save as a draft",
+  "p.frontier.save_point_named": "Save the choice at {cap} as a draft",
+  "p.frontier.point_name": "Frontier at {cap}",
+  "p.frontier.axis_cost": "Cost of the plans chosen",
+  "p.frontier.axis_value": "Value (summed Smart Score)",
+  "p.frontier.chart_points_one": "{n} budget cap.",
+  "p.frontier.chart_points_other": "{n} budget caps.",
+  "p.frontier.chart_best": "The most value, {value}, costs {cost}.",
+  "p.frontier.chart_dominated_one":
+    "{n} cap buys no more value than a cheaper one.",
+  "p.frontier.chart_dominated_other":
+    "{n} caps buy no more value than a cheaper one.",
+  "p.frontier.legend_efficient": "buys more value",
+  "p.frontier.legend_dominated": "buys no more value than a cheaper cap",
+  "p.frontier.no_points": "The frontier has no points.",
+  "p.frontier.generate_heading": "Generate a draft",
+  "p.frontier.generate_says":
+    "Saved as a draft scenario, to evaluate, compare and commit like any other. A name is needed, at most {bytes} bytes. With a currency each plan is priced in it; a cap needs its currency.",
+  "p.frontier.g_name": "Name of the draft",
+  "p.frontier.g_cap": "Budget cap (optional)",
+  "p.frontier.g_currency": "Currency (needed with a cap)",
+  "p.frontier.generate": "Generate the draft",
+  "p.frontier.draft_saved": "Draft {name} saved; it is in the list above.",
+  "p.frontier.choice_at": "What a cap of {cap} chooses",
+  "p.frontier.choice_of": "What {name} chose",
+  "p.frontier.chosen_count_one": "{n} plan chosen of {of}.",
+  "p.frontier.chosen_count_other": "{n} plans chosen of {of}.",
+  "p.frontier.col_plan": "Plan in the choice",
+  "p.frontier.col_chosen": "Chosen or not",
+  "p.frontier.col_score": "Its Smart Score",
+  "p.frontier.col_plan_cost": "Its cost",
+  "p.frontier.col_why": "Why left out",
+  "p.frontier.chosen": "chosen",
+  "p.frontier.left_out": "left out",
+  "p.frontier.no_score": "no Smart Score",
+  "p.frontier.plan_unknown": "A plan you cannot read, or that no longer exists",
+  "p.frontier.reason_no_score":
+    "it has no Smart Score, which is not a score of zero",
+  "p.frontier.reason_foreign_currency":
+    "its budget lines are all in another currency, so it cannot be priced",
+  "p.frontier.reason_over_cap": "the cap ran out before it",
+  "p.frontier.reason_must_include_conflict":
+    "it must be included, but it is not a plan you can read",
+  "p.frontier.reason_other": "left out for a reason this page does not know",
+  "p.frontier.problem_currency": "Give the currency as three letters.",
+  "p.frontier.problem_steps":
+    "The number of caps must be a whole number from {min} to {max}.",
+  "p.frontier.problem_caps_none": "Name at least one cap.",
+  "p.frontier.problem_caps_many": "Name at most {list} caps.",
+  "p.frontier.problem_caps_amount":
+    "Each cap must be an amount not below zero.",
+  "p.frontier.problem_must_include": "Choose at most {list} plans to include.",
+  "p.frontier.problem_name": "Give the draft a name.",
+  "p.frontier.problem_name_long": "The name is longer than {bytes} bytes.",
+  "p.frontier.problem_cap_currency": "A cap needs its currency.",
+  "p.frontier.problem_cap_amount": "The cap must be an amount not below zero.",
+  "p.frontier.refused_frontier": "The frontier was refused.",
+  "p.frontier.refused_generate": "The draft was refused.",
+  "p.frontier.could_not_read": "Could not draw the frontier.",
+  "p.frontier.could_not_generate": "Could not generate the draft.",
+  "p.frontier.rollback": "Roll back",
+  "p.frontier.rollback_named": "Roll back {name}",
+  "p.frontier.rollback_says":
+    "A committed scenario can be rolled back to a draft, after a question; it changes nothing but the scenario.",
+  "p.frontier.confirm_rollback":
+    "Roll {name} back to a draft? It is no longer the committed portfolio; the commitment stays in the audit trail.",
+  "p.frontier.rolled_back": "{name} is a draft again.",
+  "p.frontier.refused_rollback_status":
+    "{name} is no longer committed, so there is nothing to roll back. The list has been read again.",
+  "p.frontier.refused_rollback_gone":
+    "{name} no longer exists, or you cannot read it. The list has been read again.",
+  "p.frontier.could_not_roll_back": "Could not roll the scenario back.",
+  "p.frontier.status_draft": "draft",
+  "p.frontier.status_committed": "committed",
+  "p.frontier.violations_one": "{n} constraint broken",
+  "p.frontier.violations_other": "{n} constraints broken",
+  "p.frontier.compare_note":
+    "B minus A, one currency at a time; currencies are never added together.",
+  "p.intake.edit": "Edit",
+  "p.intake.edit_named": "Edit the draft {title}",
+  "p.intake.edit_heading": "Edit {title}",
+  "p.intake.edit_heading_loading": "Reading the draft…",
+  "p.intake.edit_form": "The draft's fields",
+  "p.intake.edit_says":
+    "Only a draft can be edited, which is also where a proposal is tagged as an external ask. A title is needed; a title and a summary are at most {bytes} bytes each; an amount needs its currency; a named trade-off is {min} to {max} characters. Saving replaces every field.",
+  "p.intake.save": "Save the draft",
+  "p.intake.saved": "{title} saved.",
+  "p.intake.unchanged": "Nothing has changed, so nothing was sent.",
+  "p.intake.could_not_read_draft": "Could not read the draft.",
+  "p.intake.problem_not_draft": "Only a draft can be edited.",
+  "p.intake.problem_title_long": "The title is longer than {bytes} bytes.",
+  "p.intake.problem_summary_long": "The summary is longer than {bytes} bytes.",
+  "p.intake.refused_not_draft":
+    "The edit was refused: the proposal is no longer a draft. The list has been read again.",
+  "p.intake.refused_edit":
+    "The edit was refused: a field is outside what the service accepts.",
+  "p.intake.forecast_heading": "How many will be approved",
+  "p.intake.forecast_says":
+    "Drawn by simulation from how many proposals were approved in each past period; proposals arriving do not feed it. A forecast needs at least {needed} periods of history.",
+  "p.intake.f_periods": "Periods ahead (1 to {max}; empty for {fallback})",
+  "p.intake.f_period_days":
+    "Days in a period (1 to {max}; empty for {fallback})",
+  "p.intake.f_history": "Periods of history (1 to {max}; empty for {fallback})",
+  "p.intake.forecast_run": "Forecast",
+  "p.intake.problem_periods":
+    "The periods ahead must be a whole number from 1 to {periods}.",
+  "p.intake.problem_period_days":
+    "A period must be a whole number of days from 1 to {days}.",
+  "p.intake.problem_history":
+    "The history must be a whole number of periods from 1 to {history}.",
+  "p.intake.refused_forecast": "The forecast was refused.",
+  "p.intake.could_not_forecast": "Could not draw the forecast.",
+  "p.intake.window": "History from {from} to {to}, in periods of {days} days.",
+  "p.intake.at_least_label_one":
+    "In the next {n} period ({days} days), at least",
+  "p.intake.at_least_label_other":
+    "In the next {n} periods ({days} days), at least",
+  "p.intake.at_least_means": "with 85% confidence: the figure to plan on",
+  "p.intake.median_label": "Typically",
+  "p.intake.median_means":
+    "half the trials approve more, half fewer: a coin-flip, not a commitment",
+  "p.intake.at_most_label": "At most",
+  "p.intake.at_most_means":
+    "the hopeful end: 85% of the trials approve no more",
+  "p.intake.proposals_n_one": "{n} proposal",
+  "p.intake.proposals_n_other": "{n} proposals",
+  "p.intake.absent_history":
+    "No forecast: it needs at least {needed} periods of history, and there are {n}.",
+  "p.intake.absent_other": "No forecast could be drawn from this history.",
+  "p.intake.approvals_history": "Approved per period, oldest first: {list}",
+  "p.intake.arrivals_history":
+    "Proposals arriving per period, oldest first (shown beside it; they do not feed the forecast): {list}",
 } as const;
 
 /** A key in the page and component catalogue. */

@@ -7866,4 +7866,269 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.value.problem_source": "Choisissez où la cible a été promise.",
   "p.value.refused_target": "La cible a été refusée.",
   "p.value.could_not_record_target": "Impossible d'enregistrer la cible.",
+  "p.scoring.rank_by": "Classer par",
+  "p.scoring.model_smart": "Score Smart (d'après les preuves)",
+  "p.scoring.model_wsjf": "WSJF (travail le plus court pondéré d'abord)",
+  "p.scoring.model_rice": "RICE (portée, incidence, confiance, effort)",
+  "p.scoring.models_say":
+    "Le score Smart est tiré des preuves que détient le service ; WSJF et RICE sont calculés à partir des estimations d'une personne, saisies pour chaque plan sous son bouton Estimations. Un plan auquel il manque une entrée requise par un modèle reste sans score et est classé en dernier, jamais à zéro. La bande appartient au score Smart.",
+  "p.scoring.of_plans_one": "{length} sur {scored_of} plan, classé par {model}",
+  "p.scoring.of_plans_other":
+    "{length} sur {scored_of} plans, classés par {model}",
+  "p.scoring.ranked_by": "Plans classés par {model}",
+  "p.scoring.waiting_for": "En attente de",
+  "p.scoring.open": "Estimations",
+  "p.scoring.open_named": "Ouvrir les estimations de {name}",
+  "p.scoring.heading": "Estimations pour {name}",
+  "p.scoring.form": "Les estimations de {name}",
+  "p.scoring.says":
+    "WSJF et RICE sont calculés à partir de ces estimations. S'il manque une entrée, aucun score n'est donné, jamais deviné ; un zéro déclaré n'est pas une entrée manquante. Enregistrer remplace chaque estimation : une case vide l'efface.",
+  "p.scoring.last_set": "Saisies pour la dernière fois {when}.",
+  "p.scoring.none_set": "Aucune estimation n'a été saisie.",
+  "p.scoring.wsjf_inputs":
+    "Entrées WSJF, chacune un nombre entier de {min} à {max}",
+  "p.scoring.rice_inputs": "Entrées RICE",
+  "p.scoring.input_business_value": "Valeur métier",
+  "p.scoring.input_time_criticality": "Urgence temporelle",
+  "p.scoring.input_risk_reduction":
+    "Réduction du risque ou opportunité ouverte",
+  "p.scoring.input_job_size": "Taille du travail",
+  "p.scoring.input_reach": "Portée (personnes ou événements sur une période)",
+  "p.scoring.input_impact": "Incidence",
+  "p.scoring.input_confidence": "Confiance (pour cent)",
+  "p.scoring.input_effort": "Effort (mois-personnes)",
+  "p.scoring.input_other": "une autre entrée",
+  "p.scoring.component_cost_of_delay": "Coût du retard",
+  "p.scoring.impact_minimal": "minime",
+  "p.scoring.impact_low": "faible",
+  "p.scoring.impact_medium": "moyenne",
+  "p.scoring.impact_high": "forte",
+  "p.scoring.impact_massive": "énorme",
+  "p.scoring.impact_value": "{value} (incidence {word})",
+  "p.scoring.not_estimated": "non estimé",
+  "p.scoring.save": "Enregistrer les estimations",
+  "p.scoring.close": "Fermer les estimations",
+  "p.scoring.unchanged":
+    "Les estimations sont telles qu'enregistrées ; rien n'a été envoyé.",
+  "p.scoring.saved": "Estimations de {name} enregistrées.",
+  "p.scoring.could_not_read": "Impossible de lire les estimations.",
+  "p.scoring.could_not_save": "Impossible d'enregistrer les estimations.",
+  "p.scoring.refused_gone":
+    "Ce plan n'existe plus, ou vous ne pouvez pas le lire.",
+  "p.scoring.refused_inputs":
+    "Les estimations ont été refusées : une entrée est hors de sa plage.",
+  "p.scoring.problem_wsjf":
+    "{input} doit être un nombre entier de {min} à {max}.",
+  "p.scoring.problem_reach":
+    "{input} doit être un nombre entier, pas en dessous de zéro.",
+  "p.scoring.problem_impact": "{input} doit valoir 0,25, 0,5, 1, 2 ou 3.",
+  "p.scoring.problem_confidence":
+    "{input} doit être un nombre entier de 0 à 100.",
+  "p.scoring.problem_effort": "{input} doit être supérieur à zéro.",
+  "p.scoring.problem_number": "{input} doit être un nombre.",
+  "p.scoring.formula_wsjf":
+    "WSJF vaut (valeur métier + urgence temporelle + réduction du risque ou opportunité ouverte) ÷ taille du travail.",
+  "p.scoring.formula_rice":
+    "RICE vaut portée × incidence × confiance ÷ effort.",
+  "p.scoring.score_is": "Score : {score}",
+  "p.scoring.no_score": "Aucun score : il attend ces entrées.",
+  "p.scoring.needs_delay_part": "elle fait partie du coût du retard",
+  "p.scoring.needs_divisor":
+    "c'est le diviseur : sans lui, il n'y a pas de valeur par unité de travail",
+  "p.scoring.needs_reach":
+    "elle dit combien de personnes le travail touche sur une période",
+  "p.scoring.needs_impact":
+    "elle dit combien le travail compte pour chaque personne touchée",
+  "p.scoring.needs_confidence":
+    "elle minore les estimations selon leur degré de certitude",
+  "p.scoring.needs_other": "le score en a besoin",
+  "p.scoring.means_business_value":
+    "valeur relative pour l'utilisateur ou le métier, de 1 à 20",
+  "p.scoring.means_time_criticality":
+    "la vitesse à laquelle la valeur se perd en cas de retard, de 1 à 20",
+  "p.scoring.means_risk_reduction":
+    "le risque qu'il supprime ou l'opportunité qu'il ouvre, de 1 à 20",
+  "p.scoring.means_cost_of_delay":
+    "la somme des trois ci-dessus : ce que coûte un retard",
+  "p.scoring.means_job_size":
+    "la taille relative du travail, de 1 à 20 ; le diviseur",
+  "p.scoring.means_reach": "personnes ou événements touchés sur une période",
+  "p.scoring.means_impact":
+    "0,25 minime, 0,5 faible, 1 moyenne, 2 forte, 3 énorme",
+  "p.scoring.means_confidence": "le degré de certitude des estimations",
+  "p.scoring.means_effort": "mois-personnes de travail ; le diviseur",
+  "p.scoring.means_other": "une composante que cette page ne connaît pas",
+  "p.frontier.heading": "Choisir un portefeuille",
+  "p.frontier.says":
+    "Le générateur note chaque plan que vous pouvez lire par son score Smart et le chiffre par ses lignes budgétaires, puis prend les plans par score par unité de coût jusqu'à épuiser le plafond. Les plans à inclure sont pris d'abord, quel que soit leur coût. Un plan sans score Smart est écarté ; un plan sans ligne budgétaire ne coûte rien. Le choix n'est pas toujours le meilleur possible : un plafond qui n'achète pas plus de valeur qu'un plafond moins cher est signalé, pas caché.",
+  "p.frontier.must_include":
+    "Plans que chaque choix doit inclure (jusqu'à {max})",
+  "p.frontier.plans_loading": "Lecture des plans…",
+  "p.frontier.plans_none": "Aucun plan que vous pouvez lire.",
+  "p.frontier.frontier_heading": "Frontière efficiente",
+  "p.frontier.frontier_says":
+    "Le générateur est exécuté une fois par plafond, et rien n'est enregistré. Répartissez de {min} à {max} plafonds régulièrement de zéro au coût de tous les plans chiffrables (vide pour {fallback}), ou indiquez vous-même jusqu'à {list} plafonds, chacun un montant non négatif.",
+  "p.frontier.f_currency": "Devise des coûts (trois lettres)",
+  "p.frontier.f_how": "Quels plafonds budgétaires",
+  "p.frontier.how_steps": "Répartis régulièrement",
+  "p.frontier.how_caps": "Plafonds que j'indique",
+  "p.frontier.f_steps": "Combien de plafonds (vide pour {fallback})",
+  "p.frontier.f_caps": "Plafonds budgétaires, un par ligne (jusqu'à {list})",
+  "p.frontier.run": "Tracer la frontière",
+  "p.frontier.value_is":
+    "La valeur est la somme des scores Smart des plans choisis.",
+  "p.frontier.table": "La frontière, point par point",
+  "p.frontier.col_cap": "Plafond budgétaire",
+  "p.frontier.col_cost": "Coût du choix",
+  "p.frontier.col_value": "Valeur",
+  "p.frontier.col_included": "Plans choisis",
+  "p.frontier.col_more": "Achète plus de valeur",
+  "p.frontier.more_yes": "Oui",
+  "p.frontier.more_no": "Non : un plafond moins cher atteint autant",
+  "p.frontier.show_choice": "Montrer le choix",
+  "p.frontier.show_choice_named": "Montrer le choix à {cap}",
+  "p.frontier.save_point": "Enregistrer comme brouillon",
+  "p.frontier.save_point_named": "Enregistrer le choix à {cap} comme brouillon",
+  "p.frontier.point_name": "Frontière à {cap}",
+  "p.frontier.axis_cost": "Coût des plans choisis",
+  "p.frontier.axis_value": "Valeur (somme des scores Smart)",
+  "p.frontier.chart_points_one": "{n} plafond budgétaire.",
+  "p.frontier.chart_points_other": "{n} plafonds budgétaires.",
+  "p.frontier.chart_best": "La plus grande valeur, {value}, coûte {cost}.",
+  "p.frontier.chart_dominated_one":
+    "{n} plafond n'achète pas plus de valeur qu'un moins cher.",
+  "p.frontier.chart_dominated_other":
+    "{n} plafonds n'achètent pas plus de valeur qu'un moins cher.",
+  "p.frontier.legend_efficient": "achète plus de valeur",
+  "p.frontier.legend_dominated":
+    "n'achète pas plus de valeur qu'un plafond moins cher",
+  "p.frontier.no_points": "La frontière n'a aucun point.",
+  "p.frontier.generate_heading": "Générer un brouillon",
+  "p.frontier.generate_says":
+    "Enregistré comme scénario brouillon, à évaluer, comparer et engager comme les autres. Un nom est nécessaire, de {bytes} octets au plus. Avec une devise, chaque plan y est chiffré ; un plafond a besoin de sa devise.",
+  "p.frontier.g_name": "Nom du brouillon",
+  "p.frontier.g_cap": "Plafond budgétaire (facultatif)",
+  "p.frontier.g_currency": "Devise (requise avec un plafond)",
+  "p.frontier.generate": "Générer le brouillon",
+  "p.frontier.draft_saved":
+    "Brouillon {name} enregistré ; il figure dans la liste ci-dessus.",
+  "p.frontier.choice_at": "Ce que choisit un plafond de {cap}",
+  "p.frontier.choice_of": "Ce que {name} a choisi",
+  "p.frontier.chosen_count_one": "{n} plan choisi sur {of}.",
+  "p.frontier.chosen_count_other": "{n} plans choisis sur {of}.",
+  "p.frontier.col_plan": "Plan du choix",
+  "p.frontier.col_chosen": "Choisi ou non",
+  "p.frontier.col_score": "Son score Smart",
+  "p.frontier.col_plan_cost": "Son coût",
+  "p.frontier.col_why": "Pourquoi écarté",
+  "p.frontier.chosen": "choisi",
+  "p.frontier.left_out": "écarté",
+  "p.frontier.no_score": "pas de score Smart",
+  "p.frontier.plan_unknown":
+    "Un plan que vous ne pouvez pas lire, ou qui n'existe plus",
+  "p.frontier.reason_no_score":
+    "il n'a pas de score Smart, ce qui n'est pas un score de zéro",
+  "p.frontier.reason_foreign_currency":
+    "toutes ses lignes budgétaires sont dans une autre devise, il ne peut donc pas être chiffré",
+  "p.frontier.reason_over_cap": "le plafond était épuisé avant lui",
+  "p.frontier.reason_must_include_conflict":
+    "il doit être inclus, mais ce n'est pas un plan que vous pouvez lire",
+  "p.frontier.reason_other":
+    "écarté pour une raison que cette page ne connaît pas",
+  "p.frontier.problem_currency": "Indiquez la devise en trois lettres.",
+  "p.frontier.problem_steps":
+    "Le nombre de plafonds doit être un nombre entier de {min} à {max}.",
+  "p.frontier.problem_caps_none": "Indiquez au moins un plafond.",
+  "p.frontier.problem_caps_many": "Indiquez au plus {list} plafonds.",
+  "p.frontier.problem_caps_amount":
+    "Chaque plafond doit être un montant non négatif.",
+  "p.frontier.problem_must_include":
+    "Choisissez au plus {list} plans à inclure.",
+  "p.frontier.problem_name": "Donnez un nom au brouillon.",
+  "p.frontier.problem_name_long": "Le nom dépasse {bytes} octets.",
+  "p.frontier.problem_cap_currency": "Un plafond a besoin de sa devise.",
+  "p.frontier.problem_cap_amount":
+    "Le plafond doit être un montant non négatif.",
+  "p.frontier.refused_frontier": "La frontière a été refusée.",
+  "p.frontier.refused_generate": "Le brouillon a été refusé.",
+  "p.frontier.could_not_read": "Impossible de tracer la frontière.",
+  "p.frontier.could_not_generate": "Impossible de générer le brouillon.",
+  "p.frontier.rollback": "Annuler l'engagement",
+  "p.frontier.rollback_named": "Annuler l'engagement de {name}",
+  "p.frontier.rollback_says":
+    "Un scénario engagé peut redevenir un brouillon, après une question ; cela ne change que le scénario.",
+  "p.frontier.confirm_rollback":
+    "Faire redevenir {name} un brouillon ? Il ne sera plus le portefeuille engagé ; l'engagement reste dans la piste d'audit.",
+  "p.frontier.rolled_back": "{name} est de nouveau un brouillon.",
+  "p.frontier.refused_rollback_status":
+    "{name} n'est plus engagé : il n'y a rien à annuler. La liste a été relue.",
+  "p.frontier.refused_rollback_gone":
+    "{name} n'existe plus, ou vous ne pouvez pas le lire. La liste a été relue.",
+  "p.frontier.could_not_roll_back":
+    "Impossible d'annuler l'engagement du scénario.",
+  "p.frontier.status_draft": "brouillon",
+  "p.frontier.status_committed": "engagé",
+  "p.frontier.violations_one": "{n} contrainte enfreinte",
+  "p.frontier.violations_other": "{n} contraintes enfreintes",
+  "p.frontier.compare_note":
+    "B moins A, une devise à la fois ; les devises ne sont jamais additionnées.",
+  "p.intake.edit": "Modifier",
+  "p.intake.edit_named": "Modifier le brouillon {title}",
+  "p.intake.edit_heading": "Modifier {title}",
+  "p.intake.edit_heading_loading": "Lecture du brouillon…",
+  "p.intake.edit_form": "Les champs du brouillon",
+  "p.intake.edit_says":
+    "Seul un brouillon peut être modifié, et c'est aussi là qu'une proposition est marquée comme demande externe. Un titre est nécessaire ; le titre et le résumé font au plus {bytes} octets chacun ; un montant a besoin de sa devise ; une contrepartie nommée fait de {min} à {max} caractères. Enregistrer remplace chaque champ.",
+  "p.intake.save": "Enregistrer le brouillon",
+  "p.intake.saved": "{title} enregistré.",
+  "p.intake.unchanged": "Rien n'a changé ; rien n'a été envoyé.",
+  "p.intake.could_not_read_draft": "Impossible de lire le brouillon.",
+  "p.intake.problem_not_draft": "Seul un brouillon peut être modifié.",
+  "p.intake.problem_title_long": "Le titre dépasse {bytes} octets.",
+  "p.intake.problem_summary_long": "Le résumé dépasse {bytes} octets.",
+  "p.intake.refused_not_draft":
+    "La modification a été refusée : la proposition n'est plus un brouillon. La liste a été relue.",
+  "p.intake.refused_edit":
+    "La modification a été refusée : un champ sort de ce que le service accepte.",
+  "p.intake.forecast_heading": "Combien seront approuvées",
+  "p.intake.forecast_says":
+    "Obtenue par simulation à partir du nombre de propositions approuvées à chaque période passée ; les propositions qui arrivent n'y entrent pas. Une prévision a besoin d'au moins {needed} périodes d'historique.",
+  "p.intake.f_periods": "Périodes à venir (1 à {max} ; vide pour {fallback})",
+  "p.intake.f_period_days":
+    "Jours par période (1 à {max} ; vide pour {fallback})",
+  "p.intake.f_history":
+    "Périodes d'historique (1 à {max} ; vide pour {fallback})",
+  "p.intake.forecast_run": "Prévoir",
+  "p.intake.problem_periods":
+    "Les périodes à venir doivent être un nombre entier de 1 à {periods}.",
+  "p.intake.problem_period_days":
+    "Une période doit être un nombre entier de jours de 1 à {days}.",
+  "p.intake.problem_history":
+    "L'historique doit être un nombre entier de périodes de 1 à {history}.",
+  "p.intake.refused_forecast": "La prévision a été refusée.",
+  "p.intake.could_not_forecast": "Impossible d'établir la prévision.",
+  "p.intake.window":
+    "Historique du {from} au {to}, par périodes de {days} jours.",
+  "p.intake.at_least_label_one":
+    "Dans la prochaine {n} période ({days} jours), au moins",
+  "p.intake.at_least_label_other":
+    "Dans les {n} prochaines périodes ({days} jours), au moins",
+  "p.intake.at_least_means":
+    "avec 85 % de confiance : le chiffre sur lequel planifier",
+  "p.intake.median_label": "En général",
+  "p.intake.median_means":
+    "la moitié des essais approuve plus, l'autre moitié moins : un pile ou face, pas un engagement",
+  "p.intake.at_most_label": "Au plus",
+  "p.intake.at_most_means":
+    "l'extrémité optimiste : 85 % des essais n'approuvent pas plus",
+  "p.intake.proposals_n_one": "{n} proposition",
+  "p.intake.proposals_n_other": "{n} propositions",
+  "p.intake.absent_history":
+    "Pas de prévision : il faut au moins {needed} périodes d'historique, et il y en a {n}.",
+  "p.intake.absent_other":
+    "Aucune prévision n'a pu être tirée de cet historique.",
+  "p.intake.approvals_history":
+    "Approuvées par période, de la plus ancienne à la plus récente : {list}",
+  "p.intake.arrivals_history":
+    "Propositions arrivées par période, de la plus ancienne à la plus récente (montrées à côté ; elles n'entrent pas dans la prévision) : {list}",
 };

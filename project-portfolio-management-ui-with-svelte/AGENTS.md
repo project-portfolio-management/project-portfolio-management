@@ -226,6 +226,9 @@ the Status note above).
 | The value realized and an observed value (`/plans/[pid]/benefits`) | `GET /api/plans/{pid}/value-realization` · `POST /api/plans/{pid}/value-points` (the first measurable one after a question) |
 | Phase and start (`/plans/[pid]/programme`, `PlanPhase.svelte`) | `GET /api/plans/{pid}/phase-history` · `PUT …/phase` (`start_override_reason` for a refused start) · `GET …/start-check` |
 | Trade-off on a new ask (`/proposals`) | `POST /api/proposals` (`external_ask`, `tradeoff`) · `PUT /api/proposals/{pid}/tradeoff` |
+| Ranking by WSJF and RICE, and a plan's estimates (`/prioritization`, `ScoringEstimates.svelte`) | `GET /api/prioritization?model=wsjf\|rice` (left out for the Smart Score) · `GET`/`PUT /api/plans/{pid}/scoring-inputs` (all eight sent; nothing for no change) · `GET /api/plans/{pid}/score?model=` |
+| The efficient frontier, a generated draft and a rollback (`/scenarios`, `FrontierChart.svelte`) | `GET /api/scenarios/frontier?currency=&steps=\|caps=&must_include=` (ten steps not sent) · `POST /api/scenarios/generate` · `POST /api/scenarios/{pid}/rollback` (after a question) · `GET /api/plans` (names, and the plans to include) |
+| Editing a draft and the intake's forecast (`/proposals`) | `GET`/`PUT /api/proposals/{pid}` (a draft only; nothing for no change; tags an external ask) · `GET /api/proposals/forecast?periods=&period_days=&history_periods=` (defaults not sent) |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

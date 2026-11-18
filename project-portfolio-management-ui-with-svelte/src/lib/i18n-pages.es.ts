@@ -7826,4 +7826,264 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.value.problem_source": "Elija dónde se prometió el objetivo.",
   "p.value.refused_target": "Se rechazó el objetivo.",
   "p.value.could_not_record_target": "No se pudo registrar el objetivo.",
+  "p.scoring.rank_by": "Ordenar por",
+  "p.scoring.model_smart": "Puntuación Smart (a partir de pruebas)",
+  "p.scoring.model_wsjf": "WSJF (el trabajo más corto ponderado primero)",
+  "p.scoring.model_rice": "RICE (alcance, impacto, confianza, esfuerzo)",
+  "p.scoring.models_say":
+    "La Puntuación Smart sale de las pruebas que tiene el servicio; WSJF y RICE se puntúan a partir de las estimaciones de una persona, fijadas para cada plan con su botón Estimaciones. Un plan sin todas las entradas que necesita un modelo queda sin puntuar y va al final, nunca con cero. La banda es de la Puntuación Smart.",
+  "p.scoring.of_plans_one":
+    "{length} de {scored_of} plan, ordenado por {model}",
+  "p.scoring.of_plans_other":
+    "{length} de {scored_of} planes, ordenados por {model}",
+  "p.scoring.ranked_by": "Planes ordenados por {model}",
+  "p.scoring.waiting_for": "A la espera de",
+  "p.scoring.open": "Estimaciones",
+  "p.scoring.open_named": "Abrir las estimaciones de {name}",
+  "p.scoring.heading": "Estimaciones para {name}",
+  "p.scoring.form": "Las estimaciones de {name}",
+  "p.scoring.says":
+    "WSJF y RICE se puntúan a partir de estas estimaciones. Si falta alguna entrada no hay puntuación, nunca una suposición; un cero declarado no es una entrada que falta. Guardar sustituye cada estimación: una casilla vacía la borra.",
+  "p.scoring.last_set": "Fijadas por última vez {when}.",
+  "p.scoring.none_set": "No se han fijado estimaciones.",
+  "p.scoring.wsjf_inputs":
+    "Entradas de WSJF, cada una un número entero de {min} a {max}",
+  "p.scoring.rice_inputs": "Entradas de RICE",
+  "p.scoring.input_business_value": "Valor de negocio",
+  "p.scoring.input_time_criticality": "Urgencia temporal",
+  "p.scoring.input_risk_reduction": "Reducción de riesgo u oportunidad abierta",
+  "p.scoring.input_job_size": "Tamaño del trabajo",
+  "p.scoring.input_reach": "Alcance (personas o eventos en un periodo)",
+  "p.scoring.input_impact": "Impacto",
+  "p.scoring.input_confidence": "Confianza (por ciento)",
+  "p.scoring.input_effort": "Esfuerzo (meses-persona)",
+  "p.scoring.input_other": "otra entrada",
+  "p.scoring.component_cost_of_delay": "Coste del retraso",
+  "p.scoring.impact_minimal": "mínimo",
+  "p.scoring.impact_low": "bajo",
+  "p.scoring.impact_medium": "medio",
+  "p.scoring.impact_high": "alto",
+  "p.scoring.impact_massive": "enorme",
+  "p.scoring.impact_value": "{value} (impacto {word})",
+  "p.scoring.not_estimated": "sin estimar",
+  "p.scoring.save": "Guardar las estimaciones",
+  "p.scoring.close": "Cerrar las estimaciones",
+  "p.scoring.unchanged":
+    "Las estimaciones están como se guardaron; no se envió nada.",
+  "p.scoring.saved": "Estimaciones de {name} guardadas.",
+  "p.scoring.could_not_read": "No se pudieron leer las estimaciones.",
+  "p.scoring.could_not_save": "No se pudieron guardar las estimaciones.",
+  "p.scoring.refused_gone": "Ese plan ya no existe, o no puede leerlo.",
+  "p.scoring.refused_inputs":
+    "Se rechazaron las estimaciones: una entrada está fuera de su rango.",
+  "p.scoring.problem_wsjf":
+    "{input} debe ser un número entero de {min} a {max}.",
+  "p.scoring.problem_reach":
+    "{input} debe ser un número entero, no inferior a cero.",
+  "p.scoring.problem_impact": "{input} debe ser 0,25, 0,5, 1, 2 o 3.",
+  "p.scoring.problem_confidence":
+    "{input} debe ser un número entero de 0 a 100.",
+  "p.scoring.problem_effort": "{input} debe ser mayor que cero.",
+  "p.scoring.problem_number": "{input} debe ser un número.",
+  "p.scoring.formula_wsjf":
+    "WSJF es (valor de negocio + urgencia temporal + reducción de riesgo u oportunidad abierta) ÷ tamaño del trabajo.",
+  "p.scoring.formula_rice": "RICE es alcance × impacto × confianza ÷ esfuerzo.",
+  "p.scoring.score_is": "Puntuación: {score}",
+  "p.scoring.no_score": "Sin puntuación: espera estas entradas.",
+  "p.scoring.needs_delay_part": "forma parte del coste del retraso",
+  "p.scoring.needs_divisor":
+    "es el divisor: sin ella no hay valor por unidad de trabajo",
+  "p.scoring.needs_reach":
+    "dice a cuántas personas llega el trabajo en un periodo",
+  "p.scoring.needs_impact":
+    "dice cuánto importa el trabajo a cada persona alcanzada",
+  "p.scoring.needs_confidence":
+    "rebaja las estimaciones según lo seguras que son",
+  "p.scoring.needs_other": "la puntuación la necesita",
+  "p.scoring.means_business_value":
+    "valor relativo para el usuario o el negocio, de 1 a 20",
+  "p.scoring.means_time_criticality":
+    "lo rápido que se pierde el valor si llega tarde, de 1 a 20",
+  "p.scoring.means_risk_reduction":
+    "el riesgo que elimina o la oportunidad que abre, de 1 a 20",
+  "p.scoring.means_cost_of_delay":
+    "la suma de los tres anteriores: lo que cuesta un retraso",
+  "p.scoring.means_job_size":
+    "el tamaño relativo del trabajo, de 1 a 20; el divisor",
+  "p.scoring.means_reach": "personas o eventos alcanzados en un periodo",
+  "p.scoring.means_impact": "0,25 mínimo, 0,5 bajo, 1 medio, 2 alto, 3 enorme",
+  "p.scoring.means_confidence": "lo seguras que son las estimaciones",
+  "p.scoring.means_effort": "meses-persona de trabajo; el divisor",
+  "p.scoring.means_other": "un componente que esta página no conoce",
+  "p.frontier.heading": "Elegir una cartera",
+  "p.frontier.says":
+    "El generador puntúa cada plan que puede leer por su Puntuación Smart y le pone precio por sus líneas de presupuesto; después toma planes por puntuación por unidad de coste hasta agotar el tope. Los planes que deben incluirse se toman primero, cueste lo que cueste. Un plan sin Puntuación Smart queda fuera; un plan sin líneas de presupuesto no cuesta nada. La elección no siempre es la mejor posible, así que un tope que no compra más valor que otro más barato se marca, no se oculta.",
+  "p.frontier.must_include":
+    "Planes que toda elección debe incluir (hasta {max})",
+  "p.frontier.plans_loading": "Leyendo los planes…",
+  "p.frontier.plans_none": "No hay planes que pueda leer.",
+  "p.frontier.frontier_heading": "Frontera eficiente",
+  "p.frontier.frontier_says":
+    "El generador se ejecuta una vez en cada tope y no se guarda nada. Reparta de {min} a {max} topes por igual desde cero hasta el coste de todos los planes con precio (vacío para {fallback}), o indique usted hasta {list} topes, cada uno un importe no inferior a cero.",
+  "p.frontier.f_currency": "Moneda de los costes (tres letras)",
+  "p.frontier.f_how": "Qué topes de presupuesto",
+  "p.frontier.how_steps": "Repartidos por igual",
+  "p.frontier.how_caps": "Topes que indico",
+  "p.frontier.f_steps": "Cuántos topes (vacío para {fallback})",
+  "p.frontier.f_caps": "Topes de presupuesto, uno por línea (hasta {list})",
+  "p.frontier.run": "Trazar la frontera",
+  "p.frontier.value_is":
+    "El valor es la suma de las Puntuaciones Smart de los planes elegidos.",
+  "p.frontier.table": "La frontera, punto por punto",
+  "p.frontier.col_cap": "Tope de presupuesto",
+  "p.frontier.col_cost": "Coste de la elección",
+  "p.frontier.col_value": "Valor",
+  "p.frontier.col_included": "Planes elegidos",
+  "p.frontier.col_more": "Compra más valor",
+  "p.frontier.more_yes": "Sí",
+  "p.frontier.more_no": "No: un tope más barato llega a lo mismo",
+  "p.frontier.show_choice": "Mostrar la elección",
+  "p.frontier.show_choice_named": "Mostrar la elección con {cap}",
+  "p.frontier.save_point": "Guardar como borrador",
+  "p.frontier.save_point_named": "Guardar la elección con {cap} como borrador",
+  "p.frontier.point_name": "Frontera con {cap}",
+  "p.frontier.axis_cost": "Coste de los planes elegidos",
+  "p.frontier.axis_value": "Valor (Puntuación Smart sumada)",
+  "p.frontier.chart_points_one": "{n} tope de presupuesto.",
+  "p.frontier.chart_points_other": "{n} topes de presupuesto.",
+  "p.frontier.chart_best": "El mayor valor, {value}, cuesta {cost}.",
+  "p.frontier.chart_dominated_one":
+    "{n} tope no compra más valor que uno más barato.",
+  "p.frontier.chart_dominated_other":
+    "{n} topes no compran más valor que uno más barato.",
+  "p.frontier.legend_efficient": "compra más valor",
+  "p.frontier.legend_dominated": "no compra más valor que un tope más barato",
+  "p.frontier.no_points": "La frontera no tiene puntos.",
+  "p.frontier.generate_heading": "Generar un borrador",
+  "p.frontier.generate_says":
+    "Se guarda como escenario en borrador, para evaluarlo, compararlo y comprometerlo como cualquier otro. Hace falta un nombre, de {bytes} bytes como máximo. Con una moneda, cada plan se valora en ella; un tope necesita su moneda.",
+  "p.frontier.g_name": "Nombre del borrador",
+  "p.frontier.g_cap": "Tope de presupuesto (opcional)",
+  "p.frontier.g_currency": "Moneda (necesaria con un tope)",
+  "p.frontier.generate": "Generar el borrador",
+  "p.frontier.draft_saved":
+    "Borrador {name} guardado; está en la lista de arriba.",
+  "p.frontier.choice_at": "Lo que elige un tope de {cap}",
+  "p.frontier.choice_of": "Lo que eligió {name}",
+  "p.frontier.chosen_count_one": "{n} plan elegido de {of}.",
+  "p.frontier.chosen_count_other": "{n} planes elegidos de {of}.",
+  "p.frontier.col_plan": "Plan de la elección",
+  "p.frontier.col_chosen": "Elegido o no",
+  "p.frontier.col_score": "Su Puntuación Smart",
+  "p.frontier.col_plan_cost": "Su coste",
+  "p.frontier.col_why": "Por qué quedó fuera",
+  "p.frontier.chosen": "elegido",
+  "p.frontier.left_out": "fuera",
+  "p.frontier.no_score": "sin Puntuación Smart",
+  "p.frontier.plan_unknown": "Un plan que no puede leer, o que ya no existe",
+  "p.frontier.reason_no_score":
+    "no tiene Puntuación Smart, que no es una puntuación de cero",
+  "p.frontier.reason_foreign_currency":
+    "todas sus líneas de presupuesto están en otra moneda, así que no se le puede poner precio",
+  "p.frontier.reason_over_cap": "el tope se agotó antes de llegar a él",
+  "p.frontier.reason_must_include_conflict":
+    "debe incluirse, pero no es un plan que pueda leer",
+  "p.frontier.reason_other": "fuera por un motivo que esta página no conoce",
+  "p.frontier.problem_currency": "Indique la moneda con tres letras.",
+  "p.frontier.problem_steps":
+    "El número de topes debe ser un número entero de {min} a {max}.",
+  "p.frontier.problem_caps_none": "Indique al menos un tope.",
+  "p.frontier.problem_caps_many": "Indique como máximo {list} topes.",
+  "p.frontier.problem_caps_amount":
+    "Cada tope debe ser un importe no inferior a cero.",
+  "p.frontier.problem_must_include":
+    "Elija como máximo {list} planes para incluir.",
+  "p.frontier.problem_name": "Ponga un nombre al borrador.",
+  "p.frontier.problem_name_long": "El nombre supera los {bytes} bytes.",
+  "p.frontier.problem_cap_currency": "Un tope necesita su moneda.",
+  "p.frontier.problem_cap_amount":
+    "El tope debe ser un importe no inferior a cero.",
+  "p.frontier.refused_frontier": "Se rechazó la frontera.",
+  "p.frontier.refused_generate": "Se rechazó el borrador.",
+  "p.frontier.could_not_read": "No se pudo trazar la frontera.",
+  "p.frontier.could_not_generate": "No se pudo generar el borrador.",
+  "p.frontier.rollback": "Deshacer el compromiso",
+  "p.frontier.rollback_named": "Deshacer el compromiso de {name}",
+  "p.frontier.rollback_says":
+    "Un escenario comprometido puede volver a ser borrador, tras una pregunta; no cambia nada salvo el escenario.",
+  "p.frontier.confirm_rollback":
+    "¿Devolver {name} a borrador? Dejará de ser la cartera comprometida; el compromiso queda en el registro de auditoría.",
+  "p.frontier.rolled_back": "{name} vuelve a ser un borrador.",
+  "p.frontier.refused_rollback_status":
+    "{name} ya no está comprometido, así que no hay nada que deshacer. Se ha vuelto a leer la lista.",
+  "p.frontier.refused_rollback_gone":
+    "{name} ya no existe, o no puede leerlo. Se ha vuelto a leer la lista.",
+  "p.frontier.could_not_roll_back":
+    "No se pudo deshacer el compromiso del escenario.",
+  "p.frontier.status_draft": "borrador",
+  "p.frontier.status_committed": "comprometido",
+  "p.frontier.violations_one": "{n} restricción incumplida",
+  "p.frontier.violations_other": "{n} restricciones incumplidas",
+  "p.frontier.compare_note":
+    "B menos A, una moneda cada vez; las monedas nunca se suman entre sí.",
+  "p.intake.edit": "Editar",
+  "p.intake.edit_named": "Editar el borrador {title}",
+  "p.intake.edit_heading": "Editar {title}",
+  "p.intake.edit_heading_loading": "Leyendo el borrador…",
+  "p.intake.edit_form": "Los campos del borrador",
+  "p.intake.edit_says":
+    "Solo se puede editar un borrador, y ahí también se marca una propuesta como petición externa. Hace falta un título; el título y el resumen tienen como máximo {bytes} bytes cada uno; un importe necesita su moneda; una contrapartida indicada tiene de {min} a {max} caracteres. Guardar sustituye cada campo.",
+  "p.intake.save": "Guardar el borrador",
+  "p.intake.saved": "{title} guardado.",
+  "p.intake.unchanged": "No ha cambiado nada; no se envió nada.",
+  "p.intake.could_not_read_draft": "No se pudo leer el borrador.",
+  "p.intake.problem_not_draft": "Solo se puede editar un borrador.",
+  "p.intake.problem_title_long": "El título supera los {bytes} bytes.",
+  "p.intake.problem_summary_long": "El resumen supera los {bytes} bytes.",
+  "p.intake.refused_not_draft":
+    "Se rechazó la edición: la propuesta ya no es un borrador. Se ha vuelto a leer la lista.",
+  "p.intake.refused_edit":
+    "Se rechazó la edición: un campo queda fuera de lo que acepta el servicio.",
+  "p.intake.forecast_heading": "Cuántas se aprobarán",
+  "p.intake.forecast_says":
+    "Se obtiene por simulación de cuántas propuestas se aprobaron en cada periodo pasado; las propuestas que llegan no influyen. Una previsión necesita al menos {needed} periodos de historial.",
+  "p.intake.f_periods":
+    "Periodos por delante (1 a {max}; vacío para {fallback})",
+  "p.intake.f_period_days":
+    "Días por periodo (1 a {max}; vacío para {fallback})",
+  "p.intake.f_history":
+    "Periodos de historial (1 a {max}; vacío para {fallback})",
+  "p.intake.forecast_run": "Prever",
+  "p.intake.problem_periods":
+    "Los periodos por delante deben ser un número entero de 1 a {periods}.",
+  "p.intake.problem_period_days":
+    "Un periodo debe ser un número entero de días de 1 a {days}.",
+  "p.intake.problem_history":
+    "El historial debe ser un número entero de periodos de 1 a {history}.",
+  "p.intake.refused_forecast": "Se rechazó la previsión.",
+  "p.intake.could_not_forecast": "No se pudo obtener la previsión.",
+  "p.intake.window":
+    "Historial del {from} al {to}, en periodos de {days} días.",
+  "p.intake.at_least_label_one":
+    "En el próximo {n} periodo ({days} días), al menos",
+  "p.intake.at_least_label_other":
+    "En los próximos {n} periodos ({days} días), al menos",
+  "p.intake.at_least_means":
+    "con un 85 % de confianza: la cifra con la que planificar",
+  "p.intake.median_label": "Normalmente",
+  "p.intake.median_means":
+    "la mitad de las pruebas aprueba más y la mitad menos: una moneda al aire, no un compromiso",
+  "p.intake.at_most_label": "Como mucho",
+  "p.intake.at_most_means":
+    "el extremo optimista: el 85 % de las pruebas no aprueba más",
+  "p.intake.proposals_n_one": "{n} propuesta",
+  "p.intake.proposals_n_other": "{n} propuestas",
+  "p.intake.absent_history":
+    "Sin previsión: necesita al menos {needed} periodos de historial, y hay {n}.",
+  "p.intake.absent_other":
+    "No se pudo obtener una previsión de este historial.",
+  "p.intake.approvals_history":
+    "Aprobadas por periodo, de la más antigua a la más reciente: {list}",
+  "p.intake.arrivals_history":
+    "Propuestas llegadas por periodo, de la más antigua a la más reciente (se muestran al lado; no influyen en la previsión): {list}",
 };

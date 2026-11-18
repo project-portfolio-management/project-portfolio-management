@@ -11,18 +11,24 @@
   NC-8 (NC-1 slice 12 part e): each proposal shows, on asking, the lessons of plans whose title is like its own
   (`GET /api/proposals/{pid}/lessons`), best match first, each with the match's score and confidence in words and the
   title's similarity; how they are matched is said first. Rules in `src/lib/lesson-view.ts`.
+
+  NC-1 slice 12 part g (EX-13): a draft is read as stored (`GET /api/proposals/{pid}`, the form disabled until read)
+  and edited (`PUT /api/proposals/{pid}`, every field sent, the ones not shown as stored; nothing sent for no change),
+  which is where an existing proposal is tagged as an external ask; and the intake's forecast (`GET
+  /api/proposals/forecast`): how many proposals will be approved in the next periods, with the history it is drawn
+  from. Rules in `src/lib/intake-view.ts`, said first; the service's notes and reason are never shown.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
   import { errorText } from "#lib/error-text.js";
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridCellContext, DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
-  import { t, localeHref } from "#lib/i18n.svelte.js";
-  import { formatDecimal, formatPercent } from "#lib/locale-format.js";
+  import { t, tn, localeHref } from "#lib/i18n.svelte.js";
+  import { formatDate, formatDecimal, formatInteger, formatPercent } from "#lib/locale-format.js";
   import { enumLabel } from "#lib/enum-labels.js";
-  import { currencyCode, toMinor } from "#lib/money.js";
+  import { currencyCode, minorToInput, toMinor } from "#lib/money.js";
   import { onMount } from "svelte";
-  import { PpmClient, type DemandHit, type Proposal, type ProposalLessonMatch, money } from "#lib/api/ppm.js";
+  import { PpmClient, type DemandHit, type IntakeForecast, type Proposal, type ProposalLessonMatch, money } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
   import {
     TRADEOFF_MAX,
@@ -36,6 +42,21 @@
     tradeoffBody,
   } from "#lib/tradeoff-view.js";
   import { CATEGORY_MARK, CONFIDENCE_KEY, isGate, lessonRefusalKey, nameScore, scorePercent } from "#lib/lesson-view.js";
+  import {
+    HISTORY,
+    HISTORY_NEEDED,
+    PERIODS,
+    PERIOD_DAYS,
+    TEXT_MAX_BYTES,
+    forecastAbsentKey,
+    forecastQuery,
+    forecastRefusalKey,
+    proposalEditBody,
+    proposalEditFormOf,
+    proposalEditRefusalKey,
+    type ForecastForm,
+    type ProposalEditForm,
+  } from "#lib/intake-view.js";
 
   type Step = "submit" | "review" | "approve" | "reject";
   const STEP_LABELS = {
@@ -71,6 +92,86 @@
   let tradeoffText = $state("");
   let tradeoffError = $state<string | null>(null);
   let tradeoffNotice = $state("");
+
+  // Editing a draft (NC-1 slice 12 part g).
+  let draft = $state<Proposal | null>(null);
+  let draftPid = $state<string | null>(null);
+  let draftForm = $state<ProposalEditForm>({ title: "", summary: "", kindTarget: "projects", requested: "", currency: "", externalAsk: false, tradeoff: "" });
+  let draftProblem = $state<string | null>(null);
+  let draftNotice = $state("");
+
+  async function openDraft(p: Proposal) {
+    draftPid = p.pid;
+    draft = null;
+    draftProblem = null;
+    draftNotice = "";
+    try {
+      const read = await ppm.getProposal(p.pid);
+      if (draftPid !== p.pid) return;
+      draft = read;
+      draftForm = proposalEditFormOf(read, (m, c) => minorToInput(m, c));
+    } catch (err) {
+      const k = proposalEditRefusalKey(err);
+      draftProblem = k ? t(k) : errorText(err, "p.intake.could_not_read_draft");
+    }
+  }
+
+  function closeDraft() {
+    draftPid = null;
+    draft = null;
+  }
+
+  async function saveDraft(event: SubmitEvent) {
+    event.preventDefault();
+    if (!draft) return;
+    draftNotice = "";
+    const r = proposalEditBody(draft, draftForm);
+    if (r === null) {
+      draftProblem = null;
+      draftNotice = t("p.intake.unchanged");
+      return;
+    }
+    if ("problems" in r) {
+      draftProblem = r.problems.map((k) => t(k, { min: TRADEOFF_MIN, max: TRADEOFF_MAX, bytes: TEXT_MAX_BYTES })).join(" ");
+      return;
+    }
+    draftProblem = null;
+    try {
+      const saved = await ppm.updateProposal(draft.pid, r.body);
+      draft = saved;
+      draftForm = proposalEditFormOf(saved, (m, c) => minorToInput(m, c));
+      draftNotice = t("p.intake.saved", { title: saved.title });
+      await refresh();
+    } catch (err) {
+      const k = proposalEditRefusalKey(err);
+      draftProblem = k ? t(k) : errorText(err, "ppm.common.actionFailed");
+      if (k === "p.intake.refused_not_draft") {
+        await refresh();
+        draft = null;
+      }
+    }
+  }
+
+  // The intake's forecast (NC-1 slice 12 part g).
+  let fcForm = $state<ForecastForm>({ periods: null, periodDays: null, historyPeriods: null });
+  let forecast = $state<IntakeForecast | null>(null);
+  let fcProblem = $state<string | null>(null);
+
+  async function runForecast(event: SubmitEvent) {
+    event.preventDefault();
+    const r = forecastQuery(fcForm);
+    if ("problems" in r) {
+      fcProblem = r.problems.map((k) => t(k, { periods: PERIODS.max, days: PERIOD_DAYS.max, history: HISTORY.max })).join(" ");
+      return;
+    }
+    fcProblem = null;
+    try {
+      forecast = await ppm.intakeForecast(r.query);
+    } catch (err) {
+      const k = forecastRefusalKey(err);
+      fcProblem = k ? t(k) : errorText(err, "p.intake.could_not_forecast");
+    }
+  }
 
   async function refresh() {
     try {
@@ -241,6 +342,9 @@
   {#each actionsFor(proposal.status) as action (action)}
     <button class="button small" aria-label={t(STEP_NAMED[action], { title: proposal.title })} onclick={() => step(proposal, action)}>{t(STEP_LABELS[action])}</button>
   {/each}
+  {#if proposal.status === "draft"}
+    <button class="button small" aria-label={t("p.intake.edit_named", { title: proposal.title })} onclick={() => openDraft(proposal)}>{t("p.intake.edit")}</button>
+  {/if}
   {#if canNameTradeoff(proposal)}
     <button class="button small" aria-label={proposal.tradeoff ? t("p.proposals.tradeoff_change_named", { title: proposal.title }) : t("p.proposals.tradeoff_name_named", { title: proposal.title })} onclick={() => openTradeoff(proposal)}>{proposal.tradeoff ? t("p.proposals.tradeoff_change") : t("p.proposals.tradeoff_name")}</button>
   {/if}
@@ -308,6 +412,66 @@
   </section>
 {/if}
 
+{#if draftPid}
+  <section class="draft-form" aria-labelledby="draft-h">
+    <h2 id="draft-h">{draft ? t("p.intake.edit_heading", { title: draft.title }) : t("p.intake.edit_heading_loading")}</h2>
+    <p class="small muted">{t("p.intake.edit_says", { bytes: TEXT_MAX_BYTES, min: TRADEOFF_MIN, max: TRADEOFF_MAX })}</p>
+    {#if draftProblem}<p class="banner error" role="alert">{draftProblem}</p>{/if}
+    <p class="small" role="status">{draftNotice}</p>
+    <form class="stack" novalidate onsubmit={saveDraft} aria-label={t("p.intake.edit_form")}>
+      <div class="row">
+        <label class="field">{t("ppm.proposals.formTitle")}<input bind:value={draftForm.title} disabled={!draft} /></label>
+        <label class="field">{t("ppm.proposals.formSummary")}<input bind:value={draftForm.summary} disabled={!draft} /></label>
+        <label class="field">{t("p.proposals.target_collection")}
+          <select bind:value={draftForm.kindTarget} disabled={!draft}>
+            {#each COLLECTIONS as target (target)}<option value={target}>{enumLabel("collection", target)}</option>{/each}
+          </select>
+        </label>
+        <label class="field">{t("ppm.proposals.requested")}<input bind:value={draftForm.requested} size="12" disabled={!draft} /></label>
+        <label class="field">{t("p.proposals.currency")}<input bind:value={draftForm.currency} size="4" maxlength="3" disabled={!draft} /></label>
+      </div>
+      <label class="check"><input type="checkbox" bind:checked={draftForm.externalAsk} disabled={!draft} /> {t("p.proposals.f_external_ask")}</label>
+      {#if draftForm.externalAsk}
+        <label class="wide">{t("p.proposals.f_new_tradeoff", { min: TRADEOFF_MIN, max: TRADEOFF_MAX })}<textarea bind:value={draftForm.tradeoff} rows="2" disabled={!draft}></textarea></label>
+      {/if}
+      <div class="row">
+        <button class="button" type="submit" disabled={!draft}>{t("p.intake.save")}</button>
+        <button class="button" type="button" onclick={closeDraft}>{t("p.proposals.tradeoff_close")}</button>
+      </div>
+    </form>
+  </section>
+{/if}
+
+<section class="forecast" aria-labelledby="fc-h">
+  <h2 id="fc-h">{t("p.intake.forecast_heading")}</h2>
+  <p class="small muted">{t("p.intake.forecast_says", { needed: HISTORY_NEEDED })}</p>
+  {#if fcProblem}<p class="banner error" role="alert">{fcProblem}</p>{/if}
+  <form class="row" novalidate onsubmit={runForecast} aria-label={t("p.intake.forecast_heading")}>
+    <label class="field">{t("p.intake.f_periods", { fallback: PERIODS.fallback, max: PERIODS.max })}<input type="number" min={PERIODS.min} max={PERIODS.max} step="1" bind:value={fcForm.periods} /></label>
+    <label class="field">{t("p.intake.f_period_days", { fallback: PERIOD_DAYS.fallback, max: PERIOD_DAYS.max })}<input type="number" min={PERIOD_DAYS.min} max={PERIOD_DAYS.max} step="1" bind:value={fcForm.periodDays} /></label>
+    <label class="field">{t("p.intake.f_history", { fallback: HISTORY.fallback, max: HISTORY.max })}<input type="number" min={HISTORY.min} max={HISTORY.max} step="1" bind:value={fcForm.historyPeriods} /></label>
+    <button class="button" type="submit">{t("p.intake.forecast_run")}</button>
+  </form>
+  {#if forecast}
+    {@const f = forecast.forecast}
+    <p class="small">{t("p.intake.window", { from: formatDate(forecast.history_window.from), to: formatDate(forecast.history_window.to), days: forecast.history_window.period_days })}</p>
+    {#if f.median_items !== null && f.at_least_items !== null && f.at_most_items !== null}
+      <dl class="figures">
+        <dt>{tn("p.intake.at_least_label", f.periods, { n: f.periods, days: f.days })}</dt>
+        <dd><strong>{tn("p.intake.proposals_n", f.at_least_items, { n: formatInteger(f.at_least_items) })}</strong> · {t("p.intake.at_least_means")}</dd>
+        <dt>{t("p.intake.median_label")}</dt>
+        <dd>{tn("p.intake.proposals_n", f.median_items, { n: formatInteger(f.median_items) })} · {t("p.intake.median_means")}</dd>
+        <dt>{t("p.intake.at_most_label")}</dt>
+        <dd>{tn("p.intake.proposals_n", f.at_most_items, { n: formatInteger(f.at_most_items) })} · {t("p.intake.at_most_means")}</dd>
+      </dl>
+    {:else}
+      <p>{t(forecastAbsentKey(f.history_periods), { n: f.history_periods, needed: HISTORY_NEEDED })}</p>
+    {/if}
+    <p class="small">{t("p.intake.approvals_history", { list: forecast.approvals_per_period.map((n) => formatInteger(n)).join(", ") || "—" })}</p>
+    <p class="small">{t("p.intake.arrivals_history", { list: forecast.arrivals_per_period.map((n) => formatInteger(n)).join(", ") || "—" })}</p>
+  {/if}
+</section>
+
 {#each proposals.filter((p) => duplicates[p.pid]) as proposal (proposal.pid)}
   <section class="small" aria-label={proposal.title}>
     <strong>{proposal.title}:</strong>
@@ -357,6 +521,11 @@
   .wide { display: grid; gap: 0.25rem; max-width: 40rem; }
   .tradeoff { white-space: pre-wrap; overflow-wrap: anywhere; }
   .tradeoff-form { margin-block: 1.5rem; }
+  .draft-form, .forecast { margin-block: 1.5rem; }
+  .field { display: grid; gap: 0.2rem; }
+  .figures { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.75rem; }
+  .figures dt { font-weight: 600; }
+  .figures dd { margin: 0; }
   .chip {
     display: inline-block;
     border: 1px solid var(--border, #ccc);

@@ -302,6 +302,15 @@ import type {
   PlanForecast,
   ValuePointBody,
   ValueRealization,
+  EstimateModel,
+  Frontier,
+  GenerateScenarioBody,
+  GeneratedScenario,
+  IntakeForecast,
+  ModelRanking,
+  PlanModelScore,
+  ScoringInputs,
+  ScoringInputsView,
 } from "./ppm-types";
 
 export * from "./ppm-types";
@@ -338,6 +347,32 @@ export class PpmClient {
     pid: string,
   ): Promise<{ plan_pid: string; kind_target: string | null }> {
     return this.http.post(`/api/proposals/${pid}/promote`, { body: {} });
+  }
+  /** One proposal as stored, read before editing it. */
+  getProposal(pid: string): Promise<Proposal> {
+    return this.http.get(`/api/proposals/${pid}`);
+  }
+  /** Edit a draft proposal: the body replaces every field (EX-13 tags one as an external ask here). */
+  updateProposal(pid: string, body: CreateProposalBody): Promise<Proposal> {
+    return this.http.put(`/api/proposals/${pid}`, { body });
+  }
+  /** How many proposals will be approved in the next periods, from the intake's own approvals (T-28i). The service's
+   * defaults (4 periods, 7 days, 12 periods of history) are left out of the query. */
+  intakeForecast(
+    params: {
+      periods?: number;
+      periodDays?: number;
+      historyPeriods?: number;
+    } = {},
+  ): Promise<IntakeForecast> {
+    const q = new URLSearchParams();
+    if (params.periods !== undefined) q.set("periods", String(params.periods));
+    if (params.periodDays !== undefined)
+      q.set("period_days", String(params.periodDays));
+    if (params.historyPeriods !== undefined)
+      q.set("history_periods", String(params.historyPeriods));
+    const s = q.toString();
+    return this.http.get(`/api/proposals/forecast${s ? `?${s}` : ""}`);
   }
   /** Name what an external ask displaces (EX-13), until the proposal is decided. */
   setProposalTradeoff(pid: string, tradeoff: string): Promise<Proposal> {
@@ -1371,6 +1406,51 @@ export class PpmClient {
   }
   commitScenario(pid: string): Promise<Scenario> {
     return this.http.post(`/api/scenarios/${pid}/commit`, { body: {} });
+  }
+  /** Un-commit a committed scenario: it becomes a draft again (T-28a). */
+  rollbackScenario(pid: string): Promise<Scenario> {
+    return this.http.post(`/api/scenarios/${pid}/rollback`, { body: {} });
+  }
+  /** Generate and save a draft scenario, chosen by Smart Score per unit cost within an optional cap (T-28h). */
+  generateScenario(body: GenerateScenarioBody): Promise<GeneratedScenario> {
+    return this.http.post("/api/scenarios/generate", { body });
+  }
+  /** The efficient frontier: the generator re-run over a sweep of caps; nothing is saved (NC-7). The caps are given,
+   * or `steps` are spread evenly (left out for the service's 10). */
+  scenarioFrontier(params: {
+    currency: string;
+    caps?: number[];
+    steps?: number;
+    mustInclude?: string[];
+  }): Promise<Frontier> {
+    const q = new URLSearchParams({ currency: params.currency });
+    if (params.caps && params.caps.length > 0)
+      q.set("caps", params.caps.join(","));
+    else if (params.steps !== undefined) q.set("steps", String(params.steps));
+    if (params.mustInclude && params.mustInclude.length > 0)
+      q.set("must_include", params.mustInclude.join(","));
+    return this.http.get(`/api/scenarios/frontier?${q}`);
+  }
+
+  // ---- WSJF and RICE (NC-6) ----
+  /** A plan's estimated WSJF and RICE inputs. */
+  scoringInputs(pid: string): Promise<ScoringInputsView> {
+    return this.http.get(`/api/plans/${pid}/scoring-inputs`);
+  }
+  /** Replace a plan's estimated inputs (a `null` clears one). */
+  setScoringInputs(
+    pid: string,
+    body: ScoringInputs,
+  ): Promise<ScoringInputsView> {
+    return this.http.put(`/api/plans/${pid}/scoring-inputs`, { body });
+  }
+  /** A plan's WSJF or RICE score, with every component and the inputs it waits for. */
+  modelScore(pid: string, model: EstimateModel): Promise<PlanModelScore> {
+    return this.http.get(`/api/plans/${pid}/score?model=${model}`);
+  }
+  /** The plans ranked by WSJF or RICE, highest first, unscored last. */
+  rankByModel(model: EstimateModel): Promise<ModelRanking> {
+    return this.http.get(`/api/prioritization?model=${model}`);
   }
 
   // ---- objectives (PPM-5) ----

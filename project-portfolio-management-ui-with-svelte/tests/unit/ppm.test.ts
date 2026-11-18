@@ -942,6 +942,60 @@ describe("PpmClient programme money, value and benefits, read live (NC-1 slice 1
   });
 });
 
+describe("PpmClient ranking and choosing (NC-1 slice 12 part g, NC-6, NC-7, EX-13)", () => {
+  it("reads and writes at the service's paths, the defaults left out of the query", async () => {
+    const { ppm, calls } = recordingClient();
+    const inputs = {
+      business_value: 1,
+      time_criticality: null,
+      risk_reduction: null,
+      job_size: null,
+      reach: null,
+      impact: null,
+      confidence_percent: null,
+      effort: null,
+    };
+    await ppm.scoringInputs("p1");
+    await ppm.setScoringInputs("p1", inputs);
+    await ppm.modelScore("p1", "wsjf");
+    await ppm.rankByModel("rice");
+    await ppm.scenarioFrontier({ currency: "GBP" });
+    await ppm.scenarioFrontier({
+      currency: "GBP",
+      steps: 5,
+      mustInclude: ["p1", "p2"],
+    });
+    await ppm.scenarioFrontier({ currency: "GBP", caps: [0, 1000], steps: 5 });
+    await ppm.generateScenario({ name: "Spring" });
+    await ppm.rollbackScenario("s1");
+    await ppm.intakeForecast();
+    await ppm.intakeForecast({
+      periods: 8,
+      periodDays: 14,
+      historyPeriods: 26,
+    });
+    await ppm.getProposal("a1");
+    await ppm.updateProposal("a1", { title: "T", kind_target: "projects" });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/scoring-inputs",
+      "PUT /api/plans/p1/scoring-inputs",
+      "GET /api/plans/p1/score?model=wsjf",
+      "GET /api/prioritization?model=rice",
+      "GET /api/scenarios/frontier?currency=GBP",
+      "GET /api/scenarios/frontier?currency=GBP&steps=5&must_include=p1%2Cp2",
+      "GET /api/scenarios/frontier?currency=GBP&caps=0%2C1000",
+      "POST /api/scenarios/generate",
+      "POST /api/scenarios/s1/rollback",
+      "GET /api/proposals/forecast",
+      "GET /api/proposals/forecast?periods=8&period_days=14&history_periods=26",
+      "GET /api/proposals/a1",
+      "PUT /api/proposals/a1",
+    ]);
+  });
+});
+
 describe("PpmClient milestone sign-off required (NC-1 slice 11, EX-4)", () => {
   it("replaces the organizations a milestone needs", async () => {
     const { ppm, calls } = recordingClient();

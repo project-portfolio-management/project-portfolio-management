@@ -1758,6 +1758,7 @@ export interface Scenario {
   status: "draft" | "committed";
   budget_cap_minor: number | null;
   currency: string | null;
+  committed_at?: string | null;
 }
 
 export interface ScenarioEvaluation {
@@ -4656,3 +4657,151 @@ export interface ValueRealization {
 
 /** Which actual cost the portfolio's earned value reads. */
 export type AcSource = "budget_lines" | "labour" | "both";
+
+// ---- Ranking and choosing (NC-1 slice 12 part g: NC-6, NC-7, EX-13) ----
+
+/** How the prioritization queue ranks: the Smart Score, or a model scored from a person's estimates (NC-6). */
+export type RankModel = "smart" | "wsjf" | "rice";
+/** The two models scored from estimates. */
+export type EstimateModel = "wsjf" | "rice";
+
+/** A plan's estimated inputs for WSJF and RICE (`PUT` replaces them all; `null` is not estimated). */
+export interface ScoringInputs {
+  business_value: number | null;
+  time_criticality: number | null;
+  risk_reduction: number | null;
+  job_size: number | null;
+  reach: number | null;
+  impact: number | null;
+  confidence_percent: number | null;
+  effort: number | null;
+}
+
+/** `GET /api/plans/{pid}/scoring-inputs`: `set` is false when none were ever saved. */
+export interface ScoringInputsView {
+  plan_pid: string;
+  set: boolean;
+  inputs: ScoringInputs;
+  set_by: string | null;
+  updated_at: string | null;
+}
+
+/** One component of a WSJF or RICE score; `explanation` is the service's English, never shown. */
+export interface ModelScoreComponent {
+  name: string;
+  value: number | null;
+  explanation: string;
+}
+
+/** An input a score is waiting for; `reason` is the service's English, never shown. */
+export interface ModelScoreMissing {
+  input: string;
+  reason: string;
+}
+
+/** A model's score with its derivation; `formula` is the service's English, never shown. */
+export interface ModelScore {
+  model: EstimateModel;
+  score: number | null;
+  formula: string;
+  components: ModelScoreComponent[];
+  missing: ModelScoreMissing[];
+}
+
+/** `GET /api/plans/{pid}/score?model=`. */
+export interface PlanModelScore {
+  pid: string;
+  name: string;
+  inputs_set: boolean;
+  score: ModelScore;
+}
+
+/** One plan in `GET /api/prioritization?model=wsjf|rice`, highest first, unscored last. */
+export interface ModelRankedPlan {
+  pid: string;
+  name: string;
+  kind: string | null;
+  stage: string | null;
+  score: number | null;
+  missing_inputs: ModelScoreMissing[];
+}
+
+/** `GET /api/prioritization?model=wsjf|rice`. */
+export interface ModelRanking {
+  model: EstimateModel;
+  plans: ModelRankedPlan[];
+  scored_of: number;
+  as_of: string;
+}
+
+/** Why the generator left a plan out. */
+export type ScenarioExcludeReason =
+  "no_score" | "foreign_currency" | "over_cap" | "must_include_conflict";
+
+/** One plan's row in a generated choice: included, or left out with its reason. */
+export interface ScenarioChoice {
+  pid: string;
+  included: boolean;
+  score?: number | null;
+  cost_minor?: number | null;
+  reason?: ScenarioExcludeReason | null;
+}
+
+/** One point of the efficient frontier: what the generator chooses at one budget cap. */
+export interface FrontierPoint {
+  budget_cap_minor: number;
+  value: number;
+  cost_minor: number;
+  included: number;
+  dominated: boolean;
+  rationale: ScenarioChoice[];
+}
+
+/** `GET /api/scenarios/frontier`; `value` is the service's English, never shown. */
+export interface Frontier {
+  currency: string;
+  value: string;
+  points: FrontierPoint[];
+}
+
+/** `POST /api/scenarios/generate`. */
+export interface GenerateScenarioBody {
+  name?: string;
+  budget_cap_minor?: number;
+  currency?: string;
+  must_include?: string[];
+}
+
+/** `POST /api/scenarios/generate`'s answer: the draft saved and every plan's row. */
+export interface GeneratedScenario {
+  pid: string;
+  name: string;
+  status: "draft";
+  rationale: ScenarioChoice[];
+}
+
+/** `GET /api/proposals/forecast`: how many proposals will be approved in the next periods. `note`, `forecast.note` and
+ * `forecast.reason` are the service's English, never shown. */
+export interface IntakeForecast {
+  as_of: string;
+  note: string;
+  history_window: {
+    from: string;
+    to: string;
+    periods: number;
+    period_days: number;
+  };
+  arrivals_per_period: number[];
+  approvals_per_period: number[];
+  forecast: {
+    periods: number;
+    days: number;
+    trials: number;
+    history_periods: number;
+    median_items: number | null;
+    at_least_items: number | null;
+    at_most_items: number | null;
+    reason: string | null;
+    note: string;
+  };
+}

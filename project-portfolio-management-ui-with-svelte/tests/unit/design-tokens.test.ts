@@ -42,7 +42,7 @@ const LEGACY: Record<string, number> = {
   "src/routes/plans/[pid]/governance/+page.svelte": 4,
   "src/routes/plans/[pid]/schedule/+page.svelte": 3,
   "src/routes/plans/[pid]/tolerances/+page.svelte": 5,
-  "src/routes/prioritization/+page.svelte": 3,
+  "src/routes/prioritization/+page.svelte": 2,
   "src/routes/reviews/+page.svelte": 1,
   "src/routes/risk/+page.svelte": 2,
   "src/routes/scenarios/+page.svelte": 4,

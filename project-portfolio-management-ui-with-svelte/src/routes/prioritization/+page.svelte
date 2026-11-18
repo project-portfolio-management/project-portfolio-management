@@ -6,6 +6,12 @@
 
   Unscored plans keep the `unscored` band and sort last: no evidence is
   reported as no evidence, never as a low score.
+
+  NC-6 (NC-1 slice 12 part g): the queue ranks by a chosen model, the Smart Score (the default, not sent), WSJF or
+  RICE (`GET /api/prioritization?model=`); the band filter is the Smart Score's and is offered only with it. A WSJF or
+  RICE row says the inputs its score waits for in the catalogue's words. Each row opens the plan's estimates
+  (`ScoringEstimates.svelte`: `GET`/`PUT /api/plans/{pid}/scoring-inputs`, `GET /api/plans/{pid}/score?model=`).
+  Rules in `src/lib/scoring-view.ts`.
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -21,17 +27,35 @@
     type Prioritization,
     type PlanSmartScore,
   } from "#lib/api/capabilities.js";
+  import { PpmClient, type ModelRanking, type RankModel } from "#lib/api/ppm.js";
+  import ScoringEstimates from "#lib/components/ScoringEstimates.svelte";
+  import { MODELS, MODEL_KEY, inputKey } from "#lib/scoring-view.js";
 
   const api = CapabilityClient.withFetch();
+  const ppm = PpmClient.withFetch();
   let view = $state<Prioritization | null>(null);
+  let ranking = $state<ModelRanking | null>(null);
   let error = $state<string | null>(null);
   let band = $state("");
+  let model = $state<RankModel>("smart");
+  /** The model the rows on show were ranked by. */
+  let shown = $state<RankModel>("smart");
   let expanded = $state<string | null>(null);
   let detail = $state<PlanSmartScore | null>(null);
+  let estimating = $state<{ pid: string; name: string } | null>(null);
 
   async function refresh() {
     try {
-      view = await api.prioritization({ band: band || undefined });
+      if (model === "smart") {
+        view = await api.prioritization({ band: band || undefined });
+        ranking = null;
+      } else {
+        ranking = await ppm.rankByModel(model);
+        view = null;
+        expanded = null;
+        detail = null;
+      }
+      shown = model;
       error = null;
     } catch (err) {
       error = errorText(err, "p.prioritization.could_not_load_the_queue");
@@ -63,6 +87,22 @@
     { id: "coverage", header: t("p.prioritization.coverage_2"), align: "end", format: (v) => formatPercent(Number(v)) },
     { id: "missing_evidence", header: t("p.prioritization.missing_evidence"), accessor: (r) => (rowOf<PRow>(r).missing_evidence.length === 0 ? t("p.prioritization.none") : rowOf<PRow>(r).missing_evidence.join(", ")) },
     { id: "pid", header: "", sortable: false, cell: explainCell },
+    { id: "estimates", header: t("p.scoring.open"), sortable: false, accessor: () => "", cell: estimateCell },
+  ]);
+  type MRow = ModelRanking["plans"][number];
+  const modelColumns: DataGridColumn[] = $derived([
+    { id: "name", header: t("p.prioritization.plan"), rowHeader: true, cell: planCell },
+    { id: "score", header: t("p.prioritization.score"), align: "end", format: (v) => (v === null || v === undefined ? "—" : formatDecimal(Number(v), 2)) },
+    {
+      id: "missing_inputs",
+      header: t("p.scoring.waiting_for"),
+      sortable: false,
+      accessor: (r) => {
+        const m = rowOf<MRow>(r).missing_inputs;
+        return m.length === 0 ? t("p.prioritization.none") : m.map((x) => t(inputKey(x.input))).join(", ");
+      },
+    },
+    { id: "pid", header: "", sortable: false, cell: estimateCell },
   ]);
   const componentColumns: DataGridColumn[] = $derived([
     { id: "name", header: t("p.prioritization.component"), rowHeader: true },
@@ -79,6 +119,12 @@
 {#snippet explainCell({ row }: DataGridCellContext)}
   <button class="button small" type="button" onclick={() => toggle(String(row.pid))}>
     {expanded === row.pid ? t("p.prioritization.hide") : t("p.prioritization.explain")}
+  </button>
+{/snippet}
+
+{#snippet estimateCell({ row }: DataGridCellContext)}
+  <button class="button small" type="button" aria-label={t("p.scoring.open_named", { name: String(row.name) })} onclick={() => (estimating = { pid: String(row.pid), name: String(row.name) })}>
+    {t("p.scoring.open")}
   </button>
 {/snippet}
 
@@ -100,6 +146,13 @@
   }}
 >
   <label class="small">
+    {t("p.scoring.rank_by")}
+    <select bind:value={model}>
+      {#each MODELS as m (m)}<option value={m}>{t(MODEL_KEY[m])}</option>{/each}
+    </select>
+  </label>
+  {#if model === "smart"}
+  <label class="small">
     {t("p.prioritization.band")}
     <select bind:value={band}>
       <option value="">{t("p.prioritization.all")}</option>
@@ -109,8 +162,24 @@
       <option value="unscored">{t("p.prioritization.unscored")}</option>
     </select>
   </label>
+  {/if}
   <button class="button small primary" type="submit">{t("p.prioritization.apply")}</button>
 </form>
+<p class="small muted">{t("p.scoring.models_say")}</p>
+
+{#if ranking && shown !== "smart"}
+  <p class="small muted">{tn("p.scoring.of_plans", ranking.scored_of, { length: ranking.plans.length, scored_of: ranking.scored_of, model: t(MODEL_KEY[shown]) })}</p>
+  <DataTable label={t("p.scoring.ranked_by", { model: t(MODEL_KEY[shown]) })} columns={modelColumns} rows={ranking.plans} rowId={(r) => String(r.pid)} searchable grid storageKey="prioritization-model" />
+  {#if ranking.plans.length === 0}
+    <p class="small muted">{t("p.prioritization.no_plans_match_that_filter")}</p>
+  {/if}
+{/if}
+
+{#if estimating}
+  {#key estimating.pid}
+    <ScoringEstimates pid={estimating.pid} name={estimating.name} onsaved={() => void refresh()} onclose={() => (estimating = null)} />
+  {/key}
+{/if}
 
 {#if view}
   <p class="small muted">{tn("p.prioritization.of_plans", view.scored_of, { length: view.plans.length, scored_of: view.scored_of })}</p>
@@ -143,7 +212,7 @@
     font-size: 0.75rem;
     border: 1px solid currentColor;
   }
-  .chip.high { color: #1d8a4e; }
+  .chip.high { color: var(--mxi-color-success); }
   .chip.medium { color: #8a6d1d; }
   .chip.low { color: #a4262c; }
   .chip.unscored { color: var(--text-2, #666); }

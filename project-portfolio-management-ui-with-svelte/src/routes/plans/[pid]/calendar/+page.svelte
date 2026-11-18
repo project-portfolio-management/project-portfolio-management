@@ -3,7 +3,8 @@
   work and which dates are holidays. Float and finish dates on the critical path
   are counted in these business days, so a Friday task of two business days ends on Monday
   and a Monday holiday is skipped. With no calendar every day works, which is
-  what every plan did before calendars existed.
+  what every plan did before calendars existed. NC-1 slice 12 part i adds the working day and week and a person's
+  time away (`WorkingTime.svelte`).
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -12,6 +13,7 @@
   import { page } from "$app/state";
   import { PpmClient, type WorkCalendarView } from "#lib/api/ppm.js";
   import CalendarMonth from "#lib/components/CalendarMonth.svelte";
+  import WorkingTime from "#lib/components/WorkingTime.svelte";
   import { WEEKDAY_NAMES, maskToWeekdays, toggleHoliday, weekdaysToMask, weekdaysValid } from "#lib/cpm-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -80,6 +82,8 @@
 {:else if !error}
   <p>{t("p.plans.pid.calendar.loading")}</p>
 {/if}
+
+<WorkingTime {pid} />
 
 <style>
   .day {

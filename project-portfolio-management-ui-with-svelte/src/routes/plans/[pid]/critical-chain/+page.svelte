@@ -3,7 +3,8 @@
   shown on a timeline of labelled bars with a table that gives the same figures, beside the critical
   path (never blended with it). The buffers are bars too: the work of a chain in a solid bar and its
   buffer in a dashed one, labelled in words, with a table twin. A bar is never the only signal: each row
-  has its words and, where a state matters, a shape.
+  has its words and, where a state matters, a shape. NC-1 slice 12 part i adds each task's aggressive and safe
+  estimates (`CcpmEstimates.svelte`, CC-2) and the frozen buffer plan (`FrozenBufferPlan.svelte`, CC-3).
 -->
 <script lang="ts">
   import { arrow } from "#lib/locale-format.js";
@@ -16,6 +17,8 @@
   import DataTable from "#lib/components/DataTable.svelte";
   import type { DataGridColumn } from "@lilydesignsystem/svelte-data-grid";
   import { layoutBars } from "#lib/chain-view.js";
+  import CcpmEstimates from "#lib/components/CcpmEstimates.svelte";
+  import FrozenBufferPlan from "#lib/components/FrozenBufferPlan.svelte";
 
   const ppm = PpmClient.withFetch();
   const pid = $derived(page.params.pid ?? "");
@@ -31,6 +34,15 @@
     if (b.status === "fulfilled") buffers = b.value;
     loaded = true;
   });
+
+  /** The buffers are sized from the estimates, so a saved estimate reads them again. */
+  async function reloadBuffers() {
+    try {
+      buffers = await ppm.chainBuffers(pid);
+    } catch {
+      // The buffers already shown stay; the next load reads them.
+    }
+  }
 
   const reasonText = (code: string | undefined): string =>
     code === "no_assignments" ? t("p.critical_chain.reason_no_assignments")
@@ -197,6 +209,9 @@
     {/if}
   </section>
 {/if}
+
+<CcpmEstimates {pid} onsaved={() => void reloadBuffers()} />
+<FrozenBufferPlan {pid} />
 
 <style>
   .bars ol { list-style: none; padding: 0; margin: 0 0 1rem; }

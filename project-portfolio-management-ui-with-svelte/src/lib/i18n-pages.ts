@@ -8042,6 +8042,435 @@ export const PAGES_EN = {
   "p.timereport.could_not_load": "Could not read the time report.",
   "p.timereport.could_not_load_plans":
     "Could not read the plans to choose from.",
+  "p.hammock.heading": "Hammocks: summary tasks spanning others",
+  "p.hammock.says":
+    "A hammock is a summary whose dates come from the tasks of this plan it links, from the earliest start to the latest finish. It is not in the dependency network, so it never changes any task's float or the finish. A task becomes one only when it has no duration, work, constraint or dependency, and its planned start is cleared; making it a task again removes every link it has. A hammock links to a task or another hammock of this plan, not to itself, not twice and not in a loop.",
+  "p.hammock.none": "This plan has no hammocks.",
+  "p.hammock.spans": "Spans {range}.",
+  "p.hammock.no_links": "No dates yet: it links to no task.",
+  "p.hammock.members_unscheduled":
+    "No dates yet: none of the tasks it links has dates.",
+  "p.hammock.untitled": "A task with no title",
+  "p.hammock.member_hammock": "{title} (a hammock)",
+  "p.hammock.unmake_named": "Make {title} a task again",
+  "p.hammock.unlink": "Remove the link",
+  "p.hammock.unlink_named": "Remove the link from {hammock} to {title}",
+  "p.hammock.make_form": "Make a task a hammock",
+  "p.hammock.f_task": "Task",
+  "p.hammock.choose_task": "Choose a task",
+  "p.hammock.make": "Make it a hammock",
+  "p.hammock.link_form": "Link a hammock to a task",
+  "p.hammock.f_hammock": "Hammock",
+  "p.hammock.choose_hammock": "Choose a hammock",
+  "p.hammock.f_member": "Task it spans",
+  "p.hammock.choose_member": "Choose a task to span",
+  "p.hammock.link": "Add the link",
+  "p.hammock.confirm_make":
+    "Make {title} a hammock? Its planned start is cleared, and its dates then come from the tasks it links.",
+  "p.hammock.confirm_unmake_one":
+    "Make {title} a task again? Its {n} link goes.",
+  "p.hammock.confirm_unmake_other":
+    "Make {title} a task again? Its {n} links go.",
+  "p.hammock.confirm_unlink":
+    "Remove the link from {hammock} to {title}? The task itself is not changed.",
+  "p.hammock.made": "{title} is now a hammock.",
+  "p.hammock.unmade": "{title} is a task again.",
+  "p.hammock.linked": "{hammock} now spans {title}.",
+  "p.hammock.unlinked": "{hammock} no longer spans {title}.",
+  "p.hammock.problem_choose_task": "Choose a task to make a hammock.",
+  "p.hammock.problem_carries_work":
+    "This task has a duration, work or a constraint: clear them on the schedule first.",
+  "p.hammock.problem_has_dependencies":
+    "This task has dependencies: remove them first, as a hammock takes none.",
+  "p.hammock.problem_choose_hammock": "Choose a hammock.",
+  "p.hammock.problem_choose_member": "Choose a task for the hammock to span.",
+  "p.hammock.problem_self": "A hammock cannot span itself.",
+  "p.hammock.problem_linked": "This hammock already spans that task.",
+  "p.hammock.problem_loop":
+    "That hammock already spans this one, so the link would make a loop.",
+  "p.hammock.refused_make":
+    "The service would not make this task a hammock: it still carries a duration, work, a constraint or a dependency.",
+  "p.hammock.refused_link":
+    "The service would not add the link: the task may be gone from this plan, already spanned, or part of a loop.",
+  "p.hammock.refused_gone":
+    "The task or hammock is gone, or you can no longer read it.",
+  "p.hammock.refused_link_gone": "That link is already gone.",
+  "p.hammock.could_not_load": "Could not read the hammocks.",
+  "p.hammock.could_not_save": "Could not change the hammock.",
+  "p.crossplan.heading": "Tasks of linked plans",
+  "p.crossplan.says":
+    "These are the tasks of other plans you can read that this plan's tasks are linked to, scheduled with their own plan's calendar. A dashed bar is a task off the critical path; a solid bar and a diamond mark one on it.",
+  "p.crossplan.network_finish":
+    "With the linked plans, the network finishes {date}.",
+  "p.crossplan.truncated":
+    "Not every linked plan is shown: the network reached its limit of plans or tasks.",
+  "p.crossplan.links_heading": "Links that cross into another plan",
+  "p.crossplan.lag": "lag of {days} business days",
+  "p.crossplan.timeline": "Tasks of {plan} on a timeline",
+  "p.crossplan.table": "Dates of the tasks of linked plans",
+  "p.crossplan.col_task": "Task",
+  "p.crossplan.col_plan": "Plan",
+  "p.crossplan.col_start": "Earliest start",
+  "p.crossplan.col_finish": "Earliest finish",
+  "p.crossplan.col_critical": "On the critical path",
+  "p.crossplan.yes": "Yes",
+  "p.crossplan.no": "No",
+  "p.crossplan.untitled": "A task with no title",
+  "p.crossplan.kind_fs": "finish to start",
+  "p.crossplan.kind_ss": "start to start",
+  "p.crossplan.kind_ff": "finish to finish",
+  "p.crossplan.kind_sf": "start to finish",
+  "p.crossplan.task_heading": "Dependencies, in this plan or another",
+  "p.crossplan.task_says":
+    "A dependency joins this task to one in another plan you can read. Its kind is finish to start unless chosen; its lag is whole business days from minus {max} to {max}, a negative lag a lead. A dependency is not made twice the same way, nor in a loop across plans, nor with a hammock. One whose other end you cannot read is counted, never named, and is left out of the schedule.",
+  "p.crossplan.no_links": "This task has no dependencies yet.",
+  "p.crossplan.this_before": "This task comes before {other}",
+  "p.crossplan.this_after": "This task comes after {other}",
+  "p.crossplan.end_own": "{title}, in this plan",
+  "p.crossplan.end_external": "{title}, in {plan}",
+  "p.crossplan.end_unnamed": "a task not named here ({ref})",
+  "p.crossplan.remove": "Remove",
+  "p.crossplan.remove_named": "Remove the dependency on {other}",
+  "p.crossplan.restricted_one":
+    "{n} more dependency joins a task you cannot read.",
+  "p.crossplan.restricted_other":
+    "{n} more dependencies join tasks you cannot read.",
+  "p.crossplan.see_network": "See the schedule across plans",
+  "p.crossplan.form": "Add a dependency on a task of another plan",
+  "p.crossplan.f_order": "Order",
+  "p.crossplan.order_before": "This task comes first",
+  "p.crossplan.order_after": "The other task comes first",
+  "p.crossplan.f_plan": "Other plan",
+  "p.crossplan.choose_plan": "Choose a plan",
+  "p.crossplan.f_task": "Task in that plan",
+  "p.crossplan.choose_task": "Choose a task",
+  "p.crossplan.f_kind": "How the two join",
+  "p.crossplan.f_lag": "Lag in business days (0 if empty)",
+  "p.crossplan.add": "Add the dependency",
+  "p.crossplan.added": "Added a dependency on {title}.",
+  "p.crossplan.removed": "Removed the dependency.",
+  "p.crossplan.confirm_remove_before":
+    "Remove the dependency: {task} comes before {other}? Neither task is changed.",
+  "p.crossplan.confirm_remove_after":
+    "Remove the dependency: {task} comes after {other}? Neither task is changed.",
+  "p.crossplan.problem_plan": "Choose the other plan.",
+  "p.crossplan.problem_task": "Choose a task in that plan.",
+  "p.crossplan.problem_lag":
+    "A lag is a whole number of business days from minus {max} to {max}.",
+  "p.crossplan.problem_self": "A task cannot depend on itself.",
+  "p.crossplan.problem_exists": "This dependency is already there.",
+  "p.crossplan.refused_unreadable":
+    "One of the two tasks is gone, or you cannot read it.",
+  "p.crossplan.refused_exists": "This dependency is already there.",
+  "p.crossplan.refused_add":
+    "The service would not add the dependency: it may already be there, make a loop, or join a hammock.",
+  "p.crossplan.refused_gone":
+    "That dependency is already gone, or you can no longer read both tasks.",
+  "p.crossplan.could_not_load": "Could not read this task's dependencies.",
+  "p.crossplan.could_not_load_plans":
+    "Could not read the plans to choose from.",
+  "p.crossplan.could_not_load_tasks": "Could not read that plan's tasks.",
+  "p.crossplan.could_not_save": "Could not change the dependency.",
+  "p.taskrollup.heading": "Sub-tasks rolled up",
+  "p.taskrollup.says":
+    "Worked out each time from this task's sub-tasks, never stored: the latest due date among them, their points added, progress weighted by the estimated ones only, and the time recorded across them.",
+  "p.taskrollup.subtasks": "Sub-tasks",
+  "p.taskrollup.done_of_one": "{done} of {n} done",
+  "p.taskrollup.done_of_other": "{done} of {n} done",
+  "p.taskrollup.due": "Latest due date",
+  "p.taskrollup.points": "Points added up",
+  "p.taskrollup.progress": "Progress",
+  "p.taskrollup.spent": "Time recorded",
+  "p.taskrollup.no_children": "This task has no sub-tasks.",
+  "p.taskrollup.no_dated_children": "None of its sub-tasks has a due date.",
+  "p.taskrollup.no_estimates": "None of its sub-tasks is estimated.",
+  "p.taskrollup.absent": "Not known.",
+  "p.taskrollup.unestimated_one":
+    "{n} sub-task has no estimate, so it is left out of the progress (not counted as zero):",
+  "p.taskrollup.unestimated_other":
+    "{n} sub-tasks have no estimate, so they are left out of the progress (not counted as zero):",
+  "p.taskrollup.unnamed": "A sub-task not named here ({ref})",
+  "p.taskrollup.refused_gone":
+    "This task is gone, or you can no longer read it.",
+  "p.taskrollup.could_not_load": "Could not read the sub-tasks rolled up.",
+  "p.readings.heading": "More about this plan",
+  "p.readings.says": "Each of these is read only when you ask.",
+  "p.readings.read": "Read",
+  "p.readings.could_not_read": "Could not read this.",
+  "p.readings.not_measured": "not measured",
+  "p.readings.days": "{n} days",
+  "p.readings.rollup_heading": "Flow across the plans it contains",
+  "p.readings.rollup_says":
+    "The tasks of this plan and every plan under it, counted together, not averaged; up to {max} levels down when left empty.",
+  "p.readings.f_depth": "Levels down",
+  "p.readings.rollup_plans_one": "{n} plan.",
+  "p.readings.rollup_plans_other": "{n} plans.",
+  "p.readings.rollup_tasks_one":
+    "{n} task: {finished} finished, {wip} in progress, {not_started} not started.",
+  "p.readings.rollup_tasks_other":
+    "{n} tasks: {finished} finished, {wip} in progress, {not_started} not started.",
+  "p.readings.rollup_times":
+    "Most work (85 in 100) finished within {cycle} of starting and {lead} of being asked for; time spent working rather than waiting: {efficiency}.",
+  "p.readings.rollup_truncated":
+    "Not every plan underneath was counted: the walk reached its limit.",
+  "p.readings.rollup_revisits_one":
+    "{n} plan is reached twice and counted once.",
+  "p.readings.rollup_revisits_other":
+    "{n} plans are reached twice and counted once.",
+  "p.readings.rollup_table": "Flow by plan",
+  "p.readings.col_plan": "Plan",
+  "p.readings.col_depth": "Level",
+  "p.readings.col_tasks": "Tasks",
+  "p.readings.col_finished": "Finished",
+  "p.readings.col_wip": "In progress",
+  "p.readings.col_efficiency": "Time working rather than waiting",
+  "p.readings.effort_heading": "Time recorded",
+  "p.readings.effort_says":
+    "The time people recorded against this plan, as they stated it; nothing checks it.",
+  "p.readings.read_effort": "Read the time recorded",
+  "p.readings.effort_none": "No time is recorded against this plan.",
+  "p.readings.effort_total": "{total} recorded, of which {billable} billable.",
+  "p.readings.effort_split":
+    "Capital spending {capex}, operating spending {opex}, not classified {unclassified}.",
+  "p.readings.effort_by_person": "Time by person",
+  "p.readings.effort_by_task": "Time by task",
+  "p.readings.col_person": "Person",
+  "p.readings.col_time": "Time",
+  "p.readings.col_billable": "Billable",
+  "p.readings.col_task": "Task",
+  "p.readings.task_unnamed": "A task not named here ({ref})",
+  "p.readings.forecast_heading": "Delivery forecast",
+  "p.readings.forecast_says":
+    "Ten thousand runs drawn from how much this plan finished in each past period: how long the open work may take, and how much may be done in a number of periods. An empty box is the default; at least six periods of history are needed.",
+  "p.readings.f_items": "Items to finish (the open ones if empty)",
+  "p.readings.f_periods": "Periods ahead ({n} if empty)",
+  "p.readings.f_period_days": "Days in a period ({n} if empty)",
+  "p.readings.f_history": "Periods of history ({n} if empty)",
+  "p.readings.read_forecast": "Read the forecast",
+  "p.readings.forecast_history_one": "Drawn from {n} period of {days} days.",
+  "p.readings.forecast_history_other": "Drawn from {n} periods of {days} days.",
+  "p.readings.forecast_batch_one":
+    "{n} item: half the runs finish within {p50} days, 85 in 100 within {p85} days and 95 in 100 within {p95} days.",
+  "p.readings.forecast_batch_other":
+    "{n} items: half the runs finish within {p50} days, 85 in 100 within {p85} days and 95 in 100 within {p95} days.",
+  "p.readings.forecast_no_batch":
+    "How long the work may take cannot be forecast: there is too little history, or nothing was finished in it.",
+  "p.readings.forecast_horizon":
+    "In the next {days} days, about {median} items may be done: at least {least} in 85 runs of 100, and at most {most}.",
+  "p.readings.forecast_no_horizon":
+    "How much may be done cannot be forecast: there is too little history, or nothing was finished in it.",
+  "p.readings.performance_heading": "Schedule, cost and stakeholders",
+  "p.readings.performance_says":
+    "Schedule performance is the work done against the work planned so far, and cost performance the work done against what it cost; above 100% is better than plan. The stakeholder score runs from minus 100 to 100.",
+  "p.readings.read_performance": "Read the performance",
+  "p.readings.schedule": "Schedule performance",
+  "p.readings.cost": "Cost performance",
+  "p.readings.stakeholders": "Stakeholder score",
+  "p.readings.nps_one":
+    "{score}, from {n} answer ({promoters} promoting, {detractors} detracting)",
+  "p.readings.nps_other":
+    "{score}, from {n} answers ({promoters} promoting, {detractors} detracting)",
+  "p.readings.nps_none": "No answers yet.",
+  "p.readings.earned_value_link": "See the earned value in full",
+  "p.readings.absent_no_baseline":
+    "Not measured: the plan has no budget baseline.",
+  "p.readings.absent_no_weighted_tasks":
+    "Not measured: no task carries any weight.",
+  "p.readings.absent_not_yet_defined":
+    "Not measured yet: nothing was planned or spent so far.",
+  "p.readings.absent_several_currencies":
+    "Not one figure: the plan has budgets in several currencies; see the earned value.",
+  "p.readings.absent_other": "Not measured.",
+  "p.readings.workflow_heading": "Task workflow",
+  "p.readings.read_workflow": "Read the task workflow",
+  "p.readings.workflow_plan": "This plan has its own task workflow.",
+  "p.readings.workflow_built_in": "This plan uses the built-in task workflow.",
+  "p.readings.workflow_constrained": "Only the moves listed are allowed.",
+  "p.readings.workflow_free": "A task may move from any state to any other.",
+  "p.readings.cat_todo": "not started",
+  "p.readings.cat_active": "in progress",
+  "p.readings.cat_waiting": "waiting",
+  "p.readings.cat_done": "finished",
+  "p.readings.cat_other": "another kind",
+  "p.readings.initial": "where a task starts",
+  "p.readings.terminal": "where a task ends",
+  "p.readings.wip_limit": "at most {n} at once",
+  "p.readings.anyone": "anyone",
+  "p.readings.roles": "roles: {roles}",
+  "p.readings.problem_depth": "Levels down is a whole number from 1 to {max}.",
+  "p.readings.problem_depth_zero":
+    "Levels down is a whole number from 0 to {max}.",
+  "p.readings.problem_items":
+    "Items to finish is a whole number of at least 1.",
+  "p.readings.problem_periods":
+    "Periods ahead is a whole number from 1 to 520.",
+  "p.readings.problem_period_days":
+    "Days in a period is a whole number from 1 to 90.",
+  "p.readings.problem_history":
+    "Periods of history is a whole number from 6 to 260.",
+  "p.readings.problem_window":
+    "The window is a whole number of days from 1 to 3650.",
+  "p.readings.refused_query": "The service would not take that question.",
+  "p.readings.refused_module": "This part of the plan is switched off.",
+  "p.readings.refused_gone": "This plan is gone, or you can no longer read it.",
+  "p.readings.flow_feature": "New features",
+  "p.readings.flow_defect": "Defects",
+  "p.readings.flow_risk": "Risk work",
+  "p.readings.flow_debt": "Technical debt",
+  "p.readings.flow_unclassified": "Not classified",
+  "p.readings.flow_other": "Another kind",
+  "p.flowmix.heading": "The mix of finished work",
+  "p.flowmix.says":
+    "How the work finished in a window splits into new features, defects, risk work and technical debt, against the mix the plan intends where it declared one. The window is {n} days if left empty.",
+  "p.flowmix.f_window": "Days looked back ({n} if empty)",
+  "p.flowmix.f_rollup": "Include the plans it contains",
+  "p.flowmix.f_depth": "Levels down ({max} if empty)",
+  "p.flowmix.read": "Read the mix",
+  "p.flowmix.window_one": "Work finished in the last {n} day.",
+  "p.flowmix.window_other": "Work finished in the last {n} days.",
+  "p.flowmix.plans_one": "{n} plan counted.",
+  "p.flowmix.plans_other": "{n} plans counted.",
+  "p.flowmix.truncated":
+    "Not every plan underneath was counted: the walk reached its limit.",
+  "p.flowmix.none": "No work was finished in that window.",
+  "p.flowmix.no_intent":
+    "The plan declares no intended mix, so there is nothing to compare with.",
+  "p.flowmix.table": "Finished work by kind",
+  "p.flowmix.col_kind": "Kind of work",
+  "p.flowmix.col_count": "Finished",
+  "p.flowmix.col_share": "Share",
+  "p.flowmix.col_intended": "Intended share",
+  "p.flowmix.col_gap": "Gap",
+  "p.ccpm.heading": "Aggressive and safe estimates",
+  "p.ccpm.says":
+    "For the critical chain each task needs an aggressive estimate (about even odds) and a safe one, in whole business days from 1 to {max}, the aggressive not above the safe. A figure shown is the one recorded, else the risk range's, else one the deployment's rule derives, and each says which. A milestone and a task with no duration are not estimated. Clearing both removes what is recorded.",
+  "p.ccpm.rule_explicit_only":
+    "Rule: only estimates given are used; nothing is derived.",
+  "p.ccpm.rule_half_of_safe":
+    "Rule: a missing safe estimate is the task's duration, and a missing aggressive one half the safe.",
+  "p.ccpm.rule_other": "Rule: one this page does not know.",
+  "p.ccpm.rule_unusable":
+    "The deployment's rule setting could not be read, so only estimates given are used.",
+  "p.ccpm.attention_one": "{n} task needs its estimates.",
+  "p.ccpm.attention_other": "{n} tasks need their estimates.",
+  "p.ccpm.more": "The first {shown} of {total} tasks are shown.",
+  "p.ccpm.no_tasks": "This plan has no tasks to estimate.",
+  "p.ccpm.table": "Estimates by task",
+  "p.ccpm.col_task": "Task",
+  "p.ccpm.col_likely": "Duration in business days",
+  "p.ccpm.col_aggressive": "Aggressive",
+  "p.ccpm.col_safe": "Safe",
+  "p.ccpm.col_state": "Standing",
+  "p.ccpm.figure": "{days} days, {source}",
+  "p.ccpm.none": "none",
+  "p.ccpm.source_recorded": "recorded",
+  "p.ccpm.source_risk_range": "from the risk range",
+  "p.ccpm.source_rule": "by the rule",
+  "p.ccpm.state_complete": "Both given",
+  "p.ccpm.state_derived": "Partly derived",
+  "p.ccpm.state_missing": "Missing an estimate",
+  "p.ccpm.state_inconsistent": "Aggressive above safe",
+  "p.ccpm.state_milestone": "A milestone, not estimated",
+  "p.ccpm.state_no_duration": "No duration, not estimated",
+  "p.ccpm.state_other": "Another standing",
+  "p.ccpm.form": "Record a task's estimates",
+  "p.ccpm.f_task": "Task",
+  "p.ccpm.choose_task": "Choose a task",
+  "p.ccpm.f_aggressive": "Aggressive, in business days",
+  "p.ccpm.f_safe": "Safe, in business days",
+  "p.ccpm.save": "Save the estimates",
+  "p.ccpm.unchanged": "Nothing changed, so nothing was sent.",
+  "p.ccpm.saved": "Saved the estimates for {title}.",
+  "p.ccpm.cleared": "Cleared the estimates recorded for {title}.",
+  "p.ccpm.confirm_clear":
+    "Clear the estimates recorded for {title}? A figure from the risk range or the rule may still be shown.",
+  "p.ccpm.problem_task": "Choose a task.",
+  "p.ccpm.problem_aggressive":
+    "The aggressive estimate is a whole number of business days from 1 to {max}.",
+  "p.ccpm.problem_safe":
+    "The safe estimate is a whole number of business days from 1 to {max}.",
+  "p.ccpm.problem_order":
+    "The aggressive estimate cannot be above the safe one.",
+  "p.ccpm.refused_invalid":
+    "The service would not take these estimates: the task may have lost its duration or become a milestone.",
+  "p.ccpm.refused_gone": "This task is gone, or you can no longer read it.",
+  "p.ccpm.could_not_load": "Could not read the estimates.",
+  "p.ccpm.could_not_save": "Could not save the estimates.",
+  "p.frozen.heading": "The frozen buffer plan",
+  "p.frozen.none": "No buffer plan has been frozen yet.",
+  "p.frozen.freeze_link": "Freeze one on buffer management",
+  "p.frozen.taken": "Frozen on {date}; {rule}",
+  "p.frozen.table": "Buffers as frozen",
+  "p.frozen.col_buffer": "Buffer",
+  "p.frozen.col_days": "Business days",
+  "p.frozen.col_chain": "Chain",
+  "p.frozen.col_finish": "Planned finish",
+  "p.frozen.project": "Project buffer",
+  "p.frozen.feeding": "Feeding buffer into {joins}",
+  "p.frozen.unsized": "not sized",
+  "p.frozen.untitled": "A task with no title",
+  "p.frozen.history_one": "{n} buffer plan frozen: {dates}.",
+  "p.frozen.history_other": "{n} buffer plans frozen, newest first: {dates}.",
+  "p.frozen.could_not_load": "Could not read the frozen buffer plan.",
+  "p.workingtime.heading": "The working day and week",
+  "p.workingtime.says":
+    "How long a working day is (1 minute to 24 hours) and how many days a week are worked (1 to 7), for this plan or as the organization's default. Each is a new record that cannot be changed or removed here, so you are asked first; a second one for this plan is refused.",
+  "p.workingtime.form": "Set the working day and week",
+  "p.workingtime.f_scope": "For",
+  "p.workingtime.scope_plan": "This plan",
+  "p.workingtime.scope_default": "The organization's default",
+  "p.workingtime.f_hours": "Hours in a day",
+  "p.workingtime.f_minutes": "And minutes",
+  "p.workingtime.f_days": "Days in a week",
+  "p.workingtime.save": "Set the working day",
+  "p.workingtime.confirm_plan_one":
+    "Set this plan's working day to {day}, {days} day a week? It cannot be changed here afterwards.",
+  "p.workingtime.confirm_plan_other":
+    "Set this plan's working day to {day}, {days} days a week? It cannot be changed here afterwards.",
+  "p.workingtime.confirm_default_one":
+    "Set the organization's default working day to {day}, {days} day a week? It cannot be changed here afterwards.",
+  "p.workingtime.confirm_default_other":
+    "Set the organization's default working day to {day}, {days} days a week? It cannot be changed here afterwards.",
+  "p.workingtime.saved_one": "Set a working day of {day}, {days} day a week.",
+  "p.workingtime.saved_other":
+    "Set a working day of {day}, {days} days a week.",
+  "p.workingtime.away_heading": "Time away from project work",
+  "p.workingtime.away_says":
+    "Leave, a holiday, study leave or a duty outside the project, for one person from a first to a last day, so that time is not read as idle. The person is a reference such as person: and an id. It cannot be changed or removed once recorded, so you are asked first; a blank note is not sent.",
+  "p.workingtime.f_person": "Person's reference",
+  "p.workingtime.f_starts": "First day",
+  "p.workingtime.f_ends": "Last day",
+  "p.workingtime.f_kind": "Kind",
+  "p.workingtime.f_note": "Note (optional)",
+  "p.workingtime.record": "Record the time away",
+  "p.workingtime.confirm_away":
+    "Record {kind} for {person}, {range}? It cannot be changed or removed afterwards.",
+  "p.workingtime.recorded": "Recorded {kind} for {person}, {range}.",
+  "p.workingtime.kind_leave": "leave",
+  "p.workingtime.kind_holiday": "a holiday",
+  "p.workingtime.kind_study_leave": "study leave",
+  "p.workingtime.kind_non_project_duty": "a duty outside the project",
+  "p.workingtime.problem_hours": "Hours are a whole number from 0 to 24.",
+  "p.workingtime.problem_minutes": "Minutes are a whole number from 0 to 59.",
+  "p.workingtime.problem_day": "A working day is from 1 minute to 24 hours.",
+  "p.workingtime.problem_week":
+    "Days in a week are a whole number from 1 to 7.",
+  "p.workingtime.problem_person":
+    "Give the person as person: or worker: and an id.",
+  "p.workingtime.problem_starts": "Give the first day.",
+  "p.workingtime.problem_ends": "Give the last day.",
+  "p.workingtime.problem_order": "The last day cannot come before the first.",
+  "p.workingtime.refused_exists":
+    "This plan already has a working day set, and it cannot be replaced here.",
+  "p.workingtime.refused_working":
+    "The service would not take this working day.",
+  "p.workingtime.refused_non_working":
+    "The service would not take this time away.",
+  "p.workingtime.refused_forbidden": "You may not record this.",
+  "p.workingtime.could_not_save": "Could not record this.",
+  "p.task.is_hammock":
+    "This task is a hammock: its dates come from the tasks it spans.",
+  "p.task.hammock_link": "See its span on the critical path",
 } as const;
 
 /** A key in the page and component catalogue. */

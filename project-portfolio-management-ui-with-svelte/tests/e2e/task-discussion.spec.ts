@@ -110,8 +110,28 @@ async function stub(page: Page, opts: Options = {}) {
     if (path.endsWith("/relations"))
       return route.fulfill({ json: { relations: [], hidden: 0 } });
     if (path.endsWith("/links")) return route.fulfill({ json: [] });
+    // NC-1 slice 12 part (i): the sub-tasks rolled up (none here; scheduling-rest.spec.ts has them).
+    if (path === `/api/plans/${PID}/tasks/${T1}/rollup`)
+      return route.fulfill({
+        json: {
+          task_pid: T1,
+          rollup: {
+            descendants: 0,
+            done: 0,
+            due: { value: null, reason: "no_children" },
+            estimate_points: { value: null, reason: "no_children" },
+            progress_bp: { value: null, reason: "no_children" },
+            excluded_unestimated: [],
+            spent_minutes: 0,
+          },
+        },
+      });
     return route.fulfill({ status: 404, json: { error: "unhandled in stub" } });
   });
+  // NC-1 slice 12 part (i): the task's dependencies on other plans and the plans to choose from (none here).
+  await page.route(/\/api\/proxy\/api\/(dependencies|plans)(\?.*)?$/, (route) =>
+    route.fulfill({ json: [] }),
+  );
   await page.route(
     /\/api\/proxy\/api\/(comments|reactions|attachments|watchers)/,
     async (route) => {

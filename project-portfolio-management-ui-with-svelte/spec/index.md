@@ -3112,3 +3112,134 @@ catalogue's sentence by action and status; the service's text is never shown. Ru
   the service's English carries `"service text"`, and each test checks it is not shown. The translations are
   machine-written and unreviewed. **Not verified:** against a real service; a calendar app subscribing to the address
   through the proxy; whether the proxy's or the service's access logs keep the token from the query string.
+
+## Scheduling, the rest (NC-1 slice 12 part i, PJ-7, PJ-13, LT-10, CC-2, CC-3, RM-5, SC-4)
+
+Hammocks, links to tasks of other plans, the plan's readings and a task's sub-tasks rolled up on
+`/plans/[pid]/critical-path` and the task page; critical-chain estimates and the frozen buffer plan on
+`/plans/[pid]/critical-chain`; the working day and time away on `/plans/[pid]/calendar`; the mix of finished work on
+`/plans/[pid]/flow`. Every rule is said before anything is sent and checked first, every problem at once; each refusal
+is the catalogue's sentence by action and status (and, for a 404, the service's machine `code`); the service's notes,
+reasons and labels are never shown. Rules in `src/lib/hammock-view.ts`, `src/lib/cross-plan-view.ts`,
+`src/lib/ccpm-estimate-view.ts`, `src/lib/plan-readings-view.ts` and `src/lib/working-time-view.ts`.
+
+- **`/plans/[pid]/critical-path`: the tasks of linked plans (PJ-13, `ExternalTasks.svelte`).** The critical path's
+  answer already carries every task of a linked plan the reader can read (`external` nodes) and the links that cross
+  (`cross_plan` edges); they are drawn as bars on one timeline per plan (a dashed bar off the critical path, a solid
+  bar and "◆" on it, so never colour alone; the plan's name links to its own critical path), with a table that gives
+  the same dates, and each crossing link in words (both ends, the other plan named, the kind and a lag). The finish
+  across the network is said beside the plan's own; a network cut short (`external_truncated`) is said. Links to
+  plans the reader cannot read stay counted, never named (as before).
+- **`/plans/[pid]/critical-path`: hammocks (PJ-7, `Hammocks.svelte`).** `GET /api/plans/{pid}/hammocks`, with the
+  plan's tasks from `GET /api/plans/{pid}/tasks` (the lists disabled until read). Said first: a hammock's dates come
+  from the tasks of this plan it links, earliest start to latest finish; it is not in the dependency network, so it
+  never changes a float or the finish; a task becomes one only with no duration, work, constraint or dependency, and
+  its planned start is cleared; making it a task again removes every link; a link is to a task or hammock of this
+  plan, not itself, not twice, not in a loop. Each hammock shows its span in the reader's locale, or why it has none
+  ("○" and words: no links, or none of its tasks dated), and its links. *Make it a hammock* is checked first against
+  what the critical path says of the task (a duration, work or a constraint; a dependency either way), then asked
+  (Cancel sends nothing), then `POST …/tasks/{t_pid}/hammock` (`{enabled: true}`). *Make {title} a task again* is
+  asked, saying how many links go, then `{enabled: false}`. *Add the link* is checked first (a hammock and a task
+  chosen; not itself; not one already spanned; not a loop through nested hammocks), then `POST
+  …/hammocks/{h_pid}/links` (`{member_pid}`). *Remove the link* is asked (the task is said not to change), then `DELETE
+  …/hammocks/{h_pid}/links/{member}`. A 422 on making one says it still carries work; on linking, that the task may be
+  gone, spanned or in a loop; a 404 that the task or hammock is gone, or on removing that the link is already gone.
+  The critical path is read again after each change.
+- **`/plans/[pid]/critical-path`: the plan's readings (RM-5, SC-4, `PlanReadings.svelte`), each read on asking.**
+  *Flow across the plans it contains* (`GET /api/plans/{pid}/rollup`; levels down 1 to 32, checked first, 32 or empty
+  not sent): the plans counted, the tasks finished, in progress and not started (counted together, not averaged), the
+  85th-percentile cycle and lead times and the time working rather than waiting, a walk cut short and plans reached
+  twice said, and a table by plan. *Time recorded* (`…/effort`): the total and the billable part, capital, operating
+  and unclassified, and tables by person and by task (named from the critical path), said to be as people stated it.
+  *Delivery forecast* (`…/forecast`): items (the open ones if empty), periods ahead (1 to 520; 4 not sent), days in a
+  period (1 to 90; 7 not sent) and periods of history (6 to 260, as fewer cannot forecast; 12 not sent), checked
+  first; the answer is how long the items may take at even odds, 85 and 95 in 100, and how many may be done in the
+  window, or a sentence when there is too little history (the service's reasons are not shown). *Schedule, cost and
+  stakeholders* (`…/performance`): schedule and cost performance as percentages, or why each is absent in words (no
+  budget baseline, no weighted task, nothing yet, several currencies), the stakeholder score with its answers, and a
+  link to the earned value. *Task workflow* (`…/workflow`): built-in or the plan's own, whether moves are limited,
+  each state (a built-in one in the catalogue's words, a plan's own in its label for the reader's language) with its
+  kind, start or end and a work-in-progress limit, and each allowed move with who may make it.
+- **`/plans/[pid]/tasks/[tpid]`: dependencies on tasks of other plans (PJ-13, LT-10, `CrossPlanLinks.svelte`).** `GET
+  /api/dependencies?item={task}`; each end named from the critical path (`GET /api/plans/{pid}/cpm`, best effort: an
+  end it does not carry is "a task not named here" and the start of its reference); a link with an end the reader
+  cannot read counted, never named (a plural). Said first: the kind is finish to start unless chosen; the lag is whole
+  business days from minus 3,650 to 3,650 (negative a lead); not twice the same way, not in a loop across plans, not
+  with a hammock; a hidden one is left out of the schedule. *Add the dependency*: this task first or the other, a plan
+  (`GET /api/plans`, this one left out), a task of it (`GET /api/plans/{other}/tasks`, hammocks left out; disabled until
+  read), a kind and a lag; checked first (a plan, a task, the lag, itself, one already there the same way); `POST
+  /api/dependencies` with the kind and lag only when they are not the defaults. *Remove* is asked (neither task is said
+  to change), then `DELETE /api/dependencies/{pid}`. A 404 on adding says a task is gone or unreadable; a 409 that it
+  is already there; a 422 that it may already be there, make a loop or join a hammock; a 404 on removing that it is
+  gone or no longer readable at both ends.
+- **`/plans/[pid]/tasks/[tpid]`: sub-tasks rolled up (RM-5, `TaskRollup.svelte`).** `GET
+  /api/plans/{pid}/tasks/{t_pid}/rollup`: said to be worked out each time, never stored; the sub-tasks done of the
+  whole, the latest due date, the points added, progress weighted by the estimated ones only (a percentage), the time
+  recorded; an absent figure says why (no sub-tasks, none dated, none estimated); the unestimated sub-tasks are counted
+  and named, never counted as zero. A task that is a hammock says so, with a link to its span on the critical path.
+- **`/plans/[pid]/critical-chain`: aggressive and safe estimates (CC-2, `CcpmEstimates.svelte`).** `GET
+  /api/plans/{pid}/ccpm-estimates?limit=1000` (a plan with more says how many are shown): the deployment's rule in
+  words (and when its setting was unusable), how many tasks need their estimates ("▲" and words), and a table of each
+  task's duration, aggressive and safe figures with where each came from (recorded, the risk range, the rule) and its
+  standing in words ("▲" where someone must act). Said first: whole business days from 1 to 3,650, the aggressive not
+  above the safe; a milestone and a task with no duration are not estimated (and not offered); clearing both removes
+  what is recorded. *Save the estimates* for a chosen task (the inputs disabled until one is chosen, filled from the
+  recorded figures only): nothing sent when they are what is recorded; every problem at once; clearing both asked first
+  (a risk-range or rule figure may still show); then `PUT …/tasks/{t_pid}/ccpm-estimate` with both figures, and the
+  buffers are read again. A 422 says the task may have lost its duration or become a milestone; a 404 that it is gone.
+- **`/plans/[pid]/critical-chain`: the frozen buffer plan (CC-3, `FrozenBufferPlan.svelte`).** `GET
+  /api/plans/{pid}/buffer-plan`: when it was frozen and by which sizing rule, a table of the project buffer and each
+  feeding buffer (the task it feeds), its business days or "not sized", its chain and its planned finish, and the days
+  earlier plans were frozen. None frozen says so, with a link to `/plans/[pid]/buffers` (the service's reason is not
+  shown).
+- **`/plans/[pid]/calendar`: the working day and time away (`WorkingTime.svelte`).** *The working day and week*: for
+  this plan (`plan:{pid}`, the default) or the organization's default (no scope sent), hours and minutes (7 hours 30
+  minutes filled in) and days a week (5). Said first: 1 minute to 24 hours, 1 to 7 days; a new record that cannot be
+  changed or removed here; a second for this plan is refused. Checked first, asked first (Cancel sends nothing), then
+  `POST /api/working-time`. *Time away from project work*: a person's reference (`person:` or `worker:` and an id), a
+  first and a last day, a kind (leave, a holiday, study leave, a duty outside the project) and a note (blank not sent).
+  Said first: so the time is not read as idle; it cannot be changed or removed once recorded. Checked first (the
+  reference, real dates, the last not before the first), asked first, then `POST /api/non-working`. A 409 says this
+  plan already has a working day; a 422 that the service would not take it; a 403 that the reader may not record it.
+- **`/plans/[pid]/flow`: the mix of finished work (`FlowMix.svelte`).** On asking, `GET
+  /api/plans/{pid}/flow-distribution`: a window (1 to 3,650 days, checked first, as the service would quietly read
+  another as 90; 90 not sent) and optionally the plans it contains (`rollup=true`) to a depth (0 to 32; 32 not sent).
+  The window and the plans counted said, a walk cut short said, no finished work a sentence, else a table of each kind
+  of work in words with its count and share and, where the plan declared the mix it intends, the intended share and the
+  gap (else said that there is nothing to compare with).
+- **Decided (the plainest option):** each part is a section of the page the plan names, not a page of its own; a
+  dependency on another plan is added from a task's page and drawn on the critical path; the plan's readings, the mix
+  of finished work and the forecast are read on asking; making a task a hammock, making a hammock a task, clearing
+  estimates, a working day and time away are asked first; a forecast's history starts at six periods (the service
+  answers fewer with no figure); `/plans/{pid}/rollup`, `/effort`, `/forecast`, `/performance` and `/workflow` sit on
+  the critical path as the plan lists them.
+- **Not built:** the issue workflow (`?applies_to=issue`, which the issues page already reads through the issue
+  types); more than the first 1,000 tasks' estimates (paged by a `Link` header); naming a hidden end; a working-time
+  record's list, change or removal (no route); a person picker for time away (a typed reference); the plan roll-up's
+  attrition trail and service-level expectations; a forecast's seed or trials. **Service gaps:** every hammock refusal
+  (not a hammock, another plan's task, already linked, a loop; a task that carries work) is one 422 `unprocessable`
+  with English text naming what to clear; every `POST /api/dependencies` refusal (the lag, the kind, a hammock, a
+  duplicate, a loop) is one 422 `unprocessable` with English text; `PUT …/ccpm-estimate` joins every problem into one
+  422 `unprocessable_entity`; `POST /api/working-time` and `POST /api/non-working` are `unprocessable` with English
+  text, `person_ref` is not checked, a working day for the organization's default (no scope) is never deduplicated and
+  only the first one is read, and one for a plan is stored but nothing reads it yet; `GET /api/dependencies` carries
+  no names, so the other end is named from the critical path; `…/flow-distribution` quietly reads a window outside 1
+  to 3,650 as 90 days; `…/buffer-plan`'s `reason`, every reading's `note` and the forecast's `reason` are English; `GET
+  …/performance` says "six-dimension" but carries three.
+- **Tests:** `tests/unit/hammock-view.test.ts` (what a task may not carry, a link's checks and a loop through nested
+  hammocks, the span's words, each refusal), `tests/unit/cross-plan-view.test.ts` (hidden links counted, the other
+  end, the body with the defaults left out, every problem, the external tasks by plan, the crossing links, each
+  refusal), `tests/unit/ccpm-estimate-view.test.ts` (the form from recorded figures only, nothing for no change,
+  clearing, every problem, standings, refusals), `tests/unit/plan-readings-view.test.ts` (the depth, the forecast's and
+  the mix's queries with the defaults left out, a window refused first, the words, a switched-off module by its code),
+  `tests/unit/working-time-view.test.ts` (both bodies, every problem, refusals), the paths in `tests/unit/ppm.test.ts`
+  (bodies checked against `openapi.json` by `client-bodies.test.ts`); `tests/e2e/scheduling-rest.spec.ts` (new: the
+  linked plans drawn; hammocks' checks, questions and bodies; a refused link and one already gone; the readings with
+  their checks and the defaults not sent; a task's dependencies, the hidden counted, added and removed after a
+  question, the rolled-up sub-tasks; refused dependencies; estimates with nothing for no change and clearing asked;
+  a refused estimate; the frozen buffer plan; the working day and time away asked first, a 409; the mix of finished
+  work; Welsh; axe with the sections open) and stubs for the new reads in `tests/e2e/plan-task-edit.spec.ts` and
+  `tests/e2e/task-discussion.spec.ts`. Every
+  stub that would carry the service's English carries `"service text"`, and each test checks it is not shown. The
+  translations are machine-written and unreviewed. **Not verified:** against a real service; how the critical path
+  draws a network with many linked plans (up to eight plans and 3,000 tasks).

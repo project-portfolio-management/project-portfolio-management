@@ -6,7 +6,9 @@
   such as the Jira or Linear issue it is tracked as (the service stores a link's address and never fetches it); and
   (NC-1 slice 5) following it, reactions, comments and attached files, in `Discussion.svelte`; and (NC-1 slice 12
   part c, IR-3) raising an issue from it while it is blocked, once while that issue is open (said before anything is
-  sent; the task is not changed). Each card on the board links here. Refusals say the catalogue's sentence, never the
+  sent; the task is not changed); and (NC-1 slice 12 part i) its dependencies on tasks of other plans
+  (`CrossPlanLinks.svelte`, PJ-13, LT-10), its sub-tasks rolled up (`TaskRollup.svelte`, RM-5) and whether it is a
+  hammock (PJ-7). Each card on the board links here. Refusals say the catalogue's sentence, never the
   service's own text.
 -->
 <script lang="ts">
@@ -21,6 +23,8 @@
   import { issueRefusalKey, openIssueFromTask } from "#lib/issue-view.js";
   import LinksPanel from "#lib/components/LinksPanel.svelte";
   import Discussion from "#lib/components/Discussion.svelte";
+  import CrossPlanLinks from "#lib/components/CrossPlanLinks.svelte";
+  import TaskRollup from "#lib/components/TaskRollup.svelte";
   import {
     RELATION_KINDS,
     formFromTask,
@@ -45,6 +49,7 @@
   // The plan's other tasks, to link to.
   const planTasks = resource<Task[]>(async () => (await ppm.listTasks(pid)).tasks, "p.task.could_not_load_tasks");
   const others = $derived((planTasks.data ?? []).filter((o) => o.pid !== tpid));
+  const taskTitles = $derived(new Map((planTasks.data ?? []).map((o) => [o.pid, o.title])));
   // The plan's issues, to say whether one is already open from this task (IR-3). Best effort: without them the
   // button is offered and the service decides.
   let planIssues = $state<Issue[] | null>(null);
@@ -297,6 +302,12 @@
       </div>
     </form>
   </section>
+
+  {#if task.is_hammock}
+    <p data-testid="task-hammock">{t("p.task.is_hammock")} <a href={localeHref(`/plans/${pid}/critical-path`)}>{t("p.task.hammock_link")}</a></p>
+  {/if}
+  <CrossPlanLinks {pid} taskPid={tpid} taskTitle={task.title} />
+  <TaskRollup {pid} taskPid={tpid} titles={taskTitles} />
 
   <section aria-labelledby="task-issue-h">
     <h2 id="task-issue-h">{t("p.task.issue_heading")}</h2>

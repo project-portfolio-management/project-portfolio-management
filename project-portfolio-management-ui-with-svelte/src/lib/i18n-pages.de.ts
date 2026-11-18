@@ -8396,4 +8396,460 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.timereport.could_not_load": "Der Zeitbericht konnte nicht gelesen werden.",
   "p.timereport.could_not_load_plans":
     "Die Pläne zur Auswahl konnten nicht gelesen werden.",
+  "p.hammock.heading": "Sammelvorgänge: Übersichtsaufgaben über andere hinweg",
+  "p.hammock.says":
+    "Ein Sammelvorgang ist eine Übersicht, deren Termine aus den verknüpften Aufgaben dieses Plans stammen, vom frühesten Anfang bis zum spätesten Ende. Er gehört nicht zum Abhängigkeitsnetz und ändert daher nie den Puffer einer Aufgabe oder das Ende. Eine Aufgabe wird nur dann zum Sammelvorgang, wenn sie keine Dauer, keine Arbeit, keine Einschränkung und keine Abhängigkeit hat; ihr geplanter Anfang wird gelöscht. Wird sie wieder zur Aufgabe, entfallen alle ihre Verknüpfungen. Ein Sammelvorgang verknüpft eine Aufgabe oder einen anderen Sammelvorgang dieses Plans, nicht sich selbst, nicht doppelt und nicht im Kreis.",
+  "p.hammock.none": "Dieser Plan hat keine Sammelvorgänge.",
+  "p.hammock.spans": "Umfasst {range}.",
+  "p.hammock.no_links":
+    "Noch keine Termine: Er ist mit keiner Aufgabe verknüpft.",
+  "p.hammock.members_unscheduled":
+    "Noch keine Termine: Keine der verknüpften Aufgaben hat Termine.",
+  "p.hammock.untitled": "Eine Aufgabe ohne Titel",
+  "p.hammock.member_hammock": "{title} (ein Sammelvorgang)",
+  "p.hammock.unmake_named": "{title} wieder zur Aufgabe machen",
+  "p.hammock.unlink": "Verknüpfung entfernen",
+  "p.hammock.unlink_named": "Verknüpfung von {hammock} zu {title} entfernen",
+  "p.hammock.make_form": "Eine Aufgabe zum Sammelvorgang machen",
+  "p.hammock.f_task": "Aufgabe",
+  "p.hammock.choose_task": "Aufgabe wählen",
+  "p.hammock.make": "Zum Sammelvorgang machen",
+  "p.hammock.link_form": "Einen Sammelvorgang mit einer Aufgabe verknüpfen",
+  "p.hammock.f_hammock": "Sammelvorgang",
+  "p.hammock.choose_hammock": "Sammelvorgang wählen",
+  "p.hammock.f_member": "Umfasste Aufgabe",
+  "p.hammock.choose_member": "Zu umfassende Aufgabe wählen",
+  "p.hammock.link": "Verknüpfung hinzufügen",
+  "p.hammock.confirm_make":
+    "{title} zum Sammelvorgang machen? Der geplante Anfang wird gelöscht, und die Termine kommen dann aus den verknüpften Aufgaben.",
+  "p.hammock.confirm_unmake_one":
+    "{title} wieder zur Aufgabe machen? Ihre {n} Verknüpfung entfällt.",
+  "p.hammock.confirm_unmake_other":
+    "{title} wieder zur Aufgabe machen? Ihre {n} Verknüpfungen entfallen.",
+  "p.hammock.confirm_unlink":
+    "Verknüpfung von {hammock} zu {title} entfernen? Die Aufgabe selbst bleibt unverändert.",
+  "p.hammock.made": "{title} ist jetzt ein Sammelvorgang.",
+  "p.hammock.unmade": "{title} ist wieder eine Aufgabe.",
+  "p.hammock.linked": "{hammock} umfasst jetzt {title}.",
+  "p.hammock.unlinked": "{hammock} umfasst {title} nicht mehr.",
+  "p.hammock.problem_choose_task":
+    "Wählen Sie eine Aufgabe, die zum Sammelvorgang werden soll.",
+  "p.hammock.problem_carries_work":
+    "Diese Aufgabe hat eine Dauer, Arbeit oder eine Einschränkung: Löschen Sie diese zuerst im Terminplan.",
+  "p.hammock.problem_has_dependencies":
+    "Diese Aufgabe hat Abhängigkeiten: Entfernen Sie sie zuerst, denn ein Sammelvorgang hat keine.",
+  "p.hammock.problem_choose_hammock": "Wählen Sie einen Sammelvorgang.",
+  "p.hammock.problem_choose_member":
+    "Wählen Sie eine Aufgabe, die der Sammelvorgang umfassen soll.",
+  "p.hammock.problem_self":
+    "Ein Sammelvorgang kann sich nicht selbst umfassen.",
+  "p.hammock.problem_linked":
+    "Dieser Sammelvorgang umfasst diese Aufgabe bereits.",
+  "p.hammock.problem_loop":
+    "Jener Sammelvorgang umfasst diesen bereits, die Verknüpfung ergäbe einen Kreis.",
+  "p.hammock.refused_make":
+    "Der Dienst hat die Aufgabe nicht zum Sammelvorgang gemacht: Sie hat noch eine Dauer, Arbeit, eine Einschränkung oder eine Abhängigkeit.",
+  "p.hammock.refused_link":
+    "Der Dienst hat die Verknüpfung nicht hinzugefügt: Die Aufgabe ist vielleicht nicht mehr im Plan, schon umfasst oder Teil eines Kreises.",
+  "p.hammock.refused_gone":
+    "Die Aufgabe oder der Sammelvorgang ist weg, oder Sie können ihn nicht mehr lesen.",
+  "p.hammock.refused_link_gone": "Diese Verknüpfung ist bereits weg.",
+  "p.hammock.could_not_load":
+    "Die Sammelvorgänge konnten nicht gelesen werden.",
+  "p.hammock.could_not_save": "Der Sammelvorgang konnte nicht geändert werden.",
+  "p.crossplan.heading": "Aufgaben verknüpfter Pläne",
+  "p.crossplan.says":
+    "Das sind die Aufgaben anderer Pläne, die Sie lesen können und mit denen Aufgaben dieses Plans verknüpft sind, terminiert nach dem Kalender ihres eigenen Plans. Ein gestrichelter Balken ist eine Aufgabe abseits des kritischen Pfads; ein voller Balken und eine Raute kennzeichnen eine darauf.",
+  "p.crossplan.network_finish":
+    "Mit den verknüpften Plänen endet das Netz am {date}.",
+  "p.crossplan.truncated":
+    "Nicht alle verknüpften Pläne werden gezeigt: Das Netz hat seine Grenze an Plänen oder Aufgaben erreicht.",
+  "p.crossplan.links_heading": "Verknüpfungen in einen anderen Plan",
+  "p.crossplan.lag": "Verzögerung von {days} Arbeitstagen",
+  "p.crossplan.timeline": "Aufgaben von {plan} auf einer Zeitachse",
+  "p.crossplan.table": "Termine der Aufgaben verknüpfter Pläne",
+  "p.crossplan.col_task": "Aufgabe",
+  "p.crossplan.col_plan": "Projektplan",
+  "p.crossplan.col_start": "Frühester Anfang",
+  "p.crossplan.col_finish": "Frühestes Ende",
+  "p.crossplan.col_critical": "Auf dem kritischen Pfad",
+  "p.crossplan.yes": "Ja",
+  "p.crossplan.no": "Nein",
+  "p.crossplan.untitled": "Eine Aufgabe ohne Titel",
+  "p.crossplan.kind_fs": "Ende zu Anfang",
+  "p.crossplan.kind_ss": "Anfang zu Anfang",
+  "p.crossplan.kind_ff": "Ende zu Ende",
+  "p.crossplan.kind_sf": "Anfang zu Ende",
+  "p.crossplan.task_heading":
+    "Abhängigkeiten, in diesem oder einem anderen Plan",
+  "p.crossplan.task_says":
+    "Eine Abhängigkeit verbindet diese Aufgabe mit einer in einem anderen Plan, den Sie lesen können. Ihre Art ist Ende zu Anfang, sofern nicht anders gewählt; ihre Verzögerung ist eine ganze Zahl von Arbeitstagen von minus {max} bis {max}, eine negative ist ein Vorlauf. Eine Abhängigkeit wird nicht zweimal in derselben Richtung angelegt, nicht im Kreis über Pläne hinweg und nicht mit einem Sammelvorgang. Eine, deren anderes Ende Sie nicht lesen können, wird gezählt, nie benannt, und bleibt außerhalb des Terminplans.",
+  "p.crossplan.no_links": "Diese Aufgabe hat noch keine Abhängigkeiten.",
+  "p.crossplan.this_before": "Diese Aufgabe kommt vor {other}",
+  "p.crossplan.this_after": "Diese Aufgabe kommt nach {other}",
+  "p.crossplan.end_own": "{title}, in diesem Plan",
+  "p.crossplan.end_external": "{title}, im Plan {plan}",
+  "p.crossplan.end_unnamed": "eine hier nicht benannte Aufgabe ({ref})",
+  "p.crossplan.remove": "Entfernen",
+  "p.crossplan.remove_named": "Abhängigkeit von {other} entfernen",
+  "p.crossplan.restricted_one":
+    "{n} weitere Abhängigkeit verbindet mit einer Aufgabe, die Sie nicht lesen können.",
+  "p.crossplan.restricted_other":
+    "{n} weitere Abhängigkeiten verbinden mit Aufgaben, die Sie nicht lesen können.",
+  "p.crossplan.see_network": "Den Terminplan über Pläne hinweg ansehen",
+  "p.crossplan.form":
+    "Eine Abhängigkeit von einer Aufgabe eines anderen Plans hinzufügen",
+  "p.crossplan.f_order": "Reihenfolge",
+  "p.crossplan.order_before": "Diese Aufgabe kommt zuerst",
+  "p.crossplan.order_after": "Die andere Aufgabe kommt zuerst",
+  "p.crossplan.f_plan": "Anderer Plan",
+  "p.crossplan.choose_plan": "Plan wählen",
+  "p.crossplan.f_task": "Aufgabe in diesem Plan",
+  "p.crossplan.choose_task": "Aufgabe wählen",
+  "p.crossplan.f_kind": "Art der Abhängigkeit",
+  "p.crossplan.f_lag": "Verzögerung in Arbeitstagen (0, wenn leer)",
+  "p.crossplan.add": "Abhängigkeit hinzufügen",
+  "p.crossplan.added": "Abhängigkeit von {title} hinzugefügt.",
+  "p.crossplan.removed": "Abhängigkeit entfernt.",
+  "p.crossplan.confirm_remove_before":
+    "Abhängigkeit entfernen: {task} kommt vor {other}? Keine der beiden Aufgaben wird geändert.",
+  "p.crossplan.confirm_remove_after":
+    "Abhängigkeit entfernen: {task} kommt nach {other}? Keine der beiden Aufgaben wird geändert.",
+  "p.crossplan.problem_plan": "Wählen Sie den anderen Plan.",
+  "p.crossplan.problem_task": "Wählen Sie eine Aufgabe in diesem Plan.",
+  "p.crossplan.problem_lag":
+    "Eine Verzögerung ist eine ganze Zahl von Arbeitstagen von minus {max} bis {max}.",
+  "p.crossplan.problem_self":
+    "Eine Aufgabe kann nicht von sich selbst abhängen.",
+  "p.crossplan.problem_exists": "Diese Abhängigkeit besteht bereits.",
+  "p.crossplan.refused_unreadable":
+    "Eine der beiden Aufgaben ist weg, oder Sie können sie nicht lesen.",
+  "p.crossplan.refused_exists": "Diese Abhängigkeit besteht bereits.",
+  "p.crossplan.refused_add":
+    "Der Dienst hat die Abhängigkeit nicht hinzugefügt: Sie besteht vielleicht schon, ergäbe einen Kreis oder verbindet einen Sammelvorgang.",
+  "p.crossplan.refused_gone":
+    "Diese Abhängigkeit ist bereits weg, oder Sie können nicht mehr beide Aufgaben lesen.",
+  "p.crossplan.could_not_load":
+    "Die Abhängigkeiten dieser Aufgabe konnten nicht gelesen werden.",
+  "p.crossplan.could_not_load_plans":
+    "Die Pläne zur Auswahl konnten nicht gelesen werden.",
+  "p.crossplan.could_not_load_tasks":
+    "Die Aufgaben dieses Plans konnten nicht gelesen werden.",
+  "p.crossplan.could_not_save":
+    "Die Abhängigkeit konnte nicht geändert werden.",
+  "p.taskrollup.heading": "Unteraufgaben zusammengefasst",
+  "p.taskrollup.says":
+    "Jedes Mal aus den Unteraufgaben dieser Aufgabe berechnet, nie gespeichert: das späteste Fälligkeitsdatum unter ihnen, ihre Punkte addiert, der Fortschritt nur nach den geschätzten gewichtet, und die über sie erfasste Zeit.",
+  "p.taskrollup.subtasks": "Unteraufgaben",
+  "p.taskrollup.done_of_one": "{done} von {n} erledigt",
+  "p.taskrollup.done_of_other": "{done} von {n} erledigt",
+  "p.taskrollup.due": "Spätestes Fälligkeitsdatum",
+  "p.taskrollup.points": "Punkte addiert",
+  "p.taskrollup.progress": "Fortschritt",
+  "p.taskrollup.spent": "Erfasste Zeit",
+  "p.taskrollup.no_children": "Diese Aufgabe hat keine Unteraufgaben.",
+  "p.taskrollup.no_dated_children":
+    "Keine ihrer Unteraufgaben hat ein Fälligkeitsdatum.",
+  "p.taskrollup.no_estimates": "Keine ihrer Unteraufgaben ist geschätzt.",
+  "p.taskrollup.absent": "Nicht bekannt.",
+  "p.taskrollup.unestimated_one":
+    "{n} Unteraufgabe hat keine Schätzung und bleibt daher beim Fortschritt außen vor (nicht als null gezählt):",
+  "p.taskrollup.unestimated_other":
+    "{n} Unteraufgaben haben keine Schätzung und bleiben daher beim Fortschritt außen vor (nicht als null gezählt):",
+  "p.taskrollup.unnamed": "Eine hier nicht benannte Unteraufgabe ({ref})",
+  "p.taskrollup.refused_gone":
+    "Diese Aufgabe ist weg, oder Sie können sie nicht mehr lesen.",
+  "p.taskrollup.could_not_load":
+    "Die zusammengefassten Unteraufgaben konnten nicht gelesen werden.",
+  "p.readings.heading": "Mehr zu diesem Plan",
+  "p.readings.says":
+    "Jede dieser Angaben wird erst gelesen, wenn Sie danach fragen.",
+  "p.readings.read": "Lesen",
+  "p.readings.could_not_read": "Das konnte nicht gelesen werden.",
+  "p.readings.not_measured": "nicht gemessen",
+  "p.readings.days": "{n} Tage",
+  "p.readings.rollup_heading": "Fluss über die enthaltenen Pläne",
+  "p.readings.rollup_says":
+    "Die Aufgaben dieses Plans und aller Pläne darunter, zusammen gezählt, nicht gemittelt; bis zu {max} Ebenen tief, wenn leer gelassen.",
+  "p.readings.f_depth": "Ebenen tief",
+  "p.readings.rollup_plans_one": "{n} Plan.",
+  "p.readings.rollup_plans_other": "{n} Pläne.",
+  "p.readings.rollup_tasks_one":
+    "{n} Aufgabe: {finished} beendet, {wip} in Arbeit, {not_started} nicht begonnen.",
+  "p.readings.rollup_tasks_other":
+    "{n} Aufgaben: {finished} beendet, {wip} in Arbeit, {not_started} nicht begonnen.",
+  "p.readings.rollup_times":
+    "Die meiste Arbeit (85 von 100) war binnen {cycle} nach Beginn und binnen {lead} nach der Anfrage fertig; Zeit mit Arbeiten statt Warten: {efficiency}.",
+  "p.readings.rollup_truncated":
+    "Nicht jeder Plan darunter wurde gezählt: Der Durchlauf hat seine Grenze erreicht.",
+  "p.readings.rollup_revisits_one":
+    "{n} Plan wird zweimal erreicht und einmal gezählt.",
+  "p.readings.rollup_revisits_other":
+    "{n} Pläne werden zweimal erreicht und einmal gezählt.",
+  "p.readings.rollup_table": "Fluss nach Plan",
+  "p.readings.col_plan": "Projektplan",
+  "p.readings.col_depth": "Ebene",
+  "p.readings.col_tasks": "Aufgaben",
+  "p.readings.col_finished": "Beendet",
+  "p.readings.col_wip": "In Arbeit",
+  "p.readings.col_efficiency": "Zeit mit Arbeiten statt Warten",
+  "p.readings.effort_heading": "Erfasste Zeit",
+  "p.readings.effort_says":
+    "Die Zeit, die Personen für diesen Plan erfasst haben, wie angegeben; nichts prüft sie.",
+  "p.readings.read_effort": "Erfasste Zeit lesen",
+  "p.readings.effort_none": "Für diesen Plan ist keine Zeit erfasst.",
+  "p.readings.effort_total": "{total} erfasst, davon {billable} abrechenbar.",
+  "p.readings.effort_split":
+    "Investitionsausgaben {capex}, Betriebsausgaben {opex}, nicht zugeordnet {unclassified}.",
+  "p.readings.effort_by_person": "Zeit nach Person",
+  "p.readings.effort_by_task": "Zeit nach Aufgabe",
+  "p.readings.col_person": "Mitarbeiter",
+  "p.readings.col_time": "Zeit",
+  "p.readings.col_billable": "Abrechenbar",
+  "p.readings.col_task": "Aufgabe",
+  "p.readings.task_unnamed": "Eine hier nicht benannte Aufgabe ({ref})",
+  "p.readings.forecast_heading": "Lieferprognose",
+  "p.readings.forecast_says":
+    "Zehntausend Durchläufe, gezogen aus dem, was dieser Plan in jedem vergangenen Zeitraum beendet hat: wie lange die offene Arbeit dauern kann und wie viel in einer Zahl von Zeiträumen fertig werden kann. Ein leeres Feld ist der Standard; mindestens sechs Zeiträume Verlauf sind nötig.",
+  "p.readings.f_items": "Zu beendende Einträge (die offenen, wenn leer)",
+  "p.readings.f_periods": "Zeiträume voraus ({n}, wenn leer)",
+  "p.readings.f_period_days": "Tage pro Zeitraum ({n}, wenn leer)",
+  "p.readings.f_history": "Zeiträume Verlauf ({n}, wenn leer)",
+  "p.readings.read_forecast": "Prognose lesen",
+  "p.readings.forecast_history_one":
+    "Gezogen aus {n} Zeitraum von {days} Tagen.",
+  "p.readings.forecast_history_other":
+    "Gezogen aus {n} Zeiträumen von {days} Tagen.",
+  "p.readings.forecast_batch_one":
+    "{n} Eintrag: Die Hälfte der Durchläufe endet binnen {p50} Tagen, 85 von 100 binnen {p85} Tagen und 95 von 100 binnen {p95} Tagen.",
+  "p.readings.forecast_batch_other":
+    "{n} Einträge: Die Hälfte der Durchläufe endet binnen {p50} Tagen, 85 von 100 binnen {p85} Tagen und 95 von 100 binnen {p95} Tagen.",
+  "p.readings.forecast_no_batch":
+    "Wie lange die Arbeit dauern kann, lässt sich nicht prognostizieren: Es gibt zu wenig Verlauf, oder darin wurde nichts beendet.",
+  "p.readings.forecast_horizon":
+    "In den nächsten {days} Tagen können etwa {median} Einträge fertig werden: mindestens {least} in 85 von 100 Durchläufen und höchstens {most}.",
+  "p.readings.forecast_no_horizon":
+    "Wie viel fertig werden kann, lässt sich nicht prognostizieren: Es gibt zu wenig Verlauf, oder darin wurde nichts beendet.",
+  "p.readings.performance_heading": "Termine, Kosten und Beteiligte",
+  "p.readings.performance_says":
+    "Die Terminleistung ist die geleistete Arbeit gegenüber der bisher geplanten, die Kostenleistung die geleistete Arbeit gegenüber ihren Kosten; über 100 % ist besser als geplant. Der Wert der Beteiligten reicht von minus 100 bis 100.",
+  "p.readings.read_performance": "Leistung lesen",
+  "p.readings.schedule": "Terminleistung",
+  "p.readings.cost": "Kostenleistung",
+  "p.readings.stakeholders": "Wert der Beteiligten",
+  "p.readings.nps_one":
+    "{score}, aus {n} Antwort ({promoters} fördernd, {detractors} ablehnend)",
+  "p.readings.nps_other":
+    "{score}, aus {n} Antworten ({promoters} fördernd, {detractors} ablehnend)",
+  "p.readings.nps_none": "Noch keine Antworten.",
+  "p.readings.earned_value_link": "Den Fertigstellungswert vollständig ansehen",
+  "p.readings.absent_no_baseline":
+    "Nicht gemessen: Der Plan hat keine Budget-Basislinie.",
+  "p.readings.absent_no_weighted_tasks":
+    "Nicht gemessen: Keine Aufgabe trägt Gewicht.",
+  "p.readings.absent_not_yet_defined":
+    "Noch nicht gemessen: Bisher wurde nichts geplant oder ausgegeben.",
+  "p.readings.absent_several_currencies":
+    "Kein einzelner Wert: Der Plan hat Budgets in mehreren Währungen; siehe den Fertigstellungswert.",
+  "p.readings.absent_other": "Nicht gemessen.",
+  "p.readings.workflow_heading": "Arbeitsablauf der Aufgaben",
+  "p.readings.read_workflow": "Arbeitsablauf der Aufgaben lesen",
+  "p.readings.workflow_plan":
+    "Dieser Plan hat einen eigenen Arbeitsablauf für Aufgaben.",
+  "p.readings.workflow_built_in":
+    "Dieser Plan nutzt den eingebauten Arbeitsablauf für Aufgaben.",
+  "p.readings.workflow_constrained":
+    "Nur die aufgeführten Wechsel sind erlaubt.",
+  "p.readings.workflow_free":
+    "Eine Aufgabe kann von jedem Zustand in jeden anderen wechseln.",
+  "p.readings.cat_todo": "nicht begonnen",
+  "p.readings.cat_active": "in Arbeit",
+  "p.readings.cat_waiting": "wartend",
+  "p.readings.cat_done": "beendet",
+  "p.readings.cat_other": "eine andere Art",
+  "p.readings.initial": "hier beginnt eine Aufgabe",
+  "p.readings.terminal": "hier endet eine Aufgabe",
+  "p.readings.wip_limit": "höchstens {n} gleichzeitig",
+  "p.readings.anyone": "jeder",
+  "p.readings.roles": "Rollen: {roles}",
+  "p.readings.problem_depth":
+    "Ebenen tief ist eine ganze Zahl von 1 bis {max}.",
+  "p.readings.problem_depth_zero":
+    "Ebenen tief ist eine ganze Zahl von 0 bis {max}.",
+  "p.readings.problem_items": "Zu beendende Einträge ist eine ganze Zahl ab 1.",
+  "p.readings.problem_periods":
+    "Zeiträume voraus ist eine ganze Zahl von 1 bis 520.",
+  "p.readings.problem_period_days":
+    "Tage pro Zeitraum ist eine ganze Zahl von 1 bis 90.",
+  "p.readings.problem_history":
+    "Zeiträume Verlauf ist eine ganze Zahl von 6 bis 260.",
+  "p.readings.problem_window":
+    "Das Fenster ist eine ganze Zahl von Tagen von 1 bis 3650.",
+  "p.readings.refused_query": "Der Dienst hat diese Abfrage nicht angenommen.",
+  "p.readings.refused_module": "Dieser Teil des Plans ist ausgeschaltet.",
+  "p.readings.refused_gone":
+    "Dieser Plan ist weg, oder Sie können ihn nicht mehr lesen.",
+  "p.readings.flow_feature": "Neue Funktionen",
+  "p.readings.flow_defect": "Fehler",
+  "p.readings.flow_risk": "Risikoarbeit",
+  "p.readings.flow_debt": "Technische Schulden",
+  "p.readings.flow_unclassified": "Nicht zugeordnet",
+  "p.readings.flow_other": "Eine andere Art",
+  "p.flowmix.heading": "Die Mischung der beendeten Arbeit",
+  "p.flowmix.says":
+    "Wie sich die in einem Zeitfenster beendete Arbeit auf neue Funktionen, Fehler, Risikoarbeit und technische Schulden verteilt, verglichen mit der vom Plan beabsichtigten Mischung, wo er eine angegeben hat. Das Fenster ist {n} Tage, wenn leer gelassen.",
+  "p.flowmix.f_window": "Tage zurück ({n}, wenn leer)",
+  "p.flowmix.f_rollup": "Die enthaltenen Pläne einbeziehen",
+  "p.flowmix.f_depth": "Ebenen tief ({max}, wenn leer)",
+  "p.flowmix.read": "Mischung lesen",
+  "p.flowmix.window_one": "Arbeit, beendet am letzten {n} Tag.",
+  "p.flowmix.window_other": "Arbeit, beendet in den letzten {n} Tagen.",
+  "p.flowmix.plans_one": "{n} Plan gezählt.",
+  "p.flowmix.plans_other": "{n} Pläne gezählt.",
+  "p.flowmix.truncated":
+    "Nicht jeder Plan darunter wurde gezählt: Der Durchlauf hat seine Grenze erreicht.",
+  "p.flowmix.none": "In diesem Fenster wurde keine Arbeit beendet.",
+  "p.flowmix.no_intent":
+    "Der Plan gibt keine beabsichtigte Mischung an, es gibt also nichts zu vergleichen.",
+  "p.flowmix.table": "Beendete Arbeit nach Art",
+  "p.flowmix.col_kind": "Art der Arbeit",
+  "p.flowmix.col_count": "Beendet",
+  "p.flowmix.col_share": "Anteil",
+  "p.flowmix.col_intended": "Beabsichtigter Anteil",
+  "p.flowmix.col_gap": "Abweichung",
+  "p.ccpm.heading": "Aggressive und sichere Schätzungen",
+  "p.ccpm.says":
+    "Für die kritische Kette braucht jede Aufgabe eine aggressive Schätzung (etwa gleiche Chancen) und eine sichere, in ganzen Arbeitstagen von 1 bis {max}, die aggressive nicht über der sicheren. Ein gezeigter Wert ist der erfasste, sonst der aus der Risikospanne, sonst einer, den die Regel der Installation ableitet, und jeder sagt, welcher. Ein Meilenstein und eine Aufgabe ohne Dauer werden nicht geschätzt. Beide zu leeren entfernt das Erfasste.",
+  "p.ccpm.rule_explicit_only":
+    "Regel: Nur angegebene Schätzungen zählen; nichts wird abgeleitet.",
+  "p.ccpm.rule_half_of_safe":
+    "Regel: Eine fehlende sichere Schätzung ist die Dauer der Aufgabe, eine fehlende aggressive die Hälfte der sicheren.",
+  "p.ccpm.rule_other": "Regel: eine, die diese Seite nicht kennt.",
+  "p.ccpm.rule_unusable":
+    "Die Regeleinstellung der Installation war nicht lesbar, daher zählen nur angegebene Schätzungen.",
+  "p.ccpm.attention_one": "{n} Aufgabe braucht ihre Schätzungen.",
+  "p.ccpm.attention_other": "{n} Aufgaben brauchen ihre Schätzungen.",
+  "p.ccpm.more": "Die ersten {shown} von {total} Aufgaben werden gezeigt.",
+  "p.ccpm.no_tasks": "Dieser Plan hat keine zu schätzenden Aufgaben.",
+  "p.ccpm.table": "Schätzungen nach Aufgabe",
+  "p.ccpm.col_task": "Aufgabe",
+  "p.ccpm.col_likely": "Dauer in Arbeitstagen",
+  "p.ccpm.col_aggressive": "Aggressiv",
+  "p.ccpm.col_safe": "Sicher",
+  "p.ccpm.col_state": "Stand",
+  "p.ccpm.figure": "{days} Tage, {source}",
+  "p.ccpm.none": "keine",
+  "p.ccpm.source_recorded": "erfasst",
+  "p.ccpm.source_risk_range": "aus der Risikospanne",
+  "p.ccpm.source_rule": "nach der Regel",
+  "p.ccpm.state_complete": "Beide angegeben",
+  "p.ccpm.state_derived": "Teilweise abgeleitet",
+  "p.ccpm.state_missing": "Eine Schätzung fehlt",
+  "p.ccpm.state_inconsistent": "Aggressiv über sicher",
+  "p.ccpm.state_milestone": "Ein Meilenstein, nicht geschätzt",
+  "p.ccpm.state_no_duration": "Keine Dauer, nicht geschätzt",
+  "p.ccpm.state_other": "Ein anderer Stand",
+  "p.ccpm.form": "Schätzungen einer Aufgabe erfassen",
+  "p.ccpm.f_task": "Aufgabe",
+  "p.ccpm.choose_task": "Aufgabe wählen",
+  "p.ccpm.f_aggressive": "Aggressiv, in Arbeitstagen",
+  "p.ccpm.f_safe": "Sicher, in Arbeitstagen",
+  "p.ccpm.save": "Schätzungen speichern",
+  "p.ccpm.unchanged": "Nichts geändert, daher nichts gesendet.",
+  "p.ccpm.saved": "Schätzungen für {title} gespeichert.",
+  "p.ccpm.cleared": "Erfasste Schätzungen für {title} geleert.",
+  "p.ccpm.confirm_clear":
+    "Die erfassten Schätzungen für {title} leeren? Ein Wert aus der Risikospanne oder der Regel kann weiter angezeigt werden.",
+  "p.ccpm.problem_task": "Wählen Sie eine Aufgabe.",
+  "p.ccpm.problem_aggressive":
+    "Die aggressive Schätzung ist eine ganze Zahl von Arbeitstagen von 1 bis {max}.",
+  "p.ccpm.problem_safe":
+    "Die sichere Schätzung ist eine ganze Zahl von Arbeitstagen von 1 bis {max}.",
+  "p.ccpm.problem_order":
+    "Die aggressive Schätzung darf nicht über der sicheren liegen.",
+  "p.ccpm.refused_invalid":
+    "Der Dienst hat diese Schätzungen nicht angenommen: Die Aufgabe hat vielleicht ihre Dauer verloren oder ist ein Meilenstein geworden.",
+  "p.ccpm.refused_gone":
+    "Diese Aufgabe ist weg, oder Sie können sie nicht mehr lesen.",
+  "p.ccpm.could_not_load": "Die Schätzungen konnten nicht gelesen werden.",
+  "p.ccpm.could_not_save": "Die Schätzungen konnten nicht gespeichert werden.",
+  "p.frozen.heading": "Der eingefrorene Pufferplan",
+  "p.frozen.none": "Es wurde noch kein Pufferplan eingefroren.",
+  "p.frozen.freeze_link": "Einen in der Pufferverwaltung einfrieren",
+  "p.frozen.taken": "Eingefroren am {date}; {rule}",
+  "p.frozen.table": "Puffer wie eingefroren",
+  "p.frozen.col_buffer": "Puffer",
+  "p.frozen.col_days": "Arbeitstage",
+  "p.frozen.col_chain": "Kette",
+  "p.frozen.col_finish": "Geplantes Ende",
+  "p.frozen.project": "Projektpuffer",
+  "p.frozen.feeding": "Zubringerpuffer in {joins}",
+  "p.frozen.unsized": "nicht bemessen",
+  "p.frozen.untitled": "Eine Aufgabe ohne Titel",
+  "p.frozen.history_one": "{n} Pufferplan eingefroren: {dates}.",
+  "p.frozen.history_other":
+    "{n} Pufferpläne eingefroren, neueste zuerst: {dates}.",
+  "p.frozen.could_not_load":
+    "Der eingefrorene Pufferplan konnte nicht gelesen werden.",
+  "p.workingtime.heading": "Arbeitstag und Arbeitswoche",
+  "p.workingtime.says":
+    "Wie lang ein Arbeitstag ist (1 Minute bis 24 Stunden) und an wie vielen Tagen pro Woche gearbeitet wird (1 bis 7), für diesen Plan oder als Standard der Organisation. Jeder Eintrag ist neu und lässt sich hier nicht ändern oder entfernen, daher wird zuerst gefragt; ein zweiter für diesen Plan wird abgelehnt.",
+  "p.workingtime.form": "Arbeitstag und Arbeitswoche festlegen",
+  "p.workingtime.f_scope": "Für",
+  "p.workingtime.scope_plan": "Diesen Plan",
+  "p.workingtime.scope_default": "Den Standard der Organisation",
+  "p.workingtime.f_hours": "Stunden pro Tag",
+  "p.workingtime.f_minutes": "Und Minuten",
+  "p.workingtime.f_days": "Tage pro Woche",
+  "p.workingtime.save": "Arbeitstag festlegen",
+  "p.workingtime.confirm_plan_one":
+    "Den Arbeitstag dieses Plans auf {day} festlegen, {days} Tag pro Woche? Danach lässt er sich hier nicht ändern.",
+  "p.workingtime.confirm_plan_other":
+    "Den Arbeitstag dieses Plans auf {day} festlegen, {days} Tage pro Woche? Danach lässt er sich hier nicht ändern.",
+  "p.workingtime.confirm_default_one":
+    "Den Standard-Arbeitstag der Organisation auf {day} festlegen, {days} Tag pro Woche? Danach lässt er sich hier nicht ändern.",
+  "p.workingtime.confirm_default_other":
+    "Den Standard-Arbeitstag der Organisation auf {day} festlegen, {days} Tage pro Woche? Danach lässt er sich hier nicht ändern.",
+  "p.workingtime.saved_one":
+    "Arbeitstag von {day} festgelegt, {days} Tag pro Woche.",
+  "p.workingtime.saved_other":
+    "Arbeitstag von {day} festgelegt, {days} Tage pro Woche.",
+  "p.workingtime.away_heading": "Abwesenheit von der Projektarbeit",
+  "p.workingtime.away_says":
+    "Urlaub, ein Feiertag, Bildungsurlaub oder eine Pflicht außerhalb des Projekts, für eine Person von einem ersten bis zu einem letzten Tag, damit diese Zeit nicht als Leerlauf gilt. Die Person ist eine Referenz wie person: und eine Kennung. Einmal erfasst, lässt sie sich nicht ändern oder entfernen, daher wird zuerst gefragt; eine leere Notiz wird nicht gesendet.",
+  "p.workingtime.f_person": "Referenz der Person",
+  "p.workingtime.f_starts": "Erster Tag",
+  "p.workingtime.f_ends": "Letzter Tag",
+  "p.workingtime.f_kind": "Art",
+  "p.workingtime.f_note": "Notiz (optional)",
+  "p.workingtime.record": "Abwesenheit erfassen",
+  "p.workingtime.confirm_away":
+    "{kind} für {person} erfassen, {range}? Danach lässt sich das nicht ändern oder entfernen.",
+  "p.workingtime.recorded": "{kind} für {person} erfasst, {range}.",
+  "p.workingtime.kind_leave": "Urlaub",
+  "p.workingtime.kind_holiday": "einen Feiertag",
+  "p.workingtime.kind_study_leave": "Bildungsurlaub",
+  "p.workingtime.kind_non_project_duty": "eine Pflicht außerhalb des Projekts",
+  "p.workingtime.problem_hours": "Stunden sind eine ganze Zahl von 0 bis 24.",
+  "p.workingtime.problem_minutes": "Minuten sind eine ganze Zahl von 0 bis 59.",
+  "p.workingtime.problem_day": "Ein Arbeitstag dauert 1 Minute bis 24 Stunden.",
+  "p.workingtime.problem_week":
+    "Tage pro Woche sind eine ganze Zahl von 1 bis 7.",
+  "p.workingtime.problem_person":
+    "Geben Sie die Person als person: oder worker: und eine Kennung an.",
+  "p.workingtime.problem_starts": "Geben Sie den ersten Tag an.",
+  "p.workingtime.problem_ends": "Geben Sie den letzten Tag an.",
+  "p.workingtime.problem_order":
+    "Der letzte Tag darf nicht vor dem ersten liegen.",
+  "p.workingtime.refused_exists":
+    "Für diesen Plan ist bereits ein Arbeitstag festgelegt, und er lässt sich hier nicht ersetzen.",
+  "p.workingtime.refused_working":
+    "Der Dienst hat diesen Arbeitstag nicht angenommen.",
+  "p.workingtime.refused_non_working":
+    "Der Dienst hat diese Abwesenheit nicht angenommen.",
+  "p.workingtime.refused_forbidden": "Sie dürfen das nicht erfassen.",
+  "p.workingtime.could_not_save": "Das konnte nicht erfasst werden.",
+  "p.task.is_hammock":
+    "Diese Aufgabe ist ein Sammelvorgang: Ihre Termine kommen aus den Aufgaben, die sie umfasst.",
+  "p.task.hammock_link": "Ihre Spanne auf dem kritischen Pfad ansehen",
 };

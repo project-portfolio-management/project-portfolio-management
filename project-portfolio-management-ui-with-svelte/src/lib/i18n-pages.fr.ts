@@ -8383,4 +8383,450 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.timereport.could_not_load": "Impossible de lire le rapport de temps.",
   "p.timereport.could_not_load_plans":
     "Impossible de lire les plans à choisir.",
+  "p.hammock.heading":
+    "Tâches hamac : des tâches de synthèse qui en couvrent d'autres",
+  "p.hammock.says":
+    "Une tâche hamac est une synthèse dont les dates viennent des tâches de ce plan qu'elle relie, du début le plus tôt à la fin la plus tardive. Elle n'est pas dans le réseau des dépendances, donc elle ne change jamais la marge d'une tâche ni la fin. Une tâche ne devient hamac que si elle n'a ni durée, ni travail, ni contrainte, ni dépendance, et son début prévu est effacé ; la redevenir tâche retire tous ses liens. Un hamac relie une tâche ou un autre hamac de ce plan, pas lui-même, pas deux fois et pas en boucle.",
+  "p.hammock.none": "Ce plan n'a pas de tâches hamac.",
+  "p.hammock.spans": "Couvre {range}.",
+  "p.hammock.no_links": "Pas encore de dates : il ne relie aucune tâche.",
+  "p.hammock.members_unscheduled":
+    "Pas encore de dates : aucune des tâches qu'il relie n'a de dates.",
+  "p.hammock.untitled": "Une tâche sans titre",
+  "p.hammock.member_hammock": "{title} (un hamac)",
+  "p.hammock.unmake_named": "Refaire de {title} une tâche",
+  "p.hammock.unlink": "Retirer le lien",
+  "p.hammock.unlink_named": "Retirer le lien de {hammock} vers {title}",
+  "p.hammock.make_form": "Faire d'une tâche un hamac",
+  "p.hammock.f_task": "Tâche",
+  "p.hammock.choose_task": "Choisissez une tâche",
+  "p.hammock.make": "En faire un hamac",
+  "p.hammock.link_form": "Relier un hamac à une tâche",
+  "p.hammock.f_hammock": "Hamac",
+  "p.hammock.choose_hammock": "Choisissez un hamac",
+  "p.hammock.f_member": "Tâche couverte",
+  "p.hammock.choose_member": "Choisissez une tâche à couvrir",
+  "p.hammock.link": "Ajouter le lien",
+  "p.hammock.confirm_make":
+    "Faire de {title} un hamac ? Son début prévu est effacé, et ses dates viennent ensuite des tâches qu'il relie.",
+  "p.hammock.confirm_unmake_one":
+    "Refaire de {title} une tâche ? Son {n} lien disparaît.",
+  "p.hammock.confirm_unmake_other":
+    "Refaire de {title} une tâche ? Ses {n} liens disparaissent.",
+  "p.hammock.confirm_unlink":
+    "Retirer le lien de {hammock} vers {title} ? La tâche elle-même ne change pas.",
+  "p.hammock.made": "{title} est désormais un hamac.",
+  "p.hammock.unmade": "{title} est de nouveau une tâche.",
+  "p.hammock.linked": "{hammock} couvre désormais {title}.",
+  "p.hammock.unlinked": "{hammock} ne couvre plus {title}.",
+  "p.hammock.problem_choose_task":
+    "Choisissez une tâche à transformer en hamac.",
+  "p.hammock.problem_carries_work":
+    "Cette tâche a une durée, du travail ou une contrainte : effacez-les d'abord dans le planning.",
+  "p.hammock.problem_has_dependencies":
+    "Cette tâche a des dépendances : retirez-les d'abord, car un hamac n'en prend aucune.",
+  "p.hammock.problem_choose_hammock": "Choisissez un hamac.",
+  "p.hammock.problem_choose_member":
+    "Choisissez une tâche que le hamac couvrira.",
+  "p.hammock.problem_self": "Un hamac ne peut pas se couvrir lui-même.",
+  "p.hammock.problem_linked": "Ce hamac couvre déjà cette tâche.",
+  "p.hammock.problem_loop":
+    "Ce hamac-là couvre déjà celui-ci, le lien ferait donc une boucle.",
+  "p.hammock.refused_make":
+    "Le service n'a pas fait de cette tâche un hamac : elle a encore une durée, du travail, une contrainte ou une dépendance.",
+  "p.hammock.refused_link":
+    "Le service n'a pas ajouté le lien : la tâche n'est peut-être plus dans ce plan, déjà couverte, ou dans une boucle.",
+  "p.hammock.refused_gone":
+    "La tâche ou le hamac n'existe plus, ou vous ne pouvez plus le lire.",
+  "p.hammock.refused_link_gone": "Ce lien n'existe déjà plus.",
+  "p.hammock.could_not_load": "Impossible de lire les tâches hamac.",
+  "p.hammock.could_not_save": "Impossible de modifier le hamac.",
+  "p.crossplan.heading": "Tâches des plans liés",
+  "p.crossplan.says":
+    "Voici les tâches d'autres plans que vous pouvez lire et auxquelles des tâches de ce plan sont liées, planifiées selon le calendrier de leur propre plan. Une barre en pointillés est une tâche hors du chemin critique ; une barre pleine et un losange en marquent une dessus.",
+  "p.crossplan.network_finish":
+    "Avec les plans liés, le réseau se termine le {date}.",
+  "p.crossplan.truncated":
+    "Tous les plans liés ne sont pas affichés : le réseau a atteint sa limite de plans ou de tâches.",
+  "p.crossplan.links_heading": "Liens qui passent dans un autre plan",
+  "p.crossplan.lag": "décalage de {days} jours ouvrés",
+  "p.crossplan.timeline": "Tâches de {plan} sur une frise",
+  "p.crossplan.table": "Dates des tâches des plans liés",
+  "p.crossplan.col_task": "Tâche",
+  "p.crossplan.col_plan": "Projet",
+  "p.crossplan.col_start": "Début au plus tôt",
+  "p.crossplan.col_finish": "Fin au plus tôt",
+  "p.crossplan.col_critical": "Sur le chemin critique",
+  "p.crossplan.yes": "Oui",
+  "p.crossplan.no": "Non",
+  "p.crossplan.untitled": "Une tâche sans titre",
+  "p.crossplan.kind_fs": "fin à début",
+  "p.crossplan.kind_ss": "début à début",
+  "p.crossplan.kind_ff": "fin à fin",
+  "p.crossplan.kind_sf": "début à fin",
+  "p.crossplan.task_heading": "Dépendances, dans ce plan ou un autre",
+  "p.crossplan.task_says":
+    "Une dépendance relie cette tâche à une tâche d'un autre plan que vous pouvez lire. Son type est fin à début sauf autre choix ; son décalage est un nombre entier de jours ouvrés de moins {max} à {max}, un décalage négatif étant une avance. Une dépendance n'est pas créée deux fois dans le même sens, ni en boucle entre plans, ni avec un hamac. Une dont vous ne pouvez pas lire l'autre extrémité est comptée, jamais nommée, et reste hors du planning.",
+  "p.crossplan.no_links": "Cette tâche n'a pas encore de dépendances.",
+  "p.crossplan.this_before": "Cette tâche vient avant {other}",
+  "p.crossplan.this_after": "Cette tâche vient après {other}",
+  "p.crossplan.end_own": "{title}, dans ce plan",
+  "p.crossplan.end_external": "{title}, dans {plan}",
+  "p.crossplan.end_unnamed": "une tâche non nommée ici ({ref})",
+  "p.crossplan.remove": "Retirer",
+  "p.crossplan.remove_named": "Retirer la dépendance envers {other}",
+  "p.crossplan.restricted_one":
+    "{n} autre dépendance relie à une tâche que vous ne pouvez pas lire.",
+  "p.crossplan.restricted_other":
+    "{n} autres dépendances relient à des tâches que vous ne pouvez pas lire.",
+  "p.crossplan.see_network": "Voir le planning entre les plans",
+  "p.crossplan.form": "Ajouter une dépendance envers une tâche d'un autre plan",
+  "p.crossplan.f_order": "Ordre",
+  "p.crossplan.order_before": "Cette tâche vient d'abord",
+  "p.crossplan.order_after": "L'autre tâche vient d'abord",
+  "p.crossplan.f_plan": "Autre plan",
+  "p.crossplan.choose_plan": "Choisissez un plan",
+  "p.crossplan.f_task": "Tâche de ce plan",
+  "p.crossplan.choose_task": "Choisissez une tâche",
+  "p.crossplan.f_kind": "Type de dépendance",
+  "p.crossplan.f_lag": "Décalage en jours ouvrés (0 si vide)",
+  "p.crossplan.add": "Ajouter la dépendance",
+  "p.crossplan.added": "Dépendance envers {title} ajoutée.",
+  "p.crossplan.removed": "Dépendance retirée.",
+  "p.crossplan.confirm_remove_before":
+    "Retirer la dépendance : {task} vient avant {other} ? Aucune des deux tâches ne change.",
+  "p.crossplan.confirm_remove_after":
+    "Retirer la dépendance : {task} vient après {other} ? Aucune des deux tâches ne change.",
+  "p.crossplan.problem_plan": "Choisissez l'autre plan.",
+  "p.crossplan.problem_task": "Choisissez une tâche de ce plan.",
+  "p.crossplan.problem_lag":
+    "Un décalage est un nombre entier de jours ouvrés de moins {max} à {max}.",
+  "p.crossplan.problem_self": "Une tâche ne peut pas dépendre d'elle-même.",
+  "p.crossplan.problem_exists": "Cette dépendance existe déjà.",
+  "p.crossplan.refused_unreadable":
+    "L'une des deux tâches n'existe plus, ou vous ne pouvez pas la lire.",
+  "p.crossplan.refused_exists": "Cette dépendance existe déjà.",
+  "p.crossplan.refused_add":
+    "Le service n'a pas ajouté la dépendance : elle existe peut-être déjà, ferait une boucle ou relie un hamac.",
+  "p.crossplan.refused_gone":
+    "Cette dépendance n'existe déjà plus, ou vous ne pouvez plus lire les deux tâches.",
+  "p.crossplan.could_not_load":
+    "Impossible de lire les dépendances de cette tâche.",
+  "p.crossplan.could_not_load_plans":
+    "Impossible de lire les plans parmi lesquels choisir.",
+  "p.crossplan.could_not_load_tasks":
+    "Impossible de lire les tâches de ce plan.",
+  "p.crossplan.could_not_save": "Impossible de modifier la dépendance.",
+  "p.taskrollup.heading": "Sous-tâches agrégées",
+  "p.taskrollup.says":
+    "Calculé à chaque fois à partir des sous-tâches de cette tâche, jamais stocké : l'échéance la plus tardive parmi elles, leurs points additionnés, l'avancement pondéré par les seules sous-tâches estimées, et le temps saisi sur l'ensemble.",
+  "p.taskrollup.subtasks": "Sous-tâches",
+  "p.taskrollup.done_of_one": "{done} sur {n} terminée",
+  "p.taskrollup.done_of_other": "{done} sur {n} terminées",
+  "p.taskrollup.due": "Échéance la plus tardive",
+  "p.taskrollup.points": "Points additionnés",
+  "p.taskrollup.progress": "Avancement",
+  "p.taskrollup.spent": "Temps saisi",
+  "p.taskrollup.no_children": "Cette tâche n'a pas de sous-tâches.",
+  "p.taskrollup.no_dated_children": "Aucune de ses sous-tâches n'a d'échéance.",
+  "p.taskrollup.no_estimates": "Aucune de ses sous-tâches n'est estimée.",
+  "p.taskrollup.absent": "Inconnu.",
+  "p.taskrollup.unestimated_one":
+    "{n} sous-tâche n'a pas d'estimation, elle reste donc hors de l'avancement (pas comptée comme zéro) :",
+  "p.taskrollup.unestimated_other":
+    "{n} sous-tâches n'ont pas d'estimation, elles restent donc hors de l'avancement (pas comptées comme zéro) :",
+  "p.taskrollup.unnamed": "Une sous-tâche non nommée ici ({ref})",
+  "p.taskrollup.refused_gone":
+    "Cette tâche n'existe plus, ou vous ne pouvez plus la lire.",
+  "p.taskrollup.could_not_load": "Impossible de lire les sous-tâches agrégées.",
+  "p.readings.heading": "Plus sur ce plan",
+  "p.readings.says":
+    "Chacune de ces lectures n'est faite que lorsque vous la demandez.",
+  "p.readings.read": "Lire",
+  "p.readings.could_not_read": "Impossible de lire ceci.",
+  "p.readings.not_measured": "non mesuré",
+  "p.readings.days": "{n} jours",
+  "p.readings.rollup_heading": "Flux dans les plans qu'il contient",
+  "p.readings.rollup_says":
+    "Les tâches de ce plan et de chaque plan en dessous, comptées ensemble et non moyennées ; jusqu'à {max} niveaux si laissé vide.",
+  "p.readings.f_depth": "Niveaux en dessous",
+  "p.readings.rollup_plans_one": "{n} plan compté.",
+  "p.readings.rollup_plans_other": "{n} plans comptés.",
+  "p.readings.rollup_tasks_one":
+    "{n} tâche : {finished} terminées, {wip} en cours, {not_started} non commencées.",
+  "p.readings.rollup_tasks_other":
+    "{n} tâches : {finished} terminées, {wip} en cours, {not_started} non commencées.",
+  "p.readings.rollup_times":
+    "La plupart du travail (85 sur 100) s'est terminé en {cycle} après son début et en {lead} après la demande ; temps passé à travailler plutôt qu'à attendre : {efficiency}.",
+  "p.readings.rollup_truncated":
+    "Tous les plans en dessous n'ont pas été comptés : le parcours a atteint sa limite.",
+  "p.readings.rollup_revisits_one":
+    "{n} plan est atteint deux fois et compté une fois.",
+  "p.readings.rollup_revisits_other":
+    "{n} plans sont atteints deux fois et comptés une fois.",
+  "p.readings.rollup_table": "Flux par plan",
+  "p.readings.col_plan": "Projet",
+  "p.readings.col_depth": "Niveau",
+  "p.readings.col_tasks": "Tâches",
+  "p.readings.col_finished": "Terminées",
+  "p.readings.col_wip": "En cours",
+  "p.readings.col_efficiency": "Temps à travailler plutôt qu'à attendre",
+  "p.readings.effort_heading": "Temps saisi",
+  "p.readings.effort_says":
+    "Le temps que les personnes ont saisi sur ce plan, tel qu'elles l'ont déclaré ; rien ne le vérifie.",
+  "p.readings.read_effort": "Lire le temps saisi",
+  "p.readings.effort_none": "Aucun temps n'est saisi sur ce plan.",
+  "p.readings.effort_total": "{total} saisi, dont {billable} facturable.",
+  "p.readings.effort_split":
+    "Dépenses d'investissement {capex}, dépenses de fonctionnement {opex}, non classé {unclassified}.",
+  "p.readings.effort_by_person": "Temps par personne",
+  "p.readings.effort_by_task": "Temps par tâche",
+  "p.readings.col_person": "Personne",
+  "p.readings.col_time": "Temps",
+  "p.readings.col_billable": "Facturable",
+  "p.readings.col_task": "Tâche",
+  "p.readings.task_unnamed": "Une tâche non nommée ici ({ref})",
+  "p.readings.forecast_heading": "Prévision de livraison",
+  "p.readings.forecast_says":
+    "Dix mille tirages à partir de ce que ce plan a terminé à chaque période passée : combien de temps le travail ouvert peut prendre, et combien peut être fait en un nombre de périodes. Une case vide est la valeur par défaut ; il faut au moins six périodes d'historique.",
+  "p.readings.f_items": "Éléments à terminer (les ouverts si vide)",
+  "p.readings.f_periods": "Périodes à venir ({n} si vide)",
+  "p.readings.f_period_days": "Jours par période ({n} si vide)",
+  "p.readings.f_history": "Périodes d'historique ({n} si vide)",
+  "p.readings.read_forecast": "Lire la prévision",
+  "p.readings.forecast_history_one": "Tiré de {n} période de {days} jours.",
+  "p.readings.forecast_history_other": "Tiré de {n} périodes de {days} jours.",
+  "p.readings.forecast_batch_one":
+    "{n} élément : la moitié des tirages se terminent en {p50} jours, 85 sur 100 en {p85} jours et 95 sur 100 en {p95} jours.",
+  "p.readings.forecast_batch_other":
+    "{n} éléments : la moitié des tirages se terminent en {p50} jours, 85 sur 100 en {p85} jours et 95 sur 100 en {p95} jours.",
+  "p.readings.forecast_no_batch":
+    "La durée du travail ne peut être prévue : l'historique est trop court, ou rien n'y a été terminé.",
+  "p.readings.forecast_horizon":
+    "Dans les {days} prochains jours, environ {median} éléments peuvent être faits : au moins {least} dans 85 tirages sur 100, et au plus {most}.",
+  "p.readings.forecast_no_horizon":
+    "La quantité réalisable ne peut être prévue : l'historique est trop court, ou rien n'y a été terminé.",
+  "p.readings.performance_heading": "Délais, coûts et parties prenantes",
+  "p.readings.performance_says":
+    "La performance des délais est le travail fait par rapport au travail prévu jusqu'ici, et celle des coûts le travail fait par rapport à ce qu'il a coûté ; au-dessus de 100 % est mieux que prévu. Le score des parties prenantes va de moins 100 à 100.",
+  "p.readings.read_performance": "Lire la performance",
+  "p.readings.schedule": "Performance des délais",
+  "p.readings.cost": "Performance des coûts",
+  "p.readings.stakeholders": "Score des parties prenantes",
+  "p.readings.nps_one":
+    "{score}, sur {n} réponse ({promoters} promoteurs, {detractors} détracteurs)",
+  "p.readings.nps_other":
+    "{score}, sur {n} réponses ({promoters} promoteurs, {detractors} détracteurs)",
+  "p.readings.nps_none": "Pas encore de réponses.",
+  "p.readings.earned_value_link": "Voir la valeur acquise en entier",
+  "p.readings.absent_no_baseline":
+    "Non mesuré : le plan n'a pas de référence budgétaire.",
+  "p.readings.absent_no_weighted_tasks":
+    "Non mesuré : aucune tâche n'a de poids.",
+  "p.readings.absent_not_yet_defined":
+    "Pas encore mesuré : rien n'a été prévu ni dépensé jusqu'ici.",
+  "p.readings.absent_several_currencies":
+    "Pas de chiffre unique : le plan a des budgets en plusieurs devises ; voir la valeur acquise.",
+  "p.readings.absent_other": "Non mesuré.",
+  "p.readings.workflow_heading": "Flux de travail des tâches",
+  "p.readings.read_workflow": "Lire le flux de travail des tâches",
+  "p.readings.workflow_plan":
+    "Ce plan a son propre flux de travail des tâches.",
+  "p.readings.workflow_built_in":
+    "Ce plan utilise le flux de travail des tâches intégré.",
+  "p.readings.workflow_constrained": "Seuls les passages listés sont permis.",
+  "p.readings.workflow_free":
+    "Une tâche peut passer de n'importe quel état à n'importe quel autre.",
+  "p.readings.cat_todo": "non commencé",
+  "p.readings.cat_active": "en cours",
+  "p.readings.cat_waiting": "en attente",
+  "p.readings.cat_done": "terminé",
+  "p.readings.cat_other": "un autre type",
+  "p.readings.initial": "où une tâche commence",
+  "p.readings.terminal": "où une tâche finit",
+  "p.readings.wip_limit": "au plus {n} à la fois",
+  "p.readings.anyone": "tout le monde",
+  "p.readings.roles": "rôles : {roles}",
+  "p.readings.problem_depth":
+    "Les niveaux en dessous sont un nombre entier de 1 à {max}.",
+  "p.readings.problem_depth_zero":
+    "Les niveaux en dessous sont un nombre entier de 0 à {max}.",
+  "p.readings.problem_items":
+    "Les éléments à terminer sont un nombre entier d'au moins 1.",
+  "p.readings.problem_periods":
+    "Les périodes à venir sont un nombre entier de 1 à 520.",
+  "p.readings.problem_period_days":
+    "Les jours par période sont un nombre entier de 1 à 90.",
+  "p.readings.problem_history":
+    "Les périodes d'historique sont un nombre entier de 6 à 260.",
+  "p.readings.problem_window":
+    "La fenêtre est un nombre entier de jours de 1 à 3650.",
+  "p.readings.refused_query": "Le service n'a pas accepté cette demande.",
+  "p.readings.refused_module": "Cette partie du plan est désactivée.",
+  "p.readings.refused_gone":
+    "Ce plan n'existe plus, ou vous ne pouvez plus le lire.",
+  "p.readings.flow_feature": "Nouvelles fonctions",
+  "p.readings.flow_defect": "Défauts",
+  "p.readings.flow_risk": "Travail sur les risques",
+  "p.readings.flow_debt": "Dette technique",
+  "p.readings.flow_unclassified": "Non classé",
+  "p.readings.flow_other": "Un autre type",
+  "p.flowmix.heading": "La répartition du travail terminé",
+  "p.flowmix.says":
+    "Comment le travail terminé dans une fenêtre se répartit entre nouvelles fonctions, défauts, travail sur les risques et dette technique, par rapport à la répartition visée par le plan s'il en a déclaré une. La fenêtre est de {n} jours si laissée vide.",
+  "p.flowmix.f_window": "Jours en arrière ({n} si vide)",
+  "p.flowmix.f_rollup": "Inclure les plans qu'il contient",
+  "p.flowmix.f_depth": "Niveaux en dessous ({max} si vide)",
+  "p.flowmix.read": "Lire la répartition",
+  "p.flowmix.window_one": "Travail terminé le dernier {n} jour.",
+  "p.flowmix.window_other": "Travail terminé les {n} derniers jours.",
+  "p.flowmix.plans_one": "{n} plan compté.",
+  "p.flowmix.plans_other": "{n} plans comptés.",
+  "p.flowmix.truncated":
+    "Tous les plans en dessous n'ont pas été comptés : le parcours a atteint sa limite.",
+  "p.flowmix.none": "Aucun travail n'a été terminé dans cette fenêtre.",
+  "p.flowmix.no_intent":
+    "Le plan ne déclare pas de répartition visée, il n'y a donc rien à comparer.",
+  "p.flowmix.table": "Travail terminé par type",
+  "p.flowmix.col_kind": "Type de travail",
+  "p.flowmix.col_count": "Terminé",
+  "p.flowmix.col_share": "Part",
+  "p.flowmix.col_intended": "Part visée",
+  "p.flowmix.col_gap": "Écart",
+  "p.ccpm.heading": "Estimations agressive et sûre",
+  "p.ccpm.says":
+    "Pour la chaîne critique, chaque tâche a besoin d'une estimation agressive (environ une chance sur deux) et d'une sûre, en jours ouvrés entiers de 1 à {max}, l'agressive pas au-dessus de la sûre. Un chiffre affiché est celui saisi, sinon celui de la plage de risque, sinon celui que dérive la règle de l'installation, et chacun dit lequel. Un jalon et une tâche sans durée ne sont pas estimés. Vider les deux retire ce qui est saisi.",
+  "p.ccpm.rule_explicit_only":
+    "Règle : seules les estimations données servent ; rien n'est dérivé.",
+  "p.ccpm.rule_half_of_safe":
+    "Règle : une estimation sûre manquante est la durée de la tâche, et une agressive manquante la moitié de la sûre.",
+  "p.ccpm.rule_other": "Règle : une que cette page ne connaît pas.",
+  "p.ccpm.rule_unusable":
+    "Le réglage de la règle de l'installation est illisible, seules les estimations données servent donc.",
+  "p.ccpm.attention_one": "{n} tâche a besoin de ses estimations.",
+  "p.ccpm.attention_other": "{n} tâches ont besoin de leurs estimations.",
+  "p.ccpm.more": "Les {shown} premières tâches sur {total} sont affichées.",
+  "p.ccpm.no_tasks": "Ce plan n'a pas de tâches à estimer.",
+  "p.ccpm.table": "Estimations par tâche",
+  "p.ccpm.col_task": "Tâche",
+  "p.ccpm.col_likely": "Durée en jours ouvrés",
+  "p.ccpm.col_aggressive": "Agressive",
+  "p.ccpm.col_safe": "Sûre",
+  "p.ccpm.col_state": "Situation",
+  "p.ccpm.figure": "{days} jours, {source}",
+  "p.ccpm.none": "aucune",
+  "p.ccpm.source_recorded": "saisie",
+  "p.ccpm.source_risk_range": "de la plage de risque",
+  "p.ccpm.source_rule": "par la règle",
+  "p.ccpm.state_complete": "Les deux données",
+  "p.ccpm.state_derived": "En partie dérivée",
+  "p.ccpm.state_missing": "Une estimation manque",
+  "p.ccpm.state_inconsistent": "Agressive au-dessus de la sûre",
+  "p.ccpm.state_milestone": "Un jalon, non estimé",
+  "p.ccpm.state_no_duration": "Sans durée, non estimée",
+  "p.ccpm.state_other": "Une autre situation",
+  "p.ccpm.form": "Saisir les estimations d'une tâche",
+  "p.ccpm.f_task": "Tâche",
+  "p.ccpm.choose_task": "Choisissez une tâche",
+  "p.ccpm.f_aggressive": "Agressive, en jours ouvrés",
+  "p.ccpm.f_safe": "Sûre, en jours ouvrés",
+  "p.ccpm.save": "Enregistrer les estimations",
+  "p.ccpm.unchanged": "Rien n'a changé, donc rien n'a été envoyé.",
+  "p.ccpm.saved": "Estimations de {title} enregistrées.",
+  "p.ccpm.cleared": "Estimations saisies pour {title} vidées.",
+  "p.ccpm.confirm_clear":
+    "Vider les estimations saisies pour {title} ? Un chiffre de la plage de risque ou de la règle peut encore s'afficher.",
+  "p.ccpm.problem_task": "Choisissez une tâche.",
+  "p.ccpm.problem_aggressive":
+    "L'estimation agressive est un nombre entier de jours ouvrés de 1 à {max}.",
+  "p.ccpm.problem_safe":
+    "L'estimation sûre est un nombre entier de jours ouvrés de 1 à {max}.",
+  "p.ccpm.problem_order":
+    "L'estimation agressive ne peut pas dépasser la sûre.",
+  "p.ccpm.refused_invalid":
+    "Le service n'a pas accepté ces estimations : la tâche a peut-être perdu sa durée ou est devenue un jalon.",
+  "p.ccpm.refused_gone":
+    "Cette tâche n'existe plus, ou vous ne pouvez plus la lire.",
+  "p.ccpm.could_not_load": "Impossible de lire les estimations.",
+  "p.ccpm.could_not_save": "Impossible d'enregistrer les estimations.",
+  "p.frozen.heading": "Le plan de tampons figé",
+  "p.frozen.none": "Aucun plan de tampons n'a encore été figé.",
+  "p.frozen.freeze_link": "En figer un dans la gestion des tampons",
+  "p.frozen.taken": "Figé le {date} ; {rule}",
+  "p.frozen.table": "Tampons tels que figés",
+  "p.frozen.col_buffer": "Tampon",
+  "p.frozen.col_days": "Jours ouvrés",
+  "p.frozen.col_chain": "Chaîne",
+  "p.frozen.col_finish": "Fin prévue",
+  "p.frozen.project": "Tampon du projet",
+  "p.frozen.feeding": "Tampon d'alimentation vers {joins}",
+  "p.frozen.unsized": "non dimensionné",
+  "p.frozen.untitled": "Une tâche sans titre",
+  "p.frozen.history_one": "{n} plan de tampons figé : {dates}.",
+  "p.frozen.history_other":
+    "{n} plans de tampons figés, le plus récent d'abord : {dates}.",
+  "p.frozen.could_not_load": "Impossible de lire le plan de tampons figé.",
+  "p.workingtime.heading": "La journée et la semaine de travail",
+  "p.workingtime.says":
+    "La durée d'une journée de travail (1 minute à 24 heures) et le nombre de jours travaillés par semaine (1 à 7), pour ce plan ou comme valeur par défaut de l'organisation. Chacune est un nouvel enregistrement qui ne peut être ni modifié ni retiré ici, la question est donc posée d'abord ; une seconde pour ce plan est refusée.",
+  "p.workingtime.form": "Fixer la journée et la semaine de travail",
+  "p.workingtime.f_scope": "Pour",
+  "p.workingtime.scope_plan": "Ce plan",
+  "p.workingtime.scope_default": "La valeur par défaut de l'organisation",
+  "p.workingtime.f_hours": "Heures par jour",
+  "p.workingtime.f_minutes": "Et minutes",
+  "p.workingtime.f_days": "Jours par semaine",
+  "p.workingtime.save": "Fixer la journée de travail",
+  "p.workingtime.confirm_plan_one":
+    "Fixer la journée de travail de ce plan à {day}, {days} jour par semaine ? Elle ne pourra plus être modifiée ici.",
+  "p.workingtime.confirm_plan_other":
+    "Fixer la journée de travail de ce plan à {day}, {days} jours par semaine ? Elle ne pourra plus être modifiée ici.",
+  "p.workingtime.confirm_default_one":
+    "Fixer la journée de travail par défaut de l'organisation à {day}, {days} jour par semaine ? Elle ne pourra plus être modifiée ici.",
+  "p.workingtime.confirm_default_other":
+    "Fixer la journée de travail par défaut de l'organisation à {day}, {days} jours par semaine ? Elle ne pourra plus être modifiée ici.",
+  "p.workingtime.saved_one":
+    "Journée de travail de {day} fixée, {days} jour par semaine.",
+  "p.workingtime.saved_other":
+    "Journée de travail de {day} fixée, {days} jours par semaine.",
+  "p.workingtime.away_heading": "Absences du travail du projet",
+  "p.workingtime.away_says":
+    "Un congé, un jour férié, un congé de formation ou une mission hors du projet, pour une personne d'un premier à un dernier jour, afin que ce temps ne soit pas lu comme inactif. La personne est une référence comme person: et un identifiant. Une fois saisie, l'absence ne peut être ni modifiée ni retirée, la question est donc posée d'abord ; une note vide n'est pas envoyée.",
+  "p.workingtime.f_person": "Référence de la personne",
+  "p.workingtime.f_starts": "Premier jour",
+  "p.workingtime.f_ends": "Dernier jour",
+  "p.workingtime.f_kind": "Type",
+  "p.workingtime.f_note": "Note (facultative)",
+  "p.workingtime.record": "Saisir l'absence",
+  "p.workingtime.confirm_away":
+    "Saisir {kind} pour {person}, {range} ? Elle ne pourra plus être modifiée ni retirée.",
+  "p.workingtime.recorded": "{kind} saisi pour {person}, {range}.",
+  "p.workingtime.kind_leave": "un congé",
+  "p.workingtime.kind_holiday": "un jour férié",
+  "p.workingtime.kind_study_leave": "un congé de formation",
+  "p.workingtime.kind_non_project_duty": "une mission hors du projet",
+  "p.workingtime.problem_hours": "Les heures sont un nombre entier de 0 à 24.",
+  "p.workingtime.problem_minutes":
+    "Les minutes sont un nombre entier de 0 à 59.",
+  "p.workingtime.problem_day":
+    "Une journée de travail va de 1 minute à 24 heures.",
+  "p.workingtime.problem_week":
+    "Les jours par semaine sont un nombre entier de 1 à 7.",
+  "p.workingtime.problem_person":
+    "Indiquez la personne sous la forme person: ou worker: et un identifiant.",
+  "p.workingtime.problem_starts": "Indiquez le premier jour.",
+  "p.workingtime.problem_ends": "Indiquez le dernier jour.",
+  "p.workingtime.problem_order":
+    "Le dernier jour ne peut pas précéder le premier.",
+  "p.workingtime.refused_exists":
+    "Ce plan a déjà une journée de travail fixée, et elle ne peut pas être remplacée ici.",
+  "p.workingtime.refused_working":
+    "Le service n'a pas accepté cette journée de travail.",
+  "p.workingtime.refused_non_working":
+    "Le service n'a pas accepté cette absence.",
+  "p.workingtime.refused_forbidden": "Vous ne pouvez pas saisir ceci.",
+  "p.workingtime.could_not_save": "Impossible de saisir ceci.",
+  "p.task.is_hammock":
+    "Cette tâche est un hamac : ses dates viennent des tâches qu'elle couvre.",
+  "p.task.hammock_link": "Voir son étendue sur le chemin critique",
 };

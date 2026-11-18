@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (NC-1 slice 12 part i: scheduling, the rest)
+
+- **UI:** hammocks, the tasks of linked plans drawn and the plan's readings (flow across contained plans, time
+  recorded, the delivery forecast, performance, the task workflow) on the critical path; a task's dependencies on other
+  plans and its sub-tasks rolled up on its page; aggressive and safe estimates and the frozen buffer plan on the
+  critical chain; the working day and time away on the calendar; the mix of finished work on flow (PJ-7, PJ-13, LT-10,
+  CC-2, CC-3, RM-5, SC-4). Every rule said and checked first; each refusal in the catalogue's words; translations
+  machine-written and unreviewed. **Service gaps:** one 422 code with English text for each of the hammock,
+  dependency, estimate, working-time and time-away refusals; no names on `GET /api/dependencies`; an unchecked
+  `person_ref`; a bad flow window read as 90 days. **Not verified:** against a real service.
+
 ### 18 November (the "contrast flake" was a real first-paint contrast failure)
 
 - **UI:** the muted text colour's first-paint fallback mixed to 3.75:1 (needs 4.5:1), which axe caught whenever it ran

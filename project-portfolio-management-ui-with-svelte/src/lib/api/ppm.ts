@@ -321,8 +321,26 @@ import type {
   TimeEntryBody,
   TimeReport,
   TimeReportQuery,
+  BufferPlan,
+  CcpmEstimateBody,
+  CcpmEstimates,
+  DeliveryForecast,
+  DeliveryForecastQuery,
+  DependencyBody,
+  DependencyRow,
+  FlowDistribution,
+  FlowDistributionQuery,
+  HammockList,
+  HammockSet,
+  NonWorkingBody,
+  PlanEffort,
+  PlanFlowRollup,
+  PlanPerformance,
+  PlanWorkflow,
+  TaskRollup,
+  WorkingTimeBody,
 } from "./ppm-types";
-import { timeReportSearch } from "./ppm-types";
+import { readingSearch, timeReportSearch } from "./ppm-types";
 
 export * from "./ppm-types";
 
@@ -2685,6 +2703,118 @@ export class PpmClient {
     for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
     const qs = q.toString();
     return this.http.get(`/api/work-profile${qs ? `?${qs}` : ""}`);
+  }
+
+  // ---- scheduling, the rest (PJ-7, PJ-13, LT-10, CC-2, CC-3, RM-5, SC-4; NC-1 slice 12 part i) ----
+  /** Each hammock of the plan with the span derived from its links (PJ-7). */
+  hammocks(pid: string): Promise<HammockList> {
+    return this.http.get(`/api/plans/${pid}/hammocks`);
+  }
+  /** Make a task a hammock, or a hammock a task again (which removes its links); 422 for a task that carries work. */
+  setHammock(
+    pid: string,
+    taskPid: string,
+    enabled: boolean,
+  ): Promise<HammockSet> {
+    return this.http.post(`/api/plans/${pid}/tasks/${taskPid}/hammock`, {
+      body: { enabled },
+    });
+  }
+  /** Link a hammock to a task (or a hammock) of the same plan; 422 for any of four refusals, told apart only in English. */
+  linkHammock(
+    pid: string,
+    hammockPid: string,
+    memberPid: string,
+  ): Promise<{ pid: string }> {
+    return this.http.post(`/api/plans/${pid}/hammocks/${hammockPid}/links`, {
+      body: { member_pid: memberPid },
+    });
+  }
+  /** Remove a hammock's link to `memberPid` (the task's pid, not the link's); 404 when there is none. */
+  unlinkHammock(
+    pid: string,
+    hammockPid: string,
+    memberPid: string,
+  ): Promise<void> {
+    return this.http.delete(
+      `/api/plans/${pid}/hammocks/${hammockPid}/links/${memberPid}`,
+    );
+  }
+  /** The links touching one task or plan (PJ-13); one whose other end the caller cannot read is opaque. */
+  dependencies(item: string): Promise<DependencyRow[]> {
+    return this.http.get(`/api/dependencies?item=${encodeURIComponent(item)}`);
+  }
+  /** Link two tasks, of any plans the caller can read both of; 404 when either is gone or unreadable. */
+  addDependency(body: DependencyBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/dependencies`, { body });
+  }
+  /** Remove a link; 404 when it is gone or an end is unreadable. */
+  removeDependency(depPid: string): Promise<void> {
+    return this.http.delete(`/api/dependencies/${depPid}`);
+  }
+  /** A task's sub-tasks rolled up (RM-5), derived on read. */
+  taskRollup(pid: string, taskPid: string): Promise<TaskRollup> {
+    return this.http.get(`/api/plans/${pid}/tasks/${taskPid}/rollup`);
+  }
+  /** Flow across a plan and the plans it contains (TBA-9); a left-out depth is 32. */
+  planFlowRollup(pid: string, depth?: number): Promise<PlanFlowRollup> {
+    return this.http.get(`/api/plans/${pid}/rollup${readingSearch({ depth })}`);
+  }
+  /** The plan's recorded effort per plan, assignee and task, as people asserted it. */
+  planEffort(pid: string): Promise<PlanEffort> {
+    return this.http.get(`/api/plans/${pid}/effort`);
+  }
+  /** How long the plan's open work may take and how much may land (TBA-11); left-out values are the defaults. */
+  deliveryForecast(
+    pid: string,
+    q: DeliveryForecastQuery = {},
+  ): Promise<DeliveryForecast> {
+    return this.http.get(
+      `/api/plans/${pid}/forecast${readingSearch({ items: q.items, periods: q.periods, period_days: q.period_days, history_periods: q.history_periods })}`,
+    );
+  }
+  /** Schedule and cost performance and the stakeholder score (SC-4). */
+  planPerformance(pid: string): Promise<PlanPerformance> {
+    return this.http.get(`/api/plans/${pid}/performance`);
+  }
+  /** The mix of finished work by kind; 90 days and no roll-up are the defaults, not sent. */
+  flowDistribution(
+    pid: string,
+    q: FlowDistributionQuery = {},
+  ): Promise<FlowDistribution> {
+    return this.http.get(
+      `/api/plans/${pid}/flow-distribution${readingSearch({ window_days: q.window_days, rollup: q.rollup, depth: q.depth })}`,
+    );
+  }
+  /** The plan's task workflow: its states and the moves allowed. */
+  planWorkflow(pid: string): Promise<PlanWorkflow> {
+    return this.http.get(`/api/plans/${pid}/workflow`);
+  }
+  /** Each task's aggressive and safe estimates (CC-2), up to `limit` tasks (1 to 1000). */
+  ccpmEstimates(pid: string, limit = 1000): Promise<CcpmEstimates> {
+    return this.http.get(`/api/plans/${pid}/ccpm-estimates?limit=${limit}`);
+  }
+  /** Record a task's two estimates, or clear them with both null; 422 carries every problem in English. */
+  setCcpmEstimate(
+    pid: string,
+    taskPid: string,
+    body: CcpmEstimateBody,
+  ): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/tasks/${taskPid}/ccpm-estimate`, {
+      body,
+    });
+  }
+  /** The latest frozen buffer plan (CC-3) and when each was taken. */
+  bufferPlan(pid: string): Promise<BufferPlan> {
+    return this.http.get(`/api/plans/${encodeURIComponent(pid)}/buffer-plan`);
+  }
+  /** Set a working day and week (an insert; 409 when the scope has one already). */
+  setWorkingTime(body: WorkingTimeBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/working-time`, { body });
+  }
+  /** Record a person's leave or other time away from project work. */
+  recordNonWorking(body: NonWorkingBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/non-working`, { body });
   }
   // ---- plan templates (LT-2, NC-1 slice 9) ----
   /** Saved templates the caller may see, then the built-in starters. */

@@ -8333,4 +8333,443 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.timereport.could_not_load": "No se pudo leer el informe de tiempo.",
   "p.timereport.could_not_load_plans":
     "No se pudieron leer los planes para elegir.",
+  "p.hammock.heading": "Tareas hamaca: tareas resumen que abarcan otras",
+  "p.hammock.says":
+    "Una tarea hamaca es un resumen cuyas fechas salen de las tareas de este plan que enlaza, desde el inicio más temprano hasta el fin más tardío. No está en la red de dependencias, así que nunca cambia la holgura de ninguna tarea ni el fin. Una tarea solo se convierte en hamaca si no tiene duración, trabajo, restricción ni dependencia, y se borra su inicio previsto; volver a hacerla tarea quita todos sus enlaces. Una hamaca enlaza una tarea u otra hamaca de este plan, no a sí misma, no dos veces y no en bucle.",
+  "p.hammock.none": "Este plan no tiene tareas hamaca.",
+  "p.hammock.spans": "Abarca {range}.",
+  "p.hammock.no_links": "Aún sin fechas: no enlaza ninguna tarea.",
+  "p.hammock.members_unscheduled":
+    "Aún sin fechas: ninguna de las tareas que enlaza tiene fechas.",
+  "p.hammock.untitled": "Una tarea sin título",
+  "p.hammock.member_hammock": "{title} (una hamaca)",
+  "p.hammock.unmake_named": "Volver a hacer de {title} una tarea",
+  "p.hammock.unlink": "Quitar el enlace",
+  "p.hammock.unlink_named": "Quitar el enlace de {hammock} a {title}",
+  "p.hammock.make_form": "Convertir una tarea en hamaca",
+  "p.hammock.f_task": "Tarea",
+  "p.hammock.choose_task": "Elija una tarea",
+  "p.hammock.make": "Convertirla en hamaca",
+  "p.hammock.link_form": "Enlazar una hamaca con una tarea",
+  "p.hammock.f_hammock": "Hamaca",
+  "p.hammock.choose_hammock": "Elija una hamaca",
+  "p.hammock.f_member": "Tarea que abarca",
+  "p.hammock.choose_member": "Elija una tarea que abarcar",
+  "p.hammock.link": "Añadir el enlace",
+  "p.hammock.confirm_make":
+    "¿Convertir {title} en hamaca? Se borra su inicio previsto, y sus fechas pasan a salir de las tareas que enlaza.",
+  "p.hammock.confirm_unmake_one":
+    "¿Volver a hacer de {title} una tarea? Se va su {n} enlace.",
+  "p.hammock.confirm_unmake_other":
+    "¿Volver a hacer de {title} una tarea? Se van sus {n} enlaces.",
+  "p.hammock.confirm_unlink":
+    "¿Quitar el enlace de {hammock} a {title}? La tarea en sí no cambia.",
+  "p.hammock.made": "{title} ya es una hamaca.",
+  "p.hammock.unmade": "{title} vuelve a ser una tarea.",
+  "p.hammock.linked": "{hammock} ahora abarca {title}.",
+  "p.hammock.unlinked": "{hammock} ya no abarca {title}.",
+  "p.hammock.problem_choose_task":
+    "Elija una tarea para convertirla en hamaca.",
+  "p.hammock.problem_carries_work":
+    "Esta tarea tiene duración, trabajo o una restricción: bórrelos antes en el cronograma.",
+  "p.hammock.problem_has_dependencies":
+    "Esta tarea tiene dependencias: quítelas antes, pues una hamaca no admite ninguna.",
+  "p.hammock.problem_choose_hammock": "Elija una hamaca.",
+  "p.hammock.problem_choose_member": "Elija una tarea que la hamaca abarque.",
+  "p.hammock.problem_self": "Una hamaca no puede abarcarse a sí misma.",
+  "p.hammock.problem_linked": "Esta hamaca ya abarca esa tarea.",
+  "p.hammock.problem_loop":
+    "Esa hamaca ya abarca esta, así que el enlace formaría un bucle.",
+  "p.hammock.refused_make":
+    "El servicio no convirtió esta tarea en hamaca: aún tiene duración, trabajo, una restricción o una dependencia.",
+  "p.hammock.refused_link":
+    "El servicio no añadió el enlace: puede que la tarea ya no esté en este plan, ya esté abarcada o forme parte de un bucle.",
+  "p.hammock.refused_gone":
+    "La tarea o la hamaca ya no existe, o ya no puede leerla.",
+  "p.hammock.refused_link_gone": "Ese enlace ya no existe.",
+  "p.hammock.could_not_load": "No se pudieron leer las tareas hamaca.",
+  "p.hammock.could_not_save": "No se pudo cambiar la hamaca.",
+  "p.crossplan.heading": "Tareas de planes enlazados",
+  "p.crossplan.says":
+    "Estas son las tareas de otros planes que puede leer y con las que están enlazadas tareas de este plan, programadas con el calendario de su propio plan. Una barra discontinua es una tarea fuera del camino crítico; una barra sólida y un rombo marcan una en él.",
+  "p.crossplan.network_finish":
+    "Con los planes enlazados, la red termina el {date}.",
+  "p.crossplan.truncated":
+    "No se muestran todos los planes enlazados: la red llegó a su límite de planes o tareas.",
+  "p.crossplan.links_heading": "Enlaces que cruzan a otro plan",
+  "p.crossplan.lag": "retardo de {days} días laborables",
+  "p.crossplan.timeline": "Tareas de {plan} en una línea de tiempo",
+  "p.crossplan.table": "Fechas de las tareas de planes enlazados",
+  "p.crossplan.col_task": "Tarea",
+  "p.crossplan.col_plan": "Proyecto",
+  "p.crossplan.col_start": "Inicio más temprano",
+  "p.crossplan.col_finish": "Fin más temprano",
+  "p.crossplan.col_critical": "En el camino crítico",
+  "p.crossplan.yes": "Sí",
+  "p.crossplan.no": "No es así",
+  "p.crossplan.untitled": "Una tarea sin título",
+  "p.crossplan.kind_fs": "fin a inicio",
+  "p.crossplan.kind_ss": "inicio a inicio",
+  "p.crossplan.kind_ff": "fin a fin",
+  "p.crossplan.kind_sf": "inicio a fin",
+  "p.crossplan.task_heading": "Dependencias, en este plan o en otro",
+  "p.crossplan.task_says":
+    "Una dependencia une esta tarea con una de otro plan que puede leer. Su tipo es fin a inicio salvo que elija otro; su retardo son días laborables enteros de menos {max} a {max}, y uno negativo es un adelanto. No se crea dos veces en el mismo sentido, ni en bucle entre planes, ni con una hamaca. Una cuyo otro extremo no puede leer se cuenta, nunca se nombra, y queda fuera del cronograma.",
+  "p.crossplan.no_links": "Esta tarea aún no tiene dependencias.",
+  "p.crossplan.this_before": "Esta tarea va antes de {other}",
+  "p.crossplan.this_after": "Esta tarea va después de {other}",
+  "p.crossplan.end_own": "{title}, en este plan",
+  "p.crossplan.end_external": "{title}, en {plan}",
+  "p.crossplan.end_unnamed": "una tarea no nombrada aquí ({ref})",
+  "p.crossplan.remove": "Quitar",
+  "p.crossplan.remove_named": "Quitar la dependencia de {other}",
+  "p.crossplan.restricted_one":
+    "{n} dependencia más une con una tarea que no puede leer.",
+  "p.crossplan.restricted_other":
+    "{n} dependencias más unen con tareas que no puede leer.",
+  "p.crossplan.see_network": "Ver el cronograma entre planes",
+  "p.crossplan.form": "Añadir una dependencia de una tarea de otro plan",
+  "p.crossplan.f_order": "Orden",
+  "p.crossplan.order_before": "Esta tarea va primero",
+  "p.crossplan.order_after": "La otra tarea va primero",
+  "p.crossplan.f_plan": "Otro plan",
+  "p.crossplan.choose_plan": "Elija un plan",
+  "p.crossplan.f_task": "Tarea de ese plan",
+  "p.crossplan.choose_task": "Elija una tarea",
+  "p.crossplan.f_kind": "Tipo de dependencia",
+  "p.crossplan.f_lag": "Retardo en días laborables (0 si está vacío)",
+  "p.crossplan.add": "Añadir la dependencia",
+  "p.crossplan.added": "Se añadió una dependencia de {title}.",
+  "p.crossplan.removed": "Se quitó la dependencia.",
+  "p.crossplan.confirm_remove_before":
+    "¿Quitar la dependencia: {task} va antes de {other}? Ninguna tarea cambia.",
+  "p.crossplan.confirm_remove_after":
+    "¿Quitar la dependencia: {task} va después de {other}? Ninguna tarea cambia.",
+  "p.crossplan.problem_plan": "Elija el otro plan.",
+  "p.crossplan.problem_task": "Elija una tarea de ese plan.",
+  "p.crossplan.problem_lag":
+    "Un retardo es un número entero de días laborables de menos {max} a {max}.",
+  "p.crossplan.problem_self": "Una tarea no puede depender de sí misma.",
+  "p.crossplan.problem_exists": "Esta dependencia ya existe.",
+  "p.crossplan.refused_unreadable":
+    "Una de las dos tareas ya no existe, o no puede leerla.",
+  "p.crossplan.refused_exists": "Esta dependencia ya existe.",
+  "p.crossplan.refused_add":
+    "El servicio no añadió la dependencia: puede que ya exista, forme un bucle o una con una hamaca.",
+  "p.crossplan.refused_gone":
+    "Esa dependencia ya no existe, o ya no puede leer ambas tareas.",
+  "p.crossplan.could_not_load":
+    "No se pudieron leer las dependencias de esta tarea.",
+  "p.crossplan.could_not_load_plans":
+    "No se pudieron leer los planes para elegir.",
+  "p.crossplan.could_not_load_tasks":
+    "No se pudieron leer las tareas de ese plan.",
+  "p.crossplan.could_not_save": "No se pudo cambiar la dependencia.",
+  "p.taskrollup.heading": "Subtareas agregadas",
+  "p.taskrollup.says":
+    "Calculado cada vez a partir de las subtareas de esta tarea, nunca guardado: la fecha de vencimiento más tardía entre ellas, sus puntos sumados, el avance ponderado solo por las estimadas y el tiempo registrado en todas.",
+  "p.taskrollup.subtasks": "Subtareas",
+  "p.taskrollup.done_of_one": "{done} de {n} hecha",
+  "p.taskrollup.done_of_other": "{done} de {n} hechas",
+  "p.taskrollup.due": "Vencimiento más tardío",
+  "p.taskrollup.points": "Puntos sumados",
+  "p.taskrollup.progress": "Avance",
+  "p.taskrollup.spent": "Tiempo registrado",
+  "p.taskrollup.no_children": "Esta tarea no tiene subtareas.",
+  "p.taskrollup.no_dated_children":
+    "Ninguna de sus subtareas tiene fecha de vencimiento.",
+  "p.taskrollup.no_estimates": "Ninguna de sus subtareas está estimada.",
+  "p.taskrollup.absent": "Se desconoce.",
+  "p.taskrollup.unestimated_one":
+    "{n} subtarea no tiene estimación, así que queda fuera del avance (no cuenta como cero):",
+  "p.taskrollup.unestimated_other":
+    "{n} subtareas no tienen estimación, así que quedan fuera del avance (no cuentan como cero):",
+  "p.taskrollup.unnamed": "Una subtarea no nombrada aquí ({ref})",
+  "p.taskrollup.refused_gone": "Esta tarea ya no existe, o ya no puede leerla.",
+  "p.taskrollup.could_not_load": "No se pudieron leer las subtareas agregadas.",
+  "p.readings.heading": "Más sobre este plan",
+  "p.readings.says": "Cada una de estas lecturas se hace solo cuando la pide.",
+  "p.readings.read": "Leer",
+  "p.readings.could_not_read": "No se pudo leer esto.",
+  "p.readings.not_measured": "sin medir",
+  "p.readings.days": "{n} días",
+  "p.readings.rollup_heading": "Flujo en los planes que contiene",
+  "p.readings.rollup_says":
+    "Las tareas de este plan y de cada plan por debajo, contadas juntas, no promediadas; hasta {max} niveles si se deja vacío.",
+  "p.readings.f_depth": "Niveles hacia abajo",
+  "p.readings.rollup_plans_one": "{n} plan contado.",
+  "p.readings.rollup_plans_other": "{n} planes.",
+  "p.readings.rollup_tasks_one":
+    "{n} tarea: {finished} terminadas, {wip} en curso, {not_started} sin empezar.",
+  "p.readings.rollup_tasks_other":
+    "{n} tareas: {finished} terminadas, {wip} en curso, {not_started} sin empezar.",
+  "p.readings.rollup_times":
+    "La mayor parte del trabajo (85 de cada 100) terminó en {cycle} desde que empezó y en {lead} desde que se pidió; tiempo trabajando y no esperando: {efficiency}.",
+  "p.readings.rollup_truncated":
+    "No se contaron todos los planes por debajo: el recorrido llegó a su límite.",
+  "p.readings.rollup_revisits_one":
+    "{n} plan se alcanza dos veces y se cuenta una.",
+  "p.readings.rollup_revisits_other":
+    "{n} planes se alcanzan dos veces y se cuentan una.",
+  "p.readings.rollup_table": "Flujo por plan",
+  "p.readings.col_plan": "Proyecto",
+  "p.readings.col_depth": "Nivel",
+  "p.readings.col_tasks": "Tareas",
+  "p.readings.col_finished": "Terminadas",
+  "p.readings.col_wip": "En curso",
+  "p.readings.col_efficiency": "Tiempo trabajando y no esperando",
+  "p.readings.effort_heading": "Tiempo registrado",
+  "p.readings.effort_says":
+    "El tiempo que las personas registraron en este plan, tal como lo declararon; nada lo comprueba.",
+  "p.readings.read_effort": "Leer el tiempo registrado",
+  "p.readings.effort_none": "No hay tiempo registrado en este plan.",
+  "p.readings.effort_total":
+    "{total} registrado, de lo cual {billable} facturable.",
+  "p.readings.effort_split":
+    "Gasto de capital {capex}, gasto operativo {opex}, sin clasificar {unclassified}.",
+  "p.readings.effort_by_person": "Tiempo por persona",
+  "p.readings.effort_by_task": "Tiempo por tarea",
+  "p.readings.col_person": "Persona",
+  "p.readings.col_time": "Tiempo",
+  "p.readings.col_billable": "Facturable",
+  "p.readings.col_task": "Tarea",
+  "p.readings.task_unnamed": "Una tarea no nombrada aquí ({ref})",
+  "p.readings.forecast_heading": "Previsión de entrega",
+  "p.readings.forecast_says":
+    "Diez mil simulaciones a partir de cuánto terminó este plan en cada periodo pasado: cuánto puede tardar el trabajo abierto y cuánto puede hacerse en un número de periodos. Una casilla vacía es el valor por defecto; hacen falta al menos seis periodos de historial.",
+  "p.readings.f_items": "Elementos por terminar (los abiertos si está vacío)",
+  "p.readings.f_periods": "Periodos por delante ({n} si está vacío)",
+  "p.readings.f_period_days": "Días por periodo ({n} si está vacío)",
+  "p.readings.f_history": "Periodos de historial ({n} si está vacío)",
+  "p.readings.read_forecast": "Leer la previsión",
+  "p.readings.forecast_history_one": "A partir de {n} periodo de {days} días.",
+  "p.readings.forecast_history_other":
+    "A partir de {n} periodos de {days} días.",
+  "p.readings.forecast_batch_one":
+    "{n} elemento: la mitad de las simulaciones termina en {p50} días, 85 de cada 100 en {p85} días y 95 de cada 100 en {p95} días.",
+  "p.readings.forecast_batch_other":
+    "{n} elementos: la mitad de las simulaciones termina en {p50} días, 85 de cada 100 en {p85} días y 95 de cada 100 en {p95} días.",
+  "p.readings.forecast_no_batch":
+    "No se puede prever cuánto tardará el trabajo: hay poco historial, o no se terminó nada en él.",
+  "p.readings.forecast_horizon":
+    "En los próximos {days} días pueden hacerse unos {median} elementos: al menos {least} en 85 de cada 100 simulaciones, y como mucho {most}.",
+  "p.readings.forecast_no_horizon":
+    "No se puede prever cuánto se hará: hay poco historial, o no se terminó nada en él.",
+  "p.readings.performance_heading": "Plazo, coste y partes interesadas",
+  "p.readings.performance_says":
+    "El rendimiento del plazo es el trabajo hecho frente al previsto hasta ahora, y el del coste el trabajo hecho frente a lo que costó; por encima del 100 % es mejor que lo previsto. La puntuación de las partes interesadas va de menos 100 a 100.",
+  "p.readings.read_performance": "Leer el rendimiento",
+  "p.readings.schedule": "Rendimiento del plazo",
+  "p.readings.cost": "Rendimiento del coste",
+  "p.readings.stakeholders": "Puntuación de las partes interesadas",
+  "p.readings.nps_one":
+    "{score}, de {n} respuesta ({promoters} promotores, {detractors} detractores)",
+  "p.readings.nps_other":
+    "{score}, de {n} respuestas ({promoters} promotores, {detractors} detractores)",
+  "p.readings.nps_none": "Aún no hay respuestas.",
+  "p.readings.earned_value_link": "Ver el valor ganado completo",
+  "p.readings.absent_no_baseline":
+    "Sin medir: el plan no tiene línea base de presupuesto.",
+  "p.readings.absent_no_weighted_tasks": "Sin medir: ninguna tarea tiene peso.",
+  "p.readings.absent_not_yet_defined":
+    "Aún sin medir: no se ha previsto ni gastado nada.",
+  "p.readings.absent_several_currencies":
+    "No hay una sola cifra: el plan tiene presupuestos en varias monedas; vea el valor ganado.",
+  "p.readings.absent_other": "Sin medir.",
+  "p.readings.workflow_heading": "Flujo de trabajo de las tareas",
+  "p.readings.read_workflow": "Leer el flujo de trabajo de las tareas",
+  "p.readings.workflow_plan":
+    "Este plan tiene su propio flujo de trabajo de tareas.",
+  "p.readings.workflow_built_in":
+    "Este plan usa el flujo de trabajo de tareas integrado.",
+  "p.readings.workflow_constrained": "Solo se permiten los cambios listados.",
+  "p.readings.workflow_free":
+    "Una tarea puede pasar de cualquier estado a cualquier otro.",
+  "p.readings.cat_todo": "sin empezar",
+  "p.readings.cat_active": "en curso",
+  "p.readings.cat_waiting": "en espera",
+  "p.readings.cat_done": "terminada",
+  "p.readings.cat_other": "otro tipo",
+  "p.readings.initial": "donde empieza una tarea",
+  "p.readings.terminal": "donde acaba una tarea",
+  "p.readings.wip_limit": "como mucho {n} a la vez",
+  "p.readings.anyone": "cualquiera",
+  "p.readings.roles": "funciones: {roles}",
+  "p.readings.problem_depth":
+    "Los niveles hacia abajo son un número entero de 1 a {max}.",
+  "p.readings.problem_depth_zero":
+    "Los niveles hacia abajo son un número entero de 0 a {max}.",
+  "p.readings.problem_items":
+    "Los elementos por terminar son un número entero de al menos 1.",
+  "p.readings.problem_periods":
+    "Los periodos por delante son un número entero de 1 a 520.",
+  "p.readings.problem_period_days":
+    "Los días por periodo son un número entero de 1 a 90.",
+  "p.readings.problem_history":
+    "Los periodos de historial son un número entero de 6 a 260.",
+  "p.readings.problem_window":
+    "La ventana es un número entero de días de 1 a 3650.",
+  "p.readings.refused_query": "El servicio no aceptó esa consulta.",
+  "p.readings.refused_module": "Esta parte del plan está desactivada.",
+  "p.readings.refused_gone": "Este plan ya no existe, o ya no puede leerlo.",
+  "p.readings.flow_feature": "Funciones nuevas",
+  "p.readings.flow_defect": "Defectos",
+  "p.readings.flow_risk": "Trabajo de riesgos",
+  "p.readings.flow_debt": "Deuda técnica",
+  "p.readings.flow_unclassified": "Sin clasificar",
+  "p.readings.flow_other": "Otro tipo",
+  "p.flowmix.heading": "La mezcla del trabajo terminado",
+  "p.flowmix.says":
+    "Cómo se reparte el trabajo terminado en una ventana entre funciones nuevas, defectos, trabajo de riesgos y deuda técnica, frente a la mezcla que el plan pretende donde la declaró. La ventana es de {n} días si se deja vacía.",
+  "p.flowmix.f_window": "Días hacia atrás ({n} si está vacío)",
+  "p.flowmix.f_rollup": "Incluir los planes que contiene",
+  "p.flowmix.f_depth": "Niveles hacia abajo ({max} si está vacío)",
+  "p.flowmix.read": "Leer la mezcla",
+  "p.flowmix.window_one": "Trabajo terminado en el último {n} día.",
+  "p.flowmix.window_other": "Trabajo terminado en los últimos {n} días.",
+  "p.flowmix.plans_one": "{n} plan contado.",
+  "p.flowmix.plans_other": "{n} planes contados.",
+  "p.flowmix.truncated":
+    "No se contaron todos los planes por debajo: el recorrido llegó a su límite.",
+  "p.flowmix.none": "No se terminó trabajo en esa ventana.",
+  "p.flowmix.no_intent":
+    "El plan no declara una mezcla prevista, así que no hay con qué comparar.",
+  "p.flowmix.table": "Trabajo terminado por tipo",
+  "p.flowmix.col_kind": "Tipo de trabajo",
+  "p.flowmix.col_count": "Terminado",
+  "p.flowmix.col_share": "Proporción",
+  "p.flowmix.col_intended": "Proporción prevista",
+  "p.flowmix.col_gap": "Diferencia",
+  "p.ccpm.heading": "Estimaciones agresiva y segura",
+  "p.ccpm.says":
+    "Para la cadena crítica cada tarea necesita una estimación agresiva (probabilidad de más o menos la mitad) y una segura, en días laborables enteros de 1 a {max}, sin que la agresiva supere la segura. Una cifra mostrada es la registrada, si no la del rango de riesgo, si no una que deriva la regla de la instalación, y cada una dice cuál. Un hito y una tarea sin duración no se estiman. Vaciar ambas quita lo registrado.",
+  "p.ccpm.rule_explicit_only":
+    "Regla: solo se usan las estimaciones dadas; no se deriva nada.",
+  "p.ccpm.rule_half_of_safe":
+    "Regla: una estimación segura que falta es la duración de la tarea, y una agresiva que falta la mitad de la segura.",
+  "p.ccpm.rule_other": "Regla: una que esta página no conoce.",
+  "p.ccpm.rule_unusable":
+    "No se pudo leer el ajuste de la regla de la instalación, así que solo se usan las estimaciones dadas.",
+  "p.ccpm.attention_one": "{n} tarea necesita sus estimaciones.",
+  "p.ccpm.attention_other": "{n} tareas necesitan sus estimaciones.",
+  "p.ccpm.more": "Se muestran las primeras {shown} de {total} tareas.",
+  "p.ccpm.no_tasks": "Este plan no tiene tareas que estimar.",
+  "p.ccpm.table": "Estimaciones por tarea",
+  "p.ccpm.col_task": "Tarea",
+  "p.ccpm.col_likely": "Duración en días laborables",
+  "p.ccpm.col_aggressive": "Agresiva",
+  "p.ccpm.col_safe": "Segura",
+  "p.ccpm.col_state": "Situación",
+  "p.ccpm.figure": "{days} días, {source}",
+  "p.ccpm.none": "ninguna",
+  "p.ccpm.source_recorded": "registrada",
+  "p.ccpm.source_risk_range": "del rango de riesgo",
+  "p.ccpm.source_rule": "por la regla",
+  "p.ccpm.state_complete": "Ambas dadas",
+  "p.ccpm.state_derived": "En parte derivada",
+  "p.ccpm.state_missing": "Falta una estimación",
+  "p.ccpm.state_inconsistent": "Agresiva por encima de la segura",
+  "p.ccpm.state_milestone": "Un hito, no se estima",
+  "p.ccpm.state_no_duration": "Sin duración, no se estima",
+  "p.ccpm.state_other": "Otra situación",
+  "p.ccpm.form": "Registrar las estimaciones de una tarea",
+  "p.ccpm.f_task": "Tarea",
+  "p.ccpm.choose_task": "Elija una tarea",
+  "p.ccpm.f_aggressive": "Agresiva, en días laborables",
+  "p.ccpm.f_safe": "Segura, en días laborables",
+  "p.ccpm.save": "Guardar las estimaciones",
+  "p.ccpm.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.ccpm.saved": "Se guardaron las estimaciones de {title}.",
+  "p.ccpm.cleared": "Se vaciaron las estimaciones registradas de {title}.",
+  "p.ccpm.confirm_clear":
+    "¿Vaciar las estimaciones registradas de {title}? Puede seguir mostrándose una cifra del rango de riesgo o de la regla.",
+  "p.ccpm.problem_task": "Elija una tarea.",
+  "p.ccpm.problem_aggressive":
+    "La estimación agresiva es un número entero de días laborables de 1 a {max}.",
+  "p.ccpm.problem_safe":
+    "La estimación segura es un número entero de días laborables de 1 a {max}.",
+  "p.ccpm.problem_order": "La estimación agresiva no puede superar la segura.",
+  "p.ccpm.refused_invalid":
+    "El servicio no aceptó estas estimaciones: puede que la tarea haya perdido su duración o se haya convertido en hito.",
+  "p.ccpm.refused_gone": "Esta tarea ya no existe, o ya no puede leerla.",
+  "p.ccpm.could_not_load": "No se pudieron leer las estimaciones.",
+  "p.ccpm.could_not_save": "No se pudieron guardar las estimaciones.",
+  "p.frozen.heading": "El plan de colchones congelado",
+  "p.frozen.none": "Aún no se ha congelado ningún plan de colchones.",
+  "p.frozen.freeze_link": "Congelar uno en la gestión de colchones",
+  "p.frozen.taken": "Congelado el {date}; {rule}",
+  "p.frozen.table": "Colchones tal como se congelaron",
+  "p.frozen.col_buffer": "Colchón",
+  "p.frozen.col_days": "Días laborables",
+  "p.frozen.col_chain": "Cadena",
+  "p.frozen.col_finish": "Fin previsto",
+  "p.frozen.project": "Colchón del proyecto",
+  "p.frozen.feeding": "Colchón de alimentación hacia {joins}",
+  "p.frozen.unsized": "sin dimensionar",
+  "p.frozen.untitled": "Una tarea sin título",
+  "p.frozen.history_one": "{n} plan de colchones congelado: {dates}.",
+  "p.frozen.history_other":
+    "{n} planes de colchones congelados, el más reciente primero: {dates}.",
+  "p.frozen.could_not_load": "No se pudo leer el plan de colchones congelado.",
+  "p.workingtime.heading": "La jornada y la semana laborables",
+  "p.workingtime.says":
+    "Cuánto dura una jornada (de 1 minuto a 24 horas) y cuántos días a la semana se trabaja (de 1 a 7), para este plan o como valor por defecto de la organización. Cada uno es un registro nuevo que aquí no puede cambiarse ni quitarse, así que se le pregunta antes; un segundo para este plan se rechaza.",
+  "p.workingtime.form": "Fijar la jornada y la semana laborables",
+  "p.workingtime.f_scope": "Para",
+  "p.workingtime.scope_plan": "Este plan",
+  "p.workingtime.scope_default": "El valor por defecto de la organización",
+  "p.workingtime.f_hours": "Horas al día",
+  "p.workingtime.f_minutes": "Y minutos",
+  "p.workingtime.f_days": "Días a la semana",
+  "p.workingtime.save": "Fijar la jornada",
+  "p.workingtime.confirm_plan_one":
+    "¿Fijar la jornada de este plan en {day}, {days} día a la semana? Después no podrá cambiarse aquí.",
+  "p.workingtime.confirm_plan_other":
+    "¿Fijar la jornada de este plan en {day}, {days} días a la semana? Después no podrá cambiarse aquí.",
+  "p.workingtime.confirm_default_one":
+    "¿Fijar la jornada por defecto de la organización en {day}, {days} día a la semana? Después no podrá cambiarse aquí.",
+  "p.workingtime.confirm_default_other":
+    "¿Fijar la jornada por defecto de la organización en {day}, {days} días a la semana? Después no podrá cambiarse aquí.",
+  "p.workingtime.saved_one":
+    "Se fijó una jornada de {day}, {days} día a la semana.",
+  "p.workingtime.saved_other":
+    "Se fijó una jornada de {day}, {days} días a la semana.",
+  "p.workingtime.away_heading": "Tiempo fuera del trabajo del proyecto",
+  "p.workingtime.away_says":
+    "Vacaciones, un festivo, un permiso de estudios o una tarea ajena al proyecto, para una persona de un primer a un último día, para que ese tiempo no se lea como inactivo. La persona es una referencia como person: y un identificador. No puede cambiarse ni quitarse una vez registrado, así que se le pregunta antes; una nota vacía no se envía.",
+  "p.workingtime.f_person": "Referencia de la persona",
+  "p.workingtime.f_starts": "Primer día",
+  "p.workingtime.f_ends": "Último día",
+  "p.workingtime.f_kind": "Tipo",
+  "p.workingtime.f_note": "Nota (opcional)",
+  "p.workingtime.record": "Registrar el tiempo fuera",
+  "p.workingtime.confirm_away":
+    "¿Registrar {kind} para {person}, {range}? Después no podrá cambiarse ni quitarse.",
+  "p.workingtime.recorded": "Se registró {kind} para {person}, {range}.",
+  "p.workingtime.kind_leave": "vacaciones",
+  "p.workingtime.kind_holiday": "un festivo",
+  "p.workingtime.kind_study_leave": "un permiso de estudios",
+  "p.workingtime.kind_non_project_duty": "una tarea ajena al proyecto",
+  "p.workingtime.problem_hours": "Las horas son un número entero de 0 a 24.",
+  "p.workingtime.problem_minutes":
+    "Los minutos son un número entero de 0 a 59.",
+  "p.workingtime.problem_day": "Una jornada dura de 1 minuto a 24 horas.",
+  "p.workingtime.problem_week":
+    "Los días a la semana son un número entero de 1 a 7.",
+  "p.workingtime.problem_person":
+    "Indique la persona como person: o worker: y un identificador.",
+  "p.workingtime.problem_starts": "Indique el primer día.",
+  "p.workingtime.problem_ends": "Indique el último día.",
+  "p.workingtime.problem_order":
+    "El último día no puede ser anterior al primero.",
+  "p.workingtime.refused_exists":
+    "Este plan ya tiene una jornada fijada, y aquí no puede sustituirse.",
+  "p.workingtime.refused_working": "El servicio no aceptó esta jornada.",
+  "p.workingtime.refused_non_working":
+    "El servicio no aceptó este tiempo fuera.",
+  "p.workingtime.refused_forbidden": "No puede registrar esto.",
+  "p.workingtime.could_not_save": "No se pudo registrar esto.",
+  "p.task.is_hammock":
+    "Esta tarea es una hamaca: sus fechas salen de las tareas que abarca.",
+  "p.task.hammock_link": "Ver su alcance en el camino crítico",
 };

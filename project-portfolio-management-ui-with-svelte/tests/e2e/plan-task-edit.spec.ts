@@ -90,6 +90,11 @@ async function stub(page: Page, refuse: Partial<Record<string, number>> = {}) {
       return route.fulfill({ json: [] });
     },
   );
+  // NC-1 slice 12 part (i): the task's dependencies on other plans and the plans to choose from have their own spec,
+  // scheduling-rest.spec.ts; here there are none.
+  await page.route(/\/api\/proxy\/api\/(dependencies|plans)(\?.*)?$/, (route) =>
+    route.fulfill({ json: [] }),
+  );
   await page.route(`**/api/plans/${PID}/**`, async (route) => {
     const req = route.request();
     const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
@@ -157,6 +162,21 @@ async function stub(page: Page, refuse: Partial<Record<string, number>> = {}) {
     }
     if (path === `${base}/tasks/${T1}/links` && method === "GET")
       return route.fulfill({ json: [] });
+    if (path === `${base}/tasks/${T1}/rollup` && method === "GET")
+      return route.fulfill({
+        json: {
+          task_pid: T1,
+          rollup: {
+            descendants: 0,
+            done: 0,
+            due: { value: null, reason: "no_children" },
+            estimate_points: { value: null, reason: "no_children" },
+            progress_bp: { value: null, reason: "no_children" },
+            excluded_unestimated: [],
+            spent_minutes: 0,
+          },
+        },
+      });
     return route.fulfill({ status: 404, json: { error: "unhandled in stub" } });
   });
   return sent;

@@ -2947,6 +2947,8 @@ export interface CpmEdge {
   kind: "fs" | "ss" | "ff" | "sf";
   /** Business days; negative is a lead. */
   lag_days: number;
+  /** PJ-13: exactly one end is a task of another plan. */
+  cross_plan?: boolean;
 }
 
 /** `GET /api/plans/{pid}/cpm`. */
@@ -2977,6 +2979,8 @@ export interface Cpm {
     label: string;
   }[];
   external_truncated?: boolean;
+  /** PJ-7: each hammock with the span derived across the linked network. */
+  hammocks?: Hammock[];
   note: string;
 }
 
@@ -4962,4 +4966,341 @@ export function timeReportSearch(q: TimeReportQuery, csv = false): string {
   if (q.person) s.set("person", q.person);
   if (csv) s.set("format", "csv");
   return `?${s.toString()}`;
+}
+
+// ---- scheduling, the rest (NC-1 slice 12 part i: PJ-7, PJ-13, LT-10, CC-2, CC-3, RM-5, SC-4) ----
+
+/** A hammock's span (PJ-7), derived from the tasks it links: dated, or not yet with a machine reason. */
+export type HammockSpan =
+  | { state: "scheduled"; start: string; finish: string }
+  | { state: "unscheduled"; reason: "no_links" | "members_unscheduled" };
+
+/** One hammock: a summary that spans the tasks it links and is never in the dependency network. */
+export interface Hammock {
+  pid: string;
+  title: string;
+  span: HammockSpan;
+  links: { pid: string; title: string | null; is_hammock: boolean }[];
+}
+
+/** `GET /api/plans/{pid}/hammocks`. The `note` is English and not shown. */
+export interface HammockList {
+  hammocks: Hammock[];
+  note: string;
+}
+
+/** `POST /api/plans/{pid}/tasks/{t_pid}/hammock`. */
+export interface HammockSet {
+  pid: string;
+  is_hammock: boolean;
+  changed: boolean;
+}
+
+/** One row of `GET /api/dependencies` (PJ-13): the link, or an opaque one with an end the caller cannot read. */
+export type DependencyRow =
+  | {
+      pid: string;
+      predecessor_pid: string;
+      successor_pid: string;
+      lag_days: number;
+      kind: "fs" | "ss" | "ff" | "sf";
+      created_at?: string;
+      restricted?: undefined;
+    }
+  | { pid: string; restricted: true; label: string };
+
+/** `POST /api/dependencies`: a kind of `fs` and a lag of 0 are the service's defaults and not sent. */
+export interface DependencyBody {
+  predecessor_pid: string;
+  successor_pid: string;
+  kind?: "ss" | "ff" | "sf";
+  lag_days?: number;
+}
+
+/** A figure that may be absent, with the machine reason (RM-5). */
+export interface Derived<T> {
+  value: T | null;
+  reason: "no_children" | "no_dated_children" | "no_estimates" | null;
+}
+
+/** `GET /api/plans/{pid}/tasks/{t_pid}/rollup` (RM-5): derived on read, never stored. */
+export interface TaskRollup {
+  task_pid: string;
+  rollup: {
+    descendants: number;
+    done: number;
+    due: Derived<string>;
+    estimate_points: Derived<number>;
+    /** Basis points, 0 to 10000, weighted by the estimated descendants only. */
+    progress_bp: Derived<number>;
+    excluded_unestimated: string[];
+    spent_minutes: number;
+  };
+}
+
+/** A time distribution of the flow measures (in days, among other units not read here). */
+export interface FlowTimes {
+  n: number;
+  p50_days: number;
+  p85_days: number;
+}
+
+/** A ratio; `value` is null when it cannot be measured. */
+export interface FlowRatio {
+  value: number | null;
+}
+
+/** `GET /api/plans/{pid}/rollup` (TBA-9): flow across a plan and the plans it contains. Prose fields not shown. */
+export interface PlanFlowRollup {
+  as_of: string;
+  root: { pid: string; name: string };
+  tree: {
+    plans: number;
+    max_depth: number;
+    depth_limit: number;
+    truncated: boolean;
+    revisits: number;
+  };
+  combined: {
+    tasks: number;
+    finished: number;
+    work_in_progress: number;
+    not_started: number;
+    cycle_time: FlowTimes | null;
+    lead_time: FlowTimes | null;
+    aggregate_flow_efficiency: FlowRatio;
+  };
+  by_plan: {
+    plan: { pid: string; name: string };
+    depth: number;
+    tasks: number;
+    finished: number;
+    work_in_progress: number;
+    flow_efficiency: FlowRatio;
+  }[];
+}
+
+/** Recorded effort in minutes, every figure as people asserted it. */
+export interface EffortTotals {
+  minutes: number;
+  capex_minutes: number;
+  opex_minutes: number;
+  unclassified_minutes: number;
+  billable_minutes: number;
+  asserted: boolean;
+}
+
+/** `GET /api/plans/{pid}/effort`. */
+export interface PlanEffort {
+  plan_pid: string;
+  plan: EffortTotals;
+  by_assignee: { actor_ref: string; totals: EffortTotals }[];
+  by_task: { task_pid: string; totals: EffortTotals }[];
+  as_of: string;
+}
+
+/** The query of `GET /api/plans/{pid}/forecast`; a left-out value is the service's default. */
+export interface DeliveryForecastQuery {
+  items?: number;
+  periods?: number;
+  period_days?: number;
+  history_periods?: number;
+}
+
+/** `GET /api/plans/{pid}/forecast` (TBA-11), from the plan's own throughput. `reason` and `note` are English. */
+export interface DeliveryForecast {
+  as_of: string;
+  plan: { pid: string; name: string };
+  throughput_history: number[];
+  open_items: number;
+  batch: {
+    items: number;
+    trials: number;
+    history_periods: number;
+    period_days: number;
+    p50_days: number | null;
+    p85_days: number | null;
+    p95_days: number | null;
+    trials_hit_ceiling: number | boolean;
+    reason: string | null;
+  };
+  horizon: {
+    periods: number;
+    days: number;
+    median_items: number | null;
+    at_least_items: number | null;
+    at_most_items: number | null;
+    reason: string | null;
+  };
+}
+
+/** Why a performance figure is absent (machine values). */
+export type PerformanceAbsent =
+  | "no_baseline"
+  | "no_weighted_tasks"
+  | "not_yet_defined"
+  | "several_currencies";
+
+/** `GET /api/plans/{pid}/performance`: schedule and cost in basis points and the stakeholder score. */
+export interface PlanPerformance {
+  plan_pid: string;
+  stakeholder: {
+    nps: {
+      score: number | null;
+      absent: "no_responses" | null;
+      responses: number;
+      promoters: number;
+      passives: number;
+      detractors: number;
+    };
+  };
+  schedule: { spi: number | null; absent: PerformanceAbsent | null };
+  financial: { cpi: number | null; absent: PerformanceAbsent | null };
+  as_of: string;
+}
+
+/** The kinds of work a flow distribution counts, in the service's order. */
+export type FlowType = "feature" | "defect" | "risk" | "debt" | "unclassified";
+
+/** The query of `GET /api/plans/{pid}/flow-distribution`; 90 days and no roll-up are the defaults, not sent. */
+export interface FlowDistributionQuery {
+  window_days?: number;
+  rollup?: boolean;
+  depth?: number;
+}
+
+/** `GET /api/plans/{pid}/flow-distribution`. The `note` is English and not shown. */
+export interface FlowDistribution {
+  plan_pid: string;
+  window_days: number;
+  rollup: boolean;
+  plans_counted: number;
+  truncated: boolean;
+  distribution: {
+    total: number;
+    shares: {
+      flow_type: FlowType;
+      count: number;
+      basis_points: number | null;
+      intended_basis_points: number | null;
+      gap_basis_points: number | null;
+    }[];
+    intent_declared: boolean;
+  };
+  as_of: string;
+}
+
+/** `GET /api/plans/{pid}/workflow`: the plan's task workflow. */
+export interface PlanWorkflow {
+  plan_pid: string;
+  applies_to: "task" | "issue";
+  source: "plan" | "built_in_or_default";
+  constrained: boolean;
+  workflow: {
+    states: {
+      key: string;
+      label: string;
+      labels?: Record<string, string>;
+      category: "todo" | "active" | "waiting" | "done";
+      wip_limit: number | null;
+      is_initial: boolean;
+      is_terminal: boolean;
+    }[];
+    transitions: { from: string; to: string; roles: string[] }[];
+  };
+}
+
+/** Where a critical-chain figure came from (CC-2). */
+export type CcpmSource = "recorded" | "risk_range" | "rule";
+/** A task's standing for its two estimates. */
+export type CcpmState =
+  | "complete"
+  | "derived"
+  | "missing"
+  | "inconsistent"
+  | "milestone"
+  | "no_duration";
+
+/** One task's two estimates. */
+export interface CcpmTask {
+  pid: string;
+  title: string;
+  likely_days: number | null;
+  aggressive: { days: number; source: CcpmSource } | null;
+  safe: { days: number; source: CcpmSource } | null;
+  state: CcpmState;
+}
+
+/** `GET /api/plans/{pid}/ccpm-estimates` (CC-2). The `note` is English and not shown. */
+export interface CcpmEstimates {
+  rule: "explicit_only" | "half_of_safe";
+  rule_setting_unusable: boolean;
+  total: number;
+  limit: number;
+  counts: Partial<Record<CcpmState, number>>;
+  needing_attention: string[];
+  tasks: CcpmTask[];
+}
+
+/** `PUT /api/plans/{pid}/tasks/{t_pid}/ccpm-estimate`: both null clears what is recorded. */
+export interface CcpmEstimateBody {
+  aggressive_days: number | null;
+  safe_days: number | null;
+}
+
+/** One frozen buffer in a buffer plan (CC-3). */
+export interface FrozenBuffer {
+  key: string;
+  days: number | null;
+  tasks: { pid: string; title: string | null; days: number | null }[];
+  planned_finish: string | null;
+  joins?: { pid: string; title: string | null };
+}
+
+/** `GET /api/plans/{pid}/buffer-plan`: the latest frozen plan, or none (its `reason` is English and not shown). */
+export type BufferPlan =
+  | { state: "no_buffer_plan"; reason?: string }
+  | {
+      state: "buffer_plan";
+      pid: string;
+      taken_on: string;
+      document: {
+        version: number;
+        calendar: "plan" | "default";
+        buffer_rule: "cut_and_paste" | "root_sum_squares";
+        project: FrozenBuffer;
+        feeding: FrozenBuffer[];
+      };
+      history: { pid: string; taken_on: string }[];
+    };
+
+/** `POST /api/working-time`: a working day and week; no scope is the organization's default. */
+export interface WorkingTimeBody {
+  scope_ref?: string;
+  minutes_per_day: number;
+  working_days_per_week: number;
+}
+
+/** The kinds of time away from project work. */
+export type NonWorkingKind =
+  "leave" | "holiday" | "study_leave" | "non_project_duty";
+
+/** `POST /api/non-working`: a blank note is not sent. */
+export interface NonWorkingBody {
+  person_ref: string;
+  starts_on: string;
+  ends_on: string;
+  kind: NonWorkingKind;
+  note?: string;
+}
+
+/** A query string from the values given; a left-out value is not sent. */
+export function readingSearch(
+  q: Record<string, number | boolean | undefined>,
+): string {
+  const s = new URLSearchParams();
+  for (const [k, v] of Object.entries(q))
+    if (v !== undefined) s.set(k, String(v));
+  const qs = s.toString();
+  return qs ? `?${qs}` : "";
 }

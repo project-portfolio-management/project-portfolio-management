@@ -15,7 +15,8 @@
   spec's `time-based-analysis.md` §12.4 for why that is a decision
   rather than a missing feature.
 
-  English-first, like the other PPM views.
+  English-first, like the other PPM views. NC-1 slice 12 part i adds the mix
+  of finished work by kind, read on asking (`FlowMix.svelte`).
 -->
 <script lang="ts">
   import { rowOf } from "#lib/row-of.js";
@@ -26,6 +27,7 @@
   import { arrow, formatDecimal } from "#lib/locale-format.js";
   import { page } from "$app/state";
   import CumulativeFlow from "#lib/components/CumulativeFlow.svelte";
+  import FlowMix from "#lib/components/FlowMix.svelte";
   import {
     TbaClient,
     days,
@@ -314,6 +316,8 @@
         : ""}{status} {arrow()} {category}{/each}
   </p>
 {/if}
+
+<FlowMix {pid} />
 
 <style>
   .tiles {

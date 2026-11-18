@@ -1185,6 +1185,72 @@ describe("PpmClient skill pool writes (NC-1 slice 11, DP-10)", () => {
   });
 });
 
+describe("PpmClient scheduling, the rest (NC-1 slice 12 part i)", () => {
+  it("reaches every route, defaults left out of the queries", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.hammocks("p1");
+    await ppm.setHammock("p1", "t1", true);
+    await ppm.linkHammock("p1", "h1", "t2");
+    await ppm.unlinkHammock("p1", "h1", "t2");
+    await ppm.dependencies("t1");
+    await ppm.addDependency({ predecessor_pid: "t1", successor_pid: "x1" });
+    await ppm.removeDependency("d1");
+    await ppm.taskRollup("p1", "t1");
+    await ppm.planFlowRollup("p1");
+    await ppm.planFlowRollup("p1", 3);
+    await ppm.planEffort("p1");
+    await ppm.deliveryForecast("p1");
+    await ppm.deliveryForecast("p1", { items: 20, period_days: 14 });
+    await ppm.planPerformance("p1");
+    await ppm.flowDistribution("p1");
+    await ppm.flowDistribution("p1", {
+      window_days: 30,
+      rollup: true,
+      depth: 0,
+    });
+    await ppm.planWorkflow("p1");
+    await ppm.ccpmEstimates("p1");
+    await ppm.setCcpmEstimate("p1", "t1", { aggressive_days: 2, safe_days: 4 });
+    await ppm.bufferPlan("p1");
+    await ppm.setWorkingTime({
+      minutes_per_day: 450,
+      working_days_per_week: 5,
+    });
+    await ppm.recordNonWorking({
+      person_ref: "person:a",
+      starts_on: "2026-12-21",
+      ends_on: "2026-12-24",
+      kind: "leave",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/plans/p1/hammocks",
+      "POST /api/plans/p1/tasks/t1/hammock",
+      "POST /api/plans/p1/hammocks/h1/links",
+      "DELETE /api/plans/p1/hammocks/h1/links/t2",
+      "GET /api/dependencies?item=t1",
+      "POST /api/dependencies",
+      "DELETE /api/dependencies/d1",
+      "GET /api/plans/p1/tasks/t1/rollup",
+      "GET /api/plans/p1/rollup",
+      "GET /api/plans/p1/rollup?depth=3",
+      "GET /api/plans/p1/effort",
+      "GET /api/plans/p1/forecast",
+      "GET /api/plans/p1/forecast?items=20&period_days=14",
+      "GET /api/plans/p1/performance",
+      "GET /api/plans/p1/flow-distribution",
+      "GET /api/plans/p1/flow-distribution?window_days=30&rollup=true&depth=0",
+      "GET /api/plans/p1/workflow",
+      "GET /api/plans/p1/ccpm-estimates?limit=1000",
+      "PUT /api/plans/p1/tasks/t1/ccpm-estimate",
+      "GET /api/plans/p1/buffer-plan",
+      "POST /api/working-time",
+      "POST /api/non-working",
+    ]);
+  });
+});
+
 describe("money", () => {
   it("formats minor units as grouped major units", () => {
     expect(money(123_450, "GBP", "en-GB")).toBe("£1,234.50");

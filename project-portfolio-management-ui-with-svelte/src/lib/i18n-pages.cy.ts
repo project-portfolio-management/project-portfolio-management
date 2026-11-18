@@ -8235,4 +8235,447 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.timereport.could_not_load": "Methu darllen yr adroddiad amser.",
   "p.timereport.could_not_load_plans":
     "Methu darllen y cynlluniau i ddewis ohonynt.",
+  "p.hammock.heading": "Hamogau: tasgau crynodeb sy'n rhychwantu eraill",
+  "p.hammock.says":
+    "Crynodeb yw hamog y daw ei ddyddiadau o'r tasgau yn y cynllun hwn y mae'n eu cysylltu, o'r dechrau cynharaf i'r gorffen olaf. Nid yw yn rhwydwaith y dibyniaethau, felly nid yw byth yn newid arnofio unrhyw dasg na'r gorffen. Daw tasg yn hamog dim ond pan nad oes ganddi hyd, gwaith, cyfyngiad na dibyniaeth, a chaiff ei dechrau arfaethedig ei glirio; mae ei gwneud yn dasg eto yn dileu pob cyswllt sydd ganddi. Mae hamog yn cysylltu â thasg neu hamog arall yn y cynllun hwn, nid ag ef ei hun, nid ddwywaith ac nid mewn dolen.",
+  "p.hammock.none": "Nid oes gan y cynllun hwn hamogau.",
+  "p.hammock.spans": "Yn rhychwantu {range}.",
+  "p.hammock.no_links": "Dim dyddiadau eto: nid yw'n cysylltu ag unrhyw dasg.",
+  "p.hammock.members_unscheduled":
+    "Dim dyddiadau eto: nid oes gan yr un o'r tasgau y mae'n eu cysylltu ddyddiadau.",
+  "p.hammock.untitled": "Tasg heb deitl",
+  "p.hammock.member_hammock": "{title} (hamog)",
+  "p.hammock.unmake_named": "Gwneud {title} yn dasg eto",
+  "p.hammock.unlink": "Dileu'r cyswllt",
+  "p.hammock.unlink_named": "Dileu'r cyswllt o {hammock} i {title}",
+  "p.hammock.make_form": "Gwneud tasg yn hamog",
+  "p.hammock.f_task": "Tasg",
+  "p.hammock.choose_task": "Dewiswch dasg",
+  "p.hammock.make": "Ei gwneud yn hamog",
+  "p.hammock.link_form": "Cysylltu hamog â thasg",
+  "p.hammock.f_hammock": "Hamog",
+  "p.hammock.choose_hammock": "Dewiswch hamog",
+  "p.hammock.f_member": "Tasg y mae'n ei rhychwantu",
+  "p.hammock.choose_member": "Dewiswch dasg i'w rhychwantu",
+  "p.hammock.link": "Ychwanegu'r cyswllt",
+  "p.hammock.confirm_make":
+    "Gwneud {title} yn hamog? Caiff ei dechrau arfaethedig ei glirio, ac yna daw ei ddyddiadau o'r tasgau y mae'n eu cysylltu.",
+  "p.hammock.confirm_unmake_one":
+    "Gwneud {title} yn dasg eto? Bydd ei {n} cyswllt yn mynd.",
+  "p.hammock.confirm_unmake_other":
+    "Gwneud {title} yn dasg eto? Bydd ei {n} cyswllt yn mynd.",
+  "p.hammock.confirm_unlink":
+    "Dileu'r cyswllt o {hammock} i {title}? Nid yw'r dasg ei hun yn newid.",
+  "p.hammock.made": "Mae {title} bellach yn hamog.",
+  "p.hammock.unmade": "Mae {title} yn dasg eto.",
+  "p.hammock.linked": "Mae {hammock} bellach yn rhychwantu {title}.",
+  "p.hammock.unlinked": "Nid yw {hammock} yn rhychwantu {title} mwyach.",
+  "p.hammock.problem_choose_task": "Dewiswch dasg i'w gwneud yn hamog.",
+  "p.hammock.problem_carries_work":
+    "Mae gan y dasg hon hyd, gwaith neu gyfyngiad: cliriwch nhw ar yr amserlen yn gyntaf.",
+  "p.hammock.problem_has_dependencies":
+    "Mae gan y dasg hon ddibyniaethau: dilëwch nhw yn gyntaf, gan nad yw hamog yn cymryd yr un.",
+  "p.hammock.problem_choose_hammock": "Dewiswch hamog.",
+  "p.hammock.problem_choose_member": "Dewiswch dasg i'r hamog ei rhychwantu.",
+  "p.hammock.problem_self": "Ni all hamog ei rychwantu ei hun.",
+  "p.hammock.problem_linked":
+    "Mae'r hamog hwn eisoes yn rhychwantu'r dasg honno.",
+  "p.hammock.problem_loop":
+    "Mae'r hamog hwnnw eisoes yn rhychwantu hwn, felly byddai'r cyswllt yn gwneud dolen.",
+  "p.hammock.refused_make":
+    "Ni fyddai'r gwasanaeth yn gwneud y dasg hon yn hamog: mae ganddi hyd, gwaith, cyfyngiad neu ddibyniaeth o hyd.",
+  "p.hammock.refused_link":
+    "Ni fyddai'r gwasanaeth yn ychwanegu'r cyswllt: efallai fod y dasg wedi mynd o'r cynllun hwn, eisoes wedi'i rhychwantu, neu'n rhan o ddolen.",
+  "p.hammock.refused_gone":
+    "Mae'r dasg neu'r hamog wedi mynd, neu ni allwch ei ddarllen mwyach.",
+  "p.hammock.refused_link_gone": "Mae'r cyswllt hwnnw eisoes wedi mynd.",
+  "p.hammock.could_not_load": "Methu darllen yr hamogau.",
+  "p.hammock.could_not_save": "Methu newid yr hamog.",
+  "p.crossplan.heading": "Tasgau cynlluniau cysylltiedig",
+  "p.crossplan.says":
+    "Dyma dasgau cynlluniau eraill y gallwch eu darllen y mae tasgau'r cynllun hwn wedi'u cysylltu â nhw, wedi'u hamserlennu â chalendr eu cynllun eu hunain. Mae bar toredig yn dasg oddi ar y llwybr critigol; mae bar solet a diemwnt yn nodi un arno.",
+  "p.crossplan.network_finish":
+    "Gyda'r cynlluniau cysylltiedig, mae'r rhwydwaith yn gorffen {date}.",
+  "p.crossplan.truncated":
+    "Nid yw pob cynllun cysylltiedig yn cael ei ddangos: cyrhaeddodd y rhwydwaith ei derfyn o gynlluniau neu dasgau.",
+  "p.crossplan.links_heading": "Cysylltiadau sy'n croesi i gynllun arall",
+  "p.crossplan.lag": "oedi o {days} diwrnod gwaith",
+  "p.crossplan.timeline": "Tasgau {plan} ar linell amser",
+  "p.crossplan.table": "Dyddiadau tasgau'r cynlluniau cysylltiedig",
+  "p.crossplan.col_task": "Tasg",
+  "p.crossplan.col_plan": "Cynllun",
+  "p.crossplan.col_start": "Dechrau cynharaf",
+  "p.crossplan.col_finish": "Gorffen cynharaf",
+  "p.crossplan.col_critical": "Ar y llwybr critigol",
+  "p.crossplan.yes": "Ydy",
+  "p.crossplan.no": "Nac ydy",
+  "p.crossplan.untitled": "Tasg heb deitl",
+  "p.crossplan.kind_fs": "gorffen i ddechrau",
+  "p.crossplan.kind_ss": "dechrau i ddechrau",
+  "p.crossplan.kind_ff": "gorffen i orffen",
+  "p.crossplan.kind_sf": "dechrau i orffen",
+  "p.crossplan.task_heading": "Dibyniaethau, yn y cynllun hwn neu un arall",
+  "p.crossplan.task_says":
+    "Mae dibyniaeth yn cysylltu'r dasg hon ag un mewn cynllun arall y gallwch ei ddarllen. Gorffen i ddechrau yw ei math oni ddewisir fel arall; mae ei hoedi'n ddiwrnodau gwaith cyfan o minws {max} i {max}, ac oedi negatif yn flaen. Ni wneir dibyniaeth ddwywaith yr un ffordd, nac mewn dolen ar draws cynlluniau, nac â hamog. Caiff un na allwch ddarllen ei phen arall ei chyfrif, byth ei henwi, a'i gadael allan o'r amserlen.",
+  "p.crossplan.no_links": "Nid oes gan y dasg hon ddibyniaethau eto.",
+  "p.crossplan.this_before": "Daw'r dasg hon cyn {other}",
+  "p.crossplan.this_after": "Daw'r dasg hon ar ôl {other}",
+  "p.crossplan.end_own": "{title}, yn y cynllun hwn",
+  "p.crossplan.end_external": "{title}, yn {plan}",
+  "p.crossplan.end_unnamed": "tasg heb ei henwi yma ({ref})",
+  "p.crossplan.remove": "Dileu",
+  "p.crossplan.remove_named": "Dileu'r ddibyniaeth ar {other}",
+  "p.crossplan.restricted_one":
+    "Mae {n} dibyniaeth arall yn cysylltu â thasg na allwch ei darllen.",
+  "p.crossplan.restricted_other":
+    "Mae {n} dibyniaeth arall yn cysylltu â thasgau na allwch eu darllen.",
+  "p.crossplan.see_network": "Gweld yr amserlen ar draws cynlluniau",
+  "p.crossplan.form": "Ychwanegu dibyniaeth ar dasg mewn cynllun arall",
+  "p.crossplan.f_order": "Trefn",
+  "p.crossplan.order_before": "Daw'r dasg hon gyntaf",
+  "p.crossplan.order_after": "Daw'r dasg arall gyntaf",
+  "p.crossplan.f_plan": "Cynllun arall",
+  "p.crossplan.choose_plan": "Dewiswch gynllun",
+  "p.crossplan.f_task": "Tasg yn y cynllun hwnnw",
+  "p.crossplan.choose_task": "Dewiswch dasg",
+  "p.crossplan.f_kind": "Math o ddibyniaeth",
+  "p.crossplan.f_lag": "Oedi mewn diwrnodau gwaith (0 os yw'n wag)",
+  "p.crossplan.add": "Ychwanegu'r ddibyniaeth",
+  "p.crossplan.added": "Ychwanegwyd dibyniaeth ar {title}.",
+  "p.crossplan.removed": "Dilëwyd y ddibyniaeth.",
+  "p.crossplan.confirm_remove_before":
+    "Dileu'r ddibyniaeth: daw {task} cyn {other}? Nid yw'r un dasg yn newid.",
+  "p.crossplan.confirm_remove_after":
+    "Dileu'r ddibyniaeth: daw {task} ar ôl {other}? Nid yw'r un dasg yn newid.",
+  "p.crossplan.problem_plan": "Dewiswch y cynllun arall.",
+  "p.crossplan.problem_task": "Dewiswch dasg yn y cynllun hwnnw.",
+  "p.crossplan.problem_lag":
+    "Mae oedi'n nifer cyfan o ddiwrnodau gwaith o minws {max} i {max}.",
+  "p.crossplan.problem_self": "Ni all tasg ddibynnu arni ei hun.",
+  "p.crossplan.problem_exists": "Mae'r ddibyniaeth hon yno eisoes.",
+  "p.crossplan.refused_unreadable":
+    "Mae un o'r ddwy dasg wedi mynd, neu ni allwch ei darllen.",
+  "p.crossplan.refused_exists": "Mae'r ddibyniaeth hon yno eisoes.",
+  "p.crossplan.refused_add":
+    "Ni fyddai'r gwasanaeth yn ychwanegu'r ddibyniaeth: efallai ei bod yno eisoes, yn gwneud dolen, neu'n cysylltu â hamog.",
+  "p.crossplan.refused_gone":
+    "Mae'r ddibyniaeth honno eisoes wedi mynd, neu ni allwch ddarllen y ddwy dasg mwyach.",
+  "p.crossplan.could_not_load": "Methu darllen dibyniaethau'r dasg hon.",
+  "p.crossplan.could_not_load_plans":
+    "Methu darllen y cynlluniau i ddewis ohonynt.",
+  "p.crossplan.could_not_load_tasks": "Methu darllen tasgau'r cynllun hwnnw.",
+  "p.crossplan.could_not_save": "Methu newid y ddibyniaeth.",
+  "p.taskrollup.heading": "Is-dasgau wedi'u crynhoi",
+  "p.taskrollup.says":
+    "Wedi'i gyfrifo bob tro o is-dasgau'r dasg hon, byth wedi'i gadw: y dyddiad dyledus olaf yn eu plith, eu pwyntiau wedi'u hadio, cynnydd wedi'i bwysoli gan y rhai a amcangyfrifwyd yn unig, a'r amser a gofnodwyd ar eu traws.",
+  "p.taskrollup.subtasks": "Is-dasgau",
+  "p.taskrollup.done_of_one": "{done} o {n} wedi'u gwneud",
+  "p.taskrollup.done_of_other": "{done} o {n} wedi'u gwneud",
+  "p.taskrollup.due": "Dyddiad dyledus olaf",
+  "p.taskrollup.points": "Pwyntiau wedi'u hadio",
+  "p.taskrollup.progress": "Cynnydd",
+  "p.taskrollup.spent": "Amser a gofnodwyd",
+  "p.taskrollup.no_children": "Nid oes gan y dasg hon is-dasgau.",
+  "p.taskrollup.no_dated_children":
+    "Nid oes gan yr un o'i his-dasgau ddyddiad dyledus.",
+  "p.taskrollup.no_estimates": "Nid oes amcangyfrif gan yr un o'i his-dasgau.",
+  "p.taskrollup.absent": "Anhysbys.",
+  "p.taskrollup.unestimated_one":
+    "Nid oes amcangyfrif gan {n} is-dasg, felly caiff ei gadael allan o'r cynnydd (nid ei chyfrif yn sero):",
+  "p.taskrollup.unestimated_other":
+    "Nid oes amcangyfrif gan {n} is-dasg, felly cânt eu gadael allan o'r cynnydd (nid eu cyfrif yn sero):",
+  "p.taskrollup.unnamed": "Is-dasg heb ei henwi yma ({ref})",
+  "p.taskrollup.refused_gone":
+    "Mae'r dasg hon wedi mynd, neu ni allwch ei darllen mwyach.",
+  "p.taskrollup.could_not_load": "Methu darllen yr is-dasgau wedi'u crynhoi.",
+  "p.readings.heading": "Rhagor am y cynllun hwn",
+  "p.readings.says":
+    "Caiff pob un o'r rhain ei ddarllen dim ond pan fyddwch yn gofyn.",
+  "p.readings.read": "Darllen",
+  "p.readings.could_not_read": "Methu darllen hyn.",
+  "p.readings.not_measured": "heb ei fesur",
+  "p.readings.days": "{n} diwrnod",
+  "p.readings.rollup_heading": "Llif ar draws y cynlluniau y mae'n eu cynnwys",
+  "p.readings.rollup_says":
+    "Tasgau'r cynllun hwn a phob cynllun oddi tano, wedi'u cyfrif gyda'i gilydd, nid ar gyfartaledd; hyd at {max} lefel i lawr pan adewir yn wag.",
+  "p.readings.f_depth": "Lefelau i lawr",
+  "p.readings.rollup_plans_one": "{n} cynllun.",
+  "p.readings.rollup_plans_other": "{n} cynllun.",
+  "p.readings.rollup_tasks_one":
+    "{n} dasg: {finished} wedi gorffen, {wip} ar y gweill, {not_started} heb ddechrau.",
+  "p.readings.rollup_tasks_other":
+    "{n} tasg: {finished} wedi gorffen, {wip} ar y gweill, {not_started} heb ddechrau.",
+  "p.readings.rollup_times":
+    "Gorffennodd y rhan fwyaf o'r gwaith (85 o bob 100) o fewn {cycle} i ddechrau ac o fewn {lead} i gael ei ofyn amdano; amser yn gweithio yn hytrach nag yn aros: {efficiency}.",
+  "p.readings.rollup_truncated":
+    "Ni chafodd pob cynllun oddi tano ei gyfrif: cyrhaeddodd y daith ei therfyn.",
+  "p.readings.rollup_revisits_one":
+    "Cyrhaeddir {n} cynllun ddwywaith a'i gyfrif unwaith.",
+  "p.readings.rollup_revisits_other":
+    "Cyrhaeddir {n} cynllun ddwywaith a'u cyfrif unwaith.",
+  "p.readings.rollup_table": "Llif fesul cynllun",
+  "p.readings.col_plan": "Cynllun",
+  "p.readings.col_depth": "Lefel",
+  "p.readings.col_tasks": "Tasgau",
+  "p.readings.col_finished": "Wedi gorffen",
+  "p.readings.col_wip": "Ar y gweill",
+  "p.readings.col_efficiency": "Amser yn gweithio yn hytrach nag yn aros",
+  "p.readings.effort_heading": "Amser a gofnodwyd",
+  "p.readings.effort_says":
+    "Yr amser a gofnododd pobl yn erbyn y cynllun hwn, fel y'i nodwyd ganddynt; nid oes dim yn ei wirio.",
+  "p.readings.read_effort": "Darllen yr amser a gofnodwyd",
+  "p.readings.effort_none": "Ni chofnodwyd amser yn erbyn y cynllun hwn.",
+  "p.readings.effort_total":
+    "{total} wedi'i gofnodi, a {billable} ohono y gellir ei filio.",
+  "p.readings.effort_split":
+    "Gwariant cyfalaf {capex}, gwariant gweithredol {opex}, heb ei ddosbarthu {unclassified}.",
+  "p.readings.effort_by_person": "Amser fesul person",
+  "p.readings.effort_by_task": "Amser fesul tasg",
+  "p.readings.col_person": "Unigolyn",
+  "p.readings.col_time": "Amser",
+  "p.readings.col_billable": "Y gellir ei filio",
+  "p.readings.col_task": "Tasg",
+  "p.readings.task_unnamed": "Tasg heb ei henwi yma ({ref})",
+  "p.readings.forecast_heading": "Rhagolwg cyflawni",
+  "p.readings.forecast_says":
+    "Deng mil o rediadau wedi'u tynnu o faint a orffennodd y cynllun hwn ym mhob cyfnod a fu: pa mor hir y gall y gwaith agored ei gymryd, a faint y gellir ei wneud mewn nifer o gyfnodau. Blwch gwag yw'r rhagosodiad; mae angen o leiaf chwe chyfnod o hanes.",
+  "p.readings.f_items": "Eitemau i'w gorffen (y rhai agored os yw'n wag)",
+  "p.readings.f_periods": "Cyfnodau o'n blaen ({n} os yw'n wag)",
+  "p.readings.f_period_days": "Diwrnodau mewn cyfnod ({n} os yw'n wag)",
+  "p.readings.f_history": "Cyfnodau o hanes ({n} os yw'n wag)",
+  "p.readings.read_forecast": "Darllen y rhagolwg",
+  "p.readings.forecast_history_one":
+    "Wedi'i dynnu o {n} cyfnod o {days} diwrnod.",
+  "p.readings.forecast_history_other":
+    "Wedi'i dynnu o {n} cyfnod o {days} diwrnod.",
+  "p.readings.forecast_batch_one":
+    "{n} eitem: mae hanner y rhediadau'n gorffen o fewn {p50} diwrnod, 85 o bob 100 o fewn {p85} diwrnod a 95 o bob 100 o fewn {p95} diwrnod.",
+  "p.readings.forecast_batch_other":
+    "{n} eitem: mae hanner y rhediadau'n gorffen o fewn {p50} diwrnod, 85 o bob 100 o fewn {p85} diwrnod a 95 o bob 100 o fewn {p95} diwrnod.",
+  "p.readings.forecast_no_batch":
+    "Ni ellir rhagweld pa mor hir y gall y gwaith ei gymryd: mae rhy ychydig o hanes, neu ni orffennwyd dim ynddo.",
+  "p.readings.forecast_horizon":
+    "Yn y {days} diwrnod nesaf, gellid gwneud tua {median} eitem: o leiaf {least} mewn 85 rhediad o 100, ac ar y mwyaf {most}.",
+  "p.readings.forecast_no_horizon":
+    "Ni ellir rhagweld faint y gellir ei wneud: mae rhy ychydig o hanes, neu ni orffennwyd dim ynddo.",
+  "p.readings.performance_heading": "Amserlen, cost a rhanddeiliaid",
+  "p.readings.performance_says":
+    "Perfformiad yr amserlen yw'r gwaith a wnaed yn erbyn y gwaith a gynlluniwyd hyd yma, a pherfformiad cost y gwaith a wnaed yn erbyn ei gost; mae dros 100% yn well na'r cynllun. Mae sgôr y rhanddeiliaid yn rhedeg o minws 100 i 100.",
+  "p.readings.read_performance": "Darllen y perfformiad",
+  "p.readings.schedule": "Perfformiad yr amserlen",
+  "p.readings.cost": "Perfformiad cost",
+  "p.readings.stakeholders": "Sgôr y rhanddeiliaid",
+  "p.readings.nps_one":
+    "{score}, o {n} ateb ({promoters} yn hyrwyddo, {detractors} yn tynnu'n ôl)",
+  "p.readings.nps_other":
+    "{score}, o {n} ateb ({promoters} yn hyrwyddo, {detractors} yn tynnu'n ôl)",
+  "p.readings.nps_none": "Dim atebion eto.",
+  "p.readings.earned_value_link": "Gweld y gwerth a enillwyd yn llawn",
+  "p.readings.absent_no_baseline":
+    "Heb ei fesur: nid oes gan y cynllun waelodlin cyllideb.",
+  "p.readings.absent_no_weighted_tasks":
+    "Heb ei fesur: nid oes pwysau gan unrhyw dasg.",
+  "p.readings.absent_not_yet_defined":
+    "Heb ei fesur eto: ni chynlluniwyd na gwariwyd dim hyd yma.",
+  "p.readings.absent_several_currencies":
+    "Nid un ffigur: mae gan y cynllun gyllidebau mewn sawl arian; gweler y gwerth a enillwyd.",
+  "p.readings.absent_other": "Heb ei fesur.",
+  "p.readings.workflow_heading": "Llif gwaith tasgau",
+  "p.readings.read_workflow": "Darllen llif gwaith y tasgau",
+  "p.readings.workflow_plan":
+    "Mae gan y cynllun hwn ei lif gwaith tasgau ei hun.",
+  "p.readings.workflow_built_in":
+    "Mae'r cynllun hwn yn defnyddio'r llif gwaith tasgau adeiledig.",
+  "p.readings.workflow_constrained":
+    "Dim ond y symudiadau a restrir a ganiateir.",
+  "p.readings.workflow_free":
+    "Gall tasg symud o unrhyw gyflwr i unrhyw un arall.",
+  "p.readings.cat_todo": "heb ddechrau",
+  "p.readings.cat_active": "ar y gweill",
+  "p.readings.cat_waiting": "yn aros",
+  "p.readings.cat_done": "wedi gorffen",
+  "p.readings.cat_other": "math arall",
+  "p.readings.initial": "lle mae tasg yn dechrau",
+  "p.readings.terminal": "lle mae tasg yn gorffen",
+  "p.readings.wip_limit": "{n} ar y mwyaf ar unwaith",
+  "p.readings.anyone": "unrhyw un",
+  "p.readings.roles": "rolau: {roles}",
+  "p.readings.problem_depth": "Mae lefelau i lawr yn rhif cyfan o 1 i {max}.",
+  "p.readings.problem_depth_zero":
+    "Mae lefelau i lawr yn rhif cyfan o 0 i {max}.",
+  "p.readings.problem_items":
+    "Mae eitemau i'w gorffen yn rhif cyfan o 1 o leiaf.",
+  "p.readings.problem_periods":
+    "Mae cyfnodau o'n blaen yn rhif cyfan o 1 i 520.",
+  "p.readings.problem_period_days":
+    "Mae diwrnodau mewn cyfnod yn rhif cyfan o 1 i 90.",
+  "p.readings.problem_history": "Mae cyfnodau o hanes yn rhif cyfan o 6 i 260.",
+  "p.readings.problem_window":
+    "Mae'r ffenestr yn nifer cyfan o ddiwrnodau o 1 i 3650.",
+  "p.readings.refused_query":
+    "Ni fyddai'r gwasanaeth yn derbyn y cwestiwn hwnnw.",
+  "p.readings.refused_module": "Mae'r rhan hon o'r cynllun wedi'i diffodd.",
+  "p.readings.refused_gone":
+    "Mae'r cynllun hwn wedi mynd, neu ni allwch ei ddarllen mwyach.",
+  "p.readings.flow_feature": "Nodweddion newydd",
+  "p.readings.flow_defect": "Diffygion",
+  "p.readings.flow_risk": "Gwaith risg",
+  "p.readings.flow_debt": "Dyled dechnegol",
+  "p.readings.flow_unclassified": "Heb ei ddosbarthu",
+  "p.readings.flow_other": "Math arall",
+  "p.flowmix.heading": "Cymysgedd y gwaith a orffennwyd",
+  "p.flowmix.says":
+    "Sut mae'r gwaith a orffennwyd mewn ffenestr yn rhannu'n nodweddion newydd, diffygion, gwaith risg a dyled dechnegol, yn erbyn y cymysgedd y mae'r cynllun yn ei fwriadu lle y'i datganwyd. {n} diwrnod yw'r ffenestr os gadewir yn wag.",
+  "p.flowmix.f_window": "Diwrnodau i edrych yn ôl ({n} os yw'n wag)",
+  "p.flowmix.f_rollup": "Cynnwys y cynlluniau y mae'n eu cynnwys",
+  "p.flowmix.f_depth": "Lefelau i lawr ({max} os yw'n wag)",
+  "p.flowmix.read": "Darllen y cymysgedd",
+  "p.flowmix.window_one": "Gwaith a orffennwyd yn y {n} diwrnod diwethaf.",
+  "p.flowmix.window_other": "Gwaith a orffennwyd yn y {n} diwrnod diwethaf.",
+  "p.flowmix.plans_one": "{n} cynllun wedi'i gyfrif.",
+  "p.flowmix.plans_other": "{n} cynllun wedi'u cyfrif.",
+  "p.flowmix.truncated":
+    "Ni chafodd pob cynllun oddi tano ei gyfrif: cyrhaeddodd y daith ei therfyn.",
+  "p.flowmix.none": "Ni orffennwyd gwaith yn y ffenestr honno.",
+  "p.flowmix.no_intent":
+    "Nid yw'r cynllun yn datgan cymysgedd bwriadedig, felly nid oes dim i'w gymharu ag ef.",
+  "p.flowmix.table": "Gwaith a orffennwyd fesul math",
+  "p.flowmix.col_kind": "Math o waith",
+  "p.flowmix.col_count": "Wedi gorffen",
+  "p.flowmix.col_share": "Cyfran",
+  "p.flowmix.col_intended": "Cyfran fwriadedig",
+  "p.flowmix.col_gap": "Bwlch",
+  "p.ccpm.heading": "Amcangyfrifon ymosodol a diogel",
+  "p.ccpm.says":
+    "Ar gyfer y gadwyn gritigol mae angen amcangyfrif ymosodol (tua siawns gyfartal) ac un diogel ar bob tasg, mewn diwrnodau gwaith cyfan o 1 i {max}, a'r ymosodol heb fod yn uwch na'r diogel. Ffigur a ddangosir yw'r un a gofnodwyd, fel arall un yr ystod risg, fel arall un y mae rheol y gosodiad yn ei ddeillio, ac mae pob un yn dweud pa un. Nid amcangyfrifir carreg filltir na thasg heb hyd. Mae clirio'r ddau yn dileu'r hyn a gofnodwyd.",
+  "p.ccpm.rule_explicit_only":
+    "Rheol: dim ond yr amcangyfrifon a roddir a ddefnyddir; ni ddeillir dim.",
+  "p.ccpm.rule_half_of_safe":
+    "Rheol: hyd y dasg yw amcangyfrif diogel coll, a hanner y diogel yw un ymosodol coll.",
+  "p.ccpm.rule_other": "Rheol: un nad yw'r dudalen hon yn ei hadnabod.",
+  "p.ccpm.rule_unusable":
+    "Methwyd darllen gosodiad rheol y gosodiad, felly dim ond yr amcangyfrifon a roddir a ddefnyddir.",
+  "p.ccpm.attention_one": "Mae angen ei hamcangyfrifon ar {n} dasg.",
+  "p.ccpm.attention_other": "Mae angen eu hamcangyfrifon ar {n} tasg.",
+  "p.ccpm.more": "Dangosir y {shown} cyntaf o {total} tasg.",
+  "p.ccpm.no_tasks": "Nid oes gan y cynllun hwn dasgau i'w hamcangyfrif.",
+  "p.ccpm.table": "Amcangyfrifon fesul tasg",
+  "p.ccpm.col_task": "Tasg",
+  "p.ccpm.col_likely": "Hyd mewn diwrnodau gwaith",
+  "p.ccpm.col_aggressive": "Ymosodol",
+  "p.ccpm.col_safe": "Diogel",
+  "p.ccpm.col_state": "Safle",
+  "p.ccpm.figure": "{days} diwrnod, {source}",
+  "p.ccpm.none": "dim",
+  "p.ccpm.source_recorded": "wedi'i gofnodi",
+  "p.ccpm.source_risk_range": "o'r ystod risg",
+  "p.ccpm.source_rule": "gan y rheol",
+  "p.ccpm.state_complete": "Y ddau wedi'u rhoi",
+  "p.ccpm.state_derived": "Wedi'i ddeillio'n rhannol",
+  "p.ccpm.state_missing": "Amcangyfrif ar goll",
+  "p.ccpm.state_inconsistent": "Ymosodol yn uwch na diogel",
+  "p.ccpm.state_milestone": "Carreg filltir, heb ei hamcangyfrif",
+  "p.ccpm.state_no_duration": "Dim hyd, heb ei hamcangyfrif",
+  "p.ccpm.state_other": "Safle arall",
+  "p.ccpm.form": "Cofnodi amcangyfrifon tasg",
+  "p.ccpm.f_task": "Tasg",
+  "p.ccpm.choose_task": "Dewiswch dasg",
+  "p.ccpm.f_aggressive": "Ymosodol, mewn diwrnodau gwaith",
+  "p.ccpm.f_safe": "Diogel, mewn diwrnodau gwaith",
+  "p.ccpm.save": "Cadw'r amcangyfrifon",
+  "p.ccpm.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.ccpm.saved": "Cadwyd yr amcangyfrifon ar gyfer {title}.",
+  "p.ccpm.cleared": "Cliriwyd yr amcangyfrifon a gofnodwyd ar gyfer {title}.",
+  "p.ccpm.confirm_clear":
+    "Clirio'r amcangyfrifon a gofnodwyd ar gyfer {title}? Efallai y dangosir ffigur o'r ystod risg neu'r rheol o hyd.",
+  "p.ccpm.problem_task": "Dewiswch dasg.",
+  "p.ccpm.problem_aggressive":
+    "Mae'r amcangyfrif ymosodol yn nifer cyfan o ddiwrnodau gwaith o 1 i {max}.",
+  "p.ccpm.problem_safe":
+    "Mae'r amcangyfrif diogel yn nifer cyfan o ddiwrnodau gwaith o 1 i {max}.",
+  "p.ccpm.problem_order":
+    "Ni all yr amcangyfrif ymosodol fod yn uwch na'r un diogel.",
+  "p.ccpm.refused_invalid":
+    "Ni fyddai'r gwasanaeth yn derbyn yr amcangyfrifon hyn: efallai fod y dasg wedi colli ei hyd neu wedi dod yn garreg filltir.",
+  "p.ccpm.refused_gone":
+    "Mae'r dasg hon wedi mynd, neu ni allwch ei darllen mwyach.",
+  "p.ccpm.could_not_load": "Methu darllen yr amcangyfrifon.",
+  "p.ccpm.could_not_save": "Methu cadw'r amcangyfrifon.",
+  "p.frozen.heading": "Y cynllun byffer wedi'i rewi",
+  "p.frozen.none": "Nid oes cynllun byffer wedi'i rewi eto.",
+  "p.frozen.freeze_link": "Rhewi un ar reoli byfferau",
+  "p.frozen.taken": "Wedi'i rewi ar {date}; {rule}",
+  "p.frozen.table": "Byfferau fel y'u rhewyd",
+  "p.frozen.col_buffer": "Byffer",
+  "p.frozen.col_days": "Diwrnodau gwaith",
+  "p.frozen.col_chain": "Cadwyn",
+  "p.frozen.col_finish": "Gorffen arfaethedig",
+  "p.frozen.project": "Byffer y prosiect",
+  "p.frozen.feeding": "Byffer bwydo i mewn i {joins}",
+  "p.frozen.unsized": "heb ei faintioli",
+  "p.frozen.untitled": "Tasg heb deitl",
+  "p.frozen.history_one": "{n} cynllun byffer wedi'i rewi: {dates}.",
+  "p.frozen.history_other":
+    "{n} cynllun byffer wedi'u rhewi, y diweddaraf yn gyntaf: {dates}.",
+  "p.frozen.could_not_load": "Methu darllen y cynllun byffer wedi'i rewi.",
+  "p.workingtime.heading": "Y diwrnod a'r wythnos waith",
+  "p.workingtime.says":
+    "Pa mor hir yw diwrnod gwaith (1 munud i 24 awr) a faint o ddiwrnodau'r wythnos a weithir (1 i 7), ar gyfer y cynllun hwn neu fel rhagosodiad y sefydliad. Mae pob un yn gofnod newydd na ellir ei newid na'i ddileu yma, felly gofynnir i chi yn gyntaf; gwrthodir ail un ar gyfer y cynllun hwn.",
+  "p.workingtime.form": "Gosod y diwrnod a'r wythnos waith",
+  "p.workingtime.f_scope": "Ar gyfer",
+  "p.workingtime.scope_plan": "Y cynllun hwn",
+  "p.workingtime.scope_default": "Rhagosodiad y sefydliad",
+  "p.workingtime.f_hours": "Oriau mewn diwrnod",
+  "p.workingtime.f_minutes": "A munudau",
+  "p.workingtime.f_days": "Diwrnodau mewn wythnos",
+  "p.workingtime.save": "Gosod y diwrnod gwaith",
+  "p.workingtime.confirm_plan_one":
+    "Gosod diwrnod gwaith y cynllun hwn i {day}, {days} diwrnod yr wythnos? Ni ellir ei newid yma wedyn.",
+  "p.workingtime.confirm_plan_other":
+    "Gosod diwrnod gwaith y cynllun hwn i {day}, {days} diwrnod yr wythnos? Ni ellir ei newid yma wedyn.",
+  "p.workingtime.confirm_default_one":
+    "Gosod diwrnod gwaith rhagosodedig y sefydliad i {day}, {days} diwrnod yr wythnos? Ni ellir ei newid yma wedyn.",
+  "p.workingtime.confirm_default_other":
+    "Gosod diwrnod gwaith rhagosodedig y sefydliad i {day}, {days} diwrnod yr wythnos? Ni ellir ei newid yma wedyn.",
+  "p.workingtime.saved_one":
+    "Gosodwyd diwrnod gwaith o {day}, {days} diwrnod yr wythnos.",
+  "p.workingtime.saved_other":
+    "Gosodwyd diwrnod gwaith o {day}, {days} diwrnod yr wythnos.",
+  "p.workingtime.away_heading": "Amser i ffwrdd o waith y prosiect",
+  "p.workingtime.away_says":
+    "Absenoldeb, gŵyl, absenoldeb astudio neu ddyletswydd y tu allan i'r prosiect, i un person o ddiwrnod cyntaf i ddiwrnod olaf, fel nad yw'r amser hwnnw'n cael ei ddarllen fel segur. Cyfeirnod yw'r person, fel person: a dynodwr. Ni ellir ei newid na'i ddileu ar ôl ei gofnodi, felly gofynnir i chi yn gyntaf; nid anfonir nodyn gwag.",
+  "p.workingtime.f_person": "Cyfeirnod y person",
+  "p.workingtime.f_starts": "Diwrnod cyntaf",
+  "p.workingtime.f_ends": "Diwrnod olaf",
+  "p.workingtime.f_kind": "Math",
+  "p.workingtime.f_note": "Nodyn (dewisol)",
+  "p.workingtime.record": "Cofnodi'r amser i ffwrdd",
+  "p.workingtime.confirm_away":
+    "Cofnodi {kind} ar gyfer {person}, {range}? Ni ellir ei newid na'i ddileu wedyn.",
+  "p.workingtime.recorded": "Cofnodwyd {kind} ar gyfer {person}, {range}.",
+  "p.workingtime.kind_leave": "absenoldeb",
+  "p.workingtime.kind_holiday": "gŵyl",
+  "p.workingtime.kind_study_leave": "absenoldeb astudio",
+  "p.workingtime.kind_non_project_duty": "dyletswydd y tu allan i'r prosiect",
+  "p.workingtime.problem_hours": "Mae oriau'n rhif cyfan o 0 i 24.",
+  "p.workingtime.problem_minutes": "Mae munudau'n rhif cyfan o 0 i 59.",
+  "p.workingtime.problem_day": "Mae diwrnod gwaith rhwng 1 munud a 24 awr.",
+  "p.workingtime.problem_week":
+    "Mae diwrnodau mewn wythnos yn rhif cyfan o 1 i 7.",
+  "p.workingtime.problem_person":
+    "Rhowch y person fel person: neu worker: a dynodwr.",
+  "p.workingtime.problem_starts": "Rhowch y diwrnod cyntaf.",
+  "p.workingtime.problem_ends": "Rhowch y diwrnod olaf.",
+  "p.workingtime.problem_order": "Ni all y diwrnod olaf ddod cyn y cyntaf.",
+  "p.workingtime.refused_exists":
+    "Mae diwrnod gwaith wedi'i osod eisoes ar gyfer y cynllun hwn, ac ni ellir ei ddisodli yma.",
+  "p.workingtime.refused_working":
+    "Ni fyddai'r gwasanaeth yn derbyn y diwrnod gwaith hwn.",
+  "p.workingtime.refused_non_working":
+    "Ni fyddai'r gwasanaeth yn derbyn yr amser i ffwrdd hwn.",
+  "p.workingtime.refused_forbidden": "Ni chewch gofnodi hyn.",
+  "p.workingtime.could_not_save": "Methu cofnodi hyn.",
+  "p.task.is_hammock":
+    "Hamog yw'r dasg hon: daw ei dyddiadau o'r tasgau y mae'n eu rhychwantu.",
+  "p.task.hammock_link": "Gweld ei rhychwant ar y llwybr critigol",
 };

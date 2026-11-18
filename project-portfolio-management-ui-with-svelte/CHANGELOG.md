@@ -9,6 +9,37 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — scheduling, the rest (NC-1 slice 12 part i, PJ-7, PJ-13, LT-10, CC-2, CC-3, RM-5, SC-4, 2026-11-18)
+
+- `/plans/[pid]/critical-path`: the tasks of linked plans drawn (`ExternalTasks.svelte`: the critical path's
+  `external` nodes as bars per plan, dashed off the critical path and solid with "◆" on it, a table twin, each crossing
+  link in words, the network's finish and a network cut short said); hammocks (`Hammocks.svelte`: each span in the
+  reader's locale or why it has none; a task made a hammock and a hammock made a task again after a question; a link
+  added and removed after a question; what a task may not carry, a duplicate, itself and a loop through nested
+  hammocks checked first); the plan's readings on asking (`PlanReadings.svelte`: flow across the plans it contains,
+  time recorded, the delivery forecast, schedule and cost performance with the stakeholder score, the task workflow;
+  each query checked first, the defaults not sent).
+- `/plans/[pid]/tasks/[tpid]`: dependencies on tasks of other plans (`CrossPlanLinks.svelte`: named from the critical
+  path, the hidden counted, added with the kind and lag sent only when not the defaults, removed after a question) and
+  the sub-tasks rolled up (`TaskRollup.svelte`: done of the whole, the latest due date, points, progress weighted by
+  the estimated ones, time recorded, the unestimated named); a hammock says so.
+- `/plans/[pid]/critical-chain`: each task's aggressive and safe estimates (`CcpmEstimates.svelte`: the rule in words,
+  where each figure came from, the standing in a word and "▲"; nothing sent for no change; clearing asked first) and
+  the frozen buffer plan (`FrozenBufferPlan.svelte`).
+- `/plans/[pid]/calendar`: the working day and week, and a person's time away (`WorkingTime.svelte`, each asked first
+  as it cannot be changed). `/plans/[pid]/flow`: the mix of finished work (`FlowMix.svelte`, a window checked first as
+  the service would quietly read a bad one as 90 days).
+- Rules in `src/lib/hammock-view.ts`, `cross-plan-view.ts`, `ccpm-estimate-view.ts`, `plan-readings-view.ts` and
+  `working-time-view.ts`; 19 client methods; five new unit test files and one more in `ppm.test.ts`;
+  `tests/e2e/scheduling-rest.spec.ts` (twelve, with Welsh and axe) and the new reads stubbed in
+  `plan-task-edit.spec.ts` and `task-discussion.spec.ts`; 346 keys in eight catalogues, machine-written and unreviewed.
+- **Not built:** the issue workflow; estimates past the first 1,000 tasks; a list, change or removal of a working-time
+  record (no route); a person picker for time away; the roll-up's attrition trail. **Service gaps:** the hammock,
+  dependency, estimate, working-time and time-away refusals are each one 422 code with English text; `person_ref` is
+  not checked; an organization-wide working day is never deduplicated and a plan's is not read; `GET
+  /api/dependencies` carries no names; a bad flow window is read as 90 days; the notes and reasons are English. **Not
+  verified:** against a real service; a network with many linked plans.
+
 ### Fixed — the "contrast flake" was a real first-paint failure (2026-11-18)
 
 - `--mxi-color-muted` falls back, before the theme stylesheet arrives, to a mix of `#6b7280`, which is `#80808d`:

@@ -3,7 +3,10 @@
   tasks with their float. Three views of one result — a Gantt with the float
   drawn as a tail, a precedence network, and a table — plus the critical chains,
   what could not be scheduled (and why), and an editor for a task's start,
-  duration, constraint and deadline that answers with **what moved**.
+  duration, constraint and deadline that answers with **what moved**. NC-1 slice
+  12 part i adds the tasks of linked plans drawn (`ExternalTasks.svelte`), the
+  hammocks (`Hammocks.svelte`) and the plan's readings on asking
+  (`PlanReadings.svelte`).
   English-first, like the other recent views.
 -->
 <script lang="ts">
@@ -26,6 +29,9 @@
   import CpmTable from "#lib/components/CpmTable.svelte";
   import NetworkDiagram from "#lib/components/NetworkDiagram.svelte";
   import VarianceTable from "#lib/components/VarianceTable.svelte";
+  import ExternalTasks from "#lib/components/ExternalTasks.svelte";
+  import Hammocks from "#lib/components/Hammocks.svelte";
+  import PlanReadings from "#lib/components/PlanReadings.svelte";
   import { diagramFits, floatLabel, restrictedText, unscheduledReason } from "#lib/cpm-view.js";
 
   const ppm = PpmClient.withFetch();
@@ -281,6 +287,10 @@
       {/each}
     </ul>
   {/if}
+
+  <ExternalTasks {cpm} />
+  <Hammocks {pid} {cpm} onchanged={() => void load()} />
+  <PlanReadings {pid} titles={titleOf} />
 
   {#if selected}
     <section class="surface stack" aria-labelledby="edit-h">

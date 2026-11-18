@@ -29,4 +29,7 @@ pub struct Model {
     pub cadence: Option<String>,
     pub owner_ref: Option<String>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
+    /// The scorecard-template measure it was made from (`POST /api/scorecards/{pid}/from-template`), so a client can
+    /// name it from its own catalogue; none for a KPI made any other way.
+    pub template_key: Option<String>,
 }

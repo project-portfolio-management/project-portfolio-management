@@ -150,6 +150,9 @@ migration. Only `axa` and `axa-test` (0.11) change.
    are unchanged. A `zstd` request body is now a `415` problem, and a caller asking for `zstd` alone gets an
    uncompressed answer. A deployment whose clients send Zstd needs the feature turned on in `Cargo.toml` and a rebuild.
 
+The same release carries migration `20261118000116` (a KPI's scorecard-template key), which adds one nullable column
+with a check, with a down file; existing KPIs keep a null key.
+
 ## Upgrading to axa 0.19
 
 The release that moves the service from axa 0.17 to 0.19 (through 0.18) renames no setting, changes no route or

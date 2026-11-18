@@ -1848,3 +1848,13 @@ and its English `detail`; each fact a screen must show is a field, not only Engl
   data-subject tools cover them. The same tracker inside a director pack leaves all three people fields out, as it
   leaves out the evidence notes and links: a pack names no one. Test: `tests/organizations.rs` (the tracker shows them;
   the pack's `outcomes` holds neither subject).
+- **A template measure keeps its key.** `GET /api/scorecard-template` gives each measure's `name` as the service's
+  English and a stable `key`. A KPI made by `POST /api/scorecards/{pid}/from-template` is stored under that English name
+  and, since migration `20261118000116_kpi_template_key`, keeps the key in `kpis.template_key` (null for a KPI made any
+  other way; a lower-case key of letters, digits and `_`, at most 80, checked by the database). It is returned as
+  `template_key` wherever the KPI is (`GET /api/kpis`, `GET /api/kpis/{pid}`, `GET /api/scorecards/{pid}`, the
+  tracker's `kpis`), so a client names the measure from its own catalogue in the reader's language. The stored name
+  is not translated and stays as made: a KPI renamed by `PUT /api/kpis/{pid}` keeps its key, and a client that shows
+  the catalogue's name for a key ignores that rename. Tests:
+  `the_template_has_no_targets_and_every_direction_is_valid` (domain: every key fits the check),
+  `tests/organizations.rs`.

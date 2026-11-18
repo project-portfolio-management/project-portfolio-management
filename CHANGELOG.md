@@ -30,6 +30,9 @@ It is pre-1.0; the first release cut from the root release workflow is
 - **Service: the de-escalation tracker says who set the level and who recorded the evidence** (`set_by`,
   `recorded_by`, `recorded_on`), as references; a director pack's copy leaves the people out. **Not done:** names (the
   service stores references only).
+- **Service: a KPI made from the scorecard template keeps the measure's key** (`template_key`, migration
+  `20261118000116`), so the UI can name it in the reader's language instead of the service's English. **Not done:** no
+  backfill of KPIs made before; the plan-template starters stay English.
 
 ### 18 November (test coverage measured, with cargo-tarpaulin)
 

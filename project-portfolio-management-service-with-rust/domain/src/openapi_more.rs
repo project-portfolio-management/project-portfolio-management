@@ -1719,7 +1719,7 @@ fn scorecard_paths() -> Value {
         },
         "/api/scorecard-template": {
             "get": op("kpis", "A starter set of measures, with no targets (nothing is applied)",
-                "Inputs: the built-in list of suggested measures: a key, name, direction and unit, and no target. It is offered, not a default; POST /api/scorecards/{pid}/from-template creates the ones you pick with the targets you set.",
+                "Inputs: the built-in list of suggested measures: a key, name, direction and unit, and no target. The name is the service's English; the key is stable, and a client names a measure from its own catalogue by it. It is offered, not a default; POST /api/scorecards/{pid}/from-template creates the ones you pick with the targets you set.",
                 vec![], &[("200", "measures, note")])
         },
         "/api/scorecards/{pid}": {
@@ -1734,7 +1734,7 @@ fn scorecard_paths() -> Value {
         },
         "/api/scorecards/{pid}/from-template": {
             "post": op("kpis", "Create the picked template measures as KPIs, with your targets, on the scorecard",
-                "Body: measures [{key, target_value, red_value}], each key from the template; the red line must lie on the worse side of the target. The KPIs are portfolio-level and quarterly. Audited.",
+                "Body: measures [{key, target_value, red_value}], each key from the template; the red line must lie on the worse side of the target. The KPIs are portfolio-level and quarterly; each is named with the measure's English name and keeps its key as template_key (on GET /api/kpis, GET /api/kpis/{pid}, the scorecard and the tracker), so a client can name it in the reader's language. Audited.",
                 vec![uuid_param("pid")], &[("200", "scorecard_pid, kpi_pids"), ("404", "Unknown scorecard"), ("422", "A key not in the template, or thresholds that contradict the direction")])
         },
         "/api/deescalation": {

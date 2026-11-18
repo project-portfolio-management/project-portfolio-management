@@ -277,7 +277,8 @@ async fn from_template(
     let mut problems = Vec::new();
     let mut chosen = Vec::new();
     for p in &b.measures {
-        let Some((_, name, dir, unit)) = rules::TEMPLATE.iter().find(|(k, ..)| *k == p.key) else {
+        let Some((key, name, dir, unit)) = rules::TEMPLATE.iter().find(|(k, ..)| *k == p.key)
+        else {
             problems.push(format!("{} is not in the template", p.key));
             continue;
         };
@@ -285,17 +286,18 @@ async fn from_template(
         if let Some(why) = kpi::threshold_problem(d, p.target_value, p.red_value) {
             problems.push(format!("{}: {why}", p.key));
         }
-        chosen.push((*name, *dir, *unit, p));
+        chosen.push((*key, *name, *dir, *unit, p));
     }
     if !problems.is_empty() {
         return Err(unprocessable(&problems.join("; ")));
     }
     let mut made = Vec::new();
     let mut tx = crate::db::begin(&ctx).await?;
-    for (name, dir, unit, p) in chosen {
+    for (key, name, dir, unit, p) in chosen {
+        // The name is the service's English; the key is what a client names the measure by in its own language.
         let k: Uuid = sqlx::query_scalar(
-            "INSERT INTO kpis (pid, name, unit, direction, target_value, red_value, cadence)
-             VALUES ($1, $2, $3, $4, $5, $6, 'quarterly')
+            "INSERT INTO kpis (pid, name, unit, direction, target_value, red_value, cadence, template_key)
+             VALUES ($1, $2, $3, $4, $5, $6, 'quarterly', $7)
              RETURNING pid",
         )
         .bind(Uuid::new_v4())
@@ -304,6 +306,7 @@ async fn from_template(
         .bind(dir)
         .bind(p.target_value)
         .bind(p.red_value)
+        .bind(key)
         .fetch_one(tx.conn())
         .await
         .map_err(|e| db_err(&e))?;
@@ -375,7 +378,7 @@ async fn kpi_rows(
             });
             per.push(json!({ "quarter": q.label(), "value": latest.map(|r| r.value), "observed_on": latest.map(|r| r.observed_on), "met": met }));
         }
-        rows.push(json!({ "kpi_pid": k.pid, "name": k.name, "unit": k.unit, "direction": k.direction, "target_value": k.target_value, "quarters": per }));
+        rows.push(json!({ "kpi_pid": k.pid, "name": k.name, "template_key": k.template_key, "unit": k.unit, "direction": k.direction, "target_value": k.target_value, "quarters": per }));
     }
     Ok((rows, hidden, inputs))
 }

@@ -39,6 +39,14 @@ Service spec, "Codes and fields a screen reads (NC-1 slice 12, part a)", is the 
   (`pack_section`) removes them. Test: `tests/organizations.rs`. **Not done:** the references are token subjects, not
   names; the service holds no directory to turn one into a name, so a screen shows the reference (the same limit as a
   confidence assessment's assessor).
+- **A KPI made from the scorecard template keeps the measure's key.** Migration `20261118000116_kpi_template_key` adds
+  `kpis.template_key` (nullable, checked to a lower-case key; a down file drops it); `from-template` stores it, and every
+  KPI answer returns it (`GET /api/kpis`, `/api/kpis/{pid}`, `/api/scorecards/{pid}`, the tracker). Chosen over
+  translating the template in the service: the service answers in English, a client names a measure from its own
+  catalogue by key, and the column is the small honest fix. Tests: the domain template test checks every key fits,
+  `tests/organizations.rs` reads the key back. **Not done:** KPIs made from the template before this migration have
+  no key (nothing is backfilled: a name match could be wrong); the template answer's `name` stays English; the plan
+  templates' starter names and text are English too (BR-13), untouched.
 
 ### Added — test coverage with cargo-tarpaulin, and its baseline (2026-11-18)
 

@@ -319,5 +319,13 @@ mod tests {
                 .all(|(_, _, dir, _)| crate::kpi::Direction::parse(dir).is_some())
         );
         assert!(TEMPLATE.len() >= 5);
+        // Each key fits the `kpis.template_key` check (migration 20261118000116): a client names the measure by it.
+        assert!(TEMPLATE.iter().all(|(key, ..)| {
+            key.len() <= 80
+                && key.starts_with(|c: char| c.is_ascii_lowercase())
+                && key
+                    .chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+        }));
     }
 }

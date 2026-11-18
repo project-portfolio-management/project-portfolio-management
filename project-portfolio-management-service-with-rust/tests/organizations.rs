@@ -705,6 +705,9 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
             { "key": "milestones_met_on_time", "target_value": 80, "red_value": 50 },
             { "key": "open_critical_issues", "target_value": 2, "red_value": 10 } ] })).await.json();
         let kp: Vec<String> = made["kpi_pids"].as_array().unwrap().iter().map(|k| k.as_str().unwrap().to_string()).collect();
+        // Each made KPI keeps the measure's key, so a client can name it in its own language.
+        let one: Value = with!(request.get(&format!("/api/kpis/{}", kp[0])), writer).await.json();
+        assert_eq!(one["kpi"]["template_key"], "milestones_met_on_time", "{one}");
         let reading = |kpi: &str, q, v: i64| {
             let (request, writer, kpi, d) = (&request, writer.clone(), kpi.to_string(), day(q));
             async move { request.post(&format!("/api/kpis/{kpi}/readings")).add_header(writer.0, writer.1).json(&json!({ "observed_on": d, "value": v })).await.assert_status_success(); }
@@ -751,6 +754,8 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert!(sqlx::raw_sql("UPDATE escalation_levels SET level = 'Level 0'").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "append-only");
         let one: Value = with!(request.get(&format!("/api/scorecards/{scp}?quarters=2")), writer).await.json();
         assert_eq!(one["kpis"].as_array().unwrap().len(), 2);
+        let keys: Vec<&str> = one["kpis"].as_array().unwrap().iter().filter_map(|k| k["template_key"].as_str()).collect();
+        assert_eq!(keys, ["milestones_met_on_time", "open_critical_issues"], "{one}");
         let d10: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": (first - project_portfolio_management::datetime::Months::new(3)).format("%Y-%m").to_string(), "audience": "executive" })).await.json();
         let pack10: Value = with!(request.get(&format!("/api/director-packs/{}", d10["pid"].as_str().unwrap())), issuer).await.json();
         assert_eq!(pack10["body"]["outcomes"]["level"]["level"], "Level 2");

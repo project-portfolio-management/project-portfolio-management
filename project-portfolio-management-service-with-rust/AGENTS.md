@@ -244,7 +244,8 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
   lookups through `controllers::model_not_found`.
 - There are no configuration files: `src/app.rs` reads the environment (`spec/08-architecture.md` §8.3a). The family
   issues PASETO, and the Dockerfile must `COPY benches/`
-  (manifest declares `[[bench]] service_bench` and `calculation_bench`).
+  (the manifest declares `[[bench]] service_bench`; `domain/` and `datetime/`, copied whole, declare
+  `calculation_bench` and `datetime_bench`).
 
 ## Testing
 
@@ -257,6 +258,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 | Real-token and other database suites | `cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::` (all, as CI runs them), or one module, e.g. `cargo test --test main private_aggregates:: -- --ignored --test-threads=1` (`list_paging`, `approvals`, `processes`, …; `tests/change_requests.rs` is the module `change_request_rights`) |
 | Keycloak | `cargo test --features keycloak --test main keycloak_guard::` (in-process test IdP); `--features keycloak --test main keycloak_container:: -- --ignored` needs Podman |
 | Fluvio | `fluvio_relay.rs`, needs the `fluvio` feature and a broker (`compose.fluvio.yaml`) |
+| Benchmarks (Criterion 0.8, release) | `cargo bench --bench service_bench` (the request path, the row structs' JSON) · `cargo bench -p project-portfolio-management-domain --bench calculation_bench` (the engines; builds no service) · `cargo bench -p project-portfolio-management-datetime --bench datetime_bench` (the date types, one operation at a time). Results: [`../BENCHMARKS.md`](../BENCHMARKS.md) |
 
 DB tests are `#[ignore]`d so a plain `cargo test` is DB-free. Mint tokens
 in-process (ed25519 + `rusty_paseto`, as `private_aggregates.rs` does); no

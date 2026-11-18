@@ -115,17 +115,183 @@ How to read it:
 - **Calendar arithmetic is 2 to 3 times slower**, in absolute terms 14 to 40 ns more per date (business-day index,
   ISO week to Monday and seven days, the next monthly report, absence expansion). chrono's `NaiveDate` is one packed
   integer with an ordinal; jiff's is year, month and day, so a day step or a weekday is a conversion. Day steps within
-  a month, ISO weeks and comparisons already avoid the slow paths. Not changed further: a 1,000-date calendar walk
-  costs about 30 µs, against milliseconds for the database round trip around it.
+  a month, ISO weeks and comparisons already avoid the slow paths. A 1,000-date calendar walk costs about 30 µs,
+  against milliseconds for the database round trip around it. (Worked on the same day, operation by operation:
+  "The date types, one operation at a time", below.)
 - **Not measured:** the database encoding (microseconds and days since 2000, as before), and anything under load.
+
+## Every bench on the new layout (measured 2026-11-18)
+
+Each of the four bench files once, one after another, on the final code of the change that split
+`calculation_bench.rs` (below, "The date types, one operation at a time"), with the command
+`cargo bench … -- --warm-up-time 1 --measurement-time 3` (the `…` from the table under "How to add a benchmark").
+
+| | |
+|---|---|
+| Date | 2026-11-18, 01:50 to 02:07 |
+| Machine | Apple M4 Max (16 cores), macOS 27.2.1, **shared**: the one-minute load average was 15.6 at the start, 6.3 to 11 for most of it, 8 to 9 at the end (other sessions' builds) |
+| Toolchain | rustc 1.100.0, release profile |
+| Reported | Criterion's point estimate (time per call) |
+
+`domain/benches/calculation_bench.rs` (moved from the service, IDs unchanged; the 2026-11-17 figures were taken at
+load 97 to 190):
+
+| Benchmark | 2026-11-18 | 2026-11-17 |
+|---|---|---|
+| `schedule_risk/simulate_default_iterations/100`, `/1000` | 676 ms, 7.87 s | 1.96 s, 11.7 s |
+| `cost_risk/simulate_default_iterations/100`, `/900` | 10.5 ms, 81.7 ms | 24.8 ms, 223 ms |
+| `leveling/propose/51`, `/201` | 2.18 ms, 2.00 s | 3.18 ms, 1.82 s |
+| `schedule_health/assess/100`, `/1000` | 699 µs, 7.62 ms | 766 µs, 7.57 ms |
+| `mspdi/parse/sample`, `generated_1000`, `generated_5000` | 10.9 µs, 1.28 ms, 6.96 ms | 16.6 µs, 2.19 ms, 12.0 ms |
+| `mspdi/write/sample`, `generated_1000`, `generated_5000` | 1.91 µs, 543 µs, 8.03 ms | 3.86 µs, 829 µs, 12.1 ms |
+| `earned_value/percent_complete_points/100`, `/1000` | 536 ns, 3.19 µs | 564 ns, 4.73 µs |
+| `earned_value/block/12_monthly_periods`, `60_…`, `260_weekly_…` | 11.0 µs, 261 µs, 1.02 ms | 23.2 µs, 1.30 ms, 3.50 ms |
+| `earned_value/pv_after/12_…`, `60_…`, `260_…` | 47.3 ns, 244 ns, 1.07 µs | 111 ns, 1.34 µs, 1.63 µs |
+| `earned_value/eac_variants_tcpi_recommended` | 31.0 ns | 41.7 ns |
+| `timestamps/tracker_import_parse_date_iso_1000`, `_jira_1000` | 29.1 µs, 80.5 µs | 59.1 µs, 114 µs |
+| `timestamps/parse_flex_date_mixed_1000`, `parse_month_add_months_1000` | 24.6 µs, 66.2 µs | 148 µs, 251 µs |
+| `timestamps/iso_week_start_and_days_1000`, `business_day_index_1000` | 60.9 µs, 18.5 µs | 83.5 µs, 55.3 µs |
+| `timestamps/report_schedule_next_monthly_1000`, `financial_year_of_1000`, `expand_absences_20` | 7.92 µs, 35.8 µs, 3.08 µs | 33.7 µs, 174 µs, 2.33 µs |
+
+The 2026-11-17 column was chrono and a machine ten times as loaded, so a ratio between the columns means little; the
+quadratics it named are unchanged in kind (`mspdi/write`: five times the tasks, fifteen times the time; earned value's
+`block`: five times the monthly periods, 24 times the time), and leveling's 201-task case still stops at its cap
+(`truncated true`, 18 moves, 44 unresolved).
+
+`datetime/benches/datetime_bench.rs`, `timestamps` (moved from the service, IDs unchanged): `decode_iso_dates_1000`
+35.4 µs, `encode_iso_dates_1000` 15.5 µs, `decode_rfc3339_instants_1000` 74.4 µs, `encode_rfc3339_instants_1000`
+32.5 µs, `full_date_1000` 26.3 µs. Its `date_ops` and `duration_ops` rows agree with the new-code rounds in the next
+section to within the noise (for example `weekday/1000` 1.06 µs, `add_thirty_days/1000` 7.12 µs,
+`last_day_of_month/1000` 4.46 µs).
+
+`benches/service_bench.rs`:
+
+| Benchmark | Time |
+|---|---|
+| `timestamps/decode_plans/1`, `/1000`; `encode_plans/1`, `/1000` (moved here, IDs unchanged) | 775 ns, 800 µs; 556 ns, 460 µs |
+| `timestamps/decode_tasks/1`, `/1000`; `encode_tasks/1`, `/1000` | 1.22 µs, 1.14 ms; 896 ns, 748 µs |
+| `timestamps/decode_audit_logs/1`, `/1000`; `encode_audit_logs/1`, `/1000` | 561 ns, 554 µs; 352 ns, 287 µs |
+| `validation/valid_payload`, `several_problems`, `oversized_arrays` | 90.4 ns, 167 ns, 4.91 µs |
+| `merge/typical_pair`, `many_keywords_half_overlapping` | 1.86 µs, 1.05 ms |
+| `search/index_one_document` | 136 ms |
+| `search/exact`, `fuzzy`, `phonetic`, `exact_kind_filtered` | 25.7 µs, 174 µs, 9.9 µs, 27.2 µs |
+| `search/duplicate_candidates/10`, `/50` | 146 µs, 152 µs |
+| `capacity_rollups/summed_percent/40`, `/400`; `utilization/40`, `/400` | 18.3 ns, 174 ns; 525 ns, 5.05 µs |
+| `cpm/analyze/100`, `/1000`, `/4000`, `/12667` | 279 µs, 2.97 ms, 13.7 ms, 66.0 ms |
+| `auth/enforce_valid_token_read`, `_write`; `refuse_no_token`, `public_path` | 25.7 µs, 25.7 µs; 17.3 ns, 17.3 ns |
+| `cursor/first_page`, `signed_next_page`, `refuse_forged_cursor`, `next_link` | 342 ns, 498 ns, 197 ns, 16.9 ns |
+| `public_roadmap/slug_from_title`, `public_id`, `source_hash_30_detail_lines`, `shown_translations_full_item`, `tag_and_detail_checks` | 233 ns, 10.4 ns, 1.95 µs, 12.0 µs, 1.51 µs |
+| `dhcw_import/parse_example_spreadsheet`, `dry_run_example_spreadsheet` | 35.9 µs, 90.3 µs |
+
+The three row-JSON pairs match the jiff column of "Date handling before and after" (same code, now in this file).
+`cpm/analyze` is about 35% slower than on 2026-11-15 (279 µs against 203 µs at 100 tasks); the CPM code did not
+change in this work, and the machine was busier, but the difference was not investigated.
+
+`project-portfolio-management-matcher-with-rust/benches/match_pair.rs` (not changed by this work):
+
+| Benchmark | Time | 2026-10-10 |
+|---|---|---|
+| `match_pair/identical_clone`, `fuzzy_near_match`, `unrelated_pair` | 301 ns, 4.18 µs, 4.23 µs | 98 ns, 4.08 µs, 3.73 µs |
+| `deterministic/shared_jira_key`, `same_owner_code` | 108 ns, 300 ns | 108 ns, 99 ns |
+| `rank/10`, `/100`, `/1000` | 43.1 µs, 434 µs, 4.34 ms | 50 µs, 376 µs, 3.80 ms |
+| `config_variants/default`, `strict`, `lenient` | 4.16, 4.19, 4.16 µs | 4.04, 4.06, 4.17 µs |
+| `field_arrays/goals/10`, `/100`, `/1000` | 7.13 µs, 49.8 µs, 1.05 ms | 6.8 µs, 50 µs, 1.19 ms |
+| `field_arrays/relationships/10`, `/100`, `/1000` | 11.9 µs, 89.2 µs, 1.46 ms | 11.6 µs, 87.6 µs, not run |
+| `field_arrays/keywords/…`, `tags/…` (10, 100, 1000) | 5.70 µs, 33.5 µs, 998 µs; 6.13 µs, 37.7 µs, 1.22 ms | not run |
+
+`identical_clone` and `same_owner_code` take three times what they did on 2026-10-10 (the rest agree); the matcher has
+changed since then (0.2.2, its mutation-testing work). Not investigated here.
+
+## The date types, one operation at a time, and the calendar arithmetic made cheaper (measured 2026-11-18)
+
+`datetime/benches/datetime_bench.rs` times each operation the slow rows above are made of, on one date (`…/1`) and
+over the same thousand dates the domain rows use (`…/1000`), and the same step on `jiff::civil::Date` directly
+(`jiff_…`), so a cost can be put down to the wrapper or to jiff. It showed jiff 1.0 doing two things much faster than
+this crate's own integer code: reading a weekday (0.9 ns, against 3.6 ns through a Hinnant day number) and stepping
+a date across a month end (3 ns, against 13 ns through Hinnant's `civil_from_days` and a checked `from_ymd_opt`).
+`Date::weekday`, the day number, the difference of two dates and a day step that leaves the month now go through
+jiff's own arithmetic (jiff 1.0 converts a date to its day number with Neri-Schneider, no branches or divisions).
+A step jiff refuses (one longer than its range of day numbers, such as the whole span from -9999-01-01, which still
+lands in range) is retried through the absolute day number, so no result changes. A unit test
+(`datetime/src/date.rs`, `jiff_day_numbers_agree_with_the_algorithms_they_replaced_on_every_date`) checks the new
+paths against the old integer algorithms on every one of the 7.3 million dates in range, and day steps on every
+eleventh date and on every date within 20,000 days of either end; the service's golden tests (`src/datetime/golden.rs`)
+and the crate's other tests pass unchanged.
+
+| | |
+|---|---|
+| Date | 2026-11-18, 01:28 to 01:44 |
+| Machine | Apple M4 Max (16 cores), macOS 27.2.1, **shared**: other sessions' builds held the one-minute load average between 9.8 and 19.6 |
+| Toolchain | rustc 1.100.0, release profile |
+| Method | the old `date.rs` (commit `a6f8f3c9`) and the new one swapped in and out of the same tree: old, new, old, new, each round `cargo bench -p project-portfolio-management-datetime --bench datetime_bench -- --warm-up-time 1 --measurement-time 3 date_ops` then the domain crate's `calculation_bench … timestamps/` |
+| Reported | Criterion's point estimate; "Ratio" is the new code's faster round over the old code's faster round (under 1 is faster) |
+
+The operations:
+
+| Benchmark (`date_ops/…`, one date; a thousand) | Old (two rounds) | New (two rounds) | Ratio |
+|---|---|---|---|
+| `weekday/1`; `/1000` | 3.87, 3.57 ns; 3.65, 3.47 µs | 1.09, 1.03 ns; 1.10, 1.04 µs | **0.29; 0.30** |
+| `jiff_weekday/1000` (jiff alone) | 0.95, 0.90 µs | 0.97, 0.91 µs | 1.01 |
+| `date_minus_date/1000` | 3.45, 3.16 µs | 2.36, 2.56 µs | **0.75** |
+| `add_one_day/1000` (one in thirty crosses a month) | 1.91, 1.82 µs | 2.24, 2.22 µs | 1.22 |
+| `add_seven_days/1000` | 4.42, 4.17 µs | 3.50, 3.25 µs | **0.78** |
+| `add_thirty_days/1`; `/1000` (every one crosses a month) | 15.2, 14.3 ns; 14.2, 13.0 µs | 7.27, 6.68 ns; 6.54, 6.60 µs | **0.47; 0.50** |
+| `jiff_add_thirty_days/1000` (jiff alone) | 3.02, 2.96 µs | 5.16, 5.09 µs | 1.72 |
+| `monday_of/1000` | 7.10, 6.67 µs | 3.96, 4.05 µs | **0.59** |
+| `days_of_week/1000` (seven dates each) | 16.2, 15.2 µs | 17.0, 17.0 µs | 1.12 |
+| `from_isoywd_opt/1000` | 19.5, 18.2 µs | 11.6, 11.3 µs | **0.62** |
+| `last_day_of_month/1000` | 15.5, 14.6 µs | 4.35, 5.32 µs | **0.30** |
+| `iso_week/1000`, `add_months_13/1000`, `from_ymd_opt/1000` | 3.06, 3.29, 1.60 µs (faster rounds) | 3.21, 3.42, 1.55 µs | 1.05, 1.04, 0.97 |
+| `succ_opt/1000`, `pred_opt/1000`, `cmp/1000`, `holiday_contains/1000`, `ordinal/1000` | 1.66, 1.90 µs; 547, 4,750, 579 ns | 1.69, 1.72 µs; 586, 4,790, 568 ns | 1.02, 0.91, 1.07, 1.01, 0.98 |
+| `duration_ops/*` (`days`, `num_days`, `add`, `neg`, `hours_to_days`) | 0.4 to 2.4 ns each | unchanged | about 1.00 |
+
+The domain functions the regression was recorded in (`domain/benches/calculation_bench.rs`, same rounds):
+
+| Benchmark (`timestamps/…`) | Old (two rounds) | New (two rounds) | Ratio | chrono, 2026-11-18 (above) |
+|---|---|---|---|---|
+| `report_schedule_next_monthly_1000` | 22.0, 20.6 µs | 7.76, 8.61 µs | **0.38** | 6.6 µs |
+| `business_day_index_1000` | 36.8, 33.1 µs | 18.7, 24.3 µs | **0.56** | 13.5 µs |
+| `expand_absences_20` | 4.67, 4.42 µs | 2.82, 3.19 µs | **0.64** | 1.4 µs |
+| `iso_week_start_and_days_1000` | 79.9, 71.9 µs | 61.4, 77.8 µs | 0.85 | 27.0 µs |
+| `financial_year_of_1000` | 43.6, 40.7 µs | 38.0, 43.0 µs | 0.94 | 33.9 µs |
+| `parse_month_add_months_1000` | 79.5, 69.0 µs | 65.4, 85.4 µs | 0.95 | 86.5 µs |
+| `parse_flex_date_mixed_1000` | 26.3, 26.5 µs | 23.5, 28.7 µs | 0.89 | 38.0 µs |
+| `tracker_import_parse_date_iso_1000`, `_jira_1000` | 28.3, 84.2 µs (faster rounds) | 27.9, 80.6 µs | 0.98, 0.96 | 51.0, 90.3 µs |
+
+How to read it:
+
+- **Where the time went.** The weekday was the largest share of the business-day index and of `monday_of`, and the
+  cross-month step was most of a monthly report schedule (each month's last day is the first of the next minus a
+  day) and of `from_isoywd_opt`. Both are now jiff's own code, and the rows built on them are a third to a half
+  cheaper. Against the chrono figures (measured a day earlier at a different load, so only roughly comparable) the
+  report schedule is now close to chrono's, the business-day index and absence expansion about 1.5 to 2 times it.
+- **What did not improve, and why.** An ISO week to its seven days is still about twice chrono's: `days_of_week`
+  (seven day steps, nearly all inside the month) did not get faster, and `add_one_day` is about 0.4 ns a date slower
+  in the new build. The same-month fast path is the same code; the measured difference is the larger `add_days`
+  being inlined differently. The `jiff_add_thirty_days` control (jiff alone, code untouched) is 1.7 times slower in
+  the new build for the same kind of reason, which also says how far a codegen change alone can move one row.
+  Formatting the financial year's label, not date arithmetic, is most of `financial_year_of`.
+- **Noise.** Two rounds a side, on a machine at load 10 to 20: rows that differ by less than about 15% between the
+  two sides (`iso_week`, the parsers, `financial_year_of`) are not a measured change.
+- **Not done:** an `#[inline(always)]` on `add_days`, or a day-number representation, to recover the same-month step;
+  a back-to-back run against chrono on the new code.
 
 ## The calculation engines and date handling (measured 2026-11-17, a heavily loaded machine)
 
 Criterion benchmarks for the pure engines behind the schedule-risk, cost-risk, leveling, schedule-health, MSPDI and
 earned-value routes, and for the date and time handling the move from `chrono` to `jiff` will change:
-`project-portfolio-management-service-with-rust/benches/calculation_bench.rs`. Nothing here touches PostgreSQL. The
-file names no `chrono` type and calls no `chrono` function (its module docs say why), so it compiles and measures
+`project-portfolio-management-service-with-rust/benches/calculation_bench.rs` when this was measured. Nothing here
+touches PostgreSQL. The file named no `chrono` type and called no `chrono` function, so it compiled and measured
 unchanged after the migration.
+
+**Where these rows are now (moved 18 November 2026, IDs unchanged):** `schedule_risk`, `cost_risk`, `leveling`,
+`schedule_health`, `mspdi`, `earned_value`, and the `timestamps` rows from `tracker_import_parse_date_iso_1000` to
+`expand_absences_20`, are in the domain crate's `domain/benches/calculation_bench.rs`; `timestamps/decode_…` and
+`encode_…` of `plans`, `tasks` and `audit_logs` are in the service's `benches/service_bench.rs`;
+`timestamps/decode_iso_dates_1000`, `encode_iso_dates_1000`, the two `rfc3339_instants_1000` rows and
+`full_date_1000` are in the datetime crate's `datetime/benches/datetime_bench.rs` (`full_date_1000` now calls
+`Date::parse_from_str(s.trim(), "%Y-%m-%d")`, which is all `plan_templates::full_date` does). The same rows on
+18 November, on the new layout, are in "Every bench on the new layout" above.
 
 | | |
 |---|---|
@@ -451,13 +617,27 @@ tested (no Stryker); that is not planned yet.
 
 ## How to add a benchmark
 
-Add it under `benches/`, run it with `cargo bench`, and record here the date,
+Add it under the `benches/` of the crate whose code it measures (the domain crate's for a pure rule, the datetime
+crate's for the date types, the service's only for what needs the service), run it with `cargo bench`, and record here the date,
 the machine, the command and the numbers. A benchmark without a recorded run
 does not belong on this page.
 
-The bench files: the matcher's `benches/match_pair.rs`, and the service's `benches/service_bench.rs` (the request
-path) and `benches/calculation_bench.rs` (the calculation engines and date handling; it must not name a `chrono` or
-`jiff` type, see its module docs). A new file needs its own `[[bench]]` entry with `harness = false`. CI's `api`
-job type-checks and lints every bench (`cargo clippy --all-targets --all-features`, so a bench cannot rot) but runs
-none: a shared runner's timings are not comparable from run to run. A release build of the benches was left out on
-purpose; it would add 8 to 22 minutes to the job.
+The bench files, all Criterion 0.8 (`criterion` 0.8.2 in both lockfiles, with `html_reports`), each with its own
+`[[bench]]` entry and `harness = false`:
+
+| File | What it measures | Run it (from the crate's directory) |
+|---|---|---|
+| `project-portfolio-management-matcher-with-rust/benches/match_pair.rs` | the matching engine | `cargo bench --bench match_pair` |
+| `project-portfolio-management-service-with-rust/benches/service_bench.rs` | the request path (validation, merge, search, CPM, auth, cursors, roadmaps, the DHCW import) and the row structs' JSON (`timestamps/decode_plans/…`) | `cargo bench --bench service_bench` |
+| `project-portfolio-management-service-with-rust/domain/benches/calculation_bench.rs` | the calculation engines (schedule and cost risk, leveling, schedule health, MSPDI, earned value) and the domain modules' date work; builds the domain crate, not the service | `cargo bench -p project-portfolio-management-domain --bench calculation_bench` |
+| `project-portfolio-management-service-with-rust/datetime/benches/datetime_bench.rs` | the date types: serde, the `YYYY-MM-DD` reader, and each calendar operation on one date and on a thousand | `cargo bench -p project-portfolio-management-datetime --bench datetime_bench` |
+
+Until 18 November 2026 the service's `benches/calculation_bench.rs` held the engines, the row structs' JSON and the
+date work together, and compiled the whole web service to measure code that needs none of it. It was split by where
+the code lives, and every benchmark ID kept its name, so rows measured before and after compare (the section "The
+calculation engines and date handling" says where each row went). Its old rule, that it name no `chrono` or `jiff`
+type, ended with the move to jiff; the new files name the datetime crate's types.
+
+CI's `api` job type-checks and lints every bench (`cargo clippy --workspace --all-targets --all-features`, so a
+bench cannot rot) but runs none: a shared runner's timings are not comparable from run to run. A release build of
+the benches was left out on purpose; it would add 8 to 22 minutes to the job.

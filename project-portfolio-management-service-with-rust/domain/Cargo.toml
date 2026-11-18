@@ -43,6 +43,13 @@ project-portfolio-management-matcher = "0.2.2"
 [dev-dependencies]
 # Temp directories for the artifact-store tests.
 tempfile = { version = "3" }
+# The calculation engines' benchmarks (`benches/calculation_bench.rs`); the same version and features as the service's.
+criterion = { version = "0.8", features = ["html_reports"] }
+
+# The calculation engines and the domain modules' date work, without building the service.
+[[bench]]
+name = "calculation_bench"
+harness = false
 
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }

@@ -1,23 +1,19 @@
 #![warn(clippy::pedantic)]
 
-//! Criterion benchmarks for the service's pure calculation engines and its date and time handling.
+//! Criterion benchmarks for the domain crate's pure calculation engines and the date work done by its modules.
 //!
-//! Run with `cargo bench --bench calculation_bench`. Nothing here touches PostgreSQL: like `service_bench.rs`,
-//! these are the CPU-bound halves of a request.
+//! Run from the service directory with `cargo bench -p project-portfolio-management-domain --bench
+//! calculation_bench`. Nothing here touches PostgreSQL, and nothing here needs the web service: this file depends
+//! on the domain crate alone, so building it does not compile axum, axa, sqlx or the service. (It was
+//! `benches/calculation_bench.rs` in the service crate until 18 November 2026; the benchmark IDs are unchanged.)
 //!
-//! # The rule for this file: no `chrono`
+//! Dates are built from `YYYY-MM-DD` text through `Date::parse_from_str(s.trim(), "%Y-%m-%d")`, which is exactly
+//! what the service's `plan_templates::full_date` does, so the fixtures are the ones the service file built. Day
+//! offsets are computed here on plain integers.
 //!
-//! **This file names no `chrono` type and calls no `chrono` function, and must not.** The service is moving from
-//! `chrono` to `jiff`; this file is meant to compile and measure **unchanged** on both sides of that move, so that
-//! the same command on the same machine gives a true before and after. Every date or timestamp here is therefore
-//! built from a string, through the service's own parsing (`plan_templates::full_date`, the row structs'
-//! `Deserialize`), or decoded from JSON, and its type is left to inference or named through the service's own
-//! aliases (`models::_entities::Date`, `DateTimeWithTimeZone`). Date arithmetic the fixtures need (a day offset to
-//! `YYYY-MM-DD`) is done here on plain integers. If a function can only be reached with a value this file cannot
-//! build that way, leave it out and say so in `BENCHMARKS.md`; do not import `chrono` (or `jiff`).
-//!
-//! The one thing the migration may legitimately make you change is the **text** of the JSON fixtures, if the
-//! row structs' wire format for a timestamp changes; that would be a change to the API's answers as well.
+//! Elsewhere: the row structs' JSON (`timestamps/decode_plans/…` and the like) needs the service and is in the
+//! service's `benches/service_bench.rs`; serde, parsing and the type-level calendar arithmetic of the date types
+//! themselves are in `datetime/benches/datetime_bench.rs`.
 //!
 //! # The groups
 //!
@@ -36,28 +32,31 @@
 //!   1,000 and 5,000 tasks (5,000 is `MAX_TASKS`), and writing one back (`mspdi::write`, the export).
 //! - **`earned_value`**: the per-request work of `GET …/earned-value` and the EVM views: percent complete over a
 //!   plan's tasks, one currency's block over a baseline of monthly or weekly periods, the EAC variants and TCPI.
-//! - **`timestamps`**: what the `chrono` to `jiff` move changes: decoding and encoding rows of `plans`, `tasks` and
-//!   `audit_logs` as JSON (their timestamp and date columns), lists of ISO dates and RFC 3339 instants, the
-//!   service's date parsers, and its calendar arithmetic (business-day index, report schedules, financial years,
-//!   ISO weeks, absence expansion).
+//! - **`timestamps`**: the domain modules' date work: the Jira and flexible date parsers, ISO weeks, months, and
+//!   the calendar arithmetic (business-day index, report schedules, financial years, absence expansion). The date
+//!   types' own operations under these are measured one by one in `datetime_bench`.
 
 use std::{collections::HashMap, fmt::Write as _, hint::black_box};
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use project_portfolio_management::{
+use project_portfolio_management_domain::{
     calendars, capacity_heatmap, cost_risk,
     cpm::{self, ConstraintKind, Edge, Kind, Node},
-    earned_value, evm, financial_year, leveling,
-    models::_entities::{Date, DateTimeWithTimeZone, audit_logs, plans, tasks},
-    mspdi, plan_templates, report_schedules, schedule_health, schedule_risk, timesheets,
-    tracker_import, visibility,
+    datetime::Date,
+    earned_value, evm, financial_year, leveling, mspdi, report_schedules, schedule_health,
+    schedule_risk, timesheets, tracker_import, visibility,
 };
 use uuid::Uuid;
 
-/// A date from `YYYY-MM-DD`, through the service's own parser; its type is inferred, never named.
+/// A date from `YYYY-MM-DD`, read as the service's `plan_templates::full_date` reads one.
+fn full_date(s: &str) -> Option<Date> {
+    Date::parse_from_str(s.trim(), "%Y-%m-%d").ok()
+}
+
+/// A date from `YYYY-MM-DD`.
 macro_rules! day {
     ($s:expr) => {
-        plan_templates::full_date(&$s).expect("a valid ISO date")
+        full_date(&$s).expect("a valid ISO date")
     };
 }
 
@@ -89,18 +88,6 @@ fn iso(z: i64) -> String {
 /// `YYYY-MM-DD` of `offset` days after Monday 2026-11-02, the plans' start.
 fn iso_from_start(offset: i64) -> String {
     iso(days_from_civil(2026, 11, 2) + offset)
-}
-
-/// An RFC 3339 instant with microseconds (PostgreSQL's precision) and a `+00:00` offset.
-fn instant(i: i64) -> String {
-    format!(
-        "{}T{:02}:{:02}:{:02}.{:06}+00:00",
-        iso_from_start(-(i % 400)),
-        (i * 7) % 24,
-        (i * 13) % 60,
-        (i * 17) % 60,
-        (i * 7919) % 1_000_000
-    )
 }
 
 fn count(n: usize) -> u64 {
@@ -679,170 +666,18 @@ fn bench_earned_value(c: &mut Criterion) {
     group.finish();
 }
 
-/// `n` plan rows as the service answers them, a small plan payload in `data`.
-fn plan_rows(n: usize) -> String {
-    let rows: Vec<serde_json::Value> = (0..n)
-        .map(|i| {
-            let at = i64::try_from(i).unwrap_or(0);
-            serde_json::json!({
-                "created_at": instant(at),
-                "updated_at": instant(at + 1),
-                "id": i + 1,
-                "pid": id(i),
-                "kind": "Project",
-                "name": format!("Plan {i}"),
-                "data": { "name": format!("Plan {i}"), "start_date": iso_from_start(at % 90), "tags": ["digital"] },
-                "parent_pid": (i % 4 != 0).then(|| id(i / 4)),
-                "active": true,
-                "stage": "g2_business_case",
-                "phase": "executing",
-                "deleted_at": null,
-                "content_hash": "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
-                "content_hash_sha3": "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532",
-                "content_mac": "hmac-sha256.k1:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
-            })
-        })
-        .collect();
-    serde_json::to_string(&rows).expect("rows encode")
-}
-
-/// `n` task rows: five timestamp columns (one null) and four date columns.
-fn task_rows(n: usize) -> String {
-    let rows: Vec<serde_json::Value> = (0..n)
-        .map(|i| {
-            let at = i64::try_from(i).unwrap_or(0);
-            let done = i % 3 == 0;
-            serde_json::json!({
-                "created_at": instant(at),
-                "updated_at": instant(at + 2),
-                "id": i + 1,
-                "pid": id(i),
-                "plan_pid": id(0),
-                "sprint_pid": null,
-                "title": format!("Task {i}"),
-                "description": "Agree the scope with the service owner",
-                "status": if done { "done" } else { "todo" },
-                "assignee_ref": format!("person:{}", i % 7),
-                "points": 3,
-                "status_changed_at": instant(at + 3),
-                "done_at": done.then(|| instant(at + 4)),
-                "due_date": iso_from_start(at % 200 + 10),
-                "start_date": iso_from_start(at % 200),
-                "duration_days": 1 + i % 9,
-                "duration_optimistic_days": null,
-                "duration_pessimistic_days": null,
-                "work_minutes": 2_400,
-                "units_percent": 100,
-                "scheduling_rule": "fixed_units",
-                "contour": "flat",
-                "contour_custom": null,
-                "constraint_kind": (i % 25 == 0).then_some("snet"),
-                "constraint_date": (i % 25 == 0).then(|| iso_from_start(at % 200)),
-                "deadline": (i % 10 == 0).then(|| iso_from_start(at % 200 + 30)),
-                "external_ref": format!("mspdi:{i}"),
-                "percent_method": null,
-                "percent_manual": null,
-                "percent_note": null,
-                "component_pid": null,
-                "parent_task_pid": null,
-                "sibling_position": i,
-                "flow_type": "feature",
-                "is_hammock": false,
-                "deleted_at": null,
-            })
-        })
-        .collect();
-    serde_json::to_string(&rows).expect("rows encode")
-}
-
-/// `n` audit-log rows with a small snapshot.
-fn audit_rows(n: usize) -> String {
-    let rows: Vec<serde_json::Value> = (0..n)
-        .map(|i| {
-            let at = i64::try_from(i).unwrap_or(0);
-            serde_json::json!({
-                "created_at": instant(at),
-                "updated_at": instant(at),
-                "id": i + 1,
-                "entity_pid": id(i % 50),
-                "action": "update",
-                "actor": "person:0c4f1e2a",
-                "snapshot": { "name": format!("Plan {}", i % 50), "status": "Active" },
-                "hash": "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
-                "hash_sha3": "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532",
-                "mac": null,
-            })
-        })
-        .collect();
-    serde_json::to_string(&rows).expect("rows encode")
-}
-
-/// Decode then encode one table's rows, at 1 and 1,000 rows.
-fn rows_round_trip<T: serde::de::DeserializeOwned + serde::Serialize>(
-    group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
-    table: &str,
-    make: fn(usize) -> String,
-) {
-    for n in [1_usize, 1_000] {
-        let json = make(n);
-        let rows: Vec<T> =
-            serde_json::from_str(&json).expect("the fixture decodes into the row struct");
-        group.throughput(Throughput::Elements(count(n)));
-        group.bench_function(BenchmarkId::new(format!("decode_{table}"), n), |b| {
-            b.iter(|| serde_json::from_str::<Vec<T>>(black_box(&json)).expect("rows decode"));
-        });
-        group.bench_function(BenchmarkId::new(format!("encode_{table}"), n), |b| {
-            b.iter(|| serde_json::to_string(black_box(&rows)).expect("rows encode"));
-        });
-    }
-}
-
 #[expect(clippy::too_many_lines)]
 fn bench_timestamps(c: &mut Criterion) {
     let mut group = c.benchmark_group("timestamps");
-    rows_round_trip::<plans::Model>(&mut group, "plans", plan_rows);
-    rows_round_trip::<tasks::Model>(&mut group, "tasks", task_rows);
-    rows_round_trip::<audit_logs::Model>(&mut group, "audit_logs", audit_rows);
-
-    // A thousand dates and a thousand instants, as JSON arrays (a query parameter or a row column is the same parse).
+    // A thousand dates (the same thousand as `datetime_bench`'s `timestamps` group).
     let n = 1_000_usize;
     let date_strings: Vec<String> = (0..n)
         .map(|i| iso_from_start(i64::try_from(i).unwrap_or(0) * 3 - 900))
         .collect();
-    let instant_strings: Vec<String> = (0..n)
-        .map(|i| instant(i64::try_from(i).unwrap_or(0)))
-        .collect();
-    let dates_json = serde_json::to_string(&date_strings).expect("strings encode");
-    let instants_json = serde_json::to_string(&instant_strings).expect("strings encode");
-    let dates: Vec<Date> = serde_json::from_str(&dates_json).expect("ISO dates decode");
-    let instants: Vec<DateTimeWithTimeZone> =
-        serde_json::from_str(&instants_json).expect("RFC 3339 instants decode");
+    let dates: Vec<Date> = date_strings.iter().map(|s| day!(s)).collect();
     group.throughput(Throughput::Elements(count(n)));
-    group.bench_function("decode_iso_dates_1000", |b| {
-        b.iter(|| serde_json::from_str::<Vec<Date>>(black_box(&dates_json)).expect("decode"));
-    });
-    group.bench_function("encode_iso_dates_1000", |b| {
-        b.iter(|| serde_json::to_string(black_box(&dates)).expect("encode"));
-    });
-    group.bench_function("decode_rfc3339_instants_1000", |b| {
-        b.iter(|| {
-            serde_json::from_str::<Vec<DateTimeWithTimeZone>>(black_box(&instants_json))
-                .expect("decode")
-        });
-    });
-    group.bench_function("encode_rfc3339_instants_1000", |b| {
-        b.iter(|| serde_json::to_string(black_box(&instants)).expect("encode"));
-    });
 
-    // The service's own date parsers, over the same thousand dates.
-    group.bench_function("full_date_1000", |b| {
-        b.iter(|| {
-            date_strings
-                .iter()
-                .filter_map(|s| plan_templates::full_date(black_box(s)))
-                .count()
-        });
-    });
+    // The domain's own date parsers, over the same thousand dates.
     let jira: Vec<String> = (0..n)
         .map(|i| {
             let month = ["Jan", "Mar", "Jun", "Oct"][i % 4];

@@ -4263,6 +4263,7 @@ dependencies = [
 name = "project-portfolio-management-datetime"
 version = "0.2.0"
 dependencies = [
+ "criterion",
  "jiff 1.0.0",
  "schemars 1.2.3",
  "serde",
@@ -4274,6 +4275,7 @@ dependencies = [
 name = "project-portfolio-management-domain"
 version = "0.2.0"
 dependencies = [
+ "criterion",
  "project-portfolio-management-datetime",
  "project-portfolio-management-matcher",
  "roxmltree",

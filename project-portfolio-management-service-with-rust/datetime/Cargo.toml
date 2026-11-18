@@ -37,6 +37,13 @@ sqlx = { version = "0.9", default-features = false, features = ["postgres"], opt
 
 [dev-dependencies]
 serde_json = { version = "1", features = ["float_roundtrip"] }
+# The date types' benchmarks (`benches/datetime_bench.rs`); the same version and features as the service's.
+criterion = { version = "0.8", features = ["html_reports"] }
+
+# Serde, parsing and the calendar arithmetic of the date types, one operation at a time.
+[[bench]]
+name = "datetime_bench"
+harness = false
 
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }

@@ -41,7 +41,8 @@ WORKDIR /app
 
 # This crate: manifests first, then the nested `migration`, `domain` and `datetime` crates (workspace members, path
 # dependencies), sources, and benches. Cargo parses the whole manifest even for a --bin build, and
-# Cargo.toml declares `[[bench]]` service_bench and calculation_bench, so benches/ must exist.
+# Cargo.toml declares `[[bench]]` service_bench, so benches/ must exist (domain/ and datetime/ are copied whole, their
+# benches/ with them: domain/Cargo.toml declares calculation_bench and datetime/Cargo.toml datetime_bench).
 COPY project-portfolio-management-service-with-rust/Cargo.toml project-portfolio-management-service-with-rust/Cargo.lock project-portfolio-management-service-with-rust/
 COPY project-portfolio-management-service-with-rust/migration project-portfolio-management-service-with-rust/migration
 COPY project-portfolio-management-service-with-rust/domain project-portfolio-management-service-with-rust/domain

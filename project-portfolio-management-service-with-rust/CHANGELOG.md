@@ -9,6 +9,48 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the benchmarks where their code lives, and the datetime crate's calendar arithmetic cheaper (2026-11-18)
+
+- **Bench layout.** Before: `benches/service_bench.rs` (the request path) and `benches/calculation_bench.rs` (the
+  engines, the row structs' JSON and the date work), both in the service crate, so measuring a pure engine compiled
+  axum, axa, sqlx and the whole service. After:
+  - `domain/benches/calculation_bench.rs` (`cargo bench -p project-portfolio-management-domain --bench
+    calculation_bench`): `schedule_risk`, `cost_risk`, `leveling`, `schedule_health`, `mspdi`, `earned_value`, and the
+    `timestamps` rows of the domain modules (Jira and flexible date parsers, ISO weeks, months, business-day index,
+    report schedules, financial years, absence expansion). Dates are read with `Date::parse_from_str(s.trim(),
+    "%Y-%m-%d")`, exactly what `plan_templates::full_date` (a service function) does, so the fixtures are unchanged.
+  - `datetime/benches/datetime_bench.rs` (`cargo bench -p project-portfolio-management-datetime --bench
+    datetime_bench`): `timestamps/decode_iso_dates_1000`, `encode_iso_dates_1000`, the two `rfc3339_instants_1000`
+    rows and `full_date_1000` (moved), and the new `date_ops` and `duration_ops` groups: weekday, day steps inside
+    and across a month, `Date - Date`, `monday_of`, the seven days of a week, `from_isoywd_opt`, `iso_week`, month
+    steps, `from_ymd_opt`, a month's last day, ordinal, `succ_opt`/`pred_opt`, comparison and a holiday lookup, each on
+    one date and on a thousand, with jiff's own weekday, day step and difference beside them for attribution.
+  - `benches/service_bench.rs` gains the `timestamps` group of `plans`, `tasks` and `audit_logs` row JSON.
+  Every benchmark ID is unchanged. `criterion` 0.8 (locked at 0.8.2, `html_reports`) is a dev-dependency of the
+  domain and datetime crates too; `[[bench]]` entries moved with the files. The raw-pool census (`src/db.rs`) now also
+  reads `domain/benches` and `datetime/benches`. The Dockerfile copies `domain/` and `datetime/` whole, so their
+  `benches/` come with them (its comment says so).
+- **Faster calendar arithmetic, nothing observable changed** (`datetime/src/date.rs`). `Date::weekday` reads jiff's
+  weekday (computed from year, month and day) instead of going through a Hinnant day number; the private day number,
+  `days_since` and the cross-month branch of `add_days` use jiff 1.0's day numbers (Neri-Schneider) through
+  `duration_since` and `checked_add`. A step jiff refuses because it is longer than jiff's range of day numbers (from
+  -9999-01-01 across the whole range) is retried through the absolute day number, so it still lands. Measured old
+  and new alternately (BENCHMARKS.md): `weekday` 0.30 times its old time, a cross-month step 0.50, `from_isoywd_opt`
+  0.62, a month's last day 0.30; in the domain functions, `report_schedules::next_after` monthly 0.38, the
+  business-day index 0.56, `calendars::expand_absences` 0.64, an ISO week to its days 0.85.
+- **Tests.** `jiff_day_numbers_agree_with_the_algorithms_they_replaced_on_every_date` keeps the old Hinnant
+  algorithms as references and checks the day number, `from_epoch_day`, the weekday and `days_since` on every one of
+  the 7.3 million dates from -9999-01-01 to 9999-12-31, day steps of ±1, ±7, ±30, 365, -366 and ±10,000 on every
+  eleventh date and every date within 20,000 days of either end, and steps off both ends. It takes about 7 seconds in
+  a debug build. The golden tests (`src/datetime/golden.rs`) and the crate's other tests pass unchanged.
+- **Not done:** the same-month step is about 0.4 ns a date slower in the new build (inlining; `days_of_week` 1.12,
+  `add_one_day` 1.22), and an ISO week to its seven days is still about twice chrono's. The service's
+  `service_bench` still holds groups (`cpm`, `validation`, `merge`, `capacity_rollups`, `public_roadmap`,
+  `dhcw_import`) that reach only domain code; they were left where they are, as the request path. **Not verified:** on
+  a quiet machine (load 10 to 20 for every run); against chrono on the new code (chrono is no longer in the tree).
+- **Fixed on the way:** `Date::checked_add_days(Days::new(i64::MAX as u64))` panicked with an overflow in a debug build
+  (the same-month check added unchecked); it is `None`, as a release build already gave.
+
 ### Added — a milestone's `signoff` names every required organization (EX-4, 2026-11-18)
 
 - The `signoff` object on `GET /api/milestones` and `GET /api/milestone-signoffs` gains `required`: every organization

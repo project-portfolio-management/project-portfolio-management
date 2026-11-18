@@ -202,9 +202,9 @@ mod tests {
     }
 
     /// A statement on the raw pool would go uncounted, and the query-count guards would pass without seeing it. Every
-    /// `.rs` file under `src/`, `tests/` and `benches/` but this one; the tests reach the database through
-    /// [`super::pool`] and [`super::begin`] too (the migration tests open throwaway databases of their own). (Until
-    /// SQ-1 (c) this read `src/` alone, for `get_postgres_connection_pool`.)
+    /// `.rs` file under `src/`, `tests/` and `benches/` (the domain and datetime crates' `benches/` too) but this
+    /// one; the tests reach the database through [`super::pool`] and [`super::begin`] too (the migration tests open
+    /// throwaway databases of their own). (Until SQ-1 (c) this read `src/` alone, for `get_postgres_connection_pool`.)
     #[test]
     fn nothing_outside_this_file_takes_the_raw_pool() {
         let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -214,6 +214,8 @@ mod tests {
             manifest.join("benches"),
             manifest.join("domain/src"),
             manifest.join("domain/tests"),
+            manifest.join("domain/benches"),
+            manifest.join("datetime/benches"),
         ];
         let (mut offenders, mut files) = (Vec::new(), 0_usize);
         while let Some(dir) = stack.pop() {

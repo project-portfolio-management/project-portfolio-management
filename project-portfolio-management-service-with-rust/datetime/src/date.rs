@@ -293,8 +293,9 @@ impl Date {
     #[must_use]
     #[inline]
     pub fn weekday(&self) -> Weekday {
-        // 1970-01-01 was a Thursday (3 days from Monday).
-        Weekday::from_monday_offset((self.epoch_day() + 3).rem_euclid(7))
+        // jiff 1.0 reads the weekday straight from year, month and day (an add, a multiply and a shift); that is
+        // about four times cheaper than going through a day number here (`datetime_bench`, `date_ops/weekday`).
+        Weekday::from_monday_offset(i64::from(self.0.weekday().to_monday_zero_offset()))
     }
 
     /// The ISO 8601 week.
@@ -365,51 +366,41 @@ impl Date {
         self.add_days(-1)
     }
 
-    /// Days since 1970-01-01 (Howard Hinnant's `days_from_civil`, on plain integers: the calendar arithmetic
-    /// below is in hot loops, and this is cheaper than going through jiff's checked arithmetic).
+    const UNIX_EPOCH: civil::Date = civil::Date::constant(1970, 1, 1);
+
+    /// Days since 1970-01-01. jiff 1.0 turns a date into its day number without branches or divisions
+    /// (Neri-Schneider), and its whole-day difference is that number's difference in seconds; this is cheaper than
+    /// Hinnant's `days_from_civil` on `i64`, which this used until 18 November 2026 (`date_ops/date_minus_date`).
     #[inline]
     fn epoch_day(self) -> i64 {
-        let (y, m, d) = (
-            i64::from(self.0.year()),
-            i64::from(self.0.month()),
-            i64::from(self.0.day()),
-        );
-        let y = if m <= 2 { y - 1 } else { y };
-        let era = y.div_euclid(400);
-        let yoe = y - era * 400;
-        let mp = (m + 9) % 12;
-        let doy = (153 * mp + 2) / 5 + d - 1;
-        let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-        era * 146_097 + doe - 719_468
+        self.0.duration_since(Date::UNIX_EPOCH).as_secs() / 86_400
     }
 
-    /// The date `z` days after 1970-01-01 (Hinnant's `civil_from_days`), or `None` outside -9999..=9999.
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 1..=12 and 1..=31 by construction
+    /// The date `z` days after 1970-01-01, or `None` outside -9999..=9999: jiff's own day step (through its day
+    /// number, as above), about four times cheaper than Hinnant's `civil_from_days` and a checked `from_ymd_opt`,
+    /// which this used until 18 November 2026 (`date_ops/add_thirty_days`).
     #[inline]
     fn from_epoch_day(z: i64) -> Option<Date> {
-        let z = z + 719_468;
-        let era = z.div_euclid(146_097);
-        let doe = z - era * 146_097;
-        let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-        let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-        let mp = (5 * doy + 2) / 153;
-        let d = doy - (153 * mp + 2) / 5 + 1;
-        let m = if mp < 10 { mp + 3 } else { mp - 9 };
-        let y = yoe + era * 400 + i64::from(m <= 2);
-        Date::from_ymd_opt(i32::try_from(y).ok()?, m as u32, d as u32)
+        Date::UNIX_EPOCH
+            .checked_add(jiff::SignedDuration::from_secs(z.checked_mul(86_400)?))
+            .ok()
+            .map(Date)
     }
 
     /// Whole days from `other` to `self` (negative if `self` is earlier).
     #[inline]
     fn days_since(self, other: Date) -> i64 {
-        self.epoch_day() - other.epoch_day()
+        // One jiff difference (both day numbers, in seconds) rather than two `epoch_day` calls.
+        self.0.duration_since(other.0).as_secs() / 86_400
     }
 
     /// `n` days later (earlier if negative), or `None` out of range.
     #[inline]
     fn add_days(self, n: i64) -> Option<Date> {
         // Within the same month (the common step of a day or a week), no day-number round trip.
-        let day = i64::from(self.0.day()) + n;
+        // Checked: `checked_add_days(Days::new(i64::MAX as u64))` reaches here with `n = i64::MAX` (release wrapped
+        // and still gave `None`; a debug build panicked).
+        let day = i64::from(self.0.day()).checked_add(n)?;
         if day >= 1 && day <= i64::from(self.0.days_in_month()) {
             #[allow(clippy::cast_possible_truncation)] // 1..=31
             return Some(Date(civil::Date::constant(
@@ -418,7 +409,14 @@ impl Date {
                 day as i8,
             )));
         }
-        Date::from_epoch_day(self.epoch_day().checked_add(n)?)
+        // jiff's own step first. It refuses a step longer than its range of day numbers even when the date it lands
+        // on is in range (-9999-01-01 plus the whole span), so a refusal is retried through the absolute day number,
+        // which is in range exactly when the date is.
+        let secs = n.checked_mul(86_400)?;
+        match self.0.checked_add(jiff::SignedDuration::from_secs(secs)) {
+            Ok(date) => Some(Date(date)),
+            Err(_) => Date::from_epoch_day(self.epoch_day().checked_add(n)?),
+        }
     }
 
     /// `n` months later (earlier if negative), the day clamped to the end of a shorter month.
@@ -681,6 +679,91 @@ mod tests {
 
     fn d(y: i32, m: u32, day: u32) -> Date {
         Date::from_ymd_opt(y, m, day).unwrap()
+    }
+
+    /// The day number as this crate computed it until 18 November 2026 (Hinnant's `days_from_civil`).
+    fn hinnant_epoch_day(date: Date) -> i64 {
+        let (y, m, d) = (
+            i64::from(date.year()),
+            i64::from(date.month()),
+            i64::from(date.day()),
+        );
+        let y = if m <= 2 { y - 1 } else { y };
+        let era = y.div_euclid(400);
+        let yoe = y - era * 400;
+        let mp = (m + 9) % 12;
+        let doy = (153 * mp + 2) / 5 + d - 1;
+        let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+        era * 146_097 + doe - 719_468
+    }
+
+    /// The date of a day number as this crate computed it until 18 November 2026 (Hinnant's `civil_from_days`).
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 1..=12 and 1..=31 by construction
+    fn hinnant_from_epoch_day(z: i64) -> Option<Date> {
+        let z = z + 719_468;
+        let era = z.div_euclid(146_097);
+        let doe = z - era * 146_097;
+        let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+        let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+        let mp = (5 * doy + 2) / 153;
+        let d = doy - (153 * mp + 2) / 5 + 1;
+        let m = if mp < 10 { mp + 3 } else { mp - 9 };
+        let y = yoe + era * 400 + i64::from(m <= 2);
+        Date::from_ymd_opt(i32::try_from(y).ok()?, m as u32, d as u32)
+    }
+
+    /// The day number, the weekday, the difference of two dates and every day step that leaves the month go through
+    /// jiff's own arithmetic since 18 November 2026 (for speed). On every date in the supported range they agree with
+    /// the integer algorithms they replaced, and so do day steps across and off both ends of the range.
+    #[test]
+    fn jiff_day_numbers_agree_with_the_algorithms_they_replaced_on_every_date() {
+        let (first, last) = (hinnant_epoch_day(Date::MIN), hinnant_epoch_day(Date::MAX));
+        let steps = [1_i64, -1, 7, -7, 30, -30, 365, -366, 10_000, -10_000];
+        let mut date = Date::MIN;
+        for z in first..=last {
+            assert_eq!(date.epoch_day(), z, "{date}");
+            assert_eq!(hinnant_epoch_day(date), z, "{date}");
+            assert_eq!(Date::from_epoch_day(z), Some(date), "{z}");
+            assert_eq!(hinnant_from_epoch_day(z), Some(date), "{z}");
+            assert_eq!(date.days_since(Date::MIN), z - first, "{date}");
+            assert_eq!(Date::MAX.days_since(date), last - z, "{date}");
+            assert_eq!(
+                date.weekday(),
+                Weekday::from_monday_offset((z + 3).rem_euclid(7)),
+                "{date}"
+            );
+            // The steps on every eleventh date (eleven shares no factor with a month's or a year's length) and on
+            // every date within 20,000 days of either end; the conversions under them are checked on every date.
+            let near_an_end = z - first < 20_000 || last - z < 20_000;
+            for n in steps.iter().copied().filter(|_| near_an_end || z % 11 == 0) {
+                let old = if (first..=last).contains(&(z + n)) {
+                    hinnant_from_epoch_day(z + n)
+                } else {
+                    None
+                };
+                assert_eq!(date.add_days(n), old, "{date} + {n}");
+            }
+            if z < last {
+                date = date.succ_opt().expect("a next day");
+            }
+        }
+        for z in [
+            first - 1,
+            last + 1,
+            i64::MAX,
+            i64::MIN,
+            i64::MAX / 86_400 + 1,
+        ] {
+            assert_eq!(Date::from_epoch_day(z), None, "{z}");
+        }
+        assert_eq!(Date::MAX.add_days(i64::MAX), None);
+        assert_eq!(
+            Date::MIN.checked_add_days(Days::new(i64::MAX.unsigned_abs())),
+            None
+        );
+        assert_eq!(Date::MIN.add_days(i64::MIN), None);
+        assert_eq!(Date::MIN.add_days(last - first), Some(Date::MAX));
+        assert_eq!(Date::MAX.add_days(first - last), Some(Date::MIN));
     }
 
     #[test]

@@ -15,6 +15,23 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (benchmarks where their code lives, and cheaper calendar arithmetic)
+
+- **Service: the Criterion benchmarks follow the code.** The calculation engines' benchmarks and the domain
+  modules' date rows moved from the service's `benches/calculation_bench.rs` to the domain crate's
+  `domain/benches/calculation_bench.rs` (it no longer compiles the web service); serde and parsing of the date types,
+  and a new `date_ops`/`duration_ops` pair of groups timing each calendar operation on one date and on a thousand, are
+  `datetime/benches/datetime_bench.rs`; the row structs' JSON joined `benches/service_bench.rs`. Every benchmark ID
+  kept its name. `criterion` stays 0.8.2 with the same features, now a dev-dependency of the two crates as well.
+- **Service: calendar arithmetic is a third to a half cheaper** where the move to jiff had made it 2 to 3 times
+  slower than chrono: the datetime crate's weekday, day number, date difference and cross-month day step now use
+  jiff 1.0's own arithmetic. Measured old and new alternately: the monthly report schedule 0.38 times its old time,
+  the business-day index 0.56, absence expansion 0.64 (BENCHMARKS.md). Nothing observable changed; a new test checks
+  the new paths against the old algorithms on every date in range.
+- **Not done:** the same-month day step (`add_one_day`, and the seven days of an ISO week) is about 0.4 ns a date
+  slower in the new build, and the ISO-week row is still about twice chrono's. **Not verified:** a quiet machine (load
+  10 to 20 throughout); a back-to-back run against chrono on the new code.
+
 ### 18 November (what is still built only at the API: an audit, and NC-1's slice 12 plan)
 
 - **Docs: an audit of the backlog's "no screen" notes against the route table, the UI client and its pages.** 21

@@ -35,12 +35,18 @@
 //! - **`public_roadmap`** — the roadmap rules on a write: a slug, a public id, a translation's source hash, the
 //!   translations shown for a full item, and the checks on tags and details.
 //! - **`dhcw_import`** — reading DHCW's example spreadsheet (`dhcw_import::parse` and the dry run's report).
+//! - **`timestamps`** — decoding and encoding rows of `plans`, `tasks` and `audit_logs` as JSON (the row structs
+//!   in `models::_entities`, whose timestamp and date columns some routes answer with). Until 18 November 2026
+//!   this group was in `benches/calculation_bench.rs`, with the same IDs; the rest of that file is now the domain
+//!   crate's `benches/calculation_bench.rs` and the datetime crate's `benches/datetime_bench.rs`, which build
+//!   without the service.
 
 use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use project_portfolio_management::{
     auth, cpm, effort, merge,
+    models::_entities::{audit_logs, plans, tasks},
     search::{SearchEngine, SearchMode},
     validation, visibility,
 };
@@ -573,6 +579,163 @@ fn bench_dhcw_import(c: &mut Criterion) {
     group.finish();
 }
 
+/// `YYYY-MM-DD` of `offset` days after Monday 2026-11-02 (Howard Hinnant's `civil_from_days`, on plain integers).
+fn iso_from_start(offset: i64) -> String {
+    // 2026-11-02 is day 20,759 after 1970-01-01.
+    let z = 20_759 + offset + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = yoe + era * 400 + i64::from(m <= 2);
+    format!("{y:04}-{m:02}-{d:02}")
+}
+
+/// An RFC 3339 instant with microseconds (PostgreSQL's precision) and a `+00:00` offset.
+fn instant(i: i64) -> String {
+    format!(
+        "{}T{:02}:{:02}:{:02}.{:06}+00:00",
+        iso_from_start(-(i % 400)),
+        (i * 7) % 24,
+        (i * 13) % 60,
+        (i * 17) % 60,
+        (i * 7919) % 1_000_000
+    )
+}
+
+fn row_id(i: usize) -> Uuid {
+    Uuid::from_u128(u128::try_from(i).unwrap_or(0) + 1)
+}
+
+/// `n` plan rows as the service answers them, a small plan payload in `data`.
+fn plan_rows(n: usize) -> String {
+    let rows: Vec<serde_json::Value> = (0..n)
+        .map(|i| {
+            let at = i64::try_from(i).unwrap_or(0);
+            serde_json::json!({
+                "created_at": instant(at),
+                "updated_at": instant(at + 1),
+                "id": i + 1,
+                "pid": row_id(i),
+                "kind": "Project",
+                "name": format!("Plan {i}"),
+                "data": { "name": format!("Plan {i}"), "start_date": iso_from_start(at % 90), "tags": ["digital"] },
+                "parent_pid": (i % 4 != 0).then(|| row_id(i / 4)),
+                "active": true,
+                "stage": "g2_business_case",
+                "phase": "executing",
+                "deleted_at": null,
+                "content_hash": "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+                "content_hash_sha3": "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532",
+                "content_mac": "hmac-sha256.k1:6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+            })
+        })
+        .collect();
+    serde_json::to_string(&rows).expect("rows encode")
+}
+
+/// `n` task rows: five timestamp columns (one null) and four date columns.
+fn task_rows(n: usize) -> String {
+    let rows: Vec<serde_json::Value> = (0..n)
+        .map(|i| {
+            let at = i64::try_from(i).unwrap_or(0);
+            let done = i % 3 == 0;
+            serde_json::json!({
+                "created_at": instant(at),
+                "updated_at": instant(at + 2),
+                "id": i + 1,
+                "pid": row_id(i),
+                "plan_pid": row_id(0),
+                "sprint_pid": null,
+                "title": format!("Task {i}"),
+                "description": "Agree the scope with the service owner",
+                "status": if done { "done" } else { "todo" },
+                "assignee_ref": format!("person:{}", i % 7),
+                "points": 3,
+                "status_changed_at": instant(at + 3),
+                "done_at": done.then(|| instant(at + 4)),
+                "due_date": iso_from_start(at % 200 + 10),
+                "start_date": iso_from_start(at % 200),
+                "duration_days": 1 + i % 9,
+                "duration_optimistic_days": null,
+                "duration_pessimistic_days": null,
+                "work_minutes": 2_400,
+                "units_percent": 100,
+                "scheduling_rule": "fixed_units",
+                "contour": "flat",
+                "contour_custom": null,
+                "constraint_kind": (i % 25 == 0).then_some("snet"),
+                "constraint_date": (i % 25 == 0).then(|| iso_from_start(at % 200)),
+                "deadline": (i % 10 == 0).then(|| iso_from_start(at % 200 + 30)),
+                "external_ref": format!("mspdi:{i}"),
+                "percent_method": null,
+                "percent_manual": null,
+                "percent_note": null,
+                "component_pid": null,
+                "parent_task_pid": null,
+                "sibling_position": i,
+                "flow_type": "feature",
+                "is_hammock": false,
+                "deleted_at": null,
+            })
+        })
+        .collect();
+    serde_json::to_string(&rows).expect("rows encode")
+}
+
+/// `n` audit-log rows with a small snapshot.
+fn audit_rows(n: usize) -> String {
+    let rows: Vec<serde_json::Value> = (0..n)
+        .map(|i| {
+            let at = i64::try_from(i).unwrap_or(0);
+            serde_json::json!({
+                "created_at": instant(at),
+                "updated_at": instant(at),
+                "id": i + 1,
+                "entity_pid": row_id(i % 50),
+                "action": "update",
+                "actor": "person:0c4f1e2a",
+                "snapshot": { "name": format!("Plan {}", i % 50), "status": "Active" },
+                "hash": "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4",
+                "hash_sha3": "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532",
+                "mac": null,
+            })
+        })
+        .collect();
+    serde_json::to_string(&rows).expect("rows encode")
+}
+
+/// Decode then encode one table's rows, at 1 and 1,000 rows.
+fn rows_round_trip<T: serde::de::DeserializeOwned + serde::Serialize>(
+    group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    table: &str,
+    make: fn(usize) -> String,
+) {
+    for n in [1_usize, 1_000] {
+        let json = make(n);
+        let rows: Vec<T> =
+            serde_json::from_str(&json).expect("the fixture decodes into the row struct");
+        group.throughput(Throughput::Elements(u64::try_from(n).unwrap_or(u64::MAX)));
+        group.bench_function(BenchmarkId::new(format!("decode_{table}"), n), |b| {
+            b.iter(|| serde_json::from_str::<Vec<T>>(black_box(&json)).expect("rows decode"));
+        });
+        group.bench_function(BenchmarkId::new(format!("encode_{table}"), n), |b| {
+            b.iter(|| serde_json::to_string(black_box(&rows)).expect("rows encode"));
+        });
+    }
+}
+
+fn bench_timestamps(c: &mut Criterion) {
+    let mut group = c.benchmark_group("timestamps");
+    rows_round_trip::<plans::Model>(&mut group, "plans", plan_rows);
+    rows_round_trip::<tasks::Model>(&mut group, "tasks", task_rows);
+    rows_round_trip::<audit_logs::Model>(&mut group, "audit_logs", audit_rows);
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_validation,
@@ -583,6 +746,7 @@ criterion_group!(
     bench_auth,
     bench_cursor,
     bench_public_roadmap,
-    bench_dhcw_import
+    bench_dhcw_import,
+    bench_timestamps
 );
 criterion_main!(benches);

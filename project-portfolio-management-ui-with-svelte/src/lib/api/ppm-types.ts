@@ -4805,3 +4805,161 @@ export interface IntakeForecast {
     note: string;
   };
 }
+
+// ---- a person's own work (NC-1 slice 12 part h: PL-4, LT-7, RM-3, LT-11, RM-10, PJ-5) ----
+
+/** `POST /api/me/planned-slots` (PL-4): time blocked for a task, as UTC instants. */
+export interface PlannedSlotBody {
+  task_pid: string;
+  starts_at: string;
+  ends_at: string;
+}
+
+/** A planned slot as the service stored it (its owner's own; never shown to anyone else). */
+export interface PlannedSlot {
+  pid: string;
+  task_pid: string;
+  starts_at: string;
+  ends_at: string;
+}
+
+/** One slot of `GET /api/me/plan`, with the task it is for. */
+export interface DayPlanSlot {
+  pid: string;
+  task: {
+    pid: string;
+    title: string;
+    status: string;
+    plan_pid: string;
+    plan_name: string | null;
+  };
+  /** UTC. */
+  starts_at: string;
+  ends_at: string;
+  /** The same instants written in the asked zone (not used: the page formats the UTC instants itself). */
+  starts_local: string;
+  ends_local: string;
+}
+
+/** `GET /api/me/plan?day=&tz=` (PL-4): one local day of the caller's slots, their clashes and what is due. */
+export interface DayPlan {
+  day: string;
+  tz: string;
+  /** The day's UTC bounds; 23 or 25 hours when the clocks change. */
+  window: { from: string; to: string; hours: number };
+  slots: DayPlanSlot[];
+  /** Groups of slot pids that overlap (back to back is not a clash). */
+  clashes: string[][];
+  /** Open tasks assigned to the caller and due on the day. */
+  due_on_day: Array<{ pid: string; title: string; plan_pid: string }>;
+  /** Slots on tasks the caller can no longer read, left out. */
+  omitted_unreadable: number;
+}
+
+/** `POST /api/me/feed-token` (LT-7): a feed token, shown once. `note` is the service's English and is never shown. */
+export interface FeedTokenIssued {
+  token: string;
+  calendar_url: string;
+  atom_url: string;
+  note?: string;
+}
+
+/** `GET /api/me/watching` (RM-3): what the caller follows, newest first, at most 500; no names. */
+export interface MyWatching {
+  count: number;
+  items: Array<{ subject_kind: string; subject_pid: string }>;
+}
+
+/** `GET /api/work-profile` (PJ-5): the work in every plan the caller can read, spread over periods. */
+export interface PortfolioWorkProfile {
+  from?: string;
+  to?: string;
+  period?: Grain;
+  plans: Array<{
+    plan_pid: string;
+    name: string | null;
+    work_minutes: number;
+    unplaced_work_minutes: number;
+    buckets: Bucket[];
+  }>;
+  totals: {
+    buckets: Bucket[] | null;
+    work_minutes: number;
+    unplaced_work_minutes?: number;
+  };
+  /** `no_assignments` when no readable plan has a task carrying work. */
+  reason?: string | null;
+  /** English; never shown. */
+  note?: string;
+}
+
+/** The three effort categories a time entry carries (anything else is stored as `unclassified`). */
+export type EffortCategory = "unclassified" | "capex" | "opex";
+
+/** `POST /api/plans/{pid}/time-entries` (LT-11): recorded effort, an assertion by a person. */
+export interface TimeEntryBody {
+  actor_ref: string;
+  spent_on: string;
+  minutes: number;
+  task_pid?: string;
+  category?: EffortCategory;
+  billable?: boolean;
+  note?: string;
+}
+
+/** One entry of `GET /api/plans/{pid}/time-entries` (every person's, newest first). */
+export interface TimeEntry {
+  pid: string;
+  plan_pid: string;
+  task_pid: string | null;
+  actor_ref: string;
+  spent_on: string;
+  minutes: number;
+  category: string;
+  billable: boolean;
+  note: string | null;
+  created_at: string;
+}
+
+/** What `GET /api/time-reports` groups by (RM-10). */
+export type TimeReportGroupBy =
+  "person" | "plan" | "category" | "billable" | "month";
+
+/** The query of `GET /api/time-reports`; a left-out date is the service's default (the last 90 days to today). */
+export interface TimeReportQuery {
+  groupBy: TimeReportGroupBy;
+  from?: string;
+  to?: string;
+  plan?: string;
+  person?: string;
+}
+
+/** `GET /api/time-reports` (RM-10): time grouped, billable and not billable always apart. */
+export interface TimeReport {
+  group_by: string;
+  from: string;
+  to: string;
+  groups: Array<{
+    key: string;
+    entries: number;
+    split: { billable: number; non_billable: number };
+    minutes: number;
+  }>;
+  split: { billable: number; non_billable: number };
+  /** Null with `reason: "no_entries"` when nothing was recorded, never zero. */
+  total_minutes: number | null;
+  reason: string | null;
+  omitted_unreadable: number;
+  truncated: boolean;
+}
+
+/** The query string of `GET /api/time-reports` (and of its CSV). */
+export function timeReportSearch(q: TimeReportQuery, csv = false): string {
+  const s = new URLSearchParams({ group_by: q.groupBy });
+  if (q.from) s.set("from", q.from);
+  if (q.to) s.set("to", q.to);
+  if (q.plan) s.set("plan", q.plan);
+  if (q.person) s.set("person", q.person);
+  if (csv) s.set("format", "csv");
+  return `?${s.toString()}`;
+}

@@ -996,6 +996,57 @@ describe("PpmClient ranking and choosing (NC-1 slice 12 part g, NC-6, NC-7, EX-1
   });
 });
 
+describe("PpmClient a person's own work (NC-1 slice 12 part h: PL-4, LT-7, RM-3, LT-11, RM-10, PJ-5)", () => {
+  it("maps the planner, the feed, following, the work profile, time entries and the time report", async () => {
+    const { ppm, calls } = recordingClient();
+    await ppm.myDayPlan("2026-11-18", "Europe/London");
+    await ppm.planSlot({
+      task_pid: "t1",
+      starts_at: "2026-11-18T09:00:00Z",
+      ends_at: "2026-11-18T10:00:00Z",
+    });
+    await ppm.removeSlot("s1");
+    await ppm.issueFeedToken();
+    await ppm.revokeFeedToken();
+    await ppm.myWatching();
+    await ppm.portfolioWorkProfile();
+    await ppm.portfolioWorkProfile({ period: "month", from: "2026-01-01" });
+    await ppm.timeEntries("p1");
+    await ppm.recordTime("p1", {
+      actor_ref: "person:x",
+      spent_on: "2026-11-18",
+      minutes: 30,
+    });
+    await ppm.timeReport({ groupBy: "plan" });
+    await ppm.timeReport({
+      groupBy: "person",
+      from: "2026-11-01",
+      to: "2026-11-30",
+      plan: "p1",
+      person: "person:x",
+    });
+    expect(
+      calls.map((x) => `${x.method} ${x.url.replace("http://svc", "")}`),
+    ).toEqual([
+      "GET /api/me/plan?day=2026-11-18&tz=Europe%2FLondon",
+      "POST /api/me/planned-slots",
+      "POST /api/me/planned-slots/s1/delete",
+      "POST /api/me/feed-token",
+      "POST /api/me/feed-token/revoke",
+      "GET /api/me/watching",
+      "GET /api/work-profile",
+      "GET /api/work-profile?period=month&from=2026-01-01",
+      "GET /api/plans/p1/time-entries",
+      "POST /api/plans/p1/time-entries",
+      "GET /api/time-reports?group_by=plan",
+      "GET /api/time-reports?group_by=person&from=2026-11-01&to=2026-11-30&plan=p1&person=person%3Ax",
+    ]);
+    expect(ppm.timeReportCsvUrl({ groupBy: "month" })).toMatch(
+      /\/api\/proxy\/api\/time-reports\?group_by=month&format=csv$/,
+    );
+  });
+});
+
 describe("PpmClient milestone sign-off required (NC-1 slice 11, EX-4)", () => {
   it("replaces the organizations a milestone needs", async () => {
     const { ppm, calls } = recordingClient();

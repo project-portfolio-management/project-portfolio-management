@@ -311,7 +311,18 @@ import type {
   PlanModelScore,
   ScoringInputs,
   ScoringInputsView,
+  DayPlan,
+  FeedTokenIssued,
+  MyWatching,
+  PlannedSlot,
+  PlannedSlotBody,
+  PortfolioWorkProfile,
+  TimeEntry,
+  TimeEntryBody,
+  TimeReport,
+  TimeReportQuery,
 } from "./ppm-types";
+import { timeReportSearch } from "./ppm-types";
 
 export * from "./ppm-types";
 
@@ -2622,6 +2633,58 @@ export class PpmClient {
   /** An approver approves or rejects someone else's submitted week (LT-11); approved is final. */
   decideTimesheet(body: TimesheetDecideBody): Promise<TimesheetWeekState> {
     return this.http.post(`/api/timesheets/decide`, { body });
+  }
+  /** Every person's time entries in a plan, newest first (LT-11); at most 5000. */
+  timeEntries(pid: string): Promise<TimeEntry[]> {
+    return this.http.get(`/api/plans/${pid}/time-entries`);
+  }
+  /** Record effort in a plan (LT-11): 409 when the person's week is approved and locked; 422 out of the rules. */
+  recordTime(pid: string, body: TimeEntryBody): Promise<{ pid: string }> {
+    return this.http.post(`/api/plans/${pid}/time-entries`, { body });
+  }
+  /** Time grouped by person, plan, category, billable or month (RM-10), over the plans the caller can read. */
+  timeReport(q: TimeReportQuery): Promise<TimeReport> {
+    return this.http.get(`/api/time-reports${timeReportSearch(q)}`);
+  }
+  /** Where the browser downloads the same time report as the service's CSV, through the proxy. */
+  timeReportCsvUrl(q: TimeReportQuery): string {
+    return `${API_BASE_URL}/api/time-reports${timeReportSearch(q, true)}`;
+  }
+
+  // ---- a person's own work (PL-4, LT-7, RM-3, PJ-5; NC-1 slice 12 part h) ----
+  /** One local day of the caller's planned slots (PL-4), in `tz` (an IANA zone name; 422 for one refused). */
+  myDayPlan(day: string, tz: string): Promise<DayPlan> {
+    const q = new URLSearchParams({ day, tz });
+    return this.http.get(`/api/me/plan?${q.toString()}`);
+  }
+  /** Block time for a task (PL-4): 422 out of the rules, 404 for a task the caller cannot read. */
+  planSlot(body: PlannedSlotBody): Promise<PlannedSlot> {
+    return this.http.post(`/api/me/planned-slots`, { body });
+  }
+  /** Remove one of the caller's slots (PL-4); the POST twin of DELETE. Another person's is a 404. */
+  removeSlot(slotPid: string): Promise<void> {
+    return this.http.post(`/api/me/planned-slots/${slotPid}/delete`);
+  }
+  /** Make a calendar feed token (LT-7), shown once; it replaces any earlier one. */
+  issueFeedToken(): Promise<FeedTokenIssued> {
+    return this.http.post(`/api/me/feed-token`);
+  }
+  /** Stop every feed token of the caller (LT-7); the POST twin of DELETE. */
+  revokeFeedToken(): Promise<void> {
+    return this.http.post(`/api/me/feed-token/revoke`);
+  }
+  /** What the caller follows (RM-3), newest first. */
+  myWatching(): Promise<MyWatching> {
+    return this.http.get(`/api/me/watching`);
+  }
+  /** The work of every plan the caller can read, spread over periods (PJ-5). A left-out period is weeks. */
+  portfolioWorkProfile(
+    params: { period?: Grain; from?: string; to?: string } = {},
+  ): Promise<PortfolioWorkProfile> {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+    const qs = q.toString();
+    return this.http.get(`/api/work-profile${qs ? `?${qs}` : ""}`);
   }
   // ---- plan templates (LT-2, NC-1 slice 9) ----
   /** Saved templates the caller may see, then the built-in starters. */

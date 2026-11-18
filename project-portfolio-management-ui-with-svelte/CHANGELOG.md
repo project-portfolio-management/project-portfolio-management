@@ -9,6 +9,49 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a person's own work (NC-1 slice 12 part h, PL-4, LT-7, RM-3, LT-11, RM-10, PJ-5, 2026-11-18)
+
+- `/me`: *Planned time* (`MyDayPlanner.svelte`): one local day of the person's slots (`GET /api/me/plan?day=&tz=`, the
+  browser's zone), moved a day at a time or to a typed date, each slot's time in the reader's locale, its task linked,
+  a clash in words and a shape, a 23- or 25-hour day said, the slots on unreadable tasks counted and what is due
+  listed; a slot planned for one of the person's open tasks (`POST /api/me/planned-slots`: the rules said and checked
+  first, every problem at once, a time the clocks skip refused, 12 hours counted in real time, the times sent in
+  UTC) and removed after a question (`POST …/{pid}/delete`; Cancel sends nothing). *Calendar feed* (`FeedToken.svelte`):
+  an address made after a question (`POST /api/me/feed-token`; it stops any earlier one), shown once through this
+  site's proxy in read-only boxes, never logged or kept; every address stopped after a question (`POST
+  /api/me/feed-token/revoke`). *What you follow* (`MyWatching.svelte`, `GET /api/me/watching`): a plan named and linked,
+  anything else by its kind in words and the start of its reference, each stopped after a question (`POST
+  /api/watchers/unwatch`). *Work over time* (`MyWorkProfile.svelte`, `GET /api/work-profile`, on asking): days, weeks
+  (not sent) or months and an optional window, checked first (ten years, 120 periods), with a table per plan and per
+  period.
+- `/me/timesheet`: *Record time* (`TimeEntryForm.svelte`), opened on asking: a plan, an optional open task, a date,
+  hours and minutes, a category, billable and a note, recorded against the person's own reference (`POST
+  /api/plans/{pid}/time-entries`) after a question, as an entry cannot be changed or removed; the defaults and a blank
+  note not sent; every rule checked first, including a week the page has read as approved; the page moves to the
+  entry's week; the person's own entries in the plan listed (`GET …/time-entries`, everyone's, the person's kept).
+- `/reports`: *Time report* (`TimeReport.svelte`, `GET /api/time-reports`): grouped by plan, person, category,
+  billable or month, from and to (defaults not sent), one plan or all, a person's reference; checked first; the groups
+  in words with billable, not billable and total in hours and minutes; no entries said; entries in unreadable plans
+  counted; the CSV link. The existing "says so when a report cannot be run" test now picks its alert by its text, as
+  the time report has an alert of its own when its plan list cannot be read.
+- Eleven client methods; `src/lib/planner-view.ts`, `src/lib/time-entry-view.ts`, and the feed, following and
+  work-over-time rules in `src/lib/my-work-view.ts`; 200 keys in eight catalogues, machine-written and unreviewed.
+- Tests: `tests/unit/planner-view.test.ts` (nine), `tests/unit/time-entry-view.test.ts` (eleven), five more in
+  `tests/unit/my-work-view.test.ts`, one more in `ppm.test.ts`; `tests/e2e/my-own-work.spec.ts` (seven, new), three more
+  in `me-timesheet.spec.ts` and three more in `reports.spec.ts`, with Welsh and axe; every stub that would carry the
+  service's English carries "service text" and the tests check it never shows.
+- **Decided (the plainest option):** the four `/me` parts are sections of `/me`; the work over time and the time form
+  are read on asking; recording time asks first; the feed addresses are shown through the proxy; the report's person
+  is a typed reference.
+- **Not done:** a slot past midnight (planned as two) or moving a slot; a per-person work profile (the route rolls up
+  every readable plan); a feed label; names or links for a followed task or other non-plan thing; following from
+  `/me`; editing or removing a time entry (no route); other people's entries in a plan. **Service gaps:** every 422 on
+  the day plan, a slot, a time entry, the time report and the work profile is `unprocessable` with English text; the
+  locked-week 409 is `conflict` with English text; the feed's and the work profile's `note` are English;
+  `GET /api/me/watching` has no names and no plan for a task; `GET /api/plans/{pid}/time-entries` lists everyone's
+  entries. **Not verified:** against a real service; a calendar app subscribing through the proxy; whether access logs
+  keep the feed token from the query string.
+
 ### Added — ranking and choosing (NC-1 slice 12 part g, NC-6, NC-7, EX-13, 2026-11-18)
 
 - `/prioritization`: "Rank by" chooses the Smart Score (the default, not sent), WSJF or RICE (`GET

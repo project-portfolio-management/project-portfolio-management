@@ -229,6 +229,12 @@ the Status note above).
 | Ranking by WSJF and RICE, and a plan's estimates (`/prioritization`, `ScoringEstimates.svelte`) | `GET /api/prioritization?model=wsjf\|rice` (left out for the Smart Score) · `GET`/`PUT /api/plans/{pid}/scoring-inputs` (all eight sent; nothing for no change) · `GET /api/plans/{pid}/score?model=` |
 | The efficient frontier, a generated draft and a rollback (`/scenarios`, `FrontierChart.svelte`) | `GET /api/scenarios/frontier?currency=&steps=\|caps=&must_include=` (ten steps not sent) · `POST /api/scenarios/generate` · `POST /api/scenarios/{pid}/rollback` (after a question) · `GET /api/plans` (names, and the plans to include) |
 | Editing a draft and the intake's forecast (`/proposals`) | `GET`/`PUT /api/proposals/{pid}` (a draft only; nothing for no change; tags an external ask) · `GET /api/proposals/forecast?periods=&period_days=&history_periods=` (defaults not sent) |
+| The day's plan (`/me`, `MyDayPlanner.svelte`) | `GET /api/me/plan?day=&tz=` · `POST /api/me/planned-slots` (sent in UTC) · `POST …/planned-slots/{pid}/delete` (after a question) · `GET /api/me/tasks` (the tasks to plan for) |
+| The calendar feed (`/me`, `FeedToken.svelte`) | `POST /api/me/feed-token` (after a question; the addresses shown once, through the proxy) · `POST /api/me/feed-token/revoke` (after a question) |
+| What I follow (`/me`, `MyWatching.svelte`) | `GET /api/me/watching` · `POST /api/watchers/unwatch` (after a question) · `GET /api/plans/{pid}` (plan names) |
+| The work over time (`/me`, `MyWorkProfile.svelte`) | `GET /api/work-profile?period=&from=&to=` (weeks not sent) |
+| Recording time (`/me/timesheet`, `TimeEntryForm.svelte`) | `POST /api/plans/{pid}/time-entries` (after a question; defaults not sent) · `GET /api/plans/{pid}/time-entries` (the caller's own kept) · `GET /api/plans` · `GET /api/plans/{pid}/tasks` |
+| The time report (`/reports`, `TimeReport.svelte`) | `GET /api/time-reports?group_by=&from=&to=&plan=&person=` (and `&format=csv`, a link) · `GET /api/plans` |
 | Task discussion and files (`/plans/[pid]/tasks/[tpid]`, `Discussion.svelte`) | `GET / POST /api/comments` · `PUT /api/comments/{pid}` · `POST …/{pid}/delete` · `GET …/{pid}/history` · `GET / POST /api/reactions` · `POST …/remove` · `GET / POST /api/watchers` · `POST …/unwatch` · `GET / POST /api/attachments` · `POST …/{pid}/delete` · `GET …/{pid}/download` (a link, never drawn in the page) |
 
 `src/lib/api/capabilities.ts` additionally defines a per-task assign

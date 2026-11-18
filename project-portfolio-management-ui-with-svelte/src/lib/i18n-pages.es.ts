@@ -8086,4 +8086,251 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Aprobadas por periodo, de la más antigua a la más reciente: {list}",
   "p.intake.arrivals_history":
     "Propuestas llegadas por periodo, de la más antigua a la más reciente (se muestran al lado; no influyen en la previsión): {list}",
+  "p.planner.heading": "Tiempo planificado",
+  "p.planner.says":
+    "Reserve tiempo un día para una de sus tareas abiertas. Un bloque es solo suyo y nunca cambia la fecha de vencimiento de la tarea; termina después de empezar y dura como máximo 12 horas. Los bloques pueden solaparse: un solapamiento se muestra como conflicto, y un bloque que termina cuando empieza el siguiente no lo es. Las horas están en su zona horaria, {tz}.",
+  "p.planner.day_nav": "Elegir el día",
+  "p.planner.previous_day": "Día anterior",
+  "p.planner.back_to_today": "Volver a hoy",
+  "p.planner.next_day": "Día siguiente",
+  "p.planner.f_day": "Día",
+  "p.planner.show_day": "Mostrar el día",
+  "p.planner.problem_day": "Indique el día como una fecha.",
+  "p.planner.day_heading": "Planificado el {day}",
+  "p.planner.day_hours": "Este día tiene {hours} horas, porque cambia la hora.",
+  "p.planner.nothing_planned": "No hay nada planificado este día.",
+  "p.planner.clashes_one": "Choca con {n} bloque más",
+  "p.planner.clashes_other": "Choca con {n} bloques más",
+  "p.planner.remove": "Quitar",
+  "p.planner.remove_named": "Quitar el bloque de {title}, {time}",
+  "p.planner.confirm_remove":
+    "¿Quitar el bloque de {title}, {time}? La tarea en sí no cambia.",
+  "p.planner.removed": "Se quitó el bloque de {title}, {time}.",
+  "p.planner.omitted_one":
+    "No se muestra {n} bloque de una tarea que ya no puede leer.",
+  "p.planner.omitted_other":
+    "No se muestran {n} bloques de tareas que ya no puede leer.",
+  "p.planner.due_heading": "Vence este día",
+  "p.planner.nothing_due": "Nada de lo que tiene asignado vence este día.",
+  "p.planner.loading": "Leyendo el día…",
+  "p.planner.form": "Planificar tiempo para una tarea",
+  "p.planner.form_says":
+    "El bloque es el {day}, en su zona horaria. Uno que pasa de la medianoche se planifica como dos.",
+  "p.planner.f_task": "Tarea",
+  "p.planner.choose_task": "Elija una de sus tareas abiertas",
+  "p.planner.loading_tasks": "Leyendo sus tareas…",
+  "p.planner.task_option": "{title}, en {plan}",
+  "p.planner.no_tasks":
+    "No tiene nada asignado, así que no hay tarea para la que planificar tiempo.",
+  "p.planner.f_start": "Empieza",
+  "p.planner.f_end": "Termina",
+  "p.planner.plan_time": "Planificar este tiempo",
+  "p.planner.planned": "Se planificó {title}, {time}.",
+  "p.planner.problem_task": "Elija una tarea.",
+  "p.planner.problem_start": "Indique la hora de inicio.",
+  "p.planner.problem_end": "Indique la hora de fin.",
+  "p.planner.problem_start_skipped":
+    "Ese día el reloj se salta la hora de inicio; elija otra.",
+  "p.planner.problem_end_skipped":
+    "Ese día el reloj se salta la hora de fin; elija otra.",
+  "p.planner.problem_order": "Un bloque debe terminar después de empezar.",
+  "p.planner.problem_too_long": "Un bloque dura como máximo 12 horas.",
+  "p.planner.refused_zone":
+    "No se aceptó la zona horaria de su navegador, así que no se puede mostrar el día.",
+  "p.planner.refused_slot":
+    "No se aceptó el bloque: debe terminar después de empezar y durar como máximo 12 horas, y una persona tiene como máximo {max} bloques.",
+  "p.planner.refused_task":
+    "Esa tarea ya no existe o está en un plan que no puede leer.",
+  "p.planner.refused_gone":
+    "Ese bloque ya no existe. Se ha vuelto a leer el día.",
+  "p.planner.could_not_load": "No se pudo leer el día.",
+  "p.planner.could_not_plan": "No se pudo planificar el tiempo.",
+  "p.planner.could_not_remove": "No se pudo quitar el bloque.",
+  "p.feed.heading": "Fuente de calendario",
+  "p.feed.says":
+    "Una dirección privada a la que puede suscribirse una aplicación de calendario: las tareas abiertas que tiene asignadas con fecha de vencimiento, los hitos y sprints de sus planes, y el tiempo que ha planificado. Una segunda dirección es una fuente de sus notificaciones para un lector de fuentes. Quien tenga una dirección puede leer lo que muestra, así que guárdela para usted.",
+  "p.feed.rules":
+    "Una dirección se muestra una vez, aquí, y esta página no la guarda; dura 365 días. Crear una nueva detiene al instante cualquier anterior.",
+  "p.feed.issue": "Crear una dirección de fuente",
+  "p.feed.confirm_issue":
+    "¿Crear una nueva dirección de fuente? Cualquier dirección que creara antes deja de funcionar al instante.",
+  "p.feed.issued":
+    "Sus nuevas direcciones están abajo. Cópielas ahora: no se vuelven a mostrar.",
+  "p.feed.calendar_address": "Dirección del calendario (iCalendar)",
+  "p.feed.atom_address": "Dirección de la fuente de notificaciones (Atom)",
+  "p.feed.revoke": "Detener todas las direcciones de fuente",
+  "p.feed.confirm_revoke":
+    "¿Detener todas las direcciones de fuente que ha creado? Una aplicación de calendario que use una deja de actualizarse al instante.",
+  "p.feed.revoked":
+    "Todas las direcciones de fuente que creó han dejado de funcionar.",
+  "p.feed.no_address":
+    "La respuesta no traía ninguna dirección que esta página pueda mostrar, así que no se muestra ninguna. Cualquier dirección anterior se ha detenido; cree otra si la necesita.",
+  "p.feed.refused_forbidden": "No puede gestionar una dirección de fuente.",
+  "p.feed.could_not_issue": "No se pudo crear una dirección de fuente.",
+  "p.feed.could_not_revoke":
+    "No se pudieron detener las direcciones de fuente.",
+  "p.watching.heading": "Lo que sigue",
+  "p.watching.says":
+    "Se le avisa cuando cambia algo que sigue. Sigue una tarea cuando la crea, la comenta o se le asigna, salvo que lo haya desactivado en sus opciones de notificación. A nadie más se le dice quién sigue. Un plan se nombra; todo lo demás se muestra por su tipo y el comienzo de su referencia.",
+  "p.watching.count_one": "Sigue {n} elemento.",
+  "p.watching.count_other": "Sigue {n} elementos.",
+  "p.watching.capped": "Solo se muestran los {max} más recientes.",
+  "p.watching.none": "Ahora mismo no sigue nada.",
+  "p.watching.named_plan": "El plan {name}",
+  "p.watching.unnamed": "{kind}, referencia {ref}",
+  "p.watching.kind_plan": "Un plan",
+  "p.watching.kind_task": "Tarea",
+  "p.watching.kind_risk": "Riesgo",
+  "p.watching.kind_proposal": "Propuesta",
+  "p.watching.kind_idea": "Una idea",
+  "p.watching.kind_canvas_item": "Elemento de lienzo",
+  "p.watching.kind_budget_line": "Partida presupuestaria",
+  "p.watching.kind_scenario": "Escenario",
+  "p.watching.kind_document_version": "Versión de documento",
+  "p.watching.kind_other": "Otra cosa",
+  "p.watching.stop": "Dejar de seguir",
+  "p.watching.stop_named": "Dejar de seguir {what}",
+  "p.watching.confirm_stop":
+    "¿Dejar de seguir {what}? Ya no se le avisará cuando cambie.",
+  "p.watching.stopped": "Ya no sigue {what}.",
+  "p.watching.refused": "No se aceptó dejar de seguir eso.",
+  "p.watching.loading": "Leyendo lo que sigue…",
+  "p.watching.could_not_load": "No se pudo leer lo que sigue.",
+  "p.watching.could_not_stop": "No se pudo dejar de seguirlo.",
+  "p.workprofile.heading": "Trabajo a lo largo del tiempo",
+  "p.workprofile.says":
+    "El trabajo de las tareas de cada plan que puede leer, repartido por los días laborables de cada tarea según su perfil, en minutos enteros. El trabajo que no se puede ubicar (una tarea aún sin programar, o sin ningún día laborable) se cuenta aparte y nunca se descarta.",
+  "p.workprofile.rules":
+    "Las semanas van de lunes a domingo. Deje las fechas vacías para abarcar todo el trabajo ubicado. Una ventana abarca como máximo diez años y {max} periodos.",
+  "p.workprofile.form": "Mostrar el trabajo a lo largo del tiempo",
+  "p.workprofile.f_period": "Periodos",
+  "p.workprofile.period_week": "Semanas",
+  "p.workprofile.period_day": "Días",
+  "p.workprofile.period_month": "Meses",
+  "p.workprofile.f_from": "Desde (vacío para el primer día ubicado)",
+  "p.workprofile.f_to": "Hasta (vacío para el último día ubicado)",
+  "p.workprofile.show": "Mostrar el trabajo",
+  "p.workprofile.problem_from": "Indique el primer día como una fecha.",
+  "p.workprofile.problem_to": "Indique el último día como una fecha.",
+  "p.workprofile.problem_order":
+    "El primer día no puede ser posterior al último.",
+  "p.workprofile.problem_too_long": "Una ventana abarca como máximo diez años.",
+  "p.workprofile.problem_periods":
+    "Esa ventana tiene más de {max} periodos; elija periodos más largos o una ventana más corta.",
+  "p.workprofile.refused":
+    "No se aceptó esa ventana: si aún no hay trabajo ubicado, indique ambas fechas, y no supere los periodos indicados arriba.",
+  "p.workprofile.none":
+    "Ningún plan que pueda leer tiene una tarea con trabajo.",
+  "p.workprofile.summary": "{range}: {work} de trabajo, {unplaced} sin ubicar.",
+  "p.workprofile.plans_table": "Trabajo por plan",
+  "p.workprofile.periods_table": "Trabajo por periodo",
+  "p.workprofile.col_plan": "Nombre del plan",
+  "p.workprofile.col_work": "Trabajo",
+  "p.workprofile.col_unplaced": "Sin ubicar",
+  "p.workprofile.col_period": "Periodo",
+  "p.workprofile.plan_unnamed": "Un plan sin nombre",
+  "p.workprofile.could_not_load":
+    "No se pudo leer el trabajo a lo largo del tiempo.",
+  "p.timeentry.heading": "Registrar tiempo",
+  "p.timeentry.says":
+    "El tiempo se registra a su nombre, en minutos enteros, de 1 minuto a {max} en una fecha, en un plan y, si quiere, en una de sus tareas. Una semana aprobada no admite más tiempo. Un registro no se puede cambiar ni quitar una vez hecho.",
+  "p.timeentry.open": "Anotar tiempo",
+  "p.timeentry.form": "Registrar tiempo en un plan",
+  "p.timeentry.f_plan": "En qué plan",
+  "p.timeentry.choose_plan": "Elija un plan",
+  "p.timeentry.loading": "Leyendo los planes…",
+  "p.timeentry.f_task": "Tarea (opcional)",
+  "p.timeentry.no_task": "Sin tarea: el plan en sí",
+  "p.timeentry.task_unnamed": "Una tarea que ya no está en este plan",
+  "p.timeentry.f_date": "Fecha",
+  "p.timeentry.f_duration": "Tiempo dedicado",
+  "p.timeentry.f_hours": "Horas",
+  "p.timeentry.f_minutes": "Minutos",
+  "p.timeentry.typed": "Son {time}.",
+  "p.timeentry.f_category": "Categoría",
+  "p.timeentry.category_unclassified": "Sin clasificar",
+  "p.timeentry.category_capex": "Gasto de capital (capex)",
+  "p.timeentry.category_opex": "Gasto operativo (opex)",
+  "p.timeentry.f_billable": "Facturable",
+  "p.timeentry.f_note": "Nota (opcional)",
+  "p.timeentry.record": "Registrar este tiempo",
+  "p.timeentry.confirm":
+    "¿Registrar {time} el {day} en {plan}? Un registro no se puede cambiar ni quitar una vez hecho.",
+  "p.timeentry.recorded": "Se registró {time} el {day} en {plan}.",
+  "p.timeentry.problem_plan": "Elija un plan.",
+  "p.timeentry.problem_date": "Indique la fecha en que se dedicó el tiempo.",
+  "p.timeentry.problem_locked":
+    "Esa semana está aprobada y bloqueada, así que no admite más tiempo.",
+  "p.timeentry.problem_duration":
+    "Indique el tiempo en horas enteras (0 a 24) y minutos (0 a 59), de 1 a {max} minutos en total.",
+  "p.timeentry.refused_locked":
+    "Esa semana está aprobada y bloqueada, así que no admite más tiempo. No se registró nada.",
+  "p.timeentry.refused_invalid":
+    "No se aceptó el registro: su tiempo, o su tarea, no es uno que el plan admita. No se registró nada.",
+  "p.timeentry.refused_plan": "Ese plan ya no existe o no puede leerlo.",
+  "p.timeentry.refused_forbidden": "No puede registrar tiempo en este plan.",
+  "p.timeentry.could_not_load_plans": "No se pudieron leer los planes.",
+  "p.timeentry.could_not_load_plan":
+    "No se pudieron leer las tareas y el tiempo de ese plan.",
+  "p.timeentry.could_not_record": "No se pudo registrar el tiempo.",
+  "p.timeentry.yours_heading": "Su tiempo en {plan}",
+  "p.timeentry.yours_none": "No ha registrado tiempo en este plan.",
+  "p.timeentry.yours_table":
+    "Sus registros de tiempo en {plan}, los más recientes primero",
+  "p.timeentry.col_date": "Fecha",
+  "p.timeentry.col_time": "Tiempo",
+  "p.timeentry.col_task": "Tarea",
+  "p.timeentry.col_category": "Categoría",
+  "p.timeentry.col_billable": "Facturable",
+  "p.timeentry.col_note": "Nota",
+  "p.timeentry.billable_yes": "Facturable",
+  "p.timeentry.billable_no": "No facturable",
+  "p.timereport.heading": "Informe de tiempo",
+  "p.timereport.says":
+    "Tiempo registrado en los planes que puede leer, agrupado como elija, con lo facturable y lo no facturable siempre aparte. Deje las fechas vacías para los últimos 90 días hasta hoy. Una persona es una referencia person: o worker:; déjela vacía para todos.",
+  "p.timereport.form": "Pedir un informe de tiempo",
+  "p.timereport.f_group_by": "Agrupar por",
+  "p.timereport.by_plan": "Por plan",
+  "p.timereport.by_person": "Por persona",
+  "p.timereport.by_category": "Por categoría",
+  "p.timereport.by_billable": "Facturable o no",
+  "p.timereport.by_month": "Por mes",
+  "p.timereport.f_from": "Desde",
+  "p.timereport.f_to": "Hasta",
+  "p.timereport.f_plan": "Solo este plan",
+  "p.timereport.every_plan": "Todos los planes que puede leer",
+  "p.timereport.loading_plans": "Leyendo los planes…",
+  "p.timereport.f_person": "Persona (una referencia)",
+  "p.timereport.show": "Mostrar el informe de tiempo",
+  "p.timereport.problem_from": "Indique el primer día como una fecha.",
+  "p.timereport.problem_to": "Indique el último día como una fecha.",
+  "p.timereport.problem_order":
+    "El primer día no puede ser posterior al último.",
+  "p.timereport.problem_person":
+    "Una persona es person: o worker: y un identificador, como person:6f1c2a3b-0000-4000-8000-000000000009.",
+  "p.timereport.refused":
+    "No se aceptó el informe de tiempo con esas opciones.",
+  "p.timereport.window": "Tiempo registrado {range}.",
+  "p.timereport.no_entries":
+    "No se registró tiempo en estos planes en ese intervalo.",
+  "p.timereport.table": "Tiempo por grupo",
+  "p.timereport.col_entries": "Registros",
+  "p.timereport.col_billable": "Facturable",
+  "p.timereport.col_not_billable": "No facturable",
+  "p.timereport.col_total": "En total",
+  "p.timereport.total":
+    "En total: {billable} facturable, {not_billable} no facturable, {total} en conjunto.",
+  "p.timereport.omitted_one":
+    "Se omite {n} registro de un plan que no puede leer.",
+  "p.timereport.omitted_other":
+    "Se omiten {n} registros de planes que no puede leer.",
+  "p.timereport.truncated":
+    "Solo se leyeron los primeros {max} registros, así que el informe está incompleto.",
+  "p.timereport.csv": "Descargar este informe de tiempo como CSV",
+  "p.timereport.billable": "Facturable",
+  "p.timereport.not_billable": "No facturable",
+  "p.timereport.plan_unnamed": "Un plan sin nombre aquí ({ref})",
+  "p.timereport.could_not_load": "No se pudo leer el informe de tiempo.",
+  "p.timereport.could_not_load_plans":
+    "No se pudieron leer los planes para elegir.",
 };

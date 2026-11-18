@@ -6,7 +6,9 @@
   (`?tz=`) because the server never guesses one; a fixed offset would be
   refused.
 
-  English-first, like the other recent views; localization follows.
+  Below the tasks (NC-1 slice 12 part h): the day's plan (`MyDayPlanner.svelte`, PL-4), the calendar feed
+  (`FeedToken.svelte`, LT-7), what the person follows (`MyWatching.svelte`, RM-3) and the work over time in the
+  plans they can read (`MyWorkProfile.svelte`, PJ-5).
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -15,6 +17,10 @@
   import { onMount } from "svelte";
   import { PpmClient, MY_WORK_BUCKETS, type MyWork, type MyWorkBucket } from "#lib/api/ppm.js";
   import { floatText } from "#lib/my-work-view.js";
+  import MyDayPlanner from "#lib/components/MyDayPlanner.svelte";
+  import FeedToken from "#lib/components/FeedToken.svelte";
+  import MyWatching from "#lib/components/MyWatching.svelte";
+  import MyWorkProfile from "#lib/components/MyWorkProfile.svelte";
 
   const ppm = PpmClient.withFetch();
   let work = $state<MyWork | null>(null);
@@ -28,9 +34,12 @@
     get undated() { return t("p.me.no_due_date"); },
   };
 
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  /** The person's open tasks, for planning time: `null` until read. */
+  const myTasks = $derived(work ? MY_WORK_BUCKETS.flatMap((b) => work?.buckets[b] ?? []) : null);
+
   async function refresh() {
     try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
       work = await ppm.myTasks(tz);
       error = null;
     } catch (err) {
@@ -97,6 +106,11 @@
 {:else if !error}
   <p class="muted">{t("p.me.loading")}</p>
 {/if}
+
+<MyDayPlanner tasks={myTasks} {tz} />
+<FeedToken />
+<MyWatching />
+<MyWorkProfile />
 
 <style>
   .tasks {

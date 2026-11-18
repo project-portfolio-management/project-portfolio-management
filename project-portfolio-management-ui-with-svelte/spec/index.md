@@ -1880,10 +1880,11 @@ holds the rules and `src/lib/components/TimesheetGrid.svelte` draws a week; the 
   token `sub` that is not a UUID); on someone else's, that the week or person was not accepted; on submit, that the
   week has no time in it; on decide, that sending back needs a reason. Each is a catalogue sentence; the service's own
   text is never shown. These routes take no `If-Match`.
-- **Not built in this slice:** recording, editing or deleting time entries (`POST /api/plans/{pid}/time-entries` has
-  no screen, and the service has no edit or delete route); a list of the weeks waiting for a decision (the service
-  has no such query, so an approver must know the person); a person picker or people's names for a reference; time
-  reports (`GET /api/time-reports`, RM-10); a link to a week from `?week=` in the address; hiding the approver section
+- **Not built in this slice:** recording, editing or deleting time entries (recording was built in slice 12 part h,
+  "A person's own work" below; the service has no edit or delete route); a list of the weeks waiting for a decision
+  (the service has no such query, so an approver must know the person); a person picker or people's names for a
+  reference; time reports (`GET /api/time-reports`, RM-10; built in slice 12 part h, on `/reports`); a link to a week
+  from `?week=` in the address; hiding the approver section
   from people without the right (the page does not know the caller's rights; the service's 403 is shown in words);
   categories and notes of the entries behind a cell.
 - **Tests:** `tests/unit/timesheet-view.test.ts`, the paths in `tests/unit/ppm.test.ts`, the weekday heads in
@@ -3009,3 +3010,105 @@ status (a proposal edit's two 422s by their machine `code`); the service's text 
   the forecast's checks, defaults not sent and figures; too little history; Welsh and axe). Every stub that would carry
   the service's English carries `"service text"`, and each test checks it is not shown. The translations are
   machine-written and unreviewed. **Not verified:** against a real service.
+
+## A person's own work (NC-1 slice 12 part h, PL-4, LT-7, RM-3, LT-11, RM-10, PJ-5)
+
+The day's plan, the calendar feed, what a person follows and the work over time on `/me`; recording time on
+`/me/timesheet`; the time report on `/reports`. Every rule is said before anything is sent; each refusal is the
+catalogue's sentence by action and status; the service's text is never shown. Rules in `src/lib/planner-view.ts`,
+`src/lib/my-work-view.ts` and `src/lib/time-entry-view.ts`.
+
+- **`/me`: the day's plan (PL-4, `MyDayPlanner.svelte`).** *Planned time* reads one local day (`GET
+  /api/me/plan?day=&tz=`, the browser's IANA zone), today first; "Previous day", "Back to today", "Next day" and a
+  typed date move it (a date that is not one refused on the page). Said first: a slot is the person's alone and never
+  changes the task's due date; it ends after it starts and lasts at most 12 hours; slots may overlap, an overlap shown
+  as a clash and one slot ending as the next begins not one; the times are in the named zone. Each slot shows its time
+  range in the reader's locale (from the UTC instants; the service's `starts_local` and `ends_local` are not shown), its
+  task linked to the task page, its plan, and, when it clashes, "⚠ Clashes with {n} other slot(s)" (a word and a
+  shape, from the service's clash groups); a day of 23 or 25 hours says so; the slots on tasks the person can no longer
+  read are counted; what is due that day is listed. *Plan time for a task*: one of the person's own open tasks (from
+  `GET /api/me/tasks`, the list disabled until read; with none, said), a start and an end on the shown day, read in
+  the zone and sent as UTC (`POST /api/me/planned-slots`). Checked first, every problem at once: a task, both times, a
+  time the clocks skip on that day refused (a time that happens twice is the first), the end after the start, at most
+  12 hours in real time (so 00:00 to 12:00 is 13 hours on the day the clocks go back). A slot past midnight is said to
+  be planned as two. Each slot is removed after a question (`POST /api/me/planned-slots/{pid}/delete`; Cancel sends
+  nothing; the task is said not to change). A 422 on reading says the zone was refused; on planning, the rules and the
+  2,000 slots a person may hold; a 404 on planning that the task is gone or unreadable; a 404 on removing that the
+  slot is already gone, and the day is read again.
+- **`/me`: the calendar feed (LT-7, `FeedToken.svelte`).** Said first: the calendar address shows the open tasks
+  assigned to the person with a due date, the milestones and sprints of their plans and their planned time; a second
+  address is a feed of their notifications; anyone with an address can read it; an address is shown once, is not kept
+  by the page and lasts 365 days; making one stops any earlier one. "Make a feed address" asks first (Cancel sends
+  nothing), then `POST /api/me/feed-token`; the two addresses are shown once, in read-only boxes (selected on focus),
+  as the service returns them, through this site's proxy (`{origin}/api/proxy/api/feeds/calendar.ics?token=…`: the
+  proxy forwards a request with no session to the service without a token, and `/api/feeds/` authenticates by the
+  token alone). An answer whose address is not a feed address is said, and nothing is shown. "Stop every feed address"
+  asks first, then `POST /api/me/feed-token/revoke`, and clears what is shown. The token is never logged or stored by
+  the page; the service's `note` is not shown. A 403 says the person may not manage a feed address.
+- **`/me`: what the person follows (RM-3, `MyWatching.svelte`).** `GET /api/me/watching`, newest first: said first how
+  a task comes to be followed and that nobody else is told who follows. A plan is named (`GET /api/plans/{pid}`) and
+  linked; anything else is its kind in words and the start of its reference (the service gives no names); a kind the
+  page does not know is "Something else" and offers no stop. The count is a plural, and at 500 the newest only are
+  said to be shown. "Stop following" asks first (Cancel sends nothing), then `POST /api/watchers/unwatch`, and the list
+  is read again.
+- **`/me`: the work over time (PJ-5, `MyWorkProfile.svelte`).** On asking, `GET /api/work-profile` (every plan the
+  reader can read): periods of days, weeks (the default, not sent) or months, and an optional first and last day. Said
+  first: weeks run Monday to Sunday; empty dates cover all the placed work; a window spans at most ten years and 120
+  periods. Checked first: real dates, the first not after the last, ten years, 120 periods counted as the service
+  counts them (weeks from the Monday). The answer: the window, the work and the part not placed, in hours and minutes;
+  a table of each plan (linked) with its work and the part not placed; a table of the work in each period. No plan
+  with work is said. A 422 says the window was not accepted. The service's `note` is not shown.
+- **`/me/timesheet`: recording time (LT-11, `TimeEntryForm.svelte`).** *Record time*, opened on asking (so nothing is
+  read until then): a plan (`GET /api/plans`, the list disabled until read), an optional task of it (`GET
+  /api/plans/{pid}/tasks`, the open ones offered), a date (today in the reader's zone), hours and minutes (number
+  inputs; the total said as typed), a category (not classified, the default and not sent; capital or operating
+  spending), billable (not, the default and not sent) and a note (blank not sent). The entry is recorded against the
+  person's own reference, the `person` their week names (the button disabled until the week is read). Said first:
+  whole minutes from 1 to 1,440 on one date; an approved week takes no more time; an entry cannot be changed or removed
+  once recorded. Checked first, every problem at once: a plan, a real date, whole hours 0 to 24 and minutes 0 to 59
+  making 1 to 1,440, and a date in the shown week when the page has read it as approved. Asked first, saying the time,
+  date and plan (Cancel sends nothing), then `POST /api/plans/{pid}/time-entries`; the page moves to the entry's week
+  and reads it again. The person's own entries in the chosen plan are shown from `GET /api/plans/{pid}/time-entries`
+  (which lists everyone's; the page keeps the person's, by id whatever the prefix or case): date, time, task, category
+  and billable in words, and their own note. A 409 says the week is approved and locked; a 422 that the time or task
+  was not accepted; a 404 that the plan is gone; a 403 that the person may not record time there.
+- **`/reports`: the time report (RM-10, `TimeReport.svelte`).** Group by plan, person, category, billable or month;
+  from and to (empty for the service's last 90 days to today, not sent); one plan (`GET /api/plans`, disabled until
+  read) or every plan; a person's reference (empty for everyone). Said first: billable and not billable are always
+  apart. Checked first: real dates, the first not after the last, a person as `person:` or `worker:` and an id. The
+  answer (`GET /api/time-reports`): the window, a table of the groups (a plan by name or "not named here" with the
+  start of its reference, a category and billable in words, a month in the reader's locale, a person by reference)
+  with entries, billable, not billable and total in hours and minutes, and a sentence with the three; no entries is a
+  sentence, never a row of zeros; the entries in plans the reader cannot read are counted (a plural); a truncated read
+  is said; and the same report as the service's CSV (a link, `format=csv`). A 422 says the report was not accepted.
+- **Decided (the plainest option):** the planner, the feed, what is followed and the work over time are sections of
+  `/me`, not pages of their own; the work over time is read on asking, as it rolls up every readable plan; the time
+  form on `/me/timesheet` opens on asking; recording time is asked first, as it is final; the feed addresses are shown
+  through this site's proxy; the person filter of the time report is a typed reference (there is no person picker).
+- **Not built:** a slot that runs past midnight (planned as two); moving a slot; a per-person work profile (`GET
+  /api/work-profile` rolls up every readable plan, not the caller's own work); a feed label (`?label=`); naming a
+  followed task, risk or other thing, or linking it (the service gives a kind and a reference only, and a task page
+  needs its plan); following something from this page; editing or removing a time entry (no route); other people's
+  entries in a plan (the service lists them; the page shows only the caller's). **Service gaps:** every 422 on `GET
+  /api/me/plan`, `POST /api/me/planned-slots`, `POST /api/plans/{pid}/time-entries`, `GET /api/time-reports` and `GET
+  /api/work-profile` is `unprocessable` with English text (one code for several refusals), so the page checks every
+  rule first; the 409 on a locked week is `conflict` with English text; the feed's `note` and the work profile's
+  `note` are English; `GET /api/me/watching` carries no name, and no plan for a task; `GET /api/plans/{pid}/time-entries`
+  lists everyone's entries, with no filter by person.
+- **Tests:** `tests/unit/planner-view.test.ts` (the day moved; a time in the zone as UTC in London, Los Angeles,
+  Auckland and Kolkata; a skipped and a repeated time; a slot's body, every problem, 12 hours in real time across both
+  clock changes; clashes; each refusal), more in `tests/unit/my-work-view.test.ts` (the feed's address; the kinds
+  followed; the work over time's query, the defaults not sent, ten years and 120 periods; each refusal),
+  `tests/unit/time-entry-view.test.ts` (an entry's minutes; its body, the defaults and a blank note not sent; every
+  problem; a locked week; the caller's own entries; the report's query and its search string; a group's words; each
+  refusal), the paths in `tests/unit/ppm.test.ts` (bodies checked against `openapi.json` by `client-bodies.test.ts`);
+  `tests/e2e/my-own-work.spec.ts` (new: the day's plan, a clash, what is due, a slot left out; a slot's checks, its UTC
+  body, a removal after a question and Cancel; a refused slot and one already gone; the feed made and stopped after
+  questions, the addresses through the proxy; what is followed, named and stopped; the work over time's checks, the
+  default not sent, its tables and a refusal; Welsh and axe), three more in `tests/e2e/me-timesheet.spec.ts`
+  (recording time: the rules, the question, the bodies, the person's own entries; a locked week refused on the page, a
+  409 and a 422; Welsh and axe) and three more in `tests/e2e/reports.spec.ts` (the time report's checks, the defaults
+  not sent, the groups and both halves, the CSV link; no entries and a 422; Welsh and axe). Every stub that would carry
+  the service's English carries `"service text"`, and each test checks it is not shown. The translations are
+  machine-written and unreviewed. **Not verified:** against a real service; a calendar app subscribing to the address
+  through the proxy; whether the proxy's or the service's access logs keep the token from the query string.

@@ -670,3 +670,251 @@ test("passes the accessibility audit, with someone else's week open", async ({
       .map((v) => v.id),
   ).toEqual([]);
 });
+
+// NC-1 slice 12 part (h), LT-11: recording time against the caller's own reference, and reading their entries back.
+
+/** The plan list, a plan's tasks and its time entries; `refuse` answers the next entries POST with each status. */
+async function stubEntries(page: Page, refuse: number[] = []) {
+  const posted: Sent[] = [];
+  const entries = [
+    {
+      pid: "e1",
+      plan_pid: PLAN_A,
+      task_pid: "t1",
+      actor_ref: ME,
+      spent_on: "2026-11-10",
+      minutes: 90,
+      category: "capex",
+      billable: true,
+      note: "Design review",
+      created_at: "2026-11-10T17:00:00Z",
+    },
+    {
+      pid: "e2",
+      plan_pid: PLAN_A,
+      task_pid: null,
+      actor_ref: ALICE,
+      spent_on: "2026-11-12",
+      minutes: 480,
+      category: "opex",
+      billable: true,
+      note: "Alice's own note",
+      created_at: "2026-11-12T17:00:00Z",
+    },
+  ];
+  await page.route(
+    /\/api\/proxy\/api\/plans(\/[^/]+\/(tasks|time-entries))?(\?.*)?$/,
+    async (route) => {
+      const req = route.request();
+      const path = new URL(req.url()).pathname.replace(/^\/api\/proxy/, "");
+      if (path === "/api/plans")
+        return route.fulfill({
+          json: [
+            { pid: PLAN_A, name: "Website replatform" },
+            { pid: PLAN_B, name: "Data centre exit" },
+          ],
+        });
+      if (path.endsWith("/tasks"))
+        return route.fulfill({
+          json: {
+            tasks: [
+              { pid: "t1", title: "Migrate the CMS", status: "todo" },
+              { pid: "t2", title: "Old task", status: "done" },
+            ],
+            counts: {},
+          },
+        });
+      if (req.method() === "GET") return route.fulfill({ json: entries });
+      const body = req.postDataJSON();
+      posted.push({ method: "POST", path, body });
+      const status = refuse.shift();
+      if (status)
+        return route.fulfill({
+          status,
+          json: { code: "conflict", detail: "service text" },
+        });
+      entries.unshift({
+        pid: `e${entries.length + 1}`,
+        plan_pid: PLAN_A,
+        task_pid: body.task_pid ?? null,
+        actor_ref: body.actor_ref,
+        spent_on: body.spent_on,
+        minutes: body.minutes,
+        category: body.category ?? "unclassified",
+        billable: body.billable ?? false,
+        note: body.note ?? null,
+        created_at: "2026-11-11T10:00:00Z",
+      });
+      return route.fulfill({ json: { pid: "e9" } });
+    },
+  );
+  return posted;
+}
+
+test("recording time: the rules said and checked first, asked first, sent against me with the defaults left out, and read back", async ({
+  page,
+}) => {
+  await stub(page);
+  const posted = await stubEntries(page);
+  await open(page);
+  const r = page.getByTestId("record-time");
+  await expect(r).toContainText(
+    "An approved week takes no more time. An entry cannot be changed or removed once recorded.",
+  );
+  await r.getByRole("button", { name: "Record some time" }).click();
+  const form = r.getByRole("form", { name: "Record time in a plan" });
+  await expect(form.getByRole("combobox", { name: /^Plan\b/ })).toBeEnabled();
+  await expect(form.getByLabel("Date")).toHaveValue("2026-11-11");
+  await form.getByRole("button", { name: "Record this time" }).click();
+  await expect(r.getByRole("alert")).toHaveText(
+    "Choose a plan. Give the time spent as whole hours (0 to 24) and minutes (0 to 59), from 1 minute to 1,440 minutes in all.",
+  );
+  await form
+    .getByRole("combobox", { name: /^Plan\b/ })
+    .selectOption({ label: "Website replatform" });
+  // Only the caller's own entries in the plan, with their task, category and billable in words.
+  const mine = r.getByTestId("own-entries");
+  await expect(mine.getByRole("row")).toHaveCount(2);
+  await expect(
+    mine.getByRole("row", {
+      name: /10 Nov 2026\s+1 hr 30 mins\s+Migrate the CMS\s+Capital spending \(capex\)\s+Billable\s+Design review/,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("Alice's own note")).toHaveCount(0);
+  // A done task is not offered.
+  await expect(form.getByLabel("Task (optional)").locator("option")).toHaveText(
+    ["No task: the plan itself", "Migrate the CMS"],
+  );
+  await form.getByLabel("Hours").fill("1");
+  await form.getByLabel("Minutes").fill("30");
+  await expect(form.getByTestId("typed-duration")).toHaveText(
+    "That is 1 hr 30 mins.",
+  );
+  await form.getByRole("button", { name: "Record this time" }).click();
+  await expect(page.getByRole("alertdialog")).toContainText(
+    "Record 1 hr 30 mins on 11 Nov 2026 in Website replatform? An entry cannot be changed or removed once recorded.",
+  );
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Cancel" })
+    .click();
+  expect(posted).toEqual([]);
+  await form.getByRole("button", { name: "Record this time" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(r.getByRole("status")).toHaveText(
+    "Recorded 1 hr 30 mins on 11 Nov 2026 in Website replatform.",
+  );
+  await expect(mine.getByRole("row")).toHaveCount(3);
+  await form
+    .getByLabel("Task (optional)")
+    .selectOption({ label: "Migrate the CMS" });
+  await form.getByLabel("Minutes").fill("45");
+  await form
+    .getByLabel("Category")
+    .selectOption({ label: "Operating spending (opex)" });
+  await form.getByLabel("Billable").check();
+  await form.getByLabel("Note (optional)").fill("  Sprint review  ");
+  await form.getByRole("button", { name: "Record this time" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(r.getByRole("status")).toHaveText(
+    "Recorded 45 mins on 11 Nov 2026 in Website replatform.",
+  );
+  expect(posted).toEqual([
+    {
+      method: "POST",
+      path: `/api/plans/${PLAN_A}/time-entries`,
+      body: { actor_ref: ME, spent_on: "2026-11-11", minutes: 90 },
+    },
+    {
+      method: "POST",
+      path: `/api/plans/${PLAN_A}/time-entries`,
+      body: {
+        actor_ref: ME,
+        spent_on: "2026-11-11",
+        minutes: 45,
+        task_pid: "t1",
+        category: "opex",
+        billable: true,
+        note: "Sprint review",
+      },
+    },
+  ]);
+});
+
+test("an approved week is refused on the page, and a 409 and a 422 are the catalogue's sentences", async ({
+  page,
+}) => {
+  await stub(
+    page,
+    {},
+    {
+      [`${ALICE}|2026-W46`]: "submitted",
+      [`${ME}|2026-W46`]: "approved",
+    },
+  );
+  const posted = await stubEntries(page, [409, 422]);
+  await open(page);
+  const r = page.getByTestId("record-time");
+  await r.getByRole("button", { name: "Record some time" }).click();
+  const form = r.getByRole("form", { name: "Record time in a plan" });
+  await form
+    .getByRole("combobox", { name: /^Plan\b/ })
+    .selectOption({ label: "Website replatform" });
+  await form.getByLabel("Hours").fill("2");
+  await form.getByRole("button", { name: "Record this time" }).click();
+  await expect(r.getByRole("alert")).toHaveText(
+    "That week is approved and locked, so it takes no more time.",
+  );
+  expect(posted).toEqual([]);
+  await form.getByLabel("Date").fill("2026-11-16");
+  await form.getByRole("button", { name: "Record this time" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(r.getByRole("alert")).toHaveText(
+    "That week is approved and locked, so it takes no more time. Nothing was recorded.",
+  );
+  await form.getByRole("button", { name: "Record this time" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(r.getByRole("alert")).toHaveText(
+    "The entry was not accepted: its time, or its task, is not one the plan takes. Nothing was recorded.",
+  );
+  expect(posted).toHaveLength(2);
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
+test("recording time reads in Welsh and passes axe with the form open", async ({
+  page,
+}) => {
+  await stub(page);
+  await stubEntries(page);
+  await open(page, "cy-001");
+  const r = page.getByTestId("record-time");
+  await r.getByRole("button", { name: "Cofnodi peth amser" }).click();
+  const form = r.getByRole("form", { name: "Cofnodi amser mewn cynllun" });
+  await form
+    .getByRole("combobox", { name: /^Cynllun\b/ })
+    .selectOption({ label: "Website replatform" });
+  await expect(r.getByTestId("own-entries")).toContainText(
+    "Gwariant cyfalaf (capex)",
+  );
+  await settle(page);
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(
+    results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    ),
+  ).toEqual([]);
+});

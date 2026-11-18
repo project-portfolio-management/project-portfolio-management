@@ -15,6 +15,24 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 18 November (a person's own work: NC-1 slice 12 part h)
+
+- **UI: the day's plan, the calendar feed, what I follow, the work over time, recording time and the time report
+  (PL-4, LT-7, RM-3, PJ-5, LT-11, RM-10).** `/me` shows a day of the person's planned slots in their own zone, with
+  clashes in words and what is due, plans a slot for one of their open tasks (every rule checked first, sent in UTC)
+  and removes one after a question; makes a calendar feed address after a question and shows it once, through this
+  site's proxy, and stops every address after a question; lists what the person follows and stops one after a
+  question; and, on asking, spreads the work in every readable plan over days, weeks or months. `/me/timesheet`
+  records time against the person's own reference after a question (an entry is final), every rule checked first,
+  and lists their own entries in the plan. `/reports` gains the time report, grouped five ways with billable and not
+  billable apart, and its CSV. The service's text is never shown. UI spec, "A person's own work"; tests
+  `tests/e2e/my-own-work.spec.ts` and additions to `me-timesheet.spec.ts` and `reports.spec.ts`. 200 keys in eight
+  catalogues, machine-written. **Not done:** a slot past midnight or moving one; a per-person work profile; names for a
+  followed non-plan thing; editing or removing a time entry. **Service gaps:** the 422s on the day plan, a slot, a time
+  entry, the time report and the work profile are `unprocessable` with English text; `GET /api/me/watching` has no
+  names; `GET /api/plans/{pid}/time-entries` lists everyone's entries. **Not verified:** against a real service; a
+  calendar app subscribing through the proxy.
+
 ### 18 November (ranking and choosing: NC-1 slice 12 part g)
 
 - **UI: WSJF and RICE, the efficient frontier, a scenario's rollback, and editing a proposal (NC-6, NC-7, EX-13).**

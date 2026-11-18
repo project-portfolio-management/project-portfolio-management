@@ -1,7 +1,7 @@
 <!--
   Saved reports (`/reports`, PPM-9): definitions (collection +
   filters + projected fields), synchronous runs previewed as a
-  table, and the CSV download.
+  table, and the CSV download. Below, the time report (`TimeReport.svelte`, RM-10; NC-1 slice 12 part h).
 -->
 <script lang="ts">
   import { errorText } from "#lib/error-text.js";
@@ -12,6 +12,7 @@
   import { onMount } from "svelte";
   import { PpmClient, type ReportDefinition, type ReportRun } from "#lib/api/ppm.js";
   import { COLLECTIONS, type Collection } from "#lib/api/types.js";
+  import TimeReport from "#lib/components/TimeReport.svelte";
 
   const ppm = PpmClient.withFetch();
   let reports = $state<ReportDefinition[]>([]);
@@ -98,6 +99,8 @@
     {/if}
   </section>
 {/each}
+
+<TimeReport />
 
 <style>
   .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.8rem 0; }

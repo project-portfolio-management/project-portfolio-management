@@ -15,7 +15,9 @@
   import { PpmClient, type TimesheetWeek } from "#lib/api/ppm.js";
   import { PlanRepository } from "#lib/api/plans.js";
   import TimesheetGrid from "#lib/components/TimesheetGrid.svelte";
+  import TimeEntryForm from "#lib/components/TimeEntryForm.svelte";
   import {
+    isoWeekOf,
     STATUS_KEY,
     STATUS_SYMBOL,
     canDecide,
@@ -179,6 +181,9 @@
     }
   }
 
+  /** The weeks the page knows are approved and locked: the shown week, once read as approved. */
+  const lockedWeeks = $derived(new Set(mine && statusOf(mine.status) === "approved" ? [mine.week] : []));
+
   function range(w: TimesheetWeek): string {
     return formatDateRange(w.grid.days[0], w.grid.days[6]);
   }
@@ -234,6 +239,8 @@
     <p class="muted">{t("p.timesheet.loading")}</p>
   {/if}
 </section>
+
+<TimeEntryForm me={mine?.person ?? null} today={todayIn(tz)} {lockedWeeks} onrecorded={(day) => goTo(isoWeekOf(day))} />
 
 <section aria-labelledby="ts-other-h" data-testid="other">
   <h2 id="ts-other-h">{t("p.timesheet.other_heading")}</h2>

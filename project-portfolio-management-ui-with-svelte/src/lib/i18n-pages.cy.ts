@@ -7986,4 +7986,253 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Wedi'u cymeradwyo fesul cyfnod, yr hynaf yn gyntaf: {list}",
   "p.intake.arrivals_history":
     "Cynigion yn cyrraedd fesul cyfnod, yr hynaf yn gyntaf (wedi'u dangos wrth ei ochr; nid ydynt yn bwydo'r rhagolwg): {list}",
+  "p.planner.heading": "Amser wedi'i gynllunio",
+  "p.planner.says":
+    "Neilltuwch amser ar ddiwrnod i un o'ch tasgau agored. Eich un chi yn unig yw slot, ac nid yw byth yn newid dyddiad dyledus y dasg; mae'n gorffen ar ôl iddo ddechrau ac yn para 12 awr ar y mwyaf. Caiff slotiau orgyffwrdd: dangosir gorgyffwrdd fel gwrthdaro, ac nid yw slot sy'n gorffen wrth i'r nesaf ddechrau yn un. Mae'r amseroedd yn eich cylchfa amser chi, {tz}.",
+  "p.planner.day_nav": "Dewis y diwrnod",
+  "p.planner.previous_day": "Diwrnod blaenorol",
+  "p.planner.back_to_today": "Yn ôl i heddiw",
+  "p.planner.next_day": "Diwrnod nesaf",
+  "p.planner.f_day": "Diwrnod",
+  "p.planner.show_day": "Dangos y diwrnod",
+  "p.planner.problem_day": "Rhowch y diwrnod fel dyddiad.",
+  "p.planner.day_heading": "Wedi'i gynllunio ar {day}",
+  "p.planner.day_hours":
+    "Mae gan y diwrnod hwn {hours} awr, gan fod y clociau'n newid.",
+  "p.planner.nothing_planned": "Does dim wedi'i gynllunio ar y diwrnod hwn.",
+  "p.planner.clashes_one": "Yn gwrthdaro ag {n} slot arall",
+  "p.planner.clashes_other": "Yn gwrthdaro ag {n} slot arall",
+  "p.planner.remove": "Tynnu",
+  "p.planner.remove_named": "Tynnu'r slot ar gyfer {title}, {time}",
+  "p.planner.confirm_remove":
+    "Tynnu'r slot ar gyfer {title}, {time}? Nid yw'r dasg ei hun yn newid.",
+  "p.planner.removed": "Wedi tynnu'r slot ar gyfer {title}, {time}.",
+  "p.planner.omitted_one":
+    "Nid yw {n} slot ar dasg na allwch ei darllen mwyach yn cael ei ddangos.",
+  "p.planner.omitted_other":
+    "Nid yw {n} slot ar dasgau na allwch eu darllen mwyach yn cael eu dangos.",
+  "p.planner.due_heading": "Yn ddyledus ar y diwrnod hwn",
+  "p.planner.nothing_due":
+    "Nid oes dim a neilltuwyd i chi yn ddyledus ar y diwrnod hwn.",
+  "p.planner.loading": "Yn darllen y diwrnod…",
+  "p.planner.form": "Cynllunio amser ar gyfer tasg",
+  "p.planner.form_says":
+    "Mae'r slot ar {day}, yn eich cylchfa amser. Caiff un sy'n mynd heibio hanner nos ei gynllunio fel dau.",
+  "p.planner.f_task": "Tasg",
+  "p.planner.choose_task": "Dewiswch un o'ch tasgau agored",
+  "p.planner.loading_tasks": "Yn darllen eich tasgau…",
+  "p.planner.task_option": "{title}, yn {plan}",
+  "p.planner.no_tasks":
+    "Nid oes dim wedi'i neilltuo i chi, felly nid oes tasg i gynllunio amser ar ei chyfer.",
+  "p.planner.f_start": "Yn dechrau",
+  "p.planner.f_end": "Yn gorffen",
+  "p.planner.plan_time": "Cynllunio'r amser hwn",
+  "p.planner.planned": "Wedi cynllunio {title}, {time}.",
+  "p.planner.problem_task": "Dewiswch dasg.",
+  "p.planner.problem_start": "Rhowch yr amser y mae'n dechrau.",
+  "p.planner.problem_end": "Rhowch yr amser y mae'n gorffen.",
+  "p.planner.problem_start_skipped":
+    "Mae'r clociau'n neidio dros yr amser dechrau ar y diwrnod hwn; dewiswch un arall.",
+  "p.planner.problem_end_skipped":
+    "Mae'r clociau'n neidio dros yr amser gorffen ar y diwrnod hwn; dewiswch un arall.",
+  "p.planner.problem_order": "Rhaid i slot orffen ar ôl iddo ddechrau.",
+  "p.planner.problem_too_long": "Mae slot yn para 12 awr ar y mwyaf.",
+  "p.planner.refused_zone":
+    "Ni dderbyniwyd cylchfa amser eich porwr, felly ni ellir dangos y diwrnod.",
+  "p.planner.refused_slot":
+    "Ni dderbyniwyd y slot: rhaid iddo orffen ar ôl iddo ddechrau a phara 12 awr ar y mwyaf, a gall person ddal {max} slot ar y mwyaf.",
+  "p.planner.refused_task":
+    "Mae'r dasg honno wedi mynd, neu mewn cynllun na allwch ei ddarllen.",
+  "p.planner.refused_gone":
+    "Mae'r slot hwnnw wedi mynd yn barod. Mae'r diwrnod wedi'i ddarllen eto.",
+  "p.planner.could_not_load": "Methu darllen y diwrnod.",
+  "p.planner.could_not_plan": "Methu cynllunio'r amser.",
+  "p.planner.could_not_remove": "Methu tynnu'r slot.",
+  "p.feed.heading": "Ffrwd calendr",
+  "p.feed.says":
+    "Cyfeiriad preifat y gall ap calendr danysgrifio iddo: y tasgau agored a neilltuwyd i chi sydd â dyddiad dyledus, cerrig milltir a sbrintiau eu cynlluniau, a'r amser rydych wedi'i gynllunio. Mae ail gyfeiriad yn ffrwd o'ch hysbysiadau ar gyfer darllenydd ffrydiau. Gall unrhyw un sydd â chyfeiriad ddarllen yr hyn y mae'n ei ddangos, felly cadwch ef i chi'ch hun.",
+  "p.feed.rules":
+    "Dangosir cyfeiriad unwaith, yma, ac nid yw'r dudalen hon yn ei gadw; mae'n para 365 diwrnod. Mae gwneud un newydd yn atal unrhyw un cynharach ar unwaith.",
+  "p.feed.issue": "Gwneud cyfeiriad ffrwd",
+  "p.feed.confirm_issue":
+    "Gwneud cyfeiriad ffrwd newydd? Mae unrhyw gyfeiriad a wnaethoch o'r blaen yn peidio â gweithio ar unwaith.",
+  "p.feed.issued":
+    "Mae eich cyfeiriadau newydd isod. Copïwch nhw nawr: ni chânt eu dangos eto.",
+  "p.feed.calendar_address": "Cyfeiriad calendr (iCalendar)",
+  "p.feed.atom_address": "Cyfeiriad ffrwd hysbysiadau (Atom)",
+  "p.feed.revoke": "Atal pob cyfeiriad ffrwd",
+  "p.feed.confirm_revoke":
+    "Atal pob cyfeiriad ffrwd rydych wedi'i wneud? Mae ap calendr sy'n defnyddio un yn peidio â diweddaru ar unwaith.",
+  "p.feed.revoked":
+    "Mae pob cyfeiriad ffrwd a wnaethoch wedi peidio â gweithio.",
+  "p.feed.no_address":
+    "Nid oedd yn yr ateb gyfeiriad y gall y dudalen hon ei ddangos, felly ni ddangosir un. Mae unrhyw gyfeiriad cynharach wedi'i atal; gwnewch un arall os oes angen.",
+  "p.feed.refused_forbidden": "Ni chewch reoli cyfeiriad ffrwd.",
+  "p.feed.could_not_issue": "Methu gwneud cyfeiriad ffrwd.",
+  "p.feed.could_not_revoke": "Methu atal y cyfeiriadau ffrwd.",
+  "p.watching.heading": "Yr hyn rydych yn ei ddilyn",
+  "p.watching.says":
+    "Cewch wybod pan fydd rhywbeth rydych yn ei ddilyn yn newid. Rydych yn dilyn tasg pan fyddwch yn ei chreu, yn rhoi sylw arni neu'n ei chael, oni bai eich bod wedi diffodd hynny yn eich dewisiadau hysbysu. Ni ddywedir wrth neb arall pwy sy'n dilyn. Enwir cynllun; dangosir unrhyw beth arall yn ôl ei fath a dechrau ei gyfeirnod.",
+  "p.watching.count_one": "Rydych yn dilyn {n} peth.",
+  "p.watching.count_other": "Rydych yn dilyn {n} peth.",
+  "p.watching.capped": "Dim ond y {max} mwyaf newydd a ddangosir.",
+  "p.watching.none": "Nid ydych yn dilyn dim ar hyn o bryd.",
+  "p.watching.named_plan": "Cynllun {name}",
+  "p.watching.unnamed": "{kind}, cyfeirnod {ref}",
+  "p.watching.kind_plan": "Cynllun",
+  "p.watching.kind_task": "Tasg",
+  "p.watching.kind_risk": "Risg",
+  "p.watching.kind_proposal": "Cynnig",
+  "p.watching.kind_idea": "Syniad",
+  "p.watching.kind_canvas_item": "Eitem cynfas",
+  "p.watching.kind_budget_line": "Llinell gyllideb",
+  "p.watching.kind_scenario": "Senario",
+  "p.watching.kind_document_version": "Fersiwn dogfen",
+  "p.watching.kind_other": "Rhywbeth arall",
+  "p.watching.stop": "Peidio â dilyn",
+  "p.watching.stop_named": "Peidio â dilyn {what}",
+  "p.watching.confirm_stop":
+    "Peidio â dilyn {what}? Ni chewch wybod mwyach pan fydd yn newid.",
+  "p.watching.stopped": "Nid ydych yn dilyn {what} mwyach.",
+  "p.watching.refused": "Ni dderbyniwyd peidio â dilyn hynny.",
+  "p.watching.loading": "Yn darllen yr hyn rydych yn ei ddilyn…",
+  "p.watching.could_not_load": "Methu darllen yr hyn rydych yn ei ddilyn.",
+  "p.watching.could_not_stop": "Methu peidio â'i ddilyn.",
+  "p.workprofile.heading": "Gwaith dros amser",
+  "p.workprofile.says":
+    "Y gwaith sydd gan dasgau ym mhob cynllun y gallwch ei ddarllen, wedi'i wasgaru dros ddiwrnodau gwaith pob tasg yn ôl ei chyfuchlin, mewn munudau cyfan. Caiff gwaith na ellir ei osod (tasg heb ei hamserlennu eto, neu un heb ddiwrnod gwaith) ei gyfrif ar wahân, a byth ei ollwng.",
+  "p.workprofile.rules":
+    "Mae wythnosau'n rhedeg o ddydd Llun i ddydd Sul. Gadewch y dyddiadau'n wag i gwmpasu'r holl waith a osodwyd. Mae ffenestr yn rhychwantu deng mlynedd a {max} cyfnod ar y mwyaf.",
+  "p.workprofile.form": "Dangos y gwaith dros amser",
+  "p.workprofile.f_period": "Cyfnodau",
+  "p.workprofile.period_week": "Wythnosau",
+  "p.workprofile.period_day": "Diwrnodau",
+  "p.workprofile.period_month": "Misoedd",
+  "p.workprofile.f_from": "O (yn wag ar gyfer y diwrnod cyntaf a osodwyd)",
+  "p.workprofile.f_to": "I (yn wag ar gyfer y diwrnod olaf a osodwyd)",
+  "p.workprofile.show": "Dangos y gwaith",
+  "p.workprofile.problem_from": "Rhowch y diwrnod cyntaf fel dyddiad.",
+  "p.workprofile.problem_to": "Rhowch y diwrnod olaf fel dyddiad.",
+  "p.workprofile.problem_order":
+    "Ni chaiff y diwrnod cyntaf fod ar ôl yr olaf.",
+  "p.workprofile.problem_too_long":
+    "Mae ffenestr yn rhychwantu deng mlynedd ar y mwyaf.",
+  "p.workprofile.problem_periods":
+    "Mae gan y ffenestr honno fwy na {max} cyfnod; dewiswch gyfnodau hirach neu ffenestr fyrrach.",
+  "p.workprofile.refused":
+    "Ni dderbyniwyd y ffenestr honno: heb waith wedi'i osod eto, rhowch y ddau ddyddiad, a chadwch o fewn y cyfnodau a nodwyd uchod.",
+  "p.workprofile.none":
+    "Nid oes gan unrhyw gynllun y gallwch ei ddarllen dasg sy'n cario gwaith.",
+  "p.workprofile.summary":
+    "{range}: {work} o waith, {unplaced} ohono heb ei osod.",
+  "p.workprofile.plans_table": "Gwaith fesul cynllun",
+  "p.workprofile.periods_table": "Gwaith fesul cyfnod",
+  "p.workprofile.col_plan": "Cynllun",
+  "p.workprofile.col_work": "Gwaith",
+  "p.workprofile.col_unplaced": "Heb ei osod",
+  "p.workprofile.col_period": "Cyfnod",
+  "p.workprofile.plan_unnamed": "Cynllun heb enw",
+  "p.workprofile.could_not_load": "Methu darllen y gwaith dros amser.",
+  "p.timeentry.heading": "Cofnodi amser",
+  "p.timeentry.says":
+    "Cofnodir amser yn eich enw chi, mewn munudau cyfan, o 1 munud hyd at {max} ar un dyddiad, mewn cynllun ac, os mynnwch, un o'i dasgau. Nid yw wythnos a gymeradwywyd yn derbyn mwy o amser. Ni ellir newid na thynnu cofnod ar ôl ei gofnodi.",
+  "p.timeentry.open": "Cofnodi peth amser",
+  "p.timeentry.form": "Cofnodi amser mewn cynllun",
+  "p.timeentry.f_plan": "Cynllun",
+  "p.timeentry.choose_plan": "Dewiswch gynllun",
+  "p.timeentry.loading": "Yn darllen y cynlluniau…",
+  "p.timeentry.f_task": "Tasg (dewisol)",
+  "p.timeentry.no_task": "Dim tasg: y cynllun ei hun",
+  "p.timeentry.task_unnamed": "Tasg nad yw yn y cynllun hwn mwyach",
+  "p.timeentry.f_date": "Dyddiad",
+  "p.timeentry.f_duration": "Amser a dreuliwyd",
+  "p.timeentry.f_hours": "Oriau",
+  "p.timeentry.f_minutes": "Munudau",
+  "p.timeentry.typed": "Dyna {time}.",
+  "p.timeentry.f_category": "Categori",
+  "p.timeentry.category_unclassified": "Heb ei ddosbarthu",
+  "p.timeentry.category_capex": "Gwariant cyfalaf (capex)",
+  "p.timeentry.category_opex": "Gwariant gweithredu (opex)",
+  "p.timeentry.f_billable": "Y gellir ei filio",
+  "p.timeentry.f_note": "Nodyn (dewisol)",
+  "p.timeentry.record": "Cofnodi'r amser hwn",
+  "p.timeentry.confirm":
+    "Cofnodi {time} ar {day} yn {plan}? Ni ellir newid na thynnu cofnod ar ôl ei gofnodi.",
+  "p.timeentry.recorded": "Wedi cofnodi {time} ar {day} yn {plan}.",
+  "p.timeentry.problem_plan": "Dewiswch gynllun.",
+  "p.timeentry.problem_date": "Rhowch y dyddiad y treuliwyd yr amser.",
+  "p.timeentry.problem_locked":
+    "Mae'r wythnos honno wedi'i chymeradwyo a'i chloi, felly nid yw'n derbyn mwy o amser.",
+  "p.timeentry.problem_duration":
+    "Rhowch yr amser a dreuliwyd fel oriau cyfan (0 i 24) a munudau (0 i 59), o 1 munud hyd at {max} munud i gyd.",
+  "p.timeentry.refused_locked":
+    "Mae'r wythnos honno wedi'i chymeradwyo a'i chloi, felly nid yw'n derbyn mwy o amser. Ni chofnodwyd dim.",
+  "p.timeentry.refused_invalid":
+    "Ni dderbyniwyd y cofnod: nid yw ei amser, neu ei dasg, yn un y mae'r cynllun yn ei dderbyn. Ni chofnodwyd dim.",
+  "p.timeentry.refused_plan":
+    "Mae'r cynllun hwnnw wedi mynd, neu ni allwch ei ddarllen.",
+  "p.timeentry.refused_forbidden": "Ni chewch gofnodi amser yn y cynllun hwn.",
+  "p.timeentry.could_not_load_plans": "Methu darllen y cynlluniau.",
+  "p.timeentry.could_not_load_plan":
+    "Methu darllen tasgau ac amser y cynllun hwnnw.",
+  "p.timeentry.could_not_record": "Methu cofnodi'r amser.",
+  "p.timeentry.yours_heading": "Eich amser yn {plan}",
+  "p.timeentry.yours_none": "Nid ydych wedi cofnodi amser yn y cynllun hwn.",
+  "p.timeentry.yours_table":
+    "Eich cofnodion amser yn {plan}, y mwyaf newydd yn gyntaf",
+  "p.timeentry.col_date": "Dyddiad",
+  "p.timeentry.col_time": "Amser",
+  "p.timeentry.col_task": "Tasg",
+  "p.timeentry.col_category": "Categori",
+  "p.timeentry.col_billable": "Y gellir ei filio",
+  "p.timeentry.col_note": "Nodyn",
+  "p.timeentry.billable_yes": "Y gellir ei filio",
+  "p.timeentry.billable_no": "Ni ellir ei filio",
+  "p.timereport.heading": "Adroddiad amser",
+  "p.timereport.says":
+    "Amser a gofnodwyd yn y cynlluniau y gallwch eu darllen, wedi'i grwpio fel y dewiswch, gyda'r hyn y gellir ei filio a'r hyn na ellir bob amser ar wahân. Gadewch y dyddiadau'n wag ar gyfer y 90 diwrnod diwethaf hyd heddiw. Cyfeirnod person: neu worker: yw person; gadewch ef yn wag ar gyfer pawb.",
+  "p.timereport.form": "Gofyn am adroddiad amser",
+  "p.timereport.f_group_by": "Grwpio yn ôl",
+  "p.timereport.by_plan": "Cynllun",
+  "p.timereport.by_person": "Unigolyn",
+  "p.timereport.by_category": "Categori",
+  "p.timereport.by_billable": "Y gellir ei filio neu beidio",
+  "p.timereport.by_month": "Mis",
+  "p.timereport.f_from": "O",
+  "p.timereport.f_to": "I",
+  "p.timereport.f_plan": "Cynllun",
+  "p.timereport.every_plan": "Pob cynllun y gallwch ei ddarllen",
+  "p.timereport.loading_plans": "Yn darllen y cynlluniau…",
+  "p.timereport.f_person": "Person (cyfeirnod)",
+  "p.timereport.show": "Dangos yr adroddiad amser",
+  "p.timereport.problem_from": "Rhowch y diwrnod cyntaf fel dyddiad.",
+  "p.timereport.problem_to": "Rhowch y diwrnod olaf fel dyddiad.",
+  "p.timereport.problem_order": "Ni chaiff y diwrnod cyntaf fod ar ôl yr olaf.",
+  "p.timereport.problem_person":
+    "Person yw person: neu worker: a dynodydd, fel person:6f1c2a3b-0000-4000-8000-000000000009.",
+  "p.timereport.refused":
+    "Ni dderbyniwyd yr adroddiad amser ar gyfer y dewisiadau hynny.",
+  "p.timereport.window": "Amser a gofnodwyd {range}.",
+  "p.timereport.no_entries":
+    "Ni chofnodwyd amser yn y cynlluniau hyn yn y cyfnod hwnnw.",
+  "p.timereport.table": "Amser fesul grŵp",
+  "p.timereport.col_entries": "Cofnodion",
+  "p.timereport.col_billable": "Y gellir ei filio",
+  "p.timereport.col_not_billable": "Ni ellir ei filio",
+  "p.timereport.col_total": "Cyfanswm",
+  "p.timereport.total":
+    "Y cyfan: {billable} y gellir ei filio, {not_billable} na ellir, {total} gyda'i gilydd.",
+  "p.timereport.omitted_one":
+    "Gadawyd allan {n} cofnod mewn cynllun na allwch ei ddarllen.",
+  "p.timereport.omitted_other":
+    "Gadawyd allan {n} cofnod mewn cynlluniau na allwch eu darllen.",
+  "p.timereport.truncated":
+    "Dim ond y {max} cofnod cyntaf a ddarllenwyd, felly mae'r adroddiad yn anghyflawn.",
+  "p.timereport.csv": "Llwytho'r adroddiad amser hwn i lawr fel CSV",
+  "p.timereport.billable": "Y gellir ei filio",
+  "p.timereport.not_billable": "Ni ellir ei filio",
+  "p.timereport.plan_unnamed": "Cynllun heb ei enwi yma ({ref})",
+  "p.timereport.could_not_load": "Methu darllen yr adroddiad amser.",
+  "p.timereport.could_not_load_plans":
+    "Methu darllen y cynlluniau i ddewis ohonynt.",
 };

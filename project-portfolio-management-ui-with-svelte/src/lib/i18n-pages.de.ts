@@ -8143,4 +8143,257 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Genehmigt je Zeitraum, die ältesten zuerst: {list}",
   "p.intake.arrivals_history":
     "Eingehende Vorschläge je Zeitraum, die ältesten zuerst (daneben gezeigt; sie fließen nicht in die Prognose ein): {list}",
+  "p.planner.heading": "Geplante Zeit",
+  "p.planner.says":
+    "Blocken Sie an einem Tag Zeit für eine Ihrer offenen Aufgaben. Ein Zeitblock gehört nur Ihnen und ändert nie das Fälligkeitsdatum der Aufgabe; er endet nach seinem Beginn und dauert höchstens 12 Stunden. Zeitblöcke dürfen sich überschneiden: Eine Überschneidung wird als Konflikt gezeigt, und ein Block, der endet, wenn der nächste beginnt, ist keiner. Die Zeiten gelten in Ihrer Zeitzone, {tz}.",
+  "p.planner.day_nav": "Tag wählen",
+  "p.planner.previous_day": "Vorheriger Tag",
+  "p.planner.back_to_today": "Zurück zu heute",
+  "p.planner.next_day": "Nächster Tag",
+  "p.planner.f_day": "Tag",
+  "p.planner.show_day": "Tag zeigen",
+  "p.planner.problem_day": "Geben Sie den Tag als Datum an.",
+  "p.planner.day_heading": "Geplant am {day}",
+  "p.planner.day_hours":
+    "Dieser Tag hat {hours} Stunden, weil die Uhren umgestellt werden.",
+  "p.planner.nothing_planned": "An diesem Tag ist nichts geplant.",
+  "p.planner.clashes_one": "Kollidiert mit {n} anderen Zeitblock",
+  "p.planner.clashes_other": "Kollidiert mit {n} anderen Zeitblöcken",
+  "p.planner.remove": "Entfernen",
+  "p.planner.remove_named": "Zeitblock für {title} entfernen, {time}",
+  "p.planner.confirm_remove":
+    "Den Zeitblock für {title} entfernen, {time}? Die Aufgabe selbst ändert sich nicht.",
+  "p.planner.removed": "Zeitblock für {title} entfernt, {time}.",
+  "p.planner.omitted_one":
+    "{n} Zeitblock zu einer Aufgabe, die Sie nicht mehr lesen dürfen, wird nicht gezeigt.",
+  "p.planner.omitted_other":
+    "{n} Zeitblöcke zu Aufgaben, die Sie nicht mehr lesen dürfen, werden nicht gezeigt.",
+  "p.planner.due_heading": "An diesem Tag fällig",
+  "p.planner.nothing_due":
+    "Nichts, was Ihnen zugewiesen ist, ist an diesem Tag fällig.",
+  "p.planner.loading": "Der Tag wird gelesen …",
+  "p.planner.form": "Zeit für eine Aufgabe planen",
+  "p.planner.form_says":
+    "Der Zeitblock liegt am {day}, in Ihrer Zeitzone. Einer über Mitternacht hinaus wird als zwei geplant.",
+  "p.planner.f_task": "Aufgabe",
+  "p.planner.choose_task": "Eine Ihrer offenen Aufgaben wählen",
+  "p.planner.loading_tasks": "Ihre Aufgaben werden gelesen …",
+  "p.planner.task_option": "{title}, im Plan {plan}",
+  "p.planner.no_tasks":
+    "Ihnen ist nichts zugewiesen, also gibt es keine Aufgabe, für die Zeit geplant werden kann.",
+  "p.planner.f_start": "Beginnt",
+  "p.planner.f_end": "Endet",
+  "p.planner.plan_time": "Diese Zeit planen",
+  "p.planner.planned": "{title} geplant, {time}.",
+  "p.planner.problem_task": "Wählen Sie eine Aufgabe.",
+  "p.planner.problem_start": "Geben Sie die Anfangszeit an.",
+  "p.planner.problem_end": "Geben Sie die Endzeit an.",
+  "p.planner.problem_start_skipped":
+    "An diesem Tag überspringen die Uhren die Anfangszeit; wählen Sie eine andere.",
+  "p.planner.problem_end_skipped":
+    "An diesem Tag überspringen die Uhren die Endzeit; wählen Sie eine andere.",
+  "p.planner.problem_order": "Ein Zeitblock muss nach seinem Beginn enden.",
+  "p.planner.problem_too_long": "Ein Zeitblock dauert höchstens 12 Stunden.",
+  "p.planner.refused_zone":
+    "Die Zeitzone Ihres Browsers wurde nicht angenommen, daher kann der Tag nicht gezeigt werden.",
+  "p.planner.refused_slot":
+    "Der Zeitblock wurde nicht angenommen: Er muss nach seinem Beginn enden und höchstens 12 Stunden dauern, und eine Person hat höchstens {max} Zeitblöcke.",
+  "p.planner.refused_task":
+    "Diese Aufgabe gibt es nicht mehr, oder sie liegt in einem Plan, den Sie nicht lesen dürfen.",
+  "p.planner.refused_gone":
+    "Dieser Zeitblock ist bereits weg. Der Tag wurde neu gelesen.",
+  "p.planner.could_not_load": "Der Tag konnte nicht gelesen werden.",
+  "p.planner.could_not_plan": "Die Zeit konnte nicht geplant werden.",
+  "p.planner.could_not_remove": "Der Zeitblock konnte nicht entfernt werden.",
+  "p.feed.heading": "Kalender-Feed",
+  "p.feed.says":
+    "Eine private Adresse, die eine Kalender-App abonnieren kann: die Ihnen zugewiesenen offenen Aufgaben mit Fälligkeitsdatum, die Meilensteine und Sprints ihrer Pläne und die von Ihnen geplante Zeit. Eine zweite Adresse ist ein Feed Ihrer Benachrichtigungen für einen Feedreader. Wer eine Adresse hat, kann lesen, was sie zeigt; behalten Sie sie also für sich.",
+  "p.feed.rules":
+    "Eine Adresse wird einmal gezeigt, hier, und diese Seite speichert sie nicht; sie gilt 365 Tage. Eine neue stoppt jede frühere sofort.",
+  "p.feed.issue": "Feed-Adresse erstellen",
+  "p.feed.confirm_issue":
+    "Eine neue Feed-Adresse erstellen? Jede früher erstellte Adresse funktioniert sofort nicht mehr.",
+  "p.feed.issued":
+    "Ihre neuen Adressen stehen unten. Kopieren Sie sie jetzt: Sie werden nicht noch einmal gezeigt.",
+  "p.feed.calendar_address": "Kalenderadresse (iCalendar)",
+  "p.feed.atom_address": "Adresse des Benachrichtigungs-Feeds (Atom)",
+  "p.feed.revoke": "Alle Feed-Adressen stoppen",
+  "p.feed.confirm_revoke":
+    "Alle von Ihnen erstellten Feed-Adressen stoppen? Eine Kalender-App, die eine nutzt, wird sofort nicht mehr aktualisiert.",
+  "p.feed.revoked":
+    "Alle von Ihnen erstellten Feed-Adressen funktionieren nicht mehr.",
+  "p.feed.no_address":
+    "Die Antwort enthielt keine Adresse, die diese Seite zeigen kann, daher wird keine gezeigt. Jede frühere Adresse ist gestoppt; erstellen Sie bei Bedarf eine neue.",
+  "p.feed.refused_forbidden": "Sie dürfen keine Feed-Adresse verwalten.",
+  "p.feed.could_not_issue": "Die Feed-Adresse konnte nicht erstellt werden.",
+  "p.feed.could_not_revoke": "Die Feed-Adressen konnten nicht gestoppt werden.",
+  "p.watching.heading": "Was Sie verfolgen",
+  "p.watching.says":
+    "Sie werden benachrichtigt, wenn sich etwas ändert, das Sie verfolgen. Sie verfolgen eine Aufgabe, wenn Sie sie anlegen, kommentieren oder zugewiesen bekommen, sofern Sie das in Ihren Benachrichtigungseinstellungen nicht abgeschaltet haben. Niemandem wird gesagt, wer etwas verfolgt. Ein Plan wird benannt; alles andere wird mit seiner Art und dem Anfang seiner Referenz gezeigt.",
+  "p.watching.count_one": "Sie verfolgen {n} Eintrag.",
+  "p.watching.count_other": "Sie verfolgen {n} Einträge.",
+  "p.watching.capped": "Nur die neuesten {max} werden gezeigt.",
+  "p.watching.none": "Sie verfolgen derzeit nichts.",
+  "p.watching.named_plan": "Vorhaben {name}",
+  "p.watching.unnamed": "{kind}, Referenz {ref}",
+  "p.watching.kind_plan": "Vorhaben",
+  "p.watching.kind_task": "Aufgabe",
+  "p.watching.kind_risk": "Risiko",
+  "p.watching.kind_proposal": "Vorschlag",
+  "p.watching.kind_idea": "Idee",
+  "p.watching.kind_canvas_item": "Canvas-Eintrag",
+  "p.watching.kind_budget_line": "Budgetposten",
+  "p.watching.kind_scenario": "Szenario",
+  "p.watching.kind_document_version": "Dokumentversion",
+  "p.watching.kind_other": "Etwas anderes",
+  "p.watching.stop": "Nicht mehr verfolgen",
+  "p.watching.stop_named": "{what} nicht mehr verfolgen",
+  "p.watching.confirm_stop":
+    "{what} nicht mehr verfolgen? Sie werden bei Änderungen nicht mehr benachrichtigt.",
+  "p.watching.stopped": "Sie verfolgen {what} nicht mehr.",
+  "p.watching.refused": "Das Beenden dieses Verfolgens wurde nicht angenommen.",
+  "p.watching.loading": "Ihre verfolgten Einträge werden gelesen …",
+  "p.watching.could_not_load":
+    "Ihre verfolgten Einträge konnten nicht gelesen werden.",
+  "p.watching.could_not_stop": "Das Verfolgen konnte nicht beendet werden.",
+  "p.workprofile.heading": "Arbeit im Zeitverlauf",
+  "p.workprofile.says":
+    "Die Arbeit der Aufgaben in jedem Plan, den Sie lesen dürfen, nach dem Verlauf jeder Aufgabe auf ihre Arbeitstage verteilt, in ganzen Minuten. Arbeit, die sich nicht verteilen lässt (eine noch nicht terminierte Aufgabe oder eine ohne Arbeitstag), wird getrennt gezählt und nie weggelassen.",
+  "p.workprofile.rules":
+    "Wochen laufen von Montag bis Sonntag. Lassen Sie die Daten leer, um alle verteilte Arbeit abzudecken. Ein Zeitfenster umfasst höchstens zehn Jahre und {max} Zeiträume.",
+  "p.workprofile.form": "Arbeit im Zeitverlauf zeigen",
+  "p.workprofile.f_period": "Zeiträume",
+  "p.workprofile.period_week": "Wochen",
+  "p.workprofile.period_day": "Tage",
+  "p.workprofile.period_month": "Monate",
+  "p.workprofile.f_from": "Von (leer für den ersten verteilten Tag)",
+  "p.workprofile.f_to": "Bis (leer für den letzten verteilten Tag)",
+  "p.workprofile.show": "Arbeit zeigen",
+  "p.workprofile.problem_from": "Geben Sie den ersten Tag als Datum an.",
+  "p.workprofile.problem_to": "Geben Sie den letzten Tag als Datum an.",
+  "p.workprofile.problem_order":
+    "Der erste Tag darf nicht nach dem letzten liegen.",
+  "p.workprofile.problem_too_long":
+    "Ein Zeitfenster umfasst höchstens zehn Jahre.",
+  "p.workprofile.problem_periods":
+    "Dieses Zeitfenster hat mehr als {max} Zeiträume; wählen Sie längere Zeiträume oder ein kürzeres Fenster.",
+  "p.workprofile.refused":
+    "Dieses Zeitfenster wurde nicht angenommen: Ist noch keine Arbeit verteilt, geben Sie beide Daten an, und bleiben Sie innerhalb der oben genannten Zeiträume.",
+  "p.workprofile.none":
+    "Kein Plan, den Sie lesen dürfen, hat eine Aufgabe mit Arbeit.",
+  "p.workprofile.summary":
+    "{range}: {work} Arbeit, davon {unplaced} nicht verteilt.",
+  "p.workprofile.plans_table": "Arbeit je Plan",
+  "p.workprofile.periods_table": "Arbeit je Zeitraum",
+  "p.workprofile.col_plan": "Planname",
+  "p.workprofile.col_work": "Arbeit",
+  "p.workprofile.col_unplaced": "Nicht verteilt",
+  "p.workprofile.col_period": "Zeitraum",
+  "p.workprofile.plan_unnamed": "Ein Plan ohne Namen",
+  "p.workprofile.could_not_load":
+    "Die Arbeit im Zeitverlauf konnte nicht gelesen werden.",
+  "p.timeentry.heading": "Zeit erfassen",
+  "p.timeentry.says":
+    "Zeit wird für Sie erfasst, in ganzen Minuten, von 1 Minute bis {max} an einem Datum, in einem Plan und auf Wunsch einer seiner Aufgaben. Eine genehmigte Woche nimmt keine Zeit mehr an. Ein Eintrag kann nach dem Erfassen weder geändert noch entfernt werden.",
+  "p.timeentry.open": "Zeit eintragen",
+  "p.timeentry.form": "Zeit in einem Plan erfassen",
+  "p.timeentry.f_plan": "In welchem Plan",
+  "p.timeentry.choose_plan": "Plan wählen",
+  "p.timeentry.loading": "Pläne werden gelesen …",
+  "p.timeentry.f_task": "Aufgabe (optional)",
+  "p.timeentry.no_task": "Keine Aufgabe: der Plan selbst",
+  "p.timeentry.task_unnamed": "Eine Aufgabe, die nicht mehr in diesem Plan ist",
+  "p.timeentry.f_date": "Datum",
+  "p.timeentry.f_duration": "Aufgewendete Zeit",
+  "p.timeentry.f_hours": "Stunden",
+  "p.timeentry.f_minutes": "Minuten",
+  "p.timeentry.typed": "Das sind {time}.",
+  "p.timeentry.f_category": "Kategorie",
+  "p.timeentry.category_unclassified": "Nicht eingeordnet",
+  "p.timeentry.category_capex": "Investitionsausgaben (Capex)",
+  "p.timeentry.category_opex": "Betriebsausgaben (Opex)",
+  "p.timeentry.f_billable": "Abrechenbar",
+  "p.timeentry.f_note": "Notiz (optional)",
+  "p.timeentry.record": "Diese Zeit erfassen",
+  "p.timeentry.confirm":
+    "{time} am {day} in {plan} erfassen? Ein Eintrag kann nach dem Erfassen weder geändert noch entfernt werden.",
+  "p.timeentry.recorded": "{time} am {day} in {plan} erfasst.",
+  "p.timeentry.problem_plan": "Wählen Sie einen Plan.",
+  "p.timeentry.problem_date":
+    "Geben Sie das Datum an, an dem die Zeit aufgewendet wurde.",
+  "p.timeentry.problem_locked":
+    "Diese Woche ist genehmigt und gesperrt und nimmt keine Zeit mehr an.",
+  "p.timeentry.problem_duration":
+    "Geben Sie die Zeit in ganzen Stunden (0 bis 24) und Minuten (0 bis 59) an, insgesamt 1 bis {max} Minuten.",
+  "p.timeentry.refused_locked":
+    "Diese Woche ist genehmigt und gesperrt und nimmt keine Zeit mehr an. Es wurde nichts erfasst.",
+  "p.timeentry.refused_invalid":
+    "Der Eintrag wurde nicht angenommen: Seine Zeit oder seine Aufgabe passt nicht zum Plan. Es wurde nichts erfasst.",
+  "p.timeentry.refused_plan":
+    "Diesen Plan gibt es nicht mehr, oder Sie dürfen ihn nicht lesen.",
+  "p.timeentry.refused_forbidden":
+    "Sie dürfen in diesem Plan keine Zeit erfassen.",
+  "p.timeentry.could_not_load_plans": "Die Pläne konnten nicht gelesen werden.",
+  "p.timeentry.could_not_load_plan":
+    "Aufgaben und Zeit dieses Plans konnten nicht gelesen werden.",
+  "p.timeentry.could_not_record": "Die Zeit konnte nicht erfasst werden.",
+  "p.timeentry.yours_heading": "Ihre Zeit in {plan}",
+  "p.timeentry.yours_none": "Sie haben in diesem Plan keine Zeit erfasst.",
+  "p.timeentry.yours_table": "Ihre Zeiteinträge in {plan}, neueste zuerst",
+  "p.timeentry.col_date": "Datum",
+  "p.timeentry.col_time": "Zeit",
+  "p.timeentry.col_task": "Aufgabe",
+  "p.timeentry.col_category": "Kategorie",
+  "p.timeentry.col_billable": "Abrechenbar",
+  "p.timeentry.col_note": "Notiz",
+  "p.timeentry.billable_yes": "Abrechenbar",
+  "p.timeentry.billable_no": "Nicht abrechenbar",
+  "p.timereport.heading": "Zeitbericht",
+  "p.timereport.says":
+    "Erfasste Zeit in den Plänen, die Sie lesen dürfen, gruppiert nach Ihrer Wahl, abrechenbar und nicht abrechenbar immer getrennt. Lassen Sie die Daten leer für die letzten 90 Tage bis heute. Eine Person ist eine person:- oder worker:-Referenz; leer lassen für alle.",
+  "p.timereport.form": "Zeitbericht anfordern",
+  "p.timereport.f_group_by": "Gruppieren nach",
+  "p.timereport.by_plan": "Nach Plan",
+  "p.timereport.by_person": "Nach Person",
+  "p.timereport.by_category": "Nach Kategorie",
+  "p.timereport.by_billable": "Abrechenbar oder nicht",
+  "p.timereport.by_month": "Nach Monat",
+  "p.timereport.f_from": "Von",
+  "p.timereport.f_to": "Bis",
+  "p.timereport.f_plan": "Nur dieser Plan",
+  "p.timereport.every_plan": "Jeder Plan, den Sie lesen dürfen",
+  "p.timereport.loading_plans": "Pläne werden gelesen …",
+  "p.timereport.f_person": "Person (eine Referenz)",
+  "p.timereport.show": "Zeitbericht zeigen",
+  "p.timereport.problem_from": "Geben Sie den ersten Tag als Datum an.",
+  "p.timereport.problem_to": "Geben Sie den letzten Tag als Datum an.",
+  "p.timereport.problem_order":
+    "Der erste Tag darf nicht nach dem letzten liegen.",
+  "p.timereport.problem_person":
+    "Eine Person ist person: oder worker: und eine Kennung, etwa person:6f1c2a3b-0000-4000-8000-000000000009.",
+  "p.timereport.refused":
+    "Der Zeitbericht wurde für diese Auswahl nicht angenommen.",
+  "p.timereport.window": "Erfasste Zeit {range}.",
+  "p.timereport.no_entries":
+    "In diesen Plänen wurde in diesem Zeitraum keine Zeit erfasst.",
+  "p.timereport.table": "Zeit je Gruppe",
+  "p.timereport.col_entries": "Einträge",
+  "p.timereport.col_billable": "Abrechenbar",
+  "p.timereport.col_not_billable": "Nicht abrechenbar",
+  "p.timereport.col_total": "Gesamt",
+  "p.timereport.total":
+    "Insgesamt: {billable} abrechenbar, {not_billable} nicht abrechenbar, zusammen {total}.",
+  "p.timereport.omitted_one":
+    "{n} Eintrag in einem Plan, den Sie nicht lesen dürfen, ist ausgelassen.",
+  "p.timereport.omitted_other":
+    "{n} Einträge in Plänen, die Sie nicht lesen dürfen, sind ausgelassen.",
+  "p.timereport.truncated":
+    "Nur die ersten {max} Einträge wurden gelesen; der Bericht ist daher unvollständig.",
+  "p.timereport.csv": "Diesen Zeitbericht als CSV herunterladen",
+  "p.timereport.billable": "Abrechenbar",
+  "p.timereport.not_billable": "Nicht abrechenbar",
+  "p.timereport.plan_unnamed": "Ein hier nicht benannter Plan ({ref})",
+  "p.timereport.could_not_load": "Der Zeitbericht konnte nicht gelesen werden.",
+  "p.timereport.could_not_load_plans":
+    "Die Pläne zur Auswahl konnten nicht gelesen werden.",
 };

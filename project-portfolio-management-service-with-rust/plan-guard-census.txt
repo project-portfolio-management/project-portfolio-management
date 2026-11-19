@@ -9,6 +9,10 @@
 # admin      an administrator or a named area's right; full by design
 # no-plan    holds no plan's data
 # left-open  reviewed, and left as a decision recorded in CHANGELOG.md
+#
+# CF-8: GET /api/objectives/{pid}/key-results and GET /api/key-results/{pid}/check-ins read organisation-wide records
+# by objective or key-result pid. Their responses contain no plan alignments. GET /api/plans/{pid}/okr and
+# GET /api/plans/{pid}/skill-gap are covered by privacy_mw.
 GET /api-docs/openapi.json	no-plan
 GET /api/access-review	admin
 POST /api/actions/{pid}/convert	checks

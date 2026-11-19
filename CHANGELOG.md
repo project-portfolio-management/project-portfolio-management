@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 19 November (CF-8, private-plan and organisation-wide reads)
+
+- The plan guard returns `404` to a non-member on the private plan's `…/okr` and `…/skill-gap` reads. The objective's
+  key results and a key result's check-ins are organisation-wide. The database test checks both lists before and
+  after linking the objective to a private plan and confirms that both responses stay byte-identical.
+  Handling marks, canvas promotion and live worker-service calls were outside this verification.
+
 ### 19 November (RG-19, restored attachments)
 
 - The recovery drill checks the artifact count after restoring both plain and encrypted backups.

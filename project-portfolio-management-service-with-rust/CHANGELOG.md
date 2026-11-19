@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Security — CF-8: the OKR and skill-gap reads keep a private plan out (2026-11-19)
+
+- The plan guard returns `404` to non-members on `GET /api/plans/{pid}/okr` and `…/skill-gap`. Members and
+  administrators get `200`. Linking an objective to a private plan leaves the organisation-wide key-result
+  and check-in responses identical. The database test is `private_routes::the_okr_and_skill_gap_reads_keep_a_private_plan_out`.
+  Handling marks, canvas promotion and live worker-service calls were outside this verification.
+
 ### Security — lettre 0.11.24 for RUSTSEC-2026-0560 to 0565 (2026-11-18)
 
 - `lettre` 0.11.23 had six advisories published on 18 November: a STARTTLS reply injection that lets a man in the middle

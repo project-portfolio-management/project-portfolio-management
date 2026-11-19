@@ -1915,7 +1915,7 @@ and the third whether a person can reliably use it in the deployment's language.
 
 | Priority | What the repository establishes | Next decision and evidence |
 |---|---|---|
-| 1. Private plans | The service has plan guards and real-identity database suites. CF-8 still records an unanswered access question about four reads used by the resource and OKR screens. | Resolve CF-8 before putting confidential portfolios in the pilot. Keep a passing member case alongside each non-member refusal. |
+| 1. Private plans | CF-8 verifies that members and administrators can read a private plan's skill gaps and OKR scores and that non-members get `404`. The organisation-wide key-result and check-in responses are identical before and after private plan alignment. | Apply the deployment's handling-mark and access policy when deciding which confidential portfolios the pilot can include. |
 | 2. Recovery | The restore job can compare a fresh database with its source. RG-19 corrects a blind spot in the encrypted attachment check. A successful drill on a freshly made backup leaves retrieval from retained off-host storage and deployment-scale timing unmeasured. | Have the deployment owner run RG-20 on representative data. Record the age of the backup used and the elapsed time through the first successful authenticated download. |
 | 3. Language and access | Ten UI locales have catalogue and browser coverage. Non-English catalogues have machine drafts. The accessibility statement identifies screen-reader order and the wording of errors as open human checks. | Choose the first locale from the pilot population. Use RG-21 to follow a real plan through the deployed UI and service. Review the words in context and repeat for each locale considered for rollout. |
 

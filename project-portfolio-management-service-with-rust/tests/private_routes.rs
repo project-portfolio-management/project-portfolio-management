@@ -1,6 +1,5 @@
-//! Routes outside the plan guard, with real identities (`privacy_mw` guards only `/api/plans/{uuid}...`): whoever cannot read
-//! a private plan gets nothing from a route that reaches that plan's records by their own pid or by a field in the body, and
-//! a person's inbox belongs to that person.
+//! Routes inside and outside the plan guard, with real identities. Whoever cannot read a private plan gets nothing
+//! from routes that reach it by its own pid, a record's pid, or a field in the body. A person's inbox belongs to them.
 //!
 //! Its **own process** (`own_process!`) (the verifier is a process-wide `OnceLock`). `#[ignore]`d: needs PostgreSQL.
 //! `cargo test --features paseto --test main private_routes:: -- --ignored --test-threads=1`.
@@ -1143,6 +1142,109 @@ async fn what_you_were_told_goes_when_your_access_does() {
             2,
             "{asked}"
         );
+    })
+    .await;
+}
+
+/// CF-8: the plan guard covers the OKR and skill-gap reads. A private alignment leaves the organisation's key-result
+/// and check-in lists unchanged.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
+async fn the_okr_and_skill_gap_reads_keep_a_private_plan_out() {
+    own_process!();
+    let (keys, kid) = keys_and_kid();
+    set_up(&keys);
+    let who = callers(&kid);
+    request::<App, _, _>(|request, _ctx| async move {
+        let name = "Confidential estate consolidation";
+        let plan = private_plan(&request, &who, name).await;
+
+        let objective: Value = with!(request.post("/api/objectives"), who.member)
+            .json(&json!({ "title": "Fewer data centres", "period": "2026-H2" }))
+            .await
+            .json();
+        let objective = objective["pid"].as_str().expect("objective").to_string();
+        let key_results_url = format!("/api/objectives/{objective}/key-results");
+        let key_result: Value = with!(request.post(&key_results_url), who.member)
+            .json(
+                &json!({ "title": "Sites closed", "metric": "number", "direction": "increase",
+                       "start_value": 0, "target_value": 4 }),
+            )
+            .await
+            .json();
+        let key_result = key_result["pid"].as_str().expect("key result").to_string();
+        let check_ins_url = format!("/api/key-results/{key_result}/check-ins");
+        let check_in: Value = with!(request.post(&check_ins_url), who.member)
+            .json(&json!({ "value": 1, "note": "first closed" }))
+            .await
+            .json();
+        let key_results_before = with!(request.get(&key_results_url), who.outsider).await;
+        key_results_before.assert_status_ok();
+        assert_eq!(
+            key_results_before.json::<Value>()[0]["key_result"]["pid"],
+            key_result
+        );
+        let check_ins_before = with!(request.get(&check_ins_url), who.outsider).await;
+        check_ins_before.assert_status_ok();
+        assert_eq!(check_ins_before.json::<Value>()[0]["pid"], check_in["pid"]);
+        assert_eq!(check_ins_before.json::<Value>()[0]["value"], 1);
+
+        with!(
+            request.post(&format!("/api/plans/{plan}/objectives")),
+            who.member
+        )
+        .json(&json!({ "objective_pid": objective, "weight": 2 }))
+        .await
+        .assert_status_ok();
+
+        // Under the plan guard: as if the plan did not exist, and the member's own reads still work.
+        for tail in ["okr", "skill-gap"] {
+            let url = format!("/api/plans/{plan}/{tail}");
+            assert_eq!(
+                with!(request.get(&url), who.outsider).await.status_code(),
+                404,
+                "{url}"
+            );
+            with!(request.get(&url), who.member)
+                .await
+                .assert_status_ok();
+            with!(request.get(&url), who.admin).await.assert_status_ok();
+        }
+        let okr: Value = with!(request.get(&format!("/api/plans/{plan}/okr")), who.member)
+            .await
+            .json();
+        assert_eq!(okr["objectives"][0]["objective_pid"], objective.as_str());
+        let gaps: Value = with!(
+            request.get(&format!("/api/plans/{plan}/skill-gap")),
+            who.member
+        )
+        .await
+        .json();
+        assert_eq!(gaps["plan_pid"], plan);
+
+        for (url, before) in [
+            (key_results_url, key_results_before),
+            (check_ins_url, check_ins_before),
+        ] {
+            let seen = with!(request.get(&url), who.outsider).await;
+            seen.assert_status_ok();
+            let text = seen.text();
+            assert!(!text.contains(&plan), "{url} names the private plan's pid");
+            assert!(!text.contains(name), "{url} names the private plan");
+            assert_eq!(
+                text,
+                before.text(),
+                "{url} changes after the private alignment"
+            );
+            let member = with!(request.get(&url), who.member).await;
+            member.assert_status_ok();
+            assert_eq!(
+                member.text(),
+                text,
+                "{url} answers a member and a non-member alike"
+            );
+        }
     })
     .await;
 }

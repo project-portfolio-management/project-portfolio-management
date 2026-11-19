@@ -156,6 +156,12 @@ list after it** is authoritative (verified against the controllers;
   `PUT`/`DELETE /api/key-results/{pid}`, `POST`/`GET
   /api/key-results/{pid}/check-ins`; scores at `GET /api/plans/{pid}/okr`
   and `GET /api/okrs`. `PUT`/`DELETE /api/objectives/{pid}` exist.
+  The key-result and check-in lists are organization-wide reads. A plan's
+  alignment to an objective does not change access to either list or appear
+  in its response. The plan guard applies to `GET /api/plans/{pid}/okr`
+  and `GET /api/plans/{pid}/skill-gap`. For a private plan, a member or
+  administrator with sufficient clearance can read them and a non-member
+  without an override gets `404`.
 - Effort: `POST`/`GET /api/plans/{pid}/time-entries` and `GET
   …/effort` only (no `PUT`/`DELETE`); `POST /api/working-time`, `POST
   /api/non-working`.

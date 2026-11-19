@@ -11,7 +11,7 @@ runs the backups, and in spec NFR-16.
 | What it protects | database and artifact store | database (the artifact store still needs Mode A's archive or object-store versioning) |
 | **RPO** | **24 hours** with a nightly run; tighten it by running `scripts/backup.sh` more often (each run is a full dump) | **15 minutes** with WAL archiving at that interval |
 | **RTO** | **4 hours** from the decision to restore to a service answering requests | **4 hours**, usually much less |
-| Guaranteed by | `scripts/check-backup-age.sh` failing when the newest backup is older than the RPO; the restore drill proving a backup restores | the database platform's own monitoring of its archive lag |
+| Guaranteed by | `scripts/backup.sh` publishing only a complete, uniquely named backup; `scripts/check-backup-age.sh` failing when the newest published backup is older than the RPO; the restore drill proving a backup restores | the database platform's own monitoring of its archive lag |
 
 ## What the 4 hours are made of
 

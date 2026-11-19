@@ -160,9 +160,12 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   For a local store it also compares paths and file contents against the quiescent source.
   For a store supplied by `ARTIFACT_TAR_CMD`, only the archive and count are available to the drill.
   A configured store that yielded no archive fails the drill. A database-only drill is valid
-  when no store was configured. RG-20 proposes a separate deployment exercise using a retained
-  off-host backup and a downloaded attachment's recorded digest. RG-22 proposes publishing completed
-  backups atomically so the age monitor cannot select a partial backup.
+  when no store was configured. A backup is assembled in a private directory on the destination
+  filesystem and renamed to its public, uniquely suffixed name only after the dump, expected artifact
+  archive, manifest and checksums are complete. A configured local artifact directory that is missing
+  refuses the run before the dump. Concurrent runs in the same second publish separate backups, and a
+  failed run removes only its own private directory. RG-20 proposes a separate deployment exercise using
+  a retained off-host backup and a downloaded attachment's recorded digest.
 - **NFR-17 — Information governance pack.** The repository ships documents a
   buyer's information governance lead can adapt rather than write from scratch:
   a data protection impact assessment (DPIA) template pre-filled with what this

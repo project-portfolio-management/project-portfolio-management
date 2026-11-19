@@ -15,6 +15,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 19 November (RG-22, complete backup publication)
+
+- `backup.sh` now builds each run in a private directory and atomically publishes a uniquely named completed backup.
+  Same-second runs keep separate destinations, a failing run cannot remove another run's output, and a missing
+  configured local artifact directory fails before the database dump. A shell regression exercises two concurrent
+  successes and one failure under one timestamp, and CI runs it in the restore job. **Not verified:** rename
+  atomicity on non-POSIX or remote filesystems, or a deployment's scheduled monitoring.
+
 ### 19 November (CF-8, private-plan and organisation-wide reads)
 
 - The plan guard returns `404` to a non-member on the private plan's `…/okr` and `…/skill-gap` reads. The objective's

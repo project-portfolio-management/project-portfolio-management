@@ -1633,12 +1633,19 @@ what was **not** tested; claim no certification.
   and a dated task, correcting a validation error on the way. Record the build, locale, time zone,
   browser and assistive technology, expected and observed values, and any wording or focus issue.
   Link findings to catalogue keys and defects. Record review only for the strings actually examined.
-- [ ] **RG-22 (S) — Publish a backup only when its configured inputs are complete.** `backup.sh`
+- [x] **RG-22 (S) — Publish a backup only when its configured inputs are complete.** `backup.sh`
   currently records a missing configured directory as skipped and creates the destination with
   a timestamp precise to one second. Build each archive in its own private temporary directory.
   Publish it after its dump, expected store, manifest and checksums are complete. Two starts
   in the same second must preserve every already published backup, including if one start fails.
   A missing configured store must exit nonzero and leave the previous backup visible to monitoring.
+  **Built 2026-11-19.** Each run uses a mode-700 `mktemp` directory beneath the backup root and atomically renames it
+  to `ppm-backup-<timestamp>-<unique suffix>` after the dump, expected artifact archive, manifest and checksums exist.
+  A missing configured local store is refused before `pg_dump`; a streamed store remains represented by
+  `ARTIFACT_TAR_CMD`. The shell regression starts two successful runs and one failing run at the same timestamp,
+  observes only the retained backup while they are incomplete, then finds both successful backups and no partial
+  directory. CI runs it in the restore job. **Not verified:** atomic rename semantics on a non-POSIX or remote
+  filesystem; scheduled monitoring still belongs to the deployment.
 
 ## Not taken (director pack, escalation, production readiness)
 

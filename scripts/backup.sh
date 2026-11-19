@@ -3,7 +3,7 @@
 #
 #   DB_URL=postgres://user:pass@host/db scripts/backup.sh [-o BACKUP_ROOT]
 #
-# Writes BACKUP_ROOT/ppm-backup-<UTC timestamp>/ containing
+# Writes BACKUP_ROOT/ppm-backup-<UTC timestamp>-<unique suffix>/ containing
 #   db.dump             pg_dump custom format (restore with scripts/restore.sh)
 #   artifacts.tar.gz    the artifact store (attachments, export files), if present
 #   MANIFEST            when, what, how many migrations, row counts per table
@@ -48,6 +48,12 @@ done
 PG_DUMP="${PG_DUMP:-pg_dump}"
 PSQL="${PSQL:-psql}"
 ARTIFACT_DIR="${ARTIFACT_DIR:-${PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR:-}}"
+ARTIFACT_TAR_CMD="${ARTIFACT_TAR_CMD:-}"
+
+if [ -z "$ARTIFACT_TAR_CMD" ] && [ -n "$ARTIFACT_DIR" ] && [ ! -d "$ARTIFACT_DIR" ]; then
+  echo "backup: configured artifact directory does not exist: $ARTIFACT_DIR" >&2
+  exit 1
+fi
 
 PASSPHRASE_FILE="${BACKUP_PASSPHRASE_FILE:-}"
 GPG_RECIPIENT="${BACKUP_GPG_RECIPIENT:-}"
@@ -79,30 +85,39 @@ encrypt() {
 sha256() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$@"; else shasum -a 256 "$@"; fi; }
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-OUT="$ROOT/ppm-backup-$STAMP"
-mkdir -p "$OUT"
-trap 'echo "backup FAILED; removing partial $OUT" >&2; rm -rf "$OUT"' EXIT
+mkdir -p "$ROOT"
+umask 077
+WORK="$(mktemp -d "$ROOT/.ppm-backup-$STAMP.tmp.XXXXXX")"
+OUT="$ROOT/ppm-backup-$STAMP-${WORK##*.}"
+cleanup() {
+  status=$?
+  trap - EXIT HUP INT TERM
+  if [ -n "$WORK" ] && [ -d "$WORK" ]; then
+    echo "backup FAILED; removing private partial directory" >&2
+    rm -rf "$WORK"
+  fi
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
 
 echo "dumping the database ..."
 # --no-owner/--no-privileges: restore works under a different role. -Fc: compressed, selective.
-$PG_DUMP --format=custom --no-owner --no-privileges --dbname="$DB_URL" > "$OUT/db.dump"
+$PG_DUMP --format=custom --no-owner --no-privileges --dbname="$DB_URL" > "$WORK/db.dump"
 
-ARTIFACT_TAR_CMD="${ARTIFACT_TAR_CMD:-}"
 ARTIFACT_NOTE="skipped (no ARTIFACT_DIR or ARTIFACT_TAR_CMD set)"
 if [ -n "$ARTIFACT_TAR_CMD" ]; then
   echo "archiving the artifact store with ARTIFACT_TAR_CMD ..."
-  sh -c "$ARTIFACT_TAR_CMD" > "$OUT/artifacts.tar.gz"
-  ARTIFACT_NOTE="$(tar -tzf "$OUT/artifacts.tar.gz" | grep -vc '/$' || true) files via ARTIFACT_TAR_CMD"
-elif [ -n "$ARTIFACT_DIR" ] && [ -d "$ARTIFACT_DIR" ]; then
-  echo "archiving the artifact store $ARTIFACT_DIR ..."
-  tar -czf "$OUT/artifacts.tar.gz" -C "$ARTIFACT_DIR" .
-  ARTIFACT_NOTE="$(find "$ARTIFACT_DIR" -type f -print0 | LC_ALL=C tr -cd '\000' | wc -c | tr -d ' ') files from $ARTIFACT_DIR"
+  sh -c "$ARTIFACT_TAR_CMD" > "$WORK/artifacts.tar.gz"
+  ARTIFACT_NOTE="$(tar -tzf "$WORK/artifacts.tar.gz" | grep -vc '/$' || true) files via ARTIFACT_TAR_CMD"
 elif [ -n "$ARTIFACT_DIR" ]; then
-  ARTIFACT_NOTE="skipped ($ARTIFACT_DIR does not exist)"
+  echo "archiving the artifact store $ARTIFACT_DIR ..."
+  tar -czf "$WORK/artifacts.tar.gz" -C "$ARTIFACT_DIR" .
+  ARTIFACT_NOTE="$(find "$ARTIFACT_DIR" -type f -print0 | LC_ALL=C tr -cd '\000' | wc -c | tr -d ' ') files from $ARTIFACT_DIR"
 fi
 
-encrypt "$OUT/db.dump"
-[ -f "$OUT/artifacts.tar.gz" ] && encrypt "$OUT/artifacts.tar.gz"
+encrypt "$WORK/db.dump"
+[ -f "$WORK/artifacts.tar.gz" ] && encrypt "$WORK/artifacts.tar.gz"
 
 {
   echo "encryption=$ENCRYPTION"
@@ -124,10 +139,18 @@ encrypt "$OUT/db.dump"
     | while read -r t; do
         printf '%s=%s\n' "$t" "$($PSQL "$DB_URL" -Atc "select count(*) from \"$t\"")"
       done
-} > "$OUT/MANIFEST"
+} > "$WORK/MANIFEST"
 
 SUFFIX=""; [ "$ENCRYPTION" != none ] && SUFFIX=".gpg"
-( cd "$OUT" && sha256 "db.dump$SUFFIX" MANIFEST $( [ -f "artifacts.tar.gz$SUFFIX" ] && echo "artifacts.tar.gz$SUFFIX" ) > SHA256SUMS )
+(
+  cd "$WORK"
+  set -- "db.dump$SUFFIX" MANIFEST
+  [ ! -f "artifacts.tar.gz$SUFFIX" ] || set -- "$@" "artifacts.tar.gz$SUFFIX"
+  sha256 "$@" > SHA256SUMS
+)
+mv "$WORK" "$OUT"
+WORK=""
 trap - EXIT
+trap - HUP INT TERM
 echo "backup complete: $OUT"
 echo "$OUT"

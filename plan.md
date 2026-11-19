@@ -1919,10 +1919,10 @@ and the third whether a person can reliably use it in the deployment's language.
 | 2. Recovery | The restore job can compare a fresh database with its source. RG-19 corrects a blind spot in the encrypted attachment check. A successful drill on a freshly made backup leaves retrieval from retained off-host storage and deployment-scale timing unmeasured. | Have the deployment owner run RG-20 on representative data. Record the age of the backup used and the elapsed time through the first successful authenticated download. |
 | 3. Language and access | Ten UI locales have catalogue and browser coverage. Non-English catalogues have machine drafts. The accessibility statement identifies screen-reader order and the wording of errors as open human checks. | Choose the first locale from the pilot population. Use RG-21 to follow a real plan through the deployed UI and service. Review the words in context and repeat for each locale considered for rollout. |
 
-Before scheduling backups unattended, address RG-22. Today a missing configured directory can
-produce a successful database-only backup, and two invocations in the same second target the
-same output directory. The drill detects the omission when it runs. Backup monitoring also
-needs a reliable signal at the time the scheduled job runs.
+RG-22 makes a backup visible to monitoring only after its configured inputs, manifest and checksums
+are complete. Same-second runs publish under separate names, and a failed run leaves earlier backups
+visible. The deployment still needs to connect the scheduled job's exit status and backup-age check
+to its monitoring.
 
 The underlying records are the [open and completed tasks](tasks.md), the
 [recovery targets](operations/recovery-objectives.md), the [language statement](governance/language-statement.md)

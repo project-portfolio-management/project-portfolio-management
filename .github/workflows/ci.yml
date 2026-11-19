@@ -185,6 +185,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Backups are published complete and same-second runs stay separate
+        working-directory: .
+        run: scripts/test-backup-publication.sh
       # pg_dump must not be older than the server (18): take the client from PGDG.
       - name: PostgreSQL 18 client tools
         working-directory: .

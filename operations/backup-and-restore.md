@@ -19,12 +19,16 @@ The search index is not backed up; it is rebuilt (`task search_reindex`).
 DB_URL=postgres://user:pass@db-host:5432/project_portfolio_management \
 ARTIFACT_DIR=/var/lib/ppm/artifacts \
   scripts/backup.sh -o /backups
-# -> /backups/ppm-backup-20261010T020000Z/{db.dump,artifacts.tar.gz,MANIFEST,SHA256SUMS}
+# -> /backups/ppm-backup-20261010T020000Z-a1B2c3/{db.dump,artifacts.tar.gz,MANIFEST,SHA256SUMS}
 ```
 
-A failed backup removes its partial directory. Copy the directory **off the
-machine** (object storage, another site) and keep it encrypted. The script can
-do the encrypting (needs `gpg`):
+The script builds in a private directory on the backup filesystem and publishes
+the uniquely named directory only after every expected file and checksum is
+complete. Concurrent runs in the same second therefore keep separate outputs.
+A failed run removes its own private directory and leaves every published backup
+alone. A configured local artifact directory that is missing refuses the run
+before `pg_dump`. Copy a completed directory **off the machine** (object storage,
+another site) and keep it encrypted. The script can do the encrypting (needs `gpg`):
 
 ```sh
 # a passphrase kept in a file (mode 0600) OUTSIDE the backup location ...
@@ -80,7 +84,7 @@ verified one).
    is an upgrade, not a restore.
 
 ```sh
-scripts/restore.sh /backups/ppm-backup-20261010T020000Z \
+scripts/restore.sh /backups/ppm-backup-20261010T020000Z-a1B2c3 \
     postgres://user:pass@db-host:5432/project_portfolio_management \
     -a /var/lib/ppm/artifacts
 ```
@@ -97,10 +101,10 @@ podman compose up -d --wait postgres                       # an empty database
 export DB_URL=postgresql://ppm:$POSTGRES_PASSWORD@localhost:5432/project_portfolio_management
 export PSQL="podman compose exec -T postgres psql"
 export PG_RESTORE="podman compose exec -T postgres pg_restore" RESTORE_FROM_STDIN=1
-scripts/restore.sh /backups/ppm-backup-20261010T020000Z "$DB_URL"   # the database
+scripts/restore.sh /backups/ppm-backup-20261010T020000Z-a1B2c3 "$DB_URL"   # the database
 podman compose up -d --wait migrate api                    # start the service (migrate is a no-op)
 podman compose exec -T api tar -C /app/data/artifacts -xz \
-    < /backups/ppm-backup-20261010T020000Z/artifacts.tar.gz               # the artifact store
+    < /backups/ppm-backup-20261010T020000Z-a1B2c3/artifacts.tar.gz               # the artifact store
 ```
 
 (`podman compose` works the same; use `api-dev-insecure` instead of `api` if that

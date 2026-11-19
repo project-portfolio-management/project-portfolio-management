@@ -1906,3 +1906,24 @@ It matters to this project for three reasons:
 2026-11-15: yes, as an opt-in that stays off by default); OQ-15, whether
 to offer DHCW this service as the API its guide plans (decided 2026-11-16: not now, the path kept open); and whether a public roadmap may ever name a person (the
 recommendation is no, and to name a role or a team instead).
+
+## 93. Worldwide production readiness, 19 November 2026
+
+The evidence supports a scoped pilot with non-sensitive portfolio data. Three decisions matter before
+expanding it. The first concerns who can read a plan, the second whether an operator can recover it,
+and the third whether a person can reliably use it in the deployment's language.
+
+| Priority | What the repository establishes | Next decision and evidence |
+|---|---|---|
+| 1. Private plans | The service has plan guards and real-identity database suites. CF-8 still records an unanswered access question about four reads used by the resource and OKR screens. | Resolve CF-8 before putting confidential portfolios in the pilot. Keep a passing member case alongside each non-member refusal. |
+| 2. Recovery | The restore job can compare a fresh database with its source. RG-19 corrects a blind spot in the encrypted attachment check. A successful drill on a freshly made backup leaves retrieval from retained off-host storage and deployment-scale timing unmeasured. | Have the deployment owner run RG-20 on representative data. Record the age of the backup used and the elapsed time through the first successful authenticated download. |
+| 3. Language and access | Ten UI locales have catalogue and browser coverage. Non-English catalogues have machine drafts. The accessibility statement identifies screen-reader order and the wording of errors as open human checks. | Choose the first locale from the pilot population. Use RG-21 to follow a real plan through the deployed UI and service. Review the words in context and repeat for each locale considered for rollout. |
+
+Before scheduling backups unattended, address RG-22. Today a missing configured directory can
+produce a successful database-only backup, and two invocations in the same second target the
+same output directory. The drill detects the omission when it runs. Backup monitoring also
+needs a reliable signal at the time the scheduled job runs.
+
+The underlying records are the [open and completed tasks](tasks.md), the
+[recovery targets](operations/recovery-objectives.md), the [language statement](governance/language-statement.md)
+and the [accessibility statement](governance/accessibility-statement.md).

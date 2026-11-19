@@ -1,44 +1,29 @@
 ## 11. Testing Strategy
 
-Entity-level summary; detail in [`agents/testing.md`](../agents/testing.md).
-The entity is **spec-only; no code exists yet** (§14), so every row
-below is **planned** — the table records the intended layers, not
-delivered suites.
+[Implementation status](14-implementation-status.md) counts the tests in the source tree.
+The following suites exercise distinct parts of the contract. CI records which passed for a revision.
 
-### 11.1 Per subproject (planned)
+### 11.1 Per subproject
 
-| Subproject | Layer | Plan |
+| Subproject | Suite | What a passing run establishes |
 |---|---|---|
-| matcher | Unit tests embedded per module (`#[cfg(test)]`); integration suite `tests/public_api.rs` over the re-exported surface; rustdoc examples as doctests | Build T-2 |
-| matcher | Kind-agnostic tests (two plans with differing `kind` labels still match on their other signals; a vestigial always-`false` `kind_gate_blocked`), deterministic-rule tests (R-0 each scheme, R-1 owner+code, R-2 `same_as`) and probabilistic-component tests (name, goal-title Jaccard, code, owner org, parent plan, timeframe, keywords, relationships, tags); renormalization; presets | Build T-2 |
-| service | DB-free tests: matcher embedding + JSON round-trip of the thin DTO (incl. optional `kind`) | Build T-3 |
-| service | Controller validation unit tests: blank-name → `422`, malformed `EntityRef` / `parent_ref` / containment cycle / deterministic identifier / relationship / `in_language` → `422` (DB-free) | Build T-3 |
-| service | Request-level integration tests against PostgreSQL (axa harness): CRUD on the one plans collection, 422s, 404, `/match`, `/check-duplicates`, `409` on create, merge (any two plans) with sub-resource re-homing; sub-resource CRUD; derived timeline / burndown; the parent child roll-up filter; `#[ignore]`-gated, run with a Postgres URL | Build T-4 |
-| service | The goals bridge: a goal sub-resource write is visible in `data.goals[]` and in a subsequent match (regression for §5.3) | Build T-4 |
-| front-end | `pnpm run check` (svelte-check strict, 0/0) + production build | Build T-6 |
-| front-end | vitest units (`ApiClient`, `PlanRepository`, sub-resource repositories) + Playwright smoke over the routes | Build T-6 |
+| Matcher | Unit, property, public API and doctests | The library scores the supplied plan pairs, exposes its component scores and round-trips the plan DTO. |
+| Service | Workspace library tests and the database-free part of the `main` integration binary | Domain calculations, validation, route and schema inventories, and repository invariants hold for the cases under test. |
+| Service with PostgreSQL | The ignored request suites and real-identity suites in `tests/main.rs` | Actual handlers, migrations, database transactions and access decisions work together on the test database. |
+| Operator UI | Type checks, Vitest and Playwright | The production UI build renders and responds through the tested workflows. The browser fixtures supply the API responses. |
+| Recovery | The `restore` CI job | A scratch database agrees with its source, the request suites run on the restored copy, and the artifact checks in NFR-16 pass. |
 
-### 11.2 Cross-subproject contract tests (planned)
+### 11.2 Cross-subproject contracts
 
-The integration contract this spec owns needs pinning at four seams:
-
-- **Service ↔ matcher** — a matcher-embedding test plus the JSONB
-  round-trip is the whole contract for the thin record (no adapter
-  exists to drift). The request-level suite adds a check-duplicates
-  round-trip (store a plan, post a near-duplicate query, assert the
-  ranked hit) and a `409`-on-create assertion.
-- **Kind-agnostic matching** — a test asserts that two plans carrying
-  **different** optional `kind` labels still match on their shared
-  signals (there is no kind gate): the matcher scores them on the
-  other components and the service feeds candidates without kind
-  filtering.
-- **The partition** — a test asserts that no sub-resource field ever
-  appears in any `data` column and that a sub-resource write never
-  changes the match score (except a goal write, which is the deliberate
-  crossover — §5.3 / §5.6).
-- **Front-end ↔ service** — the TypeScript types in
-  `src/lib/api/types.ts` are hand-mirrored; a Playwright smoke against
-  a running service is the planned guard.
+- **Service and matcher.** The matcher's `tests/public_api.rs` checks the JSON round trip.
+  The service's `tests/requests/plans.rs` stores plans and finds deterministic duplicates across
+  different kinds. The request tests in `tests/requests/goals.rs` read back goal edits through the plan.
+  The contract also calls for coverage of the duplicate conflict on create and the storage boundary in
+  §5.3. Operational sub-resource writes leave matching unchanged except for goal titles.
+- **Operator UI and service.** TypeScript mirrors the service DTOs. The Playwright suite uses a
+  mock API. A live-service smoke test remains proposed. For a pilot, exercise one complete write and
+  read through the deployed UI in the pilot locale, including a validation error. Record the build,
+  locale, expected values, and what the operator actually read back (RG-21).
 
 ### 11.2a Real Keycloak via Testcontainers (Podman)
 
@@ -62,7 +47,6 @@ Token fetch and verifier configuration must use the same origin
 
 ### 11.3 Gates
 
-Rust: `cargo test`, `cargo clippy --all-targets -- -D warnings`,
-`cargo fmt --check` in both crates. Front-end: `pnpm run check`,
-`pnpm run build`. A behavioural change PR MUST carry its test edit
-(three-part PR discipline).
+The [root agent guide](../AGENTS.md) lists the workspace and matcher formatting, lint and test
+commands, the PostgreSQL suites, the restore drill and the UI gates. Each behavioural change
+includes its specification, implementation and regression test in one commit.

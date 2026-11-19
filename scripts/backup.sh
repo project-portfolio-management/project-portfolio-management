@@ -96,7 +96,7 @@ if [ -n "$ARTIFACT_TAR_CMD" ]; then
 elif [ -n "$ARTIFACT_DIR" ] && [ -d "$ARTIFACT_DIR" ]; then
   echo "archiving the artifact store $ARTIFACT_DIR ..."
   tar -czf "$OUT/artifacts.tar.gz" -C "$ARTIFACT_DIR" .
-  ARTIFACT_NOTE="$(find "$ARTIFACT_DIR" -type f | wc -l | tr -d ' ') files from $ARTIFACT_DIR"
+  ARTIFACT_NOTE="$(find "$ARTIFACT_DIR" -type f -print0 | LC_ALL=C tr -cd '\000' | wc -c | tr -d ' ') files from $ARTIFACT_DIR"
 elif [ -n "$ARTIFACT_DIR" ]; then
   ARTIFACT_NOTE="skipped ($ARTIFACT_DIR does not exist)"
 fi

@@ -37,8 +37,9 @@ design (a warm standby) rather than the number.
 - **The artifact store and the database are backed up one after the other**, not
   atomically. A file uploaded between the two steps is in the database but not
   the archive (or the reverse). The service tolerates a missing file (the
-  download answers `404`); the restore drill compares file counts so a large
-  gap is visible. Back up at a quiet time, or stop writes, if you need exactness.
+  download answers `404`). The drill compares restored files with a quiet local source, or checks
+  the restored count for a streamed archive. Neither check relates a file to its database row.
+  Stop writes for the backup if you need the database and files from the same point in time.
 - **A restore returns the system to the backup's moment.** Everything after it
   is gone (that is the RPO); audit history after that moment is lost with it.
 - **Mode A's RPO is the interval, not zero.** Do not claim a tighter figure

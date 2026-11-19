@@ -11,7 +11,8 @@
 #
 # Checks: archive checksums; the migration history is identical; every table has
 # the same row count; every table has the same content digest (md5 over its rows
-# as text, ordered); the restored artifact files match the archive's manifest.
+# as text, ordered); restored artifact counts match the manifest. For a local
+# artifact store its paths and contents must also match the quiescent source.
 #
 # DB_URL must be a plain postgres://user:pass@host:port/dbname URL with no
 # query string, and its role must be able to CREATE DATABASE.
@@ -50,7 +51,8 @@ out="$("$HERE/backup.sh" -o "$WORK/backups" | tail -1)"
 
 echo "2/5 restoring into scratch database $scratch ..."
 $PSQL "$base/postgres" -qc "create database \"$scratch\"" || fail "cannot create the scratch database"
-"$HERE/restore.sh" "$out" "$SCRATCH_URL" -a "$WORK/artifacts" >/dev/null || fail "restore failed"
+# A drill always extracts locally, even if the deployment has a live restore hook.
+ARTIFACT_UNTAR_CMD= "$HERE/restore.sh" "$out" "$SCRATCH_URL" -a "$WORK/artifacts" >/dev/null || fail "restore failed"
 
 echo "3/5 comparing migration history ..."
 # Both histories: sqlx's, and SeaORM's, which a database migrated before the move to sqlx keeps.
@@ -82,11 +84,19 @@ rows="$($PSQL "$SCRATCH_URL" -Atc "select coalesce(sum(n_live_tup),0) from pg_st
 echo "    (restored database reports about $rows live rows)"
 
 echo "5/5 checking the artifact store ..."
-if [ -f "$out/artifacts.tar.gz" ]; then
+source_store="${ARTIFACT_DIR:-${PROJECT_PORTFOLIO_MANAGEMENT_ARTIFACT_DIR:-}}"
+if [ -f "$out/artifacts.tar.gz" ] || [ -f "$out/artifacts.tar.gz.gpg" ]; then
+  [ -d "$WORK/artifacts" ] || fail "artifact archive was not extracted"
   want="$(sed -n 's/^artifacts=\([0-9]*\) files.*/\1/p' "$out/MANIFEST")"
-  have="$(find "$WORK/artifacts" -type f | wc -l | tr -d ' ')"
-  [ -z "$want" ] || [ "$want" = "$have" ] || fail "artifact files: archived $want, restored $have"
+  [ -n "$want" ] || fail "missing artifact file count in manifest"
+  have="$(find "$WORK/artifacts" -type f -print0 | LC_ALL=C tr -cd '\000' | wc -c | tr -d ' ')"
+  [ "$want" = "$have" ] || fail "artifact files: archived $want, restored $have"
   echo "    $have artifact files restored"
+  if [ -z "${ARTIFACT_TAR_CMD:-}" ]; then
+    diff -qr "$source_store" "$WORK/artifacts" || fail "restored artifact store differs from source"
+  fi
+elif [ -n "$source_store" ] || [ -n "${ARTIFACT_TAR_CMD:-}" ]; then
+  fail "configured artifact store produced no archive"
 else
   echo "    no artifact archive in this backup"
 fi

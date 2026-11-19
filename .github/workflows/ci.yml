@@ -213,6 +213,7 @@ jobs:
           # Libtest takes several name filters after `--`; Cargo takes one before it.
           cargo test --test main -- approvals:: feeds:: planner:: private_aggregates:: --ignored --test-threads=1
           mkdir -p "$ARTIFACT_DIR/ab/cd" && echo "attachment bytes" > "$ARTIFACT_DIR/ab/cd/example"
+          printf '\000\377' > "$ARTIFACT_DIR/ab/cd/"$'ملف\n資料'
       - name: Back up, restore into a scratch database, compare, run the suite on it
         working-directory: .
         run: >-
@@ -224,6 +225,24 @@ jobs:
           umask 077
           printf '%s' "ci-only-passphrase-$GITHUB_RUN_ID" > "$RUNNER_TEMP/ppm-pass"
           BACKUP_PASSPHRASE_FILE="$RUNNER_TEMP/ppm-pass" scripts/restore-test.sh
+      - name: Encrypted drill detects a same-size attachment mismatch
+        working-directory: .
+        run: |
+          # Change one fixture byte after backup so both trees still have identical names, sizes and counts.
+          cat > "$RUNNER_TEMP/change-fixture" <<'SH'
+          #!/bin/sh
+          set -eu
+          printf X | dd of="$ARTIFACT_DIR/ab/cd/example" bs=1 count=1 conv=notrunc 2>/dev/null
+          exec pg_restore "$@"
+          SH
+          chmod +x "$RUNNER_TEMP/change-fixture"
+          if PG_RESTORE="$RUNNER_TEMP/change-fixture" BACKUP_PASSPHRASE_FILE="$RUNNER_TEMP/ppm-pass" \
+            scripts/restore-test.sh > "$RUNNER_TEMP/mismatch.log" 2>&1; then
+            echo "Drill accepted a same-size mismatch" >&2
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/mismatch.log"
+          grep -F 'RESTORE TEST FAILED: restored artifact store differs from source' "$RUNNER_TEMP/mismatch.log"
 
   matcher:
     name: Matcher (fmt, clippy, test)

@@ -155,7 +155,14 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   with the scripts' own guarantee distinguished from what point-in-time
   recovery adds. A restore is **tested automatically**: a CI job restores a
   `pg_dump` into a fresh database, checks it against the source and runs the
-  test suite against it.
+  test suite against it. For both plain and encrypted backups the drill extracts an archived
+  artifact store into a scratch directory and checks its file count against the manifest.
+  For a local store it also compares paths and file contents against the quiescent source.
+  For a store supplied by `ARTIFACT_TAR_CMD`, only the archive and count are available to the drill.
+  A configured store that yielded no archive fails the drill. A database-only drill is valid
+  when no store was configured. RG-20 proposes a separate deployment exercise using a retained
+  off-host backup and a downloaded attachment's recorded digest. RG-22 proposes publishing completed
+  backups atomically so the age monitor cannot select a partial backup.
 - **NFR-17 — Information governance pack.** The repository ships documents a
   buyer's information governance lead can adapt rather than write from scratch:
   a data protection impact assessment (DPIA) template pre-filled with what this

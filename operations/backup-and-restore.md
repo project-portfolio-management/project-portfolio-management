@@ -122,6 +122,12 @@ It takes a backup of the source, restores it into a scratch database, and fails
 unless **the migration history is identical** (`_sqlx_migrations`, and `seaql_migrations` where a database
 migrated before the move to sqlx keeps it), **every table has the same rows
 and the same content digest**, and the **restored artifact file count matches**.
+Both plain and encrypted archives are extracted into the drill's private directory, including when
+the deployment sets `ARTIFACT_UNTAR_CMD` for a live restore. With a local artifact directory the drill
+also compares every path and file's bytes with the source. Run it against a quiet copy so that a
+concurrent upload or purge cannot change the comparison. With `ARTIFACT_TAR_CMD` the drill verifies
+the archive checksum and restored count. A database-only drill omits the store settings. If a store
+was configured but the backup omitted it, the drill fails.
 `-t COMMAND` runs a command against the restored database before it is dropped
 (`RESTORED_DB_URL` is exported); CI uses it to run the whole request test
 suite against the restored copy. `-k` keeps the scratch database so you can

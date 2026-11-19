@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 19 November (RG-19, restored attachments)
+
+- The recovery drill checks the artifact count after restoring both plain and encrypted backups.
+  For a local store it compares the restored paths and bytes with the quiet source. The encrypted
+  regression changes one byte without changing the name, length or count. The worldwide assessment
+  in plan §93 records the remaining access, recovery and language evidence needed for a pilot.
+  A streamed store still has only archive checksums and a restored count. Recovery from off-host
+  storage, deployment-scale timings and speaker review remain open.
+
 ### 18 November (a possible private-plan leak, recorded as CF-8)
 
 - **Recorded, not yet checked:** four read routes found by slice 12 part (j) take no caller

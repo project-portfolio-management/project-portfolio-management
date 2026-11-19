@@ -1619,6 +1619,26 @@ what was **not** tested; claim no certification.
   failed on the old code with 28 and 133; each programme's forecast equals the rollup route's). Under load, on a
   fresh database of the same shape: 494 requests a second at a median of 64 ms, from 54 to 67 at 466 to 478.
   **Not verified:** a programme tree over 2,000 plans (the walk's ceiling, unchanged).
+- [x] **RG-19 (S) — Check the restored attachment store in both backup modes.** The drill checks
+  the manifest count for plain and encrypted archives and compares the restored local tree with
+  its quiescent source. A regression in the restore job changes one byte without changing the
+  file size or count. A streamed store has no local source tree for that comparison.
+- [ ] **RG-20 (M) — Recover from a retained off-host backup.** Start with the stored backup,
+  recovery credentials and a fresh environment. Record backup age, time until an authenticated
+  reader can download an attachment, and the result of comparing its bytes to the digest in
+  the restored artifact row. Exercise one missing referenced file and require the check to fail.
+  The deployment owner compares the measured data loss window and elapsed time to its own targets.
+- [ ] **RG-21 (S per pilot locale) — Test a localized workflow through the deployed UI and API.**
+  A speaker and a keyboard or screen-reader user create and reopen a plan with a mixed-script name
+  and a dated task, correcting a validation error on the way. Record the build, locale, time zone,
+  browser and assistive technology, expected and observed values, and any wording or focus issue.
+  Link findings to catalogue keys and defects. Record review only for the strings actually examined.
+- [ ] **RG-22 (S) — Publish a backup only when its configured inputs are complete.** `backup.sh`
+  currently records a missing configured directory as skipped and creates the destination with
+  a timestamp precise to one second. Build each archive in its own private temporary directory.
+  Publish it after its dump, expected store, manifest and checksums are complete. Two starts
+  in the same second must preserve every already published backup, including if one start fails.
+  A missing configured store must exit nonzero and leave the previous backup visible to monitoring.
 
 ## Not taken (director pack, escalation, production readiness)
 

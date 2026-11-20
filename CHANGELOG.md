@@ -15,6 +15,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (sibling service links renamed)
+
+- Links to the sibling services in `SixArm/main-x-service` now use their current names: each `…-service-with-loco` is
+  `…-service-with-axum` (authentication, case, care-pathway, organization, course, person, link-graph). The files
+  they point to were checked on that repository's `main`. Comments and documents only; no behaviour changes.
+
 ### 20 November (`LOCO_ENV` no longer checked)
 
 - **The start check for `LOCO_ENV` is removed.** The service used to refuse to start when the Loco-era `LOCO_ENV` was

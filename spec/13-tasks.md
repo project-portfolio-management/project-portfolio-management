@@ -839,7 +839,7 @@ described manual check confirms it. Split tasks too big for one PR
     from `/whoami`") was factually wrong — corrected, not guessed
     around**: `GET /api/auth/me` (there is no `/whoami` endpoint)
     carried no `attrs` field anywhere in the family before this landed;
-    fixed at the source in `authentication-service-with-loco`
+    fixed at the source in `authentication-service-with-axum`
     (`CurrentResponse` gains `attrs`, that crate's own `spec/index.md`
     §13 T-17).
   - [x] **T-28g (M) — Deadline-shift trigger and rescheduling.** Two

@@ -1084,7 +1084,7 @@ links are **never** a match signal (entity spec §1).
       **The task's own premise was factually wrong — corrected, not
       guessed around.** T-28f's text assumed "the front-end reads the
       `attrs` the BFF already gets from `/whoami`." Verified false by
-      reading `authentication-service-with-loco/src/views/auth.rs`
+      reading `authentication-service-with-axum/src/views/auth.rs`
       (`GET /api/auth/me`'s `CurrentResponse` carried no `attrs` field
       at all) and grepping every front-end's BFF (`grep -rln "attrs"
       */*-front-end-with-svelte/src/lib/server/*.ts` — no hits anywhere
@@ -1092,7 +1092,7 @@ links are **never** a match signal (entity spec §1).
       either (that would mean hand-rolling a second verifier in
       TypeScript — exactly what `authentication-verifier` exists to
       avoid), so `attrs` was never reachable client-side at all. Fixed
-      at the source: `authentication-service-with-loco`'s
+      at the source: `authentication-service-with-axum`'s
       `CurrentResponse` now carries `attrs` (the **live**
       `users.attributes`, not the PASETO claim's up-to-5-minute-stale
       snapshot) — its own `spec/index.md` §13 T-17 carries the full

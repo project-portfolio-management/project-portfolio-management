@@ -15,12 +15,12 @@
 //! too, not assumed (see "What differs from the person-style ports"
 //! below) — the last of PRO-H12's seven slices.
 //!
-//! [`case-service`]: https://github.com/sixarm/main-x-service/tree/main/case/case-service-with-loco
-//! [`care-pathway-service`]: https://github.com/sixarm/main-x-service/tree/main/care-pathway/care-pathway-service-with-loco
-//! [`organization-service`]: https://github.com/sixarm/main-x-service/tree/main/organization/organization-service-with-loco
-//! [`course-service`]: https://github.com/sixarm/main-x-service/tree/main/course/course-service-with-loco
-//! [`person-service`]: https://github.com/sixarm/main-x-service/tree/main/person/person-service-with-loco
-//! [`link-graph-service`]: https://github.com/sixarm/main-x-service/tree/main/link/link-graph-service-with-loco
+//! [`case-service`]: https://github.com/sixarm/main-x-service/tree/main/case/case-service-with-axum
+//! [`care-pathway-service`]: https://github.com/sixarm/main-x-service/tree/main/care-pathway/care-pathway-service-with-axum
+//! [`organization-service`]: https://github.com/sixarm/main-x-service/tree/main/organization/organization-service-with-axum
+//! [`course-service`]: https://github.com/sixarm/main-x-service/tree/main/course/course-service-with-axum
+//! [`person-service`]: https://github.com/sixarm/main-x-service/tree/main/person/person-service-with-axum
+//! [`link-graph-service`]: https://github.com/sixarm/main-x-service/tree/main/link/link-graph-service-with-axum
 //!
 //! ## What it installs
 //!

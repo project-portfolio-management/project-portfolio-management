@@ -23,9 +23,9 @@
 //! `send` actually reaches a topic). Saying "the Fluvio sink is tested"
 //! on the strength of the compile check alone would be false — same
 //! posture as person's `s3_round_trip_against_a_live_endpoint`
-//! (`person/person-service-with-loco/src/bulk/store.rs`, BLK-4) and
+//! (`person/person-service-with-axum/src/bulk/store.rs`, BLK-4) and
 //! case's `fluvio_relay_publishes_an_outbox_row_to_a_real_topic`
-//! (`case/case-service-with-loco/tests/fluvio_relay.rs`, BUS-1).
+//! (`case/case-service-with-axum/tests/fluvio_relay.rs`, BUS-1).
 #![cfg(feature = "fluvio")]
 
 use axa_test::prelude::*;

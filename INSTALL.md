@@ -69,7 +69,7 @@ cargo test
 (cd project-portfolio-management-matcher-with-rust && cargo test)
 (cd project-portfolio-management-service-with-rust && cargo test)               # database-free
 # needs PostgreSQL; serially (AGENTS.md has the rest of the database suites)
-(cd project-portfolio-management-service-with-rust && DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test main requests:: -- --ignored --test-threads=1)
+(cd project-portfolio-management-service-with-rust && DB_URL=postgres://postgres:postgres@localhost:5432/project_portfolio_management_test cargo test --test main requests:: -- --ignored --test-threads=1)
 
 # Front end
 cd project-portfolio-management-ui-with-svelte

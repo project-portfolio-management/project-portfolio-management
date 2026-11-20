@@ -7,12 +7,12 @@
 version = 2
 yanked = "warn"
 # Transitive advisories that cannot be fixed at this level, accepted here WITH their reasons and revisited on each
-# upgrade. Removing Loco removed most of this list. Real, actionable advisories NOT on it still fail the build.
+# upgrade. Real, actionable advisories NOT on it still fail the build.
 ignore = [
     "RUSTSEC-2024-0384", # instant (unmaintained), transitive
     "RUSTSEC-2024-0436", # paste (unmaintained), transitive
-    "RUSTSEC-2024-0449", # unsafe-libyaml (unmaintained), transitive: loco-gen -> rrgen -> serde_yaml; added 2026-10-13
-    "RUSTSEC-2025-0134", # rustls-pemfile (unmaintained; a thin wrapper over rustls-pki-types), transitive (loco tree); added 2026-10-10
+    "RUSTSEC-2024-0449", # unsafe-libyaml (unmaintained), only with the optional `fluvio` feature (fluvio -> serde_yaml); added 2026-10-13
+    "RUSTSEC-2025-0134", # rustls-pemfile (unmaintained; a thin wrapper over rustls-pki-types), only with the optional `fluvio` feature (fluvio-future); added 2026-10-10
     "RUSTSEC-2026-0440", # astral-tokio-tar (unmaintained), no safe upgrade: test-only, via testcontainers, not in a built service; added 2026-11-05
     "RUSTSEC-2026-0441", # pin-utils (unmaintained), no safe upgrade: only with the optional `fluvio` feature, not in the default build; added 2026-11-05
     # chrono, and so chrono-tz and humantime, were declared unmaintained (chronotope/chrono#1768). Unmaintained, not

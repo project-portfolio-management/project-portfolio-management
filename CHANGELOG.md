@@ -15,6 +15,20 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (Loco names removed)
+
+- The test and development Postgres credentials are now `postgres`/`postgres` instead of `loco`/`loco`, in CI,
+  `compose.test.yaml`, the docs, the chaos test and the tests' default `DB_URL`. The test Redis password is now
+  `redis`. The `deny.toml` reasons for RUSTSEC-2024-0449 and RUSTSEC-2025-0134 now name the optional `fluvio`
+  feature, which still pulls those crates in, and not the Loco tree. Stale `cargo loco task` and "loco reads
+  `config/`" comments are corrected.
+  **Kept on purpose:** history (changelogs, landed tasks, `.gitleaksignore` entries for old commits), the names of
+  sibling repositories that end in `-with-loco`, and the start guard that refuses a retired `LOCO_ENV` setting.
+  **Upgrade note:** a test container already running with `loco`/`loco` keeps those credentials. Recreate it with
+  `podman compose -f compose.test.yaml up -d --force-recreate --wait`.
+  **Not verified:** only the migrations and `requests::plans` suites ran against a fresh `postgres`/`postgres`
+  database (19 tests passed). CI runs the rest. The chaos test was not run.
+
 ### 20 November (CI fix)
 
 - Main's `API` and `Restore drill` jobs were red. Clippy refused test code added with the coverage work (`usize` casts in

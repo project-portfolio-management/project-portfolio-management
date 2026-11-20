@@ -441,7 +441,7 @@ by the maintainer and MUST be recorded, in the same change that introduces it, w
 
 - what is excepted and why;
 - what limits the risk meanwhile;
-- an expiry date or the event that ends it (for example "when `loco-gen` is removed").
+- an expiry date or the event that ends it (for example "when `fluvio` drops `serde_yaml`").
 
 16.2. The record MUST be in [`tasks.md`](../tasks.md) and in the changelog entry of the change, and, where the tool
 has one, next to the setting: `deny.toml` `ignore` entries, `.gitleaksignore`, [`.zap/rules.tsv`](../.zap/rules.tsv),

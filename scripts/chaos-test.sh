@@ -13,7 +13,7 @@ TEST_DB_PORT="${TEST_DB_PORT:-5439}"
 TEST_REDIS_PORT="${TEST_REDIS_PORT:-6380}"
 SVC=project-portfolio-management-service-with-rust
 export TEST_DB_PORT TEST_REDIS_PORT
-export DB_URL="postgres://loco:loco@127.0.0.1:${TEST_DB_PORT}/project_portfolio_management_test"
+export DB_URL="postgres://postgres:postgres@127.0.0.1:${TEST_DB_PORT}/project_portfolio_management_test"
 
 ( cd "$SVC" && cargo build --quiet )
 BIN="$PWD/$SVC/target/debug/project-portfolio-management"

@@ -14,7 +14,7 @@ use sqlx::{AssertSqlSafe, PgPool};
 /// The server's own database, from which the throwaway ones are made.
 fn server_url() -> String {
     std::env::var("DB_URL").unwrap_or_else(|_| {
-        "postgres://loco:loco@localhost:5432/project_portfolio_management_test".to_string()
+        "postgres://postgres:postgres@localhost:5432/project_portfolio_management_test".to_string()
     })
 }
 

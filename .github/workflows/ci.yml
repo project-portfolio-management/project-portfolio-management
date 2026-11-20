@@ -68,16 +68,16 @@ jobs:
       postgres:
         image: postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
         env:
-          POSTGRES_USER: loco
-          POSTGRES_PASSWORD: loco
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: project_portfolio_management_test
         ports:
           - "5432:5432"
         options: >-
-          --health-cmd "pg_isready -U loco -d project_portfolio_management_test"
+          --health-cmd "pg_isready -U postgres -d project_portfolio_management_test"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      DB_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_test
+      DB_URL: postgres://postgres:postgres@localhost:5432/project_portfolio_management_test
       # The test pool has ONE connection and a 500 ms wait for it. On a busy
       # runner a request that queues behind another fails with PoolTimedOut (seen twice, in
       # two different tests, 2026-10-18). Wait up to 10 s; a real deadlock still fails.
@@ -119,16 +119,16 @@ jobs:
       postgres:
         image: postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
         env:
-          POSTGRES_USER: loco
-          POSTGRES_PASSWORD: loco
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: project_portfolio_management_test
         ports:
           - "5432:5432"
         options: >-
-          --health-cmd "pg_isready -U loco -d project_portfolio_management_test"
+          --health-cmd "pg_isready -U postgres -d project_portfolio_management_test"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      DB_URL: postgres://loco:loco@localhost:5432/project_portfolio_management_test
+      DB_URL: postgres://postgres:postgres@localhost:5432/project_portfolio_management_test
       # As in api-db: the one-connection test pool waits up to 10 s, so a slow runner does not fail a request.
       DB_CONNECT_TIMEOUT: "10000"
     steps:
@@ -170,16 +170,16 @@ jobs:
       postgres:
         image: postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
         env:
-          POSTGRES_USER: loco
-          POSTGRES_PASSWORD: loco
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: ppm_source
         ports:
           - "5432:5432"
         options: >-
-          --health-cmd "pg_isready -U loco -d ppm_source"
+          --health-cmd "pg_isready -U postgres -d ppm_source"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      DB_URL: postgres://loco:loco@localhost:5432/ppm_source
+      DB_URL: postgres://postgres:postgres@localhost:5432/ppm_source
       ARTIFACT_DIR: ${{ github.workspace }}/restore-artifacts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

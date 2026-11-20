@@ -45,9 +45,9 @@ cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features
 cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
 # service: the one integration-test binary (tests/main.rs; each former tests/*.rs binary is a module of it), database-free part
 cargo test --test main
-# database tests need Postgres 18 (the file also starts a Redis 8 on 127.0.0.1:6379, password `loco`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
+# database tests need Postgres 18 (the file also starts a Redis 8 on 127.0.0.1:6379, password `redis`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
 #   then, as CI's `api-db` job runs them, the request suites and then everything else that is ignored:
-#   DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test cargo test --test main requests:: -- --ignored --test-threads=1
+#   DB_URL=postgres://postgres:postgres@localhost:5432/project_portfolio_management_test cargo test --test main requests:: -- --ignored --test-threads=1
 #   DB_URL=… cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::
 #   (or a throwaway database on a local Postgres: createdb -U postgres -O "$USER" <name>, and drop it after)
 #   one former binary is a module filter: cargo test --test main approvals:: -- --ignored --test-threads=1

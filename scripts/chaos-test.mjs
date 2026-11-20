@@ -2,7 +2,7 @@
 // Chaos test for the service: random faults while a mixed workload runs, then check what must still be true.
 //
 //   node scripts/chaos-test.mjs --service project-portfolio-management-service-with-rust/target/debug/project-portfolio-management \
-//        --database-url postgres://loco:loco@127.0.0.1:5432/project_portfolio_management_test \
+//        --database-url postgres://postgres:postgres@127.0.0.1:5432/project_portfolio_management_test \
 //        --service-dir project-portfolio-management-service-with-rust [--runtime podman] [--db-container mxi-project-portfolio-management-test-db] \
 //        [--seconds 60] [--workers 8] [--seed 1] [--port 5199] [--self-test]
 //
@@ -39,7 +39,7 @@ const args = Object.fromEntries(
 const need = (k) => args[k] ?? (console.error(`missing --${k}`), process.exit(2));
 const service = need("service");
 const databaseUrl = need("database-url");
-const serviceDir = args["service-dir"] ?? "."; // where `config/` is: loco reads it from the working directory
+const serviceDir = args["service-dir"] ?? "."; // the working directory the service is started in
 const runtime = args.runtime ?? "podman";
 const dbContainer = args["db-container"] ?? "mxi-project-portfolio-management-test-db";
 const seconds = Number(args.seconds ?? 60);
@@ -199,7 +199,7 @@ async function chaos() {
       faults.push({ kind, at, detail: `${ms} ms` });
     } else if (kind === "drop_connections") {
       container(
-        "exec", dbContainer, "psql", "-U", "loco", "-d", "postgres", "-c",
+        "exec", dbContainer, "psql", "-U", "postgres", "-d", "postgres", "-c",
         "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'project_portfolio_management_test' AND pid <> pg_backend_pid();",
       );
       faults.push({ kind, at, detail: "every client connection" });
@@ -264,7 +264,7 @@ if (args["self-test"]) {
   // Prove the checks can fail: remove one acknowledged plan behind the service's back. The run must then
   // report it, so `--self-test` passes (exit 0) only if the violation was seen.
   const [victim] = acknowledgedPlans.keys();
-  container("exec", dbContainer, "psql", "-U", "loco", "-d", "project_portfolio_management_test", "-c", `DELETE FROM plans WHERE pid = '${victim}';`);
+  container("exec", dbContainer, "psql", "-U", "postgres", "-d", "project_portfolio_management_test", "-c", `DELETE FROM plans WHERE pid = '${victim}';`);
 }
 const result = await verify();
 expectedExit = true;

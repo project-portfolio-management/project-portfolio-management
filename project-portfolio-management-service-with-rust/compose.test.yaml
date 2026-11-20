@@ -3,15 +3,15 @@
 # From this crate's directory:
 #
 #   podman compose -f compose.test.yaml up -d --wait
-#   DB_URL=postgres://loco:loco@localhost:5432/project_portfolio_management_test \
+#   DB_URL=postgres://postgres:postgres@localhost:5432/project_portfolio_management_test \
 #     cargo test --test main requests:: -- --ignored --test-threads=1
 #   podman compose -f compose.test.yaml down -v
 #
-# Redis (the production cache provider) is started with Postgres, on 127.0.0.1:6379 with the password `loco`
+# Redis (the production cache provider) is started with Postgres, on 127.0.0.1:6379 with the password `redis`
 # (override the port with TEST_REDIS_PORT). The tests keep the in-memory cache and do not
 # need it; it is there to run the service against Redis by hand:
 #
-#   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL=redis://:loco@127.0.0.1:6379/0 APP_ENV=production ...
+#   PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL=redis://:redis@127.0.0.1:6379/0 APP_ENV=production ...
 #
 # Redis is 8 (AGPL-3.0, RSALv2 or SSPLv1, at the user's choice; used here for development and tests only, see the
 # root LICENSE.md).
@@ -19,7 +19,7 @@
 # The file is plain Compose spec.
 #
 # The connection details deliberately match what CI provides
-# (/.github/workflows/ci.yml job `api-db`): superuser `loco`/`loco` on 5432.
+# (/.github/workflows/ci.yml job `api-db`): superuser `postgres`/`postgres` on 5432.
 # A database a test passes against locally but CI cannot reproduce is
 # worse than no local database.
 services:
@@ -29,8 +29,8 @@ services:
     image: docker.io/library/postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     container_name: mxi-project-portfolio-management-test-db
     environment:
-      POSTGRES_USER: loco
-      POSTGRES_PASSWORD: loco
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       # Matches the default test database, so a bare `cargo test -- --ignored`
       # finds its database.
       POSTGRES_DB: project_portfolio_management_test
@@ -53,7 +53,7 @@ services:
     healthcheck:
       # `up --wait` waits on this, so a test run cannot start
       # against a database that is still initializing.
-      test: ["CMD-SHELL", "pg_isready -U loco -d project_portfolio_management_test"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d project_portfolio_management_test"]
       interval: 2s
       timeout: 3s
       retries: 30
@@ -64,11 +64,11 @@ services:
   redis:
     image: docker.io/library/redis:8-alpine@sha256:21090af93f8324db2f0f0f4f38a7c60369d47d917e000c3423d89d2ae2883537
     container_name: mxi-project-portfolio-management-test-redis
-    command: ["redis-server", "--requirepass", "loco", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    command: ["redis-server", "--requirepass", "redis", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
       - "127.0.0.1:${TEST_REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a loco --no-auth-warning ping | grep -q PONG"]
+      test: ["CMD-SHELL", "redis-cli -a redis --no-auth-warning ping | grep -q PONG"]
       interval: 2s
       timeout: 3s
       retries: 30

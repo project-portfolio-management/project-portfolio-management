@@ -45,23 +45,38 @@ pub fn spawn_policy_watcher() {
     else {
         return;
     };
+    watch_file(
+        path,
+        std::time::Duration::from_secs(POLICY_WATCH_SECS),
+        reload_policy,
+    );
+    tracing::info!(
+        secs = POLICY_WATCH_SECS,
+        "watching the ABAC policy file for changes"
+    );
+}
+
+/// Poll `path`'s last-modified time every `every` and call `on_change` each time it differs from the last poll (a file
+/// that appears, disappears or is rewritten). The first poll only records the time, so starting the watcher does not
+/// itself count as a change. Runs until the returned task is aborted.
+pub(super) fn watch_file(
+    path: String,
+    every: std::time::Duration,
+    on_change: impl Fn() + Send + 'static,
+) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         let mut last = file_mtime(&path);
-        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(POLICY_WATCH_SECS));
+        let mut ticker = tokio::time::interval(every);
         ticker.tick().await; // skip the immediate first tick
         loop {
             ticker.tick().await;
             let now = file_mtime(&path);
             if now != last {
                 last = now;
-                reload_policy();
+                on_change();
             }
         }
-    });
-    tracing::info!(
-        secs = POLICY_WATCH_SECS,
-        "watching the ABAC policy file for changes"
-    );
+    })
 }
 
 /// The last-modified time of `path`, or `None` when it cannot be read
@@ -110,6 +125,56 @@ mod tests {
 
     const TEST_NAME: &str =
         "auth::policy::tests::environment_policy_sources_are_exercised_in_child_processes";
+
+    #[tokio::test]
+    async fn the_watcher_calls_back_once_per_change_and_not_at_start() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::time::{Duration, SystemTime};
+
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("policy.json");
+        std::fs::write(&file, r#"{"rules":[]}"#).unwrap();
+        let changes = Arc::new(AtomicUsize::new(0));
+        let counted = changes.clone();
+        let watcher = watch_file(
+            file.to_string_lossy().to_string(),
+            Duration::from_millis(10),
+            move || {
+                counted.fetch_add(1, Ordering::SeqCst);
+            },
+        );
+        let wait_for = |n: usize| {
+            let changes = changes.clone();
+            async move {
+                for _ in 0..200 {
+                    if changes.load(Ordering::SeqCst) >= n {
+                        return;
+                    }
+                    tokio::time::sleep(Duration::from_millis(5)).await;
+                }
+            }
+        };
+
+        // Started, unchanged: no call.
+        tokio::time::sleep(Duration::from_millis(60)).await;
+        assert_eq!(changes.load(Ordering::SeqCst), 0);
+        // A rewrite (a later modified time): one call, and quiet again after it.
+        std::fs::File::options()
+            .write(true)
+            .open(&file)
+            .unwrap()
+            .set_modified(SystemTime::now() + Duration::from_secs(60))
+            .unwrap();
+        wait_for(1).await;
+        tokio::time::sleep(Duration::from_millis(60)).await;
+        assert_eq!(changes.load(Ordering::SeqCst), 1);
+        // The file removed: that is a change too.
+        std::fs::remove_file(&file).unwrap();
+        wait_for(2).await;
+        assert_eq!(changes.load(Ordering::SeqCst), 2);
+        watcher.abort();
+    }
 
     #[test]
     fn environment_policy_sources_are_exercised_in_child_processes() {

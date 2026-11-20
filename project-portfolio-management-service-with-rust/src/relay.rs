@@ -389,6 +389,64 @@ async fn connect(uri: &str) -> Outbox {
     }
 }
 
+/// Whether [`spawn`] starts the relay.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Start {
+    /// The transport is not `outbox`, or the relay is turned off: nothing to do.
+    Off,
+    /// A Fluvio endpoint is set but this binary has no `fluvio` feature: refuse rather than mark rows published to a
+    /// logging sink.
+    RefuseNoFluvio,
+    /// Start it.
+    Run,
+}
+
+/// The decision behind [`spawn`], from what it reads: the transport, the relay switch, the Fluvio endpoint (if set) and
+/// whether the binary was built with `fluvio`.
+#[must_use]
+pub const fn start_decision(
+    outbox_transport: bool,
+    enabled: bool,
+    fluvio_endpoint: Option<&str>,
+    fluvio_built: bool,
+) -> Start {
+    if !outbox_transport || !enabled {
+        Start::Off
+    } else if fluvio_endpoint.is_some() && !fluvio_built {
+        Start::RefuseNoFluvio
+    } else {
+        Start::Run
+    }
+}
+
+/// `primary`, with webhook delivery beside it when `targets` names any. Webhooks are signed, so with no integrity-MAC
+/// key (`mac_enabled` false) they do not start, which is logged at `error`, and the primary runs alone. `webhooks`
+/// builds the webhook sink from the targets.
+pub fn with_webhooks(
+    primary: Box<dyn EventSink>,
+    targets: Vec<crate::webhooks::WebhookTarget>,
+    mac_enabled: bool,
+    webhooks: impl FnOnce(Vec<crate::webhooks::WebhookTarget>) -> Box<dyn EventSink>,
+) -> Box<dyn EventSink> {
+    if targets.is_empty() {
+        primary
+    } else if mac_enabled {
+        Box::new(CompositeSink::new(primary, vec![webhooks(targets)]))
+    } else {
+        tracing::error!(
+            targets = targets.len(),
+            "{} names webhook target(s) but no integrity-MAC key is configured \
+             ({}/{}); webhook delivery will NOT start (an unsigned webhook is a \
+             different, unauthenticated feature — see agents/share/event-bus.md §12); \
+             the primary relay sink is unaffected",
+            crate::webhooks::WEBHOOKS_ENV,
+            crate::compliance::mac::KEY_ENV,
+            crate::compliance::mac::KEY_FILE_ENV,
+        );
+        primary
+    }
+}
+
 /// Spawn the background relay loop if (and only if) the transport is
 /// `outbox` and [`relay_enabled`]. A no-op otherwise — so with the default
 /// `memory` transport this never starts, keeping behaviour unchanged.
@@ -408,18 +466,24 @@ async fn connect(uri: &str) -> Outbox {
 /// (logged `error`) rather than send unsigned deliveries; the primary
 /// relay still starts either way.
 pub fn spawn(ctx: &axa::AppContext) {
-    if !crate::streaming::transport().is_outbox() || !relay_enabled() {
-        return;
-    }
     let endpoint = fluvio_endpoint();
-    if endpoint.is_some() && !cfg!(feature = "fluvio") {
-        tracing::error!(
-            "PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT is set but this binary was built \
+    match start_decision(
+        crate::streaming::transport().is_outbox(),
+        relay_enabled(),
+        endpoint.as_deref(),
+        cfg!(feature = "fluvio"),
+    ) {
+        Start::Off => return,
+        Start::Run => {}
+        Start::RefuseNoFluvio => {
+            tracing::error!(
+                "PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT is set but this binary was built \
              without the `fluvio` cargo feature; the relay will NOT start — rebuild with \
              `--features fluvio` (falling back to the logging sink would mark outbox rows \
              published without ever reaching a real broker)"
-        );
-        return;
+            );
+            return;
+        }
     }
     let interval = interval_secs();
     if retired_retention_is_set() {
@@ -445,29 +509,12 @@ pub fn spawn(ctx: &axa::AppContext) {
     tokio::spawn(async move {
         let outbox = connect(&uri).await;
         let primary = build_sink(endpoint.as_deref()).await;
-        let sink: Box<dyn EventSink> = if webhook_targets.is_empty() {
-            primary
-        } else if crate::compliance::mac::is_enabled() {
-            Box::new(CompositeSink::new(
-                primary,
-                vec![Box::new(crate::webhooks::WebhookSink::new(
-                    webhook_targets,
-                    ctx,
-                ))],
-            ))
-        } else {
-            tracing::error!(
-                targets = webhook_targets.len(),
-                "{} names webhook target(s) but no integrity-MAC key is configured \
-                 ({}/{}); webhook delivery will NOT start (an unsigned webhook is a \
-                 different, unauthenticated feature — see agents/share/event-bus.md §12); \
-                 the primary relay sink is unaffected",
-                crate::webhooks::WEBHOOKS_ENV,
-                crate::compliance::mac::KEY_ENV,
-                crate::compliance::mac::KEY_FILE_ENV,
-            );
-            primary
-        };
+        let sink = with_webhooks(
+            primary,
+            webhook_targets,
+            crate::compliance::mac::is_enabled(),
+            |targets| Box::new(crate::webhooks::WebhookSink::new(targets, ctx)),
+        );
         run(outbox, Arc::from(sink), stopped).await;
     });
 }
@@ -496,6 +543,88 @@ mod tests {
 
     #[async_trait::async_trait]
     impl EventSink for CapturingSink {
+        async fn send(
+            &self,
+            entity: &str,
+            key: &str,
+            _payload: &serde_json::Value,
+        ) -> Result<(), SinkError> {
+            self.0
+                .lock()
+                .unwrap()
+                .push((entity.to_string(), key.to_string()));
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn the_relay_starts_only_on_the_outbox_transport_when_enabled_and_buildable() {
+        assert_eq!(start_decision(false, true, None, true), Start::Off);
+        assert_eq!(
+            start_decision(true, false, Some("fluvio:9003"), false),
+            Start::Off
+        );
+        assert_eq!(start_decision(true, true, None, false), Start::Run);
+        assert_eq!(
+            start_decision(true, true, Some("fluvio:9003"), true),
+            Start::Run
+        );
+        assert_eq!(
+            start_decision(true, true, Some("fluvio:9003"), false),
+            Start::RefuseNoFluvio
+        );
+    }
+
+    #[tokio::test]
+    async fn webhooks_join_the_primary_only_when_named_and_signed() {
+        let target: crate::webhooks::WebhookTarget =
+            serde_json::from_value(serde_json::json!({"url": "https://example.invalid/hook"}))
+                .unwrap();
+        let primary = Arc::new(Mutex::new(Vec::new()));
+        let secondary = Arc::new(Mutex::new(Vec::new()));
+        let capture = |into: &Arc<Mutex<Vec<(String, String)>>>| -> Box<dyn EventSink> {
+            Box::new(Shared(into.clone()))
+        };
+        let sent = |sink: Box<dyn EventSink>| async move {
+            sink.send("plan", "p-1", &serde_json::json!({}))
+                .await
+                .unwrap();
+        };
+
+        // No targets: the primary alone, and the webhook sink is never built.
+        sent(with_webhooks(
+            capture(&primary),
+            vec![],
+            true,
+            |_| unreachable!(),
+        ))
+        .await;
+        // Targets but no MAC key: still the primary alone.
+        sent(with_webhooks(
+            capture(&primary),
+            vec![target.clone()],
+            false,
+            |_| unreachable!(),
+        ))
+        .await;
+        assert_eq!(primary.lock().unwrap().len(), 2);
+        assert!(secondary.lock().unwrap().is_empty());
+
+        // Targets and a key: both sinks get the event, and the builder is handed the targets.
+        let sink = with_webhooks(capture(&primary), vec![target.clone()], true, |targets| {
+            assert_eq!(targets, vec![target.clone()]);
+            capture(&secondary)
+        });
+        sent(sink).await;
+        assert_eq!(primary.lock().unwrap().len(), 3);
+        assert_eq!(secondary.lock().unwrap().len(), 1);
+    }
+
+    /// A sink that records into a shared list, so a test can read it after the sink is moved.
+    struct Shared(Arc<Mutex<Vec<(String, String)>>>);
+
+    #[async_trait::async_trait]
+    impl EventSink for Shared {
         async fn send(
             &self,
             entity: &str,

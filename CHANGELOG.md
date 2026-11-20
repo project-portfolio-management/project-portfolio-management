@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (coverage: the relay's start decisions)
+
+- `relay::spawn` made two decisions inline: whether to start, and whether to add webhook delivery. Each is now a
+  function a unit test can call. `start_decision` is off unless the transport is `outbox` and the relay is on, and it
+  refuses a Fluvio endpoint in a build without `fluvio`. `with_webhooks` adds webhooks beside the primary sink only
+  when targets are named and an integrity-MAC key is set. Behaviour is unchanged. Two unit tests cover every branch
+  of both.
+  **Not covered:** `connect`'s retry while the database is down, the outbox-count read failing, and the spawned task
+  itself. Those need a database that goes away, or the process-wide start switch, which the chaos test exercises.
+
 ### 20 November (coverage: scheduler and search rebuild)
 
 - **The scheduler loop is now testable.** `scheduler::spawn` reads its setting and calls `spawn_with(ctx, raw)`, which

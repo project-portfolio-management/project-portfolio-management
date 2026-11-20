@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (coverage: strict webhook resolution and telemetry)
+
+- The strict-outbound child-process test now covers a URL with no host, a name that resolves to loopback, a name that
+  does not resolve, and strict mode dropping a non-public target. New `observability` tests cover `Telemetry`'s
+  flush and shutdown with export off and on (to a collector that is not there), and `init` in child processes with
+  export off and on.
+- Measured: of the 2,998 lines uncovered in the 94.38% report, 135 (5%) sit inside a `tracing` macro. `tracing`
+  skips a disabled event's fields, and the unit tests install no subscriber, so those lines count as not run even
+  where the path is tested. The rest are untested code.
+  **Not measured:** coverage was not rerun after these tests.
+
 ### 20 November (coverage measured again: 94.38%; policy watcher and mailer tests)
 
 - A full `make coverage-db` run after `19cb59c7` measures **94.38% (50,342 of 53,340 lines)**, and tarpaulin now

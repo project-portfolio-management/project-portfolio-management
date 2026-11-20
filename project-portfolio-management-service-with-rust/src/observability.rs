@@ -545,6 +545,70 @@ mod tests {
 
     use super::*;
 
+    fn dead_end() -> TelemetryConfig {
+        // Port 1 on the loopback: nothing answers, which export must survive.
+        TelemetryConfig {
+            service_name: "ppm-test".to_string(),
+            endpoint: Some("http://127.0.0.1:1".to_string()),
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn telemetry_flushes_and_shuts_down_with_or_without_export() {
+        // Export off: nothing to flush, nothing to shut down, and it says it is not exporting.
+        let off = Telemetry::default();
+        assert!(!off.exporting());
+        off.force_flush();
+        off.shutdown();
+
+        // Export on, to a collector that is not there: flush and shutdown return rather than hang.
+        let config = dead_end();
+        let on = Telemetry {
+            tracer_provider: build_tracer_provider(&config).unwrap(),
+            meter_provider: build_meter_provider(&config).unwrap(),
+        };
+        assert!(on.exporting());
+        on.force_flush();
+        on.shutdown();
+        // A second shutdown is refused by the SDK; that is logged, not a panic.
+        on.shutdown();
+    }
+
+    const INIT_TEST: &str = "observability::tests::init_installs_the_subscriber_once_per_process";
+
+    #[test]
+    fn init_installs_the_subscriber_once_per_process() {
+        // `init` sets the process-wide subscriber, so it runs in a child process of its own.
+        if let Ok(case) = std::env::var("PPM_OBSERVABILITY_INIT_CASE") {
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async {
+                let config = if case == "export" {
+                    dead_end()
+                } else {
+                    TelemetryConfig {
+                        service_name: "ppm-test".to_string(),
+                        endpoint: None,
+                    }
+                };
+                let telemetry =
+                    init(&config, tracing_subscriber::EnvFilter::new("info"), None).expect("init");
+                assert_eq!(telemetry.exporting(), case == "export");
+                tracing::info!("a span-less event through the installed subscriber");
+                telemetry.shutdown();
+            });
+            return;
+        }
+        let executable = std::env::current_exe().unwrap();
+        for case in ["off", "export"] {
+            let status = std::process::Command::new(&executable)
+                .args(["--exact", INIT_TEST, "--nocapture"])
+                .env("PPM_OBSERVABILITY_INIT_CASE", case)
+                .status()
+                .unwrap();
+            assert!(status.success(), "the {case} child failed");
+        }
+    }
+
     #[test]
     fn defaults_enable_export_at_the_documented_endpoint() {
         let config = TelemetryConfig::resolve(None, None);

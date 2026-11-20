@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (one customer, one database, proposed)
+
+- New proposed requirement SA-R13 in [`spec/supplier-assurance.md`](spec/supplier-assurance.md) and task SA-21. Each
+  deployment is named with `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID`. The first start stores the name in a
+  one-row `deployment` table. Every later start compares the two before migrations, jobs or routes run, and refuses to start on
+  a mismatch, so a wrong `DB_URL` cannot open another customer's database.
+  **Not done:** nothing is built or tested. Two limits are stated in the spec: the first start after an upgrade trusts
+  its configuration, and two deployments given the same name are not caught.
+
 ### 20 November (supplier assurance requirements, proposed)
 
 - New proposed spec [`spec/supplier-assurance.md`](spec/supplier-assurance.md) and tasks SA-1 to SA-20. It covers what a

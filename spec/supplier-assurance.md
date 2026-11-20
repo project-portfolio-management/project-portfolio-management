@@ -1,6 +1,6 @@
 # Supplier assurance for a managed, hosted deployment (proposed 2026-11-20)
 
-> **Status: proposed. None of SA-1 to SA-20 is built or done.** Tasks are in [`tasks.md`](../tasks.md). The decisions
+> **Status: proposed. None of SA-1 to SA-21 is built or done.** Tasks are in [`tasks.md`](../tasks.md). The decisions
 > SA-D1 to SA-D4 belong to the owner. The first buyer in view is NHS Wales, so the names here are NHS Wales names, but
 > every software requirement applies to any deployment.
 
@@ -11,7 +11,7 @@ Digital Health and Care Wales (DHCW) becomes the **data processor** under UK GDP
 supplier**. The buyer assesses the supplier's organization as well as the open-source project. This spec separates three
 kinds of requirement:
 
-- **what the software must do** (SA-R1 to SA-R12), which this repository can build and test;
+- **what the software must do** (SA-R1 to SA-R13), which this repository can build and test;
 - **what the supplier must be or hold** (SA-O1 to SA-O9), such as contracts, certificates, vetting and tests by a third
   party. No commit can meet these;
 - **what the buyer keeps** (the shared-responsibility matrix below).
@@ -46,7 +46,30 @@ Each requirement states what is already true, checked against the code on 2026-1
   own artifact store and its own backups. No table has a tenant column, and none may gain one. A supplier serving several
   customers runs several deployments. *Today:* true by design; no test states it. *Missing:* a census test that fails when
   a migration adds a `tenant`, `organization_id` or similar discriminator column (SA-1), and a sentence in the deployment
-  guide.
+  guide. SA-R13 makes sure each service opens its own customer's database.
+- **SA-R13 — One customer, one database: the service knows which database is its own.** When a supplier hosts several
+  customers, only the `DB_URL` setting ties a running service to its database. A configuration copied from the wrong
+  deployment, or a typing mistake in a deploy script, could start customer B's service against customer A's database.
+  Customer B's staff would then read and change customer A's plans, people references, time and costs. SA-R1 keeps the
+  data of different customers apart. SA-R13 makes sure each service opens the right database. The rule:
+  1. Each deployment is given a name with `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID`, for example `acme-example`: 1
+     to 63 lowercase letters, digits and hyphens, starting with a letter. Any other value stops the start.
+  2. **First start.** The database has no name yet. The service writes the configured name into a new one-row table,
+     `deployment` (`id` fixed at 1, `deployment_id`, `recorded_at`), writes an audit row, then starts as normal.
+  3. **Every later start.** The service compares the configured name with the stored one before it runs a migration,
+     starts a scheduled job or relay, or serves a request. If they are equal it starts. If they differ, it **refuses to
+     start**. It exits non-zero with an error that names both values and the database host and name, but not the
+     password. It reads no other row and writes nothing.
+  4. **Name not set.** In production (NFR-12) the service refuses to start. In development and test it starts with a
+     warning and writes no name, so local and CI databases need no setting.
+  5. **Renaming** is deliberate. An operator task (`cargo run -- task deployment_rename`) takes the old and the new name,
+     changes the row only when the old name matches, and writes an audit row. No HTTP route can read or change the name.
+  A database restored from a backup keeps the name, which is correct: it holds the same customer's data. A restore into a
+  scratch database for the restore drill needs the same setting, or development mode. *Today:* nothing checks this; the
+  wrong `DB_URL` starts the service against the other customer's database. *Missing:* everything (SA-21). Limits: a
+  database that existed before this check is named by the first start after the upgrade, so that start trusts its
+  configuration. The operator should check that start by hand. The check also cannot catch two deployments given the
+  same name. The deployment guide should state that names are unique per supplier.
 - **SA-R2 — Data stays where it is put.** The service makes no outbound transfer of its own (§12.3). Every outbound target
   is set by the operator: webhooks, the WPM bridge, the email relay, the event relay, the virus-scan hook and the OIDC
   issuer. Strict mode (NFR-21, `sinks.rs`) holds operator targets to public `https` addresses. It does not hold them to a
@@ -137,7 +160,7 @@ brackets) but can meet none of them.
 
 | Area | Supplier | Customer (health board, trust or DHCW) |
 | --- | --- | --- |
-| DPIA and controller duties | Technical inputs (the governance pack, SA-R1 to SA-R12) | Completes and signs the DPIA (DPO and SIRO) |
+| DPIA and controller duties | Technical inputs (the governance pack, SA-R1 to SA-R13) | Completes and signs the DPIA (DPO and SIRO) |
 | Hosting and backups | UK-only hosting, hardening, monitoring, backups, sub-processors | Approves location; reviews evidence through WIGTK |
 | Code and patching | Tracks advisories, builds releases, patches (SA-O7), commissions the health check | Reviews summaries; approves maintenance windows |
 | Identity | Maintains the OIDC integration and the ABAC role map | Accounts, multi-factor authentication and leavers in Entra ID or NADEX; assigns roles |

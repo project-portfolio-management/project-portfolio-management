@@ -3743,8 +3743,8 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
 ## Supplier assurance (SA-n, [spec/supplier-assurance.md](spec/supplier-assurance.md)), proposed 2026-11-20
 
 Why: a supplier that hosts and supports this service for NHS Wales is the data processor, and the buyer assesses the
-supplier. SA-1 to SA-12 build the software requirements SA-R1 to SA-R12. SA-13 to SA-18 give a supplier evidence for
-the obligations SA-O1 to SA-O9, which no commit can meet. **None is built.** Decisions SA-D1 to SA-D4 are the owner's
+supplier. SA-1 to SA-12 build the software requirements SA-R1 to SA-R12, and SA-21 builds SA-R13. SA-13 to SA-18
+give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can meet. **None is built.** Decisions SA-D1 to SA-D4 are the owner's
 (SA-19).
 
 - [ ] **SA-1 (S) — Single tenant, stated and kept.** A census test fails when a migration adds a tenant or organization
@@ -3788,6 +3788,11 @@ the obligations SA-O1 to SA-O9, which no commit can meet. **None is built.** Dec
 - [ ] **SA-19 (S, owner) — Decide SA-D1 to SA-D4.**
 - [ ] **SA-20 (S) — Read the sources.** Read the current WIGTK, WHC (2017) 025, the NHS Wales Records Management Code of
   Practice and an NHS Wales supplier contract template, and correct the spec where the briefing was wrong.
+- [ ] **SA-21 (M) — One customer, one database (SA-R13).** `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID`, a new
+  migration adding the one-row `deployment` table, and a check at start before migrations, jobs and routes: write the name on
+  first start, refuse to start on a mismatch (naming both values, never the password), refuse in production when the
+  setting is unset. A `deployment_rename` operator task with an audit row. Database tests for first start, match,
+  mismatch, unset in production and unset in development; the restore drill and the deployment guide updated.
 
 ## Coverage work in progress (2026-11-20)
 

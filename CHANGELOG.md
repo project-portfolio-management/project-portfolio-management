@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (axa 0.20.1)
+
+- **axa 0.20.0 → 0.20.1.** The release's only change is that axa's `mail` feature requires `axa-mail` 0.1.2 and so
+  lettre 0.11.24 (RUSTSEC-2026-0560 to 0565). This service does not turn on `mail` and already locks lettre 0.11.24,
+  so nothing it builds changes; the bump keeps it on the current release. No code change.
+  **Waiver:** axa 0.20.1 was published 2026-11-18 22:45 UTC, under the maintainer's 2-day minimum publish age. The
+  maintainer waived the age for this one crate. Only axa's version and checksum changed in `Cargo.lock`, and the lock
+  was checked with `--locked` with the age rule on.
+  **Not verified:** the database suites did not run locally; CI runs them.
+
 ### 20 November (sibling service links renamed)
 
 - Links to the sibling services in `SixArm/main-x-service` now use their current names: each `…-service-with-loco` is

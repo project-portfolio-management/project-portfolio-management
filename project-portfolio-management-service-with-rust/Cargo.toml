@@ -27,7 +27,7 @@ include = ["src/**/*", "README.md"]
 [workspace.dependencies]
 # The plumbing every service shares. `postgres-sqlx` (called `sqlx` before axa 0.12) makes `AppContext::db` sqlx's
 # `PgPool` (spec §8.3b).
-axa = { version = "0.20", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "postgres-sqlx"] }
+axa = { version = "0.20.1", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "postgres-sqlx"] }
 
 [dependencies]
 # Keyed integrity MACs with key handling (retired keys, key files): one implementation shared by every service,

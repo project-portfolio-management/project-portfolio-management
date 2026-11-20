@@ -58,6 +58,7 @@ mod role_tasks;
 mod scale;
 mod scheduled_jobs;
 mod scoring;
+mod search_reindex;
 mod security_regression;
 mod starter_templates;
 mod status_evidence;

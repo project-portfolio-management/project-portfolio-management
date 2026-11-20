@@ -130,3 +130,23 @@ async fn z_every_scheduled_job_runs_once_and_an_empty_estate_refreshes_flow_metr
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn the_ticker_starts_only_when_configured_and_one_pass_runs_every_sweep() {
+    use project_portfolio_management::scheduler::{spawn_with, sweep_once};
+    super::isolate_search_index();
+    request::<App, _, _>(|_request, ctx| async move {
+        // Off when unset, blank, zero or junk; on for a positive number of minutes (the loop then sleeps first).
+        assert!(!spawn_with(ctx.clone(), None));
+        assert!(!spawn_with(ctx.clone(), Some("  ")));
+        assert!(!spawn_with(ctx.clone(), Some("0")));
+        assert!(!spawn_with(ctx.clone(), Some("hourly")));
+        assert!(spawn_with(ctx.clone(), Some("60")));
+        // One pass over a healthy database: every sweep runs and none fails, and a second pass is just as quiet.
+        assert_eq!(sweep_once(&ctx).await, 0);
+        assert_eq!(sweep_once(&ctx).await, 0);
+    })
+    .await;
+}

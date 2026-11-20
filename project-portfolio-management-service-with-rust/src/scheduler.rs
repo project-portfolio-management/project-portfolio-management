@@ -40,72 +40,102 @@ pub fn configured_period_minutes(raw: Option<&str>) -> Option<u64> {
 /// Start the sweep loop when configured. A no-op by default.
 pub fn spawn(ctx: AppContext) {
     let raw = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES").ok();
-    let Some(minutes) = configured_period_minutes(raw.as_deref()) else {
-        if raw.as_deref().is_some_and(|v| !v.trim().is_empty()) {
+    spawn_with(ctx, raw.as_deref());
+}
+
+/// [`spawn`] with the setting's value given, so a test need not set the process's environment. Returns whether the
+/// loop was started: `false` when `raw` is unset or blank (quietly) or not a positive whole number (with a warning).
+pub fn spawn_with(ctx: AppContext, raw: Option<&str>) -> bool {
+    let Some(minutes) = configured_period_minutes(raw) else {
+        if raw.is_some_and(|v| !v.trim().is_empty()) {
             tracing::warn!(
                 "PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES is not a positive whole \
                  number of minutes; the scheduled-action ticker stays off"
             );
         }
-        return;
+        return false;
     };
     tokio::spawn(async move {
         let period = std::time::Duration::from_secs(minutes.saturating_mul(60));
         loop {
             tokio::time::sleep(period).await;
-            match crate::controllers::automation::sweep_due(&ctx).await {
-                Ok((fired, skipped, capped)) if fired > 0 || capped => {
-                    tracing::info!(
-                        "scheduled-action sweep fired {fired} action(s) \
-                         (skipped {skipped}, capped {capped})"
-                    );
-                }
-                Ok(_) => {}
-                Err(err) => tracing::warn!("scheduled-action sweep failed: {err}"),
-            }
-            match crate::controllers::report_schedules::run_due(&ctx, 200).await {
-                Ok(r) if r.ran > 0 || r.failed > 0 => {
-                    tracing::info!("report-schedule sweep ran {} (failed {})", r.ran, r.failed);
-                }
-                Ok(_) => {}
-                Err(err) => tracing::warn!("report-schedule sweep failed: {err}"),
-            }
-            match crate::controllers::pack_rhythm::run_due(&ctx, crate::tz::deployment_today())
-                .await
-            {
-                Ok(r) if !r.drafted.is_empty() => {
-                    tracing::info!("director-pack schedule drafted {} pack(s)", r.drafted.len());
-                }
-                Ok(_) => {}
-                Err(err) => tracing::warn!("director-pack schedule failed: {err}"),
-            }
-            if let Err(err) = crate::controllers::earned_value::snapshot_all(&ctx).await {
-                tracing::warn!("earned-value snapshot pass failed: {err}");
-            }
-            crate::scheduled_jobs::run_enabled(&ctx).await;
-            match crate::controllers::status_updates::remind_due(&ctx).await {
-                Ok(r) if r.sent > 0 || r.unaddressed > 0 => {
-                    tracing::info!(
-                        "status-update reminders: {} sent, {} with nobody to tell",
-                        r.sent,
-                        r.unaddressed
-                    );
-                }
-                Ok(_) => {}
-                Err(err) => tracing::warn!("status-update reminder sweep failed: {err}"),
-            }
-            match crate::controllers::automation::sweep_milestone_due(&ctx).await {
-                Ok((fired, already_claimed, capped)) if fired > 0 || capped => {
-                    tracing::info!(
-                        "milestone-due sweep fired {fired} rule(s) \
-                         (already claimed {already_claimed}, capped {capped})"
-                    );
-                }
-                Ok(_) => {}
-                Err(err) => tracing::warn!("milestone-due sweep failed: {err}"),
-            }
+            let _ = sweep_once(&ctx).await;
         }
     });
+    true
+}
+
+/// One pass of the loop: every sweep in turn. A sweep that fails is logged and the next one still runs, so one broken
+/// sweep cannot stop the others. Returns how many of the six fallible sweeps failed (the scheduled jobs report their
+/// own runs in `scheduled_job_runs`).
+pub async fn sweep_once(ctx: &AppContext) -> usize {
+    let mut failed = 0;
+    match crate::controllers::automation::sweep_due(ctx).await {
+        Ok((fired, skipped, capped)) if fired > 0 || capped => {
+            tracing::info!(
+                "scheduled-action sweep fired {fired} action(s) \
+                 (skipped {skipped}, capped {capped})"
+            );
+        }
+        Ok(_) => {}
+        Err(err) => {
+            failed += 1;
+            tracing::warn!("scheduled-action sweep failed: {err}");
+        }
+    }
+    match crate::controllers::report_schedules::run_due(ctx, 200).await {
+        Ok(r) if r.ran > 0 || r.failed > 0 => {
+            tracing::info!("report-schedule sweep ran {} (failed {})", r.ran, r.failed);
+        }
+        Ok(_) => {}
+        Err(err) => {
+            failed += 1;
+            tracing::warn!("report-schedule sweep failed: {err}");
+        }
+    }
+    match crate::controllers::pack_rhythm::run_due(ctx, crate::tz::deployment_today()).await {
+        Ok(r) if !r.drafted.is_empty() => {
+            tracing::info!("director-pack schedule drafted {} pack(s)", r.drafted.len());
+        }
+        Ok(_) => {}
+        Err(err) => {
+            failed += 1;
+            tracing::warn!("director-pack schedule failed: {err}");
+        }
+    }
+    if let Err(err) = crate::controllers::earned_value::snapshot_all(ctx).await {
+        failed += 1;
+        tracing::warn!("earned-value snapshot pass failed: {err}");
+    }
+    crate::scheduled_jobs::run_enabled(ctx).await;
+    match crate::controllers::status_updates::remind_due(ctx).await {
+        Ok(r) if r.sent > 0 || r.unaddressed > 0 => {
+            tracing::info!(
+                "status-update reminders: {} sent, {} with nobody to tell",
+                r.sent,
+                r.unaddressed
+            );
+        }
+        Ok(_) => {}
+        Err(err) => {
+            failed += 1;
+            tracing::warn!("status-update reminder sweep failed: {err}");
+        }
+    }
+    match crate::controllers::automation::sweep_milestone_due(ctx).await {
+        Ok((fired, already_claimed, capped)) if fired > 0 || capped => {
+            tracing::info!(
+                "milestone-due sweep fired {fired} rule(s) \
+                 (already claimed {already_claimed}, capped {capped})"
+            );
+        }
+        Ok(_) => {}
+        Err(err) => {
+            failed += 1;
+            tracing::warn!("milestone-due sweep failed: {err}");
+        }
+    }
+    failed
 }
 
 #[cfg(test)]

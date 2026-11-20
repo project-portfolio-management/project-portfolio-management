@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (coverage: scheduler and search rebuild)
+
+- **The scheduler loop is now testable.** `scheduler::spawn` reads its setting and calls `spawn_with(ctx, raw)`, which
+  returns whether the loop started. The loop body is `sweep_once(&ctx)`, which runs every sweep and returns how many
+  failed, where before failures only went to the log. Behaviour is unchanged. A database test covers off for unset,
+  blank, zero and junk settings, on for `60`, and two passes over a healthy database with no failed sweep.
+- **The search rebuild is tested in process** (`requests::search_reindex`). It checks that a rebuild one row per page
+  counts every active plan and skips one with an unreadable payload, that a batch of 0 is read as 1, and that the
+  start-up rebuild runs only once the index is empty.
+  **Not measured:** coverage was not rerun. The two files stood at 24% and 36% in this morning's report.
+  **Not covered:** the scheduler's "fired" log lines need due actions and schedules to fire; a healthy pass only
+  takes the quiet branches.
+
 ### 20 November (SA-1: one customer per deployment, kept by a test)
 
 - **SA-1 built.** `no_table_has_a_tenant_column` (a database test in `tests/migrations.rs`) reads every column of the

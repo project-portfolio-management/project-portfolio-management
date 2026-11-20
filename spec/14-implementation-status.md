@@ -71,7 +71,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | PE | 1 | 15 |
 | SM | 2 | 15 |
 | RE | 15 | 0 |
-| **Total** | **262** | **60** |
+| SA | 0 | 20 |
+| **Total** | **262** | **80** |
 
 <!-- generated:end -->
 

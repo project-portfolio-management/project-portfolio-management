@@ -3740,6 +3740,55 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   **Acceptance:** `.github/pull_request_template.md` exists and links AGENTS.md.
   **Built 2026-11-14.** `.github/pull_request_template.md`: the task, the specification, code and test, what the change writes outside the service (exports, webhooks, feeds, the public reader, migrations), what was not done or verified, and AI tools. CONTRIBUTING.md points at it. **Not verified:** how GitHub renders it, since no pull request has been opened since.
 
+## Supplier assurance (SA-n, [spec/supplier-assurance.md](spec/supplier-assurance.md)), proposed 2026-11-20
+
+Why: a supplier that hosts and supports this service for NHS Wales is the data processor, and the buyer assesses the
+supplier. SA-1 to SA-12 build the software requirements SA-R1 to SA-R12. SA-13 to SA-18 give a supplier evidence for
+the obligations SA-O1 to SA-O9, which no commit can meet. **None is built.** Decisions SA-D1 to SA-D4 are the owner's
+(SA-19).
+
+- [ ] **SA-1 (S) — Single tenant, stated and kept.** A census test fails when a migration adds a tenant or organization
+  discriminator column. The deployment guide says one deployment serves one customer.
+- [ ] **SA-2 (S) — Every outbound host in one list.** The deployment guide lists each setting that names an outbound host.
+  A test fails when a new setting of that kind is missing from the list.
+- [ ] **SA-3 (S) — No passwords, no built-in account.** A test asserts that no route takes a password or mints a credential
+  and that no subject is hard-coded with access. The Entra sign-in guide states that multi-factor authentication and
+  conditional access are enforced at the provider.
+- [ ] **SA-4 (L) — Customer-approved support grants.** A grant kind for supplier support that takes effect only once a
+  customer administrator approves it. It states a reason, expires within a set number of hours and is audited on every
+  request it serves, with a view of what it served. A threat review before it ships.
+- [ ] **SA-5 (M) — Rates and costs need the finance area.** A census of every route returning `per_hour_minor`,
+  `cost_minor` or a per-person cost total, and a request test for each showing that plan access alone, and `access=admin`
+  without finance, is refused or masked.
+- [ ] **SA-6 (S) — No special-category HR columns.** The personal-data inventory census refuses column names for absence or
+  sickness reasons, occupational health, disciplinary matters, grievances and pay grades. The inventory states the rule.
+- [ ] **SA-7 (L) — Audit hash chain.** `prev_hash` and `hash` on `audit_logs` in a new migration, outside-witness
+  checkpoints, and `GET /api/compliance/audit/verify` reporting the first broken link.
+- [ ] **SA-8 (M) — Audit feed for a SIEM.** A cursor-paged audit feed for a read-only machine token, with a documented JSON
+  schema and a collector example, or relay through the outbox.
+- [ ] **SA-9 (S) — Who encrypts what.** The deployment guide states TLS at the edge, storage encryption at the host,
+  backup encryption by the scripts, and that handling marks do not encrypt. Blocked on SA-D3 for column-level encryption.
+- [ ] **SA-10 (M) — Whole-deployment export.** An operator task writes every table as CSV and JSON with a manifest of counts
+  and SHA-256 digests, plus the artifact files. A test reconciles its counts with the database.
+- [ ] **SA-11 (S) — Erasure at exit.** A runbook procedure destroys hosted volumes, backups and their keys, and writes an
+  erasure record of what was destroyed and when.
+- [ ] **SA-12 (S) — Retention against the NHS Wales code.** A column in the retention schedule for the matching Records
+  Management Code of Practice entry, left blank until the code is read (SA-20).
+- [ ] **SA-13 (M) — Supplier assurance pack templates.** In `governance/`: a sub-processor register, an architecture and
+  data-flow diagram showing UK-only hosting and one tenant, and a support-access procedure, all for a supplier to fill in.
+- [ ] **SA-14 (S) — Patch time.** State a patch time for critical advisories in `SECURITY.md` once SA-D1 is decided.
+- [ ] **SA-15 (S) — Container image scan.** Scan the released image for known vulnerabilities in the release workflow, and
+  fail the release on a critical finding that has a fix.
+- [ ] **SA-16 (S) — Assurance checklist rows.** Add SA-O1 to SA-O9 to `governance/assurance-checklist.md`, each marked
+  **open**, with owner and what the project supplies.
+- [ ] **SA-17 (M) — Health-check scope for testers.** A test plan for a CHECK or CREST tester covering role separation
+  between plan roles, finance, administrators, guests, read-only and capture tokens, and supplier support grants.
+- [ ] **SA-18 (S) — Processor inputs to the DPIA.** A processor section in `governance/dpia.md` covering hosting location,
+  sub-processors, support access and exit, for an NHS Wales DPO to adapt.
+- [ ] **SA-19 (S, owner) — Decide SA-D1 to SA-D4.**
+- [ ] **SA-20 (S) — Read the sources.** Read the current WIGTK, WHC (2017) 025, the NHS Wales Records Management Code of
+  Practice and an NHS Wales supplier contract template, and correct the spec where the briefing was wrong.
+
 ## Coverage work in progress (2026-11-20)
 
 - [ ] **CQ-coverage-95 — Raise service-workspace line coverage to at least 95%.** The authoritative database run is

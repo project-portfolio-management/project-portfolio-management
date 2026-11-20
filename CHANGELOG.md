@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (supplier assurance requirements, proposed)
+
+- New proposed spec [`spec/supplier-assurance.md`](spec/supplier-assurance.md) and tasks SA-1 to SA-20. It covers what a
+  supplier hosting and supporting this service for NHS Wales needs: twelve software requirements (SA-R1 to SA-R12), nine
+  supplier obligations outside the code (SA-O1 to SA-O9), a shared-responsibility matrix and four owner decisions. It
+  maps the source briefing's HR categories (sickness, disciplinary, pay) onto the nearest data this service holds,
+  which are per-person cost rates and time.
+  **Not done:** nothing is built. The source was a secondary briefing, and no NHS Wales document (WIGTK,
+  WHC (2017) 025, the Records Management Code) was read (SA-20). The assurance checklist was not yet extended (SA-16).
+
 ### 20 November (coverage expansion, work in progress)
 
 - Service-workspace database coverage reached a measured **94.11% (50,022/53,154)** with all unit, request and other

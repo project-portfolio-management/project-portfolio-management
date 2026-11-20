@@ -122,3 +122,4 @@ kept whole rather than split across them:
 - **Learning, upskilling and economic viability (proposed):** [learning-economics.md](learning-economics.md).
 - **Product evaluation (proposed):** [product-evaluation.md](product-evaluation.md).
 - **Service management and security reporting (proposed):** [service-management.md](service-management.md).
+- **Supplier assurance for a managed, hosted deployment (proposed; NHS Wales first):** [supplier-assurance.md](supplier-assurance.md).

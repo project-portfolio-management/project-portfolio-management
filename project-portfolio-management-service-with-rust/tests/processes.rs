@@ -282,7 +282,7 @@ async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
         assert!(mine.as_array().unwrap().len() >= 5);
         let running: Value = with!(request.get("/api/process-executions?status=running"), starter).await.json();
         assert!(running.as_array().unwrap().iter().all(|e| e["status"] == "running"));
-        with!(request.get(&format!("/api/process-executions?subject_kind=plan")), starter).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        with!(request.get("/api/process-executions?subject_kind=plan"), starter).await.assert_status(S::UNPROCESSABLE_ENTITY);
         let strangers: Value = with!(request.get("/api/process-executions"), dave).await.json();
         assert!(strangers.as_array().unwrap().is_empty(), "someone else's runs are not in my list");
         let on_plan: Value = with!(request.get(&format!("/api/process-executions?subject_kind=plan&subject_pid={plan}")), dave).await.json();

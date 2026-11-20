@@ -121,16 +121,20 @@ mod tests {
             Weekday::Sun,
         ];
         let names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        for (index, day) in days.into_iter().enumerate() {
-            assert_eq!(day.num_days_from_monday(), index as u32);
-            assert_eq!(day.number_from_monday(), index as u32 + 1);
-            assert_eq!(day.num_days_from_sunday(), (index as u32 + 1) % 7);
-            assert_eq!(day.number_from_sunday(), (index as u32 + 1) % 7 + 1);
+        for ((day, name), index) in days.into_iter().zip(names).zip(0_u8..) {
+            let offset = u32::from(index);
+            assert_eq!(day.num_days_from_monday(), offset);
+            assert_eq!(day.number_from_monday(), offset + 1);
+            assert_eq!(day.num_days_from_sunday(), (offset + 1) % 7);
+            assert_eq!(day.number_from_sunday(), (offset + 1) % 7 + 1);
             assert_eq!(day.succ().pred(), day);
             assert_eq!(day.pred().succ(), day);
-            assert_eq!(Weekday::from_monday_offset(index as i64), day);
-            assert_eq!(day.to_string(), names[index]);
-            assert_eq!(day.to_jiff().to_monday_zero_offset(), index as i8);
+            assert_eq!(Weekday::from_monday_offset(i64::from(index)), day);
+            assert_eq!(day.to_string(), name);
+            assert_eq!(
+                day.to_jiff().to_monday_zero_offset(),
+                i8::try_from(index).unwrap()
+            );
         }
         assert_eq!(Weekday::from_monday_offset(-1), Weekday::Mon);
         assert_eq!(Weekday::from_monday_offset(7), Weekday::Mon);

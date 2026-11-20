@@ -15,6 +15,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (CI fix)
+
+- Main's `API` and `Restore drill` jobs were red. Clippy refused test code added with the coverage work (`usize` casts in
+  `datetime/src/weekday.rs`, raw strings with needless hashes in `domain/src/mspdi.rs`, an item after a statement in
+  `src/relay.rs`, a needless `format!` and a function over 100 lines in the integration tests), now fixed without
+  `allow`. `scripts/test-backup-publication.sh` read a directory's mode with BSD `stat -f` first, which on Linux
+  succeeds with filesystem status, so the GNU form is now tried first.
+  **Not verified:** the backup publication test ran on macOS only; Linux is checked by CI.
+
 ### 20 November (one customer, one database, proposed)
 
 - New proposed requirement SA-R13 in [`spec/supplier-assurance.md`](spec/supplier-assurance.md) and task SA-21. Each

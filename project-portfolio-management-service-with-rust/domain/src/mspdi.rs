@@ -1049,7 +1049,7 @@ mod tests {
 
     #[test]
     fn calendar_exceptions_are_deduplicated_and_bad_entries_are_ignored() {
-        let xml = r#"<Project><CalendarUID>9</CalendarUID><Calendars><Calendar>
+        let xml = r"<Project><CalendarUID>9</CalendarUID><Calendars><Calendar>
           <UID>1</UID><IsBaseCalendar>1</IsBaseCalendar><WeekDays>
             <WeekDay><DayType>1</DayType><DayWorking>1</DayWorking></WeekDay>
             <WeekDay><DayWorking>0</DayWorking></WeekDay>
@@ -1057,7 +1057,7 @@ mod tests {
           </WeekDays><Exceptions>
             <Exception><DayWorking>0</DayWorking><TimePeriod><FromDate>2026-01-03</FromDate><ToDate>2026-01-04</ToDate></TimePeriod></Exception>
             <Exception><DayWorking>0</DayWorking><TimePeriod><FromDate>bad</FromDate></TimePeriod></Exception>
-          </Exceptions></Calendar></Calendars></Project>"#;
+          </Exceptions></Calendar></Calendars></Project>";
         let doc = roxmltree::Document::parse(xml).unwrap();
         let calendar = calendar_of(doc.root_element()).unwrap();
         assert_eq!(calendar.weekdays, "1111101");
@@ -1249,7 +1249,7 @@ mod tests {
     #[test]
     fn uncommon_constraint_link_baseline_and_fixed_cost_forms_are_explicit() {
         let parsed = parse(
-            r#"<Project><MinutesPerDay>480</MinutesPerDay><Tasks>
+            r"<Project><MinutesPerDay>480</MinutesPerDay><Tasks>
               <Task><UID>1</UID><Name>Start cost</Name><ConstraintType>6</ConstraintType>
                 <Baseline><Number>0</Number></Baseline><FixedCost>12.34</FixedCost><FixedCostAccrual>1</FixedCostAccrual>
                 <PredecessorLink><Type>1</Type></PredecessorLink>
@@ -1258,7 +1258,7 @@ mod tests {
               </Task>
               <Task><UID>2</UID><Name>End cost</Name><FixedCost>5</FixedCost><FixedCostAccrual>2</FixedCostAccrual></Task>
               <Task><UID>3</UID><Name>Spread cost</Name><FixedCost>7</FixedCost><FixedCostAccrual>0</FixedCostAccrual></Task>
-            </Tasks></Project>"#,
+            </Tasks></Project>",
         )
         .unwrap();
         let reasons = parsed

@@ -561,7 +561,6 @@ mod tests {
 
     #[tokio::test]
     async fn composite_requires_the_primary_but_ignores_secondary_failures() {
-        let captured = Arc::new(Mutex::new(Vec::new()));
         struct SharedCapture(Arc<Mutex<Vec<(String, String)>>>);
         #[async_trait::async_trait]
         impl EventSink for SharedCapture {
@@ -579,6 +578,7 @@ mod tests {
             }
         }
 
+        let captured = Arc::new(Mutex::new(Vec::new()));
         let sink = CompositeSink::new(
             Box::new(SharedCapture(captured.clone())),
             vec![Box::new(FailingSink), Box::new(LoggingSink)],

@@ -66,6 +66,27 @@ fn resolve_schema<'a>(document: &'a Value, schema: &'a Value) -> &'a Value {
         .unwrap_or(schema)
 }
 
+/// The schema's JSON type, ignoring `null`; an untyped schema with properties is an object.
+fn schema_kind(schema: &Value) -> &str {
+    schema
+        .get("type")
+        .and_then(|value| match value {
+            Value::String(kind) => Some(kind.as_str()),
+            Value::Array(kinds) => kinds
+                .iter()
+                .filter_map(Value::as_str)
+                .find(|kind| *kind != "null"),
+            _ => None,
+        })
+        .unwrap_or_else(|| {
+            if schema.get("properties").is_some() {
+                "object"
+            } else {
+                "string"
+            }
+        })
+}
+
 fn minimal_json(document: &Value, schema: &Value, depth: usize) -> Value {
     if depth > 12 {
         return Value::Null;
@@ -98,24 +119,7 @@ fn minimal_json(document: &Value, schema: &Value, depth: usize) -> Value {
     {
         return minimal_json(document, part, depth + 1);
     }
-    let kind = schema
-        .get("type")
-        .and_then(|value| match value {
-            Value::String(kind) => Some(kind.as_str()),
-            Value::Array(kinds) => kinds
-                .iter()
-                .filter_map(Value::as_str)
-                .find(|kind| *kind != "null"),
-            _ => None,
-        })
-        .unwrap_or_else(|| {
-            if schema.get("properties").is_some() {
-                "object"
-            } else {
-                "string"
-            }
-        });
-    match kind {
+    match schema_kind(schema) {
         "object" => {
             let properties = schema
                 .get("properties")

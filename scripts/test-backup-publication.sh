@@ -77,7 +77,7 @@ sleep 1
   fail "an incomplete backup became visible"
 for partial in "$WORK"/backups/.ppm-backup-*; do
   [ -d "$partial" ] || continue
-  mode="$(stat -f '%Lp' "$partial" 2>/dev/null || stat -c '%a' "$partial")"
+  mode="$(stat -c '%a' "$partial" 2>/dev/null || stat -f '%Lp' "$partial")"
   [ "$mode" = 700 ] || fail "$partial has mode $mode instead of 700"
 done
 

@@ -99,14 +99,27 @@ pub fn min_tasks_from_env() -> usize {
 /// tick rather than aborting the loop — a metrics refresh must never be
 /// able to take the service down.
 pub async fn refresh_once(ctx: &AppContext) -> Result<tba::FlowMetricSet> {
-    let as_of = crate::datetime::Timestamp::now();
-    let as_of_ms = as_of.timestamp_millis();
-    let classes = tba::classes_in_force();
     let limits = crate::engineering::parse_wip_limits(
         std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMITS")
             .ok()
             .as_deref(),
     );
+    refresh_with(ctx, limits.as_ref()).await
+}
+
+/// [`refresh_once`] with the WIP limits given (`None`: no limits), so a test need not change the process's
+/// environment.
+///
+/// # Errors
+///
+/// As [`refresh_once`].
+pub async fn refresh_with(
+    ctx: &AppContext,
+    limits: Option<&std::collections::BTreeMap<String, usize>>,
+) -> Result<tba::FlowMetricSet> {
+    let as_of = crate::datetime::Timestamp::now();
+    let as_of_ms = as_of.timestamp_millis();
+    let classes = tba::classes_in_force();
 
     // Only the pid is used. No `ORDER BY`, as before: which plans a cap of 1000 reaches is the table's order.
     let plans: Vec<uuid::Uuid> =
@@ -135,7 +148,7 @@ pub async fn refresh_once(ctx: &AppContext) -> Result<tba::FlowMetricSet> {
         // Columns over their cap. The per-column detail is deliberately
         // not exported (see `tba::flow_metric_rows`); the count is the
         // alertable fact.
-        let columns_over_limit = limits.as_ref().map_or(0, |limits| {
+        let columns_over_limit = limits.map_or(0, |limits| {
             crate::engineering::TASK_STATUSES
                 .iter()
                 .filter(|status| {
@@ -171,6 +184,14 @@ pub fn spawn(ctx: &AppContext) {
         );
         return;
     };
+    // Detached: the loop runs for the life of the process.
+    drop(spawn_every(ctx, period));
+}
+
+/// Refresh every `period`, the first time at once. Runs until the returned task is aborted; dropping the handle
+/// leaves it running.
+#[must_use = "the handle is how a caller stops the loop; drop it to leave the loop running"]
+pub fn spawn_every(ctx: &AppContext, period: Duration) -> tokio::task::JoinHandle<()> {
     let ctx = ctx.clone();
     tokio::spawn(async move {
         let mut ticker = tokio::time::interval(period);
@@ -191,7 +212,7 @@ pub fn spawn(ctx: &AppContext) {
                 Err(error) => tracing::error!(%error, "flow metrics refresh failed"),
             }
         }
-    });
+    })
 }
 
 #[cfg(test)]

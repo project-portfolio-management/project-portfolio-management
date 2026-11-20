@@ -150,3 +150,48 @@ async fn the_ticker_starts_only_when_configured_and_one_pass_runs_every_sweep() 
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn flow_metrics_read_plans_with_tasks_and_count_a_column_over_its_limit() {
+    use project_portfolio_management::flow_metrics::{refresh_with, spawn_every};
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan = |name: &'static str| {
+            let request = &request;
+            async move {
+                let plan: serde_json::Value = request
+                    .post("/api/plans")
+                    .json(&serde_json::json!({ "kind": "Project", "name": name }))
+                    .await
+                    .json();
+                plan["pid"].as_str().expect("pid").to_string()
+            }
+        };
+        let busy = plan("Flow with tasks").await;
+        let _empty = plan("Flow without tasks").await;
+        for title in ["One", "Two", "Three"] {
+            request
+                .post(&format!("/api/plans/{busy}/tasks"))
+                .json(&serde_json::json!({ "title": title }))
+                .await
+                .assert_status_success();
+        }
+
+        // With no limits, and with a cap of one on the column the three tasks sit in: both passes succeed and
+        // read the same plans.
+        let unlimited = refresh_with(&ctx, None).await.unwrap();
+        let limits = std::collections::BTreeMap::from([("todo".to_string(), 1)]);
+        let capped = refresh_with(&ctx, Some(&limits)).await.unwrap();
+        assert_eq!(unlimited.suppressed_plans, capped.suppressed_plans);
+        assert_eq!(unlimited.rows.len(), capped.rows.len());
+
+        // The loop refreshes at once on start, then every period.
+        let ticking = spawn_every(&ctx, std::time::Duration::from_millis(20));
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        assert!(!ticking.is_finished(), "the loop keeps running");
+        ticking.abort();
+    })
+    .await;
+}

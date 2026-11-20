@@ -565,6 +565,22 @@ mod tests {
         );
         assert_eq!(r.len(), 3);
         assert!(csv_parse("a,\"unterminated").is_err());
+        assert_eq!(
+            csv_parse("last,row").unwrap()[0].cells,
+            ["last".to_string(), "row".to_string()],
+            "a final record needs no newline"
+        );
+    }
+
+    #[test]
+    fn blank_jsonl_lines_and_csv_edge_shapes_are_explicit() {
+        let rows = decode_jsonl("\n  \n{\"name\":\"kept\"}\n");
+        assert_eq!((rows.len(), rows[0].source_line), (1, 3));
+        assert_eq!(decode_csv("").unwrap_err(), "the CSV has no header row");
+
+        let rows = decode_csv("name,owner_org_name\nAlpha,{not-json}\n").unwrap();
+        let (_, plan) = rows.into_iter().next().unwrap().result.unwrap();
+        assert_eq!(plan.owner_org_name.as_deref(), Some("{not-json}"));
     }
 
     #[test]

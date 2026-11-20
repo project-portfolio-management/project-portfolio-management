@@ -659,4 +659,82 @@ mod tests {
         assert_eq!(d[2].text, "Adults first");
         assert_eq!(list("National, SBUHB, "), ["National", "SBUHB"]);
     }
+
+    #[test]
+    fn malformed_missing_and_duplicate_spreadsheet_rows_are_all_accounted_for() {
+        let index = "Sheet,Enabled,Title,Vision,Service description,Category,Last updated,Title (cy),Vision (cy),Service description (cy),Family,Product Lead\n\
+,Yes,No sheet,,,,,,,,,\n\
+Template,Yes,Template,,,,,,,,,\n\
+Alpha,Yes,Alpha title,Vision,Service,New category,not-a-date,Teitl,Gweledigaeth,Gwasanaeth,Fam,Person\n\
+ALPHA,No,Duplicate,,,,,,,,,\n\
+!!!,No,No slug,,,,,,,,,\n\
+BadTab,No,Bad tab,,,,,,,,,\n\
+Good,No,Good title,,,,2026-01-02,,,,,\n";
+        let good_tab = "Title,Description,Outcome,Horizon,Phase,Labels,Organisations,Details,Item ID,Title (cy),Description (cy),Outcome (cy),Phase (cy),Labels (cy),Details (cy)\n\
+,,,,,,,,,,,,,,\n\
+One,Description,Outcome,Soon,Discovery,one two,KNOWN unknown,root,k7q2xwbn,Un,Disgrifiad,Canlyniad,Cyfnod,un dau,- manylion\n\
+Two,,,,,,,,k7q2xwbn,,,,,,\n";
+        let input = Input {
+            index: index.to_string(),
+            tabs: BTreeMap::from([
+                ("BadTab".to_string(), "Title\n\"unclosed".to_string()),
+                ("Good".to_string(), good_tab.to_string()),
+                ("Unread".to_string(), "Title\nElsewhere".to_string()),
+            ]),
+            known_codes: vec!["known".into()],
+            known_categories: vec![],
+        };
+
+        let report = dry_run(&input);
+        assert_eq!(report["totals"]["index_rows"], 7);
+        assert_eq!(report["totals"]["roadmaps_mapped"], 3);
+        assert!(
+            report["tabs_not_in_the_index"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("Unread"))
+        );
+        let alpha = &report["roadmaps"][2];
+        assert!(
+            alpha["problems"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p.as_str().unwrap().contains("not a date"))
+        );
+        assert_eq!(alpha["items"]["error"], "no file for the tab `Alpha`");
+        let bad = &report["roadmaps"][5];
+        assert!(
+            bad["items"]["error"]
+                .as_str()
+                .unwrap()
+                .contains("cannot be read")
+        );
+        let good = &report["roadmaps"][6];
+        assert_eq!(good["items"]["skipped"], 1);
+        assert_eq!(good["items"]["unplaced"], 2);
+        assert_eq!(
+            good["items"]["each"][2]["public_id"], "new",
+            "duplicate ids are not retained"
+        );
+
+        let parsed = parse(&input).unwrap();
+        assert_eq!(parsed.len(), 3);
+        assert!(parsed[0].items.as_ref().unwrap_err().contains("no file"));
+        assert!(
+            parsed[1]
+                .items
+                .as_ref()
+                .unwrap_err()
+                .contains("cannot be read")
+        );
+        let items = parsed[2].items.as_ref().unwrap();
+        assert_eq!(items.len(), 2);
+        assert_eq!(parsed[2].items_skipped, vec![(2, "no title")]);
+        assert!(items[0].welsh.contains_key("details"));
+
+        let empty = Input::default();
+        assert!(dry_run(&empty)["error"].as_str().unwrap().contains("index"));
+        assert!(parse(&empty).is_err());
+    }
 }

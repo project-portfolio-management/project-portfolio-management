@@ -1468,3 +1468,167 @@ pub fn routes() -> Routes {
         .add("/automations/milestones/sweep", post(sweep_milestones))
         .add("/scheduled-actions/{pid}", delete(cancel_scheduled_action))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn context() -> AppContext {
+        let environment = axa::Environment::Test;
+        let config = axa::config::Config::from_env(&environment, &axa::config::Defaults::default())
+            .expect("test configuration");
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://nobody:nothing@127.0.0.1:1/none")
+            .expect("lazy pool");
+        AppContext::new(environment, pool, config)
+    }
+
+    fn fact(kind: &str, from: Option<&str>, to: Option<&str>) -> rules::TriggerFact {
+        rules::TriggerFact {
+            kind: kind.to_string(),
+            plan_pid: Uuid::nil(),
+            from_status: from.map(str::to_string),
+            to_status: to.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn action_strings_are_trimmed_and_blank_values_are_absent() {
+        assert_eq!(
+            action_str(&serde_json::json!({"x": " value "}), "x").as_deref(),
+            Some("value")
+        );
+        assert_eq!(action_str(&serde_json::json!({"x": "  "}), "x"), None);
+        assert_eq!(action_str(&serde_json::json!({"x": 1}), "x"), None);
+        assert_eq!(action_str(&serde_json::json!({}), "x"), None);
+    }
+
+    #[test]
+    fn timeframe_dates_require_two_parseable_dates() {
+        assert!(
+            shift_dates(&fact(
+                "plan_timeframe_changed",
+                Some("2026-01-01"),
+                Some("2026-01-02")
+            ))
+            .is_some()
+        );
+        assert!(shift_dates(&fact("plan_timeframe_changed", None, Some("2026-01-02"))).is_none());
+        assert!(
+            shift_dates(&fact(
+                "plan_timeframe_changed",
+                Some("bad"),
+                Some("2026-01-02")
+            ))
+            .is_none()
+        );
+        assert!(
+            shift_dates(&fact(
+                "plan_timeframe_changed",
+                Some("2026-01-01"),
+                Some("bad")
+            ))
+            .is_none()
+        );
+    }
+
+    #[tokio::test]
+    async fn malformed_stored_actions_fail_or_skip_before_touching_the_database() {
+        let ctx = context();
+        let pid = Uuid::nil();
+
+        assert_eq!(
+            act_assign(&ctx, "rule", &serde_json::json!({}), "task", pid)
+                .await
+                .0,
+            "failed"
+        );
+        assert_eq!(
+            act_assign(
+                &ctx,
+                "rule",
+                &serde_json::json!({"assignee_ref":"person:x"}),
+                "plan",
+                pid
+            )
+            .await
+            .0,
+            "skipped"
+        );
+        assert_eq!(
+            act_set_task_status(&ctx, &serde_json::json!({}), "task", pid)
+                .await
+                .0,
+            "failed"
+        );
+        assert_eq!(
+            act_set_task_status(&ctx, &serde_json::json!({"status":"done"}), "plan", pid)
+                .await
+                .0,
+            "skipped"
+        );
+        assert_eq!(
+            act_notify(&ctx, "rule", &serde_json::json!({}), "task", pid)
+                .await
+                .0,
+            "failed"
+        );
+        assert_eq!(
+            act_schedule(&ctx, pid, &serde_json::json!({}), "task", pid, None)
+                .await
+                .0,
+            "failed"
+        );
+        assert_eq!(
+            act_schedule(
+                &ctx,
+                pid,
+                &serde_json::json!({"action_kind":"notify"}),
+                "task",
+                pid,
+                None
+            )
+            .await
+            .0,
+            "failed"
+        );
+
+        let ordinary = fact("task_moved", None, None);
+        assert_eq!(
+            act_propose_reschedule(&ctx, &serde_json::json!({}), &ordinary)
+                .await
+                .0,
+            "skipped"
+        );
+        assert_eq!(
+            act_shift_dependents(&ctx, pid, 0, &ordinary, None).await.0,
+            "skipped"
+        );
+        let changed = fact(
+            "plan_timeframe_changed",
+            Some("2026-01-01"),
+            Some("2026-01-02"),
+        );
+        assert_eq!(
+            act_propose_reschedule(&ctx, &serde_json::json!({}), &changed)
+                .await
+                .0,
+            "failed"
+        );
+        let bad_dates = fact("plan_timeframe_changed", Some("bad"), Some("worse"));
+        assert_eq!(
+            act_propose_reschedule(
+                &ctx,
+                &serde_json::json!({"recipient_ref":"person:x"}),
+                &bad_dates
+            )
+            .await
+            .0,
+            "skipped"
+        );
+        assert_eq!(
+            act_shift_dependents(&ctx, pid, 0, &bad_dates, None).await.0,
+            "skipped"
+        );
+    }
+}

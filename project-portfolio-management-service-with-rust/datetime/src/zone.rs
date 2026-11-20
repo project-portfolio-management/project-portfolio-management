@@ -209,6 +209,7 @@ impl FromStr for Tz {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::hash::{DefaultHasher, Hash, Hasher};
 
     #[test]
     fn names_match_exactly() {
@@ -239,5 +240,45 @@ mod tests {
             (format!("{a:?}"), format!("{b:?}")),
             ("2026-11-01T08:30:00Z".into(), "2026-11-01T09:30:00Z".into())
         );
+    }
+
+    #[test]
+    fn local_results_and_zone_value_semantics_cover_every_shape() {
+        let one = LocalResult::Single(2);
+        assert_eq!(one.single(), Some(2));
+        assert_eq!(one.earliest(), Some(2));
+        assert_eq!(one.latest(), Some(2));
+        let fold = LocalResult::Ambiguous(1, 3);
+        assert_eq!(fold.single(), None);
+        assert_eq!(fold.earliest(), Some(1));
+        assert_eq!(fold.latest(), Some(3));
+        let none = LocalResult::<i32>::None;
+        assert_eq!(none.single(), None);
+        assert_eq!(none.earliest(), None);
+        assert_eq!(none.latest(), None);
+
+        let london: Tz = "Europe/London".parse().unwrap();
+        let cached = Tz::named("Europe/London").unwrap();
+        assert_eq!(london, cached);
+        assert_eq!(format!("{london:?}"), "Europe/London");
+        assert_eq!(london.to_string(), "Europe/London");
+        assert_eq!(london.name(), "Europe/London");
+        assert_eq!(london.to_jiff().iana_name(), Some("Europe/London"));
+        assert_eq!(
+            "not/a-zone".parse::<Tz>().unwrap_err().to_string(),
+            "failed to parse timezone"
+        );
+
+        let winter: Timestamp = "2026-01-15T12:00:00Z".parse().unwrap();
+        let summer: Timestamp = "2026-07-15T12:00:00Z".parse().unwrap();
+        assert_eq!(london.offset_seconds_at(winter), 0);
+        assert_eq!(london.offset_seconds_at(summer), 3600);
+        assert_eq!(london.at(summer).hour(), 13);
+
+        let mut first = DefaultHasher::new();
+        let mut second = DefaultHasher::new();
+        london.hash(&mut first);
+        cached.hash(&mut second);
+        assert_eq!(first.finish(), second.finish());
     }
 }

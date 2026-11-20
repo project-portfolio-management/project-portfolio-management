@@ -529,4 +529,31 @@ mod tests {
             Err(JointError::Schedule(RunError::Cycle(_)))
         ));
     }
+
+    #[test]
+    fn joint_work_cap_and_finish_text_are_explicit() {
+        let (nodes, edges) = chain();
+        let lines =
+            vec![line(10, 100, 100, 100); cost_risk::MAX_WORK / schedule_risk::MAX_ITERATIONS + 1];
+        assert!(matches!(
+            simulate(
+                &nodes,
+                &edges,
+                &WorkCalendar::mon_fri(),
+                &[],
+                &HashMap::new(),
+                &[],
+                &lines,
+                &[],
+                0,
+                Params {
+                    iterations: schedule_risk::MAX_ITERATIONS,
+                    ..Params::default()
+                }
+            ),
+            Err(JointError::Schedule(RunError::TooMuchWork(_)))
+        ));
+        assert_eq!(finish_text(None), None);
+        assert_eq!(finish_text(Some(monday())).as_deref(), Some("2026-10-05"));
+    }
 }

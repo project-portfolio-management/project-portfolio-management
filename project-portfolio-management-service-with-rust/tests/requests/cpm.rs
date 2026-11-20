@@ -1859,6 +1859,30 @@ async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
         let h: Value = request.get("/api/resource-plan/hours?from=2026-10-05&to=2026-10-11").await.json();
         let plan_a = h["plans"].as_array().unwrap().iter().find(|x| x["plan_pid"] == a.as_str()).cloned().unwrap();
         assert_eq!(plan_a["planned_minutes"], 7 * 450, "the organization's day length");
+
+        for url in [
+            "/api/resource-plan?group_by=nope",
+            "/api/resource-plan?from=2027-01-02&to=2027-01-01",
+            "/api/resource-plan?from=2000-01-01&to=2026-01-01",
+        ] {
+            request.get(url).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        }
+        let scenario: Value = request
+            .post("/api/scenarios")
+            .json(&json!({ "name": "Only Apollo", "plan_pids": [a] }))
+            .await
+            .json();
+        let scoped: Value = request
+            .get(&format!("/api/resource-plan?{qs}&scenario={}", scenario["pid"].as_str().unwrap()))
+            .await
+            .json();
+        assert_eq!(scoped["scope"]["kind"], "scenario");
+
+        request.put("/api/resource-roles").json(&json!({ "person_ref": alice, "role": "x".repeat(61) })).await.assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        request.put("/api/resource-roles").json(&json!({ "person_ref": alice, "role": "lead" })).await.assert_status_ok();
+        request.put("/api/resource-roles").json(&json!({ "person_ref": alice, "role": null })).await.assert_status_ok();
+        let roles: Value = request.get("/api/resource-roles").await.json();
+        assert!(roles.as_array().unwrap().iter().all(|r| r["person_ref"] != alice));
     })
     .await;
 }
@@ -2925,7 +2949,7 @@ async fn assignments_follow_their_rule_and_work_is_spread_exactly_over_working_d
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
     super::isolate_search_index();
-    request::<App, _, _>(|request, _ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         use axum::http::StatusCode as S;
         let who = "person:00000000-0000-4000-8000-0000000000b1";
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Costed" })).await.json();
@@ -2965,8 +2989,8 @@ async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
             "title": "Build", "assignee_ref": who, "start_date": "2026-10-05", "duration_days": 3 })).await.json();
         let tp = task["pid"].as_str().unwrap().to_string();
         request.put(&format!("/api/plans/{p}/tasks/{tp}/assignment")).json(&json!({ "units_percent": 100 })).await.assert_status_ok();
-        request.post(&format!("/api/plans/{p}/tasks/{tp}/costs")).json(&json!({
-            "kind": "material", "description": "Timber", "amount_minor": 100, "currency": "gbp", "accrual": "prorated" })).await.assert_status_ok();
+        let timber: Value = request.post(&format!("/api/plans/{p}/tasks/{tp}/costs")).json(&json!({
+            "kind": "material", "description": "Timber", "amount_minor": 100, "currency": "gbp", "accrual": "prorated" })).await.json();
         request.post(&format!("/api/plans/{p}/tasks/{tp}/costs")).json(&json!({
             "kind": "fixed", "description": "x", "amount_minor": 0, "currency": "GBP", "accrual": "start" })).await.assert_status(S::UNPROCESSABLE_ENTITY);
         let plan_cost: Value = request.get(&format!("/api/plans/{p}/cost-plan?period=day")).await.json();
@@ -2976,6 +3000,33 @@ async fn cost_rates_price_work_by_date_and_never_rewrite_an_actual() {
         assert_eq!(gbp["fixed"]["total_minor"], 100, "the prorated expense sums exactly");
         assert_eq!(gbp["total"]["total_minor"], 128_100);
         assert!(plan_cost["unrated"].as_array().unwrap().is_empty());
+        let costs: Value = request.get(&format!("/api/plans/{p}/tasks/{tp}/costs")).await.json();
+        assert_eq!(costs["costs"].as_array().unwrap().len(), 1);
+
+        // Role-owned tables are the fallback when the person has no own table;
+        // both owner filters and the soft-delete expense path are observable.
+        let role_person = "person:00000000-0000-4000-8000-0000000000b3";
+        sqlx::query("INSERT INTO resource_roles (pid, person_ref, role) VALUES ($1, $2, $3)")
+            .bind(uuid::Uuid::new_v4())
+            .bind(role_person)
+            .bind("Engineer")
+            .execute(project_portfolio_management::db::pool(&ctx))
+            .await
+            .unwrap();
+        let role_table: Value = request.post("/api/cost-rate-tables").json(&json!({
+            "name": "standard", "role": " Engineer ", "currency": "EUR" })).await.json();
+        request.post(&format!("/api/cost-rate-tables/{}/rates", role_table["pid"].as_str().unwrap()))
+            .json(&json!({ "effective_from": "2026-01-01", "per_hour_minor": 4200 }))
+            .await.assert_status_ok();
+        let role_lookup: Value = request.get(&format!(
+            "/api/cost-rates/lookup?person_ref={role_person}&date=2026-10-06"
+        )).await.json();
+        assert_eq!((role_lookup["rate"]["source"].as_str(), role_lookup["rate"]["currency"].as_str()), (Some("role"), Some("EUR")));
+        assert_eq!(request.get("/api/cost-rate-tables?role=Engineer").await.json::<Value>()["tables"].as_array().unwrap().len(), 1);
+        assert_eq!(request.get(&format!("/api/cost-rate-tables?person_ref={who}")).await.json::<Value>()["tables"].as_array().unwrap().len(), 1);
+
+        request.delete(&format!("/api/plans/{p}/tasks/{tp}/costs/{}", timber["pid"].as_str().unwrap())).await.assert_status_ok();
+        request.delete(&format!("/api/plans/{p}/tasks/{tp}/costs/{}", timber["pid"].as_str().unwrap())).await.assert_status(S::NOT_FOUND);
 
         // Time entries are priced once, with their rate stored; a later rate does not rewrite them.
         let entry: Value = request.post(&format!("/api/plans/{p}/time-entries")).json(&json!({

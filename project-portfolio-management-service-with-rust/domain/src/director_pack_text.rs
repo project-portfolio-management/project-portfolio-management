@@ -421,6 +421,103 @@ mod tests {
     }
 
     #[test]
+    fn every_optional_section_and_fallback_is_rendered() {
+        let meta = json!({
+            "period": "2026-11", "audience": "directors", "version": true,
+            "status": "issued", "cut_off": "cut", "issued_at": "now",
+            "change_note": "Reissued"
+        });
+        let body = json!({
+            "basis": "Stored facts only",
+            "data_quality": {
+                "plans_included": "two", "plans_left_out_private_or_marked": false,
+                "sections_included": ["funding", 7],
+                "sections_not_yet_built": ["risks", null]
+            },
+            "what_changed": ["A changed", 1],
+            "portfolio_map": {
+                "programmes_total": 2,
+                "groups": [{"aim": "Better care", "programmes": [{
+                    "name": "Alpha", "programme_status": "active", "stage": null,
+                    "phase": "deliver", "confidence": {"value": "amber", "marked_self": true},
+                    "trend": "up"
+                }]}]
+            },
+            "exceptions": {
+                "window_hours": 48,
+                "open": [{"plan":"Alpha","worst_value":"red","decision_needed":"Fund", "owner_role":"SRO","decide_by":"Friday"}],
+                "breached": [{"plan":"Beta","worst_value":"late","decision_needed":"Stop", "owner_role":"Board","decide_by":"Monday"}],
+                "closed_in_period": [{"plan":"Gamma","worst_value":"closed","decision_needed":"None", "owner_role":"PM","decide_by":"Done"}]
+            },
+            "gate_decisions": {
+                "passed": [{"plan":"Alpha","gate":"G1","decided_on":null,"planned_on":"2026-11-01","reason":"Ready"}],
+                "failed": [{"plan":"Beta","gate":"G2","decided_on":"2026-11-02","planned_on":null,"reason":"Evidence"}],
+                "deferred": [{"plan":"Gamma","gate":"G3"}],
+                "paused": [{"plan":"Pause","since":null,"reason":"Capacity","still_held":{"allocations_flagged":2}}],
+                "stopped": [{"plan":"Stop","since":"today","reason":"Value","still_held":{}}]
+            },
+            "funding": {
+                "financial_year":{"label":"2026/27","start":"start","end":"end"},
+                "programmes":[{"name":"Alpha","by_funding_source":[{
+                    "funding_source":"Grant","class":"capex","currency":"GBP",
+                    "budget_minor":null,"spend_minor":100,"variance_minor":-100
+                }],"whole_life_forecast":{"rows":[{
+                    "currency":"JPY","actual_minor":1000,"estimate_at_completion_minor":2000
+                }]}}],
+                "data_quality":{}
+            },
+            "buffer_fever":{"programmes":[
+                {"plan":"Alpha","point":null,"no_fever_chart_point":{"reason":"No chain"}},
+                {"plan":"Beta","point":{"chain_completed_pct":40,"buffer_consumed_pct":50,"zone":"amber","slip_days":2,"buffer_days":4}}
+            ]},
+            "earned_value":{"programmes":[
+                {"name":"Alpha","state":"no_baseline","currencies":[]},
+                {"name":"Beta","currencies":[
+                    {"currency":"GBP","state":"included","totals":{"bac_minor":100,"ev_minor":50,"ac_minor":75},"spi":{"bp":5000},"cpi":{"bp":6667}},
+                    {"currency":"JPY","state":"below","bac_minor":300}
+                ]}
+            ]},
+            "benefits":{"totals":[{"currency":"GBP","recurrence":"annual","classification":"cash", "planned_minor":100,"claimed_minor":50,"validated_minor":25,"unvalidated_claim_minor":25}]},
+            "capacity_heatmap":{"pools":[{"name":"Nurses","cells":[{
+                "month":"2026-11","word":"shortage","shape":"triangle",
+                "demand_fte":2.0,"supply_fte":1.25,"gap_fte":null
+            }]}]},
+            "issues":{}, "change_requests":{}
+        });
+
+        let text = lines(&meta, &body).join("\n");
+        for expected in [
+            "Change note: Reissued",
+            "Sections not yet built: risks.",
+            "status active",
+            "(self-assessed)",
+            "Open: 1",
+            "Breached: 1",
+            "Closed in the period: 1",
+            "Passed: 1",
+            "Failed: 1",
+            "Deferred: 1",
+            "Paused programmes: 1",
+            "Stopped programmes: 1",
+            "budget -",
+            "forecast (JPY)",
+            "no fever-chart point",
+            "zone amber",
+            "Alpha: no baseline",
+            "SPI 5000",
+            "below EVM threshold",
+            "Total GBP annual cash",
+            "Pool Nurses",
+            "demand 2.000",
+            "gap -",
+            "Open issues: -",
+            "Awaiting a decision: -",
+        ] {
+            assert!(text.contains(expected), "missing {expected:?} in:\n{text}");
+        }
+    }
+
+    #[test]
     fn an_empty_body_does_not_panic_and_free_text_cannot_inject_pdf_syntax() {
         let meta =
             json!({ "period": "2026-10", "audience": "a)b", "version": 1, "status": "issued" });

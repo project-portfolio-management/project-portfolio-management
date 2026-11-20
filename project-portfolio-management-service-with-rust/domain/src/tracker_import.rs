@@ -810,6 +810,23 @@ mod tests {
     }
 
     #[test]
+    fn source_tokens_and_every_parse_error_have_stable_operator_text() {
+        assert_eq!(Source::parse("jira"), Some(Source::Jira));
+        assert_eq!(Source::parse("asana"), Some(Source::Asana));
+        assert_eq!(Source::parse("Jira"), None);
+        for error in [
+            ParseError::TooLarge,
+            ParseError::Empty,
+            ParseError::UnclosedQuote,
+            ParseError::TooManyRows,
+            ParseError::TooWide,
+            ParseError::MissingColumns(vec!["id", "name"]),
+        ] {
+            assert!(!error.to_string().is_empty());
+        }
+    }
+
+    #[test]
     fn dates_are_read_in_the_forms_the_exports_use_and_never_guessed() {
         let d = |y, m, day| Date::from_ymd_opt(y, m, day);
         assert_eq!(parse_date("2026-10-15"), d(2026, 10, 15));
@@ -992,6 +1009,17 @@ P-4,Odd,To Do,,31/13/26,,P-9,,,P-99,,,\n";
         let p = parse(Source::Jira, "Issue key,Summary\n,No key\nA-1,\nA-2,Fine\n").unwrap();
         assert_eq!(p.items.len(), 1);
         assert_eq!(p.unmapped.iter().filter(|u| u.what == "row").count(), 2);
+    }
+
+    #[test]
+    fn asana_rows_without_an_id_or_name_are_reported_too() {
+        let parsed = parse(Source::Asana, "Task ID,Name\n,No id\n1,\n2,Fine\n").unwrap();
+        assert_eq!(parsed.items.len(), 1);
+        assert_eq!(
+            parsed.unmapped.iter().filter(|u| u.what == "row").count(),
+            2
+        );
+        assert_eq!(parse_date("1/Jan/26/extra"), None);
     }
 
     #[test]

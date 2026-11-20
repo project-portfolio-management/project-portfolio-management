@@ -1313,8 +1313,9 @@ HIPAA/NHS/GDPR posture for audit and access controls.
   as the code `sink_unavailable`, its text logged. `/events/recent` and
   webhook redelivery read the record; a redelivery of an erased payload is
   `422`. `/metrics.prom` adds `held` and `tampered` to
-  `ppm_event_outbox_rows`. `db truncate` drops and remakes the record, as it
-  refuses `DELETE`. `axa-idempotency` 0.2 holds a lost run's key for its
+  `ppm_event_outbox_rows`. `db truncate` drops and remakes the event record, as it
+  refuses `DELETE`, and deletes the audit record only in a transaction carrying
+  the audit guard's retention authorization. `axa-idempotency` 0.2 holds a lost run's key for its
   whole day (NFR-7); `axa-worker` 0.2 makes `axa_job_acts` when the queue
   connects. Tests: `requests::event_outbox` (each state reached as a relay
   reaches it: delivered, failed by a hung publish, released with who and

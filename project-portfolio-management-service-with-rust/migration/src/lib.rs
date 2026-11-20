@@ -419,6 +419,7 @@ pub async fn status(pool: &PgPool) -> Result<Vec<Status>, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::error::Error as _;
 
     /// Every name the old migrator wrote into `seaql_migrations`, in its order: the bridge must know each one.
     const OLD_NAMES: &str = include_str!("old_names.txt");
@@ -518,5 +519,28 @@ mod tests {
     fn names_are_quoted_as_the_old_migrator_quoted_them() {
         assert_eq!(quoted("plans"), "\"plans\"");
         assert_eq!(quoted("a\"b"), "\"a\"\"b\"");
+    }
+
+    #[test]
+    fn every_runner_error_keeps_its_message_and_source_contract() {
+        let sqlx = Error::from(sqlx::Error::RowNotFound);
+        assert!(sqlx.to_string().contains("no rows"));
+        assert!(sqlx.source().is_some());
+
+        let migrate = Error::from(MigrateError::VersionMissing(99));
+        assert!(migrate.to_string().contains("99"));
+        assert!(migrate.source().is_some());
+
+        let unknown = Error::Unknown(vec!["future_one".into(), "future_two".into()]);
+        assert!(unknown.to_string().contains("future_one, future_two"));
+        assert!(unknown.source().is_none());
+
+        let refused = Error::Refused {
+            name: "m1_test".into(),
+            reason: "cannot undo".into(),
+        };
+        let text = refused.to_string();
+        assert!(text.contains("cannot undo") && text.contains("m1_test"));
+        assert!(refused.source().is_none());
     }
 }

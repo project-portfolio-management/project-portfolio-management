@@ -38,6 +38,7 @@ mod capacity_heatmap;
 mod capture_scope;
 #[path = "change_requests.rs"]
 mod change_request_rights;
+mod cli;
 mod controlled_documents;
 mod coverage_config;
 mod cross_plan;

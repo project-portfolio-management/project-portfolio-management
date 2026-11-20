@@ -138,6 +138,7 @@ async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
 
         // ── definitions ──
         with!(request.post("/api/processes"), starter).json(&json!({ "name": "Sign-off", "steps": [] })).await.assert_status(S::UNPROCESSABLE_ENTITY);
+        with!(request.post("/api/processes"), starter).json(&json!({ "name": "x".repeat(121), "steps": steps(Value::Null) })).await.assert_status(S::UNPROCESSABLE_ENTITY);
         with!(request.post("/api/processes"), starter).json(&json!({ "name": "Sign-off", "steps": [{ "kind": "approve", "person_ref": "bob", "title": "x" }] })).await.assert_status(S::UNPROCESSABLE_ENTITY);
         with!(request.post("/api/processes"), starter).json(&json!({ "steps": steps(Value::Null) })).await.assert_status(S::UNPROCESSABLE_ENTITY);
         let def: Value = with!(request.post("/api/processes"), starter).json(&json!({ "name": "Sign-off", "steps": steps(Value::Null) })).await.json();
@@ -174,13 +175,15 @@ async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
 
         // The process is edited while this run is under way: the run is pinned to version 1.
         assert_eq!(with!(request.put(&format!("/api/processes/{proc}")), dave).json(&json!({ "steps": steps(Value::Null) })).await.status_code(), 403, "only the definer or an admin");
+        let renamed: Value = with!(request.put(&format!("/api/processes/{proc}")), starter).json(&json!({ "name": "Sign-off revised", "steps": steps(Value::Null) })).await.json();
+        assert_eq!(renamed["name"], "Sign-off revised");
         let v2: Value = with!(request.put(&format!("/api/processes/{proc}")), admin).json(&json!({ "steps": [{ "kind": "notify", "person_ref": person(DAVE), "title": "Only a notice now" }] })).await.json();
-        assert_eq!(v2["current_version"], 2);
+        assert_eq!(v2["current_version"], 3);
         let pinned = get_ex(&e1, &starter).await;
         assert_eq!(pinned["version"], 1);
         assert_eq!(pinned["steps"].as_array().unwrap().len(), 4, "the running execution keeps its four steps");
         let fresh: Value = start(&starter).await.json();
-        assert_eq!((fresh["version"].as_i64(), fresh["status"].as_str()), (Some(2), Some("completed")), "a new run uses version 2: one notice, done");
+        assert_eq!((fresh["version"].as_i64(), fresh["status"].as_str()), (Some(3), Some("completed")), "a new run uses the latest version: one notice, done");
 
         // ── the approval is decided: the next step starts ──
         assert_eq!(with!(request.post(&format!("/api/approvals/{ap_pid}/decide")), dave).json(&json!({ "decision": "approved" })).await.status_code(), 403);
@@ -198,6 +201,13 @@ async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
             "2:step_started", "2:step_completed", "3:step_started", "3:step_completed", "-:execution_completed",
         ]);
         assert_eq!(complete(&e1, 2, &carol).await.status_code(), 409, "a finished execution is over");
+        assert_eq!(
+            with!(request.post(&format!("/api/process-executions/{e1}/steps/2/complete")), carol)
+                .json(&json!({ "note": "x".repeat(501) }))
+                .await
+                .status_code(),
+            422
+        );
 
         // ── a rejection ends it, and every step it skips is logged ──
         with!(request.put(&format!("/api/processes/{proc}")), admin).json(&json!({ "steps": steps(Value::Null) })).await.assert_status_ok();
@@ -270,6 +280,9 @@ async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
         with!(request.post(&format!("/api/processes/{proc}/start")), starter).json(&json!({ "subject_kind": "nonsense", "subject_pid": plan })).await.assert_status(S::UNPROCESSABLE_ENTITY);
         let mine: Value = with!(request.get("/api/process-executions"), starter).await.json();
         assert!(mine.as_array().unwrap().len() >= 5);
+        let running: Value = with!(request.get("/api/process-executions?status=running"), starter).await.json();
+        assert!(running.as_array().unwrap().iter().all(|e| e["status"] == "running"));
+        with!(request.get(&format!("/api/process-executions?subject_kind=plan")), starter).await.assert_status(S::UNPROCESSABLE_ENTITY);
         let strangers: Value = with!(request.get("/api/process-executions"), dave).await.json();
         assert!(strangers.as_array().unwrap().is_empty(), "someone else's runs are not in my list");
         let on_plan: Value = with!(request.get(&format!("/api/process-executions?subject_kind=plan&subject_pid={plan}")), dave).await.json();

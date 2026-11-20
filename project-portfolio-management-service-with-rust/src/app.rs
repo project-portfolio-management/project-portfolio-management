@@ -745,9 +745,19 @@ impl App {
                 .execute(crate::db::pool(ctx))
                 .await?;
         }
-        for table in ["merge_records", "audit_logs", "plans"] {
-            Self::delete_all(ctx, table).await?;
-        }
+        Self::delete_all(ctx, "merge_records").await?;
+        // The audit record's database trigger permits deletion only to a transaction that explicitly identifies
+        // itself as retention. `db truncate` is already guarded as a development/test-only destructive command; it
+        // still has to use the record's own narrow authorization rather than disabling the trigger.
+        let mut tx = crate::db::begin(ctx).await?;
+        sqlx::query("SELECT set_config('ppm.retention_purge', 'on', true)")
+            .execute(tx.conn())
+            .await?;
+        sqlx::query("DELETE FROM audit_logs")
+            .execute(tx.conn())
+            .await?;
+        tx.commit().await?;
+        Self::delete_all(ctx, "plans").await?;
         Ok(())
     }
 
@@ -922,5 +932,23 @@ mod tests {
                     .is_ok()
             );
         }
+    }
+
+    #[tokio::test]
+    async fn version_defaults_tls_and_route_registration_are_available_without_io() {
+        assert!(App::app_version().starts_with(env!("CARGO_PKG_VERSION")));
+        let defaults = defaults();
+        assert_eq!(defaults.port, 1241);
+        assert_eq!(defaults.max_connections, 1);
+        install_tls_provider();
+        install_tls_provider();
+        let environment = Environment::Test;
+        let config = ServiceConfig::from_env(&environment, &defaults).unwrap();
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://nobody:nothing@127.0.0.1:1/none")
+            .unwrap();
+        let ctx = AppContext::new(environment, pool, config);
+        let _ = App::routes(&ctx);
+        App::on_shutdown();
     }
 }

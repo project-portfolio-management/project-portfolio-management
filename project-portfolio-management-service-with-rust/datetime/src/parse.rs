@@ -614,4 +614,142 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn field_validation_and_scanners_report_each_error_kind() {
+        let mut parsed = Parsed::default();
+        parsed.set_year(2026).unwrap();
+        assert_eq!(parsed.set_year(2027), Err(IMPOSSIBLE));
+        assert_eq!(parsed.set_year(i64::MAX), Err(OUT_OF_RANGE));
+        assert_eq!(parsed.set_month(0), Err(OUT_OF_RANGE));
+        assert_eq!(parsed.set_day(32), Err(OUT_OF_RANGE));
+        assert_eq!(parsed.set_hour(24), Err(OUT_OF_RANGE));
+        assert_eq!(parsed.set_minute(60), Err(OUT_OF_RANGE));
+        assert_eq!(parsed.set_second(61), Err(OUT_OF_RANGE));
+        assert_eq!(parsed.set_nanosecond(1_000_000_000), Err(OUT_OF_RANGE));
+        assert_eq!(parsed.set_offset(i64::MAX), Err(OUT_OF_RANGE));
+        assert_eq!(Parsed::default().to_date(), Err(NOT_ENOUGH));
+        assert_eq!(Parsed::default().to_time(), Err(NOT_ENOUGH));
+
+        let fraction_without_second = Parsed {
+            hour: Some(1),
+            minute: Some(2),
+            nanosecond: Some(3),
+            ..Parsed::default()
+        };
+        assert_eq!(fraction_without_second.to_time(), Err(NOT_ENOUGH));
+        let invalid_fraction = Parsed {
+            hour: Some(1),
+            minute: Some(2),
+            second: Some(3),
+            nanosecond: Some(1_000_000_000),
+            ..Parsed::default()
+        };
+        assert_eq!(invalid_fraction.to_time(), Err(OUT_OF_RANGE));
+        let invalid_offset = Parsed {
+            year: Some(2026),
+            month: Some(1),
+            day: Some(1),
+            hour: Some(0),
+            minute: Some(0),
+            offset: Some(86_400),
+            ..Parsed::default()
+        };
+        assert_eq!(invalid_offset.to_instant(), Err(OUT_OF_RANGE));
+
+        assert_eq!(number("", 1, 2), Err(TOO_SHORT));
+        assert_eq!(number("x", 1, 2), Err(INVALID));
+        assert_eq!(number("12x", 1, 2), Ok(("x", 12)));
+        assert_eq!(
+            number("999999999999999999999999", 1, usize::MAX),
+            Err(OUT_OF_RANGE)
+        );
+        assert_eq!(nanosecond("123456789999x"), Ok(("x", 123_456_789)));
+        assert_eq!(char("", b':'), Err(TOO_SHORT));
+        assert_eq!(char("x", b':'), Err(INVALID));
+        assert_eq!(char(":x", b':'), Ok("x"));
+    }
+
+    #[test]
+    fn offsets_patterns_and_rfc3339_readers_cover_permissive_and_refused_forms() {
+        assert_eq!(
+            timezone_offset("Zx", |s| char(s, b':'), true, false, false),
+            Ok(("x", 0))
+        );
+        assert_eq!(
+            timezone_offset("+01", |s| char(s, b':'), false, true, false),
+            Err(TOO_SHORT)
+        );
+        assert_eq!(
+            timezone_offset("+01", colon_or_space, false, true, false),
+            Ok(("", 3600))
+        );
+        assert_eq!(
+            timezone_offset("−0130", colon_or_space, false, false, true),
+            Ok(("", -5400))
+        );
+        assert_eq!(
+            timezone_offset("−0130", colon_or_space, false, false, false),
+            Err(INVALID)
+        );
+        assert_eq!(
+            timezone_offset("x0130", colon_or_space, false, false, false),
+            Err(INVALID)
+        );
+        assert_eq!(
+            timezone_offset("", colon_or_space, false, false, false),
+            Err(TOO_SHORT)
+        );
+        assert_eq!(
+            timezone_offset("+x130", colon_or_space, false, false, false),
+            Err(INVALID)
+        );
+        assert_eq!(
+            timezone_offset("+0160", colon_or_space, false, false, false),
+            Err(OUT_OF_RANGE)
+        );
+        assert_eq!(
+            timezone_offset("+01x0", colon_or_space, false, false, false),
+            Err(INVALID)
+        );
+
+        let parsed = strptime(
+            "+2026 03 04 05 06 07.123456789999 +0130 %",
+            "%Y %m %d %H %M %S%.f %#z %%",
+        )
+        .unwrap();
+        assert_eq!(parsed.year, Some(2026));
+        assert_eq!(parsed.nanosecond, Some(123_456_789));
+        assert_eq!(parsed.offset, Some(5400));
+        assert_eq!(strptime("2026", "%Y-%m").unwrap_err(), TOO_SHORT);
+        assert_eq!(strptime("2026/01", "%Y-%m").unwrap_err(), INVALID);
+        assert_eq!(strptime("2026", "%Q").unwrap_err(), BAD_FORMAT);
+        assert_eq!(strptime("2026x", "%Y").unwrap_err(), TOO_LONG);
+
+        assert!(rfc3339_relaxed("2026-1-2t3:4:5 UTC").is_ok());
+        assert!(rfc3339_relaxed("2026-1-2 3:4:5 −0130").is_ok());
+        assert_eq!(rfc3339_relaxed("2026-1-2x3:4:5Z"), Err(INVALID));
+        assert_eq!(rfc3339_relaxed("2026-1-2"), Err(TOO_SHORT));
+        assert_eq!(rfc3339_relaxed("2026-1-2T3:4:5Z trailing"), Err(TOO_LONG));
+
+        assert!(rfc3339_strict("2026-01-02T03:04:05.123456789999+01:30").is_ok());
+        for bad in [
+            "2026-01-02",
+            "x026-01-02T03:04:05Z",
+            "2026/01-02T03:04:05Z",
+            "2026-01/02T03:04:05Z",
+            "2026-01-02X03:04:05Z",
+            "2026-01-02T03-04:05Z",
+            "2026-01-02T03:04-05Z",
+        ] {
+            assert!(rfc3339_strict(bad).is_err(), "{bad}");
+        }
+        assert_eq!(rfc3339_strict("2026-13-02T03:04:05Z"), Err(OUT_OF_RANGE));
+        assert_eq!(
+            rfc3339_strict("2026-01-02T03:04:05+01:60"),
+            Err(OUT_OF_RANGE)
+        );
+        assert_eq!(rfc3339_strict("2026-01-02T03:04:05Zx"), Err(TOO_LONG));
+        assert_eq!(date("2026-01-02 trailing"), Err(TOO_LONG));
+    }
 }

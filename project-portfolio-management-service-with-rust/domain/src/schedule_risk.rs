@@ -769,6 +769,64 @@ mod tests {
     }
 
     #[test]
+    fn parser_degenerate_draw_milestone_and_work_caps_are_explicit() {
+        assert_eq!(
+            Distribution::parse("triangular"),
+            Some(Distribution::Triangular)
+        );
+        assert_eq!(Distribution::parse("pert"), Some(Distribution::Pert));
+        assert_eq!(Distribution::parse("PERT"), None);
+        let mut rng = Rng::new(0);
+        assert_eq!(draw(&mut rng, 4.0, 4.0, 4.0, Distribution::Pert), 4.0);
+        assert_eq!(correlation(&[1.0], &[2.0]), None);
+
+        let milestone = [node(1, 0, true)];
+        let outcome = run(
+            &milestone,
+            &[],
+            &HashMap::new(),
+            &[],
+            Params {
+                iterations: 2,
+                ..Params::default()
+            },
+        );
+        assert_eq!(outcome.tasks[0].source, Source::Milestone);
+
+        let too_many = vec![node(1, 1, true); MAX_WORK / MAX_ITERATIONS + 1];
+        assert!(matches!(
+            simulate(
+                &too_many,
+                &[],
+                &WorkCalendar::mon_fri(),
+                &[],
+                &HashMap::new(),
+                &[],
+                Params {
+                    iterations: MAX_ITERATIONS,
+                    ..Params::default()
+                }
+            ),
+            Err(RunError::TooMuchWork(_))
+        ));
+        assert!(matches!(
+            simulate(
+                &[],
+                &[],
+                &WorkCalendar::mon_fri(),
+                &[],
+                &HashMap::new(),
+                &[],
+                Params {
+                    iterations: 1,
+                    ..Params::default()
+                }
+            ),
+            Err(RunError::NothingScheduled)
+        ));
+    }
+
+    #[test]
     fn pert_stays_nearer_the_likely_value_than_triangular() {
         let nodes = vec![node(1, 10, true)];
         let est = estimates(&[(1, 2, 30)]);

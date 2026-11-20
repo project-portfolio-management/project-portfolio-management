@@ -113,6 +113,8 @@ no handler maps answers `409`, and a violated check or not-null constraint `422`
 the process's own `APP_ENV` and the one the command names must allow it. axa's parser (`cli::parse`, and `Cli::parse` since 0.6) refuses
 them, exiting `1` before the service connects to anything, so `bin/main.rs` must read its arguments through axa. Rollback in production
 is a restore (`operations/upgrade-and-migration.md`).
+`db truncate` keeps the database's audit-record trigger enabled and identifies only its audit deletion transaction with
+the trigger's transaction-local retention setting; it must complete without weakening the production guard.
 
 The three health routes are axa's and follow Kubernetes' probes. `/_health/live` asks nothing. `/_health/ready` asks the database,
 the queue and the cache, names what failed in a `503`, gives each check a time limit, reuses one answer for 5 seconds, because the

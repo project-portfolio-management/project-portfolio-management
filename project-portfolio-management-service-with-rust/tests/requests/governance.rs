@@ -111,6 +111,14 @@ async fn intake_pipeline_promotes_into_the_registry() {
             .json(&json!({ "title": "X", "kind_target": "initiatives" }))
             .await;
         assert_eq!(bad.status_code(), 422);
+        for body in [
+            json!({ "title": "", "kind_target": "projects" }),
+            json!({ "title": "Bad sponsor", "kind_target": "projects", "sponsor_ref": "email:nobody@example.invalid" }),
+            json!({ "title": "Missing currency", "kind_target": "projects", "requested_minor": 1 }),
+            json!({ "title": "Long tradeoff", "kind_target": "projects", "tradeoff": "x".repeat(2001) }),
+        ] {
+            assert_eq!(request.post("/api/proposals").json(&body).await.status_code(), 422, "{body}");
+        }
         let created: Value = request
             .post("/api/proposals")
             .json(&a_proposal("Website replatform"))
@@ -118,6 +126,18 @@ async fn intake_pipeline_promotes_into_the_registry() {
             .json();
         assert_eq!(created["status"], "draft");
         let pid = created["pid"].as_str().expect("pid").to_string();
+
+        let mut edited_body = a_proposal("Website replatform v2");
+        edited_body["summary"] = json!("Updated summary");
+        edited_body["strategic_rationale"] = json!("Reduce operational risk");
+        edited_body["external_ask"] = json!(true);
+        edited_body["tradeoff"] = json!("Pause the legacy refresh");
+        let edited: Value = request
+            .put(&format!("/api/proposals/{pid}"))
+            .json(&edited_body)
+            .await
+            .json();
+        assert_eq!((edited["title"].as_str(), edited["external_ask"].as_bool()), (Some("Website replatform v2"), Some(true)));
 
         // Promote straight from draft is refused (pipeline order).
         assert_eq!(
@@ -155,7 +175,7 @@ async fn intake_pipeline_promotes_into_the_registry() {
         assert_eq!(promoted["status"], "promoted");
         let item_pid = promoted["plan_pid"].as_str().expect("plan pid");
         let item: Value = request.get(&format!("/api/plans/{item_pid}")).await.json();
-        assert_eq!(item["name"], "Website replatform");
+        assert_eq!(item["name"], "Website replatform v2");
         assert_eq!(item["kind"], "Project");
 
         // Promoting twice is refused; the proposal records the mint.
@@ -317,6 +337,26 @@ async fn risks_score_and_escalate() {
         assert_eq!(materialized["status"], "materialized");
         assert_eq!(request.post(&escalate).await.status_code(), 422);
         let low_pid = low["pid"].as_str().unwrap();
+        assert_eq!(
+            request
+                .put(&format!("/api/plans/{pid}/risks/{low_pid}"))
+                .json(&json!({ "status": "vanished", "mitigation": "x".repeat(2001) }))
+                .await
+                .status_code(),
+            422
+        );
+        let revised: Value = request
+            .put(&format!("/api/plans/{pid}/risks/{low_pid}"))
+            .json(&json!({ "mitigation": "Monitor weekly", "review_date": "2027-01-15" }))
+            .await
+            .json();
+        assert_eq!(
+            (
+                revised["mitigation"].as_str(),
+                revised["review_date"].as_str()
+            ),
+            (Some("Monitor weekly"), Some("2027-01-15"))
+        );
         let closed: Value = request
             .put(&format!("/api/plans/{pid}/risks/{low_pid}"))
             .json(&json!({ "status": "closed" }))
@@ -348,6 +388,20 @@ async fn budgets_track_variance_and_the_summary_aggregates() {
                             "currency": "pounds", "planned_minor": 100 }))
             .await;
         assert_eq!(bad_currency.status_code(), 422);
+        for body in [
+            json!({ "category": "capex", "description": "", "currency": "GBP", "planned_minor": 100 }),
+            json!({ "category": "capex", "description": "x", "currency": "GBP", "planned_minor": -1 }),
+            json!({ "category": "capex", "description": "x", "currency": "GBP", "planned_minor": 1,
+                    "period_start": "2027-02-01", "period_end": "2027-01-01" }),
+            json!({ "category": "capex", "description": "x", "currency": "GBP", "planned_minor": 1,
+                    "gate": "not-a-gate" }),
+        ] {
+            assert_eq!(
+                request.post(&format!("/api/plans/{pid}/budget-lines")).json(&body).await.status_code(),
+                422,
+                "{body}"
+            );
+        }
 
         let line: Value = request
             .post(&format!("/api/plans/{pid}/budget-lines"))

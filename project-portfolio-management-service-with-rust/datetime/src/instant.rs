@@ -863,6 +863,7 @@ impl<'de> serde::Deserialize<'de> for OffsetDateTime {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::hash::{DefaultHasher, Hasher};
 
     #[test]
     fn a_wrong_json_type_names_what_was_expected() {
@@ -906,5 +907,146 @@ mod tests {
             format!("{:?}", t.checked_add_months(Months::new(1)).unwrap()),
             "2024-02-29T10:00:00Z"
         );
+    }
+
+    #[test]
+    fn timestamp_accessors_constructors_arithmetic_and_formats_are_consistent() {
+        let mut t = Timestamp::with_ymd_and_hms(2024, 2, 29, 23, 58, 57).unwrap();
+        t += Duration::milliseconds(654);
+        assert_eq!(
+            (
+                t.year(),
+                t.month(),
+                t.day(),
+                t.hour(),
+                t.minute(),
+                t.second(),
+                t.nanosecond(),
+            ),
+            (2024, 2, 29, 23, 58, 57, 654_000_000)
+        );
+        assert_eq!(t.weekday(), Weekday::Thu);
+        assert_eq!(t.ordinal(), 60);
+        assert_eq!(t.timestamp_subsec_millis(), 654);
+        assert_eq!(t.timestamp_subsec_micros(), 654_000);
+        assert_eq!(t.timestamp_subsec_nanos(), 654_000_000);
+        assert_eq!(t.timestamp_millis(), t.timestamp() * 1000 + 654);
+        assert_eq!(t.timestamp_micros(), t.timestamp() * 1_000_000 + 654_000);
+        assert_eq!(
+            t.timestamp_nanos_opt(),
+            Some(t.timestamp() * 1_000_000_000 + 654_000_000)
+        );
+        assert_eq!(t.naive_utc(), t.naive_local());
+        assert_eq!(t.date_naive(), Date::from_ymd_opt(2024, 2, 29).unwrap());
+        assert_eq!(t.to_rfc3339(), "2024-02-29T23:58:57.654+00:00");
+        assert_eq!(
+            t.to_rfc3339_opts(SecondsFormat::Secs, true),
+            "2024-02-29T23:58:57Z"
+        );
+        assert_eq!(
+            t.format("%Y %m %d %H %M %S %%").to_string(),
+            "2024 02 29 23 58 57 %"
+        );
+        assert_eq!(t.to_jiff(), Timestamp::from_jiff(t.to_jiff()).to_jiff());
+        assert_eq!(
+            t.signed_duration_since(Timestamp::UNIX_EPOCH),
+            t - Timestamp::UNIX_EPOCH
+        );
+
+        let original = t;
+        t -= Duration::milliseconds(654);
+        assert_eq!(t + Duration::milliseconds(654), original);
+        assert_eq!(t + Days::new(1) - Days::new(1), t);
+        assert_eq!(t + Months::new(1) - Months::new(1), t);
+        assert_eq!(t.checked_add_days(Days::new(1)).unwrap().day(), 1);
+        assert_eq!(t.checked_sub_days(Days::new(1)).unwrap().day(), 28);
+        assert_eq!(
+            Timestamp::MAX_UTC.checked_add_signed(Duration::nanoseconds(1)),
+            None
+        );
+        assert_eq!(
+            Timestamp::MIN_UTC.checked_sub_signed(Duration::nanoseconds(1)),
+            None
+        );
+        assert_eq!(Timestamp::MAX_UTC.checked_add_days(Days::new(1)), None);
+        assert_eq!(Timestamp::MIN_UTC.checked_sub_days(Days::new(1)), None);
+        assert_eq!(Timestamp::MAX_UTC.timestamp_nanos_opt(), None);
+
+        assert_eq!(
+            Timestamp::from_timestamp(1, 2)
+                .unwrap()
+                .timestamp_nanos_opt(),
+            Some(1_000_000_002)
+        );
+        assert_eq!(Timestamp::from_timestamp(0, 1_000_000_000), None);
+        assert_eq!(
+            Timestamp::from_timestamp_millis(1500)
+                .unwrap()
+                .timestamp_millis(),
+            1500
+        );
+        assert_eq!(
+            Timestamp::from_timestamp_micros(1500)
+                .unwrap()
+                .timestamp_micros(),
+            1500
+        );
+        assert_eq!(
+            Timestamp::from_timestamp_nanos(-1).timestamp_nanos_opt(),
+            Some(-1)
+        );
+        assert_eq!(Timestamp::default(), Timestamp::UNIX_EPOCH);
+        assert!(Timestamp::now() >= Timestamp::UNIX_EPOCH);
+        assert_eq!(Timestamp::with_ymd_and_hms(2024, 2, 30, 0, 0, 0), None);
+    }
+
+    #[test]
+    fn fixed_offsets_keep_the_instant_across_conversions_order_and_hashing() {
+        let utc: Timestamp = "2026-10-30T03:45:00Z".parse().unwrap();
+        let mut local = OffsetDateTime::from_instant(utc, 19_800).unwrap();
+        assert_eq!(local.offset_local_minus_utc(), 19_800);
+        assert_eq!(local.naive_utc(), utc.naive_utc());
+        assert_eq!(local.hour(), 9);
+        assert_eq!(local.to_rfc3339(), "2026-10-30T09:15:00+05:30");
+        assert_eq!(local.fixed_offset(), local);
+        assert_eq!(local.to_utc(), utc);
+        assert_eq!(Timestamp::from(local), utc);
+        assert_eq!(OffsetDateTime::from(utc), utc.fixed_offset());
+        assert_eq!(jiff::Timestamp::from(utc), utc.to_jiff());
+        assert_eq!(Timestamp::from(utc.to_jiff()), utc);
+        assert_eq!(OffsetDateTime::from_instant(utc, 86_400), None);
+
+        let parsed = OffsetDateTime::parse_from_rfc3339("2026-10-30T09:15:00+05:30").unwrap();
+        let patterned =
+            OffsetDateTime::parse_from_str("2026-10-30 09:15:00+05:30", "%Y-%m-%d %H:%M:%S%#z")
+                .unwrap();
+        assert_eq!(parsed, patterned);
+        assert_eq!(
+            serde_json::from_str::<OffsetDateTime>("\"2026-10-30T09:15:00+05:30\"").unwrap(),
+            parsed
+        );
+        assert_eq!(
+            serde_json::from_str::<Timestamp>("\"2026-10-30T09:15:00+05:30\"").unwrap(),
+            utc
+        );
+
+        local += Duration::seconds(2);
+        local -= Duration::seconds(1);
+        assert_eq!(local - parsed, Duration::seconds(1));
+        assert_eq!(parsed + Duration::seconds(1), local);
+        assert_eq!(local - Duration::seconds(1), parsed);
+        assert_eq!(
+            OffsetDateTime::default(),
+            Timestamp::UNIX_EPOCH.fixed_offset()
+        );
+        assert!(parsed.partial_cmp(&utc).is_some());
+        assert!(utc.partial_cmp(&parsed).is_some());
+
+        let mut first = DefaultHasher::new();
+        let mut second = DefaultHasher::new();
+        parsed.hash(&mut first);
+        utc.fixed_offset().hash(&mut second);
+        assert_eq!(first.finish(), second.finish());
+        assert_eq!(utc.with_timezone(&crate::Tz::UTC), utc.fixed_offset());
     }
 }

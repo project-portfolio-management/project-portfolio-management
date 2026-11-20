@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (coverage expansion, work in progress)
+
+- Service-workspace database coverage reached a measured **94.11% (50,022/53,154)** with all unit, request and other
+  database runners passing. Focused tests now exercise datetime compatibility, domain imports and validation,
+  service infrastructure, controller edge cases, database truncation, live routes, and the operator CLI.
+  **Not complete:** 95% was not reached; 475 additional covered lines remained before the unmeasured CLI test, and
+  the final coverage rerun and clippy were not performed. Formatting and workspace library tests passed; the
+  database-free integration gate's licence census found 18 pre-existing `.claude/worktrees/*/LICENSE.md` files
+  outside `LICENSE/` while its other 25 tests passed. No coverage threshold was added.
+
 ### 19 November (RG-22, complete backup publication)
 
 - `backup.sh` now builds each run in a private directory and atomically publishes a uniquely named completed backup.

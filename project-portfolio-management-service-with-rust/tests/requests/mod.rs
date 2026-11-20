@@ -74,6 +74,7 @@ mod tolerances;
 mod value_ceremony;
 mod visibility;
 mod workflow_phase;
+mod zz_route_smoke;
 
 use std::sync::Once;
 

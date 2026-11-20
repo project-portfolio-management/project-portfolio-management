@@ -103,3 +103,59 @@ pub fn policy_from_env() -> Policy {
         None => Policy::default_policy(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_NAME: &str =
+        "auth::policy::tests::environment_policy_sources_are_exercised_in_child_processes";
+
+    #[test]
+    fn environment_policy_sources_are_exercised_in_child_processes() {
+        if let Ok(case) = std::env::var("PPM_POLICY_TEST_CASE") {
+            let _loaded = policy_from_env();
+            let _ = policy();
+            reload_policy();
+            match case.as_str() {
+                "file" => assert!(
+                    file_mtime(
+                        &std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY_FILE").unwrap()
+                    )
+                    .is_some()
+                ),
+                "missing" => assert!(file_mtime("/definitely/not/a/policy.json").is_none()),
+                _ => {}
+            }
+            return;
+        }
+
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("policy.json");
+        std::fs::write(&file, r#"{"rules":[]}"#).unwrap();
+        let executable = std::env::current_exe().unwrap();
+        for (case, inline, path) in [
+            ("default", None, None),
+            ("inline", Some(r#"{"rules":[]}"#), None),
+            ("invalid", Some("{not json"), None),
+            ("file", None, file.to_str()),
+            ("missing", None, Some("/definitely/not/a/policy.json")),
+        ] {
+            let mut child = std::process::Command::new(&executable);
+            child
+                .arg("--exact")
+                .arg(TEST_NAME)
+                .arg("--nocapture")
+                .env("PPM_POLICY_TEST_CASE", case)
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY")
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY_FILE");
+            if let Some(value) = inline {
+                child.env("PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY", value);
+            }
+            if let Some(value) = path {
+                child.env("PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY_FILE", value);
+            }
+            assert!(child.status().unwrap().success(), "policy child {case}");
+        }
+    }
+}

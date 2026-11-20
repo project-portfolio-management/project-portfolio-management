@@ -19,6 +19,14 @@ use serial_test::serial;
 async fn idea_funnel_flows_into_the_intake_pipeline() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
+        for body in [
+            json!({ "title": "" }),
+            json!({ "title": "Too many tags", "tags": vec!["x"; 33] }),
+            json!({ "title": "Blank tag", "tags": ["ok", " "] }),
+            json!({ "title": "Long tag", "tags": ["x".repeat(65)] }),
+        ] {
+            assert_eq!(request.post("/api/ideas").json(&body).await.status_code(), 422, "{body}");
+        }
         let quiet: Value = request
             .post("/api/ideas")
             .json(&json!({ "title": "Modest idea" }))
@@ -72,6 +80,22 @@ async fn idea_funnel_flows_into_the_intake_pipeline() {
             .post(&format!("/api/ideas/{quiet_pid}/dismiss"))
             .await
             .assert_status_ok();
+        assert_eq!(
+            request
+                .post(&format!("/api/ideas/{quiet_pid}/convert"))
+                .json(&json!({ "kind_target": "projects", "sponsor_ref": "email:nobody@example.invalid" }))
+                .await
+                .status_code(),
+            422
+        );
+        assert_eq!(
+            request
+                .post(&format!("/api/ideas/{quiet_pid}/convert"))
+                .json(&json!({ "kind_target": "projects" }))
+                .await
+                .status_code(),
+            422
+        );
 
         // The funnel completes: submit → review → approve → promote.
         for action in ["submit", "review", "approve", "promote"] {
@@ -126,6 +150,22 @@ async fn scenarios_evaluate_and_commit_feasibly() {
             .json(&json!({ "title": "Supply risk", "probability": 3, "impact": 4 }))
             .await
             .assert_status_ok();
+
+        for body in [
+            json!({ "name": "" }),
+            json!({ "name": "Too many", "plan_pids": vec![uuid::Uuid::new_v4(); 257] }),
+            json!({ "name": "No currency", "budget_cap_minor": 1 }),
+        ] {
+            assert_eq!(
+                request
+                    .post("/api/scenarios")
+                    .json(&body)
+                    .await
+                    .status_code(),
+                422,
+                "{body}"
+            );
+        }
 
         // Unknown member pid refuses at create.
         assert_eq!(
@@ -529,6 +569,14 @@ async fn generate_scenario_scores_prices_and_never_silently_drops_must_include()
 async fn okr_alignment_rolls_up() {
     super::isolate_search_index();
     request::<App, _, _>(|request, _ctx| async move {
+        assert_eq!(
+            request
+                .post("/api/objectives")
+                .json(&json!({ "title": "" }))
+                .await
+                .status_code(),
+            422
+        );
         let objective: Value = request
             .post("/api/objectives")
             .json(&json!({ "title": "Reduce cost to serve", "period": "2026-H2" }))
@@ -615,6 +663,20 @@ async fn benefits_track_realization_and_roi() {
                 .status_code(),
             422
         );
+        for body in [
+            json!({ "title": "", "category": "other", "note": "x" }),
+            json!({ "title": "No currency", "category": "cost_saving", "target_minor": 1 }),
+        ] {
+            assert_eq!(
+                request
+                    .post(&format!("/api/plans/{pid}/benefits"))
+                    .json(&body)
+                    .await
+                    .status_code(),
+                422,
+                "{body}"
+            );
+        }
         let benefit: Value = request
             .post(&format!("/api/plans/{pid}/benefits"))
             .json(
@@ -625,6 +687,14 @@ async fn benefits_track_realization_and_roi() {
             .await
             .json();
         let benefit_pid = benefit["pid"].as_str().expect("pid");
+        assert_eq!(
+            request
+                .post(&format!("/api/plans/{pid}/benefits/{benefit_pid}/realize"))
+                .json(&json!({ "amount_minor": 1, "status": "imaginary" }))
+                .await
+                .status_code(),
+            422
+        );
 
         // Spend 1m (budget line + actual), realize 1.5m ⇒ ROI +50%.
         let line: Value = request
@@ -729,6 +799,20 @@ async fn the_efficient_frontier_matches_single_cap_generate_runs() {
             .get("/api/scenarios/frontier")
             .await
             .assert_status_bad_request();
+        for query in [
+            "/api/scenarios/frontier?currency=GBP&steps=1".to_string(),
+            "/api/scenarios/frontier?currency=GBP&caps=".to_string(),
+            "/api/scenarios/frontier?currency=GBP&must_include=not-a-uuid".to_string(),
+            format!(
+                "/api/scenarios/frontier?currency=GBP&caps={}",
+                vec!["0"; 51].join(",")
+            ),
+        ] {
+            request
+                .get(&query)
+                .await
+                .assert_status(axum::http::StatusCode::UNPROCESSABLE_ENTITY);
+        }
     })
     .await;
 }

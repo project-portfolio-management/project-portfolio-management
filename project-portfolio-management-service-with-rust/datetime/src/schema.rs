@@ -68,6 +68,8 @@ impl JsonSchema for crate::Weekday {
 
 #[cfg(test)]
 mod tests {
+    use schemars::JsonSchema;
+
     #[test]
     fn schemas_are_inline_strings_with_a_format() {
         let date = schemars::schema_for!(crate::Date);
@@ -75,5 +77,27 @@ mod tests {
         assert_eq!(date.get("format").and_then(|v| v.as_str()), Some("date"));
         let t = schemars::schema_for!(Option<crate::Timestamp>);
         assert_eq!(t.get("format").and_then(|v| v.as_str()), Some("date-time"));
+
+        assert!(crate::Date::inline_schema());
+        assert_eq!(crate::Date::schema_name(), "NaiveDate");
+        assert_eq!(crate::Date::schema_id(), "chrono::NaiveDate");
+        assert!(crate::Timestamp::inline_schema());
+        assert_eq!(crate::Timestamp::schema_name(), "DateTime");
+        assert_eq!(crate::Timestamp::schema_id(), "chrono::DateTime");
+        assert!(crate::OffsetDateTime::inline_schema());
+        assert_eq!(crate::OffsetDateTime::schema_name(), "DateTime");
+        assert_eq!(crate::OffsetDateTime::schema_id(), "chrono::DateTime");
+
+        let weekday = schemars::schema_for!(crate::Weekday);
+        assert!(crate::Weekday::inline_schema());
+        assert_eq!(crate::Weekday::schema_name(), "Weekday");
+        assert_eq!(crate::Weekday::schema_id(), "chrono::Weekday");
+        assert_eq!(
+            weekday
+                .get("enum")
+                .and_then(|value| value.as_array())
+                .map(Vec::len),
+            Some(7)
+        );
     }
 }

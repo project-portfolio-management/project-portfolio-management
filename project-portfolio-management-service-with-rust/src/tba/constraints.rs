@@ -203,3 +203,151 @@ pub fn aging(age_ms: i64, sle_ms: Option<i64>) -> AgingItem {
         sle_ratio: ratio,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tba::{CategoryShare, Ratio, StatusShare};
+
+    fn task(blocked: i64, queue: i64, handoffs: usize) -> TaskAnalysis {
+        TaskAnalysis {
+            lead_time_ms: blocked + queue,
+            lead_time_days: 0.0,
+            cycle_time_ms: Some(blocked),
+            cycle_time_days: Some(0.0),
+            cycle_time_reason: None,
+            work_time_ms: 0,
+            process_time_ms: 0,
+            wait_time_ms: blocked,
+            blocked_time_ms: blocked,
+            blocked_by_reason: BTreeMap::from([
+                ("external_dependency".to_string(), blocked / 2),
+                (UNRECORDED_REASON.to_string(), blocked - blocked / 2),
+            ]),
+            queue_time_ms: queue,
+            flow_efficiency: Ratio::new(0, blocked),
+            by_status: Vec::<StatusShare>::new(),
+            by_category: Vec::<CategoryShare>::new(),
+            transitions: 0,
+            backfilled: 0,
+            rework_count: 0,
+            first_pass: true,
+            distinct_assignees: handoffs + 1,
+            handoffs,
+            finished: false,
+            age_ms: Some(blocked),
+            age_days: Some(0.0),
+        }
+    }
+
+    fn summary(rework: usize, yield_value: Option<f64>) -> PlanAnalysis {
+        PlanAnalysis {
+            tasks: 1,
+            finished: 0,
+            work_in_progress: 1,
+            not_started: 0,
+            cycle_time: None,
+            lead_time: None,
+            aggregate_flow_efficiency: Ratio::new(0, 1),
+            median_flow_efficiency: Some(0.0),
+            waste_shape: "uniform",
+            rolled_first_pass_yield: yield_value,
+            rework_count: rework,
+            by_status: vec![
+                StatusShare {
+                    status: "todo".into(),
+                    category: "unnecessary".into(),
+                    waste: None,
+                    ms: 50,
+                    days: 0.0,
+                    share: None,
+                    entries: 1,
+                },
+                StatusShare {
+                    status: "blocked".into(),
+                    category: "unnecessary".into(),
+                    waste: None,
+                    ms: 40,
+                    days: 0.0,
+                    share: None,
+                    entries: 1,
+                },
+                StatusShare {
+                    status: "waiting".into(),
+                    category: "necessary".into(),
+                    waste: None,
+                    ms: 10,
+                    days: 0.0,
+                    share: None,
+                    entries: 1,
+                },
+                StatusShare {
+                    status: "doing".into(),
+                    category: CATEGORY_VALUE_ADDING.into(),
+                    waste: None,
+                    ms: 100,
+                    days: 0.0,
+                    share: None,
+                    entries: 1,
+                },
+                StatusShare {
+                    status: "zero".into(),
+                    category: "unnecessary".into(),
+                    waste: None,
+                    ms: 0,
+                    days: 0.0,
+                    share: None,
+                    entries: 0,
+                },
+            ],
+            backfilled_ratio: Some(0.25),
+        }
+    }
+
+    #[test]
+    fn every_constraint_is_disclosed_and_ranked_by_recoverable_time() {
+        let findings = constraints(&[task(80, 120, HANDOFF_HEAVY)], &summary(2, Some(0.5)));
+        let rules: Vec<&str> = findings.iter().map(|f| f.rule).collect();
+        for rule in [
+            "status_dominates_wait",
+            "status_wait",
+            "blocked_time",
+            "backlog_dwell",
+            "rework",
+            "handoff_heavy",
+            "backfilled_history",
+        ] {
+            assert!(rules.contains(&rule), "missing {rule}: {rules:?}");
+        }
+        assert!(
+            findings
+                .windows(2)
+                .all(|w| w[0].recoverable_ms >= w[1].recoverable_ms)
+        );
+        assert!(
+            findings
+                .iter()
+                .find(|f| f.rule == "blocked_time")
+                .unwrap()
+                .detail
+                .contains(UNRECORDED_REASON)
+        );
+        assert!(
+            constraints(&[], &summary(1, None))
+                .iter()
+                .any(|f| f.detail.contains("n/a"))
+        );
+    }
+
+    #[test]
+    fn aging_handles_missing_zero_inside_and_past_expectations() {
+        assert_eq!(aging(10, None).sle_ratio, None);
+        assert_eq!(aging(10, Some(0)).sle_ratio, None);
+        let inside = aging(50, Some(100));
+        assert_eq!(inside.sle_ratio, Some(0.5));
+        assert!(!inside.past_sle);
+        let past = aging(101, Some(100));
+        assert!(past.past_sle);
+        assert_eq!(past.age_ms, 101);
+    }
+}

@@ -287,6 +287,73 @@ pub(super) fn bearer_token(headers: &HeaderMap) -> Result<&str, (StatusCode, Str
         ))
 }
 
+#[cfg(all(test, feature = "paseto"))]
+mod coverage_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn environment_verifier_paths_run_in_fresh_child_processes() {
+        const NAME: &str = "auth::verifier::coverage_tests::environment_verifier_paths_run_in_fresh_child_processes";
+        if let Ok(case) = std::env::var("PPM_VERIFIER_TEST_CASE") {
+            match case.as_str() {
+                "default" => {
+                    assert_eq!(env_or("PPM_MISSING_VALUE", "fallback"), "fallback");
+                    assert_eq!(build_from_env().key_count(), 0);
+                    init_paseto().await;
+                    spawn_paseto_key_refresh();
+                }
+                "blank" => {
+                    assert_eq!(
+                        env_or("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER", "fallback"),
+                        "fallback"
+                    );
+                    assert_eq!(build_from_env().key_count(), 0);
+                    spawn_paseto_key_refresh();
+                }
+                "invalid" => {
+                    assert_eq!(
+                        env_or("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER", "fallback"),
+                        "custom"
+                    );
+                    assert_eq!(build_from_env().key_count(), 0);
+                    spawn_paseto_key_refresh();
+                }
+                _ => unreachable!(),
+            }
+            return;
+        }
+        let executable = std::env::current_exe().unwrap();
+        for case in ["default", "blank", "invalid"] {
+            let mut child = std::process::Command::new(&executable);
+            child
+                .arg("--exact")
+                .arg(NAME)
+                .arg("--nocapture")
+                .env("PPM_VERIFIER_TEST_CASE", case)
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL")
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_REFRESH_SECS")
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS")
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER")
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_AUDIENCE");
+            if case == "blank" {
+                child
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER", " ")
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL", " ");
+            } else if case == "invalid" {
+                child
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER", "custom")
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS", "not json")
+                    .env(
+                        "PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL",
+                        "http://127.0.0.1:1/keys",
+                    )
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_REFRESH_SECS", "0");
+            }
+            assert!(child.status().unwrap().success(), "verifier child {case}");
+        }
+    }
+}
+
 /// Authenticate a request through every credential type this build
 /// accepts, against the process-wide verifiers. A token beginning `v4.` is
 /// a PASETO; a JWT from the configured OIDC issuer goes to [`super::oidc`]; anything else is offered to

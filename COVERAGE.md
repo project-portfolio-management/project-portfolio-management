@@ -46,6 +46,18 @@ running service); doctests; branch coverage (tarpaulin does not implement it).
 
 ## Baseline (measured 2026-11-18)
 
+### Work-in-progress measurement (2026-11-20)
+
+The latest complete database trace map measures **94.11% (50,022 of 53,154 lines)**. The run passed 27 datetime,
+8 migration, 865 domain (one intentional ignore), 472 service-unit, 240 request and 93 other database tests. A new
+operator-CLI integration test passed afterwards but was not included in this figure: its focused coverage run was
+stopped during compilation when the work was wrapped up. At the measured denominator, strictly exceeding 95% needs
+475 more covered lines. The detailed 2026-11-18 baseline below remains the last completed per-crate summary.
+
+Tarpaulin 0.37.6 returned `Test failed during run` after all runners passed because a passing parent test deliberately
+executes a failing child process. `--no-fail-fast` emitted the complete JSON, HTML and LCOV reports before returning
+that status. This interaction and a full rerun after the CLI test remain to be completed. No threshold was added.
+
 | | |
 |---|---|
 | Machine | Apple M4 Max (16 cores), macOS 27.2.1, shared with other sessions' builds (one-minute load 6 to 18) |

@@ -121,6 +121,56 @@ async fn invalid_canvases_and_items_are_refused() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn canvas_items_can_be_moved_edited_reordered_and_deleted() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, _ctx| async move {
+        let c = canvas(&request, "swot", None).await;
+        let it = item(&request, &c, "strengths", "Original").await;
+        let url = format!("/api/canvases/{c}/items/{it}");
+
+        for body in [
+            json!({ "box": "not-a-box" }),
+            json!({ "body": "   " }),
+            json!({ "owner_ref": "email:nobody@example.invalid" }),
+            json!({ "position": -1 }),
+        ] {
+            assert_eq!(
+                request.put(&url).json(&body).await.status_code(),
+                422,
+                "{body}"
+            );
+        }
+
+        let moved: Value = request
+            .put(&url)
+            .json(&json!({
+                "box": "opportunities",
+                "body": "Expanded opportunity",
+                "owner_ref": format!("person:{}", uuid::Uuid::new_v4()),
+                "position": 7
+            }))
+            .await
+            .json();
+        assert_eq!(
+            (
+                moved["box_key"].as_str(),
+                moved["body"].as_str(),
+                moved["position"].as_i64()
+            ),
+            (Some("opportunities"), Some("Expanded opportunity"), Some(7))
+        );
+        let unchanged: Value = request.put(&url).json(&json!({})).await.json();
+        assert_eq!(unchanged["box_key"], "opportunities");
+
+        request.delete(&url).await.assert_status_ok();
+        assert_eq!(request.delete(&url).await.status_code(), 404);
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Promotion creates the target and an audit row naming the source item,
 // links the item back, and is refused (409) the second time.
 async fn promotion_writes_the_target_audits_the_source_and_is_not_repeatable() {

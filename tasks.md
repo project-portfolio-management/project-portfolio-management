@@ -3739,3 +3739,26 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   public reader, and what was not done or not verified.
   **Acceptance:** `.github/pull_request_template.md` exists and links AGENTS.md.
   **Built 2026-11-14.** `.github/pull_request_template.md`: the task, the specification, code and test, what the change writes outside the service (exports, webhooks, feeds, the public reader, migrations), what was not done or verified, and AI tools. CONTRIBUTING.md points at it. **Not verified:** how GitHub renders it, since no pull request has been opened since.
+
+## Coverage work in progress (2026-11-20)
+
+- [ ] **CQ-coverage-95 — Raise service-workspace line coverage to at least 95%.** The authoritative database run is
+  **94.11% (50,022 of 53,154 lines)** after adding focused tests across datetime, domain import/risk/validation rules,
+  migration errors, authentication, caching, automation, relays, streaming, webhooks, truncation, canvas,
+  collaboration, CPM, governance, oversight, strategy, scheduled jobs, processes, outbox/audit, and a live-route
+  census. All test runners passed: 27 datetime, 8 migration, 865 domain (one intentional ignore), 472 service unit,
+  240 request and 93 other database tests. Strictly exceeding 95% at that denominator needs another **475 covered
+  lines**.
+- A new operator-CLI integration test subsequently passed for `check`, `db migrate`, `db status`, task listing,
+  invalid task arguments and `search_reindex`. Its targeted tarpaulin run was stopped while compiling when this work
+  was wrapped up, so its gain is not included in 94.11% and the remaining gap has not been remeasured.
+- Tarpaulin 0.37.6 reports `Test failed during run` after the otherwise-green suite because a deliberately failing
+  child process is part of a passing parent test. Running with `--no-fail-fast` writes the complete JSON/HTML/LCOV
+  report before returning that status. **Next:** identify or isolate that child-status interaction, measure the CLI
+  test, then cover the largest remaining deterministic paths (`app`, bulk, capacity heatmap, automation, MSPDI batch,
+  processes, relay/webhooks) and rerun `make coverage-db`.
+- **Not done:** 95% was not reached; no coverage threshold was added (maintainers have not decided one); clippy was
+  not rerun. Formatting and all workspace library tests passed. The database-free integration gate passed 25 tests
+  but its licence census failed because 18 pre-existing `.claude/worktrees/*/LICENSE.md` files sit outside `LICENSE/`;
+  those worktrees were not changed or removed. Mutation testing, feature-gated Keycloak/Fluvio suites, the load test,
+  and UI/matcher coverage were not run.

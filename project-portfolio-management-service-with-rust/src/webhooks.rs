@@ -794,10 +794,120 @@ mod tests {
     }
 
     use super::{
-        Domain, REPLAY_WINDOW_SECS, WebhookFormat, WebhookTarget, parse_targets, render,
-        should_retry_status, signing_input_v2, target_allowed, timestamp_is_fresh,
-        url_is_permitted,
+        AttemptResult, Domain, REPLAY_WINDOW_SECS, Rendered, WebhookFormat, WebhookTarget,
+        attempt_once, parse_targets, render, should_retry_status, signing_input_v2, target_allowed,
+        timestamp_is_fresh, url_is_permitted,
     };
+
+    #[tokio::test]
+    async fn one_http_attempt_distinguishes_delivery_rejection_retry_and_transport_failure() {
+        use axum::{Router, http::StatusCode, routing::post};
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let app = Router::new()
+            .route("/ok", post(|| async { StatusCode::NO_CONTENT }))
+            .route("/bad", post(|| async { StatusCode::BAD_REQUEST }))
+            .route("/retry", post(|| async { StatusCode::SERVICE_UNAVAILABLE }));
+        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let request = Rendered {
+            content_type: "application/json",
+            headers: vec![("ce-id".into(), "event".into())],
+            body: br#"{"kind":"created"}"#.to_vec(),
+        };
+        let call = |path: &'static str| {
+            let request = &request;
+            async move {
+                attempt_once(
+                    &format!("http://{address}/{path}"),
+                    "event",
+                    "delivery",
+                    "signature",
+                    request,
+                )
+                .await
+            }
+        };
+        assert!(matches!(call("ok").await, AttemptResult::Delivered));
+        assert!(matches!(
+            call("bad").await,
+            AttemptResult::Rejected { status: 400, .. }
+        ));
+        assert!(matches!(
+            call("retry").await,
+            AttemptResult::Retryable {
+                status: Some(503),
+                ..
+            }
+        ));
+        assert!(matches!(
+            attempt_once(
+                "http://127.0.0.1:1/unavailable",
+                "event",
+                "delivery",
+                "signature",
+                &request,
+            )
+            .await,
+            AttemptResult::Retryable { status: None, .. }
+        ));
+        server.abort();
+    }
+
+    #[tokio::test]
+    async fn environment_target_sources_and_strict_resolution_run_in_child_processes() {
+        const NAME: &str = "webhooks::tests::environment_target_sources_and_strict_resolution_run_in_child_processes";
+        if let Ok(case) = std::env::var("PPM_WEBHOOK_TEST_CASE") {
+            match case.as_str() {
+                "inline" | "file" => assert_eq!(super::targets().len(), 1),
+                "missing" => assert!(super::targets().is_empty()),
+                "strict" => {
+                    assert!(super::outbound_strict());
+                    assert_eq!(super::check_resolution("not a url").await, Err(true));
+                    assert_eq!(
+                        super::check_resolution("https://8.8.8.8/hook").await,
+                        Ok(())
+                    );
+                }
+                _ => unreachable!(),
+            }
+            return;
+        }
+
+        let dir = tempfile::tempdir().unwrap();
+        let target_file = dir.path().join("targets.json");
+        let raw = r#"[{"url":"https://ops.example.com/hook"}]"#;
+        std::fs::write(&target_file, raw).unwrap();
+        let executable = std::env::current_exe().unwrap();
+        for case in ["inline", "file", "missing", "strict"] {
+            let mut child = std::process::Command::new(&executable);
+            child
+                .arg("--exact")
+                .arg(NAME)
+                .arg("--nocapture")
+                .env("PPM_WEBHOOK_TEST_CASE", case)
+                .env_remove(super::WEBHOOKS_ENV)
+                .env_remove(super::WEBHOOKS_FILE_ENV)
+                .env_remove(super::OUTBOUND_STRICT_ENV);
+            match case {
+                "inline" => {
+                    child.env(super::WEBHOOKS_ENV, raw);
+                }
+                "file" => {
+                    child
+                        .env(super::WEBHOOKS_ENV, "not json")
+                        .env(super::WEBHOOKS_FILE_ENV, &target_file);
+                }
+                "missing" => {
+                    child.env(super::WEBHOOKS_FILE_ENV, dir.path().join("missing.json"));
+                }
+                "strict" => {
+                    child.env(super::OUTBOUND_STRICT_ENV, "ON");
+                }
+                _ => unreachable!(),
+            }
+            assert!(child.status().unwrap().success(), "webhook child {case}");
+        }
+    }
 
     #[test]
     fn https_to_any_host_is_permitted() {

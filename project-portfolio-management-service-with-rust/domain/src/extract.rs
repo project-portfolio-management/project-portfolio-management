@@ -186,6 +186,10 @@ mod tests {
             "Hello & world \u{e9}A"
         );
         assert_eq!(strip_xml("a<b>c</b>d"), "a c d", "tags separate words");
+        assert_eq!(
+            strip_xml("&lt;&gt;&quot;&apos; &unknown; &123456789;"),
+            "<>\"' ;"
+        );
     }
 
     #[test]

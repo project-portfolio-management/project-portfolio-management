@@ -1018,6 +1018,56 @@ mod tests {
 
     use super::*;
 
+    #[test]
+    fn parser_errors_and_small_conversion_helpers_cover_the_refusal_cases() {
+        assert!(ParseError::TooLarge.to_string().contains("larger"));
+        assert!(ParseError::Xml("bad".into()).to_string().contains("bad"));
+        assert!(ParseError::NotMspdi.to_string().contains("MS Project"));
+        assert!(ParseError::TooManyTasks.to_string().contains("tasks"));
+
+        for invalid in ["", "PT1Q", "P1Y", "P12", "PT.H", "not a duration"] {
+            assert_eq!(duration_minutes(invalid), None, "{invalid}");
+        }
+        assert_eq!(duration_minutes("P1DT2H3M4.5S"), Some(1563));
+        assert_eq!(days_of(-481, 480), (-2, true));
+        assert_eq!(days_of(10, 0), (10, false));
+
+        assert_eq!(per_hour_minor(2.0, Some(1), 480), Some(12_000));
+        assert_eq!(per_hour_minor(2.0, Some(2), 480), Some(200));
+        assert_eq!(per_hour_minor(8.0, Some(3), 480), Some(100));
+        assert_eq!(per_hour_minor(2.0, Some(4), 480), None);
+        assert_eq!(per_hour_minor(-1.0, Some(2), 480), None);
+        assert_eq!(per_hour_minor(1.0e20, Some(2), 480), None);
+
+        let day = d(2026, 1, 1);
+        assert!(span(day, day - crate::datetime::Duration::days(1)).is_empty());
+        assert_eq!(
+            span(day, day + crate::datetime::Duration::days(999)).len(),
+            367
+        );
+    }
+
+    #[test]
+    fn calendar_exceptions_are_deduplicated_and_bad_entries_are_ignored() {
+        let xml = r#"<Project><CalendarUID>9</CalendarUID><Calendars><Calendar>
+          <UID>1</UID><IsBaseCalendar>1</IsBaseCalendar><WeekDays>
+            <WeekDay><DayType>1</DayType><DayWorking>1</DayWorking></WeekDay>
+            <WeekDay><DayWorking>0</DayWorking></WeekDay>
+            <WeekDay><DayType>0</DayType><DayWorking>0</DayWorking><TimePeriod><FromDate>2026-01-02</FromDate><ToDate>2026-01-03</ToDate></TimePeriod></WeekDay>
+          </WeekDays><Exceptions>
+            <Exception><DayWorking>0</DayWorking><TimePeriod><FromDate>2026-01-03</FromDate><ToDate>2026-01-04</ToDate></TimePeriod></Exception>
+            <Exception><DayWorking>0</DayWorking><TimePeriod><FromDate>bad</FromDate></TimePeriod></Exception>
+          </Exceptions></Calendar></Calendars></Project>"#;
+        let doc = roxmltree::Document::parse(xml).unwrap();
+        let calendar = calendar_of(doc.root_element()).unwrap();
+        assert_eq!(calendar.weekdays, "1111101");
+        assert_eq!(
+            calendar.holidays,
+            vec![d(2026, 1, 2), d(2026, 1, 3), d(2026, 1, 4)]
+        );
+        assert!(calendar_with(doc.root_element(), Some(99), false).is_none());
+    }
+
     fn d(y: i32, m: u32, day: u32) -> Date {
         Date::from_ymd_opt(y, m, day).unwrap()
     }
@@ -1193,6 +1243,48 @@ mod tests {
         assert!(
             has("constraint", "as-late-as-possible"),
             "ALAP has no date and is still reported"
+        );
+    }
+
+    #[test]
+    fn uncommon_constraint_link_baseline_and_fixed_cost_forms_are_explicit() {
+        let parsed = parse(
+            r#"<Project><MinutesPerDay>480</MinutesPerDay><Tasks>
+              <Task><UID>1</UID><Name>Start cost</Name><ConstraintType>6</ConstraintType>
+                <Baseline><Number>0</Number></Baseline><FixedCost>12.34</FixedCost><FixedCostAccrual>1</FixedCostAccrual>
+                <PredecessorLink><Type>1</Type></PredecessorLink>
+                <PredecessorLink><PredecessorUID>9</PredecessorUID><Type>99</Type></PredecessorLink>
+                <PredecessorLink><PredecessorUID>8</PredecessorUID><Type>1</Type><LinkLag>10</LinkLag><LagFormat>8</LagFormat></PredecessorLink>
+              </Task>
+              <Task><UID>2</UID><Name>End cost</Name><FixedCost>5</FixedCost><FixedCostAccrual>2</FixedCostAccrual></Task>
+              <Task><UID>3</UID><Name>Spread cost</Name><FixedCost>7</FixedCost><FixedCostAccrual>0</FixedCostAccrual></Task>
+            </Tasks></Project>"#,
+        )
+        .unwrap();
+        let reasons = parsed
+            .unmapped
+            .iter()
+            .map(|u| u.reason.as_str())
+            .collect::<Vec<_>>();
+        for expected in [
+            "constraint without a date",
+            "task baselines are not imported",
+            "unknown link type 99",
+            "part-day lag was rounded",
+            "elapsed-time lag was treated as working time",
+        ] {
+            assert!(
+                reasons.iter().any(|r| r.contains(expected)),
+                "{expected}: {reasons:?}"
+            );
+        }
+        assert_eq!(
+            parsed
+                .fixed_costs
+                .iter()
+                .map(|c| (c.uid, c.amount_minor, c.accrual))
+                .collect::<Vec<_>>(),
+            [(1, 1234, "start"), (2, 500, "end"), (3, 700, "prorated")]
         );
     }
 

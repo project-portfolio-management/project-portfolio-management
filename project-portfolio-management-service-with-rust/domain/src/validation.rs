@@ -258,7 +258,9 @@ fn looks_like_bcp47(s: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use project_portfolio_management_matcher::{Goal, Plan, PlanIdentifier};
+    use project_portfolio_management_matcher::{
+        Goal, Plan, PlanIdentifier, PlanRelationship, RelationKind,
+    };
 
     fn project(name: &str) -> Plan {
         Plan::new(name)
@@ -390,6 +392,61 @@ mod tests {
             p[0].contains("keywords[0]") && p[0].contains("512"),
             "{p:?}"
         );
+    }
+
+    #[test]
+    fn every_array_member_and_optional_scalar_has_its_own_bounded_problem() {
+        let long_item = "x".repeat(MAX_ITEM_LEN + 1);
+        let long_text = "y".repeat(MAX_TEXT_LEN + 1);
+        let mut wi = project("Apollo");
+        wi.alternate_names = vec![String::new(), long_item.clone()];
+        wi.code = Some(long_text.clone());
+        wi.owner_org_id = Some(long_text.clone());
+        wi.owner_org_name = Some(long_text.clone());
+        wi.lead_ref = Some(long_text.clone());
+        wi.start_date = Some(long_text.clone());
+        wi.target_date = Some(long_text);
+        wi.tags = vec![long_item.clone()];
+        wi.same_as = vec![long_item.clone()];
+        wi.goals = vec![Goal {
+            title: long_item.clone(),
+            ..Default::default()
+        }];
+        wi.identifiers = vec![PlanIdentifier {
+            scheme: IdentifierScheme::JiraProjectKey,
+            value: long_item.clone(),
+        }];
+        wi.relationships = vec![
+            PlanRelationship {
+                relation: RelationKind::RelatedTo,
+                plan_id: String::new(),
+            },
+            PlanRelationship {
+                relation: RelationKind::RelatedTo,
+                plan_id: long_item,
+            },
+        ];
+
+        let out = problems(&wi).join("\n");
+        for expected in [
+            "alternate_names[0]: must not be blank",
+            "alternate_names[1]: exceeds",
+            "code: exceeds",
+            "owner_org_id: exceeds",
+            "owner_org_name: exceeds",
+            "lead_ref: exceeds",
+            "start_date: exceeds",
+            "target_date: exceeds",
+            "tags[0]: exceeds",
+            "same_as[0]: exceeds",
+            "goals[0].title: exceeds",
+            "identifiers[0].value: exceeds",
+            "relationships[0]: plan_id must not be blank",
+            "relationships[1].plan_id: exceeds",
+        ] {
+            assert!(out.contains(expected), "missing {expected:?} from {out}");
+        }
+        assert!(!looks_like_bcp47(""));
     }
 
     #[test]

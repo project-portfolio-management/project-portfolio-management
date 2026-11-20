@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Tests — coverage expansion in progress (2026-11-20)
+
+- Added focused unit and database coverage across the datetime and domain crates, migrations, authentication,
+  caching, automation, relays, streaming, webhooks, truncation, canvas, collaboration, CPM, governance, oversight,
+  strategy, scheduled jobs, processes, outbox/audit, live route handling, and the installed operator CLI.
+- The latest complete database trace map is **94.11% (50,022/53,154)**; all runners passed. The CLI test was added and
+  passed after that measurement. **Not done or verified:** 95% was not reached (475 lines remained before measuring
+  the CLI test); the CLI coverage run was stopped during compilation; clippy was not rerun; the database-free
+  integration gate's licence census found 18 pre-existing `.claude/worktrees/*/LICENSE.md` files outside `LICENSE/`
+  (its other 25 tests passed); no threshold was added; feature-gated, load and mutation tests were not run.
+
 ### Security — CF-8: the OKR and skill-gap reads keep a private plan out (2026-11-19)
 
 - The plan guard returns `404` to non-members on `GET /api/plans/{pid}/okr` and `…/skill-gap`. Members and

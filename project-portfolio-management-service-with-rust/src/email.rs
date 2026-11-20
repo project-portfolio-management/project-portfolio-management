@@ -381,4 +381,53 @@ mod tests {
             Err(SendError::Permanent(_))
         ));
     }
+
+    #[tokio::test]
+    async fn stub_smtp_sender_builds_messages_and_rejects_header_addresses() {
+        let mailer = Mailer::from_env(&axa::Environment::Test).unwrap();
+        assert_eq!(format!("{mailer:?}"), "Mailer::Stub");
+        assert_eq!(mailer.deliveries().count, 0);
+        let sender = SmtpSender::new(mailer.clone());
+        assert_eq!(sender.name(), "smtp");
+        let message = Message {
+            from: "service@example.org".into(),
+            to: "person@example.org".into(),
+            subject: "Subject".into(),
+            text: "Body".into(),
+        };
+        sender.send(&message).await.unwrap();
+        assert_eq!(mailer.deliveries().messages, ["Subject\nBody"]);
+
+        let mut invalid = message.clone();
+        invalid.from = "not an address".into();
+        assert!(matches!(
+            sender.send(&invalid).await,
+            Err(SendError::Permanent(_))
+        ));
+        invalid.from = message.from.clone();
+        invalid.to = "still not an address".into();
+        assert!(matches!(
+            sender.send(&invalid).await,
+            Err(SendError::Permanent(_))
+        ));
+        assert_eq!(NoSender.name(), "none");
+        assert_eq!(RecordingSender::default().name(), "recording");
+    }
+
+    #[test]
+    fn address_boundaries_and_long_retry_backoff_are_explicit() {
+        assert!(address_ok(" a@b.com "));
+        for bad in ["a@.example", "a@example.", "a;b@example.com"] {
+            assert!(!address_ok(bad), "{bad:?}");
+        }
+        let too_long = format!("{}@example.com", "a".repeat(254));
+        assert!(!address_ok(&too_long));
+        let now = Timestamp::now();
+        let transient = Err(SendError::Transient("down".into()));
+        assert_eq!(
+            after(&transient, -100, now).next,
+            Some(now + Duration::minutes(1))
+        );
+        assert_eq!(after(&transient, 100, now).status, "failed");
+    }
 }

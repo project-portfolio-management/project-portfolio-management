@@ -733,4 +733,27 @@ mod tests {
         assert!(mine.len() >= 2);
         assert!(mine.windows(2).all(|w| w[0].seq < w[1].seq));
     }
+
+    #[test]
+    fn the_memory_publisher_is_bounded_and_a_poisoned_lock_fails_closed() {
+        let publisher = InMemoryPublisher::new();
+        for i in 0..=CAPACITY {
+            publisher.publish(envelope(
+                EventKind::Created,
+                &format!("p-{i}"),
+                "name",
+                None,
+            ));
+        }
+        let rows = publisher.recent(CAPACITY + 10);
+        assert_eq!(rows.len(), CAPACITY);
+        assert_eq!(rows.first().unwrap().pid, "p-1");
+
+        let _ = std::panic::catch_unwind(|| {
+            let _guard = publisher.buffer.lock().unwrap();
+            panic!("poison the test publisher");
+        });
+        publisher.publish(envelope(EventKind::Updated, "dropped", "name", None));
+        assert!(publisher.recent(10).is_empty());
+    }
 }

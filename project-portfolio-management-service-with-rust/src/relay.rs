@@ -480,6 +480,20 @@ mod tests {
     /// A capturing sink for tests: records every `(entity, key)` sent.
     struct CapturingSink(Mutex<Vec<(String, String)>>);
 
+    struct FailingSink;
+
+    #[async_trait::async_trait]
+    impl EventSink for FailingSink {
+        async fn send(
+            &self,
+            _entity: &str,
+            _key: &str,
+            _payload: &serde_json::Value,
+        ) -> Result<(), SinkError> {
+            Err(std::io::Error::other("sink failed").into())
+        }
+    }
+
     #[async_trait::async_trait]
     impl EventSink for CapturingSink {
         async fn send(
@@ -542,6 +556,125 @@ mod tests {
         }
         if std::env::var_os(RETIRED_RETENTION_SETTING).is_none() {
             assert!(!retired_retention_is_set());
+        }
+    }
+
+    #[tokio::test]
+    async fn composite_requires_the_primary_but_ignores_secondary_failures() {
+        let captured = Arc::new(Mutex::new(Vec::new()));
+        struct SharedCapture(Arc<Mutex<Vec<(String, String)>>>);
+        #[async_trait::async_trait]
+        impl EventSink for SharedCapture {
+            async fn send(
+                &self,
+                entity: &str,
+                key: &str,
+                _: &serde_json::Value,
+            ) -> Result<(), SinkError> {
+                self.0
+                    .lock()
+                    .unwrap()
+                    .push((entity.to_string(), key.to_string()));
+                Ok(())
+            }
+        }
+
+        let sink = CompositeSink::new(
+            Box::new(SharedCapture(captured.clone())),
+            vec![Box::new(FailingSink), Box::new(LoggingSink)],
+        );
+        sink.send("plan", "p-1", &serde_json::json!({"kind":"updated"}))
+            .await
+            .unwrap();
+        assert_eq!(captured.lock().unwrap().len(), 1);
+
+        let failed = CompositeSink::new(
+            Box::new(FailingSink),
+            vec![Box::new(SharedCapture(captured.clone()))],
+        );
+        assert!(
+            failed
+                .send("plan", "p-2", &serde_json::json!({}))
+                .await
+                .is_err()
+        );
+        assert_eq!(
+            captured.lock().unwrap().len(),
+            1,
+            "a secondary is not called after primary failure"
+        );
+    }
+
+    #[tokio::test]
+    async fn no_fluvio_build_uses_the_logging_sink_and_options_keep_the_defaults() {
+        let sink = build_sink(None).await;
+        sink.send("plan", "p", &serde_json::json!({}))
+            .await
+            .unwrap();
+        let configured = options();
+        assert!(configured.poll_interval >= Duration::from_secs(1));
+    }
+
+    #[test]
+    fn environment_selectors_are_exercised_in_child_processes() {
+        const NAME: &str = "relay::tests::environment_selectors_are_exercised_in_child_processes";
+        if let Ok(case) = std::env::var("PPM_RELAY_TEST_CASE") {
+            match case.as_str() {
+                "truthy" => {
+                    assert!(relay_enabled());
+                    assert_eq!(interval_secs(), 1);
+                    assert!(retired_retention_is_set());
+                    assert_eq!(fluvio_endpoint().as_deref(), Some("broker:9003"));
+                    assert_eq!(event_topic(), "custom.events");
+                }
+                "invalid" => {
+                    assert!(!relay_enabled());
+                    assert_eq!(interval_secs(), 5);
+                    assert_eq!(fluvio_endpoint(), None);
+                    assert_eq!(event_topic(), "mxi.plan.events");
+                }
+                _ => unreachable!(),
+            }
+            return;
+        }
+
+        let executable = std::env::current_exe().unwrap();
+        for case in ["truthy", "invalid"] {
+            let mut child = std::process::Command::new(&executable);
+            child
+                .arg("--exact")
+                .arg(NAME)
+                .arg("--nocapture")
+                .env("PPM_RELAY_TEST_CASE", case)
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY")
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY_INTERVAL_SECS")
+                .env_remove(RETIRED_RETENTION_SETTING)
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT")
+                .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TOPIC");
+            if case == "truthy" {
+                child
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY", " YES ")
+                    .env(
+                        "PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY_INTERVAL_SECS",
+                        "0",
+                    )
+                    .env(RETIRED_RETENTION_SETTING, "30")
+                    .env(
+                        "PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT",
+                        "broker:9003",
+                    )
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TOPIC", "custom.events");
+            } else {
+                child
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY", "maybe")
+                    .env(
+                        "PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY_INTERVAL_SECS",
+                        "bad",
+                    )
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT", "  ")
+                    .env("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_TOPIC", " ");
+            }
+            assert!(child.status().unwrap().success(), "relay child {case}");
         }
     }
 }

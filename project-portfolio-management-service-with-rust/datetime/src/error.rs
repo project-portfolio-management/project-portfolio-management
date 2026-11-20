@@ -78,3 +78,51 @@ impl fmt::Display for OutOfRangeError {
 }
 
 impl std::error::Error for OutOfRangeError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_parse_error_keeps_its_kind_message_and_debug_name() {
+        let cases = [
+            (
+                OUT_OF_RANGE,
+                ParseErrorKind::OutOfRange,
+                "input is out of range",
+            ),
+            (
+                IMPOSSIBLE,
+                ParseErrorKind::Impossible,
+                "no possible date and time matching input",
+            ),
+            (
+                NOT_ENOUGH,
+                ParseErrorKind::NotEnough,
+                "input is not enough for unique date and time",
+            ),
+            (
+                INVALID,
+                ParseErrorKind::Invalid,
+                "input contains invalid characters",
+            ),
+            (
+                TOO_SHORT,
+                ParseErrorKind::TooShort,
+                "premature end of input",
+            ),
+            (TOO_LONG, ParseErrorKind::TooLong, "trailing input"),
+            (
+                BAD_FORMAT,
+                ParseErrorKind::BadFormat,
+                "bad or unsupported format string",
+            ),
+        ];
+        for (error, kind, message) in cases {
+            assert_eq!(error.kind(), kind);
+            assert_eq!(error.to_string(), message);
+            assert_eq!(format!("{error:?}"), format!("ParseError({kind:?})"));
+        }
+        assert_eq!(OutOfRangeError(()).to_string(), "out of range");
+    }
+}

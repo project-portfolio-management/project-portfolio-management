@@ -92,3 +92,41 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
     })
     .await;
 }
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+// Keep this after the exact metrics assertion above: metrics are process-global.
+// Exercise every opt-in maintenance job against an empty throwaway estate.
+async fn z_every_scheduled_job_runs_once_and_an_empty_estate_refreshes_flow_metrics() {
+    super::isolate_search_index();
+    request::<App, _, _>(|_request, ctx| async move {
+        let flow = project_portfolio_management::flow_metrics::refresh_once(&ctx)
+            .await
+            .expect("refresh an empty estate");
+        assert!(flow.rows.is_empty());
+        let first_epoch = project_portfolio_management::response_cache::epoch(&ctx).await;
+        assert_eq!(
+            project_portfolio_management::response_cache::epoch(&ctx).await,
+            first_epoch
+        );
+        project_portfolio_management::response_cache::bump(&ctx).await;
+        assert_ne!(
+            project_portfolio_management::response_cache::epoch(&ctx).await,
+            first_epoch
+        );
+
+        let now = project_portfolio_management::datetime::Timestamp::now();
+        for &job in project_portfolio_management::scheduled_jobs::ALL {
+            let first = run_job(&ctx, job, now).await.unwrap();
+            assert!(matches!(first, Ran::Ok(_)), "{}: {first:?}", job.name());
+            assert_eq!(
+                run_job(&ctx, job, now).await.unwrap(),
+                Ran::Skipped,
+                "{} must not run twice inside its interval",
+                job.name()
+            );
+        }
+    })
+    .await;
+}

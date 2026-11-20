@@ -63,6 +63,13 @@ async fn collaborative_review_delegates_and_aggregates_honestly() {
                     .await
             }
         };
+        for body in [
+            json!({ "subject_kind": "unknown", "subject_pid": plan_pid, "reviewer_ref": expert_a }),
+            json!({ "subject_kind": "plan", "subject_pid": plan_pid, "reviewer_ref": expert_a, "reviewer_scope": "planetary" }),
+            json!({ "subject_kind": "plan", "subject_pid": plan_pid, "reviewer_ref": expert_a, "expertise": "x".repeat(1025) }),
+        ] {
+            assert_eq!(request.post("/api/reviews").json(&body).await.status_code(), 422, "{body}");
+        }
         let first: Value = invite(expert_a.clone(), "internal").await.json();
         let second: Value = invite(expert_b.clone(), "external").await.json();
         let third: Value = invite(expert_c.clone(), "internal").await.json();
@@ -94,6 +101,14 @@ async fn collaborative_review_delegates_and_aggregates_honestly() {
             .json(&json!({ "response": "accept" }))
             .await
             .assert_status_ok();
+        assert_eq!(
+            request
+                .post(&format!("/api/reviews/{a_pid}/submit"))
+                .json(&json!({ "score": 101, "comment": "x".repeat(1025) }))
+                .await
+                .status_code(),
+            422
+        );
         request
             .post(&format!("/api/reviews/{a_pid}/submit"))
             .json(&json!({ "score": 80, "recommendation": "advance", "comment": "Solid" }))
@@ -105,8 +120,6 @@ async fn collaborative_review_delegates_and_aggregates_honestly() {
             .json(&json!({ "response": "decline" }))
             .await
             .assert_status_ok();
-        let _ = third;
-
         let consensus: Value = request
             .get(&format!(
                 "/api/reviews/consensus?subject_kind=plan&subject_pid={plan_pid}"
@@ -135,6 +148,20 @@ async fn collaborative_review_delegates_and_aggregates_honestly() {
             inbox.as_array().is_some_and(|rows| !rows.is_empty()),
             "the invited expert has an in-app notification"
         );
+        let filtered: Value = request
+            .get(&format!("/api/reviews?subject_kind=plan&reviewer_ref={expert_a}&status=submitted"))
+            .await
+            .json();
+        assert_eq!(filtered.as_array().map(Vec::len), Some(1));
+
+        assert_eq!(
+            request.delete(&format!("/api/reviews/{a_pid}")).await.status_code(),
+            422,
+            "a submitted verdict is an immutable record"
+        );
+        let c_pid = third["pid"].as_str().expect("pid");
+        request.delete(&format!("/api/reviews/{c_pid}")).await.assert_status_ok();
+        assert_eq!(request.delete(&format!("/api/reviews/{c_pid}")).await.status_code(), 404);
     })
     .await;
 }
@@ -407,6 +434,156 @@ async fn a_multi_action_rule_applies_every_action_in_order_and_logs_each_outcome
         assert_eq!(rows[0]["outcome"], "skipped", "already carried the label");
         assert_eq!(rows[1]["action_index"], 1);
         assert_eq!(rows[1]["outcome"], "applied", "the assign action");
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+// Exercise the remaining action kinds together, and the operator lifecycle
+// and filters around their rule. The action order is observable in the run log.
+async fn automation_status_notify_schedule_filters_enable_and_delete_round_trip() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan_pid = create_plan!(request, "Every automation action");
+        let assignee = person("12121212-1212-1212-1212-121212121212");
+        let recipient = person("34343434-3434-3434-3434-343434343434");
+        let rule: Value = request
+            .post("/api/automations")
+            .json(&json!({
+                "plan_pid": plan_pid,
+                "name": "Apply every action",
+                "trigger_kind": "task_moved",
+                "to_status": "in_review",
+                "actions": [
+                    {"kind":"assign", "value":{"assignee_ref":assignee}},
+                    {"kind":"set_task_status", "value":{"status":"done"}},
+                    {"kind":"notify", "value":{"recipient_ref":recipient}},
+                    {"kind":"schedule_action", "value":{"action_kind":"expire_review", "in_days":1}},
+                    {"kind":"add_label", "value":{"label":"fully-automated"}}
+                ]
+            }))
+            .await
+            .json();
+        let rule_pid = rule["pid"].as_str().unwrap().to_string();
+
+        // Optional list filters are real query clauses, and enabling is a
+        // separately audited transition from disabling.
+        for query in [
+            format!("plan={plan_pid}"),
+            "trigger=task_moved".to_string(),
+            "enabled=true".to_string(),
+        ] {
+            let rows: Value = request.get(&format!("/api/automations?{query}")).await.json();
+            assert_eq!(rows.as_array().map(Vec::len), Some(1), "{query}");
+        }
+        request
+            .post(&format!("/api/automations/{rule_pid}/disable"))
+            .await
+            .assert_status_ok();
+        request
+            .post(&format!("/api/automations/{rule_pid}/enable"))
+            .await
+            .assert_status_ok();
+
+        let task: Value = request
+            .post(&format!("/api/plans/{plan_pid}/tasks"))
+            .json(&json!({"title":"Run every action"}))
+            .await
+            .json();
+        let task_pid = task["pid"].as_str().unwrap().to_string();
+        request
+            .patch(&format!("/api/plans/{plan_pid}/tasks/{task_pid}"))
+            .json(&json!({"status":"in_review"}))
+            .await
+            .assert_status_ok();
+
+        let task_rows: Value = request
+            .get(&format!("/api/plans/{plan_pid}/tasks"))
+            .await
+            .json();
+        assert_eq!(task_rows["tasks"][0]["status"], "done");
+        assert_eq!(task_rows["tasks"][0]["assignee_ref"], assignee);
+        let plan: Value = request.get(&format!("/api/plans/{plan_pid}")).await.json();
+        assert!(plan["tags"].as_array().unwrap().iter().any(|v| v == "fully-automated"));
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM notifications WHERE recipient_ref = $1")
+                .bind(&recipient)
+                .fetch_one(project_portfolio_management::db::pool(&ctx))
+                .await
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scheduled_actions WHERE source_automation_pid = $1")
+                .bind(rule_pid.parse::<uuid::Uuid>().unwrap())
+                .fetch_one(project_portfolio_management::db::pool(&ctx))
+                .await
+                .unwrap(),
+            1
+        );
+
+        for query in [
+            format!("automation={rule_pid}"),
+            format!("subject={task_pid}"),
+            "outcome=applied".to_string(),
+        ] {
+            let rows: Value = request.get(&format!("/api/automations/runs?{query}")).await.json();
+            assert_eq!(rows.as_array().map(Vec::len), Some(5), "{query}");
+        }
+
+        request
+            .delete(&format!("/api/automations/{rule_pid}"))
+            .await
+            .assert_status_ok();
+        let active: Value = request.get("/api/automations").await.json();
+        assert!(active.as_array().unwrap().is_empty());
+
+        // A write made before action validation existed is ignored wholesale:
+        // invalid array entries leave no partial run behind. The database
+        // itself refuses a non-array value.
+        let stale: Value = request
+            .post("/api/automations")
+            .json(&json!({
+                "plan_pid": plan_pid,
+                "name":"Stale stored rule",
+                "trigger_kind":"task_moved",
+                "to_status":"todo",
+                "actions":[{"kind":"add_label", "value":{"label":"never"}}]
+            }))
+            .await
+            .json();
+        let stale_pid: uuid::Uuid = stale["pid"].as_str().unwrap().parse().unwrap();
+        for actions in [
+            json!([{"value":{"label":"missing-kind"}}]),
+            json!([{"kind":"retired", "value":{}}]),
+        ] {
+            sqlx::query("UPDATE automations SET actions = $1 WHERE pid = $2")
+                .bind(actions)
+                .bind(stale_pid)
+                .execute(project_portfolio_management::db::pool(&ctx))
+                .await
+                .unwrap();
+            request
+                .patch(&format!("/api/plans/{plan_pid}/tasks/{task_pid}"))
+                .json(&json!({"status":"todo"}))
+                .await
+                .assert_status_ok();
+            request
+                .patch(&format!("/api/plans/{plan_pid}/tasks/{task_pid}"))
+                .json(&json!({"status":"done"}))
+                .await
+                .assert_status_ok();
+        }
+        assert_eq!(
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM automation_runs WHERE automation_pid = $1")
+                .bind(stale_pid)
+                .fetch_one(project_portfolio_management::db::pool(&ctx))
+                .await
+                .unwrap(),
+            0
+        );
     })
     .await;
 }
@@ -844,6 +1021,88 @@ async fn scheduled_actions_only_fire_when_due_and_only_once() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+// Pin the due-time executor's outcomes, including malformed rows left by an
+// older binary: the sweep records each refusal and continues with the rest.
+async fn due_scheduled_actions_record_notify_expiry_and_malformed_outcomes() {
+    use project_portfolio_management::models::capabilities::{NewScheduledAction, schedule_on};
+
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan_pid: uuid::Uuid = create_plan!(request, "Due action plan").parse().unwrap();
+        let due_at: project_portfolio_management::datetime::OffsetDateTime =
+            (project_portfolio_management::datetime::Timestamp::now()
+                - project_portfolio_management::datetime::Duration::days(1))
+            .into();
+        let cases = [
+            (
+                "notify",
+                json!({"recipient_ref":"person:scheduled-recipient", "message":"Due now"}),
+                "notified",
+            ),
+            ("notify", json!({}), "failed: no recipient_ref"),
+            ("expire_review", json!({}), "expired 0 review(s)"),
+            (
+                "retired_action_kind",
+                json!({}),
+                "failed: unknown action_kind",
+            ),
+        ];
+        let mut pids = Vec::new();
+        for (kind, payload, _) in &cases {
+            let row = schedule_on(
+                &mut project_portfolio_management::db::pool(&ctx),
+                NewScheduledAction {
+                    subject_kind: "plan".to_string(),
+                    subject_pid: plan_pid,
+                    action_kind: (*kind).to_string(),
+                    payload: payload.clone(),
+                    due_at,
+                    source_automation_pid: None,
+                    created_by: Some("coverage-operator".to_string()),
+                },
+            )
+            .await
+            .unwrap();
+            pids.push(row.pid);
+        }
+
+        assert_eq!(
+            project_portfolio_management::controllers::automation::sweep_due(&ctx)
+                .await
+                .unwrap(),
+            (4, 0, false)
+        );
+        for ((_, _, expected), pid) in cases.iter().zip(&pids) {
+            let outcome: String =
+                sqlx::query_scalar("SELECT outcome FROM scheduled_actions WHERE pid = $1")
+                    .bind(pid)
+                    .fetch_one(project_portfolio_management::db::pool(&ctx))
+                    .await
+                    .unwrap();
+            assert!(outcome.starts_with(expected), "{pid}: {outcome}");
+        }
+        assert_eq!(
+            request
+                .delete(&format!("/api/scheduled-actions/{}", pids[0]))
+                .await
+                .status_code(),
+            422,
+            "an already-fired action cannot be cancelled"
+        );
+        assert_eq!(
+            project_portfolio_management::controllers::automation::sweep_due(&ctx)
+                .await
+                .unwrap(),
+            (0, 0, false),
+            "fired rows are never selected again"
+        );
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Pins pagination (agents/share/restful.md) on the three automation
 // list endpoints — configured rules, their run log, and the deadline
 // queue: signed next links walk every row once, there is no total, and
@@ -921,6 +1180,74 @@ async fn automation_lists_are_paginated() {
         super::assert_pages(&request, "/api/scheduled-actions", 5).await;
         let (paged, _) = super::walk(&request, "/api/scheduled-actions?limit=2").await;
         assert_eq!(&paged, full_rows, "the pages keep the soonest-first order");
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+// The destructive maintenance command is deliberately exercised only against
+// the throwaway database each request test boots. It must empty application
+// rows and recreate the append-only outbox record so the database remains usable.
+async fn db_truncate_empties_the_service_and_recreates_the_outbox() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan_pid = create_plan!(request, "Disposable truncate check");
+        let duplicate_pid = create_plan!(request, "Disposable duplicate");
+        project_portfolio_management::models::merge_records::Model::record(
+            &ctx,
+            plan_pid.parse().unwrap(),
+            duplicate_pid.parse().unwrap(),
+            Some("coverage drill"),
+            Some("operator"),
+            Some(json!({"name":"Disposable duplicate"})),
+        )
+        .await
+        .expect("record a merge before truncating");
+        assert_eq!(
+            project_portfolio_management::models::merge_records::Model::recent(&ctx, 1)
+                .await
+                .unwrap()
+                .len(),
+            1
+        );
+        let mut tx = project_portfolio_management::db::begin(&ctx).await.unwrap();
+        let envelope = project_portfolio_management::streaming::Envelope {
+            event_id: uuid::Uuid::new_v4(),
+            schema_version: project_portfolio_management::streaming::SCHEMA_VERSION,
+            entity: project_portfolio_management::streaming::ENTITY,
+            kind: project_portfolio_management::streaming::EventKind::Updated,
+            pid: plan_pid.clone(),
+            seq: 99,
+            actor: Some("operator".into()),
+            name: "Disposable truncate check".into(),
+        };
+        project_portfolio_management::models::event_outbox::write(&mut tx, &envelope)
+            .await
+            .unwrap();
+        tx.commit().await.unwrap();
+        let events = project_portfolio_management::models::event_outbox::recent(&ctx, 10)
+            .await
+            .unwrap();
+        assert!(events.iter().any(|event| event.seq == 99));
+        App::truncate(&ctx)
+            .await
+            .expect("truncate the throwaway database");
+
+        assert_eq!(
+            request
+                .get(&format!("/api/plans/{plan_pid}"))
+                .await
+                .status_code(),
+            404
+        );
+        let plans: Value = request.get("/api/plans").await.json();
+        assert_eq!(plans.as_array().map(Vec::len), Some(0));
+        // A write after truncation proves the outbox tables were recreated and
+        // all foreign-key deletion ordering left the schema operational.
+        let replacement = create_plan!(request, "After truncate");
+        assert!(!replacement.is_empty());
     })
     .await;
 }

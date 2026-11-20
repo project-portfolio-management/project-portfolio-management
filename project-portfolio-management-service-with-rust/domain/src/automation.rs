@@ -658,6 +658,31 @@ mod tests {
             "recipient_ref": format!("worker:{}", Uuid::new_v4()),
         });
         assert!(validate_action("schedule_action", &notify_with_recipient, STATUSES).is_ok());
+        assert!(
+            validate_action(
+                "schedule_action",
+                &json!({"action_kind": "notify", "in_days": 3, "recipient_ref": "worker:not-a-uuid"}),
+                STATUSES
+            )
+            .is_err()
+        );
+        assert!(
+            validate_action(
+                "schedule_action",
+                &json!({"action_kind": "expire_review", "in_days": "tomorrow"}),
+                STATUSES
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn immediate_notifications_require_a_person_like_recipient() {
+        let who = format!("organization:{}", Uuid::new_v4());
+        for kind in ["notify", "propose_reschedule"] {
+            assert!(validate_action(kind, &json!({"recipient_ref": who}), STATUSES).is_ok());
+            assert!(validate_action(kind, &json!({"recipient_ref": "someone"}), STATUSES).is_err());
+        }
     }
 
     #[test]

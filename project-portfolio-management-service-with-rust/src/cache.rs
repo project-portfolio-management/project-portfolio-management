@@ -218,4 +218,16 @@ mod tests {
         assert!(cache.ping().await.is_err());
         assert!(cache.get::<String>("a").await.is_err());
     }
+
+    #[tokio::test]
+    async fn memory_debug_ping_and_decode_errors_are_explicit() {
+        let cache = Cache::memory();
+        assert_eq!(format!("{cache:?}"), "Cache::Memory");
+        cache.ping().await.unwrap();
+        cache
+            .insert_with_expiry("number", &"not a number", Duration::from_secs(5))
+            .await
+            .unwrap();
+        assert!(cache.get::<u64>("number").await.is_err());
+    }
 }

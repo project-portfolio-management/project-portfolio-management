@@ -851,4 +851,80 @@ mod tests {
         assert_eq!(d(2026, 1, 1).num_days_from_ce(), 739_617);
         assert_eq!(format!("{:?}", d(2027, 1, 1).iso_week()), "2026-W53");
     }
+
+    #[test]
+    fn compatibility_accessors_conversions_and_operators_are_exercised() {
+        let leap = d(2024, 2, 29);
+        assert_eq!((leap.month0(), leap.day0(), leap.ordinal()), (1, 28, 60));
+        assert!(leap.leap_year());
+        assert_eq!(leap.num_days_from_ce(), 738_945);
+        assert_eq!(leap.with_day(28), Some(d(2024, 2, 28)));
+        assert_eq!(leap.with_day(30), None);
+        assert_eq!(leap.with_month(3), Some(d(2024, 3, 29)));
+        assert_eq!(d(2024, 1, 31).with_month(2), None);
+        assert_eq!(leap.with_year(2023), None);
+        assert_eq!(leap.pred_opt(), Some(d(2024, 2, 28)));
+        assert_eq!(d(2024, 3, 1).pred_opt(), Some(leap));
+        assert_eq!(Date::MIN.pred_opt(), None);
+
+        let week = d(2021, 1, 1).iso_week();
+        assert_eq!((week.year(), week.week(), week.week0()), (2020, 53, 52));
+        assert_eq!(
+            Date::from_isoywd_opt(2020, 53, Weekday::Fri),
+            Some(d(2021, 1, 1))
+        );
+        assert_eq!(Date::from_isoywd_opt(2021, 53, Weekday::Mon), None);
+        assert_eq!(format!("{:?}", d(-1, 1, 1).iso_week()), "-0002-W53");
+
+        let jiff = leap.to_jiff();
+        assert_eq!(Date::from_jiff(jiff), leap);
+        assert_eq!(Date::from(jiff), leap);
+        assert_eq!(jiff::civil::Date::from(leap), jiff);
+        assert_eq!(Date::default(), d(1970, 1, 1));
+        assert_eq!(format!("{leap:?}"), "2024-02-29");
+        assert_eq!("2024-02-29".parse::<Date>().unwrap(), leap);
+        assert_eq!(
+            Date::parse_from_str("29/02/2024", "%d/%m/%Y").unwrap(),
+            leap
+        );
+        assert_eq!(leap.format("%d %m %Y").to_string(), "29 02 2024");
+
+        let time = NaiveTime::from_hms_opt(23, 59, 58).unwrap();
+        assert_eq!(NaiveTime::MIN, NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+        assert_eq!(NaiveTime::from_hms_opt(24, 0, 0), None);
+        let mut local = leap.and_time(time);
+        assert_eq!(local.date(), leap);
+        assert_eq!(
+            local.and_utc(),
+            "2024-02-29T23:59:58Z".parse::<crate::Timestamp>().unwrap()
+        );
+        local += Duration::seconds(2);
+        assert_eq!(local.date(), d(2024, 3, 1));
+        assert_eq!(NaiveDateTime::default().date(), d(1970, 1, 1));
+        assert_eq!(
+            Date::MIN.and_hms_opt(0, 0, 0).unwrap().and_utc(),
+            crate::Timestamp::MIN_UTC
+        );
+        assert_eq!(
+            Date::MAX.and_hms_opt(23, 59, 59).unwrap().and_utc(),
+            crate::Timestamp::MAX_UTC
+        );
+
+        let mut moved = leap;
+        moved += Duration::days(1);
+        moved -= Duration::days(1);
+        assert_eq!(moved, leap);
+        assert_eq!(leap + Days::new(1) - Days::new(1), leap);
+        assert_eq!(leap + Months::new(1) - Months::new(1), leap);
+        assert_eq!(
+            leap.checked_sub_signed(Duration::days(1)),
+            Some(d(2024, 2, 28))
+        );
+        assert_eq!(
+            leap.signed_duration_since(d(2024, 2, 1)),
+            Duration::days(28)
+        );
+        assert_eq!(Date::MAX.checked_add_months(Months::new(u32::MAX)), None);
+        assert_eq!(Date::MIN.checked_sub_months(Months::new(u32::MAX)), None);
+    }
 }

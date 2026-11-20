@@ -551,4 +551,107 @@ mod tests {
             std::time::Duration::from_secs(2)
         );
     }
+
+    #[test]
+    fn constructors_counts_checked_arithmetic_and_operators_agree() {
+        let d = Duration::weeks(2)
+            + Duration::days(3)
+            + Duration::hours(4)
+            + Duration::minutes(5)
+            + Duration::seconds(6)
+            + Duration::milliseconds(7)
+            + Duration::microseconds(8)
+            + Duration::nanoseconds(9);
+        assert_eq!(d.num_weeks(), 2);
+        assert_eq!(d.num_days(), 17);
+        assert_eq!(d.num_hours(), 412);
+        assert_eq!(d.num_minutes(), 24_725);
+        assert_eq!(d.num_seconds(), 1_483_506);
+        assert_eq!(d.num_milliseconds(), 1_483_506_007);
+        assert_eq!(d.num_microseconds(), Some(1_483_506_007_008));
+        assert_eq!(d.num_nanoseconds(), Some(1_483_506_007_008_009));
+        assert_eq!(d.subsec_nanos(), 7_008_009);
+        assert!((d.as_seconds_f64() - 1_483_506.007_008_009).abs() < f64::EPSILON);
+        assert!(!d.is_zero());
+        assert!(Duration::zero().is_zero());
+        assert_eq!((-d).abs(), d);
+
+        assert_eq!(
+            Duration::seconds(4).checked_add(&Duration::seconds(3)),
+            Some(Duration::seconds(7))
+        );
+        assert_eq!(
+            Duration::seconds(4).checked_sub(&Duration::seconds(3)),
+            Some(Duration::seconds(1))
+        );
+        assert_eq!(
+            Duration::seconds(4).checked_mul(3),
+            Some(Duration::seconds(12))
+        );
+        assert_eq!(
+            Duration::seconds(5).checked_div(2),
+            Some(Duration::milliseconds(2500))
+        );
+        assert_eq!(
+            Duration::milliseconds(-1500).checked_div(2),
+            Some(Duration::milliseconds(-750))
+        );
+        assert_eq!(Duration::seconds(1).checked_div(0), None);
+        assert_eq!(Duration::MAX.checked_mul(2), None);
+        assert_eq!(Duration::MIN.checked_sub(&Duration::nanoseconds(1)), None);
+
+        let mut assigned = Duration::seconds(10);
+        assigned += Duration::seconds(2);
+        assigned -= Duration::seconds(1);
+        assert_eq!(assigned, Duration::seconds(11));
+        assert_eq!(Duration::seconds(3) * 4, Duration::seconds(12));
+        assert_eq!(Duration::seconds(9) / 3, Duration::seconds(3));
+        assert_eq!(
+            vec![Duration::seconds(1), Duration::seconds(2)]
+                .into_iter()
+                .sum::<Duration>(),
+            Duration::seconds(3)
+        );
+        assert_eq!(
+            [Duration::seconds(2), Duration::seconds(3)]
+                .iter()
+                .sum::<Duration>(),
+            Duration::seconds(5)
+        );
+
+        assert_eq!(
+            Duration::from_std(std::time::Duration::from_millis(1500)).unwrap(),
+            Duration::milliseconds(1500)
+        );
+        assert!(Duration::from_std(std::time::Duration::MAX).is_err());
+        assert_eq!(
+            Duration::from_jiff(Duration::seconds(4).to_jiff()),
+            Some(Duration::seconds(4))
+        );
+        assert_eq!(Days::new(8), Days(8));
+        assert_eq!(Months::new(13).as_u32(), 13);
+    }
+
+    #[test]
+    fn every_try_constructor_refuses_values_past_the_duration_range() {
+        assert_eq!(Duration::try_weeks(1), Some(Duration::weeks(1)));
+        assert_eq!(Duration::try_days(1), Some(Duration::days(1)));
+        assert_eq!(Duration::try_hours(1), Some(Duration::hours(1)));
+        assert_eq!(Duration::try_minutes(1), Some(Duration::minutes(1)));
+        assert_eq!(Duration::try_seconds(1), Some(Duration::seconds(1)));
+        assert_eq!(Duration::try_milliseconds(i64::MAX), Some(Duration::MAX));
+        for constructor in [
+            Duration::try_weeks,
+            Duration::try_days,
+            Duration::try_hours,
+            Duration::try_minutes,
+            Duration::try_seconds,
+        ] {
+            assert!(constructor(i64::MAX).is_none());
+            assert!(constructor(i64::MIN).is_none());
+        }
+        assert_eq!(Duration::MAX.num_microseconds(), None);
+        assert_eq!(Duration::MAX.num_nanoseconds(), None);
+        assert_eq!(Duration::milliseconds(1).to_string(), "PT0.001S");
+    }
 }

@@ -1,7 +1,7 @@
-//! DB-gated proof that under the `outbox` transport, `create_and_emit`
-//! writes the entity, its `axa_outbox` row, **and** its `audit_logs`
-//! row in **one transaction** (`agents/share/event-bus.md` §3: audit and
-//! outbox share the handler transaction, so they can never disagree).
+//! DB-gated proof that under the `outbox` transport, every plan mutation
+//! writes the entity, its `axa_outbox` row, **and** its `audit_logs` row in
+//! one transaction (`agents/share/event-bus.md` §3: audit and outbox share
+//! the handler transaction, so they can never disagree).
 //!
 //! This drives the real `streaming::create_and_emit` path (not a
 //! hand-built transaction), so it also exercises the transport switch. It
@@ -22,7 +22,7 @@ use serial_test::serial;
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with: cargo test --test main outbox_audit:: -- --ignored"]
-async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
+async fn outbox_create_update_merge_delete_write_events_and_audit_atomically() {
     own_process!();
     // Select the durable transport BEFORE the app boots (the transport is
     // read once into a process-wide OnceLock). `set_var` is `unsafe` in
@@ -39,16 +39,37 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
         let model = streaming::create_and_emit(&ctx, &wi, Some(actor))
             .await
             .expect("create_and_emit under outbox transport");
+        let main_pid = model.pid;
+
+        let mut changed = model.to_plan().expect("stored plan");
+        changed.name = "Outbox Audit Portfolio renamed".to_string();
+        let model = streaming::update_and_emit(&ctx, model, &changed, Some(actor))
+            .await
+            .expect("update_and_emit under outbox transport");
+
+        let duplicate_plan = Plan::new("Duplicate outbox portfolio");
+        let duplicate = streaming::create_and_emit(&ctx, &duplicate_plan, Some(actor))
+            .await
+            .expect("create duplicate under outbox transport");
+        let duplicate_pid = duplicate.pid;
+        let (merged, returned_duplicate, _) =
+            streaming::merge_and_emit(&ctx, model, duplicate, &changed, Some(actor))
+                .await
+                .expect("merge_and_emit under outbox transport");
+        assert_eq!(returned_duplicate, duplicate_pid);
+        streaming::delete_and_emit(&ctx, merged, Some(actor))
+            .await
+            .expect("delete_and_emit under outbox transport");
 
         // Entity committed.
         assert_eq!(
             sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plans WHERE pid = $1")
-                .bind(model.pid)
+                .bind(main_pid)
                 .fetch_one(project_portfolio_management::db::pool(&ctx))
                 .await
                 .expect("count plans"),
             1,
-            "the plans row committed"
+            "the soft-deleted survivor row committed"
         );
 
         // Exactly one outbox row, unpublished, for this record.
@@ -56,28 +77,42 @@ async fn outbox_create_and_emit_writes_entity_event_and_audit_atomically() {
             "SELECT e.kind, o.state FROM axa_outbox_events e \
                  JOIN axa_outbox_owed o ON o.event_id = e.event_id WHERE e.key = $1",
         )
-        .bind(model.pid.to_string())
+        .bind(main_pid.to_string())
         .fetch_all(project_portfolio_management::db::pool(&ctx))
         .await
         .expect("load outbox rows");
         assert_eq!(
             events,
-            vec![("created".to_string(), "pending".to_string())],
-            "one pending outbox event"
+            ["created", "updated", "merged", "deleted"]
+                .map(|kind| (kind.to_string(), "pending".to_string())),
+            "one pending event for each mutation of the survivor"
         );
+        let duplicate_events: Vec<String> = sqlx::query_scalar(
+            "SELECT e.kind FROM axa_outbox_events e WHERE e.key = $1 ORDER BY e.id",
+        )
+        .bind(duplicate_pid.to_string())
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .expect("load duplicate events");
+        assert_eq!(duplicate_events, ["created", "deleted"]);
 
         // ...and the audit row rode the SAME transaction (§3) — not a
         // best-effort after-commit side channel.
         let audits = sqlx::query_as::<_, audit_logs::Model>(
             "SELECT * FROM audit_logs WHERE entity_pid = $1",
         )
-        .bind(model.pid)
+        .bind(main_pid)
         .fetch_all(project_portfolio_management::db::pool(&ctx))
         .await
         .expect("load audit rows");
-        assert_eq!(audits.len(), 1, "one audit_logs row, atomic with the event");
-        assert_eq!(audits[0].action, "created");
-        assert_eq!(audits[0].actor.as_deref(), Some(actor));
+        assert_eq!(
+            audits
+                .iter()
+                .map(|row| row.action.as_str())
+                .collect::<Vec<_>>(),
+            ["created", "updated", "merged", "deleted"]
+        );
+        assert!(audits.iter().all(|row| row.actor.as_deref() == Some(actor)));
     })
     .await;
 }

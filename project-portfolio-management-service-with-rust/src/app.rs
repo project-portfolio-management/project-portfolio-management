@@ -136,11 +136,11 @@ fn leave_headers_to_http_security(config: &mut ServiceConfig) {
 }
 
 /// Settings axa 0.10 read under a name axa 0.11 ignores, each with the name that replaced it. Left alone, each falls back
-/// without a word: to a default database in development, to the build's environment, to the default body limit or
-/// header timeout. `HTTP_CSP` is not here, as this service never used axa's policy under either name.
-pub const RENAMED_SETTINGS: [(&str, &str); 4] = [
+/// without a word: to a default database in development, to the default body limit or
+/// header timeout. `HTTP_CSP` is not here, as this service never used axa's policy under either name. The Loco-era
+/// `LOCO_ENV` is not here either: it is ignored like any other unknown setting.
+pub const RENAMED_SETTINGS: [(&str, &str); 3] = [
     ("DATABASE_URL", "DB_URL"),
-    ("LOCO_ENV", "APP_ENV"),
     ("BODY_LIMIT_BYTES", "HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT"),
     (
         "HEADER_READ_TIMEOUT_SECONDS",
@@ -897,13 +897,15 @@ mod tests {
         }
         let refusal = renamed_settings(env(&[
             ("DATABASE_URL", "postgres://x"),
-            ("LOCO_ENV", "production"),
+            ("BODY_LIMIT_BYTES", "1024"),
         ]))
         .unwrap_err();
         assert!(
-            refusal.contains("DB_URL") && refusal.contains("APP_ENV"),
+            refusal.contains("DB_URL") && refusal.contains("HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT"),
             "{refusal}"
         );
+        // The Loco-era environment name is no longer checked: set alone, it does not stop the start.
+        assert_eq!(renamed_settings(env(&[("LOCO_ENV", "production")])), Ok(()));
     }
 
     #[test]

@@ -15,6 +15,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (`LOCO_ENV` no longer checked)
+
+- **The start check for `LOCO_ENV` is removed.** The service used to refuse to start when the Loco-era `LOCO_ENV` was
+  set without `APP_ENV`. It now ignores `LOCO_ENV`, as it ignores any setting it does not read. The checks for
+  `DATABASE_URL`, `BODY_LIMIT_BYTES` and `HEADER_READ_TIMEOUT_SECONDS` stay. Spec §8 and the deployment, runbook and
+  upgrade documents say so, and a unit test shows that `LOCO_ENV` alone no longer stops the start. **Operators:** a
+  deployment that still sets only `LOCO_ENV=production` now starts as the build's environment, so set `APP_ENV`.
+  **Not verified:** the integration suite ran without the database; its one failure is local only (the licence-file
+  test finds old agent worktrees under `.claude/worktrees/`, which CI does not have).
+
 ### 20 November (Loco names removed)
 
 - The test and development Postgres credentials are now `postgres`/`postgres` instead of `loco`/`loco`, in CI,

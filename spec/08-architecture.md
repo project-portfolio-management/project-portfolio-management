@@ -85,9 +85,9 @@ off, and neither `HTTP_CONTENT_SECURITY_POLICY` nor `HTTP_PERMISSIONS_POLICY` ch
 stack refuses a browser's cross-site write (`403` `cross_site_write_refused`, or `origin_mismatch` for an `origin` that is not the
 service's host); a request with neither header, as the UI's proxy sends, passes, and a write from an origin
 `PROJECT_PORTFOLIO_MANAGEMENT_CORS_ORIGINS` lists passes because the service's CORS layer, outside axa's stack, does not pass its
-`origin` and `sec-fetch-site` on (`tests/requests/cross_site.rs`). `DB_URL` may come from `DB_URL_FILE` (not both). axa 0.10 read four of these under
-other names, which axa 0.11 ignores: `DATABASE_URL` (now `DB_URL`), `LOCO_ENV` (now `APP_ENV`), `BODY_LIMIT_BYTES` and
-`HEADER_READ_TIMEOUT_SECONDS`. **The service refuses to start, in every environment, when an old name is set and its new name is
+`origin` and `sec-fetch-site` on (`tests/requests/cross_site.rs`). `DB_URL` may come from `DB_URL_FILE` (not both). axa 0.10 read three of these under
+other names, which axa 0.11 ignores: `DATABASE_URL` (now `DB_URL`), `BODY_LIMIT_BYTES` and `HEADER_READ_TIMEOUT_SECONDS`.
+The Loco-era `LOCO_ENV` (now `APP_ENV`) is not checked; like any unknown setting, it is ignored. **The service refuses to start, in every environment, when an old name is set and its new name is
 not**, naming both, rather than silently falling back to a default database, environment or limit. The body limit
 (2 MiB unless set) binds every request body, read by an extractor or not; the attachment upload and the plan, MS Project
 and tracker imports raise it to their own caps with axa's `middleware::body_limit`, and a census test keeps Axum's

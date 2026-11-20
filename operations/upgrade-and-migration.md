@@ -84,13 +84,13 @@ The release that moves the service to axa 0.11 reads none of the old names below
 routes. Do these first, in every environment, then deploy. Each item names the old and new name.
 
 1. **Rename the settings** in every `.env` file, `compose.yaml` override, Kubernetes `ConfigMap` or `Secret`, and CI
-   job. The service **refuses to start** while an old name in the first four rows is set without its new one, and says
+   job. The service **refuses to start** while an old name in the first three rows is set without its new one, and says
    which; nothing falls back to a default database.
 
    | Old | New | Left alone |
    |---|---|---|
    | `DATABASE_URL` | `DB_URL` | refuses to start, naming `DB_URL` |
-   | `LOCO_ENV` | `APP_ENV` | refuses to start, naming `APP_ENV` |
+   | `LOCO_ENV` | `APP_ENV` | ignored: the service runs as the build's environment unless `APP_ENV` is set |
    | `BODY_LIMIT_BYTES` | `HTTP_REQUEST_BODY_LIMIT_BYTE_COUNT` | refuses to start, naming the new name |
    | `HEADER_READ_TIMEOUT_SECONDS` | `HTTP_REQUEST_HEADER_READ_TIMEOUT_SECONDS` | refuses to start, naming the new name |
    | `HTTP_CSP` | `HTTP_CONTENT_SECURITY_POLICY` | nothing: this service sends its own policy and never read either |

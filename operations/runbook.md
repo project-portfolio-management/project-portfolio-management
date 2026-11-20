@@ -30,7 +30,7 @@ The start-up gate prints a message beginning `refusing to start:`. Do what it sa
 |---|---|---|
 | `authentication enforcement is off in the production environment` | `REQUIRE_AUTH=false` under `APP_ENV=production` | remove the opt-out; production never runs anonymously |
 | `authentication enforcement is on but no token verifier is configured` | no `PASETO_KEYS`, `PASETO_KEYS_URL` or Keycloak settings | set one (see [Deployment](deployment.md)) |
-| `axa 0.11 no longer reads DATABASE_URL (set DB_URL instead)` (or `LOCO_ENV`, `BODY_LIMIT_BYTES`, `HEADER_READ_TIMEOUT_SECONDS`) | a setting under its axa 0.10 name | rename it as the message says ([Upgrade](upgrade-and-migration.md#upgrading-to-axa-011)) |
+| `axa 0.11 no longer reads DATABASE_URL (set DB_URL instead)` (or `BODY_LIMIT_BYTES`, `HEADER_READ_TIMEOUT_SECONDS`) | a setting under its axa 0.10 name | rename it as the message says ([Upgrade](upgrade-and-migration.md#upgrading-to-axa-011)) |
 | `DB_URL is required in production` | no database URL | set `DB_URL` |
 | `PoolTimedOut` / `Conn` | the database is unreachable or the URL is wrong | check `DB_URL`, the database, the network |
 | YAML or `Tera` errors naming a config file | a malformed config or a missing required variable (`DB_URL`) | read the line; `doctor --config` |

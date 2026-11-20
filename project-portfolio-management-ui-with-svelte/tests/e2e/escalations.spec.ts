@@ -132,11 +132,14 @@ test("an escalation is raised, taken up a level and resolved", async ({
   expect(sent.raised).toBeUndefined();
   await page.getByLabel("Title").fill("Cost is beyond tolerance");
   await page.getByRole("button", { name: "Raise it" }).click();
-  expect(sent.raised).toEqual({
-    title: "Cost is beyond tolerance",
-    reason_kind: "tolerance",
-    tolerance_dimension: "cost",
-  });
+  // The request goes out after the click returns; wait for it rather than race it.
+  await expect
+    .poll(() => sent.raised)
+    .toEqual({
+      title: "Cost is beyond tolerance",
+      reason_kind: "tolerance",
+      tolerance_dimension: "cost",
+    });
   await expect(page.getByRole("status")).toContainText(
     "Raised Cost is beyond tolerance.",
   );
@@ -160,7 +163,7 @@ test("an escalation is raised, taken up a level and resolved", async ({
   expect(sent.up).toBeUndefined();
   await region.getByLabel("Why it is going up").fill("No answer in a week");
   await region.getByRole("button", { name: "Take it up a level" }).click();
-  expect(sent.up).toEqual({ note: "No answer in a week" });
+  await expect.poll(() => sent.up).toEqual({ note: "No answer in a week" });
   await expect(page.getByText("Level 2: Sponsor")).toBeVisible();
   await expect(region).toContainText("Taken up a level");
 

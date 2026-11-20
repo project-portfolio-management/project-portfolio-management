@@ -112,7 +112,13 @@ test("a process is defined, started, followed and its to-do step completed", asy
     .click();
   await page.getByLabel("Its identifier").fill(PID);
   await page.getByRole("button", { name: "Start the run" }).click();
-  expect(sent.started).toEqual({ subject_kind: "plan", subject_pid: PID });
+  // The request goes out after the click returns; wait for it rather than race it.
+  await expect
+    .poll(() => sent.started)
+    .toEqual({
+      subject_kind: "plan",
+      subject_pid: PID,
+    });
   await expect(page.getByText("Release sign-off on plan")).toBeVisible();
 
   // Follow it and finish the to-do that is waiting.

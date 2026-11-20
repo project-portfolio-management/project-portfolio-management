@@ -81,6 +81,19 @@ impl Mailer {
     ///
     /// When the SMTP host is not usable.
     pub fn from_env(environment: &axa::Environment) -> axa::Result<Self> {
+        Self::from_lookup(environment, |name| std::env::var(name).ok())
+    }
+
+    /// [`Mailer::from_env`] with the settings read through `lookup`, so a test need not change the process's
+    /// environment.
+    ///
+    /// # Errors
+    ///
+    /// When the SMTP host is not usable.
+    pub fn from_lookup(
+        environment: &axa::Environment,
+        lookup: impl Fn(&str) -> Option<String>,
+    ) -> axa::Result<Self> {
         use lettre::transport::smtp::authentication::Credentials;
         use lettre::{AsyncSmtpTransport, Tokio1Executor};
         match environment {
@@ -91,17 +104,16 @@ impl Mailer {
                     .build(),
             )),
             _ => {
-                let host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
-                let port = std::env::var("SMTP_PORT")
-                    .ok()
+                let host = lookup("SMTP_HOST").unwrap_or_else(|| "localhost".to_string());
+                let port = lookup("SMTP_PORT")
                     .and_then(|p| p.parse().ok())
                     .unwrap_or(587);
                 let mut builder = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&host)
                     .map_err(axa::Error::wrap)?
                     .port(port);
-                let user = std::env::var("SMTP_USER").unwrap_or_default();
+                let user = lookup("SMTP_USER").unwrap_or_default();
                 if !user.is_empty() {
-                    let password = std::env::var("SMTP_PASSWORD").unwrap_or_default();
+                    let password = lookup("SMTP_PASSWORD").unwrap_or_default();
                     builder = builder.credentials(Credentials::new(user, password));
                 }
                 Ok(Self::Smtp(builder.build()))
@@ -311,6 +323,55 @@ pub fn after(result: &Result<(), SendError>, attempts: i32, now: Timestamp) -> A
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn each_environment_gets_its_mailer() {
+        let none = |_: &str| None;
+        let test = Mailer::from_lookup(&axa::Environment::Test, none).unwrap();
+        assert_eq!(format!("{test:?}"), "Mailer::Stub");
+        let development = Mailer::from_lookup(&axa::Environment::Development, none).unwrap();
+        assert_eq!(format!("{development:?}"), "Mailer::Smtp");
+        // A real transport keeps no record of what it sent.
+        assert_eq!(development.deliveries().count, 0);
+
+        // Production: the defaults, then every setting (a bad port falls back to 587).
+        let production = axa::Environment::Production;
+        assert!(Mailer::from_lookup(&production, none).is_ok());
+        let settings = |name: &str| {
+            Some(
+                match name {
+                    "SMTP_HOST" => "smtp.example.invalid",
+                    "SMTP_PORT" => "not-a-port",
+                    "SMTP_USER" => "relay",
+                    _ => "secret",
+                }
+                .to_string(),
+            )
+        };
+        let configured = Mailer::from_lookup(&production, settings).unwrap();
+        assert_eq!(format!("{configured:?}"), "Mailer::Smtp");
+    }
+
+    #[tokio::test]
+    async fn a_relay_that_cannot_be_reached_is_a_transient_failure() {
+        // Port 1 on the loopback refuses the connection at once.
+        let transport =
+            lettre::AsyncSmtpTransport::<lettre::Tokio1Executor>::builder_dangerous("127.0.0.1")
+                .port(1)
+                .timeout(Some(std::time::Duration::from_secs(2)))
+                .build();
+        let sender = SmtpSender::new(Mailer::Smtp(transport));
+        let message = Message {
+            from: "service@example.com".into(),
+            to: "ada@example.com".into(),
+            subject: "Hello".into(),
+            text: "Body".into(),
+        };
+        assert!(matches!(
+            sender.send(&message).await,
+            Err(SendError::Transient(_))
+        ));
+    }
 
     #[test]
     fn addresses_with_line_breaks_lists_or_names_are_refused() {

@@ -1,6 +1,6 @@
 # Supplier assurance for a managed, hosted deployment (proposed 2026-11-20)
 
-> **Status: proposed. None of SA-1 to SA-21 is built or done.** Tasks are in [`tasks.md`](../tasks.md). The decisions
+> **Status: proposed. SA-1 is built; none of SA-2 to SA-21 is built or done.** Tasks are in [`tasks.md`](../tasks.md). The decisions
 > SA-D1 to SA-D4 belong to the owner. The first buyer in view is NHS Wales, so the names here are NHS Wales names, but
 > every software requirement applies to any deployment.
 
@@ -44,9 +44,12 @@ Each requirement states what is already true, checked against the code on 2026-1
 
 - **SA-R1 — Single tenant per deployment.** One deployment serves one customer organization, with its own database, its
   own artifact store and its own backups. No table has a tenant column, and none may gain one. A supplier serving several
-  customers runs several deployments. *Today:* true by design; no test states it. *Missing:* a census test that fails when
-  a migration adds a `tenant`, `organization_id` or similar discriminator column (SA-1), and a sentence in the deployment
-  guide. SA-R13 makes sure each service opens its own customer's database.
+  customers runs several deployments. *Built (SA-1, 2026-11-20):* `no_table_has_a_tenant_column` in
+  `tests/migrations.rs` reads every column of the migrated schema and fails on a tenant, customer or account
+  discriminator (`tenant`, `tenant_id`, `customer_id`, `organization_id`, `account_id` and similar). The only exception
+  is axa's outbox `tenant` on `axa_outbox_events` and `axa_outbox_owed` (migration 114), and a second test fails if the
+  service ever fills it. `organization_pid` is allowed, because an organization here is a delivery partner within the
+  one customer. The deployment guide states the rule. SA-R13 makes sure each service opens its own customer's database.
 - **SA-R13 — One customer, one database: the service knows which database is its own.** When a supplier hosts several
   customers, only the `DB_URL` setting ties a running service to its database. A configuration copied from the wrong
   deployment, or a typing mistake in a deploy script, could start customer B's service against customer A's database.

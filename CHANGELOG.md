@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (SA-1: one customer per deployment, kept by a test)
+
+- **SA-1 built.** `no_table_has_a_tenant_column` (a database test in `tests/migrations.rs`) reads every column of the
+  migrated schema. It fails on any tenant, customer or account discriminator. axa's outbox `tenant` column on
+  `axa_outbox_events` and `axa_outbox_owed` (migration 114) is the one named exception, and
+  `the_service_never_names_an_outbox_tenant` fails if the service ever fills it. The deployment guide gains
+  "One customer per deployment". The test was checked both ways: it passes on the real schema and fails, naming the
+  column, when a `tenant_id` is added.
+  **Not done:** the name list is a list, so a discriminator under another name (`company_id`, say) would pass. Review
+  new migrations for that too. SA-2 to SA-21 are not built.
+
 ### 20 November (axa 0.20.1)
 
 - **axa 0.20.0 → 0.20.1.** The release's only change is that axa's `mail` feature requires `axa-mail` 0.1.2 and so

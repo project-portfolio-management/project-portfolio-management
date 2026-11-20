@@ -119,6 +119,14 @@ it up**), and `ppm-search` (derived; safe to lose). Without `ARTIFACT_DIR` on a
 volume, uploaded files would live in the container's temporary directory and
 vanish on restart; the shipped `compose.yaml` and image set it up for you.
 
+## One customer per deployment
+
+A deployment serves **one customer organization**. It has its own database, its own artifact volume and its own
+backups. No table has a tenant or customer column, and a test (`no_table_has_a_tenant_column`, SA-1) fails if a
+migration adds one. The only tenant column is axa's outbox column, which this service always leaves empty. A supplier
+hosting several customers runs one deployment for each, and never points two at the same database
+([supplier assurance](../spec/supplier-assurance.md), SA-R1).
+
 ## More than one instance
 
 The service is designed for a single node today. Before running replicas:

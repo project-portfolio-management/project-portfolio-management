@@ -3744,11 +3744,14 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
 
 Why: a supplier that hosts and supports this service for NHS Wales is the data processor, and the buyer assesses the
 supplier. SA-1 to SA-12 build the software requirements SA-R1 to SA-R12, and SA-21 builds SA-R13. SA-13 to SA-18
-give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can meet. **None is built.** Decisions SA-D1 to SA-D4 are the owner's
+give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can meet. SA-1 is built; the rest are not. Decisions SA-D1 to SA-D4 are the owner's
 (SA-19).
 
-- [ ] **SA-1 (S) — Single tenant, stated and kept.** A census test fails when a migration adds a tenant or organization
+- [x] **SA-1 (S) — Single tenant, stated and kept.** A census test fails when a migration adds a tenant or organization
   discriminator column. The deployment guide says one deployment serves one customer.
+  **Built 2026-11-20.** `tests/migrations.rs`: `no_table_has_a_tenant_column` (database) and
+  `the_service_never_names_an_outbox_tenant`; axa's outbox `tenant` (migration 114) is the one named exception.
+  `operations/deployment.md` § One customer per deployment.
 - [ ] **SA-2 (S) — Every outbound host in one list.** The deployment guide lists each setting that names an outbound host.
   A test fails when a new setting of that kind is missing from the list.
 - [ ] **SA-3 (S) — No passwords, no built-in account.** A test asserts that no route takes a password or mints a credential

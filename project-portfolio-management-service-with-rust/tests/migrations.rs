@@ -437,3 +437,90 @@ async fn reset_drops_both_histories_and_builds_from_nothing() {
     assert!(history(&db.pool).await.iter().all(|row| row.5 > 0));
     db.drop_it().await;
 }
+
+/// Column names that would let one database hold several customers (SA-R1, SA-1): a tenant, customer or account
+/// discriminator. `organization_pid` is not one: an organization here is a delivery partner within the one customer
+/// (migration 66), not a second customer.
+const TENANT_COLUMNS: &[&str] = &[
+    "tenant",
+    "tenant_id",
+    "tenant_pid",
+    "tenant_ref",
+    "tenant_key",
+    "customer",
+    "customer_id",
+    "customer_pid",
+    "customer_ref",
+    "org_id",
+    "organization_id",
+    "organisation_id",
+    "account_id",
+    "workspace_id",
+];
+
+/// The only tenant columns allowed: axa's outbox (migration 114) carries one for services that serve several, and this
+/// service always leaves it empty (`src/models/event_outbox.rs`, checked by
+/// [`the_service_never_names_an_outbox_tenant`]).
+const AXA_OUTBOX_TENANT: &[(&str, &str)] = &[
+    ("axa_outbox_events", "tenant"),
+    ("axa_outbox_owed", "tenant"),
+];
+
+#[tokio::test]
+#[ignore = "needs PostgreSQL via DB_URL"]
+async fn no_table_has_a_tenant_column() {
+    let db = Scratch::new().await;
+    migrations::up(&db.pool).await.unwrap();
+    let columns: Vec<(String, String)> = sqlx::query_as(
+        "SELECT table_name::text, column_name::text FROM information_schema.columns \
+         WHERE table_schema = 'public' ORDER BY 1, 2",
+    )
+    .fetch_all(&db.pool)
+    .await
+    .unwrap();
+    db.drop_it().await;
+
+    assert!(columns.len() > 100, "the whole schema was read");
+    let found: Vec<(&str, &str)> = columns
+        .iter()
+        .map(|(table, column)| (table.as_str(), column.as_str()))
+        .filter(|(_, column)| TENANT_COLUMNS.contains(&column.to_ascii_lowercase().as_str()))
+        .collect();
+    assert_eq!(
+        found, AXA_OUTBOX_TENANT,
+        "one deployment serves one customer (SA-R1): give each customer its own deployment, never a tenant column"
+    );
+}
+
+#[test]
+fn the_service_never_names_an_outbox_tenant() {
+    fn visit(dir: &std::path::Path, out: &mut Vec<String>) {
+        for entry in std::fs::read_dir(dir).expect("read src") {
+            let path = entry.expect("entry").path();
+            if path.is_dir() {
+                visit(&path, out);
+            } else if path.extension().is_some_and(|e| e == "rs") {
+                let text = std::fs::read_to_string(&path).expect("read a source file");
+                let compact: String = text.split_whitespace().collect();
+                if compact.contains("tenant:Some") || compact.contains(".tenant(") {
+                    out.push(path.display().to_string());
+                }
+            }
+        }
+    }
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut naming = Vec::new();
+    visit(&src, &mut naming);
+    assert!(
+        naming.is_empty(),
+        "outbox events name a tenant in {naming:?} (SA-R1)"
+    );
+    let outbox = std::fs::read_to_string(src.join("models/event_outbox.rs")).unwrap();
+    assert!(
+        outbox
+            .split_whitespace()
+            .collect::<String>()
+            .contains("tenant:None"),
+        "the outbox write states that it has no tenant"
+    );
+}

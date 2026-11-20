@@ -48,9 +48,21 @@ impl Cache {
     /// When such an environment has no URL, or the URL is malformed. An unreachable Redis is not an error here:
     /// the connection is retried, and `/_health/ready` reports it.
     pub fn from_env(environment: &Environment) -> Result<Self> {
-        let url = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL")
-            .ok()
-            .filter(|u| !u.trim().is_empty());
+        Self::from_url(
+            environment,
+            std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL")
+                .ok()
+                .as_deref(),
+        )
+    }
+
+    /// [`Cache::from_env`] with the setting's value given, so a test need not change the process's environment.
+    ///
+    /// # Errors
+    ///
+    /// As [`Cache::from_env`].
+    pub fn from_url(environment: &Environment, url: Option<&str>) -> Result<Self> {
+        let url = url.filter(|u| !u.trim().is_empty());
         match url {
             Some(url) => {
                 let client = redis::Client::open(url).map_err(Error::wrap)?;
@@ -159,6 +171,30 @@ impl Cache {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn the_setting_chooses_redis_and_an_unreachable_one_fails_each_call_cleanly() {
+        let production = Environment::Production;
+        // No URL: refused in production, a memory cache where the guards are off.
+        assert!(Cache::from_url(&production, None).is_err());
+        assert!(Cache::from_url(&production, Some("  ")).is_err());
+        let test = Cache::from_url(&Environment::Test, None).unwrap();
+        assert_eq!(format!("{test:?}"), "Cache::Memory");
+        // A malformed URL is refused at boot.
+        assert!(Cache::from_url(&production, Some("not a url")).is_err());
+
+        // A well-formed URL that nothing answers: built lazily, and each call is an error, not a hang or a panic.
+        let redis = Cache::from_url(&production, Some("redis://127.0.0.1:1/0")).unwrap();
+        assert_eq!(format!("{redis:?}"), "Cache::Redis");
+        assert!(redis.get::<String>("k").await.is_err());
+        assert!(
+            redis
+                .insert_with_expiry("k", &"v".to_string(), Duration::from_millis(10))
+                .await
+                .is_err()
+        );
+        assert!(redis.ping().await.is_err());
+    }
 
     #[tokio::test]
     async fn memory_returns_what_was_stored_until_it_expires() {

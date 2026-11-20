@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (licence-file check reads what git would commit)
+
+- `licence_files::no_licence_file_lives_outside_the_licence_directory` walked the whole folder tree, so a checkout
+  with agent worktrees under `.claude/worktrees/` (ignored through `.git/info/exclude`) failed it. A coverage run
+  with a failing test drops that run's whole report, so locally every hit from the database-free integration tests
+  went missing, the OTLP tests among them. The test now lists files with `git ls-files --cached --others
+  --exclude-standard`, which still includes a licence file not yet committed, and falls back to the walk where there
+  is no git. Checked both ways: it passes on this checkout and fails on a stray `LICENSE-STRAY.txt` at the root.
+  Full database coverage measured 94.35% (50,326 of 53,340) **before** this fix. That figure is low, because the
+  database-free integration run's hits were dropped.
+
 ### 20 November (coverage: the relay's start decisions)
 
 - `relay::spawn` made two decisions inline: whether to start, and whether to add webhook delivery. Each is now a

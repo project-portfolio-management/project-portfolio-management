@@ -120,8 +120,36 @@ fn no_licence_file_lives_outside_the_licence_directory() {
             }
         }
     }
+    // What git would commit: tracked files and untracked ones it does not ignore. That leaves out a local checkout's
+    // ignored folders (agent worktrees, editor state), which hold other copies of this repository and are not ours.
+    // Without git (a source archive), walk the tree instead.
+    let listed = std::process::Command::new("git")
+        .args([
+            "ls-files",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+            "-z",
+        ])
+        .current_dir(root())
+        .output()
+        .ok()
+        .filter(|out| out.status.success());
     let mut found = Vec::new();
-    walk(&root(), &mut found);
+    if let Some(out) = listed {
+        for relative in out.stdout.split(|b| *b == 0).filter(|p| !p.is_empty()) {
+            let path = root().join(String::from_utf8_lossy(relative).as_ref());
+            let in_licence_dir = path.starts_with(root().join("LICENSE"));
+            let name = path
+                .file_name()
+                .map_or_else(String::new, |n| n.to_string_lossy().to_lowercase());
+            if !in_licence_dir && is_licence_name(&name) && path != root().join("LICENSE.md") {
+                found.push(path);
+            }
+        }
+    } else {
+        walk(&root(), &mut found);
+    }
     assert!(
         found.is_empty(),
         "licence files outside LICENSE/: {found:?}"

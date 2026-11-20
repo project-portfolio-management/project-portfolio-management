@@ -15,6 +15,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (coverage measured again: 94.38%; policy watcher and mailer tests)
+
+- A full `make coverage-db` run after `19cb59c7` measures **94.38% (50,342 of 53,340 lines)**, and tarpaulin now
+  exits 0. `COVERAGE.md` records the figure and corrects its earlier explanation of the failing exit status, which
+  was the licence-file test failing on a checkout with agent worktrees.
+- The ABAC policy-file watcher's loop is `watch_file(path, every, on_change)`, and a unit test runs it every 10 ms:
+  no call at start, one per rewrite, one on removal. The mailer's settings go through
+  `Mailer::from_lookup(environment, lookup)`, and unit tests cover each environment and a refused relay
+  (`Transient`). Behaviour is unchanged.
+  **Not measured:** coverage was not rerun after these two.
+
 ### 20 November (licence-file check reads what git would commit)
 
 - `licence_files::no_licence_file_lives_outside_the_licence_directory` walked the whole folder tree, so a checkout

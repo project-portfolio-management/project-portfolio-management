@@ -48,15 +48,16 @@ running service); doctests; branch coverage (tarpaulin does not implement it).
 
 ### Work-in-progress measurement (2026-11-20)
 
-The latest complete database trace map measures **94.11% (50,022 of 53,154 lines)**. The run passed 27 datetime,
-8 migration, 865 domain (one intentional ignore), 472 service-unit, 240 request and 93 other database tests. A new
-operator-CLI integration test passed afterwards but was not included in this figure: its focused coverage run was
-stopped during compilation when the work was wrapped up. At the measured denominator, strictly exceeding 95% needs
-475 more covered lines. The detailed 2026-11-18 baseline below remains the last completed per-crate summary.
+The latest complete database trace map (`make coverage-db`, 2026-11-20, after commit `19cb59c7`) measures
+**94.38% (50,342 of 53,340 lines)**: domain 98.23%, datetime 98.20%, migration 95.32%, service 93.18%. Every runner
+passed: 8 migration, 27 datetime, 865 domain (one intentional ignore), 474 service-unit, 27 database-free
+integration, 242 request and 95 other database tests. Tarpaulin exited 0. At this denominator, strictly exceeding 95%
+needs 332 more covered lines. The detailed 2026-11-18 baseline below remains the last per-crate summary with timings.
 
-Tarpaulin 0.37.6 returned `Test failed during run` after all runners passed because a passing parent test deliberately
-executes a failing child process. `--no-fail-fast` emitted the complete JSON, HTML and LCOV reports before returning
-that status. This interaction and a full rerun after the CLI test remain to be completed. No threshold was added.
+**Correction.** An earlier run here reported `Test failed during run` and blamed a test that runs a failing child
+process. The cause was the licence-file test failing on a checkout with agent worktrees under `.claude/worktrees/`,
+and a run with a failing test drops that run's coverage, so every hit from the database-free integration tests was
+lost. That test now lists what git would commit (`19cb59c7`), and the run exits 0. No threshold was added.
 
 | | |
 |---|---|

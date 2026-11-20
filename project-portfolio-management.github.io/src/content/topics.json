@@ -12,6 +12,12 @@
       "features": "nodweddion",
       "tutorial": "tiwtorial"
     },
+    "cy-ar": {
+      "comparisons": "cymariaethau",
+      "benefits": "manteision",
+      "features": "nodweddion",
+      "tutorial": "tiwtorial"
+    },
     "cy-gb": {
       "comparisons": "cymariaethau",
       "benefits": "manteision",
@@ -54,6 +60,12 @@
       "benefits": "लाभ",
       "features": "सुविधाएँ"
     },
+    "hi-np": {
+      "tutorial": "ट्यूटोरियल",
+      "comparisons": "तुलना",
+      "benefits": "लाभ",
+      "features": "सुविधाएँ"
+    },
     "zh-001": {
       "benefits": "优势",
       "features": "功能",
@@ -61,6 +73,12 @@
       "comparisons": "比较"
     },
     "zh-cn": {
+      "benefits": "优势",
+      "features": "功能",
+      "tutorial": "教程",
+      "comparisons": "比较"
+    },
+    "zh-th": {
       "benefits": "优势",
       "features": "功能",
       "tutorial": "教程",

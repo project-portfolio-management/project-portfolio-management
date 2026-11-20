@@ -33,6 +33,9 @@ export const BRIEF_LOCALES = [
   "hi-in",
   "zh-001",
   "zh-cn",
+  "zh-th",
+  "hi-np",
+  "cy-ar",
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
@@ -40,7 +43,7 @@ export type BriefLocale = (typeof BRIEF_LOCALES)[number];
  * The locales with only a path-to-production page (`locales/<locale>/path-to-production/`): the interface's languages
  * that have no role briefs or home page (`spec/locales.md`). The site's own words stay English on them.
  */
-export const PAGE_ONLY_LOCALES = ["de-001", "de-de", "es-001", "fr-001"] as const;
+export const PAGE_ONLY_LOCALES = ["de-001", "de-de", "es-001", "fr-001", "de-at", "es-es", "es-mx", "fr-fr", "fr-ca"] as const;
 /** Every locale with a path-to-production page. */
 export const PATH_LOCALES = [...BRIEF_LOCALES, ...PAGE_ONLY_LOCALES].sort();
 export type PathLocale = BriefLocale | (typeof PAGE_ONLY_LOCALES)[number];
@@ -68,6 +71,14 @@ export const LOCALE_LABELS: Record<PathLocale, string> = {
   "hi-in": "हिन्दी - भारत",
   "zh-001": "中文",
   "zh-cn": "中文 - 中国",
+  "zh-th": "中文 - 泰国",
+  "hi-np": "हिन्दी - नेपाल",
+  "cy-ar": "Cymraeg - Ariannin",
+  "de-at": "Deutsch - Österreich",
+  "es-es": "Español - España",
+  "es-mx": "Español - México",
+  "fr-fr": "Français - France",
+  "fr-ca": "Français - Canada",
 };
 
 /** The topics, by their en-001 slug. A topic's slug differs by locale: `TOPIC_SLUGS` comes from the peer ids. */

@@ -867,6 +867,23 @@ mod tests {
                         super::check_resolution("https://8.8.8.8/hook").await,
                         Ok(())
                     );
+                    // A URL with no host, a name that resolves to loopback, and a name that does not resolve.
+                    assert_eq!(
+                        super::check_resolution("file:///etc/hosts").await,
+                        Err(true)
+                    );
+                    assert_eq!(
+                        super::check_resolution("https://localhost/hook").await,
+                        Err(true)
+                    );
+                    assert_eq!(
+                        super::check_resolution("https://no-such-host.invalid/hook").await,
+                        Err(false)
+                    );
+                    // Strict mode drops a target on a non-public address when the list is read.
+                    assert!(
+                        super::parse_targets(r#"[{"url":"https://127.0.0.1/hook"}]"#).is_empty()
+                    );
                 }
                 _ => unreachable!(),
             }

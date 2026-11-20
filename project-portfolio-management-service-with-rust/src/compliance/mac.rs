@@ -111,39 +111,42 @@ impl Domain {
 /// loaded.
 fn keys() -> &'static KeySet {
     static KEYS: OnceLock<KeySet> = OnceLock::new();
-    KEYS.get_or_init(|| {
-        let source = integrity_mac::resolve_root_key(
-            std::env::var(KEY_ENV).ok().as_deref(),
-            std::env::var(KEY_FILE_ENV).ok().as_deref(),
-        );
-        if let Some(warning) = &source.warning {
-            tracing::warn!("{warning}");
-        }
-        if let Some(error) = &source.error {
-            tracing::error!("{error}; integrity MACs disabled");
-        }
-        if let Some(raw) = &source.key {
-            let assessment = assess_key_hex(raw);
-            if !assessment.is_usable() {
-                // The assessment names the problem, never the key.
-                tracing::error!(
-                    "MAC root key rejected: {}; integrity MACs disabled",
-                    assessment.describe()
-                );
-            }
-        } else if source.error.is_none() {
-            tracing::info!(
-                "no {KEY_ENV} or {KEY_FILE_ENV} configured; integrity MACs are not being written"
+    KEYS.get_or_init(|| load_keys(|name| std::env::var(name).ok()))
+}
+
+/// The key set from the four settings, read through `lookup`, with what is wrong logged (never the key itself).
+fn load_keys(lookup: impl Fn(&str) -> Option<String>) -> KeySet {
+    let source = integrity_mac::resolve_root_key(
+        lookup(KEY_ENV).as_deref(),
+        lookup(KEY_FILE_ENV).as_deref(),
+    );
+    if let Some(warning) = &source.warning {
+        tracing::warn!("{warning}");
+    }
+    if let Some(error) = &source.error {
+        tracing::error!("{error}; integrity MACs disabled");
+    }
+    if let Some(raw) = &source.key {
+        let assessment = assess_key_hex(raw);
+        if !assessment.is_usable() {
+            // The assessment names the problem, never the key.
+            tracing::error!(
+                "MAC root key rejected: {}; integrity MACs disabled",
+                assessment.describe()
             );
         }
-        KeySet::load_with_domains(
-            &CONFIG,
-            source.key.as_deref(),
-            std::env::var(RETIRED_KEYS_ENV).ok().as_deref(),
-            std::env::var(KEY_ID_ENV).ok().as_deref(),
-            &Domain::ALL,
-        )
-    })
+    } else if source.error.is_none() {
+        tracing::info!(
+            "no {KEY_ENV} or {KEY_FILE_ENV} configured; integrity MACs are not being written"
+        );
+    }
+    KeySet::load_with_domains(
+        &CONFIG,
+        source.key.as_deref(),
+        lookup(RETIRED_KEYS_ENV).as_deref(),
+        lookup(KEY_ID_ENV).as_deref(),
+        &Domain::ALL,
+    )
 }
 
 /// Whether a key is configured, so MACs are being written.
@@ -181,7 +184,7 @@ pub fn verify(domain: Domain, stored: Option<&str>, preimage: &[u8]) -> MacVerdi
 
 #[cfg(test)]
 mod tests {
-    use super::Domain;
+    use super::*;
 
     /// Every domain has a distinct label, since the label *is* the
     /// separation — two domains sharing one would silently share a key.
@@ -201,6 +204,53 @@ mod tests {
     /// A variant missing here still works — the shared crate derives on
     /// demand — but pays an HKDF per call, and the omission would be
     /// invisible without this.
+    #[test]
+    fn keys_load_from_each_source_and_refuse_what_is_unusable() {
+        let key = generate_key().unwrap();
+        let settings = |pairs: Vec<(&'static str, String)>| {
+            move |name: &str| {
+                pairs
+                    .iter()
+                    .find(|(k, _)| *k == name)
+                    .map(|(_, v)| v.clone())
+            }
+        };
+        // Nothing configured: off, quietly.
+        assert!(!load_keys(|_| None).is_enabled());
+        // An inline key, with an id: on, under that id.
+        let inline = load_keys(settings(vec![
+            (KEY_ENV, key.clone()),
+            (KEY_ID_ENV, "k2".to_string()),
+        ]));
+        assert!(inline.is_enabled());
+        assert_eq!(inline.active_key_id(), Some("k2"));
+        // A key too short to use: off.
+        assert!(!load_keys(settings(vec![(KEY_ENV, "abcd".to_string())])).is_enabled());
+        // A key file that cannot be read: off, even with an inline key beside it.
+        let missing = load_keys(settings(vec![
+            (KEY_ENV, key.clone()),
+            (KEY_FILE_ENV, "/definitely/not/a/key".to_string()),
+        ]));
+        assert!(!missing.is_enabled());
+        // A readable key file beside an inline key: the file wins (with a warning).
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("key");
+        std::fs::write(&file, &key).unwrap();
+        let from_file = load_keys(settings(vec![
+            (KEY_ENV, "ignored".to_string()),
+            (KEY_FILE_ENV, file.to_string_lossy().to_string()),
+        ]));
+        assert!(from_file.is_enabled());
+    }
+
+    #[test]
+    fn the_process_keys_answer_consistently() {
+        // Whatever this process was started with, the three readers agree with each other.
+        assert_eq!(is_enabled(), active_key_id().is_some());
+        assert_eq!(is_enabled(), active_prefix().is_some());
+        assert_eq!(is_enabled(), tag(Domain::Record, b"x").is_some());
+    }
+
     #[test]
     fn all_lists_every_domain() {
         for domain in [Domain::AuditRow, Domain::Record, Domain::Webhook] {

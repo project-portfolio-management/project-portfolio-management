@@ -15,6 +15,18 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 20 November (production requires `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID`)
+
+- **Breaking for operators.** Production, and any environment not set up for development (`staging`, say), now refuses
+  to start, run a task or pass `check` without `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID`: 1 to 63 lowercase
+  letters, digits and hyphens, starting with a letter, one name per customer (SA-R13 rules 1 and 4). A malformed name
+  is refused in every environment. Development, test and `container-dev` start without it, with a warning.
+  `compose.yaml` sets `local-stack` unless `PPM_DEPLOYMENT_ID` is given. Unit tests cover the form and each
+  environment, and `tests/cli.rs` runs the binary's `check` as production.
+  **Upgrade:** set the name in every production and staging environment before deploying this.
+  **Not built (SA-21):** the name is not yet stored in the database or compared at start, so a wrong `DB_URL` is still
+  not caught. The rename task is not built either.
+
 ### 20 November (coverage: strict webhook resolution and telemetry)
 
 - The strict-outbound child-process test now covers a URL with no host, a name that resolves to loopback, a name that

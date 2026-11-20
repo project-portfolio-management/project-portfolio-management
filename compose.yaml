@@ -65,6 +65,9 @@ name: project-portfolio-management
 
 x-api-environment: &api-environment
   APP_ENV: production
+  # Names this deployment, one name per customer (SA-R13): production refuses to start without it. Set PPM_DEPLOYMENT_ID
+  # to your own name anywhere but a local stack.
+  PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID: ${PPM_DEPLOYMENT_ID:-local-stack}
   PORT: "1241"
   DB_URL: postgres://ppm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (any value for local use)}@postgres:5432/project_portfolio_management?sslmode=require
   # The cache (Redis). The password defaults to the database's so a local stack needs one secret.

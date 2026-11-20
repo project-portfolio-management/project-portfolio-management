@@ -1,6 +1,7 @@
 # Supplier assurance for a managed, hosted deployment (proposed 2026-11-20)
 
-> **Status: proposed. SA-1 is built; none of SA-2 to SA-21 is built or done.** Tasks are in [`tasks.md`](../tasks.md). The decisions
+> **Status: proposed. SA-1 is built, and SA-21 in part (the name is required in production); the rest of SA-2 to
+> SA-21 is not built.** Tasks are in [`tasks.md`](../tasks.md). The decisions
 > SA-D1 to SA-D4 belong to the owner. The first buyer in view is NHS Wales, so the names here are NHS Wales names, but
 > every software requirement applies to any deployment.
 
@@ -64,12 +65,15 @@ Each requirement states what is already true, checked against the code on 2026-1
      start**. It exits non-zero with an error that names both values and the database host and name, but not the
      password. It reads no other row and writes nothing.
   4. **Name not set.** In production (NFR-12) the service refuses to start. In development and test it starts with a
-     warning and writes no name, so local and CI databases need no setting.
+     warning and writes no name, so local and CI databases need no setting. *Built (2026-11-20):* rules 1 and 4, in
+     `src/deployment_id.rs`, checked by `start`, `task` and `check`; production and any environment not set up for
+     development refuse a missing name, and every environment refuses a malformed one.
   5. **Renaming** is deliberate. An operator task (`cargo run -- task deployment_rename`) takes the old and the new name,
      changes the row only when the old name matches, and writes an audit row. No HTTP route can read or change the name.
   A database restored from a backup keeps the name, which is correct: it holds the same customer's data. A restore into a
-  scratch database for the restore drill needs the same setting, or development mode. *Today:* nothing checks this; the
-  wrong `DB_URL` starts the service against the other customer's database. *Missing:* everything (SA-21). Limits: a
+  scratch database for the restore drill needs the same setting, or development mode. *Today:* the name is required and its
+  form checked (rules 1 and 4), but it is not yet stored or compared, so the wrong `DB_URL` still starts the service
+  against the other customer's database. *Missing:* rules 2, 3 and 5 (SA-21). Limits: a
   database that existed before this check is named by the first start after the upgrade, so that start trusts its
   configuration. The operator should check that start by hand. The check also cannot catch two deployments given the
   same name. The deployment guide should state that names are unique per supplier.

@@ -59,3 +59,39 @@ fn operator_cli_checks_migrations_lists_tasks_and_rebuilds_search() {
 
     let _ = std::fs::remove_dir_all(search_path);
 }
+
+/// `check` as production: without a deployment name it refuses, naming the setting, before reading anything else; with
+/// a bad one it refuses for the name's form; with a good one it gets past this check (and may stop on a later one).
+#[test]
+fn production_refuses_to_start_without_a_deployment_name() {
+    let check = |name: Option<&str>| {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_project-portfolio-management"));
+        command
+            .arg("check")
+            .env("APP_ENV", "production")
+            .env("OTLP_ENDPOINT", "")
+            .env_remove("PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID");
+        if let Some(name) = name {
+            command.env("PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID", name);
+        }
+        let output = command.output().expect("run check");
+        let said = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        (output.status.success(), said)
+    };
+    let (ok, said) = check(None);
+    assert!(
+        !ok && said.contains("PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID is required"),
+        "{said}"
+    );
+    let (ok, said) = check(Some("Acme Example"));
+    assert!(!ok && said.contains("lowercase letters"), "{said}");
+    let (_, said) = check(Some("acme-example"));
+    assert!(
+        !said.contains("PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID"),
+        "{said}"
+    );
+}

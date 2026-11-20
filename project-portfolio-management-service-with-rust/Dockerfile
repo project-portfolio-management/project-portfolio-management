@@ -113,8 +113,8 @@ EXPOSE 1241
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl --silent --fail http://localhost:1241/_health/live || exit 1
 
-# Configuration comes from the environment; production requires DB_URL and
-# PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL, and refuses to boot without them. See /compose.yaml for the
+# Configuration comes from the environment; production requires DB_URL,
+# PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL and PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID, and refuses to boot without them. See /compose.yaml for the
 # environment a real deployment needs (token-verifier keys, login enforcement).
 ENV APP_ENV=production \
     PORT=1241

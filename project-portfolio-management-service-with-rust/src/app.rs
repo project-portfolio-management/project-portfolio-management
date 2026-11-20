@@ -100,6 +100,7 @@ pub fn opts_out_of_guards(environment: &Environment) -> bool {
 /// is the policy whatever the environment says.
 fn service_config(environment: &Environment) -> Result<ServiceConfig> {
     renamed_settings(|name| std::env::var(name).ok()).map_err(Error::Message)?;
+    crate::deployment_id::from_env(environment).map_err(Error::Message)?;
     let mut config = ServiceConfig::from_env(environment, &defaults())?;
     leave_headers_to_http_security(&mut config);
     if std::env::var_os("REQUEST_TIMEOUT_SECONDS").is_none() {
@@ -277,6 +278,7 @@ impl App {
             .map_or_else(Environment::from_env, Environment::parse);
         if matches!(cli.command, Command::Check) {
             renamed_settings(|name| std::env::var(name).ok()).map_err(Error::Message)?;
+            crate::deployment_id::from_env(&environment).map_err(Error::Message)?;
             axa::cli::check(&environment, &defaults())?;
             // axa's check knows nothing of the settings that are this service's own, and these two refuse a bad boot.
             crate::cache::Cache::from_env(&environment)?;

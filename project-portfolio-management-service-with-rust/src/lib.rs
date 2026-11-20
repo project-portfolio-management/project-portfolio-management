@@ -107,6 +107,7 @@ pub mod cursor;
 pub mod data;
 pub mod datetime;
 pub mod db;
+pub mod deployment_id;
 pub mod dhcw_apply;
 pub mod email;
 /// The time-based-analysis flow-gauge refresh loop: default-off,

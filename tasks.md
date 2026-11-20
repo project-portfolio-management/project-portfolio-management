@@ -3744,7 +3744,7 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
 
 Why: a supplier that hosts and supports this service for NHS Wales is the data processor, and the buyer assesses the
 supplier. SA-1 to SA-12 build the software requirements SA-R1 to SA-R12, and SA-21 builds SA-R13. SA-13 to SA-18
-give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can meet. SA-1 is built; the rest are not. Decisions SA-D1 to SA-D4 are the owner's
+give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can meet. SA-1 is built and SA-21 in part; the rest are not. Decisions SA-D1 to SA-D4 are the owner's
 (SA-19).
 
 - [x] **SA-1 (S) — Single tenant, stated and kept.** A census test fails when a migration adds a tenant or organization
@@ -3796,6 +3796,9 @@ give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can
   first start, refuse to start on a mismatch (naming both values, never the password), refuse in production when the
   setting is unset. A `deployment_rename` operator task with an audit row. Database tests for first start, match,
   mismatch, unset in production and unset in development; the restore drill and the deployment guide updated.
+  **Part built 2026-11-20:** the setting, its form, and the refusal in production when it is unset
+  (`src/deployment_id.rs`; unit tests and `tests/cli.rs`; `compose.yaml` defaults to `local-stack`; the deployment
+  guide's table). **Not built:** the `deployment` table, the first-start write, the comparison, the rename task.
 
 ## Coverage work in progress (2026-11-20)
 

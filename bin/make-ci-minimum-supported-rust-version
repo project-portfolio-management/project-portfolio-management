@@ -3,7 +3,7 @@
 # version after it (N-1): `cargo check --all-targets` then `cargo test`, for
 # every Rust workspace in this repository. Run it with:
 #
-#     make test-minimum-supported-rust-version
+#     make ci-minimum-supported-rust-version
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

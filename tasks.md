@@ -3788,7 +3788,8 @@ give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can
   between plan roles, finance, administrators, guests, read-only and capture tokens, and supplier support grants.
 - [ ] **SA-18 (S) — Processor inputs to the DPIA.** A processor section in `governance/dpia.md` covering hosting location,
   sub-processors, support access and exit, for an NHS Wales DPO to adapt.
-- [ ] **SA-19 (S, owner) — Decide SA-D1 to SA-D4.**
+- [ ] **SA-19 (S, owner) — Decide SA-D1 to SA-D4.** SA-D2 decided 2026-11-21: OIDC only, no SAML until a customer
+  needs it (NFR-18, OQ-16).
 - [ ] **SA-20 (S) — Read the sources.** Read the current WIGTK, WHC (2017) 025, the NHS Wales Records Management Code of
   Practice and an NHS Wales supplier contract template, and correct the spec where the briefing was wrong.
 - [ ] **SA-21 (M) — One customer, one database (SA-R13).** `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID`, a new

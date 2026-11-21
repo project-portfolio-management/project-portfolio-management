@@ -2,7 +2,7 @@
 
 > **Status: proposed. SA-1 is built, and SA-21 in part (the name is required in production); the rest of SA-2 to
 > SA-21 is not built.** Tasks are in [`tasks.md`](../tasks.md). The decisions
-> SA-D1 to SA-D4 belong to the owner. The first buyer in view is NHS Wales, so the names here are NHS Wales names, but
+> SA-D1, SA-D3 and SA-D4 belong to the owner; SA-D2 is decided (OIDC only). The first buyer in view is NHS Wales, so the names here are NHS Wales names, but
 > every software requirement applies to any deployment.
 
 ## What it is for
@@ -87,8 +87,9 @@ Each requirement states what is already true, checked against the code on 2026-1
   caller is a verified token from the configured identity provider (NFR-5, NFR-18), and the service will not start in
   production with login off (NFR-12). *Missing:* a test asserting that no route accepts a password or issues its own
   credential, and that no subject is hard-coded with access; a documented Entra ID sign-in with multi-factor authentication
-  enforced at the provider (SA-3). NADEX is reached through Entra ID or a Keycloak realm. **SAML 2.0 is not supported
-  directly:** a Keycloak realm brokers it (SA-D2).
+  enforced at the provider (SA-3). NADEX is reached through Entra ID or a Keycloak realm. **OIDC only; SAML 2.0 is not
+  supported** (SA-D2, decided 2026-11-21): a SAML-only provider is brokered, for example by a Keycloak realm, until a
+  customer needs SAML and cannot broker it.
 - **SA-R4 — Supplier support access is granted, limited in time and recorded.** A support engineer acting in the
   application gets access only through a grant that a customer administrator approves. The grant names its reason and
   expires within a stated number of hours. Every request served under it is audited, as break-glass access is today
@@ -179,7 +180,9 @@ brackets) but can meet none of them.
 
 - **SA-D1** — Whether the project itself states a patch time for critical advisories in `SECURITY.md`, or leaves it to each
   supplier. The project has one maintainer.
-- **SA-D2** — Whether direct SAML 2.0 is in scope, or brokering through Keycloak is the answer.
+- **SA-D2** — Whether direct SAML 2.0 is in scope, or brokering through Keycloak is the answer. **Decided by the
+  owner 2026-11-21:** stay OIDC-only, with no SAML, until a customer needs it. A SAML-only provider is brokered
+  (NFR-18).
 - **SA-D3** — Whether to build column-level encryption for per-person rates and costs, given the key-management burden.
 - **SA-D4** — The breach-notice period the project's documents assume: 24 hours, 48 hours, or left blank for the contract.
 

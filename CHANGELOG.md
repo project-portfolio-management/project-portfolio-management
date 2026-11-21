@@ -15,6 +15,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (decided: OIDC only, no SAML)
+
+- The owner decided SA-D2: stay OIDC-only, not SAML, until a customer needs it. A SAML-only identity provider is
+  brokered, for example by a Keycloak realm. Recorded in NFR-18, SA-R3 and SA-D2 in
+  [`spec/supplier-assurance.md`](spec/supplier-assurance.md), OQ-16 and task SA-19. No code changes; nothing SAML
+  existed. **Not done:** SA-D1, SA-D3 and SA-D4 are still open.
+
 ### 20 November (production requires `PROJECT_PORTFOLIO_MANAGEMENT_DEPLOYMENT_ID`)
 
 - **Breaking for operators.** Production, and any environment not set up for development (`staging`, say), now refuses

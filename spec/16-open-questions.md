@@ -96,3 +96,8 @@ spec §16 once that crate is scaffolded.
   stay as interop features of this service, kept working by their tests. Nothing more is built for the Roadmap
   Editor alone unless DHCW asks; a change that is useful without them, such as organization short names and names in
   other languages (FR-16e18), is judged on its own. Revisit when DHCW asks, or when the owner chooses to offer it.)
+- **OQ-16 — SAML 2.0 sign-in?** NHS Wales and other public bodies may run identity providers that offer SAML, and a
+  procurement briefing lists it (SA-D2). The service verifies OIDC tokens only (NFR-18).
+  (**Decided 2026-11-21 by the owner: stay OIDC-only, not SAML, until a customer needs it.** Nothing SAML is built,
+  directly or as a bridge in the service. A SAML-only provider reaches the service through a broker the deployer
+  runs, such as a Keycloak realm. Revisit when a customer needs SAML and cannot broker it.)

@@ -185,7 +185,10 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   sector or institutional federation need not be brokered through Keycloak. The
   set of accepted providers names no product and no country. Roles or groups reach ABAC only through an explicit map. The path
   is documented and covered by an end-to-end test that signs in through an
-  Entra-compatible provider.
+  Entra-compatible provider. **OpenID Connect only** (decided by the owner 2026-11-21, SA-D2): the service and its
+  front-end speak OIDC and nothing else. SAML 2.0 is not built, neither directly nor as a bridge inside the service.
+  An identity provider that offers only SAML reaches the service through a broker the deployer runs, such as a
+  Keycloak realm. Revisit when a customer needs SAML and cannot broker it.
 - **NFR-19 — Every page in every supported locale.** All text a person reads on
   a page comes from the locale catalogue (`i18n.svelte.ts`), none is hard-coded
   in English, and **every supported locale is complete** (WW-1.1, accepted

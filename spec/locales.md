@@ -68,6 +68,9 @@ Ten, sorted by code (the picker shows them in this order):
 | `ko-kr` | Korean (South Korea; machine-written, not reviewed) | left-to-right |
 | `nl-001` | Dutch (world; copy of `nl-nl`, machine-written, not reviewed) | left-to-right |
 | `nl-nl` | Dutch (Netherlands; machine-written, not reviewed) | left-to-right |
+| `pt-001` | Portuguese (world; copy of `pt-br`, machine-written, not reviewed) | left-to-right |
+| `pt-br` | Portuguese (Brazil; machine-written, not reviewed) | left-to-right |
+| `pt-pt` | Portuguese (Portugal; copy of `pt-br` with light vocabulary and spelling edits, not reviewed by a speaker) | left-to-right |
 | `ru-001` | Russian (world; copy of `ru-ru`, machine-written, not reviewed) | left-to-right |
 | `ru-by` | Russian (Belarus; copy of `ru-ru`, not edited for regional usage) | left-to-right |
 | `ru-ru` | Russian (Russia; machine-written, not reviewed) | left-to-right |

@@ -150,6 +150,24 @@
       "comparisons": "vergelijkingen",
       "benefits": "voordelen"
     },
+    "pt-001": {
+      "benefits": "benefícios",
+      "comparisons": "comparações",
+      "features": "funcionalidades",
+      "tutorial": "tutorial"
+    },
+    "pt-br": {
+      "benefits": "benefícios",
+      "comparisons": "comparações",
+      "features": "funcionalidades",
+      "tutorial": "tutorial"
+    },
+    "pt-pt": {
+      "benefits": "benefícios",
+      "comparisons": "comparações",
+      "features": "funcionalidades",
+      "tutorial": "tutorial"
+    },
     "ru-001": {
       "features": "возможности",
       "benefits": "преимущества",

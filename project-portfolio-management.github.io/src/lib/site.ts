@@ -60,6 +60,9 @@ export const BRIEF_LOCALES = [
   "nl-001",
   "vi-vn",
   "vi-001",
+  "pt-br",
+  "pt-001",
+  "pt-pt",
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
@@ -127,6 +130,9 @@ export const LOCALE_LABELS: Record<PathLocale, string> = {
   "nl-001": "Nederlands",
   "vi-vn": "Tiếng Việt - Việt Nam",
   "vi-001": "Tiếng Việt",
+  "pt-br": "Português - Brasil",
+  "pt-001": "Português",
+  "pt-pt": "Português - Portugal",
 };
 
 /** The topics, by their en-001 slug. A topic's slug differs by locale: `TOPIC_SLUGS` comes from the peer ids. */

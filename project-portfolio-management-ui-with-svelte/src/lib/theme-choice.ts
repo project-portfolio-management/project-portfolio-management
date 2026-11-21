@@ -1,18 +1,12 @@
-// The UI uses the browser's light/dark setting (spec, Theming). A theme the person picks in the theme picker wins over
-// it and is remembered; nothing else is. Lily's ThemePicker, given a storage key, stores every theme it applies,
-// including the one it guessed from the browser, so after a first visit the browser's setting no longer counted. The
-// layout therefore gives the picker no storage key and keeps the person's choice here.
+// The UI follows the browser's light/dark setting (spec, Theming) through Lily's ThemePicker "Follow this device"
+// option, whose value is "system" and which the picker keeps in `localStorage` key `lily-theme` (and a cookie). Two
+// earlier schemes left values behind; `migrateThemeChoice` brings them across once, before the picker mounts.
 
-/** Where the person's own choice is kept. */
-export const CHOICE_KEY = "ppm-theme-choice";
+/** Where the UI itself kept the person's own choice, 2026-11-15 to 2026-11-21. */
+export const OLD_CHOICE_KEY = "ppm-theme-choice";
 
-/** Where the picker kept every theme it applied, guessed or chosen, until 2026-11-15. */
-export const LEGACY_KEY = "lily-theme";
-
-/** The theme the browser's setting asks for. */
-export function systemTheme(prefersDark: boolean): "light" | "dark" {
-  return prefersDark ? "dark" : "light";
-}
+/** The picker's key: the choice it keeps ("system", or a theme slug). */
+export const PICKER_KEY = "lily-theme";
 
 /** The minimal part of `Storage` used here, so the rules can be tested without a browser. */
 export interface ChoiceStore {
@@ -22,42 +16,21 @@ export interface ChoiceStore {
 }
 
 /**
- * The person's chosen theme, or "" to follow the browser. A value under the legacy key moves across once: `light` or
- * `dark` there was most likely the picker's own guess from the browser, so it is dropped; any other theme was picked.
+ * Move old values to the picker's key. A theme under `ppm-theme-choice` was picked by the person and becomes the
+ * picker's choice; the old key goes. Before that, the picker kept every theme it applied, so `light` or `dark` under
+ * `lily-theme` with no other choice was most likely its guess from the browser: it is dropped, and the picker starts on
+ * "Follow this device". Any other theme there was picked and stays.
  */
-export function readChoice(store: ChoiceStore): string {
+export function migrateThemeChoice(store: ChoiceStore): void {
   try {
-    const legacy = store.getItem(LEGACY_KEY);
-    if (legacy !== null) {
-      store.removeItem(LEGACY_KEY);
-      if (
-        legacy &&
-        legacy !== "light" &&
-        legacy !== "dark" &&
-        store.getItem(CHOICE_KEY) === null
-      ) {
-        store.setItem(CHOICE_KEY, legacy);
-      }
+    const picked = store.getItem(OLD_CHOICE_KEY);
+    if (picked !== null) {
+      store.removeItem(OLD_CHOICE_KEY);
+      if (picked) store.setItem(PICKER_KEY, picked);
+      return;
     }
-    return store.getItem(CHOICE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-/**
- * The choice to keep after the picker applies `slug` while the browser asks for `system`: a theme other than the
- * browser's is the person's choice; the browser's own theme means "follow the browser" again, so nothing is kept.
- */
-export function nextChoice(slug: string, system: string): string {
-  return slug === system ? "" : slug;
-}
-
-/** Keep `choice`, or forget it when it is "". */
-export function writeChoice(store: ChoiceStore, choice: string): void {
-  try {
-    if (choice) store.setItem(CHOICE_KEY, choice);
-    else store.removeItem(CHOICE_KEY);
+    const kept = store.getItem(PICKER_KEY);
+    if (kept === "light" || kept === "dark") store.removeItem(PICKER_KEY);
   } catch {
     // A browser that refuses storage still follows its own setting.
   }

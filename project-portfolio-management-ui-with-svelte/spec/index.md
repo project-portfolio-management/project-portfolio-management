@@ -303,14 +303,17 @@ to the shared design-system themes).
 **The UI uses the browser's light/dark setting** (owner's rule, 2026-11-15):
 with no theme the person picked, the theme is `light` or `dark` as the
 browser's `prefers-color-scheme` says, on every visit, and it changes when the
-setting changes while the page is open. A theme the person picks that is not
-the browser's own is kept (`localStorage`, key `ppm-theme-choice`) and wins
-over the setting; picking the theme the browser asks for clears it, so the UI
-follows the browser again. The picker is given no storage key, because it
-stores every theme it applies, its guess from the browser included, which
-made the setting count only on a first visit (`src/lib/theme-choice.ts`). A
-value under the old key `lily-theme` is read once: `light` or `dark` there
-(most likely that guess) is dropped, any other theme is kept as the choice.
+setting changes while the page is open. The theme picker (Lily theme-picker
+0.4.0) offers this as its first option, "Follow this device" (`chrome.theme_system`,
+value `system`), and starts there. A theme the person picks is kept by the
+picker (`localStorage` and a first-party cookie, key `lily-theme`) and wins over
+the setting; picking "Follow this device" follows the browser again. The picker
+writes nothing until the choice changes. Two earlier schemes left values behind
+and `migrateThemeChoice` (`src/lib/theme-choice.ts`) moves them across once: a
+theme under `ppm-theme-choice` becomes the picker's choice, and `light` or `dark`
+under `lily-theme` with no other choice (most likely the old picker's guess from
+the browser) is dropped. "Follow this device" is machine-written outside English
+and is not reviewed; a locale without it shows the English text.
 `tests/e2e/theme-follows-browser.spec.ts` and `tests/unit/theme-choice.test.ts`. The app's own colour tokens (`src/app.css`) are
 derived from the theme's so that text meets WCAG 2 AA (4.5:1) under both
 the `light` and the `dark` theme: `--mxi-color-link` (every link, and text

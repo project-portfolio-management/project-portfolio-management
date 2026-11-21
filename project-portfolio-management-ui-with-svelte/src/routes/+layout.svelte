@@ -26,32 +26,11 @@
   import PaletteTrigger from "#lib/components/PaletteTrigger.svelte";
   import PickerBar from "@lilydesignsystem/svelte-picker-bar";
   import type { ShareTarget } from "@lilydesignsystem/svelte-share-picker";
-  import { nextChoice, readChoice, systemTheme, writeChoice } from "#lib/theme-choice.js";
+  import { migrateThemeChoice } from "#lib/theme-choice.js";
 
-  // The UI uses the browser's light/dark setting (spec, Theming), following it when it changes, unless the person
-  // picked another theme, which is kept (#lib/theme-choice.ts says why the picker is given no storage key).
-  // `matchMedia` is missing in some test environments and very old browsers: then the theme is light until picked.
-  const darkQuery =
-    browser && typeof window.matchMedia === "function"
-      ? window.matchMedia("(prefers-color-scheme: dark)")
-      : null;
-  let browserTheme = $state(systemTheme(darkQuery?.matches ?? false));
-  let themeChoice = $state(browser ? readChoice(localStorage) : "");
-  const themeValue = $derived(themeChoice || browserTheme);
-  $effect(() => {
-    if (!darkQuery) return;
-    const follow = () => {
-      browserTheme = systemTheme(darkQuery.matches);
-    };
-    darkQuery.addEventListener("change", follow);
-    return () => darkQuery.removeEventListener("change", follow);
-  });
-  function onThemeChange(slug: string) {
-    const choice = nextChoice(slug, browserTheme);
-    if (choice === themeChoice) return;
-    themeChoice = choice;
-    if (browser) writeChoice(localStorage, choice);
-  }
+  // The UI follows the browser's light/dark setting (spec, Theming) through the picker's "Follow this device" option,
+  // which also changes the theme when the setting changes. Values an earlier scheme left are moved across first.
+  if (browser) migrateThemeChoice(localStorage);
 
   // Share destinations for the Lily SharePicker. Lily ships no
   // third-party URLs — each `href` builder is ours. `url`/`title` are
@@ -319,11 +298,7 @@
         }}
         themesUrl="/assets/themes/"
         themeProps={{
-          // No storageKey: the picker would store the theme it guessed from the browser as if the person had chosen
-          // it. The value is the person's choice, else the browser's light/dark setting (see the script above).
-          value: themeValue,
-          defaultValue: "light",
-          onChange: onThemeChange,
+          systemLabel: t("chrome.theme_system"),
         }}
         locales={[...LOCALES]}
         localeProps={{

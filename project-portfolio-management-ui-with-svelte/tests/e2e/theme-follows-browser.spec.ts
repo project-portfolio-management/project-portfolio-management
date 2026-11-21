@@ -20,9 +20,7 @@ test("a theme the person chose wins over the browser's setting", async ({
   page,
 }) => {
   await stubPlansApi(page);
-  await page.addInitScript(() =>
-    localStorage.setItem("ppm-theme-choice", "cupcake"),
-  );
+  await page.addInitScript(() => localStorage.setItem("lily-theme", "cupcake"));
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/en-001");
   await expect.poll(() => theme(page)).toBe("cupcake");
@@ -49,7 +47,7 @@ test("a later visit still follows the browser's setting", async ({ page }) => {
   await expect.poll(() => theme(page)).toBe("dark");
 });
 
-test("a theme picked in the picker is remembered, and picking the browser's own theme follows the browser again", async ({
+test("a theme picked in the picker is remembered, and picking Follow this device follows the browser again", async ({
   page,
 }) => {
   await stubPlansApi(page);
@@ -68,9 +66,18 @@ test("a theme picked in the picker is remembered, and picking the browser's own 
   await page.emulateMedia({ colorScheme: "dark" });
   await page.reload();
   await expect.poll(() => theme(page)).toBe("cupcake");
-  // Back to following the browser: pick the theme the browser asks for.
-  await pick(/^\s*dark\s*$/i);
+  await pick(/follow this device/i);
   await expect.poll(() => theme(page)).toBe("dark");
   await page.emulateMedia({ colorScheme: "light" });
   await expect.poll(() => theme(page)).toBe("light");
+});
+
+test("a theme the picker guessed under the old scheme does not pin the browser's setting", async ({
+  page,
+}) => {
+  await stubPlansApi(page);
+  await page.addInitScript(() => localStorage.setItem("lily-theme", "light"));
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/en-001");
+  await expect.poll(() => theme(page)).toBe("dark");
 });

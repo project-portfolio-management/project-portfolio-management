@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — Lily svelte-headless 0.11.0, picker-bar 0.7.0, theme-picker 0.4.0 (2026-11-21)
+
+- Updated `@lilydesignsystem/svelte-headless` 0.9.0 to 0.11.0 (removes the national-identifier components and the colour,
+  emoji, rating and status pickers; this UI used none) and `@lilydesignsystem/svelte-picker-bar` 0.6.0 to 0.7.0.
+- The theme picker's own "Follow this device" option (`systemLabel`) replaces the layout's `matchMedia` listener and
+  `ppm-theme-choice` bookkeeping. `src/lib/theme-choice.ts` is now only `migrateThemeChoice`, which moves the two
+  earlier schemes' values to the picker's key. New string `chrome.theme_system` in the ten locales that hold
+  `chrome.theme`; the rest show English. The translations are machine-written and not reviewed.
+- Not verified: the lint, type check and unit tests ran; the theme and contrast Playwright specs (71 tests) pass, rewritten for the
+  new option; the whole Playwright suite was not run; no other picker-bar 0.7.0 change was looked for beyond its changelog and
+  types. The picker now also writes a `lily-theme` cookie that nothing on the server reads.
+
 ### Added — the board, sprints, resources and the OKR and KPI reads (NC-1 slice 12 part j, RM-9, PL-3, FR-29, SC-7, PJ-2, PJ-3, KO-1, KO-2, 2026-11-18)
 
 - `/plans/[pid]/board`: many tasks at once (`BoardBulk.svelte`: the assignee, due date and start date left, set or

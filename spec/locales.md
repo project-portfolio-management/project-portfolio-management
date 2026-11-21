@@ -56,6 +56,7 @@ Ten, sorted by code (the picker shows them in this order):
 | `hi-001` | Hindi | left-to-right |
 | `zh-001` | Chinese (world) | left-to-right |
 | `zh-cn` | Chinese (China) | left-to-right |
+| `zh-tw` | Chinese (Taiwan, Traditional; OpenCC `s2twp` from zh-cn, machine-written, not reviewed) | left-to-right |
 
 Only `ar-001` is right-to-left (`RTL_LOCALES`). The static shell carries the right `lang` and
 `dir` before any script runs, and the layout keeps `document.documentElement.dir` in step.

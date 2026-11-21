@@ -83,6 +83,12 @@
       "features": "功能",
       "tutorial": "教程",
       "comparisons": "比较"
+    },
+    "zh-tw": {
+      "benefits": "優勢",
+      "features": "功能",
+      "tutorial": "教程",
+      "comparisons": "比較"
     }
   },
   "compare": [

@@ -34,6 +34,7 @@ export const BRIEF_LOCALES = [
   "zh-001",
   "zh-cn",
   "zh-th",
+  "zh-tw",
   "hi-np",
   "cy-ar",
 ] as const;
@@ -72,6 +73,7 @@ export const LOCALE_LABELS: Record<PathLocale, string> = {
   "zh-001": "中文",
   "zh-cn": "中文 - 中国",
   "zh-th": "中文 - 泰国",
+  "zh-tw": "中文 - 台灣",
   "hi-np": "हिन्दी - नेपाल",
   "cy-ar": "Cymraeg - Ariannin",
   "de-at": "Deutsch - Österreich",

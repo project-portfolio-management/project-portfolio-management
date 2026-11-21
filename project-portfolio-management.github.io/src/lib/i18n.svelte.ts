@@ -24,6 +24,7 @@ export type MessageKey = keyof typeof messages.en;
 
 /** The site's language for a locale. */
 export function siteLangOf(locale: string): SiteLang {
+  if (locale in messages) return locale as SiteLang;
   const base = locale.split("-")[0] ?? "";
   return base in messages ? (base as SiteLang) : "en";
 }

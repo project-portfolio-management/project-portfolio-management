@@ -192,6 +192,18 @@
       "comparisons": "ulinganisho",
       "features": "vipengele"
     },
+    "vi-001": {
+      "tutorial": "hướng-dẫn",
+      "benefits": "lợi-ích",
+      "comparisons": "so-sánh",
+      "features": "tính-năng"
+    },
+    "vi-vn": {
+      "tutorial": "hướng-dẫn",
+      "benefits": "lợi-ích",
+      "comparisons": "so-sánh",
+      "features": "tính-năng"
+    },
     "zh-001": {
       "benefits": "优势",
       "features": "功能",

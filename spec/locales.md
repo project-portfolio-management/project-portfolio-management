@@ -75,6 +75,8 @@ Ten, sorted by code (the picker shows them in this order):
 | `sv-se` | Swedish (Sweden; machine-written, not reviewed) | left-to-right |
 | `sw-001` | Swahili (world; copy of `sw-tz`, machine-written, not reviewed) | left-to-right |
 | `sw-tz` | Swahili (Tanzania; machine-written, not reviewed) | left-to-right |
+| `vi-001` | Vietnamese (world; copy of `vi-vn`, machine-written, not reviewed) | left-to-right |
+| `vi-vn` | Vietnamese (Vietnam; machine-written, not reviewed) | left-to-right |
 | `zh-001` | Chinese (world) | left-to-right |
 | `zh-cn` | Chinese (China) | left-to-right |
 | `zh-tw` | Chinese (Taiwan, Traditional; OpenCC `s2twp` from zh-cn, machine-written, not reviewed) | left-to-right |

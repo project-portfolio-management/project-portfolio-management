@@ -138,6 +138,18 @@
       "benefits": "장점",
       "tutorial": "튜토리얼"
     },
+    "nl-001": {
+      "features": "functies",
+      "tutorial": "handleiding",
+      "comparisons": "vergelijkingen",
+      "benefits": "voordelen"
+    },
+    "nl-nl": {
+      "features": "functies",
+      "tutorial": "handleiding",
+      "comparisons": "vergelijkingen",
+      "benefits": "voordelen"
+    },
     "ru-001": {
       "features": "возможности",
       "benefits": "преимущества",

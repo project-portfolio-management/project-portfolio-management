@@ -15,6 +15,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (Dependabot: two updates applied, twenty branches settled)
+
+- Applied Dependabot #36 (UI: vite 8.3.6 → 8.3.8) and #35 (site: marked 18.1.3 → 18.2.0, vite 8.3.6 → 8.3.8). Their
+  CI failures came from main at the time (clippy, the restore drill's `stat` and a stale `docs.json`), not from the
+  updates. Checked locally: UI lint, `svelte-check`, 1,599 unit tests, build and 1,526 Playwright tests; site
+  `svelte-check`, 6 unit tests, build and 280 Playwright tests.
+- The other 18 Dependabot branches belonged to closed pull requests. Each was checked against main: 11 are on main at
+  the same or a newer version, and 4 are moot (the `api-with-rust` folder and the ubuntu runtime are gone, and
+  `dtolnay/rust-toolchain@1.120.0` names no Rust release; main pins it by SHA at 1.100.0). Three hold updates
+  declined on purpose: `jsonwebtoken` 11 (it stays at the version the Keycloak and OIDC code was written against),
+  TypeScript 7 (`svelte-check` accepts 5 or 6), and packages main removed (SVAR, the old Lily pickers). Every
+  pull request gets a comment saying which, and all 20 branches are deleted.
+
 ### 21 November (decided: OIDC only, no SAML)
 
 - The owner decided SA-D2: stay OIDC-only, not SAML, until a customer needs it. A SAML-only identity provider is

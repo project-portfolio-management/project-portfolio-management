@@ -313,7 +313,8 @@ test("a programme's primary aim is set; its current one is said first; a refusal
   const aims = page.getByRole("group", {
     name: "Objectives that are strategic aims",
   });
-  await aims.getByRole("checkbox", { name: "Lower cost" }).check();
+  // A click, not check(): the refusal puts the box back, and check() fails if it sees the box unticked again.
+  await aims.getByRole("checkbox", { name: "Lower cost" }).click();
   await expect(page.getByRole("alert")).toHaveText(
     "You are not allowed to do that.",
   );

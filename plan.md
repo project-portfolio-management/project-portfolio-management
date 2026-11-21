@@ -1001,7 +1001,7 @@ legal advice on the licence or the DPIA.
 
 | Item | Already here | Gap |
 |---|---|---|
-| Licence | `license` fields: both Rust crates `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`; the UI `MIT OR Apache-2.0` | **No licence file anywhere** (no `LICENSE*`, `COPYING`); **the three manifests disagree** (finding F-14); no SPDX headers; `cargo deny` licence checks exist (`deny.toml`) but govern dependencies, not us |
+| Licence | `license` fields: both Rust crates `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 OR CC-BY-NC-SA-4.0`; the UI `MIT OR Apache-2.0` | **No licence file anywhere** (no `LICENSE*`, `COPYING`); **the three manifests disagree** (finding F-14); no SPDX headers; `cargo deny` licence checks exist (`deny.toml`) but govern dependencies, not us |
 | Own repository, automated checks | `rust-toolchain.toml` pins 1.96.1 at the root; `api/.github/workflows/ci.yaml` and `security.yml`, `matcher/.github/workflows/security.yml` | **No workflow runs**: GitHub only reads `.github/workflows` at the repository root, so the three files in sub-directories are inert (F-15). The CI file floats `stable` against the pinned toolchain, uses the archived `actions-rs/cargo`, and has no UI job. **`repository` URLs point at an old monorepo** (`sixarm/main-x-service`), and comments still say "Main X Index repository" (F-16). **`project-portfolio-management-matcher-with-rust/target/` is committed** (822 build files, F-17). Pushes go to three forges (GitHub, Codeberg, GitLab), so checks must not depend on one forge only |
 | Login enforcement | Blanket `/api/*` enforcement (PASETO and/or Keycloak, then ABAC) exists and is tested | **Off by default**: `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` unset ⇒ every request is anonymous **and every write is allowed** (`area_allows` returns true), including finance areas (F-18). A deployment that forgets one variable is wide open |
 | Security headers | `nosniff`, `no-store` and attachment disposition on file downloads only | No HSTS, CSP, frame-ancestors / `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` or COOP/CORP on API or UI responses; the UI sets no headers in `hooks.server.ts`; **CORS is enabled with the framework default in production** (F-19) |
@@ -1012,11 +1012,11 @@ legal advice on the licence or the DPIA.
 ## 47. Recommendations
 
 1. **Licence.** One licence set for the whole repository, chosen by the owner
-   (§51). **All licence files live in a `LICENSE/` directory at the root**
-   (owner decision, 2026-10-09), one file per licence in the expression;
+   (§51). **All licence files live in a `LICENSES/` directory at the root**
+   (owner decision, 2026-10-09), one `LICENSES/<id>/index.md` per licence in the expression;
    none elsewhere. Make every manifest's `license` field the same SPDX
    expression, and add a test that keeps them equal and finds a file in
-   `LICENSE/` for each. (Forge licence detection usually looks for a root
+   `LICENSES/<id>/index.md` for each. (Forge licence detection usually looks for a root
    `LICENSE` *file*; with a directory the README carries the statement.)
 2. **Its own repository.** Move CI to the root `.github/workflows`, one job per
    crate and one for the UI, on the pinned toolchain; fix the `repository`
@@ -1076,7 +1076,7 @@ legal advice on the licence or the DPIA.
   feature; attachments and bulk export exist.
 
 **Status, 2026-10-09 (evening).** F-14 resolved (HD-1: one expression in all
-three manifests, texts in `LICENSE/`, a test keeps them equal). F-15 and F-17
+three manifests, texts in `LICENSES/`, a test keeps them equal). F-15 and F-17
 resolved in the tree: one workflow at the root, `matcher/target/` untracked and
 ignored — but the workflows have **not yet run on GitHub**, so HD-2 stays open
 until the first green run. F-16: the `repository` URLs name this repository.
@@ -1111,7 +1111,8 @@ resolved (metrics need a token). F-23 resolved (HD-9). HD-6 (backups) and HD-7
 
 - ~~**Licence:**~~ **Decided 2026-10-09:** any of MIT, Apache-2.0,
   GPL-2.0-only, GPL-3.0-only or BSD-3-Clause, or a custom licence by
-  arrangement; texts in `LICENSE/` (HD-1, landed).
+  arrangement; texts in `LICENSES/` (HD-1, landed). **Extended later:** the UK
+  Open Government Licence v3.0 (`OGL-UK-3.0`) and CC-BY-NC-SA-4.0 are also offered.
 - **Canonical forge:** GitHub, Codeberg or GitLab — which runs the required
   checks?
 - **Enforcement off in production:** forbidden outright, or allowed with a
@@ -1129,7 +1130,7 @@ workforce planner); only this repository was checked. Against the code:
 
 | Point | Verdict here |
 |---|---|
-| 1. Licence | **Done differently on purpose.** Texts are in `LICENSE/` (owner decision, HD-1), not `LICENSE-MIT` / `LICENSE-APACHE` at the root, so "GitHub detects a licence" is **not** a goal here; the README states the licence. The UI manifest now matches the crates. `"private": true` is still in the UI `package.json` (open question below) |
+| 1. Licence | **Done differently on purpose.** Texts are in `LICENSES/` (owner decision, HD-1), not `LICENSE-MIT` / `LICENSE-APACHE` at the root, so "GitHub detects a licence" is **not** a goal here; the README states the licence. The UI manifest now matches the crates. `"private": true` is still in the UI `package.json` (open question below) |
 | 2. Fresh clone | **Confirmed, with a different cause.** The portfolio crates do not use `../../link` path dependencies: `integrity-mac` and `authentication-verifier` are **git dependencies pinned to the old monorepo** (`SixArm/main-x-service`, a revision). The `Dockerfile` copies monorepo paths that do not exist here (`integrity/…`, `authentication/…`, `project-portfolio-management/…`), and `compose.test.yaml` mounts `../../ci/postgres-init`, which is absent (F-21) |
 | 3. CI at the root | **Confirmed** (already F-15, HD-2); also no `dependabot.yml` anywhere, and the CI uses archived `actions-rs` actions |
 | 4. Secure by default | **Confirmed** (F-18, F-19); also **`/metrics.prom` is a deliberately public path** in `is_public_path`, so anything that can reach the service reads its metrics (F-22) |

@@ -4,7 +4,7 @@
 
 ## 라이선스
 
-MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only 중 어느 하나로, 또는 협의에 따른 맞춤 조건으로 제공됩니다. 선택지와 전문은 [`LICENSE.md`](../../../../LICENSE.md)와 `LICENSE/`에 있으며, 테스트가 모든 매니페스트가 이와 일치하도록 유지합니다.
+MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0, CC-BY-NC-SA-4.0 중 어느 하나로, 또는 협의에 따른 맞춤 조건으로 제공됩니다. 선택지와 전문은 [`LICENSE.md`](../../../../LICENSE.md)와 `LICENSES/`에 있으며, 테스트가 모든 매니페스트가 이와 일치하도록 유지합니다.
 
 ## 데이터 보호 (적용되는 법)
 

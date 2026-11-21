@@ -4,7 +4,7 @@
 
 ## Lisensi
 
-Ditawarkan di bawah salah satu dari MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, atau GPL-3.0-only, atau ketentuan khusus berdasarkan kesepakatan. Pilihan dan teksnya ada di [`LICENSE.md`](../../../../LICENSE.md) dan `LICENSE/`; sebuah pengujian menjaga setiap manifes konsisten dengannya.
+Ditawarkan di bawah salah satu dari MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0, atau CC-BY-NC-SA-4.0, atau ketentuan khusus berdasarkan kesepakatan. Pilihan dan teksnya ada di [`LICENSE.md`](../../../../LICENSE.md) dan `LICENSES/`; sebuah pengujian menjaga setiap manifes konsisten dengannya.
 
 ## Pelindungan data (hukum yang berlaku bagi Anda)
 

@@ -1068,7 +1068,7 @@ Every response carries `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Po
 
 ### Changed — Oxford spelling and explicit day units (NFR-10, NFR-11, 2026-10-09)
 
-English text and identifiers use Oxford (`-ize`) spelling (`normalizeLocale`, the `/prioritization` page); durations in days say "calendar days" or "business days" (the compact `2.3d` forms are spelled out). The package licence matches the Rust crates (`MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only`).
+English text and identifiers use Oxford (`-ize`) spelling (`normalizeLocale`, the `/prioritization` page); durations in days say "calendar days" or "business days" (the compact `2.3d` forms are spelled out). The package licence matches the Rust crates (`MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 OR CC-BY-NC-SA-4.0`).
 
 ### Removed — two-letter locale forwarding
 

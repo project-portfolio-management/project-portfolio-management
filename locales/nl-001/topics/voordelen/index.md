@@ -28,7 +28,7 @@ Inloggen staat standaard aan, en de dienst start in productie niet met uitgescha
 
 ## Controle en overdraagbaarheid
 
-- **Licenties.** De software is open source, naar keuze onder MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 of GPL-3.0.
+- **Licenties.** De software is open source, naar keuze onder MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 of CC-BY-NC-SA-4.0.
 - **Hosting.** De software is zelf te hosten: één Rust-dienst op PostgreSQL, met een SvelteKit-interface.
 - **Gegevensimport.** CSV-bestanden uit Jira en Asana kunnen worden geïmporteerd, met een voorbeeldweergave en een vermelde reden voor alles wat wordt uitgesloten. Microsoft Project XML kan worden geïmporteerd en geëxporteerd.
 - **Talen.** De interface is beschikbaar in tien taalvarianten, waaronder het van rechts naar links geschreven Arabisch. De vertalingen zijn concepten die nog door moedertaalsprekers moeten worden beoordeeld.

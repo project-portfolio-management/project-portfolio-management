@@ -28,7 +28,7 @@ Login aktif secara bawaan, dan layanan tidak dimulai di produksi dengan login di
 
 ## Kendali dan portabilitas
 
-- **Lisensi.** Perangkat lunak ini bersumber terbuka, dengan pilihan MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, atau GPL-3.0.
+- **Lisensi.** Perangkat lunak ini bersumber terbuka, dengan pilihan MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0, atau CC-BY-NC-SA-4.0.
 - **Hosting.** Perangkat lunak ini di-host sendiri: satu layanan Rust di atas PostgreSQL, dengan antarmuka SvelteKit.
 - **Impor data.** Berkas CSV dari Jira dan Asana dapat diimpor, dengan pratinjau dan alasan yang dinyatakan untuk apa pun yang dikecualikan. XML Microsoft Project dapat diimpor dan diekspor.
 - **Bahasa.** Antarmuka tersedia dalam sepuluh lokal, termasuk bahasa Arab yang ditulis dari kanan ke kiri. Terjemahannya masih draf yang menunggu tinjauan penutur.

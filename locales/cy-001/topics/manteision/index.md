@@ -28,7 +28,7 @@ Mae mewngofnodi ymlaen yn ddiofyn, ac nid yw'r gwasanaeth yn cychwyn wrth gynhyr
 
 ## Rheolaeth a chludadwyedd
 
-- **Trwyddedu.** Mae'r feddalwedd yn god agored, dan ddewis o MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 neu GPL-3.0.
+- **Trwyddedu.** Mae'r feddalwedd yn god agored, dan ddewis o MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 neu CC-BY-NC-SA-4.0.
 - **Lletya.** Mae'r feddalwedd yn cael ei hunan-letya: un gwasanaeth Rust dros PostgreSQL, gyda rhyngwyneb SvelteKit.
 - **Mewnforio data.** Gellir mewnforio ffeiliau CSV o Jira ac Asana, gyda rhagolwg a rheswm wedi'i nodi am unrhyw beth a eithrir. Gellir mewnforio ac allforio XML Microsoft Project.
 - **Ieithoedd.** Mae'r rhyngwyneb ar gael mewn deg locale, gan gynnwys Arabeg o'r dde i'r chwith. Drafftiau yw'r cyfieithiadau, sy'n aros am adolygiad gan siaradwyr.

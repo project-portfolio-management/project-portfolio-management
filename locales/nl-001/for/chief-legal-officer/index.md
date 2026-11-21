@@ -4,7 +4,7 @@
 
 ## Licentie
 
-Aangeboden onder één van MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only of GPL-3.0-only, of onder aangepaste voorwaarden in overleg. De keuze en de teksten staan in [`LICENSE.md`](../../../../LICENSE.md) en `LICENSE/`; een test houdt elk manifest daarmee consistent.
+Aangeboden onder één van MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 of CC-BY-NC-SA-4.0, of onder aangepaste voorwaarden in overleg. De keuze en de teksten staan in [`LICENSE.md`](../../../../LICENSE.md) en `LICENSES/`; een test houdt elk manifest daarmee consistent.
 
 ## Gegevensbescherming (de wet die voor u geldt)
 

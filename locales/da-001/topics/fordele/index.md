@@ -28,7 +28,7 @@ Login er slået til som standard, og tjenesten starter ikke i produktion med log
 
 ## Kontrol og portabilitet
 
-- **Licens.** Softwaren er open source, med valg mellem MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 eller GPL-3.0.
+- **Licens.** Softwaren er open source, med valg mellem MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 eller CC-BY-NC-SA-4.0.
 - **Drift.** Softwaren driftes selv: én Rust-tjeneste oven på PostgreSQL med en SvelteKit-brugerflade.
 - **Dataimport.** CSV-filer fra Jira og Asana kan importeres med en forhåndsvisning og en oplyst årsag til alt, der er udeladt. Microsoft Project XML kan importeres og eksporteres.
 - **Sprog.** Brugerfladen findes på ti sprogversioner, herunder arabisk, som skrives fra højre mod venstre. Oversættelserne er udkast, der afventer gennemgang af personer, der taler sprogene.

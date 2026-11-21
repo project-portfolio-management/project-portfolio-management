@@ -4,7 +4,7 @@
 
 ## Leseni
 
-Hutolewa chini ya mojawapo ya MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only au GPL-3.0-only, au masharti maalum kwa makubaliano. Uchaguzi na maandishi yako katika [`LICENSE.md`](../../../../LICENSE.md) na `LICENSE/`; jaribio huhakikisha kila faili ya maelezo inalingana nayo.
+Hutolewa chini ya mojawapo ya MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 au CC-BY-NC-SA-4.0, au masharti maalum kwa makubaliano. Uchaguzi na maandishi yako katika [`LICENSE.md`](../../../../LICENSE.md) na `LICENSES/`; jaribio huhakikisha kila faili ya maelezo inalingana nayo.
 
 ## Ulinzi wa data (sheria inayokuhusu)
 

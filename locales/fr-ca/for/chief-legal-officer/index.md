@@ -4,7 +4,7 @@
 
 ## Licence
 
-Proposé au choix sous l'une des licences MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 ou CC-BY-NC-SA-4.0, ou sous des conditions sur mesure par accord. Le choix et les textes figurent dans [`LICENSE.md`](../../../../LICENSE.md) et dans `LICENSE/` ; un test maintient tous les manifestes cohérents avec eux.
+Proposé au choix sous l'une des licences MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 ou CC-BY-NC-SA-4.0, ou sous des conditions sur mesure par accord. Le choix et les textes figurent dans [`LICENSE.md`](../../../../LICENSE.md) et dans `LICENSES/` ; un test maintient tous les manifestes cohérents avec eux.
 
 ## Protection des données (le droit qui s'applique à vous)
 

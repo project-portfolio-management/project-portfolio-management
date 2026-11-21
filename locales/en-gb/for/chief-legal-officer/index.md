@@ -4,7 +4,7 @@
 
 ## Licence
 
-Offered under any one of MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only or GPL-3.0-only, or custom terms by arrangement. The choice and the texts are in [`LICENSE.md`](../../../../LICENSE.md) and `LICENSE/`; a test keeps every manifest consistent with them.
+Offered under any one of MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 or CC-BY-NC-SA-4.0, or custom terms by arrangement. The choice and the texts are in [`LICENSE.md`](../../../../LICENSE.md) and `LICENSES/`; a test keeps every manifest consistent with them.
 
 ## Data protection (the law that applies to you)
 

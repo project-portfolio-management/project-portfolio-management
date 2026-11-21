@@ -4,7 +4,7 @@
 
 ## 許可證
 
-可在 MIT、Apache-2.0、BSD-3-Clause、GPL-2.0-only 或 GPL-3.0-only 中任選其一使用，或經安排採用定製條款。選擇說明和文字見 [`LICENSE.md`](../../../../LICENSE.md) 和 `LICENSE/`；測試保證所有清單檔案與之一致。
+可在 MIT、Apache-2.0、BSD-3-Clause、GPL-2.0-only、GPL-3.0-only、OGL-UK-3.0 或 CC-BY-NC-SA-4.0 中任選其一使用，或經安排採用定製條款。選擇說明和文字見 [`LICENSE.md`](../../../../LICENSE.md) 和 `LICENSES/`；測試保證所有清單檔案與之一致。
 
 ## 資料保護（英國 GDPR / 歐盟 GDPR）
 

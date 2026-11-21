@@ -4,7 +4,7 @@
 
 ## Licens
 
-Erbjuds under någon av MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only eller GPL-3.0-only, eller enligt särskilda villkor efter överenskommelse. Valet och texterna finns i [`LICENSE.md`](../../../../LICENSE.md) och `LICENSE/`; ett test håller varje manifest förenligt med dem.
+Erbjuds under någon av MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 eller CC-BY-NC-SA-4.0, eller enligt särskilda villkor efter överenskommelse. Valet och texterna finns i [`LICENSE.md`](../../../../LICENSE.md) och `LICENSES/`; ett test håller varje manifest förenligt med dem.
 
 ## Dataskydd (den lag som gäller för dig)
 

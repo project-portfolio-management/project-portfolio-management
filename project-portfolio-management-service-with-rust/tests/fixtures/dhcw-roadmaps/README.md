@@ -5,7 +5,7 @@ These four CSV files are copied unchanged from `tests/fixtures/sheets/` of
 at commit `cc81478`, which copied them from the `sheets/` folder of DHCW's `product-roadmaps` repository. They are
 the layout of DHCW's roadmap spreadsheet filled with **fake example data**, under the MIT licence, © 2026 Digital
 Health and Care Wales. The notice is kept below, in this file, because this repository keeps licence files only
-in `LICENSE/` (a test checks it).
+in `LICENSES/` (a test checks it).
 
 `domain/src/dhcw_import.rs` (RE-5 part b) runs its dry run on them. Never put data from a live spreadsheet here.
 

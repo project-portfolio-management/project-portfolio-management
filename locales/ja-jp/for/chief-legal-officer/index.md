@@ -4,7 +4,7 @@
 
 ## ライセンス
 
-MIT、Apache-2.0、BSD-3-Clause、GPL-2.0-only、GPL-3.0-only のいずれか一つ、または協議による個別の条件で提供されます。選択肢と本文は [`LICENSE.md`](../../../../LICENSE.md) と `LICENSE/` にあり、テストがすべてのマニフェストとの整合を保ちます。
+MIT、Apache-2.0、BSD-3-Clause、GPL-2.0-only、GPL-3.0-only、OGL-UK-3.0、CC-BY-NC-SA-4.0 のいずれか一つ、または協議による個別の条件で提供されます。選択肢と本文は [`LICENSE.md`](../../../../LICENSE.md) と `LICENSES/` にあり、テストがすべてのマニフェストとの整合を保ちます。
 
 ## データ保護（あなたに適用される法律）
 

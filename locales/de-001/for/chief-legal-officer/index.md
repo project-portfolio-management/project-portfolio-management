@@ -4,7 +4,7 @@
 
 ## Lizenz
 
-Angeboten wahlweise unter MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 oder CC-BY-NC-SA-4.0 oder nach Vereinbarung zu eigenen Bedingungen. Die Auswahl und die Texte stehen in [`LICENSE.md`](../../../../LICENSE.md) und `LICENSE/`; ein Test hält jedes Manifest damit in Übereinstimmung.
+Angeboten wahlweise unter MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 oder CC-BY-NC-SA-4.0 oder nach Vereinbarung zu eigenen Bedingungen. Die Auswahl und die Texte stehen in [`LICENSE.md`](../../../../LICENSE.md) und `LICENSES/`; ein Test hält jedes Manifest damit in Übereinstimmung.
 
 ## Datenschutz (das für Sie geltende Recht)
 

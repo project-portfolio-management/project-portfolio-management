@@ -28,7 +28,7 @@ L'accesso con credenziali è attivo per impostazione predefinita, e il servizio 
 
 ## Controllo e portabilità
 
-- **Licenze.** Il software è open source, a scelta tra MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 o GPL-3.0.
+- **Licenze.** Il software è open source, a scelta tra MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 o CC-BY-NC-SA-4.0.
 - **Hosting.** Il software è ospitato in proprio: un servizio Rust su PostgreSQL, con un'interfaccia SvelteKit.
 - **Importazione dei dati.** I file CSV di Jira e Asana possono essere importati, con anteprima e il motivo dichiarato di tutto ciò che viene escluso. Il formato XML di Microsoft Project può essere importato ed esportato.
 - **Lingue.** L'interfaccia è disponibile in dieci impostazioni locali, compreso l'arabo da destra a sinistra. Le traduzioni sono bozze in attesa di revisione da parte di parlanti.

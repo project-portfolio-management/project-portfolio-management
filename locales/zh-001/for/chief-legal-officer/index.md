@@ -4,7 +4,7 @@
 
 ## 许可证
 
-可在 MIT、Apache-2.0、BSD-3-Clause、GPL-2.0-only 或 GPL-3.0-only 中任选其一使用，或经安排采用定制条款。选择说明和文本见 [`LICENSE.md`](../../../../LICENSE.md) 和 `LICENSE/`；测试保证所有清单文件与之一致。
+可在 MIT、Apache-2.0、BSD-3-Clause、GPL-2.0-only、GPL-3.0-only、OGL-UK-3.0 或 CC-BY-NC-SA-4.0 中任选其一使用，或经安排采用定制条款。选择说明和文本见 [`LICENSE.md`](../../../../LICENSE.md) 和 `LICENSES/`；测试保证所有清单文件与之一致。
 
 ## 数据保护（英国 GDPR / 欧盟 GDPR）
 

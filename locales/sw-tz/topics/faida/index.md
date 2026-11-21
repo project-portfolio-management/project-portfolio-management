@@ -28,7 +28,7 @@ Kuingia kumewashwa kwa chaguo-msingi, na huduma haianzi katika uzalishaji ikiwa 
 
 ## Udhibiti na uhamishikaji
 
-- **Leseni.** Programu ni huria, chini ya chaguo la MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 au GPL-3.0.
+- **Leseni.** Programu ni huria, chini ya chaguo la MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 au CC-BY-NC-SA-4.0.
 - **Uwekaji.** Programu huendeshwa na mwenyewe: huduma moja ya Rust juu ya PostgreSQL, yenye kiolesura cha SvelteKit.
 - **Uingizaji wa data.** Faili za CSV kutoka Jira na Asana zinaweza kuingizwa, kwa mwonekano wa awali na sababu iliyotajwa kwa kila kilichoachwa. XML ya Microsoft Project inaweza kuingizwa na kutolewa.
 - **Lugha.** Kiolesura kinapatikana katika lugha na maeneo kumi, ikiwemo Kiarabu kinachoandikwa kutoka kulia kwenda kushoto. Tafsiri ni rasimu zinazosubiri mapitio ya wazungumzaji.

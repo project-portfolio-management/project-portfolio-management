@@ -225,7 +225,7 @@ capabilities (`NC-`) of the 2026-10-21 research pass ([`plan.md`](../plan.md)
 ### Release and operations
 
 **In progress** (the HD series in [`tasks.md`](../tasks.md), HD-1 … HD-9).
-Landed: the licence files (HD-1, `LICENSE/`); login enforcement **on by
+Landed: the licence files (HD-1, `LICENSES/`); login enforcement **on by
 default**, refused off in production (HD-3); security headers, a strict CSP and
 an explicit CORS allow-list on the API and the front-end (HD-4); per-caller
 rate limiting (HD-5); and documents that match the code (HD-9: the generated

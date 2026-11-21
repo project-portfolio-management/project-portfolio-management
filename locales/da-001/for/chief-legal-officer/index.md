@@ -4,7 +4,7 @@
 
 ## Licens
 
-Tilbydes under en af MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only eller GPL-3.0-only, eller på særlige vilkår efter aftale. Valget og teksterne findes i [`LICENSE.md`](../../../../LICENSE.md) og `LICENSE/`; en test sikrer, at alle manifester stemmer overens med dem.
+Tilbydes under en af MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 eller CC-BY-NC-SA-4.0, eller på særlige vilkår efter aftale. Valget og teksterne findes i [`LICENSE.md`](../../../../LICENSE.md) og `LICENSES/`; en test sikrer, at alle manifester stemmer overens med dem.
 
 ## Databeskyttelse (den lov, der gælder for dig)
 

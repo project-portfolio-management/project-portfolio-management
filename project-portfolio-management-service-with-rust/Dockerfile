@@ -77,7 +77,7 @@ LABEL org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.title="project-portfolio-management" \
       org.opencontainers.image.description="Project portfolio management service (Axum and axa REST API, PostgreSQL)" \
       org.opencontainers.image.source="https://github.com/project-portfolio-management/project-portfolio-management" \
-      org.opencontainers.image.licenses="MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only" \
+      org.opencontainers.image.licenses="MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 OR CC-BY-NC-SA-4.0" \
       org.opencontainers.image.revision="${REVISION}"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

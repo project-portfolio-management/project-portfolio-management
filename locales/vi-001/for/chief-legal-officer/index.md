@@ -4,7 +4,7 @@
 
 ## Giấy phép
 
-Được cung cấp theo bất kỳ một trong các giấy phép MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only hoặc GPL-3.0-only, hoặc theo điều khoản riêng khi có thỏa thuận. Lựa chọn và văn bản giấy phép nằm trong [`LICENSE.md`](../../../../LICENSE.md) và `LICENSE/`; một bài kiểm thử giữ cho mọi tệp kê khai khớp với chúng.
+Được cung cấp theo bất kỳ một trong các giấy phép MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 hoặc CC-BY-NC-SA-4.0, hoặc theo điều khoản riêng khi có thỏa thuận. Lựa chọn và văn bản giấy phép nằm trong [`LICENSE.md`](../../../../LICENSE.md) và `LICENSES/`; một bài kiểm thử giữ cho mọi tệp kê khai khớp với chúng.
 
 ## Bảo vệ dữ liệu (luật áp dụng cho bạn)
 

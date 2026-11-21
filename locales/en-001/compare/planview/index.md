@@ -16,7 +16,7 @@ A commercial suite for enterprise portfolio and work management.
 
 ## When this project may be the better fit
 
-- Open-source software under a choice of five licences is required
+- Open-source software under a choice of seven licences is required
 - The code and tests need to be open to inspection
 - A controlled pilot on self-hosted infrastructure is the intended first step
 

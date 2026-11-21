@@ -4,7 +4,7 @@
 
 ## Trwydded
 
-Cynigir o dan unrhyw un o MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only neu GPL-3.0-only, neu delerau pwrpasol drwy drefniant. Mae'r dewis a'r testunau yn [`LICENSE.md`](../../../../LICENSE.md) a `LICENSE/`; mae prawf yn cadw pob maniffest yn gyson â hwy.
+Cynigir o dan unrhyw un o MIT, Apache-2.0, BSD-3-Clause, GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 neu CC-BY-NC-SA-4.0, neu delerau pwrpasol drwy drefniant. Mae'r dewis a'r testunau yn [`LICENSE.md`](../../../../LICENSE.md) a `LICENSES/`; mae prawf yn cadw pob maniffest yn gyson â hwy.
 
 ## Diogelu data (GDPR y DU / GDPR yr UE)
 

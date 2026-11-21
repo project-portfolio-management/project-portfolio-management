@@ -28,7 +28,7 @@ Login is on by default, and the service does not start in production with login 
 
 ## Control and portability
 
-- **Licensing.** The software is open source, under a choice of MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 or GPL-3.0.
+- **Licensing.** The software is open source, under a choice of MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 or CC-BY-NC-SA-4.0.
 - **Hosting.** The software is self-hosted: one Rust service over PostgreSQL, with a SvelteKit interface.
 - **Data import.** CSV files from Jira and Asana can be imported, with a preview and a stated reason for anything excluded. Microsoft Project XML can be imported and exported.
 - **Languages.** The interface is available in ten locales, including right-to-left Arabic. The translations are drafts awaiting review by speakers.

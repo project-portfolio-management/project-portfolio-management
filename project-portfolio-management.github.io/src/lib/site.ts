@@ -45,6 +45,9 @@ export const BRIEF_LOCALES = [
   "bn-bd",
   "bn-001",
   "bn-in",
+  "id-id",
+  "id-001",
+  "id-my",
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
@@ -97,6 +100,9 @@ export const LOCALE_LABELS: Record<PathLocale, string> = {
   "bn-bd": "বাংলা - বাংলাদেশ",
   "bn-001": "বাংলা",
   "bn-in": "বাংলা - ভারত",
+  "id-id": "Indonesia - Indonesia",
+  "id-001": "Indonesia",
+  "id-my": "Indonesia - Malaysia",
 };
 
 /** The topics, by their en-001 slug. A topic's slug differs by locale: `TOPIC_SLUGS` comes from the peer ids. */

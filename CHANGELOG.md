@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (id-id, id-001, id-my: Indonesian, Indonesia, world and Malaysia)
+
+- Added `locales/id-id`, `locales/id-001` and `locales/id-my` (34 files each: peer ids, 17 symlinked READMEs, `sitemap.xml`; topic folders manfaat, fitur, perbandingan, tutorial), the site's own words in `id` (`messages.json`, 65 keys) and the picker labels `Indonesia - Indonesia`, `Indonesia` and `Indonesia - Malaysia`. `id-id` was translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. `id-001` and `id-my` are copies of `id-id`; the tutorial's sign-in URL and the sitemap URLs name the locale. No Malaysian wording was substituted. Not done or not verified: no Indonesian speaker has reviewed any of the three; Playwright and the live pages were not checked, only a build; the `id` interface strings are shared by all three; `id-001` makes Indonesian appear in the home page's "Translations" line, which was not checked in a browser; the sitemaps were written by script, not by the site's generator.
+
 ### 21 November (bn-bd, bn-001, bn-in: Bengali, Bangladesh, world and India)
 
 - Added `locales/bn-bd`, `locales/bn-001` and `locales/bn-in` (34 files each: peer ids, 17 symlinked READMEs, `sitemap.xml`; folder names in Bengali script: সুবিধা, বৈশিষ্ট্য, তুলনা, টিউটোরিয়াল), the site's own words in `bn` (`messages.json`) and the picker labels `বাংলা - বাংলাদেশ`, `বাংলা` and `বাংলা - ভারত`. `bn-bd` was translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. `bn-001` and `bn-in` are copies of `bn-bd`; only the tutorial's sign-in URL and the sitemap URLs name the locale, and no Indian wording was substituted. Not done or not verified: no Bengali speaker has reviewed any of the three; Playwright and the live pages were not checked, only a build; the `bn` interface strings are shared by all three; the "Translations" line was not checked in a browser; the sitemaps were written by script, not by the site's generator.

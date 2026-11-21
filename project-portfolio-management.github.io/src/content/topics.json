@@ -96,6 +96,24 @@
       "benefits": "लाभ",
       "features": "सुविधाएँ"
     },
+    "id-001": {
+      "features": "fitur",
+      "benefits": "manfaat",
+      "comparisons": "perbandingan",
+      "tutorial": "tutorial"
+    },
+    "id-id": {
+      "features": "fitur",
+      "benefits": "manfaat",
+      "comparisons": "perbandingan",
+      "tutorial": "tutorial"
+    },
+    "id-my": {
+      "features": "fitur",
+      "benefits": "manfaat",
+      "comparisons": "perbandingan",
+      "tutorial": "tutorial"
+    },
     "ru-001": {
       "features": "возможности",
       "benefits": "преимущества",

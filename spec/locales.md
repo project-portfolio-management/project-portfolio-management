@@ -26,9 +26,8 @@ directory or file stem that is named for a locale.
   **document locales**: `ar-001`, `cy-001`, `cy-gb`, `en-001`, `en-gb`, `en-gb-oxendict`, `en-us`,
   `hi-001`, `hi-in`, `zh-001`, `zh-cn`. That set is not the interface's (§2): five are regional
   document variants (British, Oxford and US English, Welsh and Hindi with a region) the interface
-  does not have, and **`fr-001`, `fr-fr` and `fr-ca` have no reader guides:
-  a recorded gap**, to close by the same bar as the interface (a draft labelled unreviewed). Those three have one
-  document each, the path to production (`locales/<code>/path-to-production/index.md`, machine-written); it is in every document locale too. The
+  does not have. Every interface locale now has the home page, the four topics, the eleven reader
+  guides and the path to production (`locales/<code>/path-to-production/index.md`, machine-written, each a draft labelled unreviewed). The
   English guides name the applicable data-protection law and treat the UK NHS DTAC as one worked
   example; the Welsh, Hindi and Chinese guides were not updated to match on 2026-10-31 and still
   name UK GDPR and the DTAC alone (a recorded gap).
@@ -60,7 +59,9 @@ Ten, sorted by code (the picker shows them in this order):
 | `es-001` | Spanish (world; copy of `es-mx`, machine-written, not reviewed; folder names in Spanish) | left-to-right |
 | `es-es` | Spanish (Spain; copy of `es-mx` with light vocabulary edits, machine-written, not reviewed; folder names in Spanish) | left-to-right |
 | `es-mx` | Spanish (Mexico; machine-written, not reviewed; folder names in Spanish) | left-to-right |
-| `fr-001` | French | left-to-right |
+| `fr-001` | French (world; copy of `fr-fr`, machine-written, not reviewed; folder names in French) | left-to-right |
+| `fr-ca` | French (Canada; copy of `fr-fr` with light vocabulary edits, machine-written, not reviewed; folder names in French) | left-to-right |
+| `fr-fr` | French (France; machine-written, not reviewed; folder names in French) | left-to-right |
 | `hi-001` | Hindi | left-to-right |
 | `id-001` | Indonesian (world; copy of `id-id`, machine-written, not reviewed) | left-to-right |
 | `id-id` | Indonesian (Indonesia; machine-written, not reviewed) | left-to-right |

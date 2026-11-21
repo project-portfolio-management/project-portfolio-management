@@ -73,6 +73,9 @@ export const BRIEF_LOCALES = [
   "es-mx",
   "es-001",
   "es-es",
+  "fr-fr",
+  "fr-001",
+  "fr-ca",
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
@@ -80,7 +83,7 @@ export type BriefLocale = (typeof BRIEF_LOCALES)[number];
  * The locales with only a path-to-production page (`locales/<locale>/path-to-production/`): the interface's languages
  * that have no role briefs or home page (`spec/locales.md`). The site's own words stay English on them.
  */
-export const PAGE_ONLY_LOCALES = ["fr-001", "fr-fr", "fr-ca"] as const;
+export const PAGE_ONLY_LOCALES = [] as const;
 /** Every locale with a path-to-production page. */
 export const PATH_LOCALES = [...BRIEF_LOCALES, ...PAGE_ONLY_LOCALES].sort();
 export type PathLocale = BriefLocale | (typeof PAGE_ONLY_LOCALES)[number];

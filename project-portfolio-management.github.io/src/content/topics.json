@@ -120,6 +120,24 @@
       "features": "funciones",
       "tutorial": "tutorial"
     },
+    "fr-001": {
+      "benefits": "avantages",
+      "comparisons": "comparaisons",
+      "features": "fonctionnalités",
+      "tutorial": "tutoriel"
+    },
+    "fr-ca": {
+      "benefits": "avantages",
+      "comparisons": "comparaisons",
+      "features": "fonctionnalités",
+      "tutorial": "tutoriel"
+    },
+    "fr-fr": {
+      "benefits": "avantages",
+      "comparisons": "comparaisons",
+      "features": "fonctionnalités",
+      "tutorial": "tutoriel"
+    },
     "hi-001": {
       "tutorial": "ट्यूटोरियल",
       "comparisons": "तुलना",

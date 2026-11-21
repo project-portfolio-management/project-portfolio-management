@@ -24,6 +24,10 @@ const PACK_OF: Record<Locale, string> = {
   "es-001": "es-001",
   "fr-001": "fr-001",
   "hi-001": "hi-001",
+  "ja-001": "ja-001",
+  "ko-001": "ko-001",
+  "pt-001": "pt-001",
+  "ru-001": "ru-001",
   "zh-001": "zh-001",
   "zh-cn": "zh-001",
 };
@@ -37,6 +41,10 @@ const PACKS: Record<string, () => Promise<{ default: unknown }>> = {
   "es-001": () => import("@lilydesignsystem/svelte-locale-translations/es-001"),
   "fr-001": () => import("@lilydesignsystem/svelte-locale-translations/fr-001"),
   "hi-001": () => import("@lilydesignsystem/svelte-locale-translations/hi-001"),
+  "ja-001": () => import("@lilydesignsystem/svelte-locale-translations/ja-001"),
+  "ko-001": () => import("@lilydesignsystem/svelte-locale-translations/ko-001"),
+  "pt-001": () => import("@lilydesignsystem/svelte-locale-translations/pt-001"),
+  "ru-001": () => import("@lilydesignsystem/svelte-locale-translations/ru-001"),
   "zh-001": () => import("@lilydesignsystem/svelte-locale-translations/zh-001"),
 };
 

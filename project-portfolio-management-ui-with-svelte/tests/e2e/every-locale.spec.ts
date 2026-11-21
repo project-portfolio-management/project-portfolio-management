@@ -86,6 +86,15 @@ const SAME: Partial<Record<string, ReadonlySet<string>>> = {
     "Ticket",
     "Triangular",
   ]),
+  "pt-001": new Set([
+    "capex",
+    "opex",
+    "Sprint",
+    "Sprints",
+    "Status",
+    "Status: Active",
+    "Triangular",
+  ]),
   "fr-001": new Set([
     "← Documents",
     "← Plan",

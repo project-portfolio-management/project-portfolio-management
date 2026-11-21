@@ -9,6 +9,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Japanese, Korean, Portuguese and Russian (WW-1.1, 2026-11-21)
+
+- Four locales, `ja-001`, `ko-001`, `pt-001` and `ru-001` (now 14), each with a page catalogue (`i18n-pages.<ja|ko|pt|ru>.ts`,
+  loaded only for its locale), an interface block in `i18n.svelte.ts` (320 strings), Lily's label pack
+  (`lily-labels.ts`), a review record and working file in `governance/translation-reviews/` (7,496 texts each), a font
+  rule for `lang="ja"` and `lang="ko"` in `app.css`, and rows in the language statement. A browser asking for `ja-JP`,
+  `ko-KR`, `pt-BR`, `pt-PT` or `ru-RU` now lands on its world locale; they used to get English.
+- Written by Claude (the AI assistant) as machine drafts: 16 agents, each translating about 300 strings at a time and
+  checking keys and placeholders with a script. **No translation is reviewed by a speaker or a translator.**
+- Stated limits: Portuguese is one catalogue (Brazilian spellings, following the Portuguese docs) for Brazil and
+  Portugal; the page catalogue has English's keys, so Russian holds only `_one` and `_other` and a count of 2 to 4 reads
+  the `_other` wording; Korean and Russian keep a few strings made of placeholders alone, and Portuguese keeps words that are
+  the same as English (counted in `catalogue-coverage.test.ts`, which may only fall).
+- Not verified: no page was read in a browser in any of the four languages; long Russian and Portuguese words against
+  the layouts; the Japanese terms were checked for consistency across the chunks (計画, 課題) but one agent did not read the docs
+  first; the Korean agent had changed some literal values (`person:<uuid>`, `PERT`) to pass its script, which were put back;
+  Lily's four label packs are unreviewed; the whole Playwright suite after this change (see the commit message for what ran).
+
 ### Changed — Lily svelte-headless 0.11.0, picker-bar 0.7.0, theme-picker 0.4.0 (2026-11-21)
 
 - Updated `@lilydesignsystem/svelte-headless` 0.9.0 to 0.11.0 (removes the national-identifier components and the colour,

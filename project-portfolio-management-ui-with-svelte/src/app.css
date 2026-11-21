@@ -53,7 +53,8 @@
   --mxi-radius: var(--radius-field, 6px);
   --mxi-spacing: 1rem;
   /* WW-1.15: after the platform's own UI font, faces that cover the scripts of the supported locales (Arabic,
-     Devanagari, Simplified Chinese) where the system has them. No font is downloaded or bundled: a system without
+     Devanagari, Simplified Chinese, Japanese, Korean; Latin and Cyrillic come with the platform font) where the
+     system has them. No font is downloaded or bundled: a system without
      any of them shows the browser's own fallback, a stated limit. */
   font-family:
     system-ui,
@@ -68,6 +69,12 @@
     "Noto Sans SC",
     "PingFang SC",
     "Microsoft YaHei",
+    "Hiragino Sans",
+    "Yu Gothic UI",
+    "Noto Sans JP",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    "Noto Sans KR",
     sans-serif;
   color: var(--mxi-color-fg);
   background: var(--mxi-color-bg);
@@ -83,6 +90,29 @@
    seven-step scale (PickerBar's DEFAULT_SIZES) is used unmodified,
    largest-to-smallest; "normal" is the unscaled default and carries no
    rule. */
+/* Japanese and Korean put their own faces first, so a Han character is drawn in the Japanese form, not the
+   Simplified Chinese one the general stack reaches first. The dyslexia face still wins when it is chosen. */
+:root:lang(ja):not([data-font="dyslexia"]) {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Hiragino Sans",
+    "Yu Gothic UI",
+    "Noto Sans JP",
+    "Noto Sans",
+    sans-serif;
+}
+:root:lang(ko):not([data-font="dyslexia"]) {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    "Noto Sans KR",
+    "Noto Sans",
+    sans-serif;
+}
+
 :root[data-text-size="smallest"] {
   font-size: 75%;
 }

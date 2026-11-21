@@ -12,6 +12,10 @@ Claude (the AI assistant) and **none has been reviewed** by a speaker or a profe
 | `es-001` | Spanish | [es-001.md](es-001.md) | [es-001.csv](es-001.csv) | no |
 | `fr-001` | French | [fr-001.md](fr-001.md) | [fr-001.csv](fr-001.csv) | no |
 | `hi-001` | Hindi | [hi-001.md](hi-001.md) | [hi-001.csv](hi-001.csv) | no |
+| `ja-001` | Japanese | [ja-001.md](ja-001.md) | [ja-001.csv](ja-001.csv) | no |
+| `ko-001` | Korean | [ko-001.md](ko-001.md) | [ko-001.csv](ko-001.csv) | no |
+| `pt-001` | Portuguese | [pt-001.md](pt-001.md) | [pt-001.csv](pt-001.csv) | no |
+| `ru-001` | Russian | [ru-001.md](ru-001.md) | [ru-001.csv](ru-001.csv) | no |
 | `zh-001` | Chinese (Simplified) | [zh-001.md](zh-001.md) | [zh-001.csv](zh-001.csv) | no |
 | `zh-cn` | Chinese (Simplified, China) | [zh-cn.md](zh-cn.md) | [zh-cn.csv](zh-cn.csv) | no |
 

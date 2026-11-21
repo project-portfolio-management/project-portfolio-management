@@ -31,6 +31,10 @@ describe("i18n catalog", () => {
       "es-001",
       "fr-001",
       "hi-001",
+      "ja-001",
+      "ko-001",
+      "pt-001",
+      "ru-001",
       "zh-001",
       "zh-cn",
     ]);
@@ -43,6 +47,10 @@ describe("i18n catalog", () => {
       "es-001": "Español",
       "fr-001": "Français",
       "hi-001": "हिन्दी",
+      "ja-001": "日本語",
+      "ko-001": "한국어",
+      "pt-001": "Português",
+      "ru-001": "Русский",
       "zh-001": "中文",
       "zh-cn": "中文 - 中国",
     });
@@ -69,6 +77,8 @@ describe("i18n catalog", () => {
     i18n.set("de-DE");
     expect(i18n.locale).toBe("de-de");
     i18n.set("ja");
+    expect(i18n.locale).toBe("ja-001");
+    i18n.set("sw");
     expect(i18n.locale).toBe("en-001");
   });
 

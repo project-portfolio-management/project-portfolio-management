@@ -392,21 +392,33 @@ built inside a catalogue string or a column with its own `format` were not each 
 `LocalePicker` (`lily-design-system-svelte-locale-picker`) sets `lang`
 and `dir` on `<html>` and switches the active translation catalogue, so
 selecting a locale changes the displayed language. Supported locales
-(10, `src/lib/locales.ts`): `ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`,
-`es-001`, `fr-001`, `hi-001`, `zh-001`, `zh-cn`; `ar-001` is **RTL**. The
+(14, `src/lib/locales.ts`): `ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`,
+`es-001`, `fr-001`, `hi-001`, `ja-001`, `ko-001`, `pt-001`, `ru-001`, `zh-001`, `zh-cn`; `ar-001` is **RTL**. The
 locale is the first path segment (`/de-001/plans`). Strings come from
 `src/lib/i18n.svelte.ts` (navigation, forms) and one page catalogue per
-language (`i18n-pages.ts` English, `i18n-pages.<cy|ar|de|es|fr|hi|zh>.ts`;
+language (`i18n-pages.ts` English, `i18n-pages.<cy|ar|de|es|fr|hi|ja|ko|pt|ru|zh>.ts`;
 `de-de` and `zh-cn` share their language's). **Every locale is complete
 (WW-1.1, NFR-19):** each page catalogue is typed as a complete record of the
 English keys, `tests/unit/catalogue-coverage.test.ts` checks keys,
 placeholders and copied English for each, and `tests/e2e/every-locale.spec.ts`
 opens every page route in every locale. A missing key would still fall back
-to English at run time. English and Welsh are bundled; the other six page
+to English at run time. English and Welsh are bundled; the other ten page
 catalogues are loaded only for their own locale (`loadLocale`, awaited by
 the root layout's load), so a page does not carry every language. Every translation is a machine draft, recorded
 unreviewed per locale in `governance/translation-reviews/` (Welsh in
 `governance/welsh-translation-review.md`).
+
+**Japanese, Korean, Portuguese and Russian (added 2026-11-21).** Each has one world locale (`ja-001`, `ko-001`,
+`pt-001`, `ru-001`) and no regional one, so `ja-JP`, `ko-KR`, `pt-BR`, `pt-PT`, `ru-RU` and `ru-BY` all read it
+(`normalizeLocale`). Their text was written in 26 chunks of about 300 strings, checked by script for keys and
+placeholders, and read by nobody. **Stated limits:** Portuguese is one catalogue for Brazil and Portugal, so words and
+spellings that differ between them are not served; every plural group lives in the page catalogue, whose keys are
+English's, so Russian has only `_one` and `_other` (a count of 2 to 4 reads the `_other` wording; the interface strings
+in `i18n.svelte.ts` hold no plural group); Japanese and Korean have one plural form, so
+`_one` and `_other` read the same; the widget words come from Lily's `ja-001`, `ko-001`, `pt-001` and `ru-001` packs, which
+ship unreviewed; `src/app.css` puts Japanese and Korean faces first for `lang="ja"` and `lang="ko"`, and no font is
+bundled. Not verified: the pages in each language in a browser, apart from the test run; the longer words (Russian
+and Portuguese) against the layouts.
 
 **Right-to-left (WW-1.15).** `ar-001` sets `dir="rtl"`. Stylesheets use logical properties only
 (`margin-inline-start`, `border-inline-start`, `text-align: start`, …) so the layout mirrors;

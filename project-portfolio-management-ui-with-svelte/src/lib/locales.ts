@@ -26,6 +26,10 @@ export const LOCALES = [
   "es-001",
   "fr-001",
   "hi-001",
+  "ja-001",
+  "ko-001",
+  "pt-001",
+  "ru-001",
   "zh-001",
   "zh-cn",
 ] as const;
@@ -50,6 +54,10 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   "es-001": "Español",
   "fr-001": "Français",
   "hi-001": "हिन्दी",
+  "ja-001": "日本語",
+  "ko-001": "한국어",
+  "pt-001": "Português",
+  "ru-001": "Русский",
   "zh-001": "中文",
   "zh-cn": "中文 - 中国",
 };
@@ -77,7 +85,7 @@ const TRADITIONAL_CHINESE = /^zh-(hant(-|$)|tw$|hk$|mo$)/;
  * 3. otherwise by primary language: a region the UI has no variant for reads the language's world locale
  *    (`es-MX`, `fr-CA`, `en-IN` and `en-US` read `es-001`, `fr-001`, `en-001`; `de-AT` reads `de-001`, not
  *    `de-de`). Regional spelling and vocabulary are therefore not served: a stated limit;
- * 4. a language with no catalogue (`ja`, `pt`, `sw`, …) is `null`, and the caller tries the reader's next
+ * 4. a language with no catalogue (`sw`, `tr`, `fa`, …) is `null`, and the caller tries the reader's next
  *    preference and finally {@link DEFAULT_LOCALE}.
  */
 export function normalizeLocale(raw: string | null | undefined): Locale | null {

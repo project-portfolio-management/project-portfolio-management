@@ -16,6 +16,10 @@ import { PAGES_DE } from "../../src/lib/i18n-pages.de";
 import { PAGES_ES } from "../../src/lib/i18n-pages.es";
 import { PAGES_FR } from "../../src/lib/i18n-pages.fr";
 import { PAGES_HI } from "../../src/lib/i18n-pages.hi";
+import { PAGES_JA } from "../../src/lib/i18n-pages.ja";
+import { PAGES_KO } from "../../src/lib/i18n-pages.ko";
+import { PAGES_PT } from "../../src/lib/i18n-pages.pt";
+import { PAGES_RU } from "../../src/lib/i18n-pages.ru";
 import { PAGES_ZH } from "../../src/lib/i18n-pages.zh";
 
 /** English strings that are correct, unchanged, in Welsh (names, units, codes, symbols). */
@@ -151,8 +155,9 @@ describe("the Welsh page catalogue", () => {
 
 // WW-1.1: the same three guards for every other locale's page catalogue (machine drafts, unreviewed; see
 // governance/translation-reviews/). A string left identical to the English must be a name or code (the Welsh
-// allow-list and `CODE` below). Arabic, Hindi and Chinese may leave nothing else. German, Spanish and French share
-// many words with English (Status, Budget, Plan, Description, Total); those are counted, and the count in
+// allow-list and `CODE` below). Arabic, Hindi, Chinese and Japanese may leave nothing else. German, Spanish, French and Portuguese share many words
+// with English (Status, Budget, Plan, Description, Total), and Korean and Russian keep a few format templates made of
+// placeholders alone (`{date}: {outcome}`); those are counted, and the count in
 // `SAME_LIMIT` may only fall, so a new English string copied across unchanged fails.
 const OTHERS = {
   ar: PAGES_AR,
@@ -160,6 +165,10 @@ const OTHERS = {
   es: PAGES_ES,
   fr: PAGES_FR,
   hi: PAGES_HI,
+  ja: PAGES_JA,
+  ko: PAGES_KO,
+  pt: PAGES_PT,
+  ru: PAGES_RU,
   zh: PAGES_ZH,
 } as const;
 /** Code and identifiers shown as written in every language. */
@@ -171,6 +180,10 @@ const SAME_LIMIT: Record<keyof typeof OTHERS, number> = {
   es: 52,
   fr: 137,
   hi: 0,
+  ja: 0,
+  ko: 3,
+  pt: 29,
+  ru: 4,
   zh: 0,
 };
 

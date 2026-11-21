@@ -13,7 +13,11 @@ const CASES: [string, string][] = [
   ["zh-CN", "/zh-cn"],
   ["es-MX", "/es-001"],
   ["ar-EG", "/ar-001"],
-  ["ja-JP", "/en-001"],
+  ["ja-JP", "/ja-001"],
+  ["ko-KR", "/ko-001"],
+  ["pt-BR", "/pt-001"],
+  ["ru-RU", "/ru-001"],
+  ["sw-KE", "/en-001"],
 ];
 
 for (const [language, expected] of CASES) {

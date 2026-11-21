@@ -93,8 +93,8 @@ switcher). The chrome area carries:
 - a **theme selector** (`lily-design-system-svelte-theme-picker`) —
   selecting a theme restyles the whole site (full shared catalogue);
 - a **locale selector** (`lily-design-system-svelte-locale-picker`) —
-  10 locales (`ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`, `es-001`,
-  `fr-001`, `hi-001`, `zh-001`, `zh-cn`; `LOCALES` in `src/lib/locales.ts`).
+  14 locales (`ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`, `es-001`,
+  `fr-001`, `hi-001`, `ja-001`, `ko-001`, `pt-001`, `ru-001`, `zh-001`, `zh-cn`; `LOCALES` in `src/lib/locales.ts`).
   Pages live under a locale prefix (`/cy-001/plans`); a two-letter prefix such
   as `/en/plans` is not a locale and is not forwarded. Only `ar-001` renders
   RTL;

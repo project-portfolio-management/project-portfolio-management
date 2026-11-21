@@ -90,13 +90,13 @@ describe("isUnlocalized", () => {
 describe("localeFromAcceptLanguage", () => {
   it("picks the first supported tag, by quality", () => {
     expect(localeFromAcceptLanguage("cy-GB,cy;q=0.9,en;q=0.8")).toBe("cy-001");
-    expect(localeFromAcceptLanguage("ja,fr;q=0.8,en;q=0.5")).toBe("fr-001");
+    expect(localeFromAcceptLanguage("sw,fr;q=0.8,en;q=0.5")).toBe("fr-001");
     expect(localeFromAcceptLanguage("en;q=0.5,de;q=0.9")).toBe("de-001");
     expect(localeFromAcceptLanguage("zh-TW")).toBe("zh-001");
   });
   it("ignores wildcards, q=0 and nothing-supported", () => {
     expect(localeFromAcceptLanguage("*")).toBeNull();
-    expect(localeFromAcceptLanguage("cy;q=0,ja")).toBeNull();
+    expect(localeFromAcceptLanguage("cy;q=0,sw")).toBeNull();
     expect(localeFromAcceptLanguage("")).toBeNull();
     expect(localeFromAcceptLanguage(null)).toBeNull();
   });
@@ -161,24 +161,19 @@ describe("navigator.language on the root route", () => {
     expect(normalizeLocale("zh-Hans-CN")).toBe("zh-001");
   });
   it("languages with no catalogue are null, so the next preference is tried", () => {
-    for (const tag of [
-      "pt-BR",
-      "ja",
-      "ko",
-      "sw-KE",
-      "yo",
-      "tr",
-      "ru",
-      "fa",
-      "ur",
-      "bn",
-      "id",
-    ])
+    for (const tag of ["sw-KE", "yo", "tr", "fa", "ur", "bn", "id", "it", "nl"])
       expect(normalizeLocale(tag), tag).toBeNull();
     expect(localeFromAcceptLanguage("sw-KE,sw;q=0.9,fr;q=0.5")).toBe("fr-001");
   });
+  it("Japanese, Korean, Portuguese and Russian read their world locale, whatever the region", () => {
+    expect(normalizeLocale("ja-JP")).toBe("ja-001");
+    expect(normalizeLocale("ko")).toBe("ko-001");
+    expect(normalizeLocale("pt-BR")).toBe("pt-001");
+    expect(normalizeLocale("pt_PT")).toBe("pt-001");
+    expect(normalizeLocale("ru-BY")).toBe("ru-001");
+  });
   it("a language the app does not have resolves to nothing, so the default applies", () => {
-    expect(normalizeLocale("ja-JP")).toBeNull();
+    expect(normalizeLocale("sw-TZ")).toBeNull();
     expect(normalizeLocale("")).toBeNull();
     expect(normalizeLocale(undefined)).toBeNull();
   });

@@ -69,6 +69,8 @@ Ten, sorted by code (the picker shows them in this order):
 | `ru-001` | Russian (world; copy of `ru-ru`, machine-written, not reviewed) | left-to-right |
 | `ru-by` | Russian (Belarus; copy of `ru-ru`, not edited for regional usage) | left-to-right |
 | `ru-ru` | Russian (Russia; machine-written, not reviewed) | left-to-right |
+| `sw-001` | Swahili (world; copy of `sw-tz`, machine-written, not reviewed) | left-to-right |
+| `sw-tz` | Swahili (Tanzania; machine-written, not reviewed) | left-to-right |
 | `zh-001` | Chinese (world) | left-to-right |
 | `zh-cn` | Chinese (China) | left-to-right |
 | `zh-tw` | Chinese (Taiwan, Traditional; OpenCC `s2twp` from zh-cn, machine-written, not reviewed) | left-to-right |

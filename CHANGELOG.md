@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (sw-tz, sw-001: Swahili, Tanzania and world)
+
+- Added `locales/sw-tz` and `locales/sw-001` (34 files each: peer ids, 17 symlinked READMEs, `sitemap.xml`; folder names in Latin script: faida, vipengele, ulinganisho, mafunzo), the site's own words in `sw` (`messages.json`) and the picker labels `Kiswahili - Tanzania` and `Kiswahili`. `sw-tz` was translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. `sw-001` is a copy of `sw-tz`; only the tutorial's sign-in URL and the sitemap URLs name the locale. Not done or not verified: no Swahili speaker has reviewed either; Playwright and the live pages were not checked, only a build; the `sw` interface strings are shared by both; the "Translations" line was not checked in a browser; the sitemaps were written by script, not by the site's generator; the tutorial still names the demonstration's English button and page labels; technical terms (for example "kighairi" for exception, "kichocheo" for trigger) are the model's choices and may differ from usage in Tanzania.
+
 ### 21 November (ko-kr, ko-001: Korean, South Korea and world)
 
 - Added `locales/ko-kr` and `locales/ko-001` (34 files each: peer ids, 17 symlinked READMEs, `sitemap.xml`; folder names in Hangul: 장점, 기능, 비교, 튜토리얼), the site's own words in `ko` (`messages.json`, 65 keys) and the picker labels `한국어 - 대한민국` and `한국어`. `ko-kr` was translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. `ko-001` is a copy of `ko-kr`; only the tutorial's sign-in URL and the sitemap URLs name the locale. Not done or not verified: no Korean speaker has reviewed either; Playwright and the live pages were not checked, only a build; the `ko` interface strings are shared by both; the "Translations" line was not checked in a browser; the sitemaps were written by script, not by the site's generator; the tutorial still names the demonstration's English button and page labels.

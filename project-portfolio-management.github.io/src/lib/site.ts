@@ -52,6 +52,8 @@ export const BRIEF_LOCALES = [
   "ja-001",
   "ko-kr",
   "ko-001",
+  "sw-tz",
+  "sw-001",
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
@@ -111,6 +113,8 @@ export const LOCALE_LABELS: Record<PathLocale, string> = {
   "ja-001": "日本語",
   "ko-kr": "한국어 - 대한민국",
   "ko-001": "한국어",
+  "sw-tz": "Kiswahili - Tanzania",
+  "sw-001": "Kiswahili",
 };
 
 /** The topics, by their en-001 slug. A topic's slug differs by locale: `TOPIC_SLUGS` comes from the peer ids. */

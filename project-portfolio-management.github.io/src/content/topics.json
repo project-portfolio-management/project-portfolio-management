@@ -156,6 +156,18 @@
       "tutorial": "руководство",
       "comparisons": "сравнения"
     },
+    "sw-001": {
+      "benefits": "faida",
+      "tutorial": "mafunzo",
+      "comparisons": "ulinganisho",
+      "features": "vipengele"
+    },
+    "sw-tz": {
+      "benefits": "faida",
+      "tutorial": "mafunzo",
+      "comparisons": "ulinganisho",
+      "features": "vipengele"
+    },
     "zh-001": {
       "benefits": "优势",
       "features": "功能",

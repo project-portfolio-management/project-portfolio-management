@@ -80,7 +80,7 @@ fn the_licences_directory_holds_only_the_expression_s_licences() {
         let entry = entry.expect("a directory entry");
         let name = entry.file_name().to_string_lossy().to_string();
         assert!(
-            entry.path().is_dir() && ids.iter().any(|id| *id == name),
+            entry.path().is_dir() && ids.contains(&name),
             "LICENSES/{name} is not a licence directory in the expression"
         );
         let mut files: Vec<String> = std::fs::read_dir(entry.path())

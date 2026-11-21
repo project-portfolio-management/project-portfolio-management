@@ -210,6 +210,12 @@
       "comparisons": "ulinganisho",
       "features": "vipengele"
     },
+    "ur-001": {
+      "features": "خصوصیات",
+      "tutorial": "سبق",
+      "benefits": "فوائد",
+      "comparisons": "موازنے"
+    },
     "vi-001": {
       "tutorial": "hướng-dẫn",
       "benefits": "lợi-ích",

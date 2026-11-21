@@ -78,13 +78,14 @@ Ten, sorted by code (the picker shows them in this order):
 | `sv-se` | Swedish (Sweden; machine-written, not reviewed) | left-to-right |
 | `sw-001` | Swahili (world; copy of `sw-tz`, machine-written, not reviewed) | left-to-right |
 | `sw-tz` | Swahili (Tanzania; machine-written, not reviewed) | left-to-right |
+| `ur-001` | Urdu (world; machine-written, not reviewed; folder names in Urdu script) | right-to-left |
 | `vi-001` | Vietnamese (world; copy of `vi-vn`, machine-written, not reviewed) | left-to-right |
 | `vi-vn` | Vietnamese (Vietnam; machine-written, not reviewed) | left-to-right |
 | `zh-001` | Chinese (world) | left-to-right |
 | `zh-cn` | Chinese (China) | left-to-right |
 | `zh-tw` | Chinese (Taiwan, Traditional; OpenCC `s2twp` from zh-cn, machine-written, not reviewed) | left-to-right |
 
-Only `ar-001` is right-to-left (`RTL_LOCALES`). The static shell carries the right `lang` and
+The Arabic locales and `ur-001` are right-to-left (`RTL_LOCALES`, keyed by base language). The static shell carries the right `lang` and
 `dir` before any script runs, and the layout keeps `document.documentElement.dir` in step.
 
 To add one: extend `LOCALES`, add its entry to `LOCALE_LABELS` (written in that language) and

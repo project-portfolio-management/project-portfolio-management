@@ -56,6 +56,7 @@ Ten, sorted by code (the picker shows them in this order):
 | `es-001` | Spanish | left-to-right |
 | `fr-001` | French | left-to-right |
 | `hi-001` | Hindi | left-to-right |
+| `ru-ru` | Russian (Russia; machine-written, not reviewed) | left-to-right |
 | `zh-001` | Chinese (world) | left-to-right |
 | `zh-cn` | Chinese (China) | left-to-right |
 | `zh-tw` | Chinese (Taiwan, Traditional; OpenCC `s2twp` from zh-cn, machine-written, not reviewed) | left-to-right |

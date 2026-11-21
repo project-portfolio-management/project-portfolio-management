@@ -39,6 +39,7 @@ export const BRIEF_LOCALES = [
   "zh-tw",
   "hi-np",
   "cy-ar",
+  "ru-ru",
 ] as const;
 export type BriefLocale = (typeof BRIEF_LOCALES)[number];
 
@@ -85,6 +86,7 @@ export const LOCALE_LABELS: Record<PathLocale, string> = {
   "es-mx": "Español - México",
   "fr-fr": "Français - France",
   "fr-ca": "Français - Canada",
+  "ru-ru": "Русский - Россия",
 };
 
 /** The topics, by their en-001 slug. A topic's slug differs by locale: `TOPIC_SLUGS` comes from the peer ids. */

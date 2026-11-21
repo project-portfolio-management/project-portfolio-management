@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (ru-ru: Russian, Russia)
+
+- Added `locales/ru-ru` (33 files, folder names in Cyrillic, symlinked READMEs, peer ids, `sitemap.xml`), the site's own words in `ru` (`messages.json`) and the picker label `Русский - Россия`. Translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. Not done or not verified: no Russian speaker has reviewed it; the Playwright suite and the live GitHub Pages page were not checked, only `pnpm run check` and a build; the tutorial still names the demonstration's English button and page labels. `ru-001` and `ru-by` do not exist yet, so the "Translations" line on the home page does not name Russian, and the `ru-ru` pages have no regional edits.
+
 ### 21 November (ar-eg, ar-dz: Arabic, Egypt and Algeria)
 
 - Added `locales/ar-eg` and `locales/ar-dz` (33 files each, peer ids, symlinked READMEs, `sitemap.xml`) and their picker labels. Both are copies of `ar-001` (Modern Standard Arabic, the written standard in both countries); no Egyptian or Algerian wording was substituted. Not done or not verified: no Arabic speaker has reviewed either; the right-to-left rendering, Playwright and the live pages were not checked, only a build; the `ar` interface strings are shared, with no country variant.

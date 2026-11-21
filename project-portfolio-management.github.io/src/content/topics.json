@@ -78,6 +78,12 @@
       "benefits": "लाभ",
       "features": "सुविधाएँ"
     },
+    "ru-ru": {
+      "features": "возможности",
+      "benefits": "преимущества",
+      "tutorial": "руководство",
+      "comparisons": "сравнения"
+    },
     "zh-001": {
       "benefits": "优势",
       "features": "功能",

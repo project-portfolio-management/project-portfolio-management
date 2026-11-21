@@ -13,6 +13,11 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
+
+## 21 November (sitemap.xml for the older locales)
+
+Added `locales/<loc>/sitemap.xml` to ar-001, cy-001, cy-ar, cy-gb, en-001, en-gb, en-gb-oxendict, en-us, hi-001, hi-in, hi-np, zh-001, zh-cn and zh-th. Written by script from the folders on disk (17 URLs each, 26 for en-001); percent-encoded for non-ASCII folder names. Not done or not verified: the files were not fetched live; the translations in these locales were not re-read; the LocalePicker label rewordings are still not applied; no browser check of the hero line, picker hover or dropdown.
+
 ## Unreleased
 
 ### 21 November (fr-fr, fr-001 and fr-ca: French, France, world and Canada)

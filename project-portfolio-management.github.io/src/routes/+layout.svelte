@@ -241,7 +241,10 @@
       }}
       {themesUrl}
       themeProps={{
-        // No storageKey: the picker would store the theme it guessed from the browser as if the reader had chosen it.
+        // The picker keeps nothing itself (theme-picker 0.4.0 defaults to the `lily-theme` key and cookie, and "" turns
+        // each off): this site keeps the reader's choice in #lib/choices, so a guess is never stored as a choice.
+        storageKey: "",
+        cookieName: "",
         // The value is the reader's choice, else the browser's light/dark setting (see the script above).
         value: themeValue,
         defaultValue: "light",

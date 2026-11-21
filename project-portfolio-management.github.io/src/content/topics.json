@@ -114,6 +114,18 @@
       "comparisons": "perbandingan",
       "tutorial": "tutorial"
     },
+    "ja-001": {
+      "tutorial": "チュートリアル",
+      "benefits": "利点",
+      "features": "機能",
+      "comparisons": "比較"
+    },
+    "ja-jp": {
+      "tutorial": "チュートリアル",
+      "benefits": "利点",
+      "features": "機能",
+      "comparisons": "比較"
+    },
     "ru-001": {
       "features": "возможности",
       "benefits": "преимущества",

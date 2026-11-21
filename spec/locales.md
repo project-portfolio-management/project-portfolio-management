@@ -49,6 +49,9 @@ Ten, sorted by code (the picker shows them in this order):
 | `ar-001` | Arabic | right-to-left |
 | `ar-dz` | Arabic (Algeria; copy of `ar-001`, not edited for regional usage) | right-to-left |
 | `ar-eg` | Arabic (Egypt; copy of `ar-001`, not edited for regional usage) | right-to-left |
+| `bn-001` | Bengali (world; copy of `bn-bd`, machine-written, not reviewed) | left-to-right |
+| `bn-bd` | Bengali (Bangladesh; machine-written, not reviewed) | left-to-right |
+| `bn-in` | Bengali (India; copy of `bn-bd`, not edited for regional usage) | left-to-right |
 | `cy-001` | Welsh | left-to-right |
 | `de-001` | German (world) | left-to-right |
 | `de-de` | German (Germany) | left-to-right |

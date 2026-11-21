@@ -18,6 +18,24 @@
       "comparisons": "المقارنات",
       "features": "الميزات"
     },
+    "bn-001": {
+      "tutorial": "টিউটোরিয়াল",
+      "comparisons": "তুলনা",
+      "features": "বৈশিষ্ট্য",
+      "benefits": "সুবিধা"
+    },
+    "bn-bd": {
+      "tutorial": "টিউটোরিয়াল",
+      "comparisons": "তুলনা",
+      "features": "বৈশিষ্ট্য",
+      "benefits": "সুবিধা"
+    },
+    "bn-in": {
+      "tutorial": "টিউটোরিয়াল",
+      "comparisons": "তুলনা",
+      "features": "বৈশিষ্ট্য",
+      "benefits": "সুবিধা"
+    },
     "cy-001": {
       "comparisons": "cymariaethau",
       "benefits": "manteision",

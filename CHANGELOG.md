@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (bn-bd, bn-001, bn-in: Bengali, Bangladesh, world and India)
+
+- Added `locales/bn-bd`, `locales/bn-001` and `locales/bn-in` (34 files each: peer ids, 17 symlinked READMEs, `sitemap.xml`; folder names in Bengali script: সুবিধা, বৈশিষ্ট্য, তুলনা, টিউটোরিয়াল), the site's own words in `bn` (`messages.json`) and the picker labels `বাংলা - বাংলাদেশ`, `বাংলা` and `বাংলা - ভারত`. `bn-bd` was translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. `bn-001` and `bn-in` are copies of `bn-bd`; only the tutorial's sign-in URL and the sitemap URLs name the locale, and no Indian wording was substituted. Not done or not verified: no Bengali speaker has reviewed any of the three; Playwright and the live pages were not checked, only a build; the `bn` interface strings are shared by all three; the "Translations" line was not checked in a browser; the sitemaps were written by script, not by the site's generator.
+
 ### 21 November (ru-001, ru-by: Russian, world and Belarus)
 
 - Added `locales/ru-001` and `locales/ru-by` (34 files each: peer ids, symlinked READMEs, `sitemap.xml`) and their picker labels. Both are copies of `ru-ru`; the tutorial's sign-in URL and the sitemap URLs name the locale. No Belarusian wording was substituted. Not done or not verified: no Russian speaker has reviewed either; Playwright and the live pages were not checked, only a build; the `ru` interface strings are shared, with no country variant. `ru-001` makes Russian appear in the home page's "Translations" line; that line was not checked in a browser.

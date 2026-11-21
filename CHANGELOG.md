@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (ko-kr, ko-001: Korean, South Korea and world)
+
+- Added `locales/ko-kr` and `locales/ko-001` (34 files each: peer ids, 17 symlinked READMEs, `sitemap.xml`; folder names in Hangul: 장점, 기능, 비교, 튜토리얼), the site's own words in `ko` (`messages.json`, 65 keys) and the picker labels `한국어 - 대한민국` and `한국어`. `ko-kr` was translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. `ko-001` is a copy of `ko-kr`; only the tutorial's sign-in URL and the sitemap URLs name the locale. Not done or not verified: no Korean speaker has reviewed either; Playwright and the live pages were not checked, only a build; the `ko` interface strings are shared by both; the "Translations" line was not checked in a browser; the sitemaps were written by script, not by the site's generator; the tutorial still names the demonstration's English button and page labels.
+
 ### 21 November (ja-jp, ja-001: Japanese, Japan and world)
 
 - Added `locales/ja-jp` and `locales/ja-001` (34 files each: peer ids, 17 symlinked READMEs, `sitemap.xml`; folder names in Japanese script: 利点, 機能, 比較, チュートリアル), the site's own words in `ja` (`messages.json`, 65 keys) and the picker labels `日本語 - 日本` and `日本語`. `ja-jp` was translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. `ja-001` is a copy of `ja-jp`; only the tutorial's sign-in URL and the sitemap URLs name the locale. Not done or not verified: no Japanese speaker has reviewed either; Playwright and the live pages were not checked, only a build; the `ja` interface strings are shared by both; the "Translations" line was not checked in a browser; the sitemaps were written by script, not by the site's generator; the tutorial still names the demonstration's English button and page labels.

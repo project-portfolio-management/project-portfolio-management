@@ -126,6 +126,18 @@
       "features": "機能",
       "comparisons": "比較"
     },
+    "ko-001": {
+      "features": "기능",
+      "comparisons": "비교",
+      "benefits": "장점",
+      "tutorial": "튜토리얼"
+    },
+    "ko-kr": {
+      "features": "기능",
+      "comparisons": "비교",
+      "benefits": "장점",
+      "tutorial": "튜토리얼"
+    },
     "ru-001": {
       "features": "возможности",
       "benefits": "преимущества",

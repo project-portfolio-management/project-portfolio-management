@@ -64,6 +64,8 @@ Ten, sorted by code (the picker shows them in this order):
 | `id-my` | Indonesian (Malaysia; copy of `id-id`, not edited for regional usage) | left-to-right |
 | `ja-001` | Japanese (world; copy of `ja-jp`, machine-written, not reviewed) | left-to-right |
 | `ja-jp` | Japanese (Japan; machine-written, not reviewed) | left-to-right |
+| `ko-001` | Korean (world; copy of `ko-kr`, machine-written, not reviewed) | left-to-right |
+| `ko-kr` | Korean (South Korea; machine-written, not reviewed) | left-to-right |
 | `ru-001` | Russian (world; copy of `ru-ru`, machine-written, not reviewed) | left-to-right |
 | `ru-by` | Russian (Belarus; copy of `ru-ru`, not edited for regional usage) | left-to-right |
 | `ru-ru` | Russian (Russia; machine-written, not reviewed) | left-to-right |

@@ -47,6 +47,8 @@ Ten, sorted by code (the picker shows them in this order):
 | Code | Language | Direction |
 |---|---|---|
 | `ar-001` | Arabic | right-to-left |
+| `ar-dz` | Arabic (Algeria; copy of `ar-001`, not edited for regional usage) | right-to-left |
+| `ar-eg` | Arabic (Egypt; copy of `ar-001`, not edited for regional usage) | right-to-left |
 | `cy-001` | Welsh | left-to-right |
 | `de-001` | German (world) | left-to-right |
 | `de-de` | German (Germany) | left-to-right |

@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (ar-eg, ar-dz: Arabic, Egypt and Algeria)
+
+- Added `locales/ar-eg` and `locales/ar-dz` (33 files each, peer ids, symlinked READMEs, `sitemap.xml`) and their picker labels. Both are copies of `ar-001` (Modern Standard Arabic, the written standard in both countries); no Egyptian or Algerian wording was substituted. Not done or not verified: no Arabic speaker has reviewed either; the right-to-left rendering, Playwright and the live pages were not checked, only a build; the `ar` interface strings are shared, with no country variant.
+
 ### 21 November (zh-tw: Traditional Chinese, Taiwan)
 
 - Added `locales/zh-tw` (33 files, folder names in Traditional characters, symlinked READMEs, peer ids, `sitemap.xml`) and the site's own words in `zh-tw` (`messages.json`; `siteLangOf` now tries the full locale before its language). Machine-converted from `zh-cn` with OpenCC `s2twp` (Taiwan phrases), quotes changed to 「」. Not done or not verified: no Traditional-Chinese speaker has reviewed it; the Playwright suite and the live GitHub Pages page were not checked, only `pnpm run check`, unit tests and a build. The other locales still lack a `locales/<locale>/sitemap.xml`.

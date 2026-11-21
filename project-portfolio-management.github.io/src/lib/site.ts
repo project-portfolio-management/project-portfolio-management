@@ -23,6 +23,8 @@ export const DOC_PAGES: readonly DocPage[] = [
 /** The locales that have role briefs (`locales/<locale>/for/`), in the repository's spelling. */
 export const BRIEF_LOCALES = [
   "ar-001",
+  "ar-dz",
+  "ar-eg",
   "cy-001",
   "cy-gb",
   "en-001",
@@ -58,6 +60,8 @@ export const DEFAULT_LOCALE: BriefLocale = "en-001";
 /** Each locale's name, in that language, in the UI's form (`spec/locales.md`). */
 export const LOCALE_LABELS: Record<PathLocale, string> = {
   "ar-001": "العربية",
+  "ar-dz": "العربية - الجزائر",
+  "ar-eg": "العربية - مصر",
   "cy-001": "Cymraeg",
   "cy-gb": "Cymraeg - Y Deyrnas Unedig",
   "de-001": "Deutsch",

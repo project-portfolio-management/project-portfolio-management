@@ -102,6 +102,24 @@
       "features": "features",
       "tutorial": "tutorial"
     },
+    "es-001": {
+      "benefits": "beneficios",
+      "comparisons": "comparaciones",
+      "features": "funciones",
+      "tutorial": "tutorial"
+    },
+    "es-es": {
+      "benefits": "beneficios",
+      "comparisons": "comparaciones",
+      "features": "funciones",
+      "tutorial": "tutorial"
+    },
+    "es-mx": {
+      "benefits": "beneficios",
+      "comparisons": "comparaciones",
+      "features": "funciones",
+      "tutorial": "tutorial"
+    },
     "hi-001": {
       "tutorial": "ट्यूटोरियल",
       "comparisons": "तुलना",

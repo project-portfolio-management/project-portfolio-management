@@ -14,6 +14,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 21 November (LocalePicker labels reworded)
+
+- `LOCALE_LABELS` in `project-portfolio-management.github.io/src/lib/site.ts`: en-gb is now "English - Great Britain",
+  en-gb-oxendict "English - Great Britain - Oxford" and cy-gb "Cymraeg - Prydain Fawr".
+- Not done: the Scots, Gaelic and Cornish labels in the request ("Scots - Great Britain", "Gàidhlig - Breatainn Mhòr",
+  "Kernewek - Breten Veur") have no locale in this site, so nothing changed for them.
+- Not verified: no browser check of the picker, hover or dropdown; only `pnpm run check` ran. The Welsh label is
+  machine-written and not reviewed by a speaker.
+
 ## 21 November (sitemap.xml for the older locales)
 
 Added `locales/<loc>/sitemap.xml` to ar-001, cy-001, cy-ar, cy-gb, en-001, en-gb, en-gb-oxendict, en-us, hi-001, hi-in, hi-np, zh-001, zh-cn and zh-th. Written by script from the folders on disk (17 URLs each, 26 for en-001); percent-encoded for non-ASCII folder names. Not done or not verified: the files were not fetched live; the translations in these locales were not re-read; the LocalePicker label rewordings are still not applied; no browser check of the hero line, picker hover or dropdown.

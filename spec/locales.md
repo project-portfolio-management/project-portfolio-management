@@ -53,6 +53,7 @@ Ten, sorted by code (the picker shows them in this order):
 | `bn-bd` | Bengali (Bangladesh; machine-written, not reviewed) | left-to-right |
 | `bn-in` | Bengali (India; copy of `bn-bd`, not edited for regional usage) | left-to-right |
 | `cy-001` | Welsh | left-to-right |
+| `da-001` | Danish (world; machine-written, not reviewed; folder names in Danish) | left-to-right |
 | `de-001` | German (world) | left-to-right |
 | `de-de` | German (Germany) | left-to-right |
 | `en-001` | English (world) — the default and the source of truth for strings | left-to-right |

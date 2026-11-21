@@ -54,6 +54,12 @@
       "features": "nodweddion",
       "tutorial": "tiwtorial"
     },
+    "da-001": {
+      "benefits": "fordele",
+      "features": "funktioner",
+      "comparisons": "sammenligninger",
+      "tutorial": "vejledning"
+    },
     "en-001": {
       "benefits": "benefits",
       "comparisons": "comparisons",

@@ -60,6 +60,24 @@
       "comparisons": "sammenligninger",
       "tutorial": "vejledning"
     },
+    "de-001": {
+      "tutorial": "anleitung",
+      "features": "funktionen",
+      "comparisons": "vergleiche",
+      "benefits": "vorteile"
+    },
+    "de-at": {
+      "tutorial": "anleitung",
+      "features": "funktionen",
+      "comparisons": "vergleiche",
+      "benefits": "vorteile"
+    },
+    "de-de": {
+      "tutorial": "anleitung",
+      "features": "funktionen",
+      "comparisons": "vergleiche",
+      "benefits": "vorteile"
+    },
     "en-001": {
       "benefits": "benefits",
       "comparisons": "comparisons",

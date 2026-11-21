@@ -26,10 +26,9 @@ directory or file stem that is named for a locale.
   **document locales**: `ar-001`, `cy-001`, `cy-gb`, `en-001`, `en-gb`, `en-gb-oxendict`, `en-us`,
   `hi-001`, `hi-in`, `zh-001`, `zh-cn`. That set is not the interface's (§2): five are regional
   document variants (British, Oxford and US English, Welsh and Hindi with a region) the interface
-  does not have, and **`de-001`, `de-de`, `es-001` and `fr-001` have no reader guides:
-  a recorded gap**, to close by the same bar as the interface (a draft labelled unreviewed). Those four have one
-  document each, the path to production (`locales/<code>/path-to-production/index.md`, machine-written, `de-001` a
-  copy of `de-de`); it is in every document locale too. The
+  does not have, and **`es-001` and `fr-001` have no reader guides:
+  a recorded gap**, to close by the same bar as the interface (a draft labelled unreviewed). Those two have one
+  document each, the path to production (`locales/<code>/path-to-production/index.md`, machine-written); it is in every document locale too. The
   English guides name the applicable data-protection law and treat the UK NHS DTAC as one worked
   example; the Welsh, Hindi and Chinese guides were not updated to match on 2026-10-31 and still
   name UK GDPR and the DTAC alone (a recorded gap).
@@ -54,8 +53,9 @@ Ten, sorted by code (the picker shows them in this order):
 | `bn-in` | Bengali (India; copy of `bn-bd`, not edited for regional usage) | left-to-right |
 | `cy-001` | Welsh | left-to-right |
 | `da-001` | Danish (world; machine-written, not reviewed; folder names in Danish) | left-to-right |
-| `de-001` | German (world) | left-to-right |
-| `de-de` | German (Germany) | left-to-right |
+| `de-001` | German (world; copy of `de-de`, machine-written, not reviewed; folder names in German) | left-to-right |
+| `de-at` | German (Austria; copy of `de-de`, not edited for regional usage) | left-to-right |
+| `de-de` | German (Germany; machine-written, not reviewed; folder names in German) | left-to-right |
 | `en-001` | English (world) — the default and the source of truth for strings | left-to-right |
 | `es-001` | Spanish | left-to-right |
 | `fr-001` | French | left-to-right |

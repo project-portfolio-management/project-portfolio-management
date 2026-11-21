@@ -120,6 +120,18 @@
       "comparisons": "perbandingan",
       "tutorial": "tutorial"
     },
+    "it-001": {
+      "comparisons": "confronti",
+      "features": "funzionalità",
+      "tutorial": "guida",
+      "benefits": "vantaggi"
+    },
+    "it-it": {
+      "comparisons": "confronti",
+      "features": "funzionalità",
+      "tutorial": "guida",
+      "benefits": "vantaggi"
+    },
     "ja-001": {
       "tutorial": "チュートリアル",
       "benefits": "利点",

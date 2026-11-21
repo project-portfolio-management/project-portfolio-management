@@ -63,6 +63,8 @@ Ten, sorted by code (the picker shows them in this order):
 | `id-001` | Indonesian (world; copy of `id-id`, machine-written, not reviewed) | left-to-right |
 | `id-id` | Indonesian (Indonesia; machine-written, not reviewed) | left-to-right |
 | `id-my` | Indonesian (Malaysia; copy of `id-id`, not edited for regional usage) | left-to-right |
+| `it-001` | Italian (world; copy of `it-it`, machine-written, not reviewed; folder names in Italian) | left-to-right |
+| `it-it` | Italian (Italy; machine-written, not reviewed; folder names in Italian) | left-to-right |
 | `ja-001` | Japanese (world; copy of `ja-jp`, machine-written, not reviewed) | left-to-right |
 | `ja-jp` | Japanese (Japan; machine-written, not reviewed) | left-to-right |
 | `ko-001` | Korean (world; copy of `ko-kr`, machine-written, not reviewed) | left-to-right |

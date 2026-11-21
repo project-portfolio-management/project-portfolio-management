@@ -156,6 +156,18 @@
       "tutorial": "руководство",
       "comparisons": "сравнения"
     },
+    "sv-001": {
+      "features": "funktioner",
+      "benefits": "fördelar",
+      "tutorial": "handledning",
+      "comparisons": "jämförelser"
+    },
+    "sv-se": {
+      "features": "funktioner",
+      "benefits": "fördelar",
+      "tutorial": "handledning",
+      "comparisons": "jämförelser"
+    },
     "sw-001": {
       "benefits": "faida",
       "tutorial": "mafunzo",

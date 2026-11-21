@@ -15,6 +15,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## Unreleased
 
+### 21 November (ru-001, ru-by: Russian, world and Belarus)
+
+- Added `locales/ru-001` and `locales/ru-by` (34 files each: peer ids, symlinked READMEs, `sitemap.xml`) and their picker labels. Both are copies of `ru-ru`; the tutorial's sign-in URL and the sitemap URLs name the locale. No Belarusian wording was substituted. Not done or not verified: no Russian speaker has reviewed either; Playwright and the live pages were not checked, only a build; the `ru` interface strings are shared, with no country variant. `ru-001` makes Russian appear in the home page's "Translations" line; that line was not checked in a browser.
+
 ### 21 November (ru-ru: Russian, Russia)
 
 - Added `locales/ru-ru` (33 files, folder names in Cyrillic, symlinked READMEs, peer ids, `sitemap.xml`), the site's own words in `ru` (`messages.json`) and the picker label `Русский - Россия`. Translated from `en-001` by the model, in full: the home page, the four topics, path to production and the eleven role briefs. Not done or not verified: no Russian speaker has reviewed it; the Playwright suite and the live GitHub Pages page were not checked, only `pnpm run check` and a build; the tutorial still names the demonstration's English button and page labels. `ru-001` and `ru-by` do not exist yet, so the "Translations" line on the home page does not name Russian, and the `ru-ru` pages have no regional edits.

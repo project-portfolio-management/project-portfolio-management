@@ -78,6 +78,18 @@
       "benefits": "लाभ",
       "features": "सुविधाएँ"
     },
+    "ru-001": {
+      "features": "возможности",
+      "benefits": "преимущества",
+      "tutorial": "руководство",
+      "comparisons": "сравнения"
+    },
+    "ru-by": {
+      "features": "возможности",
+      "benefits": "преимущества",
+      "tutorial": "руководство",
+      "comparisons": "сравнения"
+    },
     "ru-ru": {
       "features": "возможности",
       "benefits": "преимущества",

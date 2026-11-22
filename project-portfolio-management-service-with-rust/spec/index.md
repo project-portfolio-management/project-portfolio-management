@@ -1876,7 +1876,7 @@ plus `unwrap_or(bound)` and cites the rule; none wraps, saturates silently or pa
   removed site by site. Done: the work-limit guards of the three risk simulations (a product past `usize` is over the
   cap and refused), the ticker periods (too large: no ticker, said aloud), the reindex offset (past `i64`: no further
   page), the search page end (error), the body-limit ceilings (the cap itself), the cumulative-flow step (ends at the
-  window's end), idea votes and baseline version (`422`), and `milli_of_centi` (`None`, unknown). Not done: the sums of
+  window's end), idea votes and baseline version (`422`), `milli_of_centi` (`None`, unknown), and the effort roll-up (`effort::totals` is `None` when a total does not fit, and `GET /api/plans/{pid}/effort` answers `500` rather than a bound). Not done: the sums of
   money and milliseconds (`Figure::total_add`, `total_mul` and the signed `total_sub`), which still report the bound on
   their side until each becomes a `Result` or an unknown. `domain/src/figures.rs` still holds them.
 - **FIG-2. A count taken from a smaller count.** A remaining or dropped count (`total − done`, `eligible − kept`,

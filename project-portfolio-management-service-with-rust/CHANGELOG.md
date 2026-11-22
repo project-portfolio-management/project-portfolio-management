@@ -9,6 +9,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the effort roll-up reports no total instead of a bound (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `effort::totals` returns `Option<EffortTotals>`, `None` when a total
+  of the stored minutes does not fit an `i64`; `GET /api/plans/{pid}/effort` then answers `500` instead of a total at
+  `i64::MAX`. One test now asserts `None` (it asserted the bound).
+- Not done: `team_utilization` and `group_utilization` still sum with `Figure::total_add` (an overflow there needs a way
+  to say "out of range" in `Unavailable`, which the UI maps), and the other roughly 55 `total_add` / `total_mul` sites.
+  The `500` is untested end to end (database-gated).
+
 ### Changed — checked-arithmetic enforcement: clippy bans, release overflow checks, CI grep (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-ENF-2, RCA-ENF-4, RCA-ENF-5): `clippy.toml` now bans `core::num::Saturating`,

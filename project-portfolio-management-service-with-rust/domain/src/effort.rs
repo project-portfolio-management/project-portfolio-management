@@ -153,9 +153,10 @@ pub struct EffortTotals {
     pub asserted: bool,
 }
 
-/// Roll up effort. Saturating, so an absurd stored value cannot panic.
+/// Roll up effort. `None` when a total does not fit an `i64`: the stored minutes are then corrupt, and there is no total
+/// (RCA-IN-6, RCA-P-3), not a bound.
 #[must_use]
-pub fn totals(entries: &[EffortFact]) -> EffortTotals {
+pub fn totals(entries: &[EffortFact]) -> Option<EffortTotals> {
     let mut out = EffortTotals {
         minutes: 0,
         capex_minutes: 0,
@@ -165,23 +166,18 @@ pub fn totals(entries: &[EffortFact]) -> EffortTotals {
         asserted: true,
     };
     for entry in entries {
-        out.minutes = out.minutes.total_add(entry.minutes);
-        match entry.category {
-            EffortCategory::Capex => {
-                out.capex_minutes = out.capex_minutes.total_add(entry.minutes);
-            }
-            EffortCategory::Opex => {
-                out.opex_minutes = out.opex_minutes.total_add(entry.minutes);
-            }
-            EffortCategory::Unclassified => {
-                out.unclassified_minutes = out.unclassified_minutes.total_add(entry.minutes);
-            }
-        }
+        out.minutes = out.minutes.checked_add(entry.minutes)?;
+        let by_category = match entry.category {
+            EffortCategory::Capex => &mut out.capex_minutes,
+            EffortCategory::Opex => &mut out.opex_minutes,
+            EffortCategory::Unclassified => &mut out.unclassified_minutes,
+        };
+        *by_category = by_category.checked_add(entry.minutes)?;
         if entry.billable {
-            out.billable_minutes = out.billable_minutes.total_add(entry.minutes);
+            out.billable_minutes = out.billable_minutes.checked_add(entry.minutes)?;
         }
     }
-    out
+    Some(out)
 }
 
 /// Why a utilization figure is absent. Reported beside the `None`, so
@@ -382,7 +378,8 @@ mod tests {
             entry("person:a", 120, EffortCategory::Capex, true),
             entry("person:a", 60, EffortCategory::Opex, false),
             entry("person:b", 30, EffortCategory::Unclassified, false),
-        ]);
+        ])
+        .expect("a small total fits");
         assert_eq!(t.minutes, 210);
         assert_eq!(t.capex_minutes, 120);
         assert_eq!(t.opex_minutes, 60);
@@ -553,7 +550,7 @@ mod tests {
         let huge: Vec<EffortFact> = (0..3)
             .map(|_| entry("person:a", i64::MAX, EffortCategory::Capex, true))
             .collect();
-        assert_eq!(totals(&huge).minutes, i64::MAX, "saturating, not wrapping");
+        assert!(totals(&huge).is_none(), "no total, not a bound");
         let _ = team_utilization(&[], 0);
     }
 }

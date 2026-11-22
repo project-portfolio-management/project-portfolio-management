@@ -156,6 +156,13 @@ fn facts_of(rows: &[time_entries::Model]) -> Vec<rules::EffortFact> {
         .collect()
 }
 
+/// The roll-up of `rows`, or an error when a total does not fit an `i64`: the stored minutes are corrupt, and there is
+/// no total to report (RCA-IN-6), not a bound.
+fn totals_of(rows: &[time_entries::Model]) -> Result<rules::EffortTotals> {
+    rules::totals(&facts_of(rows))
+        .ok_or_else(|| Error::Message("the effort totals are outside the range of a figure".into()))
+}
+
 /// `GET /api/plans/{pid}/effort` — roll-ups per plan, per task and per
 /// assignee, every one labelled **asserted**.
 #[debug_handler]
@@ -190,19 +197,26 @@ async fn effort_rollup(
         }
     }
 
+    let plan_totals = totals_of(&rows)?;
+    let assignees = by_actor
+        .iter()
+        .map(|(actor, entries)| {
+            Ok(serde_json::json!({ "actor_ref": actor, "totals": totals_of(entries)? }))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let tasks = by_task
+        .iter()
+        .map(|(task, entries)| {
+            Ok(serde_json::json!({ "task_pid": task, "totals": totals_of(entries)? }))
+        })
+        .collect::<Result<Vec<_>>>()?;
     let body = serde_json::json!({
         "plan_pid": plan.pid.to_string(),
-        "plan": rules::totals(&facts_of(&rows)),
+        "plan": plan_totals,
         // Stable key order, and deliberately not sorted by size:
         // obligation 4, never the sole ranking key.
-        "by_assignee": by_actor.iter().map(|(actor, entries)| serde_json::json!({
-            "actor_ref": actor,
-            "totals": rules::totals(&facts_of(entries)),
-        })).collect::<Vec<_>>(),
-        "by_task": by_task.iter().map(|(task, entries)| serde_json::json!({
-            "task_pid": task,
-            "totals": rules::totals(&facts_of(entries)),
-        })).collect::<Vec<_>>(),
+        "by_assignee": assignees,
+        "by_task": tasks,
         "as_of": crate::datetime::Timestamp::now(),
     });
     let etag = super::etag_of(&body);

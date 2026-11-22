@@ -192,27 +192,22 @@ pub enum RunError {
     TooMuchWork(String),
 }
 
-/// A deterministic xorshift64* generator, its seed scrambled so that nearby
-/// seeds give unrelated streams.
-pub struct Rng(u64);
+/// A deterministic generator (PCG-XSL-RR 128/64, from the vetted `rand_pcg` crate), seeded from a `u64`: the same seed
+/// always gives the same stream, which is what makes a simulation repeatable. The workspace's own code does not wrap
+/// (RCA-EXC-3), so the generator is not written here.
+pub struct Rng(rand_pcg::Pcg64);
 
 impl Rng {
-    /// A generator for `seed`; the seed is scrambled so nearby seeds give unrelated streams, and the state is never zero (xorshift would stick there).
+    /// A generator for `seed`; `rand_pcg` expands the seed so nearby seeds give unrelated streams.
     pub(crate) fn new(seed: u64) -> Self {
-        // SplitMix64 finalizer; never zero.
-        let mut z = seed.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^= z >> 31;
-        Self(if z == 0 { 0x9E37_79B9_7F4A_7C15 } else { z })
+        Self(<rand_pcg::Pcg64 as rand_core::SeedableRng>::seed_from_u64(
+            seed,
+        ))
     }
 
-    /// The next 64 bits of the xorshift64* stream; the same seed always gives the same sequence, which is what makes a simulation repeatable.
+    /// The next 64 bits of the stream.
     pub(crate) fn next_u64(&mut self) -> u64 {
-        self.0 ^= self.0 << 13;
-        self.0 ^= self.0 >> 7;
-        self.0 ^= self.0 << 17;
-        self.0.wrapping_mul(0x2545_F491_4F6C_DD1D)
+        rand_core::Rng::next_u64(&mut self.0)
     }
 
     /// Uniform in `(0, 1)`.

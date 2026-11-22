@@ -4305,6 +4305,8 @@ dependencies = [
  "criterion",
  "project-portfolio-management-datetime",
  "project-portfolio-management-matcher",
+ "rand_core 0.10.1",
+ "rand_pcg",
  "roxmltree",
  "schemars 1.2.3",
  "serde",

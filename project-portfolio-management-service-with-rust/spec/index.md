@@ -1888,8 +1888,7 @@ plus `unwrap_or(bound)` and cites the rule; none wraps, saturates silently or pa
   the two `compliance/.../verify` endpoints; `limit` 1 to 500 (default 200) on the issue register; `limit` 1 to 200
   (default 50) on announcements; `review_days` 1 to 365 (default 90); `months` 1 to 24 (default 6 on technology flow, 3
   on DevOps metrics); `trials` 1 to `MAX_TRIALS` on the forecasts; break-glass `minutes` 1 to 240 (default 60). A
-  `limit` or `months` of `0` used to be raised to 1, and one above the maximum lowered to it. The wrapping generators
-  (`schedule_risk::Rng`) are not yet declared and still use `wrapping_*`.
+  `limit` or `months` of `0` used to be raised to 1, and one above the maximum lowered to it.
 
 Tests: `a_total_past_the_range_is_at_the_bound_on_its_side`, `a_total_inside_the_range_is_exact`,
 `a_count_taken_from_a_smaller_count_is_zero` (domain `figures`); `an_absent_figure_is_its_default_and_an_out_of_range_one_is_refused` (`controllers::within`), `the_limit_is_refused_outside_its_range`, `trials_outside_their_range_are_refused_not_moved_to_a_bound`, `expires_at` in `break_glass`, and `tests/requests/oversight.rs` (`review_days`, database-gated).
@@ -1921,3 +1920,8 @@ The ranges are the implementer's, chosen wide so no working deployment is refuse
 maintainers' review). A value that used to be accepted and is now refused: `BULK_TTL_HOURS=0` (was raised to 1),
 `SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum. Tests:
 `an_invalid_setting_is_refused_by_name_and_an_absent_one_is_not` (`settings`).
+
+**The simulations' generator (RCA-EXC-3).** `schedule_risk::Rng`, shared by the schedule, cost and joint risk simulations, is
+PCG-XSL-RR 128/64 from the `rand_pcg` crate, seeded with `seed_from_u64`; the workspace's own code no longer wraps. A
+given `seed` still gives the same stream on every run, but not the stream it gave before this change, so a simulation
+re-run with an old seed gives slightly different percentiles.

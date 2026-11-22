@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the simulations' generator comes from `rand_pcg`, not hand-written wrapping code (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-INT-4, RCA-EXC-3): `schedule_risk::Rng` (also used by the cost and joint risk
+  simulations) was xorshift64* with a SplitMix64 seed, written with `wrapping_add` and `wrapping_mul`. It is now `rand_pcg`
+  0.10 (`Pcg64`) with `rand_core` 0.10, two new direct dependencies of the domain crate that were already in
+  `Cargo.lock` (via `rand`), so no new version enters. `cargo deny check` passes.
+- **Behaviour change:** a seed gives a different (equally repeatable) stream, so a stored or documented result for a given
+  seed will differ slightly. The unit tests that passed before still pass; none pinned a stream.
+- Not done: `domain/src/leveling.rs` test code still has a `wrapping_mul` LCG (tests may, RCA-EXC-5); `tba::forecast`
+  has its own small generator, not surveyed for this rule. The percentiles were not compared before and after.
+
 ### Changed — an invalid numeric setting stops start-up (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-IN-4, RCA-IN-2): `settings::validate` checks nineteen numeric environment settings

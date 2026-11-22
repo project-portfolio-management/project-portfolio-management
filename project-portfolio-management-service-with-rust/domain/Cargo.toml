@@ -37,6 +37,10 @@ zip = { version = "9", default-features = false, features = ["deflate"] }
 roxmltree = "0.21"
 # URL parsing for sink destinations (`sinks`): the type `reqwest::Url` re-exports, without the HTTP client.
 url = "2.5"
+# The seeded generator of the Monte Carlo simulations (`schedule_risk::Rng`): a vetted PCG, since the workspace's own
+# code does not wrap (spec/rust-checked-arithmetic RCA-EXC-3).
+rand_core = "0.10"
+rand_pcg = "0.10"
 # The canonical `Plan` model.
 project-portfolio-management-matcher = "0.2.2"
 

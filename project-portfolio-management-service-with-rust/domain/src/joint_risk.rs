@@ -15,7 +15,6 @@
 //! Finishing early gives no credit: delay cost is only charged for business days
 //! late.
 
-use crate::figures::Figure;
 use std::collections::HashMap;
 
 use crate::datetime::Date;
@@ -108,7 +107,12 @@ pub fn simulate<S: std::hash::BuildHasher>(
         return Err(JointError::NoLines);
     };
     let currency = first.currency.clone();
-    if params.iterations.total_mul(lines.len() + cost_events.len()) > cost_risk::MAX_WORK {
+    // A product past `usize` is over the cap too: it is refused, not saturated (FIG-1).
+    if params
+        .iterations
+        .checked_mul(lines.len() + cost_events.len())
+        .is_none_or(|work| work > cost_risk::MAX_WORK)
+    {
         return Err(JointError::Schedule(RunError::TooMuchWork(format!(
             "iterations x (lines + events) may be at most {}; lower the iterations",
             cost_risk::MAX_WORK

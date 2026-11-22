@@ -9,7 +9,6 @@
 //! `PROJECT_PORTFOLIO_MANAGEMENT_SNAPSHOT_HOURS` (unset/0 ⇒ off, the
 //! default; parse failure ⇒ off with a warning).
 
-use crate::figures::Figure;
 use crate::prelude::*;
 
 use crate::insights;
@@ -79,8 +78,15 @@ pub fn spawn(ctx: AppContext) {
     if hours == 0 {
         return;
     }
+    // A period past `u64` seconds is a configuration defect, not a long period: no ticker, said aloud (RCA-IN-4).
+    let Some(seconds) = hours.checked_mul(3600) else {
+        tracing::error!(
+            "PROJECT_PORTFOLIO_MANAGEMENT_SNAPSHOT_HOURS is too large; the snapshot ticker stays off"
+        );
+        return;
+    };
+    let period = std::time::Duration::from_secs(seconds);
     tokio::spawn(async move {
-        let period = std::time::Duration::from_secs(hours.total_mul(3600));
         loop {
             tokio::time::sleep(period).await;
             if let Err(err) = capture_on(&mut crate::db::pool(&ctx)).await {

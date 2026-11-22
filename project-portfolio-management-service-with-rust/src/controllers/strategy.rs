@@ -137,7 +137,10 @@ async fn vote_idea(
         return Err(unprocessable("only open ideas take votes"));
     }
     let row_pid = idea.pid;
-    let next = idea.votes.total_add(1);
+    let next = idea
+        .votes
+        .checked_add(1)
+        .ok_or_else(|| unprocessable("the idea already has the largest number of votes"))?;
     let mut tx = crate::db::begin(&ctx).await?;
     // The one column the update set before SQ-1, by id; no row back is an error, as before.
     let row: ideas::Model = sqlx::query_as("UPDATE ideas SET votes = $1 WHERE id = $2 RETURNING *")

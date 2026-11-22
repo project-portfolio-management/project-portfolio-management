@@ -4,7 +4,6 @@ use super::{
     BACKLOG_STATUS, BLOCKED_STATUS, BOARD_ORDER, BTreeMap, FINISHED_STATUS, Serialize, Transition,
     is_started,
 };
-use crate::figures::Figure;
 
 /// The most samples a cumulative-flow request may produce, so a wide
 /// window cannot become an unbounded response (security invariant 3).
@@ -115,7 +114,10 @@ pub fn cumulative_flow(
         if at == to_ms {
             break;
         }
-        at = at.total_add(step_ms).min(to_ms);
+        // A step past `i64` ends the window: the last sample lands on `to_ms`.
+        at = at
+            .checked_add(step_ms)
+            .map_or(to_ms, |next| next.min(to_ms));
     }
     out
 }

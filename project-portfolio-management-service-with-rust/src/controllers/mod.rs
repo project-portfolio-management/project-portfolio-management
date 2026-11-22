@@ -512,8 +512,7 @@ pub mod pagination {
         /// The `LIMIT` to fetch: one more row than the page, so [`Page::respond`] can tell whether more follow.
         #[must_use]
         pub const fn fetch(&self) -> u64 {
-            // FIG-1: a limit at the type's maximum fetches no more than the maximum. (A `const fn` cannot call
-            // `Figure::total_add`.)
+            // The limit is validated to a small range, so this cannot overflow; at the type's maximum it is the maximum.
             match self.0.limit().checked_add(1) {
                 Some(n) => n,
                 None => u64::MAX,

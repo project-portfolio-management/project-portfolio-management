@@ -12,7 +12,6 @@
 //! cargo run -- task search_reindex batch:1000 # tune the page size
 //! ```
 
-use crate::figures::Figure;
 use crate::prelude::*;
 
 use crate::models::_entities::plans;
@@ -58,12 +57,13 @@ pub async fn reindex(ctx: &AppContext, batch: u64) -> Result<ReindexReport> {
     // `LIMIT`/`OFFSET` in id order, as the paginator read it before SQ-1, until a page comes back empty.
     let size = i64::try_from(batch.max(1)).unwrap_or(i64::MAX);
     let mut page: i64 = 0;
-    loop {
+    // An offset past `i64` is past the last row: there is no further page.
+    while let Some(offset) = size.checked_mul(page) {
         let rows: Vec<plans::Model> = sqlx::query_as(
             "SELECT * FROM plans WHERE deleted_at IS NULL ORDER BY id ASC LIMIT $1 OFFSET $2",
         )
         .bind(size)
-        .bind(size.total_mul(page))
+        .bind(offset)
         .fetch_all(crate::db::pool(ctx))
         .await?;
         if rows.is_empty() {

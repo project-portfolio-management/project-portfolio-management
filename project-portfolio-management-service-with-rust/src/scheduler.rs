@@ -17,7 +17,6 @@
 //! [`crate::controllers::automation::sweep_milestone_due`]), so running
 //! the ticker *and* an external cron cannot double-fire a deadline.
 
-use crate::figures::Figure;
 use axa::prelude::AppContext;
 
 /// Smallest sweep period, in minutes. A tighter loop would poll the
@@ -56,8 +55,15 @@ pub fn spawn_with(ctx: AppContext, raw: Option<&str>) -> bool {
         }
         return false;
     };
+    // A period past `u64` seconds is a configuration defect, not a long period: no ticker, said aloud (RCA-IN-4).
+    let Some(seconds) = minutes.checked_mul(60) else {
+        tracing::error!(
+            "PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULER_MINUTES is too large; the scheduled-action ticker stays off"
+        );
+        return false;
+    };
+    let period = std::time::Duration::from_secs(seconds);
     tokio::spawn(async move {
-        let period = std::time::Duration::from_secs(minutes.total_mul(60));
         loop {
             tokio::time::sleep(period).await;
             let _ = sweep_once(&ctx).await;

@@ -9,6 +9,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — overflowing guards, periods and counters are errors, not bounds (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-4, RCA-P-10): FIG-1 (a total past its type is reported at the bound)
+  is withdrawn in the service spec, because a total past its type means its inputs were invalid. Thirteen sites now
+  fail instead: the work-limit guards of cost, joint and schedule risk refuse a product past `usize`; the snapshot and
+  scheduler tickers stay off, with an error log, when the period overflows; the reindex stops at an offset past `i64`;
+  the search page end is an error; the bulk and attachment body ceilings are the cap when cap + 64 KiB overflows; the
+  cumulative-flow step ends at the window's end; an idea's vote and a baseline's version answer `422` at their
+  maximum; `wpm_bridge::milli_of_centi` returns `Option<i64>` and an overflow is an unknown supply figure.
+- Not done: the money, minute and millisecond sums (about 90 `Figure::total_add`, `total_mul` and signed `total_sub`
+  calls in the domain and service) still report the bound; each needs its own `Result` or unknown, so they come in
+  later slices. The environment readers that fall back to a default for an invalid setting (RCA-IN-4) are untouched.
+  Verified: lib tests and clippy; no test of the ticker's refusal, the reindex stop or the `422`s (database-gated).
+
 ### Changed — a supplied figure outside its range is refused, not clamped (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-IN-2, RCA-IN-3, RCA-IN-5, RCA-DECL-6, RCA-P-10): nine `clamp` calls on request

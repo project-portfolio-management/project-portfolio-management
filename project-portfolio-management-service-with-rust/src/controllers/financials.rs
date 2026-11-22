@@ -14,7 +14,6 @@
 //! there.
 
 use super::unprocessable;
-use crate::figures::Figure;
 use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
@@ -72,7 +71,12 @@ async fn next_version(ctx: &AppContext, plan_pid: Uuid) -> Result<i32> {
     .bind(plan_pid)
     .fetch_optional(crate::db::pool(ctx))
     .await?;
-    Ok(newest.map_or(1, |row| row.version.total_add(1)))
+    match newest {
+        None => Ok(1),
+        Some(row) => row.version.checked_add(1).ok_or_else(|| {
+            super::unprocessable_entity("the baseline sequence has no further version number")
+        }),
+    }
 }
 
 /// `POST /api/plans/{pid}/budget-baselines` — approve a new baseline

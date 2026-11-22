@@ -25,7 +25,6 @@
 
 // The sampling maths uses the standard names (o, m, p, u, x).
 
-use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use serde::Serialize;
@@ -252,7 +251,12 @@ pub fn simulate(lines: &[Line], events: &[CostEvent], params: Params) -> Result<
             "iterations must be 1 to {MAX_ITERATIONS}"
         )));
     }
-    if params.iterations.total_mul(lines.len() + events.len()) > MAX_WORK {
+    // A product past `usize` is over the cap too: it is refused, not saturated (FIG-1).
+    if params
+        .iterations
+        .checked_mul(lines.len() + events.len())
+        .is_none_or(|work| work > MAX_WORK)
+    {
         return Err(RunError::TooMuchWork(format!(
             "iterations x (lines + events) may be at most {MAX_WORK}; lower the iterations"
         )));

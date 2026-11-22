@@ -11,7 +11,6 @@
 
 use super::forbidden;
 use super::unprocessable;
-use crate::figures::Figure;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axa::middleware::body_limit;
@@ -429,7 +428,8 @@ pub fn routes() -> Routes {
     // body itself (Axum's `DefaultBodyLimit` raises only the extractors' limit, and
     // axa 0.11's stack would still refuse at 2 MiB). The handler still refuses anything
     // over the cap, so this layer is a transport ceiling, not the rule.
-    let ceiling = artifacts::max_bytes().total_add(64 * 1024);
+    let cap = artifacts::max_bytes();
+    let ceiling = cap.checked_add(64 * 1024).unwrap_or(cap); // the handler refuses over the cap either way
     Routes::new()
         .prefix("/api")
         .add("/attachments", body_limit(post(upload), ceiling))

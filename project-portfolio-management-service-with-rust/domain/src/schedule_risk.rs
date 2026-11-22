@@ -26,7 +26,6 @@
 // The sampling maths uses the standard names (o, m, p, u, a, b, c, d, x, v).
 #![expect(clippy::many_single_char_names)]
 
-use crate::figures::Figure;
 use std::collections::HashMap;
 
 use crate::datetime::Date;
@@ -375,7 +374,12 @@ pub fn simulate_with<S: std::hash::BuildHasher, H: FnMut(usize, Date, i64, &[Uui
             "iterations must be 1 to {MAX_ITERATIONS}"
         )));
     }
-    if params.iterations.total_mul(nodes.len().max(1)) > MAX_WORK {
+    // A product past `usize` is over the cap too: it is refused, not saturated (FIG-1).
+    if params
+        .iterations
+        .checked_mul(nodes.len().max(1))
+        .is_none_or(|work| work > MAX_WORK)
+    {
         return Err(RunError::TooMuchWork(format!(
             "iterations x tasks may be at most {MAX_WORK}; lower the iterations"
         )));

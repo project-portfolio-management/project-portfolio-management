@@ -1870,11 +1870,15 @@ and its English `detail`; each fact a screen must show is a field, not only Engl
 This declares the overflow behaviour of the service's totals (RCA-DECL-1, RCA-DECL-4). Code writes each as `checked_*`
 plus `unwrap_or(bound)` and cites the rule; none wraps, saturates silently or panics (RCA-INT-4).
 
-- **FIG-1. A total past its type.** A total of money in minor units, minutes, milliseconds, votes or counts (`i32`,
-  `i64`, `u32`, `u64`, `usize`) that would leave its type's range is reported at the bound on its side
-  (`MAX` or `MIN`). It is a bound, not an exact figure; no real estate comes near it (an `i64` of minor units is about
-  9 × 10¹⁸). `domain/src/figures.rs` `Figure::total_add`, `total_sub` and `total_mul` are the one place this is written.
-  Where a caller can refuse instead, it uses `checked_*` and `ok_or` and answers `422`.
+- **FIG-1. Withdrawn, in part (RCA-DECL-6, RCA-P-10).** A total of money in minor units, minutes or milliseconds that
+  would leave its type's range means its inputs were out of range: that is invalid data, so it is an error or an
+  "unknown", never a bound. This section named `MAX` and `MIN` as the answer; that was a defect, and it is being
+  removed site by site. Done: the work-limit guards of the three risk simulations (a product past `usize` is over the
+  cap and refused), the ticker periods (too large: no ticker, said aloud), the reindex offset (past `i64`: no further
+  page), the search page end (error), the body-limit ceilings (the cap itself), the cumulative-flow step (ends at the
+  window's end), idea votes and baseline version (`422`), and `milli_of_centi` (`None`, unknown). Not done: the sums of
+  money and milliseconds (`Figure::total_add`, `total_mul` and the signed `total_sub`), which still report the bound on
+  their side until each becomes a `Result` or an unknown. `domain/src/figures.rs` still holds them.
 - **FIG-2. A count taken from a smaller count.** A remaining or dropped count (`total − done`, `eligible − kept`,
   `lines − 1`) that would be negative is `0`: nothing remains.
 - **FIG-3. A supplied figure outside its range is refused (RCA-IN-2, RCA-IN-5).** A query or body figure that is

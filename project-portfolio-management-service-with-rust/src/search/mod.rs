@@ -31,7 +31,6 @@
 //! would silently reintroduce the per-kind collection boundary the
 //! service's data model removed. See `AGENTS.md` golden rule 5.
 
-use crate::figures::Figure;
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 
@@ -411,7 +410,9 @@ impl SearchEngine {
         // Ask for the whole prefix up to the page end, then skip: Tantivy
         // has no "start at N" collector, and the offset is bounded by the
         // caller precisely so this stays finite.
-        let wanted = offset.total_add(limit);
+        let wanted = offset
+            .checked_add(limit)
+            .ok_or_else(|| Error::Message("the search page end is out of range".into()))?;
         let (top, total) = searcher
             .search(
                 query.as_ref(),

@@ -27,7 +27,6 @@
 //! none. A refusal, and every view that does not ask WPM, reads `unknown`. The store is bounded
 //! (`KEPT_CALLERS_MAX` callers, `KEPT_FIGURES_PER_CALLER_MAX` figures each) and lost at restart.
 
-use crate::figures::Figure;
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
@@ -82,10 +81,10 @@ pub fn centi_of_milli(milli: i64) -> i64 {
     (milli.max(0) + 5) / 10
 }
 
-/// Hundredths of an FTE to thousandths.
+/// Hundredths of an FTE to thousandths; `None` when the figure does not fit, which is unknown, not a number.
 #[must_use]
-pub fn milli_of_centi(centi: i64) -> i64 {
-    centi.total_mul(10)
+pub fn milli_of_centi(centi: i64) -> Option<i64> {
+    centi.checked_mul(10)
 }
 
 /// The id of one version of a programme's demand on a pool for a month: the pool, the plan, the month and the
@@ -209,7 +208,7 @@ pub fn read_month(
         },
         Some(c) => SupplyReading {
             status: if fresh { "live" } else { "last_received" },
-            milli: Some(milli_of_centi(c)),
+            milli: milli_of_centi(c),
             as_of: Some(r.as_of),
             reason,
         },
@@ -885,7 +884,12 @@ mod tests {
         assert_eq!(centi_of_milli(1004), 100);
         assert_eq!(centi_of_milli(4), 0, "0.004 FTE is no hundredth");
         assert_eq!(centi_of_milli(-10), 0);
-        assert_eq!(milli_of_centi(150), 1500);
+        assert_eq!(milli_of_centi(150), Some(1500));
+        assert_eq!(
+            milli_of_centi(i64::MAX),
+            None,
+            "unknown, not a saturated figure"
+        );
     }
 
     #[test]

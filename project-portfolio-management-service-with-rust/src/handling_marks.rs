@@ -24,6 +24,7 @@
 //! HTTP header carries ASCII only, so a mark with any other character is sent as an RFC 8187 extended value,
 //! `UTF-8''` followed by its percent-encoded UTF-8 ([`header_value`]).
 
+use crate::figures::Figure;
 use std::fmt::Write as _;
 use std::sync::OnceLock;
 
@@ -125,9 +126,7 @@ impl Scheme {
     pub fn plan_level(&self, mark: Option<&str>) -> usize {
         match mark {
             None => 0,
-            Some(m) => self
-                .level_of(m)
-                .unwrap_or(self.levels.len().saturating_sub(1)),
+            Some(m) => self.level_of(m).unwrap_or(self.levels.len().total_sub(1)),
         }
     }
 

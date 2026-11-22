@@ -10,6 +10,7 @@
 
 #![expect(missing_docs)]
 
+use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use uuid::Uuid;
@@ -129,15 +130,15 @@ pub fn group(items: &[Financial]) -> Vec<Row> {
             });
         r.benefits += 1;
         match b.planned_minor {
-            Some(p) => r.planned_minor = r.planned_minor.saturating_add(p),
+            Some(p) => r.planned_minor = r.planned_minor.total_add(p),
             None => r.with_no_planned_amount += 1,
         }
         let v = b.validated_minor.unwrap_or(0);
-        r.claimed_minor = r.claimed_minor.saturating_add(b.claimed_minor);
-        r.validated_minor = r.validated_minor.saturating_add(v);
+        r.claimed_minor = r.claimed_minor.total_add(b.claimed_minor);
+        r.validated_minor = r.validated_minor.total_add(v);
         r.unvalidated_claim_minor = r
             .unvalidated_claim_minor
-            .saturating_add((b.claimed_minor - v).max(0));
+            .total_add((b.claimed_minor - v).max(0));
         if standing(b.claimed_minor, b.validated_minor) == Standing::Claimed {
             r.claimed_only += 1;
         }

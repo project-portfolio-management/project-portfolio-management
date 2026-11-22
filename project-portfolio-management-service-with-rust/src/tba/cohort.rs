@@ -1,6 +1,7 @@
 //! Cohort statistics (spec §7).
 
 use super::{BTreeMap, DAY_MS, Ratio, Serialize, StatusShare, TaskAnalysis, as_days, waste_for};
+use crate::figures::Figure;
 
 /// Nearest-rank percentile over a **sorted** sample (spec §7.1).
 ///
@@ -18,7 +19,7 @@ pub fn percentile(sorted: &[i64], p: f64) -> Option<i64> {
     }
     let n = sorted.len();
     let rank = (p * n as f64).ceil().max(1.0);
-    let index = (rank as usize).min(n).saturating_sub(1);
+    let index = (rank as usize).min(n).total_sub(1);
     sorted.get(index).copied()
 }
 
@@ -61,7 +62,7 @@ pub fn distribution(values: &[i64]) -> Option<Distribution> {
     let mut sorted = values.to_vec();
     sorted.sort_unstable();
     let n = sorted.len();
-    let sum = sorted.iter().fold(0i64, |a, v| a.saturating_add(*v));
+    let sum = sorted.iter().fold(0i64, |a, v| a.total_add(*v));
     #[expect(clippy::cast_possible_wrap)]
     let mean = sum / (n as i64).max(1);
     let at = |p: f64| percentile(&sorted, p).unwrap_or(0);
@@ -195,10 +196,10 @@ pub fn plan(analyses: &[TaskAnalysis]) -> PlanAnalysis {
 
     let total_work = analyses
         .iter()
-        .fold(0i64, |a, x| a.saturating_add(x.work_time_ms));
+        .fold(0i64, |a, x| a.total_add(x.work_time_ms));
     let total_cycle = analyses
         .iter()
-        .fold(0i64, |a, x| a.saturating_add(x.cycle_time_ms.unwrap_or(0)));
+        .fold(0i64, |a, x| a.total_add(x.cycle_time_ms.unwrap_or(0)));
 
     let mut ratios: Vec<f64> = analyses
         .iter()
@@ -230,7 +231,7 @@ pub fn plan(analyses: &[TaskAnalysis]) -> PlanAnalysis {
                 totals
                     .entry(status.status.clone())
                     .or_insert((status.category.clone(), 0, 0));
-            entry.1 = entry.1.saturating_add(status.ms);
+            entry.1 = entry.1.total_add(status.ms);
             entry.2 += status.entries;
         }
     }

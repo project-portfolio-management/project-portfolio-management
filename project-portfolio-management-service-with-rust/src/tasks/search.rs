@@ -12,6 +12,7 @@
 //! cargo run -- task search_reindex batch:1000 # tune the page size
 //! ```
 
+use crate::figures::Figure;
 use crate::prelude::*;
 
 use crate::models::_entities::plans;
@@ -62,7 +63,7 @@ pub async fn reindex(ctx: &AppContext, batch: u64) -> Result<ReindexReport> {
             "SELECT * FROM plans WHERE deleted_at IS NULL ORDER BY id ASC LIMIT $1 OFFSET $2",
         )
         .bind(size)
-        .bind(size.saturating_mul(page))
+        .bind(size.total_mul(page))
         .fetch_all(crate::db::pool(ctx))
         .await?;
         if rows.is_empty() {

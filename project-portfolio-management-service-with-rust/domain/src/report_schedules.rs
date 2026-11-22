@@ -6,6 +6,7 @@
 //! and then moves to the next future date: it never replays every missed day.
 
 use crate::datetime::Date;
+use crate::figures::Figure;
 
 /// Cadences.
 pub const CADENCES: &[&str] = &["daily", "weekly", "monthly"];
@@ -70,7 +71,7 @@ pub fn is_due(next_run: Date, enabled: bool, today: Date) -> bool {
 #[must_use]
 pub fn rows_in(format: &str, body: &str) -> i32 {
     let n = if format == "csv" {
-        body.lines().count().saturating_sub(1)
+        body.lines().count().total_sub(1)
     } else {
         serde_json::from_str::<serde_json::Value>(body)
             .ok()

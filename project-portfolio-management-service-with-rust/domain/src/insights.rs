@@ -7,6 +7,7 @@
 //! per-currency lines never merge, ratios carry their numerator and
 //! denominator, and absent data is `None`, never `0`.
 
+use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use serde::Serialize;
@@ -68,8 +69,8 @@ pub fn variance_by_currency(lines: &[MoneyLine]) -> Vec<VarianceRow> {
     let mut per: BTreeMap<&str, (i64, i64, usize)> = BTreeMap::new();
     for line in lines {
         let entry = per.entry(line.currency.as_str()).or_default();
-        entry.0 = entry.0.saturating_add(line.planned_minor);
-        entry.1 = entry.1.saturating_add(line.actual_minor);
+        entry.0 = entry.0.total_add(line.planned_minor);
+        entry.1 = entry.1.total_add(line.actual_minor);
         entry.2 += 1;
     }
     per.into_iter()
@@ -77,7 +78,7 @@ pub fn variance_by_currency(lines: &[MoneyLine]) -> Vec<VarianceRow> {
             currency: currency.to_string(),
             planned_minor: planned,
             actual_minor: actual,
-            remaining_minor: planned.saturating_sub(actual),
+            remaining_minor: planned.total_sub(actual),
             overrun: actual > planned,
             line_count: count,
         })

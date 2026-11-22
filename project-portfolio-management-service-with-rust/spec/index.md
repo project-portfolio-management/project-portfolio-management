@@ -1864,3 +1864,22 @@ and its English `detail`; each fact a screen must show is a field, not only Engl
   may read draws on the allocation), `not_on_a_line` (allocated but planned on no line) or `lines_over_plan` (the lines
   plan more than was allocated); both are null when every unit is traced (`domain/src/ledger.rs` `untraced_reason`).
   Tests: `untraced_money_says_why_as_a_code` (domain), `tests/organizations.rs`.
+
+## Figures: bounds and fallbacks (FIG-1 to FIG-3, from `spec/rust-checked-arithmetic`)
+
+This declares the overflow behaviour of the service's totals (RCA-DECL-1, RCA-DECL-4). Code writes each as `checked_*`
+plus `unwrap_or(bound)` and cites the rule; none wraps, saturates silently or panics (RCA-INT-4).
+
+- **FIG-1. A total past its type.** A total of money in minor units, minutes, milliseconds, votes or counts (`i32`,
+  `i64`, `u32`, `u64`, `usize`) that would leave its type's range is reported at the bound on its side
+  (`MAX` or `MIN`). It is a bound, not an exact figure; no real estate comes near it (an `i64` of minor units is about
+  9 × 10¹⁸). `domain/src/figures.rs` `Figure::total_add`, `total_sub` and `total_mul` are the one place this is written.
+  Where a caller can refuse instead, it uses `checked_*` and `ok_or` and answers `422`.
+- **FIG-2. A count taken from a smaller count.** A remaining or dropped count (`total − done`, `eligible − kept`,
+  `lines − 1`) that would be negative is `0`: nothing remains.
+- **FIG-3. Not yet declared.** Page limits, month and week counts and percentages that are clamped to a range today,
+  and the seeded random generators that wrap, are not yet declared and still use `clamp` and `wrapping_*`. They are the
+  next slices of the adoption (RCA-ENF-3).
+
+Tests: `a_total_past_the_range_is_at_the_bound_on_its_side`, `a_total_inside_the_range_is_exact`,
+`a_count_taken_from_a_smaller_count_is_zero` (domain `figures`).

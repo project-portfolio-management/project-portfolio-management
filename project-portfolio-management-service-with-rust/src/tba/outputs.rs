@@ -5,6 +5,7 @@ use super::{
     CATEGORY_VALUE_ADDING, DAY_MS, FINISHED_STATUS, Serialize, TaskClock, Transition,
     blocked_by_reason, classify, is_backwards, is_started, waste_for,
 };
+use crate::figures::Figure;
 
 /// A ratio reported with the two figures it came from.
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -142,7 +143,7 @@ impl Interval {
     /// The duration, never negative.
     #[must_use]
     pub fn duration_ms(&self) -> i64 {
-        self.to_ms.saturating_sub(self.from_ms).max(0)
+        self.to_ms.total_sub(self.from_ms).max(0)
     }
 }
 
@@ -225,7 +226,7 @@ fn roll_up_statuses(
     let mut per_status: BTreeMap<String, (i64, usize)> = BTreeMap::new();
     for span in spans {
         let entry = per_status.entry(span.status.clone()).or_insert((0, 0));
-        entry.0 = entry.0.saturating_add(span.duration_ms());
+        entry.0 = entry.0.total_add(span.duration_ms());
         entry.1 += 1;
     }
     per_status
@@ -252,7 +253,7 @@ fn roll_up_categories(by_status: &[StatusShare], lead: i64) -> Vec<CategoryShare
             let ms = by_status
                 .iter()
                 .filter(|s| s.category == *category)
-                .fold(0i64, |acc, s| acc.saturating_add(s.ms));
+                .fold(0i64, |acc, s| acc.total_add(s.ms));
             CategoryShare {
                 category: (*category).to_string(),
                 ms,
@@ -280,7 +281,7 @@ pub fn analyze(
     // Lead time is what the requester waits: creation to finish. The
     // intervals partition it exactly, which is why it is the
     // denominator for every per-status share (§6.3).
-    let lead = end.saturating_sub(clock.created_ms).max(0);
+    let lead = end.total_sub(clock.created_ms).max(0);
 
     // Cycle time is what the team controls: from the moment the item
     // first occupied a started status.
@@ -311,7 +312,7 @@ pub fn analyze(
         (Some(a), Some(b)) => Some(a.min(b)),
         (only @ Some(_), None) | (None, only) => only,
     };
-    let cycle = first_started.map(|start| end.saturating_sub(start).max(0));
+    let cycle = first_started.map(|start| end.total_sub(start).max(0));
 
     let by_status = roll_up_statuses(&spans, classes, lead);
     let by_category = roll_up_categories(&by_status, lead);
@@ -319,10 +320,10 @@ pub fn analyze(
         by_status
             .iter()
             .filter(|s| s.category == category)
-            .fold(0i64, |acc, s| acc.saturating_add(s.ms))
+            .fold(0i64, |acc, s| acc.total_add(s.ms))
     };
     let work = total_for(CATEGORY_VALUE_ADDING);
-    let process = work.saturating_add(total_for(CATEGORY_NECESSARY));
+    let process = work.total_add(total_for(CATEGORY_NECESSARY));
 
     let status_ms = |status: &str| -> i64 {
         by_status
@@ -356,7 +357,7 @@ pub fn analyze(
 
     let finished = clock.done_ms.is_some();
     let age = (!finished)
-        .then(|| first_started.map(|start| as_of_ms.saturating_sub(start).max(0)))
+        .then(|| first_started.map(|start| as_of_ms.total_sub(start).max(0)))
         .flatten();
     let denominator = cycle.unwrap_or(0);
 
@@ -370,7 +371,7 @@ pub fn analyze(
         }),
         work_time_ms: work,
         process_time_ms: process,
-        wait_time_ms: denominator.saturating_sub(process).max(0),
+        wait_time_ms: denominator.total_sub(process).max(0),
         blocked_time_ms: status_ms(BLOCKED_STATUS),
         blocked_by_reason: blocked_by_reason(transitions, &spans),
         queue_time_ms: status_ms(BACKLOG_STATUS),

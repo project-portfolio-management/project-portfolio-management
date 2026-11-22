@@ -7,6 +7,7 @@
 //! sorts last — never `0`**, because zero means *measured and failing*
 //! and using it for *not measured* is how a dashboard lies.
 
+use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// Basis-point scale.
@@ -103,7 +104,7 @@ pub struct Roi {
 /// that cost nothing has no return *ratio*, whatever value it produced.
 #[must_use]
 pub fn roi(values: &[ValueFact], investment_minor: i64) -> Roi {
-    let realized: i64 = values.iter().fold(0_i64, |a, v| a.saturating_add(v.value));
+    let realized: i64 = values.iter().fold(0_i64, |a, v| a.total_add(v.value));
     let measured = values
         .iter()
         .filter(|v| v.method == Method::Measured)

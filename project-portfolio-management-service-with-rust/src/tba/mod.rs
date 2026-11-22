@@ -34,6 +34,7 @@
 //! PT / VT / %A / #HO / RFPY) and the queueing-theory one (λ / μ / ρ /
 //! τ / κ); see the spec's §2 for provenance.
 
+use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use serde::Serialize;
@@ -123,7 +124,7 @@ pub fn blocked_by_reason(transitions: &[Transition], spans: &[Interval]) -> BTre
             .and_then(|t| t.blocked_reason.clone())
             .unwrap_or_else(|| UNRECORDED_REASON.to_string());
         let slot = out.entry(reason).or_insert(0);
-        *slot = slot.saturating_add(span.duration_ms());
+        *slot = slot.total_add(span.duration_ms());
     }
     out
 }

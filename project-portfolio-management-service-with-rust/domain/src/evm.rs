@@ -17,6 +17,7 @@
 //! Money is minor units in `i64`, ratios basis points, arithmetic `i128` and
 //! integer. Undefined is `None` with a reason, never zero.
 
+use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use serde::Serialize;
@@ -430,12 +431,12 @@ pub fn add(
     ac: Option<i64>,
 ) {
     let t = totals.entry(currency.to_string()).or_default();
-    t.bac_minor = t.bac_minor.saturating_add(bac);
-    t.pv_minor = t.pv_minor.saturating_add(pv);
-    t.ev_minor = t.ev_minor.saturating_add(ev);
+    t.bac_minor = t.bac_minor.total_add(bac);
+    t.pv_minor = t.pv_minor.total_add(pv);
+    t.ev_minor = t.ev_minor.total_add(ev);
     t.plans += 1;
     match ac {
-        Some(a) => t.ac_minor = t.ac_minor.saturating_add(a),
+        Some(a) => t.ac_minor = t.ac_minor.total_add(a),
         None => t.plans_without_ac += 1,
     }
 }

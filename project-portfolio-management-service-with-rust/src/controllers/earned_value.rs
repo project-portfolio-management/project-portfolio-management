@@ -18,6 +18,7 @@
 //! **Currencies never merge.** One block per baseline currency; budget lines in a
 //! currency with no baseline are listed, not added in.
 
+use crate::figures::Figure;
 use axum::http::{StatusCode, header};
 use std::fmt::Write as _;
 
@@ -235,18 +236,18 @@ pub(crate) async fn compute_with(
         let budget_ac = lines
             .iter()
             .filter(|(currency, _)| *currency == b.currency)
-            .fold(0_i64, |a, (_, actual)| a.saturating_add(*actual));
+            .fold(0_i64, |a, (_, actual)| a.total_add(*actual));
         let labour: Vec<i64> = labour_rows
             .iter()
             .filter(|(currency, _)| *currency == b.currency)
             .map(|(_, cost)| *cost)
             .collect();
-        let labour_ac = labour.iter().fold(0_i64, |a, c| a.saturating_add(*c));
+        let labour_ac = labour.iter().fold(0_i64, |a, c| a.total_add(*c));
         // No labour recorded in this currency is "no actuals" (null), never a zero.
         let ac = match source {
             AcSource::BudgetLines => Some(budget_ac),
             AcSource::Labour => (!labour.is_empty()).then_some(labour_ac),
-            AcSource::Both => Some(budget_ac.saturating_add(labour_ac)),
+            AcSource::Both => Some(budget_ac.total_add(labour_ac)),
         };
         if let Some(block) = ev::block(&periods, pc.numerator, pc.denominator, ac, as_of) {
             blocks.push((b.currency.clone(), b.version, block));
@@ -867,7 +868,7 @@ pub(crate) async fn rollup_over(
                         .and_then(|v| v.eac.minor)
                     {
                         let slot = eac.entry(cur.clone()).or_insert((0, 0));
-                        slot.0 = slot.0.saturating_add(e);
+                        slot.0 = slot.0.total_add(e);
                         slot.1 += 1;
                         variants_used.entry(cur.clone()).or_default().insert(chosen);
                     }

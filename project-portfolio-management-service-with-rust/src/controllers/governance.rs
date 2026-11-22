@@ -5,6 +5,7 @@
 //! [`crate::governance`]; nothing here ever feeds the matcher (the §8
 //! partition rule).
 
+use crate::figures::Figure;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
@@ -615,7 +616,7 @@ async fn intake_forecast(
     }
 
     let now = crate::datetime::Timestamp::now();
-    let period_ms = period_days.saturating_mul(crate::tba::DAY_MS);
+    let period_ms = period_days.total_mul(crate::tba::DAY_MS);
     let (from_ms, to_ms) =
         crate::tba::history_window(now.timestamp_millis(), history_periods, period_ms);
 

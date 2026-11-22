@@ -2,6 +2,7 @@
 //! the idea funnel tokens, scenario evaluation arithmetic, OKR weight
 //! bounds, and benefit/ROI math — DB-free and unit-tested.
 
+use crate::figures::Figure;
 use uuid::Uuid;
 
 /// Idea funnel statuses (PPM-2).
@@ -92,7 +93,7 @@ pub fn evaluate_scenario(members: &[MemberFact], constraints: &Constraints) -> E
     for member in members {
         for (currency, amount) in &member.planned_by_currency {
             match planned.iter_mut().find(|(c, _)| c == currency) {
-                Some((_, total)) => *total = total.saturating_add(*amount),
+                Some((_, total)) => *total = total.total_add(*amount),
                 None => planned.push((currency.clone(), *amount)),
             }
         }
@@ -232,7 +233,7 @@ pub fn generate_scenario(
             cost_minor: c.cost_minor,
             reason: None,
         });
-        remaining_cap = remaining_cap.map(|cap| cap.saturating_sub(c.cost_minor.unwrap_or(0)));
+        remaining_cap = remaining_cap.map(|cap| cap.total_sub(c.cost_minor.unwrap_or(0)));
     }
 
     // The rest: no-score and foreign-currency exclude outright; the
@@ -351,7 +352,7 @@ pub fn frontier(
             let (value, cost_minor, included) = chosen.fold((0.0, 0_i64, 0), |(v, c, n), r| {
                 (
                     v + r.score.unwrap_or(0.0),
-                    c.saturating_add(r.cost_minor.unwrap_or(0)),
+                    c.total_add(r.cost_minor.unwrap_or(0)),
                     n + 1,
                 )
             });

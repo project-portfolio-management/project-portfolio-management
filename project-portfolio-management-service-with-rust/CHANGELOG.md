@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — totals use declared bounds, not `saturating_*` (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-INT-4, RCA-NONE-2): about 110 `saturating_add`, `saturating_sub` and
+  `saturating_mul` calls in the domain and service crates are now `Figure::total_add`, `total_sub` and `total_mul`
+  (`domain/src/figures.rs`), each `checked_*` plus `unwrap_or(bound)` and declared in the service spec
+  (FIG-1, FIG-2). `Page::fetch` does the same inline (a `const fn`).
+- Not done: this renames and declares the existing behaviour; an overflowing total is still reported at its bound, not
+  refused. No figure comes near the bound in practice. `clamp` (about 30 uses), the seeded generators' `wrapping_*`
+  (`schedule_risk::Rng`, which RCA-EXC-3 wants from a vetted dependency) and `overflowing_*` are untouched; so is the
+  `RCA-ENF-2` `clippy.toml`, which would forbid the old names. Verified: domain (870) and service lib tests, clippy
+  `-D warnings`; the database suites were not run.
+
 ### Changed — no panicking date, time or duration operators (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-TIME-3, RCA-DOM-3, RCA-AGG-1): the `datetime` crate no longer has `date + duration`,

@@ -4,6 +4,7 @@
 //! burndown only ever counts real completion stamps, and the `MoSCoW`
 //! bands come from an explicit, disclosed tag convention.
 
+use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use crate::datetime::Date;
@@ -49,7 +50,7 @@ pub fn burndown(total: usize, done_dates: &[Date], from: Date, to: Date) -> Vec<
         let done = done_dates.iter().filter(|d| **d <= day).count();
         points.push(BurndownPoint {
             date: day,
-            remaining: total.saturating_sub(done),
+            remaining: total.total_sub(done),
         });
         day = match day.succ_opt() {
             Some(next) => next,

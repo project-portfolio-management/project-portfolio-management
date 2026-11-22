@@ -14,6 +14,7 @@
 //! (§12.4): handoff counts describe an item's journey, and there is no
 //! per-assignee cycle time by design.
 
+use crate::figures::Figure;
 use crate::prelude::*;
 use uuid::Uuid;
 
@@ -557,7 +558,7 @@ async fn cumulative_flow(
         .collect();
 
     let to_ms = now.timestamp_millis();
-    let from_ms = to_ms.saturating_sub(days.saturating_mul(tba::DAY_MS));
+    let from_ms = to_ms.total_sub(days.total_mul(tba::DAY_MS));
     let samples = tba::cumulative_flow(&histories, from_ms, to_ms, tba::DAY_MS);
 
     format::json(serde_json::json!({
@@ -795,7 +796,7 @@ async fn forecast(
         .iter()
         .filter_map(|task| task.done_at.map(|at| at.timestamp_millis()))
         .collect();
-    let period_ms = period_days.saturating_mul(tba::DAY_MS);
+    let period_ms = period_days.total_mul(tba::DAY_MS);
     let (from_ms, to_ms) = tba::history_window(now.timestamp_millis(), history_periods, period_ms);
     let history = tba::throughput_history(&completed_ms, from_ms, to_ms, period_ms);
 

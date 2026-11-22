@@ -488,7 +488,12 @@ pub mod pagination {
         /// The `LIMIT` to fetch: one more row than the page, so [`Page::respond`] can tell whether more follow.
         #[must_use]
         pub const fn fetch(&self) -> u64 {
-            self.0.limit().saturating_add(1)
+            // FIG-1: a limit at the type's maximum fetches no more than the maximum. (A `const fn` cannot call
+            // `Figure::total_add`.)
+            match self.0.limit().checked_add(1) {
+                Some(n) => n,
+                None => u64::MAX,
+            }
         }
 
         /// The page out of rows already in memory: [`Page::fetch`] of them, from [`Page::offset`].

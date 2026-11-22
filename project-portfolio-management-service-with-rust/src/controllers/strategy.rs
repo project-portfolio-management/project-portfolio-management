@@ -6,6 +6,7 @@
 
 use super::conflict;
 use super::unprocessable;
+use crate::figures::Figure;
 use crate::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -136,7 +137,7 @@ async fn vote_idea(
         return Err(unprocessable("only open ideas take votes"));
     }
     let row_pid = idea.pid;
-    let next = idea.votes.saturating_add(1);
+    let next = idea.votes.total_add(1);
     let mut tx = crate::db::begin(&ctx).await?;
     // The one column the update set before SQ-1, by id; no row back is an error, as before.
     let row: ideas::Model = sqlx::query_as("UPDATE ideas SET votes = $1 WHERE id = $2 RETURNING *")
@@ -509,7 +510,7 @@ async fn plan_member_fact(
     let mut planned: Vec<(String, i64)> = Vec::new();
     for line in &budgets {
         match planned.iter_mut().find(|(c, _)| *c == line.currency) {
-            Some((_, total)) => *total = total.saturating_add(line.planned_minor),
+            Some((_, total)) => *total = total.total_add(line.planned_minor),
             None => planned.push((line.currency.clone(), line.planned_minor)),
         }
         inputs_read.push(rules::InputRead {
@@ -716,7 +717,7 @@ async fn compare_scenarios(
                 "currency": currency,
                 "a_minor": a_minor,
                 "b_minor": b_minor,
-                "delta_minor": b_minor.saturating_sub(a_minor),
+                "delta_minor": b_minor.total_sub(a_minor),
             })
         })
         .collect();

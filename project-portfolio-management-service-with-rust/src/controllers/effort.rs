@@ -19,6 +19,7 @@
 //! ratio.
 
 use super::unprocessable;
+use crate::figures::Figure;
 use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
@@ -422,7 +423,7 @@ async fn utilization(
                 .filter(|a| &a.person_ref == actor)
                 .map(|a| {
                     let days = (a.ends_on - a.starts_on).num_days() + 1;
-                    days.max(0).saturating_mul(minutes_per_day)
+                    days.max(0).total_mul(minutes_per_day)
                 })
                 .sum();
             rules::CapacityFact {

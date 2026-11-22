@@ -17,6 +17,7 @@
 //! [`crate::controllers::automation::sweep_milestone_due`]), so running
 //! the ticker *and* an external cron cannot double-fire a deadline.
 
+use crate::figures::Figure;
 use axa::prelude::AppContext;
 
 /// Smallest sweep period, in minutes. A tighter loop would poll the
@@ -56,7 +57,7 @@ pub fn spawn_with(ctx: AppContext, raw: Option<&str>) -> bool {
         return false;
     };
     tokio::spawn(async move {
-        let period = std::time::Duration::from_secs(minutes.saturating_mul(60));
+        let period = std::time::Duration::from_secs(minutes.total_mul(60));
         loop {
             tokio::time::sleep(period).await;
             let _ = sweep_once(&ctx).await;

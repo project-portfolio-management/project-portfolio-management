@@ -27,6 +27,7 @@
 //! pro-rate.
 
 use crate::datetime::Date;
+use crate::figures::Figure;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -235,7 +236,7 @@ pub struct Period {
 pub fn bac(periods: &[Period]) -> i64 {
     periods
         .iter()
-        .fold(0_i64, |a, p| a.saturating_add(p.planned_minor))
+        .fold(0_i64, |a, p| a.total_add(p.planned_minor))
 }
 
 /// The first day of the baseline, or `None` with no periods.

@@ -4,6 +4,7 @@ use super::{
     BACKLOG_STATUS, BLOCKED_STATUS, BTreeMap, CATEGORY_VALUE_ADDING, PlanAnalysis, Serialize,
     TaskAnalysis, UNRECORDED_REASON, as_days,
 };
+use crate::figures::Figure;
 
 /// The share of non-value-adding time above which a status is reported
 /// as dominating it rather than merely contributing.
@@ -36,7 +37,7 @@ fn status_findings(summary: &PlanAnalysis) -> Vec<Finding> {
         .by_status
         .iter()
         .filter(|s| s.category != CATEGORY_VALUE_ADDING)
-        .fold(0i64, |a, s| a.saturating_add(s.ms));
+        .fold(0i64, |a, s| a.total_add(s.ms));
     summary
         .by_status
         .iter()
@@ -76,13 +77,13 @@ pub fn constraints(analyses: &[TaskAnalysis], summary: &PlanAnalysis) -> Vec<Fin
 
     let blocked = analyses
         .iter()
-        .fold(0i64, |a, x| a.saturating_add(x.blocked_time_ms));
+        .fold(0i64, |a, x| a.total_add(x.blocked_time_ms));
     if blocked > 0 {
         let mut by_reason: BTreeMap<&str, i64> = BTreeMap::new();
         for analysis in analyses {
             for (reason, ms) in &analysis.blocked_by_reason {
                 let slot = by_reason.entry(reason.as_str()).or_insert(0);
-                *slot = slot.saturating_add(*ms);
+                *slot = slot.total_add(*ms);
             }
         }
         let reasons = by_reason
@@ -107,7 +108,7 @@ pub fn constraints(analyses: &[TaskAnalysis], summary: &PlanAnalysis) -> Vec<Fin
 
     let dwell = analyses
         .iter()
-        .fold(0i64, |a, x| a.saturating_add(x.queue_time_ms));
+        .fold(0i64, |a, x| a.total_add(x.queue_time_ms));
     if dwell > 0 {
         findings.push(Finding {
             rule: "backlog_dwell",

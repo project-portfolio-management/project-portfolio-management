@@ -1,6 +1,7 @@
 //! Flow gauges (spec §15 TBA-10).
 
 use super::{PlanAnalysis, ServiceLevelExpectation};
+use crate::figures::Figure;
 
 /// Default cap on how many plans are exported as individual gauge
 /// series. Per-plan labels are unbounded cardinality, and a metric that
@@ -102,7 +103,7 @@ pub fn flow_metric_rows(
             sample.plan_pid.clone(),
         )
     });
-    let dropped = eligible.len().saturating_sub(max_plans);
+    let dropped = eligible.len().total_sub(max_plans);
     eligible.truncate(max_plans);
 
     FlowMetricSet {

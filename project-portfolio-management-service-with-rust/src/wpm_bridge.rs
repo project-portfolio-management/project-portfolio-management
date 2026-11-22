@@ -27,6 +27,7 @@
 //! none. A refusal, and every view that does not ask WPM, reads `unknown`. The store is bounded
 //! (`KEPT_CALLERS_MAX` callers, `KEPT_FIGURES_PER_CALLER_MAX` figures each) and lost at restart.
 
+use crate::figures::Figure;
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
@@ -84,7 +85,7 @@ pub fn centi_of_milli(milli: i64) -> i64 {
 /// Hundredths of an FTE to thousandths.
 #[must_use]
 pub fn milli_of_centi(centi: i64) -> i64 {
-    centi.saturating_mul(10)
+    centi.total_mul(10)
 }
 
 /// The id of one version of a programme's demand on a pool for a month: the pool, the plan, the month and the

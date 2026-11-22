@@ -22,6 +22,7 @@
 //! Persona gating is deployment configuration on the existing ABAC
 //! guard (e.g. `dept=board` allow rules) — not new code here.
 
+use crate::figures::Figure;
 use std::fmt::Write as _;
 
 use crate::prelude::*;
@@ -256,7 +257,7 @@ async fn board_pack_body(
         match (amount, currency_of.get(&row.entity_pid).cloned().flatten()) {
             (Some(amount), Some(currency)) => {
                 let entry = realized_per_currency.entry(currency).or_default();
-                *entry = entry.saturating_add(amount);
+                *entry = entry.total_add(amount);
             }
             _ => realized_unattributed += 1,
         }
@@ -1142,8 +1143,8 @@ async fn regulator_extract(
         {
             if let Some(currency) = benefit.currency.as_deref() {
                 let entry = benefits_per_currency.entry(currency).or_default();
-                entry.0 = entry.0.saturating_add(benefit.target_minor.unwrap_or(0));
-                entry.1 = entry.1.saturating_add(benefit.realized_minor);
+                entry.0 = entry.0.total_add(benefit.target_minor.unwrap_or(0));
+                entry.1 = entry.1.total_add(benefit.realized_minor);
             }
         }
         let benefits_view: Vec<serde_json::Value> = benefits_per_currency

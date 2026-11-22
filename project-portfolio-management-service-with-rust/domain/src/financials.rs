@@ -22,6 +22,7 @@
 //! Integer minor units, ISO-4217 currency codes, no float — the same
 //! posture as every other money figure in this crate.
 
+use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// One period of a budget baseline: planned cost for one window.
@@ -64,7 +65,7 @@ impl Baseline {
         self.periods
             .iter()
             .filter(|p| p.period_end >= today)
-            .fold(0_i64, |acc, p| acc.saturating_add(p.planned_minor))
+            .fold(0_i64, |acc, p| acc.total_add(p.planned_minor))
     }
 }
 
@@ -165,11 +166,11 @@ pub fn forecast(
     let actual_minor = actual_lines
         .iter()
         .filter(|(c, _)| *c == currency)
-        .fold(0_i64, |acc, (_, m)| acc.saturating_add(*m));
+        .fold(0_i64, |acc, (_, m)| acc.total_add(*m));
     let excluded_other_currency_minor = actual_lines
         .iter()
         .filter(|(c, _)| *c != currency)
-        .fold(0_i64, |acc, (_, m)| acc.saturating_add(*m));
+        .fold(0_i64, |acc, (_, m)| acc.total_add(*m));
 
     let (etc, source) = match tpc_cec.filter(|(c, _)| *c == currency) {
         Some((_, cec)) => (Some(cec), Some(EtcSource::Tpc)),
@@ -252,13 +253,13 @@ pub fn rollup_forecast(forecasts: &[Forecast]) -> Rollup {
             estimate_at_completion_minor: 0,
             plans: 0,
         });
-        row.actual_minor = row.actual_minor.saturating_add(f.actual_minor);
+        row.actual_minor = row.actual_minor.total_add(f.actual_minor);
         row.estimate_to_complete_minor = row
             .estimate_to_complete_minor
-            .saturating_add(f.estimate_to_complete_minor.unwrap_or(0));
+            .total_add(f.estimate_to_complete_minor.unwrap_or(0));
         row.estimate_at_completion_minor = row
             .estimate_at_completion_minor
-            .saturating_add(f.estimate_at_completion_minor.unwrap_or(0));
+            .total_add(f.estimate_at_completion_minor.unwrap_or(0));
         row.plans += 1;
     }
     Rollup {

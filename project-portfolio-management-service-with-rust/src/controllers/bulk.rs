@@ -20,6 +20,7 @@
 
 use super::forbidden;
 use super::unprocessable;
+use crate::figures::Figure;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axa::middleware::body_limit;
@@ -1518,7 +1519,7 @@ async fn run_export(ctx: &AppContext, job: &bulk_jobs::Model) -> std::result::Re
 
 /// The bulk routes.
 pub fn routes() -> Routes {
-    let ceiling = import_max().saturating_add(64 * 1024);
+    let ceiling = import_max().total_add(64 * 1024);
     Routes::new()
         .prefix("/api")
         .add("/plans/import", body_limit(post(import), ceiling))

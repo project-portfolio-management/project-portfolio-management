@@ -8,6 +8,7 @@
 #![expect(missing_docs)]
 
 use crate::datetime::Date;
+use crate::figures::Figure;
 use serde::Serialize;
 
 /// One task's stamps.
@@ -68,7 +69,7 @@ pub fn flow(items: &[Item], as_of: Date, weeks: u32) -> Option<Flow> {
         .count();
     let now = at(as_of);
     Some(Flow {
-        open: now.scope.saturating_sub(now.done),
+        open: now.scope.total_sub(now.done),
         done: now.done,
         scope: now.scope,
         burn_up,

@@ -8,6 +8,8 @@
 
 #![expect(missing_docs)]
 
+use crate::figures::Figure;
+
 /// Milli-FTE from percent-days over `days` calendar days: `percent_days / (100 × days) × 1000`,
 /// rounded to the nearest whole milli-FTE.
 #[must_use]
@@ -54,14 +56,14 @@ pub struct Verdict {
 /// Read a cell. Supply under demand is a shortfall; supply under 110 % of demand is tight.
 #[must_use]
 pub fn verdict(i: &Inputs) -> Verdict {
-    let demand = i.own_demand.saturating_add(i.partner_demand);
+    let demand = i.own_demand.total_add(i.partner_demand);
     let supply = if i.own_supply.is_none() && i.partner_committed.is_none() {
         None
     } else {
         Some(
             i.own_supply
                 .unwrap_or(0)
-                .saturating_add(i.partner_committed.unwrap_or(0)),
+                .total_add(i.partner_committed.unwrap_or(0)),
         )
     };
     let short = matches!((i.partner_committed, i.partner_delivered), (Some(c), Some(d)) if d < c);

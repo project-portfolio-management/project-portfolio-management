@@ -11,6 +11,7 @@
 //! and those are different findings.
 
 use super::unprocessable;
+use crate::figures::Figure;
 use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
@@ -353,12 +354,12 @@ async fn value_realization(
     let mixed = currencies.len() > 1;
     let investment: i64 = budgets
         .iter()
-        .fold(0_i64, |acc, line| acc.saturating_add(line.actual_minor));
+        .fold(0_i64, |acc, line| acc.total_add(line.actual_minor));
     let roi = if mixed {
         rules::Roi {
             basis_points: None,
             absent: Some(rules::Absent::MixedCurrency),
-            realized_minor: facts.iter().fold(0_i64, |a, f| a.saturating_add(f.value)),
+            realized_minor: facts.iter().fold(0_i64, |a, f| a.total_add(f.value)),
             investment_minor: investment,
             measured_share_basis_points: None,
         }

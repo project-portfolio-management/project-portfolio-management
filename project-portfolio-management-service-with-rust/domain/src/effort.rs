@@ -31,6 +31,7 @@
 //!    and denominator.
 //! 5. Effort stays labelled **asserted**.
 
+use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// Basis-point scale.
@@ -164,20 +165,20 @@ pub fn totals(entries: &[EffortFact]) -> EffortTotals {
         asserted: true,
     };
     for entry in entries {
-        out.minutes = out.minutes.saturating_add(entry.minutes);
+        out.minutes = out.minutes.total_add(entry.minutes);
         match entry.category {
             EffortCategory::Capex => {
-                out.capex_minutes = out.capex_minutes.saturating_add(entry.minutes);
+                out.capex_minutes = out.capex_minutes.total_add(entry.minutes);
             }
             EffortCategory::Opex => {
-                out.opex_minutes = out.opex_minutes.saturating_add(entry.minutes);
+                out.opex_minutes = out.opex_minutes.total_add(entry.minutes);
             }
             EffortCategory::Unclassified => {
-                out.unclassified_minutes = out.unclassified_minutes.saturating_add(entry.minutes);
+                out.unclassified_minutes = out.unclassified_minutes.total_add(entry.minutes);
             }
         }
         if entry.billable {
-            out.billable_minutes = out.billable_minutes.saturating_add(entry.minutes);
+            out.billable_minutes = out.billable_minutes.total_add(entry.minutes);
         }
     }
     out
@@ -246,7 +247,7 @@ pub struct Utilization {
 pub fn utilization(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
     let available = fact
         .declared_minutes
-        .saturating_sub(fact.non_working_minutes)
+        .total_sub(fact.non_working_minutes)
         .max(0);
 
     let unavailable = if fact.declared_minutes <= 0 {
@@ -291,13 +292,13 @@ pub fn team_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilizati
         actor_ref: "team".to_string(),
         declared_minutes: facts
             .iter()
-            .fold(0_i64, |a, f| a.saturating_add(f.declared_minutes)),
+            .fold(0_i64, |a, f| a.total_add(f.declared_minutes)),
         non_working_minutes: facts
             .iter()
-            .fold(0_i64, |a, f| a.saturating_add(f.non_working_minutes)),
+            .fold(0_i64, |a, f| a.total_add(f.non_working_minutes)),
         effort_minutes: facts
             .iter()
-            .fold(0_i64, |a, f| a.saturating_add(f.effort_minutes)),
+            .fold(0_i64, |a, f| a.total_add(f.effort_minutes)),
     };
     utilization(&combined, floor_minutes)
 }

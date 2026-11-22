@@ -21,6 +21,7 @@
 //!   that basis would teach operators to misreport the phase, which
 //!   costs more than it buys.
 
+use crate::figures::Figure;
 use project_portfolio_management_matcher::PlanPhase;
 use serde::{Deserialize, Serialize};
 
@@ -148,9 +149,9 @@ pub fn durations(transitions: &[TransitionFact], as_of_ms: i64) -> Vec<PhaseDura
             .get(index + 1)
             .map_or(as_of_ms, |next| next.at_ms)
             .max(entry.at_ms);
-        let span = end.saturating_sub(entry.at_ms);
+        let span = end.total_sub(entry.at_ms);
         let slot = entry.to.ordinal();
-        rows[slot].ms = rows[slot].ms.saturating_add(span);
+        rows[slot].ms = rows[slot].ms.total_add(span);
         rows[slot].visits += 1;
     }
 

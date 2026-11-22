@@ -9,6 +9,7 @@
 //! `PROJECT_PORTFOLIO_MANAGEMENT_SNAPSHOT_HOURS` (unset/0 ⇒ off, the
 //! default; parse failure ⇒ off with a warning).
 
+use crate::figures::Figure;
 use crate::prelude::*;
 
 use crate::insights;
@@ -79,7 +80,7 @@ pub fn spawn(ctx: AppContext) {
         return;
     }
     tokio::spawn(async move {
-        let period = std::time::Duration::from_secs(hours.saturating_mul(3600));
+        let period = std::time::Duration::from_secs(hours.total_mul(3600));
         loop {
             tokio::time::sleep(period).await;
             if let Err(err) = capture_on(&mut crate::db::pool(&ctx)).await {

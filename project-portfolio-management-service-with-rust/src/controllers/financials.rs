@@ -14,6 +14,7 @@
 //! there.
 
 use super::unprocessable;
+use crate::figures::Figure;
 use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
@@ -71,7 +72,7 @@ async fn next_version(ctx: &AppContext, plan_pid: Uuid) -> Result<i32> {
     .bind(plan_pid)
     .fetch_optional(crate::db::pool(ctx))
     .await?;
-    Ok(newest.map_or(1, |row| row.version.saturating_add(1)))
+    Ok(newest.map_or(1, |row| row.version.total_add(1)))
 }
 
 /// `POST /api/plans/{pid}/budget-baselines` — approve a new baseline

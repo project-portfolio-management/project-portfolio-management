@@ -7,6 +7,7 @@
 //! The recurring rule of this crate holds: **no benefit recorded is `Unmeasured`, never `NotViable`.** A plan that has not yet
 //! estimated its benefits has not failed. Flows are one currency; the caller withholds a mixed set before it gets here.
 
+use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// Basis points in 100 percent.
@@ -103,7 +104,7 @@ fn crossing(before: i128, flow: i128, period: u32, last_out: u32) -> Payback {
     // `before` < 0 and `before + flow` >= 0, so `flow` > 0.
     let need = -before;
     let fraction = need * BP / flow;
-    let whole = period.saturating_sub(last_out).saturating_sub(1);
+    let whole = period.total_sub(last_out).total_sub(1);
     let fraction_bp = u32::try_from(fraction).unwrap_or(0).min(9_999);
     Payback {
         periods: whole,

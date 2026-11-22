@@ -1049,14 +1049,24 @@ fn an_items_forecast_refuses_rather_than_guessing() {
 }
 
 #[test]
-fn trials_are_clamped_rather_than_trusted() {
+fn trials_outside_their_range_are_refused_not_moved_to_a_bound() {
     let history = vec![3, 4, 5, 2, 3, 4];
-    assert_eq!(forecast_batch(&history, 5, 0, 7, 1).trials, 1);
-    assert_eq!(
-        forecast_batch(&history, 5, usize::MAX, 7, 1).trials,
-        MAX_TRIALS
+    for bad in [0, MAX_TRIALS + 1, usize::MAX] {
+        let batch = forecast_batch(&history, 5, bad, 7, 1);
+        assert!(batch.reason.is_some() && batch.p50_days.is_none(), "{bad}");
+        assert_eq!(batch.trials, bad, "the figure is reported as supplied");
+        let items = forecast_items(&history, 2, bad, 7, 1);
+        assert!(
+            items.reason.is_some() && items.median_items.is_none(),
+            "{bad}"
+        );
+    }
+    assert!(
+        forecast_batch(&history, 5, MAX_TRIALS, 7, 1)
+            .reason
+            .is_none()
     );
-    assert_eq!(forecast_items(&history, 2, 0, 7, 1).trials, 1);
+    assert!(forecast_items(&history, 2, 1, 7, 1).reason.is_none());
 }
 
 #[test]

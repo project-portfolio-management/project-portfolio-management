@@ -168,7 +168,6 @@ pub fn forecast_batch(
     period_days: i64,
     seed: u64,
 ) -> BatchForecast {
-    let trials = trials.clamp(1, MAX_TRIALS);
     let base = BatchForecast {
         items,
         trials,
@@ -182,6 +181,12 @@ pub fn forecast_batch(
         note: "higher percentile = more conservative: 85% of simulated runs                finished by the p85 figure",
     };
 
+    if !(1..=MAX_TRIALS).contains(&trials) {
+        return BatchForecast {
+            reason: Some(format!("trials must be from 1 to {MAX_TRIALS}")),
+            ..base
+        };
+    }
     if history.len() < MIN_THROUGHPUT_PERIODS {
         return BatchForecast {
             reason: Some(format!(
@@ -281,7 +286,6 @@ pub fn forecast_items(
     period_days: i64,
     seed: u64,
 ) -> ItemsForecast {
-    let trials = trials.clamp(1, MAX_TRIALS);
     let base = ItemsForecast {
         periods,
         days: i64::try_from(periods).unwrap_or(0).total_mul(period_days),
@@ -294,6 +298,12 @@ pub fn forecast_items(
         note: "at_least_items is the 15th percentile: for `how many`, the                conservative end is the low one",
     };
 
+    if !(1..=MAX_TRIALS).contains(&trials) {
+        return ItemsForecast {
+            reason: Some(format!("trials must be from 1 to {MAX_TRIALS}")),
+            ..base
+        };
+    }
     if history.len() < MIN_THROUGHPUT_PERIODS {
         return ItemsForecast {
             reason: Some(format!(

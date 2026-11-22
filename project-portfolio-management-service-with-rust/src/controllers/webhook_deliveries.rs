@@ -62,6 +62,7 @@ async fn list(
     {
         return Err(unprocessable("status must be delivered or failed"));
     }
+    let limit = super::within(q.limit, "limit", (1, 500), 100)?;
     let list: Vec<rows::Model> = sqlx::query_as(
         "SELECT * FROM webhook_deliveries
          WHERE ($1::uuid IS NULL OR event_id = $1) AND ($2::text IS NULL OR status = $2)
@@ -70,7 +71,7 @@ async fn list(
     )
     .bind(q.event_id)
     .bind(&q.status)
-    .bind(i64::try_from(q.limit.unwrap_or(100).clamp(1, 500)).unwrap_or(500))
+    .bind(i64::try_from(limit).unwrap_or(500)) // within 1..=500, so it fits
     .fetch_all(crate::db::pool(&ctx))
     .await?;
     format::json(json!({ "deliveries": list.iter().map(|d| json!({

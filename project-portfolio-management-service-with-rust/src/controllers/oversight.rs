@@ -770,7 +770,12 @@ async fn compliance_findings(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let review_days = i64::from(query.review_days.unwrap_or(90).clamp(1, 365));
+    let review_days = i64::from(super::within(
+        query.review_days,
+        "review_days",
+        (1, 365),
+        90,
+    )?);
     let now = crate::datetime::Timestamp::now();
     let today = now.date_naive();
     let items = live!(plans, &ctx, &scope);

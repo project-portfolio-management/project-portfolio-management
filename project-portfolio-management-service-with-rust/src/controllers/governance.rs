@@ -608,9 +608,9 @@ async fn intake_forecast(
         return Err(refuse("history_periods must be between 1 and 260"));
     }
     let trials = query.trials.unwrap_or(crate::tba::DEFAULT_TRIALS);
-    if trials > crate::tba::MAX_TRIALS {
+    if trials == 0 || trials > crate::tba::MAX_TRIALS {
         return Err(refuse(&format!(
-            "trials must be at most {}",
+            "trials must be from 1 to {}",
             crate::tba::MAX_TRIALS
         )));
     }

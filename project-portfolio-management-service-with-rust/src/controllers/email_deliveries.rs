@@ -210,7 +210,7 @@ async fn list(
     if !admin {
         return Err(Error::NotFound);
     }
-    let limit = q.limit.unwrap_or(100).clamp(1, 500);
+    let limit = super::within(q.limit, "limit", (1, 500), 100)?;
     let mut find = sqlx::QueryBuilder::new("SELECT * FROM email_deliveries");
     if let Some(s) = &q.status {
         if !["queued", "retry", "sent", "failed"].contains(&s.as_str()) {

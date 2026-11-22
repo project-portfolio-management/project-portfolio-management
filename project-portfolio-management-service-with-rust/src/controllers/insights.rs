@@ -945,7 +945,7 @@ async fn technology_flow(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let months = i64::from(query.months.unwrap_or(6).clamp(1, 24));
+    let months = i64::from(super::within(query.months, "months", (1, 24), 6)?);
     let now = crate::datetime::Timestamp::now();
     // `months` is 1 to 24, so `months * 31` is at most 744.
     let window_start = super::timestamp_before(now, months * 31, "months")?;

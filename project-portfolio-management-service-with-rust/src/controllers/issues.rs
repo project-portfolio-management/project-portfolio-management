@@ -859,7 +859,7 @@ pub(crate) struct RegisterParams {
     #[serde(default)]
     min_age_days: Option<i64>,
     #[serde(default)]
-    /// Rows to return; defaults to 200 and is clamped to 1 through `REGISTER_MAX`.
+    /// Rows to return; defaults to 200 when absent; outside 1 through `REGISTER_MAX` it is refused with `422`.
     limit: Option<u64>,
 }
 
@@ -960,7 +960,8 @@ async fn register(
             .then(a.raised_on.cmp(&b.raised_on))
             .then(a.id.cmp(&b.id))
     });
-    let limit = usize::try_from(q.limit.unwrap_or(200).clamp(1, REGISTER_MAX)).unwrap_or(200);
+    let limit =
+        usize::try_from(super::within(q.limit, "limit", (1, REGISTER_MAX), 200)?).unwrap_or(200);
     let matching = rows.len();
     format::json(serde_json::json!({
         "issues": rows.iter().take(limit).map(worded).collect::<Vec<_>>(),

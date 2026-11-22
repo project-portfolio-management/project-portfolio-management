@@ -1877,9 +1877,15 @@ plus `unwrap_or(bound)` and cites the rule; none wraps, saturates silently or pa
   Where a caller can refuse instead, it uses `checked_*` and `ok_or` and answers `422`.
 - **FIG-2. A count taken from a smaller count.** A remaining or dropped count (`total − done`, `eligible − kept`,
   `lines − 1`) that would be negative is `0`: nothing remains.
-- **FIG-3. Not yet declared.** Page limits, month and week counts and percentages that are clamped to a range today,
-  and the seeded random generators that wrap, are not yet declared and still use `clamp` and `wrapping_*`. They are the
-  next slices of the adoption (RCA-ENF-3).
+- **FIG-3. A supplied figure outside its range is refused (RCA-IN-2, RCA-IN-5).** A query or body figure that is
+  absent takes its stated default (RCA-IN-3); one that is supplied outside its range is `422` naming the figure and the
+  range, never moved to a bound and never replaced by the default. The ranges: `limit` 1 to 500 (default 100) on
+  `GET /api/email-deliveries` and `GET /api/webhook-deliveries`; `limit` 1 to 10 000 (default `VERIFY_DEFAULT_LIMIT`) on
+  the two `compliance/.../verify` endpoints; `limit` 1 to 500 (default 200) on the issue register; `limit` 1 to 200
+  (default 50) on announcements; `review_days` 1 to 365 (default 90); `months` 1 to 24 (default 6 on technology flow, 3
+  on DevOps metrics); `trials` 1 to `MAX_TRIALS` on the forecasts; break-glass `minutes` 1 to 240 (default 60). A
+  `limit` or `months` of `0` used to be raised to 1, and one above the maximum lowered to it. The wrapping generators
+  (`schedule_risk::Rng`) are not yet declared and still use `wrapping_*`.
 
 Tests: `a_total_past_the_range_is_at_the_bound_on_its_side`, `a_total_inside_the_range_is_exact`,
-`a_count_taken_from_a_smaller_count_is_zero` (domain `figures`).
+`a_count_taken_from_a_smaller_count_is_zero` (domain `figures`); `an_absent_figure_is_its_default_and_an_out_of_range_one_is_refused` (`controllers::within`), `the_limit_is_refused_outside_its_range`, `trials_outside_their_range_are_refused_not_moved_to_a_bound`, `expires_at` in `break_glass`, and `tests/requests/oversight.rs` (`review_days`, database-gated).

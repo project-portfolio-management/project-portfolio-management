@@ -139,6 +139,30 @@ pub(crate) fn unprocessable_entity(message: &str) -> axa::Error {
     )
 }
 
+/// A query figure that must lie in `lo..=hi`: `default` when it is absent (RCA-IN-3), `422` naming `name` and the range
+/// when it is supplied outside the range (RCA-IN-2, RCA-IN-5). It is never moved to a bound or replaced by the default.
+///
+/// # Errors
+///
+/// `422` when `value` is present and outside `lo..=hi`.
+pub(crate) fn within<T>(
+    value: Option<T>,
+    name: &str,
+    (lo, hi): (T, T),
+    default: T,
+) -> Result<T, axa::Error>
+where
+    T: PartialOrd + Copy + std::fmt::Display,
+{
+    match value {
+        None => Ok(default),
+        Some(v) if v >= lo && v <= hi => Ok(v),
+        Some(_) => Err(unprocessable_entity(&format!(
+            "{name} must be from {lo} to {hi}"
+        ))),
+    }
+}
+
 /// `date` moved by `days` (a negative count is earlier), or `422` naming `figure` when the result is outside the range of
 /// a date. The error says the date could not be computed; it carries no number (RCA-ERR-4).
 ///
@@ -803,5 +827,33 @@ mod database_unavailable {
             refused.into_response().status(),
             StatusCode::INTERNAL_SERVER_ERROR
         );
+    }
+}
+
+#[cfg(test)]
+mod within_a_range {
+    use super::within;
+    use axum::{http::StatusCode, response::IntoResponse};
+
+    /// RCA-IN-2, RCA-IN-3: absent is the default, supplied and in range is itself, supplied and out of range is `422`
+    /// naming the figure and its range; never a bound, never the default.
+    #[test]
+    fn an_absent_figure_is_its_default_and_an_out_of_range_one_is_refused() {
+        assert_eq!(within(None, "limit", (1_u64, 500), 100).ok(), Some(100));
+        assert_eq!(within(Some(1_u64), "limit", (1, 500), 100).ok(), Some(1));
+        assert_eq!(
+            within(Some(500_u64), "limit", (1, 500), 100).ok(),
+            Some(500)
+        );
+        for bad in [0_u64, 501, u64::MAX] {
+            let Err(error) = within(Some(bad), "limit", (1, 500), 100) else {
+                panic!("{bad} must be refused");
+            };
+            assert_eq!(
+                error.into_response().status(),
+                StatusCode::UNPROCESSABLE_ENTITY
+            );
+        }
+        assert!(within(Some(-1_i64), "months", (1, 24), 6).is_err());
     }
 }

@@ -147,7 +147,7 @@ async fn open(
     let plan = preconditions(&ctx, b.plan_pid, &sub, now).await?;
     let Some(expires) = rules::expires_at(now, b.minutes) else {
         return Err(super::unprocessable_entity(
-            "minutes is outside the range of dates",
+            "minutes must be from 1 to the maximum, and the end must be a representable date",
         ));
     };
     let minutes = b.minutes.unwrap_or(rules::DEFAULT_MINUTES);

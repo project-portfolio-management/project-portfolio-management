@@ -102,7 +102,7 @@ async fn list(
             std::cmp::Ordering::Greater
         }
     });
-    let limit = usize::try_from(q.limit.unwrap_or(50).clamp(1, 200)).unwrap_or(50);
+    let limit = usize::try_from(super::within(q.limit, "limit", (1, 200), 50)?).unwrap_or(50);
     let total = keyed.len();
     format::json(serde_json::json!({
         "announcements": keyed.iter().take(limit).map(|(_, a)| view(a, now)).collect::<Vec<_>>(),

@@ -173,7 +173,7 @@ pub(super) async fn devops_metrics(
     headers: HeaderMap,
 ) -> Result<Response> {
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
-    let months = i64::from(query.months.unwrap_or(3).clamp(1, 24));
+    let months = i64::from(super::super::within(query.months, "months", (1, 24), 3)?);
     let now = crate::datetime::Timestamp::now();
     // `months` is 1 to 24, so `months * 31` is at most 744.
     let window_start = super::super::timestamp_before(now, months * 31, "months")?;

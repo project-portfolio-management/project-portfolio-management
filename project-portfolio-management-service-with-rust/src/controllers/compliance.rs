@@ -41,20 +41,23 @@ pub const VERIFY_MAX_LIMIT: u64 = 10_000;
 /// Query string for both verification endpoints.
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub(crate) struct VerifyParams {
-    /// How many rows to verify; clamped to [`VERIFY_MAX_LIMIT`].
+    /// How many rows to verify: 1 to [`VERIFY_MAX_LIMIT`], [`VERIFY_DEFAULT_LIMIT`] when absent; outside that, `422`.
     limit: Option<u64>,
 }
 
 impl VerifyParams {
-    /// The clamped limit.
-    fn limit(&self) -> u64 {
-        self.limit
-            .unwrap_or(VERIFY_DEFAULT_LIMIT)
-            .clamp(1, VERIFY_MAX_LIMIT)
+    /// The limit: the default when absent, `422` when supplied outside `1..=VERIFY_MAX_LIMIT`.
+    fn limit(&self) -> Result<u64> {
+        super::within(
+            self.limit,
+            "limit",
+            (1, VERIFY_MAX_LIMIT),
+            VERIFY_DEFAULT_LIMIT,
+        )
     }
 }
 
-/// A clamped limit as the `bigint` a `LIMIT` binds (it is at most [`VERIFY_MAX_LIMIT`], so it always fits).
+/// A validated limit as the `bigint` a `LIMIT` binds (it is at most [`VERIFY_MAX_LIMIT`], so it always fits).
 fn limit_param(limit: u64) -> i64 {
     i64::try_from(limit).unwrap_or(i64::MAX)
 }
@@ -91,7 +94,7 @@ async fn verify_records(
     // Every plan, deleted ones included, newest change first, as before.
     let rows: Vec<plans::Model> =
         sqlx::query_as("SELECT * FROM plans ORDER BY updated_at DESC LIMIT $1")
-            .bind(limit_param(params.limit()))
+            .bind(limit_param(params.limit()?))
             .fetch_all(crate::db::pool(&ctx))
             .await?;
     format::json(record_integrity::verify(&rows))
@@ -113,7 +116,7 @@ async fn verify_audit(
     require_admin(&caller)?;
     let rows: Vec<audit_logs::Model> =
         sqlx::query_as("SELECT * FROM audit_logs ORDER BY id DESC LIMIT $1")
-            .bind(limit_param(params.limit()))
+            .bind(limit_param(params.limit()?))
             .fetch_all(crate::db::pool(&ctx))
             .await?;
     format::json(audit_integrity::verify(&rows))
@@ -131,25 +134,29 @@ pub fn routes() -> Routes {
 mod tests {
     use super::{VERIFY_DEFAULT_LIMIT, VERIFY_MAX_LIMIT, VerifyParams};
 
-    /// The limit is clamped at both ends. An unbounded limit is a CPU
-    /// denial-of-service: verification recomputes several digests per
-    /// row, so a caller asking for everything can pin a core.
+    /// An absent limit is the default; a limit outside the range is refused, not moved to a bound (RCA-IN-2). An
+    /// unbounded limit is a CPU denial-of-service: verification recomputes several digests per row.
     #[test]
-    fn the_limit_is_clamped_at_both_ends() {
+    fn the_limit_is_refused_outside_its_range() {
         assert_eq!(
-            VerifyParams { limit: None }.limit(),
-            VERIFY_DEFAULT_LIMIT,
+            VerifyParams { limit: None }.limit().ok(),
+            Some(VERIFY_DEFAULT_LIMIT),
             "an absent limit uses the default"
         );
-        assert_eq!(VerifyParams { limit: Some(0) }.limit(), 1, "zero is raised");
+        for bad in [0, VERIFY_MAX_LIMIT + 1, u64::MAX] {
+            assert!(
+                VerifyParams { limit: Some(bad) }.limit().is_err(),
+                "{bad} is refused"
+            );
+        }
+        assert_eq!(VerifyParams { limit: Some(42) }.limit().ok(), Some(42));
         assert_eq!(
             VerifyParams {
-                limit: Some(u64::MAX)
+                limit: Some(VERIFY_MAX_LIMIT)
             }
-            .limit(),
-            VERIFY_MAX_LIMIT,
-            "an enormous limit is capped"
+            .limit()
+            .ok(),
+            Some(VERIFY_MAX_LIMIT)
         );
-        assert_eq!(VerifyParams { limit: Some(42) }.limit(), 42);
     }
 }

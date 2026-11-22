@@ -7,6 +7,7 @@
 //! `#[ignore]`d: needs PostgreSQL; run with `cargo test -- --ignored`.
 
 use axa_test::prelude::*;
+use axum::http::StatusCode;
 use project_portfolio_management::app::App;
 use serde_json::{Value, json};
 use serial_test::serial;
@@ -133,6 +134,13 @@ async fn compliance_and_risk_views_name_each_material_finding() {
             .await
             .assert_status_ok();
 
+        // A review window outside 1 to 365 is refused, not moved to a bound or to the default (RCA-IN-2).
+        for bad in ["0", "366"] {
+            request
+                .get(&format!("/api/compliance/findings?review_days={bad}"))
+                .await
+                .assert_status(StatusCode::UNPROCESSABLE_ENTITY);
+        }
         let findings: Value = request
             .get("/api/compliance/findings?review_days=1")
             .await

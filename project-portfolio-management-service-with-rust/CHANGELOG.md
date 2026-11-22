@@ -9,6 +9,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — a supplied figure outside its range is refused, not clamped (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-IN-2, RCA-IN-3, RCA-IN-5, RCA-DECL-6, RCA-P-10): nine `clamp` calls on request
+  figures now answer `422` naming the figure and range when the figure is supplied outside it, and take the stated
+  default only when it is absent (`controllers::within`): `limit` on email deliveries, webhook deliveries, the issue
+  register, announcements and the two verify endpoints; `review_days`; `months` on technology flow and DevOps metrics.
+  `trials` of `0` is refused on both forecast endpoints, and the forecasts report a `reason` for out-of-range trials
+  instead of clamping. Break-glass `expires_at` returns `None` outside 1 to 240 minutes (`problems` already refused them
+  first). **Behaviour change:** `?limit=0`, `?limit=9999`, `?months=99` and the like were answered with a capped or raised
+  figure and are now `422`. Two tests asserted the capping (`the_limit_is_clamped_at_both_ends`,
+  `trials_are_clamped_rather_than_trusted`, and the `expires_at` cases for 10 000 and -3 minutes); they now assert the
+  refusal, as the spec change requires.
+- Not done: `clamp` on computed figures (`okr`, `fever`, `prioritization`, `schedule_risk` correlation, `deescalation::window`,
+  `bulk::progress_percent`, `product_flow::flow`, `tba::outputs`), on stored or imported values (`earned_value::manual_bp`,
+  `mspdi` percent complete, `insights` probability and impact, `value` rank), and the `min`/`max` bounds on external
+  figures are still there. The `RCA-ENF-2` `clippy.toml` is not set. The database suites were not run, so the request-level
+  `422` (including `tests/requests/oversight.rs`) is untested end to end.
+
 ### Changed — totals use declared bounds, not `saturating_*` (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-INT-4, RCA-NONE-2): about 110 `saturating_add`, `saturating_sub` and

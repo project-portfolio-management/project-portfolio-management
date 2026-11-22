@@ -49,10 +49,15 @@ pub fn problems(
     out
 }
 
-/// When a grant opened at `now` ends, or `None` when that is past the last instant a `Timestamp` holds.
+/// When a grant opened at `now` ends: `DEFAULT_MINUTES` after it when `minutes` is absent (RCA-IN-3). `None` when `minutes`
+/// is supplied outside `1..=MAX_MINUTES`, which [`problems`] refuses first (RCA-IN-2), or when the end is past the last
+/// instant a `Timestamp` holds.
 #[must_use]
 pub fn expires_at(now: Timestamp, minutes: Option<i64>) -> Option<Timestamp> {
-    let minutes = minutes.unwrap_or(DEFAULT_MINUTES).clamp(1, MAX_MINUTES);
+    let minutes = minutes.unwrap_or(DEFAULT_MINUTES);
+    if !(1..=MAX_MINUTES).contains(&minutes) {
+        return None;
+    }
     now.checked_add_signed(Duration::try_minutes(minutes)?)
 }
 
@@ -122,8 +127,12 @@ mod tests {
     fn the_window_is_capped_at_four_hours_whatever_is_asked() {
         assert_eq!(expires_at(at(9, 0), None), Some(at(10, 0)));
         assert_eq!(expires_at(at(9, 0), Some(30)), Some(at(9, 30)));
-        assert_eq!(expires_at(at(9, 0), Some(10_000)), Some(at(13, 0)));
-        assert_eq!(expires_at(at(9, 0), Some(-3)), Some(at(9, 1)));
+        // Out of range is refused, not moved to the nearest bound (RCA-IN-2).
+        assert_eq!(expires_at(at(9, 0), Some(10_000)), None);
+        assert_eq!(expires_at(at(9, 0), Some(MAX_MINUTES + 1)), None);
+        assert_eq!(expires_at(at(9, 0), Some(-3)), None);
+        assert_eq!(expires_at(at(9, 0), Some(0)), None);
+        assert_eq!(expires_at(at(9, 0), Some(MAX_MINUTES)), Some(at(13, 0)));
     }
 
     #[test]

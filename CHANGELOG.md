@@ -14,6 +14,20 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 22 November (arithmetic spec: math must not panic)
+
+- Added `spec/arithmetic/index.md`: arithmetic must not panic or wrap; integer maths uses the `checked_*` functions and
+  returns `None` (or an error) where the result does not fit, for example `255_u8.checked_add(1)` is `None`. It also
+  covers dates and durations, narrowing conversions, floats, what is out of scope (tests, build scripts) and how it is
+  enforced (deny lints, a test per `None` edge, a 500 for a handler that panics).
+- Not done: **the code does not meet it yet.** A clippy run over the service workspace finds about 90 `unwrap`,
+  `expect`, `panic!` and `unreachable!` sites and about 480 index or slice sites in non-test code (the matcher has none);
+  no lint is denied, there is no panic-catching layer on the service, and the date and time crate still has its
+  panicking operators. Those are separate steps. `spec/index.md` does not link the new page yet, because that file holds
+  uncommitted edits that are not part of this change.
+- Not verified: the counts are from one clippy run (`unwrap_used`, `expect_used`, `panic`, `unreachable`, `todo`,
+  `unimplemented`, `indexing_slicing`) on 2026-11-22, not a review of each site.
+
 ## 21 November (LocalePicker labels reworded)
 
 - `LOCALE_LABELS` in `project-portfolio-management.github.io/src/lib/site.ts`: en-gb is now "English - Great Britain",

@@ -323,9 +323,7 @@ pub async fn lockout_mw(
     let response =
         axa::ratelimit::lock_out_failures(State(limiter.lockout.clone()), req, next).await;
     if is_new_lockout(&response) {
-        crate::metrics::Metrics::global()
-            .client_address_lockouts_total
-            .inc();
+        crate::metrics::Metrics::with(|m| m.client_address_lockouts_total.inc());
         tracing::warn!("a client address was locked out for failed authentications");
     }
     response

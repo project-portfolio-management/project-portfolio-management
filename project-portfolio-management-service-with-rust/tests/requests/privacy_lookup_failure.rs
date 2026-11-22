@@ -27,7 +27,12 @@ async fn a_failed_privacy_lookup_refuses_and_is_counted() {
             .await
             .assert_status_ok();
 
-        let failed = || Metrics::global().visibility_lookup_failed_total.get();
+        let failed = || {
+            Metrics::global()
+                .unwrap()
+                .visibility_lookup_failed_total
+                .get()
+        };
         let before = failed();
         sqlx::raw_sql("ALTER TABLE plan_access_settings RENAME TO plan_access_settings_cq6")
             .execute(project_portfolio_management::db::pool(&ctx))
@@ -65,7 +70,10 @@ async fn a_failed_lookup_under_a_list_answers_503() {
             .assert_status_success();
         request.get("/api/plans").await.assert_status_ok();
 
-        let before = Metrics::global().visibility_lookup_failed_total.get();
+        let before = Metrics::global()
+            .unwrap()
+            .visibility_lookup_failed_total
+            .get();
         sqlx::raw_sql("ALTER TABLE plan_access_settings RENAME TO plan_access_settings_cq6")
             .execute(project_portfolio_management::db::pool(&ctx))
             .await
@@ -78,7 +86,14 @@ async fn a_failed_lookup_under_a_list_answers_503() {
 
         assert_eq!(res.status_code(), 503, "{}", res.text());
         assert_eq!(res.json::<Value>()["code"], "unavailable");
-        assert!(Metrics::global().visibility_lookup_failed_total.get() - before >= 1.0);
+        assert!(
+            Metrics::global()
+                .unwrap()
+                .visibility_lookup_failed_total
+                .get()
+                - before
+                >= 1.0
+        );
         request.get("/api/plans").await.assert_status_ok();
     })
     .await;

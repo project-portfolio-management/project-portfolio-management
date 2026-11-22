@@ -10,6 +10,18 @@
 // The OpenAPI entries in `openapi_more` are large nested `json!` trees.
 #![recursion_limit = "512"]
 #![forbid(unsafe_code)]
+// Production code does not panic (spec/arithmetic): an `Option` or a `Result` is handled, never unwrapped. Tests may.
+#![cfg_attr(
+    not(test),
+    deny(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::unreachable,
+        clippy::todo,
+        clippy::unimplemented
+    )
+)]
 #![deny(missing_docs)]
 
 /// Dates, instants, durations and IANA zones (the `project-portfolio-management-datetime` crate, over jiff), so

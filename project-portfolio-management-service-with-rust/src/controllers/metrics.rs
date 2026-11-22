@@ -19,16 +19,23 @@ use crate::metrics::{self, Metrics};
 /// [`metrics::CONTENT_TYPE`]) and the gathered metric families as the body.
 #[debug_handler]
 async fn metrics_prom() -> Response {
-    let body = Metrics::global().render();
-    (
-        StatusCode::OK,
-        [(
-            CONTENT_TYPE,
-            HeaderValue::from_static(metrics::CONTENT_TYPE),
-        )],
-        body,
-    )
-        .into_response()
+    // No metric set, or an encoder error, is a stated 500 for the scrape, not a dropped connection.
+    match Metrics::global().map(Metrics::render) {
+        Some(Ok(body)) => (
+            StatusCode::OK,
+            [(
+                CONTENT_TYPE,
+                HeaderValue::from_static(metrics::CONTENT_TYPE),
+            )],
+            body,
+        )
+            .into_response(),
+        Some(Err(error)) => {
+            tracing::error!(%error, "the metrics could not be rendered");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+        None => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
 }
 
 /// The `GET /metrics.prom` route, mounted at the root (no `/api` prefix) to

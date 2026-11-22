@@ -169,7 +169,7 @@ pub async fn refresh_with(
 
     let set = tba::flow_metric_rows(&samples, max_plans_from_env(), min_tasks_from_env());
     #[expect(clippy::cast_precision_loss)] // seconds since the epoch
-    Metrics::global().publish_flow(&set, as_of.timestamp() as f64);
+    Metrics::with(|m| m.publish_flow(&set, as_of.timestamp() as f64));
     Ok(set)
 }
 

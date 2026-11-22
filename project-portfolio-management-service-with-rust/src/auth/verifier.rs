@@ -18,14 +18,17 @@ pub(super) const DEFAULT_AUDIENCE: &str = "main-x-service";
 /// `init` never ran — e.g. in unit tests — built lazily from the
 /// environment on first use). Shared behind an `Arc` and read-only.
 #[cfg(feature = "paseto")]
-pub(super) static VERIFIER: OnceLock<ReloadableVerifier> = OnceLock::new();
+pub(super) static VERIFIER: OnceLock<Option<ReloadableVerifier>> = OnceLock::new();
 
 /// The process-wide token verifier (see `VERIFIER` and the module
-/// docs). Shared behind an `Arc` and read-only.
+/// docs). Shared behind an `Arc` and read-only. `None` when not even an empty key set could be built, which is not
+/// expected: every token is then refused, as with an empty key set.
 #[cfg(feature = "paseto")]
 #[must_use]
-pub fn verifier() -> &'static ReloadableVerifier {
-    VERIFIER.get_or_init(|| ReloadableVerifier::new(build_from_env()))
+pub fn verifier() -> Option<&'static ReloadableVerifier> {
+    VERIFIER
+        .get_or_init(|| build_from_env().map(ReloadableVerifier::new))
+        .as_ref()
 }
 
 /// Seed the process-wide `verifier` before the app serves traffic
@@ -49,6 +52,12 @@ pub async fn init() {
 /// Seed the PASETO `verifier` (the `paseto` half of `init`).
 #[cfg(feature = "paseto")]
 pub(super) async fn init_paseto() {
+    let Some(fallback) = build_from_env() else {
+        tracing::error!(
+            "auth: no PASETO verifier could be built; every PASETO token will be refused"
+        );
+        return;
+    };
     let built = match std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL")
         .ok()
         .filter(|s| !s.trim().is_empty())
@@ -59,14 +68,16 @@ pub(super) async fn init_paseto() {
                 "PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_AUDIENCE",
                 DEFAULT_AUDIENCE,
             );
-            fetch_or(url.trim(), &issuer, &audience, build_from_env()).await
+            fetch_or(url.trim(), &issuer, &audience, fallback).await
         }
-        None => build_from_env(),
+        None => fallback,
     };
     // `store` rather than `set`: the holder may already exist (a lazy
     // `verifier()` call beat us here), and the boot-fetched key set
     // should win either way.
-    verifier().store(built);
+    if let Some(holder) = verifier() {
+        holder.store(built);
+    }
 }
 
 /// The process-wide Keycloak verifier, present only when
@@ -165,7 +176,9 @@ pub(super) fn spawn_paseto_key_refresh() {
             match Verifier::from_paseto_keys_url(&url, &issuer, &audience).await {
                 Ok(fetched) => {
                     tracing::info!(keys = fetched.key_count(), "refreshed PASETO key set");
-                    verifier().store(fetched);
+                    if let Some(holder) = verifier() {
+                        holder.store(fetched);
+                    }
                 }
                 Err(error) => {
                     tracing::warn!(%error, "PASETO key-set refresh failed; keeping current keys");
@@ -222,7 +235,7 @@ pub(super) fn env_or(name: &str, default: &str) -> String {
 /// set yields an empty key set (every token rejected) so the service still
 /// boots without credentials configured.
 #[cfg(feature = "paseto")]
-pub(super) fn build_from_env() -> Verifier {
+pub(super) fn build_from_env() -> Option<Verifier> {
     let issuer = env_or("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER", DEFAULT_ISSUER);
     let audience = env_or(
         "PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_AUDIENCE",
@@ -234,15 +247,16 @@ pub(super) fn build_from_env() -> Verifier {
         .and_then(|raw| serde_json::from_str::<serde_json::Value>(&raw).ok())
         .unwrap_or_else(|| serde_json::json!({ "keys": [] }));
     Verifier::from_paseto_keys_value(&keys, &issuer, &audience)
-        .unwrap_or_else(|_| empty_verifier(&issuer, &audience))
+        .ok()
+        .or_else(|| empty_verifier(&issuer, &audience))
 }
 
 /// A verifier with no keys: rejects every token until a real key set is
-/// configured. Infallible — an empty `keys` array always parses.
+/// configured. An empty `keys` array parses, so `None` is not expected.
 #[cfg(feature = "paseto")]
-pub(super) fn empty_verifier(issuer: &str, audience: &str) -> Verifier {
+pub(super) fn empty_verifier(issuer: &str, audience: &str) -> Option<Verifier> {
     let empty = serde_json::json!({ "keys": [] });
-    Verifier::from_paseto_keys_value(&empty, issuer, audience).expect("empty key set always builds")
+    Verifier::from_paseto_keys_value(&empty, issuer, audience).ok()
 }
 
 /// Extract and verify the bearer token from request headers. Pure (the
@@ -298,7 +312,7 @@ mod coverage_tests {
             match case.as_str() {
                 "default" => {
                     assert_eq!(env_or("PPM_MISSING_VALUE", "fallback"), "fallback");
-                    assert_eq!(build_from_env().key_count(), 0);
+                    assert_eq!(build_from_env().unwrap().key_count(), 0);
                     init_paseto().await;
                     spawn_paseto_key_refresh();
                 }
@@ -307,7 +321,7 @@ mod coverage_tests {
                         env_or("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER", "fallback"),
                         "fallback"
                     );
-                    assert_eq!(build_from_env().key_count(), 0);
+                    assert_eq!(build_from_env().unwrap().key_count(), 0);
                     spawn_paseto_key_refresh();
                 }
                 "invalid" => {
@@ -315,7 +329,7 @@ mod coverage_tests {
                         env_or("PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER", "fallback"),
                         "custom"
                     );
-                    assert_eq!(build_from_env().key_count(), 0);
+                    assert_eq!(build_from_env().unwrap().key_count(), 0);
                     spawn_paseto_key_refresh();
                 }
                 _ => unreachable!(),
@@ -392,6 +406,12 @@ pub async fn request_claims(headers: &HeaderMap) -> Result<Claims, (StatusCode, 
     #[cfg(feature = "paseto")]
     {
         verifier()
+            .ok_or_else(|| {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    "no verifier is available".to_string(),
+                )
+            })?
             .current()
             .verify(token)
             .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))

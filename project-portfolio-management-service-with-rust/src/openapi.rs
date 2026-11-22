@@ -868,17 +868,21 @@ fn financials_paths() -> Value {
     })
 }
 
+/// The members of a JSON object, or none for any other value.
+fn into_object(value: Value) -> serde_json::Map<String, Value> {
+    match value {
+        Value::Object(map) => map,
+        _ => serde_json::Map::new(),
+    }
+}
+
 /// The Controlling-process paths (entity spec §9.2c / FR-38, FR-39).
 /// Split across two functions purely to stay under clippy's
-/// `too_many_lines`; the two `Value::Object`s are merged below.
+/// `too_many_lines`; the two `Value::Object`s are merged here.
 fn control_paths() -> Value {
-    let Value::Object(mut merged) = control_register_paths() else {
-        unreachable!("control_register_paths always returns an object")
-    };
-    let Value::Object(rest) = control_action_paths() else {
-        unreachable!("control_action_paths always returns an object")
-    };
-    merged.extend(rest);
+    // Both are `json!({ … })` objects, so neither reads as empty.
+    let mut merged = into_object(control_register_paths());
+    merged.extend(into_object(control_action_paths()));
     Value::Object(merged)
 }
 

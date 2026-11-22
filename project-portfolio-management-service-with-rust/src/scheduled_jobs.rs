@@ -226,10 +226,11 @@ pub async fn run_job(ctx: &AppContext, job: Job, now: Timestamp) -> Result<Ran> 
         Ok(text) => ("ok", text.clone()),
         Err(e) => ("failed", e.to_string()),
     };
-    crate::metrics::Metrics::global()
-        .scheduled_job_runs_total
-        .with_label_values(&[job.name(), outcome])
-        .inc();
+    crate::metrics::Metrics::with(|m| {
+        m.scheduled_job_runs_total
+            .with_label_values(&[job.name(), outcome])
+            .inc();
+    });
     let mut txn = crate::db::begin(ctx).await?;
     let row: Option<i64> = sqlx::query_scalar("SELECT id FROM scheduled_job_runs WHERE pid = $1")
         .bind(pid)

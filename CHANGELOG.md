@@ -16,6 +16,8 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## 22 November (arithmetic spec: math must not panic)
 
+- Service, domain and migration crates: no `unwrap`, `expect`, `panic!` or `unreachable!` in production code, denied by lint (62
+  sites removed). Still open: the datetime crate, indexing and slicing, a panic-catching layer. See the service CHANGELOG.
 - `spec/arithmetic/index.md` now also says a `checked_*` result is never unwrapped (`.unwrap()`, `.expect()`): the `None` is
   handled, passed up or turned into an error. Enforced for production code by the `unwrap_used` and `expect_used` lints once
   denied; not yet denied, so not yet enforced.

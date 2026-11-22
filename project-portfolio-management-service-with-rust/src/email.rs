@@ -7,10 +7,8 @@
 //! says so), or a recording one for tests. A sender reports an attempt as sent, **transient** (try again) or
 //! **permanent** (do not).
 
-#![expect(clippy::missing_panics_doc)]
-
 use std::collections::VecDeque;
-use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, PoisonError, RwLock};
 
 use crate::datetime::{Duration, Timestamp};
 use async_trait::async_trait;
@@ -126,7 +124,7 @@ impl Mailer {
     pub fn deliveries(&self) -> Deliveries {
         match self {
             Self::Smtp(_) => Deliveries::default(),
-            Self::Stub(d) => d.lock().expect("lock").clone(),
+            Self::Stub(d) => d.lock().unwrap_or_else(PoisonError::into_inner).clone(),
         }
     }
 }
@@ -174,7 +172,7 @@ impl Sender for SmtpSender {
                 .map(|_| ())
                 .map_err(|e| SendError::Transient(e.to_string())),
             Mailer::Stub(deliveries) => {
-                let mut d = deliveries.lock().expect("lock");
+                let mut d = deliveries.lock().unwrap_or_else(PoisonError::into_inner);
                 d.count += 1;
                 d.messages.push(format!("{}\n{}", m.subject, m.text));
                 Ok(())
@@ -217,13 +215,19 @@ impl RecordingSender {
 
     /// Fail the next attempt with `e` (queued, in order).
     pub fn fail_next(&self, e: SendError) {
-        self.failures.lock().expect("lock").push_back(e);
+        self.failures
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push_back(e);
     }
 
     /// What was sent successfully.
     #[must_use]
     pub fn sent(&self) -> Vec<Message> {
-        self.sent.lock().expect("lock").clone()
+        self.sent
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 }
 
@@ -234,10 +238,18 @@ impl Sender for RecordingSender {
     }
 
     async fn send(&self, m: &Message) -> Result<(), SendError> {
-        if let Some(e) = self.failures.lock().expect("lock").pop_front() {
+        if let Some(e) = self
+            .failures
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .pop_front()
+        {
             return Err(e);
         }
-        self.sent.lock().expect("lock").push(m.clone());
+        self.sent
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(m.clone());
         Ok(())
     }
 }
@@ -250,13 +262,17 @@ fn slot() -> &'static RwLock<Option<Arc<dyn Sender>>> {
 
 /// Replace the sender for the whole process (`None` restores the configured one). For tests.
 pub fn override_sender(s: Option<Arc<dyn Sender>>) {
-    *slot().write().expect("lock") = s;
+    *slot().write().unwrap_or_else(PoisonError::into_inner) = s;
 }
 
 /// The sender in force: the override if one is set, else the configured SMTP mailer, else [`NoSender`].
 #[must_use]
 pub fn sender_for(ctx: &axa::AppContext) -> Arc<dyn Sender> {
-    if let Some(s) = slot().read().expect("lock").clone() {
+    if let Some(s) = slot()
+        .read()
+        .unwrap_or_else(PoisonError::into_inner)
+        .clone()
+    {
         return s;
     }
     match ctx.shared_store.get::<Mailer>() {

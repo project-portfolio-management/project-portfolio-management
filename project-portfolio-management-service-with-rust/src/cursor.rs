@@ -43,7 +43,7 @@ impl Cursors {
             Some(secret) => CursorKey::new(secret.as_bytes())
                 .map(Self)
                 .map_err(|error| Error::Message(format!("{CURSOR_KEY}: {error}"))),
-            None if crate::app::opts_out_of_guards(environment) => Ok(Self::random()),
+            None if crate::app::opts_out_of_guards(environment) => Self::random(),
             None => Err(Error::Message(format!(
                 "{CURSOR_KEY} is required in this environment: at least {MIN_KEY_LEN} bytes, the same on every replica"
             ))),
@@ -52,24 +52,33 @@ impl Cursors {
 
     /// A key no one else holds, for this process only.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Never: two UUIDs are 32 bytes, which is [`MIN_KEY_LEN`].
-    #[must_use]
-    pub fn random() -> Self {
+    /// When the key cannot be built. Two UUIDs are 32 bytes, which is [`MIN_KEY_LEN`], so this is not expected.
+    pub fn random() -> Result<Self> {
         let mut secret = Vec::with_capacity(MIN_KEY_LEN);
         secret.extend_from_slice(uuid::Uuid::new_v4().as_bytes());
         secret.extend_from_slice(uuid::Uuid::new_v4().as_bytes());
-        Self(CursorKey::new(&secret).expect("two UUIDs are 32 bytes"))
+        CursorKey::new(&secret)
+            .map(Self)
+            .map_err(|error| Error::Message(format!("a random cursor key: {error}")))
     }
 
     /// The key this service booted with. A context built without one gets one random key for the process.
-    #[must_use]
-    pub fn of(ctx: &AppContext) -> Arc<Self> {
+    ///
+    /// # Errors
+    ///
+    /// When there is no booted key and a random one cannot be built (see [`Cursors::random`]).
+    pub fn of(ctx: &AppContext) -> Result<Arc<Self>> {
         static FALLBACK: OnceLock<Arc<Cursors>> = OnceLock::new();
-        ctx.shared_store
-            .get_ref::<Self>()
-            .unwrap_or_else(|| FALLBACK.get_or_init(|| Arc::new(Self::random())).clone())
+        if let Some(booted) = ctx.shared_store.get_ref::<Self>() {
+            return Ok(booted);
+        }
+        if let Some(fallback) = FALLBACK.get() {
+            return Ok(fallback.clone());
+        }
+        let made = Arc::new(Self::random()?);
+        Ok(FALLBACK.get_or_init(|| made).clone())
     }
 }
 

@@ -16,6 +16,18 @@
 
 // SEC-I3: the runner runs SQL files; forbid unsafe.
 #![forbid(unsafe_code)]
+// Production code does not panic (spec/arithmetic): an `Option` or a `Result` is handled, never unwrapped. Tests may.
+#![cfg_attr(
+    not(test),
+    deny(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::unreachable,
+        clippy::todo,
+        clippy::unimplemented
+    )
+)]
 #![deny(missing_docs)]
 #![warn(clippy::pedantic)]
 
@@ -28,7 +40,8 @@ use sqlx::migrate::{Migrate, MigrateError, Migration, MigrationType, Migrator};
 use sqlx::{AssertSqlSafe, Connection, PgConnection, PgPool, SqlSafeStr};
 
 /// Every file in `migrations/`, name and text, embedded at build time by `build.rs`.
-const FILES: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/migrations.rs"));
+#[allow(clippy::unreadable_literal)] // the versions are timestamps, written by `build.rs` as they are in the file names
+const FILES: &[(i64, &str, &str)] = include!(concat!(env!("OUT_DIR"), "/migrations.rs"));
 
 /// Every migration, read from [`FILES`] as sqlx's own resolver reads a directory (a unit test holds the two equal):
 /// `<version>_<description>.sql`, `.up.sql` or `.down.sql`, the description with spaces for underscores, the
@@ -37,17 +50,15 @@ pub static MIGRATOR: LazyLock<Migrator> = LazyLock::new(|| {
     Migrator::with_migrations(
         FILES
             .iter()
-            .map(|(name, sql)| {
-                let (version, rest) = name
-                    .split_once('_')
-                    .expect("a migration file is <version>_<description>.sql");
-                let version: i64 = version.parse().expect("a migration version is a number");
+            .map(|(version, name, sql)| {
+                // `build.rs` checked the name and parsed the version; a name without `_` cannot get here.
+                let rest = name.split_once('_').map_or(*name, |(_, rest)| rest);
                 let migration_type = MigrationType::from_filename(rest);
                 let description = rest
                     .trim_end_matches(migration_type.suffix())
                     .replace('_', " ");
                 Migration::new(
-                    version,
+                    *version,
                     Cow::Owned(description),
                     migration_type,
                     sql.into_sql_str(),

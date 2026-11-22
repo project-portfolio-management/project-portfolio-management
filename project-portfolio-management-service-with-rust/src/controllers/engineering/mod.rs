@@ -110,7 +110,10 @@ mod task_window_tests {
     use crate::cursor::Cursors;
 
     fn window(uri: &str) -> Result<(u64, u64), u16> {
-        let cursor = Cursor::new(std::sync::Arc::new(Cursors::random()), uri.parse().unwrap());
+        let cursor = Cursor::new(
+            std::sync::Arc::new(Cursors::random().unwrap()),
+            uri.parse().unwrap(),
+        );
         task_window(&cursor)
             .map(|page| (page.limit(), page.offset()))
             .map_err(|e| {

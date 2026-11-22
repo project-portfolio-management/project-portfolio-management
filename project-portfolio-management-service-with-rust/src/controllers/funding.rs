@@ -332,7 +332,8 @@ pub(crate) async fn money_section(
     combine_classes: bool,
 ) -> Result<serde_json::Value> {
     let sm = rules::start_month();
-    let year = rules::year_of(day, sm);
+    let year = rules::year_of(day, sm)
+        .ok_or_else(|| unprocessable("day is outside the range of financial years"))?;
     let all = live_plans(ctx).await?;
     let by_pid: HashMap<Uuid, &plans::Model> = all.iter().map(|p| (p.pid, p)).collect();
     let names: HashMap<Uuid, String> = all_sources(ctx)

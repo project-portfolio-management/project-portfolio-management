@@ -686,8 +686,11 @@ async fn compare_scenarios(
         let result = evaluate(&ctx, &scenario, &fence).await?;
         pair.push((scenario, result));
     }
-    let (b_side, b_result) = pair.pop().expect("two loaded");
-    let (a_side, a_result) = pair.pop().expect("two loaded");
+    let mut loaded = pair.into_iter();
+    let (Some((a_side, a_result)), Some((b_side, b_result))) = (loaded.next(), loaded.next())
+    else {
+        return Err(Error::NotFound);
+    };
     let (a_eval, b_eval) = (&a_result.evaluation, &b_result.evaluation);
     // Per-currency planned delta (b - a); a currency present on only
     // one side still gets a row (the other side reads 0).

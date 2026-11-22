@@ -65,11 +65,20 @@ handle.
 
 ## Status
 
-Stated honestly, as of 2026-11-22: **this is not yet true of the code.** A clippy run over the service workspace's
-non-test code finds about 90 `unwrap`, `expect`, `panic!` and `unreachable!` sites and about 480 places that index or
-slice, mostly in the service and domain crates; 27 of the first group are the date and time crate's own operators and
-constructors. They are removed in steps, and a lint is denied for a crate only once that crate has none left. The
-[CHANGELOG](../../CHANGELOG.md) of each project says which steps are done and what is not verified.
+Stated honestly, as of 2026-11-22:
+
+- **Done:** the service, domain and migration crates deny `unwrap_used`, `expect_used`, `panic`, `unreachable`, `todo` and
+  `unimplemented` for non-test code (a crate-level `cfg_attr(not(test), deny(…))`), and have no site left. Where a value
+  could not be built, the function now returns `Option` or `Result` (the metric set, the token verifier, the cursor
+  key, the HTTP clients, the financial year of a date at the end of the range), and a bad handling-mark scheme refuses
+  the start instead of panicking at first use. The matcher has no such site.
+- **Not done:** the date and time crate (`datetime/`) still has 27 `expect` sites, its own operators (`date +
+  duration`) and constructors (`Duration::days(n)`), and is not yet denied; removing them touches about 200 call
+  sites. About 480 places in the service, domain and date and time crates index or slice (`v[i]`, `&s[a..b]`); the
+  `indexing_slicing` and `arithmetic_side_effects` lints are not yet denied. There is no panic-catching layer on the
+  service. The `u8::MAX + 1` style tests are written only for the `year_of` edge so far.
+
+The [CHANGELOG](../../CHANGELOG.md) of each project says which steps are done and what is not verified.
 
 ## Example
 

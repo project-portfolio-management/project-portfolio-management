@@ -45,30 +45,27 @@ pub struct Year {
     pub label: String,
 }
 
-/// The financial year a date falls in.
-///
-/// # Panics
-///
-/// Never for a real date: the dates built are the first of a month.
+/// The financial year a date falls in, or `None` when its first or last day is outside the range of a date (the years
+/// around 9999 and -9999).
 #[must_use]
-pub fn year_of(date: Date, start_month: u32) -> Year {
+pub fn year_of(date: Date, start_month: u32) -> Option<Year> {
     let y = if date.month() >= start_month {
         date.year()
     } else {
         date.year() - 1
     };
-    let start = Date::from_ymd_opt(y, start_month, 1).expect("first of a month");
-    let next = Date::from_ymd_opt(y + 1, start_month, 1).expect("first of a month");
+    let start = Date::from_ymd_opt(y, start_month, 1)?;
+    let next = Date::from_ymd_opt(y.checked_add(1)?, start_month, 1)?;
     let label = if start_month == 1 {
         y.to_string()
     } else {
         format!("{y}/{:02}", (y + 1) % 100)
     };
-    Year {
+    Some(Year {
         start,
-        end: next.pred_opt().expect("a day before"),
+        end: next.pred_opt()?,
         label,
-    }
+    })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -187,6 +184,18 @@ pub fn group(lines: &[Line], year: &Year, combine_classes: bool) -> (Vec<Row>, Q
 mod tests {
     use super::*;
 
+    /// `year_of` for a date known to be in range.
+    fn year(date: Date, start_month: u32) -> Year {
+        year_of(date, start_month).unwrap()
+    }
+
+    #[test]
+    fn a_date_at_the_end_of_the_range_has_no_financial_year() {
+        // The year after is past the last date a `Date` holds: `None`, not a panic.
+        assert!(year_of(Date::MAX, 4).is_none());
+        assert!(year_of(Date::MAX, 1).is_none());
+    }
+
     fn d(s: &str) -> Date {
         Date::parse_from_str(s, "%Y-%m-%d").unwrap()
     }
@@ -195,10 +204,7 @@ mod tests {
     fn the_start_month_has_no_country_default() {
         // WW-1.5: unset is the calendar year, not April.
         assert_eq!(parse_start_month(None), 1);
-        assert_eq!(
-            year_of(d("2026-03-31"), parse_start_month(None)).label,
-            "2026"
-        );
+        assert_eq!(year(d("2026-03-31"), parse_start_month(None)).label, "2026");
         for (raw, m) in [("4", 4), ("7", 7), (" 10 ", 10), ("12", 12)] {
             assert_eq!(parse_start_month(Some(raw)), m, "{raw}");
         }
@@ -206,8 +212,8 @@ mod tests {
             assert_eq!(parse_start_month(Some(bad)), 1, "{bad}");
         }
         // A July year (Australia, for one) and an October year (the US federal government, for one).
-        assert_eq!(year_of(d("2026-06-30"), 7).label, "2025/26");
-        assert_eq!(year_of(d("2026-10-01"), 10).label, "2026/27");
+        assert_eq!(year(d("2026-06-30"), 7).label, "2025/26");
+        assert_eq!(year(d("2026-10-01"), 10).label, "2026/27");
     }
     #[expect(clippy::too_many_arguments)]
     fn line(
@@ -234,8 +240,8 @@ mod tests {
 
     #[test]
     fn the_boundary_is_the_last_of_march_and_the_first_of_april() {
-        let before = year_of(d("2026-03-31"), 4);
-        let after = year_of(d("2026-04-01"), 4);
+        let before = year(d("2026-03-31"), 4);
+        let after = year(d("2026-04-01"), 4);
         assert_eq!(
             (before.start, before.end, before.label.as_str()),
             (d("2025-04-01"), d("2026-03-31"), "2025/26")
@@ -264,15 +270,15 @@ mod tests {
 
     #[test]
     fn a_calendar_year_and_a_leap_day() {
-        let y = year_of(d("2028-02-29"), 1);
+        let y = year(d("2028-02-29"), 1);
         assert_eq!(
             (y.start, y.end, y.label.as_str()),
             (d("2028-01-01"), d("2028-12-31"), "2028")
         );
-        let y = year_of(d("2028-02-29"), 4);
+        let y = year(d("2028-02-29"), 4);
         assert_eq!(y.end, d("2028-03-31"));
         assert_eq!(
-            year_of(d("2099-12-31"), 4).label,
+            year(d("2099-12-31"), 4).label,
             "2099/00",
             "the century rolls over"
         );
@@ -280,7 +286,7 @@ mod tests {
 
     #[test]
     fn a_line_with_only_an_end_is_placed_by_its_end_and_none_is_undated() {
-        let y = year_of(d("2026-06-01"), 4);
+        let y = year(d("2026-06-01"), 4);
         assert_eq!(
             placement(None, Some(d("2026-09-01")), &y),
             Placement::InYear
@@ -305,7 +311,7 @@ mod tests {
     #[test]
     fn currencies_and_classes_are_never_summed_unless_asked() {
         let (p, s) = (Uuid::from_u128(1), Some(Uuid::from_u128(9)));
-        let y = year_of(d("2026-06-01"), 4);
+        let y = year(d("2026-06-01"), 4);
         let lines = [
             line(p, s, "capex", "GBP", 100, 40, Some("2026-05-01"), None),
             line(p, s, "opex", "GBP", 50, 10, Some("2026-05-01"), None),
@@ -347,7 +353,7 @@ mod tests {
     #[test]
     fn lines_outside_the_year_or_undated_are_counted_not_dropped_silently() {
         let p = Uuid::from_u128(1);
-        let y = year_of(d("2026-06-01"), 4);
+        let y = year(d("2026-06-01"), 4);
         let lines = [
             line(p, None, "opex", "GBP", 1, 0, Some("2026-03-31"), None),
             line(p, None, "opex", "GBP", 1, 0, None, None),

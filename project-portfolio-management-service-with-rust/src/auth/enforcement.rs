@@ -69,7 +69,7 @@ pub fn require_auth() -> bool {
 /// Whether any token verifier this build accepts has keys to verify with.
 pub(super) fn verifier_configured() -> bool {
     #[cfg(feature = "paseto")]
-    if verifier().current().key_count() > 0 {
+    if verifier().is_some_and(|v| v.current().key_count() > 0) {
         return true;
     }
     #[cfg(feature = "keycloak")]

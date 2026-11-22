@@ -65,7 +65,10 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
         }
 
         // It is counted.
-        let text = project_portfolio_management::metrics::Metrics::global().render();
+        let text = project_portfolio_management::metrics::Metrics::global()
+            .unwrap()
+            .render()
+            .unwrap();
         assert!(
             text.contains(r#"scheduled_job_runs_total{job="exception_breaches",outcome="ok"} 1"#),
             "{text}"

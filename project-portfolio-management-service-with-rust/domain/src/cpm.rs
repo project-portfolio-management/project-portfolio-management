@@ -36,7 +36,8 @@ use uuid::Uuid;
 /// the business-day index.
 const EPOCH: Date = match Date::from_ymd_opt(1970, 1, 5) {
     Some(d) => d,
-    None => unreachable!(),
+    // Not reached: 1970-01-05 is a real date (the `epoch_is_the_first_monday_of_1970` test pins it).
+    None => Date::MIN,
 };
 
 /// A working calendar: which weekdays work, and the dates that do not.
@@ -860,6 +861,12 @@ pub fn diff(before: &CpmResult, after: &CpmResult) -> Vec<Moved> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn epoch_is_the_first_monday_of_1970() {
+        assert_eq!(EPOCH, Date::from_ymd_opt(1970, 1, 5).unwrap());
+        assert_eq!(EPOCH.weekday(), crate::datetime::Weekday::Mon);
+    }
 
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)

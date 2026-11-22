@@ -382,7 +382,10 @@ async fn the_flow_gauges_publish_only_what_may_be_published() {
              gauge inherits it rather than inventing a number"
         );
 
-        let body = project_portfolio_management::metrics::Metrics::global().render();
+        let body = project_portfolio_management::metrics::Metrics::global()
+            .unwrap()
+            .render()
+            .unwrap();
         assert!(
             body.contains(&format!(r#"ppm_flow_work_in_progress{{plan="{plan}"}}"#)),
             "missing the labelled series in: {body}"

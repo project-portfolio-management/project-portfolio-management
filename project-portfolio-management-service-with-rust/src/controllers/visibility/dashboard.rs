@@ -137,7 +137,7 @@ pub(super) async fn at_a_glance(
                 overrun,
                 violated.contains(&member.pid),
             );
-            *rag_counts.get_mut(colour).expect("fixed keys") += 1;
+            rag_counts.entry(colour).and_modify(|n| *n += 1);
             *stages
                 .entry(
                     member

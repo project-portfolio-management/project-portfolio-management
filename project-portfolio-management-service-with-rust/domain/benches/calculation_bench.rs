@@ -768,7 +768,7 @@ fn bench_timestamps(c: &mut Criterion) {
         b.iter(|| {
             dates
                 .iter()
-                .map(|d| financial_year::year_of(black_box(*d), 4))
+                .map(|d| financial_year::year_of(black_box(*d), 4).is_some())
                 .collect::<Vec<_>>()
         });
     });

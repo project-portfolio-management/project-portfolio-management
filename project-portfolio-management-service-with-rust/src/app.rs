@@ -203,6 +203,7 @@ impl App {
     /// When any of those cannot be set up.
     pub async fn context(environment: Environment, config: ServiceConfig) -> Result<AppContext> {
         install_tls_provider();
+        crate::handling_marks::init().map_err(Error::Message)?;
         let db = axa::db::connect(&config.database).await?;
         let mut ctx = AppContext::new(environment, db, config);
         ctx.shared_store

@@ -349,7 +349,9 @@ async fn an_event_out_of_attempts_is_kept_as_failed_and_can_be_released() {
         ));
         let failed_rows = || {
             project_portfolio_management::metrics::Metrics::global()
+                .unwrap()
                 .render()
+                .unwrap()
                 .lines()
                 .find_map(|l| l.strip_prefix("ppm_event_outbox_rows{status=\"failed\"} "))
                 .and_then(|v| v.parse::<f64>().ok())

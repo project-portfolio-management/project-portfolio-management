@@ -9,6 +9,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — no panic in production code of the service, domain and migration crates (2026-11-22)
+
+- `spec/arithmetic/index.md`: arithmetic must not panic or wrap. The three crates now deny `clippy::unwrap_used`,
+  `expect_used`, `panic`, `unreachable`, `todo` and `unimplemented` for non-test code, and the 62 sites that broke it are
+  gone: `Metrics::new` returns a `Result` and `Metrics::global()` an `Option` (callers use `Metrics::with`;
+  `/metrics.prom` answers 500 if the set or the encoder fails), `auth::verifier()` is an `Option` (no verifier refuses the
+  token), `Cursors::random` and `Cursors::of` return a `Result`, the three HTTP clients return a `Result`,
+  `financial_year::year_of` returns an `Option` (the funding section answers 422 for a day at the end of the range),
+  a mutex that was poisoned by a panic is recovered in `email.rs`, and `migration/build.rs` checks file names at build
+  time. An invalid `PROJECT_PORTFOLIO_MANAGEMENT_HANDLING_MARKS` now refuses to start (`App::context`) instead of panicking at
+  first use. Two tests added (`epoch_is_the_first_monday_of_1970`, the `year_of` range edge).
+- Not done: the `datetime` crate still has its 27 panicking sites (operators and constructors; removing them touches
+  about 200 call sites) and is not denied; about 480 index and slice sites remain in the service, domain and
+  datetime crates, with `indexing_slicing` and `arithmetic_side_effects` not yet denied; no panic-catching layer on the
+  service; the `rag_counts`-style counters still use a bare `+= 1`.
+- Not verified: the database-backed suites (`-- --ignored`) were not run, including the ones that read
+  `Metrics::global().unwrap()` after this change; the handling-mark refusal at start-up has no test; the no-verifier,
+  no-metrics and no-client branches are not exercised (they are not expected to be reachable).
+  Run here: fmt, clippy `-D warnings` over every target, 1402 library tests, the 29 database-free integration tests.
+
 ### Tests — coverage expansion in progress (2026-11-20)
 
 - Added focused unit and database coverage across the datetime and domain crates, migrations, authentication,

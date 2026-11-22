@@ -107,7 +107,11 @@ pub(crate) async fn build(
     let when: HashMap<Uuid, &crate::cpm::NodeResult> =
         levelled.nodes.iter().map(|n| (n.pid, n)).collect();
     let cal = &net.plan_cal;
-    let last = when[chain_pids.last().expect("a chain has a task")];
+    let Some(last) = chain_pids.last().and_then(|pid| when.get(pid)).copied() else {
+        out["state"] = json!("no_buffers");
+        out["reason"] = json!("chain_not_scheduled");
+        return Ok((out, None));
+    };
     let project_days = buffers::size(
         rule,
         &chain_pids.iter().filter_map(&safety).collect::<Vec<_>>(),

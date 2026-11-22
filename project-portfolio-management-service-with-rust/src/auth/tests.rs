@@ -143,7 +143,7 @@ fn tampered_token_is_401() {
 /// A no-key verifier (the boot fallback) rejects even a valid token.
 #[test]
 fn empty_verifier_rejects_everything() {
-    let verifier = empty_verifier(ISSUER, AUDIENCE);
+    let verifier = empty_verifier(ISSUER, AUDIENCE).unwrap();
     let (_, kid) = test_keys_and_kid();
     let token = sign(&kid, 10_000_000_000);
     assert_eq!(
@@ -721,7 +721,13 @@ async fn serve_keys(keys: serde_json::Value) -> String {
 async fn fetch_or_fetched_key_set_wins() {
     let (keys, kid) = test_keys_and_kid();
     let url = serve_keys(keys).await;
-    let verifier = fetch_or(&url, ISSUER, AUDIENCE, empty_verifier(ISSUER, AUDIENCE)).await;
+    let verifier = fetch_or(
+        &url,
+        ISSUER,
+        AUDIENCE,
+        empty_verifier(ISSUER, AUDIENCE).unwrap(),
+    )
+    .await;
     assert_eq!(verifier.key_count(), 1);
     let token = sign(&kid, 10_000_000_000);
     let claims = bearer_claims(&bearer(&token), &verifier).expect("token signed by fetched key");

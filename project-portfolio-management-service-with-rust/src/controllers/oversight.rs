@@ -215,7 +215,7 @@ async fn board_pack_body(
                 worst = colour;
             }
         }
-        *status_counts.get_mut(worst).expect("fixed keys") += 1;
+        status_counts.entry(worst).and_modify(|n| *n += 1);
     }
 
     // Decisions in the window (shared builder, filtered).

@@ -185,7 +185,7 @@ async fn executive_health(
         let mut rag_counts =
             std::collections::BTreeMap::from([("red", 0usize), ("amber", 0), ("green", 0)]);
         for member in members {
-            *rag_counts.get_mut(rag[&member.pid]).expect("fixed keys") += 1;
+            rag_counts.entry(rag[&member.pid]).and_modify(|n| *n += 1);
         }
         let status = if rag_counts["red"] > 0 {
             "red"

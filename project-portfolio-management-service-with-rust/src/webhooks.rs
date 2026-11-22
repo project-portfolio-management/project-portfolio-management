@@ -423,16 +423,24 @@ enum AttemptResult {
 /// contacted is the operator-configured target — a receiver returning a
 /// `3xx` cannot bounce the request to a different, attacker-chosen host.
 /// Built once and reused.
-pub(crate) fn client() -> &'static reqwest::Client {
-    static CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+///
+/// # Errors
+///
+/// The client could not be built (not expected; the TLS provider is installed first). The message says why.
+pub(crate) fn client() -> Result<&'static reqwest::Client, &'static str> {
+    static CLIENT: std::sync::OnceLock<Result<reqwest::Client, String>> =
+        std::sync::OnceLock::new();
     crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
-    CLIENT.get_or_init(|| {
-        reqwest::Client::builder()
-            .timeout(Duration::from_secs(10))
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .expect("build the non-redirecting webhook-delivery client")
-    })
+    CLIENT
+        .get_or_init(|| {
+            reqwest::Client::builder()
+                .timeout(Duration::from_secs(10))
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .map_err(|e| format!("the webhook-delivery client could not be built: {e}"))
+        })
+        .as_ref()
+        .map_err(String::as_str)
 }
 
 /// In strict outbound mode, resolve the target's name now and refuse it if **any** address it
@@ -503,7 +511,16 @@ async fn attempt_once(
             };
         }
     }
-    let mut builder = client()
+    let client = match client() {
+        Ok(client) => client,
+        Err(error) => {
+            return AttemptResult::Retryable {
+                status: None,
+                error: error.to_string(),
+            };
+        }
+    };
+    let mut builder = client
         .post(url)
         .header("content-type", request.content_type)
         .header(EVENT_ID_HEADER, event_id)

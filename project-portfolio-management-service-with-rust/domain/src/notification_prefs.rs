@@ -142,20 +142,20 @@ pub fn collapse(entries: Vec<Entry>, daily_kinds: &BTreeSet<String>, zone: Tz) -
     }
     let mut items: Vec<Item> = singles
         .into_iter()
-        .map(|e| to_item(vec![e], false))
+        .filter_map(|e| to_item(vec![e], false))
         .collect();
-    items.extend(groups.into_values().map(|g| to_item(g, true)));
+    items.extend(groups.into_values().filter_map(|g| to_item(g, true)));
     items.sort_by(|a, b| b.latest_at.cmp(&a.latest_at).then(a.pids.cmp(&b.pids)));
     items
 }
 
 /// Collapse a group of notifications about one subject into one list item showing the newest, with a count, every id, and unread if any member is unread. `digest` marks a grouped item.
-fn to_item(mut group: Vec<Entry>, digest: bool) -> Item {
+fn to_item(mut group: Vec<Entry>, digest: bool) -> Option<Item> {
     group.sort_by_key(|e| e.created_at);
     // Sorted oldest first above, so the last entry is the newest, whose text represents the group.
-    // `group` is never empty by construction.
-    let newest = group.last().cloned().expect("non-empty group");
-    Item {
+    // `group` is never empty by construction; an empty one yields no item.
+    let newest = group.last().cloned()?;
+    Some(Item {
         kind: newest.kind,
         subject_kind: newest.subject_kind,
         subject_pid: newest.subject_pid,
@@ -165,7 +165,7 @@ fn to_item(mut group: Vec<Entry>, digest: bool) -> Item {
         unread: group.iter().any(|e| !e.read),
         latest_at: newest.created_at,
         digest,
-    }
+    })
 }
 
 #[cfg(test)]

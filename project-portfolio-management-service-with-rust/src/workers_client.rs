@@ -104,16 +104,19 @@ fn store(pid: Uuid, result: &Result<Vec<String>, String>) {
 /// The non-redirecting HTTP client (SEC-B11 posture, mirroring
 /// `webhooks::client`): the only host ever contacted is the
 /// operator-configured worker-service base URL.
-fn client() -> &'static reqwest::Client {
-    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+fn client() -> Result<&'static reqwest::Client, &'static str> {
+    static CLIENT: OnceLock<Result<reqwest::Client, String>> = OnceLock::new();
     crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
-    CLIENT.get_or_init(|| {
-        reqwest::Client::builder()
-            .timeout(Duration::from_secs(5))
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .expect("build the non-redirecting worker-skills client")
-    })
+    CLIENT
+        .get_or_init(|| {
+            reqwest::Client::builder()
+                .timeout(Duration::from_secs(5))
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .map_err(|e| format!("the worker-skills client could not be built: {e}"))
+        })
+        .as_ref()
+        .map_err(String::as_str)
 }
 
 #[derive(serde::Deserialize)]
@@ -153,6 +156,7 @@ async fn fetch(base_url: &str, worker_pid: Uuid) -> Result<Vec<String>, String> 
         base_url.trim_end_matches('/')
     );
     let response = client()
+        .map_err(str::to_string)?
         .get(&url)
         .send()
         .await

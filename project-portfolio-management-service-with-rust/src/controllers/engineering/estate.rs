@@ -87,10 +87,12 @@ pub(super) async fn moscow(
             .filter_map(|tag| tag.as_str())
             .find_map(rules::parse_moscow_tag);
         match band {
-            Some(band) => bands
-                .get_mut(band)
-                .expect("known band")
-                .push(item_ref(item)),
+            // A band the table does not hold (not expected: the parser and the table share one list) is counted as
+            // untagged, not guessed into a band.
+            Some(band) => match bands.get_mut(band) {
+                Some(list) => list.push(item_ref(item)),
+                None => untagged += 1,
+            },
             None => untagged += 1,
         }
     }

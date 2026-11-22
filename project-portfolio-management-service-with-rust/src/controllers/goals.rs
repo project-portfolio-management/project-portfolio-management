@@ -106,7 +106,7 @@ async fn save(
     )
     .map_err(super::record_rejection)?;
     let updated = streaming::update_and_emit(ctx, model, &plan, caller.actor()).await?;
-    Metrics::global().plan_updated_total.inc();
+    Metrics::with(|m| m.plan_updated_total.inc());
     with_etag(updated.to_plan().map_err(Error::Model)?.goals)
 }
 

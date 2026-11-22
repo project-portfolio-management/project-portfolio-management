@@ -373,9 +373,8 @@ async fn rank_by_inputs(
             let inputs = by_plan
                 .get(&plan.pid)
                 .map_or_default(super::scoring::inputs_of);
-            let s =
-                super::scoring::score_by_name(model, &inputs).expect("the model name was checked");
-            (
+            let s = super::scoring::score_by_name(model, &inputs)?;
+            Some((
                 s.score,
                 serde_json::json!({
                     "pid": plan.pid.to_string(),
@@ -385,9 +384,10 @@ async fn rank_by_inputs(
                     "score": s.score,
                     "missing_inputs": s.missing,
                 }),
-            )
+            ))
         })
-        .collect();
+        .collect::<Option<_>>()
+        .ok_or_else(|| super::unprocessable("model is smart, wsjf or rice"))?;
     scored.sort_by(|a, b| match (a.0, b.0) {
         (Some(x), Some(y)) => y.partial_cmp(&x).unwrap_or(std::cmp::Ordering::Equal),
         (Some(_), None) => std::cmp::Ordering::Less,

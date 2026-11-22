@@ -23,6 +23,18 @@
 // The hand-written OpenAPI document is one large nested `json!` tree.
 #![recursion_limit = "512"]
 #![forbid(unsafe_code)]
+// Production code does not panic (spec/arithmetic): an `Option` or a `Result` is handled, never unwrapped. Tests may.
+#![cfg_attr(
+    not(test),
+    deny(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::unreachable,
+        clippy::todo,
+        clippy::unimplemented
+    )
+)]
 #![deny(missing_docs)]
 
 /// The pure domain modules, which live in the `project-portfolio-management-domain` crate (`domain/`), re-exported

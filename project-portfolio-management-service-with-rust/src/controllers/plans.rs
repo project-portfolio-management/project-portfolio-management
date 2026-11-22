@@ -370,7 +370,7 @@ async fn create(
         super::modules::set_modules(&ctx, model.pid, modules, caller.actor()).await?;
     }
     // Audit is written inside `create_and_emit` (see `streaming`).
-    Metrics::global().plan_created_total.inc();
+    Metrics::with(|m| m.plan_created_total.inc());
     format::json(PlanRef::of(&model))
 }
 
@@ -524,7 +524,7 @@ async fn update(
     let old_target_date = model.to_plan().ok().and_then(|p| p.target_date);
     let updated = streaming::update_and_emit(&ctx, model, &wi, caller.actor()).await?;
     // Audit is written inside `update_and_emit` (see `streaming`).
-    Metrics::global().plan_updated_total.inc();
+    Metrics::with(|m| m.plan_updated_total.inc());
 
     // T-28g's deadline-shift trigger (FR-32): narrowed to `target_date`
     // — "the plan's end" — the same way `milestone_due` was narrowed to
@@ -600,7 +600,7 @@ async fn remove(
     }
     let (_entity_pid, _name) = streaming::delete_and_emit(&ctx, model, caller.actor()).await?;
     // Audit is written inside `delete_and_emit` (see `streaming`).
-    Metrics::global().plan_deleted_total.inc();
+    Metrics::with(|m| m.plan_deleted_total.inc());
     format::empty_json()
 }
 
@@ -830,7 +830,7 @@ async fn merge(
     }
     // The two audit entries (survivor "merged", duplicate "merged_into")
     // are written inside `merge_and_emit` (see `streaming`).
-    Metrics::global().plan_merged_total.inc();
+    Metrics::with(|m| m.plan_merged_total.inc());
 
     format::json(serde_json::json!({
         "main_pid": merged.pid.to_string(),

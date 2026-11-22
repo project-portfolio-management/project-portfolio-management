@@ -124,7 +124,11 @@ async fn send_http(sink: &notification_sinks::Model, note: &Note<'_>) -> Outcome
         Ok(b) => b,
         Err(e) => return Outcome::Failed(e),
     };
-    let mut req = crate::webhooks::client()
+    let client = match crate::webhooks::client() {
+        Ok(client) => client,
+        Err(error) => return Outcome::Retry(error.to_string()),
+    };
+    let mut req = client
         .post(&sink.destination)
         .timeout(Duration::from_secs(10))
         .header("content-type", ctype)

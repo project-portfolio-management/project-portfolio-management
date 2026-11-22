@@ -95,7 +95,7 @@ pub struct Feeding {
 /// one feeding chain only (the one joining earliest on the chain); a later join whose feeder is already
 /// taken is not repeated. `chain` is in order. The result is in chain order, then input order.
 #[must_use]
-#[expect(clippy::missing_panics_doc, clippy::implicit_hasher)]
+#[expect(clippy::implicit_hasher)]
 pub fn feeding_chains(
     chain: &[Uuid],
     nodes: &[Uuid],
@@ -134,9 +134,12 @@ pub fn feeding_chains(
         head += 1;
         order.push(n);
         for s in succs.get(&n).into_iter().flatten() {
-            let d = indegree.get_mut(s).expect("known");
-            *d -= 1;
-            if *d == 0 {
+            // Every successor is in the map and each edge was counted once; a miss or a zero is skipped.
+            let left = indegree.get_mut(s).and_then(|d| {
+                *d = d.checked_sub(1)?;
+                Some(*d)
+            });
+            if left == Some(0) {
                 queue.push(*s);
             }
         }

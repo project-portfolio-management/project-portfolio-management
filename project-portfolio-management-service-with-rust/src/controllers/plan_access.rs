@@ -44,9 +44,7 @@ fn members_of(row: &plan_access::Model) -> Vec<String> {
 /// the lookup, and `visibility_lookup_failed_total`. Failing closed stays the rule; failing silently
 /// does not, because a database fault would otherwise look like an empty portfolio.
 fn fail_closed(lookup: &'static str, error: &sqlx::Error) {
-    crate::metrics::Metrics::global()
-        .visibility_lookup_failed_total
-        .inc();
+    crate::metrics::Metrics::with(|m| m.visibility_lookup_failed_total.inc());
     let _ = LOOKUP_FAILED.try_with(|f| f.store(true, std::sync::atomic::Ordering::Relaxed));
     tracing::error!(lookup, %error, "visibility lookup failed; hiding what could not be checked");
 }

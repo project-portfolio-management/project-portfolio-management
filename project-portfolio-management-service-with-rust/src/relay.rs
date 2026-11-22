@@ -354,19 +354,21 @@ pub const STATS_EVERY: Duration = Duration::from_secs(30);
 pub async fn count(outbox: Outbox, mut stopped: watch::Receiver<bool>, every: Duration) {
     loop {
         match outbox.stats().await {
-            Ok(stats) => crate::metrics::Metrics::global().publish_outbox(
-                crate::metrics::OutboxCounts {
-                    pending: stats.pending,
-                    claimed: stats.claimed,
-                    held: stats.held,
-                    failed: stats.failed,
-                    tampered: stats.tampered,
-                    oldest_owed_seconds: stats.oldest.map(|d| d.as_secs_f64()),
-                },
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map_or(0.0, |d| d.as_secs_f64()),
-            ),
+            Ok(stats) => crate::metrics::Metrics::with(|m| {
+                m.publish_outbox(
+                    crate::metrics::OutboxCounts {
+                        pending: stats.pending,
+                        claimed: stats.claimed,
+                        held: stats.held,
+                        failed: stats.failed,
+                        tampered: stats.tampered,
+                        oldest_owed_seconds: stats.oldest.map(|d| d.as_secs_f64()),
+                    },
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map_or(0.0, |d| d.as_secs_f64()),
+                );
+            }),
             Err(err) => tracing::warn!(error = %err, "relay: cannot read the outbox's counts"),
         }
         tokio::select! {

@@ -81,7 +81,11 @@ pub async fn paging_mw(State(ctx): State<AppContext>, req: Request, next: Next) 
     else {
         return rebuilt(parts, bytes);
     };
-    let page = match page_with(&Cursors::of(&ctx).0, &uri, MAX_LIMIT, MAX_LIMIT) {
+    let key = match Cursors::of(&ctx) {
+        Ok(key) => key,
+        Err(error) => return error.into_response(),
+    };
+    let page = match page_with(&key.0, &uri, MAX_LIMIT, MAX_LIMIT) {
         Ok(page) => page,
         Err(error) => return error.into_response(),
     };

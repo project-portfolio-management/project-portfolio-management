@@ -218,16 +218,10 @@ pub(super) async fn run(
                 report.note("constraint", Some(t.uid), "as-late-as-possible is not supported yet; the task is scheduled as soon as possible");
                 None
             }
+            // Asap and Alap are the two arms above, so a kind with no name here is not expected: no constraint.
+            Some((kind, _)) if ms_constraint_name(kind).is_none() => None,
             Some((kind, date)) => {
-                let ours = match kind {
-                    MsConstraint::Mso => "mso",
-                    MsConstraint::Mfo => "mfo",
-                    MsConstraint::Snet => "snet",
-                    MsConstraint::Snlt => "snlt",
-                    MsConstraint::Fnet => "fnet",
-                    MsConstraint::Fnlt => "fnlt",
-                    MsConstraint::Asap | MsConstraint::Alap => unreachable!("handled above"),
-                };
+                let ours = ms_constraint_name(kind).unwrap_or_default();
                 if ConstraintKind::parse(ours).is_some_and(ConstraintKind::is_hard) && !hard_ok {
                     report.note("constraint", Some(t.uid), format!("{ours} overrides the schedule's logic and needs access=admin or scheduling=hard_constraints; imported without it"));
                     None
@@ -510,4 +504,17 @@ pub fn routes() -> Routes {
         "/plans/{pid}/import/mspdi",
         body_limit(post(import), ceiling),
     )
+}
+
+/// Our name for an MS Project constraint kind that carries a date; `None` for as-soon/as-late-as-possible, which do not.
+fn ms_constraint_name(kind: MsConstraint) -> Option<&'static str> {
+    match kind {
+        MsConstraint::Mso => Some("mso"),
+        MsConstraint::Mfo => Some("mfo"),
+        MsConstraint::Snet => Some("snet"),
+        MsConstraint::Snlt => Some("snlt"),
+        MsConstraint::Fnet => Some("fnet"),
+        MsConstraint::Fnlt => Some("fnlt"),
+        MsConstraint::Asap | MsConstraint::Alap => None,
+    }
 }

@@ -190,52 +190,47 @@ impl FlowGauges {
     /// loop is configured, so an unconfigured deployment renders no
     /// `ppm_flow_*` family at all rather than a wall of zeroes that
     /// reads like a measured estate with nothing in it.
-    fn register_into(registry: &Registry) -> Self {
-        let gauge_vec = |name: &str, help: &str| {
-            GaugeVec::new(Opts::new(name, help), &["plan"])
-                .expect("static opts and one label name cannot fail")
-        };
-        let scalar = |name: &str, help: &str| {
-            Gauge::with_opts(Opts::new(name, help)).expect("static opts cannot fail")
-        };
+    fn register_into(registry: &Registry) -> Result<Self, prometheus::Error> {
+        let gauge_vec = |name: &str, help: &str| GaugeVec::new(Opts::new(name, help), &["plan"]);
+        let scalar = |name: &str, help: &str| Gauge::with_opts(Opts::new(name, help));
         let gauges = Self {
             efficiency: gauge_vec(
                 "ppm_flow_efficiency",
                 "Aggregate work time over cycle time, per plan.",
-            ),
+            )?,
             cycle_time_p85_days: gauge_vec(
                 "ppm_flow_cycle_time_p85_days",
                 "85th-percentile cycle time in calendar days (nearest-rank), per plan.",
-            ),
+            )?,
             work_in_progress: gauge_vec(
                 "ppm_flow_work_in_progress",
                 "Tasks started and not finished, per plan.",
-            ),
+            )?,
             first_pass_yield: gauge_vec(
                 "ppm_flow_first_pass_yield",
                 "Share of finished tasks that never moved backwards, per plan.",
-            ),
+            )?,
             columns_over_limit: gauge_vec(
                 "ppm_flow_columns_over_limit",
                 "Board columns over their configured WIP cap, per plan.",
-            ),
+            )?,
             plans_exported: scalar(
                 "ppm_flow_plans_exported",
                 "Plans exported as their own series in the last refresh.",
-            ),
+            )?,
             plans_suppressed: scalar(
                 "ppm_flow_plans_suppressed",
                 "Plans withheld in the last refresh: board too small to aggregate \
                  without describing individual people.",
-            ),
+            )?,
             plans_dropped: scalar(
                 "ppm_flow_plans_dropped",
                 "Plans dropped in the last refresh for exceeding the series cap.",
-            ),
+            )?,
             last_refresh_timestamp_seconds: scalar(
                 "ppm_flow_last_refresh_timestamp_seconds",
                 "Unix time of the last successful flow-metrics refresh; alert on it going stale.",
-            ),
+            )?,
         };
         for collector in [
             Box::new(gauges.efficiency.clone()) as Box<dyn prometheus::core::Collector>,
@@ -248,11 +243,9 @@ impl FlowGauges {
             Box::new(gauges.plans_dropped.clone()),
             Box::new(gauges.last_refresh_timestamp_seconds.clone()),
         ] {
-            registry
-                .register(collector)
-                .expect("registering a freshly-constructed collector cannot fail");
+            registry.register(collector)?;
         }
-        gauges
+        Ok(gauges)
     }
 }
 
@@ -265,35 +258,32 @@ struct OutboxGauges {
 
 impl OutboxGauges {
     /// Construct the outbox gauges and register them into `registry`.
-    fn new(registry: &Registry) -> Self {
+    fn new(registry: &Registry) -> Result<Self, prometheus::Error> {
         let outbox_vec = |name: &str, help: &str, labels: &[&str]| {
-            let vec = GaugeVec::new(Opts::new(name, help), labels)
-                .expect("static opts and label names cannot fail");
-            registry
-                .register(Box::new(vec.clone()))
-                .expect("registering a freshly-constructed collector cannot fail");
-            vec
+            let vec = GaugeVec::new(Opts::new(name, help), labels)?;
+            registry.register(Box::new(vec.clone()))?;
+            Ok::<_, prometheus::Error>(vec)
         };
         let event_outbox_rows = outbox_vec(
             "ppm_event_outbox_rows",
             "Event outbox rows by status, from the relay's last read; failed rows wait for an operator.",
             &["status"],
-        );
+        )?;
         let event_outbox_oldest_owed_seconds = outbox_vec(
             "ppm_event_outbox_oldest_owed_seconds",
             "How long the oldest pending or claimed event outbox row has waited, in seconds.",
             &[],
-        );
+        )?;
         let event_outbox_last_refresh_timestamp_seconds = outbox_vec(
             "ppm_event_outbox_last_refresh_timestamp_seconds",
             "Unix time of the relay's last read of the event outbox; alert on it going stale.",
             &[],
-        );
-        Self {
+        )?;
+        Ok(Self {
             rows: event_outbox_rows,
             oldest_owed_seconds: event_outbox_oldest_owed_seconds,
             last_refresh_timestamp_seconds: event_outbox_last_refresh_timestamp_seconds,
-        }
+        })
     }
 }
 
@@ -301,48 +291,45 @@ impl Metrics {
     /// Construct the full metric set and register every collector into a
     /// fresh [`Registry`].
     ///
-    /// Called once by [`Metrics::global`]. The `.expect`s are infallible:
-    /// every `Opts`/collector here is statically valid, and registering a
-    /// freshly-constructed collector into an empty registry cannot collide.
-    fn new() -> Self {
+    /// Called once by [`Metrics::global`]. Every `Opts`/collector here is
+    /// statically valid and registers into an empty registry, so the error
+    /// is not expected; it is returned, not panicked on, and `global` logs it.
+    ///
+    /// # Errors
+    ///
+    /// A collector's options are invalid, or two collectors collide.
+    fn new() -> Result<Self, prometheus::Error> {
         let registry = Registry::new();
 
-        let outbox = OutboxGauges::new(&registry);
+        let outbox = OutboxGauges::new(&registry)?;
 
         let plan_created_total = Counter::with_opts(Opts::new(
             "plan_created_total",
             "Total plan records created.",
-        ))
-        .expect("static counter opts are always valid");
+        ))?;
         let plan_updated_total = Counter::with_opts(Opts::new(
             "plan_updated_total",
             "Total plan records updated.",
-        ))
-        .expect("static counter opts are always valid");
+        ))?;
         let plan_deleted_total = Counter::with_opts(Opts::new(
             "plan_deleted_total",
             "Total plan records soft-deleted.",
-        ))
-        .expect("static counter opts are always valid");
+        ))?;
         let plan_merged_total =
-            Counter::with_opts(Opts::new("plan_merged_total", "Total plan records merged."))
-                .expect("static counter opts are always valid");
+            Counter::with_opts(Opts::new("plan_merged_total", "Total plan records merged."))?;
         let audit_write_failed_total = Counter::with_opts(Opts::new(
             "audit_write_failed_total",
             "Audit rows that could not be written for a write that was kept.",
-        ))
-        .expect("static counter opts are always valid");
+        ))?;
 
         let client_address_lockouts_total = Counter::with_opts(Opts::new(
             "client_address_lockouts_total",
             "Client addresses locked out for failed authentications, once per lockout.",
-        ))
-        .expect("static counter opts are always valid");
+        ))?;
         let visibility_lookup_failed_total = Counter::with_opts(Opts::new(
             "visibility_lookup_failed_total",
             "Visibility lookups that failed and were answered by hiding (fail closed).",
-        ))
-        .expect("static counter opts are always valid");
+        ))?;
 
         let http_requests_total = IntCounterVec::new(
             Opts::new(
@@ -350,8 +337,7 @@ impl Metrics {
                 "Total HTTP requests handled, labeled by method, path, and status.",
             ),
             &["method", "path", "status"],
-        )
-        .expect("static counter-vec opts are always valid");
+        )?;
 
         let scheduled_job_runs_total = IntCounterVec::new(
             Opts::new(
@@ -359,8 +345,7 @@ impl Metrics {
                 "Runs of the jobs the service schedules for itself, labeled by job and outcome.",
             ),
             &["job", "outcome"],
-        )
-        .expect("static counter-vec opts are always valid");
+        )?;
 
         for collector in [
             Box::new(plan_created_total.clone()) as Box<dyn prometheus::core::Collector>,
@@ -371,19 +356,13 @@ impl Metrics {
             Box::new(visibility_lookup_failed_total.clone()),
             Box::new(client_address_lockouts_total.clone()),
         ] {
-            registry
-                .register(collector)
-                .expect("registering a freshly-constructed collector cannot fail");
+            registry.register(collector)?;
         }
-        registry
-            .register(Box::new(http_requests_total.clone()))
-            .expect("registering a freshly-constructed collector cannot fail");
-        registry
-            .register(Box::new(scheduled_job_runs_total.clone()))
-            .expect("registering a freshly-constructed collector cannot fail");
+        registry.register(Box::new(http_requests_total.clone()))?;
+        registry.register(Box::new(scheduled_job_runs_total.clone()))?;
 
-        let flow = FlowGauges::register_into(&registry);
-        Self {
+        let flow = FlowGauges::register_into(&registry)?;
+        Ok(Self {
             registry,
             plan_created_total,
             plan_updated_total,
@@ -406,7 +385,7 @@ impl Metrics {
             event_outbox_rows: outbox.rows,
             event_outbox_oldest_owed_seconds: outbox.oldest_owed_seconds,
             event_outbox_last_refresh_timestamp_seconds: outbox.last_refresh_timestamp_seconds,
-        }
+        })
     }
 
     /// Publish one read of the outbox.
@@ -435,10 +414,28 @@ impl Metrics {
     ///
     /// Backed by a private [`OnceLock`], so every caller shares the one
     /// registry that `GET /metrics.prom` renders.
+    ///
+    /// `None` when the metric set could not be built, which is not expected (every option is a literal): the error is
+    /// logged once and the service runs without metrics, since a counter is not worth a failed request.
     #[must_use]
-    pub fn global() -> &'static Self {
-        static METRICS: OnceLock<Metrics> = OnceLock::new();
-        METRICS.get_or_init(Self::new)
+    pub fn global() -> Option<&'static Self> {
+        static METRICS: OnceLock<Option<Metrics>> = OnceLock::new();
+        METRICS
+            .get_or_init(|| match Self::new() {
+                Ok(metrics) => Some(metrics),
+                Err(error) => {
+                    tracing::error!(%error, "the metric set could not be built; metrics are off");
+                    None
+                }
+            })
+            .as_ref()
+    }
+
+    /// Run `f` on the process-wide metrics, if there are any (see [`Metrics::global`]).
+    pub fn with(f: impl FnOnce(&Self)) {
+        if let Some(metrics) = Self::global() {
+            f(metrics);
+        }
     }
 
     /// A fresh, unregistered metric set for a test.
@@ -448,7 +445,7 @@ impl Metrics {
     /// harness's parallelism. Each gets its own registry instead.
     #[cfg(test)]
     fn isolated() -> Self {
-        Self::new()
+        Self::new().unwrap()
     }
 
     /// Publish one flow-metrics pass (spec §15 TBA-10).
@@ -504,20 +501,16 @@ impl Metrics {
     /// Render the registry to Prometheus text-exposition format
     /// (`text/plain; version=0.0.4`).
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Does not panic in practice: the text encoder writes into a `Vec`
-    /// (which never fails) and always produces valid UTF-8, so the two
-    /// `.expect`s are unreachable.
-    #[must_use]
-    pub fn render(&self) -> String {
+    /// The encoder fails to write a family. It writes into a `Vec`, so this is not expected.
+    pub fn render(&self) -> Result<String, prometheus::Error> {
         let encoder = TextEncoder::new();
         let metric_families = self.registry.gather();
         let mut buf = Vec::new();
-        encoder
-            .encode(&metric_families, &mut buf)
-            .expect("text encoder writes to a Vec which never fails");
-        String::from_utf8(buf).expect("Prometheus text encoder produces UTF-8")
+        encoder.encode(&metric_families, &mut buf)?;
+        // The text encoder writes UTF-8; a byte that is not would show as U+FFFD, not stop the scrape.
+        Ok(String::from_utf8_lossy(&buf).into_owned())
     }
 }
 
@@ -529,7 +522,7 @@ mod tests {
     fn the_outbox_family_is_absent_until_a_relay_publishes_it() {
         let metrics = Metrics::isolated();
         assert!(
-            !metrics.render().contains("ppm_event_outbox"),
+            !metrics.render().unwrap().contains("ppm_event_outbox"),
             "no relay, no figures"
         );
         metrics.publish_outbox(
@@ -543,7 +536,7 @@ mod tests {
             },
             1_700_000_000.0,
         );
-        let text = metrics.render();
+        let text = metrics.render().unwrap();
         for line in [
             "ppm_event_outbox_rows{status=\"pending\"} 4",
             "ppm_event_outbox_rows{status=\"claimed\"} 1",
@@ -567,6 +560,7 @@ mod tests {
         assert!(
             metrics
                 .render()
+                .unwrap()
                 .lines()
                 .any(|l| l == "ppm_event_outbox_oldest_owed_seconds 0"),
             "none owed is a wait of nothing"
@@ -595,7 +589,7 @@ mod tests {
             },
             1_700_000_000.0,
         );
-        let body = metrics.render();
+        let body = metrics.render().unwrap();
         assert!(
             body.contains(r#"ppm_flow_efficiency{plan="abc"} 0.07"#),
             "{body}"
@@ -642,7 +636,7 @@ mod tests {
             },
             1.0,
         );
-        assert!(metrics.render().contains(r#"plan="gone""#));
+        assert!(metrics.render().unwrap().contains(r#"plan="gone""#));
         metrics.publish_flow(
             &crate::tba::FlowMetricSet {
                 rows: vec![row("stays")],
@@ -651,7 +645,7 @@ mod tests {
             },
             2.0,
         );
-        let body = metrics.render();
+        let body = metrics.render().unwrap();
         assert!(
             !body.contains(r#"plan="gone""#),
             "a withdrawn plan must not keep its last value: {body}"
@@ -681,7 +675,7 @@ mod tests {
             },
             3.0,
         );
-        let body = metrics.render();
+        let body = metrics.render().unwrap();
         assert!(
             !body.contains(r#"ppm_flow_cycle_time_p85_days{plan="nulls"}"#),
             "a refused p85 must not render as 0: {body}"
@@ -701,7 +695,7 @@ mod tests {
     /// registered metrics). Runs without a database.
     #[test]
     fn render_yields_valid_prometheus_text() {
-        let metrics = Metrics::global();
+        let metrics = Metrics::global().unwrap();
         metrics.plan_created_total.inc();
         // A counter vec only emits a metric family once it has at least one
         // observed label set, so touch one combination here.
@@ -709,7 +703,7 @@ mod tests {
             .http_requests_total
             .with_label_values(&["GET", "/metrics.prom", "200"])
             .inc();
-        let body = metrics.render();
+        let body = metrics.render().unwrap();
 
         // Each registered counter contributes HELP + TYPE lines.
         assert!(
@@ -760,7 +754,7 @@ mod tests {
             },
             0.0,
         );
-        let text = metrics.render();
+        let text = metrics.render().unwrap();
         let mut named = Vec::new();
         for line in RULES.lines().filter(|l| !l.trim_start().starts_with('#')) {
             for word in line.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_')) {

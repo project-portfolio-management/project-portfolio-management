@@ -271,7 +271,7 @@ pub fn validate_action(
         // `propose_reschedule` would, applying it instead of only
         // proposing it.
         "shift_dependents" => {}
-        _ => unreachable!("action_kind was checked against ACTION_KINDS above"),
+        other => return Err(format!("action_kind {other:?} has no action_value rule")),
     }
     Ok(())
 }

@@ -105,9 +105,7 @@ pub fn model_not_found(err: axa::model::ModelError) -> axa::Error {
 /// Takes any error that displays (`AuditModel::record_on`'s service error).
 #[must_use]
 pub(crate) fn audit_failed(e: impl std::fmt::Display) -> axa::Error {
-    crate::metrics::Metrics::global()
-        .audit_write_failed_total
-        .inc();
+    crate::metrics::Metrics::with(|m| m.audit_write_failed_total.inc());
     tracing::error!(error = %e, "audit row not written; the write is refused");
     axa::Error::CustomError(
         axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -335,7 +333,7 @@ pub mod pagination {
     }
 
     impl FromRequestParts<AppContext> for Cursor {
-        type Rejection = std::convert::Infallible;
+        type Rejection = axa::Error;
 
         fn from_request_parts(
             parts: &mut Parts,
@@ -346,10 +344,7 @@ pub mod pagination {
                 .extensions
                 .get::<OriginalUri>()
                 .map_or_else(|| parts.uri.clone(), |original| original.0.clone());
-            std::future::ready(Ok(Self {
-                key: Cursors::of(ctx),
-                uri,
-            }))
+            std::future::ready(Cursors::of(ctx).map(|key| Self { key, uri }))
         }
     }
 

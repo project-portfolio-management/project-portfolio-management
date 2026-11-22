@@ -187,21 +187,46 @@ impl Scheme {
     }
 }
 
-/// The scheme this process uses, read once from the environment. A bad value is logged and means **no
-/// scheme** would be the dangerous reading (everything visible), so it panics at first use instead: a
+/// The scheme the environment asks for: none when [`SCHEME_ENV`] is unset or blank.
+///
+/// # Errors
+///
+/// When the variable is set to something that is not a valid scheme. A bad value must not mean **no scheme**, which
+/// would be the dangerous reading (everything visible), so [`init`] refuses to start the process with it: a
 /// deployment that asked for marks and got a typo must not start without them.
+pub fn from_env() -> Result<Scheme, String> {
+    match std::env::var(SCHEME_ENV) {
+        Ok(v) if !v.trim().is_empty() => {
+            Scheme::parse(&v).map_err(|e| format!("{SCHEME_ENV} is invalid: {e}"))
+        }
+        _ => Ok(Scheme::default()),
+    }
+}
+
+static SCHEME: OnceLock<Scheme> = OnceLock::new();
+
+/// Read and check the scheme at start-up, so a bad value stops the start (see [`from_env`]). Called by
+/// `App::context`, which every command (the server and the tasks) goes through.
 ///
-/// # Panics
+/// # Errors
 ///
-/// When the variable is set to something that is not a valid scheme.
+/// As [`from_env`].
+pub fn init() -> Result<(), String> {
+    let scheme = from_env()?;
+    // Already set (a second context in one process): the first reading stands.
+    let _ = SCHEME.set(scheme);
+    Ok(())
+}
+
+/// The scheme this process uses, read once from the environment. A bad value was refused by [`init`] at start-up; a
+/// process that never ran it (a unit test) and has a bad value logs it and reads as no scheme.
 #[must_use]
 pub fn scheme() -> &'static Scheme {
-    static SCHEME: OnceLock<Scheme> = OnceLock::new();
-    SCHEME.get_or_init(|| match std::env::var(SCHEME_ENV) {
-        Ok(v) if !v.trim().is_empty() => {
-            Scheme::parse(&v).unwrap_or_else(|e| panic!("{SCHEME_ENV} is invalid: {e}"))
-        }
-        _ => Scheme::default(),
+    SCHEME.get_or_init(|| {
+        from_env().unwrap_or_else(|error| {
+            tracing::error!(%error, "the handling-mark scheme is invalid and `init` did not run");
+            Scheme::default()
+        })
     })
 }
 

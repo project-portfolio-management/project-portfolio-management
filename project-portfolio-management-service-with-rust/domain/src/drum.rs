@@ -94,7 +94,7 @@ fn fte(m: i64) -> String {
 
 /// Stagger `projects` against a drum of `capacity_milli` with `buffer_days` between successive projects.
 #[must_use]
-#[expect(clippy::missing_panics_doc, clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> Vec<Placement> {
     let mut order: Vec<&Project> = projects.iter().filter(|p| !p.segments.is_empty()).collect();
     order.sort_by_key(|p| {
@@ -107,8 +107,13 @@ pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> V
     let mut placed: Vec<(Uuid, String, Vec<Segment>)> = Vec::new();
     let mut out = Vec::new();
     for p in order {
-        let first = p.segments.iter().map(|s| s.start).min().expect("non-empty");
-        let last = p.segments.iter().map(|s| s.end).max().expect("non-empty");
+        // `order` holds only projects with segments, so both are `Some`; a project without any is left out.
+        let (Some(first), Some(last)) = (
+            p.segments.iter().map(|s| s.start).min(),
+            p.segments.iter().map(|s| s.end).max(),
+        ) else {
+            continue;
+        };
         let own_peak = peak(&p.segments);
         let all_placed: Vec<Segment> = placed
             .iter()

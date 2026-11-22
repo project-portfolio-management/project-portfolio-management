@@ -83,9 +83,7 @@ impl Model {
         snapshot: Option<serde_json::Value>,
     ) {
         if let Err(error) = Self::record_on(db, entity_pid, action, actor, snapshot).await {
-            crate::metrics::Metrics::global()
-                .audit_write_failed_total
-                .inc();
+            crate::metrics::Metrics::with(|m| m.audit_write_failed_total.inc());
             tracing::error!(%entity_pid, action, %error, "audit row not written");
         }
     }

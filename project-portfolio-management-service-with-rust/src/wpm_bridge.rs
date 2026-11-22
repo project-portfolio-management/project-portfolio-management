@@ -345,17 +345,20 @@ fn recall(caller: &str, peer_pool_ref: &str, month: Date) -> Option<Received> {
 // ---- the calls ----------------------------------------------------------------------------------------------
 
 /// Shared HTTP client for calls to the worker service: bounded by [`PEER_TIMEOUT`] and never following redirects, so a peer cannot bounce a bearer token elsewhere.
-fn client() -> &'static reqwest::Client {
-    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+fn client() -> Result<&'static reqwest::Client, &'static str> {
+    static CLIENT: OnceLock<Result<reqwest::Client, String>> = OnceLock::new();
     crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
-    CLIENT.get_or_init(|| {
-        reqwest::Client::builder()
-            .timeout(PEER_TIMEOUT)
-            .connect_timeout(PEER_TIMEOUT)
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .expect("build the non-redirecting WPM client")
-    })
+    CLIENT
+        .get_or_init(|| {
+            reqwest::Client::builder()
+                .timeout(PEER_TIMEOUT)
+                .connect_timeout(PEER_TIMEOUT)
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .map_err(|e| format!("the WPM client could not be built: {e}"))
+        })
+        .as_ref()
+        .map_err(String::as_str)
 }
 
 /// Checks the worker service URL is an acceptable outbound target (scheme, and public address in strict mode) and that its DNS resolution passes, returning the reason when not.
@@ -419,6 +422,7 @@ async fn fetch_supply(
         from.format("%Y-%m-%d")
     );
     let response = client()
+        .map_err(|e| Fetch::Unreachable(e.to_string()))?
         .get(&url)
         .bearer_auth(bearer)
         .send()
@@ -613,7 +617,11 @@ pub async fn send_demand(s: &DemandSend) -> (&'static str, String) {
     }
     let url = format!("{}/api/capacity/peer-demand", s.base.trim_end_matches('/'));
     let body = demand_body(s);
-    let response = match client()
+    let client = match client() {
+        Ok(client) => client,
+        Err(error) => return ("unreachable", error.to_string()),
+    };
+    let response = match client
         .post(&url)
         .bearer_auth(&s.bearer)
         .json(&body)
@@ -721,6 +729,7 @@ async fn fetch_people_impact(
         base.trim_end_matches('/')
     );
     let response = client()
+        .map_err(|e| Fetch::Unreachable(e.to_string()))?
         .get(&url)
         .bearer_auth(bearer)
         .send()

@@ -16,7 +16,7 @@ use uuid::Uuid;
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 async fn a_failed_audit_write_is_counted_not_dropped() {
     request::<App, _, _>(|_request, ctx| async move {
-        let failed = || Metrics::global().audit_write_failed_total.get();
+        let failed = || Metrics::global().unwrap().audit_write_failed_total.get();
         let before = failed();
 
         // A good write is not counted.
@@ -57,7 +57,7 @@ async fn a_failed_audit_write_is_counted_not_dropped() {
 async fn a_write_whose_audit_row_cannot_be_written_is_refused() {
     use serde_json::{Value, json};
     request::<App, _, _>(|request, ctx| async move {
-        let failed = || Metrics::global().audit_write_failed_total.get();
+        let failed = || Metrics::global().unwrap().audit_write_failed_total.get();
         sqlx::raw_sql("CREATE OR REPLACE FUNCTION cq3_refuse_audit() RETURNS trigger AS $$
                  BEGIN RAISE EXCEPTION 'cq3: the audit table is unavailable'; END; $$ LANGUAGE plpgsql;
                  DROP TRIGGER IF EXISTS cq3_refuse ON audit_logs;
